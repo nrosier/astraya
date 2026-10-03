@@ -63,12 +63,17 @@ test('two people with known birth times get a Synastry screen with a bi-wheel an
   await expect(page.locator('div.chart-wheel svg')).toHaveCount(1);
   await expect(page.getByRole('table', { name: 'Aspects' })).toBeVisible();
 
-  // #359: the aspect table's new Interpretation column never renders blank, even though no
-  // corpus content has been written for synastry-aspect yet — it falls back to the mechanical
-  // "Trine between your X and their Y" sentence composed by `composeFallbackText`.
+  // The aspect table's Interpretation column never renders blank (#359): it starts as the
+  // mechanical sentence and, once the reviewed corpus has loaded (#422), becomes the corpus text,
+  // led by whose side it is written from.
   await expect(page.getByRole('columnheader', { name: 'Interpretation' })).toBeVisible();
   const firstInterpretationCell = page.getByRole('row').nth(1).getByRole('cell').last();
   await expect(firstInterpretationCell).not.toBeEmpty();
+  const fromCorpus = page.getByRole('cell').filter({ hasText: /^Seen from (Ada Lovelace|Charles Babbage)’s side: / });
+  await expect(fromCorpus.first()).toBeVisible();
+  // Every row that has an entry names a side; the rows that are a body paired with itself do not.
+  const rows = page.getByRole('table', { name: 'Aspects' }).locator('tbody tr');
+  expect(await fromCorpus.count()).toBeLessThanOrEqual(await rows.count());
 
   const [download] = await Promise.all([
     page.waitForEvent('download'),

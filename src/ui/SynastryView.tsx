@@ -22,7 +22,6 @@ import { deriveExportFilename } from '../domain/export-filename.js';
 import { computeSynastry, type SynastryData } from '../domain/synastry.js';
 import { renderMultiWheelSvg, type CrossRingAspects } from '../chart/multi-wheel.js';
 import { aspectDisplayName, bodyDisplayName } from './astro-names.messages.js';
-import { composeFallbackText } from '../interpretation/compose.js';
 import { BiWheelSelectionPanel } from './BiWheelSelectionPanel.js';
 import { biWheelSelectionPanelMessages } from './BiWheelSelectionPanel.messages.js';
 import { resolveBiWheelSelection } from './bi-wheel-selection.js';
@@ -36,25 +35,10 @@ import { SortableTable } from './SortableTable.js';
 import { useStoreState } from './store-context.js';
 import { synastryViewMessages } from './SynastryView.messages.js';
 import type { TableColumn } from './table-sort.js';
-import type { CorpusPlacement, Locale } from '../interpretation/schema.js';
-
-/**
- * The `synastry-aspect` fallback sentence (#359) for one cross-chart aspect — `bodyA` is
- * always this screen's `person`, `bodyB` always the chosen partner, mirroring
- * `PeriodicTransitView.tsx`'s `transitAspectSentence` for `transit-aspect`. No corpus content
- * has been written for `synastry-aspect` yet, so every sentence here is the mechanical
- * fallback, not a persona-voiced entry — the same "never blank" guarantee #59 gives every
- * other category, now extended to this screen for the first time.
- */
-function synastryAspectSentence(row: AspectRow, locale: Locale): string {
-  const placement: CorpusPlacement = {
-    category: 'synastry-aspect',
-    aspect: row.aspectKey,
-    bodyA: row.bodyAKey,
-    bodyB: row.bodyBKey,
-  };
-  return composeFallbackText(placement, locale);
-}
+import type { CorpusEntry, Locale } from '../interpretation/schema.js';
+import { initialPersona } from './report-persona.js';
+import { synastryText } from './synastry-text.js';
+import { wheelCorpus } from './wheel-corpus.js';
 
 type Load =
   | { readonly kind: 'idle' }
@@ -62,7 +46,11 @@ type Load =
   | { readonly kind: 'ready'; readonly data: SynastryData }
   | { readonly kind: 'error'; readonly message: string };
 
-function aspectColumns(t: typeof synastryViewMessages.en, locale: Locale): readonly TableColumn<AspectRow>[] {
+function aspectColumns(
+  t: typeof synastryViewMessages.en,
+  locale: Locale,
+  interpretationOf: (row: AspectRow) => string,
+): readonly TableColumn<AspectRow>[] {
   return [
     {
       key: 'bodyAName',
@@ -92,7 +80,7 @@ function aspectColumns(t: typeof synastryViewMessages.en, locale: Locale): reado
     {
       key: 'interpretation',
       label: t.interpretationLabel,
-      valueOf: (row) => synastryAspectSentence(row, locale),
+      valueOf: interpretationOf,
     },
   ];
 }
@@ -142,6 +130,25 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
     };
   }, [momentKey(person?.moment), momentKey(partner?.moment), provider]);
 
+  // The reviewed interpretation texts are fetched once a synastry is on screen, and kept per language
+  // and advisor voice; until they arrive (or if they cannot) the rows show the mechanical sentence.
+  const persona = useMemo(initialPersona, []);
+  const [corpus, setCorpus] = useState<readonly CorpusEntry[]>([]);
+  const synastryReady = load.kind === 'ready';
+  useEffect(() => {
+    if (!synastryReady) return undefined;
+    let cancelled = false;
+    wheelCorpus(locale, persona).then(
+      (loaded) => {
+        if (!cancelled) setCorpus(loaded);
+      },
+      () => undefined,
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [synastryReady, locale, persona]);
+
   const wheelMarkup = useMemo(() => {
     if (load.kind !== 'ready') return undefined;
     const nameA: string = person?.displayName ?? '';
@@ -162,6 +169,11 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
   const nameA: string = person?.displayName ?? '';
   const nameB: string = partner?.displayName ?? '';
   const ringLabels = [nameA || t.personALabel, nameB || t.personBLabel];
+  const interpretationOf = (row: AspectRow): string => {
+    const { text, speaksFrom } = synastryText(row, locale, corpus, persona);
+    const name = speaksFrom === 'a' ? ringLabels[0] : ringLabels[1];
+    return speaksFrom === undefined || name === undefined ? text : `${t.seenFromSide(name)}${text}`;
+  };
   const biWheelFacts = useMemo(() => {
     if (load.kind !== 'ready' || selectionKey === undefined) return undefined;
     return resolveBiWheelSelection(selectionKey, {
@@ -259,7 +271,7 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
 
           <SortableTable
             caption={t.aspectsCaption}
-            columns={aspectColumns(t, locale)}
+            columns={aspectColumns(t, locale, interpretationOf)}
             rows={crossAspectRows(load.data.aspects)}
             getRowKey={(row) => `${row.bodyAKey}-${row.aspect}-${row.bodyBKey}`}
             downloadFilename={deriveExportFilename(

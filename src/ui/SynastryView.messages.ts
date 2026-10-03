@@ -2,6 +2,8 @@
  * Message catalogue for `SynastryView.tsx` (#158).
  */
 const en = {
+  /** Leads a corpus text that is written from one person's side ("your Mars…the other person's Moon"). */
+  seenFromSide: (name: string) => `Seen from ${name}’s side: `,
   personFallback: 'Person',
   thisPerson: 'This person',
   synastryFallback: 'Synastry',
@@ -32,6 +34,7 @@ const en = {
 };
 
 const nl: typeof en = {
+  seenFromSide: (name) => `Vanuit de kant van ${name}: `,
   personFallback: 'Persoon',
   thisPerson: 'Deze persoon',
   synastryFallback: 'Synastrie',
