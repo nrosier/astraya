@@ -40,6 +40,14 @@ import { civilFromJulianDay } from '../time/julian.js';
 import { todayInputValue } from './format.js';
 import { useMessages } from './messages.js';
 import { momentKey } from '../time/encode.js';
+import {
+  chartRulerKeyOf,
+  filterTransits,
+  rankTransits,
+  type TransitRuleContext,
+} from '../astrology/transit-importance.js';
+import { housesAreDefined } from '../domain/chart-compute.js';
+import { EVERY_BODY_KEY, TransitFilterPanel, useTransitFilter } from './TransitFilterPanel.js';
 import { useLocale } from './locale.js';
 import { periodicTransitViewMessages } from './PeriodicTransitView.messages.js';
 import { PersonNotFound } from './PersonNotFound.js';
@@ -208,6 +216,17 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
   const [asOf, setAsOf] = useState(todayInputValue);
   const { provider } = useEphemerisProvider();
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
+  const natal = load.kind === 'ready' ? load.data.natal : undefined;
+  const rules = useMemo<TransitRuleContext>(
+    () => ({
+      everyBodyKey: EVERY_BODY_KEY,
+      context: 'yearly',
+      chartRulerKey:
+        natal !== undefined && housesAreDefined(natal.houses) ? chartRulerKeyOf(natal.houses.ascendant) : undefined,
+    }),
+    [natal],
+  );
+  const [filter, setFilter] = useTransitFilter(rules);
 
   const targetDate = useMemo(() => {
     const [year, month, day] = asOf.split('-').map(Number);
@@ -324,6 +343,22 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
   const progressedLunarReturnAscendantSign =
     data !== undefined ? Math.floor((data.monthly.progressedLunarReturn.houses.cusps[1] ?? 0) / 30) : 0;
   const returnData = returnLoad.kind === 'ready' ? returnLoad.data : undefined;
+  // The return and progressed-return contacts share one filter and count. The daily Moon's own
+  // aspects are left out: that section is about the Moon, which the default rules treat as background.
+  const shownOf = (contacts: readonly Aspect[]): readonly Aspect[] =>
+    rankTransits(filterTransits(contacts, filter), filter, rules.chartRulerKey);
+  const filteredContactLists: readonly (readonly Aspect[])[] =
+    data === undefined
+      ? []
+      : [
+          ...data.weekly.lunarReturns.returns.map((lunarReturn) => lunarReturn.contacts),
+          data.monthly.progressedLunarReturn.contacts,
+          data.yearly.solarReturn.contacts,
+          data.yearly.demibirthday.contacts,
+          ...(returnData === undefined ? [] : [returnData.contacts]),
+        ];
+  const contactsTotal = filteredContactLists.reduce((sum, list) => sum + list.length, 0);
+  const contactsShown = filteredContactLists.reduce((sum, list) => sum + shownOf(list).length, 0);
   const planetaryReturnAscendantSign =
     returnData !== undefined ? Math.floor((returnData.houses.cusps[1] ?? 0) / 30) : 0;
 
@@ -347,6 +382,17 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
           />
         </label>
       </p>
+
+      {data !== undefined && (
+        <TransitFilterPanel
+          filter={filter}
+          rules={rules}
+          onChange={setFilter}
+          shown={contactsShown}
+          total={contactsTotal}
+          locale={locale}
+        />
+      )}
 
       {load.kind === 'loading' && <p className="status">{t.calculating}</p>}
 
@@ -420,11 +466,11 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
                         localizedSignName(ascendantSign, locale, t),
                       )}
                     </p>
-                    {lunarReturn.contacts.length > 0 && (
+                    {shownOf(lunarReturn.contacts).length > 0 && (
                       <SortableTable
                         caption={t.lunarReturnContactsCaption}
                         columns={contactColumns(t)}
-                        rows={contactRows(lunarReturn.contacts, locale)}
+                        rows={contactRows(shownOf(lunarReturn.contacts), locale)}
                         getRowKey={(row) => row.key}
                         downloadFilename={deriveExportFilename(
                           person.displayName,
@@ -467,11 +513,11 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
                 localizedSignName(progressedLunarReturnAscendantSign, locale, t),
               )}
             </p>
-            {data.monthly.progressedLunarReturn.contacts.length > 0 && (
+            {shownOf(data.monthly.progressedLunarReturn.contacts).length > 0 && (
               <SortableTable
                 caption={t.progressedLunarReturnContactsCaption}
                 columns={contactColumns(t)}
-                rows={contactRows(data.monthly.progressedLunarReturn.contacts, locale)}
+                rows={contactRows(shownOf(data.monthly.progressedLunarReturn.contacts), locale)}
                 getRowKey={(row) => row.key}
                 downloadFilename={deriveExportFilename(
                   person.displayName,
@@ -491,11 +537,11 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
                 localizedSignName(returnAscendantSign, locale, t),
               )}
             </p>
-            {data.yearly.solarReturn.contacts.length > 0 && (
+            {shownOf(data.yearly.solarReturn.contacts).length > 0 && (
               <SortableTable
                 caption={t.solarReturnContactsCaption}
                 columns={contactColumns(t)}
-                rows={contactRows(data.yearly.solarReturn.contacts, locale)}
+                rows={contactRows(shownOf(data.yearly.solarReturn.contacts), locale)}
                 getRowKey={(row) => row.key}
                 downloadFilename={deriveExportFilename(person.displayName, 'forecast-yearly-return', 'csv')}
               />
@@ -507,11 +553,11 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
                 localizedSignName(demibirthdayAscendantSign, locale, t),
               )}
             </p>
-            {data.yearly.demibirthday.contacts.length > 0 && (
+            {shownOf(data.yearly.demibirthday.contacts).length > 0 && (
               <SortableTable
                 caption={t.demibirthdayContactsCaption}
                 columns={contactColumns(t)}
-                rows={contactRows(data.yearly.demibirthday.contacts, locale)}
+                rows={contactRows(shownOf(data.yearly.demibirthday.contacts), locale)}
                 getRowKey={(row) => row.key}
                 downloadFilename={deriveExportFilename(person.displayName, 'forecast-yearly-demibirthday', 'csv')}
               />
@@ -554,11 +600,11 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
                     localizedSignName(planetaryReturnAscendantSign, locale, t),
                   )}
                 </p>
-                {returnData.contacts.length > 0 && (
+                {shownOf(returnData.contacts).length > 0 && (
                   <SortableTable
                     caption={t.planetaryReturnContactsCaption}
                     columns={contactColumns(t)}
-                    rows={contactRows(returnData.contacts, locale)}
+                    rows={contactRows(shownOf(returnData.contacts), locale)}
                     getRowKey={(row) => row.key}
                     downloadFilename={deriveExportFilename(person.displayName, 'forecast-planetary-return', 'csv')}
                   />

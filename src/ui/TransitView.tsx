@@ -21,6 +21,7 @@ import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { chartWheelRing, crossAspectRows, type AspectRow } from '../domain/chart-tables.js';
 import { deriveExportFilename } from '../domain/export-filename.js';
 import { computeTransit, type TransitData } from '../domain/transit.js';
+import { TRANSIT_ORB_CONFIG } from '../astrology/transit-importance.js';
 import { renderMultiWheelSvg, type CrossRingAspects } from '../chart/multi-wheel.js';
 import { findVoidOfCourseMoon, type VoidOfCourseMoon } from '../astrology/void-of-course.js';
 import { voidOfCourseSentence } from './void-of-course-text.js';
@@ -30,6 +31,14 @@ import { BiWheelSelectionPanel } from './BiWheelSelectionPanel.js';
 import { biWheelSelectionPanelMessages } from './BiWheelSelectionPanel.messages.js';
 import { resolveBiWheelSelection } from './bi-wheel-selection.js';
 import { useWheelIsolation } from './wheel-interaction.js';
+import {
+  chartRulerKeyOf,
+  filterTransits,
+  rankTransits,
+  type TransitRuleContext,
+} from '../astrology/transit-importance.js';
+import { housesAreDefined } from '../domain/chart-compute.js';
+import { EVERY_BODY_KEY, TransitFilterPanel, useTransitFilter } from './TransitFilterPanel.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { momentKey } from '../time/encode.js';
@@ -101,7 +110,7 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
         // day, not a moment, and noon keeps the civil day intact under any offset the target's
         // own calculation might apply.
         const targetJd = await provider.julianDayFromUtc(targetDate.year, targetDate.month, targetDate.day, 12, 0, 0);
-        const data = await computeTransit(moment, targetJd, provider);
+        const data = await computeTransit(moment, targetJd, provider, {}, TRANSIT_ORB_CONFIG);
         // Secondary to the wheel: if the Moon search fails, the screen still shows the transit.
         const voidOfCourse = await findVoidOfCourseMoon(provider, targetJd).catch(() => undefined);
         if (!effect.cancelled) setLoad({ kind: 'ready', data, voidOfCourse });
@@ -116,6 +125,26 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
     };
   }, [momentKey(person?.moment), provider, targetDate]);
 
+  const natal = load.kind === 'ready' ? load.data.natal : undefined;
+  const rules = useMemo<TransitRuleContext>(
+    () => ({
+      everyBodyKey: EVERY_BODY_KEY,
+      context: 'daily',
+      chartRulerKey:
+        natal !== undefined && housesAreDefined(natal.houses) ? chartRulerKeyOf(natal.houses.ascendant) : undefined,
+    }),
+    [natal],
+  );
+  const [filter, setFilter] = useTransitFilter(rules);
+  // The table, the wheel's cross-ring lines and the panel all read the same filtered, ranked list.
+  const shownContacts = useMemo(
+    () =>
+      load.kind === 'ready'
+        ? rankTransits(filterTransits(load.data.contacts, filter), filter, rules.chartRulerKey)
+        : [],
+    [load, filter, rules],
+  );
+
   const wheelMarkup = useMemo(() => {
     if (load.kind !== 'ready') return undefined;
     const natalRing = chartWheelRing(load.data.natal, t.natalLabel);
@@ -124,10 +153,10 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
       // Natal is ring 0 (innermost), transit ring 1 (outer). `computeTransit`'s contacts are
       // already ordered transiting-first (bodyA), natal-second (bodyB) — the same order
       // `outerRingIndex`/`innerRingIndex` expect.
-      { innerRingIndex: 0, outerRingIndex: 1, aspects: load.data.contacts },
+      { innerRingIndex: 0, outerRingIndex: 1, aspects: shownContacts },
     ];
     return renderMultiWheelSvg([natalRing, transitRing], crossAspects);
-  }, [load, t]);
+  }, [load, t, shownContacts]);
 
   const wheelT = useMessages(biWheelSelectionPanelMessages);
   const { wheelRef, selectionKey, clear: clearIsolation, onClick: handleWheelClick } = useWheelIsolation(wheelMarkup);
@@ -138,12 +167,12 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
         { label: t.natalLabel, data: load.data.natal },
         { label: t.transitRingLabel, data: load.data.transit },
       ],
-      cross: crossAspectRows(load.data.contacts),
+      cross: crossAspectRows(shownContacts),
       // Each contact's first end is the transiting body (ring 1), its second the natal point (ring 0).
       crossRingOfA: 1,
       crossRingOfB: 0,
     });
-  }, [load, selectionKey, t]);
+  }, [load, selectionKey, t, shownContacts]);
 
   if (person === undefined) {
     return <PersonNotFound />;
@@ -209,6 +238,15 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
         <>
           {/* App-generated SVG from just-computed chart data, never user-supplied markup —
               the same trust boundary ChartView.tsx's sheet markup is injected under. */}
+          <TransitFilterPanel
+            filter={filter}
+            rules={rules}
+            onChange={setFilter}
+            shown={shownContacts.length}
+            total={load.data.contacts.length}
+            locale={locale}
+          />
+
           <p className="hint chart-wheel-hint">{wheelT.hint}</p>
           <div
             ref={wheelRef}
@@ -235,7 +273,7 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
           <SortableTable
             caption={t.contactsCaption}
             columns={contactColumns(t, locale)}
-            rows={crossAspectRows(load.data.contacts)}
+            rows={crossAspectRows(shownContacts)}
             getRowKey={(row) => `${row.bodyAKey}-${row.aspect}-${row.bodyBKey}`}
             downloadFilename={deriveExportFilename(person.displayName, 'transit-contacts', 'csv')}
           />
