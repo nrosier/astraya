@@ -8,7 +8,7 @@
  * All the rules live in `domain/person-form.ts`, so this component is only wiring: hold the
  * draft, show the errors, save the fields that changed. Nothing here decides what is valid.
  */
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { draftFrom, draftToMutations, validateDraft, type Draft } from '../domain/person-form.js';
 import { personFormValidationMessages } from '../domain/person-form.messages.js';
 import { formatOffset, resolveMoment } from '../time/resolve.js';
@@ -36,6 +36,7 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
   const state = useStoreState();
   const person = state.people.get(personId);
   const t = useMessages(personFormMessages);
+  const unknownTimeHintId = useId();
   const shared = useMessages(sharedMessages);
   const validationT = useMessages(personFormValidationMessages);
 
@@ -53,6 +54,7 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
   }
 
   const current = draft ?? opened ?? draftFrom(person);
+  const unknown = current.timeAccuracy === 'unknown';
   const { errors, moment } = validateDraft(current, validationT);
   const resolved = moment === undefined ? undefined : resolveMoment(moment);
 
@@ -105,6 +107,12 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
 
   const field = (name: keyof Draft): { 'aria-invalid'?: true; 'aria-describedby'?: string } =>
     errors[name] === undefined ? {} : { 'aria-invalid': true, 'aria-describedby': `${name}-error` };
+
+  // The time field is described by its own error, and — while the time is unknown — by why it is off.
+  const timeDescribedBy =
+    [errors.time === undefined ? undefined : 'time-error', unknown ? `${unknownTimeHintId}-reason` : undefined]
+      .filter((id) => id !== undefined)
+      .join(' ') || undefined;
 
   const Error_ = ({ name }: { name: keyof Draft }): React.JSX.Element | null =>
     errors[name] === undefined ? null : (
@@ -178,20 +186,6 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
             <Error_ name="date" />
           </label>
           <label>
-            {t.timeLabel}
-            <input
-              type="time"
-              step={1}
-              value={current.time}
-              disabled={current.timeAccuracy === 'unknown'}
-              {...field('time')}
-              onChange={(event) => {
-                set('time', event.target.value);
-              }}
-            />
-            <Error_ name="time" />
-          </label>
-          <label>
             {t.timeKnownLabel}
             <select
               value={current.timeAccuracy}
@@ -206,7 +200,32 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
               ))}
             </select>
           </label>
+          <label>
+            {t.timeLabel}
+            <input
+              type="time"
+              step={1}
+              value={current.time}
+              disabled={unknown}
+              {...field('time')}
+              aria-describedby={timeDescribedBy}
+              onChange={(event) => {
+                set('time', event.target.value);
+              }}
+            />
+            <Error_ name="time" />
+          </label>
         </div>
+        {unknown && (
+          <>
+            <p id={`${unknownTimeHintId}-reason`} className="hint">
+              {t.timeUnavailableReason}
+            </p>
+            <p id={unknownTimeHintId} className="hint">
+              {t.unknownTimeHint}
+            </p>
+          </>
+        )}
       </fieldset>
 
       <fieldset className="field-group">
@@ -355,8 +374,6 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
           <p className="hint">{t.tzdbHint(resolved.tzdbFingerprint)}</p>
         </>
       )}
-
-      {current.timeAccuracy === 'unknown' && <p className="hint">{t.unknownTimeHint}</p>}
 
       <p className="actions">
         <button type="button" onClick={save} disabled={saving || moment === undefined}>

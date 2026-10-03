@@ -55,6 +55,7 @@ const en = {
 
   worthCheckingHeading: 'Worth checking',
 
+  timeUnavailableReason: 'The time is not used while it is set to Unknown. Choose another option above to enter one.',
   unknownTimeHint:
     'With no birth time, houses, the Ascendant and the Midheaven cannot be calculated at all — they are not approximate, they are undefined. Planetary positions are still meaningful, and the Moon moves about 13° a day, so its sign may be uncertain.',
 
@@ -124,6 +125,8 @@ const nl: typeof en = {
 
   worthCheckingHeading: 'Het controleren waard',
 
+  timeUnavailableReason:
+    'De tijd wordt niet gebruikt zolang die op Onbekend staat. Kies hierboven een andere optie om een tijd in te vullen.',
   unknownTimeHint:
     'Zonder geboortetijd kunnen huizen, de Ascendant en de Midheaven helemaal niet worden berekend — ze zijn niet bij benadering, ze zijn onbepaald. Planeetposities blijven wel betekenisvol, en de Maan verplaatst ongeveer 13° per dag, dus haar teken kan onzeker zijn.',
 
