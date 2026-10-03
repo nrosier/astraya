@@ -78,8 +78,11 @@ describe('server/auth/bootstrap.ts', () => {
     expect(checkBootstrapToken(token.slice(0, -1))).toBe('invalid');
     // Differing in the first byte and in the last must both be refused, and neither may
     // throw — the whole token is still compared either way.
-    expect(checkBootstrapToken(`Z${token.slice(1)}`)).toBe('invalid');
-    expect(checkBootstrapToken(`${token.slice(0, -1)}Z`)).toBe('invalid');
+    // The replacement byte is chosen to differ from the real one: the token is random, so a fixed
+    // letter would sometimes equal it and turn "a different token" into the right one.
+    const other = (char: string | undefined): string => (char === 'Z' ? 'Y' : 'Z');
+    expect(checkBootstrapToken(`${other(token[0])}${token.slice(1)}`)).toBe('invalid');
+    expect(checkBootstrapToken(`${token.slice(0, -1)}${other(token.at(-1))}`)).toBe('invalid');
     expect(checkBootstrapToken(token)).toBeNull();
   });
 
