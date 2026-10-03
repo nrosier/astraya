@@ -668,6 +668,16 @@ footer {
   background: var(--surface-hover);
 }
 
+/* A disabled field reads as intentionally unavailable, not broken (#420): dimmed, no hover
+   response and the default cursor. The text beside it says why. Disabled controls are exempt
+   from the contrast rule, so dimming does not cost legibility checks. */
+.field-grid input:disabled,
+.field-grid select:disabled {
+  opacity: 0.6;
+  cursor: default;
+  background: var(--surface);
+}
+
 .field-grid input:focus-visible,
 .field-grid select:focus-visible {
   border-color: var(--accent);
