@@ -17,6 +17,7 @@
  * entirely app-generated from just-computed data, never user-supplied.
  */
 import { useSymbolClass } from './symbol-setting.js';
+import { useGlyphVariants } from './glyph-variant-setting.js';
 import { useEffect, useMemo, useState } from 'react';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { chartWheelRing, crossAspectRows, type AspectRow } from '../domain/chart-tables.js';
@@ -131,6 +132,8 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
 
   const [rulership] = useRulershipChoice();
   const [symbolClass] = useSymbolClass();
+  // The wheel's markup is cached on these, so a change of symbol form redraws it.
+  const [variants] = useGlyphVariants();
   const natal = load.kind === 'ready' ? load.data.natal : undefined;
   const rules = useMemo<TransitRuleContext>(
     () => ({
@@ -164,7 +167,7 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
       { innerRingIndex: 0, outerRingIndex: 1, aspects: shownContacts },
     ];
     return renderMultiWheelSvg([natalRing, transitRing], crossAspects);
-  }, [load, t, shownContacts, symbolClass]);
+  }, [load, t, shownContacts, symbolClass, variants]);
 
   const wheelT = useMessages(biWheelSelectionPanelMessages);
   const { wheelRef, selectionKey, clear: clearIsolation, onClick: handleWheelClick } = useWheelIsolation(wheelMarkup);

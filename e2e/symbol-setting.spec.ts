@@ -105,3 +105,36 @@ test('the transit wheel and the cycles diagram follow the class too', async ({ p
   await expect(page.getByRole('heading', { name: 'Planetary cycles', level: 1 })).toBeVisible();
   await expect(page.locator('.cycle-diagram text.chart-symbol-text-text').first()).toBeVisible({ timeout: 30_000 });
 });
+
+test('Uranus and Pluto can be drawn in either of their two forms, kept on this device', async ({ page }) => {
+  test.setTimeout(90_000);
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  await createPerson(page, {
+    name: 'Ada Lovelace',
+    date: '1815-12-10',
+    time: '07:45:00',
+    latitude: '51.5072',
+    longitude: '-0.1276',
+  });
+  await openNatalChart(page);
+  await expect(page.locator('div.chart-wheel')).toBeVisible();
+  await page.locator('details.extended-settings summary').click();
+
+  // The astronomical form's arrow shaft is a path of its own, so it is on the wheel only once it is chosen.
+  const arrowShaft = page.locator('.chart-wheel path[d="M50 50 L50 12"]');
+  await expect(arrowShaft).toHaveCount(0);
+  await page.getByLabel('Uranus', { exact: true }).selectOption('astronomical');
+  await expect(arrowShaft.first()).toBeAttached();
+
+  // The Unicode class follows the form.
+  await page.getByLabel('Symbols', { exact: true }).selectOption('unicode');
+  await expect(page.locator('.chart-wheel text.chart-symbol-text-unicode', { hasText: '⛢' }).first()).toBeAttached();
+
+  // Kept on this device: still chosen after a reload.
+  await page.reload();
+  await page.waitForEvent('load', { timeout: 5_000 }).catch(() => undefined);
+  await page.locator('details.extended-settings summary').click();
+  await expect(page.getByLabel('Uranus', { exact: true })).toHaveValue('astronomical');
+  await page.getByLabel('Pluto', { exact: true }).selectOption('monogram');
+  await expect(page.getByLabel('Pluto', { exact: true })).toHaveValue('monogram');
+});

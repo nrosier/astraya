@@ -45,6 +45,8 @@ const en = {
   acknowledgementsParagraph2Before:
     'Reference positions used to test Astraya come from the NASA JPL Horizons system. A full list of third-party components and their licences is in ',
   acknowledgementsParagraph2After: '.',
+  acknowledgementsGlyphs:
+    'The planet, sign and aspect symbols are derived from the Kerykeion project (AGPL-3.0). The alternate forms of Uranus and Pluto, and the text and Unicode ways of writing each symbol, were made for Astraya under the same licence.',
 };
 
 const nl: typeof en = {
@@ -91,6 +93,8 @@ const nl: typeof en = {
   acknowledgementsParagraph2Before:
     'Referentieposities die worden gebruikt om Astraya te testen komen van het NASA JPL Horizons-systeem. Een volledige lijst van externe componenten en hun licenties staat in ',
   acknowledgementsParagraph2After: '.',
+  acknowledgementsGlyphs:
+    'De symbolen voor planeten, tekens en aspecten zijn afgeleid van het Kerykeion-project (AGPL-3.0). De alternatieve vormen van Uranus en Pluto, en de tekst- en Unicode-weergave van elk symbool, zijn voor Astraya gemaakt onder dezelfde licentie.',
 };
 
 export const aboutMessages = { en, nl };

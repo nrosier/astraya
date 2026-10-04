@@ -16,6 +16,7 @@
  * inner/outer convention rooted in the astrology here, only in the SVG's ring order.
  */
 import { useSymbolClass } from './symbol-setting.js';
+import { useGlyphVariants } from './glyph-variant-setting.js';
 import { useEffect, useMemo, useState } from 'react';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { chartWheelRing, crossAspectRows, type AspectRow } from '../domain/chart-tables.js';
@@ -100,6 +101,8 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
   const person = state.people.get(personId);
   const t = useMessages(synastryViewMessages);
   const [symbolClass] = useSymbolClass();
+  // The wheel's markup is cached on these, so a change of symbol form redraws it.
+  const [variants] = useGlyphVariants();
   const [locale] = useLocale();
 
   const candidates = useMemo(
@@ -172,7 +175,7 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
       { outerRingIndex: 0, innerRingIndex: 1, aspects: load.data.aspects },
     ];
     return renderMultiWheelSvg([ringA, ringB], crossAspects);
-  }, [load, person, partner, t, symbolClass]);
+  }, [load, person, partner, t, symbolClass, variants]);
 
   const wheelT = useMessages(biWheelSelectionPanelMessages);
   const { wheelRef, selectionKey, clear: clearIsolation, onClick: handleWheelClick } = useWheelIsolation(wheelMarkup);
