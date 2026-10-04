@@ -1,17 +1,54 @@
 /**
- * The plain-language description of a placement that the corpus generator sends the model, and the
- * facts the judge is given (`tools/corpus-gen/lib/placements.mjs`, #427): what the model reads must
- * say what the placement is, never a raw key or an internal value.
+ * `tools/corpus-gen/lib/placements.mjs`: the placement space the generator covers (#395) and the
+ * plain-language descriptions it sends the model (#427).
+ *
+ * #395: `corePairs()` excludes same-point calculation-method-variant pairs (e.g.
+ * interpolatedLilith/meanLilith, meanNode/trueNode) from the aspect-pair/synastry-aspect placement
+ * space entirely — two variants of the same real point are always near-conjunct by construction,
+ * so an "aspect" between them carries no independent astrological meaning however it is worded.
+ *
+ * #427: what the model reads must say what the placement is, never a raw key or an internal value.
  */
 import { describe, expect, it } from 'vitest';
 import { composeFallbackText } from '../src/interpretation/compose.js';
 import type { CorpusPlacement } from '../src/interpretation/schema.js';
 // prettier-ignore
 // @ts-expect-error -- plain .mjs, no type declarations; cast to known shapes below.
-import { placementDescription as placementDescriptionUntyped, factsDescription as factsDescriptionUntyped } from '../tools/corpus-gen/lib/placements.mjs';
+import { corePairs as corePairsUntyped, placementDescription as placementDescriptionUntyped, factsDescription as factsDescriptionUntyped } from '../tools/corpus-gen/lib/placements.mjs';
 
+const corePairs = corePairsUntyped as () => readonly (readonly [string, string])[];
 const placementDescription = placementDescriptionUntyped as (placement: CorpusPlacement) => string;
 const factsDescription = factsDescriptionUntyped as (placement: CorpusPlacement) => string;
+
+describe('corePairs (#395)', () => {
+  const pairs = corePairs();
+
+  it('excludes every pairing within the Lilith calculation-method family', () => {
+    const lilithKeys = ['meanLilith', 'osculatingLilith', 'interpolatedLilith'];
+    for (const a of lilithKeys) {
+      for (const b of lilithKeys) {
+        if (a >= b) continue;
+        expect(pairs).not.toContainEqual([a, b]);
+      }
+    }
+  });
+
+  it('excludes the mean/true node pairing', () => {
+    expect(pairs).not.toContainEqual(['meanNode', 'trueNode']);
+  });
+
+  it('still includes a Lilith variant paired with a genuinely different body', () => {
+    expect(pairs).toContainEqual(['mars', 'meanLilith']);
+  });
+
+  it('still includes two genuinely different asteroids (same category, not a point-variant family)', () => {
+    expect(pairs).toContainEqual(['ceres', 'vesta']);
+  });
+
+  it('still includes a node paired with a genuinely different body', () => {
+    expect(pairs).toContainEqual(['meanNode', 'venus']);
+  });
+});
 
 describe('what the generator tells the model (#427)', () => {
   it('describes a dignity in words, not "Sun in ruler"', () => {
