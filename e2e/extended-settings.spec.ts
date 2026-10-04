@@ -126,3 +126,33 @@ test('the card works on a phone: it fills the screen, scrolls inside, and keeps 
   const results = await new AxeBuilder({ page }).include('dialog.settings-card').analyze();
   expect(results.violations.map((v) => v.id)).toEqual([]);
 });
+
+test('opening and cancelling the card keeps what is selected on the wheel (applying redraws, which clears it)', async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  await createPerson(page, ADA);
+  await openNatalChart(page);
+  await expect(page.locator('div.chart-wheel')).toBeVisible();
+
+  await page.getByRole('tab', { name: 'Positions', exact: true }).click();
+  await page.getByRole('button', { name: 'Show Sun on the chart', exact: true }).click();
+  await expect(page.locator('tr.data-table-row-selected')).toContainText('Sun');
+
+  await openSettings(page);
+  await closeSettings(page);
+  await expect(page.locator('tr.data-table-row-selected')).toContainText('Sun');
+});
+
+test('the card is not part of the printed page', async ({ page }) => {
+  test.setTimeout(90_000);
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  await createPerson(page, ADA);
+  await openNatalChart(page);
+  await expect(page.locator('div.chart-wheel')).toBeVisible();
+  await page.emulateMedia({ media: 'print' });
+  await expect(page.locator('button.extended-settings-trigger')).toBeHidden();
+  await page.emulateMedia({ media: 'screen' });
+  await expect(page.locator('button.extended-settings-trigger')).toBeVisible();
+});
