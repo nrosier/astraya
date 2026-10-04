@@ -3134,9 +3134,9 @@
   {
     "key": "planet-in-house:moon:10",
     "locale": "en",
-    "text": "Your emotional security is deeply tied to public standing, achievement, and holding a clear role of responsibility before the world. You manage vulnerability by translating personal needs into structured duties and tangible outcomes, finding steady ground through outward competence. When external demands outpace your private capacity, however, you risk tying your entire sense of self-worth exclusively to productivity and the approval of others.",
+    "text": "Your instinctive need for safety seeks grounding through public utility, visibility, and measurable external standing. You process vulnerability by converting personal needs into outward responsibility and productive achievement. When external expectations press too heavily or independence requires retreat, this drive can stumble into treating public validation as the sole proof of inner worth.",
     "tier": "core",
-    "tags": [],
+    "tags": ["regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -4730,9 +4730,9 @@
   {
     "key": "planet-in-house:meanLilith:11",
     "locale": "en",
-    "text": "You hold an instinctive demand for absolute autonomy within collective spaces, preferring total exclusion to any compromise of your personal independence. This drive shapes how you handle shared goals, pushing you to test group boundaries by exposing unspoken hypocrisies. When social systems try to enforce conformity, the resulting tension often isolates you from the very communities you seek to reform.",
+    "text": "You hold an acute sensitivity to the unspoken exclusions within group dynamics, driving you toward spaces where belonging does not demand conformity. This stance manages social boundaries by keeping a critical distance from collective consensus, protecting your autonomy within shared networks. When external groups enforce rigid loyalty or uniformity, this disposition triggers a sharp alienation, often withdrawing from the collective entirely rather than negotiating compromise.",
     "tier": "core",
-    "tags": [],
+    "tags": ["regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47666,9 +47666,9 @@
   {
     "key": "dignity-state:sun:ruler",
     "locale": "en",
-    "text": "You naturally anchor your sense of self in an unshakeable clarity of purpose, directing your personal will with striking self-possession. This foundational focus establishes boundaries by relying entirely on internal authority rather than seeking external validation. When meeting strict external limits, this internal conviction can harden into an inflexible self-reliance that resists helpful collaboration.",
+    "text": "You build a life centered on purposeful self-expression, seeking to leave a distinct and vital mark through authentic creation. This drive operates by asserting personal authority outward, claiming space to shine without hesitation or apology. When met with external boundaries or competing demands, the tension surfaces as a reluctance to share the spotlight or an insistence on absolute autonomy.",
     "tier": "core",
-    "tags": ["ruler"],
+    "tags": ["ruler", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47678,9 +47678,9 @@
   {
     "key": "dignity-state:sun:exalted",
     "locale": "en",
-    "text": "You build your core identity around an innate competence that seeks out arenas where your distinctive capabilities are fully recognized and rewarded. This drive asserts itself by stepping naturally into positions of responsibility, establishing clear standards through steady personal authority rather than force. When you encounter situations that demand submission to arbitrary limits or unearned hierarchy, the tension surfaces as an acute resistance to being undervalued.",
+    "text": "Your core drive centers on initiating action and establishing an independent presence through direct engagement with the world. You manage personal boundaries by asserting clear personal agency and taking immediate charge of situations. The shadow dilemma arises when external authority demands patience or compromise, creating friction between the urge for instant momentum and the reality of shared control.",
     "tier": "core",
-    "tags": ["exalted"],
+    "tags": ["exalted", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47690,9 +47690,9 @@
   {
     "key": "dignity-state:sun:detriment",
     "locale": "en",
-    "text": "You construct your core sense of identity by continuously bridging the gap between who you intend to be and how the surrounding world receives you. This drive approaches independence by demanding that your validity be earned rather than assumed, testing its own substance against conditions that offer no natural resonance. When external limits push back, you risk either overidentifying with the friction or constantly straining to validate your standing on your own terms.",
+    "text": "Your core drive centers on building an independent identity through collective ideals and objective distance from the crowd. You sustain this vital purpose by holding firm to principles that transcend personal ego, maintaining clear boundaries between your own autonomy and group expectations. The shadow dilemma arises when shared structures demand conformity, creating friction between your distinct vision and the pressure to blend into the surrounding environment.",
     "tier": "core",
-    "tags": ["detriment", "improved-via-feedback-loop"],
+    "tags": ["detriment", "improved-via-feedback-loop", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47702,9 +47702,9 @@
   {
     "key": "dignity-state:sun:fall",
     "locale": "en",
-    "text": "Your vitality centers on defining your purpose through deep accommodation of others, often subordinating your personal will to maintain relational harmony. You build identity by measuring your worth against external expectations and seeking validation through partnership. This approach creates friction when self-assertion becomes necessary, tempting you to overcompensate by bending entirely to outside demands rather than standing on your own terms.",
+    "text": "Your core drive centers on discovering personal identity through the mirror of meaningful partnership and collaboration. This disposition shapes boundaries by constantly weighing opposing perspectives before asserting its own direction. When forced into isolation or abrupt independence, the shadow dilemma emerges as hesitation and a quiet struggle to validate your purpose without external consensus.",
     "tier": "core",
-    "tags": ["fall", "improved-via-feedback-loop"],
+    "tags": ["fall", "improved-via-feedback-loop", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47714,9 +47714,9 @@
   {
     "key": "dignity-state:moon:ruler",
     "locale": "en",
-    "text": "Your emotional life flows with an innate, self-sustaining ease that makes comfort feel immediately accessible and deeply familiar. This instinct builds toward creating an organic sanctuary where emotional needs are met without internal friction or the need to justify vulnerability. When unexpected external demands disrupt this quiet equilibrium, the resulting tension causes a retreat into private certainty rather than an outward search for reassurance.",
+    "text": "Your immediate emotional security is found by creating sanctuaries of deep belonging and protective care. You process experience through an instinctive radar for subtle shifts in the environment, holding memories and attachments with remarkable tenacity. When external demands require detachment or quick detachment from familiar roots, this drive can manifest as withdrawal behind impenetrable walls or an insistence on guarding vulnerability until absolute safety is secured.",
     "tier": "core",
-    "tags": ["ruler", "improved-via-feedback-loop"],
+    "tags": ["ruler", "improved-via-feedback-loop", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47726,9 +47726,9 @@
   {
     "key": "dignity-state:moon:exalted",
     "locale": "en",
-    "text": "You seek immediate safety through enduring physical comfort and a steady, immovable preservation of emotional peace. This drive operates by quietly anchoring your inner world to what is tangible, reliable, and capable of holding steady against shifting moods. When external realities demand rapid adaptation, a distinct tension arises between holding fast to familiar ground and accepting necessary change.",
+    "text": "Your baseline requirement for security centers on tangible preservation and quiet continuity. You process change best by anchoring into physical comfort and steady routines that protect you from sudden disruption. When external demands outpace your capacity to absorb them, this instinctive drive for stability can calcify into stubborn resistance against necessary adaptation.",
     "tier": "core",
-    "tags": ["exalted", "improved-via-feedback-loop"],
+    "tags": ["exalted", "improved-via-feedback-loop", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47738,9 +47738,9 @@
   {
     "key": "dignity-state:moon:detriment",
     "locale": "en",
-    "text": "Your emotional security requires finding practical order within external chaos, anchoring vulnerability through useful contribution rather than quiet retreat. This drive operates by testing whether shared environments can reliably support your private needs without demanding total self-reliance. The tension surfaces when structural demands clash with internal processing, creating friction between the desire for emotional refuge and the pressure to perform.",
+    "text": "Your emotional processing relies on steady composure, turning toward tangible responsibility and practical competence to establish an inner sense of security. You manage vulnerability by establishing firm boundaries and maintaining self-reliance, keeping personal needs secondary to constructive accomplishment. When external demands conflict with emotional restoration, this drive can manifest as an over-controlled detachment, treating internal requirements merely as tasks to be managed.",
     "tier": "core",
-    "tags": ["detriment"],
+    "tags": ["detriment", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47750,9 +47750,9 @@
   {
     "key": "dignity-state:moon:fall",
     "locale": "en",
-    "text": "Your instinctive approach to comfort carries an underlying friction, searching for reassurance in places that demand self-sufficiency instead of soothing. You build emotional security through constant watchfulness, managing vulnerability by testing whether support can truly be trusted before accepting it. When external limits require immediate surrender, this protective posture risks hardening into an isolating detachment that makes simple receptivity feel remarkably difficult.",
+    "text": "You seek profound psychological safety through absolute emotional clarity and complete privacy, holding experiences in deep memory to test what endures. This drive engages boundaries by demanding total honesty and testing loyalty before allowing vulnerability. The shadow emerges when this quest for certainty creates suspicion or isolates you from the simple support you actually require.",
     "tier": "core",
-    "tags": ["fall", "improved-via-feedback-loop"],
+    "tags": ["fall", "improved-via-feedback-loop", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47762,9 +47762,9 @@
   {
     "key": "dignity-state:mercury:ruler",
     "locale": "en",
-    "text": "Your mental processing naturally references its own internal rules, absorbing and organizing new facts with a seamless self-contained logic. This fluid style builds understanding through direct internal connection rather than outside authorization. Yet this native self-reliance creates friction when collective problem solving requires adopting external procedures or temporarily abandoning familiar conceptual frameworks.",
+    "text": "You process incoming details with exceptional clarity, organizing observations into precise, workable frameworks. This intellectual style thrives on gathering data and testing ideas against practical reality to maintain a steady grasp on facts. However, when faced with overwhelming ambiguity or vague instructions, this need for coherent order can turn into intellectual rigidity, struggling to find traction where logic does not readily apply.",
     "tier": "core",
-    "tags": ["ruler", "improved-via-feedback-loop"],
+    "tags": ["ruler", "improved-via-feedback-loop", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47774,9 +47774,9 @@
   {
     "key": "dignity-state:mercury:exalted",
     "locale": "en",
-    "text": "Your intellectual focus leans toward exceptional precision and systematic clarity, seeking absolute accuracy in every logical exchange. This perspective processes details by organizing variables into clean classifications to ensure every premise remains fully coherent. When faced with ambiguous data or unstructured problems, this approach can risk becoming overly rigid or dismissive of alternative viewpoints that defy clean categorization.",
+    "text": "You naturally seek clarity by breaking complex details into discrete, orderly parts, building a solid framework of practical understanding. This mental drive manages information by sorting through chaos with sharp precision, seeking functional utility in every idea encountered. When faced with external demands that resist clear categorization or demand hurried oversimplification, this faculty tends to tighten its standards into frustrating rigidity rather than accepting ambiguity.",
     "tier": "core",
-    "tags": ["exalted", "improved-via-feedback-loop"],
+    "tags": ["exalted", "improved-via-feedback-loop", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47786,9 +47786,9 @@
   {
     "key": "dignity-state:mercury:detriment",
     "locale": "en",
-    "text": "Your mental process builds toward specialized patterns of perception that often bypass standard channels of exchange. This information-handling mechanism approaches external boundaries by filtering facts through personal criteria rather than collective consensus. The recurring tension arises when your distinctive reasoning meets environments that require conventional shorthand, creating friction between direct observation and shared communication systems.",
+    "text": "Your mental processing favors broad synthesis over linear detail, prioritizing conceptual horizons and emotional resonance above strict empirical facts. You build understanding by absorbing the whole context at once, which allows you to grasp underlying patterns with ease. When forced to defend precise particulars or strict categorical boundaries, this holistic approach can falter, leading to friction with external demands for literal proof.",
     "tier": "core",
-    "tags": ["detriment", "improved-via-feedback-loop"],
+    "tags": ["detriment", "improved-via-feedback-loop", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47798,9 +47798,9 @@
   {
     "key": "dignity-state:mercury:fall",
     "locale": "en",
-    "text": "Your mental processing seeks conceptual nuance over rigid order, preferring to examine multiple angles rather than settle for quick categorization. This inquiring drive handles complexity by constantly turning details over, though it generates friction when practical environments demand linear, unambiguous conclusions and rapid sorting.",
+    "text": "Your intellect perceives the world through a fluid impressionistic lens, grasping patterns and emotional undertones before sorting isolated facts. This perspective processes reality holistically, absorbing nuance rather than dissecting distinct parts. When you encounter rigid categorical demands, this tendency struggles to enforce artificial boundaries, occasionally retreating inward rather than arguing fine distinctions.",
     "tier": "core",
-    "tags": ["fall", "improved-via-feedback-loop"],
+    "tags": ["fall", "improved-via-feedback-loop", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47810,9 +47810,9 @@
   {
     "key": "dignity-state:venus:ruler",
     "locale": "en",
-    "text": "You draw strength from cultivating deep alignment between personal values and outward expressions of affection, shaping an environment where mutual appreciation flows with remarkable ease. This steady capacity for harmony manages boundaries by inviting shared investment rather than forcing agreement. Yet, when external constraints challenge this quiet equilibrium, a subtle hesitation can surface, mistaking temporary friction for a complete loss of shared ground.",
+    "text": "You build toward an effortless union of beauty, fairness, and sustained devotion, anchoring connection in tangible comfort and mutual respect. This drive maintains harmony by establishing clear expectations and shared pleasures that honor both parties equally. The shadow surfaces when external demands threaten your peace, causing you to avoid necessary friction or resist compromise to protect your equilibrium.",
     "tier": "core",
-    "tags": ["ruler"],
+    "tags": ["ruler", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47822,9 +47822,9 @@
   {
     "key": "dignity-state:venus:exalted",
     "locale": "en",
-    "text": "You approach connection with a generous idealism, offering affection and resources through an expansive vision of beauty and shared devotion. This drive creates harmony by elevating everyday relating into something meaningful, yet it risks disillusionment whenever the messy realities of life fail to match that grand standard.",
+    "text": "You approach connection through an instinctive pull toward boundless empathy, seeking profound unity by dissolving personal boundaries for the sake of shared understanding. This orientation establishes rapport by offering unconditional acceptance and holding space for vulnerability without demanding strict terms in return. However, this radical openness creates friction when external realities require self-preservation, leaving you vulnerable to absorbing emotional burdens that obscure your own clear sense of separation.",
     "tier": "core",
-    "tags": ["exalted", "improved-via-feedback-loop"],
+    "tags": ["exalted", "improved-via-feedback-loop", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47834,9 +47834,9 @@
   {
     "key": "dignity-state:venus:detriment",
     "locale": "en",
-    "text": "You cultivate connection by aligning affection and resources with strict personal standards rather than following conventional social expectations. This drive builds deep discernment by ensuring warmth is reserved only for what meets distinct internal criteria of worth. When external environments demand automatic agreement, you risk creating friction or withholding pleasantries to preserve your own uncompromising definitions of beauty and value.",
+    "text": "Your approach to connection seeks intensity and direct engagement, treating affection as an active pursuit rather than a soft compromise. This drive establishes closeness through friction and honesty, testing boundaries to prove loyalty. The shadow surface appears when this insistence on depth clashes with shared routines, turning ordinary interdependence into a contest for control.",
     "tier": "core",
-    "tags": ["detriment", "improved-via-feedback-loop"],
+    "tags": ["detriment", "improved-via-feedback-loop", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47846,9 +47846,9 @@
   {
     "key": "dignity-state:venus:fall",
     "locale": "en",
-    "text": "You approach connection with a cautious eye toward flaw, seeking security through careful selection and exacting criteria for what deserves devotion. This drive handles shared bonds by holding back until every condition of mutual utility and integrity is thoroughly met. The shadow emerges when this insistence on flawless terms creates an unyielding distance, transforming the pursuit of peace into an endless trial that ease struggles to survive.",
+    "text": "You seek connection through usefulness and practical devotion, showing care by improving conditions and solving concrete problems for others. This approach establishes healthy boundaries by setting clear standards for mutual effort and practical accountability. However, when faced with emotional unpredictability or messy dependencies, you may retreat into hyper-critical analysis or withhold warmth until every detail meets an impossible standard of order.",
     "tier": "core",
-    "tags": ["fall", "improved-via-feedback-loop"],
+    "tags": ["fall", "improved-via-feedback-loop", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47858,9 +47858,9 @@
   {
     "key": "dignity-state:mars:ruler",
     "locale": "en",
-    "text": "Your fundamental impulse is to initiate action with natural authority and unhesitating self-possession, treating obstacles simply as details to clear away. This mode of assertion operates best when entirely self-directed, establishing boundaries through quiet certainty rather than reaction. The corresponding friction arises when external demands require coordination, turning the presence of shared control into an unnecessary test of autonomy.",
+    "text": "You approach personal agency as a direct and undivided force, moving toward objectives with immediate and total commitment. This drive asserts itself by establishing clear boundaries and demanding complete autonomy in how you shape your path. When external obstacles or dependencies restrict your momentum, this insistence on self-direction can harden into sharp resistance against any form of compromise.",
     "tier": "core",
-    "tags": ["ruler", "improved-via-feedback-loop"],
+    "tags": ["ruler", "improved-via-feedback-loop", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47870,9 +47870,9 @@
   {
     "key": "dignity-state:mars:exalted",
     "locale": "en",
-    "text": "Your drive operates with remarkable focus, directing effort toward clear objectives with quiet efficiency. You establish momentum by pursuing goals through steady persistence rather than force, allowing your actions to build sustainable results over time. When external obstacles arise, tension surfaces between maintaining calm composure and pushing firmly against stubborn restrictions.",
+    "text": "You build momentum through calculated endurance, treating every objective as a long-term architecture rather than a sudden burst of will. Your capacity for self-mastery allows you to subordinate immediate impulse to enduring structures, maintaining steady pressure against resistance until obstacles yield. When faced with rigid external authority or unexpected ceilings, this focus risks hardening into stubborn rigidity, mistaking total control of the environment for true progress.",
     "tier": "core",
-    "tags": ["exalted"],
+    "tags": ["exalted", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47894,9 +47894,9 @@
   {
     "key": "dignity-state:mars:fall",
     "locale": "en",
-    "text": "Your pursuit of goals operates through careful calculation and measured restraint, preferring strategic preparation over impulsive action. You test external boundaries by withholding direct force until conditions fully support your position. This creates a functional tension when urgency demands immediate output, leading you to stall or second-guess your initiative rather than risk moving prematurely.",
+    "text": "Your drive to act and assert yourself operates primarily through emotional protection and the safeguarding of what feels secure. You pursue your objectives by stepping back, defending personal boundaries, and waiting for the right psychological conditions before making a move. This approach creates friction when external demands require immediate force, leading you to internalize conflict rather than confront it directly.",
     "tier": "core",
-    "tags": ["fall"],
+    "tags": ["fall", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47906,9 +47906,9 @@
   {
     "key": "dignity-state:jupiter:ruler",
     "locale": "en",
-    "text": "You cultivate an expansive vision with unusual ease, trusting your own outlook as an entirely natural authority on what is possible. This perspective builds quiet confidence through continuous learning and broad horizons, handling external boundaries by simply assuming larger frameworks will eventually open up. The shadow arises when this native certainty meets hard limits, turning seamless optimism into overextension or a stubborn resistance to necessary restraint.",
+    "text": "You seek meaning and growth by pursuing expansive horizons, trusting that every horizon opens naturally into a larger truth. This drive handles boundaries by continually looking past them for broader context, preferring open space over fixed definitions. The shadow surface of this inclination appears when boundless optimism dismisses practical limits, turning a pursuit of wide possibility into an avoidance of necessary structure.",
     "tier": "core",
-    "tags": ["ruler", "improved-via-feedback-loop"],
+    "tags": ["ruler", "improved-via-feedback-loop", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47918,9 +47918,9 @@
   {
     "key": "dignity-state:jupiter:exalted",
     "locale": "en",
-    "text": "You cultivate an expansive vision by operating with the quiet certainty that your aspirations are naturally supported by circumstance. This steady conviction treats boundaries as temporary terrain rather than true walls, expecting doors to open just as you reach them. Yet this deep-seated assurance risks dismissing practical limits entirely, generating friction when your sweeping expectations collide with the demand for careful, measured restraint.",
+    "text": "You seek meaning and confidence by building secure emotional sanctuaries and protecting what feels vulnerable. This drive approaches independence by creating deep circles of belonging, anchoring security in mutual care rather than isolated self-reliance. The shadow surfaces when this protective impulse overreaches into smothering control, turning the desire to nurture into a rigid boundary that resists external influence.",
     "tier": "core",
-    "tags": ["exalted", "improved-via-feedback-loop"],
+    "tags": ["exalted", "improved-via-feedback-loop", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47930,9 +47930,9 @@
   {
     "key": "dignity-state:jupiter:detriment",
     "locale": "en",
-    "text": "You seek growth by reaching for broad overarching principles, yet this expansion continually clashes with local rules that demand narrow proof. This drive attempts to build confidence through grand visions, but it frequently falters when forced to fit its outlook into rigid, conventional systems. When met with strict boundaries, the pursuit of opportunity risks overextending into restless skepticism, complicating the search for a secure philosophy.",
+    "text": "You seek meaning by gathering infinite details and organizing every moving part within reach. This hunger for broad understanding relies on careful categorization and meticulous processing of facts. The tension arises when the sheer volume of particulars threatens to obscure the larger picture, tempting you to mistake collecting information for discovering wisdom.",
     "tier": "core",
-    "tags": ["detriment", "improved-via-feedback-loop"],
+    "tags": ["detriment", "improved-via-feedback-loop", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47942,9 +47942,9 @@
   {
     "key": "dignity-state:jupiter:fall",
     "locale": "en",
-    "text": "You seek meaning and growth by holding tightly to specific principles rather than trusting open possibilities. This drive establishes confidence through careful selection and structured frameworks, keeping expectations restrained to what can be thoroughly tested. When faced with situations demanding boundless optimism, you may pull back into skepticism, treating broad opportunities with caution until their practical value is proven.",
+    "text": "You seek meaning and growth primarily through tangible structure, measurable achievement, and disciplined long-term strategy rather than through spontaneous optimism. Your confidence builds outward by mastering concrete responsibilities and respecting established boundaries. When confronted with strict limitations or demands for conformity, you risk overextending your authority into rigid control or mistaking caution for a lack of authentic possibility.",
     "tier": "core",
-    "tags": ["fall"],
+    "tags": ["fall", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47954,7 +47954,7 @@
   {
     "key": "dignity-state:saturn:ruler",
     "locale": "en",
-    "text": "You build lasting structures through steady persistence and an instinct for absolute accountability. This orientation handles boundaries by establishing firm rules and expecting reliable follow-through from yourself and others. Friction arises when rigid expectations meet situations requiring flexibility, turning the need for order into an unyielding demand.",
+    "text": "You build lasting structures through deliberate patience and a quiet insistence on structural integrity. When managing external rules or collective frameworks, you prefer steady method over quick fixes, relying on internal standards rather than outside validation. The shadow emerges when routine hardens into inflexibility, causing friction whenever an established method meets unexpected change.",
     "tier": "core",
     "tags": ["ruler", "improved-via-feedback-loop", "regenerated-437"],
     "provenance": {
@@ -47966,9 +47966,9 @@
   {
     "key": "dignity-state:saturn:exalted",
     "locale": "en",
-    "text": "You construct enduring systems through principled fairness and measured restraint. Your approach to boundaries relies on objective standards and calm accountability, treating structural limits as the foundation for ethical authority. When confronted with chaotic demands or uneven power dynamics, the push for total order can solidify into inflexibility, creating friction where adaptability is required.",
+    "text": "You build toward lasting structures through mutual accord, anchoring responsibility in shared agreements rather than solitary mandates. This drive manages boundaries by seeking structural parity, ensuring that commitments remain balanced even when mutual obligations require strict adherence. The shadow dilemma surfaces when external delays or rigid procedures disrupt cooperation, turning the pursuit of fairness into an inflexible demand for procedural perfection.",
     "tier": "core",
-    "tags": ["exalted", "improved-via-feedback-loop"],
+    "tags": ["exalted", "improved-via-feedback-loop", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47978,9 +47978,9 @@
   {
     "key": "dignity-state:saturn:detriment",
     "locale": "en",
-    "text": "You approach structure by carrying heavy obligations where standard frameworks fail to support you, learning mastery through trial rather than institutional backing. This placement fosters a persistent drive to construct dependable systems independently, yet it creates friction when your methods challenge established protocols. The underlying tension surfaces between your reliance on self-generated order and the external demands of authority.",
+    "text": "You build toward enduring stability by trying to anchor authority within personal conviction and emotional loyalty, seeking mastery over matters of home, recognition, and self-expression. This drive establishes order by leaning heavily on personal investment, striving to construct secure structures where personal stakes feel absolute. The shadow dilemma surfaces when external realities or shared dependencies refuse to conform to your internal standards, creating sharp friction between the need for structured permanence and the vulnerability of personal attachment.",
     "tier": "core",
-    "tags": ["detriment", "improved-via-feedback-loop"],
+    "tags": ["detriment", "improved-via-feedback-loop", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47990,9 +47990,9 @@
   {
     "key": "dignity-state:saturn:fall",
     "locale": "en",
-    "text": "Your drive toward disciplined achievement continually collides with an internal resistance to rigid authority, creating a constant tension between bold initiative and necessary restraint. This dynamic forces a deliberate negotiation with external rules, pushing you to either over-structure your efforts or chafe against the very boundaries required for lasting stability. When limits press down, the primary dilemma centers on balancing the urge for independent action with the demand for patient, structured endurance.",
+    "text": "You build authority through direct initiative, seeking immediate mastery over your own path and external structures. This drive operates by pushing hard against boundaries to establish personal agency, asserting control through self-reliance. When confronted with necessary delays or prolonged dependence, this approach often hardens into impulsive resistance against authority, creating friction where patience is required to sustain long-term responsibility.",
     "tier": "core",
-    "tags": ["fall", "improved-via-feedback-loop"],
+    "tags": ["fall", "improved-via-feedback-loop", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -48242,9 +48242,9 @@
   {
     "key": "astro-line:mercury:AC",
     "locale": "en",
-    "text": "This location amplifies your mental curiosity and quickens your desire for active exchange with your surroundings. You naturally engage through dialogue, gathering perspectives and bridging gaps between different ideas as you encounter them. However, when faced with intellectual stagnation or rigid environments, you may default to restless over-analysis or intellectualize situations rather than resolving the underlying friction.",
+    "text": "You process the surrounding world through an active, inquiring lens that treats every encounter as data to evaluate and exchange. This habit shapes your immediate presence, turning casual observation into an ongoing dialogue with your environment. When external expectations demand silence or rigid conformity, this rapid mental processing can turn into defensive over-explaining or restlessness, creating friction when the situation calls for steady patience rather than verbal agility.",
     "tier": "core",
-    "tags": [],
+    "tags": ["regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -48410,9 +48410,9 @@
   {
     "key": "astro-line:jupiter:MC",
     "locale": "en",
-    "text": "You naturally draw public visibility and expansion through professional endeavors, treating career growth as a primary avenue for personal meaning. This placement builds outward momentum by seeking environments that reward ambition and offer room for broad influence. When external structures impose rigid limits or demands for conformity, you may experience friction between the desire for autonomy and the practical necessity of cooperation.",
+    "text": "Your public path centers on an outward search for significant purpose and expanded authority, looking far beyond immediate surroundings to build a meaningful reputation. You pursue professional standing by seeking out large opportunities and aligning daily work with a broader philosophy of success. When external constraints or institutional limits arise, this drive can tip into overextended commitments or friction with established boundaries.",
     "tier": "core",
-    "tags": [],
+    "tags": ["regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -48578,9 +48578,9 @@
   {
     "key": "astro-line:pluto:AC",
     "locale": "en",
-    "text": "Your presence consistently exerts a heavy gravitational pull on your surroundings, altering the dynamic of any room simply by entering it. You manage interpersonal boundaries by demanding absolute authenticity from others, pushing past surface pleasantries to test what is real. When external expectations attempt to soften this intense personal impact, friction arises, prompting a delicate negotiation between asserting complete control over how you are seen or holding back entirely.",
+    "text": "You meet the world through an unmistakable intensity, treating self-presentation as a constant process of stripping away what no longer serves. This presence operates by demanding authenticity and total transparency from every environment you enter, leaving little room for superficial engagement. The inherent tension arises when this insistence on profound transformation meets situations that require compromise, creating friction with external structures that prefer stability over radical reinvention.",
     "tier": "core",
-    "tags": ["improved-via-feedback-loop"],
+    "tags": ["improved-via-feedback-loop", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -57554,9 +57554,9 @@
   {
     "key": "dignity-state:uranus:ruler",
     "locale": "en",
-    "text": "You cultivate radical autonomy by systematically dismantling established structures to uncover original methods. Your functional mechanism relies on absolute self-determination, cutting away external expectations to keep room clear for uncompromised invention. When forced into rigid dependency or traditional routines, you risk isolating yourself entirely through reactive detachment rather than seeking collaborative compromise.",
+    "text": "You naturally challenge established systems to clear the path for original perspectives and collective progress. This drive operates by dismantling outdated structures and demanding absolute autonomy from traditional expectations. The shadow arises when this constant push for objective reform isolates you from personal bonds, creating sudden friction whenever collective ideals clash with individual intimacy.",
     "tier": "core",
-    "tags": ["ruler"],
+    "tags": ["ruler", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -57566,7 +57566,7 @@
   {
     "key": "dignity-state:uranus:detriment",
     "locale": "en",
-    "text": "You build toward a distinct form of personal authority that deliberately discards established scripts to reinvent how presence is expressed. This drive relies on radical self-determination to break open routine expectations and assert complete sovereignty over your own path. When external structures demand conformity or shared consensus, the resulting tension often sparks friction around who holds the right to define authentic identity.",
+    "text": "You build a distinct capacity to radically reinvent personal expression, insisting on absolute creative sovereignty against any established expectation. This drive handles boundaries by abruptly dismantling whatever feels restrictive, often treating shared structures as personal challenges to authority. The underlying friction emerges when unique self-assertion collides with collective frameworks, creating a sharp tension between the demand for total independence and the reality of mutual reliance.",
     "tier": "core",
     "tags": ["detriment", "regenerated-437"],
     "provenance": {
@@ -57578,9 +57578,9 @@
   {
     "key": "dignity-state:neptune:ruler",
     "locale": "en",
-    "text": "You hold an instinctive attunement to invisible currents, seeking to dissolve rigid edges in favor of boundless connection and profound imagination. This orientation bridges inner ideals with external realities by remaining porous to the moods of others, testing the porous line between empathy and self-forgetting. When hard limits arise, this openness can drift into escapism or confusion, mistaking wishful longing for actual ground.",
+    "text": "You hold a profound capacity for boundless empathy and visionary creation, perceiving the unseen currents that connect all things. This worldview dissolves rigid boundaries, allowing you to absorb the emotional atmospheres around you with total permeability. When hard external limits arise, this openness can blur into quiet escapism or a reluctance to anchor your ideals in concrete reality.",
     "tier": "core",
-    "tags": ["ruler"],
+    "tags": ["ruler", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -57590,9 +57590,9 @@
   {
     "key": "dignity-state:neptune:detriment",
     "locale": "en",
-    "text": "You build toward a vision of universal healing and quiet devotion, seeking to dissolve the friction between ideal goals and everyday duty. This drive operates by absorbing the atmosphere of any given environment, often struggling to maintain healthy separation when practical demands require strict categorization. When confronted with hard structural limits or stark pragmatic tasks, this sensitivity can slip into profound disorientation, confusing the pursuit of a higher standard with total detachment from practical reality.",
+    "text": "You hold a profound longing to dissolve everyday limitations through absolute ideals, seeking a purity that transcends ordinary human messiness. This drive operates by attempting to translate boundless vision into precise, immaculate daily systems. The tension arises when reality refuses to be edited into perfection, tempting you to slip into quiet disillusionment or rigid over-correction when the tangible world fails to match your inner standard.",
     "tier": "core",
-    "tags": ["detriment", "improved-via-feedback-loop"],
+    "tags": ["detriment", "improved-via-feedback-loop", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -57602,9 +57602,9 @@
   {
     "key": "dignity-state:pluto:ruler",
     "locale": "en",
-    "text": "You hold an innate drive toward radical regeneration, seeking deep structural truth by dismantling what has outlived its purpose. This power operates through absolute focus and an unyielding grip on self-determination, refusing surface compromises. When you encounter immovable external limits, this intensity can curdle into defensive control, treating necessary cooperation as a threat to your autonomy.",
+    "text": "You hold an innate capacity to seek out profound renewal by dismantling what has outlived its purpose. This drive operates through deep excavation, steering clear of superficial fixes to confront foundational realities directly. When faced with external control or unbreakable limits, this disposition can stiffen into defensive secrecy, preferring absolute withdrawal to any compromise of inner power.",
     "tier": "core",
-    "tags": ["ruler"],
+    "tags": ["ruler", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -57614,7 +57614,7 @@
   {
     "key": "dignity-state:pluto:detriment",
     "locale": "en",
-    "text": "You hold an innate drive to secure lasting stability through deep, foundational reconstruction. This posture manages external demands by holding fiercely to established ground, preferring silent endurance over sudden disruption. When faced with mandatory change or forced yielding, a distinct tension arises between the need to preserve what is tangible and the necessity of enduring structural breakdown.",
+    "text": "You hold an innate drive to root deep and preserve what feels substantial, seeking absolute permanence in a shifting world. This impulse operates by securing material ground and holding fast against external demands for compromise. The shadow surfaces when fixed structures meet necessary change, turning your resistance to loss into an exhausting grip on control.",
     "tier": "core",
     "tags": ["detriment", "regenerated-437"],
     "provenance": {

@@ -4514,9 +4514,9 @@
   {
     "key": "planet-in-house:trueNode:6",
     "locale": "nl",
-    "text": "Je richt je instinctief op het verfijnen van je dagelijkse routines en het leveren van betekenisvolle bijdragen aan je omgeving, gedreven door een drang naar nut en orde. Dit mechanisme functioneert via gestructureerde werkwijzen en het zorgvuldig afbakenen van je dagelijkse verplichtingen om grip te houden op de chaos. Zodra je echter geconfronteerd wordt met onvoorziene omstandigheden of starre kaders van buitenaf, ontstaat de spanning waarin je vervalt in rigide controle of juist het overzicht volledig loslaat.",
+    "text": "Jouw ontwikkeling vraagt om volledige toewijding aan concrete taken, dagelijkse routines en het zorgvuldig dienen van de praktische werkelijkheid. Dit functionele mechanisme zoekt houvast in regelmaat en het ordenen van de directe omgeving om grip te behouden op het bestaan. Zodra externe verplichtingen of fysieke grenzen deze structuur onder druk zetten, ontstaat het risico dat je doorslaat in starre controle of juist elk gevoel van plicht volledig probeert af te wijzen.",
     "tier": "core",
-    "tags": [],
+    "tags": ["regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -4946,9 +4946,9 @@
   {
     "key": "planet-in-house:interpolatedLilith:6",
     "locale": "nl",
-    "text": "Je streeft naar een volstrekt autonome dagelijkse praktijk waarin je routine volledig vrij blijft van externe normen of verwachtingen. Dit functionele mechanisme beschermt je routines door strakke grenzen te trekken rond je methoden en elke vorm van gedwongen medezeggenschap buiten de deur te houden. Zodra structurele verplichtingen of andermans procedures je dagindeling raken, reageer je met een scherpe afwijzing van dat gezag of trek je je juist volledig terug in een rigide isolement.",
+    "text": "Je bent gedreven om volstrekt onafhankelijk te functioneren binnen je dagelijkse routines en werkomgeving. Dit mechanisme uit zich in een scherpe autonomie ten opzichte van opgelegde structuren en verwachtingen van anderen. Zodra externe verplichtingen of routines te dwingend aanvoelen, ontstaat er een fundamentele spanning tussen de wens tot volledige zelfbeschikking en de noodzaak tot praktische samenwerking.",
     "tier": "core",
-    "tags": [],
+    "tags": ["regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -5882,9 +5882,9 @@
   {
     "key": "sign-on-cusp:0:12",
     "locale": "nl",
-    "text": "Je bezit een spontane impuls om direct te handelen en nieuwe wegen in te slaan, gedreven door een diepgeworteld verlangen naar zelfstandigheid en directe doorbraken. Dit mechanisme uit zich in een onmiddellijke reactie op elke vorm van stagnatie, waarbij je grenzen het liefst doorbreekt door zelf het initiatief te nemen. Zodra je echter geconfronteerd wordt met situaties waarin direct handelen onmogelijk is of waarin je moet wachten, ontstaat er een innerlijke spanning tussen de drang tot actie en de noodzaak tot overgave.",
+    "text": "Je spontane impuls om direct te handelen richt zich hier onvermijdelijk op de besloten binnenwereld van stilte en verborgen processen. Dit mechanisme zoekt naar directe doorbraken wanneer je je terugtrekt uit de buitenwereld, wat effectief helpt om onbewuste blokkades eigenhandig te slechten. Zodra externe verwachtingen of verplichtingen deze noodzakelijke afzondering doorkruisen, ontstaat er een scherpe spanning tussen de drang tot onmiddellijke actie en de noodzaak tot overgave aan het onbekende.",
     "tier": "core",
-    "tags": [],
+    "tags": ["regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47666,9 +47666,9 @@
   {
     "key": "dignity-state:sun:ruler",
     "locale": "nl",
-    "text": "Jouw diepste drijfveer richt zich op het innemen van een vanzelfsprekende centrale plaats, waarbij je visie en handelen moeiteloos samenvallen. Dit functioneert door autoriteit uit te stralen zonder dat je daarvoor hoeft te strijden, omdat je interne kompas sterk verankerd is in je eigen oordeel. Het schaduwdilemma ontstaat wanneer externe verwachtingen of gedeelde verantwoordelijkheden vragen om concessies, wat kan omslaan in een starre overtuiging dat alleen jouw eigen koers juist is.",
+    "text": "Jouw diepste drijfveer richt zich op zichtbaarheid en het innemen van een centrale plaats vanuit een vanzelfsprekende autoriteit. Dit functionele mechanisme zoekt zelfexpressie door te vertrouwen op eigen middelen en autonomie, waarbij je grenzen benadert als een uitnodiging om je eigen wetten te stellen. Het schaduwdilemma ontstaat wanneer externe verwachtingen botsen met jouw behoefte aan soevereiniteit, wat kan omslaan in een starre eis tot bewondering of een gesloten trots bij gebrek aan erkenning.",
     "tier": "core",
-    "tags": ["ruler"],
+    "tags": ["ruler", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47678,9 +47678,9 @@
   {
     "key": "dignity-state:sun:exalted",
     "locale": "nl",
-    "text": "Je bouwt een bewuste identiteit op vanuit een vanzelfsprekende autoriteit en de wrijvingsloze overtuiging dat jouw richting juist is. Dit vermogen handhaaft zijn autonomie door vast te houden aan eigen standaarden en onafhankelijk te handelen zonder constante bevestiging nodig te hebben. Het schaduwdilemma ontstaat wanneer de vanzelfsprekende behoefte aan invloed botst met de verwachtingen van de omgeving, wat leidt tot een spanning tussen innerlijke zekerheid en de noodzaak om je tot anderen te verhouden.",
+    "text": "Je fundamentele drijfveer richt zich op directe zelfontplooiing en het opeisen van eigen ruimte, waarbij je vorm geeft aan een heldere en onafhankelijke identiteit. Dit mechanisme reageert op grenzen door direct te handelen en autonomie voorop te stellen, zonder omwegen te zoeken. Zodra je echter geconfronteerd wordt met externe controle of noodzakelijke samenwerking, ontstaat een spanning waarin autoriteit al snel als een rem op je ontplooiing wordt ervaren.",
     "tier": "core",
-    "tags": ["exalted", "improved-via-feedback-loop"],
+    "tags": ["exalted", "improved-via-feedback-loop", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47690,9 +47690,9 @@
   {
     "key": "dignity-state:sun:detriment",
     "locale": "nl",
-    "text": "Je vormt je identiteit in voortdurende afstemming op anderen, waardoor jouw eigen wil gemakkelijk ondergesneeuwd raakt door de verwachtingen van je omgeving. Jouw vitale kern zoekt bevestiging in harmonie, maar gebruikt diezelfde relaties vaak als spiegel om te ontdekken wie je zelf eigenlijk bent. Zodra compromissen doorslaan in zelfontkenning, ontstaat de schaduwspanning waarin je óf alle ruimte weggeeft aan de ander óf star vasthoudt aan een geforceerd gelijk.",
+    "text": "Jouw diepste drijfveer is het formuleren van een authentieke identiteit die onafhankelijk staat van collectieve verwachtingen. Dit streven manifesteert zich door ideeën en idealen te toetsen aan objectieve geldigheid, waarbij je je eigen koers bepaalt los van sociale goedkeuring. Zodra je echter geconfronteerd wordt met persoonlijke afhankelijkheid of dwingende conventies, kan deze onafhankelijke houding omslaan in een starre distantie of een principiële rebellie.",
     "tier": "core",
-    "tags": ["detriment", "improved-via-feedback-loop"],
+    "tags": ["detriment", "improved-via-feedback-loop", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47702,9 +47702,9 @@
   {
     "key": "dignity-state:sun:fall",
     "locale": "nl",
-    "text": "Jouw diepste drijfveer is het verwerven van erkenning door je continu aan te passen aan de verwachtingen van je omgeving. Je zet je doelgerichtheid in om via zorgvuldige diplomatie invloed uit te oefenen, waarbij je grenzen opzoekt door de consensus nauwlettend te bewaken. Zodra je echter stuit op onvoorwaardelijke weerstand of starre verwachtingen, ontstaat de spanning dat je jouw eigen autonome koers volledig wegcijfert om de harmonie te bewaren.",
+    "text": "Jouw diepste drijfveer richt zich op het afstemmen op anderen, waarbij je identiteit vorm krijgt door wat je deelt en spiegelt in verbindingen. Je zoekt structuur via overeenstemming en samenwerking, maar stuit op een dilemma zodra externe verwachtingen botsen met je eigen onafhankelijke richting. Dit kan leiden tot een overmatige aanpassing waarin je eigen kern ondergesneeuwd raakt door de wens om ieders vrede te bewaren.",
     "tier": "core",
-    "tags": ["fall"],
+    "tags": ["fall", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47714,9 +47714,9 @@
   {
     "key": "dignity-state:moon:ruler",
     "locale": "nl",
-    "text": "Jouw emotionele basis rust op een diepe, zelfstandige kracht in hoe je voor jezelf en anderen zorgt. Je instinct reageert direct op onveiligheid door zelf de regie over de stemming en de zorg te nemen, waarmee je een betrouwbaar anker vormt. Dit functioneert soepel zolang je autonomie behouden blijft, maar zodra je gedwongen wordt te leunen op andermans kaders, kan deze zelfredzaamheid omslaan in een starre overtuiging dat alleen jouw aanpak veiligheid garandeert.",
+    "text": "Je zoekt van nature naar een diepe emotionele thuishaven waar je je volledig kunt ontspannen en kwetsbaar durft te zijn. Dit instinctieve streven naar veiligheid reguleer je door zorgvuldig je omgeving af te schermen en alleen vertrouwde mensen toe te laten tot je innerlijke wereld. Zodra je echter geconfronteerd wordt met externe druk of de verwachting om onmiddellijk te presteren, ontstaat er een spanning tussen de behoefte aan beschutting en de noodzaak om je aan te passen aan de buitenwereld.",
     "tier": "core",
-    "tags": ["ruler", "improved-via-feedback-loop"],
+    "tags": ["ruler", "improved-via-feedback-loop", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47726,9 +47726,9 @@
   {
     "key": "dignity-state:moon:exalted",
     "locale": "nl",
-    "text": "Jouw diepste drijfveer is het handhaven van een onwrikbare emotionele rust en waardigheid. Dit mechanisme functioneert door instinctief te vertrouwen op een diepgeworteld gevoel van orde, waardoor je kalmte bewaart te midden van turbulentie. Zodra externe druk of onvoorspelbaarheid die harmonie bedreigt, ontstaat er een schaduwdilemma waarin je star vasthoudt aan bekende patronen om elk risico op ontheemding te vermijden.",
+    "text": "Je zoekt een onwrikbare emotionele grond waar fysieke en materiële zekerheid de voorwaarde zijn voor innerlijke rust. Dit mechanisme reageert op externe onzekerheid door vast te houden aan het vertrouwde en het tastbare, waarmee rust wordt bewaakt. Zodra externe druk of verandering die gecreëerde stabiliteit bedreigt, kan dit verkeren in een hardnekkige weerstand tegen elke vorm van flexibiliteit.",
     "tier": "core",
-    "tags": ["exalted", "improved-via-feedback-loop"],
+    "tags": ["exalted", "improved-via-feedback-loop", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47738,9 +47738,9 @@
   {
     "key": "dignity-state:moon:detriment",
     "locale": "nl",
-    "text": "Je zoekt emotionele veiligheid in een scherpe, onverzettelijke onafhankelijkheid waarbij kwetsbaarheid al snel als een risico voelt. Dit mechanisme beschermt je tegen teleurstelling door zelf de controle te bewaren over elke nabijheid. Het schaduwdilemma ontstaat wanneer die zelfredzaamheid zo ver doorvoert dat je steun van anderen afwijst, waardoor je juist in een isolement geraakt dat de veiligheid ondermijnt die je probeert te bereiken.",
+    "text": "Je zoekt emotionele veiligheid in structuur, controle en tastbare resultaten. Dit mechanisme reageert op kwetsbaarheid door direct praktische orde aan te brengen en verantwoordelijkheid te dragen. Het schaduwdilemma ontstaat wanneer de eis van zelfredzaamheid botst met de noodzaak om steun te ontvangen, waardoor nabijheid al snel als een risico of een last kan aanvoelen.",
     "tier": "core",
-    "tags": ["detriment"],
+    "tags": ["detriment", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47750,9 +47750,9 @@
   {
     "key": "dignity-state:moon:fall",
     "locale": "nl",
-    "text": "Je vindt emotionele veiligheid in een onafhankelijke zelfredzaamheid, waarbij je situaties eerst grondig overziet voordat je ergens op vertrouwt. Dit mechanisme werkt door controle te behouden over je eigen omgeving en je pas open te stellen wanneer de omstandigheden volkomen helder zijn. Zodra je echter te maken krijgt met dwingende verwachtingen of plotselinge verandering, ontstaat er een scherpe wrijving tussen de wens tot nabijheid en de drang om je direct af te sluiten.",
+    "text": "Je zoekt emotionele veiligheid in absolute diepte en onvoorwaardelijke betrouwbaarheid, waarbij je situaties grondig doorgrondt voordat je je openstelt. Dit instinctieve verlangen naar controle reageert op kwetsbaarheid door elk risico op verlies of verraad zorgvuldig te omzeilen. Zodra je echter geconfronteerd wordt met externe verwachtingen of onvermijdelijke afhankelijkheid, ontstaat er een spanningsveld waarin volledige zelfbescherming kan omslaan in een gesloten of achterdochtige houding.",
     "tier": "core",
-    "tags": ["fall", "improved-via-feedback-loop"],
+    "tags": ["fall", "improved-via-feedback-loop", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47762,9 +47762,9 @@
   {
     "key": "dignity-state:mercury:ruler",
     "locale": "nl",
-    "text": "Je beschikt over een helder en direct vermogen om gedachten te ordenen en feiten scherp van elkaar te scheiden, waardoor je informatie moeiteloos doorgrondt en structureert. Dit verstandelijke instrument functioneert het best wanneer het zelf de regie voert over de informatiestroom en grenzen stelt aan invloeden van buitenaf. Zodra externe onduidelijkheid of diffuse kaders optreden, kan deze scherpte omslaan in een gesloten autonomie die elk extern perspectief bij voorbaat buitensluit.",
+    "text": "Je beschikt over een scherpe, onderzoekende geest die feiten en verbanden moeiteloos filtert om de werkelijkheid te doorgronden. Dit denkvermogen brengt structuur door constant te observeren en te ordenen, waarmee je helderheid schept in complexe situaties. Zodra externe systemen of starre regels je flexibiliteit echter inperken, ontstaat de neiging om elk detail te overanalyseren om de controle te behouden.",
     "tier": "core",
-    "tags": ["ruler", "improved-via-feedback-loop"],
+    "tags": ["ruler", "improved-via-feedback-loop", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47774,9 +47774,9 @@
   {
     "key": "dignity-state:mercury:exalted",
     "locale": "nl",
-    "text": "Je bezit een scherpe, observerende geest die feilloos verbanden legt en concepten doorgrondt tot hun essentie. Om deze helderheid te waarborgen, zoek je voortdurend naar ordening en precisie in de uitwisseling van feiten en ideeën. Zodra de werkelijkheid zich echter onvoorspelbaar of ambigue aandient, kan deze behoefte aan logische controle omslaan in rigide conceptualisering of overmatige mentale analyse.",
+    "text": "Je beschikt over het vermogen om de wereld te doorgronden door de kleinste details moeiteloos te ordenen en te begrijpen. Dit functioneert als een analytisch instrument dat structuur aanbrengt waar anderen slechts chaos zien, mits je grip houdt op het geheel. Wanneer externe factoren of onvoorspelbare omstandigheden deze orde verstoren, ontstaat de neiging om elk detail te overanalyseren om de controle te behouden.",
     "tier": "core",
-    "tags": ["exalted"],
+    "tags": ["exalted", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47786,7 +47786,7 @@
   {
     "key": "dignity-state:mercury:detriment",
     "locale": "nl",
-    "text": "Je absorbeert feiten en indrukken via een eigenzinnige filter, waardoor je logica zelden de gebaande paden volgt. Dit functionele mechanisme zoekt naar ongebruikelijke verbanden om onafhankelijk van consensus te kunnen oordelen. Zodra je echter stuit op dwingende kaders of starre verwachtingen, ontstaat er wrijving tussen jouw behoefte aan eigenzinnige verwerking en de eis om je aan te passen aan algemene standaarden.",
+    "text": "Je absorbeert de wereld via een brede intuïtieve synthese in plaats van door systematische analyse. Dit mechanisme zoekt naar universele betekenis achter feiten, waardoor je moeiteloos verbanden legt die anderen missen. Zodra starre kaders of strikte procedures worden opgelegd, ontstaat een functionele wrijving tussen jouw holistische blik en de eis tot gedetailleerde controle.",
     "tier": "core",
     "tags": ["detriment", "improved-via-feedback-loop", "regenerated-437"],
     "provenance": {
@@ -47798,9 +47798,9 @@
   {
     "key": "dignity-state:mercury:fall",
     "locale": "nl",
-    "text": "Je observeert de wereld door te zoeken naar de onderliggende samenhang, waarbij feiten en details vaak worden getoetst aan een persoonlijk begrippenkader in plaats van aan direct geaccepteerde kaders. Dit denkproces streeft naar een volstrekte eigen logica die echter kan wringen met situaties waarin heldere, gestandaardiseerde feiten worden geëist. Zodra je geconfronteerd wordt met externe verwachtingen over hoe informatie hoort te worden overgedragen, ontstaat er wrijving tussen jouw associatieve invalshoek en de behoefte van je omgeving aan directe controle.",
+    "text": "Je absorbeert informatie liever via sfeer, stemming en intuïtieve resonantie dan via droge feiten of strakke logica. Dit functionele mechanisme filtert de wereld door betekenis en samenhang te voelen in plaats van deze analytisch te ontleden. Zodra heldere kaders of feitelijke bewijzen ontbreken, ontstaat er spanning tussen jouw associatieve denkwijze en de vraag naar eenduidige, controleerbare antwoorden.",
     "tier": "core",
-    "tags": ["fall", "improved-via-feedback-loop"],
+    "tags": ["fall", "improved-via-feedback-loop", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47810,9 +47810,9 @@
   {
     "key": "dignity-state:venus:ruler",
     "locale": "nl",
-    "text": "Je investeert van nature in esthetische en relationele zuiverheid, waarbij je een onvoorwaardelijke waarde hecht aan esthetiek, comfort en oprechte wederkerigheid. Dit uit zich in een verfijnde smaak en een sterke voorkeur voor esthetische en emotionele harmonie die je zorgvuldig bewaakt. Zodra externe omstandigheden deze vorm van genieten of delen onder druk zetten, kun je star vasthouden aan je eigen esthetische of morele normen of je volledig distantiëren.",
+    "text": "Je zoekt naar duurzame schoonheid en evenwicht, waarbij verbinding tot stand komt door een natuurlijke harmonie en gedeelde waarde. Je beveiligt deze rust door vast te houden aan wat bekend en betrouwbaar voelt, waardoor de grens tussen behoud en stagnatie dun wordt. Zodra externe omstandigheden deze stabiliteit verstoren, trekt de neiging tot overmatige voorzichtigheid of compromissen sluiten om elk conflict te vermijden op de voorgrond.",
     "tier": "core",
-    "tags": ["ruler", "improved-via-feedback-loop"],
+    "tags": ["ruler", "improved-via-feedback-loop", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47822,9 +47822,9 @@
   {
     "key": "dignity-state:venus:exalted",
     "locale": "nl",
-    "text": "Jouw diepste drijfveer is het scheppen van duurzame schoonheid en betekenisvolle verbinding, waarbij je van nature kiest voor de hoogste kwaliteit in alles wat je waardeert. Dit vermogen uit zich in een bewuste, zorgvuldige omgang met middelen en genegenheid, waarbij je grenzen stelt vanuit een helder gevoel voor esthetiek en wederkerigheid. Zodra externe beperkingen of afhankelijkheid deze harmonie onder druk zetten, ontstaat de neiging om star vast te houden aan je eigen normen of je juist volledig terug te trekken uit het compromis.",
+    "text": "Je zoekt naar een volkomen versmelting met wat waardevol en mooi is, waarbij je jezelf grenzeloos openstelt voor elke vorm van verbinding. Dit functioneert door telkens weer te vertrouwen op een diepe, intuïtieve stroom in plaats van op controle of verzet. Wanneer je externe beperkingen of afhankelijkheid tegenkomt, ontstaat direct de spanning tussen het volledig opgaan in de ander en het verlies van je eigen broodnodige soevereiniteit.",
     "tier": "core",
-    "tags": ["exalted"],
+    "tags": ["exalted", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47834,9 +47834,9 @@
   {
     "key": "dignity-state:venus:detriment",
     "locale": "nl",
-    "text": "Je bouwt aan relaties door onmiddellijk de randen van harmonie op te zoeken, waarbij de waarde van verbinding juist wordt gemeten aan de weerstand die ze overwint. Dit mechanisme beveiligt de eigen autonomie door conventionele verwachtingen te omzeilen en onbekende terreinen te betreden. Zodra externe verwachtingen te dwingend worden, ontstaat er wrijving tussen de drang naar nabijheid en de onverzettelijke eis om onafhankelijk te blijven.",
+    "text": "Jouw diepste drijfveer is om verbinding te zoeken via absolute toewijding en onvoorwaardelijke echtheid, waarbij je concessies en schijn vermijdt. Dit vermogen om waarde te hechten functioneert door intensiteit en directe betrokkenheid, waardoor je grenzen verkent door de ander volledig tegemoet te treden of juist te testen op betrouwbaarheid. Zodra je te maken krijgt met externe verwachtingen of onvermijdelijke afhankelijkheid, ontstaat de spanning om ofwel elk compromis te weren of de controle te maximaliseren om de eigen kwetsbaarheid te beschermen.",
     "tier": "core",
-    "tags": ["detriment", "improved-via-feedback-loop"],
+    "tags": ["detriment", "improved-via-feedback-loop", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47846,9 +47846,9 @@
   {
     "key": "dignity-state:venus:fall",
     "locale": "nl",
-    "text": "Je zoekt naar verbinding via een scherp oog voor feitelijke waarde en betrouwbaarheid, waarbij genegenheid zich toont door daadwerkelijke steun en gedeelde plichten. Dit mechanisme zoekt houvast in duidelijke kaders en praktische helderheid om wederkerigheid te waarborgen. Zodra verwachtingen onuitgesproken blijven of afhankelijkheid te groot wordt, ontstaat er een gereserveerde distantie die warmte onnodig op afstand houdt.",
+    "text": "Je schenkt genegenheid en waardeert schoonheid door zorgvuldige aandacht, toewijding en praktische dienstbaarheid. Dit functionele mechanisme zoekt harmonie via nut en orde, waarbij grenzen worden bewaakt door hoge normen te stellen aan jezelf en anderen. Het schaduwdilemma ontstaat wanneer externe onvoorspelbaarheid of wanorde de poging tot volledige controle frustreert, wat kan leiden tot rigide perfectionisme of het terughouden van verbinding.",
     "tier": "core",
-    "tags": ["fall"],
+    "tags": ["fall", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47870,9 +47870,9 @@
   {
     "key": "dignity-state:mars:exalted",
     "locale": "nl",
-    "text": "Je richt je op doelgerichte en strategische actie waarbij elk initiatief wordt ingezet met nauwkeurige precisie en controle. Dit functioneert door volledig autonoom te werk te gaan, waarbij externe kaders direct worden getoetst op hun effectiviteit en nut. Zodra je stuit op starre beperkingen of stroperige procedures, ontstaat de spanning tussen het handhaven van je eigen onverzettelijke tempo en het verduren van opgelegde vertraging.",
+    "text": "Jouw diepste drive richt zich op het methodisch en duurzaam verwezenlijken van langetermijndoelen, waarbij elke stap zorgvuldig wordt gewogen op effectiviteit en nut. Je hanteert een strikte zelfbeheersing om obstakels systematisch te slechten en behoudt je autonomie door volledige verantwoordelijkheid voor het resultaat op je te nemen. Wanneer externe kaders of regels echter te strak worden aangehaald, kan deze doelgerichtheid omslaan in rigide koppigheid of een totale afwijzing van noodzakelijke samenwerking.",
     "tier": "core",
-    "tags": ["exalted", "improved-via-feedback-loop"],
+    "tags": ["exalted", "improved-via-feedback-loop", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47882,9 +47882,9 @@
   {
     "key": "dignity-state:mars:detriment",
     "locale": "nl",
-    "text": "Je richt je handelen op een weloverwogen strategie waarin je de directe confrontatie liever uitstelt tot alle omstandigheden juist zijn. Dit mechanisme zorgt ervoor dat je impulsen doseert en de krachten zorgvuldig afweegt voordat je besluit te bewegen. Zodra je echter wordt gedwongen tot onmiddellijke actie zonder die voorbereiding, kan er een scherpe spanning ontstaan tussen je behoefte aan controle en de druk om per direct resultaat te leveren.",
+    "text": "Je richt je handelen op het bereiken van harmonie en vastigheid, waarbij je initiatief neemt door middel van wikken, wegen en weloverwogen samenwerking. Jouw drive functioneert door weerstand te minimaliseren en te zoeken naar gedeelde grond voordat je tot actie overgaat. Zodra je echter geconfronteerd wordt met externe urgentie of onvoorziene druk, kan deze behoefte aan afstemming omslaan in aarzeling of passief verzet.",
     "tier": "core",
-    "tags": ["detriment", "improved-via-feedback-loop"],
+    "tags": ["detriment", "improved-via-feedback-loop", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47894,9 +47894,9 @@
   {
     "key": "dignity-state:mars:fall",
     "locale": "nl",
-    "text": "Je richt je daden op het beschermen van een veilige basis, waarbij elk initiatief pas wordt ontplooid als de risico's volledig zijn ingeschat. Dit mechanisme zorgt ervoor dat je assertiviteit inzet als schild in plaats van zwaard, door behoedzaam te manoeuvreren waar anderen direct doorstoten. Zodra externe druk echter dwingend aanvoelt, kan deze behoefte aan veiligheid omslaan in rigide terughouding of het volledig blokkeren van actie.",
+    "text": "Jouw diepste drijfveer is om te handelen vanuit bescherming en emotionele betrokkenheid, waarbij je initiatief neemt zodra de veiligheid van je omgeving in het geding is. Je hanteert een indirect mechanisme om grenzen te bewaken, waarbij je kiest voor verdediging en behoud in plaats van directe confrontatie. Zodra je stuit op externe weerstand of gedwongen wordt tot open strijd, ontstaat er een schaduwdilemma waarin je je terugtrekt in hardnekkige passiviteit of juist onverzettelijks verzet toont.",
     "tier": "core",
-    "tags": ["fall", "improved-via-feedback-loop"],
+    "tags": ["fall", "improved-via-feedback-loop", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47906,9 +47906,9 @@
   {
     "key": "dignity-state:jupiter:ruler",
     "locale": "nl",
-    "text": "Je bouwt een natuurlijke zekerheid op rond de overtuiging dat er altijd voldoende middelen en kansen beschikbaar zijn om de horizon te verruimen. Dit functionele mechanisme zoekt expansie door vanzelf te vertrouwen op de juistheid van eigen opvattingen bij het ontmoeten van grenzen of regels. De schaduwzijde openbaart zich wanneer onvoorziene beperkingen de vanzelfsprekende stroom blokkeren, waardoor een starre vasthoudendheid aan het eigen gelijk ontstaat.",
+    "text": "Je richt je blik van nature op wat groter is dan het directe moment en zoekt continu naar bredere context en betekenis. Dit streven naar ruimte uit zich in een vanzelfsprekend vertrouwen dat obstakels op den duur zullen oplossen in een groter geheel. Wanneer externe kaders echter te nauw worden of de realiteit dwingt tot strikte grenzen, dreigt de neiging om elke vorm van structuur te ontwijken en je toevlucht te nemen tot grenzeloze idealisering.",
     "tier": "core",
-    "tags": ["ruler"],
+    "tags": ["ruler", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47918,9 +47918,9 @@
   {
     "key": "dignity-state:jupiter:exalted",
     "locale": "nl",
-    "text": "Je richt je blik van nature op de horizon waar mogelijkheden samenkomen met een diep gevoel van rechtvaardigheid en zin. Dit vertrouwen functioneert als een brede lens die kansen herkent lang voordat anderen die waarnemen, en die moeiteloos verbindingen legt tussen schijnbare tegenstrijdigheden. Zodra deze onbegrensde expansie echter stuit op starre structuren of onvoorziene grenzen, ontstaat de neiging om te vervallen in blinde overtuiging of het ontkennen van praktische noodzaken.",
+    "text": "Je zoekt een fundament van diepe zekerheid waarin bescherming en zorg de basis vormen voor persoonlijke groei en gedeelde overvloed. Dit mechanisme reageert op externe grenzen door een veilige haven te creëren die onafhankelijkheid waarborgt door middel van zorgvuldige opbouw. De schaduwzijde openbaart zich wanneer de drang naar veiligheid omslaat in een rigide verdediging tegen elke vorm van onvoorspelbaarheid of verandering.",
     "tier": "core",
-    "tags": ["exalted"],
+    "tags": ["exalted", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47930,9 +47930,9 @@
   {
     "key": "dignity-state:jupiter:detriment",
     "locale": "nl",
-    "text": "Je zoekt naar grotere betekenis en de overtuiging dat alles ergens toe dient, juist wanneer de directe feiten dat vertrouwen niet direct bevestigen. Deze drang naar uitzicht en horizon botst met de realiteit van vaststaande kaders, wat kan leiden tot een overdreven vasthouden aan het eigen gelijk of het volledig vermijden van de confrontatie met feitelijke grenzen.",
+    "text": "Je richt je op een brede zin door telkens de kleinste onderdelen te doorgronden, waarmee je zoekt naar betekenis in de feitelijke werkelijkheid. Dit mechanisme breidt zich uit door details minutieus te ordenen en te analyseren, zodat niets aan de aandacht ontsnapt. Zodra externe kaders of overkoepelende systemen je dwingen tot blinde geloofwaardigheid, ontstaat er wrijving tussen je behoefte aan verifieerbare feiten en de vraag naar onvoorwaardelijk vertrouwen.",
     "tier": "core",
-    "tags": ["detriment", "improved-via-feedback-loop"],
+    "tags": ["detriment", "improved-via-feedback-loop", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47942,9 +47942,9 @@
   {
     "key": "dignity-state:jupiter:fall",
     "locale": "nl",
-    "text": "Je zoekt naar betekenis en reikwijdte, maar ervert dat het verlangen naar onvoorwaardelijke groei voortdurend botst op harde structuren en feitelijke grenzen. Dit mechanisme tracht expansie te bereiken door eigen overtuigingen vastberaden door te zetten tegen de stroom in. Zodra externe omstandigheden die expansie direct inperken, ontstaat een spanning waarin de zoektocht naar perspectief kan verkeren in een dogmatische koppigheid.",
+    "text": "Je richt je groei op tastbare resultaten en zoekt betekenis in meetbare bewijzen van nut en duurzaamheid. Dit mechanisme toetst elke ambitie aan de harde realiteit van middelen en structuur, waardoor je plannen zorgvuldig afweegt tegen wat daadwerkelijk haalbaar is. Zodra externe beperkingen of starre kaders je bewegingsvrijheid inperken, ontstaat de spanning dat betekenis verloren gaat in louter plicht en de bewijsvoering een doel op zich wordt.",
     "tier": "core",
-    "tags": ["fall", "improved-via-feedback-loop"],
+    "tags": ["fall", "improved-via-feedback-loop", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47954,9 +47954,9 @@
   {
     "key": "dignity-state:saturn:ruler",
     "locale": "nl",
-    "text": "Je bouwt aan een duurzaam gevoel van autoriteit door structuur en verantwoordelijkheid volledig in eigen hand te nemen. Dit functioneert door systematisch grenzen te bewaken en autonomie te verlenen aan wat je zelf hebt opgebouwd, zonder te leunen op externe bevestiging. Het schaduwdilemma ontstaat wanneer deze sterke zelfredzaamheid botst met situaties waarin samenwerking of overgave aan een groter geheel wordt gevraagd, wat kan leiden tot onbuigzaamheid of een te grote bewijsdrang.",
+    "text": "Je bouwt aan een duurzaam fundament door methodisch te plannen en volwaardig verantwoordelijkheid te dragen voor wat je opzet. Dit functionele mechanisme zoekt naar structuren die autonoom kunnen bestaan en toetst elke grens op haar intrinsieke waarde en houdbaarheid. Zodra je stuit op starre externe verplichtingen of onterecht gezag, ontstaat het dilemma waarin absolute zelfgenoegzaamheid kan omslaan in een rigide uitsluiting van externe invloeden.",
     "tier": "core",
-    "tags": ["ruler"],
+    "tags": ["ruler", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47966,9 +47966,9 @@
   {
     "key": "dignity-state:saturn:exalted",
     "locale": "nl",
-    "text": "Je bouwt aan een rechtvaardig meesterschap door systematisch vorm te geven aan wat duurzame orde vraagt. Dit functioneert via een principieel gezag dat heldere normen stelt om stabiliteit te waarborgen wanneer de druk toeneemt. Wanneer externe kaders echter oneerlijk of star aanvoelen, ontstaat er wrijving tussen de wil om integer te besturen en het ongemak met opgelegde beperkingen.",
+    "text": "Jouw diepste drijfveer is het scheppen van duurzame harmonie door onwrikbare structuur en heldere afspraken. Dit mechanisme werkt door regels toe te passen die wederzijdse onafhankelijkheid en evenwicht waarborgen, zonder dat de persoonlijke vrijheid verloren gaat. De schaduw ontstaat wanneer de hang naar volstrekte rechtvaardigheid omslaat in een starre afhankelijkheid van externe goedkeuring of formele kaders.",
     "tier": "core",
-    "tags": ["exalted", "improved-via-feedback-loop"],
+    "tags": ["exalted", "improved-via-feedback-loop", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47978,9 +47978,9 @@
   {
     "key": "dignity-state:saturn:detriment",
     "locale": "nl",
-    "text": "Je streeft naar solide meesterschap door methoden te hanteren die zelden direct aansluiten bij gevestigde kaders. Dit mechanisme test structuren op hun houdbaarheid door tegen gevestigde regels aan te lopen en eigen normen te vormen. Hierdoor ontstaat een wrijving wanneer de buitenwereld starre grenzen oplegt die niet stroken met je eigen noodzaak om verantwoordelijkheid opnieuw in te richten.",
+    "text": "Jouw diepste drijfveer is het opbouwen van duurzame zekerheid en gezag, maar je ervaart daarbij voortdurend een interne wrijving tussen de wil om te beschermen en de noodzaak om streng te structureren. Dit functionele mechanisme reageert op druk door òf rigide controle op te leggen aan je persoonlijke ruimte òf verantwoordelijkheid juist volledig uit de weg te gaan. Het schaduwdilemma ontstaat zodra externe verwachtingen botsen met je behoefte aan erkenning, wat kan leiden tot onflexibiliteit in de verhouding tot macht en autonomie.",
     "tier": "core",
-    "tags": ["detriment", "improved-via-feedback-loop"],
+    "tags": ["detriment", "improved-via-feedback-loop", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -47990,9 +47990,9 @@
   {
     "key": "dignity-state:saturn:fall",
     "locale": "nl",
-    "text": "Je probeert orde en richting te geven aan situaties die direct ingrijpen vereisen, maar ervaart voortdurend dat je methodes op de proef worden gesteld. Dit mechanisme functioneert door verantwoordelijkheid te nemen waar je eigen handelen of gezag direct ter discussie staat. Zodra externe weerstand opduikt, ontstaat een scherpe wrijving tussen de drang om grenzen te stellen en de hardnekkige weerbarstigheid van de praktijk.",
+    "text": "Je bouwt aan een duurzaam vermogen om structuur en richting aan te brengen door directe initiatieven te toetsen aan de langetermijnwaarde. Het mechanisme werkt door hardnekkig vast te houden aan controle over eigen acties, waarbij elke vorm van externe vertraging of sturing wordt ervaren als een directe weerstand tegen de persoonlijke autonomie. Dit leidt tot een schaduwdilemma waarin de noodzaak tot samenwerking of het incasseren van oponthoud omslaat in ongecontroleerde koppigheid of juist een volledige blokkade van de daadkracht.",
     "tier": "core",
-    "tags": ["fall", "improved-via-feedback-loop"],
+    "tags": ["fall", "improved-via-feedback-loop", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -48026,9 +48026,9 @@
   {
     "key": "profected-house:3",
     "locale": "nl",
-    "text": "Je richt de aandacht dit jaar sterk op de directe leefomgeving, lokale contacten en de dagelijkse informatiestroom. Dit brengt een natuurlijke drang mee om alles wat je hoort en ziet direct te ordenen en te begrijpen. Zodra de veelheid aan indrukken botst met praktische grenzen, ontstaat de neiging om elk detail vast te leggen in rigide structuren of juist elk contact te mijden om de stroom te stoppen.",
+    "text": "Je richt de aandacht dit jaar intensief op je directe leefomgeving, dagelijkse uitwisseling en het vergaren van praktische vaardigheden. Dit mechanisme zoekt naar structuur door informatie direct te ordenen en te delen met de mensen om je heen. De spanning ontstaat wanneer de dagelijkse stroom van prikkels botst met de behoefte aan overzicht, wat kan leiden tot rigide controle over details of juist vermijding van verplichtingen.",
     "tier": "core",
-    "tags": ["improved-via-feedback-loop"],
+    "tags": ["improved-via-feedback-loop", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -48146,9 +48146,9 @@
   {
     "key": "astro-line:sun:AC",
     "locale": "nl",
-    "text": "Je straalt een vanzelfsprekende presentie uit die de aandacht trekt zonder dat je daar moeite voor hoeft te doen. Dit vermogen om direct ruimte in te nemen brengt een sterke drang naar zelfbepaling met zich mee, waarbij je autonomie centraal staat in elke omgeving. Zodra je te maken krijgt met verwachtingen of structuren van buitenaf, ontstaat er snel wrijving tussen jouw behoefte aan zelfexpressie en de noodzaak om je aan te passen.",
+    "text": "Je draagt een natuurlijke helderheid in je uitstraling waarmee je direct ruimte inneemt in elke omgeving. Dit vermogen om je persoonlijke kern onmiddellijk zichtbaar te maken werkt als een anker voor je handelen, maar kan botsen zodra je merkt dat de buitenwereld je impact probeert te begrenzen. Hierdoor ontstaat soms een spanning tussen de behoefte om onvoorwaardelijk jezelf te tonen en de noodzaak om je aan te passen aan de verwachtingen van anderen.",
     "tier": "core",
-    "tags": [],
+    "tags": ["regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -48182,7 +48182,7 @@
   {
     "key": "astro-line:sun:IC",
     "locale": "nl",
-    "text": "Je zoekt een onwrikbare innerlijke basis waar je volledig op kunt bouwen en die diep verborgen ligt in je persoonlijke fundament. Dit streven naar een veilige kern functioneert als een privé-domein waarin je zelf de volledige regie voert over je rust en bestaansrecht. Zodra externe verwachtingen of verplichtingen deze private ruimte binnendringen, ontstaat de spanning dat je je óf volledig afsluit voor invloeden van buitenaf óf je eigen autonomie opoffert om harmonie te bewaren.",
+    "text": "Je bouwt je persoonlijke identiteit op rond het creëren van een fundament dat volledig aansluit bij je diepste kern. Dit streven naar een eigen, beschermde basis werkt als een intern anker dat richting geeft aan al je keuzes. Zodra je echter te maken krijgt met externe verwachtingen of verplichtingen die dit privégebied doorkruisen, ontstaat er een scherpe wrijving tussen je behoefte aan autonomie en de eisen van de buitenwereld.",
     "tier": "core",
     "tags": ["improved-via-feedback-loop", "regenerated-437"],
     "provenance": {
@@ -48206,9 +48206,9 @@
   {
     "key": "astro-line:moon:DC",
     "locale": "nl",
-    "text": "Je zoekt opvallend sterk naar emotionele resonantie via je relaties en spiegel je continu aan de reacties van de ander. Dit functionele mechanisme zorgt ervoor dat je de sfeer feilloos aanvoelt en verbinding opzoekt, maar zodra er grenzen of meningsverschillen ontstaan, dreigt het gevaar dat je jezelf volledig wegcijfert om de harmonie te bewaren.",
+    "text": "Je zoekt een instinctieve nabijheid waarin emotionele openheid de maatstaf is voor veiligheid. Dit mechanisme reageert op de onvoorspelbaarheid van anderen door de eigen binnenwereld sterk te spiegelen aan de stemming in de omgeving. Wanneer relaties echter te veeleisend worden of te dicht op de huid komen, ontstaat de neiging om zich abrupt terug te trekken in een zelfgekozen isolement.",
     "tier": "core",
-    "tags": [],
+    "tags": ["regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -48362,9 +48362,9 @@
   {
     "key": "astro-line:mars:MC",
     "locale": "nl",
-    "text": "Je richt je levensloop in op directe autonomie en zichtbare invloed, waarbij je de wereld tegemoettreedt via doelgerichte actie. Dit functionele mechanisme stelt je in staat om grenzen te doorbreken door resoluut de leiding te nemen zodra situaties vastlopen. Wanneer externe structuren je autonomie inperken, ontstaat er een schaduwdilemma waarin ongeduld omslaat in openlijke confrontatie of het volledig ontwijken van compromissen.",
+    "text": "Jouw primaire drijfveer richt zich op het zichtbaar neerzetten van prestaties en het opeisen van een eigen plek in de publieke wereld. Je gebruikt directe daadkracht en strategische assertiviteit om professionele obstakels te overwinnen en de regie over je eigen richting te behouden. Wanneer externe verwachtingen of hiërarchische structuren je autonomie inperken, ontstaat er een scherpe spanning tussen de wil om door te pakken en de noodzaak om je tot bestaande kaders te verhouden.",
     "tier": "core",
-    "tags": [],
+    "tags": ["regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -57554,9 +57554,9 @@
   {
     "key": "dignity-state:uranus:ruler",
     "locale": "nl",
-    "text": "Je draagt een natuurlijke drang in je om gevestigde structuren open te breken zodra ze te benauwend aanvoelen, gedreven door een scherp verlangen naar totale zelfbeschikking. Jouw functionele mechanisme reageert op elke vorm van externe dwang of routine met directe inventiviteit om de eigen autonomie te waarborgen. Zodra je afhankelijk wordt van starre verwachtingen van buitenaf, ontstaat de schaduwzijde dat je zoekt naar radicale breuken om de controle te behouden, soms ten koste van broodnodige stabiliteit.",
+    "text": "Jouw diepste drijfveer is het systematisch ontmantelen van verouderde structuren om plaats te maken voor objectieve vernieuwing en radicale onafhankelijkheid. Dit functioneert als een scherpe, mentale distantie waarmee je conventies en verwachtingen van je afschudt zodra deze te benauwend worden. Wanneer je toch stuit op starre collectieve normen, schiet je al snel door naar een kompromisloze rebellie of een koele afwijzing van elke vorm van saamhorigheid.",
     "tier": "core",
-    "tags": ["ruler"],
+    "tags": ["ruler", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -57566,7 +57566,7 @@
   {
     "key": "dignity-state:uranus:detriment",
     "locale": "nl",
-    "text": "Je zoekt naar een volstrekt eigen vorm van expressie die conventionele verwachtingen doelbewust doorbreekt. Dit mechanisme zoekt naar onafhankelijkheid door vastgeroeste patronen radicaal los te laten zodra ze te benauwend worden. Zodra externe systemen of rollen echter te veel om erkenning vragen, ontstaat er een scherpe wrijving tussen de wefzelse behoefte aan autonomie en de sociale druk om zich te conformeren.",
+    "text": "Jouw diepste drijfveer is het doorbreken van vaste verwachtingen om individuele authenticiteit zichtbaar te maken, waarbij je onafhankelijkheid handhaaft door bestaande structuren direct uit te dagen. Dit mechanisme zoekt naar ruimte door conventionele rollen eigenzinnig te herschrijven, maar loopt vast in spanning zodra collectieve goedkeuring of gedeelde tradities als beperkend worden ervaren. Hierdoor ontstaat het risico dat je in verzet schiet tegen elke vorm van verwachting, zelfs wanneer samenwerking nuttig zou zijn.",
     "tier": "core",
     "tags": ["detriment", "regenerated-437"],
     "provenance": {
@@ -57578,9 +57578,9 @@
   {
     "key": "dignity-state:neptune:ruler",
     "locale": "nl",
-    "text": "Je beschikt over een grenzeloze ontvankelijkheid voor de sfeer en stemmingen om je heen, waardoor je de werkelijkheid moeiteloos laat samensmelten met je eigen verbeelding en idealen. Dit mechanisme werkt door subtiele indrukken op te zuigen en vormeloze ideeën tastbaar te maken via creatieve of medelevende kanalen. Zodra externe kaders of harde feiten je dromen begrenzen, ontstaat het risico dat je de werkelijkheid gaat ontlopen of je verliest in onbereikbare verwachtingen.",
+    "text": "Je beschikt over een grenzeloze verbeelding en een diepgaand idealisme dat zoekt naar een betekenis voorbij het direct waarneembare. Dit functioneert door structuren vloeiend te houden en grenzen te laten vervagen om open te staan voor alle indrukken uit de omgeving. Zodra je echter harde externe beperkingen tegenkomt, ontstaat het risico dat je de werkelijkheid ontvlucht en verdwaalt in illusoire verwachtingen.",
     "tier": "core",
-    "tags": ["ruler"],
+    "tags": ["ruler", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -57590,9 +57590,9 @@
   {
     "key": "dignity-state:neptune:detriment",
     "locale": "nl",
-    "text": "Je zoekt naar een volmaakte eenheid en gedreven idealen, waarbij de verbeelding door elke harde structuur heen breekt om betekenis te vinden. Dit mechanisme probeert vaststaande kaders te omzeilen om de tastbare werkelijkheid te verzachten. Zodra feiten of grenzen de visie kruisen, ontstaat het risico dat je verdwaalt in illusies om de confrontatie met de praktijk te vermijden.",
+    "text": "Je hebt een diepgeworteld verlangen om structuren te doorbreken en grenzen te laten vervloeien in een groter geheel. Dit uit zich in een voortdurende poging om idealen praktisch te toetsen en vorm te geven, waarbij je functioneert door absolute zuiverheid na te streven in een onvolmaakte realiteit. Zodra externe systemen of rigide kaders te strak worden, ontstaat het risico dat je verdwaalt in eindeloze correcties of juist de grip volledig loslaat om teleurstelling te vermijden.",
     "tier": "core",
-    "tags": ["detriment", "improved-via-feedback-loop"],
+    "tags": ["detriment", "improved-via-feedback-loop", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -57602,9 +57602,9 @@
   {
     "key": "dignity-state:pluto:ruler",
     "locale": "nl",
-    "text": "Je bezit een onverzadigbare drang om tot de kern van elke situatie door te dringen en verborgen structuren aan het licht te brengen. Dit mechanisme opereert met een scherpe, controlerende intensiteit wanneer je geconfronteerd wordt met externe grenzen of machtsverhoudingen. Daardoor ontstaat een risico op obsessieve fixatie of een rigide behoefte aan absolute zeggenschap zodra de situatie vraagt om loslaten.",
+    "text": "Jouw diepste drijfveer is de radicale vernieuwing van alles wat verouderd is, waarbij je onvoorwaardelijk zoekt naar de kern van elke situatie. Dit mechanisme werkt door diep te graven en structuren volledig te ontleden wanneer externe grenzen je vrijheid inperken. Het schaduwdilemma ontstaat zodra de drang naar volledige controle overgaat in een gesloten houding, waarbij je elke vorm van kwetsbaarheid uit de weg gaat uit angst voor externe invloed.",
     "tier": "core",
-    "tags": ["ruler"],
+    "tags": ["ruler", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -57614,9 +57614,9 @@
   {
     "key": "dignity-state:pluto:detriment",
     "locale": "nl",
-    "text": "Je bezit de drang om bestaande structuren grondig te ontleden en te vernieuwen, maar botst daarbij voortdurend op de behoefte aan veiligheid en houvast. Dit mechanisme zoekt controle door diep te graven, terwijl tegelijkertijd vastgehouden wordt aan het bekende om de orde te bewaren. Wanneer deze constructie op grenzen stuit, ontstaat een scherpe spanning tussen de wens tot totale vernieuwing en de angst om de noodzakelijke stabiliteit te verliezen.",
+    "text": "Jouw diepste drijfveer is het fundamenteel vernieuwen van wat zeker en tastbaar geacht wordt, waarbij je zoekt naar blijvende waarde door vastgeroeste structuren open te breken. Dit mechanisme test de grens tussen vasthouden en loslaten door vastberaden weerstand te bieden aan elke externe eis tot verandering. Het schaduwdilemma ontstaat wanneer de drang naar absolute controle botst met onvermijdelijke vergankelijkheid, wat kan leiden tot verstarring zodra zekerheden wankelen.",
     "tier": "core",
-    "tags": ["detriment", "improved-via-feedback-loop"],
+    "tags": ["detriment", "improved-via-feedback-loop", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",

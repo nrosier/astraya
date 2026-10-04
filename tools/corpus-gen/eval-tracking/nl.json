@@ -2636,7 +2636,7 @@
     "locale": "nl",
     "clean": true,
     "evaluationCount": 0,
-    "updatedAt": "2026-10-02T07:02:07.166Z"
+    "updatedAt": "2026-10-04T21:32:26.309Z"
   },
   {
     "key": "planet-in-house:trueNode:7",
@@ -2888,7 +2888,7 @@
     "locale": "nl",
     "clean": true,
     "evaluationCount": 0,
-    "updatedAt": "2026-10-02T07:02:07.169Z"
+    "updatedAt": "2026-10-04T21:32:26.309Z"
   },
   {
     "key": "planet-in-house:interpolatedLilith:7",
@@ -3434,7 +3434,7 @@
     "locale": "nl",
     "clean": true,
     "evaluationCount": 0,
-    "updatedAt": "2026-10-02T07:02:07.171Z"
+    "updatedAt": "2026-10-04T21:32:26.309Z"
   },
   {
     "key": "sign-on-cusp:1:1",
@@ -26288,196 +26288,196 @@
     "locale": "nl",
     "clean": true,
     "evaluationCount": 0,
-    "updatedAt": "2026-10-02T13:59:39.002Z"
+    "updatedAt": "2026-10-04T21:18:20.027Z"
   },
   {
     "key": "dignity-state:sun:exalted",
     "locale": "nl",
     "clean": true,
-    "evaluationCount": 2,
-    "updatedAt": "2026-10-02T14:26:17.685Z"
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T21:18:20.027Z"
   },
   {
     "key": "dignity-state:sun:detriment",
     "locale": "nl",
     "clean": true,
-    "evaluationCount": 1,
-    "updatedAt": "2026-10-02T14:06:19.570Z"
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T21:18:20.027Z"
   },
   {
     "key": "dignity-state:sun:fall",
     "locale": "nl",
     "clean": true,
     "evaluationCount": 0,
-    "updatedAt": "2026-10-02T13:59:39.002Z"
+    "updatedAt": "2026-10-04T21:18:20.027Z"
   },
   {
     "key": "dignity-state:moon:ruler",
     "locale": "nl",
     "clean": true,
-    "evaluationCount": 1,
-    "updatedAt": "2026-10-02T14:06:19.571Z"
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T21:18:20.027Z"
   },
   {
     "key": "dignity-state:moon:exalted",
     "locale": "nl",
     "clean": true,
-    "evaluationCount": 1,
-    "updatedAt": "2026-10-02T14:06:19.571Z"
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T21:18:20.027Z"
   },
   {
     "key": "dignity-state:moon:detriment",
     "locale": "nl",
     "clean": true,
     "evaluationCount": 0,
-    "updatedAt": "2026-10-02T13:59:39.002Z"
+    "updatedAt": "2026-10-04T21:18:20.027Z"
   },
   {
     "key": "dignity-state:moon:fall",
     "locale": "nl",
     "clean": true,
-    "evaluationCount": 1,
-    "updatedAt": "2026-10-02T14:06:19.571Z"
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T21:18:20.027Z"
   },
   {
     "key": "dignity-state:mercury:ruler",
     "locale": "nl",
     "clean": true,
-    "evaluationCount": 1,
-    "updatedAt": "2026-10-02T14:06:19.571Z"
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T21:18:20.027Z"
   },
   {
     "key": "dignity-state:mercury:exalted",
     "locale": "nl",
     "clean": true,
     "evaluationCount": 0,
-    "updatedAt": "2026-10-02T13:59:39.003Z"
+    "updatedAt": "2026-10-04T21:18:20.027Z"
   },
   {
     "key": "dignity-state:mercury:detriment",
     "locale": "nl",
     "clean": true,
     "evaluationCount": 0,
-    "updatedAt": "2026-10-04T20:41:04.903Z"
+    "updatedAt": "2026-10-04T21:18:20.027Z"
   },
   {
     "key": "dignity-state:mercury:fall",
     "locale": "nl",
     "clean": true,
-    "evaluationCount": 3,
-    "updatedAt": "2026-10-02T14:34:21.720Z"
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T21:18:20.027Z"
   },
   {
     "key": "dignity-state:venus:ruler",
     "locale": "nl",
     "clean": true,
-    "evaluationCount": 1,
-    "updatedAt": "2026-10-02T14:06:19.571Z"
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T21:18:20.027Z"
   },
   {
     "key": "dignity-state:venus:exalted",
     "locale": "nl",
     "clean": true,
     "evaluationCount": 0,
-    "updatedAt": "2026-10-02T13:59:39.003Z"
+    "updatedAt": "2026-10-04T21:18:20.027Z"
   },
   {
     "key": "dignity-state:venus:detriment",
     "locale": "nl",
     "clean": true,
-    "evaluationCount": 1,
-    "updatedAt": "2026-10-02T14:06:19.571Z"
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T21:18:20.027Z"
   },
   {
     "key": "dignity-state:venus:fall",
     "locale": "nl",
     "clean": true,
     "evaluationCount": 0,
-    "updatedAt": "2026-10-02T13:59:39.003Z"
+    "updatedAt": "2026-10-04T21:18:20.027Z"
   },
   {
     "key": "dignity-state:mars:ruler",
     "locale": "nl",
-    "clean": true,
+    "clean": false,
     "evaluationCount": 0,
-    "updatedAt": "2026-10-02T13:59:39.003Z"
+    "updatedAt": "2026-10-04T21:18:20.027Z"
   },
   {
     "key": "dignity-state:mars:exalted",
     "locale": "nl",
     "clean": true,
-    "evaluationCount": 1,
-    "updatedAt": "2026-10-02T14:06:19.571Z"
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T21:18:20.027Z"
   },
   {
     "key": "dignity-state:mars:detriment",
     "locale": "nl",
     "clean": true,
-    "evaluationCount": 1,
-    "updatedAt": "2026-10-02T14:06:19.572Z"
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T21:18:20.027Z"
   },
   {
     "key": "dignity-state:mars:fall",
     "locale": "nl",
     "clean": true,
-    "evaluationCount": 2,
-    "updatedAt": "2026-10-02T14:26:17.685Z"
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T21:18:20.027Z"
   },
   {
     "key": "dignity-state:jupiter:ruler",
     "locale": "nl",
     "clean": true,
     "evaluationCount": 0,
-    "updatedAt": "2026-10-02T13:59:39.004Z"
+    "updatedAt": "2026-10-04T21:18:20.027Z"
   },
   {
     "key": "dignity-state:jupiter:exalted",
     "locale": "nl",
-    "clean": false,
-    "evaluationCount": 2,
-    "updatedAt": "2026-10-04T20:56:05.961Z"
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T21:18:20.027Z"
   },
   {
     "key": "dignity-state:jupiter:detriment",
     "locale": "nl",
     "clean": true,
-    "evaluationCount": 6,
-    "updatedAt": "2026-10-04T20:49:30.865Z"
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T21:18:20.027Z"
   },
   {
     "key": "dignity-state:jupiter:fall",
     "locale": "nl",
     "clean": true,
-    "evaluationCount": 2,
-    "updatedAt": "2026-10-02T14:26:17.686Z"
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T21:18:20.027Z"
   },
   {
     "key": "dignity-state:saturn:ruler",
     "locale": "nl",
     "clean": true,
     "evaluationCount": 0,
-    "updatedAt": "2026-10-02T13:59:39.004Z"
+    "updatedAt": "2026-10-04T21:18:20.027Z"
   },
   {
     "key": "dignity-state:saturn:exalted",
     "locale": "nl",
     "clean": true,
-    "evaluationCount": 2,
-    "updatedAt": "2026-10-02T14:26:17.686Z"
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T21:18:20.027Z"
   },
   {
     "key": "dignity-state:saturn:detriment",
     "locale": "nl",
     "clean": true,
-    "evaluationCount": 2,
-    "updatedAt": "2026-10-02T14:26:17.686Z"
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T21:18:20.027Z"
   },
   {
     "key": "dignity-state:saturn:fall",
     "locale": "nl",
     "clean": true,
-    "evaluationCount": 7,
-    "updatedAt": "2026-10-02T19:46:45.339Z"
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T21:18:20.027Z"
   },
   {
     "key": "synastry-aspect:trine:osculatingLilith:trueNode",
@@ -28023,8 +28023,8 @@
     "key": "profected-house:3",
     "locale": "nl",
     "clean": true,
-    "evaluationCount": 1,
-    "updatedAt": "2026-10-02T14:18:31.769Z"
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T21:32:26.309Z"
   },
   {
     "key": "profected-house:4",
@@ -28093,8 +28093,8 @@
     "key": "astro-line:sun:AC",
     "locale": "nl",
     "clean": true,
-    "evaluationCount": 1,
-    "updatedAt": "2026-10-02T14:18:31.770Z"
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T21:32:26.309Z"
   },
   {
     "key": "astro-line:sun:DC",
@@ -28115,7 +28115,7 @@
     "locale": "nl",
     "clean": true,
     "evaluationCount": 0,
-    "updatedAt": "2026-10-04T20:41:04.903Z"
+    "updatedAt": "2026-10-04T21:32:26.309Z"
   },
   {
     "key": "astro-line:moon:AC",
@@ -28129,7 +28129,7 @@
     "locale": "nl",
     "clean": true,
     "evaluationCount": 0,
-    "updatedAt": "2026-10-02T14:06:19.574Z"
+    "updatedAt": "2026-10-04T21:32:26.309Z"
   },
   {
     "key": "astro-line:moon:MC",
@@ -28169,9 +28169,9 @@
   {
     "key": "astro-line:mercury:IC",
     "locale": "nl",
-    "clean": true,
+    "clean": false,
     "evaluationCount": 0,
-    "updatedAt": "2026-10-02T14:06:19.575Z"
+    "updatedAt": "2026-10-04T21:32:26.309Z"
   },
   {
     "key": "astro-line:venus:AC",
@@ -28220,7 +28220,7 @@
     "locale": "nl",
     "clean": true,
     "evaluationCount": 0,
-    "updatedAt": "2026-10-02T14:06:19.576Z"
+    "updatedAt": "2026-10-04T21:32:26.309Z"
   },
   {
     "key": "astro-line:mars:IC",
@@ -33582,41 +33582,41 @@
     "locale": "nl",
     "clean": true,
     "evaluationCount": 0,
-    "updatedAt": "2026-10-04T11:59:18.932Z"
+    "updatedAt": "2026-10-04T21:18:20.027Z"
   },
   {
     "key": "dignity-state:uranus:detriment",
     "locale": "nl",
     "clean": true,
     "evaluationCount": 0,
-    "updatedAt": "2026-10-04T20:41:04.903Z"
+    "updatedAt": "2026-10-04T21:18:20.027Z"
   },
   {
     "key": "dignity-state:neptune:ruler",
     "locale": "nl",
     "clean": true,
     "evaluationCount": 0,
-    "updatedAt": "2026-10-04T11:59:18.935Z"
+    "updatedAt": "2026-10-04T21:18:20.027Z"
   },
   {
     "key": "dignity-state:neptune:detriment",
     "locale": "nl",
     "clean": true,
-    "evaluationCount": 1,
-    "updatedAt": "2026-10-04T12:04:45.910Z"
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T21:18:20.027Z"
   },
   {
     "key": "dignity-state:pluto:ruler",
     "locale": "nl",
     "clean": true,
     "evaluationCount": 0,
-    "updatedAt": "2026-10-04T11:59:18.935Z"
+    "updatedAt": "2026-10-04T21:18:20.027Z"
   },
   {
     "key": "dignity-state:pluto:detriment",
     "locale": "nl",
     "clean": true,
-    "evaluationCount": 1,
-    "updatedAt": "2026-10-04T12:04:45.910Z"
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T21:18:20.027Z"
   }
 ]
