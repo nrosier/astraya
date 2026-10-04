@@ -26,6 +26,7 @@ import { ReportView, PERSONA_LABELS } from '../src/ui/ReportView.js';
 import { reportViewMessages } from '../src/ui/ReportView.messages.js';
 import { toTier2ChartPayload } from '../src/interpretation/tier2-client.js';
 import { getLocale, setLocale } from '../src/ui/locale.js';
+import { formatSavedTime } from '../src/ui/saved-time.js';
 import { bodyByKey } from '../src/astrology/bodies.js';
 import { SessionProvider, useSession, useStoreStatus } from '../src/ui/session-context.js';
 import type { StoreStatus } from '../src/ui/session-context.js';
@@ -931,6 +932,96 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
       root.unmount();
     });
     container.remove();
+  });
+
+  it('shows each past interpretation as local time, the description and the kind, never the raw UTC time (#423)', async () => {
+    const { container, root } = await mountSignedIn();
+
+    const raw = new DatabaseSync(join(dir, 'astraya.db'));
+    const { id: userId } = raw.prepare('SELECT id FROM users WHERE username = ?').get('alice') as { id: string };
+    const key = Buffer.from(process.env.ASTRAYA_ENCRYPTION_KEY ?? '', 'base64');
+    saveInterpretationResult(
+      raw,
+      {
+        userId,
+        mode: 'grounded',
+        locale: 'en',
+        sections: [{ heading: 'h', body: 'b' }],
+        description: 'Short and warm with focus on family',
+      },
+      key,
+    );
+    saveInterpretationResult(
+      raw,
+      { userId, mode: 'freeform', locale: 'en', sections: [{ heading: 'h', body: 'b' }] },
+      key,
+    );
+    const createdAt = (
+      raw.prepare('SELECT created_at FROM interpretation_results ORDER BY created_at').all() as {
+        created_at: string;
+      }[]
+    ).map((row) => row.created_at);
+    raw.close();
+
+    await vi.waitFor(() => {
+      expect(panelOf(container).querySelectorAll('.tier2-saved-results button')).toHaveLength(2);
+    });
+    const texts = [...panelOf(container).querySelectorAll('.tier2-saved-results button')].map((b) => b.textContent);
+    // Newest first. The older entry has the description; the newer one has none.
+    const [first, second] = [createdAt[0] ?? '', createdAt[1] ?? ''];
+    expect(texts).toContain(
+      `${formatSavedTime(first, 'en')} (Short and warm with focus on family) (Local interpretation based)`,
+    );
+    expect(texts).toContain(`${formatSavedTime(second, 'en')} (AI interpretation based)`);
+    for (const text of texts) {
+      expect(text).toMatch(/^[A-Z][a-z]+day [A-Z][a-z]+ \d{1,2} \d{4} @ \d{2}:\d{2} \(/);
+      expect(text).not.toMatch(/\d{4}-\d{2}-\d{2}T|Z\b/);
+    }
+
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('shows the history line in Dutch when the language is Dutch (#423)', async () => {
+    const { container, root } = await mountSignedIn();
+    await act(async () => {
+      setLocale('nl');
+      await Promise.resolve();
+    });
+
+    const raw = new DatabaseSync(join(dir, 'astraya.db'));
+    const { id: userId } = raw.prepare('SELECT id FROM users WHERE username = ?').get('alice') as { id: string };
+    const key = Buffer.from(process.env.ASTRAYA_ENCRYPTION_KEY ?? '', 'base64');
+    saveInterpretationResult(
+      raw,
+      {
+        userId,
+        mode: 'freeform',
+        locale: 'nl',
+        sections: [{ heading: 'h', body: 'b' }],
+        description: 'Gericht op carrière',
+      },
+      key,
+    );
+    const { created_at: createdAt } = raw.prepare('SELECT created_at FROM interpretation_results').get() as {
+      created_at: string;
+    };
+    raw.close();
+
+    await vi.waitFor(() => {
+      expect(panelOf(container).querySelectorAll('.tier2-saved-results button')).toHaveLength(1);
+    });
+    expect(panelOf(container).querySelector('.tier2-saved-results button')?.textContent).toBe(
+      `${formatSavedTime(createdAt, 'nl')} (Gericht op carrière) (Gebaseerd op AI-interpretatie)`,
+    );
+
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+    setLocale('en');
   });
 
   it('lists a saved generation and reopens it without ever calling /generate (#392)', async () => {

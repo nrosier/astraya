@@ -135,6 +135,19 @@ and the model's `reason` (written in the request's locale), which the UI shows a
 `interpretation_usage` whatever its verdict, so it counts toward both daily caps. Freeform
 mode with no instruction has nothing to verify and skips this phase.
 
+**Each interpretation gets a short description (#423).** The model is asked, in
+the same call, for a label of a few words naming what was asked ("Short and
+warm, focus on family"), which labels the entry in the reader's history next
+to its local time and its kind (local-interpretation based or AI based). It is
+model output built partly from the reader's own text, so it is untrusted: it is
+shown as plain text, held to the rules an allowed instruction is
+(`checkCustomPrompt`), kept to a few words on one line, and **fails closed** —
+a label that does not pass is dropped and the history shows just the kind. It
+summarises the reader's instruction, so it is stored **encrypted** like the
+prose (`description_json`/`description_iv`, the same key), never in plaintext;
+without the key, or with a rotated one, it reads as no label and the entry
+still lists and opens.
+
 ## Consequences
 
 Good:

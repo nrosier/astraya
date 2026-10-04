@@ -49,7 +49,9 @@ const en = {
     'These instructions violate the allowed customization rules. You can change the tone, style, or focus, but not ask the interpretation to lie, invent facts, or make promises.',
   tier2CustomizationRejectedReason: (reason: string) => `Reason: ${reason}`,
   tier2SavedHeading: 'Past interpretations',
-  tier2SavedEntry: (createdAt: string, mode: string) => `${createdAt} (${mode})`,
+  /** `Tuesday March 10 2026 @ 17:30 (Short and warm, focus on family) (AI interpretation based)`; the description is optional. */
+  tier2SavedEntry: (time: string, kind: string, description: string | null) =>
+    description === null ? `${time} (${kind})` : `${time} (${description}) (${kind})`,
   tier2SavedModeLocal: 'Local interpretation based',
   tier2SavedModeAi: 'AI interpretation based',
 };
@@ -103,7 +105,8 @@ const nl: typeof en = {
     'Deze instructies overtreden de regels voor toegestane aanpassingen. Je kunt de toon, stijl of focus wijzigen, maar de interpretatie niet laten liegen, feiten laten verzinnen of beloftes laten doen.',
   tier2CustomizationRejectedReason: (reason: string) => `Reden: ${reason}`,
   tier2SavedHeading: 'Eerdere interpretaties',
-  tier2SavedEntry: (createdAt: string, mode: string) => `${createdAt} (${mode})`,
+  tier2SavedEntry: (time, kind, description) =>
+    description === null ? `${time} (${kind})` : `${time} (${description}) (${kind})`,
   tier2SavedModeLocal: 'Gebaseerd op lokale interpretatie',
   tier2SavedModeAi: 'Gebaseerd op AI-interpretatie',
 };

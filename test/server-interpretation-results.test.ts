@@ -120,3 +120,91 @@ describe('listInterpretationResults (#392)', () => {
     expect(results.every((r) => !('sections' in r))).toBe(true);
   });
 });
+
+describe('the short description of an interpretation (#423)', () => {
+  const DESCRIPTION = 'Short and warm with focus on family';
+
+  it('round-trips through the list and the detail with the right key', () => {
+    const db = openDatabase(':memory:');
+    const key = randomBytes(32);
+    const userId = makeUser(db, 'alice');
+    const id = saveInterpretationResult(
+      db,
+      { userId, mode: 'grounded', locale: 'en', sections: SECTIONS, description: DESCRIPTION },
+      key,
+    );
+    expect(listInterpretationResults(db, userId, key)[0]).toMatchObject({ id, description: DESCRIPTION });
+    expect(getInterpretationResult(db, userId, id, key)).toMatchObject({ id, description: DESCRIPTION });
+    db.close();
+  });
+
+  it('is stored encrypted: neither the prose nor the label appears in any raw column', () => {
+    const db = openDatabase(':memory:');
+    const key = randomBytes(32);
+    const userId = makeUser(db, 'alice');
+    saveInterpretationResult(
+      db,
+      { userId, mode: 'grounded', locale: 'en', sections: SECTIONS, description: DESCRIPTION },
+      key,
+    );
+    const row = db.prepare('SELECT * FROM interpretation_results').get() as Record<string, unknown>;
+    expect(row.description_json).toBeInstanceOf(Uint8Array);
+    expect(row.description_iv).toBeInstanceOf(Uint8Array);
+    for (const value of Object.values(row)) {
+      if (value instanceof Uint8Array) expect(Buffer.from(value).toString('utf8')).not.toContain('warm');
+      else expect(String(value)).not.toContain('warm');
+    }
+    db.close();
+  });
+
+  it('is null when none was given, and the entry still opens (an entry from before descriptions)', () => {
+    const db = openDatabase(':memory:');
+    const key = randomBytes(32);
+    const userId = makeUser(db, 'alice');
+    const withNone = saveInterpretationResult(db, { userId, mode: 'grounded', locale: 'en', sections: SECTIONS }, key);
+    const withNull = saveInterpretationResult(
+      db,
+      { userId, mode: 'grounded', locale: 'en', sections: SECTIONS, description: null },
+      key,
+    );
+    const rows = db.prepare('SELECT description_json, description_iv FROM interpretation_results').all();
+    expect(rows).toEqual([
+      { description_json: null, description_iv: null },
+      { description_json: null, description_iv: null },
+    ]);
+    expect(listInterpretationResults(db, userId, key).map((r) => r.description)).toEqual([null, null]);
+    expect(getInterpretationResult(db, userId, withNone, key)?.description).toBeNull();
+    expect(getInterpretationResult(db, userId, withNull, key)?.sections).toEqual(SECTIONS);
+    db.close();
+  });
+
+  it('is null, not an error, when the list is read without the key or with a different one', () => {
+    const db = openDatabase(':memory:');
+    const key = randomBytes(32);
+    const userId = makeUser(db, 'alice');
+    saveInterpretationResult(
+      db,
+      { userId, mode: 'grounded', locale: 'en', sections: SECTIONS, description: DESCRIPTION },
+      key,
+    );
+    expect(listInterpretationResults(db, userId)[0]?.description).toBeNull();
+    expect(listInterpretationResults(db, userId, randomBytes(32))[0]?.description).toBeNull();
+    // The entry itself is still listed, so it can be told apart by its time and kind.
+    expect(listInterpretationResults(db, userId)).toHaveLength(1);
+    db.close();
+  });
+
+  it('reads a row written before the columns existed, as null', () => {
+    const db = openDatabase(':memory:');
+    const key = randomBytes(32);
+    const userId = makeUser(db, 'alice');
+    // An old row: written the way migration 10 alone allowed, with no description columns set.
+    db.prepare(
+      'INSERT INTO interpretation_results (id, user_id, mode, locale, sections_json, key_version, iv, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+    ).run('old', userId, 'synthesis', 'en', Buffer.from('x'), 1, Buffer.from('y'), '2026-01-01T00:00:00.000Z');
+    expect(listInterpretationResults(db, userId, key)).toEqual([
+      { id: 'old', mode: 'synthesis', locale: 'en', createdAt: '2026-01-01T00:00:00.000Z', description: null },
+    ]);
+    db.close();
+  });
+});

@@ -268,6 +268,17 @@ const MIGRATIONS: readonly ((db: DatabaseSync) => void)[] = [
       CREATE INDEX interpretation_results_user_created ON interpretation_results(user_id, created_at);
     `);
   },
+  // 11: the model's short description of each Tier 2 request (#423) — a few words such as "Short
+  // and warm, focus on family" that label the entry in the reader's history. It summarises the
+  // reader's own instruction, so it is stored encrypted like `sections_json` (same key and
+  // `key_version`, its own iv), never in plaintext. Both columns are nullable: entries from before
+  // this migration have none, and a label that failed validation is simply not stored.
+  (db) => {
+    db.exec(`
+      ALTER TABLE interpretation_results ADD COLUMN description_json BLOB;
+      ALTER TABLE interpretation_results ADD COLUMN description_iv BLOB;
+    `);
+  },
 ];
 
 /** Migration steps whose table rebuild would otherwise break `REFERENCES` clauses pointing at the table being rebuilt. */

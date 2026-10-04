@@ -14,6 +14,8 @@ export interface InterpretationResultSummary {
   readonly mode: string;
   readonly locale: string;
   readonly createdAt: string;
+  /** The model's short label for the request (#423); `null` for older entries, a rejected label, or when it cannot be decrypted. */
+  readonly description: string | null;
 }
 
 export interface InterpretationResultDetail extends InterpretationResultSummary {
@@ -28,15 +30,32 @@ export function saveInterpretationResult(
     readonly mode: string;
     readonly locale: string;
     readonly sections: readonly Tier2Section[];
+    /** Already validated (`sanitizeDescription`); stored encrypted, like the prose, since it summarises the reader's own instruction. */
+    readonly description?: string | null;
   },
   key: Buffer,
 ): string {
   const id = randomUUID();
   const plaintext = Buffer.from(JSON.stringify(params.sections), 'utf8');
   const { ciphertext, iv } = encryptPayload(plaintext, key);
+  const description =
+    params.description === undefined || params.description === null
+      ? undefined
+      : encryptPayload(Buffer.from(params.description, 'utf8'), key);
   db.prepare(
-    'INSERT INTO interpretation_results (id, user_id, mode, locale, sections_json, key_version, iv, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-  ).run(id, params.userId, params.mode, params.locale, ciphertext, CURRENT_KEY_VERSION, iv, new Date().toISOString());
+    'INSERT INTO interpretation_results (id, user_id, mode, locale, sections_json, key_version, iv, created_at, description_json, description_iv) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+  ).run(
+    id,
+    params.userId,
+    params.mode,
+    params.locale,
+    ciphertext,
+    CURRENT_KEY_VERSION,
+    iv,
+    new Date().toISOString(),
+    description?.ciphertext ?? null,
+    description?.iv ?? null,
+  );
   return id;
 }
 
@@ -45,16 +64,42 @@ interface SummaryRow {
   readonly mode: string;
   readonly locale: string;
   readonly created_at: string;
+  readonly description_json: Buffer | null;
+  readonly description_iv: Buffer | null;
 }
 
-/** Metadata only, newest first — never decrypts, so this works even if the server's key has since been rotated away (#340) or removed. */
-export function listInterpretationResults(db: Database, userId: string): readonly InterpretationResultSummary[] {
+/** The stored label, or `null` when there is none or it cannot be read (no key, a rotated key, a tampered row) — never an error: a label is a convenience, not the entry. */
+function readDescription(row: SummaryRow, key: Buffer | undefined): string | null {
+  if (key === undefined || row.description_json === null || row.description_iv === null) return null;
+  try {
+    return decryptPayload(row.description_json, row.description_iv, key).toString('utf8');
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Metadata, newest first. The prose is never decrypted here, so this works even if the server's key
+ * has since been rotated away (#340) or removed; the short descriptions (#423) are read when `key`
+ * can decrypt them and are `null` otherwise, which only costs the label.
+ */
+export function listInterpretationResults(
+  db: Database,
+  userId: string,
+  key?: Buffer,
+): readonly InterpretationResultSummary[] {
   const rows = db
     .prepare(
-      'SELECT id, mode, locale, created_at FROM interpretation_results WHERE user_id = ? ORDER BY created_at DESC',
+      'SELECT id, mode, locale, created_at, description_json, description_iv FROM interpretation_results WHERE user_id = ? ORDER BY created_at DESC',
     )
     .all(userId) as unknown as SummaryRow[];
-  return rows.map((row) => ({ id: row.id, mode: row.mode, locale: row.locale, createdAt: row.created_at }));
+  return rows.map((row) => ({
+    id: row.id,
+    mode: row.mode,
+    locale: row.locale,
+    createdAt: row.created_at,
+    description: readDescription(row, key),
+  }));
 }
 
 interface DetailRow extends SummaryRow {
@@ -71,11 +116,18 @@ export function getInterpretationResult(
 ): InterpretationResultDetail | undefined {
   const row = db
     .prepare(
-      'SELECT id, mode, locale, sections_json, iv, created_at FROM interpretation_results WHERE user_id = ? AND id = ?',
+      'SELECT id, mode, locale, sections_json, iv, created_at, description_json, description_iv FROM interpretation_results WHERE user_id = ? AND id = ?',
     )
     .get(userId, id) as DetailRow | undefined;
   if (row === undefined) return undefined;
   const plaintext = decryptPayload(row.sections_json, row.iv, key);
   const sections = JSON.parse(plaintext.toString('utf8')) as readonly Tier2Section[];
-  return { id: row.id, mode: row.mode, locale: row.locale, createdAt: row.created_at, sections };
+  return {
+    id: row.id,
+    mode: row.mode,
+    locale: row.locale,
+    createdAt: row.created_at,
+    description: readDescription(row, key),
+    sections,
+  };
 }

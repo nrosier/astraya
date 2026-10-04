@@ -42,6 +42,7 @@ import { PERSONA_IDS, type CorpusEntry, type Locale, type PersonaId } from '../i
 import { initialPersona, isPersonaId, PERSONA_KEY, reportPersonasEnabled } from './report-persona.js';
 import { checkCustomPrompt, type GuardrailIssue } from '../interpretation/prompt-guardrail.js';
 import { describeParagraphProvenance } from './report-provenance.js';
+import { formatSavedTime } from './saved-time.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { useSessionUserOrUndefined } from './session-context.js';
@@ -349,7 +350,11 @@ function AiCustomizedPanel({
                     openSaved(saved.id);
                   }}
                 >
-                  {t.tier2SavedEntry(saved.createdAt, savedModeName(saved.mode))}
+                  {t.tier2SavedEntry(
+                    formatSavedTime(saved.createdAt, locale),
+                    savedModeName(saved.mode),
+                    saved.description,
+                  )}
                 </button>
               </li>
             ))}

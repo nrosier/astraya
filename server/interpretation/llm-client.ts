@@ -44,6 +44,8 @@ export interface Tier2Section {
 
 export interface Tier2Result {
   readonly sections: readonly Tier2Section[];
+  /** The model's raw short description of the request (#423) — untrusted; see `description.ts`. */
+  readonly description: unknown;
   readonly promptTokens: number;
   readonly outputTokens: number;
 }
@@ -81,6 +83,9 @@ const TIER2_RESPONSE_SCHEMA = {
         required: ['heading', 'body'],
       },
     },
+    // A few words labelling what was asked (#423). Not `required`: a reply without one is still a
+    // good interpretation, and the history just shows the kind of interpretation instead.
+    description: { type: 'STRING' },
   },
   required: ['sections'],
 };
@@ -95,13 +100,13 @@ function isTier2Section(value: unknown): value is Tier2Section {
 }
 
 /**
- * Parses the model's structured-output JSON string into `{ sections }`. The
+ * Parses the model's structured-output JSON string into `{ sections, description }`. The
  * request already asks Gemini to conform to `TIER2_RESPONSE_SCHEMA`
  * (`gemini.mjs`'s `generateStructured` trusts the same enforcement), but this
  * still fails closed with a clear error on an unexpected shape rather than
  * letting a malformed `.sections` crash further downstream.
  */
-function parseTier2Sections(text: string): readonly Tier2Section[] {
+function parseTier2Reply(text: string): { readonly sections: readonly Tier2Section[]; readonly description: unknown } {
   let parsed: unknown;
   try {
     parsed = JSON.parse(text);
@@ -112,7 +117,7 @@ function parseTier2Sections(text: string): readonly Tier2Section[] {
   if (!Array.isArray(sections) || !sections.every(isTier2Section)) {
     throw new Error(`Tier 2: unexpected model response shape: ${JSON.stringify(parsed).slice(0, 500)}`);
   }
-  return sections;
+  return { sections, description: (parsed as { description?: unknown }).description };
 }
 
 interface RawModelText {
@@ -205,7 +210,8 @@ export async function generateTier2Text(
     maxRetries,
     logger,
   );
-  return { sections: parseTier2Sections(raw.text), promptTokens: raw.promptTokens, outputTokens: raw.outputTokens };
+  const reply = parseTier2Reply(raw.text);
+  return { ...reply, promptTokens: raw.promptTokens, outputTokens: raw.outputTokens };
 }
 
 /**

@@ -137,6 +137,8 @@ export interface SavedInterpretationSummary {
   readonly mode: string;
   readonly locale: Locale;
   readonly createdAt: string;
+  /** The model's short label for the request (#423); `null` for older entries or when none was kept. */
+  readonly description: string | null;
 }
 
 export interface SavedInterpretationDetail extends SavedInterpretationSummary {
