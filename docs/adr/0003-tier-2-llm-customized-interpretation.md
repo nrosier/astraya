@@ -29,10 +29,10 @@ its own "AI-Customized" sub-tab alongside "Standard", gated by
 never-persisted consent checkbox: consent authorizes one specific request,
 not a standing preference.
 
-**Tier 2 has two modes, chosen per request by the reader — `'grounded'`
-(the default) and `'freeform'` — and only `'grounded'` carries the guarantee
-below in full.** (A third mode, `'synthesis'` (#377), was folded into
-`'freeform'` by #425; see below.)
+**Tier 2 has three modes — `'grounded'` (the default), `'freeform'` and
+`'focus'` (#424) — and only `'grounded'` carries the guarantee below in
+full.** (A further mode, `'synthesis'` (#377), was folded into `'freeform'` by
+#425; see below.)
 
 **In grounded mode, the client never sends birth data, chart data, or
 interpretation prose.** It sends `placementKeys` (`report.ts`'s
@@ -77,6 +77,29 @@ and the one-click whole-chart reading is freeform with an empty instruction.
 entries from before the change keep their `'synthesis'` mode and are shown
 as AI-based like the rest. An empty or whitespace-only instruction means none:
 there is nothing to check or verify, so no verification call is made.
+
+**Focus mode (#424) explains the tensions of one selected placement.** From the
+selection card on a wheel (a planet, natal or transiting), the client sends
+`focusContext`: that placement's sign, house, dispositor, the houses it rules, and
+each aspect it makes with the other planet's sign, house and rulerships
+(`focus-context.ts`). Only that planet's data is sent, never the whole chart, and
+nothing identifying: no name, date, time or place. Like `chartData`, it is not a
+placement key, so focus mode shares freeform's departure from the "no chart data
+crosses the wire" guarantee, and the consent text says what is sent. The task is
+fixed and carries no reader-written text, so there is **no instruction and
+nothing for the verifier (#411) to judge**: a `customPrompt` in this mode is
+refused with 400 rather than ignored or passed on unchecked. The payload is
+rebuilt from closed sets before it reaches the prompt (`validateFocusContext`,
+in `focus-context-schema.ts`, which the server imports without the
+chart-calculation modules), the same anti-injection discipline as `validateKey`
+and `validateChartData`. The prompts are the specification's, with two restated
+rules (stay within the data; no medical, legal or financial advice) and the
+reply shape, so they do not contradict the other modes. Conventions, stated in
+the module and in the payload (`rulership`): modern rulers, a planet rules a
+house when it rules the sign on that house's cusp, the chart ruler is the ruler
+of the Ascendant's sign, and "on an angle" means within 5° of the Ascendant,
+Midheaven, Descendant or Imum Coeli. It goes through the same route, consent,
+rate limit, cost caps, fail-closed handling and saved history as the other modes.
 
 **`customPrompt` is the one field that structural guarantee doesn't cover.**
 Free-form style/tone/focus instructions can't be made structurally incapable

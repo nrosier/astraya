@@ -6,7 +6,7 @@
  * response beyond its own shape, and every rejection carries the server's
  * own message.
  *
- * Two modes, see ADR 0003:
+ * Three modes, see ADR 0003:
  * - `'grounded'` sends `placementKeys` (from `report.ts`'s
  *   `reportPlacementKeys`) rather than the chart or corpus text itself — the
  *   server re-resolves each key's grounded Tier-1 text against its own copy
@@ -22,10 +22,15 @@
  *   The instruction is optional (#425; this mode also replaces the former
  *   `'synthesis'` mode, which was the same call with no instruction).
  *
+ * - `'focus'` (#424) sends `focusContext`: the sign, house, dispositor, rulerships and aspects of ONE
+ *   selected placement (see `focus-context.ts`), and asks the model for that placement's tensions.
+ *   There is no instruction, so nothing for the verifier to judge.
+ *
  * `locale` is sent alongside either payload so the server responds in the
  * language the report is already showing.
  */
 import type { ChartData } from '../domain/chart-compute.js';
+import type { FocusContext } from './focus-context-schema.js';
 import type { Locale } from './schema.js';
 
 export class Tier2Error extends Error {
@@ -116,6 +121,12 @@ export type Tier2Request =
       readonly chartData: Tier2ChartDataPayload;
       /** Optional: without one the model writes a balanced reading of the whole chart (#425). */
       readonly customPrompt?: string;
+      readonly locale: Locale;
+    }
+  | {
+      /** The tensions of one selected placement (#424): a fixed task, so no instruction. */
+      readonly mode: 'focus';
+      readonly focusContext: FocusContext;
       readonly locale: Locale;
     };
 

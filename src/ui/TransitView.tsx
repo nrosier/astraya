@@ -27,6 +27,8 @@ import { findVoidOfCourseMoon, type VoidOfCourseMoon } from '../astrology/void-o
 import { voidOfCourseSentence } from './void-of-course-text.js';
 import { aspectDisplayName, bodyDisplayName } from './astro-names.messages.js';
 import { todayInputValue } from './format.js';
+import { buildFocusObjectContext } from '../interpretation/focus-context.js';
+import { FocusInterpretation } from './FocusInterpretation.js';
 import { BiWheelSelectionPanel } from './BiWheelSelectionPanel.js';
 import { biWheelSelectionPanelMessages } from './BiWheelSelectionPanel.messages.js';
 import { resolveBiWheelSelection } from './bi-wheel-selection.js';
@@ -174,6 +176,18 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
     });
   }, [load, selectionKey, t, shownContacts]);
 
+  // What the "interpret the tensions of this placement" button would send (#424): for a transiting
+  // planet, its contacts as they are on screen (after the filter); for a natal one, the natal chart's own.
+  const focusContext = useMemo(() => {
+    if (load.kind !== 'ready' || biWheelFacts?.kind !== 'body') return undefined;
+    const { bodyKey, ring } = biWheelFacts.body;
+    return buildFocusObjectContext(
+      load.data.natal,
+      bodyKey,
+      ring === 1 ? { chart: load.data.transit, contacts: shownContacts } : undefined,
+    );
+  }, [load, biWheelFacts, shownContacts]);
+
   if (person === undefined) {
     return <PersonNotFound />;
   }
@@ -262,6 +276,9 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
               locale={locale}
               onClear={clearIsolation}
             />
+          )}
+          {selectionKey !== undefined && focusContext !== undefined && (
+            <FocusInterpretation context={focusContext} locale={locale} resetKey={selectionKey} />
           )}
 
           {load.voidOfCourse !== undefined && (

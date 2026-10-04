@@ -179,11 +179,12 @@ function AiCustomizedPanel({
   }
 
   const placementKeys = reportPlacementKeys(report);
-  // Which of the two kinds a saved interpretation was: an older `synthesis` entry was AI-written too.
+  // Which of the two kinds a saved interpretation was: an older `synthesis` entry and a placement's
+  // `focus` interpretation (#424) were AI-written too.
   const savedModeName = (savedMode: string): string =>
     savedMode === 'grounded'
       ? t.tier2SavedModeLocal
-      : savedMode === 'freeform' || savedMode === 'synthesis'
+      : savedMode === 'freeform' || savedMode === 'synthesis' || savedMode === 'focus'
         ? t.tier2SavedModeAi
         : savedMode;
   // The AI-written mode's instruction is optional, so an empty one has nothing to guard.

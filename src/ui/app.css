@@ -2448,6 +2448,33 @@ label.stacked textarea:focus-visible {
 }
 
 /* The written interpretation under a wheel selection (#415). */
+/* The button under a selected placement's card that asks the model for its tensions (#424). */
+.focus-interpretation {
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+.focus-interpretation h4 {
+  margin: 0 0 0.5rem;
+  color: var(--accent);
+  font-size: 0.95rem;
+}
+.focus-interpretation label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.focus-interpretation h5 {
+  margin: 0.75rem 0 0.25rem;
+  font-size: 0.9rem;
+}
+.focus-interpretation .tier2-result p {
+  margin: 0;
+}
+
 .chart-isolation-interpretation {
   margin-top: 0.9rem;
   padding-top: 0.75rem;

@@ -85,6 +85,8 @@ import { useMessages } from './messages.js';
 import { useWheelIsolation } from './wheel-interaction.js';
 import { WheelSelectionText } from './WheelSelectionText.js';
 import { parseSelectionKey } from '../interpretation/selection.js';
+import { buildFocusObjectContext } from '../interpretation/focus-context.js';
+import { FocusInterpretation } from './FocusInterpretation.js';
 import { PersonNotFound } from './PersonNotFound.js';
 import { SortableTable } from './SortableTable.js';
 import { useStoreState } from './store-context.js';
@@ -748,6 +750,13 @@ export function ChartDataView({
     return resolveWheelIsolation(isolatedKey, load.data, pointVisibility, housesRenderable, locale);
   }, [isolatedKey, load, pointVisibility, housesRenderable, locale]);
 
+  // What the "interpret the tensions of this placement" button would send: only for a selected planet (#424).
+  const focusContext = useMemo(() => {
+    if (isolatedKey === undefined || load.kind !== 'ready') return undefined;
+    const selection = parseSelectionKey(isolatedKey);
+    return selection?.kind === 'body' ? buildFocusObjectContext(load.data, selection.key) : undefined;
+  }, [isolatedKey, load]);
+
   useEffect(() => {
     if (!printAll) return undefined;
     // document.title seeds the filename most browsers' print-to-PDF dialogs suggest, so a
@@ -921,6 +930,10 @@ export function ChartDataView({
                     <WheelSelectionText chart={load.data} selectionKey={isolatedKey} locale={locale} />
                   )}
                 </div>
+              )}
+
+              {isolatedKey !== undefined && focusContext !== undefined && (
+                <FocusInterpretation context={focusContext} locale={locale} resetKey={isolatedKey} />
               )}
 
               {/* AstroChart is a reference rendering kept alongside Astraya's own wheel so the

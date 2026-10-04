@@ -4,7 +4,7 @@
  * docs/adr/0003-tier-2-llm-customized-interpretation.md for the full
  * architecture — this file is the route itself.
  *
- * Two modes (#425; `'synthesis'` (#377) was folded into the second):
+ * Three modes (#425, #424; `'synthesis'` (#377) was folded into the second):
  * - `'grounded'` (default, unchanged since #360): the client sends
  *   `placementKeys` (from `report.ts`'s `reportPlacementKeys`) rather than
  *   birth data or chart-derived text; each key is re-resolved against this
@@ -22,6 +22,13 @@
  *   third-party prompt unchecked. The instruction (style, tone, focus) is
  *   optional: without one the model writes a balanced reading of the whole
  *   chart, and no verification call is made.
+ * - `'focus'` (#424): the client sends `focusContext`, the enriched context of ONE selected
+ *   placement (its sign, house, dispositor, the houses it rules, and each aspect it makes with the
+ *   other planet's sign, house and rulerships — see `src/interpretation/focus-context.ts`), and the
+ *   model explains the tensions of that placement. The task is fixed and carries no reader-written
+ *   text, so there is no `customPrompt` and nothing for the instruction verifier to judge; the
+ *   payload is rebuilt from closed sets (`validateFocusContext`) before it reaches the prompt,
+ *   and it holds no name, date, time or place.
  * - `'synthesis'` is still accepted, as an older client's spelling of
  *   `'freeform'` with no instruction; it is stored as `'freeform'`.
  *
@@ -65,6 +72,7 @@ import {
   costCentsSinceByUser,
 } from './interpretation/usage.ts';
 import { checkCustomPrompt } from '../src/interpretation/prompt-guardrail.ts';
+import { validateFocusContext, type FocusContext } from '../src/interpretation/focus-context-schema.ts';
 import { loadEncryptionKey } from './ops/crypto.ts';
 import { sanitizeDescription } from './interpretation/description.ts';
 import {
@@ -84,11 +92,11 @@ function isLocale(value: unknown): value is Locale {
   return typeof value === 'string' && (CORPUS_LOCALES as readonly string[]).includes(value);
 }
 
-type Mode = 'grounded' | 'freeform';
+type Mode = 'grounded' | 'freeform' | 'focus';
 
 /** What a request may name: `'synthesis'` is the older spelling of `'freeform'` (see the file doc). */
 function isRequestedMode(value: unknown): value is Mode | 'synthesis' {
-  return value === 'grounded' || value === 'freeform' || value === 'synthesis';
+  return value === 'grounded' || value === 'freeform' || value === 'focus' || value === 'synthesis';
 }
 
 interface GenerateBody {
@@ -96,6 +104,7 @@ interface GenerateBody {
   readonly placementKeys?: unknown;
   readonly chartData?: unknown;
   readonly customPrompt?: unknown;
+  readonly focusContext?: unknown;
   readonly locale?: unknown;
 }
 
@@ -162,6 +171,49 @@ const FREEFORM_SYSTEM_INSTRUCTION = [
   'heading and a 1 to 3 sentence body — never one long undivided paragraph.',
   DESCRIPTION_RULE,
 ].join(' ');
+
+/**
+ * The fixed task of focus mode (#424): explain the tensions of ONE placement from its enriched
+ * context. The first four rules are the specification as written; the last two restate what every
+ * Tier 2 prompt already says (nothing outside the facts, no medical/legal/financial advice) and
+ * the shape of the reply, so this prompt does not contradict the others.
+ */
+const FOCUS_SYSTEM_INSTRUCTION = [
+  'You are a psychologically grounded, professional astrological engine. Your goal is to explain the internal tensions, growth opportunities, and operational dynamics of a specific planetary placement based on provided structured chart data.',
+  '',
+  'RULES:',
+  '1. SYNTHESIZE HOUSES AND RULERSHIPS: Do not merely list aspects. Combine the placement of the focus planet with the houses ruled by BOTH planets involved in an aspect. For instance, if Planet A in House 2 squares Planet B in House 4 (which rules House 12), frame the tension as a dilemma between financial/personal security (House 2), domestic foundations (House 4), and subconscious patterns (House 12).',
+  '2. AVOID FATALISM & CLINICAL TROPES: Do not use fatalistic language ("you will fail", "you are condemned to") or clinical psychological labels ("severe anxiety", "paralyzing trauma"). Frame challenges as functional tensions or developmental lessons.',
+  '3. NO GENERIC TROPES: Avoid cliché shortcuts (e.g., Saturn is not just "workaholic", Pluto is not just "obsession/power-hungry"). Focus on universal psychological drives: autonomy, security, boundaries, integration, and communication.',
+  '4. PRIORITIZE HIGH-WEIGHT CONTACTS: Pay special attention to aspects involving the Chart Ruler, Sun/Moon, or tight applying orbs (< 2 degrees).',
+  '5. STAY WITHIN THE DATA: Use only the placements, houses, rulerships, and aspects in the JSON. Do not invent any, and do not give medical, legal, or financial advice.',
+  '6. SHAPE: Organize your response into 2 to 4 short thematic sections, each with a brief heading and a body of 2 to 4 sentences — never one long undivided paragraph.',
+  '',
+  DESCRIPTION_RULE,
+].join('\n');
+
+/** Focus mode's user content: the specification's template, the language, and what a transit perspective changes. */
+function buildFocusUserContent(context: FocusContext, locale: Locale): string {
+  const language = locale === 'nl' ? 'Dutch' : 'English';
+  const note =
+    context.perspective === 'transit'
+      ? [
+          'The focus planet is a currently transiting planet: its house and the houses it rules are the',
+          "person's natal houses, and its aspects are contacts to natal planets.",
+          '',
+        ]
+      : [];
+  return [
+    `Write in ${language}.`,
+    '',
+    'Analyze the following focus planet and its contacts based on the provided JSON data. ',
+    'Explain the core tension this placement creates, how it manifests across the specific life departments (houses) involved, and how the person can constructively navigate this energy.',
+    '',
+    ...note,
+    'JSON Data:',
+    JSON.stringify(context),
+  ].join('\n');
+}
 
 // A real report has a few dozen placements at most; this is a generous ceiling against
 // a request padded with junk entries to inflate token usage/cost per call.
@@ -366,11 +418,16 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
       // this isn't a breaking change for any caller that predates freeform mode.
       const requested = rawMode === undefined ? 'grounded' : isRequestedMode(rawMode) ? rawMode : undefined;
       if (requested === undefined) {
-        return reply.code(400).send({ error: "mode must be 'grounded' or 'freeform'" });
+        return reply.code(400).send({ error: "mode must be 'grounded', 'freeform' or 'focus'" });
       }
       // `'synthesis'` is an older client's spelling of `'freeform'` with no instruction.
       const mode: Mode = requested === 'synthesis' ? 'freeform' : requested;
 
+      if (mode === 'focus' && customPrompt !== undefined) {
+        // A fixed task with no reader-written text: there is nothing for the verifier to judge, so an
+        // instruction is refused rather than silently ignored or let through unchecked.
+        return reply.code(400).send({ error: "customPrompt is not accepted in 'focus' mode" });
+      }
       if (customPrompt !== undefined && typeof customPrompt !== 'string') {
         return reply.code(400).send({ error: 'customPrompt must be a string' });
       }
@@ -398,7 +455,8 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
         return reply.code(400).send({ error: `locale must be one of ${CORPUS_LOCALES.join(', ')}` });
       }
 
-      let facts: string[];
+      let facts: string[] = [];
+      let focusContext: FocusContext | undefined;
       let systemInstruction: string;
       if (mode === 'grounded') {
         if (!Array.isArray(placementKeys) || placementKeys.length === 0) {
@@ -426,6 +484,13 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
         const placements = parsedPlacements as readonly NonNullable<(typeof parsedPlacements)[number]>[];
         facts = placements.map((placement) => resolvePlacementText(placement, locale, CORPUS));
         systemInstruction = SYSTEM_INSTRUCTION;
+      } else if (mode === 'focus') {
+        const validated = validateFocusContext(request.body.focusContext);
+        if ('errors' in validated) {
+          return reply.code(400).send({ error: `focusContext is invalid: ${validated.errors.join('; ')}` });
+        }
+        focusContext = validated.context;
+        systemInstruction = FOCUS_SYSTEM_INSTRUCTION;
       } else {
         const validated = validateChartData(chartData);
         if ('errors' in validated) {
@@ -489,9 +554,11 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
       }
 
       const userContent =
-        mode === 'grounded' && instruction !== undefined
-          ? buildUserContent(facts, instruction, locale)
-          : buildFreeformUserContent(facts, instruction, locale);
+        focusContext !== undefined
+          ? buildFocusUserContent(focusContext, locale)
+          : mode === 'grounded' && instruction !== undefined
+            ? buildUserContent(facts, instruction, locale)
+            : buildFreeformUserContent(facts, instruction, locale);
 
       let result;
       try {

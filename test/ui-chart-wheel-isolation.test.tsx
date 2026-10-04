@@ -110,6 +110,42 @@ describe('wheel click-to-isolate (#412)', () => {
     expect([...dimmedKeys(wheel, 'data-sign', false)]).toEqual(['capricorn']);
   });
 
+  it('offers the AI interpretation of a selected planet, below its card, and of nothing else (#424)', async () => {
+    const container = await mount();
+    const wheel = wheelOf(container);
+    const focus = (): Element | null => container.querySelector('.focus-interpretation');
+
+    expect(focus()).toBeNull();
+
+    await clickHitArea(wheel, '.chart-point[data-body="sun"]');
+    const card = container.querySelector('.chart-isolation-panel');
+    expect(card).not.toBeNull();
+    expect(focus()).not.toBeNull();
+    // Below the card, not inside it.
+    expect(card?.contains(focus())).toBe(false);
+    expect(card?.compareDocumentPosition(focus() as Node)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    const button = focus()?.querySelector('button');
+    expect(button?.textContent).toBe('Interpret the tensions of this placement');
+    // Nobody is signed in in this test, so it says why it cannot be used.
+    expect(button?.disabled).toBe(true);
+    expect(focus()?.textContent).toContain('Sign in to generate an AI interpretation of this placement.');
+
+    // A sign, and an aspect line, are not placements: no button.
+    await clickHitArea(wheel, '.chart-sign[data-sign="libra"]');
+    expect(focus()).toBeNull();
+    const link = wheel.querySelector('.chart-aspect-link');
+    const a = link?.getAttribute('data-aspect-body-a') ?? '';
+    const b = link?.getAttribute('data-aspect-body-b') ?? '';
+    await clickHitArea(wheel, `.chart-aspect-link[data-aspect-body-a="${a}"][data-aspect-body-b="${b}"]`);
+    expect(focus()).toBeNull();
+
+    // Another planet gets its own, and clearing the selection removes it.
+    await clickHitArea(wheel, '.chart-point[data-body="saturn"]');
+    expect(focus()).not.toBeNull();
+    await clickHitArea(wheel, '.chart-point[data-body="saturn"]');
+    expect(focus()).toBeNull();
+  });
+
   it('isolates a clicked sign: the sign, the bodies in it and their aspect lines', async () => {
     const container = await mount();
     const wheel = wheelOf(container);

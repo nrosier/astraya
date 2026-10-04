@@ -7,6 +7,7 @@
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
@@ -77,8 +78,18 @@ test('a person with a known birth time gets a Transit screen with a bi-wheel and
   await expect(page.locator('.chart-isolation-head strong')).toHaveText('Saturn (Transit)');
   await expect(page.locator('div.chart-wheel .chart-dimmed').first()).toBeAttached();
   await expect(transitingSaturn).not.toHaveClass(/chart-dimmed/);
+
+  // The AI interpretation of the selected placement (#424): offered below the card for a planet,
+  // disabled with its reason while nobody is signed in, and accessible.
+  const focusButton = page.getByRole('button', { name: 'Interpret the tensions of this placement' });
+  await expect(focusButton).toBeVisible();
+  await expect(focusButton).toBeDisabled();
+  await expect(page.locator('.focus-interpretation')).toContainText('Sign in to generate an AI interpretation');
+  const focusAxe = await new AxeBuilder({ page }).include('.focus-interpretation').analyze();
+  expect(focusAxe.violations.map((v) => v.id)).toEqual([]);
   await transitingSaturn.locator('.chart-hit-area').click();
   await expect(page.locator('.chart-isolation-panel')).toHaveCount(0);
+  await expect(page.locator('.focus-interpretation')).toHaveCount(0);
   await expect(page.locator('div.chart-wheel .chart-dimmed')).toHaveCount(0);
 
   const [download] = await Promise.all([
