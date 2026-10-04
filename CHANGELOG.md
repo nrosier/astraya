@@ -4,6 +4,28 @@ All notable changes to Astraya are recorded here. Versions follow
 [semantic versioning](https://semver.org/), and every milestone ends in a release —
 see [docs/RELEASING.md](docs/RELEASING.md).
 
+## [0.28.0] — 2026-10-05
+
+**One Charts page for every chart cast for a person, with solar and lunar returns; Export moves into the header; Uranus and Pluto can be drawn in two ways; and about a hundred interpretation texts were rewritten to be more specific.**
+
+M9 (Polish & launch) progress, not a finished milestone — v1.0.0 hasn't shipped yet.
+
+### Added
+
+- **A Charts page (#440).** The natal, draconic and harmonic charts used to be separate screens showing the same tables. They are now one page with a chart-type selector at the top, and the sections (chart wheel, chart shape, positions, houses, aspects, dignities, derived points) as tabs on it. The type and the section are in the address, so each view can be linked, and the old draconic and harmonic links still land on it. In the header the **Charts** menu replaces the Natal chart tab and the Chart Variants menu.
+- **Solar and lunar returns (#440).** Two new chart types on that page, cast as full charts with the wheel, shape and every table. A solar return takes a year; a lunar return finds the first Moon return on or after a date. Either is cast for the birthplace or for another latitude and longitude (a relocated return), and a table lists its contacts to the natal chart. They share the natal chart's Extended settings (house system, zodiac, orbs, points shown).
+- **Export in the header.** One **Export** menu: everything as a single file (every person with their birth record and natal chart tables), the people as a spreadsheet, and the open chart's own exports (SVG, PNG in three sizes, PDF). The buttons that sat under the wheel are gone. The header navigation is also centred now.
+- **Two forms of Uranus and Pluto (#419).** In the chart's Extended settings: Uranus as the H with a ball (as before) or the astronomical circle, dot and arrow; Pluto as the orb over a crescent and cross (as before) or the PL monogram. The choice is kept on this device and applies to the wheel, the grids, the diagrams, the tables and the exports. Chiron, Lilith and the nodes have no second form yet because none could be sourced.
+
+### Changed
+
+- About 130 interpretation texts were rewritten in English and Dutch: every dignity entry (rulership, exaltation, detriment, fall) and a few house, cusp, profection and line entries. The generator now knows which sign a dignity is about (Jupiter in exaltation is Cancer) and what a house or angle means, and the judge that reviews the text reads the same facts. The judge also now votes three times and only flags an entry when most votes do. Some texts the judge kept disputing are now settled.
+
+### Notes for people running their own server
+
+- No database migration and no new configuration in this release.
+- The "everything" export is a new file format (astraya-export, version 1). It is written only by the browser; the server does not read it.
+
 ## [0.27.0] — 2026-10-04
 
 **The navigation moves into the sticky header, with a Tools menu and a Menu button for phones; the chart's tables share the wheel's selection; and symbols can be drawn, written in Unicode or shown as text.**
