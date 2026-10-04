@@ -12,6 +12,9 @@ const en = {
   loadingEphemeris: 'Loading ephemeris…',
   loadingScreen: 'Loading…',
 
+  skipToContent: 'Skip to main content',
+  homeLinkLabel: 'Astraya, back to the people list',
+
   changelogLink: (version: string) => `Version ${version}`,
   aboutLink: 'about & licence',
 };
@@ -26,6 +29,9 @@ const nl: typeof en = {
 
   loadingEphemeris: 'Ephemeris wordt geladen…',
   loadingScreen: 'Laden…',
+
+  skipToContent: 'Ga naar de hoofdinhoud',
+  homeLinkLabel: 'Astraya, terug naar de lijst met mensen',
 
   changelogLink: (version: string) => `Versie ${version}`,
   aboutLink: 'over & licentie',

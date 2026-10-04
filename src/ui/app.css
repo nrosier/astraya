@@ -58,16 +58,10 @@
   /* The page's own content column width — shared by `.shell` and `.person-shelf` so they
      never drift out of sync whenever this gets tuned. */
   --shell-max-width: 64rem;
-  /* Clears `.locale-bar`'s own footprint (measured ~80px plus its 0.75rem right offset) with
-     room to spare — the floor `.person-tabs`'s own right padding must never drop below, since
-     it's the one row on every person-scoped page guaranteed to scroll up through the fixed
-     `.locale-bar`'s vertical band (#137). */
-  --locale-bar-clearance: 7rem;
-  /* Clears `.account-bar`'s own footprint generously — signed in as an admin, it can hold the
-     ephemeris status line plus a `SyncBadge`/username plus a signed-in-as row with both
-     "Sign out" and "Manage users" pills side by side, comfortably past 10rem. Used by
-     `.pwastatus` so its own text doesn't start underneath `.account-bar`'s column (#137). */
-  --account-bar-clearance: 11rem;
+  /* The sticky header's height (#421): what the page scrolls under, so anchors and focus
+     scroll clear of it (`html`'s `scroll-padding-top` below), and how much the mobile header
+     is allowed to grow. */
+  --app-header-height: 3.5rem;
 }
 
 @media (prefers-color-scheme: light) {
@@ -150,48 +144,104 @@
 }
 
 /*
- * Language and theme sit together in a fixed top-right bar, side by side (#137) — the one
- * pair of controls someone reaches for together ("read this in Dutch" and "make it dark"
- * are both "change how the page looks", not "change who's using it"), visible from
- * anywhere including the landing page.
+ * One sticky header across the top of every screen (#421): the name on the left, and on the
+ * right who is signed in and where the data is (sync badge, account), then how the page looks
+ * (language, theme). It replaces the two fixed corners these used to sit in — a top-right pair
+ * and a bottom-left column — which left dead zones, needed clearance padding on whatever
+ * scrolled underneath them and had to be hunted for on a long page. It is part of the page
+ * flow (sticky, not fixed), so nothing needs to clear it, and a translucent blurred background
+ * lets a long table scroll under it without hiding behind a hard edge. Hidden when printing.
  */
-.locale-bar {
-  position: fixed;
-  top: 0.75rem;
-  right: 0.75rem;
-  z-index: 10;
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
   display: flex;
-  flex-direction: row;
   align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: var(--app-header-height);
+  padding: 0.5rem 1rem;
+  background: color-mix(in oklab, var(--bg) 82%, transparent);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--line);
+}
+
+/* A browser without `backdrop-filter` would show scrolling content through a see-through bar. */
+@supports not (backdrop-filter: blur(1px)) {
+  .app-header {
+    background: var(--bg);
+  }
+}
+
+.app-header-start {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.app-header-brand {
+  color: var(--fg);
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+}
+
+.app-header-brand:hover {
+  color: var(--accent);
+}
+
+.app-header-status {
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.app-header-end {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
   gap: 0.5rem;
 }
 
-/*
- * Sign-in and sync status sit together in a fixed bottom-left bar (#137, #230): sign-in/
- * out is the thing that changes the sync badge's state, so the two have always stayed
- * beside each other, just moved corners a few times (both top corners, briefly a single
- * top bar, briefly a left-edge column) as the rest of the chrome around them changed. The
- * ephemeris-loading/error status joins them here too — it is the same kind of "is
- * something wrong with the app itself" signal sync status already is, so it reads as one
- * group rather than a stray line elsewhere. Fixed rather than in the flow, unlike
- * `.accountpanel-signedin` below — meant to be visible from anywhere, on every screen
- * including the landing page, not just where a signed-in device's data shows up.
- */
-.account-bar {
-  position: fixed;
-  bottom: 0.75rem;
+/* First focusable thing on the page, hidden until it takes focus (#421). */
+.skip-link {
+  position: absolute;
+  top: -4rem;
   left: 0.75rem;
-  z-index: 10;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.5rem;
+  z-index: 30;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--fg);
+  font-size: 0.875rem;
+}
+
+.skip-link:focus {
+  top: 0.5rem;
+}
+
+/* The skip link's target. Programmatically focusable only; no outline, since nothing here is a control. */
+.main-content:focus {
+  outline: none;
+}
+
+/* Anchors, focus and find-in-page scroll clear of the sticky header (#421), whatever element
+   they land on, without a rule per element. */
+html {
+  scroll-padding-top: calc(var(--app-header-height) + 0.75rem);
 }
 
 /* Shared pill shape for every corner control (#367) — box only. Cursor/hover stays on
    each interactive selector below so the non-interactive `.accountpanel-demo` badge
    doesn't pick up pointer/hover affordances it shouldn't have. */
 .corner-pill {
+  /* Controls, not text: when the sign-in box opens the pills beside it shift, and a click that
+     ends over a pill would otherwise leave its label selected. */
+  user-select: none;
   display: flex;
   align-items: center;
   height: 2.25rem;
@@ -254,28 +304,30 @@
 .accountpanel {
   position: relative;
   display: flex;
+  /* Keeps its pill's height while the sign-in box is open and the trigger is replaced, so the box
+     below always hangs from the same line instead of from a zero-size point (#421). */
+  min-height: 2.25rem;
 }
 
 .accountpanel-signedin .warning {
   position: absolute;
-  bottom: 2.5rem;
-  left: 0;
+  top: calc(100% + 0.5rem);
+  right: 0;
   width: max-content;
-  max-width: 16rem;
+  max-width: min(16rem, calc(100vw - 2rem));
 }
 
-/* The sign-in form and the adoption prompt, both floating above their trigger rather
-   than in the page flow — `.account-bar` is fixed, so anything it contains that has more
-   to say than a one-line badge needs its own box instead of pushing the page around.
-   Opens upward (`bottom: 2.5rem`), not downward, since the trigger sits near the bottom
-   edge of the viewport (#230) — a downward popover would run off the bottom of the
-   screen. Left-anchored (`left: 0`), not right, for the same reason: the trigger sits
-   near the left edge too. */
+/* The sign-in form and the adoption prompt float beneath their trigger rather than in the page
+   flow: they have more to say than a one-line badge and must not push the page around. The
+   trigger now sits in the sticky header at the top right (#421), so the box opens downward and
+   lines up with the trigger's right edge, and never wider than the screen. */
 .accountpanel-popover {
   position: absolute;
-  bottom: 2.5rem;
-  left: 0;
+  /* Below the header's bottom edge, not over the pills beside it. */
+  top: calc(100% + 0.75rem);
+  right: 0;
   width: 18rem;
+  max-width: calc(100vw - 2rem);
   padding: 1rem;
   border-radius: 0.5rem;
   border: 1px solid var(--line);
@@ -283,6 +335,21 @@
   color: var(--fg);
   font-size: 0.875rem;
   box-shadow: 0 0.5rem 1.5rem rgb(0 0 0 / 20%);
+}
+
+/* On a phone the trigger is not at the right edge (the header's controls wrap), so a box aligned
+   to it would run off the left side of the screen: it spans the screen under the header instead.
+   `.app-header`'s `backdrop-filter` makes it the containing block of this fixed box, so the offsets
+   below are measured from the header's own top-left corner. */
+@media (max-width: 40rem) {
+  .accountpanel-popover {
+    position: fixed;
+    top: calc(100% + 0.25rem);
+    left: 1rem;
+    right: 1rem;
+    width: auto;
+    max-width: none;
+  }
 }
 
 .accountpanel-popover-head {
@@ -1038,16 +1105,11 @@ label.stacked textarea:focus-visible {
 .pwastatus {
   position: fixed;
   inset: auto 0 0 0;
-  /* Below `.account-bar`'s own z-index (#137): both are fixed to the bottom of the viewport
-     and this one is rendered later in the DOM, so without an explicit order its own
-     background would paint over `.account-bar`'s pills whenever an update or a warm-cache
-     message is showing. The left padding below keeps this message's own text from starting
-     underneath that corner in the first place; the z-index order is the fallback for the
-     sliver of its semi-transparent background that still extends under it. */
+  /* Below the sticky header's z-index, so a tall message never paints over it. */
   z-index: 9;
   display: grid;
   gap: 0.5rem;
-  padding: 0.75rem 1.5rem 0.75rem var(--account-bar-clearance);
+  padding: 0.75rem 1.5rem;
   background: color-mix(in oklab, var(--surface) 92%, transparent);
   border-top: 1px solid var(--line);
   backdrop-filter: blur(6px);
@@ -1226,13 +1288,7 @@ label.stacked textarea:focus-visible {
   flex-wrap: wrap;
   align-items: flex-start;
   gap: 0.2rem;
-  /* Right padding is `--locale-bar-clearance`, not the plain `0.6rem` every other side gets
-     (#137): this row sits at the very top of `.person-shelf`, which has no side padding of
-     its own below `--shell-max-width` (it runs edge to edge there) — so without this, the
-     last tab/family on a line would scroll up directly underneath the fixed `.locale-bar`,
-     intercepting its clicks and sitting visually behind its pills. Wrapping one tab earlier
-     than it otherwise would is the trade; it's cheaper than losing the tab entirely. */
-  padding: 0.6rem var(--locale-bar-clearance) 0 0.6rem;
+  padding: 0.6rem;
 }
 
 .person-tab {
@@ -2308,8 +2364,7 @@ label.stacked textarea:focus-visible {
   .data-table-actions,
   .report-controls,
   .pwastatus,
-  .locale-bar,
-  .account-bar,
+  .app-header,
   .birth-place-search,
   .hint {
     display: none !important;
