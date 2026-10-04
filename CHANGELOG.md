@@ -4,6 +4,18 @@ All notable changes to Astraya are recorded here. Versions follow
 [semantic versioning](https://semver.org/), and every milestone ends in a release —
 see [docs/RELEASING.md](docs/RELEASING.md).
 
+## [0.24.1] — 2026-10-04
+
+**A patch for v0.24.0: the same app, with its Docker image fixed so it starts.**
+
+v0.24.0's Docker image crashed on start. The server had gained imports of two shared source files that the image did not contain, and spelled their own imports in a way that the image's Node cannot resolve, so the `0.24.0` and `latest` tags pointed at an image that never became healthy. The app itself, the GitHub release and the demo were not affected. If you run the image, pull `0.24.1`.
+
+### Fixed
+
+- **The Docker image starts again.** The two missing files are copied in and the imports are spelled the way Node needs.
+- **A test now computes everything the server loads at runtime and fails if the Dockerfile does not copy it,** or if an import would not resolve in the image, so a new server import cannot reach a release without its line. `npm run docker:smoke` builds the image locally and starts it the way the release workflow does, and is now a step in the release checklist.
+- **Two tests that failed at release time are fixed.** One read a generated, gitignored corpus folder instead of the committed corpus, and one compared two ephemeris values to a tolerance that sat exactly on floating-point noise (now 0.018 arcseconds, far inside the 0.2 arcsecond golden-chart gate).
+
 ## [0.24.0] — 2026-10-04
 
 **Five new timing and judgment tools (eclipses, horary, electional, rectification, planetary cycles), the transit list now leads with the transits that matter, every wheel can be clicked to isolate and read, the planetary rulers are yours to choose, and AI interpretations are named, labelled and can explain one placement.**
