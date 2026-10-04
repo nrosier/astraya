@@ -19,14 +19,21 @@ export function toggleSort(current: SortState | undefined, column: string): Sort
   return { column, direction: current.direction === 'asc' ? 'desc' : 'asc' };
 }
 
+import type { ReactNode } from 'react';
+
 export type CellValue = string | number | boolean;
 
 export interface TableColumn<T> {
   readonly key: string;
   readonly label: string;
   readonly valueOf: (row: T) => CellValue;
-  /** Display text for the cell; defaults to `String(valueOf(row))` when omitted. */
+  /** Display text for the cell; defaults to `String(valueOf(row))` when omitted. Also what a copy or CSV export would use. */
   readonly render?: (row: T) => string;
+  /**
+   * What the cell shows on screen when it needs more than text (a button, #418). Never used for the
+   * copied or downloaded table, which stay plain text from `render`/`valueOf`.
+   */
+  readonly renderCell?: (row: T) => ReactNode;
 }
 
 function comparable(value: CellValue): string | number {

@@ -56,6 +56,68 @@ test('the cycles screen lists the great conjunctions with a diagram, and narrows
   await expect(table.getByRole('row').nth(1)).toContainText('Venus');
 });
 
+test('a diagram point and its table row select each other (#418)', async ({ page }) => {
+  test.setTimeout(90_000);
+  // Short enough that the table starts below the fold, so scrolling a selected row into view is visible.
+  await page.setViewportSize({ width: 1100, height: 560 });
+  await gotoAndSettle(page, `${baseUrl}/#/cycles`);
+  const table = page.getByRole('table');
+  await expect(table).toBeVisible({ timeout: 60_000 });
+
+  const groups = page.locator('svg.cycle-diagram .cycle-point-group');
+  const count = await groups.count();
+  expect(count).toBeGreaterThan(5);
+  await expect(page.locator('svg.cycle-diagram .cycle-dimmed')).toHaveCount(0);
+
+  // Clicking a point on the diagram selects it, dims the rest, marks its row and brings it into view.
+  // The last point is the topmost: in this cycle points three steps apart land almost on top of each
+  // other, and a click goes to the one drawn last (the table reaches every one of them).
+  const lastId = await groups.nth(count - 1).getAttribute('data-cycle-id');
+  await groups
+    .nth(count - 1)
+    .locator('.cycle-hit-area')
+    .click();
+  const selectedRow = table.locator(`tbody tr[data-row-key="${lastId ?? ''}"]`);
+  await expect(selectedRow).toHaveAttribute('aria-current', 'true');
+  await expect(selectedRow).toBeInViewport();
+  await expect(selectedRow.getByRole('button', { name: `Show step ${String(count)} on the diagram` })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await expect(page.locator('svg.cycle-diagram .cycle-selected')).toHaveCount(1);
+  expect(await page.locator('svg.cycle-diagram .cycle-dimmed').count()).toBeGreaterThan(0);
+  await expect(page.getByRole('status').filter({ hasText: `Step ${String(count)} of` })).toBeVisible();
+
+  // A step button in the table selects that event on the diagram, and moves the selection.
+  await table.getByRole('button', { name: 'Show step 5 on the diagram' }).click();
+  await expect(table.locator('tbody tr[aria-current="true"]')).toHaveCount(1);
+  await expect(table.getByRole('button', { name: 'Show step 5 on the diagram' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await expect(table.getByRole('button', { name: `Show step ${String(count)} on the diagram` })).toHaveAttribute(
+    'aria-pressed',
+    'false',
+  );
+  await expect(page.locator('svg.cycle-diagram .cycle-selected .cycle-point-label')).toHaveText('5');
+
+  // The keyboard reaches it too: focus the button and press Enter on the selected one to clear.
+  const stepFive = table.getByRole('button', { name: 'Show step 5 on the diagram' });
+  await stepFive.focus();
+  await page.keyboard.press('Enter');
+  await expect(table.locator('tbody tr[aria-current="true"]')).toHaveCount(0);
+  await expect(page.locator('svg.cycle-diagram .cycle-dimmed')).toHaveCount(0);
+
+  // Clicking the empty diagram clears a selection too, and a new search starts with none.
+  await groups
+    .nth(count - 1)
+    .locator('.cycle-hit-area')
+    .click();
+  await expect(page.locator('svg.cycle-diagram .cycle-selected')).toHaveCount(1);
+  await page.getByLabel('Cycle').selectOption('venus-pentagram');
+  await expect(page.locator('svg.cycle-diagram .cycle-selected')).toHaveCount(0);
+});
+
 test('the cycles screen has no automatically detectable accessibility violations', async ({ page }) => {
   test.setTimeout(90_000);
 

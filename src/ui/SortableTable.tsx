@@ -20,6 +20,7 @@ export function SortableTable<T>({
   rows,
   getRowKey,
   downloadFilename,
+  selectedRowKey,
 }: {
   readonly caption: string;
   readonly columns: readonly TableColumn<T>[];
@@ -27,6 +28,8 @@ export function SortableTable<T>({
   readonly getRowKey: (row: T) => string;
   /** Filename for this table's CSV download (#68), already derived from the person and chart. */
   readonly downloadFilename: string;
+  /** The row to mark as selected (#418): highlighted, and exposed to assistive technology as the current row. */
+  readonly selectedRowKey?: string | undefined;
 }): React.JSX.Element {
   const t = useMessages(sortableTableMessages);
   const [sort, setSort] = useState<SortState>();
@@ -96,13 +99,28 @@ export function SortableTable<T>({
             </tr>
           </thead>
           <tbody>
-            {sorted.map((row) => (
-              <tr key={getRowKey(row)}>
-                {columns.map((column) => (
-                  <td key={column.key}>{column.render ? column.render(row) : String(column.valueOf(row))}</td>
-                ))}
-              </tr>
-            ))}
+            {sorted.map((row) => {
+              const rowKey = getRowKey(row);
+              const selected = selectedRowKey === rowKey;
+              return (
+                <tr
+                  key={rowKey}
+                  data-row-key={rowKey}
+                  className={selected ? 'data-table-row-selected' : undefined}
+                  aria-current={selected ? 'true' : undefined}
+                >
+                  {columns.map((column) => (
+                    <td key={column.key}>
+                      {column.renderCell
+                        ? column.renderCell(row)
+                        : column.render
+                          ? column.render(row)
+                          : String(column.valueOf(row))}
+                    </td>
+                  ))}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

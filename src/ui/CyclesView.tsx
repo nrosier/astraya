@@ -76,6 +76,16 @@ export function CyclesView(): React.JSX.Element {
   const [validation, setValidation] = useState<string>();
   const [result, setResult] = useState<Result>({ kind: 'idle' });
   const runId = useRef(0);
+  // The event shared by the diagram and the table (#418): a point and its row name the same exact aspect.
+  const [selectedId, setSelectedId] = useState<string>();
+  const tableRef = useRef<HTMLDivElement>(null);
+  // Where a selection came from: only one made on the diagram scrolls the table to its row.
+  const selectionFrom = useRef<'diagram' | 'table'>('table');
+
+  const select = (id: string | undefined, from: 'diagram' | 'table'): void => {
+    selectionFrom.current = from;
+    setSelectedId((current) => (id === undefined || current === id ? undefined : id));
+  };
 
   const run = (next: Params): void => {
     if (provider === undefined) return;
@@ -145,8 +155,51 @@ export function CyclesView(): React.JSX.Element {
 
   const nameOf = (key: string): string => bodyDisplayName(key, locale);
 
+  // A new result is a new set of events: nothing stays selected from the last one.
+  useEffect(() => {
+    setSelectedId(undefined);
+  }, [result]);
+
+  // Selecting a point on the diagram brings its row into view (smoothly, unless the reader asked for less motion).
+  useEffect(() => {
+    if (selectedId === undefined || selectionFrom.current !== 'diagram') return;
+    const row = Array.from(tableRef.current?.querySelectorAll('[data-row-key]') ?? []).find(
+      (candidate) => candidate.getAttribute('data-row-key') === selectedId,
+    );
+    const reduceMotion =
+      typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    row?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'nearest' });
+  }, [selectedId]);
+
+  const stepOf = useMemo(
+    () => new Map((result.kind === 'ready' ? result.rows : []).map((row, index) => [String(row.jd), index + 1])),
+    [result],
+  );
+
   const columns = useMemo<readonly TableColumn<CycleRow>[]>(
     () => [
+      {
+        key: 'step',
+        label: t.stepColumn,
+        valueOf: (row) => stepOf.get(String(row.jd)) ?? 0,
+        // A real button, so the keyboard reaches the link to the diagram too (the diagram itself is not announced).
+        renderCell: (row) => {
+          const step = stepOf.get(String(row.jd)) ?? 0;
+          return (
+            <button
+              type="button"
+              className="quiet"
+              aria-pressed={selectedId === String(row.jd)}
+              aria-label={t.showStep(step)}
+              onClick={() => {
+                select(String(row.jd), 'table');
+              }}
+            >
+              {step}
+            </button>
+          );
+        },
+      },
       { key: 'date', label: t.dateColumn, valueOf: (row) => row.jd, render: (row) => row.date },
       {
         key: 'aspect',
@@ -181,17 +234,23 @@ export function CyclesView(): React.JSX.Element {
       },
     ],
     // `nameOf` closes over `locale`, which is listed.
-    [t, locale, result],
+    [t, locale, result, stepOf, selectedId],
   );
 
   const diagram = useMemo(
     () =>
       result.kind === 'ready' && result.rows.length > 0
         ? renderCycleDiagramSvg(
-            result.rows.map((row, index) => ({ longitude: row.longitude, label: String(index + 1) })),
+            result.rows.map((row, index) => ({
+              longitude: row.longitude,
+              label: String(index + 1),
+              id: String(row.jd),
+            })),
+            380,
+            selectedId,
           )
         : undefined,
-    [result],
+    [result, selectedId],
   );
 
   return (
@@ -339,17 +398,37 @@ export function CyclesView(): React.JSX.Element {
             </p>
             {diagram !== undefined && (
               <figure className="cycle-figure">
-                <div aria-hidden="true" dangerouslySetInnerHTML={{ __html: diagram }} />
-                <figcaption className="hint">{t.diagramCaption}</figcaption>
+                {/* Hidden from assistive technology: the table, with a step button on every row, is the
+                    accessible way to the same selection. A click on a point selects it; on the empty
+                    diagram, or on the selected point again, it clears. */}
+                <div
+                  className="cycle-diagram-interactive"
+                  aria-hidden="true"
+                  dangerouslySetInnerHTML={{ __html: diagram }}
+                  onClick={(event) => {
+                    const target = event.target;
+                    const point = target instanceof Element ? target.closest('[data-cycle-id]') : null;
+                    select(point?.getAttribute('data-cycle-id') ?? undefined, 'diagram');
+                  }}
+                />
+                <figcaption className="hint">
+                  {t.diagramCaption} {t.selectionHint}
+                </figcaption>
               </figure>
             )}
-            <SortableTable
-              caption={t.tableCaption}
-              columns={columns}
-              rows={result.rows}
-              getRowKey={(row) => String(row.jd)}
-              downloadFilename={`cycles-${result.params.bodyA}-${result.params.bodyB}-${result.params.aspect}.csv`}
-            />
+            <p className="hint" role="status">
+              {selectedId === undefined ? '' : t.stepSelected(stepOf.get(selectedId) ?? 0, result.rows.length)}
+            </p>
+            <div ref={tableRef}>
+              <SortableTable
+                caption={t.tableCaption}
+                columns={columns}
+                rows={result.rows}
+                getRowKey={(row) => String(row.jd)}
+                downloadFilename={`cycles-${result.params.bodyA}-${result.params.bodyB}-${result.params.aspect}.csv`}
+                selectedRowKey={selectedId}
+              />
+            </div>
           </>
         ))}
     </main>
