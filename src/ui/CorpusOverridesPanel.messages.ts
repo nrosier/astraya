@@ -26,6 +26,7 @@ const en = {
   exportButton: 'Export corrections',
 
   keyColumn: 'Entry',
+  detailsColumn: 'Details',
   categoryColumn: 'Category',
   tierColumn: 'Tier',
   tagsColumn: 'Tags',
@@ -74,6 +75,7 @@ const nl: typeof en = {
   exportButton: 'Correcties exporteren',
 
   keyColumn: 'Onderdeel',
+  detailsColumn: 'Details',
   categoryColumn: 'Categorie',
   tierColumn: 'Niveau',
   tagsColumn: 'Labels',

@@ -23,6 +23,7 @@ const en = {
     `${count} of the selected candidates were already decided elsewhere and were skipped.`,
 
   keyColumn: 'Entry',
+  detailsColumn: 'Details',
   sourceColumn: 'Source',
   triageColumn: 'Triage',
   tagsColumn: 'Tags',
@@ -63,6 +64,7 @@ const nl: typeof en = {
     `${count} van de geselecteerde kandidaten waren elders al besloten en zijn overgeslagen.`,
 
   keyColumn: 'Onderdeel',
+  detailsColumn: 'Details',
   sourceColumn: 'Bron',
   triageColumn: 'Triage',
   tagsColumn: 'Labels',

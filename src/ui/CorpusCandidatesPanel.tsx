@@ -26,11 +26,6 @@ import { sharedMessages } from './shared.messages.js';
 import type { CorpusCandidate } from '../sync/admin-client.js';
 import type { Locale } from '../interpretation/schema.js';
 
-function truncate(text: string): string {
-  const maxLength = 90;
-  return text.length <= maxLength ? text : `${text.slice(0, maxLength - 1)}…`;
-}
-
 export function CorpusCandidatesPanel(): React.JSX.Element {
   const t = useMessages(corpusCandidatesPanelMessages);
   const shared = useMessages(sharedMessages);
@@ -209,10 +204,7 @@ export function CorpusCandidatesPanel(): React.JSX.Element {
                   <tr>
                     <th aria-hidden="true" />
                     <th>{t.keyColumn}</th>
-                    <th>{t.sourceColumn}</th>
-                    <th>{t.triageColumn}</th>
-                    <th>{t.tagsColumn}</th>
-                    <th>{t.textColumn}</th>
+                    <th>{t.detailsColumn}</th>
                     <th>{t.actionsColumn}</th>
                   </tr>
                 </thead>
@@ -247,26 +239,35 @@ export function CorpusCandidatesPanel(): React.JSX.Element {
                             </>
                           )}
                         </td>
-                        <td>{candidate.source === 'classical-seed' ? t.sourceClassicalSeed : t.sourceLlmFill}</td>
+                        {/* Source, triage, tags and the whole text in one cell, so a reviewer reads the candidate without opening it. */}
                         <td>
-                          {candidate.triageSignal === 'match'
-                            ? t.triageMatch
-                            : candidate.triageSignal === 'mismatch'
-                              ? t.triageMismatch
-                              : candidate.triageSignal === 'no-baseline'
-                                ? t.triageNoBaseline
-                                : t.triageUnchecked}
-                          {candidate.triageScore !== undefined && ` (${candidate.triageScore.toFixed(2)})`}
+                          <dl className="entry-details">
+                            <dt>{t.sourceColumn}</dt>
+                            <dd>{candidate.source === 'classical-seed' ? t.sourceClassicalSeed : t.sourceLlmFill}</dd>
+                            <dt>{t.triageColumn}</dt>
+                            <dd>
+                              {candidate.triageSignal === 'match'
+                                ? t.triageMatch
+                                : candidate.triageSignal === 'mismatch'
+                                  ? t.triageMismatch
+                                  : candidate.triageSignal === 'no-baseline'
+                                    ? t.triageNoBaseline
+                                    : t.triageUnchecked}
+                              {candidate.triageScore !== undefined && ` (${candidate.triageScore.toFixed(2)})`}
+                            </dd>
+                            <dt>{t.tagsColumn}</dt>
+                            <dd>
+                              {candidate.tags.map((tag) => (
+                                <span key={tag} className="cell-tag">
+                                  {tagLabel(tag, uiLocale)}
+                                  <span className="cell-explanation">{tagExplanation(tag, uiLocale)}</span>
+                                </span>
+                              ))}
+                            </dd>
+                            <dt>{t.textColumn}</dt>
+                            <dd className="entry-text">{candidate.text}</dd>
+                          </dl>
                         </td>
-                        <td>
-                          {candidate.tags.map((tag) => (
-                            <span key={tag} className="cell-tag">
-                              {tagLabel(tag, uiLocale)}
-                              <span className="cell-explanation">{tagExplanation(tag, uiLocale)}</span>
-                            </span>
-                          ))}
-                        </td>
-                        <td>{truncate(candidate.text)}</td>
                         <td className="actions">
                           <button
                             type="button"

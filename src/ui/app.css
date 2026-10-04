@@ -2874,6 +2874,27 @@ svg text.chart-symbol-text-unicode {
   white-space: nowrap;
 }
 
+.entry-details {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 0.3rem 1rem;
+  margin: 0;
+}
+
+.entry-details dt {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.entry-details dd {
+  margin: 0;
+}
+
+/* The whole text of the entry, with its line breaks, so a reviewer can read it in full. */
+.entry-text {
+  white-space: pre-wrap;
+}
+
 .cell-explanation {
   display: block;
   margin-top: 0.15rem;

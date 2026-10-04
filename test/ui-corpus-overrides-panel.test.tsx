@@ -221,6 +221,27 @@ describe('CorpusOverridesPanel (#292)', () => {
     expect(rows[0]?.textContent).toContain('Moon in Taurus');
   });
 
+  it('shows each entry as Entry, Details and Actions, with the whole text and nothing cut short', async () => {
+    const longText = `${'A long placement description that goes on and on. '.repeat(8)}The very last words.`;
+    const { fetch: fetchMock } = makeFetchMock([{ ...NEUTRAL_ENTRY, text: longText }, OTHER_ENTRY]);
+    vi.stubGlobal('fetch', fetchMock);
+    const { container, root } = await mount();
+    cleanup = () => {
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+    };
+
+    const headers = Array.from(container.querySelectorAll('th')).map((th) => th.textContent);
+    expect(headers).toEqual(['Entry', 'Details', 'Actions']);
+    const first = tableRows(container)[0];
+    expect(first?.querySelector('dd.entry-text')?.textContent).toBe(longText);
+    expect(first?.textContent).not.toContain('…');
+    const labels = Array.from(first?.querySelectorAll('dt') ?? []).map((dt) => dt.textContent);
+    expect(labels).toEqual(['Category', 'Tier', 'Tags', 'Text', 'Status']);
+  });
+
   it('editing and saving a correction marks the entry Overridden', async () => {
     const { fetch: fetchMock } = makeFetchMock();
     vi.stubGlobal('fetch', fetchMock);

@@ -47,11 +47,6 @@ import type { CorpusCategory, CorpusEntry, CorpusTier, Locale } from '../interpr
 
 const PAGE_SIZE = 50;
 
-function truncate(text: string): string {
-  const maxLength = 90;
-  return text.length <= maxLength ? text : `${text.slice(0, maxLength - 1)}…`;
-}
-
 function isCorpusCategory(value: string): value is CorpusCategory {
   return (CORPUS_CATEGORIES as readonly string[]).includes(value);
 }
@@ -469,11 +464,7 @@ export function CorpusOverridesPanel(): React.JSX.Element {
                   <thead>
                     <tr>
                       <th>{t.keyColumn}</th>
-                      <th>{t.categoryColumn}</th>
-                      <th>{t.tierColumn}</th>
-                      <th>{t.tagsColumn}</th>
-                      <th>{t.textColumn}</th>
-                      <th>{t.statusColumn}</th>
+                      <th>{t.detailsColumn}</th>
                       <th>{t.actionsColumn}</th>
                     </tr>
                   </thead>
@@ -486,24 +477,35 @@ export function CorpusOverridesPanel(): React.JSX.Element {
                           <td>
                             <EntryLabel entryKey={entry.key} locale={uiLocale} />
                           </td>
+                          {/* Everything about the entry in one cell, with the whole text, so a reviewer reads it
+                              without opening it: nothing is cut short. */}
                           <td>
-                            {categoryLabelOf(entry.key)}
-                            <span className="cell-explanation">{categoryExplanationOf(entry.key)}</span>
+                            <dl className="entry-details">
+                              <dt>{t.categoryColumn}</dt>
+                              <dd>
+                                {categoryLabelOf(entry.key)}
+                                <span className="cell-explanation">{categoryExplanationOf(entry.key)}</span>
+                              </dd>
+                              <dt>{t.tierColumn}</dt>
+                              <dd>
+                                {tierLabel(entry.tier, uiLocale)}
+                                <span className="cell-explanation">{tierExplanation(entry.tier, uiLocale)}</span>
+                              </dd>
+                              <dt>{t.tagsColumn}</dt>
+                              <dd>
+                                {entry.tags.map((tag) => (
+                                  <span key={tag} className="cell-tag">
+                                    {tagLabel(tag, uiLocale)}
+                                    <span className="cell-explanation">{tagExplanation(tag, uiLocale)}</span>
+                                  </span>
+                                ))}
+                              </dd>
+                              <dt>{t.textColumn}</dt>
+                              <dd className="entry-text">{entry.text}</dd>
+                              <dt>{t.statusColumn}</dt>
+                              <dd>{overridden ? t.overriddenStatus : t.defaultStatus}</dd>
+                            </dl>
                           </td>
-                          <td>
-                            {tierLabel(entry.tier, uiLocale)}
-                            <span className="cell-explanation">{tierExplanation(entry.tier, uiLocale)}</span>
-                          </td>
-                          <td>
-                            {entry.tags.map((tag) => (
-                              <span key={tag} className="cell-tag">
-                                {tagLabel(tag, uiLocale)}
-                                <span className="cell-explanation">{tagExplanation(tag, uiLocale)}</span>
-                              </span>
-                            ))}
-                          </td>
-                          <td>{truncate(entry.text)}</td>
-                          <td>{overridden ? t.overriddenStatus : t.defaultStatus}</td>
                           <td className="actions">
                             <button
                               type="button"
