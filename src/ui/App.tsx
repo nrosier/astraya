@@ -10,7 +10,7 @@ import { LanguageToggle } from './LanguageToggle.js';
 import { useMessages } from './messages.js';
 import { People } from './People.js';
 import { AdminNav } from './AdminNav.js';
-import { PersonNav } from './PersonNav.js';
+import { AppNav } from './AppNav.js';
 import { PwaStatus } from './PwaStatus.js';
 import { parseRoute } from './route.js';
 import { SessionProvider, useStoreStatus } from './session-context.js';
@@ -65,12 +65,11 @@ const CorpusCandidatesPanel = lazy(async () => ({
 const SharedChartView = lazy(async () => ({ default: (await import('./SharedChartView.js')).SharedChartView }));
 
 /**
- * The routes that need the local store, wrapped in the one place that opens it.
+ * The routes that need the local store, gated in the one place that reports its state.
  *
- * Opened here rather than at the app root so a visitor reading /about never touches
- * IndexedDB — and so a browser that refuses it (private mode, storage disabled) breaks
- * exactly one part of the app instead of the whole shell. The failure is rendered:
- * falling back to memory would lose everything typed, silently, at the next reload.
+ * A browser that refuses the store (private mode, storage disabled) breaks exactly the screens that
+ * need it instead of the whole shell. The failure is rendered: falling back to memory would lose
+ * everything typed, silently, at the next reload.
  */
 function Stored({ children }: { children: React.ReactNode }): React.JSX.Element {
   const status = useStoreStatus();
@@ -100,7 +99,9 @@ function Stored({ children }: { children: React.ReactNode }): React.JSX.Element 
     );
   }
 
-  return <StoreProvider store={status.store}>{children}</StoreProvider>;
+  // The provider itself is mounted once above the header and the screens (`StoreFrame`), so the
+  // header's navigation can read the person too (#421); this only gates on the store being usable.
+  return <>{children}</>;
 }
 
 /** Shown while a lazily-loaded screen's chunk is in flight (#338) — the same line and shape `Stored` uses while opening the database, so a slow network and slow storage look the same rather than inventing a second idiom. */
@@ -138,6 +139,17 @@ export function App(): React.JSX.Element {
   );
 }
 
+/**
+ * Provides the open store (or `undefined` while it is opening or failed) to everything below, header
+ * included (#421): the header's navigation shows whose chart a person's screen is, which needs the
+ * person, and the screens used to open the store themselves one level too low for that. Mounted once,
+ * so the provider never changes type when the store arrives and the header is not remounted.
+ */
+function StoreFrame({ children }: { children: React.ReactNode }): React.JSX.Element {
+  const status = useStoreStatus();
+  return <StoreProvider store={status.kind === 'ready' ? status.store : undefined}>{children}</StoreProvider>;
+}
+
 function AppShell(): React.JSX.Element {
   const t = useMessages(appMessages);
   const [route, setRoute] = useState(() => window.location.hash);
@@ -146,6 +158,7 @@ function AppShell(): React.JSX.Element {
   const [versionError, setVersionError] = useState<string>();
   const engineStatus = engineError ?? versionError ?? (seVersion === undefined ? t.loadingEphemeris : 'ready');
   const isFirstRoute = useRef(true);
+  const headerRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     const onHashChange = (): void => {
@@ -214,6 +227,26 @@ function AppShell(): React.JSX.Element {
   }, [provider]);
 
   useEffect(() => {
+    // The header is one row on a wide screen and wraps to two when the navigation does not fit, so
+    // anchors and focus have to scroll clear of its real height, not a fixed one (#421).
+    const header = headerRef.current;
+    if (header === null || typeof ResizeObserver === 'undefined') return undefined;
+    const apply = (): void => {
+      document.documentElement.style.setProperty(
+        '--app-header-size',
+        `${String(header.getBoundingClientRect().height)}px`,
+      );
+    };
+    apply();
+    const observer = new ResizeObserver(apply);
+    observer.observe(header);
+    return () => {
+      observer.disconnect();
+      document.documentElement.style.removeProperty('--app-header-size');
+    };
+  }, []);
+
+  useEffect(() => {
     // Dev mode only, never registered: a service worker caching `npm run dev`'s
     // requests would fight Vite's HMR, which serves the same paths differently
     // on every reload.
@@ -237,7 +270,8 @@ function AppShell(): React.JSX.Element {
     // left dead zones, needed clearance padding on whatever scrolled underneath them, and
     // could not be reached without scrolling back to the corner's neighbourhood.
     <SessionProvider>
-      {/* The header is first in the DOM, so a keyboard user meets the skip link, then the
+      <StoreFrame>
+        {/* The header is first in the DOM, so a keyboard user meets the skip link, then the
           controls, before any page content — the order sighted users see them in. Its skip
           link is the first focusable thing on every page (#421). `AccountPanel` sits right next
           to `SyncBadge` (#230): sign-in/out is the thing that changes the sync badge's state.
@@ -246,36 +280,38 @@ function AppShell(): React.JSX.Element {
           project is built to avoid, so it stays visible on every route. Language and theme are
           side by side: both are "change how the page looks", picked together more often than
           either alone. */}
-      <header className="app-header">
-        <a className="skip-link" href="#main-content" onClick={skipToContent}>
-          {t.skipToContent}
-        </a>
-        <div className="app-header-start">
-          <a className="app-header-brand" href="#/people" aria-label={t.homeLinkLabel}>
-            Astraya
+        <header ref={headerRef} className={'personId' in parsed ? 'app-header app-header-with-person' : 'app-header'}>
+          <a className="skip-link" href="#main-content" onClick={skipToContent}>
+            {t.skipToContent}
           </a>
-          {engineStatus !== 'ready' && <p className="status app-header-status">{engineStatus}</p>}
-        </div>
-        <div className="app-header-end">
-          <SyncBadge />
-          <AccountPanel />
-          <LanguageToggle />
-          <ThemeToggle />
-        </div>
-      </header>
-      {/* One boundary around the whole screen slot rather than one per lazy route (#338):
+          <div className="app-header-start">
+            <a className="app-header-brand" href="#/people" aria-label={t.homeLinkLabel}>
+              Astraya
+            </a>
+            {engineStatus !== 'ready' && <p className="status app-header-status">{engineStatus}</p>}
+          </div>
+          <AppNav route={parsed} />
+          <div className="app-header-end">
+            <SyncBadge />
+            <AccountPanel />
+            <LanguageToggle />
+            <ThemeToggle />
+          </div>
+        </header>
+        {/* One boundary around the whole screen slot rather than one per lazy route (#338):
           every lazy screen wants the same fallback, and keeping the boundary outside
           `Stored` means a chunk still in flight does not also restart the store. */}
-      <div id="main-content" className="main-content" tabIndex={-1}>
-        <Suspense fallback={<LoadingScreen />}>{screen}</Suspense>
-      </div>
-      <footer>
-        {/* The version itself is the changelog link: clicking a version to see what changed
+        <div id="main-content" className="main-content" tabIndex={-1}>
+          <Suspense fallback={<LoadingScreen />}>{screen}</Suspense>
+        </div>
+        <footer>
+          {/* The version itself is the changelog link: clicking a version to see what changed
             in it is the behaviour people expect. Promoted here from the old landing page
             (#234) so both routes stay reachable now that the landing page is gone. */}
-        <a href="#/changelog">{t.changelogLink(APP_VERSION)}</a> &middot; <a href="#/about">{t.aboutLink}</a>
-      </footer>
-      <PwaStatus />
+          <a href="#/changelog">{t.changelogLink(APP_VERSION)}</a> &middot; <a href="#/about">{t.aboutLink}</a>
+        </footer>
+        <PwaStatus />
+      </StoreFrame>
     </SessionProvider>
   );
 }
@@ -323,7 +359,7 @@ function renderScreen(parsed: Route, seVersion: string | undefined): React.JSX.E
     parsed.kind === 'corpus-candidates'
   ) {
     // One tab strip over all four admin screens (#414), in the same bordered shelf the person
-    // tabs use. The admin area is person-independent, so it is not part of `PersonNav`.
+    // tabs use. The admin area is person-independent, so it is not part of the person menu.
     return (
       <Stored>
         <div className="person-shelf">
@@ -358,19 +394,8 @@ function renderScreen(parsed: Route, seVersion: string | undefined): React.JSX.E
     parsed.kind === 'periodic-transit' ||
     parsed.kind === 'astrocartography'
   ) {
-    return (
-      <Stored>
-        {/* Rendered once above whichever view is picked below (#234), rather than each of
-            the nine person-scoped screens carrying its own copy of the nav chain that used
-            to live inside PersonForm. `.person-shelf` is what makes the tab strip and the
-            view below it read as one bordered box rather than two stacked pieces — see
-            app.css. */}
-        <div className="person-shelf">
-          <PersonNav personId={parsed.personId} route={parsed} />
-          {renderPersonView(parsed)}
-        </div>
-      </Stored>
-    );
+    // The person's tabs live in the header's navigation (#421), so the view stands on its own.
+    return <Stored>{renderPersonView(parsed)}</Stored>;
   }
 
   return <HomeRedirect />;

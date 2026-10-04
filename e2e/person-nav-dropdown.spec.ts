@@ -80,7 +80,7 @@ test('choosing an item navigates and leaves no menu open', async ({ page }) => {
   await expect(page.getByRole('navigation', { name: /subtabs$/ })).toHaveCount(0);
   // The group holding the current page is highlighted, but not held open.
   await expect(group(page, 'Progressions & Directions')).toHaveAttribute('aria-expanded', 'false');
-  await expect(page.locator('.person-tab-family.active')).toHaveCount(1);
+  await expect(page.locator('.app-nav-group.active')).toHaveCount(1);
 });
 
 test('a click on empty page, on content, or on another tab closes the open menu', async ({ page }) => {

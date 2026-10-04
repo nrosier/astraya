@@ -11,7 +11,7 @@ import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
-import { gotoAndSettle } from './support.ts';
+import { gotoAndSettle, openTool } from './support.ts';
 
 let dir: string;
 let app: FastifyInstance;
@@ -45,7 +45,7 @@ test('casting a horary chart shows the considerations before judgment and the ch
   test.setTimeout(90_000);
 
   await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await page.getByRole('link', { name: 'Horary chart', exact: true }).click();
+  await openTool(page, 'Horary chart');
   await expect(page.getByRole('heading', { name: 'Horary chart', level: 1 })).toBeVisible();
 
   await castLondonChart(page);

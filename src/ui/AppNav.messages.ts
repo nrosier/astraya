@@ -1,13 +1,25 @@
 /**
- * Message catalogue for `PersonNav.tsx` (#158), including the per-tab labels for
- * `person-nav.ts`'s `PERSON_TABS` (that module has no access to the current locale, so
- * `PersonNav.tsx` looks labels up here by `tab.key`).
+ * Message catalogue for `AppNav.tsx` (#158, #421): the per-tab labels for `person-nav.ts`'s
+ * `PERSON_TABS` and the tools menu's labels for `tools-nav.ts` (those modules have no access to
+ * the current locale, so `AppNav.tsx` looks labels up here by key).
  */
 import type { PersonTabFamilyKey, PersonTabKey } from './person-nav.js';
+import type { ToolKey } from './tools-nav.js';
 
 const en = {
-  chartTypesAriaLabel: 'Chart types',
+  mainNavAriaLabel: 'Main',
+  menuButton: 'Menu',
+  menuButtonClose: 'Close menu',
+  personChipLabel: (name: string) => `Chart of ${name}`,
   adminTabLabel: 'Admin',
+  toolsLabel: 'Tools',
+  toolLabels: {
+    cycles: 'Planetary cycles',
+    eclipses: 'Eclipses',
+    horary: 'Horary chart',
+    electional: 'Electional search',
+    rectification: 'Birth-time rectification',
+  } satisfies Record<ToolKey, string>,
   disabledTabSuffix: (label: string) => `${label} — complete the birth record first`,
   completeBirthRecordHint: 'Complete the birth record to unlock the other tabs.',
   subtabsAriaLabel: (familyLabel: string) => `${familyLabel} subtabs`,
@@ -37,8 +49,19 @@ const en = {
 };
 
 const nl: typeof en = {
-  chartTypesAriaLabel: 'Horoscooptypes',
+  mainNavAriaLabel: 'Hoofdmenu',
+  menuButton: 'Menu',
+  menuButtonClose: 'Menu sluiten',
+  personChipLabel: (name: string) => `Horoscoop van ${name}`,
   adminTabLabel: 'Beheer',
+  toolsLabel: 'Hulpmiddelen',
+  toolLabels: {
+    cycles: 'Planetaire cycli',
+    eclipses: 'Verduisteringen',
+    horary: 'Horoscoop voor een vraag',
+    electional: 'Electieve zoektocht',
+    rectification: 'Geboortetijd-rectificatie',
+  } satisfies Record<ToolKey, string>,
   disabledTabSuffix: (label: string) => `${label} — voltooi eerst de geboortegegevens`,
   completeBirthRecordHint: 'Vul de geboortegegevens in om de overige tabs te ontgrendelen.',
   subtabsAriaLabel: (familyLabel: string) => `Subtabs van ${familyLabel}`,
@@ -67,4 +90,4 @@ const nl: typeof en = {
   } satisfies Record<PersonTabFamilyKey, string>,
 };
 
-export const personNavMessages = { en, nl };
+export const appNavMessages = { en, nl };

@@ -11,7 +11,7 @@ import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
-import { gotoAndSettle } from './support.ts';
+import { gotoAndSettle, openTool } from './support.ts';
 
 let dir: string;
 let app: FastifyInstance;
@@ -44,7 +44,7 @@ test('searching for just the void-Moon rule reproduces the 8 March 2024 void win
   test.setTimeout(120_000);
 
   await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await page.getByRole('link', { name: 'Electional search', exact: true }).click();
+  await openTool(page, 'Electional search');
   await expect(page.getByRole('heading', { name: 'Electional search', level: 1 })).toBeVisible();
 
   await fillLondonWindow(page);

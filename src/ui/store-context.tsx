@@ -16,7 +16,17 @@ import { trace } from '../trace.js';
 
 const StoreContext = createContext<Store | undefined>(undefined);
 
-export function StoreProvider({ store, children }: { store: Store; children: React.ReactNode }): React.JSX.Element {
+/**
+ * `store` may be `undefined` while the store is still opening (or failed to): the app mounts this once above the
+ * header and the screens (#421), so the provider itself never changes type when the store arrives.
+ */
+export function StoreProvider({
+  store,
+  children,
+}: {
+  store: Store | undefined;
+  children: React.ReactNode;
+}): React.JSX.Element {
   return <StoreContext.Provider value={store}>{children}</StoreContext.Provider>;
 }
 

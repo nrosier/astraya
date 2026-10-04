@@ -156,10 +156,11 @@
   position: sticky;
   top: 0;
   z-index: 20;
-  display: flex;
+  display: grid;
+  grid-template-areas: 'start nav end';
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
+  gap: 0 0.75rem;
   min-height: var(--app-header-height);
   padding: 0.5rem 1rem;
   background: color-mix(in oklab, var(--bg) 82%, transparent);
@@ -175,6 +176,7 @@
 }
 
 .app-header-start {
+  grid-area: start;
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -199,6 +201,7 @@
 }
 
 .app-header-end {
+  grid-area: end;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -232,7 +235,7 @@
 /* Anchors, focus and find-in-page scroll clear of the sticky header (#421), whatever element
    they land on, without a rule per element. */
 html {
-  scroll-padding-top: calc(var(--app-header-height) + 0.75rem);
+  scroll-padding-top: calc(var(--app-header-size, var(--app-header-height)) + 0.75rem);
 }
 
 /* Shared pill shape for every corner control (#367) — box only. Cursor/hover stays on
@@ -679,6 +682,7 @@ footer {
 }
 
 .field-group {
+  min-width: 0; /* a fieldset otherwise refuses to shrink below its widest field, and scrolls a phone sideways */
   margin: 0 0 1.25rem;
   padding: 0;
   border: none;
@@ -783,6 +787,7 @@ footer {
   flex-direction: column;
   gap: 0.35rem;
   flex: 1;
+  min-width: 0;
   color: var(--muted);
   font-size: 0.8rem;
   font-weight: 550;
@@ -790,6 +795,7 @@ footer {
 }
 
 .birth-place-search-form input {
+  min-width: 0;
   padding: 0.55rem 0.7rem;
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
@@ -1329,96 +1335,6 @@ label.stacked textarea:focus-visible {
   cursor: not-allowed;
 }
 
-/* A family of subtabs (#398) — a native <details> standing in for one `.person-tab`, so it sits
-   in the same flex row and gets the same "fused into the panel below" active treatment as a
-   plain tab when the family containing the current route is open. `position: relative` anchors
-   the subtab dropdown (`.person-subtabs` below) to this element rather than the whole nav row. */
-.person-tab-family {
-  position: relative;
-}
-
-.person-tab-family-toggle {
-  padding: 0.55rem 1rem;
-  border: none;
-  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
-  background: none;
-  color: var(--muted);
-  font: inherit;
-  font-weight: 550;
-  cursor: pointer;
-  user-select: none;
-}
-
-.person-tab-family-toggle::after {
-  content: ' \25BE';
-  font-size: 0.75em;
-  color: var(--muted);
-}
-
-.person-tab-family:hover > .person-tab-family-toggle {
-  color: var(--fg);
-}
-
-/* The group that is open, and — separately — the one holding the current page (#417): the page's
-   group is highlighted like an active tab without being held open. */
-.person-tab-family.open > .person-tab-family-toggle,
-.person-tab-family.active > .person-tab-family-toggle {
-  background: var(--bg);
-  color: var(--fg);
-}
-
-.person-tab-family.active > .person-tab-family-toggle {
-  margin-bottom: -1px;
-}
-
-/* The revealed subtabs — a small dropdown anchored under the summary, not pushed into normal
-   flow, so the main tab row's height doesn't shift depending on which family is open. */
-.person-subtabs {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  z-index: 10;
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-  min-width: 100%;
-  padding: 0.3rem;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  box-shadow: 0 0.5rem 1.5rem rgb(0 0 0 / 20%);
-}
-
-.person-subtab {
-  padding: 0.4rem 0.8rem;
-  border: none;
-  border-radius: var(--radius-sm);
-  background: none;
-  color: var(--muted);
-  font-weight: 500;
-  font-size: 0.9em;
-  text-align: left;
-  white-space: nowrap;
-}
-
-.person-subtab:hover:not(.active) {
-  color: var(--fg);
-  background: var(--surface-hover);
-}
-
-.person-subtab.active {
-  background: var(--surface-hover);
-  color: var(--fg);
-  font-weight: 600;
-}
-
-.person-subtab.disabled,
-.person-subtab.disabled:hover {
-  opacity: 0.55;
-  color: var(--muted);
-  cursor: not-allowed;
-}
-
 .person-shelf .hint {
   margin: 0;
   padding: 0 1rem 0.75rem;
@@ -1432,6 +1348,223 @@ label.stacked textarea:focus-visible {
   margin: 0;
   padding: 1.5rem 1.5rem 2rem;
   background: var(--bg);
+}
+
+/*
+ * The header's navigation (#421, `AppNav.tsx`): the person chip and tabs, the Tools menu and Admin.
+ * Between the brand and the controls on a screen with no person; on a row of its own under them on a
+ * person's screen. Below 64rem it folds behind a Menu button and opens as a panel under the header.
+ */
+.app-nav-wrap {
+  grid-area: nav;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+/* On a person's screen the navigation is long (the chip, eight items and Tools), so it takes a row
+   of its own under the brand and the controls instead of squeezing between them. */
+.app-header-with-person {
+  grid-template-areas:
+    'start end'
+    'nav nav';
+  grid-template-columns: minmax(0, 1fr) auto;
+  row-gap: 0.15rem;
+}
+
+.app-nav-toggle {
+  display: none;
+}
+
+.app-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.app-nav-person {
+  max-width: 11rem;
+  margin-right: 0.3rem;
+  padding-right: 0.6rem;
+  overflow: hidden;
+  border-right: 1px solid var(--line);
+  color: var(--fg);
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-nav-item,
+.app-nav-group-toggle {
+  padding: 0.3rem 0.5rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 550;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.app-nav-item:hover:not(.active, .disabled),
+.app-nav-group-toggle:hover {
+  color: var(--fg);
+  background: var(--surface-hover);
+}
+
+.app-nav-item.active,
+.app-nav-group.active > .app-nav-group-toggle,
+.app-nav-group.open > .app-nav-group-toggle {
+  background: var(--surface-hover);
+  color: var(--fg);
+}
+
+.app-nav-item.disabled,
+.app-nav-item.disabled:hover,
+.app-nav-menu-item.disabled,
+.app-nav-menu-item.disabled:hover {
+  opacity: 0.55;
+  color: var(--muted);
+  background: none;
+  cursor: not-allowed;
+}
+
+/* The admin area, set apart in the accent so an admin finds it without it competing with the chart tabs. */
+.app-nav-admin {
+  margin-left: auto;
+  color: var(--accent);
+}
+
+.app-nav-group {
+  position: relative;
+}
+
+.app-nav-group-toggle::after {
+  content: ' \25BE';
+  font-size: 0.75em;
+  color: var(--muted);
+}
+
+/* The revealed items: a dropdown anchored under its button, over the page rather than pushed into the
+   flow, so the bar's height does not shift with which group is open. */
+.app-nav-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 100%;
+  padding: 0.3rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 0.5rem 1.5rem rgb(0 0 0 / 20%);
+}
+
+.app-nav-menu-item {
+  padding: 0.4rem 0.8rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-weight: 500;
+  font-size: 0.9em;
+  text-align: left;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.app-nav-menu-item:hover:not(.active, .disabled) {
+  color: var(--fg);
+  background: var(--surface-hover);
+}
+
+.app-nav-menu-item.active {
+  background: var(--surface-hover);
+  color: var(--fg);
+  font-weight: 600;
+}
+
+@media (max-width: 63.99rem) {
+  /* Brand and the Menu button on the first row, the controls under them, whatever the screen. */
+  .app-header,
+  .app-header-with-person {
+    grid-template-areas:
+      'start nav'
+      'end end';
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .app-header-end {
+    justify-content: flex-start;
+  }
+
+  .app-nav-toggle {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.4rem 0.9rem;
+  }
+
+  /* The panel hangs under the header, as wide as it is (the header is its containing block). */
+  .app-nav {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 25;
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.1rem;
+    max-height: calc(100vh - var(--app-header-size, var(--app-header-height)));
+    padding: 0.5rem 1rem 1rem;
+    overflow-y: auto;
+    background: var(--bg);
+    border-bottom: 1px solid var(--line);
+    box-shadow: 0 0.75rem 1.5rem rgb(0 0 0 / 20%);
+  }
+
+  .app-nav.open {
+    display: flex;
+  }
+
+  .app-nav-person {
+    max-width: none;
+    margin: 0 0 0.25rem;
+    padding: 0.4rem 0.7rem;
+    border-right: none;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .app-nav-item,
+  .app-nav-group-toggle {
+    padding: 0.65rem 0.7rem;
+    text-align: left;
+  }
+
+  .app-nav-admin {
+    margin-left: 0;
+  }
+
+  /* Inside the panel a group opens in place instead of floating over the items beneath it. */
+  .app-nav-menu {
+    position: static;
+    padding: 0 0 0 1rem;
+    border: none;
+    box-shadow: none;
+    background: none;
+  }
+
+  .app-nav-menu-item {
+    padding: 0.6rem 0.7rem;
+  }
 }
 
 /* Report tab (#62): named sections of paragraphs, with an optional per-paragraph provenance line. */
