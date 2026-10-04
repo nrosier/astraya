@@ -138,7 +138,7 @@ describe('a table row selects on the wheel (#418)', () => {
     const container = await mount();
     await open(container, 'positions');
     const rows = Array.from(container.querySelectorAll('#chart-tabpanel-positions tbody tr'));
-    const ascendant = rows.find((row) => /Ascendant/.test(row.textContent));
+    const ascendant = rows.find((row) => row.textContent.includes('Ascendant'));
     if (ascendant !== undefined) expect(ascendant.querySelector('button')).toBeNull();
     act(() => {
       mounted?.root.unmount();
