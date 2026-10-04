@@ -4,6 +4,29 @@ All notable changes to Astraya are recorded here. Versions follow
 [semantic versioning](https://semver.org/), and every milestone ends in a release —
 see [docs/RELEASING.md](docs/RELEASING.md).
 
+## [0.25.0] — 2026-10-04
+
+**A sticky header, readable admin screens, a clickable cycles diagram, synastry contacts ranked by importance, and AI interpretations that say what they were based on.**
+
+M9 (Polish & launch) progress, not a finished milestone — v1.0.0 hasn't shipped yet.
+
+### Added
+
+- **One sticky header (#421).** The account, sync status, language and theme sit in a single bar that stays visible while you scroll, with a "skip to content" link. The account popover opens below its button and fits a phone screen.
+- **Synastry contacts ranked by importance (#422).** The contacts between two charts are ordered by how much they weigh (the bodies involved, the kind of aspect and how tight it is) with an Importance column from 0 to 100, so the contacts that matter come first.
+- **The cycles diagram and its table select each other (#418).** Click a point on a planetary cycle's diagram to highlight its row in the table, or a row to highlight the point; the selection dims the rest and says which step is shown.
+- **AI interpretations say what they were based on (#423).** Each saved AI interpretation records its kind and basis — the entire chart, a single body with its natal or transit perspective, or the placements a restyle used — and the history says so, for example "AI interpretation of Mars (natal)". It shows on the Interpretation page's past interpretations and now also under a selected body's own interpretation button, which lists that body's earlier readings and reopens them. Entries from before this say the basis was not recorded. A new kind of AI interpretation must declare its kind and wording in English and Dutch before it can ship.
+- **The admin corpus screens speak in words (#428).** Each entry shows what it means ("Sun in the 3rd house", "Zon in het 3e huis") with its key as small secondary text, searchable and sortable by meaning. Category, tier and tags are explained in plain language in English and Dutch instead of internal values, and the tables wrap to the page width instead of scrolling sideways.
+
+### Fixed
+
+- **Long body names no longer overlap in the aspect matrix (#432).** Mean Node and the Lilith variants use short names (_Node (m)_, _Lilith (m)_, in Dutch _Knoop (g)_, _Lilith (g)_), and any name that still would not fit is scaled to its column.
+
+### For people running their own server
+
+- A new database migration (12) adds two plain columns, `kind` and `basis_json`, to the saved AI interpretations. It runs on start and needs no action; older entries are left as they were.
+- The Docker image gained one more copied source file (the shared kind-and-basis definitions); `npm run docker:smoke` and the runtime-files test cover it.
+
 ## [0.24.1] — 2026-10-04
 
 **A patch for v0.24.0: the same app, with its Docker image fixed so it starts.**
