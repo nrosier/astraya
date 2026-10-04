@@ -49,11 +49,9 @@ const en = {
     'These instructions violate the allowed customization rules. You can change the tone, style, or focus, but not ask the interpretation to lie, invent facts, or make promises.',
   tier2CustomizationRejectedReason: (reason: string) => `Reason: ${reason}`,
   tier2SavedHeading: 'Past interpretations',
-  /** `Tuesday March 10 2026 @ 17:30 (Short and warm, focus on family) (AI interpretation based)`; the description is optional. */
+  /** `Tuesday March 10 2026 @ 17:30 (Short and warm, focus on family) (AI interpretation of Mars (natal))`; the description is optional. The kind-and-basis phrase comes from `result-basis-label.ts`. */
   tier2SavedEntry: (time: string, kind: string, description: string | null) =>
     description === null ? `${time} (${kind})` : `${time} (${description}) (${kind})`,
-  tier2SavedModeLocal: 'Local interpretation based',
-  tier2SavedModeAi: 'AI interpretation based',
 };
 
 const nl: typeof en = {
@@ -107,8 +105,6 @@ const nl: typeof en = {
   tier2SavedHeading: 'Eerdere interpretaties',
   tier2SavedEntry: (time, kind, description) =>
     description === null ? `${time} (${kind})` : `${time} (${description}) (${kind})`,
-  tier2SavedModeLocal: 'Gebaseerd op lokale interpretatie',
-  tier2SavedModeAi: 'Gebaseerd op AI-interpretatie',
 };
 
 export const reportViewMessages = { en, nl };

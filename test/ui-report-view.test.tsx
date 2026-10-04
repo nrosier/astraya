@@ -21,6 +21,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
+import type { ResultBasis } from '../src/interpretation/result-basis.js';
 import { saveInterpretationResult } from '../server/interpretation/results.ts';
 import { ReportView, PERSONA_LABELS } from '../src/ui/ReportView.js';
 import { reportViewMessages } from '../src/ui/ReportView.messages.js';
@@ -911,19 +912,28 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
     const raw = new DatabaseSync(join(dir, 'astraya.db'));
     const { id: userId } = raw.prepare('SELECT id FROM users WHERE username = ?').get('alice') as { id: string };
     const key = Buffer.from(process.env.ASTRAYA_ENCRYPTION_KEY ?? '', 'base64');
-    for (const mode of ['grounded', 'freeform', 'synthesis']) {
-      saveInterpretationResult(raw, { userId, mode, locale: 'en', sections: [{ heading: 'h', body: 'b' }] }, key);
-    }
+    const sections = [{ heading: 'h', body: 'b' }];
+    const save = (mode: string, basis?: ResultBasis): void => {
+      saveInterpretationResult(raw, { userId, mode, locale: 'en', sections, ...(basis ? { basis } : {}) }, key);
+    };
+    save('grounded', { kind: 'placements', keys: ['planet-in-sign:sun:2'] });
+    save('freeform', { kind: 'whole-chart' });
+    save('focus', { kind: 'focus', body: 'mars', perspective: 'natal' });
+    save('synthesis'); // an entry from before the basis was recorded
     raw.close();
 
     await vi.waitFor(() => {
-      expect(panelOf(container).querySelectorAll('.tier2-saved-results button')).toHaveLength(3);
+      expect(panelOf(container).querySelectorAll('.tier2-saved-results button')).toHaveLength(4);
     });
-    const names = [...panelOf(container).querySelectorAll('.tier2-saved-results button')].map(
-      (button) => /\(([^()]*)\)$/.exec(button.textContent)?.[1],
+    const texts = [...panelOf(container).querySelectorAll('.tier2-saved-results button')].map(
+      (button) => button.textContent,
     );
-    expect(names.filter((name) => name === 'Local interpretation based')).toHaveLength(1);
-    expect(names.filter((name) => name === 'AI interpretation based')).toHaveLength(2);
+    const endsWith = (suffix: string): number => texts.filter((text) => text.endsWith(`(${suffix})`)).length;
+    // Each kind is told apart and says what it was based on; the old entry says it was not recorded.
+    expect(endsWith('Local interpretation of Sun in Gemini')).toBe(1);
+    expect(endsWith('AI interpretation of the entire chart')).toBe(1);
+    expect(endsWith('AI interpretation of Mars (natal)')).toBe(1);
+    expect(endsWith('AI interpretation, basis not recorded')).toBe(1);
     expect(panelOf(container).querySelector('.tier2-saved-results')?.textContent).not.toMatch(
       /grounded|freeform|synthesis/,
     );
@@ -948,12 +958,19 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
         locale: 'en',
         sections: [{ heading: 'h', body: 'b' }],
         description: 'Short and warm with focus on family',
+        basis: { kind: 'placements', keys: ['planet-in-sign:sun:2'] },
       },
       key,
     );
     saveInterpretationResult(
       raw,
-      { userId, mode: 'freeform', locale: 'en', sections: [{ heading: 'h', body: 'b' }] },
+      {
+        userId,
+        mode: 'freeform',
+        locale: 'en',
+        sections: [{ heading: 'h', body: 'b' }],
+        basis: { kind: 'whole-chart' },
+      },
       key,
     );
     const createdAt = (
@@ -970,9 +987,9 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
     // Newest first. The older entry has the description; the newer one has none.
     const [first, second] = [createdAt[0] ?? '', createdAt[1] ?? ''];
     expect(texts).toContain(
-      `${formatSavedTime(first, 'en')} (Short and warm with focus on family) (Local interpretation based)`,
+      `${formatSavedTime(first, 'en')} (Short and warm with focus on family) (Local interpretation of Sun in Gemini)`,
     );
-    expect(texts).toContain(`${formatSavedTime(second, 'en')} (AI interpretation based)`);
+    expect(texts).toContain(`${formatSavedTime(second, 'en')} (AI interpretation of the entire chart)`);
     for (const text of texts) {
       expect(text).toMatch(/^[A-Z][a-z]+day [A-Z][a-z]+ \d{1,2} \d{4} @ \d{2}:\d{2} \(/);
       expect(text).not.toMatch(/\d{4}-\d{2}-\d{2}T|Z\b/);
@@ -1002,6 +1019,7 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
         locale: 'nl',
         sections: [{ heading: 'h', body: 'b' }],
         description: 'Gericht op carrière',
+        basis: { kind: 'whole-chart' },
       },
       key,
     );
@@ -1014,7 +1032,7 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
       expect(panelOf(container).querySelectorAll('.tier2-saved-results button')).toHaveLength(1);
     });
     expect(panelOf(container).querySelector('.tier2-saved-results button')?.textContent).toBe(
-      `${formatSavedTime(createdAt, 'nl')} (Gericht op carrière) (Gebaseerd op AI-interpretatie)`,
+      `${formatSavedTime(createdAt, 'nl')} (Gericht op carrière) (AI-interpretatie van de hele horoscoop)`,
     );
 
     act(() => {

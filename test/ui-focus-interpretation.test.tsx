@@ -11,8 +11,10 @@ import type { FocusContext } from '../src/interpretation/focus-context.js';
 import { setLocale } from '../src/ui/locale.js';
 
 let signedIn = true;
+// One stable object, as the real session context gives: a new one per render would re-run every effect keyed on it.
+const USER = { id: 'u1', username: 'alice', isAdmin: false };
 vi.mock('../src/ui/session-context.js', () => ({
-  useSessionUserOrUndefined: () => (signedIn ? { id: 'u1', username: 'alice', isAdmin: false } : undefined),
+  useSessionUserOrUndefined: () => (signedIn ? USER : undefined),
 }));
 
 const { FocusInterpretation } = await import('../src/ui/FocusInterpretation.js');
@@ -53,10 +55,14 @@ const realFetch = globalThis.fetch;
 beforeEach(() => {
   signedIn = true;
   setLocale('en');
-  fetchMock = vi.fn(() =>
+  fetchMock = vi.fn((url: string) =>
     Promise.resolve(
       new Response(
-        JSON.stringify({ sections: [{ heading: 'Core tension', body: 'Security meets power.' }], description: null }),
+        JSON.stringify(
+          url === '/api/interpretation/results'
+            ? { results: [] }
+            : { sections: [{ heading: 'Core tension', body: 'Security meets power.' }], description: null },
+        ),
         { status: 200 },
       ),
     ),
@@ -117,14 +123,65 @@ async function tickConsent(): Promise<void> {
     await Promise.resolve();
   });
 }
+/** The generation requests only: opening the panel also reads the history (#423), which is not what these tests count. */
+const generateCalls = (): [string, RequestInit][] =>
+  (fetchMock.mock.calls as [string, RequestInit][]).filter(([url]) => url === '/api/interpretation/generate');
+const firstGenerateCall = (): [string, RequestInit] => {
+  const call = generateCalls()[0];
+  if (call === undefined) throw new Error('fixture bug: no generation request was sent');
+  return call;
+};
 async function generate(): Promise<void> {
   await act(async () => {
     button().click();
     await vi.waitFor(() => {
-      expect(fetchMock).toHaveBeenCalled();
+      expect(generateCalls().length).toBeGreaterThan(0);
     });
   });
 }
+
+describe('past readings of the selected placement (#423)', () => {
+  const entry = (id: string, body: string, perspective: 'natal' | 'transit', description: string | null) => ({
+    id,
+    mode: 'focus',
+    locale: 'en',
+    createdAt: '2026-03-10T16:30:00.000Z',
+    description,
+    kind: 'focus',
+    basis: { kind: 'focus', body, perspective },
+  });
+
+  it('lists only the readings of this body from this perspective, each saying what it was based on', async () => {
+    fetchMock = vi.fn((url: string) =>
+      Promise.resolve(
+        new Response(
+          JSON.stringify(
+            url === '/api/interpretation/results'
+              ? {
+                  results: [
+                    entry('a', 'pluto', 'natal', 'Power and security'),
+                    entry('b', 'mars', 'natal', 'Drive'),
+                    entry('c', 'pluto', 'transit', 'A passing push'),
+                    { ...entry('d', 'pluto', 'natal', null), basis: null },
+                  ],
+                }
+              : { sections: [], description: null },
+          ),
+          { status: 200 },
+        ),
+      ),
+    );
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+    await mount({ context: CONTEXT, resetKey: 'a' });
+    await act(async () => {
+      await Promise.resolve();
+    });
+    const items = Array.from(box().querySelectorAll('.tier2-saved-results li')).map((li) => li.textContent);
+    expect(items).toHaveLength(1);
+    expect(items[0]).toContain('Power and security');
+    expect(items[0]).toContain('Pluto (natal)');
+  });
+});
 
 describe('FocusInterpretation (#424)', () => {
   it('renders nothing without a context', async () => {
@@ -168,8 +225,8 @@ describe('FocusInterpretation (#424)', () => {
     await tickConsent();
     await generate();
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(generateCalls()).toHaveLength(1);
+    const [url, init] = firstGenerateCall();
     expect(url).toBe('/api/interpretation/generate');
     expect(init.method).toBe('POST');
     expect(JSON.parse(init.body as string)).toEqual({ mode: 'focus', focusContext: CONTEXT, locale: 'en' });
@@ -240,7 +297,7 @@ describe('FocusInterpretation (#424)', () => {
     expect(button().textContent).toBe('Interpreteer de spanningen van deze plaatsing');
     await tickConsent();
     await generate();
-    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const [, init] = firstGenerateCall();
     expect(JSON.parse(init.body as string)).toMatchObject({ locale: 'nl' });
     await vi.waitFor(() => {
       expect(box().querySelector('.tier2-result')).not.toBeNull();

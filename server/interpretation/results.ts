@@ -7,6 +7,7 @@
 import { randomUUID } from 'node:crypto';
 import type { Database } from '../db.ts';
 import { CURRENT_KEY_VERSION, decryptPayload, encryptPayload } from '../ops/crypto.ts';
+import { kindForMode, parseBasis, type ResultBasis, type ResultKind } from '../../src/interpretation/result-basis.ts';
 import type { Tier2Section } from './llm-client.ts';
 
 export interface InterpretationResultSummary {
@@ -16,6 +17,10 @@ export interface InterpretationResultSummary {
   readonly createdAt: string;
   /** The model's short label for the request (#423); `null` for older entries, a rejected label, or when it cannot be decrypted. */
   readonly description: string | null;
+  /** Which kind of interpretation this is (#423); derived from `mode` for entries saved before kinds existed. */
+  readonly kind: ResultKind | null;
+  /** What it was based on; `null` for entries saved before this was recorded. */
+  readonly basis: ResultBasis | null;
 }
 
 export interface InterpretationResultDetail extends InterpretationResultSummary {
@@ -32,6 +37,8 @@ export function saveInterpretationResult(
     readonly sections: readonly Tier2Section[];
     /** Already validated (`sanitizeDescription`); stored encrypted, like the prose, since it summarises the reader's own instruction. */
     readonly description?: string | null;
+    /** What it was based on (#423), built by the route from the validated request. */
+    readonly basis?: ResultBasis;
   },
   key: Buffer,
 ): string {
@@ -43,7 +50,7 @@ export function saveInterpretationResult(
       ? undefined
       : encryptPayload(Buffer.from(params.description, 'utf8'), key);
   db.prepare(
-    'INSERT INTO interpretation_results (id, user_id, mode, locale, sections_json, key_version, iv, created_at, description_json, description_iv) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    'INSERT INTO interpretation_results (id, user_id, mode, locale, sections_json, key_version, iv, created_at, description_json, description_iv, kind, basis_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
   ).run(
     id,
     params.userId,
@@ -55,6 +62,8 @@ export function saveInterpretationResult(
     new Date().toISOString(),
     description?.ciphertext ?? null,
     description?.iv ?? null,
+    params.basis?.kind ?? kindForMode(params.mode) ?? null,
+    params.basis === undefined ? null : JSON.stringify(params.basis),
   );
   return id;
 }
@@ -66,6 +75,14 @@ interface SummaryRow {
   readonly created_at: string;
   readonly description_json: Buffer | null;
   readonly description_iv: Buffer | null;
+  readonly kind: string | null;
+  readonly basis_json: string | null;
+}
+
+/** The kind and basis a row reports: the stored ones, or — for an older row — the kind its `mode` implies and no basis. */
+function readBasis(row: SummaryRow): { readonly kind: ResultKind | null; readonly basis: ResultBasis | null } {
+  const basis = parseBasis(row.basis_json) ?? null;
+  return { kind: basis?.kind ?? kindForMode(row.mode) ?? null, basis };
 }
 
 /** The stored label, or `null` when there is none or it cannot be read (no key, a rotated key, a tampered row) — never an error: a label is a convenience, not the entry. */
@@ -90,7 +107,7 @@ export function listInterpretationResults(
 ): readonly InterpretationResultSummary[] {
   const rows = db
     .prepare(
-      'SELECT id, mode, locale, created_at, description_json, description_iv FROM interpretation_results WHERE user_id = ? ORDER BY created_at DESC',
+      'SELECT id, mode, locale, created_at, description_json, description_iv, kind, basis_json FROM interpretation_results WHERE user_id = ? ORDER BY created_at DESC',
     )
     .all(userId) as unknown as SummaryRow[];
   return rows.map((row) => ({
@@ -99,6 +116,7 @@ export function listInterpretationResults(
     locale: row.locale,
     createdAt: row.created_at,
     description: readDescription(row, key),
+    ...readBasis(row),
   }));
 }
 
@@ -116,7 +134,7 @@ export function getInterpretationResult(
 ): InterpretationResultDetail | undefined {
   const row = db
     .prepare(
-      'SELECT id, mode, locale, sections_json, iv, created_at, description_json, description_iv FROM interpretation_results WHERE user_id = ? AND id = ?',
+      'SELECT id, mode, locale, sections_json, iv, created_at, description_json, description_iv, kind, basis_json FROM interpretation_results WHERE user_id = ? AND id = ?',
     )
     .get(userId, id) as DetailRow | undefined;
   if (row === undefined) return undefined;
@@ -128,6 +146,7 @@ export function getInterpretationResult(
     locale: row.locale,
     createdAt: row.created_at,
     description: readDescription(row, key),
+    ...readBasis(row),
     sections,
   };
 }
