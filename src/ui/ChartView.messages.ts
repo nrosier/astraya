@@ -71,6 +71,11 @@ const en = {
     handle === undefined ? `Chart shape: ${shape}.` : `Chart shape: ${shape} (handle: ${handle}).`,
 
   chartTabLabel: 'Chart',
+  showOnChartColumn: 'Wheel',
+  showOnChartButton: 'Show',
+  showOnChart: (name: string) => `Show ${name} on the chart`,
+  selectedOnChart: (what: string) => `Selected on the chart: ${what}`,
+  goToChart: 'Go to the chart',
   shapeTabLabel: 'Chart shape',
   shapeSourceNote:
     'Chart shapes are a convention from Marc Edmund Jones (1941), widely taught in modern textbooks. They are not part of classical astrology and have not been validated empirically: read them as a tendency, never a verdict. The shape is worked out from the ten planets, Sun to Pluto, and its boundaries are approximate: a chart just either side of a boundary can fall in a neighbouring shape.',
@@ -232,6 +237,11 @@ const nl: typeof en = {
     handle === undefined ? `Horoscoopvorm: ${shape}.` : `Horoscoopvorm: ${shape} (handvat: ${handle}).`,
 
   chartTabLabel: 'Horoscoop',
+  showOnChartColumn: 'Wiel',
+  showOnChartButton: 'Toon',
+  showOnChart: (name: string) => `Toon ${name} op de horoscoop`,
+  selectedOnChart: (what: string) => `Geselecteerd op de horoscoop: ${what}`,
+  goToChart: 'Ga naar de horoscoop',
   shapeTabLabel: 'Horoscoopvorm',
   shapeSourceNote:
     'Horoscoopvormen zijn een conventie van Marc Edmund Jones (1941), veel onderwezen in moderne leerboeken. Ze maken geen deel uit van de klassieke astrologie en zijn niet empirisch onderbouwd: lees ze als een neiging, nooit als een oordeel. De vorm wordt bepaald uit de tien planeten, Zon tot Pluto, en de grenzen zijn bij benadering: een horoscoop net aan de ene of andere kant van een grens kan in een naburige vorm vallen.',

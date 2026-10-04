@@ -215,3 +215,37 @@ test('the natal chart sections fit a phone: the tab strip wraps instead of scrol
   await expect(page.locator('.chart-shape-diagram')).toBeVisible();
   expect(await page.evaluate('document.documentElement.scrollWidth - window.innerWidth')).toBeLessThanOrEqual(1);
 });
+
+test('a table row selects on the wheel and the wheel marks the table row (#418)', async ({ page }) => {
+  test.setTimeout(60_000);
+
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  await createPerson(page, {
+    name: 'Ada Lovelace',
+    date: '1815-12-10',
+    time: '07:45:00',
+    latitude: '51.5072',
+    longitude: '-0.1276',
+  });
+  await page.getByRole('link', { name: 'Natal chart', exact: true }).click();
+  await expect(page.locator('div.chart-wheel')).toBeVisible();
+
+  // Table to wheel: press Show on the Sun's row, then go to the chart: it is isolated there.
+  await page.getByRole('tab', { name: 'Positions', exact: true }).click();
+  await page.getByRole('button', { name: 'Show Sun on the chart', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Show Sun on the chart', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await expect(page.locator('tr.data-table-row-selected')).toContainText('Sun');
+  await page.getByRole('button', { name: 'Go to the chart', exact: true }).click();
+  await expect(page.locator('div.chart-wheel')).toBeVisible();
+  await expect(page.locator('.chart-wheel .chart-dimmed').first()).toBeAttached();
+  await expect(page.locator('.chart-isolation-panel')).toBeVisible();
+
+  // Wheel to table: select the Moon on the wheel and the Positions table marks its row.
+  await page.getByRole('button', { name: 'Clear', exact: true }).first().click();
+  await page.locator('.chart-point[data-body="moon"]').first().click({ force: true });
+  await page.getByRole('tab', { name: 'Positions', exact: true }).click();
+  await expect(page.locator('tr.data-table-row-selected')).toContainText('Moon');
+});

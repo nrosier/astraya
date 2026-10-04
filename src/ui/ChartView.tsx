@@ -42,6 +42,7 @@ import {
   fixedStarRows,
   houseCuspRows,
   positionRows,
+  visiblePositions,
   type AngleRow,
   type AntisciaRow,
   type AspectRow,
@@ -82,7 +83,8 @@ import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { ExtendedSettingsPanel } from './ExtendedSettingsPanel.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
-import { useWheelIsolation } from './wheel-interaction.js';
+import { aspectKeyFor, useWheelIsolation } from './wheel-interaction.js';
+import { bodyId } from '../chart/body-id.js';
 import { WheelSelectionText } from './WheelSelectionText.js';
 import { parseSelectionKey } from '../interpretation/selection.js';
 import { buildFocusObjectContext } from '../interpretation/focus-context.js';
@@ -119,8 +121,68 @@ const degreeColumns = <
   { key: 'second', label: t.secLabel, valueOf: (row) => row.second },
 ];
 
-function positionColumns(t: typeof chartViewMessages.en, locale: Locale): readonly TableColumn<PositionRow>[] {
+/**
+ * What a table needs to be linked to the wheel (#418): the wheel's current selection, how to toggle one, and
+ * which bodies the wheel actually draws (an Ascendant row has no body symbol to select). Absent when the
+ * table stands alone, as in the PDF export.
+ */
+interface TableSelection {
+  readonly selectedKey: string | undefined;
+  readonly onToggle: (key: string) => void;
+  readonly selectableBodies: ReadonlySet<string>;
+}
+
+/** The wheel's selection key for a body, or an aspect between two. */
+const bodySelectionKey = (bodyKey: string): string => `body:${bodyId(bodyKey, 0)}`;
+const aspectSelectionKey = (row: AspectRow): string => aspectKeyFor(bodyId(row.bodyAKey, 0), bodyId(row.bodyBKey, 0));
+
+/** The column of "show on the chart" buttons: a real button per row, so the keyboard reaches the wheel's selection too. */
+function selectColumn<T>(
+  t: typeof chartViewMessages.en,
+  selection: TableSelection,
+  keyOf: (row: T) => string | undefined,
+  nameOf: (row: T) => string,
+): TableColumn<T> {
+  return {
+    key: 'select',
+    label: t.showOnChartColumn,
+    valueOf: (row) => (keyOf(row) !== undefined && keyOf(row) === selection.selectedKey ? 0 : 1),
+    renderCell: (row) => {
+      const key = keyOf(row);
+      if (key === undefined) return null;
+      return (
+        <button
+          type="button"
+          className="quiet"
+          aria-pressed={selection.selectedKey === key}
+          aria-label={t.showOnChart(nameOf(row))}
+          onClick={() => {
+            selection.onToggle(key);
+          }}
+        >
+          {t.showOnChartButton}
+        </button>
+      );
+    },
+  };
+}
+
+function positionColumns(
+  t: typeof chartViewMessages.en,
+  locale: Locale,
+  selection?: TableSelection,
+): readonly TableColumn<PositionRow>[] {
   return [
+    ...(selection === undefined
+      ? []
+      : [
+          selectColumn<PositionRow>(
+            t,
+            selection,
+            (row) => (selection.selectableBodies.has(row.bodyKey) ? bodySelectionKey(row.bodyKey) : undefined),
+            (row) => bodyDisplayName(row.bodyKey, locale),
+          ),
+        ]),
     { key: 'glyph', label: t.symbolLabel, valueOf: (row) => row.glyph },
     {
       key: 'bodyName',
@@ -173,8 +235,26 @@ function angleColumns(t: typeof chartViewMessages.en, locale: Locale): readonly 
   return [{ key: 'label', label: t.angleLabel, valueOf: (row) => row.label }, ...degreeColumns<AngleRow>(t, locale)];
 }
 
-function aspectColumns(t: typeof chartViewMessages.en, locale: Locale): readonly TableColumn<AspectRow>[] {
+function aspectColumns(
+  t: typeof chartViewMessages.en,
+  locale: Locale,
+  selection?: TableSelection,
+): readonly TableColumn<AspectRow>[] {
   return [
+    ...(selection === undefined
+      ? []
+      : [
+          selectColumn<AspectRow>(
+            t,
+            selection,
+            (row) =>
+              selection.selectableBodies.has(row.bodyAKey) && selection.selectableBodies.has(row.bodyBKey)
+                ? aspectSelectionKey(row)
+                : undefined,
+            (row) =>
+              `${bodyDisplayName(row.bodyAKey, locale)} ${aspectDisplayName(row.aspectKey, locale)} ${bodyDisplayName(row.bodyBKey, locale)}`,
+          ),
+        ]),
     {
       key: 'bodyAName',
       label: t.bodyALabel,
@@ -361,15 +441,23 @@ function renderTableTab(
   t: typeof chartViewMessages.en,
   locale: Locale,
   rulership: RulershipChoice,
+  selection?: TableSelection,
 ): React.ReactNode {
   switch (tab) {
     case 'positions':
       return (
         <SortableTable
           caption={t.positionsCaption}
-          columns={positionColumns(t, locale)}
+          columns={positionColumns(t, locale, selection)}
           rows={positionRows(data, pointVisibility, showHouses)}
           getRowKey={(row) => row.bodyKey}
+          selectedRowKey={
+            selection?.selectedKey === undefined
+              ? undefined
+              : positionRows(data, pointVisibility, showHouses).find(
+                  (row) => bodySelectionKey(row.bodyKey) === selection.selectedKey,
+                )?.bodyKey
+          }
           downloadFilename={deriveExportFilename(displayName, 'positions', 'csv')}
         />
       );
@@ -400,9 +488,16 @@ function renderTableTab(
         <>
           <SortableTable
             caption={t.aspectsCaption}
-            columns={aspectColumns(t, locale)}
+            columns={aspectColumns(t, locale, selection)}
             rows={aspectRows(data)}
             getRowKey={(row) => `${row.bodyAKey}-${row.aspect}-${row.bodyBKey}`}
+            selectedRowKey={(() => {
+              const chosen =
+                selection?.selectedKey === undefined
+                  ? undefined
+                  : aspectRows(data).find((row) => aspectSelectionKey(row) === selection.selectedKey);
+              return chosen === undefined ? undefined : `${chosen.bodyAKey}-${chosen.aspect}-${chosen.bodyBKey}`;
+            })()}
             downloadFilename={deriveExportFilename(displayName, 'aspects', 'csv')}
           />
           {antiscionRows.length > 0 && (
@@ -772,8 +867,22 @@ export function ChartDataView({
     wheelRef,
     selectionKey: isolatedKey,
     clear: clearIsolation,
+    toggle: toggleIsolation,
     onClick: handleWheelClick,
   } = useWheelIsolation(sheet);
+
+  // The Positions and Aspects tables share the wheel's selection (#418): a button on a row selects it on the
+  // wheel, and the row the wheel has selected is marked. Only where there is a wheel, and never in the PDF.
+  const tableSelection = useMemo((): TableSelection | undefined => {
+    if (sheet === undefined || load.kind !== 'ready') return undefined;
+    return {
+      selectedKey: isolatedKey,
+      onToggle: toggleIsolation,
+      selectableBodies: new Set(
+        visiblePositions(load.data.positions, pointVisibility).map((position) => bodyById(position.body)?.key ?? ''),
+      ),
+    };
+  }, [sheet, load, isolatedKey, toggleIsolation, pointVisibility]);
 
   const isolation = useMemo(() => {
     if (isolatedKey === undefined || load.kind !== 'ready') return undefined;
@@ -1093,6 +1202,23 @@ export function ChartDataView({
                   tabIndex={0}
                 >
                   <h2>{tabLabels(t)[currentTab]}</h2>
+                  {tableSelection !== undefined && isolation !== undefined && (
+                    <p className="chart-selection-bar" role="status">
+                      {t.selectedOnChart(isolation.heading)}{' '}
+                      <button
+                        type="button"
+                        className="quiet"
+                        onClick={() => {
+                          setActiveTab('chart');
+                        }}
+                      >
+                        {t.goToChart}
+                      </button>{' '}
+                      <button type="button" className="quiet" onClick={clearIsolation}>
+                        {t.isolationClear}
+                      </button>
+                    </p>
+                  )}
                   {currentTab === 'shape'
                     ? renderShapeSection(load.data, housesRenderable, t, locale)
                     : renderTableTab(
@@ -1104,6 +1230,7 @@ export function ChartDataView({
                         t,
                         locale,
                         rulership,
+                        tableSelection,
                       )}
                 </div>
               )}

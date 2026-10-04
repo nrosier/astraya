@@ -135,6 +135,8 @@ export interface WheelIsolation {
   /** The current selection, or `undefined`. */
   readonly selectionKey: string | undefined;
   readonly clear: () => void;
+  /** Selects `key` as a click would (`body:sun@0`, `aspect:…`), or clears it when it is already the selection: for a table row's button (#418). */
+  readonly toggle: (key: string) => void;
   /** Goes on the same element as `wheelRef`. */
   readonly onClick: (event: React.MouseEvent<HTMLDivElement>) => void;
 }
@@ -161,6 +163,9 @@ export function useWheelIsolation(resetKey: unknown): WheelIsolation {
     selectionKey,
     clear: () => {
       setSelectionKey(undefined);
+    },
+    toggle: (key) => {
+      setSelectionKey((current) => (current === key ? undefined : key));
     },
     onClick: (event) => {
       const next = selectionKeyForTarget(event.target as Element);
