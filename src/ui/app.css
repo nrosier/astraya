@@ -2567,3 +2567,27 @@ label.stacked textarea:focus-visible {
   font-size: 0.75rem;
   overflow-wrap: anywhere;
 }
+
+/* A planetary cycle's diagram and its table name the same events (#418): a point is clickable, a
+   selection keeps that point and the segment that arrives at it, and the table marks its row. */
+.cycle-diagram-interactive .cycle-point-group {
+  cursor: pointer;
+}
+.cycle-diagram-interactive .cycle-point-group:hover .cycle-point {
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+.cycle-diagram .cycle-dimmed {
+  opacity: 0.22;
+}
+.cycle-diagram .cycle-selected .cycle-point {
+  stroke: var(--accent);
+  stroke-width: 3;
+}
+.cycle-diagram .cycle-selected .cycle-point-label {
+  font-weight: 700;
+}
+.data-table-row-selected {
+  background: color-mix(in oklab, var(--accent) 14%, transparent);
+  box-shadow: inset 3px 0 0 var(--accent);
+}

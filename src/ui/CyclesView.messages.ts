@@ -32,6 +32,10 @@ const en = {
   diagramCaption:
     'Each point is where the first body is at an exact aspect, numbered in order; lines join each to the next.',
   tableCaption: 'Exact aspects',
+  stepColumn: 'Step',
+  showStep: (step: number) => `Show step ${String(step)} on the diagram`,
+  selectionHint: 'Click a point on the diagram, or a step number in the table, to link them; click again to clear.',
+  stepSelected: (step: number, total: number) => `Step ${String(step)} of ${String(total)} is highlighted.`,
   dateColumn: 'Date (UTC)',
   aspectColumn: 'Aspect',
   positionColumn: 'Position',
@@ -74,6 +78,11 @@ const nl: typeof en = {
   diagramCaption:
     'Elk punt is waar het eerste lichaam staat bij een exact aspect, op volgorde genummerd; lijnen verbinden elk punt met het volgende.',
   tableCaption: 'Exacte aspecten',
+  stepColumn: 'Stap',
+  showStep: (step) => `Toon stap ${String(step)} op het diagram`,
+  selectionHint:
+    'Klik op een punt in het diagram, of op een stapnummer in de tabel, om ze te koppelen; klik nogmaals om te wissen.',
+  stepSelected: (step, total) => `Stap ${String(step)} van ${String(total)} is gemarkeerd.`,
   dateColumn: 'Datum (UTC)',
   aspectColumn: 'Aspect',
   positionColumn: 'Positie',
