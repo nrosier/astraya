@@ -4770,8 +4770,8 @@
     "key": "aspect-pair:conjunction:juno:moon",
     "locale": "nl",
     "clean": true,
-    "evaluationCount": 2,
-    "updatedAt": "2026-10-02T14:27:21.694Z"
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T20:56:05.961Z"
   },
   {
     "key": "aspect-pair:conjunction:juno:neptune",
@@ -7310,8 +7310,8 @@
     "key": "aspect-pair:semisquare:interpolatedLilith:sun",
     "locale": "nl",
     "clean": true,
-    "evaluationCount": 3,
-    "updatedAt": "2026-10-02T14:34:21.701Z"
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T20:56:05.961Z"
   },
   {
     "key": "aspect-pair:semisquare:interpolatedLilith:trueNode",
@@ -17117,8 +17117,8 @@
     "key": "synastry-aspect:sextile:meanNode:uranus",
     "locale": "nl",
     "clean": true,
-    "evaluationCount": 4,
-    "updatedAt": "2026-10-02T14:59:43.378Z"
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T20:56:05.961Z"
   },
   {
     "key": "synastry-aspect:sextile:meanNode:venus",
@@ -17180,8 +17180,8 @@
     "key": "synastry-aspect:sextile:mercury:sun",
     "locale": "nl",
     "clean": true,
-    "evaluationCount": 2,
-    "updatedAt": "2026-10-02T14:26:17.669Z"
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T20:56:05.961Z"
   },
   {
     "key": "synastry-aspect:sextile:mercury:trueNode",
@@ -19973,8 +19973,8 @@
     "key": "synastry-aspect:conjunction:meanNode:osculatingLilith",
     "locale": "nl",
     "clean": true,
-    "evaluationCount": 2,
-    "updatedAt": "2026-10-02T14:27:21.713Z"
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T20:56:05.961Z"
   },
   {
     "key": "synastry-aspect:conjunction:meanNode:pallas",
@@ -20715,8 +20715,8 @@
     "key": "synastry-aspect:semisextile:chiron:sun",
     "locale": "nl",
     "clean": true,
-    "evaluationCount": 3,
-    "updatedAt": "2026-10-02T14:34:21.708Z"
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T20:56:05.961Z"
   },
   {
     "key": "synastry-aspect:semisextile:chiron:trueNode",
@@ -22675,8 +22675,8 @@
     "key": "synastry-aspect:semisquare:mercury:sun",
     "locale": "nl",
     "clean": true,
-    "evaluationCount": 2,
-    "updatedAt": "2026-10-02T14:26:17.667Z"
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T20:56:05.961Z"
   },
   {
     "key": "synastry-aspect:semisquare:mercury:trueNode",
@@ -22843,8 +22843,8 @@
     "key": "synastry-aspect:semisquare:osculatingLilith:pallas",
     "locale": "nl",
     "clean": true,
-    "evaluationCount": 2,
-    "updatedAt": "2026-10-02T14:26:17.667Z"
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T20:56:05.961Z"
   },
   {
     "key": "synastry-aspect:semisquare:osculatingLilith:pluto",
@@ -22976,8 +22976,8 @@
     "key": "synastry-aspect:semisquare:pluto:venus",
     "locale": "nl",
     "clean": true,
-    "evaluationCount": 2,
-    "updatedAt": "2026-10-02T14:26:17.667Z"
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T20:56:05.961Z"
   },
   {
     "key": "synastry-aspect:semisquare:pluto:vesta",
@@ -26433,9 +26433,9 @@
   {
     "key": "dignity-state:jupiter:exalted",
     "locale": "nl",
-    "clean": true,
+    "clean": false,
     "evaluationCount": 2,
-    "updatedAt": "2026-10-02T14:26:17.685Z"
+    "updatedAt": "2026-10-04T20:56:05.961Z"
   },
   {
     "key": "dignity-state:jupiter:detriment",
@@ -27967,8 +27967,8 @@
     "key": "synastry-aspect:sesquiquadrate:trueNode:uranus",
     "locale": "nl",
     "clean": true,
-    "evaluationCount": 3,
-    "updatedAt": "2026-10-02T14:34:21.714Z"
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T20:56:05.961Z"
   },
   {
     "key": "synastry-aspect:sesquiquadrate:trueNode:venus",
@@ -28177,8 +28177,8 @@
     "key": "astro-line:venus:AC",
     "locale": "nl",
     "clean": true,
-    "evaluationCount": 3,
-    "updatedAt": "2026-10-02T14:34:21.720Z"
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T20:56:05.961Z"
   },
   {
     "key": "astro-line:venus:DC",
@@ -28582,9 +28582,9 @@
   {
     "key": "aspect-pair:quintile:chiron:pluto",
     "locale": "nl",
-    "clean": false,
-    "evaluationCount": 2,
-    "updatedAt": "2026-10-02T18:23:43.939Z"
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T20:56:05.961Z"
   },
   {
     "key": "aspect-pair:quintile:chiron:saturn",
@@ -31263,9 +31263,9 @@
   {
     "key": "synastry-aspect:quintile:interpolatedLilith:mercury",
     "locale": "nl",
-    "clean": false,
-    "evaluationCount": 2,
-    "updatedAt": "2026-10-02T18:23:43.945Z"
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T20:56:05.961Z"
   },
   {
     "key": "synastry-aspect:quintile:interpolatedLilith:moon",
@@ -31978,8 +31978,8 @@
     "key": "synastry-aspect:quintile:neptune:pluto",
     "locale": "nl",
     "clean": true,
-    "evaluationCount": 3,
-    "updatedAt": "2026-10-02T19:46:45.345Z"
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T20:56:05.961Z"
   },
   {
     "key": "synastry-aspect:quintile:neptune:saturn",
