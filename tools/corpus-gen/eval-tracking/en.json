@@ -26610,8 +26610,8 @@
     "key": "synastry-aspect:conjunction:neptune:pluto",
     "locale": "en",
     "clean": true,
-    "evaluationCount": 2,
-    "updatedAt": "2026-10-02T14:24:42.996Z"
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T20:54:44.493Z"
   },
   {
     "key": "synastry-aspect:conjunction:pluto:vesta",
@@ -27205,8 +27205,8 @@
     "key": "dignity-state:saturn:ruler",
     "locale": "en",
     "clean": true,
-    "evaluationCount": 3,
-    "updatedAt": "2026-10-02T14:33:53.708Z"
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T20:54:44.493Z"
   },
   {
     "key": "dignity-state:saturn:detriment",
@@ -28450,9 +28450,9 @@
   {
     "key": "aspect-pair:quintile:ceres:pluto",
     "locale": "en",
-    "clean": false,
-    "evaluationCount": 2,
-    "updatedAt": "2026-10-02T18:23:43.040Z"
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T20:54:44.493Z"
   },
   {
     "key": "aspect-pair:quintile:ceres:saturn",
@@ -30802,9 +30802,9 @@
   {
     "key": "aspect-pair:biquintile:pallas:uranus",
     "locale": "en",
-    "clean": false,
-    "evaluationCount": 2,
-    "updatedAt": "2026-10-02T18:23:43.043Z"
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T20:54:44.493Z"
   },
   {
     "key": "aspect-pair:biquintile:pallas:venus",
@@ -30887,8 +30887,8 @@
     "key": "aspect-pair:biquintile:saturn:venus",
     "locale": "en",
     "clean": true,
-    "evaluationCount": 3,
-    "updatedAt": "2026-10-02T19:46:44.205Z"
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T20:54:44.493Z"
   },
   {
     "key": "aspect-pair:biquintile:saturn:vesta",
@@ -32139,9 +32139,9 @@
   {
     "key": "synastry-aspect:quintile:pluto:trueNode",
     "locale": "en",
-    "clean": false,
-    "evaluationCount": 2,
-    "updatedAt": "2026-10-02T18:23:43.044Z"
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T20:54:44.493Z"
   },
   {
     "key": "synastry-aspect:quintile:pluto:uranus",
