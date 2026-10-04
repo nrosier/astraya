@@ -15,7 +15,14 @@
  * people share a place or time, and nothing about one chart's own dignities, sect or angles
  * depends on the other's.
  */
-import { findCrossAspects, subjectsFrom, type Aspect, type OrbConfig } from '../astrology/aspects.js';
+import {
+  DEFAULT_ORB_CONFIG,
+  findCrossAspects,
+  subjectsFrom,
+  type Aspect,
+  type OrbConfig,
+} from '../astrology/aspects.js';
+import { rankSynastryAspects, type RankedAspect } from '../astrology/synastry-importance.js';
 import { bodyById, type BodyCategory } from '../astrology/bodies.js';
 import { computeChartData, type ChartCalculationOptions, type ChartData } from './chart-compute.js';
 import type { BodyId, EphemerisProvider } from '../ephemeris/types.js';
@@ -32,6 +39,8 @@ export interface SynastryData {
   readonly chartB: ChartData;
   /** Every aspect between a body in A's chart and a body in B's chart, both at real speed. */
   readonly aspects: readonly Aspect[];
+  /** The orbs the aspects were found with, so a ranking measures each contact against the limit it was found under. */
+  readonly orbConfig: OrbConfig;
 }
 
 /** `provider` must already be initialized. Both moments are resolved and computed independently. */
@@ -53,5 +62,13 @@ export async function computeSynastry(
     orbConfig,
   );
 
-  return { chartA, chartB, aspects };
+  return { chartA, chartB, aspects, orbConfig: orbConfig ?? DEFAULT_ORB_CONFIG };
+}
+
+/**
+ * The contacts between the two charts, most important first, each with its score (#422).
+ * The same contacts `data.aspects` holds, reordered: none is added or dropped.
+ */
+export function rankedSynastryAspects(data: SynastryData): readonly RankedAspect[] {
+  return rankSynastryAspects(data.aspects, data.orbConfig);
 }

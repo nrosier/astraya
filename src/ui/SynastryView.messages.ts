@@ -31,6 +31,9 @@ const en = {
   applying: 'Applying',
   separating: 'Separating',
   interpretationLabel: 'Interpretation',
+  importanceLabel: 'Importance',
+  rankingHint:
+    'The aspects are ordered by importance, 100 being a tight contact between the Sun and Moon: the luminaries and the personal planets count most, hard aspects more than easy ones, and a tighter orb more than a wide one. It orders the contacts; it does not add or remove any, and you can sort by any column.',
 };
 
 const nl: typeof en = {
@@ -62,6 +65,9 @@ const nl: typeof en = {
   applying: 'Toenemend',
   separating: 'Afnemend',
   interpretationLabel: 'Interpretatie',
+  importanceLabel: 'Belang',
+  rankingHint:
+    'De aspecten staan op belang gesorteerd, waarbij 100 een nauw contact tussen Zon en Maan is: de lichten en de persoonlijke planeten tellen het zwaarst, harde aspecten meer dan zachte, en een kleinere orb meer dan een grote. Het ordent de contacten; het voegt er geen toe en laat er geen weg, en je kunt op elke kolom sorteren.',
 };
 
 export const synastryViewMessages = { en, nl };
