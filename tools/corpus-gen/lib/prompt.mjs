@@ -6,10 +6,9 @@
  */
 
 /**
- * The voice for a persona-less ("neutral") entry — the default a reader gets
- * before choosing a persona, and the fallback every persona-specific lookup
- * lands on when its own voice has nothing for this placement yet (#211). Not
- * one of `personas.json`'s five flavors: no character, no signature style.
+ * The voice of a corpus entry: no character, no signature style. (The advisor personas that once
+ * sat beside it were removed in #429; the wording below is unchanged, so a regeneration reads
+ * the same as before.)
  *
  * Three-part structure (gift / mechanism / shadow dilemma), not the earlier
  * plain "gift then pitfall" framing: a cross-check against ChatGPT's own
@@ -53,7 +52,7 @@ export const NEGATIVE_CONSTRAINTS = [
   "Aim for 50 to 80 words, across 2 to 3 sentences — a target, not a hard ceiling: go a little longer only when the placement genuinely needs the room for a balanced, unrushed sentence, never by default, and never toward paragraph length. Shorter reads as a stub; too long stops being one placement's contribution to a report that stacks a dozen of these. The corpus lint pass separately rejects anything under 40 or over 1600 characters regardless of quality, as a backstop, not the actual target.",
 ];
 
-/** Builds the model-facing instruction block shared by every request, regardless of persona. */
+/** Builds the model-facing instruction block shared by every request. */
 export function buildNegativeConstraintsBlock() {
   return [
     'HARD CONSTRAINTS (violating any of these makes the output unusable)',
@@ -77,35 +76,23 @@ export function buildNegativeConstraintsBlock() {
  * `buildUserContent` can simply omit the section rather than every caller
  * needing its own now-unnecessary "seed some anchors first" workaround.
  */
-export function buildAnchorsBlock(corpusEntries, locale, persona) {
+export function buildAnchorsBlock(corpusEntries, locale) {
   const anchors = corpusEntries.filter((entry) => entry.anchor === true && entry.locale === locale);
   if (anchors.length === 0) return undefined;
-  // Anchors are always neutral-voiced (schema.ts forbids an anchor from declaring a persona), so
-  // when a persona is generating, "match this tone" would fight the persona's own system prompt
-  // above. Scope the instruction to what anchors actually establish across every voice — depth,
-  // length, concreteness — and leave tone to the persona voice instead of the neutral examples.
-  const matchInstruction = persona
-    ? 'match this depth, length and level of concreteness — but keep the voice above, not this tone'
-    : 'match this tone, depth and length';
+  const matchInstruction = 'match this tone, depth and length';
   return [
     `GOLD-STANDARD EXAMPLES (${matchInstruction} — do not copy their content)`,
     ...anchors.map((entry) => `- ${entry.text}`),
   ].join('\n');
 }
 
-/**
- * Combines a voice with the neutral rules every entry must still obey.
- * `persona` is optional — omit it (or pass `undefined`) to generate the
- * default/neutral entry instead of a persona's flavor.
- */
-export function buildSystemInstruction({ persona, symbolismContext, locale, forceLanguageDirective }) {
-  const personaPrompt = persona
-    ? (persona.systemPrompts[locale] ?? persona.systemPrompts.en)
-    : (NEUTRAL_SYSTEM_PROMPT[locale] ?? NEUTRAL_SYSTEM_PROMPT.en);
+/** Combines the voice with the rules every entry must obey. */
+export function buildSystemInstruction({ symbolismContext, locale, forceLanguageDirective }) {
+  const voicePrompt = NEUTRAL_SYSTEM_PROMPT[locale] ?? NEUTRAL_SYSTEM_PROMPT.en;
   const languageDirective = forceLanguageDirective ? FORCE_LANGUAGE_DIRECTIVE[locale] : undefined;
   return [
     ...(languageDirective ? [languageDirective, ''] : []),
-    personaPrompt,
+    voicePrompt,
     '',
     'Even in this voice, the output feeds a structured interpretation corpus, not a chat reply — the constraints below override any instinct the voice above has to hedge, moralize or use extended metaphor.',
     '',
@@ -137,8 +124,8 @@ export function aspectFlavorHint(aspectKey, locale) {
   return QUINTILE_SERIES_FLAVOR_HINT[locale] ?? QUINTILE_SERIES_FLAVOR_HINT.en;
 }
 
-export function buildUserContent({ placementDescription, corpusEntries, locale, persona, aspectKey }) {
-  const anchorsBlock = buildAnchorsBlock(corpusEntries, locale, persona);
+export function buildUserContent({ placementDescription, corpusEntries, locale, aspectKey }) {
+  const anchorsBlock = buildAnchorsBlock(corpusEntries, locale);
   const flavorHint = aspectKey === undefined ? undefined : aspectFlavorHint(aspectKey, locale);
   return [
     `TARGET PLACEMENT: ${placementDescription}`,

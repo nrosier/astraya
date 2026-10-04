@@ -13,7 +13,7 @@
  * mechanical sentence, which is symmetrical.
  */
 import { composeFallbackText, findCorpusEntry } from '../interpretation/compose.js';
-import type { CorpusEntry, CorpusPlacement, Locale, PersonaId } from '../interpretation/schema.js';
+import type { CorpusEntry, CorpusPlacement, Locale } from '../interpretation/schema.js';
 
 export interface SynastryRow {
   readonly aspectKey: string;
@@ -31,18 +31,13 @@ function placement(row: SynastryRow, bodyA: string, bodyB: string): CorpusPlacem
   return { category: 'synastry-aspect', aspect: row.aspectKey, bodyA, bodyB };
 }
 
-export function synastryText(
-  row: SynastryRow,
-  locale: Locale,
-  corpus: readonly CorpusEntry[],
-  persona?: PersonaId,
-): SynastryText {
+export function synastryText(row: SynastryRow, locale: Locale, corpus: readonly CorpusEntry[]): SynastryText {
   // The corpus order is alphabetical by key; a row already in that order speaks from person A.
   const inCorpusOrder = row.bodyAKey <= row.bodyBKey;
   const canonical = inCorpusOrder
     ? placement(row, row.bodyAKey, row.bodyBKey)
     : placement(row, row.bodyBKey, row.bodyAKey);
-  const entry = findCorpusEntry(canonical, locale, corpus, persona);
+  const entry = findCorpusEntry(canonical, locale, corpus);
   if (entry !== undefined && row.bodyAKey !== row.bodyBKey) {
     return { text: entry.text, speaksFrom: inCorpusOrder ? 'a' : 'b' };
   }

@@ -81,13 +81,9 @@ npx tsx --env-file=.env.local tools/corpus-gen/generate-batch.mjs --locale=nl --
 
 ### What gets generated
 
-**Neutral only, by default** — the persona-less text every reader sees
-before choosing a voice, and the fallback a persona-specific lookup lands on
-when its own entry doesn't exist yet. Pass `--persona=<id>` (an id from
-`tools/corpus-gen/personas.json`: `traditionalist`, `big_sister`, `cynic`,
-`mystic`, `pragmatist`) to generate that persona's voice instead — omit it
-to keep the neutral default, which is almost certainly what you want for a
-first run.
+The text every reader sees for a placement. (The advisor voices that once
+sat beside it were removed in #429; tone and style are the AI-customised
+interpretation's job.)
 
 Coverage generated per locale (all computed placement types the app can
 produce): `planet-in-sign`, `planet-in-house`, `aspect-pair`,
@@ -99,8 +95,7 @@ none).
 ### Resumable, and skips what's already shipped
 
 The script is idempotent: it only generates keys the locale's corpus
-**doesn't already have** (scoped to `(key, persona)` — a neutral entry and a
-persona entry for the same key are tracked separately). Every successful
+**doesn't already have** (by key). Every successful
 entry is written immediately, so an interrupted run can just be re-run.
 
 This also means that, on a locale whose neutral corpus is already fully
@@ -132,7 +127,6 @@ formatting.
 All from `generate-batch.mjs`'s own usage comment:
 
 ```
---persona=<id>        generate one persona's voice instead of neutral (see above)
 --limit=N              stop after N entries (useful for a quick smoke test)
 --concurrency=N         parallel requests (default 3)
 --delay-ms=N            delay between requests (default 200)
@@ -140,7 +134,7 @@ All from `generate-batch.mjs`'s own usage comment:
 ```
 
 `--skip-final-checks` is worth using if you're about to run several
-`--persona` rounds back-to-back: that pass is quadratic in the locale's
+rounds back-to-back: that pass is quadratic in the locale's
 total entry count, so paying it after every round adds up for no benefit
 until the last round.
 

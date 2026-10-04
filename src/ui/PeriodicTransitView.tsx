@@ -15,9 +15,9 @@
  * item) comes from `interpretation/compose.ts`'s `composeFallbackText`: every row below carries
  * a plain mechanically-composed sentence via the new `transit-aspect` `CorpusPlacement`
  * category, the same fallback guarantee #59 already gives every other category so a report is
- * never blank. No persona/locale corpus content has been written for `transit-aspect` yet — that
+ * never blank. No locale corpus content has been written for `transit-aspect` yet — that
  * is unbounded prose-authoring work for #55/#56, not this issue — so every sentence here is that
- * fallback, not `ReportView.tsx`'s full persona pipeline. The structured columns stay alongside
+ * fallback, not `ReportView.tsx`'s full report pipeline. The structured columns stay alongside
  * the sentence for sorting and CSV export, the same as `TransitView.tsx`'s contacts table.
  */
 import { useEffect, useMemo, useState } from 'react';

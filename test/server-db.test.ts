@@ -38,7 +38,7 @@ describe('server/db.ts', () => {
   it('sets PRAGMA user_version to the number of migrations applied', () => {
     const db = openDatabase(':memory:');
     const row = db.prepare('PRAGMA user_version').get() as unknown as { user_version: number };
-    expect(row.user_version).toBe(12);
+    expect(row.user_version).toBe(13);
     db.close();
   });
 
@@ -56,7 +56,7 @@ describe('server/db.ts', () => {
       const second = openDatabase(path);
       expect(schemaOf(second)).toEqual(before);
       const row = second.prepare('PRAGMA user_version').get() as unknown as { user_version: number };
-      expect(row.user_version).toBe(12);
+      expect(row.user_version).toBe(13);
       second.close();
     } finally {
       rmSync(dir, { recursive: true, force: true });
@@ -143,7 +143,7 @@ describe('server/db.ts', () => {
 
       const db = openDatabase(path);
       const row = db.prepare('PRAGMA user_version').get() as unknown as { user_version: number };
-      expect(row.user_version).toBe(12);
+      expect(row.user_version).toBe(13);
 
       // The pre-existing row survived the users rebuild intact.
       const legacyUser = db.prepare('SELECT * FROM users WHERE id = ?').get('legacy-user') as
@@ -313,5 +313,52 @@ describe('server/db.ts', () => {
     expect(() => insertUser('u3', 'carol', null)).not.toThrow();
     expect(() => insertUser('u4', 'dave', null)).not.toThrow();
     db.close();
+  });
+
+  it('migration 13 removes voice-specific corrections and candidates, keeps neutral ones, and drops the persona column (#429)', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'astraya-db-test-'));
+    const path = join(dir, 'astraya.db');
+    try {
+      // Put a current database back into its version-12 shape: the persona column and the old unique indexes.
+      const first = openDatabase(path);
+      first.exec(`
+        INSERT INTO users (id, username, password_hash, created_at) VALUES ('u', 'u', 'h', 'now');
+        DROP INDEX corpus_overrides_identity;
+        ALTER TABLE corpus_overrides ADD COLUMN persona TEXT NOT NULL DEFAULT '';
+        CREATE UNIQUE INDEX corpus_overrides_identity ON corpus_overrides(key, locale, persona);
+        DROP INDEX corpus_candidates_identity;
+        ALTER TABLE corpus_candidates ADD COLUMN persona TEXT NOT NULL DEFAULT '';
+        CREATE UNIQUE INDEX corpus_candidates_identity ON corpus_candidates(key, locale, persona, source);
+        INSERT INTO corpus_overrides (id, key, locale, persona, text, tier, tags, created_at, updated_at, updated_by)
+          VALUES ('o1', 'k', 'en', '', 'neutral', 'core', '[]', 'now', 'now', 'u'),
+                 ('o2', 'k', 'en', 'mystic', 'voiced', 'core', '[]', 'now', 'now', 'u');
+        INSERT INTO corpus_candidates (id, key, locale, persona, text, tier, tags, source, created_at)
+          VALUES ('c1', 'k', 'en', '', 'neutral', 'core', '[]', 'llm-fill', 'now'),
+                 ('c2', 'k', 'en', 'cynic', 'voiced', 'core', '[]', 'llm-fill', 'now');
+        PRAGMA user_version = 12;
+      `);
+      first.close();
+
+      const db = openDatabase(path);
+      expect(db.prepare('SELECT id FROM corpus_overrides').all()).toEqual([{ id: 'o1' }]);
+      expect(db.prepare('SELECT id FROM corpus_candidates').all()).toEqual([{ id: 'c1' }]);
+      for (const table of ['corpus_overrides', 'corpus_candidates']) {
+        const columns = (db.prepare(`PRAGMA table_info(${table})`).all() as unknown as { name: string }[]).map(
+          (column) => column.name,
+        );
+        expect(columns).not.toContain('persona');
+      }
+      // The rebuilt unique indexes still hold a key to one row per language.
+      expect(() =>
+        db
+          .prepare(
+            "INSERT INTO corpus_overrides (id, key, locale, text, tier, tags, created_at, updated_at, updated_by) VALUES ('o3', 'k', 'en', 'x', 'core', '[]', 'now', 'now', 'u')",
+          )
+          .run(),
+      ).toThrow(/UNIQUE/);
+      db.close();
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });

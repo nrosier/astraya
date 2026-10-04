@@ -3,7 +3,7 @@
  * per route. Same shape as `auth-client.ts`: nothing here interprets a response beyond
  * its own shape, and every rejection carries the server's own message.
  */
-import type { CorpusTier, Locale, PersonaId } from '../interpretation/schema.js';
+import type { CorpusTier, Locale } from '../interpretation/schema.js';
 
 /** Mirrors `server/auth/admin-routes.ts`'s `AdminUser` shape. */
 export interface AdminUser {
@@ -101,8 +101,6 @@ export interface CorpusOverride {
   readonly id: string;
   readonly key: string;
   readonly locale: Locale;
-  /** Absent means the neutral, persona-agnostic override. */
-  readonly persona: PersonaId | undefined;
   readonly text: string;
   readonly tier: CorpusTier;
   readonly tags: readonly string[];
@@ -115,7 +113,6 @@ export interface CorpusOverride {
 export interface UpsertCorpusOverrideParams {
   readonly key: string;
   readonly locale: Locale;
-  readonly persona?: PersonaId;
   readonly text: string;
   readonly tier: CorpusTier;
   readonly tags: readonly string[];
@@ -157,8 +154,6 @@ export interface CorpusCandidate {
   readonly id: string;
   readonly key: string;
   readonly locale: Locale;
-  /** Absent means the neutral, persona-agnostic candidate. */
-  readonly persona: PersonaId | undefined;
   readonly text: string;
   readonly tier: CorpusTier;
   readonly tags: readonly string[];

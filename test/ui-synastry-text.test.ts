@@ -143,15 +143,4 @@ describe('synastryText (#422)', () => {
     expect(result.text).toBe(entryText(NL, 'synastry-aspect:square:mars:moon'));
     expect(result.text).not.toBe(entryText(EN, 'synastry-aspect:square:mars:moon'));
   });
-
-  it('a persona with no synastry entry of its own still gets the neutral text, not the mechanical sentence', () => {
-    // The shipped corpus is neutral only today, so a persona's corpus is stood in for by one entry of its
-    // own for a different placement: the voice that has no synastry entry must fall back to the neutral one.
-    const neutralSun = EN.find((entry) => entry.key === 'planet-in-sign:sun:0');
-    if (neutralSun === undefined) throw new Error('fixture bug: no neutral Sun in Aries entry');
-    const cynicEntry: CorpusEntry = { ...neutralSun, persona: 'cynic', text: 'A cynic’s Sun in Aries.' };
-    const result = synastryText(row('trine', 'sun', 'venus'), 'en', [...EN, cynicEntry], 'cynic');
-    expect(result.text).toBe(entryText(EN, 'synastry-aspect:trine:sun:venus'));
-    expect(result.speaksFrom).toBe('a');
-  });
 });

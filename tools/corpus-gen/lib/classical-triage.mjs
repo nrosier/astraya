@@ -12,10 +12,9 @@
  *
  * Deliberately narrow, like the fact-grounding judge: agreement in substance
  * (the same broad character — is this a flattering or unflattering portrait,
- * roughly the same traits?), not agreement in wording, tone, or persona
- * voice. A "cynic"-persona entry is allowed to be sarcastic about a trait
- * Lilly describes gravely; it should only be flagged if it describes the
- * *opposite* character to what the classical source says for that state.
+ * roughly the same traits?), not agreement in wording or tone. An entry is
+ * allowed to be sarcastic about a trait Lilly describes gravely; it should
+ * only be flagged if it describes the *opposite* character to what the classical source says for that state.
  */
 
 export const CLASSICAL_TRIAGE_RESPONSE_SCHEMA = {

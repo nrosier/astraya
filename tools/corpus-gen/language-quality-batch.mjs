@@ -178,7 +178,7 @@ if (useBatch) {
       locale: entry.locale,
     });
     return buildBatchRequest({
-      key: String(index), // corpus array index — unique per entry regardless of persona, unlike entry.key
+      key: String(index), // corpus array index — unique per entry, unlike entry.key
       systemInstruction,
       userContent,
       temperature: 0,

@@ -11,35 +11,20 @@
  * same "thin `.tsx`, tested `.ts`" split `SortableTable.tsx`/`table-sort.ts`
  * already use.
  *
- * Advisor is user-selectable here: `assembleReport` and `loadRuntimeCorpus`
- * already take a `Locale`/`PersonaId` (the corpus is fully generated for
- * both `en` and `nl`, all five personas), this component exposes the
- * persona choice and remembers it per device, the same
- * `localStorage`-persisted-preference pattern `session-context.tsx` uses for
- * the last signed-in user. Persona is optional — "neutral" (no persona
- * selected) falls back to the same voice every report used before this
- * picker existed. Language is a shared, app-wide setting (`locale.ts`), not
- * this component's own state — this view only consumes it.
- *
- * The picker itself is a deployment-time toggle, `VITE_ENABLE_REPORT_PERSONAS`
- * (.env.example), off by default: personas are a newer, less-reviewed part of
- * the corpus than the neutral voice, so a deployer opts in rather than every
- * build getting them for free. Off, the control is hidden and any persona a
- * device already had saved in `localStorage` from before the toggle existed
- * (or from a deployment where it's since been turned back off) is ignored —
- * the report always renders in the neutral voice.
+ * Language is a shared, app-wide setting (`locale.ts`), not this component's own state — this
+ * view only consumes it. Tone and style are the AI-customised panel's job (#429 removed the
+ * corpus-level advisor voices).
  *
  * Fetches its corpus chunk at runtime via `loadRuntimeCorpus` rather than
  * importing `CORPUS` from `../interpretation/index.js` — that export is the
- * full, synchronous, every-locale-every-persona corpus the test suite needs,
+ * full, synchronous, every-locale corpus the test suite needs,
  * and importing it here would inline all of it into this app's JS bundle.
  * See corpus-client.ts for why.
  */
 import { useEffect, useState } from 'react';
 import { assembleReport, reportPlacementKeys, type Report, type ReportParagraph } from '../interpretation/report.js';
 import { loadRuntimeCorpus } from '../interpretation/corpus-client.js';
-import { PERSONA_IDS, type CorpusEntry, type Locale, type PersonaId } from '../interpretation/schema.js';
-import { initialPersona, isPersonaId, PERSONA_KEY, reportPersonasEnabled } from './report-persona.js';
+import type { CorpusEntry, Locale } from '../interpretation/schema.js';
 import { checkCustomPrompt, type GuardrailIssue } from '../interpretation/prompt-guardrail.js';
 import { describeParagraphProvenance } from './report-provenance.js';
 import { savedKindLabel } from './result-basis-label.js';
@@ -87,22 +72,6 @@ function guardrailIssueMessage(t: typeof reportViewMessages.en, issue: Guardrail
       return t.guardrailIssueFabricationRequest;
   }
 }
-
-/**
- * Mirrors `tools/corpus-gen/personas.json`'s `title` field — kept as a plain
- * literal here, the same reasoning `schema.ts`'s own `PERSONA_IDS` comment
- * gives for not reading that file at runtime: this stays a pure client
- * module with no filesystem access. `test/ui-report-view.test.tsx` asserts
- * these titles stay in sync with that file, the same way
- * `test/interpretation-schema.test.ts` already does for the id list itself.
- */
-export const PERSONA_LABELS: Readonly<Record<PersonaId, Readonly<Record<Locale, string>>>> = {
-  traditionalist: { en: 'The Strict Traditionalist', nl: 'De Strenge Traditionalist' },
-  big_sister: { en: 'The Cozy Cosmic Big Sister', nl: 'De Warme Kosmische Zus' },
-  cynic: { en: 'The Irreverent Cynic', nl: 'De Cynische Realist' },
-  mystic: { en: 'The Evolutionary Mystic', nl: 'De Esoterische Mysticus' },
-  pragmatist: { en: 'The Pragmatic No-Nonsense Coach', nl: 'De Praktische No-Nonsense Coach' },
-};
 
 function Paragraph({
   paragraph,
@@ -366,7 +335,6 @@ export function ReportView({ chart }: { readonly chart: ChartData }): React.JSX.
   const [activeTab, setActiveTab] = useState<InterpretationTabKey>('standard');
   const [showProvenance, setShowProvenance] = useState(false);
   const [locale] = useLocale();
-  const [persona, setPersona] = useState<PersonaId | undefined>(initialPersona);
   const [rulership] = useRulershipChoice();
   const [corpus, setCorpus] = useState<readonly CorpusEntry[] | undefined>(undefined);
   const [loadError, setLoadError] = useState<string | undefined>(undefined);
@@ -375,7 +343,7 @@ export function ReportView({ chart }: { readonly chart: ChartData }): React.JSX.
     let cancelled = false;
     setCorpus(undefined);
     setLoadError(undefined);
-    loadRuntimeCorpus(locale, persona)
+    loadRuntimeCorpus(locale)
       .then((loaded) => {
         if (!cancelled) setCorpus(loaded);
       })
@@ -385,7 +353,7 @@ export function ReportView({ chart }: { readonly chart: ChartData }): React.JSX.
     return () => {
       cancelled = true;
     };
-  }, [locale, persona]);
+  }, [locale]);
 
   const onTabKeyDown = (event: React.KeyboardEvent<HTMLDivElement>): void => {
     const currentIndex = TAB_ORDER.indexOf(activeTab);
@@ -417,37 +385,11 @@ export function ReportView({ chart }: { readonly chart: ChartData }): React.JSX.
     );
   }
 
-  const report: Report = assembleReport(chart, locale, corpus, persona, rulership);
+  const report: Report = assembleReport(chart, locale, corpus, rulership);
 
   const controls = (
     <div className="report-controls">
       <RulershipSetting />
-      {reportPersonasEnabled() && (
-        <label>
-          {t.advisor}
-          <select
-            value={persona ?? ''}
-            onChange={(event) => {
-              const next = event.target.value;
-              if (next === '') {
-                localStorage.removeItem(PERSONA_KEY);
-                setPersona(undefined);
-                return;
-              }
-              if (!isPersonaId(next)) return;
-              localStorage.setItem(PERSONA_KEY, next);
-              setPersona(next);
-            }}
-          >
-            <option value="">{t.neutral}</option>
-            {PERSONA_IDS.map((option) => (
-              <option key={option} value={option}>
-                {PERSONA_LABELS[option][locale]}
-              </option>
-            ))}
-          </select>
-        </label>
-      )}
       {!import.meta.env.PROD && (
         <label>
           <input

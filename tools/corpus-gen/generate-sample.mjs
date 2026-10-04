@@ -1,15 +1,14 @@
 /**
- * One-off smoke test for #56: generates a single entry for one persona,
- * one locale and one placement, and shows the raw result plus a lint/dedupe
+ * One-off smoke test for #56: generates a single entry for one locale
+ * and one placement, and shows the raw result plus a lint/dedupe
  * check against the shipped corpus. Does not write to
  * src/interpretation/corpus/*.json — this is a "does the pipeline work and
  * is the output usable" check, not the batch runner (#56's other
  * checkboxes — batching, resumability — are not built yet).
  *
- *   npx tsx --env-file=.env.local tools/corpus-gen/generate-sample.mjs <personaId|neutral> [category] [body] [signOrHouse] [--locale=en|nl] [--provider=gemini|ollama]
- *   npx tsx --env-file=.env.local tools/corpus-gen/generate-sample.mjs traditionalist planet-in-sign jupiter 8
- *   npx tsx --env-file=.env.local tools/corpus-gen/generate-sample.mjs mystic planet-in-sign moon 5 --locale=nl
- *   npx tsx --env-file=.env.local tools/corpus-gen/generate-sample.mjs neutral planet-in-sign moon 5 --locale=nl
+ *   npx tsx --env-file=.env.local tools/corpus-gen/generate-sample.mjs [category] [body] [signOrHouse] [--locale=en|nl] [--provider=gemini|ollama]
+ *   npx tsx --env-file=.env.local tools/corpus-gen/generate-sample.mjs planet-in-sign jupiter 8
+ *   npx tsx --env-file=.env.local tools/corpus-gen/generate-sample.mjs planet-in-sign moon 5 --locale=nl
  *   npx tsx --env-file=.env.local tools/corpus-gen/generate-sample.mjs neutral planet-in-sign moon 5 --provider=ollama
  *
  * `--provider=ollama` (#359) is the smoke test to run before ever trusting
@@ -42,10 +41,9 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const rawArgs = process.argv.slice(2);
 if (rawArgs.includes('--help') || rawArgs.includes('-h')) {
   console.log(
-    'Usage: npx tsx --env-file=.env.local tools/corpus-gen/generate-sample.mjs <personaId|neutral> [category] [body] [signOrHouse] [--locale=en|nl] [--provider=gemini|ollama]\n' +
-      '   e.g.: npx tsx --env-file=.env.local tools/corpus-gen/generate-sample.mjs traditionalist planet-in-sign jupiter 8\n' +
-      '         npx tsx --env-file=.env.local tools/corpus-gen/generate-sample.mjs mystic planet-in-sign moon 5 --locale=nl\n' +
-      '         npx tsx --env-file=.env.local tools/corpus-gen/generate-sample.mjs neutral planet-in-sign moon 5 --provider=ollama',
+    'Usage: npx tsx --env-file=.env.local tools/corpus-gen/generate-sample.mjs [category] [body] [signOrHouse] [--locale=en|nl] [--provider=gemini|ollama]\n' +
+      '   e.g.: npx tsx --env-file=.env.local tools/corpus-gen/generate-sample.mjs planet-in-sign jupiter 8\n' +
+      '         npx tsx --env-file=.env.local tools/corpus-gen/generate-sample.mjs planet-in-sign moon 5 --locale=nl',
   );
   process.exit(0);
 }
@@ -61,15 +59,8 @@ const model = provider === 'ollama' ? process.env.OLLAMA_MODEL || 'gemma4' : pro
 const baseUrl = provider === 'ollama' ? process.env.OLLAMA_BASE_URL : process.env.GEMINI_BASE_URL;
 const positional = rawArgs.filter((arg) => !arg.startsWith('--'));
 
-const [personaId, category = 'planet-in-sign', body = 'jupiter', signOrHouseRaw = '8'] = positional;
+const [category = 'planet-in-sign', body = 'jupiter', signOrHouseRaw = '8'] = positional;
 const signOrHouse = Number(signOrHouseRaw);
-
-const personas = JSON.parse(await readFile(join(root, 'tools', 'corpus-gen', 'personas.json'), 'utf8')).personas;
-const knownIds = ['neutral', ...personas.map((p) => p.id)];
-if (!personaId) throw new Error(`personaId is required — known: ${knownIds.join(', ')}`);
-const persona = personaId === 'neutral' ? undefined : personas.find((candidate) => candidate.id === personaId);
-if (personaId !== 'neutral' && !persona)
-  throw new Error(`unknown persona "${personaId}" — known: ${knownIds.join(', ')}`);
 
 if (category !== 'planet-in-sign' && category !== 'planet-in-house') {
   throw new Error(`this smoke test only supports planet-in-sign / planet-in-house, got "${category}"`);
@@ -94,15 +85,13 @@ const placementDescription =
     : `${bodyName} in house ${String(signOrHouse)} (${planetSymbolism(body)?.core ?? ''})`;
 
 const systemInstruction = buildSystemInstruction({
-  persona,
   symbolismContext: buildSymbolismContext(locale, symbolismScopeFor(placement)),
   locale,
   forceLanguageDirective: provider === 'ollama',
 });
-const userContent = buildUserContent({ placementDescription, corpusEntries, locale, persona });
+const userContent = buildUserContent({ placementDescription, corpusEntries, locale });
 
 console.log('='.repeat(80));
-console.log(`PERSONA: ${persona ? `${persona.title.en} (${persona.id})` : 'neutral (no persona)'}`);
 console.log(`PLACEMENT: ${key} — ${placementDescription}`);
 console.log(`PROVIDER: ${provider}  MODEL: ${String(model)}  TEMPERATURE: ${process.env.GEMINI_TEMPERATURE}`);
 console.log('='.repeat(80));
@@ -150,7 +139,6 @@ const draftEntry = {
   text: result.text,
   tier: result.tier,
   tags: placement.category === 'dignity-state' ? [placement.state] : [],
-  ...(persona ? { persona: persona.id } : {}),
   provenance: {
     source: 'generated',
     model,

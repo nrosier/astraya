@@ -24,13 +24,7 @@ import {
   upsertCorpusOverride,
 } from '../sync/admin-client.js';
 import { loadRuntimeCorpus } from '../interpretation/corpus-client.js';
-import {
-  CORPUS_CATEGORIES,
-  CORPUS_LOCALES,
-  CORPUS_TIERS,
-  PERSONA_IDS,
-  categoryOfKey,
-} from '../interpretation/schema.js';
+import { CORPUS_CATEGORIES, CORPUS_LOCALES, CORPUS_TIERS, categoryOfKey } from '../interpretation/schema.js';
 import { downloadBlob } from './download.js';
 import { LOCALE_LABELS, isLocale, useLocale } from './locale.js';
 import { EntryLabel } from './EntryLabel.js';
@@ -46,25 +40,16 @@ import {
   tierLabel,
 } from './placement-label.js';
 import { useMessages } from './messages.js';
-import { PERSONA_LABELS } from './ReportView.js';
 import { corpusOverridesPanelMessages } from './CorpusOverridesPanel.messages.js';
 import { sharedMessages } from './shared.messages.js';
 import type { CorpusOverride } from '../sync/admin-client.js';
-import type { CorpusCategory, CorpusEntry, CorpusTier, Locale, PersonaId } from '../interpretation/schema.js';
+import type { CorpusCategory, CorpusEntry, CorpusTier, Locale } from '../interpretation/schema.js';
 
 const PAGE_SIZE = 50;
-
-function identityKeyOf(key: string, persona: PersonaId | undefined): string {
-  return `${key}::${persona ?? ''}`;
-}
 
 function truncate(text: string): string {
   const maxLength = 90;
   return text.length <= maxLength ? text : `${text.slice(0, maxLength - 1)}…`;
-}
-
-function isPersonaIdValue(value: string): value is PersonaId {
-  return (PERSONA_IDS as readonly string[]).includes(value);
 }
 
 function isCorpusCategory(value: string): value is CorpusCategory {
@@ -82,7 +67,6 @@ interface LoadedData {
 
 interface EditState {
   readonly key: string;
-  readonly persona: PersonaId | undefined;
   readonly text: string;
   readonly tier: CorpusTier;
   readonly tags: string;
@@ -90,7 +74,6 @@ interface EditState {
 
 interface PendingReset {
   readonly key: string;
-  readonly persona: PersonaId | undefined;
   readonly overrideId: string;
 }
 
@@ -101,7 +84,6 @@ export function CorpusOverridesPanel(): React.JSX.Element {
   const [uiLocale] = useLocale();
 
   const [corpusLocale, setCorpusLocale] = useState<Locale>('en');
-  const [scope, setScope] = useState<PersonaId>();
 
   const [data, setData] = useState<LoadedData>();
   const [loadError, setLoadError] = useState<string>();
@@ -119,11 +101,9 @@ export function CorpusOverridesPanel(): React.JSX.Element {
   const [saveError, setSaveError] = useState<string>();
 
   const load = (): Promise<void> =>
-    Promise.all([loadRuntimeCorpus(corpusLocale, scope), listCorpusOverrides(corpusLocale)]).then(
-      ([corpus, overrides]) => {
-        setData({ corpus, overrides });
-      },
-    );
+    Promise.all([loadRuntimeCorpus(corpusLocale), listCorpusOverrides(corpusLocale)]).then(([corpus, overrides]) => {
+      setData({ corpus, overrides });
+    });
 
   useEffect(() => {
     let cancelled = false;
@@ -135,15 +115,15 @@ export function CorpusOverridesPanel(): React.JSX.Element {
     return () => {
       cancelled = true;
     };
-  }, [corpusLocale, scope]);
+  }, [corpusLocale]);
 
   useEffect(() => {
     setPage(1);
-  }, [corpusLocale, scope, categoryFilter, tierFilter, tagFilter, overriddenOnly, search]);
+  }, [corpusLocale, categoryFilter, tierFilter, tagFilter, overriddenOnly, search]);
 
   const overrideMap = useMemo(() => {
     const map = new Map<string, CorpusOverride>();
-    for (const override of data?.overrides ?? []) map.set(identityKeyOf(override.key, override.persona), override);
+    for (const override of data?.overrides ?? []) map.set(override.key, override);
     return map;
   }, [data]);
 
@@ -177,7 +157,7 @@ export function CorpusOverridesPanel(): React.JSX.Element {
           if (categoryFilter !== '' && categoryOfKey(entry.key) !== categoryFilter) return false;
           if (tierFilter !== '' && entry.tier !== tierFilter) return false;
           if (tagFilter !== '' && !entry.tags.includes(tagFilter)) return false;
-          if (overriddenOnly && !overrideMap.has(identityKeyOf(entry.key, entry.persona))) return false;
+          if (overriddenOnly && !overrideMap.has(entry.key)) return false;
           if (words.length > 0) {
             const haystack = `${label} ${entry.key} ${entry.text}`.toLowerCase();
             if (!words.every((word) => haystack.includes(word))) return false;
@@ -203,7 +183,6 @@ export function CorpusOverridesPanel(): React.JSX.Element {
   const startEdit = (entry: CorpusEntry): void => {
     setEditing({
       key: entry.key,
-      persona: entry.persona,
       text: entry.text,
       tier: entry.tier,
       tags: entry.tags.join(', '),
@@ -218,7 +197,7 @@ export function CorpusOverridesPanel(): React.JSX.Element {
 
   const save = (): void => {
     if (editing === undefined) return;
-    const identity = identityKeyOf(editing.key, editing.persona);
+    const identity = editing.key;
     setBusyKey(identity);
     setSaveError(undefined);
     const tags = editing.tags
@@ -228,7 +207,6 @@ export function CorpusOverridesPanel(): React.JSX.Element {
     void upsertCorpusOverride({
       key: editing.key,
       locale: corpusLocale,
-      ...(editing.persona !== undefined ? { persona: editing.persona } : {}),
       text: editing.text,
       tier: editing.tier,
       tags,
@@ -247,16 +225,16 @@ export function CorpusOverridesPanel(): React.JSX.Element {
 
   const requestReset = (): void => {
     if (editing === undefined) return;
-    const override = overrideMap.get(identityKeyOf(editing.key, editing.persona));
+    const override = overrideMap.get(editing.key);
     if (override === undefined) return;
-    setPendingReset({ key: editing.key, persona: editing.persona, overrideId: override.id });
+    setPendingReset({ key: editing.key, overrideId: override.id });
   };
 
   const confirmReset = (): void => {
     const target = pendingReset;
     if (target === undefined) return;
     setPendingReset(undefined);
-    setBusyKey(identityKeyOf(target.key, target.persona));
+    setBusyKey(target.key);
     setSaveError(undefined);
     void deleteCorpusOverride(target.overrideId)
       .then(() => {
@@ -309,23 +287,6 @@ export function CorpusOverridesPanel(): React.JSX.Element {
             {CORPUS_LOCALES.map((locale) => (
               <option key={locale} value={locale}>
                 {LOCALE_LABELS[locale]}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          {t.scopeLabel}
-          <select
-            value={scope ?? ''}
-            onChange={(event) => {
-              const next = event.target.value;
-              setScope(next !== '' && isPersonaIdValue(next) ? next : undefined);
-            }}
-          >
-            <option value="">{t.neutral}</option>
-            {PERSONA_IDS.map((persona) => (
-              <option key={persona} value={persona}>
-                {PERSONA_LABELS[persona][corpusLocale]}
               </option>
             ))}
           </select>
@@ -442,7 +403,6 @@ export function CorpusOverridesPanel(): React.JSX.Element {
         >
           <p>
             <strong>{labelForKey(editing.key, uiLocale)}</strong> <code className="entry-key">{editing.key}</code>
-            {editing.persona !== undefined && ` · ${PERSONA_LABELS[editing.persona][corpusLocale]}`}
           </p>
           <label>
             {t.textLabel}
@@ -481,19 +441,14 @@ export function CorpusOverridesPanel(): React.JSX.Element {
             />
           </label>
           <p className="actions">
-            <button type="submit" disabled={busyKey === identityKeyOf(editing.key, editing.persona)}>
-              {busyKey === identityKeyOf(editing.key, editing.persona) ? t.savingLabel : t.saveButton}
+            <button type="submit" disabled={busyKey === editing.key}>
+              {busyKey === editing.key ? t.savingLabel : t.saveButton}
             </button>
             <button type="button" className="quiet" onClick={cancelEdit}>
               {t.cancelButton}
             </button>
-            {overrideMap.has(identityKeyOf(editing.key, editing.persona)) && (
-              <button
-                type="button"
-                className="danger"
-                disabled={busyKey === identityKeyOf(editing.key, editing.persona)}
-                onClick={requestReset}
-              >
+            {overrideMap.has(editing.key) && (
+              <button type="button" className="danger" disabled={busyKey === editing.key} onClick={requestReset}>
                 {t.resetButton}
               </button>
             )}
@@ -524,7 +479,7 @@ export function CorpusOverridesPanel(): React.JSX.Element {
                   </thead>
                   <tbody>
                     {visible.map((entry) => {
-                      const identity = identityKeyOf(entry.key, entry.persona);
+                      const identity = entry.key;
                       const overridden = overrideMap.has(identity);
                       return (
                         <tr key={identity}>

@@ -61,14 +61,8 @@ function jaccard(a: Set<string>, b: Set<string>): number {
 
 /**
  * Flags every pair of entries, within a locale, whose text is at or above
- * `threshold` similar. Comparison is further scoped to entries that share a
- * persona (including the neutral, persona-less group): a persona is a
- * deliberately distinct voice for the same fact, so two entries in different
- * personas reading alike is not the "sounds templated" signal this pass
- * exists to catch — it's two personas doing their job on the same placement.
- * Scoping this way also keeps each compared group at one persona's slice of
- * the corpus (a few thousand entries) rather than all five-plus-neutral
- * pooled together, which is what makes the remaining pruning effective.
+ * `threshold` similar. Each locale is compared on its own, which keeps each
+ * compared group to one language's entries rather than both pooled together.
  *
  * Within a group, the scan is quadratic but pruned: a pair's Jaccard
  * similarity can never exceed the ratio of its smaller trigram set to its
@@ -83,7 +77,7 @@ export function findNearDuplicates(
 ): SimilarityReport {
   const byGroup = new Map<string, { locale: Locale; group: CorpusEntry[] }>();
   for (const entry of entries) {
-    const groupKey = `${entry.locale}::${entry.persona ?? ''}`;
+    const groupKey = entry.locale;
     const existing = byGroup.get(groupKey);
     if (existing) {
       existing.group.push(entry);

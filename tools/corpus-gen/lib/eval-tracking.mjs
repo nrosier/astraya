@@ -27,7 +27,7 @@
 import { readFile, writeFile } from 'node:fs/promises';
 
 function sameIdentity(a, b) {
-  return a.key === b.key && (a.persona ?? 'neutral') === (b.persona ?? 'neutral');
+  return a.key === b.key;
 }
 
 /** Reads a locale's tracking file, or an empty array if it doesn't exist yet. */
@@ -45,12 +45,12 @@ export async function writeTracking(path, tracking) {
   await writeFile(path, `${JSON.stringify(tracking, null, 2)}\n`, 'utf8');
 }
 
-/** Finds the existing record for this (key, persona), or `undefined` if this entry has never been tracked. */
+/** Finds the existing record for this key, or `undefined` if this entry has never been tracked. */
 export function findTracking(tracking, identity) {
   return tracking.find((existing) => sameIdentity(existing, identity));
 }
 
-/** Mutates `tracking` in place: replaces the existing record for this (key, persona), or appends. */
+/** Mutates `tracking` in place: replaces the existing record for this key, or appends. */
 export function upsertTracking(tracking, record) {
   const index = tracking.findIndex((existing) => sameIdentity(existing, record));
   if (index === -1) tracking.push(record);

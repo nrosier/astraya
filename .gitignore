@@ -9,10 +9,9 @@ coverage/
 # source: 2.6 MB that would otherwise be committed a second time.
 public/ephe/
 
-# Per-(locale, persona) corpus chunks, split out of src/interpretation/corpus/
-# by `npm run corpus:split` (scripts/split-corpus.mjs) so the browser fetches
-# only the voice a reader actually needs instead of the whole multi-persona,
-# multi-locale corpus. Build output, not source — same reasoning as public/ephe/.
+# Per-locale corpus files, split out of src/interpretation/corpus/ by
+# `npm run corpus:split` (scripts/split-corpus.mjs) so the browser fetches only
+# the language a reader needs. Build output, not source — same reasoning as public/ephe/.
 public/corpus/
 
 # Secrets. The sync server's encryption key lives here and must never be

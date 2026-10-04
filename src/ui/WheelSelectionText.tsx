@@ -2,11 +2,11 @@
  * The written interpretation for whatever is selected on the chart wheel (#415): the same corpus
  * text the Interpretation tab shows for those placements, under the facts the selection panel
  * already gives. It resolves each entry through `resolvePlacementText`, so a placement the corpus
- * has no entry for still gets the mechanical sentence rather than nothing, and uses the device's
- * saved advisor voice, so the two screens read alike.
+ * has no entry for still gets the mechanical sentence rather than nothing, so the two screens read
+ * alike.
  *
  * The corpus is fetched on the first selection (it is not loaded with the wheel) and kept per
- * language and voice, so later clicks show their text at once.
+ * language, so later clicks show their text at once.
  */
 import { useEffect, useMemo, useState } from 'react';
 import type { ChartData } from '../domain/chart-compute.js';
@@ -15,7 +15,6 @@ import type { CorpusEntry, Locale } from '../interpretation/schema.js';
 import { parseSelectionKey, selectionPlacements } from '../interpretation/selection.js';
 import { chartViewMessages } from './ChartView.messages.js';
 import { useMessages } from './messages.js';
-import { initialPersona } from './report-persona.js';
 import { wheelCorpus } from './wheel-corpus.js';
 import { placementHeading, SELECTION_TEXT_LIMIT } from './wheel-selection.js';
 
@@ -29,7 +28,6 @@ export function WheelSelectionText({
   readonly locale: Locale;
 }): React.JSX.Element | null {
   const t = useMessages(chartViewMessages);
-  const persona = useMemo(initialPersona, []);
   const [corpus, setCorpus] = useState<readonly CorpusEntry[] | undefined>(undefined);
   const [failed, setFailed] = useState(false);
   const [showAll, setShowAll] = useState(false);
@@ -38,7 +36,7 @@ export function WheelSelectionText({
     let cancelled = false;
     setCorpus(undefined);
     setFailed(false);
-    wheelCorpus(locale, persona).then(
+    wheelCorpus(locale).then(
       (loaded) => {
         if (!cancelled) setCorpus(loaded);
       },
@@ -49,7 +47,7 @@ export function WheelSelectionText({
     return () => {
       cancelled = true;
     };
-  }, [locale, persona]);
+  }, [locale]);
 
   // A new selection starts collapsed again.
   useEffect(() => {
@@ -81,7 +79,7 @@ export function WheelSelectionText({
             {shown.map((item) => (
               <li key={item.key}>
                 <strong>{placementHeading(item.placement, locale, labels)}</strong>
-                <p>{resolvePlacementText(item.placement, locale, corpus, persona)}</p>
+                <p>{resolvePlacementText(item.placement, locale, corpus)}</p>
               </li>
             ))}
           </ul>

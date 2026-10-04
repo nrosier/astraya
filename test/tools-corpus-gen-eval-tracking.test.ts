@@ -2,7 +2,7 @@
  * Regression coverage for `tools/corpus-gen/lib/eval-tracking.mjs` (#381): the per-locale,
  * per-entry evaluation-loop state that stops evaluate-corpus-batch.mjs from re-checking an
  * entry already judged clean, or already rewritten as many times as the feedback loop allows.
- * Identity is (key, persona), same convention as corpus-feedback.mjs.
+ * Identity is the entry's key, same convention as corpus-feedback.mjs.
  */
 import { mkdtempSync, rmSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
@@ -15,7 +15,6 @@ import { readTracking as readTrackingUntyped, writeTracking as writeTrackingUnty
 
 interface TrackingRecord {
   readonly key: string;
-  readonly persona?: string | undefined;
   readonly locale: string;
   readonly clean: boolean;
   readonly evaluationCount: number;
@@ -26,7 +25,7 @@ const readTracking = readTrackingUntyped as (path: string) => Promise<TrackingRe
 const writeTracking = writeTrackingUntyped as (path: string, tracking: readonly TrackingRecord[]) => Promise<void>;
 const findTracking = findTrackingUntyped as (
   tracking: readonly TrackingRecord[],
-  identity: { readonly key: string; readonly persona?: string | undefined },
+  identity: { readonly key: string },
 ) => TrackingRecord | undefined;
 const upsertTracking = upsertTrackingUntyped as (tracking: TrackingRecord[], record: TrackingRecord) => void;
 const isEvaluationExhausted = isEvaluationExhaustedUntyped as (
@@ -75,39 +74,27 @@ describe('readTracking (#381)', () => {
 
 describe('findTracking (#381)', () => {
   it('returns undefined when no record matches', () => {
-    expect(findTracking([record()], { key: 'planet-in-sign:mars:0', persona: undefined })).toBeUndefined();
+    expect(findTracking([record()], { key: 'planet-in-sign:mars:0' })).toBeUndefined();
   });
 
-  it('finds the matching record by (key, persona)', () => {
-    const target = record({ persona: 'mystic' });
-    expect(findTracking([record(), target], { key: target.key, persona: 'mystic' })).toEqual(target);
-  });
-
-  it('treats a missing persona and persona="neutral" as the same identity', () => {
-    const target = record({ persona: undefined });
-    expect(findTracking([target], { key: target.key, persona: undefined })).toEqual(target);
+  it('finds the matching record by key', () => {
+    const target = record({ key: 'planet-in-sign:mars:0' });
+    expect(findTracking([record(), target], { key: target.key })).toEqual(target);
   });
 });
 
 describe('upsertTracking (#381)', () => {
-  it('appends a new record when none exists for this (key, persona)', () => {
+  it('appends a new record when none exists for this key', () => {
     const tracking: TrackingRecord[] = [];
     upsertTracking(tracking, record());
     expect(tracking).toEqual([record()]);
   });
 
-  it('replaces the existing record for the same (key, persona) instead of duplicating it', () => {
+  it('replaces the existing record for the same key instead of duplicating it', () => {
     const tracking: TrackingRecord[] = [record({ evaluationCount: 1 })];
     upsertTracking(tracking, record({ evaluationCount: 2 }));
     expect(tracking).toHaveLength(1);
     expect(tracking[0]?.evaluationCount).toBe(2);
-  });
-
-  it('keeps a neutral and a persona-specific record for the same key as two separate entries', () => {
-    const tracking: TrackingRecord[] = [];
-    upsertTracking(tracking, record({ persona: undefined }));
-    upsertTracking(tracking, record({ persona: 'mystic' }));
-    expect(tracking).toHaveLength(2);
   });
 });
 

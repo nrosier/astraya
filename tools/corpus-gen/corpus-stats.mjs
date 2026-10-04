@@ -34,7 +34,7 @@ const evaluationLimit = Number(flag('evaluation-limit', 2));
 const locales = localeFilter ? [localeFilter] : ['en', 'nl'];
 
 function identityOf(item) {
-  return `${item.key}\u0000${item.persona ?? 'neutral'}`;
+  return item.key;
 }
 
 function pct(n, total) {

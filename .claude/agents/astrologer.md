@@ -145,8 +145,7 @@ and both files say so explicitly rather than picking silently:
 key fails validation rather than silently never matching a chart. Checking a
 new/edited corpus entry:
 
-- **`anchor: true` entries must be neutral** (no `persona`) and their
-  provenance must be either `hand-written` or `generated` *and* reviewed
+- **`anchor: true` entries'** provenance must be either `hand-written` or `generated` *and* reviewed
   (`reviewedBy`/`reviewedAt` both set) — `isAcceptableAnchorProvenance` in
   `schema.ts`. A new anchor with only `generated` provenance and no review
   fields is exactly the case this validation exists to reject; don't let a

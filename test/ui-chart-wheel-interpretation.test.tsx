@@ -27,10 +27,7 @@ const corpusFile = (locale: 'en' | 'nl'): readonly CorpusEntry[] =>
   JSON.parse(
     readFileSync(resolve(import.meta.dirname, `../src/interpretation/corpus/${locale}.json`), 'utf8'),
   ) as CorpusEntry[];
-const NEUTRAL = {
-  en: corpusFile('en').filter((e) => e.persona === undefined),
-  nl: corpusFile('nl').filter((e) => e.persona === undefined),
-};
+const NEUTRAL = { en: corpusFile('en'), nl: corpusFile('nl') };
 
 let data: ChartData;
 let mounted: { container: HTMLElement; root: Root } | undefined;
@@ -54,7 +51,7 @@ beforeEach(() => {
     'fetch',
     vi.fn((input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
-      const chunk = /\/corpus\/(en|nl)\/neutral\.json$/.exec(url);
+      const chunk = /\/corpus\/(en|nl)\.json$/.exec(url);
       if (chunk?.[1] === 'en' || chunk?.[1] === 'nl') return Promise.resolve(corpusResponse(chunk[1]));
       return Promise.resolve(new Response(JSON.stringify({ entries: [] }), { status: 200 }));
     }),
@@ -225,7 +222,7 @@ describe('wheel selection interpretation (#415)', () => {
       if (typeof input === 'string') return input;
       return input instanceof URL ? input.href : input.url;
     });
-    const chunkFetches = requestedUrls.filter((url) => url.includes('/corpus/en/neutral.json')).length;
+    const chunkFetches = requestedUrls.filter((url) => url.includes('/corpus/en.json')).length;
     expect(chunkFetches).toBe(1);
   });
 

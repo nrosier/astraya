@@ -7,7 +7,7 @@
  *
  * Writes every entry the judge flags (not every entry checked — only the ones with a real
  * concern) to tools/corpus-gen/feedback/<locale>.json, one record per flagged entry: its key,
- * persona, original text, and the judge's own specific issues. Never touches the corpus itself
+ * original text, and the judge's own specific issues. Never touches the corpus itself
  * — this script is read-only against src/interpretation/corpus/<locale>.json; see
  * improve-corpus-batch.mjs for the half that acts on this file.
  *
@@ -19,7 +19,7 @@
  * `--evaluation-limit` rounds (default 2) without this script ever agreeing it's clean — then
  * it is left alone, flagged or not, so the loop can't run forever on an entry the two models
  * keep disagreeing about. `--force` bypasses this tracking entirely and re-evaluates everything
- * selected by `--locale`/`--persona`/`--limit`, same as before this tracking existed.
+ * selected by `--locale`/`--limit`, same as before this tracking existed.
  *
  * Submit-and-exit, not submit-and-block: a batch job can legitimately take OpenAI up to 24h, so
  * this script never sits in a poll loop. Every run first checks every job already recorded in
@@ -47,7 +47,7 @@
  * generate-batch.mjs's --batch is one of two modes, since the whole point of this feature is to
  * run the ChatGPT side cheaply at corpus scale.
  *
- *   npx tsx --env-file=.env.local tools/corpus-gen/evaluate-corpus-batch.mjs --locale=en [--limit=N] [--model=<name>] [--persona=<id>] [--evaluation-limit=N] [--force] [--check-only]
+ *   npx tsx --env-file=.env.local tools/corpus-gen/evaluate-corpus-batch.mjs --locale=en [--limit=N] [--model=<name>] [--evaluation-limit=N] [--force] [--check-only]
  *   npx tsx --env-file=.env.local tools/corpus-gen/evaluate-corpus-batch.mjs --check-only   (checks every locale with a batch in flight)
  */
 import { readFile, mkdir, readdir } from 'node:fs/promises';
@@ -71,7 +71,7 @@ import { readBatchState, writeBatchState, clearBatchState } from './lib/batch-st
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 function identityOf(item) {
-  return `${item.key}\u0000${item.persona ?? 'neutral'}`;
+  return item.key;
 }
 
 const rawArgs = process.argv.slice(2);
@@ -81,7 +81,7 @@ function flag(name, fallback) {
 }
 if (rawArgs.includes('--help') || rawArgs.includes('-h')) {
   console.log(
-    'Usage: npx tsx --env-file=.env.local tools/corpus-gen/evaluate-corpus-batch.mjs --locale=en [--limit=N] [--model=<name>] [--persona=<id>] [--evaluation-limit=N] [--force] [--recheck-exhausted] [--check-only]',
+    'Usage: npx tsx --env-file=.env.local tools/corpus-gen/evaluate-corpus-batch.mjs --locale=en [--limit=N] [--model=<name>] [--evaluation-limit=N] [--force] [--recheck-exhausted] [--check-only]',
   );
   console.log(
     '       npx tsx --env-file=.env.local tools/corpus-gen/evaluate-corpus-batch.mjs --check-only   (checks every locale with a batch in flight)',
@@ -92,7 +92,6 @@ if (rawArgs.includes('--help') || rawArgs.includes('-h')) {
 const locale = flag('locale');
 const limit = Number(flag('limit', Infinity));
 const model = flag('model', 'gpt-6-luna');
-const personaFilter = flag('persona'); // omit to check every persona, including neutral
 const evaluationLimit = Number(flag('evaluation-limit', 2));
 const force = rawArgs.includes('--force');
 // #396: re-checking the entries improve-corpus-batch.mjs's own `--last-resort` mode just revised
@@ -156,11 +155,11 @@ async function checkAndApply(loc) {
     if (feedback === undefined) feedback = await readFeedback(feedbackPath);
 
     // Rebuild this job's own candidates from the identity list captured at submission time,
-    // against the corpus as it stands now — same (key, persona) lookup convention as
+    // against the corpus as it stands now — same key lookup convention as
     // corpus-feedback.mjs/eval-tracking.mjs.
     const byIdentity = new Map(corpus.map((entry) => [identityOf(entry), entry]));
-    const candidates = job.candidates.map(({ key, persona }) => {
-      const entry = byIdentity.get(identityOf({ key, persona }));
+    const candidates = job.candidates.map(({ key }) => {
+      const entry = byIdentity.get(identityOf({ key }));
       const placement = entry ? parsePlacementKey(entry.key) : undefined;
       return entry && placement ? { entry, placement } : undefined;
     });
@@ -197,7 +196,6 @@ async function checkAndApply(loc) {
         totalFlagged += 1;
         upsertFeedback(feedback, {
           key: entry.key,
-          persona: entry.persona,
           locale: entry.locale,
           originalText: entry.text,
           issues: result.result.issues,
@@ -205,7 +203,6 @@ async function checkAndApply(loc) {
         });
         upsertTracking(tracking, {
           key: entry.key,
-          persona: entry.persona,
           locale: entry.locale,
           clean: false,
           evaluationCount: existingTracking?.evaluationCount ?? 0,
@@ -216,7 +213,6 @@ async function checkAndApply(loc) {
         totalClean += 1;
         upsertTracking(tracking, {
           key: entry.key,
-          persona: entry.persona,
           locale: entry.locale,
           clean: true,
           evaluationCount: existingTracking?.evaluationCount ?? 0,
@@ -290,7 +286,6 @@ if (checkOnly) {
 const inFlightIdentities = new Set(stillRunning.flatMap((job) => job.candidates.map(identityOf)));
 
 const selected = corpus
-  .filter((entry) => personaFilter === undefined || (entry.persona ?? 'neutral') === personaFilter)
   .filter((entry) => !inFlightIdentities.has(identityOf(entry)))
   .map((entry) => {
     const placement = parsePlacementKey(entry.key);
@@ -307,7 +302,7 @@ const alreadyResolved = selected.length - eligible.length;
 const candidates = eligible.slice(0, Number.isFinite(limit) ? limit : undefined);
 
 console.log(
-  `[${locale}] model: ${model} — ${String(candidates.length)} entries to evaluate${personaFilter ? ` (persona=${personaFilter})` : ''}${alreadyResolved > 0 ? ` (${String(alreadyResolved)} already resolved, skipped)` : ''}${inFlightIdentities.size > 0 ? ` (${String(inFlightIdentities.size)} already covered by ${String(stillRunning.length)} running batch(es))` : ''}`,
+  `[${locale}] model: ${model} — ${String(candidates.length)} entries to evaluate${alreadyResolved > 0 ? ` (${String(alreadyResolved)} already resolved, skipped)` : ''}${inFlightIdentities.size > 0 ? ` (${String(inFlightIdentities.size)} already covered by ${String(stillRunning.length)} running batch(es))` : ''}`,
 );
 if (candidates.length === 0) {
   if (stillRunning.length > 0) await writeBatchState(statePath, { jobs: stillRunning });
@@ -327,7 +322,7 @@ const requests = candidates.map(({ entry, placement }, index) => {
     ...(priorRejection ? { priorRejection } : {}),
   });
   return buildBatchRequest({
-    customId: String(index), // position in `candidates` — unique regardless of persona, unlike entry.key alone
+    customId: String(index), // position in `candidates` — a plain index
     model,
     systemInstruction,
     userContent,
@@ -347,7 +342,7 @@ const newJob = {
   batchId: submitted.id,
   submittedAt: new Date().toISOString(),
   model,
-  candidates: candidates.map(({ entry }) => ({ key: entry.key, persona: entry.persona })),
+  candidates: candidates.map(({ entry }) => ({ key: entry.key })),
 };
 await writeBatchState(statePath, { jobs: [...stillRunning, newJob] });
 console.log(

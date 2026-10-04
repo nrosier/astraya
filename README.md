@@ -64,7 +64,7 @@ if upstream repacks them, because a silently different ephemeris file is a
 silently different chart.
 
 `npm run corpus:split` splits `src/interpretation/corpus/{en,nl}.json` into
-small per-(locale, persona) files under `public/corpus/`, so the app fetches
+one file per locale under `public/corpus/`, so the app fetches
 only the interpretation text a reader can actually see instead of the entire
 corpus. Re-run it whenever those source files change.
 

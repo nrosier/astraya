@@ -39,7 +39,7 @@
  * produces structured events keyed by `BodyId`; turning an event into a
  * sentence is `interpretation/compose.ts`'s job (via the `transit-aspect`
  * `CorpusPlacement` category, #207's schema addition) and is left to the UI
- * layer that has a locale and persona to ask for, the same separation
+ * layer that has a locale to ask for, the same separation
  * `ReportView.tsx` already keeps from `report.ts`.
  */
 import { findCrossAspects, fixedSubjects, subjectsFrom, type Aspect, type OrbConfig } from '../astrology/aspects.js';

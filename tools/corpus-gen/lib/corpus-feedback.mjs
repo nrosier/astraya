@@ -4,8 +4,7 @@
  * an object map, so it stays simple to inspect by hand (`jq`, a text editor) between the two
  * stages — this is meant to be a legible artifact, not just internal plumbing.
  *
- * Identity is `(key, persona)`, matching the corpus's own dedupe identity (schema.ts/loader.ts):
- * a neutral and a persona-specific entry for the same placement are tracked separately.
+ * Identity is the entry's `key`, matching the corpus's own dedupe identity (schema.ts/loader.ts).
  * `upsertFeedback` replaces an existing record for the same identity rather than duplicating it,
  * so re-running evaluate-corpus-batch.mjs after a prior pass updates stale feedback instead of
  * piling up repeats.
@@ -13,7 +12,7 @@
 import { readFile, writeFile } from 'node:fs/promises';
 
 function sameIdentity(a, b) {
-  return a.key === b.key && (a.persona ?? 'neutral') === (b.persona ?? 'neutral');
+  return a.key === b.key;
 }
 
 /** Reads a locale's feedback file, or an empty array if it doesn't exist yet. */
@@ -31,14 +30,14 @@ export async function writeFeedback(path, feedback) {
   await writeFile(path, `${JSON.stringify(feedback, null, 2)}\n`, 'utf8');
 }
 
-/** Mutates `feedback` in place: replaces the existing record for this (key, persona), or appends. */
+/** Mutates `feedback` in place: replaces the existing record for this key, or appends. */
 export function upsertFeedback(feedback, record) {
   const index = feedback.findIndex((existing) => sameIdentity(existing, record));
   if (index === -1) feedback.push(record);
   else feedback[index] = record;
 }
 
-/** Removes the record for this (key, persona), if present. Used by improve-corpus-batch.mjs once a record has been acted on. */
+/** Removes the record for this key, if present. Used by improve-corpus-batch.mjs once a record has been acted on. */
 export function removeFeedback(feedback, identity) {
   const index = feedback.findIndex((existing) => sameIdentity(existing, identity));
   if (index !== -1) feedback.splice(index, 1);

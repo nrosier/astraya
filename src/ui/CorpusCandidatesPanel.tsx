@@ -21,7 +21,6 @@ import { LOCALE_LABELS, isLocale, useLocale } from './locale.js';
 import { EntryLabel } from './EntryLabel.js';
 import { compareSortKeys, labelForKey, sortKeyForKey, tagExplanation, tagLabel } from './placement-label.js';
 import { useMessages } from './messages.js';
-import { PERSONA_LABELS } from './ReportView.js';
 import { corpusCandidatesPanelMessages } from './CorpusCandidatesPanel.messages.js';
 import { sharedMessages } from './shared.messages.js';
 import type { CorpusCandidate } from '../sync/admin-client.js';
@@ -30,10 +29,6 @@ import type { Locale } from '../interpretation/schema.js';
 function truncate(text: string): string {
   const maxLength = 90;
   return text.length <= maxLength ? text : `${text.slice(0, maxLength - 1)}…`;
-}
-
-function identityKeyOf(candidate: CorpusCandidate): string {
-  return `${candidate.key}::${candidate.persona ?? ''}`;
 }
 
 export function CorpusCandidatesPanel(): React.JSX.Element {
@@ -77,13 +72,13 @@ export function CorpusCandidatesPanel(): React.JSX.Element {
     };
   }, [corpusLocale]);
 
-  // Which `(key, persona)` pairs have more than one still-pending candidate — the collision
+  // Which keys have more than one still-pending candidate — the collision
   // #370's own "Dedup" requirement asks a reviewer be able to see, e.g. a classical-seed and
   // an llm-fill candidate both proposing text for the same placement.
   const duplicateIdentities = useMemo(() => {
     const counts = new Map<string, number>();
     for (const candidate of candidates ?? []) {
-      const identity = identityKeyOf(candidate);
+      const identity = candidate.key;
       counts.set(identity, (counts.get(identity) ?? 0) + 1);
     }
     return new Set(
@@ -223,7 +218,7 @@ export function CorpusCandidatesPanel(): React.JSX.Element {
                 </thead>
                 <tbody>
                   {candidates.map((candidate) => {
-                    const isDuplicate = duplicateIdentities.has(identityKeyOf(candidate));
+                    const isDuplicate = duplicateIdentities.has(candidate.key);
                     return (
                       <tr key={candidate.id}>
                         <td>
@@ -238,7 +233,6 @@ export function CorpusCandidatesPanel(): React.JSX.Element {
                         </td>
                         <td>
                           <EntryLabel entryKey={candidate.key} locale={uiLocale} />
-                          {candidate.persona !== undefined && ` · ${PERSONA_LABELS[candidate.persona][corpusLocale]}`}
                           {isDuplicate && (
                             <>
                               {' '}

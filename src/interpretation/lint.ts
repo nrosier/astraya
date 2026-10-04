@@ -162,7 +162,7 @@ const MIN_ENTRIES_FOR_OPENING_CHECK = 20;
 /**
  * Second-person address is what these interpretations are for: "you"/"your"
  * (and Dutch "je"/"jij"/"jouw", "u"/"uw" for formal address) legitimately open
- * a huge share of every persona's entries, in both locales, by design — not
+ * a huge share of the entries, in both locales, by design — not
  * because the text is templated. Excluding them from the opening-variety check
  * keeps that check aimed at what it actually means to catch: many entries
  * starting with the same distinctive word or phrase, which reads as templated.

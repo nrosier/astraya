@@ -15,14 +15,12 @@ import type { Database } from './db.ts';
 import type { User } from './auth/identity.ts';
 import {
   LOCALES,
-  PERSONA_IDS,
   TIERS,
   deleteCorpusOverride,
   listCorpusOverrides,
   toCorpusEntry,
   upsertCorpusOverride,
   type Locale,
-  type PersonaId,
   type CorpusTier,
 } from './corpus-overrides.ts';
 import { requireAdmin } from './auth/identity.ts';
@@ -31,10 +29,6 @@ import type { CorpusEntry } from '../src/interpretation/schema.ts';
 
 function isLocale(value: unknown): value is Locale {
   return typeof value === 'string' && (LOCALES as readonly string[]).includes(value);
-}
-
-function isPersonaId(value: unknown): value is PersonaId {
-  return typeof value === 'string' && (PERSONA_IDS as readonly string[]).includes(value);
 }
 
 function isTier(value: unknown): value is CorpusTier {
@@ -89,8 +83,10 @@ export function registerCorpusOverrideRoutes(app: FastifyInstance, db: Database)
       const { key, locale, persona, text, tier, tags } = request.body;
       if (typeof key !== 'string' || key === '') return reply.code(400).send({ error: 'key is required' });
       if (!isLocale(locale)) return reply.code(400).send({ error: `locale must be one of ${LOCALES.join(', ')}` });
-      if (persona !== undefined && !isPersonaId(persona)) {
-        return reply.code(400).send({ error: `persona must be one of ${PERSONA_IDS.join(', ')}` });
+      if (persona !== undefined) {
+        return reply
+          .code(400)
+          .send({ error: 'persona is no longer supported: an override is a key and a language (#429)' });
       }
       if (typeof text !== 'string' || text === '') return reply.code(400).send({ error: 'text is required' });
       if (!isTier(tier)) return reply.code(400).send({ error: `tier must be one of ${TIERS.join(', ')}` });
@@ -101,7 +97,7 @@ export function registerCorpusOverrideRoutes(app: FastifyInstance, db: Database)
       // `lintEntry` (#354) is the same content-quality gate `tools/corpus-gen` already runs
       // on every machine-produced entry before it ships — length bounds, fatalistic phrasing,
       // medical/legal/financial claims, gendered pronouns. An admin's hand-typed correction
-      // got none of that until now; `provenance`/`persona` don't affect any of those rules,
+      // got none of that until now; `provenance` doesn't affect any of those rules,
       // so a minimal stand-in entry is enough to lint against before it's ever stored.
       const candidate: CorpusEntry = {
         key,
@@ -110,7 +106,6 @@ export function registerCorpusOverrideRoutes(app: FastifyInstance, db: Database)
         tier,
         tags,
         provenance: { source: 'hand-written' },
-        ...(persona !== undefined ? { persona } : {}),
       };
       const lintIssues = lintEntry(candidate);
       if (lintIssues.length > 0) {
@@ -122,7 +117,6 @@ export function registerCorpusOverrideRoutes(app: FastifyInstance, db: Database)
       const override = upsertCorpusOverride(db, {
         key,
         locale,
-        ...(persona !== undefined ? { persona } : {}),
         text,
         tier,
         tags,

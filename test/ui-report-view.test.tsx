@@ -1,21 +1,19 @@
 // @vitest-environment jsdom
 /**
- * A jsdom smoke test for `ReportView` (#62's advisor picker, plus its
+ * A jsdom smoke test for `ReportView` (its
  * consumption of the shared, app-wide language setting from `locale.ts`), in
  * the style of `ui-extended-settings-panel.test.tsx`: mount with
  * `createRoot`, interact with real DOM nodes, no React Testing Library.
  * `loadRuntimeCorpus`'s network call is stubbed via a fake `global.fetch`
  * rather than an injected `fetchImpl` — `ReportView` calls it with none,
  * same as production — so this also exercises the real corpus-client URL
- * shape (`/corpus/<locale>/<scope>.json`).
+ * shape (`/corpus/<locale>.json`).
  */
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { readFile } from 'node:fs/promises';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
 import { randomBytes } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -23,7 +21,7 @@ import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
 import type { ResultBasis } from '../src/interpretation/result-basis.js';
 import { saveInterpretationResult } from '../server/interpretation/results.ts';
-import { ReportView, PERSONA_LABELS } from '../src/ui/ReportView.js';
+import { ReportView } from '../src/ui/ReportView.js';
 import { reportViewMessages } from '../src/ui/ReportView.messages.js';
 import { toTier2ChartPayload } from '../src/interpretation/tier2-client.js';
 import { getLocale, setLocale } from '../src/ui/locale.js';
@@ -111,15 +109,6 @@ function makeChart(): ChartData {
   };
 }
 
-function labeledSelect(container: HTMLElement, labelText: string): HTMLSelectElement {
-  const label = Array.from(container.querySelectorAll('label')).find(
-    (candidate) => candidate.querySelector('select') !== null && candidate.textContent.includes(labelText),
-  );
-  const select = label?.querySelector('select');
-  if (!(select instanceof HTMLSelectElement)) throw new Error(`test fixture bug: no select labeled "${labelText}"`);
-  return select;
-}
-
 async function mount(): Promise<{ container: HTMLElement; root: Root }> {
   const container = document.createElement('div');
   document.body.append(container);
@@ -132,23 +121,7 @@ async function mount(): Promise<{ container: HTMLElement; root: Root }> {
   return { container, root };
 }
 
-describe('PERSONA_LABELS stays in sync with tools/corpus-gen/personas.json', () => {
-  it('matches every persona title, in both locales', async () => {
-    const personasPath = join(dirname(fileURLToPath(import.meta.url)), '..', 'tools', 'corpus-gen', 'personas.json');
-    const raw = await readFile(personasPath, 'utf8');
-    const personas = (JSON.parse(raw) as { personas: readonly { id: string; title: { en: string; nl: string } }[] })
-      .personas;
-    for (const persona of personas) {
-      const labels = (PERSONA_LABELS as Record<string, Record<string, string>>)[persona.id];
-      if (labels === undefined) throw new Error(`no PERSONA_LABELS entry for "${persona.id}"`);
-      expect(labels.en).toBe(persona.title.en);
-      expect(labels.nl).toBe(persona.title.nl);
-    }
-    expect(Object.keys(PERSONA_LABELS).sort()).toEqual(personas.map((p) => p.id).sort());
-  });
-});
-
-describe('ReportView advisor picker (locale comes from the shared locale.ts store)', () => {
+describe('ReportView corpus loading (locale comes from the shared locale.ts store)', () => {
   let fetchMock: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
@@ -160,15 +133,11 @@ describe('ReportView advisor picker (locale comes from the shared locale.ts stor
     fetchMock = vi.fn((input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
       // The corpus-overrides fetch (#292) returns a differently-shaped body
-      // (`{ entries }`) than a static chunk (a bare array) — this describe
-      // block isn't about overrides, so it soft-fails via a 404 either way.
+      // (`{ entries }`) than a static chunk (a bare array).
       const body = url.startsWith('/api/corpus-overrides/') ? { entries: [] } : [];
       return Promise.resolve({ ok: true, json: () => Promise.resolve(body) }) as unknown as ReturnType<typeof fetch>;
     });
     vi.stubGlobal('fetch', fetchMock);
-    // This describe block is entirely about the picker itself, so it opts into the
-    // feature explicitly rather than relying on its off-by-default value (#62).
-    vi.stubEnv('VITE_ENABLE_REPORT_PERSONAS', 'true');
   });
 
   afterEach(() => {
@@ -176,21 +145,11 @@ describe('ReportView advisor picker (locale comes from the shared locale.ts stor
     vi.unstubAllEnvs();
   });
 
-  it('defaults to English/Neutral and fetches only the neutral chunk', async () => {
+  it('defaults to English and fetches only that language’s corpus', async () => {
     const { container, root } = await mount();
 
     expect(getLocale()).toBe('en');
-    const advisorSelect = labeledSelect(container, 'Advisor');
-    expect(advisorSelect.value).toBe('');
-    expect(Array.from(advisorSelect.options).map((o) => o.textContent)).toEqual([
-      'Neutral',
-      'The Strict Traditionalist',
-      'The Cozy Cosmic Big Sister',
-      'The Irreverent Cynic',
-      'The Evolutionary Mystic',
-      'The Pragmatic No-Nonsense Coach',
-    ]);
-    expect(fetchMock).toHaveBeenCalledWith('/corpus/en/neutral.json');
+    expect(fetchMock).toHaveBeenCalledWith('/corpus/en.json');
     // Plus one call for the (soft-failing) admin-overrides fetch, #292.
     expect(fetchMock).toHaveBeenCalledTimes(2);
 
@@ -209,10 +168,7 @@ describe('ReportView advisor picker (locale comes from the shared locale.ts stor
     });
 
     expect(localStorage.getItem('astraya:reportLocale')).toBe('nl');
-    expect(fetchMock).toHaveBeenCalledWith('/corpus/nl/neutral.json');
-    // The advisor options relabel in the newly selected report language.
-    const advisorSelect = labeledSelect(container, reportViewMessages.nl.advisor);
-    expect(Array.from(advisorSelect.options).map((o) => o.textContent)).toContain('De Cynische Realist');
+    expect(fetchMock).toHaveBeenCalledWith('/corpus/nl.json');
 
     act(() => {
       root.unmount();
@@ -220,113 +176,16 @@ describe('ReportView advisor picker (locale comes from the shared locale.ts stor
     container.remove();
   });
 
-  it('persists the chosen advisor to localStorage and fetches its persona chunk', async () => {
-    const { container, root } = await mount();
-    const advisorSelect = labeledSelect(container, 'Advisor');
-
-    await act(async () => {
-      advisorSelect.value = 'cynic';
-      advisorSelect.dispatchEvent(new Event('change', { bubbles: true }));
-      await Promise.resolve();
-    });
-
-    expect(localStorage.getItem('astraya:reportPersona')).toBe('cynic');
-    expect(fetchMock).toHaveBeenCalledWith('/corpus/en/neutral.json');
-    expect(fetchMock).toHaveBeenCalledWith('/corpus/en/cynic.json');
-
-    act(() => {
-      root.unmount();
-    });
-    container.remove();
-  });
-
-  it('reflects an already-chosen locale and restores the advisor from localStorage', async () => {
-    setLocale('nl');
-    localStorage.setItem('astraya:reportPersona', 'mystic');
-    const { container, root } = await mount();
-
-    expect(getLocale()).toBe('nl');
-    expect(labeledSelect(container, reportViewMessages.nl.advisor).value).toBe('mystic');
-    expect(fetchMock).toHaveBeenCalledWith('/corpus/nl/neutral.json');
-    expect(fetchMock).toHaveBeenCalledWith('/corpus/nl/mystic.json');
-
-    act(() => {
-      root.unmount();
-    });
-    container.remove();
-  });
-});
-
-describe('report personas, off by default (VITE_ENABLE_REPORT_PERSONAS)', () => {
-  beforeEach(() => {
-    localStorage.clear();
-    setLocale('en');
-    vi.stubGlobal(
-      'fetch',
-      vi.fn((input: RequestInfo | URL) => {
-        const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
-        const body = url.startsWith('/api/corpus-overrides/') ? { entries: [] } : [];
-        return Promise.resolve({ ok: true, json: () => Promise.resolve(body) }) as unknown as ReturnType<typeof fetch>;
-      }),
-    );
-  });
-
-  afterEach(() => {
-    vi.unstubAllGlobals();
-    vi.unstubAllEnvs();
-  });
-
-  it('hides the advisor picker and stays in the neutral voice when unset', async () => {
-    const { container, root } = await mount();
-
-    const label = Array.from(container.querySelectorAll('label')).find((candidate) =>
-      candidate.textContent.includes('Advisor'),
-    );
-    expect(label).toBeUndefined();
-
-    act(() => {
-      root.unmount();
-    });
-    container.remove();
-  });
-
-  it('ignores a persona already saved in localStorage from before the toggle existed', async () => {
-    localStorage.setItem('astraya:reportPersona', 'cynic');
-    const { root, container } = await mount();
-
-    const label = Array.from(container.querySelectorAll('label')).find((candidate) =>
-      candidate.textContent.includes('Advisor'),
-    );
-    expect(label).toBeUndefined();
-    expect(fetch).toHaveBeenCalledWith('/corpus/en/neutral.json');
-    expect(fetch).not.toHaveBeenCalledWith('/corpus/en/cynic.json');
-
-    act(() => {
-      root.unmount();
-    });
-    container.remove();
-  });
-
-  it('anything other than the literal string "true" also disables it', async () => {
-    vi.stubEnv('VITE_ENABLE_REPORT_PERSONAS', '1');
-    const { container, root } = await mount();
-
-    const label = Array.from(container.querySelectorAll('label')).find((candidate) =>
-      candidate.textContent.includes('Advisor'),
-    );
-    expect(label).toBeUndefined();
-
-    act(() => {
-      root.unmount();
-    });
-    container.remove();
-  });
-
-  it('shows the picker once VITE_ENABLE_REPORT_PERSONAS=true', async () => {
+  it('has no advisor picker at all (#429)', async () => {
     vi.stubEnv('VITE_ENABLE_REPORT_PERSONAS', 'true');
+    localStorage.setItem('astraya:reportPersona', 'cynic');
     const { container, root } = await mount();
 
-    expect(labeledSelect(container, 'Advisor')).toBeInstanceOf(HTMLSelectElement);
+    const label = Array.from(container.querySelectorAll('label')).find((candidate) =>
+      /advisor|adviseur/i.test(candidate.textContent),
+    );
+    expect(label).toBeUndefined();
+    expect(fetchMock).not.toHaveBeenCalledWith('/corpus/en/cynic.json');
 
     act(() => {
       root.unmount();

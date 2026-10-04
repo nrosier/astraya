@@ -79,7 +79,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const IMPROVED_TAG = 'improved-via-feedback-loop';
 
 function identityOf(item) {
-  return `${item.key}\u0000${item.persona ?? 'neutral'}`;
+  return item.key;
 }
 
 const rawArgs = process.argv.slice(2);
@@ -122,8 +122,6 @@ if (!locale && !checkOnly) {
     '--locale=<locale> is required (unless using --check-only without --locale, which checks every locale)',
   );
 }
-
-const personas = JSON.parse(await readFile(join(root, 'tools', 'corpus-gen', 'personas.json'), 'utf8')).personas;
 
 // This locale's batch-state file holds a *list* of jobs, not just one — more than one batch can
 // be in flight for the same locale at once. Every call checks all of them (one single-shot status
@@ -171,12 +169,12 @@ async function checkAndApply(loc) {
     const byKey = new Map(results.map((r) => [r.key, r]));
 
     for (const jobRecord of job.records) {
-      const { key, persona } = jobRecord;
+      const { key } = jobRecord;
       // `--last-resort` jobs (#396) carry their own `issues`/`originalText` straight from
       // tracking at submission time (see below) — there's no feedback-file entry to look up,
       // since these entries are already past evaluate-corpus-batch.mjs's own exhaustion filter
       // and so were never re-flagged into the feedback file this round.
-      const record = job.lastResort ? jobRecord : byFeedbackIdentity.get(identityOf({ key, persona }));
+      const record = job.lastResort ? jobRecord : byFeedbackIdentity.get(identityOf({ key }));
       if (record === undefined) {
         skipped += 1;
         console.error(`[${loc}] SKIPPED ${key}: no longer present in the feedback file`);
@@ -239,7 +237,6 @@ async function checkAndApply(loc) {
       // current text.
       upsertTracking(tracking, {
         key: record.key,
-        persona: record.persona,
         locale: loc,
         clean: false,
         evaluationCount: (existingTracking?.evaluationCount ?? 0) + 1,
@@ -339,7 +336,7 @@ if (lastResort) {
     .map((t) => {
       const entry = corpusByIdentity.get(identityOf(t));
       if (entry === undefined) return undefined;
-      return { key: t.key, persona: t.persona, issues: t.lastRejection.issues, originalText: entry.text };
+      return { key: t.key, issues: t.lastRejection.issues, originalText: entry.text };
     })
     .filter((r) => r !== undefined)
     .slice(0, Number.isFinite(limit) ? limit : undefined);
@@ -390,9 +387,7 @@ for (const record of records) {
     );
     continue;
   }
-  const persona = record.persona ? personas.find((p) => p.id === record.persona) : undefined;
   const baseSystemInstruction = buildSystemInstruction({
-    persona,
     symbolismContext: buildSymbolismContext(locale, symbolismScopeFor(placement)),
     locale,
     forceLanguageDirective: false,
@@ -406,7 +401,7 @@ for (const record of records) {
   });
   requests.push(
     buildBatchRequest({
-      key: identityOf(record), // (key, persona) composite — distinguishes a neutral and a persona-specific record for the same placement, unlike record.key alone
+      key: identityOf(record),
       systemInstruction,
       userContent,
       temperature: Number(process.env.GEMINI_TEMPERATURE ?? '0.75'),
@@ -436,11 +431,9 @@ const newJob = {
   name: submitted.name,
   submittedAt: new Date().toISOString(),
   model,
-  // `--last-resort` jobs carry `issues`/`originalText` here too (not just `key`/`persona`), since
+  // `--last-resort` jobs carry `issues`/`originalText` here too (not just `key`), since
   // there's no feedback-file entry for checkAndApply to resolve them against later.
-  records: records
-    .filter((r) => !newlySkipped.includes(r))
-    .map((r) => (lastResort ? r : { key: r.key, persona: r.persona })),
+  records: records.filter((r) => !newlySkipped.includes(r)).map((r) => (lastResort ? r : { key: r.key })),
   ...(lastResort ? { lastResort: true } : {}),
 };
 await writeBatchState(statePath, { jobs: [...stillRunning, newJob] });

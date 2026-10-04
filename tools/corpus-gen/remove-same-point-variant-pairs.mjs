@@ -81,7 +81,7 @@ const matching = corpus.filter(isSamePointVariantEntry);
 console.log(
   `[${locale}] ${String(matching.length)} entr${matching.length === 1 ? 'y' : 'ies'} are same-point-variant aspect pairs.`,
 );
-for (const entry of matching.slice(0, 20)) console.log(`  ${entry.key}${entry.persona ? ` (${entry.persona})` : ''}`);
+for (const entry of matching.slice(0, 20)) console.log(`  ${entry.key}`);
 if (matching.length > 20) console.log(`  ... and ${String(matching.length - 20)} more`);
 
 if (matching.length === 0) {
@@ -110,8 +110,8 @@ console.log(
 
 const trackingPath = join(root, 'tools', 'corpus-gen', 'eval-tracking', `${locale}.json`);
 const tracking = await readTracking(trackingPath);
-const removedIdentity = new Set(matching.map((e) => `${e.key}\u0000${e.persona ?? 'neutral'}`));
-const keptTracking = tracking.filter((r) => !removedIdentity.has(`${r.key}\u0000${r.persona ?? 'neutral'}`));
+const removedIdentity = new Set(matching.map((e) => e.key));
+const keptTracking = tracking.filter((r) => !removedIdentity.has(r.key));
 if (keptTracking.length !== tracking.length) {
   await writeTracking(trackingPath, keptTracking);
   console.log(`[${locale}] dropped ${String(tracking.length - keptTracking.length)} orphaned eval-tracking record(s).`);

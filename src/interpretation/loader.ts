@@ -44,10 +44,8 @@ export function loadCorpus(byLocale: CorpusByLocale): readonly CorpusEntry[] {
   }
 
   if (problems.length === 0) {
-    /** `key::persona` (empty suffix for the neutral entry) — parity must hold per persona, not just per key. */
-    const identityOf = (entry: CorpusEntry): string => `${entry.key}::${entry.persona ?? ''}`;
-    const describeIdentity = (entry: CorpusEntry): string =>
-      entry.persona === undefined ? `key "${entry.key}"` : `key "${entry.key}" for persona "${entry.persona}"`;
+    const identityOf = (entry: CorpusEntry): string => entry.key;
+    const describeIdentity = (entry: CorpusEntry): string => `key "${entry.key}"`;
 
     const identitiesByLocale = new Map(
       CORPUS_LOCALES.map((locale) => [
