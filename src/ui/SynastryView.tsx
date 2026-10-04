@@ -19,7 +19,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { chartWheelRing, crossAspectRows, type AspectRow } from '../domain/chart-tables.js';
 import { deriveExportFilename } from '../domain/export-filename.js';
-import { computeSynastry, type SynastryData } from '../domain/synastry.js';
+import { computeSynastry, rankedSynastryAspects, type SynastryData } from '../domain/synastry.js';
+import { bodyById } from '../astrology/bodies.js';
 import { renderMultiWheelSvg, type CrossRingAspects } from '../chart/multi-wheel.js';
 import { aspectDisplayName, bodyDisplayName } from './astro-names.messages.js';
 import { BiWheelSelectionPanel } from './BiWheelSelectionPanel.js';
@@ -46,10 +47,13 @@ type Load =
   | { readonly kind: 'ready'; readonly data: SynastryData }
   | { readonly kind: 'error'; readonly message: string };
 
+const bodyKeyOf = (id: number): string => bodyById(id)?.key ?? String(id);
+
 function aspectColumns(
   t: typeof synastryViewMessages.en,
   locale: Locale,
   interpretationOf: (row: AspectRow) => string,
+  importanceOf: (row: AspectRow) => number,
 ): readonly TableColumn<AspectRow>[] {
   return [
     {
@@ -76,6 +80,12 @@ function aspectColumns(
       label: t.applyingLabel,
       valueOf: (row) => row.applying,
       render: (row) => (row.applying ? t.applying : t.separating),
+    },
+    {
+      key: 'importance',
+      label: t.importanceLabel,
+      valueOf: importanceOf,
+      render: (row) => String(Math.round(importanceOf(row) * 100)),
     },
     {
       key: 'interpretation',
@@ -169,6 +179,26 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
   const nameA: string = person?.displayName ?? '';
   const nameB: string = partner?.displayName ?? '';
   const ringLabels = [nameA || t.personALabel, nameB || t.personBLabel];
+  // The contacts most important first (#422): the same contacts, reordered, each with its score.
+  const rankedRows = useMemo(
+    () => (load.kind === 'ready' ? crossAspectRows(rankedSynastryAspects(load.data).map((r) => r.aspect)) : []),
+    [load],
+  );
+  const importanceByRow = useMemo(
+    () =>
+      new Map(
+        load.kind === 'ready'
+          ? rankedSynastryAspects(load.data).map(({ aspect, importance }) => [
+              `${bodyKeyOf(aspect.bodyA)}-${aspect.aspect.key}-${bodyKeyOf(aspect.bodyB)}`,
+              importance,
+            ])
+          : [],
+      ),
+    [load],
+  );
+  const importanceOf = (row: AspectRow): number =>
+    importanceByRow.get(`${row.bodyAKey}-${row.aspectKey}-${row.bodyBKey}`) ?? 0;
+
   const interpretationOf = (row: AspectRow): string => {
     const { text, speaksFrom } = synastryText(row, locale, corpus, persona);
     const name = speaksFrom === 'a' ? ringLabels[0] : ringLabels[1];
@@ -269,10 +299,12 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
             />
           )}
 
+          <p className="hint">{t.rankingHint}</p>
+
           <SortableTable
             caption={t.aspectsCaption}
-            columns={aspectColumns(t, locale, interpretationOf)}
-            rows={crossAspectRows(load.data.aspects)}
+            columns={aspectColumns(t, locale, interpretationOf, importanceOf)}
+            rows={rankedRows}
             getRowKey={(row) => `${row.bodyAKey}-${row.aspect}-${row.bodyBKey}`}
             downloadFilename={deriveExportFilename(
               `${person.displayName || 'person'}-${(partner?.displayName ?? '') || 'partner'}`,

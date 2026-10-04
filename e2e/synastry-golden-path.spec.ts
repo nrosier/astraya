@@ -75,6 +75,21 @@ test('two people with known birth times get a Synastry screen with a bi-wheel an
   const rows = page.getByRole('table', { name: 'Aspects' }).locator('tbody tr');
   expect(await fromCorpus.count()).toBeLessThanOrEqual(await rows.count());
 
+  // Ranked by importance (#422): the table opens with the strongest contacts first, each scored.
+  await expect(page.getByText('The aspects are ordered by importance')).toBeVisible();
+  const aspectsTable = page.getByRole('table', { name: 'Aspects' });
+  const headers = await aspectsTable.getByRole('columnheader').allInnerTexts();
+  const importanceColumn = headers.findIndex((header) => header.toLowerCase().includes('importance'));
+  expect(importanceColumn, `column headers: ${JSON.stringify(headers)}`).toBeGreaterThanOrEqual(0);
+  const scores: number[] = [];
+  for (const row of await aspectsTable.locator('tbody tr').all()) {
+    scores.push(Number(await row.getByRole('cell').nth(importanceColumn).innerText()));
+  }
+  expect(scores.length).toBeGreaterThan(3);
+  expect(scores.every((score) => Number.isInteger(score) && score >= 0 && score <= 100)).toBe(true);
+  expect(scores).toEqual([...scores].sort((a, b) => b - a));
+  expect(scores[0]).toBeGreaterThan(scores.at(-1) ?? 0);
+
   const [download] = await Promise.all([
     page.waitForEvent('download'),
     page.getByRole('button', { name: 'Download CSV', exact: true }).click(),
