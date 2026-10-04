@@ -4,6 +4,42 @@ All notable changes to Astraya are recorded here. Versions follow
 [semantic versioning](https://semver.org/), and every milestone ends in a release —
 see [docs/RELEASING.md](docs/RELEASING.md).
 
+## [0.24.0] — 2026-10-04
+
+**Five new timing and judgment tools (eclipses, horary, electional, rectification, planetary cycles), the transit list now leads with the transits that matter, every wheel can be clicked to isolate and read, the planetary rulers are yours to choose, and AI interpretations are named, labelled and can explain one placement.**
+
+M9 (Polish & launch) progress, not a finished milestone — v1.0.0 hasn't shipped yet.
+
+### Added
+
+- **An eclipse finder (#404).** Solar and lunar eclipses for a range of years, with the kind, the exact moment and the zodiac degree each falls at. Pick a person and it shows which of their natal points an eclipse touches, within 3° of the eclipse degree or of the degree opposite it. Checked against NASA's eclipse catalogue for 2023–2026.
+- **Horary charts (#406).** A chart cast for the moment a question is asked, with the four classical considerations before judgment stated plainly rather than hidden: the Ascendant in the first or last 3° of its sign, a void-of-course Moon, the Moon in the Via Combusta and Saturn in the 7th house.
+- **An electional search (#409).** Searches a window of time for the best moments to begin something and ranks them by how many of the rules you select hold: the Moon not void of course, not in the Via Combusta, not weak and waxing, Mercury direct, a benefic (Venus or Jupiter) in an angular house, and the Moon applying to a benefic. Consecutive moments with the same outcome are merged into windows, and each rule says where it comes from.
+- **Birth-time rectification (#408).** Tests candidate birth times against the dates of known life events (solar-arc directions and slow-planet transits to the angles) and ranks them. It narrows a guess; it does not prove one, and each result carries its lift over the average candidate so a flat field is visible.
+- **Planetary cycles (#410).** Exact aspects between two moving planets, for example the Jupiter–Saturn conjunctions or the Venus cycle that draws a pentagram, with a diagram and a table. Checked against the known Jupiter–Saturn conjunctions from 1980 to 2040.
+- **The interpretation for whatever you click on the natal wheel (#415).** Select a planet, sign or aspect line and the same written interpretation the Interpretation tab shows for it appears under the facts, in your language and chosen advisor voice.
+- **Click-to-isolate on the Transits and Synastry bi-wheels (#418).** Each ring draws the same planets, so a click picks out the planet on its own ring (the transiting Sun is not the natal Sun), dims the rest and names the ring in a panel with its sign, house, and aspects to the other ring. The natal wheel now uses the same shared code. The planetary-cycles and chart-shape diagrams cannot be clicked yet.
+- **Important transits first (#416).** The Transits screen opens on the transits that matter for a day (the Sun, Moon, Mercury, Venus and Mars within 1.5°, the slow planets only within 1°) and the Forecast screen on those that matter for a year (Jupiter to Pluto and Chiron within 3.5°), ranked by importance. A filter lets you choose a preset, the orb, hard, soft and minor aspects, applying only and individual bodies, and a bar says how many of the total are shown, with a Show all button. The wheel's lines match the table, and your choice is remembered on this device. Transits now also calculate the semisquare, sesquiquadrate and quincunx so the minor aspects can be shown. Contacts to the angles are not covered yet.
+- **Choose the planetary rulers (#426).** Modern (Pluto, Uranus and Neptune rule Scorpio, Aquarius and Pisces), Traditional, or Both as co-rulers, kept on this device. The choice drives the chart ruler, the houses a planet rules, essential dignities, dispositors and mutual reception, the almuten, profections (both lords under Both), the transit ranking and the AI interpretation, and can be changed from the chart's extended settings, the transit filter, profections and the report.
+- **An AI interpretation of one placement (#424).** Under the information card of a selected planet, on the natal chart and on the Transits wheel, a button asks the model for the tensions of that placement. Only that planet's sign, house, rulerships and aspects are sent, never your name or birth data, and you consent to each request.
+- **Past AI interpretations are labelled (#423).** Each carries a few-word description of what you asked, your local time written out (Tuesday March 10 2026 @ 17:30, or the Dutch equivalent) and which kind it was.
+- **Reviewed corpus text on the Synastry screen (#422).** The aspect table now shows the written interpretation for each pair of planets, in English and Dutch. The text is written from one person's side, so each is led by whose side it speaks from.
+
+### Changed
+
+- **The planetary rulers are now modern by default (#426).** Before, the dignity tables, dispositors and report used traditional rulers, so a Scorpio, Aquarius or Pisces Ascendant could show two different chart rulers. Under modern, Mars in Scorpio is no longer shown as ruling, and Pluto, Uranus and Neptune can be shown in rulership or detriment. Choose Traditional to get the old behaviour back. The corpus has no written text yet for those outer-planet dignities, so they show a plain mechanical sentence for now.
+- **The two AI-written modes are now one (#425).** The mode list offers Restyle reviewed text and AI-written from your full chart; your style, tone and focus instruction is optional in the second, and with none you get a balanced reading of the whole chart. Past interpretations are named Local interpretation based or AI interpretation based instead of by their internal mode.
+- **The birth form asks how the time is known before it asks for the time (#420).** While the time is unknown the time field stays visible but dimmed, with the reason beside it.
+
+### Fixed
+
+- **Person-menu dropdowns close (#417)** when you choose an item, click elsewhere, press Escape or tab out, and only one is open at a time.
+
+### Notes for people running their own server
+
+- A database migration (11) adds two nullable columns for the short descriptions of AI interpretations; it applies on start-up and existing entries are unaffected.
+- The AI features still need `ASTRAYA_INTERPRETATION_API_KEY` and, to save past interpretations, `ASTRAYA_ENCRYPTION_KEY`.
+
 ## [0.23.1] — 2026-10-03
 
 **A patch for v0.23.0: the same app, with its changelog entry corrected so the release could be published.**
