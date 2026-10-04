@@ -89,6 +89,7 @@ import { bodyGlyph, renderGlyph } from '../chart/glyphs.js';
 import type { SymbolClass } from '../chart/symbol-class.js';
 import { unicodeSymbol, textSymbol } from '../chart/symbol-text.js';
 import { useSymbolClass } from './symbol-setting.js';
+import { useGlyphVariants } from './glyph-variant-setting.js';
 import { useRegisterExports } from './export-registry.js';
 import { CHART_SECTIONS, chartSectionLabels, type ChartSection } from './chart-sections.js';
 import { ChartTypeSelector, changeChartSection } from './ChartTypeSelector.js';
@@ -870,6 +871,8 @@ export function ChartDataView({
     onSectionChange?.(next);
   };
   const [symbolClass] = useSymbolClass();
+  // The wheel's markup is cached on these, so a change of symbol form redraws it.
+  const [variants] = useGlyphVariants();
   // True only for the moment between clicking "Export PDF" and the print dialog closing
   // (see `exportPdf` below): while true, every table renders at once instead of just the
   // active tab, so the PDF the browser's own "Save as PDF" produces has all of them (#67).
@@ -901,7 +904,7 @@ export function ChartDataView({
         signWedgeStyle: toSignWedgeStyle(extendedSettings),
       },
     );
-  }, [load, housesRenderable, displayName, metaLines, extendedSettings, t, locale, symbolClass]);
+  }, [load, housesRenderable, displayName, metaLines, extendedSettings, t, locale, symbolClass, variants]);
 
   // Click-to-isolate (#400, #412, #418): the selection, its dimming of the wheel and its click
   // handling are shared with every other wheel (`wheel-interaction.ts`); only the panel of facts

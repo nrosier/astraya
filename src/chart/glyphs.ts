@@ -37,6 +37,7 @@
  * crescent-and-cross base glyph.
  */
 
+import { chosenAlternate } from './glyph-variants.js';
 import { getSymbolClass } from './symbol-class.js';
 import { textSymbol, unicodeSymbol, type SymbolKind } from './symbol-text.js';
 import { escapeXml } from './svg-primitives.js';
@@ -45,6 +46,10 @@ export interface GlyphDefinition {
   readonly key: string;
   /** Which registry it came from, so `renderGlyph` can write it as text when the symbol class asks (#419). */
   readonly kind?: SymbolKind;
+  /** The Unicode character of a variant form (#419); the plain table's character is used when absent. */
+  readonly unicode?: string;
+  /** The text code of a variant form, when it differs from the plain table's. */
+  readonly text?: string;
   /** Raw `<path>`/`<circle>`/`<rect>` tags, coordinates in a 0-100 box. */
   readonly elements: readonly string[];
 }
@@ -225,7 +230,28 @@ function tagged(
 
 const TAGGED_BODY_GLYPHS = tagged({ ...BODY_GLYPHS, southNode: SOUTH_NODE_GLYPH }, 'body');
 
+const ALTERNATE_GLYPHS = new Map<object, GlyphDefinition>();
+
+/**
+ * The glyph for a body, in the form chosen for it (#419): Uranus and Pluto have two, and the choice is read each
+ * time so a change redraws everything. Every other body has one.
+ */
 export function bodyGlyph(key: string): GlyphDefinition | undefined {
+  const alternate = chosenAlternate(key);
+  if (alternate !== undefined) {
+    let definition = ALTERNATE_GLYPHS.get(alternate);
+    if (definition === undefined) {
+      definition = {
+        key,
+        kind: 'body',
+        elements: alternate.elements,
+        unicode: alternate.unicode,
+        text: alternate.text,
+      };
+      ALTERNATE_GLYPHS.set(alternate, definition);
+    }
+    return definition;
+  }
   return TAGGED_BODY_GLYPHS[key];
 }
 
@@ -418,8 +444,8 @@ export function renderGlyph(
   if (symbolClass !== 'drawn' && definition.kind !== undefined) {
     const written =
       symbolClass === 'unicode'
-        ? unicodeSymbol(definition.kind, definition.key)
-        : textSymbol(definition.kind, definition.key);
+        ? (definition.unicode ?? unicodeSymbol(definition.kind, definition.key))
+        : (definition.text ?? textSymbol(definition.kind, definition.key));
     if (written !== undefined) {
       return (
         `<g transform="translate(${tx.toFixed(2)} ${ty.toFixed(2)}) scale(${scale.toFixed(4)})" class="${className}"${attrs}>` +

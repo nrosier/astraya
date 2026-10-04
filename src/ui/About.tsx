@@ -77,6 +77,7 @@ export function About({ seVersion }: { seVersion?: string | undefined }): React.
         <a href={`${SOURCE_URL}/blob/main/NOTICE`}>NOTICE</a>
         {t.acknowledgementsParagraph2After}
       </p>
+      <p>{t.acknowledgementsGlyphs}</p>
     </main>
   );
 }
