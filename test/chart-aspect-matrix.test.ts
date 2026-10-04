@@ -251,3 +251,13 @@ describe('renderAspectMatrixSvg', () => {
     expect(markup).toContain('x="50.00" y="120.00"');
   });
 });
+
+describe('long body names (#432)', () => {
+  it('shrinks a name that would overflow its column, and leaves a short one alone', async () => {
+    const { fitFontSize } = await import('../src/chart/aspect-matrix.js');
+    expect(fitFontSize('Sun', 10, 80, 2)).toBe(10);
+    const shrunk = fitFontSize('Gemiddelde Maansknoop', 10, 80, 2);
+    expect(shrunk).toBeLessThan(10);
+    expect(21 * 0.58 * shrunk).toBeLessThanOrEqual(76 + 1e-9);
+  });
+});

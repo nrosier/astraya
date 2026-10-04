@@ -92,6 +92,16 @@ const SIGN_GLYPH_FRACTION = 0.5;
  */
 const MIN_ORB_FONT_SIZE = 7;
 
+/** Average glyph width of the table font, as a fraction of its size — a generous estimate for fitting text. */
+const NAME_CHAR_WIDTH_EM = 0.58;
+
+/** The font size at which `name` fits `width` (less a margin each side): `fontSize` unless the name is too wide. */
+export function fitFontSize(name: string, fontSize: number, width: number, margin: number): number {
+  const available = width - 2 * margin;
+  const needed = name.length * NAME_CHAR_WIDTH_EM * fontSize;
+  return needed <= available || needed === 0 ? fontSize : (fontSize * available) / needed;
+}
+
 /** `-3`, `6`, `-0`: whole degrees, signed by side of exact. A pair a hair short of exact reads `-0`, as on Astro-Seek. */
 function formatSignedOrb(signedOrb: Degrees): string {
   return `${signedOrb < 0 ? '-' : ''}${String(Math.round(Math.abs(signedOrb)))}`;
@@ -211,14 +221,16 @@ export function renderAspectMatrixSvg(input: AspectMatrixInput, layout: PanelLay
       parts.push(rect(x, y, width, cell, 'chart-matrix-row-cell'));
     }
     parts.push(rowGlyph(rowBody, glyphX + glyphW / 2, centerY));
+    // A name too wide for its column shrinks to fit rather than running into the degree (#432).
+    const nameFont = fitFontSize(rowBody.name, tableFont, nameW, cell * 0.12);
     parts.push(
       text(
         nameX + cell * 0.12,
-        centerY + baselineOffset(tableFont),
+        centerY + baselineOffset(nameFont),
         'start',
         'chart-matrix-name',
         escapeXml(rowBody.name),
-        tableFont,
+        nameFont,
       ),
       text(
         degreeX + degreeW - cell * 0.1,
