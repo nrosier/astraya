@@ -4,6 +4,24 @@ All notable changes to Astraya are recorded here. Versions follow
 [semantic versioning](https://semver.org/), and every milestone ends in a release —
 see [docs/RELEASING.md](docs/RELEASING.md).
 
+## [0.27.0] — 2026-10-04
+
+**The navigation moves into the sticky header, with a Tools menu and a Menu button for phones; the chart's tables share the wheel's selection; and symbols can be drawn, written in Unicode or shown as text.**
+
+M9 (Polish & launch) progress, not a finished milestone — v1.0.0 hasn't shipped yet.
+
+### Added
+
+- **The menus are in the header (#421).** A person's name and their tabs (Birth record, Natal chart, Interpretation, Astrocartography and the four grouped menus) now sit in the sticky header instead of a bordered strip above the page, so they stay in view while you scroll. Admin is there for administrators. On a phone the whole navigation folds behind a **Menu** button and opens as a panel; choosing anything, pressing Escape or changing page closes it.
+- **A Tools menu (#421).** The screens that are not about one person's chart — Planetary cycles, Eclipses, Horary chart, Electional search and Birth-time rectification — were links under the People list. They are now one **Tools** (Dutch _Hulpmiddelen_) menu in the header, on every screen.
+- **The tables and the wheel select each other (#418).** On a chart, a **Show** button on a row of the Positions or Aspects table selects that planet or aspect on the wheel, and clicking the wheel marks the matching row. The tables show what is selected and take you to the chart.
+- **Choose how symbols are written (#419).** A new **Symbols** setting in the chart's Extended settings: the drawn glyphs (the default, unchanged), Unicode characters (☉ ☽ ♈ ☌), or text only (SUN, MOO, ARI, SQR). It applies to the wheel, the transit and synastry wheels, the aspect grid and diagrams, the Positions table and the exported SVG, and is remembered on this device. Per-symbol variants and further drawn styles are not part of this release.
+
+### Fixed
+
+- The Birth record form no longer scrolls the page sideways on a phone.
+- The test suite no longer logs hundreds of "not configured to support act(...)" lines; it now tells React it is a test environment.
+
 ## [0.26.1] — 2026-10-04
 
 **A patch that ships the regenerated interpretation text: the Uranus, Neptune and Pluto dignity entries and the rewritten quintile series.**
