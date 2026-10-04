@@ -13,6 +13,7 @@ import {
 import { BODIES } from '../../../src/astrology/bodies.ts';
 import { SIGNS } from '../../../src/astrology/signs.ts';
 import { ASPECTS } from '../../../src/astrology/aspects.ts';
+import { detrimentRulerOf, exaltationRulerOf, fallRulerOf, rulerOf } from '../../../src/astrology/dignities.ts';
 
 export { buildSymbolismContext, symbolismScopeFor, BODIES, SIGNS, ASPECTS };
 
@@ -125,12 +126,69 @@ const DIGNITY_WORDS = {
   fall: 'in its fall (in the sign opposite its exaltation)',
 };
 
-// The sign each modern outer planet is in detriment in: opposite the sign it rules (Uranus Aquarius, Neptune Pisces,
-// Pluto Scorpio).
-const OUTER_DETRIMENT = {
-  uranus: { sign: 'Leo', rules: 'Aquarius' },
-  neptune: { sign: 'Virgo', rules: 'Pisces' },
-  pluto: { sign: 'Taurus', rules: 'Scorpio' },
+// Where each dignity falls, derived from the app's own tables so it cannot drift from them (#437). The judge knows
+// the sign (Jupiter is exalted only in Cancer) and wants the entry to carry that sign's character; the generator was
+// only ever told "in exaltation", so it wrote the generic version. A ruler or detriment can cover two signs.
+const SIGN_INDICES_ALL = Array.from({ length: 12 }, (_, sign) => sign);
+function dignitySigns(bodyKey, state) {
+  const body = BODIES.find((b) => b.key === bodyKey);
+  if (body === undefined) return [];
+  const matches = (sign) => {
+    switch (state) {
+      case 'ruler':
+        return rulerOf(sign, 'traditional') === body.id || rulerOf(sign, 'modern') === body.id;
+      case 'detriment':
+        return detrimentRulerOf(sign, 'traditional') === body.id || detrimentRulerOf(sign, 'modern') === body.id;
+      case 'exalted':
+        return exaltationRulerOf(sign) === body.id;
+      case 'fall':
+        return fallRulerOf(sign) === body.id;
+      default:
+        return false;
+    }
+  };
+  return SIGN_INDICES_ALL.filter(matches).map((sign) => SIGNS[sign]?.name ?? String(sign));
+}
+
+const DIGNITY_RELATION = {
+  ruler: 'at home and expresses itself freely',
+  exalted: 'honoured and finds its fullest expression',
+  detriment: 'placed opposite the sign it rules and works against the grain',
+  fall: 'placed opposite the sign of its exaltation and is at its least comfortable',
+};
+
+/** What a dignity-state entry's generator is told on top of the state: the sign(s) it is about, for the generator only. */
+function dignityHint(placement) {
+  const signs = dignitySigns(placement.body, placement.state);
+  const relation = DIGNITY_RELATION[placement.state];
+  if (signs.length === 0 || relation === undefined) return '';
+  const names = signs.join(' and ');
+  const body = BODIES.find((b) => b.key === placement.body)?.name ?? placement.body;
+  return ` — this is about ${body} in ${names}, where it is ${relation}. Let the specific interplay between ${body}'s function and the nature of ${names} come through${signs.length > 1 ? ' (write what the signs share, not one of them)' : ''}, without naming the sign${signs.length > 1 ? 's' : ''} or the planet.`;
+}
+
+// Houses and angles, in the generator's description (#437): the judge reads "house 8" as shared resources, depth and
+// transformation, and "Midheaven" as public standing, but the generator was only given the number or the code.
+const HOUSE_GLOSS = [
+  'the self, body and how one meets the world',
+  'resources, possessions and what one values',
+  'communication, learning, siblings and the near environment',
+  'home, family, roots and the private foundation',
+  'creativity, pleasure, romance and self-expression',
+  'daily work, routines, health and service',
+  'partnership and the people one meets as an equal',
+  'shared resources, intimacy, crisis and transformation',
+  'beliefs, higher learning, travel and meaning',
+  'vocation, public standing and reputation',
+  'community, friends and hopes for the future',
+  'solitude, the unconscious, retreat and what is hidden',
+];
+const houseGloss = (house) => HOUSE_GLOSS[house - 1] ?? '';
+const ANGLE_GLOSS = {
+  AC: 'identity, presence and how one comes across',
+  DC: 'relationships and the people one is drawn to',
+  MC: 'career, reputation and public life',
+  IC: 'home, roots and the private base',
 };
 
 // The angle a line is drawn for, as a name rather than the raw `AC`/`MC` code.
@@ -142,9 +200,9 @@ export function placementDescription(placement) {
     case 'planet-in-sign':
       return `${bodyName(placement.body)} in ${SIGNS[placement.sign]?.name ?? String(placement.sign)} (${planetSymbolism(placement.body)?.core ?? ''} / ${signSymbolism(placement.sign)?.core ?? ''})`;
     case 'planet-in-house':
-      return `${bodyName(placement.body)} in house ${String(placement.house)} (${planetSymbolism(placement.body)?.core ?? ''})`;
+      return `${bodyName(placement.body)} in house ${String(placement.house)} (${planetSymbolism(placement.body)?.core ?? ''} / house of ${houseGloss(placement.house)})`;
     case 'sign-on-cusp':
-      return `${SIGNS[placement.sign]?.name ?? String(placement.sign)} on the cusp of house ${String(placement.house)} (${signSymbolism(placement.sign)?.core ?? ''})`;
+      return `${SIGNS[placement.sign]?.name ?? String(placement.sign)} on the cusp of house ${String(placement.house)} (${signSymbolism(placement.sign)?.core ?? ''} / house of ${houseGloss(placement.house)})`;
     case 'aspect-pair':
       return `${bodyName(placement.bodyA)} ${placement.aspect} ${bodyName(placement.bodyB)}`;
     case 'synastry-aspect':
@@ -153,18 +211,12 @@ export function placementDescription(placement) {
       // other's body, and the vaguer "written from the first person's side" left that to the model.
       return `synastry: one person's ${bodyName(placement.bodyA)} ${placement.aspect} the other person's ${bodyName(placement.bodyB)} (written from the first person's side). The ${bodyName(placement.bodyA)} is YOURS ("you", "your") and the ${bodyName(placement.bodyB)} belongs to the OTHER person ("they", "their"). Do not swap them, and describe the dynamic between the two people, not one person's inner conflict.`;
     case 'dignity-state': {
-      const base = `${bodyName(placement.body)} ${DIGNITY_WORDS[placement.state] ?? placement.state}`;
-      const outer = placement.state === 'detriment' ? OUTER_DETRIMENT[placement.body] : undefined;
-      // #437: the judge wants the tension specific to the sign an outer planet is in detriment in, which the
-      // description never gave the generator. It is named here for the generator only; the entry must not name it.
-      return outer === undefined
-        ? base
-        : `${base} — it falls in ${outer.sign}, the sign opposite ${outer.rules}, which it rules. Let the specific friction between ${bodyName(placement.body)}'s function and ${outer.sign}'s nature come through, without naming the sign or the planet.`;
+      return `${bodyName(placement.body)} ${DIGNITY_WORDS[placement.state] ?? placement.state}${dignityHint(placement)}`;
     }
     case 'profected-house':
-      return `house ${String(placement.house)} profected (annual/monthly profection)`;
+      return `house ${String(placement.house)} profected (annual/monthly profection) — the house of ${houseGloss(placement.house)}`;
     case 'astro-line':
-      return `${bodyName(placement.body)} on the ${ANGLE_WORDS[placement.angle] ?? placement.angle} astrocartography line`;
+      return `${bodyName(placement.body)} on the ${ANGLE_WORDS[placement.angle] ?? placement.angle} astrocartography line (${planetSymbolism(placement.body)?.core ?? ''} / the angle of ${ANGLE_GLOSS[placement.angle] ?? ''})`;
     default:
       throw new Error(`unreachable: unhandled category "${placement.category}"`);
   }
@@ -185,8 +237,12 @@ export function factsDescription(placement) {
       return `${bodyName(placement.bodyA)} ${aspectName(placement.aspect)} ${bodyName(placement.bodyB)}`;
     case 'synastry-aspect':
       return `this chart's ${bodyName(placement.bodyA)} ${aspectName(placement.aspect)} the other chart's ${bodyName(placement.bodyB)}`;
-    case 'dignity-state':
-      return `${bodyName(placement.body)} ${DIGNITY_WORDS[placement.state] ?? placement.state}`;
+    case 'dignity-state': {
+      // The judge is told the sign(s) the generator was told (#437): without them it rejected a text that rightly
+      // drew on one of two detriment signs as "not supported by the facts".
+      const signs = dignitySigns(placement.body, placement.state);
+      return `${bodyName(placement.body)} ${DIGNITY_WORDS[placement.state] ?? placement.state}${signs.length === 0 ? '' : `, in ${signs.join(' or ')}`}`;
+    }
     case 'profected-house':
       return `house ${String(placement.house)} is the profected house for this period`;
     case 'astro-line':

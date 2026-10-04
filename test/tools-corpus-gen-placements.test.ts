@@ -100,15 +100,32 @@ describe('the fallback sentence for the two wired categories (#427)', () => {
 });
 
 describe('what the generator is told for the placements the judge kept flagging (#437)', () => {
-  it('names the sign an outer planet is in detriment in, for the generator only, and leaves the facts alone', () => {
-    const uranus = { category: 'dignity-state', body: 'uranus', state: 'detriment' } as unknown as CorpusPlacement;
-    expect(placementDescription(uranus)).toContain('falls in Leo');
-    expect(placementDescription({ ...uranus, body: 'neptune' } as unknown as CorpusPlacement)).toContain('Virgo');
-    expect(placementDescription({ ...uranus, body: 'pluto' } as unknown as CorpusPlacement)).toContain('Taurus');
-    expect(factsDescription(uranus)).not.toContain('Leo');
-    // Only the outer detriments: a traditional planet's detriment and an outer planet's rulership are unchanged.
-    expect(placementDescription({ ...uranus, body: 'venus' } as unknown as CorpusPlacement)).not.toContain('falls in');
-    expect(placementDescription({ ...uranus, state: 'ruler' } as unknown as CorpusPlacement)).not.toContain('falls in');
+  it('names the sign a dignity is about, for the generator and the judge alike, and the entry is told not to name it', () => {
+    const dignity = (body: string, state: string): CorpusPlacement =>
+      ({ category: 'dignity-state', body, state }) as unknown as CorpusPlacement;
+    expect(placementDescription(dignity('uranus', 'detriment'))).toContain('Uranus in Leo');
+    expect(placementDescription(dignity('neptune', 'detriment'))).toContain('Neptune in Virgo');
+    expect(placementDescription(dignity('pluto', 'detriment'))).toContain('Pluto in Taurus');
+    expect(placementDescription(dignity('jupiter', 'exalted'))).toContain('Jupiter in Cancer');
+    expect(placementDescription(dignity('jupiter', 'exalted'))).toContain('without naming the sign');
+    // Two signs where the planet has two, and the generator is asked for what they share.
+    expect(placementDescription(dignity('venus', 'detriment'))).toContain('Venus in Aries and Scorpio');
+    expect(placementDescription(dignity('venus', 'detriment'))).toContain('what the signs share');
+    // The judge reads the same signs (#437): it rejected a text that rightly drew on one of two.
+    expect(factsDescription(dignity('jupiter', 'exalted'))).toContain('in Cancer');
+    expect(factsDescription(dignity('venus', 'detriment'))).toContain('in Aries or Scorpio');
+  });
+
+  it('glosses the house or angle a placement is in, so the generator is given what the judge expects', () => {
+    expect(
+      placementDescription({ category: 'planet-in-house', body: 'moon', house: 8 } as unknown as CorpusPlacement),
+    ).toContain('shared resources, intimacy, crisis and transformation');
+    expect(placementDescription({ category: 'profected-house', house: 7 } as unknown as CorpusPlacement)).toContain(
+      'partnership',
+    );
+    expect(
+      placementDescription({ category: 'astro-line', body: 'venus', angle: 'MC' } as unknown as CorpusPlacement),
+    ).toContain('career, reputation and public life');
   });
 
   it('says which body of a synastry aspect is the reader’s and which is the other person’s', () => {
