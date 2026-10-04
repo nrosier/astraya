@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * The lunar phase line above the Positions table (#403), against a real computed chart: the
+ * The lunar phase line in the Chart shape section (#403, moved there from Positions by #430), against a real computed chart: the
  * #412 reference chart, 1 Jan 1970 00:00 in Antwerp (Ohio), whose Moon is 272°57' ahead of the
  * Sun — a Last Quarter Moon, about 47% lit, which Astro-Seek names the same way.
  */
@@ -49,6 +49,11 @@ async function mount(locale: 'en' | 'nl'): Promise<HTMLElement> {
     await Promise.resolve();
   });
   mounted = { container, root };
+  // The Chart tab is the default; the phase belongs to the Chart shape section.
+  await act(async () => {
+    container.querySelector<HTMLButtonElement>('#chart-tab-shape')?.click();
+    await Promise.resolve();
+  });
   return container;
 }
 

@@ -122,7 +122,9 @@ test('clicking an aspect line isolates just its two endpoint bodies (#400)', asy
   await expect(panel).toHaveCount(0);
 });
 
-test('the Jones chart-shape diagram renders alongside its text sentence (#401)', async ({ page }) => {
+test('the Jones chart-shape diagram renders alongside its text sentence and explanation (#401, #430)', async ({
+  page,
+}) => {
   test.setTimeout(60_000);
 
   await gotoAndSettle(page, `${baseUrl}/#/people`);
@@ -135,7 +137,79 @@ test('the Jones chart-shape diagram renders alongside its text sentence (#401)',
   });
 
   await page.getByRole('link', { name: 'Natal chart', exact: true }).click();
+  await page.getByRole('tab', { name: 'Chart shape', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Chart shape', level: 2 })).toBeVisible();
   await expect(page.getByText(/Chart shape: /)).toBeVisible();
   await expect(page.locator('.chart-shape-diagram')).toBeVisible();
   await expect(page.locator('.chart-shape-diagram .chart-shape-ring')).toBeVisible();
+  await expect(page.getByText(/Marc Edmund Jones \(1941\)/)).toBeVisible();
+  await expect(page.locator('.lunar-phase-summary')).toBeVisible();
+  await expect(page.getByText(/Sect: (Day|Night) chart/)).toBeVisible();
+});
+
+test('the natal chart is split into sections, opening on the wheel, and the wheel keeps its selection (#430)', async ({
+  page,
+}) => {
+  test.setTimeout(60_000);
+
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  await createPerson(page, {
+    name: 'Ada Lovelace',
+    date: '1815-12-10',
+    time: '07:45:00',
+    latitude: '51.5072',
+    longitude: '-0.1276',
+  });
+  await page.getByRole('link', { name: 'Natal chart', exact: true }).click();
+
+  const tabs = page.getByRole('tab');
+  await expect(tabs).toHaveText([
+    'Chart',
+    'Chart shape',
+    'Positions',
+    'Houses',
+    'Aspects',
+    'Dignities',
+    'Derived points',
+  ]);
+  await expect(page.getByRole('tab', { name: 'Chart', exact: true })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.locator('div.chart-wheel')).toBeVisible();
+
+  // Select a planet, visit another section, come back: the selection is still there.
+  await page.locator('.chart-point[data-body="sun"]').first().click({ force: true });
+  await expect(page.locator('.chart-isolation-panel')).toBeVisible();
+  await page.getByRole('tab', { name: 'Positions', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Positions', level: 2 })).toBeVisible();
+  await expect(page.locator('div.chart-wheel')).toBeHidden();
+  await expect(page.getByRole('cell', { name: 'Sun', exact: true }).first()).toBeVisible();
+  await page.getByRole('tab', { name: 'Chart', exact: true }).click();
+  await expect(page.locator('.chart-isolation-panel')).toBeVisible();
+
+  // The arrow keys walk the strip.
+  await page.getByRole('tab', { name: 'Chart', exact: true }).focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(page.getByRole('tab', { name: 'Chart shape', exact: true })).toBeFocused();
+});
+
+test('the natal chart sections fit a phone: the tab strip wraps instead of scrolling the page sideways (#430)', async ({
+  page,
+}) => {
+  test.setTimeout(60_000);
+
+  await page.setViewportSize({ width: 390, height: 800 });
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  await createPerson(page, {
+    name: 'Ada Lovelace',
+    date: '1815-12-10',
+    time: '07:45:00',
+    latitude: '51.5072',
+    longitude: '-0.1276',
+  });
+  await page.getByRole('link', { name: 'Natal chart', exact: true }).click();
+  await expect(page.getByRole('tab', { name: 'Derived points', exact: true })).toBeVisible();
+  const overflow = await page.evaluate('document.documentElement.scrollWidth - window.innerWidth');
+  expect(overflow).toBeLessThanOrEqual(1);
+  await page.getByRole('tab', { name: 'Chart shape', exact: true }).click();
+  await expect(page.locator('.chart-shape-diagram')).toBeVisible();
+  expect(await page.evaluate('document.documentElement.scrollWidth - window.innerWidth')).toBeLessThanOrEqual(1);
 });

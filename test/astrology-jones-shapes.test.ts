@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { jonesShapeOf } from '../src/astrology/jones-shapes.js';
+import { JONES_BODY_KEYS, jonesBodyPositions, jonesShapeOf } from '../src/astrology/jones-shapes.js';
+import { bodyByKey } from '../src/astrology/bodies.js';
 
 function positionsOf(longitudes: readonly number[]): Map<number, number> {
   return new Map(longitudes.map((longitude, body) => [body, longitude]));
@@ -57,5 +58,39 @@ describe('jonesShapeOf (#35)', () => {
 
   it('rejects fewer than two bodies', () => {
     expect(() => jonesShapeOf(positionsOf([10]))).toThrow(RangeError);
+  });
+});
+
+describe('the ten planets and the Bucket handle (#430)', () => {
+  const id = (key: string): number => bodyByKey(key)?.id ?? -1;
+
+  it('takes only the ten planets Jones used, never a node, Lilith, an asteroid or Chiron', () => {
+    expect(JONES_BODY_KEYS).toHaveLength(10);
+    const all = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto'];
+    const extras = ['meanNode', 'trueNode', 'meanLilith', 'chiron', 'ceres', 'pallas', 'juno', 'vesta'];
+    const positions = [...all, ...extras].map((key, index) => ({ body: id(key), longitude: index * 20 }));
+    const kept = jonesBodyPositions(positions);
+    expect([...kept.keys()].sort()).toEqual(all.map(id).sort());
+  });
+
+  it('is not changed by a node or an asteroid, which would otherwise move the shape with a display setting', () => {
+    // Ten planets in one trine (a Bundle); a node on the far side would make it a Bucket if it counted.
+    const planets = JONES_BODY_KEYS.map((key, index) => ({ body: id(key), longitude: 10 + index * 10 }));
+    const withNode = [...planets, { body: id('meanNode'), longitude: 250 }];
+    expect(jonesShapeOf(jonesBodyPositions(withNode)).shape).toBe('bundle');
+    expect(jonesShapeOf(new Map(withNode.map((p) => [p.body, p.longitude]))).shape).not.toBe('bundle');
+  });
+
+  it('calls a lone body with empty circle on both sides the handle, wherever the cluster sits (this module’s convention)', () => {
+    // A cluster spanning 200 degrees plus one body 80 degrees beyond each end: a Bucket here, though a
+    // stricter reading of Jones would want the cluster within half the circle.
+    const result = jonesShapeOf(positionsOf([0, 50, 100, 150, 200, 280]));
+    expect(result.shape).toBe('bucket');
+    expect(result.handle).toBe(5);
+  });
+
+  it('puts a chart a degree either side of a boundary in neighbouring shapes: the lines are hard', () => {
+    expect(jonesShapeOf(positionsOf([0, 60, 119])).shape).toBe('bundle');
+    expect(jonesShapeOf(positionsOf([0, 60, 121])).shape).toBe('bowl');
   });
 });

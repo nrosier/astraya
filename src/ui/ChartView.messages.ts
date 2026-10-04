@@ -70,6 +70,26 @@ const en = {
   chartShapeSentence: (shape: string, handle: string | undefined) =>
     handle === undefined ? `Chart shape: ${shape}.` : `Chart shape: ${shape} (handle: ${handle}).`,
 
+  chartTabLabel: 'Chart',
+  shapeTabLabel: 'Chart shape',
+  shapeSourceNote:
+    'Chart shapes are a convention from Marc Edmund Jones (1941), widely taught in modern textbooks. They are not part of classical astrology and have not been validated empirically: read them as a tendency, never a verdict. The shape is worked out from the ten planets, Sun to Pluto, and its boundaries are approximate: a chart just either side of a boundary can fall in a neighbouring shape.',
+  shapeCannotBeWorkedOut: 'The chart shape cannot be worked out: it needs at least two planets.',
+  jonesShapeExplanations: {
+    bundle:
+      'All the planets sit within about a third of the circle. Traditionally read as a concentrated, self-contained focus with a narrow range of experience. A tendency, not a verdict.',
+    bowl: 'The planets fill about half the circle and leave the other half empty. Often read as self-containment, the empty half being what the person looks toward or lacks; the planets at the edges of the filled half (the “rim”) are sometimes given extra weight.',
+    locomotive:
+      'The planets span about two thirds of the circle and leave a third empty. Often read as drive and momentum, with the planet leading the motion sometimes taken as the focal point; that last part is a later gloss.',
+    bucket:
+      'A bowl-like group of planets plus one separate planet, the handle. Read as the outlet or focus of the chart’s energy, so the handle matters for its sign, house and aspects.',
+    seesaw:
+      'Two groups of planets roughly facing each other across the circle. Read as balancing two sets of concerns, a polarity; “tension” is a modern gloss.',
+    splay: 'Three or more irregular groups of planets. Read as individualistic and varied, without one dominant theme.',
+    splash:
+      'The planets are spread widely around the circle with few gaps. Read as many interests and an all-round range; the “scattered” downside is a modern gloss.',
+  },
+
   lunarPhaseLabels: {
     new: 'New Moon',
     crescent: 'Crescent Moon',
@@ -210,6 +230,27 @@ const nl: typeof en = {
   },
   chartShapeSentence: (shape: string, handle: string | undefined) =>
     handle === undefined ? `Horoscoopvorm: ${shape}.` : `Horoscoopvorm: ${shape} (handvat: ${handle}).`,
+
+  chartTabLabel: 'Horoscoop',
+  shapeTabLabel: 'Horoscoopvorm',
+  shapeSourceNote:
+    'Horoscoopvormen zijn een conventie van Marc Edmund Jones (1941), veel onderwezen in moderne leerboeken. Ze maken geen deel uit van de klassieke astrologie en zijn niet empirisch onderbouwd: lees ze als een neiging, nooit als een oordeel. De vorm wordt bepaald uit de tien planeten, Zon tot Pluto, en de grenzen zijn bij benadering: een horoscoop net aan de ene of andere kant van een grens kan in een naburige vorm vallen.',
+  shapeCannotBeWorkedOut: 'De horoscoopvorm kan niet worden bepaald: er zijn minstens twee planeten nodig.',
+  jonesShapeExplanations: {
+    bundle:
+      'Alle planeten staan binnen ongeveer een derde van de cirkel. Traditioneel gelezen als een geconcentreerde, in zichzelf gekeerde focus met een smal ervaringsgebied. Een neiging, geen oordeel.',
+    bowl: 'De planeten vullen ongeveer de helft van de cirkel en laten de andere helft leeg. Vaak gelezen als in zichzelf gekeerdheid, waarbij de lege helft is waar iemand naar uitkijkt of wat iemand mist; de planeten aan de randen van de gevulde helft (de “rand”) krijgen soms extra gewicht.',
+    locomotive:
+      'De planeten beslaan ongeveer twee derde van de cirkel en laten een derde leeg. Vaak gelezen als drijfkracht en vaart, waarbij de planeet die de beweging aanvoert soms als brandpunt wordt gezien; dat laatste is een latere toevoeging.',
+    bucket:
+      'Een komvormige groep planeten plus één losse planeet, het handvat. Gelezen als de uitlaat of het brandpunt van de energie van de horoscoop, dus het handvat telt mee voor zijn teken, huis en aspecten.',
+    seesaw:
+      'Twee groepen planeten die elkaar ongeveer aankijken aan weerszijden van de cirkel. Gelezen als het in evenwicht brengen van twee reeksen zorgen, een polariteit; “spanning” is een moderne toevoeging.',
+    splay:
+      'Drie of meer onregelmatige groepen planeten. Gelezen als eigenzinnig en gevarieerd, zonder één overheersend thema.',
+    splash:
+      'De planeten zijn wijd over de cirkel verspreid met weinig tussenruimten. Gelezen als veel interesses en een brede, veelzijdige range; de “versnipperde” keerzijde is een moderne toevoeging.',
+  },
 
   lunarPhaseLabels: {
     new: 'Nieuwe maan',

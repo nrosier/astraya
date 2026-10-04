@@ -19,8 +19,48 @@
  * breakpoints are Jones' own (thirds and half of the circle); the sextile
  * used to detect a genuine split beyond that is this module's own explicit,
  * documented choice, not a claim of universal agreement.
+ *
+ * What was checked against Jones's scheme, and what this module chose (#430):
+ *
+ * - **Which bodies.** Jones used the ten planets, the Sun and Moon through Pluto, and nothing else.
+ *   A lunar node, Lilith or an asteroid is not a planet in his scheme, and letting one decide the
+ *   shape would make it change with a display setting. `jonesBodyPositions` therefore keeps only
+ *   the ten (`JONES_BODY_KEYS`); every caller (the chart screen and the written report) goes
+ *   through it, so they cannot disagree about the shape of the same chart.
+ * - **The Bucket handle** is a lone body with at least a sextile of empty circle on both sides, the
+ *   rest of the planets forming the other group. It is *not* required to sit opposite the cluster,
+ *   and the cluster is not required to be a bowl (within half the circle): a lone planet beside a
+ *   group spanning up to 240 degrees is a Bucket here, a little wider than Jones's picture of a
+ *   bowl with a handle. This is the module's convention, stated here rather than hidden.
+ * - **Thresholds are hard lines.** A chart at 118 degrees of span is a Bundle, at 122 a Bowl; the
+ *   screen words every shape as "about" for that reason.
+ * - **No leading planet** is reported for a Locomotive: only a Bucket returns a handle, because
+ *   which planet leads the motion needs a convention this module does not state.
  */
 import type { BodyId, Degrees } from '../ephemeris/types.js';
+import { bodyByKey } from './bodies.js';
+
+/** The ten planets Jones's shapes are drawn from: the Sun and Moon through Pluto. */
+export const JONES_BODY_KEYS = [
+  'sun',
+  'moon',
+  'mercury',
+  'venus',
+  'mars',
+  'jupiter',
+  'saturn',
+  'uranus',
+  'neptune',
+  'pluto',
+] as const;
+
+/** The longitudes of just the ten planets, in `positions`' own order — the input `jonesShapeOf` expects. */
+export function jonesBodyPositions(
+  positions: readonly { readonly body: BodyId; readonly longitude: Degrees }[],
+): ReadonlyMap<BodyId, Degrees> {
+  const ids = new Set<BodyId>(JONES_BODY_KEYS.flatMap((key) => bodyByKey(key)?.id ?? []));
+  return new Map(positions.filter((position) => ids.has(position.body)).map((p) => [p.body, p.longitude]));
+}
 
 const TRINE: Degrees = 120;
 const OPPOSITION: Degrees = 180;
@@ -41,7 +81,7 @@ export interface JonesShapeResult {
    * split at all (bundle, bowl, locomotive, splash).
    */
   readonly groups: readonly (readonly BodyId[])[];
-  /** The isolated body opposite the main cluster. Present only for 'bucket'. */
+  /** The lone body with empty circle on both sides. Present only for 'bucket' (not necessarily opposite the cluster). */
   readonly handle?: BodyId;
 }
 

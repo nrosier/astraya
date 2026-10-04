@@ -14,7 +14,7 @@ import { declinationContacts, isOutOfBounds } from '../astrology/declinations.js
 import { dispositorChain, isMutualReception } from '../astrology/dispositors.js';
 import { houseOf } from '../astrology/emphasis.js';
 import { fixedStarConjunctions } from '../astrology/fixed-stars.js';
-import { jonesShapeOf, type JonesShapeResult } from '../astrology/jones-shapes.js';
+import { jonesBodyPositions, jonesShapeOf, type JonesShapeResult } from '../astrology/jones-shapes.js';
 import { midpointOf } from '../astrology/midpoints.js';
 import { DEFAULT_RULERSHIP_CHOICE, primaryRulerOf, rulersOf, type RulershipChoice } from '../astrology/rulership.js';
 import { degreesInSign, signIndex, signOf } from '../astrology/signs.js';
@@ -524,16 +524,13 @@ export function fixedStarRows(
 }
 
 /**
- * The chart's overall Jones shape (#35, #398) — `undefined` only in the degenerate case of fewer
- * than two visible positions, where `jonesShapeOf` would otherwise throw (`PointVisibilityOptions`
- * can drop Chiron down to as few as nine bodies, still comfortably above two, but this guards the
- * boundary rather than assuming it).
+ * The chart's overall Jones shape (#35, #398) — worked out from the ten planets only (`jonesBodyPositions`,
+ * #430), whatever points the chart displays, and `undefined` only when fewer than two of them are
+ * present, where `jonesShapeOf` would otherwise throw.
  */
-export function chartShapeOf(data: ChartData, options: PointVisibilityOptions = {}): JonesShapeResult | undefined {
-  const visible = visiblePositions(data.positions, options);
-  if (visible.length < 2) return undefined;
-  const positions = new Map<BodyId, Degrees>(visible.map((position) => [position.body, position.longitude]));
-  return jonesShapeOf(positions);
+export function chartShapeOf(data: ChartData): JonesShapeResult | undefined {
+  const positions = jonesBodyPositions(data.positions);
+  return positions.size < 2 ? undefined : jonesShapeOf(positions);
 }
 
 export interface DerivedPointRow extends DegreeParts {

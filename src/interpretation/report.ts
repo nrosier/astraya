@@ -59,7 +59,7 @@ import { bodyById, bodyByKey, type BodyDefinition } from '../astrology/bodies.js
 import { DEFAULT_RULERSHIP_CHOICE, primaryRulerOf, rulersOf, type RulershipChoice } from '../astrology/rulership.js';
 import { dispositorChain, type DispositorChain } from '../astrology/dispositors.js';
 import { elementBalance, houseOf, modalityBalance } from '../astrology/emphasis.js';
-import { jonesShapeOf, type JonesShape } from '../astrology/jones-shapes.js';
+import { jonesBodyPositions, jonesShapeOf, type JonesShape } from '../astrology/jones-shapes.js';
 import type { Element, Modality } from '../astrology/signs.js';
 import { signIndex } from '../astrology/signs.js';
 import type { ChartData } from '../domain/chart-compute.js';
@@ -354,7 +354,7 @@ const JONES_SHAPE_NAMES: Readonly<Record<JonesShape, Readonly<Record<Locale, str
 };
 
 function jonesShapeSentence(chart: ChartData, locale: Locale): string {
-  const shape = jonesShapeOf(positionsMap(chart)).shape;
+  const shape = jonesShapeOf(jonesBodyPositions(chart.positions)).shape;
   const name = JONES_SHAPE_NAMES[shape][locale];
   return locale === 'nl' ? `Je horoscoop vormt een ${name}-patroon.` : `Your chart forms a ${name} pattern.`;
 }
@@ -367,8 +367,9 @@ function aspectPatternsSection(chart: ChartData, locale: Locale, corpus: readonl
     resolveParagraph(placement.placement, locale, corpus, placement.factors),
   );
 
-  // jonesShapeOf needs at least 2 positions; every real ChartData has far more, but a minimal fixture might not.
-  const shape = chart.positions.length >= 2 ? [derivedParagraph(jonesShapeSentence(chart, locale))] : [];
+  // jonesShapeOf needs at least 2 of the ten planets; every real ChartData has them all, but a minimal fixture might not.
+  const shape =
+    jonesBodyPositions(chart.positions).size >= 2 ? [derivedParagraph(jonesShapeSentence(chart, locale))] : [];
 
   return section('aspect-patterns', locale, [...shape, ...paragraphs]);
 }
