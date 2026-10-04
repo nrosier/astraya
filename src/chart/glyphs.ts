@@ -37,8 +37,14 @@
  * crescent-and-cross base glyph.
  */
 
+import { getSymbolClass } from './symbol-class.js';
+import { textSymbol, unicodeSymbol, type SymbolKind } from './symbol-text.js';
+import { escapeXml } from './svg-primitives.js';
+
 export interface GlyphDefinition {
   readonly key: string;
+  /** Which registry it came from, so `renderGlyph` can write it as text when the symbol class asks (#419). */
+  readonly kind?: SymbolKind;
   /** Raw `<path>`/`<circle>`/`<rect>` tags, coordinates in a 0-100 box. */
   readonly elements: readonly string[];
 }
@@ -209,9 +215,18 @@ const SOUTH_NODE_GLYPH: GlyphDefinition = glyph('southNode', [
   ),
 ]);
 
+/** The registry's entries, each stamped with its kind once, so a lookup returns a stable object. */
+function tagged(
+  definitions: Readonly<Record<string, GlyphDefinition>>,
+  kind: SymbolKind,
+): Readonly<Record<string, GlyphDefinition>> {
+  return Object.fromEntries(Object.entries(definitions).map(([key, definition]) => [key, { ...definition, kind }]));
+}
+
+const TAGGED_BODY_GLYPHS = tagged({ ...BODY_GLYPHS, southNode: SOUTH_NODE_GLYPH }, 'body');
+
 export function bodyGlyph(key: string): GlyphDefinition | undefined {
-  if (key === 'southNode') return SOUTH_NODE_GLYPH;
-  return BODY_GLYPHS[key];
+  return TAGGED_BODY_GLYPHS[key];
 }
 
 // --- Zodiac signs (SIGNS, by name) ------------------------------------------
@@ -306,8 +321,10 @@ const SIGN_GLYPHS: Readonly<Record<string, GlyphDefinition>> = {
   ]),
 };
 
+const TAGGED_SIGN_GLYPHS = tagged(SIGN_GLYPHS, 'sign');
+
 export function signGlyph(name: string): GlyphDefinition | undefined {
-  return SIGN_GLYPHS[name];
+  return TAGGED_SIGN_GLYPHS[name];
 }
 
 // --- Aspects (ASPECTS, by key) ----------------------------------------------
@@ -368,8 +385,10 @@ const ASPECT_GLYPHS: Readonly<Record<string, GlyphDefinition>> = {
   ]),
 };
 
+const TAGGED_ASPECT_GLYPHS = tagged(ASPECT_GLYPHS, 'aspect');
+
 export function aspectGlyph(key: string): GlyphDefinition | undefined {
-  return ASPECT_GLYPHS[key];
+  return TAGGED_ASPECT_GLYPHS[key];
 }
 
 /**
@@ -393,6 +412,21 @@ export function renderGlyph(
   const tx = cx - size / 2;
   const ty = cy - size / 2;
   const attrs = extraAttrs === '' ? '' : ` ${extraAttrs}`;
+  // The Unicode and text classes (#419) write the same symbol as text inside the same 0-100 box, so every
+  // renderer's layout, hit area and isolation markup is exactly what it is for a drawn glyph.
+  const symbolClass = getSymbolClass();
+  if (symbolClass !== 'drawn' && definition.kind !== undefined) {
+    const written =
+      symbolClass === 'unicode'
+        ? unicodeSymbol(definition.kind, definition.key)
+        : textSymbol(definition.kind, definition.key);
+    if (written !== undefined) {
+      return (
+        `<g transform="translate(${tx.toFixed(2)} ${ty.toFixed(2)}) scale(${scale.toFixed(4)})" class="${className}"${attrs}>` +
+        `<text class="chart-symbol-text chart-symbol-text-${symbolClass}" x="50" y="52" text-anchor="middle" dominant-baseline="central">${escapeXml(written)}</text></g>`
+      );
+    }
+  }
   return (
     `<g transform="translate(${tx.toFixed(2)} ${ty.toFixed(2)}) scale(${scale.toFixed(4)})" class="${className}"${attrs}>` +
     `${definition.elements.join('')}</g>`

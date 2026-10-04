@@ -2046,6 +2046,85 @@ label.stacked textarea:focus-visible {
   stroke: none;
 }
 
+/* The Unicode and text symbol classes (#419): the same symbol written as text in the glyph's own 0-100
+   box (`renderGlyph`). `svg text.…` outranks the wheel's general `text` rule, whatever order they load in. */
+svg text.chart-symbol-text {
+  font-family: 'Segoe UI Symbol', 'Noto Sans Symbols', 'Apple Symbols', system-ui, sans-serif;
+  font-weight: 600;
+  fill: var(--fg);
+  stroke: none;
+}
+
+svg text.chart-symbol-text-text {
+  font-size: 44px;
+  font-weight: 650;
+  letter-spacing: -2px;
+}
+
+svg text.chart-symbol-text-unicode {
+  font-size: 78px;
+  font-weight: 400;
+}
+
+.chart-sign-glyph text.chart-symbol-text {
+  fill: var(--accent);
+}
+
+.chart-sign-element-fire text.chart-symbol-text {
+  fill: var(--element-fire);
+}
+
+.chart-sign-element-earth text.chart-symbol-text {
+  fill: var(--element-earth);
+}
+
+.chart-sign-element-air text.chart-symbol-text {
+  fill: var(--element-air);
+}
+
+.chart-sign-element-water text.chart-symbol-text {
+  fill: var(--element-water);
+}
+
+.chart-aspect-glyph text.chart-symbol-text {
+  fill: var(--muted);
+}
+
+.chart-aspect-glyph-semisquare text.chart-symbol-text,
+.chart-aspect-glyph-square text.chart-symbol-text,
+.chart-aspect-glyph-sesquiquadrate text.chart-symbol-text,
+.chart-aspect-glyph-opposition text.chart-symbol-text {
+  fill: var(--aspect-hard);
+}
+
+.chart-aspect-glyph-conjunction text.chart-symbol-text,
+.chart-aspect-glyph-semisextile text.chart-symbol-text,
+.chart-aspect-glyph-sextile text.chart-symbol-text,
+.chart-aspect-glyph-trine text.chart-symbol-text {
+  fill: var(--aspect-soft);
+}
+
+.chart-aspect-glyph-quintile text.chart-symbol-text,
+.chart-aspect-glyph-biquintile text.chart-symbol-text,
+.chart-aspect-glyph-quincunx text.chart-symbol-text {
+  fill: var(--aspect-minor);
+}
+
+/* A symbol in a data table cell (#419): a small drawn glyph, or the Unicode or text form, in the row. */
+.table-symbol {
+  display: inline-block;
+  width: 1.25rem;
+  height: 1.25rem;
+  vertical-align: middle;
+}
+
+.table-symbol-text {
+  font-size: 0.75rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+}
+
 .chart-glyph-leader {
   stroke: var(--muted);
   stroke-width: 1;

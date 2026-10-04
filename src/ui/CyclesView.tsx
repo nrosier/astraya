@@ -6,6 +6,7 @@
  * The diagram is app-generated from just-computed longitudes, never user-supplied markup, and
  * is hidden from assistive tech: the table beside it carries every value it plots.
  */
+import { useSymbolClass } from './symbol-setting.js';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { findMutualAspects, type MutualAspectEvent } from '../astrology/mutual-aspects.js';
 import { renderCycleDiagramSvg } from '../chart/cycle-diagram.js';
@@ -63,6 +64,7 @@ function paramsFor(preset: CyclePreset): Params {
 
 export function CyclesView(): React.JSX.Element {
   const t = useMessages(cyclesViewMessages);
+  const [symbolClass] = useSymbolClass();
   const shared = useMessages(sharedMessages);
   const [locale] = useLocale();
   const { provider } = useEphemerisProvider();
@@ -250,7 +252,7 @@ export function CyclesView(): React.JSX.Element {
             selectedId,
           )
         : undefined,
-    [result, selectedId],
+    [result, selectedId, symbolClass],
   );
 
   return (

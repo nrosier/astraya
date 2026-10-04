@@ -21,6 +21,7 @@ import { extendedSettingsPanelMessages } from './ExtendedSettingsPanel.messages.
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { RulershipSetting } from './RulershipSetting.js';
+import { SymbolSetting } from './SymbolSetting.js';
 import type { EphemerisProvider } from '../ephemeris/types.js';
 
 const MINOR_ASPECTS = ASPECTS.filter((aspect) => aspect.family === 'minor');
@@ -159,6 +160,8 @@ export function ExtendedSettingsPanel({
 
       {/* A device preference, not part of this draft: it applies at once everywhere a ruler is shown (#426). */}
       <RulershipSetting />
+      {/* Also a device preference: how planets, signs and aspects are written everywhere (#419). */}
+      <SymbolSetting />
 
       <fieldset className="field-group">
         <legend>{t.orbLegend}</legend>
