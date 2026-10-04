@@ -13,13 +13,27 @@ import type { CorpusEntry, Locale } from '../src/interpretation/schema.js';
 import { synastryText } from '../src/ui/synastry-text.js';
 import { getEngine } from './engine-harness.js';
 
-const corpusOf = (locale: Locale, persona = 'neutral'): readonly CorpusEntry[] =>
-  JSON.parse(readFileSync(`public/corpus/${locale}/${persona}.json`, 'utf8')) as CorpusEntry[];
+/**
+ * The committed corpus source. `public/corpus/` is generated (`npm run corpus:split`) and gitignored, so a
+ * checkout, or CI before the split, may not have it, or may hold an older one: the source is what is shipped.
+ */
+const corpusOf = (locale: Locale): readonly CorpusEntry[] =>
+  JSON.parse(readFileSync(`src/interpretation/corpus/${locale}.json`, 'utf8')) as CorpusEntry[];
 
 const EN = corpusOf('en');
 const NL = corpusOf('nl');
 const entryText = (corpus: readonly CorpusEntry[], key: string): string | undefined =>
   corpus.find((entry) => entry.key === key)?.text;
+/** The variants of one point a chart carries only one of. */
+const VARIANT_FAMILIES: Record<string, string> = {
+  meanLilith: 'lilith',
+  osculatingLilith: 'lilith',
+  interpolatedLilith: 'lilith',
+  meanNode: 'node',
+  trueNode: 'node',
+};
+const isVariant = (key: string): boolean => key in VARIANT_FAMILIES;
+const family = (key: string): string | undefined => VARIANT_FAMILIES[key];
 const row = (aspectKey: string, bodyAKey: string, bodyBKey: string) => ({ aspectKey, bodyAKey, bodyBKey });
 
 let synastry: SynastryData;
@@ -88,14 +102,17 @@ describe('synastryText (#422)', () => {
       for (const aspect of aspects) {
         for (const a of bodies) {
           for (const b of bodies) {
-            if (a === b) continue;
+            // Two models of the same point (Lilith's three, the two nodes) never occur in one chart, so
+            // the corpus has no entry for such a pair and none is looked up.
+            if (a === b || (isVariant(a) && isVariant(b) && family(a) === family(b))) continue;
             const result = synastryText(row(aspect, a, b), locale, corpus);
             expect(result.speaksFrom).toBe(a < b ? 'a' : 'b');
             resolved++;
           }
         }
       }
-      expect(resolved).toBe(11 * 20 * 19);
+      // Every ordered pair of different bodies, less the 8 ordered pairs of variants of one point.
+      expect(resolved).toBe(11 * (20 * 19 - 8));
     }
   });
 
@@ -127,9 +144,13 @@ describe('synastryText (#422)', () => {
     expect(result.text).not.toBe(entryText(EN, 'synastry-aspect:square:mars:moon'));
   });
 
-  it('a persona with no synastry entries of its own still gets the neutral text, not the mechanical sentence', () => {
-    const cynic = [...EN, ...corpusOf('en', 'cynic')];
-    const result = synastryText(row('trine', 'sun', 'venus'), 'en', cynic, 'cynic');
+  it('a persona with no synastry entry of its own still gets the neutral text, not the mechanical sentence', () => {
+    // The shipped corpus is neutral only today, so a persona's corpus is stood in for by one entry of its
+    // own for a different placement: the voice that has no synastry entry must fall back to the neutral one.
+    const neutralSun = EN.find((entry) => entry.key === 'planet-in-sign:sun:0');
+    if (neutralSun === undefined) throw new Error('fixture bug: no neutral Sun in Aries entry');
+    const cynicEntry: CorpusEntry = { ...neutralSun, persona: 'cynic', text: 'A cynic’s Sun in Aries.' };
+    const result = synastryText(row('trine', 'sun', 'venus'), 'en', [...EN, cynicEntry], 'cynic');
     expect(result.text).toBe(entryText(EN, 'synastry-aspect:trine:sun:venus'));
     expect(result.speaksFrom).toBe('a');
   });
