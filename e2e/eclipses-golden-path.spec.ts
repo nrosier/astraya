@@ -10,7 +10,7 @@ import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
-import { createPerson, gotoAndSettle } from './support.ts';
+import { createPerson, gotoAndSettle, openTool } from './support.ts';
 
 let dir: string;
 let app: FastifyInstance;
@@ -36,7 +36,7 @@ test('the eclipses screen lists the four eclipses of 2024 with their degrees', a
   test.setTimeout(90_000);
 
   await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await page.getByRole('link', { name: 'Eclipses', exact: true }).click();
+  await openTool(page, 'Eclipses');
   await expect(page.getByRole('heading', { name: 'Eclipses', level: 1 })).toBeVisible();
 
   await page.getByLabel('From year').fill('2024');

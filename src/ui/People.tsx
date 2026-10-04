@@ -78,11 +78,6 @@ export function People(): React.JSX.Element {
           {t.addPerson}
         </button>
       </p>
-      <p>
-        <a href="#/cycles">{t.cyclesLink}</a> · <a href="#/eclipses">{t.eclipsesLink}</a> ·{' '}
-        <a href="#/horary">{t.horaryLink}</a> · <a href="#/electional">{t.electionalLink}</a> ·{' '}
-        <a href="#/rectification">{t.rectificationLink}</a>
-      </p>
 
       {people.length === 0 ? (
         <p className="empty">{t.empty}</p>

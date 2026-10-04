@@ -78,3 +78,9 @@ export async function signIn(page: Page, username: string, password: string): Pr
   }
   await expect(signedIn).toBeVisible();
 }
+
+/** Opens a screen from the header's Tools menu (#421): the menu button, then the tool's link. */
+export async function openTool(page: Page, name: string): Promise<void> {
+  await page.getByRole('button', { name: 'Tools', exact: true }).click();
+  await page.getByRole('link', { name, exact: true }).click();
+}

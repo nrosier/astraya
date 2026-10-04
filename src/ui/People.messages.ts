@@ -6,11 +6,6 @@ const en = {
   tagline: 'Charts belong to a person, so this is where they start. Everything here is stored on this device.',
   saveFailed: 'That did not save.',
   addPerson: 'Add a person',
-  cyclesLink: 'Planetary cycles',
-  eclipsesLink: 'Eclipses',
-  horaryLink: 'Horary chart',
-  electionalLink: 'Electional search',
-  rectificationLink: 'Birth-time rectification',
   empty:
     'Nobody yet. Add a person and their birth record; a chart can be drawn once the date, time and coordinates are in.',
   unnamed: 'Unnamed',
@@ -29,11 +24,6 @@ const nl: typeof en = {
   tagline: 'Horoscopen horen bij een persoon, dus hier begint het. Alles hier wordt op dit apparaat opgeslagen.',
   saveFailed: 'Dat is niet opgeslagen.',
   addPerson: 'Persoon toevoegen',
-  cyclesLink: 'Planetaire cycli',
-  eclipsesLink: 'Verduisteringen',
-  horaryLink: 'Horoscoop voor een vraag',
-  electionalLink: 'Electieve zoektocht',
-  rectificationLink: 'Geboortetijd-rectificatie',
   empty:
     'Nog niemand. Voeg een persoon en hun geboortegegevens toe; een horoscoop kan worden getekend zodra de datum, tijd en coördinaten bekend zijn.',
   unnamed: 'Naamloos',

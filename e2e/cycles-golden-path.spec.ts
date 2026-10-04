@@ -11,7 +11,7 @@ import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
-import { gotoAndSettle } from './support.ts';
+import { gotoAndSettle, openTool } from './support.ts';
 
 let dir: string;
 let app: FastifyInstance;
@@ -39,7 +39,7 @@ test('the cycles screen lists the great conjunctions with a diagram, and narrows
   test.setTimeout(90_000);
 
   await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await page.getByRole('link', { name: 'Planetary cycles', exact: true }).click();
+  await openTool(page, 'Planetary cycles');
   await expect(page.getByRole('heading', { name: 'Planetary cycles' })).toBeVisible();
 
   // Opens on Jupiter-Saturn: the great conjunction of 21 December 2020 is in the table.

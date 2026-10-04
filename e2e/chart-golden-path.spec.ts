@@ -205,6 +205,8 @@ test('the natal chart sections fit a phone: the tab strip wraps instead of scrol
     latitude: '51.5072',
     longitude: '-0.1276',
   });
+  // On a phone the navigation is folded behind the Menu button (#421).
+  await page.getByRole('button', { name: 'Menu', exact: true }).click();
   await page.getByRole('link', { name: 'Natal chart', exact: true }).click();
   await expect(page.getByRole('tab', { name: 'Derived points', exact: true })).toBeVisible();
   const overflow = await page.evaluate('document.documentElement.scrollWidth - window.innerWidth');
