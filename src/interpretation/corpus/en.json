@@ -26618,9 +26618,9 @@
   {
     "key": "aspect-pair:opposition:meanLilith:uranus",
     "locale": "en",
-    "text": "You carry an instinctive distrust of collective norms, meeting shared expectations with a sudden impulse to clear the board entirely. This dynamic negotiates boundaries through sharp detachment, breaking away whenever structure hardens into predictability. The shadow emerges as a cyclical alienation, where the reflexive need to shatter convention routinely undercuts the reliable ground you might otherwise build.",
+    "text": "You hold an instinctive demand for radical autonomy, pushing against any framework that restricts your personal sovereignty. Your approach relies on abrupt departures and sudden shifts to clear away outdated structures when expectations become too rigid. This dynamic creates a persistent friction between the need for absolute freedom and the reality of shared commitments, often turning every external demand into a test of independence.",
     "tier": "core",
-    "tags": ["improved-via-feedback-loop"],
+    "tags": ["improved-via-feedback-loop", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -56630,9 +56630,9 @@
   {
     "key": "synastry-aspect:biquintile:meanNode:mercury",
     "locale": "en",
-    "text": "Your intellectual development pulls toward an inventive knack for finding unexpected common ground, shaping how you process and exchange ideas with others. This developmental connection relies on an agile interplay of perspectives that bridges distinct mental frameworks to foster mutual growth. Tension surfaces whenever rigid certainty meets this fluid flexibility, leading to sudden friction when fixed viewpoints attempt to pin down a constantly evolving dialogue.",
+    "text": "Your developmental path finds a natural collaborator in how they process information, creating an inventive synergy that simplifies complex ideas together. This dynamic thrives on finding clever workarounds to shared impasses without forcing either perspective. A minor friction can surface when one person over-adjusts their pacing to match the other's mental speed.",
     "tier": "nuance",
-    "tags": ["improved-via-feedback-loop"],
+    "tags": ["improved-via-feedback-loop", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -57566,9 +57566,9 @@
   {
     "key": "dignity-state:uranus:detriment",
     "locale": "en",
-    "text": "You cultivate unexpected insights by challenging established structures, often disrupting traditions just to see what new ground emerges. This drive asserts independence by intentionally breaking away from consensus, insisting on radical autonomy over comfortable routines. When faced with rigid boundaries or unavoidable cooperation, this impulse can harden into reflexive opposition, rejecting helpful structure purely because it arrives with conditions attached.",
+    "text": "You build toward a distinct form of personal authority that deliberately discards established scripts to reinvent how presence is expressed. This drive relies on radical self-determination to break open routine expectations and assert complete sovereignty over your own path. When external structures demand conformity or shared consensus, the resulting tension often sparks friction around who holds the right to define authentic identity.",
     "tier": "core",
-    "tags": ["detriment"],
+    "tags": ["detriment", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -57614,9 +57614,9 @@
   {
     "key": "dignity-state:pluto:detriment",
     "locale": "en",
-    "text": "You hold an instinctive drive to unearth foundational truths by confronting what has outlived its purpose, stripping away surface order to reach raw potential. This profound depth handles external resistance by digging deeper into private conviction rather than yielding to outside pressure. The recurring shadow appears when this intensity meets rigid boundaries, turning a capacity for renewal into friction with shared structures and mutual surrender.",
+    "text": "You hold an innate drive to secure lasting stability through deep, foundational reconstruction. This posture manages external demands by holding fiercely to established ground, preferring silent endurance over sudden disruption. When faced with mandatory change or forced yielding, a distinct tension arises between the need to preserve what is tangible and the necessity of enduring structural breakdown.",
     "tier": "core",
-    "tags": ["detriment"],
+    "tags": ["detriment", "regenerated-437"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",

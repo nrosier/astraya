@@ -93,3 +93,18 @@ export function buildEvaluationPrompt({ factsDescription, entryText, priorReject
     userContent: `PLACEMENT FACTS: ${factsDescription}\n\nENTRY TEXT: ${entryText}${priorRejectionBlock}`,
   };
 }
+
+/**
+ * Majority vote over one entry's judge ballots (#437). The judge's "generic trope" call is subjective, so the
+ * same entry flips between rounds; it is flagged only when more than half of the ballots that came back flag
+ * it, and the issues come from the ballots that flagged. `valid` is how many ballots counted (errored ones do not).
+ */
+export function majorityVerdict(ballots) {
+  const valid = ballots.filter((ballot) => ballot !== undefined && !ballot.error);
+  const flagged = valid.filter((ballot) => ballot.result.correct === false);
+  return {
+    valid: valid.length,
+    correct: flagged.length * 2 <= valid.length,
+    issues: [...new Set(flagged.flatMap((ballot) => ballot.result.issues))],
+  };
+}

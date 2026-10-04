@@ -47,13 +47,13 @@
  * generate-batch.mjs's --batch is one of two modes, since the whole point of this feature is to
  * run the ChatGPT side cheaply at corpus scale.
  *
- *   npx tsx --env-file=.env.local tools/corpus-gen/evaluate-corpus-batch.mjs --locale=en [--limit=N] [--model=<name>] [--evaluation-limit=N] [--force] [--check-only]
+ *   npx tsx --env-file=.env.local tools/corpus-gen/evaluate-corpus-batch.mjs --locale=en [--limit=N] [--model=<name>] [--evaluation-limit=N] [--votes=N] [--force] [--check-only]
  *   npx tsx --env-file=.env.local tools/corpus-gen/evaluate-corpus-batch.mjs --check-only   (checks every locale with a batch in flight)
  */
 import { readFile, mkdir, readdir } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildEvaluationPrompt, EVALUATION_RESPONSE_SCHEMA } from './lib/corpus-evaluation.mjs';
+import { buildEvaluationPrompt, EVALUATION_RESPONSE_SCHEMA, majorityVerdict } from './lib/corpus-evaluation.mjs';
 import { buildBatchRequest, submitBatch, getBatch, isBatchTerminal, extractBatchResults } from './lib/openai-batch.mjs';
 import { factsDescription } from './lib/placements.mjs';
 import { parsePlacementKey } from '../../src/interpretation/schema.ts';
@@ -81,7 +81,7 @@ function flag(name, fallback) {
 }
 if (rawArgs.includes('--help') || rawArgs.includes('-h')) {
   console.log(
-    'Usage: npx tsx --env-file=.env.local tools/corpus-gen/evaluate-corpus-batch.mjs --locale=en [--limit=N] [--model=<name>] [--evaluation-limit=N] [--force] [--recheck-exhausted] [--check-only]',
+    'Usage: npx tsx --env-file=.env.local tools/corpus-gen/evaluate-corpus-batch.mjs --locale=en [--limit=N] [--model=<name>] [--evaluation-limit=N] [--votes=N] [--force] [--recheck-exhausted] [--check-only]',
   );
   console.log(
     '       npx tsx --env-file=.env.local tools/corpus-gen/evaluate-corpus-batch.mjs --check-only   (checks every locale with a batch in flight)',
@@ -92,6 +92,9 @@ if (rawArgs.includes('--help') || rawArgs.includes('-h')) {
 const locale = flag('locale');
 const limit = Number(flag('limit', Infinity));
 const model = flag('model', 'gpt-6-luna');
+// How many times each entry is judged; it is flagged only when most of the votes flag it (#437).
+const votes = Number(flag('votes', '3'));
+if (!Number.isInteger(votes) || votes < 1) throw new Error('--votes must be a positive integer');
 const evaluationLimit = Number(flag('evaluation-limit', 2));
 const force = rawArgs.includes('--force');
 // #396: re-checking the entries improve-corpus-batch.mjs's own `--last-resort` mode just revised
@@ -176,20 +179,36 @@ async function checkAndApply(loc) {
         return;
       }
       const { entry } = candidate;
-      const result = byCustomId.get(String(index));
-      if (result === undefined) {
+      // Majority vote (#437): the judge's "generic trope" call is subjective and noisy — re-judging the same
+      // entry flips it — so each entry is judged `job.votes` times and flagged only when most ballots flag it.
+      // A job from before voting (no `votes`) has one ballot, under the plain index as its custom id.
+      const ballotIds =
+        job.votes === undefined
+          ? [String(index)]
+          : Array.from({ length: job.votes }, (_, vote) => `${String(index)}:${String(vote)}`);
+      const ballots = ballotIds.map((id) => byCustomId.get(id)).filter((ballot) => ballot !== undefined);
+      if (ballots.length === 0) {
         totalFailed += 1;
         console.error(`[${loc}] FAILED ${entry.key}: no result came back for this entry`);
         return;
       }
-      if (result.error) {
+      const valid = ballots.filter((ballot) => !ballot.error);
+      if (valid.length === 0) {
         totalFailed += 1;
-        console.error(`[${loc}] FAILED ${entry.key}: ${result.error.message}`);
+        console.error(`[${loc}] FAILED ${entry.key}: ${ballots[0].error.message}`);
         return;
       }
-      const costCents = estimateBatchCostCents(job.model, result.usage?.prompt_tokens, result.usage?.completion_tokens);
-      if (costCents === undefined) costUnknown = true;
-      else totalCostCents += costCents;
+      for (const ballot of valid) {
+        const costCents = estimateBatchCostCents(
+          job.model,
+          ballot.usage?.prompt_tokens,
+          ballot.usage?.completion_tokens,
+        );
+        if (costCents === undefined) costUnknown = true;
+        else totalCostCents += costCents;
+      }
+      const verdict = majorityVerdict(valid);
+      const result = { result: { correct: verdict.correct, issues: verdict.issues } };
       const existingTracking = findTracking(tracking, entry);
       const now = new Date().toISOString();
       if (result.result.correct === false) {
@@ -311,7 +330,7 @@ if (candidates.length === 0) {
   process.exit(0);
 }
 
-const requests = candidates.map(({ entry, placement }, index) => {
+const requests = candidates.flatMap(({ entry, placement }, index) => {
   // If Gemini rejected a complaint about this exact entry last round (improve-corpus-batch.mjs's
   // UNCHANGED verdict), hand that rejection back to this judge now — reviewing with the other
   // side's reasoning already in view, not re-flagging the same thing blind every round (#381).
@@ -321,27 +340,30 @@ const requests = candidates.map(({ entry, placement }, index) => {
     entryText: entry.text,
     ...(priorRejection ? { priorRejection } : {}),
   });
-  return buildBatchRequest({
-    customId: String(index), // position in `candidates` — a plain index
-    model,
-    systemInstruction,
-    userContent,
-    // No temperature override: gpt-6-luna (this script's own default) rejects anything but its
-    // own default (1) — see openai-batch.mjs's buildBatchRequest doc comment, found via a real
-    // batch job's error file, not guessed.
-    responseSchema: EVALUATION_RESPONSE_SCHEMA,
-    schemaName: 'evaluation',
-  });
+  return Array.from({ length: votes }, (_, vote) =>
+    buildBatchRequest({
+      customId: `${String(index)}:${String(vote)}`, // position in `candidates`, and which vote
+      model,
+      systemInstruction,
+      userContent,
+      // No temperature override: gpt-6-luna (this script's own default) rejects anything but its
+      // own default (1) — see openai-batch.mjs's buildBatchRequest doc comment, found via a real
+      // batch job's error file, not guessed.
+      responseSchema: EVALUATION_RESPONSE_SCHEMA,
+      schemaName: 'evaluation',
+    }),
+  );
 });
 
 console.log(
-  `\n[${locale}] submitting ${String(requests.length)} request${requests.length === 1 ? '' : 's'} as one batch job...`,
+  `\n[${locale}] submitting ${String(requests.length)} request${requests.length === 1 ? '' : 's'} (${String(votes)} vote${votes === 1 ? '' : 's'} per entry) as one batch job...`,
 );
 const submitted = await submitBatch({ apiKey: process.env.OPENAI_API_KEY, requests });
 const newJob = {
   batchId: submitted.id,
   submittedAt: new Date().toISOString(),
   model,
+  votes,
   candidates: candidates.map(({ entry }) => ({ key: entry.key })),
 };
 await writeBatchState(statePath, { jobs: [...stillRunning, newJob] });

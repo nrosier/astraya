@@ -118,10 +118,25 @@ const QUINTILE_SERIES_FLAVOR_HINT = {
   nl: 'Het aspect van deze combinatie hoort bij de quintielfamilie. Anders dan de spanning of vloeiendheid van een hoofdaspect is de traditionele kleur ervan een aanleg voor creatieve synthese: een specifiek talent, een vindingrijke oplossing, of een vaardige manier waarop de twee drijfveren samen iets opleveren dat geen van beide alleen voor elkaar krijgt. Laat die specifieke creatieve, integrerende kwaliteit doorklinken in wat de combinatie daadwerkelijk oplevert of mogelijk maakt — zonder het aspect zelf te noemen.',
 };
 
-/** The quintile-series flavor hint for this aspect/locale, or `undefined` outside that family. */
+/**
+ * #437: the voice asks every entry for a "shadow dilemma", and the judge rejects a shadow written as an
+ * extreme symptom. For the mild minor aspects the model dramatises the shadow (a "constant vigilance", an
+ * "absolute need to defend autonomy") and gets flagged for overstating a subtle contact. So these aspects get
+ * their own reminder that the contact is small and the shadow should be too.
+ */
+const MILD_ASPECTS = new Set(['semisextile', 'semisquare', 'quintile', 'biquintile']);
+const MILD_SHADOW_HINT = {
+  en: 'This aspect is a subtle contact, not a major one. Keep the shadow equally mild: a small friction or a habit of over-adjusting, never a defensive reflex, an absolute need, or an extreme behaviour.',
+  nl: 'Dit aspect is een subtiel contact, geen hoofdaspect. Houd de schaduw even mild: een kleine wrijving of een neiging tot overbijsturen, nooit een afweerreflex, een absolute behoefte of extreem gedrag.',
+};
+
+/** The flavor hint for this aspect/locale: the quintile series' creative flavor and/or the mild-shadow reminder, or `undefined`. */
 export function aspectFlavorHint(aspectKey, locale) {
-  if (!QUINTILE_SERIES_ASPECTS.has(aspectKey)) return undefined;
-  return QUINTILE_SERIES_FLAVOR_HINT[locale] ?? QUINTILE_SERIES_FLAVOR_HINT.en;
+  const parts = [];
+  if (QUINTILE_SERIES_ASPECTS.has(aspectKey))
+    parts.push(QUINTILE_SERIES_FLAVOR_HINT[locale] ?? QUINTILE_SERIES_FLAVOR_HINT.en);
+  if (MILD_ASPECTS.has(aspectKey)) parts.push(MILD_SHADOW_HINT[locale] ?? MILD_SHADOW_HINT.en);
+  return parts.length === 0 ? undefined : parts.join(' ');
 }
 
 export function buildUserContent({ placementDescription, corpusEntries, locale, aspectKey }) {
