@@ -367,3 +367,25 @@ test('the corpus-overrides admin screen has no automatically detectable accessib
   const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
   expect(results.violations).toEqual([]);
 });
+
+test('the corpus-overrides table wraps its text instead of scrolling sideways, at desktop and phone width (#428)', async ({
+  page,
+}) => {
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  await signIn(page, ADMIN_USERNAME, ADMIN_PASSWORD);
+  await page.getByRole('button', { name: 'Admin', exact: true }).click();
+  await page.getByRole('link', { name: 'Corpus overrides', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Corpus corrections' })).toBeVisible();
+  const scroll = page.locator('div.data-table-scroll').first();
+  await expect(scroll).toBeVisible();
+
+  for (const width of [1280, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    const tableBox = await scroll.locator('table').boundingBox();
+    const scrollBox = await scroll.boundingBox();
+    const overflow = (tableBox?.width ?? Number.POSITIVE_INFINITY) - (scrollBox?.width ?? 0);
+    expect(overflow, `no sideways scroll at ${String(width)}px`).toBeLessThanOrEqual(1);
+  }
+  // Tier and category are words with an explanation, not the internal values.
+  await expect(page.locator('.data-table-wrap tbody tr').first().locator('.cell-explanation').first()).toBeVisible();
+});
