@@ -139,6 +139,32 @@ export function bodyDisplayName(bodyKey: string, locale: Locale): string {
   return lookup(bodyNamesMessages, bodyKey, locale);
 }
 
+/**
+ * Short body names for tight spots such as the aspect matrix's name column (#432), following the
+ * ephemeris convention of a suffix for which variant: (m)ean / (t)rue, and (o)sculating /
+ * (i)nterpolated Lilith; Dutch g(emiddeld) / w(aar). Bodies not listed keep their full name.
+ */
+const shortBodyNames: Readonly<Record<Locale, Readonly<Record<string, string>>>> = {
+  en: {
+    meanNode: 'Node (m)',
+    trueNode: 'Node (t)',
+    meanLilith: 'Lilith (m)',
+    osculatingLilith: 'Lilith (o)',
+    interpolatedLilith: 'Lilith (i)',
+  },
+  nl: {
+    meanNode: 'Knoop (g)',
+    trueNode: 'Knoop (w)',
+    meanLilith: 'Lilith (g)',
+    osculatingLilith: 'Lilith (o)',
+    interpolatedLilith: 'Lilith (i)',
+  },
+};
+
+export function bodyShortName(bodyKey: string, locale: Locale): string {
+  return shortBodyNames[locale][bodyKey] ?? bodyDisplayName(bodyKey, locale);
+}
+
 /** Translates an `AspectRow.aspectKey` value (an `AspectDefinition.key`). */
 export function aspectDisplayName(aspectKey: string, locale: Locale): string {
   return lookup(aspectNamesMessages, aspectKey, locale);

@@ -74,7 +74,7 @@ import { resolveWheelDisplayOptions } from '../chart/wheel-options.js';
 import { AstroChartWheel } from './AstroChartWheel.js';
 import { bodyById, bodyByKey } from '../astrology/bodies.js';
 import { SIGNS } from '../astrology/signs.js';
-import { aspectDisplayName, bodyDisplayName, signDisplayName } from './astro-names.messages.js';
+import { aspectDisplayName, bodyDisplayName, bodyShortName, signDisplayName } from './astro-names.messages.js';
 import { chartViewMessages } from './ChartView.messages.js';
 import { svgToPngBlob } from './chart-raster.js';
 import { downloadBlob, downloadText } from './download.js';
@@ -731,7 +731,7 @@ export function ChartDataView({
         metaLines ?? [displayName || t.chartFallback],
         displayName || t.natalFallback,
         toPointVisibilityOptions(extendedSettings),
-        (bodyKey) => bodyDisplayName(bodyKey, locale),
+        (bodyKey) => bodyShortName(bodyKey, locale),
       ),
       {
         ...resolveWheelDisplayOptions({}),
