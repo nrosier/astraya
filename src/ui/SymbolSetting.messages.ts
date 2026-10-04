@@ -8,6 +8,10 @@ const en = {
     unicode: 'Unicode characters',
     text: 'Text only (SUN, MOO, …)',
   },
+  weightLabel: 'Line weight',
+  weightOptions: { fine: 'Fine', regular: 'Regular', bold: 'Bold' },
+  weightHint:
+    'How heavy the lines of the drawn planet and aspect symbols are. The zodiac signs are solid shapes and do not change.',
   variantsLegend: 'Forms of a symbol',
   variantLabels: { uranus: 'Uranus', pluto: 'Pluto' },
   variantOptions: {
@@ -26,6 +30,10 @@ const nl: typeof en = {
     unicode: 'Unicode-tekens',
     text: 'Alleen tekst (SUN, MOO, …)',
   },
+  weightLabel: 'Lijndikte',
+  weightOptions: { fine: 'Fijn', regular: 'Normaal', bold: 'Dik' },
+  weightHint:
+    'Hoe dik de lijnen van de getekende planeet- en aspectsymbolen zijn. De dierenriemtekens zijn massieve vormen en veranderen niet.',
   variantsLegend: 'Vormen van een symbool',
   variantLabels: { uranus: 'Uranus', pluto: 'Pluto' },
   variantOptions: {

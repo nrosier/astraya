@@ -20,6 +20,7 @@ import { SetupForm } from './SetupForm.js';
 import { sharedMessages } from './shared.messages.js';
 import { StoreProvider } from './store-context.js';
 import { SyncBadge } from './SyncBadge.js';
+import { SymbolToggle } from './SymbolToggle.js';
 import { ThemeToggle } from './ThemeToggle.js';
 import { APP_VERSION } from '../version.js';
 import type { Route } from './route.js';
@@ -301,6 +302,7 @@ function AppShell(): React.JSX.Element {
               <SyncBadge />
               <AccountPanel />
               <LanguageToggle />
+              <SymbolToggle />
               <ThemeToggle />
             </div>
           </header>

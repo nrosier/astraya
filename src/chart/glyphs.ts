@@ -38,6 +38,7 @@
  */
 
 import { chosenAlternate } from './glyph-variants.js';
+import { getGlyphWeight, GLYPH_STROKE } from './glyph-weight.js';
 import { getSymbolClass } from './symbol-class.js';
 import { textSymbol, unicodeSymbol, type SymbolKind } from './symbol-text.js';
 import { escapeXml } from './svg-primitives.js';
@@ -453,8 +454,11 @@ export function renderGlyph(
       );
     }
   }
+  // A line weight other than regular (#419) travels as a CSS custom property the glyph rules read.
+  const weight = getGlyphWeight();
+  const style = weight === 'regular' ? '' : ` style="--glyph-stroke:${String(GLYPH_STROKE[weight])}"`;
   return (
-    `<g transform="translate(${tx.toFixed(2)} ${ty.toFixed(2)}) scale(${scale.toFixed(4)})" class="${className}"${attrs}>` +
+    `<g transform="translate(${tx.toFixed(2)} ${ty.toFixed(2)}) scale(${scale.toFixed(4)})" class="${className}"${style}${attrs}>` +
     `${definition.elements.join('')}</g>`
   );
 }

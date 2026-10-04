@@ -1988,7 +1988,7 @@ label.stacked textarea:focus-visible {
 .chart-sign-glyph line {
   fill: none;
   stroke: var(--accent);
-  stroke-width: 6;
+  stroke-width: var(--glyph-stroke, 6);
   stroke-linecap: round;
   stroke-linejoin: round;
 }
@@ -2084,7 +2084,7 @@ label.stacked textarea:focus-visible {
 .chart-glyph rect {
   fill: none;
   stroke: var(--fg);
-  stroke-width: 6;
+  stroke-width: var(--glyph-stroke, 6);
   stroke-linecap: round;
   stroke-linejoin: round;
 }
@@ -2346,7 +2346,7 @@ svg text.chart-symbol-text-unicode {
 .chart-aspect-glyph line {
   fill: none;
   stroke: var(--muted);
-  stroke-width: 6;
+  stroke-width: var(--glyph-stroke, 6);
   stroke-linecap: round;
   stroke-linejoin: round;
 }

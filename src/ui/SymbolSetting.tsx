@@ -4,6 +4,7 @@
  */
 import { useId } from 'react';
 import { isSymbolClass, SYMBOL_CLASSES } from '../chart/symbol-class.js';
+import { GLYPH_WEIGHTS, isGlyphWeight } from '../chart/glyph-weight.js';
 import { isVariantKey, VARIANT_BODIES, VARIANT_KEYS } from '../chart/glyph-variants.js';
 import { useGlyphVariants } from './glyph-variant-setting.js';
 import { useMessages } from './messages.js';
@@ -13,7 +14,7 @@ import { symbolSettingMessages } from './SymbolSetting.messages.js';
 export function SymbolSetting(): React.JSX.Element {
   const t = useMessages(symbolSettingMessages);
   const [choice, setChoice] = useSymbolClass();
-  const [variants, setVariant] = useGlyphVariants();
+  const [variants, setVariant, setWeight] = useGlyphVariants();
   const id = useId();
   return (
     <>
@@ -36,6 +37,27 @@ export function SymbolSetting(): React.JSX.Element {
         <span id={`${id}-hint`} className="hint rulership-setting-hint">
           {' '}
           {t.hint}
+        </span>
+      </p>
+      <p className="rulership-setting">
+        <label htmlFor={`${id}-weight`}>{t.weightLabel} </label>
+        <select
+          id={`${id}-weight`}
+          value={variants.weight}
+          aria-describedby={`${id}-weight-hint`}
+          onChange={(event) => {
+            if (isGlyphWeight(event.target.value)) setWeight(event.target.value);
+          }}
+        >
+          {GLYPH_WEIGHTS.map((option) => (
+            <option key={option} value={option}>
+              {t.weightOptions[option]}
+            </option>
+          ))}
+        </select>
+        <span id={`${id}-weight-hint`} className="hint rulership-setting-hint">
+          {' '}
+          {t.weightHint}
         </span>
       </p>
       <fieldset className="field-group">

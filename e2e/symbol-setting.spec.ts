@@ -138,3 +138,35 @@ test('Uranus and Pluto can be drawn in either of their two forms, kept on this d
   await page.getByLabel('Pluto', { exact: true }).selectOption('monogram');
   await expect(page.getByLabel('Pluto', { exact: true })).toHaveValue('monogram');
 });
+
+test('the header toggle writes the symbols as text, and the line weight changes the drawn glyphs', async ({ page }) => {
+  test.setTimeout(90_000);
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  await createPerson(page, {
+    name: 'Ada Lovelace',
+    date: '1815-12-10',
+    time: '07:45:00',
+    latitude: '51.5072',
+    longitude: '-0.1276',
+  });
+  await openNatalChart(page);
+  await expect(page.locator('div.chart-wheel')).toBeVisible();
+  await page.locator('details.extended-settings summary').click();
+
+  // Line weight: a drawn glyph carries the custom property once the weight is not regular.
+  await expect(page.locator('.chart-wheel g[style*="--glyph-stroke"]')).toHaveCount(0);
+  await page.getByLabel('Line weight', { exact: true }).selectOption('bold');
+  await expect(page.locator('.chart-wheel g[style*="--glyph-stroke:9"]').first()).toBeAttached();
+  await page.getByLabel('Line weight', { exact: true }).selectOption('regular');
+  await expect(page.locator('.chart-wheel g[style*="--glyph-stroke"]')).toHaveCount(0);
+
+  // The header toggle: text only on, and the Symbols setting follows.
+  const toggle = page.getByRole('button', { name: 'Text-only symbols', exact: true });
+  await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+  await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('.chart-wheel text.chart-symbol-text-text', { hasText: 'SUN' }).first()).toBeAttached();
+  await expect(page.getByLabel('Symbols', { exact: true })).toHaveValue('text');
+  await toggle.click();
+  await expect(page.getByLabel('Symbols', { exact: true })).toHaveValue('drawn');
+});
