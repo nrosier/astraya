@@ -18,8 +18,8 @@
  * so where the reader can see it.
  */
 import type { BodyId, Degrees } from '../ephemeris/types.js';
-import { exaltationRulerOf, fallRulerOf, rulerOf, type EssentialDignities, type RulershipScheme } from './dignities.js';
-import { signIndex } from './signs.js';
+import { exaltationRulerOf, fallRulerOf, rulerOf, type EssentialDignities, type RulershipScheme } from './dignities.ts';
+import { signIndex } from './signs.ts';
 
 export type RulershipChoice = RulershipScheme | 'both';
 

@@ -5,10 +5,10 @@
  * the whole calculation graph into its own build; `focus-context.ts` builds the payload and
  * re-exports everything here.
  */
-import { ASPECTS } from '../astrology/aspects.js';
-import { BODIES } from '../astrology/bodies.js';
-import { isRulershipChoice, type RulershipChoice } from '../astrology/rulership.js';
-import { SIGNS } from '../astrology/signs.js';
+import { ASPECTS } from '../astrology/aspects.ts';
+import { BODIES } from '../astrology/bodies.ts';
+import { isRulershipChoice, type RulershipChoice } from '../astrology/rulership.ts';
+import { SIGNS } from '../astrology/signs.ts';
 
 const HOUSE_COUNT = 12;
 /** The most aspects a payload carries (a body has at most ~19 aspects; this bounds a padded request too). */

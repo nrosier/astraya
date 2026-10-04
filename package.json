@@ -1,6 +1,6 @@
 {
   "name": "astraya",
-  "version": "0.24.0",
+  "version": "0.24.1",
   "private": true,
   "type": "module",
   "description": "Astrological calculation and charting webapp powered by the Swiss Ephemeris",
@@ -24,6 +24,7 @@
     "typecheck": "tsc -b --noEmit",
     "ops:rotate-key": "node server/ops/rotate-key.ts",
     "ephe:sync": "node scripts/sync-ephemeris.mjs",
+    "docker:smoke": "node scripts/docker-smoke.mjs",
     "corpus:split": "node scripts/split-corpus.mjs",
     "check:bundle-size": "node scripts/check-bundle-size.mjs",
     "changelog:draft": "node scripts/changelog-draft.mjs",

@@ -95,8 +95,8 @@ COPY --from=build /app/src/interpretation/lint.ts ./src/interpretation/lint.ts
 # dignities.ts is copied too, unlike src/ephemeris/types.ts below, which is
 # only ever reached through `import type` and is erased by Node's type
 # stripping before resolution is attempted. This is the full value-import
-# closure that route actually reaches at runtime (traced by hand from its
-# own imports down).
+# closure that route actually reaches at runtime — now checked by
+# `test/docker-runtime-files.test.ts` instead of traced by hand.
 COPY --from=build /app/src/interpretation/schema.ts ./src/interpretation/schema.ts
 COPY --from=build /app/src/interpretation/compose.ts ./src/interpretation/compose.ts
 COPY --from=build /app/src/interpretation/index.ts ./src/interpretation/index.ts
@@ -110,6 +110,16 @@ COPY --from=build /app/src/astrology/signs.ts ./src/astrology/signs.ts
 COPY --from=build /app/src/astrology/nakshatras.ts ./src/astrology/nakshatras.ts
 COPY --from=build /app/src/astrology/emphasis.ts ./src/astrology/emphasis.ts
 COPY --from=build /app/src/astrology/dignities.ts ./src/astrology/dignities.ts
+
+# Focus mode (#424, server/interpretation-routes.ts) validates its payload with
+# `validateFocusContext`, which lives in focus-context-schema.ts and reads the
+# reader's rulership choice from rulership.ts (#426). Both are static tables and
+# pure functions with no calculation imports, which is why the schema is its own
+# file rather than part of the builder. `test/docker-runtime-files.test.ts`
+# computes the server's real runtime import closure and fails if any file in it
+# is missing from this list, so a new server import cannot ship without its line.
+COPY --from=build /app/src/interpretation/focus-context-schema.ts ./src/interpretation/focus-context-schema.ts
+COPY --from=build /app/src/astrology/rulership.ts ./src/astrology/rulership.ts
 COPY --from=build /app/src/ephemeris/generated-constants.ts ./src/ephemeris/generated-constants.ts
 
 # `data/` is the one writable path in the tree — it holds the SQLite file plus

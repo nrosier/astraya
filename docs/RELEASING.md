@@ -39,22 +39,30 @@ fixed, without waiting for a milestone — a wrong chart is not something to sit
    never waived. If reference agreement has degraded, that is the release blocker.
 4. `npm run ephe:sync` reports no digest change, or the change is explained in the
    changelog.
-5. Bump `version` in `package.json` to the table's value. The hard-coded release
+5. **`npm run docker:smoke` passes.** It builds the image locally and starts it the way
+   the release workflow's smoke test does: the container must answer `/healthz` and
+   serve its security headers. Never skip it: `npm run check` and the e2e suite run the
+   server from the working tree, where every file exists, while the image copies only a
+   named list of `src/` files, so a new server import can pass every other gate and
+   still produce an image that crashes on start (v0.24.0 shipped exactly that).
+   `test/docker-runtime-files.test.ts` catches the missing-file case in `npm run check`;
+   the smoke run catches everything else about the image.
+6. Bump `version` in `package.json` to the table's value. The hard-coded release
    badge in `README.md` follows it; `test/readme.test.ts` fails if it does not, so
    step 2 catches a forgotten bump.
-6. `CHANGELOG.md` has a section for the release. Start from
+7. `CHANGELOG.md` has a section for the release. Start from
    `npm run changelog:draft`, which groups conventional commit subjects since the
    last tag by change type, then **edit it for humans** — say what changed for a
    _user_, not which files moved. The draft is not written to the file on purpose: it
    guarantees nothing is forgotten, not that the result is worth reading. It also
    lists any commit whose subject did not parse, so nothing user-facing is dropped;
    CI rejects those on pull requests, so this should be empty.
-7. Tag and push: `git tag -a v0.1.0 -m 'M0: foundation' && git push origin v0.1.0`.
+8. Tag and push: `git tag -a v0.1.0 -m 'M0: foundation' && git push origin v0.1.0`.
    The tag triggers `.github/workflows/release.yml`, which builds, attaches the
    changelog, and publishes the GitHub release.
-8. Close the milestone.
-9. Confirm the deployed app's About page shows the new version and commit, and that
-   `docker pull niqck/astraya:latest` gets that same version.
+9. Close the milestone.
+10. Confirm the deployed app's About page shows the new version and commit, and that
+    `docker pull niqck/astraya:latest` gets that same version.
 
 ## Docker image tags
 
