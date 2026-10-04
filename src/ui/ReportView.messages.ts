@@ -16,7 +16,7 @@ const en = {
   aiTabLabel: 'AI-Customized',
   tier2Heading: 'AI-customized interpretation',
   tier2SignInPrompt: 'Sign in to generate an AI-customized interpretation in your own style and tone.',
-  tier2ConsentLabel: (mode: 'grounded' | 'freeform' | 'synthesis'): string =>
+  tier2ConsentLabel: (mode: 'grounded' | 'freeform'): string =>
     mode === 'grounded'
       ? 'Send the placements above (no name or birth data) to a third-party AI model for this one request.'
       : 'Send your exact positions, houses, and aspects (no name or birth data) to a third-party AI model for this one request.',
@@ -25,11 +25,9 @@ const en = {
   tier2ModeGroundedDescription: 'Rewrites the reviewed text in your style. Sends only the placements above.',
   tier2ModeFreeform: 'AI-written from your full chart',
   tier2ModeFreeformDescription:
-    'The AI writes its own interpretation of your chart. Sends your exact positions, houses, and aspects.',
-  tier2ModeSynthesis: 'AI-written synthesis',
-  tier2ModeSynthesisDescription:
-    'Reasons across your whole chart at once, not placement by placement. Sends your exact positions, houses, and aspects.',
+    'The AI reasons across your whole chart, placements and how they interact, and writes its own interpretation. Your style, tone and focus instruction is optional. Sends your exact positions, houses, and aspects.',
   customPromptLabel: 'Style, tone, and focus instructions',
+  customPromptOptional: ' (optional)',
   customPromptPlaceholder: 'e.g. warm and encouraging, focused on career growth',
   guardrailIssueLength: 'Keep this between 1 and 500 characters.',
   guardrailIssuePromptInjection:
@@ -52,6 +50,8 @@ const en = {
   tier2CustomizationRejectedReason: (reason: string) => `Reason: ${reason}`,
   tier2SavedHeading: 'Past interpretations',
   tier2SavedEntry: (createdAt: string, mode: string) => `${createdAt} (${mode})`,
+  tier2SavedModeLocal: 'Local interpretation based',
+  tier2SavedModeAi: 'AI interpretation based',
 };
 
 const nl: typeof en = {
@@ -69,7 +69,7 @@ const nl: typeof en = {
   aiTabLabel: 'AI-gepersonaliseerd',
   tier2Heading: 'AI-gepersonaliseerde interpretatie',
   tier2SignInPrompt: 'Log in om een AI-gepersonaliseerde interpretatie in je eigen stijl en toon te genereren.',
-  tier2ConsentLabel: (mode: 'grounded' | 'freeform' | 'synthesis') =>
+  tier2ConsentLabel: (mode: 'grounded' | 'freeform') =>
     mode === 'grounded'
       ? 'Verstuur de bovenstaande plaatsingen (geen naam of geboortegegevens) naar een AI-model van derden voor dit ene verzoek.'
       : 'Verstuur je exacte posities, huizen en aspecten (geen naam of geboortegegevens) naar een AI-model van derden voor dit ene verzoek.',
@@ -79,11 +79,9 @@ const nl: typeof en = {
     'Herschrijft de beoordeelde tekst in jouw stijl. Verstuurt alleen de bovenstaande plaatsingen.',
   tier2ModeFreeform: 'Door AI geschreven vanuit je volledige horoscoop',
   tier2ModeFreeformDescription:
-    'De AI schrijft een eigen interpretatie van je horoscoop. Verstuurt je exacte posities, huizen en aspecten.',
-  tier2ModeSynthesis: 'Door AI geschreven synthese',
-  tier2ModeSynthesisDescription:
-    'Redeneert tegelijk over je volledige horoscoop, niet per plaatsing. Verstuurt je exacte posities, huizen en aspecten.',
+    'De AI redeneert over je hele horoscoop, de plaatsingen en hun samenspel, en schrijft een eigen interpretatie. Je instructie voor stijl, toon en focus is optioneel. Verstuurt je exacte posities, huizen en aspecten.',
   customPromptLabel: 'Instructies voor stijl, toon en focus',
+  customPromptOptional: ' (optioneel)',
   customPromptPlaceholder: 'bijv. warm en aanmoedigend, gericht op carrièregroei',
   guardrailIssueLength: 'Houd dit tussen 1 en 500 tekens.',
   guardrailIssuePromptInjection:
@@ -106,6 +104,8 @@ const nl: typeof en = {
   tier2CustomizationRejectedReason: (reason: string) => `Reden: ${reason}`,
   tier2SavedHeading: 'Eerdere interpretaties',
   tier2SavedEntry: (createdAt: string, mode: string) => `${createdAt} (${mode})`,
+  tier2SavedModeLocal: 'Gebaseerd op lokale interpretatie',
+  tier2SavedModeAi: 'Gebaseerd op AI-interpretatie',
 };
 
 export const reportViewMessages = { en, nl };

@@ -122,7 +122,7 @@ function Paragraph({
   );
 }
 
-type Tier2Mode = 'grounded' | 'freeform' | 'synthesis';
+type Tier2Mode = 'grounded' | 'freeform';
 
 /**
  * Tier 2 (#360): opt-in, authenticated, per-request-consented LLM-customized
@@ -178,15 +178,22 @@ function AiCustomizedPanel({
   }
 
   const placementKeys = reportPlacementKeys(report);
-  // Synthesis mode has no free-text instruction, so it has nothing to guard.
-  const guardrailIssues = mode === 'synthesis' ? [] : checkCustomPrompt(customPrompt);
+  // Which of the two kinds a saved interpretation was: an older `synthesis` entry was AI-written too.
+  const savedModeName = (savedMode: string): string =>
+    savedMode === 'grounded'
+      ? t.tier2SavedModeLocal
+      : savedMode === 'freeform' || savedMode === 'synthesis'
+        ? t.tier2SavedModeAi
+        : savedMode;
+  // The AI-written mode's instruction is optional, so an empty one has nothing to guard.
+  const guardrailIssues = mode === 'freeform' && customPrompt.trim() === '' ? [] : checkCustomPrompt(customPrompt);
   // Only shown once the user has typed something — otherwise the empty-prompt "length"
   // issue would announce itself on mount and re-announce on every keystroke, before the
   // user has had a chance to write anything.
-  const visibleGuardrailIssues = mode === 'synthesis' || customPrompt === '' ? [] : guardrailIssues;
+  const visibleGuardrailIssues = customPrompt === '' ? [] : guardrailIssues;
   const disabledReason = !consent
     ? t.tier2GenerateDisabledConsent
-    : mode !== 'synthesis' && customPrompt === ''
+    : mode === 'grounded' && customPrompt === ''
       ? t.tier2GenerateDisabledEmpty
       : guardrailIssues.length > 0
         ? t.tier2GenerateDisabledGuardrail
@@ -203,9 +210,12 @@ function AiCustomizedPanel({
     const request =
       mode === 'grounded'
         ? { mode: 'grounded' as const, placementKeys, customPrompt, locale }
-        : mode === 'freeform'
-          ? { mode: 'freeform' as const, chartData: toTier2ChartPayload(chart), customPrompt, locale }
-          : { mode: 'synthesis' as const, chartData: toTier2ChartPayload(chart), locale };
+        : {
+            mode: 'freeform' as const,
+            chartData: toTier2ChartPayload(chart),
+            ...(customPrompt.trim() === '' ? {} : { customPrompt }),
+            locale,
+          };
     generateTier2Interpretation(request)
       .then((sections) => {
         setResult(sections);
@@ -262,14 +272,9 @@ function AiCustomizedPanel({
         >
           <option value="grounded">{t.tier2ModeGrounded}</option>
           <option value="freeform">{t.tier2ModeFreeform}</option>
-          <option value="synthesis">{t.tier2ModeSynthesis}</option>
         </select>
         <p id="tier2-mode-description" className="hint">
-          {mode === 'grounded'
-            ? t.tier2ModeGroundedDescription
-            : mode === 'freeform'
-              ? t.tier2ModeFreeformDescription
-              : t.tier2ModeSynthesisDescription}
+          {mode === 'grounded' ? t.tier2ModeGroundedDescription : t.tier2ModeFreeformDescription}
         </p>
       </div>
       <label>
@@ -282,9 +287,10 @@ function AiCustomizedPanel({
         />{' '}
         {t.tier2ConsentLabel(mode)}
       </label>
-      {mode !== 'synthesis' && (
+      {
         <label className="stacked">
           {t.customPromptLabel}
+          {mode === 'freeform' && t.customPromptOptional}
           <textarea
             value={customPrompt}
             placeholder={t.customPromptPlaceholder}
@@ -294,7 +300,7 @@ function AiCustomizedPanel({
             }}
           />
         </label>
-      )}
+      }
       {visibleGuardrailIssues.length > 0 && (
         <div className="ai-customized-guardrail-issues warning" aria-live="polite">
           <ul>
@@ -306,7 +312,7 @@ function AiCustomizedPanel({
       )}
       <button
         type="button"
-        disabled={!consent || (mode !== 'synthesis' && customPrompt === '') || guardrailIssues.length > 0 || generating}
+        disabled={!consent || (mode === 'grounded' && customPrompt === '') || guardrailIssues.length > 0 || generating}
         aria-label={disabledReason === undefined ? undefined : `${t.tier2Generate} — ${disabledReason}`}
         onClick={handleGenerate}
       >
@@ -343,7 +349,7 @@ function AiCustomizedPanel({
                     openSaved(saved.id);
                   }}
                 >
-                  {t.tier2SavedEntry(saved.createdAt, saved.mode)}
+                  {t.tier2SavedEntry(saved.createdAt, savedModeName(saved.mode))}
                 </button>
               </li>
             ))}

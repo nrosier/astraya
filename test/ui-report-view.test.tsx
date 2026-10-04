@@ -556,7 +556,7 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
   }
 
   /** Same prototype-setter trick as `setTextareaValue` below, for the controlled mode `<select>`. */
-  function selectMode(container: HTMLElement, mode: 'grounded' | 'freeform' | 'synthesis'): void {
+  function selectMode(container: HTMLElement, mode: 'grounded' | 'freeform'): void {
     const select = modeSelect(container);
     Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value')?.set?.call(select, mode);
     select.dispatchEvent(new Event('change', { bubbles: true }));
@@ -786,12 +786,12 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
     const { container, root } = await mountSignedIn();
 
     await act(async () => {
-      selectMode(container, 'synthesis');
+      selectMode(container, 'freeform');
       await Promise.resolve();
     });
-    expect(modeSelect(container).value).toBe('synthesis');
+    expect(modeSelect(container).value).toBe('freeform');
     expect(panelOf(container).querySelector('#tier2-mode-description')?.textContent).toBe(
-      reportViewMessages.en.tier2ModeSynthesisDescription,
+      reportViewMessages.en.tier2ModeFreeformDescription,
     );
 
     act(() => {
@@ -904,6 +904,35 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
     container.remove();
   });
 
+  it('names each past interpretation by which kind it was: local-interpretation based or AI based, including older synthesis ones (#425)', async () => {
+    const { container, root } = await mountSignedIn();
+
+    const raw = new DatabaseSync(join(dir, 'astraya.db'));
+    const { id: userId } = raw.prepare('SELECT id FROM users WHERE username = ?').get('alice') as { id: string };
+    const key = Buffer.from(process.env.ASTRAYA_ENCRYPTION_KEY ?? '', 'base64');
+    for (const mode of ['grounded', 'freeform', 'synthesis']) {
+      saveInterpretationResult(raw, { userId, mode, locale: 'en', sections: [{ heading: 'h', body: 'b' }] }, key);
+    }
+    raw.close();
+
+    await vi.waitFor(() => {
+      expect(panelOf(container).querySelectorAll('.tier2-saved-results button')).toHaveLength(3);
+    });
+    const names = [...panelOf(container).querySelectorAll('.tier2-saved-results button')].map(
+      (button) => /\(([^()]*)\)$/.exec(button.textContent)?.[1],
+    );
+    expect(names.filter((name) => name === 'Local interpretation based')).toHaveLength(1);
+    expect(names.filter((name) => name === 'AI interpretation based')).toHaveLength(2);
+    expect(panelOf(container).querySelector('.tier2-saved-results')?.textContent).not.toMatch(
+      /grounded|freeform|synthesis/,
+    );
+
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
   it('lists a saved generation and reopens it without ever calling /generate (#392)', async () => {
     // /api/interpretation/generate is intercepted by this describe block's own fetch mock
     // (above) rather than reaching the real server (so other tests here can control its exact
@@ -1006,7 +1035,7 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
     container.remove();
   });
 
-  it('states what freeform/synthesis actually send, not grounded mode’s narrower claim (#391)', async () => {
+  it('states what the AI-written mode actually sends, not grounded mode’s narrower claim (#391)', async () => {
     const { container, root } = await mountSignedIn();
 
     expect(panelOf(container).textContent).toContain(reportViewMessages.en.tier2ConsentLabel('grounded'));
@@ -1054,31 +1083,52 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
     container.remove();
   });
 
-  it('sends chartData with no customPrompt once synthesis mode is selected, and hides the prompt textarea (#377)', async () => {
+  it('lets the AI-written mode generate with no instruction: the box stays, marked optional, and no customPrompt is sent (#425)', async () => {
     const { container, root } = await mountSignedIn();
 
     await act(async () => {
-      // Mode first, then consent — selecting a mode resets consent (#391), so ticking it
-      // beforehand would leave the button disabled.
-      selectMode(container, 'synthesis');
+      selectMode(container, 'freeform');
       consentCheckbox(container).click();
       await Promise.resolve();
     });
 
-    expect(panelOf(container).querySelector('textarea')).toBeNull();
+    expect(customPromptTextarea(container)).not.toBeNull();
+    expect(panelOf(container).textContent).toContain(reportViewMessages.en.customPromptOptional.trim());
+    expect(generateButton(container).disabled).toBe(false);
 
     act(() => {
       generateButton(container).click();
     });
-
     await vi.waitFor(() => {
       expect(panelOf(container).querySelector('.tier2-result')).not.toBeNull();
     });
 
-    expect(lastGenerateRequest).toMatchObject({ mode: 'synthesis' });
+    expect(lastGenerateRequest).toMatchObject({ mode: 'freeform' });
     expect(lastGenerateRequest).not.toHaveProperty('placementKeys');
     expect(lastGenerateRequest).not.toHaveProperty('customPrompt');
     expect(lastGenerateRequest).toHaveProperty('chartData', toTier2ChartPayload(makeChart()));
+
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('still needs an instruction in the restyle mode, and does not in the AI-written one (#425)', async () => {
+    const { container, root } = await mountSignedIn();
+
+    await act(async () => {
+      consentCheckbox(container).click();
+      await Promise.resolve();
+    });
+    expect(generateButton(container).disabled).toBe(true);
+
+    await act(async () => {
+      selectMode(container, 'freeform');
+      consentCheckbox(container).click();
+      await Promise.resolve();
+    });
+    expect(generateButton(container).disabled).toBe(false);
 
     act(() => {
       root.unmount();
@@ -1099,7 +1149,6 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
     expect(Array.from(select.options).map((option) => option.textContent)).toEqual([
       reportViewMessages.nl.tier2ModeGrounded,
       reportViewMessages.nl.tier2ModeFreeform,
-      reportViewMessages.nl.tier2ModeSynthesis,
     ]);
     const label = panelOf(container).querySelector('label[for="tier2-mode"]');
     expect(label?.textContent).toBe(reportViewMessages.nl.tier2ModeLabel);

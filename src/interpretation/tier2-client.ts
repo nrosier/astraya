@@ -6,7 +6,7 @@
  * response beyond its own shape, and every rejection carries the server's
  * own message.
  *
- * Three modes, see ADR 0003:
+ * Two modes, see ADR 0003:
  * - `'grounded'` sends `placementKeys` (from `report.ts`'s
  *   `reportPlacementKeys`) rather than the chart or corpus text itself — the
  *   server re-resolves each key's grounded Tier-1 text against its own copy
@@ -16,13 +16,11 @@
  *   restyles that given text.
  * - `'freeform'` sends `chartData` (computed positions/houses/aspects — see
  *   `toTier2ChartPayload`) and lets the model originate its own
- *   interpretation from it. This deliberately gives up grounded mode's
- *   "no chart data crosses the wire" guarantee for this mode only; ADR 0003
- *   documents the tradeoff.
- * - `'synthesis'` (#377) also sends `chartData`, but asks the model to reason
- *   across the whole chart's placements together rather than restyle/
- *   originate per a free-text instruction — so there is no `customPrompt`
- *   field for this mode.
+ *   interpretation from it, reasoning across the whole chart's placements
+ *   together. This deliberately gives up grounded mode's "no chart data crosses
+ *   the wire" guarantee for this mode only; ADR 0003 documents the tradeoff.
+ *   The instruction is optional (#425; this mode also replaces the former
+ *   `'synthesis'` mode, which was the same call with no instruction).
  *
  * `locale` is sent alongside either payload so the server responds in the
  * language the report is already showing.
@@ -116,12 +114,8 @@ export type Tier2Request =
   | {
       readonly mode: 'freeform';
       readonly chartData: Tier2ChartDataPayload;
-      readonly customPrompt: string;
-      readonly locale: Locale;
-    }
-  | {
-      readonly mode: 'synthesis';
-      readonly chartData: Tier2ChartDataPayload;
+      /** Optional: without one the model writes a balanced reading of the whole chart (#425). */
+      readonly customPrompt?: string;
       readonly locale: Locale;
     };
 

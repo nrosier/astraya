@@ -4,30 +4,26 @@
  * docs/adr/0003-tier-2-llm-customized-interpretation.md for the full
  * architecture — this file is the route itself.
  *
- * Three modes:
+ * Two modes (#425; `'synthesis'` (#377) was folded into the second):
  * - `'grounded'` (default, unchanged since #360): the client sends
  *   `placementKeys` (from `report.ts`'s `reportPlacementKeys`) rather than
  *   birth data or chart-derived text; each key is re-resolved against this
  *   server's own copy of the corpus (`resolvePlacementText`), so no
  *   interpretation prose or personal data crosses the wire from the client,
  *   only the structurally de-identified keys ADR 0003 documents, and the
- *   model only restyles that given text.
+ *   model only restyles that given text. The instruction is required.
  * - `'freeform'`: the client sends `chartData` (computed positions/houses/
- *   aspects), and the model originates its own interpretation from it —
- *   deliberately giving up the "no chart data crosses the wire" guarantee
- *   for this mode only, per ADR 0003's updated scope. `validateChartData`
- *   below re-derives and closed-set-checks every numeric id/key, the same
- *   reason `validateKey` does for grounded mode: untrusted client data must
- *   never reach the third-party prompt unchecked.
- * - `'synthesis'` (#377): same `chartData` validation and fact-building as
- *   `'freeform'`, but with a fixed task — reason across the whole chart's
- *   placements together rather than restyling/originating per a
- *   reader-supplied instruction — so it carries no `customPrompt` field at
- *   all. #377 investigated this as a two-stage "synthesis + refinement"
- *   pipeline; refinement turned out to already be covered by `'grounded'`
- *   mode (restyle already-reviewed text) and unnecessary as a second chained
- *   call on top of synthesis's own output, so this is the one new mode that
- *   capability actually needed.
+ *   aspects), and the model originates its own interpretation from it,
+ *   reasoning across the placements together — deliberately giving up the
+ *   "no chart data crosses the wire" guarantee for this mode only, per ADR
+ *   0003's updated scope. `validateChartData` below re-derives and
+ *   closed-set-checks every numeric id/key, the same reason `validateKey`
+ *   does for grounded mode: untrusted client data must never reach the
+ *   third-party prompt unchecked. The instruction (style, tone, focus) is
+ *   optional: without one the model writes a balanced reading of the whole
+ *   chart, and no verification call is made.
+ * - `'synthesis'` is still accepted, as an older client's spelling of
+ *   `'freeform'` with no instruction; it is stored as `'freeform'`.
  *
  * `customPrompt` is the one free-text field neither mode's structural
  * constraint covers, so it is run through `checkCustomPrompt` here —
@@ -87,9 +83,10 @@ function isLocale(value: unknown): value is Locale {
   return typeof value === 'string' && (CORPUS_LOCALES as readonly string[]).includes(value);
 }
 
-type Mode = 'grounded' | 'freeform' | 'synthesis';
+type Mode = 'grounded' | 'freeform';
 
-function isMode(value: unknown): value is Mode {
+/** What a request may name: `'synthesis'` is the older spelling of `'freeform'` (see the file doc). */
+function isRequestedMode(value: unknown): value is Mode | 'synthesis' {
   return value === 'grounded' || value === 'freeform' || value === 'synthesis';
 }
 
@@ -133,33 +130,22 @@ const SYSTEM_INSTRUCTION = [
 ].join(' ');
 
 const FREEFORM_SYSTEM_INSTRUCTION = [
-  'You write an original astrological interpretation from a list of grounded',
-  'chart facts — exact placements, houses, and aspects, already computed and',
-  'correct — and a short instruction describing the style, tone, or focus the',
-  'reader wants. Unlike a restyling task, you originate the interpretation',
-  "yourself: draw on the reader's chart facts to say what they mean, not just",
-  'reword them. Stay strictly within the facts given to you — do not invent',
-  'placements, aspects, dates, or claims not present in them. Do not give',
-  'medical, legal, or financial advice, and do not use fatalistic or absolute',
-  '("you will never...") phrasing. Organize your response into 2 to 4 short',
-  'thematic sections, each with a brief heading and a 1 to 3 sentence body —',
-  'never one long undivided paragraph.',
-].join(' ');
-
-const SYNTHESIS_SYSTEM_INSTRUCTION = [
-  'You are a psychologically grounded astrologer writing a synthesized reading',
-  'of a whole natal chart from a list of grounded chart facts — exact placements,',
-  'houses, and aspects, already computed and correct. You are given several of',
-  "this chart's placements and aspects at once. Do not describe each one",
-  'independently in its own section — reason across them together, the way a',
-  'human astrologer integrating a whole chart would: note where placements',
-  'reinforce each other, where they create internal tension, and what unified',
-  'pattern of personality emerges from the combination. Stay strictly within the',
-  'facts given to you — do not invent placements, aspects, dates, or claims not',
-  'present in them. Do not give medical, legal, or financial advice, and do not',
-  'use fatalistic or absolute ("you will never...") phrasing. Organize your',
-  'response into 2 to 4 short thematic sections, each with a brief heading and a',
-  '1 to 3 sentence body — never one long undivided paragraph.',
+  'You are a psychologically grounded astrologer writing an original interpretation',
+  'of a natal chart from a list of grounded chart facts — exact placements, houses,',
+  'and aspects, already computed and correct — and, when the reader gives one, a',
+  'short instruction describing the form, style, tone, or focus they want. Unlike a',
+  'restyling task, you originate the interpretation yourself: say what the facts',
+  'mean, not just reword them. Reason across the placements together, the way a human',
+  'astrologer integrating a whole chart would, rather than describing each one',
+  'independently in its own section: note where placements reinforce each other,',
+  'where they create internal tension, and what unified pattern emerges from the',
+  "combination. Follow the reader's instruction for form, style, tone, and focus",
+  'when there is one; without one, write a balanced reading of the whole chart.',
+  'Stay strictly within the facts given to you — do not invent placements, aspects,',
+  'dates, or claims not present in them. Do not give medical, legal, or financial',
+  'advice, and do not use fatalistic or absolute ("you will never...") phrasing.',
+  'Organize your response into 2 to 4 short thematic sections, each with a brief',
+  'heading and a 1 to 3 sentence body — never one long undivided paragraph.',
 ].join(' ');
 
 // A real report has a few dozen placements at most; this is a generous ceiling against
@@ -199,8 +185,9 @@ function buildUserContent(facts: readonly string[], customPrompt: string, locale
   ].join('\n');
 }
 
-/** Synthesis mode's user content — unlike `buildUserContent`, there is no reader-supplied style instruction: the task itself is fixed (`SYNTHESIS_SYSTEM_INSTRUCTION`). */
-function buildSynthesisUserContent(facts: readonly string[], locale: Locale): string {
+/** The AI-written mode's user content: the reader's instruction is optional (#425). */
+function buildFreeformUserContent(facts: readonly string[], customPrompt: string | undefined, locale: Locale): string {
+  if (customPrompt !== undefined) return buildUserContent(facts, customPrompt, locale);
   const language = locale === 'nl' ? 'Dutch' : 'English';
   return [
     `Write in ${language}.`,
@@ -208,7 +195,7 @@ function buildSynthesisUserContent(facts: readonly string[], locale: Locale): st
     'Computed placements and aspects (do not add facts beyond these):',
     ...facts.map((fact) => `- ${fact}`),
     '',
-    'Write the synthesized reading.',
+    'Write the reading.',
   ].join('\n');
 }
 
@@ -362,18 +349,30 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
 
       // A missing `mode` defaults to `'grounded'` — this route's original, only behavior — so
       // this isn't a breaking change for any caller that predates freeform mode.
-      const mode: Mode | undefined = rawMode === undefined ? 'grounded' : isMode(rawMode) ? rawMode : undefined;
-      if (mode === undefined) {
-        return reply.code(400).send({ error: "mode must be 'grounded', 'freeform', or 'synthesis'" });
+      const requested = rawMode === undefined ? 'grounded' : isRequestedMode(rawMode) ? rawMode : undefined;
+      if (requested === undefined) {
+        return reply.code(400).send({ error: "mode must be 'grounded' or 'freeform'" });
       }
+      // `'synthesis'` is an older client's spelling of `'freeform'` with no instruction.
+      const mode: Mode = requested === 'synthesis' ? 'freeform' : requested;
 
-      // Synthesis mode is a fixed task with no reader-supplied style instruction, so it carries
-      // no `customPrompt` field at all — unlike grounded/freeform, which both require one.
-      if (mode !== 'synthesis') {
-        if (typeof customPrompt !== 'string') {
-          return reply.code(400).send({ error: 'customPrompt must be a string' });
-        }
-        const guardrailIssues = checkCustomPrompt(customPrompt);
+      if (customPrompt !== undefined && typeof customPrompt !== 'string') {
+        return reply.code(400).send({ error: 'customPrompt must be a string' });
+      }
+      // Grounded mode restyles per an instruction, so it needs one; the AI-written mode takes an
+      // optional one — an empty or missing instruction means "a balanced reading of the whole
+      // chart", with nothing to check or verify.
+      if (mode === 'grounded' && customPrompt === undefined) {
+        return reply.code(400).send({ error: 'customPrompt must be a string' });
+      }
+      const instruction: string | undefined =
+        mode === 'grounded'
+          ? customPrompt
+          : customPrompt === undefined || customPrompt.trim() === ''
+            ? undefined
+            : customPrompt;
+      if (instruction !== undefined) {
+        const guardrailIssues = checkCustomPrompt(instruction);
         if (guardrailIssues.length > 0) {
           return reply
             .code(400)
@@ -418,7 +417,7 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
           return reply.code(400).send({ error: `chartData is invalid: ${validated.errors.join('; ')}` });
         }
         facts = buildFreeformFacts(validated.chartData);
-        systemInstruction = mode === 'synthesis' ? SYNTHESIS_SYSTEM_INSTRUCTION : FREEFORM_SYSTEM_INSTRUCTION;
+        systemInstruction = FREEFORM_SYSTEM_INSTRUCTION;
       }
 
       const config = loadTier2Config();
@@ -443,12 +442,12 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
         return reply.code(503).send({ error: 'Daily usage limit reached for this deployment. Try again tomorrow.' });
       }
 
-      if (mode !== 'synthesis') {
+      if (instruction !== undefined) {
         let verification;
         try {
           verification = await verifyCustomPrompt(
             config,
-            customPrompt as string,
+            instruction,
             locale === 'nl' ? 'Dutch' : 'English',
             2,
             request.log,
@@ -475,9 +474,9 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
       }
 
       const userContent =
-        mode === 'synthesis'
-          ? buildSynthesisUserContent(facts, locale)
-          : buildUserContent(facts, customPrompt as string, locale);
+        mode === 'grounded' && instruction !== undefined
+          ? buildUserContent(facts, instruction, locale)
+          : buildFreeformUserContent(facts, instruction, locale);
 
       let result;
       try {

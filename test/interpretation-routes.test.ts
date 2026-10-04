@@ -428,7 +428,7 @@ describe('POST /api/interpretation/generate', () => {
     });
   });
 
-  describe('synthesis mode (#377)', () => {
+  describe('the older `synthesis` spelling (#377, folded into freeform by #425)', () => {
     const VALID_SYNTHESIS_BODY = { mode: 'synthesis', chartData: VALID_CHART_DATA, locale: 'en' };
 
     it('generates text from the given chart facts with no customPrompt required', async () => {
@@ -561,6 +561,124 @@ describe('POST /api/interpretation/generate', () => {
       expect(response.statusCode).toBe(200);
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(generationCalls()).toBe(1);
+    });
+  });
+
+  describe('the AI-written mode’s optional instruction (#425)', () => {
+    // `signIn` provisions the first account, which can happen once per app: sign in on first use.
+    let cookie: string | undefined;
+    beforeEach(() => {
+      cookie = undefined;
+    });
+    async function generateWith(payload: Record<string, unknown>) {
+      cookie ??= await signIn(app);
+      return app.inject({
+        method: 'POST',
+        url: '/api/interpretation/generate',
+        cookies: { [SESSION_COOKIE]: cookie },
+        payload,
+      });
+    }
+
+    /** The system and user text the model was sent for the (one) generation call. */
+    function generationPrompt(): { system: string; user: string } {
+      const call = fetchMock.mock.calls.find(([, init]) => !isVerificationCall(init as RequestInit | undefined));
+      const sent = JSON.parse((call?.[1] as RequestInit).body as string) as {
+        systemInstruction?: { parts: { text: string }[] };
+        contents: { parts: { text: string }[] }[];
+      };
+      return { system: sent.systemInstruction?.parts[0]?.text ?? '', user: sent.contents[0]?.parts[0]?.text ?? '' };
+    }
+
+    const savedModes = (): unknown[] => {
+      const raw = new DatabaseSync(dbPath);
+      const rows = raw.prepare('SELECT mode FROM interpretation_results ORDER BY created_at').all();
+      raw.close();
+      return rows.map((row) => row.mode);
+    };
+
+    it('writes a whole-chart reading with no instruction, with one model call and no verification', async () => {
+      const response = await generateWith({ mode: 'freeform', chartData: VALID_CHART_DATA, locale: 'en' });
+      expect(response.statusCode).toBe(200);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(generationCalls()).toBe(1);
+      const { user } = generationPrompt();
+      expect(user).toContain('Write the reading.');
+      expect(user).not.toContain('instructions from the reader');
+    });
+
+    it('treats an empty or whitespace-only instruction as none', async () => {
+      for (const customPrompt of ['', '   \n ']) {
+        fetchMock.mockClear();
+        const response = await generateWith({
+          mode: 'freeform',
+          chartData: VALID_CHART_DATA,
+          locale: 'en',
+          customPrompt,
+        });
+        expect(response.statusCode).toBe(200);
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+      }
+    });
+
+    it('still checks and verifies an instruction when one is given, then passes it on', async () => {
+      const response = await generateWith({
+        ...VALID_FREEFORM_BODY,
+        customPrompt: 'warm, short, with a focus on family',
+      });
+      expect(response.statusCode).toBe(200);
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(generationPrompt().user).toContain('warm, short, with a focus on family');
+    });
+
+    it('rejects a bad instruction in this mode exactly as before: the phrase check with 400, the verifier with 422', async () => {
+      const fatalistic = await generateWith({
+        ...VALID_FREEFORM_BODY,
+        customPrompt: 'tell me you will never find love',
+      });
+      expect([400, 422]).toContain(fatalistic.statusCode);
+      expect(generationCalls()).toBe(0);
+
+      fetchMock = modelAnswering('fail: Asks the interpretation to promise an outcome.');
+      globalThis.fetch = fetchMock as unknown as typeof fetch;
+      const rejected = await generateWith({ ...VALID_FREEFORM_BODY, customPrompt: 'make it sound confident' });
+      expect(rejected.statusCode).toBe(422);
+      expect(generationCalls()).toBe(0);
+    });
+
+    it('rejects an instruction that is not a string', async () => {
+      const response = await generateWith({ ...VALID_FREEFORM_BODY, customPrompt: 42 });
+      expect(response.statusCode).toBe(400);
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it('still requires an instruction in grounded mode, where it is what steers the restyling', async () => {
+      const missing = await generateWith({ placementKeys: VALID_BODY.placementKeys, locale: VALID_BODY.locale });
+      expect(missing.statusCode).toBe(400);
+      const empty = await generateWith({ ...VALID_BODY, customPrompt: '' });
+      expect(empty.statusCode).toBe(400);
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it('asks the model to reason across the placements together, and to follow an instruction only when given one', async () => {
+      await generateWith({ mode: 'freeform', chartData: VALID_CHART_DATA, locale: 'en' });
+      const { system } = generationPrompt();
+      expect(system).toContain('Reason across the placements together');
+      expect(system).toContain('rather than describing each one independently');
+      expect(system).toContain('when there is one; without one, write a balanced reading of the whole chart');
+    });
+
+    it('stores a saved interpretation from either spelling as freeform, and a restyle as grounded', async () => {
+      await generateWith({ mode: 'synthesis', chartData: VALID_CHART_DATA, locale: 'en' });
+      await generateWith({ mode: 'freeform', chartData: VALID_CHART_DATA, locale: 'en' });
+      await generateWith(VALID_BODY);
+      expect(savedModes()).toEqual(['freeform', 'freeform', 'grounded']);
+    });
+
+    it('rejects an unknown mode, and says which two exist', async () => {
+      const response = await generateWith({ mode: 'oracle', chartData: VALID_CHART_DATA, locale: 'en' });
+      expect(response.statusCode).toBe(400);
+      expect(response.json()).toEqual({ error: "mode must be 'grounded' or 'freeform'" });
     });
   });
 

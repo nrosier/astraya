@@ -29,9 +29,10 @@ its own "AI-Customized" sub-tab alongside "Standard", gated by
 never-persisted consent checkbox: consent authorizes one specific request,
 not a standing preference.
 
-**Tier 2 has three modes, chosen per request by the reader — `'grounded'`
-(the default), `'freeform'`, and `'synthesis'` — and only `'grounded'`
-carries the guarantee below in full.**
+**Tier 2 has two modes, chosen per request by the reader — `'grounded'`
+(the default) and `'freeform'` — and only `'grounded'` carries the guarantee
+below in full.** (A third mode, `'synthesis'` (#377), was folded into
+`'freeform'` by #425; see below.)
 
 **In grounded mode, the client never sends birth data, chart data, or
 interpretation prose.** It sends `placementKeys` (`report.ts`'s
@@ -62,17 +63,20 @@ discipline `validateKey` applies to grounded mode's placement keys, just
 applied to a richer payload. Freeform mode does not get grounded mode's
 "never originates content" guarantee; it is not offered as if it did.
 
-**In synthesis mode (#377), the client sends the same `chartData` as
-freeform mode, but the task is fixed rather than reader-directed: reason
-across the whole chart's placements together — where they reinforce each
-other, where they create tension, what unified pattern emerges — instead of
-restyling or originating per a free-text instruction.** This is why
-synthesis mode carries no `customPrompt` field at all; #377 investigated
-this as a two-stage "synthesis, then refinement" pipeline, but refinement
-turned out to already be grounded mode's own job (restyling already-
-reviewed text), so synthesis is the one genuinely new capability. It shares
-freeform mode's `validateChartData`/privacy tradeoff and does not carry the
-"never originates content" guarantee either.
+**Freeform reasons across the whole chart, and its instruction is optional
+(#425).** The model is told to reason across the placements together — where
+they reinforce each other, where they create tension, what unified pattern
+emerges — rather than describe each one in its own section, and to follow
+the reader's form/style/tone/focus instruction when there is one. #377 had
+added a separate `'synthesis'` mode for the first half (the same `chartData`,
+a fixed task, no instruction); with freeform now doing that too, a reader who
+wants both an integrated reading _and_ a say in its form needs only one mode,
+and the one-click whole-chart reading is freeform with an empty instruction.
+`'synthesis'` is still accepted on the wire as an older client's spelling of
+`'freeform'` with no instruction, and is stored as `'freeform'`; saved
+entries from before the change keep their `'synthesis'` mode and are shown
+as AI-based like the rest. An empty or whitespace-only instruction means none:
+there is nothing to check or verify, so no verification call is made.
 
 **`customPrompt` is the one field that structural guarantee doesn't cover.**
 Free-form style/tone/focus instructions can't be made structurally incapable
@@ -128,8 +132,8 @@ Any output that is neither form is treated as `fail`, and a failed verification 
 the check fails closed, never skipped. A rejection is a 422 with `code: 'customization-rejected'`
 and the model's `reason` (written in the request's locale), which the UI shows alongside a fixed
 "violates the allowed customization rules" message. The verification call is billed through
-`interpretation_usage` whatever its verdict, so it counts toward both daily caps. Synthesis mode
-has no `customPrompt` and skips this phase.
+`interpretation_usage` whatever its verdict, so it counts toward both daily caps. Freeform
+mode with no instruction has nothing to verify and skips this phase.
 
 ## Consequences
 
