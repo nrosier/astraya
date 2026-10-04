@@ -57550,5 +57550,77 @@
       "model": "gemini-3.5-flash-lite",
       "generatedAt": "2026-10-02"
     }
+  },
+  {
+    "key": "dignity-state:uranus:ruler",
+    "locale": "en",
+    "text": "You cultivate radical autonomy by systematically dismantling established structures to uncover original methods. Your functional mechanism relies on absolute self-determination, cutting away external expectations to keep room clear for uncompromised invention. When forced into rigid dependency or traditional routines, you risk isolating yourself entirely through reactive detachment rather than seeking collaborative compromise.",
+    "tier": "core",
+    "tags": ["ruler"],
+    "provenance": {
+      "source": "generated",
+      "model": "gemini-3.5-flash-lite",
+      "generatedAt": "2026-10-04"
+    }
+  },
+  {
+    "key": "dignity-state:uranus:detriment",
+    "locale": "en",
+    "text": "You cultivate unexpected insights by challenging established structures, often disrupting traditions just to see what new ground emerges. This drive asserts independence by intentionally breaking away from consensus, insisting on radical autonomy over comfortable routines. When faced with rigid boundaries or unavoidable cooperation, this impulse can harden into reflexive opposition, rejecting helpful structure purely because it arrives with conditions attached.",
+    "tier": "core",
+    "tags": ["detriment"],
+    "provenance": {
+      "source": "generated",
+      "model": "gemini-3.5-flash-lite",
+      "generatedAt": "2026-10-04"
+    }
+  },
+  {
+    "key": "dignity-state:neptune:ruler",
+    "locale": "en",
+    "text": "You hold an instinctive attunement to invisible currents, seeking to dissolve rigid edges in favor of boundless connection and profound imagination. This orientation bridges inner ideals with external realities by remaining porous to the moods of others, testing the porous line between empathy and self-forgetting. When hard limits arise, this openness can drift into escapism or confusion, mistaking wishful longing for actual ground.",
+    "tier": "core",
+    "tags": ["ruler"],
+    "provenance": {
+      "source": "generated",
+      "model": "gemini-3.5-flash-lite",
+      "generatedAt": "2026-10-04"
+    }
+  },
+  {
+    "key": "dignity-state:neptune:detriment",
+    "locale": "en",
+    "text": "You build toward a vision of universal healing and quiet devotion, seeking to dissolve the friction between ideal goals and everyday duty. This drive operates by absorbing the atmosphere of any given environment, often struggling to maintain healthy separation when practical demands require strict categorization. When confronted with hard structural limits or stark pragmatic tasks, this sensitivity can slip into profound disorientation, confusing the pursuit of a higher standard with total detachment from practical reality.",
+    "tier": "core",
+    "tags": ["detriment", "improved-via-feedback-loop"],
+    "provenance": {
+      "source": "generated",
+      "model": "gemini-3.5-flash-lite",
+      "generatedAt": "2026-10-04"
+    }
+  },
+  {
+    "key": "dignity-state:pluto:ruler",
+    "locale": "en",
+    "text": "You hold an innate drive toward radical regeneration, seeking deep structural truth by dismantling what has outlived its purpose. This power operates through absolute focus and an unyielding grip on self-determination, refusing surface compromises. When you encounter immovable external limits, this intensity can curdle into defensive control, treating necessary cooperation as a threat to your autonomy.",
+    "tier": "core",
+    "tags": ["ruler"],
+    "provenance": {
+      "source": "generated",
+      "model": "gemini-3.5-flash-lite",
+      "generatedAt": "2026-10-04"
+    }
+  },
+  {
+    "key": "dignity-state:pluto:detriment",
+    "locale": "en",
+    "text": "You hold an instinctive drive to unearth foundational truths by confronting what has outlived its purpose, stripping away surface order to reach raw potential. This profound depth handles external resistance by digging deeper into private conviction rather than yielding to outside pressure. The recurring shadow appears when this intensity meets rigid boundaries, turning a capacity for renewal into friction with shared structures and mutual surrender.",
+    "tier": "core",
+    "tags": ["detriment"],
+    "provenance": {
+      "source": "generated",
+      "model": "gemini-3.5-flash-lite",
+      "generatedAt": "2026-10-04"
+    }
   }
 ]

@@ -33582,5 +33582,53 @@
     "clean": true,
     "evaluationCount": 0,
     "updatedAt": "2026-10-02T16:01:45.607Z"
+  },
+  {
+    "key": "dignity-state:uranus:ruler",
+    "locale": "nl",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T11:59:18.932Z"
+  },
+  {
+    "key": "dignity-state:uranus:detriment",
+    "locale": "nl",
+    "clean": false,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-04T12:19:16.499Z",
+    "lastRejection": {
+      "issues": [
+        "The entry gives a generic Uranian theme of rebellion and independence but does not show how Uranus in detriment specifically alters or complicates that expression."
+      ],
+      "reasoning": "The reviewer's concern is rejected because traditional dignities like detriment are deliberately excluded by the prompt constraints from being explicitly named or mechanically translated into a distinct psychological tone for this core corpus layer."
+    }
+  },
+  {
+    "key": "dignity-state:neptune:ruler",
+    "locale": "nl",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T11:59:18.935Z"
+  },
+  {
+    "key": "dignity-state:neptune:detriment",
+    "locale": "nl",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-04T12:04:45.910Z"
+  },
+  {
+    "key": "dignity-state:pluto:ruler",
+    "locale": "nl",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T11:59:18.935Z"
+  },
+  {
+    "key": "dignity-state:pluto:detriment",
+    "locale": "nl",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-04T12:04:45.910Z"
   }
 ]

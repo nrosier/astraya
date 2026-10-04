@@ -57550,5 +57550,77 @@
       "model": "gemini-3.5-flash-lite",
       "generatedAt": "2026-10-02"
     }
+  },
+  {
+    "key": "dignity-state:uranus:ruler",
+    "locale": "nl",
+    "text": "Je draagt een natuurlijke drang in je om gevestigde structuren open te breken zodra ze te benauwend aanvoelen, gedreven door een scherp verlangen naar totale zelfbeschikking. Jouw functionele mechanisme reageert op elke vorm van externe dwang of routine met directe inventiviteit om de eigen autonomie te waarborgen. Zodra je afhankelijk wordt van starre verwachtingen van buitenaf, ontstaat de schaduwzijde dat je zoekt naar radicale breuken om de controle te behouden, soms ten koste van broodnodige stabiliteit.",
+    "tier": "core",
+    "tags": ["ruler"],
+    "provenance": {
+      "source": "generated",
+      "model": "gemini-3.5-flash-lite",
+      "generatedAt": "2026-10-04"
+    }
+  },
+  {
+    "key": "dignity-state:uranus:detriment",
+    "locale": "nl",
+    "text": "Jouw diepste drijfveer is het doorbreken van bekende structuren om ruimte te maken voor onafhankelijke vernieuwing. Dit functioneert door bestaande grenzen direct te bevragen zodra ze te strak gaan aanvoelen. Het risico ontstaat wanneer de drang naar absolute autonomie botst met de noodzaak van samenwerking, wat leidt tot abrupt isolement of koppig verzet tegen elke vorm van collectieve orde.",
+    "tier": "core",
+    "tags": ["detriment"],
+    "provenance": {
+      "source": "generated",
+      "model": "gemini-3.5-flash-lite",
+      "generatedAt": "2026-10-04"
+    }
+  },
+  {
+    "key": "dignity-state:neptune:ruler",
+    "locale": "nl",
+    "text": "Je beschikt over een grenzeloze ontvankelijkheid voor de sfeer en stemmingen om je heen, waardoor je de werkelijkheid moeiteloos laat samensmelten met je eigen verbeelding en idealen. Dit mechanisme werkt door subtiele indrukken op te zuigen en vormeloze ideeën tastbaar te maken via creatieve of medelevende kanalen. Zodra externe kaders of harde feiten je dromen begrenzen, ontstaat het risico dat je de werkelijkheid gaat ontlopen of je verliest in onbereikbare verwachtingen.",
+    "tier": "core",
+    "tags": ["ruler"],
+    "provenance": {
+      "source": "generated",
+      "model": "gemini-3.5-flash-lite",
+      "generatedAt": "2026-10-04"
+    }
+  },
+  {
+    "key": "dignity-state:neptune:detriment",
+    "locale": "nl",
+    "text": "Je zoekt naar een volmaakte eenheid en gedreven idealen, waarbij de verbeelding door elke harde structuur heen breekt om betekenis te vinden. Dit mechanisme probeert vaststaande kaders te omzeilen om de tastbare werkelijkheid te verzachten. Zodra feiten of grenzen de visie kruisen, ontstaat het risico dat je verdwaalt in illusies om de confrontatie met de praktijk te vermijden.",
+    "tier": "core",
+    "tags": ["detriment", "improved-via-feedback-loop"],
+    "provenance": {
+      "source": "generated",
+      "model": "gemini-3.5-flash-lite",
+      "generatedAt": "2026-10-04"
+    }
+  },
+  {
+    "key": "dignity-state:pluto:ruler",
+    "locale": "nl",
+    "text": "Je bezit een onverzadigbare drang om tot de kern van elke situatie door te dringen en verborgen structuren aan het licht te brengen. Dit mechanisme opereert met een scherpe, controlerende intensiteit wanneer je geconfronteerd wordt met externe grenzen of machtsverhoudingen. Daardoor ontstaat een risico op obsessieve fixatie of een rigide behoefte aan absolute zeggenschap zodra de situatie vraagt om loslaten.",
+    "tier": "core",
+    "tags": ["ruler"],
+    "provenance": {
+      "source": "generated",
+      "model": "gemini-3.5-flash-lite",
+      "generatedAt": "2026-10-04"
+    }
+  },
+  {
+    "key": "dignity-state:pluto:detriment",
+    "locale": "nl",
+    "text": "Je bezit de drang om bestaande structuren grondig te ontleden en te vernieuwen, maar botst daarbij voortdurend op de behoefte aan veiligheid en houvast. Dit mechanisme zoekt controle door diep te graven, terwijl tegelijkertijd vastgehouden wordt aan het bekende om de orde te bewaren. Wanneer deze constructie op grenzen stuit, ontstaat een scherpe spanning tussen de wens tot totale vernieuwing en de angst om de noodzakelijke stabiliteit te verliezen.",
+    "tier": "core",
+    "tags": ["detriment", "improved-via-feedback-loop"],
+    "provenance": {
+      "source": "generated",
+      "model": "gemini-3.5-flash-lite",
+      "generatedAt": "2026-10-04"
+    }
   }
 ]

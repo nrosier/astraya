@@ -33570,5 +33570,59 @@
     "clean": true,
     "evaluationCount": 0,
     "updatedAt": "2026-10-02T15:54:04.343Z"
+  },
+  {
+    "key": "dignity-state:uranus:ruler",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T11:59:41.158Z"
+  },
+  {
+    "key": "dignity-state:uranus:detriment",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-04T12:24:32.574Z",
+    "lastRejection": {
+      "issues": [
+        "It describes generic Uranian disruption and independence without showing the detriment-specific tension of Uranian change operating through Leo’s personal self-expression and need for recognition."
+      ],
+      "reasoning": "Rejected the concern because the strict prompt constraints explicitly forbid using sign names, house numbers, or placement-specific terms like detriment in the prose, making it impossible to explicitly frame the text around Leo without breaking hard rules."
+    }
+  },
+  {
+    "key": "dignity-state:neptune:ruler",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-04T12:18:26.388Z"
+  },
+  {
+    "key": "dignity-state:neptune:detriment",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-04T12:18:26.389Z"
+  },
+  {
+    "key": "dignity-state:pluto:ruler",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T11:59:41.161Z"
+  },
+  {
+    "key": "dignity-state:pluto:detriment",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-04T12:24:32.575Z",
+    "lastRejection": {
+      "issues": [
+        "The entry leans on generic Pluto themes of depth, resistance, and renewal without expressing the detriment-specific tension between transformation and Taurus-like security, attachment, or material stability."
+      ],
+      "reasoning": "The reviewer suggests adding themes of Taurus-like security and material stability for detriment, but the baseline corpus entry must focus purely on the core archetype's mechanism with general boundary friction, leaving sign-specific modifiers to other corpus layers."
+    }
   }
 ]
