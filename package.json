@@ -32,6 +32,7 @@
     "corpus:review-report": "node scripts/corpus-review-report.mjs",
     "corpus:verify": "npx tsx --env-file=.env.local tools/corpus-gen/verify-batch.mjs",
     "corpus:stats": "node tools/corpus-gen/corpus-stats.mjs",
+    "corpus:audit": "npx tsx tools/corpus-gen/audit-corpus.mjs",
     "corpus-gen": "tools/corpus-gen/run.sh",
     "check": "npm run format:check && npm run lint && npm run typecheck && npm run test"
   },

@@ -10,9 +10,9 @@
  * exaltation or fall). That is a correctness constraint, not a scope choice:
  * an asteroid, Chiron or a node has no dignity to describe, so generating one
  * would be inventing astrology, not omitting coverage. synastry-aspect (#359) reuses aspect-pair's own
- * corePairs() x ASPECTS coverage — the neutral entry describes the pair's
- * dynamic regardless of which chart owns which body, mirroring aspect-pair's
- * own symmetric phrasing.
+ * corePairs() x ASPECTS coverage, stored once per pair in alphabetical order and
+ * written from the first body's owner's side ("your … their …", #427) — the
+ * prompt says so, and so does the Synastry screen when it shows the text.
  *
  * Resumable and idempotent: every successful entry is written to
  * src/interpretation/corpus/<locale>.json immediately, and a re-run skips

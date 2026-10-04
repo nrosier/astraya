@@ -17,13 +17,11 @@
  * (planet-in-sign, planet-in-house, sign-on-cusp, aspect-pair, dignity-state),
  * plus `transit-aspect` (#207) and `synastry-aspect` (#359), which reuse this
  * same fallback machinery for a different pair of roles (transiting/natal,
- * or this-chart/other-chart) rather than a same-chart pair. `nakshatra`,
- * `pattern`, `profected-house` and `astro-line` (#369) are out of scope for
- * the same reason #60 excluded the first two: none of the four is produced
- * by anything currently feeding this module (#369 only added the corpus
- * schema/categories, not live report-engine wiring) — a future issue wiring
- * profections or astrocartography into an actual report should add real
- * cases here then, not before there's a real caller to exercise them.
+ * or this-chart/other-chart) rather than a same-chart pair. `profected-house`
+ * and `astro-line` (#369) have cases since #427 wired the profections and
+ * astrocartography screens to the corpus. `nakshatra` and `pattern` are
+ * reserved categories nothing produces yet, so they still throw: add real
+ * cases here when something has a real caller to exercise them.
  *
  * Dutch terminology note: the twelve sign names, ten planet/luminary names
  * and five major-aspect names below are standard, unremarkable translations.
@@ -39,7 +37,7 @@
 import { bodyByKey } from '../astrology/bodies.ts';
 import { aspectByKey } from '../astrology/aspects.ts';
 import { SIGNS } from '../astrology/signs.ts';
-import type { CorpusEntry, CorpusPlacement, DignityState, Locale } from './schema.js';
+import type { AcgAngle, CorpusEntry, CorpusPlacement, DignityState, Locale } from './schema.js';
 import { placementKey } from './schema.ts';
 
 type NameTable = Readonly<Record<string, string>>;
@@ -196,6 +194,12 @@ function ordinal(n: number, locale: Locale): string {
   }
 }
 
+/** The angle an astrocartography line is drawn for, as a name (`astro-line:venus:MC` is Venus on the Midheaven line). */
+const ACG_ANGLE_NAMES: Readonly<Record<Locale, Readonly<Record<AcgAngle, string>>>> = {
+  en: { AC: 'Ascendant', DC: 'Descendant', MC: 'Midheaven', IC: 'Imum Coeli' },
+  nl: { AC: 'Ascendant', DC: 'Descendant', MC: 'Medium Coeli', IC: 'Imum Coeli' },
+};
+
 function capitalize(text: string): string {
   const first = text.charAt(0);
   return first === '' ? text : first.toUpperCase() + text.slice(1);
@@ -255,10 +259,19 @@ export function composeFallbackText(placement: CorpusPlacement, locale: Locale):
       const predicate = DIGNITY_PREDICATES[locale][placement.state];
       return `${body} is ${predicate}.`;
     }
+    case 'profected-house': {
+      const house = ordinal(placement.house, locale);
+      return locale === 'nl'
+        ? `Het ${house} huis is het geprofecteerde huis voor deze periode.`
+        : `The ${house} house is the profected house for this period.`;
+    }
+    case 'astro-line': {
+      const body = capitalize(bodyName(placement.body, locale));
+      const angle = ACG_ANGLE_NAMES[locale][placement.angle];
+      return locale === 'nl' ? `${body} op de ${angle}-lijn.` : `${body} on the ${angle} line.`;
+    }
     case 'nakshatra':
     case 'pattern':
-    case 'profected-house':
-    case 'astro-line':
       throw new Error(`composeFallbackText: category "${placement.category}" is out of scope for #59 (see file doc)`);
   }
 }

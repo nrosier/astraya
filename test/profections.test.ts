@@ -8,7 +8,7 @@
 import { describe, expect, it } from 'vitest';
 import { rulerOf } from '../src/astrology/dignities.js';
 import { signIndex } from '../src/astrology/signs.js';
-import { computeProfections } from '../src/domain/profections.js';
+import { computeProfections, profectedHouse } from '../src/domain/profections.js';
 import { julianDayFor } from '../src/time/julian.js';
 import { resolveMoment } from '../src/time/resolve.js';
 import type { BirthMomentInput } from '../src/time/types.js';
@@ -131,5 +131,25 @@ describe('computeProfections (#168)', () => {
 
     const profected = await computeProfections(NATAL, targetJd, engine);
     expect(profected.age).toBeCloseTo(-2, 5);
+  });
+});
+
+describe('the profected house (#427)', () => {
+  it('counts whole signs from the natal Ascendant’s sign: its own sign is the 1st house', () => {
+    // Ascendant at 15° Gemini (sign 2).
+    expect(profectedHouse(75, 2)).toBe(1);
+    expect(profectedHouse(75, 3)).toBe(2);
+    expect(profectedHouse(75, 1)).toBe(12);
+    expect(profectedHouse(75, 8)).toBe(7);
+  });
+
+  it('is the 1st house at birth and moves one house per year', async () => {
+    const engine = await getEngine();
+    const natalJd = await julianDayFor(engine, resolveMoment(NATAL));
+    const atBirth = await computeProfections(NATAL, natalJd, engine);
+    expect(atBirth.year.house).toBe(1);
+    expect(atBirth.month.house).toBe(1);
+    const atThirtyFive = await computeProfections(NATAL, natalJd + 35 * 365.2425 + 1, engine);
+    expect(atThirtyFive.year.house).toBe((35 % 12) + 1);
   });
 });

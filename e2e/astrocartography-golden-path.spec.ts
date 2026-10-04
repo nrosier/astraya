@@ -60,6 +60,13 @@ test('a person with a known birth time gets an Astrocartography map and the SVG 
   for await (const chunk of contents) chunks.push(chunk as Buffer);
   const svg = Buffer.concat(chunks).toString('utf-8');
   expect(svg).toContain('<svg');
+
+  // What each line means, from the reviewed corpus text rather than the mechanical fallback (#427).
+  await expect(page.getByRole('heading', { name: 'What the lines mean', level: 2 })).toBeVisible();
+  const sun = page.locator('.acg-meanings details').first();
+  await sun.locator('summary').click();
+  await expect(sun.locator('dd').first()).not.toContainText('Sun on the Midheaven line.');
+  expect((await sun.locator('dd').first().textContent())?.length ?? 0).toBeGreaterThan(40);
 });
 
 test('unchecking a line type removes it from the map', async ({ page }) => {

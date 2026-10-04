@@ -78,12 +78,11 @@ describe('placementKey / parsePlacementKey (#53)', () => {
     });
   });
 
-  it('does not canonicalize synastry-aspect bodies — bodyA is always this chart, bodyB always the other (#359)', () => {
+  it('canonicalizes synastry-aspect bodies alphabetically: one entry per pair, written from the first body’s owner (#427)', () => {
     const forward = placementKey({ category: 'synastry-aspect', aspect: 'trine', bodyA: 'mars', bodyB: 'sun' });
     const reversed = placementKey({ category: 'synastry-aspect', aspect: 'trine', bodyA: 'sun', bodyB: 'mars' });
     expect(forward).toBe('synastry-aspect:trine:mars:sun');
-    expect(reversed).toBe('synastry-aspect:trine:sun:mars');
-    expect(forward).not.toBe(reversed);
+    expect(reversed).toBe('synastry-aspect:trine:mars:sun');
   });
 
   it('categoryOfKey reads just the first segment', () => {

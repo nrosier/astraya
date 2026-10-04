@@ -38,8 +38,21 @@ export interface ProfectionOptions {
   readonly rulership?: RulershipChoice;
 }
 
+/**
+ * The house a profected sign is, counted from the natal Ascendant's sign (whole-sign houses, which
+ * is what a profection is): the Ascendant's own sign is the 1st house, the next sign the 2nd. A
+ * profected year in the 7th house is a "7th-house year" — the key of the corpus's `profected-house`
+ * entries (#427).
+ */
+export function profectedHouse(natalAscendant: Degrees, signIndex: number): number {
+  const ascendantSign = Math.floor((((natalAscendant % 360) + 360) % 360) / 30);
+  return ((((signIndex - ascendantSign) % 12) + 12) % 12) + 1;
+}
+
 export interface ProfectedPeriod {
   readonly signIndex: number;
+  /** The profected house, 1–12 (see `profectedHouse`). */
+  readonly house: number;
   readonly signName: string;
   readonly longitude: Degrees;
   /** The lord of the period (the traditional ruler first under Both). */
@@ -88,12 +101,14 @@ export async function computeProfections(
     age,
     year: {
       signIndex: year.signIndex,
+      house: profectedHouse(natalHouses.ascendant, year.signIndex),
       signName: signOf(year.longitude).name,
       longitude: year.longitude,
       ...lords(year.signIndex),
     },
     month: {
       signIndex: month.signIndex,
+      house: profectedHouse(natalHouses.ascendant, month.signIndex),
       signName: signOf(month.longitude).name,
       longitude: month.longitude,
       ...lords(month.signIndex),
