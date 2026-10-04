@@ -158,7 +158,8 @@
   z-index: 20;
   display: grid;
   grid-template-areas: 'start nav end';
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  /* Equal outer columns, so the navigation sits in the true centre of the page. */
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   gap: 0 0.75rem;
   min-height: var(--app-header-height);
@@ -202,6 +203,7 @@
 
 .app-header-end {
   grid-area: end;
+  justify-self: end;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -1359,6 +1361,7 @@ label.stacked textarea:focus-visible {
   grid-area: nav;
   display: flex;
   align-items: center;
+  justify-content: center; /* the navigation is centred in the header, not pinned to the brand */
   min-width: 0;
 }
 
@@ -1380,6 +1383,7 @@ label.stacked textarea:focus-visible {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: center;
   gap: 0.15rem;
 }
 
@@ -1433,9 +1437,8 @@ label.stacked textarea:focus-visible {
   cursor: not-allowed;
 }
 
-/* The admin area, set apart in the accent so an admin finds it without it competing with the chart tabs. */
+/* The admin area, in the accent so an admin finds it without it competing with the chart tabs. */
 .app-nav-admin {
-  margin-left: auto;
   color: var(--accent);
 }
 
@@ -1492,6 +1495,54 @@ label.stacked textarea:focus-visible {
   font-weight: 600;
 }
 
+/* The Export menu's section heading and its submenus (a group of items that expands in place). */
+.app-nav-menu-heading {
+  margin: 0.4rem 0.8rem 0.1rem;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.app-nav-submenu-toggle::after {
+  content: ' \25B8';
+  font-size: 0.75em;
+}
+
+.app-nav-submenu-toggle[aria-expanded='true']::after {
+  content: ' \25BE';
+}
+
+.app-nav-submenu-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding-left: 0.8rem;
+}
+
+/* What a running export says, since the menu has closed: a small notice at the foot of the screen. */
+.app-export-status {
+  position: fixed;
+  bottom: 1rem;
+  left: 50%;
+  z-index: 40;
+  max-width: calc(100vw - 2rem);
+  margin: 0;
+  padding: 0.5rem 0.9rem;
+  transform: translateX(-50%);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 0.5rem 1.5rem rgb(0 0 0 / 20%);
+  font-size: 0.9rem;
+}
+
+.app-export-status.error {
+  border-color: var(--aspect-hard);
+  color: var(--aspect-hard);
+}
+
 @media (max-width: 63.99rem) {
   /* Brand and the Menu button on the first row, the controls under them, whatever the screen. */
   .app-header,
@@ -1503,6 +1554,7 @@ label.stacked textarea:focus-visible {
   }
 
   .app-header-end {
+    justify-self: start;
     justify-content: flex-start;
   }
 
@@ -1547,10 +1599,6 @@ label.stacked textarea:focus-visible {
   .app-nav-group-toggle {
     padding: 0.65rem 0.7rem;
     text-align: left;
-  }
-
-  .app-nav-admin {
-    margin-left: 0;
   }
 
   /* Inside the panel a group opens in place instead of floating over the items beneath it. */
@@ -2840,4 +2888,31 @@ svg text.chart-symbol-text-unicode {
 
 .cell-tag + .cell-tag {
   margin-top: 0.4rem;
+}
+
+/* The Charts page's chart-type selector: natal, draconic, harmonic, solar return, lunar return. */
+.chart-type-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 1rem 0 0.5rem;
+}
+
+.chart-type-link {
+  padding: 0.35rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-weight: 550;
+  text-decoration: none;
+}
+
+.chart-type-link:hover:not(.active) {
+  background: var(--surface-hover);
+  color: var(--fg);
+}
+
+.chart-type-link.active {
+  border-color: var(--accent);
+  color: var(--fg);
 }

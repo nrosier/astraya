@@ -12,6 +12,18 @@ const en = {
   menuButtonClose: 'Close menu',
   personChipLabel: (name: string) => `Chart of ${name}`,
   adminTabLabel: 'Admin',
+  exportLabel: 'Export',
+  exportEverything: 'Everything (one file)',
+  exportEverythingHint:
+    'Every person on this device with their birth record, and their natal chart’s data, as one JSON file.',
+  exportPeopleCsv: 'People (CSV)',
+  exportThisPage: 'This page',
+  exportPreparing: (what: string) => `Preparing ${what}…`,
+  exportDone: (what: string) => `${what} exported.`,
+  exportFailed: (message: string) => `The export failed: ${message}`,
+  exportNeedsEngine: 'The calculation engine is still loading.',
+  exportEverythingName: 'everything',
+  exportPeopleName: 'the people list',
   toolsLabel: 'Tools',
   toolLabels: {
     cycles: 'Planetary cycles',
@@ -26,7 +38,7 @@ const en = {
 
   tabLabels: {
     'birth-record': 'Birth record',
-    chart: 'Natal chart',
+    chart: 'Charts',
     report: 'Interpretation',
     profections: 'Profections',
     progressions: 'Progressions',
@@ -34,8 +46,6 @@ const en = {
     transit: 'Transits',
     synastry: 'Synastry',
     composite: 'Composite',
-    harmonic: 'Harmonic',
-    draconic: 'Draconic',
     'periodic-transit': 'Forecast',
     astrocartography: 'Astrocartography',
   } satisfies Record<PersonTabKey, string>,
@@ -44,7 +54,6 @@ const en = {
     'transits-forecast': 'Transits & Forecast',
     'progressions-directions': 'Progressions & Directions',
     'relationship-charts': 'Relationship Charts',
-    'chart-variants': 'Chart Variants',
   } satisfies Record<PersonTabFamilyKey, string>,
 };
 
@@ -54,6 +63,18 @@ const nl: typeof en = {
   menuButtonClose: 'Menu sluiten',
   personChipLabel: (name: string) => `Horoscoop van ${name}`,
   adminTabLabel: 'Beheer',
+  exportLabel: 'Exporteren',
+  exportEverything: 'Alles (één bestand)',
+  exportEverythingHint:
+    'Elke persoon op dit apparaat met zijn of haar geboortegegevens en de gegevens van het geboortehoroscoop, als één JSON-bestand.',
+  exportPeopleCsv: 'Personen (CSV)',
+  exportThisPage: 'Deze pagina',
+  exportPreparing: (what: string) => `${what} voorbereiden…`,
+  exportDone: (what: string) => `${what} geëxporteerd.`,
+  exportFailed: (message: string) => `De export is mislukt: ${message}`,
+  exportNeedsEngine: 'De rekenmotor wordt nog geladen.',
+  exportEverythingName: 'alles',
+  exportPeopleName: 'de personenlijst',
   toolsLabel: 'Hulpmiddelen',
   toolLabels: {
     cycles: 'Planetaire cycli',
@@ -68,7 +89,7 @@ const nl: typeof en = {
 
   tabLabels: {
     'birth-record': 'Geboortegegevens',
-    chart: 'Horoscoop',
+    chart: 'Horoscopen',
     report: 'Interpretatie',
     profections: 'Profecties',
     progressions: 'Progressies',
@@ -76,8 +97,6 @@ const nl: typeof en = {
     transit: 'Transits',
     synastry: 'Synastrie',
     composite: 'Composiet',
-    harmonic: 'Harmonisch',
-    draconic: 'Draconisch',
     'periodic-transit': 'Prognose',
     astrocartography: 'Astrocartografie',
   } satisfies Record<PersonTabKey, string>,
@@ -86,7 +105,6 @@ const nl: typeof en = {
     'transits-forecast': 'Transits & prognose',
     'progressions-directions': 'Progressies & directies',
     'relationship-charts': 'Relatiehoroscopen',
-    'chart-variants': 'Horoscoopvarianten',
   } satisfies Record<PersonTabFamilyKey, string>,
 };
 

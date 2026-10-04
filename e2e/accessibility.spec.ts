@@ -14,7 +14,7 @@ import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
-import { createPerson, gotoAndSettle, signIn } from './support.ts';
+import { createPerson, gotoAndSettle, openChart, openNatalChart, signIn } from './support.ts';
 
 const BOOTSTRAP_TOKEN = 'e2e-a11y-bootstrap-token';
 const ADMIN_USERNAME = 'admin';
@@ -70,7 +70,7 @@ test('a gated chart-type tab renders as a genuinely disabled control (#234)', as
   await expect(page.getByRole('heading', { name: 'New person' })).toBeVisible();
 
   // No birth data has been entered yet, so every tab but Birth record is gated.
-  await expect(page.getByRole('button', { name: /Natal chart/ })).toBeDisabled();
+  await expect(page.getByRole('button', { name: /^Charts/ })).toBeDisabled();
 
   const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
   expect(results.violations).toEqual([]);
@@ -110,7 +110,7 @@ test('the chart view (wheel plus data tables) has no automatically detectable ac
     latitude: '51.5072',
     longitude: '-0.1276',
   });
-  await page.getByRole('link', { name: 'Natal chart', exact: true }).click();
+  await openNatalChart(page);
   await expect(page.locator('div.chart-wheel')).toBeVisible();
 
   const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
@@ -130,7 +130,7 @@ test('every section of the natal chart has no automatically detectable accessibi
     latitude: '51.5072',
     longitude: '-0.1276',
   });
-  await page.getByRole('link', { name: 'Natal chart', exact: true }).click();
+  await openNatalChart(page);
   await expect(page.locator('div.chart-wheel')).toBeVisible();
 
   for (const name of ['Chart shape', 'Positions', 'Houses', 'Aspects', 'Dignities', 'Derived points']) {
@@ -252,8 +252,7 @@ test('the harmonic screen (#170) has no automatically detectable accessibility v
     latitude: '51.5072',
     longitude: '-0.1276',
   });
-  await page.getByRole('button', { name: 'Chart Variants', exact: true }).click();
-  await page.getByRole('link', { name: 'Harmonic', exact: true }).click();
+  await openChart(page, 'Harmonic');
   await expect(page.locator('div.chart-wheel')).toBeVisible();
 
   const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();

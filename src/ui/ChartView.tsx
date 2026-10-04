@@ -88,6 +88,9 @@ import { bodyGlyph, renderGlyph } from '../chart/glyphs.js';
 import type { SymbolClass } from '../chart/symbol-class.js';
 import { unicodeSymbol, textSymbol } from '../chart/symbol-text.js';
 import { useSymbolClass } from './symbol-setting.js';
+import { useRegisterExports } from './export-registry.js';
+import { CHART_SECTIONS, chartSectionLabels, type ChartSection } from './chart-sections.js';
+import { ChartTypeSelector, changeChartSection } from './ChartTypeSelector.js';
 import { bodyId } from '../chart/body-id.js';
 import { WheelSelectionText } from './WheelSelectionText.js';
 import { parseSelectionKey } from '../interpretation/selection.js';
@@ -464,7 +467,7 @@ function derivedPointColumns(t: typeof chartViewMessages.en, locale: Locale): re
 }
 
 /** The sections of the chart screen (#430), in reading order: the wheel, the overall pattern, then the detail. */
-type TabKey = 'chart' | 'shape' | 'positions' | 'houses' | 'aspects' | 'dignities' | 'derived';
+type TabKey = ChartSection;
 /** The sections that are tables, as opposed to the wheel and the chart-shape panel. */
 type TableTabKey = Exclude<TabKey, 'chart' | 'shape'>;
 
@@ -674,20 +677,10 @@ function renderShapeSection(
   );
 }
 
-function tabLabels(t: typeof chartViewMessages.en): Record<TabKey, string> {
-  return {
-    chart: t.chartTabLabel,
-    shape: t.shapeTabLabel,
-    positions: t.positionsCaption,
-    houses: t.housesCaption,
-    aspects: t.aspectsCaption,
-    dignities: t.dignitiesCaption,
-    derived: t.derivedPointsCaption,
-  };
-}
+const tabLabels = chartSectionLabels;
 
 /** Every tab in display order; the caller drops `chart` (no wheel), `houses` and `derived` when the chart has no houses. */
-const TAB_ORDER: readonly TabKey[] = ['chart', 'shape', 'positions', 'houses', 'aspects', 'dignities', 'derived'];
+const TAB_ORDER: readonly TabKey[] = CHART_SECTIONS;
 
 /** PNG export resolutions (#67): the wheel's own default pixel size, and 2x/4x of it. */
 function pngSizes(t: typeof chartViewMessages.en): readonly { readonly label: string; readonly size: number }[] {
@@ -832,6 +825,8 @@ export function ChartDataView({
   extendedSettings = DEFAULT_EXTENDED_SETTINGS,
   onExtendedSettingsChange,
   settingsProvider,
+  section,
+  onSectionChange,
 }: {
   readonly load: Load;
   readonly displayName: string;
@@ -841,7 +836,7 @@ export function ChartDataView({
    * the caller holds the birth moment the date/place lines come from; omitted,
    * the sheet is headed by the display name alone.
    */
-  readonly metaLines?: readonly string[];
+  readonly metaLines?: readonly string[] | undefined;
   /**
    * The confirmed (post-Redraw) extended settings (#52): house system, zodiac,
    * orb rules, minor aspects, point visibility, and the wheel's sign-wedge
@@ -858,20 +853,26 @@ export function ChartDataView({
   readonly onExtendedSettingsChange?: (next: ExtendedSettings) => void;
   /** A long-lived provider for the panel's own house-system/ayanamsa name lookups. */
   readonly settingsProvider?: EphemerisProvider | undefined;
+  /** The open section, when the URL decides it (the natal chart); see `chart-sections.ts`. */
+  readonly section?: ChartSection | undefined;
+  readonly onSectionChange?: ((section: ChartSection) => void) | undefined;
 }): React.JSX.Element {
   const t = useMessages(chartViewMessages);
   const [locale] = useLocale();
   const [rulership] = useRulershipChoice();
-  const [activeTab, setActiveTab] = useState<TabKey>('chart');
+  // Controlled by the URL where a screen supplies `section` (the natal chart: the header's menu and these tabs
+  // name the same sections); otherwise the tab is this component's own state.
+  const [ownTab, setOwnTab] = useState<TabKey>('chart');
+  const activeTab: TabKey = section ?? ownTab;
+  const setActiveTab = (next: TabKey): void => {
+    setOwnTab(next);
+    onSectionChange?.(next);
+  };
   const [symbolClass] = useSymbolClass();
-  const [pngSize, setPngSize] = useState(1200);
-  const [pngError, setPngError] = useState<string | undefined>(undefined);
-  const [pngBusy, setPngBusy] = useState(false);
   // True only for the moment between clicking "Export PDF" and the print dialog closing
   // (see `exportPdf` below): while true, every table renders at once instead of just the
   // active tab, so the PDF the browser's own "Save as PDF" produces has all of them (#67).
   const [printAll, setPrintAll] = useState(false);
-  const sizes = pngSizes(t);
 
   const pointVisibility = toPointVisibilityOptions(extendedSettings);
 
@@ -971,25 +972,32 @@ export function ChartDataView({
     downloadText(deriveExportFilename(displayName, 'chart', 'svg'), standaloneSvg(sheet.markup), 'image/svg+xml');
   };
 
-  const downloadPng = (): void => {
+  /** Rejects with the rasterizer's own message, which the header's export status shows. */
+  const downloadPng = async (size: number): Promise<void> => {
     if (sheet === undefined) return;
-    setPngError(undefined);
-    setPngBusy(true);
     // The sheet is taller than it is wide, so the chosen size is its width and
     // the height follows its own aspect ratio — rasterizing it square would
     // squash the wheel into an ellipse.
-    const pngHeight = Math.round((pngSize * sheet.height) / sheet.width);
-    void svgToPngBlob(standaloneSvg(sheet.markup), pngSize, pngHeight)
-      .then((blob) => {
-        downloadBlob(deriveExportFilename(displayName, 'chart', 'png'), blob);
-      })
-      .catch((error: unknown) => {
-        setPngError(error instanceof Error ? error.message : String(error));
-      })
-      .finally(() => {
-        setPngBusy(false);
-      });
+    const pngHeight = Math.round((size * sheet.height) / sheet.width);
+    const blob = await svgToPngBlob(standaloneSvg(sheet.markup), size, pngHeight);
+    downloadBlob(deriveExportFilename(displayName, 'chart', 'png'), blob);
   };
+
+  // The chart's own exports live in the header's Export menu (#export), not under the wheel: registered while
+  // this screen is mounted, so the menu offers them on every screen that shows a chart.
+  useRegisterExports(
+    sheet === undefined
+      ? undefined
+      : [
+          { key: 'chart-svg', label: t.exportSvg, run: downloadSvg },
+          ...pngSizes(t).map((option) => ({
+            key: `chart-png-${String(option.size)}`,
+            label: t.exportPng(option.label),
+            run: () => downloadPng(option.size),
+          })),
+          { key: 'chart-pdf', label: t.exportPdf, run: exportPdf },
+        ],
+  );
 
   // The sections this chart can show (#430): the wheel (and the Houses and Derived points tables) are built
   // on the Ascendant, so a chart without houses has none of them and opens on the next section instead.
@@ -1110,39 +1118,6 @@ export function ChartDataView({
             <p className="hint">{t.astrochartReferenceHint}</p>
           </div>
         )}
-
-        <div className="chart-export-actions">
-          <button type="button" className="quiet" onClick={downloadSvg}>
-            {t.downloadSvg}
-          </button>
-          <span className="chart-export-png">
-            <select
-              aria-label={t.pngResolutionLabel}
-              value={pngSize}
-              onChange={(event) => {
-                setPngSize(Number(event.target.value));
-              }}
-            >
-              {sizes.map((option) => (
-                <option key={option.size} value={option.size}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <button type="button" className="quiet" onClick={downloadPng} disabled={pngBusy}>
-              {pngBusy ? t.rendering : t.downloadPng}
-            </button>
-          </span>
-          <button type="button" className="quiet" onClick={exportPdf}>
-            {t.exportPdf}
-          </button>
-        </div>
-        {pngError !== undefined && (
-          <p className="warning" role="alert">
-            {pngError}
-          </p>
-        )}
-        <p className="hint">{t.exportPdfHint}</p>
       </>
     );
 
@@ -1286,7 +1261,13 @@ export function ChartDataView({
   );
 }
 
-export function ChartView({ personId }: { personId: string }): React.JSX.Element {
+export function ChartView({
+  personId,
+  section,
+}: {
+  personId: string;
+  section?: ChartSection | undefined;
+}): React.JSX.Element {
   const state = useStoreState();
   const person = state.people.get(personId);
   const t = useMessages(chartViewMessages);
@@ -1295,6 +1276,15 @@ export function ChartView({ personId }: { personId: string }): React.JSX.Element
   const [settings, setSettings] = useState<ExtendedSettings>(DEFAULT_EXTENDED_SETTINGS);
   const [rulership] = useRulershipChoice();
   const lastChartKey = useRef('');
+  // Memoised: it is a dependency of the wheel's markup, and a new array on every render of this screen (which a
+  // change of section now causes) would redraw the wheel and drop what was selected on it.
+  const personMoment = person?.moment;
+  const personName = person?.displayName ?? '';
+  const metaLines = useMemo(
+    () =>
+      personMoment === undefined ? undefined : chartSheetMetaLines(personName || t.chartFallback, personMoment, locale),
+    [personMoment, personName, t.chartFallback, locale],
+  );
   // The "Extended settings" panel's house-system/ayanamsa name lookups and the main
   // chart computation below used to hold two separate `WorkerEphemerisProvider`
   // instances — kept apart so that recreating the computation provider on a settings
@@ -1361,15 +1351,20 @@ export function ChartView({ personId }: { personId: string }): React.JSX.Element
         <a href={`#/person/${personId}`}>&larr; {person.displayName || t.personFallback}</a>
       </p>
       <h1>{person.displayName || t.chartFallback}</h1>
+      <ChartTypeSelector personId={personId} type="natal" section={section} />
       <ShareLink moment={person.moment} housesKnown={showHouses} />
       <ChartDataView
         load={load}
         displayName={person.displayName}
         showHouses={showHouses}
-        metaLines={chartSheetMetaLines(person.displayName || t.chartFallback, person.moment, locale)}
+        metaLines={metaLines}
         extendedSettings={settings}
         onExtendedSettingsChange={setSettings}
         settingsProvider={provider}
+        section={section ?? 'chart'}
+        onSectionChange={(next) => {
+          changeChartSection(personId, 'natal', next);
+        }}
       />
     </main>
   );

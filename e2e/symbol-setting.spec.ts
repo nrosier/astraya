@@ -9,7 +9,7 @@ import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
-import { createPerson, gotoAndSettle } from './support.ts';
+import { chooseExport, createPerson, gotoAndSettle, openNatalChart } from './support.ts';
 
 let dir: string;
 let app: FastifyInstance;
@@ -42,7 +42,7 @@ test('the symbol class changes the wheel, the tables and the export together, an
     latitude: '51.5072',
     longitude: '-0.1276',
   });
-  await page.getByRole('link', { name: 'Natal chart', exact: true }).click();
+  await openNatalChart(page);
   await expect(page.locator('div.chart-wheel')).toBeVisible();
 
   const openSettings = async (): Promise<void> => {
@@ -62,7 +62,7 @@ test('the symbol class changes the wheel, the tables and the export together, an
   await expect(page.locator('#chart-tabpanel-positions .table-symbol-text', { hasText: 'SUN' })).toBeVisible();
 
   // Unicode: the characters instead.
-  await page.getByRole('tab', { name: 'Chart', exact: true }).click();
+  await page.getByRole('tab', { name: 'Chart wheel', exact: true }).click();
   await openSettings();
   await symbols.selectOption('unicode');
   await expect(page.locator('.chart-wheel text.chart-symbol-text-unicode', { hasText: '☉' }).first()).toBeAttached();
@@ -70,13 +70,10 @@ test('the symbol class changes the wheel, the tables and the export together, an
   await expect(page.locator('#chart-tabpanel-positions td', { hasText: '☉' }).first()).toBeVisible();
 
   // The exported SVG carries the choice and the style that makes it readable outside the app.
-  await page.getByRole('tab', { name: 'Chart', exact: true }).click();
+  await page.getByRole('tab', { name: 'Chart wheel', exact: true }).click();
   await openSettings();
   await symbols.selectOption('text');
-  const [download] = await Promise.all([
-    page.waitForEvent('download'),
-    page.getByRole('button', { name: 'Download SVG', exact: true }).click(),
-  ]);
+  const [download] = await Promise.all([page.waitForEvent('download'), chooseExport(page, 'Image (SVG)')]);
   const chunks: Buffer[] = [];
   for await (const chunk of await download.createReadStream()) chunks.push(chunk as Buffer);
   const svg = Buffer.concat(chunks).toString('utf-8');

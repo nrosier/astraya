@@ -70,7 +70,7 @@ const en = {
   chartShapeSentence: (shape: string, handle: string | undefined) =>
     handle === undefined ? `Chart shape: ${shape}.` : `Chart shape: ${shape} (handle: ${handle}).`,
 
-  chartTabLabel: 'Chart',
+  chartTabLabel: 'Chart wheel',
   showOnChartColumn: 'Wheel',
   showOnChartButton: 'Show',
   showOnChart: (name: string) => `Show ${name} on the chart`,
@@ -138,11 +138,9 @@ const en = {
   astrochartReferenceHeading: 'AstroChart reference rendering (dev only)',
   astrochartReferenceHint: 'Shown for comparison only — exports always use Astraya’s own rendering above.',
 
-  downloadSvg: 'Download SVG',
-  pngResolutionLabel: 'PNG resolution',
-  rendering: 'Rendering…',
-  downloadPng: 'Download PNG',
-  exportPdf: 'Export PDF…',
+  exportSvg: 'Image (SVG)',
+  exportPng: (size: string) => `Image (PNG), ${size}`,
+  exportPdf: 'Document (PDF, via print)…',
   exportPdfHint:
     '“Export PDF” opens your browser’s print dialog with the wheel and every data table laid out for paper — choose “Save as PDF” there.',
 
@@ -236,7 +234,7 @@ const nl: typeof en = {
   chartShapeSentence: (shape: string, handle: string | undefined) =>
     handle === undefined ? `Horoscoopvorm: ${shape}.` : `Horoscoopvorm: ${shape} (handvat: ${handle}).`,
 
-  chartTabLabel: 'Horoscoop',
+  chartTabLabel: 'Horoscoopwiel',
   showOnChartColumn: 'Wiel',
   showOnChartButton: 'Toon',
   showOnChart: (name: string) => `Toon ${name} op de horoscoop`,
@@ -303,11 +301,9 @@ const nl: typeof en = {
   astrochartReferenceHint:
     'Alleen getoond ter vergelijking — exports gebruiken altijd Astraya’s eigen weergave hierboven.',
 
-  downloadSvg: 'SVG downloaden',
-  pngResolutionLabel: 'PNG-resolutie',
-  rendering: 'Renderen…',
-  downloadPng: 'PNG downloaden',
-  exportPdf: 'PDF exporteren…',
+  exportSvg: 'Afbeelding (SVG)',
+  exportPng: (size: string) => `Afbeelding (PNG), ${size}`,
+  exportPdf: 'Document (PDF, via afdrukken)…',
   exportPdfHint:
     '“PDF exporteren” opent het afdrukdialoogvenster van je browser met het wiel en elke gegevenstabel opgemaakt voor papier — kies daar “Opslaan als PDF”.',
 

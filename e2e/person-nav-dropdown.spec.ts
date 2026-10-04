@@ -54,8 +54,8 @@ test('opening a second group closes the first, so only one dropdown is ever open
   await expect(popup(page, 'Transits & Forecast')).toBeVisible();
   await expect(group(page, 'Transits & Forecast')).toHaveAttribute('aria-expanded', 'true');
 
-  await group(page, 'Chart Variants').click();
-  await expect(popup(page, 'Chart Variants')).toBeVisible();
+  await group(page, 'Charts').click();
+  await expect(popup(page, 'Charts')).toBeVisible();
   await expect(popup(page, 'Transits & Forecast')).toHaveCount(0);
   await expect(group(page, 'Transits & Forecast')).toHaveAttribute('aria-expanded', 'false');
 });
@@ -87,21 +87,21 @@ test('a click on empty page, on content, or on another tab closes the open menu'
   test.setTimeout(60_000);
   await personWithChart(page);
 
-  await group(page, 'Chart Variants').click();
-  await expect(popup(page, 'Chart Variants')).toBeVisible();
+  await group(page, 'Charts').click();
+  await expect(popup(page, 'Charts')).toBeVisible();
   await page.getByRole('heading', { level: 1 }).click();
-  await expect(popup(page, 'Chart Variants')).toHaveCount(0);
+  await expect(popup(page, 'Charts')).toHaveCount(0);
 
-  await group(page, 'Chart Variants').click();
-  await expect(popup(page, 'Chart Variants')).toBeVisible();
+  await group(page, 'Charts').click();
+  await expect(popup(page, 'Charts')).toBeVisible();
   // The page's own link: no route change follows, so only the outside press can close it.
   await page.getByRole('link', { name: 'Birth record', exact: true }).click();
-  await expect(popup(page, 'Chart Variants')).toHaveCount(0);
+  await expect(popup(page, 'Charts')).toHaveCount(0);
 
-  await group(page, 'Chart Variants').click();
-  await expect(popup(page, 'Chart Variants')).toBeVisible();
+  await group(page, 'Charts').click();
+  await expect(popup(page, 'Charts')).toBeVisible();
   await page.mouse.click(5, 400);
-  await expect(popup(page, 'Chart Variants')).toHaveCount(0);
+  await expect(popup(page, 'Charts')).toHaveCount(0);
 });
 
 test('Escape closes the menu and puts focus back on its button', async ({ page }) => {
