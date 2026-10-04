@@ -279,6 +279,17 @@ const MIGRATIONS: readonly ((db: DatabaseSync) => void)[] = [
       ALTER TABLE interpretation_results ADD COLUMN description_iv BLOB;
     `);
   },
+  // 12: what each Tier 2 result was based on (#423): its `kind` (see `src/interpretation/result-basis.ts`)
+  // and a small `basis` record (the body, the perspective, the placements). Both are rebuilt by the
+  // server from the closed-set-validated request and hold no reader-written text, so they are plain
+  // columns like `mode`, not encrypted. Nullable: entries from before this have only a `mode`, and
+  // the history derives their kind from it and says the basis was not recorded.
+  (db) => {
+    db.exec(`
+      ALTER TABLE interpretation_results ADD COLUMN kind TEXT;
+      ALTER TABLE interpretation_results ADD COLUMN basis_json TEXT;
+    `);
+  },
 ];
 
 /** Migration steps whose table rebuild would otherwise break `REFERENCES` clauses pointing at the table being rebuilt. */

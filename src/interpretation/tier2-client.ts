@@ -31,6 +31,7 @@
  */
 import type { ChartData } from '../domain/chart-compute.js';
 import type { FocusContext } from './focus-context-schema.js';
+import type { ResultBasis, ResultKind } from './result-basis.js';
 import type { Locale } from './schema.js';
 
 export class Tier2Error extends Error {
@@ -150,6 +151,10 @@ export interface SavedInterpretationSummary {
   readonly createdAt: string;
   /** The model's short label for the request (#423); `null` for older entries or when none was kept. */
   readonly description: string | null;
+  /** Which kind of interpretation it is (#423); `null` only for a mode this client does not know. */
+  readonly kind: ResultKind | null;
+  /** What it was based on; `null` for entries saved before that was recorded. */
+  readonly basis: ResultBasis | null;
 }
 
 export interface SavedInterpretationDetail extends SavedInterpretationSummary {

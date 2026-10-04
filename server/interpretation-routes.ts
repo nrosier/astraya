@@ -74,6 +74,7 @@ import {
 import { checkCustomPrompt } from '../src/interpretation/prompt-guardrail.ts';
 import { validateFocusContext, type FocusContext } from '../src/interpretation/focus-context-schema.ts';
 import { loadEncryptionKey } from './ops/crypto.ts';
+import type { ResultBasis } from '../src/interpretation/result-basis.ts';
 import { sanitizeDescription } from './interpretation/description.ts';
 import {
   saveInterpretationResult,
@@ -466,6 +467,7 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
 
       let facts: string[] = [];
       let focusContext: FocusContext | undefined;
+      let basis: ResultBasis;
       let systemInstruction: string;
       if (mode === 'grounded') {
         if (!Array.isArray(placementKeys) || placementKeys.length === 0) {
@@ -493,6 +495,7 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
         const placements = parsedPlacements as readonly NonNullable<(typeof parsedPlacements)[number]>[];
         facts = placements.map((placement) => resolvePlacementText(placement, locale, CORPUS));
         systemInstruction = SYSTEM_INSTRUCTION;
+        basis = { kind: 'placements', keys: placementKeys };
       } else if (mode === 'focus') {
         const validated = validateFocusContext(request.body.focusContext);
         if ('errors' in validated) {
@@ -500,6 +503,7 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
         }
         focusContext = validated.context;
         systemInstruction = FOCUS_SYSTEM_INSTRUCTION;
+        basis = { kind: 'focus', body: validated.context.focus_object.key, perspective: validated.context.perspective };
       } else {
         const validated = validateChartData(chartData);
         if ('errors' in validated) {
@@ -507,6 +511,7 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
         }
         facts = buildFreeformFacts(validated.chartData);
         systemInstruction = FREEFORM_SYSTEM_INSTRUCTION;
+        basis = { kind: 'whole-chart' };
       }
 
       const config = loadTier2Config();
@@ -595,7 +600,11 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
       // succeeded; the reader just won't be able to reopen this one later.
       const resultsKey = loadEncryptionKey();
       if (resultsKey) {
-        saveInterpretationResult(db, { userId, mode, locale, sections: result.sections, description }, resultsKey);
+        saveInterpretationResult(
+          db,
+          { userId, mode, locale, sections: result.sections, description, basis },
+          resultsKey,
+        );
       }
 
       return reply.send({ sections: result.sections, description });

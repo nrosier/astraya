@@ -710,7 +710,9 @@ describe('POST /api/interpretation/generate', () => {
         url: '/api/interpretation/results',
         cookies: { [SESSION_COOKIE]: cookie ?? '' },
       });
-      return response.json<{ results: { mode: string; description: string | null }[] }>().results;
+      return response.json<{
+        results: { mode: string; description: string | null; kind: string | null; basis: unknown }[];
+      }>().results;
     }
     const answerWith = (description: unknown) => {
       fetchMock = modelAnswering('pass', description);
@@ -726,6 +728,18 @@ describe('POST /api/interpretation/generate', () => {
         mode: 'grounded',
         description: 'Short and warm with focus on family',
       });
+    });
+
+    it('records what each kind of request was based on, from the validated request (#423)', async () => {
+      answerWith('A label');
+      await generateWith(VALID_BODY);
+      await generateWith({ mode: 'freeform', chartData: VALID_CHART_DATA, locale: 'en' });
+      const byMode = new Map((await listed()).map((entry) => [entry.mode, entry]));
+      expect(byMode.get('grounded')).toMatchObject({
+        kind: 'placements',
+        basis: { kind: 'placements', keys: VALID_BODY.placementKeys },
+      });
+      expect(byMode.get('freeform')).toMatchObject({ kind: 'whole-chart', basis: { kind: 'whole-chart' } });
     });
 
     it('labels an AI-written reading with no instruction too', async () => {
@@ -859,6 +873,20 @@ describe('POST /api/interpretation/generate', () => {
       ],
     };
     const FOCUS_BODY = { mode: 'focus', focusContext: FOCUS, locale: 'en' };
+
+    it('records which body and perspective the reading was about (#423)', async () => {
+      await generateWith({ ...FOCUS_BODY, focusContext: { ...FOCUS, perspective: 'transit' } });
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/interpretation/results',
+        cookies: { [SESSION_COOKIE]: cookie ?? '' },
+      });
+      expect(response.json<{ results: unknown[] }>().results[0]).toMatchObject({
+        mode: 'focus',
+        kind: 'focus',
+        basis: { kind: 'focus', body: 'pluto', perspective: 'transit' },
+      });
+    });
 
     it('generates from the placement’s context with one model call and no verification', async () => {
       const response = await generateWith(FOCUS_BODY);

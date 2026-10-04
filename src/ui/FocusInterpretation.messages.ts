@@ -10,6 +10,10 @@ const en = {
   signIn: 'Sign in to generate an AI interpretation of this placement.',
   disabledConsent: 'check the consent box first',
   error: (message: string) => `Could not generate: ${message}`,
+  savedHeading: 'Past interpretations of this placement',
+  /** `Tuesday March 10 2026 @ 17:30 (Short and sharp) (Mars (natal))`: the time, the model's short label if any, what it was based on. */
+  savedEntry: (time: string, basis: string, description: string | null) =>
+    description === null ? `${time} (${basis})` : `${time} (${description}) (${basis})`,
 };
 
 const nl: typeof en = {
@@ -21,6 +25,9 @@ const nl: typeof en = {
   signIn: 'Log in om een AI-interpretatie van deze plaatsing te genereren.',
   disabledConsent: 'vink eerst het toestemmingsvakje aan',
   error: (message) => `Kon niet genereren: ${message}`,
+  savedHeading: 'Eerdere interpretaties van deze plaatsing',
+  savedEntry: (time, basis, description) =>
+    description === null ? `${time} (${basis})` : `${time} (${description}) (${basis})`,
 };
 
 export const focusInterpretationMessages = { en, nl };

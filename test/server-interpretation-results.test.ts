@@ -203,8 +203,73 @@ describe('the short description of an interpretation (#423)', () => {
       'INSERT INTO interpretation_results (id, user_id, mode, locale, sections_json, key_version, iv, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
     ).run('old', userId, 'synthesis', 'en', Buffer.from('x'), 1, Buffer.from('y'), '2026-01-01T00:00:00.000Z');
     expect(listInterpretationResults(db, userId, key)).toEqual([
-      { id: 'old', mode: 'synthesis', locale: 'en', createdAt: '2026-01-01T00:00:00.000Z', description: null },
+      {
+        id: 'old',
+        mode: 'synthesis',
+        locale: 'en',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        description: null,
+        kind: 'whole-chart',
+        basis: null,
+      },
     ]);
+    db.close();
+  });
+});
+
+describe('what an interpretation was based on (#423)', () => {
+  it('stores the kind and basis, and returns them in the list and when reopened', () => {
+    const db = openDatabase(':memory:');
+    const key = randomBytes(32);
+    const userId = makeUser(db, 'alice');
+    const basis = { kind: 'focus', body: 'mars', perspective: 'transit' } as const;
+    const id = saveInterpretationResult(db, { userId, mode: 'focus', locale: 'en', sections: SECTIONS, basis }, key);
+    expect(listInterpretationResults(db, userId, key)[0]).toMatchObject({ id, kind: 'focus', basis });
+    expect(getInterpretationResult(db, userId, id, key)).toMatchObject({ kind: 'focus', basis });
+    db.close();
+  });
+
+  it('keeps the basis readable without the encryption key: it is metadata, like the mode', () => {
+    const db = openDatabase(':memory:');
+    const userId = makeUser(db, 'alice');
+    saveInterpretationResult(
+      db,
+      { userId, mode: 'freeform', locale: 'en', sections: SECTIONS, basis: { kind: 'whole-chart' } },
+      randomBytes(32),
+    );
+    expect(listInterpretationResults(db, userId)[0]).toMatchObject({
+      kind: 'whole-chart',
+      basis: { kind: 'whole-chart' },
+    });
+    db.close();
+  });
+
+  it('derives the kind from the mode for a save with no basis, and reports no basis', () => {
+    const db = openDatabase(':memory:');
+    const userId = makeUser(db, 'alice');
+    saveInterpretationResult(db, { userId, mode: 'grounded', locale: 'en', sections: SECTIONS }, randomBytes(32));
+    expect(listInterpretationResults(db, userId)[0]).toMatchObject({ kind: 'placements', basis: null });
+    db.close();
+  });
+
+  it('ignores a stored basis it does not understand rather than failing', () => {
+    const db = openDatabase(':memory:');
+    const userId = makeUser(db, 'alice');
+    db.prepare(
+      'INSERT INTO interpretation_results (id, user_id, mode, locale, sections_json, key_version, iv, created_at, kind, basis_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    ).run(
+      'x',
+      userId,
+      'focus',
+      'en',
+      Buffer.from('x'),
+      1,
+      Buffer.from('y'),
+      '2026-01-01T00:00:00.000Z',
+      'focus',
+      '{"kind":"from-the-future"}',
+    );
+    expect(listInterpretationResults(db, userId)[0]).toMatchObject({ kind: 'focus', basis: null });
     db.close();
   });
 });

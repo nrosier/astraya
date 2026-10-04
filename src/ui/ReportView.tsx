@@ -42,6 +42,7 @@ import { PERSONA_IDS, type CorpusEntry, type Locale, type PersonaId } from '../i
 import { initialPersona, isPersonaId, PERSONA_KEY, reportPersonasEnabled } from './report-persona.js';
 import { checkCustomPrompt, type GuardrailIssue } from '../interpretation/prompt-guardrail.js';
 import { describeParagraphProvenance } from './report-provenance.js';
+import { savedKindLabel } from './result-basis-label.js';
 import { formatSavedTime } from './saved-time.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
@@ -181,14 +182,6 @@ function AiCustomizedPanel({
   }
 
   const placementKeys = reportPlacementKeys(report);
-  // Which of the two kinds a saved interpretation was: an older `synthesis` entry and a placement's
-  // `focus` interpretation (#424) were AI-written too.
-  const savedModeName = (savedMode: string): string =>
-    savedMode === 'grounded'
-      ? t.tier2SavedModeLocal
-      : savedMode === 'freeform' || savedMode === 'synthesis' || savedMode === 'focus'
-        ? t.tier2SavedModeAi
-        : savedMode;
   // The AI-written mode's instruction is optional, so an empty one has nothing to guard.
   const guardrailIssues = mode === 'freeform' && customPrompt.trim() === '' ? [] : checkCustomPrompt(customPrompt);
   // Only shown once the user has typed something — otherwise the empty-prompt "length"
@@ -355,7 +348,7 @@ function AiCustomizedPanel({
                 >
                   {t.tier2SavedEntry(
                     formatSavedTime(saved.createdAt, locale),
-                    savedModeName(saved.mode),
+                    savedKindLabel(saved, locale),
                     saved.description,
                   )}
                 </button>
