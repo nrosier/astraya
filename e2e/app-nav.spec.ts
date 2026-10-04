@@ -9,7 +9,15 @@ import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test, type Download } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
-import { createPerson, gotoAndSettle, openChart, openNatalChart, openTool } from './support.ts';
+import {
+  closeSettings,
+  createPerson,
+  gotoAndSettle,
+  openChart,
+  openNatalChart,
+  openSettings,
+  openTool,
+} from './support.ts';
 
 let dir: string;
 let app: FastifyInstance;
@@ -225,15 +233,15 @@ test('a solar return and a lunar return are charts like any other, with their co
 
   // A house system chosen on the natal chart applies to the returns, which share its Extended settings.
   await openNatalChart(page);
-  await page.locator('details.extended-settings summary').click();
-  await page.locator('details.extended-settings select').first().selectOption('W');
-  await page.getByRole('button', { name: 'Redraw', exact: true }).click();
+  await openSettings(page);
+  await page.getByLabel('House system', { exact: true }).selectOption('W');
+  await page.getByRole('button', { name: 'Apply and redraw', exact: true }).click();
 
   await openChart(page, 'Solar return');
   await expect(page.getByRole('heading', { name: /solar return/i, level: 1 })).toBeVisible();
-  await page.locator('details.extended-settings summary').click();
-  await expect(page.locator('details.extended-settings select').first()).toHaveValue('W');
-  await page.locator('details.extended-settings summary').click();
+  await openSettings(page);
+  await expect(page.getByLabel('House system', { exact: true })).toHaveValue('W');
+  await closeSettings(page);
   await page.getByLabel('Year').fill('2025');
   await expect(page.getByText(/Exact return: 2025-12-/)).toBeVisible({ timeout: 30_000 });
   await expect(page.locator('div.chart-wheel')).toBeVisible();

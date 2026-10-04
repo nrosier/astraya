@@ -43,6 +43,7 @@ export function SymbolSetting(): React.JSX.Element {
         <label htmlFor={`${id}-weight`}>{t.weightLabel} </label>
         <select
           id={`${id}-weight`}
+          disabled={choice !== 'drawn'}
           value={variants.weight}
           aria-describedby={`${id}-weight-hint`}
           onChange={(event) => {
@@ -68,6 +69,8 @@ export function SymbolSetting(): React.JSX.Element {
             {t.variantLabels[body]}{' '}
             <select
               aria-label={t.variantLabels[body]}
+              // The line weight and the Pluto forms are only visible in the drawn class; Uranus also has a Unicode form.
+              disabled={body === 'uranus' ? choice === 'text' : choice !== 'drawn'}
               value={variants[body]}
               onChange={(event) => {
                 if (isVariantKey(body, event.target.value)) setVariant(body, event.target.value);

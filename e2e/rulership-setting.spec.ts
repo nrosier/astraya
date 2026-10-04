@@ -10,7 +10,7 @@ import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
-import { createPerson, gotoAndSettle, openNatalChart } from './support.ts';
+import { createPerson, gotoAndSettle, openNatalChart, openSettings } from './support.ts';
 
 let dir: string;
 let app: FastifyInstance;
@@ -50,12 +50,8 @@ test('the rulers choice is modern by default, drives the dispositor table, and i
   await expect(page.locator('div.chart-wheel')).toBeVisible();
   await page.getByRole('tab', { name: 'Dignities', exact: true }).click();
 
-  // The control sits in the chart's collapsible "Extended settings" panel.
-  const openSettings = async (): Promise<void> => {
-    const panel = page.locator('details.extended-settings');
-    if ((await panel.getAttribute('open')) === null) await panel.locator('summary').click();
-  };
-  await openSettings();
+  // The control sits in the chart's Extended settings card, under "On this device".
+  await openSettings(page);
   const rulers = page.getByLabel('Planetary rulers', { exact: true });
   const plutoChain = page
     .getByRole('table', { name: 'Dispositors' })
@@ -81,7 +77,7 @@ test('the rulers choice is modern by default, drives the dispositor table, and i
   await page.reload();
   await page.waitForEvent('load', { timeout: 5_000 }).catch(() => undefined);
   await page.getByRole('tab', { name: 'Dignities', exact: true }).click();
-  await openSettings();
+  await openSettings(page);
   await expect(page.getByLabel('Planetary rulers', { exact: true })).toHaveValue('traditional');
   await expect(plutoChain).toContainText('Pluto → Mars');
 

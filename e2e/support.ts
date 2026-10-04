@@ -107,3 +107,17 @@ export async function chooseExport(page: Page, item: string, group?: string): Pr
   if (group !== undefined) await page.getByRole('button', { name: group, exact: true }).click();
   await page.getByRole('button', { name: item, exact: true }).click();
 }
+
+/** Opens the chart's Extended settings card (a modal dialog) from its trigger, if it is not open already. */
+export async function openSettings(page: Page): Promise<void> {
+  const dialog = page.locator('dialog.settings-card');
+  if (!(await dialog.isVisible())) await page.locator('button.extended-settings-trigger').click();
+  await expect(dialog).toBeVisible();
+}
+
+/** Closes the card without applying what is in its draft; the device preferences in it have already taken effect. */
+export async function closeSettings(page: Page): Promise<void> {
+  const dialog = page.locator('dialog.settings-card');
+  if (await dialog.isVisible()) await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await expect(dialog).toBeHidden();
+}

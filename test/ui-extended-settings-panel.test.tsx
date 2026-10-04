@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * A jsdom smoke test for `ExtendedSettingsPanel` (#52), in the style of the
+ * A jsdom smoke test for `ExtendedSettingsPanel` (#52, #442), in the style of the
  * existing `chart-astrochart-wheel.test.tsx`: mount with `createRoot`,
  * interact with real DOM nodes, no React Testing Library. The provider here
  * is a hand-built fake rather than the real engine (unlike the
@@ -10,10 +10,11 @@
  */
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { describe, expect, it, vi } from 'vitest';
-import { DEFAULT_EXTENDED_SETTINGS } from '../src/chart/extended-settings.js';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { DEFAULT_EXTENDED_SETTINGS, type ExtendedSettings } from '../src/chart/extended-settings.js';
 import type { EphemerisProvider } from '../src/ephemeris/types.js';
 import { ExtendedSettingsPanel } from '../src/ui/ExtendedSettingsPanel.js';
+import { writeRulershipChoice } from '../src/ui/rulership-setting.js';
 
 function notImplemented(): never {
   throw new Error('not used by this test');
@@ -53,15 +54,21 @@ function checkboxLabeled(container: HTMLElement, text: string): HTMLInputElement
   return input;
 }
 
+afterEach(() => {
+  localStorage.clear();
+  writeRulershipChoice('modern');
+});
+
 async function mount(
   provider: EphemerisProvider,
   onRedraw: (next: unknown) => void,
+  value: ExtendedSettings = DEFAULT_EXTENDED_SETTINGS,
 ): Promise<{ container: HTMLElement; root: Root }> {
   const container = document.createElement('div');
   document.body.append(container);
   const root = createRoot(container);
   await act(async () => {
-    root.render(<ExtendedSettingsPanel value={DEFAULT_EXTENDED_SETTINGS} onRedraw={onRedraw} provider={provider} />);
+    root.render(<ExtendedSettingsPanel value={value} onRedraw={onRedraw} provider={provider} />);
     // Lets the fake provider's already-resolved name-lookup promises settle and the
     // resulting re-render commit before assertions run.
     await Promise.resolve();
@@ -70,31 +77,51 @@ async function mount(
   return { container, root };
 }
 
+function unmount(container: HTMLElement, root: Root): void {
+  act(() => {
+    root.unmount();
+  });
+  container.remove();
+}
+
+const buttonNamed = (container: HTMLElement, name: string): HTMLButtonElement | undefined =>
+  Array.from(container.querySelectorAll('button')).find((button) => button.textContent === name);
+
+const trigger = (container: HTMLElement): HTMLButtonElement => {
+  const found = container.querySelector<HTMLButtonElement>('button.extended-settings-trigger');
+  if (found === null) throw new Error('fixture bug: no trigger');
+  return found;
+};
+
+function openCard(container: HTMLElement): void {
+  act(() => {
+    trigger(container).click();
+  });
+}
+
 describe('ExtendedSettingsPanel', () => {
-  it('renders collapsed behind a disclosure and resolves house-system names asynchronously', async () => {
+  it('shows a button, opens a modal card from it, and resolves house-system names asynchronously', async () => {
     const { container, root } = await mount(fakeProvider(), vi.fn());
 
-    expect(container.querySelector('details.extended-settings')).not.toBeNull();
-    expect(container.querySelector('summary')?.textContent).toBe('Extended settings');
+    expect(trigger(container).textContent).toBe('Extended settings');
+    expect(container.querySelector('dialog.settings-card')?.hasAttribute('open')).toBe(false);
+    openCard(container);
+    expect(container.querySelector('dialog.settings-card')?.hasAttribute('open')).toBe(true);
 
-    const houseSelect = container.querySelector('select');
+    const houseSelect = container.querySelector('dialog select');
     expect(houseSelect).not.toBeNull();
-    // Placidus ('P') is the default; its option's label should have resolved from the
-    // fake's houseSystemName rather than staying on the raw machine key ("placidus").
-    const placidusOption = Array.from(houseSelect?.querySelectorAll('option') ?? []).find(
-      (option) => option.value === 'P',
+    const placidusOption = Array.from(container.querySelectorAll('select option')).find(
+      (option) => (option as HTMLOptionElement).value === 'P',
     );
     expect(placidusOption?.textContent).toBe('House system P');
 
-    act(() => {
-      root.unmount();
-    });
-    container.remove();
+    unmount(container, root);
   });
 
-  it('redraws with the edited draft, not the original value, once Redraw is clicked', async () => {
+  it('applies the edited draft, not the original value, once Apply and redraw is clicked', async () => {
     const onRedraw = vi.fn();
     const { container, root } = await mount(fakeProvider(), onRedraw);
+    openCard(container);
 
     const rainbowCheckbox = checkboxLabeled(container, 'Rainbow Color Zodiac');
     expect(rainbowCheckbox.checked).toBe(false);
@@ -103,53 +130,80 @@ describe('ExtendedSettingsPanel', () => {
     });
     expect(onRedraw).not.toHaveBeenCalled();
 
-    const redrawButton = Array.from(container.querySelectorAll('button')).find(
-      (button) => button.textContent === 'Redraw',
-    );
-    expect(redrawButton).not.toBeUndefined();
     act(() => {
-      redrawButton?.click();
+      buttonNamed(container, 'Apply and redraw')?.click();
     });
 
     expect(onRedraw).toHaveBeenCalledTimes(1);
     expect(onRedraw).toHaveBeenCalledWith({ ...DEFAULT_EXTENDED_SETTINGS, rainbowZodiac: true });
+    expect(container.querySelector('dialog')?.hasAttribute('open')).toBe(false);
 
-    act(() => {
-      root.unmount();
-    });
-    container.remove();
+    unmount(container, root);
   });
 
-  it('toggles the Midpoints checkbox and redraws with it set', async () => {
+  it('cannot apply while nothing has changed, and Cancel drops the draft', async () => {
     const onRedraw = vi.fn();
     const { container, root } = await mount(fakeProvider(), onRedraw);
+    openCard(container);
+
+    const apply = buttonNamed(container, 'Apply and redraw');
+    expect(apply?.disabled).toBe(true);
+    act(() => {
+      checkboxLabeled(container, 'Part of Fortune').click();
+    });
+    expect(buttonNamed(container, 'Apply and redraw')?.disabled).toBe(false);
+    act(() => {
+      buttonNamed(container, 'Cancel')?.click();
+    });
+    expect(onRedraw).not.toHaveBeenCalled();
+
+    // Opened again, the draft starts from the applied value, not from what was abandoned.
+    openCard(container);
+    expect(checkboxLabeled(container, 'Part of Fortune').checked).toBe(false);
+
+    unmount(container, root);
+  });
+
+  it('closes without applying on Escape', async () => {
+    const onRedraw = vi.fn();
+    const { container, root } = await mount(fakeProvider(), onRedraw);
+    openCard(container);
+    act(() => {
+      checkboxLabeled(container, 'Vertex').click();
+    });
+    act(() => {
+      container.querySelector('dialog')?.dispatchEvent(new Event('cancel', { cancelable: true }));
+    });
+    expect(onRedraw).not.toHaveBeenCalled();
+    expect(container.querySelector('dialog')?.hasAttribute('open')).toBe(false);
+    unmount(container, root);
+  });
+
+  it('toggles the Midpoints checkbox and applies it set', async () => {
+    const onRedraw = vi.fn();
+    const { container, root } = await mount(fakeProvider(), onRedraw);
+    openCard(container);
 
     const midpointsCheckbox = checkboxLabeled(container, 'Midpoints (ASC/MC, Sun/Moon)');
     expect(midpointsCheckbox.checked).toBe(false);
     act(() => {
       midpointsCheckbox.click();
     });
-
-    const redrawButton = Array.from(container.querySelectorAll('button')).find(
-      (button) => button.textContent === 'Redraw',
-    );
     act(() => {
-      redrawButton?.click();
+      buttonNamed(container, 'Apply and redraw')?.click();
     });
 
     expect(onRedraw).toHaveBeenCalledWith({ ...DEFAULT_EXTENDED_SETTINGS, midpointsVisible: true });
-
-    act(() => {
-      root.unmount();
-    });
-    container.remove();
+    unmount(container, root);
   });
 
   it('reveals the ayanamsa picker only once Sidereal is chosen', async () => {
     const { container, root } = await mount(fakeProvider(), vi.fn());
+    openCard(container);
 
-    // The house-system select, the planetary-rulers select (#426), the symbols and line-weight selects and the Uranus and Pluto form selects (#419); the ayanamsa picker joins them.
-    expect(container.querySelectorAll('select')).toHaveLength(6);
+    // The starting point, the house-system select, the planetary-rulers select (#426), the symbols and line-weight selects and
+    // the Uranus and Pluto form selects (#419); the ayanamsa picker joins them.
+    expect(container.querySelectorAll('select')).toHaveLength(7);
     const siderealRadio = Array.from(container.querySelectorAll<HTMLInputElement>('input[type="radio"]')).find(
       (radio) => radio.name === 'extended-settings-zodiac' && !radio.checked,
     );
@@ -161,17 +215,15 @@ describe('ExtendedSettingsPanel', () => {
     await act(async () => {
       await Promise.resolve();
     });
-    expect(container.querySelectorAll('select')).toHaveLength(7);
+    expect(container.querySelectorAll('select')).toHaveLength(8);
 
-    act(() => {
-      root.unmount();
-    });
-    container.remove();
+    unmount(container, root);
   });
 
-  it('selects the Interpolated Lilith radio and redraws with it set (#380)', async () => {
+  it('selects the Interpolated Lilith radio and applies it set (#380)', async () => {
     const onRedraw = vi.fn();
     const { container, root } = await mount(fakeProvider(), onRedraw);
+    openCard(container);
 
     const interpolatedRadio = Array.from(container.querySelectorAll<HTMLInputElement>('input[type="radio"]')).find(
       (radio) =>
@@ -182,19 +234,76 @@ describe('ExtendedSettingsPanel', () => {
     act(() => {
       interpolatedRadio?.click();
     });
-
-    const redrawButton = Array.from(container.querySelectorAll('button')).find(
-      (button) => button.textContent === 'Redraw',
-    );
     act(() => {
-      redrawButton?.click();
+      buttonNamed(container, 'Apply and redraw')?.click();
     });
 
     expect(onRedraw).toHaveBeenCalledWith({ ...DEFAULT_EXTENDED_SETTINGS, lilithVariant: 'interpolated' });
+    unmount(container, root);
+  });
+});
 
+describe('the trigger and the starting points (#442)', () => {
+  it('says nothing about the defaults, and names only what was changed', async () => {
+    const changed: ExtendedSettings = {
+      ...DEFAULT_EXTENDED_SETTINGS,
+      houseSystem: 'W',
+      zodiac: { kind: 'sidereal', ayanamsa: 1 },
+      fortuneVisible: true,
+      chironVisible: false,
+    };
+    const { container, root } = await mount(fakeProvider(), vi.fn(), changed);
+    const text = trigger(container).textContent;
+    expect(text).toContain('House system W');
+    expect(text).toContain('Sidereal (Ayanamsa 1)');
+    expect(text).toContain('Part of Fortune');
+    expect(text).toContain('Chiron hidden');
+    expect(text).toContain('4 changed');
+    expect(text).not.toContain('Rainbow');
+    expect(trigger(container).getAttribute('aria-label')).toContain('Chiron hidden');
+    unmount(container, root);
+  });
+
+  it('fills the profile in one go from a starting point, and shows Custom once it no longer matches', async () => {
+    const onRedraw = vi.fn();
+    const { container, root } = await mount(fakeProvider(), onRedraw);
+    openCard(container);
+
+    const preset = container.querySelector<HTMLSelectElement>('dialog select');
+    expect(preset?.value).toBe('modern');
     act(() => {
-      root.unmount();
+      if (preset === null) return;
+      Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value')?.set?.call(preset, 'traditional');
+      preset.dispatchEvent(new Event('change', { bubbles: true }));
     });
-    container.remove();
+    expect(checkboxLabeled(container, 'Part of Fortune').checked).toBe(true);
+    expect(container.querySelector<HTMLSelectElement>('dialog select')?.value).toBe('traditional');
+    // It also sets the (device-wide) rulers, but only when applied.
+    expect(container.textContent).toContain('also sets the planetary rulers to Traditional');
+    act(() => {
+      buttonNamed(container, 'Apply and redraw')?.click();
+    });
+    expect(onRedraw).toHaveBeenCalledWith(
+      expect.objectContaining({ houseSystem: 'W', fortuneVisible: true, chironVisible: false }),
+    );
+    expect(localStorage.getItem('astraya:rulershipChoice')).toBe('traditional');
+
+    unmount(container, root);
+  });
+
+  it('does not touch the rulers if the card is cancelled after choosing a starting point', async () => {
+    const { container, root } = await mount(fakeProvider(), vi.fn());
+    openCard(container);
+    const preset = container.querySelector<HTMLSelectElement>('dialog select');
+    act(() => {
+      if (preset === null) return;
+      Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value')?.set?.call(preset, 'vedic');
+      preset.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    act(() => {
+      buttonNamed(container, 'Cancel')?.click();
+    });
+    expect(localStorage.getItem('astraya:rulershipChoice')).not.toBe('traditional');
+    unmount(container, root);
   });
 });

@@ -1130,6 +1130,15 @@ export function ChartDataView({
       {!showHouses && <p className="hint">{t.housesUnknownHint(displayName || t.thisPerson)}</p>}
       {showHouses && !housesComputed && <p className="hint">{t.housesUndefinedHint(displayName || t.thisPerson)}</p>}
 
+      {/* Outside the loaded-chart gate: a setting that might fix a failed or slow calculation stays reachable (#442). */}
+      {onExtendedSettingsChange !== undefined && settingsProvider !== undefined && (
+        <ExtendedSettingsPanel
+          value={extendedSettings}
+          onRedraw={onExtendedSettingsChange}
+          provider={settingsProvider}
+        />
+      )}
+
       {load.kind === 'loading' && <p className="status">{t.calculating}</p>}
 
       {load.kind === 'error' && (
@@ -1144,14 +1153,6 @@ export function ChartDataView({
             <p className="warning" role="alert">
               {load.data.houses.warning}
             </p>
-          )}
-
-          {onExtendedSettingsChange !== undefined && settingsProvider !== undefined && (
-            <ExtendedSettingsPanel
-              value={extendedSettings}
-              onRedraw={onExtendedSettingsChange}
-              provider={settingsProvider}
-            />
           )}
 
           {printAll ? (
