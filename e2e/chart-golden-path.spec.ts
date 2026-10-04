@@ -13,7 +13,7 @@ import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
-import { createPerson, gotoAndSettle } from './support.ts';
+import { chooseExport, createPerson, gotoAndSettle, openNatalChart } from './support.ts';
 
 let dir: string;
 let app: FastifyInstance;
@@ -47,13 +47,10 @@ test('entering birth data renders the chart wheel and the SVG export downloads',
     longitude: '-0.1276',
   });
 
-  await page.getByRole('link', { name: 'Natal chart', exact: true }).click();
+  await openNatalChart(page);
   await expect(page.locator('div.chart-wheel')).toBeVisible();
 
-  const [download] = await Promise.all([
-    page.waitForEvent('download'),
-    page.getByRole('button', { name: 'Download SVG', exact: true }).click(),
-  ]);
+  const [download] = await Promise.all([page.waitForEvent('download'), chooseExport(page, 'Image (SVG)')]);
   expect(download.suggestedFilename()).toBe('ada-lovelace-chart.svg');
 
   const contents = await download.createReadStream();
@@ -75,7 +72,7 @@ test('clicking a glyph on the wheel isolates it and opens a focused-info panel (
     longitude: '-0.1276',
   });
 
-  await page.getByRole('link', { name: 'Natal chart', exact: true }).click();
+  await openNatalChart(page);
   await expect(page.locator('div.chart-wheel')).toBeVisible();
 
   // `.chart-point` is the clickable glyph group; since #412 the Sun's radial stack and its degree
@@ -108,7 +105,7 @@ test('clicking an aspect line isolates just its two endpoint bodies (#400)', asy
     longitude: '-0.1276',
   });
 
-  await page.getByRole('link', { name: 'Natal chart', exact: true }).click();
+  await openNatalChart(page);
   await expect(page.locator('div.chart-wheel')).toBeVisible();
 
   const line = page.locator('[data-aspect-body-a]').first();
@@ -136,7 +133,7 @@ test('the Jones chart-shape diagram renders alongside its text sentence and expl
     longitude: '-0.1276',
   });
 
-  await page.getByRole('link', { name: 'Natal chart', exact: true }).click();
+  await openNatalChart(page);
   await page.getByRole('tab', { name: 'Chart shape', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Chart shape', level: 2 })).toBeVisible();
   await expect(page.getByText(/Chart shape: /)).toBeVisible();
@@ -160,11 +157,11 @@ test('the natal chart is split into sections, opening on the wheel, and the whee
     latitude: '51.5072',
     longitude: '-0.1276',
   });
-  await page.getByRole('link', { name: 'Natal chart', exact: true }).click();
+  await openNatalChart(page);
 
   const tabs = page.getByRole('tab');
   await expect(tabs).toHaveText([
-    'Chart',
+    'Chart wheel',
     'Chart shape',
     'Positions',
     'Houses',
@@ -172,7 +169,7 @@ test('the natal chart is split into sections, opening on the wheel, and the whee
     'Dignities',
     'Derived points',
   ]);
-  await expect(page.getByRole('tab', { name: 'Chart', exact: true })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('tab', { name: 'Chart wheel', exact: true })).toHaveAttribute('aria-selected', 'true');
   await expect(page.locator('div.chart-wheel')).toBeVisible();
 
   // Select a planet, visit another section, come back: the selection is still there.
@@ -182,11 +179,11 @@ test('the natal chart is split into sections, opening on the wheel, and the whee
   await expect(page.getByRole('heading', { name: 'Positions', level: 2 })).toBeVisible();
   await expect(page.locator('div.chart-wheel')).toBeHidden();
   await expect(page.getByRole('cell', { name: 'Sun', exact: true }).first()).toBeVisible();
-  await page.getByRole('tab', { name: 'Chart', exact: true }).click();
+  await page.getByRole('tab', { name: 'Chart wheel', exact: true }).click();
   await expect(page.locator('.chart-isolation-panel')).toBeVisible();
 
   // The arrow keys walk the strip.
-  await page.getByRole('tab', { name: 'Chart', exact: true }).focus();
+  await page.getByRole('tab', { name: 'Chart wheel', exact: true }).focus();
   await page.keyboard.press('ArrowRight');
   await expect(page.getByRole('tab', { name: 'Chart shape', exact: true })).toBeFocused();
 });
@@ -207,7 +204,7 @@ test('the natal chart sections fit a phone: the tab strip wraps instead of scrol
   });
   // On a phone the navigation is folded behind the Menu button (#421).
   await page.getByRole('button', { name: 'Menu', exact: true }).click();
-  await page.getByRole('link', { name: 'Natal chart', exact: true }).click();
+  await openNatalChart(page);
   await expect(page.getByRole('tab', { name: 'Derived points', exact: true })).toBeVisible();
   const overflow = await page.evaluate('document.documentElement.scrollWidth - window.innerWidth');
   expect(overflow).toBeLessThanOrEqual(1);
@@ -227,7 +224,7 @@ test('a table row selects on the wheel and the wheel marks the table row (#418)'
     latitude: '51.5072',
     longitude: '-0.1276',
   });
-  await page.getByRole('link', { name: 'Natal chart', exact: true }).click();
+  await openNatalChart(page);
   await expect(page.locator('div.chart-wheel')).toBeVisible();
 
   // Table to wheel: press Show on the Sun's row, then go to the chart: it is isolated there.

@@ -10,7 +10,7 @@ import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
-import { createPerson, gotoAndSettle } from './support.ts';
+import { createPerson, gotoAndSettle, openNatalChart } from './support.ts';
 
 let dir: string;
 let app: FastifyInstance;
@@ -46,7 +46,7 @@ test('the rulers choice is modern by default, drives the dispositor table, and i
     latitude: '51.5072',
     longitude: '-0.1276',
   });
-  await page.getByRole('link', { name: 'Natal chart', exact: true }).click();
+  await openNatalChart(page);
   await expect(page.locator('div.chart-wheel')).toBeVisible();
   await page.getByRole('tab', { name: 'Dignities', exact: true }).click();
 

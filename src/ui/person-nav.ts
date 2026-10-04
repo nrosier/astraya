@@ -15,8 +15,6 @@ export type PersonTabKey =
   | 'transit'
   | 'synastry'
   | 'composite'
-  | 'harmonic'
-  | 'draconic'
   | 'periodic-transit'
   | 'astrocartography';
 
@@ -38,8 +36,6 @@ export const PERSON_TABS: readonly PersonTab[] = [
   { key: 'transit', buildHref: (id) => `#/transit/${id}` },
   { key: 'synastry', buildHref: (id) => `#/synastry/${id}` },
   { key: 'composite', buildHref: (id) => `#/composite/${id}` },
-  { key: 'harmonic', buildHref: (id) => `#/harmonic/${id}` },
-  { key: 'draconic', buildHref: (id) => `#/draconic/${id}` },
   { key: 'periodic-transit', buildHref: (id) => `#/periodic-transit/${id}` },
   { key: 'astrocartography', buildHref: (id) => `#/astrocartography/${id}` },
 ];
@@ -51,12 +47,12 @@ export const PERSON_TABS: readonly PersonTab[] = [
  * reasoning: a real astrologer's own navigation habits, not engineering convenience —
  * "Transits & Forecast" is "what is the real sky doing against this chart"; "Progressions &
  * Directions" is "advance the chart by its own symbolic rule"; "Relationship Charts" is "how do
- * two people's charts interact"; "Chart Variants" is "a different lens on this one birth moment".
+ * two people's charts interact". The charts cast for one person alone (natal, draconic, harmonic, returns) are one
+ * page, the Charts page, with the type picked there, so they need no family here.
  * `astrocartography` is deliberately NOT in any family — it's spatial, not a different lens on
  * the same chart data, with its own distinct vocabulary and practitioner audience.
  */
-export type PersonTabFamilyKey =
-  'transits-forecast' | 'progressions-directions' | 'relationship-charts' | 'chart-variants';
+export type PersonTabFamilyKey = 'transits-forecast' | 'progressions-directions' | 'relationship-charts';
 
 export interface PersonTabFamily {
   readonly key: PersonTabFamilyKey;
@@ -70,7 +66,6 @@ export const PERSON_TAB_FAMILIES: readonly PersonTabFamily[] = [
   { key: 'transits-forecast', members: ['transit', 'periodic-transit'] },
   { key: 'progressions-directions', members: ['profections', 'progressions', 'solar-arc'] },
   { key: 'relationship-charts', members: ['synastry', 'composite'] },
-  { key: 'chart-variants', members: ['harmonic', 'draconic'] },
 ];
 
 /** Which family (if any) a tab belongs to — `undefined` for the three fixed tabs and `astrocartography`. */
@@ -91,8 +86,6 @@ export function activeTabKey(route: Route): PersonTabKey | null {
     case 'transit':
     case 'synastry':
     case 'composite':
-    case 'harmonic':
-    case 'draconic':
     case 'periodic-transit':
     case 'astrocartography':
       return route.kind;

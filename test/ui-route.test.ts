@@ -139,10 +139,10 @@ describe('parseRoute', () => {
     expect(parseRoute('#/composite/../about')).toEqual({ kind: 'home' });
   });
 
-  it('routes a harmonic id through (#170)', () => {
-    expect(parseRoute(`#/harmonic/${ID}`)).toEqual({ kind: 'harmonic', personId: ID });
-    expect(parseRoute(`#/harmonic/${ID}/`)).toEqual({ kind: 'harmonic', personId: ID });
-    expect(parseRoute(`#/harmonic/${ID}?x=1`)).toEqual({ kind: 'harmonic', personId: ID });
+  it('sends the old harmonic link (#170) to the Charts page, as a harmonic chart', () => {
+    expect(parseRoute(`#/harmonic/${ID}`)).toEqual({ kind: 'chart', personId: ID, chartType: 'harmonic' });
+    expect(parseRoute(`#/harmonic/${ID}/`)).toEqual({ kind: 'chart', personId: ID, chartType: 'harmonic' });
+    expect(parseRoute(`#/harmonic/${ID}?x=1`)).toEqual({ kind: 'chart', personId: ID, chartType: 'harmonic' });
   });
 
   it('sends a malformed harmonic id home rather than to a blank screen', () => {
@@ -151,10 +151,25 @@ describe('parseRoute', () => {
     expect(parseRoute('#/harmonic/../about')).toEqual({ kind: 'home' });
   });
 
-  it('routes a draconic id through (#398)', () => {
-    expect(parseRoute(`#/draconic/${ID}`)).toEqual({ kind: 'draconic', personId: ID });
-    expect(parseRoute(`#/draconic/${ID}/`)).toEqual({ kind: 'draconic', personId: ID });
-    expect(parseRoute(`#/draconic/${ID}?x=1`)).toEqual({ kind: 'draconic', personId: ID });
+  it('sends the old draconic link (#398) to the Charts page, as a draconic chart', () => {
+    expect(parseRoute(`#/draconic/${ID}`)).toEqual({ kind: 'chart', personId: ID, chartType: 'draconic' });
+    expect(parseRoute(`#/draconic/${ID}/`)).toEqual({ kind: 'chart', personId: ID, chartType: 'draconic' });
+    expect(parseRoute(`#/draconic/${ID}?x=1`)).toEqual({ kind: 'chart', personId: ID, chartType: 'draconic' });
+  });
+
+  it('reads the chart type and section from the Charts page link, ignoring unknown ones', () => {
+    expect(parseRoute(`#/chart/${ID}?type=solar-return&section=positions`)).toEqual({
+      kind: 'chart',
+      personId: ID,
+      chartType: 'solar-return',
+      section: 'positions',
+    });
+    expect(parseRoute(`#/chart/${ID}?type=lunar-return`)).toEqual({
+      kind: 'chart',
+      personId: ID,
+      chartType: 'lunar-return',
+    });
+    expect(parseRoute(`#/chart/${ID}?type=nonsense&section=nope`)).toEqual({ kind: 'chart', personId: ID });
   });
 
   it('sends a malformed draconic id home rather than to a blank screen', () => {

@@ -12,8 +12,29 @@ import type { ChartData } from '../src/domain/chart-compute.js';
 import { computeChartData } from '../src/domain/chart-compute.js';
 import { setLocale } from '../src/ui/locale.js';
 import { ChartDataView } from '../src/ui/ChartView.js';
+import { ExportRegistryProvider, useExportItems } from '../src/ui/export-registry.js';
 import { chartViewMessages } from '../src/ui/ChartView.messages.js';
 import { getEngine } from './engine-harness.js';
+
+/** Stands in for the header's Export menu: lists what the chart registered as buttons. */
+function ExportProbe(): React.JSX.Element {
+  const items = useExportItems();
+  return (
+    <div className="export-probe">
+      {items.map((item) => (
+        <button
+          key={item.key}
+          type="button"
+          onClick={() => {
+            void item.run();
+          }}
+        >
+          {item.label}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 let data: ChartData;
 let mounted: { container: HTMLElement; root: Root } | undefined;
@@ -47,7 +68,10 @@ async function mount(options: { showHouses?: boolean; locale?: 'en' | 'nl' } = {
   const root = createRoot(container);
   await act(async () => {
     root.render(
-      <ChartDataView load={{ kind: 'ready', data }} displayName="Test" showHouses={options.showHouses ?? true} />,
+      <ExportRegistryProvider>
+        <ChartDataView load={{ kind: 'ready', data }} displayName="Test" showHouses={options.showHouses ?? true} />
+        <ExportProbe />
+      </ExportRegistryProvider>,
     );
     await Promise.resolve();
   });
@@ -86,7 +110,7 @@ describe('the chart sections (#430)', () => {
 
   it('every open panel starts with an h2 naming it, and only the open table section is in the page', async () => {
     const container = await mount();
-    expect(container.querySelector('#chart-tabpanel-chart h2')?.textContent).toBe('Chart');
+    expect(container.querySelector('#chart-tabpanel-chart h2')?.textContent).toBe('Chart wheel');
     expect(container.querySelector('#chart-tabpanel-aspects')).toBeNull();
     await open(container, 'aspects');
     expect(container.querySelector('#chart-tabpanel-aspects h2')?.textContent).toBe('Aspects');
@@ -177,9 +201,9 @@ describe('the chart sections (#430)', () => {
     const print = vi.fn();
     window.print = print;
     await act(async () => {
-      Array.from(container.querySelectorAll('button'))
+      Array.from(container.querySelectorAll('.export-probe button'))
         .find((button) => button.textContent === chartViewMessages.en.exportPdf)
-        ?.click();
+        ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
       await new Promise((resolve) => setTimeout(resolve, 10));
     });
     const stacked = container.querySelector('.chart-print-all');
@@ -205,5 +229,23 @@ describe('the chart sections (#430)', () => {
     });
     expect(container.querySelector('.chart-print-all')).toBeNull();
     expect(container.querySelector('[role="tablist"]')).not.toBeNull();
+  });
+
+  it('offers the chart’s exports to the header menu instead of drawing buttons under the wheel', async () => {
+    const container = await mount();
+    const t = chartViewMessages.en;
+    expect(container.querySelector('.chart-export-actions')).toBeNull();
+    expect(Array.from(container.querySelectorAll('.export-probe button')).map((b) => b.textContent)).toEqual([
+      t.exportSvg,
+      t.exportPng(t.pngSmall),
+      t.exportPng(t.pngMedium),
+      t.exportPng(t.pngLarge),
+      t.exportPdf,
+    ]);
+  });
+
+  it('offers none without a wheel (an unknown birth time has no chart image to export)', async () => {
+    const container = await mount({ showHouses: false });
+    expect(container.querySelectorAll('.export-probe button')).toHaveLength(0);
   });
 });

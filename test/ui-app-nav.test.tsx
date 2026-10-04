@@ -17,6 +17,11 @@ vi.mock('../src/ui/session-context.js', () => ({
   useSessionUserOrUndefined: () => (admin ? USER : undefined),
 }));
 
+// The Export menu asks for the calculation engine; none is needed to open and close menus.
+vi.mock('../src/ui/EphemerisProviderContext.js', () => ({
+  useEphemerisProvider: () => ({ provider: undefined, error: undefined }),
+}));
+
 const { AppNav } = await import('../src/ui/AppNav.js');
 
 let mounted: { container: HTMLElement; root: Root } | undefined;

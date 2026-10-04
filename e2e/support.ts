@@ -84,3 +84,26 @@ export async function openTool(page: Page, name: string): Promise<void> {
   await page.getByRole('button', { name: 'Tools', exact: true }).click();
   await page.getByRole('link', { name, exact: true }).click();
 }
+
+/** Opens one kind of chart (`Natal`, `Draconic`, `Harmonic`, `Solar return` or `Lunar return`) from the header's Charts menu. */
+export async function openChart(page: Page, type: string): Promise<void> {
+  await page.getByRole('button', { name: 'Charts', exact: true }).click();
+  await page.getByRole('banner').getByRole('link', { name: type, exact: true }).click();
+}
+
+/**
+ * Opens the natal chart from the header's Charts menu (#430), at one of its sections: the wheel by
+ * default, or `Chart shape`, `Positions`, `Houses`, `Aspects`, `Dignities` or `Derived points`, which
+ * are the tabs on the chart page.
+ */
+export async function openNatalChart(page: Page, section = 'Chart wheel'): Promise<void> {
+  await openChart(page, 'Natal');
+  if (section !== 'Chart wheel') await page.getByRole('tab', { name: section, exact: true }).click();
+}
+
+/** Picks an export from the header's Export menu; `group` opens a submenu first, for an export that is in one. */
+export async function chooseExport(page: Page, item: string, group?: string): Promise<void> {
+  await page.getByRole('button', { name: 'Export', exact: true }).click();
+  if (group !== undefined) await page.getByRole('button', { name: group, exact: true }).click();
+  await page.getByRole('button', { name: item, exact: true }).click();
+}

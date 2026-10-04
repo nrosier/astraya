@@ -10,6 +10,7 @@
  * has to resolve without a server rewrite rule, including when the app is opened from disk.
  */
 import { isPersonId } from '../domain/id.js';
+import { chartSectionFromHash, chartTypeFromHash, type ChartSection, type ChartType } from './chart-sections.js';
 
 export type Route =
   | { readonly kind: 'home' }
@@ -17,7 +18,15 @@ export type Route =
   | { readonly kind: 'changelog' }
   | { readonly kind: 'people' }
   | { readonly kind: 'person'; readonly personId: string }
-  | { readonly kind: 'chart'; readonly personId: string }
+  // The Charts page: one route for every chart cast for one person. `chartType` is the kind of chart
+  // (`?type=draconic`; absent means natal) and `section` its open section (`?section=shape`; absent
+  // means the wheel). The old `#/draconic/<id>` and `#/harmonic/<id>` links land here too.
+  | {
+      readonly kind: 'chart';
+      readonly personId: string;
+      readonly chartType?: ChartType;
+      readonly section?: ChartSection;
+    }
   // The written report (#271) — previously reached as `#/chart/:id?tab=report`, a query
   // modifier on the chart route rather than a route of its own like every sibling here.
   | { readonly kind: 'report'; readonly personId: string }
@@ -37,13 +46,6 @@ export type Route =
   | { readonly kind: 'synastry'; readonly personId: string }
   // Same reasoning as synastry (#169): the second person is picked in-screen, not the URL.
   | { readonly kind: 'composite'; readonly personId: string }
-  // The harmonic number / Varga preset is picked in-screen, not the URL (#170) — same
-  // reasoning as composite: it changes far more often within one visit than it's worth
-  // sharing as a link, and the screen's default (natal, n=1) is always a valid landing.
-  | { readonly kind: 'harmonic'; readonly personId: string }
-  // Draconic chart (#398). No in-screen parameter at all: the draconic zero-point is always
-  // the natal North Node, so unlike harmonic there is nothing here to pick.
-  | { readonly kind: 'draconic'; readonly personId: string }
   // Daily/weekly/monthly/yearly transit forecast (#207). No second parameter to pick — the
   // screen's own "as of" date input plays the role a harmonic number or comparison person
   // plays elsewhere, and that's already excluded from the URL for the same reasons those are.
@@ -74,6 +76,7 @@ const SOLAR_ARC_PATH = /^#\/solar-arc\/(.+)$/;
 const TRANSIT_PATH = /^#\/transit\/(.+)$/;
 const SYNASTRY_PATH = /^#\/synastry\/(.+)$/;
 const COMPOSITE_PATH = /^#\/composite\/(.+)$/;
+// Before the Charts page, harmonic and draconic charts had routes of their own; links to them still work.
 const HARMONIC_PATH = /^#\/harmonic\/(.+)$/;
 const DRACONIC_PATH = /^#\/draconic\/(.+)$/;
 const PERIODIC_TRANSIT_PATH = /^#\/periodic-transit\/(.+)$/;
@@ -139,7 +142,16 @@ export function parseRoute(hash: string): Route {
   if (person !== null && isPersonId(person[1])) return { kind: 'person', personId: person[1] };
 
   const chart = CHART_PATH.exec(path);
-  if (chart !== null && isPersonId(chart[1])) return { kind: 'chart', personId: chart[1] };
+  if (chart !== null && isPersonId(chart[1])) {
+    const chartType = chartTypeFromHash(hash);
+    const section = chartSectionFromHash(hash);
+    return {
+      kind: 'chart',
+      personId: chart[1],
+      ...(chartType === undefined ? {} : { chartType }),
+      ...(section === undefined ? {} : { section }),
+    };
+  }
 
   const report = REPORT_PATH.exec(path);
   if (report !== null && isPersonId(report[1])) return { kind: 'report', personId: report[1] };
@@ -163,10 +175,14 @@ export function parseRoute(hash: string): Route {
   if (composite !== null && isPersonId(composite[1])) return { kind: 'composite', personId: composite[1] };
 
   const harmonic = HARMONIC_PATH.exec(path);
-  if (harmonic !== null && isPersonId(harmonic[1])) return { kind: 'harmonic', personId: harmonic[1] };
+  if (harmonic !== null && isPersonId(harmonic[1])) {
+    return { kind: 'chart', personId: harmonic[1], chartType: 'harmonic' };
+  }
 
   const draconic = DRACONIC_PATH.exec(path);
-  if (draconic !== null && isPersonId(draconic[1])) return { kind: 'draconic', personId: draconic[1] };
+  if (draconic !== null && isPersonId(draconic[1])) {
+    return { kind: 'chart', personId: draconic[1], chartType: 'draconic' };
+  }
 
   const periodicTransit = PERIODIC_TRANSIT_PATH.exec(path);
   if (periodicTransit !== null && isPersonId(periodicTransit[1])) {

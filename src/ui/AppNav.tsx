@@ -4,8 +4,9 @@
  *
  * What it holds, left to right:
  * - on a person's screen, **whose chart** this is (the person chip) and that person's tabs: Birth
- *   record, Natal chart, Interpretation, Astrocartography and the four grouped dropdowns
- *   (Transits & Forecast, Progressions & Directions, Relationship Charts, Chart Variants);
+ *   record, Charts (a dropdown of the chart types: natal, draconic, harmonic, solar and lunar return),
+ *   Interpretation, Astrocartography and the three grouped dropdowns (Transits & Forecast, Progressions &
+ *   Directions, Relationship Charts);
  * - **Tools**, on every screen: the calculators that are not about one person's chart
  *   (`tools-nav.ts`);
  * - **Admin**, for an admin only. Purely navigation: each admin route is guarded on the server.
@@ -23,15 +24,147 @@ import { ADMIN_HOME_HREF, activeAdminTabKey } from './admin-nav.js';
 import { appNavMessages } from './AppNav.messages.js';
 import { useMessages } from './messages.js';
 import { activeTabKey, isTabEnabled, PERSON_TAB_FAMILIES, PERSON_TABS } from './person-nav.js';
+import { CHART_TYPES, chartHref } from './chart-sections.js';
+import { chartTypesMessages } from './ChartTypes.messages.js';
 import type { PersonTab } from './person-nav.js';
 import type { Route } from './route.js';
 import { useSessionUserOrUndefined } from './session-context.js';
 import { useOptionalStore, useStoreState } from './store-context.js';
+import type { Person } from '../domain/person.js';
 import { activeToolKey, TOOLS } from './tools-nav.js';
+import { useEphemerisProvider } from './EphemerisProviderContext.js';
+import { useExportItems, type ExportItem } from './export-registry.js';
+import { useRulershipChoice } from './rulership-setting.js';
+import { useSymbolClass } from './symbol-setting.js';
+import { downloadText } from './download.js';
+import { APP_VERSION } from '../version.js';
+import { buildFullExport, fullExportFilename, peopleCsvFilename, peopleToCsv } from '../domain/full-export.js';
 import { useExclusiveOpen, type ExclusiveOpen } from './use-exclusive-open.js';
 
-const UNGROUPED_KEYS = new Set(['birth-record', 'chart', 'report', 'astrocartography']);
+// The chart is not here: it is a menu of the chart types (below), not a single link.
+const UNGROUPED_KEYS = new Set(['birth-record', 'report', 'astrocartography']);
+const CHARTS_GROUP = 'charts';
 const TOOLS_GROUP = 'tools';
+const EXPORT_GROUP = 'export';
+
+interface ExportStatus {
+  readonly kind: 'busy' | 'done' | 'error';
+  readonly text: string;
+}
+
+/**
+ * The Export menu (#export): everything the user can export, in one place, not scattered under each screen.
+ * "Everything" is one file; the rest is split because it should be: the people as a spreadsheet, and the
+ * current screen's own exports (a chart's image, its print version) as submenus of "This page", registered
+ * by the screen (`export-registry.tsx`) while it is mounted. The status of a running export is announced in
+ * `AppNav`, since the menu closes as soon as something is chosen.
+ */
+function ExportMenu({
+  dropdown,
+  run,
+}: {
+  readonly dropdown: ExclusiveOpen<string>;
+  readonly run: (what: string, action: () => void | Promise<void>) => void;
+}): React.JSX.Element {
+  const t = useMessages(appNavMessages);
+  const store = useOptionalStore();
+  const { provider } = useEphemerisProvider();
+  const [rulership] = useRulershipChoice();
+  const [symbolClass] = useSymbolClass();
+  const pageItems = useExportItems();
+  const [openGroup, setOpenGroup] = useState<string | undefined>(undefined);
+  const isOpen = dropdown.open === EXPORT_GROUP;
+  useEffect(() => {
+    if (!isOpen) setOpenGroup(undefined);
+  }, [isOpen]);
+
+  const people = (): readonly Person[] => (store === undefined ? [] : [...store.state.people.values()]);
+  const everything = (): void => {
+    run(t.exportEverythingName, async () => {
+      if (provider === undefined) throw new Error(t.exportNeedsEngine);
+      const now = new Date();
+      const archive = await buildFullExport({
+        people: people(),
+        provider,
+        appVersion: APP_VERSION,
+        rulership,
+        symbolClass,
+        now,
+      });
+      downloadText(fullExportFilename(now), `${JSON.stringify(archive, null, 2)}\n`, 'application/json');
+    });
+  };
+  const peopleCsv = (): void => {
+    run(t.exportPeopleName, () => {
+      const now = new Date();
+      downloadText(peopleCsvFilename(now), peopleToCsv(people()), 'text/csv');
+    });
+  };
+
+  const groups = new Map<string, ExportItem[]>();
+  const ungrouped: ExportItem[] = [];
+  for (const item of pageItems) {
+    if (item.group === undefined) ungrouped.push(item);
+    else groups.set(item.group, [...(groups.get(item.group) ?? []), item]);
+  }
+  const itemButton = (item: ExportItem): React.JSX.Element => (
+    <button
+      key={item.key}
+      type="button"
+      className="app-nav-menu-item"
+      disabled={item.disabled === true}
+      onClick={() => {
+        run(item.label, item.run);
+      }}
+    >
+      {item.label}
+    </button>
+  );
+
+  return (
+    <NavGroup
+      groupKey={EXPORT_GROUP}
+      label={t.exportLabel}
+      popupAriaLabel={t.subtabsAriaLabel(t.exportLabel)}
+      active={false}
+      dropdown={dropdown}
+    >
+      <button
+        type="button"
+        className="app-nav-menu-item"
+        title={t.exportEverythingHint}
+        disabled={store === undefined}
+        onClick={everything}
+      >
+        {t.exportEverything}
+      </button>
+      <button type="button" className="app-nav-menu-item" disabled={store === undefined} onClick={peopleCsv}>
+        {t.exportPeopleCsv}
+      </button>
+      {pageItems.length > 0 && <p className="app-nav-menu-heading">{t.exportThisPage}</p>}
+      {ungrouped.map(itemButton)}
+      {[...groups].map(([group, items]) => {
+        const expanded = openGroup === group;
+        return (
+          <div key={group} className="app-nav-submenu">
+            <button
+              type="button"
+              className="app-nav-menu-item app-nav-submenu-toggle"
+              aria-label={group}
+              aria-expanded={expanded}
+              onClick={() => {
+                setOpenGroup(expanded ? undefined : group);
+              }}
+            >
+              {group}
+            </button>
+            {expanded && <div className="app-nav-submenu-items">{items.map(itemButton)}</div>}
+          </div>
+        );
+      })}
+    </NavGroup>
+  );
+}
 
 /** One dropdown button and its popup of links. */
 function NavGroup({
@@ -133,6 +266,9 @@ function PersonMenu({
     );
   }
 
+  const typesT = useMessages(chartTypesMessages);
+  const chartEnabled = isTabEnabled('chart', hasBirthMoment);
+  const openType = route.kind === 'chart' ? (route.chartType ?? 'natal') : undefined;
   const name = person?.displayName ?? '';
   return (
     <>
@@ -141,7 +277,45 @@ function PersonMenu({
           {name}
         </span>
       )}
-      {PERSON_TABS.filter((tab) => UNGROUPED_KEYS.has(tab.key)).map((tab) => renderTab(tab, 'app-nav-item'))}
+      {PERSON_TABS.filter((tab) => UNGROUPED_KEYS.has(tab.key) && tab.key === 'birth-record').map((tab) =>
+        renderTab(tab, 'app-nav-item'),
+      )}
+      {/* One page for every chart cast for this person (natal, draconic, harmonic, returns); its sections
+          (wheel, shape, tables) are tabs on the page. */}
+      {chartEnabled ? (
+        <NavGroup
+          groupKey={CHARTS_GROUP}
+          label={typesT.chartsLabel}
+          popupAriaLabel={t.subtabsAriaLabel(typesT.chartsLabel)}
+          active={route.kind === 'chart'}
+          dropdown={dropdown}
+        >
+          {CHART_TYPES.map((type) => (
+            <a
+              key={type}
+              href={chartHref(personId, undefined, type)}
+              className={type === openType ? 'app-nav-menu-item active' : 'app-nav-menu-item'}
+              aria-current={type === openType ? 'page' : undefined}
+              onClick={onNavigate}
+            >
+              {typesT.typeLabels[type]}
+            </a>
+          ))}
+        </NavGroup>
+      ) : (
+        <button
+          type="button"
+          disabled
+          className="app-nav-item disabled"
+          aria-label={t.disabledTabSuffix(typesT.chartsLabel)}
+          title={t.completeBirthRecordHint}
+        >
+          {typesT.chartsLabel}
+        </button>
+      )}
+      {PERSON_TABS.filter((tab) => UNGROUPED_KEYS.has(tab.key) && tab.key !== 'birth-record').map((tab) =>
+        renderTab(tab, 'app-nav-item'),
+      )}
       {PERSON_TAB_FAMILIES.map((family) => {
         const familyLabel = t.familyLabels[family.key];
         return (
@@ -175,6 +349,7 @@ export function AppNav({ route }: { route: Route }): React.JSX.Element {
   const dropdown = useExclusiveOpen<string>(pageKey);
   const [menuOpen, setMenuOpen] = useState(false);
   const toggleRef = useRef<HTMLButtonElement>(null);
+  const [exportStatus, setExportStatus] = useState<ExportStatus | undefined>(undefined);
   const activeTool = activeToolKey(route);
 
   useEffect(() => {
@@ -197,6 +372,26 @@ export function AppNav({ route }: { route: Route }): React.JSX.Element {
   const closeAll = (): void => {
     dropdown.close();
     setMenuOpen(false);
+  };
+
+  /** Runs an export, closing the menus and announcing what is happening, since the choice is gone from view. */
+  const runExport = (what: string, action: () => void | Promise<void>): void => {
+    closeAll();
+    setExportStatus({ kind: 'busy', text: t.exportPreparing(what) });
+    void Promise.resolve()
+      .then(action)
+      .then(() => {
+        setExportStatus({ kind: 'done', text: t.exportDone(what) });
+        window.setTimeout(() => {
+          setExportStatus((current) => (current?.kind === 'done' ? undefined : current));
+        }, 3000);
+      })
+      .catch((error: unknown) => {
+        setExportStatus({
+          kind: 'error',
+          text: t.exportFailed(error instanceof Error ? error.message : String(error)),
+        });
+      });
   };
 
   return (
@@ -237,6 +432,7 @@ export function AppNav({ route }: { route: Route }): React.JSX.Element {
             </a>
           ))}
         </NavGroup>
+        <ExportMenu dropdown={dropdown} run={runExport} />
         {/* Admin area (#414): only for an admin. Purely navigation — each admin route is guarded by
             `requireAdmin` on the server whatever this shows. */}
         {sessionUser?.isAdmin === true && (
@@ -252,6 +448,25 @@ export function AppNav({ route }: { route: Route }): React.JSX.Element {
           </a>
         )}
       </nav>
+      {exportStatus !== undefined && (
+        <p
+          className={`app-export-status ${exportStatus.kind}`}
+          role={exportStatus.kind === 'error' ? 'alert' : 'status'}
+        >
+          {exportStatus.text}
+          {exportStatus.kind === 'error' && (
+            <button
+              type="button"
+              className="quiet"
+              onClick={() => {
+                setExportStatus(undefined);
+              }}
+            >
+              ×
+            </button>
+          )}
+        </p>
+      )}
     </div>
   );
 }

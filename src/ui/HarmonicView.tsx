@@ -14,6 +14,8 @@ import { computeHarmonic, type HarmonicData } from '../domain/harmonic.js';
 import { housesAreDefined } from '../domain/chart-compute.js';
 import { momentKey } from '../time/encode.js';
 import { ChartDataView } from './ChartView.js';
+import { ChartTypeSelector, changeChartSection } from './ChartTypeSelector.js';
+import type { ChartSection } from './chart-sections.js';
 import { ReportView } from './ReportView.js';
 import { harmonicViewMessages } from './HarmonicView.messages.js';
 import { useMessages } from './messages.js';
@@ -29,7 +31,13 @@ type Load =
 
 const CUSTOM = 'custom';
 
-export function HarmonicView({ personId }: { personId: string }): React.JSX.Element {
+export function HarmonicView({
+  personId,
+  section,
+}: {
+  personId: string;
+  section?: ChartSection | undefined;
+}): React.JSX.Element {
   const state = useStoreState();
   const person = state.people.get(personId);
   const t = useMessages(harmonicViewMessages);
@@ -39,6 +47,10 @@ export function HarmonicView({ personId }: { personId: string }): React.JSX.Elem
   const preset = useMemo(() => VARGA_PRESETS.find((candidate) => candidate.key === presetKey), [presetKey]);
   const n = preset !== undefined ? preset.n : Number.parseInt(customN, 10);
   const nValid = Number.isInteger(n) && n >= 1;
+
+  const label = preset !== undefined ? preset.label : t.harmonicLabel(String(n));
+  // Memoised: a new array each render (a change of section re-renders this screen) would redraw the wheel and drop a selection.
+  const metaLines = useMemo(() => [label], [label]);
 
   const { provider } = useEphemerisProvider();
   const [load, setLoad] = useState<Load>({ kind: 'idle' });
@@ -86,7 +98,6 @@ export function HarmonicView({ personId }: { personId: string }): React.JSX.Elem
     );
   }
 
-  const label = preset !== undefined ? preset.label : t.harmonicLabel(String(n));
   const displayName = person.displayName ? `${person.displayName} — ${label}` : label;
 
   return (
@@ -95,6 +106,7 @@ export function HarmonicView({ personId }: { personId: string }): React.JSX.Elem
         <a href={`#/person/${personId}`}>&larr; {person.displayName || t.personFallback}</a>
       </p>
       <h1>{person.displayName ? t.heading(person.displayName) : t.headingFallback}</h1>
+      <ChartTypeSelector personId={personId} type="harmonic" section={section} />
       <p className="hint">{t.hint}</p>
 
       <div className="field-grid">
@@ -138,7 +150,16 @@ export function HarmonicView({ personId }: { personId: string }): React.JSX.Elem
       )}
 
       {nValid && load.kind !== 'idle' && (
-        <ChartDataView load={load} displayName={displayName} showHouses metaLines={[label]} />
+        <ChartDataView
+          load={load}
+          displayName={displayName}
+          showHouses
+          metaLines={metaLines}
+          section={section ?? 'chart'}
+          onSectionChange={(next) => {
+            changeChartSection(personId, 'harmonic', next);
+          }}
+        />
       )}
 
       {nValid && load.kind === 'ready' && !housesAreDefined(load.data.houses) && (

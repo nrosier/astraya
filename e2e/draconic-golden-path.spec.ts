@@ -1,6 +1,6 @@
 /**
  * The golden path for the draconic chart (#398): a person with a known birth time, opening the
- * Draconic screen from the Chart Variants family, and the synthetic draconic chart renders with
+ * Draconic screen from the Charts menu, and the synthetic draconic chart renders with
  * its own wheel and data tables — no in-screen picker, since the draconic zero-point is always
  * the natal North Node.
  */
@@ -10,7 +10,7 @@ import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
-import { createPerson, gotoAndSettle } from './support.ts';
+import { createPerson, gotoAndSettle, openChart } from './support.ts';
 
 let dir: string;
 let app: FastifyInstance;
@@ -43,8 +43,7 @@ test('a person with a known birth time gets a Draconic screen with a wheel and d
     latitude: '51.5072',
     longitude: '-0.1276',
   });
-  await page.getByRole('button', { name: 'Chart Variants', exact: true }).click();
-  await page.getByRole('link', { name: 'Draconic', exact: true }).click();
+  await openChart(page, 'Draconic');
   await expect(page.getByRole('heading', { name: /draconic/i, level: 1 })).toBeVisible();
 
   await expect(page.locator('div.chart-wheel')).toBeVisible();
@@ -62,7 +61,6 @@ test('a person with an unknown birth time is told a draconic chart needs one', a
     longitude: '-74.006',
   });
 
-  await page.getByRole('button', { name: 'Chart Variants', exact: true }).click();
-  await page.getByRole('link', { name: 'Draconic', exact: true }).click();
+  await openChart(page, 'Draconic');
   await expect(page.getByText(/needs a complete birth record with a known time/)).toBeVisible();
 });

@@ -6,12 +6,14 @@
  * than the multi-wheel renderer. Unlike harmonic, there is no in-screen parameter to pick: the
  * draconic zero-point is always the natal North Node, so this view has no picker at all.
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { computeDraconic, type DraconicData } from '../domain/draconic.js';
 import { housesAreDefined } from '../domain/chart-compute.js';
 import { momentKey } from '../time/encode.js';
 import { ChartDataView } from './ChartView.js';
+import { ChartTypeSelector, changeChartSection } from './ChartTypeSelector.js';
+import type { ChartSection } from './chart-sections.js';
 import { ReportView } from './ReportView.js';
 import { draconicViewMessages } from './DraconicView.messages.js';
 import { useMessages } from './messages.js';
@@ -24,10 +26,19 @@ type Load =
   | { readonly kind: 'ready'; readonly data: ChartData }
   | { readonly kind: 'error'; readonly message: string };
 
-export function DraconicView({ personId }: { personId: string }): React.JSX.Element {
+export function DraconicView({
+  personId,
+  section,
+}: {
+  personId: string;
+  section?: ChartSection | undefined;
+}): React.JSX.Element {
   const state = useStoreState();
   const person = state.people.get(personId);
   const t = useMessages(draconicViewMessages);
+
+  // Memoised: a new array each render (a change of section re-renders this screen) would redraw the wheel and drop a selection.
+  const metaLines = useMemo(() => [t.headingFallback], [t.headingFallback]);
 
   const { provider } = useEphemerisProvider();
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
@@ -80,9 +91,19 @@ export function DraconicView({ personId }: { personId: string }): React.JSX.Elem
         <a href={`#/person/${personId}`}>&larr; {person.displayName || t.personFallback}</a>
       </p>
       <h1>{person.displayName ? t.heading(person.displayName) : t.headingFallback}</h1>
+      <ChartTypeSelector personId={personId} type="draconic" section={section} />
       <p className="hint">{t.hint}</p>
 
-      <ChartDataView load={load} displayName={displayName} showHouses metaLines={[t.headingFallback]} />
+      <ChartDataView
+        load={load}
+        displayName={displayName}
+        showHouses
+        metaLines={metaLines}
+        section={section ?? 'chart'}
+        onSectionChange={(next) => {
+          changeChartSection(personId, 'draconic', next);
+        }}
+      />
 
       {load.kind === 'ready' && !housesAreDefined(load.data.houses) && (
         <p className="warning" role="alert">
