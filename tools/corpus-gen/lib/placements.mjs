@@ -125,6 +125,14 @@ const DIGNITY_WORDS = {
   fall: 'in its fall (in the sign opposite its exaltation)',
 };
 
+// The sign each modern outer planet is in detriment in: opposite the sign it rules (Uranus Aquarius, Neptune Pisces,
+// Pluto Scorpio).
+const OUTER_DETRIMENT = {
+  uranus: { sign: 'Leo', rules: 'Aquarius' },
+  neptune: { sign: 'Virgo', rules: 'Pisces' },
+  pluto: { sign: 'Taurus', rules: 'Scorpio' },
+};
+
 // The angle a line is drawn for, as a name rather than the raw `AC`/`MC` code.
 const ANGLE_WORDS = { AC: 'Ascendant', DC: 'Descendant', MC: 'Midheaven', IC: 'Imum Coeli' };
 
@@ -141,9 +149,18 @@ export function placementDescription(placement) {
       return `${bodyName(placement.bodyA)} ${placement.aspect} ${bodyName(placement.bodyB)}`;
     case 'synastry-aspect':
       // The entry is written from the first body's owner (alphabetical order, #427): "your … their …".
-      return `synastry: one person's ${bodyName(placement.bodyA)} ${placement.aspect} the other person's ${bodyName(placement.bodyB)} (written from the first person's side)`;
-    case 'dignity-state':
-      return `${bodyName(placement.body)} ${DIGNITY_WORDS[placement.state] ?? placement.state}`;
+      // Which body is whose is spelled out (#437): the judge found a dozen Dutch entries that gave each person the
+      // other's body, and the vaguer "written from the first person's side" left that to the model.
+      return `synastry: one person's ${bodyName(placement.bodyA)} ${placement.aspect} the other person's ${bodyName(placement.bodyB)} (written from the first person's side). The ${bodyName(placement.bodyA)} is YOURS ("you", "your") and the ${bodyName(placement.bodyB)} belongs to the OTHER person ("they", "their"). Do not swap them, and describe the dynamic between the two people, not one person's inner conflict.`;
+    case 'dignity-state': {
+      const base = `${bodyName(placement.body)} ${DIGNITY_WORDS[placement.state] ?? placement.state}`;
+      const outer = placement.state === 'detriment' ? OUTER_DETRIMENT[placement.body] : undefined;
+      // #437: the judge wants the tension specific to the sign an outer planet is in detriment in, which the
+      // description never gave the generator. It is named here for the generator only; the entry must not name it.
+      return outer === undefined
+        ? base
+        : `${base} — it falls in ${outer.sign}, the sign opposite ${outer.rules}, which it rules. Let the specific friction between ${bodyName(placement.body)}'s function and ${outer.sign}'s nature come through, without naming the sign or the planet.`;
+    }
     case 'profected-house':
       return `house ${String(placement.house)} profected (annual/monthly profection)`;
     case 'astro-line':

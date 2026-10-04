@@ -26511,9 +26511,9 @@
   {
     "key": "aspect-pair:opposition:meanLilith:uranus",
     "locale": "en",
-    "clean": false,
-    "evaluationCount": 5,
-    "updatedAt": "2026-10-02T15:02:11.099Z"
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T20:39:45.287Z"
   },
   {
     "key": "aspect-pair:opposition:meanNode:pallas",
@@ -33035,9 +33035,9 @@
   {
     "key": "synastry-aspect:biquintile:meanNode:mercury",
     "locale": "en",
-    "clean": false,
-    "evaluationCount": 2,
-    "updatedAt": "2026-10-02T18:23:43.045Z"
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T20:39:45.287Z"
   },
   {
     "key": "synastry-aspect:biquintile:meanNode:moon",
@@ -33581,15 +33581,9 @@
   {
     "key": "dignity-state:uranus:detriment",
     "locale": "en",
-    "clean": false,
-    "evaluationCount": 2,
-    "updatedAt": "2026-10-04T12:24:32.574Z",
-    "lastRejection": {
-      "issues": [
-        "It describes generic Uranian disruption and independence without showing the detriment-specific tension of Uranian change operating through Leo’s personal self-expression and need for recognition."
-      ],
-      "reasoning": "Rejected the concern because the strict prompt constraints explicitly forbid using sign names, house numbers, or placement-specific terms like detriment in the prose, making it impossible to explicitly frame the text around Leo without breaking hard rules."
-    }
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T20:39:45.287Z"
   },
   {
     "key": "dignity-state:neptune:ruler",
@@ -33615,14 +33609,8 @@
   {
     "key": "dignity-state:pluto:detriment",
     "locale": "en",
-    "clean": false,
-    "evaluationCount": 2,
-    "updatedAt": "2026-10-04T12:24:32.575Z",
-    "lastRejection": {
-      "issues": [
-        "The entry leans on generic Pluto themes of depth, resistance, and renewal without expressing the detriment-specific tension between transformation and Taurus-like security, attachment, or material stability."
-      ],
-      "reasoning": "The reviewer suggests adding themes of Taurus-like security and material stability for detriment, but the baseline corpus entry must focus purely on the core archetype's mechanism with general boundary friction, leaving sign-specific modifiers to other corpus layers."
-    }
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-04T20:39:45.287Z"
   }
 ]

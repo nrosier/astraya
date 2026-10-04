@@ -98,3 +98,27 @@ describe('the fallback sentence for the two wired categories (#427)', () => {
     );
   });
 });
+
+describe('what the generator is told for the placements the judge kept flagging (#437)', () => {
+  it('names the sign an outer planet is in detriment in, for the generator only, and leaves the facts alone', () => {
+    const uranus = { category: 'dignity-state', body: 'uranus', state: 'detriment' } as unknown as CorpusPlacement;
+    expect(placementDescription(uranus)).toContain('falls in Leo');
+    expect(placementDescription({ ...uranus, body: 'neptune' } as unknown as CorpusPlacement)).toContain('Virgo');
+    expect(placementDescription({ ...uranus, body: 'pluto' } as unknown as CorpusPlacement)).toContain('Taurus');
+    expect(factsDescription(uranus)).not.toContain('Leo');
+    // Only the outer detriments: a traditional planet's detriment and an outer planet's rulership are unchanged.
+    expect(placementDescription({ ...uranus, body: 'venus' } as unknown as CorpusPlacement)).not.toContain('falls in');
+    expect(placementDescription({ ...uranus, state: 'ruler' } as unknown as CorpusPlacement)).not.toContain('falls in');
+  });
+
+  it('says which body of a synastry aspect is the reader’s and which is the other person’s', () => {
+    const description = placementDescription({
+      category: 'synastry-aspect',
+      aspect: 'semisquare',
+      bodyA: 'meanLilith',
+      bodyB: 'sun',
+    } as unknown as CorpusPlacement);
+    expect(description).toContain('Mean Lilith is YOURS');
+    expect(description).toContain('Sun belongs to the OTHER person');
+  });
+});
