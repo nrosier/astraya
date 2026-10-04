@@ -15,6 +15,7 @@
  * speed on both sides (see that module's doc comment) — and correspondingly there is no
  * inner/outer convention rooted in the astrology here, only in the SVG's ring order.
  */
+import { useSymbolClass } from './symbol-setting.js';
 import { useEffect, useMemo, useState } from 'react';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { chartWheelRing, crossAspectRows, type AspectRow } from '../domain/chart-tables.js';
@@ -98,6 +99,7 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
   const state = useStoreState();
   const person = state.people.get(personId);
   const t = useMessages(synastryViewMessages);
+  const [symbolClass] = useSymbolClass();
   const [locale] = useLocale();
 
   const candidates = useMemo(
@@ -170,7 +172,7 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
       { outerRingIndex: 0, innerRingIndex: 1, aspects: load.data.aspects },
     ];
     return renderMultiWheelSvg([ringA, ringB], crossAspects);
-  }, [load, person, partner, t]);
+  }, [load, person, partner, t, symbolClass]);
 
   const wheelT = useMessages(biWheelSelectionPanelMessages);
   const { wheelRef, selectionKey, clear: clearIsolation, onClick: handleWheelClick } = useWheelIsolation(wheelMarkup);
