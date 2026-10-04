@@ -8,6 +8,7 @@ import { adminGroupStartupNotice, describeOidcAdminGroupCheck } from '../server/
 
 afterEach(() => {
   delete process.env.ASTRAYA_OIDC_ADMIN_GROUPS;
+  delete process.env.ASTRAYA_OIDC_SUPER_ADMIN_GROUPS;
 });
 
 describe('describeOidcAdminGroupCheck', () => {
@@ -20,7 +21,9 @@ describe('describeOidcAdminGroupCheck', () => {
       groupClaim: 'groups',
       groupsSeen: ['everyone', 'astraya_admin'],
       adminGroupsConfigured: ['astraya_admin', 'other'],
+      superAdminGroupsConfigured: [],
       matchedGroups: ['astraya_admin'],
+      matchedSuperAdminGroups: [],
     });
   });
 
@@ -40,6 +43,30 @@ describe('describeOidcAdminGroupCheck', () => {
     expect(check.message).toContain('astraya_admin');
     expect(check.message).toContain('case included');
     expect(check.fields.matchedGroups).toEqual([]);
+  });
+
+  it('reports a super admin group match separately from an admin group match (#431)', () => {
+    process.env.ASTRAYA_OIDC_ADMIN_GROUPS = 'astraya_admin';
+    process.env.ASTRAYA_OIDC_SUPER_ADMIN_GROUPS = 'astraya_owner';
+    const check = describeOidcAdminGroupCheck(['astraya_owner', 'astraya_admin'], 'groups');
+    expect(check.message).toContain('matched super admin group astraya_owner');
+    expect(check.message).toContain('matched admin group astraya_admin');
+    expect(check.fields.matchedSuperAdminGroups).toEqual(['astraya_owner']);
+    expect(check.fields.matchedGroups).toEqual(['astraya_admin']);
+  });
+
+  it('names both variables when a user matches neither list', () => {
+    process.env.ASTRAYA_OIDC_ADMIN_GROUPS = 'astraya_admin';
+    process.env.ASTRAYA_OIDC_SUPER_ADMIN_GROUPS = 'astraya_owner';
+    const check = describeOidcAdminGroupCheck(['everyone'], 'groups');
+    expect(check.message).toContain('ASTRAYA_OIDC_ADMIN_GROUPS (astraya_admin)');
+    expect(check.message).toContain('ASTRAYA_OIDC_SUPER_ADMIN_GROUPS (astraya_owner)');
+    expect(check.message).toContain('case included');
+  });
+
+  it('warns about a missing claim when only super admin groups are configured', () => {
+    process.env.ASTRAYA_OIDC_SUPER_ADMIN_GROUPS = 'astraya_owner';
+    expect(describeOidcAdminGroupCheck([], 'groups').level).toBe('warn');
   });
 
   it('says nothing is attempted when no admin groups are configured', () => {
@@ -64,6 +91,21 @@ describe('adminGroupStartupNotice', () => {
     expect(notice?.level).toBe('info');
     expect(notice?.message).toContain('astraya_admin');
     expect(notice?.message).toContain('"groups"');
+  });
+
+  it('states which groups make a super admin and which an admin (#431)', () => {
+    process.env.ASTRAYA_OIDC_ADMIN_GROUPS = 'astraya_admin';
+    process.env.ASTRAYA_OIDC_SUPER_ADMIN_GROUPS = 'astraya_owner';
+    const notice = adminGroupStartupNotice(true, 'groups');
+    expect(notice?.message).toContain('astraya_owner are made super admin');
+    expect(notice?.message).toContain('astraya_admin are made admin');
+  });
+
+  it('warns when only super admin groups are set but OIDC is not configured', () => {
+    process.env.ASTRAYA_OIDC_SUPER_ADMIN_GROUPS = 'astraya_owner';
+    const notice = adminGroupStartupNotice(false, 'groups');
+    expect(notice?.level).toBe('warn');
+    expect(notice?.message).toContain('ASTRAYA_OIDC_SUPER_ADMIN_GROUPS');
   });
 
   it('notes that nobody is promoted when OIDC is on but no admin groups are set', () => {

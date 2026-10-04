@@ -39,6 +39,7 @@ afterEach(async () => {
   await app.close();
   delete process.env.ASTRAYA_BOOTSTRAP_TOKEN;
   delete process.env.ASTRAYA_ADMIN_USERNAMES;
+  delete process.env.ASTRAYA_SUPER_ADMIN_USERNAMES;
   rmSync(dir, { recursive: true, force: true });
   clearLoginThrottle('admin');
   clearLoginThrottle('carol');
@@ -174,7 +175,7 @@ describe('POST /api/auth/login and GET /api/auth/me', () => {
     const passwordHash = await hashPassword('correct-horse-battery');
     const raw = new DatabaseSync(dbPath);
     raw
-      .prepare('INSERT INTO users (id, username, password_hash, is_admin, created_at) VALUES (?, ?, ?, 0, ?)')
+      .prepare("INSERT INTO users (id, username, password_hash, role, created_at) VALUES (?, ?, ?, 'user', ?)")
       .run(randomUUID(), 'carol', passwordHash, new Date().toISOString());
     raw.close();
 
@@ -191,7 +192,7 @@ describe('POST /api/auth/login and GET /api/auth/me', () => {
     const passwordHash = await hashPassword('correct-horse-battery');
     const raw = new DatabaseSync(dbPath);
     raw
-      .prepare('INSERT INTO users (id, username, password_hash, is_admin, created_at) VALUES (?, ?, ?, 0, ?)')
+      .prepare("INSERT INTO users (id, username, password_hash, role, created_at) VALUES (?, ?, ?, 'user', ?)")
       .run(randomUUID(), 'carol', passwordHash, new Date().toISOString());
     raw.close();
 
@@ -201,6 +202,43 @@ describe('POST /api/auth/login and GET /api/auth/me', () => {
       payload: { username: 'carol', password: 'correct-horse-battery' },
     });
     expect(login.json<{ user: { isAdmin: boolean } }>().user.isAdmin).toBe(false);
+  });
+
+  it('maps the two username allowlists to the two roles, the higher winning (#431)', async () => {
+    process.env.ASTRAYA_ADMIN_USERNAMES = 'ada,both';
+    process.env.ASTRAYA_SUPER_ADMIN_USERNAMES = 'Sam,both';
+    const passwordHash = await hashPassword('correct-horse-battery');
+    const raw = new DatabaseSync(dbPath);
+    for (const name of ['ada', 'sam', 'both', 'plain']) {
+      raw
+        .prepare("INSERT INTO users (id, username, password_hash, role, created_at) VALUES (?, ?, ?, 'user', ?)")
+        .run(randomUUID(), name, passwordHash, new Date().toISOString());
+    }
+    raw.close();
+
+    const roleOf = async (username: string): Promise<string> =>
+      (
+        await app.inject({
+          method: 'POST',
+          url: '/api/auth/login',
+          payload: { username, password: 'correct-horse-battery' },
+        })
+      ).json<{ user: { role: string } }>().user.role;
+    expect(await roleOf('ada')).toBe('admin');
+    expect(await roleOf('sam')).toBe('super_admin');
+    expect(await roleOf('both')).toBe('super_admin');
+    expect(await roleOf('plain')).toBe('user');
+  });
+
+  it('never lowers a super admin whose name is only on the admin allowlist', async () => {
+    process.env.ASTRAYA_ADMIN_USERNAMES = 'admin';
+    await setupAdmin('admin', 'correct-horse-battery');
+    const login = await app.inject({
+      method: 'POST',
+      url: '/api/auth/login',
+      payload: { username: 'admin', password: 'correct-horse-battery' },
+    });
+    expect(login.json<{ user: { role: string } }>().user.role).toBe('super_admin');
   });
 
   it('never demotes an existing admin removed from ASTRAYA_ADMIN_USERNAMES', async () => {

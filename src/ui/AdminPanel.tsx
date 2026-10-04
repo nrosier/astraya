@@ -1,7 +1,9 @@
 /**
  * Admin user management (#135): list, create, reset-password, disable/enable,
- * promote/demote, and delete — each backed by the matching route in
- * `server/auth/admin-routes.ts` through `sync/admin-client.ts`. Outside `Stored`:
+ * change role, and delete — each backed by the matching route in
+ * `server/auth/admin-routes.ts` through `sync/admin-client.ts`. An admin sees the list read-only;
+ * only a super admin gets the controls that create, change or remove an account (#431) — the
+ * server refuses them for anyone else regardless of what is rendered here. Outside `Stored`:
  * this screen manages *other* users' accounts, not this device's local data, so it
  * needs the session but not the store.
  *
@@ -13,14 +15,13 @@
 import { useEffect, useState } from 'react';
 import {
   createUser,
-  demoteUser,
   disableUser,
   enableUser,
   getDeletionImpact,
   getInterpretationUsage,
   listUsers,
-  promoteUser,
   resetPassword,
+  setUserRole,
   deleteUser,
 } from '../sync/admin-client.js';
 import { getOidcConfig } from '../sync/auth-client.js';
@@ -28,7 +29,14 @@ import { adminPanelMessages } from './AdminPanel.messages.js';
 import { useMessages } from './messages.js';
 import { sharedMessages } from './shared.messages.js';
 import type { AdminUser, DeletionImpact, InterpretationUsageReport } from '../sync/admin-client.js';
-import type { OidcConfig } from '../sync/auth-client.js';
+import type { OidcConfig, Role } from '../sync/auth-client.js';
+import { useSessionUserOrUndefined } from './session-context.js';
+
+const ROLE_ORDER: readonly Role[] = ['user', 'admin', 'super_admin'];
+
+function roleLabel(role: Role, t: typeof adminPanelMessages.en): string {
+  return role === 'super_admin' ? t.superAdminRoleLabel : role === 'admin' ? t.adminRoleLabel : t.memberRoleLabel;
+}
 
 function formatCost(cents: number): string {
   return `$${(cents / 100).toFixed(2)}`;
@@ -54,10 +62,10 @@ function CreateUserForm({
   create,
 }: {
   oidcEnabled: boolean;
-  create: (username: string, isAdmin: boolean) => Promise<void>;
+  create: (username: string, role: Role) => Promise<void>;
 }): React.JSX.Element {
   const [username, setUsername] = useState('');
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [role, setRole] = useState<Role>('user');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
   const t = useMessages(adminPanelMessages);
@@ -71,10 +79,10 @@ function CreateUserForm({
     event.preventDefault();
     setBusy(true);
     setError(undefined);
-    void create(username, isAdmin)
+    void create(username, role)
       .then(() => {
         setUsername('');
-        setIsAdmin(false);
+        setRole('user');
       })
       .catch((cause: unknown) => {
         setError(cause instanceof Error ? cause.message : String(cause));
@@ -104,14 +112,20 @@ function CreateUserForm({
           />
         </label>
         <label>
-          <input
-            type="checkbox"
-            checked={isAdmin}
+          {t.createRoleLabel}
+          <select
+            value={role}
             onChange={(event) => {
-              setIsAdmin(event.target.checked);
+              const next = ROLE_ORDER.find((candidate) => candidate === event.target.value);
+              if (next !== undefined) setRole(next);
             }}
-          />
-          {t.adminCheckboxLabel}
+          >
+            {ROLE_ORDER.map((option) => (
+              <option key={option} value={option}>
+                {roleLabel(option, t)}
+              </option>
+            ))}
+          </select>
         </label>
       </div>
       <p className="actions">
@@ -125,18 +139,24 @@ function CreateUserForm({
 
 function UserRow({
   user,
+  canManage,
+  isSelf,
   passwordLink,
   disabled,
   toggleEnabled,
-  togglePromoted,
+  changeRole,
   requestReset,
   requestDelete,
 }: {
   user: AdminUser;
+  /** A super admin: may change this account. An admin sees the row without the controls. */
+  canManage: boolean;
+  /** Nobody can change their own role, so the control is disabled for the signed-in user's own row. */
+  isSelf: boolean;
   passwordLink: string | undefined;
   disabled: boolean;
   toggleEnabled: () => void;
-  togglePromoted: () => void;
+  changeRole: (role: Role) => void;
   requestReset: () => void;
   requestDelete: () => void;
 }): React.JSX.Element {
@@ -147,27 +167,46 @@ function UserRow({
         {user.username}
         {user.disabledAt !== null && t.disabledSuffix}
       </td>
-      <td>{user.isAdmin ? t.adminRoleLabel : t.memberRoleLabel}</td>
-      <td>{user.lastSeenAt === null ? t.neverSeen : new Date(user.lastSeenAt).toLocaleString()}</td>
-      <td className="actions">
-        <button type="button" className="quiet" disabled={disabled} onClick={toggleEnabled}>
-          {user.disabledAt === null ? t.disableButton : t.enableButton}
-        </button>
-        <button type="button" className="quiet" disabled={disabled} onClick={togglePromoted}>
-          {user.isAdmin ? t.demoteButton : t.promoteButton}
-        </button>
-        <button type="button" className="quiet" disabled={disabled} onClick={requestReset}>
-          {t.resetPasswordButton}
-        </button>
-        <button type="button" className="danger" disabled={disabled} onClick={requestDelete}>
-          {t.deleteButton}
-        </button>
-        {passwordLink !== undefined && (
-          <p className="hint">
-            {t.copyLinkNow} <code>{passwordLink}</code>
-          </p>
+      <td>
+        {canManage ? (
+          <select
+            aria-label={t.roleSelectLabel(user.username)}
+            value={user.role}
+            disabled={disabled || isSelf}
+            onChange={(event) => {
+              const next = ROLE_ORDER.find((candidate) => candidate === event.target.value);
+              if (next !== undefined) changeRole(next);
+            }}
+          >
+            {ROLE_ORDER.map((option) => (
+              <option key={option} value={option}>
+                {roleLabel(option, t)}
+              </option>
+            ))}
+          </select>
+        ) : (
+          roleLabel(user.role, t)
         )}
       </td>
+      <td>{user.lastSeenAt === null ? t.neverSeen : new Date(user.lastSeenAt).toLocaleString()}</td>
+      {canManage && (
+        <td className="actions">
+          <button type="button" className="quiet" disabled={disabled} onClick={toggleEnabled}>
+            {user.disabledAt === null ? t.disableButton : t.enableButton}
+          </button>
+          <button type="button" className="quiet" disabled={disabled} onClick={requestReset}>
+            {t.resetPasswordButton}
+          </button>
+          <button type="button" className="danger" disabled={disabled} onClick={requestDelete}>
+            {t.deleteButton}
+          </button>
+          {passwordLink !== undefined && (
+            <p className="hint">
+              {t.copyLinkNow} <code>{passwordLink}</code>
+            </p>
+          )}
+        </td>
+      )}
     </tr>
   );
 }
@@ -181,6 +220,8 @@ export function AdminPanel(): React.JSX.Element {
   const [pendingDelete, setPendingDelete] = useState<PendingDelete>();
   const t = useMessages(adminPanelMessages);
   const shared = useMessages(sharedMessages);
+  const sessionUser = useSessionUserOrUndefined();
+  const canManage = sessionUser?.isSuperAdmin === true;
 
   const refresh = (): Promise<void> =>
     listUsers().then((loaded) => {
@@ -210,8 +251,8 @@ export function AdminPanel(): React.JSX.Element {
       });
   };
 
-  const create = (username: string, isAdmin: boolean): Promise<void> =>
-    createUser(username, isAdmin).then(({ setPasswordUrl }) => {
+  const create = (username: string, role: Role): Promise<void> =>
+    createUser(username, role).then(({ setPasswordUrl }) => {
       setPasswordLink({ userId: username, url: setPasswordUrl });
       return refresh();
     });
@@ -228,8 +269,8 @@ export function AdminPanel(): React.JSX.Element {
     run(user.id, () => (user.disabledAt === null ? disableUser(user.id) : enableUser(user.id)).then(() => undefined));
   };
 
-  const togglePromoted = (user: AdminUser): void => {
-    run(user.id, () => (user.isAdmin ? demoteUser(user.id) : promoteUser(user.id)).then(() => undefined));
+  const changeRole = (user: AdminUser, role: Role): void => {
+    run(user.id, () => setUserRole(user.id, role).then(() => undefined));
   };
 
   const requestDelete = (user: AdminUser): void => {
@@ -266,7 +307,9 @@ export function AdminPanel(): React.JSX.Element {
         </p>
       )}
 
-      {pendingDelete !== undefined && (
+      {!canManage && <p className="hint">{t.readOnlyUsersHint}</p>}
+
+      {canManage && pendingDelete !== undefined && (
         <p className="warning" role="alert">
           {t.deleteWarning(pendingDelete.user.username, describeImpact(pendingDelete.impact, t))}{' '}
           <button type="button" className="danger" onClick={confirmDelete}>
@@ -284,12 +327,16 @@ export function AdminPanel(): React.JSX.Element {
         </p>
       )}
 
-      <h2>{t.createUserHeading}</h2>
-      <CreateUserForm oidcEnabled={oidcConfig?.enabled === true} create={create} />
-      {passwordLink !== undefined && users?.every((u) => u.id !== passwordLink.userId) === true && (
-        <p className="hint">
-          {t.copyLinkNow} <code>{passwordLink.url}</code>
-        </p>
+      {canManage && (
+        <>
+          <h2>{t.createUserHeading}</h2>
+          <CreateUserForm oidcEnabled={oidcConfig?.enabled === true} create={create} />
+          {passwordLink !== undefined && users?.every((u) => u.id !== passwordLink.userId) === true && (
+            <p className="hint">
+              {t.copyLinkNow} <code>{passwordLink.url}</code>
+            </p>
+          )}
+        </>
       )}
 
       <h2>{t.usersHeading}</h2>
@@ -304,7 +351,7 @@ export function AdminPanel(): React.JSX.Element {
                   <th>{shared.usernameLabel}</th>
                   <th>{t.roleColumn}</th>
                   <th>{t.lastSeenColumn}</th>
-                  <th>{t.actionsColumn}</th>
+                  {canManage && <th>{t.actionsColumn}</th>}
                 </tr>
               </thead>
               <tbody>
@@ -312,13 +359,15 @@ export function AdminPanel(): React.JSX.Element {
                   <UserRow
                     key={user.id}
                     user={user}
+                    canManage={canManage}
+                    isSelf={user.id === sessionUser?.id}
                     disabled={busyUserId === user.id}
                     passwordLink={passwordLink?.userId === user.id ? passwordLink.url : undefined}
                     toggleEnabled={() => {
                       toggleEnabled(user);
                     }}
-                    togglePromoted={() => {
-                      togglePromoted(user);
+                    changeRole={(role) => {
+                      changeRole(user, role);
                     }}
                     requestReset={() => {
                       requestReset(user);

@@ -12,7 +12,7 @@ import {
   promoteLocalUserIfAllowlisted,
   promoteOidcUserIfGroupMatched,
 } from './admin-promotion.ts';
-import { adminExists, announceBootstrap, checkBootstrapToken } from './bootstrap.ts';
+import { superAdminExists, announceBootstrap, checkBootstrapToken } from './bootstrap.ts';
 import {
   getUserByUsername,
   getUserByOidcIdentity,
@@ -21,6 +21,7 @@ import {
   consumePasswordSetToken,
   createOidcUser,
   resolveUser,
+  roleFields,
 } from './identity.ts';
 import { clearLoginThrottle, isLoginThrottled, recordFailedLogin } from './login-throttle.ts';
 import { exchangeCode, getDiscovery, getEndSessionEndpoint, loadOidcConfig, verifyIdToken } from './oidc.ts';
@@ -199,7 +200,7 @@ export function registerAuthRoutes(app: FastifyInstance, db: Database): void {
         // the IdP side after the account already exists.
         user = promoteOidcUserIfGroupMatched(db, user, claims.groups);
         const groupCheck = describeOidcAdminGroupCheck(claims.groups, oidcConfig.adminGroupClaim);
-        request.log[groupCheck.level]({ ...groupCheck.fields, isAdmin: user.isAdmin }, groupCheck.message);
+        request.log[groupCheck.level]({ ...groupCheck.fields, role: user.role }, groupCheck.message);
 
         const session = createSession(db, user.id, { oidcIdToken: idToken });
         reply.setCookie(SESSION_COOKIE, session.id, {
@@ -223,7 +224,7 @@ export function registerAuthRoutes(app: FastifyInstance, db: Database): void {
     async (request, reply) => {
       // 404, not 403: a 403 would confirm the route exists as an ongoing attack
       // surface after the instance is already bootstrapped.
-      if (adminExists(db)) return reply.code(404).send({ error: 'Not found' });
+      if (superAdminExists(db)) return reply.code(404).send({ error: 'Not found' });
 
       const { token, username, password } = request.body;
       if (typeof token !== 'string' || typeof username !== 'string' || typeof password !== 'string') {
@@ -243,12 +244,9 @@ export function registerAuthRoutes(app: FastifyInstance, db: Database): void {
       const passwordHash = await hashPassword(password);
       const id = randomUUID();
       const now = new Date().toISOString();
-      db.prepare('INSERT INTO users (id, username, password_hash, is_admin, created_at) VALUES (?, ?, ?, 1, ?)').run(
-        id,
-        username,
-        passwordHash,
-        now,
-      );
+      db.prepare(
+        "INSERT INTO users (id, username, password_hash, role, created_at) VALUES (?, ?, ?, 'super_admin', ?)",
+      ).run(id, username, passwordHash, now);
       // Re-announce: an admin now exists, so this clears the in-memory token and the
       // bootstrap flow is done for this process's lifetime (a restart is needed to
       // bootstrap again, which can't happen while an admin row already exists).
@@ -262,7 +260,9 @@ export function registerAuthRoutes(app: FastifyInstance, db: Database): void {
         path: '/',
         expires: new Date(session.expiresAt),
       });
-      return reply.code(201).send({ user: { id, username, isAdmin: true, createdAt: now, disabledAt: null } });
+      return reply
+        .code(201)
+        .send({ user: { id, username, ...roleFields('super_admin'), createdAt: now, disabledAt: null } });
     },
   );
 

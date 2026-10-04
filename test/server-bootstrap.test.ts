@@ -7,7 +7,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FastifyBaseLogger } from 'fastify';
 import { openDatabase, type Database } from '../server/db.ts';
-import { adminExists, announceBootstrap, checkBootstrapToken } from '../server/auth/bootstrap.ts';
+import { superAdminExists, announceBootstrap, checkBootstrapToken } from '../server/auth/bootstrap.ts';
 
 function fakeLogger(): { warn: (message: string) => void; messages: string[] } {
   const messages: string[] = [];
@@ -24,12 +24,9 @@ function extractToken(messages: readonly string[]): string {
 }
 
 function createAdmin(db: Database): void {
-  db.prepare('INSERT INTO users (id, username, password_hash, is_admin, created_at) VALUES (?, ?, ?, 1, ?)').run(
-    'admin-id',
-    'admin',
-    'hash',
-    new Date().toISOString(),
-  );
+  db.prepare(
+    "INSERT INTO users (id, username, password_hash, role, created_at) VALUES (?, ?, ?, 'super_admin', ?)",
+  ).run('admin-id', 'admin', 'hash', new Date().toISOString());
 }
 
 describe('server/auth/bootstrap.ts', () => {
@@ -47,7 +44,7 @@ describe('server/auth/bootstrap.ts', () => {
   });
 
   it('reports no admin for a fresh database', () => {
-    expect(adminExists(db)).toBe(false);
+    expect(superAdminExists(db)).toBe(false);
   });
 
   it('generates a random token and logs the bootstrap URL', () => {
@@ -125,7 +122,7 @@ describe('server/auth/bootstrap.ts', () => {
     // the admin, which is what actually clears the in-memory token.
     announceBootstrap(db, log as unknown as FastifyBaseLogger);
 
-    expect(adminExists(db)).toBe(true);
+    expect(superAdminExists(db)).toBe(true);
     expect(checkBootstrapToken(token)).toBe('no-token-issued');
   });
 

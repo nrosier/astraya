@@ -31,7 +31,7 @@ session/auth code, not through a missing `WHERE` clause on a shared table.
 ## Where to look
 
 - **Sessions and identity** — `server/auth/identity.ts` is the one place that
-  answers "who is this request from" (`resolveUser`/`requireUser`/`requireAdmin`);
+  answers "who is this request from" (`resolveUser`/`requireUser`/`requireAdmin`/`requireSuperAdmin` — two administrator levels, #431: an admin may use every admin screen except account management, which is super-admin only; check a new admin route picks the right one, and that the role is enforced on the server rather than only hidden in the UI);
   don't accept a new code path that re-derives identity a different way.
   `resolveUser` checks `disabledAt` itself, not just relying on session
   revocation having already run — that's deliberate, closing the gap between
@@ -64,24 +64,27 @@ session/auth code, not through a missing `WHERE` clause on a shared table.
 - **Bootstrap** (`server/auth/bootstrap.ts`) — the first-admin flow is a
   one-time token printed to the server log (readable only by whoever already
   has container/log access), not a default credential and not an env-var admin
-  created unconditionally. `adminExists()` excludes disabled admins from the
-  count on purpose: an instance whose only admin row is disabled has no
-  *usable* admin and must re-arm the bootstrap flow, not stay silently
-  unrecoverable. `isOnlyRemainingAdmin` in `server/auth/admin-routes.ts` follows
+  created unconditionally. `superAdminExists()` excludes disabled super admins
+  from the count on purpose: an instance whose only super admin row is disabled
+  has no *usable* one and must re-arm the bootstrap flow, not stay silently
+  unrecoverable. `isOnlyRemainingSuperAdmin` in `server/auth/admin-routes.ts` follows
   the same exclusion when guarding disable/demote/delete — check a new
-  admin-lifecycle mutation reuses this helper rather than a raw
-  `COUNT(*) WHERE is_admin = 1` that would double-count a disabled admin as
-  "remaining."
+  account-lifecycle mutation reuses this helper rather than a raw
+  `COUNT(*) WHERE role = 'super_admin'` that would double-count a disabled super
+  admin as "remaining." Nobody may change their own role either (the role route
+  refuses it), so a sole super admin cannot demote themselves out of the seat.
 - **Admin auto-promotion is a privilege-escalation surface, deliberately
-  promote-only** (`server/auth/admin-promotion.ts`, #292). `ASTRAYA_ADMIN_USERNAMES`
-  grants admin to a matching local username on every login;
-  `ASTRAYA_OIDC_ADMIN_GROUPS` grants it to any OIDC user whose ID-token group
+  promote-only** (`server/auth/admin-promotion.ts`, #292). `ASTRAYA_ADMIN_USERNAMES` /
+  `ASTRAYA_SUPER_ADMIN_USERNAMES` grant the admin / super admin role to a
+  matching local username on every login; `ASTRAYA_OIDC_ADMIN_GROUPS` /
+  `ASTRAYA_OIDC_SUPER_ADMIN_GROUPS` grant them to any OIDC user whose ID-token group
   claim matches, on every callback (not just first sign-in — group
   membership can change on the IdP side after the account already exists).
-  Both are no-ops once a user is already admin, and **neither ever revokes**
+  All are no-ops once a user already has the role or a higher one (`grantRole`
+  only raises), and **none ever revokes**
   — removing a name/group elsewhere never demotes; demotion stays the
-  existing manual route (`admin-routes.ts`'s Demote action, #135). A change
-  that adds any code path here which *removes* `is_admin` reintroduces the
+  existing manual route (`admin-routes.ts`'s role route, #135, #431). A change
+  that adds any code path here which *lowers* `role` reintroduces the
   exact surprise-lockout risk this was deliberately designed against — that
   belongs in the manual demote flow, not here. Username matching is
   case-insensitive (mirrors `users.username`'s `COLLATE NOCASE`); OIDC group

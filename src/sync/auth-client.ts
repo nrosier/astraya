@@ -4,11 +4,18 @@
  * one place that decides who is signed in.
  */
 
+/** Mirrors `server/auth/roles.ts`'s `Role`: a user, an admin (everything but account management) or a super admin (everything). */
+export type Role = 'user' | 'admin' | 'super_admin';
+
 /** Mirrors `server/auth/identity.ts`'s `User` shape. */
 export interface AuthUser {
   readonly id: string;
   readonly username: string;
+  readonly role: Role;
+  /** An admin or a super admin. */
   readonly isAdmin: boolean;
+  /** May manage accounts and roles as well. */
+  readonly isSuperAdmin: boolean;
   readonly createdAt: string;
   readonly disabledAt: string | null;
 }

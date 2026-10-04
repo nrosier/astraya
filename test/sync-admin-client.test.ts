@@ -19,15 +19,14 @@ import {
   createUser,
   deleteCorpusOverride,
   deleteUser,
-  demoteUser,
   disableUser,
   enableUser,
   exportCorpusOverrides,
   getDeletionImpact,
   listCorpusOverrides,
   listUsers,
-  promoteUser,
   resetPassword,
+  setUserRole,
   upsertCorpusOverride,
 } from '../src/sync/admin-client.ts';
 
@@ -134,11 +133,14 @@ describe('disable / enable / promote / demote', () => {
     const enabled = await enableUser(user.id);
     expect(enabled.disabledAt).toBeNull();
 
-    const promoted = await promoteUser(user.id);
-    expect(promoted.isAdmin).toBe(true);
+    const admin = await setUserRole(user.id, 'admin');
+    expect(admin).toMatchObject({ role: 'admin', isAdmin: true });
 
-    const demoted = await demoteUser(user.id);
-    expect(demoted.isAdmin).toBe(false);
+    const superAdmin = await setUserRole(user.id, 'super_admin');
+    expect(superAdmin).toMatchObject({ role: 'super_admin', isAdmin: true });
+
+    const demoted = await setUserRole(user.id, 'user');
+    expect(demoted).toMatchObject({ role: 'user', isAdmin: false });
   });
 });
 

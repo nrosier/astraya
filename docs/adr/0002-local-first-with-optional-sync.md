@@ -106,3 +106,21 @@ Two additive changes:
   deletes its _already-stored_ rows for that `(entity, entityId)`, keeping only the
   marker itself. It still never reads or acts on any field's actual value beyond this
   narrow purge check, and ciphertext at rest and on ordinary pulls is unaffected.
+
+## Amendment (2026-10-04): two administrator levels (#431)
+
+The single `is_admin` flag became a role: **user**, **admin** or **super admin**. An admin can use every
+admin screen except account management (the user list is visible read-only, with each account's role);
+a super admin can also create, disable, reset the password of, change the role of, and delete accounts,
+and preview a deletion's impact (which decrypts counts for one user). The check is made on the server on
+every route (`requireAdmin` for an admin or above, `requireSuperAdmin` for account management); the
+screens only hide what a role cannot do.
+
+This narrows what an administrator can reach, in the direction of the threat model above: an account
+that only needs to review the corpus or the AI usage can no longer touch other people's accounts. Two
+rules keep the instance from locking itself out — nobody can change their own role, and the last usable
+super admin cannot be demoted, disabled or deleted — and the first account (setup) is a super admin.
+Upgrading turns every existing admin into a super admin, so nobody loses access; an owner can demote
+others afterwards. Automatic promotion is still promote-only and can name either role
+(`ASTRAYA_ADMIN_USERNAMES` / `ASTRAYA_SUPER_ADMIN_USERNAMES`, `ASTRAYA_OIDC_ADMIN_GROUPS` /
+`ASTRAYA_OIDC_SUPER_ADMIN_GROUPS`); a match for a lower role never lowers a higher one.
