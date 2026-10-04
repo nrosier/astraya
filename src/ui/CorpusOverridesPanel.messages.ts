@@ -10,7 +10,7 @@ const en = {
   scopeLabel: 'Advisor scope',
   neutral: 'Neutral',
 
-  searchLabel: 'Search',
+  searchLabel: 'Search (meaning, key or text)',
   categoryLabel: 'Category',
   allCategories: 'All categories',
   tierLabel: 'Tier',
@@ -26,7 +26,7 @@ const en = {
   loadMoreButton: 'Load more',
   exportButton: 'Export corrections',
 
-  keyColumn: 'Key',
+  keyColumn: 'Entry',
   categoryColumn: 'Category',
   tierColumn: 'Tier',
   tagsColumn: 'Tags',
@@ -59,7 +59,7 @@ const nl: typeof en = {
   scopeLabel: 'Adviseursbereik',
   neutral: 'Neutraal',
 
-  searchLabel: 'Zoeken',
+  searchLabel: 'Zoeken (betekenis, sleutel of tekst)',
   categoryLabel: 'Categorie',
   allCategories: 'Alle categorieën',
   tierLabel: 'Niveau',
@@ -75,7 +75,7 @@ const nl: typeof en = {
   loadMoreButton: 'Meer laden',
   exportButton: 'Correcties exporteren',
 
-  keyColumn: 'Sleutel',
+  keyColumn: 'Onderdeel',
   categoryColumn: 'Categorie',
   tierColumn: 'Niveau',
   tagsColumn: 'Labels',

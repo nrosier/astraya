@@ -17,7 +17,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { decideCorpusCandidates, listCorpusCandidates } from '../sync/admin-client.js';
 import { CORPUS_LOCALES } from '../interpretation/schema.js';
-import { LOCALE_LABELS, isLocale } from './locale.js';
+import { LOCALE_LABELS, isLocale, useLocale } from './locale.js';
+import { EntryLabel } from './EntryLabel.js';
+import { compareSortKeys, labelForKey, sortKeyForKey } from './placement-label.js';
 import { useMessages } from './messages.js';
 import { PERSONA_LABELS } from './ReportView.js';
 import { corpusCandidatesPanelMessages } from './CorpusCandidatesPanel.messages.js';
@@ -39,7 +41,17 @@ export function CorpusCandidatesPanel(): React.JSX.Element {
   const shared = useMessages(sharedMessages);
 
   const [corpusLocale, setCorpusLocale] = useState<Locale>('en');
-  const [candidates, setCandidates] = useState<readonly CorpusCandidate[]>();
+  // The admin's interface language: what a candidate means is worded in it (#428).
+  const [uiLocale] = useLocale();
+  const [loaded, setCandidates] = useState<readonly CorpusCandidate[]>();
+  // By what each candidate means (planet, then sign or house in order), not by its key as text.
+  const candidates = useMemo(
+    () =>
+      loaded === undefined
+        ? undefined
+        : [...loaded].sort((a, b) => compareSortKeys(sortKeyForKey(a.key), sortKeyForKey(b.key))),
+    [loaded],
+  );
   const [loadError, setLoadError] = useState<string>();
 
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
@@ -221,11 +233,11 @@ export function CorpusCandidatesPanel(): React.JSX.Element {
                             onChange={(event) => {
                               toggleSelected(candidate.id, event.target.checked);
                             }}
-                            aria-label={candidate.key}
+                            aria-label={labelForKey(candidate.key, uiLocale)}
                           />
                         </td>
                         <td>
-                          {candidate.key}
+                          <EntryLabel entryKey={candidate.key} locale={uiLocale} />
                           {candidate.persona !== undefined && ` · ${PERSONA_LABELS[candidate.persona][corpusLocale]}`}
                           {isDuplicate && (
                             <>

@@ -22,7 +22,7 @@ const en = {
   missingWarning: (count: string) =>
     `${count} of the selected candidates were already decided elsewhere and were skipped.`,
 
-  keyColumn: 'Key',
+  keyColumn: 'Entry',
   sourceColumn: 'Source',
   triageColumn: 'Triage',
   tagsColumn: 'Tags',
@@ -62,7 +62,7 @@ const nl: typeof en = {
   missingWarning: (count: string) =>
     `${count} van de geselecteerde kandidaten waren elders al besloten en zijn overgeslagen.`,
 
-  keyColumn: 'Sleutel',
+  keyColumn: 'Onderdeel',
   sourceColumn: 'Bron',
   triageColumn: 'Triage',
   tagsColumn: 'Labels',

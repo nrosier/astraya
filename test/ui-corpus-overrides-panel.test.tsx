@@ -61,7 +61,10 @@ function urlOf(input: RequestInfo | URL): string {
   return typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
 }
 
-function makeFetchMock(): { fetch: typeof fetch; overrides: FakeOverride[] } {
+function makeFetchMock(corpus: readonly object[] = [NEUTRAL_ENTRY, OTHER_ENTRY]): {
+  fetch: typeof fetch;
+  overrides: FakeOverride[];
+} {
   const overrides: FakeOverride[] = [];
   let nextId = 1;
 
@@ -70,7 +73,7 @@ function makeFetchMock(): { fetch: typeof fetch; overrides: FakeOverride[] } {
     const url = urlOf(input);
     const method = init?.method ?? 'GET';
 
-    if (url === '/corpus/en/neutral.json') return new Response(JSON.stringify([NEUTRAL_ENTRY, OTHER_ENTRY]));
+    if (url === '/corpus/en/neutral.json') return new Response(JSON.stringify(corpus));
 
     if (url.startsWith('/api/corpus-overrides/')) {
       return new Response(
@@ -157,7 +160,8 @@ function tableRows(container: HTMLElement): readonly HTMLTableRowElement[] {
  * by its key's own cell instead of assuming a position.
  */
 function editButtonForKey(container: HTMLElement, key: string): HTMLButtonElement {
-  const row = tableRows(container).find((candidate) => candidate.querySelector('td')?.textContent === key);
+  // The row's entry cell shows what the entry means, with the key as small secondary text (#428).
+  const row = tableRows(container).find((candidate) => candidate.querySelector('td .entry-key')?.textContent === key);
   const button = row?.querySelector('td.actions button');
   if (!(button instanceof HTMLButtonElement)) throw new Error(`test fixture bug: no edit button for row "${key}"`);
   return button;
@@ -218,6 +222,7 @@ describe('CorpusOverridesPanel (#292)', () => {
     const rows = tableRows(container);
     expect(rows).toHaveLength(1);
     expect(rows[0]?.textContent).toContain('planet-in-sign:moon:1');
+    expect(rows[0]?.textContent).toContain('Moon in Taurus');
   });
 
   it('editing and saving a correction marks the entry Overridden', async () => {
@@ -300,5 +305,204 @@ describe('CorpusOverridesPanel (#292)', () => {
 
     expect(overrides).toHaveLength(0);
     expect(tableRows(container).every((row) => !row.textContent.includes(t.overriddenStatus))).toBe(true);
+  });
+});
+
+/** One entry of the committed corpus's own shape, for the cases below. */
+function corpusEntry(key: string, text: string, tier = 'core'): object {
+  return { key, locale: 'en', text, tier, tags: [], provenance: { source: 'hand-written' } };
+}
+
+const MEANING_CORPUS = [
+  corpusEntry('planet-in-house:sun:10', 'Career is where the Sun shines.'),
+  corpusEntry('planet-in-house:sun:2', 'Resources carry the Sun.'),
+  corpusEntry('planet-in-house:sun:3', 'Words and learning carry the Sun.'),
+  corpusEntry('planet-in-sign:sun:2', 'A curious Sun.'),
+  corpusEntry('planet-in-sign:moon:1', 'A steady Moon.'),
+  corpusEntry('aspect-pair:square:mars:venus', 'Desire meets will.'),
+  corpusEntry('sign-on-cusp:2:3', 'Gemini opens the third house.'),
+  corpusEntry('not-a-real-key', 'An entry the schema cannot read.'),
+];
+
+describe('CorpusOverridesPanel shows what an entry means (#428)', () => {
+  let cleanup: (() => void) | undefined;
+
+  beforeEach(() => {
+    setLocale('en');
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    cleanup?.();
+    cleanup = undefined;
+  });
+
+  async function mountWith(corpus: readonly object[]): Promise<HTMLElement> {
+    const { fetch: fetchMock } = makeFetchMock(corpus);
+    vi.stubGlobal('fetch', fetchMock);
+    const { container, root } = await mount();
+    cleanup = () => {
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+    };
+    return container;
+  }
+
+  const meanings = (container: HTMLElement): (string | undefined)[] =>
+    tableRows(container).map(
+      (row) => row.querySelector('td .entry-meaning')?.textContent ?? row.querySelector('td')?.textContent,
+    );
+  const search = async (container: HTMLElement, value: string): Promise<void> => {
+    await act(async () => {
+      setNativeValue(searchInput(container), value);
+      await Promise.resolve();
+    });
+  };
+
+  it('shows each entry as its meaning, with the key beneath as secondary text', async () => {
+    const container = await mountWith(MEANING_CORPUS);
+    const row = tableRows(container).find(
+      (r) => r.querySelector('td .entry-key')?.textContent === 'planet-in-house:sun:3',
+    );
+    expect(row?.querySelector('td .entry-meaning')?.textContent).toBe('Sun in the 3rd house');
+    expect(row?.querySelector('td .entry-key')?.textContent).toBe('planet-in-house:sun:3');
+    // The first column is the meaning, not the key.
+    expect(row?.querySelector('td')?.textContent.startsWith('Sun in the 3rd house')).toBe(true);
+  });
+
+  it('reads the zero-based sign index as the sign and the house number as the house', async () => {
+    const container = await mountWith(MEANING_CORPUS);
+    expect(meanings(container)).toContain('Sun in Gemini');
+    expect(meanings(container)).toContain('Sun in the 2nd house');
+    expect(meanings(container)).toContain('Gemini on the cusp of the 3rd house');
+    expect(meanings(container)).toContain('Mars square Venus');
+  });
+
+  it('shows a key the schema cannot read once, as it is', async () => {
+    const container = await mountWith(MEANING_CORPUS);
+    const row = tableRows(container).find((r) => r.querySelector('td .entry-key')?.textContent === 'not-a-real-key');
+    expect(row?.querySelector('td .entry-meaning')).toBeNull();
+    expect(row?.querySelector('td')?.textContent).toBe('not-a-real-key');
+  });
+
+  it('lists entries by what they mean, so the 2nd house comes before the 10th', async () => {
+    const container = await mountWith(MEANING_CORPUS);
+    expect(meanings(container)).toEqual([
+      'Sun in Gemini',
+      'Moon in Taurus',
+      'Sun in the 2nd house',
+      'Sun in the 3rd house',
+      'Sun in the 10th house',
+      'Gemini on the cusp of the 3rd house',
+      'Mars square Venus',
+      'not-a-real-key',
+    ]);
+  });
+
+  it('finds entries by their meaning, by the key, and by the text', async () => {
+    const container = await mountWith(MEANING_CORPUS);
+    await search(container, 'sun 3rd house');
+    expect(meanings(container)).toEqual(['Sun in the 3rd house']);
+
+    await search(container, 'gemini');
+    expect(meanings(container)).toEqual(['Sun in Gemini', 'Gemini on the cusp of the 3rd house']);
+
+    await search(container, 'planet-in-house:sun:10');
+    expect(meanings(container)).toEqual(['Sun in the 10th house']);
+
+    await search(container, 'Career');
+    expect(meanings(container)).toEqual(['Sun in the 10th house']);
+
+    await search(container, '  SQUARE   venus ');
+    expect(meanings(container)).toEqual(['Mars square Venus']);
+
+    await search(container, 'sun saturn');
+    expect(tableRows(container)).toHaveLength(0);
+    expect(container.querySelector('.empty')).not.toBeNull();
+  });
+
+  it('names the categories in the filter in words, and filters by them', async () => {
+    const container = await mountWith(MEANING_CORPUS);
+    const select = [...container.querySelectorAll('select')].find((candidate) =>
+      [...candidate.options].some((option) => option.value === 'planet-in-house'),
+    );
+    if (select === undefined) throw new Error('test fixture bug: no category filter');
+    const option = [...select.options].find((o) => o.value === 'planet-in-house');
+    expect(option?.textContent).toBe('Planet in house');
+    expect([...select.options].some((o) => o.textContent === 'planet-in-house')).toBe(false);
+
+    await act(async () => {
+      select.value = 'planet-in-house';
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+      await Promise.resolve();
+    });
+    expect(meanings(container)).toEqual(['Sun in the 2nd house', 'Sun in the 3rd house', 'Sun in the 10th house']);
+    // The category column names it too.
+    expect(tableRows(container)[0]?.textContent).toContain('Planet in house');
+  });
+
+  it('names the entry in the editor and in the reset confirmation, with its key', async () => {
+    const container = await mountWith(MEANING_CORPUS);
+    await act(async () => {
+      editButtonForKey(container, 'planet-in-house:sun:3').click();
+      await Promise.resolve();
+    });
+    const form = container.querySelector('form');
+    expect(form?.querySelector('strong')?.textContent).toBe('Sun in the 3rd house');
+    expect(form?.querySelector('code.entry-key')?.textContent).toBe('planet-in-house:sun:3');
+  });
+
+  it('names the entry in the reset confirmation, with its key', async () => {
+    const { fetch: fetchMock, overrides } = makeFetchMock(MEANING_CORPUS);
+    overrides.push({
+      id: 'ov-1',
+      key: 'planet-in-house:sun:3',
+      locale: 'en',
+      persona: undefined,
+      text: 'A corrected description.',
+      tier: 'core',
+      tags: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      updatedByUserId: 'u1',
+      updatedByUsername: 'alice',
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const { container, root } = await mount();
+    cleanup = () => {
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+    };
+    await act(async () => {
+      editButtonForKey(container, 'planet-in-house:sun:3').click();
+      await Promise.resolve();
+    });
+    await act(async () => {
+      findButton(container, corpusOverridesPanelMessages.en.resetButton).click();
+      await Promise.resolve();
+    });
+    const warning = container.querySelector('p.warning');
+    expect(warning?.textContent).toContain('Reset "Sun in the 3rd house (planet-in-house:sun:3)"');
+  });
+
+  it('words the entries in Dutch when the interface is Dutch', async () => {
+    setLocale('nl');
+    const container = await mountWith(MEANING_CORPUS);
+    expect(meanings(container)).toContain('Zon in Tweelingen');
+    expect(meanings(container)).toContain('Zon in het 3e huis');
+    expect(meanings(container)).toContain('Mars vierkant Venus');
+    expect(container.querySelector('thead th')?.textContent).toBe('Onderdeel');
+    // Search by the Dutch meaning.
+    await search(container, 'zon 3e huis');
+    expect(meanings(container)).toEqual(['Zon in het 3e huis']);
+  });
+
+  it('has an accessible search label that says what can be searched', async () => {
+    const container = await mountWith(MEANING_CORPUS);
+    expect(container.textContent).toContain('Search (meaning, key or text)');
   });
 });
