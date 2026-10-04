@@ -20,6 +20,10 @@ const en = {
   ac: 'AC (Ascendant)',
   dc: 'DC (Descendant)',
 
+  meaningsHeading: 'What the lines mean',
+  meaningsHint:
+    'What each checked body is traditionally read to mean on each checked kind of line, as a starting point for reflection; astrocartography is an interpretive tradition, not a forecast.',
+
   bodiesLegend: 'Bodies',
   extendedSummary: 'Extended',
 
@@ -64,6 +68,10 @@ const nl: typeof en = {
   ic: 'IC (Nadir)',
   ac: 'AC (Ascendant)',
   dc: 'DC (Descendant)',
+
+  meaningsHeading: 'Wat de lijnen betekenen',
+  meaningsHint:
+    'Wat elk aangevinkt hemellichaam traditioneel betekent op elk aangevinkt type lijn, als startpunt voor reflectie; astrocartografie is een interpretatieve traditie, geen voorspelling.',
 
   bodiesLegend: 'Hemellichamen',
   extendedSummary: 'Uitgebreid',

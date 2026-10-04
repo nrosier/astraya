@@ -55,6 +55,14 @@ test('a person with a known birth time gets a Profections screen with a Year/Mon
     page.getByRole('button', { name: 'Download CSV', exact: true }).click(),
   ]);
   expect(download.suggestedFilename()).toBe('ada-lovelace-profections.csv');
+
+  // The profected houses are explained in the reviewed corpus text, not the mechanical fallback (#427).
+  await expect(page.getByRole('heading', { name: 'What the profected houses mean', level: 2 })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /^Year: \d+(st|nd|rd|th) house$/, level: 3 })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /^Month: \d+(st|nd|rd|th) house$/, level: 3 })).toBeVisible();
+  const meaning = page.locator('.profection-meanings p').first();
+  await expect(meaning).not.toContainText('is the profected house for this period');
+  expect((await meaning.textContent())?.length ?? 0).toBeGreaterThan(40);
 });
 
 test('a person with an unknown birth time is told profections need one', async ({ page }) => {

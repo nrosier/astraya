@@ -116,6 +116,18 @@ export function buildPlacements() {
   return placements;
 }
 
+// What a dignity state means, in the words a person would use (#427): "Sun in ruler" says neither
+// which sign nor what the state is, and "in exalted" is not English.
+const DIGNITY_WORDS = {
+  ruler: 'in domicile (it rules the sign it is in)',
+  exalted: 'in exaltation',
+  detriment: 'in detriment (in the sign opposite the one it rules)',
+  fall: 'in its fall (in the sign opposite its exaltation)',
+};
+
+// The angle a line is drawn for, as a name rather than the raw `AC`/`MC` code.
+const ANGLE_WORDS = { AC: 'Ascendant', DC: 'Descendant', MC: 'Midheaven', IC: 'Imum Coeli' };
+
 export function placementDescription(placement) {
   const bodyName = (key) => BODIES.find((b) => b.key === key)?.name ?? key;
   switch (placement.category) {
@@ -128,13 +140,14 @@ export function placementDescription(placement) {
     case 'aspect-pair':
       return `${bodyName(placement.bodyA)} ${placement.aspect} ${bodyName(placement.bodyB)}`;
     case 'synastry-aspect':
-      return `synastry: ${bodyName(placement.bodyA)} ${placement.aspect} ${bodyName(placement.bodyB)} (cross-chart)`;
+      // The entry is written from the first body's owner (alphabetical order, #427): "your … their …".
+      return `synastry: one person's ${bodyName(placement.bodyA)} ${placement.aspect} the other person's ${bodyName(placement.bodyB)} (written from the first person's side)`;
     case 'dignity-state':
-      return `${bodyName(placement.body)} in ${placement.state}`;
+      return `${bodyName(placement.body)} ${DIGNITY_WORDS[placement.state] ?? placement.state}`;
     case 'profected-house':
       return `house ${String(placement.house)} profected (annual/monthly profection)`;
     case 'astro-line':
-      return `${bodyName(placement.body)} ${placement.angle} astrocartography line`;
+      return `${bodyName(placement.body)} on the ${ANGLE_WORDS[placement.angle] ?? placement.angle} astrocartography line`;
     default:
       throw new Error(`unreachable: unhandled category "${placement.category}"`);
   }
@@ -156,11 +169,11 @@ export function factsDescription(placement) {
     case 'synastry-aspect':
       return `this chart's ${bodyName(placement.bodyA)} ${aspectName(placement.aspect)} the other chart's ${bodyName(placement.bodyB)}`;
     case 'dignity-state':
-      return `${bodyName(placement.body)} in ${placement.state}`;
+      return `${bodyName(placement.body)} ${DIGNITY_WORDS[placement.state] ?? placement.state}`;
     case 'profected-house':
       return `house ${String(placement.house)} is the profected house for this period`;
     case 'astro-line':
-      return `${bodyName(placement.body)} on the ${placement.angle} astrocartography line`;
+      return `${bodyName(placement.body)} on the ${ANGLE_WORDS[placement.angle] ?? placement.angle} astrocartography line`;
     default:
       throw new Error(`this tool does not (yet) support category "${placement.category}"`);
   }

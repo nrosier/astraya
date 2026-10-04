@@ -12,6 +12,7 @@
  * `julianDayFromUtc` the engine uses everywhere else a picked date becomes a Julian day.
  */
 import { useEffect, useMemo, useState } from 'react';
+import { resolvePlacementText } from '../interpretation/compose.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { bodyById } from '../astrology/bodies.js';
 import { degreeParts } from '../domain/chart-tables.js';
@@ -29,7 +30,9 @@ import { profectionsViewMessages } from './ProfectionsView.messages.js';
 import { SortableTable } from './SortableTable.js';
 import { useStoreState } from './store-context.js';
 import type { TableColumn } from './table-sort.js';
-import type { Locale } from '../interpretation/schema.js';
+import type { CorpusEntry, Locale } from '../interpretation/schema.js';
+import { ordinal } from './placement-label.js';
+import { wheelCorpus } from './wheel-corpus.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -93,6 +96,20 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
   const { provider } = useEphemerisProvider();
   const [rulership] = useRulershipChoice();
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
+  // The reviewed text of each profected house (#427): the mechanical sentence until it arrives.
+  const [corpus, setCorpus] = useState<readonly CorpusEntry[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    wheelCorpus(locale).then(
+      (loaded) => {
+        if (!cancelled) setCorpus(loaded);
+      },
+      () => undefined,
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [locale]);
 
   const targetDate = useMemo(() => {
     const [year, month, day] = asOf.split('-').map(Number);
@@ -202,6 +219,18 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
               downloadFilename={deriveExportFilename(person.displayName, 'profections', 'csv')}
             />
           )}
+          <section className="profection-meanings" aria-labelledby="profection-meanings-heading">
+            <h2 id="profection-meanings-heading">{t.meaningHeading}</h2>
+            {[
+              { period: t.yearPeriod, house: load.data.year.house },
+              { period: t.monthPeriod, house: load.data.month.house },
+            ].map(({ period, house }) => (
+              <div key={period}>
+                <h3>{t.periodHouse(period, ordinal(house, locale))}</h3>
+                <p>{resolvePlacementText({ category: 'profected-house', house }, locale, corpus)}</p>
+              </div>
+            ))}
+          </section>
         </>
       )}
     </main>

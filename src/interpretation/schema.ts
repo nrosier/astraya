@@ -15,6 +15,43 @@
  * (`BODIES`, `SIGNS`, `ASPECTS`, `NAKSHATRAS`) rather than accepted as
  * arbitrary strings, so a typo'd body or aspect key fails validation instead
  * of silently never matching any chart.
+ *
+ * KEY REFERENCE (#427) — one place for every category's shape. Numbers are plain integers:
+ * a SIGN is a zero-based index (0 = Aries … 11 = Pisces); a HOUSE is one-based (1–12); so
+ * `planet-in-sign:sun:2` is the Sun in Gemini and `planet-in-house:sun:2` is the Sun in the 2nd
+ * house — same shape, different meaning, which is why `src/ui/placement-label.ts` (`labelForKey`)
+ * puts the meaning in words wherever a key is shown to a person. Bodies are `BodyDefinition.key`s
+ * (`sun`, `meanNode`…), aspects are `ASPECTS` keys (`square`…).
+ *
+ *   category          shape                                  example                           order of the two bodies
+ *   planet-in-sign    planet-in-sign:<body>:<sign>           planet-in-sign:sun:2              —
+ *   planet-in-house   planet-in-house:<body>:<house>         planet-in-house:sun:3             —
+ *   sign-on-cusp      sign-on-cusp:<sign>:<house>            sign-on-cusp:2:3                  — (sign first, then house)
+ *   aspect-pair       aspect-pair:<aspect>:<a>:<b>           aspect-pair:square:mars:saturn    alphabetical
+ *   transit-aspect    transit-aspect:<aspect>:<tr>:<natal>   transit-aspect:trine:mars:sun      by role: transiting, then natal
+ *   synastry-aspect   synastry-aspect:<aspect>:<a>:<b>       synastry-aspect:square:mars:moon  alphabetical, one entry per pair
+ *   dignity-state     dignity-state:<body>:<state>           dignity-state:sun:ruler           —
+ *   nakshatra         nakshatra:<body>:<index>               nakshatra:moon:3                  — (reserved, no entries)
+ *   pattern           pattern:<kebab-case-name>              pattern:bucket                    — (reserved, no entries)
+ *   profected-house   profected-house:<house>                profected-house:7                 —
+ *   astro-line        astro-line:<body>:<angle>              astro-line:venus:MC               —
+ *
+ * Ordering conventions, stated once: an `aspect-pair` and a `synastry-aspect` are stored ONCE per
+ * unordered pair, with the bodies in alphabetical order (the symmetric aspect needs one entry, not
+ * two). A `synastry-aspect` text is written from the FIRST body's owner — "your Mars … their Moon"
+ * for `…:mars:moon` — so a screen that has the pair the other way round looks up the same entry and
+ * says whose side it speaks from (`src/ui/synastry-text.ts`). A `transit-aspect` is ordered by role,
+ * not alphabetically. Everything else has one body or none.
+ *
+ * Angle vocabulary (#427): the corpus's `astro-line` keys use the uppercase `AC`/`DC`/`MC`/`IC`;
+ * everywhere else a chart angle is a lowercase point key — `asc`/`dsc`/`mc`/`ic` (the focus payload,
+ * `FocusAngle`) — and a screen shows a name from `astro-names`. `ACG_ANGLE_POINT_KEYS` is the one
+ * mapping between the two. The corpus keeps its uppercase keys because renaming them would change
+ * every override and the generator's batches for no reader-visible gain.
+ *
+ * `nakshatra` and `pattern` are reserved: the schema accepts them but no entry, screen or
+ * generator uses them yet. `test/interpretation-key-reference.test.ts` fails if any category's shape
+ * above changes, so this table cannot drift from `placementKey`.
  */
 import { bodyByKey } from '../astrology/bodies.ts';
 import { aspectByKey } from '../astrology/aspects.ts';
@@ -40,6 +77,14 @@ export type CorpusCategory = (typeof CORPUS_CATEGORIES)[number];
 /** The four angular house cusps a natal chart's astrocartography lines are drawn relative to (`src/astrology/astrocartography.ts`). */
 export const ACG_ANGLES = ['AC', 'DC', 'MC', 'IC'] as const;
 export type AcgAngle = (typeof ACG_ANGLES)[number];
+
+/** The lowercase point key (`asc`, `mc`, …) each corpus angle corresponds to — see the angle vocabulary in the header. */
+export const ACG_ANGLE_POINT_KEYS: Readonly<Record<AcgAngle, 'asc' | 'dsc' | 'mc' | 'ic'>> = {
+  AC: 'asc',
+  DC: 'dsc',
+  MC: 'mc',
+  IC: 'ic',
+};
 
 /**
  * Editorial importance, assigned by whoever writes or reviews the entry —
@@ -93,10 +138,12 @@ export function dignityState(dignities: EssentialDignities): DignityState | unde
  * and `natal` may even be the same body key (e.g. transiting Saturn aspecting
  * natal Saturn, a Saturn return) — nothing here alphabetizes or forbids that.
  *
- * `synastry-aspect` is `transit-aspect`'s cross-chart sibling, for the same reason: `bodyA` is
- * always the "this chart" side and `bodyB` the other person's chart, so swapping them describes
- * a different comparison even though the aspect itself is symmetric — unlike `aspect-pair`,
- * nothing here alphabetizes the two.
+ * `synastry-aspect` is `aspect-pair`'s cross-chart sibling: stored ONCE per unordered pair, with
+ * the bodies in alphabetical order (`canonicalPair`), exactly like `aspect-pair`. Its text is
+ * written from the first body's owner ("your Mars … their Moon" for `…:mars:moon`); a caller that
+ * holds the pair the other way round looks up the same entry and says whose side it speaks from
+ * (#422, `src/ui/synastry-text.ts`). Storing both directions would double 2,046 entries to say the
+ * same thing from the other side, so the schema does not (#427).
  */
 export type CorpusPlacement =
   | { readonly category: 'planet-in-sign'; readonly body: string; readonly sign: number }
@@ -138,8 +185,10 @@ export function placementKey(placement: CorpusPlacement): string {
     }
     case 'transit-aspect':
       return `transit-aspect:${placement.aspect}:${placement.transiting}:${placement.natal}`;
-    case 'synastry-aspect':
-      return `synastry-aspect:${placement.aspect}:${placement.bodyA}:${placement.bodyB}`;
+    case 'synastry-aspect': {
+      const [bodyA, bodyB] = canonicalPair(placement.bodyA, placement.bodyB);
+      return `synastry-aspect:${placement.aspect}:${bodyA}:${bodyB}`;
+    }
     case 'dignity-state':
       return `dignity-state:${placement.body}:${placement.state}`;
     case 'nakshatra':
@@ -345,6 +394,11 @@ function validatePlacementFields(placement: CorpusPlacement): string[] {
       if (aspectByKey(placement.aspect) === undefined) errors.push(`unknown aspect key "${placement.aspect}"`);
       checkBody(placement.bodyA, 'bodyA');
       checkBody(placement.bodyB, 'bodyB');
+      if (placement.bodyA > placement.bodyB) {
+        errors.push(
+          `synastry-aspect bodies must be in alphabetical order — got "${placement.bodyA}", "${placement.bodyB}"`,
+        );
+      }
       break;
     case 'dignity-state':
       checkBody(placement.body, 'body');

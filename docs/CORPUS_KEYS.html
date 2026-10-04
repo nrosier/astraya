@@ -1,0 +1,494 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Corpus key reference</title>
+    <style>
+      /*
+       * HTML-first documentation (#399, #427): reuses Astraya's own design tokens from
+       * src/ui/app.css verbatim rather than re-deriving them. Deliberately standalone:
+       * no build step, no external font, no dependency on the app's stylesheet.
+       */
+      :root {
+        color-scheme: dark light;
+
+        --bg: #0b0c18;
+        --surface: #15162a;
+        --surface-hover: #1d1e36;
+        --line: #2a2b45;
+
+        --fg: #eceafa;
+        --muted: #a09dc0;
+
+        --accent: #a390fb;
+        --aspect-hard: #ff8189;
+        --aspect-soft: #6ec3ff;
+        --aspect-minor: #8fe0a0;
+        --solar: #f2b75e;
+
+        --glow-a: rgb(124 92 255 / 18%);
+        --glow-b: rgb(242 183 94 / 8%);
+
+        --radius: 0.625rem;
+        --radius-sm: 0.375rem;
+      }
+
+      @media (prefers-color-scheme: light) {
+        :root {
+          --bg: #fbfaff;
+          --surface: #f3f1fa;
+          --surface-hover: #ebe8f6;
+          --line: #e2dff0;
+
+          --fg: #16152b;
+          --muted: #5c5878;
+
+          --accent: #5b3fd4;
+          --solar: #8f5a0e;
+          --aspect-hard: #b3261e;
+          --aspect-soft: #1857c4;
+          --aspect-minor: #0a4d28;
+
+          --glow-a: rgb(124 92 255 / 8%);
+          --glow-b: rgb(242 183 94 / 7%);
+        }
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 3rem 1.5rem 6rem;
+        background: var(--bg);
+        background-image:
+          radial-gradient(ellipse at top right, var(--glow-a), transparent 55%),
+          radial-gradient(ellipse at bottom left, var(--glow-b), transparent 55%);
+        background-attachment: fixed;
+        color: var(--fg);
+        font:
+          16px/1.65 system-ui,
+          -apple-system,
+          'Segoe UI',
+          Roboto,
+          sans-serif;
+      }
+
+      main {
+        max-width: 64rem;
+        margin: 0 auto;
+      }
+
+      header.adr-header {
+        margin-bottom: 2.5rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .adr-kicker {
+        margin: 0 0 0.5rem;
+        color: var(--accent);
+        font-weight: 650;
+        font-size: 0.8rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0 0 0.75rem;
+        font-size: 1.75rem;
+        font-weight: 680;
+        letter-spacing: -0.02em;
+        line-height: 1.25;
+      }
+
+      .adr-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.25rem;
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      .adr-meta dt {
+        display: inline;
+        font-weight: 620;
+        color: var(--fg);
+      }
+
+      .adr-meta dt::after {
+        content: ' ';
+      }
+
+      .adr-meta dd {
+        display: inline;
+        margin: 0;
+      }
+
+      .status-pill {
+        display: inline-block;
+        padding: 0.1em 0.6em;
+        border: 1px solid color-mix(in oklab, var(--aspect-minor) 45%, var(--line));
+        border-radius: 999px;
+        background: color-mix(in oklab, var(--aspect-minor) 16%, var(--surface));
+        color: var(--aspect-minor);
+        font-weight: 650;
+        font-size: 0.8rem;
+        text-transform: capitalize;
+      }
+
+      /* Prose: the decision narrative, styled after app.css's .prose class. */
+      .prose h2 {
+        margin: 2.5rem 0 0.75rem;
+        font-size: 1.35rem;
+        font-weight: 620;
+        letter-spacing: -0.015em;
+      }
+
+      .prose h2:first-of-type {
+        margin-top: 0;
+      }
+
+      .prose h3 {
+        margin: 2rem 0 0.4rem;
+        font-size: 1.1rem;
+        font-weight: 620;
+      }
+
+      .prose h4 {
+        margin: 1.5rem 0 0.3rem;
+        color: var(--accent);
+        font-size: 0.95rem;
+      }
+
+      .prose p {
+        margin: 0 0 1rem;
+      }
+
+      .prose ul,
+      .prose ol {
+        margin: 0.5rem 0 1.25rem;
+        padding-left: 1.15rem;
+      }
+
+      .prose ul ul,
+      .prose ul ol {
+        margin: 0.4rem 0 0.4rem;
+      }
+
+      .prose li {
+        margin-bottom: 0.5rem;
+      }
+
+      .prose li::marker {
+        color: var(--accent);
+      }
+
+      .prose strong {
+        color: var(--fg);
+        font-weight: 650;
+      }
+
+      code {
+        padding: 0.1em 0.35em;
+        border-radius: 0.25rem;
+        background: color-mix(in oklab, var(--fg) 8%, transparent);
+        font-size: 0.875em;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+
+      /* Tables: reproduces app.css's .data-table visual treatment. */
+      .data-table-wrap {
+        margin: 0 0 2rem;
+      }
+
+      .data-table-caption {
+        margin: 0 0 0.5rem;
+        color: var(--muted);
+        font-weight: 620;
+        font-size: 0.85rem;
+      }
+
+      .data-table-scroll {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+      }
+
+      table.data-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-variant-numeric: tabular-nums;
+        font-size: 0.9rem;
+      }
+
+      table.data-table th,
+      table.data-table td {
+        padding: 0.5rem 0.85rem;
+        text-align: left;
+        border-bottom: 1px solid color-mix(in oklab, var(--line) 65%, transparent);
+      }
+
+      table.data-table td.num {
+        text-align: right;
+        white-space: nowrap;
+      }
+
+      table.data-table tbody tr:last-child th,
+      table.data-table tbody tr:last-child td {
+        border-bottom: none;
+      }
+
+      table.data-table th {
+        background: color-mix(in oklab, var(--surface) 70%, transparent);
+        color: var(--muted);
+        font-weight: 650;
+        font-size: 0.8rem;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+      }
+
+      table.data-table strong {
+        color: var(--fg);
+      }
+
+      footer.adr-footer {
+        margin-top: 3rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header class="adr-header">
+        <p class="adr-kicker">Reference &middot; interpretation corpus</p>
+        <h1>Corpus key reference</h1>
+        <dl class="adr-meta">
+          <div>
+            <dt>Issue</dt>
+            <dd>#427</dd>
+          </div>
+          <div>
+            <dt>Source of truth</dt>
+            <dd><code>src/interpretation/schema.ts</code></dd>
+          </div>
+        </dl>
+      </header>
+
+      <article class="prose">
+        <h2>What a key is</h2>
+        <p>
+          Every corpus entry is identified by a <strong>key</strong>, derived from the placement it describes by
+          <code>placementKey</code> and never typed by hand. The key&rsquo;s first segment is the category; the rest
+          says which placement. There is one entry per key and language.
+        </p>
+        <p>
+          The numbers are plain integers, and the two kinds are easy to confuse: a <strong>sign</strong> is a
+          <strong>zero-based</strong> index (0&nbsp;=&nbsp;Aries &hellip; 11&nbsp;=&nbsp;Pisces), a
+          <strong>house</strong> is <strong>one-based</strong> (1&ndash;12). So <code>planet-in-sign:sun:2</code> is the
+          Sun in <strong>Gemini</strong>, while <code>planet-in-house:sun:2</code> is the Sun in the
+          <strong>2nd house</strong>. Bodies are <code>BodyDefinition.key</code>s (<code>sun</code>,
+          <code>meanNode</code>&hellip;) and aspects are <code>ASPECTS</code> keys (<code>square</code>&hellip;).
+        </p>
+        <p>
+          A person never needs to read a key: the admin screens show what an entry means in words, with the key as small
+          secondary text (<code>labelForKey</code> in <code>src/ui/placement-label.ts</code>, #428).
+        </p>
+
+        <h2>Every category</h2>
+        <div class="data-table-wrap">
+          <div class="data-table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th scope="col">Category</th>
+                  <th scope="col">Shape</th>
+                  <th scope="col">Example</th>
+                  <th scope="col">Reads as</th>
+                  <th scope="col">Order of two bodies</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row"><code>planet-in-sign</code></th>
+                  <td><code>planet-in-sign:&lt;body&gt;:&lt;sign&gt;</code></td>
+                  <td><code>planet-in-sign:sun:2</code></td>
+                  <td>Sun in Gemini</td>
+                  <td>&mdash;</td>
+                </tr>
+                <tr>
+                  <th scope="row"><code>planet-in-house</code></th>
+                  <td><code>planet-in-house:&lt;body&gt;:&lt;house&gt;</code></td>
+                  <td><code>planet-in-house:sun:3</code></td>
+                  <td>Sun in the 3rd house</td>
+                  <td>&mdash;</td>
+                </tr>
+                <tr>
+                  <th scope="row"><code>sign-on-cusp</code></th>
+                  <td><code>sign-on-cusp:&lt;sign&gt;:&lt;house&gt;</code></td>
+                  <td><code>sign-on-cusp:2:3</code></td>
+                  <td>Gemini on the cusp of the 3rd house</td>
+                  <td>sign first, then house</td>
+                </tr>
+                <tr>
+                  <th scope="row"><code>aspect-pair</code></th>
+                  <td><code>aspect-pair:&lt;aspect&gt;:&lt;a&gt;:&lt;b&gt;</code></td>
+                  <td><code>aspect-pair:square:mars:saturn</code></td>
+                  <td>Mars square Saturn</td>
+                  <td>alphabetical, one entry per pair</td>
+                </tr>
+                <tr>
+                  <th scope="row"><code>transit-aspect</code></th>
+                  <td><code>transit-aspect:&lt;aspect&gt;:&lt;transiting&gt;:&lt;natal&gt;</code></td>
+                  <td><code>transit-aspect:trine:mars:sun</code></td>
+                  <td>Transiting Mars trine natal Sun</td>
+                  <td>by role, not alphabetical</td>
+                </tr>
+                <tr>
+                  <th scope="row"><code>synastry-aspect</code></th>
+                  <td><code>synastry-aspect:&lt;aspect&gt;:&lt;a&gt;:&lt;b&gt;</code></td>
+                  <td><code>synastry-aspect:square:mars:moon</code></td>
+                  <td>Your Mars square their Moon</td>
+                  <td>alphabetical, one entry per pair; written from the first body&rsquo;s owner</td>
+                </tr>
+                <tr>
+                  <th scope="row"><code>dignity-state</code></th>
+                  <td><code>dignity-state:&lt;body&gt;:&lt;state&gt;</code></td>
+                  <td><code>dignity-state:sun:ruler</code></td>
+                  <td>Sun in its own sign (ruler)</td>
+                  <td>&mdash;</td>
+                </tr>
+                <tr>
+                  <th scope="row"><code>nakshatra</code></th>
+                  <td><code>nakshatra:&lt;body&gt;:&lt;index&gt;</code></td>
+                  <td><code>nakshatra:moon:3</code></td>
+                  <td><em>reserved: no entries</em></td>
+                  <td>&mdash;</td>
+                </tr>
+                <tr>
+                  <th scope="row"><code>pattern</code></th>
+                  <td><code>pattern:&lt;kebab-case-name&gt;</code></td>
+                  <td><code>pattern:bucket</code></td>
+                  <td><em>reserved: no entries</em></td>
+                  <td>&mdash;</td>
+                </tr>
+                <tr>
+                  <th scope="row"><code>profected-house</code></th>
+                  <td><code>profected-house:&lt;house&gt;</code></td>
+                  <td><code>profected-house:7</code></td>
+                  <td>The 7th house as the profected house</td>
+                  <td>&mdash;</td>
+                </tr>
+                <tr>
+                  <th scope="row"><code>astro-line</code></th>
+                  <td><code>astro-line:&lt;body&gt;:&lt;angle&gt;</code></td>
+                  <td><code>astro-line:venus:MC</code></td>
+                  <td>Venus on the Midheaven line</td>
+                  <td>&mdash;</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <h2>Ordering</h2>
+        <ul>
+          <li>
+            <strong><code>aspect-pair</code> and <code>synastry-aspect</code></strong> are stored once per unordered
+            pair, with the two bodies in alphabetical order. A symmetric aspect needs one entry, not two, and a key in
+            the other order is refused as non-canonical rather than becoming a second entry.
+          </li>
+          <li>
+            <strong>A <code>synastry-aspect</code> text is written from the first body&rsquo;s owner</strong>:
+            &ldquo;your Mars &hellip; their Moon&rdquo; for <code>&hellip;:mars:moon</code>. A screen that holds the
+            pair the other way round looks up the same entry and says whose side it speaks from
+            (<code>src/ui/synastry-text.ts</code>, #422). Storing both directions would double 2,046 entries to say the
+            same thing from the other side, so the schema does not.
+          </li>
+          <li>
+            <strong><code>transit-aspect</code></strong> is ordered by role: the transiting body first, the natal body
+            second. The two may even be the same body (a Saturn return).
+          </li>
+          <li>
+            <strong><code>sign-on-cusp</code></strong> puts the sign first and the house second, while
+            <code>planet-in-house</code> puts the body first. Neither is wrong; this table is the reference.
+          </li>
+        </ul>
+
+        <h2>Angle vocabulary</h2>
+        <p>
+          Three spellings of the chart angles exist, each in its own place, with one mapping between the first two
+          (<code>ACG_ANGLE_POINT_KEYS</code> in <code>schema.ts</code>):
+        </p>
+        <div class="data-table-wrap">
+          <div class="data-table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th scope="col">Where</th>
+                  <th scope="col">Spelling</th>
+                  <th scope="col">Why</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">Corpus <code>astro-line</code> keys</th>
+                  <td><code>AC</code> <code>DC</code> <code>MC</code> <code>IC</code></td>
+                  <td>
+                    Kept: renaming would change every override and the generator&rsquo;s batches for no reader-visible
+                    gain.
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">Point keys: the AI payload (<code>FocusAngle</code>), the chart tables</th>
+                  <td><code>asc</code> <code>dsc</code> <code>mc</code> <code>ic</code></td>
+                  <td>The same lowercase style every other body and point key uses.</td>
+                </tr>
+                <tr>
+                  <th scope="row">Screens</th>
+                  <td>names from <code>astro-names</code>: Ascendant, Midheaven&hellip;</td>
+                  <td>What a person reads, in their language.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <h2>Reserved categories</h2>
+        <p>
+          <code>nakshatra</code> and <code>pattern</code> are accepted by the schema, but no entry, screen or generator
+          uses them yet. <code>profected-house</code> and <code>astro-line</code> are used: the Profections screen shows
+          the text of the profected house, and the Astrocartography screen shows what each checked body means on each
+          checked line.
+        </p>
+
+        <h2>How this is kept true</h2>
+        <ul>
+          <li>
+            <code>test/interpretation-key-reference.test.ts</code> holds one example per category, its shape and its
+            ordering rule, and fails if any of them changes.
+          </li>
+          <li>
+            <code>npm run corpus:audit</code> (<code>tools/corpus-gen/lib/corpus-audit.mjs</code>) checks the committed
+            corpus: every key valid and canonical, no duplicates, English and Dutch holding the same keys, nothing
+            outside the generator&rsquo;s scope, and the placements the generator expects but the corpus lacks. A theme
+            check compares each text&rsquo;s subject with its key&rsquo;s own sign or house, so a shifted index (the Sun
+            in Gemini filed as Taurus) would fail even though every key is individually valid. The same audit runs in
+            the test suite (<code>test/tools-corpus-audit.test.ts</code>) and is meant to be run after every
+            regeneration.
+          </li>
+        </ul>
+      </article>
+
+      <footer class="adr-footer">
+        <p>A lightweight Markdown counterpart is kept alongside: <code>docs/CORPUS_KEYS.md</code>.</p>
+      </footer>
+    </main>
+  </body>
+</html>

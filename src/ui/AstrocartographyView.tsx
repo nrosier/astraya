@@ -12,6 +12,7 @@
  * data it just computed, never user-supplied).
  */
 import { useEffect, useMemo, useState } from 'react';
+import { resolvePlacementText } from '../interpretation/compose.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { renderAcgMapSvg, type AcgMapInput } from '../chart/acg-map.js';
 import { standaloneSvg } from '../chart/standalone-svg.js';
@@ -34,7 +35,8 @@ import { useMessages } from './messages.js';
 import { PersonNotFound } from './PersonNotFound.js';
 import { useStoreState } from './store-context.js';
 import type { BodyId, GeoPosition } from '../ephemeris/types.js';
-import type { Locale } from '../interpretation/schema.js';
+import type { CorpusEntry, Locale } from '../interpretation/schema.js';
+import { wheelCorpus } from './wheel-corpus.js';
 
 type LineType = 'MC' | 'IC' | 'AC' | 'DC';
 const ALL_LINE_TYPES: readonly LineType[] = ['MC', 'IC', 'AC', 'DC'];
@@ -91,6 +93,20 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
   const [pngSize, setPngSize] = useState(1800);
   const [pngError, setPngError] = useState<string | undefined>(undefined);
   const [pngBusy, setPngBusy] = useState(false);
+  // The reviewed text of each line (#427): the mechanical sentence until it arrives.
+  const [corpus, setCorpus] = useState<readonly CorpusEntry[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    wheelCorpus(locale).then(
+      (loaded) => {
+        if (!cancelled) setCorpus(loaded);
+      },
+      () => undefined,
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [locale]);
   const sizes = pngSizes(t);
 
   const relocationPlace: GeoPosition | undefined = useMemo(() => {
@@ -359,6 +375,36 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
             <p className="warning" role="alert">
               {pngError}
             </p>
+          )}
+          {lineTypes.length > 0 && bodies.length > 0 && (
+            <section className="acg-meanings" aria-labelledby="acg-meanings-heading">
+              <h2 id="acg-meanings-heading">{t.meaningsHeading}</h2>
+              <p className="hint">{t.meaningsHint}</p>
+              {[...TRADITIONAL_ACG_BODY_IDS, ...EXTENDED_ACG_BODY_IDS]
+                .filter((body) => bodies.includes(body))
+                .map((body) => {
+                  const key = bodyById(body)?.key ?? String(body);
+                  return (
+                    <details key={body}>
+                      <summary>{bodyName(body, locale)}</summary>
+                      <dl>
+                        {ALL_LINE_TYPES.filter((lineType) => lineTypes.includes(lineType)).map((lineType) => (
+                          <div key={lineType}>
+                            <dt>{lineTypeLabels(t)[lineType]}</dt>
+                            <dd>
+                              {resolvePlacementText(
+                                { category: 'astro-line', body: key, angle: lineType },
+                                locale,
+                                corpus,
+                              )}
+                            </dd>
+                          </div>
+                        ))}
+                      </dl>
+                    </details>
+                  );
+                })}
+            </section>
           )}
         </>
       )}

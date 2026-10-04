@@ -30,6 +30,9 @@ const en = {
 
   yearPeriod: 'Year',
   monthPeriod: 'Month',
+
+  meaningHeading: 'What the profected houses mean',
+  periodHouse: (period: string, house: string) => `${period}: ${house} house`,
 };
 
 const nl: typeof en = {
@@ -61,6 +64,9 @@ const nl: typeof en = {
 
   yearPeriod: 'Jaar',
   monthPeriod: 'Maand',
+
+  meaningHeading: 'Wat de geprofecteerde huizen betekenen',
+  periodHouse: (period, house) => `${period}: ${house} huis`,
 };
 
 export const profectionsViewMessages = { en, nl };
