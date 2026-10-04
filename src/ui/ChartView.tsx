@@ -42,7 +42,6 @@ import {
   fixedStarRows,
   houseCuspRows,
   positionRows,
-  visiblePositions,
   type AngleRow,
   type AntisciaRow,
   type AspectRow,
@@ -62,6 +61,7 @@ import { momentKey } from '../time/encode.js';
 import { renderChartSheetSvg } from '../chart/chart-sheet.js';
 import { renderJonesShapeDiagramSvg } from '../chart/jones-shape-diagram.js';
 import { lunarPhaseOf } from '../astrology/lunar-phase.js';
+import { jonesBodyPositions } from '../astrology/jones-shapes.js';
 import {
   DEFAULT_EXTENDED_SETTINGS,
   toChartCalculationOptions,
@@ -343,14 +343,17 @@ function derivedPointColumns(t: typeof chartViewMessages.en, locale: Locale): re
   ];
 }
 
-type TabKey = 'positions' | 'houses' | 'aspects' | 'dignities' | 'derived';
+/** The sections of the chart screen (#430), in reading order: the wheel, the overall pattern, then the detail. */
+type TabKey = 'chart' | 'shape' | 'positions' | 'houses' | 'aspects' | 'dignities' | 'derived';
+/** The sections that are tables, as opposed to the wheel and the chart-shape panel. */
+type TableTabKey = Exclude<TabKey, 'chart' | 'shape'>;
 
 /**
  * The table(s) for one tab, factored out of the tab panel below so the same markup can also
  * be stacked for every tab at once in the PDF export (#67) without being duplicated.
  */
 function renderTableTab(
-  tab: TabKey,
+  tab: TableTabKey,
   data: ChartData,
   displayName: string,
   pointVisibility: PointVisibilityOptions,
@@ -360,56 +363,16 @@ function renderTableTab(
   rulership: RulershipChoice,
 ): React.ReactNode {
   switch (tab) {
-    case 'positions': {
-      const shape = chartShapeOf(data, pointVisibility);
-      const shapePositions = new Map(
-        visiblePositions(data.positions, pointVisibility).map((position) => [position.body, position.longitude]),
-      );
-      const sunBody = bodyByKey('sun');
-      const moonBody = bodyByKey('moon');
-      const sunLongitude = data.positions.find((position) => position.body === sunBody?.id)?.longitude;
-      const moonLongitude = data.positions.find((position) => position.body === moonBody?.id)?.longitude;
-      const lunarPhase =
-        sunLongitude === undefined || moonLongitude === undefined
-          ? undefined
-          : lunarPhaseOf(moonLongitude, sunLongitude);
+    case 'positions':
       return (
-        <>
-          {lunarPhase !== undefined && (
-            <p className="hint lunar-phase-summary">
-              {t.lunarPhaseSentence(
-                t.lunarPhaseLabels[lunarPhase.phase],
-                formatElongation(lunarPhase.elongation),
-                lunarPhase.waxing,
-                Math.round(lunarPhase.illumination * 100),
-              )}
-            </p>
-          )}
-          {shape !== undefined && (
-            <div className="chart-shape-summary">
-              <p className="hint">
-                {t.chartShapeSentence(
-                  t.jonesShapeLabels[shape.shape],
-                  shape.handle === undefined ? undefined : bodyDisplayName(bodyById(shape.handle)?.key ?? '', locale),
-                )}
-              </p>
-              <div
-                className="chart-shape-diagram-wrap"
-                aria-hidden="true"
-                dangerouslySetInnerHTML={{ __html: renderJonesShapeDiagramSvg(shape, shapePositions, 140) }}
-              />
-            </div>
-          )}
-          <SortableTable
-            caption={t.positionsCaption}
-            columns={positionColumns(t, locale)}
-            rows={positionRows(data, pointVisibility, showHouses)}
-            getRowKey={(row) => row.bodyKey}
-            downloadFilename={deriveExportFilename(displayName, 'positions', 'csv')}
-          />
-        </>
+        <SortableTable
+          caption={t.positionsCaption}
+          columns={positionColumns(t, locale)}
+          rows={positionRows(data, pointVisibility, showHouses)}
+          getRowKey={(row) => row.bodyKey}
+          downloadFilename={deriveExportFilename(displayName, 'positions', 'csv')}
+        />
       );
-    }
     case 'houses':
       return (
         <>
@@ -500,24 +463,85 @@ function renderTableTab(
     }
     case 'derived':
       return (
-        <>
-          <p className="hint">
-            {t.sectPrefix} {data.sect === 'day' ? t.dayChart : t.nightChart}
-          </p>
-          <SortableTable
-            caption={t.derivedPointsCaption}
-            columns={derivedPointColumns(t, locale)}
-            rows={derivedPointRows(data, pointVisibility)}
-            getRowKey={(row) => row.label}
-            downloadFilename={deriveExportFilename(displayName, 'derived-points', 'csv')}
-          />
-        </>
+        <SortableTable
+          caption={t.derivedPointsCaption}
+          columns={derivedPointColumns(t, locale)}
+          rows={derivedPointRows(data, pointVisibility)}
+          getRowKey={(row) => row.label}
+          downloadFilename={deriveExportFilename(displayName, 'derived-points', 'csv')}
+        />
       );
   }
 }
 
+/**
+ * The chart-shape section (#430): the Jones shape with its diagram and an explanation worded as a
+ * convention, then what else describes the chart's overall character rather than a position — the
+ * Moon's phase and, when the chart has houses, its sect. The shape comes from the ten planets only
+ * (`chartShapeOf`).
+ */
+function renderShapeSection(
+  data: ChartData,
+  hasHouses: boolean,
+  t: typeof chartViewMessages.en,
+  locale: Locale,
+): React.ReactNode {
+  const shape = chartShapeOf(data);
+  const shapePositions = jonesBodyPositions(data.positions);
+  const sunBody = bodyByKey('sun');
+  const moonBody = bodyByKey('moon');
+  const sunLongitude = data.positions.find((position) => position.body === sunBody?.id)?.longitude;
+  const moonLongitude = data.positions.find((position) => position.body === moonBody?.id)?.longitude;
+  const lunarPhase =
+    sunLongitude === undefined || moonLongitude === undefined ? undefined : lunarPhaseOf(moonLongitude, sunLongitude);
+  return (
+    <>
+      {shape === undefined ? (
+        <p className="hint">{t.shapeCannotBeWorkedOut}</p>
+      ) : (
+        <div className="chart-shape-summary">
+          <div>
+            <p>
+              <strong>
+                {t.chartShapeSentence(
+                  t.jonesShapeLabels[shape.shape],
+                  shape.handle === undefined ? undefined : bodyDisplayName(bodyById(shape.handle)?.key ?? '', locale),
+                )}
+              </strong>
+            </p>
+            <p>{t.jonesShapeExplanations[shape.shape]}</p>
+            <p className="hint">{t.shapeSourceNote}</p>
+          </div>
+          <div
+            className="chart-shape-diagram-wrap"
+            aria-hidden="true"
+            dangerouslySetInnerHTML={{ __html: renderJonesShapeDiagramSvg(shape, shapePositions, 140) }}
+          />
+        </div>
+      )}
+      {lunarPhase !== undefined && (
+        <p className="lunar-phase-summary">
+          {t.lunarPhaseSentence(
+            t.lunarPhaseLabels[lunarPhase.phase],
+            formatElongation(lunarPhase.elongation),
+            lunarPhase.waxing,
+            Math.round(lunarPhase.illumination * 100),
+          )}
+        </p>
+      )}
+      {hasHouses && (
+        <p>
+          {t.sectPrefix} {data.sect === 'day' ? t.dayChart : t.nightChart}
+        </p>
+      )}
+    </>
+  );
+}
+
 function tabLabels(t: typeof chartViewMessages.en): Record<TabKey, string> {
   return {
+    chart: t.chartTabLabel,
+    shape: t.shapeTabLabel,
     positions: t.positionsCaption,
     houses: t.housesCaption,
     aspects: t.aspectsCaption,
@@ -526,8 +550,8 @@ function tabLabels(t: typeof chartViewMessages.en): Record<TabKey, string> {
   };
 }
 
-/** Every tab in display order; `houses` and `derived` are dropped by the caller when `!showHouses`. */
-const TAB_ORDER: readonly TabKey[] = ['positions', 'houses', 'aspects', 'dignities', 'derived'];
+/** Every tab in display order; the caller drops `chart` (no wheel), `houses` and `derived` when the chart has no houses. */
+const TAB_ORDER: readonly TabKey[] = ['chart', 'shape', 'positions', 'houses', 'aspects', 'dignities', 'derived'];
 
 /** PNG export resolutions (#67): the wheel's own default pixel size, and 2x/4x of it. */
 function pngSizes(t: typeof chartViewMessages.en): readonly { readonly label: string; readonly size: number }[] {
@@ -702,7 +726,7 @@ export function ChartDataView({
   const t = useMessages(chartViewMessages);
   const [locale] = useLocale();
   const [rulership] = useRulershipChoice();
-  const [activeTab, setActiveTab] = useState<TabKey>('positions');
+  const [activeTab, setActiveTab] = useState<TabKey>('chart');
   const [pngSize, setPngSize] = useState(1200);
   const [pngError, setPngError] = useState<string | undefined>(undefined);
   const [pngBusy, setPngBusy] = useState(false);
@@ -816,12 +840,16 @@ export function ChartDataView({
       });
   };
 
-  const tabs: readonly TabKey[] = housesRenderable
-    ? TAB_ORDER
-    : TAB_ORDER.filter((tab) => tab !== 'houses' && tab !== 'derived');
+  // The sections this chart can show (#430): the wheel (and the Houses and Derived points tables) are built
+  // on the Ascendant, so a chart without houses has none of them and opens on the next section instead.
+  const tabs: readonly TabKey[] = TAB_ORDER.filter((tab) =>
+    tab === 'chart' ? sheet !== undefined : tab === 'houses' || tab === 'derived' ? housesRenderable : true,
+  );
+  // A chosen tab that has since gone (a setting made the houses undefined) falls back to the first one shown.
+  const currentTab: TabKey = tabs.includes(activeTab) ? activeTab : (tabs[0] ?? 'shape');
 
   const onTabKeyDown = (event: React.KeyboardEvent<HTMLDivElement>): void => {
-    const currentIndex = tabs.indexOf(activeTab);
+    const currentIndex = tabs.indexOf(currentTab);
     let nextIndex: number | undefined;
     if (event.key === 'ArrowRight') nextIndex = (currentIndex + 1) % tabs.length;
     else if (event.key === 'ArrowLeft') nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
@@ -834,6 +862,138 @@ export function ChartDataView({
     setActiveTab(next);
     document.getElementById(`chart-tab-${next}`)?.focus();
   };
+
+  /** The wheel, what a click isolates, the interpret button and the exports: everything the Chart section holds. */
+  const renderChartPanel = (data: ChartData): React.ReactNode =>
+    sheet === undefined ? null : (
+      <>
+        <h2>{t.chartTabLabel}</h2>
+        <p className="hint chart-wheel-hint">{t.wheelClickHint}</p>
+        <div
+          ref={wheelRef}
+          className="chart-wheel chart-wheel-interactive"
+          // Hidden from assistive tech rather than given an aria-label (#69): a chart
+          // wheel packs dozens of positions/aspects into overlapping glyphs, and no short
+          // label does that justice. The data tables right below are the actual accessible
+          // equivalent — they carry every value the wheel draws, as text a screen reader
+          // can read directly. Click-to-isolate (#400) stays a mouse/touch-only
+          // enhancement layered on top of that decision, not a reason to revisit it: the
+          // tables remain the one accessible path to every value the wheel draws, clicked
+          // or not.
+          aria-hidden="true"
+          // The wheel is generated entirely by this app from data it just computed — never
+          // user-supplied markup — so injecting it is the same trust boundary as any other
+          // value this component renders, just carried as a string instead of JSX.
+          dangerouslySetInnerHTML={{ __html: sheet.markup }}
+          onClick={handleWheelClick}
+        />
+
+        {isolation !== undefined && (
+          <div className="chart-isolation-panel">
+            <div className="chart-isolation-head">
+              <strong>{isolation.heading}</strong>
+              <button type="button" className="quiet" onClick={clearIsolation}>
+                {t.isolationClear}
+              </button>
+            </div>
+            {isolation.bodiesInSign !== undefined &&
+              (isolation.bodiesInSign.length === 0 ? (
+                <p className="hint">{t.isolationSignEmpty}</p>
+              ) : (
+                <p>
+                  {isolation.bodiesInSign
+                    .map(
+                      (row) =>
+                        `${bodyDisplayName(row.bodyKey, locale)} ${String(row.degree)}°${String(row.minute).padStart(2, '0')}'`,
+                    )
+                    .join(', ')}
+                </p>
+              ))}
+            {isolation.positionRow !== undefined && (
+              <p>
+                {signDisplayName(isolation.positionRow.sign, locale)} {isolation.positionRow.degree}°
+                {String(isolation.positionRow.minute).padStart(2, '0')}'
+                {isolation.positionRow.house !== undefined && ` — ${t.houseLabel} ${isolation.positionRow.house}`}
+              </p>
+            )}
+            {isolation.relatedAspects.length > 0 && (
+              <ul>
+                {isolation.relatedAspects.map((row) => {
+                  const otherKey = row.bodyAKey === isolation.positionRow?.bodyKey ? row.bodyBKey : row.bodyAKey;
+                  const otherName = bodyDisplayName(otherKey, locale);
+                  return (
+                    <li key={`${row.bodyAKey}-${row.aspectKey}-${row.bodyBKey}`}>
+                      {aspectDisplayName(row.aspectKey, locale)} {otherName} ({row.orb.toFixed(2)}°,{' '}
+                      {row.applying ? t.applying : t.separating})
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+            {isolation.aspectRow !== undefined && (
+              <p>
+                {aspectDisplayName(isolation.aspectRow.aspectKey, locale)} — {t.orbLabel}{' '}
+                {isolation.aspectRow.orb.toFixed(2)}°, {isolation.aspectRow.applying ? t.applying : t.separating}
+              </p>
+            )}
+            {isolatedKey !== undefined && (
+              <WheelSelectionText chart={data} selectionKey={isolatedKey} locale={locale} />
+            )}
+          </div>
+        )}
+
+        {isolatedKey !== undefined && focusContext !== undefined && (
+          <FocusInterpretation context={focusContext} locale={locale} resetKey={isolatedKey} />
+        )}
+
+        {/* AstroChart is a reference rendering kept alongside Astraya's own wheel so the
+                  two can be compared during development (#231) — production users only ever
+                  see Astraya's, and it never participates in export (#67), so it's hidden
+                  during the print-all pass "Export PDF" triggers. */}
+        {!import.meta.env.PROD && !printAll && (
+          <div className="chart-wheel-reference">
+            <p className="hint">{t.astrochartReferenceHeading}</p>
+            <div aria-hidden="true">
+              <AstroChartWheel data={data} signWedgeStyle={toSignWedgeStyle(extendedSettings)} />
+            </div>
+            <p className="hint">{t.astrochartReferenceHint}</p>
+          </div>
+        )}
+
+        <div className="chart-export-actions">
+          <button type="button" className="quiet" onClick={downloadSvg}>
+            {t.downloadSvg}
+          </button>
+          <span className="chart-export-png">
+            <select
+              aria-label={t.pngResolutionLabel}
+              value={pngSize}
+              onChange={(event) => {
+                setPngSize(Number(event.target.value));
+              }}
+            >
+              {sizes.map((option) => (
+                <option key={option.size} value={option.size}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <button type="button" className="quiet" onClick={downloadPng} disabled={pngBusy}>
+              {pngBusy ? t.rendering : t.downloadPng}
+            </button>
+          </span>
+          <button type="button" className="quiet" onClick={exportPdf}>
+            {t.exportPdf}
+          </button>
+        </div>
+        {pngError !== undefined && (
+          <p className="warning" role="alert">
+            {pngError}
+          </p>
+        )}
+        <p className="hint">{t.exportPdfHint}</p>
+      </>
+    );
 
   return (
     <>
@@ -864,141 +1024,30 @@ export function ChartDataView({
             />
           )}
 
-          {sheet !== undefined && (
-            <>
-              <p className="hint chart-wheel-hint">{t.wheelClickHint}</p>
-              <div
-                ref={wheelRef}
-                className="chart-wheel chart-wheel-interactive"
-                // Hidden from assistive tech rather than given an aria-label (#69): a chart
-                // wheel packs dozens of positions/aspects into overlapping glyphs, and no short
-                // label does that justice. The data tables right below are the actual accessible
-                // equivalent — they carry every value the wheel draws, as text a screen reader
-                // can read directly. Click-to-isolate (#400) stays a mouse/touch-only
-                // enhancement layered on top of that decision, not a reason to revisit it: the
-                // tables remain the one accessible path to every value the wheel draws, clicked
-                // or not.
-                aria-hidden="true"
-                // The wheel is generated entirely by this app from data it just computed — never
-                // user-supplied markup — so injecting it is the same trust boundary as any other
-                // value this component renders, just carried as a string instead of JSX.
-                dangerouslySetInnerHTML={{ __html: sheet.markup }}
-                onClick={handleWheelClick}
-              />
-
-              {isolation !== undefined && (
-                <div className="chart-isolation-panel">
-                  <div className="chart-isolation-head">
-                    <strong>{isolation.heading}</strong>
-                    <button type="button" className="quiet" onClick={clearIsolation}>
-                      {t.isolationClear}
-                    </button>
-                  </div>
-                  {isolation.bodiesInSign !== undefined &&
-                    (isolation.bodiesInSign.length === 0 ? (
-                      <p className="hint">{t.isolationSignEmpty}</p>
-                    ) : (
-                      <p>
-                        {isolation.bodiesInSign
-                          .map(
-                            (row) =>
-                              `${bodyDisplayName(row.bodyKey, locale)} ${String(row.degree)}°${String(row.minute).padStart(2, '0')}'`,
-                          )
-                          .join(', ')}
-                      </p>
-                    ))}
-                  {isolation.positionRow !== undefined && (
-                    <p>
-                      {signDisplayName(isolation.positionRow.sign, locale)} {isolation.positionRow.degree}°
-                      {String(isolation.positionRow.minute).padStart(2, '0')}'
-                      {isolation.positionRow.house !== undefined && ` — ${t.houseLabel} ${isolation.positionRow.house}`}
-                    </p>
-                  )}
-                  {isolation.relatedAspects.length > 0 && (
-                    <ul>
-                      {isolation.relatedAspects.map((row) => {
-                        const otherKey = row.bodyAKey === isolation.positionRow?.bodyKey ? row.bodyBKey : row.bodyAKey;
-                        const otherName = bodyDisplayName(otherKey, locale);
-                        return (
-                          <li key={`${row.bodyAKey}-${row.aspectKey}-${row.bodyBKey}`}>
-                            {aspectDisplayName(row.aspectKey, locale)} {otherName} ({row.orb.toFixed(2)}°,{' '}
-                            {row.applying ? t.applying : t.separating})
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  )}
-                  {isolation.aspectRow !== undefined && (
-                    <p>
-                      {aspectDisplayName(isolation.aspectRow.aspectKey, locale)} — {t.orbLabel}{' '}
-                      {isolation.aspectRow.orb.toFixed(2)}°, {isolation.aspectRow.applying ? t.applying : t.separating}
-                    </p>
-                  )}
-                  {isolatedKey !== undefined && (
-                    <WheelSelectionText chart={load.data} selectionKey={isolatedKey} locale={locale} />
-                  )}
-                </div>
-              )}
-
-              {isolatedKey !== undefined && focusContext !== undefined && (
-                <FocusInterpretation context={focusContext} locale={locale} resetKey={isolatedKey} />
-              )}
-
-              {/* AstroChart is a reference rendering kept alongside Astraya's own wheel so the
-                  two can be compared during development (#231) — production users only ever
-                  see Astraya's, and it never participates in export (#67), so it's hidden
-                  during the print-all pass "Export PDF" triggers. */}
-              {!import.meta.env.PROD && !printAll && (
-                <div className="chart-wheel-reference">
-                  <p className="hint">{t.astrochartReferenceHeading}</p>
-                  <div aria-hidden="true">
-                    <AstroChartWheel data={load.data} signWedgeStyle={toSignWedgeStyle(extendedSettings)} />
-                  </div>
-                  <p className="hint">{t.astrochartReferenceHint}</p>
-                </div>
-              )}
-
-              <div className="chart-export-actions">
-                <button type="button" className="quiet" onClick={downloadSvg}>
-                  {t.downloadSvg}
-                </button>
-                <span className="chart-export-png">
-                  <select
-                    aria-label={t.pngResolutionLabel}
-                    value={pngSize}
-                    onChange={(event) => {
-                      setPngSize(Number(event.target.value));
-                    }}
-                  >
-                    {sizes.map((option) => (
-                      <option key={option.size} value={option.size}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                  <button type="button" className="quiet" onClick={downloadPng} disabled={pngBusy}>
-                    {pngBusy ? t.rendering : t.downloadPng}
-                  </button>
-                </span>
-                <button type="button" className="quiet" onClick={exportPdf}>
-                  {t.exportPdf}
-                </button>
-              </div>
-              {pngError !== undefined && (
-                <p className="warning" role="alert">
-                  {pngError}
-                </p>
-              )}
-              <p className="hint">{t.exportPdfHint}</p>
-            </>
-          )}
-
           {printAll ? (
             <div className="chart-print-all">
               {tabs.map((tab) => (
-                <div key={tab}>
-                  {renderTableTab(tab, load.data, displayName, pointVisibility, housesRenderable, t, locale, rulership)}
-                </div>
+                <section key={tab}>
+                  {tab === 'chart' ? (
+                    renderChartPanel(load.data)
+                  ) : (
+                    <>
+                      <h2>{tabLabels(t)[tab]}</h2>
+                      {tab === 'shape'
+                        ? renderShapeSection(load.data, housesRenderable, t, locale)
+                        : renderTableTab(
+                            tab,
+                            load.data,
+                            displayName,
+                            pointVisibility,
+                            housesRenderable,
+                            t,
+                            locale,
+                            rulership,
+                          )}
+                    </>
+                  )}
+                </section>
               ))}
             </div>
           ) : (
@@ -1010,10 +1059,10 @@ export function ChartDataView({
                     type="button"
                     id={`chart-tab-${tab}`}
                     role="tab"
-                    aria-selected={activeTab === tab}
+                    aria-selected={currentTab === tab}
                     aria-controls={`chart-tabpanel-${tab}`}
-                    tabIndex={activeTab === tab ? 0 : -1}
-                    className={activeTab === tab ? 'tab active' : 'tab'}
+                    tabIndex={currentTab === tab ? 0 : -1}
+                    className={currentTab === tab ? 'tab active' : 'tab'}
                     onClick={() => {
                       setActiveTab(tab);
                     }}
@@ -1023,23 +1072,41 @@ export function ChartDataView({
                 ))}
               </div>
 
-              <div
-                role="tabpanel"
-                id={`chart-tabpanel-${activeTab}`}
-                aria-labelledby={`chart-tab-${activeTab}`}
-                tabIndex={0}
-              >
-                {renderTableTab(
-                  activeTab,
-                  load.data,
-                  displayName,
-                  pointVisibility,
-                  housesRenderable,
-                  t,
-                  locale,
-                  rulership,
-                )}
-              </div>
+              {/* The wheel stays mounted while another section is open, so a selection on it survives a
+                  visit to the tables; every other section is only in the page while it is shown. */}
+              {tabs.includes('chart') && (
+                <div
+                  role="tabpanel"
+                  id="chart-tabpanel-chart"
+                  aria-labelledby="chart-tab-chart"
+                  tabIndex={0}
+                  hidden={currentTab !== 'chart'}
+                >
+                  {renderChartPanel(load.data)}
+                </div>
+              )}
+              {currentTab !== 'chart' && (
+                <div
+                  role="tabpanel"
+                  id={`chart-tabpanel-${currentTab}`}
+                  aria-labelledby={`chart-tab-${currentTab}`}
+                  tabIndex={0}
+                >
+                  <h2>{tabLabels(t)[currentTab]}</h2>
+                  {currentTab === 'shape'
+                    ? renderShapeSection(load.data, housesRenderable, t, locale)
+                    : renderTableTab(
+                        currentTab,
+                        load.data,
+                        displayName,
+                        pointVisibility,
+                        housesRenderable,
+                        t,
+                        locale,
+                        rulership,
+                      )}
+                </div>
+              )}
             </>
           )}
         </>

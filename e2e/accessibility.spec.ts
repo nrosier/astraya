@@ -117,6 +117,30 @@ test('the chart view (wheel plus data tables) has no automatically detectable ac
   expect(results.violations).toEqual([]);
 });
 
+test('every section of the natal chart has no automatically detectable accessibility violations (#430)', async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  await createPerson(page, {
+    name: 'Ada Lovelace',
+    date: '1815-12-10',
+    time: '07:45:00',
+    latitude: '51.5072',
+    longitude: '-0.1276',
+  });
+  await page.getByRole('link', { name: 'Natal chart', exact: true }).click();
+  await expect(page.locator('div.chart-wheel')).toBeVisible();
+
+  for (const name of ['Chart shape', 'Positions', 'Houses', 'Aspects', 'Dignities', 'Derived points']) {
+    await page.getByRole('tab', { name, exact: true }).click();
+    await expect(page.getByRole('heading', { name, level: 2 })).toBeVisible();
+    const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
+    expect(results.violations, `section ${name}`).toEqual([]);
+  }
+});
+
 test('the profections screen (#168) has no automatically detectable accessibility violations', async ({ page }) => {
   test.setTimeout(60_000);
 

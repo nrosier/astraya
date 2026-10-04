@@ -1649,14 +1649,22 @@ label.stacked textarea:focus-visible {
   flex-wrap: wrap;
 }
 
-.chart-shape-summary .hint {
-  flex: 1 1 16rem;
-  margin: 0;
+.chart-shape-summary > div:first-child {
+  flex: 1 1 18rem;
+}
+
+.chart-shape-summary > div:first-child p {
+  margin: 0 0 0.6rem;
 }
 
 .chart-shape-diagram-wrap {
   flex: 0 0 auto;
-  width: 70px;
+  width: 110px;
+}
+
+/* The chart screen's sections (#430): a panel's own heading sits under the tab strip. */
+.chart-print-all > section + section {
+  margin-top: 1.5rem;
 }
 
 .chart-shape-diagram {
