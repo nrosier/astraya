@@ -76,7 +76,7 @@ const nl: typeof en = {
   invalidPlace: 'Voer een breedtegraad in tussen −90 en 90 en een lengtegraad tussen −180 en 180.',
   returnMoment: (utc: string) => `Exacte terugkeer: ${utc}`,
   conventions:
-    'Tropische dierenriem, Placidus-huizen, standaardorbs. De uitgebreide instellingen van het geboortehoroscoop gelden hier niet.',
+    'Huizensysteem, dierenriem, orbs en de getoonde punten volgen de uitgebreide instellingen, die het geboortehoroscoop deelt.',
   castFor: (place: string) => `berekend voor ${place}`,
   calculating: 'Berekenen…',
   chartError: (message: string) => `De terugkeer kon niet worden berekend: ${message}`,

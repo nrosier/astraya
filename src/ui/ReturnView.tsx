@@ -23,6 +23,8 @@ import { useMessages } from './messages.js';
 import { PersonNotFound } from './PersonNotFound.js';
 import { ReportView } from './ReportView.js';
 import { returnViewMessages } from './ReturnView.messages.js';
+import { toChartCalculationOptions } from '../chart/extended-settings.js';
+import { useExtendedSettings } from './extended-settings-store.js';
 import { useRulershipChoice } from './rulership-setting.js';
 import { SortableTable } from './SortableTable.js';
 import { useStoreState } from './store-context.js';
@@ -91,6 +93,7 @@ export function ReturnView({
   const t = useMessages(returnViewMessages);
   const [locale] = useLocale();
   const [rulership] = useRulershipChoice();
+  const [settings, setSettings] = useExtendedSettings();
   const { provider } = useEphemerisProvider();
   const solar = kind === 'solar-return';
 
@@ -133,7 +136,11 @@ export function ReturnView({
 
     void (async () => {
       try {
-        const options = { rulership, ...(place === undefined ? {} : { place }) };
+        const options = {
+          ...toChartCalculationOptions(settings),
+          rulership,
+          ...(place === undefined ? {} : { place }),
+        };
         const result = solar
           ? await computeSolarReturnChart(moment, yearNumber, provider, options)
           : await computeLunarReturnChart(
@@ -152,7 +159,18 @@ export function ReturnView({
     return () => {
       effect.cancelled = true;
     };
-  }, [momentKey(person?.moment), provider, solar, yearNumber, fromJdParts, place, placeInvalid, inputValid, rulership]);
+  }, [
+    momentKey(person?.moment),
+    provider,
+    solar,
+    yearNumber,
+    fromJdParts,
+    place,
+    placeInvalid,
+    inputValid,
+    rulership,
+    settings,
+  ]);
 
   const baseLabel = solar ? t.solarLabel(year) : t.lunarLabel;
   const label =
@@ -301,6 +319,9 @@ export function ReturnView({
           displayName={displayName}
           showHouses
           metaLines={metaLines}
+          extendedSettings={settings}
+          onExtendedSettingsChange={setSettings}
+          settingsProvider={provider}
           section={section ?? 'chart'}
           onSectionChange={(next) => {
             changeChartSection(personId, kind, next);

@@ -223,8 +223,17 @@ test('a solar return and a lunar return are charts like any other, with their co
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   await createPerson(page, ADA);
 
+  // A house system chosen on the natal chart applies to the returns, which share its Extended settings.
+  await openNatalChart(page);
+  await page.locator('details.extended-settings summary').click();
+  await page.locator('details.extended-settings select').first().selectOption('W');
+  await page.getByRole('button', { name: 'Redraw', exact: true }).click();
+
   await openChart(page, 'Solar return');
   await expect(page.getByRole('heading', { name: /solar return/i, level: 1 })).toBeVisible();
+  await page.locator('details.extended-settings summary').click();
+  await expect(page.locator('details.extended-settings select').first()).toHaveValue('W');
+  await page.locator('details.extended-settings summary').click();
   await page.getByLabel('Year').fill('2025');
   await expect(page.getByText(/Exact return: 2025-12-/)).toBeVisible({ timeout: 30_000 });
   await expect(page.locator('div.chart-wheel')).toBeVisible();

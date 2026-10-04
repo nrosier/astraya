@@ -81,6 +81,7 @@ import { svgToPngBlob } from './chart-raster.js';
 import { downloadBlob, downloadText } from './download.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { ExtendedSettingsPanel } from './ExtendedSettingsPanel.js';
+import { useExtendedSettings } from './extended-settings-store.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { aspectKeyFor, useWheelIsolation } from './wheel-interaction.js';
@@ -1273,7 +1274,8 @@ export function ChartView({
   const t = useMessages(chartViewMessages);
   const [locale] = useLocale();
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
-  const [settings, setSettings] = useState<ExtendedSettings>(DEFAULT_EXTENDED_SETTINGS);
+  // Shared with the solar and lunar return charts, so a house system chosen here applies there too.
+  const [settings, setSettings] = useExtendedSettings();
   const [rulership] = useRulershipChoice();
   const lastChartKey = useRef('');
   // Memoised: it is a dependency of the wheel's markup, and a new array on every render of this screen (which a
