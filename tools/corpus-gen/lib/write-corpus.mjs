@@ -6,7 +6,7 @@ import * as prettier from 'prettier';
  * implementation uses `MoveFileExW` with `MOVEFILE_REPLACE_EXISTING`), so a process killed
  * mid-write (Ctrl-C, OOM, crash) leaves either the old file intact or the new one complete —
  * never a truncated corpus file. The suffix guards against two concurrent writers (e.g. two
- * `--persona` batch runs against the same locale) racing on the same temp path.
+ * batch runs against the same locale) racing on the same temp path.
  */
 async function writeFileAtomic(path, content) {
   const tmpPath = `${path}.tmp-${String(process.pid)}-${Math.random().toString(36).slice(2)}`;

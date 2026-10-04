@@ -14,11 +14,10 @@ import { DatabaseSync } from 'node:sqlite';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
 import { hashPassword } from '../server/auth/passwords.ts';
-import { LOCALES, TIERS, PERSONA_IDS, CORPUS_CATEGORIES } from '../server/corpus-overrides.ts';
+import { LOCALES, TIERS, CORPUS_CATEGORIES } from '../server/corpus-overrides.ts';
 import {
   CORPUS_LOCALES,
   CORPUS_TIERS,
-  PERSONA_IDS as SCHEMA_PERSONA_IDS,
   CORPUS_CATEGORIES as SCHEMA_CORPUS_CATEGORIES,
   validateCorpusEntries,
 } from '../src/interpretation/schema.ts';
@@ -106,10 +105,6 @@ describe('literal-array cross-check', () => {
     expect(TIERS).toEqual(CORPUS_TIERS);
   });
 
-  it('PERSONA_IDS matches schema.ts PERSONA_IDS', () => {
-    expect(PERSONA_IDS).toEqual(SCHEMA_PERSONA_IDS);
-  });
-
   it('CORPUS_CATEGORIES matches schema.ts CORPUS_CATEGORIES', () => {
     expect(CORPUS_CATEGORIES).toEqual(SCHEMA_CORPUS_CATEGORIES);
   });
@@ -158,7 +153,7 @@ describe('write routes require admin', () => {
 });
 
 describe('PUT /api/admin/corpus-overrides', () => {
-  it('upserts, then updates the same (key, locale, persona) identity via ON CONFLICT', async () => {
+  it('upserts, then updates the same (key, locale) identity via ON CONFLICT', async () => {
     const adminCookie = await setupAdmin(app);
 
     const first = await app.inject({
@@ -204,21 +199,9 @@ describe('PUT /api/admin/corpus-overrides', () => {
     expect(list.json<ListResponseJson>().overrides).toHaveLength(1);
   });
 
-  it('treats a persona-scoped override and a neutral override as distinct identities', async () => {
+  it('refuses an override that still names a persona (#429)', async () => {
     const adminCookie = await setupAdmin(app);
-    await app.inject({
-      method: 'PUT',
-      url: '/api/admin/corpus-overrides',
-      cookies: { [SESSION_COOKIE]: adminCookie },
-      payload: {
-        key: 'dignity-state:sun:ruler',
-        locale: 'en',
-        text: 'A neutral, persona-agnostic version of the correction text, past the length minimum.',
-        tier: 'core',
-        tags: [],
-      },
-    });
-    await app.inject({
+    const response = await app.inject({
       method: 'PUT',
       url: '/api/admin/corpus-overrides',
       cookies: { [SESSION_COOKIE]: adminCookie },
@@ -226,18 +209,13 @@ describe('PUT /api/admin/corpus-overrides', () => {
         key: 'dignity-state:sun:ruler',
         locale: 'en',
         persona: 'cynic',
-        text: 'A cynic-persona version of the correction text, also past the length minimum.',
+        text: 'A version of the correction text that is long enough to pass the length minimum.',
         tier: 'core',
         tags: [],
       },
     });
-
-    const list = await app.inject({
-      method: 'GET',
-      url: '/api/admin/corpus-overrides',
-      cookies: { [SESSION_COOKIE]: adminCookie },
-    });
-    expect(list.json<ListResponseJson>().overrides).toHaveLength(2);
+    expect(response.statusCode).toBe(400);
+    expect(response.json<{ error: string }>().error).toMatch(/persona is no longer supported/);
   });
 
   it('rejects an invalid tier with 400', async () => {

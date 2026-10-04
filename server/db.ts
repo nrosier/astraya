@@ -289,6 +289,22 @@ const MIGRATIONS: readonly ((db: DatabaseSync) => void)[] = [
       ALTER TABLE interpretation_results ADD COLUMN kind TEXT;
       ALTER TABLE interpretation_results ADD COLUMN basis_json TEXT;
     `);
+  }, // 13: the advisor voices are gone (#429), so a correction or a candidate is just a key and a
+  // language. Rows written for a particular voice have nothing left to apply to and are removed
+  // (the neutral ones, which are what every reader sees, are kept); the `persona` column goes and
+  // each unique index is rebuilt without it. SQLite refuses to drop a column an index uses, so the
+  // index is dropped first.
+  (db) => {
+    db.exec(`
+      DELETE FROM corpus_overrides WHERE persona <> '';
+      DELETE FROM corpus_candidates WHERE persona <> '';
+      DROP INDEX corpus_overrides_identity;
+      ALTER TABLE corpus_overrides DROP COLUMN persona;
+      CREATE UNIQUE INDEX corpus_overrides_identity ON corpus_overrides(key, locale);
+      DROP INDEX corpus_candidates_identity;
+      ALTER TABLE corpus_candidates DROP COLUMN persona;
+      CREATE UNIQUE INDEX corpus_candidates_identity ON corpus_candidates(key, locale, source);
+    `);
   },
 ];
 

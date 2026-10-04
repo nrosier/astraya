@@ -85,7 +85,7 @@ export function buildBatchRequest({
  * Uploads `requests` as one JSONL file and creates a batch job against it. No inline-request
  * size cap to enforce here the way gemini-batch.mjs has — OpenAI's file-upload path (the only
  * path it has) is already good for up to 200MB / 50,000 requests per their own documented limits,
- * comfortably more than any locale/persona scope this project runs.
+ * comfortably more than any locale scope this project runs.
  */
 export async function submitBatch({ apiKey, baseUrl, requests, maxRetries = 3 }) {
   if (!apiKey) throw new Error('OPENAI_API_KEY is not set — check .env.local');

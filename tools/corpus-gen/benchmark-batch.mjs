@@ -271,12 +271,11 @@ let usageOut = 0;
  * otherwise generated on demand and never persisted (this tool is read-only, per #368's own "not
  * an automatic corpus edit" constraint). */
 async function astrayaTextFor(sample) {
-  const shipped = corpus.find((e) => e.key === sample.key && e.locale === 'en' && e.persona === undefined);
+  const shipped = corpus.find((e) => e.key === sample.key && e.locale === 'en');
   if (shipped) return { text: shipped.text, source: 'shipped', model: shipped.provenance?.model };
 
   const description = placementDescription(sample.placement);
   const systemInstruction = buildSystemInstruction({
-    persona: undefined,
     symbolismContext: buildSymbolismContext('en'),
     locale: 'en',
     forceLanguageDirective: provider === 'ollama',
@@ -285,7 +284,6 @@ async function astrayaTextFor(sample) {
     placementDescription: description,
     corpusEntries: corpus,
     locale: 'en',
-    persona: undefined,
     aspectKey: sample.placement.aspect,
   });
   const result = await generateStructured({

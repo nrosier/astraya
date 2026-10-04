@@ -8,7 +8,7 @@
  *
  * Inline requests only, not the File API's JSONL-upload path: Google caps
  * an inline batch payload at 20MB, which comfortably covers every
- * locale/persona scope generate-batch.mjs actually runs (at most a few
+ * locale scope generate-batch.mjs actually runs (at most a few
  * thousand placements) without needing a resumable-upload protocol on top
  * of what gemini.mjs already does. `submitBatch` throws before sending if a
  * payload would exceed that cap (with margin) — split the run with

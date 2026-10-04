@@ -1,11 +1,9 @@
-import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 import {
   categoryOfKey,
   CORPUS_ENTRY_RESPONSE_SCHEMA,
   dignityState,
   parsePlacementKey,
-  PERSONA_IDS,
   placementKey,
   validateCorpusEntries,
   validateKey,
@@ -283,54 +281,20 @@ describe('validateCorpusEntries (#53)', () => {
   });
 });
 
-describe('validateCorpusEntries persona (#211)', () => {
-  it('rejects an unknown persona id', () => {
-    const result = validateCorpusEntries([validEntry({ persona: 'astrologer-supreme' })]);
-    expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.issues[0]?.message).toMatch(/persona must be one of/);
-  });
-
-  it('accepts a known persona id and includes it on the entry', () => {
+describe('validateCorpusEntries and the removed advisor voices (#429)', () => {
+  it('rejects an entry that still carries a persona', () => {
     const result = validateCorpusEntries([validEntry({ persona: 'mystic' })]);
-    expect(result.ok).toBe(true);
-    if (result.ok) expect(result.entries[0]?.persona).toBe('mystic');
-  });
-
-  it('allows the same key for a neutral entry and a persona entry', () => {
-    const result = validateCorpusEntries([validEntry(), validEntry({ persona: 'cynic' })]);
-    expect(result.ok).toBe(true);
-    if (result.ok) expect(result.entries).toHaveLength(2);
-  });
-
-  it('allows the same key for two different personas', () => {
-    const result = validateCorpusEntries([validEntry({ persona: 'mystic' }), validEntry({ persona: 'cynic' })]);
-    expect(result.ok).toBe(true);
-    if (result.ok) expect(result.entries).toHaveLength(2);
-  });
-
-  it('rejects duplicate (key, persona) pairs', () => {
-    const result = validateCorpusEntries([validEntry({ persona: 'mystic' }), validEntry({ persona: 'mystic' })]);
     expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(
-        result.issues.some((issue) => issue.message.includes('duplicate key') && issue.message.includes('mystic')),
-      ).toBe(true);
-    }
+    if (!result.ok) expect(result.issues[0]?.message).toMatch(/persona is no longer supported/);
   });
 
-  it('rejects a persona on a profected-house entry — that category is neutral-only (#369)', () => {
-    const result = validateCorpusEntries([validEntry({ key: 'profected-house:7', persona: 'mystic' })]);
+  it('rejects a duplicate key', () => {
+    const result = validateCorpusEntries([validEntry(), validEntry()]);
     expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.issues.some((issue) => issue.message.includes('neutral-only'))).toBe(true);
+    if (!result.ok) expect(result.issues.some((issue) => issue.message.includes('duplicate key'))).toBe(true);
   });
 
-  it('rejects a persona on an astro-line entry — that category is neutral-only (#369)', () => {
-    const result = validateCorpusEntries([validEntry({ key: 'astro-line:venus:MC', persona: 'cynic' })]);
-    expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.issues.some((issue) => issue.message.includes('neutral-only'))).toBe(true);
-  });
-
-  it('accepts a persona-less profected-house entry', () => {
+  it('accepts a profected-house entry', () => {
     const result = validateCorpusEntries([validEntry({ key: 'profected-house:7' })]);
     expect(result.ok).toBe(true);
   });
@@ -361,15 +325,6 @@ describe('validateCorpusEntries anchor (#211)', () => {
     expect(result.ok).toBe(true);
   });
 
-  it('rejects an anchor that also declares a persona', () => {
-    const result = validateCorpusEntries([
-      validEntry({ anchor: true, persona: 'mystic', provenance: { source: 'hand-written' } }),
-    ]);
-    expect(result.ok).toBe(false);
-    if (!result.ok)
-      expect(result.issues.some((issue) => issue.message.includes('must not declare a persona'))).toBe(true);
-  });
-
   it('rejects a non-boolean anchor value', () => {
     const result = validateCorpusEntries([validEntry({ anchor: 'yes' })]);
     expect(result.ok).toBe(false);
@@ -381,17 +336,5 @@ describe('CORPUS_ENTRY_RESPONSE_SCHEMA (#211)', () => {
   it('no longer requires (or defines) tags — tags are derived mechanically, not model-invented', () => {
     expect(CORPUS_ENTRY_RESPONSE_SCHEMA.required).not.toContain('tags');
     expect(Object.keys(CORPUS_ENTRY_RESPONSE_SCHEMA.properties)).not.toContain('tags');
-  });
-});
-
-describe('PERSONA_IDS stays in sync with tools/corpus-gen/personas.json (#211)', () => {
-  it('matches exactly, in any order', async () => {
-    const raw = await readFile(new URL('../tools/corpus-gen/personas.json', import.meta.url), 'utf8');
-    const personas = (JSON.parse(raw) as { personas: readonly { id: string }[] }).personas;
-    const fileIds = personas
-      .map((persona) => persona.id)
-      .slice()
-      .sort();
-    expect(fileIds).toEqual([...PERSONA_IDS].sort());
   });
 });

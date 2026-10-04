@@ -37,7 +37,6 @@ import { useStoreState } from './store-context.js';
 import { synastryViewMessages } from './SynastryView.messages.js';
 import type { TableColumn } from './table-sort.js';
 import type { CorpusEntry, Locale } from '../interpretation/schema.js';
-import { initialPersona } from './report-persona.js';
 import { synastryText } from './synastry-text.js';
 import { wheelCorpus } from './wheel-corpus.js';
 
@@ -140,15 +139,14 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
     };
   }, [momentKey(person?.moment), momentKey(partner?.moment), provider]);
 
-  // The reviewed interpretation texts are fetched once a synastry is on screen, and kept per language
-  // and advisor voice; until they arrive (or if they cannot) the rows show the mechanical sentence.
-  const persona = useMemo(initialPersona, []);
+  // The reviewed interpretation texts are fetched once a synastry is on screen, and kept per language;
+  // until they arrive (or if they cannot) the rows show the mechanical sentence.
   const [corpus, setCorpus] = useState<readonly CorpusEntry[]>([]);
   const synastryReady = load.kind === 'ready';
   useEffect(() => {
     if (!synastryReady) return undefined;
     let cancelled = false;
-    wheelCorpus(locale, persona).then(
+    wheelCorpus(locale).then(
       (loaded) => {
         if (!cancelled) setCorpus(loaded);
       },
@@ -157,7 +155,7 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
     return () => {
       cancelled = true;
     };
-  }, [synastryReady, locale, persona]);
+  }, [synastryReady, locale]);
 
   const wheelMarkup = useMemo(() => {
     if (load.kind !== 'ready') return undefined;
@@ -200,7 +198,7 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
     importanceByRow.get(`${row.bodyAKey}-${row.aspectKey}-${row.bodyBKey}`) ?? 0;
 
   const interpretationOf = (row: AspectRow): string => {
-    const { text, speaksFrom } = synastryText(row, locale, corpus, persona);
+    const { text, speaksFrom } = synastryText(row, locale, corpus);
     const name = speaksFrom === 'a' ? ringLabels[0] : ringLabels[1];
     return speaksFrom === undefined || name === undefined ? text : `${t.seenFromSide(name)}${text}`;
   };

@@ -180,7 +180,6 @@ describe('listCorpusOverrides / upsertCorpusOverride / deleteCorpusOverride / ex
       key: 'dignity-state:sun:ruler',
       text: 'Corrected text, now well past the forty-character minimum length required.',
     });
-    expect(override.persona).toBeUndefined();
 
     expect((await listCorpusOverrides('en')).map((o) => o.id)).toEqual([override.id]);
     expect(await listCorpusOverrides('nl')).toEqual([]);

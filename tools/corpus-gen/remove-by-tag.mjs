@@ -69,7 +69,7 @@ function matches(entry) {
 
 const matching = corpus.filter(matches);
 console.log(`[${locale}] ${String(matching.length)} entr${matching.length === 1 ? 'y' : 'ies'} tagged "${tag}".`);
-for (const entry of matching.slice(0, 20)) console.log(`  ${entry.key}${entry.persona ? ` (${entry.persona})` : ''}`);
+for (const entry of matching.slice(0, 20)) console.log(`  ${entry.key}`);
 if (matching.length > 20) console.log(`  ... and ${String(matching.length - 20)} more`);
 
 if (matching.length === 0) {

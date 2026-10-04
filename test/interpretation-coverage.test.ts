@@ -178,13 +178,13 @@ describe('resolvePlacementText (#59)', () => {
     expect(resolvePlacementText(placement, 'en', [])).toBe(composeFallbackText(placement, 'en'));
   });
 
-  it('the shipped corpus now has a real entry for every placement, in every persona', () => {
+  it('the shipped corpus now has a real entry for every placement', () => {
     expect(CORPUS.length).toBeGreaterThan(0);
     const placement: CorpusPlacement = { category: 'planet-in-house', body: 'moon', house: 1 };
     expect(resolvePlacementText(placement, 'en', CORPUS)).not.toBe(composeFallbackText(placement, 'en'));
   });
 
-  it('falls back to the neutral corpus entry, not the mechanical fallback, when a persona has no dedicated entry', () => {
+  it('uses the corpus entry, not the mechanical fallback, when the corpus has one', () => {
     const placement: CorpusPlacement = { category: 'planet-in-sign', body: 'sun', sign: 0 };
     const neutral: CorpusEntry = {
       key: 'planet-in-sign:sun:0',
@@ -194,6 +194,6 @@ describe('resolvePlacementText (#59)', () => {
       tags: [],
       provenance: { source: 'hand-written' },
     };
-    expect(resolvePlacementText(placement, 'en', [neutral], 'mystic')).toBe(neutral.text);
+    expect(resolvePlacementText(placement, 'en', [neutral])).toBe(neutral.text);
   });
 });

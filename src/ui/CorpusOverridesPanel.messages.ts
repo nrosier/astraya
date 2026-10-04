@@ -7,7 +7,6 @@ const en = {
     'Browse the interpretation corpus and correct individual entries. A correction replaces the committed text everywhere it would otherwise be shown, until it is reset.',
 
   corpusLocaleLabel: 'Corpus language',
-  scopeLabel: 'Advisor scope',
   neutral: 'Neutral',
 
   searchLabel: 'Search (meaning, key or text)',
@@ -56,7 +55,6 @@ const nl: typeof en = {
     'Doorzoek het interpretatiecorpus en corrigeer afzonderlijke items. Een correctie vervangt de vastgelegde tekst overal waar deze anders zou worden getoond, totdat ze wordt teruggezet.',
 
   corpusLocaleLabel: 'Corpustaal',
-  scopeLabel: 'Adviseursbereik',
   neutral: 'Neutraal',
 
   searchLabel: 'Zoeken (betekenis, sleutel of tekst)',

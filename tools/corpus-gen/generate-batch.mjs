@@ -1,8 +1,5 @@
 /**
- * Batch runner for #56's default/neutral corpus entries: the persona-less
- * text every reader sees before choosing a more particular voice, and the
- * fallback a persona-specific lookup lands on when its own entry doesn't
- * exist yet (#211).
+ * Batch runner for #56's corpus entries: the text every reader sees for a placement.
  *
  * planet-in-sign/-house and aspect-pair cover every computed body (all 20 —
  * the 10 traditional/modern planets, both nodes, all three Lilith variants
@@ -19,12 +16,11 @@
  *
  * Resumable and idempotent: every successful entry is written to
  * src/interpretation/corpus/<locale>.json immediately, and a re-run skips
- * any key that file already has (as a neutral entry — persona-specific
- * entries for the same key don't count as coverage here). Runs one locale
+ * any key that file already has. Runs one locale
  * at a time by design, so `--locale=en` and `--locale=nl` can run
  * concurrently or be resumed independently, per #56.
  *
- *   npx tsx --env-file=.env.local tools/corpus-gen/generate-batch.mjs --locale=en [--persona=<id>] [--limit=N] [--concurrency=N] [--delay-ms=N] [--skip-final-checks] [--provider=gemini|ollama] [--force] [--max-language-retries=N] [--batch]
+ *   npx tsx --env-file=.env.local tools/corpus-gen/generate-batch.mjs --locale=en [--limit=N] [--concurrency=N] [--delay-ms=N] [--skip-final-checks] [--provider=gemini|ollama] [--force] [--max-language-retries=N] [--batch]
  *
  * `--max-language-retries` (default 4): a response that fails lint's own
  * `language-mismatch` rule (text in the wrong locale entirely) is re-requested
@@ -56,15 +52,10 @@
  * gold-standard fragments" reference examples, not something a batch run
  * should be able to overwrite with its own output.
  *
- * `--persona` (a `tools/corpus-gen/personas.json` id) generates that
- * persona's voice for each placement instead of the neutral default;
- * omitting it keeps the original neutral-only behavior. Coverage/resume is
- * scoped to `(key, persona)`, matching the corpus's own dedupe identity
- * (schema.ts / loader.ts). `--skip-final-checks` skips the whole-locale
- * lint/dedupe pass at the end — useful when running many persona rounds
- * back-to-back, since that pass is quadratic in the locale's total entry
- * count and repeating it after every round pays a rising cost for no benefit
- * until the last round is done anyway.
+ * `--skip-final-checks` skips the whole-locale lint/dedupe pass at the end — useful when
+ * running many rounds back-to-back, since that pass is quadratic in the locale's total entry
+ * count and repeating it after every round pays a rising cost for no benefit until the last
+ * round is done anyway.
  *
  * `--provider=gemini|ollama` (#359, default gemini) picks which machine runs
  * this: Ollama only ever runs against whoever's own machine has it
@@ -79,11 +70,7 @@ import { buildSystemInstruction, buildUserContent } from './lib/prompt.mjs';
 import { buildBatchRequest, submitBatch, pollBatch, extractBatchResults } from './lib/gemini-batch.mjs';
 import { writeCorpus } from './lib/write-corpus.mjs';
 import { buildPlacements, placementDescription, buildSymbolismContext, symbolismScopeFor } from './lib/placements.mjs';
-import {
-  CORPUS_ENTRY_RESPONSE_SCHEMA,
-  placementKey,
-  NEUTRAL_ONLY_CATEGORIES,
-} from '../../src/interpretation/schema.ts';
+import { CORPUS_ENTRY_RESPONSE_SCHEMA, placementKey } from '../../src/interpretation/schema.ts';
 import { lintCorpus, lintEntry } from '../../src/interpretation/lint.ts';
 import { findNearDuplicates } from '../../src/interpretation/dedupe.ts';
 import { estimateCostCentsForCall, formatCents } from './lib/cost-estimate.mjs';
@@ -115,7 +102,7 @@ function flag(name, fallback) {
 }
 if (rawArgs.includes('--help') || rawArgs.includes('-h')) {
   console.log(
-    'Usage: npx tsx --env-file=.env.local tools/corpus-gen/generate-batch.mjs --locale=en [--persona=<id>] [--limit=N] [--concurrency=N] [--delay-ms=N] [--skip-final-checks] [--provider=gemini|ollama] [--force] [--max-language-retries=N] [--batch]',
+    'Usage: npx tsx --env-file=.env.local tools/corpus-gen/generate-batch.mjs --locale=en [--limit=N] [--concurrency=N] [--delay-ms=N] [--skip-final-checks] [--provider=gemini|ollama] [--force] [--max-language-retries=N] [--batch]',
   );
   process.exit(0);
 }
@@ -138,14 +125,6 @@ if (useBatch && provider !== 'gemini') {
 const { generateStructured } = await import(provider === 'ollama' ? './lib/ollama.mjs' : './lib/gemini.mjs');
 const model = provider === 'ollama' ? process.env.OLLAMA_MODEL || 'gemma4' : process.env.GEMINI_MODEL;
 const baseUrl = provider === 'ollama' ? process.env.OLLAMA_BASE_URL : process.env.GEMINI_BASE_URL;
-
-const personas = JSON.parse(await readFile(join(root, 'tools', 'corpus-gen', 'personas.json'), 'utf8')).personas;
-const personaIdFlag = flag('persona');
-const persona = personaIdFlag ? personas.find((p) => p.id === personaIdFlag) : undefined;
-if (personaIdFlag && !persona) {
-  throw new Error(`unknown persona "${personaIdFlag}" — known: ${personas.map((p) => p.id).join(', ')}`);
-}
-const scopeLabel = persona?.id ?? 'neutral';
 
 const corpusPath = join(root, 'src', 'interpretation', 'corpus', `${locale}.json`);
 let corpus;
@@ -174,27 +153,23 @@ if (seedAnchorsFrom && corpus.filter((e) => e.anchor === true && e.locale === lo
   corpus.push(...seedAnchors);
   await writeCorpus(corpusPath, corpus);
   console.log(
-    `[${locale}/${scopeLabel}] seeded ${String(seedAnchors.length)} anchor entr${seedAnchors.length === 1 ? 'y' : 'ies'} from ${seedAnchorsFrom}`,
+    `[${locale}] seeded ${String(seedAnchors.length)} anchor entr${seedAnchors.length === 1 ? 'y' : 'ies'} from ${seedAnchorsFrom}`,
   );
 }
 if (corpus.filter((e) => e.anchor === true && e.locale === locale).length === 0) {
-  console.log(`[${locale}/${scopeLabel}] no anchor entries for this locale — generating with no few-shot example.`);
+  console.log(`[${locale}] no anchor entries for this locale — generating with no few-shot example.`);
 }
 
-// Maps a (persona-scoped) key to its position in `corpus`, so a `--force` regeneration replaces
+// Maps a key to its position in `corpus`, so a `--force` regeneration replaces
 // the entry in place instead of pushing a second entry with the same key.
 const existingIndex = new Map();
 corpus.forEach((entry, i) => {
-  if (entry.persona === persona?.id) existingIndex.set(entry.key, i);
+  existingIndex.set(entry.key, i);
 });
 
 const allPlacements = buildPlacements();
 const pending = allPlacements
   .map((placement) => ({ placement, key: placementKey(placement) }))
-  // profected-house/astro-line (#369) are neutral-only — no persona round should ever touch them,
-  // same enforcement schema.ts's validateCorpusEntries applies to a shipped entry, just earlier
-  // (skipped before spending a single API call, not caught only after generating one).
-  .filter(({ placement }) => !persona || !NEUTRAL_ONLY_CATEGORIES.includes(placement.category))
   .filter(({ key }) => {
     const idx = existingIndex.get(key);
     if (idx === undefined) return true; // genuinely missing — always generate
@@ -204,11 +179,11 @@ const pending = allPlacements
   .slice(0, Number.isFinite(limit) ? limit : undefined);
 
 console.log(
-  `[${locale}/${scopeLabel}] provider: ${provider} (model: ${String(model)}) — restricted scope: ${String(allPlacements.length)} placements, ` +
+  `[${locale}] provider: ${provider} (model: ${String(model)}) — restricted scope: ${String(allPlacements.length)} placements, ` +
     `${String(existingIndex.size)} already shipped, ${String(pending.length)} to ${force ? 'regenerate' : 'generate'}${force ? ' (--force)' : ''}`,
 );
 if (pending.length === 0) {
-  console.log(`[${locale}/${scopeLabel}] nothing to do.`);
+  console.log(`[${locale}] nothing to do.`);
   process.exit(0);
 }
 
@@ -231,7 +206,7 @@ function renderProgress() {
   const etaMin = finished > 0 ? (elapsedMin / finished) * (pending.length - finished) : 0;
   const rate = finished > 0 ? finished / elapsedMin : 0;
   const line =
-    `[${locale}/${scopeLabel}] [${bar}] ${String(finished)}/${String(pending.length)} (${(pct * 100).toFixed(1)}%)` +
+    `[${locale}] [${bar}] ${String(finished)}/${String(pending.length)} (${(pct * 100).toFixed(1)}%)` +
     ` — ${String(done)} ok, ${String(failed)} failed — ${elapsedMin.toFixed(1)}min elapsed, ~${etaMin.toFixed(1)}min left` +
     ` — ${rate.toFixed(1)}/min`;
   process.stdout.write(`\r${line.padEnd(process.stdout.columns ?? line.length)}`);
@@ -247,7 +222,6 @@ async function persist() {
 // now varies per item exactly like userContent already does.
 function systemInstructionFor(placement) {
   return buildSystemInstruction({
-    persona,
     symbolismContext: buildSymbolismContext(locale, symbolismScopeFor(placement)),
     locale,
     forceLanguageDirective: provider === 'ollama',
@@ -261,7 +235,6 @@ function buildEntry({ key, placement, text, tier }) {
     text,
     tier,
     tags: placement.category === 'dignity-state' ? [placement.state] : [],
-    ...(persona ? { persona: persona.id } : {}),
     provenance: {
       source: 'generated',
       model,
@@ -304,7 +277,6 @@ async function runBatchRounds() {
           placementDescription: placementDescription(placement),
           corpusEntries: corpus,
           locale,
-          persona,
           aspectKey: placement.aspect,
         }),
         temperature: Number(process.env.GEMINI_TEMPERATURE ?? '0.75'),
@@ -313,16 +285,16 @@ async function runBatchRounds() {
     );
 
     console.log(
-      `\n[${locale}/${scopeLabel}] batch round ${String(round)}/${String(MAX_LANGUAGE_RETRIES)}: submitting ${String(requests.length)} request${requests.length === 1 ? '' : 's'}...`,
+      `\n[${locale}] batch round ${String(round)}/${String(MAX_LANGUAGE_RETRIES)}: submitting ${String(requests.length)} request${requests.length === 1 ? '' : 's'}...`,
     );
     const submitted = await submitBatch({
       apiKey: process.env.GEMINI_API_KEY,
       baseUrl,
       model,
-      displayName: `astraya-corpus-${locale}-${scopeLabel}-round${String(round)}-${String(Date.now())}`,
+      displayName: `astraya-corpus-${locale}-round${String(round)}-${String(Date.now())}`,
       requests,
     });
-    console.log(`[${locale}/${scopeLabel}] batch round ${String(round)}: ${submitted.name} — polling...`);
+    console.log(`[${locale}] batch round ${String(round)}: ${submitted.name} — polling...`);
 
     let lastState;
     const finished = await pollBatch({
@@ -332,7 +304,7 @@ async function runBatchRounds() {
       onPoll: (state) => {
         if (state !== lastState) {
           lastState = state;
-          console.log(`[${locale}/${scopeLabel}] batch round ${String(round)}: ${String(state)}`);
+          console.log(`[${locale}] batch round ${String(round)}: ${String(state)}`);
         }
       },
     });
@@ -345,7 +317,7 @@ async function runBatchRounds() {
       const result = byKey.get(item.key);
       if (result === undefined) {
         failed += 1;
-        console.error(`[${locale}/${scopeLabel}] FAILED ${item.key}: no result came back for this key`);
+        console.error(`[${locale}] FAILED ${item.key}: no result came back for this key`);
         continue;
       }
       if (result.usage) {
@@ -356,7 +328,7 @@ async function runBatchRounds() {
       }
       if (result.error) {
         failed += 1;
-        console.error(`[${locale}/${scopeLabel}] FAILED ${item.key}: ${result.error.message}`);
+        console.error(`[${locale}] FAILED ${item.key}: ${result.error.message}`);
         continue;
       }
 
@@ -373,7 +345,7 @@ async function runBatchRounds() {
         } else {
           failed += 1;
           console.error(
-            `[${locale}/${scopeLabel}] FAILED ${item.key}: ${languageIssue.message} (still wrong after ${String(MAX_LANGUAGE_RETRIES)} rounds)`,
+            `[${locale}] FAILED ${item.key}: ${languageIssue.message} (still wrong after ${String(MAX_LANGUAGE_RETRIES)} rounds)`,
           );
         }
         continue;
@@ -384,7 +356,7 @@ async function runBatchRounds() {
     }
 
     console.log(
-      `[${locale}/${scopeLabel}] batch round ${String(round)} complete: ${String(done)} written so far, ${String(failed)} failed so far, ${String(nextRemaining.length)} going to the next round`,
+      `[${locale}] batch round ${String(round)} complete: ${String(done)} written so far, ${String(failed)} failed so far, ${String(nextRemaining.length)} going to the next round`,
     );
     remaining = nextRemaining;
   }
@@ -399,7 +371,6 @@ if (useBatch) {
       placementDescription: placementDescription(placement),
       corpusEntries: corpus,
       locale,
-      persona,
       aspectKey: placement.aspect,
     });
 
@@ -430,7 +401,7 @@ if (useBatch) {
         if (languageIssue && attempt < MAX_LANGUAGE_RETRIES) {
           if (useProgressBar) process.stdout.write('\n');
           console.error(
-            `[${locale}/${scopeLabel}] ${key}: attempt ${String(attempt)}/${String(MAX_LANGUAGE_RETRIES)} came back in the wrong language — regenerating`,
+            `[${locale}] ${key}: attempt ${String(attempt)}/${String(MAX_LANGUAGE_RETRIES)} came back in the wrong language — regenerating`,
           );
         }
       } while (languageIssue && attempt < MAX_LANGUAGE_RETRIES);
@@ -450,13 +421,13 @@ if (useBatch) {
         const elapsedMin = (Date.now() - startedAt) / 60000;
         const rate = done / elapsedMin;
         console.log(
-          `[${locale}/${scopeLabel}] ${String(done)}/${String(pending.length)} written (${elapsedMin.toFixed(1)} min elapsed, ${rate.toFixed(1)}/min) — last: ${key}`,
+          `[${locale}] ${String(done)}/${String(pending.length)} written (${elapsedMin.toFixed(1)} min elapsed, ${rate.toFixed(1)}/min) — last: ${key}`,
         );
       }
     } catch (error) {
       failed += 1;
       if (useProgressBar) process.stdout.write('\n');
-      console.error(`[${locale}/${scopeLabel}] FAILED ${key}: ${error.message}`);
+      console.error(`[${locale}] FAILED ${key}: ${error.message}`);
       if (useProgressBar) renderProgress();
     }
 
@@ -464,7 +435,7 @@ if (useBatch) {
   });
 }
 
-console.log(`\n[${locale}/${scopeLabel}] batch complete: ${String(done)} written, ${String(failed)} failed`);
+console.log(`\n[${locale}] batch complete: ${String(done)} written, ${String(failed)} failed`);
 
 {
   const costCents = estimateCostCentsForCall({
@@ -478,22 +449,20 @@ console.log(`\n[${locale}/${scopeLabel}] batch complete: ${String(done)} written
     costCents === undefined
       ? `cost unknown (no pricing on file for ${model})`
       : `est. cost at ${provider === 'ollama' ? 'local' : useBatch ? 'Batch-tier' : 'Standard-tier'} rates: ${formatCents(costCents)}`;
-  console.log(
-    `[${locale}/${scopeLabel}] usage: ${String(usageIn)} input tokens, ${String(usageOut)} output tokens — ${costNote}`,
-  );
+  console.log(`[${locale}] usage: ${String(usageIn)} input tokens, ${String(usageOut)} output tokens — ${costNote}`);
 }
 
 if (skipFinalChecks) {
-  console.log(`\n[${locale}/${scopeLabel}] --skip-final-checks set: skipping whole-locale lint/dedupe pass.`);
+  console.log(`\n[${locale}] --skip-final-checks set: skipping whole-locale lint/dedupe pass.`);
   process.exit(0);
 }
 
-console.log(`\n[${locale}/${scopeLabel}] final lint pass over the whole locale:`);
+console.log(`\n[${locale}] final lint pass over the whole locale:`);
 const lintIssues = lintCorpus(corpus);
-if (lintIssues.length === 0) console.log(`[${locale}/${scopeLabel}] clean — no lint issues`);
+if (lintIssues.length === 0) console.log(`[${locale}] clean — no lint issues`);
 else for (const issue of lintIssues) console.log(`  [${issue.rule}] ${issue.key}: ${issue.message}`);
 
-console.log(`\n[${locale}/${scopeLabel}] final dedupe pass over the whole locale:`);
+console.log(`\n[${locale}] final dedupe pass over the whole locale:`);
 const { pairs } = findNearDuplicates(corpus);
-if (pairs.length === 0) console.log(`[${locale}/${scopeLabel}] clean — no near-duplicates at or above the threshold`);
+if (pairs.length === 0) console.log(`[${locale}] clean — no near-duplicates at or above the threshold`);
 else for (const pair of pairs) console.log(`  ${pair.keyA} <-> ${pair.keyB}: ${pair.similarity.toFixed(3)}`);

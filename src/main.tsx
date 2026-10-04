@@ -8,6 +8,13 @@ import './ui/app.css';
 // flashes the OS-default theme first.
 applyTheme(readStoredTheme());
 
+// The advisor-voice preference (#429) no longer exists; a device that saved one carries a stale value.
+try {
+  localStorage.removeItem('astraya:reportPersona');
+} catch {
+  // Storage can be blocked (a private window); there is then nothing to clear.
+}
+
 const root = document.getElementById('root');
 if (root === null) throw new Error('Missing #root element in index.html.');
 

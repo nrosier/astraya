@@ -35,7 +35,6 @@ interface FakeOverride {
   readonly id: string;
   readonly key: string;
   readonly locale: string;
-  readonly persona: string | undefined;
   readonly text: string;
   readonly tier: string;
   readonly tags: readonly string[];
@@ -73,7 +72,7 @@ function makeFetchMock(corpus: readonly object[] = [NEUTRAL_ENTRY, OTHER_ENTRY])
     const url = urlOf(input);
     const method = init?.method ?? 'GET';
 
-    if (url === '/corpus/en/neutral.json') return new Response(JSON.stringify(corpus));
+    if (url === '/corpus/en.json') return new Response(JSON.stringify(corpus));
 
     if (url.startsWith('/api/corpus-overrides/')) {
       return new Response(
@@ -84,7 +83,6 @@ function makeFetchMock(corpus: readonly object[] = [NEUTRAL_ENTRY, OTHER_ENTRY])
             text: o.text,
             tier: o.tier,
             tags: o.tags,
-            persona: o.persona,
             provenance: { source: 'hand-written' },
           })),
         }),
@@ -99,7 +97,6 @@ function makeFetchMock(corpus: readonly object[] = [NEUTRAL_ENTRY, OTHER_ENTRY])
       const body = JSON.parse(init?.body as string) as {
         key: string;
         locale: string;
-        persona?: string;
         text: string;
         tier: string;
         tags: readonly string[];
@@ -109,7 +106,6 @@ function makeFetchMock(corpus: readonly object[] = [NEUTRAL_ENTRY, OTHER_ENTRY])
         id: `ov-${String(nextId)}`,
         key: body.key,
         locale: body.locale,
-        persona: body.persona,
         text: body.text,
         tier: body.tier,
         tags: body.tags,
@@ -119,7 +115,7 @@ function makeFetchMock(corpus: readonly object[] = [NEUTRAL_ENTRY, OTHER_ENTRY])
         updatedByUsername: 'alice',
       };
       nextId += 1;
-      const existing = overrides.findIndex((o) => o.key === body.key && o.persona === body.persona);
+      const existing = overrides.findIndex((o) => o.key === body.key);
       if (existing === -1) overrides.push(override);
       else overrides[existing] = override;
       return new Response(JSON.stringify({ override }));
@@ -267,7 +263,6 @@ describe('CorpusOverridesPanel (#292)', () => {
       id: 'ov-existing',
       key: NEUTRAL_ENTRY.key,
       locale: 'en',
-      persona: undefined,
       text: 'A corrected description.',
       tier: 'core',
       tags: ['sun'],
@@ -460,7 +455,6 @@ describe('CorpusOverridesPanel shows what an entry means (#428)', () => {
       id: 'ov-1',
       key: 'planet-in-house:sun:3',
       locale: 'en',
-      persona: undefined,
       text: 'A corrected description.',
       tier: 'core',
       tags: [],

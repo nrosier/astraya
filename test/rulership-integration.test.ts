@@ -168,7 +168,7 @@ describe('the report’s chart-ruler section follows the choice (#426)', () => {
   /** Natal chart with the Ascendant moved into Scorpio, the Ascendant's sign being what the section reads. */
   const scorpioRising = (): ChartData => ({ ...natal, houses: { ...natal.houses, ascendant: 215 } });
   const section = (choice: 'modern' | 'traditional' | 'both') =>
-    assembleReport(scorpioRising(), 'en', [], undefined, choice).sections.find((s) => s.id === 'chart-ruler');
+    assembleReport(scorpioRising(), 'en', [], choice).sections.find((s) => s.id === 'chart-ruler');
   const rulerBodies = (choice: 'modern' | 'traditional' | 'both'): string[] =>
     (section(choice)?.paragraphs ?? []).flatMap((p) =>
       p.placement?.category === 'planet-in-sign' ? [p.placement.body] : [],
@@ -193,9 +193,7 @@ describe('the report’s chart-ruler section follows the choice (#426)', () => {
   });
 
   it('says the same in Dutch', () => {
-    const dutch = assembleReport(scorpioRising(), 'nl', [], undefined, 'both').sections.find(
-      (s) => s.id === 'chart-ruler',
-    );
+    const dutch = assembleReport(scorpioRising(), 'nl', [], 'both').sections.find((s) => s.id === 'chart-ruler');
     expect((dutch?.paragraphs ?? []).some((p) => p.text.includes('twee heersers'))).toBe(true);
   });
 

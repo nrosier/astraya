@@ -15,7 +15,6 @@ function candidate(id: string, key: string, text: string, source = 'llm-fill'): 
     id,
     key,
     locale: 'en',
-    persona: undefined,
     text,
     tier: 'core',
     tags: [],

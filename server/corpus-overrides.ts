@@ -13,11 +13,8 @@
  * hits runtime module resolution, so it's safe.
  *
  * The literal unions below mirror `schema.ts`'s real
- * `CORPUS_LOCALES`/`CORPUS_TIERS`/`PERSONA_IDS`/`CORPUS_CATEGORIES` exports
- * and are duplicated rather than imported, for the same reason — this is the
- * same shape `schema.ts` itself already uses for `PERSONA_IDS` (duplicated
- * there from `tools/corpus-gen/personas.json` rather than read from it, to
- * keep that module synchronous with no filesystem access).
+ * `CORPUS_LOCALES`/`CORPUS_TIERS`/`CORPUS_CATEGORIES` exports and are
+ * duplicated rather than imported, for the same reason.
  * `test/server-corpus-overrides.test.ts` asserts these arrays stay in
  * sync with `schema.ts`'s real exports.
  */
@@ -30,9 +27,6 @@ export type Locale = (typeof LOCALES)[number];
 
 export const TIERS = ['core', 'notable', 'nuance'] as const;
 export type CorpusTier = (typeof TIERS)[number];
-
-export const PERSONA_IDS = ['traditionalist', 'big_sister', 'cynic', 'mystic', 'pragmatist'] as const;
-export type PersonaId = (typeof PERSONA_IDS)[number];
 
 export const CORPUS_CATEGORIES = [
   'planet-in-sign',
@@ -53,8 +47,6 @@ export interface CorpusOverride {
   readonly id: string;
   readonly key: string;
   readonly locale: Locale;
-  /** Absent means the neutral, persona-agnostic override. */
-  readonly persona: PersonaId | undefined;
   readonly text: string;
   readonly tier: CorpusTier;
   readonly tags: readonly string[];
@@ -68,7 +60,6 @@ interface CorpusOverrideRow {
   readonly id: string;
   readonly key: string;
   readonly locale: string;
-  readonly persona: string;
   readonly text: string;
   readonly tier: string;
   readonly tags: string;
@@ -83,7 +74,6 @@ function toCorpusOverride(row: CorpusOverrideRow): CorpusOverride {
     id: row.id,
     key: row.key,
     locale: row.locale as Locale,
-    persona: row.persona === '' ? undefined : (row.persona as PersonaId),
     text: row.text,
     tier: row.tier as CorpusTier,
     tags: JSON.parse(row.tags) as readonly string[],
@@ -118,7 +108,6 @@ export function toCorpusEntry(
     tier: override.tier,
     tags: override.tags,
     provenance,
-    ...(override.persona !== undefined ? { persona: override.persona } : {}),
   };
 }
 
@@ -139,7 +128,6 @@ export function listCorpusOverrides(db: Database, locale?: Locale): readonly Cor
 export interface UpsertCorpusOverrideParams {
   readonly key: string;
   readonly locale: Locale;
-  readonly persona?: PersonaId;
   readonly text: string;
   readonly tier: CorpusTier;
   readonly tags: readonly string[];
@@ -149,18 +137,16 @@ export interface UpsertCorpusOverrideParams {
 export function upsertCorpusOverride(db: Database, params: UpsertCorpusOverrideParams): CorpusOverride {
   const id = randomUUID();
   const now = new Date().toISOString();
-  const persona = params.persona ?? '';
   db.prepare(
-    `INSERT INTO corpus_overrides (id, key, locale, persona, text, tier, tags, created_at, updated_at, updated_by)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-     ON CONFLICT(key, locale, persona) DO UPDATE SET
+    `INSERT INTO corpus_overrides (id, key, locale, text, tier, tags, created_at, updated_at, updated_by)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(key, locale) DO UPDATE SET
        text = excluded.text, tier = excluded.tier, tags = excluded.tags,
        updated_at = excluded.updated_at, updated_by = excluded.updated_by`,
   ).run(
     id,
     params.key,
     params.locale,
-    persona,
     params.text,
     params.tier,
     JSON.stringify(params.tags),
@@ -170,10 +156,8 @@ export function upsertCorpusOverride(db: Database, params: UpsertCorpusOverrideP
   );
 
   const row = db
-    .prepare(
-      `${SELECT_WITH_USERNAME} WHERE corpus_overrides.key = ? AND corpus_overrides.locale = ? AND corpus_overrides.persona = ?`,
-    )
-    .get(params.key, params.locale, persona) as unknown as CorpusOverrideRow;
+    .prepare(`${SELECT_WITH_USERNAME} WHERE corpus_overrides.key = ? AND corpus_overrides.locale = ? `)
+    .get(params.key, params.locale) as unknown as CorpusOverrideRow;
   return toCorpusOverride(row);
 }
 

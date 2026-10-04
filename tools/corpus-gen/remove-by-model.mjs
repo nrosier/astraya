@@ -24,7 +24,7 @@
  * process to finish (or stop it) before running this against the same
  * locale.
  *
- *   npx tsx tools/corpus-gen/remove-by-model.mjs --locale=en --model=<model-name> [--persona=<id>] [--apply]
+ *   npx tsx tools/corpus-gen/remove-by-model.mjs --locale=en --model=<model-name> [--apply]
  */
 import { readFile, mkdir, copyFile } from 'node:fs/promises';
 import { execSync } from 'node:child_process';
@@ -40,9 +40,7 @@ function flag(name, fallback) {
   return found ? found.slice(name.length + 3) : fallback;
 }
 if (rawArgs.includes('--help') || rawArgs.includes('-h')) {
-  console.log(
-    'Usage: npx tsx tools/corpus-gen/remove-by-model.mjs --locale=en --model=<model-name> [--persona=<id>] [--apply]',
-  );
+  console.log('Usage: npx tsx tools/corpus-gen/remove-by-model.mjs --locale=en --model=<model-name> [--apply]');
   process.exit(0);
 }
 
@@ -50,7 +48,6 @@ const locale = flag('locale');
 if (locale !== 'en' && locale !== 'nl') throw new Error('--locale=en|nl is required');
 const model = flag('model');
 if (!model) throw new Error('--model=<name> is required — e.g. --model=gemini-3.5-flash-lite');
-const personaFilter = flag('persona'); // omit to match every persona, including neutral
 const apply = rawArgs.includes('--apply');
 
 /** Best-effort guard against the exact hazard this file's own doc comment describes — a `ps`
@@ -80,16 +77,14 @@ const corpus = JSON.parse(await readFile(corpusPath, 'utf8'));
 
 function matches(entry) {
   if (entry.provenance?.model !== model) return false;
-  if (personaFilter !== undefined && (entry.persona ?? 'neutral') !== personaFilter) return false;
   return true;
 }
 
 const matching = corpus.filter(matches);
 console.log(
-  `[${locale}] ${String(matching.length)} entr${matching.length === 1 ? 'y' : 'ies'} match model "${model}"` +
-    `${personaFilter ? ` (persona=${personaFilter})` : ' (any persona, including neutral)'}.`,
+  `[${locale}] ${String(matching.length)} entr${matching.length === 1 ? 'y' : 'ies'} match model "${model}"` + '.',
 );
-for (const entry of matching.slice(0, 20)) console.log(`  ${entry.key}${entry.persona ? ` (${entry.persona})` : ''}`);
+for (const entry of matching.slice(0, 20)) console.log(`  ${entry.key}`);
 if (matching.length > 20) console.log(`  ... and ${String(matching.length - 20)} more`);
 
 if (matching.length === 0) {

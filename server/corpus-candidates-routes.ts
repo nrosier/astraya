@@ -11,7 +11,6 @@ import type { User } from './auth/identity.ts';
 import {
   CANDIDATE_SOURCES,
   LOCALES,
-  PERSONA_IDS,
   TIERS,
   TRIAGE_SIGNALS,
   CANDIDATE_STATUSES,
@@ -22,7 +21,6 @@ import {
   type CandidateStatus,
   type CorpusTier,
   type Locale,
-  type PersonaId,
   type TriageSignal,
 } from './corpus-candidates.ts';
 import { requireAdmin } from './auth/identity.ts';
@@ -31,10 +29,6 @@ import type { CorpusEntry } from '../src/interpretation/schema.ts';
 
 function isLocale(value: unknown): value is Locale {
   return typeof value === 'string' && (LOCALES as readonly string[]).includes(value);
-}
-
-function isPersonaId(value: unknown): value is PersonaId {
-  return typeof value === 'string' && (PERSONA_IDS as readonly string[]).includes(value);
 }
 
 function isTier(value: unknown): value is CorpusTier {
@@ -80,8 +74,8 @@ interface DecideBody {
   readonly decision?: unknown;
 }
 
-// A generation batch covers at most a few thousand placements (a full persona-scope chunk is
-// 2,742 entries per #292's own sizing) — generous ceiling against a request padded to inflate
+// A generation batch covers at most a few thousand placements (a full corpus is a few
+// thousand entries per #292's own sizing) — generous ceiling against a request padded to inflate
 // server-side work, same reasoning as `interpretation-routes.ts`'s `MAX_BODIES`/`MAX_ASPECTS`.
 const MAX_IMPORT_BATCH = 5_000;
 const MAX_DECIDE_BATCH = 500;
@@ -125,7 +119,6 @@ export function registerCorpusCandidateRoutes(app: FastifyInstance, db: Database
       const validated: {
         key: string;
         locale: Locale;
-        persona?: PersonaId;
         text: string;
         tier: CorpusTier;
         tags: readonly string[];
@@ -141,8 +134,8 @@ export function registerCorpusCandidateRoutes(app: FastifyInstance, db: Database
         if (typeof key !== 'string' || key === '') return reply.code(400).send({ error: at('key is required') });
         if (!isLocale(locale))
           return reply.code(400).send({ error: at(`locale must be one of ${LOCALES.join(', ')}`) });
-        if (persona !== undefined && !isPersonaId(persona)) {
-          return reply.code(400).send({ error: at(`persona must be one of ${PERSONA_IDS.join(', ')}`) });
+        if (persona !== undefined) {
+          return reply.code(400).send({ error: at('persona is no longer supported (#429)') });
         }
         if (typeof text !== 'string' || text === '') return reply.code(400).send({ error: at('text is required') });
         if (!isTier(tier)) return reply.code(400).send({ error: at(`tier must be one of ${TIERS.join(', ')}`) });
@@ -160,7 +153,6 @@ export function registerCorpusCandidateRoutes(app: FastifyInstance, db: Database
         validated.push({
           key,
           locale,
-          ...(persona !== undefined ? { persona } : {}),
           text,
           tier,
           tags,
@@ -208,7 +200,6 @@ export function registerCorpusCandidateRoutes(app: FastifyInstance, db: Database
             tier: candidate.tier,
             tags: candidate.tags,
             provenance: { source: 'hand-written' },
-            ...(candidate.persona !== undefined ? { persona: candidate.persona } : {}),
           };
           const lintIssues = lintEntry(draft);
           if (lintIssues.length > 0) {

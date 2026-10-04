@@ -13,8 +13,8 @@ import { DatabaseSync } from 'node:sqlite';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
 import { hashPassword } from '../server/auth/passwords.ts';
-import { LOCALES, PERSONA_IDS, TIERS } from '../server/corpus-candidates.ts';
-import { CORPUS_LOCALES, CORPUS_TIERS, PERSONA_IDS as SCHEMA_PERSONA_IDS } from '../src/interpretation/schema.ts';
+import { LOCALES, TIERS } from '../server/corpus-candidates.ts';
+import { CORPUS_LOCALES, CORPUS_TIERS } from '../src/interpretation/schema.ts';
 
 const BOOTSTRAP_TOKEN = 'test-bootstrap-token';
 const SESSION_COOKIE = 'astraya_session';
@@ -24,7 +24,6 @@ interface CandidateJson {
   readonly id: string;
   readonly key: string;
   readonly locale: string;
-  readonly persona?: string;
   readonly text: string;
   readonly source: string;
   readonly triageSignal?: string;
@@ -114,12 +113,6 @@ describe('literal-array cross-check', () => {
     expect(TIERS).toEqual(CORPUS_TIERS);
   });
 
-  it('PERSONA_IDS matches schema.ts PERSONA_IDS', () => {
-    expect(PERSONA_IDS).toEqual(SCHEMA_PERSONA_IDS);
-  });
-});
-
-describe('routes require admin', () => {
   it('rejects an unauthenticated import with 401', async () => {
     const response = await app.inject({
       method: 'POST',
@@ -178,7 +171,7 @@ describe('POST /api/admin/corpus-candidates/import', () => {
     expect(candidates[0]).toMatchObject({ key: 'dignity-state:sun:ruler', source: 'llm-fill', status: 'pending' });
   });
 
-  it('re-importing the same (key, locale, persona, source) updates in place rather than duplicating', async () => {
+  it('re-importing the same (key, locale, source) updates in place rather than duplicating', async () => {
     const adminCookie = await setupAdmin(app);
     await app.inject({
       method: 'POST',

@@ -2,17 +2,16 @@
  * Runtime corpus loading for the browser, as a small counterpart to
  * `index.ts`'s synchronous `CORPUS` export.
  *
- * `index.ts` statically imports the full committed corpus (both locales,
- * every persona) so the interpretation test suite and `loadCorpus`'s en/nl
- * parity check can validate it — that must stay a synchronous, whole-corpus
- * value for those to work. But a browser client only ever needs one
- * locale's neutral text plus, at most, one persona's flavor of it, and
- * Vite inlines whatever `index.ts` imports into the JS bundle regardless —
+ * `index.ts` statically imports the full committed corpus (both locales)
+ * so the interpretation test suite and `loadCorpus`'s en/nl parity check
+ * can validate it — that must stay a synchronous, whole-corpus value for
+ * those to work. But a browser client only ever needs one locale's text,
+ * and Vite inlines whatever `index.ts` imports into the JS bundle regardless —
  * so `ReportView.tsx` fetches a chunk through this module instead of
  * importing `CORPUS` at all.
  *
  * The chunks this fetches are written by scripts/split-corpus.mjs into
- * public/corpus/<locale>/<scope>.json — build output, gitignored, generated
+ * public/corpus/<locale>.json — build output, gitignored, generated
  * before `dev`/`build` the same way public/ephe/ is (see that script's own
  * comment). `CORPUS_BASE_URL` mirrors `EPHE_BASE_URL`
  * (src/ephemeris/assets.ts) and `fetchImpl` is injectable for the same
@@ -21,22 +20,20 @@
  *
  * On top of the static chunks, this also fetches any admin corrections
  * (#292) from `GET /api/corpus-overrides/:locale` and layers them in by
- * `(key, persona)` identity, replacing the matching static entry. That
+ * `key`, replacing the matching static entry. That
  * fetch soft-fails to `[]` on any error — no server (a static, `demo`-mode
  * deploy has none at all), the server unreachable, or any other failure —
  * so a correction is a bonus, never a requirement for the report to render.
  */
-import type { CorpusEntry, Locale, PersonaId } from './schema.js';
+import type { CorpusEntry, Locale } from './schema.js';
 
 export const CORPUS_BASE_URL = `${import.meta.env.BASE_URL}corpus/`;
 
-async function fetchChunk(locale: Locale, scope: string, fetchImpl: typeof fetch): Promise<readonly CorpusEntry[]> {
-  const url = `${CORPUS_BASE_URL}${locale}/${scope}.json`;
+async function fetchChunk(locale: Locale, fetchImpl: typeof fetch): Promise<readonly CorpusEntry[]> {
+  const url = `${CORPUS_BASE_URL}${locale}.json`;
   const response = await fetchImpl(url);
   if (!response.ok) {
-    throw new Error(
-      `Failed to load the interpretation corpus: ${locale}/${scope}.json (HTTP ${String(response.status)})`,
-    );
+    throw new Error(`Failed to load the interpretation corpus: ${locale}.json (HTTP ${String(response.status)})`);
   }
   return (await response.json()) as readonly CorpusEntry[];
 }
@@ -52,35 +49,17 @@ async function fetchOverrides(locale: Locale, fetchImpl: typeof fetch): Promise<
   }
 }
 
-function identityKey(entry: CorpusEntry): string {
-  return `${entry.key}::${entry.persona ?? ''}`;
-}
-
 /**
- * The corpus slice a report for `locale`/`persona` needs: the neutral chunk
- * every placement can fall back to, plus (when given) that persona's chunk
- * layered on top — matching `findCorpusEntry`'s own persona-then-neutral
- * preference, so the concatenation order here doesn't matter to it. Any
- * admin overrides for `locale` (across all personas — cheap to filter
- * client-side, and reused across persona switches without a re-fetch of the
- * override feed) replace their matching static entry.
+ * The corpus a report for `locale` needs: that locale's committed text, with any admin overrides for
+ * it replacing the entry of the same key.
  */
 export async function loadRuntimeCorpus(
   locale: Locale,
-  persona?: PersonaId,
   fetchImpl: typeof fetch = fetch,
 ): Promise<readonly CorpusEntry[]> {
-  const [chunks, overrides] = await Promise.all([
-    Promise.all([
-      fetchChunk(locale, 'neutral', fetchImpl),
-      ...(persona !== undefined ? [fetchChunk(locale, persona, fetchImpl)] : []),
-    ]),
-    fetchOverrides(locale, fetchImpl),
-  ]);
-  const base = chunks.flat();
+  const [base, overrides] = await Promise.all([fetchChunk(locale, fetchImpl), fetchOverrides(locale, fetchImpl)]);
   if (overrides.length === 0) return base;
 
-  const overriddenKeys = new Set(overrides.map(identityKey));
-  const relevantOverrides = overrides.filter((entry) => entry.persona === undefined || entry.persona === persona);
-  return [...base.filter((entry) => !overriddenKeys.has(identityKey(entry))), ...relevantOverrides];
+  const overriddenKeys = new Set(overrides.map((entry) => entry.key));
+  return [...base.filter((entry) => !overriddenKeys.has(entry.key)), ...overrides];
 }

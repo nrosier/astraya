@@ -22,9 +22,6 @@ export type Locale = (typeof LOCALES)[number];
 export const TIERS = ['core', 'notable', 'nuance'] as const;
 export type CorpusTier = (typeof TIERS)[number];
 
-export const PERSONA_IDS = ['traditionalist', 'big_sister', 'cynic', 'mystic', 'pragmatist'] as const;
-export type PersonaId = (typeof PERSONA_IDS)[number];
-
 /** Where a candidate's text came from — not `CorpusProvenance.source` (`schema.ts`): that
  * describes a *shipped* entry's origin, this describes an unreviewed one still in the queue. */
 export const CANDIDATE_SOURCES = ['classical-seed', 'llm-fill'] as const;
@@ -42,7 +39,6 @@ export interface CorpusCandidate {
   readonly id: string;
   readonly key: string;
   readonly locale: Locale;
-  readonly persona: PersonaId | undefined;
   readonly text: string;
   readonly tier: CorpusTier;
   readonly tags: readonly string[];
@@ -59,7 +55,6 @@ interface CorpusCandidateRow {
   readonly id: string;
   readonly key: string;
   readonly locale: string;
-  readonly persona: string;
   readonly text: string;
   readonly tier: string;
   readonly tags: string;
@@ -77,7 +72,6 @@ function toCorpusCandidate(row: CorpusCandidateRow): CorpusCandidate {
     id: row.id,
     key: row.key,
     locale: row.locale as Locale,
-    persona: row.persona === '' ? undefined : (row.persona as PersonaId),
     text: row.text,
     tier: row.tier as CorpusTier,
     tags: JSON.parse(row.tags) as readonly string[],
@@ -118,7 +112,6 @@ export function listCorpusCandidates(
 export interface ImportCorpusCandidateParams {
   readonly key: string;
   readonly locale: Locale;
-  readonly persona?: PersonaId;
   readonly text: string;
   readonly tier: CorpusTier;
   readonly tags: readonly string[];
@@ -130,7 +123,7 @@ export interface ImportCorpusCandidateParams {
 /**
  * Bulk-imports generated candidates, idempotently: re-running the same generation batch
  * against an already-imported (still-pending) candidate updates it in place rather than
- * duplicating it, via the same `(key, locale, persona, source)` identity the unique index
+ * duplicating it, via the same `(key, locale, source)` identity the unique index
  * enforces. A candidate already decided (`accepted`/`rejected`) has already been deleted by
  * `decideCorpusCandidates` below, so it never conflicts here — a re-import after a decision
  * inserts a fresh pending row rather than resurrecting the old one.
@@ -139,9 +132,9 @@ export function importCorpusCandidates(db: Database, candidates: readonly Import
   const now = new Date().toISOString();
   const insert = db.prepare(
     `INSERT INTO corpus_candidates
-       (id, key, locale, persona, text, tier, tags, source, triage_signal, triage_score, status, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)
-     ON CONFLICT(key, locale, persona, source) DO UPDATE SET
+       (id, key, locale, text, tier, tags, source, triage_signal, triage_score, status, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)
+     ON CONFLICT(key, locale, source) DO UPDATE SET
        text = excluded.text, tier = excluded.tier, tags = excluded.tags,
        triage_signal = excluded.triage_signal, triage_score = excluded.triage_score`,
   );
@@ -150,7 +143,6 @@ export function importCorpusCandidates(db: Database, candidates: readonly Import
       randomUUID(),
       candidate.key,
       candidate.locale,
-      candidate.persona ?? '',
       candidate.text,
       candidate.tier,
       JSON.stringify(candidate.tags),
@@ -207,7 +199,6 @@ export function decideCorpusCandidates(
       upsertCorpusOverride(db, {
         key: candidate.key,
         locale: candidate.locale,
-        ...(candidate.persona !== undefined ? { persona: candidate.persona } : {}),
         text: candidate.text,
         tier: candidate.tier,
         tags: candidate.tags,
