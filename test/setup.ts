@@ -18,3 +18,11 @@ installFileFetch();
  * whatever `db.ts` happens to do.
  */
 import 'fake-indexeddb/auto';
+
+/**
+ * Tell React this is a test environment that uses `act(...)`. Without the flag React logs "The
+ * current testing environment is not configured to support act(...)" on every `act` call (hundreds
+ * of lines in the CI log), and it also stays silent about a state update a test forgot to wrap in
+ * `act`. Set on `globalThis`, so it is harmless for the tests that never render anything.
+ */
+(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
