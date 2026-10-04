@@ -4,6 +4,31 @@ All notable changes to Astraya are recorded here. Versions follow
 [semantic versioning](https://semver.org/), and every milestone ends in a release —
 see [docs/RELEASING.md](docs/RELEASING.md).
 
+## [0.26.0] — 2026-10-04
+
+**The natal chart split into sections with an explained chart shape, two administrator levels, one reference for the corpus keys, and the advisor voices removed.**
+
+M9 (Polish & launch) progress, not a finished milestone — v1.0.0 hasn't shipped yet.
+
+### Added
+
+- **The natal chart in sections (#430).** One tab strip: Chart (the wheel, opened first), Chart shape, Positions, Houses, Aspects, Dignities and Derived points, each panel under its own heading. The wheel keeps your selection while you visit the tables, the PDF export prints every section in order, and a chart without a birth time shows only the sections it can. **Chart shape** is new: the diagram, an English and Dutch explanation of each shape worded as a convention (Marc Edmund Jones, 1941) rather than a verdict, the Moon phase and the sect.
+- **Two administrator levels (#431).** An **admin** can use every admin screen — the user list read-only with each account's role, AI usage and the corpus screens — but cannot create, change or delete accounts. A **super admin** can do everything, including granting roles. It is enforced on the server on every route; nobody can change their own role and the last usable super admin cannot be demoted, disabled or deleted. OIDC groups and local usernames can name either role (`ASTRAYA_OIDC_SUPER_ADMIN_GROUPS`, `ASTRAYA_SUPER_ADMIN_USERNAMES`).
+- **What the profected houses and astrocartography lines mean (#427).** The Profections screen explains the profected year and month house, and the Astrocartography screen explains each checked body on each checked line, from the reviewed corpus text.
+- **A corpus key reference and audit (#427).** `docs/CORPUS_KEYS.html` lists every key shape and its ordering; `npm run corpus:audit` checks the corpus for valid keys, duplicates, English/Dutch parity, coverage and a shifted sign or house index.
+
+### Changed
+
+- **The advisor voices are gone (#429).** Tone and style are the AI-customised interpretation's job. The picker, its build flag and the saved preference are removed, and so is the voice dimension of the corpus, the corrections and candidates, and the corpus tooling.
+- **The chart shape uses the ten planets (#430).** Jones's shapes are drawn from the Sun and Moon through Pluto, so a node, Lilith or an asteroid no longer changes the shape, and the written report and the chart screen now agree. The report's "Your chart forms a … pattern" sentence can change for a chart where an extra point decided the shape.
+- **Synastry texts are stored once per pair (#427),** in alphabetical order and written from the first body's owner, which is what the corpus always held; the schema now says so.
+
+### For people running their own server
+
+- **Migration 13** deletes corrections and candidates that were saved for a particular advisor voice and keeps the neutral ones, which are what every reader sees. **Migration 14** replaces the admin flag with a role: every existing admin becomes a **super admin**, so nobody loses access.
+- **Usernames on the admin list now become admins, not full administrators.** `ASTRAYA_ADMIN_USERNAMES` is that list; an owner who must manage accounts belongs in the new `ASTRAYA_SUPER_ADMIN_USERNAMES`. The README and `.env.example` describe both lists and the OIDC group variables.
+- `VITE_ENABLE_REPORT_PERSONAS` no longer has any effect and can be removed.
+
 ## [0.25.0] — 2026-10-04
 
 **A sticky header, readable admin screens, a clickable cycles diagram, synastry contacts ranked by importance, and AI interpretations that say what they were based on.**
