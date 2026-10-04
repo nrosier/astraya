@@ -4,6 +4,15 @@ All notable changes to Astraya are recorded here. Versions follow
 [semantic versioning](https://semver.org/), and every milestone ends in a release —
 see [docs/RELEASING.md](docs/RELEASING.md).
 
+## [0.26.1] — 2026-10-04
+
+**A patch that ships the regenerated interpretation text: the Uranus, Neptune and Pluto dignity entries and the rewritten quintile series.**
+
+### Fixed
+
+- **An outer planet in its own sign or detriment now reads reviewed text.** Since the rulership choice (v0.24.0) the app uses Uranus, Neptune and Pluto as rulers of Aquarius, Pisces and Scorpio, but the corpus had no text for those states, so they showed the plain mechanical sentence. The twelve missing entries (ruler and detriment, in English and Dutch) are now in the corpus.
+- **Quintile and biquintile interpretations read less generic.** All 744 entries of each language were rewritten with guidance on what is distinctive about that aspect family, a knack for creative synthesis rather than tension or flow. A small remainder the two reviewing models still disagree about is tracked for a later pass.
+
 ## [0.26.0] — 2026-10-04
 
 **The natal chart split into sections with an explained chart shape, two administrator levels, one reference for the corpus keys, and the advisor voices removed.**
