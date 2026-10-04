@@ -2502,3 +2502,13 @@ label.stacked textarea:focus-visible {
 .chart-isolation-interpretation > button {
   margin: 0.25rem 0 0.5rem;
 }
+
+/* A corpus entry named by what it means, with its key beside it as small secondary text (#428). */
+.entry-meaning {
+  font-weight: 600;
+}
+.entry-key {
+  color: var(--muted);
+  font-size: 0.75rem;
+  overflow-wrap: anywhere;
+}

@@ -32,7 +32,9 @@ import {
   categoryOfKey,
 } from '../interpretation/schema.js';
 import { downloadBlob } from './download.js';
-import { LOCALE_LABELS, isLocale } from './locale.js';
+import { LOCALE_LABELS, isLocale, useLocale } from './locale.js';
+import { EntryLabel } from './EntryLabel.js';
+import { categoryLabel, compareSortKeys, labelForKey, sortKeyForKey } from './placement-label.js';
 import { useMessages } from './messages.js';
 import { PERSONA_LABELS } from './ReportView.js';
 import { corpusOverridesPanelMessages } from './CorpusOverridesPanel.messages.js';
@@ -85,6 +87,8 @@ interface PendingReset {
 export function CorpusOverridesPanel(): React.JSX.Element {
   const t = useMessages(corpusOverridesPanelMessages);
   const shared = useMessages(sharedMessages);
+  // The admin's interface language: what an entry means is worded in it, whichever corpus language is browsed.
+  const [uiLocale] = useLocale();
 
   const [corpusLocale, setCorpusLocale] = useState<Locale>('en');
   const [scope, setScope] = useState<PersonaId>();
@@ -139,22 +143,48 @@ export function CorpusOverridesPanel(): React.JSX.Element {
     return Array.from(tags).sort();
   }, [data]);
 
+  // Each entry with what it means and where it sorts, worked out once per corpus and language.
+  const labelled = useMemo(
+    () =>
+      (data?.corpus ?? []).map((entry) => ({
+        entry,
+        label: labelForKey(entry.key, uiLocale),
+        sort: sortKeyForKey(entry.key),
+      })),
+    [data, uiLocale],
+  );
+
   const filtered = useMemo(() => {
-    if (data === undefined) return [];
-    const query = search.trim().toLowerCase();
-    return data.corpus.filter((entry) => {
-      if (categoryFilter !== '' && categoryOfKey(entry.key) !== categoryFilter) return false;
-      if (tierFilter !== '' && entry.tier !== tierFilter) return false;
-      if (tagFilter !== '' && !entry.tags.includes(tagFilter)) return false;
-      if (overriddenOnly && !overrideMap.has(identityKeyOf(entry.key, entry.persona))) return false;
-      if (query !== '' && !entry.key.toLowerCase().includes(query) && !entry.text.toLowerCase().includes(query)) {
-        return false;
-      }
-      return true;
-    });
-  }, [data, categoryFilter, tierFilter, tagFilter, overriddenOnly, search, overrideMap]);
+    // Every word typed must appear in the meaning, the key or the text, so "sun 3rd house" finds
+    // "Sun in the 3rd house" and a pasted key still finds its entry.
+    const words = search
+      .toLowerCase()
+      .split(/\s+/)
+      .filter((word) => word !== '');
+    return (
+      labelled
+        .filter(({ entry, label }) => {
+          if (categoryFilter !== '' && categoryOfKey(entry.key) !== categoryFilter) return false;
+          if (tierFilter !== '' && entry.tier !== tierFilter) return false;
+          if (tagFilter !== '' && !entry.tags.includes(tagFilter)) return false;
+          if (overriddenOnly && !overrideMap.has(identityKeyOf(entry.key, entry.persona))) return false;
+          if (words.length > 0) {
+            const haystack = `${label} ${entry.key} ${entry.text}`.toLowerCase();
+            if (!words.every((word) => haystack.includes(word))) return false;
+          }
+          return true;
+        })
+        // By what the entry means (planet, then sign or house in order), not by its key as text.
+        .sort((a, b) => compareSortKeys(a.sort, b.sort))
+        .map(({ entry }) => entry)
+    );
+  }, [labelled, categoryFilter, tierFilter, tagFilter, overriddenOnly, search, overrideMap]);
 
   const visible = filtered.slice(0, page * PAGE_SIZE);
+  const categoryLabelOf = (key: string): string => {
+    const category = categoryOfKey(key);
+    return category === undefined ? '—' : categoryLabel(category, uiLocale);
+  };
 
   const startEdit = (entry: CorpusEntry): void => {
     setEditing({
@@ -308,7 +338,7 @@ export function CorpusOverridesPanel(): React.JSX.Element {
             <option value="">{t.allCategories}</option>
             {CORPUS_CATEGORIES.map((category) => (
               <option key={category} value={category}>
-                {category}
+                {categoryLabel(category, uiLocale)}
               </option>
             ))}
           </select>
@@ -372,7 +402,7 @@ export function CorpusOverridesPanel(): React.JSX.Element {
 
       {pendingReset !== undefined && (
         <p className="warning" role="alert">
-          {t.resetWarning(pendingReset.key)}{' '}
+          {t.resetWarning(`${labelForKey(pendingReset.key, uiLocale)} (${pendingReset.key})`)}{' '}
           <button type="button" className="danger" onClick={confirmReset}>
             {t.resetPermanentlyButton}
           </button>{' '}
@@ -397,7 +427,7 @@ export function CorpusOverridesPanel(): React.JSX.Element {
           }}
         >
           <p>
-            <strong>{editing.key}</strong>
+            <strong>{labelForKey(editing.key, uiLocale)}</strong> <code className="entry-key">{editing.key}</code>
             {editing.persona !== undefined && ` · ${PERSONA_LABELS[editing.persona][corpusLocale]}`}
           </p>
           <label>
@@ -484,8 +514,10 @@ export function CorpusOverridesPanel(): React.JSX.Element {
                       const overridden = overrideMap.has(identity);
                       return (
                         <tr key={identity}>
-                          <td>{entry.key}</td>
-                          <td>{categoryOfKey(entry.key) ?? '—'}</td>
+                          <td>
+                            <EntryLabel entryKey={entry.key} locale={uiLocale} />
+                          </td>
+                          <td>{categoryLabelOf(entry.key)}</td>
                           <td>{entry.tier}</td>
                           <td>{entry.tags.join(', ')}</td>
                           <td>{truncate(entry.text)}</td>
