@@ -16,7 +16,8 @@ import { houseOf } from '../astrology/emphasis.js';
 import { fixedStarConjunctions } from '../astrology/fixed-stars.js';
 import { jonesShapeOf, type JonesShapeResult } from '../astrology/jones-shapes.js';
 import { midpointOf } from '../astrology/midpoints.js';
-import { degreesInSign, signOf } from '../astrology/signs.js';
+import { DEFAULT_RULERSHIP_CHOICE, primaryRulerOf, rulersOf, type RulershipChoice } from '../astrology/rulership.js';
+import { degreesInSign, signIndex, signOf } from '../astrology/signs.js';
 import { formatCoordinate } from '../ui/format.js';
 import { housesAreDefined, type ChartData } from './chart-compute.js';
 import type { Aspect } from '../astrology/aspects.js';
@@ -307,11 +308,16 @@ export interface DignityRow {
 }
 
 /** One row per visible body, in `ChartData.positions`' own order — every body, not only ones holding a dignity. */
-export function dignityRows(data: ChartData, options: PointVisibilityOptions = {}): readonly DignityRow[] {
+export function dignityRows(
+  data: ChartData,
+  options: PointVisibilityOptions = {},
+  rulership: RulershipChoice = DEFAULT_RULERSHIP_CHOICE,
+): readonly DignityRow[] {
   return visiblePositions(data.positions, options).map((position) => {
     const body = bodyById(position.body);
     const dignities = data.dignities.get(position.body);
-    const score = essentialDignityScoreOf(position.body, position.longitude, data.sect);
+    // The same rulers as the chart's own `dignities`, so a planet in its own sign is never "peregrine".
+    const score = essentialDignityScoreOf(position.body, position.longitude, data.sect, { rulershipScheme: rulership });
     return {
       bodyKey: body?.key ?? String(position.body),
       bodyName: body?.name ?? String(position.body),
@@ -334,9 +340,12 @@ export function dignityRows(data: ChartData, options: PointVisibilityOptions = {
  * carries all of them, same as `almuten.ts`'s own `AlmutenResult`. `undefined` when houses
  * aren't usable (`housesAreDefined`), the same gate `ChartView`'s own houses-dependent sections use.
  */
-export function almutenOfAscendant(data: ChartData): { readonly almutens: readonly string[] } | undefined {
+export function almutenOfAscendant(
+  data: ChartData,
+  rulership: RulershipChoice = DEFAULT_RULERSHIP_CHOICE,
+): { readonly almutens: readonly string[] } | undefined {
   if (!housesAreDefined(data.houses)) return undefined;
-  const result = almutenOf(data.houses.ascendant, data.sect);
+  const result = almutenOf(data.houses.ascendant, data.sect, { rulershipScheme: rulership });
   return { almutens: result.almutens.map((id) => bodyById(id)?.key ?? String(id)) };
 }
 
@@ -351,6 +360,8 @@ export interface DispositorRow {
   readonly cycle: boolean;
   /** True when this body and its immediate dispositor rule each other's sign (#398). */
   readonly mutualReception: boolean;
+  /** Under `both` (#426), the other ruler of the sign this body is in; the chain follows `chain[1]`, the modern one. */
+  readonly coDispositorKey?: string;
 }
 
 /**
@@ -358,7 +369,11 @@ export interface DispositorRow {
  * asteroids, Chiron, the Lunar Nodes and Lilith are never a sign ruler themselves, so a
  * dispositor chain for one of them would only restate another body's own row (#398).
  */
-export function dispositorRows(data: ChartData, options: PointVisibilityOptions = {}): readonly DispositorRow[] {
+export function dispositorRows(
+  data: ChartData,
+  options: PointVisibilityOptions = {},
+  rulership: RulershipChoice = DEFAULT_RULERSHIP_CHOICE,
+): readonly DispositorRow[] {
   const positions = new Map<BodyId, Degrees>(data.positions.map((position) => [position.body, position.longitude]));
   const classical = visiblePositions(data.positions, options).filter((position) => {
     const category = bodyById(position.body)?.category;
@@ -366,14 +381,23 @@ export function dispositorRows(data: ChartData, options: PointVisibilityOptions 
   });
   return classical.map((position) => {
     const body = bodyById(position.body);
-    const result = dispositorChain(position.body, positions);
+    const result = dispositorChain(position.body, positions, rulership);
     const immediateDispositor = result.chain[1];
     const immediateDispositorLongitude =
       immediateDispositor === undefined ? undefined : positions.get(immediateDispositor);
     const mutualReception =
       immediateDispositor !== undefined &&
       immediateDispositorLongitude !== undefined &&
-      isMutualReception(position.body, position.longitude, immediateDispositor, immediateDispositorLongitude);
+      isMutualReception(
+        position.body,
+        position.longitude,
+        immediateDispositor,
+        immediateDispositorLongitude,
+        rulership,
+      );
+    // The ruler the chain does not follow: only under Both, and only where the sign has two.
+    const sign = signIndex(position.longitude);
+    const coDispositor = rulersOf(sign, rulership).find((id) => id !== primaryRulerOf(sign, rulership));
     const finalBody = result.finalDispositor === undefined ? undefined : bodyById(result.finalDispositor);
     return {
       bodyKey: body?.key ?? String(position.body),
@@ -382,6 +406,7 @@ export function dispositorRows(data: ChartData, options: PointVisibilityOptions 
       ...(finalBody === undefined ? {} : { finalDispositorKey: finalBody.key, finalDispositorName: finalBody.name }),
       cycle: result.cycle,
       mutualReception,
+      ...(coDispositor === undefined ? {} : { coDispositorKey: bodyById(coDispositor)?.key ?? String(coDispositor) }),
     };
   });
 }

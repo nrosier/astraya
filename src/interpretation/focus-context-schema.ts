@@ -7,7 +7,7 @@
  */
 import { ASPECTS } from '../astrology/aspects.js';
 import { BODIES } from '../astrology/bodies.js';
-import type { RulershipScheme } from '../astrology/dignities.js';
+import { isRulershipChoice, type RulershipChoice } from '../astrology/rulership.js';
 import { SIGNS } from '../astrology/signs.js';
 
 const HOUSE_COUNT = 12;
@@ -32,8 +32,10 @@ export interface FocusObject {
   readonly is_chart_ruler: boolean;
   readonly on_angle: boolean;
   readonly angle: FocusAngle | null;
-  /** The ruler of the sign it is in. */
+  /** The ruler of the sign it is in (the traditional ruler first under Both). */
   readonly dispositor: string;
+  /** The second ruler of that sign, under Both and only in Scorpio, Aquarius and Pisces. */
+  readonly co_dispositor: string | null;
 }
 
 export interface FocusAspect {
@@ -51,7 +53,7 @@ export interface FocusAspect {
 export interface FocusContext {
   /** `natal`: a planet of the birth chart. `transit`: a transiting planet read against the natal chart. */
   readonly perspective: FocusPerspective;
-  readonly rulership: RulershipScheme;
+  readonly rulership: RulershipChoice;
   readonly focus_object: FocusObject;
   readonly aspects: readonly FocusAspect[];
 }
@@ -98,9 +100,7 @@ export function validateFocusContext(value: unknown): FocusContextValidation {
 
   const perspective = value.perspective;
   if (perspective !== 'natal' && perspective !== 'transit') errors.push("perspective must be 'natal' or 'transit'");
-  if (value.rulership !== 'modern' && value.rulership !== 'traditional') {
-    errors.push("rulership must be 'modern' or 'traditional'");
-  }
+  if (!isRulershipChoice(value.rulership)) errors.push("rulership must be 'modern', 'traditional' or 'both'");
 
   const focus = value.focus_object;
   let focusObject: FocusObject | undefined;
@@ -118,6 +118,14 @@ export function validateFocusContext(value: unknown): FocusContextValidation {
     if (typeof focus.on_angle !== 'boolean') errors.push('focus_object.on_angle must be a boolean');
     if (angle === undefined) errors.push("focus_object.angle must be 'asc', 'mc', 'dsc', 'ic' or null");
     if (!isMember(BODY_KEYS, focus.dispositor)) errors.push('focus_object.dispositor must be a known body');
+    // Absent from an older client's payload: no second ruler.
+    const coDispositor =
+      focus.co_dispositor === undefined || focus.co_dispositor === null
+        ? null
+        : isMember(BODY_KEYS, focus.co_dispositor)
+          ? focus.co_dispositor
+          : undefined;
+    if (coDispositor === undefined) errors.push('focus_object.co_dispositor must be a known body or null');
     if (
       isMember(BODY_KEYS, focus.key) &&
       isMember(SIGN_NAMES, focus.sign) &&
@@ -126,7 +134,8 @@ export function validateFocusContext(value: unknown): FocusContextValidation {
       typeof focus.is_chart_ruler === 'boolean' &&
       typeof focus.on_angle === 'boolean' &&
       angle !== undefined &&
-      isMember(BODY_KEYS, focus.dispositor)
+      isMember(BODY_KEYS, focus.dispositor) &&
+      coDispositor !== undefined
     ) {
       focusObject = {
         key: focus.key,
@@ -137,6 +146,7 @@ export function validateFocusContext(value: unknown): FocusContextValidation {
         on_angle: focus.on_angle,
         angle,
         dispositor: focus.dispositor,
+        co_dispositor: coDispositor,
       };
     }
   }
@@ -205,7 +215,7 @@ export function validateFocusContext(value: unknown): FocusContextValidation {
   return {
     context: {
       perspective: perspective as FocusPerspective,
-      rulership: value.rulership as RulershipScheme,
+      rulership: value.rulership as RulershipChoice,
       focus_object: focusObject,
       aspects,
     },

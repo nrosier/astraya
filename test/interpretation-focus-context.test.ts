@@ -181,6 +181,7 @@ describe('buildFocusObjectContext (#424), natal', () => {
     expect(Object.keys(context).sort()).toEqual(['aspects', 'focus_object', 'perspective', 'rulership']);
     expect(Object.keys(context.focus_object).sort()).toEqual([
       'angle',
+      'co_dispositor',
       'dispositor',
       'house',
       'is_chart_ruler',
@@ -195,6 +196,79 @@ describe('buildFocusObjectContext (#424), natal', () => {
     // Another planet's aspects are not in it.
     expect(context.aspects.every((a) => a.target_key !== 'pluto')).toBe(true);
     expect(BODIES.length).toBeGreaterThan(10);
+  });
+});
+
+describe('the rulership choice (#426)', () => {
+  /**
+   * A chart with Scorpio rising and whole-sign houses (house 1 Scorpio, 2 Sagittarius, … 6 Aries, …), and
+   * Venus in Scorpio, so the three choices disagree about the chart ruler, the houses ruled and the dispositor.
+   */
+  const scorpioRising = (): ChartData => ({
+    ...natal,
+    positions: natal.positions.map((p) => (keyOf(p.body) === 'venus' ? { ...p, longitude: 220 } : p)),
+    houses: {
+      ...natal.houses,
+      cusps: [Number.NaN, ...Array.from({ length: 12 }, (_, index) => ((7 + index) % 12) * 30 + 5)],
+      ascendant: 215,
+      midheaven: 125,
+    },
+  });
+  const focus = (key: string, rulership: 'modern' | 'traditional' | 'both') => {
+    const context = buildFocusObjectContext(scorpioRising(), key, undefined, rulership);
+    if (context === undefined) throw new Error('fixture bug');
+    return context;
+  };
+
+  it('modern (the default): Pluto is the chart ruler and rules house 1, Mars only house 6', () => {
+    expect(buildFocusObjectContext(scorpioRising(), 'pluto')).toEqual(focus('pluto', 'modern'));
+    expect(focus('pluto', 'modern')).toMatchObject({
+      rulership: 'modern',
+      focus_object: { is_chart_ruler: true, rules_houses: [1] },
+    });
+    expect(focus('mars', 'modern').focus_object).toMatchObject({ is_chart_ruler: false, rules_houses: [6] });
+    expect(focus('venus', 'modern').focus_object).toMatchObject({
+      sign: 'Scorpio',
+      dispositor: 'pluto',
+      co_dispositor: null,
+    });
+  });
+
+  it('traditional: Mars is the chart ruler and rules houses 1 and 6, Pluto none', () => {
+    expect(focus('mars', 'traditional')).toMatchObject({
+      rulership: 'traditional',
+      focus_object: { is_chart_ruler: true, rules_houses: [1, 6] },
+    });
+    expect(focus('pluto', 'traditional').focus_object).toMatchObject({ is_chart_ruler: false, rules_houses: [] });
+    expect(focus('venus', 'traditional').focus_object).toMatchObject({ dispositor: 'mars', co_dispositor: null });
+  });
+
+  it('both: Mars and Pluto are both the chart ruler and both rule house 1; the dispositor and co-dispositor are the two', () => {
+    expect(focus('mars', 'both').focus_object).toMatchObject({ is_chart_ruler: true, rules_houses: [1, 6] });
+    expect(focus('pluto', 'both').focus_object).toMatchObject({ is_chart_ruler: true, rules_houses: [1] });
+    expect(focus('venus', 'both')).toMatchObject({
+      rulership: 'both',
+      focus_object: { dispositor: 'mars', co_dispositor: 'pluto' },
+    });
+  });
+
+  it('flags a target as the chart ruler by the same choice', () => {
+    const targets = (rulership: 'modern' | 'traditional' | 'both'): string[] =>
+      PLANETS.flatMap((key) =>
+        focus(key, rulership)
+          .aspects.filter((a) => a.is_target_chart_ruler)
+          .map((a) => a.target_key),
+      );
+    expect(new Set(targets('modern'))).toEqual(new Set(['pluto']));
+    expect(new Set(targets('traditional'))).toEqual(new Set(['mars']));
+    expect(new Set(targets('both'))).toEqual(new Set(['mars', 'pluto']));
+  });
+
+  it('agrees with every other planet on a sign both schemes rule alike', () => {
+    for (const rulership of ['modern', 'traditional', 'both'] as const) {
+      // Mars rules Aries (house 6 here) under every choice.
+      expect(focus('mars', rulership).focus_object.rules_houses).toContain(6);
+    }
   });
 });
 
@@ -378,7 +452,7 @@ describe('validateFocusContext (#424)', () => {
       errorsFor((c) => {
         c.rulership = 'vedic';
       }),
-    ).toContain("rulership must be 'modern' or 'traditional'");
+    ).toContain("rulership must be 'modern', 'traditional' or 'both'");
     expect(
       errorsFor((c) => {
         c.aspects = 'many';
@@ -401,6 +475,23 @@ describe('validateFocusContext (#424)', () => {
         }),
       ).toContain(message);
     }
+  });
+
+  it('accepts the three rulership choices and a second dispositor, and treats a missing one as none (#426)', () => {
+    const good = contextFor('pluto');
+    for (const rulership of ['modern', 'traditional', 'both'] as const) {
+      expect(validateFocusContext({ ...good, rulership })).toEqual({ context: { ...good, rulership } });
+    }
+    const withCo = { ...good, focus_object: { ...good.focus_object, co_dispositor: 'pluto' } };
+    expect(validateFocusContext(withCo)).toEqual({ context: withCo });
+    const older: Record<string, unknown> = { ...good.focus_object };
+    delete older.co_dispositor;
+    expect(validateFocusContext({ ...good, focus_object: older })).toEqual({ context: good });
+    expect(
+      validateFocusContext({ ...good, focus_object: { ...good.focus_object, co_dispositor: 'ignore me' } }),
+    ).toEqual({
+      errors: ['focus_object.co_dispositor must be a known body or null'],
+    });
   });
 
   it('refuses a padded aspect list and a payload that is not an object', () => {

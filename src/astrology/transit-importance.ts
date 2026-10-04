@@ -25,7 +25,7 @@
  *
  * **The angles are not covered yet.** The Ascendant and Midheaven matter as natal targets, but
  * Astraya's transit contacts are between bodies only, and the wheel has no point to draw a line
- * to. They are not in the lists below; the chart ruler (the planet ruling the Ascendant's sign)
+ * to. They are not in the lists below; the chart ruler (the planet ruling the Ascendant's sign, by the reader's rulership choice: modern by default, both co-rulers under Both; #426)
  * stands in for the Ascendant's weight.
  *
  * **Score** `S = W_transit × W_natal × W_aspect × orb multiplier × applying bonus`:
@@ -43,7 +43,7 @@
  */
 import { DEFAULT_ORB_CONFIG, type Aspect, type OrbConfig } from './aspects.js';
 import { bodyById } from './bodies.js';
-import { rulerOf } from './dignities.js';
+import { DEFAULT_RULERSHIP_CHOICE, rulersOf, type RulershipChoice } from './rulership.js';
 
 export type TransitContext = 'daily' | 'yearly';
 export type TransitPreset = 'important' | 'outer' | 'personal' | 'all';
@@ -69,8 +69,8 @@ export interface TransitFilter {
 export interface TransitRuleContext {
   readonly everyBodyKey: readonly string[];
   readonly context: TransitContext;
-  /** The planet ruling the natal Ascendant's sign, when the chart has an Ascendant. */
-  readonly chartRulerKey?: string | undefined;
+  /** The planets ruling the natal Ascendant's sign (two under Both, #426); none without an Ascendant. */
+  readonly chartRulerKeys?: readonly string[] | undefined;
 }
 
 export const OUTER_PLANET_KEYS = ['jupiter', 'saturn', 'uranus', 'neptune', 'pluto'] as const;
@@ -98,8 +98,9 @@ const DAILY_MOON_ORB_DEG = 1;
 const DAILY_SLOW_PLANET_ORB_DEG = 1;
 const YEARLY_ORB_DEG = 3.5;
 
-function withRuler(keys: readonly string[], chartRulerKey: string | undefined): readonly string[] {
-  return chartRulerKey === undefined || keys.includes(chartRulerKey) ? keys : [...keys, chartRulerKey];
+function withRulers(keys: readonly string[], chartRulerKeys: readonly string[] | undefined): readonly string[] {
+  const missing = (chartRulerKeys ?? []).filter((key) => !keys.includes(key));
+  return missing.length === 0 ? keys : [...keys, ...missing];
 }
 
 /** The filter for a preset. `important` is the daily or yearly rule set, by context. */
@@ -111,7 +112,7 @@ export function transitPreset(preset: TransitPreset, rules: TransitRuleContext):
         ? {
             ...common,
             transiting: [...PERSONAL_PLANET_KEYS, ...OUTER_PLANET_KEYS],
-            natal: withRuler(PERSONAL_PLANET_KEYS, rules.chartRulerKey),
+            natal: withRulers(PERSONAL_PLANET_KEYS, rules.chartRulerKeys),
             aspects: [...MAJOR_ASPECT_KEYS],
             maxOrb: DAILY_ORB_DEG,
             orbOverrides: {
@@ -122,7 +123,7 @@ export function transitPreset(preset: TransitPreset, rules: TransitRuleContext):
         : {
             ...common,
             transiting: [...OUTER_PLANET_KEYS, 'chiron'],
-            natal: withRuler([...PERSONAL_PLANET_KEYS, ...OUTER_PLANET_KEYS, ...NODE_KEYS], rules.chartRulerKey),
+            natal: withRulers([...PERSONAL_PLANET_KEYS, ...OUTER_PLANET_KEYS, ...NODE_KEYS], rules.chartRulerKeys),
             aspects: [...MAJOR_ASPECT_KEYS],
             maxOrb: YEARLY_ORB_DEG,
           };
@@ -212,11 +213,14 @@ export function filterTransits(contacts: readonly Aspect[], filter: TransitFilte
   return contacts.filter((contact) => passesTransitFilter(contact, filter));
 }
 
-/** The key of the planet ruling the sign an Ascendant longitude is in (traditional rulers). */
-export function chartRulerKeyOf(ascendantLongitude: number): string | undefined {
-  if (!Number.isFinite(ascendantLongitude)) return undefined;
+/** The keys of the planets ruling the sign an Ascendant longitude is in: one, or the two co-rulers under Both. */
+export function chartRulerKeysOf(
+  ascendantLongitude: number,
+  rulership: RulershipChoice = DEFAULT_RULERSHIP_CHOICE,
+): readonly string[] {
+  if (!Number.isFinite(ascendantLongitude)) return [];
   const sign = Math.floor((((ascendantLongitude % 360) + 360) % 360) / 30);
-  return bodyById(rulerOf(sign))?.key;
+  return rulersOf(sign, rulership).map((id) => bodyById(id)?.key ?? '');
 }
 
 const TRANSITING_WEIGHT: Readonly<Record<string, number>> = {
@@ -242,8 +246,8 @@ const SOFT_ASPECT_WEIGHT = 0.7;
 const MINOR_ASPECT_WEIGHT = 0.4;
 const APPLYING_BONUS = 1.15;
 
-function natalWeight(natalKey: string, chartRulerKey: string | undefined): number {
-  if (natalKey === chartRulerKey) return CHART_RULER_WEIGHT;
+function natalWeight(natalKey: string, chartRulerKeys: readonly string[]): number {
+  if (chartRulerKeys.includes(natalKey)) return CHART_RULER_WEIGHT;
   if (natalKey === 'sun' || natalKey === 'moon') return LUMINARY_WEIGHT;
   if (natalKey === 'mercury' || natalKey === 'venus' || natalKey === 'mars') return PERSONAL_WEIGHT;
   if ((OUTER_PLANET_KEYS as readonly string[]).includes(natalKey)) return OUTER_NATAL_WEIGHT;
@@ -257,13 +261,17 @@ function aspectWeight(aspectKey: string): number {
 }
 
 /** How much a contact matters, for ordering — see the file doc for the formula. Higher is more. */
-export function transitImportance(contact: Aspect, filter: TransitFilter, chartRulerKey?: string): number {
+export function transitImportance(
+  contact: Aspect,
+  filter: TransitFilter,
+  chartRulerKeys: readonly string[] = [],
+): number {
   const transitingKey = keyOf(contact.bodyA);
   const limit = orbLimitFor(filter, transitingKey);
   const orbMultiplier = Math.max(0, 1 - contact.orb / limit);
   return (
     (TRANSITING_WEIGHT[transitingKey] ?? OTHER_TRANSITING_WEIGHT) *
-    natalWeight(keyOf(contact.bodyB), chartRulerKey) *
+    natalWeight(keyOf(contact.bodyB), chartRulerKeys) *
     aspectWeight(contact.aspect.key) *
     orbMultiplier *
     (contact.applying ? APPLYING_BONUS : 1)
@@ -274,10 +282,10 @@ export function transitImportance(contact: Aspect, filter: TransitFilter, chartR
 export function rankTransits(
   contacts: readonly Aspect[],
   filter: TransitFilter,
-  chartRulerKey?: string,
+  chartRulerKeys: readonly string[] = [],
 ): readonly Aspect[] {
   return contacts
-    .map((contact, index) => ({ contact, index, score: transitImportance(contact, filter, chartRulerKey) }))
+    .map((contact, index) => ({ contact, index, score: transitImportance(contact, filter, chartRulerKeys) }))
     .sort((a, b) => b.score - a.score || a.index - b.index)
     .map(({ contact }) => contact);
 }

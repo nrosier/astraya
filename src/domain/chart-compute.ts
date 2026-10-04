@@ -24,7 +24,8 @@ import {
   type OrbConfig,
 } from '../astrology/aspects.js';
 import { bodyByKey, BODIES } from '../astrology/bodies.js';
-import { essentialDignities, type EssentialDignities } from '../astrology/dignities.js';
+import type { EssentialDignities } from '../astrology/dignities.js';
+import { DEFAULT_RULERSHIP_CHOICE, essentialDignitiesFor, type RulershipChoice } from '../astrology/rulership.js';
 import { partOfFortune, partOfSpirit } from '../astrology/arabic-parts.js';
 import { sectOf, type Sect } from '../astrology/sect.js';
 import { julianDayFor } from '../time/julian.js';
@@ -63,6 +64,8 @@ export const NATAL_FIXED_STARS: readonly string[] = [
 
 export interface ChartCalculationOptions {
   readonly houseSystem?: HouseSystem;
+  /** Whose rulers the essential dignities use: modern by default (#426). */
+  readonly rulership?: RulershipChoice;
   readonly zodiac?: Zodiac;
   readonly orbConfig?: OrbConfig;
   /** Which Lilith model `data.positions` carries; the other two are dropped. Default 'mean'. */
@@ -282,7 +285,10 @@ export async function computeChartDataAtJd(
   const angleAspects = housesAreDefined(houses) ? findAngleAspects(houses, subjects, orbConfig) : [];
 
   const dignities = new Map<BodyId, EssentialDignities>(
-    positions.map((position) => [position.body, essentialDignities(position.body, position.longitude)]),
+    positions.map((position) => [
+      position.body,
+      essentialDignitiesFor(position.body, position.longitude, options.rulership ?? DEFAULT_RULERSHIP_CHOICE),
+    ]),
   );
 
   const sun = bodyByKey('sun');

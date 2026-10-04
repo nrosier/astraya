@@ -7,11 +7,12 @@
  * planet-in-sign/-house and aspect-pair cover every computed body (all 20 —
  * the 10 traditional/modern planets, both nodes, all three Lilith variants
  * and the four main-belt asteroids), so no placement a chart can produce is
- * left without a default entry. dignity-state stays restricted to the 7
- * bodies with a defined traditional rulership — that one is a correctness
- * constraint, not a scope choice: Pluto, an asteroid, etc. have no classical
- * dignity to describe, so generating one would be inventing astrology, not
- * omitting coverage. synastry-aspect (#359) reuses aspect-pair's own
+ * left without a default entry. dignity-state covers the 7 bodies with a
+ * traditional rulership (all four states) and, since #426, Uranus, Neptune
+ * and Pluto (ruler and detriment only — no tradition gives them an
+ * exaltation or fall). That is a correctness constraint, not a scope choice:
+ * an asteroid, Chiron or a node has no dignity to describe, so generating one
+ * would be inventing astrology, not omitting coverage. synastry-aspect (#359) reuses aspect-pair's own
  * corePairs() x ASPECTS coverage — the neutral entry describes the pair's
  * dynamic regardless of which chart owns which body, mirroring aspect-pair's
  * own symmetric phrasing.

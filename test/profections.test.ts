@@ -45,12 +45,12 @@ describe('computeProfections (#168)', () => {
     expect(profected.year.signIndex).toBe((signIndex(natalHouses.ascendant) + 5) % 12);
   });
 
-  it('resolves the Lord of the Year via traditional rulership by default', async () => {
+  it('resolves the Lord of the Year with the traditional rulers when requested', async () => {
     const engine = await getEngine();
     const natalJd = await julianDayFor(engine, resolveMoment(NATAL));
     const targetJd = natalJd + 365.2425 * 5;
 
-    const profected = await computeProfections(NATAL, targetJd, engine);
+    const profected = await computeProfections(NATAL, targetJd, engine, { rulership: 'traditional' });
     expect(profected.year.ruler).toBe(rulerOf(profected.year.signIndex, 'traditional'));
   });
 
@@ -60,8 +60,45 @@ describe('computeProfections (#168)', () => {
     // 8 years lands on a sign whose traditional and modern rulers differ (Scorpio/Aquarius family).
     const targetJd = natalJd + 365.2425 * 8;
 
-    const profected = await computeProfections(NATAL, targetJd, engine, { scheme: 'modern' });
+    const profected = await computeProfections(NATAL, targetJd, engine, { rulership: 'modern' });
     expect(profected.year.ruler).toBe(rulerOf(profected.year.signIndex, 'modern'));
+  });
+
+  it('uses the modern rulers by default, like the rest of the app, and names both lords under Both (#426)', async () => {
+    const engine = await getEngine();
+    const natalJd = await julianDayFor(engine, resolveMoment(NATAL));
+    // Walk the years until the profected sign is one the schemes disagree on (Scorpio, Aquarius, Pisces).
+    let found: { age: number; sign: number } | undefined;
+    for (let age = 0; age < 12 && found === undefined; age++) {
+      const p = await computeProfections(NATAL, natalJd + 365.2425 * age, engine, { rulership: 'traditional' });
+      if ([7, 10, 11].includes(p.year.signIndex)) found = { age, sign: p.year.signIndex };
+    }
+    if (found === undefined) throw new Error('fixture bug: no year profects to Scorpio, Aquarius or Pisces');
+    const targetJd = natalJd + 365.2425 * found.age;
+
+    const byDefault = await computeProfections(NATAL, targetJd, engine);
+    const modern = await computeProfections(NATAL, targetJd, engine, { rulership: 'modern' });
+    const traditional = await computeProfections(NATAL, targetJd, engine, { rulership: 'traditional' });
+    const both = await computeProfections(NATAL, targetJd, engine, { rulership: 'both' });
+
+    expect(byDefault.year.ruler).toBe(rulerOf(found.sign, 'modern'));
+    expect(byDefault.year.ruler).toBe(modern.year.ruler);
+    expect(modern.year.coRuler).toBeUndefined();
+    expect(traditional.year.ruler).toBe(rulerOf(found.sign, 'traditional'));
+    expect(traditional.year.ruler).not.toBe(modern.year.ruler);
+    expect(traditional.year.coRuler).toBeUndefined();
+    // Both: the traditional lord first, the modern one as the second lord.
+    expect(both.year.ruler).toBe(traditional.year.ruler);
+    expect(both.year.coRuler).toBe(modern.year.ruler);
+  });
+
+  it('has no second lord under Both when the two schemes agree', async () => {
+    const engine = await getEngine();
+    const natalJd = await julianDayFor(engine, resolveMoment(NATAL));
+    for (let age = 0; age < 12; age++) {
+      const p = await computeProfections(NATAL, natalJd + 365.2425 * age, engine, { rulership: 'both' });
+      expect(p.year.coRuler !== undefined).toBe([7, 10, 11].includes(p.year.signIndex));
+    }
   });
 
   it('subdivides the year into monthly profections that start at the year’s own sign', async () => {

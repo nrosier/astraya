@@ -831,6 +831,7 @@ describe('POST /api/interpretation/generate', () => {
         on_angle: false,
         angle: null,
         dispositor: 'venus',
+        co_dispositor: null,
       },
       aspects: [
         {
@@ -891,6 +892,34 @@ describe('POST /api/interpretation/generate', () => {
       );
       expect(user).toContain(`JSON Data:\n${JSON.stringify(FOCUS)}`);
       expect(user).not.toContain('currently transiting planet');
+    });
+
+    it('explains the Both choice to the model, and says nothing about rulership otherwise (#426)', async () => {
+      await generateWith({
+        ...FOCUS_BODY,
+        focusContext: {
+          ...FOCUS,
+          rulership: 'both',
+          focus_object: { ...FOCUS.focus_object, sign: 'Scorpio', dispositor: 'mars', co_dispositor: 'pluto' },
+        },
+      });
+      const { user } = generationPrompt();
+      expect(user).toContain("Rulership is 'both'");
+      expect(user).toContain('co_dispositor');
+      expect(user).toContain('"co_dispositor":"pluto"');
+    });
+
+    it('accepts the traditional choice and an older payload with no co_dispositor', async () => {
+      const olderFocusObject: Record<string, unknown> = { ...FOCUS.focus_object };
+      delete olderFocusObject.co_dispositor;
+      const response = await generateWith({
+        ...FOCUS_BODY,
+        focusContext: { ...FOCUS, rulership: 'traditional', focus_object: olderFocusObject },
+      });
+      expect(response.statusCode).toBe(200);
+      const { user } = generationPrompt();
+      expect(user).not.toContain("Rulership is 'both'");
+      expect(user).toContain('"co_dispositor":null');
     });
 
     it('tells the model when the focus planet is a transiting one, and writes in Dutch on request', async () => {

@@ -14,6 +14,7 @@ import { PersonNotFound } from './PersonNotFound.js';
 import { reportScreenMessages } from './ReportScreen.messages.js';
 import { ReportView } from './ReportView.js';
 import { useMessages } from './messages.js';
+import { useRulershipChoice } from './rulership-setting.js';
 import { useStoreState } from './store-context.js';
 
 type Load =
@@ -26,6 +27,7 @@ export function ReportScreen({ personId }: { personId: string }): React.JSX.Elem
   const person = state.people.get(personId);
   const t = useMessages(reportScreenMessages);
   const { provider } = useEphemerisProvider();
+  const [rulership] = useRulershipChoice();
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
 
   useEffect(() => {
@@ -36,7 +38,7 @@ export function ReportScreen({ personId }: { personId: string }): React.JSX.Elem
 
     void (async () => {
       try {
-        const data = await computeChartData(moment, provider);
+        const data = await computeChartData(moment, provider, { rulership });
         if (!effect.cancelled) setLoad({ kind: 'ready', data });
       } catch (error) {
         if (!effect.cancelled)
@@ -47,7 +49,7 @@ export function ReportScreen({ personId }: { personId: string }): React.JSX.Elem
     return () => {
       effect.cancelled = true;
     };
-  }, [momentKey(person?.moment), provider]);
+  }, [momentKey(person?.moment), rulership, provider]);
 
   if (person === undefined) {
     return <PersonNotFound />;

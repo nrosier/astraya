@@ -2,7 +2,7 @@
  * Computes a harmonic or Vedic Varga chart from one person's natal chart (#170).
  *
  * Like the composite chart (#169), a harmonic chart is a synthetic chart, not a comparison — so
- * this reuses the single-chart engine (`findAspects`, `essentialDignities`, `sectOf`, the two
+ * this reuses the single-chart engine (`findAspects`, `essentialDignitiesFor`, `sectOf`, the two
  * Arabic parts) to compute fresh aspects/dignities/sect/parts from the transformed positions and
  * houses, exactly the way `computeChartDataAtJd` does for a real chart. The transform itself
  * (`harmonicLongitude`, `harmonicPosition`, `harmonicHouses`) lives in `astrology/harmonics.ts`,
@@ -11,7 +11,8 @@
  */
 import { DEFAULT_ORB_CONFIG, findAspects, subjectsFrom, type Aspect, type OrbConfig } from '../astrology/aspects.js';
 import { bodyByKey, bodyById, type BodyCategory } from '../astrology/bodies.js';
-import { essentialDignities, type EssentialDignities } from '../astrology/dignities.js';
+import type { EssentialDignities } from '../astrology/dignities.js';
+import { DEFAULT_RULERSHIP_CHOICE, essentialDignitiesFor } from '../astrology/rulership.js';
 import { partOfFortune, partOfSpirit } from '../astrology/arabic-parts.js';
 import { harmonicHouses, harmonicPosition } from '../astrology/harmonics.js';
 import { sectOf, type Sect } from '../astrology/sect.js';
@@ -67,7 +68,10 @@ export async function computeHarmonic(
   );
 
   const dignities = new Map<BodyId, EssentialDignities>(
-    positions.map((position) => [position.body, essentialDignities(position.body, position.longitude)]),
+    positions.map((position) => [
+      position.body,
+      essentialDignitiesFor(position.body, position.longitude, options.rulership ?? DEFAULT_RULERSHIP_CHOICE),
+    ]),
   );
 
   const sun = bodyByKey('sun');

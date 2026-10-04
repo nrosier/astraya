@@ -2,7 +2,7 @@
  * Computes a draconic chart from one person's natal chart (#398).
  *
  * Like harmonic/Varga charts, a draconic chart is synthetic rather than a comparison, so this
- * reuses the single-chart engine (`findAspects`, `essentialDignities`, `sectOf`, the two Arabic
+ * reuses the single-chart engine (`findAspects`, `essentialDignitiesFor`, `sectOf`, the two Arabic
  * parts) to compute fresh aspects/dignities/sect/parts from the transformed positions — exactly
  * the way `computeHarmonic` does. Unlike harmonic, houses are not transformed at all: the natal
  * `HousePositions` carries through unchanged (see `draconic.ts`'s own doc comment for why), which
@@ -11,7 +11,8 @@
  */
 import { DEFAULT_ORB_CONFIG, findAspects, subjectsFrom, type Aspect, type OrbConfig } from '../astrology/aspects.js';
 import { bodyByKey, bodyById, type BodyCategory } from '../astrology/bodies.js';
-import { essentialDignities, type EssentialDignities } from '../astrology/dignities.js';
+import type { EssentialDignities } from '../astrology/dignities.js';
+import { DEFAULT_RULERSHIP_CHOICE, essentialDignitiesFor } from '../astrology/rulership.js';
 import { partOfFortune, partOfSpirit } from '../astrology/arabic-parts.js';
 import { draconicPosition } from '../astrology/draconic.js';
 import { sectOf, type Sect } from '../astrology/sect.js';
@@ -67,7 +68,10 @@ export async function computeDraconic(
   );
 
   const dignities = new Map<BodyId, EssentialDignities>(
-    positions.map((position) => [position.body, essentialDignities(position.body, position.longitude)]),
+    positions.map((position) => [
+      position.body,
+      essentialDignitiesFor(position.body, position.longitude, options.rulership ?? DEFAULT_RULERSHIP_CHOICE),
+    ]),
   );
 
   const sun = bodyByKey('sun');

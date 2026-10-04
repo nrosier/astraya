@@ -23,6 +23,7 @@ import { BODIES } from '../astrology/bodies.js';
 import type { Locale } from '../interpretation/schema.js';
 import { bodyDisplayName } from './astro-names.messages.js';
 import { useMessages } from './messages.js';
+import { RulershipSetting } from './RulershipSetting.js';
 import { transitFilterPanelMessages } from './TransitFilterPanel.messages.js';
 
 export const EVERY_BODY_KEY: readonly string[] = BODIES.map((body) => body.key);
@@ -178,6 +179,7 @@ export function TransitFilterPanel({ filter, rules, onChange, shown, total, loca
 
       <details className="transit-filter-adjust">
         <summary>{t.adjust}</summary>
+        <RulershipSetting />
         <p>
           <label htmlFor={`${id}-orb`}>{t.orbLabel} </label>
           <select

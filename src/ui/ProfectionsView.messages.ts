@@ -12,7 +12,7 @@ const en = {
     `Profections rotate the natal Ascendant, so they need a known birth time. ${name}’s birth time is unknown — the same reason their chart has no houses.`,
 
   heading: (name: string) => `${name}’s profections`,
-  hint: 'Annual and monthly Hellenistic profections: a house-per-year rotation of the natal Ascendant, using the traditional (pre-outer-planet) rulership scheme for "Lord of the Year/Month."',
+  hint: 'Annual and monthly profections: a house-per-year rotation of the natal Ascendant. The "Lord of the Year/Month" is the ruler of the profected sign, by the planetary rulers you choose below; the technique is Hellenistic and predates the outer planets, so Traditional is the historically faithful choice.',
   asOfLabel: 'As of',
   calculating: 'Calculating…',
   error: (message: string) => `Profections could not be calculated. ${message}`,
@@ -43,7 +43,7 @@ const nl: typeof en = {
     `Profecties draaien de natale Ascendant rond, dus is een bekende geboortetijd vereist. De geboortetijd van ${name} is onbekend — dezelfde reden waarom hun horoscoop geen huizen heeft.`,
 
   heading: (name: string) => `Profecties van ${name}`,
-  hint: 'Jaarlijkse en maandelijkse hellenistische profecties: een rotatie van de natale Ascendant met één huis per jaar, volgens het traditionele (pre-buitenplaneten) heerserschema voor "Heerser van het Jaar/Maand."',
+  hint: 'Jaarlijkse en maandelijkse profecties: een rotatie van de natale Ascendant met één huis per jaar. De "Heerser van het Jaar/Maand" is de heerser van het geprofecteerde teken, volgens de heersende planeten die je hieronder kiest; de techniek is hellenistisch en dateert van vóór de buitenplaneten, dus Traditioneel is de historisch trouwste keuze.',
   asOfLabel: 'Vanaf',
   calculating: 'Berekenen…',
   error: (message: string) => `Profecties konden niet worden berekend. ${message}`,

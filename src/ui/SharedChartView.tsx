@@ -12,6 +12,7 @@ import { decodeChartShareLink, type ChartShareData } from '../domain/chart-share
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
+import { useRulershipChoice } from './rulership-setting.js';
 import { sharedChartViewMessages } from './SharedChartView.messages.js';
 import { sharedMessages } from './shared.messages.js';
 
@@ -38,6 +39,7 @@ export function SharedChartView(): React.JSX.Element {
   const initial = useMemo(fromLocation, []);
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
   const { provider } = useEphemerisProvider();
+  const [rulership] = useRulershipChoice();
 
   useEffect(() => {
     if (initial.data === undefined || provider === undefined) return undefined;
@@ -46,7 +48,7 @@ export function SharedChartView(): React.JSX.Element {
 
     void (async () => {
       try {
-        const data = await computeChartData(moment, provider);
+        const data = await computeChartData(moment, provider, { rulership });
         if (!effect.cancelled) setLoad({ kind: 'ready', data });
       } catch (error) {
         if (!effect.cancelled)
@@ -57,7 +59,7 @@ export function SharedChartView(): React.JSX.Element {
     return () => {
       effect.cancelled = true;
     };
-  }, [initial.data, provider]);
+  }, [initial.data, rulership, provider]);
 
   return (
     <main className="shell">

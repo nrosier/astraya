@@ -95,10 +95,13 @@ chart-calculation modules), the same anti-injection discipline as `validateKey`
 and `validateChartData`. The prompts are the specification's, with two restated
 rules (stay within the data; no medical, legal or financial advice) and the
 reply shape, so they do not contradict the other modes. Conventions, stated in
-the module and in the payload (`rulership`): modern rulers, a planet rules a
-house when it rules the sign on that house's cusp, the chart ruler is the ruler
-of the Ascendant's sign, and "on an angle" means within 5° of the Ascendant,
-Midheaven, Descendant or Imum Coeli. It goes through the same route, consent,
+the module and in the payload (`rulership`): the rulers are the reader's choice
+(#426) — modern by default, traditional, or both as co-rulers, a device
+preference shared with every screen that shows a ruler — a planet rules a house
+when it rules the sign on that house's cusp, the chart ruler is the ruler of
+the Ascendant's sign (both co-rulers under Both, with a `co_dispositor`), and
+"on an angle" means within 5° of the Ascendant, Midheaven, Descendant or Imum
+Coeli. It goes through the same route, consent,
 rate limit, cost caps, fail-closed handling and saved history as the other modes.
 
 **`customPrompt` is the one field that structural guarantee doesn't cover.**

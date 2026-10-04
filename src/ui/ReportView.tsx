@@ -45,6 +45,8 @@ import { describeParagraphProvenance } from './report-provenance.js';
 import { formatSavedTime } from './saved-time.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
+import { RulershipSetting } from './RulershipSetting.js';
+import { useRulershipChoice } from './rulership-setting.js';
 import { useSessionUserOrUndefined } from './session-context.js';
 import { reportViewMessages } from './ReportView.messages.js';
 import {
@@ -372,6 +374,7 @@ export function ReportView({ chart }: { readonly chart: ChartData }): React.JSX.
   const [showProvenance, setShowProvenance] = useState(false);
   const [locale] = useLocale();
   const [persona, setPersona] = useState<PersonaId | undefined>(initialPersona);
+  const [rulership] = useRulershipChoice();
   const [corpus, setCorpus] = useState<readonly CorpusEntry[] | undefined>(undefined);
   const [loadError, setLoadError] = useState<string | undefined>(undefined);
 
@@ -421,10 +424,11 @@ export function ReportView({ chart }: { readonly chart: ChartData }): React.JSX.
     );
   }
 
-  const report: Report = assembleReport(chart, locale, corpus, persona);
+  const report: Report = assembleReport(chart, locale, corpus, persona, rulership);
 
   const controls = (
     <div className="report-controls">
+      <RulershipSetting />
       {reportPersonasEnabled() && (
         <label>
           {t.advisor}

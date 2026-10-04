@@ -29,6 +29,7 @@ const CONTEXT: FocusContext = {
     on_angle: false,
     angle: null,
     dispositor: 'venus',
+    co_dispositor: null,
   },
   aspects: [
     {

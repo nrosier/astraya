@@ -100,9 +100,12 @@ async function unmount(): Promise<void> {
 const count = (container: HTMLElement): string => container.querySelector('[role="status"]')?.textContent ?? '';
 const totalCount = (): string => String(contacts.length);
 
-async function choose(container: HTMLElement, selectIndex: number, value: string): Promise<void> {
-  const select = container.querySelectorAll('select')[selectIndex];
-  if (select === undefined) throw new Error('fixture bug: no such select');
+async function choose(container: HTMLElement, label: 'Show' | 'Orb', value: string): Promise<void> {
+  // By its label: the panel also holds the planetary-rulers select (#426), so an index would drift.
+  const labelled = [...container.querySelectorAll('label')].find((l) => l.textContent.trim() === label);
+  const select =
+    labelled === undefined ? null : container.querySelector<HTMLSelectElement>(`select[id="${labelled.htmlFor}"]`);
+  if (select === null) throw new Error(`fixture bug: no "${label}" select`);
   await act(async () => {
     select.value = value;
     select.dispatchEvent(new Event('change', { bubbles: true }));
@@ -187,9 +190,9 @@ describe('TransitFilterPanel (#416)', () => {
     const container = await mount('en', 'yearly');
     const shownOf = (): number => Number(/Showing (\d+)/.exec(count(container))?.[1]);
     const balanced = shownOf();
-    await choose(container, 1, 'wide');
+    await choose(container, 'Orb', 'wide');
     const wide = shownOf();
-    await choose(container, 1, 'tight');
+    await choose(container, 'Orb', 'tight');
     const tight = shownOf();
     expect(wide).toBeGreaterThanOrEqual(balanced);
     expect(tight).toBeLessThanOrEqual(balanced);
@@ -230,7 +233,7 @@ describe('TransitFilterPanel (#416)', () => {
 
   it('remembers the choice per screen on this device, and a preset is rebuilt rather than frozen', async () => {
     const container = await mount('en', 'daily');
-    await choose(container, 0, 'outer');
+    await choose(container, 'Show', 'outer');
     await unmount();
     expect(JSON.parse(localStorage.getItem('astraya:transitFilter:daily') ?? 'null')).toEqual({ preset: 'outer' });
     expect((await mount('en', 'daily')).querySelector('select')?.value).toBe('outer');

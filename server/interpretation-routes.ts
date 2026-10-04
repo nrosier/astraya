@@ -203,6 +203,14 @@ function buildFocusUserContent(context: FocusContext, locale: Locale): string {
           '',
         ]
       : [];
+  const rulershipNote =
+    context.rulership === 'both'
+      ? [
+          "Rulership is 'both': Scorpio, Aquarius and Pisces have a traditional and a modern ruler, and",
+          'both count as rulers (is_chart_ruler, rules_houses, dispositor and co_dispositor).',
+          '',
+        ]
+      : [];
   return [
     `Write in ${language}.`,
     '',
@@ -210,6 +218,7 @@ function buildFocusUserContent(context: FocusContext, locale: Locale): string {
     'Explain the core tension this placement creates, how it manifests across the specific life departments (houses) involved, and how the person can constructively navigate this energy.',
     '',
     ...note,
+    ...rulershipNote,
     'JSON Data:',
     JSON.stringify(context),
   ].join('\n');

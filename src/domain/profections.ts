@@ -7,7 +7,7 @@
  * `chart-compute.ts`'s own doc comment), then pure arithmetic (`astrology/profections.ts`)
  * over the result. No position call at all: nothing here needs a body other than the angle.
  */
-import { rulerOf, type RulershipScheme } from '../astrology/dignities.js';
+import { DEFAULT_RULERSHIP_CHOICE, rulersOf, type RulershipChoice } from '../astrology/rulership.js';
 import { annualProfection, monthlyProfection } from '../astrology/profections.js';
 import { ageInYears } from '../astrology/progressions.js';
 import { signOf } from '../astrology/signs.js';
@@ -27,20 +27,25 @@ import type { BirthMomentInput } from '../time/types.js';
 /** Placidus, matching every other chart-computing module's default. */
 const DEFAULT_HOUSE_SYSTEM: HouseSystem = 'P';
 
-/** Traditional/classical rulership, the historically correct scheme for a Hellenistic technique that predates the outer planets. */
-const DEFAULT_SCHEME: RulershipScheme = 'traditional';
-
 export interface ProfectionOptions {
   readonly houseSystem?: HouseSystem;
   readonly zodiac?: Zodiac;
-  readonly scheme?: RulershipScheme;
+  /**
+   * Whose rulers name the lord (#426); modern by default like the rest of the app. The technique is
+   * Hellenistic and predates the outer planets, so Traditional is the historically faithful choice;
+   * under Both a sign has two lords.
+   */
+  readonly rulership?: RulershipChoice;
 }
 
 export interface ProfectedPeriod {
   readonly signIndex: number;
   readonly signName: string;
   readonly longitude: Degrees;
+  /** The lord of the period (the traditional ruler first under Both). */
   readonly ruler: BodyId;
+  /** The second lord, under Both and only in Scorpio, Aquarius and Pisces. */
+  readonly coRuler?: BodyId;
 }
 
 export interface ProfectionData {
@@ -63,7 +68,12 @@ export async function computeProfections(
   const natalJd = await julianDayFor(provider, resolved);
   const place: GeoPosition = { ...natalMoment.coordinates, altitude: 0 };
   const houseSystem = options.houseSystem ?? DEFAULT_HOUSE_SYSTEM;
-  const scheme = options.scheme ?? DEFAULT_SCHEME;
+  const rulership = options.rulership ?? DEFAULT_RULERSHIP_CHOICE;
+  const lords = (sign: number): Pick<ProfectedPeriod, 'ruler' | 'coRuler'> => {
+    const [ruler, coRuler] = rulersOf(sign, rulership);
+    if (ruler === undefined) throw new RangeError(`sign index ${String(sign)} has no ruler`);
+    return coRuler === undefined ? { ruler } : { ruler, coRuler };
+  };
 
   const natalHouses = await provider.houses(natalJd, place, houseSystem, options.zodiac);
   const age = ageInYears(natalJd, targetJd);
@@ -80,13 +90,13 @@ export async function computeProfections(
       signIndex: year.signIndex,
       signName: signOf(year.longitude).name,
       longitude: year.longitude,
-      ruler: rulerOf(year.signIndex, scheme),
+      ...lords(year.signIndex),
     },
     month: {
       signIndex: month.signIndex,
       signName: signOf(month.longitude).name,
       longitude: month.longitude,
-      ruler: rulerOf(month.signIndex, scheme),
+      ...lords(month.signIndex),
       monthIndex: month.monthIndex,
     },
   };

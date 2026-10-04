@@ -8,7 +8,7 @@ import { ASPECTS, type Aspect } from '../src/astrology/aspects.js';
 import { BODIES, bodyById, bodyByKey } from '../src/astrology/bodies.js';
 import {
   TRANSIT_ORB_CONFIG,
-  chartRulerKeyOf,
+  chartRulerKeysOf,
   filterTransits,
   orbLimitFor,
   presetOf,
@@ -30,14 +30,14 @@ const keyOf = (id: number): string => bodyById(id)?.key ?? '';
 const rules = (context: 'daily' | 'yearly', chartRulerKey?: string): TransitRuleContext => ({
   everyBodyKey: EVERY,
   context,
-  chartRulerKey,
+  chartRulerKeys: chartRulerKey === undefined ? undefined : [chartRulerKey],
 });
 const OUTER = ['jupiter', 'saturn', 'uranus', 'neptune', 'pluto'];
 const PERSONAL = ['sun', 'moon', 'mercury', 'venus', 'mars'];
 const MAJORS = ['conjunction', 'sextile', 'square', 'trine', 'opposition'];
 const MINORS = ['semisquare', 'sesquiquadrate', 'quincunx'];
-/** Traditional rulers by sign, written out here rather than imported. */
-const TRADITIONAL_RULER = [
+/** Modern rulers by sign — the default — written out here rather than imported. */
+const MODERN_RULER = [
   'mars',
   'venus',
   'mercury',
@@ -45,11 +45,11 @@ const TRADITIONAL_RULER = [
   'sun',
   'mercury',
   'venus',
-  'mars',
+  'pluto',
   'jupiter',
   'saturn',
-  'saturn',
-  'jupiter',
+  'uranus',
+  'neptune',
 ];
 
 beforeAll(async () => {
@@ -67,7 +67,7 @@ beforeAll(async () => {
     TRANSIT_ORB_CONFIG,
   );
   contacts = transit.contacts;
-  rulerKey = TRADITIONAL_RULER[Math.floor(transit.natal.houses.ascendant / 30)];
+  rulerKey = MODERN_RULER[Math.floor(transit.natal.houses.ascendant / 30)];
 }, 60_000);
 
 /** A hand-built contact, for the weights. */
@@ -214,18 +214,38 @@ describe('orb sensitivity and aspect groups (#416)', () => {
   });
 });
 
-describe('the chart ruler (#416)', () => {
-  it('is the traditional ruler of the Ascendant’s sign', () => {
-    expect(chartRulerKeyOf(15)).toBe('mars'); // Aries
-    expect(chartRulerKeyOf(75)).toBe('mercury'); // Gemini
-    expect(chartRulerKeyOf(225)).toBe('mars'); // Scorpio (traditional)
-    expect(chartRulerKeyOf(315)).toBe('saturn'); // Aquarius (traditional)
-    expect(chartRulerKeyOf(-15)).toBe('jupiter'); // 345°, Pisces
-    expect(chartRulerKeyOf(Number.NaN)).toBeUndefined();
+describe('the chart ruler (#416, #426)', () => {
+  it('is the modern ruler of the Ascendant’s sign by default, the traditional one on request, and both under Both', () => {
+    expect(chartRulerKeysOf(15)).toEqual(['mars']); // Aries: the same either way
+    expect(chartRulerKeysOf(75)).toEqual(['mercury']); // Gemini
+    expect(chartRulerKeysOf(225)).toEqual(['pluto']); // Scorpio, modern by default
+    expect(chartRulerKeysOf(225, 'traditional')).toEqual(['mars']);
+    expect(chartRulerKeysOf(225, 'both')).toEqual(['mars', 'pluto']);
+    expect(chartRulerKeysOf(315, 'modern')).toEqual(['uranus']); // Aquarius
+    expect(chartRulerKeysOf(315, 'traditional')).toEqual(['saturn']);
+    expect(chartRulerKeysOf(315, 'both')).toEqual(['saturn', 'uranus']);
+    expect(chartRulerKeysOf(345, 'both')).toEqual(['jupiter', 'neptune']); // Pisces
+    expect(chartRulerKeysOf(-15, 'traditional')).toEqual(['jupiter']); // 345°
+    expect(chartRulerKeysOf(Number.NaN)).toEqual([]);
   });
 
   it('agrees with the fixture chart’s own Ascendant', () => {
-    expect(chartRulerKeyOf(transit.natal.houses.ascendant)).toBe(rulerKey);
+    expect(chartRulerKeysOf(transit.natal.houses.ascendant)).toEqual(rulerKey === undefined ? [] : [rulerKey]);
+  });
+
+  it('adds every co-ruler to the daily natal targets and boosts each of them', () => {
+    const both = transitPreset('important', {
+      everyBodyKey: EVERY,
+      context: 'daily',
+      chartRulerKeys: ['saturn', 'uranus'],
+    });
+    expect(both.natal).toEqual(expect.arrayContaining(['saturn', 'uranus']));
+    const yearly = transitPreset('important', rules('yearly'));
+    const contactToUranus = contact('pluto', 'uranus', 'conjunction', 0, false);
+    const contactToSaturn = contact('pluto', 'saturn', 'conjunction', 0, false);
+    expect(transitImportance(contactToUranus, yearly, ['saturn', 'uranus'])).toBeCloseTo(1.5, 10);
+    expect(transitImportance(contactToSaturn, yearly, ['saturn', 'uranus'])).toBeCloseTo(1.5, 10);
+    expect(transitImportance(contactToUranus, yearly, [])).toBeCloseTo(0.7, 10);
   });
 });
 
@@ -261,7 +281,7 @@ describe('transit score (#416)', () => {
 
   it('weighs the chart ruler above the Sun and Moon: Venus as ruler is 1.5, otherwise 1.0', () => {
     const c = contact('pluto', 'venus', 'conjunction', 0, false);
-    expect(transitImportance(c, yearly, 'venus')).toBeCloseTo(1.5, 10);
+    expect(transitImportance(c, yearly, ['venus'])).toBeCloseTo(1.5, 10);
     expect(transitImportance(c, yearly)).toBeCloseTo(1.0, 10);
   });
 
@@ -280,10 +300,10 @@ describe('transit score (#416)', () => {
 
   it('orders a real transit list best-first, without losing or inventing a contact', () => {
     const filter = transitPreset('all', rules('daily', rulerKey));
-    const ranked = rankTransits(contacts, filter, rulerKey);
+    const ranked = rankTransits(contacts, filter, rulerKey === undefined ? [] : [rulerKey]);
     expect(ranked).toHaveLength(contacts.length);
     expect(new Set(ranked)).toEqual(new Set(contacts));
-    const scores = ranked.map((c) => transitImportance(c, filter, rulerKey));
+    const scores = ranked.map((c) => transitImportance(c, filter, rulerKey === undefined ? [] : [rulerKey]));
     expect(scores).toEqual([...scores].sort((a, b) => b - a));
   });
 });

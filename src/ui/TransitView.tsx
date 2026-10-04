@@ -34,7 +34,7 @@ import { biWheelSelectionPanelMessages } from './BiWheelSelectionPanel.messages.
 import { resolveBiWheelSelection } from './bi-wheel-selection.js';
 import { useWheelIsolation } from './wheel-interaction.js';
 import {
-  chartRulerKeyOf,
+  chartRulerKeysOf,
   filterTransits,
   rankTransits,
   type TransitRuleContext,
@@ -43,6 +43,7 @@ import { housesAreDefined } from '../domain/chart-compute.js';
 import { EVERY_BODY_KEY, TransitFilterPanel, useTransitFilter } from './TransitFilterPanel.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
+import { useRulershipChoice } from './rulership-setting.js';
 import { momentKey } from '../time/encode.js';
 import { PersonNotFound } from './PersonNotFound.js';
 import { SortableTable } from './SortableTable.js';
@@ -127,22 +128,25 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
     };
   }, [momentKey(person?.moment), provider, targetDate]);
 
+  const [rulership] = useRulershipChoice();
   const natal = load.kind === 'ready' ? load.data.natal : undefined;
   const rules = useMemo<TransitRuleContext>(
     () => ({
       everyBodyKey: EVERY_BODY_KEY,
       context: 'daily',
-      chartRulerKey:
-        natal !== undefined && housesAreDefined(natal.houses) ? chartRulerKeyOf(natal.houses.ascendant) : undefined,
+      chartRulerKeys:
+        natal !== undefined && housesAreDefined(natal.houses)
+          ? chartRulerKeysOf(natal.houses.ascendant, rulership)
+          : undefined,
     }),
-    [natal],
+    [natal, rulership],
   );
   const [filter, setFilter] = useTransitFilter(rules);
   // The table, the wheel's cross-ring lines and the panel all read the same filtered, ranked list.
   const shownContacts = useMemo(
     () =>
       load.kind === 'ready'
-        ? rankTransits(filterTransits(load.data.contacts, filter), filter, rules.chartRulerKey)
+        ? rankTransits(filterTransits(load.data.contacts, filter), filter, rules.chartRulerKeys)
         : [],
     [load, filter, rules],
   );
@@ -185,8 +189,9 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
       load.data.natal,
       bodyKey,
       ring === 1 ? { chart: load.data.transit, contacts: shownContacts } : undefined,
+      rulership,
     );
-  }, [load, biWheelFacts, shownContacts]);
+  }, [load, biWheelFacts, shownContacts, rulership]);
 
   if (person === undefined) {
     return <PersonNotFound />;

@@ -26,7 +26,7 @@
  * pattern is small enough to inline here rather than factor into its own
  * component for a single caller.
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   almutenOfAscendant,
   angleRows,
@@ -87,6 +87,8 @@ import { WheelSelectionText } from './WheelSelectionText.js';
 import { parseSelectionKey } from '../interpretation/selection.js';
 import { buildFocusObjectContext } from '../interpretation/focus-context.js';
 import { FocusInterpretation } from './FocusInterpretation.js';
+import { useRulershipChoice } from './rulership-setting.js';
+import type { RulershipChoice } from '../astrology/rulership.js';
 import { PersonNotFound } from './PersonNotFound.js';
 import { SortableTable } from './SortableTable.js';
 import { useStoreState } from './store-context.js';
@@ -253,7 +255,9 @@ function dispositorColumns(t: typeof chartViewMessages.en, locale: Locale): read
       key: 'chain',
       label: t.chainLabel,
       valueOf: (row) => row.chain.join(' '),
-      render: (row) => row.chain.map((key) => bodyDisplayName(key, locale)).join(' → '),
+      render: (row) =>
+        row.chain.map((key) => bodyDisplayName(key, locale)).join(' → ') +
+        (row.coDispositorKey === undefined ? '' : ` (+ ${bodyDisplayName(row.coDispositorKey, locale)})`),
     },
     {
       key: 'finalDispositorName',
@@ -353,6 +357,7 @@ function renderTableTab(
   showHouses: boolean,
   t: typeof chartViewMessages.en,
   locale: Locale,
+  rulership: RulershipChoice,
 ): React.ReactNode {
   switch (tab) {
     case 'positions': {
@@ -468,7 +473,7 @@ function renderTableTab(
       );
     }
     case 'dignities': {
-      const almuten = almutenOfAscendant(data);
+      const almuten = almutenOfAscendant(data, rulership);
       return (
         <>
           {almuten !== undefined && (
@@ -479,14 +484,14 @@ function renderTableTab(
           <SortableTable
             caption={t.dignitiesCaption}
             columns={dignityColumns(t, locale)}
-            rows={dignityRows(data, pointVisibility)}
+            rows={dignityRows(data, pointVisibility, rulership)}
             getRowKey={(row) => row.bodyKey}
             downloadFilename={deriveExportFilename(displayName, 'dignities', 'csv')}
           />
           <SortableTable
             caption={t.dispositorsCaption}
             columns={dispositorColumns(t, locale)}
-            rows={dispositorRows(data, pointVisibility)}
+            rows={dispositorRows(data, pointVisibility, rulership)}
             getRowKey={(row) => row.bodyKey}
             downloadFilename={deriveExportFilename(displayName, 'dispositors', 'csv')}
           />
@@ -696,6 +701,7 @@ export function ChartDataView({
 }): React.JSX.Element {
   const t = useMessages(chartViewMessages);
   const [locale] = useLocale();
+  const [rulership] = useRulershipChoice();
   const [activeTab, setActiveTab] = useState<TabKey>('positions');
   const [pngSize, setPngSize] = useState(1200);
   const [pngError, setPngError] = useState<string | undefined>(undefined);
@@ -754,8 +760,10 @@ export function ChartDataView({
   const focusContext = useMemo(() => {
     if (isolatedKey === undefined || load.kind !== 'ready') return undefined;
     const selection = parseSelectionKey(isolatedKey);
-    return selection?.kind === 'body' ? buildFocusObjectContext(load.data, selection.key) : undefined;
-  }, [isolatedKey, load]);
+    return selection?.kind === 'body'
+      ? buildFocusObjectContext(load.data, selection.key, undefined, rulership)
+      : undefined;
+  }, [isolatedKey, load, rulership]);
 
   useEffect(() => {
     if (!printAll) return undefined;
@@ -989,7 +997,7 @@ export function ChartDataView({
             <div className="chart-print-all">
               {tabs.map((tab) => (
                 <div key={tab}>
-                  {renderTableTab(tab, load.data, displayName, pointVisibility, housesRenderable, t, locale)}
+                  {renderTableTab(tab, load.data, displayName, pointVisibility, housesRenderable, t, locale, rulership)}
                 </div>
               ))}
             </div>
@@ -1021,7 +1029,16 @@ export function ChartDataView({
                 aria-labelledby={`chart-tab-${activeTab}`}
                 tabIndex={0}
               >
-                {renderTableTab(activeTab, load.data, displayName, pointVisibility, housesRenderable, t, locale)}
+                {renderTableTab(
+                  activeTab,
+                  load.data,
+                  displayName,
+                  pointVisibility,
+                  housesRenderable,
+                  t,
+                  locale,
+                  rulership,
+                )}
               </div>
             </>
           )}
@@ -1038,6 +1055,8 @@ export function ChartView({ personId }: { personId: string }): React.JSX.Element
   const [locale] = useLocale();
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
   const [settings, setSettings] = useState<ExtendedSettings>(DEFAULT_EXTENDED_SETTINGS);
+  const [rulership] = useRulershipChoice();
+  const lastChartKey = useRef('');
   // The "Extended settings" panel's house-system/ayanamsa name lookups and the main
   // chart computation below used to hold two separate `WorkerEphemerisProvider`
   // instances — kept apart so that recreating the computation provider on a settings
@@ -1056,11 +1075,15 @@ export function ChartView({ personId }: { personId: string }): React.JSX.Element
     const moment = person.moment;
     // A mutable holder rather than a `let`, matching `App.tsx`'s own effect below.
     const effect = { cancelled: false };
-    setLoad({ kind: 'loading' });
+    // Only the planetary rulers changed (#426): keep the chart on screen while it is recalculated
+    // rather than going back to "loading", so the settings panel the choice was made in stays open.
+    const sameChart = lastChartKey.current === `${personId}|${momentKey(moment)}|${JSON.stringify(settings)}`;
+    lastChartKey.current = `${personId}|${momentKey(moment)}|${JSON.stringify(settings)}`;
+    setLoad((current) => (sameChart && current.kind === 'ready' ? current : { kind: 'loading' }));
 
     void (async () => {
       try {
-        const data = await computeChartData(moment, provider, toChartCalculationOptions(settings));
+        const data = await computeChartData(moment, provider, { ...toChartCalculationOptions(settings), rulership });
         if (!effect.cancelled) setLoad({ kind: 'ready', data });
       } catch (error) {
         if (!effect.cancelled)
@@ -1071,7 +1094,7 @@ export function ChartView({ personId }: { personId: string }): React.JSX.Element
     return () => {
       effect.cancelled = true;
     };
-  }, [personId, momentKey(person?.moment), settings, provider]);
+  }, [personId, momentKey(person?.moment), settings, rulership, provider]);
 
   if (person === undefined) {
     return <PersonNotFound />;

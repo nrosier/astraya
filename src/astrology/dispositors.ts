@@ -12,9 +12,12 @@
  * for: `positions` must include a longitude for every body the walk reaches,
  * which in practice means at least the seven traditional rulers (plus the
  * three modern outer-planet rulers, if using the modern scheme).
+ *
+ * Under `both` (co-rulers, #426) a sign has two rulers, but a chain needs one path, so it follows the
+ * modern ruler; `isMutualReception` accepts either.
  */
 import type { BodyId, Degrees } from '../ephemeris/types.js';
-import { type RulershipScheme, rulerOf } from './dignities.js';
+import { primaryRulerOf, rulersOf, type RulershipChoice } from './rulership.js';
 import { signIndex } from './signs.js';
 
 export interface DispositorChain {
@@ -35,7 +38,7 @@ export interface DispositorChain {
 export function dispositorChain(
   body: BodyId,
   positions: ReadonlyMap<BodyId, Degrees>,
-  scheme: RulershipScheme = 'traditional',
+  scheme: RulershipChoice = 'traditional',
 ): DispositorChain {
   const chain: BodyId[] = [body];
   const seen = new Set<BodyId>([body]);
@@ -46,7 +49,8 @@ export function dispositorChain(
     if (longitude === undefined) {
       throw new RangeError(`no position given for body ${current}; every body in the chain needs a placement`);
     }
-    const ruler = rulerOf(signIndex(longitude), scheme);
+    // One path: the traditional ruler under Traditional, the modern one under Modern and Both (#426).
+    const ruler = primaryRulerOf(signIndex(longitude), scheme);
     if (ruler === current) return { chain, finalDispositor: current, cycle: false };
     if (seen.has(ruler)) return { chain, finalDispositor: undefined, cycle: true };
     chain.push(ruler);
@@ -66,7 +70,10 @@ export function isMutualReception(
   longitudeA: Degrees,
   bodyB: BodyId,
   longitudeB: Degrees,
-  scheme: RulershipScheme = 'traditional',
+  scheme: RulershipChoice = 'traditional',
 ): boolean {
-  return rulerOf(signIndex(longitudeA), scheme) === bodyB && rulerOf(signIndex(longitudeB), scheme) === bodyA;
+  // Under Both either co-ruler counts: Mars in Pluto's sign and Pluto in Mars's is a reception too.
+  return (
+    rulersOf(signIndex(longitudeA), scheme).includes(bodyB) && rulersOf(signIndex(longitudeB), scheme).includes(bodyA)
+  );
 }

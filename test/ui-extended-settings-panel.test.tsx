@@ -148,7 +148,8 @@ describe('ExtendedSettingsPanel', () => {
   it('reveals the ayanamsa picker only once Sidereal is chosen', async () => {
     const { container, root } = await mount(fakeProvider(), vi.fn());
 
-    expect(container.querySelectorAll('select')).toHaveLength(1);
+    // The house-system select, and the planetary-rulers select (#426); the ayanamsa picker joins them.
+    expect(container.querySelectorAll('select')).toHaveLength(2);
     const siderealRadio = Array.from(container.querySelectorAll<HTMLInputElement>('input[type="radio"]')).find(
       (radio) => radio.name === 'extended-settings-zodiac' && !radio.checked,
     );
@@ -160,7 +161,7 @@ describe('ExtendedSettingsPanel', () => {
     await act(async () => {
       await Promise.resolve();
     });
-    expect(container.querySelectorAll('select')).toHaveLength(2);
+    expect(container.querySelectorAll('select')).toHaveLength(3);
 
     act(() => {
       root.unmount();

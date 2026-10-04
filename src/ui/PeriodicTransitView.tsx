@@ -39,9 +39,10 @@ import type { TransitAspectEvent } from '../astrology/transit-events.js';
 import { civilFromJulianDay } from '../time/julian.js';
 import { todayInputValue } from './format.js';
 import { useMessages } from './messages.js';
+import { useRulershipChoice } from './rulership-setting.js';
 import { momentKey } from '../time/encode.js';
 import {
-  chartRulerKeyOf,
+  chartRulerKeysOf,
   filterTransits,
   rankTransits,
   type TransitRuleContext,
@@ -216,15 +217,18 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
   const [asOf, setAsOf] = useState(todayInputValue);
   const { provider } = useEphemerisProvider();
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
+  const [rulership] = useRulershipChoice();
   const natal = load.kind === 'ready' ? load.data.natal : undefined;
   const rules = useMemo<TransitRuleContext>(
     () => ({
       everyBodyKey: EVERY_BODY_KEY,
       context: 'yearly',
-      chartRulerKey:
-        natal !== undefined && housesAreDefined(natal.houses) ? chartRulerKeyOf(natal.houses.ascendant) : undefined,
+      chartRulerKeys:
+        natal !== undefined && housesAreDefined(natal.houses)
+          ? chartRulerKeysOf(natal.houses.ascendant, rulership)
+          : undefined,
     }),
-    [natal],
+    [natal, rulership],
   );
   const [filter, setFilter] = useTransitFilter(rules);
 
@@ -346,7 +350,7 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
   // The return and progressed-return contacts share one filter and count. The daily Moon's own
   // aspects are left out: that section is about the Moon, which the default rules treat as background.
   const shownOf = (contacts: readonly Aspect[]): readonly Aspect[] =>
-    rankTransits(filterTransits(contacts, filter), filter, rules.chartRulerKey);
+    rankTransits(filterTransits(contacts, filter), filter, rules.chartRulerKeys);
   const filteredContactLists: readonly (readonly Aspect[])[] =
     data === undefined
       ? []

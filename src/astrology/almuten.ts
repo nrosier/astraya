@@ -37,7 +37,7 @@ import type { BodyId, Degrees } from '../ephemeris/types.js';
 import type { BoundsScheme } from './bounds.js';
 import { boundRulerOf } from './bounds.js';
 import { faceRulerOf } from './decans.js';
-import { essentialDignities, type RulershipScheme } from './dignities.js';
+import { essentialDignitiesFor, type RulershipChoice } from './rulership.js';
 import type { Sect } from './sect.js';
 import { triplicityRoleOf } from './triplicity.js';
 
@@ -65,7 +65,8 @@ const BOUND_POINTS = 2;
 const FACE_POINTS = 1;
 
 export interface EssentialDignityScoreOptions {
-  readonly rulershipScheme?: RulershipScheme;
+  /** Whose rulers count (#426). The candidates stay the seven classical planets whatever this is: the almuten is a medieval technique, and the outer planets have no triplicity, bound or face. */
+  readonly rulershipScheme?: RulershipChoice;
   readonly boundsScheme?: BoundsScheme;
 }
 
@@ -92,7 +93,7 @@ export function essentialDignityScoreOf(
   const rulershipScheme = options.rulershipScheme ?? 'traditional';
   const boundsScheme = options.boundsScheme ?? 'egyptian';
 
-  const dignities = essentialDignities(body, longitude, rulershipScheme);
+  const dignities = essentialDignitiesFor(body, longitude, rulershipScheme);
   const triplicity = triplicityRoleOf(body, longitude) === sect;
   const bound = boundRulerOf(longitude, boundsScheme) === body;
   const face = faceRulerOf(longitude) === body;

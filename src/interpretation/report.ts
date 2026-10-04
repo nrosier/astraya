@@ -56,7 +56,7 @@
  * selected, so there is nothing a factor would explain.
  */
 import { bodyById, bodyByKey, type BodyDefinition } from '../astrology/bodies.js';
-import { rulerOf } from '../astrology/dignities.js';
+import { DEFAULT_RULERSHIP_CHOICE, primaryRulerOf, rulersOf, type RulershipChoice } from '../astrology/rulership.js';
 import { dispositorChain, type DispositorChain } from '../astrology/dispositors.js';
 import { elementBalance, houseOf, modalityBalance } from '../astrology/emphasis.js';
 import { jonesShapeOf, type JonesShape } from '../astrology/jones-shapes.js';
@@ -295,30 +295,48 @@ function chartRulerSection(
   locale: Locale,
   corpus: readonly CorpusEntry[],
   persona: PersonaId | undefined,
+  rulership: RulershipChoice,
 ): ReportSection {
   const ascendantSign = signIndex(chart.houses.ascendant);
-  const rulerId = rulerOf(ascendantSign);
-  const ruler = bodyById(rulerId);
-  const rulerPosition = chart.positions.find((position) => position.body === rulerId);
-  if (ruler === undefined || rulerPosition === undefined) {
-    throw new Error('unreachable: the ascendant ruler is always one of BODIES with a computed position');
-  }
+  // Under Both the Ascendant has two rulers (Scorpio: Mars and Pluto); each gets its own sign paragraph.
+  const rulerIds = rulersOf(ascendantSign, rulership);
+  const rulerSignParagraphs = rulerIds.map((rulerId) => {
+    const ruler = bodyById(rulerId);
+    const rulerPosition = chart.positions.find((position) => position.body === rulerId);
+    if (ruler === undefined || rulerPosition === undefined) {
+      throw new Error('unreachable: the ascendant ruler is always one of BODIES with a computed position');
+    }
+    return resolveParagraph(
+      { category: 'planet-in-sign', body: ruler.key, sign: signIndex(rulerPosition.longitude) },
+      locale,
+      corpus,
+      persona,
+    );
+  });
 
-  const rulerSignParagraph = resolveParagraph(
-    { category: 'planet-in-sign', body: ruler.key, sign: signIndex(rulerPosition.longitude) },
-    locale,
-    corpus,
-    persona,
-  );
-  const chain = dispositorChain(rulerId, positionsMap(chart));
+  // A chain needs one path: the traditional ruler under Traditional, the modern one otherwise.
+  const chain = dispositorChain(primaryRulerOf(ascendantSign, rulership), positionsMap(chart), rulership);
   const chainFactors: SalienceFactor[] = chain.chain.map((id, index) => ({
     rule: 'dispositor-step',
     weight: index,
     detail: chainBodyName(id),
   }));
 
+  const coRulerNote =
+    rulerIds.length > 1
+      ? [
+          derivedParagraph(
+            locale === 'nl'
+              ? `De Ascendant heeft hier twee heersers: ${rulerIds.map(chainBodyName).join(' en ')}. De keten hieronder volgt de moderne heerser.`
+              : `The Ascendant has two rulers here: ${rulerIds.map(chainBodyName).join(' and ')}. The chain below follows the modern ruler.`,
+            rulerIds.map((id, index) => ({ rule: 'dispositor-step', weight: index, detail: chainBodyName(id) })),
+          ),
+        ]
+      : [];
+
   return section('chart-ruler', locale, [
-    rulerSignParagraph,
+    ...rulerSignParagraphs,
+    ...coRulerNote,
     derivedParagraph(describeDispositorChain(chain, locale), chainFactors),
   ]);
 }
@@ -445,12 +463,13 @@ export function assembleReport(
   locale: Locale,
   corpus: readonly CorpusEntry[],
   persona?: PersonaId,
+  rulership: RulershipChoice = DEFAULT_RULERSHIP_CHOICE,
 ): Report {
   return {
     sections: [
       coreIdentitySection(chart, locale, corpus, persona),
       temperamentSection(chart, locale),
-      chartRulerSection(chart, locale, corpus, persona),
+      chartRulerSection(chart, locale, corpus, persona, rulership),
       housesSection(chart, locale, corpus, persona),
       aspectPatternsSection(chart, locale, corpus, persona),
       dignitiesSectSection(chart, locale, corpus, persona),

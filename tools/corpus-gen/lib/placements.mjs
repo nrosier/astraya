@@ -22,8 +22,16 @@ export const DIGNITY_STATES = ['ruler', 'exalted', 'detriment', 'fall'];
 
 /** Every computed body — planet-in-sign/-house and aspect-pair cover all of them. */
 export const CORE_BODY_KEYS = BODIES.map((b) => b.key);
-/** The 7 bodies with a defined traditional rulership — the only ones dignity-state means anything for. */
+/** The 7 bodies with a defined traditional rulership: they can hold all four dignity states. */
 export const TRADITIONAL_RULER_KEYS = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'];
+/**
+ * The 3 outer planets that modern rulership gives a sign (#426): Uranus (Aquarius), Neptune (Pisces),
+ * Pluto (Scorpio). No tradition gives them an exaltation or fall, so they can hold only these two
+ * states (detriment: Uranus in Leo, Neptune in Virgo, Pluto in Taurus) — generating an exalted or
+ * fall entry for them would be inventing astrology.
+ */
+export const MODERN_OUTER_RULER_KEYS = ['uranus', 'neptune', 'pluto'];
+export const MODERN_OUTER_DIGNITY_STATES = ['ruler', 'detriment'];
 /**
  * The complete, closed set of bodies the app ever computes astrocartography lines for — the union
  * of `TRADITIONAL_ACG_BODY_IDS` and `EXTENDED_ACG_BODY_IDS` (`src/domain/astrocartography.ts`),
@@ -97,6 +105,9 @@ export function buildPlacements() {
   }
   for (const body of TRADITIONAL_RULER_KEYS) {
     for (const state of DIGNITY_STATES) placements.push({ category: 'dignity-state', body, state });
+  }
+  for (const body of MODERN_OUTER_RULER_KEYS) {
+    for (const state of MODERN_OUTER_DIGNITY_STATES) placements.push({ category: 'dignity-state', body, state });
   }
   for (const house of HOUSES) placements.push({ category: 'profected-house', house });
   for (const body of ACG_BODY_KEYS) {

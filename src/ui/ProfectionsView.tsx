@@ -21,6 +21,8 @@ import { bodyDisplayName, signDisplayName } from './astro-names.messages.js';
 import { todayInputValue } from './format.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
+import { RulershipSetting } from './RulershipSetting.js';
+import { useRulershipChoice } from './rulership-setting.js';
 import { momentKey } from '../time/encode.js';
 import { PersonNotFound } from './PersonNotFound.js';
 import { profectionsViewMessages } from './ProfectionsView.messages.js';
@@ -42,16 +44,20 @@ interface ProfectionRow {
   readonly second: number;
   readonly ruler: string;
   readonly rulerKey: string;
+  /** The second lord, under Both (#426). */
+  readonly coRulerKey?: string;
 }
 
 function toRow(period: string, profected: ProfectedPeriod): ProfectionRow {
   const parts = degreeParts(profected.longitude);
   const ruler = bodyById(profected.ruler);
+  const coRuler = profected.coRuler === undefined ? undefined : bodyById(profected.coRuler);
   return {
     period,
     ...parts,
     ruler: ruler?.name ?? String(profected.ruler),
     rulerKey: ruler?.key ?? String(profected.ruler),
+    ...(coRuler === undefined ? {} : { coRulerKey: coRuler.key }),
   };
 }
 
@@ -71,7 +77,9 @@ function columns(t: typeof profectionsViewMessages.en, locale: Locale): readonly
       key: 'ruler',
       label: t.lordLabel,
       valueOf: (row) => row.ruler,
-      render: (row) => bodyDisplayName(row.rulerKey, locale),
+      render: (row) =>
+        bodyDisplayName(row.rulerKey, locale) +
+        (row.coRulerKey === undefined ? '' : ` + ${bodyDisplayName(row.coRulerKey, locale)}`),
     },
   ];
 }
@@ -83,6 +91,7 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
   const [locale] = useLocale();
   const [asOf, setAsOf] = useState(todayInputValue);
   const { provider } = useEphemerisProvider();
+  const [rulership] = useRulershipChoice();
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
 
   const targetDate = useMemo(() => {
@@ -102,7 +111,7 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
         // civil day intact under any timezone offset the target's own calculation might
         // apply — midnight on a date near a DST/offset boundary can round to the day before.
         const targetJd = await provider.julianDayFromUtc(targetDate.year, targetDate.month, targetDate.day, 12, 0, 0);
-        const data = await computeProfections(moment, targetJd, provider);
+        const data = await computeProfections(moment, targetJd, provider, { rulership });
         if (!effect.cancelled) setLoad({ kind: 'ready', data });
       } catch (error) {
         if (!effect.cancelled)
@@ -113,7 +122,7 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
     return () => {
       effect.cancelled = true;
     };
-  }, [momentKey(person?.moment), provider, targetDate]);
+  }, [momentKey(person?.moment), provider, targetDate, rulership]);
 
   if (person === undefined) {
     return <PersonNotFound />;
@@ -156,6 +165,7 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
       </p>
       <h1>{person.displayName ? t.heading(person.displayName) : t.profectionsFallback}</h1>
       <p className="hint">{t.hint}</p>
+      <RulershipSetting />
 
       <p>
         <label>

@@ -6,11 +6,11 @@
  *
  * Conventions, stated rather than picked silently:
  *
- * - **Rulers are modern** (Pluto rules Scorpio, Uranus Aquarius, Neptune Pisces), so the outer
- *   planets rule houses and can be the chart ruler; the payload says `rulership: 'modern'` so the
- *   model reads it the same way. This differs from the rest of Astraya, whose dignity tables use
- *   the traditional scheme by default; it is one constant here (`RULERSHIP`) and applies to the
- *   dispositor, the chart ruler and the house rulerships alike.
+ * - **Rulers follow the reader's choice** (`rulership.ts`, #426): modern by default (Pluto rules
+ *   Scorpio, Uranus Aquarius, Neptune Pisces), traditional, or both as co-rulers. The payload says
+ *   which (`rulership`) so the model reads it the same way, and it applies to the dispositor, the
+ *   chart ruler and the house rulerships alike. Under Both a planet is the chart ruler or rules a
+ *   house if it is either co-ruler, and `co_dispositor` names the second ruler of its sign.
  * - **A planet rules a house when it rules the sign on that house's cusp** (the cusps the chart
  *   was cast with). A sign that sits inside a house without touching a cusp (an intercepted sign)
  *   gives its ruler nothing extra, and a planet can rule none, one or several houses.
@@ -27,7 +27,7 @@
  */
 import type { Aspect } from '../astrology/aspects.js';
 import { bodyById, bodyByKey } from '../astrology/bodies.js';
-import { rulerOf, type RulershipScheme } from '../astrology/dignities.js';
+import { DEFAULT_RULERSHIP_CHOICE, rulersOf, type RulershipChoice } from '../astrology/rulership.js';
 import { houseOf } from '../astrology/emphasis.js';
 import { SIGNS } from '../astrology/signs.js';
 import { housesAreDefined, type ChartData } from '../domain/chart-compute.js';
@@ -42,7 +42,6 @@ import {
 
 export * from './focus-context-schema.js';
 
-const RULERSHIP: RulershipScheme = 'modern';
 export const ANGLE_ORB_DEG = 5;
 const HOUSE_COUNT = 12;
 
@@ -72,21 +71,26 @@ function keyOfBody(id: number): string {
 }
 
 /** The houses (1-based) whose cusp is in a sign `bodyKey` rules. */
-function housesRuledBy(bodyKey: string, chart: ChartData): readonly number[] {
+function housesRuledBy(bodyKey: string, chart: ChartData, rulership: RulershipChoice): readonly number[] {
   if (!housesAreDefined(chart.houses)) return [];
   const ruled: number[] = [];
   for (let house = 1; house <= HOUSE_COUNT; house++) {
     const cusp = chart.houses.cusps[house];
     if (cusp === undefined) continue;
-    if (keyOfBody(rulerOf(Math.floor(norm360(cusp) / 30), RULERSHIP)) === bodyKey) ruled.push(house);
+    if (rulerKeys(Math.floor(norm360(cusp) / 30), rulership).includes(bodyKey)) ruled.push(house);
   }
   return ruled;
 }
 
-/** The key of the planet ruling the Ascendant's sign, or `undefined` when there is no Ascendant. */
-function chartRulerKey(chart: ChartData): string | undefined {
-  if (!housesAreDefined(chart.houses)) return undefined;
-  return keyOfBody(rulerOf(Math.floor(norm360(chart.houses.ascendant) / 30), RULERSHIP));
+/** The keys of the planets ruling `sign` under `rulership`: one, or the two co-rulers under Both. */
+function rulerKeys(sign: number, rulership: RulershipChoice): readonly string[] {
+  return rulersOf(sign, rulership).map(keyOfBody);
+}
+
+/** The keys of the planets ruling the Ascendant's sign; none when there is no Ascendant. */
+function chartRulerKeys(chart: ChartData, rulership: RulershipChoice): readonly string[] {
+  if (!housesAreDefined(chart.houses)) return [];
+  return rulerKeys(Math.floor(norm360(chart.houses.ascendant) / 30), rulership);
 }
 
 function angleOf(longitude: Degrees, chart: ChartData): FocusAngle | null {
@@ -126,13 +130,14 @@ export function buildFocusObjectContext(
   natal: ChartData,
   focusBodyKey: string,
   transit?: FocusTransit,
+  rulership: RulershipChoice = DEFAULT_RULERSHIP_CHOICE,
 ): FocusContext | undefined {
   const focusChart = transit?.chart ?? natal;
   const focusLongitude = longitudeOf(focusChart, focusBodyKey);
   const focusBody = bodyByKey(focusBodyKey);
   if (focusLongitude === undefined || focusBody === undefined) return undefined;
 
-  const chartRuler = chartRulerKey(natal);
+  const chartRulers = chartRulerKeys(natal, rulership);
   const angle = angleOf(focusLongitude, natal);
   const sign = Math.floor(norm360(focusLongitude) / 30);
 
@@ -158,11 +163,11 @@ export function buildFocusObjectContext(
       target_key: targetKey,
       target_sign: signNameOf(targetLongitude),
       target_house: houseIn(targetLongitude, natal),
-      target_rules_houses: housesRuledBy(targetKey, natal),
+      target_rules_houses: housesRuledBy(targetKey, natal, rulership),
       aspect: aspect.aspect.key,
       orb: roundOrb(aspect.orb),
       state: aspect.applying ? 'applying' : 'separating',
-      is_target_chart_ruler: targetKey === chartRuler,
+      is_target_chart_ruler: chartRulers.includes(targetKey),
       is_target_luminary: targetKey === 'sun' || targetKey === 'moon',
     });
   }
@@ -170,16 +175,17 @@ export function buildFocusObjectContext(
 
   return {
     perspective: transit === undefined ? 'natal' : 'transit',
-    rulership: RULERSHIP,
+    rulership,
     focus_object: {
       key: focusBodyKey,
       sign: SIGNS[sign]?.name ?? '',
       house: houseIn(focusLongitude, natal),
-      rules_houses: housesRuledBy(focusBodyKey, natal),
-      is_chart_ruler: focusBodyKey === chartRuler,
+      rules_houses: housesRuledBy(focusBodyKey, natal, rulership),
+      is_chart_ruler: chartRulers.includes(focusBodyKey),
       on_angle: angle !== null,
       angle,
-      dispositor: keyOfBody(rulerOf(sign, RULERSHIP)),
+      dispositor: rulerKeys(sign, rulership)[0] ?? '',
+      co_dispositor: rulerKeys(sign, rulership)[1] ?? null,
     },
     // Tightest first, and never more than the server accepts (a "show all" transit filter can hold many).
     aspects: aspects.slice(0, MAX_FOCUS_ASPECTS),
