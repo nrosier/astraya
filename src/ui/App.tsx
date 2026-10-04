@@ -120,6 +120,16 @@ function LoadingScreen(): React.JSX.Element {
  * version, AGPL obligations. Hash routing rather than a router library: the app is a
  * handful of screens, and a hash keeps every URL shareable as a plain static file.
  */
+/**
+ * The skip link points at `#main-content`, but this app routes on the URL hash (`#/people`), so
+ * letting the browser follow that link would change the route. It moves focus (and scroll) to
+ * the content instead, leaving the address alone.
+ */
+function skipToContent(event: React.MouseEvent<HTMLAnchorElement>): void {
+  event.preventDefault();
+  document.getElementById('main-content')?.focus();
+}
+
 export function App(): React.JSX.Element {
   return (
     <EphemerisProviderProvider>
@@ -221,35 +231,44 @@ function AppShell(): React.JSX.Element {
     // `Stored` — otherwise every navigation would reopen the database and restart sync.
     //
     // Account/sync status and language/theme are both global, not tied to any one screen
-    // (#137), but answer two different questions — "who am I and where's my data" versus
-    // "how does the page look" — so each gets its own fixed corner rather than one shared
-    // column: sign-in/sync at bottom-left, language/theme at top-right, both on every
-    // route including the landing page.
+    // (#137), and live together in one sticky header (#421) that stays in view while a long
+    // page scrolls: the name on the left, who-am-I and how-the-page-looks on the right, on
+    // every route including the landing page. They used to sit in two fixed corners, which
+    // left dead zones, needed clearance padding on whatever scrolled underneath them, and
+    // could not be reached without scrolling back to the corner's neighbourhood.
     <SessionProvider>
-      {/* `AccountPanel` sits right next to `SyncBadge` (#230): sign-in/out is the thing
-          that changes the sync badge's state, so it belongs beside it. The ephemeris
-          status line joins them (#234) — once ready, the ephemeris is an implementation
-          detail again, but a silent failure here is precisely the bug class this project
-          is built to avoid, so it stays visible on every route, not just a landing page
-          that no longer exists. */}
-      <div className="account-bar">
-        {engineStatus !== 'ready' && <p className="status">{engineStatus}</p>}
-        <SyncBadge />
-        <AccountPanel />
-      </div>
-      {/* Ordered before `screen` so tab order matches the fixed top-right position these
-          render at (#69) — a keyboard user reaches them before the page content, same as
-          sighted users see them first. Side by side, not stacked: changing language and
-          changing theme are both "change how the page looks", picked together more often
-          than either is picked alone. */}
-      <div className="locale-bar">
-        <LanguageToggle />
-        <ThemeToggle />
-      </div>
+      {/* The header is first in the DOM, so a keyboard user meets the skip link, then the
+          controls, before any page content — the order sighted users see them in. Its skip
+          link is the first focusable thing on every page (#421). `AccountPanel` sits right next
+          to `SyncBadge` (#230): sign-in/out is the thing that changes the sync badge's state.
+          The ephemeris status line joins the left side (#234) — once ready it is an
+          implementation detail again, but a silent failure here is precisely the bug class this
+          project is built to avoid, so it stays visible on every route. Language and theme are
+          side by side: both are "change how the page looks", picked together more often than
+          either alone. */}
+      <header className="app-header">
+        <a className="skip-link" href="#main-content" onClick={skipToContent}>
+          {t.skipToContent}
+        </a>
+        <div className="app-header-start">
+          <a className="app-header-brand" href="#/people" aria-label={t.homeLinkLabel}>
+            Astraya
+          </a>
+          {engineStatus !== 'ready' && <p className="status app-header-status">{engineStatus}</p>}
+        </div>
+        <div className="app-header-end">
+          <SyncBadge />
+          <AccountPanel />
+          <LanguageToggle />
+          <ThemeToggle />
+        </div>
+      </header>
       {/* One boundary around the whole screen slot rather than one per lazy route (#338):
           every lazy screen wants the same fallback, and keeping the boundary outside
           `Stored` means a chunk still in flight does not also restart the store. */}
-      <Suspense fallback={<LoadingScreen />}>{screen}</Suspense>
+      <div id="main-content" className="main-content" tabIndex={-1}>
+        <Suspense fallback={<LoadingScreen />}>{screen}</Suspense>
+      </div>
       <footer>
         {/* The version itself is the changelog link: clicking a version to see what changed
             in it is the behaviour people expect. Promoted here from the old landing page

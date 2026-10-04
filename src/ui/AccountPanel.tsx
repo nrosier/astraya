@@ -1,5 +1,5 @@
 /**
- * Sign-in/out UI (#78, #109). Mounted globally in `account-bar`, right next to
+ * Sign-in/out UI (#78, #109). Mounted globally in the sticky `app-header` (#421), right next to
  * `SyncBadge` (#230) — signed-in or signed-out state is the answer to "am I signed
  * in", and that has to be visible without navigating anywhere.
  *
@@ -147,8 +147,8 @@ function OidcSignIn({ config }: { config: { clientId: string; authorizationEndpo
 }
 
 /**
- * Collapsed to a compact "Sign in" button by default — this now lives in the fixed
- * top-left corner of every screen, so an always-open form would sit over the page on
+ * Collapsed to a compact "Sign in" button by default — this lives in the sticky header at
+ * the top right of every screen (#421), so an always-open form would sit over the page on
  * every route rather than just where it's relevant. Opening it reveals the same form as
  * a small popover beneath the button; closing it (the × or a successful sign-in) hides
  * the form again without losing anything typed elsewhere on the page.
@@ -295,7 +295,7 @@ function SignInForm({
 
 /**
  * No "signed in as" text here — `SyncBadge`'s "(logged in as: {username})" already
- * says that, right next to this in `account-bar` (#230).
+ * says that, right next to this in the header (#230, #421).
  */
 function SignedIn({
   user,
@@ -421,10 +421,10 @@ export function AccountPanel(): React.JSX.Element {
     if (user !== undefined) setRemovableAccount(undefined);
   }, [user]);
 
-  // Positioned so the popover/warning below — absolutely positioned, `left: 0`/
-  // `bottom: 2.5rem` — anchors to this trigger's own box rather than to `.account-bar`'s
-  // (#230: this shares that fixed corner with `SyncBadge`, so anchoring to the shared
-  // container would misplace the popover under whichever control sits first).
+  // Positioned so the popover/warning below — absolutely positioned, `right: 0` beneath the
+  // trigger — anchors to this trigger's own box rather than to the header's (#230, #421: this
+  // shares the header with `SyncBadge`, so anchoring to the shared container would misplace the
+  // popover under whichever control sits first).
   return (
     <div className="accountpanel">
       {IS_DEMO_MODE ? (
