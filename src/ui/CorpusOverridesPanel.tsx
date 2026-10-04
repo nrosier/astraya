@@ -34,7 +34,17 @@ import {
 import { downloadBlob } from './download.js';
 import { LOCALE_LABELS, isLocale, useLocale } from './locale.js';
 import { EntryLabel } from './EntryLabel.js';
-import { categoryLabel, compareSortKeys, labelForKey, sortKeyForKey } from './placement-label.js';
+import {
+  categoryExplanation,
+  categoryLabel,
+  compareSortKeys,
+  labelForKey,
+  sortKeyForKey,
+  tagExplanation,
+  tagLabel,
+  tierExplanation,
+  tierLabel,
+} from './placement-label.js';
 import { useMessages } from './messages.js';
 import { PERSONA_LABELS } from './ReportView.js';
 import { corpusOverridesPanelMessages } from './CorpusOverridesPanel.messages.js';
@@ -181,6 +191,10 @@ export function CorpusOverridesPanel(): React.JSX.Element {
   }, [labelled, categoryFilter, tierFilter, tagFilter, overriddenOnly, search, overrideMap]);
 
   const visible = filtered.slice(0, page * PAGE_SIZE);
+  const categoryExplanationOf = (key: string): string | undefined => {
+    const category = categoryOfKey(key);
+    return category === undefined ? undefined : categoryExplanation(category, uiLocale);
+  };
   const categoryLabelOf = (key: string): string => {
     const category = categoryOfKey(key);
     return category === undefined ? '—' : categoryLabel(category, uiLocale);
@@ -355,7 +369,7 @@ export function CorpusOverridesPanel(): React.JSX.Element {
             <option value="">{t.allTiers}</option>
             {CORPUS_TIERS.map((tier) => (
               <option key={tier} value={tier}>
-                {tier}
+                {tierLabel(tier, uiLocale)}
               </option>
             ))}
           </select>
@@ -371,7 +385,7 @@ export function CorpusOverridesPanel(): React.JSX.Element {
             <option value="">{t.allTags}</option>
             {availableTags.map((tag) => (
               <option key={tag} value={tag}>
-                {tag}
+                {tagLabel(tag, uiLocale)}
               </option>
             ))}
           </select>
@@ -494,7 +508,7 @@ export function CorpusOverridesPanel(): React.JSX.Element {
           {filtered.length === 0 ? (
             <p className="empty">{t.noResults}</p>
           ) : (
-            <div className="data-table">
+            <div className="data-table data-table-wrap">
               <div className="data-table-scroll">
                 <table>
                   <thead>
@@ -517,9 +531,22 @@ export function CorpusOverridesPanel(): React.JSX.Element {
                           <td>
                             <EntryLabel entryKey={entry.key} locale={uiLocale} />
                           </td>
-                          <td>{categoryLabelOf(entry.key)}</td>
-                          <td>{entry.tier}</td>
-                          <td>{entry.tags.join(', ')}</td>
+                          <td>
+                            {categoryLabelOf(entry.key)}
+                            <span className="cell-explanation">{categoryExplanationOf(entry.key)}</span>
+                          </td>
+                          <td>
+                            {tierLabel(entry.tier, uiLocale)}
+                            <span className="cell-explanation">{tierExplanation(entry.tier, uiLocale)}</span>
+                          </td>
+                          <td>
+                            {entry.tags.map((tag) => (
+                              <span key={tag} className="cell-tag">
+                                {tagLabel(tag, uiLocale)}
+                                <span className="cell-explanation">{tagExplanation(tag, uiLocale)}</span>
+                              </span>
+                            ))}
+                          </td>
                           <td>{truncate(entry.text)}</td>
                           <td>{overridden ? t.overriddenStatus : t.defaultStatus}</td>
                           <td className="actions">

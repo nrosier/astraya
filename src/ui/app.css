@@ -2591,3 +2591,33 @@ label.stacked textarea:focus-visible {
   background: color-mix(in oklab, var(--accent) 14%, transparent);
   box-shadow: inset 3px 0 0 var(--accent);
 }
+
+/* Admin tables (#428): text wraps within its column so the table fits the page width and never
+   scrolls sideways. Long unbroken words (keys) break rather than widen the column. Opt-in, because
+   the numeric chart tables must not break a value such as 12°34' across lines. */
+.data-table-wrap th,
+.data-table-wrap td {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  vertical-align: top;
+}
+
+.data-table-wrap .actions {
+  white-space: nowrap;
+}
+
+.cell-explanation {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+
+.cell-tag {
+  display: block;
+}
+
+.cell-tag + .cell-tag {
+  margin-top: 0.4rem;
+}

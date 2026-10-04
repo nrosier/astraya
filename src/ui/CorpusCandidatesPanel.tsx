@@ -19,7 +19,7 @@ import { decideCorpusCandidates, listCorpusCandidates } from '../sync/admin-clie
 import { CORPUS_LOCALES } from '../interpretation/schema.js';
 import { LOCALE_LABELS, isLocale, useLocale } from './locale.js';
 import { EntryLabel } from './EntryLabel.js';
-import { compareSortKeys, labelForKey, sortKeyForKey } from './placement-label.js';
+import { compareSortKeys, labelForKey, sortKeyForKey, tagExplanation, tagLabel } from './placement-label.js';
 import { useMessages } from './messages.js';
 import { PERSONA_LABELS } from './ReportView.js';
 import { corpusCandidatesPanelMessages } from './CorpusCandidatesPanel.messages.js';
@@ -207,7 +207,7 @@ export function CorpusCandidatesPanel(): React.JSX.Element {
             </button>
           </p>
 
-          <div className="data-table">
+          <div className="data-table data-table-wrap">
             <div className="data-table-scroll">
               <table>
                 <thead>
@@ -264,7 +264,14 @@ export function CorpusCandidatesPanel(): React.JSX.Element {
                                 : t.triageUnchecked}
                           {candidate.triageScore !== undefined && ` (${candidate.triageScore.toFixed(2)})`}
                         </td>
-                        <td>{candidate.tags.join(', ')}</td>
+                        <td>
+                          {candidate.tags.map((tag) => (
+                            <span key={tag} className="cell-tag">
+                              {tagLabel(tag, uiLocale)}
+                              <span className="cell-explanation">{tagExplanation(tag, uiLocale)}</span>
+                            </span>
+                          ))}
+                        </td>
                         <td>{truncate(candidate.text)}</td>
                         <td className="actions">
                           <button

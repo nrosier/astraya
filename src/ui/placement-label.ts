@@ -23,6 +23,7 @@ import {
   validateKey,
   type CorpusCategory,
   type CorpusPlacement,
+  type CorpusTier,
   type Locale,
 } from '../interpretation/schema.js';
 import { aspectDisplayName, bodyDisplayName, signDisplayName } from './astro-names.messages.js';
@@ -202,4 +203,93 @@ export function compareSortKeys(a: readonly (number | string)[], b: readonly (nu
     return String(x).localeCompare(String(y));
   }
   return 0;
+}
+
+const CATEGORY_EXPLANATIONS: Readonly<Record<Locale, Readonly<Record<CorpusCategory, string>>>> = {
+  en: {
+    'planet-in-sign': 'How a planet expresses itself in the sign it stands in.',
+    'planet-in-house': 'Which area of life a planet works in.',
+    'sign-on-cusp': 'The tone of a life area, set by the sign on its house cusp.',
+    'aspect-pair': 'How two planets in the same chart interact.',
+    'transit-aspect': 'A passing planet touching a planet in the birth chart.',
+    'synastry-aspect': "How one person's planet meets another person's planet.",
+    'dignity-state': 'How comfortable a planet is in its sign (ruler, exalted, detriment, fall).',
+    nakshatra: 'The Moon-mansion a planet falls in (Vedic).',
+    pattern: 'An overall figure formed by several planets together.',
+    'profected-house': 'The life area emphasised in a given year of life.',
+    'astro-line': 'A planet line on the map and the effect of living along it.',
+  },
+  nl: {
+    'planet-in-sign': 'Hoe een planeet zich uit in het teken waarin hij staat.',
+    'planet-in-house': 'In welk levensgebied een planeet werkt.',
+    'sign-on-cusp': 'De toon van een levensgebied, bepaald door het teken op de huiscusp.',
+    'aspect-pair': 'Hoe twee planeten in dezelfde horoscoop samenwerken.',
+    'transit-aspect': 'Een passerende planeet die een planeet in het geboortehoroscoop raakt.',
+    'synastry-aspect': 'Hoe de planeet van de één de planeet van de ander ontmoet.',
+    'dignity-state': 'Hoe goed een planeet zich thuis voelt in zijn teken (heerser, verhoging, schade, val).',
+    nakshatra: 'Het maanhuis waarin een planeet staat (Vedisch).',
+    pattern: 'Een totaalfiguur gevormd door meerdere planeten samen.',
+    'profected-house': 'Het levensgebied dat in een bepaald levensjaar centraal staat.',
+    'astro-line': 'Een planeetlijn op de kaart en wat het effect is van wonen langs die lijn.',
+  },
+};
+
+export function categoryExplanation(category: CorpusCategory, locale: Locale): string {
+  return CATEGORY_EXPLANATIONS[locale][category];
+}
+
+const TIER_TEXT: Readonly<Record<Locale, Readonly<Record<CorpusTier, { label: string; explanation: string }>>>> = {
+  en: {
+    core: { label: 'Core', explanation: 'Almost every report will want to say something about this.' },
+    notable: { label: 'Notable', explanation: 'In between: worth mentioning, chosen by an editor.' },
+    nuance: { label: 'Nuance', explanation: 'Fine detail that matters once the obvious has been said.' },
+  },
+  nl: {
+    core: { label: 'Kern', explanation: 'Vrijwel elke duiding wil hier iets over zeggen.' },
+    notable: { label: 'Opvallend', explanation: 'Tussenin: het noemen waard, door een redacteur gekozen.' },
+    nuance: { label: 'Verfijning', explanation: 'Fijn detail dat telt als het voor de hand liggende gezegd is.' },
+  },
+};
+
+export function tierLabel(tier: CorpusTier, locale: Locale): string {
+  return TIER_TEXT[locale][tier].label;
+}
+
+export function tierExplanation(tier: CorpusTier, locale: Locale): string {
+  return TIER_TEXT[locale][tier].explanation;
+}
+
+const TAG_TEXT: Readonly<Record<Locale, Readonly<Record<string, { label: string; explanation: string }>>>> = {
+  en: {
+    'improved-via-feedback-loop': {
+      label: 'Revised after review',
+      explanation: 'Rewritten by the automatic feedback loop after a quality review.',
+    },
+    ruler: { label: 'Ruler', explanation: 'The planet rules this sign (its own sign).' },
+    exalted: { label: 'Exalted', explanation: 'The planet is exalted here (especially strong).' },
+    detriment: { label: 'Detriment', explanation: 'The planet is in detriment here (opposite its own sign).' },
+    fall: { label: 'Fall', explanation: 'The planet is in its fall here (opposite its exaltation).' },
+  },
+  nl: {
+    'improved-via-feedback-loop': {
+      label: 'Herzien na controle',
+      explanation: 'Herschreven door de automatische feedbacklus na een kwaliteitscontrole.',
+    },
+    ruler: { label: 'Heerser', explanation: 'De planeet heerst over dit teken (eigen teken).' },
+    exalted: { label: 'Verhoogd', explanation: 'De planeet is hier verhoogd (extra sterk).' },
+    detriment: { label: 'Schade', explanation: 'De planeet staat hier in schade (tegenover zijn eigen teken).' },
+    fall: { label: 'Val', explanation: 'De planeet staat hier in zijn val (tegenover zijn verhoging).' },
+  },
+};
+
+/** A tag in words; an unknown tag is made readable (hyphens to spaces, capitalised) rather than shown raw. */
+export function tagLabel(tag: string, locale: Locale): string {
+  const known = TAG_TEXT[locale][tag]?.label;
+  if (known !== undefined) return known;
+  const spaced = tag.replace(/[-_]+/g, ' ').trim();
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+}
+
+export function tagExplanation(tag: string, locale: Locale): string | undefined {
+  return TAG_TEXT[locale][tag]?.explanation;
 }
