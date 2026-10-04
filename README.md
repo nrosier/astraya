@@ -122,19 +122,25 @@ Authentik provider:
   session rather than leaving it active.
 
 Signing in with Authentik provisions a new local Astraya account on first use
-(never an admin — grant that separately) and, from then on, works exactly like
+(never an admin — grant that separately, see below) and, from then on, works exactly like
 a local account: same session cookie, same sync relay, same sign-out flow.
 Astraya has no way to notice an account disabled or a session revoked on the
 Authentik side after the initial sign-in exchange, so Authentik-derived
 sessions use a shorter TTL (24h, vs. 30 days for local accounts) to bound how
 long that gap can last.
 
-#### Making Authentik group members admins
+#### Making Authentik group members admins or super admins
 
-Set `ASTRAYA_OIDC_ADMIN_GROUPS` to a comma-separated list of Authentik group
-names (matched exactly, case included, e.g. `ASTRAYA_OIDC_ADMIN_GROUPS=astraya_admin`).
-Anyone in one of those groups is made an admin each time they sign in; nobody
-is ever demoted automatically. Two things have to be true for this to work:
+There are two levels of administrator (#431): an **admin** can use every admin
+screen but cannot create, change or delete accounts; a **super admin** can do
+everything, including granting and removing either role. Set
+`ASTRAYA_OIDC_ADMIN_GROUPS` and/or `ASTRAYA_OIDC_SUPER_ADMIN_GROUPS` to
+comma-separated lists of Authentik group names (matched exactly, case included,
+e.g. `ASTRAYA_OIDC_ADMIN_GROUPS=astraya_admin`). Anyone in one of those groups is
+given the role each time they sign in (a member of both is a super admin);
+nobody is ever demoted automatically. Local accounts have the matching
+`ASTRAYA_ADMIN_USERNAMES` and `ASTRAYA_SUPER_ADMIN_USERNAMES`. Two things have
+to be true for this to work:
 
 - **The server has to actually see the variable.** The Node server reads only
   its process environment — it does not look for a `.env` file by itself. Pass
@@ -150,8 +156,12 @@ is ever demoted automatically. Two things have to be true for this to work:
 Each OIDC sign-in logs which groups the token carried and whether any matched,
 so if promotion doesn't happen, the server log says why.
 
-Admins get an **Admin** tab in the main menu with the user list, AI usage, and
-the corpus review screens.
+Admins get an **Admin** tab in the main menu with the user list (read-only, with
+each account's role), AI usage, and the corpus review screens. Super admins also
+get the controls that create, change the role of, disable, reset the password of,
+and delete accounts. The first account created at setup is a super admin; the
+last usable super admin cannot be demoted, disabled or deleted, and nobody can
+change their own role.
 
 ### Optional: a geocoding provider that doesn't need a referrer
 

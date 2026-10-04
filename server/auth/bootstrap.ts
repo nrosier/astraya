@@ -18,7 +18,7 @@ const TOKEN_TTL_MS = 15 * 60 * 1000;
 
 interface BootstrapToken {
   readonly token: string;
-  /** `null` for the env-supplied token: it doesn't expire on its own, only when an admin exists. */
+  /** `null` for the env-supplied token: it doesn't expire on its own, only when a super admin exists. */
   readonly expiresAt: number | null;
   readonly fromEnv: boolean;
 }
@@ -27,14 +27,17 @@ interface BootstrapToken {
 let current: BootstrapToken | null = null;
 
 /**
- * Excludes disabled admins (#318): an instance whose only admin row is disabled has no
- * *usable* admin, and must be treated the same as having none at all, so a restart
- * re-arms the bootstrap flow (and `/api/setup`'s "already bootstrapped" guard in
- * `server/auth/routes.ts` re-opens) instead of leaving the instance permanently
- * unrecoverable through the UI.
+ * Whether the instance has a usable **super admin** (#431): the one role that can manage accounts,
+ * so an instance without one cannot be administered through the UI whatever plain admins it has.
+ * Excludes disabled ones (#318): an instance whose only super admin row is disabled has no
+ * *usable* one, and must be treated the same as having none at all, so a restart re-arms the
+ * bootstrap flow (and `/api/setup`'s "already bootstrapped" guard in `server/auth/routes.ts`
+ * re-opens) instead of leaving the instance permanently unrecoverable through the UI.
  */
-export function adminExists(db: Database): boolean {
-  const row = db.prepare('SELECT COUNT(*) AS count FROM users WHERE is_admin = 1 AND disabled_at IS NULL').get() as {
+export function superAdminExists(db: Database): boolean {
+  const row = db
+    .prepare("SELECT COUNT(*) AS count FROM users WHERE role = 'super_admin' AND disabled_at IS NULL")
+    .get() as {
     count: number;
   };
   return row.count > 0;
@@ -42,18 +45,20 @@ export function adminExists(db: Database): boolean {
 
 /**
  * Call once at server startup. Logs the bootstrap URL on every boot while no
- * admin exists yet — an un-bootstrapped instance is a misconfiguration, not a
+ * super admin exists yet — an un-bootstrapped instance is a misconfiguration, not a
  * steady state, so this doesn't log once and go quiet.
  */
 export function announceBootstrap(db: Database, log: FastifyBaseLogger): void {
-  if (adminExists(db)) {
+  if (superAdminExists(db)) {
     current = null;
     return;
   }
   const envToken = process.env.ASTRAYA_BOOTSTRAP_TOKEN;
   if (envToken) {
     current = { token: envToken, expiresAt: null, fromEnv: true };
-    log.warn('No admin account exists. Using the configured ASTRAYA_BOOTSTRAP_TOKEN — create one at POST /api/setup');
+    log.warn(
+      'No super admin account exists. Using the configured ASTRAYA_BOOTSTRAP_TOKEN — create one at POST /api/setup',
+    );
     return;
   }
   current = { token: randomBytes(48).toString('base64url'), expiresAt: Date.now() + TOKEN_TTL_MS, fromEnv: false };
@@ -61,7 +66,7 @@ export function announceBootstrap(db: Database, log: FastifyBaseLogger): void {
   // token's own consumer, is `#/...`. A path without the `#` (as this used to read) loads
   // the app shell fine but never reaches any router, so the link silently opens the home
   // screen with the token sitting unused in `location.search`.
-  log.warn(`No admin account exists. Create one within 15 minutes at: /#/setup?token=${current.token}`);
+  log.warn(`No super admin account exists. Create one within 15 minutes at: /#/setup?token=${current.token}`);
 }
 
 export type BootstrapTokenError = 'no-token-issued' | 'invalid' | 'expired';

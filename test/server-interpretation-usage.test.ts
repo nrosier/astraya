@@ -17,7 +17,7 @@ import {
 
 function makeUser(db: Database, username: string): string {
   const id = randomUUID();
-  db.prepare('INSERT INTO users (id, username, password_hash, is_admin, created_at) VALUES (?, ?, ?, 0, ?)').run(
+  db.prepare("INSERT INTO users (id, username, password_hash, role, created_at) VALUES (?, ?, ?, 'user', ?)").run(
     id,
     username,
     'irrelevant-hash',

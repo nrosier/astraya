@@ -4,11 +4,14 @@
  * its own shape, and every rejection carries the server's own message.
  */
 import type { CorpusTier, Locale } from '../interpretation/schema.js';
+import type { Role } from './auth-client.js';
 
 /** Mirrors `server/auth/admin-routes.ts`'s `AdminUser` shape. */
 export interface AdminUser {
   readonly id: string;
   readonly username: string;
+  readonly role: Role;
+  /** An admin or a super admin. */
   readonly isAdmin: boolean;
   readonly createdAt: string;
   readonly disabledAt: string | null;
@@ -52,14 +55,11 @@ export async function listUsers(): Promise<readonly AdminUser[]> {
   return users;
 }
 
-export async function createUser(
-  username: string,
-  isAdmin?: boolean,
-): Promise<{ user: AdminUser; setPasswordUrl: string }> {
+export async function createUser(username: string, role?: Role): Promise<{ user: AdminUser; setPasswordUrl: string }> {
   return call('/api/admin/users', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(isAdmin === undefined ? { username } : { username, isAdmin }),
+    body: JSON.stringify(role === undefined ? { username } : { username, role }),
   });
 }
 
@@ -77,13 +77,13 @@ export async function enableUser(id: string): Promise<AdminUser> {
   return user;
 }
 
-export async function promoteUser(id: string): Promise<AdminUser> {
-  const { user } = await call<{ user: AdminUser }>(`/api/admin/users/${id}/promote`, { method: 'POST' });
-  return user;
-}
-
-export async function demoteUser(id: string): Promise<AdminUser> {
-  const { user } = await call<{ user: AdminUser }>(`/api/admin/users/${id}/demote`, { method: 'POST' });
+/** Super admin only: changes a user's role (never one's own; never demotes the last super admin). */
+export async function setUserRole(id: string, role: Role): Promise<AdminUser> {
+  const { user } = await call<{ user: AdminUser }>(`/api/admin/users/${id}/role`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ role }),
+  });
   return user;
 }
 

@@ -1,7 +1,14 @@
 /**
- * Admin user management (#135): list, create, reset-password, disable/enable,
- * promote/demote, a pre-delete impact preview, and delete. Every route here sits
- * behind `requireAdmin` — `requireUser`/the ops relay are untouched by this file.
+ * Admin user management (#135): list, create, reset-password, disable/enable, change role, a
+ * pre-delete impact preview, and delete. Two levels of administrator (#431): listing the users is
+ * read-only information any admin may see (the AI usage report names users too), but every action
+ * that creates, changes or removes an account — and the deletion-impact preview, which decrypts
+ * counts for one user — requires a **super admin**. `requireUser`/the ops relay are untouched by
+ * this file.
+ *
+ * Two rules protect the instance from locking itself out: nobody can change their own role (so a
+ * super admin cannot quietly demote themselves out of the only seat), and the last usable super
+ * admin cannot be demoted, disabled or deleted.
  *
  * No route here reads another user's `people`/`charts` data. The one exception,
  * `deletion-impact`, decrypts only counts (distinct entity ids) for one target
@@ -9,9 +16,10 @@
  * comment for why that's a narrow, deliberate exception, not a new capability.
  */
 import { randomBytes, randomUUID } from 'node:crypto';
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyRequest } from 'fastify';
 import type { Database } from '../db.ts';
-import { getUserByUsername, requireAdmin } from './identity.ts';
+import { getUserByUsername, requireAdmin, requireSuperAdmin, roleFields } from './identity.ts';
+import { isRole, ROLES, type Role } from './roles.ts';
 import { loadOidcConfig } from './oidc.ts';
 import { revokeAllSessionsForUser } from './sessions.ts';
 import { loadEncryptionKey } from '../ops/crypto.ts';
@@ -25,7 +33,7 @@ const MAX_USERNAME_LENGTH = 64;
 interface AdminUserRow {
   readonly id: string;
   readonly username: string;
-  readonly is_admin: number;
+  readonly role: string;
   readonly created_at: string;
   readonly disabled_at: string | null;
   readonly last_seen_at: string | null;
@@ -34,6 +42,8 @@ interface AdminUserRow {
 interface AdminUser {
   readonly id: string;
   readonly username: string;
+  readonly role: Role;
+  /** An admin or a super admin. */
   readonly isAdmin: boolean;
   readonly createdAt: string;
   readonly disabledAt: string | null;
@@ -44,7 +54,7 @@ function toAdminUser(row: AdminUserRow): AdminUser {
   return {
     id: row.id,
     username: row.username,
-    isAdmin: row.is_admin !== 0,
+    ...roleFields(isRole(row.role) ? row.role : 'user'),
     createdAt: row.created_at,
     disabledAt: row.disabled_at,
     lastSeenAt: row.last_seen_at,
@@ -54,7 +64,7 @@ function toAdminUser(row: AdminUserRow): AdminUser {
 function getAdminUser(db: Database, id: string): AdminUser | null {
   const row = db
     .prepare(
-      `SELECT users.id, users.username, users.is_admin, users.created_at, users.disabled_at,
+      `SELECT users.id, users.username, users.role, users.created_at, users.disabled_at,
               MAX(sessions.last_seen_at) AS last_seen_at
        FROM users LEFT JOIN sessions ON sessions.user_id = users.id
        WHERE users.id = ?
@@ -65,17 +75,18 @@ function getAdminUser(db: Database, id: string): AdminUser | null {
 }
 
 /**
- * True iff `userId` is an admin and the sole remaining *usable* one —
- * disabling/demoting/deleting them would leave the instance unrecoverable
- * through the UI. Counts only enabled admins (#318): otherwise disabling
- * admin A while admin B still exists is allowed (B isn't disabled), and then
- * disabling/demoting B later leaves the only *enabled* admin already
- * disabled, with no admin able to act and no in-UI recovery path.
+ * True iff `userId` is a super admin and the sole remaining *usable* one — demoting, disabling or
+ * deleting them would leave the instance unmanageable through the UI. Counts only enabled super
+ * admins (#318): otherwise disabling super admin A while B still exists is allowed (B isn't
+ * disabled), and then disabling/demoting B later leaves the only *enabled* one already disabled,
+ * with no one able to act and no in-UI recovery path.
  */
-function isOnlyRemainingAdmin(db: Database, userId: string): boolean {
-  const row = db.prepare('SELECT is_admin FROM users WHERE id = ?').get(userId) as { is_admin: number } | undefined;
-  if (!row || row.is_admin === 0) return false;
-  const count = db.prepare('SELECT COUNT(*) AS count FROM users WHERE is_admin = 1 AND disabled_at IS NULL').get() as {
+function isOnlyRemainingSuperAdmin(db: Database, userId: string): boolean {
+  const row = db.prepare('SELECT role FROM users WHERE id = ?').get(userId) as { role: string } | undefined;
+  if (row?.role !== 'super_admin') return false;
+  const count = db
+    .prepare("SELECT COUNT(*) AS count FROM users WHERE role = 'super_admin' AND disabled_at IS NULL")
+    .get() as {
     count: number;
   };
   return count.count <= 1;
@@ -98,7 +109,17 @@ function setPasswordUrl(token: string): string {
 
 interface CreateUserBody {
   readonly username?: unknown;
-  readonly isAdmin?: unknown;
+  readonly role?: unknown;
+}
+
+interface SetRoleBody {
+  readonly role?: unknown;
+}
+
+/** The caller, who `requireAdmin`/`requireSuperAdmin` has already resolved. */
+function actorId(request: FastifyRequest): string {
+  if (!request.user) throw new Error('a role preHandler did not run before this handler.');
+  return request.user.id;
 }
 
 export function registerAdminRoutes(app: FastifyInstance, db: Database): void {
@@ -108,7 +129,7 @@ export function registerAdminRoutes(app: FastifyInstance, db: Database): void {
     async (_request, reply) => {
       const rows = db
         .prepare(
-          `SELECT users.id, users.username, users.is_admin, users.created_at, users.disabled_at,
+          `SELECT users.id, users.username, users.role, users.created_at, users.disabled_at,
                   MAX(sessions.last_seen_at) AS last_seen_at
            FROM users LEFT JOIN sessions ON sessions.user_id = users.id
            GROUP BY users.id
@@ -121,30 +142,30 @@ export function registerAdminRoutes(app: FastifyInstance, db: Database): void {
 
   app.post<{ Body: CreateUserBody }>(
     '/api/admin/users',
-    { preHandler: requireAdmin(db), config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
+    { preHandler: requireSuperAdmin(db), config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
     async (request, reply) => {
       if (loadOidcConfig()) {
         return reply.code(409).send({ error: 'Local accounts cannot be created while OIDC is configured' });
       }
 
-      const { username, isAdmin } = request.body;
+      const { username, role } = request.body;
       if (typeof username !== 'string' || username === '') {
         return reply.code(400).send({ error: 'username is required' });
       }
       if (username.length > MAX_USERNAME_LENGTH) {
         return reply.code(400).send({ error: `username must be at most ${String(MAX_USERNAME_LENGTH)} characters` });
       }
-      if (isAdmin !== undefined && typeof isAdmin !== 'boolean') {
-        return reply.code(400).send({ error: 'isAdmin must be a boolean' });
+      if (role !== undefined && !isRole(role)) {
+        return reply.code(400).send({ error: `role must be one of ${ROLES.join(', ')}` });
       }
       if (getUserByUsername(db, username)) return reply.code(409).send({ error: 'Username already taken' });
 
       const id = randomUUID();
       const now = new Date().toISOString();
-      db.prepare('INSERT INTO users (id, username, password_hash, is_admin, created_at) VALUES (?, ?, NULL, ?, ?)').run(
+      db.prepare('INSERT INTO users (id, username, password_hash, role, created_at) VALUES (?, ?, NULL, ?, ?)').run(
         id,
         username,
-        isAdmin === true ? 1 : 0,
+        role ?? 'user',
         now,
       );
       const token = mintPasswordSetToken(db, id);
@@ -155,7 +176,7 @@ export function registerAdminRoutes(app: FastifyInstance, db: Database): void {
 
   app.post<{ Params: { id: string } }>(
     '/api/admin/users/:id/reset-password',
-    { preHandler: requireAdmin(db), config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
+    { preHandler: requireSuperAdmin(db), config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
     async (request, reply) => {
       const user = getAdminUser(db, request.params.id);
       if (!user) return reply.code(404).send({ error: 'No such user' });
@@ -166,12 +187,12 @@ export function registerAdminRoutes(app: FastifyInstance, db: Database): void {
 
   app.post<{ Params: { id: string } }>(
     '/api/admin/users/:id/disable',
-    { preHandler: requireAdmin(db), config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
+    { preHandler: requireSuperAdmin(db), config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
     async (request, reply) => {
       const user = getAdminUser(db, request.params.id);
       if (!user) return reply.code(404).send({ error: 'No such user' });
-      if (isOnlyRemainingAdmin(db, user.id)) {
-        return reply.code(409).send({ error: 'Cannot disable the only remaining admin' });
+      if (isOnlyRemainingSuperAdmin(db, user.id)) {
+        return reply.code(409).send({ error: 'Cannot disable the only remaining super admin' });
       }
       db.prepare('UPDATE users SET disabled_at = ? WHERE id = ?').run(new Date().toISOString(), user.id);
       revokeAllSessionsForUser(db, user.id);
@@ -181,7 +202,7 @@ export function registerAdminRoutes(app: FastifyInstance, db: Database): void {
 
   app.post<{ Params: { id: string } }>(
     '/api/admin/users/:id/enable',
-    { preHandler: requireAdmin(db), config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
+    { preHandler: requireSuperAdmin(db), config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
     async (request, reply) => {
       const user = getAdminUser(db, request.params.id);
       if (!user) return reply.code(404).send({ error: 'No such user' });
@@ -190,27 +211,23 @@ export function registerAdminRoutes(app: FastifyInstance, db: Database): void {
     },
   );
 
-  app.post<{ Params: { id: string } }>(
-    '/api/admin/users/:id/promote',
-    { preHandler: requireAdmin(db), config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
+  // One route for every role change (#431), replacing separate promote and demote routes: the
+  // target role is data, and the rules below are the same whichever way it moves.
+  app.post<{ Params: { id: string }; Body: SetRoleBody }>(
+    '/api/admin/users/:id/role',
+    { preHandler: requireSuperAdmin(db), config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
     async (request, reply) => {
+      const { role } = request.body;
+      if (!isRole(role)) return reply.code(400).send({ error: `role must be one of ${ROLES.join(', ')}` });
       const user = getAdminUser(db, request.params.id);
       if (!user) return reply.code(404).send({ error: 'No such user' });
-      db.prepare('UPDATE users SET is_admin = 1 WHERE id = ?').run(user.id);
-      return reply.send({ user: getAdminUser(db, user.id) });
-    },
-  );
-
-  app.post<{ Params: { id: string } }>(
-    '/api/admin/users/:id/demote',
-    { preHandler: requireAdmin(db), config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
-    async (request, reply) => {
-      const user = getAdminUser(db, request.params.id);
-      if (!user) return reply.code(404).send({ error: 'No such user' });
-      if (isOnlyRemainingAdmin(db, user.id)) {
-        return reply.code(409).send({ error: 'Cannot demote the only remaining admin' });
+      if (user.id === actorId(request)) {
+        return reply.code(409).send({ error: 'You cannot change your own role' });
       }
-      db.prepare('UPDATE users SET is_admin = 0 WHERE id = ?').run(user.id);
+      if (user.role === 'super_admin' && role !== 'super_admin' && isOnlyRemainingSuperAdmin(db, user.id)) {
+        return reply.code(409).send({ error: 'Cannot demote the only remaining super admin' });
+      }
+      db.prepare('UPDATE users SET role = ? WHERE id = ?').run(role, user.id);
       return reply.send({ user: getAdminUser(db, user.id) });
     },
   );
@@ -222,7 +239,7 @@ export function registerAdminRoutes(app: FastifyInstance, db: Database): void {
   // reachable that way at all.
   app.post<{ Params: { id: string } }>(
     '/api/admin/users/:id/deletion-impact',
-    { preHandler: requireAdmin(db), config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
+    { preHandler: requireSuperAdmin(db), config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
     async (request, reply) => {
       const user = getAdminUser(db, request.params.id);
       if (!user) return reply.code(404).send({ error: 'No such user' });
@@ -233,12 +250,12 @@ export function registerAdminRoutes(app: FastifyInstance, db: Database): void {
 
   app.delete<{ Params: { id: string } }>(
     '/api/admin/users/:id',
-    { preHandler: requireAdmin(db), config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
+    { preHandler: requireSuperAdmin(db), config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
     async (request, reply) => {
       const user = getAdminUser(db, request.params.id);
       if (!user) return reply.code(404).send({ error: 'No such user' });
-      if (isOnlyRemainingAdmin(db, user.id)) {
-        return reply.code(409).send({ error: 'Cannot delete the only remaining admin' });
+      if (isOnlyRemainingSuperAdmin(db, user.id)) {
+        return reply.code(409).send({ error: 'Cannot delete the only remaining super admin' });
       }
       // ON DELETE CASCADE on both sessions.user_id and ops.user_id takes care of the rest.
       db.prepare('DELETE FROM users WHERE id = ?').run(user.id);

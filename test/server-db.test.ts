@@ -38,7 +38,7 @@ describe('server/db.ts', () => {
   it('sets PRAGMA user_version to the number of migrations applied', () => {
     const db = openDatabase(':memory:');
     const row = db.prepare('PRAGMA user_version').get() as unknown as { user_version: number };
-    expect(row.user_version).toBe(13);
+    expect(row.user_version).toBe(14);
     db.close();
   });
 
@@ -56,7 +56,7 @@ describe('server/db.ts', () => {
       const second = openDatabase(path);
       expect(schemaOf(second)).toEqual(before);
       const row = second.prepare('PRAGMA user_version').get() as unknown as { user_version: number };
-      expect(row.user_version).toBe(13);
+      expect(row.user_version).toBe(14);
       second.close();
     } finally {
       rmSync(dir, { recursive: true, force: true });
@@ -143,7 +143,7 @@ describe('server/db.ts', () => {
 
       const db = openDatabase(path);
       const row = db.prepare('PRAGMA user_version').get() as unknown as { user_version: number };
-      expect(row.user_version).toBe(13);
+      expect(row.user_version).toBe(14);
 
       // The pre-existing row survived the users rebuild intact.
       const legacyUser = db.prepare('SELECT * FROM users WHERE id = ?').get('legacy-user') as
@@ -323,6 +323,8 @@ describe('server/db.ts', () => {
       const first = openDatabase(path);
       first.exec(`
         INSERT INTO users (id, username, password_hash, created_at) VALUES ('u', 'u', 'h', 'now');
+        ALTER TABLE users DROP COLUMN role;
+        ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0;
         DROP INDEX corpus_overrides_identity;
         ALTER TABLE corpus_overrides ADD COLUMN persona TEXT NOT NULL DEFAULT '';
         CREATE UNIQUE INDEX corpus_overrides_identity ON corpus_overrides(key, locale, persona);
@@ -356,6 +358,41 @@ describe('server/db.ts', () => {
           )
           .run(),
       ).toThrow(/UNIQUE/);
+      db.close();
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('migration 14 turns every existing admin into a super admin, keeps users as users, and drops is_admin (#431)', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'astraya-db-test-'));
+    const path = join(dir, 'astraya.db');
+    try {
+      // Put a current database back into its version-13 shape: the is_admin flag, no role column.
+      const first = openDatabase(path);
+      first.exec(`
+        ALTER TABLE users DROP COLUMN role;
+        ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0;
+        INSERT INTO users (id, username, password_hash, is_admin, created_at)
+          VALUES ('a', 'owner', 'h', 1, 'now'), ('b', 'second-admin', 'h', 1, 'now'), ('c', 'member', 'h', 0, 'now');
+        PRAGMA user_version = 13;
+      `);
+      first.close();
+
+      const db = openDatabase(path);
+      const roles = db.prepare('SELECT username, role FROM users ORDER BY username').all();
+      expect(roles).toEqual([
+        { username: 'member', role: 'user' },
+        { username: 'owner', role: 'super_admin' },
+        { username: 'second-admin', role: 'super_admin' },
+      ]);
+      const columns = (db.prepare('PRAGMA table_info(users)').all() as unknown as { name: string }[]).map(
+        (column) => column.name,
+      );
+      expect(columns).toContain('role');
+      expect(columns).not.toContain('is_admin');
+      // The CHECK keeps a typo from creating a fourth, unranked role.
+      expect(() => db.prepare("UPDATE users SET role = 'root' WHERE username = 'member'").run()).toThrow(/CHECK/);
       db.close();
     } finally {
       rmSync(dir, { recursive: true, force: true });

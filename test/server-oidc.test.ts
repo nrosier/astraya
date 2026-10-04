@@ -47,6 +47,7 @@ afterEach(async () => {
   delete process.env.ASTRAYA_OIDC_CLIENT_ID;
   delete process.env.ASTRAYA_PUBLIC_URL;
   delete process.env.ASTRAYA_OIDC_ADMIN_GROUPS;
+  delete process.env.ASTRAYA_OIDC_SUPER_ADMIN_GROUPS;
   delete process.env.ASTRAYA_OIDC_ADMIN_GROUP_CLAIM;
   rmSync(dir, { recursive: true, force: true });
 });
@@ -364,6 +365,56 @@ describe('POST /api/auth/oidc/callback', () => {
     fakeAuthentik.registerCode('code-admin-5b', { idToken: second });
     const secondResponse = await callback({ code: 'code-admin-5b', codeVerifier: 'v', nonce: 'n2' });
     expect(secondResponse.json<{ user: { isAdmin: boolean } }>().user.isAdmin).toBe(true);
+  });
+
+  describe('group membership maps to either role (#431)', () => {
+    const signIn = async (sub: string, username: string, groups: string[]) => {
+      const idToken = await fakeAuthentik.mintIdToken({ sub, nonce: 'n', preferred_username: username, groups });
+      fakeAuthentik.registerCode(`code-${sub}`, { idToken });
+      const response = await callback({ code: `code-${sub}`, codeVerifier: 'v', nonce: 'n' });
+      return response.json<{ user: { role: string; isAdmin: boolean; isSuperAdmin: boolean } }>().user;
+    };
+
+    it('an admin group makes an admin, not a super admin', async () => {
+      process.env.ASTRAYA_OIDC_ADMIN_GROUPS = 'astraya-admins';
+      process.env.ASTRAYA_OIDC_SUPER_ADMIN_GROUPS = 'astraya-owners';
+      expect(await signIn('role-1', 'aaron', ['astraya-admins'])).toMatchObject({
+        role: 'admin',
+        isAdmin: true,
+        isSuperAdmin: false,
+      });
+    });
+
+    it('a super admin group makes a super admin', async () => {
+      process.env.ASTRAYA_OIDC_ADMIN_GROUPS = 'astraya-admins';
+      process.env.ASTRAYA_OIDC_SUPER_ADMIN_GROUPS = 'astraya-owners';
+      expect(await signIn('role-2', 'bella', ['astraya-owners'])).toMatchObject({
+        role: 'super_admin',
+        isSuperAdmin: true,
+      });
+    });
+
+    it('belonging to both gives the higher role', async () => {
+      process.env.ASTRAYA_OIDC_ADMIN_GROUPS = 'astraya-admins';
+      process.env.ASTRAYA_OIDC_SUPER_ADMIN_GROUPS = 'astraya-owners';
+      expect((await signIn('role-3', 'carl', ['astraya-admins', 'astraya-owners'])).role).toBe('super_admin');
+    });
+
+    it('works with only the super admin variable set', async () => {
+      process.env.ASTRAYA_OIDC_SUPER_ADMIN_GROUPS = 'astraya-owners';
+      expect((await signIn('role-4', 'dana', ['astraya-owners'])).role).toBe('super_admin');
+      expect((await signIn('role-5', 'eli', ['everyone'])).role).toBe('user');
+    });
+
+    it('promotes a later sign-in from admin to super admin, and never lowers a role', async () => {
+      process.env.ASTRAYA_OIDC_ADMIN_GROUPS = 'astraya-admins';
+      process.env.ASTRAYA_OIDC_SUPER_ADMIN_GROUPS = 'astraya-owners';
+      expect((await signIn('role-6', 'fay', ['astraya-admins'])).role).toBe('admin');
+      expect((await signIn('role-6', 'fay', ['astraya-owners'])).role).toBe('super_admin');
+      // The IdP group later says only "admin": a match for a lower role never lowers a higher one.
+      expect((await signIn('role-6', 'fay', ['astraya-admins'])).role).toBe('super_admin');
+      expect((await signIn('role-6', 'fay', ['everyone'])).role).toBe('super_admin');
+    });
   });
 
   it('returns 404 when OIDC is not configured', async () => {

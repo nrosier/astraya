@@ -305,6 +305,17 @@ const MIGRATIONS: readonly ((db: DatabaseSync) => void)[] = [
       ALTER TABLE corpus_candidates DROP COLUMN persona;
       CREATE UNIQUE INDEX corpus_candidates_identity ON corpus_candidates(key, locale, source);
     `);
+  }, // 14: two levels of administrator (#431). `users.is_admin` becomes `users.role` ('user', 'admin' or
+  // 'super_admin'): every existing admin becomes a super admin, so nobody loses anything on upgrade
+  // (the owner can demote others afterwards). The CHECK keeps a typo from creating a fourth, unranked
+  // role. `is_admin` is dropped rather than kept beside `role`, so there is one source of truth; it
+  // has no index or constraint, which is what lets SQLite drop it in place.
+  (db) => {
+    db.exec(`
+      ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'admin', 'super_admin'));
+      UPDATE users SET role = 'super_admin' WHERE is_admin = 1;
+      ALTER TABLE users DROP COLUMN is_admin;
+    `);
   },
 ];
 

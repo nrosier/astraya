@@ -6,16 +6,19 @@ const en = {
 
   oidcHint:
     'Local accounts cannot be created while sign-in through Authentik is configured — new accounts are provisioned there instead.',
-  adminCheckboxLabel: 'Admin',
+  createRoleLabel: 'Role',
   createUserButton: 'Create user',
 
+  superAdminRoleLabel: 'Super admin',
   adminRoleLabel: 'Admin',
   memberRoleLabel: 'Member',
+  roleSelectLabel: (username: string) => `Role of ${username}`,
+  roleOptionHint: 'An admin can use every admin screen except managing accounts; a super admin can do everything.',
+  readOnlyUsersHint:
+    'You can see the accounts and their roles. Creating, changing and removing accounts is for super admins.',
   neverSeen: 'never',
   disableButton: 'Disable',
   enableButton: 'Enable',
-  demoteButton: 'Demote',
-  promoteButton: 'Promote',
   resetPasswordButton: 'Reset password',
   deleteButton: 'Delete',
   copyLinkNow: 'One-time link, shown once — copy it now:',
@@ -60,16 +63,20 @@ const nl: typeof en = {
 
   oidcHint:
     'Lokale accounts kunnen niet worden aangemaakt terwijl inloggen via Authentik is geconfigureerd — nieuwe accounts worden daar aangemaakt.',
-  adminCheckboxLabel: 'Beheerder',
+  createRoleLabel: 'Rol',
   createUserButton: 'Gebruiker aanmaken',
 
+  superAdminRoleLabel: 'Hoofdbeheerder',
   adminRoleLabel: 'Beheerder',
   memberRoleLabel: 'Lid',
+  roleSelectLabel: (username) => `Rol van ${username}`,
+  roleOptionHint:
+    'Een beheerder kan alle beheerschermen gebruiken behalve accountbeheer; een hoofdbeheerder kan alles.',
+  readOnlyUsersHint:
+    'Je kunt de accounts en hun rollen zien. Accounts aanmaken, wijzigen en verwijderen is voor hoofdbeheerders.',
   neverSeen: 'nooit',
   disableButton: 'Uitschakelen',
   enableButton: 'Inschakelen',
-  demoteButton: 'Degraderen',
-  promoteButton: 'Promoveren',
   resetPasswordButton: 'Wachtwoord opnieuw instellen',
   deleteButton: 'Verwijderen',
   copyLinkNow: 'Eenmalige link, één keer getoond — kopieer hem nu:',

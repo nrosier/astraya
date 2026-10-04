@@ -77,7 +77,7 @@ async function createAndLoginUser(target: FastifyInstance, username: string, pas
   const passwordHash = await hashPassword(password);
   const raw = new DatabaseSync(dbPath);
   raw
-    .prepare('INSERT INTO users (id, username, password_hash, is_admin, created_at) VALUES (?, ?, ?, 0, ?)')
+    .prepare("INSERT INTO users (id, username, password_hash, role, created_at) VALUES (?, ?, ?, 'user', ?)")
     .run(randomUUID(), username, passwordHash, new Date().toISOString());
   raw.close();
 
