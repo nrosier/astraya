@@ -154,7 +154,11 @@ export function ReturnView({
     };
   }, [momentKey(person?.moment), provider, solar, yearNumber, fromJdParts, place, placeInvalid, inputValid, rulership]);
 
-  const label = solar ? t.solarLabel(year) : t.lunarLabel;
+  const baseLabel = solar ? t.solarLabel(year) : t.lunarLabel;
+  const label =
+    place === undefined
+      ? baseLabel
+      : `${baseLabel}, ${t.castFor(`${String(place.latitude)}, ${String(place.longitude)}`)}`;
   // Memoised: a new array each render (a change of section re-renders this screen) would redraw the wheel and drop a selection.
   const metaLines = useMemo(() => [label], [label]);
   const contacts = useMemo(() => (load.kind === 'ready' ? crossAspectRows(load.result.contacts) : []), [load]);
@@ -288,6 +292,7 @@ export function ReturnView({
       </fieldset>
 
       {load.kind === 'ready' && <p className="status">{t.returnMoment(formatUtc(load.result.returnJd))}</p>}
+      <p className="hint">{t.conventions}</p>
       {load.kind === 'loading' && <p className="status">{t.calculating}</p>}
 
       {load.kind !== 'idle' && (

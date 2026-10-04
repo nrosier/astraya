@@ -1,6 +1,6 @@
 /** Return charts (the Charts page), against the real Swiss Ephemeris. */
 import { beforeAll, describe, expect, it } from 'vitest';
-import { bodyByKey } from '../src/astrology/bodies.js';
+import { bodyById, bodyByKey } from '../src/astrology/bodies.js';
 import { computeLunarReturnChart, computeSolarReturnChart } from '../src/domain/return-chart.js';
 import type { EphemerisProvider } from '../src/ephemeris/types.js';
 import { julianDayFor } from '../src/time/julian.js';
@@ -38,6 +38,14 @@ describe('computeSolarReturnChart', () => {
     expect(result.chart.houses.ascendant).toBeGreaterThanOrEqual(0);
     expect(result.chart.dignities.size).toBeGreaterThan(0);
     expect(result.contacts.length).toBeGreaterThan(0);
+    // The contacts follow the chart: one Lilith model, one node model, and none of Chiron, Lilith or the Nodes unasked.
+    const kept = new Set(result.chart.positions.map((p) => p.body));
+    for (const contact of result.contacts) {
+      expect(kept.has(contact.bodyA) && kept.has(contact.bodyB)).toBe(true);
+      for (const body of [contact.bodyA, contact.bodyB]) {
+        expect(['lilith', 'node', 'centaur']).not.toContain(bodyById(body)?.category);
+      }
+    }
     expect(result.place.latitude).toBeCloseTo(38.7478, 4);
   }, 60_000);
 
