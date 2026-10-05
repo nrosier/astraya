@@ -144,6 +144,33 @@ describe('assembleReport (#61)', () => {
     expect(nl.sections.every((s) => s.title.trim() !== '')).toBe(true);
   });
 
+  it('prepends a composite-intro section only when chartKind is composite (#450)', () => {
+    const chart = makeFullChart();
+    const natal = assembleReport(chart, 'en', [], undefined, 'natal');
+    const composite = assembleReport(chart, 'en', [], undefined, 'composite');
+    expect(natal.sections.map((s) => s.id)).not.toContain('composite-intro');
+    expect(composite.sections.map((s) => s.id)[0]).toBe('composite-intro');
+    // Every other section is still exactly the same — composite only adds, never replaces.
+    expect(composite.sections.slice(1)).toEqual(natal.sections);
+  });
+
+  it('explains what a composite chart is, in the requested locale, as a derived paragraph with no placement', () => {
+    const chart = makeFullChart();
+    const wordByLocale: Record<Locale, string> = { en: 'composite', nl: 'composiet' };
+    for (const locale of LOCALES) {
+      const [intro] = assembleReport(chart, locale, [], undefined, 'composite').sections;
+      expect(intro?.id).toBe('composite-intro');
+      expect(intro?.paragraphs).toHaveLength(1);
+      expect(intro?.paragraphs[0]?.source).toEqual({ kind: 'derived' });
+      expect(intro?.paragraphs[0]?.placement).toBeUndefined();
+      expect(intro?.paragraphs[0]?.text.toLowerCase()).toContain(wordByLocale[locale]);
+    }
+    // en and nl genuinely differ, same expectation every other locale-templated section has.
+    const en = assembleReport(chart, 'en', [], undefined, 'composite').sections[0]?.paragraphs[0]?.text;
+    const nl = assembleReport(chart, 'nl', [], undefined, 'composite').sections[0]?.paragraphs[0]?.text;
+    expect(en).not.toBe(nl);
+  });
+
   it('never produces an empty paragraph, in either locale, with no corpus at all', () => {
     const chart = makeFullChart();
     for (const locale of LOCALES) {

@@ -69,7 +69,14 @@ import { derivePlacements, rankPlacements, type SalienceFactor } from './rules.j
 import { dignityState, placementKey, type CorpusEntry, type CorpusPlacement, type Locale } from './schema.js';
 
 export type ReportSectionId =
-  'core-identity' | 'temperament' | 'chart-ruler' | 'houses' | 'aspect-patterns' | 'dignities-sect' | 'nodes-chiron';
+  | 'composite-intro'
+  | 'core-identity'
+  | 'temperament'
+  | 'chart-ruler'
+  | 'houses'
+  | 'aspect-patterns'
+  | 'dignities-sect'
+  | 'nodes-chiron';
 
 /**
  * Where a paragraph's text came from. `'corpus'` carries the matching entry
@@ -106,6 +113,7 @@ export interface Report {
 }
 
 const SECTION_TITLES: Readonly<Record<ReportSectionId, Readonly<Record<Locale, string>>>> = {
+  'composite-intro': { en: 'About this chart', nl: 'Over deze horoscoop' },
   'core-identity': { en: 'Core identity: Sun, Moon, Ascendant', nl: 'Kernidentiteit: Zon, Maan, Ascendant' },
   temperament: { en: 'Temperament and elemental balance', nl: 'Temperament en elementenbalans' },
   'chart-ruler': { en: 'Chart ruler and dispositor chain', nl: 'Horoscoopheerser en dispositorketen' },
@@ -145,6 +153,22 @@ function resolveParagraph(
   const text = entry !== undefined ? entry.text : composeFallbackText(placement, locale);
   const source: ParagraphSource = entry !== undefined ? { kind: 'corpus', entry } : { kind: 'fallback' };
   return { text, placement, source, factors };
+}
+
+/**
+ * The one framing paragraph a composite chart's report gets that a natal chart's never does
+ * (#450): every other section below reads a composite's placements through the exact same
+ * corpus categories a natal chart uses (`planet-in-sign`, `aspect-pair`, etc. — composite has
+ * no dedicated category of its own yet, see #451), so without this paragraph the report reads
+ * as a natal account of a fictional third person instead of saying what it actually is.
+ */
+const COMPOSITE_INTRO_TEXT: Readonly<Record<Locale, string>> = {
+  en: "This is a composite chart: a single synthetic chart derived from the midpoints of two people's own charts, describing their relationship or combination as its own entity. The placements below describe that combination, not either person individually.",
+  nl: 'Dit is een composietkaart: één synthetische horoscoop afgeleid van de middelpunten van de horoscopen van twee personen, die hun relatie of combinatie als een eigen geheel beschrijft. De plaatsingen hieronder beschrijven die combinatie, niet een van beide personen afzonderlijk.',
+};
+
+function compositeIntroSection(locale: Locale): ReportSection {
+  return section('composite-intro', locale, [derivedParagraph(COMPOSITE_INTRO_TEXT[locale])]);
 }
 
 /** A paragraph synthesized directly from chart data, with no corpus placement of its own. */
@@ -414,9 +438,18 @@ export function assembleReport(
   locale: Locale,
   corpus: readonly CorpusEntry[],
   rulership: RulershipChoice = DEFAULT_RULERSHIP_CHOICE,
+  /**
+   * What kind of chart `chart` is (#450); defaults to `'natal'`, which every caller except
+   * `CompositeView.tsx` (via `ReportView.tsx`) is. `'composite'` prepends a framing paragraph —
+   * every other section still reads a composite's placements through the same corpus categories
+   * a natal chart uses, so without it the report would otherwise say nothing distinguishing it
+   * from a natal account of a fictional third person.
+   */
+  chartKind: 'natal' | 'composite' = 'natal',
 ): Report {
   return {
     sections: [
+      ...(chartKind === 'composite' ? [compositeIntroSection(locale)] : []),
       coreIdentitySection(chart, locale, corpus),
       temperamentSection(chart, locale),
       chartRulerSection(chart, locale, corpus, rulership),
