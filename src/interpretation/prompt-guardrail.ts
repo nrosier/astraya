@@ -29,7 +29,8 @@ export type GuardrailRule =
   | 'medical-legal-financial-claim'
   | 'pii-shape'
   | 'off-topic'
-  | 'fabrication-request';
+  | 'fabrication-request'
+  | 'relationship-verdict';
 
 export interface GuardrailIssue {
   readonly rule: GuardrailRule;
@@ -186,6 +187,42 @@ const FABRICATION_PHRASES = [
   'het hoeft niet accuraat te zijn',
 ];
 
+/**
+ * #422's relationship mode describes compatibility, strengths, weaknesses, caveats and
+ * dynamic — not a verdict on the relationship's outcome or worth, romantic or otherwise.
+ * Checked for every mode, not only `relationship`: asking a natal or freeform reading to
+ * judge a relationship this way makes no more sense there, so there is no reason to scope
+ * this check to one mode only.
+ */
+const RELATIONSHIP_VERDICT_PHRASES = [
+  'should we stay together',
+  'should they stay together',
+  'should we break up',
+  'should they break up',
+  'are we compatible',
+  'are they compatible',
+  'is this relationship worth',
+  'will this relationship last',
+  'will we last',
+  'will they last',
+  'are they in love',
+  'are we in love',
+  'is she in love',
+  'is he in love',
+  'tell me if we should',
+  'tell me if they should',
+  // Dutch
+  'moeten we samen blijven',
+  'moeten ze samen blijven',
+  'moeten we uit elkaar',
+  'moeten ze uit elkaar',
+  'zijn we compatibel',
+  'zijn ze compatibel',
+  'is deze relatie het waard',
+  'houden ze van elkaar',
+  'houden we van elkaar',
+];
+
 // Best-effort, not structural — unlike a placement key (shape-constrained by construction),
 // free text can't be made structurally incapable of carrying a birth date or coordinate. This
 // catches the shapes that matter (a date, a lat/long pair) without pretending to catch a plain
@@ -245,6 +282,13 @@ export function checkCustomPrompt(text: string): GuardrailIssue[] {
     issues.push({
       rule: 'fabrication-request',
       message: 'Asks the model to invent or ignore facts rather than restyle the real chart.',
+    });
+  }
+
+  if (RELATIONSHIP_VERDICT_PHRASES.some((phrase) => lower.includes(phrase))) {
+    issues.push({
+      rule: 'relationship-verdict',
+      message: 'Asks for a verdict about the relationship, not an observation about its dynamic.',
     });
   }
 

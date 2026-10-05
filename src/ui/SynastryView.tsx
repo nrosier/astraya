@@ -34,6 +34,7 @@ import { useMessages } from './messages.js';
 import { ordered } from './people-list.js';
 import { momentKey } from '../time/encode.js';
 import { PersonNotFound } from './PersonNotFound.js';
+import { RelationshipSummary } from './RelationshipSummary.js';
 import { SortableTable } from './SortableTable.js';
 import { useStoreState } from './store-context.js';
 import { synastryViewMessages } from './SynastryView.messages.js';
@@ -303,6 +304,13 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
               onClear={clearIsolation}
             />
           )}
+
+          <RelationshipSummary
+            data={load.data}
+            nameA={nameA || t.personALabel}
+            nameB={nameB || t.personBLabel}
+            locale={locale}
+          />
 
           <p className="hint">{t.rankingHint}</p>
 

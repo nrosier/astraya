@@ -37,6 +37,8 @@ const en = {
     'This is about files, systems, or access, not the interpretation — describe style, tone, and focus only.',
   guardrailIssueFabricationRequest:
     'This asks the model to invent or ignore facts rather than restyle the real chart — not allowed.',
+  guardrailIssueRelationshipVerdict:
+    'This asks for a verdict about a relationship rather than an observation about its dynamic — not allowed.',
   tier2Generate: 'Generate',
   tier2Generating: 'Generating…',
   tier2GenerateDisabledConsent: 'check the consent box first',
@@ -89,6 +91,8 @@ const nl: typeof en = {
     'Dit gaat over bestanden, systemen of toegang, niet over de interpretatie — beschrijf alleen stijl, toon en focus.',
   guardrailIssueFabricationRequest:
     'Dit vraagt het model om feiten te verzinnen of te negeren in plaats van de echte horoscoop anders te verwoorden — niet toegestaan.',
+  guardrailIssueRelationshipVerdict:
+    'Dit vraagt om een oordeel over een relatie in plaats van een observatie over de dynamiek ervan — niet toegestaan.',
   tier2Generate: 'Genereren',
   tier2Generating: 'Genereren…',
   tier2GenerateDisabledConsent: 'vink eerst het toestemmingsvakje aan',

@@ -713,10 +713,185 @@ describe('POST /api/interpretation/generate', () => {
       expect(savedModes()).toEqual(['freeform', 'freeform', 'grounded']);
     });
 
-    it('rejects an unknown mode, and says which two exist', async () => {
+    it('rejects an unknown mode, and says which exist', async () => {
       const response = await generateWith({ mode: 'oracle', chartData: VALID_CHART_DATA, locale: 'en' });
       expect(response.statusCode).toBe(400);
-      expect(response.json()).toEqual({ error: "mode must be 'grounded', 'freeform' or 'focus'" });
+      expect(response.json()).toEqual({ error: "mode must be 'grounded', 'freeform', 'focus' or 'relationship'" });
+    });
+  });
+
+  describe('relationship mode (#422)', () => {
+    let cookie: string | undefined;
+    beforeEach(() => {
+      cookie = undefined;
+    });
+    async function generateWith(payload: Record<string, unknown>) {
+      cookie ??= await signIn(app);
+      return app.inject({
+        method: 'POST',
+        url: '/api/interpretation/generate',
+        cookies: { [SESSION_COOKIE]: cookie },
+        payload,
+      });
+    }
+
+    function generationPrompt(): { system: string; user: string } {
+      const call = fetchMock.mock.calls.find(([, init]) => !isVerificationCall(init as RequestInit | undefined));
+      const sent = JSON.parse((call?.[1] as RequestInit).body as string) as {
+        systemInstruction?: { parts: { text: string }[] };
+        contents: { parts: { text: string }[] }[];
+      };
+      return { system: sent.systemInstruction?.parts[0]?.text ?? '', user: sent.contents[0]?.parts[0]?.text ?? '' };
+    }
+
+    const VALID_RELATIONSHIP_DATA = {
+      chartA: { positions: VALID_CHART_DATA.positions, houses: VALID_CHART_DATA.houses },
+      chartB: { positions: VALID_CHART_DATA.positions, houses: VALID_CHART_DATA.houses },
+      crossAspects: [{ bodyA: SUN_ID, bodyB: MOON_ID, aspectKey: 'trine', separation: 119, orb: 1 }],
+      houseOverlays: [{ body: SUN_ID, house: 7, direction: 'a-in-b' as const }],
+    };
+
+    it('generates a reading from both charts, the cross-aspects, and the house overlays', async () => {
+      const response = await generateWith({
+        mode: 'relationship',
+        relationshipData: VALID_RELATIONSHIP_DATA,
+        locale: 'en',
+      });
+      expect(response.statusCode).toBe(200);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      const { user } = generationPrompt();
+      expect(user).toContain("Person A's Sun");
+      expect(user).toContain("Person B's");
+      expect(user).toContain('falls in');
+    });
+
+    it('describes compatibility, strengths, weaknesses, caveats and dynamic — never a verdict (#422 decision 4)', async () => {
+      await generateWith({ mode: 'relationship', relationshipData: VALID_RELATIONSHIP_DATA, locale: 'en' });
+      const { system } = generationPrompt();
+      expect(system).toContain('compatibility, strengths, weaknesses, caveats');
+      expect(system).toContain('not a verdict on it');
+      expect(system).toContain('whether the people are');
+      expect(system).toContain('symmetrically');
+    });
+
+    it('rejects relationshipData missing a required field with 400', async () => {
+      const response = await generateWith({
+        mode: 'relationship',
+        relationshipData: { ...VALID_RELATIONSHIP_DATA, chartB: undefined },
+        locale: 'en',
+      });
+      expect(response.statusCode).toBe(400);
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it('rejects a cross-aspect naming an unknown body or aspect with 400', async () => {
+      const response = await generateWith({
+        mode: 'relationship',
+        relationshipData: {
+          ...VALID_RELATIONSHIP_DATA,
+          crossAspects: [{ bodyA: -999, bodyB: MOON_ID, aspectKey: 'trine', separation: 119, orb: 1 }],
+        },
+        locale: 'en',
+      });
+      expect(response.statusCode).toBe(400);
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it('rejects a house overlay with an out-of-range house or unknown direction with 400', async () => {
+      const badHouse = await generateWith({
+        mode: 'relationship',
+        relationshipData: {
+          ...VALID_RELATIONSHIP_DATA,
+          houseOverlays: [{ body: SUN_ID, house: 13, direction: 'a-in-b' }],
+        },
+        locale: 'en',
+      });
+      expect(badHouse.statusCode).toBe(400);
+
+      const badDirection = await generateWith({
+        mode: 'relationship',
+        relationshipData: {
+          ...VALID_RELATIONSHIP_DATA,
+          houseOverlays: [{ body: SUN_ID, house: 7, direction: 'sideways' }],
+        },
+        locale: 'en',
+      });
+      expect(badDirection.statusCode).toBe(400);
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it('still checks and verifies a custom instruction when one is given, same as freeform', async () => {
+      const response = await generateWith({
+        mode: 'relationship',
+        relationshipData: VALID_RELATIONSHIP_DATA,
+        locale: 'en',
+        customPrompt: 'warm, short, focused on shared humour',
+      });
+      expect(response.statusCode).toBe(200);
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(generationPrompt().user).toContain('warm, short, focused on shared humour');
+    });
+
+    it('rejects a custom instruction asking for a relationship verdict, with 422', async () => {
+      const response = await generateWith({
+        mode: 'relationship',
+        relationshipData: VALID_RELATIONSHIP_DATA,
+        locale: 'en',
+        customPrompt: 'Tell me if we should stay together.',
+      });
+      expect(response.statusCode).toBe(400);
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it('records the relationship basis on the saved result, with no body/side named (#423)', async () => {
+      await generateWith({ mode: 'relationship', relationshipData: VALID_RELATIONSHIP_DATA, locale: 'en' });
+      const raw = new DatabaseSync(dbPath);
+      const rows = raw.prepare('SELECT mode, basis_json FROM interpretation_results ORDER BY created_at').all() as {
+        mode: string;
+        basis_json: string | null;
+      }[];
+      raw.close();
+      expect(rows).toHaveLength(1);
+      expect(rows[0]?.mode).toBe('relationship');
+      expect(JSON.parse(rows[0]?.basis_json ?? '{}')).toEqual({ kind: 'relationship' });
+    });
+  });
+
+  describe('composite freeform readings share the relationship-framing bans (#422 decision 2)', () => {
+    let cookie: string | undefined;
+    beforeEach(() => {
+      cookie = undefined;
+    });
+    async function generateWith(payload: Record<string, unknown>) {
+      cookie ??= await signIn(app);
+      return app.inject({
+        method: 'POST',
+        url: '/api/interpretation/generate',
+        cookies: { [SESSION_COOKIE]: cookie },
+        payload,
+      });
+    }
+    function generationPrompt(): { system: string; user: string } {
+      const call = fetchMock.mock.calls.find(([, init]) => !isVerificationCall(init as RequestInit | undefined));
+      const sent = JSON.parse((call?.[1] as RequestInit).body as string) as {
+        systemInstruction?: { parts: { text: string }[] };
+        contents: { parts: { text: string }[] }[];
+      };
+      return { system: sent.systemInstruction?.parts[0]?.text ?? '', user: sent.contents[0]?.parts[0]?.text ?? '' };
+    }
+
+    it('tells a composite reading the same compatibility/no-verdict/fairness rules a relationship reading gets', async () => {
+      await generateWith({ mode: 'freeform', chartData: VALID_CHART_DATA, locale: 'en', chartKind: 'composite' });
+      const { user } = generationPrompt();
+      expect(user).toContain('compatibility, strengths, weaknesses, caveats');
+      expect(user).toContain('not a verdict on it');
+      expect(user).toContain('symmetrically');
+    });
+
+    it('does not add the relationship-framing bans to an ordinary natal freeform reading', async () => {
+      await generateWith({ mode: 'freeform', chartData: VALID_CHART_DATA, locale: 'en' });
+      const { user } = generationPrompt();
+      expect(user).not.toContain('compatibility, strengths, weaknesses, caveats');
     });
   });
 

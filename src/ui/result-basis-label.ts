@@ -19,6 +19,7 @@ interface Wording {
   /** The kind, as the lead of an entry: "AI interpretation" / "Local interpretation". */
   readonly kinds: Readonly<Record<ResultKind, string>>;
   readonly entireChart: string;
+  readonly bothCharts: string;
   readonly notRecorded: string;
   readonly natal: string;
   readonly transit: string;
@@ -28,8 +29,14 @@ interface Wording {
 
 const WORDING: Readonly<Record<Locale, Wording>> = {
   en: {
-    kinds: { placements: 'Local interpretation', 'whole-chart': 'AI interpretation', focus: 'AI interpretation' },
+    kinds: {
+      placements: 'Local interpretation',
+      'whole-chart': 'AI interpretation',
+      focus: 'AI interpretation',
+      relationship: 'AI pairing reading',
+    },
     entireChart: 'the entire chart',
+    bothCharts: 'both charts',
     notRecorded: 'basis not recorded',
     natal: 'natal',
     transit: 'transit',
@@ -41,8 +48,10 @@ const WORDING: Readonly<Record<Locale, Wording>> = {
       placements: 'Lokale interpretatie',
       'whole-chart': 'AI-interpretatie',
       focus: 'AI-interpretatie',
+      relationship: 'AI-relatieduiding',
     },
     entireChart: 'de hele horoscoop',
+    bothCharts: 'beide horoscopen',
     notRecorded: 'grondslag niet vastgelegd',
     natal: 'geboortehoroscoop',
     transit: 'transit',
@@ -59,6 +68,8 @@ export function basisLabel(basis: ResultBasis, locale: Locale): string {
       return words.entireChart;
     case 'focus':
       return `${bodyDisplayName(basis.body, locale)} (${basis.perspective === 'transit' ? words.transit : words.natal})`;
+    case 'relationship':
+      return words.bothCharts;
     case 'placements': {
       const named = basis.keys.slice(0, MAX_NAMED_PLACEMENTS).map((key) => labelForKey(key, locale));
       const rest = basis.keys.length - named.length;

@@ -29,7 +29,9 @@
  * `locale` is sent alongside either payload so the server responds in the
  * language the report is already showing.
  */
+import { bodyByKey } from '../astrology/bodies.js';
 import type { ChartData } from '../domain/chart-compute.js';
+import type { SynastryData } from '../domain/synastry.js';
 import type { FocusContext } from './focus-context-schema.js';
 import type { ResultBasis, ResultKind } from './result-basis.js';
 import type { Locale } from './schema.js';
@@ -110,6 +112,60 @@ export function toTier2ChartPayload(chart: ChartData): Tier2ChartDataPayload {
   };
 }
 
+/** One side of `Tier2RelationshipDataPayload` — `Tier2ChartDataPayload` without the `aspects`, which the relationship payload carries once, cross-chart, instead of per side. */
+export interface Tier2PositionsHousesPayload {
+  readonly positions: readonly { readonly body: number; readonly longitude: number }[];
+  readonly houses: { readonly cusps: readonly number[]; readonly ascendant: number; readonly midheaven: number };
+}
+
+/** Hand-mirrors `server/interpretation-routes.ts`'s `relationshipData` validation shape (#422). */
+export interface Tier2RelationshipDataPayload {
+  readonly chartA: Tier2PositionsHousesPayload;
+  readonly chartB: Tier2PositionsHousesPayload;
+  readonly crossAspects: readonly {
+    readonly bodyA: number;
+    readonly bodyB: number;
+    readonly aspectKey: string;
+    readonly separation: number;
+    readonly orb: number;
+  }[];
+  readonly houseOverlays: readonly {
+    readonly body: number;
+    readonly house: number;
+    readonly direction: 'a-in-b' | 'b-in-a';
+  }[];
+}
+
+function toPositionsHouses(chart: ChartData): Tier2PositionsHousesPayload {
+  return {
+    positions: chart.positions.map((position) => ({ body: position.body, longitude: position.longitude })),
+    houses: { cusps: chart.houses.cusps, ascendant: chart.houses.ascendant, midheaven: chart.houses.midheaven },
+  };
+}
+
+/** Flattens a computed `SynastryData` plus its house overlays into relationship mode's wire payload (#422). */
+export function toTier2RelationshipPayload(
+  data: SynastryData,
+  overlays: readonly { readonly bodyKey: string; readonly house: number; readonly direction: 'a-in-b' | 'b-in-a' }[],
+): Tier2RelationshipDataPayload {
+  return {
+    chartA: toPositionsHouses(data.chartA),
+    chartB: toPositionsHouses(data.chartB),
+    crossAspects: data.aspects.map((aspect) => ({
+      bodyA: aspect.bodyA,
+      bodyB: aspect.bodyB,
+      aspectKey: aspect.aspect.key,
+      separation: aspect.separation,
+      orb: aspect.orb,
+    })),
+    houseOverlays: overlays.map((overlay) => ({
+      body: bodyByKey(overlay.bodyKey)?.id ?? -1,
+      house: overlay.house,
+      direction: overlay.direction,
+    })),
+  };
+}
+
 export type Tier2Request =
   | {
       readonly mode: 'grounded';
@@ -134,6 +190,14 @@ export type Tier2Request =
       /** The tensions of one selected placement (#424): a fixed task, so no instruction. */
       readonly mode: 'focus';
       readonly focusContext: FocusContext;
+      readonly locale: Locale;
+    }
+  | {
+      /** A synastry reading from both charts (#422): no name, date, time or place of either person. */
+      readonly mode: 'relationship';
+      readonly relationshipData: Tier2RelationshipDataPayload;
+      /** Optional, same as freeform's own (#425). */
+      readonly customPrompt?: string;
       readonly locale: Locale;
     };
 
