@@ -73,7 +73,17 @@ const STANDALONE_STYLE = [
   '.chart-aspect-quintile, .chart-aspect-biquintile, .chart-aspect-quincunx { stroke: #0a4d28; stroke-width: 1.5; opacity: 0.6; }',
   '.chart-aspect.chart-aspect-applying { opacity: 0.95; }',
   '.chart-aspect.chart-aspect-tight { stroke-width: 3; }',
+  // A chord crossing two different rings (#448) is dashed, so colour is never the only way to
+  // tell it apart from a ring's own aspects — same rule app.css's `.chart-cross-aspect` applies
+  // live; this is the literal copy a standalone export needs since there is no app.css there.
+  '.chart-cross-aspect { stroke-dasharray: 4 3; }',
   '.chart-multiwheel-legend-swatch { fill: #5b3fd4; }',
+  // A second or third ring's own colour (#448), matching app.css's `--ring-1-color`/
+  // `--ring-2-color` light-theme values — see that file's own comment for why these two hues.
+  '.chart-multiwheel-ring-1.chart-multiwheel-cusp-angle { stroke: #0f766e; }',
+  '.chart-multiwheel-ring-2.chart-multiwheel-cusp-angle { stroke: #9d174d; }',
+  '.chart-multiwheel-ring-1.chart-multiwheel-legend-swatch { fill: #0f766e; }',
+  '.chart-multiwheel-ring-2.chart-multiwheel-legend-swatch { fill: #9d174d; }',
   '.chart-multiwheel-legend-label { fill: #16152b; }',
   '.chart-sheet-title { fill: #16152b; font-weight: 650; }',
   '.chart-sheet-meta { fill: #5c5878; }',
