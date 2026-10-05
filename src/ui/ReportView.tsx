@@ -70,6 +70,8 @@ function guardrailIssueMessage(t: typeof reportViewMessages.en, issue: Guardrail
       return t.guardrailIssueOffTopic;
     case 'fabrication-request':
       return t.guardrailIssueFabricationRequest;
+    case 'relationship-verdict':
+      return t.guardrailIssueRelationshipVerdict;
   }
 }
 

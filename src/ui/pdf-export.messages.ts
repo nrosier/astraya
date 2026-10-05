@@ -50,6 +50,8 @@ const en = {
   choosePartnerOption: 'Choose a person…',
   noPartnersHint: 'Needs a second person with a complete, known-time birth record.',
   aspectsTableLabel: 'Aspects',
+  /** The no-LLM grouped/ranked text from `RelationshipSummary.tsx` (#422); never the opt-in AI reading. */
+  relationshipSummaryLabel: 'Relationship summary',
   buildButton: 'Build PDF',
   buildingStatus: 'Building the PDF…',
   nothingSelected: 'nothing is selected',
@@ -113,6 +115,7 @@ const nl: typeof en = {
   choosePartnerOption: 'Kies een persoon…',
   noPartnersHint: 'Vereist een tweede persoon met volledige, bekende geboortegegevens.',
   aspectsTableLabel: 'Aspecten',
+  relationshipSummaryLabel: 'Relatieoverzicht',
   buildButton: 'PDF samenstellen',
   buildingStatus: 'PDF wordt samengesteld…',
   nothingSelected: 'er is niets geselecteerd',

@@ -88,14 +88,21 @@ describe('pdfSelectionIsEmpty', () => {
       pdfSelectionIsEmpty({
         personId: 'p-ada',
         ...EMPTY_SELECTION,
-        synastry: { partnerId: 'p-partner', wheel: false, aspectsTable: false },
+        synastry: { partnerId: 'p-partner', wheel: false, aspectsTable: false, relationshipSummary: false },
       }),
     ).toBe(true);
     expect(
       pdfSelectionIsEmpty({
         personId: 'p-ada',
         ...EMPTY_SELECTION,
-        synastry: { partnerId: 'p-partner', wheel: true, aspectsTable: false },
+        synastry: { partnerId: 'p-partner', wheel: true, aspectsTable: false, relationshipSummary: false },
+      }),
+    ).toBe(false);
+    expect(
+      pdfSelectionIsEmpty({
+        personId: 'p-ada',
+        ...EMPTY_SELECTION,
+        synastry: { partnerId: 'p-partner', wheel: false, aspectsTable: false, relationshipSummary: true },
       }),
     ).toBe(false);
     expect(

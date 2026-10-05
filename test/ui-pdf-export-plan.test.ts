@@ -240,12 +240,12 @@ describe('buildPdfPlan', () => {
     expect(plan.errors).toHaveLength(1);
   }, 30_000);
 
-  it('builds a synastry section with a bi-wheel and the ranked aspects table (#441)', async () => {
+  it('builds a synastry section with a bi-wheel, the ranked aspects table, and the relationship summary text (#441, #422)', async () => {
     const provider = await getEngine();
     const selection: PdfSelection = {
       personId: ADA.id,
       ...EMPTY_SELECTION,
-      synastry: { partnerId: CHARLES.id, wheel: true, aspectsTable: true },
+      synastry: { partnerId: CHARLES.id, wheel: true, aspectsTable: true, relationshipSummary: true },
     };
     const context: PdfPlanContext = {
       person: ADA,
@@ -258,7 +258,7 @@ describe('buildPdfPlan', () => {
     };
     const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
     expect(plan.errors).toHaveLength(0);
-    const [section] = plan.sections;
+    const [section, summarySection] = plan.sections;
     if (section?.kind !== 'chart') throw new Error('expected a chart section');
     expect(section.heading).toContain('Ada Lovelace');
     expect(section.heading).toContain('Charles Babbage');
@@ -267,6 +267,37 @@ describe('buildPdfPlan', () => {
     expect(section.tables[0]?.body.length).toBeGreaterThan(0);
     // The interpretation column is already resolved to plain text, same as the live table.
     expect(section.tables[0]?.body.every((row) => row.every((cell) => typeof cell === 'string'))).toBe(true);
+
+    // The no-LLM grouped/ranked text (#422), never the opt-in AI reading: a text section right
+    // after the chart, with at least the hint/balance-sentence paragraphs every pairing gets.
+    if (summarySection?.kind !== 'text') throw new Error('expected a text section');
+    expect(summarySection.heading).toContain('Relationship summary');
+    expect(summarySection.heading).toContain('Ada Lovelace');
+    expect(summarySection.heading).toContain('Charles Babbage');
+    expect(summarySection.paragraphs.length).toBeGreaterThanOrEqual(2);
+    expect(summarySection.paragraphs.every((p) => p.length > 0)).toBe(true);
+  }, 30_000);
+
+  it('omits the relationship summary text when its own checkbox is off, keeping the chart section', async () => {
+    const provider = await getEngine();
+    const selection: PdfSelection = {
+      personId: ADA.id,
+      ...EMPTY_SELECTION,
+      synastry: { partnerId: CHARLES.id, wheel: true, aspectsTable: true, relationshipSummary: false },
+    };
+    const context: PdfPlanContext = {
+      person: ADA,
+      provider,
+      rulership: DEFAULT_RULERSHIP_CHOICE,
+      locale: 'en',
+      aiConsent: false,
+      corpusFetch,
+      people: PEOPLE,
+    };
+    const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
+    expect(plan.errors).toHaveLength(0);
+    expect(plan.sections).toHaveLength(1);
+    expect(plan.sections[0]?.kind).toBe('chart');
   }, 30_000);
 
   it('skips synastry with an error, not a crash, when the partner cannot be found', async () => {
@@ -274,7 +305,7 @@ describe('buildPdfPlan', () => {
     const selection: PdfSelection = {
       personId: ADA.id,
       ...EMPTY_SELECTION,
-      synastry: { partnerId: 'p-does-not-exist', wheel: true, aspectsTable: true },
+      synastry: { partnerId: 'p-does-not-exist', wheel: true, aspectsTable: true, relationshipSummary: true },
     };
     const context: PdfPlanContext = {
       person: ADA,

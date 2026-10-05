@@ -2890,6 +2890,55 @@ svg text.chart-symbol-text-unicode {
   margin: 0;
 }
 
+/* The grouped, ranked relationship summary above Synastry's aspects table (#422). Same card
+   treatment as .focus-interpretation, since both are a prose+consent panel inside a non-report
+   screen. */
+.relationship-summary {
+  margin: 0.9rem 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+.relationship-summary h3 {
+  margin: 0 0 0.4rem;
+  font-size: 1rem;
+}
+.relationship-summary h4 {
+  margin: 0.9rem 0 0.3rem;
+  color: var(--accent);
+  font-size: 0.9rem;
+}
+.relationship-summary ul {
+  margin: 0 0 0 1.1rem;
+  padding: 0;
+}
+.relationship-summary li {
+  margin: 0.2rem 0;
+}
+.relationship-summary label {
+  display: block;
+  margin: 0.5rem 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+/* A contact's valence (#422), the same three-way split the wheel's own aspect-line colours
+   already use (--aspect-hard/-soft/-minor) — a quiet left border, not a full colour change,
+   since this is plain list text, not a drawn line. */
+.relationship-contact-harmonious {
+  border-left: 2px solid var(--aspect-soft);
+  padding-left: 0.5rem;
+}
+.relationship-contact-challenging {
+  border-left: 2px solid var(--aspect-hard);
+  padding-left: 0.5rem;
+}
+.relationship-contact-neutral {
+  border-left: 2px solid var(--aspect-minor);
+  padding-left: 0.5rem;
+}
+
 .chart-isolation-interpretation {
   margin-top: 0.9rem;
   padding-top: 0.75rem;

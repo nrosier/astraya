@@ -110,6 +110,27 @@ describe('checkCustomPrompt (#360)', () => {
     const issues = checkCustomPrompt('warm and encouraging, focused on career growth');
     expect(issues.some((issue) => issue.rule === 'off-topic' || issue.rule === 'fabrication-request')).toBe(false);
   });
+
+  it('flags a request for a relationship verdict (#422), romantic or otherwise', () => {
+    for (const prompt of [
+      'Tell me if we should stay together.',
+      'Just tell us: are we compatible?',
+      'Is this relationship worth continuing?',
+      'Are they in love with each other?',
+    ]) {
+      expect(checkCustomPrompt(prompt).some((issue) => issue.rule === 'relationship-verdict')).toBe(true);
+    }
+  });
+
+  it('flags the Dutch equivalent of a relationship-verdict request', () => {
+    const issues = checkCustomPrompt('Moeten we samen blijven, wat denk je?');
+    expect(issues.some((issue) => issue.rule === 'relationship-verdict')).toBe(true);
+  });
+
+  it('does not flag a legitimate relationship-dynamic instruction', () => {
+    const issues = checkCustomPrompt('Focus on communication strengths and caveats between us.');
+    expect(issues.some((issue) => issue.rule === 'relationship-verdict')).toBe(false);
+  });
 });
 
 describe('containsPromptInjectionPhrase (#394)', () => {

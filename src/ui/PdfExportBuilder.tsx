@@ -427,6 +427,16 @@ export function PdfExportBuilder(): React.JSX.Element {
                   }}
                 />{' '}
                 {t.aspectsTableLabel}
+              </label>{' '}
+              <label>
+                <input
+                  type="checkbox"
+                  checked={fullSelection.synastry.relationshipSummary}
+                  onChange={(event) => {
+                    patchSynastry({ relationshipSummary: event.target.checked });
+                  }}
+                />{' '}
+                {t.relationshipSummaryLabel}
               </label>
             </div>
           )}

@@ -15,8 +15,8 @@
  * This file is imported by the server, so it has no imports and is listed in the Dockerfile.
  */
 
-/** The kinds, one per way of asking: the reader's own wording over chosen placements, a whole-chart reading, a single body. */
-export const RESULT_KINDS = ['placements', 'whole-chart', 'focus'] as const;
+/** The kinds, one per way of asking: the reader's own wording over chosen placements, a whole-chart reading, a single body, a relationship between two charts. */
+export const RESULT_KINDS = ['placements', 'whole-chart', 'focus', 'relationship'] as const;
 export type ResultKind = (typeof RESULT_KINDS)[number];
 
 export type ResultBasis =
@@ -25,7 +25,9 @@ export type ResultBasis =
   /** A reading of the whole chart (freeform mode). */
   | { readonly kind: 'whole-chart' }
   /** The tensions of one body: its `BodyDefinition.key` and whose chart it is read from (`transit` = a transit against the natal chart). */
-  | { readonly kind: 'focus'; readonly body: string; readonly perspective: 'natal' | 'transit' };
+  | { readonly kind: 'focus'; readonly body: string; readonly perspective: 'natal' | 'transit' }
+  /** A synastry reading between two people's charts (#422) — naming a side isn't meaningful the way `focus` names one body, so this stays as plain as `whole-chart`. */
+  | { readonly kind: 'relationship' };
 
 export function isResultKind(value: unknown): value is ResultKind {
   return typeof value === 'string' && (RESULT_KINDS as readonly string[]).includes(value);
@@ -36,6 +38,7 @@ export function kindForMode(mode: string): ResultKind | undefined {
   if (mode === 'grounded') return 'placements';
   if (mode === 'freeform' || mode === 'synthesis') return 'whole-chart';
   if (mode === 'focus') return 'focus';
+  if (mode === 'relationship') return 'relationship';
   return undefined;
 }
 
@@ -67,6 +70,8 @@ export function parseBasis(json: string | null): ResultBasis | undefined {
       if (typeof body !== 'string' || (perspective !== 'natal' && perspective !== 'transit')) return undefined;
       return { kind: 'focus', body, perspective };
     }
+    case 'relationship':
+      return { kind: 'relationship' };
     default:
       return undefined;
   }

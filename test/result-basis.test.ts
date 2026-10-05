@@ -12,6 +12,7 @@ const SAMPLES: Readonly<Record<(typeof RESULT_KINDS)[number], ResultBasis>> = {
   placements: { kind: 'placements', keys: ['planet-in-sign:sun:2', 'planet-in-house:moon:3'] },
   'whole-chart': { kind: 'whole-chart' },
   focus: { kind: 'focus', body: 'mars', perspective: 'natal' },
+  relationship: { kind: 'relationship' },
 };
 
 describe('the kinds of AI interpretation (#423)', () => {

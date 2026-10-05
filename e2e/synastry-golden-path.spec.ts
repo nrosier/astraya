@@ -97,6 +97,50 @@ test('two people with known birth times get a Synastry screen with a bi-wheel an
   expect(download.suggestedFilename()).toBe('ada-lovelace-charles-babbage-synastry-aspects.csv');
 });
 
+test('the relationship summary panel groups contacts by theme, and its AI reading is gated on an account (#422)', async ({
+  page,
+}) => {
+  test.setTimeout(60_000);
+
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  await createPerson(page, {
+    name: 'Ada Lovelace',
+    date: '1815-12-10',
+    time: '07:45:00',
+    latitude: '51.5072',
+    longitude: '-0.1276',
+  });
+  await page.getByRole('link', { name: '← People' }).click();
+  await createPerson(page, {
+    name: 'Charles Babbage',
+    date: '1820-12-26',
+    time: '10:00:00',
+    latitude: '51.5072',
+    longitude: '-0.1276',
+  });
+
+  await page.getByRole('link', { name: '← People' }).click();
+  await page.getByRole('link').filter({ hasText: 'Ada Lovelace' }).click();
+  await page.getByRole('button', { name: 'Relationship Charts', exact: true }).click();
+  await page.getByRole('link', { name: 'Synastry', exact: true }).click();
+  await page.getByLabel('Compare with').selectOption({ label: 'Charles Babbage' });
+
+  const panel = page.getByRole('region', { name: 'Relationship summary' });
+  await expect(panel).toBeVisible();
+  await expect(panel.getByText('Emotional bond')).toBeVisible();
+  // Not a verdict (#422 decision 4): the panel states counts, never a conclusion about the pair.
+  await expect(panel.getByText(/harmonious contact.*challenging/)).toBeVisible();
+
+  // The AI reading needs an account before consent even enters the picture: logged out, there is
+  // no consent checkbox to tick at all (it would wrongly suggest proceeding is one tick away), and
+  // the Generate button stays disabled with the sign-in reason, the same two-gate design every
+  // other Tier 2 panel in the app uses.
+  const generateButton = panel.getByRole('button', { name: 'Generate an AI-customised relationship reading' });
+  await expect(generateButton).toBeDisabled();
+  await expect(panel.getByText('Sign in to generate an AI-customised relationship reading.')).toBeVisible();
+  await expect(panel.getByRole('checkbox')).toHaveCount(0);
+});
+
 test('a person with an unknown birth time is told synastry needs one', async ({ page }) => {
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   await createPerson(page, {
