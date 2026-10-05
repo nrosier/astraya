@@ -11,13 +11,51 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { svg2pdf } from 'svg2pdf.js';
+import {
+  ASPECT_CODES,
+  ASPECT_UNICODE,
+  BODY_CODES,
+  BODY_UNICODE,
+  SIGN_CODES,
+  SIGN_UNICODE,
+} from '../chart/symbol-text.js';
 import { deriveExportFilename } from '../domain/export-filename.js';
 import type { PdfPlan } from './pdf-export-plan.js';
 
 const PAGE_MARGIN = 15;
 
+/**
+ * jsPDF's standard built-in fonts (the core PDF fonts, e.g. Helvetica) only cover the WinAnsi
+ * encoding, not arbitrary Unicode — the astrological body/sign/aspect glyphs (`symbol-text.ts`'s
+ * `*_UNICODE` tables), the retrograde mark ℞, and the dispositor chain's → separator
+ * (`ChartView.tsx`) all fall outside it. A character outside the font's encoding doesn't throw —
+ * it silently maps to whatever glyph that byte happens to mean in the font's table, which is why
+ * these show up as `!` or other unrelated characters instead of erroring. The live app, the CSV
+ * download and the SVG/PNG export never hit this (a browser's own font stack handles Unicode
+ * fine) — only jsPDF's plain-text drawing does. `symbol-text.ts` already has a WinAnsi-safe
+ * three-letter code for every body/sign/aspect (the same ones the 'text' symbol-class preference
+ * uses, #419), so those are reused here rather than inventing a second mapping.
+ */
+const PDF_UNSAFE_TO_SAFE: ReadonlyMap<string, string> = new Map([
+  ...Object.entries(BODY_UNICODE).map(([key, glyph]): [string, string] => [glyph, BODY_CODES[key] ?? glyph]),
+  ...Object.entries(SIGN_UNICODE).map(([key, glyph]): [string, string] => [glyph, SIGN_CODES[key] ?? glyph]),
+  ...Object.entries(ASPECT_UNICODE).map(([key, glyph]): [string, string] => [glyph, ASPECT_CODES[key] ?? glyph]),
+  ['℞', 'Rx'],
+  ['→', '->'],
+]);
+
+const PDF_UNSAFE_PATTERN = new RegExp(
+  [...PDF_UNSAFE_TO_SAFE.keys()].map((char) => char.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'),
+  'g',
+);
+
+/** Substitutes every character jsPDF's standard fonts can't draw with its WinAnsi-safe text code. */
+function pdfSafeText(text: string): string {
+  return text.replace(PDF_UNSAFE_PATTERN, (char) => PDF_UNSAFE_TO_SAFE.get(char) ?? char);
+}
+
 function wrapAndPrint(doc: jsPDF, text: string, x: number, y: number, maxWidth: number, lineHeight = 6): number {
-  const lines = doc.splitTextToSize(text, maxWidth) as string[];
+  const lines = doc.splitTextToSize(pdfSafeText(text), maxWidth) as string[];
   doc.text(lines, x, y);
   return y + lines.length * lineHeight;
 }
@@ -59,7 +97,7 @@ export async function renderPdfPlan(plan: PdfPlan): Promise<{ blob: Blob; filena
 
   // Cover page.
   doc.setFontSize(22);
-  doc.text(plan.title, PAGE_MARGIN, 40);
+  doc.text(pdfSafeText(plan.title), PAGE_MARGIN, 40);
   doc.setFontSize(11);
   doc.text(`Generated ${plan.generatedAt.toISOString().slice(0, 10)} by Astraya`, PAGE_MARGIN, 50);
 
@@ -100,10 +138,17 @@ export async function renderPdfPlan(plan: PdfPlan): Promise<{ blob: Blob; filena
         y += 4;
       }
       if (section.svg !== undefined) {
+        const size = Math.min(contentWidth, 160);
+        const height = (size * section.svg.height) / section.svg.width;
+        // The wheel is a fixed-aspect block that cannot itself be split across a page break (unlike a
+        // table, which can carry on past one): if it wouldn't fit in what's left of the current page,
+        // start it on a fresh one instead of letting it run past the bottom margin and get cut off (#446).
+        if (y + height > pageHeight - PAGE_MARGIN) {
+          doc.addPage();
+          y = 20;
+        }
         const svgEl = mountSvg(section.svg.markup);
         try {
-          const size = Math.min(contentWidth, 160);
-          const height = (size * section.svg.height) / section.svg.width;
           await svg2pdf(svgEl, doc, { x: PAGE_MARGIN, y, width: size, height });
           y += height + 6;
         } finally {
@@ -116,12 +161,12 @@ export async function renderPdfPlan(plan: PdfPlan): Promise<{ blob: Blob; filena
           y = 20;
         }
         doc.setFontSize(11);
-        doc.text(table.caption, PAGE_MARGIN, y);
+        doc.text(pdfSafeText(table.caption), PAGE_MARGIN, y);
         y += 2;
         let finalY = y;
         autoTable(doc, {
-          head: [[...table.head]],
-          body: table.body.map((row) => [...row]),
+          head: [table.head.map(pdfSafeText)],
+          body: table.body.map((row) => row.map(pdfSafeText)),
           startY: y,
           margin: { left: PAGE_MARGIN, right: PAGE_MARGIN },
           styles: { fontSize: 8 },
@@ -148,7 +193,7 @@ export async function renderPdfPlan(plan: PdfPlan): Promise<{ blob: Blob; filena
   let tocY = 32;
   doc.setFontSize(11);
   for (const entry of tocEntries) {
-    doc.text(entry.heading, PAGE_MARGIN, tocY);
+    doc.text(pdfSafeText(entry.heading), PAGE_MARGIN, tocY);
     doc.text(String(entry.page), pageWidth - PAGE_MARGIN, tocY, { align: 'right' });
     tocY += 7;
   }
