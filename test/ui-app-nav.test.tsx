@@ -1,21 +1,16 @@
 // @vitest-environment jsdom
 /**
  * The header navigation's menus (#421), on a screen with no person (so no store is needed): the
- * Tools dropdown, the Menu button the nav folds behind on a small screen, Escape and page changes
- * closing them, and Admin appearing for an admin only. The person's own tabs need an open store and
- * are covered end to end (`e2e/app-nav.spec.ts`).
+ * Tools dropdown and the Menu button the nav folds behind on a small screen, with Escape and page
+ * changes closing them. Admin is reached from the account area on the top bar, not from here
+ * (#443), so it is not this file's concern. The person's own tabs need an open store and are
+ * covered end to end (`e2e/app-nav.spec.ts`).
  */
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { setLocale } from '../src/ui/locale.js';
 import { parseRoute, type Route } from '../src/ui/route.js';
-
-let admin = false;
-const USER = { id: 'u', username: 'root', role: 'admin', isAdmin: true, isSuperAdmin: false };
-vi.mock('../src/ui/session-context.js', () => ({
-  useSessionUserOrUndefined: () => (admin ? USER : undefined),
-}));
 
 // The Export menu asks for the calculation engine; none is needed to open and close menus.
 vi.mock('../src/ui/EphemerisProviderContext.js', () => ({
@@ -34,7 +29,6 @@ afterEach(() => {
     mounted.container.remove();
     mounted = undefined;
   }
-  admin = false;
   setLocale('en');
 });
 
@@ -159,24 +153,5 @@ describe('the Menu button for a small screen', () => {
     await click(button('Menu'));
     await render(parseRoute('#/about'));
     expect(box().querySelector('#app-nav')?.classList.contains('open')).toBe(false);
-  });
-});
-
-describe('Admin in the navigation', () => {
-  it('is shown to an admin, highlighted on an admin screen, and absent for everyone else', async () => {
-    await mount(parseRoute('#/people'));
-    expect(box().querySelector('.app-nav-admin')).toBeNull();
-    act(() => {
-      mounted?.root.unmount();
-    });
-    mounted?.container.remove();
-    mounted = undefined;
-
-    admin = true;
-    await mount(parseRoute('#/admin/usage'));
-    const link = box().querySelector('.app-nav-admin');
-    expect(link?.getAttribute('href')).toBe('#/admin');
-    expect(link?.classList.contains('active')).toBe(true);
-    expect(link?.getAttribute('aria-current')).toBe('page');
   });
 });

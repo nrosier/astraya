@@ -1437,11 +1437,6 @@ label.stacked textarea:focus-visible {
   cursor: not-allowed;
 }
 
-/* The admin area, in the accent so an admin finds it without it competing with the chart tabs. */
-.app-nav-admin {
-  color: var(--accent);
-}
-
 .app-nav-group {
   position: relative;
 }

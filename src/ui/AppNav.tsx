@@ -9,7 +9,10 @@
  *   Directions, Relationship Charts);
  * - **Tools**, on every screen: the calculators that are not about one person's chart
  *   (`tools-nav.ts`);
- * - **Admin**, for an admin only. Purely navigation: each admin route is guarded on the server.
+ * - **Export**, on every screen.
+ *
+ * Admin is reached from the account area on the top bar (`AccountPanel.tsx`), not from here (#443):
+ * an administrator does not need the entry twice.
  *
  * Marked up as plain navigation links, not `role="tablist"`: these are links to different routes,
  * not same-page panels, so the WAI-ARIA tab pattern (roving tabindex, arrow keys) does not fit.
@@ -20,7 +23,6 @@
  * closes it. The dropdowns then open in place inside that panel rather than floating over it.
  */
 import { useEffect, useRef, useState } from 'react';
-import { ADMIN_HOME_HREF, activeAdminTabKey } from './admin-nav.js';
 import { appNavMessages } from './AppNav.messages.js';
 import { useMessages } from './messages.js';
 import { activeTabKey, isTabEnabled, PERSON_TAB_FAMILIES, PERSON_TABS } from './person-nav.js';
@@ -28,7 +30,6 @@ import { CHART_TYPES, chartHref } from './chart-sections.js';
 import { chartTypesMessages } from './ChartTypes.messages.js';
 import type { PersonTab } from './person-nav.js';
 import type { Route } from './route.js';
-import { useSessionUserOrUndefined } from './session-context.js';
 import { useOptionalStore, useStoreState } from './store-context.js';
 import type { Person } from '../domain/person.js';
 import { activeToolKey, TOOLS } from './tools-nav.js';
@@ -341,7 +342,6 @@ function PersonMenu({
 
 export function AppNav({ route }: { route: Route }): React.JSX.Element {
   const t = useMessages(appNavMessages);
-  const sessionUser = useSessionUserOrUndefined();
   const store = useOptionalStore();
   const personId = 'personId' in route ? route.personId : undefined;
   // Closed on every page change: the route's kind and person identify the page.
@@ -433,20 +433,6 @@ export function AppNav({ route }: { route: Route }): React.JSX.Element {
           ))}
         </NavGroup>
         <ExportMenu dropdown={dropdown} run={runExport} />
-        {/* Admin area (#414): only for an admin. Purely navigation — each admin route is guarded by
-            `requireAdmin` on the server whatever this shows. */}
-        {sessionUser?.isAdmin === true && (
-          <a
-            href={ADMIN_HOME_HREF}
-            className={
-              activeAdminTabKey(route) === null ? 'app-nav-item app-nav-admin' : 'app-nav-item app-nav-admin active'
-            }
-            aria-current={activeAdminTabKey(route) === null ? undefined : 'page'}
-            onClick={closeAll}
-          >
-            {t.adminTabLabel}
-          </a>
-        )}
       </nav>
       {exportStatus !== undefined && (
         <p

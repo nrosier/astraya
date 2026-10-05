@@ -11,7 +11,6 @@ const en = {
   menuButton: 'Menu',
   menuButtonClose: 'Close menu',
   personChipLabel: (name: string) => `Chart of ${name}`,
-  adminTabLabel: 'Admin',
   exportLabel: 'Export',
   exportEverything: 'Everything (one file)',
   exportEverythingHint:
@@ -62,7 +61,6 @@ const nl: typeof en = {
   menuButton: 'Menu',
   menuButtonClose: 'Menu sluiten',
   personChipLabel: (name: string) => `Horoscoop van ${name}`,
-  adminTabLabel: 'Beheer',
   exportLabel: 'Exporteren',
   exportEverything: 'Alles (één bestand)',
   exportEverythingHint:
