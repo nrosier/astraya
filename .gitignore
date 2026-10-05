@@ -60,3 +60,7 @@ tools/corpus-gen/backups/
 # Its sibling eval-tracking/ is deliberately committed — it is the loop's memory of which
 # entries were already judged clean, so a fresh checkout doesn't re-pay to re-check them.
 tools/corpus-gen/feedback/
+
+# server/index.ts's default ASTRAYA_DB_PATH when the env var is unset (local `npm run serve`,
+# or a manual run with no override) — a per-machine SQLite file, never something the repo ships.
+data/
