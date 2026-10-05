@@ -104,10 +104,43 @@ test('a person’s screens carry their name and tabs in the header, with no stri
   const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
   expect(results.violations).toEqual([]);
 
-  // Going to a tool leaves the person's tabs behind: it is not about their chart.
+  // Going to a tool keeps the person's tabs in the header (#453): a tool is not about their
+  // chart, but losing the way back to it just for visiting one is its own kind of friction.
   await header.getByRole('link', { name: 'Planetary cycles', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Planetary cycles', level: 1 })).toBeVisible();
-  await expect(header.getByRole('button', { name: 'Charts', exact: true })).toHaveCount(0);
+  await expect(header.getByText('Ada Lovelace', { exact: true })).toBeVisible();
+  await expect(header.getByRole('button', { name: 'Charts', exact: true })).toBeVisible();
+  // None of the person's tabs is "current" on a tool page — it genuinely isn't one of them.
+  await expect(header.getByRole('link', { name: 'Birth record', exact: true })).not.toHaveAttribute(
+    'aria-current',
+    'page',
+  );
+});
+
+test('a tool page remembers the last person visited, and returning to their tabs needs no re-pick (#453)', async ({
+  page,
+}) => {
+  test.setTimeout(60_000);
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  await createPerson(page, ADA);
+  const header = page.getByRole('banner');
+  await openTool(page, 'Eclipses');
+  await expect(page.getByRole('heading', { name: 'Eclipses', level: 1 })).toBeVisible();
+
+  // Still Ada's tabs, carried over from the person's screen the tool was opened from.
+  await expect(header.getByText('Ada Lovelace', { exact: true })).toBeVisible();
+  await header.getByRole('link', { name: 'Birth record', exact: true }).click();
+  await expect(page).toHaveURL(/#\/person\//);
+  await expect(header.getByText('Ada Lovelace', { exact: true })).toBeVisible();
+
+  // The People list itself is not a tool page: it should not show a stale person's tabs.
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  await expect(header.getByText('Ada Lovelace', { exact: true })).toHaveCount(0);
+
+  // Reopening a tool straight from the People list (no person page visited this time) still
+  // remembers Ada from before, since nothing has overwritten that memory in between.
+  await openTool(page, 'Horary chart');
+  await expect(header.getByText('Ada Lovelace', { exact: true })).toBeVisible();
 });
 
 test('on a phone the navigation folds behind a Menu button, and nothing scrolls sideways', async ({ page }) => {

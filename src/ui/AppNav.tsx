@@ -35,6 +35,7 @@ import type { Person } from '../domain/person.js';
 import { activeToolKey, TOOLS } from './tools-nav.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { useExportItems, type ExportItem } from './export-registry.js';
+import { useLastPersonId, writeLastPersonId } from './last-person.js';
 import { useRulershipChoice } from './rulership-setting.js';
 import { useSymbolClass } from './symbol-setting.js';
 import { downloadText } from './download.js';
@@ -353,14 +354,31 @@ function PersonMenu({
 export function AppNav({ route }: { route: Route }): React.JSX.Element {
   const t = useMessages(appNavMessages);
   const store = useOptionalStore();
-  const personId = 'personId' in route ? route.personId : undefined;
+  const routePersonId = 'personId' in route ? route.personId : undefined;
+  const activeTool = activeToolKey(route);
+  const lastPersonId = useLastPersonId();
+  // A tool page (#453) carries no person in its own route at all (`route.ts`) — falling back to
+  // the last person seen there keeps their nav tabs showing instead of losing them, and lets a
+  // link back to one of those tabs return to the same person rather than requiring they be
+  // picked again. Scoped to tool pages specifically, not every person-less route (the People
+  // list itself, say, should not show a stale person's tabs). Checked against the live store so
+  // a since-deleted person doesn't linger here.
+  const personId =
+    routePersonId ??
+    (activeTool !== null && lastPersonId !== undefined && store?.state.people.has(lastPersonId)
+      ? lastPersonId
+      : undefined);
+
+  useEffect(() => {
+    if (routePersonId !== undefined) writeLastPersonId(routePersonId);
+  }, [routePersonId]);
+
   // Closed on every page change: the route's kind and person identify the page.
   const pageKey = `${route.kind}:${personId ?? ''}`;
   const dropdown = useExclusiveOpen<string>(pageKey);
   const [menuOpen, setMenuOpen] = useState(false);
   const toggleRef = useRef<HTMLButtonElement>(null);
   const [exportStatus, setExportStatus] = useState<ExportStatus | undefined>(undefined);
-  const activeTool = activeToolKey(route);
 
   useEffect(() => {
     setMenuOpen(false);
