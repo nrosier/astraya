@@ -26,6 +26,7 @@ describe('standaloneSvg (#67)', () => {
       'chart-glyph-leader',
       'chart-aspect',
       'chart-aspect-applying',
+      'chart-cross-aspect',
       'chart-multiwheel-legend-swatch',
       'wheel-ring-zodiac',
       'wheel-ring-aspect',
@@ -53,6 +54,15 @@ describe('standaloneSvg (#67)', () => {
     ]) {
       expect(result).toContain(className);
     }
+  });
+
+  it('gives a second/third ring its own colour, matching app.css (#448)', () => {
+    const result = standaloneSvg('<svg><g /></svg>');
+    expect(result).toContain('.chart-multiwheel-ring-1.chart-multiwheel-cusp-angle');
+    expect(result).toContain('.chart-multiwheel-ring-2.chart-multiwheel-cusp-angle');
+    expect(result).toContain('.chart-multiwheel-ring-1.chart-multiwheel-legend-swatch');
+    expect(result).toContain('.chart-multiwheel-ring-2.chart-multiwheel-legend-swatch');
+    expect(result).toContain('.chart-cross-aspect');
   });
 
   it('is well-formed enough to still be exactly one svg document', () => {
