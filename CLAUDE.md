@@ -220,3 +220,13 @@ preferences (symbol class, rulership choice, theme, locale itself) are stored in
   `CHANGELOG.md`, `README.md`'s badge) and is checked against the Dockerfile/shipped-files
   list — see `docs/RELEASING.md` for the full checklist. Versions are milestone-driven
   (`v0.1.0`–`v1.0.0` map to M0–M9), not calendar- or feature-count-driven.
+
+## Agent skills
+
+### Issue tracker
+
+Issues live as GitHub Issues (`gh` CLI) in nrosier/astraya. See `docs/agents/issue-tracker.md`.
+
+### Domain docs
+
+Single-context layout: one `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
