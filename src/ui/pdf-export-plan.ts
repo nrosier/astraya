@@ -77,6 +77,7 @@ import type { chartViewMessages } from './ChartView.messages.js';
 import type { pdfExportMessages } from './pdf-export.messages.js';
 import { bodyDisplayName, bodyShortName } from './astro-names.messages.js';
 import { formatCoordinate } from './format.js';
+import { relationshipSummaryParagraphs } from './relationship-summary-pdf-text.js';
 import { aspectColumns as synastryAspectColumns } from './SynastryView.js';
 import { synastryViewMessages } from './SynastryView.messages.js';
 import { synastryText } from './synastry-text.js';
@@ -300,7 +301,7 @@ async function buildSynastrySectionPlan(
   options: PdfSynastrySectionOptions,
   context: PdfPlanContext,
   pt: typeof pdfExportMessages.en,
-): Promise<PdfChartSectionPlan> {
+): Promise<readonly PdfSectionPlan[]> {
   const { person, provider, locale, corpusFetch } = context;
   if (person.moment === undefined) throw new Error('this person has no complete birth record');
   const partner = resolvePartner(options.partnerId, context);
@@ -348,12 +349,24 @@ async function buildSynastrySectionPlan(
     );
   }
 
-  return {
-    kind: 'chart',
-    heading,
-    ...(svg === undefined ? {} : { svg }),
-    tables,
-  };
+  const sections: PdfSectionPlan[] = [
+    {
+      kind: 'chart',
+      heading,
+      ...(svg === undefined ? {} : { svg }),
+      tables,
+    },
+  ];
+
+  if (options.relationshipSummary) {
+    sections.push({
+      kind: 'text',
+      heading: `${pt.relationshipSummaryLabel} — ${nameA} / ${nameB}`,
+      paragraphs: relationshipSummaryParagraphs(data, nameA, nameB, locale),
+    });
+  }
+
+  return sections;
 }
 
 async function buildCompositeSectionPlan(
@@ -465,9 +478,12 @@ export async function buildPdfPlan(
     }
   }
 
-  if (selection.synastry !== undefined && (selection.synastry.wheel || selection.synastry.aspectsTable)) {
+  if (
+    selection.synastry !== undefined &&
+    (selection.synastry.wheel || selection.synastry.aspectsTable || selection.synastry.relationshipSummary)
+  ) {
     try {
-      sections.push(await buildSynastrySectionPlan(selection.synastry, context, pt));
+      sections.push(...(await buildSynastrySectionPlan(selection.synastry, context, pt)));
     } catch (error) {
       errors.push(`${pt.synastryLabel}: ${error instanceof Error ? error.message : String(error)}`);
     }

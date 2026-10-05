@@ -50,6 +50,9 @@ export interface PdfSynastrySectionOptions {
   readonly wheel: boolean;
   /** The one table synastry's own screen shows (the ranked cross-chart aspects); no sub-choice to make. */
   readonly aspectsTable: boolean;
+  /** The grouped, ranked no-LLM text from `RelationshipSummary.tsx` (#422) — never the opt-in AI
+   * reading, which (like the natal AI-customised narrative) is never included in an export. */
+  readonly relationshipSummary: boolean;
 }
 
 /**
@@ -82,7 +85,7 @@ export const EMPTY_SELECTION: Omit<PdfSelection, 'personId'> = {
 };
 
 export function defaultSynastrySectionOptions(partnerId: string): PdfSynastrySectionOptions {
-  return { partnerId, wheel: true, aspectsTable: true };
+  return { partnerId, wheel: true, aspectsTable: true, relationshipSummary: true };
 }
 
 export function defaultCompositeSectionOptions(partnerId: string): PdfCompositeSectionOptions {
@@ -154,7 +157,8 @@ export function pdfSelectionIsEmpty(selection: PdfSelection): boolean {
     !selection.interpretation.base &&
     !selection.interpretation.aiCustomised &&
     selection.charts.every((chart) => !chart.wheel && chart.tables.length === 0) &&
-    (selection.synastry === undefined || (!selection.synastry.wheel && !selection.synastry.aspectsTable)) &&
+    (selection.synastry === undefined ||
+      (!selection.synastry.wheel && !selection.synastry.aspectsTable && !selection.synastry.relationshipSummary)) &&
     (selection.composite === undefined || (!selection.composite.wheel && selection.composite.tables.length === 0))
   );
 }
