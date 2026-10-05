@@ -4,6 +4,30 @@ All notable changes to Astraya are recorded here. Versions follow
 [semantic versioning](https://semver.org/), and every milestone ends in a release —
 see [docs/RELEASING.md](docs/RELEASING.md).
 
+## [0.29.0] — 2026-10-05
+
+**A PDF export builder for custom reports, Extended settings regrouped into one card with Apply/Cancel, bold and fine symbol weights, and a tidier admin and navigation.**
+
+M9 (Polish & launch) progress, not a finished milestone — v1.0.0 hasn't shipped yet.
+
+### Added
+
+- **A PDF export builder (#441).** A new Export page (reached from the header's Export menu, "Build custom PDF…") where you pick a person, start from a preset (Executive summary, Complete archive, or Custom) and tick exactly what goes in: the birth record, the written interpretation (with an optional AI-customised narrative, its own one-time consent per ADR 0003), and any of the Charts page's five chart types, each with its own wheel/table and parameters (harmonic number, return year or date) chosen on the page itself rather than read off a screen you had open. The result is a real multi-page PDF — vector chart wheels, proper tables, a cover page and a table of contents with real page numbers — built in the browser, with the PDF libraries only loaded once you click Build PDF so they add nothing to the normal app's download. Synastry, composite, transits, forecast, progressions, solar arc, profections, astrocartography and the horary/electional/rectification tools are not in this first slice.
+- **A line weight for drawn symbols, and a quick text-only toggle (#419).** Extended settings gains a Symbol weight choice (fine, regular, bold) for the drawn glyph set, and the header now has a one-press button to switch between drawn symbols and text-only (SUN, MOO, ARI, …) for a reader who needs plain text on an unfamiliar device.
+
+### Changed
+
+- **Extended settings is now a single card (#442).** The settings button summarises only what differs from the defaults and opens a modal with Apply and Cancel — it stays usable while a chart is loading or has failed, and nothing changes until you press Apply. Options are grouped by what you're actually setting up (zodiac and houses; bodies and points; aspects and orbs, with the orbs in force spelled out; wheel colours; device preferences), and a Modern Western / Traditional / Hellenistic / Vedic starting point fills the whole profile in one go. The card keeps the wheel's selection and is hidden when printing.
+- **The admin corpus tables show the full entry text,** split into Entry, Details and Actions columns, instead of truncating it.
+
+### Fixed
+
+- **The Admin link no longer appears twice (#443).** It stayed in the header's main navigation menu after moving to the account area on the top bar; the duplicate menu entry is removed.
+
+### Notes for people running their own server
+
+- No database migration and no new configuration in this release. The PDF export builder runs entirely in the browser; the server is not involved.
+
 ## [0.28.0] — 2026-10-05
 
 **One Charts page for every chart cast for a person, with solar and lunar returns; Export moves into the header; Uranus and Pluto can be drawn in two ways; and about a hundred interpretation texts were rewritten to be more specific.**
