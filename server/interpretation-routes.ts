@@ -104,9 +104,18 @@ interface GenerateBody {
   readonly mode?: unknown;
   readonly placementKeys?: unknown;
   readonly chartData?: unknown;
+  /** Freeform mode only (#454): what kind of chart `chartData` is. Absent means `'natal'`, the
+   *  original and still most common case, so this isn't a breaking change for an older caller. */
+  readonly chartKind?: unknown;
   readonly customPrompt?: unknown;
   readonly focusContext?: unknown;
   readonly locale?: unknown;
+}
+
+type ChartKind = 'natal' | 'composite';
+
+function isChartKind(value: unknown): value is ChartKind {
+  return value === 'natal' || value === 'composite';
 }
 
 /** Freeform mode's validated wire shape — hand-mirrors `src/interpretation/tier2-client.ts`'s `Tier2ChartDataPayload`. */
@@ -153,9 +162,15 @@ const SYSTEM_INSTRUCTION = [
   DESCRIPTION_RULE,
 ].join(' ');
 
+// Deliberately says "chart", not "natal chart" (#454): this prompt also runs for a composite
+// chart's facts (CompositeView.tsx -> ReportView.tsx), a two-person midpoint synthesis, not an
+// individual's own placements. Which kind of chart this is, and what that means for how to
+// read it, is said once in `buildFreeformUserContent`'s own note instead — the same place
+// `buildFocusUserContent` already says what a transit perspective changes — rather than
+// duplicating that distinction into every system instruction that happens to use chart facts.
 const FREEFORM_SYSTEM_INSTRUCTION = [
   'You are a psychologically grounded astrologer writing an original interpretation',
-  'of a natal chart from a list of grounded chart facts — exact placements, houses,',
+  'of an astrological chart from a list of grounded chart facts — exact placements, houses,',
   'and aspects, already computed and correct — and, when the reader gives one, a',
   'short instruction describing the form, style, tone, or focus they want. Unlike a',
   'restyling task, you originate the interpretation yourself: say what the facts',
@@ -262,13 +277,32 @@ function buildUserContent(facts: readonly string[], customPrompt: string, locale
   ].join('\n');
 }
 
-/** The AI-written mode's user content: the reader's instruction is optional (#425). */
-function buildFreeformUserContent(facts: readonly string[], customPrompt: string | undefined, locale: Locale): string {
-  if (customPrompt !== undefined) return buildUserContent(facts, customPrompt, locale);
+/** The one-line note prepended to freeform mode's user content when `chartKind` is `'composite'` (#454). */
+const COMPOSITE_CHART_NOTE =
+  "This chart is a composite (midpoint) chart: a single synthetic chart derived from two people's " +
+  "own charts, describing their relationship or combination as its own entity — not either person's " +
+  'individual placements. Write about what this combination looks like, not about one person.';
+
+/**
+ * The AI-written mode's user content: the reader's instruction is optional (#425). `chartKind`
+ * (#454) says once, plainly, what kind of chart these facts describe — a composite chart's
+ * facts are a two-person midpoint synthesis, not an individual's own placements, and without
+ * this note the model has every reason to write as if describing one person's own traits, the
+ * same framing gap the pre-generated corpus report (not this route) has separately for #450.
+ */
+function buildFreeformUserContent(
+  facts: readonly string[],
+  customPrompt: string | undefined,
+  locale: Locale,
+  chartKind: ChartKind,
+): string {
+  const note = chartKind === 'composite' ? [COMPOSITE_CHART_NOTE, ''] : [];
+  if (customPrompt !== undefined) return [...note, buildUserContent(facts, customPrompt, locale)].join('\n');
   const language = locale === 'nl' ? 'Dutch' : 'English';
   return [
     `Write in ${language}.`,
     '',
+    ...note,
     'Computed placements and aspects (do not add facts beyond these):',
     ...facts.map((fact) => `- ${fact}`),
     '',
@@ -469,6 +503,8 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
       let focusContext: FocusContext | undefined;
       let basis: ResultBasis;
       let systemInstruction: string;
+      /** Freeform mode only (#454); irrelevant, so left `'natal'`, for 'grounded'/'focus'. */
+      let chartKind: ChartKind = 'natal';
       if (mode === 'grounded') {
         if (!Array.isArray(placementKeys) || placementKeys.length === 0) {
           return reply.code(400).send({ error: 'placementKeys must be a non-empty array' });
@@ -509,6 +545,10 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
         if ('errors' in validated) {
           return reply.code(400).send({ error: `chartData is invalid: ${validated.errors.join('; ')}` });
         }
+        if (request.body.chartKind !== undefined && !isChartKind(request.body.chartKind)) {
+          return reply.code(400).send({ error: "chartKind must be 'natal' or 'composite'" });
+        }
+        chartKind = isChartKind(request.body.chartKind) ? request.body.chartKind : 'natal';
         facts = buildFreeformFacts(validated.chartData);
         systemInstruction = FREEFORM_SYSTEM_INSTRUCTION;
         basis = { kind: 'whole-chart' };
@@ -572,7 +612,7 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
           ? buildFocusUserContent(focusContext, locale)
           : mode === 'grounded' && instruction !== undefined
             ? buildUserContent(facts, instruction, locale)
-            : buildFreeformUserContent(facts, instruction, locale);
+            : buildFreeformUserContent(facts, instruction, locale, chartKind);
 
       let result;
       try {
