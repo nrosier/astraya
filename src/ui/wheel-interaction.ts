@@ -1,18 +1,22 @@
 /**
- * Click-to-isolate for any chart wheel (#400, #412, #418): which symbol was clicked, and which parts
- * of the wheel stay at full strength because of it.
+ * Click-to-isolate for any chart wheel (#400, #412, #418, #448): which symbol was clicked, and
+ * which parts of the wheel stay at full strength because of it.
  *
  * Everything here reads the wheel's own markup (`data-body`, `data-ring`, `data-body-sign`,
- * `data-sign`, `data-aspect-body-a/b`, `data-ring-a/b`), never the chart data behind it. That is
- * what lets one implementation serve the natal wheel, the transit and synastry bi-wheels and any
- * wheel added later: a screen only has to render `renderMultiWheelSvg`'s markup and mount
- * `useWheelIsolation`. A screen supplies its own panel of facts, since what is worth stating differs.
+ * `data-sign`, `data-aspect-body-a/b`, `data-ring-a/b`, `data-ring-legend`), never the chart data
+ * behind it. That is what lets one implementation serve the natal wheel, the transit and synastry
+ * bi-wheels and any wheel added later: a screen only has to render `renderMultiWheelSvg`'s markup
+ * and mount `useWheelIsolation`. A screen supplies its own panel of facts, since what is worth
+ * stating differs.
  *
  * A body is identified by its key *and its ring*, written `sun@1`: a bi-wheel draws the Sun twice,
  * and clicking one must not light up the other. A single wheel has only ring 0, so `sun@0`.
  *
- * Selection keys are `body:<id>`, `sign:<lowercase sign name>` and `aspect:<idA>|<idB>` (sorted, so
- * the same pair is the same key whichever end was named first).
+ * Selection keys are `body:<id>`, `sign:<lowercase sign name>`, `aspect:<idA>|<idB>` (sorted, so
+ * the same pair is the same key whichever end was named first) and `ring:<index>` — the last from
+ * clicking a ring's legend entry (#448), isolating every body on that ring plus every aspect, own
+ * or cross-ring, touching one of them (the same "focus plus its connections" rule `body` and
+ * `sign` already use, just seeded with a whole ring's bodies instead of one or a sign's worth).
  */
 import { useEffect, useRef, useState } from 'react';
 import { bodyId } from '../chart/body-id.js';
@@ -39,6 +43,8 @@ export function selectionKeyForTarget(target: Element): string | undefined {
   if (body !== null) return `body:${idOfBodyElement(body)}`;
   const sign = target.closest('[data-sign]');
   if (sign !== null) return `sign:${sign.getAttribute('data-sign') ?? ''}`;
+  const ringLegend = target.closest('[data-ring-legend]');
+  if (ringLegend !== null) return `ring:${ringLegend.getAttribute('data-ring-legend') ?? ''}`;
   const link = target.closest('[data-aspect-body-a]');
   if (link !== null) {
     const [a, b] = endsOfLink(link);
@@ -89,6 +95,15 @@ function whatStays(root: Element, selectionKey: string): Keep | undefined {
   if (kind === 'sign') {
     const inSign = new Set([...signOfBody].filter(([, sign]) => sign === value).map(([id]) => id));
     return { ...withConnections(inSign), signs: new Set([value]) };
+  }
+  if (kind === 'ring') {
+    const inRing = new Set(
+      bodyElements.filter((element) => (element.getAttribute('data-ring') ?? '0') === value).map(idOfBodyElement),
+    );
+    const signs = new Set(
+      [...inRing].map((id) => signOfBody.get(id)).filter((sign): sign is string => sign !== undefined && sign !== ''),
+    );
+    return { ...withConnections(inRing), signs };
   }
   if (kind === 'aspect') {
     const [a, b] = value.split('|');

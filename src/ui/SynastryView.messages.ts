@@ -18,6 +18,9 @@ const en = {
   choosePersonOption: 'Choose a person…',
   unnamedOption: 'Unnamed',
   partnerGoneWarning: 'That person is no longer available to compare with.',
+  /** Appended to each person's name in the bi-wheel's ring legend, so it's clear which ring is whose without decoding the line style first. */
+  outerRingSuffix: ' (outer circle)',
+  innerRingSuffix: ' (inner circle)',
 
   calculating: 'Calculating…',
   error: (message: string) => `Synastry could not be calculated. ${message}`,
@@ -52,6 +55,8 @@ const nl: typeof en = {
   choosePersonOption: 'Kies een persoon…',
   unnamedOption: 'Naamloos',
   partnerGoneWarning: 'Die persoon is niet langer beschikbaar om mee te vergelijken.',
+  outerRingSuffix: ' (buitencirkel)',
+  innerRingSuffix: ' (binnencirkel)',
 
   calculating: 'Berekenen…',
   error: (message: string) => `Synastrie kon niet worden berekend. ${message}`,

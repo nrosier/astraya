@@ -168,8 +168,11 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
     if (load.kind !== 'ready') return undefined;
     const nameA: string = person?.displayName ?? '';
     const nameB: string = partner?.displayName ?? '';
-    const ringA = chartWheelRing(load.data.chartA, nameA || t.personALabel);
-    const ringB = chartWheelRing(load.data.chartB, nameB || t.personBLabel);
+    // The legend names which ring is whose by stating outer/inner directly (#448), not just
+    // through the ring's own line colour/dash — "outer"/"inner" is unambiguous even before a
+    // reader learns to read the dash pattern, since the bi-wheel only ever has these two rings.
+    const ringA = chartWheelRing(load.data.chartA, `${nameA || t.personALabel}${t.outerRingSuffix}`);
+    const ringB = chartWheelRing(load.data.chartB, `${nameB || t.personBLabel}${t.innerRingSuffix}`);
     const crossAspects: readonly CrossRingAspects[] = [
       // `computeSynastry`'s aspects run bodyA from chartA (ring 0), bodyB from chartB (ring
       // 1) — outerRingIndex/innerRingIndex name which side of the aspect a ring resolves,
