@@ -48,6 +48,16 @@
   --element-water: #6aa8ff;
   /* Attention accent: warnings, and the sun in anything we draw. */
   --solar: #f2b75e;
+  /*
+   * A multi-ring chart's second and third rings (#448: transits, synastry, composite — one
+   * to three charts drawn as concentric rings, `chart/multi-wheel.ts`). Ring 0 keeps using
+   * `--accent` unchanged, so a single-ring chart still reads exactly as before; teal and rose
+   * sit clearly apart from `--accent`, `--solar`, both aspect-family and element hues at the
+   * saturations/lightnesses used here, so a second or third source reads as its own family
+   * rather than competing with an existing meaning.
+   */
+  --ring-1-color: #4fd1c5;
+  --ring-2-color: #ff8ad1;
 
   --glow-a: rgb(124 92 255 / 18%);
   --glow-b: rgb(242 183 94 / 8%);
@@ -76,6 +86,8 @@
 
     --accent: #5b3fd4;
     --solar: #8f5a0e;
+    --ring-1-color: #0f766e;
+    --ring-2-color: #9d174d;
     --aspect-hard: #b3261e;
     --aspect-soft: #1857c4;
     --aspect-minor: #0a4d28;
@@ -108,6 +120,8 @@
 
   --accent: #a390fb;
   --solar: #f2b75e;
+  --ring-1-color: #4fd1c5;
+  --ring-2-color: #ff8ad1;
   --aspect-hard: #ff8189;
   --aspect-soft: #6ec3ff;
   --aspect-minor: #8fe0a0;
@@ -131,6 +145,8 @@
 
   --accent: #5b3fd4;
   --solar: #8f5a0e;
+  --ring-1-color: #0f766e;
+  --ring-2-color: #9d174d;
   --aspect-hard: #b3261e;
   --aspect-soft: #1857c4;
   --aspect-minor: #0a4d28;
@@ -2112,6 +2128,17 @@ label.stacked textarea:focus-visible {
   stroke-width: 2;
 }
 
+/* A second or third ring's Ascendant/Midheaven spokes get their own colour (#448), so a
+   multi-source chart (transits, synastry, composite) can tell its rings apart at a glance;
+   ring 0 keeps the plain `--accent` above unchanged. */
+.chart-multiwheel-ring-1.chart-multiwheel-cusp-angle {
+  stroke: var(--ring-1-color);
+}
+
+.chart-multiwheel-ring-2.chart-multiwheel-cusp-angle {
+  stroke: var(--ring-2-color);
+}
+
 .chart-glyph circle,
 .chart-glyph path,
 .chart-glyph rect {
@@ -2291,8 +2318,23 @@ svg text.chart-symbol-text-unicode {
   stroke-width: 3;
 }
 
+/* A chord between two different rings (`aspect-web.ts` only emits this class for one that
+   crosses rings, never a ring's own aspects) is dashed, so colour is never the only way to
+   tell a cross-source aspect apart from one within a single ring (#448). */
+.chart-cross-aspect {
+  stroke-dasharray: 4 3;
+}
+
 .chart-multiwheel-legend-swatch {
   fill: var(--accent);
+}
+
+.chart-multiwheel-ring-1.chart-multiwheel-legend-swatch {
+  fill: var(--ring-1-color);
+}
+
+.chart-multiwheel-ring-2.chart-multiwheel-legend-swatch {
+  fill: var(--ring-2-color);
 }
 
 .chart-multiwheel-legend-label {
