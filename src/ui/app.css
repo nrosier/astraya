@@ -674,6 +674,30 @@ dd:not(:first-of-type) {
   border-top: 1px solid color-mix(in oklab, var(--line) 65%, transparent);
 }
 
+/*
+ * The astrocartography "What the lines mean" cards (#447) wrap each dt/dd pair in its own
+ * `<div>` (`AstrocartographyView.tsx`), one per line type — valid HTML (a `<dl>` may group
+ * entries in `<div>`s), but it means each `<div>`, not `dt`/`dd`, is the shared grid's actual
+ * item: the dt/dd inside just stack in normal block flow, and the grid's `max-content` column
+ * sizes itself off the single longest unwrapped line across every entry, which is how a whole
+ * paragraph ends up overflowing instead of wrapping. This content is a heading-then-paragraph
+ * pair, not a tabular label-beside-value row the shared grid is for, so this opts out of the
+ * grid entirely rather than fighting it — dt and dd both become plain full-width blocks.
+ */
+.acg-meanings dl {
+  display: block;
+}
+
+.acg-meanings dt,
+.acg-meanings dd {
+  padding-right: 0;
+}
+
+.acg-meanings dd {
+  margin-top: 0.2rem;
+  overflow-wrap: break-word;
+}
+
 footer {
   margin-top: 4rem;
   padding-top: 1.25rem;
@@ -1203,6 +1227,20 @@ label.stacked textarea:focus-visible {
 .data-table tbody tr:last-child th,
 .data-table tbody tr:last-child td {
   border-bottom: none;
+}
+
+/* A free-text column (an interpretation sentence, #449) wraps instead of forcing the whole
+   table to scroll horizontally, unlike every other column here (names/degrees/orbs), which
+   genuinely benefits from staying on one line. `white-space: normal` alone isn't enough: the
+   table's default `table-layout: auto` sizes a column to its content's own max-content width
+   regardless, so without a `max-width` the browser just grows the column instead of wrapping
+   within it — min-width only sets a floor, not a ceiling. The extra specificity (element +
+   two classes) is needed to actually beat `.data-table th, .data-table td`'s own `nowrap`
+   above, which a single class alone ties and loses on source order. */
+.data-table td.data-table-cell-wrap {
+  white-space: normal;
+  min-width: 16rem;
+  max-width: 28rem;
 }
 
 .data-table th {

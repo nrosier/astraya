@@ -110,7 +110,7 @@ export function SortableTable<T>({
                   aria-current={selected ? 'true' : undefined}
                 >
                   {columns.map((column) => (
-                    <td key={column.key}>
+                    <td key={column.key} className={column.wrapText ? 'data-table-cell-wrap' : undefined}>
                       {column.renderCell
                         ? column.renderCell(row)
                         : column.render

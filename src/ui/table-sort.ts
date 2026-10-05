@@ -34,6 +34,13 @@ export interface TableColumn<T> {
    * copied or downloaded table, which stay plain text from `render`/`valueOf`.
    */
   readonly renderCell?: (row: T) => ReactNode;
+  /**
+   * True for a column holding free-text prose (an interpretation sentence, #449) rather than the
+   * short values every other column here has — the table's shared `white-space: nowrap` (right for
+   * names/degrees/orbs, which benefit from staying on one line) is wrong for this one, which should
+   * wrap within the column instead of forcing the whole table to scroll horizontally.
+   */
+  readonly wrapText?: boolean;
 }
 
 function comparable(value: CellValue): string | number {

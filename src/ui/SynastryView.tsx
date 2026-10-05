@@ -92,6 +92,7 @@ function aspectColumns(
       key: 'interpretation',
       label: t.interpretationLabel,
       valueOf: interpretationOf,
+      wrapText: true,
     },
   ];
 }
