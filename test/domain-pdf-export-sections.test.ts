@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 import {
   applyPdfPreset,
   defaultChartSectionOptions,
+  defaultCompositeSectionOptions,
+  defaultSynastrySectionOptions,
   EMPTY_SELECTION,
   matchPdfPreset,
   PDF_CHART_TYPES,
@@ -22,6 +24,19 @@ describe('presets', () => {
   it('says Custom for a selection that matches no preset', () => {
     const custom: PdfSelection = { personId: 'p-ada', ...EMPTY_SELECTION, birthRecord: true };
     expect(matchPdfPreset(custom)).toBeUndefined();
+  });
+
+  it('says Custom for a selection with synastry or composite ticked — no preset sets either (#441)', () => {
+    const withSynastry: PdfSelection = {
+      ...applyPdfPreset('executive-summary', 'p-ada'),
+      synastry: defaultSynastrySectionOptions('p-partner'),
+    };
+    expect(matchPdfPreset(withSynastry)).toBeUndefined();
+    const withComposite: PdfSelection = {
+      ...applyPdfPreset('executive-summary', 'p-ada'),
+      composite: defaultCompositeSectionOptions('p-partner'),
+    };
+    expect(matchPdfPreset(withComposite)).toBeUndefined();
   });
 
   it('offers every chart type in the complete archive, every table and the wheel', () => {
@@ -66,6 +81,51 @@ describe('pdfSelectionIsEmpty', () => {
         charts: [{ type: 'natal', wheel: false, tables: [] }],
       }),
     ).toBe(true);
+  });
+
+  it('is false once synastry or composite has anything ticked, true for either with nothing ticked (#441)', () => {
+    expect(
+      pdfSelectionIsEmpty({
+        personId: 'p-ada',
+        ...EMPTY_SELECTION,
+        synastry: { partnerId: 'p-partner', wheel: false, aspectsTable: false },
+      }),
+    ).toBe(true);
+    expect(
+      pdfSelectionIsEmpty({
+        personId: 'p-ada',
+        ...EMPTY_SELECTION,
+        synastry: { partnerId: 'p-partner', wheel: true, aspectsTable: false },
+      }),
+    ).toBe(false);
+    expect(
+      pdfSelectionIsEmpty({
+        personId: 'p-ada',
+        ...EMPTY_SELECTION,
+        composite: { partnerId: 'p-partner', wheel: false, tables: [] },
+      }),
+    ).toBe(true);
+    expect(
+      pdfSelectionIsEmpty({
+        personId: 'p-ada',
+        ...EMPTY_SELECTION,
+        composite: { partnerId: 'p-partner', wheel: false, tables: ['positions'] },
+      }),
+    ).toBe(false);
+  });
+});
+
+describe('defaultSynastrySectionOptions / defaultCompositeSectionOptions', () => {
+  it('starts both with their wheel on and the partner named', () => {
+    const synastry = defaultSynastrySectionOptions('p-partner');
+    expect(synastry.partnerId).toBe('p-partner');
+    expect(synastry.wheel).toBe(true);
+    expect(synastry.aspectsTable).toBe(true);
+
+    const composite = defaultCompositeSectionOptions('p-partner');
+    expect(composite.partnerId).toBe('p-partner');
+    expect(composite.wheel).toBe(true);
+    expect(composite.tables).toHaveLength(5);
   });
 });
 

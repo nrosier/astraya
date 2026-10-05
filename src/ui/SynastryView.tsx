@@ -50,7 +50,8 @@ type Load =
 
 const bodyKeyOf = (id: number): string => bodyById(id)?.key ?? String(id);
 
-function aspectColumns(
+/** Exported for the PDF export builder (#441), which reuses the same columns a CSV download would. */
+export function aspectColumns(
   t: typeof synastryViewMessages.en,
   locale: Locale,
   interpretationOf: (row: AspectRow) => string,
