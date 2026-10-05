@@ -145,7 +145,7 @@ export function CompositeView({ personId }: { personId: string }): React.JSX.Ele
         </p>
       )}
       {partnerId !== '' && load.kind === 'ready' && housesAreDefined(load.data.houses) && (
-        <ReportView chart={load.data} />
+        <ReportView chart={load.data} chartKind="composite" />
       )}
     </main>
   );

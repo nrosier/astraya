@@ -676,6 +676,36 @@ describe('POST /api/interpretation/generate', () => {
       expect(system).toContain('when there is one; without one, write a balanced reading of the whole chart');
     });
 
+    it('says nothing about chart kind by default — the facts describe an ordinary natal chart (#454)', async () => {
+      await generateWith({ mode: 'freeform', chartData: VALID_CHART_DATA, locale: 'en' });
+      const { user } = generationPrompt();
+      expect(user).not.toContain('composite');
+    });
+
+    it('tells the model the facts are a composite chart when chartKind says so (#454)', async () => {
+      await generateWith({ mode: 'freeform', chartData: VALID_CHART_DATA, locale: 'en', chartKind: 'composite' });
+      const { user } = generationPrompt();
+      expect(user).toContain('composite (midpoint) chart');
+      expect(user).toContain('not either person');
+    });
+
+    it("says 'chart', not 'natal chart', in the system instruction, since this mode also serves composite charts (#454)", async () => {
+      await generateWith({ mode: 'freeform', chartData: VALID_CHART_DATA, locale: 'en' });
+      const { system } = generationPrompt();
+      expect(system).not.toContain('natal chart');
+    });
+
+    it('rejects an unrecognised chartKind with 400, same closed-set treatment as every other field here (#454)', async () => {
+      const response = await generateWith({
+        mode: 'freeform',
+        chartData: VALID_CHART_DATA,
+        locale: 'en',
+        chartKind: 'synastry',
+      });
+      expect(response.statusCode).toBe(400);
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
     it('stores a saved interpretation from either spelling as freeform, and a restyle as grounded', async () => {
       await generateWith({ mode: 'synthesis', chartData: VALID_CHART_DATA, locale: 'en' });
       await generateWith({ mode: 'freeform', chartData: VALID_CHART_DATA, locale: 'en' });

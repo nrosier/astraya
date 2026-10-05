@@ -120,6 +120,12 @@ export type Tier2Request =
   | {
       readonly mode: 'freeform';
       readonly chartData: Tier2ChartDataPayload;
+      /**
+       * What kind of chart `chartData` is (#454); absent means `'natal'`. A composite chart's
+       * data is a two-person midpoint synthesis, not an individual's own placements — without
+       * this, the model has no way to know it isn't reading an ordinary natal chart.
+       */
+      readonly chartKind?: 'natal' | 'composite';
       /** Optional: without one the model writes a balanced reading of the whole chart (#425). */
       readonly customPrompt?: string;
       readonly locale: Locale;

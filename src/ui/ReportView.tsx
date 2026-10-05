@@ -115,10 +115,13 @@ function AiCustomizedPanel({
   report,
   locale,
   chart,
+  chartKind,
 }: {
   readonly report: Report;
   readonly locale: Locale;
   readonly chart: ChartData;
+  /** What kind of chart `chart` is (#454) — the model needs to know when it isn't an ordinary natal chart. */
+  readonly chartKind: 'natal' | 'composite';
 }): React.JSX.Element {
   const t = useMessages(reportViewMessages);
   const user = useSessionUserOrUndefined();
@@ -179,6 +182,7 @@ function AiCustomizedPanel({
         : {
             mode: 'freeform' as const,
             chartData: toTier2ChartPayload(chart),
+            ...(chartKind === 'natal' ? {} : { chartKind }),
             ...(customPrompt.trim() === '' ? {} : { customPrompt }),
             locale,
           };
@@ -330,7 +334,19 @@ function AiCustomizedPanel({
   );
 }
 
-export function ReportView({ chart }: { readonly chart: ChartData }): React.JSX.Element {
+export function ReportView({
+  chart,
+  chartKind = 'natal',
+}: {
+  readonly chart: ChartData;
+  /**
+   * What kind of chart `chart` is (#454) — defaults to `'natal'`, which every caller except
+   * `CompositeView.tsx` is. A composite chart's facts are a two-person midpoint synthesis, not
+   * an individual's own placements; the Tier 2 freeform-mode model needs to be told so, the
+   * same framing gap #450 separately covers for the pre-generated corpus report.
+   */
+  readonly chartKind?: 'natal' | 'composite';
+}): React.JSX.Element {
   const t = useMessages(reportViewMessages);
   const [activeTab, setActiveTab] = useState<InterpretationTabKey>('standard');
   const [showProvenance, setShowProvenance] = useState(false);
@@ -476,7 +492,7 @@ export function ReportView({ chart }: { readonly chart: ChartData }): React.JSX.
             ))}
           </>
         ) : (
-          <AiCustomizedPanel report={report} locale={locale} chart={chart} />
+          <AiCustomizedPanel report={report} locale={locale} chart={chart} chartKind={chartKind} />
         )}
       </div>
     </div>
