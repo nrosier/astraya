@@ -77,13 +77,16 @@ const STANDALONE_STYLE = [
   // tell it apart from a ring's own aspects — same rule app.css's `.chart-cross-aspect` applies
   // live; this is the literal copy a standalone export needs since there is no app.css there.
   '.chart-cross-aspect { stroke-dasharray: 4 3; }',
-  '.chart-multiwheel-legend-swatch { fill: #5b3fd4; }',
-  // A second or third ring's own colour (#448), matching app.css's `--ring-1-color`/
-  // `--ring-2-color` light-theme values — see that file's own comment for why these two hues.
-  '.chart-multiwheel-ring-1.chart-multiwheel-cusp-angle { stroke: #0f766e; }',
-  '.chart-multiwheel-ring-2.chart-multiwheel-cusp-angle { stroke: #9d174d; }',
-  '.chart-multiwheel-ring-1.chart-multiwheel-legend-swatch { fill: #0f766e; }',
-  '.chart-multiwheel-ring-2.chart-multiwheel-legend-swatch { fill: #9d174d; }',
+  // The legend swatch is a short line sample, not a dot (#448): a stroke, not a fill, so it
+  // can carry the same dash pattern as the angle spoke it stands for.
+  '.chart-multiwheel-legend-swatch { fill: none; stroke: #5b3fd4; stroke-width: 2; }',
+  // A second or third ring's own colour AND dash pattern (#448), matching app.css's
+  // `--ring-1-color`/`--ring-2-color` light-theme values and dash patterns — see that file's
+  // own comment for why these two hues and dash styles.
+  '.chart-multiwheel-ring-1.chart-multiwheel-cusp-angle { stroke: #0f766e; stroke-dasharray: 1 3; }',
+  '.chart-multiwheel-ring-2.chart-multiwheel-cusp-angle { stroke: #9d174d; stroke-dasharray: 6 2 1 2; }',
+  '.chart-multiwheel-ring-1.chart-multiwheel-legend-swatch { stroke: #0f766e; stroke-dasharray: 1 3; }',
+  '.chart-multiwheel-ring-2.chart-multiwheel-legend-swatch { stroke: #9d174d; stroke-dasharray: 6 2 1 2; }',
   '.chart-multiwheel-legend-label { fill: #16152b; }',
   '.chart-sheet-title { fill: #16152b; font-weight: 650; }',
   '.chart-sheet-meta { fill: #5c5878; }',

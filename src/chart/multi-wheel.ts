@@ -625,26 +625,36 @@ export function renderMultiWheelSvg(
   // Fixed corner legend, not radial text (see this module's doc comment).
   // Pointless for a single ring, which has nothing to tell apart.
   if (rings.length > 1) {
+    const swatchWidth = geometry.panelFontSize * 1.1;
     rings.forEach((ring, index) => {
       const x = -geometry.labelMargin + geometry.panelFontSize * 0.5;
       const y = -geometry.labelMargin + geometry.panelFontSize * (1 + index * 1.3);
+      // A short line sample, not a coloured dot (#448): what actually tells a ring's own
+      // Ascendant/Midheaven spoke apart from another ring's is this same solid/dotted/
+      // dash-dot line style, so the legend reuses the identical class rather than a fill-only
+      // shape that drops the dash pattern a reader needs to match it against the wheel.
+      // `data-ring-legend` makes the whole entry clickable (#448): `wheel-interaction.ts`
+      // resolves it to that ring's own click-to-isolate selection, the same mechanism a
+      // planet or sign click already uses, so a reader can isolate one source's placements
+      // and tensions by clicking its name instead of hunting for one of its bodies.
       parts.push(
-        circle(
-          x + geometry.panelFontSize * 0.3,
-          y - geometry.panelFontSize * 0.3,
-          geometry.panelFontSize * 0.3,
-          `chart-multiwheel-legend-swatch chart-multiwheel-ring-${String(index)}`,
-        ),
-      );
-      parts.push(
-        text(
-          x + geometry.panelFontSize,
-          y,
-          'start',
-          'chart-multiwheel-legend-label',
-          escapeXml(ring.label),
-          geometry.panelFontSize,
-        ),
+        `<g data-ring-legend="${String(index)}">` +
+          line(
+            x,
+            y - geometry.panelFontSize * 0.3,
+            x + swatchWidth,
+            y - geometry.panelFontSize * 0.3,
+            `chart-multiwheel-legend-swatch chart-multiwheel-ring-${String(index)}`,
+          ) +
+          text(
+            x + swatchWidth + geometry.panelFontSize * 0.4,
+            y,
+            'start',
+            'chart-multiwheel-legend-label',
+            escapeXml(ring.label),
+            geometry.panelFontSize,
+          ) +
+          '</g>',
       );
     });
   }
