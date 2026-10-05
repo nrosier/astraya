@@ -55,6 +55,9 @@ export type Route =
   // periodic-transit's "as of" date above.
   | { readonly kind: 'astrocartography'; readonly personId: string }
   | { readonly kind: 'shared' }
+  // The PDF export builder (#441): the primary person is picked on the page itself, not the URL,
+  // the same reasoning synastry's second person already uses.
+  | { readonly kind: 'export-builder' }
   | { readonly kind: 'cycles' }
   | { readonly kind: 'eclipses' }
   | { readonly kind: 'horary' }
@@ -98,6 +101,9 @@ export function parseRoute(hash: string): Route {
     // #65: a chart shared by link — everything it needs is in the query, not the store.
     case '#/shared':
       return { kind: 'shared' };
+    // #441: the PDF export builder — needs the store (to list people) but not person-scoped.
+    case '#/export':
+      return { kind: 'export-builder' };
     // #410: planetary cycles — ephemeris only, no person, no stored data.
     case '#/cycles':
       return { kind: 'cycles' };

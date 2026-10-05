@@ -44,9 +44,12 @@
     "@node-rs/argon2": "^2.2.1",
     "fastify": "^5.12.3",
     "jose": "^6.2.12",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.8",
     "luxon": "^3.7.2",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "svg2pdf.js": "^2.8.1",
     "sweph-wasm": "2.6.9",
     "tz-lookup": "^6.1.25"
   },

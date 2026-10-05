@@ -12,6 +12,8 @@ const en = {
   menuButtonClose: 'Close menu',
   personChipLabel: (name: string) => `Chart of ${name}`,
   exportLabel: 'Export',
+  exportPdfBuilder: 'Build custom PDF…',
+  exportPdfBuilderHint: 'Choose what goes into one PDF document, with each section’s own options.',
   exportEverything: 'Everything (one file)',
   exportEverythingHint:
     'Every person on this device with their birth record, and their natal chart’s data, as one JSON file.',
@@ -62,6 +64,8 @@ const nl: typeof en = {
   menuButtonClose: 'Menu sluiten',
   personChipLabel: (name: string) => `Horoscoop van ${name}`,
   exportLabel: 'Exporteren',
+  exportPdfBuilder: 'PDF samenstellen…',
+  exportPdfBuilderHint: 'Kies wat in één PDF-document komt, met de eigen opties van elk onderdeel.',
   exportEverything: 'Alles (één bestand)',
   exportEverythingHint:
     'Elke persoon op dit apparaat met zijn of haar geboortegegevens en de gegevens van het geboortehoroscoop, als één JSON-bestand.',

@@ -1,0 +1,118 @@
+/**
+ * Message catalogue for `pdf-export.ts` and `PdfExportBuilder.tsx` (#441).
+ */
+import type { PdfChartTable, PdfPresetKey } from '../domain/pdf-export-sections.js';
+import type { ChartType } from './chart-sections.js';
+import type { TimeAccuracy } from '../domain/person.js';
+
+const en = {
+  heading: 'Build a PDF',
+  hint: 'Pick what goes into one PDF document: the birth record, the interpretation, and any of the charts, each with its own options — chosen here, not read off a screen you had open.',
+  personLabel: 'Person',
+  noPeople: 'Add a person first.',
+  unnamedOption: 'Unnamed',
+  presetLabel: 'Starting point',
+  presetOptions: {
+    custom: 'Custom',
+    'executive-summary': 'Executive summary (natal wheel, positions, interpretation)',
+    'complete-archive': 'Complete archive (every chart, every table, interpretation)',
+  } satisfies Record<'custom' | PdfPresetKey, string>,
+  birthRecordLabel: 'Birth record',
+  interpretationLabel: 'Interpretation',
+  interpretationBaseLabel: 'Written report (included at no extra cost)',
+  interpretationAiLabel: 'AI-customised narrative',
+  interpretationAiHint: 'Generated on request and costs an API call. Needs its own consent, spent on this one build.',
+  interpretationAiConsentLabel: 'I consent to generating an AI-customised narrative for this export.',
+  chartsLegend: 'Charts',
+  chartTypeLabels: {
+    natal: 'Natal',
+    draconic: 'Draconic',
+    harmonic: 'Harmonic',
+    'solar-return': 'Solar return',
+    'lunar-return': 'Lunar return',
+  } satisfies Record<ChartType, string>,
+  wheelLabel: 'Wheel',
+  tableLabels: {
+    positions: 'Positions',
+    houses: 'Houses',
+    aspects: 'Aspects',
+    dignities: 'Dignities',
+    derived: 'Derived points',
+  } satisfies Record<PdfChartTable, string>,
+  harmonicNumberLabel: 'Harmonic number',
+  returnYearLabel: 'Year',
+  returnFromDateLabel: 'On or after (UTC date)',
+  buildButton: 'Build PDF',
+  buildingStatus: 'Building the PDF…',
+  nothingSelected: 'nothing is selected',
+  someSectionsSkipped: (count: string) => `${count} section(s) could not be included; see the end of the PDF.`,
+  dateLabel: 'Date',
+  placeLabel: 'Place',
+  coordinatesLabel: 'Coordinates',
+  timeAccuracyLabel: 'How the time is known',
+  timeAccuracyValues: {
+    recorded: 'Recorded (certificate or hospital record)',
+    remembered: 'Remembered',
+    approximate: 'Approximate',
+    unknown: 'Unknown',
+  } satisfies Record<TimeAccuracy, string>,
+  aiNarrativeHeading: 'AI-customised narrative',
+};
+
+const nl: typeof en = {
+  heading: 'PDF samenstellen',
+  hint: 'Kies wat in één PDF-document komt: de geboortegegevens, de interpretatie, en elke horoscoop met zijn eigen opties — hier gekozen, niet overgenomen van een scherm dat open stond.',
+  personLabel: 'Persoon',
+  noPeople: 'Voeg eerst een persoon toe.',
+  unnamedOption: 'Naamloos',
+  presetLabel: 'Beginpunt',
+  presetOptions: {
+    custom: 'Eigen keuze',
+    'executive-summary': 'Samenvatting (geboortewiel, posities, interpretatie)',
+    'complete-archive': 'Volledig archief (elke horoscoop, elke tabel, interpretatie)',
+  } satisfies Record<'custom' | PdfPresetKey, string>,
+  birthRecordLabel: 'Geboortegegevens',
+  interpretationLabel: 'Interpretatie',
+  interpretationBaseLabel: 'Geschreven verslag (zonder extra kosten)',
+  interpretationAiLabel: 'AI-aangepast verhaal',
+  interpretationAiHint:
+    'Wordt op verzoek gegenereerd en kost een API-aanroep. Vereist eigen toestemming, besteed aan deze ene export.',
+  interpretationAiConsentLabel: 'Ik geef toestemming om een AI-aangepast verhaal te genereren voor deze export.',
+  chartsLegend: 'Horoscopen',
+  chartTypeLabels: {
+    natal: 'Geboortehoroscoop',
+    draconic: 'Draconisch',
+    harmonic: 'Harmonisch',
+    'solar-return': 'Zonneterugkeer',
+    'lunar-return': 'Maanterugkeer',
+  } satisfies Record<ChartType, string>,
+  wheelLabel: 'Wiel',
+  tableLabels: {
+    positions: 'Posities',
+    houses: 'Huizen',
+    aspects: 'Aspecten',
+    dignities: 'Waardigheden',
+    derived: 'Afgeleide punten',
+  } satisfies Record<PdfChartTable, string>,
+  harmonicNumberLabel: 'Harmonisch getal',
+  returnYearLabel: 'Jaar',
+  returnFromDateLabel: 'Op of na (UTC-datum)',
+  buildButton: 'PDF samenstellen',
+  buildingStatus: 'PDF wordt samengesteld…',
+  nothingSelected: 'er is niets geselecteerd',
+  someSectionsSkipped: (count: string) =>
+    `${count} onderdeel/onderdelen kon(den) niet worden opgenomen; zie het einde van de PDF.`,
+  dateLabel: 'Datum',
+  placeLabel: 'Plaats',
+  coordinatesLabel: 'Coördinaten',
+  timeAccuracyLabel: 'Hoe de tijd bekend is',
+  timeAccuracyValues: {
+    recorded: 'Vastgelegd (akte of ziekenhuisdossier)',
+    remembered: 'Herinnerd',
+    approximate: 'Bij benadering',
+    unknown: 'Onbekend',
+  } satisfies Record<TimeAccuracy, string>,
+  aiNarrativeHeading: 'AI-aangepast verhaal',
+};
+
+export const pdfExportMessages = { en, nl };

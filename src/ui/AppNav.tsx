@@ -130,6 +130,16 @@ function ExportMenu({
       active={false}
       dropdown={dropdown}
     >
+      <a
+        href="#/export"
+        className="app-nav-menu-item"
+        title={t.exportPdfBuilderHint}
+        onClick={() => {
+          dropdown.close();
+        }}
+      >
+        {t.exportPdfBuilder}
+      </a>
       <button
         type="button"
         className="app-nav-menu-item"

@@ -206,7 +206,7 @@ function symbolCell(bodyKey: string, fallback: string, symbolClass: SymbolClass)
   );
 }
 
-function positionColumns(
+export function positionColumns(
   t: typeof chartViewMessages.en,
   locale: Locale,
   symbolClass: SymbolClass,
@@ -269,18 +269,18 @@ function positionColumns(
   ];
 }
 
-function houseCuspColumns(t: typeof chartViewMessages.en, locale: Locale): readonly TableColumn<HouseCuspRow>[] {
+export function houseCuspColumns(t: typeof chartViewMessages.en, locale: Locale): readonly TableColumn<HouseCuspRow>[] {
   return [
     { key: 'house', label: t.houseLabel, valueOf: (row) => row.house },
     ...degreeColumns<HouseCuspRow>(t, locale),
   ];
 }
 
-function angleColumns(t: typeof chartViewMessages.en, locale: Locale): readonly TableColumn<AngleRow>[] {
+export function angleColumns(t: typeof chartViewMessages.en, locale: Locale): readonly TableColumn<AngleRow>[] {
   return [{ key: 'label', label: t.angleLabel, valueOf: (row) => row.label }, ...degreeColumns<AngleRow>(t, locale)];
 }
 
-function aspectColumns(
+export function aspectColumns(
   t: typeof chartViewMessages.en,
   locale: Locale,
   selection?: TableSelection,
@@ -328,7 +328,7 @@ function aspectColumns(
   ];
 }
 
-function dignityColumns(t: typeof chartViewMessages.en, locale: Locale): readonly TableColumn<DignityRow>[] {
+export function dignityColumns(t: typeof chartViewMessages.en, locale: Locale): readonly TableColumn<DignityRow>[] {
   return [
     {
       key: 'bodyName',
@@ -368,7 +368,10 @@ function dignityColumns(t: typeof chartViewMessages.en, locale: Locale): readonl
   ];
 }
 
-function dispositorColumns(t: typeof chartViewMessages.en, locale: Locale): readonly TableColumn<DispositorRow>[] {
+export function dispositorColumns(
+  t: typeof chartViewMessages.en,
+  locale: Locale,
+): readonly TableColumn<DispositorRow>[] {
   return [
     {
       key: 'bodyName',
@@ -400,7 +403,7 @@ function dispositorColumns(t: typeof chartViewMessages.en, locale: Locale): read
   ];
 }
 
-function declinationColumns(
+export function declinationColumns(
   t: typeof chartViewMessages.en,
   locale: Locale,
 ): readonly TableColumn<DeclinationContactRow>[] {
@@ -422,7 +425,7 @@ function declinationColumns(
   ];
 }
 
-function antisciaColumns(t: typeof chartViewMessages.en, locale: Locale): readonly TableColumn<AntisciaRow>[] {
+export function antisciaColumns(t: typeof chartViewMessages.en, locale: Locale): readonly TableColumn<AntisciaRow>[] {
   return [
     {
       key: 'bodyName',
@@ -446,7 +449,7 @@ function antisciaColumns(t: typeof chartViewMessages.en, locale: Locale): readon
   ];
 }
 
-function fixedStarColumns(t: typeof chartViewMessages.en, locale: Locale): readonly TableColumn<FixedStarRow>[] {
+export function fixedStarColumns(t: typeof chartViewMessages.en, locale: Locale): readonly TableColumn<FixedStarRow>[] {
   return [
     // Star names (Regulus, Spica, ...) are proper nouns, the same in both locales — no glossary
     // lookup needed, unlike body/aspect names.
@@ -461,7 +464,10 @@ function fixedStarColumns(t: typeof chartViewMessages.en, locale: Locale): reado
   ];
 }
 
-function derivedPointColumns(t: typeof chartViewMessages.en, locale: Locale): readonly TableColumn<DerivedPointRow>[] {
+export function derivedPointColumns(
+  t: typeof chartViewMessages.en,
+  locale: Locale,
+): readonly TableColumn<DerivedPointRow>[] {
   return [
     { key: 'label', label: t.pointLabel, valueOf: (row) => row.label },
     ...degreeColumns<DerivedPointRow>(t, locale),

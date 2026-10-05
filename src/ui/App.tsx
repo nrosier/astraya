@@ -57,6 +57,7 @@ const ElectionalView = lazy(async () => ({ default: (await import('./ElectionalV
 const HoraryView = lazy(async () => ({ default: (await import('./HoraryView.js')).HoraryView }));
 const EclipsesView = lazy(async () => ({ default: (await import('./EclipsesView.js')).EclipsesView }));
 const CyclesView = lazy(async () => ({ default: (await import('./CyclesView.js')).CyclesView }));
+const PdfExportBuilder = lazy(async () => ({ default: (await import('./PdfExportBuilder.js')).PdfExportBuilder }));
 const AdminPanel = lazy(async () => ({ default: (await import('./AdminPanel.js')).AdminPanel }));
 const AdminUsagePanel = lazy(async () => ({ default: (await import('./AdminPanel.js')).AdminUsagePanel }));
 const CorpusOverridesPanel = lazy(async () => ({
@@ -385,6 +386,14 @@ function renderScreen(parsed: Route, seVersion: string | undefined): React.JSX.E
     return (
       <Stored>
         <People />
+      </Stored>
+    );
+  }
+
+  if (parsed.kind === 'export-builder') {
+    return (
+      <Stored>
+        <PdfExportBuilder />
       </Stored>
     );
   }
