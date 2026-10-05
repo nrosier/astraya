@@ -8,8 +8,11 @@
  *
  * First slice (#441): the Charts page's five chart types with their own tables and wheel, the birth
  * record, and the interpretation report (the base corpus text, plus an opt-in AI-customised
- * narrative that costs an API call). Synastry, composite, transits, forecast, progressions, solar
- * arc, profections and astrocartography are not sections here yet — see the issue for the follow-up.
+ * narrative that costs an API call). Second slice: synastry and composite, each with their own
+ * partner picker — unlike a chart type (independently on/off, several at once), only one partner
+ * can be compared/combined with at a time, so these are a single optional field each rather than
+ * an array entry. Transits, forecast, progressions, solar arc, profections and astrocartography are
+ * not sections here yet — see the issue for the follow-up.
  */
 import type { ChartType } from '../ui/chart-sections.js';
 
@@ -41,11 +44,33 @@ export interface PdfInterpretationOptions {
   readonly aiCustomised: boolean;
 }
 
+/** Synastry's own place in the export: the partner it's compared against, and the wheel/table on. */
+export interface PdfSynastrySectionOptions {
+  readonly partnerId: string;
+  readonly wheel: boolean;
+  /** The one table synastry's own screen shows (the ranked cross-chart aspects); no sub-choice to make. */
+  readonly aspectsTable: boolean;
+}
+
+/**
+ * Composite's own place in the export: the partner it's combined with, and which tables (the
+ * same five a chart type can show — a composite is a single synthetic `ChartData`, same as any
+ * other chart this builder already draws).
+ */
+export interface PdfCompositeSectionOptions {
+  readonly partnerId: string;
+  readonly wheel: boolean;
+  readonly tables: readonly PdfChartTable[];
+}
+
 export interface PdfSelection {
   readonly personId: string;
   readonly birthRecord: boolean;
   readonly interpretation: PdfInterpretationOptions;
   readonly charts: readonly PdfChartSectionOptions[];
+  /** Absent means "not included" — there is at most one of each at a time, unlike `charts`. */
+  readonly synastry?: PdfSynastrySectionOptions;
+  readonly composite?: PdfCompositeSectionOptions;
 }
 
 const EVERY_TABLE = PDF_CHART_TABLES;
@@ -55,6 +80,14 @@ export const EMPTY_SELECTION: Omit<PdfSelection, 'personId'> = {
   interpretation: { base: false, aiCustomised: false },
   charts: [],
 };
+
+export function defaultSynastrySectionOptions(partnerId: string): PdfSynastrySectionOptions {
+  return { partnerId, wheel: true, aspectsTable: true };
+}
+
+export function defaultCompositeSectionOptions(partnerId: string): PdfCompositeSectionOptions {
+  return { partnerId, wheel: true, tables: EVERY_TABLE };
+}
 
 /** One chart type, every table and the wheel on, with no type-specific parameters set. */
 function fullChartSection(type: ChartType): PdfChartSectionOptions {
@@ -105,7 +138,11 @@ export function matchPdfPreset(selection: PdfSelection): PdfPresetKey | undefine
           other.tables.length === chart.tables.length &&
           chart.tables.every((table) => other.tables.includes(table))
         );
-      })
+      }) &&
+      // No preset sets either — a partner is always picked separately — so a selection that
+      // does include one, however it's filled in, can only ever be "Custom".
+      selection.synastry === undefined &&
+      selection.composite === undefined
     );
   });
 }
@@ -116,7 +153,9 @@ export function pdfSelectionIsEmpty(selection: PdfSelection): boolean {
     !selection.birthRecord &&
     !selection.interpretation.base &&
     !selection.interpretation.aiCustomised &&
-    selection.charts.every((chart) => !chart.wheel && chart.tables.length === 0)
+    selection.charts.every((chart) => !chart.wheel && chart.tables.length === 0) &&
+    (selection.synastry === undefined || (!selection.synastry.wheel && !selection.synastry.aspectsTable)) &&
+    (selection.composite === undefined || (!selection.composite.wheel && selection.composite.tables.length === 0))
   );
 }
 

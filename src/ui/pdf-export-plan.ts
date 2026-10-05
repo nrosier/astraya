@@ -13,6 +13,7 @@
  * (`TableColumn.render`, falling back to `String(valueOf(row))`), so no generic row type, and nothing
  * jsPDF-shaped, ever has to cross from this file into that one.
  */
+import { bodyById } from '../astrology/bodies.js';
 import type { RulershipChoice } from '../astrology/rulership.js';
 import {
   housesAreDefined,
@@ -27,6 +28,8 @@ import {
   almutenOfAscendant,
   angleRows,
   antisciaRows,
+  chartWheelRing,
+  crossAspectRows,
   declinationContactRows,
   derivedPointRows,
   dignityRows,
@@ -36,14 +39,25 @@ import {
   positionRows,
   aspectRows,
   chartSheetInput,
+  type AspectRow,
 } from '../domain/chart-tables.js';
-import type { PdfChartSectionOptions, PdfChartTable, PdfSelection } from '../domain/pdf-export-sections.js';
+import { computeComposite } from '../domain/composite.js';
+import {
+  type PdfChartSectionOptions,
+  type PdfChartTable,
+  type PdfCompositeSectionOptions,
+  type PdfSelection,
+  type PdfSynastrySectionOptions,
+} from '../domain/pdf-export-sections.js';
 import type { Person } from '../domain/person.js';
+import { computeSynastry, rankedSynastryAspects } from '../domain/synastry.js';
 import { renderChartSheetSvg } from '../chart/chart-sheet.js';
+import { renderMultiWheelSvg, type CrossRingAspects } from '../chart/multi-wheel.js';
 import { standaloneSvg } from '../chart/standalone-svg.js';
 import { resolveWheelDisplayOptions } from '../chart/wheel-options.js';
 import type { EphemerisProvider } from '../ephemeris/types.js';
-import type { Locale } from '../interpretation/schema.js';
+import type { CorpusEntry, Locale } from '../interpretation/schema.js';
+import type { BirthMomentInput } from '../time/types.js';
 import { assembleReport } from '../interpretation/report.js';
 import { loadRuntimeCorpus } from '../interpretation/corpus-client.js';
 import { generateTier2Interpretation, toTier2ChartPayload } from '../interpretation/tier2-client.js';
@@ -63,6 +77,9 @@ import type { chartViewMessages } from './ChartView.messages.js';
 import type { pdfExportMessages } from './pdf-export.messages.js';
 import { bodyDisplayName, bodyShortName } from './astro-names.messages.js';
 import { formatCoordinate } from './format.js';
+import { aspectColumns as synastryAspectColumns } from './SynastryView.js';
+import { synastryViewMessages } from './SynastryView.messages.js';
+import { synastryText } from './synastry-text.js';
 import type { TableColumn } from './table-sort.js';
 
 /** A table reduced to plain strings — the same conversion a CSV download already does for every cell. */
@@ -112,6 +129,8 @@ export interface PdfPlanContext {
   readonly aiConsent: boolean;
   /** Injectable for the same reason `corpus-client.ts`'s own `fetchImpl` is — testability without a real network. */
   readonly corpusFetch?: typeof fetch;
+  /** Every stored person, so a synastry/composite section's own `partnerId` can be resolved; absent (or missing the id) if neither section is in the selection. */
+  readonly people?: ReadonlyMap<string, Person>;
 }
 
 function tablePlanOf<T>(caption: string, columns: readonly TableColumn<T>[], rows: readonly T[]): PdfTablePlan {
@@ -265,6 +284,114 @@ async function buildChartSectionPlan(
   };
 }
 
+const bodyKeyOf = (id: number): string => bodyById(id)?.key ?? String(id);
+
+/** The second person a synastry/composite section names, resolved against every stored person (#441). */
+function resolvePartner(partnerId: string, context: PdfPlanContext): Person & { readonly moment: BirthMomentInput } {
+  const partner = context.people?.get(partnerId);
+  if (partner === undefined) throw new Error('the chosen partner could not be found');
+  if (partner.moment === undefined || partner.timeAccuracy === 'unknown') {
+    throw new Error('the chosen partner has no complete, known-time birth record');
+  }
+  return { ...partner, moment: partner.moment };
+}
+
+async function buildSynastrySectionPlan(
+  options: PdfSynastrySectionOptions,
+  context: PdfPlanContext,
+  pt: typeof pdfExportMessages.en,
+): Promise<PdfChartSectionPlan> {
+  const { person, provider, locale, corpusFetch } = context;
+  if (person.moment === undefined) throw new Error('this person has no complete birth record');
+  const partner = resolvePartner(options.partnerId, context);
+  // Safe: both just checked above.
+  const momentA = person.moment;
+  const momentB = partner.moment;
+  const st = synastryViewMessages[locale];
+  const data = await computeSynastry(momentA, momentB, provider);
+  const nameA = person.displayName || st.personALabel;
+  const nameB = partner.displayName || st.personBLabel;
+  const heading = `${pt.synastryLabel} — ${nameA} / ${nameB}`;
+
+  let svg: PdfChartSectionPlan['svg'];
+  if (options.wheel) {
+    const ringA = chartWheelRing(data.chartA, nameA);
+    const ringB = chartWheelRing(data.chartB, nameB);
+    // Same reasoning SynastryView.tsx's own wheel gives: `outerRingIndex`/`innerRingIndex` name
+    // which side of the aspect a ring resolves, not radius order — chartA is "outer" here even
+    // though it is drawn as ring 0.
+    const crossAspects: readonly CrossRingAspects[] = [{ outerRingIndex: 0, innerRingIndex: 1, aspects: data.aspects }];
+    const markup = renderMultiWheelSvg([ringA, ringB], crossAspects);
+    svg = { markup: standaloneSvg(markup), width: 800, height: 800 };
+  }
+
+  const tables: PdfTablePlan[] = [];
+  if (options.aspectsTable) {
+    const corpus = await loadRuntimeCorpus(locale, corpusFetch ?? fetch).catch((): readonly CorpusEntry[] => []);
+    const ranked = rankedSynastryAspects(data);
+    const importanceByRow = new Map(
+      ranked.map(({ aspect, importance }) => [
+        `${bodyKeyOf(aspect.bodyA)}-${aspect.aspect.key}-${bodyKeyOf(aspect.bodyB)}`,
+        importance,
+      ]),
+    );
+    const importanceOf = (row: AspectRow): number =>
+      importanceByRow.get(`${row.bodyAKey}-${row.aspectKey}-${row.bodyBKey}`) ?? 0;
+    const interpretationOf = (row: AspectRow): string => {
+      const { text, speaksFrom } = synastryText(row, locale, corpus);
+      const name = speaksFrom === 'a' ? nameA : speaksFrom === 'b' ? nameB : undefined;
+      return speaksFrom === undefined || name === undefined ? text : `${st.seenFromSide(name)}${text}`;
+    };
+    const rows = crossAspectRows(ranked.map((r) => r.aspect));
+    tables.push(
+      tablePlanOf(st.aspectsCaption, synastryAspectColumns(st, locale, interpretationOf, importanceOf), rows),
+    );
+  }
+
+  return {
+    kind: 'chart',
+    heading,
+    ...(svg === undefined ? {} : { svg }),
+    tables,
+  };
+}
+
+async function buildCompositeSectionPlan(
+  options: PdfCompositeSectionOptions,
+  context: PdfPlanContext,
+  t: typeof chartViewMessages.en,
+  pt: typeof pdfExportMessages.en,
+): Promise<PdfChartSectionPlan> {
+  const { person, provider, rulership, locale } = context;
+  if (person.moment === undefined) throw new Error('this person has no complete birth record');
+  const partner = resolvePartner(options.partnerId, context);
+  const momentA = person.moment;
+  const momentB = partner.moment;
+  const nameA = person.displayName || pt.unnamedOption;
+  const nameB = partner.displayName || pt.unnamedOption;
+  const { composite: data } = await computeComposite(momentA, momentB, provider, { rulership });
+  const heading = `${pt.compositeLabel} — ${nameA} / ${nameB}`;
+  const housesRenderable = housesAreDefined(data.houses);
+
+  let svg: PdfChartSectionPlan['svg'];
+  if (options.wheel && housesRenderable) {
+    const sheet = renderChartSheetSvg(
+      chartSheetInput(data, [heading], pt.compositeLabel, {}, (bodyKey) => bodyShortName(bodyKey, locale)),
+      { ...resolveWheelDisplayOptions({}) },
+    );
+    svg = { markup: standaloneSvg(sheet.markup), width: sheet.width, height: sheet.height };
+  }
+
+  const tables = options.tables.flatMap((table) => tablesOf(data, table, housesRenderable, t, locale, rulership));
+
+  return {
+    kind: 'chart',
+    heading,
+    ...(svg === undefined ? {} : { svg }),
+    tables,
+  };
+}
+
 async function buildInterpretationSections(
   selection: PdfSelection['interpretation'],
   context: PdfPlanContext,
@@ -335,6 +462,22 @@ export async function buildPdfPlan(
       errors.push(
         `${chartTypeLabel(chartOptions.type, pt)}: ${error instanceof Error ? error.message : String(error)}`,
       );
+    }
+  }
+
+  if (selection.synastry !== undefined && (selection.synastry.wheel || selection.synastry.aspectsTable)) {
+    try {
+      sections.push(await buildSynastrySectionPlan(selection.synastry, context, pt));
+    } catch (error) {
+      errors.push(`${pt.synastryLabel}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  if (selection.composite !== undefined && (selection.composite.wheel || selection.composite.tables.length > 0)) {
+    try {
+      sections.push(await buildCompositeSectionPlan(selection.composite, context, t, pt));
+    } catch (error) {
+      errors.push(`${pt.compositeLabel}: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 

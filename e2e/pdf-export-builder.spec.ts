@@ -41,6 +41,14 @@ const ADA = {
   longitude: '-0.1276',
 };
 
+const CHARLES = {
+  name: 'Charles Babbage',
+  date: '1820-12-26',
+  time: '10:00:00',
+  latitude: '51.5072',
+  longitude: '-0.1276',
+};
+
 test('the Export menu opens the PDF builder, and a preset downloads a real PDF', async ({ page }) => {
   test.setTimeout(90_000);
   await gotoAndSettle(page, `${baseUrl}/#/people`);
@@ -104,4 +112,50 @@ test('the AI-customised narrative needs its own consent tick before Build PDF is
     .getByRole('checkbox', { name: 'I consent to generating an AI-customised narrative for this export.' })
     .check();
   await expect(buildButton).toBeEnabled();
+});
+
+test('synastry and composite each get their own partner picker, and both build into one PDF (#441)', async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  await createPerson(page, ADA);
+  await page.getByRole('link', { name: '← People' }).click();
+  await createPerson(page, CHARLES);
+  await page.goto(`${baseUrl}/#/export`);
+  await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Ada Lovelace' });
+
+  // Neither partner picker exists until its own checkbox is ticked.
+  await expect(page.getByLabel('Compare with', { exact: true })).toHaveCount(0);
+  await expect(page.getByLabel('Compose with', { exact: true })).toHaveCount(0);
+
+  await page.getByRole('checkbox', { name: 'Synastry', exact: true }).check();
+  await page.getByLabel('Compare with', { exact: true }).selectOption({ label: 'Charles Babbage' });
+  await page.getByRole('checkbox', { name: 'Composite', exact: true }).check();
+  await page.getByLabel('Compose with', { exact: true }).selectOption({ label: 'Charles Babbage' });
+
+  const buildButton = page.getByRole('button', { name: 'Build PDF', exact: true });
+  await expect(buildButton).toBeEnabled();
+  const [download] = await Promise.all([page.waitForEvent('download'), buildButton.click()]);
+  const chunks: Buffer[] = [];
+  for await (const chunk of await download.createReadStream()) chunks.push(chunk as Buffer);
+  const pdf = Buffer.concat(chunks);
+  expect(pdf.subarray(0, 5).toString('latin1')).toBe('%PDF-');
+  expect(pdf.length).toBeGreaterThan(1000);
+  await expect(page.getByRole('status')).toHaveText('✓');
+});
+
+test('unticking Synastry hides its partner picker and drops it from the selection', async ({ page }) => {
+  test.setTimeout(60_000);
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  await createPerson(page, ADA);
+  await page.getByRole('link', { name: '← People' }).click();
+  await createPerson(page, CHARLES);
+  await page.goto(`${baseUrl}/#/export`);
+  await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Ada Lovelace' });
+
+  await page.getByRole('checkbox', { name: 'Synastry', exact: true }).check();
+  await expect(page.getByLabel('Compare with', { exact: true })).toBeVisible();
+  await page.getByRole('checkbox', { name: 'Synastry', exact: true }).uncheck();
+  await expect(page.getByLabel('Compare with', { exact: true })).toHaveCount(0);
 });

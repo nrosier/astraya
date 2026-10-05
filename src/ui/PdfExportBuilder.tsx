@@ -14,6 +14,8 @@ import { useId, useMemo, useState } from 'react';
 import {
   applyPdfPreset,
   defaultChartSectionOptions,
+  defaultCompositeSectionOptions,
+  defaultSynastrySectionOptions,
   EMPTY_SELECTION,
   matchPdfPreset,
   PDF_CHART_TABLES,
@@ -22,8 +24,11 @@ import {
   pdfSelectionIsEmpty,
   type PdfChartSectionOptions,
   type PdfChartTable,
+  type PdfCompositeSectionOptions,
   type PdfSelection,
+  type PdfSynastrySectionOptions,
 } from '../domain/pdf-export-sections.js';
+import type { Person } from '../domain/person.js';
 import type { ChartType } from './chart-sections.js';
 import { chartViewMessages } from './ChartView.messages.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
@@ -51,6 +56,11 @@ function chartOf(selection: Draft, type: ChartType): PdfChartSectionOptions | un
   return selection.charts.find((c) => c.type === type);
 }
 
+/** A partner needs a complete, known-time birth record — same requirement SynastryView/CompositeView gate their own picker on. */
+function isPartnerCandidate(candidate: Person, excludingId: string): boolean {
+  return candidate.id !== excludingId && candidate.moment !== undefined && candidate.timeAccuracy !== 'unknown';
+}
+
 export function PdfExportBuilder(): React.JSX.Element {
   const t = useMessages(pdfExportMessages);
   const ct = useMessages(chartViewMessages);
@@ -67,6 +77,10 @@ export function PdfExportBuilder(): React.JSX.Element {
   const id = useId();
 
   const person = state.people.get(personId);
+  const partnerCandidates = useMemo(
+    () => people.filter((candidate) => isPartnerCandidate(candidate, personId)),
+    [people, personId],
+  );
   const fullSelection: PdfSelection = { personId, ...selection };
   const currentPreset = matchPdfPreset(fullSelection);
   const empty = pdfSelectionIsEmpty(fullSelection);
@@ -99,12 +113,61 @@ export function PdfExportBuilder(): React.JSX.Element {
     });
   };
 
+  const toggleSynastry = (included: boolean, firstPartnerId: string): void => {
+    setSelection((current) => {
+      if (!included) {
+        const next = { ...current };
+        delete next.synastry;
+        return next;
+      }
+      return { ...current, synastry: defaultSynastrySectionOptions(firstPartnerId) };
+    });
+  };
+
+  const patchSynastry = (patch: Partial<PdfSynastrySectionOptions>): void => {
+    setSelection((current) =>
+      current.synastry === undefined ? current : { ...current, synastry: { ...current.synastry, ...patch } },
+    );
+  };
+
+  const toggleComposite = (included: boolean, firstPartnerId: string): void => {
+    setSelection((current) => {
+      if (!included) {
+        const next = { ...current };
+        delete next.composite;
+        return next;
+      }
+      return { ...current, composite: defaultCompositeSectionOptions(firstPartnerId) };
+    });
+  };
+
+  const patchComposite = (patch: Partial<PdfCompositeSectionOptions>): void => {
+    setSelection((current) =>
+      current.composite === undefined ? current : { ...current, composite: { ...current.composite, ...patch } },
+    );
+  };
+
+  const toggleCompositeTable = (table: PdfChartTable, on: boolean): void => {
+    setSelection((current) => {
+      if (current.composite === undefined) return current;
+      const tables = on
+        ? [...current.composite.tables, table]
+        : current.composite.tables.filter((candidate) => candidate !== table);
+      return { ...current, composite: { ...current.composite, tables } };
+    });
+  };
+
   async function handleBuild(): Promise<void> {
     if (person === undefined || provider === undefined) return;
     setStatus({ kind: 'building' });
     try {
       const { buildPdfPlan } = await import('./pdf-export-plan.js');
-      const plan = await buildPdfPlan(fullSelection, { person, provider, rulership, locale, aiConsent }, ct, t);
+      const plan = await buildPdfPlan(
+        fullSelection,
+        { person, provider, rulership, locale, aiConsent, people: state.people },
+        ct,
+        t,
+      );
       // Consent authorizes one specific build, not a standing preference (ADR 0003) — spent the
       // moment the request goes out, same rule the AI-customised interpretation panel follows.
       setAiConsent(false);
@@ -311,6 +374,117 @@ export function PdfExportBuilder(): React.JSX.Element {
             </div>
           );
         })}
+      </fieldset>
+
+      <fieldset className="field-group">
+        <legend>{t.relationshipLegend}</legend>
+        <div>
+          <label>
+            <input
+              type="checkbox"
+              checked={fullSelection.synastry !== undefined}
+              disabled={partnerCandidates.length === 0}
+              onChange={(event) => {
+                toggleSynastry(event.target.checked, partnerCandidates[0]?.id ?? '');
+              }}
+            />{' '}
+            {t.synastryLabel}
+          </label>
+          {partnerCandidates.length === 0 && <p className="hint">{t.noPartnersHint}</p>}
+          {fullSelection.synastry !== undefined && (
+            <div className="settings-card-indent">
+              <label htmlFor={`${id}-synastry-partner`}>{t.partnerLabelSynastry}</label>{' '}
+              <select
+                id={`${id}-synastry-partner`}
+                value={fullSelection.synastry.partnerId}
+                onChange={(event) => {
+                  patchSynastry({ partnerId: event.target.value });
+                }}
+              >
+                {partnerCandidates.map((candidate) => (
+                  <option key={candidate.id} value={candidate.id}>
+                    {candidate.displayName || t.unnamedOption}
+                  </option>
+                ))}
+              </select>
+              <br />
+              <label>
+                <input
+                  type="checkbox"
+                  checked={fullSelection.synastry.wheel}
+                  onChange={(event) => {
+                    patchSynastry({ wheel: event.target.checked });
+                  }}
+                />{' '}
+                {t.wheelLabel}
+              </label>{' '}
+              <label>
+                <input
+                  type="checkbox"
+                  checked={fullSelection.synastry.aspectsTable}
+                  onChange={(event) => {
+                    patchSynastry({ aspectsTable: event.target.checked });
+                  }}
+                />{' '}
+                {t.aspectsTableLabel}
+              </label>
+            </div>
+          )}
+        </div>
+        <div>
+          <label>
+            <input
+              type="checkbox"
+              checked={fullSelection.composite !== undefined}
+              disabled={partnerCandidates.length === 0}
+              onChange={(event) => {
+                toggleComposite(event.target.checked, partnerCandidates[0]?.id ?? '');
+              }}
+            />{' '}
+            {t.compositeLabel}
+          </label>
+          {fullSelection.composite !== undefined && (
+            <div className="settings-card-indent">
+              <label htmlFor={`${id}-composite-partner`}>{t.partnerLabelComposite}</label>{' '}
+              <select
+                id={`${id}-composite-partner`}
+                value={fullSelection.composite.partnerId}
+                onChange={(event) => {
+                  patchComposite({ partnerId: event.target.value });
+                }}
+              >
+                {partnerCandidates.map((candidate) => (
+                  <option key={candidate.id} value={candidate.id}>
+                    {candidate.displayName || t.unnamedOption}
+                  </option>
+                ))}
+              </select>
+              <br />
+              <label>
+                <input
+                  type="checkbox"
+                  checked={fullSelection.composite.wheel}
+                  onChange={(event) => {
+                    patchComposite({ wheel: event.target.checked });
+                  }}
+                />{' '}
+                {t.wheelLabel}
+              </label>{' '}
+              {PDF_CHART_TABLES.map((table) => (
+                <label key={table}>
+                  <input
+                    type="checkbox"
+                    checked={fullSelection.composite?.tables.includes(table) ?? false}
+                    onChange={(event) => {
+                      toggleCompositeTable(table, event.target.checked);
+                    }}
+                  />{' '}
+                  {t.tableLabels[table]}
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
       </fieldset>
 
       <p>

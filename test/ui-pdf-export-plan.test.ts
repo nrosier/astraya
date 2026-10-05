@@ -41,6 +41,25 @@ const ADA: Person = {
   missing: [],
 };
 
+const CHARLES: Person = {
+  id: 'p-charles',
+  displayName: 'Charles Babbage',
+  moment: {
+    civil: { year: 1820, month: 12, day: 26, hour: 10, minute: 0, second: 0 },
+    coordinates: { latitude: 51.5072, longitude: -0.1276 },
+    offsetOverrideMinutes: 0,
+  },
+  placeLabel: 'London, UK',
+  timeAccuracy: 'recorded',
+  notes: '',
+  missing: [],
+};
+
+const PEOPLE = new Map([
+  [ADA.id, ADA],
+  [CHARLES.id, CHARLES],
+]);
+
 describe('buildPdfPlan', () => {
   it('builds nothing but the title when the selection is empty', async () => {
     const provider = await getEngine();
@@ -219,5 +238,84 @@ describe('buildPdfPlan', () => {
     const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
     expect(plan.sections.some((s) => s.kind === 'fields')).toBe(true);
     expect(plan.errors).toHaveLength(1);
+  }, 30_000);
+
+  it('builds a synastry section with a bi-wheel and the ranked aspects table (#441)', async () => {
+    const provider = await getEngine();
+    const selection: PdfSelection = {
+      personId: ADA.id,
+      ...EMPTY_SELECTION,
+      synastry: { partnerId: CHARLES.id, wheel: true, aspectsTable: true },
+    };
+    const context: PdfPlanContext = {
+      person: ADA,
+      provider,
+      rulership: DEFAULT_RULERSHIP_CHOICE,
+      locale: 'en',
+      aiConsent: false,
+      corpusFetch,
+      people: PEOPLE,
+    };
+    const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
+    expect(plan.errors).toHaveLength(0);
+    const [section] = plan.sections;
+    if (section?.kind !== 'chart') throw new Error('expected a chart section');
+    expect(section.heading).toContain('Ada Lovelace');
+    expect(section.heading).toContain('Charles Babbage');
+    expect(section.svg?.markup).toContain('<svg');
+    expect(section.tables).toHaveLength(1);
+    expect(section.tables[0]?.body.length).toBeGreaterThan(0);
+    // The interpretation column is already resolved to plain text, same as the live table.
+    expect(section.tables[0]?.body.every((row) => row.every((cell) => typeof cell === 'string'))).toBe(true);
+  }, 30_000);
+
+  it('skips synastry with an error, not a crash, when the partner cannot be found', async () => {
+    const provider = await getEngine();
+    const selection: PdfSelection = {
+      personId: ADA.id,
+      ...EMPTY_SELECTION,
+      synastry: { partnerId: 'p-does-not-exist', wheel: true, aspectsTable: true },
+    };
+    const context: PdfPlanContext = {
+      person: ADA,
+      provider,
+      rulership: DEFAULT_RULERSHIP_CHOICE,
+      locale: 'en',
+      aiConsent: false,
+      corpusFetch,
+      people: PEOPLE,
+    };
+    const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
+    expect(plan.sections).toHaveLength(0);
+    expect(plan.errors).toHaveLength(1);
+    expect(plan.errors[0]).toContain('Synastry');
+  }, 30_000);
+
+  it('builds a composite section as a single synthetic chart with the requested tables (#441)', async () => {
+    const provider = await getEngine();
+    const selection: PdfSelection = {
+      personId: ADA.id,
+      ...EMPTY_SELECTION,
+      composite: { partnerId: CHARLES.id, wheel: true, tables: ['positions', 'aspects'] },
+    };
+    const context: PdfPlanContext = {
+      person: ADA,
+      provider,
+      rulership: DEFAULT_RULERSHIP_CHOICE,
+      locale: 'en',
+      aiConsent: false,
+      corpusFetch,
+      people: PEOPLE,
+    };
+    const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
+    expect(plan.errors).toHaveLength(0);
+    const [section] = plan.sections;
+    if (section?.kind !== 'chart') throw new Error('expected a chart section');
+    expect(section.heading).toContain('Ada Lovelace');
+    expect(section.heading).toContain('Charles Babbage');
+    expect(section.svg?.markup).toContain('<svg');
+    expect(section.tables.map((t) => t.caption)).toEqual(
+      expect.arrayContaining([chartViewMessages.en.positionsCaption, chartViewMessages.en.aspectsCaption]),
+    );
   }, 30_000);
 });
