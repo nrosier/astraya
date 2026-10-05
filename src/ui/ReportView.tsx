@@ -401,7 +401,7 @@ export function ReportView({
     );
   }
 
-  const report: Report = assembleReport(chart, locale, corpus, rulership);
+  const report: Report = assembleReport(chart, locale, corpus, rulership, chartKind);
 
   const controls = (
     <div className="report-controls">
