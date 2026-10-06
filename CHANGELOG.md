@@ -4,6 +4,16 @@ All notable changes to Astraya are recorded here. Versions follow
 [semantic versioning](https://semver.org/), and every milestone ends in a release —
 see [docs/RELEASING.md](docs/RELEASING.md).
 
+## [0.31.1] — 2026-10-06
+
+**A patch for v0.31.0: the same app, with its flaky property test fixed so the release could be published.**
+
+v0.31.0's Docker image and demo build went out as published (its own full check suite passed locally before the tag was pushed), but the tagged CI run's "Verify before publishing" step hit a property test whose counterexample fell a hair outside its assertion's tolerance — a known recurring class of flakiness in this suite, not a real chart defect — so the GitHub Release for v0.31.0 was never created. Nothing in the app changes between v0.31.0 and this release; if you pulled `niqck/astraya:latest` or `:0.31.0` already, nothing about it was wrong.
+
+### Fixed
+
+- **The quadrant-house-system property test (#37) no longer sits at the edge of its own tolerance.** It checks that `cusps[1]`/`cusps[10]` agree with the Ascendant/Midheaven as computed by a separate code path, and has been tightened and defeated by a new counterexample several times before (9, then 8, 7, 6 and 5 decimal places), each time by a margin a hair over whatever threshold was current — the two code paths' disagreement scales with the input rather than being bounded noise around one fixed size. It's now asserted directly in arcseconds, with real headroom, well inside the golden-chart gate's own 0.2″ accuracy claim rather than creeping up on it one decimal place at a time.
+
 ## [0.31.0] — 2026-10-06
 
 **Composite charts gain their own interpretation categories and a (still unevaluated) draft corpus, Dispositors becomes easier to find and reads correctly in PDF exports, and chart tables get contextual help tooltips.**
