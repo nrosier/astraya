@@ -54,7 +54,7 @@ import { readFile, mkdir, readdir } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildEvaluationPrompt, EVALUATION_RESPONSE_SCHEMA, majorityVerdict } from './lib/corpus-evaluation.mjs';
-import { buildBatchRequest, submitBatch, getBatch, isBatchTerminal, extractBatchResults } from './lib/openai-batch.mjs';
+import { buildBatchRequest, submitBatch, getBatch, isBatchTerminal, extractBatchResults, detectStalledBatch } from './lib/openai-batch.mjs';
 import { factsDescription } from './lib/placements.mjs';
 import { parsePlacementKey } from '../../src/interpretation/schema.ts';
 import { readFeedback, writeFeedback, upsertFeedback } from './lib/corpus-feedback.mjs';
@@ -81,11 +81,15 @@ function flag(name, fallback) {
 }
 if (rawArgs.includes('--help') || rawArgs.includes('-h')) {
   console.log(
-    'Usage: npx tsx --env-file=.env.local tools/corpus-gen/evaluate-corpus-batch.mjs --locale=en [--limit=N] [--model=<name>] [--evaluation-limit=N] [--votes=N] [--force] [--recheck-exhausted] [--check-only]',
+    'Usage: npx tsx --env-file=.env.local tools/corpus-gen/evaluate-corpus-batch.mjs --locale=en [--limit=N] [--model=<name>] [--evaluation-limit=N] [--votes=N] [--force] [--recheck-exhausted] [--stall-threshold-minutes=N] [--check-only]',
   );
   console.log(
     '       npx tsx --env-file=.env.local tools/corpus-gen/evaluate-corpus-batch.mjs --check-only   (checks every locale with a batch in flight)',
   );
+  console.log('');
+  console.log('Options:');
+  console.log('  --stall-threshold-minutes=N   How long (in minutes) a batch can show no progress before being abandoned');
+  console.log('                                (default: 30). Use 60+ for longer grace periods on slow batches.');
   process.exit(0);
 }
 
@@ -107,6 +111,10 @@ const recheckExhausted = rawArgs.includes('--recheck-exhausted');
 // builds a new candidate list or submits anything. Combined with omitting `--locale`, scans every
 // locale that has a batch-state file instead of just one.
 const checkOnly = rawArgs.includes('--check-only');
+// Threshold in minutes for detecting a batch as stalled — no progress for this long = abandon (#???).
+// Default 30 minutes; use --stall-threshold-minutes=60 for a longer grace period.
+const stallThresholdMinutes = Number(flag('stall-threshold-minutes', 30));
+if (!Number.isInteger(stallThresholdMinutes) || stallThresholdMinutes < 1) throw new Error('--stall-threshold-minutes must be a positive integer');
 
 if (!locale && !checkOnly) {
   throw new Error(
@@ -148,19 +156,51 @@ async function checkAndApply(loc) {
       const batch = await getBatch({ apiKey: process.env.OPENAI_API_KEY, batchId: job.batchId });
       if (!isBatchTerminal(batch)) {
         const counts = batch.request_counts;
+        const { isStalled, shouldAbandon, reason, nextTracking } = detectStalledBatch(batch, job, stallThresholdMinutes);
         console.log(
-          `[${loc}] batch ${job.batchId} still ${batch.status}${counts ? ` (${String(counts.completed)}/${String(counts.total)} done, ${String(counts.failed)} failed)` : ''}`,
+          `[${loc}] batch ${job.batchId} still ${batch.status}${counts ? ` (${String(counts.completed)}/${String(counts.total)} done, ${String(counts.failed)} failed)` : ''}${reason ? ` — ${reason}` : ''}`,
         );
+
+        // Update tracking for next check (even if not yet abandoned)
+        if (nextTracking) {
+          job.lastSeenCounts = nextTracking;
+        }
+
+        // If batch is stalled beyond threshold, abandon it and reset entries for resubmission
+        if (shouldAbandon) {
+          if (feedback === undefined) feedback = await readFeedback(feedbackPath);
+          const now = new Date().toISOString();
+          console.error(
+            `[${loc}] ⚠️ ABANDONING batch ${job.batchId} (${reason}) — resetting ${String(job.candidates.length)} entries for resubmission`,
+          );
+          for (const candidate of job.candidates) {
+            const entry = corpus.find((e) => identityOf(e) === identityOf(candidate));
+            if (entry) {
+              const existingTracking = findTracking(tracking, entry);
+              upsertTracking(tracking, {
+                key: entry.key,
+                locale: entry.locale,
+                clean: undefined, // Mark as pending (neither clean nor flagged)
+                evaluationCount: (existingTracking?.evaluationCount ?? 0) + 1,
+                updatedAt: now,
+              });
+              console.log(`[${loc}] RESET ${entry.key} — eligible for resubmission after batch abandonment`);
+            }
+          }
+          anyTerminal = true;
+          continue; // Skip to next batch
+        }
+
         stillRunning.push(job);
         continue;
       }
       console.log(
-        `[${loc}] batch ${job.batchId} is ${batch.status}${batch.status === 'failed' ? ' (discarding and resetting entries to pending)' : ' — retrieving results...'}...`,
+        `[${loc}] batch ${job.batchId} is ${batch.status}${['failed', 'cancelled', 'expired'].includes(batch.status) ? ' (discarding and resetting entries to pending)' : ' — retrieving results...'}...`,
       );
       anyTerminal = true;
 
-      // If batch is failed, it will not be retried by OpenAI — reset entries to pending for resubmission
-      if (batch.status === 'failed') {
+      // If batch failed, was cancelled, or expired, it will not be retried by OpenAI — reset entries to pending for resubmission
+      if (['failed', 'cancelled', 'expired'].includes(batch.status)) {
         if (feedback === undefined) feedback = await readFeedback(feedbackPath);
         const now = new Date().toISOString();
         for (const candidate of job.candidates) {

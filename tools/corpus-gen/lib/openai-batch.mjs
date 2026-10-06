@@ -121,6 +121,67 @@ export async function getBatch({ apiKey, baseUrl, batchId, maxRetries = 3 }) {
   return response.json();
 }
 
+/**
+ * Detects when a batch has stalled by comparing its current request counts to a prior snapshot.
+ * A batch is considered stalled if:
+ * 1. The batch is still in_progress
+ * 2. The completed + failed count hasn't changed since the last check
+ * 3. That unchanged state has persisted for >= stallThresholdMinutes
+ *
+ * Tracking is stored in the job object: `lastSeenCounts` { completed, failed, checkedAt }.
+ * On each call, this function returns { isStalled, shouldAbandon, reason }.
+ */
+export function detectStalledBatch(batch, jobTracking, stallThresholdMinutes = 30) {
+  if (batch.status !== 'in_progress' || !batch.request_counts) {
+    return { isStalled: false, shouldAbandon: false, reason: null };
+  }
+
+  const { completed, failed } = batch.request_counts;
+  const currentCount = completed + failed;
+  const now = new Date();
+
+  // First check: initialize tracking
+  if (!jobTracking.lastSeenCounts) {
+    return {
+      isStalled: false,
+      shouldAbandon: false,
+      reason: null,
+      nextTracking: { completed, failed, checkedAt: now.toISOString() },
+    };
+  }
+
+  const lastCount = jobTracking.lastSeenCounts.completed + jobTracking.lastSeenCounts.failed;
+  const lastCheck = new Date(jobTracking.lastSeenCounts.checkedAt);
+  const stallDurationMinutes = (now - lastCheck) / (1000 * 60);
+
+  // No progress since last check
+  if (currentCount === lastCount) {
+    if (stallDurationMinutes >= stallThresholdMinutes) {
+      return {
+        isStalled: true,
+        shouldAbandon: true,
+        reason: `stalled for ${Math.round(stallDurationMinutes)}min (${currentCount} requests stuck)`,
+        nextTracking: { completed, failed, checkedAt: now.toISOString() },
+      };
+    }
+    // Still within threshold — report the stall but don't abandon yet
+    return {
+      isStalled: true,
+      shouldAbandon: false,
+      reason: `stalling: no progress for ${Math.round(stallDurationMinutes)}min (${currentCount}/${batch.request_counts.total} done, ${stallThresholdMinutes - Math.round(stallDurationMinutes)}min until abandon)`,
+      nextTracking: { completed, failed, checkedAt: now.toISOString() },
+    };
+  }
+
+  // Progress detected — reset the stall timer
+  return {
+    isStalled: false,
+    shouldAbandon: false,
+    reason: null,
+    nextTracking: { completed, failed, checkedAt: now.toISOString() },
+  };
+}
+
 /** Whether a batch has reached a terminal status (not necessarily success — see TERMINAL_STATUSES). */
 export function isBatchTerminal(batch) {
   return TERMINAL_STATUSES.has(batch.status);
