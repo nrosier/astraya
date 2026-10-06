@@ -4,6 +4,32 @@ All notable changes to Astraya are recorded here. Versions follow
 [semantic versioning](https://semver.org/), and every milestone ends in a release —
 see [docs/RELEASING.md](docs/RELEASING.md).
 
+## [0.31.0] — 2026-10-06
+
+**Composite charts gain their own interpretation categories and a (still unevaluated) draft corpus, Dispositors becomes easier to find and reads correctly in PDF exports, and chart tables get contextual help tooltips.**
+
+M9 (Polish & launch) progress, not a finished milestone — v1.0.0 hasn't shipped yet.
+
+### Added
+
+- **Composite charts have their own corpus categories, not natal ones borrowed for two people (#451).** The generator, schema and report composer gain dedicated `composite-aspect-pair`, `composite-point-in-sign` and `composite-point-in-house` keys, so a composite reading describes the synthetic midpoint chart on its own terms instead of reusing natal wording.
+- **A complete composite-chart corpus ships for both locales** — over 1000 aspect-pair entries plus point-in-sign/house entries each. **This batch is unevaluated**: it has no hand-written anchors and has not been through the two-model judge/revise review loop every other shipped corpus entry goes through, so its tone and specificity have not been checked to the usual bar. Treat composite interpretation text as a draft until a reviewed pass replaces it; a near-duplicate pass already caught and rewrote four Dutch entries that had collapsed onto nearly identical template language.
+- **Chart tables explain themselves on hover (#456).** The Declinations and Antiscia table headers and the Aspects table's new columns now carry a tooltip explaining what the column means, for a reader who doesn't already know the convention.
+- **Dispositors is easier to find (#446).** The table gets its own section heading, a hover tooltip, and a short explanatory paragraph above it describing what a dispositor is and why the chain matters, instead of appearing as an unlabelled table a reader could miss.
+
+### Fixed
+
+- **The dispositor chain's arrow (→) no longer renders as corrupted text in the PDF export (#447).** The PDF builder was stringifying the table's React render output instead of its plain-text value; it now uses the dedicated text value everywhere a PDF needs one, matching what the live table shows.
+
+### Internal tooling
+
+- **The corpus generator's batch pipeline handles failures gracefully instead of crashing or leaving stuck state**, after several rounds of fixes: a failed OpenAI batch is discarded and its entries reset to pending rather than silently stuck, the feedback file stays valid JSON even after a failure partway through, and a new `recover-batch` tool can resume a batch left in a bad state. None of this touches the shipped app or server.
+- **A new MCP server, astraya-linter,** exposes the corpus's own lint/schema/locale-parity checks for in-flight validation while drafting corpus text, re-exporting the same rules the app already enforces rather than duplicating them. Build-time tooling only, with a new devDependency to support it.
+
+### Notes for people running their own server
+
+- No database migration and no new configuration in this release.
+
 ## [0.30.0] — 2026-10-06
 
 **A grouped relationship summary with house overlays for synastry, a guarded Tier 2 "relationship" reading for a pair of charts, synastry and composite in the PDF export builder, and bi-wheel rings told apart by line style, name and click-to-isolate rather than colour alone.**
