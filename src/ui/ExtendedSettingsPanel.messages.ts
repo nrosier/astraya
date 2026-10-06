@@ -53,7 +53,10 @@ const en = {
       regiomontanus:
         'Regiomontanus divides the equator into 12 equal parts and projects onto the ecliptic. It is an older European tradition, useful at high latitudes, and the basis for some classical interpretation texts.',
     };
-    return descriptions[system] ?? 'This house system calculates cusps using a specific mathematical method. Check the system\'s documentation for details.';
+    return (
+      descriptions[system] ??
+      "This house system calculates cusps using a specific mathematical method. Check the system's documentation for details."
+    );
   },
 
   rulersLegend: 'Rulership & dignities',
@@ -66,18 +69,15 @@ const en = {
     'Co-rulers shows both classical and modern rulerships simultaneously—each sign has two rulers (e.g., Aquarius has both Saturn and Uranus). This hybrid approach lets you see how rulerships have evolved and compare traditional and modern interpretations side by side.',
   symbolsFrameSubtitle: 'How planetary and zodiac symbols are displayed',
   unicodeSymbolsDescription:
-    'Display symbols as Unicode text characters (♅, ♇, ☿, etc.). This uses the font\'s built-in glyphs and is fast and lightweight, but appearance depends on your font.',
+    "Display symbols as Unicode text characters (♅, ♇, ☿, etc.). This uses the font's built-in glyphs and is fast and lightweight, but appearance depends on your font.",
   drawnSymbolsDescription:
     'Display symbols as hand-rolled SVG paths. This gives consistent appearance across all devices and allows fine-tuning of line weight and form variants (e.g., Uranus and Pluto have alternate shapes).',
   textSymbolsDescription:
-    'Display symbols as letter codes (♅ becomes \'U\', ♇ becomes \'P\', etc.). This is compact and always legible, but loses visual distinctiveness.',
+    "Display symbols as letter codes (♅ becomes 'U', ♇ becomes 'P', etc.). This is compact and always legible, but loses visual distinctiveness.",
   lineWeightLabel: 'Line weight',
-  lineWeightAvailableWhen:
-    '(Only available when Symbols is set to "Drawn")',
-  fineWeightDescription:
-    'Fine lines: delicate, minimal visual weight. Good for dense charts or small screens.',
-  regularWeightDescription:
-    'Regular lines (default): balanced between visibility and elegance.',
+  lineWeightAvailableWhen: '(Only available when Symbols is set to "Drawn")',
+  fineWeightDescription: 'Fine lines: delicate, minimal visual weight. Good for dense charts or small screens.',
+  regularWeightDescription: 'Regular lines (default): balanced between visibility and elegance.',
   boldWeightDescription:
     'Bold lines: thick, prominent strokes. Good for large printed charts or low-vision accessibility.',
 
@@ -187,7 +187,10 @@ const nl: typeof en = {
       regiomontanus:
         'Regiomontanus verdeelt de evenaar in 12 gelijke delen en projecteert op de ecliptica. Het is een oudere Europese traditie, nuttig op hoge breedtegraden, en de basis voor enkele klassieke interpretatieteksten.',
     };
-    return descriptions[system] ?? 'Dit huizensysteem berekent cuspen met behulp van een specifieke wiskundige methode. Raadpleeg de documentatie van het systeem voor details.';
+    return (
+      descriptions[system] ??
+      'Dit huizensysteem berekent cuspen met behulp van een specifieke wiskundige methode. Raadpleeg de documentatie van het systeem voor details.'
+    );
   },
 
   rulersLegend: 'Heersers & waardigheid',
@@ -204,14 +207,12 @@ const nl: typeof en = {
   drawnSymbolsDescription:
     'Symbolen weergeven als SVG-paden met de hand getekend. Dit biedt een consistent uiterlijk op alle apparaten en maakt fijnafstelling van lijngewicht en formvarianten mogelijk (bijv. Uranus en Plutt hebben alternatieve vormen).',
   textSymbolsDescription:
-    'Symbolen weergeven als lettercodes (♅ wordt \'U\', ♇ wordt \'P\', enz.). Dit is compact en altijd leesbaar, maar verliest visuele distinctiviteit.',
+    "Symbolen weergeven als lettercodes (♅ wordt 'U', ♇ wordt 'P', enz.). Dit is compact en altijd leesbaar, maar verliest visuele distinctiviteit.",
   lineWeightLabel: 'Lijngewicht',
-  lineWeightAvailableWhen:
-    '(Alleen beschikbaar als Symbolen is ingesteld op "Getekend")',
+  lineWeightAvailableWhen: '(Alleen beschikbaar als Symbolen is ingesteld op "Getekend")',
   fineWeightDescription:
     'Fijne lijnen: delicaat, minimaal visueel gewicht. Goed voor dichte grafieken of kleine schermen.',
-  regularWeightDescription:
-    'Normale lijnen (standaard): gebalanceerd tussen zichtbaarheid en elegantie.',
+  regularWeightDescription: 'Normale lijnen (standaard): gebalanceerd tussen zichtbaarheid en elegantie.',
   boldWeightDescription:
     'Vette lijnen: dikke, opvallende lijnen. Goed voor grote afgedrukte grafieken of toegankelijkheid voor slechtzienden.',
 

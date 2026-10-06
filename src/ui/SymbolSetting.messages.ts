@@ -9,20 +9,18 @@ const en = {
     text: 'Text only (SUN, MOO, …)',
   },
   unicodeDescription:
-    'Display symbols as Unicode text characters (♅, ♇, ☿, etc.). This uses the font\'s built-in glyphs and is fast and lightweight, but appearance depends on your font.',
+    "Display symbols as Unicode text characters (♅, ♇, ☿, etc.). This uses the font's built-in glyphs and is fast and lightweight, but appearance depends on your font.",
   drawnDescription:
     'Display symbols as hand-rolled SVG paths. This gives consistent appearance across all devices and allows fine-tuning of line weight and form variants (e.g., Uranus and Pluto have alternate shapes).',
   textDescription:
-    'Display symbols as letter codes (♅ becomes \'U\', ♇ becomes \'P\', etc.). This is compact and always legible, but loses visual distinctiveness.',
+    "Display symbols as letter codes (♅ becomes 'U', ♇ becomes 'P', etc.). This is compact and always legible, but loses visual distinctiveness.",
   weightLabel: 'Line weight',
   weightOptions: { fine: 'Fine', regular: 'Regular', bold: 'Bold' },
   weightAvailableWhen: '(Only available when Symbols is set to "Drawn")',
   weightHint:
     'How heavy the lines of the drawn planet and aspect symbols are. The zodiac signs are solid shapes and do not change.',
-  fineWeightDescription:
-    'Fine lines: delicate, minimal visual weight. Good for dense charts or small screens.',
-  regularWeightDescription:
-    'Regular lines (default): balanced between visibility and elegance.',
+  fineWeightDescription: 'Fine lines: delicate, minimal visual weight. Good for dense charts or small screens.',
+  regularWeightDescription: 'Regular lines (default): balanced between visibility and elegance.',
   boldWeightDescription:
     'Bold lines: thick, prominent strokes. Good for large printed charts or low-vision accessibility.',
   variantsLegend: 'Forms of a symbol',
@@ -48,7 +46,7 @@ const nl: typeof en = {
   drawnDescription:
     'Symbolen weergeven als SVG-paden met de hand getekend. Dit biedt een consistent uiterlijk op alle apparaten en maakt fijnafstelling van lijngewicht en formvarianten mogelijk (bijv. Uranus en Plutt hebben alternatieve vormen).',
   textDescription:
-    'Symbolen weergeven als lettercodes (♅ wordt \'U\', ♇ wordt \'P\', enz.). Dit is compact en altijd leesbaar, maar verliest visuele distinctiviteit.',
+    "Symbolen weergeven als lettercodes (♅ wordt 'U', ♇ wordt 'P', enz.). Dit is compact en altijd leesbaar, maar verliest visuele distinctiviteit.",
   weightLabel: 'Lijndikte',
   weightOptions: { fine: 'Fijn', regular: 'Normaal', bold: 'Dik' },
   weightAvailableWhen: '(Alleen beschikbaar als Symbolen is ingesteld op "Getekend")',
@@ -56,8 +54,7 @@ const nl: typeof en = {
     'Hoe dik de lijnen van de getekende planeet- en aspectsymbolen zijn. De dierenriemtekens zijn massieve vormen en veranderen niet.',
   fineWeightDescription:
     'Fijne lijnen: delicaat, minimaal visueel gewicht. Goed voor dichte grafieken of kleine schermen.',
-  regularWeightDescription:
-    'Normale lijnen (standaard): gebalanceerd tussen zichtbaarheid en elegantie.',
+  regularWeightDescription: 'Normale lijnen (standaard): gebalanceerd tussen zichtbaarheid en elegantie.',
   boldWeightDescription:
     'Vette lijnen: dikke, opvallende lijnen. Goed voor grote afgedrukte grafieken of toegankelijkheid voor slechtzienden.',
   variantsLegend: 'Vormen van een symbool',

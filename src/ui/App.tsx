@@ -67,7 +67,6 @@ const CorpusCandidatesPanel = lazy(async () => ({
   default: (await import('./CorpusCandidatesPanel.js')).CorpusCandidatesPanel,
 }));
 const SharedChartView = lazy(async () => ({ default: (await import('./SharedChartView.js')).SharedChartView }));
-import { ExtendedSettingsDemo } from './ExtendedSettingsDemo.js';
 
 /**
  * The routes that need the local store, gated in the one place that reports its state.
@@ -341,7 +340,6 @@ export function HomeRedirect(): React.JSX.Element {
 }
 
 function renderScreen(parsed: Route, seVersion: string | undefined): React.JSX.Element {
-  if (parsed.kind === 'demo-settings') return <ExtendedSettingsDemo />;
   if (parsed.kind === 'about') return <About seVersion={seVersion} />;
   if (parsed.kind === 'changelog') return <Changelog />;
   if (parsed.kind === 'shared') return <SharedChartView />;

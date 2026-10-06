@@ -68,8 +68,7 @@ export type Route =
   | { readonly kind: 'corpus-overrides' }
   | { readonly kind: 'corpus-candidates' }
   | { readonly kind: 'set-password' }
-  | { readonly kind: 'setup' }
-  | { readonly kind: 'demo-settings' };
+  | { readonly kind: 'setup' };
 
 const PERSON_PATH = /^#\/person\/(.+)$/;
 const CHART_PATH = /^#\/chart\/(.+)$/;
@@ -137,8 +136,6 @@ export function parseRoute(hash: string): Route {
     // itself, not here.
     case '#/setup':
       return { kind: 'setup' };
-    case '#/demo/settings':
-      return { kind: 'demo-settings' };
     default:
       break;
   }
