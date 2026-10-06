@@ -736,7 +736,7 @@
       "lastSeenCounts": {
         "completed": 720,
         "failed": 0,
-        "checkedAt": "2026-10-06T23:04:10.471Z"
+        "checkedAt": "2026-10-06T23:32:07.007Z"
       }
     },
     {
@@ -2247,9 +2247,1522 @@
         }
       ],
       "lastSeenCounts": {
-        "completed": 1169,
+        "completed": 1368,
         "failed": 0,
-        "checkedAt": "2026-10-06T23:04:10.664Z"
+        "checkedAt": "2026-10-06T23:32:07.201Z"
+      }
+    },
+    {
+      "batchId": "batch_6ac58010f9dc81909212a8a744e6e7a0",
+      "submittedAt": "2026-10-06T23:11:13.150Z",
+      "model": "gpt-6-luna",
+      "votes": 3,
+      "candidates": [
+        {
+          "key": "aspect-pair:conjunction:meanNode:osculatingLilith"
+        },
+        {
+          "key": "aspect-pair:semisextile:chiron:vesta"
+        },
+        {
+          "key": "aspect-pair:semisextile:interpolatedLilith:vesta"
+        },
+        {
+          "key": "aspect-pair:semisextile:meanLilith:trueNode"
+        },
+        {
+          "key": "dignity-state:mars:detriment"
+        },
+        {
+          "key": "composite-planet-in-sign:sun:1"
+        },
+        {
+          "key": "composite-planet-in-sign:sun:0"
+        },
+        {
+          "key": "composite-planet-in-sign:sun:2"
+        },
+        {
+          "key": "composite-planet-in-sign:sun:3"
+        },
+        {
+          "key": "composite-planet-in-sign:sun:5"
+        },
+        {
+          "key": "composite-planet-in-sign:sun:4"
+        },
+        {
+          "key": "composite-planet-in-sign:sun:6"
+        },
+        {
+          "key": "composite-planet-in-sign:sun:7"
+        },
+        {
+          "key": "composite-planet-in-sign:sun:8"
+        },
+        {
+          "key": "composite-planet-in-sign:sun:9"
+        },
+        {
+          "key": "composite-planet-in-sign:sun:11"
+        },
+        {
+          "key": "composite-planet-in-sign:sun:10"
+        },
+        {
+          "key": "composite-planet-in-sign:moon:0"
+        },
+        {
+          "key": "composite-planet-in-sign:moon:1"
+        },
+        {
+          "key": "composite-planet-in-sign:moon:2"
+        },
+        {
+          "key": "composite-planet-in-sign:moon:3"
+        },
+        {
+          "key": "composite-planet-in-sign:moon:4"
+        },
+        {
+          "key": "composite-planet-in-sign:moon:5"
+        },
+        {
+          "key": "composite-planet-in-sign:moon:6"
+        },
+        {
+          "key": "composite-planet-in-sign:moon:7"
+        },
+        {
+          "key": "composite-planet-in-sign:moon:8"
+        },
+        {
+          "key": "composite-planet-in-sign:moon:9"
+        },
+        {
+          "key": "composite-planet-in-sign:moon:10"
+        },
+        {
+          "key": "composite-planet-in-sign:moon:11"
+        },
+        {
+          "key": "composite-planet-in-sign:mercury:0"
+        },
+        {
+          "key": "composite-planet-in-sign:mercury:1"
+        },
+        {
+          "key": "composite-planet-in-sign:mercury:2"
+        },
+        {
+          "key": "composite-planet-in-sign:mercury:3"
+        },
+        {
+          "key": "composite-planet-in-sign:mercury:4"
+        },
+        {
+          "key": "composite-planet-in-sign:mercury:5"
+        },
+        {
+          "key": "composite-planet-in-sign:mercury:6"
+        },
+        {
+          "key": "composite-planet-in-sign:mercury:7"
+        },
+        {
+          "key": "composite-planet-in-sign:mercury:8"
+        },
+        {
+          "key": "composite-planet-in-sign:mercury:9"
+        },
+        {
+          "key": "composite-planet-in-sign:mercury:11"
+        },
+        {
+          "key": "composite-planet-in-sign:mercury:10"
+        },
+        {
+          "key": "composite-planet-in-sign:venus:0"
+        },
+        {
+          "key": "composite-planet-in-sign:venus:2"
+        },
+        {
+          "key": "composite-planet-in-sign:venus:3"
+        },
+        {
+          "key": "composite-planet-in-sign:venus:1"
+        },
+        {
+          "key": "composite-planet-in-sign:venus:4"
+        },
+        {
+          "key": "composite-planet-in-sign:venus:5"
+        },
+        {
+          "key": "composite-planet-in-sign:venus:6"
+        },
+        {
+          "key": "composite-planet-in-sign:venus:7"
+        },
+        {
+          "key": "composite-planet-in-sign:venus:8"
+        },
+        {
+          "key": "composite-planet-in-sign:venus:9"
+        },
+        {
+          "key": "composite-planet-in-sign:venus:10"
+        },
+        {
+          "key": "composite-planet-in-sign:venus:11"
+        },
+        {
+          "key": "composite-planet-in-sign:mars:0"
+        },
+        {
+          "key": "composite-planet-in-sign:mars:1"
+        },
+        {
+          "key": "composite-planet-in-sign:mars:2"
+        },
+        {
+          "key": "composite-planet-in-sign:mars:3"
+        },
+        {
+          "key": "composite-planet-in-sign:mars:4"
+        },
+        {
+          "key": "composite-planet-in-sign:mars:5"
+        },
+        {
+          "key": "composite-planet-in-sign:mars:6"
+        },
+        {
+          "key": "composite-planet-in-sign:mars:7"
+        },
+        {
+          "key": "composite-planet-in-sign:mars:8"
+        },
+        {
+          "key": "composite-planet-in-sign:mars:9"
+        },
+        {
+          "key": "composite-planet-in-sign:saturn:9"
+        },
+        {
+          "key": "composite-planet-in-sign:trueNode:7"
+        },
+        {
+          "key": "composite-planet-in-sign:meanLilith:1"
+        },
+        {
+          "key": "composite-planet-in-sign:meanLilith:5"
+        },
+        {
+          "key": "composite-planet-in-sign:meanLilith:6"
+        },
+        {
+          "key": "composite-planet-in-sign:osculatingLilith:0"
+        },
+        {
+          "key": "composite-planet-in-sign:osculatingLilith:1"
+        },
+        {
+          "key": "composite-planet-in-sign:osculatingLilith:2"
+        },
+        {
+          "key": "composite-planet-in-sign:osculatingLilith:5"
+        },
+        {
+          "key": "composite-planet-in-sign:osculatingLilith:6"
+        },
+        {
+          "key": "composite-planet-in-sign:osculatingLilith:7"
+        },
+        {
+          "key": "composite-planet-in-sign:osculatingLilith:9"
+        },
+        {
+          "key": "composite-planet-in-sign:interpolatedLilith:1"
+        },
+        {
+          "key": "composite-planet-in-sign:interpolatedLilith:4"
+        },
+        {
+          "key": "composite-planet-in-sign:interpolatedLilith:5"
+        },
+        {
+          "key": "composite-planet-in-sign:interpolatedLilith:6"
+        },
+        {
+          "key": "composite-planet-in-sign:interpolatedLilith:9"
+        },
+        {
+          "key": "composite-planet-in-sign:chiron:0"
+        },
+        {
+          "key": "composite-planet-in-sign:chiron:1"
+        },
+        {
+          "key": "composite-planet-in-sign:chiron:2"
+        },
+        {
+          "key": "composite-planet-in-sign:chiron:8"
+        },
+        {
+          "key": "composite-planet-in-sign:chiron:9"
+        },
+        {
+          "key": "composite-planet-in-sign:chiron:10"
+        },
+        {
+          "key": "composite-planet-in-sign:ceres:6"
+        },
+        {
+          "key": "composite-planet-in-sign:ceres:7"
+        },
+        {
+          "key": "composite-planet-in-sign:ceres:8"
+        },
+        {
+          "key": "composite-planet-in-sign:ceres:10"
+        },
+        {
+          "key": "composite-planet-in-sign:pallas:2"
+        },
+        {
+          "key": "composite-planet-in-sign:juno:7"
+        },
+        {
+          "key": "composite-planet-in-sign:vesta:7"
+        },
+        {
+          "key": "composite-planet-in-house:sun:5"
+        },
+        {
+          "key": "composite-planet-in-house:sun:8"
+        },
+        {
+          "key": "composite-planet-in-house:moon:1"
+        },
+        {
+          "key": "composite-planet-in-house:uranus:1"
+        },
+        {
+          "key": "composite-planet-in-house:trueNode:3"
+        },
+        {
+          "key": "composite-planet-in-house:meanLilith:12"
+        },
+        {
+          "key": "composite-planet-in-house:osculatingLilith:1"
+        },
+        {
+          "key": "composite-planet-in-house:osculatingLilith:12"
+        },
+        {
+          "key": "composite-planet-in-house:interpolatedLilith:12"
+        },
+        {
+          "key": "composite-planet-in-house:chiron:1"
+        },
+        {
+          "key": "composite-planet-in-house:chiron:9"
+        },
+        {
+          "key": "composite-planet-in-house:ceres:9"
+        },
+        {
+          "key": "composite-planet-in-house:ceres:8"
+        },
+        {
+          "key": "composite-planet-in-house:ceres:10"
+        },
+        {
+          "key": "composite-planet-in-house:pallas:1"
+        },
+        {
+          "key": "composite-planet-in-house:pallas:2"
+        },
+        {
+          "key": "composite-aspect-pair:conjunction:ceres:pluto"
+        },
+        {
+          "key": "composite-aspect-pair:conjunction:ceres:saturn"
+        },
+        {
+          "key": "composite-aspect-pair:conjunction:ceres:uranus"
+        },
+        {
+          "key": "composite-aspect-pair:conjunction:juno:sun"
+        },
+        {
+          "key": "composite-aspect-pair:conjunction:osculatingLilith:uranus"
+        },
+        {
+          "key": "composite-aspect-pair:conjunction:trueNode:uranus"
+        },
+        {
+          "key": "composite-aspect-pair:semisextile:chiron:sun"
+        },
+        {
+          "key": "composite-aspect-pair:semisextile:interpolatedLilith:mercury"
+        },
+        {
+          "key": "composite-aspect-pair:semisextile:interpolatedLilith:uranus"
+        },
+        {
+          "key": "composite-aspect-pair:semisextile:pluto:saturn"
+        },
+        {
+          "key": "composite-aspect-pair:semisquare:interpolatedLilith:pluto"
+        },
+        {
+          "key": "composite-aspect-pair:semisquare:juno:mars"
+        },
+        {
+          "key": "composite-aspect-pair:semisquare:meanNode:moon"
+        },
+        {
+          "key": "composite-aspect-pair:semisquare:osculatingLilith:sun"
+        },
+        {
+          "key": "composite-aspect-pair:semisquare:osculatingLilith:vesta"
+        },
+        {
+          "key": "composite-aspect-pair:semisquare:pallas:pluto"
+        },
+        {
+          "key": "composite-aspect-pair:semisquare:pallas:saturn"
+        },
+        {
+          "key": "composite-aspect-pair:semisquare:pallas:sun"
+        },
+        {
+          "key": "composite-aspect-pair:semisquare:pallas:trueNode"
+        },
+        {
+          "key": "composite-aspect-pair:semisquare:pallas:uranus"
+        },
+        {
+          "key": "composite-aspect-pair:semisquare:pallas:venus"
+        },
+        {
+          "key": "composite-aspect-pair:semisquare:pallas:vesta"
+        },
+        {
+          "key": "composite-aspect-pair:semisquare:pluto:saturn"
+        },
+        {
+          "key": "composite-aspect-pair:semisquare:pluto:sun"
+        },
+        {
+          "key": "composite-aspect-pair:semisquare:pluto:trueNode"
+        },
+        {
+          "key": "composite-aspect-pair:semisquare:pluto:uranus"
+        },
+        {
+          "key": "composite-aspect-pair:semisquare:pluto:venus"
+        },
+        {
+          "key": "composite-aspect-pair:semisquare:pluto:vesta"
+        },
+        {
+          "key": "composite-aspect-pair:semisquare:saturn:sun"
+        },
+        {
+          "key": "composite-aspect-pair:semisquare:saturn:trueNode"
+        },
+        {
+          "key": "composite-aspect-pair:semisquare:saturn:uranus"
+        },
+        {
+          "key": "composite-aspect-pair:semisquare:saturn:venus"
+        },
+        {
+          "key": "composite-aspect-pair:semisquare:saturn:vesta"
+        },
+        {
+          "key": "composite-aspect-pair:semisquare:sun:trueNode"
+        },
+        {
+          "key": "composite-aspect-pair:semisquare:sun:uranus"
+        },
+        {
+          "key": "composite-aspect-pair:semisquare:sun:venus"
+        },
+        {
+          "key": "composite-aspect-pair:semisquare:sun:vesta"
+        },
+        {
+          "key": "composite-aspect-pair:semisquare:trueNode:uranus"
+        },
+        {
+          "key": "composite-aspect-pair:semisquare:trueNode:venus"
+        },
+        {
+          "key": "composite-aspect-pair:semisquare:trueNode:vesta"
+        },
+        {
+          "key": "composite-aspect-pair:semisquare:uranus:venus"
+        },
+        {
+          "key": "composite-aspect-pair:semisquare:uranus:vesta"
+        },
+        {
+          "key": "composite-aspect-pair:semisquare:venus:vesta"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:ceres:chiron"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:ceres:interpolatedLilith"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:ceres:juno"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:ceres:jupiter"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:ceres:mars"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:ceres:meanLilith"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:ceres:meanNode"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:ceres:mercury"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:ceres:moon"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:ceres:neptune"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:ceres:osculatingLilith"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:ceres:pallas"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:ceres:pluto"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:ceres:saturn"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:ceres:sun"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:ceres:trueNode"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:ceres:uranus"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:ceres:venus"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:ceres:vesta"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:chiron:interpolatedLilith"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:chiron:juno"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:chiron:jupiter"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:chiron:mars"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:chiron:meanLilith"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:chiron:meanNode"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:chiron:mercury"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:chiron:moon"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:chiron:neptune"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:chiron:osculatingLilith"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:chiron:pallas"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:chiron:pluto"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:chiron:saturn"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:chiron:sun"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:chiron:trueNode"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:chiron:uranus"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:chiron:venus"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:chiron:vesta"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:interpolatedLilith:juno"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:interpolatedLilith:jupiter"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:interpolatedLilith:mars"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:interpolatedLilith:meanNode"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:interpolatedLilith:mercury"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:interpolatedLilith:moon"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:interpolatedLilith:neptune"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:interpolatedLilith:pallas"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:interpolatedLilith:pluto"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:interpolatedLilith:saturn"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:interpolatedLilith:sun"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:interpolatedLilith:trueNode"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:interpolatedLilith:uranus"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:interpolatedLilith:venus"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:interpolatedLilith:vesta"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:juno:jupiter"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:juno:mars"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:juno:meanLilith"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:juno:meanNode"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:juno:mercury"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:juno:moon"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:juno:neptune"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:juno:osculatingLilith"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:juno:pallas"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:juno:pluto"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:juno:saturn"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:juno:sun"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:juno:trueNode"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:juno:uranus"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:juno:venus"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:juno:vesta"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:jupiter:mars"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:jupiter:meanLilith"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:jupiter:meanNode"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:jupiter:mercury"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:jupiter:moon"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:jupiter:neptune"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:jupiter:osculatingLilith"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:jupiter:pallas"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:jupiter:pluto"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:jupiter:saturn"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:jupiter:sun"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:jupiter:trueNode"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:jupiter:uranus"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:jupiter:venus"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:jupiter:vesta"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:mars:meanLilith"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:mars:meanNode"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:mars:mercury"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:mars:moon"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:mars:neptune"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:mars:osculatingLilith"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:mars:pallas"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:mars:pluto"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:mars:saturn"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:mars:sun"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:mars:trueNode"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:mars:uranus"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:mars:venus"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:mars:vesta"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:meanLilith:meanNode"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:meanLilith:mercury"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:meanLilith:moon"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:meanLilith:neptune"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:meanLilith:pallas"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:meanLilith:pluto"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:meanLilith:saturn"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:meanLilith:sun"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:meanLilith:trueNode"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:meanLilith:uranus"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:meanLilith:venus"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:meanLilith:vesta"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:meanNode:mercury"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:meanNode:moon"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:meanNode:neptune"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:meanNode:osculatingLilith"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:meanNode:pallas"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:meanNode:pluto"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:meanNode:saturn"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:meanNode:sun"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:meanNode:uranus"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:meanNode:venus"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:meanNode:vesta"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:mercury:moon"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:mercury:neptune"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:mercury:osculatingLilith"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:mercury:pallas"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:mercury:pluto"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:mercury:saturn"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:mercury:sun"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:mercury:trueNode"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:mercury:uranus"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:mercury:venus"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:mercury:vesta"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:moon:neptune"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:moon:osculatingLilith"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:moon:pallas"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:moon:pluto"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:moon:saturn"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:moon:sun"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:moon:trueNode"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:moon:uranus"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:moon:venus"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:moon:vesta"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:neptune:osculatingLilith"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:neptune:pallas"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:neptune:pluto"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:neptune:saturn"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:neptune:sun"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:neptune:trueNode"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:neptune:uranus"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:neptune:venus"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:neptune:vesta"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:osculatingLilith:pallas"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:osculatingLilith:pluto"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:osculatingLilith:saturn"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:osculatingLilith:sun"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:osculatingLilith:trueNode"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:osculatingLilith:uranus"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:osculatingLilith:venus"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:osculatingLilith:vesta"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:pallas:pluto"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:pallas:saturn"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:pallas:sun"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:pallas:trueNode"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:pallas:uranus"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:pallas:venus"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:pallas:vesta"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:pluto:saturn"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:pluto:sun"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:pluto:trueNode"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:pluto:uranus"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:pluto:venus"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:pluto:vesta"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:saturn:sun"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:saturn:trueNode"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:saturn:uranus"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:saturn:venus"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:saturn:vesta"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:sun:trueNode"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:sun:uranus"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:sun:venus"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:sun:vesta"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:trueNode:uranus"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:trueNode:venus"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:trueNode:vesta"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:uranus:venus"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:uranus:vesta"
+        },
+        {
+          "key": "composite-aspect-pair:sextile:venus:vesta"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:ceres:chiron"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:ceres:interpolatedLilith"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:ceres:juno"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:ceres:jupiter"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:ceres:mars"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:ceres:meanLilith"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:ceres:meanNode"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:ceres:mercury"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:ceres:moon"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:ceres:neptune"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:ceres:osculatingLilith"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:ceres:pallas"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:ceres:pluto"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:ceres:saturn"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:ceres:sun"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:ceres:trueNode"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:ceres:uranus"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:ceres:venus"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:ceres:vesta"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:chiron:interpolatedLilith"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:chiron:juno"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:chiron:jupiter"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:chiron:mars"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:chiron:meanLilith"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:chiron:meanNode"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:chiron:mercury"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:chiron:moon"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:chiron:neptune"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:chiron:osculatingLilith"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:chiron:pallas"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:chiron:pluto"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:chiron:saturn"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:chiron:sun"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:chiron:trueNode"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:chiron:uranus"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:chiron:venus"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:chiron:vesta"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:interpolatedLilith:juno"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:interpolatedLilith:jupiter"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:interpolatedLilith:mars"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:interpolatedLilith:meanNode"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:interpolatedLilith:mercury"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:interpolatedLilith:moon"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:interpolatedLilith:neptune"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:interpolatedLilith:pallas"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:interpolatedLilith:pluto"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:interpolatedLilith:saturn"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:interpolatedLilith:sun"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:interpolatedLilith:trueNode"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:interpolatedLilith:uranus"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:interpolatedLilith:venus"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:interpolatedLilith:vesta"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:juno:jupiter"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:juno:mars"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:juno:meanLilith"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:juno:meanNode"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:juno:mercury"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:juno:moon"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:juno:neptune"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:juno:osculatingLilith"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:juno:pallas"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:juno:pluto"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:juno:saturn"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:juno:sun"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:juno:trueNode"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:juno:uranus"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:juno:venus"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:juno:vesta"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:jupiter:mars"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:jupiter:meanLilith"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:jupiter:meanNode"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:jupiter:mercury"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:jupiter:moon"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:jupiter:neptune"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:jupiter:osculatingLilith"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:jupiter:pallas"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:jupiter:pluto"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:jupiter:saturn"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:jupiter:sun"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:jupiter:trueNode"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:jupiter:uranus"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:jupiter:venus"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:jupiter:vesta"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:mars:meanLilith"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:mars:meanNode"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:mars:mercury"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:mars:moon"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:mars:neptune"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:mars:osculatingLilith"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:mars:pallas"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:mars:pluto"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:mars:saturn"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:mars:sun"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:mars:trueNode"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:mars:uranus"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:mars:venus"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:mars:vesta"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:meanLilith:meanNode"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:meanLilith:mercury"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:meanLilith:moon"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:meanLilith:neptune"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:meanLilith:pallas"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:meanLilith:pluto"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:meanLilith:saturn"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:meanLilith:sun"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:meanLilith:trueNode"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:meanLilith:uranus"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:meanLilith:venus"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:meanLilith:vesta"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:meanNode:mercury"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:meanNode:moon"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:meanNode:neptune"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:meanNode:osculatingLilith"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:meanNode:pallas"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:meanNode:pluto"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:meanNode:saturn"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:meanNode:sun"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:meanNode:uranus"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:meanNode:venus"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:meanNode:vesta"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:mercury:moon"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:mercury:neptune"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:mercury:osculatingLilith"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:mercury:pallas"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:mercury:pluto"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:mercury:saturn"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:mercury:sun"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:mercury:trueNode"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:mercury:uranus"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:mercury:venus"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:mercury:vesta"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:moon:neptune"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:moon:osculatingLilith"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:moon:pallas"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:moon:pluto"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:moon:saturn"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:moon:sun"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:moon:trueNode"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:moon:uranus"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:moon:venus"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:moon:vesta"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:neptune:osculatingLilith"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:neptune:pallas"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:neptune:pluto"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:neptune:saturn"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:neptune:sun"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:neptune:trueNode"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:neptune:uranus"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:neptune:venus"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:neptune:vesta"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:osculatingLilith:pallas"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:osculatingLilith:pluto"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:osculatingLilith:saturn"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:osculatingLilith:sun"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:osculatingLilith:trueNode"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:osculatingLilith:uranus"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:osculatingLilith:venus"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:osculatingLilith:vesta"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:pallas:pluto"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:pallas:saturn"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:pallas:sun"
+        },
+        {
+          "key": "composite-aspect-pair:quintile:pallas:trueNode"
+        }
+      ],
+      "lastSeenCounts": {
+        "completed": 1472,
+        "failed": 0,
+        "checkedAt": "2026-10-06T23:32:07.386Z"
       }
     }
   ]

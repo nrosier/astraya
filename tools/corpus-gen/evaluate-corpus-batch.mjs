@@ -54,7 +54,14 @@ import { readFile, mkdir, readdir } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildEvaluationPrompt, EVALUATION_RESPONSE_SCHEMA, majorityVerdict } from './lib/corpus-evaluation.mjs';
-import { buildBatchRequest, submitBatch, getBatch, isBatchTerminal, extractBatchResults, detectStalledBatch } from './lib/openai-batch.mjs';
+import {
+  buildBatchRequest,
+  submitBatch,
+  getBatch,
+  isBatchTerminal,
+  extractBatchResults,
+  detectStalledBatch,
+} from './lib/openai-batch.mjs';
 import { factsDescription } from './lib/placements.mjs';
 import { parsePlacementKey } from '../../src/interpretation/schema.ts';
 import { readFeedback, writeFeedback, upsertFeedback } from './lib/corpus-feedback.mjs';
@@ -88,7 +95,9 @@ if (rawArgs.includes('--help') || rawArgs.includes('-h')) {
   );
   console.log('');
   console.log('Options:');
-  console.log('  --stall-threshold-minutes=N   How long (in minutes) a batch can show no progress before being abandoned');
+  console.log(
+    '  --stall-threshold-minutes=N   How long (in minutes) a batch can show no progress before being abandoned',
+  );
   console.log('                                (default: 30). Use 60+ for longer grace periods on slow batches.');
   process.exit(0);
 }
@@ -114,7 +123,8 @@ const checkOnly = rawArgs.includes('--check-only');
 // Threshold in minutes for detecting a batch as stalled — no progress for this long = abandon (#???).
 // Default 30 minutes; use --stall-threshold-minutes=60 for a longer grace period.
 const stallThresholdMinutes = Number(flag('stall-threshold-minutes', 30));
-if (!Number.isInteger(stallThresholdMinutes) || stallThresholdMinutes < 1) throw new Error('--stall-threshold-minutes must be a positive integer');
+if (!Number.isInteger(stallThresholdMinutes) || stallThresholdMinutes < 1)
+  throw new Error('--stall-threshold-minutes must be a positive integer');
 
 if (!locale && !checkOnly) {
   throw new Error(
@@ -183,12 +193,13 @@ async function checkAndApply(loc) {
       }
       if (!isBatchTerminal(batch)) {
         const counts = batch.request_counts;
-        const { isStalled, shouldAbandon, reason, nextTracking } = detectStalledBatch(batch, job, stallThresholdMinutes);
+        const { shouldAbandon, reason, nextTracking } = detectStalledBatch(batch, job, stallThresholdMinutes);
         console.log(
           `[${loc}] batch ${job.batchId} still ${batch.status}${counts ? ` (${String(counts.completed)}/${String(counts.total)} done, ${String(counts.failed)} failed)` : ''}${reason ? ` — ${reason}` : ''}`,
         );
 
         // Update tracking for next check (even if not yet abandoned)
+        // This persists the current state to disk at the end of this function
         if (nextTracking) {
           job.lastSeenCounts = nextTracking;
         }
@@ -395,8 +406,16 @@ if (checkOnly && !locale) {
     else if (stillRunning.length > 0)
       console.log(`[${loc}] ${String(stillRunning.length)}/${String(jobs.length)} batch(es) still running.`);
     else console.log(`[${loc}] all recorded batches completed and applied.`);
-    if (stillRunning.length > 0) await writeBatchState(statePath, { jobs: stillRunning });
-    else await clearBatchState(statePath);
+    if (stillRunning.length > 0) {
+      await writeBatchState(statePath, { jobs: stillRunning });
+      for (const job of stillRunning) {
+        if (job.lastSeenCounts) {
+          console.log(
+            `[${loc}] persisted stall tracking for ${job.batchId}: ${String(job.lastSeenCounts.completed + job.lastSeenCounts.failed)}/${String(job.totalRequests ?? '?')} done, last checked at ${job.lastSeenCounts.checkedAt}`,
+          );
+        }
+      }
+    } else await clearBatchState(statePath);
   }
   process.exit(0);
 }
@@ -411,8 +430,16 @@ if (checkOnly) {
     );
   else
     console.log(`[${locale}] all recorded batches completed and applied — --check-only, not submitting anything new.`);
-  if (stillRunning.length > 0) await writeBatchState(statePath, { jobs: stillRunning });
-  else await clearBatchState(statePath);
+  if (stillRunning.length > 0) {
+    await writeBatchState(statePath, { jobs: stillRunning });
+    for (const job of stillRunning) {
+      if (job.lastSeenCounts) {
+        console.log(
+          `[${locale}] persisted stall tracking for ${job.batchId}: ${String(job.lastSeenCounts.completed + job.lastSeenCounts.failed)}/${String(job.totalRequests ?? '?')} done, last checked at ${job.lastSeenCounts.checkedAt}`,
+        );
+      }
+    }
+  } else await clearBatchState(statePath);
   process.exit(0);
 }
 
