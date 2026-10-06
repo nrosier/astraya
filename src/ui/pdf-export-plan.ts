@@ -138,7 +138,11 @@ function tablePlanOf<T>(caption: string, columns: readonly TableColumn<T>[], row
   return {
     caption,
     head: columns.map((column) => column.label),
-    body: rows.map((row) => columns.map((column) => column.render?.(row) ?? String(column.valueOf(row)))),
+    // Plain-text extraction for PDF uses valueOf() only, never render() — the latter returns JSX that
+    // can't be stringified safely (e.g. the dispositor chain's → symbol becomes corrupted). valueOf() is
+    // the authoritative textual representation, already passed through a TextFilter when needed (see
+    // table-sort.ts); render() is visual layout for the live table and may include React elements (#447).
+    body: rows.map((row) => columns.map((column) => String(column.valueOf(row)))),
   };
 }
 

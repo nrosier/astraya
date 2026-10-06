@@ -382,7 +382,9 @@ export function dispositorColumns(
     {
       key: 'chain',
       label: t.chainLabel,
-      valueOf: (row) => row.chain.join(' '),
+      valueOf: (row) =>
+        row.chain.map((key) => bodyByKey(key)?.name ?? key).join(' → ') +
+        (row.coDispositorKey === undefined ? '' : ` (+ ${bodyByKey(row.coDispositorKey)?.name ?? row.coDispositorKey})`),
       render: (row) =>
         row.chain.map((key) => bodyDisplayName(key, locale)).join(' → ') +
         (row.coDispositorKey === undefined ? '' : ` (+ ${bodyDisplayName(row.coDispositorKey, locale)})`),
