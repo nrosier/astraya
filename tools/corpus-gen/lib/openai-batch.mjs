@@ -122,13 +122,14 @@ export async function getBatch({ apiKey, baseUrl, batchId, maxRetries = 3 }) {
 }
 
 /**
- * Detects when a batch has stalled by comparing its current request counts to a prior snapshot.
+ * Detects when a batch has stalled by tracking when counts last *changed*.
  * A batch is considered stalled if:
  * 1. The batch is still in_progress
  * 2. The completed + failed count hasn't changed since the last check
- * 3. That unchanged state has persisted for >= stallThresholdMinutes
+ * 3. The time since that count last changed is >= stallThresholdMinutes
  *
- * Tracking is stored in the job object: `lastSeenCounts` { completed, failed, checkedAt }.
+ * Tracking is stored in the job object: `lastSeenCounts` { completed, failed, changedAt }.
+ * `changedAt` is updated ONLY when the counts differ from the previous observation.
  * On each call, this function returns { isStalled, shouldAbandon, reason }.
  */
 export function detectStalledBatch(batch, jobTracking, stallThresholdMinutes = 30) {
@@ -140,45 +141,46 @@ export function detectStalledBatch(batch, jobTracking, stallThresholdMinutes = 3
   const currentCount = completed + failed;
   const now = new Date();
 
-  // First check: initialize tracking
+  // First check: initialize tracking with the current timestamp as "when it changed"
   if (!jobTracking.lastSeenCounts) {
     return {
       isStalled: false,
       shouldAbandon: false,
       reason: null,
-      nextTracking: { completed, failed, checkedAt: now.toISOString() },
+      nextTracking: { completed, failed, changedAt: now.toISOString() },
     };
   }
 
   const lastCount = jobTracking.lastSeenCounts.completed + jobTracking.lastSeenCounts.failed;
-  const lastCheck = new Date(jobTracking.lastSeenCounts.checkedAt);
-  const stallDurationMinutes = (now - lastCheck) / (1000 * 60);
+  const lastChanged = new Date(jobTracking.lastSeenCounts.changedAt);
+  const stallDurationMinutes = (now - lastChanged) / (1000 * 60);
 
-  // No progress since last check
-  if (currentCount === lastCount) {
-    if (stallDurationMinutes >= stallThresholdMinutes) {
-      return {
-        isStalled: true,
-        shouldAbandon: true,
-        reason: `stalled for ${Math.round(stallDurationMinutes)}min (${currentCount} requests stuck)`,
-        nextTracking: { completed, failed, checkedAt: now.toISOString() },
-      };
-    }
-    // Still within threshold — report the stall but don't abandon yet
+  // Counts have changed — update changedAt to now
+  if (currentCount !== lastCount) {
     return {
-      isStalled: true,
+      isStalled: false,
       shouldAbandon: false,
-      reason: `stalling: no progress for ${Math.round(stallDurationMinutes)}min (${currentCount}/${batch.request_counts.total} done, ${stallThresholdMinutes - Math.round(stallDurationMinutes)}min until abandon)`,
-      nextTracking: { completed, failed, checkedAt: now.toISOString() },
+      reason: null,
+      nextTracking: { completed, failed, changedAt: now.toISOString() },
     };
   }
 
-  // Progress detected — reset the stall timer
+  // No change in counts — check if stalled
+  if (stallDurationMinutes >= stallThresholdMinutes) {
+    return {
+      isStalled: true,
+      shouldAbandon: true,
+      reason: `stalled for ${Math.round(stallDurationMinutes)}min (${currentCount} requests stuck, no progress since ${lastChanged.toISOString()})`,
+      nextTracking: { completed, failed, changedAt: lastChanged.toISOString() },
+    };
+  }
+
+  // No change yet, but still within threshold
   return {
-    isStalled: false,
+    isStalled: true,
     shouldAbandon: false,
-    reason: null,
-    nextTracking: { completed, failed, checkedAt: now.toISOString() },
+    reason: `stalling: no progress for ${Math.round(stallDurationMinutes)}min (${currentCount}/${batch.request_counts.total} done, ${stallThresholdMinutes - Math.round(stallDurationMinutes)}min until abandon)`,
+    nextTracking: { completed, failed, changedAt: lastChanged.toISOString() },
   };
 }
 

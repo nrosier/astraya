@@ -411,7 +411,7 @@ if (checkOnly && !locale) {
       for (const job of stillRunning) {
         if (job.lastSeenCounts) {
           console.log(
-            `[${loc}] persisted stall tracking for ${job.batchId}: ${String(job.lastSeenCounts.completed + job.lastSeenCounts.failed)}/${String(job.totalRequests ?? '?')} done, last checked at ${job.lastSeenCounts.checkedAt}`,
+            `[${loc}] persisted stall tracking for ${job.batchId}: ${String(job.lastSeenCounts.completed + job.lastSeenCounts.failed)}/${String(job.totalRequests ?? '?')} done, last changed at ${job.lastSeenCounts.changedAt}`,
           );
         }
       }
@@ -435,7 +435,7 @@ if (checkOnly) {
     for (const job of stillRunning) {
       if (job.lastSeenCounts) {
         console.log(
-          `[${locale}] persisted stall tracking for ${job.batchId}: ${String(job.lastSeenCounts.completed + job.lastSeenCounts.failed)}/${String(job.totalRequests ?? '?')} done, last checked at ${job.lastSeenCounts.checkedAt}`,
+          `[${locale}] persisted stall tracking for ${job.batchId}: ${String(job.lastSeenCounts.completed + job.lastSeenCounts.failed)}/${String(job.totalRequests ?? '?')} done, last changed at ${job.lastSeenCounts.changedAt}`,
         );
       }
     }
