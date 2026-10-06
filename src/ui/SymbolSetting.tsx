@@ -21,6 +21,21 @@ export function SymbolSetting({ onChanged }: { readonly onChanged?: () => void }
     callback();
     onChanged?.();
   };
+
+  // Reactive description based on symbol class choice
+  const getSymbolDescription = (): string | undefined => {
+    switch (choice) {
+      case 'unicode':
+        return t.unicodeDescription;
+      case 'drawn':
+        return t.drawnDescription;
+      case 'text':
+        return t.textDescription;
+      default:
+        return undefined;
+    }
+  };
+
   return (
     <>
       <p className="rulership-setting">
@@ -49,6 +64,22 @@ export function SymbolSetting({ onChanged }: { readonly onChanged?: () => void }
           {t.hint}
         </span>
       </p>
+      {getSymbolDescription() && (
+        <p
+          style={{
+            marginTop: '0.75rem',
+            fontSize: '0.9em',
+            lineHeight: '1.5',
+            color: '#333',
+            padding: '0.75rem',
+            backgroundColor: '#fff',
+            borderLeft: '3px solid #007acc',
+            marginBottom: '1rem',
+          }}
+        >
+          {getSymbolDescription()}
+        </p>
+      )}
       <p className="rulership-setting">
         <label htmlFor={`${id}-weight`}>{t.weightLabel} </label>
         <select
@@ -73,9 +104,27 @@ export function SymbolSetting({ onChanged }: { readonly onChanged?: () => void }
         </select>
         <span id={`${id}-weight-hint`} className="hint rulership-setting-hint">
           {' '}
-          {t.weightHint}
+          {choice === 'drawn' ? t.weightHint : t.weightAvailableWhen}
         </span>
       </p>
+      {choice === 'drawn' && (
+        <p
+          style={{
+            marginTop: '0.75rem',
+            fontSize: '0.9em',
+            lineHeight: '1.5',
+            color: '#333',
+            padding: '0.75rem',
+            backgroundColor: '#fff',
+            borderLeft: '3px solid #007acc',
+            marginBottom: '1rem',
+          }}
+        >
+          {variants.weight === 'fine' && t.fineWeightDescription}
+          {variants.weight === 'regular' && t.regularWeightDescription}
+          {variants.weight === 'bold' && t.boldWeightDescription}
+        </p>
+      )}
       <fieldset className="field-group">
         <legend>{t.variantsLegend}</legend>
         <p className="hint">{t.variantsHint}</p>

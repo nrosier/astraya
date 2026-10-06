@@ -75,6 +75,8 @@ export function ExtendedSettingsPanel({
   // Symbols are also a device preference (localStorage), but we track if they changed to enable the Apply button.
   const [symbolsChanged, setSymbolsChanged] = useState(false);
   const [open, setOpen] = useState(false);
+  // Capture the current rulership choice for reactive description updates
+  const [rulershipChoice] = useRulershipChoice();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const headingId = useId();
@@ -291,32 +293,52 @@ export function ExtendedSettingsPanel({
           <fieldset className="field-group settings-card-group">
             <legend>{t.zodiacHousesLegend}</legend>
             <p className="hint settings-card-tag">{t.appliesOnApply}</p>
-            <div role="radiogroup" aria-label={t.zodiacLegend}>
-              <label>
-                <input
-                  type="radio"
-                  name="extended-settings-zodiac"
-                  checked={draft.zodiac.kind === 'tropical'}
-                  onChange={() => {
-                    patch({ zodiac: { kind: 'tropical' } });
-                  }}
-                />{' '}
-                {t.tropical}
-              </label>{' '}
-              <label>
-                <input
-                  type="radio"
-                  name="extended-settings-zodiac"
-                  checked={draft.zodiac.kind === 'sidereal'}
-                  onChange={() => {
-                    patch({ zodiac: { kind: 'sidereal', ayanamsa: LAHIRI_AYANAMSA_ID } });
-                  }}
-                />{' '}
-                {t.sidereal}
-              </label>
+            <p className="hint">{t.zodiacFrameSubtitle}</p>
+
+            {/* Starting Point */}
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ fontWeight: '600', display: 'block', marginBottom: '0.5rem' }}>{t.zodiacLegend}</label>
+              <div role="radiogroup" aria-label={t.zodiacLegend}>
+                <label>
+                  <input
+                    type="radio"
+                    name="extended-settings-zodiac"
+                    checked={draft.zodiac.kind === 'tropical'}
+                    onChange={() => {
+                      patch({ zodiac: { kind: 'tropical' } });
+                    }}
+                  />{' '}
+                  {t.tropical}
+                </label>{' '}
+                <label>
+                  <input
+                    type="radio"
+                    name="extended-settings-zodiac"
+                    checked={draft.zodiac.kind === 'sidereal'}
+                    onChange={() => {
+                      patch({ zodiac: { kind: 'sidereal', ayanamsa: LAHIRI_AYANAMSA_ID } });
+                    }}
+                  />{' '}
+                  {t.sidereal}
+                </label>
+              </div>
+              <p
+                style={{
+                  marginTop: '0.75rem',
+                  fontSize: '0.9em',
+                  lineHeight: '1.5',
+                  color: '#333',
+                  padding: '0.75rem',
+                  backgroundColor: '#fff',
+                  borderLeft: '3px solid #007acc',
+                }}
+              >
+                {draft.zodiac.kind === 'tropical' ? t.tropicalDescription : t.siderealDescription}
+              </p>
             </div>
+
             {draft.zodiac.kind === 'sidereal' && (
-              <label>
+              <label style={{ display: 'block', marginBottom: '1.5rem' }}>
                 {t.ayanamsaLabel}
                 <select
                   aria-label={t.ayanamsaLabel}
@@ -333,23 +355,36 @@ export function ExtendedSettingsPanel({
                 </select>
               </label>
             )}
-            <div className="field-grid">
-              <label>
-                {t.systemLabel}
-                <select
-                  aria-label={t.houseSystemLegend}
-                  value={draft.houseSystem}
-                  onChange={(event) => {
-                    patch({ houseSystem: event.target.value });
-                  }}
-                >
-                  {HOUSE_SYSTEMS.map((system) => (
-                    <option key={system.code} value={system.code}>
-                      {houseSystemNames.get(system.code) ?? system.key}
-                    </option>
-                  ))}
-                </select>
-              </label>
+
+            {/* House System */}
+            <div>
+              <label style={{ fontWeight: '600', display: 'block', marginBottom: '0.5rem' }}>{t.systemLabel}</label>
+              <select
+                aria-label={t.houseSystemLegend}
+                value={draft.houseSystem}
+                onChange={(event) => {
+                  patch({ houseSystem: event.target.value });
+                }}
+              >
+                {HOUSE_SYSTEMS.map((system) => (
+                  <option key={system.code} value={system.code}>
+                    {houseSystemNames.get(system.code) ?? system.key}
+                  </option>
+                ))}
+              </select>
+              <p
+                style={{
+                  marginTop: '0.75rem',
+                  fontSize: '0.9em',
+                  lineHeight: '1.5',
+                  color: '#333',
+                  padding: '0.75rem',
+                  backgroundColor: '#fff',
+                  borderLeft: '3px solid #007acc',
+                }}
+              >
+                {t.houseSystemDescription(draft.houseSystem)}
+              </p>
             </div>
           </fieldset>
 
@@ -551,14 +586,41 @@ export function ExtendedSettingsPanel({
           </fieldset>
 
           <fieldset className="field-group settings-card-group">
-            <legend>{t.deviceLegend}</legend>
-            <p className="hint settings-card-tag">{t.savedOnDevice}</p>
+            <legend>{t.rulersLegend}</legend>
+            <p className="hint settings-card-tag">{t.appliesOnApply}</p>
+            <p className="hint">{t.rulersSubtitle}</p>
             <RulershipSetting />
+            <p
+              style={{
+                marginTop: '0.75rem',
+                fontSize: '0.9em',
+                lineHeight: '1.5',
+                color: '#333',
+                padding: '0.75rem',
+                backgroundColor: '#fff',
+                borderLeft: '3px solid #007acc',
+              }}
+            >
+              {/* Display reactive description based on rulers choice */}
+              {rulershipChoice === 'modern' && t.modernRulersDescription}
+              {rulershipChoice === 'traditional' && t.traditionalRulersDescription}
+              {rulershipChoice === 'both' && t.coRulersDescription}
+            </p>
+          </fieldset>
+
+          <fieldset className="field-group settings-card-group">
+            <legend>{t.symbolsFrameSubtitle}</legend>
+            <p className="hint settings-card-tag">{t.savedOnDevice}</p>
             <SymbolSetting
               onChanged={() => {
                 setSymbolsChanged(true);
               }}
             />
+          </fieldset>
+
+          <fieldset className="field-group settings-card-group">
+            <legend>{t.deviceLegend}</legend>
+            <p className="hint settings-card-tag">{t.savedOnDevice}</p>
           </fieldset>
         </div>
 
