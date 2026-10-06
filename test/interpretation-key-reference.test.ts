@@ -80,6 +80,21 @@ const REFERENCE: Readonly<Record<CorpusCategory, Row>> = {
     key: 'astro-line:venus:MC',
     shape: /^astro-line:[A-Za-z]+:(?:AC|DC|MC|IC)$/,
   },
+  'composite-planet-in-sign': {
+    placement: { category: 'composite-planet-in-sign', body: 'sun', sign: 2 },
+    key: 'composite-planet-in-sign:sun:2',
+    shape: /^composite-planet-in-sign:[A-Za-z]+:(?:[0-9]|1[01])$/,
+  },
+  'composite-planet-in-house': {
+    placement: { category: 'composite-planet-in-house', body: 'sun', house: 3 },
+    key: 'composite-planet-in-house:sun:3',
+    shape: /^composite-planet-in-house:[A-Za-z]+:(?:[1-9]|1[0-2])$/,
+  },
+  'composite-aspect-pair': {
+    placement: { category: 'composite-aspect-pair', aspect: 'square', bodyA: 'mars', bodyB: 'saturn' },
+    key: 'composite-aspect-pair:square:mars:saturn',
+    shape: /^composite-aspect-pair:[a-z]+:[A-Za-z]+:[A-Za-z]+$/,
+  },
 };
 
 describe('the corpus key reference (#427)', () => {
@@ -108,8 +123,8 @@ describe('the corpus key reference (#427)', () => {
   });
 
   describe('the ordering of the two bodies', () => {
-    it('aspect-pair and synastry-aspect are stored once per pair, alphabetically', () => {
-      for (const category of ['aspect-pair', 'synastry-aspect'] as const) {
+    it('aspect-pair, synastry-aspect and composite-aspect-pair are stored once per pair, alphabetically', () => {
+      for (const category of ['aspect-pair', 'synastry-aspect', 'composite-aspect-pair'] as const) {
         const swapped = placementKey({ category, aspect: 'square', bodyA: 'moon', bodyB: 'mars' });
         expect(swapped).toBe(`${category}:square:mars:moon`);
         // A hand-typed key in the other order is refused, not silently a second entry.

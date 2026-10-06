@@ -37,12 +37,15 @@ function aspectLabel(key: string): string {
 export function describePlacement(placement: CorpusPlacement): string {
   switch (placement.category) {
     case 'planet-in-sign':
+    case 'composite-planet-in-sign':
       return `${bodyLabel(placement.body)} in ${signLabel(placement.sign)}`;
     case 'planet-in-house':
+    case 'composite-planet-in-house':
       return `${bodyLabel(placement.body)} in house ${String(placement.house)}`;
     case 'sign-on-cusp':
       return `${signLabel(placement.sign)} on the house ${String(placement.house)} cusp`;
     case 'aspect-pair':
+    case 'composite-aspect-pair':
       return `${bodyLabel(placement.bodyA)} ${aspectLabel(placement.aspect)} ${bodyLabel(placement.bodyB)}`;
     case 'transit-aspect':
       return `transiting ${bodyLabel(placement.transiting)} ${aspectLabel(placement.aspect)} natal ${bodyLabel(placement.natal)}`;

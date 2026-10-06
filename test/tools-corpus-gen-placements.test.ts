@@ -14,11 +14,12 @@ import { composeFallbackText } from '../src/interpretation/compose.js';
 import type { CorpusPlacement } from '../src/interpretation/schema.js';
 // prettier-ignore
 // @ts-expect-error -- plain .mjs, no type declarations; cast to known shapes below.
-import { corePairs as corePairsUntyped, placementDescription as placementDescriptionUntyped, factsDescription as factsDescriptionUntyped } from '../tools/corpus-gen/lib/placements.mjs';
+import { corePairs as corePairsUntyped, placementDescription as placementDescriptionUntyped, factsDescription as factsDescriptionUntyped, buildPlacements as buildPlacementsUntyped } from '../tools/corpus-gen/lib/placements.mjs';
 
 const corePairs = corePairsUntyped as () => readonly (readonly [string, string])[];
 const placementDescription = placementDescriptionUntyped as (placement: CorpusPlacement) => string;
 const factsDescription = factsDescriptionUntyped as (placement: CorpusPlacement) => string;
+const buildPlacements = buildPlacementsUntyped as () => readonly CorpusPlacement[];
 
 describe('corePairs (#395)', () => {
   const pairs = corePairs();
@@ -137,5 +138,60 @@ describe('what the generator is told for the placements the judge kept flagging 
     } as unknown as CorpusPlacement);
     expect(description).toContain('Mean Lilith is YOURS');
     expect(description).toContain('Sun belongs to the OTHER person');
+  });
+});
+
+describe('composite categories (#451)', () => {
+  it('buildPlacements covers composite-planet-in-sign/-house/-aspect-pair with the same coverage as their natal siblings', () => {
+    const placements = buildPlacements();
+    const countOf = (category: string) => placements.filter((p) => p.category === category).length;
+    expect(countOf('composite-planet-in-sign')).toBe(countOf('planet-in-sign'));
+    expect(countOf('composite-planet-in-house')).toBe(countOf('planet-in-house'));
+    expect(countOf('composite-aspect-pair')).toBe(countOf('aspect-pair'));
+    expect(countOf('composite-aspect-pair')).toBeGreaterThan(0);
+  });
+
+  it('tells the generator this is a composite chart, not an individual, for all three categories', () => {
+    const signText = placementDescription({ category: 'composite-planet-in-sign', body: 'sun', sign: 2 });
+    const houseText = placementDescription({ category: 'composite-planet-in-house', body: 'sun', house: 3 });
+    const aspectText = placementDescription({
+      category: 'composite-aspect-pair',
+      aspect: 'square',
+      bodyA: 'mars',
+      bodyB: 'saturn',
+    });
+    for (const text of [signText, houseText, aspectText]) {
+      expect(text).toContain('composite (relationship) chart');
+    }
+    expect(signText).toContain('Sun in Gemini');
+    expect(houseText).toContain('Sun in house 3');
+    expect(aspectText).toContain('Mars square Saturn');
+  });
+
+  it('facts for the judge are plain, chart-scoped descriptions, same shape as the natal categories', () => {
+    expect(factsDescription({ category: 'composite-planet-in-sign', body: 'sun', sign: 2 })).toBe(
+      "the composite chart's Sun in Gemini",
+    );
+    expect(factsDescription({ category: 'composite-planet-in-house', body: 'sun', house: 3 })).toBe(
+      "the composite chart's Sun in house 3",
+    );
+    expect(
+      factsDescription({ category: 'composite-aspect-pair', aspect: 'square', bodyA: 'mars', bodyB: 'saturn' }),
+    ).toBe("the composite chart's Mars Square Saturn");
+  });
+
+  it('falls back to the same mechanical sentence as the natal category, since neither says "you"', () => {
+    expect(composeFallbackText({ category: 'composite-planet-in-sign', body: 'sun', sign: 2 }, 'en')).toBe(
+      composeFallbackText({ category: 'planet-in-sign', body: 'sun', sign: 2 }, 'en'),
+    );
+    expect(composeFallbackText({ category: 'composite-planet-in-house', body: 'sun', house: 3 }, 'nl')).toBe(
+      composeFallbackText({ category: 'planet-in-house', body: 'sun', house: 3 }, 'nl'),
+    );
+    expect(
+      composeFallbackText(
+        { category: 'composite-aspect-pair', aspect: 'square', bodyA: 'mars', bodyB: 'saturn' },
+        'en',
+      ),
+    ).toBe(composeFallbackText({ category: 'aspect-pair', aspect: 'square', bodyA: 'mars', bodyB: 'saturn' }, 'en'));
   });
 });

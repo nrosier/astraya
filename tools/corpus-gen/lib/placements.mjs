@@ -114,6 +114,19 @@ export function buildPlacements() {
   for (const body of ACG_BODY_KEYS) {
     for (const angle of ACG_ANGLES) placements.push({ category: 'astro-line', body, angle });
   }
+  // #451: the same body/sign/house/aspect coverage as planet-in-sign/-house and aspect-pair,
+  // under their own category — a composite chart's placements need their own framing, not a
+  // second copy of the enumeration.
+  for (const body of CORE_BODY_KEYS) {
+    for (const sign of SIGN_INDICES) placements.push({ category: 'composite-planet-in-sign', body, sign });
+  }
+  for (const body of CORE_BODY_KEYS) {
+    for (const house of HOUSES) placements.push({ category: 'composite-planet-in-house', body, house });
+  }
+  for (const aspect of ASPECTS) {
+    for (const [bodyA, bodyB] of corePairs())
+      placements.push({ category: 'composite-aspect-pair', aspect: aspect.key, bodyA, bodyB });
+  }
   return placements;
 }
 
@@ -217,6 +230,17 @@ export function placementDescription(placement) {
       return `house ${String(placement.house)} profected (annual/monthly profection) — the house of ${houseGloss(placement.house)}`;
     case 'astro-line':
       return `${bodyName(placement.body)} on the ${ANGLE_WORDS[placement.angle] ?? placement.angle} astrocartography line (${planetSymbolism(placement.body)?.core ?? ''} / the angle of ${ANGLE_GLOSS[placement.angle] ?? ''})`;
+    // #451: a composite chart is a single synthetic chart derived from two people's midpoints,
+    // describing their relationship/combination as its own entity — the same framing
+    // COMPOSITE_CHART_NOTE gives Tier 2's freeform mode. Said explicitly so the generator writes
+    // about the combination itself, not an individual's own trait (the same failure mode
+    // synastry-aspect's own hint above exists to prevent, just for one body instead of two).
+    case 'composite-planet-in-sign':
+      return `composite chart: ${bodyName(placement.body)} in ${SIGNS[placement.sign]?.name ?? String(placement.sign)} (${planetSymbolism(placement.body)?.core ?? ''} / ${signSymbolism(placement.sign)?.core ?? ''}). This is a composite (relationship) chart: describe what this placement means for the relationship or combination itself, not for either person individually. Do not use "you"/"your" or name either person.`;
+    case 'composite-planet-in-house':
+      return `composite chart: ${bodyName(placement.body)} in house ${String(placement.house)} (${planetSymbolism(placement.body)?.core ?? ''} / house of ${houseGloss(placement.house)}). This is a composite (relationship) chart: describe what this placement means for the relationship or combination itself, not for either person individually. Do not use "you"/"your" or name either person.`;
+    case 'composite-aspect-pair':
+      return `composite chart: ${bodyName(placement.bodyA)} ${placement.aspect} ${bodyName(placement.bodyB)}. This is a composite (relationship) chart: describe what this aspect means for the relationship or combination itself, not for either person individually. Do not use "you"/"your" or name either person.`;
     default:
       throw new Error(`unreachable: unhandled category "${placement.category}"`);
   }
@@ -247,6 +271,12 @@ export function factsDescription(placement) {
       return `house ${String(placement.house)} is the profected house for this period`;
     case 'astro-line':
       return `${bodyName(placement.body)} on the ${ANGLE_WORDS[placement.angle] ?? placement.angle} astrocartography line`;
+    case 'composite-planet-in-sign':
+      return `the composite chart's ${bodyName(placement.body)} in ${SIGNS[placement.sign]?.name ?? String(placement.sign)}`;
+    case 'composite-planet-in-house':
+      return `the composite chart's ${bodyName(placement.body)} in house ${String(placement.house)}`;
+    case 'composite-aspect-pair':
+      return `the composite chart's ${bodyName(placement.bodyA)} ${aspectName(placement.aspect)} ${bodyName(placement.bodyB)}`;
     default:
       throw new Error(`this tool does not (yet) support category "${placement.category}"`);
   }

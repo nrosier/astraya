@@ -150,8 +150,32 @@ describe('assembleReport (#61)', () => {
     const composite = assembleReport(chart, 'en', [], undefined, 'composite');
     expect(natal.sections.map((s) => s.id)).not.toContain('composite-intro');
     expect(composite.sections.map((s) => s.id)[0]).toBe('composite-intro');
-    // Every other section is still exactly the same — composite only adds, never replaces.
-    expect(composite.sections.slice(1)).toEqual(natal.sections);
+    // Every other section has the same shape (ids, order, text) — composite only adds a section,
+    // never replaces one — but (#451) a planet-in-sign/-house or aspect-pair paragraph now reads
+    // through its composite-aware sibling category instead of the plain natal one, so the
+    // underlying placements genuinely differ even though the rendered text (fallback, no corpus
+    // loaded in this test) happens to be the same mechanical sentence either way.
+    const rest = composite.sections.slice(1);
+    expect(rest.map((s) => s.id)).toEqual(natal.sections.map((s) => s.id));
+    expect(rest.map((s) => s.paragraphs.map((p) => p.text))).toEqual(
+      natal.sections.map((s) => s.paragraphs.map((p) => p.text)),
+    );
+    // This fixture has no aspects (see makeFullChart), so the aspect-patterns section is empty
+    // either way; the composite-aware aspect-pair remapping is covered separately below, with a
+    // chart that actually has aspects.
+    const compositeCategories = new Set(
+      rest.flatMap((s) => s.paragraphs.map((p) => p.placement?.category).filter((c) => c !== undefined)),
+    );
+    expect(compositeCategories).toContain('composite-planet-in-sign');
+    expect(compositeCategories).toContain('composite-planet-in-house');
+    expect(compositeCategories).not.toContain('planet-in-sign');
+    expect(compositeCategories).not.toContain('planet-in-house');
+    // sign-on-cusp and dignity-state have no composite sibling (#451's own stated scope).
+    const natalCategories = new Set(
+      natal.sections.flatMap((s) => s.paragraphs.map((p) => p.placement?.category).filter((c) => c !== undefined)),
+    );
+    expect(natalCategories).toContain('sign-on-cusp');
+    expect(compositeCategories).toContain('sign-on-cusp');
   });
 
   it('explains what a composite chart is, in the requested locale, as a derived paragraph with no placement', () => {
@@ -348,6 +372,22 @@ describe('aspect patterns section (#61)', () => {
       bodyA: 'mars',
       bodyB: 'venus',
     });
+  });
+
+  it('reads aspect-pair placements through composite-aspect-pair when chartKind is composite (#451)', () => {
+    const chart = makeFullChart({ aspects: [makeAspect('venus', 'mars', 120, 0.1)] });
+    const paragraphs = assembleReport(chart, 'en', [], undefined, 'composite').sections[5]?.paragraphs ?? [];
+    // paragraphs[0] is the derived, placement-less Jones-shape sentence (see the test above);
+    // everything after it is this chart's one aspect-pair placement.
+    const aspectParagraphs = paragraphs.filter((p) => p.placement !== undefined);
+    expect(aspectParagraphs).not.toHaveLength(0);
+    expect(aspectParagraphs.every((p) => p.placement?.category === 'composite-aspect-pair')).toBe(true);
+    // Still the same mechanical fallback sentence either way (composite's own corpus category
+    // happens to have no entries yet, so both fall back identically) — only the placement's own
+    // category differs, which is what a Tier 2 payload or an admin screen actually reads.
+    expect(aspectParagraphs[0]?.text).toBe(
+      composeFallbackText({ category: 'aspect-pair', aspect: 'trine', bodyA: 'mars', bodyB: 'venus' }, 'en'),
+    );
   });
 
   it('caps the number of aspects shown even when the chart has many', () => {

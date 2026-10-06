@@ -392,6 +392,27 @@
                   <td>Venus on the Midheaven line</td>
                   <td>&mdash;</td>
                 </tr>
+                <tr>
+                  <th scope="row"><code>composite-planet-in-sign</code></th>
+                  <td><code>composite-planet-in-sign:&lt;body&gt;:&lt;sign&gt;</code></td>
+                  <td><code>composite-planet-in-sign:sun:2</code></td>
+                  <td>The composite chart's Sun in Gemini</td>
+                  <td>&mdash;</td>
+                </tr>
+                <tr>
+                  <th scope="row"><code>composite-planet-in-house</code></th>
+                  <td><code>composite-planet-in-house:&lt;body&gt;:&lt;house&gt;</code></td>
+                  <td><code>composite-planet-in-house:sun:3</code></td>
+                  <td>The composite chart's Sun in the 3rd house</td>
+                  <td>&mdash;</td>
+                </tr>
+                <tr>
+                  <th scope="row"><code>composite-aspect-pair</code></th>
+                  <td><code>composite-aspect-pair:&lt;aspect&gt;:&lt;a&gt;:&lt;b&gt;</code></td>
+                  <td><code>composite-aspect-pair:square:mars:saturn</code></td>
+                  <td>Mars square Saturn, within the composite chart</td>
+                  <td>alphabetical, one entry per pair</td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -466,6 +487,21 @@
           uses them yet. <code>profected-house</code> and <code>astro-line</code> are used: the Profections screen shows
           the text of the profected house, and the Astrocartography screen shows what each checked body means on each
           checked line.
+        </p>
+
+        <h2>Composite categories</h2>
+        <p>
+          <code>composite-planet-in-sign</code>, <code>composite-planet-in-house</code> and
+          <code>composite-aspect-pair</code> are the composite chart's own siblings of <code>planet-in-sign</code>,
+          <code>planet-in-house</code> and <code>aspect-pair</code> &mdash; same shape, same body/sign/house/aspect
+          coverage, read by <code>src/interpretation/report.ts</code>'s <code>assembleReport</code> whenever
+          <code>chartKind</code> is <code>'composite'</code>. A composite's placements describe the relationship or
+          combination itself, not either person individually, so they need their own generated text rather than reusing
+          the natal category's "you"/"your" voice &mdash; the same reason <code>synastry-aspect</code> is its own
+          category rather than a qualified <code>aspect-pair</code>. <code>sign-on-cusp</code> and
+          <code>dignity-state</code> have no composite sibling: a house cusp's sign and a planet's essential dignity are
+          facts about the chart's own structure, not a trait attributed to "you", so the plain natal category already
+          reads fine for a composite chart too.
         </p>
 
         <h2>How this is kept true</h2>

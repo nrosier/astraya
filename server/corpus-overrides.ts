@@ -40,6 +40,9 @@ export const CORPUS_CATEGORIES = [
   'pattern',
   'profected-house',
   'astro-line',
+  'composite-planet-in-sign',
+  'composite-planet-in-house',
+  'composite-aspect-pair',
 ] as const;
 export type CorpusCategory = (typeof CORPUS_CATEGORIES)[number];
 

@@ -35,6 +35,9 @@
  *   pattern           pattern:<kebab-case-name>              pattern:bucket                    — (reserved, no entries)
  *   profected-house   profected-house:<house>                profected-house:7                 —
  *   astro-line        astro-line:<body>:<angle>              astro-line:venus:MC               —
+ *   composite-planet-in-sign   composite-planet-in-sign:<body>:<sign>   composite-planet-in-sign:sun:2    —
+ *   composite-planet-in-house  composite-planet-in-house:<body>:<house> composite-planet-in-house:sun:3   —
+ *   composite-aspect-pair      composite-aspect-pair:<aspect>:<a>:<b>   composite-aspect-pair:square:mars:saturn  alphabetical
  *
  * Ordering conventions, stated once: an `aspect-pair` and a `synastry-aspect` are stored ONCE per
  * unordered pair, with the bodies in alphabetical order (the symmetric aspect needs one entry, not
@@ -52,6 +55,16 @@
  * `nakshatra` and `pattern` are reserved: the schema accepts them but no entry, screen or
  * generator uses them yet. `test/interpretation-key-reference.test.ts` fails if any category's shape
  * above changes, so this table cannot drift from `placementKey`.
+ *
+ * `composite-planet-in-sign`/`composite-planet-in-house`/`composite-aspect-pair` (#451) are
+ * composite-chart siblings of the three natal categories with the same shape and ordering —
+ * same reason `synastry-aspect` is its own category rather than a qualified `aspect-pair`: a
+ * composite's placements describe the relationship/combination itself, not an individual's own
+ * traits, so the generated text needs its own framing, which means its own category (the corpus
+ * loader has no "same text, different voice" mechanism). `sign-on-cusp` and `dignity-state` have
+ * no composite sibling: #451 only asked for these three, and neither reads as personal in the
+ * same way (a house cusp's sign and a planet's essential dignity are facts about the chart's
+ * own structure, not a trait attributed to "you").
  */
 import { bodyByKey } from '../astrology/bodies.ts';
 import { aspectByKey } from '../astrology/aspects.ts';
@@ -71,6 +84,9 @@ export const CORPUS_CATEGORIES = [
   'pattern',
   'profected-house',
   'astro-line',
+  'composite-planet-in-sign',
+  'composite-planet-in-house',
+  'composite-aspect-pair',
 ] as const;
 export type CorpusCategory = (typeof CORPUS_CATEGORIES)[number];
 
@@ -166,7 +182,15 @@ export type CorpusPlacement =
   | { readonly category: 'nakshatra'; readonly body: string; readonly nakshatra: number }
   | { readonly category: 'pattern'; readonly pattern: string }
   | { readonly category: 'profected-house'; readonly house: number }
-  | { readonly category: 'astro-line'; readonly body: string; readonly angle: AcgAngle };
+  | { readonly category: 'astro-line'; readonly body: string; readonly angle: AcgAngle }
+  | { readonly category: 'composite-planet-in-sign'; readonly body: string; readonly sign: number }
+  | { readonly category: 'composite-planet-in-house'; readonly body: string; readonly house: number }
+  | {
+      readonly category: 'composite-aspect-pair';
+      readonly aspect: string;
+      readonly bodyA: string;
+      readonly bodyB: string;
+    };
 
 const PATTERN_KEY_RE = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/;
 
@@ -199,6 +223,14 @@ export function placementKey(placement: CorpusPlacement): string {
       return `profected-house:${String(placement.house)}`;
     case 'astro-line':
       return `astro-line:${placement.body}:${placement.angle}`;
+    case 'composite-planet-in-sign':
+      return `composite-planet-in-sign:${placement.body}:${String(placement.sign)}`;
+    case 'composite-planet-in-house':
+      return `composite-planet-in-house:${placement.body}:${String(placement.house)}`;
+    case 'composite-aspect-pair': {
+      const [bodyA, bodyB] = canonicalPair(placement.bodyA, placement.bodyB);
+      return `composite-aspect-pair:${placement.aspect}:${bodyA}:${bodyB}`;
+    }
   }
 }
 
@@ -272,6 +304,21 @@ export function parsePlacementKey(key: string): CorpusPlacement | undefined {
       const [body, angle] = rest;
       if (body === undefined || !isAcgAngle(angle)) return undefined;
       return { category, body, angle };
+    }
+    case 'composite-planet-in-sign': {
+      const [body, sign] = rest;
+      if (body === undefined || sign === undefined) return undefined;
+      return { category, body, sign: Number(sign) };
+    }
+    case 'composite-planet-in-house': {
+      const [body, house] = rest;
+      if (body === undefined || house === undefined) return undefined;
+      return { category, body, house: Number(house) };
+    }
+    case 'composite-aspect-pair': {
+      const [aspect, bodyA, bodyB] = rest;
+      if (aspect === undefined || bodyA === undefined || bodyB === undefined) return undefined;
+      return { category, aspect, bodyA, bodyB };
     }
     default:
       return undefined;
@@ -425,6 +472,26 @@ function validatePlacementFields(placement: CorpusPlacement): string[] {
       checkBody(placement.body, 'body');
       if (!(ACG_ANGLES as readonly string[]).includes(placement.angle)) {
         errors.push(`unknown astro-line angle "${placement.angle}"`);
+      }
+      break;
+    case 'composite-planet-in-sign':
+      checkBody(placement.body, 'body');
+      checkSign(placement.sign, 'sign');
+      break;
+    case 'composite-planet-in-house':
+      checkBody(placement.body, 'body');
+      checkHouse(placement.house, 'house');
+      break;
+    case 'composite-aspect-pair':
+      if (aspectByKey(placement.aspect) === undefined) errors.push(`unknown aspect key "${placement.aspect}"`);
+      checkBody(placement.bodyA, 'bodyA');
+      checkBody(placement.bodyB, 'bodyB');
+      if (placement.bodyA === placement.bodyB) {
+        errors.push(`composite-aspect-pair bodyA and bodyB are both "${placement.bodyA}"`);
+      } else if (placement.bodyA > placement.bodyB) {
+        errors.push(
+          `composite-aspect-pair bodies must be in alphabetical order — got "${placement.bodyA}", "${placement.bodyB}"`,
+        );
       }
       break;
   }

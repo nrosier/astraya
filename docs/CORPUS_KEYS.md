@@ -15,19 +15,22 @@ The admin screens show what an entry means in words, with the key as small secon
 
 ## Every category
 
-| Category          | Shape                                          | Example                            | Reads as                             | Order of two bodies                                                   |
-| ----------------- | ---------------------------------------------- | ---------------------------------- | ------------------------------------ | --------------------------------------------------------------------- |
-| `planet-in-sign`  | `planet-in-sign:<body>:<sign>`                 | `planet-in-sign:sun:2`             | Sun in Gemini                        | —                                                                     |
-| `planet-in-house` | `planet-in-house:<body>:<house>`               | `planet-in-house:sun:3`            | Sun in the 3rd house                 | —                                                                     |
-| `sign-on-cusp`    | `sign-on-cusp:<sign>:<house>`                  | `sign-on-cusp:2:3`                 | Gemini on the cusp of the 3rd house  | sign first, then house                                                |
-| `aspect-pair`     | `aspect-pair:<aspect>:<a>:<b>`                 | `aspect-pair:square:mars:saturn`   | Mars square Saturn                   | alphabetical, one entry per pair                                      |
-| `transit-aspect`  | `transit-aspect:<aspect>:<transiting>:<natal>` | `transit-aspect:trine:mars:sun`    | Transiting Mars trine natal Sun      | by role, not alphabetical                                             |
-| `synastry-aspect` | `synastry-aspect:<aspect>:<a>:<b>`             | `synastry-aspect:square:mars:moon` | Your Mars square their Moon          | alphabetical, one entry per pair; written from the first body’s owner |
-| `dignity-state`   | `dignity-state:<body>:<state>`                 | `dignity-state:sun:ruler`          | Sun in its own sign (ruler)          | —                                                                     |
-| `nakshatra`       | `nakshatra:<body>:<index>`                     | `nakshatra:moon:3`                 | _reserved: no entries_               | —                                                                     |
-| `pattern`         | `pattern:<kebab-case-name>`                    | `pattern:bucket`                   | _reserved: no entries_               | —                                                                     |
-| `profected-house` | `profected-house:<house>`                      | `profected-house:7`                | The 7th house as the profected house | —                                                                     |
-| `astro-line`      | `astro-line:<body>:<angle>`                    | `astro-line:venus:MC`              | Venus on the Midheaven line          | —                                                                     |
+| Category                    | Shape                                          | Example                                    | Reads as                                       | Order of two bodies                                                   |
+| --------------------------- | ---------------------------------------------- | ------------------------------------------ | ---------------------------------------------- | --------------------------------------------------------------------- |
+| `planet-in-sign`            | `planet-in-sign:<body>:<sign>`                 | `planet-in-sign:sun:2`                     | Sun in Gemini                                  | —                                                                     |
+| `planet-in-house`           | `planet-in-house:<body>:<house>`               | `planet-in-house:sun:3`                    | Sun in the 3rd house                           | —                                                                     |
+| `sign-on-cusp`              | `sign-on-cusp:<sign>:<house>`                  | `sign-on-cusp:2:3`                         | Gemini on the cusp of the 3rd house            | sign first, then house                                                |
+| `aspect-pair`               | `aspect-pair:<aspect>:<a>:<b>`                 | `aspect-pair:square:mars:saturn`           | Mars square Saturn                             | alphabetical, one entry per pair                                      |
+| `transit-aspect`            | `transit-aspect:<aspect>:<transiting>:<natal>` | `transit-aspect:trine:mars:sun`            | Transiting Mars trine natal Sun                | by role, not alphabetical                                             |
+| `synastry-aspect`           | `synastry-aspect:<aspect>:<a>:<b>`             | `synastry-aspect:square:mars:moon`         | Your Mars square their Moon                    | alphabetical, one entry per pair; written from the first body’s owner |
+| `dignity-state`             | `dignity-state:<body>:<state>`                 | `dignity-state:sun:ruler`                  | Sun in its own sign (ruler)                    | —                                                                     |
+| `nakshatra`                 | `nakshatra:<body>:<index>`                     | `nakshatra:moon:3`                         | _reserved: no entries_                         | —                                                                     |
+| `pattern`                   | `pattern:<kebab-case-name>`                    | `pattern:bucket`                           | _reserved: no entries_                         | —                                                                     |
+| `profected-house`           | `profected-house:<house>`                      | `profected-house:7`                        | The 7th house as the profected house           | —                                                                     |
+| `astro-line`                | `astro-line:<body>:<angle>`                    | `astro-line:venus:MC`                      | Venus on the Midheaven line                    | —                                                                     |
+| `composite-planet-in-sign`  | `composite-planet-in-sign:<body>:<sign>`       | `composite-planet-in-sign:sun:2`           | The composite chart's Sun in Gemini            | —                                                                     |
+| `composite-planet-in-house` | `composite-planet-in-house:<body>:<house>`     | `composite-planet-in-house:sun:3`          | The composite chart's Sun in the 3rd house     | —                                                                     |
+| `composite-aspect-pair`     | `composite-aspect-pair:<aspect>:<a>:<b>`       | `composite-aspect-pair:square:mars:saturn` | Mars square Saturn, within the composite chart | alphabetical, one entry per pair                                      |
 
 ## Ordering
 
@@ -51,6 +54,15 @@ The admin screens show what an entry means in words, with the key as small secon
 
 `nakshatra` and `pattern` are accepted but unused: no entry, screen or generator. `profected-house` (Profections screen) and
 `astro-line` (Astrocartography screen) are used.
+
+## Composite categories
+
+`composite-planet-in-sign`/`-planet-in-house`/`-aspect-pair` are the composite chart's own siblings of
+`planet-in-sign`/`planet-in-house`/`aspect-pair` — same shape and coverage, read by `assembleReport` (`report.ts`) when
+`chartKind` is `'composite'`, since a composite's placements describe the relationship/combination itself, not either
+person's own traits (the same reason `synastry-aspect` is its own category). `sign-on-cusp` and `dignity-state` have no
+composite sibling: a house cusp's sign and a planet's dignity are facts about the chart's structure, not a trait
+attributed to "you", so the plain natal category already reads fine for a composite chart.
 
 ## How this is kept true
 

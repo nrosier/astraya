@@ -50,6 +50,9 @@ const CATEGORY_LABELS: Readonly<Record<Locale, Readonly<Record<CorpusCategory, s
     pattern: 'Chart pattern',
     'profected-house': 'Profected house',
     'astro-line': 'Astrocartography line',
+    'composite-planet-in-sign': 'Composite planet in sign',
+    'composite-planet-in-house': 'Composite planet in house',
+    'composite-aspect-pair': 'Composite aspect between two planets',
   },
   nl: {
     'planet-in-sign': 'Planeet in teken',
@@ -63,6 +66,9 @@ const CATEGORY_LABELS: Readonly<Record<Locale, Readonly<Record<CorpusCategory, s
     pattern: 'Horoscoopfiguur',
     'profected-house': 'Geprofecteerd huis',
     'astro-line': 'Astrocartografielijn',
+    'composite-planet-in-sign': 'Composietplaneet in teken',
+    'composite-planet-in-house': 'Composietplaneet in huis',
+    'composite-aspect-pair': 'Composietaspect tussen twee planeten',
   },
 };
 
@@ -89,8 +95,10 @@ export function placementLabel(placement: CorpusPlacement, locale: Locale): stri
   const nl = locale === 'nl';
   switch (placement.category) {
     case 'planet-in-sign':
+    case 'composite-planet-in-sign':
       return `${body(placement.body)} in ${sign(placement.sign, locale)}`;
     case 'planet-in-house':
+    case 'composite-planet-in-house':
       return nl
         ? `${body(placement.body)} in het ${ordinal(placement.house, locale)} huis`
         : `${body(placement.body)} in the ${ordinal(placement.house, locale)} house`;
@@ -99,6 +107,7 @@ export function placementLabel(placement: CorpusPlacement, locale: Locale): stri
         ? `${sign(placement.sign, locale)} op de cusp van het ${ordinal(placement.house, locale)} huis`
         : `${sign(placement.sign, locale)} on the cusp of the ${ordinal(placement.house, locale)} house`;
     case 'aspect-pair':
+    case 'composite-aspect-pair':
       return `${body(placement.bodyA)} ${aspect(placement.aspect, locale)} ${body(placement.bodyB)}`;
     case 'transit-aspect':
       return nl
@@ -163,13 +172,16 @@ export function placementSortKey(placement: CorpusPlacement): readonly (number |
   const category = CORPUS_CATEGORIES.indexOf(placement.category);
   switch (placement.category) {
     case 'planet-in-sign':
+    case 'composite-planet-in-sign':
       return [category, bodyOrder(placement.body), placement.sign];
     case 'planet-in-house':
+    case 'composite-planet-in-house':
       return [category, bodyOrder(placement.body), placement.house];
     case 'sign-on-cusp':
       return [category, placement.sign, placement.house];
     case 'aspect-pair':
     case 'synastry-aspect':
+    case 'composite-aspect-pair':
       return [category, bodyOrder(placement.bodyA), bodyOrder(placement.bodyB), aspectOrder(placement.aspect)];
     case 'transit-aspect':
       return [category, bodyOrder(placement.transiting), bodyOrder(placement.natal), aspectOrder(placement.aspect)];
@@ -218,6 +230,10 @@ const CATEGORY_EXPLANATIONS: Readonly<Record<Locale, Readonly<Record<CorpusCateg
     pattern: 'An overall figure formed by several planets together.',
     'profected-house': 'The life area emphasised in a given year of life.',
     'astro-line': 'A planet line on the map and the effect of living along it.',
+    'composite-planet-in-sign':
+      'How a planet expresses itself in the sign it stands in, for the relationship or combination itself, not either person.',
+    'composite-planet-in-house': 'Which area of the relationship or combination a planet works in.',
+    'composite-aspect-pair': 'How two planets interact within the composite (relationship) chart.',
   },
   nl: {
     'planet-in-sign': 'Hoe een planeet zich uit in het teken waarin hij staat.',
@@ -231,6 +247,10 @@ const CATEGORY_EXPLANATIONS: Readonly<Record<Locale, Readonly<Record<CorpusCateg
     pattern: 'Een totaalfiguur gevormd door meerdere planeten samen.',
     'profected-house': 'Het levensgebied dat in een bepaald levensjaar centraal staat.',
     'astro-line': 'Een planeetlijn op de kaart en wat het effect is van wonen langs die lijn.',
+    'composite-planet-in-sign':
+      'Hoe een planeet zich uit in het teken waarin hij staat, voor de relatie of combinatie zelf, niet voor een van beide personen.',
+    'composite-planet-in-house': 'In welk gebied van de relatie of combinatie een planeet werkt.',
+    'composite-aspect-pair': 'Hoe twee planeten samenwerken binnen de composietkaart (relatie).',
   },
 };
 

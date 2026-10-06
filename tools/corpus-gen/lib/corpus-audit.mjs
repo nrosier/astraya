@@ -78,7 +78,8 @@ export function themeOffsets(entries, category, themes) {
   for (const entry of entries) {
     const placement = parsePlacementKey(entry.key);
     if (placement === undefined || placement.category !== category) continue;
-    const own = category === 'planet-in-sign' ? placement.sign : placement.house - 1;
+    const isSignCategory = category === 'planet-in-sign' || category === 'composite-planet-in-sign';
+    const own = isSignCategory ? placement.sign : placement.house - 1;
     const scores = scoreAgainst(entry.text, themes);
     const top = Math.max(...scores);
     if (top < 2 || scores.filter((score) => score === top).length > 1) continue;
@@ -133,6 +134,10 @@ export function auditCorpus(corpus) {
     for (const [category, themes, label] of [
       ['planet-in-sign', SIGN_THEMES, 'sign'],
       ['planet-in-house', HOUSE_THEMES, 'house'],
+      // #451: same shift-detection safety net for the composite siblings — a sign/house is still a
+      // sign/house whichever chart it's read against.
+      ['composite-planet-in-sign', SIGN_THEMES, 'sign'],
+      ['composite-planet-in-house', HOUSE_THEMES, 'house'],
     ]) {
       const { clear, tally } = themeOffsets(english, category, themes);
       if (clear < THEME_MIN_CLEAR) {

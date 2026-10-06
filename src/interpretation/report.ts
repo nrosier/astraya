@@ -176,14 +176,19 @@ function derivedParagraph(text: string, factors: readonly SalienceFactor[] = [])
   return { text, source: { kind: 'derived' }, factors };
 }
 
+/** Which corpus category a planet-in-sign/-house paragraph resolves against (#451): a composite
+ * chart's placements need the composite-aware category, never the plain natal one, since the
+ * natal text speaks as "you" about an individual and a composite describes the pairing itself. */
 function planetInSignParagraph(
   chart: ChartData,
   key: string,
   locale: Locale,
   corpus: readonly CorpusEntry[],
+  chartKind: 'natal' | 'composite',
 ): ReportParagraph {
   const { longitude } = bodyPosition(chart, key);
-  return resolveParagraph({ category: 'planet-in-sign', body: key, sign: signIndex(longitude) }, locale, corpus);
+  const category = chartKind === 'composite' ? 'composite-planet-in-sign' : 'planet-in-sign';
+  return resolveParagraph({ category, body: key, sign: signIndex(longitude) }, locale, corpus);
 }
 
 function planetInHouseParagraph(
@@ -191,19 +196,26 @@ function planetInHouseParagraph(
   key: string,
   locale: Locale,
   corpus: readonly CorpusEntry[],
+  chartKind: 'natal' | 'composite',
 ): ReportParagraph {
   const { longitude } = bodyPosition(chart, key);
   const house = houseOf(longitude, chart.houses.cusps);
-  return resolveParagraph({ category: 'planet-in-house', body: key, house }, locale, corpus);
+  const category = chartKind === 'composite' ? 'composite-planet-in-house' : 'planet-in-house';
+  return resolveParagraph({ category, body: key, house }, locale, corpus);
 }
 
-function coreIdentitySection(chart: ChartData, locale: Locale, corpus: readonly CorpusEntry[]): ReportSection {
+function coreIdentitySection(
+  chart: ChartData,
+  locale: Locale,
+  corpus: readonly CorpusEntry[],
+  chartKind: 'natal' | 'composite',
+): ReportSection {
   const ascendantSign = signIndex(chart.houses.ascendant);
   return section('core-identity', locale, [
-    planetInSignParagraph(chart, 'sun', locale, corpus),
-    planetInHouseParagraph(chart, 'sun', locale, corpus),
-    planetInSignParagraph(chart, 'moon', locale, corpus),
-    planetInHouseParagraph(chart, 'moon', locale, corpus),
+    planetInSignParagraph(chart, 'sun', locale, corpus, chartKind),
+    planetInHouseParagraph(chart, 'sun', locale, corpus, chartKind),
+    planetInSignParagraph(chart, 'moon', locale, corpus, chartKind),
+    planetInHouseParagraph(chart, 'moon', locale, corpus, chartKind),
     resolveParagraph({ category: 'sign-on-cusp', sign: ascendantSign, house: 1 }, locale, corpus),
   ]);
 }
@@ -299,10 +311,12 @@ function chartRulerSection(
   locale: Locale,
   corpus: readonly CorpusEntry[],
   rulership: RulershipChoice,
+  chartKind: 'natal' | 'composite',
 ): ReportSection {
   const ascendantSign = signIndex(chart.houses.ascendant);
   // Under Both the Ascendant has two rulers (Scorpio: Mars and Pluto); each gets its own sign paragraph.
   const rulerIds = rulersOf(ascendantSign, rulership);
+  const rulerSignCategory = chartKind === 'composite' ? 'composite-planet-in-sign' : 'planet-in-sign';
   const rulerSignParagraphs = rulerIds.map((rulerId) => {
     const ruler = bodyById(rulerId);
     const rulerPosition = chart.positions.find((position) => position.body === rulerId);
@@ -310,7 +324,7 @@ function chartRulerSection(
       throw new Error('unreachable: the ascendant ruler is always one of BODIES with a computed position');
     }
     return resolveParagraph(
-      { category: 'planet-in-sign', body: ruler.key, sign: signIndex(rulerPosition.longitude) },
+      { category: rulerSignCategory, body: ruler.key, sign: signIndex(rulerPosition.longitude) },
       locale,
       corpus,
     );
@@ -343,7 +357,12 @@ function chartRulerSection(
   ]);
 }
 
-function housesSection(chart: ChartData, locale: Locale, corpus: readonly CorpusEntry[]): ReportSection {
+function housesSection(
+  chart: ChartData,
+  locale: Locale,
+  corpus: readonly CorpusEntry[],
+  chartKind: 'natal' | 'composite',
+): ReportSection {
   const houseCount = chart.houses.cusps.length - 1;
   const bodiesByHouse = new Map<number, BodyId[]>();
   for (const position of chart.positions) {
@@ -353,6 +372,9 @@ function housesSection(chart: ChartData, locale: Locale, corpus: readonly Corpus
     else bodiesByHouse.set(house, [position.body]);
   }
 
+  // sign-on-cusp has no composite sibling (#451 only asked for the three categories above) — a
+  // house cusp's sign is a fact about the chart's own structure, not a trait attributed to "you".
+  const planetInHouseCategory = chartKind === 'composite' ? 'composite-planet-in-house' : 'planet-in-house';
   const paragraphs: ReportParagraph[] = [];
   for (let house = 1; house <= houseCount; house++) {
     const cusp = chart.houses.cusps[house];
@@ -361,7 +383,7 @@ function housesSection(chart: ChartData, locale: Locale, corpus: readonly Corpus
     for (const bodyId of bodiesByHouse.get(house) ?? []) {
       const body = bodyById(bodyId);
       if (body === undefined) continue;
-      paragraphs.push(resolveParagraph({ category: 'planet-in-house', body: body.key, house }, locale, corpus));
+      paragraphs.push(resolveParagraph({ category: planetInHouseCategory, body: body.key, house }, locale, corpus));
     }
   }
   return section('houses', locale, paragraphs);
@@ -383,13 +405,31 @@ function jonesShapeSentence(chart: ChartData, locale: Locale): string {
   return locale === 'nl' ? `Je horoscoop vormt een ${name}-patroon.` : `Your chart forms a ${name} pattern.`;
 }
 
-function aspectPatternsSection(chart: ChartData, locale: Locale, corpus: readonly CorpusEntry[]): ReportSection {
+function aspectPatternsSection(
+  chart: ChartData,
+  locale: Locale,
+  corpus: readonly CorpusEntry[],
+  chartKind: 'natal' | 'composite',
+): ReportSection {
   const aspectPlacements = rankPlacements(derivePlacements(chart))
     .filter((placement) => placement.placement.category === 'aspect-pair')
     .slice(0, ASPECT_PATTERNS_LIMIT);
-  const paragraphs = aspectPlacements.map((placement) =>
-    resolveParagraph(placement.placement, locale, corpus, placement.factors),
-  );
+  // `derivePlacements` always tags its own output 'aspect-pair' regardless of chart kind (it's
+  // shared with the natal wheel's own click-to-isolate interpretation, out of scope for #451) —
+  // remapped to the composite category here, the one place a composite's report actually reads it.
+  const paragraphs = aspectPlacements.map((placement) => {
+    const { placement: aspectPlacement, factors } = placement;
+    const corpusPlacement: CorpusPlacement =
+      chartKind === 'composite' && aspectPlacement.category === 'aspect-pair'
+        ? {
+            category: 'composite-aspect-pair',
+            aspect: aspectPlacement.aspect,
+            bodyA: aspectPlacement.bodyA,
+            bodyB: aspectPlacement.bodyB,
+          }
+        : aspectPlacement;
+    return resolveParagraph(corpusPlacement, locale, corpus, factors);
+  });
 
   // jonesShapeOf needs at least 2 of the ten planets; every real ChartData has them all, but a minimal fixture might not.
   const shape =
@@ -424,11 +464,19 @@ function dignitiesSectSection(chart: ChartData, locale: Locale, corpus: readonly
 
 const NODE_CHIRON_KEYS = ['trueNode', 'chiron'] as const;
 
-function nodesChironSection(chart: ChartData, locale: Locale, corpus: readonly CorpusEntry[]): ReportSection {
+function nodesChironSection(
+  chart: ChartData,
+  locale: Locale,
+  corpus: readonly CorpusEntry[],
+  chartKind: 'natal' | 'composite',
+): ReportSection {
   const paragraphs = NODE_CHIRON_KEYS.flatMap((key) => {
     const body = bodyByKey(key);
     if (body === undefined || !chart.positions.some((position) => position.body === body.id)) return [];
-    return [planetInSignParagraph(chart, key, locale, corpus), planetInHouseParagraph(chart, key, locale, corpus)];
+    return [
+      planetInSignParagraph(chart, key, locale, corpus, chartKind),
+      planetInHouseParagraph(chart, key, locale, corpus, chartKind),
+    ];
   });
   return section('nodes-chiron', locale, paragraphs);
 }
@@ -440,23 +488,23 @@ export function assembleReport(
   rulership: RulershipChoice = DEFAULT_RULERSHIP_CHOICE,
   /**
    * What kind of chart `chart` is (#450); defaults to `'natal'`, which every caller except
-   * `CompositeView.tsx` (via `ReportView.tsx`) is. `'composite'` prepends a framing paragraph —
-   * every other section still reads a composite's placements through the same corpus categories
-   * a natal chart uses, so without it the report would otherwise say nothing distinguishing it
-   * from a natal account of a fictional third person.
+   * `CompositeView.tsx` (via `ReportView.tsx`) is. `'composite'` prepends a framing paragraph and
+   * (#451) reads the planet-in-sign/-house/aspect-pair sections through their composite-aware
+   * sibling categories instead — `sign-on-cusp` and `dignity-state` have no composite sibling
+   * (see those sections' own comments) and stay on the plain natal category either way.
    */
   chartKind: 'natal' | 'composite' = 'natal',
 ): Report {
   return {
     sections: [
       ...(chartKind === 'composite' ? [compositeIntroSection(locale)] : []),
-      coreIdentitySection(chart, locale, corpus),
+      coreIdentitySection(chart, locale, corpus, chartKind),
       temperamentSection(chart, locale),
-      chartRulerSection(chart, locale, corpus, rulership),
-      housesSection(chart, locale, corpus),
-      aspectPatternsSection(chart, locale, corpus),
+      chartRulerSection(chart, locale, corpus, rulership, chartKind),
+      housesSection(chart, locale, corpus, chartKind),
+      aspectPatternsSection(chart, locale, corpus, chartKind),
       dignitiesSectSection(chart, locale, corpus),
-      nodesChironSection(chart, locale, corpus),
+      nodesChironSection(chart, locale, corpus, chartKind),
     ],
   };
 }

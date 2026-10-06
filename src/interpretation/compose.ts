@@ -19,7 +19,11 @@
  * same fallback machinery for a different pair of roles (transiting/natal,
  * or this-chart/other-chart) rather than a same-chart pair. `profected-house`
  * and `astro-line` (#369) have cases since #427 wired the profections and
- * astrocartography screens to the corpus. `nakshatra` and `pattern` are
+ * astrocartography screens to the corpus. `composite-planet-in-sign`/
+ * `-planet-in-house`/`-aspect-pair` (#451) share their natal counterpart's case: the mechanical
+ * fallback never says "you" either way, so there is nothing composite-specific for the fallback
+ * sentence to get wrong — only the real corpus text (which does speak about the combination, not
+ * an individual) needs a dedicated category. `nakshatra` and `pattern` are
  * reserved categories nothing produces yet, so they still throw: add real
  * cases here when something has a real caller to exercise them.
  *
@@ -213,12 +217,14 @@ function capitalize(text: string): string {
  */
 export function composeFallbackText(placement: CorpusPlacement, locale: Locale): string {
   switch (placement.category) {
-    case 'planet-in-sign': {
+    case 'planet-in-sign':
+    case 'composite-planet-in-sign': {
       const body = capitalize(bodyName(placement.body, locale));
       const sign = signName(placement.sign, locale);
       return `${body} in ${sign}.`;
     }
-    case 'planet-in-house': {
+    case 'planet-in-house':
+    case 'composite-planet-in-house': {
       const body = capitalize(bodyName(placement.body, locale));
       const house = ordinal(placement.house, locale);
       return locale === 'nl' ? `${body} in het ${house} huis.` : `${body} in the ${house} house.`;
@@ -230,7 +236,8 @@ export function composeFallbackText(placement: CorpusPlacement, locale: Locale):
         ? `${sign} op de cusp van het ${house} huis.`
         : `${sign} on the cusp of the ${house} house.`;
     }
-    case 'aspect-pair': {
+    case 'aspect-pair':
+    case 'composite-aspect-pair': {
       const aspect = aspectName(placement.aspect, locale);
       const bodyA = bodyName(placement.bodyA, locale);
       const bodyB = bodyName(placement.bodyB, locale);

@@ -351,11 +351,13 @@ export interface PlacementLike {
 export function symbolismScopeFor(placement: PlacementLike): SymbolismScope {
   switch (placement.category) {
     case 'planet-in-sign':
+    case 'composite-planet-in-sign':
       return {
         bodyKeys: placement.body !== undefined ? [placement.body] : [],
         signIndices: placement.sign !== undefined ? [placement.sign] : [],
       };
     case 'planet-in-house':
+    case 'composite-planet-in-house':
     case 'dignity-state':
       return { bodyKeys: placement.body !== undefined ? [placement.body] : [] };
     case 'sign-on-cusp':
@@ -363,6 +365,7 @@ export function symbolismScopeFor(placement: PlacementLike): SymbolismScope {
     case 'aspect-pair':
     case 'synastry-aspect':
     case 'transit-aspect':
+    case 'composite-aspect-pair':
       return { bodyKeys: [placement.bodyA, placement.bodyB].filter((key): key is string => key !== undefined) };
     default:
       return {};
