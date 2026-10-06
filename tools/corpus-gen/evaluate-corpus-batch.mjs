@@ -167,7 +167,19 @@ async function checkAndApply(loc) {
       return entry && placement ? { entry, placement } : undefined;
     });
 
-    const results = await extractBatchResults({ apiKey: process.env.OPENAI_API_KEY, batch });
+    let results;
+    try {
+      results = await extractBatchResults({ apiKey: process.env.OPENAI_API_KEY, batch });
+    } catch (error) {
+      // Batch failed — print user-friendly message and skip it
+      if (error instanceof Error && error.name === 'BatchJobFailed') {
+        console.error(`[${loc}] ❌ ${error.message}`);
+      } else {
+        console.error(`[${loc}] ❌ Batch check failed: ${error instanceof Error ? error.message : String(error)}`);
+      }
+      stillRunning.push(job);
+      return;
+    }
     const byCustomId = new Map(results.map((r) => [r.customId, r]));
 
     candidates.forEach((candidate, index) => {

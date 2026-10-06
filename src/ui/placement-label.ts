@@ -95,20 +95,29 @@ export function placementLabel(placement: CorpusPlacement, locale: Locale): stri
   const nl = locale === 'nl';
   switch (placement.category) {
     case 'planet-in-sign':
-    case 'composite-planet-in-sign':
       return `${body(placement.body)} in ${sign(placement.sign, locale)}`;
+    case 'composite-planet-in-sign':
+      return nl
+        ? `Composiet ${body(placement.body)} in ${sign(placement.sign, locale)}`
+        : `Composite ${body(placement.body)} in ${sign(placement.sign, locale)}`;
     case 'planet-in-house':
-    case 'composite-planet-in-house':
       return nl
         ? `${body(placement.body)} in het ${ordinal(placement.house, locale)} huis`
         : `${body(placement.body)} in the ${ordinal(placement.house, locale)} house`;
+    case 'composite-planet-in-house':
+      return nl
+        ? `Composiet ${body(placement.body)} in het ${ordinal(placement.house, locale)} huis`
+        : `Composite ${body(placement.body)} in the ${ordinal(placement.house, locale)} house`;
     case 'sign-on-cusp':
       return nl
         ? `${sign(placement.sign, locale)} op de cusp van het ${ordinal(placement.house, locale)} huis`
         : `${sign(placement.sign, locale)} on the cusp of the ${ordinal(placement.house, locale)} house`;
     case 'aspect-pair':
-    case 'composite-aspect-pair':
       return `${body(placement.bodyA)} ${aspect(placement.aspect, locale)} ${body(placement.bodyB)}`;
+    case 'composite-aspect-pair':
+      return nl
+        ? `Composiet ${body(placement.bodyA)} ${aspect(placement.aspect, locale)} ${body(placement.bodyB)}`
+        : `Composite ${body(placement.bodyA)} ${aspect(placement.aspect, locale)} ${body(placement.bodyB)}`;
     case 'transit-aspect':
       return nl
         ? `Transiterende ${body(placement.transiting)} ${aspect(placement.aspect, locale)} radix ${body(placement.natal)}`

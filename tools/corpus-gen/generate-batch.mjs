@@ -309,7 +309,16 @@ async function runBatchRounds() {
       },
     });
 
-    const results = extractBatchResults(finished);
+    let results;
+    try {
+      results = extractBatchResults(finished);
+    } catch (error) {
+      // Batch failed — print user-friendly message
+      console.error(
+        `[${locale}] ❌ Batch processing failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      process.exit(1);
+    }
     const byKey = new Map(results.map((r) => [r.key, r]));
     const nextRemaining = [];
 

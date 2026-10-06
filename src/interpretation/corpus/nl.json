@@ -57630,10 +57630,9 @@
     "tier": "core",
     "tags": [],
     "provenance": {
-      "source": "human",
+      "source": "generated",
       "verifiedAt": "2026-10-06"
-    },
-    "anchor": true
+    }
   },
   {
     "key": "composite-planet-in-house:moon:1",
@@ -57642,10 +57641,9 @@
     "tier": "core",
     "tags": [],
     "provenance": {
-      "source": "human",
+      "source": "generated",
       "verifiedAt": "2026-10-06"
-    },
-    "anchor": true
+    }
   },
   {
     "key": "composite-planet-in-house:chiron:6",
@@ -57654,10 +57652,9 @@
     "tier": "core",
     "tags": [],
     "provenance": {
-      "source": "human",
+      "source": "generated",
       "verifiedAt": "2026-10-06"
-    },
-    "anchor": true
+    }
   },
   {
     "key": "composite-planet-in-house:juno:7",
@@ -57666,10 +57663,9 @@
     "tier": "core",
     "tags": [],
     "provenance": {
-      "source": "human",
+      "source": "generated",
       "verifiedAt": "2026-10-06"
-    },
-    "anchor": true
+    }
   },
   {
     "key": "composite-planet-in-sign:chiron:10",
@@ -57678,10 +57674,9 @@
     "tier": "core",
     "tags": [],
     "provenance": {
-      "source": "human",
+      "source": "generated",
       "verifiedAt": "2026-10-06"
-    },
-    "anchor": true
+    }
   },
   {
     "key": "composite-aspect-pair:sextile:moon:sun",
@@ -57690,10 +57685,9 @@
     "tier": "core",
     "tags": [],
     "provenance": {
-      "source": "human",
+      "source": "generated",
       "verifiedAt": "2026-10-06"
-    },
-    "anchor": true
+    }
   },
   {
     "key": "composite-aspect-pair:conjunction:chiron:juno",
@@ -57702,10 +57696,9 @@
     "tier": "core",
     "tags": [],
     "provenance": {
-      "source": "human",
+      "source": "generated",
       "verifiedAt": "2026-10-06"
-    },
-    "anchor": true
+    }
   },
   {
     "key": "composite-aspect-pair:square:saturn:trueNode",
@@ -57714,10 +57707,9 @@
     "tier": "core",
     "tags": [],
     "provenance": {
-      "source": "human",
+      "source": "generated",
       "verifiedAt": "2026-10-06"
-    },
-    "anchor": true
+    }
   },
   {
     "key": "composite-aspect-pair:quincunx:juno:pallas",
@@ -57726,10 +57718,9 @@
     "tier": "core",
     "tags": [],
     "provenance": {
-      "source": "human",
+      "source": "generated",
       "verifiedAt": "2026-10-06"
-    },
-    "anchor": true
+    }
   },
   {
     "key": "composite-aspect-pair:opposition:juno:pallas",
@@ -57738,10 +57729,9 @@
     "tier": "core",
     "tags": [],
     "provenance": {
-      "source": "human",
+      "source": "generated",
       "verifiedAt": "2026-10-06"
-    },
-    "anchor": true
+    }
   },
   {
     "key": "composite-planet-in-sign:sun:0",

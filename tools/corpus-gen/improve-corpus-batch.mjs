@@ -165,7 +165,19 @@ async function checkAndApply(loc) {
 
     const indexByIdentity = new Map(corpus.map((entry, i) => [identityOf(entry), i]));
     const byFeedbackIdentity = new Map(feedback.map((record) => [identityOf(record), record]));
-    const results = extractBatchResults(operation);
+    let results;
+    try {
+      results = extractBatchResults(operation);
+    } catch (error) {
+      // Batch failed — print user-friendly message and skip it
+      if (error instanceof Error && error.name === 'BatchJobFailed') {
+        console.error(`[${loc}] ❌ ${error.message}`);
+      } else {
+        console.error(`[${loc}] ❌ Batch check failed: ${error instanceof Error ? error.message : String(error)}`);
+      }
+      stillRunning.push(job);
+      continue;
+    }
     const byKey = new Map(results.map((r) => [r.key, r]));
 
     for (const jobRecord of job.records) {
