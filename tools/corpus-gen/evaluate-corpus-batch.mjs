@@ -159,6 +159,7 @@ async function checkAndApply(loc) {
 
     // If batch is failed, it will not be retried by OpenAI — reset entries to pending for resubmission
     if (batch.status === 'failed') {
+      if (feedback === undefined) feedback = await readFeedback(feedbackPath);
       const now = new Date().toISOString();
       for (const candidate of job.candidates) {
         const entry = corpus.find((e) => identityOf(e) === identityOf(candidate));
@@ -284,7 +285,8 @@ async function checkAndApply(loc) {
 
   if (anyTerminal) {
     await mkdir(dirname(feedbackPath), { recursive: true });
-    await writeFeedback(feedbackPath, feedback);
+    // Ensure feedback is defined even if no successful batches processed results
+    await writeFeedback(feedbackPath, feedback ?? []);
     await mkdir(dirname(trackingPath), { recursive: true });
     await writeTracking(trackingPath, tracking);
     console.log(
