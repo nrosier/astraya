@@ -153,7 +153,34 @@ async function checkAndApply(loc) {
       console.log(
         `[${loc}] checking batch ${job.batchId} (submitted ${job.submittedAt}, ${String(job.candidates.length)} entries)...`,
       );
-      const batch = await getBatch({ apiKey: process.env.OPENAI_API_KEY, batchId: job.batchId });
+      let batch;
+      try {
+        batch = await getBatch({ apiKey: process.env.OPENAI_API_KEY, batchId: job.batchId });
+      } catch (error) {
+        // Batch no longer exists (404/orphaned) — reset entries for resubmission
+        if (feedback === undefined) feedback = await readFeedback(feedbackPath);
+        const now = new Date().toISOString();
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        console.error(
+          `[${loc}] ⚠️ ORPHANED batch ${job.batchId} (${errorMsg}) — resetting ${String(job.candidates.length)} entries for resubmission`,
+        );
+        for (const candidate of job.candidates) {
+          const entry = corpus.find((e) => identityOf(e) === identityOf(candidate));
+          if (entry) {
+            const existingTracking = findTracking(tracking, entry);
+            upsertTracking(tracking, {
+              key: entry.key,
+              locale: entry.locale,
+              clean: undefined, // Mark as pending (neither clean nor flagged)
+              evaluationCount: (existingTracking?.evaluationCount ?? 0) + 1,
+              updatedAt: now,
+            });
+            console.log(`[${loc}] RESET ${entry.key} — eligible for resubmission after batch orphan detection`);
+          }
+        }
+        anyTerminal = true;
+        continue; // Skip to next batch, don't add to stillRunning
+      }
       if (!isBatchTerminal(batch)) {
         const counts = batch.request_counts;
         const { isStalled, shouldAbandon, reason, nextTracking } = detectStalledBatch(batch, job, stallThresholdMinutes);
