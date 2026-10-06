@@ -172,8 +172,13 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
     // The legend names which ring is whose by stating outer/inner directly (#448), not just
     // through the ring's own line colour/dash — "outer"/"inner" is unambiguous even before a
     // reader learns to read the dash pattern, since the bi-wheel only ever has these two rings.
-    const ringA = chartWheelRing(load.data.chartA, `${nameA || t.personALabel}${t.outerRingSuffix}`);
-    const ringB = chartWheelRing(load.data.chartB, `${nameB || t.personBLabel}${t.innerRingSuffix}`);
+    // This is physical radius order (`resolveRingBands`: a higher ring index gets the larger
+    // radius, so ring 1 is the one actually drawn further out), NOT the `outerRingIndex`/
+    // `innerRingIndex` naming just below, which is a different, unrelated convention (which
+    // side of a cross-chart aspect a ring resolves) that happens to assign chartA/ring 0 the
+    // "outer" role there despite chartA being the physically inner ring here.
+    const ringA = chartWheelRing(load.data.chartA, `${nameA || t.personALabel}${t.innerRingSuffix}`);
+    const ringB = chartWheelRing(load.data.chartB, `${nameB || t.personBLabel}${t.outerRingSuffix}`);
     const crossAspects: readonly CrossRingAspects[] = [
       // `computeSynastry`'s aspects run bodyA from chartA (ring 0), bodyB from chartB (ring
       // 1) — outerRingIndex/innerRingIndex name which side of the aspect a ring resolves,
