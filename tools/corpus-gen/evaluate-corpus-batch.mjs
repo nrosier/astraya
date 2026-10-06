@@ -178,7 +178,7 @@ async function checkAndApply(loc) {
         console.error(`[${loc}] ❌ Batch check failed: ${error instanceof Error ? error.message : String(error)}`);
       }
       stillRunning.push(job);
-      return;
+      continue;
     }
     const byCustomId = new Map(results.map((r) => [r.customId, r]));
 
