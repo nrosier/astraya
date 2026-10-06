@@ -8,16 +8,16 @@
 
 import { useState } from 'react';
 import { HOUSE_SYSTEMS } from '../astrology/houses.js';
-import { RULERSHIP_CHOICES, type RulershipChoice } from '../astrology/rulership.js';
-import { SYMBOL_CLASSES, type SymbolClass } from '../chart/symbol-class.js';
-import { GLYPH_WEIGHTS, type GlyphWeight } from '../chart/glyph-weight.js';
+import type { RulershipChoice } from '../astrology/rulership.js';
+import type { SymbolClass } from '../chart/symbol-class.js';
+import { GLYPH_WEIGHTS } from '../chart/glyph-weight.js';
 
 export function ExtendedSettingsDemo(): React.JSX.Element {
   const [startingPoint, setStartingPoint] = useState<'tropical' | 'sidereal'>('tropical');
   const [houseSystem, setHouseSystem] = useState<string>(HOUSE_SYSTEMS[0]?.key ?? 'placidus');
   const [rulershipScheme, setRulershipScheme] = useState<RulershipChoice>('modern');
   const [symbolClass, setSymbolClass] = useState<SymbolClass>('drawn');
-  const [glyphWeight, setGlyphWeight] = useState<GlyphWeight>('medium');
+  const [glyphWeight, setGlyphWeight] = useState<'fine' | 'regular' | 'bold'>('regular');
   const [uranusForm, setUranusForm] = useState<'circle' | 'h-shape'>('circle');
   const [plutoForm, setPlutoForm] = useState<'orb' | 'crescent'>('orb');
   const [isAuthenticated] = useState(false);
@@ -103,7 +103,7 @@ export function ExtendedSettingsDemo(): React.JSX.Element {
           <select value={houseSystem} onChange={(e) => setHouseSystem(e.target.value)}>
             {HOUSE_SYSTEMS.map((sys) => (
               <option key={sys.key} value={sys.key}>
-                {sys.label}
+                {sys.key}
               </option>
             ))}
           </select>
@@ -171,10 +171,10 @@ export function ExtendedSettingsDemo(): React.JSX.Element {
           <Description>
             {symbolClass !== 'drawn'
               ? '(Only available when Symbols is set to "Drawn")'
-              : glyphWeight === 'thin'
-                ? 'Thin lines: delicate, minimal visual weight. Good for dense charts or small screens.'
-                : glyphWeight === 'medium'
-                  ? 'Medium lines (default): balanced between visibility and elegance.'
+              : glyphWeight === 'fine'
+                ? 'Fine lines: delicate, minimal visual weight. Good for dense charts or small screens.'
+                : glyphWeight === 'regular'
+                  ? 'Regular lines (default): balanced between visibility and elegance.'
                   : 'Bold lines: thick, prominent strokes. Good for large printed charts or low-vision accessibility.'}
           </Description>
         </Setting>
