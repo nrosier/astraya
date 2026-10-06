@@ -92,3 +92,50 @@ describe('applyIsolation with a ring selection (#448)', () => {
     }
   });
 });
+
+describe('ring legend dimming (#455)', () => {
+  it('dims non-selected ring legends when a ring is isolated', () => {
+    const root = biWheelFragment();
+    applyIsolation(root, 'ring:0');
+
+    const legend0 = root.querySelector('[data-ring-legend="0"]');
+    const legend1 = root.querySelector('[data-ring-legend="1"]');
+
+    expect(legend0?.classList.contains('chart-dimmed')).toBe(false);
+    expect(legend1?.classList.contains('chart-dimmed')).toBe(true);
+  });
+
+  it('keeps the selected ring legend at full strength', () => {
+    const root = biWheelFragment();
+    applyIsolation(root, 'ring:1');
+
+    const legend0 = root.querySelector('[data-ring-legend="0"]');
+    const legend1 = root.querySelector('[data-ring-legend="1"]');
+
+    expect(legend0?.classList.contains('chart-dimmed')).toBe(true);
+    expect(legend1?.classList.contains('chart-dimmed')).toBe(false);
+  });
+
+  it('clears legend dimming when selection is cleared', () => {
+    const root = biWheelFragment();
+    applyIsolation(root, 'ring:0');
+    applyIsolation(root, undefined);
+
+    const legend0 = root.querySelector('[data-ring-legend="0"]');
+    const legend1 = root.querySelector('[data-ring-legend="1"]');
+
+    expect(legend0?.classList.contains('chart-dimmed')).toBe(false);
+    expect(legend1?.classList.contains('chart-dimmed')).toBe(false);
+  });
+
+  it('does not dim ring legends for non-ring selections (body/sign/aspect)', () => {
+    const root = biWheelFragment();
+    applyIsolation(root, 'body:sun@0');
+
+    const legend0 = root.querySelector('[data-ring-legend="0"]');
+    const legend1 = root.querySelector('[data-ring-legend="1"]');
+
+    expect(legend0?.classList.contains('chart-dimmed')).toBe(false);
+    expect(legend1?.classList.contains('chart-dimmed')).toBe(false);
+  });
+});
