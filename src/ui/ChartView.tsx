@@ -600,6 +600,10 @@ function renderTableTab(
             getRowKey={(row) => row.bodyKey}
             downloadFilename={deriveExportFilename(displayName, 'dignities', 'csv')}
           />
+          <h4 className="dispositors-section-header" style={{ marginTop: '1.5rem', marginBottom: '0.5rem' }}>
+            {t.dispositorsCaption} <span title={t.dispositorsTooltip} style={{ cursor: 'help', fontSize: '0.9em', verticalAlign: 'super' }}>?</span>
+          </h4>
+          <p className="hint">{t.dispositorsHint}</p>
           <SortableTable
             caption={t.dispositorsCaption}
             columns={dispositorColumns(t, locale)}

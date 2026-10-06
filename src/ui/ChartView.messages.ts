@@ -50,6 +50,10 @@ const en = {
   dignitiesCaption: 'Dignities',
   derivedPointsCaption: 'Derived points',
   dispositorsCaption: 'Dispositors',
+  dispositorsHint:
+    'A dispositor is the ruler of a planet\'s sign — the planetary chain traces each ruler forward until it circles back on itself or reaches a final dispositor. Use this to find rulership cycles and understand what each planet depends on.',
+  dispositorsTooltip:
+    'A dispositor is the ruler of a planet\'s sign. Dispositor chains trace where each planet\'s rulership flows.',
   declinationsCaption: 'Declinations',
   antisciaCaption: 'Antiscia',
   fixedStarsCaption: 'Fixed stars',
@@ -216,7 +220,11 @@ const nl: typeof en = {
   aspectsCaption: 'Aspecten',
   dignitiesCaption: 'Waardigheden',
   derivedPointsCaption: 'Afgeleide punten',
-  dispositorsCaption: 'Dispositors',
+  dispositorsCaption: 'Dispositoren',
+  dispositorsHint:
+    'Een dispositor is de heerser van het teken van een planeet — de planetaire keten volgt elke heerser vooruit totdat deze op zichzelf terugvoert of een uiteindelijke dispositor bereikt. Gebruik dit om heersersakels te vinden en te begrijpen waar elke planeet van afhangt.',
+  dispositorsTooltip:
+    'Een dispositor is de heerser van het teken van een planeet. Dispositorketens tonen hoe de heerserschap van elke planeet vloeit.',
   declinationsCaption: 'Declinaties',
   antisciaCaption: 'Antiscia',
   fixedStarsCaption: 'Vaste sterren',
