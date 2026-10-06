@@ -322,6 +322,7 @@ export function aspectColumns(
     {
       key: 'applying',
       label: t.applyingLabel,
+      labelTooltip: t.applyingTooltip,
       valueOf: (row) => row.applying,
       render: (row) => (row.applying ? t.applying : t.separating),
     },
@@ -384,7 +385,9 @@ export function dispositorColumns(
       label: t.chainLabel,
       valueOf: (row) =>
         row.chain.map((key) => bodyByKey(key)?.name ?? key).join(' → ') +
-        (row.coDispositorKey === undefined ? '' : ` (+ ${bodyByKey(row.coDispositorKey)?.name ?? row.coDispositorKey})`),
+        (row.coDispositorKey === undefined
+          ? ''
+          : ` (+ ${bodyByKey(row.coDispositorKey)?.name ?? row.coDispositorKey})`),
       render: (row) =>
         row.chain.map((key) => bodyDisplayName(key, locale)).join(' → ') +
         (row.coDispositorKey === undefined ? '' : ` (+ ${bodyDisplayName(row.coDispositorKey, locale)})`),
@@ -422,7 +425,13 @@ export function declinationColumns(
       valueOf: (row) => row.bodyBName,
       render: (row) => bodyDisplayName(row.bodyBKey, locale),
     },
-    { key: 'kind', label: t.kindLabel, valueOf: (row) => row.kind, render: (row) => t[row.kind] },
+    {
+      key: 'kind',
+      label: t.kindLabel,
+      labelTooltip: t.declinationKindTooltip,
+      valueOf: (row) => row.kind,
+      render: (row) => t[row.kind],
+    },
     { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => `${row.orb.toFixed(2)}°` },
   ];
 }
@@ -444,6 +453,7 @@ export function antisciaColumns(t: typeof chartViewMessages.en, locale: Locale):
     {
       key: 'kind',
       label: t.kindLabel,
+      labelTooltip: t.antisciaKindTooltip,
       valueOf: (row) => row.kind,
       render: (row) => (row.kind === 'antiscion' ? t.antiscion : t.contraAntiscion),
     },
@@ -601,7 +611,10 @@ function renderTableTab(
             downloadFilename={deriveExportFilename(displayName, 'dignities', 'csv')}
           />
           <h4 className="dispositors-section-header" style={{ marginTop: '1.5rem', marginBottom: '0.5rem' }}>
-            {t.dispositorsCaption} <span title={t.dispositorsTooltip} style={{ cursor: 'help', fontSize: '0.9em', verticalAlign: 'super' }}>?</span>
+            {t.dispositorsCaption}{' '}
+            <span title={t.dispositorsTooltip} style={{ cursor: 'help', fontSize: '0.9em', verticalAlign: 'super' }}>
+              ?
+            </span>
           </h4>
           <p className="hint">{t.dispositorsHint}</p>
           <SortableTable

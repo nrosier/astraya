@@ -57,6 +57,15 @@ interface Keep {
   readonly bodies: ReadonlySet<string>;
   readonly signs: ReadonlySet<string>;
   readonly links: ReadonlySet<Element>;
+  /**
+   * Which ring(s) a `[data-ring-legend]` entry should stay lit for (#455) — `undefined` for
+   * every kind except `ring` itself, since a legend entry names *whose chart this is*, not
+   * *does this body/sign/aspect selection happen to touch this ring somewhere* (a ring
+   * selection's own `bodies` already includes the other ring's cross-aspect partners via
+   * `withConnections`, so deriving this from `bodies` instead would wrongly keep the other
+   * person's legend lit whenever any of their placements aspects the selected one).
+   */
+  readonly rings?: ReadonlySet<string>;
 }
 
 /** What stays at full strength for `selectionKey`, worked out from the markup under `root`. */
@@ -103,7 +112,7 @@ function whatStays(root: Element, selectionKey: string): Keep | undefined {
     const signs = new Set(
       [...inRing].map((id) => signOfBody.get(id)).filter((sign): sign is string => sign !== undefined && sign !== ''),
     );
-    return { ...withConnections(inRing), signs };
+    return { ...withConnections(inRing), signs, rings: new Set([value]) };
   }
   if (kind === 'aspect') {
     const [a, b] = value.split('|');
@@ -141,6 +150,12 @@ export function applyIsolation(root: Element, selectionKey: string | undefined):
   }
   for (const element of root.querySelectorAll('[data-aspect-body-a]')) {
     element.classList.toggle('chart-dimmed', keep !== undefined && !keep.links.has(element));
+  }
+  // Only a `ring` selection says anything about which legend entry to dim (#455) — `keep.rings`
+  // is `undefined` for every other kind, so this loop is a no-op then, same as a fresh wheel.
+  for (const element of root.querySelectorAll('[data-ring-legend]')) {
+    const ring = element.getAttribute('data-ring-legend') ?? '';
+    element.classList.toggle('chart-dimmed', keep?.rings !== undefined && !keep.rings.has(ring));
   }
 }
 

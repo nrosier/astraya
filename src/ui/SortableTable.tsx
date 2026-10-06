@@ -89,7 +89,13 @@ export function SortableTable<T>({
                       setSort((current) => toggleSort(current, column.key));
                     }}
                   >
-                    {column.label}
+                    {column.labelTooltip ? (
+                      <span title={column.labelTooltip} style={{ cursor: 'help' }}>
+                        {column.label}
+                      </span>
+                    ) : (
+                      column.label
+                    )}
                     {sort?.column === column.key && (
                       <span aria-hidden="true">{sort.direction === 'asc' ? ' ▲' : ' ▼'}</span>
                     )}

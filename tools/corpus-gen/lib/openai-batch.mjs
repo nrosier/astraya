@@ -182,9 +182,22 @@ async function downloadFile({ apiKey, baseUrl, fileId }) {
  */
 export async function extractBatchResults({ apiKey, baseUrl, batch }) {
   if (batch.status !== 'completed') {
-    throw new Error(
-      `batch job ended in status ${String(batch.status)}, not completed: ${JSON.stringify(batch.errors ?? {}).slice(0, 500)}`,
-    );
+    // Parse batch errors to provide a user-friendly message
+    const batchErrors = batch.errors?.data || [];
+    let errorMsg = `Batch job status: ${String(batch.status)}`;
+    if (batchErrors.length > 0) {
+      const codes = batchErrors.map((e) => e.code).filter(Boolean);
+      const messages = batchErrors.map((e) => e.message).filter(Boolean);
+      if (codes.includes('token_limit_exceeded')) {
+        errorMsg +=
+          '\n\n⏳ Token limit reached for this organization. Please try again in a few minutes once other batches complete.';
+      } else if (messages.length > 0) {
+        errorMsg += `\n\n${messages.join('\n')}`;
+      }
+    }
+    const error = new Error(errorMsg);
+    error.name = 'BatchJobFailed';
+    throw error;
   }
   const results = [];
   if (batch.output_file_id !== null && batch.output_file_id !== undefined) {

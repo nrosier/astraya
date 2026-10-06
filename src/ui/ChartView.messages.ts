@@ -43,6 +43,13 @@ const en = {
   antiscion: 'Antiscion',
   contraAntiscion: 'Contra-antiscion',
 
+  // Tooltips for table column headers
+  declinationKindTooltip:
+    'Parallel: bodies with the same declination; Contraparallel: bodies with equal but opposite declinations',
+  antisciaKindTooltip:
+    'Antiscion: reflected across Cancer-Leo axis; Contraantiscion: reflected across Aries-Libra axis',
+  applyingTooltip: 'Applying: bodies moving toward exact aspect; Separating: bodies moving away from exact aspect',
+
   positionsCaption: 'Positions',
   housesCaption: 'Houses',
   anglesCaption: 'Angles',
@@ -51,9 +58,9 @@ const en = {
   derivedPointsCaption: 'Derived points',
   dispositorsCaption: 'Dispositors',
   dispositorsHint:
-    'A dispositor is the ruler of a planet\'s sign — the planetary chain traces each ruler forward until it circles back on itself or reaches a final dispositor. Use this to find rulership cycles and understand what each planet depends on.',
+    "A dispositor is the ruler of a planet's sign — the planetary chain traces each ruler forward until it circles back on itself or reaches a final dispositor. Use this to find rulership cycles and understand what each planet depends on.",
   dispositorsTooltip:
-    'A dispositor is the ruler of a planet\'s sign. Dispositor chains trace where each planet\'s rulership flows.',
+    "A dispositor is the ruler of a planet's sign. Dispositor chains trace where each planet's rulership flows.",
   declinationsCaption: 'Declinations',
   antisciaCaption: 'Antiscia',
   fixedStarsCaption: 'Fixed stars',
@@ -213,6 +220,14 @@ const nl: typeof en = {
   contraparallel: 'Contraparallel',
   antiscion: 'Antiscion',
   contraAntiscion: 'Contra-antiscion',
+
+  // Tooltips for table column headers (Dutch)
+  declinationKindTooltip:
+    'Parallel: hemellichamen met dezelfde declinatie; Contraparallel: hemellichamen met gelijke maar tegengestelde declinaties',
+  antisciaKindTooltip:
+    'Antiscion: gereflecteerd over Kreeft-Leeuw-as; Contraantiscion: gereflecteerd over Ram-Weegschaal-as',
+  applyingTooltip:
+    'Toenemend: hemellichamen bewegen naar exact aspect; Afnemend: hemellichamen bewegen weg van exact aspect',
 
   positionsCaption: 'Posities',
   housesCaption: 'Huizen',

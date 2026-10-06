@@ -41,6 +41,8 @@ export interface TableColumn<T> {
    * wrap within the column instead of forcing the whole table to scroll horizontally.
    */
   readonly wrapText?: boolean;
+  /** Tooltip text for the column header (e.g., definition or hint). Shown on hover with cursor:help styling. */
+  readonly labelTooltip?: string;
 }
 
 function comparable(value: CellValue): string | number {

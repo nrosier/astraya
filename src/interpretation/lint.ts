@@ -167,7 +167,21 @@ const MIN_ENTRIES_FOR_OPENING_CHECK = 20;
  * keeps that check aimed at what it actually means to catch: many entries
  * starting with the same distinctive word or phrase, which reads as templated.
  */
-const GENERIC_OPENING_WORDS = new Set(['you', 'your', 'je', 'jij', 'jouw', 'u', 'uw']);
+const GENERIC_OPENING_WORDS = new Set([
+  'you',
+  'your',
+  'this',
+  'je',
+  'jij',
+  'jouw',
+  'u',
+  'uw',
+  'dit',
+  'deze',
+  'de',
+  'het',
+  'een',
+]);
 
 function containsWholeWord(text: string, word: string): boolean {
   return new RegExp(`\\b${word}\\b`).test(text);
