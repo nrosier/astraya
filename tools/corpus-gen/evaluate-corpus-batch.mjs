@@ -140,7 +140,8 @@ async function checkAndApply(loc) {
   let totalCostCents = 0;
   let costUnknown = false;
 
-  for (const job of jobs) {
+  try {
+    for (const job of jobs) {
     console.log(
       `[${loc}] checking batch ${job.batchId} (submitted ${job.submittedAt}, ${String(job.candidates.length)} entries)...`,
     );
@@ -178,7 +179,7 @@ async function checkAndApply(loc) {
         console.error(`[${loc}] ❌ Batch check failed: ${error instanceof Error ? error.message : String(error)}`);
       }
       stillRunning.push(job);
-      continue;
+      continue; // Skip to next batch in loop
     }
     const byCustomId = new Map(results.map((r) => [r.customId, r]));
 
@@ -251,6 +252,13 @@ async function checkAndApply(loc) {
         });
       }
     });
+    }
+  } catch (error) {
+    // Unexpected error in batch loop — log and continue with cleanup
+    console.error(`[${loc}] ⚠️ Unexpected error processing batches: ${error instanceof Error ? error.message : String(error)}`);
+    if (error instanceof Error && error.stack) {
+      console.error(`[${loc}] Stack: ${error.stack}`);
+    }
   }
 
   if (anyTerminal) {
