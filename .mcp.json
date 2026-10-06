@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "astraya-linter": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["tsx", "tools/mcp/mcp-linter.mjs"],
+      "env": {}
+    }
+  }
+}
