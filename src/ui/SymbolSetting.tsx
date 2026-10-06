@@ -11,11 +11,16 @@ import { useMessages } from './messages.js';
 import { useSymbolClass } from './symbol-setting.js';
 import { symbolSettingMessages } from './SymbolSetting.messages.js';
 
-export function SymbolSetting(): React.JSX.Element {
+export function SymbolSetting({ onChanged }: { readonly onChanged?: () => void } = {}): React.JSX.Element {
   const t = useMessages(symbolSettingMessages);
   const [choice, setChoice] = useSymbolClass();
   const [variants, setVariant, setWeight] = useGlyphVariants();
   const id = useId();
+
+  const handleChange = (callback: () => void): void => {
+    callback();
+    onChanged?.();
+  };
   return (
     <>
       <p className="rulership-setting">
@@ -25,7 +30,12 @@ export function SymbolSetting(): React.JSX.Element {
           value={choice}
           aria-describedby={`${id}-hint`}
           onChange={(event) => {
-            if (isSymbolClass(event.target.value)) setChoice(event.target.value);
+            const value = event.target.value;
+            if (isSymbolClass(value)) {
+              handleChange(() => {
+                setChoice(value);
+              });
+            }
           }}
         >
           {SYMBOL_CLASSES.map((option) => (
@@ -47,7 +57,12 @@ export function SymbolSetting(): React.JSX.Element {
           value={variants.weight}
           aria-describedby={`${id}-weight-hint`}
           onChange={(event) => {
-            if (isGlyphWeight(event.target.value)) setWeight(event.target.value);
+            const value = event.target.value;
+            if (isGlyphWeight(value)) {
+              handleChange(() => {
+                setWeight(value);
+              });
+            }
           }}
         >
           {GLYPH_WEIGHTS.map((option) => (
@@ -73,7 +88,12 @@ export function SymbolSetting(): React.JSX.Element {
               disabled={body === 'uranus' ? choice === 'text' : choice !== 'drawn'}
               value={variants[body]}
               onChange={(event) => {
-                if (isVariantKey(body, event.target.value)) setVariant(body, event.target.value);
+                const value = event.target.value;
+                if (isVariantKey(body, value)) {
+                  handleChange(() => {
+                    setVariant(body, value);
+                  });
+                }
               }}
             >
               {VARIANT_KEYS[body].map((key) => (

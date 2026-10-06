@@ -72,6 +72,8 @@ export function ExtendedSettingsPanel({
   const [draft, setDraft] = useState<ExtendedSettings>(value);
   // A starting point can also set the planetary rulers, which are a device preference; they are written only on Apply.
   const [pendingRulers, setPendingRulers] = useState<RulershipChoice | undefined>(undefined);
+  // Symbols are also a device preference (localStorage), but we track if they changed to enable the Apply button.
+  const [symbolsChanged, setSymbolsChanged] = useState(false);
   const [open, setOpen] = useState(false);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -104,6 +106,7 @@ export function ExtendedSettingsPanel({
   const openCard = (): void => {
     setDraft(value);
     setPendingRulers(undefined);
+    setSymbolsChanged(false);
     setOpen(true);
     const dialog = dialogRef.current;
     if (dialog === null) return;
@@ -121,6 +124,7 @@ export function ExtendedSettingsPanel({
     setOpen(false);
     setDraft(value);
     setPendingRulers(undefined);
+    setSymbolsChanged(false);
     triggerRef.current?.focus();
   };
 
@@ -140,7 +144,7 @@ export function ExtendedSettingsPanel({
 
   const effectiveRulers = pendingRulers ?? rulers;
   const currentPreset = matchPreset(draft, effectiveRulers);
-  const dirty = !sameSettings(draft, value) || pendingRulers !== undefined;
+  const dirty = !sameSettings(draft, value) || pendingRulers !== undefined || symbolsChanged;
 
   const apply = (): void => {
     if (pendingRulers !== undefined) setRulers(pendingRulers);
@@ -550,7 +554,11 @@ export function ExtendedSettingsPanel({
             <legend>{t.deviceLegend}</legend>
             <p className="hint settings-card-tag">{t.savedOnDevice}</p>
             <RulershipSetting />
-            <SymbolSetting />
+            <SymbolSetting
+              onChanged={() => {
+                setSymbolsChanged(true);
+              }}
+            />
           </fieldset>
         </div>
 
