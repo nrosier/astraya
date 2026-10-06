@@ -142,142 +142,146 @@ async function checkAndApply(loc) {
 
   try {
     for (const job of jobs) {
-    console.log(
-      `[${loc}] checking batch ${job.batchId} (submitted ${job.submittedAt}, ${String(job.candidates.length)} entries)...`,
-    );
-    const batch = await getBatch({ apiKey: process.env.OPENAI_API_KEY, batchId: job.batchId });
-    if (!isBatchTerminal(batch)) {
-      const counts = batch.request_counts;
       console.log(
-        `[${loc}] batch ${job.batchId} still ${batch.status}${counts ? ` (${String(counts.completed)}/${String(counts.total)} done, ${String(counts.failed)} failed)` : ''}`,
+        `[${loc}] checking batch ${job.batchId} (submitted ${job.submittedAt}, ${String(job.candidates.length)} entries)...`,
       );
-      stillRunning.push(job);
-      continue;
-    }
-    console.log(`[${loc}] batch ${job.batchId} is ${batch.status}${batch.status === 'failed' ? ' (discarding and resetting entries to pending)' : ' — retrieving results...'}...`);
-    anyTerminal = true;
+      const batch = await getBatch({ apiKey: process.env.OPENAI_API_KEY, batchId: job.batchId });
+      if (!isBatchTerminal(batch)) {
+        const counts = batch.request_counts;
+        console.log(
+          `[${loc}] batch ${job.batchId} still ${batch.status}${counts ? ` (${String(counts.completed)}/${String(counts.total)} done, ${String(counts.failed)} failed)` : ''}`,
+        );
+        stillRunning.push(job);
+        continue;
+      }
+      console.log(
+        `[${loc}] batch ${job.batchId} is ${batch.status}${batch.status === 'failed' ? ' (discarding and resetting entries to pending)' : ' — retrieving results...'}...`,
+      );
+      anyTerminal = true;
 
-    // If batch is failed, it will not be retried by OpenAI — reset entries to pending for resubmission
-    if (batch.status === 'failed') {
+      // If batch is failed, it will not be retried by OpenAI — reset entries to pending for resubmission
+      if (batch.status === 'failed') {
+        if (feedback === undefined) feedback = await readFeedback(feedbackPath);
+        const now = new Date().toISOString();
+        for (const candidate of job.candidates) {
+          const entry = corpus.find((e) => identityOf(e) === identityOf(candidate));
+          if (entry) {
+            const existingTracking = findTracking(tracking, entry);
+            upsertTracking(tracking, {
+              key: entry.key,
+              locale: entry.locale,
+              clean: undefined, // Mark as pending (neither clean nor flagged)
+              evaluationCount: (existingTracking?.evaluationCount ?? 0) + 1,
+              updatedAt: now,
+            });
+            console.log(`[${loc}] RESET ${entry.key} — eligible for resubmission`);
+          }
+        }
+        continue; // Skip results retrieval, move to next batch
+      }
+
       if (feedback === undefined) feedback = await readFeedback(feedbackPath);
-      const now = new Date().toISOString();
-      for (const candidate of job.candidates) {
-        const entry = corpus.find((e) => identityOf(e) === identityOf(candidate));
-        if (entry) {
-          const existingTracking = findTracking(tracking, entry);
+
+      // Rebuild this job's own candidates from the identity list captured at submission time,
+      // against the corpus as it stands now — same key lookup convention as
+      // corpus-feedback.mjs/eval-tracking.mjs.
+      const byIdentity = new Map(corpus.map((entry) => [identityOf(entry), entry]));
+      const candidates = job.candidates.map(({ key }) => {
+        const entry = byIdentity.get(identityOf({ key }));
+        const placement = entry ? parsePlacementKey(entry.key) : undefined;
+        return entry && placement ? { entry, placement } : undefined;
+      });
+
+      let results;
+      try {
+        results = await extractBatchResults({ apiKey: process.env.OPENAI_API_KEY, batch });
+      } catch (error) {
+        // Batch failed — print user-friendly message and skip it
+        if (error instanceof Error && error.name === 'BatchJobFailed') {
+          console.error(`[${loc}] ❌ ${error.message}`);
+        } else {
+          console.error(`[${loc}] ❌ Batch check failed: ${error instanceof Error ? error.message : String(error)}`);
+        }
+        // Don't add to stillRunning — this batch is unrecoverable; entries are reset above
+        continue; // Skip to next batch in loop
+      }
+      const byCustomId = new Map(results.map((r) => [r.customId, r]));
+
+      candidates.forEach((candidate, index) => {
+        if (candidate === undefined) {
+          totalFailed += 1;
+          console.error(
+            `[${loc}] FAILED ${job.candidates[index].key}: entry no longer resolves against the current corpus`,
+          );
+          return;
+        }
+        const { entry } = candidate;
+        // Majority vote (#437): the judge's "generic trope" call is subjective and noisy — re-judging the same
+        // entry flips it — so each entry is judged `job.votes` times and flagged only when most ballots flag it.
+        // A job from before voting (no `votes`) has one ballot, under the plain index as its custom id.
+        const ballotIds =
+          job.votes === undefined
+            ? [String(index)]
+            : Array.from({ length: job.votes }, (_, vote) => `${String(index)}:${String(vote)}`);
+        const ballots = ballotIds.map((id) => byCustomId.get(id)).filter((ballot) => ballot !== undefined);
+        if (ballots.length === 0) {
+          totalFailed += 1;
+          console.error(`[${loc}] FAILED ${entry.key}: no result came back for this entry`);
+          return;
+        }
+        const valid = ballots.filter((ballot) => !ballot.error);
+        if (valid.length === 0) {
+          totalFailed += 1;
+          console.error(`[${loc}] FAILED ${entry.key}: ${ballots[0].error.message}`);
+          return;
+        }
+        for (const ballot of valid) {
+          const costCents = estimateBatchCostCents(
+            job.model,
+            ballot.usage?.prompt_tokens,
+            ballot.usage?.completion_tokens,
+          );
+          if (costCents === undefined) costUnknown = true;
+          else totalCostCents += costCents;
+        }
+        const verdict = majorityVerdict(valid);
+        const result = { result: { correct: verdict.correct, issues: verdict.issues } };
+        const existingTracking = findTracking(tracking, entry);
+        const now = new Date().toISOString();
+        if (result.result.correct === false) {
+          totalFlagged += 1;
+          upsertFeedback(feedback, {
+            key: entry.key,
+            locale: entry.locale,
+            originalText: entry.text,
+            issues: result.result.issues,
+            flaggedAt: now,
+          });
           upsertTracking(tracking, {
             key: entry.key,
             locale: entry.locale,
-            clean: undefined, // Mark as pending (neither clean nor flagged)
-            evaluationCount: (existingTracking?.evaluationCount ?? 0) + 1,
+            clean: false,
+            evaluationCount: existingTracking?.evaluationCount ?? 0,
             updatedAt: now,
           });
-          console.log(`[${loc}] RESET ${entry.key} — eligible for resubmission`);
+          console.log(`[${loc}] FLAGGED ${entry.key}: ${result.result.issues.join(' / ')}`);
+        } else {
+          totalClean += 1;
+          upsertTracking(tracking, {
+            key: entry.key,
+            locale: entry.locale,
+            clean: true,
+            evaluationCount: existingTracking?.evaluationCount ?? 0,
+            updatedAt: now,
+          });
         }
-      }
-      continue; // Skip results retrieval, move to next batch
-    }
-
-    if (feedback === undefined) feedback = await readFeedback(feedbackPath);
-
-    // Rebuild this job's own candidates from the identity list captured at submission time,
-    // against the corpus as it stands now — same key lookup convention as
-    // corpus-feedback.mjs/eval-tracking.mjs.
-    const byIdentity = new Map(corpus.map((entry) => [identityOf(entry), entry]));
-    const candidates = job.candidates.map(({ key }) => {
-      const entry = byIdentity.get(identityOf({ key }));
-      const placement = entry ? parsePlacementKey(entry.key) : undefined;
-      return entry && placement ? { entry, placement } : undefined;
-    });
-
-    let results;
-    try {
-      results = await extractBatchResults({ apiKey: process.env.OPENAI_API_KEY, batch });
-    } catch (error) {
-      // Batch failed — print user-friendly message and skip it
-      if (error instanceof Error && error.name === 'BatchJobFailed') {
-        console.error(`[${loc}] ❌ ${error.message}`);
-      } else {
-        console.error(`[${loc}] ❌ Batch check failed: ${error instanceof Error ? error.message : String(error)}`);
-      }
-      // Don't add to stillRunning — this batch is unrecoverable; entries are reset above
-      continue; // Skip to next batch in loop
-    }
-    const byCustomId = new Map(results.map((r) => [r.customId, r]));
-
-    candidates.forEach((candidate, index) => {
-      if (candidate === undefined) {
-        totalFailed += 1;
-        console.error(
-          `[${loc}] FAILED ${job.candidates[index].key}: entry no longer resolves against the current corpus`,
-        );
-        return;
-      }
-      const { entry } = candidate;
-      // Majority vote (#437): the judge's "generic trope" call is subjective and noisy — re-judging the same
-      // entry flips it — so each entry is judged `job.votes` times and flagged only when most ballots flag it.
-      // A job from before voting (no `votes`) has one ballot, under the plain index as its custom id.
-      const ballotIds =
-        job.votes === undefined
-          ? [String(index)]
-          : Array.from({ length: job.votes }, (_, vote) => `${String(index)}:${String(vote)}`);
-      const ballots = ballotIds.map((id) => byCustomId.get(id)).filter((ballot) => ballot !== undefined);
-      if (ballots.length === 0) {
-        totalFailed += 1;
-        console.error(`[${loc}] FAILED ${entry.key}: no result came back for this entry`);
-        return;
-      }
-      const valid = ballots.filter((ballot) => !ballot.error);
-      if (valid.length === 0) {
-        totalFailed += 1;
-        console.error(`[${loc}] FAILED ${entry.key}: ${ballots[0].error.message}`);
-        return;
-      }
-      for (const ballot of valid) {
-        const costCents = estimateBatchCostCents(
-          job.model,
-          ballot.usage?.prompt_tokens,
-          ballot.usage?.completion_tokens,
-        );
-        if (costCents === undefined) costUnknown = true;
-        else totalCostCents += costCents;
-      }
-      const verdict = majorityVerdict(valid);
-      const result = { result: { correct: verdict.correct, issues: verdict.issues } };
-      const existingTracking = findTracking(tracking, entry);
-      const now = new Date().toISOString();
-      if (result.result.correct === false) {
-        totalFlagged += 1;
-        upsertFeedback(feedback, {
-          key: entry.key,
-          locale: entry.locale,
-          originalText: entry.text,
-          issues: result.result.issues,
-          flaggedAt: now,
-        });
-        upsertTracking(tracking, {
-          key: entry.key,
-          locale: entry.locale,
-          clean: false,
-          evaluationCount: existingTracking?.evaluationCount ?? 0,
-          updatedAt: now,
-        });
-        console.log(`[${loc}] FLAGGED ${entry.key}: ${result.result.issues.join(' / ')}`);
-      } else {
-        totalClean += 1;
-        upsertTracking(tracking, {
-          key: entry.key,
-          locale: entry.locale,
-          clean: true,
-          evaluationCount: existingTracking?.evaluationCount ?? 0,
-          updatedAt: now,
-        });
-      }
-    });
+      });
     }
   } catch (error) {
     // Unexpected error in batch loop — log and continue with cleanup
-    console.error(`[${loc}] ⚠️ Unexpected error processing batches: ${error instanceof Error ? error.message : String(error)}`);
+    console.error(
+      `[${loc}] ⚠️ Unexpected error processing batches: ${error instanceof Error ? error.message : String(error)}`,
+    );
     if (error instanceof Error && error.stack) {
       console.error(`[${loc}] Stack: ${error.stack}`);
     }
