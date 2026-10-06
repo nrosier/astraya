@@ -154,8 +154,29 @@ async function checkAndApply(loc) {
       stillRunning.push(job);
       continue;
     }
-    console.log(`[${loc}] batch ${job.batchId} is ${batch.status} — retrieving results...`);
+    console.log(`[${loc}] batch ${job.batchId} is ${batch.status}${batch.status === 'failed' ? ' (discarding and resetting entries to pending)' : ' — retrieving results...'}...`);
     anyTerminal = true;
+
+    // If batch is failed, it will not be retried by OpenAI — reset entries to pending for resubmission
+    if (batch.status === 'failed') {
+      const now = new Date().toISOString();
+      for (const candidate of job.candidates) {
+        const entry = corpus.find((e) => identityOf(e) === identityOf(candidate));
+        if (entry) {
+          const existingTracking = findTracking(tracking, entry);
+          upsertTracking(tracking, {
+            key: entry.key,
+            locale: entry.locale,
+            clean: undefined, // Mark as pending (neither clean nor flagged)
+            evaluationCount: (existingTracking?.evaluationCount ?? 0) + 1,
+            updatedAt: now,
+          });
+          console.log(`[${loc}] RESET ${entry.key} — eligible for resubmission`);
+        }
+      }
+      continue; // Skip results retrieval, move to next batch
+    }
+
     if (feedback === undefined) feedback = await readFeedback(feedbackPath);
 
     // Rebuild this job's own candidates from the identity list captured at submission time,
@@ -178,7 +199,7 @@ async function checkAndApply(loc) {
       } else {
         console.error(`[${loc}] ❌ Batch check failed: ${error instanceof Error ? error.message : String(error)}`);
       }
-      stillRunning.push(job);
+      // Don't add to stillRunning — this batch is unrecoverable; entries are reset above
       continue; // Skip to next batch in loop
     }
     const byCustomId = new Map(results.map((r) => [r.customId, r]));
