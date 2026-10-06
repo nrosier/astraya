@@ -4,6 +4,31 @@ All notable changes to Astraya are recorded here. Versions follow
 [semantic versioning](https://semver.org/), and every milestone ends in a release —
 see [docs/RELEASING.md](docs/RELEASING.md).
 
+## [0.30.0] — 2026-10-06
+
+**A grouped relationship summary with house overlays for synastry, a guarded Tier 2 "relationship" reading for a pair of charts, synastry and composite in the PDF export builder, and bi-wheel rings told apart by line style, name and click-to-isolate rather than colour alone.**
+
+M9 (Polish & launch) progress, not a finished milestone — v1.0.0 hasn't shipped yet.
+
+### Added
+
+- **A relationship summary for synastry, with a guarded AI-customised reading (#422).** The Synastry screen now shows a themed, ranked panel between the bi-wheel and the aspects table: every cross-chart aspect grouped by what it's about (emotional bond, attraction, communication, commitment, growth, identity, and contacts to the angles) with the strongest contacts first, plus house overlays (each person's planets read into the other's houses, both directions, skipped for a partner with an unknown birth time). None of this needs an LLM — it is written, reviewed corpus text, resolved the same way the natal report already is. A new opt-in "relationship" mode on Tier 2 can additionally read both charts' positions, their cross-aspects and the house overlays — never names, birth dates or places — and write a fuller reading, under its own guardrails: no verdict on whether the relationship will last, no asymmetric blame, no compatibility "score". Consent is spent per request, same as every other Tier 2 panel. The relationship summary is also now a section in the PDF export builder's Synastry options, included by default.
+- **Synastry and composite in the PDF export builder (#441).** The builder's chart-type list grows two more: synastry (the bi-wheel plus the ranked, interpreted cross-chart aspects table) and composite (the synthetic midpoint chart), each with its own partner picked on the Export page itself rather than read off a screen left open elsewhere.
+- **Bi-wheel rings are told apart by more than colour (#448).** A second or third ring's Ascendant/Midheaven spoke now carries its own dash pattern (ring one dotted, ring two dash-dot) as well as its own colour, and the corner legend shows a short line sample in that style instead of a flat colour dot — so the distinction survives for a colour-blind reader or a black-and-white printout. Synastry's legend also names which ring is the outer and which the inner circle directly. Clicking a ring's legend entry now isolates everything on that ring — its bodies and every aspect, own or cross-ring, touching one of them — the same selection/dimming behaviour a planet or sign click already has.
+
+### Fixed
+
+- **A composite chart's written report no longer reads as if about a third person (#450).** It now opens with a framing paragraph explaining that the chart synthesizes two people's own charts and describes their combination, before the usual placement-by-placement text.
+- **Tier 2's freeform mode knows when it's reading a composite chart, not a natal one (#454).** Its system instruction no longer says "a natal chart" unconditionally, and the composite screen now tells it which kind of chart the facts came from.
+- **A tool page (cycles, eclipses, horary, electional, rectification) remembers the last person you had open (#453),** instead of dropping the person menu from navigation the moment you leave a person-scoped screen.
+- **Free-text table and card content wraps instead of overflowing (#447, #449):** the astrocartography meanings cards and synastry's Interpretation column both now wrap long text within their own width rather than forcing the layout wider.
+- **The PDF export's chart wheel no longer runs past the page, and its astrological glyphs draw correctly instead of silently becoming the wrong character (#446).**
+- **The PDF builder's standalone-export multi-wheel uses the same ring colours as the live app, and a multi-wheel chart's second and third ring (and the aspects crossing between rings) get their own distinct look (#448)** — the fixes underlying this release's ring-distinction feature above.
+
+### Notes for people running their own server
+
+- No database migration and no new configuration in this release.
+
 ## [0.29.0] — 2026-10-05
 
 **A PDF export builder for custom reports, Extended settings regrouped into one card with Apply/Cancel, bold and fine symbol weights, and a tidier admin and navigation.**
