@@ -1790,7 +1790,7 @@
   {
     "key": "planet-in-sign:meanLilith:5",
     "locale": "en",
-    "text": "You seek complete self-sufficiency through meticulous mastery, holding every process to an exacting standard that brooks no outside interference. This drive manages boundaries by demanding total systemic integrity, resisting any condition that requires reliance on unverified methods. When external limits force messy interdependence, the shadow emerges as profound detachment, treating normal operational friction as an intolerable compromise of your autonomy.",
+    "text": "You seek complete self-sufficiency through meticulous mastery, holding every process to an exacting standard that brooks no outside interference. This drive manages boundaries by demanding total systemic integrity, resisting any condition that requires reliance on unverified methods. When external limits force messy interdependence, the shadow emerges as rigid over-control, treating normal operational friction as an intolerable flaw in the working design.",
     "tier": "core",
     "tags": ["improved-via-feedback-loop"],
     "provenance": {
@@ -2234,9 +2234,9 @@
   {
     "key": "planet-in-sign:chiron:6",
     "locale": "en",
-    "text": "You build toward an innate capacity for holding space between opposing viewpoints, seeking profound equilibrium through shared connection. Your mechanism engages by constantly weighing multiple perspectives to secure mutual ground before making a choice. The shadow dilemma surfaces when the effort to keep everyone satisfied leads to self-abandonment, creating quiet friction whenever an external situation demands a firm, unilateral stand.",
+    "text": "You build toward a profound capacity to mend relational fractures by examining where connection repeatedly frays. Your mechanism engages by constantly scanning for disparity, using acute awareness of others to smooth over friction and secure mutual ground. The shadow dilemma surfaces when the relentless effort to bridge divides leaves you acutely vulnerable to self-erasure, generating deep tension whenever a situation demands standing completely alone.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -2258,9 +2258,9 @@
   {
     "key": "planet-in-sign:chiron:8",
     "locale": "en",
-    "text": "You hold an enduring drive to discover ultimate truths and map out a coherent philosophy of existence. This outlook grows through seeking out foreign perspectives and unscripted horizons, using direct exploration to bridge gaps between abstract ideals and lived reality. When faced with dogmatic limits or rigid certainty, you risk dismissing vital practical details in an urgent rush to preserve absolute freedom.",
+    "text": "You carry a persistent sensitivity around your own authority to define meaning, often feeling acutely vulnerable when your core beliefs or worldview are challenged. This edge is met by seeking out broad perspectives and questioning established dogmas to forge a hard-won wisdom that you can eventually share with others. When pinned down by rigid doctrines, you risk overcorrecting into restless flight to escape the discomfort of uncertainty.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -2390,7 +2390,7 @@
   {
     "key": "planet-in-sign:ceres:7",
     "locale": "en",
-    "text": "You offer sustenance and care through total psychological investment, treating support as a profound bond that demands absolute emotional truth in return. This nurturing drive manages vulnerability by withholding practical help until complete trust is established, rejecting casual or superficial aid. When external limits require detachment or surface-level engagement, the shadow dilemma surfaces as friction between offering complete devotion and withdrawing involvement entirely to test the safety of the connection.",
+    "text": "You offer sustenance and care through deep psychological investment, treating support as a profound bond that seeks total honesty and mutual transformation. This nurturing drive manages vulnerability by holding back until complete trust is established, preferring silence over casual remedies. When external limits demand surface-level cooperation or casual detachment, the shadow dilemma emerges as friction between demanding absolute devotion and retreating into guarded self-protection.",
     "tier": "core",
     "tags": ["improved-via-feedback-loop"],
     "provenance": {
@@ -3458,9 +3458,9 @@
   {
     "key": "planet-in-house:mars:1",
     "locale": "en",
-    "text": "Your fundamental impulse is to lead with direct action, asserting personal will immediately when confronting any barrier or environment. This drive operates by testing outer boundaries through sheer self-reliance, treating every external obstacle as a direct call for individual initiative rather than hesitation. When forced into prolonged dependence or institutional restraint, this mechanism often hardens into knee-jerk friction against authority simply to preserve autonomy.",
+    "text": "Your fundamental impulse is to meet the world through immediate physical presence and direct self-assertion, shaping your environment by acting rather than waiting. This drive operates through intense personal agency, treating every new setting as an invitation to establish your autonomy right away. When faced with situations that demand passive compliance or shared control, this mechanism can stiffen into defensive isolation rather than constructive compromise.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -4598,9 +4598,9 @@
   {
     "key": "planet-in-house:trueNode:12",
     "locale": "en",
-    "text": "You are driven toward quiet integration, seeking peace by dissolving rigid boundaries and embracing solitude. This orientation relies on a natural capacity for surrender, allowing you to loosen control over external outcomes when facing structural limits. The core tension arises when interdependence creates friction, prompting a withdrawal into isolation rather than engaging with shared obligations.",
+    "text": "You are pulled toward quiet integration, seeking peace by gradually learning to dissolve rigid boundaries and embrace solitude. This orientation develops through a gradual capacity for surrender, finding ways to loosen control over external outcomes when facing structural limits. The core tension arises when interdependence creates friction, prompting a withdrawal into isolation rather than engaging with shared obligations.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -5054,9 +5054,9 @@
   {
     "key": "planet-in-house:chiron:2",
     "locale": "en",
-    "text": "You hold a profound capacity to rebuild security from a deep sense of foundational loss, learning to ground your self-worth in internal resilience rather than external validation. This drive approaches material boundaries by constantly testing what feels secure, often building intense self-reliance as a defense against unexpected scarcity. The inherent tension arises when meeting limits on shared resources or external support, where a quiet resistance to depending on others can mimic self-sufficiency while quietly masking vulnerability.",
+    "text": "You hold a profound capacity to rebuild security from a deep sense of foundational loss, learning to ground your self-worth in internal resilience rather than external validation. This drive approaches material boundaries by constantly testing what feels secure, often building intense self-reliance as a defense against unexpected scarcity. The inherent tension arises when meeting limits on personal income or self-sufficiency, where a quiet resistance to asking for help can mimic absolute independence while quietly masking vulnerability.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -5198,9 +5198,9 @@
   {
     "key": "planet-in-house:ceres:2",
     "locale": "en",
-    "text": "You seek stability through tangible resources and physical security, building a steady foundation by carefully managing what sustains you. This drive handles independence by tying personal self-worth directly to material self-sufficiency, preferring concrete assets over abstract promises. When external limits restrict your resources, a tension arises between holding tightly to what remains and fearing sudden scarcity.",
+    "text": "You offer care and support primarily through tangible provision, creating stability by sharing physical resources and practical sustenance with those who depend on you. This drive handles independence by tying your sense of usefulness directly to material self-sufficiency, preferring concrete acts of provision over abstract reassurance. When external limits restrict your ability to provide, a tension surfaces between over-extending your reserves to protect others and fearing sudden scarcity.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -5222,7 +5222,7 @@
   {
     "key": "planet-in-house:ceres:4",
     "locale": "en",
-    "text": "You build toward a deep stewardship of emotional roots, cultivating a private sanctuary intended to offer absolute shelter and unconditional support. This drive manages boundaries by carefully vetting who enters your inner world, ensuring domestic life remains an untroubled haven. When external demands strain this refuge, a tension arises where you may shoulder all caretaking burdens alone, struggling to accept support in return.",
+    "text": "You build toward a deep stewardship of emotional roots, cultivating a private sanctuary intended to offer absolute shelter and unconditional support. This drive manages boundaries by carefully vetting who enters your inner world, ensuring domestic life remains an untroubled haven. When external demands strain this refuge, a tension arises between protecting your inner foundation and integrating outside influence, making it difficult to share the weight of maintaining that security.",
     "tier": "core",
     "tags": ["improved-via-feedback-loop"],
     "provenance": {
@@ -47882,9 +47882,9 @@
   {
     "key": "dignity-state:mars:detriment",
     "locale": "en",
-    "text": "Your pursuit of goals operates through indirect channels, preferring strategy and circumspection over blunt force when claiming ground. This approach manages boundaries by testing terrain before committing initiative, seeking leverage rather than direct confrontation. Friction arises when external structures demand immediate compliance, as hesitation can read to others as hesitation rather than calculated patience.",
+    "text": "Your pursuit of goals operates through deliberate effort, preferring measured pacing and balanced deliberation over immediate confrontation when claiming ground. This approach manages boundaries by holding firm against outside pressure, anchoring initiative in settled outcomes rather than hurried compromise. Friction surfaces when external structures demand sudden flexibility, as immovable resolve can read to others as rigidity rather than quiet strength.",
     "tier": "core",
-    "tags": ["detriment"],
+    "tags": ["detriment", "improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -57998,9 +57998,9 @@
   {
     "key": "composite-planet-in-sign:mercury:7",
     "locale": "en",
-    "text": "This partnership operates through a deeply investigative exchange, seeking subtext and underlying motives rather than accepting surface explanations. Shared thinking relies on absolute discretion, building a private vault of mutual understanding that resists casual or superficial disclosures. When encountering external resistance or hidden truths, this dynamic tends to withdraw into strict secrecy, treating guardedness as a primary mechanism for psychological self-preservation.",
+    "text": "This partnership processes information by digging past surface details to uncover underlying motives and unstated truths. Shared reasoning demands absolute honesty between partners, yet exercises strict selectivity about what is revealed to the outside world. When external pressures challenge this private consensus, the joint perspective hardens into suspicion, treating shared privacy as a barrier against external intrusion rather than an arena for open exchange.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -58598,9 +58598,9 @@
   {
     "key": "composite-planet-in-sign:saturn:9",
     "locale": "en",
-    "text": "The shared partnership builds its foundation through deliberate structure and mutual accountability, establishing stability over the long duration. This joint drive negotiates external boundaries by setting firm parameters and expecting steady reliability from the connection itself. Friction arises when rigid demands for order conflict with unexpected changes, leading the union to mistake control for security.",
+    "text": "The shared partnership builds enduring institutions and pragmatic frameworks, anchoring mutual commitments in concrete, long-term goals. This joint drive negotiates external limits by enforcing strict operational standards and demanding unwavering practical reliability. Friction arises when rigid demands for order conflict with unpredictable changes, leading the union to mistake bureaucratic control for actual security.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -59294,9 +59294,9 @@
   {
     "key": "composite-planet-in-sign:trueNode:7",
     "locale": "en",
-    "text": "This partnership moves naturally beneath superficial interactions to examine the unsaid drivers connecting both individuals. The shared mechanism protects its private core through careful observation, demanding absolute emotional honesty from the surrounding world. When faced with external constraints or demands for transparency, the collective tension risks calcifying into guarded suspicion rather than mutual growth.",
+    "text": "This partnership grows by developing a capacity for deep vulnerability and shared transformation, moving away from safe superficiality toward psychological truth. The shared mechanism builds trust by gradually lowering guarded boundaries and risking exposure. When facing external demands for safety or predictability, the collective tension risks retreating into defensive secrecy instead of leaning into mutual evolution.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -59366,9 +59366,9 @@
   {
     "key": "composite-planet-in-sign:meanLilith:1",
     "locale": "en",
-    "text": "This partnership builds its foundation through tangible security and unyielding patience, creating a shared space where physical comfort and material stability matter above all else. The connection manages external boundaries by digging in its heels and resisting outside pressure until things feel entirely secure. When faced with mandatory change or dependence on fluctuating circumstances, the shared dynamic tends to stiffen into stubborn resistance rather than adapting to the unknown.",
+    "text": "This partnership claims absolute sovereignty over its own resources and physical autonomy, guarding its material territory against any external interference or shared compromise. The connection manages boundaries by digging in its heels and refusing to yield to outside demands for adaptation. When forced into dependence on shifting circumstances, this dynamic risks hardening into an uncompromising defiance that protects security at the cost of exclusion.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -59426,9 +59426,9 @@
   {
     "key": "composite-planet-in-sign:meanLilith:6",
     "locale": "en",
-    "text": "This partnership builds toward a constant pursuit of equilibrium, weighing alternative viewpoints to maintain mutual harmony. It approaches boundaries by seeking consensus and shared agreement before taking definitive action. The shadow dilemma surfaces when external pressure demands a swift choice, turning the desire for fairness into hesitation and avoidance of conflict.",
+    "text": "This partnership builds toward a radical reclamation of autonomy within shared spaces, insisting on absolute fairness rather than quiet compliance. It approaches boundaries by scrutinizing every unspoken rule or demand for unfair compromise before agreeing to terms. The shadow dilemma surfaces when external pressure requires conformity, turning the refusal to yield into a rigid standoff that stalls mutual progress.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -59510,9 +59510,9 @@
   {
     "key": "composite-planet-in-sign:osculatingLilith:1",
     "locale": "en",
-    "text": "This partnership builds a shared foundation upon tangible security and physical comfort, moving deliberately toward what it values most. The connection manages external pressures by digging in its heels and resisting swift adaptation in favor of enduring presence. This protective stillness creates friction when shifting circumstances demand flexibility, turning an instinct for stability into an immovable barrier against necessary change.",
+    "text": "This partnership protects an uncompromising claim to bodily autonomy and material self-sufficiency, refusing any compromise that smells of dependence. The connection navigates external demands by digging in its heels and guarding its resources against outside meddling. This defiant stillness surfaces a shadow dilemma when circumstances require collaborative vulnerability, turning a fierce demand for self-ownership into an isolating wall.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -59522,9 +59522,9 @@
   {
     "key": "composite-planet-in-sign:osculatingLilith:2",
     "locale": "en",
-    "text": "This partnership thrives on a restless exchange of ideas, building connection through constant mental exploration and variety. The shared dynamic maintains momentum by holding multiple perspectives at once, resisting any pressure to settle on a single fixed conclusion. When external constraints demand finality or deep focus, this shared style tends to scatter its attention, treating boundaries as intellectual puzzles rather than solid walls.",
+    "text": "This partnership insists on speaking the unspoken, guarding its right to explore provocative ideas without seeking outside approval. The shared dynamic asserts absolute independence through verbal defiance, refusing to conform to expected social scripts or polite consensus. When external rules demand conformity or silence, this connection tends to provoke friction by deliberately questioning established boundaries and pushing past conventional limits.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -59594,9 +59594,9 @@
   {
     "key": "composite-planet-in-sign:osculatingLilith:9",
     "locale": "en",
-    "text": "This partnership builds a shared foundation through rigorous commitment and a focus on long-term stability. The dynamic handles external constraints by enforcing firm operational boundaries and mutual accountability. Friction arises when the drive for complete control over circumstances clashes with unpredictable external demands, turning necessary order into inflexible rigidity.",
+    "text": "This partnership challenges conventional hierarchies by forging its own uncompromising standard of authority and autonomy. The dynamic meets external rules with calculated defiance, carving out independent space rather than seeking approval from established systems. Friction surfaces when the refusal to compromise hardens into isolation, turning fierce self-reliance into a defensive wall against shared vulnerability.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -59690,9 +59690,9 @@
   {
     "key": "composite-planet-in-sign:interpolatedLilith:4",
     "locale": "en",
-    "text": "This partnership centers on a vital need for joint recognition, where the collective identity thrives entirely on mutual validation and bold self-expression. The dynamic approaches external boundaries by demanding that the joint effort be fully acknowledged and valued by the surrounding world. Friction arises when shared visibility is blocked or ignored, turning ordinary vulnerability into an intense struggle for pride and significance.",
+    "text": "This partnership centers on a vital need for public acknowledgment, where the shared identity insists on bold self-expression and uncompromised authenticity. The dynamic meets external boundaries by pushing against any expectation to blend into the background or soften its impact. Friction arises when visibility is denied or sidelined, turning the demand for significance into an uncompromising standoff over pride and rightful placement.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -59702,9 +59702,9 @@
   {
     "key": "composite-planet-in-sign:interpolatedLilith:5",
     "locale": "en",
-    "text": "The shared partnership builds its foundation through meticulous attention to practical utility and mutual improvement. This connection operates by constantly refining daily routines and addressing small operational frictions before they compound. When encountering external constraints or structural limitations, the partnership risks becoming overly analytical or hypercritical regarding imperfections, mistaking procedural order for emotional security.",
+    "text": "The shared partnership builds its foundation through an uncompromising demand for functional purity and utility. This connection operates by stripping away inefficiencies and insisting on absolute operational honesty, often rejecting conventional compromises as flawed. When encountering external constraints or structural limitations, the partnership risks weaponizing its exacting standards, treating any systemic flaw as an intolerable threat to its autonomy.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -59714,9 +59714,9 @@
   {
     "key": "composite-planet-in-sign:interpolatedLilith:6",
     "locale": "en",
-    "text": "The shared partnership builds toward an inherent pursuit of mutual parity, carefully weighing competing perspectives before establishing any joint direction. This balancing mechanism preserves connection by constantly moderating individual impulses against the expectations of the collective bond. When external limits or power imbalances appear, the dynamic risks stalling as an excessive preoccupation with absolute fairness prevents decisive action.",
+    "text": "The shared partnership builds toward an absolute demand for mutual autonomy within connection, continually testing where compliance masks a surrender of self. This dynamic manages boundaries by insisting on total parity, refusing external rules that require one side to diminish for the sake of peace. When dependence or systemic pressure demands conformity, the connection risks intense friction as the refusal to yield blocks practical compromise.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -59750,9 +59750,9 @@
   {
     "key": "composite-planet-in-sign:interpolatedLilith:9",
     "locale": "en",
-    "text": "This partnership builds a joint ambition focused on long-term stability and tangible achievement. It establishes clear boundaries by prioritizing practical milestones and shared responsibility over immediate emotional reassurance. The shadow dilemma arises when external constraints demand flexibility, creating friction between rigid structural expectations and the need to adapt.",
+    "text": "This partnership builds around a quiet refusal to accept conventional rules of authority and status, aiming instead to forge an uncompromised path of self-governance. It establishes independence by demanding complete autonomy over its own methods, often bypassing standard institutional expectations. The shadow dilemma surfaces when external hierarchies demand conformity, turning everyday boundaries into a charged contest over who holds legitimate power.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -59786,9 +59786,9 @@
   {
     "key": "composite-planet-in-sign:chiron:0",
     "locale": "en",
-    "text": "The shared partnership builds its foundation through immediate action and a continuous drive to break new ground together. Mutual initiatives take shape swiftly, favoring bold responses over hesitation when new challenges appear. Friction arises when external delays require patience, turning a shared impulse for rapid progress into mutual frustration with waiting.",
+    "text": "The shared partnership builds its foundation through an urgent drive to initiate and assert independence together, often carrying a persistent vulnerability around taking the lead. Mutual ventures take shape swiftly, seeking to prove capability where past wounds around self-assertion run deepest. Friction arises when external demands require patience, turning a joint impulse for rapid progress into sensitivity about moving too fast or failing to measure up.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -59798,9 +59798,9 @@
   {
     "key": "composite-planet-in-sign:chiron:1",
     "locale": "en",
-    "text": "This partnership builds security through physical comfort and tangible stability, developing its foundation with deliberate patience. The joint dynamic maintains boundaries by committing slowly to what proves reliable over time. When faced with external demands for sudden change, the connection tends to dig in its heels and resist necessary adaptation.",
+    "text": "This partnership builds a deliberate sense of security through tangible resources, yet harbors a persistent vulnerability around material worth and stability. The joint dynamic maintains boundaries by holding fast to what feels physically secure, slowly testing any external pressures. When faced with sudden instability, the connection risks calcifying into rigid resistance rather than embracing necessary adaptation.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -59810,9 +59810,9 @@
   {
     "key": "composite-planet-in-sign:chiron:2",
     "locale": "en",
-    "text": "The shared bond builds its strength through constant inquiry and the exchange of fresh perspectives, treating every conceptual hurdle as an invitation to learn rather than a final obstacle. This partnership functions by keeping multiple possibilities open, relying on verbal agility and mental versatility to bridge divides between individuals. Friction arises when the connection demands a definitive conclusion or emotional closure, causing restlessness when quick adaptation meets the need for lasting stability.",
+    "text": "The shared bond builds its strength through an ongoing dialogue around vulnerability, treating miscommunication not as a failure but as an invitation to understand differing viewpoints more deeply. This connection functions by keeping channels of inquiry open, relying on verbal honesty to bridge the gaps where misunderstandings cause sensitivity. Friction arises when the relationship demands absolute intellectual certainty or fixed answers, triggering restlessness whenever old doubts about being heard meet the need for definitive conclusions.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -59870,9 +59870,9 @@
   {
     "key": "composite-planet-in-sign:chiron:8",
     "locale": "en",
-    "text": "The shared path builds toward a broad philosophical horizon, seeking collective understanding through uncharted ideas and shared exploration. This bond manages boundaries by constantly pushing outward, preferring open-ended possibilities over restrictive structures or fixed definitions. The shadow dilemma surfaces when the partnership encounters rigid external limits, causing frustration with ordinary routine and an avoidance of practical details that require grounding.",
+    "text": "The shared path builds toward an honest inquiry into collective beliefs, seeking healing through the bold pursuit of ultimate truth. This bond manages boundaries by challenging dogma and demanding absolute sincerity, preferring radical transparency over comfortable illusions. The shadow dilemma surfaces when the partnership confronts unanswerable questions, leading to deep disillusionment with guiding principles and a sharp sensitivity toward any structure claiming exclusive authority.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -59894,9 +59894,9 @@
   {
     "key": "composite-planet-in-sign:chiron:9",
     "locale": "en",
-    "text": "The shared partnership builds its foundation upon long-term endurance and methodical growth, valuing tangible achievements above quick solutions. This connection manages external limitations by establishing firm boundaries and relying on tested frameworks to handle pressure together. The inherent vulnerability surfaces when rigid expectations meet unpredictable changes, creating friction between the need for absolute control and the reality of mutual reliance.",
+    "text": "The shared partnership carries a persistent sensitivity regarding competence and outward achievement, measuring its worth through tangible benchmarks of success. This connection handles external pressures by imposing strict standards of reliability, attempting to master every vulnerability through sheer accountability. The underlying tension surfaces when this rigid demand for authority cannot accommodate ordinary flaws, turning the pursuit of mastery into a heavy burden of proof.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -59906,9 +59906,9 @@
   {
     "key": "composite-planet-in-sign:chiron:10",
     "locale": "en",
-    "text": "This partnership centers on an idealistic drive toward collective innovation and shared social vision, often prioritizing abstract principles above interpersonal intimacy. The connection maintains independence by keeping emotional vulnerability at a distance, preferring intellectual problem-solving over raw feeling. When confronted with personal dependency or deep emotional needs, the bond risks withdrawing into clinical detachment or intellectualizing vulnerability to avoid the messiness of mutual reliance.",
+    "text": "This partnership shares a collective outsider status, finding common ground through a mutual commitment to unconventional ideals and systemic reform. The connection guards its autonomy by treating deep personal vulnerability as a structural flaw rather than a shared necessity. When forced to confront mutual dependence, the bond risks retreating into intellectual isolation, struggling to accept that true belonging requires leaning into raw, unpolished imperfection instead of shared detachment.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -60014,9 +60014,9 @@
   {
     "key": "composite-planet-in-sign:ceres:7",
     "locale": "en",
-    "text": "This partnership is driven by a deep urge to uncover hidden truths and share complete emotional vulnerability, forging bonds through profound honesty rather than superficial comfort. Mutual trust functions through total transparency and protective boundaries, requiring absolute confidentiality to feel secure. The shadow dilemma surfaces when shared vulnerability triggers mutual defensiveness, turning necessary privacy into an isolating fortress that resists external support.",
+    "text": "This partnership offers care through deep honesty and a willingness to confront difficult truths, building security by addressing what lies beneath surface comfort. Mutual support functions by holding space for profound vulnerability and protecting shared vulnerabilities from outside exposure. The shadow dilemma surfaces when the instinct to protect creates rigid isolation, turning the need for safe boundaries into a fortress that keeps helpful outside support at bay.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -60026,9 +60026,9 @@
   {
     "key": "composite-planet-in-sign:ceres:8",
     "locale": "en",
-    "text": "The shared path builds toward a broad horizon, sustained by a mutual need for discovery and conceptual freedom. This connection approaches shared vulnerabilities by seeking larger frameworks and holding room for distant possibilities rather than narrowing down too quickly. When external limitations or rigid structures arise, the bond risks dismissing practical details in favor of escape or grand theories.",
+    "text": "Care and mutual support within this connection are expressed through shared exploration and an insistence on conceptual freedom. The bond nurtures its members by offering vast horizons and philosophical room to grow rather than demanding immediate practical certainty. When faced with rigid structures, this shared style of caring risks dismissing necessary details in favor of escape or grand theoretical fixes.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -60050,9 +60050,9 @@
   {
     "key": "composite-planet-in-sign:ceres:10",
     "locale": "en",
-    "text": "This partnership builds its foundation on unconventional freedom and mutual respect for personal space, prioritizing collective ideals over intimate fusion. The connection maintains stability by keeping emotional demands at a distance and relying on intellectual agreement instead of conventional bonding rituals. When external pressures require emotional closeness or vulnerability, the dynamic often responds with sudden aloofness or intellectual detachment, struggling to blend personal intimacy with its overarching vision.",
+    "text": "This partnership offers care and sustenance through intellectual freedom, unconventional support systems, and a mutual respect for personal space. The connection nourishes its members by prioritizing shared ideals and objective perspectives over traditional emotional fusion. When external pressures demand conventional vulnerability or closeness, the dynamic responds with sudden detachment, struggling to blend personal nurturing with its broader collective vision.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -60098,9 +60098,9 @@
   {
     "key": "composite-planet-in-sign:pallas:2",
     "locale": "en",
-    "text": "This partnership operates through a continuous exchange of ideas, building connection by constantly gathering information and exploring multiple perspectives instead of seeking a single definitive conclusion. The shared mechanism relies on verbal agility and mental versatility to bridge differences and maintain flexibility when dealing with external boundaries. The underlying tension emerges when the connection avoids deep emotional settling, struggling to maintain focus whenever external limitations require a fixed, enduring commitment.",
+    "text": "This partnership approaches problem-solving by mapping diverse mental frameworks, utilizing continuous tactical revisions and wide-ranging information gathering to construct shared strategies. The joint method relies on mental agility to test multiple working models rather than locking into a single dogma when negotiating external limits. The characteristic friction emerges when complex situations demand a singular, prolonged architecture, causing the tactical versatility to scatter rather than anchor into a durable blueprint.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -60554,9 +60554,9 @@
   {
     "key": "composite-planet-in-house:sun:5",
     "locale": "en",
-    "text": "The relationship builds its central vitality around shared play, creative output, and mutual self-expression. This dynamic functions by generating its own internal spark and seeking external validation through joyous display and affectionate devotion. When encountering external restrictions or practical limits, the partnership tends to resist confinement by withdrawing into isolated recreation or demanding constant special attention.",
+    "text": "The relationship builds its central vitality around shared play, creative output, and mutual self-expression. This dynamic functions by generating its own internal spark and seeking recognition through joyous display and affectionate devotion. When encountering practical limits, the partnership struggles when mundane demands begin to suffocate its spontaneous joy or reduce shared creativity to rigid obligation.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -60590,9 +60590,9 @@
   {
     "key": "composite-planet-in-house:sun:8",
     "locale": "en",
-    "text": "The shared partnership builds its entire purpose around profound psychological depth and mutual transformation, directing its focus toward shared resources and intimate vulnerability. This combination operates by merging individual boundaries completely, forging a powerful unity that thrives during shared crises. The recurring dilemma arises when external structures demand independence or surface-level ease, causing friction between the demand for total fusion and the necessity of personal autonomy.",
+    "text": "The shared partnership builds its core purpose around joint resources, deep psychological honesty, and mutual transformation. This dynamic operates by pooling vulnerabilities and shared assets to build enduring psychological security. The tension arises when outside realities demand individual autonomy or financial separation, creating friction between the drive for absolute joint investment and the practical need for personal independence.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -61514,9 +61514,9 @@
   {
     "key": "composite-planet-in-house:uranus:1",
     "locale": "en",
-    "text": "The shared partnership builds toward a continuous clearing of stale habits, prioritizing immediate freedom over familiar structures. It manages external expectations by constantly shifting shape to avoid calcifying into fixed roles, though this leaves the dynamic vulnerable to chronic instability when predictability is required.",
+    "text": "The shared partnership presents a collective identity defined by continuous reinvention, refusing to settle into predictable public roles. It manages external expectations through sudden departures from convention, though this constant shift leaves the joint presence vulnerable to chronic instability when steady reliability is required by others.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -62354,9 +62354,9 @@
   {
     "key": "composite-planet-in-house:meanLilith:12",
     "locale": "en",
-    "text": "This partnership centers on shared privacy, unspoken boundaries, and a private retreat from public visibility. The connection maintains its strength by withdrawing into shared solitude, protecting its inner sanctuary from external demands. The shadow dilemma emerges when this retreat turns into complete isolation, hiding critical vulnerabilities from both partners and turning quiet autonomy into mutual avoidance.",
+    "text": "This partnership operates around unacknowledged edges and unspoken taboos, finding its strength by holding space for what both of you refuse to compromise or explain. The connection preserves its autonomy by keeping certain desires strictly away from public or mutual scrutiny, operating behind a quiet wall of defiance. The shadow dilemma emerges when this hidden stance hardens into total detachment, leaving vital truths buried so deeply that neither of you can reach them.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -62378,9 +62378,9 @@
   {
     "key": "composite-planet-in-house:osculatingLilith:1",
     "locale": "en",
-    "text": "The shared partnership bears an unmistakable edge of radical unruliness, demanding absolute authenticity before any conventional social standard. This collective drive asserts itself by fiercely rejecting conformity and guarding mutual autonomy against external expectations. When external pressures or institutional demands try to enforce compliance, the bond tends to respond with sharp alienation or stubborn defiance, risking isolation rather than compromise.",
+    "text": "The shared partnership presents an unapologetic, untamed face to the world, demanding absolute authenticity in how the collective identity is publicly worn. This mutual drive asserts itself by fiercely guarding independence against conventional expectations and social polish. When external pressures try to enforce standard roles, the bond tends to respond with sharp alienation or stubborn defiance, prioritizing raw truth over smooth integration.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -62678,9 +62678,9 @@
   {
     "key": "composite-planet-in-house:chiron:1",
     "locale": "en",
-    "text": "The shared partnership centers on an inherent vulnerability regarding personal identity and physical presence in the world, building toward profound mutual healing around self-assertion. The connection manages boundaries by testing how openly both individuals can expose individual frailties without losing ground. When external pressures demand rigid independence, a shadow tension arises where the shared entity overcompensates for perceived personal inadequacies by demanding constant validation from the outside.",
+    "text": "The shared partnership centers on an inherent vulnerability regarding personal identity and physical presence in the world, building toward profound mutual healing around self-assertion. The connection manages boundaries by testing how openly both individuals can expose individual frailties without losing ground. When external pressures demand rigid independence, a shadow tension arises where protecting separate autonomy clashes directly with the exposure required for genuine shared recovery.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -62894,9 +62894,9 @@
   {
     "key": "composite-planet-in-house:ceres:9",
     "locale": "en",
-    "text": "This partnership builds around a shared exploration of philosophy, culture, and worldview, treating truth and expansion as mutual ground. It operates by inviting broad intellectual horizons and shared quests for meaning to bridge daily routines. The underlying vulnerability surfaces when dogmatic viewpoints clash or differing ideals test the stability of common foundations.",
+    "text": "This partnership offers care and emotional sustenance through shared explorations of philosophy, culture, and worldview. It operates by feeding mutual growth through broad horizons and intellectual quests. The underlying vulnerability surfaces when rigid belief systems or differing ideals disrupt how both people feel supported and nourished together.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -62906,9 +62906,9 @@
   {
     "key": "composite-planet-in-house:ceres:8",
     "locale": "en",
-    "text": "The shared path builds toward deep mutual investment, anchoring the union through joint resources and vulnerable transitions. This bond manages boundaries by pooling vulnerability and pooling material security to weather external crises together. The shadow dilemma surfaces when shared survival requires surrendering personal autonomy, sparking tension over control and mutual indebtedness.",
+    "text": "The shared path builds toward profound mutual care, anchoring the union through vulnerable sustenance and tending to each other's hidden vulnerabilities. This bond manages boundaries by holding space for difficult transitions and offering deep emotional shelter during crises. The shadow dilemma surfaces when giving and receiving support creates entangled obligations, sparking tension over autonomy and the fear of being overly dependent on one another's care.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -62918,9 +62918,9 @@
   {
     "key": "composite-planet-in-house:ceres:10",
     "locale": "en",
-    "text": "This partnership builds its primary purpose around mutual achievement and shared public responsibility, treating outward goals as a collective stewardship. The joint dynamic maintains autonomy by channeling affection into practical milestones and collaborative ambition rather than private sentiment. Tension arises when external expectations or career demands threaten to consume the shared identity, turning joint success into an obligation that crowds out personal connection.",
+    "text": "This partnership anchors its shared life by offering practical care and mutual sustenance in the public sphere, treating professional responsibility as a form of stewardship. The joint dynamic maintains autonomy by feeding ambition through tangible support rather than private sentiment. Friction arises when external expectations demand so much provision that the shared support system begins to feel like an obligation rather than a refuge.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -62954,9 +62954,9 @@
   {
     "key": "composite-planet-in-house:pallas:1",
     "locale": "en",
-    "text": "The shared partnership takes shape through a collective focus on strategy, pattern recognition, and intentional problem-solving as its primary mode of engagement. This joint perspective approaches external boundaries by organizing shared resources and joint goals into structured frameworks that prioritize mental clarity. When facing limits or outside dependencies, the union risks becoming overly analytical or intellectually rigid, treating relational friction as a puzzle to solve rather than a condition to accept.",
+    "text": "The shared partnership takes shape through a collective focus on strategy, pattern recognition, and intentional problem-solving as its primary mode of engagement. This joint perspective approaches the surrounding world by presenting a unified, highly organized front that prioritizes mental clarity and tactical coordination. When facing limits or outside expectations, the union risks becoming overly analytical or intellectually rigid, treating interpersonal friction as a technical puzzle to solve rather than a condition to accept.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -63518,9 +63518,9 @@
   {
     "key": "composite-aspect-pair:conjunction:ceres:pluto",
     "locale": "en",
-    "text": "This joint bond is driven by a profound capacity for deep psychological renewal and radical honesty. The partnership manages external boundaries by demanding absolute sincerity and refusing superficial comfort when facing shared vulnerabilities. Friction arises when the intensity of this union confronts outside dependencies, often triggering a struggle over control and the necessity of surrendering familiar patterns to achieve genuine transformation.",
+    "text": "This joint bond is driven by a deep capacity to nourish through radical honesty and shared psychological renewal. The partnership manages external boundaries by demanding absolute sincerity in how care and vulnerability are exchanged. Friction arises when the intensity of this union confronts outside dependencies, triggering a struggle over control and the necessity of surrendering familiar patterns of holding on to achieve genuine mutual healing.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -63578,9 +63578,9 @@
   {
     "key": "composite-aspect-pair:conjunction:ceres:uranus",
     "locale": "en",
-    "text": "This partnership builds its foundation on radical freedom and an ongoing refusal of standard relationship models. The connection maintains its stability through sudden shifts and a shared demand for personal autonomy, frequently resetting expectations to keep the bond from feeling restrictive. When external structures or predictability threaten to anchor the dynamic too firmly, the relationship reacts with sharp unpredictability, struggling to integrate routine without sensing a loss of autonomy.",
+    "text": "This partnership builds its security on unconventional forms of care and an ongoing refusal of standard domestic expectations. The connection finds stability through sudden shifts in how support is offered, keeping the dynamic from feeling restrictive. When routine or predictability threatens to anchor the shared life too firmly, the bond reacts with sharp unpredictability, struggling to nurture without sensing a loss of personal autonomy.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -66110,7 +66110,7 @@
   {
     "key": "composite-aspect-pair:semisextile:interpolatedLilith:mercury",
     "locale": "en",
-    "text": "The shared partnership builds toward a pattern of unvarnished mental inquiry, bringing overlooked or unconventional truths directly into everyday dialogue. This collaborative mind in motion operates by probing beneath surface assumptions to test where shared logic holds up under pressure. Friction arises when unacknowledged taboos or silenced perspectives disrupt fluent exchanges, leading to sharp over-corrections in how thoughts are expressed.",
+    "text": "The shared partnership builds toward a pattern of unvarnished mental inquiry, bringing overlooked or unconventional perspectives quietly into everyday dialogue. This collaborative mind in motion operates by making small, intentional adjustments to test where shared logic holds up under subtle pressure. Friction surfaces when unspoken boundaries or hidden assumptions create mild awkwardness in how thoughts are exchanged, requiring careful calibration rather than forceful correction.",
     "tier": "nuance",
     "tags": ["improved-via-feedback-loop"],
     "provenance": {
@@ -67598,7 +67598,7 @@
   {
     "key": "composite-aspect-pair:semisextile:pluto:saturn",
     "locale": "en",
-    "text": "Shared authority evolves through a continuous friction between profound renewal and rigid structural limits. The partnership builds lasting resilience by confronting hidden power dynamics and systematically restructuring how collective ambitions handle external boundaries. Tension surfaces when the demand for fundamental control clashes with the need for patient, long-term endurance.",
+    "text": "Shared authority develops through small, quiet adjustments between profound renewal and rigid structural limits. The partnership builds quiet resilience by quietly negotiating hidden power dynamics and systematically fine-tuning how collective ambitions handle external boundaries. Tension surfaces when the need for fundamental control makes subtle compromises with the need for patient, long-term endurance feel strangely awkward.",
     "tier": "core",
     "tags": ["improved-via-feedback-loop"],
     "provenance": {
@@ -69782,9 +69782,9 @@
   {
     "key": "composite-aspect-pair:semisquare:pallas:trueNode",
     "locale": "en",
-    "text": "The shared path requires constant calibration between current joint direction and long-term trajectory. A minor friction emerges when small operational shifts pull against the overarching direction of the partnership, tempting unnecessary course corrections. The connection functions best by allowing minor discrepancies to exist without forcing immediate synchronization.",
+    "text": "Strategic pattern-recognition continually calibrates against the partnership's developmental trajectory, identifying structural insights that guide long-term growth. Tactical adjustments meet structural friction whenever immediate operational decisions clash with the overarching shared path, tempting premature attempts to control the outcome. The connection thrives by trusting underlying systemic intelligence rather than over-engineering every minor divergence.",
     "tier": "nuance",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -69794,9 +69794,9 @@
   {
     "key": "composite-aspect-pair:semisquare:pallas:uranus",
     "locale": "en",
-    "text": "The shared path builds toward radical autonomy and fresh perspective, continually clearing away stale patterns to keep the collective dynamic inventive. This union approaches boundaries by treating established structures as temporary frameworks rather than fixed rules, preferring sudden shifts over gradual adaptation. When external limits press in too tightly, a mild friction emerges, causing the connection to intermittently over-adjust against routine just to preserve breathing room.",
+    "text": "The shared path builds toward strategic problem-solving and inventive pattern recognition, continually clearing away stale structures to keep the collective dynamic fresh. This union approaches boundaries by treating established rules as provisional designs rather than fixed walls, preferring sudden mental breakthroughs over gradual adaptation. When external limits press in too tightly, friction emerges, causing the connection to intermittently over-correct against routine just to preserve intellectual breathing room.",
     "tier": "notable",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -69806,9 +69806,9 @@
   {
     "key": "composite-aspect-pair:semisquare:pallas:venus",
     "locale": "en",
-    "text": "The shared partnership builds its foundation on a quiet alignment of tastes and aesthetic values, seeking steady harmony through mutual appreciation of beauty and comfort. This connection manages boundaries by gently calibrating shared resources and social expectations to avoid friction. A mild shadow appears when slight differences in personal priorities require constant small adjustments, creating minor hesitation around how affection and common pleasures are expressed.",
+    "text": "Your joint approach bridges tactical pattern recognition with aesthetic values, designing creative solutions to preserve interpersonal harmony and shared comfort. This dynamic navigates boundaries by analyzing how affection and resources are distributed, seeking clever frameworks to manage common ground. A structural tension emerges when intellectual strategy tries to optimize personal tastes, turning simple appreciation into an overly calculated puzzle.",
     "tier": "nuance",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -69830,9 +69830,9 @@
   {
     "key": "composite-aspect-pair:semisquare:pluto:saturn",
     "locale": "en",
-    "text": "The shared partnership builds through a quiet patience with restriction, finding stability by respecting structural boundaries and enduring delays together. This dynamic handles limitation by establishing clear procedures and reliable routines to manage outside pressures. When external demands create pressure, the connection risks developing minor rigidity or treating standard procedures as rigid laws rather than flexible tools.",
+    "text": "The shared partnership builds through an intense drive to master structural limits, forcing profound restructuring when foundational boundaries are tested. This dynamic handles power imbalances by attempting to rigidly control external pressures until those very defenses must be dismantled. When outside demands collide with internal resistance, the connection risks calcifying into defensive control or forcing premature breakdown to test its own durability.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -70226,9 +70226,9 @@
   {
     "key": "composite-aspect-pair:sextile:ceres:pluto",
     "locale": "en",
-    "text": "This partnership shares an instinct to rebuild foundations through radical honesty, treating vulnerability as the primary source of collective resilience. It manages external pressures by demanding deep psychological truth rather than superficial compromise, occasionally risking rigidity when control feels threatened.",
+    "text": "This partnership shares an instinct to sustain each other through deep periods of renewal, treating shared care as a catalyst for profound personal growth. It manages external pressures by seeking authentic emotional foundations rather than surface comfort, occasionally risking intense over-involvement when vulnerability requires letting go of certainty.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -70370,9 +70370,9 @@
   {
     "key": "composite-aspect-pair:sextile:chiron:meanNode",
     "locale": "en",
-    "text": "This joint bond builds toward a shared capacity for healing past vulnerabilities by aligning personal growth with collective direction. The partnership functions by integrating historical friction into forward momentum, treating mutual difficulties as practical milestones for common evolution. When external structures impose rigid limits, the connection risks stumbling over old vulnerabilities, mistaking shared growing pains for permanent structural failure.",
+    "text": "This joint bond builds toward a shared capacity for healing past vulnerabilities by aligning personal growth with collective direction. The partnership functions by integrating historical friction into forward momentum, treating mutual difficulties as practical milestones for common evolution. When external momentum stalls, the connection risks stumbling over old vulnerabilities, mistaking temporary growth pain for permanent divergence.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -70490,9 +70490,9 @@
   {
     "key": "composite-aspect-pair:sextile:chiron:uranus",
     "locale": "en",
-    "text": "This partnership builds a shared capacity to innovate by continually breaking free from stagnant patterns and outdated expectations. It handles external boundaries through sudden shifts and inventive problem solving rather than forced compromise. The underlying tension arises when unexpected change threatens the daily sense of security, creating friction between the desire for complete autonomy and the need for reliable stability.",
+    "text": "This partnership builds a shared capacity to heal through radical innovation, finding strength precisely where expected structures fail and break apart. It approaches external boundaries by reframing old vulnerabilities into sudden breakthroughs rather than forcing rigid compromises. The underlying tension arises when the discomfort of past exposures meets the urge for total independence, creating friction between the need for mutual protection and the sudden impulse to discard the past entirely.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -70670,9 +70670,9 @@
   {
     "key": "composite-aspect-pair:sextile:interpolatedLilith:uranus",
     "locale": "en",
-    "text": "This dynamic builds toward radical freedom and unscripted mutual autonomy, clearing away old relational patterns to make room for entirely unexpected ways of connecting. The shared mechanism protects its independence by abruptly dismantling any routine or expectation that begins to feel confining. The recurring shadow surfaces when the demand for constant novelty creates instability, leaving the bond vulnerable to sudden detachment whenever structural permanence is required.",
+    "text": "This dynamic builds toward radical autonomy by finding inventive ways to weave personal truth into shared life without resorting to outright rebellion. The cooperative mechanism guards this independence by identifying structural rigidity early and offering clever, unconventional workarounds before friction escalates. The subtle shadow surfaces when the sheer ease of side-stepping rules quietly prevents the partnership from ever settling into a dependable foundation.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -70814,9 +70814,9 @@
   {
     "key": "composite-aspect-pair:sextile:juno:pluto",
     "locale": "en",
-    "text": "This partnership operates through a steady undercurrent of profound psychological renewal, continually dismantling superficial structures to forge an unbreakable bond. It manages external boundaries and shared vulnerabilities by seeking absolute honesty, refusing to let matters remain on the surface. When faced with structural limits or external pressure, the connection risks tipping into intense power struggles or mutual suspicion over control.",
+    "text": "Commitment within this partnership is strengthened by a shared willingness to address foundational truths rather than maintain polite surfaces. The connection manages mutual vulnerabilities by leaning into deep psychological honesty rather than resisting heavy topics. When external limits arise, the partnership naturally uses shared resilience to reorganize obligations instead of falling into rigid power struggles.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -71282,9 +71282,9 @@
   {
     "key": "composite-aspect-pair:sextile:meanLilith:neptune",
     "locale": "en",
-    "text": "This partnership shares an unspoken sanctuary built on shared idealism and a porous approach to ordinary boundaries. The connection naturally gravitates toward mutual dreams and profound emotional resonance, effortlessly dissolving rigid categories between individuals. The underlying tension surfaces when practical limits or external realities demand clear structure, as a shared aversion to hard facts can blur mutual accountability and obscure necessary boundaries.",
+    "text": "This partnership shares an instinctual tolerance for unconventional or unvoiced desires, creating an unwritten sanctuary outside ordinary social rules. The connection effortlessly blurs conventional categories, allowing both people to explore what mainstream structures typically reject or ignore. The underlying tension surfaces when external authorities or practical demands require strict conformity, as a shared aversion to rigid rules can obscure clear accountability and lead to mutual avoidance of necessary structure.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -71306,9 +71306,9 @@
   {
     "key": "composite-aspect-pair:sextile:meanLilith:pluto",
     "locale": "en",
-    "text": "This partnership builds toward a shared capacity for profound honesty and psychological exposure, confronting what is usually hidden or denied. The dynamic manages boundaries by demanding radical authenticity, preferring complete restructuring over superficial compromise. The shadow dilemma arises when mutual intensity becomes a mechanism for control, creating friction whenever vulnerability is demanded rather than chosen.",
+    "text": "This partnership builds toward a shared capacity for profound honesty, offering a ready opportunity to bring hidden truths and vulnerabilities into the open. The dynamic manages boundaries by inviting radical authenticity, favoring mutual growth over superficial compromise. The shadow dilemma arises when the drive for depth turns into an insistence on uncovering what is not yet ready to be shared, creating friction between exposure and privacy.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -71330,9 +71330,9 @@
   {
     "key": "composite-aspect-pair:sextile:meanLilith:sun",
     "locale": "en",
-    "text": "This partnership builds around a shared impulse to challenge standard social expectations and conventional boundaries. The connection maintains its vitality by routinely questioning consensus reality and preserving an unspoken permission to stand apart from the crowd. This dynamic creates tension whenever external rules demand conformity, occasionally turning the bond toward mutual alienation when it meets rigid institutional demands.",
+    "text": "This partnership anchors its shared vitality in an instinctive ease with breaking rank from conventional expectations. The connection sustains its core purpose by treating standard social rules as optional guidelines rather than fixed barriers. This fluent independence creates friction whenever external structures demand total conformity, occasionally pulling the bond into unnecessary isolation when encountering rigid institutional limits.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -71342,9 +71342,9 @@
   {
     "key": "composite-aspect-pair:sextile:meanLilith:trueNode",
     "locale": "en",
-    "text": "This partnership shares an instinct for questioning unspoken social rules, finding its collective purpose by refusing conventional paths. The connection manages external expectations by staking out unconventional ground together, though this shared detachment can foster a persistent friction with mainstream structures. When the relationship faces institutional pressure, the joint defense often defaults to deliberate isolation.",
+    "text": "This partnership possesses an innate capacity to question unspoken social rules, supporting its shared growth by bringing unconventional insights directly into its common path. The connection manages external expectations by translating unorthodox observations into deliberate choices, though this joint perspective can occasionally invite friction with mainstream structures. When the relationship encounters rigid institutional pressure, the response leans toward maintaining autonomy rather than seeking assimilation.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -71390,9 +71390,9 @@
   {
     "key": "composite-aspect-pair:sextile:meanNode:mercury",
     "locale": "en",
-    "text": "Shared problem-solving naturally bridges distinct perspectives through an easy exchange of ideas and collaborative reasoning. This partnership processes external challenges by talking through details until mutual understanding anchors decisions. Friction emerges when quick intellectual alignment overrides deeper emotional processing, leaving practical complexities unaddressed beneath smooth conversations.",
+    "text": "Shared growth evolves through an active pursuit of collaborative reasoning, building a joint direction by testing different perspectives against one another. This partnership develops mutual understanding by consciously exploring details together rather than defaulting to familiar assumptions. Friction emerges when intellectual agreement outpaces actual integration, leaving deeper practical needs unaddressed beneath smooth conversations.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -71486,9 +71486,9 @@
   {
     "key": "composite-aspect-pair:sextile:meanNode:uranus",
     "locale": "en",
-    "text": "This partnership naturally builds around a shared impulse to break away from ordinary expectations and forge unconventional paths together. The connection maintains its momentum by continually disrupting routine structures, using sudden shifts in perspective to preserve individual freedom within the union. A persistent tension arises whenever external predictability demands conformity, causing the shared identity to pull sharply away from any form of stagnation.",
+    "text": "This partnership naturally builds around a shared impulse to break away from ordinary expectations and forge unconventional paths together. The connection maintains its momentum by welcoming fresh perspectives and sudden shifts, using cooperative bursts of innovation to preserve individual freedom within the union. A subtle friction surfaces whenever external predictability demands conformity, prompting the shared identity to explore new territory rather than settle into stagnation.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -71714,9 +71714,9 @@
   {
     "key": "composite-aspect-pair:sextile:moon:sun",
     "locale": "en",
-    "text": "This partnership builds its foundation on an instinctive harmony between conscious purpose and emotional safety, allowing mutual goals and internal needs to reinforce one another smoothly. The connection maintains this balance by sharing decisions naturally without forcing rigid compromises or demanding constant validation. Friction arises primarily when external demands disrupt this effortless accord, leading the dynamic to stall rather than adapt under pressure.",
+    "text": "This partnership builds its foundation on a supportive connection between conscious purpose and emotional safety, allowing mutual goals and internal needs to reinforce one another through active cooperation. The dynamic maintains this balance by aligning decisions when both sides choose to engage rather than forcing rigid compromises. Friction arises primarily when external demands disrupt this collaborative flow, causing the connection to stall instead of adapting flexibly under pressure.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -71894,9 +71894,9 @@
   {
     "key": "composite-aspect-pair:sextile:osculatingLilith:pluto",
     "locale": "en",
-    "text": "This partnership builds a shared capacity to confront hidden taboos and unspoken power dynamics without flinching. The connection manages vulnerability by testing boundaries and probing beneath surface agreements to find absolute authenticity. A shadow dilemma arises when mutual intensity turns into a test of control, forcing the relationship to choose between total surrender or profound estrangement.",
+    "text": "This partnership builds a shared capacity to confront hidden dynamics and unspoken power structures without flinching. The connection manages vulnerability by probing beneath surface agreements to seek absolute authenticity. A shadow dilemma arises when mutual intensity turns into a friction over autonomy, forcing the relationship to recalibrate how influence and control are shared.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -71918,9 +71918,9 @@
   {
     "key": "composite-aspect-pair:sextile:osculatingLilith:sun",
     "locale": "en",
-    "text": "This partnership builds its central purpose around a shared refusal of conventional social constraints, cultivating a collective identity rooted in absolute authenticity and mutual autonomy. The bond functions by holding space for unpolished truths and unconventional impulses, allowing both participants to maintain fierce independence while united. When external pressures or institutional expectations challenge the relationship, friction arises between preserving institutional comfort and defending unfiltered self-expression.",
+    "text": "This partnership builds its central purpose around a clear integration of authentic self-expression and shared vitality, finding ease in honoring unconventional impulses together. The bond functions by naturally aligning personal independence with mutual recognition, allowing both participants to remain distinct without fragmenting the connection. When external expectations press inward, tension surfaces primarily around balancing private integrity with public conformity rather than descending into outright defiance.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -72026,9 +72026,9 @@
   {
     "key": "composite-aspect-pair:sextile:pallas:uranus",
     "locale": "en",
-    "text": "The partnership operates through a steady capacity for sudden adaptation, treating established structures as flexible frameworks rather than fixed rules. This dynamic balances collective stability with an ongoing openness to radical revision when external conditions shift. The shadow emerges when the need for constant room to maneuver clashes against ordinary routines, converting routine cooperation into erratic detachment.",
+    "text": "The partnership applies inventive strategy to break old molds, designing novel solutions whenever established frameworks cease to function effectively. This dynamic balances collective stability with a sharp eye for systemic reform when external conditions shift. The shadow emerges when the pursuit of clever structural breakthroughs clashes against ordinary operational routines, converting necessary cooperation into erratic detachment.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -72086,9 +72086,9 @@
   {
     "key": "composite-aspect-pair:sextile:pluto:trueNode",
     "locale": "en",
-    "text": "Shared evolution unfolds through a mutual reckoning with foundational structures that require total renewal before collective progress becomes possible. This dynamic navigates shared boundaries by continuously unearthing hidden friction and redirecting joint momentum toward long-term purpose. The underlying tension surfaces when external conditions resist deep alteration, prompting a defensive hardening around control just as collective restructuring is demanded.",
+    "text": "Shared evolution unfolds when profound reforms naturally support long-term direction, allowing deep structural changes to reinforce collective goals rather than disrupt them. This dynamic bridges hidden power dynamics with forward momentum by offering cooperative openings for renewal. The underlying tension surfaces when hesitation or comfort with old patterns causes the partnership to stall right as the path forward invites a more honest foundation.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -72242,9 +72242,9 @@
   {
     "key": "composite-aspect-pair:sextile:trueNode:uranus",
     "locale": "en",
-    "text": "This partnership builds around a shared impulse to break from rigid convention and invent alternative ways of connecting. The joint mechanism operates by introducing sudden shifts and refreshing perspectives whenever routines threaten to restrict collective growth. A characteristic tension arises when unexpected changes disrupt the joint need for stability, turning necessary evolution into an ongoing negotiation between shared security and mutual freedom.",
+    "text": "This partnership builds around a shared impulse to break from rigid convention and invent alternative ways of connecting together. The joint mechanism operates by introducing refreshing perspectives and collaborative breakthroughs whenever routines threaten to restrict collective growth. A characteristic tension arises when preferred patterns resist unexpected innovation, turning necessary evolution into an ongoing opportunity to align shared purpose with mutual freedom.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -72290,9 +72290,9 @@
   {
     "key": "composite-aspect-pair:sextile:uranus:vesta",
     "locale": "en",
-    "text": "This partnership builds toward a shared capacity for unexpected renewal, finding stability through freedom rather than rigid routine. The connection maintains its momentum by periodically dismantling outdated structures to let fresh perspectives enter. A tension arises when external demands require predictable conformity, causing friction between the collective need for reliable structure and the compulsion to break away.",
+    "text": "This partnership builds toward a shared devotion to renewal, finding lasting commitment through freedom rather than rigid routine. The connection maintains its focus by periodically dismantling outdated structures to let fresh perspectives enter. A tension arises when external demands require predictable conformity, causing friction between dedicated joint work and the sudden compulsion to break away.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -73046,9 +73046,9 @@
   {
     "key": "composite-aspect-pair:quintile:juno:pluto",
     "locale": "en",
-    "text": "This partnership builds a quiet capacity for profound reinvention, finding ingenious methods to merge separate loyalties into a singular, shared pledge. The bond navigates shared commitments by discovering clever workarounds when structural boundaries demand adaptation. A subtle tension arises when the pairing over-adjusts to deep changes, occasionally treating minor shifts in closeness as crises that require total reconstruction.",
+    "text": "This partnership builds a capacity for profound reinvention, finding ingenious methods to merge separate loyalties into a singular, shared pledge. The bond navigates shared commitments by discovering clever adaptations when structural boundaries demand change. A subtle tension arises when the pairing enforces total overhaul on collaborative processes, struggling to let mutual structures evolve without attempting to completely dismantle and remake them.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -73058,9 +73058,9 @@
   {
     "key": "composite-aspect-pair:quintile:juno:saturn",
     "locale": "en",
-    "text": "This partnership builds a deliberate framework for shared commitment, turning mutual obligations into a reliable structure. The combination achieves enduring cooperation through careful planning and measured boundaries, though it risks leaning too heavily on rigid predictability when unexpected demands arise.",
+    "text": "This partnership finds clever, inventive ways to construct lasting commitments, turning shared obligations into practical mastery through resourceful problem-solving. The connection builds enduring cooperation by applying measured boundaries with unexpected skill, though it risks leaning too heavily on rigid predictability when spontaneous flexibility is required.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -73082,9 +73082,9 @@
   {
     "key": "composite-aspect-pair:quintile:juno:trueNode",
     "locale": "en",
-    "text": "This partnership generates an inventive method for bridging shared commitments with individual trajectories, crafting subtle workarounds when conventional structures fall short. The dynamic relies on an instinctive talent for synthesis, allowing joint obligations and personal destiny to reinforce one another smoothly. Mild friction emerges only from a tendency to over-adjust small details, occasionally complicating a straightforward process with excessive cleverness.",
+    "text": "This partnership generates an inventive method for bridging shared commitments with a collective developmental path, crafting subtle workarounds when conventional structures fall short. The dynamic relies on an instinctive talent for synthesis, allowing joint obligations and mutual evolution to reinforce one another smoothly. Mild friction emerges only from a tendency to over-adjust small details, occasionally complicating a straightforward process with excessive cleverness.",
     "tier": "nuance",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -73538,9 +73538,9 @@
   {
     "key": "composite-aspect-pair:quintile:meanLilith:pluto",
     "locale": "en",
-    "text": "This partnership shares an inventive capacity to forge unconventional compromises, finding unexpected common ground where ordinary consensus fails. The combination relies on a subtle talent for structural redesign, allowing both forces to merge into solutions that neither manages alone. When structural limits arise, the partnership occasionally over-adjusts its methods rather than accepting straightforward boundaries.",
+    "text": "This partnership shares a deep drive to reclaim autonomy by confronting hidden power dynamics and challenging unspoken taboos. The dynamic navigates boundaries through intense psychological honesty, refusing surface-level harmony in favor of absolute authenticity. When external rules or control are imposed, the connection risks reacting with rigid defiance or deep suspicion rather than accepting standard compromises.",
     "tier": "nuance",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -73586,9 +73586,9 @@
   {
     "key": "composite-aspect-pair:quintile:meanLilith:uranus",
     "locale": "en",
-    "text": "The shared dynamic thrives on inventing unconventional solutions together, effortlessly bypassing standard expectations to forge an independent path. This connection builds its strength by turning unexpected friction into a tool for creative problem solving, allowing both participants to sustain mutual freedom without friction. The underlying tension surfaces only as a subtle tendency to over-adjust whenever routine threatens to settle in, occasionally mistaking the sheer need for novelty as a requirement for constant change.",
+    "text": "The shared dynamic thrives on inventive nonconformity, finding creative breakthroughs by turning away from conventional paths and societal expectations. This connection builds its strength through radical authenticity, utilizing unexpected flashes of insight to solve problems in entirely original ways. The underlying tension surfaces whenever routine threatens to settle in, occasionally mistaking the sheer need for autonomy as an automatic rejection of any lasting cooperation.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -74582,9 +74582,9 @@
   {
     "key": "composite-aspect-pair:square:ceres:jupiter",
     "locale": "en",
-    "text": "The relationship builds toward an ambitious pursuit of shared opportunity and continuous horizon-expanding growth. This combined momentum functions by constantly seeking out larger frameworks and shared abundance to bridge any temporary differences. The resulting tension appears when optimism clashes with practical limitations, creating friction between the desire for boundless expansion and the actual resources available.",
+    "text": "The relationship builds toward an ambitious culture of mutual care, linking generous support with a shared drive for continuous horizon-expanding growth. This combined momentum functions by constantly seeking out larger frameworks of abundance to nourish both partners. The resulting tension appears when high ideals of unconditional support clash with practical limitations, creating friction between the desire for boundless generosity and the actual resources available to sustain it.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -74630,9 +74630,9 @@
   {
     "key": "composite-aspect-pair:square:ceres:mercury",
     "locale": "en",
-    "text": "The shared partnership model builds toward a continuous exchange of ideas, prioritizing intellectual transparency and mutual understanding above all else. This communicative drive establishes boundaries by constantly questioning fixed assumptions and testing the durability of shared agreements through verbal inquiry. The shadow dilemma emerges when external constraints demand swift consensus, as the shared process easily stalls in endless debate and over-analysis.",
+    "text": "The shared partnership model builds toward a deep security founded on open intellectual transparency, ensuring care and vulnerability are thoroughly talked through rather than assumed. This communicative drive establishes boundaries by questioning how emotional support is requested and delivered, testing whether words truly match practical reassurance. The shadow dilemma emerges when external constraints demand instant comfort, as the joint process stalls in circular discussion over how affection is properly communicated.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -74690,9 +74690,9 @@
   {
     "key": "composite-aspect-pair:square:ceres:pluto",
     "locale": "en",
-    "text": "This partnership builds around a persistent pull to reshape and restructure its foundational vulnerabilities, treating profound growth as a requirement rather than a choice. The dynamic manages shared boundaries by confronting hidden control struggles directly, refusing to settle for superficial stability when deeper renovation is possible. Under external constraints, this tension risks hardening into mutual tests of endurance, where surrender to necessary change is mistaken for a loss of standing.",
+    "text": "This partnership builds toward a deep transformation of how support and care are given, refusing to let comfort mask underlying vulnerabilities. The dynamic manages boundaries by directly confronting power struggles around dependency and shared needs, insisting on genuine renewal over superficial harmony. When facing external limits, this tension risks hardening into rigid tests of endurance, where letting go of control over how comfort is provided feels like surrendering essential security.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -74702,9 +74702,9 @@
   {
     "key": "composite-aspect-pair:square:ceres:saturn",
     "locale": "en",
-    "text": "The shared partnership builds through enduring commitment and steady accountability, treating joint structures with serious care. Mutual goals are achieved by establishing firm boundaries and realistic expectations for every shared endeavor. Friction emerges when external restrictions or heavy responsibilities strain the connection, causing tension between the desire for freedom and the necessity of strict duty.",
+    "text": "Shared care and practical support grow through steady dedication, building security by taking tangible responsibilities very seriously. Mutual provision operates best when clear boundaries and realistic expectations protect the mutual investment from strain. Tension surfaces when outside demands or rigid rules restrict how care is given, creating friction between the need to nurture and the pressure of heavy obligations.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -74738,9 +74738,9 @@
   {
     "key": "composite-aspect-pair:square:ceres:uranus",
     "locale": "en",
-    "text": "This partnership builds around a shared impulse to dismantle outdated structures and invent entirely unscripted ways of relating together. The connection maintains its vitality by routinely testing boundaries, preferring sudden reinvention over predictable stability whenever routines turn rigid. When external conditions demand conformity or prolonged adherence to convention, the bond often responds with abrupt detachment rather than finding compromise.",
+    "text": "This partnership builds its core bond around an unconventional approach to nurturing and shared support, rejecting rigid traditions for fluid ways of caring. The connection maintains its vitality by inventing fresh methods of tending to mutual needs, preferring sudden reinvention over predictable domestic habits. When external pressures demand conventional conformity, the bond frequently responds with abrupt detachment rather than adapting its care style to fit.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -74954,9 +74954,9 @@
   {
     "key": "composite-aspect-pair:square:chiron:uranus",
     "locale": "en",
-    "text": "This partnership builds around a shared instinct to shatter predictable structures and invent entirely unconventional ways of relating. The connection maintains its vitality through sudden shifts and a restless refusal to settle into routine patterns. When external demands or traditional expectations press in too heavily, the dynamic tends to react with abrupt detachment or erratic rebellion rather than steady compromise.",
+    "text": "This partnership builds around a sensitive friction between the need for sudden freedom and the persistent vulnerability of old wounds around instability. The connection maintains its vitality by confronting rigid structures, yet external demands often trigger abrupt detachment as a defense against deeper hurt. Growth requires tolerating the unpredictability of the shared space without letting sudden disruptions fracture the bond.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -75062,9 +75062,9 @@
   {
     "key": "composite-aspect-pair:square:interpolatedLilith:neptune",
     "locale": "en",
-    "text": "Shared idealism easily drifts into mutual illusion when joint boundaries blur against external realities. The partnership builds toward deep empathetic attunement, yet struggles to maintain clarity when unspoken expectations collide with hard facts. This tension surfaces as a quiet erosion of trust whenever shared goals lack concrete definition.",
+    "text": "Unspoken taboos and disowned desires within the partnership quietly clash with an urge toward unconditional merging. Shared ideals easily mask an underlying resistance to conventional expectations, creating friction whenever mutual boundaries require explicit definition. This dynamic exposes a recurring dilemma between the wish for absolute unity and the stubborn need to preserve individual autonomy against external demands.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -75122,9 +75122,9 @@
   {
     "key": "composite-aspect-pair:square:interpolatedLilith:trueNode",
     "locale": "en",
-    "text": "This partnership carries an inherent friction between established social expectations and an untamed instinct for autonomy. The connection consistently tests conventional boundaries by leaning toward unconventional choices rather than safe conformity. When external pressures demand compromise, the shared dynamic risks polarizing into either defiant separation or silent resentment over perceived suppression.",
+    "text": "This partnership holds an internal friction between its shared evolutionary trajectory and a raw impulse for absolute independence. The dynamic continually challenges its own forward path by resisting established patterns in favor of uncompromised autonomy. When external demands require conformity, the shared connection risks polarizing into either overt defiance or quiet resentment over perceived restriction.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -76490,9 +76490,9 @@
   {
     "key": "composite-aspect-pair:square:pallas:uranus",
     "locale": "en",
-    "text": "The shared partnership builds through continuous invention, repeatedly breaking established routines to keep the collective bond distinct and free from stale habits. This drive maintains freedom by questioning every routine expectation, preventing stagnation through unpredictable shifts in direction. When external constraints demand conformity, the shared dynamic often reacts with sharp resistance, struggling to balance cooperative stability with the absolute necessity of autonomy.",
+    "text": "The shared partnership builds through strategic disruption, analyzing established routines to break unhelpful patterns and keep the collective bond distinct and intellectually free. This drive maintains independence by questioning standard expectations, using sudden shifts in perspective to solve deadlocks. When external constraints demand conformity, the shared dynamic often reacts with sharp resistance, struggling to balance cooperative stability with the absolute necessity of autonomous problem-solving.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -77186,9 +77186,9 @@
   {
     "key": "composite-aspect-pair:trine:chiron:uranus",
     "locale": "en",
-    "text": "This partnership naturally builds a shared foundation of unconventional freedom, finding strength in constant reinvention and mutual acceptance of unpredictability. The bond maintains its equilibrium by continuously breaking away from stagnant routines and external expectations, using sudden shifts to refresh its common ground. The shadow dilemma surfaces when the relationship resists necessary stability, converting every demand for predictability into an unnecessary threat to its autonomy.",
+    "text": "This partnership builds a shared capacity to heal through radical unconventionality, finding strength in mutual acceptance of sudden changes and deep-seated vulnerabilities. The bond maintains its equilibrium by reframing old wounds through unexpected breakthroughs, using progressive shifts to process past rejection. The shadow dilemma surfaces when the relationship rejects steady routines so reflexively that it mistakes necessary emotional grounding for a threat to its independence.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -77330,9 +77330,9 @@
   {
     "key": "composite-aspect-pair:trine:interpolatedLilith:saturn",
     "locale": "en",
-    "text": "This partnership builds enduring structure through a quiet mutual understanding of boundaries and shared accountability. The connection establishes stability by honoring practical limits and holding steady under external pressure. However, this cautious approach can harden into rigid containment when the shared path encounters unexpected restriction or outside demands.",
+    "text": "This partnership builds enduring structure by aligning disciplined boundaries with an uncompromising instinct for personal autonomy. The connection establishes stability through mutual respect for practical limits while guarding against any form of co-dependent containment. However, this cautious approach can harden into rigid isolation when the shared path encounters outside demands that threaten its fiercely independent foundation.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -77978,7 +77978,7 @@
   {
     "key": "composite-aspect-pair:trine:meanLilith:neptune",
     "locale": "en",
-    "text": "This partnership shares a collective pull toward an unspoken, idealistic understanding, building its foundation on mutual empathy and shared imagination. It operates by softening external edges, allowing privacy and unspoken intuition to replace rigid structures and demanding definitions. The resulting shadow emerges when shared illusions meet practical friction, creating a mutual retreat from reality whenever the partnership encounters unavoidable limitations.",
+    "text": "This partnership shares an instinctive pull toward unspoken, unconventional ideals, building its foundation on mutual empathy and shared imagination. It operates by softening standard social boundaries, allowing raw privacy and unspoken intuition to replace rigid collective expectations. The resulting shadow emerges when unacknowledged desires meet practical friction, creating a joint retreat from reality whenever the relationship encounters unavoidable limitations.",
     "tier": "core",
     "tags": ["improved-via-feedback-loop"],
     "provenance": {
@@ -78014,7 +78014,7 @@
   {
     "key": "composite-aspect-pair:trine:meanLilith:saturn",
     "locale": "en",
-    "text": "This bond builds enduring security by anchoring wild independence to strict accountability, making practical structures serve uncompromising personal autonomy. The connection approaches authority and external rules through calculated strategy, honoring limits only when they protect self-determined boundaries. Friction arises when the drive for absolute self-governance clashes with the rigid demands of collective order, turning necessary discipline into mutual alienation.",
+    "text": "This bond builds enduring security by anchoring wild independence to strict accountability, making practical structures serve uncompromising personal autonomy. The connection approaches authority and external rules through calculated strategy, honoring limits only when they protect self-determined boundaries. Flow emerges when the drive for absolute self-governance successfully aligns with the practical demands of collective order, turning necessary discipline into a stable foundation.",
     "tier": "core",
     "tags": ["improved-via-feedback-loop"],
     "provenance": {
@@ -79526,7 +79526,7 @@
   {
     "key": "composite-aspect-pair:sesquiquadrate:interpolatedLilith:neptune",
     "locale": "en",
-    "text": "This relational bond builds toward an uncompromising refusal of conventional compromises, seeking a completely unedited authenticity between partners. The shared dynamic operates by stripping away polite social fictions, favoring radical exposure over comfortable mutual illusions. The shadow dilemma surfaces when uncompromising demands for absolute freedom clash with the messy reality of interdependence, creating friction whenever human messiness resists total purification.",
+    "text": "This relational bond builds toward a profound sensitivity to unseen currents, seeking total union through shared ideals. The shared dynamic operates by merging personal boundaries and romanticizing the connection, favoring transcendent possibility over ordinary limitations. The shadow dilemma surfaces when boundless expectations clash with practical reality, creating friction whenever human flaws disrupt an idealized vision.",
     "tier": "core",
     "tags": ["improved-via-feedback-loop"],
     "provenance": {
@@ -80174,9 +80174,9 @@
   {
     "key": "composite-aspect-pair:sesquiquadrate:meanLilith:meanNode",
     "locale": "en",
-    "text": "This partnership builds around an insistence on operating outside conventional boundaries, continually questioning established social scripts. The connection maintains independence by challenging shared assumptions and rejecting ordinary expectations for how a bond should function. Friction arises when external pressures demand conformity, pushing the relationship toward deliberate isolation or unnecessary opposition against collective standards.",
+    "text": "This partnership constantly recalibrates its shared direction against an underlying pull to operate outside conventional rules, generating recurrent friction whenever collective expectations intersect with the joint developmental path. The connection maintains its autonomy by repeatedly challenging established scripts, yet this very strategy risks creating isolated standoffs when external systems demand agreement. The challenge lies in converting chronic friction into a deliberate choice rather than a reflex against every shared norm.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -80210,9 +80210,9 @@
   {
     "key": "composite-aspect-pair:sesquiquadrate:meanLilith:neptune",
     "locale": "en",
-    "text": "Shared idealism seeks a connection beyond ordinary boundaries, building toward a profound merging of imagination and unspoken empathy. This bond operates by dissolving rigid lines between separate identities, finding ease in shared dreams and mutual sensitivity. Friction surfaces when elusive boundaries obscure practical realities, creating shared vulnerability to disillusionment when ungrounded expectations meet external limits.",
+    "text": "Shared ideals pull toward a complete merging of imagination and empathy, yet an unyielding drive for radical autonomy quietly resists total dissolution. This bond navigates boundaries by seeking absolute union while fiercely guarding private exclusions and unvoiced taboos. Friction arises when idealized expectations clash with the raw, untamed reality of what remains unaccepted or hidden between you.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -80894,9 +80894,9 @@
   {
     "key": "composite-aspect-pair:sesquiquadrate:osculatingLilith:vesta",
     "locale": "en",
-    "text": "This partnership builds a shared drive toward radical autonomy and unvarnished truth, often challenging conventional boundaries to protect mutual independence. The dynamic regulates external demands by setting strict limits on shared space, preferring stark detachment over enforced compromise. Friction arises when external dependencies threaten this autonomy, leading to abrupt distancing rather than collaborative problem-solving.",
+    "text": "This partnership builds a shared drive to protect individual devotion without sacrificing personal autonomy, holding firm boundaries around what each person commits to focus upon. The dynamic regulates external demands by carefully guarding dedicated personal space, preferring clear separation over diluted compromise. Friction arises when shared obligations threaten this independent focus, creating tension between the need for mutual dedication and the insistence on absolute self-governance.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -82730,9 +82730,9 @@
   {
     "key": "composite-aspect-pair:biquintile:mercury:pluto",
     "locale": "en",
-    "text": "The shared perspective thrives on uncovering hidden patterns and unspoken motives, forging a sharp collaborative intelligence that penetrates beneath surface details. This joint capability builds through an ongoing dialogue about complex or taboo subjects, uniting separate viewpoints into a singular investigative focus. A subtle friction arises when this probing inquiry accidentally crosses into over-analysis, turning a simple exchange into an exhaustive dissection of trivial matters.",
+    "text": "The shared perspective connects unrelated ideas through unconventional links, building an inventive mental framework that thrives on specialized problem-solving. This joint capacity operates by stepping sideways around standard logic to construct unexpected solutions. A quiet tension emerges when this specialized focus insists on an uncommon angle, occasionally misaligning with simpler collective frameworks.",
     "tier": "notable",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -82850,9 +82850,9 @@
   {
     "key": "composite-aspect-pair:biquintile:moon:pluto",
     "locale": "en",
-    "text": "This partnership possesses a quiet knack for bridging emotional safety with deep psychological honesty, finding inventive ways to integrate vulnerability and shared intensity. When facing emotional limits, the connection tends to over-adjust by intellectualizing heavy undercurrents rather than letting them surface naturally.",
+    "text": "This partnership possesses a quiet knack for bridging emotional safety with profound psychological honesty, finding inventive ways to integrate vulnerability and shared intensity. When facing external limits or dependency, the connection tends to handle pressure through indirect control and emotional withholding rather than allowing vulnerability to unfold on its own terms.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -82886,9 +82886,9 @@
   {
     "key": "composite-aspect-pair:biquintile:moon:trueNode",
     "locale": "en",
-    "text": "This partnership possesses a quiet knack for bridging disparate directions, forging inventive workarounds that neither participant manages alone. The dynamic integrates diverse paths through subtle adjustments rather than grand compromises. When external limits arise, a mild tendency to over-correct can surface, leaning into clever recalibration instead of addressing the core boundary directly.",
+    "text": "This partnership finds emotional security by aligning domestic habits with a shared evolutionary trajectory, turning intuitive comfort into a testing ground for future growth. The connection instinctively experiments with unconventional routines to keep a sense of shared belonging fresh. When external demands threaten this equilibrium, a tendency to intellectualize emotional friction can emerge, over-relying on clever adaptations rather than resting in straightforward vulnerability.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -83990,9 +83990,9 @@
   {
     "key": "composite-aspect-pair:quincunx:interpolatedLilith:neptune",
     "locale": "en",
-    "text": "This partnership builds toward a shared idealism that continuously seeks absolute connection, yet struggles to anchor those lofty ideals in practical reality. The dynamic handles boundaries through perpetual blurring and unspoken assumptions, often avoiding direct confrontation in favor of subtle retreat. Friction arises when the gap between shared romantic fantasy and actual circumstance becomes impossible to ignore, exposing a mutual vulnerability to disillusionment.",
+    "text": "This partnership builds toward an uncompromised personal autonomy that persistently resists external conformity or shared illusions. The dynamic handles boundaries by abruptly withdrawing whenever intimacy threatens to demand self-cancellation. Friction arises when unacknowledged longings for absolute freedom clash with the silent expectations of togetherness, exposing a recurring tension between fierce independence and total dissolution.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -84014,9 +84014,9 @@
   {
     "key": "composite-aspect-pair:quincunx:interpolatedLilith:pluto",
     "locale": "en",
-    "text": "This partnership operates under a continuous imperative to purge hidden power struggles and unspoken resentments before mutual trust can stabilize. The bond handles structural boundaries by constantly recalibrating how vulnerability is shared, often forcing difficult reckonings whenever control feels uneven. When external limitations restrict the collective growth, the connection risks tipping into defensive withdrawal or mutual exhaustion rather than addressing the core imbalance directly.",
+    "text": "This connection builds toward profound renewal by constantly managing an awkward adjustment between raw personal autonomy and deep underlying control. It meets structural boundaries by shifting how vulnerability and independence are balanced, requiring ongoing recalibration rather than forcing fixed resolutions. When external constraints press down, the dynamic risks stalling in defensive friction because the inherent mismatch in power resists simple compromises.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -84362,9 +84362,9 @@
   {
     "key": "composite-aspect-pair:quincunx:jupiter:osculatingLilith",
     "locale": "en",
-    "text": "This partnership pursues shared growth and meaning while constantly wrestling with unwritten social rules and wild autonomy. The connection seeks boundless opportunity together, yet stumbles whenever mutual expansion collides with unspoken taboos or demands for conformity. This dynamic creates a persistent friction between the urge to push past conventional boundaries and the sudden need to withdraw into protective isolation.",
+    "text": "This partnership pursues shared growth and meaning while constantly recalibrating against unwritten social rules and wild autonomy. The connection seeks boundless opportunity together, yet stumbles whenever mutual expansion collides with unspoken taboos or demands for conformity. This dynamic creates persistent friction between the urge to push past conventional boundaries and the awkward demand to continually adjust your principles to fit unyielding edges.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -84674,9 +84674,9 @@
   {
     "key": "composite-aspect-pair:quincunx:meanLilith:neptune",
     "locale": "en",
-    "text": "This joint bond builds toward an elusive ideal of unconditional sanctuary, yet struggles constantly to reconcile shared hopes with practical reality. The connection attempts to bridge stark differences through unspoken sympathy and shared imagination, often blurring the line between mutual support and shared escapism. When external demands press firmly against the partnership, the dynamic frequently retreats into avoidance rather than addressing the structural friction directly.",
+    "text": "This partnership builds toward an idealized sanctuary of absolute acceptance, yet constantly rubs against unspoken exclusions and unacknowledged hungers that refuse easy assimilation. The connection attempts to bridge unexpressed taboos through quiet immersion, constantly adjusting between total fusion and sudden alienation. When external limits demand structural clarity, the dynamic frequently falters into mutual avoidance rather than integrating the excluded truths.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -84746,9 +84746,9 @@
   {
     "key": "composite-aspect-pair:quincunx:meanLilith:uranus",
     "locale": "en",
-    "text": "This partnership operates through a persistent friction between a raw refusal of assimilation and an unpredictable impulse toward sudden invention. The dynamic handles boundaries by abruptly dismantling settled structures whenever routine threatens to harden into restriction. This continuous tension surfaces when the shared path tries to accommodate conventional expectations, triggering sudden revisions that resist any predictable form.",
+    "text": "This partnership operates through an awkward, uncooperative mismatch between a raw refusal of assimilation and an unpredictable impulse toward sudden invention. The dynamic handles boundaries by constantly readjusting whenever settled structures threaten to restrict autonomy. This persistent friction surfaces when the shared path tries to accommodate conventional expectations, triggering abrupt revisions that struggle to find a stable or predictable form.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -85130,9 +85130,9 @@
   {
     "key": "composite-aspect-pair:quincunx:moon:uranus",
     "locale": "en",
-    "text": "The shared emotional life continually oscillates between a deep need for predictable comfort and an equally strong pull toward sudden unpredictability. Familiarity brings an automatic sense of security, yet stability easily triggers an underlying restlessness that demands sudden change. When external structures or routines impose too much predictability, the connection reacts by abruptly altering course to reclaim breathing room, often mistaking necessary grounding for confinement.",
+    "text": "Your shared emotional life requires a continuous, awkward adjustment between a deep instinct for predictable comfort and a persistent pull toward sudden disruption. Familiarity brings safety, yet stability quickly feels like an awkward constraint that forces you to constantly recalibrate how you secure breathing room. When external routines press too closely, the connection struggles to balance its need for rest with an immediate impulse to break the mold.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -85490,9 +85490,9 @@
   {
     "key": "composite-aspect-pair:quincunx:pluto:uranus",
     "locale": "en",
-    "text": "The shared dynamic builds toward profound renewal by constantly unsettling established patterns and testing conventional boundaries. This union manages external limits through persistent internal friction, where the impulse for radical change clashes directly with the demand for structural preservation. The resulting tension surfaces whenever the partnership tries to balance complete transformation against the need for steady ground.",
+    "text": "The shared dynamic builds toward profound renewal by requiring awkward adjustments between sudden disruption and deep transformation. This union manages external limits through persistent internal friction, where the impulse for radical change constantly rubs against mismatched structural demands. The resulting tension surfaces whenever the partnership tries to balance ongoing evolution against an environment that resists easy synthesis.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -85598,9 +85598,9 @@
   {
     "key": "composite-aspect-pair:quincunx:sun:uranus",
     "locale": "en",
-    "text": "This partnership builds its vitality around an ongoing negotiation between stability and radical reinvention. The connection functions by repeatedly dismantling predictable routines to keep mutual boredom at bay, though this often sparks friction whenever external pressures demand rigid predictability. Consequently, the shared bond frequently oscillates between craving absolute security and abruptly seeking total autonomy.",
+    "text": "This partnership centers its vitality on making awkward, persistent adjustments between a steady collective purpose and sudden urges for total independence. The connection functions by repeatedly recalibrating whenever an unexpected pivot disrupts established routines, though this creates chronic friction with external demands for steady predictability. Consequently, the shared bond often struggles to integrate a stable identity with an ongoing appetite for abrupt change.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -85850,9 +85850,9 @@
   {
     "key": "composite-aspect-pair:opposition:ceres:pluto",
     "locale": "en",
-    "text": "The shared partnership builds a deep capacity for profound healing through shared vulnerability and radical honesty. This connection operates by continuously unearthing hidden emotional undercurrents to transform how both individuals relate to authority and shared resources. The shadow dilemma surfaces when control becomes a substitute for trust, creating friction whenever mutual reliance requires surrendering personal autonomy to the collective bond.",
+    "text": "The shared partnership builds a deep capacity for profound healing by linking how both individuals offer care and confront what must be surrendered. This connection operates by unearthing power struggles hidden beneath routines of mutual support and dependency. The shadow dilemma surfaces when controlling how support is given becomes a substitute for genuine vulnerability, creating friction whenever mutual reliance requires letting go of absolute autonomy.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -86174,9 +86174,9 @@
   {
     "key": "composite-aspect-pair:opposition:interpolatedLilith:mars",
     "locale": "en",
-    "text": "This partnership pursues goals through an inherent friction between raw impulse and unyielding restraint, where joint initiatives consistently spark immediate pushback over territory and control. The pairing channels its vitality into testing boundaries, treating every external limitation as a direct challenge to authority rather than a practical boundary. When mutual projects meet resistance, the dynamic tends to escalate into stubborn power struggles instead of yielding to compromise.",
+    "text": "This partnership pursues goals through a direct collision between active drive and uncompromising autonomy, where joint initiatives consistently spark friction over who owns the right to refuse or initiate. The dynamic channels its vitality into testing boundaries, treating external limits as attempts to domesticate raw instinct rather than practical rules. When shared projects meet resistance, the pairing tends to escalate into stubborn standoffs instead of yielding to compromise.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -86474,9 +86474,9 @@
   {
     "key": "composite-aspect-pair:opposition:juno:trueNode",
     "locale": "en",
-    "text": "This partnership builds around a persistent tension between individual long-term evolutionary growth and the foundational need for mutual commitment. The dynamic handles this boundary by constantly testing whether shared loyalty supports or restricts personal direction. When external pressures highlight this divide, the association risks viewing independence and partnership as mutually exclusive forces rather than parallel paths.",
+    "text": "This partnership builds around a persistent tension between shared long-term evolutionary growth and the foundational need for mutual commitment. The dynamic handles this boundary by constantly testing whether shared loyalty supports or restricts the joint direction. When external pressures highlight this divide, the association risks viewing independence and partnership as mutually exclusive forces rather than parallel paths.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -86642,9 +86642,9 @@
   {
     "key": "composite-aspect-pair:opposition:jupiter:sun",
     "locale": "en",
-    "text": "This partnership centers on an expansive mutual vision that constantly seeks broader horizons and shared meaning. The connection approaches external boundaries by striving to push past limits, championing growth and optimism as primary operating principles. The shadow surfaces when grand ideals outpace practical realities, creating friction between the urge for limitless possibility and the actual constraints of structure.",
+    "text": "This partnership builds its central identity around a tension between maintaining a focused core direction and chasing endlessly expansive horizons. The connection navigates external boundaries by constantly weighing its foundational purpose against grand ideals that strain practical limits. The shadow surfaces when the drive for growth pulls the shared purpose in directions that outpace its actual structural capacity.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -86870,9 +86870,9 @@
   {
     "key": "composite-aspect-pair:opposition:meanLilith:meanNode",
     "locale": "en",
-    "text": "This partnership naturally builds toward a collective friction with conventional expectations, forging a shared path by deliberately challenging established social norms. The joint dynamic handles boundaries through sharp counter-identification, preferring outsider status over smooth assimilation into standard group structures. The shadow dilemma arises when mutual defiance isolates the connection entirely from supportive communal context, turning necessary critique into an insular rejection of all shared utility.",
+    "text": "This partnership builds toward an inherent tension between unassimilated personal truths and the collective direction of mutual growth. The joint dynamic handles boundaries by questioning established expectations, preferring peripheral observation over comfortable conformity to shared group standards. The shadow dilemma arises when mutual resistance to conventional norms isolates the connection from broader networks, turning necessary critique into an insular echo chamber.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -86906,9 +86906,9 @@
   {
     "key": "composite-aspect-pair:opposition:meanLilith:neptune",
     "locale": "en",
-    "text": "The shared dynamic builds toward a profound openness to idealism and shared dreams, merging intuition with a deep yearning for unconditional unity. This connection operates by dissolving ordinary boundaries between partners, seeking total fusion while struggling to maintain distinct individual identities. The shadow tension surfaces when ungrounded expectations collide with ordinary reality, breeding chronic confusion or mutual disappointment when the shared vision fails to match practical constraints.",
+    "text": "The shared dynamic builds toward a profound surrender to idealism, where a yearning for unconditional unity runs directly into a raw, uncompromising refusal to conform to shared illusions. This connection operates by dissolving ordinary boundaries in pursuit of total fusion, yet it continuously clashes with an instinctive need to protect unshaped, taboo desires from collective demands. The shadow tension surfaces when the pursuit of an idealized collective vision collides with the friction of maintaining distinct, unvarnished autonomy.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -86918,9 +86918,9 @@
   {
     "key": "composite-aspect-pair:opposition:meanLilith:pallas",
     "locale": "en",
-    "text": "This partnership builds toward a shared insistence on uncompromised autonomy, often challenging conventional boundaries and inherited expectations. The collective dynamic establishes independence by continuously testing existing rules and questioning established structures within the union. Friction surfaces when external pressures demand conformity, creating a recurring tension between collective freedom and institutional stability.",
+    "text": "This partnership builds toward a shared insistence on uncompromised autonomy, pairing radical independence with strategic pattern recognition to solve collective problems. The dynamic establishes its footing by scrutinizing established boundaries and testing structural assumptions for hidden flaws. Friction surfaces when strategic calculations clash with external demands for conformity, creating a recurring tension between tactical independence and institutional predictability.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -86978,9 +86978,9 @@
   {
     "key": "composite-aspect-pair:opposition:meanLilith:uranus",
     "locale": "en",
-    "text": "The shared dynamic thrives on abrupt departures from expectation, consistently clearing out stagnant habits to make room for radical autonomy. This collective drive approaches boundaries as structural cages, maintaining independence through sharp, sudden resistance to any perceived control. When confronted with mutual reliance or predictable routines, the partnership risks chronic instability, repeatedly destabilizing its own foundation just to prove it can survive outside convention.",
+    "text": "The shared dynamic thrives on radical self-assertion that rejects any social compact requiring compromise or conformity. This collective drive approaches structural boundaries as intolerable restrictions, preserving autonomy through sharp departures from whatever feels too settled. When confronted with mutual reliance, the partnership risks chronic instability, repeatedly dismantling its own foundation rather than risk the quiet confinement of routine.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -87098,9 +87098,9 @@
   {
     "key": "composite-aspect-pair:opposition:meanNode:sun",
     "locale": "en",
-    "text": "The shared purpose of the partnership pulls strongly toward individual autonomy, creating a persistent tension between collective direction and personal distinction. This bond functions by continuously renegotiating where personal boundaries end and shared goals begin, testing how much independence the union can hold. The shadow dilemma surfaces when external demands or shared routines threaten to overshadow separate identities, leading to friction over who determines the primary path.",
+    "text": "The partnership builds its central identity around a deliberate purpose, anchoring the shared life while an evolutionary pull points toward an entirely different collective horizon. This bond functions by balancing established relational habits against unfamiliar directions of growth, constantly testing how much change the common foundation can withstand. The shadow dilemma surfaces when familiar relational routines resist forward movement, creating friction between preserving security and answering the call of growth.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -87110,9 +87110,9 @@
   {
     "key": "composite-aspect-pair:opposition:meanNode:uranus",
     "locale": "en",
-    "text": "The partnership continuously builds toward a shared culture of radical freedom, prioritizing sudden reinvention over predictable stability. This drive manages external limits by dismantling routine structures whenever they threaten mutual autonomy. The resulting tension emerges when shared obligations collide with an absolute refusal to compromise on individuality, occasionally mistaking necessary cooperation for confinement.",
+    "text": "The partnership continuously seeks a shared forward direction while a persistent undercurrent of sudden disruption pulls against established routines. This drive manages external limits by abruptly dismantling structures whenever mutual habits begin to feel restrictive. The resulting tension emerges when necessary cooperation collides with an uncompromising demand for independence, occasionally mistaking shared responsibility for confinement.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -87458,9 +87458,9 @@
   {
     "key": "composite-aspect-pair:opposition:neptune:trueNode",
     "locale": "en",
-    "text": "This partnership centers on a shared pursuit of a collective ideal, seeking unity through a grand vision or shared purpose. The connection naturally dissolves rigid boundaries, favoring porous edges and mutual absorption over distinct separation. The tension surfaces when the pursuit of an ungrounded dream obscures practical realities, creating friction between shared aspirations and concrete demands.",
+    "text": "This partnership is drawn toward a collective ideal, seeking unity through a shared vision of what could be. The connection dissolves rigid boundaries by prioritizing porous edges and mutual absorption over distinct separation. Friction surfaces when this shared idealism pulls away from concrete direction, creating a tension between the longing for absolute transcendence and the actual path the partnership needs to walk.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -87470,9 +87470,9 @@
   {
     "key": "composite-aspect-pair:opposition:neptune:uranus",
     "locale": "en",
-    "text": "The shared dynamic thrives on an ongoing tension between a pull toward collective idealism and a sudden need for absolute autonomy. This connection operates by constantly dismantling predictable routines to make room for imaginative breakthroughs. The core shadow surfaces when the bond struggles to anchor itself, tipping between sudden detachment and elusive shared delusions when external pressures mount.",
+    "text": "The shared dynamic thrives on an ongoing tension between a pull toward collective idealism and a sudden need for absolute autonomy. This connection operates by constantly dismantling predictable routines to make room for imaginative breakthroughs. The core shadow surfaces when the bond struggles to anchor itself, caught between an insistence on total freedom and the quiet erosion of shared purpose under external pressure.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -87506,9 +87506,9 @@
   {
     "key": "composite-aspect-pair:opposition:osculatingLilith:pallas",
     "locale": "en",
-    "text": "This partnership builds around a shared instinct to challenge conventional boundaries and protect intellectual independence. The dynamic asserts itself by questioning established systems and rejecting unearned authority whenever collective rules threaten autonomy. Friction arises when the dynamic must choose between mutual cooperation and absolute self-sovereignty, frequently treating necessary compromise as an imposition.",
+    "text": "This partnership builds toward a shared capacity for spotting systemic flaws and defending intellectual independence against unexamined rules. The dynamic operates by formulating strategic counters to established norms, treating conventional expectations as patterns meant to be decoded rather than accepted outright. Friction arises when analytical detachment collides with collective dependence, frequently mistaking cooperative compromise for a tactical loss of ground.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -87566,9 +87566,9 @@
   {
     "key": "composite-aspect-pair:opposition:osculatingLilith:uranus",
     "locale": "en",
-    "text": "This partnership builds toward a radical refusal of predictable structures, finding its stability through constant reinvention and sudden departures from shared routine. The dynamic manages boundaries by treating any fixed agreement as an invitation to innovate or break free, prioritizing autonomy over comfort. When external constraints demand conformity, the connection risks erratic friction or a persistent impulse to tear down shared foundations simply to prove freedom remains intact.",
+    "text": "This partnership builds toward an unyielding insistence on raw autonomy, forging its bond through a mutual refusal to hide what conventional expectations prefer to smooth over. The dynamic manages boundaries by treating compromise as a form of suppression, sharply prioritizing individual freedom over relational comfort. When external rules demand conformity, the connection risks intense friction, often opting for abrupt disruption rather than tolerating any perceived restriction on personal truth.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -87614,9 +87614,9 @@
   {
     "key": "composite-aspect-pair:opposition:pallas:saturn",
     "locale": "en",
-    "text": "This partnership builds enduring structure through mutual accountability, constructing firm boundaries around joint projects and shared goals. The connection manages external authority and practical limits by establishing strict protocols, yet this insistence on control can calcify into mutual rigidity when unexpected delays challenge the foundation.",
+    "text": "This partnership applies tactical strategy to structural limits, designing deliberate plans to withstand external pressure. The connection manages authority by pitting calculated problem-solving against rigid boundaries, yet this constant tactical vigilance can harden into mutual inflexibility when unexpected delays disrupt the blueprint.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -87854,9 +87854,9 @@
   {
     "key": "composite-aspect-pair:opposition:sun:vesta",
     "locale": "en",
-    "text": "This partnership builds its core purpose around a shared devotion to a distinct collective goal, channeling unified focus into purposeful dedication. The dynamic maintains independence by establishing strict operational boundaries and mutual commitments that protect shared objectives from external distractions. When confronted with outside interference or competing priorities, the connection risks internal friction as rigid boundaries clash with the need for flexibility.",
+    "text": "This partnership builds its core identity around balancing prominent public recognition with an exacting, private devotion to a single focused task. The dynamic negotiates independence by alternating between the need to shine outwardly and the demand for quiet, sacrificial labor toward a shared altar. When outside pressures demand compromise, the connection risks internal strain as the desire for outward vitality clashes with rigid, uncompromising dedication.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -87866,9 +87866,9 @@
   {
     "key": "composite-aspect-pair:opposition:trueNode:uranus",
     "locale": "en",
-    "text": "The shared path continually resets itself through sudden departures from routine, replacing predictability with radical freedom. The partnership sustains its forward momentum by dismantling established expectations whenever authority or security threatens to fossilize the connection. This constant urge for unvarnished autonomy frequently creates friction with the need for stable grounding, turning every external limitation into an urgent catalyst for immediate structural overhaul.",
+    "text": "The shared path continually grows by breaking away from established security to seek radical freedom. The partnership sustains its forward momentum through sudden departures from routine whenever predictable patterns threaten to restrict future development. This constant urge for unvarnished autonomy creates friction with the pull toward familiar grounding, turning external limitations into urgent catalysts for structural overhaul.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -87914,9 +87914,9 @@
   {
     "key": "composite-aspect-pair:opposition:uranus:vesta",
     "locale": "en",
-    "text": "This partnership builds around a continuous push for liberation from established routines, using abrupt shifts to keep the shared dynamic fresh and unconventional. The connection manages boundaries by testing every rule against a standard of total autonomy, refusing predictable compromises in favor of sudden breakthroughs. Friction arises whenever external demands require conformity, turning ordinary stability into a perceived threat that triggers immediate resistance and detachment.",
+    "text": "This partnership builds a continuous push to balance dedicated focus with the need for radical autonomy, using abrupt shifts to keep a shared sense of devotion from hardening into rigid convention. Boundaries are managed by testing every commitment against absolute independence, refusing predictable routines in favor of sudden breakthroughs. Friction arises whenever shared devotion demands strict conformity, turning ordinary stability into a perceived threat that triggers immediate resistance and detachment.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",

@@ -47858,9 +47858,9 @@
   {
     "key": "dignity-state:mars:ruler",
     "locale": "nl",
-    "text": "Jouw diepste drive richt zich direct op het opeisen van autonomie en het vormgeven van je eigen invloed, zonder omwegen of aarzeling. Dit functionele mechanisme zet wilskracht in als een vanzelfsprekend instrument om obstakels te passeren en controle te behouden over de eigen richting. Zodra je echter stuit op externe grenzen of gedwongen medewerking, ontstaat er snel een schaduwdilemma waarin samenwerking aanvoelt als een inperking van je handelingsvrijheid.",
+    "text": "Jouw diepste drive richt zich op het beslist opeisen van invloed en het beschermen van je eigen speelruimte. Dit functionele mechanisme zet gerichte wilskracht in om obstakels te doorbreken en de regie stevig in eigen hand te houden. Zodra je stuit op externe grenzen of ongevraagde inmenging, ontstaat er een schaduwdilemma waarin elke vorm van afhankelijkheid direct aanvoelt als een bedreiging voor je handelingsvrijheid.",
     "tier": "core",
-    "tags": ["ruler"],
+    "tags": ["ruler", "improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -57670,13 +57670,10 @@
   {
     "key": "composite-planet-in-sign:chiron:10",
     "locale": "nl",
-    "text": "Samen worden jullie uitgedaagd om een eigen weg te vinden in maatschappelijke verwachtingen en ambities. De relatie leert jullie om uiterlijk succes los te koppelen van innerlijke eigenwaarde.",
+    "text": "Samen vinden jullie een eigen manier om je te verhouden tot grotere idealen en sociale verwachtingen. De relatie confronteert jullie met het spanningsveld tussen ergens bij horen en radicaal trouw blijven aan de eigen eigenzinnigheid, wat kan omslaan in een krampachtige onafhankelijkheid wanneer collectieve normen te dwingend aanvoelen.",
     "tier": "core",
-    "tags": [],
-    "provenance": {
-      "source": "generated",
-      "verifiedAt": "2026-10-06"
-    }
+    "tags": ["improved-via-feedback-loop"],
+    "provenance": { "source": "generated", "verifiedAt": "2026-10-06" }
   },
   {
     "key": "composite-aspect-pair:sextile:moon:sun",
@@ -58576,9 +58573,9 @@
   {
     "key": "composite-planet-in-sign:jupiter:10",
     "locale": "nl",
-    "text": "De gezamenlijke horizon richt zich op het verkennen van vernieuwende denkbeelden en gedeelde maatschappelijke idealen. Het partnerschap zoekt betekenis in de ruimte voor onafhankelijkheid en collectieve vooruitgang. Wanneer de verbinding echter wordt ingeperkt door strakke structuren, ontstaat er een neiging om zich volledig van de buitenwereld te isoleren.",
+    "text": "De gezamenlijke horizon richt zich op het verkennen van vernieuwende denkbeelden en gedeelde maatschappelijke idealen. Het partnerschap zoekt betekenis in de ruimte voor onafhankelijkheid en collectieve vooruitgang. Wanneer de verbinding echter stuit op strakke structuren, ontstaat er een functionele spanning tussen het opeisen van absolute vrijheid en het veronachtzamen van praktische verbondenheid.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -58828,9 +58825,9 @@
   {
     "key": "composite-planet-in-sign:uranus:7",
     "locale": "nl",
-    "text": "De dynamiek tussen jullie vraagt om een radicale doorbraak voorbij gevestigde conventies om tot de diepere kern te komen. Dit partnerschap doorbreekt vaste patronen door schijnzekerheden los te laten en onvoorwaardelijke waarachtigheid op te zoeken. De spanning ontstaat zodra de relatie klem komt te zitten in onwrikbare verwachtingen, wat vraagt om moedige vernieuwing in plaats van starre handhaving.",
+    "text": "Jullie relatie zoekt een radicale doorbraak voorbij gevestigde machtsstructuren om onuitgesproken taboes en verborgen dynamieken aan het licht te brengen. Dit partnerschap doorbreekt vaste patronen door vastgeroeste controle los te laten en onvoorwaardelijke transformatie op te zoeken. De spanning ontstaat zodra de dynamiek klem komt te zitten in wederzijdse afhankelijkheid of machtsstrijd, wat telkens vraagt om een moedige hernieuwing van de gezamenlijke fundamenten.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -59296,9 +59293,9 @@
   {
     "key": "composite-planet-in-sign:meanNode:10",
     "locale": "nl",
-    "text": "Dit partnerschap richt zich van nature op een gezamenlijke toekomst die verbonden is met grotere maatschappelijke of ideële vraagstukken. De dynamiek zoekt voortdurend naar objectieve vergezichten en vernieuwing, waarbij de neiging bestaat om sterke emotionele verstrengeling te vermijden. Zodra de verbinding te benauwend of traditioneel aanvoelt, ontstaat er wrijving tussen de wefsel van de relatie en de noodzaak om absolute onafhankelijkheid te waarborgen.",
+    "text": "Dit partnerschap groeit naar een gezamenlijke toekomst die verbonden is met bredere maatschappelijke idealen en vernieuwing. De dynamiek ontwikkelt zich richting objectieve vergezichten waarin beide partners elkaar de ruimte geven om eigen visies te behouden. Zodra verwachtingen te benauwend of traditioneel aanvoelen, ontstaat er wrijving tussen de behoefte aan een gezamenlijke koers en de drang om de eigen autonomie te waarborgen.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -59404,9 +59401,9 @@
   {
     "key": "composite-planet-in-sign:trueNode:7",
     "locale": "nl",
-    "text": "De gezamenlijke groeirichting zoekt onvermoeibaar naar de diepere waarheid achter de dagelijkse werkelijkheid. Dit partnerschap richt zich op het doorbreken van schijn en het transformeren van wat verborgen blijft. Zodra de buitenwereld grenzen stelt of autonomie inperkt, reageert de dynamiek met een intense geslotenheid en een absolute weigering om aan het oppervlak te blijven.",
+    "text": "De gezamenlijke groeirichting zoekt onvermoeibaar naar de diepere waarheid achter de dagelijkse werkelijkheid. Dit partnerschap richt zich op het doorbreken van schijn en het transformeren van wat verborgen blijft. Zodra externe verwachtingen vragen om concessies, ontstaat een spanning tussen de drang tot volledige zelfsturing en de noodzaak om controle te delen en kwetsbaarheid aan te gaan.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -59428,9 +59425,9 @@
   {
     "key": "composite-planet-in-sign:trueNode:9",
     "locale": "nl",
-    "text": "De gemeenschappelijke missie zoekt uitbreiding en betekenis via wijsheid, onderwijzend vermogen en het delen van visie. Dit platsement stimuleert het partnerschap om samen te groeien door filosofische verkenning, culturele verbindingen en het uitbreiden van hun collectieve horizon.",
+    "text": "Jullie gezamenlijke groeipad bouwt stap voor stap aan blijvende resultaten en meet vooruitgang aan de hand van zichtbare prestaties en verantwoordelijkheid. Dit mechanisme brengt structuur in ambities door heldere normen te stellen en doelgericht samen te werken. Zodra externe beperkingen of starre kaders opduiken, ontstaat de spanning of jullie strakke controle nodig hebben of juist flexibiliteit moeten toelaten om de langetermijndoelen te bereiken.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -59524,9 +59521,9 @@
   {
     "key": "composite-planet-in-sign:meanLilith:5",
     "locale": "nl",
-    "text": "Deze verbinding brengt een scherpe focus op orde, zuiverheid en praktische verbetering binnen het samen zijn. De dynamiek streeft naar volstrekte helderheid en methodische perfectie in de gezamenlijke doelen. Zodra externe eisen of onvoorziene factoren de orde verstoren, ontstaat er een gespannen neiging tot overmatige controle of sterke kritiek op de eigen structuur.",
+    "text": "Jullie gezamenlijke dynamiek brengt een compromisloze drang naar zuiverheid en bruikbaarheid met zich mee. Dit mechanisme reageert op externe inmenging of opgelegde rommeligheid met een scherpe afwijzing van concessies, waarbij elk imperfect detail tot een onverzettelijk principe wordt verheven. Zodra de omgeving structuur eist die niet aan jullie eigen zuiverheidseisen voldoet, ontstaat een gespannen reflex om zich volledig van die invloed te onttrekken.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -59596,9 +59593,9 @@
   {
     "key": "composite-planet-in-sign:meanLilith:11",
     "locale": "nl",
-    "text": "De gezamenlijke dynamiek absorbeert stemmingen en onuitgesproken verwachtingen uit de omgeving zonder deze direct te kunnen kaderen. Dit partnerschap beweegt zich voort op een vloeiende, ongrijpbare golvenlengte waarin vaste grenzen vervagen. Zodra de relatie stuit op harde externe kaders of concrete eisen, ontstaat het risico dat de gezamenlijke koers oplost in onduidelijkheid of het vermijden van noodzakelijke confrontaties.",
+    "text": "De diepste drijfveer zoekt naar een volkomen samensmelting die elke externe grens of definitie laat verdwijnen. Dit mechanisme reageert op structuur door zich onmerkbaar te onttrekken aan vastgestelde kaders, omdat elke vorm van eenduidigheid voelt als een inperking van de ruimte. Wanneer externe druk of verwachtingen te dwingend worden, ontstaat het dilemma dat volledige overgave omslaat in een ongrijpbare onbereikbaarheid.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -59620,9 +59617,9 @@
   {
     "key": "composite-planet-in-sign:osculatingLilith:1",
     "locale": "nl",
-    "text": "De dynamiek tussen jullie is gericht op het creëren van een onwrikbare materiële en emotionele zekerheid. Samen bouwen jullie aan een tastbare fundering die langzaam vorm krijgt en weerstand biedt tegen invloeden van buitenaf. Het risico ontstaat wanneer de drang naar absolute autonomie botst met de noodzaak om concessies te doen aan de ander, waardoor koppigheid de voortgang kan blokkeren.",
+    "text": "Jullie relatie rust op een diepe, compromisloze eigenzinnigheid rondom wat jullie werkelijk waarderen en opeisen. Samen zoeken jullie naar een onvoorwaardelijke echtheid die zich niets aantrekt van conventionele verwachtingen of gedeelde compromissen. De spanning ontstaat wanneer de onwrikbare koppigheid van de een botst met de behoefte aan autonomie van de ander, waardoor elke poging tot begrenzing omslaat in een koppige machtsstrijd.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -59644,9 +59641,9 @@
   {
     "key": "composite-planet-in-sign:osculatingLilith:3",
     "locale": "nl",
-    "text": "Dit partnerschap bouwt primair aan een beschermende en emotioneel veilige schuilplaats voor de gezamenlijke basis. De dynamiek zoekt naar diepe onderlinge verankering om kwetsbaarheid op te vangen. Zodra externe druk of onverwachte grenzen binnendringen, kan deze focus omslaan naar overmatige terughoudendheid en een strikte afsluiting van de buitenwereld.",
+    "text": "Dit partnerschap bouwt aan een onvoorwaardelijke emotionele veilige haven waar de diepste kwetsbaarheid mag bestaan. De dynamiek zoekt naar totale verankering om pijn rond niet-erkende zorg te helpen dragen. Zodra externe verwachtingen of afhankelijkheid drukken, kan de focus omslaan naar een onverbiddelijke afsluiting van de buitenwereld om de eigen kwetsbaarheid maar niet te hoeven tonen.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -59668,9 +59665,9 @@
   {
     "key": "composite-planet-in-sign:osculatingLilith:5",
     "locale": "nl",
-    "text": "Dit partnerschap richt zich op het methodisch verfijnen van gedeelde structuren en het oplossen van praktische onvolkomenheden. De dynamiek zoekt naar grip door feiten te ordenen en processen te optimaliseren om zo onzekerheid het hoofd te bieden. Zodra externe druk of onvoorspelbaarheid toeneemt, ontstaat het risico dat de samenwerking vervalt in rigide controle of overmatige correctie op elk detail.",
+    "text": "Dit partnerschap bezit een compromisloze focus op wat functioneel zuiver blijft en verwerpt elke vorm van slordigheid of onvolledigheid in het gezamenlijke fundament. De dynamiek eist volledige autonomie om onwelgevallige details eigenmachtig te corrigeren. Zodra externe afhankelijkheid of inmenging deze autonome orde doorkruist, ontstaat een scherpe breuk met het systeem en trekt de verbinding zich radicaal terug op de eigen ongecompromitteerde norm.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -59716,9 +59713,9 @@
   {
     "key": "composite-planet-in-sign:osculatingLilith:9",
     "locale": "nl",
-    "text": "Dit partnerschap richt zich op het opbouwen van een duurzame fundering en het gezamenlijk dragen van verantwoordelijkheid voor de toekomst. De dynamiek zoekt naar houvast in heldere kaders en tastbare resultaten, maar kan botsen zodra externe verplichtingen de onderlinge ruimte te strak inperken. Hierdoor ontstaat soms spanning tussen het handhaven van orde en het toestaan van spontane flexibiliteit.",
+    "text": "Dit partnerschap zoekt onvoorwaardelijke eigenheid en botst stelselmatig met maatschappelijke verwachtingen of conventionele orde. De dynamiek eist een ongekunstelde autonomie, maar ervaart wrijving zodra traditionele kaders of externe normen worden opgelegd als maatstaf. Hierdoor ontstaat een scherpe spanning tussen de wil om samen iets duurzaams op te bouwen en de angst om ingekapseld te raken door plicht.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -59728,9 +59725,9 @@
   {
     "key": "composite-planet-in-sign:osculatingLilith:10",
     "locale": "nl",
-    "text": "De dynamiek tussen jullie richt zich op vernieuwing en een onvoorwaardelijke vrijheid ten opzichte van conventionele verwachtingen. Dit partnerschap functioneert door vast te houden aan een eigen ideële koers, waarbij afstand wordt bewaard tot traditionele rollen of maatschappelijke druk. Zodra de buitenwereld of de gezamenlijke omgeving dwingende structuren oplegt, ontstaat er direct een scherpe wrijving en de neiging om elk gezag categorisch af te wijzen.",
+    "text": "De gezamenlijke kern drijft op een kompas van absolute onafhankelijkheid en het doorbreken van conventionele verwachtingen. Dit partnerschap functioneert door principieel buiten geijkte kaders te staan en eigen groepsnormen te scheppen. Zodra de buitenwereld dwingende structuren oplegt of conformiteit eist, ontstaat er een scherpe wrijving rondom de grens tussen autonoom blijven en ergens werkelijk bij willen horen.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -59740,9 +59737,9 @@
   {
     "key": "composite-planet-in-sign:osculatingLilith:11",
     "locale": "nl",
-    "text": "De dynamiek tussen jullie absorbeert feilloos de sferen van de omgeving, waardoor grenzen tussen de partners gemakkelijk vervagen in een gedeelde gevoelswereld. Dit opent een diepe, ongrijpbare verbondenheid die de taal overstijgt. Zodra externe verwachtingen of structuren druk uitoefenen op het partnerschap, ontstaat de neiging om op te lossen in vaagheid of zich te onttrekken aan concrete kaders.",
+    "text": "De gezamenlijke impuls verzet zich principieel tegen elke poging om het partnerschap in vaste kaders of definities te vangen, op zoek naar een volstrekt ongrijpbare autonomie. Om controle van buitenaf te ontwijken, lost deze houding op in ongrijpbaarheid of trekt zich stilzwijgend terug zodra structuur wordt opgelegd. De spanning ontstaat wanneer de behoefte aan absolute grenzeloosheid botst met de noodzaak om praktische helderheid te bewaren, waardoor afstand ontstaat op momenten dat concreet overleg nodig is.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -59896,9 +59893,9 @@
   {
     "key": "composite-planet-in-sign:chiron:0",
     "locale": "nl",
-    "text": "Dit partnerschap beweegt zich voort vanuit een onmiddellijke drang om initiatief te tonen en voorwaarts te gaan. De dynamiek zoekt naar manieren om direct te handelen en obstakels te slechten voordat er getwijfeld wordt. Zodra de verbinding stuit op externe grenzen of vertraging, ontstaat er een scherpe spanning tussen de behoefte aan directe actie en de noodzaak tot afstemming.",
+    "text": "Dit partnerschap draagt een fundamentele kwetsbaarheid rond het nemen van initiatief en het direct opeisen van ruimte. De dynamiek streeft naar moedige zelfstandigheid, maar stuit op een ingesleten aarzeling om daadwerkelijk voorop te gaan. Zodra de samenwerking vraagt om assertiviteit, ontstaat er een scherpe spanning tussen de diepe drang om onmiddellijk te handelen en de angst om door diezelfde kracht afwijzing of kwetsbaarheid op te roepen.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -59920,9 +59917,9 @@
   {
     "key": "composite-planet-in-sign:chiron:2",
     "locale": "nl",
-    "text": "Dit partnerschap draait om het voortdurend onderzoeken en uitwisselen van ideeën en perspectieven. Samen wordt er gezocht naar antwoorden door te praten en te analyseren, waarbij de dynamiek functioneert door flexibel te blijven en informatie te verzamelen. Zodra er echter een vaststaand oordeel of definitieve conclusie wordt afgedwongen, ontstaat er wrijving omdat de verbinding juist floreert bij openheid en beweging.",
+    "text": "Jullie verbinding draait om een gedeelde kwetsbaarheid in hoe gedachten en inzichten worden geuit en begrepen. Het mechanisme reageert op misverstanden door direct te analyseren en alternatieve perspectieven te zoeken om de onzekerheid te bezweren. Zodra een vaststaand oordeel of dwingend gelijk wordt geëist, ontstaat er spanning omdat het partnerschap juist genezing vindt in permanente openheid.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -59992,9 +59989,9 @@
   {
     "key": "composite-planet-in-sign:chiron:8",
     "locale": "nl",
-    "text": "De kern van deze verbinding ligt in het gezamenlijk zoeken naar betekenis, horizonverruiming en een gedeelde waarheid. Dit partnerschap richt zich van nature op groei en het verkennen van het onbekende, waarbij idealen en overtuigingen centraal staan. Zodra de relatie op grenzen of vaststaande structuren stuit, ontstaat de uitdaging om optimisme te bewaren zonder te vervallen in het ontwijken van praktische verplichtingen.",
+    "text": "De kern van deze verbinding ligt in het gezamenlijk zoeken naar een overkoepelende waarheid, waarbij de diepste kwetsbaarheid ontstaat rond het vasthouden aan of verliezen van een gedeeld geloof. Dit partnerschap functioneert door optimistisch horizonnen te verkennen en idealen te formuleren. Zodra de realiteit of een externe beperking die overtuigingen op de proef stelt, ontstaat de spanning tussen dogmatisch vasthouden aan de eigen visie en het verdragen van fundamentele onzekerheid.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -60004,9 +60001,9 @@
   {
     "key": "composite-planet-in-sign:chiron:9",
     "locale": "nl",
-    "text": "Dit partnerschap richt zich op het gezamenlijk dragen van verantwoordelijkheid en het stapsgewijs opbouwen van een duurzame fundering. De dynamiek zoekt naar houvast in heldere kaders en langetermijndoelen. Zodra externe druk toeneemt, ontstaat er een schuring tussen de wens om vast te houden aan vaste structuren en de noodzaak tot flexibiliteit.",
+    "text": "Dit partnerschap draagt een diepgewortelde kwetsbaarheid rond prestatie, autoriteit en de lat hoog leggen. De dynamiek zoekt naar houvast in strikte competentie om te verbergen waar het fundament onzeker voelt. Zodra externe druk toeneemt, ontstaat er een schuring tussen de angst om door de mand te vallen en de neiging om elk tekort met nog strengere controle te willen compenseren.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -60100,9 +60097,9 @@
   {
     "key": "composite-planet-in-sign:ceres:6",
     "locale": "nl",
-    "text": "De dynamiek binnen deze verbinding draait om het voortdurend afwegen van belangen om gezamenlijke harmonie te waarborgen. Samen zoeken jullie naar een gelijkwaardige balans waarin ieders stem even zwaar weegt, wat de samenwerking rechtvaardig maakt. Zodra externe druk of onenigheid optreedt, kan de drang om conflicten te vermijden echter omslaan in aarzeling en besluiteloosheid.",
+    "text": "De gezamenlijke zorg voor elkaar krijgt vorm door voortdurend beide kanten te wegen en wederzijdse harmonie te bewaken. Jullie ondersteunen elkaar vanuit een diepe behoefte aan billijkheid, waarin ieders inbreng gelijkwaardig moet blijven. Wanneer externe omstandigheden de rust verstoren, kan deze drang naar vrede omslaan in aarzeling en het ontwijken van noodzakelijke knopen.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -60112,9 +60109,9 @@
   {
     "key": "composite-planet-in-sign:ceres:7",
     "locale": "nl",
-    "text": "De dynamiek tussen jullie is gericht op absolute trouw en het doorgronden van diepste lagen in plaats van te blijven hangen in de oppervlakte. Dit partnerschap zoekt onvoorwaardelijke verbinding maar stuit daarbij op het risico van onderlinge controle of verstikkende verwachtingen wanneer de autonomie van een van beiden in het geding komt.",
+    "text": "Jullie manier van zorgen geven en ontvangen zoekt absolute diepgang en vraagt om een onvoorwaardelijke emotionele toewijding om je echt gesteund te voelen. Dit mechanisme biedt steun door tot de kern door te dringen, maar creëert tegelijk een wrijving wanneer de wederzijdse afhankelijkheid rond zorg en kwetsbaarheid overgaat in bewaking of controle.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -60208,9 +60205,9 @@
   {
     "key": "composite-planet-in-sign:pallas:3",
     "locale": "nl",
-    "text": "De kern van deze relatie draait om het creëren van een veilige en vertrouwde fundering waarin emotionele geborgenheid vooropstaat. Samen wordt gezocht naar een hechte basis die bescherming biedt tegen invloeden van buitenaf. Het spanningsveld ontstaat wanneer de sterke focus op hechting botst met de behoefte aan externe onafhankelijkheid, wat kan leiden tot overmatige behoedzaamheid of het afsluiten voor de buitenwereld.",
+    "text": "Jullie strategie is erop gericht om via intuïtieve patroonherkenning een psychologische schil te ontwerpen waarin kwetsbaarheid en verdediging samenkomen. Vraagstukken worden opgelost door groepsdynamieken te scannen op emotionele veiligheid en dreigingen strategisch te neutraliseren voordat ze binnenkomen. Het dilemma ontstaat wanneer de behoefte aan absolute controle over deze veilige haven botst met onvoorziene externe invloeden, wat kan omslaan in een rigide handhaving van zelfopgelegde grenzen.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -60544,9 +60541,9 @@
   {
     "key": "composite-planet-in-sign:vesta:7",
     "locale": "nl",
-    "text": "De toewijding binnen deze relatie zoekt onvermoeibaar naar de diepste kern van intimiteit en waarheid. Samen ontstaat er een stilzwijgend verbond dat elk verborgen motief onderzoekt en oppervlakkige harmonie afwijst. Wanneer de buitenwereld grenzen stelt aan deze exclusieve eenheid, reageert de dynamiek vaak met een intense geslotenheid of een allesomvattende loyaliteit die externe invloeden volledig buitensluit.",
+    "text": "De toewijding binnen deze relatie zoekt onvermoeibaar naar de diepste kern van intimiteit en waarheid. Samen ontstaat er een stilzwijgend verbond dat elk verborgen motief onderzoekt en oppervlakkige harmonie afwijst. Wanneer externe omstandigheden of praktische eisen de focus verstoren, ontstaat er een wrijving tussen de wens tot absolute concentratie op elkaar en de noodzaak om flexibel te blijven met de buitenwereld.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -60796,9 +60793,9 @@
   {
     "key": "composite-planet-in-house:moon:7",
     "locale": "nl",
-    "text": "De gemeenschappelijke basis zoekt voortdurend naar een spiegel in de ander om emotionele rust te vinden. Dit partnerschap reageert op externe spanningen door de onderlinge harmonie direct op de proef te stellen. De schaduw ontstaat wanneer de behoefte aan veiligheid omslaat in een constante afhankelijkheid van bevestiging van buitenaf.",
+    "text": "De gemeenschappelijke basis zoekt continu naar een spiegel in de ander om emotionele rust te waarborgen. Dit partnerschap reageert op externe druk door de onderlinge verhoudingen direct op scherp te zetten. De schaduw ontstaat wanneer de zoektocht naar veiligheid omslaat in een rigide verwachting dat de relatie elk intern ongemak moet oplossen.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -60856,9 +60853,9 @@
   {
     "key": "composite-planet-in-house:moon:12",
     "locale": "nl",
-    "text": "De dynamiek tussen jullie vraagt om een veilige stilte waarin emoties onuitgesproken mogen blijven. Samen zoeken jullie naar een innerlijke rust die schuilt in afzondering en het toelaten van wat verborgen is. Zodra de buitenwereld of druk binnendringt, ontstaat de neiging om zich volledig terug te trekken in de schaduw.",
+    "text": "De dynamiek tussen jullie vraagt om een veilige stilte waarin emoties onuitgesproken mogen blijven. Samen zoeken jullie naar een innerlijke rust die schuilt in afzondering en het toelaten van wat verborgen is. Zodra de buitenwereld of druk binnendringt, ontstaat de neiging om kwetsbare ervaringen volledig af te schermen voor de gezamenlijke werkelijkheid.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -62440,9 +62437,9 @@
   {
     "key": "composite-planet-in-house:meanLilith:12",
     "locale": "nl",
-    "text": "Dit partnerschap deelt een ondergrondse dynamiek waarin onuitgesproken thema's en schaduwkanten samenkomen in afzondering. De relatie zoekt van nature naar plekken van stilte en terugtrekking om los te komen van invloeden van buitenaf. Zodra externe druk of verwachtingen toenemen, ontstaat er een neiging om zich volledig terug te trekken in de luwte of het contact te verbreiden.",
+    "text": "Dit partnerschap deelt een diepe drang om onbewuste en onuitgesproken thema's buiten de invloedssfeer van de buitenwereld te houden. De dynamiek zoekt een ongrijpbare vorm van autonomie door zich achter de schermen te onttrekken aan externe verwachtingen. Zodra er druk ontstaat om deze verborgen kanten openlijk te verantwoorden, botst de behoefte aan onkwetsbare afzondering met de angst om volledig vervreemd te raken van de omgeving.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -62584,9 +62581,9 @@
   {
     "key": "composite-planet-in-house:osculatingLilith:12",
     "locale": "nl",
-    "text": "De dynamiek tussen jullie beweegt zich van nature naar het onuitgesprokene en de momenten van stilte achter gesloten deuren. Samen zoeken jullie naar een diepe, ongrijpbare ruimte waarin onverwerkte thema's uit het onderbewuste een plek krijgen. Zodra externe druk of verwachtingen de relatie binnendringen, ontstaat de neiging om zich juist volledig terug te trekken in een gezamenlijk isolement.",
+    "text": "Jullie gezamenlijke dynamiek bouwt naar een diepe, compromisloze onafhankelijkheid ten opzichte van maatschappelijke verwachtingen en gedeelde taboes. Dit mechanisme zoekt naar een ongecensureerde ruimte waar alles wat elders als onverteerbaar wordt geweerd, een plek krijgt. Zodra externe normen of druk binnendringen, ontstaat direct de spanning om zich radicaal af te sluiten in een eigen, ontoegankelijke schuilplaats.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -62968,9 +62965,9 @@
   {
     "key": "composite-planet-in-house:ceres:9",
     "locale": "nl",
-    "text": "De gezamenlijke horizon van dit partnerschap richt zich op het verbreden van blikken, het delen van overtuigingen en het gezamenlijk zoeken naar een grotere betekenis. De dynamiek voedt zich met het verkennen van nieuwe perspectieven en het uitwisselen van levensfilosofieën. Wanneer externe kaders of vaste wereldbeelden botsen met deze gezamenlijke zoektocht, ontstaat de spanning tussen het vasthouden aan een eigen gelijk en het openstaan voor de visie van de ander.",
+    "text": "Jullie gezamenlijke zorg krijgt vorm door elkaar de ruimte te geven om perspectieven te verbreden en betekenis te zoeken. Deze steun werkt het sterkst wanneer jullie elkaars groei in wereldbeeld actief voeden en valideren. Zodra externe kaders of rigide opvattingen deze autonomie inperken, ontstaat een spanning tussen het dogmatisch bewaken van de eigen overtuigingen en het verliezen van een gedeelde voedingsbodem.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -63292,9 +63289,9 @@
   {
     "key": "composite-planet-in-house:vesta:1",
     "locale": "nl",
-    "text": "De gezamenlijke identiteit van deze verbinding treedt nadrukkelijk naar voren als een eenheid die toewijding en focus uitstraalt naar de buitenwereld. Dit partnerschap functioneert door een gedeelde toewijding centraal te stellen in de manier waarop het naar buiten optreedt. Zodra externe verwachtingen of beperkingen de gezamenlijke koers raken, kan er een krampachtige controle ontstaan over het imago om maar geen kwetsbaarheid te tonen.",
+    "text": "Jullie gezamenlijke koers draait om een intensieve toewijding die direct zichtbaar is in hoe jullie je naar buiten toe presenteren en optreden. Dit partnerschap behoudt zijn kracht door een onwrikbare focus op een gezamenlijk doel, waarmee het de directe omgeving strak organiseert. Zodra externe omstandigheden deze autonomie doorkruisen, kan deze toewijding omslaan in een hardnekkige afsluiting voor invloeden van buitenaf om de eigen controle koste wat kost te handhaven.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -63460,9 +63457,9 @@
   {
     "key": "composite-aspect-pair:conjunction:ceres:juno",
     "locale": "nl",
-    "text": "De kern van deze verbinding ligt in het verweven van diepe toewijding met wederzijdse zorg. Het partnerschap zoekt continu naar een balans tussen de verantwoordelijkheid voor elkaar en de handhaving van bindende afspraken. Zodra externe druk of regels van buitenaf de autonomie inperken, ontstaat er een spanningsveld waarin loyaliteit en persoonlijke vrijheid schuren.",
+    "text": "De kern van deze verbinding ligt in het verweven van dienende zorg met bindende afspraken. Het partnerschap zoekt continu naar een balans tussen het voeden van ieders welzijn en het vastleggen van wederzijdse plichten. Zodra praktische onvoorziene omstandigheden de gemaakte afspraken onder druk zetten, ontstaat er een spanningsveld waarin de zorg voor elkaar kan omslaan in strikte verwachtingen.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -63580,9 +63577,9 @@
   {
     "key": "composite-aspect-pair:conjunction:ceres:pluto",
     "locale": "nl",
-    "text": "De kern van deze verbinding draait om intense diepgang en het doorgronden van onderstroomse dynamieken. Samen worden jullie getrokken naar wat onuitgesproken blijft, waarbij oude patronen moeten worden afgebroken om tot een vernieuwde basis te komen. Wanneer externe beperkingen of machtsdynamieken opduiken, reageert de relatie hierop met uiterste controle of juist een volstrekte weigering om zich te schikken naar verwachtingen van buitenaf.",
+    "text": "Jullie gedeelde basis zoekt naar transformatie door te onderzoeken hoe zorg, hechting en kwetsbaarheid met elkaar zijn verweven. De neiging bestaat om diep te graven in wat voedt en wat juist verstikt, waarbij oude patronen van afhankelijkheid grondig worden doorlicht. Zodra externe druk of verplichtingen toenemen, reageert deze dynamiek met ófwel strakke overcontrole over het gezamenlijke fundament, ófwel een volledige terugtrekking uit de onderlinge steun.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -63712,9 +63709,9 @@
   {
     "key": "composite-aspect-pair:conjunction:chiron:meanNode",
     "locale": "nl",
-    "text": "De gezamenlijke ontwikkeling binnen deze verbinding raakt direct aan kwetsbare plekken en onverwerkte ervaringen. Het partnerschap fungeert als spiegel voor oud zeer, wat enerzijds diepgaande heling brengt, maar anderzijds kan omslaan in een wederzijdse afhankelijkheid waarin pijnpunten steeds opnieuw worden opgezocht in plaats van losgelaten.",
+    "text": "Jullie gezamenlijke ontwikkeling brengt fundamentele kwetsbaarheden en de richting van de gezamenlijke groei nauw samen. Het partnerschap zoekt van nature naar diepgaande heling door oude pijn te doorleven en te integreren. Wanneer externe druk toeneemt, ontstaat er echter een spanning tussen het aangaan van die kwetsbaarheid en het vermijden van de pijn die nodig is voor verdere vooruitgang.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -63832,9 +63829,9 @@
   {
     "key": "composite-aspect-pair:conjunction:chiron:uranus",
     "locale": "nl",
-    "text": "Deze verbinding zoekt voortdurend naar vernieuwing door vastgeroeste structuren open te breken en kwetsbaarheid te transformeren tot een bron van gezamenlijke autonomie. Het mechanisme reageert op elke vorm van verstening of verwachtingspatroon door onmiddellijk te breken met conventies om vrijheid te waarborgen. Zodra de buitenwereld of de gezamenlijke dynamiek vraagt om aanpassing of veiligheid, ontstaat er een schaduwdilemma waarin onvoorspelbaarheid omslaat in een permanente staat van ontwrichting.",
+    "text": "Jullie gedeelde basis drijft op het openbreken van vastgeroeste patronen om diepe kwetsbaarheid te verbinden met de behoefte aan vernieuwing. Om te voorkomen dat oude structuren verstikken, reageert de dynamiek met onverwachte wendingen die vaste kaders opschudden. Wanneer de omgeving juist vraagt om langdurige stabiliteit en conformiteit, ontstaat een wrijving waarin onvoorspelbaarheid fungeert als schild tegen de angst voor herhaling.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -63940,9 +63937,9 @@
   {
     "key": "composite-aspect-pair:conjunction:interpolatedLilith:neptune",
     "locale": "nl",
-    "text": "Dit partnerschap beweegt zich van nature naar een gedeelde verbeelding waarin grenzen vervagen en idealen de boventoon voeren. Samen zoeken jullie naar een ongrijpbare eenheid, waarbij de dynamiek reageert op elk gebrek aan helderheid. Zodra de buitenwereld duidelijke kaders stelt of concrete verwachtingen oplegt, ontstaat er wrijving tussen onvoorwaardelijke versmelting en de noodzaak om functionele afspraken te maken.",
+    "text": "Dit partnerschap zoekt naar een grenzeloze echtheid waarin gezamenlijke idealen en verbeeldingskracht de normen van buitenaf overstijgen. Jullie drijfveer richt zich op een volkomen open samenzijn dat moeite heeft met strakke structuren of afgesproken kaders. Zodra externe verwachtingen of regels de dynamiek proberen vast te leggen, ontstaat er spanning tussen het verlangen naar volstrekte vrijheid en de neiging om in vage verwachtingen of onduidelijke afspraken te verdwijnen.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -64012,9 +64009,9 @@
   {
     "key": "composite-aspect-pair:conjunction:interpolatedLilith:uranus",
     "locale": "nl",
-    "text": "Dit partnerschap zoekt onvermoeibaar naar absolute autonomie en breekt radicaal met gevestigde verwachtingen. De gezamenlijke dynamiek reageert op elke vorm van externe druk met directe onafhankelijkheid, wat de relatie tot een voortdurende vernieuwing maakt. Zodra de buitenwereld vaste structuren oplegt, ontstaat er onmiddellijk wrijving en de neiging om elk gezag volledig af te wijzen.",
+    "text": "Dit partnerschap belichaamt een ongetemde drang naar radicale authenticiteit die bestaande conventies openlijk uitdaagt. De gezamenlijke dynamiek reageert op elke vorm van externe controle of onderdrukking door direct te breken met wat kunstmatig aanvoelt. Zodra de buitenwereld sociale normen oplegt, ontstaat er wrijving rondom onverzoenlijke autonomie en de neiging om taboes juist op te zoeken.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -64420,9 +64417,9 @@
   {
     "key": "composite-aspect-pair:conjunction:mars:meanLilith",
     "locale": "nl",
-    "text": "Dit partnerschap bezit een ongetemde daadkracht die ongemakkelijke waarheden en ongeuite verlangens openlijk aanspreekt. De gezamenlijke stuwkracht zoekt naar directe confrontatie met onderdrukte thema's binnen de verbinding. Zodra de buitenwereld grenzen oplegt, ontstaat er een felle weerstand die elk compromis verwerpt om de autonomie te beschermen.",
+    "text": "Dit partnerschap bezit een ongetemde daadkracht die ongemakkelijke waarheden en ongeuite verlangens openlijk aanspreekt. De gezamenlijke stuwkracht zoekt naar directe confrontatie met onderdrukte thema's binnen de verbinding. Zodra externe kaders de bewegingsvrijheid inperken, reageert de gezamenlijke wil met een scherpe reflex om de eigen autonomie onvoorwaardelijk te handhaven.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -64624,9 +64621,9 @@
   {
     "key": "composite-aspect-pair:conjunction:meanLilith:neptune",
     "locale": "nl",
-    "text": "De dynamiek tussen jullie beweegt zich van nature naar een gedeelde gevoeligheid en een dromerige verbondenheid die grenzen laat vervagen. Samen zoeken jullie naar een grenzeloze versmelting waarin idealen en verbeelding de boventoon voeren. Zodra de realiteit of een externe beperking zich aandient, ontstaat er een risico op ontduiking of het in stand houden van illusoire verwachtingen.",
+    "text": "Jullie delen een onuitgesproken fascinatie voor het ongrijpbare en het taboe, waarbij verbeelding en verlangens samenkomen buiten gevestigde kaders. Dit mechanisme zoekt intimiteit via totale openheid en het doorbreken van conventionele grenzen. Zodra de buitenwereld structuren of regels oplegt, ontstaat er een scherpe wrijving tussen de wens om te verdwijnen in illusie en het verzet tegen elke vorm van controle.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -64696,9 +64693,9 @@
   {
     "key": "composite-aspect-pair:conjunction:meanLilith:uranus",
     "locale": "nl",
-    "text": "Deze relatie zoekt continu naar vrijheid door vaste structuren en verwachtingen open te breken. Het gezamenlijke veld functioneert op basis van onvoorspelbaarheid en directe autonomie, waarbij routine actief wordt geweerd. Zodra de buitenwereld of de gezamenlijke dynamiek vraagt om zekerheid en voorspelbaarheid, ontstaat er direct een scherpe spanning tussen de drang naar vernieuwing en de behoefte aan houvast.",
+    "text": "Dit samenzijn eist absolute autonomie en breekt radicaal met alles wat benauwt of conventioneel aanvoelt. De dynamiek functioneert door taboes en onuitgesproken verwachtingen direct ter discussie te stellen, waarbij routine actief wordt geweerd om de eigen ongetemde aard te beschermen. Zodra de buitenwereld of de gezamenlijke structuur dwingt tot aanpassing, ontstaat er een scherpe, kompromisloze botsing tussen de noodzaak tot absolute vrijheid en de druk om in te lenen.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -64732,9 +64729,9 @@
   {
     "key": "composite-aspect-pair:conjunction:meanNode:mercury",
     "locale": "nl",
-    "text": "Het gezamenlijke denkproces vormt de motor van dit partnerschap, waarbij het uitwisselen van ideeën en informatie de relatie voortdurend voedt. Dit mechanisme zorgt voor een scherpe en levendige afstemming, al kan de sterke focus op rationaliteit er ook voor zorgen dat onuitgesproken gevoelens buiten beeld raken of worden overanalyseren zodra de situatie om een intuïtieve reactie vraagt.",
+    "text": "Het gezamenlijke denken fungeert als de collectieve richting van het partnerschap, waarbij de uitwisseling van perspectieven een bewuste evolutie aanstuurt. Dit mechanisme scherpt de wederzijdse blik voortdurend aan, maar kan omslaan in een gefixeerd zoeken naar antwoorden zodra de feitelijke situatie vraagt om rust in plaats van een volgende analyse.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -64816,9 +64813,9 @@
   {
     "key": "composite-aspect-pair:conjunction:meanNode:sun",
     "locale": "nl",
-    "text": "De gezamenlijke groeirichting valt samen met de bewuste kern van dit partnerschap, waardoor de verbinding vanaf de basis gericht is op een gedeelde bestemming. Samen bewegen jullie naar een helder doel waarin de richting van de relatie naadloos aansluit bij wat er nu bewust wordt opgebouwd. Zodra de buitenwereld echter kaders stelt of autonomie beperkt, ontstaat de spanning dat de gezamenlijke koers star wordt verdedigd of juist volledig verloren raakt in verwachtingen van buitenaf.",
+    "text": "De gezamenlijke groeirichting valt samen met de bewuste kern van dit partnerschap, waardoor de verbinding vanaf de basis gericht is op een gedeelde bestemming. Jullie bewegen naar een helder doel waarin de richting van de relatie naadloos aansluit bij wat er nu bewust wordt opgebouwd. Zodra externe omstandigheden de koers echter doorkruisen, ontstaat de spanning dat het gezamenlijke pad óf halsstarrig wordt vastgehouden óf juist volledig uit het oog wordt verloren.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -64936,9 +64933,9 @@
   {
     "key": "composite-aspect-pair:conjunction:mercury:sun",
     "locale": "nl",
-    "text": "De kern van deze verbinding ligt in het gezamenlijk vormgeven van een heldere visie en een gedeeld doel. Het partnerschap functioneert door gedachten, intenties en beslissingen nauw met elkaar te verweven tot één richting. Zodra externe factoren de bewegingsvrijheid inperken, ontstaat de neiging om elk meningsverschil tot in den treure te analyseren om de controle te behouden.",
+    "text": "De kern van deze verbinding ligt in het samensmelten van een gedeelde intentie en de manier waarop gedachten en doelen direct samenkomen. Het partnerschap functioneert door plannen en inzichten voortdurend op elkaar af te stemmen om zo een eensgezinde richting te bewaren. Zodra externe omstandigheden om onafhankelijke standpunten vragen, ontstaat de spanning dat de sterke drang naar gelijkluidendheid de ruimte voor een eigen, afzonderlijke stem in de weg staat.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -65284,9 +65281,9 @@
   {
     "key": "composite-aspect-pair:conjunction:osculatingLilith:uranus",
     "locale": "nl",
-    "text": "Dit partnerschap draait om een continue drang naar radicale vrijheid en het doorbreken van vastgeroeste structuren. De dynamiek zoekt voortdurend naar onafhankelijkheid en verwerpt conventionele verwachtingen die de gezamenlijke beweging beperken. Zodra de verbinding te veel op vaste regels leunt, ontstaat er direct een frictie tussen de wens tot autonomie en de behoefte aan structurele veiligheid.",
+    "text": "Dit partnerschap draait om een onverzadigbare drang naar radicale autonomie en het cultiveren van ongecensureerde, ongetemde impulsen binnen de gezamenlijke dynamiek. De verbinding zoekt voortdurend naar ruimte om dat wat conventies afwijzen of uitsluiten toch een plek te geven. Zodra vaste verwachtingen of sociale normen de teugel aantrekken, ontstaat er direct een scherpe frictie tussen de noodzaak om taboes te doorbreken en de angst om elkaar daarin kwijt te raken.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -65548,9 +65545,9 @@
   {
     "key": "composite-aspect-pair:conjunction:sun:uranus",
     "locale": "nl",
-    "text": "De kern van deze verbinding draait om het doorbreken van vaste patronen en het gezamenlijk opzoeken van vernieuwing. Dit partnerschap functioneert door de status quo continu te bevragen en onafhankelijke ruimte te waarborgen. Zodra er te veel verwachtingen of traditionele kaders van buiten worden opgelegd, ontstaat er onmiddellijk een scherpe reflex om alle grenzen direct af te wijzen.",
+    "text": "De kern van deze verbinding draait om het doorbreken van vaste patronen en het gezamenlijk opzoeken van vernieuwing. Dit partnerschap functioneert door de status quo continu te bevragen en onafhankelijke ruimte te waarborgen. Zodra er te veel traditionele verwachtingen van buiten worden opgelegd, ontstaat er direct een functionele spanning om elke vorm van inperking kritisch tegen het licht te houden.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -65956,9 +65953,9 @@
   {
     "key": "composite-aspect-pair:semisextile:chiron:mercury",
     "locale": "nl",
-    "text": "Dit partnerschap kenmerkt zich door een fijne afstemming in de onderlinge informatie-uitwisseling en het denkproces. De dynamiek zoekt voortdurend naar nuance in de manier waarop gedachten worden gedeeld en begrepen. Zodra er onduidelijkheid ontstaat, neigt de interactie ernaar om plannen direct te overdenken of te overtuigen, wat vraagt om een milde flexibiliteit in de gezamenlijke denkstijl.",
+    "text": "Jullie gedeelde mentale wereld zoekt voortdurend naar een precieze afstemming waarin elk woord gewogen wordt op onuitgesproken kwetsbaarheid. Deze dynamiek bouwt aan een fijngevoelig begrip waarin gedachten zorgvuldig worden gearticuleerd om pijnlijke misverstanden te voorkomen. Zodra er echter een meningsverschil ontstaat, reageert de interactie soms met krampachtige pogingen om alles dicht te praten, waardoor het werkelijke luisteren tijdelijk onder druk komt te staan.",
     "tier": "nuance",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -66064,9 +66061,9 @@
   {
     "key": "composite-aspect-pair:semisextile:chiron:uranus",
     "locale": "nl",
-    "text": "De dynamiek tussen jullie zoekt constant naar een balans tussen kwetsbare verwerking van oude kwetsuren en de drang naar volstrekte onafhankelijkheid. Dit partnerschap functioneert door onverwachte wendingen te benutten om starre patronen te doorbreken. De schaduw toont zich wanneer de angst voor kwetsbaarheid omslaat in een krampachtige behoefte aan vernieuwing, waardoor stabiliteit soms onnodig onder druk komt te staan.",
+    "text": "Jullie verbinding zoekt een balans tussen het zorgvuldig verwerken van oude pijn en de onmiddellijke impuls om elke vorm van routine te doorbreken. Dit partnerschap functioneert door onverwachte wendingen te gebruiken als middel om vastgelopen patronen los te wrikken. De schaduw ontstaat wanneer de noodzaak tot vernieuwing zo krampachtig wordt doorgevoerd dat noodzakelijke stabiliteit nodeloos onder druk komt te staan.",
     "tier": "nuance",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -66172,9 +66169,9 @@
   {
     "key": "composite-aspect-pair:semisextile:interpolatedLilith:neptune",
     "locale": "nl",
-    "text": "De dynamiek tussen jullie brengt een zoektocht naar absolute echtheid samen met een verlangen naar grenzeloze versmelting. Het partnerschap balanceert continu tussen het ontmaskeren van elke schijn en het in stand houden van een gedeelde illusie. Zodra de realiteit hard binnendringt, ontstaat de neiging om subtiel te ontvluchten of juist star vast te houden aan ongrijpbare idealen.",
+    "text": "Jullie verlangen naar ongekunstelde echtheid vraagt om een constante, bijna onmerkbare bijstelling in de omgang met grenzeloze idealen en gedeelde verbeelding. Het partnerschap zoekt telkens naar een werkbare vorm waarin het doorprikken van elke schijn niet botst met de neiging om werkelijkheden te verzachten. Zodra externe kaders knellen, ontstaat er een subtiele wrijving tussen het willen vasthouden aan rauwe waarheid en het wegzakken in ongrijpbare verwachtingen.",
     "tier": "nuance",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -67060,9 +67057,9 @@
   {
     "key": "composite-aspect-pair:semisextile:meanNode:uranus",
     "locale": "nl",
-    "text": "Dit partnerschap beweegt zich voortdurend tussen de gezamenlijke groeirichting en een onderhuidse behoefte aan onverwachte wendingen. De dynamiek zoekt een stabiele lijn maar reageert alert op elk teken van routine, waardoor stabiliteit soms onbedoeld wordt bijgestuurd uit angst voor stagnatie.",
+    "text": "Dit partnerschap vraagt om een voortdurende, subtiele bijstelling tussen de gezamenlijke groeirichting en een onuitgesproken drang naar vernieuwing. De dynamiek zoekt een gedeelde koers, maar reageert alert zodra voorspelbaarheid de ruimte inperkt, wat vraagt om een constante balans tussen ingesleten structuren en de noodzaak om vaste kaders open te breken.",
     "tier": "nuance",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -67144,9 +67141,9 @@
   {
     "key": "composite-aspect-pair:semisextile:mercury:pluto",
     "locale": "nl",
-    "text": "Dit gezamenlijke gesprek zoekt voortdurend naar de diepere onderlagen achter alledaagse feiten. Het mechanisme onderzoekt wat onuitgesproken blijft en brengt verborgen drijfveren naar de oppervlakte. Zodra externe druk toeneemt, ontstaat de neiging om elk detail grondig te analyseren tot een uitputtende controle.",
+    "text": "Dit gezamenlijke gesprek brengt een constante afstemming teweeg tussen oppervlakkige uitwisseling en diepere, onuitgesproken intensiteit. Het mechanisme onderzoekt de onderstroom zorgvuldig om betekenis helder te krijgen. Zodra externe grenzen opspelen, ontstaat de spanning om feiten te overschatten om op die manier de regie vast te houden.",
     "tier": "nuance",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -67192,9 +67189,9 @@
   {
     "key": "composite-aspect-pair:semisextile:mercury:uranus",
     "locale": "nl",
-    "text": "Het gezamenlijke denken beweegt zich in een constant ritme van verandering en mentale vernieuwing, waarbij vaste standpunten direct worden bevraagd. Dit mechanisme zoekt naar onverwachte oplossingen en doorbreekt patronen zodra het gesprek te voorspelbaar dreigt te worden. De schaduw toont zich in een lichte rusteloosheid wanneer de communicatie structuur zoekt, wat kan leiden tot overbodig bijsturen omwille van de verandering zelf.",
+    "text": "Het gezamenlijke denken brengt vaste kaders en onverwachte inzichten met elkaar in balans door kleine, nauwgezette bijstellingen. Dit mechanisme brengt ideeën steeds opnieuw in beweging om te voorkomen dat de gedachteverwisseling te star wordt. De schaduw ontstaat wanneer de zoektocht naar vernieuwing omslaat in een permanente herschikking, waardoor rustige continuïteit plaatsmaakt voor onnodige aanpassingen.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -67348,9 +67345,9 @@
   {
     "key": "composite-aspect-pair:semisextile:neptune:osculatingLilith",
     "locale": "nl",
-    "text": "Dit partnerschap beweegt zich van nature richting een diep gedeelde verbeeldingskracht en een fijngevoelig idealisme. De dynamiek zoekt naar manieren om grenzen te laten vervagen en een grenzeloze verbinding te realiseren. Zodra externe kaders of praktische beperkingen zich opdragen, ontstaat er een subtiele spanning waarbij de wens om vast te houden aan dromen botst met de harde werkelijkheid.",
+    "text": "Dit partnerschap neigt naar een gedeeld ideaal waarin conventionele kaders oplossen in een grenzeloze gevoeligheid. De dynamiek zoekt voortdurend naar een subtiele balans tussen totale versmelting en compromisloze individuele autonomie. Zodra externe verwachtingen of praktische regels opleggen hoe ver te gaan, ontstaat er een scherpe wens om zich te onttrekken aan elke vorm van controle.",
     "tier": "nuance",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -67372,9 +67369,9 @@
   {
     "key": "composite-aspect-pair:semisextile:neptune:pluto",
     "locale": "nl",
-    "text": "Dit partnerschap beweegt van nature richting een diepgaande en ongrijpbare verbinding waarin idealen en onuitgesproken krachten elkaar raken. De dynamiek zoekt naar een vorm van gedeelde vernieuwing door oude zekerheden los te laten. Zodra externe druk toeneemt, ontstaat de neiging om te vluchten in onduidelijkheid of juist vast te houden aan onzichtbare verwachtingen.",
+    "text": "Dit partnerschap vraagt om een voortdurende, subtiele afstemming tussen de behoefte aan grenzeloze idealen en de onderliggende noodzaak tot diepgaande transformatie. De dynamiek zoekt naar vernieuwing door telkens kleine aanpassingen te doen wanneer de werkelijkheid botst met ongrijpbare verwachtingen. Zodra externe druk toeneemt, ontstaat de spanning waarin onduidelijkheid omslaat in rigide controle over wat juist had moeten stromen.",
     "tier": "nuance",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -67516,9 +67513,9 @@
   {
     "key": "composite-aspect-pair:semisextile:osculatingLilith:uranus",
     "locale": "nl",
-    "text": "De dynamiek tussen jullie zoekt naar manieren om vastgeroeste patronen te doorbreken en ruimte te maken voor onverwachte perspectieven. Dit partnerschap functioneert door telkens opnieuw te vernieuwen en te ontsnappen aan conventionele verwachtingen. De spanning ontstaat wanneer de drang naar volstrekte onafhankelijkheid botst met de stilzwijgende behoefte aan herkenbaarheid en veiligheid.",
+    "text": "Dit partnerschap brengt een subtiele frictie met zich mee waarin ongetemde, rauwe impulsen voortdurend kleine aanpassingen vergen om niet vast te lopen in verwachte normen. De verbinding functioneert door onverwachte perspectieven te testen tegenover wat sociaal wenselijk of taboe doorkend is. Spanning ontstaat wanneer de drang naar compromisloze eigenheid botst met de stilzwijgende noodzaak om toch ergens aansluiting te vinden bij de gevestigde orde.",
     "tier": "nuance",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -67696,9 +67693,9 @@
   {
     "key": "composite-aspect-pair:semisextile:pluto:vesta",
     "locale": "nl",
-    "text": "Dit partnerschap draagt een continue drang in zich om diepgewortelde patronen grondig te doorbreken en opnieuw op te bouwen. De dynamiek zoekt voortdurend naar een zuivere kern door vastgeroeste structuren los te laten en ruimte te maken voor vernieuwing. Wanneer externe verwachtingen of verplichtingen de gezamenlijke koers inperken, ontstaat er een subtiele wrijving waarbij de neiging opspeelt om controle te versterken om de ingezette verandering te bewaken.",
+    "text": "Dit partnerschap bezit een onwrikbare toewijding om diepgewortelde structuren te zuiveren en opnieuw te richten op wat werkelijk essentieel is. De dynamiek beschermt deze gezamenlijke focus door zorgvuldig af te stemmen op een eigen interne orde. Wanneer externe invloeden of verplichtingen deze toewijding doorkruisen, ontstaat er een subtiele wrijving tussen de noodzaak om los te laten en de neiging om de gevestigde structuur zorgvuldig te beschermen.",
     "tier": "nuance",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -68344,9 +68341,9 @@
   {
     "key": "composite-aspect-pair:semisquare:interpolatedLilith:jupiter",
     "locale": "nl",
-    "text": "Dit partnerschap beweegt van nature richting betekenis, horizonverbreding en gedeelde overtuigingen. De gezamenlijke koers zoekt voortdurend naar mogelijkheden om voor te bouwen op optimisme en een gezamenlijk perspectief. Zodra grenzen of restricties opduiken, ontstaat de neiging om te overcompenseren in grenzeloze plannen, waardoor de verbinding riskeert voorbij te gaan aan praktische haalbaarheid.",
+    "text": "Jullie gezamenlijke koers bouwt van nature op vertrouwen, horizonverbreding en gedeelde overtuigingen. Dit richt zich op het vinden van een onvoorwaardelijke betekenis, waarbij autonomie en gezamenlijke groei elkaar voortdurend uitdagen. Zodra externe verwachtingen of conventies de ruimte inperken, ontstaat de neiging om elk compromis af te wijzen als een inbreuk op de eigen overtuiging.",
     "tier": "nuance",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -68404,9 +68401,9 @@
   {
     "key": "composite-aspect-pair:semisquare:interpolatedLilith:neptune",
     "locale": "nl",
-    "text": "Dit partnerschap beweegt zich van nature richting gedeelde idealen en een grenzeloze betrokkenheid op elkaar. Het functionele mechanisme zoekt naar een harmonieuze versmelting waarin individuele grenzen vervagen ten gunste van het gezamenlijke gevoel. Zodra externe kaders of feitelijke beperkingen zich aandienen, ontstaat er een subtiele spanning waarbij de gezamenlijke droom gemakkelijk wegzakt in onduidelijkheid of misverstanden.",
+    "text": "Dit partnerschap zoekt naar een volkomen samensmelting waarin ieder compromis als een inperking van de vrijheid voelt. Het mechanisme balanceert onverzettelijke autonomie met het verlangen om grenzeloos samen te smelten. Zodra externe normen of gedeelde verwachtingen te dwingend worden, ontstaat er een scherpe wrijving waarin het eigen verlangen zich radicaal terugtrekt of juist elk gezamenlijk ideaal afwijst.",
     "tier": "nuance",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -69088,9 +69085,9 @@
   {
     "key": "composite-aspect-pair:semisquare:meanLilith:neptune",
     "locale": "nl",
-    "text": "Dit partnerschap beweegt zich van nature naar een gedeelde gevoeligheid en een dromerige verbondenheid met de wereld. De dynamiek zoekt naar subtiele grenzen tussen samensmelting en onafhankelijkheid, waarbij structuur soms diffuus aanvoelt. De spanning ontstaat zodra onduidelijke verwachtingen botsen met de behoefte aan een heldere gezamenlijke richting.",
+    "text": "Jullie worden gedreven door een verlangen om conventionele kaders volledig achter je te laten en een ongecensureerde echtheid te bereiken. Dit mechanisme beschermt de individuele autonomie door elke vorm van conventionele structuur te omzeilen of te ontwrichten. Er ontstaat spanning zodra de zoektocht naar absolute vrijheid botst op praktische afhankelijkheden of wanneer het nastreven van een ongrijpbaar ideaal leidt tot onderlinge vervreemding.",
     "tier": "nuance",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -69808,9 +69805,9 @@
   {
     "key": "composite-aspect-pair:semisquare:pallas:sun",
     "locale": "nl",
-    "text": "Dit partnerschap combineert een heldere gezamenlijke richting met een scherp oog voor strategische planning. Samen ontstaat er een natuurlijke focus op het uitstippelen van doelen en het oplossen van praktische vraagstukken. De schaduw van deze combinatie uit zich in een lichte neiging tot overmatig analyseren, waarbij plannen soms belangrijker worden dan de spontane verbinding.",
+    "text": "Dit partnerschap brengt een bewuste focus op een gezamenlijke richting samen met een scherpe, methodische blik op de uitvoering. Er ontstaat een constante drang om plannen en concepten exact af te stemmen op de kern van het samenzijn. Zodra deze doelgerichte strategie botst op onvoorziene omstandigheden of spontane impulsen, ontstaat de neiging om vast te houden aan het bedachte model in plaats van flexibel mee te bewegen.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -69820,9 +69817,9 @@
   {
     "key": "composite-aspect-pair:semisquare:pallas:trueNode",
     "locale": "nl",
-    "text": "Dit partnerschap bezit een fijne afstemming tussen strategisch inzicht en de gezamenlijke ontwikkelingsrichting. De verbinding zoekt constant naar manieren om plannen en koers met elkaar in harmonie te brengen. Zodra externe omstandigheden veranderen, ontstaat er soms een lichte neiging om het gezamenlijke pad te overanalyseren.",
+    "text": "Dit partnerschap brengt strategisch inzicht en de gezamenlijke ontwikkelingsrichting samen via een scherpe, constante wrijving die voortdurende bijstelling vraagt. De verbinding zoekt voortdurend naar een werkbare balans tussen bedachte plannen en de feitelijke koers. Zodra externe omstandigheden veranderen, ontstaat de neiging om elk detail van de strategie te overdenken om grip op de vooruitgang te behouden.",
     "tier": "nuance",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -70240,9 +70237,9 @@
   {
     "key": "composite-aspect-pair:sextile:ceres:osculatingLilith",
     "locale": "nl",
-    "text": "Dit partnerschap combineert een natuurlijke zorgvuldigheid met een ontembare drang naar ongecensureerde authenticiteit. De dynamiek zoekt voortdurend naar een balans tussen de wens om elkaar te koesteren en de noodzaak om onafhankelijke ruimte te waarborgen. Zodra verwachtingen of conventies druk uitoefenen op het verband, ontstaat het risico dat een van beiden zich beknot voelt en de verbinding abrupt ter discussie stelt.",
+    "text": "Dit partnerschap verbindt een diepe toewijding aan elkaars welzijn met een compromisloze eis tot rauwe authenticiteit. De dynamiek zoekt naar een vorm van zorgen waarin ieder volledig zichzelf kan blijven zonder dat concessies worden gedaan aan de eigen onafhankelijkheid. Zodra verwachtingen of onuitgesproken regels de relatie binnensluipen, ontstaat er wrijving tussen de wens tot geborgenheid en de reflex om zich direct aan elke vorm van conformisme te onttrekken.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -70900,9 +70897,9 @@
   {
     "key": "composite-aspect-pair:sextile:juno:uranus",
     "locale": "nl",
-    "text": "Dit partnerschap vindt een natuurlijke balans tussen gedeelde verbondenheid en de noodzaak om onafhankelijk te blijven. De gezamenlijke dynamiek zoekt voortdurend naar vernieuwing in de onderlinge band en doorbreekt vaste patronen zodra die verstikkend gaan werken. Zodra externe verplichtingen of rigide verwachtingen de relatie inperken, ontstaat er direct een scherpe weerstand tegen elke vorm van beperking.",
+    "text": "Dit partnerschap vindt een natuurlijke balans tussen gedeelde verbondenheid en de noodzaak om onafhankelijk te blijven. De gezamenlijke dynamiek zoekt naar vernieuwing in de onderlinge band en doorbreekt vaste patronen zodra die verstikkend gaan werken. Zodra externe verplichtingen of rigide verwachtingen de relatie inperken, ontstaat er ruimte om de verbinding te herdefiniëren en autonoom te houden.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -71176,9 +71173,9 @@
   {
     "key": "composite-aspect-pair:sextile:mars:osculatingLilith",
     "locale": "nl",
-    "text": "De dynamiek tussen jullie verbindt doelgerichte actie direct met taboes en ongetemde randen. Samen onderzoeken jullie onuitgesproken grenzen en sociale conventies door openlijk ruimte te geven aan rauwe drijfveren. De spanning ontstaat wanneer de gedeelde assertiviteit botst op sociale verwachtingen, wat kan omslaan in een principiële afwijzing van elke vorm van buitenlandse of conventionele controle.",
+    "text": "Jullie verbinden doelgerichte actie soepel met ongefilterde impulsen en onuitgesproken randen, waardoor jullie samen conventies onderzoeken zonder onnodige strijd. Deze constructieve wisselwerking biedt kansen om verlangens vorm te geven voorbij de geijkte kaders. De schaduwduw ontstaat wanneer externe verwachtingen te strak aantrekken, wat kan omslaan in een starre verdediging van de eigen onafhankelijkheid.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -71308,9 +71305,9 @@
   {
     "key": "composite-aspect-pair:sextile:meanLilith:moon",
     "locale": "nl",
-    "text": "De dynamiek tussen jullie verbindt instinctieve kwetsbaarheid met ongefilterde authenticiteit. Het samenleven zoekt naar een bedding waarin onuitgesproken randen en diepe emotionele stromingen openlijk mogen bestaan. Zodra verwachtingen of conventies druk uitoefenen op de verbinding, ontstaat er een scherpe spanning tussen de behoefte aan veiligheid en de wil om elke concessie aan de buitenwereld af te wijzen.",
+    "text": "Jullie vinden een natuurlijke brug tussen emotionele geborgenheid en ongefilterde authenticiteit. Het samenleven integreert diepe persoonlijke gevoelens soepel met de wil om conventies te bevragen. Zodra externe druk of verwachtingen toenemen, ontstaat de ruimte om deze autonomie te verdedigen zonder dat dit de gezamenlijke basis direct bedreigt.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -71464,9 +71461,9 @@
   {
     "key": "composite-aspect-pair:sextile:meanNode:osculatingLilith",
     "locale": "nl",
-    "text": "De gezamenlijke groeirichting vindt een natuurlijke aansluiting bij ongefilterde authenticiteit en ongetemde kanten. Het partnerschap zoekt bewust naar een koers waarin ongemakkelijke waarheden en onconventionele impulsen een plek krijgen, wat de relatie weerbaar maakt tegen conventionele verwachtingen. Wanneer externe druk toeneemt, ontstaat de neiging om zich juist radicaal af te sluiten van de buitenwereld.",
+    "text": "De gezamenlijke groeirichting vindt een natuurlijke aansluiting bij ongefilterde authenticiteit en ongetemde kanten. Het partnerschap zoekt bewust naar een koers waarin ongekunstelde waarheden een plek krijgen, wat de relatie weerbaar maakt tegen vastgeroeste patronen. Wanneer externe verwachtingen toenemen, ontstaat een spanning tussen het trouw blijven aan die eigen rauwheid en het zoeken naar diplomatieke verbinding met de buitenwereld.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -71956,9 +71953,9 @@
   {
     "key": "composite-aspect-pair:sextile:osculatingLilith:trueNode",
     "locale": "nl",
-    "text": "Dit partnerschap bezit een onwrikbare drang om gevestigde normen te bevragen en een eigen richting te volgen. De gezamenlijke dynamiek integreert compromisloze onafhankelijkheid naadloos met de langetermijnkoers. Zodra externe verwachtingen of conventies druk uitoefenen, ontstaat de neiging om zich radicaal af te sluiten van elke vorm van sociale goedkeuring.",
+    "text": "Dit partnerschap bezit een onwrikbare drang om gevestigde normen te bevragen en een eigen richting te volgen. De gezamenlijke dynamiek integreert onafhankelijkheid nauwlettend met de langetermijnkoers. Zodra externe verwachtingen druk uitoefenen, ontstaat de spanning tussen het volgen van de eigen koers en het verdragen van conventionele goedkeuring.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -71992,9 +71989,9 @@
   {
     "key": "composite-aspect-pair:sextile:osculatingLilith:vesta",
     "locale": "nl",
-    "text": "De dynamiek tussen jullie combineert een onvoorwaardelijke toewijding aan een gezamenlijk doel met een scherpe, compromisloze onafhankelijkheid. Er ontstaat een natuurlijke samenwerking waarin diepe toewijding en autonomie elkaar versterken zonder dat er concessies worden gedaan aan individuele integriteit. Het spanningsveld ontstaat wanneer externe verwachtingen of regels proberen om deze unieke samenwerking in te perken, wat kan leiden tot een abrupte en koppige afwijzing van elke vorm van controle.",
+    "text": "De dynamiek tussen jullie combineert een onvoorwaardelijke toewijding aan een gezamenlijk doel met een scherpe, compromisloze onafhankelijkheid. Er ontstaat een natuurlijke samenwerking waarin toewijding en autonomie elkaar versterken zonder dat individuele integriteit verloren gaat. Het spanningsveld ontstaat wanneer externe verwachtingen of regels proberen om deze gedeelde focus in te perken, wat kan leiden tot een scherpe wrijving tussen ieders persoonlijke vrijheid en de gezamenlijke richting.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -72052,9 +72049,9 @@
   {
     "key": "composite-aspect-pair:sextile:pallas:uranus",
     "locale": "nl",
-    "text": "De dynamiek tussen jullie kenmerkt zich door een vanzelfsprekende openheid voor vernieuwing en onverwachte wendingen. Samen vinden jullie een eigen ritme dat routines moeiteloos doorbreekt en ruimte maakt voor originele inzichten. Zodra vaste structuren te benauwend worden, ontstaat er wrijving tussen de wens tot onafhankelijkheid en de behoefte aan een gezamenlijke koers.",
+    "text": "Jullie herkennen direct de structurele patronen binnen vastgeroeste systemen en bedenken onmiddellijk inventieve, alternatieve strategieën om die te doorbreken. Samen ontwerpen jullie concepten die bestaande kaders moeiteloos herordenen om ruimte te maken voor onverwachte oplossingen. Zodra externe systemen te rigid worden, ontstaat er een functionele spanning tussen de behoefte aan methodische planning en de plotselinge drang om elke gevestigde orde direct los te laten.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -72124,9 +72121,9 @@
   {
     "key": "composite-aspect-pair:sextile:pluto:uranus",
     "locale": "nl",
-    "text": "Deze relatie bezit een diepgewortelde drang om bestaande structuren te vernieuwen en te bevrijden van verstikkende patronen. Samen zoeken jullie naar manieren om radicale verandering te verbinden met de noodzaak tot onafhankelijke ruimte. Zodra externe druk of verwachtingen toenemen, ontstaat de neiging om elk compromis abrupt af te wijzen om de eigen autonomie te waarborgen.",
+    "text": "Deze verbinding beschikt over een aangeboren vermogen om ingrijpende vernieuwing te koppelen aan plotselinge doorbraken in de persoonlijke onafhankelijkheid. Samen bouwt deze dynamiek aan systemen waarin transformatie en vrijheid elkaar versterken zonder vast te lopen in traditie. Zodra externe controle of starre verwachtingen de ruimte inperken, ontstaat er echter een scherpe wrijving tussen het verlangen naar volledige autonomie en de noodzaak om gezamenlijke structuren te handhaven.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -72184,9 +72181,9 @@
   {
     "key": "composite-aspect-pair:sextile:saturn:uranus",
     "locale": "nl",
-    "text": "Dit partnerschap balanceert tussen de behoefte aan duurzame structuur en de eis van vernieuwing. De dynamiek verbindt betrouwbare kaders met onverwachte vrijheid, waardoor de gezamenlijke koers stabiel blijft zonder vast te roesten. Zodra externe druk optreedt, ontstaat een spanning tussen het handhaven van gemaakte afspraken en de impuls om alle regels direct los te laten.",
+    "text": "Dit partnerschap balanceert tussen de behoefte aan duurzame structuur en de eis van vernieuwing. De dynamiek verbindt betrouwbare kaders met onverwachte vrijheid, waardoor de gezamenlijke koers stabiel blijft zonder vast te roesten. Zodra externe druk optreedt, ontstaat een spanning tussen het vasthouden aan bekende veiligheid en het doorvoeren van noodzakelijke flexibiliteit.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -72220,9 +72217,9 @@
   {
     "key": "composite-aspect-pair:sextile:sun:trueNode",
     "locale": "nl",
-    "text": "Dit partnerschap bezit een natuurlijke vanzelfsprekendheid die aansluit bij een grotere gezamenlijke richting. De relatie helpt om bewuste stappen te zetten naar een gedeelde toekomst, waarbij de dagelijkse doelen soepel samenvallen met de lange termijn. Zodra er externe verwachtingen of druk van buitenaf optreedt, kan de verbinding echter aarzelen om de eigen koers vast te houden uit angst om de harmonie te verstoren.",
+    "text": "Dit partnerschap bezit een natuurlijke vanzelfsprekendheid die aansluit bij een grotere gezamenlijke richting. De relatie helpt om bewuste stappen te zetten naar een toekomstig doel, waarbij dagelijkse keuzes soepel samenvallen met de grotere lijn. Zodra externe verwachtingen of dwingende structuren van buitenaf binnendringen, ontstaat er echter een functionele wrijving tussen het vasthouden aan de eigen voortgang en het buigen voor opgelegde kaders.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -72496,9 +72493,9 @@
   {
     "key": "composite-aspect-pair:quintile:ceres:saturn",
     "locale": "nl",
-    "text": "De gezamenlijke groeirichting brengt een natuurlijke vaardigheid samen om zorgvuldig vorm te geven aan langetermijndoelen. Grenzen en verantwoordelijkheden worden met een vindingrijke precisie op elkaar afgestemd, al kan de wens om alles strak te beheersen soms omslaan in een overmatige focus op structuur.",
+    "text": "Jullie gezamenlijke zorg vraagt om een bewuste balans tussen teder voeden en realistische begrenzing, waarbij praktische steun hand in hand gaat met duidelijke kaders. Dit mechanisme stemt ieders behoefte aan geborgenheid af op een nuchtere plichtsbesef, wat helpt om langdurige steun betrouwbaar vorm te geven. Zodra externe druk toeneemt, dreigt de neiging echter door te schieten in rigide controle of emotionele soberheid.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -73108,9 +73105,9 @@
   {
     "key": "composite-aspect-pair:quintile:juno:trueNode",
     "locale": "nl",
-    "text": "Dit partnerschap bezit een vindingrijke aanleg om gedeelde toewijding te verbinden met een grotere gezamenlijke richting. Samen ontstaat er een subtiel talent om wederzijdse verbinding organisch te laten samenvallen met een persoonlijke levenskoers. De uitdaging ligt in de neiging om te streng te sturen op de vorm van die samenwerking, waardoor de natuurlijke inventiviteit soms verkrampt.",
+    "text": "Dit partnerschap bezit een vindingrijke aanleg om gedeelde toewijding te verbinden met een grotere gezamenlijke richting. Samen ontstaat er een subtiel talent om wederzijdse verbinding organisch te laten samenvallen met het gemeenschappelijke doel. De uitdaging ligt in de neiging om te streng te sturen op de vorm van die samenwerking, waardoor de natuurlijke inventiviteit soms verkrampt.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -73828,9 +73825,9 @@
   {
     "key": "composite-aspect-pair:quintile:mercury:pluto",
     "locale": "nl",
-    "text": "Deze combinatie genereert een scherpe, onderzoekende geest die de dieperliggende motieven achter elk gesprek blootlegt. Het mechanisme werkt door onderwerpen grondig te analyseren en niets aan het toeval over te laten bij het uitwisselen van gedachten. Zodra externe kaders of vaste meningen opleggen hoe er gedacht moet worden, ontstaat er een scherpe weerstand tegen elke vorm van oppervlakkigheid.",
+    "text": "Jouw intellect bezit een inventieve gave om ogenschijnlijk losstaande concepten vakkundig met elkaar te verbinden tot een helder geheel. Dit functionele mechanisme zoekt naar creatieve oplossingen door diep te graven en scherpe verbanden te leggen waar anderen vastlopen. Zodra externe kaders of vaste structuren deze onderzoekende denkkracht beperken, dreigt het risico van obsessieve controle over de feiten om grip te behouden.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -74716,9 +74713,9 @@
   {
     "key": "composite-aspect-pair:square:ceres:pluto",
     "locale": "nl",
-    "text": "De dynamiek tussen jullie wordt gedreven door een onmiskenbare drang naar ingrijpende vernieuwing en diepgaande verbondenheid. Dit partnerschap zoekt onvermoeibaar naar de kern van wat er leeft, waarbij onuitgesproken dynamieken en onderstroomse spanningen aan het licht worden gebracht. Zodra externe druk of grenzen de ruimte beperken, reageert de verbinding vaak met intensieve controle of juist de noodzaak om vastgeroeste structuren volledig los te laten om te overleven.",
+    "text": "Jullie verbinding wordt gedreven door een intens verlangen naar diepgaande zorg en onvoorwaardelijke steun, die echter telkens botst op de noodzaak om vastgeroeste machtsdynamieken rondom verzorging los te laten. Deze relatie zoekt naar een fundamentele vernieuwing in hoe jullie voor elkaar zorgen, maar reageert op kwetsbaarheid of externe beperkingen vaak met krampachtige controle of juist het vermijden van echte afhankelijkheid.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -75472,9 +75469,9 @@
   {
     "key": "composite-aspect-pair:square:jupiter:pallas",
     "locale": "nl",
-    "text": "Dit partnerschap beweegt van nature richting brede vergezichten en gedeelde overtuigingen, waarbij de gezamenlijke visie continu getoetst wordt aan strategische plannen en praktische uitvoerbaarheid. Er ontstaat een constante spanning tussen de drang tot onbeperkte ontwikkeling en de noodzaak om strategische keuzes scherp af te bakenen. Zodra externe kaders of vaste structuren de gezamenlijke expansie in de weg staan, zoekt de dynamiek hetzij rigoureuze controle, hetzij een volledige breuk met de realiteit.",
+    "text": "Dit partnerschap beweegt van nature richting brede vergezichten en gedeelde overtuigingen, waarbij de gezamenlijke visie continu getoetst wordt aan strategische plannen en praktische uitvoerbaarheid. Er ontstaat een constante spanning tussen de drang tot onbeperkte ontwikkeling en de noodzaak om plannen scherp af te bakenen. Zodra externe kaders de horizon beperken, wringt de gezamenlijke visie met de gehanteerde methodes.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -75508,9 +75505,9 @@
   {
     "key": "composite-aspect-pair:square:jupiter:sun",
     "locale": "nl",
-    "text": "Dit partnerschap draagt een continue drang naar verbreding en gezamenlijke betekenis in zich. De gezamenlijke koers botst met regelmaat op de individuele identiteit van beide partijen, waardoor ambitie en visie spanning opleveren rondom de te varen richting. Zodra externe verwachtingen of beperkingen de ruimte inperken, ontstaat de neiging om te vluchten in grenzeloze plannen of juist in principiële onenigheid over de te kiezen doelen.",
+    "text": "Dit partnerschap draagt een continue drang naar verbreding en gezamenlijke betekenis in zich. De gedeelde koers botst met regelmaat op de kern van het eigen bestaan als relatie, waardoor ambitie en visie spanning opleveren rondom de te varen richting. Zodra externe verwachtingen of beperkingen de ruimte inperken, ontstaat de neiging om te vluchten in grenzeloze plannen of juist in principiële onenigheid over de te kiezen doelen.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -75772,9 +75769,9 @@
   {
     "key": "composite-aspect-pair:square:meanLilith:neptune",
     "locale": "nl",
-    "text": "De dynamiek tussen jullie beweegt zich voortdurend op de grens van heldere afspraken en grenzeloze idealen. Samen zoeken jullie naar een gedeelde verbeelding, maar zodra externe verwachtingen of beperkingen binnendringen, ontstaat er een risico op misverstanden of het ontwijken van de harde werkelijkheid.",
+    "text": "Jullie delen een diepe drang om onuitgesproken of taboe verlangens te verbergen achter verheven idealen en vloeibare dromen. Zodra externe kaders of maatschappelijke verwachtingen deze ongrijpbare ruimte proberen in te perken, ontstaat er een sluimerende spanning rondom autonomie en authenticiteit. Dit leidt geregeld tot een subtiele ontwijking van vastigheid, waarin de grens tussen bewuste vrijheid en ongrijpbare illusie vervaagt.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -75844,9 +75841,9 @@
   {
     "key": "composite-aspect-pair:square:meanLilith:uranus",
     "locale": "nl",
-    "text": "De dynamiek tussen jullie kenmerkt zich door een constante spanning tussen gezamenlijke verbondenheid en de plotselinge drang naar volstrekte onafhankelijkheid. Dit partnerschap wordt regelmatig opgeschud door onverwachte wendingen die vaste patronen doorbreken en ruimte maken voor vernieuwing. Wanneer een van beiden de teugels strakker aantrekt, reageert de verbinding direct met een ontwrichtende opstandigheid die elke vorm van controle of routine uitdaagt.",
+    "text": "Jullie gedeelde dynamiek zoekt naar een radicaal eigenzinnige vrijheid waarin ongefilterde en taboedoorbrekende verlangens luid klinken. Dit partnerschap functioneert door vastgeroeste structuren regelmatig open te breken en zo de weg vrij te maken voor ongekunstelde authenticiteit. Zodra externe verwachtingen of ingesleten routines te benauwend worden aanvoelen, reageert de verbinding met een ontwrichtende opstandigheid die elke poging tot inperking direct afwijst.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -76420,9 +76417,9 @@
   {
     "key": "composite-aspect-pair:square:osculatingLilith:trueNode",
     "locale": "nl",
-    "text": "Deze relatie brengt een fundamentele spanning teweeg tussen ongecensureerde waarheden en de gezamenlijke groeirichting. De verbinding zoekt instinctief naar ongefilterde authenticiteit, wat kan botsen met de noodzaak om zich aan te passen aan een gedeeld pad. Wanneer externe verwachtingen of sociale normen worden opgelegd, ontstaat de neiging om zich juist radicaal af te zetten tegen elke vorm van conventie.",
+    "text": "Deze verbinding brengt een fundamentele spanning teweeg tussen ongecensureerde waarheden en de gezamenlijke groeirichting. De relatie zoekt instinctief naar ongefilterde authenticiteit, wat kan botsen met de noodzaak om zich aan te passen aan een gedeeld pad. Wanneer externe verwachtingen worden opgelegd, ontstaat de neiging om de eigen onafhankelijke positie te bewaken door elk compromis als een inperking te ervaren.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -76432,9 +76429,9 @@
   {
     "key": "composite-aspect-pair:square:osculatingLilith:uranus",
     "locale": "nl",
-    "text": "Dit partnerschap beweegt voortdurend op de grens van vertrouwde verbondenheid en de drang om alle vastgelegde kaders plotseling open te breken. Onverwachte impulsen doorbreken de routine zodra de structuur te strak aanvoelt. Dit leidt tot een voortdurende spanning tussen de wens tot stabiliteit en het acuut afwijzen van elke vorm van beperking.",
+    "text": "Jullie verbinding zoekt instinctief naar de randen van wat sociaal of conventioneel geaccepteerd is, waarbij ongetemde onafhankelijkheid botst met elke poging tot structurele controle. Zodra vaste kaders of verwachtingen te nauw gaan aanvoelen, ontstaat de drang om deze plotseling en radicaal te ontwrichten. Hierdoor balanceert de relatie voortdurend tussen een diep verlangen naar autonomie en de ongemakkelijke wrijving met externe begrenzing.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -76936,9 +76933,9 @@
   {
     "key": "composite-aspect-pair:trine:ceres:pluto",
     "locale": "nl",
-    "text": "De dynamiek tussen jullie vraagt om een fundamentele transformatie waarin oude zekerheden durven worden losgelaten voor diepere vernieuwing. Samen ontstaat er een onuitgesproken kracht om blinde vlekken en onderliggende spanningen te doorbreken. Het schaduwdilemma manifesteert zich wanneer de intensiteit omslaat in overmatige controle of de angst om kwetsbaarheid toe te laten in het gezamenlijke proces.",
+    "text": "Jullie delen het vermogen om elkaar diepgaand te voeden en te ondersteunen door oude patronen radicaal los te laten en te vernieuwen. Deze verbinding brengt een natuurlijke, krachtige zorg op gang die verborgen kwetsbaarheden omzet in gezamenlijke draagkracht. Het schaduwdilemma ontstaat wanneer de intense zorgzucht omslaat in verstikkende controle of wanneer de angst voor verlies leidt tot een overmatige behoefte om elkaar vast te houden.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -77272,9 +77269,9 @@
   {
     "key": "composite-aspect-pair:trine:interpolatedLilith:meanNode",
     "locale": "nl",
-    "text": "Dit partnerschap deelt een instinctieve drang om bestaande conventies en onuitgesproken taboes te bevragen. De gezamenlijke dynamiek functioneert door ongemakkelijke waarheden aan het licht te brengen en zo een eigen richting te vinden. Het dilemma ontstaat wanneer de behoefte aan radicale autonomie botst met de noodzaak om samen te bewegen in een gedeelde toekomst.",
+    "text": "Dit partnerschap deelt een instinctieve drang om bestaande conventies en onuitgesproken taboes te bevragen. De gezamenlijke dynamiek functioneert door ongemakkelijke waarheden aan het licht te brengen en zo een eigen richting te vinden. Het dilemma ontstaat wanneer de zoektocht naar radicale autonomie zo sterk doorwerkt dat de ruimte voor een echt gedeelde toekomst onder druk komt te staan.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -77308,9 +77305,9 @@
   {
     "key": "composite-aspect-pair:trine:interpolatedLilith:neptune",
     "locale": "nl",
-    "text": "De dynamiek tussen jullie beweegt moeiteloos mee met ongrijpbare stemmingen en gedeelde idealen, waardoor er een haast magische vanzelfsprekendheid ontstaat. Dit vermogen om grenzen te laten vervagen brengt een diepe empathie, maar kan er tegelijkertijd voor zorgen dat de verbinding losraakt van de werkelijkheid wanneer heldere kaders ontbreken.",
+    "text": "Jullie bouwen aan een gedeelde ruimte waarin conventionele regels en maatschappelijke verwachtingen moeiteloos worden losgelaten ten faveure van een ongrijpbaar ideaal. Dit mechanisme zoekt instinctive naar vrijheid door structuren te laten verdampen wanneer ze te strak gaan knellen. Zodra de buitenwereld concrete kaders oplegt, ontstaat de schaduwzijde dat jullie jezelf verliezen in vluchtgedrag of de realiteit volledig ontwijken om compromissen te vermijden.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -77332,9 +77329,9 @@
   {
     "key": "composite-aspect-pair:trine:interpolatedLilith:pluto",
     "locale": "nl",
-    "text": "Deze relatie bezit een diepgewortelde drang om verborgen dynamieken en onbesproken taboes bloot te leggen. Samen zoeken jullie naar absolute echtheid en worden jullie ertoe gebracht om verouderde structuren radicaal los te laten. Zodra de dynamiek stuit op externe grenzen of regels, ontstaat er een intens gevecht om de controle waarin compromissen ver te zoeken zijn.",
+    "text": "Deze relatie bezit een natuurlijke kracht om verborgen dynamieken en onbesproken taboes ongefilterd naar de oppervlakte te brengen. Samen ontstaat er een vloeiende bereidheid om verouderde structuren los te laten en tot de kern door te dringen. Wanneer externe kaders deze ongeremde stroom proberen in te perken, ontstaat er een scherpe noodzaak om de eigen autonomie en invloed volledig te bewaren.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -77380,9 +77377,9 @@
   {
     "key": "composite-aspect-pair:trine:interpolatedLilith:uranus",
     "locale": "nl",
-    "text": "De kern van deze verbinding draait om het doorbreken van vaste patronen en het opzoeken van radicale vernieuwing. Samen ontstaat er een natuurlijke stroom die conventionele verwachtingen loslaat om volledige autonomie te waarborgen. Zodra de dynamiek te veel leunt op vastigheid of externe kaders, ontstaat er een felle weerstand tegen elke vorm van controle.",
+    "text": "Jullie verbinden onbevangen met wat de gevestigde orde liever onbesproken laat, gedreven door een onbuigzame trouw aan jullie eigen rauwheid. Deze dynamiek zoekt moeiteloos de grenzen op van wat sociaal wenselijk is en schuwt elke vorm van concessie aan conventie. Zodra een externe omgeving of relatiestructuur te veel vraagt om aanpassing of diplomatie, slaat deze natuurlijke onafhankelijkheid direct om in een compromisloze afwijzing van elke controle.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -77500,9 +77497,9 @@
   {
     "key": "composite-aspect-pair:trine:juno:osculatingLilith",
     "locale": "nl",
-    "text": "Dit partnerschap verbindt de wil tot wederzijdse trouw direct met een compromisloze onafhankelijkheid. De dynamiek zoekt naar een duurzame vorm van verbinding waarin beide betrokkenen tegelijkertijd volledig autonoom kunnen blijven functioneren. Zodra verwachtingen of conventies druk uitoefenen op de relatie, ontstaat er een scherpe wrijving tussen de wens tot samenzijn en de absolute noodzaak om eigen grenzen te bewaken.",
+    "text": "Dit partnerschap verbindt de wil tot wederzijdse trouw op natuurlijke wijze met een compromisloze onafhankelijkheid. De dynamiek zoekt naar een duurzame vorm van verbinding waarin beide betrokkenen tegelijkertijd volledig autonoom kunnen blijven functioneren. Zodra externe verwachtingen of conventies druk uitoefenen op de relatie, vloeit de wens tot samenzijn moeiteloos samen met de absolute noodzaak om eigen grenzen te bewaken.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -77572,9 +77569,9 @@
   {
     "key": "composite-aspect-pair:trine:juno:uranus",
     "locale": "nl",
-    "text": "Dit partnerschap vindt zijn kracht in een constante vernieuwing van de onderlinge verbinding. De dynamiek balanceert duurzame betrokkenheid met een radicale ruimte voor individuele onafhankelijkheid, waardoor vaste verwachtingen continu worden bevraagd. Zodra externe druk of routine de relatie inperkt, ontstaat de neiging om plotselinge breuken te forceren in plaats van geleidelijke aanpassingen te zoeken.",
+    "text": "Dit partnerschap vindt zijn kracht in een natuurlijke balans tussen duurzame betrokkenheid en een ruime mate van individuele onafhankelijkheid. De dynamiek integreert vernieuwing moeiteloos in de verbinding, waardoor vaste verwachtingen op een flexibele manier worden opengehouden. Zodra externe druk of routine de relatie dreigt te beperken, ontstaat er direct ruimte voor een alternatieve indeling zonder dat dit ten koste gaat van de gezamenlijke basis.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -77704,9 +77701,9 @@
   {
     "key": "composite-aspect-pair:trine:jupiter:pluto",
     "locale": "nl",
-    "text": "Dit partnerschap bezit een gezamenlijke stuwkracht naar vernieuwing en gedeelde betekenis. De combinatie functioneert door diepgaande overtuigingen te verbinden met een gezamenlijk vermogen tot ingrijpende verandering, waarbij externe weerstand of controle direct de noodzaak oproept om vastgeroeste structuren radicaal te doorbreken.",
+    "text": "Dit partnerschap bezit een natuurlijke stuwkracht naar vernieuwing en gedeelde betekenis. De combinatie functioneert door expansieve overtuigingen soepel te verbinden met een gezamenlijk vermogen tot ingrijpende verandering, waarbij externe structuren organisch meegroeien met de gezamenlijke visie. Zodra deze groei echter op starre grenzen stuit, kan de drang ontstaan om elk compromis te omzeilen en de situatie volledig naar de eigen hand te zetten.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -77956,9 +77953,9 @@
   {
     "key": "composite-aspect-pair:trine:meanLilith:meanNode",
     "locale": "nl",
-    "text": "Dit partnerschap deelt een onderliggende stroom die zich vanzelf afkeert van conventionele verwachtingen en gangbare normen. De verbinding zoekt een gezamenlijke koers door ongemakkelijke waarheden of verborgen dynamieken openlijk te omarmen en zo richting te geven aan de gezamenlijke ontwikkeling. Zodra de buitenwereld of starre structuren druk uitoefenen op de relatie, ontstaat er een reflex om zich radicaal te onttrekken aan elke vorm van controle of concessie.",
+    "text": "Dit partnerschap vindt een natuurlijke samenhang in het verkennen van ongebaande paden en het bevragen van gevestigde normen. De verbinding brengt een gezamenlijke richting voort door taboes of onbesproken dynamieken te integreren in de persoonlijke groei. Zodra externe verwachtingen te dwingend worden, ontstaat de neiging om de eigen onafhankelijkheid strikt af te schermen, wat kan leiden tot een gespannen afstandelijkheid ten opzichte van de buitenwereld.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -77980,9 +77977,9 @@
   {
     "key": "composite-aspect-pair:trine:meanLilith:moon",
     "locale": "nl",
-    "text": "De dynamiek tussen jullie biedt een ongewone ruimte voor ongecensureerde emoties en ongetemde reacties. Het partnerschap functioneert als een veilige vrijplaats waar ongemakkelijke of verzwegen gevoelens openlijk mogen bestaan, zonder sociale maskers. Wanneer de buitenwereld of externe verwachtingen echter druk uitoefenen op deze ongepolijste verbinding, ontstaat er snel de neiging om zich volledig af te sluiten en elk compromis te weigeren.",
+    "text": "Jullie gedeelde basis zoekt naar een ongepolijste echtheid waarin onverhulde gevoelens en instinctieve reacties direct mogen bestaan. Dit partnerschap functioneert als een veilige ruimte waar taboes en ongemakkelijke kanten openlijk gedeeld worden zonder sociale maskers. Wanneer externe druk of conventies echter eisen dat de verbinding zich aanpast aan de norm, ontstaat er al snel een spanning tussen de noodzaak tot bescherming van de eigen autonomie en het verlangen naar maatschappelijke aansluiting.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -78040,9 +78037,9 @@
   {
     "key": "composite-aspect-pair:trine:meanLilith:sun",
     "locale": "nl",
-    "text": "Dit partnerschap integreert een bewuste koers met een ongepolijste, onafhankelijke grondtoon. De verbinding zoekt van nature naar erkenning door conventies los te laten en taboes te bevragen. Wanneer de dynamiek stuit op externe verwachtingen, ontstaat er een scherpe spanning tussen de gezamenlijke identiteit trouw blijven en de druk om zich aan te passen aan sociale normen.",
+    "text": "Dit partnerschap verbindt een bewuste koers moeiteloos met een ongepolijste, onafhankelijke grondtoon. De gezamenlijke richting vindt haar kracht in het vanzelfsprekend bevragen van conventies en het negeren van vastgeroeste verwachtingen. Wanneer de dynamiek grenzen tegenkomt, vloeit autonoom buiten de lijnen kleuren direct samen met de wil om trouw te blijven aan de eigen kern.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -78052,9 +78049,9 @@
   {
     "key": "composite-aspect-pair:trine:meanLilith:trueNode",
     "locale": "nl",
-    "text": "Dit partnerschap wordt gedreven door een gezamenlijke koers die onuitgesproken taboes en veronachtzaamde kanten van het leven opzoekt. De verbinding functioneert door instinctieve waarheden direct aan te spreken, voorbij sociale conventies of beleefde verwachtingen. Wanneer de relatie stuit op externe normen of gedeelde weerstand, ontstaat er een scherpe spanning tussen het volgen van de diepste eigen roeping en het handhaven van maatschappelijke acceptatie.",
+    "text": "Dit partnerschap wordt gedreven door een gezamenlijke koers die onuitgesproken taboes en veronachtzaamde kanten van het leven opzoekt. De verbinding functioneert doordat instinctieve waarheden moeiteloos samenvallen met de gezamenlijke richting, voorbij conventionele verwachtingen. Wanneer de relatie stuit op externe normen, vloeit deze diepe herkenning op een natuurlijke manier samen met de ruimte die de omgeving toelaat.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -78148,9 +78145,9 @@
   {
     "key": "composite-aspect-pair:trine:meanNode:pallas",
     "locale": "nl",
-    "text": "De gezamenlijke groeirichting sluit naadloos aan bij een scherpe strategische blik op vraagstukken. Samen ontstaat er een heldere focus op het oplossen van complexe problemen, waarbij visie en praktische planning elkaar versterken. De spanning ontstaat wanneer de drang naar vooruitgang botst met een starke behoefte aan controle over de methode, waardoor flexibiliteit onder druk komt te staan.",
+    "text": "De gezamenlijke groeirichting sluit op natuurlijke wijze aan bij een scherpe, strategische blik op vraagstukken. Samen ontstaat er een heldere focus op het doorzien van patronen, waarbij visie en praktische planning elkaar versterken. De schaduwzijde van deze soepele samenwerking toont zich wanneer de sterke voorkeur voor een uitgedacht plan te weinig ruimte laat voor onvoorziene wendingen.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -78160,9 +78157,9 @@
   {
     "key": "composite-aspect-pair:trine:meanNode:pluto",
     "locale": "nl",
-    "text": "De gezamenlijke groeirichting vraagt om een fundamentele vernieuwing waarin vastgelopen patronen losgelaten moeten worden. Het partnerschap zoekt naar diepgang door ingesleten structuren open te breken, wat kan omslaan in een intensiteit die de onderlinge verhoudingen onder druk zet wanneer controle over de koers verloren lijkt te gaan.",
+    "text": "De gezamenlijke groeirichting vindt op natuurlijke wijze aansluiting bij een diepgaande behoefte aan vernieuwing en de kracht van transformatie. Het partnerschap integreert deze intensiteit met gemak in de gemeenschappelijke koers, al ontstaat er soms spanning wanneer oude structuren moeten wijken voor de noodzaak tot fundamentele verandering.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -78640,9 +78637,9 @@
   {
     "key": "composite-aspect-pair:trine:osculatingLilith:trueNode",
     "locale": "nl",
-    "text": "De dynamiek tussen jullie verbindt ongetemde autonomie direct met de gezamenlijke groeirichting. Dit partnerschap zoekt instinctief naar gebieden waar conventies wringen, en zet die weerstand in als kompas voor vernieuwing. Zodra externe druk toeneemt, ontstaat het risico dat de gezamenlijke koers doorslaat in totale onafhankelijkheid ten koste van duurzame verbondenheid.",
+    "text": "De dynamiek tussen jullie verbindt ongetemde autonomie direct met de gezamenlijke groeirichting. Dit partnerschap zoekt instinctief naar gebieden waar conventies wringen, en zet die weerstand in als kompas voor vernieuwing. Zodra externe druk toeneemt, ontstaat de spanning waarin het vasthouden aan de eigen onafhankelijkheid botst met de verwachtingen van de omgeving.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -78676,9 +78673,9 @@
   {
     "key": "composite-aspect-pair:trine:osculatingLilith:vesta",
     "locale": "nl",
-    "text": "Deze combinatie verenigt ongecensureerde echtheid met een diepe toewijding aan een gezamenlijk doel. Het partnerschap creëert een veilige ruimte waarin taboes en onuitgesproken verlangens openlijk bestaan zonder de band te bedreigen. Zodra externe normen of verwachtingen de relatie proberen te reguleren, ontstaat de spanning om ofwel volkomen te breken met conventies of juist in rigide zelfbescherming te vervallen.",
+    "text": "Deze combinatie verenigt ongecensureerde echtheid met een diepe toewijding aan een gezamenlijk doel. Het partnerschap creëert een ruimte waarin taboes en onuitgesproken verlangens openlijk bestaan zonder de band te bedreigen. Zodra externe normen of verwachtingen de relatie proberen te reguleren, ontstaat een subtiele wrijving tussen het bewaken van de eigen autonomie en het verdedigen van de gezamenlijke focus.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -80296,9 +80293,9 @@
   {
     "key": "composite-aspect-pair:sesquiquadrate:meanLilith:uranus",
     "locale": "nl",
-    "text": "De gezamenlijke dynamiek zoekt voortdurend naar vernieuwing en doorbreekt routinematige verwachtingen om autonomie te waarborgen. Zodra vaste kaders of externe structuren worden ervaren als benauwend, reageert het partnerschap met een onverwachte wending of scherpe afbakening. Deze spanning daagt het koppel uit om onafhankelijke standpunten te verzoenen met de gedeelde basis.",
+    "text": "De gezamenlijke dynamiek weigert concessies te doen aan conventionele verwachtingen en zoekt onvoorwaardelijke autonomie in de omgang met elkaar. Zodra gedeelde structuren of sociale normen te dichtbij komen, ontstaat er een scherpe reflex om te ontsnappen aan elke vorm van inperking. Dit vraagt om het verdragen van de wrijving tussen individuele onafhankelijkheid en de noodzaak van verbinding.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -80392,9 +80389,9 @@
   {
     "key": "composite-aspect-pair:sesquiquadrate:meanNode:pluto",
     "locale": "nl",
-    "text": "Deze relatie trekt onvermijdelijk naar diepe emotionele processen en onuitgesproken dynamieken toe. Het gezamenlijke veld zoekt voortdurend naar controle en absolute loyaliteit, maar loopt daarbij vast wanneer externe omstandigheden dwingen tot loslaten. De schaduwzijde van deze verbinding uit zich in een voortdurende onderhuidse spanning rondom overwicht en autonomie.",
+    "text": "Jullie gezamenlijke ontwikkeling vraagt om een radicale confrontatie met onbewuste machtsstructuren en patronen die niet langer houdbaar zijn. Het verbindende veld eist volledige transformatie, maar stuit op weerstand zodra vastgehouden zekerheden moeten worden opgegeven. Deze spanning leidt tot een schaduwdilemma waarin de drang naar absolute controle botst met de noodzaak om controle los te laten voor verdere groei.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -80884,9 +80881,9 @@
   {
     "key": "composite-aspect-pair:sesquiquadrate:osculatingLilith:uranus",
     "locale": "nl",
-    "text": "Dit partnerschap beweegt voortdurend op de grens van gevestigde verwachtingen en onverwachte vernieuwing. De dynamiek zoekt naar een eigen vrije vorm, waarbij rigide structuren of conventionele verwachtingen regelmatig worden uitgedaagd. Zodra de buitenwereld of de relatie zelf te strakke kaders oplegt, ontstaat er een scherpe wrijving tussen de drang naar volstrekte onafhankelijkheid en de noodzaak tot structurele samenwerking.",
+    "text": "Jullie dynamiek zoekt naar een compromisloze echtheid die zich niets aantrekt van conventionele mores of sociale acceptatie. Het functionele mechanisme breekt met elke vorm van schijnveiligheid zodra regels verstikkend gaan aanvoelen. Het schaduwdilemma manifesteert zich wanneer de weigering om concessies te doen botst met de noodzaak om daadwerkelijk verbonden te blijven.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -81484,9 +81481,9 @@
   {
     "key": "composite-aspect-pair:biquintile:chiron:interpolatedLilith",
     "locale": "nl",
-    "text": "Dit partnerschap bezit een vindingrijk vermogen om kwetsbaarheid om te zetten in een gezamenlijke kracht. Door onuitgesproken spanningen of oude gevoelens van tekortkoming te benaderen als puzzelstukken, ontstaat er een ongebruikelijke, creatieve manier om elkaar te versterken. De schaduw hiervan toont zich wanneer de gezamenlijke drang om te helen omslaat in overmatige analyse, waardoor het contact soms een theoretisch karakter krijgt dat de spontane beleving in de weg staat.",
+    "text": "Dit partnerschap bezit het vermogen om ongetemde instincten en ongepolijste verlangens te integreren in de gezamenlijke dynamiek. Door rauwe randen en verzwegen grenzen serieus te nemen zonder ze glad te strijken, ontstaat er een inventieve manier om met kwetsbaarheid om te gaan. De schaduw ontstaat wanneer de drang naar compromiseloze autonomie botst met de behoefte aan veiligheid, waardoor de verbinding kan verstarren in wederzijdse autonomiestrijd.",
     "tier": "nuance",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -82636,9 +82633,9 @@
   {
     "key": "composite-aspect-pair:biquintile:meanNode:saturn",
     "locale": "nl",
-    "text": "De gezamenlijke groeirichting in deze verbinding vraagt om een bewuste vertraging en het dragen van gezamenlijke verplichtingen. Samen wordt de uitdaging aangegaan om structuur aan te brengen en stap voor stap te bouwen aan een duurzame toekomst. Het risico ontstaat wanneer de zorg voor kaders en regels doorslaat in starre controle of een rem zet op de gezamenlijke vooruitgang.",
+    "text": "Jullie gezamenlijke groeirichting vraagt om een vindingrijke manier om structuur en duurzame verplichtingen vorm te geven. Samen ontstaat de gave omdiscipline creatief te verweven met de gezamenlijke horizon, zodat grenzen geen rem worden maar een bewuste bedding. Het schaduwdilemma manifesteert zich wanneer de drang naar controle doorslaat in starre kaders die de verdere ontwikkeling juist belemmeren.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -83092,9 +83089,9 @@
   {
     "key": "composite-aspect-pair:biquintile:osculatingLilith:sun",
     "locale": "nl",
-    "text": "Dit partnerschap bezit een uniek vermogen om ongebaande paden te verkennen en conventionele verwachtingen te omzeilen. De gezamenlijke richting zoekt naar eigenzinnige oplossingen die buiten de gevestigde kaders vallen. Zodra externe druk toeneemt, kan de dynamiek doorslaan naar een koppige afzondering waarin men zich volledig afsluit van invloeden van buitenaf.",
+    "text": "Dit partnerschap bouwt aan een gerichte intentie om gevestigde kaders te bevragen en onafhankelijke keuzes te maken in de gezamenlijke richting. De dynamiek zoekt naar eigenzinnige oplossingen die buiten de norm vallen en reageert op conventies door deze resoluut te omzeilen. Zodra externe verwachtingen dwingend worden, ontstaat een scherpe wrijving tussen de wens tot creatieve autonomie en de praktische druk om zich toch aan te passen aan de omgeving.",
     "tier": "nuance",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -84076,9 +84073,9 @@
   {
     "key": "composite-aspect-pair:quincunx:interpolatedLilith:uranus",
     "locale": "nl",
-    "text": "De dynamiek tussen jullie zoekt constant naar een evenwicht tussen onvoorwaardelijke vrijheid en onverwachte wendingen. Deze verbinding schuurt zodra vaste structuren of wederzijdse verwachtingen te benauwend aanvoelen. Groei ontstaat wanneer de onvoorspelbaarheid niet wordt gezien als een bedreiging voor de band, maar als een noodzakelijke ruimte om te vernieuwen.",
+    "text": "Jullie relatie vraagt om een constante afstemming tussen compromisloze onafhankelijkheid en onverwachte verstoringen van buitenaf. Deze dynamiek wringt zodra de drang naar absolute zelfbeschikking botst op onvoorziene veranderingen of dwingende verwachtingen. Vernieuwing ontstaat pas wanneer die scherpe randen niet worden gladgestreken, maar worden erkend als een noodzakelijke brandstof voor groei.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -85288,9 +85285,9 @@
   {
     "key": "composite-aspect-pair:quincunx:osculatingLilith:pluto",
     "locale": "nl",
-    "text": "Dit partnerschap beweegt zich voortdurend rondom een diepe drang naar absolute autonomie en de onvermijdelijke confrontatie met onderliggende machtsdynamieken. De dynamiek zoekt naar grenzeloze echtheid, maar botst geregeld op een dwingende noodzaak tot controle of ingrijpende vernieuwing. Dit wringt wanneer onuitgesproken spanningen of taboes de verbinding onder druk zetten en dwingen tot radicaal loslaten.",
+    "text": "Dit partnerschap zoekt onvermoeibaar naar absolute autonomie, maar stuit telkens op subtiele wrijvingen waarin controle en onafhankelijkheid niet lekker op elkaar aansluiten. De dynamiek vraagt om voortdurende aanpassing zodra diepgewortelde machten en onuitgesproken spanningen elkaar kruisen. Dit wringt wanneer de noodzaak tot vernieuwing botst met een hardnekkige weerstand tegen concessies, wat telkens vraagt om een ongemakkelijke bijstelling van de koers.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -85420,9 +85417,9 @@
   {
     "key": "composite-aspect-pair:quincunx:pallas:uranus",
     "locale": "nl",
-    "text": "Dit partnerschap zoekt voortdurend naar een balans tussen vaste patronen en de drang om bestaande structuren open te breken. Het gezamenlijke proces vraagt om flexibiliteit wanneer onverwachte wendingen botsen met de behoefte aan continuïteit, wat kan leiden tot aarzeling tussen vasthouden aan bekende kaders en het omarmen van radicale vernieuwing.",
+    "text": "Jullie gezamenlijke probleemoplossing verbindt strategisch inzicht en herkenbare patronen met een onmiddellijke drang om bestaande structuren te doorbreken. Wanneer een doordachte strategie botst op onverwachte omstandigheden, ontstaat er spanning tussen het vasthouden aan een logische blauwdruk en het volledig loslaten van het plan. Dit vraagt om een flexibele vorm van intelligentie die structuur en vernieuwing continu met elkaar weet te verzoenen.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -85600,9 +85597,9 @@
   {
     "key": "composite-aspect-pair:quincunx:sun:uranus",
     "locale": "nl",
-    "text": "De dynamiek in deze verbinding zoekt voortdurend naar een eigen koers die botst met vaste verwachtingen of ingesleten gewoonten. Het partnerschap brengt een constante spanning teweeg tussen de wens tot stabiliteit en de plotselinge drang om alle bekende kaders los te laten. Hierdoor ontstaat een schaduw waarin elke vorm van routine al snel wordt ervaren als een benauwende beperking die directe ontwrichting uitlokt.",
+    "text": "Jullie gezamenlijke richting vraagt om een voortdurende bijstelling tussen een vaste kern en de impuls om elke bekende vorm te bevragen. Dit mechanisme brengt een subtiele wrijving met zich mee zodra stabiliteit en onafhankelijkheid elkaar lijken te bijten. Wanneer externe structuren te strak worden, ontstaat een spanning waarin behoud en vernieuwing continu om voorrang vechten.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -85876,9 +85873,9 @@
   {
     "key": "composite-aspect-pair:opposition:ceres:sun",
     "locale": "nl",
-    "text": "De gezamenlijke groeirichting in deze verbinding balanceert voortdurend tussen de wens tot persoonlijke autonomie en het verlangen naar intensieve wederzijdse betrokkenheid. Dit partnerschap vraagt om een constante afstemming rondom onafhankelijkheid en nabijheid. Wanneer de teugels te strak worden aangetrokken, ontstaat direct weerstand tegen elke vorm van inmenging, waardoor de relatie telkens opnieuw moet zoeken naar een gelijkwaardig evenwicht.",
+    "text": "Jullie gezamenlijke kern verbindt persoonlijke vitaliteit direct aan de vraag hoe jullie elkaar voeden en ruimte geven. Dit mechanisme brengt de eigen zelfexpressie in een voortdurende balans met de zorg voor elkaars fundament. Zodra de behoefte aan ondersteuning omslaat in claimend gedrag of het overnemen van verantwoordelijkheid, ontstaat er onmiddellijk spanning rondom het recht op een eigen richting.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -85912,9 +85909,9 @@
   {
     "key": "composite-aspect-pair:opposition:ceres:venus",
     "locale": "nl",
-    "text": "Dit partnerschap balanceert continu tussen de wens tot diepe verbinding en de noodzaak om persoonlijke autonomie te bewaren. De dynamiek zoekt voortdurend naar een middenweg tussen gezamenlijke zorg en individuele vrijheid. Zodra verwachtingen over toewijding te dwingend worden, ontstaat er wrijving rondom de grens tussen samenzijn en zelfstandigheid.",
+    "text": "Dit partnerschap bouwt naar een vanzelfsprekende balans tussen genegenheid en de praktische zorg voor elkaar. De kern ligt in het verbinden van plezier en waarde met concrete handelingen van toewijding. Zodra verwachtingen rondom verzorging echter te dwingend worden, ontstaat er spanning tussen wat vrijwillig uit liefde wordt gegeven en wat als een plicht of eis gaat aanvoelen.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -86140,9 +86137,9 @@
   {
     "key": "composite-aspect-pair:opposition:chiron:vesta",
     "locale": "nl",
-    "text": "De dynamiek tussen jullie brengt diepgewortelde kwetsbaarheid en de wil om ergens onvoorwaardelijk aan te wijden samen. Dit partnerschap zoekt een balans tussen het helen van oude onzekerheden en het handhaven van een gezamenlijke focus. Zodra externe verwachtingen druk leggen op de toewijding, ontstaat de neiging om òf te hard vast te houden aan controle òf juist volledig terug te trekken.",
+    "text": "Jullie verbinding brengt diepe gevoeligheid samen met een onwrikbare toewijding aan een gezamenlijk doel. Dit partnerschap zoekt voortdurend naar een balans tussen het ruimte geven aan kwetsbaarheden en het vasthouden aan een centrale focus. Zodra externe druk op de toewijding ontstaat, kan de confrontatie met oude onzekerheden de gezamenlijke concentratie verstoren of omslaan in een krampachtige plichtsbetrachting die de onderlinge kwetsbaarheid juist buitensluit.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -86224,9 +86221,9 @@
   {
     "key": "composite-aspect-pair:opposition:interpolatedLilith:neptune",
     "locale": "nl",
-    "text": "De dynamiek tussen jullie beweegt zich rondom een diepe drang naar onvoorwaardelijke versmelting en gedeelde idealen. Dit partnerschap zoekt naar grenzeloze intimiteit, waarbij het functionele mechanisme de werkelijkheid vaak laat kleuren door verlangens en verwachtingen. Zodra de buitenwereld of praktische beperkingen zich aandienen, ontstaat de schaduwzijde van illusie en het risico om elkaar of de gezamenlijke werkelijkheid uit het oog te verliezen.",
+    "text": "Jullie gedeelde dynamiek zoekt naar een volkomen grenzeloze vereniging waarin elk compromis overbodig lijkt en verlangens ongecensureerd mogen stromen. Het functionele mechanisme beschermt deze gedeelde illusie door harde feiten en praktische grenzen te weren om de ongetemde droom intact te houden. Zodra externe druk of onwelkome realiteit binnendringt, ontstaat een schaduwspanning waarin het verlangen naar absolute vrijheid botst met het onvermogen om teleurstelling een plaats te geven.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -86488,9 +86485,9 @@
   {
     "key": "composite-aspect-pair:opposition:juno:venus",
     "locale": "nl",
-    "text": "Dit partnerschap beweegt voortdurend rond de spanning tussen de drang naar diepe verbondenheid en het verlangen naar persoonlijke autonomie. De relatie vraagt om voortdurende afstemming tussen wat samen gedeeld wordt en wat individueel behouden blijft. Zodra verwachtingen over loyaliteit botsen met de behoefte aan onafhankelijkheid, ontstaat er een dynamiek waarin concessies noodzakelijk zijn om harmonie te behouden.",
+    "text": "Dit partnerschap zoekt voortdurend de balans tussen formele verwachtingen van toewijding en de vrije stroom van persoonlijke genegenheid en waarde. De verbinding vraagt om een bewuste afstemming tussen gemaakte afspraken over loyaliteit en de spontane beleving van harmonie en plezier. Zodra vaste verplichtingen knellen met wat esthetisch of gevoelsmatig als waardevol wordt ervaren, ontstaat een wrijving die noopt tot een nieuwe vorm van delen.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
@@ -86944,9 +86941,9 @@
   {
     "key": "composite-aspect-pair:opposition:meanLilith:sun",
     "locale": "nl",
-    "text": "De dynamiek tussen de gezamenlijke identiteit en ongecensureerde waarheden brengt een voortdurende spanning met zich mee. Dit partnerschap balanceert tussen zichtbaarheid en het verdedigen van een eigen, onafhankelijke ruimte. Wanneer externe verwachtingen of regels worden opgelegd, reageert de verbinding vaak met een scherpe afwijzing van elke vorm van concessie.",
+    "text": "De dynamiek tussen de gezamenlijke identiteit en ongecensureerde waarheden brengt een voortdurende spanning met zich mee. Dit partnerschap balanceert tussen zichtbaarheid en het verdedigen van een eigen, onafhankelijke ruimte. Wanneer externe verwachtingen worden opgelegd, zoekt de verbinding een evenwicht waarin de gezamenlijke koers zich verhoudt tot de noodzaak om onherleidbare persoonlijke vrijheid te waarborgen.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
