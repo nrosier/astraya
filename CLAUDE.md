@@ -6,9 +6,25 @@
 3. Use `.claudeignore` to exclude search paths; every major directory maintains its own `MAP.md`.
 
 ## Documentation Maintenance
-When creating/deleting/renaming files with significant responsibility changes:
-- Update local `MAP.md` (Domain Purpose, Responsibility, Key Dependencies).
-- Add/verify JSDoc `@module` headers (`@purpose`, `@conventions`, `@exports`).
+
+### MAP.md Format (Ultra-Lean Index)
+Every directory's `MAP.md` is a fast-lookup index, **not** a narrative guide. Each file entry must fit on one line:
+```markdown
+- `filename.ts` — Domain purpose. Brief responsibility. Deps: `dep1`, `dep2`.
+```
+
+**Strict rules:**
+- **One bullet per file** in flat Markdown list (no nested sections).
+- **1–2 sentences max** per entry (combine purpose + responsibility concisely).
+- **No code signatures, implementation details, or internal mechanics.** Include only what answers: "What domain does this file belong to?" and "What are its external dependencies?"
+- **Dependency format:** Minimal path references (relative or module shorthand; e.g., `sync/auth-client`, `astro-names.messages`), comma-separated, no full paths.
+- **Remove stale entries** and **add newly created files** on every significant change.
+- **Target reduction:** 50–70% compression vs. verbose narrative style (e.g., 481 lines → ~180 for `src/ui/MAP.md`).
+
+### File Changes Workflow
+When creating/deleting/renaming files with significant responsibility:
+- Update local `MAP.md`: add entry (one line) or remove stale reference.
+- Add/verify JSDoc `@module` header: `@purpose`, `@conventions`, `@exports`.
 - Update `docs/DEPENDENCIES.md` if external dependencies change.
 
 ## Critical Commands
