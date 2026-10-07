@@ -41,18 +41,10 @@ test('the About page includes an astrology primer section with all subsections',
 
   // Chart fundamentals paragraph with three dimensions
   await expect(page.getByText('The chart has three dimensions:')).toBeVisible();
-  await expect(
-    page.getByText(/The planets.*zodiac.*houses.*angular divisions/)
-  ).toBeVisible();
+  await expect(page.getByText(/The planets.*zodiac.*houses.*angular divisions/)).toBeVisible();
 
   // All subsections are present
-  const expectedSections = [
-    'Planets and points',
-    'The zodiac and signs',
-    'Houses',
-    'Aspects',
-    'Dignity and rulership',
-  ];
+  const expectedSections = ['Planets and points', 'The zodiac and signs', 'Houses', 'Aspects', 'Dignity and rulership'];
 
   for (const section of expectedSections) {
     await expect(page.getByRole('heading', { name: section, level: 3 })).toBeVisible();
@@ -88,7 +80,7 @@ test('the About page primer renders in Dutch with full translation', async ({ pa
   // Set Dutch locale by clicking language toggle if available
   // For now, test the page loads and check the English primer rendered
   // (full Dutch locale testing would require a language switcher implementation)
-  
+
   const primerHeading = page.getByRole('heading', { name: 'Astrology primer', exact: true });
   await expect(primerHeading).toBeVisible();
 
@@ -96,7 +88,7 @@ test('the About page primer renders in Dutch with full translation', async ({ pa
   const about = page.locator('main.shell');
   const headings = about.getByRole('heading').all();
   const headingTexts = await Promise.all((await headings).map((h) => h.textContent()));
-  
+
   const expectedHeadings = [
     'About Astraya',
     'Version',
@@ -128,7 +120,7 @@ test('the primer section is accessible and follows semantic structure', async ({
   // h3 subsection headings (correctly nested under the h2)
   const primerSection = main.locator('h2:has-text("Astrology primer") ~ *');
   const subsectionHeadings = main.getByRole('heading', { level: 3 });
-  
+
   expect(await subsectionHeadings.count()).toBeGreaterThanOrEqual(5);
 
   // All paragraphs after h2 and before next h2 are part of primer

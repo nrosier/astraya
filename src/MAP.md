@@ -15,6 +15,7 @@ Index to subdirectories. See each subdirectory's own MAP.md:
 - **src/ui/** — React SPA: root router, 150+ components (screens, panels, forms, glyphs), sticky header.
 
 Root files:
+
 - **demo-mode.ts** — `IS_DEMO_MODE` flag for GitHub Pages deployment (serverless). Checked by sign-in/sync UI.
 - **main.tsx** — App entry: theme flash prevention, stale localStorage cleanup, mount under StrictMode.
 - **sw.ts** — Service worker entry (thin wrapper, real logic in `pwa/sw-core.ts`).
