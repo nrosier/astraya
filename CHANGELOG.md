@@ -4,6 +4,20 @@ All notable changes to Astraya are recorded here. Versions follow
 [semantic versioning](https://semver.org/), and every milestone ends in a release —
 see [docs/RELEASING.md](docs/RELEASING.md).
 
+## [0.32.1] — 2026-10-07
+
+**A patch for v0.32.0: the same app, with its generated-constants check fixed so the release could be published.**
+
+v0.32.0's tagged CI run failed `scripts/gen-constants.mjs --check` — not because any Swiss Ephemeris constant actually changed (still `sweph-wasm 2.6.9`, same 275 numeric / 12 file values), but because an earlier change hand-added a `@module` JSDoc header to the machine-generated `src/ephemeris/generated-constants.ts` without teaching the generator script to emit that header itself, so the generator's own drift check correctly flagged a mismatch between the committed file and what it would produce. The generator now emits the header too; its output is byte-identical to what was already committed. This also means `main`'s own CI had been failing since that earlier change, independent of this release. Nothing about the app's behavior changes between v0.32.0 and this release.
+
+### Fixed
+
+- **The generated-constants drift check passes again.** `scripts/gen-constants.mjs` now emits the `@module` header its own output already carried, so `node scripts/gen-constants.mjs --check` (run by both `main`'s CI and the tagged release workflow) succeeds.
+
+### Notes for people running their own server
+
+- No database migration and no new configuration in this release.
+
 ## [0.32.0] — 2026-10-07
 
 **Extended Settings and the Profections rulers selector explain each choice inline as it's made, the About page gains an astrology primer for newcomers, and the Extended Settings Apply button no longer sticks on device-only preference changes.**
