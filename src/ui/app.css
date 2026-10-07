@@ -3205,3 +3205,15 @@ svg text.chart-symbol-text-unicode {
     border-radius: 0;
   }
 }
+
+/*
+ * Profections view: the rulers section wraps the RulershipSetting component
+ * and its reactive description paragraph.
+ */
+.profections-rulers-section {
+  margin-bottom: 2rem;
+}
+
+.profections-rulers-description {
+  margin-top: 1rem;
+}
