@@ -23,6 +23,19 @@
  * `src/`; `src/` may never read `tools/`, lint-enforced in `eslint.config.js`). Running under tsx,
  * same as every `tools/corpus-gen/*.mjs` script that already imports `.ts` files this way.
  */
+/**
+ * @module mcp-linter
+ * @purpose MCP server ("astraya-linter") exposing Astraya's own corpus guardrails (lint, schema,
+ *   locale parity) as callable tools, so an agent can validate generated interpretation text
+ *   in-flight before writing it to src/interpretation/corpus/<locale>.json.
+ * @conventions Run via `npx tsx tools/mcp/mcp-linter.mjs` (stdio transport); registered via
+ *   `claude mcp add --transport stdio astraya-linter -s project -- npx tsx tools/mcp/mcp-linter.mjs`.
+ *   Re-exports rules from src/interpretation/lint.ts and schema.ts rather than reimplementing
+ *   them. Imports from src/ directly — allowed in this direction only (tools/ may read src/;
+ *   src/ may never read tools/, lint-enforced).
+ * @exports Three MCP tools (lint_corpus_entry, validate_corpus_key, check_locale_parity); no
+ *   module-level JS exports.
+ */
 import { readFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
