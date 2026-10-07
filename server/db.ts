@@ -324,6 +324,30 @@ const MIGRATIONS: readonly ((db: DatabaseSync) => void)[] = [
       ALTER TABLE users DROP COLUMN is_admin;
     `);
   },
+  // 15: a short-lived hold on Tier 2 spend (#461), separate from `interpretation_usage`
+  // (migration 8, a permanent ledger row per completed call). The two daily cost caps in
+  // `server/interpretation-routes.ts` used to read `interpretation_usage` once, before any
+  // provider call, with no recheck between a request's two possible chargeable calls and no
+  // visibility between concurrent requests — so the caps were only advisory under ordinary
+  // concurrent usage. A reservation closes that: before each chargeable call, a conservative
+  // worst-case cost is inserted here inside a `BEGIN IMMEDIATE` transaction that also sums every
+  // other active reservation, so a concurrent request sees it immediately; it is deleted and
+  // replaced by the real `interpretation_usage` row once the call's actual cost is known
+  // (`server/interpretation/cost-reservation.ts`). `expires_at` exists only so a reservation
+  // abandoned by a crashed process or a hung provider call eventually stops counting against the
+  // cap — the common path always deletes the row itself and never relies on expiry.
+  (db) => {
+    db.exec(`
+      CREATE TABLE interpretation_cost_reservations (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        reserved_cents REAL NOT NULL,
+        created_at TEXT NOT NULL,
+        expires_at TEXT NOT NULL
+      );
+      CREATE INDEX interpretation_cost_reservations_expires ON interpretation_cost_reservations(expires_at);
+    `);
+  },
 ];
 
 /** Migration steps whose table rebuild would otherwise break `REFERENCES` clauses pointing at the table being rebuilt. */

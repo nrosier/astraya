@@ -16,10 +16,15 @@
  * @module llm-client
  * @purpose The Tier 2 feature's real LLM provider client — the one place in the running server that reaches a third-party model (Gemini) over the network.
  * @conventions Never imported from `src/`, enforced by `test/no-runtime-llm-access.test.ts`; deliberately separate from `tools/corpus-gen`'s build-time generator client, since this one serves free-form prose inside a live per-user request rather than fixed-schema, build-time-only generation; retries only on transient 429/5xx statuses, surfacing 4xx immediately as a likely configuration problem.
- * @exports Tier2Config, loadTier2Config, Tier2Section, Tier2Result, generateTier2Text, CustomPromptVerdict, parseCustomPromptVerdict, verifyCustomPrompt, estimateCostCents
+ * @exports Tier2Config, loadTier2Config, Tier2Section, Tier2Result, generateTier2Text, CustomPromptVerdict, parseCustomPromptVerdict, verifyCustomPrompt, estimateCostCents, estimateVerificationMaxCostCents, estimateGenerationMaxCostCents
  */
 const DEFAULT_BASE_URL = 'https://generativelanguage.googleapis.com';
 const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504]);
+
+// Added by #461: with no output cap, no cost reservation for this call could be a true upper
+// bound. 4096 is generous for the structured-sections reply this call asks for, while still
+// giving `estimateGenerationMaxCostCents` below a real ceiling to reserve against.
+const MAX_GENERATION_OUTPUT_TOKENS = 4096;
 
 export interface Tier2Config {
   readonly apiKey: string;
@@ -213,7 +218,12 @@ export async function generateTier2Text(
     config,
     systemInstruction,
     userContent,
-    { temperature: 0.7, responseMimeType: 'application/json', responseSchema: TIER2_RESPONSE_SCHEMA },
+    {
+      temperature: 0.7,
+      maxOutputTokens: MAX_GENERATION_OUTPUT_TOKENS,
+      responseMimeType: 'application/json',
+      responseSchema: TIER2_RESPONSE_SCHEMA,
+    },
     maxRetries,
     logger,
   );
@@ -307,4 +317,28 @@ const OUTPUT_COST_PER_1M_CENTS = 375;
 
 export function estimateCostCents(promptTokens: number, outputTokens: number): number {
   return (promptTokens * INPUT_COST_PER_1M_CENTS + outputTokens * OUTPUT_COST_PER_1M_CENTS) / 1_000_000;
+}
+
+// chars → tokens heuristic for a *reservation* ceiling (#461): deliberately crude, same "not an
+// exact invoice" spirit as `estimateCostCents` above — it only needs to never underestimate by
+// much, since `server/interpretation/cost-reservation.ts` reconciles every reservation down to
+// the real token counts once the call returns.
+const CHARS_PER_TOKEN_ESTIMATE = 4;
+
+function estimatePromptTokens(...texts: readonly string[]): number {
+  return Math.ceil(texts.reduce((total, text) => total + text.length, 0) / CHARS_PER_TOKEN_ESTIMATE);
+}
+
+/**
+ * Conservative worst-case cost, in cents, for one `verifyCustomPrompt` call — output is already
+ * hard-capped at 120 tokens by that call's own `generationConfig`, so only the prompt side needs
+ * estimating here.
+ */
+export function estimateVerificationMaxCostCents(instruction: string): number {
+  return estimateCostCents(estimatePromptTokens(VERIFIER_SYSTEM_INSTRUCTION, instruction), 120);
+}
+
+/** Conservative worst-case cost, in cents, for one `generateTier2Text` call. */
+export function estimateGenerationMaxCostCents(systemInstruction: string, userContent: string): number {
+  return estimateCostCents(estimatePromptTokens(systemInstruction, userContent), MAX_GENERATION_OUTPUT_TOKENS);
 }

@@ -70,14 +70,11 @@ import {
   generateTier2Text,
   verifyCustomPrompt,
   estimateCostCents,
+  estimateVerificationMaxCostCents,
+  estimateGenerationMaxCostCents,
 } from './interpretation/llm-client.ts';
-import {
-  recordUsage,
-  userCostCentsSince,
-  totalCostCentsSince,
-  usageByUser,
-  costCentsSinceByUser,
-} from './interpretation/usage.ts';
+import { totalCostCentsSince, usageByUser, costCentsSinceByUser } from './interpretation/usage.ts';
+import { reserveCostCents, releaseReservation, reconcileReservation } from './interpretation/cost-reservation.ts';
 import { checkCustomPrompt } from '../src/interpretation/prompt-guardrail.ts';
 import { validateFocusContext, type FocusContext } from '../src/interpretation/focus-context-schema.ts';
 import { loadEncryptionKey } from './ops/crypto.ts';
@@ -806,14 +803,27 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
       const userId = authenticatedUserId(request);
       const userDailyCapCents = envCapCents('ASTRAYA_INTERPRETATION_USER_DAILY_CENTS', 50);
       const totalDailyCapCents = envCapCents('ASTRAYA_INTERPRETATION_TOTAL_DAILY_CENTS', 500);
-      if (userCostCentsSince(db, userId) >= userDailyCapCents) {
-        return reply.code(503).send({ error: 'Daily usage limit reached for your account. Try again tomorrow.' });
-      }
-      if (totalCostCentsSince(db) >= totalDailyCapCents) {
-        return reply.code(503).send({ error: 'Daily usage limit reached for this deployment. Try again tomorrow.' });
-      }
+      // #461: each chargeable call below reserves its own conservative worst-case cost
+      // immediately before making it — not a single upfront check — so a second call in this
+      // same request, and every concurrent request from any user, see an up-to-date total rather
+      // than one read before any provider call was made.
+      const capRejectionReply = (rejection: { readonly reason: 'user-cap' | 'total-cap' }) =>
+        reply.code(503).send({
+          error:
+            rejection.reason === 'user-cap'
+              ? 'Daily usage limit reached for your account. Try again tomorrow.'
+              : 'Daily usage limit reached for this deployment. Try again tomorrow.',
+        });
 
       if (instruction !== undefined) {
+        const verificationReservation = reserveCostCents(db, {
+          userId,
+          maxCents: estimateVerificationMaxCostCents(instruction),
+          userDailyCapCents,
+          totalDailyCapCents,
+        });
+        if ('reason' in verificationReservation) return capRejectionReply(verificationReservation);
+
         let verification;
         try {
           verification = await verifyCustomPrompt(
@@ -824,11 +834,12 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
             request.log,
           );
         } catch (error) {
+          releaseReservation(db, verificationReservation.reservationId);
           request.log.error(error, 'Tier 2 custom-prompt verification call failed');
           return reply.code(502).send({ error: 'Your instruction could not be verified right now. Try again later.' });
         }
         // The verification call costs tokens whatever its verdict, so it counts toward both caps.
-        recordUsage(db, {
+        reconcileReservation(db, verificationReservation.reservationId, {
           userId,
           promptTokens: verification.promptTokens,
           outputTokens: verification.outputTokens,
@@ -853,10 +864,19 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
               ? buildRelationshipUserContent(facts, instruction, locale)
               : buildFreeformUserContent(facts, instruction, locale, chartKind);
 
+      const generationReservation = reserveCostCents(db, {
+        userId,
+        maxCents: estimateGenerationMaxCostCents(systemInstruction, userContent),
+        userDailyCapCents,
+        totalDailyCapCents,
+      });
+      if ('reason' in generationReservation) return capRejectionReply(generationReservation);
+
       let result;
       try {
         result = await generateTier2Text(config, systemInstruction, userContent, 2, request.log);
       } catch (error) {
+        releaseReservation(db, generationReservation.reservationId);
         request.log.error(error, 'Tier 2 model call failed');
         return reply.code(502).send({ error: 'The AI-customized interpretation could not be generated right now.' });
       }
@@ -866,7 +886,7 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
       const description = sanitizeDescription(result.description);
 
       const costCents = estimateCostCents(result.promptTokens, result.outputTokens);
-      recordUsage(db, {
+      reconcileReservation(db, generationReservation.reservationId, {
         userId,
         promptTokens: result.promptTokens,
         outputTokens: result.outputTokens,

@@ -1371,11 +1371,15 @@ describe('POST /api/interpretation/generate', () => {
     });
 
     it('does not let one user’s exhausted per-user cap block a different user, but the shared total cap blocks both', async () => {
-      process.env.ASTRAYA_INTERPRETATION_USER_DAILY_CENTS = '1';
+      // #461: the per-user cap now has to clear a conservative reservation ceiling (driven by
+      // `MAX_GENERATION_OUTPUT_TOKENS`), not just a comparison against committed usage, so this
+      // needs enough headroom for Bob's one real call to fit while still being comfortably below
+      // Alice's already-recorded usage.
+      process.env.ASTRAYA_INTERPRETATION_USER_DAILY_CENTS = '2.5';
       const aliceCookie = await signIn(app);
       const aliceId = await userId('alice');
       const { sessionId: bobCookie } = await createAndLoginUser(app, 'bob', 'correct-horse-battery-2');
-      recordPriorUsage(aliceId, 2);
+      recordPriorUsage(aliceId, 3);
 
       // Alice is already over her own per-user cap...
       const aliceBlocked = await app.inject({
@@ -1438,6 +1442,123 @@ describe('POST /api/interpretation/generate', () => {
       expect(rows).toHaveLength(2);
       expect(rows).toContainEqual(expect.objectContaining({ prompt_tokens: 3, output_tokens: 1 }));
       expect(rows).toContainEqual(expect.objectContaining({ prompt_tokens: 10, output_tokens: 20 }));
+    });
+
+    // #461: the cap used to be read once, before either chargeable call, with no recheck between
+    // them and no visibility between concurrent requests. These two cases are the issue's own
+    // "single request" and "concurrent requests" scenarios.
+
+    it('returns 503 when the verification call alone would already cross the per-user cap, without reaching generation', async () => {
+      // estimateVerificationMaxCostCents(VALID_BODY.customPrompt) is comfortably above this —
+      // the point is that nothing has been *committed* yet; only the reservation ahead of the
+      // verification call itself trips the cap.
+      process.env.ASTRAYA_INTERPRETATION_USER_DAILY_CENTS = '0.01';
+      const cookie = await signIn(app);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/interpretation/generate',
+        cookies: { [SESSION_COOKIE]: cookie },
+        payload: VALID_BODY,
+      });
+      expect(response.statusCode).toBe(503);
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(generationCalls()).toBe(0);
+    });
+
+    /**
+     * A fetch stand-in whose generation-call response doesn't resolve until `resolve` is called —
+     * lets a test hold a request open right after its reservation has committed, the exact window
+     * in which a second request used to be able to read the same stale, pre-call total.
+     */
+    function deferredGenerationFetch(): { mock: ReturnType<typeof vi.fn>; resolve: (response: Response) => void } {
+      let resolve!: (response: Response) => void;
+      const promise = new Promise<Response>((res) => {
+        resolve = res;
+      });
+      const mock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit): Promise<Response> =>
+        isVerificationCall(init) ? geminiText('pass') : promise,
+      );
+      return { mock, resolve };
+    }
+
+    const FREEFORM_NO_INSTRUCTION_BODY = { mode: 'freeform', chartData: VALID_CHART_DATA, locale: 'en' };
+
+    it('does not let two concurrent requests from the same user both reserve against an exhausted cap', async () => {
+      const cookie = await signIn(app);
+      const { sessionId: proberCookie } = await createAndLoginUser(app, 'prober', 'correct-horse-battery-3');
+
+      // Discover the real conservative reservation size for this request by reading the
+      // reservation row directly while a controlled fetch holds it open, rather than hardcoding a
+      // number that would silently drift from estimateGenerationMaxCostCents's own formula.
+      const probeFetch = deferredGenerationFetch();
+      fetchMock = probeFetch.mock;
+      globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+      const probePromise = app.inject({
+        method: 'POST',
+        url: '/api/interpretation/generate',
+        cookies: { [SESSION_COOKIE]: proberCookie },
+        payload: FREEFORM_NO_INSTRUCTION_BODY,
+      });
+      await vi.waitFor(() => {
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+      });
+
+      const probeDb = new DatabaseSync(dbPath);
+      const reservationRow = probeDb.prepare('SELECT reserved_cents FROM interpretation_cost_reservations').get() as
+        { reserved_cents: number } | undefined;
+      probeDb.close();
+      if (!reservationRow) throw new Error('expected an active reservation while the probe call is in flight');
+      const reservationMaxCents = reservationRow.reserved_cents;
+
+      probeFetch.resolve(geminiOk('probe'));
+      expect((await probePromise).statusCode).toBe(200);
+
+      // Tight enough that one reservation of this size fits (0 + max <= 1.5·max) but a second,
+      // concurrent one does not (max + max > 1.5·max) — true for any positive reservation size.
+      process.env.ASTRAYA_INTERPRETATION_USER_DAILY_CENTS = String(reservationMaxCents * 1.5);
+
+      const raceFetch = deferredGenerationFetch();
+      fetchMock = raceFetch.mock;
+      globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+      const firstPromise = app.inject({
+        method: 'POST',
+        url: '/api/interpretation/generate',
+        cookies: { [SESSION_COOKIE]: cookie },
+        payload: FREEFORM_NO_INSTRUCTION_BODY,
+      });
+      // Wait until the first request's reservation has committed and it is blocked on its own
+      // fetch call — exactly the window in which the race the issue describes could occur.
+      await vi.waitFor(() => {
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+      });
+
+      const second = await app.inject({
+        method: 'POST',
+        url: '/api/interpretation/generate',
+        cookies: { [SESSION_COOKIE]: cookie },
+        payload: FREEFORM_NO_INSTRUCTION_BODY,
+      });
+      expect(second.statusCode).toBe(503);
+      // The second request never reserved room to make its own call.
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+
+      raceFetch.resolve(geminiOk('restyled by the first request'));
+      const first = await firstPromise;
+      expect(first.statusCode).toBe(200);
+
+      const resultDb = new DatabaseSync(dbPath);
+      const totalRow = resultDb
+        .prepare(
+          'SELECT COALESCE(SUM(cost_cents), 0) AS total FROM interpretation_usage WHERE user_id = (SELECT id FROM users WHERE username = ?)',
+        )
+        .get('alice') as { total: number };
+      resultDb.close();
+      // Only the one successful call's real (small, fixed-mock) cost was ever recorded for alice —
+      // the rejected second request never got to spend anything.
+      expect(totalRow.total).toBeLessThanOrEqual(reservationMaxCents * 1.5);
     });
   });
 });

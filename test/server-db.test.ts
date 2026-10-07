@@ -38,7 +38,7 @@ describe('server/db.ts', () => {
   it('sets PRAGMA user_version to the number of migrations applied', () => {
     const db = openDatabase(':memory:');
     const row = db.prepare('PRAGMA user_version').get() as unknown as { user_version: number };
-    expect(row.user_version).toBe(14);
+    expect(row.user_version).toBe(15);
     db.close();
   });
 
@@ -56,7 +56,7 @@ describe('server/db.ts', () => {
       const second = openDatabase(path);
       expect(schemaOf(second)).toEqual(before);
       const row = second.prepare('PRAGMA user_version').get() as unknown as { user_version: number };
-      expect(row.user_version).toBe(14);
+      expect(row.user_version).toBe(15);
       second.close();
     } finally {
       rmSync(dir, { recursive: true, force: true });
@@ -143,7 +143,7 @@ describe('server/db.ts', () => {
 
       const db = openDatabase(path);
       const row = db.prepare('PRAGMA user_version').get() as unknown as { user_version: number };
-      expect(row.user_version).toBe(14);
+      expect(row.user_version).toBe(15);
 
       // The pre-existing row survived the users rebuild intact.
       const legacyUser = db.prepare('SELECT * FROM users WHERE id = ?').get('legacy-user') as
@@ -337,6 +337,9 @@ describe('server/db.ts', () => {
         INSERT INTO corpus_candidates (id, key, locale, persona, text, tier, tags, source, created_at)
           VALUES ('c1', 'k', 'en', '', 'neutral', 'core', '[]', 'llm-fill', 'now'),
                  ('c2', 'k', 'en', 'cynic', 'voiced', 'core', '[]', 'llm-fill', 'now');
+        -- A real version-12 database never had migration 15's table; drop it so re-running
+        -- migrations from here doesn't collide with the one the first openDatabase() created.
+        DROP TABLE interpretation_cost_reservations;
         PRAGMA user_version = 12;
       `);
       first.close();
@@ -375,6 +378,9 @@ describe('server/db.ts', () => {
         ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0;
         INSERT INTO users (id, username, password_hash, is_admin, created_at)
           VALUES ('a', 'owner', 'h', 1, 'now'), ('b', 'second-admin', 'h', 1, 'now'), ('c', 'member', 'h', 0, 'now');
+        -- A real version-13 database never had migration 15's table; drop it so re-running
+        -- migrations from here doesn't collide with the one the first openDatabase() created.
+        DROP TABLE interpretation_cost_reservations;
         PRAGMA user_version = 13;
       `);
       first.close();
