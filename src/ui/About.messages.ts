@@ -34,7 +34,9 @@ const en = {
   yourDataParagraph4:
     'You can delete any person, along with every chart derived from them, from the person list. Deleting clears the local copy and instructs the server to drop its copy.',
   yourDataParagraph5:
-    'Interpretation text is written ahead of release and shipped as part of the application. No AI service is contacted while you use Astraya — the Content Security Policy makes that impossible rather than merely unintended.',
+    'The interpretation shown by default is written ahead of release and shipped as part of the application — no AI service is contacted for it.',
+  yourDataParagraph5b:
+    'If you sign in and explicitly choose AI-customized interpretation, the chart facts and instructions you review beforehand are sent through this server to its configured AI provider, for that one request only. Nothing is sent unless you choose that option.',
 
   licenceHeading: 'Licence and source',
   licenceParagraphBefore: 'Astraya is free software under the ',
@@ -112,7 +114,9 @@ const nl: typeof en = {
   yourDataParagraph4:
     'Je kunt elke persoon, samen met elke horoscoop die daarvan is afgeleid, verwijderen vanuit de personenlijst. Verwijderen wist de lokale kopie en instrueert de server om zijn kopie te laten vallen.',
   yourDataParagraph5:
-    'Interpretatietekst wordt voorafgaand aan de release geschreven en meegeleverd als onderdeel van de applicatie. Er wordt geen AI-dienst benaderd terwijl je Astraya gebruikt — het Content Security Policy maakt dat onmogelijk in plaats van slechts onbedoeld.',
+    'De interpretatie die standaard wordt getoond, is voorafgaand aan de release geschreven en meegeleverd als onderdeel van de applicatie — daarvoor wordt geen AI-dienst benaderd.',
+  yourDataParagraph5b:
+    'Als je inlogt en expliciet kiest voor AI-aangepaste interpretatie, worden de chartfeiten en instructies die je vooraf bekijkt voor dat ene verzoek via deze server naar de geconfigureerde AI-provider gestuurd. Er wordt niets verzonden, tenzij je voor die optie kiest.',
 
   licenceHeading: 'Licentie en broncode',
   licenceParagraphBefore: 'Astraya is vrije software onder de ',

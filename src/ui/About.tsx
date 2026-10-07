@@ -61,6 +61,7 @@ export function About({ seVersion }: { seVersion?: string | undefined }): React.
       </p>
       <p>{t.yourDataParagraph4}</p>
       <p>{t.yourDataParagraph5}</p>
+      <p>{t.yourDataParagraph5b}</p>
 
       <h2>{t.licenceHeading}</h2>
       <p>
