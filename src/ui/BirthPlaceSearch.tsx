@@ -18,7 +18,7 @@
  * @conventions The only way to set birth coordinates (#290) — a prior map/pin/"use my location" flow was removed; results are always a click-to-confirm list so a search never silently sets the fields; text comes from co-located `BirthPlaceSearch.messages.ts` via `useMessages()`.
  * @exports BirthPlaceSearch
  */
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { birthPlaceSearchMessages } from './BirthPlaceSearch.messages.js';
 import { forwardGeocode } from './forward-geocode.js';
 import { geocodeHost } from './geocode-provider.js';
@@ -36,15 +36,25 @@ export function BirthPlaceSearch({
   const [searchStatus, setSearchStatus] = useState<SearchStatus>('idle');
   const [searchResults, setSearchResults] = useState<ForwardGeocodeResult[]>([]);
   const t = useMessages(birthPlaceSearchMessages);
+  // The in-flight search's controller, so a newer search can cancel a slower older one (#463)
+  // before applying its own results — otherwise an out-of-order response could overwrite a more
+  // recent search with stale coordinates.
+  const inFlightRef = useRef<AbortController | null>(null);
+
+  useEffect(() => () => inFlightRef.current?.abort(), []);
 
   const searchByName = (event: React.SubmitEvent<HTMLFormElement>): void => {
     event.preventDefault();
     const query = searchQuery.trim();
     if (query === '') return;
+    inFlightRef.current?.abort();
+    const controller = new AbortController();
+    inFlightRef.current = controller;
     setSearchStatus('searching');
     setSearchResults([]);
-    void forwardGeocode(query).then(
+    void forwardGeocode(query, controller.signal).then(
       (results) => {
+        if (controller.signal.aborted) return;
         if (results.length === 0) {
           setSearchStatus('not-found');
           return;
@@ -53,6 +63,7 @@ export function BirthPlaceSearch({
         setSearchResults(results);
       },
       () => {
+        if (controller.signal.aborted) return;
         setSearchStatus('error');
       },
     );

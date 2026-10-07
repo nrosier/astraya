@@ -84,11 +84,11 @@ function asArray(value: unknown): readonly (MaptilerFeature & NominatimSearchRes
   return Array.isArray(value) ? (value as readonly (MaptilerFeature & NominatimSearchResult)[]) : [];
 }
 
-async function forwardGeocodeViaMaptiler(query: string): Promise<ForwardGeocodeResult[]> {
+async function forwardGeocodeViaMaptiler(query: string, signal?: AbortSignal): Promise<ForwardGeocodeResult[]> {
   const url = maptilerGeocodeUrl(encodeURIComponent(query));
   url.searchParams.set('limit', String(RESULT_LIMIT));
 
-  const response = await fetch(url, { headers: { Accept: 'application/json' } });
+  const response = await fetch(url, { headers: { Accept: 'application/json' }, signal: signal ?? null });
   if (!response.ok) throw new Error(`place search request failed: ${String(response.status)}`);
 
   const data = (await response.json()) as MaptilerFeatureCollection;
@@ -98,7 +98,7 @@ async function forwardGeocodeViaMaptiler(query: string): Promise<ForwardGeocodeR
   );
 }
 
-async function forwardGeocodeViaNominatim(query: string): Promise<ForwardGeocodeResult[]> {
+async function forwardGeocodeViaNominatim(query: string, signal?: AbortSignal): Promise<ForwardGeocodeResult[]> {
   const url = new URL(NOMINATIM_SEARCH_URL);
   url.searchParams.set('format', 'jsonv2');
   url.searchParams.set('q', query);
@@ -106,9 +106,15 @@ async function forwardGeocodeViaNominatim(query: string): Promise<ForwardGeocode
 
   let response: Response;
   try {
-    response = await fetch(url, { headers: { Accept: 'application/json' }, referrerPolicy: 'origin' });
+    response = await fetch(url, {
+      headers: { Accept: 'application/json' },
+      referrerPolicy: 'origin',
+      signal: signal ?? null,
+    });
   } catch (error) {
-    warnIfDefaultGeocodeServer();
+    // An aborted request (#463, a newer search superseding this one) is not a reason to warn
+    // about the geocode server being unreachable — only a genuine fetch failure is.
+    if (signal?.aborted !== true) warnIfDefaultGeocodeServer();
     throw error;
   }
   if (!response.ok) {
@@ -123,7 +129,11 @@ async function forwardGeocodeViaNominatim(query: string): Promise<ForwardGeocode
 /**
  * Resolves to an empty array when nothing matches the query, rather than throwing — that is a
  * normal, expected outcome the caller should show as "no results", not treat as a failure.
+ *
+ * `signal`, when given, cancels the underlying request (#463) — the caller aborts a stale
+ * search before starting the next one, so an out-of-order response can never overwrite a
+ * newer one.
  */
-export async function forwardGeocode(query: string): Promise<ForwardGeocodeResult[]> {
-  return usingMaptiler ? forwardGeocodeViaMaptiler(query) : forwardGeocodeViaNominatim(query);
+export async function forwardGeocode(query: string, signal?: AbortSignal): Promise<ForwardGeocodeResult[]> {
+  return usingMaptiler ? forwardGeocodeViaMaptiler(query, signal) : forwardGeocodeViaNominatim(query, signal);
 }
