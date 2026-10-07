@@ -12,7 +12,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `AstrocartographyView.tsx` + `AstrocartographyView.messages.ts` — Astrocartography/local-space map with line-type/body/relocation controls. Deps: `domain/astrocartography`, `chart/acg-map`, `interpretation/compose`.
 - `BiWheelSelectionPanel.tsx` + `BiWheelSelectionPanel.messages.ts` — Bi-wheel click-to-inspect panel (body/sign/aspect info). Deps: `./bi-wheel-selection`, `astro-names.messages`.
 - `BirthPlaceSearch.tsx` + `BirthPlaceSearch.messages.ts` — Geocoding place-name search field. Deps: `./forward-geocode`, `./geocode-provider`.
-- `Changelog.tsx` — In-app CHANGELOG.md viewer. Deps: `./markdown`.
+- `Changelog.tsx` + `Changelog.messages.ts` — In-app CHANGELOG.md viewer. Deps: `./markdown`.
 - `ChartTypeSelector.tsx` — Chart-type link row (natal/draconic/harmonic/returns). Deps: `./chart-sections`.
 - `ChartTypes.messages.ts` — i18n labels for all chart types.
 - `ChartView.tsx` + `ChartView.messages.ts` — Primary chart screen + shared `ChartDataView` tabbed UI (reused by composite/draconic/harmonic/shared-chart). Deps: `domain/chart-compute`, `domain/chart-tables`, `chart/chart-sheet`.
