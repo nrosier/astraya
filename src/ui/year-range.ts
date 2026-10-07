@@ -5,6 +5,7 @@
 /**
  * @module ui/year-range
  * @purpose Defines the year range the shipped ephemeris data covers and clamps a typed year into it, shared by the planetary-cycles and eclipse screens.
+ * @conventions Pure, dependency-free constants/helper — no DOM or React — so it can be imported by any screen that needs the ephemeris's valid year range.
  * @exports MIN_EPHEMERIS_YEAR, MAX_EPHEMERIS_YEAR, clampEphemerisYear
  */
 
