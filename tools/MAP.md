@@ -1,11 +1,8 @@
-# tools/ — Map (root files only)
+# tools/ — Map
 
-`tools/` has no files directly in its root — only subdirectories. See each
-subdirectory's own MAP.md for everything: `tools/corpus-gen/MAP.md` for the
-build-time interpretation-corpus generation/audit/benchmark scripts, and
-`tools/mcp/MAP.md` for the MCP servers exposing Astraya's own build-time
-tooling to an agent session.
+No root files (subdirectories only). See each subdirectory's own MAP.md:
 
-`tools/` can never be imported from `src/` (lint-enforced via
-`no-restricted-imports` in `eslint.config.js`) — everything under here is
-build-time-only tooling, not code that ships in the browser bundle.
+- **tools/corpus-gen/** — Build-time interpretation-corpus generation/audit/benchmark scripts (18 scripts + shared lib). Regenerates `src/interpretation/corpus/en.json` and `nl.json`. Costs real API money.
+- **tools/mcp/** — MCP (Model Context Protocol) servers exposing Astraya's build-time tooling as callable tools for agent sessions.
+
+**Import boundary:** `tools/` can never be imported from `src/` (lint-enforced). Everything here is build-time-only; shipping a build-time LLM client in the browser bundle is a critical error.

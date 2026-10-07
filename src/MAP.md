@@ -1,23 +1,22 @@
-# src/ — Map (root files only)
+# src/ — Root (browsable only)
 
-Covers only the files directly in `src/` root. See each subdirectory's own MAP.md
-for everything else: `src/astrology/MAP.md` for astrology/, `src/chart/MAP.md` for
-chart/, `src/domain/MAP.md` for domain/, `src/ephemeris/MAP.md` for ephemeris/,
-`src/interpretation/MAP.md` for interpretation/, `src/pwa/MAP.md` for pwa/,
-`src/store/MAP.md` for store/, `src/sync/MAP.md` for sync/, `src/time/MAP.md`
-for time/, `src/types/MAP.md` for types/, `src/ui/MAP.md` for ui/.
+Index to subdirectories. See each subdirectory's own MAP.md:
 
-### `demo-mode.ts`
-Domain Purpose: identifies the static, serverless `demo` build (GitHub Pages, no server component) so UI code can behave accordingly. Responsibility: exports `IS_DEMO_MODE`, a boolean derived from Vite's build `MODE`. Key Dependencies: no imports; checked by `AccountPanel.tsx` and `session-context.tsx` to skip sign-in/sync.
+- **src/astrology/** — Pure astrological calculation layer (aspects, dignities, sect, Arabic parts, fixed stars, declinations).
+- **src/chart/** — Hand-rolled SVG chart rendering (wheels, glyphs, cusps, aspects, legend).
+- **src/domain/** — Single source of truth: chart composition, computed properties, entity shapes.
+- **src/ephemeris/** — Swiss Ephemeris boundary (only place `sweph-wasm` may be imported); `EphemerisProvider` interface.
+- **src/interpretation/** — Prose composition pipeline: corpus lookups, Tier 2 LLM client, custom instructions, result storage.
+- **src/pwa/** — Service worker (install/activate/fetch routing, cache strategy, offline-first precaching).
+- **src/store/** — IndexedDB op-log: HLC-ordered operations, last-write-wins fold, persistence.
+- **src/sync/** — Fetch clients to server routes (auth, admin, ops, corpus overrides/candidates).
+- **src/time/** — Birth-moment resolution: timezone, DST, calendar handling, URL encoding.
+- **src/types/** — Ambient `.d.ts` for untyped dependencies.
+- **src/ui/** — React SPA: root router, 150+ components (screens, panels, forms, glyphs), sticky header.
 
-### `main.tsx`
-Domain Purpose: the application's entry point. Responsibility: applies the stored theme before first render (avoiding a flash of the OS-default theme, #70), clears a stale localStorage key from a removed preference (#429), and mounts `<App />` into `#root` under `StrictMode`. Key Dependencies: `ui/App.js`, `ui/theme-dom.js`, `ui/app.css`.
-
-### `sw.ts`
-Domain Purpose: thin service worker entry point. Responsibility: self-starts `installServiceWorker` with the real `ServiceWorkerGlobalScope` and build-time version/base-path constants, guarded so the module stays importable from tests. Key Dependencies: `installServiceWorker`/`ServiceWorkerScope` from `pwa/sw-core.js`; built separately by `vite.sw.config.ts` into `dist/sw.js`.
-
-### `trace.ts`
-Domain Purpose: opt-in diagnostic tracing for hard-to-reason-about async handoffs (#372), such as the login → sync → op-log fold → React re-render pipeline. Responsibility: exports `trace()`, a no-op unless `localStorage['astraya:trace']` is set, logging via `console.debug` with a `[trace:` prefix. Key Dependencies: no imports; called ad hoc from across the codebase at points worth tracing.
-
-### `version.ts`
-Domain Purpose: exposes build-time version/commit/timestamp info to the running app, satisfying both the in-app changelog and the AGPL source-disclosure obligation. Responsibility: re-exports Vite-`define`-substituted `__APP_VERSION__`/`__APP_COMMIT__`/`__APP_BUILT_AT__` globals as typed constants, and derives `SOURCE_URL_FOR_BUILD`/`sourceFileUrl` pinned to the build's commit. Key Dependencies: no imports; `APP_VERSION` is consumed by `pwa/warm-status.ts` and other version-displaying UI.
+Root files:
+- **demo-mode.ts** — `IS_DEMO_MODE` flag for GitHub Pages deployment (serverless). Checked by sign-in/sync UI.
+- **main.tsx** — App entry: theme flash prevention, stale localStorage cleanup, mount under StrictMode.
+- **sw.ts** — Service worker entry (thin wrapper, real logic in `pwa/sw-core.ts`).
+- **trace.ts** — Optional diagnostic tracing (no-op unless `localStorage['astraya:trace']` set).
+- **version.ts** — Build-time version/commit/timestamp constants and AGPL source-disclosure URL.

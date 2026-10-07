@@ -1,19 +1,9 @@
-# server/ops/ — file map
+# server/ops/ — Map
 
-The op-log sync relay: the HTTP routes, at-rest encryption, right-to-erasure purge
-(and its pre-delete preview), and the key-rotation operator script.
+Op-log sync relay: HTTP routes, at-rest encryption, right-to-erasure purge, key-rotation operator script.
 
-### `crypto.ts`
-Domain Purpose: makes the sync relay's "never store a payload unencrypted" guarantee (#92) a real, enforced property rather than a policy. Responsibility: whole-payload AES-256-GCM encrypt/decrypt (authenticated, so a tampered row fails loudly) and loading/validating `ASTRAYA_ENCRYPTION_KEY`. Key Dependencies: `node:crypto`; consumed by `./routes.ts`, `./purge.ts`, `./deletion-impact.ts`, `./rotate-key.ts`, and `../interpretation/results.ts`.
-
-### `deletion-impact.ts`
-Domain Purpose: gives an admin a real sense of what an irreversible account delete would take with it, before they confirm it. Responsibility: scans (bounded) and decrypts a user's op rows just enough to count distinct people/charts, degrading to an approximate row count when the scan was truncated or no encryption key is available. Key Dependencies: `../db.ts`, `./crypto.ts`; consumed by `../auth/admin-routes.ts`'s deletion-impact route.
-
-### `purge.ts`
-Domain Purpose: makes a right-to-erasure purge (#308) a real, permanent, cross-device deletion rather than a client-side hidden flag. Responsibility: maintains the `purged_entities` deny-list and, the moment a purge-marker op is pushed, erases every already-stored op row naming that entity (except the marker's own row, so later pulls still see the erasure). Key Dependencies: `../db.ts`, `./crypto.ts`; consumed by `./routes.ts` (checked/triggered inline during a push) and `../auth/admin-routes.ts`'s deletion-impact preview path indirectly via the same deny-list concept.
-
-### `rotate-key.ts`
-Domain Purpose: the remediation path for a leaked `ASTRAYA_ENCRYPTION_KEY` (#340) — without it there is no way to recover other than hand-written SQL. Responsibility: a CLI script (run with the server stopped) that re-encrypts every stored `ops` row under a new key in one all-or-nothing transaction, failing before writing anything if a row doesn't decrypt under the stated current key. Key Dependencies: `../db.ts` (`openDatabase`), `./crypto.ts`; not an HTTP route — deliberately only reachable with shell/container access.
-
-### `routes.ts`
-Domain Purpose: the actual sync protocol's HTTP surface (#102) — this is what a client's op-log engine talks to. Responsibility: registers `POST /api/ops` (batched, idempotent, transactional append with clock-skew quarantine and purge-marker handling) and `GET /api/ops` (paginated pull since a sequence number), both scoped to the authenticated user and both disabled (503) when the relay has no encryption key configured. Key Dependencies: `../db.ts`, `../auth/identity.ts` (`requireUser`), `../../src/store/hlc.ts`, `./crypto.ts`, `./purge.ts`; registered from `../index.ts`.
+- `crypto.ts` — Whole-payload AES-256-GCM encrypt/decrypt (authenticated). Loads/validates `ASTRAYA_ENCRYPTION_KEY`. "Never store unencrypted" guarantee. Deps: node:crypto.
+- `deletion-impact.ts` — Pre-delete preview: scan (bounded) + decrypt user's ops, count distinct people/charts, approximate if truncated/no key. Deps: db, crypto.
+- `purge.ts` — Right-to-erasure (#308): maintains `purged_entities` deny-list, on purge-marker push erases every op row naming that entity (except marker itself). Deps: db, crypto.
+- `rotate-key.ts` — CLI script (server stopped): re-encrypt every op row under new key in all-or-nothing transaction. Remediation for leaked key (#340). Deps: db, crypto.
+- `routes.ts` — Sync protocol HTTP surface: `POST /api/ops` (idempotent append, clock-skew quarantine, purge handling), `GET /api/ops` (paginated pull since sequence number). Both user-scoped, disabled (503) without encryption key. Deps: db, auth/identity, src/store/hlc, crypto, purge.
