@@ -156,3 +156,26 @@ test('the card is not part of the printed page', async ({ page }) => {
   await page.emulateMedia({ media: 'screen' });
   await expect(page.locator('button.extended-settings-trigger')).toBeVisible();
 });
+
+test('the Apply button enables when only Symbols are changed (#459)', async ({ page }) => {
+  test.setTimeout(90_000);
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  await createPerson(page, ADA);
+  await openNatalChart(page);
+  await expect(page.locator('div.chart-wheel')).toBeVisible();
+
+  await openSettings(page);
+  const card = page.locator('dialog.settings-card');
+  const applyButton = card.getByRole('button', { name: /^Apply and redraw/ });
+
+  // Initially disabled
+  await expect(applyButton).toBeDisabled();
+
+  // Change only the symbol class - should enable the apply button
+  await card.getByLabel('Symbols', { exact: true }).selectOption('drawn');
+
+  // The button should now be enabled
+  await expect(applyButton).toBeEnabled();
+
+  await closeSettings(page);
+});
