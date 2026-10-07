@@ -154,3 +154,63 @@ test('a person with an unknown birth time is told synastry needs one', async ({ 
   await page.getByRole('link', { name: 'Synastry', exact: true }).click();
   await expect(page.getByText(/needs a complete birth record with a known time/)).toBeVisible();
 });
+
+test("clicking a ring legend entry dims the other person's legend (#455)", async ({ page }) => {
+  test.setTimeout(60_000);
+
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  await createPerson(page, {
+    name: 'Ada Lovelace',
+    date: '1815-12-10',
+    time: '07:45:00',
+    latitude: '51.5072',
+    longitude: '-0.1276',
+  });
+  await page.getByRole('link', { name: '← People' }).click();
+  await createPerson(page, {
+    name: 'Charles Babbage',
+    date: '1820-12-26',
+    time: '10:00:00',
+    latitude: '51.5072',
+    longitude: '-0.1276',
+  });
+
+  await page.getByRole('link', { name: '← People' }).click();
+  await page.getByRole('link').filter({ hasText: 'Ada Lovelace' }).click();
+  await page.getByRole('button', { name: 'Relationship Charts', exact: true }).click();
+  await page.getByRole('link', { name: 'Synastry', exact: true }).click();
+  await page.getByLabel('Compare with').selectOption({ label: 'Charles Babbage' });
+
+  await expect(page.locator('div.chart-wheel')).toBeVisible();
+
+  // Get the ring legend entries
+  const adaLegendEntry = page.locator('[data-ring-legend="0"]');
+  const charlesLegendEntry = page.locator('[data-ring-legend="1"]');
+
+  // Initially, both legend entries should be visible and not dimmed
+  await expect(adaLegendEntry).toBeVisible();
+  await expect(charlesLegendEntry).toBeVisible();
+  await expect(adaLegendEntry).not.toHaveClass(/chart-dimmed/);
+  await expect(charlesLegendEntry).not.toHaveClass(/chart-dimmed/);
+
+  // Click on Ada's legend entry to isolate her ring
+  await adaLegendEntry.click();
+
+  // Now Ada's entry should not be dimmed, but Charles's should be
+  await expect(adaLegendEntry).not.toHaveClass(/chart-dimmed/);
+  await expect(charlesLegendEntry).toHaveClass(/chart-dimmed/);
+
+  // Click on Charles's legend entry to isolate his ring
+  await charlesLegendEntry.click();
+
+  // Now Charles's entry should not be dimmed, but Ada's should be
+  await expect(charlesLegendEntry).not.toHaveClass(/chart-dimmed/);
+  await expect(adaLegendEntry).toHaveClass(/chart-dimmed/);
+
+  // Click on an empty area of the wheel to clear the selection
+  await page.locator('div.chart-wheel svg').click({ position: { x: 50, y: 50 } });
+
+  // Both should be visible and not dimmed again
+  await expect(adaLegendEntry).not.toHaveClass(/chart-dimmed/);
+  await expect(charlesLegendEntry).not.toHaveClass(/chart-dimmed/);
+});
