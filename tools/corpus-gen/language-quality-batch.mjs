@@ -109,7 +109,34 @@ function flag(name, fallback) {
 }
 if (rawArgs.includes('--help') || rawArgs.includes('-h')) {
   console.log(
-    'Usage: npx tsx --env-file=.env.local tools/corpus-gen/language-quality-batch.mjs --locale=nl [--provider=gemini|ollama] [--model=<name>] [--limit=N] [--concurrency=N] [--batch]',
+    [
+      'Usage: npx tsx --env-file=.env.local tools/corpus-gen/language-quality-batch.mjs --locale=nl [--provider=gemini|ollama] [--model=<name>] [--limit=N] [--concurrency=N] [--batch]',
+      '',
+      "Proofreads each entry's text for its own declared locale and classifies GOOD (no change),",
+      'FIXED (small high-confidence mechanical correction applied, tagged',
+      '`spelling-corrected-by-judge`), or BAD (wrong language or low-confidence problem, tagged',
+      '`language-quality-flagged-by-judge`, left otherwise untouched). To act on BAD results, remove',
+      'them with remove-by-tag.mjs --tag=language-quality-flagged-by-judge, then re-run',
+      'generate-batch.mjs for the same locale.',
+      '',
+      'Options:',
+      '  --locale=<locale>          Required. Any locale — the rubric is locale-agnostic by design.',
+      '  --provider=gemini|ollama   Which provider runs the judge. Default: gemini.',
+      '  --model=<name>             Which model judges. Deliberately not whatever generated the',
+      '                             entries, and not $GEMINI_MODEL — a model judging its own output',
+      '                             is a weak signal. Default: gemini-3.5-flash-lite.',
+      '  --limit=N                  Caps how many entries to judge this run. Default: unlimited.',
+      '  --concurrency=N            How many entries to judge in parallel. Ignored under --batch.',
+      '                             Default: 3.',
+      '  --batch                    Gemini only. Submits every candidate as one inline Gemini Batch',
+      '                             API job instead of one HTTP call per entry, at 50%-of-standard-',
+      '                             rate pricing. --concurrency is ignored under --batch.',
+      '',
+      'Costs real API money unless --provider=ollama. Writes corrected `text` and the',
+      'spelling-corrected-by-judge/language-quality-flagged-by-judge tags directly to the corpus',
+      'file — never touches reviewedBy/reviewedAt. Do not run against a locale a generate-batch.mjs',
+      'process is actively regenerating right now.',
+    ].join('\n'),
   );
   process.exit(0);
 }

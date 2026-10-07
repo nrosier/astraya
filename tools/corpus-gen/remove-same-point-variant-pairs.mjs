@@ -59,7 +59,28 @@ function flag(name, fallback) {
   return found ? found.slice(name.length + 3) : fallback;
 }
 if (rawArgs.includes('--help') || rawArgs.includes('-h')) {
-  console.log('Usage: npx tsx tools/corpus-gen/remove-same-point-variant-pairs.mjs --locale=en [--apply]');
+  console.log(
+    [
+      'Usage: npx tsx tools/corpus-gen/remove-same-point-variant-pairs.mjs --locale=en [--apply]',
+      '',
+      'Removes every aspect-pair/synastry-aspect entry where both bodies are calculation-method',
+      'variants of the same real point (meanNode/trueNode, meanLilith/osculatingLilith/',
+      'interpolatedLilith) — these never carried independent astrological meaning (#395). Kept as a',
+      'real script, not a throwaway, in case a future body addition ever recreates this situation.',
+      'Dry run by default: lists what would be removed, writes nothing.',
+      '',
+      'Options:',
+      '  --locale=<locale>   Required. Which corpus file to remove entries from.',
+      '  --apply             Actually writes the removal. Without it, this only reports what would',
+      '                      happen. Backs up the corpus to tools/corpus-gen/backups/, uses a',
+      '                      surgical span-based delete, and also drops matching identities from',
+      '                      eval-tracking/<locale>.json and feedback/<locale>.json so no orphaned',
+      '                      state lingers.',
+      '',
+      '--apply refuses to run against a locale that a generate/evaluate/improve-batch.mjs process',
+      'appears to be running right now (best-effort ps aux scrape).',
+    ].join('\n'),
+  );
   process.exit(0);
 }
 

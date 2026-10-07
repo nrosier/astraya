@@ -56,7 +56,24 @@ function flag(name, fallback) {
 }
 if (rawArgs.includes('--help') || rawArgs.includes('-h')) {
   console.log(
-    'Usage: npx tsx --env-file=.env.local tools/corpus-gen/classical-triage-batch.mjs [--provider=gemini|ollama] [--limit=N] [--concurrency=N]',
+    [
+      'Usage: npx tsx --env-file=.env.local tools/corpus-gen/classical-triage-batch.mjs [--provider=gemini|ollama] [--limit=N] [--concurrency=N]',
+      '',
+      "For each shipped dignity-state entry, checks it against William Lilly's Christian Astrology",
+      '(1647) excerpt and additively tags any substantive divergence with',
+      '`diverges-from-classical-source` — a triage signal for human review, never deletes or',
+      'rewrites `text`. English-only: the sourced excerpts are all English, so this always runs',
+      'against src/interpretation/corpus/en.json.',
+      '',
+      'Options:',
+      '  --provider=gemini|ollama   Which model judges each entry against its excerpt. Default:',
+      '                             gemini.',
+      '  --limit=N                  Caps how many dignity-state entries to triage this run. Default:',
+      '                             unlimited.',
+      '  --concurrency=N            How many entries to judge in parallel. Default: 3.',
+      '',
+      'Costs real API money per call (Gemini by default).',
+    ].join('\n'),
   );
   process.exit(0);
 }

@@ -86,7 +86,25 @@ function flag(name, fallback) {
 }
 if (rawArgs.includes('--help') || rawArgs.includes('-h')) {
   console.log(
-    'Usage: npx tsx --env-file=.env.local tools/corpus-gen/verify-batch.mjs --locale=en [--category=<category>] [--provider=gemini|ollama] [--limit=N] [--concurrency=N]',
+    [
+      'Usage: npx tsx --env-file=.env.local tools/corpus-gen/verify-batch.mjs --locale=en [--category=<category>] [--provider=gemini|ollama] [--limit=N] [--concurrency=N]',
+      '',
+      "Fact-grounding verification pass (#359): asks a judge model whether each entry's text is",
+      "consistent with its own placement's computed facts, and additively tags any flagged entry",
+      'with `unverified-flagged-by-judge`. Never touches reviewedBy, never deletes or rewrites',
+      '`text` — a triage signal for human review; flagged entries still ship. Idempotent: re-running',
+      'never adds a duplicate tag or re-flags/un-flags an entry across runs.',
+      '',
+      'Options:',
+      '  --locale=en|nl             Required. Which corpus file to verify.',
+      '  --category=<category>      Restricts the run to one corpus category (e.g. dignity-state).',
+      '                             Default: every category.',
+      '  --provider=gemini|ollama   Which provider runs the judge. Default: gemini.',
+      '  --limit=N                  Caps how many entries to verify this run. Default: unlimited.',
+      '  --concurrency=N            How many entries to verify in parallel. Default: 3.',
+      '',
+      'Costs real API money unless --provider=ollama.',
+    ].join('\n'),
   );
   process.exit(0);
 }

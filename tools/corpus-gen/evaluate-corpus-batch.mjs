@@ -33,11 +33,35 @@
  * exits immediately after; there's no need to keep a terminal open or a process alive across the
  * wait. Run it again (same `--locale`) whenever it's convenient to check.
  *
+ * A `failed`/`cancelled`/`expired` batch is still read for whatever it has: OpenAI can leave a
+ * real, partial `output_file_id` behind for every request that completed before it stopped (seen
+ * on a real cancelled batch, #381: 749/750 done, output file populated) — those results are
+ * extracted and applied exactly like a cleanly completed batch, nothing is thrown away just
+ * because of how the batch ended. Only once that batch has nothing extractable at all (no output
+ * file and no error file — e.g. cancelled before a single request ran), or a job is orphaned
+ * (OpenAI no longer recognizes the batch id) or stalled past `--stall-threshold-minutes` with no
+ * progress, does this script fall back to just *reporting* the problem, leaving the affected
+ * entries' tracking state exactly as it was — nothing requeued. Pass `--reset` to actually drop
+ * that job and put its entries back to pending so they're picked up for resubmission on this same
+ * run. `--stall-threshold-minutes` itself only controls when a batch is *reported* as stalled —
+ * on its own it never abandons anything, `--reset` does.
+ *
  * `--check-only` without `--locale` widens this to every locale that has a batch-state file at
  * all: it scans tools/corpus-gen/batch-state/evaluate-*.json, reports which locale has which
  * batch running (and still applies any that happen to have finished), without needing to know in
  * advance which locale(s) you're waiting on. `--locale` stays required for every other mode,
  * since submitting a new batch always has to be against one specific corpus.
+ *
+ * `--batch=<id>` checks one specific OpenAI batch id instead of every job on file for the locale:
+ * useful to recheck a single job without disturbing the stall tracking of any others still in
+ * flight. If the id is already recorded in this locale's batch-state file, its candidate list is
+ * read straight from there, same as the normal flow. If it isn't — the state file was lost,
+ * cleared, or never written for this job — this falls back to asking OpenAI directly for the
+ * batch and, if found, assumes it belongs to the given `--locale` (a batch id itself carries no
+ * locale) and re-derives its candidate list from the batch's own input file instead of giving up.
+ * If that batch isn't finished/cancelled/failed yet, it's just reported, same as the normal flow;
+ * once it is, its results are imported and parsed the same way. Implies check-only (it never
+ * submits a new batch), and still requires `--locale`.
  *
  * Prints an estimated total cost on completion, from each result's own token usage and
  * lib/cost-estimate.mjs's batch-tier pricing table — an estimate for visibility, not a billing
@@ -47,7 +71,8 @@
  * generate-batch.mjs's --batch is one of two modes, since the whole point of this feature is to
  * run the ChatGPT side cheaply at corpus scale.
  *
- *   npx tsx --env-file=.env.local tools/corpus-gen/evaluate-corpus-batch.mjs --locale=en [--limit=N] [--model=<name>] [--evaluation-limit=N] [--votes=N] [--force] [--check-only]
+ *   npx tsx --env-file=.env.local tools/corpus-gen/evaluate-corpus-batch.mjs --locale=en [--limit=N] [--model=<name>] [--evaluation-limit=N] [--votes=N] [--force] [--reset] [--check-only]
+ *   npx tsx --env-file=.env.local tools/corpus-gen/evaluate-corpus-batch.mjs --locale=en --batch=<batch-id>   (check/import one specific job)
  *   npx tsx --env-file=.env.local tools/corpus-gen/evaluate-corpus-batch.mjs --check-only   (checks every locale with a batch in flight)
  */
 /**
@@ -55,13 +80,19 @@
  * @purpose #381 stage 1 of 2: submits/checks an OpenAI Batch API job giving the corpus an
  *   independent second opinion (fact-grounding + "generic trope" detection), writing flagged
  *   entries to tools/corpus-gen/feedback/<locale>.json for improve-corpus-batch.mjs to act on.
- * @conventions CLI flags: --locale=<locale> (required unless --check-only with no --locale),
- *   --limit=N, --model=<name> (default gpt-6-luna), --evaluation-limit=N (default 2), --votes=N
- *   (default 3), --force, --recheck-exhausted, --check-only, --stall-threshold-minutes=N. Costs
- *   real OpenAI Batch API money. Submit-and-exit, never blocks — batch state (possibly several
- *   jobs per locale) is persisted to tools/corpus-gen/batch-state/evaluate-<locale>.json and
- *   per-entry loop state to tools/corpus-gen/eval-tracking/<locale>.json; re-run the same command
- *   later to check status and apply results.
+ * @conventions CLI flags: --locale=<locale> (required unless --check-only with no --locale, or
+ *   with --batch which always requires it), --limit=N, --model=<name> (default gpt-6-luna),
+ *   --evaluation-limit=N (default 2), --votes=N (default 3), --force, --recheck-exhausted,
+ *   --check-only, --batch=<id>, --reset, --stall-threshold-minutes=N. A failed/cancelled/expired
+ *   batch still has its partial results extracted and applied if it has any; only a job with
+ *   nothing usable left (orphaned, stalled, or terminal with no extractable results at all) is
+ *   just reported, never requeued, unless --reset is also passed; --stall-threshold-minutes only
+ *   controls when stalled is *reported*, never abandonment on its own. Costs real OpenAI Batch
+ *   API money.
+ *   Submit-and-exit, never blocks — batch state (possibly several jobs per locale) is persisted
+ *   to tools/corpus-gen/batch-state/evaluate-<locale>.json and per-entry loop state to
+ *   tools/corpus-gen/eval-tracking/<locale>.json; re-run the same command later to check status
+ *   and apply results.
  * @exports CLI entry point, no exports.
  */
 import { readFile, mkdir, readdir } from 'node:fs/promises';
@@ -75,6 +106,7 @@ import {
   isBatchTerminal,
   extractBatchResults,
   detectStalledBatch,
+  downloadFile,
 } from './lib/openai-batch.mjs';
 import { factsDescription } from './lib/placements.mjs';
 import { parsePlacementKey } from '../../src/interpretation/schema.ts';
@@ -95,6 +127,53 @@ function identityOf(item) {
   return item.key;
 }
 
+/**
+ * Rebuilds a `--batch=<id>` job's own `{ batchId, submittedAt, model, votes, candidates }` shape
+ * straight from OpenAI's own input file, for an id that isn't (or no longer is) recorded in this
+ * locale's batch-state file — e.g. the state file was lost, cleared, or never written for this
+ * job. Candidate identity isn't carried on the batch itself (`custom_id` is only this submission's
+ * own positional `index:vote`, per buildBatchRequest), so this re-derives it by matching each
+ * index's own request body back to a corpus entry via the exact "ENTRY TEXT: " content
+ * buildEvaluationPrompt embeds — the only identifying string OpenAI actually has on file. An
+ * index whose text no longer matches any current corpus entry (e.g. the entry was edited or
+ * removed since submission) comes back with no key, same as any other candidate that fails to
+ * resolve against the current corpus elsewhere in this script.
+ */
+async function reconstructJobFromBatch({ batch, corpus }) {
+  if (!batch.input_file_id) throw new Error(`batch ${batch.id} has no input_file_id to reconstruct candidates from`);
+  const inputText = await downloadFile({ apiKey: process.env.OPENAI_API_KEY, fileId: batch.input_file_id });
+  const requests = inputText
+    .split('\n')
+    .filter((line) => line.trim() !== '')
+    .map((line) => JSON.parse(line));
+  if (requests.length === 0) throw new Error(`batch ${batch.id}'s input file has no requests to reconstruct from`);
+
+  const byIndex = new Map();
+  for (const request of requests) {
+    const index = Number(String(request.custom_id).split(':')[0]);
+    if (!byIndex.has(index)) byIndex.set(index, []);
+    byIndex.get(index).push(request);
+  }
+  const maxIndex = Math.max(...byIndex.keys());
+  const byText = new Map(corpus.map((entry) => [entry.text, entry]));
+  const candidates = [];
+  for (let index = 0; index <= maxIndex; index++) {
+    const forIndex = byIndex.get(index) ?? [];
+    const userContent = forIndex[0]?.body?.messages?.find((message) => message.role === 'user')?.content ?? '';
+    const match = /ENTRY TEXT: ([\s\S]*?)(?:\n\nOn a previous review|$)/.exec(userContent);
+    const entry = match ? byText.get(match[1]) : undefined;
+    candidates.push({ key: entry?.key }); // key undefined → naturally unresolved below, same as a stale entry
+  }
+
+  return {
+    batchId: batch.id,
+    submittedAt: batch.created_at ? new Date(batch.created_at * 1000).toISOString() : 'unknown',
+    model: requests[0]?.body?.model,
+    votes: byIndex.get(0)?.length ?? 1,
+    candidates,
+  };
+}
+
 const rawArgs = process.argv.slice(2);
 function flag(name, fallback) {
   const found = rawArgs.find((arg) => arg.startsWith(`--${name}=`));
@@ -102,17 +181,50 @@ function flag(name, fallback) {
 }
 if (rawArgs.includes('--help') || rawArgs.includes('-h')) {
   console.log(
-    'Usage: npx tsx --env-file=.env.local tools/corpus-gen/evaluate-corpus-batch.mjs --locale=en [--limit=N] [--model=<name>] [--evaluation-limit=N] [--votes=N] [--force] [--recheck-exhausted] [--stall-threshold-minutes=N] [--check-only]',
+    'Usage: npx tsx --env-file=.env.local tools/corpus-gen/evaluate-corpus-batch.mjs --locale=en [--limit=N] [--model=<name>] [--evaluation-limit=N] [--votes=N] [--force] [--recheck-exhausted] [--reset] [--stall-threshold-minutes=N] [--check-only]',
+  );
+  console.log(
+    '       npx tsx --env-file=.env.local tools/corpus-gen/evaluate-corpus-batch.mjs --locale=en --batch=<batch-id> [--reset]   (check/import one specific job)',
   );
   console.log(
     '       npx tsx --env-file=.env.local tools/corpus-gen/evaluate-corpus-batch.mjs --check-only   (checks every locale with a batch in flight)',
   );
   console.log('');
   console.log('Options:');
+  console.log('  --locale=<locale>             Which corpus locale to evaluate/check (e.g. en, nl). Required unless');
+  console.log('                                --check-only is used with no --locale (checks every locale), or');
+  console.log('                                --batch is given (that always requires --locale too — a batch id');
+  console.log("                                alone doesn't say which locale's batch-state file it belongs to).");
+  console.log('  --limit=N                     Cap how many eligible entries are submitted in a new batch. Default:');
+  console.log('                                unlimited.');
+  console.log('  --model=<name>                Which OpenAI model judges each entry. Default: gpt-6-luna.');
+  console.log('  --votes=N                     How many times each entry is judged; flagged only when most votes');
+  console.log('                                flag it (#437). Default: 3.');
+  console.log('  --evaluation-limit=N          How many evaluate/improve rounds an entry gets before it stops being');
+  console.log('                                re-queued, even unresolved. Default: 2.');
+  console.log('  --force                       Re-evaluate every selected entry, ignoring tracked clean/exhausted');
+  console.log('                                state entirely.');
+  console.log('  --recheck-exhausted           Re-evaluate only entries improve-corpus-batch.mjs just gave a');
+  console.log('                                one-time --last-resort revision to (#396), instead of the normal');
+  console.log('                                selection.');
+  console.log('  --check-only                  Only check/apply jobs already on file; never submit a new batch.');
+  console.log('  --batch=<id>                  Check/import one specific OpenAI batch id instead of every job on');
+  console.log("                                file for this locale. Normally read from this locale's batch-state");
+  console.log('                                file; if not recorded there, falls back to asking OpenAI directly');
+  console.log('                                and assumes it belongs to --locale. Implies --check-only; still');
+  console.log('                                requires --locale.');
+  console.log('  --reset                       Actually drop a job that has nothing usable left (orphaned, stalled');
+  console.log('                                past the threshold, or finished failed/cancelled/expired with no');
+  console.log('                                extractable results at all) and put its entries back to pending for');
+  console.log('                                resubmission. Without it, such a job is only ever reported, never');
+  console.log('                                requeued. A failed/cancelled/expired batch that still has partial');
+  console.log('                                results is read and applied regardless of --reset — see above.');
   console.log(
-    '  --stall-threshold-minutes=N   How long (in minutes) a batch can show no progress before being abandoned',
+    '  --stall-threshold-minutes=N   How long (in minutes) a batch can show no progress before being reported',
   );
-  console.log('                                (default: 30). Use 60+ for longer grace periods on slow batches.');
+  console.log('                                as stalled (default: 30). Reporting only — see --reset above for');
+  console.log('                                what actually abandons a stalled batch. Use 60+ for a longer grace');
+  console.log('                                period before a slow batch is even reported as stalled.');
   process.exit(0);
 }
 
@@ -122,7 +234,9 @@ const model = flag('model', 'gpt-6-luna');
 // How many times each entry is judged; it is flagged only when most of the votes flag it (#437).
 const votes = Number(flag('votes', '3'));
 if (!Number.isInteger(votes) || votes < 1) throw new Error('--votes must be a positive integer');
+// How many evaluate/improve rounds an entry gets before it stops being re-queued even unresolved.
 const evaluationLimit = Number(flag('evaluation-limit', 2));
+// Ignores tracked clean/exhausted state entirely and re-evaluates every selected entry.
 const force = rawArgs.includes('--force');
 // #396: re-checking the entries improve-corpus-batch.mjs's own `--last-resort` mode just revised
 // doesn't fit `--force` (which re-evaluates the *entire* corpus, far more than needed) or the
@@ -134,12 +248,32 @@ const recheckExhausted = rawArgs.includes('--recheck-exhausted');
 // builds a new candidate list or submits anything. Combined with omitting `--locale`, scans every
 // locale that has a batch-state file instead of just one.
 const checkOnly = rawArgs.includes('--check-only');
-// Threshold in minutes for detecting a batch as stalled — no progress for this long = abandon (#???).
+// Checks/imports exactly one OpenAI batch id instead of every job on file for the locale — handy
+// to recheck a single job without disturbing the stall tracking of any others still in flight.
+// Batch ids aren't locale-scoped on OpenAI's side, so this always requires --locale too, to know
+// which locale's batch-state file the id should be matched against — and, if it isn't recorded
+// there, which locale to assume it belongs to when falling back to asking OpenAI directly (see
+// checkAndApply). Implies --check-only: it never builds a new candidate list or submits anything.
+const batchId = flag('batch');
+// A job with nothing usable left (orphaned, stalled past --stall-threshold-minutes, or
+// failed/cancelled/expired with no extractable results at all) is only ever *reported* by
+// default — its entries' tracking state is left exactly as-is, so nothing is silently requeued.
+// This flag is what actually drops that job and puts its entries back to pending for
+// resubmission. A failed/cancelled/expired batch that still has partial results is read and
+// applied regardless of this flag — see checkAndApply.
+const reset = rawArgs.includes('--reset');
+// Threshold in minutes for *reporting* a batch as stalled — no progress for this long = reported,
+// not auto-abandoned; pair with --reset to actually abandon it once reported.
 // Default 30 minutes; use --stall-threshold-minutes=60 for a longer grace period.
 const stallThresholdMinutes = Number(flag('stall-threshold-minutes', 30));
 if (!Number.isInteger(stallThresholdMinutes) || stallThresholdMinutes < 1)
   throw new Error('--stall-threshold-minutes must be a positive integer');
 
+if (batchId && !locale) {
+  throw new Error(
+    "--batch=<id> requires --locale=<locale> — a batch id alone doesn't say which locale's batch-state file to check",
+  );
+}
 if (!locale && !checkOnly) {
   throw new Error(
     '--locale=<locale> is required (unless using --check-only without --locale, which checks every locale)',
@@ -150,8 +284,10 @@ if (!locale && !checkOnly) {
 // batches in flight at once (e.g. kicked off back to back to parallelize throughput). Every call
 // checks all of them (one single-shot status call each, never a blocking poll): a terminal job's
 // results are retrieved and applied, then it drops off the list; a still-running one stays on it
-// and is reported, not re-submitted.
-async function checkAndApply(loc) {
+// and is reported, not re-submitted. `batchFilter`, when given, scopes the checking to just that
+// one batch id — every other recorded job is left completely untouched (not even polled), and is
+// carried straight through into `stillRunning` so it's never dropped from the state file.
+async function checkAndApply(loc, { batchFilter } = {}) {
   const corpusPath = join(root, 'src', 'interpretation', 'corpus', `${loc}.json`);
   const corpus = JSON.parse(await readFile(corpusPath, 'utf8'));
 
@@ -162,8 +298,33 @@ async function checkAndApply(loc) {
   const statePath = join(root, 'tools', 'corpus-gen', 'batch-state', `evaluate-${loc}.json`);
   const existingState = await readBatchState(statePath);
   const jobs = existingState?.jobs ?? [];
+  let jobsToCheck = batchFilter ? jobs.filter((job) => job.batchId === batchFilter) : jobs;
+  const untouchedJobs = batchFilter ? jobs.filter((job) => job.batchId !== batchFilter) : [];
+  // `--batch=<id>` named a job this locale's state file doesn't know about (lost, cleared, or
+  // never written) — fall back to asking OpenAI directly for it. The id itself carries no locale
+  // (OpenAI's batches aren't locale-scoped), so this trusts the caller's own --locale rather than
+  // reporting nothing to check; the candidate list is then re-derived from the batch's own input
+  // file (see reconstructJobFromBatch), since there's no recorded job to read it from.
+  let foundRemotely = false;
+  if (batchFilter && jobsToCheck.length === 0) {
+    console.log(
+      `[${loc}] batch ${batchFilter} isn't recorded in this locale's batch state — checking directly with OpenAI...`,
+    );
+    let remoteBatch;
+    try {
+      remoteBatch = await getBatch({ apiKey: process.env.OPENAI_API_KEY, batchId: batchFilter });
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      throw new Error(
+        `batch ${batchFilter} is not recorded locally and OpenAI doesn't recognize it either (${errorMsg})`,
+        { cause: error },
+      );
+    }
+    jobsToCheck = [await reconstructJobFromBatch({ batch: remoteBatch, corpus })];
+    foundRemotely = true;
+  }
 
-  const stillRunning = [];
+  const stillRunning = [...untouchedJobs];
   let feedback;
   let anyTerminal = false;
   let totalClean = 0;
@@ -173,7 +334,7 @@ async function checkAndApply(loc) {
   let costUnknown = false;
 
   try {
-    for (const job of jobs) {
+    for (const job of jobsToCheck) {
       console.log(
         `[${loc}] checking batch ${job.batchId} (submitted ${job.submittedAt}, ${String(job.candidates.length)} entries)...`,
       );
@@ -181,26 +342,34 @@ async function checkAndApply(loc) {
       try {
         batch = await getBatch({ apiKey: process.env.OPENAI_API_KEY, batchId: job.batchId });
       } catch (error) {
-        // Batch no longer exists (404/orphaned) — reset entries for resubmission
-        if (feedback === undefined) feedback = await readFeedback(feedbackPath);
-        const now = new Date().toISOString();
+        // Batch no longer exists (404/orphaned) — can't be checked again, so it's dropped from
+        // the job list either way. Whether its entries go back to pending for resubmission is
+        // gated on --reset: without it, this only reports the problem and leaves tracking alone.
         const errorMsg = error instanceof Error ? error.message : String(error);
-        console.error(
-          `[${loc}] ⚠️ ORPHANED batch ${job.batchId} (${errorMsg}) — resetting ${String(job.candidates.length)} entries for resubmission`,
-        );
-        for (const candidate of job.candidates) {
-          const entry = corpus.find((e) => identityOf(e) === identityOf(candidate));
-          if (entry) {
-            const existingTracking = findTracking(tracking, entry);
-            upsertTracking(tracking, {
-              key: entry.key,
-              locale: entry.locale,
-              clean: undefined, // Mark as pending (neither clean nor flagged)
-              evaluationCount: (existingTracking?.evaluationCount ?? 0) + 1,
-              updatedAt: now,
-            });
-            console.log(`[${loc}] RESET ${entry.key} — eligible for resubmission after batch orphan detection`);
+        if (reset) {
+          if (feedback === undefined) feedback = await readFeedback(feedbackPath);
+          const now = new Date().toISOString();
+          console.error(
+            `[${loc}] ⚠️ ORPHANED batch ${job.batchId} (${errorMsg}) — resetting ${String(job.candidates.length)} entries for resubmission (--reset)`,
+          );
+          for (const candidate of job.candidates) {
+            const entry = corpus.find((e) => identityOf(e) === identityOf(candidate));
+            if (entry) {
+              const existingTracking = findTracking(tracking, entry);
+              upsertTracking(tracking, {
+                key: entry.key,
+                locale: entry.locale,
+                clean: undefined, // Mark as pending (neither clean nor flagged)
+                evaluationCount: (existingTracking?.evaluationCount ?? 0) + 1,
+                updatedAt: now,
+              });
+              console.log(`[${loc}] RESET ${entry.key} — eligible for resubmission after batch orphan detection`);
+            }
           }
+        } else {
+          console.error(
+            `[${loc}] ⚠️ ORPHANED batch ${job.batchId} (${errorMsg}) — dropping from tracked state without touching its ${String(job.candidates.length)} entries; pass --reset to requeue them now`,
+          );
         }
         anyTerminal = true;
         continue; // Skip to next batch, don't add to stillRunning
@@ -218,12 +387,14 @@ async function checkAndApply(loc) {
           job.lastSeenCounts = nextTracking;
         }
 
-        // If batch is stalled beyond threshold, abandon it and reset entries for resubmission
-        if (shouldAbandon) {
+        // Exceeding the threshold is reporting-only by itself (`reason` above already surfaced
+        // it) — it only actually abandons the batch and resets its entries when --reset is also
+        // passed. Without --reset, the batch just keeps being reported as stalled on every check.
+        if (shouldAbandon && reset) {
           if (feedback === undefined) feedback = await readFeedback(feedbackPath);
           const now = new Date().toISOString();
           console.error(
-            `[${loc}] ⚠️ ABANDONING batch ${job.batchId} (${reason}) — resetting ${String(job.candidates.length)} entries for resubmission`,
+            `[${loc}] ⚠️ ABANDONING batch ${job.batchId} (${reason}) — resetting ${String(job.candidates.length)} entries for resubmission (--reset)`,
           );
           for (const candidate of job.candidates) {
             const entry = corpus.find((e) => identityOf(e) === identityOf(candidate));
@@ -242,35 +413,25 @@ async function checkAndApply(loc) {
           anyTerminal = true;
           continue; // Skip to next batch
         }
+        if (shouldAbandon && !reset) {
+          console.log(
+            `[${loc}] batch ${job.batchId} is past the stall threshold but --reset was not passed — leaving it in place and reporting; pass --reset to abandon and requeue its entries`,
+          );
+        }
 
         stillRunning.push(job);
         continue;
       }
+      // A cancelled/failed/expired batch will not be retried by OpenAI, but it isn't necessarily
+      // empty — it can still carry real results for whatever requests completed before it stopped
+      // (confirmed against a real cancelled batch, #381: 749/750 completed with a populated output
+      // file). So this always attempts extraction first, same as a cleanly completed batch, rather
+      // than discarding a mostly-finished job just because of how it ended.
+      const isDeadBatch = ['failed', 'cancelled', 'expired'].includes(batch.status);
       console.log(
-        `[${loc}] batch ${job.batchId} is ${batch.status}${['failed', 'cancelled', 'expired'].includes(batch.status) ? ' (discarding and resetting entries to pending)' : ' — retrieving results...'}...`,
+        `[${loc}] batch ${job.batchId} is ${batch.status}${isDeadBatch ? ' (will not be retried by OpenAI; retrieving whatever results it has)' : ' — retrieving results...'}`,
       );
       anyTerminal = true;
-
-      // If batch failed, was cancelled, or expired, it will not be retried by OpenAI — reset entries to pending for resubmission
-      if (['failed', 'cancelled', 'expired'].includes(batch.status)) {
-        if (feedback === undefined) feedback = await readFeedback(feedbackPath);
-        const now = new Date().toISOString();
-        for (const candidate of job.candidates) {
-          const entry = corpus.find((e) => identityOf(e) === identityOf(candidate));
-          if (entry) {
-            const existingTracking = findTracking(tracking, entry);
-            upsertTracking(tracking, {
-              key: entry.key,
-              locale: entry.locale,
-              clean: undefined, // Mark as pending (neither clean nor flagged)
-              evaluationCount: (existingTracking?.evaluationCount ?? 0) + 1,
-              updatedAt: now,
-            });
-            console.log(`[${loc}] RESET ${entry.key} — eligible for resubmission`);
-          }
-        }
-        continue; // Skip results retrieval, move to next batch
-      }
 
       if (feedback === undefined) feedback = await readFeedback(feedbackPath);
 
@@ -288,13 +449,35 @@ async function checkAndApply(loc) {
       try {
         results = await extractBatchResults({ apiKey: process.env.OPENAI_API_KEY, batch });
       } catch (error) {
-        // Batch failed — print user-friendly message and skip it
+        // Genuinely nothing came back (e.g. cancelled/failed before a single request completed)
+        // — print a user-friendly message. Same as any other unrecoverable job: its entries only
+        // go back to pending for resubmission if --reset was passed; otherwise this just reports
+        // the failure and leaves tracking alone.
         if (error instanceof Error && error.name === 'BatchJobFailed') {
           console.error(`[${loc}] ❌ ${error.message}`);
         } else {
           console.error(`[${loc}] ❌ Batch check failed: ${error instanceof Error ? error.message : String(error)}`);
         }
-        // Don't add to stillRunning — this batch is unrecoverable; entries are reset above
+        if (reset) {
+          const now = new Date().toISOString();
+          for (const candidate of job.candidates) {
+            const entry = corpus.find((e) => identityOf(e) === identityOf(candidate));
+            if (entry) {
+              const existingTracking = findTracking(tracking, entry);
+              upsertTracking(tracking, {
+                key: entry.key,
+                locale: entry.locale,
+                clean: undefined, // Mark as pending (neither clean nor flagged)
+                evaluationCount: (existingTracking?.evaluationCount ?? 0) + 1,
+                updatedAt: now,
+              });
+              console.log(`[${loc}] RESET ${entry.key} — eligible for resubmission (--reset)`);
+            }
+          }
+        } else {
+          console.error(`[${loc}] ⚠️ entries left untouched; pass --reset to requeue them now`);
+        }
+        // Don't add to stillRunning — this batch is unrecoverable.
         continue; // Skip to next batch in loop
       }
       const byCustomId = new Map(results.map((r) => [r.customId, r]));
@@ -395,7 +578,7 @@ async function checkAndApply(loc) {
     console.log(`[${loc}] tracking written to ${trackingPath}`);
   }
 
-  return { corpus, tracking, trackingPath, feedbackPath, statePath, jobs, stillRunning, anyTerminal };
+  return { corpus, tracking, trackingPath, feedbackPath, statePath, jobs, stillRunning, anyTerminal, foundRemotely };
 }
 
 if (checkOnly && !locale) {
@@ -434,7 +617,33 @@ if (checkOnly && !locale) {
   process.exit(0);
 }
 
-const { corpus, tracking, statePath, jobs, stillRunning, anyTerminal } = await checkAndApply(locale);
+const { corpus, tracking, statePath, jobs, stillRunning, anyTerminal, foundRemotely } = await checkAndApply(locale, {
+  batchFilter: batchId,
+});
+
+if (batchId) {
+  // --batch scopes checkAndApply to just this one job, above — every other recorded job for this
+  // locale was carried straight through into `stillRunning` untouched. This never falls through
+  // to submission below: a batch id names one specific already-submitted job to check/import, not
+  // a new selection to run. `foundRemotely` means this locale's state file didn't know about the
+  // id at all — checkAndApply fell back to asking OpenAI directly and, finding it, reconstructed
+  // its candidate list from the batch's own input file instead of giving up.
+  if (foundRemotely) {
+    console.log(
+      `[${locale}] note: batch ${batchId} was not recorded locally — matched it directly via OpenAI and assumed it belongs to --locale=${locale}.`,
+    );
+  }
+  if (stillRunning.some((job) => job.batchId === batchId)) {
+    console.log(`[${locale}] batch ${batchId} still running — nothing to apply yet.`);
+  } else {
+    console.log(
+      `[${locale}] batch ${batchId} checked${anyTerminal ? ' and applied' : ''} — --batch implies --check-only, not submitting anything new.`,
+    );
+  }
+  if (stillRunning.length > 0) await writeBatchState(statePath, { jobs: stillRunning });
+  else await clearBatchState(statePath);
+  process.exit(0);
+}
 
 if (checkOnly) {
   if (jobs.length === 0) console.log(`[${locale}] no batches in flight.`);

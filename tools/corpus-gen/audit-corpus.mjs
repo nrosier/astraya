@@ -18,6 +18,25 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { auditCorpus } from './lib/corpus-audit.mjs';
 
+const rawArgs = process.argv.slice(2);
+if (rawArgs.includes('--help') || rawArgs.includes('-h')) {
+  console.log(
+    [
+      'Usage: npm run corpus:audit',
+      '   or: npx tsx tools/corpus-gen/audit-corpus.mjs',
+      '',
+      'No flags — this script takes none.',
+      '',
+      'Runs the repeatable corpus audit (lib/corpus-audit.mjs) over both the committed en and nl',
+      'corpus files: key shape, locale parity, sign/house index shifts. Read-only — no API key, no',
+      'network call, no TypeScript imports beyond what tsx itself needs to load. Prints every',
+      'failure and note, then exits 1 if there were any failures, 0 otherwise, so the corpus',
+      'loop/CI can stop on a bad regeneration.',
+    ].join('\n'),
+  );
+  process.exit(0);
+}
+
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const corpus = {};
 for (const locale of ['en', 'nl']) {

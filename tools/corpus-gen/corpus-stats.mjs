@@ -34,7 +34,24 @@ function flag(name, fallback) {
   return found ? found.slice(name.length + 3) : fallback;
 }
 if (rawArgs.includes('--help') || rawArgs.includes('-h')) {
-  console.log('Usage: node tools/corpus-gen/corpus-stats.mjs [--locale=en] [--evaluation-limit=N]');
+  console.log(
+    [
+      'Usage: node tools/corpus-gen/corpus-stats.mjs [--locale=en] [--evaluation-limit=N]',
+      '',
+      "Prints a per-locale snapshot of #381's feedback-loop state: how much of the corpus has been",
+      'checked, validated, stuck disputed, mid-loop, or revised, plus what is awaiting review and',
+      "what's currently in flight. Read-only — never touches the corpus or any loop state file, just",
+      'reports on them. Plain node, no API key or TypeScript build step needed, unlike every other',
+      'script in this directory.',
+      '',
+      'Options:',
+      '  --locale=en|nl       Which locale to report on. Default: both en and nl.',
+      '  --evaluation-limit=N  Must match whatever --evaluation-limit evaluate-corpus-batch.mjs and',
+      '                        improve-corpus-batch.mjs were actually run with, so "stuck disputed"',
+      '                        is computed against the same exhaustion threshold those scripts used.',
+      '                        Default: 2.',
+    ].join('\n'),
+  );
   process.exit(0);
 }
 

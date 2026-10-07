@@ -42,7 +42,29 @@ function flag(name, fallback) {
   return found ? found.slice(name.length + 3) : fallback;
 }
 if (rawArgs.includes('--help') || rawArgs.includes('-h')) {
-  console.log('Usage: npx tsx tools/corpus-gen/remove-by-tag.mjs --locale=en --tag=<tag> [--apply]');
+  console.log(
+    [
+      'Usage: npx tsx tools/corpus-gen/remove-by-tag.mjs --locale=en --tag=<tag> [--apply]',
+      '',
+      'Removes every entry whose tags includes --tag, for one locale — e.g. to strip out everything',
+      'language-quality-batch.mjs flagged as language-quality-flagged-by-judge. Dry run by default:',
+      "lists what would be removed, writes nothing. remove-by-model.mjs's own sibling, filtering by",
+      'tags instead of provenance.model.',
+      '',
+      'Options:',
+      '  --locale=<locale>   Required. Which corpus file to remove entries from.',
+      '  --tag=<tag>         Required. Entries whose tags array includes this tag are removed.',
+      '  --apply             Actually writes the removal. Without it, this only reports what would',
+      '                      happen. Backs up the corpus file to tools/corpus-gen/backups/ first,',
+      '                      then uses a surgical span-based delete that touches nothing else',
+      '                      byte-for-byte.',
+      '',
+      'Removed keys become "genuinely missing" to generate-batch.mjs\'s own gap-filler logic, so a',
+      'plain (non --force) re-run of that script against the same locale regenerates exactly those.',
+      '--apply refuses to run against a locale that a generate-batch.mjs process appears to be',
+      'regenerating right now (best-effort ps aux scrape).',
+    ].join('\n'),
+  );
   process.exit(0);
 }
 

@@ -102,10 +102,38 @@ function flag(name, fallback) {
 }
 if (rawArgs.includes('--help') || rawArgs.includes('-h')) {
   console.log(
-    'Usage: npx tsx --env-file=.env.local tools/corpus-gen/improve-corpus-batch.mjs --locale=en [--limit=N] [--model=<name>] [--evaluation-limit=N] [--last-resort] [--check-only]',
-  );
-  console.log(
-    '       npx tsx --env-file=.env.local tools/corpus-gen/improve-corpus-batch.mjs --check-only   (checks every locale with a batch in flight)',
+    [
+      'Usage: npx tsx --env-file=.env.local tools/corpus-gen/improve-corpus-batch.mjs --locale=en [--limit=N] [--model=<name>] [--evaluation-limit=N] [--last-resort] [--check-only]',
+      '   or: npx tsx --env-file=.env.local tools/corpus-gen/improve-corpus-batch.mjs --check-only   (checks every locale with a batch in flight)',
+      '',
+      "#381 stage 2 of 2: reads a locale's feedback file (evaluate-corpus-batch.mjs's own output)",
+      'and asks Gemini, the model that originally wrote each entry, to critically review that',
+      'feedback and revise only what it genuinely agrees is a problem. An IMPROVED verdict replaces',
+      '`text` in place and tags `improved-via-feedback-loop`; an UNCHANGED verdict touches nothing.',
+      'Always Gemini Batch mode: submit-and-exit, never blocks — batch state persists to',
+      'tools/corpus-gen/batch-state/improve-<locale>.json; re-run the same command later to check',
+      'status and apply results.',
+      '',
+      'Options:',
+      '  --locale=<locale>     Required unless --check-only is passed with no --locale. Which',
+      "                        locale's feedback/corpus to act on.",
+      '  --limit=N             Caps how many flagged entries to submit in a new batch. Default:',
+      '                        unlimited.',
+      '  --model=<name>        Which Gemini model reviews the feedback. Default: $GEMINI_MODEL.',
+      '  --evaluation-limit=N  Must match whatever --evaluation-limit evaluate-corpus-batch.mjs was',
+      '                        run with — governs when an entry counts as exhausted. Default: 2.',
+      '  --last-resort         Sources candidates straight from eval-tracking instead of the',
+      '                        feedback file, for entries exhausted without agreement that the',
+      '                        normal feedback-driven path can never reach, and permits one minimal,',
+      "                        non-technical nod to the aspect's nature. Each entry gets only one",
+      '                        such attempt, ever.',
+      '  --check-only          Only checks already-in-flight jobs and applies any that finished;',
+      '                        never builds a new request list or submits anything. Combined with',
+      '                        omitting --locale, scans every locale that has a batch-state file.',
+      '',
+      'Costs real Gemini Batch API money. Writes to src/interpretation/corpus/<locale>.json and',
+      'tools/corpus-gen/feedback/<locale>.json / eval-tracking/<locale>.json.',
+    ].join('\n'),
   );
   process.exit(0);
 }

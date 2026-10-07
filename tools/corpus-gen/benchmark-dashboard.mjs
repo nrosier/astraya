@@ -50,7 +50,21 @@ function flag(name, fallback) {
   return found ? found.slice(name.length + 3) : fallback;
 }
 if (rawArgs.includes('--help') || rawArgs.includes('-h')) {
-  console.log('Usage: npx tsx tools/corpus-gen/benchmark-dashboard.mjs [--out=FILE]');
+  console.log(
+    [
+      'Usage: npx tsx tools/corpus-gen/benchmark-dashboard.mjs [--out=FILE]',
+      '',
+      "Generates a static, self-contained HTML dashboard from benchmark-batch.mjs's accumulated",
+      'sqlite results — every judge (Laya, all-minilm, gemma4) side by side for similarity and',
+      "grounded, both sides. Clicking a row expands Astraya's and astrologyapi.com's actual text",
+      'side by side, pulled from the local thirdparty_cache table. No network call, no API key,',
+      'safe and free to regenerate any time — read-only against lib/benchmark-db.mjs.',
+      '',
+      'Options:',
+      '  --out=FILE   Where to write the HTML file. Default:',
+      '               tools/corpus-gen/.data/benchmark-dashboard.html.',
+    ].join('\n'),
+  );
   process.exit(0);
 }
 const outPath = resolve(flag('out', join(root, 'tools', 'corpus-gen', '.data', 'benchmark-dashboard.html')));

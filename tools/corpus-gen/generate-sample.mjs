@@ -50,9 +50,34 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const rawArgs = process.argv.slice(2);
 if (rawArgs.includes('--help') || rawArgs.includes('-h')) {
   console.log(
-    'Usage: npx tsx --env-file=.env.local tools/corpus-gen/generate-sample.mjs [category] [body] [signOrHouse] [--locale=en|nl] [--provider=gemini|ollama]\n' +
-      '   e.g.: npx tsx --env-file=.env.local tools/corpus-gen/generate-sample.mjs planet-in-sign jupiter 8\n' +
+    [
+      'Usage: npx tsx --env-file=.env.local tools/corpus-gen/generate-sample.mjs [category] [body] [signOrHouse] [--locale=en|nl] [--provider=gemini|ollama]',
+      '',
+      '   e.g.: npx tsx --env-file=.env.local tools/corpus-gen/generate-sample.mjs planet-in-sign jupiter 8',
       '         npx tsx --env-file=.env.local tools/corpus-gen/generate-sample.mjs planet-in-sign moon 5 --locale=nl',
+      '         npx tsx --env-file=.env.local tools/corpus-gen/generate-sample.mjs planet-in-sign moon 5 --provider=ollama',
+      '',
+      'Generates a single corpus entry for one placement and prints the raw result plus a',
+      'lint/dedupe check against the shipped corpus. Never writes to',
+      'src/interpretation/corpus/<locale>.json — a "does the pipeline work and is the output',
+      'usable" check, and the pre-flight smoke test to run before trusting generate-batch.mjs with',
+      'a real batch against a new provider/model.',
+      '',
+      'Arguments (all positional, all optional):',
+      '  [category]      planet-in-sign or planet-in-house only — the only two this smoke test',
+      '                   supports. Default: planet-in-sign.',
+      '  [body]           A body key, e.g. jupiter. Default: jupiter.',
+      '  [signOrHouse]    A sign index (planet-in-sign) or house number (planet-in-house). Default: 8.',
+      '',
+      'Options:',
+      '  --locale=en|nl             Which locale to generate the sample in. Default: en.',
+      '  --provider=gemini|ollama   Which model generates the text. --provider=ollama is the smoke',
+      '                             test to run before ever trusting generate-batch.mjs',
+      '                             --provider=ollama with a real batch. Default: gemini.',
+      '',
+      'Costs real API money per call (Gemini) unless --provider=ollama. Must run under npx tsx, not',
+      'plain node — imports .ts files via .js specifiers that only a TS-aware loader remaps.',
+    ].join('\n'),
   );
   process.exit(0);
 }

@@ -121,8 +121,40 @@ function flag(name, fallback) {
 }
 if (rawArgs.includes('--help') || rawArgs.includes('-h')) {
   console.log(
-    'Usage: npx tsx --env-file=.env.local tools/corpus-gen/benchmark-batch.mjs [--sample-size=N] [--limit=N] [--provider=gemini|ollama] [--force] [--out=FILE]\n' +
+    [
+      'Usage: npx tsx --env-file=.env.local tools/corpus-gen/benchmark-batch.mjs [--sample-size=N] [--limit=N] [--provider=gemini|ollama] [--force] [--out=FILE]',
       '   or: npx tsx --env-file=.env.local tools/corpus-gen/benchmark-batch.mjs --purge-thirdparty-cache',
+      '',
+      "Benchmarks Astraya's own interpretation text against astrologyapi.com's prose for the same",
+      'real placement (planet-in-sign, planet-in-house, sign-on-cusp, aspect-pair only), judged',
+      'independently by Laya, a local Ollama embedding model (all-minilm), and a local Ollama LLM',
+      '(gemma4). Read-only: never writes to the shipped corpus, only to the local benchmark sqlite',
+      'database (lib/benchmark-db.mjs) and, optionally, --out.',
+      '',
+      'Options:',
+      '  --sample-size=N    How many real placements to sample per run. Default: 3.',
+      '  --limit=N          Caps the total number of placements considered before sampling. Default:',
+      '                     unlimited.',
+      '  --provider=gemini|ollama',
+      "                     Which provider generates Astraya's own text when no shipped neutral",
+      "                     entry exists for a sampled placement. Doesn't affect the judges",
+      '                     themselves (Laya/all-minilm/gemma4 always run, independent of this).',
+      '                     Default: gemini.',
+      '  --force            Re-checks and overwrites a placement that already has a non-skipped',
+      '                     result on file, instead of skipping it. Default: skip already-checked',
+      '                     placements.',
+      '  --out=FILE         Also writes a plain-text report to this path, in addition to the console',
+      '                     output and the sqlite database. Default: none written.',
+      '  --purge-thirdparty-cache',
+      '                     Deletes the temporary thirdparty_cache table (cached astrologyapi.com',
+      '                     responses) and exits — no sampling/judging happens. Use once the judges',
+      '                     are settled and the cache is no longer needed.',
+      '',
+      'Costs real money per astrologyapi.com call and, unless an entry is already shipped, per',
+      'Gemini generation call; Laya/embedding/LLM judging itself is always free local Ollama. See',
+      'tools/corpus-gen/benchmark-dashboard.mjs to view accumulated results, and',
+      'docs/BENCHMARK_ASTROLOGYAPI.md for the full write-up.',
+    ].join('\n'),
   );
   process.exit(0);
 }

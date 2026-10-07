@@ -58,3 +58,8 @@ These cause build/CI failures if violated:
 - **Branches:** `fix/441-description`, merged `--no-ff` to `main`.
 - **Issues:** Open until released; tick checklist items as PRs land.
 - **Releases:** Touch `package.json`, `package-lock.json`, `CHANGELOG.md`, `README.md` badge. Semantic versioning.
+
+## Environment (macOS / BSD)
+- **Host:** macOS (BSD userland, NOT GNU/Linux).
+- **CLI Rules:** Avoid GNU flags (`cat -A`, `grep -P`, `date -d`, `readlink -f`).
+- **BSD Equivalents:** `od -c` (non-printables), `grep -E` (regex), `sed -i ''` (in-place edit), `stat -f` / `realpath` (dates/paths).

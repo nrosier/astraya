@@ -26,7 +26,7 @@
  *   costs real API money. Includes stall detection (detectStalledBatch) for an in_progress batch
  *   showing no progress. Results are keyed by each request's own `custom_id`, never by line order.
  * @exports buildBatchRequest, submitBatch, getBatch, detectStalledBatch, isBatchTerminal,
- *   pollBatch, extractBatchResults, parseResultLines.
+ *   pollBatch, extractBatchResults, parseResultLines, downloadFile.
  */
 const DEFAULT_BASE_URL = 'https://api.openai.com';
 const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504]);
@@ -237,7 +237,15 @@ export function parseResultLines(text) {
     });
 }
 
-async function downloadFile({ apiKey, baseUrl, fileId }) {
+/**
+ * Downloads one uploaded/generated batch file's raw content by id — the input file (the JSONL
+ * this script itself uploaded, `{custom_id, method, url, body}` per line) as well as the
+ * output/error files extractBatchResults already reads. Exported so a caller that lost track of
+ * a job's own candidate list (e.g. evaluate-corpus-batch.mjs's `--batch=<id>` fallback, for an id
+ * never recorded locally) can re-derive it straight from the input file it uploaded, instead of
+ * needing that bookkeeping to have survived on disk.
+ */
+export async function downloadFile({ apiKey, baseUrl, fileId }) {
   const response = await fetchWithRetry(
     `${baseUrl || DEFAULT_BASE_URL}/v1/files/${fileId}/content`,
     { headers: { Authorization: `Bearer ${apiKey}` } },
@@ -247,15 +255,25 @@ async function downloadFile({ apiKey, baseUrl, fileId }) {
 }
 
 /**
- * Normalizes a finished batch job's results into one `{ customId, result, usage }` or
- * `{ customId, error }` per request, keyed by each request's own `custom_id` — the API's own
- * docs say output line order is not guaranteed to match input order. Reads both
- * `output_file_id` (succeeded requests) and `error_file_id` (failed ones — e.g. every request
- * rejected with the same 400, the exact real case that motivated reading this file at all rather
- * than silently returning nothing for an all-failed batch) when either is present.
+ * Normalizes a batch job's results into one `{ customId, result, usage }` or `{ customId, error }`
+ * per request, keyed by each request's own `custom_id` — the API's own docs say output line order
+ * is not guaranteed to match input order. Reads both `output_file_id` (succeeded requests) and
+ * `error_file_id` (failed ones — e.g. every request rejected with the same 400, the exact real
+ * case that motivated reading this file at all rather than silently returning nothing for an
+ * all-failed batch) when either is present.
+ *
+ * Deliberately not restricted to `status === 'completed'`: a `cancelled`/`failed`/`expired` batch
+ * can still carry a real `output_file_id` for whatever requests finished before it stopped —
+ * confirmed against a real cancelled batch (#381) with 749/750 requests completed and a populated
+ * output file. Whether there's anything to read is judged by file presence, not status, so those
+ * partial results aren't thrown away. Only truly empty (no output file and no error file at all —
+ * e.g. cancelled before a single request ran) throws, with a message built from `batch.errors`.
  */
 export async function extractBatchResults({ apiKey, baseUrl, batch }) {
-  if (batch.status !== 'completed') {
+  const hasFiles =
+    (batch.output_file_id !== null && batch.output_file_id !== undefined) ||
+    (batch.error_file_id !== null && batch.error_file_id !== undefined);
+  if (!hasFiles) {
     // Parse batch errors to provide a user-friendly message
     const batchErrors = batch.errors?.data || [];
     let errorMsg = `Batch job status: ${String(batch.status)}`;
