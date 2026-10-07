@@ -4,6 +4,35 @@ All notable changes to Astraya are recorded here. Versions follow
 [semantic versioning](https://semver.org/), and every milestone ends in a release —
 see [docs/RELEASING.md](docs/RELEASING.md).
 
+## [0.32.0] — 2026-10-07
+
+**Extended Settings and the Profections rulers selector explain each choice inline as it's made, the About page gains an astrology primer for newcomers, and the Extended Settings Apply button no longer sticks on device-only preference changes.**
+
+M9 (Polish & launch) progress, not a finished milestone — v1.0.0 hasn't shipped yet, by deliberate choice: M9's tracked blockers are closed, but 1.0.0 is a separate call about the app being genuinely usable end to end, not a tally of closed issues.
+
+### Added
+
+- **The About page gains an astrology primer for readers unfamiliar with the vocabulary (#457).** A new section introduces chart dimensions, planets/points, zodiac signs, houses, aspects and dignity/rulership in plain language, in both locales.
+- **The Extended Settings panel's zodiac/house system, rulership and symbol-class selectors now show a description that updates live with the current selection (#460)**, the same pattern the "Starting Point" selector already used — instead of a static blurb that didn't change when the choice did. Line weight gets its own description, shown only when it's relevant (Drawn symbols). A device-vs-synced "save as default" toggle was prototyped alongside this on a validation page but was not carried into the shipped panel; #460 stays open for that part.
+- **Profections' rulers selector explains each choice (traditional/modern/both) as it's picked (#458)**, instead of leaving the reader to infer what the choice means from the chart alone.
+
+### Changed
+
+- **About 230 interpretation texts (119 English, 111 Dutch) were rewritten through the corpus's feedback-review loop**, mostly planet-in-sign and planet-in-house core entries, tightening phrasing and sharpening a number of shadow-side descriptions that had drifted toward generic language. Each rewritten entry carries an `improved-via-feedback-loop` tag in the corpus data; no key, schema or category changed.
+
+### Fixed
+
+- **The Extended Settings "Apply" button no longer stays disabled when only a device preference changed (#459).** Changing symbol class, symbol weight, a glyph variant, or the rulers choice — all stored locally, not in the draft chart settings — didn't register as a change the dirty-state check cared about, so the button stayed disabled even though a change was pending. Rulers and symbol changes now both mark the panel dirty.
+
+### Internal tooling
+
+- **The corpus generator's batch pipeline gets another round of stall/orphan-job handling fixes** (tracking when entry counts actually changed rather than when they were last checked, detecting and resetting orphaned jobs), and its one-off dev scripts have been archived with `--help` documented on the ones that remain. None of this touches the shipped app or server.
+- **Every major source directory now has a fast-lookup index, and every source file a standard header,** as an aid for future changes rather than a behavior change: a `MAP.md` per directory and a `@module` JSDoc block (`@purpose`/`@conventions`/`@exports`) on every `.ts`/`.js` file.
+
+### Notes for people running their own server
+
+- No database migration and no new configuration in this release.
+
 ## [0.31.1] — 2026-10-06
 
 **A patch for v0.31.0: the same app, with its flaky property test fixed so the release could be published.**
