@@ -118,7 +118,6 @@ test('the primer section is accessible and follows semantic structure', async ({
   await expect(primerH2).toBeVisible();
 
   // h3 subsection headings (correctly nested under the h2)
-  const primerSection = main.locator('h2:has-text("Astrology primer") ~ *');
   const subsectionHeadings = main.getByRole('heading', { level: 3 });
 
   expect(await subsectionHeadings.count()).toBeGreaterThanOrEqual(5);
