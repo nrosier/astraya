@@ -182,7 +182,16 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
       </p>
       <h1>{person.displayName ? t.heading(person.displayName) : t.profectionsFallback}</h1>
       <p className="hint">{t.hint}</p>
-      <RulershipSetting />
+
+      <section className="profections-rulers-section" aria-labelledby="rulers-heading">
+        <h2 id="rulers-heading">{t.rulersHeading}</h2>
+        <RulershipSetting />
+        <p className="profections-rulers-description">
+          {rulership === 'traditional' && t.rulersTraditional}
+          {rulership === 'modern' && t.rulersModern}
+          {rulership === 'both' && t.rulersBoth}
+        </p>
+      </section>
 
       <p>
         <label>
