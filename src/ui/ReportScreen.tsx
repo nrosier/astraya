@@ -6,6 +6,12 @@
  * no positions/houses/aspects/dignities/derived-points sub-tabs. A report is text, not a
  * chart reading, and belongs on a page of its own.
  */
+/**
+ * @module ReportScreen
+ * @purpose Standalone written-report route (`#/report/:id`) for one person, loading natal ChartData and delegating rendering to ReportView.
+ * @conventions Gated for incomplete record/unknown time/undefined houses the same way other person-scoped views are; uses ReportScreen.messages.ts for en/nl text via useMessages().
+ * @exports ReportScreen
+ */
 import { useEffect, useState } from 'react';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { computeChartData, housesAreDefined, type ChartData } from '../domain/chart-compute.js';

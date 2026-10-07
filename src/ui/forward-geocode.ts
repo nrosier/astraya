@@ -4,6 +4,12 @@
  * found without knowing its Latitude/Longitude up front. Provider selection (self-hosted
  * Nominatim / MapTiler / public Nominatim default) lives in `geocode-provider.ts` (#291, #294).
  */
+/**
+ * @module ui/forward-geocode
+ * @purpose Turns a free-text place name into candidate coordinates + display names for BirthPlaceSearch.tsx's "search by name" field (#290), so a birth place can be found without knowing its lat/lon.
+ * @conventions Supports two providers (MapTiler, Nominatim) selected via geocode-provider.ts (#291, #294); response shapes are declared as unchecked claims and validated field-by-field so one malformed result doesn't fail the whole search.
+ * @exports ForwardGeocodeResult, forwardGeocode
+ */
 import {
   maptilerGeocodeUrl,
   NOMINATIM_SEARCH_URL,

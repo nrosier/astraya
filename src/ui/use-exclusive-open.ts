@@ -16,6 +16,12 @@
  * button and its popup must both be inside it, so pressing on the popup is "inside") and each
  * button with `buttonRef(key)`.
  */
+/**
+ * @module ui/use-exclusive-open
+ * @purpose Shared open/close rules for a row of dropdown menu buttons (#417): one-at-a-time opening, close on outside click/tap/Escape/Tab-out/page-change, as one reusable hook.
+ * @conventions The caller owns the markup; registers each group's wrapper via groupRef(key) and each trigger button via buttonRef(key); testable without mounting the surrounding page.
+ * @exports ExclusiveOpen, useExclusiveOpen
+ */
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 export interface ExclusiveOpen<K extends string> {

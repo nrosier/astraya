@@ -29,6 +29,13 @@
  * `nominatim.openstreetmap.org` by default. Kept as its own `geocodeOrigin`
  * config field so a self-hoster can point it at their own server instead.
  */
+
+/**
+ * @module csp
+ * @purpose Defines Astraya's Content Security Policy once, shared between the server's response header and the static `<meta>` tag in `index.html`.
+ * @conventions `connect-src` stays `'self'` (plus the geocode origin) by construction so the shipped app can never reach a model provider at runtime; `'wasm-unsafe-eval'` permits only WASM compilation for Swiss Ephemeris, not JS `eval`; an OIDC issuer only ever extends `form-action`, never `connect-src`/`script-src`, since the browser never talks to the issuer directly.
+ * @exports CSP_DIRECTIVES, CSP_HEADER_ONLY_DIRECTIVES, CspConfig, BuiltCsp, buildCsp, CSP_HEADER, CSP_META, stripCspMeta
+ */
 const DEFAULT_GEOCODE_ORIGIN = 'https://nominatim.openstreetmap.org';
 
 export const CSP_DIRECTIVES: readonly string[] = [

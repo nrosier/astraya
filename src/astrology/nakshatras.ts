@@ -17,6 +17,13 @@
  *
  * Dashas and vargas are deliberately out of scope, per the issue.
  */
+
+/**
+ * @module Nakshatras
+ * @purpose Computes the 27 Vedic nakshatras (lunar mansions) and their padas for a sidereal longitude.
+ * @conventions Each nakshatra spans exactly 360/27 = 13°20' of sidereal longitude, divided into four 3°20' padas, purely arithmetic (no live ephemeris dependency); nakshatra lords follow the fixed Vimshottari dasha sequence (Ketu, Venus, Sun, Moon, Mars, Rahu, Jupiter, Saturn, Mercury) repeated three times; dashas and vargas are deliberately out of scope.
+ * @exports NAKSHATRAS, NAKSHATRA_SPAN, PADA_SPAN, nakshatraPosition
+ */
 import type { Degrees } from '../ephemeris/types.js';
 
 export type NakshatraLord = 'Ketu' | 'Venus' | 'Sun' | 'Moon' | 'Mars' | 'Rahu' | 'Jupiter' | 'Saturn' | 'Mercury';

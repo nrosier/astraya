@@ -38,6 +38,12 @@
  * them as good-faith placeholders worth a native-speaker or #63 review pass,
  * not as verified facts the way the rest of this file's content is.
  */
+/**
+ * @module interpretation/compose
+ * @purpose Guarantees non-empty interpretation text for any placement by mechanically composing a plain sentence when the corpus has no entry for it.
+ * @conventions Covers the same categories the rule engine and corpus schema define (planet-in-sign, planet-in-house, sign-on-cusp, aspect-pair, dignity-state, transit-aspect, synastry-aspect, profected-house, astro-line, and the composite-chart siblings); `nakshatra`/`pattern` are reserved and throw. Fallback text is deliberately plain/repetitive, never styled to look hand-written.
+ * @exports SIGN_NAMES, BODY_NAMES, composeFallbackText, findCorpusEntry, resolvePlacementText
+ */
 import { bodyByKey } from '../astrology/bodies.ts';
 import { aspectByKey } from '../astrology/aspects.ts';
 import { SIGNS } from '../astrology/signs.ts';

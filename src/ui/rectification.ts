@@ -3,6 +3,12 @@
  * wording of a contact. Kept apart from `RectificationView.tsx` so what a typo does is testable
  * without a DOM or an ephemeris.
  */
+/**
+ * @module ui/rectification
+ * @purpose Pure logic for the rectification screen (#408): parsing its form (birth date, candidate time window, life events) into a validated search request.
+ * @conventions Kept apart from RectificationView.tsx so form-parsing edge cases are testable without a DOM or an ephemeris; event dates are returned as text, left for the screen to convert to Julian days since that needs the ephemeris.
+ * @exports RECTIFICATION_STEP_MINUTES, EventField, RectificationFields, RectificationFieldError, ParsedRectificationFields, parseRectificationFields, eventNoonParts
+ */
 import type { RectificationRequest } from '../domain/rectification.js';
 import { parseLatitude, parseLongitude } from './place-fields.js';
 

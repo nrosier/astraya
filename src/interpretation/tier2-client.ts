@@ -29,6 +29,12 @@
  * `locale` is sent alongside either payload so the server responds in the
  * language the report is already showing.
  */
+/**
+ * @module interpretation/tier2-client
+ * @purpose Thin fetch() client for POST /api/interpretation/generate — the one runtime path in Astraya that calls a third-party model provider, proxied entirely through the server per ADR 0003.
+ * @conventions Three modes: 'grounded' sends only de-identified placementKeys (server re-resolves Tier-1 text, no interpretation prose crosses the wire); 'freeform' sends computed chartData and gives up the "no chart data crosses the wire" guarantee for that mode only; 'focus' sends one placement's enriched FocusContext. Interfaces here hand-mirror server-side shapes (server/interpretation/llm-client.ts, server/interpretation-routes.ts) since there is no shared schema library between client and server. `locale` always rides alongside the payload.
+ * @exports Tier2Error, Tier2Section, Tier2ChartDataPayload, toTier2ChartPayload, Tier2PositionsHousesPayload, Tier2RelationshipDataPayload, toTier2RelationshipPayload, Tier2Request, SavedInterpretationSummary, SavedInterpretationDetail
+ */
 import { bodyByKey } from '../astrology/bodies.js';
 import type { ChartData } from '../domain/chart-compute.js';
 import type { SynastryData } from '../domain/synastry.js';

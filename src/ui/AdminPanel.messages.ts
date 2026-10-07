@@ -1,6 +1,12 @@
 /**
  * Message catalogue for `AdminPanel.tsx` (#158).
  */
+/**
+ * @module AdminPanel.messages
+ * @purpose English/Dutch i18n strings for the admin user-management screen and the AI-interpretation usage screen.
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed by AdminPanel.tsx via `useMessages(adminPanelMessages)`; `nl` is typed as `typeof en`.
+ * @exports adminPanelMessages
+ */
 const en = {
   heading: 'Admin',
 

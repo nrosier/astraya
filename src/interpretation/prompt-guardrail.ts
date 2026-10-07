@@ -20,6 +20,12 @@
  * boundary — the server runs this same check regardless of what the client
  * already filtered).
  */
+/**
+ * @module interpretation/prompt-guardrail
+ * @purpose Validates the one free-text field in a Tier-2 interpretation request — the user's style/tone/focus instruction — before it is sent to a third-party model.
+ * @conventions Pure and model-free (like lint.ts), so it's importable from both the server's authoritative check and the client UI as a non-authoritative nicety. Covers prompt injection, fatalistic phrasing, medical/legal/financial claims, PII-shaped text, off-topic system/file requests, fabrication requests, and relationship-verdict requests, in both en and nl phrase lists.
+ * @exports GuardrailRule, GuardrailIssue, MAX_CUSTOM_PROMPT_LENGTH, containsPromptInjectionPhrase, checkCustomPrompt
+ */
 import { FATALISTIC_PHRASES, MEDICAL_LEGAL_FINANCIAL_TERMS, containsTermFromWordStart } from './lint.ts';
 
 export type GuardrailRule =

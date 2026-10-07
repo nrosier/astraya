@@ -18,6 +18,12 @@
  * for the input houses, reads roughly upward rather than at a forced 12
  * o'clock — real geometry, not an idealised quadrant chart).
  */
+/**
+ * @module chart/wheel
+ * @purpose Defines the shared wheel coordinate system (`wheelAngle`, `pointOnCircle`) and the orientation/sweep/wedge-style types every chart layer in `src/chart/` draws through, so rings, ticks, cusps, glyphs, aspect chords and overlays stay aligned.
+ * @conventions Pure geometry only — draws nothing itself. Default convention: Ascendant fixed at 9 o'clock (`asc-left`, screen angle 180), longitude increasing counterclockwise (near-universal chart-wheel convention); `orientation: 'aries-up'` instead fixes 0° Aries at 12 o'clock (screen angle 90) so the wheel doesn't rotate with birth time; `sweep: 'clockwise'` reverses direction. All layers drawing into the same wheel must pass identical orientation options or drift out of alignment. Radii themselves now live in `sheet-geometry.ts`.
+ * @exports wheelAngle, pointOnCircle; WheelOrientation, WheelSweep, HouseWedgeStyle, SignWedgeStyle, WheelOrientationOptions types.
+ */
 import type { Degrees } from '../ephemeris/types.js';
 
 /** Where longitude 0 (`asc-left`, the default) or the Ascendant (`aries-up`) is fixed on screen. */

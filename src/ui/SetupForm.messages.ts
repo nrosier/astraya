@@ -1,6 +1,12 @@
 /**
  * Message catalogue for `SetupForm.tsx` (#158).
  */
+/**
+ * @module SetupForm.messages
+ * @purpose English/Dutch message catalogue for the first-boot admin-account bootstrap form.
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed via `useMessages()` by the sibling `SetupForm.tsx`.
+ * @exports setupFormMessages
+ */
 const en = {
   heading: 'Create the admin account',
   missingToken:

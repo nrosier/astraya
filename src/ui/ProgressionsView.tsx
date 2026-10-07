@@ -10,6 +10,12 @@
  * comment is explicit that the three methods produce visibly different Ascendants, so silently
  * picking one would misrepresent what the chart means.
  */
+/**
+ * @module ProgressionsView
+ * @purpose Secondary, tertiary and minor progressions screen for one person, as of a chosen date, with progressed positions and progressed-to-natal contacts.
+ * @conventions Gated for unknown birth time the same way ProfectionsView.tsx/ChartView.tsx are; uses ProgressionsView.messages.ts for en/nl text via useMessages().
+ * @exports ProgressionsView
+ */
 import { useEffect, useMemo, useState } from 'react';
 import { bodyById } from '../astrology/bodies.js';
 import type { ProgressedMcMethod } from '../astrology/progressions.js';

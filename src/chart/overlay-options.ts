@@ -9,6 +9,12 @@
  * should never stop a chart from drawing, the same reasoning `wheel-options.ts`
  * gives for its own fallbacks.
  */
+/**
+ * @module chart/overlay-options
+ * @purpose Resolves a saved chart's generic `settings` bag into strongly-typed display options for the antiscia/declination/dial90/midpoint-tree overlays.
+ * @conventions Mirrors `wheel-options.ts`'s read-with-fallback pattern, extended to booleans and numeric orbs: any missing or unrecognised value falls back to a documented rendering default (`DEFAULT_MAX_ORB` matches the tightest base orb in `DEFAULT_ORB_CONFIG`) so a cosmetic overlay toggle never stops a chart from drawing.
+ * @exports resolveOverlayDisplayOptions, ANTISCIA_VISIBLE_SETTING, ANTISCIA_MAX_ORB_SETTING, DECLINATION_VISIBLE_SETTING, DECLINATION_MAX_ORB_SETTING, DIAL90_VISIBLE_SETTING, MIDPOINT_TREE_ORB_SETTING; OverlayDisplayOptions type.
+ */
 import type { Degrees } from '../ephemeris/types.js';
 import type { JsonValue } from '../store/ops.js';
 

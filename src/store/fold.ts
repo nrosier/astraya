@@ -27,6 +27,13 @@
  * it exactly, which is the recovery path when a snapshot is ever wrong, and is tested as
  * such rather than assumed.
  */
+
+/**
+ * @module store/fold
+ * @purpose Folds the append-only operation log into materialised people and charts — the pure, deterministic function every rendered screen's state depends on.
+ * @conventions Last-write-wins per field by HLC timestamp, deliberately not a full CRDT, since one person typically creates a record once and rarely edits it concurrently; deleting sets a `deleted` field rather than removing the record, so undo is just another write; a `purged` field (once set, never unset) hides an entity entirely regardless of any other field's timestamp; registers are serialisable so they can be persisted as a snapshot and `resume`d from, with a full rebuild as the correctness fallback whenever a snapshot cannot be trusted.
+ * @exports DELETED_FIELD, PURGED_FIELD, Register, Registers, EMPTY_REGISTERS, FoldSkips, Applied, applyRecords, State, materialise, fold, Snapshot, snapshotOf, Resumed, resume
+ */
 import { buildChart, type Chart } from '../domain/chart.js';
 import { buildPerson, type Person } from '../domain/person.js';
 import { compareHlc, type Hlc } from './hlc.js';

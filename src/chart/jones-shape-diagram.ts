@@ -16,6 +16,12 @@
  * handle, or in principle any isolated single body) draws as a dot with no wedge, since a wedge
  * from a point to itself has no width to show.
  */
+/**
+ * @module chart/jones-shape-diagram
+ * @purpose Renders a small standalone abstract diagram of the chart's Jones shape (bundle/bowl/locomotive/splash/seesaw/bucket/splay), as a visual complement to the plain-text shape description.
+ * @conventions Deliberately decoupled from the real wheel — no houses/signs/aspects/chrome — fixed at `{ orientation: 'aries-up' }` with no Ascendant anchor of its own; every shape renders through one mechanism since `JonesShapeResult.groups` is already "one wedge per occupied arc" (one group = bundle/bowl/locomotive/splash, two groups = seesaw/bucket, three-or-more = splay), with a one-body group drawn as a bare dot (a wedge needs width) and the handle (if any) highlighted.
+ * @exports renderJonesShapeDiagramSvg.
+ */
 import type { JonesShapeResult } from '../astrology/jones-shapes.js';
 import type { BodyId, Degrees } from '../ephemeris/types.js';
 import { circle, polygon } from './svg-primitives.js';

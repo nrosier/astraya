@@ -1,6 +1,12 @@
 /**
  * Message catalogue for `TransitView.tsx` (#158).
  */
+/**
+ * @module TransitView.messages
+ * @purpose English/Dutch message catalogue for the transit bi-wheel screen.
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed via `useMessages()` by the sibling `TransitView.tsx`.
+ * @exports transitViewMessages
+ */
 const en = {
   transitsFallback: 'Transits',
   personFallback: 'Person',

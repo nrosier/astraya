@@ -1,6 +1,12 @@
 /**
  * Message catalogue for `SymbolToggle.tsx` (#419).
  */
+/**
+ * @module SymbolToggle.messages
+ * @purpose English/Dutch message catalogue for the header's one-press drawn/text-only symbol toggle.
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed via `useMessages()` by the sibling `SymbolToggle.tsx`.
+ * @exports symbolToggleMessages
+ */
 const en = {
   label: 'Text-only symbols',
   hintOn: 'Symbols are written as text (SUN, MOO, …) — activate to draw them again',

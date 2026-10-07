@@ -4,6 +4,12 @@
  * time-zone logic a birth moment goes through, so a daylight-saving change inside the range is
  * respected), and `astrology/rectification.ts` scores them against the events.
  */
+/**
+ * @module rectification
+ * @purpose Runs a birth-time rectification search over a range of candidate clock times for a known date/place (#408), ranking each candidate against supplied life events.
+ * @conventions Each candidate minute-of-day is resolved into a real moment through the same timezone logic a birth moment goes through, so a DST change inside the range is respected; candidates that collapse onto the same Julian day (a repeated clock hour) are deduplicated, keeping the first; scoring itself lives in `astrology/rectification.ts`.
+ * @exports runRectification, candidateMinutes, RectificationRequest, TimedCandidate
+ */
 import { rectify, type RankedCandidate, type RectificationEvent } from '../astrology/rectification.js';
 import type { EphemerisProvider, GeoPosition } from '../ephemeris/types.js';
 import { julianDayFor } from '../time/julian.js';

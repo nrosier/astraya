@@ -16,6 +16,13 @@
  *   progressed Moon itself barely moves (~1°/month of real time) while the
  *   transiting Moon laps it roughly every synodic month.
  */
+
+/**
+ * @module PlanetaryReturns
+ * @purpose Computes planetary returns for any body, the solar demibirthday, and the progressed lunar return.
+ * @conventions Sun/Moon returns use Swiss Ephemeris's dedicated root-finders; other bodies use an iterative sample-then-bisect crossing search, with wider step/maxSteps budgets for Uranus/Neptune/Pluto (OUTER_PLANET_CROSSING_BUDGET) since their orbital periods exceed the generic default's reach; demibirthday is the Sun's return to the point exactly opposite its natal longitude.
+ * @exports nextBodyCrossing, nextReturnOfBody, demibirthdayInYear, progressedLunarReturnOnOrBefore, progressedMoonLongitude
+ */
 import { SYNODIC_MONTH_DAYS } from './minor-progressions.js';
 import { progressedJulianDay } from './progressions.js';
 import type { BodyId, Degrees, EphemerisProvider, JulianDayUT, Zodiac } from '../ephemeris/types.js';

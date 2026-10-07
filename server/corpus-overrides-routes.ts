@@ -10,6 +10,13 @@
  * would mean anonymous/local-only use — this app's primary mode — never sees
  * a correction. Writes stay `requireAdmin`, matching every other admin route.
  */
+
+/**
+ * @module corpus-overrides-routes
+ * @purpose Admin HTTP routes for browsing, editing, and exporting corrections to the committed interpretation corpus, plus the one public read route the client merges before rendering a report.
+ * @conventions `GET /api/corpus-overrides/:locale` is deliberately public/unauthenticated so an anonymous/local-only visitor still sees corrections; every write route is `requireAdmin`-gated and runs the submitted entry through `lintEntry`'s content-quality gate before storing it.
+ * @exports registerCorpusOverrideRoutes
+ */
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import type { Database } from './db.ts';
 import type { User } from './auth/identity.ts';

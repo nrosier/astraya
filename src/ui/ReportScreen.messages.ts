@@ -1,6 +1,12 @@
 /**
  * Message catalogue for `ReportScreen.tsx` (#271).
  */
+/**
+ * @module ReportScreen.messages
+ * @purpose English/Dutch message catalogue for the standalone written-report route screen.
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed via `useMessages()` by the sibling `ReportScreen.tsx`.
+ * @exports reportScreenMessages
+ */
 const en = {
   personFallback: 'Person',
   reportFallback: 'Interpretation',

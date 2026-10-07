@@ -10,6 +10,13 @@
  * the same access as running the container — which is the property that makes it
  * safe to be unauthenticated over the network.
  */
+
+/**
+ * @module bootstrap
+ * @purpose Creates the first super admin account for a fresh deployment via a one-time token, printed to the server log (or supplied via env), rather than a default credential or an unconditional env-created admin.
+ * @conventions The token is held in memory only, for the current process's lifetime, and is re-armed whenever no usable (non-disabled) super admin exists; comparison is constant-time via `timingSafeEqual` on fixed-length SHA-256 digests of both sides, since the submitted token's length must not itself leak information.
+ * @exports superAdminExists, announceBootstrap, BootstrapTokenError, checkBootstrapToken
+ */
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import type { FastifyBaseLogger } from 'fastify';
 import type { Database } from '../db.ts';

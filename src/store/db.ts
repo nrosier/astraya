@@ -18,6 +18,13 @@
  * SQLite-WASM was considered and rejected: we already ship 2.5 MB of WebAssembly for the
  * ephemeris, and a few thousand records do not need a query planner.
  */
+
+/**
+ * @module store/db
+ * @purpose Implements the IndexedDB layer that physically holds a user's operation log, snapshots and device metadata — the only durable copy of their data for a user who never signs in.
+ * @conventions Schema changes are additive-only numbered migrations run in order from a database's own `oldVersion`, never editing an old migration in place; writes resolve only once the IndexedDB transaction has *committed*, not merely once a request succeeded, so the UI never reports a save that did not reach disk; a snapshot is only ever a cache and is validated loosely, discarding anything unexpected in favour of a rebuild from the log.
+ * @exports DB_NAME, DB_VERSION, OPS_STORE, SNAPSHOT_STORE, META_STORE, openDatabase, putRecords, allRecords, deleteRecords, countRecords, putSnapshot, getSnapshot, getMeta, putMeta, DEVICE_ID_KEY
+ */
 import type { OpRecord } from './ops.js';
 import type { Snapshot } from './fold.js';
 

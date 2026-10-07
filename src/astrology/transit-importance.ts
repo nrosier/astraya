@@ -41,6 +41,13 @@
  *
  * The score only orders the list; the user can still sort by any column.
  */
+
+/**
+ * @module TransitImportance
+ * @purpose Defines transit filter presets (daily/yearly, important/outer/personal/all) and a deterministic importance score for ranking transit contacts.
+ * @conventions Fixed, documented convention (#416): daily default favors fast triggers (Sun through Mars, plus slow planets only within 1° of exact) at 1.5° orb; yearly favors Jupiter through Chiron at 3.5° orb; score = W_transit × W_natal × W_aspect × orb multiplier × applying bonus (1.15x); the chart ruler stands in for the (uncovered) Ascendant as a natal target.
+ * @exports TRANSIT_ORB_CONFIG, transitPreset, presetOf, orbLimitFor, passesTransitFilter, filterTransits, chartRulerKeysOf, transitImportance, rankTransits
+ */
 import { DEFAULT_ORB_CONFIG, type Aspect, type OrbConfig } from './aspects.js';
 import { bodyById } from './bodies.js';
 import { DEFAULT_RULERSHIP_CHOICE, rulersOf, type RulershipChoice } from './rulership.js';

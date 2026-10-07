@@ -3,6 +3,12 @@
  * so the active-tab/gating logic can be tested without a DOM, the same convention `route.ts`
  * follows for route parsing.
  */
+/**
+ * @module ui/person-nav
+ * @purpose Pure logic for the persistent per-person tab bar (#234/#398): the fixed tab list, which tabs group into families (Transits & Forecast, Progressions & Directions, Relationship Charts), and which tab/family is active for a given route.
+ * @conventions Kept separate from PersonNav.tsx so active-tab/gating logic is testable without a DOM, following route.ts's own convention; tab labels are translated and live in PersonNav.messages.ts since this module has no access to the current locale.
+ * @exports PersonTabKey, PersonTab, PERSON_TABS, PersonTabFamilyKey, PersonTabFamily, PERSON_TAB_FAMILIES, familyForTab, activeTabKey, isTabEnabled
+ */
 import type { Route } from './route.js';
 
 export type PersonTabKey =

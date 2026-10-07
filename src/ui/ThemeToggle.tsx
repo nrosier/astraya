@@ -7,6 +7,12 @@
  * `main.tsx` applies the stored value once before the first paint, so this only ever
  * has to re-apply on a change the user just made.
  */
+/**
+ * @module ThemeToggle
+ * @purpose Always-visible button cycling the light/dark/system theme override and persisting the choice.
+ * @conventions Thin wiring over theme-dom.ts (DOM/storage) and theme.ts (cycle logic); uses ThemeToggle.messages.ts for en/nl text via useMessages().
+ * @exports ThemeToggle
+ */
 import { useState } from 'react';
 import { useMessages } from './messages.js';
 import { applyTheme, readStoredTheme, writeStoredTheme } from './theme-dom.js';

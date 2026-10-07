@@ -1,6 +1,12 @@
 /**
  * Message catalogue for `ExtendedSettingsPanel.tsx` (#158, #442).
  */
+/**
+ * @module ExtendedSettingsPanel.messages
+ * @purpose English/Dutch i18n strings for the chart's Extended Settings modal: presets, zodiac/house-system/body/aspect/wheel-colour controls, and their explanatory text.
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed by ExtendedSettingsPanel.tsx via `useMessages(extendedSettingsPanelMessages)`; `nl` is typed as `typeof en`.
+ * @exports extendedSettingsPanelMessages
+ */
 const en = {
   heading: 'Extended settings',
   triggerChanged: (count: string) => `${count} changed`,

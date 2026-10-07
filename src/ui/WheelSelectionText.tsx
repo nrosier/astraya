@@ -8,6 +8,12 @@
  * The corpus is fetched on the first selection (it is not loaded with the wheel) and kept per
  * language, so later clicks show their text at once.
  */
+/**
+ * @module WheelSelectionText
+ * @purpose Renders the interpretation corpus text for whatever body/sign/house/aspect is currently selected on a chart wheel.
+ * @conventions Resolves each entry through interpretation/compose.ts's resolvePlacementText so an uncovered placement still gets a mechanical fallback sentence; fetches the corpus lazily on first selection via wheel-corpus.js; uses ChartView.messages.ts for en/nl text via useMessages().
+ * @exports WheelSelectionText
+ */
 import { useEffect, useMemo, useState } from 'react';
 import type { ChartData } from '../domain/chart-compute.js';
 import { resolvePlacementText } from '../interpretation/compose.js';

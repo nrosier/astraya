@@ -14,6 +14,13 @@
  *   JD space means no date arithmetic of ours has to know that an offset can push a
  *   birth across midnight, a month end, a year end, or the Gregorian reform gap.
  */
+
+/**
+ * @module time/julian
+ * @purpose Convert a resolved birth moment to a Julian day (UT), the Swiss Ephemeris's only time input, and back again for displaying computed moments.
+ * @conventions Dates from 1972 onward in the Gregorian calendar go through `swe_utc_to_jd` (leap-second aware); earlier dates and Julian-calendar dates stay in Julian-day space via `swe_julday` plus elapsed day fraction, since UTC did not exist yet.
+ * @exports julianDayFor, civilFromJulianDay
+ */
 import { DateTime, FixedOffsetZone } from 'luxon';
 import type { CalendarSystem, EphemerisProvider, JulianDayUT } from '../ephemeris/types.js';
 import type { CivilDateTime, ResolvedMoment } from './types.js';

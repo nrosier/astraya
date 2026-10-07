@@ -20,6 +20,13 @@
  * astronomically to the Sun's west. A body ahead of the Sun rises after it:
  * occidental, an evening body, east of the Sun.
  */
+
+/**
+ * @module Sect
+ * @purpose Determines a chart's sect (day/night), a body's solar phase (oriental/occidental), and Sun-proximity conditions (cazimi, combust, under the beams).
+ * @conventions A longitude is above the horizon when it is 180-360 degrees past the Ascendant in the increasing-longitude direction (houses 7-12), needing only the Ascendant, no full cusp set; orientality follows the same increasing-longitude sweep but over time rather than height; cazimi/combustion/under-the-beams use traditional orbs (17 arcminutes, 8°, 15° respectively).
+ * @exports Sect, isAboveHorizon, sectOf, solarPhaseOf, solarConditionOf, solarConditionOfPosition
+ */
 import type { BodyPosition, Degrees } from '../ephemeris/types.js';
 import { angularSeparation } from './aspects.js';
 

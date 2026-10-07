@@ -1,6 +1,12 @@
 /**
  * Message catalogue for `ChartView.tsx` (#158).
  */
+/**
+ * @module ChartView.messages
+ * @purpose English/Dutch i18n strings for the natal chart screen: table column labels, chart-shape/lunar-phase/sect wording, export labels, and share-link text.
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed by ChartView.tsx via `useMessages(chartViewMessages)`; `nl` is typed as `typeof en`.
+ * @exports chartViewMessages
+ */
 const en = {
   signLabel: 'Sign',
   degLabel: 'Deg',

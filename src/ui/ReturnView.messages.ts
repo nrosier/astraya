@@ -1,6 +1,12 @@
 /**
  * Message catalogue for `ReturnView.tsx`: the solar and lunar return charts on the Charts page.
  */
+/**
+ * @module ReturnView.messages
+ * @purpose English/Dutch message catalogue for the solar/lunar return chart screens.
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed via `useMessages()` by the sibling `ReturnView.tsx`.
+ * @exports returnViewMessages
+ */
 const en = {
   personFallback: 'Person',
   thisPerson: 'This person',

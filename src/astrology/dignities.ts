@@ -20,6 +20,13 @@
  * in the opposite sign. Both are derived from the tables above rather than
  * duplicated, so they can never drift out of sync with them.
  */
+
+/**
+ * @module Dignities
+ * @purpose Computes essential dignities (rulership, exaltation, detriment, fall) for a body at a given sign/longitude.
+ * @conventions Rulership comes in a 'traditional' scheme (one classical ruler per sign) and a 'modern' scheme (outer-planet rulers for Scorpio/Aquarius/Pisces), selected explicitly, never guessed; exaltation/detriment/fall are not scheme-dependent and are derived from the rulership tables rather than duplicated.
+ * @exports RulershipScheme, rulerOf, exaltationRulerOf, detrimentRulerOf, fallRulerOf, essentialDignities
+ */
 import { bodyByKey } from './bodies.ts';
 import type { BodyId, Degrees } from '../ephemeris/types.js';
 import { oppositeSign, signIndex } from './signs.ts';

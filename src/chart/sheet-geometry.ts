@@ -22,6 +22,13 @@
  * meaning.
  */
 
+/**
+ * @module chart/sheet-geometry
+ * @purpose The single scale/layout authority for every radius, tick, glyph and font size in a chart sheet, following the classic Astrodienst/Astro-Seek wheel layout outside-in (zodiac dial, degree ruler, planet band, house dial, aspect disk).
+ * @conventions All reference figures are quoted in pixels on an 800x800 canvas (`REFERENCE_SIZE`) and linearly scaled by `size / 800`, so `resolveSheetGeometry(800)` reproduces the literal reference numbers exactly; radii are named fields (not an array) since each is a semantically distinct boundary; `resolveRingBands` splits the shared planet band into one sub-band per wheel ring, with a single ring getting the full reference radial glyph/degree/sign/minute stack and multiple rings each just centring their glyphs.
+ * @exports resolveSheetGeometry, resolveRingBands, TICK_INTERVAL_DEG, TICK_MEDIUM_INTERVAL_DEG, TICK_MAJOR_INTERVAL_DEG; SheetGeometry, PanelLayout, PanelRender, RingBand types.
+ */
+
 /** The size the reference layout's pixel figures below are quoted at. */
 const REFERENCE_SIZE = 800;
 

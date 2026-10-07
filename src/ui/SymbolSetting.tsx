@@ -2,6 +2,12 @@
  * The control for the symbol class (#419). It writes the device preference (`symbol-setting.ts`), so
  * every wheel, grid, diagram and table follows at once.
  */
+/**
+ * @module SymbolSetting
+ * @purpose Device-preference controls for symbol class (drawn/Unicode/text), glyph line weight, and Uranus/Pluto glyph variants.
+ * @conventions Writes shared device preferences via symbol-setting.ts and glyph-variant-setting.ts; uses SymbolSetting.messages.ts for en/nl text via useMessages().
+ * @exports SymbolSetting
+ */
 import { useId } from 'react';
 import { isSymbolClass, SYMBOL_CLASSES } from '../chart/symbol-class.js';
 import { GLYPH_WEIGHTS, isGlyphWeight } from '../chart/glyph-weight.js';

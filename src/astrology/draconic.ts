@@ -5,6 +5,13 @@
  * zodiac. That makes this strictly simpler than the harmonic/Varga transform in
  * `harmonics.ts`, which does need its own house transform.
  */
+
+/**
+ * @module Draconic
+ * @purpose Transforms a body's natal position onto the draconic zodiac, measured from the natal North Node rather than zero Aries.
+ * @conventions Houses are not transformed in the draconic chart — only body longitude is re-measured; latitude, distance, every speed and retrograde status are carried over unchanged from the natal position.
+ * @exports draconicLongitude, draconicPosition
+ */
 import type { BodyPosition, Degrees } from '../ephemeris/types.js';
 
 function norm360(degrees: Degrees): Degrees {

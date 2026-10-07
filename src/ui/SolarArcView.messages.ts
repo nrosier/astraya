@@ -1,6 +1,12 @@
 /**
  * Message catalogue for `SolarArcView.tsx` (#398).
  */
+/**
+ * @module SolarArcView.messages
+ * @purpose English/Dutch message catalogue for the solar arc directions screen.
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed via `useMessages()` by the sibling `SolarArcView.tsx`.
+ * @exports solarArcViewMessages
+ */
 const en = {
   personFallback: 'Person',
   solarArcFallback: 'Solar Arc',

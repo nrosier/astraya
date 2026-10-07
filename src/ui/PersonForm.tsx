@@ -8,6 +8,12 @@
  * All the rules live in `domain/person-form.ts`, so this component is only wiring: hold the
  * draft, show the errors, save the fields that changed. Nothing here decides what is valid.
  */
+/**
+ * @module PersonForm
+ * @purpose Birth-data entry/edit form for a person record (name, place, date/time, calendar/timezone overrides, notes), with resolved-moment feedback and delete.
+ * @conventions Thin wiring over domain/person-form.ts's draft/validation/mutation logic; uses PersonForm.messages.ts for en/nl text via useMessages().
+ * @exports PersonForm
+ */
 import { useId, useState } from 'react';
 import { draftFrom, draftToMutations, validateDraft, type Draft } from '../domain/person-form.js';
 import { personFormValidationMessages } from '../domain/person-form.messages.js';

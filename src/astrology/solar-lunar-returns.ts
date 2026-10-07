@@ -4,6 +4,13 @@
  * root-finders (`EphemerisProvider.nextSunCrossing`/`nextMoonCrossing`)
  * rather than a hand-rolled search — they are exact and already available.
  */
+
+/**
+ * @module SolarLunarReturns
+ * @purpose Computes the solar return within a given year and lunar returns within a given period, using the Sun/Moon's exact natal longitude.
+ * @conventions Delegates to Swiss Ephemeris's own crossing root-finders (nextSunCrossing/nextMoonCrossing) rather than a hand-rolled search, since they are exact and already available; solar return search starts from the target year's Jan 1 00:00 UT.
+ * @exports solarReturnInYear, lunarReturnsInPeriod
+ */
 import type { Degrees, EphemerisProvider, JulianDayUT, Zodiac } from '../ephemeris/types.js';
 
 /**

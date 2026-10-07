@@ -5,6 +5,12 @@
  * text: the actual sentence is templated in `src/ui/RelationshipSummary.messages.ts`, the same
  * split every other domain module here keeps from its `.messages.ts` counterpart.
  */
+/**
+ * @module house-overlays
+ * @purpose Computes which of the other person's houses each of a synastry pair's real bodies falls into (#422), the staple house-overlay data of a synastry reading.
+ * @conventions Pure structured data, no text — the sentence is templated in `src/ui/RelationshipSummary.messages.ts`, the same ts/`.messages.ts` split other domain modules keep; a side whose houses have no solution is simply omitted rather than erroring.
+ * @exports houseOverlays, HouseOverlay
+ */
 import { bodyById } from '../astrology/bodies.js';
 import { housesAreDefined } from './chart-compute.js';
 import type { SynastryData } from './synastry.js';

@@ -1,4 +1,9 @@
 /**
+ * Module: types/tz-lookup
+ * Purpose: Ambient type declaration for the untyped `tz-lookup` npm package.
+ * Conventions: n/a (ambient declaration only, no runtime code).
+ * Exports: default export of the `tz-lookup` module (declared ambiently, not re-exported from here).
+ *
  * `tz-lookup` ships no type declarations. It is a single CC0 function mapping a
  * coordinate to an IANA zone name using a compiled polygon table.
  */

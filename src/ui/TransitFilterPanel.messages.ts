@@ -1,6 +1,12 @@
 /**
  * Message catalogue for `TransitFilterPanel.tsx` (#416).
  */
+/**
+ * @module TransitFilterPanel.messages
+ * @purpose English/Dutch message catalogue for the transit-filter control panel (presets, orb scale, aspect groups, body checkboxes).
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed via `useMessages()` by the sibling `TransitFilterPanel.tsx`.
+ * @exports transitFilterPanelMessages
+ */
 const en = {
   heading: 'Which transits to show',
   presetLabel: 'Show',

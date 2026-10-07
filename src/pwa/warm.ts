@@ -6,6 +6,13 @@
  * is the same store from both, and doing it here means progress (~2.5 MB) can be
  * reported to the UI directly with no worker messaging protocol.
  */
+
+/**
+ * @module pwa/warm
+ * @purpose Populate the ephemeris cache ahead of time so the first offline session already has every asset (#100).
+ * @conventions Runs on the main thread, not inside the service worker, so download progress can be reported to the UI directly; already-cached assets are skipped so an interrupted or repeated warm-up doesn't re-download; a failed fetch throws immediately naming the asset, never swallowed.
+ * @exports warmEphemerisCache, WarmProgress
+ */
 import { ALL_ASSETS, EPHE_BASE_URL, type EphemerisAsset } from '../ephemeris/assets.js';
 import { ephemerisCacheName } from './cache-names.js';
 import type { CacheStorageLike } from './strategies.js';

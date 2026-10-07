@@ -1,6 +1,12 @@
 /**
  * Message catalogue for `SymbolSetting.tsx` (#419).
  */
+/**
+ * @module SymbolSetting.messages
+ * @purpose English/Dutch message catalogue for the symbol-class, glyph-weight, and glyph-variant preference controls.
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed via `useMessages()` by the sibling `SymbolSetting.tsx`.
+ * @exports symbolSettingMessages
+ */
 const en = {
   label: 'Symbols',
   options: {

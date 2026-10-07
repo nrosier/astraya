@@ -7,6 +7,12 @@
  * integration test for computing a chart and the (fast, pure) test for
  * shaping one into rows can run independently.
  */
+/**
+ * @module chart-tables
+ * @purpose Shapes a computed `ChartData` into the flat rows a chart's data tables, wheel ring and sheet actually render (#44).
+ * @conventions Pure and framework-free; kept separate from `chart-compute.ts` so the slow real-engine chart test and the fast pure row-shaping test can run independently; longitude is rounded to the nearest arcsecond before sign-splitting (`degreeParts`) to avoid a seconds rounding bumping the sign; the wheel's aspect web is limited to major aspects, tables show every aspect found.
+ * @exports positionRows, houseCuspRows, angleRows, aspectRows, crossAspectRows, dignityRows, dispositorRows, declinationContactRows, antisciaRows, fixedStarRows, chartShapeOf, derivedPointRows, chartWheelRing, chartSheetMetaLines, chartSheetInput, degreeParts, visiblePositions, almutenOfAscendant
+ */
 import { almutenOf, essentialDignityScoreOf } from '../astrology/almuten.js';
 import { antiscialContacts, type AntiscialContact } from '../astrology/antiscia.js';
 import { bodyById, bodyByKey } from '../astrology/bodies.js';

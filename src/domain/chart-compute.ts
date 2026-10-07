@@ -14,6 +14,12 @@
  * or stored — recomputing is cheap, and storing results would only create a
  * second version of the truth the `Chart` doc comment already warns against.
  */
+/**
+ * @module chart-compute
+ * @purpose Computes a chart's positions, houses, aspects, dignities, sect and derived points from a birth moment (#44).
+ * @conventions One ephemeris pass (one Julian day, one batch position call, one house call) then pure arithmetic; nothing is cached — results are cheap to recompute, not stored as a second source of truth; `housesAreDefined` must be checked before trusting house-derived fields.
+ * @exports computeChartData, computeChartDataAtJd, housesAreDefined, ChartData, ChartCalculationOptions, AngleAspect, NATAL_FIXED_STARS
+ */
 import {
   DEFAULT_ORB_CONFIG,
   findAspects,

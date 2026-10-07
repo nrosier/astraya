@@ -3,6 +3,12 @@
  * search at once. Kept apart from `EclipsesView.tsx` so it can be tested without a DOM or an
  * ephemeris.
  */
+/**
+ * @module ui/eclipses
+ * @purpose Pure logic backing the eclipses screen (#404): the search span cap and the row shape for display.
+ * @conventions Kept apart from EclipsesView.tsx so it is testable without a DOM or an ephemeris.
+ * @exports MAX_ECLIPSE_SPAN_YEARS, EclipseRow, eclipseRows
+ */
 import type { Eclipse, EclipseContact } from '../astrology/eclipses.js';
 import { SIGNS } from '../astrology/signs.js';
 import { civilFromJulianDay } from '../time/julian.js';

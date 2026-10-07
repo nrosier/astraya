@@ -14,6 +14,12 @@
  * duplicating `compose.ts`'s locale tables for a UI that has nowhere to
  * switch away from English.
  */
+/**
+ * @module ui/report-provenance
+ * @purpose Formats a ReportParagraph's source/placement/factors into short plain-English strings for #62's "why this text?" provenance toggle under a report paragraph.
+ * @conventions Kept separate from ReportView.tsx and untyped against React so it is directly Vitest-testable, following the "thin .tsx, tested .ts" split (table-sort.ts/SortableTable.tsx); deliberately English-only since there is no locale switcher for the report yet, so it duplicates body/sign/aspect English names from astrology/* rather than reusing compose.ts's locale tables.
+ * @exports describePlacement, describeSource, describeFactors, ParagraphProvenance, describeParagraphProvenance
+ */
 import { bodyByKey } from '../astrology/bodies.js';
 import { aspectByKey } from '../astrology/aspects.js';
 import { SIGNS } from '../astrology/signs.js';

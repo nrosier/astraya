@@ -3,6 +3,12 @@
  * which one a route is on. Kept apart from `AdminNav.tsx` for the same reason `person-nav.ts`
  * is apart from `PersonNav.tsx` — the active-tab mapping is testable without a DOM.
  */
+/**
+ * @module admin-nav
+ * @purpose Pure logic for the admin tab strip: which admin screens exist, their routes, and which tab a given route belongs to.
+ * @conventions Kept apart from AdminNav.tsx (the rendering component) so the active-tab mapping is Vitest-testable without a DOM.
+ * @exports AdminTabKey, AdminTab, ADMIN_TABS, ADMIN_HOME_HREF, activeAdminTabKey
+ */
 import type { Route } from './route.js';
 
 export type AdminTabKey = 'users' | 'usage' | 'corpus-overrides' | 'corpus-candidates';

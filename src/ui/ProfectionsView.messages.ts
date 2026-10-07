@@ -1,6 +1,12 @@
 /**
  * Message catalogue for `ProfectionsView.tsx` (#158).
  */
+/**
+ * @module ProfectionsView.messages
+ * @purpose English/Dutch message catalogue for the annual/monthly profections screen.
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed via `useMessages()` by the sibling `ProfectionsView.tsx`.
+ * @exports profectionsViewMessages
+ */
 const en = {
   personFallback: 'Person',
   profectionsFallback: 'Profections',

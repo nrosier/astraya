@@ -6,6 +6,13 @@
  * limit: a request-count limit alone doesn't bound spend if a single call's
  * cost varies with prompt/output length.
  */
+
+/**
+ * @module usage
+ * @purpose Cost accounting for Tier 2 LLM calls, against the `interpretation_usage` table — backs the real per-user and total daily dollar caps enforced before every call.
+ * @conventions One row recorded per successful model call (including the custom-prompt verification call, since it also costs tokens); the per-user daily cap check and the admin usage view both read from the same table so there is one source of truth for spend.
+ * @exports recordUsage, userCostCentsSince, totalCostCentsSince, UserUsageSummary, usageByUser, costCentsSinceByUser
+ */
 import type { Database } from '../db.ts';
 
 export function recordUsage(

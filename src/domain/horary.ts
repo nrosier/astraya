@@ -6,6 +6,12 @@
  * computation — and `findVoidOfCourseMoon` for the one consideration that needs the ephemeris
  * beyond the chart itself.
  */
+/**
+ * @module horary
+ * @purpose Computes a horary chart (#406): an ordinary chart for the moment a question was asked, plus the traditional considerations-before-judgment.
+ * @conventions Reuses `computeChartData` unchanged (a horary chart is a chart-for-a-moment, not a new computation); defaults to Regiomontanus houses (`HORARY_DEFAULT_HOUSE_SYSTEM`), the system the horary tradition (Lilly onward) used, versus the natal screens' Placidus default; void-of-course Moon comes from `findVoidOfCourseMoon`.
+ * @exports computeHoraryChart, HoraryChart, HORARY_DEFAULT_HOUSE_SYSTEM
+ */
 import { bodyByKey } from '../astrology/bodies.js';
 import { houseOf } from '../astrology/emphasis.js';
 import { horaryConsiderations, type HoraryConsideration } from '../astrology/horary.js';

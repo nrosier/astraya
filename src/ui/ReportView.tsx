@@ -21,6 +21,12 @@
  * and importing it here would inline all of it into this app's JS bundle.
  * See corpus-client.ts for why.
  */
+/**
+ * @module ReportView
+ * @purpose Renders an interpretation Report's sections/paragraphs with a provenance toggle, plus the Tier 2 opt-in AI-customized interpretation sub-tab (grounded restyle or freeform full-chart modes).
+ * @conventions Thin wiring over report-provenance.ts; fetches its corpus chunk at runtime via corpus-client.ts rather than importing the full synchronous CORPUS; uses ReportView.messages.ts for en/nl text via useMessages().
+ * @exports ReportView
+ */
 import { useEffect, useState } from 'react';
 import { assembleReport, reportPlacementKeys, type Report, type ReportParagraph } from '../interpretation/report.js';
 import { loadRuntimeCorpus } from '../interpretation/corpus-client.js';

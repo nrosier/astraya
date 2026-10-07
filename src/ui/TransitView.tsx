@@ -16,6 +16,13 @@
  * options), injected the same trust-boundary way `ChartView.tsx` injects its sheet markup:
  * entirely app-generated from just-computed data, never user-supplied.
  */
+/**
+ * @module TransitView
+ * @purpose Transit bi-wheel screen for one saved person against a chosen date: natal chart on the inner ring, transiting positions on the outer ring, with filtered cross-chart contacts and void-of-course Moon.
+ * @conventions Calls renderMultiWheelSvg directly, bypassing the single-chart AstroChartWheel wrapper, same as SynastryView.tsx; uses TransitView.messages.ts for en/nl text via useMessages().
+ * @exports TransitView
+ */
+
 import { useSymbolClass } from './symbol-setting.js';
 import { useGlyphVariants } from './glyph-variant-setting.js';
 import { useEffect, useMemo, useState } from 'react';

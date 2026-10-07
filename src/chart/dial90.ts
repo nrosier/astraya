@@ -20,6 +20,12 @@
  * reader can look up any arm's dial degree directly, in whichever quadrant
  * it happens to land.
  */
+/**
+ * @module chart/dial90
+ * @purpose Renders the traditional cosmobiology 90-degree dial: the ring geometry, each body plotted at all four of its dial arms, and midpoint-tree hit markers.
+ * @conventions A dial degree (`dialPosition`) collapses conjunction/square/opposition to one 0-90 value, so each body is plotted at all four synthetic longitudes 90° apart (`dialArmLongitudes`) rather than a single point, letting two bodies in hard aspect visibly coincide; body placement delegates to `glyph-layout.ts`'s `renderGlyphRingSvg` with a fixed `{ orientation: 'aries-up', sweep: 'counterclockwise' }` anchor, reusing its collision-spreading/leader-line logic unmodified.
+ * @exports dialArmLongitudes, renderDial90RingSvg, renderDial90BodiesSvg, renderDial90MidpointHitsSvg; Dial90GeometryOptions type.
+ */
 import type { MidpointTreeHit } from '../astrology/midpoints.js';
 import { dialPosition } from '../astrology/midpoints.js';
 import type { BodyId, Degrees } from '../ephemeris/types.js';

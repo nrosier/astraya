@@ -8,6 +8,12 @@
  * bundle (`scripts/check-bundle-size.mjs` only measures that graph, the same way the ephemeris engine
  * and the admin panel already stay out of it).
  */
+/**
+ * @module ui/pdf-export-render
+ * @purpose Renders a finished `PdfPlan` (pdf-export-plan.ts) into an actual PDF document, drawing chart wheels as vector SVG and tables via autotable, for the PDF export feature (#441).
+ * @conventions Browser-only — depends on jsPDF/svg2pdf.js/jspdf-autotable, which cannot be imported under Vitest (svg2pdf.js's ESM build does not resolve there), so this is covered by Playwright instead and loaded only via PdfExportBuilder.tsx's dynamic import() to keep these three libraries out of the eager bundle (scripts/check-bundle-size.mjs). Astrological glyphs are substituted with WinAnsi-safe text codes before drawing since jsPDF's core fonts can't render arbitrary Unicode.
+ * @exports renderPdfPlan
+ */
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { svg2pdf } from 'svg2pdf.js';

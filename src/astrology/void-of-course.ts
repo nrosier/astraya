@@ -24,6 +24,13 @@
  * "target" (another planet) moves too, so the planet is re-queried at every midpoint. Sign
  * entry and exit come from Swiss Ephemeris' own `nextMoonCrossing`.
  */
+
+/**
+ * @module VoidOfCourse
+ * @purpose Determines whether the Moon is void of course at a given moment — having made its last exact aspect before leaving its current sign.
+ * @conventions Uses the five Ptolemaic aspects only, counted at exactness with no orbs; default bodies are the Sun and Mercury through Pluto (Astro-Seek's convention), overridable to the classical seven; sign entry/exit come from Swiss Ephemeris's nextMoonCrossing; search samples hourly and bisects down to the second.
+ * @exports findMoonSignWindow, voidOfCourseAt, findVoidOfCourseMoon
+ */
 import { ASPECTS, type AspectDefinition } from './aspects.js';
 import { bodyByKey } from './bodies.js';
 import type { BodyId, Degrees, EphemerisProvider, JulianDayUT, PositionOptions, Zodiac } from '../ephemeris/types.js';

@@ -1,6 +1,12 @@
 /**
  * Message catalogue for `ProgressionsView.tsx` (#398).
  */
+/**
+ * @module ProgressionsView.messages
+ * @purpose English/Dutch message catalogue for the secondary/tertiary/minor progressions screen.
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed via `useMessages()` by the sibling `ProgressionsView.tsx`.
+ * @exports progressionsViewMessages
+ */
 const en = {
   personFallback: 'Person',
   progressionsFallback: 'Progressions',

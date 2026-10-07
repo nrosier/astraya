@@ -12,6 +12,12 @@
  *
  * Everything here is pure; a key that does not parse is shown as it is, never hidden.
  */
+/**
+ * @module ui/placement-label
+ * @purpose Turns a corpus key/placement (#428) into human-readable wording — e.g. `planet-in-house:sun:3` into "Sun in the 3rd house" — for the admin corpus screens' labels, search, and sort order.
+ * @conventions Wording follows the interface locale (en/nl) and reuses the same body/sign/aspect names as every other screen (astro-names.messages.ts); pure functions, a key that doesn't parse is shown as-is rather than hidden; also supplies tier/tag/category explanatory text for the admin UI.
+ * @exports ordinal, categoryLabel, placementLabel, labelForKey, placementSortKey, sortKeyForKey, compareSortKeys, categoryExplanation, tierLabel, tierExplanation, tagLabel, tagExplanation
+ */
 import { ASPECTS } from '../astrology/aspects.js';
 import { BODIES } from '../astrology/bodies.js';
 import { SIGNS } from '../astrology/signs.js';

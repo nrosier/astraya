@@ -1,6 +1,12 @@
 /**
  * Message catalogue for `CompositeView.tsx` (#158).
  */
+/**
+ * @module CompositeView.messages
+ * @purpose English/Dutch i18n strings for the composite (midpoint) chart screen, including the partner picker and houses-undefined warning.
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed by CompositeView.tsx via `useMessages(compositeViewMessages)`; `nl` is typed as `typeof en`.
+ * @exports compositeViewMessages
+ */
 const en = {
   personFallback: 'Person',
   thisPerson: 'This person',

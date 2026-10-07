@@ -9,6 +9,12 @@
  * same as every other AI-customised panel in this app (ADR 0003) — spent the moment the
  * request is sent, never remembered.
  */
+/**
+ * @module RelationshipSummary
+ * @purpose Grouped, ranked relationship-themes summary for a synastry pairing, with house overlays and an opt-in Tier 2 AI-customised relationship reading.
+ * @conventions Follows FocusInterpretation.tsx's consent/generate/saved-history structure for the Tier 2 panel; uses RelationshipSummary.messages.ts for en/nl text via useMessages().
+ * @exports RelationshipSummary
+ */
 import { useEffect, useId, useState } from 'react';
 import { bodyById } from '../astrology/bodies.js';
 import { housesAreDefined } from '../domain/chart-compute.js';

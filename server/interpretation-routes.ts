@@ -55,6 +55,13 @@
  * `ASTRAYA_INTERPRETATION_API_KEY`'s sibling encryption setting, `ASTRAYA_ENCRYPTION_KEY`, is
  * configured. Missing that key disables saving, not generation — the two are independent.
  */
+
+/**
+ * @module interpretation-routes
+ * @purpose The Tier 2 (AI-customized interpretation) HTTP routes: the one runtime surface in Astraya that calls a third-party LLM, plus listing/reopening a user's own saved results and an admin usage view.
+ * @conventions Every untrusted field (placement keys, chart data, focus context, relationship data, the free-text custom prompt) is re-derived and closed-set-validated against reference data before it reaches a model prompt; a custom instruction additionally passes a phrase-list pre-filter (`checkCustomPrompt`) and then a separate model verification call, failing closed on any error or unparseable verdict; generation is gated by `requireUser` and bounded by both a per-user rate limit and two real per-day dollar caps (`ASTRAYA_INTERPRETATION_USER_DAILY_CENTS`/`ASTRAYA_INTERPRETATION_TOTAL_DAILY_CENTS`) read via `envCapCents`, which fails closed (cap of 0) on a non-numeric env value.
+ * @exports registerInterpretationRoutes
+ */
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import type { Database } from './db.ts';
 import { requireUser, requireAdmin } from './auth/identity.ts';

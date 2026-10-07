@@ -9,6 +9,12 @@
  *
  * Needs a known birth time, same gate every angle-dependent screen in this app already uses.
  */
+/**
+ * @module SolarArcView
+ * @purpose Solar arc directions screen for one person, as of a chosen date, with directed positions and directed-to-natal contacts (including exact-date timing).
+ * @conventions Gated for unknown birth time like other angle-dependent screens; uses SolarArcView.messages.ts for en/nl text via useMessages().
+ * @exports SolarArcView
+ */
 import { useEffect, useMemo, useState } from 'react';
 import { bodyById } from '../astrology/bodies.js';
 import type { DirectedPosition } from '../astrology/solar-arc-directions.js';

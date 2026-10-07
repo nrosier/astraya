@@ -9,6 +9,12 @@
  * also means `sect`/the Arabic parts below use the natal Ascendant, as intended — one Ascendant,
  * two position sets.
  */
+/**
+ * @module draconic
+ * @purpose Computes a draconic chart — natal positions transformed to the lunar-node-based draconic zodiac — from one person's natal chart (#398).
+ * @conventions Synthetic chart, not a comparison, so reuses the single-chart engine (`findAspects`, `essentialDignitiesFor`, `sectOf`, Arabic parts) on the transformed positions; unlike harmonic charts, houses are carried through from the natal chart unchanged, so sect/Arabic parts use the natal Ascendant.
+ * @exports computeDraconic, DraconicData
+ */
 import { DEFAULT_ORB_CONFIG, findAspects, subjectsFrom, type Aspect, type OrbConfig } from '../astrology/aspects.js';
 import { bodyByKey, bodyById, type BodyCategory } from '../astrology/bodies.js';
 import type { EssentialDignities } from '../astrology/dignities.js';

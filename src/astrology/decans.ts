@@ -20,6 +20,13 @@
  *   this module returns that planet directly rather than an intermediate
  *   sign the caller would have to look up rulership for anyway.
  */
+
+/**
+ * @module Decans
+ * @purpose Computes decan (face) index and ruling planet under both the Chaldean face scheme and the sign-based (triplicity) decan scheme.
+ * @conventions Chaldean faces cycle the seven traditional planets starting at Mars for Aries' first decan, running straight through all 36 decans with no reset at sign boundaries; triplicity decans assign each decan to a sign of the same triplicity, cycling from the starting sign's own position within it, and return that sign's traditional domicile ruler.
+ * @exports DECAN_SPAN, decanIndex, decanInSign, faceRulerOf, triplicityDecanRulerOf
+ */
 import { bodyByKey } from './bodies.js';
 import type { BodyId, Degrees } from '../ephemeris/types.js';
 import { rulerOf } from './dignities.js';

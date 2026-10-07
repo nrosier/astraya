@@ -10,6 +10,13 @@
  * in by the domain layer — the only genuinely new hand-rolled math here is the
  * great-circle forward-geodesic sampler, which has no ephemeris binding.
  */
+
+/**
+ * @module Astrocartography
+ * @purpose Computes astrocartography (ACG) MC/IC/AC/DC lines and Local Space lines for mapping a chart's angles and azimuths onto the globe.
+ * @conventions MC/IC/AC/DC lines reuse armcAtAngle/EquatorialPoint from fixed-stars.ts, since an ACG line is every place whose local sidereal time equals the ARMC a point needs for that angle; great-circle paths use the standard forward-geodesic spherical-navigation formula; longitude is wrapped to [-180, 180) rather than clamped so an antimeridian crossing shows up as a jump.
+ * @exports longitudeFromArmc, meridianLine, horizonLine, greatCirclePath, localSpaceLine
+ */
 import type { BodyId, Degrees, GeoPosition } from '../ephemeris/types.js';
 import { armcAtAngle, type EquatorialPoint } from './fixed-stars.js';
 

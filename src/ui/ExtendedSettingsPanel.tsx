@@ -14,6 +14,12 @@
  * matches none. The dialog is the browser's own modal `<dialog>`, which gives the focus trap, Escape, the backdrop
  * and the return of focus to the trigger; `dialog.showModal` is missing in some test DOMs, hence the fallback.
  */
+/**
+ * @module ExtendedSettingsPanel
+ * @purpose Renders the chart's "Extended settings" modal: house system, zodiac/ayanamsa, visible points/aspects, orb scale, minor aspects, wheel colours, plus the planetary-rulership and symbol device preferences.
+ * @conventions Calculation/display settings are edited in a local draft and only committed via "Apply and redraw" (every change needs a real recompute); planetary rulers and symbols are device preferences applied immediately, outside the draft. A preset (`extended-settings-presets.js`) can fill the whole profile in one go. Text comes from co-located `ExtendedSettingsPanel.messages.ts` via `useMessages()`.
+ * @exports ExtendedSettingsPanel
+ */
 import { useEffect, useId, useRef, useState } from 'react';
 import { ASPECTS, DEFAULT_ORB_CONFIG } from '../astrology/aspects.js';
 import { ayanamsaByKey, AYANAMSAS } from '../astrology/ayanamsas.js';

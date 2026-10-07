@@ -17,6 +17,12 @@
  * would silently overwrite a note another device had edited in the meantime. Fields the
  * user did not touch must keep whatever timestamp they already had.
  */
+/**
+ * @module person-form
+ * @purpose Models the birth-data form as pure data (#45): drafting, validating and converting a person's birth-record form into op-log mutations.
+ * @conventions Draft fields are strings (what the user typed), parsed only at validation boundaries, so a half-typed value is a work-in-progress rather than coerced into a plausible number; `draftToMutations` writes only fields that actually changed (comparing against the previous draft, not the stored person) so an untouched field never gets a newer timestamp that could overwrite another device's concurrent edit; date/time/coordinates are each written as one whole register, never split field-by-field, since a merge of two partial values would describe a moment or place nobody experienced.
+ * @exports Draft, EMPTY_DRAFT, draftFrom, validateDraft, draftToMutations, DraftErrors, Validated
+ */
 import type { Person, TimeAccuracy } from './person.js';
 import type { personFormValidationMessages } from './person-form.messages.js';
 import type { BirthMomentInput, Calendar } from '../time/types.js';

@@ -18,6 +18,12 @@
  * nobody was born, so the moment is written whole; for settings a merge is harmless
  * and losing an unrelated change would just be annoying.
  */
+/**
+ * @module chart
+ * @purpose Represents a chart entity: a view of a person plus the settings needed to reproduce it, assembled from op-log field values.
+ * @conventions Charts store no computed positions — everything is recalculated from the person's birth moment and these settings; settings are kept verbatim (including keys this build does not recognise) rather than defaulted, so an unsupported setting is surfaced rather than silently substituted; each setting is its own op-log register (`settings.<name>`), unlike a person's birth moment which is written whole.
+ * @exports Chart, KNOWN_CHART_KINDS, isKnownChartKind, SETTINGS_PREFIX, CHART_FIELDS, buildChart
+ */
 import type { JsonValue } from '../store/ops.js';
 import { isPersonId } from './id.js';
 

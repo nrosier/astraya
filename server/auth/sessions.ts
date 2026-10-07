@@ -7,6 +7,13 @@
  * session table with extra steps. So the cookie carries only a random id; every
  * other fact about the session lives here.
  */
+
+/**
+ * @module sessions
+ * @purpose Server-side session storage: the cookie carries only a random session id, and the `sessions` row is the real source of truth, so revocation (disabling a user, signing out) takes effect on the very next request.
+ * @conventions Sliding expiry, not a fixed calendar expiry: `touchSession` extends it on each authenticated request; an OIDC-derived session gets a shorter TTL (`OIDC_SESSION_TTL_MS`) than a local one, since an upstream Authentik-side disable is otherwise invisible to Astraya once the token exchange is done.
+ * @exports SESSION_COOKIE, Session, CreateSessionOptions, createSession, getSession, touchSession, revokeSession, revokeAllSessionsForUser
+ */
 import { randomUUID } from 'node:crypto';
 import type { Database } from '../db.ts';
 

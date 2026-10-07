@@ -14,6 +14,12 @@
  * "Black Moon" Lilith) is chosen. The four asteroids have no slot at all and are
  * omitted.
  */
+/**
+ * @module chart/astrochart-adapter
+ * @purpose Converts Astraya's computed `ChartData` into the input shape the third-party `@astrodraw/astrochart` library's `radix()` call expects.
+ * @conventions Only the fixed subset of bodies AstroChart has a named glyph slot for is mapped (`BODY_KEY_TO_ASTROCHART_NAME`); `data.houses.cusps` is converted from Astraya's 1-indexed, index-0-unused `HousePositions` array to AstroChart's plain 0-indexed 12-element array. This is the only file in `src/chart/` coupled to that library's data format.
+ * @exports toAstroChartRadixData; AstroChartRadixData type.
+ */
 import { bodyById } from '../astrology/bodies.js';
 import type { ChartData } from '../domain/chart-compute.js';
 

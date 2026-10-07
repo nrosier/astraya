@@ -13,6 +13,12 @@
  * Pure apart from the ephemeris calls: the caller supplies the people, the provider and the moment
  * (`now`), so the document is reproducible and testable against the real engine.
  */
+/**
+ * @module full-export
+ * @purpose Builds the whole-device export: every person's birth record plus (where possible) their computed natal chart tables, as one JSON document or a people CSV.
+ * @conventions Plain JSON with its own `format`/`version` fields rather than a database dump; charts are computed with app default settings (Placidus, tropical, standard orbs) and the document states so; one person's chart failure is caught and reported per-person rather than failing the whole export; deleted people are excluded.
+ * @exports buildFullExport, peopleToCsv, fullExportFilename, peopleCsvFilename, FullExport, ExportedPerson, ExportedChart, FULL_EXPORT_FORMAT, FULL_EXPORT_VERSION
+ */
 import type { RulershipChoice } from '../astrology/rulership.js';
 import { housesAreDefined, computeChartData, type ChartData } from './chart-compute.js';
 import {

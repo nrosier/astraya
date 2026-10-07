@@ -28,6 +28,13 @@
  * the same outcome into windows, so the answer reads as "from here to there" rather than a list of
  * near-identical minutes.
  */
+
+/**
+ * @module Electional
+ * @purpose Implements electional astrology: searching a time span for the moments that best satisfy a chosen set of traditional electional rules.
+ * @conventions Seven individually selectable rules (moon-not-void, moon-not-via-combusta, mercury-direct, moon-not-weak, moon-waxing, benefic-angular, moon-aids-benefic) sourced from Bonatti/Lilly tradition, each phrased so satisfied is good; results are ranked windows rather than a single "best" time; search is capped at MAX_ELECTION_SAMPLES.
+ * @exports ELECTION_RULE_KEYS, evaluateRules, electionWindows, rankWindows, electionSnapshots, findElectionWindows, MAX_ELECTION_SAMPLES
+ */
 import { DEFAULT_ORB_CONFIG, matchAspect, type OrbConfig } from './aspects.js';
 import { bodyByKey } from './bodies.js';
 import { houseOf } from './emphasis.js';

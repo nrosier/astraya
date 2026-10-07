@@ -2,6 +2,12 @@
  * Message catalogue for `RelationshipSummary.tsx` (#422): the grouped, ranked relationship
  * summary above Synastry's existing aspects table, and its own Tier 2 panel.
  */
+/**
+ * @module RelationshipSummary.messages
+ * @purpose English/Dutch message catalogue for the grouped relationship-summary panel (themes, house overlays, Tier 2 AI reading).
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed via `useMessages()` by the sibling `RelationshipSummary.tsx`.
+ * @exports relationshipSummaryMessages
+ */
 import type { RelationshipTheme } from '../domain/relationship-themes.js';
 
 const en = {

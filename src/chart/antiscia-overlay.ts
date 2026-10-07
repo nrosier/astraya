@@ -10,6 +10,12 @@
  * `filterAspectsForDisplay`; `renderAntisciaOverlaySvg` draws the same way,
  * one `<line>` per surviving contact.
  */
+/**
+ * @module chart/antiscia-overlay
+ * @purpose Draws antiscia/contra-antiscia contacts as chords across the chart wheel.
+ * @conventions Mirrors `aspect-web.ts`'s chord-drawing idiom (one `<line>` per contact at the wheel's shared radius via `wheelAngle`/`pointOnCircle`); `filterAntisciaForDisplay` dedupes mirrored A/B-vs-B/A contacts by unordered body pair + kind before rendering, since `antiscialContacts` reports each contact from both bodies' sides.
+ * @exports filterAntisciaForDisplay, renderAntisciaOverlaySvg; AntisciaDisplayFilter type.
+ */
 import type { AntiscialContact, AntiscialPointKind } from '../astrology/antiscia.js';
 import type { BodyId, Degrees } from '../ephemeris/types.js';
 import type { WheelOrientationOptions } from './wheel.js';

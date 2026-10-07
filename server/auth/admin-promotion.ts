@@ -8,6 +8,13 @@
  * fires on demote/disable/delete — is structurally unreachable from this module: there is no path
  * here that ever removes a role from anyone.
  */
+
+/**
+ * @module admin-promotion
+ * @purpose Promote-only auto-promotion of users to admin/super admin role, from an env-configured local-username allowlist or an OIDC group claim.
+ * @conventions Strictly promote-only: removing a name from an allowlist or a group on the IdP side never auto-demotes anyone, and a lower-role match never lowers an already-higher role — manual demotion only happens via `admin-routes.ts`'s role route. A super admin match always outranks an admin match.
+ * @exports loadAdminUsernameAllowlist, loadSuperAdminUsernameAllowlist, loadOidcAdminGroups, loadOidcSuperAdminGroups, describeOidcAdminGroupCheck, adminGroupStartupNotice, promoteLocalUserIfAllowlisted, promoteOidcUserIfGroupMatched
+ */
 import type { Database } from '../db.ts';
 import { roleFields, type User } from './identity.ts';
 import { hasRole, higherRole, type Role } from './roles.ts';

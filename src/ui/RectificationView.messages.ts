@@ -1,4 +1,10 @@
 /** Message catalogue for `RectificationView.tsx` (#408). */
+/**
+ * @module RectificationView.messages
+ * @purpose English/Dutch message catalogue for the birth-time rectification screen.
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed via `useMessages()` by the sibling `RectificationView.tsx`.
+ * @exports rectificationViewMessages
+ */
 const en = {
   heading: 'Birth-time rectification',
   hint: 'For a birth date and place with an uncertain time: test candidate times against dated life events. For each candidate the Ascendant and Midheaven are worked out, and the events are checked for solar-arc and slow-planet transit contacts to them.',

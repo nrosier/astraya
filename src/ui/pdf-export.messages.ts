@@ -1,6 +1,12 @@
 /**
  * Message catalogue for `pdf-export.ts` and `PdfExportBuilder.tsx` (#441).
  */
+/**
+ * @module ui/pdf-export.messages
+ * @purpose en/nl message catalogue for the PDF export builder screen (#441).
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed via useMessages() by PdfExportBuilder.tsx (and read directly by pdf-export-plan.ts for section/field labels built outside a component).
+ * @exports pdfExportMessages
+ */
 import type { PdfChartTable, PdfPresetKey } from '../domain/pdf-export-sections.js';
 import type { ChartType } from './chart-sections.js';
 import type { TimeAccuracy } from '../domain/person.js';

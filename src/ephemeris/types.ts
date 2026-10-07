@@ -6,6 +6,13 @@
  * is testable without WebAssembly.
  */
 
+/**
+ * @module ephemeris/types
+ * @purpose Defines the engine-agnostic types and the EphemerisProvider interface that form the boundary between the Swiss Ephemeris implementation and the rest of Astraya's astrology code.
+ * @conventions Nothing in this file mentions sweph-wasm, so src/astrology/** and the UI depend only on these types and the engine stays swappable and testable without WebAssembly; every EphemerisProvider method is async because the real implementation runs in a Web Worker, and failures are thrown as EphemerisError rather than encoded as sentinel values.
+ * @exports Degrees, JulianDayUT, CalendarSystem, BodyId, Zodiac, GeoPosition, BodyPosition, HousePositions, HouseSystem, FixedStarPosition, FixedStarMagnitude, PositionOptions, HorizontalPosition, AzimuthAltitudeOptions, SolarEclipseKind, LunarEclipseKind, SolarEclipse, LunarEclipse, EphemerisProvider, EphemerisError, EphemerisErrorContext
+ */
+
 /** Ecliptic longitude in degrees, 0 <= lon < 360, measured from 0° Aries. */
 export type Degrees = number;
 

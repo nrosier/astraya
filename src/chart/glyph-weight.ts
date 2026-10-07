@@ -6,6 +6,12 @@
  * Held as module state like the symbol class (`symbol-class.ts`), for the same reason: a dozen synchronous renderers
  * all end in `renderGlyph`, and one setting every one of them must honour is not something to thread through each.
  */
+/**
+ * @module chart/glyph-weight
+ * @purpose Holds the device-wide line-weight setting (fine/regular/bold) for drawn glyph strokes, read by `renderGlyph`.
+ * @conventions Module-level mutable state with a subscribe/listener pattern, the same convention as `symbol-class.ts`/`glyph-variants.ts`; weight is applied as a stroke-width override, not new artwork, since it is a style of the same glyph paths (regular's 6 is the width the artwork was originally drawn for).
+ * @exports GLYPH_WEIGHTS, DEFAULT_GLYPH_WEIGHT, GLYPH_STROKE, isGlyphWeight, getGlyphWeight, setGlyphWeight, subscribeGlyphWeight; GlyphWeight type.
+ */
 export type GlyphWeight = 'fine' | 'regular' | 'bold';
 
 export const GLYPH_WEIGHTS: readonly GlyphWeight[] = ['fine', 'regular', 'bold'];

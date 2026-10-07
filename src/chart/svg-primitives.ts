@@ -12,6 +12,13 @@
  * palette change reaches every chart.
  */
 
+/**
+ * @module chart/svg-primitives
+ * @purpose The shared low-level SVG element builders (`line`, `circle`, `rect`, `polygon`, `polyline`, `text`) and XML-escaping/baseline helpers every renderer in `src/chart/` uses, replacing what used to be near-identical per-file copies.
+ * @conventions No colour is ever emitted — every builder takes only a CSS class name, matching the directory-wide convention that styling lives in `app.css` (or `standalone-svg.ts` for exports); coordinates are formatted to two decimals (`fmt`) for sub-pixel accuracy without bloating markup; `escapeXml` escapes for both text-node and double-quoted-attribute contexts since generated markup reaches the DOM via `dangerouslySetInnerHTML`; `baselineOffset` compensates for SVG's baseline (not middle) text anchoring since `dominant-baseline` is unreliable across SVG-to-raster converters.
+ * @exports fmt, line, circle, rect, polygon, polyline, text, escapeXml, baselineOffset; TextAnchor type.
+ */
+
 /** Two decimals: enough for sub-pixel accuracy at any export size, short enough to keep the markup readable. */
 export function fmt(value: number): string {
   return value.toFixed(2);

@@ -1,6 +1,12 @@
 /**
  * Message catalogue for `BiWheelSelectionPanel.tsx` (#418).
  */
+/**
+ * @module BiWheelSelectionPanel.messages
+ * @purpose English/Dutch i18n strings describing a selected body/sign/aspect in a bi-wheel chart (Transits, Synastry).
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed by BiWheelSelectionPanel.tsx via `useMessages(biWheelSelectionPanelMessages)`; `nl` is typed as `typeof en`.
+ * @exports biWheelSelectionPanelMessages
+ */
 const en = {
   clear: 'Clear',
   hint: 'Click a planet, sign or aspect line to highlight it and its connections. Click it again, or an empty spot, to clear.',

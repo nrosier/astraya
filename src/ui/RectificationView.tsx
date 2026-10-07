@@ -8,6 +8,12 @@
  * each time is shown with its lift over the average candidate, so a flat field cannot pass for an
  * answer.
  */
+/**
+ * @module RectificationView
+ * @purpose Birth-time rectification screen: tests candidate birth times for a known date/place against dated life events and ranks them by solar-arc/transit contact score.
+ * @conventions Not person-scoped (optional pre-fill from a stored person); uses RectificationView.messages.ts for en/nl text via useMessages().
+ * @exports RectificationView
+ */
 import { useMemo, useRef, useState } from 'react';
 import { SIGNS } from '../astrology/signs.js';
 import { runRectification, type TimedCandidate } from '../domain/rectification.js';

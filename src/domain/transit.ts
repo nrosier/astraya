@@ -19,6 +19,12 @@
  * Both rings are full `ChartData` (not just positions), so any existing table, wheel or sheet
  * helper built for a single chart's `ChartData` works unchanged for either ring here.
  */
+/**
+ * @module transit
+ * @purpose Computes a transit bi-wheel for one saved person against a chosen moment (#172) — the everyday "sky right now (or at any chosen moment) read against a natal chart that stays fixed".
+ * @conventions Uses `subjectsFrom` for the transiting (moving) side and `fixedSubjects` for the natal (reference) side, mirroring `secondary-progression.ts`'s convention with "transiting" standing in for "progressed"; the transiting ring is cast at the natal place, since Astraya has no other recorded place for a saved person; both rings are full `ChartData`, so any single-chart table/wheel/sheet helper works unchanged for either ring.
+ * @exports computeTransit, TransitData
+ */
 import { findCrossAspects, fixedSubjects, subjectsFrom, type Aspect, type OrbConfig } from '../astrology/aspects.js';
 import { bodyById, type BodyCategory } from '../astrology/bodies.js';
 import {

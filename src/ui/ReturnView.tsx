@@ -6,6 +6,12 @@
  * year (solar) or the date to search from (lunar) and where the chart is cast, and a table of the return's
  * contacts to the natal chart, shown under the chart.
  */
+/**
+ * @module ReturnView
+ * @purpose Solar and lunar return chart screens: picks the return moment/casting place, computes the return chart, and shows it via ChartDataView plus natal contacts.
+ * @conventions Gated for incomplete/unknown-time birth records like other person-scoped views; uses ReturnView.messages.ts for en/nl text via useMessages().
+ * @exports ReturnView
+ */
 import { useEffect, useMemo, useState } from 'react';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { computeLunarReturnChart, computeSolarReturnChart, type ReturnChartData } from '../domain/return-chart.js';

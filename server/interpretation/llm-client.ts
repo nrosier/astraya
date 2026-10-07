@@ -11,6 +11,13 @@
  * live HTTP request, so it gets its own minimal client rather than
  * stretching that one to cover both.
  */
+
+/**
+ * @module llm-client
+ * @purpose The Tier 2 feature's real LLM provider client — the one place in the running server that reaches a third-party model (Gemini) over the network.
+ * @conventions Never imported from `src/`, enforced by `test/no-runtime-llm-access.test.ts`; deliberately separate from `tools/corpus-gen`'s build-time generator client, since this one serves free-form prose inside a live per-user request rather than fixed-schema, build-time-only generation; retries only on transient 429/5xx statuses, surfacing 4xx immediately as a likely configuration problem.
+ * @exports Tier2Config, loadTier2Config, Tier2Section, Tier2Result, generateTier2Text, CustomPromptVerdict, parseCustomPromptVerdict, verifyCustomPrompt, estimateCostCents
+ */
 const DEFAULT_BASE_URL = 'https://generativelanguage.googleapis.com';
 const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504]);
 

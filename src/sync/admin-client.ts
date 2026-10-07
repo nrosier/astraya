@@ -3,6 +3,13 @@
  * per route. Same shape as `auth-client.ts`: nothing here interprets a response beyond
  * its own shape, and every rejection carries the server's own message.
  */
+
+/**
+ * @module sync/admin-client
+ * @purpose Provides thin `fetch()` wrappers for every admin-only server route — user management, corpus overrides, corpus candidate triage, and interpretation usage/cost reporting.
+ * @conventions One function per route, each mirroring its server-side route file's shape exactly (noted in-line per section: `server/auth/admin-routes.ts`, `server/corpus-overrides.ts`, `server/corpus-candidates.ts`, `server/interpretation/usage.ts`); every call funnels through a shared `call()` helper that throws `AdminError` with the server's own error message on a non-2xx response.
+ * @exports AdminUser, DeletionImpact, AdminError, listUsers, createUser, resetPassword, disableUser, enableUser, setUserRole, getDeletionImpact, deleteUser, CorpusOverride, UpsertCorpusOverrideParams, listCorpusOverrides, upsertCorpusOverride, deleteCorpusOverride, exportCorpusOverrides, CandidateSource, TriageSignal, CandidateStatus, CorpusCandidate, listCorpusCandidates, DecideCorpusCandidatesResult, decideCorpusCandidates, InterpretationUsageSummary, InterpretationUsageReport, getInterpretationUsage
+ */
 import type { CorpusTier, Locale } from '../interpretation/schema.js';
 import type { Role } from './auth-client.js';
 

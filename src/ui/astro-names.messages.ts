@@ -11,6 +11,12 @@
  * midpoints, Part of Fortune/Spirit) — see the doc comments on `angleRows`/`derivedPointRows` in
  * `chart-tables.ts` for why.
  */
+/**
+ * @module astro-names.messages
+ * @purpose English/Dutch display-name lookups for the domain layer's stable English astrological identifiers (sign names, body keys, aspect keys).
+ * @conventions Shaped like every other `*.messages.ts` catalogue so test/i18n-messages.test.ts covers it for free, but looked up by identifier via helper functions rather than consumed directly via useMessages().
+ * @exports signNamesMessages, bodyNamesMessages, aspectNamesMessages, signDisplayName, bodyDisplayName, bodyShortName, aspectDisplayName
+ */
 import type { Locale } from '../interpretation/schema.js';
 
 const enSigns = {

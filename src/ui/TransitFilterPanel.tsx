@@ -5,6 +5,12 @@
  * table and the wheel, and is remembered on this device — as a preset name, so an "Important" filter
  * is rebuilt for the chart being read (its chart ruler), or in full when the user customised it.
  */
+/**
+ * @module TransitFilterPanel
+ * @purpose Controls (preset, orb scale, aspect groups, applying-only, per-body checkboxes) deciding which transit contacts a screen shows, plus the useTransitFilter hook that persists the choice per context.
+ * @conventions State is remembered per context in localStorage as a preset name or full custom filter; uses TransitFilterPanel.messages.ts for en/nl text via useMessages().
+ * @exports TransitFilterPanel, useTransitFilter, EVERY_BODY_KEY
+ */
 import { useCallback, useId, useMemo, useState } from 'react';
 import {
   HARD_ASPECT_KEYS,

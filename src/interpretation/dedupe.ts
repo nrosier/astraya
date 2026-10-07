@@ -18,6 +18,12 @@
  * `nl` translation are supposed to say the same thing, so cross-locale
  * similarity would just flag every correctly-translated pair.
  */
+/**
+ * @module interpretation/dedupe
+ * @purpose Flags corpus entries that read as copy-pasted prose, so the ~1200-entry corpus doesn't feel templated even when individual entries are factually distinct.
+ * @conventions Similarity is character-trigram Jaccard (not an embedding), kept dependency-free and deterministic so it is importable from src/ and cheap enough to gate CI. Comparison is scoped per-locale. Distinct from lint.ts's `repetitive-openings` rule, which only catches shared openings, not whole-text similarity.
+ * @exports DuplicatePair, SimilarityReport, DEFAULT_SIMILARITY_THRESHOLD, findNearDuplicates, formatSimilarityReport
+ */
 import type { CorpusEntry, Locale } from './schema.js';
 
 export interface DuplicatePair {

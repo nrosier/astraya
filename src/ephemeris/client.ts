@@ -7,6 +7,13 @@
  * invisible rather than special-cased, and tests can swap in the direct engine.
  */
 
+/**
+ * @module ephemeris/client
+ * @purpose Provides the UI-thread client that talks to the ephemeris Web Worker over a message-based protocol, implementing the same EphemerisProvider interface as the direct engine.
+ * @conventions Every provider method is async and routed through a single `#call` helper that tracks pending requests by id, times them out, and rejects all in-flight calls if the worker transport reports a fatal error.
+ * @exports EphemerisTransport, workerTransport, spawnEphemerisWorker, WorkerEphemerisOptions, WorkerEphemerisProvider
+ */
+
 import {
   deserializeError,
   type EphemerisMethod,

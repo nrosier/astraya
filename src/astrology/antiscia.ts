@@ -11,6 +11,13 @@
  * instead — equivalently, the point directly opposite the antiscion. Reflecting
  * across theta = 0 is `-longitude`.
  */
+
+/**
+ * @module Antiscia
+ * @purpose Computes antiscia/contra-antiscia reflection points and detects contacts between bodies via those reflected points.
+ * @conventions Antiscion reflects a longitude across the solstitial axis (0 Cancer/Capricorn); contra-antiscion reflects across the equinoctial axis (0 Aries/Libra); a reflected point within orb of another body counts as a contact, like a conjunction.
+ * @exports antiscionOf, contraAntiscionOf, antiscialContacts
+ */
 import type { BodyId, Degrees } from '../ephemeris/types.js';
 import { angularSeparation } from './aspects.js';
 

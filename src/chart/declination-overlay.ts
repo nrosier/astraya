@@ -11,6 +11,12 @@
  * no place on a longitude-based wheel), so the chord marks which two bodies
  * are in contact, not where the contact "is".
  */
+/**
+ * @module chart/declination-overlay
+ * @purpose Draws parallel/contraparallel declination contacts as chords across the chart wheel.
+ * @conventions Same chord-drawing idiom as `aspect-web.ts`/`antiscia-overlay.ts` (one `<line>` per contact at the shared wheel radius via `wheelAngle`/`pointOnCircle`), but drawn between the two bodies' ecliptic *longitudes* (declination itself has no place on a longitude-based wheel) — the chord marks which two bodies are in contact, not where the contact "is". No dedup pass is needed here since `declinationContacts` already reports each pair exactly once.
+ * @exports filterDeclinationContactsForDisplay, renderDeclinationOverlaySvg; DeclinationDisplayFilter type.
+ */
 import type { DeclinationContact, DeclinationContactKind } from '../astrology/declinations.js';
 import type { BodyId, Degrees } from '../ephemeris/types.js';
 import type { WheelOrientationOptions } from './wheel.js';

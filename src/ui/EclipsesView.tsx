@@ -4,6 +4,12 @@
  * `Stored` because the person list comes from the local store; the search itself needs only the
  * ephemeris.
  */
+/**
+ * @module EclipsesView
+ * @purpose Renders the Eclipses tool screen: solar/lunar eclipses over a span of years, each placed in the zodiac, and (for a chosen person) which of their natal points each eclipse touches.
+ * @conventions Lives inside `Stored` because the person picker reads the local store, though the eclipse search itself needs only the ephemeris. Text comes from co-located `EclipsesView.messages.ts` via `useMessages()`.
+ * @exports EclipsesView
+ */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { bodyById } from '../astrology/bodies.js';
 import { eclipseContacts, findEclipses, type Eclipse, type NatalPoint } from '../astrology/eclipses.js';

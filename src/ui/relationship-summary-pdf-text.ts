@@ -6,6 +6,12 @@
  * `relationshipAngleContacts`, `houseOverlays`, `aspectValence`) is never duplicated here — only
  * the sentence-per-contact-into-one-paragraph joining is PDF-specific.
  */
+/**
+ * @module ui/relationship-summary-pdf-text
+ * @purpose Flattens the grouped, ranked no-LLM relationship summary (#422) into one paragraph per theme/group, for the PDF export's Synastry section, matching RelationshipSummary.tsx's own facts but reshaped for PdfTextSectionPlan's `paragraphs: readonly string[]` form.
+ * @conventions Never duplicates the underlying classification logic (groupedRelationshipContacts, relationshipAngleContacts, houseOverlays, aspectValence from domain/relationship-themes.js) — only the sentence-joining is PDF-specific; text/labels come from RelationshipSummary.messages.ts.
+ * @exports relationshipSummaryParagraphs
+ */
 import { bodyById } from '../astrology/bodies.js';
 import { housesAreDefined } from '../domain/chart-compute.js';
 import { houseOverlays } from '../domain/house-overlays.js';

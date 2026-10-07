@@ -1,6 +1,12 @@
 /**
  * Message catalogue for `DraconicView.tsx` (#398).
  */
+/**
+ * @module DraconicView.messages
+ * @purpose English/Dutch i18n strings for the draconic chart screen.
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed by DraconicView.tsx via `useMessages(draconicViewMessages)`; `nl` is typed as `typeof en`.
+ * @exports draconicViewMessages
+ */
 const en = {
   personFallback: 'Person',
   thisPerson: 'This person',

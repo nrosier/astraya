@@ -1,3 +1,9 @@
+/**
+ * @module About
+ * @purpose Renders the About screen: build/version info, the privacy statement, AGPL licence/source-availability notice, acknowledgements, and an astrology primer.
+ * @conventions Thin screen component reading its text from the co-located `About.messages.ts` via `useMessages()`.
+ * @exports About
+ */
 import { APP_BUILT_AT, APP_COMMIT, APP_VERSION, SOURCE_URL, SOURCE_URL_FOR_BUILD } from '../version.js';
 import { aboutMessages } from './About.messages.js';
 import { useMessages } from './messages.js';

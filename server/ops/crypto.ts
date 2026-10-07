@@ -10,6 +10,13 @@
  * AES-256-GCM: authenticated, so a tampered or corrupted row fails loudly on
  * decrypt (a thrown error) rather than returning silently-wrong bytes.
  */
+
+/**
+ * @module crypto
+ * @purpose At-rest encryption primitives for `ops.payload` (and, reused elsewhere, `interpretation_results`): whole-payload AES-256-GCM encrypt/decrypt plus `ASTRAYA_ENCRYPTION_KEY` loading.
+ * @conventions The server never interprets an operation's contents (ADR 0002), so the entire opaque payload blob is encrypted as one unit rather than per-field; AES-256-GCM is authenticated, so `decryptPayload` throws loudly on a tampered or corrupted row instead of returning silently-wrong bytes; a missing `ASTRAYA_ENCRYPTION_KEY` disables the sync relay (`loadEncryptionKey` returns `null`) rather than failing server boot, but a present key of the wrong length throws immediately as a deployment mistake.
+ * @exports CURRENT_KEY_VERSION, EncryptedPayload, encryptPayload, decryptPayload, loadEncryptionKey
+ */
 import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
 
 const ALGORITHM = 'aes-256-gcm';

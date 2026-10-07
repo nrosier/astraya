@@ -10,6 +10,13 @@
  * `node:sqlite` rather than `better-sqlite3`: a native module has to compile per
  * architecture, which complicates the arm64 build. `node:sqlite` ships with Node.
  */
+
+/**
+ * @module db
+ * @purpose Owns and migrates the sync server's own SQLite database (`users`, `sessions`, `ops`, plus the narrow admin-curated exceptions to ADR 0002's "opaque relay" rule).
+ * @conventions Migrations are an ordered, append-only array run inside `PRAGMA user_version`-gated transactions — never edit a past migration in place, only append a new one; a table rebuild needed to change a `REFERENCES` clause (SQLite has no `ALTER COLUMN`) must be added to `REQUIRES_FOREIGN_KEYS_OFF` so foreign keys are toggled off only around that step, and is checked with `PRAGMA foreign_key_check` before committing.
+ * @exports Database, openDatabase
+ */
 import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';

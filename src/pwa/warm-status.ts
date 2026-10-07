@@ -6,6 +6,13 @@
  * a suite in `test/pwa-warm.test.ts` against `warm.ts` directly. This module is
  * nothing but wiring that to `caches`/`fetch` and a run-once guard.
  */
+
+/**
+ * @module pwa/warm-status
+ * @purpose Subscribable UI-facing wrapper around `warmEphemerisCache`, tracking warm-up state for display (#100).
+ * @conventions Runs at most once per page load and is gated on `navigator.onLine`, since warming while offline would fail every asset for no reason — the point is to warm before going offline.
+ * @exports startWarming, subscribeToWarmState, getWarmState, WarmState
+ */
 import { ALL_ASSETS } from '../ephemeris/assets.js';
 import { APP_VERSION } from '../version.js';
 import { warmEphemerisCache, type WarmProgress } from './warm.js';

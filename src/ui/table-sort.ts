@@ -5,6 +5,12 @@
  * key, a label and an accessor — so this same pair of helpers can back every
  * data table the app ever adds, not only this issue's five.
  */
+/**
+ * @module ui/table-sort
+ * @purpose Generic, domain-agnostic column sorting plus TSV/CSV serialization backing SortableTable (#44) and every other data table in the app.
+ * @conventions Deliberately free of any chart/astrology knowledge — a TableColumn is just a key, label, and value accessor, so the same pair of helpers backs every table the app adds; `render`/`renderCell` are display-only and never used for copy/CSV/TSV output, which always use `valueOf`/`render` text.
+ * @exports SortDirection, SortState, toggleSort, CellValue, TableColumn, sortRows, rowsToTsv, rowsToCsv
+ */
 
 export type SortDirection = 'asc' | 'desc';
 

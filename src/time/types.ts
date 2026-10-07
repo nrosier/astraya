@@ -7,6 +7,13 @@
  * different chart — and it looks entirely plausible on screen.
  */
 
+/**
+ * @module time/types
+ * @purpose Shared types for resolving a birth moment from stated civil date/time/place to a UTC offset.
+ * @conventions `ResolvedMoment` carries provenance, alternative offsets, and a tzdb fingerprint alongside the chosen offset so a stored chart's inputs stay auditable rather than collapsed to a bare number.
+ * @exports CivilDateTime, Coordinates, Calendar, OffsetProvenance, TimeWarningCode, TimeWarning, BirthMomentInput, ResolvedMoment
+ */
+
 /** A wall-clock date and time, with no zone attached. What a person was told. */
 export interface CivilDateTime {
   readonly year: number;

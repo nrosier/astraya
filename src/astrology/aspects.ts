@@ -11,6 +11,13 @@
  * sometimes lumped in with it by name but is a different division, so it is
  * out of scope here rather than silently folded in.
  */
+
+/**
+ * @module Aspects
+ * @purpose Computes Ptolemaic and minor aspects between bodies, including configurable orbs and applying/separating direction.
+ * @conventions Three orb tiers (major, sextile, minor) widened for luminaries, scaled by a global percentage; defaults follow the Astro-Seek convention (majors 7°/10° with a luminary, sextile 4°/5°30', minors flat 2°30'); minor aspects are opt-in via enabledMinorAspects.
+ * @exports ASPECTS, DEFAULT_ORB_CONFIG, orbFor, angularSeparation, matchAspect, findAspects, findCrossAspects, subjectsFrom, fixedSubjects
+ */
 import type { BodyCategory } from './bodies.js';
 import type { BodyId, BodyPosition, Degrees } from '../ephemeris/types.js';
 

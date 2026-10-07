@@ -10,6 +10,12 @@
  * body, on the outer ring, first; a synastry puts person A, on ring 0, first), so the caller says
  * which ring the first and second end of each aspect row is on.
  */
+/**
+ * @module bi-wheel-selection
+ * @purpose Pure facts (what was clicked, which ring, how it relates across rings) for a bi-wheel's selection panel.
+ * @conventions Returns raw keys/numbers with no wording so it is Vitest-testable without a DOM and renderable in either language by the component; does not decide dimming (wheel-interaction.ts does).
+ * @exports BiWheelRing, BiWheelInput, BodyOnRing, BiWheelAspect, BiWheelFacts, resolveBiWheelSelection
+ */
 import { bodyById } from '../astrology/bodies.js';
 import { houseOf } from '../astrology/emphasis.js';
 import { SIGNS } from '../astrology/signs.js';

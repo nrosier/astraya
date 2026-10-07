@@ -20,6 +20,13 @@
  *    sets them first. Relying on a previous call's setting is how a sidereal
  *    request silently returns tropical longitudes.
  */
+
+/**
+ * @module ephemeris/engine
+ * @purpose Implements EphemerisProvider directly against sweph-wasm — the sole module permitted to import sweph-wasm — so Swiss Ephemeris calculations run identically on the main thread, in a Web Worker, or under Vitest.
+ * @conventions House cusps are indexed 1..12 with index 0 unused, matching the C API; sidereal mode and the topocentric observer are global mutable WASM state that must be set before every call that depends on them; dates outside the shipped 1800-2399 CE ephemeris range are refused rather than silently computed via the lower-precision fallback theory.
+ * @exports EngineConfig, SwissEphemerisEngine
+ */
 import { EPHEMERIS_DATA_FILES, EPHEMERIS_YEAR_RANGE, EPHE_BASE_URL, FIXED_STARS_ASSET } from './assets.js';
 import { SE } from './generated-constants.js';
 import {

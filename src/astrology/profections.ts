@@ -25,6 +25,13 @@
  * that themselves via `rulerOf` (`dignities.ts`), since which rulership scheme to use is a
  * caller-level choice this module has no opinion on.
  */
+
+/**
+ * @module Profections
+ * @purpose Computes annual and monthly profections — the house-per-year/month rotation of the natal Ascendant.
+ * @conventions Year zero profects the Ascendant's own sign (ages 12/24/36... land back on it); the profected point keeps the Ascendant's own degree within its new sign (whole-sign profection of the angle, not just the activated sign); monthly profection subdivides the profected year into twelfths, starting from the year's own profected sign; "Lord of the Year/Month" is left to callers via rulerOf.
+ * @exports annualProfection, monthlyProfection
+ */
 import { degreesInSign, signIndex, SIGN_SPAN } from './signs.js';
 import type { Degrees } from '../ephemeris/types.js';
 

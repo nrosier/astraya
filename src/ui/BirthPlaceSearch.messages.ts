@@ -1,6 +1,12 @@
 /**
  * Message catalogue for `BirthPlaceSearch.tsx` (#290).
  */
+/**
+ * @module BirthPlaceSearch.messages
+ * @purpose English/Dutch i18n strings for the birth-place name search field, including the geocoding-disclosure hint.
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed by BirthPlaceSearch.tsx via `useMessages(birthPlaceSearchMessages)`; `nl` is typed as `typeof en`.
+ * @exports birthPlaceSearchMessages
+ */
 const en = {
   searchByName: 'Search for a place by name',
   searchByNamePlaceholder: 'e.g. Paris, France',

@@ -17,6 +17,13 @@
  * `swe_get_ayanamsa_name`, so there is one source of truth for the text shown
  * in the UI.
  */
+
+/**
+ * @module Ayanamsas
+ * @purpose Lists the canonical set of sidereal ayanamsa modes Astraya offers for ayanamsa selection.
+ * @conventions The list is derived from SE_SIDM_* constants in generated-constants.ts (itself generated from a live sweph-wasm instance), excluding SE_SIDM_USER, which has no fixed reference point; display names come from EphemerisProvider.ayanamsaName, not hardcoded here.
+ * @exports AYANAMSAS, ayanamsaById, ayanamsaByKey
+ */
 import { SE } from '../ephemeris/generated-constants.js';
 
 export interface AyanamsaDefinition {

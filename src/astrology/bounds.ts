@@ -46,6 +46,13 @@
  * bound is [0, 6), meaning 0°00'00" through 5°59'59", with Venus's bound
  * starting exactly at 6°00'00" (see `boundRulerOf`'s `>=`/`<` comparison).
  */
+
+/**
+ * @module Bounds
+ * @purpose Provides Egyptian and Ptolemaic bounds (terms) tables used for essential dignity and almuten/peregrine scoring.
+ * @conventions Two independent classical tables (Egyptian, Ptolemaic), selected explicitly via BoundsScheme rather than defaulted silently; transcribed from flatlib and cross-checked against pyastra and Astrodienst's own documentation; bounds are lower-inclusive, upper-exclusive on [0, 30).
+ * @exports BoundsScheme, boundsOf, boundRulerOf
+ */
 import { bodyByKey } from './bodies.js';
 import type { BodyId, Degrees } from '../ephemeris/types.js';
 import { degreesInSign, signIndex } from './signs.js';

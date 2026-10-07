@@ -12,6 +12,12 @@
  * the place label land in a single call, matching `PersonForm.tsx`'s note that setting both fields
  * from two separate calls risks one clobbering the other.
  */
+/**
+ * @module BirthPlaceSearch
+ * @purpose Renders the birth-place-by-name search control that resolves a typed place name to latitude/longitude coordinates via a geocoding service.
+ * @conventions The only way to set birth coordinates (#290) — a prior map/pin/"use my location" flow was removed; results are always a click-to-confirm list so a search never silently sets the fields; text comes from co-located `BirthPlaceSearch.messages.ts` via `useMessages()`.
+ * @exports BirthPlaceSearch
+ */
 import { useState } from 'react';
 import { birthPlaceSearchMessages } from './BirthPlaceSearch.messages.js';
 import { forwardGeocode } from './forward-geocode.js';

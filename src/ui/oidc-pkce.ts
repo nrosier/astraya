@@ -4,6 +4,12 @@
  * `sessionStorage` (gone when the tab closes) is the right home for it, not
  * IndexedDB.
  */
+/**
+ * @module ui/oidc-pkce
+ * @purpose Implements the client half of the PKCE flow for the Authentik OIDC sign-in redirect round-trip (#75).
+ * @conventions Scratch per-attempt data (state/nonce/code_verifier) lives in sessionStorage, never IndexedDB, since it must not survive the attempt; the callback path is a fixed real path (not a hash route) matched against the server's SPA fallback.
+ * @exports OIDC_CALLBACK_PATH, startOidcHandshake, consumeOidcCallback
+ */
 
 const PENDING_KEY = 'astraya:oidcPending';
 

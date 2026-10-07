@@ -6,6 +6,12 @@
  * again. A device preference like symbol class/rulership choice (`rulership-setting.ts`, whose
  * shape this mirrors) — never synced, never sent anywhere.
  */
+/**
+ * @module ui/last-person
+ * @purpose Remembers the most recently viewed person's id (#453) so person-unaware tool pages (cycles/eclipses/horary/electional/rectification) can still show that person's nav tabs and return to them.
+ * @conventions Device preference stored in localStorage, never synced; mirrors the shape of rulership-setting.ts.
+ * @exports readLastPersonId, writeLastPersonId, useLastPersonId
+ */
 import { useSyncExternalStore } from 'react';
 
 const KEY = 'astraya:lastPersonId';

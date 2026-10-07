@@ -1,3 +1,9 @@
+/**
+ * @module main
+ * @purpose Application entry point: mounts the React app into the DOM and applies startup side effects before first render.
+ * @conventions The stored theme is applied before React renders so a light/dark override never flashes the OS default first (#70); a stale `astraya:reportPersona` localStorage key from the removed advisor-voice preference (#429) is cleared defensively.
+ * @exports (none — entry point module, side-effecting only)
+ */
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './ui/App.js';

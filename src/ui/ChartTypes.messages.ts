@@ -2,6 +2,12 @@
  * Message catalogue for the Charts page's chart types (`chart-sections.ts`'s `CHART_TYPES`): the names in
  * the header's Charts menu and in the type selector on the page.
  */
+/**
+ * @module ChartTypes.messages
+ * @purpose English/Dutch i18n strings naming each chart type (natal, draconic, harmonic, solar/lunar return) for the Charts menu and type selector.
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed via `useMessages(chartTypesMessages)`; `nl` is typed as `typeof en`.
+ * @exports chartTypesMessages
+ */
 import type { ChartType } from './chart-sections.js';
 
 const en = {

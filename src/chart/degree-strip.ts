@@ -14,6 +14,12 @@
  * than neighbours, and pushing a glyph past either end would put it outside
  * the axis it annotates. `spreadLinear` therefore clamps instead of wrapping.
  */
+/**
+ * @module chart/degree-strip
+ * @purpose Renders the 0-30° distribution strip showing every body's position within its own sign on one shared linear axis, for spotting same-degree clusters across different signs that are invisible on the wheel or in a positions table.
+ * @conventions Sign is deliberately dropped from the axis; `spreadLinear` is the degree-strip analogue of the wheel's circular `spreadGlyphs` but clamps at the `[0, 30]` ends instead of wrapping, since 29.5° and 0.5° are not neighbours on this bounded axis.
+ * @exports spreadLinear, renderDegreeStripSvg; DegreeStripBody, DegreeStripInput types.
+ */
 import { SIGN_SPAN, degreesInSign } from '../astrology/signs.js';
 import type { Degrees } from '../ephemeris/types.js';
 import { bodyGlyph, renderGlyph } from './glyphs.js';

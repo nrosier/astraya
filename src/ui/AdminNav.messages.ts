@@ -1,4 +1,10 @@
 /** Message catalogue for `AdminNav.tsx` (#414). */
+/**
+ * @module AdminNav.messages
+ * @purpose English/Dutch i18n strings for the admin tab strip's section labels.
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed by AdminNav.tsx via `useMessages(adminNavMessages)`; `nl` is typed as `typeof en`.
+ * @exports adminNavMessages
+ */
 import type { AdminTabKey } from './admin-nav.js';
 
 const en = {

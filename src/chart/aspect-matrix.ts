@@ -29,6 +29,12 @@
  * given and never re-derives orbs, so the grid cannot disagree with the Aspects table computed
  * from the same `ChartData`.
  */
+/**
+ * @module chart/aspect-matrix
+ * @purpose Renders the Astro-Seek-style aspect grid (positions table + lower-triangular aspect staircase) that sits under the chart wheel.
+ * @conventions Only the lower triangle below the diagonal is drawn (an aspect is symmetric); orb is shown as signed whole degrees (`separation - exact angle`, negative when short of exact) with an `a`/`s` applying/separating marker; cell/font sizes are fractions of a cell computed from panel width divided by row count, and the orb stack is hidden below `MIN_ORB_FONT_SIZE` to avoid overlapping, unreadably small text.
+ * @exports renderAspectMatrixSvg, fitFontSize; MatrixBody, MatrixAspect, AspectMatrixInput types.
+ */
 import { SIGNS } from '../astrology/signs.js';
 import type { Degrees } from '../ephemeris/types.js';
 import { TIGHT_ORB_DEG } from './aspect-web.js';

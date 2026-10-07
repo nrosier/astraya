@@ -12,6 +12,12 @@
  * through the same schema (#53) but need their own symbolism sheets later;
  * leaving them out here is a scope boundary, not an oversight.
  */
+/**
+ * @module interpretation/symbolism
+ * @purpose Owns the per-planet and per-sign reference symbolism sheets that keep generated-prose voice consistent across the corpus generator's batches.
+ * @conventions Scoped only to the ten BODIES entries whose category is luminary or planet ("the planets", Sun through Pluto); nodes, Lilith variants, Chiron and asteroids are a deliberate scope boundary, not an oversight. Provided for both en and nl (PLANET_SYMBOLISM/_NL, SIGN_SYMBOLISM/_NL, VOICE_GUIDE/_NL). This module owns the content; the generator (tools/corpus-gen) owns calling the model with it.
+ * @exports PlanetSymbolism, SignSymbolism, PLANET_SYMBOLISM, SIGN_SYMBOLISM, VOICE_GUIDE, PLANET_SYMBOLISM_NL, SIGN_SYMBOLISM_NL, VOICE_GUIDE_NL, planetSymbolism, signSymbolism, SymbolismScope, PlacementLike, symbolismScopeFor, buildSymbolismContext
+ */
 import { BODIES } from '../astrology/bodies.js';
 import { SIGNS } from '../astrology/signs.js';
 import { BODY_NAMES, SIGN_NAMES } from './compose.js';

@@ -12,6 +12,12 @@
  * below it down instead of overlapping them, and the whole sheet scales with
  * the single `size` its wheel is drawn at.
  */
+/**
+ * @module chart/chart-sheet
+ * @purpose Composes the wheel and the three data panels (aspect matrix, emphasis grid, degree strip) into one single SVG document representing the whole printable/exportable chart sheet.
+ * @conventions Vertical layout is computed top-down purely from each panel's own returned `height` plus fractions of the shared content width — no panel's position is a hardcoded pixel figure, so a chart with more bodies/asteroids pushes later panels down rather than overlapping them; one SVG document is used because every export path (standalone SVG, PNG, print-to-PDF) takes a single SVG string.
+ * @exports renderChartSheetSvg; ChartSheetInput, ChartSheetOptions, ChartSheet types.
+ */
 import type { AspectMatrixInput } from './aspect-matrix.js';
 import { renderAspectMatrixSvg } from './aspect-matrix.js';
 import type { DegreeStripInput } from './degree-strip.js';

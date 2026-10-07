@@ -18,6 +18,13 @@
  *    1868 and Liberia kept a legal -0:44:30 until 1972; overriding either with
  *    longitude would make them worse. See `useLocalMeanTime`.
  */
+
+/**
+ * @module time/zones
+ * @purpose Pure, synchronous timezone and Local Mean Time primitives used when resolving a birth moment's UTC offset.
+ * @conventions Standard time zones are treated as nonexistent before 1880 (`STANDARD_TIME_FROM_YEAR`); LMT is preferred over tzdb only when the tzdb offset is non-integral, since a whole-minute offset means a real legislated standard time existed.
+ * @exports lookupZone, isFixedOffsetZone, zoneOffsetMinutes, localMeanTimeOffsetMinutes, useLocalMeanTime, offsetCandidates, offsetDisagreesNearby, tzdbFingerprint, STANDARD_TIME_FROM_YEAR
+ */
 import tzlookup from 'tz-lookup';
 import { IANAZone } from 'luxon';
 import type { CivilDateTime, Coordinates } from './types.js';

@@ -14,6 +14,12 @@
  * PNG-rasterization source (`chart-raster.ts`) with no live DOM/CSSOM involved.
  */
 
+/**
+ * @module chart/standalone-svg
+ * @purpose Makes an exported chart SVG self-contained by inlining a fixed `<style>` palette, so a file downloaded and opened outside the app (with no `app.css`) still renders with its full ring/tick/aspect/colour distinctions.
+ * @conventions `STANDALONE_STYLE` is a literal copy of `app.css`'s chart rules, light-theme values only (meant to work on white paper too), kept static rather than computed at runtime so it also works identically as a PNG-rasterization source (`chart-raster.ts`) with no live DOM/CSSOM involved; every chart renderer in this directory emits only classed markup with no inline colour so this single palette file can recolour everything.
+ * @exports standaloneSvg.
+ */
 const STANDALONE_STYLE = [
   'svg { background: #fbfaff; }',
   'text { font: 550 0.68rem system-ui, sans-serif; fill: #5c5878; }',

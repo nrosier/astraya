@@ -66,6 +66,12 @@
  * same way (a house cusp's sign and a planet's essential dignity are facts about the chart's
  * own structure, not a trait attributed to "you").
  */
+/**
+ * @module interpretation/schema
+ * @purpose Single source of truth for the interpretation corpus's shape — the key format for every placement category, the response schema for the AI generator, and this app's own runtime validation.
+ * @conventions `category` is always the key's first segment (via categoryOfKey), never a separate field, so it can't drift from the key. Placement fields are validated against real astrology reference data (BODIES, SIGNS, ASPECTS, NAKSHATRAS), not accepted as arbitrary strings. SIGN is a zero-based index (0=Aries), HOUSE is one-based (1-12). aspect-pair/synastry-aspect/composite-aspect-pair store one entry per unordered pair with bodies alphabetical; transit-aspect is ordered by role (transiting, then natal). `nakshatra`/`pattern` are reserved categories with no entries yet. test/interpretation-key-reference.test.ts pins this table against placementKey.
+ * @exports CORPUS_CATEGORIES, CorpusCategory, ACG_ANGLES, AcgAngle, ACG_ANGLE_POINT_KEYS, CORPUS_TIERS, CorpusTier, CORPUS_LOCALES, Locale, DIGNITY_STATES, DignityState, dignityState, CorpusPlacement, placementKey, categoryOfKey, parsePlacementKey, CorpusProvenanceSource, CorpusProvenance, CorpusEntry, CORPUS_ENTRY_RESPONSE_SCHEMA, CorpusValidationIssue, CorpusValidationResult, validateKey, validateCorpusEntries
+ */
 import { bodyByKey } from '../astrology/bodies.ts';
 import { aspectByKey } from '../astrology/aspects.ts';
 import { SIGNS } from '../astrology/signs.ts';

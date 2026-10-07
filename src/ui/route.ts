@@ -9,6 +9,12 @@
  * Hash routing rather than history routing because the built app is static files: every URL
  * has to resolve without a server rewrite rule, including when the app is opened from disk.
  */
+/**
+ * @module ui/route
+ * @purpose Pure hash-route parsing and construction for every screen in the app, including legacy route aliases (harmonic/draconic) and one-time-token query extraction (set-password, setup).
+ * @conventions Pure and separate from components so it is tested without a DOM; uses hash routing rather than history routing since the built app is static files with no server rewrite rule; validates ids via domain/id.js's isPersonId rather than accepting any string.
+ * @exports Route, parseRoute, setPasswordToken, setupToken
+ */
 import { isPersonId } from '../domain/id.js';
 import { chartSectionFromHash, chartTypeFromHash, type ChartSection, type ChartType } from './chart-sections.js';
 

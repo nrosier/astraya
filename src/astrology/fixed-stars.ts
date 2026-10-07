@@ -27,6 +27,13 @@
  * `H0` is undefined (point circumpolar or never rising) when
  * `|tan(lat)*tan(dec)| > 1`, in which case rising/setting are `undefined`.
  */
+
+/**
+ * @module FixedStars
+ * @purpose Computes fixed-star ecliptic conjunctions and mundane parans (angle-crossing contacts) between points.
+ * @conventions Conjunctions are ordinary ecliptic-longitude proximity; parans derive each angle-crossing ARMC from the horizon equation sin(alt) = sin(lat)sin(dec) + cos(lat)cos(dec)cos(H) at alt=0, giving the semi-diurnal arc H0 = arccos(-tan(lat)tan(dec)); rising/setting are undefined for circumpolar/never-rising points.
+ * @exports fixedStarConjunctions, armcAtAngle, parans
+ */
 import type { BodyId, Degrees } from '../ephemeris/types.js';
 import { angularSeparation } from './aspects.js';
 

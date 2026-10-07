@@ -1,6 +1,12 @@
 /**
  * Message catalogue for `RulershipSetting.tsx` (#426).
  */
+/**
+ * @module RulershipSetting.messages
+ * @purpose English/Dutch message catalogue for the planetary-rulers (modern/traditional/both) preference control.
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed via `useMessages()` by the sibling `RulershipSetting.tsx`.
+ * @exports rulershipSettingMessages
+ */
 const en = {
   label: 'Planetary rulers',
   options: {

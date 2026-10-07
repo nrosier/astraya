@@ -7,6 +7,12 @@
  * Navigation only: every admin route is still guarded by `requireAdmin` on the server, so
  * showing or hiding this is a convenience, never the security boundary.
  */
+/**
+ * @module AdminNav
+ * @purpose Renders the admin tab strip linking to the users, AI usage, corpus overrides, and corpus candidates admin screens.
+ * @conventions Navigation UI only — the server's `requireAdmin` is the real security boundary, not this component; text comes from co-located `AdminNav.messages.ts` via `useMessages()`.
+ * @exports AdminNav
+ */
 import { activeAdminTabKey, ADMIN_TABS } from './admin-nav.js';
 import { adminNavMessages } from './AdminNav.messages.js';
 import { useMessages } from './messages.js';

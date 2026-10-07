@@ -4,6 +4,12 @@
  * rendering it without one means a mistyped or expired link never has to open IndexedDB
  * first to say so.
  */
+/**
+ * @module SetPasswordForm
+ * @purpose Unauthenticated form for setting a new account password or resetting one, from an admin-issued one-time link token.
+ * @conventions Rendered outside the Stored local-store context since it needs no local data; uses SetPasswordForm.messages.ts for en/nl text via useMessages().
+ * @exports SetPasswordForm
+ */
 import { useState } from 'react';
 import { setPassword } from '../sync/auth-client.js';
 import { useMessages } from './messages.js';

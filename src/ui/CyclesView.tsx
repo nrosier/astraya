@@ -6,6 +6,12 @@
  * The diagram is app-generated from just-computed longitudes, never user-supplied markup, and
  * is hidden from assistive tech: the table beside it carries every value it plots.
  */
+/**
+ * @module CyclesView
+ * @purpose Renders the Planetary Cycles tool screen: exact aspects between two moving bodies over a span of years, as a sortable table and a linked zodiac diagram.
+ * @conventions Independent of any person or stored data (ephemeris-only), so it lives outside `Stored`, like AdminPanel; the diagram is app-generated SVG, hidden from assistive tech since the table carries every value it plots.
+ * @exports CyclesView
+ */
 import { useSymbolClass } from './symbol-setting.js';
 import { useGlyphVariants } from './glyph-variant-setting.js';
 import { useEffect, useMemo, useRef, useState } from 'react';

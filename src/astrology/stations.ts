@@ -16,6 +16,13 @@
  * elements rather than planets in the sense "station" is normally used for,
  * so this module isn't asked to cover them.
  */
+
+/**
+ * @module Stations
+ * @purpose Finds station events — the moments a planet's longitude speed crosses zero, turning retrograde or direct.
+ * @conventions Sample-then-bisect search over longitudeSpeed (structurally like transit-events.ts, but simpler since a speed-zero crossing is unambiguous); scoped to the eight 'planet'-category bodies (Mercury through Pluto), since neither luminary nor the nodes/Lilith variants ever station.
+ * @exports DEFAULT_SAMPLE_STEP_DAYS, findStations
+ */
 import type { BodyId, Degrees, EphemerisProvider, JulianDayUT, PositionOptions, Zodiac } from '../ephemeris/types.js';
 
 export interface StationEvent {

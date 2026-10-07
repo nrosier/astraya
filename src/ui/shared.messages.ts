@@ -2,6 +2,12 @@
  * Message-catalogue entries duplicated verbatim across many components (#158) — one shared
  * source instead of a copy pasted into each component's own catalogue file.
  */
+/**
+ * @module ui/shared.messages
+ * @purpose en/nl message entries duplicated verbatim across many unrelated components (#158) — a single shared source instead of copy-pasting the same strings into each component's own catalogue.
+ * @conventions Not tied to one sibling component — consumed via useMessages() by whichever component needs one of these common strings (back/people/not-found/password fields).
+ * @exports sharedMessages
+ */
 const en = {
   back: 'Back',
   people: 'People',

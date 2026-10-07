@@ -4,6 +4,13 @@
  * one place that decides who is signed in.
  */
 
+/**
+ * @module sync/auth-client
+ * @purpose Provides the client-side authentication calls — login, logout, session check, OIDC config/callback, password set/bootstrap — each a thin wrapper over the matching server route.
+ * @conventions One function per route, mirroring `server/auth/routes.ts`/`server/auth/roles.ts`/`server/auth/identity.ts`/`server/auth/oidc.ts`/`server/auth/bootstrap.ts` exactly; nothing here interprets a response beyond its own shape — the server is the sole authority on who is signed in; failures throw `AuthError` carrying the server's own message, except `me()` where a 401 is treated as the expected "not signed in" outcome rather than an error.
+ * @exports Role, AuthUser, AuthError, login, logout, me, OidcConfig, getOidcConfig, setPassword, setup, exchangeOidcCode
+ */
+
 /** Mirrors `server/auth/roles.ts`'s `Role`: a user, an admin (everything but account management) or a super admin (everything). */
 export type Role = 'user' | 'admin' | 'super_admin';
 

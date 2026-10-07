@@ -8,6 +8,12 @@
  * and aspects — never the whole chart, and no name, date, time or place. The reading resets
  * whenever the selection changes, so an answer never sits under a different placement.
  */
+/**
+ * @module FocusInterpretation
+ * @purpose Renders the "interpret the tensions of this placement" Tier 2 AI-interpretation control shown under a selected chart placement, plus the history of past interpretations for that same placement/perspective.
+ * @conventions A Tier 2 feature per ADR 0003: requires sign-in, a plain consent checkbox that is never remembered and is spent the moment the request is sent; sends only the placement's own `FocusContext` (sign, house, rulerships, aspects) via `generateTier2Interpretation`, never the whole chart or any name/date/time/place. Resets whenever `resetKey` (the selection) changes. Text comes from co-located `FocusInterpretation.messages.ts` via `useMessages()`.
+ * @exports FocusInterpretation
+ */
 import { useEffect, useId, useState } from 'react';
 import type { FocusContext } from '../interpretation/focus-context-schema.js';
 import type { Locale } from '../interpretation/schema.js';

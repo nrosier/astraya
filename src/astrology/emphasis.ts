@@ -16,6 +16,13 @@
  * unlisted), satisfying "configurable body weights" uniformly rather than as
  * a separate mechanism.
  */
+
+/**
+ * @module Emphasis
+ * @purpose Computes element, modality, quadrant and hemisphere weighting/emphasis across a chart's body positions.
+ * @conventions Quadrants are bounded by the four angles (Ascendant/IC/Descendant/MC), independent of house system; house-based tallies (houseOf/dominantHouse) use the actual HousePositions.cusps layout; every tally accepts an optional per-body weight map, defaulting to weight 1 for an unlisted body.
+ * @exports elementBalance, modalityBalance, dominantSign, dominantPlanet, houseOf, dominantHouse, quadrantOf, eastWestOf, northSouthOf, quadrantEmphasis, hemisphereEmphasis
+ */
 import type { BodyId, Degrees } from '../ephemeris/types.js';
 import type { RulershipScheme } from './dignities.js';
 import { rulerOf } from './dignities.ts';

@@ -16,6 +16,13 @@
  * phase angle, which also depends on the Moon's latitude and distance — the difference is
  * under a degree, far below what a name or a rounded percentage can show.
  */
+
+/**
+ * @module LunarPhase
+ * @purpose Computes the Moon's phase (elongation from the Sun, eight-fold phase name, waxing/waning, illumination fraction) at a moment.
+ * @conventions Follows Dane Rudhyar's lunation cycle as Astro-Seek shows it: eight equal 45° elongation slices from the New Moon conjunction, each phase beginning at its lower bound; uses ecliptic longitude elongation only, not the true phase angle (which also depends on latitude/distance).
+ * @exports LUNAR_PHASES, lunarPhaseOf
+ */
 import type { Degrees } from '../ephemeris/types.js';
 
 export type LunarPhaseKey =

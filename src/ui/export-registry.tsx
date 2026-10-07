@@ -6,6 +6,12 @@
  * the menu lists them under "This page". The registry is a plain context holding a list: a screen
  * that unmounts removes its items, and the menu never has to know which screens exist.
  */
+/**
+ * @module ui/export-registry
+ * @purpose Lets the header's global Export menu list the current screen's exportable items (chart image, table, map) without the menu knowing which screens exist.
+ * @conventions Split into two React contexts (items vs. actions) so screens that only register exports aren't re-rendered on every list change; a screen registers its items while mounted via useRegisterExports and they're removed on unmount.
+ * @exports ExportItem, ExportRegistryProvider, useExportItems, useRegisterExports
+ */
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 export interface ExportItem {

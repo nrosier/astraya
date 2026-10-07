@@ -14,6 +14,12 @@
  * Pure, like `route.ts`, so the parsing is tested without a DOM. Labels are translated and live with
  * the chart screen's messages (`chartSectionLabels`), looked up by key.
  */
+/**
+ * @module ui/chart-sections
+ * @purpose Defines and parses the Chart screen's two URL-encoded axes — chart type (natal/draconic/harmonic/solar-return/lunar-return) and section (wheel/shape/positions/houses/aspects/dignities/derived) — so the header menu, type selector, and tabs stay in agreement.
+ * @conventions Pure functions only (no DOM), parsed/tested like route.ts; labels are translated via ChartView's own messages object rather than owning its own *.messages.ts file.
+ * @exports CHART_SECTIONS, ChartSection, CHART_TYPES, ChartType, isChartType, chartTypeFromHash, isChartSection, chartSectionFromHash, chartHref, chartSectionLabels
+ */
 import type { chartViewMessages } from './ChartView.messages.js';
 
 export const CHART_SECTIONS = ['chart', 'shape', 'positions', 'houses', 'aspects', 'dignities', 'derived'] as const;

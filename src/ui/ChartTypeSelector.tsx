@@ -3,6 +3,12 @@
  * return. Plain links to the same page with another `?type=`, keeping the open section, so switching type
  * while reading (say) the aspects table stays on the aspects table.
  */
+/**
+ * @module ChartTypeSelector
+ * @purpose Renders the natal/draconic/harmonic/solar-return/lunar-return chart-type selector shown at the top of a person's Charts page.
+ * @conventions Plain links to the same page with another `?type=`, preserving the open section; `changeChartSection` keeps the open section in the URL via `history.replaceState` + a synthetic `hashchange`.
+ * @exports ChartTypeSelector, changeChartSection
+ */
 import { CHART_TYPES, chartHref, type ChartSection, type ChartType } from './chart-sections.js';
 import { chartTypesMessages } from './ChartTypes.messages.js';
 import { useMessages } from './messages.js';

@@ -5,6 +5,12 @@
  * the whole calculation graph into its own build; `focus-context.ts` builds the payload and
  * re-exports everything here.
  */
+/**
+ * @module interpretation/focus-context-schema
+ * @purpose Defines the wire shape of the Tier-2 "focus" payload (one selected placement's enriched context) and validates it against closed sets before it reaches a model prompt.
+ * @conventions Imports only static astrology reference tables (BODIES, SIGNS, ASPECTS, rulership), never chart-computing modules, so the server can use this without the full calculation graph. Every field of untrusted input is rebuilt from a known/closed set rather than passed through, since this crosses the wire from an untrusted client into a prompt.
+ * @exports MAX_FOCUS_ASPECTS, roundOrb, FocusAngle, FocusPerspective, FocusAspectState, FocusObject, FocusAspect, FocusContext, FocusContextValidation, validateFocusContext
+ */
 import { ASPECTS } from '../astrology/aspects.ts';
 import { BODIES } from '../astrology/bodies.ts';
 import { isRulershipChoice, type RulershipChoice } from '../astrology/rulership.ts';

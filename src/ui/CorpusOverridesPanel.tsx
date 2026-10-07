@@ -16,6 +16,12 @@
  * (override id, "is this actually overridden") that merged `CorpusEntry` values alone don't
  * carry.
  */
+/**
+ * @module CorpusOverridesPanel
+ * @purpose Renders the admin screen for browsing/searching/filtering the committed interpretation corpus and replacing an entry's text with a correction, without touching the committed JSON.
+ * @conventions Reuses `loadRuntimeCorpus` (the same function ReportView uses) so the admin sees the corpus already merged with existing corrections; the corpus-language selector is local state, independent from the app's own `useLocale()`. Text comes from co-located `CorpusOverridesPanel.messages.ts` via `useMessages()`.
+ * @exports CorpusOverridesPanel
+ */
 import { useEffect, useMemo, useState } from 'react';
 import {
   deleteCorpusOverride,

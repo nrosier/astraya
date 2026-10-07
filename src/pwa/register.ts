@@ -12,6 +12,13 @@
  * swapping the app the visitor is mid-session with.
  */
 
+/**
+ * @module pwa/register
+ * @purpose Register the service worker and drive the explicit update-confirmation flow so a visitor's session is never silently swapped mid-use.
+ * @conventions `skipWaiting` is only ever sent after the user confirms via the UI banner (`PwaStatus.tsx`), never automatically on update detection.
+ * @exports registerServiceWorker, applyUpdate, subscribeToUpdates, getUpdateState, UpdateState
+ */
+
 export type UpdateState = { readonly kind: 'none' } | { readonly kind: 'available' };
 
 let state: UpdateState = { kind: 'none' };

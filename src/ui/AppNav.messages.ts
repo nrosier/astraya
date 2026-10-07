@@ -3,6 +3,12 @@
  * `PERSON_TABS` and the tools menu's labels for `tools-nav.ts` (those modules have no access to
  * the current locale, so `AppNav.tsx` looks labels up here by key).
  */
+/**
+ * @module AppNav.messages
+ * @purpose English/Dutch i18n strings for the header navigation: person tabs, chart-type/tool/export menu labels, and export status text.
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed by AppNav.tsx via `useMessages(appNavMessages)`; `nl` is typed as `typeof en`. Looks up labels by key for `person-nav.ts`'s `PersonTabKey`/`PersonTabFamilyKey` and `tools-nav.ts`'s `ToolKey` since those pure modules have no access to the current locale.
+ * @exports appNavMessages
+ */
 import type { PersonTabFamilyKey, PersonTabKey } from './person-nav.js';
 import type { ToolKey } from './tools-nav.js';
 

@@ -5,6 +5,13 @@
  * `corpus_candidates` is visible to anyone until an admin accepts it (see `server/db.ts`
  * migration 9's own comment), so every route below is `requireAdmin`-gated.
  */
+
+/**
+ * @module corpus-candidates-routes
+ * @purpose Admin HTTP routes for reviewing bulk-generated interpretation-corpus candidates before they become live overrides.
+ * @conventions Every route is `requireAdmin`-gated (no public route exists here); accepting a candidate runs it through `lintEntry`'s content-quality gate before promoting it via `upsertCorpusOverride`, and accept/reject batches are validated against the full still-pending set before any decision is applied, so a batch fails closed rather than partially committing.
+ * @exports registerCorpusCandidateRoutes
+ */
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import type { Database } from './db.ts';
 import type { User } from './auth/identity.ts';

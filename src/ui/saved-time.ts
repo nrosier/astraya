@@ -7,6 +7,12 @@
  * language writes them, the year, then `@` and a 24-hour time. The 24-hour clock uses `h23`, so
  * midnight is `00:30`, not `24:30`. `timeZone` defaults to the browser's; tests pass one.
  */
+/**
+ * @module ui/saved-time
+ * @purpose Formats a saved interpretation's stored UTC instant (#423) as the reader's own local, written-out time — e.g. "Tuesday March 10 2026 @ 17:30".
+ * @conventions Built from Intl.DateTimeFormat parts with explicit options (not a locale's date style) so the shape is identical across devices; uses h23 hour cycle so midnight reads 00:30, never 24:30.
+ * @exports formatSavedTime
+ */
 import type { Locale } from '../interpretation/schema.js';
 
 const INTL_LOCALE: Readonly<Record<Locale, string>> = { en: 'en-US', nl: 'nl-NL' };

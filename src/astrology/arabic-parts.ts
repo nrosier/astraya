@@ -16,6 +16,13 @@
  * the Egyptian/Ptolemaic bounds (see #26). `arabicPart` is exported so
  * further parts can be added later once a formula is actually confirmed.
  */
+
+/**
+ * @module ArabicParts
+ * @purpose Computes the sect-correct Part of Fortune and Part of Spirit (Arabic/Hermetic lots).
+ * @conventions General lot formula is base + a - b wrapped to 360; day/night sect reverses the a/b operand order (sectReversingPart); only Fortune and Spirit are implemented, since the wider catalogue of Arabic parts has disputed formulas across sources.
+ * @exports arabicPart, sectReversingPart, partOfFortune, partOfSpirit
+ */
 import type { Degrees } from '../ephemeris/types.js';
 import type { Sect } from './sect.js';
 

@@ -6,6 +6,13 @@
  * A role is a rank, not a set of flags: a super admin can do whatever an admin can, so every check
  * is "at least this rank". The rank lives here and nowhere else.
  */
+
+/**
+ * @module roles
+ * @purpose The single source of truth for Astraya's three account ranks (user, admin, super admin) and rank comparisons.
+ * @conventions A role is a rank, not a set of independent flags — every permission check is "at least this rank" (`hasRole`), never a per-capability flag; the rank ordering lives only here.
+ * @exports ROLES, Role, isRole, hasRole, higherRole
+ */
 export const ROLES = ['user', 'admin', 'super_admin'] as const;
 export type Role = (typeof ROLES)[number];
 

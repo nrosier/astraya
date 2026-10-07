@@ -7,6 +7,13 @@
  * `src/ephemeris/worker.ts` separates `dispatch` from the scope it runs in.
  */
 
+/**
+ * @module pwa/strategies
+ * @purpose The two caching strategies the service worker uses (cache-first, stale-while-revalidate), as plain functions over a minimal Cache Storage interface for independent testability.
+ * @conventions `cacheFirst` is for immutable per-release assets (ephemeris data, hashed build assets); `staleWhileRevalidate` is for navigation only, so the app shell never blocks a visit on the network but also doesn't go stale forever.
+ * @exports cacheFirst, staleWhileRevalidate, CacheLike, CacheStorageLike
+ */
+
 export interface CacheLike {
   match(request: RequestInfo): Promise<Response | undefined>;
   put(request: RequestInfo, response: Response): Promise<void>;

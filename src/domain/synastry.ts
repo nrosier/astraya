@@ -15,6 +15,12 @@
  * people share a place or time, and nothing about one chart's own dignities, sect or angles
  * depends on the other's.
  */
+/**
+ * @module synastry
+ * @purpose Computes a synastry bi-wheel comparing two people's natal charts (#172) — the cross-chart aspects between two independently-real natal moments.
+ * @conventions Both sides use `subjectsFrom` (each chart's own real natal speed), not `fixedSubjects`, because synastry has no "moving now vs. fixed reference" asymmetry the way a transit/progression/return/direction does — neither person's chart is "now" relative to the other; both charts are computed as independent, full `ChartData`.
+ * @exports computeSynastry, rankedSynastryAspects, SynastryData
+ */
 import {
   DEFAULT_ORB_CONFIG,
   findCrossAspects,

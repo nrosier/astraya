@@ -37,6 +37,12 @@
  * crescent-and-cross base glyph.
  */
 
+/**
+ * @module chart/glyphs
+ * @purpose The vector-path glyph registry for every body, zodiac sign and aspect, plus `renderGlyph`, which places one into any SVG at a given point/size, honouring the device's symbol-class and glyph-weight settings.
+ * @conventions Every glyph is plain SVG primitives in a fixed 0-100 coordinate box with no font dependency (CSP forbids an icon font); artwork is ported from Kerykeion (AGPL-3.0)'s "classic" theme, rescaled into the 0-100 box, with the `filled`/`glyph-fill` convention distinguishing solid shapes (signs, lunar-node horseshoes, Lilith base glyph, Uranus paddles) from outline strokes (everything else); `renderGlyph` falls back to writing Unicode/text symbols instead of paths when the module-level symbol class (`symbol-class.ts`) is not `drawn`.
+ * @exports bodyGlyph, signGlyph, aspectGlyph, renderGlyph; GlyphDefinition type.
+ */
 import { chosenAlternate } from './glyph-variants.js';
 import { getGlyphWeight, GLYPH_STROKE } from './glyph-weight.js';
 import { getSymbolClass } from './symbol-class.js';

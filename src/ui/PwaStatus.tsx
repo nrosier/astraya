@@ -11,6 +11,12 @@
  * Present on every screen, including `/about` and the other routes that never open the
  * local store — an update or a warm failure matters regardless.
  */
+/**
+ * @module PwaStatus
+ * @purpose Global banner surfacing a waiting service-worker update and offline ephemeris-cache warming/failure state.
+ * @conventions Present on every screen; uses PwaStatus.messages.ts for en/nl text via useMessages().
+ * @exports PwaStatus
+ */
 import { useSyncExternalStore } from 'react';
 import { useMessages } from './messages.js';
 import { applyUpdate, getUpdateState, subscribeToUpdates } from '../pwa/register.js';

@@ -10,6 +10,13 @@
  * is dropped (`null`), and the history then shows just the kind of interpretation, as it did
  * before descriptions existed.
  */
+
+/**
+ * @module description
+ * @purpose Validates and sanitizes the short, model-written label attached to a saved Tier 2 interpretation result, for display in the reader's history.
+ * @conventions Fails closed: untrusted model output that doesn't pass every check (length, word count, forbidden markup/link characters, the same `checkCustomPrompt` guardrail an allowed instruction must pass) is dropped to `null` rather than shown, falling back to naming just the kind of interpretation.
+ * @exports MAX_DESCRIPTION_WORDS, MAX_DESCRIPTION_LENGTH, sanitizeDescription
+ */
 import { checkCustomPrompt } from '../../src/interpretation/prompt-guardrail.ts';
 
 /** "A few words": generous enough for "Short and warm with focus on family", too short to smuggle a paragraph. */

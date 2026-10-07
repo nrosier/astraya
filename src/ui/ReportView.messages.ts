@@ -1,6 +1,12 @@
 /**
  * Message catalogue for `ReportView.tsx` (#158).
  */
+/**
+ * @module ReportView.messages
+ * @purpose English/Dutch message catalogue for the report-rendering view, its provenance toggle, and the Tier 2 AI-customized interpretation panel.
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed via `useMessages()` by the sibling `ReportView.tsx`.
+ * @exports reportViewMessages
+ */
 const en = {
   showProvenance: 'Show provenance (rule and corpus entry) for each paragraph',
   couldNotLoad: (message: string) => `Could not load the interpretation text: ${message}`,

@@ -1,6 +1,12 @@
 /**
  * Message catalogue for `PwaStatus.tsx` (#158).
  */
+/**
+ * @module PwaStatus.messages
+ * @purpose English/Dutch message catalogue for the PWA update-ready and offline-cache-warming status banner.
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed via `useMessages()` by the sibling `PwaStatus.tsx`.
+ * @exports pwaStatusMessages
+ */
 const en = {
   updateReady: 'An updated version is ready.',
   reloadToUpdate: 'Reload to update',

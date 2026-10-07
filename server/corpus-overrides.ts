@@ -18,6 +18,13 @@
  * `test/server-corpus-overrides.test.ts` asserts these arrays stay in
  * sync with `schema.ts`'s real exports.
  */
+
+/**
+ * @module corpus-overrides
+ * @purpose Data-access layer for admin corrections to committed interpretation-corpus entries, backed by the `corpus_overrides` table.
+ * @conventions Only `import type` from `src/interpretation/schema.ts` is used, never a value import, because that module's `.js`-suffixed specifiers only resolve under a bundler, not under the server's own plain-Node type stripping; the literal unions here duplicate `schema.ts`'s real exports for the same reason and are kept in sync by `test/server-corpus-overrides.test.ts`. The public, unauthenticated read route must not expose the admin username who made a correction, so `toCorpusEntry` takes an `includeReviewer` option for that case.
+ * @exports LOCALES, TIERS, CORPUS_CATEGORIES, toCorpusEntry, listCorpusOverrides, upsertCorpusOverride, deleteCorpusOverride
+ */
 import { randomUUID } from 'node:crypto';
 import type { Database } from './db.ts';
 import type { CorpusEntry, CorpusProvenance } from '../src/interpretation/schema.ts';

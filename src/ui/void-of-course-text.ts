@@ -3,6 +3,12 @@
  * component so the wording, the UTC formatting and the two cases (void / not void) are testable
  * without mounting a person and an ephemeris.
  */
+/**
+ * @module ui/void-of-course-text
+ * @purpose Composes the void-of-course Moon sentence shown on the Transits screen (#402), covering both the void and active-Moon cases.
+ * @conventions Kept out of the component so wording, UTC formatting, and both cases are testable without mounting a person and an ephemeris; text comes from TransitView.messages.ts.
+ * @exports formatUtc, voidOfCourseSentence
+ */
 import { bodyById } from '../astrology/bodies.js';
 import { SIGNS } from '../astrology/signs.js';
 import type { MoonAspectEvent, VoidOfCourseMoon } from '../astrology/void-of-course.js';

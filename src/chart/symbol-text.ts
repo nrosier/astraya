@@ -11,6 +11,12 @@
  * draw ♈ as a colour emoji, which is the unpredictability this setting exists to let a reader avoid
  * when they pick the Unicode class.
  */
+/**
+ * @module chart/symbol-text
+ * @purpose Provides the two non-drawn ways to render a glyph: its Unicode astrological character and its three-letter ephemeris-style text code, for every body/sign/aspect the glyph registry (`glyphs.ts`) covers.
+ * @conventions Text codes are the English ephemeris abbreviations (SUN, MOO, MER, ...) kept the same across every interface language on purpose, so a wheel stays readable as a picture; sign Unicode characters append the U+FE0E text-presentation selector to force text-style rendering and avoid platforms substituting a colour emoji.
+ * @exports unicodeSymbol, textSymbol, BODY_UNICODE, SIGN_UNICODE, ASPECT_UNICODE, BODY_CODES, SIGN_CODES, ASPECT_CODES; SymbolKind type.
+ */
 export type SymbolKind = 'body' | 'sign' | 'aspect';
 
 const TEXT_PRESENTATION = '︎';

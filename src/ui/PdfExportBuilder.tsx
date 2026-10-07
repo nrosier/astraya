@@ -10,6 +10,12 @@
  * (`pdf-export-render.js`'s dynamic `import()`), so they never enter the eager bundle this
  * screen's own chunk is already split out of.
  */
+/**
+ * @module PdfExportBuilder
+ * @purpose Renders the PDF export builder screen (#441): lets the user tick which sections (birth record, interpretation, chart types, synastry, composite) go into one PDF, each with its own options, then builds it.
+ * @conventions Needs the store (to list people) but is not person-scoped in the URL — the primary person and any partner are picked on the page itself. jsPDF/svg2pdf.js/jspdf-autotable (`pdf-export-render.js`) are loaded only via dynamic `import()` once "Build PDF" is clicked, so they never enter the eager bundle. AI-customised interpretation consent is spent the moment the build request goes out (ADR 0003), never remembered.
+ * @exports PdfExportBuilder
+ */
 import { useId, useMemo, useState } from 'react';
 import {
   applyPdfPreset,

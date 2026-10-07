@@ -1,6 +1,12 @@
 /**
  * Message catalogue for `CorpusCandidatesPanel.tsx` (#370).
  */
+/**
+ * @module CorpusCandidatesPanel.messages
+ * @purpose English/Dutch i18n strings for the admin bulk-generated-candidate review queue (accept/reject, triage/source labels).
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed by CorpusCandidatesPanel.tsx via `useMessages(corpusCandidatesPanelMessages)`; `nl` is typed as `typeof en`.
+ * @exports corpusCandidatesPanelMessages
+ */
 const en = {
   heading: 'Corpus candidate review',
   intro:

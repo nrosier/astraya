@@ -10,6 +10,13 @@
  * hash string carries its own parameters, so raising them later needs no
  * migration; old hashes stay verifiable.
  */
+
+/**
+ * @module passwords
+ * @purpose Password hashing (Argon2id) and weak-password rejection for local accounts.
+ * @conventions Uses `@node-rs/argon2`'s own defaults (already at or above OWASP's minimum recommendation) rather than re-specifying parameters, since the hash string carries its own parameters and needs no migration if they're raised later; `DUMMY_PASSWORD_HASH` exists so a login for a nonexistent username still runs a real Argon2 verify, closing a timing side channel that would otherwise reveal which usernames exist.
+ * @exports hashPassword, verifyPassword, passwordIsTooWeak, DUMMY_PASSWORD_HASH
+ */
 import { hash, verify } from '@node-rs/argon2';
 
 export function hashPassword(password: string): Promise<string> {

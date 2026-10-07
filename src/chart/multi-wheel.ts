@@ -43,6 +43,12 @@
  * the far side of the circle as the chart rotates, and a legend sidesteps
  * that without needing to reserve one "safe" angle that's never crowded.
  */
+/**
+ * @module chart/multi-wheel
+ * @purpose The chart wheel renderer: draws one to three charts as concentric rings around a shared centre, covering both the single natal wheel and bi-/tri-wheel cases with one implementation.
+ * @conventions A single ring is not a special case — it is `resolveRingBands(geometry, 1)`'s one band — so a natal wheel can never drift from a multi-wheel in tick tiers, glyph conventions or ring radii; every ring shares one wheel-space anchor (the innermost/base ring's Ascendant) so a given ecliptic degree lands at the same angular position in every ring, only the radius differs; aspect chords always end on the aspect circle and conjunctions are excluded from the web (the glyphs already show them); every clickable symbol is a `<g>` with `data-body`/`data-sign`/`data-aspect-body-*` attributes plus an invisible hit area for click-to-isolate; ring labels are a fixed corner legend, not radial text, to avoid upside-down labels on the far side of the circle.
+ * @exports renderMultiWheelSvg; WheelRingInput, CrossRingAspects, MultiWheelOptions types.
+ */
 import type { Aspect } from '../astrology/aspects.js';
 import { SIGNS, degreesInSign } from '../astrology/signs.js';
 import type { BodyId, Degrees, HousePositions } from '../ephemeris/types.js';

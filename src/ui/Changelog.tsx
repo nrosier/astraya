@@ -5,6 +5,12 @@
  * build they are actually running without leaving for GitHub — and without a
  * network request, since the changelog is bundled at build time.
  */
+/**
+ * @module Changelog
+ * @purpose Renders the in-app changelog screen by rendering the project's CHANGELOG.md.
+ * @conventions Bundled at build time (`?raw` import) rather than fetched, so viewing it needs no network request.
+ * @exports Changelog
+ */
 import changelogSource from '../../CHANGELOG.md?raw';
 import { renderMarkdown } from './markdown.js';
 import { APP_VERSION, SOURCE_URL, sourceFileUrl } from '../version.js';

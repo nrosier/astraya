@@ -6,6 +6,13 @@
  * Today there is one implementation, the local session cookie; OIDC becomes a
  * second implementation feeding the same `User` shape, not a parallel path.
  */
+
+/**
+ * @module identity
+ * @purpose The single boundary every route uses to resolve "who is this request from" and to require a given role, regardless of whether the session is local-password or OIDC-derived.
+ * @conventions All callers ask this module for identity/role, never branch on session type themselves; `resolveUser` treats a disabled user's still-live session as unauthenticated, and `requireUser`/`requireAdmin`/`requireSuperAdmin` are Fastify preHandlers that set `request.user` on success or reply 401/403 and leave it unset.
+ * @exports User, roleFields, getUserById, getUserByUsername, getUserCredentialsByUsername, getUserByOidcIdentity, createOidcUser, getUserByPasswordSetToken, consumePasswordSetToken, resolveUser, requireUser, requireAdmin, requireSuperAdmin
+ */
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { Database } from '../db.ts';
 import { hasRole, isRole, type Role } from './roles.ts';

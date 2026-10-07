@@ -1,6 +1,12 @@
 /**
  * Message catalogue for `People.tsx` (#158).
  */
+/**
+ * @module People.messages
+ * @purpose English/Dutch i18n strings for the People list screen: creation, the incomplete-birth-record hint, and the deleted/restore section.
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed by People.tsx via `useMessages(peopleMessages)`; `nl` is typed as `typeof en`.
+ * @exports peopleMessages
+ */
 const en = {
   heading: 'People',
   tagline: 'Charts belong to a person, so this is where they start. Everything here is stored on this device.',

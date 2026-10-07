@@ -13,6 +13,13 @@
  * compute: that belongs with sect/combustion (#28). Callers who already know
  * the sect pass it in explicitly; this module only holds the static table.
  */
+
+/**
+ * @module Triplicity
+ * @purpose Resolves the day/night/participating triplicity rulers for an element or longitude.
+ * @conventions Implements only the Dorothean/Lilly triplicity table (as reproduced in Christian Astrology), not Ptolemy's differently-assigned, participating-ruler-free variant; which ruler (day/night) applies depends on chart sect, computed elsewhere (sect.ts) and passed in by the caller.
+ * @exports triplicityRulersOf, triplicityRulersAt, triplicityRoleOf
+ */
 import { bodyByKey } from './bodies.js';
 import type { BodyId, Degrees } from '../ephemeris/types.js';
 import type { Element } from './signs.js';

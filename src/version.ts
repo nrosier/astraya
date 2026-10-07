@@ -6,6 +6,13 @@
  * for the AGPL obligation to point users at the corresponding source.
  */
 
+/**
+ * @module version
+ * @purpose Expose build-time version/commit/build-timestamp information to the running app, including the AGPL-required source link.
+ * @conventions Values are substituted by Vite's `define` at build time via `declare const` globals; `SOURCE_URL_FOR_BUILD`/`sourceFileUrl` pin to the exact build commit rather than `main` whenever a commit is known.
+ * @exports APP_VERSION, APP_COMMIT, APP_BUILT_AT, SOURCE_URL, SOURCE_URL_FOR_BUILD, sourceFileUrl
+ */
+
 declare const __APP_VERSION__: string;
 declare const __APP_COMMIT__: string;
 declare const __APP_BUILT_AT__: string;

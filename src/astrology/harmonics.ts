@@ -28,6 +28,13 @@
  * instead should treat this chart's D10 as an approximation and check a source that states which
  * convention it follows, exactly as this comment does.
  */
+
+/**
+ * @module Harmonics
+ * @purpose Computes harmonic charts and Vedic Varga (divisional) charts by multiplying longitudes by a whole number and wrapping to 360.
+ * @conventions General mechanism: longitude * n mod 360, applied uniformly to every division including the named Vedic presets (VARGA_PRESETS); whole-sign houses are the only house system that stays well-defined after the transform; D9 matches the classical Parashari rule exactly, but D10 is a documented simplification that omits the classical odd/even sign-restart rule.
+ * @exports harmonicLongitude, harmonicPosition, harmonicHouses, VARGA_PRESETS
+ */
 import { SIGN_SPAN, signIndex } from './signs.js';
 import type { BodyPosition, Degrees, HousePositions } from '../ephemeris/types.js';
 

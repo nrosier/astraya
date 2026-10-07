@@ -8,6 +8,13 @@
  * is what makes it safe to reason about.
  */
 
+/**
+ * @module ephemeris/worker
+ * @purpose Hosts the Swiss Ephemeris engine inside a dedicated Web Worker, dispatching incoming protocol requests to a SwissEphemerisEngine instance and posting back responses.
+ * @conventions Dispatch is an explicit switch over every EphemerisProvider method (never a dynamic property lookup) so an unhandled method fails to compile via an exhaustiveness check; requests are queued and run one at a time because the WASM instance carries mutable sidereal-mode/observer state that concurrent calls could corrupt; the module only self-starts as a worker when actually running inside a DedicatedWorkerGlobalScope, so it stays importable from tests.
+ * @exports dispatch, WorkerScope, serveEphemeris, WorkerConfig
+ */
+
 import { SwissEphemerisEngine, type EngineConfig } from './engine.js';
 import { serializeError, type EphemerisRequest, type EphemerisResponse } from './protocol.js';
 import type { EphemerisProvider } from './types.js';

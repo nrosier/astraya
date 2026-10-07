@@ -9,6 +9,12 @@
  * Which store to open, and opening it, live one level up in `session-context.tsx` — that
  * depends on who's signed in, which this file has no reason to know about.
  */
+/**
+ * @module ui/store-context
+ * @purpose React adapter exposing the plain-object op-log store (src/store) to components via context and useSyncExternalStore, so screens re-render correctly on store change including under concurrent rendering.
+ * @conventions Deliberately has no knowledge of which store to open or who's signed in — that decision lives one level up in session-context.tsx; store.state is replaced wholesale (never mutated) so identity comparison works as a valid snapshot.
+ * @exports StoreProvider, useStore, useOptionalStore, useStoreState
+ */
 import { createContext, useContext, useSyncExternalStore } from 'react';
 import type { State } from '../store/fold.js';
 import type { Store } from '../store/store.js';

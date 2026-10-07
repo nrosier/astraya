@@ -15,6 +15,12 @@
  * Anything it does not understand is rendered as plain text rather than dropped.
  * Silently swallowing a changelog entry would be worse than showing its syntax.
  */
+/**
+ * @module ui/markdown
+ * @purpose Deliberately small, dependency-free Markdown renderer used to display Astraya's own CHANGELOG.md in-app.
+ * @conventions Never uses dangerouslySetInnerHTML and only emits React elements, so it can never become an HTML-injection sink; unrecognized syntax is rendered as literal text rather than dropped; relative links are resolved via a caller-supplied callback since they only make sense on GitHub.
+ * @exports MarkdownOptions, renderMarkdown
+ */
 import type { JSX, ReactNode } from 'react';
 
 const INLINE = /(\*\*[^*]+\*\*|`[^`]+`|\[[^\]]+\]\([^)]+\))/g;

@@ -15,6 +15,13 @@
  * user immediately before a destructive delete — see `deletion-impact.ts`'s own
  * comment for why that's a narrow, deliberate exception, not a new capability.
  */
+
+/**
+ * @module admin-routes
+ * @purpose Admin HTTP routes for managing user accounts: listing, creating, password reset, disable/enable, role change, a pre-delete deletion-impact preview, and delete.
+ * @conventions Listing users is `requireAdmin`-gated (any admin), but every account-mutating route and the deletion-impact preview require `requireSuperAdmin`; nobody may change their own role, and the only remaining enabled super admin cannot be demoted, disabled, or deleted, so the instance can never lock itself out of account management. The deletion-impact route is a `POST`, not a `GET`, specifically so `SameSite=Lax` cannot let a followed link trigger it via a cross-site navigation.
+ * @exports registerAdminRoutes
+ */
 import { randomBytes, randomUUID } from 'node:crypto';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import type { Database } from '../db.ts';

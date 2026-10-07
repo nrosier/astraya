@@ -15,6 +15,12 @@
  * nothing to do with circumpolarity and would otherwise draw a spurious line
  * clean across the map.
  */
+/**
+ * @module chart/acg-map
+ * @purpose Renders the astrocartography (ACG) world map as a hand-rolled equirectangular SVG graticule with AC/DC/MC/IC and local-space lines.
+ * @conventions Equirectangular projection: `x = (lon + 180) / 360 * width`, `y = (90 - lat) / 180 * height`, so the map is exactly twice as wide as tall; point runs are split wherever consecutive longitudes jump by more than 180° (a projection/antimeridian break, distinct from `HorizonLine.segments`'s own circumpolar breaks).
+ * @exports renderAcgMapSvg; AcgMapInput, AcgMapOptions, AcgMap types.
+ */
 import type { LocalSpaceLine } from '../astrology/astrocartography.js';
 import { bodyById } from '../astrology/bodies.js';
 import type { AcgLine } from '../domain/astrocartography.js';

@@ -26,6 +26,12 @@
  * pattern is small enough to inline here rather than factor into its own
  * component for a single caller.
  */
+/**
+ * @module ChartView
+ * @purpose Renders the natal chart screen: the chart wheel plus every data table a chart computes (positions, houses, aspects, dignities, dispositors, declinations, antiscia, fixed stars, chart shape, derived points), and the SVG/PNG/PDF export + share-link controls.
+ * @conventions Exports `ChartDataView`, the shared tabbed chart+tables UI reused by CompositeView/SharedChartView; every value is recomputed from the stored birth moment via `domain/chart-compute.js`/`domain/chart-tables.js` rather than read from a saved Chart record; houses/angles/derived-points tables are hidden when `timeAccuracy === 'unknown'`. Text comes from co-located `ChartView.messages.ts` via `useMessages()`.
+ * @exports ChartView, ChartDataView, positionColumns, houseCuspColumns, angleColumns, aspectColumns, dignityColumns, dispositorColumns, declinationColumns, antisciaColumns, fixedStarColumns, derivedPointColumns
+ */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   almutenOfAscendant,

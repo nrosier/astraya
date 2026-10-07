@@ -11,6 +11,12 @@
  * Pure, like `person-nav.ts` and `admin-nav.ts`: which tools exist and which one a route is on can
  * be tested without a DOM. Labels are translated, so they live in `AppNav.messages.ts` by `key`.
  */
+/**
+ * @module ui/tools-nav
+ * @purpose Pure logic for the header's Tools menu (#421): the five not-person-scoped calculator screens (cycles/eclipses/horary/electional/rectification) and which one a route is on.
+ * @conventions Pure, like person-nav.ts and admin-nav.ts, so menu/active-tool logic is tested without a DOM; labels are translated and live in AppNav.messages.ts, looked up by key.
+ * @exports ToolKey, Tool, TOOLS, activeToolKey
+ */
 import type { Route } from './route.js';
 
 export type ToolKey = 'cycles' | 'eclipses' | 'horary' | 'electional' | 'rectification';

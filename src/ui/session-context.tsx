@@ -3,6 +3,12 @@
  * itself doesn't decide. Also owns the sync engine's lifecycle (it exists only while
  * signed in) and the one-time "adopt this device's anonymous data" prompt (#109).
  */
+/**
+ * @module ui/session-context
+ * @purpose Owns which per-account IndexedDB store is open (anonymous vs. a signed-in account's own), the sync engine's lifecycle, OIDC/password sign-in and sign-out, and the one-time "adopt this device's anonymous data" prompt (#109).
+ * @conventions React context + provider (SessionProvider); handles offline-boot (can't tell signed-in from signed-out, falls back to the last-used store), server-side session invalidation (handleUnauthorized closes the store rather than leaving it open across accounts, per ADR 0002's cross-account data-bleed concern), and OIDC PKCE completion via oidc-pkce.js.
+ * @exports removeAccountData, SessionProvider, useStoreStatus, useSyncEngine, useSession, useSessionUserOrUndefined, StoreStatus, AdoptionPrompt
+ */
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { openStore } from '../store/store.js';
 import { exchangeOidcCode, login, logout, me, setup as apiSetup } from '../sync/auth-client.js';

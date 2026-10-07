@@ -14,6 +14,12 @@
  * serializes requests through one promise chain, so callers from different
  * views never race each other's settings.
  */
+/**
+ * @module EphemerisProviderContext
+ * @purpose Provides the single app-wide Web Worker-backed Swiss Ephemeris provider instance, mounted once at the app root.
+ * @conventions Replaces the old per-screen pattern of constructing/disposing a `WorkerEphemerisProvider` on mount/unmount, avoiding repeated WASM/data reinitialization; `App.tsx` surfaces `error` in its header status since a silent ephemeris failure must never pass unnoticed.
+ * @exports EphemerisProviderProvider, useEphemerisProvider
+ */
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { WorkerEphemerisProvider } from '../ephemeris/client.js';
 import type { EphemerisProvider } from '../ephemeris/types.js';

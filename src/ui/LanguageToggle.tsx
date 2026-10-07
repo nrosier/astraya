@@ -6,6 +6,12 @@
  * locales today, and a button matches the toggle it sits beside instead of looking like
  * a form control dropped into the corner of the screen.
  */
+/**
+ * @module LanguageToggle
+ * @purpose Renders the app's language-switch button, cycling between the available corpus locales.
+ * @conventions Mounted in the sticky header beside `ThemeToggle`; backs onto the shared `useLocale()` store (`locale.ts`), not component-local state, so the choice is visible app-wide. Text comes from co-located `LanguageToggle.messages.ts` via `useMessages()`.
+ * @exports LanguageToggle
+ */
 import { CORPUS_LOCALES } from '../interpretation/schema.js';
 import { languageToggleMessages } from './LanguageToggle.messages.js';
 import { LOCALE_LABELS, useLocale } from './locale.js';

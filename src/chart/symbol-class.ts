@@ -10,6 +10,12 @@
  * does, behaves as before. The screens subscribe (`useSymbolClass` in `src/ui/symbol-setting.ts`) so
  * a change redraws them, and each is redrawn by its own render, never from a stale cache.
  */
+/**
+ * @module chart/symbol-class
+ * @purpose Holds the device-wide choice of which symbol class every chart renderer draws with: hand-drawn vector glyphs (default), Unicode astrological characters, or plain three-letter text codes.
+ * @conventions Module-level mutable state with a subscribe/listener pattern rather than threaded through every renderer's parameters, since a dozen synchronous renderers all end in `renderGlyph` and must stay in sync; defaults to `drawn` so any renderer used standalone (as unit tests do) behaves unchanged; screens subscribe via `useSymbolClass` in `src/ui/symbol-setting.ts` and redraw on change rather than relying on any cache.
+ * @exports SYMBOL_CLASSES, DEFAULT_SYMBOL_CLASS, isSymbolClass, getSymbolClass, setSymbolClass, subscribeSymbolClass; SymbolClass type.
+ */
 export type SymbolClass = 'drawn' | 'unicode' | 'text';
 
 export const SYMBOL_CLASSES: readonly SymbolClass[] = ['drawn', 'unicode', 'text'];

@@ -8,6 +8,12 @@
  *
  * The place defaults to the birthplace; a relocated return is the same moment cast somewhere else.
  */
+/**
+ * @module return-chart
+ * @purpose Presents a solar or lunar return as a complete chart in its own right for the Charts page, built from `computeSolarReturn`/`computeLunarReturns` plus `computeChartDataAtJd`.
+ * @conventions The place defaults to the birthplace; `chartContacts` filters the return's natal contacts down to exactly the bodies the chart itself displays (one Lilith/Node model, Chiron/Lilith/Nodes only when `aspectsTo` allows), so the contacts table never disagrees with the rendered chart.
+ * @exports computeSolarReturnChart, computeLunarReturnChart, ReturnChartData, ReturnChartOptions, LUNAR_RETURN_SEARCH_DAYS
+ */
 import type { Aspect, OrbConfig } from '../astrology/aspects.js';
 import { bodyById } from '../astrology/bodies.js';
 import type { BirthMomentInput } from '../time/types.js';

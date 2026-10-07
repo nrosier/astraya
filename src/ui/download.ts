@@ -3,6 +3,12 @@
  * temporary object URL and anchor, clicked programmatically then discarded. Shared by
  * every export feature (#67/#68) so there is exactly one place that does this.
  */
+/**
+ * @module ui/download
+ * @purpose Shared browser-download trigger used by every export feature (#67/#68).
+ * @conventions Creates and revokes a temporary object URL/anchor; revocation happens after the click to avoid breaking the download.
+ * @exports downloadBlob, downloadText
+ */
 export function downloadBlob(filename: string, blob: Blob): void {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');

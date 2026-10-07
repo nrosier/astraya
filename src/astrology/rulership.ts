@@ -17,6 +17,13 @@
  * `primaryRulerOf` — the traditional ruler under Traditional, the modern one otherwise — and says
  * so where the reader can see it.
  */
+
+/**
+ * @module Rulership
+ * @purpose Resolves which planets rule which signs under the reader's chosen rulership choice (modern, traditional, or both/co-rulers).
+ * @conventions Modern (default) assigns Pluto/Uranus/Neptune to Scorpio/Aquarius/Pisces; traditional keeps Mars/Saturn/Jupiter; 'both' returns co-rulers (traditional listed first); single-ruler questions (dispositor chains, lord of the year) use primaryRulerOf, which is traditional under Traditional and modern otherwise; exaltation/fall are unaffected by the choice since no tradition gives outer planets one.
+ * @exports RulershipChoice, RULERSHIP_CHOICES, DEFAULT_RULERSHIP_CHOICE, isRulershipChoice, rulersOf, singleRulerScheme, primaryRulerOf, detrimentRulersOf, essentialDignitiesFor
+ */
 import type { BodyId, Degrees } from '../ephemeris/types.js';
 import { exaltationRulerOf, fallRulerOf, rulerOf, type EssentialDignities, type RulershipScheme } from './dignities.ts';
 import { signIndex } from './signs.ts';

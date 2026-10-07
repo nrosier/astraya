@@ -16,6 +16,12 @@
  * the natural unit here — a caller with a calendar date already has
  * `julianDayFor`/`provider.julianDay` to produce one.
  */
+/**
+ * @module secondary-progression
+ * @purpose Computes a secondary-progressed chart for a target date (#46), using the day-for-year substitution.
+ * @conventions Mirrors `chart-compute.ts`'s shape (one house call, one batch position call) at two different moments; progressed body positions are ordinary ephemeris positions at the progressed Julian day; angles need `progressions.ts` since the three MC methods disagree on "the sky's rotation for one day"; defaults to Placidus houses and the Naibod MC method; takes a target Julian day, not a civil date, since there is no chart-creation UI yet to attach a progressed-chart concept to.
+ * @exports computeSecondaryProgression, SecondaryProgressionData, SecondaryProgressionOptions
+ */
 import { findCrossAspects, fixedSubjects, subjectsFrom, type Aspect, type OrbConfig } from '../astrology/aspects.js';
 import { BODIES, bodyById, bodyByKey, type BodyCategory } from '../astrology/bodies.js';
 import { computeProgressedHouses, type ProgressedMcMethod } from '../astrology/progressions.js';

@@ -30,6 +30,13 @@
  * "houses derived from the progressed MC" means for a symbolic method; quotidian
  * has no such arc because it recomputes the houses directly instead.
  */
+
+/**
+ * @module Progressions
+ * @purpose Computes secondary (day-for-year) progressions, with a selectable method (quotidian, naibod, solarArc) for progressing the MC and houses.
+ * @conventions Bodies progress by direct day-for-year substitution; 'quotidian' recomputes houses outright at the progressed moment; 'naibod' rotates angles/cusps by the mean Sun's daily motion (NAIBOD_DAILY_MOTION) times age; 'solarArc' rotates by the true solar arc traveled; naibod/solarArc rigidly rotate the whole natal house wheel via shiftHouses.
+ * @exports TROPICAL_YEAR_DAYS, NAIBOD_DAILY_MOTION, ageInYears, progressedJulianDay, mcArc, shiftHouses, computeProgressedHouses
+ */
 import type {
   Degrees,
   EphemerisProvider,

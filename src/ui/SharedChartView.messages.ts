@@ -1,6 +1,12 @@
 /**
  * Message catalogue for `SharedChartView.tsx` (#158).
  */
+/**
+ * @module SharedChartView.messages
+ * @purpose English/Dutch message catalogue for the no-account, link-only shared-chart screen.
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed via `useMessages()` by the sibling `SharedChartView.tsx`.
+ * @exports sharedChartViewMessages
+ */
 const en = {
   sharedChart: 'Shared chart',
   hint: 'This chart is calculated entirely in your browser from the link itself — nothing was sent to us to open it, and nothing you do here is either.',

@@ -7,6 +7,12 @@
  * `chart-compute.ts`'s own doc comment), then pure arithmetic (`astrology/profections.ts`)
  * over the result. No position call at all: nothing here needs a body other than the angle.
  */
+/**
+ * @module profections
+ * @purpose Computes the annual and monthly profection for a target moment (#168) — the whole-sign-house rotation of the natal Ascendant used in Hellenistic timing technique.
+ * @conventions Mirrors `solar-return.ts`/`secondary-progression.ts`'s shape (natal Julian day, one houses call, then pure arithmetic over `astrology/profections.ts`); no position call at all, since nothing here needs a body other than the angle; `profectedHouse` counts whole-sign houses from the natal Ascendant's own sign as the 1st house.
+ * @exports computeProfections, profectedHouse, ProfectionData, ProfectionOptions, ProfectedPeriod
+ */
 import { DEFAULT_RULERSHIP_CHOICE, rulersOf, type RulershipChoice } from '../astrology/rulership.js';
 import { annualProfection, monthlyProfection } from '../astrology/profections.js';
 import { ageInYears } from '../astrology/progressions.js';

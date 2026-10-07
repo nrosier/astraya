@@ -14,6 +14,12 @@
  * the moment a new setting is added elsewhere. A share link keeps the same guarantee: a
  * setting this build has never heard of still round-trips untouched.
  */
+/**
+ * @module chart-share
+ * @purpose Encodes/decodes a whole chart (birth moment plus chart settings) as a shareable URL, with no server round-trip (#65).
+ * @conventions Settings are carried as opaque, verbatim JSON (never individually-named parameters) so an unknown future setting still round-trips; a version tag (`v`) governs decode rules for forward/backward compatibility; UTF-8-safe base64url encodes `cs`.
+ * @exports encodeChartShareLink, decodeChartShareLink, ChartShareData, ChartShareLinkError
+ */
 import { decodeBirthMoment, encodeBirthMoment } from '../time/encode.js';
 import type { BirthMomentInput } from '../time/types.js';
 import type { JsonValue } from '../store/ops.js';

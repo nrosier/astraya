@@ -6,6 +6,12 @@
  * Held for the page's lifetime, not saved: they are chosen and Redrawn per visit, as they always were on the
  * natal chart. Draconic and harmonic charts do not use them (their positions are transformed from the natal).
  */
+/**
+ * @module ui/extended-settings-store
+ * @purpose Holds the chart's confirmed Extended settings (house system, zodiac, orbs, visible points) shared across every chart-drawing screen (natal, solar/lunar return).
+ * @conventions In-memory for the page's lifetime only (chosen and redrawn per visit, never persisted); uses useSyncExternalStore so every screen reading the settings re-renders on change.
+ * @exports setExtendedSettings, resetExtendedSettings, useExtendedSettings
+ */
 import { useSyncExternalStore } from 'react';
 import { DEFAULT_EXTENDED_SETTINGS, type ExtendedSettings } from '../chart/extended-settings.js';
 

@@ -3,6 +3,12 @@
  * are pure functions with no locale access of their own, so each now takes a `t` of this
  * shape — the same pattern `AccountPanel.tsx`'s `changes()` uses.
  */
+/**
+ * @module ui/status.messages
+ * @purpose en/nl message catalogue for status.ts's pure formatting functions (ago(), changes(), describeStatus()) describing sync/persistence state.
+ * @conventions Read directly (not via useMessages) since status.ts's functions are plain functions with no locale access of their own and take a `t` parameter of this shape, the same pattern AccountPanel.tsx's own changes() uses.
+ * @exports statusMessages
+ */
 const en = {
   justNow: 'just now',
   minutesAgo: (n: string) => `${n} minutes ago`,

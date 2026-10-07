@@ -4,6 +4,12 @@
  * its aspects to the other ring — or, for a sign or an aspect line, what stands in it or joins them.
  * The facts come from `resolveBiWheelSelection`; this only words them, in either language.
  */
+/**
+ * @module BiWheelSelectionPanel
+ * @purpose Renders the info panel beside a bi-wheel chart (Transits, Synastry) describing whatever body, sign, or aspect line the user clicked.
+ * @conventions Pure presentational component: the facts come from `resolveBiWheelSelection`/`bi-wheel-selection.js`, this module only words them in the active locale via co-located `BiWheelSelectionPanel.messages.ts`.
+ * @exports BiWheelSelectionPanel
+ */
 import type { Locale } from '../interpretation/schema.js';
 import { aspectDisplayName, bodyDisplayName, signDisplayName } from './astro-names.messages.js';
 import type { BiWheelAspect, BiWheelFacts, BodyOnRing } from './bi-wheel-selection.js';

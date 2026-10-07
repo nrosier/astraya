@@ -8,6 +8,12 @@
  * `PersonForm.tsx`/`person-form.ts` already use, needed here too since the project has
  * no jsdom/`@testing-library/react` to test a component's rendered output directly.
  */
+/**
+ * @module SortableTable
+ * @purpose Generic, reusable data table with sortable column headers, a Copy-to-clipboard button, and a CSV download, used across every tabular view in the app.
+ * @conventions Thin wiring over table-sort.ts's sorting/serialization logic; uses SortableTable.messages.ts for en/nl text via useMessages().
+ * @exports SortableTable
+ */
 import { useId, useState } from 'react';
 import { downloadText } from './download.js';
 import { useMessages } from './messages.js';

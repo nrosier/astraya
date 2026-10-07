@@ -4,6 +4,13 @@
  * only assigns each one a sequence number, encrypts it at rest (#92), and scopes
  * every row to the authenticated user (#80).
  */
+
+/**
+ * @module routes
+ * @purpose The op-log sync relay's HTTP surface (#102): append (`POST /api/ops`) and pull (`GET /api/ops`) against the opaque, per-user `ops` log.
+ * @conventions Every op is scoped to `requireUser`'s authenticated user; the relay never interprets payload contents except for the narrow, documented purge-marker check (`purge.ts`) performed on plaintext it already holds transiently before encrypting; an op whose HLC is too far ahead of server time is quarantined rather than stored, and a batch push is transactional so a mid-batch failure leaves no partial write; the relay is disabled outright (503) rather than storing unencrypted rows when `ASTRAYA_ENCRYPTION_KEY` is unset.
+ * @exports registerOpsRoutes
+ */
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import type { Database } from '../db.ts';
 import { requireUser, type User } from '../auth/identity.ts';

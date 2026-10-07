@@ -1,6 +1,12 @@
 /**
  * Message catalogue for `PersonForm.tsx` (#158).
  */
+/**
+ * @module PersonForm.messages
+ * @purpose English/Dutch message catalogue for the birth-data entry/edit form.
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed via `useMessages()` by the sibling `PersonForm.tsx`.
+ * @exports personFormMessages
+ */
 const en = {
   accuracyRecorded: 'Recorded — from a certificate or record',
   accuracyRemembered: 'Remembered — someone’s recollection',

@@ -21,6 +21,13 @@
  * after.
  */
 
+/**
+ * @module store/persist
+ * @purpose Requests storage-persistence exemption from the browser (`navigator.storage.persist()`) and reports what the browser actually promised, so Astraya can warn a user before their only copy of their data is evicted.
+ * @conventions Reports a tri-state status (`persisted`/`evictable`/`unsupported`) rather than a boolean, since Chromium/Firefox/Safari behave meaningfully differently and collapsing that to true/false would misreport the Safari case as a user refusal; storage usage/quota figures are reported only as a courtesy, never used to decide whether a write will fit, since browsers deliberately fuzz quota for fingerprinting reasons.
+ * @exports PersistenceState, Persistence, requestPersistence, persistenceWarning
+ */
+
 export type PersistenceState =
   /** The browser has promised not to evict this origin without asking. */
   | 'persisted'

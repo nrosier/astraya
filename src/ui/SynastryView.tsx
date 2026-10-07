@@ -15,6 +15,12 @@
  * speed on both sides (see that module's doc comment) — and correspondingly there is no
  * inner/outer convention rooted in the astrology here, only in the SVG's ring order.
  */
+/**
+ * @module SynastryView
+ * @purpose Synastry bi-wheel screen comparing a saved person against a second saved person: cross-chart aspects, ranked contacts, house overlays via RelationshipSummary, and interpretation text.
+ * @conventions Calls renderMultiWheelSvg directly like TransitView.tsx does, bypassing the single-chart AstroChartWheel; uses SynastryView.messages.ts for en/nl text via useMessages().
+ * @exports SynastryView, aspectColumns
+ */
 import { useSymbolClass } from './symbol-setting.js';
 import { useGlyphVariants } from './glyph-variant-setting.js';
 import { useEffect, useMemo, useState } from 'react';

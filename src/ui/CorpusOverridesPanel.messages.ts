@@ -1,6 +1,12 @@
 /**
  * Message catalogue for `CorpusOverridesPanel.tsx` (#292).
  */
+/**
+ * @module CorpusOverridesPanel.messages
+ * @purpose English/Dutch i18n strings for the admin corpus-correction browsing/editing screen (search/filter, edit form, reset-to-default).
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed by CorpusOverridesPanel.tsx via `useMessages(corpusOverridesPanelMessages)`; `nl` is typed as `typeof en`.
+ * @exports corpusOverridesPanelMessages
+ */
 const en = {
   heading: 'Corpus corrections',
   intro:

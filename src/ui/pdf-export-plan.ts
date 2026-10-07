@@ -13,6 +13,12 @@
  * (`TableColumn.render`, falling back to `String(valueOf(row))`), so no generic row type, and nothing
  * jsPDF-shaped, ever has to cross from this file into that one.
  */
+/**
+ * @module ui/pdf-export-plan
+ * @purpose Builds the PDF export feature's (#441) ordered, declarative `PdfPlan` content tree from a user's `PdfSelection`, reusing the same domain compute functions and table-column definitions the on-screen chart/synastry/composite views use.
+ * @conventions Deliberately free of jsPDF/svg2pdf.js/jspdf-autotable — svg2pdf.js's UMD entry fails to load under Vitest/Node, so any top-level import of it here would break every test importing this module; the rendering half using those libraries lives in pdf-export-render.ts instead, covered by Playwright. Table cells are reduced to plain strings via each table's `valueOf()` (never `render()`, which may return JSX), matching the existing CSV-download convention.
+ * @exports PdfTablePlan, PdfChartSectionPlan, PdfTextSectionPlan, PdfFieldsSectionPlan, PdfSectionPlan, PdfPlan, PdfPlanContext, buildPdfPlan
+ */
 import { bodyById } from '../astrology/bodies.js';
 import type { RulershipChoice } from '../astrology/rulership.js';
 import {

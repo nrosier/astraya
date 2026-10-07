@@ -18,6 +18,12 @@
  * Cell height is derived from the fullest cell rather than fixed, so a
  * stellium in one sign grows the table instead of overflowing it.
  */
+/**
+ * @module chart/emphasis-grid
+ * @purpose Renders the element x modality (fire/earth/air/water x cardinal/fixed/mutable) grid under the wheel, showing which bodies fall in each of the twelve element/modality cells with marginal totals.
+ * @conventions Marginal totals come from `elementBalance`/`modalityBalance` (which accept a per-body weight map) rather than from summing the drawn glyphs, so weighted margins stay correct even though every body's glyph is still drawn in its cell; cell height grows to fit the fullest cell (a stellium) rather than being fixed.
+ * @exports renderEmphasisGridSvg; EmphasisBody, EmphasisGridInput types.
+ */
 import { elementBalance, modalityBalance } from '../astrology/emphasis.js';
 import type { Element, Modality } from '../astrology/signs.js';
 import { signOf } from '../astrology/signs.js';

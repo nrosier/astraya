@@ -7,6 +7,13 @@
  * rather than tracking what is inside each cache.
  */
 
+/**
+ * @module pwa/cache-names
+ * @purpose Compute version-scoped Cache Storage names so a release's caches can be identified and stale ones evicted.
+ * @conventions Versioning the name rather than diffing contents makes eviction a simple name-prefix filter (`staleCaches`); the shell and ephemeris caches are kept separate so an upgrade never serves stale ephemeris data files under a new engine.
+ * @exports shellCacheName, ephemerisCacheName, staleCaches
+ */
+
 const PREFIX = 'astraya';
 
 export function shellCacheName(version: string): string {

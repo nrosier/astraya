@@ -13,6 +13,12 @@
  * setting, or plain corruption) — a cosmetic rendering choice should never
  * stop a chart from drawing.
  */
+/**
+ * @module chart/wheel-options
+ * @purpose Resolves a saved chart's generic `settings` bag into strongly-typed wheel display options (orientation, sweep, house-wedge style, sign-wedge style) so these cosmetic choices persist with the saved chart.
+ * @conventions Reads each setting key and falls back to the rendering default for anything missing or holding a value this build doesn't recognise (an older/newer build's setting, or corruption) — a cosmetic rendering choice must never stop a chart from drawing; the chart record itself (`src/domain/chart.ts`) deliberately keeps settings as untyped `JsonValue` with no validation, so this module is the sole authority on these four keys' valid values.
+ * @exports resolveWheelDisplayOptions, WHEEL_ORIENTATION_SETTING, WHEEL_SWEEP_SETTING, HOUSE_WEDGE_STYLE_SETTING, SIGN_WEDGE_STYLE_SETTING; WheelDisplayOptions type.
+ */
 import type { JsonValue } from '../store/ops.js';
 import type { HouseWedgeStyle, SignWedgeStyle, WheelOrientation, WheelSweep } from './wheel.js';
 

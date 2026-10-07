@@ -3,6 +3,12 @@
  * (#67's "PNG at selectable resolution") via an off-DOM `<img>`/`<canvas>` pair — the
  * browser's own SVG rasterizer, so this needs no new rendering dependency.
  */
+/**
+ * @module chart-raster
+ * @purpose Rasterizes a standalone wheel SVG to a PNG Blob at a chosen pixel size for PNG chart export.
+ * @conventions Uses an off-DOM Image/canvas pair rather than a third-party rasterization library.
+ * @exports svgToPngBlob
+ */
 export async function svgToPngBlob(svgMarkup: string, width: number, height: number): Promise<Blob> {
   const svgUrl = URL.createObjectURL(new Blob([svgMarkup], { type: 'image/svg+xml' }));
   try {

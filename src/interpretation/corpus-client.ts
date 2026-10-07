@@ -25,6 +25,12 @@
  * deploy has none at all), the server unreachable, or any other failure —
  * so a correction is a bonus, never a requirement for the report to render.
  */
+/**
+ * @module interpretation/corpus-client
+ * @purpose Loads one locale's committed interpretation corpus chunk at runtime in the browser, layered with any admin corpus overrides.
+ * @conventions Fetches a build-generated per-locale chunk from `${BASE_URL}corpus/<locale>.json` (written by scripts/split-corpus.mjs) rather than importing the full corpus like index.ts does. Admin overrides come from `GET /api/corpus-overrides/:locale` and replace same-key entries; that fetch soft-fails to `[]` on any error so a correction is never required for a report to render.
+ * @exports CORPUS_BASE_URL, loadRuntimeCorpus
+ */
 import type { CorpusEntry, Locale } from './schema.js';
 
 export const CORPUS_BASE_URL = `${import.meta.env.BASE_URL}corpus/`;

@@ -1,6 +1,12 @@
 /**
  * Message catalogue for `App.tsx` (#158).
  */
+/**
+ * @module App.messages
+ * @purpose English/Dutch i18n strings for the application shell: loading states, storage-unavailable warning, skip link, and footer links.
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed by App.tsx via `useMessages(appMessages)`; `nl` is typed as `typeof en`.
+ * @exports appMessages
+ */
 const en = {
   openingLocalData: 'Opening your local data…',
   noLocalStorage: 'No local storage',

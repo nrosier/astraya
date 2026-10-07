@@ -1,6 +1,12 @@
 /**
  * Message catalogue for `PeriodicTransitView.tsx` (#158).
  */
+/**
+ * @module PeriodicTransitView.messages
+ * @purpose English/Dutch message catalogue for the periodic (daily/weekly/monthly/yearly) transit forecast screen.
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed via `useMessages()` by the sibling `PeriodicTransitView.tsx`.
+ * @exports periodicTransitViewMessages
+ */
 const en = {
   forecastFallback: 'Forecast',
   personFallback: 'Person',

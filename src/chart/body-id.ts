@@ -4,6 +4,12 @@
  * single wheel has only ring 0. Shared by the wheel's markup consumers and by the interpretation
  * lookup that reads a selection back.
  */
+/**
+ * @module chart/body-id
+ * @purpose Identifies a body on a multi-ring wheel unambiguously by combining its glyph key with the ring it's drawn on.
+ * @conventions Encoding is `key@ring` (e.g. `sun@1`); a bare key with no `@` is assumed to be ring 0 (a single wheel's only ring).
+ * @exports bodyId, parseBodyId.
+ */
 
 export function bodyId(key: string, ring: number | string): string {
   return `${key}@${String(ring)}`;

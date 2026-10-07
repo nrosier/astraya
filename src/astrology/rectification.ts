@@ -30,6 +30,13 @@
  * Planets are taken at the candidate's own birth moment, so the Moon — which moves a degree every
  * two hours — also helps tell candidates apart, in the directed and natal roles alike.
  */
+
+/**
+ * @module Rectification
+ * @purpose Narrows an uncertain birth time by scoring candidate birth moments against dated life events using solar-arc and transit contacts to the angles.
+ * @conventions Solar-arc contacts (weight 2) and transits from the five slow planets (weight 1) to the Ascendant/Midheaven are scored via contactPoints (full at exact, zero at the orb — SOLAR_ARC_ORB_DEG/TRANSIT_ORB_DEG, both 1°); results report a `lift` over the mean candidate score, since a flat field means the technique explained nothing; capped at MAX_RECTIFICATION_CANDIDATES.
+ * @exports SOLAR_ARC_ORB_DEG, TRANSIT_ORB_DEG, SOLAR_ARC_WEIGHT, TRANSIT_WEIGHT, contactOrb, contactPoints, scoreCandidate, MAX_RECTIFICATION_CANDIDATES, rectify
+ */
 import { bodyByKey } from './bodies.js';
 import { ageInYears } from './progressions.js';
 import type { BodyId, Degrees, EphemerisProvider, GeoPosition, HouseSystem, JulianDayUT } from '../ephemeris/types.js';

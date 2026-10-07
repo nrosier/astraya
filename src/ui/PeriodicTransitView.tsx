@@ -20,6 +20,12 @@
  * fallback, not `ReportView.tsx`'s full report pipeline. The structured columns stay alongside
  * the sentence for sorting and CSV export, the same as `TransitView.tsx`'s contacts table.
  */
+/**
+ * @module PeriodicTransitView
+ * @purpose Daily/weekly/monthly/yearly transit forecast screen for a saved person, including solar/lunar and other planetary returns.
+ * @conventions Follows TransitView.tsx's person-not-found/incomplete-moment/unknown-time gating; uses PeriodicTransitView.messages.ts for en/nl text via useMessages().
+ * @exports PeriodicTransitView
+ */
 import { useEffect, useMemo, useState } from 'react';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import type { Aspect } from '../astrology/aspects.js';

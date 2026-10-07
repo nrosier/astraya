@@ -4,6 +4,12 @@
  * the real midpoint of the solar year, roughly (but not exactly, since the
  * Sun's speed varies) half a year after the birthday.
  */
+/**
+ * @module demibirthday
+ * @purpose Computes the demibirthday chart for a given calendar year (#50): the moment the Sun reaches the point exactly opposite its natal longitude, roughly the real midpoint of the solar year.
+ * @conventions Finds `demibirthdayInYear` via the ephemeris then casts a full chart; aspects between the demibirthday positions and the fixed natal chart use `fixedSubjects`/`subjectsFrom`, the same natal/transiting split other M6 cross-chart modules use.
+ * @exports computeDemibirthday, DemibirthdayData, DemibirthdayOptions
+ */
 import { findCrossAspects, fixedSubjects, subjectsFrom, type Aspect, type OrbConfig } from '../astrology/aspects.js';
 import { BODIES, bodyById, type BodyCategory } from '../astrology/bodies.js';
 import { demibirthdayInYear } from '../astrology/planetary-returns.js';

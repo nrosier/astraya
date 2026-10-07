@@ -16,6 +16,13 @@
  * Under `both` (co-rulers, #426) a sign has two rulers, but a chain needs one path, so it follows the
  * modern ruler; `isMutualReception` accepts either.
  */
+
+/**
+ * @module Dispositors
+ * @purpose Walks a body's dispositor chain (sign rulers in sequence) to its final dispositor or a cycle, and checks for mutual reception.
+ * @conventions Under the 'both' rulership choice a chain follows the modern co-ruler for a single path; isMutualReception accepts either co-ruler as satisfying reception; the chain can only be walked as far as the caller-supplied positions cover.
+ * @exports dispositorChain, isMutualReception
+ */
 import type { BodyId, Degrees } from '../ephemeris/types.js';
 import { primaryRulerOf, rulersOf, type RulershipChoice } from './rulership.js';
 import { signIndex } from './signs.js';

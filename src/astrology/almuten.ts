@@ -32,6 +32,13 @@
  * and `bounds.ts`); both are threaded through as explicit, defaulted options
  * rather than hidden behind one hardcoded choice.
  */
+
+/**
+ * @module Almuten
+ * @purpose Scores a planet's essential dignity at a point/degree and determines the Almuten (dignity winner) and Almuten Figuris across multiple vital points.
+ * @conventions Classical five-dignity weighting (5 ruler, 4 exaltation, 3 sect-appropriate triplicity, 2 bound, 1 face); only the essential-dignity component of Almuten Figuris is implemented (no planetary-hour/syzygy bonuses); triplicity counts only the sect-appropriate ruler, not the participating ruler.
+ * @exports essentialDignityScoreOf, almutenOf, almutenFigurisOf
+ */
 import { bodyByKey } from './bodies.js';
 import type { BodyId, Degrees } from '../ephemeris/types.js';
 import type { BoundsScheme } from './bounds.js';

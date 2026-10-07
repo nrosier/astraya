@@ -5,6 +5,12 @@
  *
  * It says which times fit the rules; whether to act then is the user's judgment.
  */
+/**
+ * @module ElectionalView
+ * @purpose Renders the Electional Search tool screen: ranks stretches of a date span by how many chosen traditional rules hold, to help pick a time to begin something.
+ * @conventions Needs no saved person or stored data (ephemeris-only), so it lives outside `Stored`; it ranks candidate times against rules, it does not recommend acting on any one of them. Text comes from co-located `ElectionalView.messages.ts` via `useMessages()`.
+ * @exports ElectionalView
+ */
 import { useMemo, useRef, useState } from 'react';
 import { ELECTION_RULE_KEYS, findElectionWindows, type ElectionRuleKey } from '../astrology/electional.js';
 import { BirthPlaceSearch } from './BirthPlaceSearch.js';

@@ -8,6 +8,13 @@
  * it has already succeeded, and a page reload just runs the same loop again
  * from wherever the durable cursor last got to.
  */
+
+/**
+ * @module sync/engine
+ * @purpose Implements the client-side sync engine: a debounced/polled push-pull loop that exchanges this device's op-log against the opaque relay in `server/ops/routes.ts`, running only while signed in.
+ * @conventions Every step is safe to interrupt at any point (#103) — the sync cursor only advances after the network call that made progress has already succeeded; errors are classified into a `SyncErrorKind` (`offline`/`unauthorized`/`server`/`malformed`/`rejected`) so the UI status can distinguish a blip from a bug; failed runs retry with exponential backoff plus jitter (#106); only this device's own outgoing records are ever pushed, filtering out peer records just pulled and folded in (#324); a row that fails to decode during pull is skipped rather than failing the whole page, so one corrupt record can't wedge every record behind it (#320).
+ * @exports SyncEngine, SyncEngineOptions, SyncErrorKind, SyncError, pushRecords, createSyncEngine
+ */
 import { isHlc, isNodeId, type Hlc, type NodeId } from '../store/hlc.js';
 import type { OpRecord } from '../store/ops.js';
 import type { Store, SyncCursor } from '../store/store.js';

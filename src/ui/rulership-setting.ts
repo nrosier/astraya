@@ -5,6 +5,12 @@
  * any of them. A change reaches the other mounted components in the same tab through an event, and
  * other tabs through the browser's `storage` event.
  */
+/**
+ * @module ui/rulership-setting
+ * @purpose Device preference (#426) for which planets rule which signs (Modern/Traditional/Both), read by every screen that shows a ruler, dignity, or dispositor.
+ * @conventions Device preference stored in localStorage, never synced; changes propagate to other mounted components via a custom event in-tab and the browser's `storage` event across tabs; falls back to an in-memory value when storage writes are refused.
+ * @exports RULERSHIP_KEY, readRulershipChoice, writeRulershipChoice, useRulershipChoice, resetRulershipMemory
+ */
 import { useCallback, useSyncExternalStore } from 'react';
 import { DEFAULT_RULERSHIP_CHOICE, isRulershipChoice, type RulershipChoice } from '../astrology/rulership.js';
 

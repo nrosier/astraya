@@ -3,6 +3,12 @@
  * window into the text the table shows. Kept apart from `ElectionalView.tsx` so what a typo does
  * is testable without a DOM or an ephemeris.
  */
+/**
+ * @module ui/electional
+ * @purpose Pure logic backing the electional screen (#409): parsing its search form into a validated search and formatting result windows for the table.
+ * @conventions Kept apart from ElectionalView.tsx so form-parsing edge cases are testable without a DOM or an ephemeris.
+ * @exports MAX_ELECTION_SPAN_DAYS, ELECTION_STEP_MINUTES, ElectionFields, ElectionFieldError, ElectionSearch, ParsedElectionFields, parseElectionFields, formatUtcMinute, formatDuration, ElectionRow, electionRows
+ */
 import type { ElectionRuleKey, ElectionWindow } from '../astrology/electional.js';
 import type { GeoPosition } from '../ephemeris/types.js';
 import { civilFromJulianDay } from '../time/julian.js';

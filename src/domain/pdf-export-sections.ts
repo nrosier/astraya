@@ -14,6 +14,12 @@
  * an array entry. Transits, forecast, progressions, solar arc, profections and astrocartography are
  * not sections here yet — see the issue for the follow-up.
  */
+/**
+ * @module pdf-export-sections
+ * @purpose Declarative registry of what can go into a PDF export (#441): which pages/sections are selectable, each section's own options, and ready-made presets.
+ * @conventions Pure and DOM-free, with neither jsPDF nor React dependencies, so it's Vitest-testable without a browser; `chart/pdf-export.ts` turns a selection into pages, `ui/PdfExportBuilder.tsx` builds a selection — neither needs this file's internals beyond its exported shape; synastry/composite are single optional fields (only one partner comparable at a time), unlike `charts` which is an array.
+ * @exports PdfSelection, PdfChartSectionOptions, PdfSynastrySectionOptions, PdfCompositeSectionOptions, PdfInterpretationOptions, PDF_CHART_TABLES, PDF_CHART_TYPES, EMPTY_SELECTION, PDF_PRESETS, PDF_PRESET_KEYS, applyPdfPreset, matchPdfPreset, pdfSelectionIsEmpty, defaultChartSectionOptions, defaultSynastrySectionOptions, defaultCompositeSectionOptions
+ */
 import type { ChartType } from '../ui/chart-sections.js';
 
 /** The data tables a chart-type section can include, independently of each other and of the wheel. */

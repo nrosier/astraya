@@ -12,6 +12,12 @@
  * apart in behaviour by construction, not just by convention — and to avoid
  * any name that could be confused with `computeSecondaryProgression` itself.
  */
+/**
+ * @module minor-progression
+ * @purpose Computes a tertiary or minor progression for a target date (#48), covering both techniques through one function with an explicit `method` parameter.
+ * @conventions Structurally mirrors `secondary-progression.ts`, except the progressed Julian day comes from `minorProgressedJulianDay` (picking the technique's own substitution formula) and houses are always recomputed directly at that moment, since neither technique has a symbolic-arc school the way secondary progression does.
+ * @exports computeMinorProgression, MinorProgressionData, MinorProgressionOptions
+ */
 import { findCrossAspects, fixedSubjects, subjectsFrom, type Aspect, type OrbConfig } from '../astrology/aspects.js';
 import { BODIES, bodyById, type BodyCategory } from '../astrology/bodies.js';
 import { minorProgressedJulianDay, type MinorProgressionMethod } from '../astrology/minor-progressions.js';

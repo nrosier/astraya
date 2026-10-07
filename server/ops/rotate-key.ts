@@ -19,6 +19,13 @@
  * keys and rewrites every row, which is an operator action with shell access, not something
  * that should be reachable with a session cookie.
  */
+
+/**
+ * @module rotate-key
+ * @purpose Operator CLI script to re-encrypt every stored `ops` row under a replacement `ASTRAYA_ENCRYPTION_KEY`, the remediation path for a leaked key.
+ * @conventions Not exposed as an admin HTTP route on purpose — it holds both the old and new key and rewrites every row, which belongs to an operator with shell/container access, not a session cookie. Rotates the key material only, never `CURRENT_KEY_VERSION` (the encryption scheme itself, AES-256-GCM, is unchanged); re-encryption runs in one transaction, failing before writing anything if any row does not decrypt under the stated current key, so a wrong key never produces a half-rotated database.
+ * @exports RotationResult, rotateEncryptionKey
+ */
 import { resolve } from 'node:path';
 import { openDatabase, type Database } from '../db.ts';
 import { decryptPayload, encryptPayload } from './crypto.ts';

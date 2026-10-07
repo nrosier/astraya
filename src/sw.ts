@@ -10,6 +10,13 @@
  * `package.json` the app reads its own version from (`src/version.ts`), so a new
  * release always gets a fresh, distinct cache — see `src/pwa/cache-names.ts`.
  */
+
+/**
+ * @module sw
+ * @purpose Thin service worker entry point that self-starts `installServiceWorker` with the real worker scope and build-time version/base-path constants.
+ * @conventions Built as a classic (non-module) script by `vite.sw.config.ts` for maximum browser support; self-starts only when actually running as a `ServiceWorkerGlobalScope`, so the module stays importable from tests.
+ * @exports (none — entry point module; see `./pwa/sw-core.js` for the tested logic)
+ */
 import { installServiceWorker, type ServiceWorkerScope } from './pwa/sw-core.js';
 
 declare const __APP_VERSION__: string;

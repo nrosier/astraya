@@ -10,6 +10,13 @@
  * the server stores accounts and an opaque operation log, never a person or a
  * chart — see ADR 0002.
  */
+
+/**
+ * @module index
+ * @purpose Astraya's Fastify app factory and process entry point: serves the built single-page app and, additively, local-account sign-in and the operation sync relay.
+ * @conventions Never participates in chart calculation — the server stores accounts and an opaque operation log only (ADR 0002); the cross-origin-write check (`csrf.ts`) and the CSP/security-header hooks are registered before every route, including the static handler, so no route can be added that bypasses them; `trustProxy` is read from `ASTRAYA_TRUST_PROXY` and defaults to trusting nothing.
+ * @exports build, BuildOptions
+ */
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { readFile } from 'node:fs/promises';

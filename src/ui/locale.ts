@@ -12,6 +12,12 @@
  * `OFF_STATUS`-style stable snapshot: returning a fresh value from `getSnapshot` would
  * make React re-render forever.
  */
+/**
+ * @module ui/locale
+ * @purpose App-wide UI locale (#158) store that drives every message catalogue read via useMessages (messages.ts) as well as the interpretation report's language.
+ * @conventions Plain module-level useSyncExternalStore (not React context) so multiple independently-mounted components (LanguageToggle, ReportView) share state without provider wiring; persists under the legacy `astraya:reportLocale` localStorage key, which is kept for backward compatibility.
+ * @exports LOCALE_LABELS, isLocale, getLocale, setLocale, useLocale
+ */
 import { useSyncExternalStore } from 'react';
 import { CORPUS_LOCALES, type Locale } from '../interpretation/schema.js';
 

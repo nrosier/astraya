@@ -11,6 +11,12 @@
  * chart wheel uses with its `aries-up` orientation, via the shared `wheelAngle`/`pointOnCircle`.
  * Colour lives in CSS (`app.css`), as everywhere in `src/chart/**`.
  */
+/**
+ * @module chart/cycle-diagram
+ * @purpose Draws a planetary cycle (e.g. Venus/Sun inferior conjunctions, Jupiter/Saturn great conjunctions) as its successive exact-aspect points joined in sequence around the zodiac, revealing the cycle's geometric pattern (star, stepped rotation, etc).
+ * @conventions Fixed orientation `{ orientation: 'aries-up', sweep: 'counterclockwise' }` via the shared `wheelAngle`/`pointOnCircle`; points within `LABEL_CROWD_DEG` of an earlier point are pushed one ring further inward so labels don't overprint; a `selectedId` dims every point/segment except the selected point and the segment arriving at it, matching the wheel's own click-to-isolate convention.
+ * @exports renderCycleDiagramSvg; CyclePoint type.
+ */
 import { SIGNS } from '../astrology/signs.js';
 import type { Degrees } from '../ephemeris/types.js';
 import { renderGlyph, signGlyph } from './glyphs.js';

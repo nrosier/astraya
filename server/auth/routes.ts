@@ -4,6 +4,13 @@
  * signing in is optional (the anonymous path elsewhere on this server is
  * untouched), but the routes that make it possible always exist.
  */
+
+/**
+ * @module routes
+ * @purpose The local-account HTTP surface: login, logout, "who am I", OIDC config/callback, first-admin setup, and setting a password from an admin-issued link.
+ * @conventions Mounted unconditionally — signing in is optional, the anonymous path elsewhere on this server is untouched; session cookies are always `httpOnly`, `sameSite: 'lax'`, and `secure` only when the request is actually HTTPS; `/api/setup` returns 404 rather than 403 once already bootstrapped, so the route's existence isn't confirmed to an attacker.
+ * @exports registerAuthRoutes
+ */
 import { randomUUID } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
 import type { Database } from '../db.ts';

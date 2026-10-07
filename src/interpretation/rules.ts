@@ -19,6 +19,12 @@
  * pattern needs a whole-chart shape classifier (#35's `jonesShapeOf`) whose
  * salience is a whole-chart question, not a single placement's.
  */
+/**
+ * @module interpretation/rules
+ * @purpose Scores and ranks every placement a computed chart has by interpretive salience, so a report can pick the handful of placements most worth saying instead of dumping every placement in birth order.
+ * @conventions A plain, deterministic function of ChartData — identical input always produces identical, identically-ordered output. Weighs body category, dignity, sect light, retrograde (classical planets only), angularity (within ANGULARITY_ORB of an angle), aspect family/orb tightness, and house class (angular/succedent/cadent, 12-house systems only). Covers planet-in-sign, planet-in-house, sign-on-cusp, aspect-pair and dignity-state; nakshatra and pattern are out of scope (need data ChartData doesn't carry).
+ * @exports SalienceFactor, SalientPlacement, DEFAULT_SALIENCE_LIMIT, angularityOf, derivePlacements, rankPlacements, selectSalientPlacements
+ */
 import { angularSeparation, DEFAULT_ORB_CONFIG, orbFor, type AspectFamily } from '../astrology/aspects.js';
 import { bodyById, type BodyCategory } from '../astrology/bodies.js';
 import { houseOf } from '../astrology/emphasis.js';

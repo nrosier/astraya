@@ -11,6 +11,13 @@
  * the user telling us the lookup is wrong, and a link that silently dropped it
  * would hand the recipient a different chart from the one that was shared.
  */
+
+/**
+ * @module time/encode
+ * @purpose Encode and decode a birth moment to/from legible URL query parameters, for shareable chart links.
+ * @conventions Encoding is deliberately human-legible (`?d=1960-06-15&t=14:30&la=38.7478`) rather than packed; `auto` calendar is omitted to keep links short; absent optional fields are omitted entirely rather than set to undefined, per `exactOptionalPropertyTypes`.
+ * @exports encodeBirthMoment, decodeBirthMoment, momentKey, BirthMomentLinkError
+ */
 import type { BirthMomentInput, Calendar } from './types.js';
 
 const CALENDARS: readonly Calendar[] = ['gregorian', 'julian', 'auto'];

@@ -5,6 +5,12 @@
  * (Moon) to decades (outer planets), so the caller supplies the search start
  * directly rather than a year.
  */
+/**
+ * @module planetary-return
+ * @purpose Computes the next return of any body to its natal longitude, searching forward from a chosen date (#50) — generalizing solar/lunar return to any body, Moon through the outer planets.
+ * @conventions Caller supplies the search start date directly (not a calendar year) since return periods range from under a month (Moon) to decades (outer planets); contacts to the fixed natal chart use `fixedSubjects`/`subjectsFrom`, matching other M6 cross-chart modules.
+ * @exports computePlanetaryReturn, PlanetaryReturnData, PlanetaryReturnOptions
+ */
 import { findCrossAspects, fixedSubjects, subjectsFrom, type Aspect, type OrbConfig } from '../astrology/aspects.js';
 import { BODIES, bodyById, type BodyCategory } from '../astrology/bodies.js';
 import { nextReturnOfBody } from '../astrology/planetary-returns.js';

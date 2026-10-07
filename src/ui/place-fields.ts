@@ -2,6 +2,12 @@
  * Parsing a typed latitude or longitude (shared by the horary and electional forms): a plain
  * decimal in degrees, typed with either `.` or `,` — a Dutch keyboard's — and within its range.
  */
+/**
+ * @module ui/place-fields
+ * @purpose Shared decimal latitude/longitude parsing for the horary and electional forms.
+ * @conventions Accepts both `.` and `,` as the decimal separator (a Dutch keyboard's), and range-validates (±90 for latitude, ±180 for longitude).
+ * @exports parseLatitude, parseLongitude
+ */
 
 const DECIMAL_PATTERN = /^-?\d+(?:[.,]\d+)?$/;
 

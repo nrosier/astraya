@@ -8,6 +8,13 @@
  * actually runs in. `src/sw.ts` is the thin entry point that calls this with the
  * real scope.
  */
+
+/**
+ * @module pwa/sw-core
+ * @purpose The service worker's actual install/activate/fetch/message behaviour, expressed over a minimal scope interface so it is testable with a fake scope instead of a real browser.
+ * @conventions Install precaches via `allSettled` (#336) so one failed asset fetch doesn't abort the whole precache; activate deletes only this app's stale caches; shell-navigate requests are rewritten to a canonical URL (#323) so Cache Storage never grows an entry per visited URL and query strings (e.g. OIDC callback params, #313a) never get cached.
+ * @exports installServiceWorker, ServiceWorkerScope, ServiceWorkerConfig, ExtendableEventLike, FetchEventLike, MessageEventLike
+ */
 import { classify } from './routing.js';
 import { cacheFirst, staleWhileRevalidate, type CacheStorageLike } from './strategies.js';
 import { ephemerisCacheName, shellCacheName, staleCaches } from './cache-names.js';

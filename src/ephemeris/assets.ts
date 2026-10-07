@@ -8,6 +8,13 @@
  * repack, or a change to the externally-fetched file, cannot silently change
  * the numbers this app reports: `npm run ephe:sync` fails loudly instead.
  */
+
+/**
+ * @module ephemeris/assets
+ * @purpose Declares the exact set of Swiss Ephemeris data files, the fixed-star catalog, and the WASM binary Astraya ships, each pinned by size and SHA-256.
+ * @conventions Each asset is pinned to an exact byte size and SHA-256 digest so an upstream repack or a change to the externally-fetched fixed-star file is caught rather than silently trusted; `npm run ephe:sync` fails loudly on a mismatch. The shipped `_18` data files cover only 1800-2399 CE.
+ * @exports EphemerisAsset, EPHEMERIS_DATA_FILES, FIXED_STARS_ASSET, WASM_BINARY, ALL_ASSETS, EPHE_BASE_URL, EPHE_MOUNT, EPHEMERIS_YEAR_RANGE
+ */
 export interface EphemerisAsset {
   /** Filename as served from `/ephe/` and as named inside the WASM filesystem. */
   readonly file: string;

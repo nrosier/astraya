@@ -11,6 +11,12 @@
  * comment). The date input is a plain civil date at noon local, converted through the same
  * `julianDayFromUtc` the engine uses everywhere else a picked date becomes a Julian day.
  */
+/**
+ * @module ProfectionsView
+ * @purpose Annual and monthly profections screen for one person, as of a chosen date, with Lord of the Year/Month and profected-house meanings.
+ * @conventions Gated the same way as ChartView.tsx's houses/angles tables for unknown birth time; uses ProfectionsView.messages.ts for en/nl text via useMessages().
+ * @exports ProfectionsView
+ */
 import { useEffect, useMemo, useState } from 'react';
 import { resolvePlacementText } from '../interpretation/compose.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';

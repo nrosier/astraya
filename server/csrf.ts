@@ -21,6 +21,13 @@
  */
 
 /**
+ * @module csrf
+ * @purpose Cross-site request forgery defence-in-depth for the server, independent of the session cookie's `SameSite=Lax` setting and the body parser's content-type restriction.
+ * @conventions Compares request `Host` rather than full origin (scheme included) so a TLS-terminating proxy that drops `X-Forwarded-Proto` doesn't cause every write to be rejected; a missing `Origin` header is allowed through, since only an unsafe method with a present, unreadable, or disallowed `Origin` is refused.
+ * @exports isCrossOriginWrite
+ */
+
+/**
  * Methods that can change state. A `GET` is not on this list even though
  * `/api/admin/users/:id/deletion-impact` used to be one — Lax permits cookies on a
  * cross-site top-level navigation, so that route became a `POST` instead of being special-

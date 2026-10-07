@@ -14,6 +14,12 @@
  *    it unless the fetch itself overrides that with `referrerPolicy: 'origin'` — discloses only
  *    this site's origin to Nominatim, never the full page URL.
  */
+/**
+ * @module ui/geocode-provider
+ * @purpose Chooses and configures the geocoding provider (self-hosted Nominatim-compatible server, MapTiler Cloud, or the public Nominatim default) used by forward-geocode.ts (#290).
+ * @conventions Precedence is explicit server origin > MapTiler API key > public Nominatim default; the server's CSP and Referrer-Policy headers must align with whichever provider is active (see README.md).
+ * @exports usingMaptiler, usingDefaultNominatim, NOMINATIM_SEARCH_URL, maptilerGeocodeUrl, geocodeHost, warnIfDefaultGeocodeServer
+ */
 const DEFAULT_NOMINATIM_ORIGIN = 'https://nominatim.openstreetmap.org';
 
 const rawNominatimUrl: unknown = import.meta.env.VITE_NOMINATIM_URL;

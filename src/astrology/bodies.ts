@@ -12,6 +12,13 @@
  * against JPL Horizons the way a real body can: there is nothing independent
  * to check against, since the model *is* the definition.
  */
+
+/**
+ * @module Bodies
+ * @purpose Defines the canonical set of bodies (luminaries, planets, nodes, Lilith variants, Chiron, main-belt asteroids) Astraya computes positions for.
+ * @conventions Order matches traditional chart-listing order, not SE numeric ids; the lunar nodes and three Lilith variants are orbital elements rather than physical bodies, computed by Swiss Ephemeris under three different models, so none can be checked against JPL Horizons.
+ * @exports BODIES, bodyById, bodyByKey, southNode
+ */
 import { SE } from '../ephemeris/generated-constants.ts';
 import type { BodyId } from '../ephemeris/types.js';
 

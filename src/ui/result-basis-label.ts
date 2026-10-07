@@ -7,6 +7,12 @@
  * enforces it — so a new kind of AI interpretation is distinguishable in the history from the day it
  * ships. An entry saved before the basis was recorded says so instead of guessing.
  */
+/**
+ * @module ui/result-basis-label
+ * @purpose Describes what a saved AI/local interpretation (#423) was based on and what kind it is, in the interface language — e.g. "AI interpretation of Mars (natal)".
+ * @conventions Every ResultKind must have wording in both en and nl, enforced by test/result-basis.test.ts; an entry saved before the basis was recorded falls back to "basis not recorded" rather than guessing.
+ * @exports basisLabel, savedKindLabel, kindLabel
+ */
 import { kindForMode, type ResultBasis, type ResultKind } from '../interpretation/result-basis.js';
 import type { Locale } from '../interpretation/schema.js';
 import { bodyDisplayName } from './astro-names.messages.js';

@@ -20,6 +20,12 @@
  * `computeChartDataAtJd` computes them for a real chart — a composite is not a comparison, so
  * it needs the single-chart `findAspects`, not the cross-chart engine synastry/transit use.
  */
+/**
+ * @module composite
+ * @purpose Computes a composite (midpoint) chart — a synthetic third chart derived from two people's natal charts — distinct from synastry's comparison of two existing charts (#169).
+ * @conventions Every body's position is the near-arc midpoint (`midpointOf`, Ebertin's convention: half the shorter arc, not the naive average); houses use the "midpoint of cusps" method rather than the Davison time/space-midpoint method, since there is no single real Julian day to ask the ephemeris for houses; the composite's own aspects/dignities/sect/parts are computed fresh via the single-chart engine.
+ * @exports computeComposite, CompositeData
+ */
 import { DEFAULT_ORB_CONFIG, findAspects, subjectsFrom, type Aspect, type OrbConfig } from '../astrology/aspects.js';
 import { bodyByKey, bodyById, type BodyCategory } from '../astrology/bodies.js';
 import type { EssentialDignities } from '../astrology/dignities.js';

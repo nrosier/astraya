@@ -1,6 +1,12 @@
 /**
  * Message catalogue for `FocusInterpretation.tsx` (#424).
  */
+/**
+ * @module FocusInterpretation.messages
+ * @purpose English/Dutch i18n strings for the Tier 2 AI-interpretation-of-a-placement feature: consent text, generate button, errors, and the saved-interpretation history.
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed by FocusInterpretation.tsx via `useMessages(focusInterpretationMessages)`; `nl` is typed as `typeof en`.
+ * @exports focusInterpretationMessages
+ */
 const en = {
   heading: 'AI interpretation of this placement',
   generate: 'Interpret the tensions of this placement',

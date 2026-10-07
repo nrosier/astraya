@@ -9,6 +9,12 @@
  * not participate in SVG/PNG/PDF export — those keep exporting Astraya's own
  * rendering, unchanged.
  */
+/**
+ * @module AstroChartWheel
+ * @purpose Renders an alternate on-screen natal-wheel visualisation using the third-party `@astrodraw/astrochart` library, as a screen-only alternative to Astraya's own hand-rolled SVG wheel.
+ * @conventions Screen-only: deliberately excluded from SVG/PNG/PDF export since the library draws by mutating a DOM container rather than producing serializable markup; converts `ChartData` via `../chart/astrochart-adapter.js`.
+ * @exports AstroChartWheel
+ */
 import { useEffect, useId, useRef } from 'react';
 import { Chart, type Settings } from '@astrodraw/astrochart';
 import { toAstroChartRadixData } from '../chart/astrochart-adapter.js';

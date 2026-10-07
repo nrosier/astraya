@@ -4,6 +4,12 @@
  * early as possible, before the first paint, to avoid a flash of the wrong theme) and
  * `ThemeToggle.tsx` (reads it into state, writes it back on every click).
  */
+/**
+ * @module ui/theme-dom
+ * @purpose DOM/storage half of the explicit light/dark theme override (#70): reads/writes the stored choice and applies it to the document.
+ * @conventions Deliberately untested/DOM-dependent, split from theme.ts's pure selection logic; shared by main.tsx (applies the stored choice pre-first-paint to avoid a flash of the wrong theme) and ThemeToggle.tsx.
+ * @exports readStoredTheme, writeStoredTheme, applyTheme
+ */
 import { isTheme, type Theme } from './theme.js';
 
 const STORAGE_KEY = 'astraya.theme';

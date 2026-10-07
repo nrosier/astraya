@@ -25,6 +25,12 @@
  * Only the selected object's own data is sent — not the whole chart — and nothing that identifies
  * anyone: no name, date, time or place.
  */
+/**
+ * @module interpretation/focus-context
+ * @purpose Builds the enriched, de-identified context for one selected placement (sign, house, dispositor, ruled houses, aspects) that a Tier-2 "focus" request sends to the model.
+ * @conventions Rulers follow the reader's rulership choice (modern/traditional/both). A planet rules a house when it rules the sign on that house's cusp (intercepted signs give nothing extra). "On an angle" means within ANGLE_ORB_DEG of ASC/MC/DSC/IC by ecliptic longitude. Aspects are the chart's own, computed with its own orb settings, tightest first. A chart with no usable houses (no birth time) leaves house/ruler/angle fields null/[]/false rather than guessing. Only the selected object's own data is included — no name, date, time or place.
+ * @exports ANGLE_ORB_DEG, FocusTransit, buildFocusObjectContext (plus re-exports from focus-context-schema.ts)
+ */
 import type { Aspect } from '../astrology/aspects.js';
 import { bodyById, bodyByKey } from '../astrology/bodies.js';
 import { DEFAULT_RULERSHIP_CHOICE, rulersOf, type RulershipChoice } from '../astrology/rulership.js';

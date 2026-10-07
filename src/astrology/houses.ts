@@ -19,6 +19,13 @@
  * ("equal") — verified empirically, not merely assumed from the letter gap in
  * the alphabet — so it is a legacy alias rather than a distinct system.
  */
+
+/**
+ * @module Houses
+ * @purpose Lists the canonical set of house systems Astraya offers for house-cusp calculation.
+ * @conventions Codes and cusp counts are read directly off a live sweph-wasm instance (swe_house_name/swe_houses_ex2), never transcribed from documentation; display names come from EphemerisProvider.houseSystemName, not hardcoded here; 'E' is excluded as a verified legacy alias of 'A'.
+ * @exports HOUSE_SYSTEMS, houseSystemByCode, houseSystemByKey
+ */
 import type { HouseSystem } from '../ephemeris/types.js';
 
 export interface HouseSystemDefinition {

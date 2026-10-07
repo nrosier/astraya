@@ -22,6 +22,12 @@
  * Menu button and opens as a panel under the header; choosing anything, Escape or changing page
  * closes it. The dropdowns then open in place inside that panel rather than floating over it.
  */
+/**
+ * @module AppNav
+ * @purpose Renders the sticky header's main navigation: a person's chart tabs/dropdowns, the Tools menu, and the Export menu.
+ * @conventions Dropdowns share one `useExclusiveOpen` so only one is open at a time; folds behind a Menu button below 1024px; text comes from co-located `AppNav.messages.ts` via `useMessages()`.
+ * @exports AppNav
+ */
 import { useEffect, useRef, useState } from 'react';
 import { appNavMessages } from './AppNav.messages.js';
 import { useMessages } from './messages.js';

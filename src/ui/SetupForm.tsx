@@ -5,6 +5,12 @@
  * opens itself, and rendering it without one means a mistyped or expired link never has to
  * open IndexedDB first to say so.
  */
+/**
+ * @module SetupForm
+ * @purpose Unauthenticated first-boot form for creating the admin account from the server-log bootstrap link token.
+ * @conventions Rendered outside the Stored local-store context; uses SetupForm.messages.ts for en/nl text via useMessages().
+ * @exports SetupForm
+ */
 import { useState } from 'react';
 import { useMessages } from './messages.js';
 import { useSession } from './session-context.js';

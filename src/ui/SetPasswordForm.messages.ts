@@ -1,6 +1,12 @@
 /**
  * Message catalogue for `SetPasswordForm.tsx` (#158).
  */
+/**
+ * @module SetPasswordForm.messages
+ * @purpose English/Dutch message catalogue for the one-time-link password-set/reset form.
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed via `useMessages()` by the sibling `SetPasswordForm.tsx`.
+ * @exports setPasswordFormMessages
+ */
 const en = {
   heading: 'Set your password',
   missingToken: 'This link is missing its token, so it cannot be used. Ask whoever sent it for a fresh one.',

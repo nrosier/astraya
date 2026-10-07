@@ -3,6 +3,12 @@
  * chart is cast for, and the defaults the form opens on. Kept apart from `HoraryView.tsx` so the
  * parsing — which decides what a typo does — is testable without a DOM.
  */
+/**
+ * @module ui/horary
+ * @purpose Pure logic backing the horary screen (#406): parsing the question-form's text fields into the moment a chart is cast for, plus the form's opening defaults.
+ * @conventions Kept apart from HoraryView.tsx so parsing edge cases (what a typo does) are testable without a DOM.
+ * @exports HoraryFields, HoraryFieldError, ParsedHoraryFields, parseHoraryFields, nowFields, HORARY_HOUSE_SYSTEMS
+ */
 import type { BirthMomentInput } from '../time/types.js';
 import { parseLatitude, parseLongitude } from './place-fields.js';
 

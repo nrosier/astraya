@@ -29,6 +29,13 @@
  * target within a single sample interval, which for these bodies at this
  * step size does not happen.
  */
+
+/**
+ * @module TransitEvents
+ * @purpose Finds exact transit-to-natal aspect events — the moments a transiting body reaches an exact aspect to a fixed natal longitude.
+ * @conventions Hand-rolled sample-then-bisect search (no root-finder exists beyond Sun/Moon) at a fixed DEFAULT_SAMPLE_STEP_DAYS (0.5 days), safe for any body from Sun through Pluto; non-conjunction/opposition aspects have two target longitudes per natal point, symmetric around it.
+ * @exports DEFAULT_SAMPLE_STEP_DAYS, targetLongitudes, findExactTransitAspects
+ */
 import { ASPECTS, DEFAULT_ORB_CONFIG, type AspectDefinition, type OrbConfig } from './aspects.js';
 import type { BodyId, Degrees, EphemerisProvider, JulianDayUT, PositionOptions, Zodiac } from '../ephemeris/types.js';
 

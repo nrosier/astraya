@@ -6,6 +6,12 @@
  * importing a UI module's messages would run the dependency the wrong way. `PersonForm.tsx`
  * imports this file just like any other catalogue and passes the resolved `t` in.
  */
+/**
+ * @module person-form.messages
+ * @purpose Message catalogue (en/nl) for `validateDraft`'s birth-form validation error text (#158).
+ * @conventions Lives beside `person-form.ts` rather than under `src/ui/` even though it's an i18n catalogue — this is domain logic, and a domain module importing a UI-owned catalogue would invert the intended dependency direction; `PersonForm.tsx` consumes it like any other `.messages.ts` file.
+ * @exports personFormValidationMessages
+ */
 const en = {
   nameRequired: 'A name is needed, even a placeholder — it is how you will find this person again.',
 

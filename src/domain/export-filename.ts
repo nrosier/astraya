@@ -3,6 +3,12 @@
  * separately, so a downloaded file always says whose chart it is without the exporter
  * having to ask.
  */
+/**
+ * @module export-filename
+ * @purpose Derives a filename for a chart export from the person and chart kind, so a downloaded file always identifies whose chart it is (#67/#68).
+ * @conventions An empty or punctuation-only display name falls back to the literal `chart` segment rather than producing a bare `-natal.svg`.
+ * @exports deriveExportFilename
+ */
 
 /** Lowercases, strips anything that isn't a filename-safe character, and collapses runs of it into one `-`. */
 function slugify(value: string): string {

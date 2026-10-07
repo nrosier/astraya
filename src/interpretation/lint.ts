@@ -13,6 +13,12 @@
  * near-duplicate detection (that catches whole-text similarity; this catches
  * only the opening).
  */
+/**
+ * @module interpretation/lint
+ * @purpose Enforces the style rules (length, fatalistic phrasing, medical/legal/financial claims, gendered pronouns, repetitive openings, language mismatch) every corpus entry must pass before shipping.
+ * @conventions Every rule is heuristic (keyword/length based, not semantic understanding) so the pass stays deterministic and CI-cheap; human review catches what these can't. Per-entry rules (lintEntry) are independent of the rest of the corpus; the repetitive-openings rule in lintCorpus needs the whole locale's set and skips corpora smaller than MIN_ENTRIES_FOR_OPENING_CHECK. MIN_LENGTH/MAX_LENGTH and the phrase/term lists are stated starting points, not derived facts.
+ * @exports LintRule, LintIssue, MIN_LENGTH, MAX_LENGTH, FATALISTIC_PHRASES, MEDICAL_LEGAL_FINANCIAL_TERMS, containsTermFromWordStart, lintEntry, lintCorpus
+ */
 import type { CorpusEntry, Locale } from './schema.js';
 
 export type LintRule =

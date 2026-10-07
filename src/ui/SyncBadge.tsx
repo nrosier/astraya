@@ -10,6 +10,12 @@
  * the "Local only" warning is discoverable from every screen, not just the ones long enough
  * to scroll past.
  */
+/**
+ * @module SyncBadge
+ * @purpose Always-visible, collapsible badge answering "where does my data live, and is it safe?" — persistence, online, and sync-engine status, present on every route.
+ * @conventions Mounted on every route in App.tsx including routes with no open store; uses SyncBadge.messages.ts and status.messages.ts for en/nl text via useMessages().
+ * @exports SyncBadge
+ */
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useMessages } from './messages.js';
 import { useSession, useSyncEngine } from './session-context.js';

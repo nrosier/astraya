@@ -8,6 +8,13 @@
  * rotation, and clock-skew tolerance are exactly the kind of crypto-correctness
  * code not worth reinventing.
  */
+
+/**
+ * @module oidc
+ * @purpose Authentik/OIDC integration: discovery, server-side authorization-code-to-token exchange, and ID token verification — the browser never sees an access, ID, or refresh token.
+ * @conventions Uses `jose` for signature verification, JWKS rotation, and clock-skew tolerance rather than a hand-rolled JWT check; `loadOidcConfig` returns `null` only for a genuinely unset issuer and throws on any other malformed configuration, since that is a deployment mistake, not a disabled state; discovery documents and JWKS are cached per issuer for the life of the process.
+ * @exports OidcConfig, loadOidcConfig, getDiscovery, exchangeCode, VerifiedIdToken, verifyIdToken, getEndSessionEndpoint
+ */
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 
 export interface OidcConfig {

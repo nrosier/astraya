@@ -55,6 +55,12 @@
  * axis paragraphs carry no factors at all: they're enumerated in full, not
  * selected, so there is nothing a factor would explain.
  */
+/**
+ * @module interpretation/report
+ * @purpose Composes one already-computed ChartData into an ordered set of named report sections, each a list of non-empty paragraphs, ready for a report screen to render.
+ * @conventions A pure, synchronous function of one ChartData only — no ephemeris access, no "now"; current-timing (progressions/solar return) reporting lives in a separate domain/periodic-transit.ts pipeline instead of being forced into this module's ChartData-shaped world. "Aspect patterns" is the only section ranked by the salience rule engine; other sections enumerate in full. Every paragraph carries provenance (its placement, whether its text is corpus or mechanical-fallback, and its salience factors where ranking applies).
+ * @exports ReportSectionId, ParagraphSource, ReportParagraph, ReportSection, Report, assembleReport, reportPlacementKeys
+ */
 import { bodyById, bodyByKey, type BodyDefinition } from '../astrology/bodies.js';
 import { DEFAULT_RULERSHIP_CHOICE, primaryRulerOf, rulersOf, type RulershipChoice } from '../astrology/rulership.js';
 import { dispositorChain, type DispositorChain } from '../astrology/dispositors.js';

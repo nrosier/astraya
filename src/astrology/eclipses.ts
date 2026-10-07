@@ -17,6 +17,13 @@
  * aspects are not counted; orbs for eclipses are conventionally tight because the effect is read
  * from the eclipse's single degree, not from a moving body's approach.
  */
+
+/**
+ * @module Eclipses
+ * @purpose Finds solar and lunar eclipses in a time span and determines their zodiacal degree and contacts to natal chart points.
+ * @conventions Eclipse search delegates to EphemerisProvider's own exact eclipse-finding routines, not an approximation from node proximity; a natal point is "touched" when the eclipse degree or its opposite falls within DEFAULT_CONTACT_ORB_DEG (3°) — conjunction/opposition only, no other aspects.
+ * @exports DEFAULT_CONTACT_ORB_DEG, findEclipses, eclipseContacts
+ */
 import { bodyByKey } from './bodies.js';
 import type {
   Degrees,

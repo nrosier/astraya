@@ -5,6 +5,12 @@
  * is make a record look more complete than it is. A row that shows a name and a date, when
  * the coordinates are missing, invites the user to expect a chart that cannot be cast.
  */
+/**
+ * @module ui/people-list
+ * @purpose Pure logic for how a person reads in the people list: sort order, a one-line summary of what's on record, and whether the resolved birth moment has caveats worth flagging.
+ * @conventions Kept out of the component so it is directly testable; deliberately never overstates a record's completeness (never shows a chart as castable when coordinates are missing); uses people-list.messages.ts via direct catalogue lookup for its i18n text.
+ * @exports ordered, caveated, summary
+ */
 import { formatOffset, resolveMoment } from '../time/resolve.js';
 import { peopleListMessages } from './people-list.messages.js';
 import type { Person } from '../domain/person.js';

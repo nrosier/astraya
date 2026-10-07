@@ -10,6 +10,12 @@
  * orb is also given its exact date, resolved against the real ephemeris
  * since the true solar arc is not perfectly linear in time.
  */
+/**
+ * @module solar-arc-directions
+ * @purpose Computes a solar arc directions chart for a target date (#47): the natal Sun's own progressed arc applied uniformly to every body and angle.
+ * @conventions Mirrors `secondary-progression.ts`'s shape (natal Julian day, one house and one batch position call), but applies the shared solar arc to every body/angle rather than only rotating angles (secondary progression's `'solarArc'` MC method); contacts to the fixed natal chart use `findCrossAspects`, and each found contact is additionally resolved to its exact date against the real ephemeris since the arc is not perfectly linear in time.
+ * @exports computeSolarArcDirections, SolarArcDirectionsData, SolarArcDirectionsOptions, DirectedContact
+ */
 import { findCrossAspects, type Aspect, type OrbConfig } from '../astrology/aspects.js';
 import { BODIES, bodyByKey, bodyById, type BodyCategory } from '../astrology/bodies.js';
 import { ageInYears, mcArc, progressedJulianDay, shiftHouses } from '../astrology/progressions.js';

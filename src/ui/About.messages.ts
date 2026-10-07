@@ -1,6 +1,12 @@
 /**
  * Message catalogue for `About.tsx` (#158).
  */
+/**
+ * @module About.messages
+ * @purpose English/Dutch i18n strings for the About screen (version, privacy, licence, acknowledgements, astrology primer).
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed by About.tsx via `useMessages(aboutMessages)`; `nl` is typed as `typeof en` to keep both locales in parity.
+ * @exports aboutMessages
+ */
 const en = {
   heading: 'About Astraya',
 

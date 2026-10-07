@@ -16,6 +16,13 @@
  * neither technique has competing schools for how the angles should move
  * the way secondary's naibod/solarArc/quotidian split does.
  */
+
+/**
+ * @module MinorProgressions
+ * @purpose Computes tertiary and minor progressions — day-for-lunar-month and lunar-month-for-year substitutions analogous to secondary progression.
+ * @conventions Tertiary progresses one day of ephemeris motion per synodic lunar month of life; minor progresses one lunar month per year of life, built on progressions.ts's ageInYears; both recompute bodies/houses directly at the progressed moment, matching secondary progression's 'quotidian' method since neither technique has competing schools for angle movement.
+ * @exports SYNODIC_MONTH_DAYS, ageInSynodicMonths, minorProgressedJulianDay
+ */
 import { ageInYears } from './progressions.js';
 import type { JulianDayUT } from '../ephemeris/types.js';
 

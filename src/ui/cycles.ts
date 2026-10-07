@@ -3,6 +3,12 @@
  * inputs, and the shape of a result row. Kept apart from `CyclesView.tsx` so it can be tested
  * without a DOM or an ephemeris.
  */
+/**
+ * @module ui/cycles
+ * @purpose Pure logic backing the planetary-cycles screen (#410): the body/aspect presets it offers and the shape of a result row.
+ * @conventions Kept apart from CyclesView.tsx so it is testable without a DOM or an ephemeris.
+ * @exports CYCLE_BODY_KEYS, CYCLE_ASPECT_KEYS, MotionFilter, CyclePreset, CYCLE_PRESETS, CycleRow, filterByMotion, cycleRows, bodyIdOf
+ */
 import { bodyByKey } from '../astrology/bodies.js';
 import type { MutualAspectEvent } from '../astrology/mutual-aspects.js';
 import { SIGNS } from '../astrology/signs.js';

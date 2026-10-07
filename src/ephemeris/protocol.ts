@@ -8,6 +8,13 @@
  * with the engine.
  */
 
+/**
+ * @module ephemeris/protocol
+ * @purpose Defines the message-passing wire protocol between the UI thread and the ephemeris Web Worker, including request/response shapes and error (de)serialization.
+ * @conventions Request/response types are derived from EphemerisProvider via mapped types rather than hand-written, so adding a provider method automatically extends the protocol and fails worker dispatch to compile until handled; errors are flattened to a plain object for structured cloning and rebuilt on the far side with a stitched stack trace.
+ * @exports EphemerisMethod, EphemerisResult, EphemerisRequest, EphemerisResponse, SerializedError, serializeError, deserializeError
+ */
+
 import type { EphemerisProvider } from './types.js';
 import { EphemerisError, type EphemerisErrorContext } from './types.js';
 

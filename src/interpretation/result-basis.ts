@@ -14,6 +14,12 @@
  *
  * This file is imported by the server, so it has no imports and is listed in the Dockerfile.
  */
+/**
+ * @module interpretation/result-basis
+ * @purpose Defines and (de)serializes what a saved AI interpretation was based on and which kind it is, so a saved result's history can describe its origin rather than just say "AI interpretation".
+ * @conventions Every generation records a `kind` plus a small `basis`, both derived from the already-validated request (never from the model or free text), so they are stored as plain metadata rather than encrypted like the prose. Adding a new kind requires updating RESULT_KINDS, ResultBasis, parseBasis here, and the label in src/ui/result-basis-label.ts for both locales. Imported by the server, so deliberately has no imports.
+ * @exports RESULT_KINDS, ResultKind, ResultBasis, isResultKind, kindForMode, parseBasis
+ */
 
 /** The kinds, one per way of asking: the reader's own wording over chosen placements, a whole-chart reading, a single body, a relationship between two charts. */
 export const RESULT_KINDS = ['placements', 'whole-chart', 'focus', 'relationship'] as const;

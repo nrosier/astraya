@@ -11,6 +11,12 @@
  * body stays in `glyphs.ts` (where the drawn artwork it came from lives); this holds the alternates, the choice, and
  * the state the renderers read, held as module state like the symbol class (`symbol-class.ts`) for the same reason.
  */
+/**
+ * @module chart/glyph-variants
+ * @purpose Holds which alternate glyph form (of the two documented drawn shapes for Uranus and Pluto) is selected on this device, in all three symbol classes.
+ * @conventions Only bodies with a documented second historical shape are modelled (Uranus: ♅ "H-with-ball" default vs ⛢ astronomical; Pluto: default orb-crescent-cross vs ♇ PL monogram); held as module-level mutable state with a subscribe/listener pattern, the same convention as `symbol-class.ts` and `glyph-weight.ts`, since a dozen synchronous renderers must all honour the same setting without it being threaded through every call.
+ * @exports VARIANT_DEFAULTS, VARIANT_KEYS, VARIANT_BODIES, ALTERNATE_FORMS, isVariantBody, isVariantKey, getVariantChoice, chosenAlternate, setVariant, setVariantChoice, subscribeVariantChoice; VariantBody, VariantForm, VariantChoice types.
+ */
 export type VariantBody = 'uranus' | 'pluto';
 
 /** One alternate form, in all three symbol classes. */

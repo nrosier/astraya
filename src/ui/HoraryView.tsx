@@ -7,6 +7,12 @@
  * It says whether the chart is fit to be judged and nothing more: reading the answer to the
  * question is the astrologer's work.
  */
+/**
+ * @module HoraryView
+ * @purpose Renders the Horary chart tool screen: casts a chart for the moment/place a question was asked and checks the traditional considerations before judgment against it.
+ * @conventions Needs no saved person or stored data (computed entirely in-browser), so it lives outside `Stored`, like ElectionalView; it reports only whether the chart is fit to be judged, never an answer to the question itself. Reuses the shared `ChartDataView`. Text comes from co-located `HoraryView.messages.ts` via `useMessages()`.
+ * @exports HoraryView
+ */
 import { useState } from 'react';
 import { isRadical } from '../astrology/horary.js';
 import { chartSheetMetaLines } from '../domain/chart-tables.js';

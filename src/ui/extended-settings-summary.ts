@@ -3,6 +3,12 @@
  * what was changed, so a chart on the defaults says nothing and a changed one says what, without opening the card.
  * Pure, so it is tested without a DOM; the words come from the panel's own messages.
  */
+/**
+ * @module ui/extended-settings-summary
+ * @purpose Determines which Extended settings (#442) differ from their defaults, so the settings trigger button can summarize what changed without opening the panel.
+ * @conventions Pure, tested without a DOM; the actual wording comes from the Extended settings panel's own messages, keyed by the returned ChangedSetting values.
+ * @exports ChangedSetting, changedSettings, sameSettings
+ */
 import { DEFAULT_EXTENDED_SETTINGS, type ExtendedSettings } from '../chart/extended-settings.js';
 
 export type ChangedSetting =

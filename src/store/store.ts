@@ -18,6 +18,13 @@
  *  3. **A record reaches the database before the UI is told it happened.** The alternative
  *     is an interface that reports a saved person the store does not have.
  */
+
+/**
+ * @module store/store
+ * @purpose Assembles the IndexedDB layer, the op-log, the fold and the HLC clock into the single `Store` object the UI talks to — the one place in the stack where impurity (database I/O, device id generation, change notification) is concentrated.
+ * @conventions State is always a fold of records, never edited in place; mutations are serialised through a tail-promise queue because the in-memory `Log` is an immutable value read at the start of a mutation and written at the end, so overlapping mutations would race; a record is written durably before the UI is ever told it happened; snapshots are rewritten only every `SNAPSHOT_EVERY` records and best-effort on failure, since a snapshot is only a cache and `resume` can always rebuild; a purge (#308) commits its `PURGED_FIELD` marker through the ordinary fold path first, then physically strips the entity's other records from the log and database.
+ * @exports SyncCursor, ReceivedSummary, Store, StoreOptions, openStore
+ */
 import {
   DEVICE_ID_KEY,
   allRecords,

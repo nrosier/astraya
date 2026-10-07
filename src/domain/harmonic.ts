@@ -9,6 +9,12 @@
  * including the doc comment on which Varga convention is used and why — this module only wires
  * that transform into a full `ChartData`.
  */
+/**
+ * @module harmonic
+ * @purpose Computes a harmonic or Vedic Varga chart (e.g. D9 Navamsha) from one person's natal chart (#170).
+ * @conventions Synthetic chart, not a comparison, so reuses the single-chart engine on positions/houses already transformed by `astrology/harmonics.ts`; `n` must be a positive integer, with `n=1` reproducing the natal chart (whole-sign houses in place of whatever system the natal chart used).
+ * @exports computeHarmonic, HarmonicData
+ */
 import { DEFAULT_ORB_CONFIG, findAspects, subjectsFrom, type Aspect, type OrbConfig } from '../astrology/aspects.js';
 import { bodyByKey, bodyById, type BodyCategory } from '../astrology/bodies.js';
 import type { EssentialDignities } from '../astrology/dignities.js';

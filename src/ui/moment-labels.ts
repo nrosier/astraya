@@ -5,6 +5,12 @@
  * copies of the same user-facing wording drift, and the drift is invisible: nobody has both
  * screens open at once to notice that one of them describes an ambiguous hour differently.
  */
+/**
+ * @module ui/moment-labels
+ * @purpose Shared user-facing wording for a resolved birth moment's provenance and warnings, used by both the birth-data form and the standalone when-and-where panel so the two screens never describe the same thing differently.
+ * @conventions Plain English constants (not a *.messages.ts en/nl pair) keyed by time/types.js's ResolvedMoment/TimeWarningCode unions.
+ * @exports PROVENANCE, NEEDS_A_DECISION
+ */
 import type { ResolvedMoment, TimeWarningCode } from '../time/types.js';
 
 /** Provenance in the user's words, not ours. */

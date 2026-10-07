@@ -37,6 +37,13 @@
  * - **No leading planet** is reported for a Locomotive: only a Bucket returns a handle, because
  *   which planet leads the motion needs a convention this module does not state.
  */
+
+/**
+ * @module JonesShapes
+ * @purpose Classifies a chart's overall body distribution into Marc Edmund Jones's seven chart shapes (bundle, bowl, locomotive, bucket, seesaw, splay, splash).
+ * @conventions Uses only the traditional ten planets (JONES_BODY_KEYS); single-arc shapes (bundle/bowl/locomotive) use span thresholds at 120/180/240 degrees (Jones's own thirds/half-circle breakpoints); group splits beyond that use a sextile (60°) SEPARATING_GAP as this module's own documented, non-universal convention.
+ * @exports JONES_BODY_KEYS, jonesBodyPositions, jonesShapeOf
+ */
 import type { BodyId, Degrees } from '../ephemeris/types.js';
 import { bodyByKey } from './bodies.js';
 

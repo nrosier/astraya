@@ -11,6 +11,12 @@
  * report section, so it fails the build the same way a broken calculation
  * would.
  */
+/**
+ * @module interpretation/loader
+ * @purpose Validates and combines the per-locale corpus arrays into one flat, typed corpus, enforcing that every key exists in both en and nl.
+ * @conventions This is the single place en/nl parity is enforced; lint/dedupe passes and the generator work one locale at a time and rely on this as the final gate. Failure is loud — one aggregated Error listing every problem across both locales, rather than a partial corpus with silent gaps.
+ * @exports CorpusByLocale, loadCorpus
+ */
 import type { CorpusEntry, CorpusValidationIssue, Locale } from './schema.js';
 import { CORPUS_LOCALES, validateCorpusEntries } from './schema.ts';
 

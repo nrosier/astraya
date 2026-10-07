@@ -11,6 +11,12 @@
  * ones, so this screen reuses `ChartDataView` wholesale (the same way `SharedChartView.tsx`
  * does) rather than calling the multi-wheel renderer directly.
  */
+/**
+ * @module CompositeView
+ * @purpose Renders the composite (midpoint) chart screen between a saved person and a second, in-screen-picked partner.
+ * @conventions Uses the near-arc midpoint convention for both positions and house cusps (`domain/composite.js`), not the time/space-midpoint "Davison" method; reuses `ChartDataView`/`ReportView` wholesale since the composite is a single synthetic `ChartData`. Text comes from co-located `CompositeView.messages.ts` via `useMessages()`.
+ * @exports CompositeView
+ */
 import { useEffect, useMemo, useState } from 'react';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { computeComposite, type CompositeData } from '../domain/composite.js';

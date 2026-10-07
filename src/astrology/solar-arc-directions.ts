@@ -10,6 +10,13 @@
  * entire point of the technique — a directed Mars can conjunct a natal
  * Venus, years before either would meet it any other way.
  */
+
+/**
+ * @module SolarArcDirections
+ * @purpose Carries every natal body and angle forward by the secondary-progressed Sun's true solar arc, and finds exact contacts to the (unmoving) natal chart.
+ * @conventions Reuses mcArc('solarArc', ...) from progressions.ts for the shared arc formula, but unlike secondary progression's own solarArc MC method, applies the arc to every body, not just the angles; exactness is found by bisection against the real ephemeris, since the true Sun's daily motion is not perfectly linear.
+ * @exports directPositions, directedSubjects, fixedNatalSubjects, arcsToExactness, findExactnessJd
+ */
 import { type AspectSubject } from './aspects.js';
 import { bodyByKey, type BodyCategory } from './bodies.js';
 import { TROPICAL_YEAR_DAYS, ageInYears, mcArc, progressedJulianDay } from './progressions.js';

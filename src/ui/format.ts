@@ -9,6 +9,12 @@
  * `chart-tables.ts` and `multi-wheel.ts` can call in too without taking on a UI/React dependency
  * or a `localStorage` read of their own.
  */
+/**
+ * @module ui/format
+ * @purpose Locale-aware display formatting (#158) for values that aren't fixed strings — dates and geographic coordinates — complementing messages.ts's fixed-string i18n.
+ * @conventions Framework-free like src/domain and src/chart: every function takes Locale explicitly rather than reading locale.ts's store, so non-UI modules (chart-tables.ts, multi-wheel.ts) can call in without a React/localStorage dependency.
+ * @exports todayInputValue, formatCoordinate
+ */
 import type { Locale } from '../interpretation/schema.js';
 
 /**

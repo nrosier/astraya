@@ -1,6 +1,12 @@
 /**
  * Message catalogue for `HarmonicView.tsx` (#158).
  */
+/**
+ * @module HarmonicView.messages
+ * @purpose English/Dutch i18n strings for the Harmonic & Varga charts screen, including the divisional-chart preset picker.
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed by HarmonicView.tsx via `useMessages(harmonicViewMessages)`; `nl` is typed as `typeof en`.
+ * @exports harmonicViewMessages
+ */
 const en = {
   personFallback: 'Person',
   thisPerson: 'This person',

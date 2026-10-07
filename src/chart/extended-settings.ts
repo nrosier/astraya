@@ -10,6 +10,12 @@
  * here, rather than inline in `ChartView`, means neither that component nor the
  * panel itself needs to know the shape of any of the three destinations.
  */
+/**
+ * @module chart/extended-settings
+ * @purpose Defines the Extended settings panel's single settings bag (`ExtendedSettings`) and the pure split functions that derive each of its three consumers' own option shapes from it.
+ * @conventions One settings object is split three ways rather than kept as three separate pieces of UI state: `toChartCalculationOptions` feeds `computeChartData`, `toPointVisibilityOptions` feeds `chart-tables.ts`'s display filtering, and `toSignWedgeStyle` feeds the wheel's cosmetic fill — keeping the split here means neither the panel component nor `ChartView` needs to know any destination's shape.
+ * @exports DEFAULT_EXTENDED_SETTINGS, toChartCalculationOptions, toPointVisibilityOptions, toSignWedgeStyle; ExtendedSettings type.
+ */
 import { DEFAULT_ORB_CONFIG, type OrbConfig } from '../astrology/aspects.js';
 import type { ChartCalculationOptions } from '../domain/chart-compute.js';
 import type { PointVisibilityOptions } from '../domain/chart-tables.js';

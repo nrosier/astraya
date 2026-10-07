@@ -17,6 +17,12 @@
  * — orb and aspect key are already on every `Aspect`, so no separate
  * bookkeeping is needed to support a future UI control for either.
  */
+/**
+ * @module chart/aspect-web
+ * @purpose Renders computed aspects as chords across the wheel's inner circle, including a cross-ring variant for bi-/tri-wheels.
+ * @conventions One `<line>` per `Aspect` at a fixed radius (the aspect circle, not wherever glyph collision-spreading moved a body); styling (aspect key, applying/separating, tight-orb) is carried only as CSS classes, never inline colour; each chord is wrapped in a `<g>` with a wide invisible hit line for clickability and `data-aspect-*`/`data-ring-*` attributes for click-to-isolate.
+ * @exports filterAspectsForDisplay, renderAspectWebSvg, renderCrossRingAspectWebSvg, TIGHT_ORB_DEG; AspectDisplayFilter type.
+ */
 import type { AspectFamily } from '../astrology/aspects.js';
 import type { Aspect } from '../astrology/aspects.js';
 import { bodyById } from '../astrology/bodies.js';

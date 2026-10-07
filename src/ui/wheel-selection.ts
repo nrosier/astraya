@@ -3,6 +3,12 @@
  * built from its placement so the reader sees *which* placement the text below belongs to. Pure and
  * locale-aware, kept apart from the component so both languages can be tested without a DOM.
  */
+/**
+ * @module ui/wheel-selection
+ * @purpose Builds the heading text for interpretation entries shown under a wheel click-selection (#415), naming which placement the text below belongs to.
+ * @conventions Pure and locale-aware, kept apart from the component so both en/nl wording is testable without a DOM; names come from astro-names.messages.ts.
+ * @exports SelectionHeadingLabels, placementHeading, SELECTION_TEXT_LIMIT
+ */
 import type { CorpusPlacement, DignityState, Locale } from '../interpretation/schema.js';
 import { SIGNS } from '../astrology/signs.js';
 import { aspectDisplayName, bodyDisplayName, signDisplayName } from './astro-names.messages.js';

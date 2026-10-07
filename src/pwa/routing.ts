@@ -12,6 +12,13 @@
  * Keep the two in sync by hand if the path ever changes.
  */
 
+/**
+ * @module pwa/routing
+ * @purpose Classify an incoming service-worker request into a caching strategy, as a pure function so the decision logic is unit-testable without a real worker.
+ * @conventions `bypass` is the only safe default for anything unrecognised, cross-origin requests, `/api/`, and the OIDC callback path (never cached, since its query string carries a single-use auth code, #383); the OIDC callback path is hardcoded here (duplicating `src/ui/oidc-pkce.ts`) because this module is bundled into the service worker, which must never import `src/ui/`.
+ * @exports classify, Strategy, RouteRequest
+ */
+
 export type Strategy = 'bypass' | 'ephemeris' | 'shell-asset' | 'shell-navigate';
 
 /** Matches `oidc-pkce.ts`'s `OIDC_CALLBACK_PATH` — never cache this: the query string carries a single-use OAuth authorization code and state, which must never land in durable Cache Storage (#383). */

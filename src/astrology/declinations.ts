@@ -16,6 +16,13 @@
  * bound to the ecliptic, can never itself go out of bounds; the Moon,
  * planets, and points with ecliptic latitude can.
  */
+
+/**
+ * @module Declinations
+ * @purpose Computes parallels, contraparallels, and out-of-bounds declination conditions between bodies.
+ * @conventions A parallel is near-equal declination (the equatorial analogue of a conjunction); a contraparallel is near-opposite declination magnitude (the analogue of an opposition); "out of bounds" means a declination more extreme than the Sun's own maximum (the obliquity of the ecliptic).
+ * @exports isParallel, isContraparallel, isOutOfBounds, declinationContacts, outOfBoundsBodies
+ */
 import type { BodyId, Degrees } from '../ephemeris/types.js';
 
 /** Two bodies at (near enough) the same declination. */

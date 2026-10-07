@@ -1,3 +1,9 @@
+/**
+ * @module App
+ * @purpose Top-level application shell: hash-based routing between every screen, the sticky header (account/sync/language/theme controls), and the lazy-loading boundary for non-landing screens.
+ * @conventions Hash routing via `parseRoute()`/`route.js` rather than a router library; the ten person-scoped screens plus AdminPanel/export-builder/corpus admin screens are behind `lazy(() => import(...))` per the bundle-size budget (#338); `Stored` gates routes needing the local IndexedDB store.
+ * @exports App, HomeRedirect
+ */
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { registerServiceWorker } from '../pwa/register.js';
 import { startWarming } from '../pwa/warm-status.js';

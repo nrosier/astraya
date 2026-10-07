@@ -18,6 +18,12 @@
  * Sync itself arrives in M8. Its states are modelled now so the indicator does not have to
  * be redesigned around them later; until then the store reports `off`.
  */
+/**
+ * @module ui/status
+ * @purpose Decides what the sync-status indicator says and why (#101): computes a Status (tone/label/detail/action) from sync/persistence/pending/quarantine state, so the user can always tell whether their data exists anywhere but this device.
+ * @conventions Pure functions taking an explicit `t` of status.messages.ts's shape rather than reading locale themselves; deliberately avoids showing "Offline" to a signed-out user and avoids "Synced" while any local change is unacknowledged; a failing sync escalates tone only after staying stale past LOUD_AFTER_MS, to avoid training users to ignore transient blips.
+ * @exports SyncState, StatusInput, Tone, Status, ago, describeStatus
+ */
 import type { statusMessages } from './status.messages.js';
 import type { Persistence } from '../store/persist.js';
 

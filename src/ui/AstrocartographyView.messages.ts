@@ -1,6 +1,12 @@
 /**
  * Message catalogue for `AstrocartographyView.tsx` (#158).
  */
+/**
+ * @module AstrocartographyView.messages
+ * @purpose English/Dutch i18n strings for the Astrocartography screen: line-type/body legends, relocation controls, and export labels.
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed by AstrocartographyView.tsx via `useMessages(astrocartographyViewMessages)`; `nl` is typed as `typeof en`.
+ * @exports astrocartographyViewMessages
+ */
 const en = {
   personFallback: 'Person',
   astrocartographyFallback: 'Astrocartography',

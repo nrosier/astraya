@@ -22,6 +22,13 @@
  * The Ascendant and Midheaven are not bodies and the aspect search is body to body, so contacts to
  * the angles are not ranked here; they would outrank everything but the luminaries.
  */
+
+/**
+ * @module SynastryImportance
+ * @purpose Ranks synastry (cross-chart) aspect contacts by importance for display ordering, without altering what the aspect search found.
+ * @conventions Weighting follows synastry practice: luminaries weighted highest, then personal/social/outer planets, then minor points; aspect weight is hard (1.0) > soft (0.7) > minor (0.4); orb factor is 1 − orb/limit; angles (Ascendant/Midheaven) are not ranked since the aspect search is body-to-body only.
+ * @exports bodyWeight, synastryAspectWeight, synastryImportance, rankSynastryAspects
+ */
 import { DEFAULT_ORB_CONFIG, orbFor, type Aspect, type OrbConfig } from './aspects.js';
 import { bodyById, type BodyCategory } from './bodies.js';
 

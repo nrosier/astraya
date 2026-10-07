@@ -12,6 +12,12 @@
  * bootstrap token already establishes over a log line, here over HTTP since the
  * admin is already signed in.
  */
+/**
+ * @module AdminPanel
+ * @purpose Renders the admin user-management screen (create/disable/enable/reset-password/change-role/delete) and the separate AI-customized interpretation usage report screen.
+ * @conventions Server enforces the real role check (super-admin vs admin vs user); this component only reads `useSessionUserOrUndefined()` to decide which controls to render. Text comes from co-located `AdminPanel.messages.ts` via `useMessages()`.
+ * @exports AdminPanel, AdminUsagePanel
+ */
 import { useEffect, useState } from 'react';
 import {
   createUser,

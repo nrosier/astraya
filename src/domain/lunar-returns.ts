@@ -4,6 +4,12 @@
  * the Sun, so this returns a list rather than a single chart. Each return is
  * cast at a chosen location (defaulting to the birthplace, overridable).
  */
+/**
+ * @module lunar-returns
+ * @purpose Computes every lunar return chart within a period (#49) — the Moon returns to its natal longitude roughly every 27.3 days, so this returns a list rather than one chart.
+ * @conventions Each return is cast at a chosen location (default birthplace, overridable); contacts to the fixed natal chart use `fixedSubjects`/`subjectsFrom`, the same natal/transiting split other cross-chart modules use.
+ * @exports computeLunarReturns, LunarReturnsData, LunarReturnChart, LunarReturnsOptions
+ */
 import { findCrossAspects, fixedSubjects, subjectsFrom, type Aspect, type OrbConfig } from '../astrology/aspects.js';
 import { BODIES, bodyById, type BodyCategory } from '../astrology/bodies.js';
 import { lunarReturnsInPeriod } from '../astrology/solar-lunar-returns.js';

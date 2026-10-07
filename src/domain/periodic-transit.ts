@@ -42,6 +42,12 @@
  * layer that has a locale to ask for, the same separation
  * `ReportView.tsx` already keeps from `report.ts`.
  */
+/**
+ * @module periodic-transit
+ * @purpose Builds the daily/weekly/monthly/yearly periodic transit forecast against a natal chart (#207) — "what's happening in the sky right now" at four different grains.
+ * @conventions Follows the natal/transiting split `computeTransit` models (`fixedSubjects` for natal, real speed for transiting); daily uses in-orb Moon aspects plus exact-today events/stations, weekly/monthly use exact-aspect search excluding the Moon (too fast to be meaningful at that grain), yearly delegates to `computeSolarReturn`/`computeDemibirthday`; produces structured events only — turning an event into a sentence is `interpretation/compose.ts`'s job.
+ * @exports computePeriodicTransitForecast, PeriodicTransitForecast, PeriodicTransitPeriods, PeriodicTransitOptions, DailyTransitForecast, WeeklyTransitForecast, MonthlyTransitForecast, YearlyTransitForecast
+ */
 import { findCrossAspects, fixedSubjects, subjectsFrom, type Aspect, type OrbConfig } from '../astrology/aspects.js';
 import { BODIES, bodyById, bodyByKey, type BodyCategory } from '../astrology/bodies.js';
 import { houseOf } from '../astrology/emphasis.js';

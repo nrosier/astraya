@@ -12,6 +12,13 @@
  * `test/server-corpus-overrides.test.ts` already asserts those arrays stay in sync, and
  * `test/server-corpus-candidates.test.ts` asserts these do too.
  */
+
+/**
+ * @module corpus-candidates
+ * @purpose Data-access layer for the pending-candidate queue of bulk-generated interpretation-corpus text, backed by the `corpus_candidates` table.
+ * @conventions Only `import type` is ever used from `src/interpretation/schema.ts`, since the server runs raw TypeScript under Node's native type stripping with no bundler to resolve that module's `.js`-suffixed specifiers; the literal unions here duplicate `schema.ts`'s real exports for the same reason and are kept in sync by `test/server-corpus-candidates.test.ts`. Accepting a candidate deletes its row and calls `upsertCorpusOverride` so there is exactly one "how does text become visible" mechanism.
+ * @exports LOCALES, TIERS, CANDIDATE_SOURCES, TRIAGE_SIGNALS, CANDIDATE_STATUSES, listCorpusCandidates, importCorpusCandidates, decideCorpusCandidates
+ */
 import { randomUUID } from 'node:crypto';
 import type { Database } from './db.ts';
 import { upsertCorpusOverride } from './corpus-overrides.ts';

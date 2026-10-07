@@ -7,6 +7,12 @@
  * in-screen picker here is the harmonic number rather than a second person: either a named Varga
  * preset (`VARGA_PRESETS`) or any positive integer, per the issue's "N selectable" ask.
  */
+/**
+ * @module HarmonicView
+ * @purpose Renders the Harmonic & Varga (divisional) charts screen for a saved person: a chosen harmonic multiplies every longitude by a whole number and rebuilds whole-sign houses from the multiplied Ascendant.
+ * @conventions A single synthetic chart derived from one natal chart (not a comparison), so it reuses `ChartDataView` wholesale like CompositeView/DraconicView; the in-screen picker is a named Varga preset (`VARGA_PRESETS`) or any positive integer. Text comes from co-located `HarmonicView.messages.ts` via `useMessages()`.
+ * @exports HarmonicView
+ */
 import { useEffect, useMemo, useState } from 'react';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { VARGA_PRESETS } from '../astrology/harmonics.js';

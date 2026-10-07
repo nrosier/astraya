@@ -11,6 +11,12 @@
  * Between the two, at most once ever per device: the adoption prompt (#109), which
  * `signIn` puts this panel into instead of completing the switch on its own.
  */
+/**
+ * @module AccountPanel
+ * @purpose Renders the sign-in/sign-out control mounted in the sticky app header, plus the one-time account-adoption prompt and local-data-removal flow.
+ * @conventions Mounted globally alongside SyncBadge; reads session state via `useSession()`/`session-context.js`; text comes from co-located `AccountPanel.messages.ts` via `useMessages()`.
+ * @exports AccountPanel
+ */
 import { useEffect, useRef, useState } from 'react';
 import { removeAccountData, useSession } from './session-context.js';
 import { getOidcConfig } from '../sync/auth-client.js';

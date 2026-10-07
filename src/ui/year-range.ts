@@ -2,6 +2,11 @@
  * The year range the shipped ephemeris data covers, and the clamp for a year typed into a
  * range field (shared by the planetary-cycles and eclipse screens).
  */
+/**
+ * @module ui/year-range
+ * @purpose Defines the year range the shipped ephemeris data covers and clamps a typed year into it, shared by the planetary-cycles and eclipse screens.
+ * @exports MIN_EPHEMERIS_YEAR, MAX_EPHEMERIS_YEAR, clampEphemerisYear
+ */
 
 /** The shipped ephemeris data (`sepl_18` and friends) covers 1800 to 2400. */
 export const MIN_EPHEMERIS_YEAR = 1800;

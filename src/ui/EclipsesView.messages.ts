@@ -1,4 +1,10 @@
 /** Message catalogue for `EclipsesView.tsx` (#404). */
+/**
+ * @module EclipsesView.messages
+ * @purpose English/Dutch i18n strings for the Eclipses tool screen: search form, eclipse-type/kind labels, and natal-contact wording.
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed by EclipsesView.tsx via `useMessages(eclipsesViewMessages)`; `nl` is typed as `typeof en`.
+ * @exports eclipsesViewMessages
+ */
 const en = {
   heading: 'Eclipses',
   hint: 'Solar and lunar eclipses from the ephemeris, with the degree each falls at. Choose a person to see which of their natal points an eclipse touches — within 3° of the eclipse degree or of the degree opposite it.',

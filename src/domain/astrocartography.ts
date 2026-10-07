@@ -8,6 +8,12 @@
  * small enough (one extra `houses()` call) to piggyback rather than earn its
  * own domain module.
  */
+/**
+ * @module astrocartography
+ * @purpose Computes astrocartography (ACG) lines, Local Space lines, and relocated houses for a natal chart (#171).
+ * @conventions Pure async `(inputs, provider, options) => Promise<StructuredData>`, no rendering; ARMC is sampled at longitude 0 to avoid the Placidus polar-house fallback.
+ * @exports TRADITIONAL_ACG_BODY_IDS, EXTENDED_ACG_BODY_IDS, computeAstrocartography, AstrocartographyOptions, AstrocartographyData, AcgLine
+ */
 import {
   horizonLine,
   localSpaceLine,

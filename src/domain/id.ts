@@ -14,6 +14,12 @@
  * These are not secrets and must not be treated as unguessable capabilities: the
  * server authorises by user, not by id (#80).
  */
+/**
+ * @module id
+ * @purpose Generates and validates record identifiers for people and charts in the local-first op-log.
+ * @conventions Ids are generated on-device (never server-assigned) using 80 bits of CSPRNG randomness, base32-encoded over 5-bit groups into a 16-character string prefixed by entity type (`p-`/`c-`); ids are not secrets/capabilities — the server authorises by user, not by id.
+ * @exports newId, isId, isPersonId, isChartId, IdPrefix
+ */
 const ALPHABET = 'abcdefghijklmnopqrstuvwxyz234567';
 
 /** A prefix, so an id is legible in a log line and a mistyped reference is obvious. */

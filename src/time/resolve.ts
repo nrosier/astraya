@@ -11,6 +11,13 @@
  * delta-T, leap seconds and the calendar flag stay with Swiss Ephemeris rather
  * than being reimplemented here. See `src/time/julian.ts`.
  */
+
+/**
+ * @module time/resolve
+ * @purpose Resolve a stated civil birth moment to a UTC offset, with provenance and any ambiguity surfaced rather than silently resolved.
+ * @conventions A manual offset override always wins; otherwise tzdb is consulted at the approximate instant, falling back to Local Mean Time before standard time existed (per `useLocalMeanTime`); DST overlaps/gaps and zone-boundary disagreements are reported as warnings, never guessed away.
+ * @exports resolveMoment, resolveCalendar, formatOffset
+ */
 import {
   isFixedOffsetZone,
   localMeanTimeOffsetMinutes,

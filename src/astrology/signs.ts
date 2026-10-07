@@ -7,6 +7,13 @@
  * partition — it is the longitude itself (already ayanamsa-shifted by the
  * engine) that differs, not the sign boundaries.
  */
+
+/**
+ * @module Signs
+ * @purpose Defines the 12 tropical zodiac signs as a pure partition of ecliptic longitude, with element/modality classification.
+ * @conventions Each sign spans exactly 30 degrees starting from 0 Aries, definitional rather than ephemeris-computed; sidereal placements use the same partition since only the longitude itself (already ayanamsa-shifted by the engine) differs, not the sign boundaries.
+ * @exports SIGN_SPAN, SIGNS, signIndex, signOf, degreesInSign, oppositeSign
+ */
 import type { Degrees } from '../ephemeris/types.js';
 
 export type Element = 'fire' | 'earth' | 'air' | 'water';

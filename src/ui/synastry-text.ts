@@ -12,6 +12,12 @@
  * A body paired with itself (A's Venus with B's Venus) has no corpus entry, so it keeps the
  * mechanical sentence, which is symmetrical.
  */
+/**
+ * @module ui/synastry-text
+ * @purpose Resolves the interpretation text for one Synastry aspect row (#422): the reviewed `synastry-aspect` corpus entry when one exists, else the mechanical fallback sentence.
+ * @conventions Corpus entries store each body pair once in alphabetical key order and are written from the first body's owner's perspective; since a Synastry row is ordered by person (A=this screen's person, B=partner) rather than alphabetically, this resolves which side ("a"/"b"/undefined for fallback) the found entry's "you" actually refers to.
+ * @exports SynastryRow, SynastryText, synastryText
+ */
 import { composeFallbackText, findCorpusEntry } from '../interpretation/compose.js';
 import type { CorpusEntry, CorpusPlacement, Locale } from '../interpretation/schema.js';
 

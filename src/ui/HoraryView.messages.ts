@@ -1,4 +1,10 @@
 /** Message catalogue for `HoraryView.tsx` (#406). */
+/**
+ * @module HoraryView.messages
+ * @purpose English/Dutch i18n strings for the Horary chart tool screen: the casting form and the traditional considerations-before-judgment list.
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed by HoraryView.tsx via `useMessages(horaryViewMessages)`; `nl` is typed as `typeof en`.
+ * @exports horaryViewMessages
+ */
 const en = {
   heading: 'Horary chart',
   hint: 'Cast a chart for the moment and place a question was asked, and check the traditional considerations before judgment. This tells you whether the chart is fit to be judged; it does not answer the question.',

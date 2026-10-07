@@ -1,6 +1,12 @@
 /**
  * Message catalogue for `AccountPanel.tsx` (#158).
  */
+/**
+ * @module AccountPanel.messages
+ * @purpose English/Dutch i18n strings for sign-in/sign-out, account adoption, and local-data-removal UI.
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed by AccountPanel.tsx via `useMessages(accountPanelMessages)`; `nl` is typed as `typeof en`.
+ * @exports accountPanelMessages
+ */
 const en = {
   oneChange: '1 change',
   changesCount: (n: string) => `${n} changes`,

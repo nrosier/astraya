@@ -13,6 +13,13 @@
  * single distance check catches a body in any hard aspect to a midpoint,
  * not only an exact conjunction.
  */
+
+/**
+ * @module Midpoints
+ * @purpose Computes midpoints between bodies, midpoint trees, and 90-degree dial projections for midpoint analysis.
+ * @conventions The conventional midpoint is the near one — half of the shorter arc, per Ebertin's cosmobiology — not the naive (a+b)/2; the 90-degree dial projects longitude mod 90 so conjunction/square/opposition to a midpoint collapse to the same dial position.
+ * @exports midpointOf, oppositeMidpointOf, allMidpoints, dialPosition, midpointTree
+ */
 import type { BodyId, Degrees } from '../ephemeris/types.js';
 
 function norm360(degrees: Degrees): Degrees {

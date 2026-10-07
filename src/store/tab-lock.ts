@@ -10,6 +10,13 @@
  * is read-only until the writer tab closes (or itself gives up the lock).
  */
 
+/**
+ * @module store/tab-lock
+ * @purpose Ensures exactly one browser tab of the same origin is allowed to write to the store at a time (#311), using the Web Locks API, so two tabs cannot mint colliding HLCs from their independent in-memory clocks.
+ * @conventions Requests an exclusive lock with `ifAvailable: true` so a non-writer tab learns immediately that it is read-only instead of queueing; falls back to always-writable when `navigator.locks` is unavailable (older browsers, test environments), since that is today's existing behaviour rather than a new risk.
+ * @exports TabLock, acquireWriteLock
+ */
+
 export interface TabLock {
   /** False when another tab already holds this lock. */
   readonly writable: boolean;

@@ -6,6 +6,12 @@
  * secondary progression itself, used the way a solar return chart is used
  * but roughly monthly instead of yearly.
  */
+/**
+ * @module progressed-lunar-return
+ * @purpose Computes the progressed lunar return chart for a target date (#50): the most recent moment the real transiting Moon crossed the secondary-progressed Moon's position as of that date.
+ * @conventions Marks the start of the current "progressed lunar month", a finer-grained cycle than year-scale secondary progression, used the way a solar return chart is used but roughly monthly; contacts to the fixed natal chart use `fixedSubjects`/`subjectsFrom`.
+ * @exports computeProgressedLunarReturn, ProgressedLunarReturnData, ProgressedLunarReturnOptions
+ */
 import { findCrossAspects, fixedSubjects, subjectsFrom, type Aspect, type OrbConfig } from '../astrology/aspects.js';
 import { BODIES, bodyById, type BodyCategory } from '../astrology/bodies.js';
 import { progressedMoonLongitude, progressedLunarReturnOnOrBefore } from '../astrology/planetary-returns.js';

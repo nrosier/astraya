@@ -8,6 +8,12 @@
  * keeps it in `localStorage`, loads it at start-up and gives React a hook. A change reaches the other
  * tabs through the browser's `storage` event.
  */
+/**
+ * @module ui/symbol-setting
+ * @purpose Device preference (#419) for which class of symbols charts/tables draw: hand-drawn glyphs (default), Unicode characters, or plain three-letter text.
+ * @conventions Device preference stored in localStorage, never synced; applied immediately at module load, before any screen draws a symbol, and propagated cross-tab via the `storage` event; delegates applied state to chart/symbol-class.js.
+ * @exports SYMBOL_CLASS_KEY, readSymbolClass, writeSymbolClass, useSymbolClass
+ */
 import { useCallback, useSyncExternalStore } from 'react';
 import {
   DEFAULT_SYMBOL_CLASS,

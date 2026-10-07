@@ -18,6 +18,12 @@
  * or cross-ring, touching one of them (the same "focus plus its connections" rule `body` and
  * `sign` already use, just seeded with a whole ring's bodies instead of one or a sign's worth).
  */
+/**
+ * @module ui/wheel-interaction
+ * @purpose Click-to-isolate interaction logic shared by every chart wheel (natal, bi-wheels, ring legends — #400/#412/#418/#448): determines what was clicked and dims everything else in the drawn SVG.
+ * @conventions Reads only the wheel's own markup data-attributes (data-body, data-ring, data-sign, data-aspect-body-a/b, data-ring-legend) rather than the underlying chart data, so one implementation serves every wheel type; applies classes directly to injected DOM (not React state) since the wheel markup is a raw string, not React elements.
+ * @exports aspectKeyFor, selectionKeyForTarget, applyIsolation, WheelIsolation, useWheelIsolation
+ */
 import { useEffect, useRef, useState } from 'react';
 import { bodyId } from '../chart/body-id.js';
 

@@ -18,6 +18,13 @@
  * direct/retrograde/direct triple a retrograde loop produces) are weeks to months apart, never
  * two inside one sample interval.
  */
+
+/**
+ * @module MutualAspects
+ * @purpose Finds exact aspects between two moving bodies (planetary cycles independent of any natal chart), such as Jupiter-Saturn conjunctions or Venus's inferior conjunctions.
+ * @conventions Sample-then-bisect search with both bodies re-queried at every step since the target itself is moving; sample step is chosen from the faster of the two bodies (STEP_DAYS_BY_BODY_KEY); search is capped at MAX_MUTUAL_SAMPLES.
+ * @exports MAX_MUTUAL_SAMPLES, defaultSampleStepDays, findMutualAspects
+ */
 import { ASPECTS, type AspectDefinition } from './aspects.js';
 import type { BodyId, Degrees, EphemerisProvider, JulianDayUT, PositionOptions, Zodiac } from '../ephemeris/types.js';
 

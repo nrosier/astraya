@@ -10,6 +10,13 @@
  * Erasing rows already written to disk, though, does need to decrypt at-rest ciphertext,
  * exactly as `deletion-impact.ts`'s preview already does.
  */
+
+/**
+ * @module purge
+ * @purpose Server-side right-to-erasure support: records a permanent per-user deny-list of purged `(entity, entityId)` pairs and erases their already-stored op rows the moment a purge marker op lands.
+ * @conventions Another deliberate, narrow exception to ADR 0002's opaque-relay rule, in the same category as `deletion-impact.ts`: push-time parsing of an op's plaintext body costs nothing extra, since `server/ops/routes.ts` already holds that plaintext transiently right before encrypting it, but erasing already-written rows does require decrypting at-rest ciphertext. The purge marker's own row is preserved (matched by its `hlc`) so a later pull still tells every device the entity is gone.
+ * @exports OpBody, parseOpBody, isPurgeMarker, isEntityPurged, recordPurgeAndErase
+ */
 import type { Database } from '../db.ts';
 import { decryptPayload } from './crypto.ts';
 

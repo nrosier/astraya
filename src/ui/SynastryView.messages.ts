@@ -1,6 +1,12 @@
 /**
  * Message catalogue for `SynastryView.tsx` (#158).
  */
+/**
+ * @module SynastryView.messages
+ * @purpose English/Dutch message catalogue for the two-person synastry bi-wheel screen.
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed via `useMessages()` by the sibling `SynastryView.tsx`.
+ * @exports synastryViewMessages
+ */
 const en = {
   /** Leads a corpus text that is written from one person's side ("your Mars…the other person's Moon"). */
   seenFromSide: (name: string) => `Seen from ${name}’s side: `,

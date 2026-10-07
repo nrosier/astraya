@@ -9,6 +9,12 @@
  * includes (`synastry-importance.ts`'s own doc comment: the angles are not bodies, so the
  * cross-aspect search never touches them).
  */
+/**
+ * @module relationship-themes
+ * @purpose Groups a synastry pairing's cross-chart aspects by customary reading theme (bond, attraction, communication, etc.) and computes body-to-angle contacts (#422).
+ * @conventions Pure and synchronous over an already-computed `SynastryData`, no ephemeris access, matching `report.ts`'s convention for a single chart; theme classification follows a fixed priority order (Moon > Venus-Mars > Mercury > Saturn > Jupiter > Sun pairs > other), stated explicitly since a pair can match more than one rule; aspect valence (harmonious/challenging/neutral) matches the wheel's own aspect-line colour convention so counts never disagree with the chart.
+ * @exports groupedRelationshipContacts, relationshipAngleContacts, aspectValence, RELATIONSHIP_THEMES, RelationshipTheme, RelationshipContact, AngleContact, AspectValence
+ */
 import { bodyById } from '../astrology/bodies.js';
 import { matchAspect, type Aspect, type AspectMatch, type OrbConfig } from '../astrology/aspects.js';
 import { rankedSynastryAspects, type SynastryData } from './synastry.js';

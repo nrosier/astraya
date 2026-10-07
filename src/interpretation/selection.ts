@@ -11,6 +11,12 @@
  *   of its own: what is written is about placements *in* it.)
  * - **An aspect line:** that one pair.
  */
+/**
+ * @module interpretation/selection
+ * @purpose Determines which interpretation entries belong to a wheel selection (a clicked planet, sign, or aspect line), so the wheel's shown text matches the Interpretation tab's report exactly.
+ * @conventions Selects from the same derivePlacements/rankPlacements the report is built from, ordered by the same salience, so the wheel can never show text the report doesn't or in a different order. Selection keys are parsed from the wheel's own `body:<id>`/`sign:<name>`/`aspect:<idA>|<idB>` string format.
+ * @exports WheelSelection, parseSelectionKey, selectionPlacements
+ */
 import { SIGNS } from '../astrology/signs.js';
 import { parseBodyId } from '../chart/body-id.js';
 import type { ChartData } from '../domain/chart-compute.js';

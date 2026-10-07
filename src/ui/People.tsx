@@ -6,6 +6,12 @@
  * make a person's birth data look more complete than it is — a name with no birth moment is
  * listed as exactly that, because a chart cannot be cast from it.
  */
+/**
+ * @module People
+ * @purpose Renders the People list screen: the app's landing page, where people are created, selected, deleted (tombstoned) and restored.
+ * @conventions A person is the primary entity (charts belong to people, not vice versa); a person with no birth moment is listed as exactly that rather than hidden or faked complete; deletes are tombstones, shown under "Deleted" with a restore option until purged. Text comes from co-located `People.messages.ts` via `useMessages()`.
+ * @exports People
+ */
 import { useState } from 'react';
 import { newId } from '../domain/id.js';
 import { useLocale } from './locale.js';

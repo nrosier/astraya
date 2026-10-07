@@ -7,6 +7,13 @@
  * transparently for the same owning client); this is a human explicitly asking for that
  * same decryption once, for one target user, for an irreversible-consequence check.
  */
+
+/**
+ * @module deletion-impact
+ * @purpose Previews how many people/charts deleting a user's operation log would take with it, shown to an admin immediately before confirming an irreversible account delete.
+ * @conventions A deliberate, narrow exception to ADR 0002's "opaque relay never interprets a payload" rule, used only for this one admin-confirmed, destructive-consequence preview — never a general route for browsing another user's data; bounded by `SCAN_LIMIT` rows, and reports `'approximate'` rather than a possibly-undercounted `'counted'` result whenever the scan was truncated or no encryption key is available to decrypt with.
+ * @exports DeletionImpact, previewDeletionImpact
+ */
 import type { Database } from '../db.ts';
 import { decryptPayload } from './crypto.ts';
 

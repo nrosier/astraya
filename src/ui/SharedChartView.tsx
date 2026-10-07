@@ -4,6 +4,12 @@
  * from what the link carries, the same offline/no-server principle `PersonForm.tsx`'s
  * offset resolution follows for a stored birth moment, extended here to a whole chart.
  */
+/**
+ * @module SharedChartView
+ * @purpose Renders a chart entirely from a #65 share link's URL query — no local store, no saved person, no account.
+ * @conventions Nothing here reads the local store; uses SharedChartView.messages.ts for en/nl text via useMessages().
+ * @exports SharedChartView
+ */
 import { useEffect, useMemo, useState } from 'react';
 import { ChartDataView } from './ChartView.js';
 import { chartSheetMetaLines } from '../domain/chart-tables.js';

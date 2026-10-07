@@ -3,6 +3,12 @@
  * never synced: the state lives in `chart/glyph-variants.ts` where the renderers can reach it, and this keeps it in
  * `localStorage`, loads it at start-up and gives React a hook.
  */
+/**
+ * @module ui/glyph-variant-setting
+ * @purpose Persists and applies the device's chosen glyph form (Uranus/Pluto variant, #419) and line weight for drawn chart symbols.
+ * @conventions Device preference stored in localStorage, never synced; applies immediately at module load and cross-tab via the `storage` event, mirroring other device-preference hooks like rulership-setting.ts; delegates the actual applied state to chart/glyph-variants.js and chart/glyph-weight.js.
+ * @exports GLYPH_VARIANTS_KEY, GLYPH_WEIGHT_KEY, readGlyphWeight, writeGlyphWeight, readVariantChoice, writeVariant, GlyphLook, useGlyphVariants
+ */
 import { useCallback, useMemo, useSyncExternalStore } from 'react';
 import {
   DEFAULT_GLYPH_WEIGHT,

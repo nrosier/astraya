@@ -1,4 +1,10 @@
 /** Message catalogue for `CyclesView.tsx` (#410). */
+/**
+ * @module CyclesView.messages
+ * @purpose English/Dutch i18n strings for the Planetary Cycles tool screen: presets, search form, and the exact-aspects table/diagram.
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed by CyclesView.tsx via `useMessages(cyclesViewMessages)`; `nl` is typed as `typeof en`.
+ * @exports cyclesViewMessages
+ */
 const en = {
   heading: 'Planetary cycles',
   hint: 'When two moving bodies make an exact aspect, found from the ephemeris alone — no birth chart involved. Each exact aspect is plotted on the zodiac below and joined to the next, so a cycle shows as a pattern: Venus’s inferior conjunctions with the Sun close into a five-pointed star over eight years.',

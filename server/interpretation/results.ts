@@ -4,6 +4,13 @@
  * (`server/ops/crypto.ts`, AES-256-GCM) — this table holds actual generated interpretation
  * prose, unlike `interpretation_usage` (migration 8), which by design never does.
  */
+
+/**
+ * @module results
+ * @purpose Persists and retrieves a user's own past Tier 2 generations (prose, label, and basis), stored encrypted at rest, so they can reopen one without regenerating and re-spending quota.
+ * @conventions `sections_json` and the optional `description_json` are encrypted with the same `ops/crypto.ts` scheme (AES-256-GCM) and key as `ops.payload`; listing never decrypts the prose, only metadata, so it still works even if the server's encryption key has since been rotated or removed; a decryption failure for a single row's label degrades to `null` rather than throwing, since a label is a convenience, not the entry itself.
+ * @exports InterpretationResultSummary, InterpretationResultDetail, saveInterpretationResult, listInterpretationResults, getInterpretationResult
+ */
 import { randomUUID } from 'node:crypto';
 import type { Database } from '../db.ts';
 import { CURRENT_KEY_VERSION, decryptPayload, encryptPayload } from '../ops/crypto.ts';

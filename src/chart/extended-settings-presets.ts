@@ -11,6 +11,12 @@
  * practice uses per-planet moieties, which this app does not model, so a number would be invented), and neither
  * the mean nor the true node is claimed for any tradition.
  */
+/**
+ * @module chart/extended-settings-presets
+ * @purpose Defines named tradition presets (modern/traditional/vedic) for the Extended settings panel, each filling only the profile half of `ExtendedSettings` (zodiac, house system, visible points/aspects, rulership scheme).
+ * @conventions A preset asserts only what is not genuinely in doubt for a tradition (e.g. Hellenistic/traditional work: tropical zodiac, Whole Sign houses, classical rulers; Vedic: sidereal zodiac with the Lahiri ayanamsa, Whole Sign houses); it never sets appearance, orb scale, or Lilith/node model, since those are not a tradition's decision in this app's model.
+ * @exports PRESET_KEYS, PRESETS, applyPreset, matchPreset; PresetKey, PresetProfile types.
+ */
 import { ayanamsaByKey, AYANAMSAS } from '../astrology/ayanamsas.js';
 import type { RulershipChoice } from '../astrology/rulership.js';
 import { DEFAULT_EXTENDED_SETTINGS, type ExtendedSettings } from './extended-settings.js';

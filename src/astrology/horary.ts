@@ -24,6 +24,13 @@
  * was asked*, which no chart can tell — those belong to the judgment itself, which this module does
  * not attempt.
  */
+
+/**
+ * @module Horary
+ * @purpose Checks the classical "considerations before judgment" that determine whether a horary chart is fit to be judged (radical).
+ * @conventions Based on Lilly's Christian Astrology (1647), ch. XXXVI; only four of Lilly's considerations are checked (Ascendant too early/late, Moon void of course, Moon in the Via Combusta, Saturn in the seventh house), since the rest depend on the content of the question asked, which no chart alone can tell.
+ * @exports horaryConsiderations, isRadical, ASCENDANT_EARLY_LIMIT_DEG, ASCENDANT_LATE_LIMIT_DEG, VIA_COMBUSTA_START_DEG, VIA_COMBUSTA_END_DEG
+ */
 import type { Degrees } from '../ephemeris/types.js';
 import { degreesInSign } from './signs.js';
 

@@ -4,6 +4,12 @@
  * (defaulting to the birthplace, but overridable — the return itself is a
  * moment in time, not tied to any particular place).
  */
+/**
+ * @module solar-return
+ * @purpose Computes a solar return chart for a given calendar year (#49): the moment the Sun returns to its exact natal longitude.
+ * @conventions Cast at a chosen location (default birthplace, overridable, since the return itself is a moment in time, not tied to a place); contacts to the fixed natal chart use `fixedSubjects`/`subjectsFrom`, matching other M6 cross-chart modules.
+ * @exports computeSolarReturn, SolarReturnData, SolarReturnOptions
+ */
 import { findCrossAspects, fixedSubjects, subjectsFrom, type Aspect, type OrbConfig } from '../astrology/aspects.js';
 import { BODIES, bodyById, type BodyCategory } from '../astrology/bodies.js';
 import { solarReturnInYear } from '../astrology/solar-lunar-returns.js';

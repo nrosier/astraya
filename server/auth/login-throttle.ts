@@ -7,6 +7,13 @@
  * In-memory and per-process, matching the bootstrap token's own trust model: a
  * self-hosted single instance, not a fleet needing a shared store.
  */
+
+/**
+ * @module login-throttle
+ * @purpose Per-account login attempt throttling, catching many addresses attacking the same username — the half of brute-force defence a per-IP rate limiter alone cannot see.
+ * @conventions In-memory and per-process (matches the single self-hosted instance trust model, not a multi-process fleet); usernames are matched case-insensitively (mirrors `users.username`'s `COLLATE NOCASE`); a periodic unref'd sweep bounds the attempts map's size against an attacker cycling through never-real usernames.
+ * @exports isLoginThrottled, recordFailedLogin, clearLoginThrottle
+ */
 const MAX_ATTEMPTS = 5;
 const WINDOW_MS = 15 * 60 * 1000;
 

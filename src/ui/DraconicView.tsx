@@ -6,6 +6,12 @@
  * than the multi-wheel renderer. Unlike harmonic, there is no in-screen parameter to pick: the
  * draconic zero-point is always the natal North Node, so this view has no picker at all.
  */
+/**
+ * @module DraconicView
+ * @purpose Renders the draconic chart screen for a saved person: every body re-measured from the natal North Node rather than zero Aries.
+ * @conventions A single synthetic chart derived from one natal chart (not a comparison), so it reuses `ChartDataView` wholesale like HarmonicView; no in-screen parameter picker since the draconic zero-point is always the natal North Node. Text comes from co-located `DraconicView.messages.ts` via `useMessages()`.
+ * @exports DraconicView
+ */
 import { useEffect, useMemo, useState } from 'react';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { computeDraconic, type DraconicData } from '../domain/draconic.js';

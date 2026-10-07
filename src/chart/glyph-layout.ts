@@ -27,6 +27,12 @@
  * same input always produces the same output, with ties at an identical
  * longitude broken by input order rather than by anything non-deterministic.
  */
+/**
+ * @module chart/glyph-layout
+ * @purpose Spreads overlapping body glyphs apart around the wheel's circular degree axis so stelliums stay legible, and renders the resulting glyph ring with leader lines back to each body's true degree.
+ * @conventions `spreadGlyphs` cuts the circle at its single largest gap (so no overlapping cluster straddles the 0/360 wrap point), unrolls the remainder onto a line preserving circular order, then relaxes adjacent pairs closer than `minSeparationDeg` apart over a capped number of passes — pure and deterministic, ties broken by input order; `renderGlyphRingSvg` draws a leader line only for glyphs that actually moved from their true longitude, and every glyph gets an invisible `hitAreaCircle` since stroked-path glyphs have no fill to click.
+ * @exports spreadGlyphs, bodyAttributes, hitAreaCircle, renderGlyphRingSvg; GlyphLayoutInput, GlyphPlacement, GlyphRingOptions types.
+ */
 import type { Degrees } from '../ephemeris/types.js';
 import { bodyGlyph, renderGlyph } from './glyphs.js';
 import { SIGNS } from '../astrology/signs.js';
