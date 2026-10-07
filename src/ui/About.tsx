@@ -78,6 +78,31 @@ export function About({ seVersion }: { seVersion?: string | undefined }): React.
         {t.acknowledgementsParagraph2After}
       </p>
       <p>{t.acknowledgementsGlyphs}</p>
+
+      <h2>{t.astrologyPrimerHeading}</h2>
+      <p>{t.primerIntro}</p>
+      <p>
+        {t.primerChart}
+        <br />
+        {t.primerChartList}
+      </p>
+
+      <h3>{t.primerBodiesHeading}</h3>
+      <p>{t.primerBodiesPara}</p>
+
+      <h3>{t.primerSignsHeading}</h3>
+      <p>{t.primerSignsPara}</p>
+
+      <h3>{t.primerHousesHeading}</h3>
+      <p>{t.primerHousesPara}</p>
+
+      <h3>{t.primerAspectsHeading}</h3>
+      <p>{t.primerAspectsPara}</p>
+
+      <h3>{t.primerDignityHeading}</h3>
+      <p>{t.primerDignityPara}</p>
+
+      <p>{t.primerResources}</p>
     </main>
   );
 }

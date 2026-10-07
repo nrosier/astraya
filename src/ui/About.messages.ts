@@ -47,6 +47,36 @@ const en = {
   acknowledgementsParagraph2After: '.',
   acknowledgementsGlyphs:
     'The planet, sign and aspect symbols are derived from the Kerykeion project (AGPL-3.0). The alternate forms of Uranus and Pluto, and the text and Unicode ways of writing each symbol, were made for Astraya under the same licence.',
+
+  astrologyPrimerHeading: 'Astrology primer',
+  primerIntro:
+    'Astrology is the ancient practice of understanding human experience through the apparent positions of the Sun, Moon and planets in the sky at a given moment and place. A natal chart is a snapshot of that sky at the moment of birth.',
+  primerChart: 'The chart has three dimensions:',
+  primerChartList:
+    'The planets (Sun, Moon, and planets of our solar system), their positions and movement; the zodiac (12 signs organised in a circle); and the houses (12 angular divisions of the sky based on location).',
+
+  primerBodiesHeading: 'Planets and points',
+  primerBodiesPara:
+    'The Sun and Moon are not true planets, but are central to astrology. The personal planets (Mercury through Mars) move quickly and affect personality and immediate circumstance. The social planets (Jupiter and Saturn) move slowly and reflect longer patterns of growth and limitation. The outer planets (Uranus, Neptune, Pluto) affect entire generations.',
+
+  primerSignsHeading: 'The zodiac and signs',
+  primerSignsPara:
+    'Twelve signs represent archetypal energies and qualities. The sign of a planet describes how that planet expresses itself. Your Sun sign is determined by your birth date (roughly March 21–April 19 is Aries, etc.); your Moon sign and rising sign (the "first house") depend on your exact birth time and place.',
+
+  primerHousesHeading: 'Houses',
+  primerHousesPara:
+    "The 12 houses divide the chart into life areas: the 1st house is identity and how you appear; the 7th house is partnerships and marriage; the 10th house is career and public life. A planet in a house colours that area of life with the planet's energy.",
+
+  primerAspectsHeading: 'Aspects',
+  primerAspectsPara:
+    'An aspect is the angle between two planets. A 0° conjunction means they are allied and work together. A 180° opposition means they are in tension. A 90° square is dynamic friction. Other angles (60°, 120°, 150°) have their own character.',
+
+  primerDignityHeading: 'Dignity and rulership',
+  primerDignityPara:
+    'Each sign has a natural ruler — the planet most at home there. A planet in its own sign (Sun in Leo, Venus in Libra) is strong and natural. A planet in the sign of its opposite number (Sun in Aquarius) is challenged. The app includes both traditional (classical) rulers and modern ones (Uranus, Neptune, Pluto).',
+
+  primerResources:
+    'For more, read conventional astrology introductions or explore the interpretations throughout this app.',
 };
 
 const nl: typeof en = {
@@ -95,6 +125,36 @@ const nl: typeof en = {
   acknowledgementsParagraph2After: '.',
   acknowledgementsGlyphs:
     'De symbolen voor planeten, tekens en aspecten zijn afgeleid van het Kerykeion-project (AGPL-3.0). De alternatieve vormen van Uranus en Pluto, en de tekst- en Unicode-weergave van elk symbool, zijn voor Astraya gemaakt onder dezelfde licentie.',
+
+  astrologyPrimerHeading: 'Astrologie-primer',
+  primerIntro:
+    'Astrologie is de oude praktijk om menselijke ervaring te begrijpen door de schijnbare posities van de Zon, Maan en planeten aan de hemel op een gegeven moment en plaats. Een geboortechart is een momentopname van die hemel op het moment van geboorte.',
+  primerChart: 'De kaart heeft drie dimensies:',
+  primerChartList:
+    'De planeten (Zon, Maan en planeten van ons zonnestelsel), hun positie en beweging; de dierenriem (12 tekens georganiseerd in een cirkel); en de huizen (12 hoekige afdelingen van de hemel op basis van locatie).',
+
+  primerBodiesHeading: 'Planeten en punten',
+  primerBodiesPara:
+    'De Zon en Maan zijn geen echte planeten, maar staan centraal in de astrologie. De persoonlijke planeten (Mercurius tot en met Mars) bewegen snel en beïnvloeden persoonlijkheid en onmiddellijke omstandigheden. De sociale planeten (Jupiter en Saturnus) bewegen langzaam en weerspiegelen langere patronen van groei en beperking. De buitenplaneten (Uranus, Neptunus, Pluto) beïnvloeden hele generaties.',
+
+  primerSignsHeading: 'De dierenriem en tekens',
+  primerSignsPara:
+    'Twaalf tekens vertegenwoordigen archetypische energieën en kwaliteiten. Het teken van een planeet beschrijft hoe die planeet zich uit. Je Zonneteken wordt bepaald door je geboortedatum (ruwweg 21 maart – 19 april is Ram, enz.); je Maanteken en rijzend teken (het "eerste huis") hangen af van je exacte geboortemoment en -plaats.',
+
+  primerHousesHeading: 'Huizen',
+  primerHousesPara:
+    'De 12 huizen verdelen de kaart in levensgebieden: het 1e huis is identiteit en hoe je eruitziet; het 7e huis is partnerschappen en huwelijk; het 10e huis is carrière en openbare leven. Een planeet in een huis kleurt dat gebied van het leven in met de energie van de planeet.',
+
+  primerAspectsHeading: 'Aspecten',
+  primerAspectsPara:
+    'Een aspect is de hoek tussen twee planeten. Een 0° conjunctie betekent dat ze verbonden zijn en samenwerken. Een 180° oppositie betekent dat ze in spanning staan. Een 90° kwadraat is dynamische wrijving. Andere hoeken (60°, 120°, 150°) hebben hun eigen karakter.',
+
+  primerDignityHeading: 'Waardigheid en heerschappij',
+  primerDignityPara:
+    'Elk teken heeft een natuurlijke heerser — de planeet die daar het meest thuis is. Een planeet in zijn eigen teken (Zon in Leeuw, Venus in Weegschaal) is sterk en natuurlijk. Een planeet in het teken van zijn tegengestelde getal (Zon in Waterman) wordt uitgedaagd. De app bevat zowel traditionele (klassieke) heersers als moderne (Uranus, Neptunus, Pluto).',
+
+  primerResources:
+    'Voor meer informatie kun je conventionele astrologie-introducties lezen of de interpretaties in deze app verkennen.',
 };
 
 export const aboutMessages = { en, nl };
