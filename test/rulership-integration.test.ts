@@ -205,3 +205,54 @@ describe('the report’s chart-ruler section follows the choice (#426)', () => {
     }
   });
 });
+
+/**
+ * #468's own question: does the rulership choice reach the *standard* (non-AI) report's prose at
+ * all, beyond the chart-ruler section covered above — and if so, where exactly, and where
+ * deliberately not? Settled against a real chart with Pluto actually in Scorpio (no synthetic
+ * fixture needed, same chart as the "differ between modern and traditional" case above).
+ */
+describe('the dignities-sect section follows the choice, and nothing else does (#468)', () => {
+  const PLUTO_IN_SCORPIO_BIRTH = { ...BIRTH, civil: { ...BIRTH.civil, year: 1990, month: 6, day: 15 } };
+
+  it('gives Pluto a dignity-state paragraph under modern/both, and none under traditional', async () => {
+    const engine = await getEngine();
+    const paragraphFor = async (choice: 'modern' | 'traditional' | 'both') => {
+      const chart = await computeChartData(PLUTO_IN_SCORPIO_BIRTH, engine, { rulership: choice });
+      const report = assembleReport(chart, 'en', [], choice);
+      const section = report.sections.find((s) => s.id === 'dignities-sect');
+      return section?.paragraphs.find((p) => p.placement?.category === 'dignity-state' && p.placement.body === 'pluto');
+    };
+    // Traditional only ever recognizes the seven classical planets as dignity holders, so Pluto
+    // is peregrine (no state, no paragraph) there, whatever sign it's in.
+    expect((await paragraphFor('traditional'))?.placement).toBeUndefined();
+    // Under modern and both, Pluto rules Scorpio, so it gets a 'ruler' dignity-state paragraph.
+    for (const choice of ['modern', 'both'] as const) {
+      expect((await paragraphFor(choice))?.placement).toEqual({
+        category: 'dignity-state',
+        body: 'pluto',
+        state: 'ruler',
+      });
+    }
+  });
+
+  it('does not let dignity change the ordinary planet-in-sign/-house/aspect-pair prose', async () => {
+    const engine = await getEngine();
+    const reportTextFor = async (choice: 'modern' | 'traditional' | 'both') => {
+      const chart = await computeChartData(PLUTO_IN_SCORPIO_BIRTH, engine, { rulership: choice });
+      const report = assembleReport(chart, 'en', [], choice);
+      // Every section except chart-ruler and dignities-sect, which are the only two #468 found
+      // to be rulership-sensitive (chart-ruler via a fresh ruler lookup, dignities-sect by
+      // reading the chart's own already-scheme-aware `dignities` map).
+      return report.sections
+        .filter((s) => s.id !== 'chart-ruler' && s.id !== 'dignities-sect')
+        .flatMap((s) => s.paragraphs.map((p) => p.text))
+        .join('\n');
+    };
+    const modern = await reportTextFor('modern');
+    const traditional = await reportTextFor('traditional');
+    const both = await reportTextFor('both');
+    expect(modern).toBe(traditional);
+    expect(modern).toBe(both);
+  });
+});
