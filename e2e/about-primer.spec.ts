@@ -77,11 +77,13 @@ test('the About page includes an astrology primer section with all subsections',
 test('the About page primer renders in Dutch with full translation', async ({ page }) => {
   await gotoAndSettle(page, `${baseUrl}/#/about`);
 
-  // Set Dutch locale by clicking language toggle if available
-  // For now, test the page loads and check the English primer rendered
-  // (full Dutch locale testing would require a language switcher implementation)
+  // The language toggle (`LanguageToggle.tsx`) cycles through `CORPUS_LOCALES` (`['en', 'nl']`),
+  // so one click from the English default switches the whole app's locale — this is the actual
+  // mechanism a user has for seeing Dutch, so the test uses it rather than asserting against
+  // English strings under a misleading name (#465).
+  await page.locator('.language-toggle').click();
 
-  const primerHeading = page.getByRole('heading', { name: 'Astrology primer', exact: true });
+  const primerHeading = page.getByRole('heading', { name: 'Astrologie-primer', exact: true });
   await expect(primerHeading).toBeVisible();
 
   // Verify primer is part of the main content flow (not hidden)
@@ -89,23 +91,30 @@ test('the About page primer renders in Dutch with full translation', async ({ pa
   const headings = about.getByRole('heading').all();
   const headingTexts = await Promise.all((await headings).map((h) => h.textContent()));
 
+  // `aboutMessages.nl.*` headings (`About.messages.ts`) — the Dutch counterparts of the
+  // headings the English test above checks for.
   const expectedHeadings = [
-    'About Astraya',
-    'Version',
-    'Your data',
-    'Licence and source',
-    'Acknowledgements',
-    'Astrology primer',
-    'Planets and points',
-    'The zodiac and signs',
-    'Houses',
-    'Aspects',
-    'Dignity and rulership',
+    'Over Astraya',
+    'Versie',
+    'Jouw gegevens',
+    'Licentie en broncode',
+    'Dankwoord',
+    'Astrologie-primer',
+    'Planeten en punten',
+    'De dierenriem en tekens',
+    'Huizen',
+    'Aspecten',
+    'Waardigheid en heerschappij',
   ];
 
   for (const expected of expectedHeadings) {
     expect(headingTexts, `Expected heading "${expected}" to be present`).toContain(expected);
   }
+
+  // Spot-check actual body prose too, not just headings — a locale switch that left the
+  // headings translated but the body text English would still be a real bug this should catch.
+  await expect(page.getByText(/Astrologie is de oude praktijk/)).toBeVisible();
+  await expect(page.getByText(/Elk teken heeft een natuurlijke heerser/)).toBeVisible();
 });
 
 test('the primer section is accessible and follows semantic structure', async ({ page }) => {
