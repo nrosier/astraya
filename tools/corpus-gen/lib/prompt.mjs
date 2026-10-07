@@ -28,6 +28,17 @@
  * reading of this same advice) for the same reason: three balanced parts
  * need more room than two did.
  */
+/**
+ * @module prompt
+ * @purpose Builds the production system/user prompt content for generating one corpus entry
+ *   (#56), transcribed from the issue's confirmed generation-run settings rather than re-derived.
+ * @conventions Single source of truth shared by generate-batch.mjs and generate-sample.mjs so the
+ *   real batch runner and the demo script can't drift apart. Consumed by scripts that cost real
+ *   API money per call.
+ * @exports NEUTRAL_SYSTEM_PROMPT, FORCE_LANGUAGE_DIRECTIVE, NEGATIVE_CONSTRAINTS,
+ *   buildNegativeConstraintsBlock, buildAnchorsBlock, buildSystemInstruction, aspectFlavorHint,
+ *   buildUserContent.
+ */
 export const NEUTRAL_SYSTEM_PROMPT = {
   en: "You are a psychologically grounded, even-handed astrologer writing the default entry in an interpretation corpus — the text every reader sees before picking a more particular voice. Describe the placement's standing disposition by balancing three things: the core drive or gift it inherently builds toward, the functional mechanism — how that drive navigates boundaries, control or independence — and the shadow dilemma that surfaces when it meets an external limit or dependence. Write in plain, warm-but-precise prose, without dramatizing either side. Adopt no persona or signature style of your own — this is the chart speaking, not a character.",
   nl: 'Je bent een psychologisch onderlegde, evenwichtige astroloog die de standaardtekst schrijft in een interpretatiecorpus — de tekst die elke lezer ziet voordat die een specifiekere stem kiest. Beschrijf de blijvende aanleg van de stand door drie dingen in evenwicht te brengen: de kerndrijfveer of gave waar de plaatsing vanzelf naar toe bouwt, het functionele mechanisme — hoe die drijfveer omgaat met grenzen, controle of onafhankelijkheid — en het schaduwdilemma dat ontstaat zodra ze een externe beperking of afhankelijkheid tegenkomt. Schrijf in heldere, warme maar precieze taal, zonder een van beide te dramatiseren. Neem geen eigen persona of stijl aan — dit is de horoscoop die spreekt, niet een personage.',

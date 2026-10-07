@@ -38,6 +38,16 @@
  * true to differentiate, with or without jargon. This note gives the judge that fact up front
  * instead of relitigating it per entry.
  */
+/**
+ * @module corpus-evaluation
+ * @purpose Builds the second-opinion evaluation rubric/prompt (#381) checking fact-grounding plus
+ *   "generic trope"/stereotyped-shadow detection, and the majority-vote verdict logic over
+ *   multiple judge ballots for one entry.
+ * @conventions Validated empirically against several OpenAI models (gpt-6-luna is this feature's
+ *   wired-up default — see evaluate-corpus-batch.mjs). Consumed by a script that costs real
+ *   OpenAI Batch API money per call.
+ * @exports EVALUATION_RESPONSE_SCHEMA, buildEvaluationPrompt, majorityVerdict.
+ */
 const VARIANT_BODY_NOTE = [
   'Six bodies — meanLilith, trueLilith, osculatingLilith, interpolatedLilith, meanNode, trueNode',
   "— are different calculation methods for one real point (the Moon's apogee, or its orbital",

@@ -53,6 +53,19 @@
  *   npx tsx --env-file=.env.local tools/corpus-gen/improve-corpus-batch.mjs --locale=en [--limit=N] [--model=<name>] [--check-only]
  *   npx tsx --env-file=.env.local tools/corpus-gen/improve-corpus-batch.mjs --check-only   (checks every locale with a batch in flight)
  */
+/**
+ * @module improve-corpus-batch
+ * @purpose #381 stage 2 of 2: submits/checks a Gemini Batch API job asking the model that
+ *   originally wrote each flagged entry to critically review evaluate-corpus-batch.mjs's feedback
+ *   and revise only what it genuinely agrees is a problem.
+ * @conventions CLI flags: --locale=<locale> (required unless --check-only with no --locale),
+ *   --limit=N, --model=<name>, --evaluation-limit=N, --last-resort, --check-only. Costs real
+ *   Gemini Batch API money. Submit-and-exit, never blocks — batch state persisted to
+ *   tools/corpus-gen/batch-state/improve-<locale>.json; re-run the same command later to check
+ *   status and apply results. Writes to src/interpretation/corpus/<locale>.json and
+ *   tools/corpus-gen/feedback/<locale>.json / eval-tracking/<locale>.json.
+ * @exports CLI entry point, no exports.
+ */
 import { readFile, mkdir, readdir } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';

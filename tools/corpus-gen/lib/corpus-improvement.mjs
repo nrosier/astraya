@@ -24,6 +24,17 @@
  * only caller that ever sets this.
  */
 
+/**
+ * @module corpus-improvement
+ * @purpose Builds the feedback-loop revision prompt (#381) asking the model that originally wrote
+ *   an entry to critically — not automatically — revise it based on an independent judge's
+ *   flagged issues.
+ * @conventions Includes a narrowly-scoped `lastResort` instruction variant (#396) permitting one
+ *   minimal nod to an aspect's nature, only for entries already exhausted at the normal
+ *   evaluation-loop limit. Consumed by improve-corpus-batch.mjs, which costs real Gemini Batch
+ *   API money per call.
+ * @exports IMPROVEMENT_RESPONSE_SCHEMA, buildImprovementPrompt.
+ */
 export const IMPROVEMENT_RESPONSE_SCHEMA = {
   type: 'object',
   properties: {

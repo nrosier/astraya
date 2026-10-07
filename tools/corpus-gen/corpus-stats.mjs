@@ -9,6 +9,15 @@
  *
  *   node tools/corpus-gen/corpus-stats.mjs [--locale=en] [--evaluation-limit=N]
  */
+/**
+ * @module corpus-stats
+ * @purpose Prints a per-locale snapshot of #381's feedback-loop state: how much of the corpus is
+ *   checked/validated/disputed/pending, plus what's awaiting review and currently in flight.
+ * @conventions CLI flags: --locale=en|nl, --evaluation-limit=N. Read-only — never touches the
+ *   corpus or any loop state file. No API key or build step needed (plain Node, no TypeScript
+ *   imports), unlike every other script in this directory.
+ * @exports CLI entry point, no exports.
+ */
 import { readFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';

@@ -9,6 +9,15 @@
  * One state file per (script, locale) pair, under tools/corpus-gen/batch-state/ — a scratch
  * directory, same convention as eval-tracking/ and feedback/, not committed.
  */
+/**
+ * @module batch-state
+ * @purpose Persists "there is a batch job in flight" across separate process invocations for
+ *   evaluate-corpus-batch.mjs and improve-corpus-batch.mjs, so a batch job can be submitted and
+ *   checked later without blocking a terminal session.
+ * @conventions One JSON state file per (script, locale) pair under tools/corpus-gen/batch-state/
+ *   — a scratch directory, not committed.
+ * @exports readBatchState, writeBatchState, clearBatchState.
+ */
 import { readFile, writeFile, unlink, mkdir } from 'node:fs/promises';
 import { dirname } from 'node:path';
 

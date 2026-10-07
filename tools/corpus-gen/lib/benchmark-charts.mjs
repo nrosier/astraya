@@ -43,6 +43,15 @@
  * asteroids on those specific report endpoints. A report call that 4xxs for
  * an unsupported body is the caller's problem to skip, not assumed clean here.
  */
+/**
+ * @module benchmark-charts
+ * @purpose Builds a fixed pool of real placements, derived from real astrologyapi.com-computed
+ *   charts, for benchmark-batch.mjs to sample and compare against the same vendor's report text.
+ * @conventions Makes real, paid calls to astrologyapi.com (`planets/tropical`,
+ *   `house_cusps/tropical`); restricted to the 7 traditional planets only (Sun through Saturn).
+ * @exports TRADITIONAL_PLANETS, astrologyApiPlanetSlug, CHARTS, astrologyApiBirthBody,
+ *   buildRealPlacements.
+ */
 import { bodyByKey } from '../../../src/astrology/bodies.ts';
 import { signIndex } from '../../../src/astrology/signs.ts';
 import { houseOf } from '../../../src/astrology/emphasis.ts';

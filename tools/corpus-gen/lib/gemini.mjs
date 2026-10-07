@@ -10,6 +10,14 @@
  * paid-tier model) that retrying will not fix.
  */
 
+/**
+ * @module gemini
+ * @purpose Minimal synchronous Gemini/AI Studio structured-output client (#56) — the default
+ *   generation/judging backend most corpus-gen scripts use.
+ * @conventions Retries on 5xx (observed as normal during testing), surfaces 4xx immediately
+ *   (almost always a config problem retrying won't fix). Costs real API money per call.
+ * @exports DEFAULT_BASE_URL, toGeminiSchema, generateStructured.
+ */
 export const DEFAULT_BASE_URL = 'https://generativelanguage.googleapis.com';
 const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504]);
 

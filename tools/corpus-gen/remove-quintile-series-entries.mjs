@@ -19,6 +19,18 @@
  *
  *   npx tsx tools/corpus-gen/remove-quintile-series-entries.mjs --locale=en [--apply]
  */
+/**
+ * @module remove-quintile-series-entries
+ * @purpose #396 cleanup: removes every aspect-pair/synastry-aspect entry whose aspect is in the
+ *   quintile series (quintile, biquintile), so a plain generate-batch.mjs run regenerates them
+ *   under the corrected prompt.
+ * @conventions CLI flags: --locale=<locale> (required), --apply. Dry run by default; --apply
+ *   backs up the corpus to tools/corpus-gen/backups/, uses lib/write-corpus.mjs's
+ *   removeCorpusEntries() for a surgical delete, and also drops matching identities from
+ *   eval-tracking/<locale>.json and feedback/<locale>.json. Refuses to run --apply while a
+ *   generate/evaluate/improve-batch.mjs process appears to be running for the same locale.
+ * @exports CLI entry point, no exports.
+ */
 import { readFile, mkdir, copyFile } from 'node:fs/promises';
 import { execSync } from 'node:child_process';
 import { dirname, join, resolve } from 'node:path';

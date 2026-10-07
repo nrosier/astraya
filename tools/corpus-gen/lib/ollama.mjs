@@ -14,6 +14,16 @@
  * failures surface immediately.
  */
 
+/**
+ * @module ollama
+ * @purpose Local Ollama client (#359) mirroring gemini.mjs's generateStructured contract, plus an
+ *   embedding helper, so a corpus-gen script can select Ollama as a free/local backend with one
+ *   flag.
+ * @conventions No apiKey (local server on localhost); context window set explicitly via
+ *   OLLAMA_NUM_CTX rather than left to Ollama's own VRAM-dependent default. Genuinely free ($0),
+ *   unlike the Gemini/OpenAI clients — a local server, not a hosted API.
+ * @exports generateStructured, embed.
+ */
 const DEFAULT_BASE_URL = 'http://localhost:11434';
 // Ollama's own default is VRAM-tier-dependent (4k below 24GiB), not fixed —
 // setting this explicitly means every call gets the same context budget

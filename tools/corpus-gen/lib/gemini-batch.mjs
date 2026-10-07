@@ -19,6 +19,18 @@
  * them by that key, not by array position — the API does not guarantee
  * response order matches request order.
  */
+/**
+ * @module gemini-batch
+ * @purpose Gemini Batch API client (submit/poll/retrieve) for asynchronous, discounted-rate
+ *   structured-output generation, used by generate-batch.mjs's --batch mode and
+ *   language-quality-batch.mjs's --batch mode, and improve-corpus-batch.mjs's always-batch flow.
+ * @conventions Inline requests only (18MB enforced cap, under Google's 20MB limit) — a payload
+ *   over that throws before sending; split with --limit if that happens. Billed at 50% of
+ *   standard Gemini rates; costs real API money. Each request/response pair is matched by its own
+ *   `metadata.key`, never by array position.
+ * @exports buildBatchRequest, submitBatch, getBatch, isBatchTerminal, pollBatch,
+ *   extractBatchResults.
+ */
 import { toGeminiSchema, DEFAULT_BASE_URL } from './gemini.mjs';
 
 const MAX_INLINE_BYTES = 18 * 1024 * 1024; // Google's own cap is 20MB; this leaves margin.

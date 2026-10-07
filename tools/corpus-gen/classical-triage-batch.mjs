@@ -15,6 +15,15 @@
  * native sourcing is explicitly out of scope for this increment), so this
  * only ever runs against `src/interpretation/corpus/en.json`.
  */
+/**
+ * @module classical-triage-batch
+ * @purpose Checks each shipped dignity-state corpus entry against a classical-source excerpt
+ *   (William Lilly, Christian Astrology, 1647) and tags substantive divergences for human review.
+ * @conventions CLI flags: --provider=gemini|ollama, --limit=N, --concurrency=N. Costs real API
+ *   money per generateStructured call (Gemini by default). Additive, non-destructive tagging only
+ *   (`diverges-from-classical-source`) — never deletes or rewrites `text`. English-only.
+ * @exports CLI entry point, no exports.
+ */
 import { readFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';

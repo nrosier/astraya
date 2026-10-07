@@ -17,6 +17,17 @@
  * not Gemini's own upper-cased `Schema` dialect — no case-transform helper
  * needed here the way gemini.mjs's `toGeminiSchema` is for Gemini.
  */
+/**
+ * @module openai-batch
+ * @purpose OpenAI Batch API client (file-upload based submit/poll/retrieve) for asynchronous,
+ *   discounted-rate structured-output judging, used by evaluate-corpus-batch.mjs.
+ * @conventions JSONL file upload/download only (OpenAI's Batch API has no inline path) — up to
+ *   200MB/50,000 requests per OpenAI's own limits. Billed at 50% of OpenAI's standard rates;
+ *   costs real API money. Includes stall detection (detectStalledBatch) for an in_progress batch
+ *   showing no progress. Results are keyed by each request's own `custom_id`, never by line order.
+ * @exports buildBatchRequest, submitBatch, getBatch, detectStalledBatch, isBatchTerminal,
+ *   pollBatch, extractBatchResults, parseResultLines.
+ */
 const DEFAULT_BASE_URL = 'https://api.openai.com';
 const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504]);
 const TERMINAL_STATUSES = new Set(['completed', 'failed', 'expired', 'cancelled']);
@@ -200,7 +211,7 @@ export async function pollBatch({ apiKey, baseUrl, batchId, intervalMs = 15000, 
 }
 
 /** Parses one JSONL results file's lines (output or error — both use the same per-line shape, confirmed against a real failed batch: a per-request error surfaces as `response.status_code` != 200 with the API's own error body, not as the line's own top-level `error` field, which OpenAI reserves for a request that couldn't even be attempted). */
-function parseResultLines(text) {
+export function parseResultLines(text) {
   return text
     .split('\n')
     .filter((line) => line.trim() !== '')

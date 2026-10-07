@@ -78,6 +78,18 @@
  *   npx tsx --env-file=.env.local tools/corpus-gen/benchmark-batch.mjs [--sample-size=N] [--limit=N] [--provider=gemini|ollama] [--force] [--out=FILE]
  *   npx tsx --env-file=.env.local tools/corpus-gen/benchmark-batch.mjs --purge-thirdparty-cache
  */
+/**
+ * @module benchmark-batch
+ * @purpose Benchmarks Astraya's own generated interpretation text against astrologyapi.com's prose
+ *   for the same real placement, judged independently by Laya, a local Ollama embedding model
+ *   (all-minilm), and a local Ollama LLM (gemma4).
+ * @conventions CLI flags: --sample-size=N, --limit=N, --provider=gemini|ollama, --force, --out=FILE,
+ *   --purge-thirdparty-cache. Costs real money per astrologyapi.com call and, unless an entry is
+ *   already shipped, per Gemini generation call; the Laya/embedding/LLM judging itself is always
+ *   free local Ollama. Results persist to a local sqlite database (lib/benchmark-db.mjs) keyed by
+ *   placement key, skipping already-verified placements unless --force is passed.
+ * @exports CLI entry point, no exports.
+ */
 import { readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';

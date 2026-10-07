@@ -15,6 +15,18 @@
  *
  *   npx tsx tools/corpus-gen/remove-same-point-variant-pairs.mjs --locale=en [--apply]
  */
+/**
+ * @module remove-same-point-variant-pairs
+ * @purpose #395 cleanup: removes every aspect-pair/synastry-aspect entry where both bodies are
+ *   calculation-method variants of the same real point (e.g. meanNode/trueNode), which never
+ *   carried independent astrological meaning.
+ * @conventions CLI flags: --locale=<locale> (required), --apply. Dry run by default; --apply
+ *   backs up the corpus to tools/corpus-gen/backups/, uses lib/write-corpus.mjs's
+ *   removeCorpusEntries() for a surgical delete, and also drops matching identities from
+ *   eval-tracking/<locale>.json and feedback/<locale>.json. Refuses to run --apply while a
+ *   generate/evaluate/improve-batch.mjs process appears to be running for the same locale.
+ * @exports CLI entry point, no exports.
+ */
 import { readFile, mkdir, copyFile } from 'node:fs/promises';
 import { execSync } from 'node:child_process';
 import { dirname, join, resolve } from 'node:path';

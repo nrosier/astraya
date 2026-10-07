@@ -5,6 +5,14 @@
  *
  *   npm run corpus:audit
  */
+/**
+ * @module audit-corpus
+ * @purpose Runs the repeatable corpus audit (lib/corpus-audit.mjs) over the committed en/nl corpus
+ *   files and reports failures and notes.
+ * @conventions Run via `npm run corpus:audit`. Read-only — no API key needed, no network calls.
+ *   Exits 1 when there are failures, so the corpus loop/CI can stop on a bad regeneration.
+ * @exports CLI entry point, no exports.
+ */
 import { readFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';

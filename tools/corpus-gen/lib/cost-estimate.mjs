@@ -20,6 +20,18 @@
  * (a local server, not a hosted API) — `estimateCostCentsForCall` returns 0 for it directly,
  * never consulting either table.
  */
+/**
+ * @module cost-estimate
+ * @purpose Estimates USD cost (in cents) for LLM calls across every corpus-gen script that calls
+ *   an external provider (#382), from token usage and a provider/model/tier pricing table.
+ * @conventions Separate standard-tier and batch-tier pricing tables, confirmed 2026-10 against
+ *   OpenAI's and Gemini's own pricing pages — verify against those pages before relying on this
+ *   for a real budget; it exists to print a console estimate, not to be an invoice. Returns
+ *   `undefined` (never a silent $0) for a model not in the relevant table; Ollama is a genuine $0
+ *   case since it is a local server.
+ * @exports estimateBatchCostCents, estimateStandardCostCents, estimateCostCentsForCall,
+ *   formatCents.
+ */
 const BATCH_PRICING_PER_1M_CENTS = {
   'gpt-6-luna': { input: 5, output: 25 },
   'gpt-5-nano': { input: 2.5, output: 20 },

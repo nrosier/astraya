@@ -9,6 +9,15 @@
  * so re-running evaluate-corpus-batch.mjs after a prior pass updates stale feedback instead of
  * piling up repeats.
  */
+/**
+ * @module corpus-feedback
+ * @purpose Reads/writes the per-locale feedback file bridging evaluate-corpus-batch.mjs's flagged
+ *   entries to improve-corpus-batch.mjs's revision pass (#381).
+ * @conventions Plain JSON array file, identity keyed by `key`, kept legible for manual inspection
+ *   between the two batch stages. `upsertFeedback` replaces an existing record for the same key
+ *   rather than duplicating it.
+ * @exports readFeedback, writeFeedback, upsertFeedback, removeFeedback.
+ */
 import { readFile, writeFile } from 'node:fs/promises';
 
 function sameIdentity(a, b) {

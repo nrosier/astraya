@@ -24,6 +24,17 @@
  * next evaluation (`corpus-evaluation.mjs`'s `priorRejection`), so a disagreement between the two
  * models is visible to both sides across rounds instead of looping blind.
  */
+/**
+ * @module eval-tracking
+ * @purpose Reads/writes per-locale, per-entry evaluation-loop state (#381) tracking whether an
+ *   entry is clean, exhausted, or still eligible for re-evaluation, so repeated runs don't re-pay
+ *   for already-settled entries.
+ * @conventions Plain JSON array file mirroring corpus-feedback.mjs's identity/shape convention.
+ *   `clean: true` is set only by evaluate-corpus-batch.mjs's own judge; `evaluationCount >= limit`
+ *   is the other, independent way an entry stops being re-queued. `lastRejection` carries a
+ *   rejected improvement's issues/reasoning forward to the next evaluation round.
+ * @exports readTracking, writeTracking, findTracking, upsertTracking, isEvaluationExhausted.
+ */
 import { readFile, writeFile } from 'node:fs/promises';
 
 function sameIdentity(a, b) {

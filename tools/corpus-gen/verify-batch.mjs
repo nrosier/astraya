@@ -21,6 +21,16 @@
  * trustworthiness signal on corpus content that has been live in production
  * with zero verification of any kind.
  */
+/**
+ * @module verify-batch
+ * @purpose Fact-grounding verification pass (#359) over a locale's shipped corpus, additively
+ *   tagging any entry whose text is inconsistent with its own placement's computed facts.
+ * @conventions CLI flags: --locale=en|nl (required), --category=<category>,
+ *   --provider=gemini|ollama, --limit=N, --concurrency=N. Costs real API money unless
+ *   --provider=ollama. Idempotent, non-destructive triage signal (`unverified-flagged-by-judge`)
+ *   — never touches `reviewedBy`, never deletes or rewrites `text`; flagged entries still ship.
+ * @exports CLI entry point, no exports.
+ */
 import { readFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';

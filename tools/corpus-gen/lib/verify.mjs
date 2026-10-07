@@ -17,6 +17,15 @@
  * miss on a fast skim of thousands of entries.
  */
 
+/**
+ * @module verify
+ * @purpose Builds the fact-grounding judge prompt (#359) checking a generated entry's text
+ *   against nothing but its own placement's computed facts — no reference text needed.
+ * @conventions Deliberately narrow: judges only mechanical fact mismatches (wrong body/sign/
+ *   house/aspect/dignity), not writing quality or deeper astrological judgment. Consumed by
+ *   verify-batch.mjs and sample-validate-batch.mjs, which cost real API money per call.
+ * @exports VERIFICATION_RESPONSE_SCHEMA, buildVerificationPrompt.
+ */
 export const VERIFICATION_RESPONSE_SCHEMA = {
   type: 'object',
   properties: {

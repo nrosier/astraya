@@ -34,6 +34,15 @@
  * language-quality-batch.mjs.
  */
 
+/**
+ * @module language-quality
+ * @purpose Builds the language-quality proofreading judge prompt (GOOD/FIXED/BAD verdict),
+ *   catching subtle fluency problems lint.ts's keyword-count `language-mismatch` rule can't.
+ * @conventions One locale-agnostic rubric (derives the target language name via
+ *   Intl.DisplayNames) rather than a per-locale hand-translated lookup. Consumed by
+ *   language-quality-batch.mjs, which costs real API money per call.
+ * @exports LANGUAGE_QUALITY_RESPONSE_SCHEMA, buildLanguageQualityPrompt.
+ */
 export const LANGUAGE_QUALITY_RESPONSE_SCHEMA = {
   type: 'object',
   properties: {

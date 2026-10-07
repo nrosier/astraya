@@ -65,6 +65,17 @@
  * either mode, there is nothing to re-request. `--concurrency` is ignored under `--batch` for the
  * same reason it is in generate-batch.mjs: one submission, not N parallel callers.
  */
+/**
+ * @module language-quality-batch
+ * @purpose Judges every corpus entry's prose for fluency in its own declared locale, classifying
+ *   GOOD/FIXED/BAD and applying high-confidence mechanical corrections directly.
+ * @conventions CLI flags: --locale=<locale> (required), --provider=gemini|ollama,
+ *   --model=<name> (default gemini-3.5-flash-lite), --limit=N, --concurrency=N, --batch. Costs
+ *   real API money unless --provider=ollama. Writes corrected `text` + the `spelling-corrected-
+ *   by-judge`/`language-quality-flagged-by-judge` tags directly to the corpus file — never
+ *   touches `reviewedBy`/`reviewedAt`.
+ * @exports CLI entry point, no exports.
+ */
 import { readFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';

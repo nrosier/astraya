@@ -19,6 +19,15 @@
  * signs.ts as real runtime values through `.js` specifiers that only a
  * TS-aware loader (tsx) remaps back to the sibling .ts files.
  */
+/**
+ * @module generate-sample
+ * @purpose One-off smoke test (#56) generating a single corpus entry for one placement and
+ *   printing the raw result plus a lint/dedupe check, without writing it anywhere.
+ * @conventions CLI positional args [category] [body] [signOrHouse] plus --locale=en|nl,
+ *   --provider=gemini|ollama. Costs real API money per call (Gemini) unless --provider=ollama.
+ *   Must run under `npx tsx`, not plain `node` — imports .ts files via .js specifiers.
+ * @exports CLI entry point, no exports.
+ */
 import { readFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';

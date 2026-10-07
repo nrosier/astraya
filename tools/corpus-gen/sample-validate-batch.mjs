@@ -30,6 +30,18 @@
  * rather than only recommending "don't use this provider" — the user's own
  * framing for what #368 should do when it detects too many issues.
  */
+/**
+ * @module sample-validate-batch
+ * @purpose Samples a representative slice of a category's placement space, generates candidate
+ *   text with the real production prompt builder, and evaluates it against fact-grounding + lint
+ *   as a report-only quality check — distinct from benchmark-batch.mjs's third-party comparison.
+ * @conventions CLI flags: --category=<category> (required), --locale=en|nl (default nl),
+ *   --sample-size=N, --provider=ollama|gemini (default ollama), --judge-provider=gemini|ollama
+ *   (default gemini, must differ from --provider unless --allow-same-provider-judge), --seed=N,
+ *   --out=FILE. Costs real API money for any Gemini-side generator/judge call. Never writes to
+ *   the shipped corpus — report-only, always printed to stdout, optionally also to --out.
+ * @exports CLI entry point, no exports.
+ */
 import { readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';

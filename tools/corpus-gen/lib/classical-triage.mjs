@@ -16,6 +16,14 @@
  * allowed to be sarcastic about a trait Lilly describes gravely; it should
  * only be flagged if it describes the *opposite* character to what the classical source says for that state.
  */
+/**
+ * @module classical-triage
+ * @purpose Builds the judge prompt comparing a dignity-state corpus entry against a classical
+ *   source excerpt for substantive agreement, consumed by classical-triage-batch.mjs.
+ * @conventions Scoped to `dignity-state` only; judges substantive agreement in character, not
+ *   wording or tone. Consumed by a batch script that costs real API money per call.
+ * @exports CLASSICAL_TRIAGE_RESPONSE_SCHEMA, buildClassicalTriagePrompt.
+ */
 
 export const CLASSICAL_TRIAGE_RESPONSE_SCHEMA = {
   type: 'object',

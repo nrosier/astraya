@@ -4,6 +4,19 @@
  * hand-rebuilding it — the exact duplication risk that made earlier /tmp
  * validation prototypes drift from what the real batch runner covers.
  */
+/**
+ * @module placements
+ * @purpose Shared builder for the full restricted placement space (every body/sign/house/aspect/
+ *   dignity/profection/astro-line/composite combination the corpus covers) and the plain-English
+ *   descriptions used both to prompt a generator and to state facts to a judge.
+ * @conventions Single source of truth reused by generate-batch.mjs, sample-validate-batch.mjs,
+ *   verify-batch.mjs, and others, so a batch runner and a validation tool can't drift apart on
+ *   what the restricted scope actually is. Pure data/derivation module — no API calls, no cost.
+ * @exports buildSymbolismContext, symbolismScopeFor, BODIES, SIGNS, ASPECTS, HOUSES,
+ *   SIGN_INDICES, DIGNITY_STATES, CORE_BODY_KEYS, TRADITIONAL_RULER_KEYS,
+ *   MODERN_OUTER_RULER_KEYS, MODERN_OUTER_DIGNITY_STATES, ACG_BODY_KEYS, ACG_ANGLES, corePairs,
+ *   buildPlacements, placementDescription, factsDescription.
+ */
 import {
   buildSymbolismContext,
   planetSymbolism,

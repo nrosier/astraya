@@ -50,6 +50,20 @@
  *   npx tsx --env-file=.env.local tools/corpus-gen/evaluate-corpus-batch.mjs --locale=en [--limit=N] [--model=<name>] [--evaluation-limit=N] [--votes=N] [--force] [--check-only]
  *   npx tsx --env-file=.env.local tools/corpus-gen/evaluate-corpus-batch.mjs --check-only   (checks every locale with a batch in flight)
  */
+/**
+ * @module evaluate-corpus-batch
+ * @purpose #381 stage 1 of 2: submits/checks an OpenAI Batch API job giving the corpus an
+ *   independent second opinion (fact-grounding + "generic trope" detection), writing flagged
+ *   entries to tools/corpus-gen/feedback/<locale>.json for improve-corpus-batch.mjs to act on.
+ * @conventions CLI flags: --locale=<locale> (required unless --check-only with no --locale),
+ *   --limit=N, --model=<name> (default gpt-6-luna), --evaluation-limit=N (default 2), --votes=N
+ *   (default 3), --force, --recheck-exhausted, --check-only, --stall-threshold-minutes=N. Costs
+ *   real OpenAI Batch API money. Submit-and-exit, never blocks — batch state (possibly several
+ *   jobs per locale) is persisted to tools/corpus-gen/batch-state/evaluate-<locale>.json and
+ *   per-entry loop state to tools/corpus-gen/eval-tracking/<locale>.json; re-run the same command
+ *   later to check status and apply results.
+ * @exports CLI entry point, no exports.
+ */
 import { readFile, mkdir, readdir } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';

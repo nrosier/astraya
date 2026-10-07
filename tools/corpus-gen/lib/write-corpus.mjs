@@ -1,3 +1,13 @@
+/**
+ * @module write-corpus
+ * @purpose Writes a corpus array back to its JSON file, touching only entries that actually
+ *   changed plus any newly appended ones, so unrelated entries keep their exact original bytes.
+ * @conventions Atomic write via temp-file-then-rename. `writeCorpus()` asserts existing entries
+ *   are never reordered or removed, only replaced in place or appended after — `removeCorpusEntries()`
+ *   is the only supported surgical-delete path for callers that need removal (e.g. remove-by-tag.mjs,
+ *   remove-by-model.mjs).
+ * @exports writeCorpus, removeCorpusEntries.
+ */
 import { readFile, rename, writeFile } from 'node:fs/promises';
 import * as prettier from 'prettier';
 

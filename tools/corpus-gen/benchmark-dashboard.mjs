@@ -27,6 +27,15 @@
  *
  *   npx tsx tools/corpus-gen/benchmark-dashboard.mjs [--out=FILE]
  */
+/**
+ * @module benchmark-dashboard
+ * @purpose Generates a static, self-contained HTML dashboard from benchmark-batch.mjs's
+ *   accumulated sqlite results, so the benchmark history can be reviewed without re-running
+ *   anything.
+ * @conventions CLI flag: --out=FILE. No network call, no API key, safe and free to regenerate any
+ *   time — reads lib/benchmark-db.mjs's local sqlite database only.
+ * @exports CLI entry point, no exports.
+ */
 import { writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';

@@ -16,6 +16,15 @@
  * only that the keys are not systematically shifted — the offset between the best theme and the
  * key must pile up at zero, not at one or eleven.
  */
+/**
+ * @module corpus-audit
+ * @purpose Implements the repeatable corpus audit (#427): key validity, duplicate/locale-parity
+ *   checks, and a sign/house theme-shift heuristic over the committed corpus.
+ * @conventions Two tiers: failures break the corpus (bad key, duplicate, locale mismatch, out of
+ *   generator scope, theme-shift evidence of an indexing bug); notes are informational (missing
+ *   placements). Pure function over an in-memory corpus — no API key, no network call.
+ * @exports SIGN_THEMES, HOUSE_THEMES, themeOffsets, auditCorpus.
+ */
 import { buildPlacements } from './placements.mjs';
 import { placementKey, validateKey, parsePlacementKey } from '../../../src/interpretation/schema.ts';
 

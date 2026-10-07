@@ -42,6 +42,19 @@
  *   no column for this text, and neither table is ever written to src/ or
  *   git.
  */
+/**
+ * @module benchmark-db
+ * @purpose Local sqlite persistence for benchmark-batch.mjs's accumulated results and a temporary
+ *   third-party-text cache, so re-runs skip already-verified placements and avoid re-paying for
+ *   the same astrologyapi.com call.
+ * @conventions Uses node:sqlite's DatabaseSync (no new dependency), deliberately without a
+ *   migration-array/PRAGMA user_version scheme — this is a single throwaway dev cache, not a
+ *   production database. `thirdparty_cache` is a deliberate, scoped, user-requested exception to
+ *   #368's no-redistribution constraint and is meant to be purged (purgeThirdPartyCache) once the
+ *   judge itself is settled; `benchmark_results` never holds third-party prose at all.
+ * @exports openBenchmarkDb, getResult, upsertResult, allResults, allCachedThirdPartyText,
+ *   getCachedThirdParty, cacheThirdParty, purgeThirdPartyCache.
+ */
 import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';

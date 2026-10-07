@@ -7,6 +7,15 @@
  *     --batch-id=batch_6ac51c25a8cc8190a28b69f60b4e1a00 \
  *     --locale=en
  */
+/**
+ * @module recover-batch
+ * @purpose Recovers results from an already-completed OpenAI batch job and writes flagged entries
+ *   to the feedback file, without resubmitting — OpenAI stores completed batch results permanently.
+ * @conventions CLI flags: --batch-id=<id> (required), --locale=<locale> (required), --dump-first.
+ *   Reads OPENAI_API_KEY from .env.local; retrieving an already-completed batch's results is free.
+ *   Writes to tools/corpus-gen/feedback/<locale>.json.
+ * @exports CLI entry point, no exports.
+ */
 import { readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';

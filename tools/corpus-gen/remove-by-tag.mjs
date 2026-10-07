@@ -17,6 +17,17 @@
  *
  *   npx tsx tools/corpus-gen/remove-by-tag.mjs --locale=en --tag=<tag> [--apply]
  */
+/**
+ * @module remove-by-tag
+ * @purpose Cleanup tool removing every corpus entry whose `tags` includes a given tag, for one
+ *   locale — e.g. stripping out everything language-quality-batch.mjs flagged as
+ *   `language-quality-flagged-by-judge` so generate-batch.mjs regenerates exactly those.
+ * @conventions CLI flags: --locale=<locale> (required), --tag=<tag> (required), --apply. Dry run
+ *   by default; --apply backs up the corpus file to tools/corpus-gen/backups/ first, then uses
+ *   lib/write-corpus.mjs's removeCorpusEntries() for a surgical delete. Refuses to run --apply
+ *   against a locale a generate-batch.mjs process appears to be regenerating right now.
+ * @exports CLI entry point, no exports.
+ */
 import { readFile, mkdir, copyFile } from 'node:fs/promises';
 import { execSync } from 'node:child_process';
 import { dirname, join, resolve } from 'node:path';

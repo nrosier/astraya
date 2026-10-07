@@ -38,6 +38,15 @@
  *
  *   npx tsx --env-file=.env.local tools/corpus-gen/pilot-benchmark-cost.mjs [--out=FILE]
  */
+/**
+ * @module pilot-benchmark-cost
+ * @purpose One-off pilot (#368) probing astrologyapi.com's natal prose-report endpoints to confirm
+ *   their response shape/content before building benchmark-batch.mjs.
+ * @conventions CLI flag: --out=FILE. Makes real, paid calls to astrologyapi.com (reads
+ *   ASTROLOGYAPI_API_KEY from .env.local); never logs the literal key value, only response
+ *   headers/bodies.
+ * @exports CLI entry point, no exports.
+ */
 import { writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 

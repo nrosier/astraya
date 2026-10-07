@@ -63,6 +63,17 @@
  * regenerating the corpus for the production/hosted deployment stays on
  * Gemini for now — a hosted environment has no local model to call.
  */
+/**
+ * @module generate-batch
+ * @purpose Batch-generates (or regenerates) every placement's corpus entry across the full
+ *   restricted scope (#56) — the primary writer of src/interpretation/corpus/<locale>.json.
+ * @conventions CLI flags: --locale=en|nl (required), --limit=N, --concurrency=N, --delay-ms=N,
+ *   --skip-final-checks, --provider=gemini|ollama, --force, --max-language-retries=N, --batch,
+ *   --seed-anchors-from=<path>. Costs real API money (Gemini) unless --provider=ollama.
+ *   Resumable/idempotent: every successful entry is written immediately and a re-run skips any
+ *   key already shipped unless --force. Never regenerates a hand-written `anchor: true` entry.
+ * @exports CLI entry point, no exports.
+ */
 import { readFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
