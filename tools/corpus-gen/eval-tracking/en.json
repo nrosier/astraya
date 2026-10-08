@@ -49445,5 +49445,194 @@
     "locale": "en",
     "evaluationCount": 1,
     "updatedAt": "2026-10-06T22:44:03.166Z"
+  },
+  {
+    "key": "composite-aspect-pair:opposition:pallas:saturn",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-08T13:52:11.610Z"
+  },
+  {
+    "key": "composite-aspect-pair:opposition:pallas:sun",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-08T13:52:11.610Z"
+  },
+  {
+    "key": "composite-aspect-pair:opposition:pallas:trueNode",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-08T13:52:11.610Z"
+  },
+  {
+    "key": "composite-aspect-pair:opposition:pallas:uranus",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-08T13:52:11.610Z"
+  },
+  {
+    "key": "composite-aspect-pair:opposition:pallas:venus",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-08T13:52:11.610Z"
+  },
+  {
+    "key": "composite-aspect-pair:opposition:pallas:vesta",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-08T13:52:11.610Z"
+  },
+  {
+    "key": "composite-aspect-pair:opposition:pluto:saturn",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-08T13:52:11.610Z"
+  },
+  {
+    "key": "composite-aspect-pair:opposition:pluto:sun",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-08T13:52:11.610Z"
+  },
+  {
+    "key": "composite-aspect-pair:opposition:pluto:trueNode",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-08T13:52:11.610Z"
+  },
+  {
+    "key": "composite-aspect-pair:opposition:pluto:uranus",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-08T13:52:11.610Z"
+  },
+  {
+    "key": "composite-aspect-pair:opposition:pluto:venus",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-08T13:52:11.610Z"
+  },
+  {
+    "key": "composite-aspect-pair:opposition:pluto:vesta",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-08T13:52:11.610Z"
+  },
+  {
+    "key": "composite-aspect-pair:opposition:saturn:sun",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-08T13:52:11.610Z"
+  },
+  {
+    "key": "composite-aspect-pair:opposition:saturn:trueNode",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-08T13:52:11.610Z"
+  },
+  {
+    "key": "composite-aspect-pair:opposition:saturn:uranus",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-08T13:52:11.610Z"
+  },
+  {
+    "key": "composite-aspect-pair:opposition:saturn:venus",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-08T13:52:11.610Z"
+  },
+  {
+    "key": "composite-aspect-pair:opposition:saturn:vesta",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-08T13:52:11.610Z"
+  },
+  {
+    "key": "composite-aspect-pair:opposition:sun:trueNode",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-08T13:52:11.610Z"
+  },
+  {
+    "key": "composite-aspect-pair:opposition:sun:uranus",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-08T13:52:11.610Z"
+  },
+  {
+    "key": "composite-aspect-pair:opposition:sun:venus",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-08T13:52:11.610Z"
+  },
+  {
+    "key": "composite-aspect-pair:opposition:sun:vesta",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-08T13:52:11.610Z"
+  },
+  {
+    "key": "composite-aspect-pair:opposition:trueNode:uranus",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-08T13:52:11.610Z"
+  },
+  {
+    "key": "composite-aspect-pair:opposition:trueNode:venus",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-08T13:52:11.610Z"
+  },
+  {
+    "key": "composite-aspect-pair:opposition:trueNode:vesta",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-08T13:52:11.610Z"
+  },
+  {
+    "key": "composite-aspect-pair:opposition:uranus:venus",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-08T13:52:11.610Z"
+  },
+  {
+    "key": "composite-aspect-pair:opposition:uranus:vesta",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-08T13:52:11.610Z"
+  },
+  {
+    "key": "composite-aspect-pair:opposition:venus:vesta",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-08T13:52:11.610Z"
   }
 ]
