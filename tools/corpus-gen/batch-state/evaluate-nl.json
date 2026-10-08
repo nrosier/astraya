@@ -1,8 +1,8 @@
 {
   "jobs": [
     {
-      "batchId": "batch_6ac73a1df12c81908ccb95d6b0b3f930",
-      "submittedAt": "2026-10-08T06:37:18.120Z",
+      "batchId": "batch_6ac7a291c7a48190855a0e644d9c14b6",
+      "submittedAt": "2026-10-08T14:02:57.970Z",
       "model": "gpt-6-luna",
       "votes": 3,
       "candidates": [
@@ -19,7 +19,7 @@
       "lastSeenCounts": {
         "completed": 0,
         "failed": 0,
-        "changedAt": "2026-10-08T06:37:27.830Z"
+        "changedAt": "2026-10-08T14:03:41.191Z"
       }
     }
   ]
