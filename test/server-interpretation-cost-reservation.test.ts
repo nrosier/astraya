@@ -19,8 +19,13 @@ beforeEach(() => {
   db = openDatabase(':memory:');
   // Insert a test user.
   const userId = 'test-user';
-  db.prepare('INSERT INTO users (id, username, password_hash, role, created_at) VALUES (?, ?, ?, ?, ?)')
-    .run(userId, 'testuser', 'hash', 'user', new Date().toISOString());
+  db.prepare('INSERT INTO users (id, username, password_hash, role, created_at) VALUES (?, ?, ?, ?, ?)').run(
+    userId,
+    'testuser',
+    'hash',
+    'user',
+    new Date().toISOString(),
+  );
 });
 
 describe('cost-reservation', () => {
@@ -47,7 +52,7 @@ describe('cost-reservation', () => {
     // Record 150 cents of committed usage.
     db.prepare(
       `INSERT INTO interpretation_usage (user_id, prompt_tokens, output_tokens, cost_cents, created_at)
-       VALUES (?, ?, ?, ?, ?)`
+       VALUES (?, ?, ?, ?, ?)`,
     ).run(userId, 1000, 500, 150, new Date().toISOString());
 
     // Try to reserve 100 more — should fail because 150 + 100 > 200.
@@ -68,7 +73,7 @@ describe('cost-reservation', () => {
     // Record 150 cents of committed usage globally (from any user).
     db.prepare(
       `INSERT INTO interpretation_usage (user_id, prompt_tokens, output_tokens, cost_cents, created_at)
-       VALUES (?, ?, ?, ?, ?)`
+       VALUES (?, ?, ?, ?, ?)`,
     ).run('test-user', 1000, 500, 150, new Date().toISOString());
 
     // Try to reserve 100 more for any user — should fail because 150 + 100 > 200.
@@ -174,7 +179,7 @@ describe('cost-reservation', () => {
 
     db.prepare(
       `INSERT INTO interpretation_cost_reservations (id, user_id, reserved_cents, created_at, expires_at)
-       VALUES (?, ?, ?, ?, ?)`
+       VALUES (?, ?, ?, ?, ?)`,
     ).run(expiredId, userId, 150, pastTime.toISOString(), pastTime.toISOString());
 
     // Try to reserve 100 cents — should succeed because the expired reservation is pruned.
@@ -188,9 +193,7 @@ describe('cost-reservation', () => {
     expect('reservationId' in reservation).toBe(true);
 
     // Confirm the expired reservation was removed.
-    const rows = db
-      .prepare(`SELECT id FROM interpretation_cost_reservations WHERE id = ?`)
-      .all(expiredId) as unknown[];
+    const rows = db.prepare(`SELECT id FROM interpretation_cost_reservations WHERE id = ?`).all(expiredId) as unknown[];
     expect(rows.length).toBe(0);
   });
 });

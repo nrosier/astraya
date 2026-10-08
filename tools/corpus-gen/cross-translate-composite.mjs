@@ -28,16 +28,8 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readTracking } from './lib/eval-tracking.mjs';
 import { generateStructured, toGeminiSchema } from './lib/gemini.mjs';
-import {
-  buildLanguageQualityPrompt,
-  LANGUAGE_QUALITY_RESPONSE_SCHEMA,
-} from './lib/language-quality.mjs';
-import {
-  buildBatchRequest,
-  submitBatch,
-  pollBatch,
-  extractBatchResults,
-} from './lib/gemini-batch.mjs';
+import { buildLanguageQualityPrompt, LANGUAGE_QUALITY_RESPONSE_SCHEMA } from './lib/language-quality.mjs';
+import { buildBatchRequest, submitBatch, pollBatch, extractBatchResults } from './lib/gemini-batch.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -79,8 +71,8 @@ async function findMismatches() {
   const corpusEn = JSON.parse(await readFile(join(root, 'src/interpretation/corpus/en.json'), 'utf8'));
   const corpusNl = JSON.parse(await readFile(join(root, 'src/interpretation/corpus/nl.json'), 'utf8'));
 
-  const mapEn = new Map(corpusEn.map(e => [e.key, e]));
-  const mapNl = new Map(corpusNl.map(e => [e.key, e]));
+  const mapEn = new Map(corpusEn.map((e) => [e.key, e]));
+  const mapNl = new Map(corpusNl.map((e) => [e.key, e]));
 
   const mismatches = [];
 
@@ -143,7 +135,7 @@ ${m.sourceText}
 
   if (completedTranslationBatch.state !== 'BATCH_STATE_SUCCEEDED') {
     throw new Error(
-      `Translation batch failed: ${completedTranslationBatch.state} — ${completedTranslationBatch.error?.message || 'unknown error'}`
+      `Translation batch failed: ${completedTranslationBatch.state} — ${completedTranslationBatch.error?.message || 'unknown error'}`,
     );
   }
 
@@ -194,7 +186,7 @@ ${m.sourceText}
         userContent,
         temperature: 0,
         responseSchema: toGeminiSchema(LANGUAGE_QUALITY_RESPONSE_SCHEMA),
-      })
+      }),
     );
     validationIndexToMismatchIdx.set(validationIdx, mismatchIdx);
     validationIdx++;
@@ -217,7 +209,7 @@ ${m.sourceText}
 
   if (completedValidationBatch.state !== 'BATCH_STATE_SUCCEEDED') {
     throw new Error(
-      `Validation batch failed: ${completedValidationBatch.state} — ${completedValidationBatch.error?.message || 'unknown error'}`
+      `Validation batch failed: ${completedValidationBatch.state} — ${completedValidationBatch.error?.message || 'unknown error'}`,
     );
   }
 
@@ -240,9 +232,7 @@ ${m.sourceText}
     try {
       const validation = JSON.parse(result.content);
       if (validation.verdict === 'BAD') {
-        console.log(
-          `  ✗ Language validation failed for ${m.key}: ${validation.issues?.join(', ') || 'unknown error'}`
-        );
+        console.log(`  ✗ Language validation failed for ${m.key}: ${validation.issues?.join(', ') || 'unknown error'}`);
         validationFailCount++;
       } else {
         results.push({
@@ -254,7 +244,7 @@ ${m.sourceText}
           issues: validation.issues,
         });
         console.log(
-          `  ✓ ${m.key}: validation ${validation.verdict}${validation.issues?.length ? ` - fixed: ${validation.issues.join(', ')}` : ''}`
+          `  ✓ ${m.key}: validation ${validation.verdict}${validation.issues?.length ? ` - fixed: ${validation.issues.join(', ')}` : ''}`,
         );
       }
     } catch (e) {
@@ -326,7 +316,7 @@ ${m.sourceText}
 
       successCount++;
       console.log(
-        `  ✓ Success (validation: ${validation.verdict}${validation.issues?.length ? ` - fixed: ${validation.issues.join(', ')}` : ''})`
+        `  ✓ Success (validation: ${validation.verdict}${validation.issues?.length ? ` - fixed: ${validation.issues.join(', ')}` : ''})`,
       );
     } catch (e) {
       console.error(`  ✗ Failed:`, e.message);
@@ -334,11 +324,11 @@ ${m.sourceText}
     }
 
     // Delay to avoid rate limiting
-    await new Promise(r => setTimeout(r, 1000));
+    await new Promise((r) => setTimeout(r, 1000));
   }
 
   console.log(
-    `\nTranslation complete: ${successCount} succeeded, ${validationFailCount} validation failures, ${translationFailCount} translation errors`
+    `\nTranslation complete: ${successCount} succeeded, ${validationFailCount} validation failures, ${translationFailCount} translation errors`,
   );
 
   return { results };
@@ -370,14 +360,14 @@ async function translateAll(useBatch) {
   for (const r of results) {
     // Update corpus
     const corpus = r.targetLocale === 'en' ? corpusEn : corpusNl;
-    const entry = corpus.find(e => e.key === r.key);
+    const entry = corpus.find((e) => e.key === r.key);
     if (entry) {
       entry.text = r.translatedText;
     }
 
     // Reset eval-tracking
     const tracking = r.targetLocale === 'en' ? trackingEn : trackingNl;
-    const rec = tracking.find(rec => rec.key === r.key);
+    const rec = tracking.find((rec) => rec.key === r.key);
     if (rec) {
       rec.evaluationCount = 0;
       rec.clean = false;
@@ -399,19 +389,19 @@ async function translateAll(useBatch) {
   await writeFile(
     join(root, 'tools/corpus-gen/eval-tracking/en.json'),
     JSON.stringify(trackingEn, null, 2) + '\n',
-    'utf8'
+    'utf8',
   );
   await writeFile(
     join(root, 'tools/corpus-gen/eval-tracking/nl.json'),
     JSON.stringify(trackingNl, null, 2) + '\n',
-    'utf8'
+    'utf8',
   );
 
   console.log(`\n✓ Updated ${results.length} entries in corpus and eval-tracking`);
   console.log(`\nNext steps:`);
   console.log(`  1. Review the changes: git diff src/interpretation/corpus/ tools/corpus-gen/eval-tracking/`);
   console.log(
-    `  2. Commit: git add -A && git commit -m "fix(#451): cross-translate composite entries, reset eval-tracking"`
+    `  2. Commit: git add -A && git commit -m "fix(#451): cross-translate composite entries, reset eval-tracking"`,
   );
   console.log(`  3. Re-evaluate with judge:`);
   console.log(`     node tools/corpus-gen/evaluate-corpus-batch.mjs --locale=en --limit=2`);

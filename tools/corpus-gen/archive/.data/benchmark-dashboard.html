@@ -1,374 +1,804 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<title>#368 benchmark dashboard — Astraya vs. astrologyapi.com</title>
-<style>
-  /* Variables live on :root, not .viz-root — .viz-root is a child of body, and a CSS custom
+  <head>
+    <meta charset="utf-8" />
+    <title>#368 benchmark dashboard — Astraya vs. astrologyapi.com</title>
+    <style>
+      /* Variables live on :root, not .viz-root — .viz-root is a child of body, and a CSS custom
      property is only visible to the element it is declared on and that element's descendants.
      Declaring these on .viz-root left body's own background/color rules unable to see them at
      all (body is .viz-root's ancestor, not its descendant), so body silently fell back to the
      browser's plain default colors regardless of theme — the dark-mode-unreadable-text bug. */
-  :root {
-    color-scheme: light;
-    --surface-1: #fcfcfb;
-    --page: #f9f9f7;
-    --text-primary: #0b0b0b;
-    --text-secondary: #52514e;
-    --muted: #898781;
-    --gridline: #e1e0d9;
-    --series-astraya: #2a78d6;
-    --series-thirdparty: #eb6834;
-    --status-good: #0ca30c;
-    --status-warning: #fab219;
-    --status-critical: #d03b3b;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root:where(:not([data-theme="light"])) {
-      color-scheme: dark;
-      --surface-1: #1a1a19;
-      --page: #0d0d0d;
-      --text-primary: #ffffff;
-      --text-secondary: #c3c2b7;
-      --muted: #898781;
-      --gridline: #2c2c2a;
-      --series-astraya: #3987e5;
-      --series-thirdparty: #d95926;
-      --status-good: #0ca30c;
-      --status-warning: #fab219;
-      --status-critical: #d03b3b;
-    }
-  }
-  :root[data-theme="dark"] {
-    color-scheme: dark;
-    --surface-1: #1a1a19;
-    --page: #0d0d0d;
-    --text-primary: #ffffff;
-    --text-secondary: #c3c2b7;
-    --muted: #898781;
-    --gridline: #2c2c2a;
-    --series-astraya: #3987e5;
-    --series-thirdparty: #d95926;
-    --status-good: #0ca30c;
-    --status-warning: #fab219;
-    --status-critical: #d03b3b;
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--page); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--text-primary); }
-  .viz-root { padding: 24px; max-width: 1200px; margin: 0 auto; }
-  h1 { font-size: 20px; margin: 0 0 4px; }
-  .subtitle { color: var(--text-secondary); font-size: 13px; margin: 0 0 24px; }
-  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 28px; }
-  .tile { background: var(--surface-1); border: 1px solid var(--gridline); border-radius: 8px; padding: 14px 16px; }
-  .tile-value { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
-  .tile-label { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
-  section { background: var(--surface-1); border: 1px solid var(--gridline); border-radius: 8px; padding: 18px; margin-bottom: 24px; }
-  section h2 { font-size: 14px; margin: 0 0 14px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; }
-  .legend { display: flex; gap: 16px; margin-bottom: 12px; font-size: 12px; color: var(--text-secondary); }
-  .legend span { display: inline-flex; align-items: center; gap: 6px; }
-  .swatch { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
-  .magnitude-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; vertical-align: middle; }
-  .category-row { margin-bottom: 12px; }
-  .category-label { font-size: 13px; margin-bottom: 4px; }
-  .bar-track { position: relative; height: 16px; background: var(--gridline); border-radius: 4px; margin-bottom: 3px; overflow: hidden; }
-  .bar-track.empty { display: flex; align-items: center; padding-left: 8px; font-size: 11px; color: var(--muted); background: none; border: 1px dashed var(--gridline); }
-  .bar { height: 100%; border-radius: 4px; }
-  .bar.series-astraya { background: var(--series-astraya); }
-  .bar.series-thirdparty { background: var(--series-thirdparty); }
-  .bar-value { position: absolute; right: 6px; top: 0; font-size: 11px; line-height: 16px; color: var(--text-primary); font-variant-numeric: tabular-nums; }
-  .table-scroll { overflow-x: auto; }
-  table { width: 100%; min-width: 1400px; border-collapse: collapse; font-size: 12px; }
-  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--gridline); white-space: nowrap; }
-  th { color: var(--text-secondary); cursor: pointer; user-select: none; white-space: nowrap; }
-  th:hover { color: var(--text-primary); }
-  td.num { font-variant-numeric: tabular-nums; text-align: right; }
-  td.mono, th.mono { font-family: ui-monospace, monospace; font-size: 11px; }
-  .muted { color: var(--muted); }
-  .tag { font-size: 11px; padding: 2px 7px; border-radius: 10px; color: #fff; white-space: nowrap; }
-  .tag-good { background: var(--status-good); }
-  .tag-warning { background: var(--status-warning); color: #2a2200; }
-  .tag-bad { background: var(--status-critical); }
-  .tag-needs-review { background: var(--muted); }
-  .filters { margin-bottom: 12px; font-size: 12px; }
-  .filters button { border: 1px solid var(--gridline); background: var(--surface-1); color: var(--text-primary); border-radius: 6px; padding: 4px 10px; margin-right: 6px; cursor: pointer; font-size: 12px; }
-  .filters button.active { background: var(--text-primary); color: var(--surface-1); }
-  tr.main-row { cursor: pointer; }
-  tr.main-row:hover { background: var(--page); }
-  .detail-cell { background: var(--page); white-space: normal; padding: 16px !important; }
-  .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-  .detail-grid h3 { font-size: 12px; margin: 0 0 6px; color: var(--text-secondary); }
-  .detail-grid p { font-size: 13px; line-height: 1.5; margin: 0; white-space: normal; }
-</style>
-</head>
-<body>
-<div class="viz-root">
-  <h1>#368 benchmark: Astraya vs. astrologyapi.com</h1>
-  <p class="subtitle">Judged by Laya, all-minilm, and gemma4. Generated 2026-10-08T14:04:43.218Z from 4 accumulated result(s), 4 with a cached third-party text available to read (click a row to compare). No third-party prose appears anywhere on this page except inside that per-row detail panel — see this file's own doc comment for the deliberate, scoped exception.</p>
+      :root {
+        color-scheme: light;
+        --surface-1: #fcfcfb;
+        --page: #f9f9f7;
+        --text-primary: #0b0b0b;
+        --text-secondary: #52514e;
+        --muted: #898781;
+        --gridline: #e1e0d9;
+        --series-astraya: #2a78d6;
+        --series-thirdparty: #eb6834;
+        --status-good: #0ca30c;
+        --status-warning: #fab219;
+        --status-critical: #d03b3b;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:where(:not([data-theme='light'])) {
+          color-scheme: dark;
+          --surface-1: #1a1a19;
+          --page: #0d0d0d;
+          --text-primary: #ffffff;
+          --text-secondary: #c3c2b7;
+          --muted: #898781;
+          --gridline: #2c2c2a;
+          --series-astraya: #3987e5;
+          --series-thirdparty: #d95926;
+          --status-good: #0ca30c;
+          --status-warning: #fab219;
+          --status-critical: #d03b3b;
+        }
+      }
+      :root[data-theme='dark'] {
+        color-scheme: dark;
+        --surface-1: #1a1a19;
+        --page: #0d0d0d;
+        --text-primary: #ffffff;
+        --text-secondary: #c3c2b7;
+        --muted: #898781;
+        --gridline: #2c2c2a;
+        --series-astraya: #3987e5;
+        --series-thirdparty: #d95926;
+        --status-good: #0ca30c;
+        --status-warning: #fab219;
+        --status-critical: #d03b3b;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--page);
+        font-family:
+          system-ui,
+          -apple-system,
+          'Segoe UI',
+          sans-serif;
+        color: var(--text-primary);
+      }
+      .viz-root {
+        padding: 24px;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      h1 {
+        font-size: 20px;
+        margin: 0 0 4px;
+      }
+      .subtitle {
+        color: var(--text-secondary);
+        font-size: 13px;
+        margin: 0 0 24px;
+      }
+      .tiles {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 12px;
+        margin-bottom: 28px;
+      }
+      .tile {
+        background: var(--surface-1);
+        border: 1px solid var(--gridline);
+        border-radius: 8px;
+        padding: 14px 16px;
+      }
+      .tile-value {
+        font-size: 22px;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+      }
+      .tile-label {
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin-top: 2px;
+      }
+      section {
+        background: var(--surface-1);
+        border: 1px solid var(--gridline);
+        border-radius: 8px;
+        padding: 18px;
+        margin-bottom: 24px;
+      }
+      section h2 {
+        font-size: 14px;
+        margin: 0 0 14px;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .legend {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 12px;
+        font-size: 12px;
+        color: var(--text-secondary);
+      }
+      .legend span {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .swatch {
+        width: 10px;
+        height: 10px;
+        border-radius: 2px;
+        display: inline-block;
+      }
+      .magnitude-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 5px;
+        vertical-align: middle;
+      }
+      .category-row {
+        margin-bottom: 12px;
+      }
+      .category-label {
+        font-size: 13px;
+        margin-bottom: 4px;
+      }
+      .bar-track {
+        position: relative;
+        height: 16px;
+        background: var(--gridline);
+        border-radius: 4px;
+        margin-bottom: 3px;
+        overflow: hidden;
+      }
+      .bar-track.empty {
+        display: flex;
+        align-items: center;
+        padding-left: 8px;
+        font-size: 11px;
+        color: var(--muted);
+        background: none;
+        border: 1px dashed var(--gridline);
+      }
+      .bar {
+        height: 100%;
+        border-radius: 4px;
+      }
+      .bar.series-astraya {
+        background: var(--series-astraya);
+      }
+      .bar.series-thirdparty {
+        background: var(--series-thirdparty);
+      }
+      .bar-value {
+        position: absolute;
+        right: 6px;
+        top: 0;
+        font-size: 11px;
+        line-height: 16px;
+        color: var(--text-primary);
+        font-variant-numeric: tabular-nums;
+      }
+      .table-scroll {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        min-width: 1400px;
+        border-collapse: collapse;
+        font-size: 12px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 6px 8px;
+        border-bottom: 1px solid var(--gridline);
+        white-space: nowrap;
+      }
+      th {
+        color: var(--text-secondary);
+        cursor: pointer;
+        user-select: none;
+        white-space: nowrap;
+      }
+      th:hover {
+        color: var(--text-primary);
+      }
+      td.num {
+        font-variant-numeric: tabular-nums;
+        text-align: right;
+      }
+      td.mono,
+      th.mono {
+        font-family: ui-monospace, monospace;
+        font-size: 11px;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .tag {
+        font-size: 11px;
+        padding: 2px 7px;
+        border-radius: 10px;
+        color: #fff;
+        white-space: nowrap;
+      }
+      .tag-good {
+        background: var(--status-good);
+      }
+      .tag-warning {
+        background: var(--status-warning);
+        color: #2a2200;
+      }
+      .tag-bad {
+        background: var(--status-critical);
+      }
+      .tag-needs-review {
+        background: var(--muted);
+      }
+      .filters {
+        margin-bottom: 12px;
+        font-size: 12px;
+      }
+      .filters button {
+        border: 1px solid var(--gridline);
+        background: var(--surface-1);
+        color: var(--text-primary);
+        border-radius: 6px;
+        padding: 4px 10px;
+        margin-right: 6px;
+        cursor: pointer;
+        font-size: 12px;
+      }
+      .filters button.active {
+        background: var(--text-primary);
+        color: var(--surface-1);
+      }
+      tr.main-row {
+        cursor: pointer;
+      }
+      tr.main-row:hover {
+        background: var(--page);
+      }
+      .detail-cell {
+        background: var(--page);
+        white-space: normal;
+        padding: 16px !important;
+      }
+      .detail-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+      .detail-grid h3 {
+        font-size: 12px;
+        margin: 0 0 6px;
+        color: var(--text-secondary);
+      }
+      .detail-grid p {
+        font-size: 13px;
+        line-height: 1.5;
+        margin: 0;
+        white-space: normal;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="viz-root">
+      <h1>#368 benchmark: Astraya vs. astrologyapi.com</h1>
+      <p class="subtitle">
+        Judged by Laya, all-minilm, and gemma4. Generated 2026-10-08T14:04:43.218Z from 4 accumulated result(s), 4 with
+        a cached third-party text available to read (click a row to compare). No third-party prose appears anywhere on
+        this page except inside that per-row detail panel — see this file's own doc comment for the deliberate, scoped
+        exception.
+      </p>
 
-  <div class="tiles">
-    <div class="tile"><div class="tile-value">4</div><div class="tile-label">checked</div></div>
-    <div class="tile"><div class="tile-value">4</div><div class="tile-label">scored</div></div>
-    <div class="tile"><div class="tile-value">0</div><div class="tile-label">skipped</div></div>
-    <div class="tile"><div class="tile-value">1</div><div class="tile-label">good (similar)</div></div>
-    <div class="tile"><div class="tile-value">0</div><div class="tile-label">bad (not similar)</div></div>
-    <div class="tile"><div class="tile-value">1.904 / 3</div><div class="tile-label">mean sim (Laya)</div></div>
-    <div class="tile"><div class="tile-value">0.509</div><div class="tile-label">mean sim (all-minilm)</div></div>
-    <div class="tile"><div class="tile-value">2.250 / 3</div><div class="tile-label">mean sim (gemma4)</div></div>
-    <div class="tile"><div class="tile-value">0.336</div><div class="tile-label">agreement Laya/all-minilm (r)</div></div>
-    <div class="tile"><div class="tile-value">-0.337</div><div class="tile-label">agreement Laya/gemma4 (r)</div></div>
-    <div class="tile"><div class="tile-value">0.767</div><div class="tile-label">agreement all-minilm/gemma4 (r)</div></div>
-    <div class="tile"><div class="tile-value">0.407</div><div class="tile-label">mean grounded (Laya) — Astraya</div></div>
-    <div class="tile"><div class="tile-value">0.290</div><div class="tile-label">mean grounded (Laya) — 3rd-party</div></div>
-    <div class="tile"><div class="tile-value">50%</div><div class="tile-label">preference win rate — Astraya</div></div>
-  </div>
+      <div class="tiles">
+        <div class="tile">
+          <div class="tile-value">4</div>
+          <div class="tile-label">checked</div>
+        </div>
+        <div class="tile">
+          <div class="tile-value">4</div>
+          <div class="tile-label">scored</div>
+        </div>
+        <div class="tile">
+          <div class="tile-value">0</div>
+          <div class="tile-label">skipped</div>
+        </div>
+        <div class="tile">
+          <div class="tile-value">1</div>
+          <div class="tile-label">good (similar)</div>
+        </div>
+        <div class="tile">
+          <div class="tile-value">0</div>
+          <div class="tile-label">bad (not similar)</div>
+        </div>
+        <div class="tile">
+          <div class="tile-value">1.904 / 3</div>
+          <div class="tile-label">mean sim (Laya)</div>
+        </div>
+        <div class="tile">
+          <div class="tile-value">0.509</div>
+          <div class="tile-label">mean sim (all-minilm)</div>
+        </div>
+        <div class="tile">
+          <div class="tile-value">2.250 / 3</div>
+          <div class="tile-label">mean sim (gemma4)</div>
+        </div>
+        <div class="tile">
+          <div class="tile-value">0.336</div>
+          <div class="tile-label">agreement Laya/all-minilm (r)</div>
+        </div>
+        <div class="tile">
+          <div class="tile-value">-0.337</div>
+          <div class="tile-label">agreement Laya/gemma4 (r)</div>
+        </div>
+        <div class="tile">
+          <div class="tile-value">0.767</div>
+          <div class="tile-label">agreement all-minilm/gemma4 (r)</div>
+        </div>
+        <div class="tile">
+          <div class="tile-value">0.407</div>
+          <div class="tile-label">mean grounded (Laya) — Astraya</div>
+        </div>
+        <div class="tile">
+          <div class="tile-value">0.290</div>
+          <div class="tile-label">mean grounded (Laya) — 3rd-party</div>
+        </div>
+        <div class="tile">
+          <div class="tile-value">50%</div>
+          <div class="tile-label">preference win rate — Astraya</div>
+        </div>
+      </div>
 
-  <section>
-    <h2>Mean grounded score by category (Laya)</h2>
-    <div class="legend">
-      <span><span class="swatch" style="background:var(--series-astraya)"></span>Astraya</span>
-      <span><span class="swatch" style="background:var(--series-thirdparty)"></span>astrologyapi.com</span>
+      <section>
+        <h2>Mean grounded score by category (Laya)</h2>
+        <div class="legend">
+          <span><span class="swatch" style="background: var(--series-astraya)"></span>Astraya</span>
+          <span><span class="swatch" style="background: var(--series-thirdparty)"></span>astrologyapi.com</span>
+        </div>
+
+        <div class="category-row">
+          <div class="category-label">planet-in-sign <span class="muted">(1 scored)</span></div>
+          <div class="bar-track">
+            <div class="bar series-astraya" style="width: 27.150000000000002%"></div>
+            <span class="bar-value">0.272</span>
+          </div>
+          <div class="bar-track">
+            <div class="bar series-thirdparty" style="width: 6.22%"></div>
+            <span class="bar-value">0.062</span>
+          </div>
+        </div>
+
+        <div class="category-row">
+          <div class="category-label">planet-in-house <span class="muted">(1 scored)</span></div>
+          <div class="bar-track">
+            <div class="bar series-astraya" style="width: 16.84%"></div>
+            <span class="bar-value">0.168</span>
+          </div>
+          <div class="bar-track">
+            <div class="bar series-thirdparty" style="width: 8.92%"></div>
+            <span class="bar-value">0.089</span>
+          </div>
+        </div>
+
+        <div class="category-row">
+          <div class="category-label">sign-on-cusp <span class="muted">(1 scored)</span></div>
+          <div class="bar-track">
+            <div class="bar series-astraya" style="width: 65.7%"></div>
+            <span class="bar-value">0.657</span>
+          </div>
+          <div class="bar-track">
+            <div class="bar series-thirdparty" style="width: 28.610000000000003%"></div>
+            <span class="bar-value">0.286</span>
+          </div>
+        </div>
+
+        <div class="category-row">
+          <div class="category-label">aspect-pair <span class="muted">(1 scored)</span></div>
+          <div class="bar-track">
+            <div class="bar series-astraya" style="width: 52.92%"></div>
+            <span class="bar-value">0.529</span>
+          </div>
+          <div class="bar-track">
+            <div class="bar series-thirdparty" style="width: 72.31%"></div>
+            <span class="bar-value">0.723</span>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>All results — click a row to read and compare both texts</h2>
+        <div class="filters" id="filters">
+          <button data-filter="all" class="active">all</button>
+          <button data-filter="bad">bad</button>
+          <button data-filter="warning">warning</button>
+          <button data-filter="good">good</button>
+          <button data-filter="needs review">needs review</button>
+        </div>
+        <div class="table-scroll">
+          <table id="results-table">
+            <thead>
+              <tr>
+                <th data-sort="status">status</th>
+                <th data-sort="placement_key" class="mono">placement</th>
+                <th data-sort="category">category</th>
+                <th data-sort="similarity_score">sim (Laya)</th>
+                <th data-sort="embedding_similarity">sim (all-minilm)</th>
+                <th data-sort="similarity_score_llm">sim (gemma4)</th>
+                <th data-sort="grounded_astraya">grnd astraya (Laya)</th>
+                <th data-sort="grounded_astraya_embedding">grnd astraya (all-minilm)</th>
+                <th data-sort="grounded_astraya_llm">grnd astraya (gemma4)</th>
+                <th data-sort="grounded_thirdparty">grnd 3rd-party (Laya)</th>
+                <th data-sort="grounded_thirdparty_embedding">grnd 3rd-party (all-minilm)</th>
+                <th data-sort="grounded_thirdparty_llm">grnd 3rd-party (gemma4)</th>
+                <th data-sort="preference">preference</th>
+                <th data-sort="astraya_model">astraya model</th>
+                <th data-sort="checked_at">checked</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                class="main-row"
+                data-key="aspect-pair:square:moon:sun"
+                data-status="warning"
+                data-category="aspect-pair"
+              >
+                <td>
+                  <span class="tag tag-warning" title="the similarity judges disagree sharply (spread 0.68)"
+                    >warning</span
+                  >
+                </td>
+                <td class="mono">aspect-pair:square:moon:sun</td>
+                <td>aspect-pair</td>
+                <td class="num">
+                  <span class="magnitude-dot" style="background: rgb(NaN, 194, 44)" title="normalized 0.68"></span>2.049
+                </td>
+                <td class="num">
+                  <span class="magnitude-dot" style="background: rgb(NaN, 154, 64)" title="normalized 0.38"></span>0.383
+                </td>
+                <td class="num">
+                  <span class="magnitude-dot" style="background: rgb(NaN, 3, 179)" title="normalized 0.00"></span>0.000
+                </td>
+                <td class="num">
+                  <span class="magnitude-dot" style="background: rgb(NaN, 175, 35)" title="normalized 0.53"></span>0.529
+                </td>
+                <td class="num">
+                  <span class="magnitude-dot" style="background: rgb(NaN, 10, 175)" title="normalized 0.01"></span>0.013
+                </td>
+                <td class="num">
+                  <span class="magnitude-dot" style="background: rgb(NaN, 221, 196)" title="normalized 1.00"></span
+                  >1.000
+                </td>
+                <td class="num">
+                  <span class="magnitude-dot" style="background: rgb(NaN, 199, 46)" title="normalized 0.72"></span>0.723
+                </td>
+                <td class="num">
+                  <span class="magnitude-dot" style="background: rgb(NaN, 140, 90)" title="normalized 0.29"></span>0.286
+                </td>
+                <td class="num">
+                  <span class="magnitude-dot" style="background: rgb(NaN, 3, 179)" title="normalized 0.00"></span>0.000
+                </td>
+                <td class="muted">astraya</td>
+                <td class="muted">gemini-3.8-flash <span class="muted">(shipped)</span></td>
+                <td class="muted mono">2026-09-30T16:39:47.625Z</td>
+              </tr>
+              <tr class="detail-row" data-key="aspect-pair:square:moon:sun" style="display: none">
+                <td class="detail-cell">
+                  <div class="detail-grid">
+                    <div>
+                      <h3>Astraya <span class="muted">(gemini-3.8-flash, shipped)</span></h3>
+                      <p>
+                        You carry an internal restlessness that pushes you to keep growing, refusing to settle for easy
+                        comfort when there is a life to build. Your deliberate aims and your instinctual needs often
+                        pull in opposite directions, giving you sharp self-awareness and real resilience. At times, this
+                        friction makes it hard to feel fully at peace with your choices, leaving you feeling divided
+                        between who you want to become and what feels safe.
+                      </p>
+                    </div>
+                    <div>
+                      <h3>astrologyapi.com</h3>
+                      <p>
+                        The sextile aspect formed between the Moon and Venus shows the need and disposition for happy
+                        personal relationships. There is a sense of sharing and communication in partnerships that will
+                        usually produce good results. You succeed socially because you can usually think of something
+                        good to say about nearly anyone. You&#39;re willing to discuss problems, but your optimistic
+                        attitude keeps you from becoming preoccupied with them. You feel matters will work out well and
+                        most of the time they do. Rarely is your progress impeded by misunderstandings with others.
+                      </p>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+
+              <tr class="main-row" data-key="sign-on-cusp:6:1" data-status="warning" data-category="sign-on-cusp">
+                <td>
+                  <span class="tag tag-warning" title="the similarity judges disagree sharply (spread 0.42)"
+                    >warning</span
+                  >
+                </td>
+                <td class="mono">sign-on-cusp:6:1</td>
+                <td>sign-on-cusp</td>
+                <td class="num">
+                  <span class="magnitude-dot" style="background: rgb(NaN, 193, 44)" title="normalized 0.68"></span>2.042
+                </td>
+                <td class="num">
+                  <span class="magnitude-dot" style="background: rgb(NaN, 181, 38)" title="normalized 0.58"></span>0.584
+                </td>
+                <td class="num">
+                  <span class="magnitude-dot" style="background: rgb(NaN, 221, 196)" title="normalized 1.00"></span
+                  >3.000
+                </td>
+                <td class="num">
+                  <span class="magnitude-dot" style="background: rgb(NaN, 190, 42)" title="normalized 0.66"></span>0.657
+                </td>
+                <td class="num">
+                  <span class="magnitude-dot" style="background: rgb(NaN, 33, 161)" title="normalized 0.06"></span>0.057
+                </td>
+                <td class="num">
+                  <span class="magnitude-dot" style="background: rgb(NaN, 221, 196)" title="normalized 1.00"></span
+                  >1.000
+                </td>
+                <td class="num">
+                  <span class="magnitude-dot" style="background: rgb(NaN, 140, 89)" title="normalized 0.29"></span>0.286
+                </td>
+                <td class="num">
+                  <span class="magnitude-dot" style="background: rgb(NaN, 48, 152)" title="normalized 0.08"></span>0.085
+                </td>
+                <td class="num">
+                  <span class="magnitude-dot" style="background: rgb(NaN, 221, 196)" title="normalized 1.00"></span
+                  >1.000
+                </td>
+                <td class="muted">thirdparty</td>
+                <td class="muted">gemini-3.8-flash <span class="muted">(shipped)</span></td>
+                <td class="muted mono">2026-09-30T16:39:19.522Z</td>
+              </tr>
+              <tr class="detail-row" data-key="sign-on-cusp:6:1" style="display: none">
+                <td class="detail-cell">
+                  <div class="detail-grid">
+                    <div>
+                      <h3>Astraya <span class="muted">(gemini-3.8-flash, shipped)</span></h3>
+                      <p>
+                        You meet the world with an instinctive grace and a talent for putting others at ease, naturally
+                        weighing social dynamics to cultivate harmony. Because you reflexively consider every
+                        perspective before asserting yourself, you can hesitate when a firm stance is required or trade
+                        away your own clarity simply to keep the peace.
+                      </p>
+                    </div>
+                    <div>
+                      <h3>astrologyapi.com</h3>
+                      <p>
+                        The view you tend to give to the world is one of a well adjusted and happy individual. Others
+                        may seek you out as an arbitrator, or come to you for advice or recommendations since your sense
+                        of fairness and balance is acknowledged and valued. You become uneasy around dissention and
+                        bickering, and will avoid situations that make you apprehensive. You have a naturally attractive
+                        and comfortable bearing that brings friendships and associations in both business and pleasure.
+                        Your social life is likely to be filled with people that possess refined tastes, and artistic
+                        talents. You may also be inclined to enter partnerships, or the marriage partner could become
+                        involved in business ventures or enterprises that would be successful.
+                      </p>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+
+              <tr
+                class="main-row"
+                data-key="planet-in-house:sun:9"
+                data-status="warning"
+                data-category="planet-in-house"
+              >
+                <td>
+                  <span class="tag tag-warning" title="the similarity judges disagree sharply (spread 0.55)"
+                    >warning</span
+                  >
+                </td>
+                <td class="mono">planet-in-house:sun:9</td>
+                <td>planet-in-house</td>
+                <td class="num">
+                  <span class="magnitude-dot" style="background: rgb(NaN, 170, 35)" title="normalized 0.49"></span>1.474
+                </td>
+                <td class="num">
+                  <span class="magnitude-dot" style="background: rgb(NaN, 164, 45)" title="normalized 0.45"></span>0.453
+                </td>
+                <td class="num">
+                  <span class="magnitude-dot" style="background: rgb(NaN, 221, 196)" title="normalized 1.00"></span
+                  >3.000
+                </td>
+                <td class="num">
+                  <span class="magnitude-dot" style="background: rgb(NaN, 92, 125)" title="normalized 0.17"></span>0.168
+                </td>
+                <td class="num">
+                  <span class="magnitude-dot" style="background: rgb(NaN, 31, 162)" title="normalized 0.05"></span>0.054
+                </td>
+                <td class="num">
+                  <span class="magnitude-dot" style="background: rgb(NaN, 221, 196)" title="normalized 1.00"></span
+                  >1.000
+                </td>
+                <td class="num">
+                  <span class="magnitude-dot" style="background: rgb(NaN, 50, 150)" title="normalized 0.09"></span>0.089
+                </td>
+                <td class="num">
+                  <span class="magnitude-dot" style="background: rgb(NaN, 14, 172)" title="normalized 0.02"></span>0.022
+                </td>
+                <td class="num">
+                  <span class="magnitude-dot" style="background: rgb(NaN, 221, 196)" title="normalized 1.00"></span
+                  >1.000
+                </td>
+                <td class="muted">thirdparty</td>
+                <td class="muted">gemini-3.8-flash <span class="muted">(shipped)</span></td>
+                <td class="muted mono">2026-09-30T16:38:26.333Z</td>
+              </tr>
+              <tr class="detail-row" data-key="planet-in-house:sun:9" style="display: none">
+                <td class="detail-cell">
+                  <div class="detail-grid">
+                    <div>
+                      <h3>Astraya <span class="muted">(gemini-3.8-flash, shipped)</span></h3>
+                      <p>
+                        You build your sense of self around an ongoing quest for meaning, finding vitality in broad
+                        horizons, study, and philosophies that stretch your understanding. Your gift is a genuine hunger
+                        for truth and an intellectual optimism that keeps life expansive. The pitfall is a tendency
+                        toward dogmatism, where broad principles can easily matter more to you than the messy, practical
+                        details of immediate reality.
+                      </p>
+                    </div>
+                    <div>
+                      <h3>astrologyapi.com</h3>
+                      <p>
+                        You may wish to find, understand, live and accept a higher ideal or philosophy. But, then again,
+                        you may be one who insists upon scientific proof before anything can be believed. You can be the
+                        far-sighted thinker, one of high ideals and tolerance of other people&#39;s views or the
+                        dogmatic fanatic who just parrots what others have told you. Generally, there is a quest for
+                        truth and wisdom and a love of travel, not necessarily physical. You may have an aptitude for
+                        foreign languages and a love of foreign culture.
+                      </p>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+
+              <tr class="main-row" data-key="planet-in-sign:sun:2" data-status="good" data-category="planet-in-sign">
+                <td>
+                  <span class="tag tag-good" title="mean normalized similarity 0.77 across 3 judge(s)">good</span>
+                </td>
+                <td class="mono">planet-in-sign:sun:2</td>
+                <td>planet-in-sign</td>
+                <td class="num">
+                  <span class="magnitude-dot" style="background: rgb(NaN, 194, 44)" title="normalized 0.68"></span>2.050
+                </td>
+                <td class="num">
+                  <span class="magnitude-dot" style="background: rgb(NaN, 185, 40)" title="normalized 0.62"></span>0.616
+                </td>
+                <td class="num">
+                  <span class="magnitude-dot" style="background: rgb(NaN, 221, 196)" title="normalized 1.00"></span
+                  >3.000
+                </td>
+                <td class="num">
+                  <span class="magnitude-dot" style="background: rgb(NaN, 138, 93)" title="normalized 0.27"></span>0.272
+                </td>
+                <td class="num">
+                  <span class="magnitude-dot" style="background: rgb(NaN, 208, 96)" title="normalized 0.83"></span>0.830
+                </td>
+                <td class="num">
+                  <span class="magnitude-dot" style="background: rgb(NaN, 221, 196)" title="normalized 1.00"></span
+                  >1.000
+                </td>
+                <td class="num">
+                  <span class="magnitude-dot" style="background: rgb(NaN, 36, 159)" title="normalized 0.06"></span>0.062
+                </td>
+                <td class="num">
+                  <span class="magnitude-dot" style="background: rgb(NaN, 162, 49)" title="normalized 0.44"></span>0.440
+                </td>
+                <td class="num">
+                  <span class="magnitude-dot" style="background: rgb(NaN, 221, 196)" title="normalized 1.00"></span
+                  >1.000
+                </td>
+                <td class="muted">astraya</td>
+                <td class="muted"><span class="muted">—</span> <span class="muted">(shipped)</span></td>
+                <td class="muted mono">2026-09-30T16:37:53.455Z</td>
+              </tr>
+              <tr class="detail-row" data-key="planet-in-sign:sun:2" style="display: none">
+                <td class="detail-cell">
+                  <div class="detail-grid">
+                    <div>
+                      <h3>Astraya</h3>
+                      <p>
+                        Sun in Gemini makes an individual extremely fast, smart, adaptable, and curious. All these
+                        valuable qualities make you an interesting individual to be around. Also, you can be easily
+                        distracted, cannot be chained.
+                      </p>
+                    </div>
+                    <div>
+                      <h3>astrologyapi.com</h3>
+                      <p>
+                        Geminians are friendly, clever, talkative, versatile, curious, perceptive, intuitive, and
+                        logical. At times they can also be quite contradictory, restless, two-faced, critical, and
+                        impatient. Gemini people enjoy and need work that includes a great deal of variety. They love to
+                        do several things all at the same time, sometimes making them late for appointments. They abhor
+                        boredom. Geminians tend to flit from one experience to another, gathering in all types of
+                        information along the way, but seldom getting to the depth of any subject. They go broad and not
+                        deep. Persistence is not their strong suit. Gaining knowledge and disseminating it is their real
+                        talent. Hence, they make wonderful salespeople or teachers if they stick around long enough to
+                        get all the facts instead of only half the story. Even if they do not possess all the facts,
+                        since they are never at a loss for words, they will continue with their story as if they did
+                        have all the facts. It is important for a Geminian to seek intellectual satisfaction. Mental
+                        stagnation turns them off, so they read extensively and communicate widely in order to satisfy
+                        this longing for mental stimulation. This discontent can make them either very ambitious, or it
+                        can incline them to jump from one thing to another, searching for the greener grass which never
+                        appears. Geminians usually think quickly on their feet and have the ability to use the right
+                        words in any situation. They possess tremendous wit and a good sense of humor. Other people may
+                        have difficulty in keeping up with their rapid change of subjects.
+                      </p>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
-    
-      <div class="category-row">
-        <div class="category-label">planet-in-sign <span class="muted">(1 scored)</span></div>
-        <div class="bar-track"><div class="bar series-astraya" style="width:27.150000000000002%"></div><span class="bar-value">0.272</span></div>
-        <div class="bar-track"><div class="bar series-thirdparty" style="width:6.22%"></div><span class="bar-value">0.062</span></div>
-      </div>
-
-      <div class="category-row">
-        <div class="category-label">planet-in-house <span class="muted">(1 scored)</span></div>
-        <div class="bar-track"><div class="bar series-astraya" style="width:16.84%"></div><span class="bar-value">0.168</span></div>
-        <div class="bar-track"><div class="bar series-thirdparty" style="width:8.92%"></div><span class="bar-value">0.089</span></div>
-      </div>
-
-      <div class="category-row">
-        <div class="category-label">sign-on-cusp <span class="muted">(1 scored)</span></div>
-        <div class="bar-track"><div class="bar series-astraya" style="width:65.7%"></div><span class="bar-value">0.657</span></div>
-        <div class="bar-track"><div class="bar series-thirdparty" style="width:28.610000000000003%"></div><span class="bar-value">0.286</span></div>
-      </div>
-
-      <div class="category-row">
-        <div class="category-label">aspect-pair <span class="muted">(1 scored)</span></div>
-        <div class="bar-track"><div class="bar series-astraya" style="width:52.92%"></div><span class="bar-value">0.529</span></div>
-        <div class="bar-track"><div class="bar series-thirdparty" style="width:72.31%"></div><span class="bar-value">0.723</span></div>
-      </div>
-  </section>
-
-  <section>
-    <h2>All results — click a row to read and compare both texts</h2>
-    <div class="filters" id="filters">
-      <button data-filter="all" class="active">all</button>
-      <button data-filter="bad">bad</button>
-      <button data-filter="warning">warning</button>
-      <button data-filter="good">good</button>
-      <button data-filter="needs review">needs review</button>
-    </div>
-    <div class="table-scroll">
-      <table id="results-table">
-        <thead>
-          <tr>
-            <th data-sort="status">status</th>
-            <th data-sort="placement_key" class="mono">placement</th>
-            <th data-sort="category">category</th>
-            <th data-sort="similarity_score">sim (Laya)</th>
-            <th data-sort="embedding_similarity">sim (all-minilm)</th>
-            <th data-sort="similarity_score_llm">sim (gemma4)</th>
-            <th data-sort="grounded_astraya">grnd astraya (Laya)</th>
-            <th data-sort="grounded_astraya_embedding">grnd astraya (all-minilm)</th>
-            <th data-sort="grounded_astraya_llm">grnd astraya (gemma4)</th>
-            <th data-sort="grounded_thirdparty">grnd 3rd-party (Laya)</th>
-            <th data-sort="grounded_thirdparty_embedding">grnd 3rd-party (all-minilm)</th>
-            <th data-sort="grounded_thirdparty_llm">grnd 3rd-party (gemma4)</th>
-            <th data-sort="preference">preference</th>
-            <th data-sort="astraya_model">astraya model</th>
-            <th data-sort="checked_at">checked</th>
-          </tr>
-        </thead>
-        <tbody>
-          
-    <tr class="main-row" data-key="aspect-pair:square:moon:sun" data-status="warning" data-category="aspect-pair">
-      <td><span class="tag tag-warning" title="the similarity judges disagree sharply (spread 0.68)">warning</span></td>
-      <td class="mono">aspect-pair:square:moon:sun</td>
-      <td>aspect-pair</td>
-      <td class="num"><span class="magnitude-dot" style="background:rgb(NaN, 194, 44)" title="normalized 0.68"></span>2.049</td>
-      <td class="num"><span class="magnitude-dot" style="background:rgb(NaN, 154, 64)" title="normalized 0.38"></span>0.383</td>
-      <td class="num"><span class="magnitude-dot" style="background:rgb(NaN, 3, 179)" title="normalized 0.00"></span>0.000</td>
-      <td class="num"><span class="magnitude-dot" style="background:rgb(NaN, 175, 35)" title="normalized 0.53"></span>0.529</td>
-      <td class="num"><span class="magnitude-dot" style="background:rgb(NaN, 10, 175)" title="normalized 0.01"></span>0.013</td>
-      <td class="num"><span class="magnitude-dot" style="background:rgb(NaN, 221, 196)" title="normalized 1.00"></span>1.000</td>
-      <td class="num"><span class="magnitude-dot" style="background:rgb(NaN, 199, 46)" title="normalized 0.72"></span>0.723</td>
-      <td class="num"><span class="magnitude-dot" style="background:rgb(NaN, 140, 90)" title="normalized 0.29"></span>0.286</td>
-      <td class="num"><span class="magnitude-dot" style="background:rgb(NaN, 3, 179)" title="normalized 0.00"></span>0.000</td>
-      <td class="muted">astraya</td>
-      <td class="muted">gemini-3.8-flash <span class="muted">(shipped)</span></td>
-      <td class="muted mono">2026-09-30T16:39:47.625Z</td>
-    </tr>
-    <tr class="detail-row" data-key="aspect-pair:square:moon:sun" style="display:none">
-      <td class="detail-cell">
-        <div class="detail-grid">
-          <div>
-            <h3>Astraya <span class="muted">(gemini-3.8-flash, shipped)</span></h3>
-            <p>You carry an internal restlessness that pushes you to keep growing, refusing to settle for easy comfort when there is a life to build. Your deliberate aims and your instinctual needs often pull in opposite directions, giving you sharp self-awareness and real resilience. At times, this friction makes it hard to feel fully at peace with your choices, leaving you feeling divided between who you want to become and what feels safe.</p>
-          </div>
-          <div>
-            <h3>astrologyapi.com</h3>
-            <p>The sextile aspect formed between the Moon and Venus shows the need and disposition for happy personal relationships. There is a sense of sharing and communication in partnerships that will usually produce good results. You succeed socially because you can usually think of something good to say about nearly anyone. You&#39;re willing to discuss problems, but your optimistic attitude keeps you from becoming preoccupied with them. You feel matters will work out well and most of the time they do. Rarely is your progress impeded by misunderstandings with others.</p>
-          </div>
-        </div>
-      </td>
-    </tr>
-
-    <tr class="main-row" data-key="sign-on-cusp:6:1" data-status="warning" data-category="sign-on-cusp">
-      <td><span class="tag tag-warning" title="the similarity judges disagree sharply (spread 0.42)">warning</span></td>
-      <td class="mono">sign-on-cusp:6:1</td>
-      <td>sign-on-cusp</td>
-      <td class="num"><span class="magnitude-dot" style="background:rgb(NaN, 193, 44)" title="normalized 0.68"></span>2.042</td>
-      <td class="num"><span class="magnitude-dot" style="background:rgb(NaN, 181, 38)" title="normalized 0.58"></span>0.584</td>
-      <td class="num"><span class="magnitude-dot" style="background:rgb(NaN, 221, 196)" title="normalized 1.00"></span>3.000</td>
-      <td class="num"><span class="magnitude-dot" style="background:rgb(NaN, 190, 42)" title="normalized 0.66"></span>0.657</td>
-      <td class="num"><span class="magnitude-dot" style="background:rgb(NaN, 33, 161)" title="normalized 0.06"></span>0.057</td>
-      <td class="num"><span class="magnitude-dot" style="background:rgb(NaN, 221, 196)" title="normalized 1.00"></span>1.000</td>
-      <td class="num"><span class="magnitude-dot" style="background:rgb(NaN, 140, 89)" title="normalized 0.29"></span>0.286</td>
-      <td class="num"><span class="magnitude-dot" style="background:rgb(NaN, 48, 152)" title="normalized 0.08"></span>0.085</td>
-      <td class="num"><span class="magnitude-dot" style="background:rgb(NaN, 221, 196)" title="normalized 1.00"></span>1.000</td>
-      <td class="muted">thirdparty</td>
-      <td class="muted">gemini-3.8-flash <span class="muted">(shipped)</span></td>
-      <td class="muted mono">2026-09-30T16:39:19.522Z</td>
-    </tr>
-    <tr class="detail-row" data-key="sign-on-cusp:6:1" style="display:none">
-      <td class="detail-cell">
-        <div class="detail-grid">
-          <div>
-            <h3>Astraya <span class="muted">(gemini-3.8-flash, shipped)</span></h3>
-            <p>You meet the world with an instinctive grace and a talent for putting others at ease, naturally weighing social dynamics to cultivate harmony. Because you reflexively consider every perspective before asserting yourself, you can hesitate when a firm stance is required or trade away your own clarity simply to keep the peace.</p>
-          </div>
-          <div>
-            <h3>astrologyapi.com</h3>
-            <p>The view you tend to give to the world is one of a well adjusted and happy individual. Others may seek you out as an arbitrator, or come to you for advice or recommendations since your sense of fairness and balance is acknowledged and valued. You become uneasy around dissention and bickering, and will avoid situations that make you apprehensive. You have a naturally attractive and comfortable bearing that brings friendships and associations in both business and pleasure. Your social life is likely to be filled with people that possess refined tastes, and artistic talents. You may also be inclined to enter partnerships, or the marriage partner could become involved in business ventures or enterprises that would be successful.</p>
-          </div>
-        </div>
-      </td>
-    </tr>
-
-    <tr class="main-row" data-key="planet-in-house:sun:9" data-status="warning" data-category="planet-in-house">
-      <td><span class="tag tag-warning" title="the similarity judges disagree sharply (spread 0.55)">warning</span></td>
-      <td class="mono">planet-in-house:sun:9</td>
-      <td>planet-in-house</td>
-      <td class="num"><span class="magnitude-dot" style="background:rgb(NaN, 170, 35)" title="normalized 0.49"></span>1.474</td>
-      <td class="num"><span class="magnitude-dot" style="background:rgb(NaN, 164, 45)" title="normalized 0.45"></span>0.453</td>
-      <td class="num"><span class="magnitude-dot" style="background:rgb(NaN, 221, 196)" title="normalized 1.00"></span>3.000</td>
-      <td class="num"><span class="magnitude-dot" style="background:rgb(NaN, 92, 125)" title="normalized 0.17"></span>0.168</td>
-      <td class="num"><span class="magnitude-dot" style="background:rgb(NaN, 31, 162)" title="normalized 0.05"></span>0.054</td>
-      <td class="num"><span class="magnitude-dot" style="background:rgb(NaN, 221, 196)" title="normalized 1.00"></span>1.000</td>
-      <td class="num"><span class="magnitude-dot" style="background:rgb(NaN, 50, 150)" title="normalized 0.09"></span>0.089</td>
-      <td class="num"><span class="magnitude-dot" style="background:rgb(NaN, 14, 172)" title="normalized 0.02"></span>0.022</td>
-      <td class="num"><span class="magnitude-dot" style="background:rgb(NaN, 221, 196)" title="normalized 1.00"></span>1.000</td>
-      <td class="muted">thirdparty</td>
-      <td class="muted">gemini-3.8-flash <span class="muted">(shipped)</span></td>
-      <td class="muted mono">2026-09-30T16:38:26.333Z</td>
-    </tr>
-    <tr class="detail-row" data-key="planet-in-house:sun:9" style="display:none">
-      <td class="detail-cell">
-        <div class="detail-grid">
-          <div>
-            <h3>Astraya <span class="muted">(gemini-3.8-flash, shipped)</span></h3>
-            <p>You build your sense of self around an ongoing quest for meaning, finding vitality in broad horizons, study, and philosophies that stretch your understanding. Your gift is a genuine hunger for truth and an intellectual optimism that keeps life expansive. The pitfall is a tendency toward dogmatism, where broad principles can easily matter more to you than the messy, practical details of immediate reality.</p>
-          </div>
-          <div>
-            <h3>astrologyapi.com</h3>
-            <p>You may wish to find, understand, live and accept a higher ideal or philosophy. But, then again, you may be one who insists upon scientific proof before anything can be believed. You can be the far-sighted thinker, one of high ideals and tolerance of other people&#39;s views or the dogmatic fanatic who just parrots what others have told you. Generally, there is a quest for truth and wisdom and a love of travel, not necessarily physical. You may have an aptitude for foreign languages and a love of foreign culture.</p>
-          </div>
-        </div>
-      </td>
-    </tr>
-
-    <tr class="main-row" data-key="planet-in-sign:sun:2" data-status="good" data-category="planet-in-sign">
-      <td><span class="tag tag-good" title="mean normalized similarity 0.77 across 3 judge(s)">good</span></td>
-      <td class="mono">planet-in-sign:sun:2</td>
-      <td>planet-in-sign</td>
-      <td class="num"><span class="magnitude-dot" style="background:rgb(NaN, 194, 44)" title="normalized 0.68"></span>2.050</td>
-      <td class="num"><span class="magnitude-dot" style="background:rgb(NaN, 185, 40)" title="normalized 0.62"></span>0.616</td>
-      <td class="num"><span class="magnitude-dot" style="background:rgb(NaN, 221, 196)" title="normalized 1.00"></span>3.000</td>
-      <td class="num"><span class="magnitude-dot" style="background:rgb(NaN, 138, 93)" title="normalized 0.27"></span>0.272</td>
-      <td class="num"><span class="magnitude-dot" style="background:rgb(NaN, 208, 96)" title="normalized 0.83"></span>0.830</td>
-      <td class="num"><span class="magnitude-dot" style="background:rgb(NaN, 221, 196)" title="normalized 1.00"></span>1.000</td>
-      <td class="num"><span class="magnitude-dot" style="background:rgb(NaN, 36, 159)" title="normalized 0.06"></span>0.062</td>
-      <td class="num"><span class="magnitude-dot" style="background:rgb(NaN, 162, 49)" title="normalized 0.44"></span>0.440</td>
-      <td class="num"><span class="magnitude-dot" style="background:rgb(NaN, 221, 196)" title="normalized 1.00"></span>1.000</td>
-      <td class="muted">astraya</td>
-      <td class="muted"><span class="muted">—</span> <span class="muted">(shipped)</span></td>
-      <td class="muted mono">2026-09-30T16:37:53.455Z</td>
-    </tr>
-    <tr class="detail-row" data-key="planet-in-sign:sun:2" style="display:none">
-      <td class="detail-cell">
-        <div class="detail-grid">
-          <div>
-            <h3>Astraya</h3>
-            <p>Sun in Gemini makes an individual extremely fast, smart, adaptable, and curious. All these valuable qualities make you an interesting individual to be around. Also, you can be easily distracted, cannot be chained.</p>
-          </div>
-          <div>
-            <h3>astrologyapi.com</h3>
-            <p>Geminians are friendly, clever, talkative, versatile, curious, perceptive, intuitive, and logical. At times they can also be quite contradictory, restless, two-faced, critical, and impatient. Gemini people enjoy and need work that includes a great deal of variety. They love to do several things all at the same time, sometimes making them late for appointments. They abhor boredom. Geminians tend to flit from one experience to another, gathering in all types of information along the way, but seldom getting to the depth of any subject. They go broad and not deep. Persistence is not their strong suit. Gaining knowledge and disseminating it is their real talent. Hence, they make wonderful salespeople or teachers if they stick around long enough to get all the facts instead of only half the story. Even if they do not possess all the facts, since they are never at a loss for words, they will continue with their story as if they did have all the facts. It is important for a Geminian to seek intellectual satisfaction. Mental stagnation turns them off, so they read extensively and communicate widely in order to satisfy this longing for mental stimulation. This discontent can make them either very ambitious, or it can incline them to jump from one thing to another, searching for the greener grass which never appears. Geminians usually think quickly on their feet and have the ability to use the right words in any situation. They possess tremendous wit and a good sense of humor. Other people may have difficulty in keeping up with their rapid change of subjects.</p>
-          </div>
-        </div>
-      </td>
-    </tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
-</div>
-<script>
-  const COLUMN_COUNT = 15;
-  const table = document.getElementById('results-table');
-  const tbody = table.querySelector('tbody');
-  tbody.querySelectorAll('.detail-cell').forEach((td) => { td.colSpan = COLUMN_COUNT; });
-
-  tbody.addEventListener('click', (e) => {
-    const tr = e.target.closest('tr.main-row');
-    if (!tr) return;
-    const detail = tbody.querySelector('tr.detail-row[data-key="' + tr.dataset.key.replace(/"/g, '') + '"]');
-    if (detail) detail.style.display = detail.style.display === 'none' ? '' : 'none';
-  });
-
-  function detailFor(mainRow) {
-    return tbody.querySelector('tr.detail-row[data-key="' + mainRow.dataset.key.replace(/"/g, '') + '"]');
-  }
-
-  document.getElementById('filters').addEventListener('click', (e) => {
-    const btn = e.target.closest('button[data-filter]');
-    if (!btn) return;
-    document.querySelectorAll('#filters button').forEach((b) => b.classList.toggle('active', b === btn));
-    const filter = btn.dataset.filter;
-    tbody.querySelectorAll('tr.main-row').forEach((tr) => {
-      const show = filter === 'all' || tr.dataset.status === filter;
-      tr.style.display = show ? '' : 'none';
-      const detail = detailFor(tr);
-      if (detail && !show) detail.style.display = 'none';
-    });
-  });
-
-  let sortState = {};
-  table.querySelectorAll('th[data-sort]').forEach((th) => {
-    th.addEventListener('click', () => {
-      const key = th.dataset.sort;
-      const asc = sortState[key] = !sortState[key];
-      const cellIndex = Array.from(th.parentElement.children).indexOf(th);
-      const mainRows = Array.from(tbody.querySelectorAll('tr.main-row'));
-      mainRows.sort((a, b) => {
-        const av = a.children[cellIndex].textContent.trim();
-        const bv = b.children[cellIndex].textContent.trim();
-        const an = Number(av), bn = Number(bv);
-        const cmp = !Number.isNaN(an) && !Number.isNaN(bn) ? an - bn : av.localeCompare(bv);
-        return asc ? cmp : -cmp;
+    <script>
+      const COLUMN_COUNT = 15;
+      const table = document.getElementById('results-table');
+      const tbody = table.querySelector('tbody');
+      tbody.querySelectorAll('.detail-cell').forEach((td) => {
+        td.colSpan = COLUMN_COUNT;
       });
-      mainRows.forEach((tr) => {
-        tbody.appendChild(tr);
-        const detail = detailFor(tr);
-        if (detail) tbody.appendChild(detail);
+
+      tbody.addEventListener('click', (e) => {
+        const tr = e.target.closest('tr.main-row');
+        if (!tr) return;
+        const detail = tbody.querySelector('tr.detail-row[data-key="' + tr.dataset.key.replace(/"/g, '') + '"]');
+        if (detail) detail.style.display = detail.style.display === 'none' ? '' : 'none';
       });
-    });
-  });
-</script>
-</body>
+
+      function detailFor(mainRow) {
+        return tbody.querySelector('tr.detail-row[data-key="' + mainRow.dataset.key.replace(/"/g, '') + '"]');
+      }
+
+      document.getElementById('filters').addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-filter]');
+        if (!btn) return;
+        document.querySelectorAll('#filters button').forEach((b) => b.classList.toggle('active', b === btn));
+        const filter = btn.dataset.filter;
+        tbody.querySelectorAll('tr.main-row').forEach((tr) => {
+          const show = filter === 'all' || tr.dataset.status === filter;
+          tr.style.display = show ? '' : 'none';
+          const detail = detailFor(tr);
+          if (detail && !show) detail.style.display = 'none';
+        });
+      });
+
+      let sortState = {};
+      table.querySelectorAll('th[data-sort]').forEach((th) => {
+        th.addEventListener('click', () => {
+          const key = th.dataset.sort;
+          const asc = (sortState[key] = !sortState[key]);
+          const cellIndex = Array.from(th.parentElement.children).indexOf(th);
+          const mainRows = Array.from(tbody.querySelectorAll('tr.main-row'));
+          mainRows.sort((a, b) => {
+            const av = a.children[cellIndex].textContent.trim();
+            const bv = b.children[cellIndex].textContent.trim();
+            const an = Number(av),
+              bn = Number(bv);
+            const cmp = !Number.isNaN(an) && !Number.isNaN(bn) ? an - bn : av.localeCompare(bv);
+            return asc ? cmp : -cmp;
+          });
+          mainRows.forEach((tr) => {
+            tbody.appendChild(tr);
+            const detail = detailFor(tr);
+            if (detail) tbody.appendChild(detail);
+          });
+        });
+      });
+    </script>
+  </body>
 </html>

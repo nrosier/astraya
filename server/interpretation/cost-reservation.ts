@@ -57,15 +57,13 @@ export function reserveCostCents(
   try {
     // Prune expired rows — cheap housekeeping that keeps the table small and ensures
     // the sums below never include an abandoned reservation.
-    db.prepare('DELETE FROM interpretation_cost_reservations WHERE expires_at <= ?').run(
-      new Date().toISOString()
-    );
+    db.prepare('DELETE FROM interpretation_cost_reservations WHERE expires_at <= ?').run(new Date().toISOString());
 
     // Sum committed usage + all active reservations for this user.
     const userCommitted = userCostCentsSince(db, userId);
     const userReserved = db
       .prepare(
-        `SELECT COALESCE(SUM(reserved_cents), 0) as total FROM interpretation_cost_reservations WHERE user_id = ?`
+        `SELECT COALESCE(SUM(reserved_cents), 0) as total FROM interpretation_cost_reservations WHERE user_id = ?`,
       )
       .get(userId) as unknown as { readonly total: number };
     const userTotal = userCommitted + userReserved.total;
@@ -73,9 +71,7 @@ export function reserveCostCents(
     // Sum committed usage + all active reservations globally.
     const totalCommitted = totalCostCentsSince(db);
     const totalReserved = db
-      .prepare(
-        `SELECT COALESCE(SUM(reserved_cents), 0) as total FROM interpretation_cost_reservations`
-      )
+      .prepare(`SELECT COALESCE(SUM(reserved_cents), 0) as total FROM interpretation_cost_reservations`)
       .get() as unknown as { readonly total: number };
     const grandTotal = totalCommitted + totalReserved.total;
 
@@ -96,7 +92,7 @@ export function reserveCostCents(
 
     db.prepare(
       `INSERT INTO interpretation_cost_reservations (id, user_id, reserved_cents, created_at, expires_at)
-       VALUES (?, ?, ?, ?, ?)`
+       VALUES (?, ?, ?, ?, ?)`,
     ).run(reservationId, userId, maxCents, now.toISOString(), expiresAt.toISOString());
 
     db.exec('COMMIT');
