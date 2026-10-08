@@ -1,130 +1,25 @@
 {
   "jobs": [
     {
-      "batchId": "batch_6ac647b0d4dc81909221f38646f246bc",
-      "submittedAt": "2026-10-07T13:22:57.486Z",
+      "batchId": "batch_6ac73a1df12c81908ccb95d6b0b3f930",
+      "submittedAt": "2026-10-08T06:37:18.120Z",
       "model": "gpt-6-luna",
       "votes": 3,
       "candidates": [
         {
-          "key": "composite-planet-in-sign:meanLilith:11"
-        },
-        {
-          "key": "composite-planet-in-sign:osculatingLilith:11"
-        },
-        {
-          "key": "composite-planet-in-sign:chiron:0"
-        },
-        {
-          "key": "composite-planet-in-sign:chiron:9"
-        },
-        {
-          "key": "composite-planet-in-sign:ceres:6"
-        },
-        {
-          "key": "composite-planet-in-house:meanLilith:12"
-        },
-        {
-          "key": "composite-planet-in-house:ceres:9"
-        },
-        {
-          "key": "composite-aspect-pair:conjunction:chiron:uranus"
-        },
-        {
-          "key": "composite-aspect-pair:conjunction:interpolatedLilith:neptune"
-        },
-        {
-          "key": "composite-aspect-pair:conjunction:meanLilith:neptune"
-        },
-        {
           "key": "composite-aspect-pair:semisextile:interpolatedLilith:pluto"
-        },
-        {
-          "key": "composite-aspect-pair:semisextile:neptune:osculatingLilith"
-        },
-        {
-          "key": "composite-aspect-pair:semisextile:neptune:pluto"
-        },
-        {
-          "key": "composite-aspect-pair:semisextile:osculatingLilith:uranus"
-        },
-        {
-          "key": "composite-aspect-pair:semisextile:pluto:vesta"
-        },
-        {
-          "key": "composite-aspect-pair:semisquare:interpolatedLilith:neptune"
-        },
-        {
-          "key": "composite-aspect-pair:sextile:pallas:uranus"
-        },
-        {
-          "key": "composite-aspect-pair:sextile:pluto:uranus"
-        },
-        {
-          "key": "composite-aspect-pair:quintile:ceres:saturn"
-        },
-        {
-          "key": "composite-aspect-pair:quintile:mercury:pluto"
-        },
-        {
-          "key": "composite-aspect-pair:trine:ceres:pluto"
-        },
-        {
-          "key": "composite-aspect-pair:trine:interpolatedLilith:meanNode"
-        },
-        {
-          "key": "composite-aspect-pair:trine:interpolatedLilith:neptune"
-        },
-        {
-          "key": "composite-aspect-pair:trine:meanLilith:trueNode"
-        },
-        {
-          "key": "composite-aspect-pair:sesquiquadrate:meanLilith:uranus"
-        },
-        {
-          "key": "composite-aspect-pair:sesquiquadrate:meanNode:pluto"
         },
         {
           "key": "composite-aspect-pair:biquintile:ceres:neptune"
         },
         {
           "key": "composite-aspect-pair:biquintile:juno:saturn"
-        },
-        {
-          "key": "composite-aspect-pair:biquintile:meanNode:saturn"
-        },
-        {
-          "key": "composite-aspect-pair:quincunx:osculatingLilith:pluto"
-        },
-        {
-          "key": "composite-aspect-pair:quincunx:pallas:uranus"
-        },
-        {
-          "key": "composite-aspect-pair:quincunx:sun:uranus"
-        },
-        {
-          "key": "composite-aspect-pair:opposition:ceres:sun"
-        },
-        {
-          "key": "composite-aspect-pair:opposition:ceres:venus"
-        },
-        {
-          "key": "composite-aspect-pair:opposition:chiron:vesta"
-        },
-        {
-          "key": "composite-aspect-pair:opposition:interpolatedLilith:neptune"
-        },
-        {
-          "key": "composite-aspect-pair:opposition:juno:venus"
-        },
-        {
-          "key": "composite-aspect-pair:opposition:meanLilith:sun"
         }
       ],
       "lastSeenCounts": {
-        "completed": 51,
+        "completed": 0,
         "failed": 0,
-        "changedAt": "2026-10-07T14:40:38.513Z"
+        "changedAt": "2026-10-08T06:37:27.830Z"
       }
     }
   ]
