@@ -3175,6 +3175,25 @@ svg text.chart-symbol-text-unicode {
   margin-left: 1.5rem;
 }
 
+.settings-card-sublabel {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+/* An informational note on the setting just above it, same shape as .warning but without the alarm colour. */
+.settings-card-note {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid color-mix(in oklab, var(--accent) 35%, var(--line));
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: color-mix(in oklab, var(--accent) 9%, transparent);
+  color: var(--fg);
+  font-size: 0.9em;
+  line-height: 1.5;
+}
+
 .settings-card-group label {
   display: block;
 }

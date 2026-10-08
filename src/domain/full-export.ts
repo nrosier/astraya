@@ -123,7 +123,7 @@ export async function buildFullExport(params: {
       continue;
     }
     try {
-      const data = await computeChartData(person.moment, params.provider);
+      const data = await computeChartData(person.moment, params.provider, { rulership: params.rulership });
       const withHouses = person.timeAccuracy !== 'unknown' && housesAreDefined(data.houses);
       people.push({ ...base, natalChart: chartExport(data, params.rulership, withHouses) });
     } catch (error) {
