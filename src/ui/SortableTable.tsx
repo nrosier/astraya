@@ -45,6 +45,10 @@ export function SortableTable<T>({
   // buttons can sit next to it without ending up inside the table's accessibility tree) —
   // aria-labelledby recovers the same table/heading association a real <caption> gives (#69).
   const captionId = useId();
+  // Shared prefix for the sr-only tooltip-description spans (#456) — one id per column, derived
+  // from this plus the column key, so each gets a stable, unique id without a useId() call per
+  // column (columns.map runs every render; useId() must be called the same number of times).
+  const tooltipIdPrefix = useId();
 
   const copy = (): void => {
     void navigator.clipboard.writeText(rowsToTsv(columns, sorted)).then(
@@ -81,33 +85,49 @@ export function SortableTable<T>({
         <table aria-labelledby={captionId}>
           <thead>
             <tr>
-              {columns.map((column) => (
-                <th
-                  key={column.key}
-                  scope="col"
-                  aria-sort={
-                    sort?.column === column.key ? (sort.direction === 'asc' ? 'ascending' : 'descending') : undefined
-                  }
-                >
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSort((current) => toggleSort(current, column.key));
-                    }}
+              {columns.map((column) => {
+                // `title` alone only reaches a mouse-hover user (#456): it isn't reliably shown on
+                // keyboard focus and isn't reliably announced by screen readers either. Pairing it
+                // with `aria-describedby` onto a `.sr-only` span exposes the same text as an
+                // accessible description regardless of input method — same shape as AppNav.tsx's
+                // disabled-tab fix, except here the tooltip is a *description* of an otherwise
+                // unchanged button name, not a replacement for it, so aria-describedby rather than
+                // aria-label.
+                const tooltipId = column.labelTooltip ? `${tooltipIdPrefix}-${column.key}` : undefined;
+                return (
+                  <th
+                    key={column.key}
+                    scope="col"
+                    aria-sort={
+                      sort?.column === column.key ? (sort.direction === 'asc' ? 'ascending' : 'descending') : undefined
+                    }
                   >
-                    {column.labelTooltip ? (
-                      <span title={column.labelTooltip} style={{ cursor: 'help' }}>
-                        {column.label}
+                    <button
+                      type="button"
+                      aria-describedby={tooltipId}
+                      onClick={() => {
+                        setSort((current) => toggleSort(current, column.key));
+                      }}
+                    >
+                      {column.labelTooltip ? (
+                        <span title={column.labelTooltip} style={{ cursor: 'help' }}>
+                          {column.label}
+                        </span>
+                      ) : (
+                        column.label
+                      )}
+                      {sort?.column === column.key && (
+                        <span aria-hidden="true">{sort.direction === 'asc' ? ' ▲' : ' ▼'}</span>
+                      )}
+                    </button>
+                    {tooltipId && (
+                      <span id={tooltipId} className="sr-only">
+                        {column.labelTooltip}
                       </span>
-                    ) : (
-                      column.label
                     )}
-                    {sort?.column === column.key && (
-                      <span aria-hidden="true">{sort.direction === 'asc' ? ' ▲' : ' ▼'}</span>
-                    )}
-                  </button>
-                </th>
-              ))}
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody>

@@ -141,6 +141,47 @@ test('every section of the natal chart has no automatically detectable accessibi
   }
 });
 
+test('column-header and dispositor tooltips are reachable on keyboard focus, not just mouse hover (#456)', async ({
+  page,
+}) => {
+  test.setTimeout(60_000);
+
+  // axe-core (the test above) only catches markup-rule violations; it would not have caught
+  // `title`-only tooltips being invisible to a keyboard user, because a bare `title` attribute
+  // isn't itself a rule violation. This test asserts the actual accessible-description wiring.
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  await createPerson(page, {
+    name: 'Ada Lovelace',
+    date: '1815-12-10',
+    time: '07:45:00',
+    latitude: '51.5072',
+    longitude: '-0.1276',
+  });
+  await openNatalChart(page);
+  await page.getByRole('tab', { name: 'Dignities', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Dignities', level: 2 })).toBeVisible();
+
+  // A column header with a glossary tooltip ("Ruler") exposes it as an accessible description
+  // via aria-describedby, not only as a hover-only title. Matched by the sort button's own name
+  // (exact), not the enclosing <th>'s: the <th>'s computed accessible name also picks up the
+  // sr-only tooltip span text (a sibling of the button, both inside the <th>), and several other
+  // dignity columns' tooltips happen to mention "ruler" too, so a substring/`columnheader` match
+  // resolves ambiguously to more than one column.
+  const rulerHeaderButton = page.getByRole('button', { name: 'Ruler', exact: true });
+  await expect(rulerHeaderButton).toHaveAccessibleDescription(
+    'Ruler (domicile): the planet is in the sign it rules — its own sign, where it is strongest',
+  );
+
+  // The dispositors "?" is a focusable button with its own accessible name, not a bare
+  // non-interactive <span title>.
+  const dispositorsHelp = page.getByRole('button', {
+    name: "A dispositor is the ruler of a planet's sign. Dispositor chains trace where each planet's rulership flows.",
+  });
+  await expect(dispositorsHelp).toBeVisible();
+  await dispositorsHelp.focus();
+  await expect(dispositorsHelp).toBeFocused();
+});
+
 test('the profections screen (#168) has no automatically detectable accessibility violations', async ({ page }) => {
   test.setTimeout(60_000);
 
