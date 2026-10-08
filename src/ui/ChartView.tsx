@@ -637,7 +637,10 @@ function renderTableTab(
         <>
           {almuten !== undefined && (
             <p className="hint">
-              {t.almutenOfAscendantSentence(almuten.almutens.map((key) => bodyDisplayName(key, locale)).join(', '))}
+              {t.almutenOfAscendantSentence(almuten.almutens.map((key) => bodyDisplayName(key, locale)).join(', '))}{' '}
+              <span title={t.almutenTooltip} style={{ cursor: 'help', fontSize: '0.9em', verticalAlign: 'super' }}>
+                ?
+              </span>
             </p>
           )}
           <SortableTable

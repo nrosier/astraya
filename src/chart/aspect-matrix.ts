@@ -193,6 +193,7 @@ export function renderAspectMatrixSvg(input: AspectMatrixInput, layout: PanelLay
             'chart-retrograde',
             'R',
             cell * 0.26,
+            'Retrograde',
           )
         : '';
     if (definition) {
