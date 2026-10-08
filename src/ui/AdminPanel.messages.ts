@@ -38,6 +38,8 @@ const en = {
   loadingUsers: 'Loading users…',
   roleColumn: 'Role',
   lastSeenColumn: 'Last seen',
+  lastSyncColumn: 'Last sync',
+  lastAiUsageColumn: 'Last AI usage',
   actionsColumn: 'Actions',
   disabledSuffix: ' (disabled)',
 
@@ -97,6 +99,8 @@ const nl: typeof en = {
   loadingUsers: 'Gebruikers laden…',
   roleColumn: 'Rol',
   lastSeenColumn: 'Laatst gezien',
+  lastSyncColumn: 'Laatst gesynchroniseerd',
+  lastAiUsageColumn: 'Laatst AI-gebruik',
   actionsColumn: 'Acties',
   disabledSuffix: ' (uitgeschakeld)',
 

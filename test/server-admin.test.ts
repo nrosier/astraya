@@ -137,6 +137,52 @@ describe('GET /api/admin/users', () => {
     const { users } = response.json<{ users: { username: string }[] }>();
     expect(users.map((u) => u.username).sort()).toEqual(['alice', 'bob']);
   });
+
+  it('reports null lastSyncAt/lastAiUsageAt for a user with no ops or AI usage (#445)', async () => {
+    const adminCookie = await setupAdmin(app);
+    await createAndLoginUser(app, 'bob', 'correct-horse-battery');
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/admin/users',
+      cookies: { [SESSION_COOKIE]: adminCookie },
+    });
+    const { users } = response.json<{
+      users: { username: string; lastSyncAt: string | null; lastAiUsageAt: string | null }[];
+    }>();
+    const bob = users.find((u) => u.username === 'bob');
+    expect(bob?.lastSyncAt).toBeNull();
+    expect(bob?.lastAiUsageAt).toBeNull();
+  });
+
+  it('surfaces a pushed op as lastSyncAt and a recorded interpretation request as lastAiUsageAt (#445)', async () => {
+    const adminCookie = await setupAdmin(app);
+    const bobCookie = await createAndLoginUser(app, 'bob', 'correct-horse-battery');
+
+    const clockRef: ClockRef = { current: createClock(randomNodeId()) };
+    await pushOp(app, bobCookie, clockRef, { entity: 'person', entityId: 'person-1', field: 'name', value: 'Ada' });
+
+    const raw = new DatabaseSync(dbPath);
+    const bobId = (raw.prepare('SELECT id FROM users WHERE username = ?').get('bob') as { id: string }).id;
+    raw
+      .prepare(
+        'INSERT INTO interpretation_usage (user_id, prompt_tokens, output_tokens, cost_cents, created_at) VALUES (?, ?, ?, ?, ?)',
+      )
+      .run(bobId, 100, 50, 0.5, new Date().toISOString());
+    raw.close();
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/admin/users',
+      cookies: { [SESSION_COOKIE]: adminCookie },
+    });
+    const { users } = response.json<{
+      users: { username: string; lastSyncAt: string | null; lastAiUsageAt: string | null }[];
+    }>();
+    const bob = users.find((u) => u.username === 'bob');
+    expect(bob?.lastSyncAt).not.toBeNull();
+    expect(bob?.lastAiUsageAt).not.toBeNull();
+  });
 });
 
 describe('POST /api/admin/users', () => {

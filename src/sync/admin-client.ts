@@ -23,6 +23,10 @@ export interface AdminUser {
   readonly createdAt: string;
   readonly disabledAt: string | null;
   readonly lastSeenAt: string | null;
+  /** Most recent op this user pushed through the sync relay (#445), not merely a session heartbeat. */
+  readonly lastSyncAt: string | null;
+  /** Most recent Tier 2 interpretation request recorded for this user (#445). */
+  readonly lastAiUsageAt: string | null;
 }
 
 /** Mirrors `server/ops/deletion-impact.ts`'s `DeletionImpact`. */

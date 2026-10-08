@@ -195,6 +195,8 @@ function UserRow({
         )}
       </td>
       <td>{user.lastSeenAt === null ? t.neverSeen : new Date(user.lastSeenAt).toLocaleString()}</td>
+      <td>{user.lastSyncAt === null ? t.neverSeen : new Date(user.lastSyncAt).toLocaleString()}</td>
+      <td>{user.lastAiUsageAt === null ? t.neverSeen : new Date(user.lastAiUsageAt).toLocaleString()}</td>
       {canManage && (
         <td className="actions">
           <button type="button" className="quiet" disabled={disabled} onClick={toggleEnabled}>
@@ -349,7 +351,7 @@ export function AdminPanel(): React.JSX.Element {
       {users === undefined ? (
         <p className="status">{t.loadingUsers}</p>
       ) : (
-        <div className="data-table">
+        <div className="data-table data-table-wrap">
           <div className="data-table-scroll">
             <table>
               <thead>
@@ -357,6 +359,8 @@ export function AdminPanel(): React.JSX.Element {
                   <th>{shared.usernameLabel}</th>
                   <th>{t.roleColumn}</th>
                   <th>{t.lastSeenColumn}</th>
+                  <th>{t.lastSyncColumn}</th>
+                  <th>{t.lastAiUsageColumn}</th>
                   {canManage && <th>{t.actionsColumn}</th>}
                 </tr>
               </thead>
