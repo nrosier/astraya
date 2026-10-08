@@ -13,7 +13,7 @@
  * @module SolarArcView
  * @purpose Solar arc directions screen for one person, as of a chosen date, with directed positions and directed-to-natal contacts (including exact-date timing).
  * @conventions Gated for unknown birth time like other angle-dependent screens; uses SolarArcView.messages.ts for en/nl text via useMessages().
- * @exports SolarArcView
+ * @exports SolarArcView; positionRows, positionColumns, contactColumns, toContactRow, formatExactDate, ContactRow (reused by pdf-export-plan.ts)
  */
 import { useEffect, useMemo, useState } from 'react';
 import { bodyById } from '../astrology/bodies.js';
@@ -54,7 +54,7 @@ interface PositionRow extends DegreeParts {
 }
 
 /** Same `includeAngles` convention as `chart-tables.ts`'s `positionRows` — Ascendant/Midheaven appended, not a separate table. */
-function positionRows(positions: readonly DirectedPosition[], houses: HousePositions): readonly PositionRow[] {
+export function positionRows(positions: readonly DirectedPosition[], houses: HousePositions): readonly PositionRow[] {
   const housesUsable = housesAreDefined(houses);
   const bodyRows = positions.map((position) => {
     const body = bodyById(position.body);
@@ -73,7 +73,10 @@ function positionRows(positions: readonly DirectedPosition[], houses: HousePosit
   ];
 }
 
-function positionColumns(t: typeof solarArcViewMessages.en, locale: Locale): readonly TableColumn<PositionRow>[] {
+export function positionColumns(
+  t: typeof solarArcViewMessages.en,
+  locale: Locale,
+): readonly TableColumn<PositionRow>[] {
   return [
     {
       key: 'bodyName',
@@ -99,11 +102,11 @@ function positionColumns(t: typeof solarArcViewMessages.en, locale: Locale): rea
   ];
 }
 
-interface ContactRow extends AspectRow {
+export interface ContactRow extends AspectRow {
   readonly exactJd: JulianDayUT | undefined;
 }
 
-function toContactRow(contact: DirectedContact): ContactRow {
+export function toContactRow(contact: DirectedContact): ContactRow {
   const bodyA = bodyById(contact.bodyA);
   const bodyB = bodyById(contact.bodyB);
   return {
@@ -121,14 +124,14 @@ function toContactRow(contact: DirectedContact): ContactRow {
   };
 }
 
-function formatExactDate(jd: JulianDayUT | undefined, t: typeof solarArcViewMessages.en): string {
+export function formatExactDate(jd: JulianDayUT | undefined, t: typeof solarArcViewMessages.en): string {
   if (jd === undefined) return t.exactOnUnknown;
   const civil = civilFromJulianDay(jd);
   const pad = (n: number): string => String(n).padStart(2, '0');
   return `${String(civil.year)}-${pad(civil.month)}-${pad(civil.day)}`;
 }
 
-function contactColumns(t: typeof solarArcViewMessages.en, locale: Locale): readonly TableColumn<ContactRow>[] {
+export function contactColumns(t: typeof solarArcViewMessages.en, locale: Locale): readonly TableColumn<ContactRow>[] {
   return [
     {
       key: 'bodyAName',

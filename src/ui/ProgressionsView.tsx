@@ -14,7 +14,7 @@
  * @module ProgressionsView
  * @purpose Secondary, tertiary and minor progressions screen for one person, as of a chosen date, with progressed positions and progressed-to-natal contacts.
  * @conventions Gated for unknown birth time the same way ProfectionsView.tsx/ChartView.tsx are; uses ProgressionsView.messages.ts for en/nl text via useMessages().
- * @exports ProgressionsView
+ * @exports ProgressionsView; positionRows, positionColumns, contactColumns, mcMethodLabel (reused by pdf-export-plan.ts)
  */
 import { useEffect, useMemo, useState } from 'react';
 import { bodyById } from '../astrology/bodies.js';
@@ -55,7 +55,7 @@ interface PositionRow extends DegreeParts {
 }
 
 /** Positions plus, matching `chart-tables.ts`'s `positionRows`'s own `includeAngles` convention, the Ascendant and Midheaven. */
-function positionRows(positions: readonly BodyPosition[], houses: HousePositions): readonly PositionRow[] {
+export function positionRows(positions: readonly BodyPosition[], houses: HousePositions): readonly PositionRow[] {
   const housesUsable = housesAreDefined(houses);
   const bodyRows = positions.map((position) => {
     const body = bodyById(position.body);
@@ -74,7 +74,10 @@ function positionRows(positions: readonly BodyPosition[], houses: HousePositions
   ];
 }
 
-function positionColumns(t: typeof progressionsViewMessages.en, locale: Locale): readonly TableColumn<PositionRow>[] {
+export function positionColumns(
+  t: typeof progressionsViewMessages.en,
+  locale: Locale,
+): readonly TableColumn<PositionRow>[] {
   return [
     {
       key: 'bodyName',
@@ -100,7 +103,10 @@ function positionColumns(t: typeof progressionsViewMessages.en, locale: Locale):
   ];
 }
 
-function contactColumns(t: typeof progressionsViewMessages.en, locale: Locale): readonly TableColumn<AspectRow>[] {
+export function contactColumns(
+  t: typeof progressionsViewMessages.en,
+  locale: Locale,
+): readonly TableColumn<AspectRow>[] {
   return [
     {
       key: 'bodyAName',
@@ -130,7 +136,7 @@ function contactColumns(t: typeof progressionsViewMessages.en, locale: Locale): 
   ];
 }
 
-function mcMethodLabel(t: typeof progressionsViewMessages.en, method: ProgressedMcMethod): string {
+export function mcMethodLabel(t: typeof progressionsViewMessages.en, method: ProgressedMcMethod): string {
   switch (method) {
     case 'quotidian':
       return t.quotidianMethod;
