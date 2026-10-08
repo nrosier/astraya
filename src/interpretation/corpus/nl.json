@@ -81364,9 +81364,9 @@
   {
     "key": "composite-aspect-pair:biquintile:ceres:neptune",
     "locale": "nl",
-    "text": "Dit partnerschap brengt een stille capaciteit voor wederzijdse zorg voort door gedeelde idealen en een verbeeldingsvolle afstemming. De verbinding vermengt praktische toewijding met grenzeloze empathie, wat ondersteunende oplossingen creëert wanneer tastbare behoeften botsen met subtiele kwetsbaarheden. Wrijving ontstaat voornamelijk door lichte over-aanpassing, waarbij de praktische werkelijkheid vervaagt in onuitgesproken verwachtingen en onvervulde hopen.",
+    "text": "Dit partnerschap brengt een inventieve gave voort om praktische zorg te verbinden met grenzeloze empathie, en zo creatieve vormen van ondersteuning te ontwerpen voor subtiele kwetsbaarheden. De samenwerking zoekt naar subtiele oplossingen waar harde kaders tekortschieten. Wrijving ontstaat wanneer de grens tussen helpen en grenzeloze inlevingsvermogen vervaagt, waardoor heldere afspraken oplossen in vage verwachtingen.",
     "tier": "nuance",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",
