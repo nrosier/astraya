@@ -152,7 +152,7 @@ ${m.sourceText}
       try {
         const parsed = JSON.parse(result.content);
         translatedTexts.set(idx, parsed.text);
-      } catch (e) {
+      } catch {
         console.error(`  ✗ Failed to parse translation for ${mismatches[idx].key}`);
         translationFailCount++;
       }
@@ -247,7 +247,7 @@ ${m.sourceText}
           `  ✓ ${m.key}: validation ${validation.verdict}${validation.issues?.length ? ` - fixed: ${validation.issues.join(', ')}` : ''}`,
         );
       }
-    } catch (e) {
+    } catch {
       console.error(`  ✗ Failed to parse validation for ${m.key}`);
       validationFailCount++;
     }

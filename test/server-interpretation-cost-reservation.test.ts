@@ -4,14 +4,14 @@
  */
 
 import { describe, test, expect, beforeEach } from 'vitest';
-import { DatabaseSync } from 'node:sqlite';
+import type { DatabaseSync } from 'node:sqlite';
 import { openDatabase } from '../server/db.ts';
 import {
   reserveCostCents,
   releaseReservation,
   reconcileReservation,
 } from '../server/interpretation/cost-reservation.ts';
-import { userCostCentsSince, totalCostCentsSince } from '../server/interpretation/usage.ts';
+import { userCostCentsSince } from '../server/interpretation/usage.ts';
 
 let db: DatabaseSync;
 

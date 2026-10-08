@@ -22,7 +22,7 @@
  * @exports Reservation, ReservationRejection, reserveCostCents, releaseReservation, reconcileReservation
  */
 
-import { DatabaseSync } from 'node:sqlite';
+import type { DatabaseSync } from 'node:sqlite';
 import { randomUUID } from 'node:crypto';
 import { userCostCentsSince, totalCostCentsSince, recordUsage } from './usage.ts';
 
