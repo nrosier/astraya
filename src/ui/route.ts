@@ -45,6 +45,9 @@ export type Route =
   // data shape (DirectedContact's exactJd) and table columns are different enough to warrant
   // a separate screen, same reasoning that already split transit/periodic-transit apart.
   | { readonly kind: 'solar-arc'; readonly personId: string }
+  // Primary directions (#407) — its own route for the same reason solar arc has one: a
+  // lifetime list of significator/promissor arcs is a different table from any progression.
+  | { readonly kind: 'primary-directions'; readonly personId: string }
   | { readonly kind: 'transit'; readonly personId: string }
   // The second person is picked from within the screen, not the URL (#172) — every other
   // multi-word route here names exactly one person, and a synastry pairing changes far more
@@ -82,6 +85,7 @@ const REPORT_PATH = /^#\/report\/(.+)$/;
 const PROFECTIONS_PATH = /^#\/profections\/(.+)$/;
 const PROGRESSIONS_PATH = /^#\/progressions\/(.+)$/;
 const SOLAR_ARC_PATH = /^#\/solar-arc\/(.+)$/;
+const PRIMARY_DIRECTIONS_PATH = /^#\/primary-directions\/(.+)$/;
 const TRANSIT_PATH = /^#\/transit\/(.+)$/;
 const SYNASTRY_PATH = /^#\/synastry\/(.+)$/;
 const COMPOSITE_PATH = /^#\/composite\/(.+)$/;
@@ -176,6 +180,11 @@ export function parseRoute(hash: string): Route {
 
   const solarArc = SOLAR_ARC_PATH.exec(path);
   if (solarArc !== null && isPersonId(solarArc[1])) return { kind: 'solar-arc', personId: solarArc[1] };
+
+  const primaryDirections = PRIMARY_DIRECTIONS_PATH.exec(path);
+  if (primaryDirections !== null && isPersonId(primaryDirections[1])) {
+    return { kind: 'primary-directions', personId: primaryDirections[1] };
+  }
 
   const transit = TRANSIT_PATH.exec(path);
   if (transit !== null && isPersonId(transit[1])) return { kind: 'transit', personId: transit[1] };

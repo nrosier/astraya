@@ -18,6 +18,7 @@ describe('activeTabKey', () => {
     expect(activeTabKey({ kind: 'profections', personId: ID })).toBe('profections');
     expect(activeTabKey({ kind: 'progressions', personId: ID })).toBe('progressions');
     expect(activeTabKey({ kind: 'solar-arc', personId: ID })).toBe('solar-arc');
+    expect(activeTabKey({ kind: 'primary-directions', personId: ID })).toBe('primary-directions');
     expect(activeTabKey({ kind: 'transit', personId: ID })).toBe('transit');
     expect(activeTabKey({ kind: 'synastry', personId: ID })).toBe('synastry');
     expect(activeTabKey({ kind: 'composite', personId: ID })).toBe('composite');
@@ -69,6 +70,7 @@ describe('PERSON_TABS', () => {
       profections: `#/profections/${ID}`,
       progressions: `#/progressions/${ID}`,
       'solar-arc': `#/solar-arc/${ID}`,
+      'primary-directions': `#/primary-directions/${ID}`,
       transit: `#/transit/${ID}`,
       synastry: `#/synastry/${ID}`,
       composite: `#/composite/${ID}`,
@@ -104,6 +106,7 @@ describe('familyForTab (#398)', () => {
     expect(familyForTab('profections')).toBe('progressions-directions');
     expect(familyForTab('progressions')).toBe('progressions-directions');
     expect(familyForTab('solar-arc')).toBe('progressions-directions');
+    expect(familyForTab('primary-directions')).toBe('progressions-directions');
     expect(familyForTab('transit')).toBe('transits-forecast');
     expect(familyForTab('periodic-transit')).toBe('transits-forecast');
     expect(familyForTab('synastry')).toBe('relationship-charts');

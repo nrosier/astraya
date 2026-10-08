@@ -103,6 +103,17 @@ describe('parseRoute', () => {
     expect(parseRoute('#/solar-arc/nope')).toEqual({ kind: 'home' });
   });
 
+  it('routes a primary-directions id through (#407)', () => {
+    expect(parseRoute(`#/primary-directions/${ID}`)).toEqual({ kind: 'primary-directions', personId: ID });
+    expect(parseRoute(`#/primary-directions/${ID}/`)).toEqual({ kind: 'primary-directions', personId: ID });
+    expect(parseRoute(`#/primary-directions/${ID}?x=1`)).toEqual({ kind: 'primary-directions', personId: ID });
+  });
+
+  it('sends a malformed primary-directions id home rather than to a blank screen', () => {
+    expect(parseRoute('#/primary-directions/')).toEqual({ kind: 'home' });
+    expect(parseRoute('#/primary-directions/nope')).toEqual({ kind: 'home' });
+  });
+
   it('routes a transit id through (#172)', () => {
     expect(parseRoute(`#/transit/${ID}`)).toEqual({ kind: 'transit', personId: ID });
     expect(parseRoute(`#/transit/${ID}/`)).toEqual({ kind: 'transit', personId: ID });

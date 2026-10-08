@@ -24,6 +24,7 @@ One level above `src/astrology/`: composes pure astrological calculations into s
 - `person-form.ts` — Birth-data entry form logic: Draft validation + minimal op-log mutations. Deps: `./person`, `./person-form.messages`, `time/types`, `store/oplog`, `store/ops`.
 - `person.ts` — Root entity: birth moment, place label, time accuracy, notes, offset witness. Deps: `time/types`.
 - `planetary-return.ts` — Any-body return chart (not just Sun/Moon). Deps: `astrology/planetary-returns`, `astrology/aspects`, `astrology/bodies`.
+- `primary-directions.ts` — Lifetime primary directions to Asc/MC/Sun/Moon (ages, dates, orb windows) + directed chart at an age. Deps: `astrology/primary-directions`, `astrology/progressions`, `astrology/bodies`, `./chart-compute`.
 - `profections.ts` — Annual/monthly profections (Hellenistic house-per-year timing). Deps: `astrology/profections`, `astrology/rulership`, `astrology/progressions`, `astrology/signs`.
 - `progressed-lunar-return.ts` — Progressed-lunar-return timing (monthly Solar-Return analogue). Deps: `astrology/planetary-returns`, `astrology/aspects`.
 - `rectification.ts` — Birth-time rectification (ranks candidate times by life-event contacts). Deps: `astrology/rectification`, `time/julian`, `time/resolve`.
