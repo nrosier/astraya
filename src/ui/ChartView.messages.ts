@@ -55,6 +55,28 @@ const en = {
   antisciaKindTooltip:
     'Antiscion: reflected across Cancer-Leo axis; Contraantiscion: reflected across Aries-Libra axis',
   applyingTooltip: 'Applying: bodies moving toward exact aspect; Separating: bodies moving away from exact aspect',
+  speedTooltip:
+    'How many degrees this body moves per day — faster near perigee/perihelion, slower (or negative) near a retrograde turn',
+  retrogradeTooltip:
+    'Retrograde (℞): the body appears to move backward through the zodiac from Earth, a visual effect of relative orbital speed, not an actual reversal',
+  aspectTooltip:
+    'The angular relationship between two bodies — this table includes minor aspects alongside the major ones (conjunction, sextile, square, trine, opposition)',
+  starTooltip:
+    'A fixed star conjunct a planet or angle, within a tight orb — traditionally read as lending that star’s own character to the point it touches',
+  derivedPointTooltip:
+    'A point calculated from other positions rather than observed directly — e.g. the Part of Fortune, combining the Sun, Moon and Ascendant',
+  rulerTooltip: 'Ruler (domicile): the planet is in the sign it rules — its own sign, where it is strongest',
+  exaltedTooltip:
+    'Exalted: the planet is in a sign where it is especially strengthened, second only to its own rulership',
+  detrimentTooltip: 'Detriment: the planet is in the sign opposite the one it rules, where it is weakened',
+  fallTooltip: 'Fall: the planet is in the sign opposite its exaltation, where it is most weakened',
+  triplicityTooltip:
+    'Triplicity: an essential dignity assigned by element (fire, earth, air, water) and by day/night sect',
+  boundTooltip:
+    'Bound (term): a classical subdivision of the sign into unequal segments, each ruled by a different planet',
+  faceTooltip: 'Face (decan): a 10° third of the sign, ruled by a planet in a fixed rotating order',
+  peregrineTooltip:
+    'Peregrine: the planet holds none of the essential dignities in this sign — no rulership, exaltation, triplicity, bound or face',
 
   positionsCaption: 'Positions',
   housesCaption: 'Houses',
@@ -234,6 +256,30 @@ const nl: typeof en = {
     'Antiscion: gereflecteerd over Kreeft-Leeuw-as; Contraantiscion: gereflecteerd over Ram-Weegschaal-as',
   applyingTooltip:
     'Toenemend: hemellichamen bewegen naar exact aspect; Afnemend: hemellichamen bewegen weg van exact aspect',
+  speedTooltip:
+    'Hoeveel graden dit hemellichaam per dag beweegt — sneller nabij perigeum/perihelium, trager (of negatief) nabij een retrograde ommekeer',
+  retrogradeTooltip:
+    'Retrograde (℞): het hemellichaam lijkt vanaf de Aarde achterwaarts door de dierenriem te bewegen, een visueel effect van relatieve omloopsnelheid, geen werkelijke omkering',
+  aspectTooltip:
+    'De hoekrelatie tussen twee hemellichamen — deze tabel bevat ook mineure aspecten naast de majeure (conjunctie, sextiel, vierkant, driehoek, oppositie)',
+  starTooltip:
+    'Een vaste ster die nauw samenvalt met een planeet of hoek — traditioneel gelezen als het overdragen van het eigen karakter van die ster aan het punt dat ze raakt',
+  derivedPointTooltip:
+    'Een punt dat berekend wordt uit andere posities in plaats van direct waargenomen — bijvoorbeeld de Fortuna, een combinatie van Zon, Maan en Ascendant',
+  rulerTooltip:
+    'Heerser (domicilie): de planeet staat in het teken dat ze heerst — haar eigen teken, waar ze het sterkst is',
+  exaltedTooltip:
+    'Verheven: de planeet staat in een teken waarin ze extra versterkt is, in kracht net na haar eigen heerserschap',
+  detrimentTooltip:
+    'Val (detriment): de planeet staat in het teken tegenover het teken dat ze heerst, waar ze verzwakt is',
+  fallTooltip: 'Val: de planeet staat in het teken tegenover haar verheffing, waar ze het meest verzwakt is',
+  triplicityTooltip:
+    'Triplicitiet: een essentiële waardigheid toegekend op basis van element (vuur, aarde, lucht, water) en dag-/nachtsect',
+  boundTooltip:
+    'Bound (term): een klassieke onderverdeling van het teken in ongelijke segmenten, elk geheerst door een andere planeet',
+  faceTooltip: 'Decaan: een derde van 10° van het teken, geheerst door een planeet in een vaste, roterende volgorde',
+  peregrineTooltip:
+    'Peregrine: de planeet heeft geen van de essentiële waardigheden in dit teken — geen heerserschap, verheffing, triplicitiet, bound of decaan',
 
   positionsCaption: 'Posities',
   housesCaption: 'Huizen',

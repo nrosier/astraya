@@ -251,12 +251,14 @@ export function positionColumns(
     {
       key: 'speed',
       label: t.speedLabel,
+      labelTooltip: t.speedTooltip,
       valueOf: (row) => row.speed ?? '',
       render: (row) => (row.speed === undefined ? '—' : row.speed.toFixed(4)),
     },
     {
       key: 'retrograde',
       label: t.rxLabel,
+      labelTooltip: t.retrogradeTooltip,
       valueOf: (row) => row.retrograde ?? false,
       render: (row) => (row.retrograde ? '℞' : ''),
     },
@@ -315,6 +317,7 @@ export function aspectColumns(
     {
       key: 'aspect',
       label: t.aspectLabel,
+      labelTooltip: t.aspectTooltip,
       valueOf: (row) => row.aspect,
       render: (row) => aspectDisplayName(row.aspectKey, locale),
     },
@@ -343,32 +346,60 @@ export function dignityColumns(t: typeof chartViewMessages.en, locale: Locale): 
       valueOf: (row) => row.bodyName,
       render: (row) => bodyDisplayName(row.bodyKey, locale),
     },
-    { key: 'ruler', label: t.rulerLabel, valueOf: (row) => row.ruler, render: (row) => (row.ruler ? '✓' : '') },
+    {
+      key: 'ruler',
+      label: t.rulerLabel,
+      labelTooltip: t.rulerTooltip,
+      valueOf: (row) => row.ruler,
+      render: (row) => (row.ruler ? '✓' : ''),
+    },
     {
       key: 'exalted',
       label: t.exaltedLabel,
+      labelTooltip: t.exaltedTooltip,
       valueOf: (row) => row.exalted,
       render: (row) => (row.exalted ? '✓' : ''),
     },
     {
       key: 'detriment',
       label: t.detrimentLabel,
+      labelTooltip: t.detrimentTooltip,
       valueOf: (row) => row.detriment,
       render: (row) => (row.detriment ? '✓' : ''),
     },
-    { key: 'fall', label: t.fallLabel, valueOf: (row) => row.fall, render: (row) => (row.fall ? '✓' : '') },
+    {
+      key: 'fall',
+      label: t.fallLabel,
+      labelTooltip: t.fallTooltip,
+      valueOf: (row) => row.fall,
+      render: (row) => (row.fall ? '✓' : ''),
+    },
     {
       key: 'triplicity',
       label: t.triplicityLabel,
+      labelTooltip: t.triplicityTooltip,
       valueOf: (row) => row.triplicity,
       render: (row) => (row.triplicity ? '✓' : ''),
     },
-    { key: 'bound', label: t.boundLabel, valueOf: (row) => row.bound, render: (row) => (row.bound ? '✓' : '') },
-    { key: 'face', label: t.faceLabel, valueOf: (row) => row.face, render: (row) => (row.face ? '✓' : '') },
+    {
+      key: 'bound',
+      label: t.boundLabel,
+      labelTooltip: t.boundTooltip,
+      valueOf: (row) => row.bound,
+      render: (row) => (row.bound ? '✓' : ''),
+    },
+    {
+      key: 'face',
+      label: t.faceLabel,
+      labelTooltip: t.faceTooltip,
+      valueOf: (row) => row.face,
+      render: (row) => (row.face ? '✓' : ''),
+    },
     { key: 'points', label: t.dignityPointsLabel, valueOf: (row) => row.points },
     {
       key: 'peregrine',
       label: t.peregrineLabel,
+      labelTooltip: t.peregrineTooltip,
       valueOf: (row) => row.peregrine,
       render: (row) => (row.peregrine ? '✓' : ''),
     },
@@ -471,7 +502,7 @@ export function fixedStarColumns(t: typeof chartViewMessages.en, locale: Locale)
   return [
     // Star names (Regulus, Spica, ...) are proper nouns, the same in both locales — no glossary
     // lookup needed, unlike body/aspect names.
-    { key: 'star', label: t.starLabel, valueOf: (row) => row.star },
+    { key: 'star', label: t.starLabel, labelTooltip: t.starTooltip, valueOf: (row) => row.star },
     {
       key: 'bodyName',
       label: t.bodyLabel,
@@ -487,7 +518,7 @@ export function derivedPointColumns(
   locale: Locale,
 ): readonly TableColumn<DerivedPointRow>[] {
   return [
-    { key: 'label', label: t.pointLabel, valueOf: (row) => row.label },
+    { key: 'label', label: t.pointLabel, labelTooltip: t.derivedPointTooltip, valueOf: (row) => row.label },
     ...degreeColumns<DerivedPointRow>(t, locale),
   ];
 }
