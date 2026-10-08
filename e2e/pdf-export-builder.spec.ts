@@ -159,3 +159,99 @@ test('unticking Synastry hides its partner picker and drops it from the selectio
   await page.getByRole('checkbox', { name: 'Synastry', exact: true }).uncheck();
   await expect(page.getByLabel('Compare with', { exact: true })).toHaveCount(0);
 });
+
+test('ticking Progressions reveals its technique/MC-method controls, which collapse the MC method for non-secondary techniques (#441)', async ({
+  page,
+}) => {
+  test.setTimeout(60_000);
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  await createPerson(page, ADA);
+  await page.goto(`${baseUrl}/#/export`);
+  await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Ada Lovelace' });
+
+  const predictive = page.getByRole('group', { name: 'Progressions, solar arc, profections & astrocartography' });
+  await expect(predictive.getByLabel('Technique', { exact: true })).toHaveCount(0);
+  await predictive.getByRole('checkbox', { name: 'Progressions', exact: true }).check();
+  await expect(predictive.getByLabel('Technique', { exact: true })).toHaveValue('secondary');
+  await expect(predictive.getByLabel('MC method', { exact: true })).toBeVisible();
+
+  await predictive.getByLabel('Technique', { exact: true }).selectOption({ label: 'Minor' });
+  await expect(predictive.getByLabel('MC method', { exact: true })).toHaveCount(0);
+
+  await predictive.getByRole('checkbox', { name: 'Progressions', exact: true }).uncheck();
+  await expect(predictive.getByLabel('Technique', { exact: true })).toHaveCount(0);
+});
+
+test('ticking Astrocartography reveals its map/line-type/body controls, which collapse when unticked (#441)', async ({
+  page,
+}) => {
+  test.setTimeout(60_000);
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  await createPerson(page, ADA);
+  await page.goto(`${baseUrl}/#/export`);
+  await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Ada Lovelace' });
+
+  const predictive = page.getByRole('group', { name: 'Progressions, solar arc, profections & astrocartography' });
+  await expect(predictive.getByLabel('Map', { exact: true })).toHaveCount(0);
+  await predictive.getByRole('checkbox', { name: 'Astrocartography', exact: true }).check();
+  await expect(predictive.getByLabel('Map', { exact: true })).toBeChecked();
+  await expect(predictive.getByRole('checkbox', { name: 'MC', exact: true })).toBeChecked();
+  await expect(predictive.getByRole('checkbox', { name: 'Sun', exact: true })).toBeChecked();
+  await expect(predictive.getByRole('checkbox', { name: 'Uranus', exact: true })).not.toBeChecked();
+
+  await predictive.getByRole('checkbox', { name: 'Astrocartography', exact: true }).uncheck();
+  await expect(predictive.getByLabel('Map', { exact: true })).toHaveCount(0);
+});
+
+test('selecting the Full predictive report preset fills progressions and solar arc, and builds a real PDF (#441)', async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  await createPerson(page, ADA);
+  await page.goto(`${baseUrl}/#/export`);
+  await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Ada Lovelace' });
+  await page
+    .getByLabel('Starting point', { exact: true })
+    .selectOption({ label: 'Full predictive report (natal wheel, transits, progressions, solar arc)' });
+
+  const predictive = page.getByRole('group', { name: 'Progressions, solar arc, profections & astrocartography' });
+  await expect(predictive.getByRole('checkbox', { name: 'Progressions', exact: true })).toBeChecked();
+  await expect(predictive.getByRole('checkbox', { name: 'Solar arc directions', exact: true })).toBeChecked();
+  await expect(predictive.getByRole('checkbox', { name: 'Profections', exact: true })).not.toBeChecked();
+  await expect(predictive.getByRole('checkbox', { name: 'Astrocartography', exact: true })).not.toBeChecked();
+
+  const buildButton = page.getByRole('button', { name: 'Build PDF', exact: true });
+  await expect(buildButton).toBeEnabled();
+  const [download] = await Promise.all([page.waitForEvent('download'), buildButton.click()]);
+  const chunks: Buffer[] = [];
+  for await (const chunk of await download.createReadStream()) chunks.push(chunk as Buffer);
+  const pdf = Buffer.concat(chunks);
+  expect(pdf.subarray(0, 5).toString('latin1')).toBe('%PDF-');
+  expect(pdf.length).toBeGreaterThan(1000);
+  await expect(page.getByRole('status')).toHaveText('✓');
+});
+
+test('ticking Profections and Astrocartography on their own builds a real PDF with both sections (#441)', async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  await createPerson(page, ADA);
+  await page.goto(`${baseUrl}/#/export`);
+  await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Ada Lovelace' });
+
+  const predictive = page.getByRole('group', { name: 'Progressions, solar arc, profections & astrocartography' });
+  await predictive.getByRole('checkbox', { name: 'Profections', exact: true }).check();
+  await predictive.getByRole('checkbox', { name: 'Astrocartography', exact: true }).check();
+
+  const buildButton = page.getByRole('button', { name: 'Build PDF', exact: true });
+  await expect(buildButton).toBeEnabled();
+  const [download] = await Promise.all([page.waitForEvent('download'), buildButton.click()]);
+  const chunks: Buffer[] = [];
+  for await (const chunk of await download.createReadStream()) chunks.push(chunk as Buffer);
+  const pdf = Buffer.concat(chunks);
+  expect(pdf.subarray(0, 5).toString('latin1')).toBe('%PDF-');
+  expect(pdf.length).toBeGreaterThan(1000);
+  await expect(page.getByRole('status')).toHaveText('✓');
+});
