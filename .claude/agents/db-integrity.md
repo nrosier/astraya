@@ -51,12 +51,16 @@ for data that lives in a browser that might not sync for years. Concretely:
   incoming record at its correct HLC position without re-sorting the whole log —
   check a new call site still goes through this rather than appending and
   re-deriving state out of order.
-- `purgeEntity` (`src/store/oplog.ts`) removes local records but — by its own
-  comment — cannot promise removal from a copy already synced elsewhere. Verify
-  current behavior in `src/sync/engine.ts` before assuming a purge propagates
-  through sync; as of this repo's own audit (`docs/audit/2026-09-26-full-audit.md`),
-  it did not. A new purge-adjacent feature that assumes deletion is global needs
-  that checked, not assumed.
+- `purgeEntity` (`src/store/oplog.ts`) now propagates through sync and erases
+  server-side (#308, fixed by commits `32066dc`/`8971eef`, after having been
+  local-only at the time of this repo's 2026-09-26 audit): it writes a
+  `PURGED_FIELD` marker that syncs like any normal op, and the server detects
+  it (`isPurgeMarker`/`recordPurgeAndErase` in `server/ops/routes.ts`) and
+  records the entity in a `purged_entities` deny-list for real erasure rather
+  than a tombstone. This agent is the canonical owner of this mechanism
+  (`security-auditor` cross-references it) — check a change here doesn't let a
+  later op resurrect a purged entity past the deny-list check, or stop the
+  marker from syncing, which would reopen the local-only hole #308 closed.
 - Cross-tab writes: two tabs sharing one `deviceId` but independent in-memory
   clocks can mint colliding HLCs. `src/store/tab-lock.ts` (Web Locks API) makes
   one tab the exclusive writer; `test/store-store.test.ts`'s
@@ -65,6 +69,12 @@ for data that lives in a browser that might not sync for years. Concretely:
 
 ## Server side: opaque relay, not zero risk
 
+- The one documented exception to "the server never interprets a payload" is
+  purge-marker detection — `isPurgeMarker`/`recordPurgeAndErase` in
+  `server/ops/routes.ts` read a payload specifically to recognize the
+  `PURGED_FIELD` marker (see above). A new relay code path that adds a second
+  payload-interpreting special case without the same documented justification
+  is exactly the "opaque relay" guarantee eroding one exception at a time.
 - `server/ops/routes.ts`'s batch insert must be one transaction
   (`BEGIN`/`COMMIT`/`ROLLBACK`), not several sequential statements — a partial
   batch insert leaves the log's own ordering guarantee broken for that user.

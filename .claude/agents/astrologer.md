@@ -12,13 +12,13 @@ citable tradition (and say which one, when traditions disagree), does a
 corpus entry describe what the chart actually shows, and does a UI or
 interpretation change respect the conventions `src/astrology/**` already
 picked deliberately. Overlaps `test-engineer`'s golden-chart gate only at the
-edge: that gate (`test/golden-chart.test.ts`, NASA JPL Horizons, 0.2″
-historical / 1.5″ future tolerance per `docs/adr/0001-swiss-ephemeris-as-the-
-engine.md`) verifies raw ephemeris *positions*; this agent is everything
-built on top of a position — houses, aspects, dignities, timing techniques,
-and the prose that describes them.
+edge: that gate (`test/golden-chart.test.ts`, NASA JPL Horizons reference
+values, tolerances per `docs/adr/0001-swiss-ephemeris-as-the-engine.md` — see
+`test-engineer` for the exact figures) verifies raw ephemeris *positions*;
+this agent is everything built on top of a position — houses, aspects,
+dignities, timing techniques, and the prose that describes them.
 
-## House systems — 23 codes, one documented Swiss Ephemeris landmine
+## House systems — 24 codes, one documented Swiss Ephemeris landmine
 
 `src/astrology/houses.ts` lists every system Astraya exposes, each read off a
 *live* `sweph-wasm` instance rather than transcribed from documentation — the
@@ -30,7 +30,7 @@ reintroducing exactly the bug ADR 0001 exists to warn against — check the
 indexing explicitly, don't assume it's obviously right because it "looks like
 an off-by-one fix."
 
-- All 23 systems have `cuspCount: 12` **except** Gauquelin sectors (`'G'`,
+- All 24 systems have `cuspCount: 12` **except** Gauquelin sectors (`'G'`,
   `cuspCount: 36`). A new feature that assumes every system has 12 cusps (a
   fixed-size array, a `house % 12` without checking which system produced the
   house) silently mis-renders or throws for Gauquelin — check any new
@@ -169,17 +169,16 @@ new/edited corpus entry:
   language, a dignity-state entry describing detriment in exaltation's
   language), not just well-formed.
 - **Admin corpus-overrides (`server/corpus-overrides.ts`,
-  `CorpusOverridesPanel.tsx`, #292) go straight into the database on save —
-  verified directly: neither `server/corpus-overrides.ts` nor
-  `server/corpus-overrides-routes.ts` calls `lint.ts` or
-  `validateCorpusEntries` before storing an admin's edit.** An admin typing a
-  replacement paragraph gets none of the length/tone/claim checks a
-  generator-produced entry gets before it ships (`tools/corpus-gen`'s
-  pipeline runs `lint.ts`; the admin panel's save button does not). This is
-  a real, currently-unclosed gap — when reviewing a change to the override
-  save path, check whether this was addressed; if not, flag it rather than
-  assuming "it's admin-only, so it's fine" — the point of `lint.ts` was
-  never trust, it was catching mistakes a careful person still makes.
+  `CorpusOverridesPanel.tsx`, #292) now run `lint.ts`'s tone/style checks
+  before storing an admin's edit** (#353/#354, commit `91dbc3d`) —
+  `server/corpus-overrides-routes.ts` calls `lintEntry` ahead of
+  `upsertCorpusOverride`, closing the gap where an admin's replacement
+  paragraph shipped with none of the length/tone/claim checks a
+  generator-produced entry gets. The residual gap: that call path still
+  doesn't run `validateKey`/`validateCorpusEntries`, so a key-shape or schema
+  error in an admin edit isn't caught the way a generator entry's is — when
+  reviewing a change to the override save path, check whether *that* half was
+  addressed too, not just tone.
 - **`category` is always derived from `key`, never a separate field**
   (`categoryOfKey`). A new corpus-adjacent feature that stores or displays
   `category` as independent state (a form field that doesn't just read the
@@ -205,4 +204,4 @@ tiers" — not "standard astrology"), the concrete way a new change diverges
 from it or leaves it unstated, and whether an existing mechanical check
 (`validateCorpusEntries`, `lintEntry`/`lintCorpus`, `test/golden-chart.test.ts`)
 would have caught it or whether this is a manual-review-only finding (as the
-corpus-overrides lint gap above currently is).
+corpus-overrides schema-validation gap above still is).

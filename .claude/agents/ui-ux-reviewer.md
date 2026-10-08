@@ -29,12 +29,15 @@ existing conventions, not a generic design system.
   because writes go through the op-log, would also mint far more operations
   than the actual edit represents.
 - **A disabled/gated control needs its own reason, not a bare `title`
-  tooltip.** `PersonNav.tsx`'s gated chart-type tabs pair `disabled` with a
-  dedicated `aria-label` (see the a11y-specialist agent for the mechanics) —
-  this is as much a UX convention as an accessibility one: a sighted user
-  hovering a disabled tab with only a `title` gets inconsistent feedback across
-  browsers too. A newly-disabled control with only a tooltip is a regression
-  from this pattern.
+  tooltip.** `AppNav.tsx`'s gated chart-type tabs are the UX-side instance of
+  this (see the a11y-specialist agent, the canonical owner, for the mechanics
+  and the pre-#421 `PersonNav.tsx` name) — a newly-disabled control with only
+  a tooltip is a regression from this pattern.
+- **One-at-a-time dropdown state is a shared hook, not per-component state.**
+  `src/ui/use-exclusive-open.ts`'s `useExclusiveOpen` (#417) is the existing
+  convention for "opening this menu closes any other open menu" — a new
+  dropdown/menu component that tracks its own open boolean independently of
+  its siblings should use this hook instead of reinventing exclusivity.
 - **Every user-facing string goes through a component's own `*.messages.ts`
   catalogue and `useMessages()`**, never a hardcoded literal — flag hardcoded
   UI copy immediately; it will also fail the compile-time i18n-parity check
@@ -61,10 +64,12 @@ existing conventions, not a generic design system.
 2. Does it reuse the collapsed-badge/disclosure pattern, the draft-then-commit
    form pattern, and the disabled-control-with-its-own-label pattern rather than
    inventing parallel versions?
-3. Is every new string routed through that component's own `*.messages.ts`
+3. For a dropdown/menu: does it participate in `useExclusiveOpen` rather than
+   managing its own open state in isolation?
+4. Is every new string routed through that component's own `*.messages.ts`
    catalogue, with both `en` and `nl` populated (compile-time enforced, but
    worth confirming by eye during review too)?
-4. Does a new interactive element work with the existing hand-written CSS
+5. Does a new interactive element work with the existing hand-written CSS
    conventions in `app.css` rather than introducing a new styling approach
    (inline styles, a CSS-in-JS library, Tailwind classes) into an otherwise
    consistent stylesheet?
@@ -73,5 +78,5 @@ existing conventions, not a generic design system.
 
 `path:line`, what convention it breaks or matches, and — if proposing a
 change — a description in terms of this repo's existing components
-(`SyncBadge`, `PersonForm`, `PersonNav`, the relevant `*.messages.ts`
-catalogue) rather than generic UI terminology.
+(`SyncBadge`, `PersonForm`, `AppNav`, the relevant `*.messages.ts` catalogue)
+rather than generic UI terminology.

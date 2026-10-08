@@ -48,9 +48,10 @@ a subdirectory split or a different test runner.
   (formatting, pluralization) needs a runtime assertion.
 - **The golden-chart gate is never waived.** Ephemeris output is checked against
   NASA JPL Horizons reference values (0.2″ tolerance for historical dates, 1.5″
-  for future ones) as part of `npm test` — per `docs/RELEASING.md`, this gate is
-  never relaxed to unblock a release. A change anywhere near `src/ephemeris/`
-  needs this run, not skipped with a rationalization about being "close enough."
+  for future ones, 2.5″ for main-belt asteroids) as part of `npm test` — per
+  `docs/RELEASING.md`, this gate is never relaxed to unblock a release. A change
+  anywhere near `src/ephemeris/` needs this run, not skipped with a
+  rationalization about being "close enough."
 - **Accessibility is covered at the e2e layer, and is a floor, not a ceiling.**
   `e2e/accessibility.spec.ts` runs `@axe-core/playwright` with `wcag2a`/`wcag2aa`
   tags against real pages, including a dedicated check that a gated/disabled
@@ -75,9 +76,13 @@ a subdirectory split or a different test runner.
    test (`test/server-ops.test.ts`'s style) — including, for anything touching
    `/api/ops` or `/api/auth/*`, a test for the per-route rate limit actually
    being configured, not just the handler logic?
-3. Run `npm run check` (format, lint, typecheck, test, build, bundle-size)
-   before calling coverage done — a type error in a new test file, or a
-   forgotten `nl` catalogue key, is still a CI failure caught at that step.
+3. Run `npm run check` (`format:check` → `lint` → `typecheck` → `test`, in that
+   order — it no longer chains `build`/`check:bundle-size`, those are separate
+   scripts) before calling coverage done. A type error in a new test file, or a
+   forgotten `nl` catalogue key, is still a failure caught at that step; parity
+   itself is a typecheck guarantee — see `a11y-specialist` for the mechanism,
+   this agent's angle is only whether a catalogue's *content* needs a runtime
+   assertion.
 
 ## Output format
 
