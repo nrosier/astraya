@@ -48,12 +48,16 @@ import {
   type AspectRow,
 } from '../domain/chart-tables.js';
 import { computeComposite } from '../domain/composite.js';
+import { computeTransit } from '../domain/transit.js';
+import { computePeriodicTransitForecast, type PeriodicTransitPeriods } from '../domain/periodic-transit.js';
 import {
   type PdfChartSectionOptions,
   type PdfChartTable,
   type PdfCompositeSectionOptions,
+  type PdfForecastSectionOptions,
   type PdfSelection,
   type PdfSynastrySectionOptions,
+  type PdfTransitsSectionOptions,
 } from '../domain/pdf-export-sections.js';
 import type { Person } from '../domain/person.js';
 import { computeSynastry, rankedSynastryAspects } from '../domain/synastry.js';
@@ -67,6 +71,14 @@ import type { BirthMomentInput } from '../time/types.js';
 import { assembleReport } from '../interpretation/report.js';
 import { loadRuntimeCorpus } from '../interpretation/corpus-client.js';
 import { generateTier2Interpretation, toTier2ChartPayload } from '../interpretation/tier2-client.js';
+import {
+  chartRulerKeysOf,
+  filterTransits,
+  rankTransits,
+  transitPreset,
+  TRANSIT_ORB_CONFIG,
+  type TransitRuleContext,
+} from '../astrology/transit-importance.js';
 import {
   angleColumns,
   antisciaColumns,
@@ -87,6 +99,21 @@ import { relationshipSummaryParagraphs } from './relationship-summary-pdf-text.j
 import { aspectColumns as synastryAspectColumns } from './SynastryView.js';
 import { synastryViewMessages } from './SynastryView.messages.js';
 import { synastryText } from './synastry-text.js';
+import { contactColumns as transitContactColumns } from './TransitView.js';
+import { transitViewMessages } from './TransitView.messages.js';
+import { EVERY_BODY_KEY } from './TransitFilterPanel.js';
+import {
+  contactColumns as forecastContactColumns,
+  contactRows as forecastContactRows,
+  exactEventColumns as forecastExactEventColumns,
+  exactEventRows as forecastExactEventRows,
+  formatUtc as forecastFormatUtc,
+  localizedSignName as forecastLocalizedSignName,
+  signHouseLabel as forecastSignHouseLabel,
+  stationColumns as forecastStationColumns,
+  stationRows as forecastStationRows,
+} from './PeriodicTransitView.js';
+import { periodicTransitViewMessages } from './PeriodicTransitView.messages.js';
 import type { TableColumn } from './table-sort.js';
 
 /** A table reduced to plain strings — the same conversion a CSV download already does for every cell. */
@@ -415,6 +442,213 @@ async function buildCompositeSectionPlan(
   };
 }
 
+/** The two-level filter the issue decided on, turned into the full `TransitFilter` `filterTransits`/`rankTransits` take — `transitPreset` already does this for every richer preset `TransitFilterPanel.tsx` offers. */
+function transitRulesFor(
+  natal: ChartData,
+  rulership: RulershipChoice,
+  context: TransitRuleContext['context'],
+): TransitRuleContext {
+  return {
+    everyBodyKey: EVERY_BODY_KEY,
+    context,
+    chartRulerKeys: housesAreDefined(natal.houses) ? chartRulerKeysOf(natal.houses.ascendant, rulership) : undefined,
+  };
+}
+
+/** Resolves a section's own `asOfDate` (unset means "today, at build time" — see `pdf-export-sections.ts`) into a target Julian day at noon, the same anchor `TransitView.tsx`/`PeriodicTransitView.tsx` use for their own "as of" date picker. */
+async function targetJdOf(asOfDate: string | undefined, provider: EphemerisProvider): Promise<number> {
+  const [y, m, d] = (asOfDate ?? new Date().toISOString().slice(0, 10)).split('-').map(Number);
+  return provider.julianDayFromUtc(y ?? 2000, m ?? 1, d ?? 1, 12, 0, 0);
+}
+
+/** The Transits section's own place in the export: `TransitView.tsx`'s bi-wheel and single contacts table, as of a chosen date (#441). */
+async function buildTransitsSectionPlan(
+  options: PdfTransitsSectionOptions,
+  context: PdfPlanContext,
+  pt: typeof pdfExportMessages.en,
+): Promise<PdfChartSectionPlan> {
+  const { person, provider, rulership, locale } = context;
+  if (person.moment === undefined) throw new Error('this person has no complete birth record');
+  const vt = transitViewMessages[locale];
+  const targetJd = await targetJdOf(options.asOfDate, provider);
+  const data = await computeTransit(person.moment, targetJd, provider, { rulership }, TRANSIT_ORB_CONFIG);
+  const rules = transitRulesFor(data.natal, rulership, 'daily');
+  const filter = transitPreset(options.filterPreset, rules);
+  const shown = rankTransits(filterTransits(data.contacts, filter), filter, rules.chartRulerKeys);
+  const heading = `${pt.transitsLabel}${person.displayName === '' ? '' : ` — ${person.displayName}`}`;
+
+  let svg: PdfChartSectionPlan['svg'];
+  if (options.wheel) {
+    const natalRing = chartWheelRing(data.natal, vt.natalLabel);
+    const transitRing = chartWheelRing(data.transit, vt.transitRingLabel);
+    const crossAspects: readonly CrossRingAspects[] = [{ innerRingIndex: 0, outerRingIndex: 1, aspects: shown }];
+    const markup = renderMultiWheelSvg([natalRing, transitRing], crossAspects);
+    svg = { markup: standaloneSvg(markup), width: 800, height: 800 };
+  }
+
+  const tables: PdfTablePlan[] = [];
+  if (options.aspectsTable) {
+    tables.push(tablePlanOf(vt.contactsCaption, transitContactColumns(vt, locale), crossAspectRows(shown)));
+  }
+
+  return { kind: 'chart', heading, ...(svg === undefined ? {} : { svg }), tables };
+}
+
+/** The Forecast section's own place in the export: `PeriodicTransitView.tsx`'s daily/weekly/monthly/yearly
+ * tiers, each independently on/off (#441). The fifth, user-picked planetary-return tier is left out of this
+ * slice — it needs an extra body choice the issue does not name, see the issue comment for the follow-up. */
+async function buildForecastSectionPlan(
+  options: PdfForecastSectionOptions,
+  context: PdfPlanContext,
+): Promise<readonly PdfSectionPlan[]> {
+  const { person, provider, rulership, locale } = context;
+  if (person.moment === undefined) throw new Error('this person has no complete birth record');
+  const ft = periodicTransitViewMessages[locale];
+  const asOfDate = options.asOfDate ?? new Date().toISOString().slice(0, 10);
+  const [yearPart, monthPart, dayPart] = asOfDate.split('-').map(Number);
+  const year = yearPart ?? new Date().getFullYear();
+  const month = monthPart ?? 1;
+  const day = dayPart ?? 1;
+  const dayJd = await provider.julianDayFromUtc(year, month, day, 12, 0, 0);
+  const nextMonth = month === 12 ? 1 : month + 1;
+  const nextMonthYear = month === 12 ? year + 1 : year;
+  const [monthFromJd, monthToJd] = await Promise.all([
+    provider.julianDayFromUtc(year, month, 1, 0, 0, 0),
+    provider.julianDayFromUtc(nextMonthYear, nextMonth, 1, 0, 0, 0),
+  ]);
+  const periods: PeriodicTransitPeriods = { dayJd, monthFromJd, monthToJd, year };
+  const data = await computePeriodicTransitForecast(person.moment, periods, provider, { rulership });
+  const rules = transitRulesFor(data.natal, rulership, 'yearly');
+  const filter = transitPreset(options.filterPreset, rules);
+  const shownOf = (contacts: typeof data.daily.moonAspects): typeof data.daily.moonAspects =>
+    rankTransits(filterTransits(contacts, filter), filter, rules.chartRulerKeys);
+
+  const sections: PdfSectionPlan[] = [];
+  const namePart = person.displayName === '' ? '' : ` — ${person.displayName}`;
+
+  if (options.daily) {
+    const tables: PdfTablePlan[] = [];
+    const moonAspects = shownOf(data.daily.moonAspects);
+    if (moonAspects.length > 0) {
+      tables.push(
+        tablePlanOf(ft.moonAspectsCaption, forecastContactColumns(ft), forecastContactRows(moonAspects, locale)),
+      );
+    }
+    if (data.daily.exactToday.length > 0) {
+      tables.push(
+        tablePlanOf(
+          ft.exactTodayCaption,
+          forecastExactEventColumns(ft),
+          forecastExactEventRows(data.daily.exactToday, ft, locale),
+        ),
+      );
+    }
+    if (data.daily.stationsToday.length > 0) {
+      tables.push(
+        tablePlanOf(
+          ft.stationsTodayCaption,
+          forecastStationColumns(ft),
+          forecastStationRows(data.daily.stationsToday, ft, locale),
+        ),
+      );
+    }
+    const hint = `${ft.moonInLabel} ${forecastSignHouseLabel(data.daily.moon.sign, data.daily.moon.house, locale, ft)}`;
+    sections.push({ kind: 'chart', heading: `${ft.dailyHeading}${namePart}`, hint, tables });
+  }
+
+  if (options.weekly) {
+    const tables: PdfTablePlan[] = [];
+    if (data.weekly.events.length > 0) {
+      tables.push(
+        tablePlanOf(
+          ft.exactThisWeekCaption,
+          forecastExactEventColumns(ft),
+          forecastExactEventRows(data.weekly.events, ft, locale),
+        ),
+      );
+    }
+    data.weekly.lunarReturns.returns.forEach((lunarReturn, index) => {
+      const shown = shownOf(lunarReturn.contacts);
+      if (shown.length > 0) {
+        tables.push(
+          tablePlanOf(
+            `${ft.lunarReturnContactsCaption} (${String(index + 1)})`,
+            forecastContactColumns(ft),
+            forecastContactRows(shown, locale),
+          ),
+        );
+      }
+    });
+    sections.push({ kind: 'chart', heading: `${ft.weeklyHeading}${namePart}`, tables });
+  }
+
+  if (options.monthly) {
+    const tables: PdfTablePlan[] = [];
+    if (data.monthly.events.length > 0) {
+      tables.push(
+        tablePlanOf(
+          ft.exactThisMonthCaption,
+          forecastExactEventColumns(ft),
+          forecastExactEventRows(data.monthly.events, ft, locale),
+        ),
+      );
+    }
+    const progressed = shownOf(data.monthly.progressedLunarReturn.contacts);
+    if (progressed.length > 0) {
+      tables.push(
+        tablePlanOf(
+          ft.progressedLunarReturnContactsCaption,
+          forecastContactColumns(ft),
+          forecastContactRows(progressed, locale),
+        ),
+      );
+    }
+    const hint = ft.sunInThisMonth(
+      forecastSignHouseLabel(data.monthly.sun.sign, data.monthly.sun.house, locale, ft),
+      forecastFormatUtc(data.monthly.fromJd),
+      forecastFormatUtc(data.monthly.toJd),
+    );
+    sections.push({ kind: 'chart', heading: `${ft.monthlyHeading}${namePart}`, hint, tables });
+  }
+
+  if (options.yearly) {
+    const tables: PdfTablePlan[] = [];
+    const solar = shownOf(data.yearly.solarReturn.contacts);
+    if (solar.length > 0) {
+      tables.push(
+        tablePlanOf(ft.solarReturnContactsCaption, forecastContactColumns(ft), forecastContactRows(solar, locale)),
+      );
+    }
+    const demibirthday = shownOf(data.yearly.demibirthday.contacts);
+    if (demibirthday.length > 0) {
+      tables.push(
+        tablePlanOf(
+          ft.demibirthdayContactsCaption,
+          forecastContactColumns(ft),
+          forecastContactRows(demibirthday, locale),
+        ),
+      );
+    }
+    const returnAscendantSign = Math.floor((data.yearly.solarReturn.houses.cusps[1] ?? 0) / 30);
+    const demibirthdayAscendantSign = Math.floor((data.yearly.demibirthday.houses.cusps[1] ?? 0) / 30);
+    const hint = [
+      ft.solarReturnSentence(
+        String(data.yearly.solarReturn.year),
+        forecastFormatUtc(data.yearly.solarReturn.returnJd),
+        forecastLocalizedSignName(returnAscendantSign, locale, ft),
+      ),
+      ft.demibirthdaySentence(
+        String(data.yearly.demibirthday.year),
+        forecastFormatUtc(data.yearly.demibirthday.demibirthdayJd),
+        forecastLocalizedSignName(demibirthdayAscendantSign, locale, ft),
+      ),
+    ].join(' ');
+    sections.push({ kind: 'chart', heading: `${ft.yearlyHeading}${namePart}`, hint, tables });
+  }
+
+  return sections;
+}
+
 async function buildInterpretationSections(
   selection: PdfSelection['interpretation'],
   context: PdfPlanContext,
@@ -504,6 +738,25 @@ export async function buildPdfPlan(
       sections.push(await buildCompositeSectionPlan(selection.composite, context, t, pt));
     } catch (error) {
       errors.push(`${pt.compositeLabel}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  if (selection.transits !== undefined && (selection.transits.wheel || selection.transits.aspectsTable)) {
+    try {
+      sections.push(await buildTransitsSectionPlan(selection.transits, context, pt));
+    } catch (error) {
+      errors.push(`${pt.transitsLabel}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  if (
+    selection.forecast !== undefined &&
+    (selection.forecast.daily || selection.forecast.weekly || selection.forecast.monthly || selection.forecast.yearly)
+  ) {
+    try {
+      sections.push(...(await buildForecastSectionPlan(selection.forecast, context)));
+    } catch (error) {
+      errors.push(`${pt.forecastLabel}: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 

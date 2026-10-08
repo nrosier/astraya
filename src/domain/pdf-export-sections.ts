@@ -11,14 +11,19 @@
  * narrative that costs an API call). Second slice: synastry and composite, each with their own
  * partner picker — unlike a chart type (independently on/off, several at once), only one partner
  * can be compared/combined with at a time, so these are a single optional field each rather than
- * an array entry. Transits, forecast, progressions, solar arc, profections and astrocartography are
- * not sections here yet — see the issue for the follow-up.
+ * an array entry. Third slice: transits and forecast — like synastry/composite, each is a single
+ * optional field (there is only one "the transits"/"the forecast" per selection), but unlike
+ * synastry/composite neither needs a partner picker, so (unlike synastry/composite) both are
+ * allowed into a preset. Both carry their own "as of" date and the same "important vs. all"
+ * contact filter the live `TransitFilterPanel.tsx` offers, chosen here rather than read off
+ * whatever a live screen happened to show. Progressions, solar arc, profections and
+ * astrocartography are not sections here yet — see the issue for the follow-up.
  */
 /**
  * @module pdf-export-sections
  * @purpose Declarative registry of what can go into a PDF export (#441): which pages/sections are selectable, each section's own options, and ready-made presets.
- * @conventions Pure and DOM-free, with neither jsPDF nor React dependencies, so it's Vitest-testable without a browser; `chart/pdf-export.ts` turns a selection into pages, `ui/PdfExportBuilder.tsx` builds a selection — neither needs this file's internals beyond its exported shape; synastry/composite are single optional fields (only one partner comparable at a time), unlike `charts` which is an array.
- * @exports PdfSelection, PdfChartSectionOptions, PdfSynastrySectionOptions, PdfCompositeSectionOptions, PdfInterpretationOptions, PDF_CHART_TABLES, PDF_CHART_TYPES, EMPTY_SELECTION, PDF_PRESETS, PDF_PRESET_KEYS, applyPdfPreset, matchPdfPreset, pdfSelectionIsEmpty, defaultChartSectionOptions, defaultSynastrySectionOptions, defaultCompositeSectionOptions
+ * @conventions Pure and DOM-free, with neither jsPDF nor React dependencies, so it's Vitest-testable without a browser; `chart/pdf-export.ts` turns a selection into pages, `ui/PdfExportBuilder.tsx` builds a selection — neither needs this file's internals beyond its exported shape; synastry/composite/transits/forecast are single optional fields (at most one of each per selection), unlike `charts` which is an array; transits/forecast need no partner, so unlike synastry/composite they can appear in a preset.
+ * @exports PdfSelection, PdfChartSectionOptions, PdfSynastrySectionOptions, PdfCompositeSectionOptions, PdfInterpretationOptions, PdfTransitsSectionOptions, PdfForecastSectionOptions, PdfTransitFilterPreset, PDF_CHART_TABLES, PDF_CHART_TYPES, EMPTY_SELECTION, PDF_PRESETS, PDF_PRESET_KEYS, applyPdfPreset, matchPdfPreset, pdfSelectionIsEmpty, defaultChartSectionOptions, defaultSynastrySectionOptions, defaultCompositeSectionOptions, defaultTransitsSectionOptions, defaultForecastSectionOptions
  */
 import type { ChartType } from '../ui/chart-sections.js';
 
@@ -72,6 +77,34 @@ export interface PdfCompositeSectionOptions {
   readonly tables: readonly PdfChartTable[];
 }
 
+/** The two filter levels the issue decided on (#441): the live `TransitFilterPanel.tsx` offers finer
+ * presets and custom per-body/per-aspect tuning, but a builder page that has never had the live
+ * screen open only needs the two the issue itself names — "limited to the important ones" (the
+ * same `'important'` preset `TransitFilterPanel.tsx` defaults to) or "show all". */
+export type PdfTransitFilterPreset = 'important' | 'all';
+
+/** Transits' own place in the export: the single bi-wheel `TransitView.tsx` shows (natal inner
+ * ring, transiting outer ring) and its one contacts table, as of a chosen date. `asOfDate` left
+ * unset means "today, at build time" — the same lazy-default convention `returnFromDate` uses. */
+export interface PdfTransitsSectionOptions {
+  readonly filterPreset: PdfTransitFilterPreset;
+  readonly wheel: boolean;
+  readonly aspectsTable: boolean;
+  readonly asOfDate?: string;
+}
+
+/** Forecast's own place in the export: `PeriodicTransitView.tsx`'s four always-on tiers
+ * (daily/weekly/monthly/yearly), each independently on/off; its fifth tier (a planetary return on
+ * a body the user picks on that screen) is left out of this slice — see the issue comment. */
+export interface PdfForecastSectionOptions {
+  readonly filterPreset: PdfTransitFilterPreset;
+  readonly daily: boolean;
+  readonly weekly: boolean;
+  readonly monthly: boolean;
+  readonly yearly: boolean;
+  readonly asOfDate?: string;
+}
+
 export interface PdfSelection {
   readonly personId: string;
   readonly birthRecord: boolean;
@@ -80,6 +113,8 @@ export interface PdfSelection {
   /** Absent means "not included" — there is at most one of each at a time, unlike `charts`. */
   readonly synastry?: PdfSynastrySectionOptions;
   readonly composite?: PdfCompositeSectionOptions;
+  readonly transits?: PdfTransitsSectionOptions;
+  readonly forecast?: PdfForecastSectionOptions;
 }
 
 const EVERY_TABLE = PDF_CHART_TABLES;
@@ -96,6 +131,38 @@ export function defaultSynastrySectionOptions(partnerId: string): PdfSynastrySec
 
 export function defaultCompositeSectionOptions(partnerId: string): PdfCompositeSectionOptions {
   return { partnerId, wheel: true, tables: EVERY_TABLE };
+}
+
+/** The same "today" default `returnFromDate`'s own builder-only default below uses, computed once a section is first ticked (presets leave `asOfDate` unset instead, resolved lazily at build time). */
+function todayDateString(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+/** Transits' own default parameters, for when it is first ticked in the builder — matches the live screen's own default filter (`'important'`). */
+export function defaultTransitsSectionOptions(): PdfTransitsSectionOptions {
+  return { filterPreset: 'important', wheel: true, aspectsTable: true, asOfDate: todayDateString() };
+}
+
+/** Every tier on, matching the live screen's own default filter. */
+export function defaultForecastSectionOptions(): PdfForecastSectionOptions {
+  return {
+    filterPreset: 'important',
+    daily: true,
+    weekly: true,
+    monthly: true,
+    yearly: true,
+    asOfDate: todayDateString(),
+  };
+}
+
+/** Transits, every table/wheel on and every contact shown — "complete archive" leaves `asOfDate` unset so it resolves to "today" at build time, not at preset-definition time. */
+function fullTransitsSection(): PdfTransitsSectionOptions {
+  return { filterPreset: 'all', wheel: true, aspectsTable: true };
+}
+
+/** Forecast, every tier on and every contact shown — same lazy `asOfDate` reasoning as `fullTransitsSection`. */
+function fullForecastSection(): PdfForecastSectionOptions {
+  return { filterPreset: 'all', daily: true, weekly: true, monthly: true, yearly: true };
 }
 
 /** One chart type, every table and the wheel on, with no type-specific parameters set. */
@@ -123,11 +190,41 @@ export const PDF_PRESETS: Readonly<Record<PdfPresetKey, Omit<PdfSelection, 'pers
     birthRecord: true,
     interpretation: { base: true, aiCustomised: false },
     charts: PDF_CHART_TYPES.map(fullChartSection),
+    transits: fullTransitsSection(),
+    forecast: fullForecastSection(),
   },
 };
 
 export function applyPdfPreset(key: PdfPresetKey, personId: string): PdfSelection {
   return { personId, ...PDF_PRESETS[key] };
+}
+
+/** Whether a transits section matches a preset's own (`asOfDate` ignored, same as `returnYear`/`harmonicN`/`returnFromDate` above — a date is a per-build parameter, not part of a preset's identity). */
+function transitsMatches(
+  selection: PdfTransitsSectionOptions | undefined,
+  preset: PdfTransitsSectionOptions | undefined,
+): boolean {
+  if (preset === undefined) return selection === undefined;
+  return (
+    selection?.filterPreset === preset.filterPreset &&
+    selection.wheel === preset.wheel &&
+    selection.aspectsTable === preset.aspectsTable
+  );
+}
+
+/** Same reasoning as `transitsMatches`, for the forecast section. */
+function forecastMatches(
+  selection: PdfForecastSectionOptions | undefined,
+  preset: PdfForecastSectionOptions | undefined,
+): boolean {
+  if (preset === undefined) return selection === undefined;
+  return (
+    selection?.filterPreset === preset.filterPreset &&
+    selection.daily === preset.daily &&
+    selection.weekly === preset.weekly &&
+    selection.monthly === preset.monthly &&
+    selection.yearly === preset.yearly
+  );
 }
 
 /** Which preset (if any) a selection matches exactly, ignoring `personId`; `undefined` means "Custom". */
@@ -148,6 +245,8 @@ export function matchPdfPreset(selection: PdfSelection): PdfPresetKey | undefine
           chart.tables.every((table) => other.tables.includes(table))
         );
       }) &&
+      transitsMatches(selection.transits, preset.transits) &&
+      forecastMatches(selection.forecast, preset.forecast) &&
       // No preset sets either — a partner is always picked separately — so a selection that
       // does include one, however it's filled in, can only ever be "Custom".
       selection.synastry === undefined &&
@@ -165,7 +264,13 @@ export function pdfSelectionIsEmpty(selection: PdfSelection): boolean {
     selection.charts.every((chart) => !chart.wheel && chart.tables.length === 0) &&
     (selection.synastry === undefined ||
       (!selection.synastry.wheel && !selection.synastry.aspectsTable && !selection.synastry.relationshipSummary)) &&
-    (selection.composite === undefined || (!selection.composite.wheel && selection.composite.tables.length === 0))
+    (selection.composite === undefined || (!selection.composite.wheel && selection.composite.tables.length === 0)) &&
+    (selection.transits === undefined || (!selection.transits.wheel && !selection.transits.aspectsTable)) &&
+    (selection.forecast === undefined ||
+      (!selection.forecast.daily &&
+        !selection.forecast.weekly &&
+        !selection.forecast.monthly &&
+        !selection.forecast.yearly))
   );
 }
 

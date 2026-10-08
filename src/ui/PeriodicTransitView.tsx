@@ -24,7 +24,7 @@
  * @module PeriodicTransitView
  * @purpose Daily/weekly/monthly/yearly transit forecast screen for a saved person, including solar/lunar and other planetary returns.
  * @conventions Follows TransitView.tsx's person-not-found/incomplete-moment/unknown-time gating; uses PeriodicTransitView.messages.ts for en/nl text via useMessages().
- * @exports PeriodicTransitView
+ * @exports PeriodicTransitView, bodyName, formatUtc, localizedSignName, signHouseLabel, contactRows, contactColumns, exactEventRows, exactEventColumns, stationRows, stationColumns
  */
 import { useEffect, useMemo, useState } from 'react';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
@@ -84,8 +84,11 @@ type PlanetaryReturnLoad =
   | { readonly kind: 'ready'; readonly data: PlanetaryReturnData }
   | { readonly kind: 'error'; readonly message: string };
 
-/** UTC civil date and time, to the minute — every timestamp here is a computed UT moment, not a local one. */
-function formatUtc(jd: JulianDayUT): string {
+/**
+ * UTC civil date and time, to the minute — every timestamp here is a computed UT moment, not a
+ * local one. Exported for `pdf-export-plan.ts` (#441): reused as-is for the PDF export's Forecast section.
+ */
+export function formatUtc(jd: JulianDayUT): string {
   const civil = civilFromJulianDay(jd);
   const pad = (n: number): string => String(n).padStart(2, '0');
   return `${String(civil.year)}-${pad(civil.month)}-${pad(civil.day)} ${pad(civil.hour)}:${pad(civil.minute)} UT`;
@@ -95,7 +98,8 @@ function bodyKey(body: BodyId): string {
   return bodyById(body)?.key ?? String(body);
 }
 
-function bodyName(body: BodyId, locale: Locale): string {
+/** Exported for `pdf-export-plan.ts` (#441): reused as-is for the PDF export's Forecast section. */
+export function bodyName(body: BodyId, locale: Locale): string {
   return bodyDisplayName(bodyKey(body), locale);
 }
 
@@ -120,7 +124,8 @@ interface ContactRow {
   readonly applying: boolean;
 }
 
-function contactRows(aspects: readonly Aspect[], locale: Locale): readonly ContactRow[] {
+/** Exported for `pdf-export-plan.ts` (#441): reused as-is for the PDF export's Forecast section. */
+export function contactRows(aspects: readonly Aspect[], locale: Locale): readonly ContactRow[] {
   return aspects.map((aspect, index) => ({
     key: `${String(aspect.bodyA)}-${aspect.aspect.key}-${String(aspect.bodyB)}-${String(index)}`,
     sentence: transitAspectSentence(aspect.bodyA, aspect.bodyB, aspect.aspect.key, locale),
@@ -132,7 +137,8 @@ function contactRows(aspects: readonly Aspect[], locale: Locale): readonly Conta
   }));
 }
 
-function contactColumns(t: typeof periodicTransitViewMessages.en): readonly TableColumn<ContactRow>[] {
+/** Exported for `pdf-export-plan.ts` (#441): reused as-is for the PDF export's Forecast section. */
+export function contactColumns(t: typeof periodicTransitViewMessages.en): readonly TableColumn<ContactRow>[] {
   return [
     { key: 'sentence', label: t.forecastLabel, valueOf: (row) => row.sentence },
     { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => `${row.orb.toFixed(2)}°` },
@@ -161,7 +167,8 @@ interface StationRow {
   readonly direction: string;
 }
 
-function exactEventRows(
+/** Exported for `pdf-export-plan.ts` (#441): reused as-is for the PDF export's Forecast section. */
+export function exactEventRows(
   events: readonly TransitAspectEvent[],
   t: typeof periodicTransitViewMessages.en,
   locale: Locale,
@@ -177,14 +184,16 @@ function exactEventRows(
   }));
 }
 
-function exactEventColumns(t: typeof periodicTransitViewMessages.en): readonly TableColumn<ExactEventRow>[] {
+/** Exported for `pdf-export-plan.ts` (#441): reused as-is for the PDF export's Forecast section. */
+export function exactEventColumns(t: typeof periodicTransitViewMessages.en): readonly TableColumn<ExactEventRow>[] {
   return [
     { key: 'jd', label: t.exactLabel, valueOf: (row) => row.jd, render: (row) => row.date },
     { key: 'sentence', label: t.forecastLabel, valueOf: (row) => row.sentence },
   ];
 }
 
-function stationRows(
+/** Exported for `pdf-export-plan.ts` (#441): reused as-is for the PDF export's Forecast section. */
+export function stationRows(
   stations: readonly StationEvent[],
   t: typeof periodicTransitViewMessages.en,
   locale: Locale,
@@ -198,7 +207,8 @@ function stationRows(
   }));
 }
 
-function stationColumns(t: typeof periodicTransitViewMessages.en): readonly TableColumn<StationRow>[] {
+/** Exported for `pdf-export-plan.ts` (#441): reused as-is for the PDF export's Forecast section. */
+export function stationColumns(t: typeof periodicTransitViewMessages.en): readonly TableColumn<StationRow>[] {
   return [
     { key: 'jd', label: t.exactLabel, valueOf: (row) => row.jd, render: (row) => row.date },
     { key: 'body', label: t.bodyLabel, valueOf: (row) => row.body },
@@ -206,12 +216,19 @@ function stationColumns(t: typeof periodicTransitViewMessages.en): readonly Tabl
   ];
 }
 
-function localizedSignName(sign: number, locale: Locale, t: typeof periodicTransitViewMessages.en): string {
+/** Exported for `pdf-export-plan.ts` (#441): reused as-is for the PDF export's Forecast section. */
+export function localizedSignName(sign: number, locale: Locale, t: typeof periodicTransitViewMessages.en): string {
   const name = SIGNS[sign]?.name;
   return name !== undefined ? signDisplayName(name, locale) : t.signFallback(String(sign));
 }
 
-function signHouseLabel(sign: number, house: number, locale: Locale, t: typeof periodicTransitViewMessages.en): string {
+/** Exported for `pdf-export-plan.ts` (#441): reused as-is for the PDF export's Forecast section. */
+export function signHouseLabel(
+  sign: number,
+  house: number,
+  locale: Locale,
+  t: typeof periodicTransitViewMessages.en,
+): string {
   return `${localizedSignName(sign, locale, t)}${t.houseSuffix(house)}`;
 }
 

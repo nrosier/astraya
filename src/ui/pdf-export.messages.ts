@@ -7,7 +7,7 @@
  * @conventions Co-located i18n file exporting `{ en, nl }`, consumed via useMessages() by PdfExportBuilder.tsx (and read directly by pdf-export-plan.ts for section/field labels built outside a component).
  * @exports pdfExportMessages
  */
-import type { PdfChartTable, PdfPresetKey } from '../domain/pdf-export-sections.js';
+import type { PdfChartTable, PdfPresetKey, PdfTransitFilterPreset } from '../domain/pdf-export-sections.js';
 import type { ChartType } from './chart-sections.js';
 import type { TimeAccuracy } from '../domain/person.js';
 
@@ -73,6 +73,19 @@ const en = {
     unknown: 'Unknown',
   } satisfies Record<TimeAccuracy, string>,
   aiNarrativeHeading: 'AI-customised narrative',
+  transitsLegend: 'Transits & Forecast',
+  transitsLabel: 'Transits',
+  forecastLabel: 'Forecast',
+  asOfDateLabel: 'As of',
+  filterPresetLabel: 'Contacts shown',
+  filterPresetOptions: {
+    important: 'Important only',
+    all: 'All',
+  } satisfies Record<PdfTransitFilterPreset, string>,
+  forecastDailyLabel: 'Daily',
+  forecastWeeklyLabel: 'Weekly',
+  forecastMonthlyLabel: 'Monthly',
+  forecastYearlyLabel: 'Yearly',
 };
 
 const nl: typeof en = {
@@ -138,6 +151,19 @@ const nl: typeof en = {
     unknown: 'Onbekend',
   } satisfies Record<TimeAccuracy, string>,
   aiNarrativeHeading: 'AI-aangepast verhaal',
+  transitsLegend: 'Transits & Vooruitzicht',
+  transitsLabel: 'Transits',
+  forecastLabel: 'Vooruitzicht',
+  asOfDateLabel: 'Vanaf',
+  filterPresetLabel: 'Getoonde contacten',
+  filterPresetOptions: {
+    important: 'Alleen belangrijke',
+    all: 'Alle',
+  } satisfies Record<PdfTransitFilterPreset, string>,
+  forecastDailyLabel: 'Dagelijks',
+  forecastWeeklyLabel: 'Wekelijks',
+  forecastMonthlyLabel: 'Maandelijks',
+  forecastYearlyLabel: 'Jaarlijks',
 };
 
 export const pdfExportMessages = { en, nl };

@@ -20,7 +20,7 @@
  * @module TransitView
  * @purpose Transit bi-wheel screen for one saved person against a chosen date: natal chart on the inner ring, transiting positions on the outer ring, with filtered cross-chart contacts and void-of-course Moon.
  * @conventions Calls renderMultiWheelSvg directly, bypassing the single-chart AstroChartWheel wrapper, same as SynastryView.tsx; uses TransitView.messages.ts for en/nl text via useMessages().
- * @exports TransitView
+ * @exports TransitView, contactColumns
  */
 
 import { useSymbolClass } from './symbol-setting.js';
@@ -66,7 +66,8 @@ type Load =
   | { readonly kind: 'ready'; readonly data: TransitData; readonly voidOfCourse: VoidOfCourseMoon | undefined }
   | { readonly kind: 'error'; readonly message: string };
 
-function contactColumns(t: typeof transitViewMessages.en, locale: Locale): readonly TableColumn<AspectRow>[] {
+/** Exported for `pdf-export-plan.ts` (#441): the same contacts table this screen shows, reused as-is for the PDF export's Transits section. */
+export function contactColumns(t: typeof transitViewMessages.en, locale: Locale): readonly TableColumn<AspectRow>[] {
   return [
     {
       key: 'bodyAName',
