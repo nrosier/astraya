@@ -10,11 +10,11 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build && vite build --config vite.sw.config.ts",
+    "build": "node scripts/run-without-warnings.mjs sh -c \"tsc -b && vite build && vite build --config vite.sw.config.ts\"",
     "build:demo": "tsc -b && vite build --mode demo && vite build --mode demo --config vite.sw.config.ts",
     "preview": "vite preview",
     "serve": "node server/index.ts",
-    "test": "vitest run",
+    "test": "node scripts/run-without-warnings.mjs vitest run",
     "test:watch": "vitest",
     "test:e2e": "npm run build && playwright test",
     "lint": "eslint .",
