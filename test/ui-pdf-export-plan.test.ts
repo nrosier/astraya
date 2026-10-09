@@ -554,4 +554,117 @@ describe('buildPdfPlan', () => {
     expect(plan.sections).toHaveLength(1);
     expect(plan.sections[0]?.kind).toBe('chart');
   }, 30_000);
+
+  it('builds a transits section with a bi-wheel and the contacts table (#441)', async () => {
+    const provider = await getEngine();
+    const selection: PdfSelection = {
+      personId: ADA.id,
+      ...EMPTY_SELECTION,
+      transits: { filterPreset: 'important', wheel: true, aspectsTable: true, asOfDate: '2025-01-01' },
+    };
+    const context: PdfPlanContext = {
+      person: ADA,
+      provider,
+      rulership: DEFAULT_RULERSHIP_CHOICE,
+      locale: 'en',
+      aiConsent: false,
+      corpusFetch,
+    };
+    const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
+    expect(plan.errors).toHaveLength(0);
+    const [section] = plan.sections;
+    if (section?.kind !== 'chart') throw new Error('expected a chart section');
+    expect(section.heading).toContain('Ada Lovelace');
+    expect(section.svg?.markup).toContain('<svg');
+    expect(section.tables).toHaveLength(1);
+  }, 30_000);
+
+  it('builds a forecast section with only the ticked tiers', async () => {
+    const provider = await getEngine();
+    const selection: PdfSelection = {
+      personId: ADA.id,
+      ...EMPTY_SELECTION,
+      forecast: {
+        filterPreset: 'important',
+        daily: true,
+        weekly: false,
+        monthly: false,
+        yearly: false,
+        asOfDate: '2025-01-01',
+      },
+    };
+    const context: PdfPlanContext = {
+      person: ADA,
+      provider,
+      rulership: DEFAULT_RULERSHIP_CHOICE,
+      locale: 'en',
+      aiConsent: false,
+      corpusFetch,
+    };
+    const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
+    expect(plan.errors).toHaveLength(0);
+    expect(plan.sections.length).toBeGreaterThan(0);
+    expect(plan.sections.every((section) => section.kind === 'chart' || section.kind === 'text')).toBe(true);
+  }, 30_000);
+
+  it('builds an eclipses section listing eclipses in the given span, with natal contacts for a known birth time (#441, #484)', async () => {
+    const provider = await getEngine();
+    const selection: PdfSelection = {
+      personId: ADA.id,
+      ...EMPTY_SELECTION,
+      eclipses: { table: true, fromYear: 2023, toYear: 2024 },
+    };
+    const context: PdfPlanContext = {
+      person: ADA,
+      provider,
+      rulership: DEFAULT_RULERSHIP_CHOICE,
+      locale: 'en',
+      aiConsent: false,
+      corpusFetch,
+    };
+    const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
+    expect(plan.errors).toHaveLength(0);
+    const [section] = plan.sections;
+    if (section?.kind !== 'chart') throw new Error('expected a chart section');
+    expect(section.heading).toContain('Ada Lovelace');
+    expect(section.svg).toBeUndefined();
+    expect(section.tables).toHaveLength(1);
+    const table = section.tables[0];
+    expect(table?.body.length).toBeGreaterThan(0);
+    expect(table?.body.every((row) => row.every((cell) => typeof cell === 'string'))).toBe(true);
+    // At least one row names a real natal contact — Ada has a complete, known-time birth record.
+    expect(table?.body.some((row) => row[3] !== '—')).toBe(true);
+  }, 30_000);
+
+  it('builds an eclipses section with no contacts column content when no person is given a complete birth record', async () => {
+    const provider = await getEngine();
+    const NO_RECORD: Person = {
+      id: 'p-no-record',
+      displayName: 'No Record',
+      placeLabel: '',
+      timeAccuracy: 'unknown',
+      notes: '',
+      missing: [],
+    };
+    const selection: PdfSelection = {
+      personId: NO_RECORD.id,
+      ...EMPTY_SELECTION,
+      eclipses: { table: true, fromYear: 2023, toYear: 2024 },
+    };
+    const context: PdfPlanContext = {
+      person: NO_RECORD,
+      provider,
+      rulership: DEFAULT_RULERSHIP_CHOICE,
+      locale: 'en',
+      aiConsent: false,
+      corpusFetch,
+    };
+    const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
+    expect(plan.errors).toHaveLength(0);
+    const [section] = plan.sections;
+    if (section?.kind !== 'chart') throw new Error('expected a chart section');
+    const table = section.tables[0];
+    expect(table?.body.length).toBeGreaterThan(0);
+    expect(table?.body.every((row) => row[3] === '—')).toBe(true);
+  }, 30_000);
 });

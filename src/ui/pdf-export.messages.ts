@@ -125,6 +125,10 @@ const en = {
   } satisfies Record<PdfAcgLineType, string>,
   bodiesLabel: 'Bodies',
   localSpaceLabel: 'Local Space lines',
+  eclipsesLegend: 'Eclipses',
+  eclipsesLabel: 'Eclipses',
+  fromYearLabel: 'From year',
+  toYearLabel: 'To year',
 };
 
 const nl: typeof en = {
@@ -235,6 +239,10 @@ const nl: typeof en = {
   } satisfies Record<PdfAcgLineType, string>,
   bodiesLabel: 'Hemellichamen',
   localSpaceLabel: 'Local Space-lijnen',
+  eclipsesLegend: 'Verduisteringen',
+  eclipsesLabel: 'Verduisteringen',
+  fromYearLabel: 'Vanaf jaar',
+  toYearLabel: 'Tot jaar',
 };
 
 export const pdfExportMessages = { en, nl };

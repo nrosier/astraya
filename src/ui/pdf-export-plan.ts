@@ -55,11 +55,13 @@ import { computeMinorProgression } from '../domain/minor-progression.js';
 import { computeSolarArcDirections } from '../domain/solar-arc-directions.js';
 import { computeProfections } from '../domain/profections.js';
 import { computeAstrocartography } from '../domain/astrocartography.js';
+import { findEclipses, eclipseContacts, type NatalPoint } from '../astrology/eclipses.js';
 import {
   type PdfAstrocartographySectionOptions,
   type PdfChartSectionOptions,
   type PdfChartTable,
   type PdfCompositeSectionOptions,
+  type PdfEclipsesSectionOptions,
   type PdfForecastSectionOptions,
   type PdfProfectionsSectionOptions,
   type PdfProgressionsSectionOptions,
@@ -104,7 +106,7 @@ import {
 } from './ChartView.js';
 import type { chartViewMessages } from './ChartView.messages.js';
 import type { pdfExportMessages } from './pdf-export.messages.js';
-import { bodyDisplayName, bodyShortName } from './astro-names.messages.js';
+import { aspectDisplayName, bodyDisplayName, bodyShortName, signDisplayName } from './astro-names.messages.js';
 import { formatCoordinate } from './format.js';
 import { relationshipSummaryParagraphs } from './relationship-summary-pdf-text.js';
 import { aspectColumns as synastryAspectColumns } from './SynastryView.js';
@@ -142,6 +144,8 @@ import {
 import { solarArcViewMessages } from './SolarArcView.messages.js';
 import { toRow as profectionToRow, columns as profectionColumns } from './ProfectionsView.js';
 import { profectionsViewMessages } from './ProfectionsView.messages.js';
+import { eclipseRows, type EclipseRow } from './eclipses.js';
+import { eclipsesViewMessages } from './EclipsesView.messages.js';
 import type { TableColumn } from './table-sort.js';
 
 /** A table reduced to plain strings — the same conversion a CSV download already does for every cell. */
@@ -839,6 +843,93 @@ async function buildAstrocartographySectionPlan(
   return sections;
 }
 
+/** `EclipsesView.tsx`'s own type-and-kind label, e.g. "Solar eclipse — total". */
+function eclipseTypeLabel(row: EclipseRow, et: typeof eclipsesViewMessages.en): string {
+  const family = et.families[row.family];
+  const kind =
+    row.family === 'solar'
+      ? et.solarKinds[row.kind as keyof typeof et.solarKinds]
+      : et.lunarKinds[row.kind as keyof typeof et.lunarKinds];
+  return `${family} — ${kind.toLowerCase()}`;
+}
+
+/** Plain-text columns for the PDF table — unlike `EclipsesView.tsx`'s own `columns`, whose `valueOf`
+ * returns a sort key (a raw JD or longitude number), not display text; `tablePlanOf` stringifies
+ * `valueOf` directly, so these must return the same text `EclipsesView.tsx`'s `render` would. */
+function eclipsesPdfColumns(et: typeof eclipsesViewMessages.en, locale: Locale): readonly TableColumn<EclipseRow>[] {
+  return [
+    { key: 'date', label: et.dateColumn, valueOf: (row) => row.date },
+    { key: 'type', label: et.typeColumn, valueOf: (row) => eclipseTypeLabel(row, et) },
+    {
+      key: 'position',
+      label: et.positionColumn,
+      valueOf: (row) => `${signDisplayName(row.signName, locale)} ${row.position}`,
+    },
+    {
+      key: 'contacts',
+      label: et.contactsColumn,
+      valueOf: (row) =>
+        row.contacts.length === 0
+          ? et.none
+          : row.contacts
+              .map((contact) =>
+                et.contact(
+                  bodyDisplayName(contact.pointKey, locale),
+                  aspectDisplayName(contact.kind, locale),
+                  `${contact.orb.toFixed(1)}°`,
+                ),
+              )
+              .join('; '),
+    },
+  ];
+}
+
+/** The Eclipses section's own place in the export: `EclipsesView.tsx`'s list over a year span,
+ * with natal contacts when the person has a complete, known-time birth record (#441). Unlike
+ * most other sections, a missing/unknown-time birth record is not an error here — eclipses
+ * themselves need no person at all; the table just shows no contacts, same as the live screen
+ * with no person chosen. */
+async function buildEclipsesSectionPlan(
+  options: PdfEclipsesSectionOptions,
+  context: PdfPlanContext,
+  pt: typeof pdfExportMessages.en,
+): Promise<PdfChartSectionPlan> {
+  const { person, provider, locale } = context;
+  const et = eclipsesViewMessages[locale];
+  const thisYear = new Date().getUTCFullYear();
+  const fromYear = options.fromYear ?? thisYear - 1;
+  const toYear = options.toYear ?? thisYear + 3;
+  const fromJd = await provider.julianDayFromUtc(fromYear, 1, 1, 0, 0, 0);
+  const toJd = await provider.julianDayFromUtc(toYear + 1, 1, 1, 0, 0, 0);
+  const eclipses = await findEclipses(provider, fromJd, toJd);
+
+  let points: readonly NatalPoint[] = [];
+  if (person.moment !== undefined) {
+    const chart = await computeChartData(person.moment, provider);
+    const bodies = chart.positions.flatMap((position) => {
+      const key = bodyById(position.body)?.key;
+      return key === undefined ? [] : [{ key, longitude: position.longitude }];
+    });
+    // Same reasoning as EclipsesView.tsx's own: an unknown birth time makes the Ascendant and
+    // Midheaven meaningless, not approximate, so they're left out rather than guessed at.
+    points =
+      person.timeAccuracy === 'unknown'
+        ? bodies
+        : [
+            ...bodies,
+            { key: 'asc', longitude: chart.houses.ascendant },
+            { key: 'mc', longitude: chart.houses.midheaven },
+          ];
+  }
+
+  const rows = eclipseRows(eclipses, (eclipse) => eclipseContacts(eclipse, points));
+  const heading = `${pt.eclipsesLabel}${person.displayName === '' ? '' : ` — ${person.displayName}`}`;
+  const tables: PdfTablePlan[] = options.table
+    ? [tablePlanOf(et.tableCaption, eclipsesPdfColumns(et, locale), rows)]
+    : [];
+  return { kind: 'chart', heading, tables };
+}
+
 async function buildInterpretationSections(
   selection: PdfSelection['interpretation'],
   context: PdfPlanContext,
@@ -985,6 +1076,14 @@ export async function buildPdfPlan(
       sections.push(...(await buildAstrocartographySectionPlan(selection.astrocartography, context, pt)));
     } catch (error) {
       errors.push(`${pt.astrocartographyLabel}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  if (selection.eclipses?.table === true) {
+    try {
+      sections.push(await buildEclipsesSectionPlan(selection.eclipses, context, pt));
+    } catch (error) {
+      errors.push(`${pt.eclipsesLabel}: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 

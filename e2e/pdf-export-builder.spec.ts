@@ -255,3 +255,61 @@ test('ticking Profections and Astrocartography on their own builds a real PDF wi
   expect(pdf.length).toBeGreaterThan(1000);
   await expect(page.getByRole('status')).toHaveText('✓');
 });
+
+test('ticking Transits reveals its filter/wheel/table/date controls, and ticking Forecast reveals its tier checkboxes, both collapsing when unticked (#441)', async ({
+  page,
+}) => {
+  test.setTimeout(60_000);
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  await createPerson(page, ADA);
+  await page.goto(`${baseUrl}/#/export`);
+  await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Ada Lovelace' });
+
+  const transitsGroup = page.getByRole('group', { name: 'Transits & Forecast' });
+  await expect(transitsGroup.getByLabel('Contacts shown', { exact: true })).toHaveCount(0);
+  await transitsGroup.getByRole('checkbox', { name: 'Transits', exact: true }).check();
+  await expect(transitsGroup.getByLabel('Contacts shown', { exact: true }).first()).toHaveValue('important');
+  await expect(transitsGroup.getByRole('checkbox', { name: 'Wheel', exact: true })).toBeChecked();
+  await expect(transitsGroup.getByRole('checkbox', { name: 'Aspects', exact: true })).toBeChecked();
+  await transitsGroup.getByRole('checkbox', { name: 'Transits', exact: true }).uncheck();
+  await expect(transitsGroup.getByLabel('Contacts shown', { exact: true })).toHaveCount(0);
+
+  await expect(transitsGroup.getByRole('checkbox', { name: 'Daily', exact: true })).toHaveCount(0);
+  await transitsGroup.getByRole('checkbox', { name: 'Forecast', exact: true }).check();
+  await expect(transitsGroup.getByRole('checkbox', { name: 'Daily', exact: true })).toBeChecked();
+  await expect(transitsGroup.getByRole('checkbox', { name: 'Weekly', exact: true })).toBeChecked();
+  await expect(transitsGroup.getByRole('checkbox', { name: 'Monthly', exact: true })).toBeChecked();
+  await expect(transitsGroup.getByRole('checkbox', { name: 'Yearly', exact: true })).toBeChecked();
+  await transitsGroup.getByRole('checkbox', { name: 'Forecast', exact: true }).uncheck();
+  await expect(transitsGroup.getByRole('checkbox', { name: 'Daily', exact: true })).toHaveCount(0);
+});
+
+test('ticking Eclipses reveals its from/to year controls, collapsing when unticked, and builds a real PDF (#441, #484)', async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  await createPerson(page, ADA);
+  await page.goto(`${baseUrl}/#/export`);
+  await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Ada Lovelace' });
+
+  const eclipsesGroup = page.getByRole('group', { name: 'Eclipses', exact: true });
+  await expect(eclipsesGroup.getByLabel('From year', { exact: true })).toHaveCount(0);
+  await eclipsesGroup.getByRole('checkbox', { name: 'Eclipses', exact: true }).check();
+  const thisYear = new Date().getUTCFullYear();
+  await expect(eclipsesGroup.getByLabel('From year', { exact: true })).toHaveValue(String(thisYear - 1));
+  await expect(eclipsesGroup.getByLabel('To year', { exact: true })).toHaveValue(String(thisYear + 3));
+
+  const buildButton = page.getByRole('button', { name: 'Build PDF', exact: true });
+  await expect(buildButton).toBeEnabled();
+  const [download] = await Promise.all([page.waitForEvent('download'), buildButton.click()]);
+  const chunks: Buffer[] = [];
+  for await (const chunk of await download.createReadStream()) chunks.push(chunk as Buffer);
+  const pdf = Buffer.concat(chunks);
+  expect(pdf.subarray(0, 5).toString('latin1')).toBe('%PDF-');
+  expect(pdf.length).toBeGreaterThan(1000);
+  await expect(page.getByRole('status')).toHaveText('✓');
+
+  await eclipsesGroup.getByRole('checkbox', { name: 'Eclipses', exact: true }).uncheck();
+  await expect(eclipsesGroup.getByLabel('From year', { exact: true })).toHaveCount(0);
+});

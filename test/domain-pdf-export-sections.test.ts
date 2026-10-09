@@ -6,10 +6,13 @@ import {
   defaultAstrocartographySectionOptions,
   defaultChartSectionOptions,
   defaultCompositeSectionOptions,
+  defaultEclipsesSectionOptions,
+  defaultForecastSectionOptions,
   defaultProfectionsSectionOptions,
   defaultProgressionsSectionOptions,
   defaultSolarArcSectionOptions,
   defaultSynastrySectionOptions,
+  defaultTransitsSectionOptions,
   EMPTY_SELECTION,
   matchPdfPreset,
   PDF_ACG_LINE_TYPES,
@@ -222,6 +225,41 @@ describe('pdfSelectionIsEmpty', () => {
       }),
     ).toBe(true);
   });
+
+  it('is false once transits, forecast, or eclipses has anything ticked, true for each with nothing ticked (#441, #484)', () => {
+    expect(
+      pdfSelectionIsEmpty({
+        personId: 'p-ada',
+        ...EMPTY_SELECTION,
+        transits: { filterPreset: 'important', wheel: false, aspectsTable: false },
+      }),
+    ).toBe(true);
+    expect(
+      pdfSelectionIsEmpty({
+        personId: 'p-ada',
+        ...EMPTY_SELECTION,
+        transits: { filterPreset: 'important', wheel: true, aspectsTable: false },
+      }),
+    ).toBe(false);
+
+    expect(
+      pdfSelectionIsEmpty({
+        personId: 'p-ada',
+        ...EMPTY_SELECTION,
+        forecast: { filterPreset: 'important', daily: false, weekly: false, monthly: false, yearly: false },
+      }),
+    ).toBe(true);
+    expect(
+      pdfSelectionIsEmpty({
+        personId: 'p-ada',
+        ...EMPTY_SELECTION,
+        forecast: { filterPreset: 'important', daily: true, weekly: false, monthly: false, yearly: false },
+      }),
+    ).toBe(false);
+
+    expect(pdfSelectionIsEmpty({ personId: 'p-ada', ...EMPTY_SELECTION, eclipses: { table: false } })).toBe(true);
+    expect(pdfSelectionIsEmpty({ personId: 'p-ada', ...EMPTY_SELECTION, eclipses: { table: true } })).toBe(false);
+  });
 });
 
 describe('defaultSynastrySectionOptions / defaultCompositeSectionOptions', () => {
@@ -283,5 +321,50 @@ describe('default section options for the four new sections (#441)', () => {
     expect(options.localSpace).toBe(false);
     expect(options.lineTypes).toHaveLength(PDF_ACG_LINE_TYPES.length);
     expect(options.bodies).toEqual(TRADITIONAL_ACG_BODY_IDS);
+  });
+
+  it('starts transits on the "important" filter with the wheel/table on and today as the date (#441)', () => {
+    const options = defaultTransitsSectionOptions();
+    expect(options.filterPreset).toBe('important');
+    expect(options.wheel).toBe(true);
+    expect(options.aspectsTable).toBe(true);
+    expect(options.asOfDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  it('starts forecast on the "important" filter with every tier on and today as the date (#441)', () => {
+    const options = defaultForecastSectionOptions();
+    expect(options.filterPreset).toBe('important');
+    expect(options.daily).toBe(true);
+    expect(options.weekly).toBe(true);
+    expect(options.monthly).toBe(true);
+    expect(options.yearly).toBe(true);
+    expect(options.asOfDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  it("starts eclipses with the table on and the live screen's own default span (#441, #484)", () => {
+    const options = defaultEclipsesSectionOptions();
+    const thisYear = new Date().getUTCFullYear();
+    expect(options.table).toBe(true);
+    expect(options.fromYear).toBe(thisYear - 1);
+    expect(options.toYear).toBe(thisYear + 3);
+  });
+});
+
+describe('eclipses in presets and matching (#441, #484)', () => {
+  it('fills complete-archive with the eclipses table on, year span left unset for lazy resolution', () => {
+    const selection = applyPdfPreset('complete-archive', 'p-ada');
+    expect(selection.eclipses).toEqual({ table: true });
+    expect(matchPdfPreset(selection)).toBe('complete-archive');
+  });
+
+  it('is Custom once eclipses is added to a selection that otherwise matches a preset with no eclipses', () => {
+    const base = applyPdfPreset('executive-summary', 'p-ada');
+    expect(matchPdfPreset({ ...base, eclipses: defaultEclipsesSectionOptions() })).toBeUndefined();
+  });
+
+  it('ignores fromYear/toYear when matching against a preset, same as asOfDate elsewhere', () => {
+    const archive = applyPdfPreset('complete-archive', 'p-ada');
+    const withSpan: PdfSelection = { ...archive, eclipses: { table: true, fromYear: 1999, toYear: 2001 } };
+    expect(matchPdfPreset(withSpan)).toBe('complete-archive');
   });
 });
