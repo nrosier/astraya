@@ -182,6 +182,37 @@ test('column-header and dispositor tooltips are reachable on keyboard focus, not
   await expect(dispositorsHelp).toBeFocused();
 });
 
+// #456's remaining acceptance item ("test with keyboard navigation and screen readers") for the
+// `labelTooltip`/native-`title` tooltip pattern (`SortableTable.tsx`). What this test *can* verify
+// automatedly: the tooltipped header is a real `<button>` reachable by Tab, and the `title` text
+// is present in the DOM once focused. What it cannot verify — because native `title` announcement
+// on focus is browser/screen-reader-controlled, not something this app's code decides — is whether
+// VoiceOver/NVDA/JAWS actually speak it. That is still an open, manual-only check (see
+// `accessibility.spec.ts`'s own header comment: axe is "a floor, not the ceiling") — nobody has
+// run it with a real screen reader yet, so #456's acceptance box for that item stays unchecked
+// until someone does.
+test('a tooltipped table column header is reachable by keyboard and exposes its tooltip text (#456)', async ({
+  page,
+}) => {
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  await createPerson(page, {
+    name: 'Ada Lovelace',
+    date: '1815-12-10',
+    time: '07:45:00',
+    latitude: '51.5072',
+    longitude: '-0.1276',
+  });
+  await openNatalChart(page);
+  await page.getByRole('tab', { name: 'Positions', exact: true }).click();
+
+  const rxHeaderButton = page.getByRole('button', { name: 'Rx' });
+  await rxHeaderButton.focus();
+  await expect(rxHeaderButton).toBeFocused();
+
+  const tooltipSpan = rxHeaderButton.locator('span[title]');
+  await expect(tooltipSpan).toHaveAttribute('title', /retrograde/i);
+});
+
 test('the profections screen (#168) has no automatically detectable accessibility violations', async ({ page }) => {
   test.setTimeout(60_000);
 

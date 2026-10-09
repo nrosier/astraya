@@ -7,7 +7,14 @@
  * @conventions Co-located i18n file exporting `{ en, nl }`, consumed via useMessages() by PdfExportBuilder.tsx (and read directly by pdf-export-plan.ts for section/field labels built outside a component).
  * @exports pdfExportMessages
  */
-import type { PdfChartTable, PdfPresetKey, PdfTransitFilterPreset } from '../domain/pdf-export-sections.js';
+import type { ProgressedMcMethod } from '../astrology/progressions.js';
+import type {
+  PdfAcgLineType,
+  PdfChartTable,
+  PdfPresetKey,
+  PdfProgressionTechnique,
+  PdfTransitFilterPreset,
+} from '../domain/pdf-export-sections.js';
 import type { ChartType } from './chart-sections.js';
 import type { TimeAccuracy } from '../domain/person.js';
 
@@ -22,6 +29,7 @@ const en = {
     custom: 'Custom',
     'executive-summary': 'Executive summary (natal wheel, positions, interpretation)',
     'complete-archive': 'Complete archive (every chart, every table, interpretation)',
+    'full-predictive-report': 'Full predictive report (natal wheel, transits, progressions, solar arc)',
   } satisfies Record<'custom' | PdfPresetKey, string>,
   birthRecordLabel: 'Birth record',
   interpretationLabel: 'Interpretation',
@@ -86,6 +94,37 @@ const en = {
   forecastWeeklyLabel: 'Weekly',
   forecastMonthlyLabel: 'Monthly',
   forecastYearlyLabel: 'Yearly',
+  predictiveLegend: 'Progressions, solar arc, profections & astrocartography',
+  progressionsLabel: 'Progressions',
+  progressionTechniqueLabel: 'Technique',
+  progressionTechniqueOptions: {
+    secondary: 'Secondary',
+    tertiary: 'Tertiary',
+    minor: 'Minor',
+  } satisfies Record<PdfProgressionTechnique, string>,
+  mcMethodLabel: 'MC method',
+  mcMethodOptions: {
+    quotidian: 'Quotidian',
+    naibod: 'Naibod',
+    solarArc: 'Solar arc',
+  } satisfies Record<ProgressedMcMethod, string>,
+  positionsTableLabel: 'Positions',
+  contactsTableLabel: 'Contacts',
+  solarArcLabel: 'Solar arc directions',
+  profectionsLabel: 'Profections',
+  profectionsTableLabel: 'Year/month table',
+  meaningsLabel: 'Meanings',
+  astrocartographyLabel: 'Astrocartography',
+  astrocartographyMapLabel: 'Map',
+  lineTypesLabel: 'Line types',
+  lineTypeOptions: {
+    MC: 'MC',
+    IC: 'IC',
+    AC: 'AC',
+    DC: 'DC',
+  } satisfies Record<PdfAcgLineType, string>,
+  bodiesLabel: 'Bodies',
+  localSpaceLabel: 'Local Space lines',
 };
 
 const nl: typeof en = {
@@ -99,6 +138,7 @@ const nl: typeof en = {
     custom: 'Eigen keuze',
     'executive-summary': 'Samenvatting (geboortewiel, posities, interpretatie)',
     'complete-archive': 'Volledig archief (elke horoscoop, elke tabel, interpretatie)',
+    'full-predictive-report': 'Volledig voorspellend verslag (geboortewiel, transits, progressies, solar arc)',
   } satisfies Record<'custom' | PdfPresetKey, string>,
   birthRecordLabel: 'Geboortegegevens',
   interpretationLabel: 'Interpretatie',
@@ -164,6 +204,37 @@ const nl: typeof en = {
   forecastWeeklyLabel: 'Wekelijks',
   forecastMonthlyLabel: 'Maandelijks',
   forecastYearlyLabel: 'Jaarlijks',
+  predictiveLegend: 'Progressies, solar arc, profecties & astrocartografie',
+  progressionsLabel: 'Progressies',
+  progressionTechniqueLabel: 'Techniek',
+  progressionTechniqueOptions: {
+    secondary: 'Secundair',
+    tertiary: 'Tertiair',
+    minor: 'Minor',
+  } satisfies Record<PdfProgressionTechnique, string>,
+  mcMethodLabel: 'MC-methode',
+  mcMethodOptions: {
+    quotidian: 'Quotidian',
+    naibod: 'Naibod',
+    solarArc: 'Solar arc',
+  } satisfies Record<ProgressedMcMethod, string>,
+  positionsTableLabel: 'Posities',
+  contactsTableLabel: 'Contacten',
+  solarArcLabel: 'Solar arc-directies',
+  profectionsLabel: 'Profecties',
+  profectionsTableLabel: 'Jaar/maand-tabel',
+  meaningsLabel: 'Betekenissen',
+  astrocartographyLabel: 'Astrocartografie',
+  astrocartographyMapLabel: 'Kaart',
+  lineTypesLabel: 'Lijnsoorten',
+  lineTypeOptions: {
+    MC: 'MC',
+    IC: 'IC',
+    AC: 'AC',
+    DC: 'DC',
+  } satisfies Record<PdfAcgLineType, string>,
+  bodiesLabel: 'Hemellichamen',
+  localSpaceLabel: 'Local Space-lijnen',
 };
 
 export const pdfExportMessages = { en, nl };
