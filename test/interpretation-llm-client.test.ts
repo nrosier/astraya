@@ -4,8 +4,9 @@
  * the actual error message this module produces, only the generic status the route maps it to.
  * This file exercises `generateTier2Text` directly against a stubbed `fetch`.
  */
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
+  PROVIDER_CALL_DEADLINE_MS,
   generateTier2Text,
   parseCustomPromptVerdict,
   verifyCustomPrompt,
@@ -17,6 +18,53 @@ const config: Tier2Config = { apiKey: 'test-key', model: 'gemini-9000-typo', bas
 
 afterEach(() => {
   globalThis.fetch = realFetch;
+  vi.useRealTimers();
+});
+
+/** A provider that never answers, but honours the request's abort signal the way real `fetch` does. */
+function hangingFetch(onCall: () => void = () => undefined): typeof fetch {
+  return (_input, init) => {
+    onCall();
+    return new Promise((_resolve, reject) => {
+      const signal = init?.signal;
+      signal?.addEventListener('abort', () => {
+        reject(signal.reason as Error);
+      });
+    });
+  };
+}
+
+describe('provider call deadline (#476)', () => {
+  it('aborts a hung request at the deadline with a clear timeout error', async () => {
+    vi.useFakeTimers();
+    let calls = 0;
+    globalThis.fetch = hangingFetch(() => {
+      calls += 1;
+    });
+    const assertion = expect(generateTier2Text(config, 'system', 'user')).rejects.toThrow(
+      /Tier 2 model call timed out after 270s/,
+    );
+    await vi.advanceTimersByTimeAsync(PROVIDER_CALL_DEADLINE_MS);
+    await assertion;
+    // A timed-out call is not retried.
+    expect(calls).toBe(1);
+  });
+
+  it('bounds the whole retry sequence, not each attempt', async () => {
+    vi.useFakeTimers();
+    let calls = 0;
+    globalThis.fetch = async () => {
+      calls += 1;
+      return new Response('unavailable', { status: 503 });
+    };
+    // Enough retries that the 2^n * 500 ms backoff alone would run far past the deadline.
+    const assertion = expect(verifyCustomPrompt(config, 'be warm', 'English', 20)).rejects.toThrow(
+      /Tier 2 model call timed out/,
+    );
+    await vi.advanceTimersByTimeAsync(PROVIDER_CALL_DEADLINE_MS);
+    await assertion;
+    expect(calls).toBeLessThan(21);
+  });
 });
 
 describe('generateTier2Text', () => {

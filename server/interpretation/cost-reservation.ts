@@ -110,13 +110,14 @@ export function reserveCostCents(
       .get() as unknown as { readonly total: number };
     const grandTotal = totalCommitted + totalReserved.total;
 
-    // Check caps.
+    // Check caps. A rejection still commits: nothing was inserted, but the prune-and-charge above
+    // must persist so an expired lease is settled once, not resurrected by a rollback (#476).
     if (userTotal + maxCents > userDailyCapCents) {
-      db.exec('ROLLBACK');
+      db.exec('COMMIT');
       return { reason: 'user-cap' };
     }
     if (grandTotal + maxCents > totalDailyCapCents) {
-      db.exec('ROLLBACK');
+      db.exec('COMMIT');
       return { reason: 'total-cap' };
     }
 
