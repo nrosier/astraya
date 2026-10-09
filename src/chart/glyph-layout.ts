@@ -228,6 +228,7 @@ export function renderGlyphRingSvg(
           'chart-retrograde',
           'R',
           retrogradeFontSize,
+          'Retrograde',
         ),
       );
     }

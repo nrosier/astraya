@@ -46,9 +46,10 @@ playwright-report/
 # benchmark-batch.mjs's (#368) local result cache + generated dashboard —
 # a per-machine dev-verification cache, not source or something the repo
 # distributes. Never holds astrologyapi.com's own prose either way (see
-# docs/BENCHMARK_ASTROLOGYAPI.md), but the whole directory stays out of git
+# docs/archive/BENCHMARK_ASTROLOGYAPI.md), but the whole directory stays out of git
 # regardless, same reasoning as .playwright-mcp/ above.
 tools/corpus-gen/.data/
+tools/corpus-gen/archive/.data/
 
 # Point-in-time corpus snapshots taken before a batch regeneration (#368),
 # for local diffing/reference against whatever a run produces — not source,

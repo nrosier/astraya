@@ -100,7 +100,7 @@ export async function generateStructured({
 /**
  * One embedding request against a local Ollama server (`/api/embed`) — for #368's `all-minilm`
  * cross-check against Laya's own `similarity` score
- * (see `docs/LAYA_INTERPRETATION_COMPARISON.md`'s "still open" item). Returns the embedding vector
+ * (see `docs/archive/LAYA_INTERPRETATION_COMPARISON.md`'s "still open" item). Returns the embedding vector
  * for a single string input. Same retry policy as `generateStructured`.
  */
 export async function embed({ model, baseUrl, input, maxRetries = 3 }) {

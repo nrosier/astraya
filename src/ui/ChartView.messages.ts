@@ -94,6 +94,8 @@ const en = {
   fixedStarsCaption: 'Fixed stars',
 
   almutenOfAscendantSentence: (names: string) => `Almuten of the Ascendant: ${names}`,
+  almutenTooltip:
+    'The almuten is the planet with the most essential-dignity points at a chart point — found by scoring every dignity (rulership, exaltation, triplicity, bound/term, face) a planet holds there and taking the highest total.',
   // Jones' own seven pattern names (#35, #398) have no established Dutch astrological
   // vocabulary, the same out-of-scope treatment house-system names and "Harmonic"/"Solar
   // return" already get (#158's glossary) — kept untranslated in both locales.
@@ -297,6 +299,8 @@ const nl: typeof en = {
   fixedStarsCaption: 'Vaste sterren',
 
   almutenOfAscendantSentence: (names: string) => `Almuten van de Ascendant: ${names}`,
+  almutenTooltip:
+    'De almuten is de planeet met de meeste essentiële waardigheidspunten op een chartpunt — gevonden door elke waardigheid (heerschappij, exaltatie, triplicitair, grens/term, decanaat) die een planeet daar heeft te scoren en de hoogste totaalscore te nemen.',
   jonesShapeLabels: {
     bundle: 'Bundle',
     bowl: 'Bowl',

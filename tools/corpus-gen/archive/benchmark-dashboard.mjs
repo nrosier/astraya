@@ -7,7 +7,7 @@
  * Shows every judge side by side — Laya, `all-minilm`, and `gemma4` — for
  * both `similarity` and `grounded` (per side), since no single one of them
  * has been validated as calibrated for astrology prose (see
- * docs/LAYA_INTERPRETATION_COMPARISON.md's own flagged, unresolved risk).
+ * docs/archive/LAYA_INTERPRETATION_COMPARISON.md's own flagged, unresolved risk).
  * Clicking a row expands a detail panel with both Astraya's and
  * astrologyapi.com's actual text side by side, pulled from the temporary
  * `thirdparty_cache` table — a deliberate, scoped exception to #368's

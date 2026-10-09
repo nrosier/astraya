@@ -9,11 +9,13 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_RULERSHIP_CHOICE } from '../src/astrology/rulership.js';
+import { TRADITIONAL_ACG_BODY_IDS } from '../src/domain/astrocartography.js';
 import { EMPTY_SELECTION, type PdfSelection } from '../src/domain/pdf-export-sections.js';
 import type { Person } from '../src/domain/person.js';
 import { chartViewMessages } from '../src/ui/ChartView.messages.js';
 import { buildPdfPlan, type PdfPlanContext } from '../src/ui/pdf-export-plan.js';
 import { pdfExportMessages } from '../src/ui/pdf-export.messages.js';
+import { solarArcViewMessages } from '../src/ui/SolarArcView.messages.js';
 import { getEngine } from './engine-harness.js';
 
 const repoRoot = resolve(import.meta.dirname, '..');
@@ -348,5 +350,208 @@ describe('buildPdfPlan', () => {
     expect(section.tables.map((t) => t.caption)).toEqual(
       expect.arrayContaining([chartViewMessages.en.positionsCaption, chartViewMessages.en.aspectsCaption]),
     );
+  }, 30_000);
+
+  it('builds a secondary progressions section with both tables and the MC method noted (#441)', async () => {
+    const provider = await getEngine();
+    const selection: PdfSelection = {
+      personId: ADA.id,
+      ...EMPTY_SELECTION,
+      progressions: {
+        technique: 'secondary',
+        mcMethod: 'naibod',
+        positionsTable: true,
+        contactsTable: true,
+        asOfDate: '2025-01-01',
+      },
+    };
+    const context: PdfPlanContext = {
+      person: ADA,
+      provider,
+      rulership: DEFAULT_RULERSHIP_CHOICE,
+      locale: 'en',
+      aiConsent: false,
+      corpusFetch,
+    };
+    const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
+    expect(plan.errors).toHaveLength(0);
+    const [section] = plan.sections;
+    if (section?.kind !== 'chart') throw new Error('expected a chart section');
+    expect(section.heading).toContain('Ada Lovelace');
+    expect(section.hint).toContain('Naibod');
+    expect(section.tables).toHaveLength(2);
+    expect(section.tables.every((table) => table.body.length > 0)).toBe(true);
+    expect(
+      section.tables.every((table) => table.body.every((row) => row.every((cell) => typeof cell === 'string'))),
+    ).toBe(true);
+  }, 30_000);
+
+  it('builds a minor-progressions section with no MC method hint, since minor progressions have none', async () => {
+    const provider = await getEngine();
+    const selection: PdfSelection = {
+      personId: ADA.id,
+      ...EMPTY_SELECTION,
+      progressions: {
+        technique: 'minor',
+        mcMethod: 'naibod',
+        positionsTable: true,
+        contactsTable: false,
+        asOfDate: '2025-01-01',
+      },
+    };
+    const context: PdfPlanContext = {
+      person: ADA,
+      provider,
+      rulership: DEFAULT_RULERSHIP_CHOICE,
+      locale: 'en',
+      aiConsent: false,
+      corpusFetch,
+    };
+    const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
+    expect(plan.errors).toHaveLength(0);
+    const [section] = plan.sections;
+    if (section?.kind !== 'chart') throw new Error('expected a chart section');
+    expect(section.hint).toBeUndefined();
+    expect(section.tables).toHaveLength(1);
+  }, 30_000);
+
+  it('builds a solar arc section with correctly-formatted exact contact dates (#441)', async () => {
+    const provider = await getEngine();
+    const selection: PdfSelection = {
+      personId: ADA.id,
+      ...EMPTY_SELECTION,
+      solarArc: { positionsTable: true, contactsTable: true, asOfDate: '2025-01-01' },
+    };
+    const context: PdfPlanContext = {
+      person: ADA,
+      provider,
+      rulership: DEFAULT_RULERSHIP_CHOICE,
+      locale: 'en',
+      aiConsent: false,
+      corpusFetch,
+    };
+    const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
+    expect(plan.errors).toHaveLength(0);
+    const [section] = plan.sections;
+    if (section?.kind !== 'chart') throw new Error('expected a chart section');
+    expect(section.tables).toHaveLength(2);
+    const contacts = section.tables[1];
+    const exactColumn = contacts?.head.findIndex((label) => label === solarArcViewMessages.en.exactOnLabel);
+    expect(exactColumn).toBeGreaterThanOrEqual(0);
+    // The exact-date column must come through as the formatted date string (`formatExactDate`:
+    // `YYYY-MM-DD` or the "unknown" fallback), never the raw Julian Day number `exactJd`'s own
+    // `valueOf` would otherwise stringify to.
+    expect(contacts?.body.length).toBeGreaterThan(0);
+    expect(
+      contacts?.body.every((row) => {
+        const cell = row[exactColumn ?? -1];
+        return (
+          cell !== undefined && (/^\d{4}-\d{2}-\d{2}$/.test(cell) || cell === solarArcViewMessages.en.exactOnUnknown)
+        );
+      }),
+    ).toBe(true);
+  }, 30_000);
+
+  it('builds a profections section with the year/month table and profected-house meanings (#441)', async () => {
+    const provider = await getEngine();
+    const selection: PdfSelection = {
+      personId: ADA.id,
+      ...EMPTY_SELECTION,
+      profections: { table: true, meanings: true, asOfDate: '2025-01-01' },
+    };
+    const context: PdfPlanContext = {
+      person: ADA,
+      provider,
+      rulership: DEFAULT_RULERSHIP_CHOICE,
+      locale: 'en',
+      aiConsent: false,
+      corpusFetch,
+    };
+    const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
+    expect(plan.errors).toHaveLength(0);
+    const [chartSection, fieldsSection] = plan.sections;
+    if (chartSection?.kind !== 'chart') throw new Error('expected a chart section');
+    expect(chartSection.tables).toHaveLength(1);
+    expect(chartSection.tables[0]?.body).toHaveLength(2);
+
+    if (fieldsSection?.kind !== 'fields') throw new Error('expected a fields section');
+    expect(fieldsSection.fields).toHaveLength(2);
+    expect(fieldsSection.fields.every((field) => field.value.length > 0)).toBe(true);
+  }, 30_000);
+
+  it('omits the profections meanings section when its checkbox is off, keeping the table', async () => {
+    const provider = await getEngine();
+    const selection: PdfSelection = {
+      personId: ADA.id,
+      ...EMPTY_SELECTION,
+      profections: { table: true, meanings: false, asOfDate: '2025-01-01' },
+    };
+    const context: PdfPlanContext = {
+      person: ADA,
+      provider,
+      rulership: DEFAULT_RULERSHIP_CHOICE,
+      locale: 'en',
+      aiConsent: false,
+      corpusFetch,
+    };
+    const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
+    expect(plan.errors).toHaveLength(0);
+    expect(plan.sections).toHaveLength(1);
+    expect(plan.sections[0]?.kind).toBe('chart');
+  }, 30_000);
+
+  it('builds an astrocartography section with a rendered map and per-line meanings (#441)', async () => {
+    const provider = await getEngine();
+    const selection: PdfSelection = {
+      personId: ADA.id,
+      ...EMPTY_SELECTION,
+      astrocartography: {
+        map: true,
+        lineTypes: ['MC', 'AC'],
+        bodies: TRADITIONAL_ACG_BODY_IDS.slice(0, 2),
+        localSpace: false,
+        meanings: true,
+      },
+    };
+    const context: PdfPlanContext = {
+      person: ADA,
+      provider,
+      rulership: DEFAULT_RULERSHIP_CHOICE,
+      locale: 'en',
+      aiConsent: false,
+      corpusFetch,
+    };
+    const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
+    expect(plan.errors).toHaveLength(0);
+    const [chartSection, fieldsSection] = plan.sections;
+    if (chartSection?.kind !== 'chart') throw new Error('expected a chart section');
+    expect(chartSection.heading).toContain('Ada Lovelace');
+    expect(chartSection.svg?.markup).toContain('<svg');
+
+    if (fieldsSection?.kind !== 'fields') throw new Error('expected a fields section');
+    // 2 bodies x 2 line types.
+    expect(fieldsSection.fields).toHaveLength(4);
+    expect(fieldsSection.fields.every((field) => field.value.length > 0)).toBe(true);
+  }, 30_000);
+
+  it('skips astrocartography meanings when there are no bodies or line types chosen', async () => {
+    const provider = await getEngine();
+    const selection: PdfSelection = {
+      personId: ADA.id,
+      ...EMPTY_SELECTION,
+      astrocartography: { map: true, lineTypes: [], bodies: [], localSpace: false, meanings: true },
+    };
+    const context: PdfPlanContext = {
+      person: ADA,
+      provider,
+      rulership: DEFAULT_RULERSHIP_CHOICE,
+      locale: 'en',
+      aiConsent: false,
+      corpusFetch,
+    };
+    const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
+    expect(plan.errors).toHaveLength(0);
+    expect(plan.sections).toHaveLength(1);
+    expect(plan.sections[0]?.kind).toBe('chart');
   }, 30_000);
 });

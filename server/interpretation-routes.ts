@@ -839,12 +839,14 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
           return reply.code(502).send({ error: 'Your instruction could not be verified right now. Try again later.' });
         }
         // The verification call costs tokens whatever its verdict, so it counts toward both caps.
-        reconcileReservation(db, verificationReservation.reservationId, {
+        const verificationOutcome = reconcileReservation(db, verificationReservation, {
           userId,
           promptTokens: verification.promptTokens,
           outputTokens: verification.outputTokens,
           costCents: estimateCostCents(verification.promptTokens, verification.outputTokens),
         });
+        // #476: the provider deadline is meant to make this unreachable; worth knowing if it isn't.
+        if (verificationOutcome === 'late') request.log.warn('Tier 2 verification reconciled after its lease expired');
         if (verification.result.verdict === 'fail') {
           const reason = verification.result.reason ?? null;
           return reply.code(422).send({
@@ -886,12 +888,13 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
       const description = sanitizeDescription(result.description);
 
       const costCents = estimateCostCents(result.promptTokens, result.outputTokens);
-      reconcileReservation(db, generationReservation.reservationId, {
+      const generationOutcome = reconcileReservation(db, generationReservation, {
         userId,
         promptTokens: result.promptTokens,
         outputTokens: result.outputTokens,
         costCents,
       });
+      if (generationOutcome === 'late') request.log.warn('Tier 2 generation reconciled after its lease expired');
 
       // Saving for later retrieval (#392) is additive, not this route's primary job — a missing
       // encryption key disables it the same way it disables the sync relay (never write
