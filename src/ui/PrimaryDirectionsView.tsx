@@ -44,6 +44,9 @@ import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { PersonNotFound } from './PersonNotFound.js';
 import { primaryDirectionsViewMessages } from './PrimaryDirectionsView.messages.js';
+import { ChoiceGroup } from './primitives/ChoiceGroup.js';
+import { DateField } from './primitives/DateField.js';
+import { NumberField } from './primitives/NumberField.js';
 import { SortableTable } from './SortableTable.js';
 import { useStoreState } from './store-context.js';
 import { useSymbolClass } from './symbol-setting.js';
@@ -257,52 +260,40 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
       <p className="hint">{t.hint}</p>
 
       <div className="field-grid">
-        <label>
-          {t.keyLabel}
-          <select
-            value={key}
-            onChange={(event) => {
-              setKey(
-                event.target.value === PrimaryDirectionKey.PTOLEMY
-                  ? PrimaryDirectionKey.PTOLEMY
-                  : PrimaryDirectionKey.NAIBOD,
-              );
-            }}
-          >
-            <option value={PrimaryDirectionKey.NAIBOD}>{t.naibodKey}</option>
-            <option value={PrimaryDirectionKey.PTOLEMY}>{t.ptolemyKey}</option>
-          </select>
-        </label>
-        <label>
-          {t.asOfLabel}
-          <input
-            type="date"
-            value={asOf}
-            onChange={(event) => {
-              setAsOf(event.target.value);
-            }}
-          />
-        </label>
-        <label>
-          {t.ageLabel}
-          <input
-            type="number"
-            min="0"
-            step="0.1"
-            value={ageDraft ?? (shownAge === undefined ? '' : shownAge.toFixed(2))}
-            disabled={data === undefined}
-            onChange={(event) => {
-              const typed = event.target.value;
-              setAgeDraft(typed);
-              const age = Number(typed);
-              if (data === undefined || typed === '' || !Number.isFinite(age) || age < 0) return;
-              setAsOf(dateInputValue(data.natalJd + age * TROPICAL_YEAR_DAYS));
-            }}
-            onBlur={() => {
-              setAgeDraft(undefined);
-            }}
-          />
-        </label>
+        <ChoiceGroup
+          label={t.keyLabel}
+          value={key}
+          options={[
+            { value: PrimaryDirectionKey.NAIBOD, label: t.naibodKey },
+            { value: PrimaryDirectionKey.PTOLEMY, label: t.ptolemyKey },
+          ]}
+          onChange={(value) => {
+            setKey(value === PrimaryDirectionKey.PTOLEMY ? PrimaryDirectionKey.PTOLEMY : PrimaryDirectionKey.NAIBOD);
+          }}
+        />
+        <DateField
+          label={t.asOfLabel}
+          value={asOf}
+          onChange={(value) => {
+            setAsOf(value);
+          }}
+        />
+        <NumberField
+          label={t.ageLabel}
+          value={ageDraft ?? (shownAge === undefined ? '' : shownAge.toFixed(2))}
+          min={0}
+          step={0.1}
+          disabled={data === undefined}
+          onChange={(typed) => {
+            setAgeDraft(typed);
+            const age = Number(typed);
+            if (data === undefined || typed === '' || !Number.isFinite(age) || age < 0) return;
+            setAsOf(dateInputValue(data.natalJd + age * TROPICAL_YEAR_DAYS));
+          }}
+          onBlur={() => {
+            setAgeDraft(undefined);
+          }}
+        />
       </div>
 
       {load.kind === 'loading' && <p className="status">{t.calculating}</p>}

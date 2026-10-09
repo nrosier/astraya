@@ -72,6 +72,55 @@
      scroll clear of it (`html`'s `scroll-padding-top` below), and how much the mobile header
      is allowed to grow. */
   --app-header-height: 3.5rem;
+
+  /*
+   * Design-system primitives (#506/#508). Added once, as the foundation every later migration
+   * phase builds shared components on — not yet the only values used throughout app.css (the
+   * audit's own plan is an incremental migration, not a single rewrite); new work should prefer
+   * these over a bare literal, and a feature-specific chart/SVG measurement is exempt by design.
+   */
+  /* 4px spacing grid. */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+
+  /* Major-second type scale. */
+  --text-xs: 0.79rem;
+  --text-sm: 0.889rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.266rem;
+  --text-2xl: 1.424rem;
+  --text-display: clamp(2rem, 1.6rem + 1.5vw, 2.5rem);
+
+  --leading-tight: 1.2;
+  --leading-body: 1.6;
+  /* Reports/prose read best at roughly 65-70 characters (#506 finding 2); tables, charts, and
+     builders keep using --shell-max-width/.shell--data, not this token. */
+  --measure-reading: 68ch;
+
+  /*
+   * Semantic state tokens, independent of astrology meaning (#506 finding 1): today `.warning`,
+   * `button.danger`, and `.field-error`/`[aria-invalid]` all resolve to `--solar`, so a user
+   * cannot tell a warning from a destructive action from an invalid field by colour alone.
+   * Danger moves to the hard-aspect red; warning keeps the solar gold it already had; success
+   * and info borrow the soft-aspect/minor-aspect hues, which are not used for UI state anywhere
+   * today. These are aliases, not new hues — reusing colours already proven to clear WCAG AA
+   * in this palette rather than inventing a fifth hue family.
+   */
+  --color-danger: var(--aspect-hard);
+  --color-warning: var(--solar);
+  --color-success: var(--aspect-minor);
+  --color-info: var(--aspect-soft);
+  --color-focus: var(--accent);
+
+  --shadow-popover: 0 0.5rem 1.5rem rgb(0 0 0 / 20%);
+  --duration-fast: 120ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
 }
 
 @media (prefers-color-scheme: light) {
@@ -110,6 +159,11 @@
  * unset (the `'system'` choice) falls straight through to the OS-driven rules as before.
  */
 :root[data-theme='dark'] {
+  /* #508: pin the browser's own UI (date/time pickers, form controls, scrollbars) to the
+     explicit override too, so it never contradicts a theme the user picked on purpose. Left
+     unset (the 'system' choice, no [data-theme] attribute) falls through to the plain `:root`
+     declaration above, which still says `dark light` and lets the OS decide. */
+  color-scheme: dark;
   --bg: #0b0c18;
   --surface: #15162a;
   --surface-hover: #1d1e36;
@@ -135,6 +189,7 @@
 }
 
 :root[data-theme='light'] {
+  color-scheme: light;
   --bg: #fbfaff;
   --surface: #f3f1fa;
   --surface-hover: #ebe8f6;
@@ -898,10 +953,10 @@ footer {
  */
 .warning {
   padding: 0.75rem 1rem;
-  border: 1px solid color-mix(in oklab, var(--solar) 35%, var(--line));
-  border-left: 3px solid var(--solar);
+  border: 1px solid color-mix(in oklab, var(--color-warning) 35%, var(--line));
+  border-left: 3px solid var(--color-warning);
   border-radius: var(--radius-sm);
-  background: color-mix(in oklab, var(--solar) 9%, transparent);
+  background: color-mix(in oklab, var(--color-warning) 9%, transparent);
 }
 
 /* Informational warnings keep the panel shape and drop the alarm colour. */
@@ -1003,13 +1058,15 @@ button.quiet:hover:not(:disabled) {
 }
 
 button.danger {
-  border-color: color-mix(in oklab, var(--solar) 40%, var(--line));
+  /* #506 finding 1: destructive actions move onto --color-danger, distinct from .warning's
+     --color-warning, so a user can tell "needs a decision" apart from "cannot be undone". */
+  border-color: color-mix(in oklab, var(--color-danger) 40%, var(--line));
   background: transparent;
-  color: var(--solar);
+  color: var(--color-danger);
 }
 
 button.danger:hover:not(:disabled) {
-  background: color-mix(in oklab, var(--solar) 12%, transparent);
+  background: color-mix(in oklab, var(--color-danger) 12%, transparent);
 }
 
 .actions {
@@ -1020,13 +1077,14 @@ button.danger:hover:not(:disabled) {
 }
 
 /* A field the form is refusing to save, marked by state rather than by a class so the
-   styling and the accessible name can never disagree. */
+   styling and the accessible name can never disagree. #506 finding 1: invalid input moves
+   onto --color-danger, same reasoning as button.danger above. */
 .field-grid [aria-invalid] {
-  border-color: var(--solar);
+  border-color: var(--color-danger);
 }
 
 .field-error {
-  color: var(--solar);
+  color: var(--color-danger);
   font-size: 0.8rem;
   font-weight: 500;
 }
@@ -3235,4 +3293,206 @@ svg text.chart-symbol-text-unicode {
 
 .profections-rulers-description {
   margin-top: 1rem;
+}
+
+/*
+ * Shared primitive styling (#506/#508) — `src/ui/primitives/`'s own CSS, driven by the design
+ * tokens defined in :root above. Equivalent controls across every screen that adopts these
+ * primitives share this one block rather than each feature styling its own.
+ */
+
+.primitive-button-primary {
+  padding: 0.55rem 1.1rem;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: var(--bg);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.primitive-button-primary:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--accent) 85%, var(--bg) 15%);
+}
+
+.primitive-button-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.primitive-button-compact {
+  padding: 0.3rem 0.65rem;
+  font-size: var(--text-sm);
+}
+
+@media (pointer: coarse) {
+  /* Compact controls return to standard touch sizing on touch layouts (#508). */
+  .primitive-button-compact {
+    padding: 0.55rem 1.1rem;
+    font-size: var(--text-base);
+  }
+}
+
+.primitive-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.primitive-field-optional,
+.primitive-field-unit {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.primitive-field-help {
+  margin: 0;
+}
+
+.primitive-control-compact {
+  padding: 0.3rem 0.5rem;
+  font-size: var(--text-sm);
+}
+
+@media (pointer: coarse) {
+  .primitive-control-compact {
+    padding: 0.55rem 0.75rem;
+    font-size: var(--text-base);
+  }
+}
+
+.primitive-number-field {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.primitive-number-input {
+  /* Browser-dependent spinners are suppressed; the shared stepper below replaces them (#508). */
+  appearance: textfield;
+}
+
+.primitive-number-input::-webkit-outer-spin-button,
+.primitive-number-input::-webkit-inner-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+.primitive-number-stepper {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.primitive-number-step {
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  font-size: var(--text-lg);
+  line-height: 1;
+}
+
+@media (pointer: coarse) {
+  .primitive-number-step {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+}
+
+.primitive-choice {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 2.75rem;
+  cursor: pointer;
+}
+
+.primitive-choice-group {
+  display: flex;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.primitive-option-cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.primitive-option-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-1) var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color var(--duration-fast) var(--ease-standard);
+}
+
+.primitive-option-card input {
+  grid-row: 1 / span 2;
+  align-self: start;
+  margin-top: 0.2rem;
+}
+
+.primitive-option-card-title {
+  font-weight: 600;
+}
+
+.primitive-option-card-consequence {
+  grid-column: 2;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.primitive-option-card-selected {
+  border-color: var(--accent);
+  background: color-mix(in oklab, var(--accent) 8%, transparent);
+}
+
+/*
+ * The shared Tooltip primitive (#456, #508): a real <button> trigger (never a bare
+ * `<span title>`), with a dotted underline as the visual affordance for an inline glossary
+ * term — the pattern `docs/UI-UX_GUIDELINES.md` names explicitly as the alternative to
+ * `<abbr title>`, which shares native title's reliability problem.
+ */
+.primitive-tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+.primitive-tooltip-trigger {
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: none;
+  border-bottom: 1px dotted var(--muted);
+  cursor: help;
+}
+
+.primitive-tooltip-trigger:hover,
+.primitive-tooltip-trigger:focus-visible {
+  border-bottom-color: var(--accent);
+}
+
+.primitive-tooltip-popup {
+  position: absolute;
+  z-index: 20;
+  inset-block-start: 100%;
+  inset-inline-start: 0;
+  margin-top: var(--space-2);
+  width: max-content;
+  max-width: min(24rem, 90vw);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  box-shadow: var(--shadow-popover);
+  font-size: var(--text-sm);
+  font-weight: 400;
+  line-height: var(--leading-body);
+  color: var(--fg);
 }

@@ -39,6 +39,8 @@ import { BODIES } from '../astrology/bodies.js';
 import type { Locale } from '../interpretation/schema.js';
 import { bodyDisplayName } from './astro-names.messages.js';
 import { useMessages } from './messages.js';
+import { Checkbox } from './primitives/Checkbox.js';
+import { Select } from './primitives/Select.js';
 import { RulershipSetting } from './RulershipSetting.js';
 import { transitFilterPanelMessages } from './TransitFilterPanel.messages.js';
 
@@ -216,16 +218,14 @@ export function TransitFilterPanel({
     <fieldset className="transit-filter-group">
       <legend>{legend}</legend>
       {EVERY_BODY_KEY.map((key) => (
-        <label key={key} className="transit-filter-check">
-          <input
-            type="checkbox"
-            checked={draft[field].includes(key)}
-            onChange={() => {
-              setDraft({ ...draft, [field]: toggled(draft[field], key) });
-            }}
-          />{' '}
-          {bodyDisplayName(key, locale)}
-        </label>
+        <Checkbox
+          key={key}
+          label={bodyDisplayName(key, locale)}
+          checked={draft[field].includes(key)}
+          onChange={() => {
+            setDraft({ ...draft, [field]: toggled(draft[field], key) });
+          }}
+        />
       ))}
     </fieldset>
   );
@@ -295,23 +295,15 @@ export function TransitFilterPanel({
 
         <div className="settings-card-body">
           <RulershipSetting />
-          <p>
-            <label htmlFor={`${id}-orb`}>{t.orbLabel} </label>
-            <select
-              id={`${id}-orb`}
-              value={draft.orbSensitivity}
-              onChange={(event) => {
-                const orbSensitivity = SENSITIVITIES.find((candidate) => candidate === event.target.value);
-                if (orbSensitivity !== undefined) setDraft({ ...draft, orbSensitivity });
-              }}
-            >
-              {SENSITIVITIES.map((sensitivity) => (
-                <option key={sensitivity} value={sensitivity}>
-                  {t.orbs[sensitivity]}
-                </option>
-              ))}
-            </select>
-          </p>
+          <Select
+            label={t.orbLabel}
+            value={draft.orbSensitivity}
+            options={SENSITIVITIES.map((sensitivity) => ({ value: sensitivity, label: t.orbs[sensitivity] }))}
+            onChange={(value) => {
+              const orbSensitivity = SENSITIVITIES.find((candidate) => candidate === value);
+              if (orbSensitivity !== undefined) setDraft({ ...draft, orbSensitivity });
+            }}
+          />
           <fieldset className="transit-filter-group">
             <legend>{t.aspectsLegend}</legend>
             {(
@@ -321,28 +313,23 @@ export function TransitFilterPanel({
                 [MINOR_ASPECT_KEYS, t.minor],
               ] as const
             ).map(([keys, label]) => (
-              <label key={label} className="transit-filter-check">
-                <input
-                  type="checkbox"
-                  checked={groupChecked(keys)}
-                  onChange={() => {
-                    toggleGroup(keys);
-                  }}
-                />{' '}
-                {label}
-              </label>
+              <Checkbox
+                key={label}
+                label={label}
+                checked={groupChecked(keys)}
+                onChange={() => {
+                  toggleGroup(keys);
+                }}
+              />
             ))}
           </fieldset>
-          <label className="transit-filter-check">
-            <input
-              type="checkbox"
-              checked={draft.applyingOnly}
-              onChange={(event) => {
-                setDraft({ ...draft, applyingOnly: event.target.checked });
-              }}
-            />{' '}
-            {t.applyingOnly}
-          </label>
+          <Checkbox
+            label={t.applyingOnly}
+            checked={draft.applyingOnly}
+            onChange={(checked) => {
+              setDraft({ ...draft, applyingOnly: checked });
+            }}
+          />
           {bodyGroup(t.transitingLegend, 'transiting')}
           {bodyGroup(t.natalLegend, 'natal')}
         </div>
