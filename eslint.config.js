@@ -92,4 +92,41 @@ export default tseslint.config(
       '@typescript-eslint/require-await': 'off',
     },
   },
+  {
+    // The @module header rule (#495): CLAUDE.md previously called this "build/lint enforced"
+    // for every .ts/.js file while no lint rule existed and ~275 tracked files (mostly
+    // test/e2e/scripts/config) had no header — a claimed hard gate with no actual gate. Scoped
+    // here to src/, server/, and tools/ application code, where a header genuinely orients a
+    // reader navigating an unfamiliar module; test/e2e/scripts/config files are exempt, since
+    // most already carry their own descriptive top-of-file prose instead of this exact tag
+    // schema.
+    files: ['src/**/*.{ts,tsx}', 'server/**/*.ts', 'tools/**/*.mjs'],
+    ignores: ['**/*.test.{ts,tsx}', 'src/ephemeris/generated-constants.ts'],
+    plugins: {
+      local: {
+        rules: {
+          'require-module-header': {
+            meta: { type: 'problem', docs: { description: 'require a @module JSDoc tag' } },
+            create(context) {
+              return {
+                Program() {
+                  const hasModuleTag = context.sourceCode
+                    .getAllComments()
+                    .some((comment) => /@module\b/.test(comment.value));
+                  if (!hasModuleTag) {
+                    context.report({
+                      loc: { line: 1, column: 0 },
+                      message:
+                        'Missing @module JSDoc header (CLAUDE.md Code Standards). Add @module/@purpose/@conventions/@exports to a top-of-file comment.',
+                    });
+                  }
+                },
+              };
+            },
+          },
+        },
+      },
+    },
+    rules: { 'local/require-module-header': 'error' },
+  },
 );

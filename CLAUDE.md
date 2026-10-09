@@ -54,7 +54,7 @@ These cause build/CI failures if violated:
 
 - **TypeScript strict flags:** `exactOptionalPropertyTypes`, `noUncheckedIndexedAccess`, `noImplicitOverride`, `noFallthroughCasesInSwitch`.
 - **ESLint:** `strictTypeChecked` + `stylisticTypeChecked`. No `!` assertions; `interface` not `type`; no floating promises.
-- **JSDoc:** All `.ts`/`.js` files must have `@module` header.
+- **JSDoc:** Every `src/`, `server/`, and `tools/` `.ts`/`.tsx`/`.mjs` file must have an `@module` header (`@purpose`, `@conventions`, `@exports`) — lint-enforced (`eslint.config.js`'s `local/require-module-header`). `test/`/`e2e/`/`scripts/`/config files are exempt; most already carry their own descriptive top-of-file prose instead.
 - **Pattern:** Pure TS (`.ts`), thin React (`.tsx`); test math directly in `.ts`.
 - **Domain Integrity:** No invented numbers/orbs; cite sources or reference tests for all house systems/conventions.
 - **Dependencies:** AGPL-3.0 compatible only (MIT/BSD/Apache-2.0/ISC/CC0). Heavy deps use dynamic `import()`. `scripts/check-bundle-size.mjs` enforces lazy loading.
