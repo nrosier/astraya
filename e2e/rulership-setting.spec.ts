@@ -106,10 +106,10 @@ test('the choice is shared by the other screens that show rulers (profections an
   await rulers.selectOption('both');
   await expect(page.getByRole('table').first()).toBeVisible();
 
-  // Transits: inside the filter's adjust section, and set to the same value.
+  // Transits: inside the filter's staged "Adjust the filter" card (#489), and set to the same value.
   await page.getByRole('button', { name: 'Transits & Forecast', exact: true }).click();
   await page.getByRole('link', { name: 'Transits', exact: true }).click();
   await expect(page.getByRole('heading', { level: 1, name: /transits/i })).toBeVisible();
-  await page.getByText('Adjust the filter', { exact: true }).click();
+  await page.getByRole('button', { name: 'Adjust the filter', exact: true }).click();
   await expect(page.getByLabel('Planetary rulers', { exact: true })).toHaveValue('both');
 });

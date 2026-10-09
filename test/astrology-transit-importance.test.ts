@@ -13,6 +13,7 @@ import {
   orbLimitFor,
   presetOf,
   rankTransits,
+  sameFilter,
   transitImportance,
   transitPreset,
   type TransitFilter,
@@ -211,6 +212,20 @@ describe('orb sensitivity and aspect groups (#416)', () => {
     }
     const custom: TransitFilter = { ...transitPreset('important', rules('daily')), orbSensitivity: 'wide' };
     expect(presetOf(custom, rules('daily'))).toBeUndefined();
+  });
+
+  it('sameFilter (#489) is order-independent for the key lists but sensitive to every other field', () => {
+    const base = transitPreset('important', rules('daily'));
+    expect(sameFilter(base, base)).toBe(true);
+    // A toggle appends to the end of a list; a draft reached by unchecking then rechecking a key
+    // ends with the same set in a different order, and that must still count as unchanged.
+    const reordered: TransitFilter = { ...base, transiting: [...base.transiting].reverse() };
+    expect(sameFilter(base, reordered)).toBe(true);
+    expect(sameFilter(base, { ...base, applyingOnly: !base.applyingOnly })).toBe(false);
+    expect(sameFilter(base, { ...base, orbSensitivity: 'wide' })).toBe(false);
+    expect(sameFilter(base, { ...base, maxOrb: base.maxOrb + 1 })).toBe(false);
+    expect(sameFilter(base, { ...base, aspects: base.aspects.slice(1) })).toBe(false);
+    expect(sameFilter(base, { ...base, orbOverrides: { ...base.orbOverrides, moon: 9.9 } })).toBe(false);
   });
 });
 

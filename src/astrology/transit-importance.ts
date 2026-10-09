@@ -46,7 +46,7 @@
  * @module TransitImportance
  * @purpose Defines transit filter presets (daily/yearly, important/outer/personal/all) and a deterministic importance score for ranking transit contacts.
  * @conventions Fixed, documented convention (#416): daily default favors fast triggers (Sun through Mars, plus slow planets only within 1° of exact) at 1.5° orb; yearly favors Jupiter through Chiron at 3.5° orb; score = W_transit × W_natal × W_aspect × orb multiplier × applying bonus (1.15x); the chart ruler stands in for the (uncovered) Ascendant as a natal target.
- * @exports TRANSIT_ORB_CONFIG, transitPreset, presetOf, orbLimitFor, passesTransitFilter, filterTransits, chartRulerKeysOf, transitImportance, rankTransits
+ * @exports TRANSIT_ORB_CONFIG, transitPreset, presetOf, sameFilter, orbLimitFor, passesTransitFilter, filterTransits, chartRulerKeysOf, transitImportance, rankTransits
  */
 import { DEFAULT_ORB_CONFIG, type Aspect, type OrbConfig } from './aspects.js';
 import { bodyById } from './bodies.js';
@@ -168,6 +168,25 @@ function sameSet(a: readonly string[], b: readonly string[]): boolean {
 function sameLimits(a: Readonly<Record<string, number>>, b: Readonly<Record<string, number>>): boolean {
   const keys = Object.keys(a);
   return keys.length === Object.keys(b).length && keys.every((key) => a[key] === b[key]);
+}
+
+/**
+ * Field-by-field equality (#489), order-independent for the three key lists — a toggle appends
+ * to the end of its list, so a draft rebuilt from a preset and a draft reached by clicking the
+ * same keys by hand can hold the same set in a different order. Used by `TransitFilterPanel`'s
+ * "Adjust the filter" card to gate its Apply button on whether the draft actually differs from
+ * the live filter, the same role `sameSettings` plays for `ExtendedSettingsPanel`'s draft.
+ */
+export function sameFilter(a: TransitFilter, b: TransitFilter): boolean {
+  return (
+    sameSet(a.transiting, b.transiting) &&
+    sameSet(a.natal, b.natal) &&
+    sameSet(a.aspects, b.aspects) &&
+    a.maxOrb === b.maxOrb &&
+    sameLimits(a.orbOverrides, b.orbOverrides) &&
+    a.orbSensitivity === b.orbSensitivity &&
+    a.applyingOnly === b.applyingOnly
+  );
 }
 
 /** The preset a filter equals exactly, or `undefined` for a custom one. */

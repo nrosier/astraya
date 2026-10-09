@@ -253,7 +253,7 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
     }),
     [natal, rulership],
   );
-  const [filter, setFilter] = useTransitFilter(rules);
+  const [filter, setFilter, applyFilterForThisViewOnly] = useTransitFilter(rules);
 
   const targetDate = useMemo(() => {
     const [year, month, day] = asOf.split('-').map(Number);
@@ -415,6 +415,8 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
           filter={filter}
           rules={rules}
           onChange={setFilter}
+          onApply={applyFilterForThisViewOnly}
+          onApplyAsDefault={setFilter}
           shown={contactsShown}
           total={contactsTotal}
           locale={locale}
