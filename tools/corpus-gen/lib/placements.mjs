@@ -7,16 +7,19 @@
 /**
  * @module placements
  * @purpose Shared builder for the full restricted placement space (every body/sign/house/aspect/
- *   dignity/profection/astro-line/composite combination the corpus covers) and the plain-English
- *   descriptions used both to prompt a generator and to state facts to a judge.
+ *   dignity/profection/astro-line/composite/degree-symbol combination the corpus covers) and the
+ *   plain-English descriptions used both to prompt a generator and to state facts to a judge.
  * @conventions Single source of truth reused by generate-batch.mjs, sample-validate-batch.mjs,
  *   verify-batch.mjs, and others, so a batch runner and a validation tool can't drift apart on
  *   what the restricted scope actually is. Pure data/derivation module — no API calls, no cost.
  * @exports buildSymbolismContext, symbolismScopeFor, BODIES, SIGNS, ASPECTS, HOUSES,
  *   SIGN_INDICES, DIGNITY_STATES, CORE_BODY_KEYS, TRADITIONAL_RULER_KEYS,
- *   MODERN_OUTER_RULER_KEYS, MODERN_OUTER_DIGNITY_STATES, ACG_BODY_KEYS, ACG_ANGLES, corePairs,
- *   buildPlacements, placementDescription, factsDescription.
+ *   MODERN_OUTER_RULER_KEYS, MODERN_OUTER_DIGNITY_STATES, ACG_BODY_KEYS, ACG_ANGLES, DEGREES,
+ *   degreeSymbolExcerpt, corePairs, buildPlacements, placementDescription, factsDescription.
  */
+import { readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   buildSymbolismContext,
   planetSymbolism,
@@ -33,6 +36,28 @@ export { buildSymbolismContext, symbolismScopeFor, BODIES, SIGNS, ASPECTS };
 export const HOUSES = Array.from({ length: 12 }, (_, i) => i + 1);
 export const SIGN_INDICES = SIGNS.map((s) => s.index);
 export const DIGNITY_STATES = ['ruler', 'exalted', 'detriment', 'fall'];
+/** Every global degree index (#405): 1 (Aries 1°) through 360 (Pisces 30°), floor(longitude)+1. */
+export const DEGREES = Array.from({ length: 360 }, (_, i) => i + 1);
+
+// Loaded once at module scope, synchronously, like every other export here — the verified CC0
+// 1655 Angelus/Turner seed text (#405's own commit b80387e), the only source of degree-symbol's
+// "fact" (there is no computed astrological fact for a degree-symbol the way there is a sign or
+// an aspect; the seed excerpt IS the fact, both for the generator to rewrite and the judge to
+// check against).
+const degreeSymbolSeedPath = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  '..',
+  'classical-texts',
+  'degree-symbol.en.json',
+);
+const degreeSymbolSeed = JSON.parse(readFileSync(degreeSymbolSeedPath, 'utf8'));
+
+/** The 1655 source excerpt for one global degree (1-360) — never `undefined` for a degree in range; the seed has all 360. */
+export function degreeSymbolExcerpt(degree) {
+  const excerpt = degreeSymbolSeed.excerpts[`degree-symbol:${String(degree)}`];
+  if (excerpt === undefined) throw new Error(`no degree-symbol seed excerpt for degree ${String(degree)}`);
+  return excerpt;
+}
 
 /** Every computed body — planet-in-sign/-house and aspect-pair cover all of them. */
 export const CORE_BODY_KEYS = BODIES.map((b) => b.key);
@@ -140,6 +165,9 @@ export function buildPlacements() {
     for (const [bodyA, bodyB] of corePairs())
       placements.push({ category: 'composite-aspect-pair', aspect: aspect.key, bodyA, bodyB });
   }
+  // #405: every degree has a seed excerpt (degreeSymbolExcerpt throws if one is ever missing),
+  // so this is unconditional, same as every HOUSES/SIGN_INDICES loop above.
+  for (const degree of DEGREES) placements.push({ category: 'degree-symbol', degree });
   return placements;
 }
 
@@ -254,6 +282,12 @@ export function placementDescription(placement) {
       return `composite chart: ${bodyName(placement.body)} in house ${String(placement.house)} (${planetSymbolism(placement.body)?.core ?? ''} / house of ${houseGloss(placement.house)}). This is a composite (relationship) chart: describe what this placement means for the relationship or combination itself, not for either person individually. Do not use "you"/"your" or name either person.`;
     case 'composite-aspect-pair':
       return `composite chart: ${bodyName(placement.bodyA)} ${placement.aspect} ${bodyName(placement.bodyB)}. This is a composite (relationship) chart: describe what this aspect means for the relationship or combination itself, not for either person individually. Do not use "you"/"your" or name either person.`;
+    // #405: only used by read-only tooling (verify-batch.mjs/corpus-audit.mjs-style callers) —
+    // generate-batch.mjs does NOT call this for degree-symbol, using
+    // buildDegreeSymbolUserContent({ excerpt }) directly instead (lib/prompt.mjs), since this
+    // category's "description" IS its source excerpt, not a derived sentence about it.
+    case 'degree-symbol':
+      return degreeSymbolExcerpt(placement.degree);
     default:
       throw new Error(`unreachable: unhandled category "${placement.category}"`);
   }
@@ -290,6 +324,12 @@ export function factsDescription(placement) {
       return `the composite chart's ${bodyName(placement.body)} in house ${String(placement.house)}`;
     case 'composite-aspect-pair':
       return `the composite chart's ${bodyName(placement.bodyA)} ${aspectName(placement.aspect)} ${bodyName(placement.bodyB)}`;
+    // #405: the 1655 seed excerpt IS the fact here — evaluate-corpus-batch.mjs's judge and
+    // verify-batch.mjs's fact-grounding check both read this as the ground truth to check a
+    // degree-symbol entry against, exactly the role factsDescription plays for every other
+    // category.
+    case 'degree-symbol':
+      return degreeSymbolExcerpt(placement.degree);
     default:
       throw new Error(`this tool does not (yet) support category "${placement.category}"`);
   }

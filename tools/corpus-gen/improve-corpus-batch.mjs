@@ -69,7 +69,7 @@
 import { readFile, mkdir, readdir } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildSystemInstruction } from './lib/prompt.mjs';
+import { buildSystemInstruction, buildDegreeSymbolSystemInstruction } from './lib/prompt.mjs';
 import { buildImprovementPrompt, IMPROVEMENT_RESPONSE_SCHEMA } from './lib/corpus-improvement.mjs';
 import { buildBatchRequest, submitBatch, getBatch, isBatchTerminal, extractBatchResults } from './lib/gemini-batch.mjs';
 import { buildSymbolismContext, symbolismScopeFor, factsDescription } from './lib/placements.mjs';
@@ -440,11 +440,17 @@ for (const record of records) {
     );
     continue;
   }
-  const baseSystemInstruction = buildSystemInstruction({
-    symbolismContext: buildSymbolismContext(locale, symbolismScopeFor(placement)),
-    locale,
-    forceLanguageDirective: false,
-  });
+  // degree-symbol (#405) was written against its own voice, not the shared disposition one —
+  // reconstructing the wrong base here would revise it against a voice it was never written in.
+  // See generate-batch.mjs's systemInstructionFor, which branches the same way at generation time.
+  const baseSystemInstruction =
+    placement.category === 'degree-symbol'
+      ? buildDegreeSymbolSystemInstruction({ locale, forceLanguageDirective: false })
+      : buildSystemInstruction({
+          symbolismContext: buildSymbolismContext(locale, symbolismScopeFor(placement)),
+          locale,
+          forceLanguageDirective: false,
+        });
   const { systemInstruction, userContent } = buildImprovementPrompt({
     baseSystemInstruction,
     factsDescription: factsDescription(placement),

@@ -62,6 +62,14 @@
  * installed, so `--provider=ollama` is for local/dev generation. Actually
  * regenerating the corpus for the production/hosted deployment stays on
  * Gemini for now — a hosted environment has no local model to call.
+ *
+ * `degree-symbol` (#405) is the one category generated against its own voice, length target and
+ * fixed tier instead of the shared disposition ones — `systemInstructionFor`/`userContentFor`
+ * branch to `lib/prompt.mjs`'s `buildDegreeSymbolSystemInstruction`/`buildDegreeSymbolUserContent`,
+ * `buildEntry` fixes its tier to `'nuance'` regardless of what the model returned, and
+ * `retryReason` (what `--max-language-retries` actually retries on, generalized beyond its name)
+ * also retries a draft under the 75-word floor, sharing the same retry budget. See those
+ * functions' own comments, and `lib/prompt.mjs`'s `DEGREE_SYMBOL_VOICE`, for why.
  */
 /**
  * @module generate-batch
@@ -77,10 +85,21 @@
 import { readFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildSystemInstruction, buildUserContent } from './lib/prompt.mjs';
+import {
+  buildSystemInstruction,
+  buildUserContent,
+  buildDegreeSymbolSystemInstruction,
+  buildDegreeSymbolUserContent,
+} from './lib/prompt.mjs';
 import { buildBatchRequest, submitBatch, pollBatch, extractBatchResults } from './lib/gemini-batch.mjs';
 import { writeCorpus } from './lib/write-corpus.mjs';
-import { buildPlacements, placementDescription, buildSymbolismContext, symbolismScopeFor } from './lib/placements.mjs';
+import {
+  buildPlacements,
+  placementDescription,
+  buildSymbolismContext,
+  symbolismScopeFor,
+  degreeSymbolExcerpt,
+} from './lib/placements.mjs';
 import { CORPUS_ENTRY_RESPONSE_SCHEMA, placementKey } from '../../src/interpretation/schema.ts';
 import { lintCorpus, lintEntry } from '../../src/interpretation/lint.ts';
 import { findNearDuplicates } from '../../src/interpretation/dedupe.ts';
@@ -170,6 +189,8 @@ const delayMs = Number(flag('delay-ms', '200'));
 const skipFinalChecks = rawArgs.includes('--skip-final-checks');
 const force = rawArgs.includes('--force');
 const MAX_LANGUAGE_RETRIES = Number(flag('max-language-retries', '4'));
+// Matches lib/prompt.mjs's DEGREE_SYMBOL_LENGTH_CONSTRAINT's own stated floor (#405).
+const DEGREE_SYMBOL_MIN_WORDS = 75;
 const useBatch = rawArgs.includes('--batch');
 
 const provider = flag('provider', 'gemini');
@@ -276,7 +297,15 @@ async function persist() {
 // Built per placement, not hoisted once: #379 made the symbolism half of this placement-scoped
 // (only the relevant body/sign's symbolism, not every planet and sign on every request), so this
 // now varies per item exactly like userContent already does.
+//
+// degree-symbol (#405) branches to its own voice/constraints builder — the shared disposition
+// voice (buildSystemInstruction) assumes a chart placement to reason about from astrological
+// symbolism, which does not apply to a traditional degree-image rewrite. See
+// lib/prompt.mjs's DEGREE_SYMBOL_VOICE for why this category needs its own voice.
 function systemInstructionFor(placement) {
+  if (placement.category === 'degree-symbol') {
+    return buildDegreeSymbolSystemInstruction({ locale, forceLanguageDirective: provider === 'ollama' });
+  }
   return buildSystemInstruction({
     symbolismContext: buildSymbolismContext(locale, symbolismScopeFor(placement)),
     locale,
@@ -284,12 +313,29 @@ function systemInstructionFor(placement) {
   });
 }
 
+/** degree-symbol's "fact" is its own 1655 seed excerpt, not a derived placement description — see placementDescription's own degree-symbol case for why. */
+function userContentFor(placement) {
+  if (placement.category === 'degree-symbol') {
+    return buildDegreeSymbolUserContent({ excerpt: degreeSymbolExcerpt(placement.degree) });
+  }
+  return buildUserContent({
+    placementDescription: placementDescription(placement),
+    corpusEntries: corpus,
+    locale,
+    aspectKey: placement.aspect,
+  });
+}
+
 function buildEntry({ key, placement, text, tier }) {
   return {
     key,
     locale,
+    // degree-symbol has no body/entity to key a per-placement tier decision off (#405) — fixed
+    // uniformly rather than asked of the model, which was observed guessing inconsistently.
+    // Still requested via CORPUS_ENTRY_RESPONSE_SCHEMA like every category (no schema change);
+    // the model's guess is just ignored here.
+    tier: placement.category === 'degree-symbol' ? 'nuance' : tier,
     text,
-    tier,
     tags: placement.category === 'dignity-state' ? [placement.state] : [],
     provenance: {
       source: 'generated',
@@ -297,6 +343,26 @@ function buildEntry({ key, placement, text, tier }) {
       generatedAt: new Date().toISOString().slice(0, 10),
     },
   };
+}
+
+/**
+ * Why a draft entry needs regenerating: a lint language-mismatch (every category) or, for
+ * degree-symbol only, a draft under the 75-word floor (#405) — the model was observed under-
+ * complying even with the stronger wording in `DEGREE_SYMBOL_LENGTH_CONSTRAINT`. Both share this
+ * file's `--max-language-retries` budget rather than a second flag, same shape as the user asked
+ * for this exact mechanism. Returns the retry reason's message, or `undefined` if the entry is
+ * fine as-is.
+ */
+function retryReason(entry, placement) {
+  const languageIssue = lintEntry(entry).find((issue) => issue.rule === 'language-mismatch');
+  if (languageIssue) return languageIssue.message;
+  if (placement.category === 'degree-symbol') {
+    const words = entry.text.trim().split(/\s+/).filter(Boolean).length;
+    if (words < DEGREE_SYMBOL_MIN_WORDS) {
+      return `degree-symbol entry is ${String(words)} words, under the ${String(DEGREE_SYMBOL_MIN_WORDS)}-word floor`;
+    }
+  }
+  return undefined;
 }
 
 /** Writes a successfully-generated entry into `corpus` in place (or appends it) and persists. */
@@ -329,12 +395,7 @@ async function runBatchRounds() {
       buildBatchRequest({
         key,
         systemInstruction: systemInstructionFor(placement),
-        userContent: buildUserContent({
-          placementDescription: placementDescription(placement),
-          corpusEntries: corpus,
-          locale,
-          aspectKey: placement.aspect,
-        }),
+        userContent: userContentFor(placement),
         temperature: Number(process.env.GEMINI_TEMPERATURE ?? '0.75'),
         responseSchema: CORPUS_ENTRY_RESPONSE_SCHEMA,
       }),
@@ -403,14 +464,14 @@ async function runBatchRounds() {
         text: result.result.text,
         tier: result.result.tier,
       });
-      const languageIssue = lintEntry(entry).find((issue) => issue.rule === 'language-mismatch');
-      if (languageIssue) {
+      const retryIssue = retryReason(entry, item.placement);
+      if (retryIssue) {
         if (round < MAX_LANGUAGE_RETRIES) {
           nextRemaining.push(item);
         } else {
           failed += 1;
           console.error(
-            `[${locale}] FAILED ${item.key}: ${languageIssue.message} (still wrong after ${String(MAX_LANGUAGE_RETRIES)} rounds)`,
+            `[${locale}] FAILED ${item.key}: ${retryIssue} (still wrong after ${String(MAX_LANGUAGE_RETRIES)} rounds)`,
           );
         }
         continue;
@@ -432,16 +493,11 @@ if (useBatch) {
 } else {
   await withConcurrency(pending, concurrency, async ({ placement, key }) => {
     const systemInstruction = systemInstructionFor(placement);
-    const userContent = buildUserContent({
-      placementDescription: placementDescription(placement),
-      corpusEntries: corpus,
-      locale,
-      aspectKey: placement.aspect,
-    });
+    const userContent = userContentFor(placement);
 
     try {
       let entry;
-      let languageIssue;
+      let issue;
       let attempt = 0;
       do {
         attempt += 1;
@@ -462,21 +518,20 @@ if (useBatch) {
 
         entry = buildEntry({ key, placement, text: result.text, tier: result.tier });
 
-        languageIssue = lintEntry(entry).find((issue) => issue.rule === 'language-mismatch');
-        if (languageIssue && attempt < MAX_LANGUAGE_RETRIES) {
+        issue = retryReason(entry, placement);
+        if (issue && attempt < MAX_LANGUAGE_RETRIES) {
           if (useProgressBar) process.stdout.write('\n');
           console.error(
-            `[${locale}] ${key}: attempt ${String(attempt)}/${String(MAX_LANGUAGE_RETRIES)} came back in the wrong language — regenerating`,
+            `[${locale}] ${key}: attempt ${String(attempt)}/${String(MAX_LANGUAGE_RETRIES)} — ${issue} — regenerating`,
           );
         }
-      } while (languageIssue && attempt < MAX_LANGUAGE_RETRIES);
+      } while (issue && attempt < MAX_LANGUAGE_RETRIES);
 
-      // Still wrong after every retry: caught below and counted as a failed key, same as any
+      // Still bad after every retry: caught below and counted as a failed key, same as any
       // other bad response. A single bad draw from a model that only *sometimes* ignores the
-      // locale in its own system prompt (qwen2.5:14b, observed) would otherwise sail through
-      // untouched, since none of this file's other checks are locale-aware.
-      if (languageIssue)
-        throw new Error(`${languageIssue.message} (still wrong after ${String(MAX_LANGUAGE_RETRIES)} attempts)`);
+      // locale in its own system prompt (qwen2.5:14b, observed), or a degree-symbol draft that
+      // stays short (#405), would otherwise sail through untouched.
+      if (issue) throw new Error(`${issue} (still bad after ${String(MAX_LANGUAGE_RETRIES)} attempts)`);
 
       await acceptEntry(key, entry);
       done += 1;

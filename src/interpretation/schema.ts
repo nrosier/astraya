@@ -38,6 +38,7 @@
  *   composite-planet-in-sign   composite-planet-in-sign:<body>:<sign>   composite-planet-in-sign:sun:2    —
  *   composite-planet-in-house  composite-planet-in-house:<body>:<house> composite-planet-in-house:sun:3   —
  *   composite-aspect-pair      composite-aspect-pair:<aspect>:<a>:<b>   composite-aspect-pair:square:mars:saturn  alphabetical
+ *   degree-symbol              degree-symbol:<degree>                   degree-symbol:1                   — (degree is 1-360, floor(longitude)+1)
  *
  * Ordering conventions, stated once: an `aspect-pair` and a `synastry-aspect` are stored ONCE per
  * unordered pair, with the bodies in alphabetical order (the symmetric aspect needs one entry, not
@@ -65,6 +66,15 @@
  * no composite sibling: #451 only asked for these three, and neither reads as personal in the
  * same way (a house cusp's sign and a planet's essential dignity are facts about the chart's
  * own structure, not a trait attributed to "you").
+ *
+ * `degree-symbol` (#405) is the one category with no `body` field at all: a Sabian-style
+ * traditional image/signification attached to an exact ecliptic degree (1-360, global index =
+ * `floor(longitude)+1`), independent of which body — or none, for the Ascendant/Midheaven —
+ * happens to occupy it. That attachment is decided at display time by whichever screen reads the
+ * entry, not at generation time, which is also why it is the one category generated with its own
+ * voice/length/tier policy rather than the shared disposition one (`tools/corpus-gen/lib/
+ * prompt.mjs`'s `buildDegreeSymbolSystemInstruction`/`buildDegreeSymbolUserContent`, not
+ * `buildSystemInstruction`/`buildUserContent`) — see that module's own header for why.
  */
 /**
  * @module interpretation/schema
@@ -93,6 +103,7 @@ export const CORPUS_CATEGORIES = [
   'composite-planet-in-sign',
   'composite-planet-in-house',
   'composite-aspect-pair',
+  'degree-symbol',
 ] as const;
 export type CorpusCategory = (typeof CORPUS_CATEGORIES)[number];
 
@@ -196,7 +207,8 @@ export type CorpusPlacement =
       readonly aspect: string;
       readonly bodyA: string;
       readonly bodyB: string;
-    };
+    }
+  | { readonly category: 'degree-symbol'; readonly degree: number };
 
 const PATTERN_KEY_RE = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/;
 
@@ -237,6 +249,8 @@ export function placementKey(placement: CorpusPlacement): string {
       const [bodyA, bodyB] = canonicalPair(placement.bodyA, placement.bodyB);
       return `composite-aspect-pair:${placement.aspect}:${bodyA}:${bodyB}`;
     }
+    case 'degree-symbol':
+      return `degree-symbol:${String(placement.degree)}`;
   }
 }
 
@@ -325,6 +339,11 @@ export function parsePlacementKey(key: string): CorpusPlacement | undefined {
       const [aspect, bodyA, bodyB] = rest;
       if (aspect === undefined || bodyA === undefined || bodyB === undefined) return undefined;
       return { category, aspect, bodyA, bodyB };
+    }
+    case 'degree-symbol': {
+      const [degree] = rest;
+      if (degree === undefined) return undefined;
+      return { category, degree: Number(degree) };
     }
     default:
       return undefined;
@@ -498,6 +517,11 @@ function validatePlacementFields(placement: CorpusPlacement): string[] {
         errors.push(
           `composite-aspect-pair bodies must be in alphabetical order — got "${placement.bodyA}", "${placement.bodyB}"`,
         );
+      }
+      break;
+    case 'degree-symbol':
+      if (!Number.isInteger(placement.degree) || placement.degree < 1 || placement.degree > 360) {
+        errors.push(`degree ${String(placement.degree)} out of range 1-360`);
       }
       break;
   }
