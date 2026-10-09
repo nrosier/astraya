@@ -2,6 +2,8 @@
 
 React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), hooks for device preferences, route parsing, and cross-cutting helpers (PDF export, table sorting, geocoding). Every route-scoped screen is lazy-loaded via `person-screens.ts`.
 
+**Subdirectory:** `primitives/` — shared UI primitives for the #506 UI/UX overhaul (Button, Field/TextField/NumberField/DateField/Select, Checkbox/Radio/ChoiceGroup/OptionCards, Tooltip). See its own `MAP.md`.
+
 - `About.tsx` + `About.messages.ts` — About/privacy/licence screen, version metadata. Deps: none (static content).
 - `AccountPanel.tsx` + `AccountPanel.messages.ts` — Sign-in/out + account adoption + local-data removal. Deps: `session-context`, `sync/auth-client`, `oidc-pkce`.
 - `AdminNav.tsx` + `AdminNav.messages.ts` — Admin tab strip (users/usage/corpus/candidates). Deps: `./admin-nav`.
