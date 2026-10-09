@@ -59,13 +59,15 @@ afterEach(() => {
 
 function Harness({ locale, context }: { locale: 'en' | 'nl'; context: TransitContext }) {
   const rules = RULES[context];
-  const [filter, setFilter] = useTransitFilter(rules);
+  const [filter, setFilter, applyForThisViewOnly] = useTransitFilter(rules);
   const shown = useMemo(() => filterTransits(contacts, filter), [filter]);
   return (
     <TransitFilterPanel
       filter={filter}
       rules={rules}
       onChange={setFilter}
+      onApply={applyForThisViewOnly}
+      onApplyAsDefault={setFilter}
       shown={shown.length}
       total={contacts.length}
       locale={locale}
@@ -132,6 +134,36 @@ async function check(container: HTMLElement, legend: string, label: string): Pro
   });
 }
 
+/** The "Adjust the filter" trigger that opens the staged card (#489). */
+function adjustTrigger(container: HTMLElement): HTMLButtonElement {
+  const found = container.querySelector<HTMLButtonElement>('button[aria-haspopup="dialog"]');
+  if (found === null) throw new Error('fixture bug: no Adjust the filter trigger');
+  return found;
+}
+
+async function openCard(container: HTMLElement): Promise<void> {
+  await act(async () => {
+    adjustTrigger(container).click();
+    await Promise.resolve();
+  });
+}
+
+/** A footer button inside the Adjust card, by its exact text (Apply / Apply as Default / Reset to Default / Cancel). */
+function cardButton(container: HTMLElement, text: string): HTMLButtonElement {
+  const found = [...container.querySelectorAll<HTMLButtonElement>('dialog button')].find(
+    (button) => button.textContent === text,
+  );
+  if (found === undefined) throw new Error(`fixture bug: no "${text}" button in the Adjust card`);
+  return found;
+}
+
+async function clickCardButton(container: HTMLElement, text: string): Promise<void> {
+  await act(async () => {
+    cardButton(container, text).click();
+    await Promise.resolve();
+  });
+}
+
 describe('TransitFilterPanel (#416)', () => {
   it('starts on the important transits and says how many of the total are shown, naming the preset', async () => {
     const container = await mount();
@@ -176,23 +208,31 @@ describe('TransitFilterPanel (#416)', () => {
     expect(container.textContent).not.toContain('Important, for a day');
   });
 
-  it('adjusting a control moves the preset to Custom, and the count follows the adjusted filter', async () => {
+  it('adjusting a control stays a draft until Apply, then moves the preset to Custom and the count follows it', async () => {
     const container = await mount();
+    await openCard(container);
     await check(container, 'Natal points', 'Jupiter');
     await check(container, 'Natal points', 'Saturn');
+    // Still the live, unapplied filter — the whole point of staging (#489).
+    expect(container.querySelector('select')?.value).toBe('important');
+    await clickCardButton(container, 'Apply');
     expect(container.querySelector('select')?.value).toBe('custom');
     const base = transitPreset('important', RULES.daily);
     const expected = filterTransits(contacts, { ...base, natal: [...base.natal, 'jupiter', 'saturn'] });
     expect(count(container)).toBe(`Showing ${String(expected.length)} of ${String(contacts.length)} transits (Custom)`);
   });
 
-  it('the orb scale re-filters: Wide shows at least as many as Balanced, Tight no more', async () => {
+  it('the orb scale re-filters once applied: Wide shows at least as many as Balanced, Tight no more', async () => {
     const container = await mount('en', 'yearly');
     const shownOf = (): number => Number(/Showing (\d+)/.exec(count(container))?.[1]);
     const balanced = shownOf();
+    await openCard(container);
     await choose(container, 'Orb', 'wide');
+    await clickCardButton(container, 'Apply');
     const wide = shownOf();
+    await openCard(container);
     await choose(container, 'Orb', 'tight');
+    await clickCardButton(container, 'Apply');
     const tight = shownOf();
     expect(wide).toBeGreaterThanOrEqual(balanced);
     expect(tight).toBeLessThanOrEqual(balanced);
@@ -201,6 +241,7 @@ describe('TransitFilterPanel (#416)', () => {
 
   it('the aspect groups toggle their aspects together: Minor adds the three minors, unticking Hard removes the three hard ones', async () => {
     const container = await mount();
+    await openCard(container);
     const minor = checkboxUnder(container, 'Aspects', 'Minor');
     expect(minor.checked).toBe(false);
     expect(checkboxUnder(container, 'Aspects', 'Hard').checked).toBe(true);
@@ -213,6 +254,7 @@ describe('TransitFilterPanel (#416)', () => {
 
   it('says so when the filter hides everything', async () => {
     const container = await mount();
+    await openCard(container);
     for (const label of [
       'Sun',
       'Moon',
@@ -227,6 +269,7 @@ describe('TransitFilterPanel (#416)', () => {
     ]) {
       await check(container, 'Transiting planets', label);
     }
+    await clickCardButton(container, 'Apply');
     expect(count(container)).toContain('Showing 0 of');
     expect(container.textContent).toContain('No transits match this filter');
   });
@@ -242,14 +285,52 @@ describe('TransitFilterPanel (#416)', () => {
     expect((await mount('en', 'yearly')).querySelector('select')?.value).toBe('important');
   });
 
-  it('remembers a customised filter in full', async () => {
+  it('remembers a customised filter in full, once applied as the default', async () => {
     const container = await mount();
+    await openCard(container);
     await check(container, 'Aspects', 'Minor');
+    await clickCardButton(container, 'Apply as Default');
     const before = count(container);
     await unmount();
     const again = await mount();
     expect(again.querySelector('select')?.value).toBe('custom');
     expect(count(again)).toBe(before);
+  });
+
+  it('"Apply" (not "Apply as Default") commits to this view only, without changing the remembered default', async () => {
+    const container = await mount();
+    await openCard(container);
+    await check(container, 'Aspects', 'Minor');
+    await clickCardButton(container, 'Apply');
+    expect(container.querySelector('select')?.value).toBe('custom');
+    expect(localStorage.getItem('astraya:transitFilter:daily')).toBeNull();
+    await unmount();
+    // A fresh mount reads from storage, not the unmounted screen's in-memory state — the applied
+    // customization was never remembered, so it starts back on the real default.
+    const again = await mount();
+    expect(again.querySelector('select')?.value).toBe('important');
+  });
+
+  it('"Reset to Default" resets the draft, not the live filter, and does not close the card', async () => {
+    const container = await mount();
+    await openCard(container);
+    await check(container, 'Aspects', 'Minor');
+    await clickCardButton(container, 'Reset to Default');
+    // Still open, and the live filter untouched (never applied).
+    expect(container.querySelector('dialog')?.hasAttribute('open')).toBe(true);
+    expect(container.querySelector('select')?.value).toBe('important');
+    expect(checkboxUnder(container, 'Aspects', 'Minor').checked).toBe(false);
+  });
+
+  it('Cancel discards the draft entirely', async () => {
+    const container = await mount();
+    await openCard(container);
+    await check(container, 'Aspects', 'Minor');
+    await clickCardButton(container, 'Cancel');
+    expect(container.querySelector('dialog')?.hasAttribute('open')).toBe(false);
+    expect(container.querySelector('select')?.value).toBe('important');
+    await openCard(container);
+    expect(checkboxUnder(container, 'Aspects', 'Minor').checked).toBe(false);
   });
 
   it('ignores a damaged saved value and starts on the default', async () => {

@@ -154,7 +154,7 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
     }),
     [natal, rulership],
   );
-  const [filter, setFilter] = useTransitFilter(rules);
+  const [filter, setFilter, applyFilterForThisViewOnly] = useTransitFilter(rules);
   // The table, the wheel's cross-ring lines and the panel all read the same filtered, ranked list.
   const shownContacts = useMemo(
     () =>
@@ -274,6 +274,8 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
             filter={filter}
             rules={rules}
             onChange={setFilter}
+            onApply={applyFilterForThisViewOnly}
+            onApplyAsDefault={setFilter}
             shown={shownContacts.length}
             total={load.data.contacts.length}
             locale={locale}

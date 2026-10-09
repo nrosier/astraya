@@ -35,6 +35,12 @@ const en = {
   natalLegend: 'Natal points',
   applyingOnly: 'Applying only',
   empty: 'No transits match this filter. Widen it, or choose “All transits”.',
+  closeLabel: 'Close without applying',
+  applyButton: 'Apply',
+  applyAsDefaultButton: 'Apply as Default',
+  resetToDefaultButton: 'Reset to Default',
+  cancelButton: 'Cancel',
+  nothingChanged: 'nothing has changed',
 };
 
 const nl: typeof en = {
@@ -64,6 +70,12 @@ const nl: typeof en = {
   natalLegend: 'Radixpunten',
   applyingOnly: 'Alleen toenemend',
   empty: 'Geen transits voldoen aan dit filter. Verbreed het, of kies “Alle transits”.',
+  closeLabel: 'Sluiten zonder toe te passen',
+  applyButton: 'Toepassen',
+  applyAsDefaultButton: 'Toepassen als standaard',
+  resetToDefaultButton: 'Terugzetten naar standaard',
+  cancelButton: 'Annuleren',
+  nothingChanged: 'er is niets gewijzigd',
 };
 
 export const transitFilterPanelMessages = { en, nl };
