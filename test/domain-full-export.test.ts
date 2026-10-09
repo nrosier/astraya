@@ -49,12 +49,25 @@ const INCOMPLETE: Person = {
 };
 const NOW = new Date('2026-10-04T12:00:00.000Z');
 
-const build = (people: readonly Person[]) =>
+// Born while Pluto transited Scorpio (1983-11-05 to 1995-01-17): under 'modern' rulership Pluto
+// rules its own sign here (ruler: true), but under 'traditional' rulership Scorpio's ruler is
+// Mars, not Pluto, so the same placement must score as non-ruling (#460).
+const PLUTO_IN_SCORPIO: Person = {
+  ...ADA,
+  id: 'p-pluto-scorpio',
+  displayName: 'Pluto In Scorpio',
+  moment: {
+    civil: { year: 1990, month: 6, day: 1, hour: 12, minute: 0, second: 0 },
+    coordinates: { latitude: 51.5072, longitude: -0.1276 },
+  },
+};
+
+const build = (people: readonly Person[], rulership: 'modern' | 'traditional' | 'both' = 'modern') =>
   buildFullExport({
     people,
     provider: engine,
     appVersion: '9.9.9',
-    rulership: 'modern',
+    rulership,
     symbolClass: 'drawn',
     now: NOW,
   });
@@ -90,6 +103,19 @@ describe('buildFullExport', () => {
     expect(['day', 'night']).toContain(chart?.sect);
     // The same Sun the chart screen shows: Ada Lovelace's Sun is in Sagittarius.
     expect(chart?.positions.find((row) => row.bodyKey === 'sun')?.sign).toBe('Sagittarius');
+  });
+
+  it('computes dignities under the device’s own rulership scheme, not a hardcoded one (#460)', async () => {
+    const [modern] = (await build([PLUTO_IN_SCORPIO], 'modern')).people;
+    const [traditional] = (await build([PLUTO_IN_SCORPIO], 'traditional')).people;
+    const plutoRow = (person: typeof modern) => person?.natalChart?.dignities.find((row) => row.bodyKey === 'pluto');
+
+    const underModern = plutoRow(modern);
+    const underTraditional = plutoRow(traditional);
+    expect(underModern?.ruler).toBe(true);
+    // Before the fix, `data.dignities` was always computed with the hardcoded default ('modern'),
+    // so this stayed `true` even when the export's own `preferences.rulership` said 'traditional'.
+    expect(underTraditional?.ruler).toBe(false);
   });
 
   it('leaves out the houses for an unknown birth time, as the chart screen does', async () => {

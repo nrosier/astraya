@@ -268,10 +268,12 @@ export function ExtendedSettingsPanel({
         <div className="settings-card-body">
           <p className="hint">{t.scopeNote}</p>
 
-          <p className="rulership-setting">
+          <fieldset className="field-group settings-card-group">
+            <legend>{t.presetLabel}</legend>
+            <p className="hint settings-card-tag">{t.appliesOnApply}</p>
             <label>
-              {t.presetLabel}{' '}
               <select
+                aria-label={t.presetLabel}
                 value={currentPreset ?? 'custom'}
                 onChange={(event) => {
                   choosePreset(event.target.value);
@@ -287,23 +289,22 @@ export function ExtendedSettingsPanel({
                 ))}
               </select>
             </label>
-            <span className="hint rulership-setting-hint">
-              {' '}
+            <p className="hint">
               {t.presetNotes[currentPreset ?? 'custom']}
               {currentPreset !== undefined && PRESETS[currentPreset].rulership !== rulers
                 ? ` ${t.presetRulership(t.rulershipNames[PRESETS[currentPreset].rulership])}`
                 : ''}
-            </span>
-          </p>
+            </p>
+          </fieldset>
 
           <fieldset className="field-group settings-card-group">
             <legend>{t.zodiacHousesLegend}</legend>
             <p className="hint settings-card-tag">{t.appliesOnApply}</p>
             <p className="hint">{t.zodiacFrameSubtitle}</p>
 
-            {/* Starting Point */}
+            {/* Zodiac */}
             <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ fontWeight: '600', display: 'block', marginBottom: '0.5rem' }}>{t.zodiacLegend}</label>
+              <label className="settings-card-sublabel">{t.zodiacLegend}</label>
               <div role="radiogroup" aria-label={t.zodiacLegend}>
                 <label>
                   <input
@@ -328,23 +329,13 @@ export function ExtendedSettingsPanel({
                   {t.sidereal}
                 </label>
               </div>
-              <p
-                style={{
-                  marginTop: '0.75rem',
-                  fontSize: '0.9em',
-                  lineHeight: '1.5',
-                  color: '#333',
-                  padding: '0.75rem',
-                  backgroundColor: '#fff',
-                  borderLeft: '3px solid #007acc',
-                }}
-              >
+              <p className="settings-card-note">
                 {draft.zodiac.kind === 'tropical' ? t.tropicalDescription : t.siderealDescription}
               </p>
             </div>
 
             {draft.zodiac.kind === 'sidereal' && (
-              <label style={{ display: 'block', marginBottom: '1.5rem' }}>
+              <label className="settings-card-indent" style={{ marginBottom: '1.5rem' }}>
                 {t.ayanamsaLabel}
                 <select
                   aria-label={t.ayanamsaLabel}
@@ -364,7 +355,7 @@ export function ExtendedSettingsPanel({
 
             {/* House System */}
             <div>
-              <label style={{ fontWeight: '600', display: 'block', marginBottom: '0.5rem' }}>{t.systemLabel}</label>
+              <label className="settings-card-sublabel">{t.systemLabel}</label>
               <select
                 aria-label={t.houseSystemLegend}
                 value={draft.houseSystem}
@@ -378,19 +369,7 @@ export function ExtendedSettingsPanel({
                   </option>
                 ))}
               </select>
-              <p
-                style={{
-                  marginTop: '0.75rem',
-                  fontSize: '0.9em',
-                  lineHeight: '1.5',
-                  color: '#333',
-                  padding: '0.75rem',
-                  backgroundColor: '#fff',
-                  borderLeft: '3px solid #007acc',
-                }}
-              >
-                {t.houseSystemDescription(draft.houseSystem)}
-              </p>
+              <p className="settings-card-note">{t.houseSystemDescription(draft.houseSystem)}</p>
             </div>
           </fieldset>
 
@@ -447,7 +426,7 @@ export function ExtendedSettingsPanel({
               />{' '}
               {t.aspectsToChiron}
             </label>
-            <div role="radiogroup" aria-label={t.lilithModelAriaLabel}>
+            <div className="settings-card-indent" role="radiogroup" aria-label={t.lilithModelAriaLabel}>
               {t.lilithLabel}{' '}
               <label>
                 <input
@@ -494,7 +473,7 @@ export function ExtendedSettingsPanel({
               />{' '}
               {t.aspectsToLilith}
             </label>
-            <div role="radiogroup" aria-label={t.lunarNodeModelAriaLabel}>
+            <div className="settings-card-indent" role="radiogroup" aria-label={t.lunarNodeModelAriaLabel}>
               {t.lunarNodesLabel}{' '}
               <label>
                 <input
@@ -596,17 +575,7 @@ export function ExtendedSettingsPanel({
             <p className="hint settings-card-tag">{t.appliesOnApply}</p>
             <p className="hint">{t.rulersSubtitle}</p>
             <RulershipSetting />
-            <p
-              style={{
-                marginTop: '0.75rem',
-                fontSize: '0.9em',
-                lineHeight: '1.5',
-                color: '#333',
-                padding: '0.75rem',
-                backgroundColor: '#fff',
-                borderLeft: '3px solid #007acc',
-              }}
-            >
+            <p className="settings-card-note">
               {/* Display reactive description based on rulers choice */}
               {rulershipChoice === 'modern' && t.modernRulersDescription}
               {rulershipChoice === 'traditional' && t.traditionalRulersDescription}
@@ -622,11 +591,6 @@ export function ExtendedSettingsPanel({
                 setSymbolsChanged(true);
               }}
             />
-          </fieldset>
-
-          <fieldset className="field-group settings-card-group">
-            <legend>{t.deviceLegend}</legend>
-            <p className="hint settings-card-tag">{t.savedOnDevice}</p>
           </fieldset>
         </div>
 

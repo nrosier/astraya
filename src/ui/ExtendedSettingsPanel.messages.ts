@@ -14,7 +14,7 @@ const en = {
   scopeNote:
     'These settings draw the natal chart and the solar and lunar returns. Draconic and harmonic charts, transits and synastry do not use them.',
 
-  presetLabel: 'Starting point',
+  presetLabel: 'Tradition',
   presetOptions: {
     custom: 'Custom',
     modern: 'Modern Western',
@@ -38,7 +38,7 @@ const en = {
   zodiacHousesLegend: 'Chart frame',
   houseSystemLegend: 'House system',
   systemLabel: 'House system',
-  zodiacLegend: 'Starting point',
+  zodiacLegend: 'Zodiac',
   tropical: 'Tropical',
   sidereal: 'Sidereal',
   ayanamsaLabel: 'Ayanamsa',
@@ -117,8 +117,6 @@ const en = {
   wheelLegend: 'Wheel colours',
   rainbowColorZodiac: 'Rainbow Color Zodiac',
 
-  deviceLegend: 'On this device',
-
   applyButton: 'Apply and redraw',
   nothingChanged: 'nothing has changed',
   cancelButton: 'Cancel',
@@ -147,7 +145,7 @@ const nl: typeof en = {
   scopeNote:
     'Deze instellingen bepalen de geboortehoroscoop en de zonne- en maanterugkeer. Draconische en harmonische horoscopen, transits en synastrie gebruiken ze niet.',
 
-  presetLabel: 'Beginpunt',
+  presetLabel: 'Traditie',
   presetOptions: {
     custom: 'Eigen keuze',
     modern: 'Modern westers',
@@ -172,7 +170,7 @@ const nl: typeof en = {
   zodiacHousesLegend: 'Grondvlak',
   houseSystemLegend: 'Huizensysteem',
   systemLabel: 'Huizensysteem',
-  zodiacLegend: 'Beginpunt',
+  zodiacLegend: 'Dierenriem',
   tropical: 'Tropisch',
   sidereal: 'Siderisch',
   ayanamsaLabel: 'Ayanamsa',
@@ -251,8 +249,6 @@ const nl: typeof en = {
 
   wheelLegend: 'Wielkleuren',
   rainbowColorZodiac: 'Regenboogkleuren-dierenriem',
-
-  deviceLegend: 'Op dit apparaat',
 
   applyButton: 'Toepassen en opnieuw tekenen',
   nothingChanged: 'er is niets gewijzigd',

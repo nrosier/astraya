@@ -55,13 +55,13 @@ test('the settings open as a card, apply together or are dropped, and the button
   const card = page.locator('dialog.settings-card');
   await expect(card.getByRole('heading', { name: 'Extended settings', level: 2 })).toBeVisible();
   await expect(card.locator('fieldset.settings-card-group > legend')).toHaveText([
+    'Tradition',
     'Chart frame',
     'Bodies and points',
     'Aspects and orbs',
     'Wheel colours',
     'Rulership & dignities',
     'How planetary and zodiac symbols are displayed',
-    'On this device',
   ]);
   await expect(card.getByText('Saved on this device and applied at once.').first()).toBeVisible();
   await expect(card.getByRole('button', { name: /^Apply and redraw/ })).toBeDisabled();
@@ -75,10 +75,9 @@ test('the settings open as a card, apply together or are dropped, and the button
   await expect(card.getByLabel('House system', { exact: true })).toHaveValue('P');
   await closeSettings(page);
 
-  // A starting point fills the profile in one go; applying it redraws and the button names what changed.
+  // A tradition preset fills the profile in one go; applying it redraws and the button names what changed.
   await openSettings(page);
-  // Target the first select element in the rulership-setting paragraph (the preset select, not the other settings)
-  await card.locator('.rulership-setting select').first().selectOption('traditional');
+  await card.getByLabel('Tradition', { exact: true }).selectOption('traditional');
   await expect(card.getByText('also sets the planetary rulers to Traditional')).toBeVisible();
   await card.getByRole('button', { name: 'Apply and redraw', exact: true }).click();
   await expect(card).toBeHidden();
@@ -87,7 +86,7 @@ test('the settings open as a card, apply together or are dropped, and the button
   await expect(trigger).toContainText('changed');
   await openSettings(page);
   await expect(card.getByLabel('Planetary rulers', { exact: true })).toHaveValue('traditional');
-  await expect(card.locator('.rulership-setting select').first()).toHaveValue('traditional');
+  await expect(card.getByLabel('Tradition', { exact: true })).toHaveValue('traditional');
 
   // The orbs now in force are spelled out, not only a percentage.
   await card.getByRole('slider', { name: 'Orb scale' }).fill('-10');
