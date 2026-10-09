@@ -1,16 +1,14 @@
 /**
  * @module App
  * @purpose Top-level application shell: hash-based routing between every screen, the sticky header (account/sync/language/theme controls), and the lazy-loading boundary for non-landing screens.
- * @conventions Hash routing via `parseRoute()`/`route.js` rather than a router library; the ten person-scoped screens plus AdminPanel/export-builder/corpus admin screens are behind `lazy(() => import(...))` per the bundle-size budget (#338); `Stored` gates routes needing the local IndexedDB store.
+ * @conventions Hash routing via `parseRoute()`/`route.js` rather than a router library; every screen not needed by the landing route (the ten person-scoped screens, AdminPanel/export-builder/corpus admin screens, and About/Changelog/SetPasswordForm/SetupForm) is behind `lazy(() => import(...))` per the bundle-size budget (#338, #494); `Stored` gates routes needing the local IndexedDB store.
  * @exports App, HomeRedirect
  */
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { registerServiceWorker } from '../pwa/register.js';
 import { startWarming } from '../pwa/warm-status.js';
-import { About } from './About.js';
 import { AccountPanel } from './AccountPanel.js';
 import { appMessages } from './App.messages.js';
-import { Changelog } from './Changelog.js';
 import { EphemerisProviderProvider, useEphemerisProvider } from './EphemerisProviderContext.js';
 import { LanguageToggle } from './LanguageToggle.js';
 import { useMessages } from './messages.js';
@@ -21,8 +19,6 @@ import { ExportRegistryProvider } from './export-registry.js';
 import { PwaStatus } from './PwaStatus.js';
 import { parseRoute } from './route.js';
 import { SessionProvider, useStoreStatus } from './session-context.js';
-import { SetPasswordForm } from './SetPasswordForm.js';
-import { SetupForm } from './SetupForm.js';
 import { sharedMessages } from './shared.messages.js';
 import { StoreProvider } from './store-context.js';
 import { SyncBadge } from './SyncBadge.js';
@@ -74,6 +70,14 @@ const CorpusCandidatesPanel = lazy(async () => ({
   default: (await import('./CorpusCandidatesPanel.js')).CorpusCandidatesPanel,
 }));
 const SharedChartView = lazy(async () => ({ default: (await import('./SharedChartView.js')).SharedChartView }));
+// None of these four need the landing route either (#494): About/Changelog/SetPasswordForm/
+// SetupForm were statically imported by oversight, pulling their content (and Changelog's own
+// changelog text) into the eager entry chunk despite this file's own stated "everything the
+// landing route needs stays statically imported above" policy.
+const About = lazy(async () => ({ default: (await import('./About.js')).About }));
+const Changelog = lazy(async () => ({ default: (await import('./Changelog.js')).Changelog }));
+const SetPasswordForm = lazy(async () => ({ default: (await import('./SetPasswordForm.js')).SetPasswordForm }));
+const SetupForm = lazy(async () => ({ default: (await import('./SetupForm.js')).SetupForm }));
 
 /**
  * The routes that need the local store, gated in the one place that reports its state.
