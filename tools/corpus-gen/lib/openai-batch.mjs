@@ -26,7 +26,7 @@
  *   costs real API money. Includes stall detection (detectStalledBatch) for an in_progress batch
  *   showing no progress. Results are keyed by each request's own `custom_id`, never by line order.
  * @exports buildBatchRequest, submitBatch, getBatch, detectStalledBatch, isBatchTerminal,
- *   pollBatch, extractBatchResults, parseResultLines, downloadFile.
+ *   pollBatch, extractBatchResults, parseResultLines, downloadFile, callChatCompletionSync.
  */
 const DEFAULT_BASE_URL = 'https://api.openai.com';
 const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504]);
@@ -252,6 +252,46 @@ export async function downloadFile({ apiKey, baseUrl, fileId }) {
     3,
   );
   return response.text();
+}
+
+/**
+ * Calls OpenAI's regular, synchronous Chat Completions endpoint directly for one request built by
+ * the same buildBatchRequest() shape used for a real batch submission — only the transport differs
+ * (an immediate HTTP round-trip vs. upload-a-JSONL-file-and-poll-for-up-to-24h). Added to rescue a
+ * stuck/stalled batch cheaply for a small number of entries without re-entering OpenAI's batch
+ * queue — this is billed at OpenAI's standard synchronous rate, not the Batch API's 50% discount
+ * (see cost-estimate.mjs's two separate pricing tables), so this stays a small-rescue-run escape
+ * hatch, never the path for a full-corpus run.
+ *
+ * Returns the same `{ customId, result, usage }` / `{ customId, error }` shape parseResultLines
+ * produces for a batch result line, so a caller can feed either straight into the same
+ * majority-vote/apply logic without caring which transport produced it.
+ */
+export async function callChatCompletionSync({ apiKey, baseUrl, request, maxRetries = 3 }) {
+  if (!apiKey) throw new Error('OPENAI_API_KEY is not set — check .env.local');
+  try {
+    const response = await fetchWithRetry(
+      `${baseUrl || DEFAULT_BASE_URL}/v1/chat/completions`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+        body: JSON.stringify(request.body),
+      },
+      maxRetries,
+    );
+    const body = await response.json();
+    const content = body.choices?.[0]?.message?.content;
+    if (typeof content !== 'string') {
+      return { customId: request.custom_id, error: new Error('unexpected response shape') };
+    }
+    try {
+      return { customId: request.custom_id, result: JSON.parse(content), usage: body.usage };
+    } catch (parseError) {
+      return { customId: request.custom_id, error: parseError };
+    }
+  } catch (error) {
+    return { customId: request.custom_id, error: error instanceof Error ? error : new Error(String(error)) };
+  }
 }
 
 /**

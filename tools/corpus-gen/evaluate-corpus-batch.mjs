@@ -67,13 +67,21 @@
  * lib/cost-estimate.mjs's batch-tier pricing table — an estimate for visibility, not a billing
  * record.
  *
- * Always batch mode (OpenAI only) — there is no per-item synchronous path here the way
- * generate-batch.mjs's --batch is one of two modes, since the whole point of this feature is to
- * run the ChatGPT side cheaply at corpus scale.
+ * Batch mode (OpenAI Batch API) is the default, since the whole point of this feature is to run
+ * the ChatGPT side cheaply at corpus scale. `--sync` is a small escape hatch, not a second normal
+ * mode: it skips the submit-and-poll dance entirely and calls OpenAI's regular Chat Completions
+ * endpoint directly, once per vote, waiting for every answer before exiting. It exists to rescue a
+ * handful of entries a real batch job has gone stuck/stalled on (recheck with `--check-only`
+ * first, then `--reset` to release them back to pending) without re-entering OpenAI's batch queue
+ * — it is billed at OpenAI's standard synchronous rate, not the Batch API's 50% discount, so it
+ * should stay scoped with `--limit` to a small rescue run, never used for a full-corpus pass.
+ * `--sync` never touches batch-state (nothing is submitted) and applies its results immediately,
+ * the same majority-vote/feedback/tracking logic a finished batch's results go through.
  *
  *   npx tsx --env-file=.env.local tools/corpus-gen/evaluate-corpus-batch.mjs --locale=en [--limit=N] [--model=<name>] [--evaluation-limit=N] [--votes=N] [--force] [--reset] [--check-only]
  *   npx tsx --env-file=.env.local tools/corpus-gen/evaluate-corpus-batch.mjs --locale=en --batch=<batch-id>   (check/import one specific job)
  *   npx tsx --env-file=.env.local tools/corpus-gen/evaluate-corpus-batch.mjs --check-only   (checks every locale with a batch in flight)
+ *   npx tsx --env-file=.env.local tools/corpus-gen/evaluate-corpus-batch.mjs --locale=en --limit=5 --sync   (rescue a few entries synchronously, standard-tier pricing)
  */
 /**
  * @module evaluate-corpus-batch
@@ -83,7 +91,9 @@
  * @conventions CLI flags: --locale=<locale> (required unless --check-only with no --locale, or
  *   with --batch which always requires it), --limit=N, --model=<name> (default gpt-6-luna),
  *   --evaluation-limit=N (default 2), --votes=N (default 3), --force, --recheck-exhausted,
- *   --check-only, --batch=<id>, --reset, --stall-threshold-minutes=N. A failed/cancelled/expired
+ *   --check-only, --batch=<id>, --reset, --stall-threshold-minutes=N, --sync (rescue-run escape
+ *   hatch: calls OpenAI's standard synchronous endpoint instead of submitting a batch job; billed
+ *   at standard, not batch-discounted, rates — scope with --limit). A failed/cancelled/expired
  *   batch still has its partial results extracted and applied if it has any; only a job with
  *   nothing usable left (orphaned, stalled, or terminal with no extractable results at all) is
  *   just reported, never requeued, unless --reset is also passed; --stall-threshold-minutes only
@@ -107,6 +117,7 @@ import {
   extractBatchResults,
   detectStalledBatch,
   downloadFile,
+  callChatCompletionSync,
 } from './lib/openai-batch.mjs';
 import { factsDescription } from './lib/placements.mjs';
 import { parsePlacementKey } from '../../src/interpretation/schema.ts';
@@ -118,13 +129,113 @@ import {
   upsertTracking,
   isEvaluationExhausted,
 } from './lib/eval-tracking.mjs';
-import { estimateBatchCostCents, formatCents } from './lib/cost-estimate.mjs';
+import { estimateCostCentsForCall, formatCents } from './lib/cost-estimate.mjs';
 import { readBatchState, writeBatchState, clearBatchState } from './lib/batch-state.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 function identityOf(item) {
   return item.key;
+}
+
+/**
+ * Applies one set of results (from a finished batch job, or from `--sync`'s direct calls — same
+ * `{ customId, result|error, usage }` shape either way) to tracking/feedback: majority vote
+ * (#437) across `votesCount` ballots per entry, cost estimate from each ballot's own token usage,
+ * then upserts clean/flagged tracking and, for a flagged entry, feedback for
+ * improve-corpus-batch.mjs to act on. Shared by checkAndApply's finished-batch path (`costTier:
+ * 'batch'`) and the `--sync` rescue path (`costTier: 'standard'`, since a direct Chat Completions
+ * call never gets the Batch API's 50% discount) — only the pricing table differs between them.
+ */
+function applyBallotResults({
+  loc,
+  candidateKeys,
+  resolvedCandidates,
+  results,
+  model,
+  votesCount,
+  tracking,
+  feedback,
+  costTier,
+}) {
+  const byCustomId = new Map(results.map((r) => [r.customId, r]));
+  let totalClean = 0;
+  let totalFlagged = 0;
+  let totalFailed = 0;
+  let totalCostCents = 0;
+  let costUnknown = false;
+
+  resolvedCandidates.forEach((candidate, index) => {
+    if (candidate === undefined) {
+      totalFailed += 1;
+      console.error(`[${loc}] FAILED ${candidateKeys[index].key}: entry no longer resolves against the current corpus`);
+      return;
+    }
+    const { entry } = candidate;
+    // Majority vote (#437): the judge's "generic trope" call is subjective and noisy — re-judging the same
+    // entry flips it — so each entry is judged `votesCount` times and flagged only when most ballots flag it.
+    // A job from before voting (no `votesCount`) has one ballot, under the plain index as its custom id.
+    const ballotIds =
+      votesCount === undefined
+        ? [String(index)]
+        : Array.from({ length: votesCount }, (_, vote) => `${String(index)}:${String(vote)}`);
+    const ballots = ballotIds.map((id) => byCustomId.get(id)).filter((ballot) => ballot !== undefined);
+    if (ballots.length === 0) {
+      totalFailed += 1;
+      console.error(`[${loc}] FAILED ${entry.key}: no result came back for this entry`);
+      return;
+    }
+    const valid = ballots.filter((ballot) => !ballot.error);
+    if (valid.length === 0) {
+      totalFailed += 1;
+      console.error(`[${loc}] FAILED ${entry.key}: ${ballots[0].error.message}`);
+      return;
+    }
+    for (const ballot of valid) {
+      const costCents = estimateCostCentsForCall({
+        provider: 'openai',
+        model,
+        tier: costTier,
+        promptTokens: ballot.usage?.prompt_tokens,
+        outputTokens: ballot.usage?.completion_tokens,
+      });
+      if (costCents === undefined) costUnknown = true;
+      else totalCostCents += costCents;
+    }
+    const verdict = majorityVerdict(valid);
+    const result = { result: { correct: verdict.correct, issues: verdict.issues } };
+    const existingTracking = findTracking(tracking, entry);
+    const now = new Date().toISOString();
+    if (result.result.correct === false) {
+      totalFlagged += 1;
+      upsertFeedback(feedback, {
+        key: entry.key,
+        locale: entry.locale,
+        originalText: entry.text,
+        issues: result.result.issues,
+        flaggedAt: now,
+      });
+      upsertTracking(tracking, {
+        key: entry.key,
+        locale: entry.locale,
+        clean: false,
+        evaluationCount: existingTracking?.evaluationCount ?? 0,
+        updatedAt: now,
+      });
+      console.log(`[${loc}] FLAGGED ${entry.key}: ${result.result.issues.join(' / ')}`);
+    } else {
+      totalClean += 1;
+      upsertTracking(tracking, {
+        key: entry.key,
+        locale: entry.locale,
+        clean: true,
+        evaluationCount: existingTracking?.evaluationCount ?? 0,
+        updatedAt: now,
+      });
+    }
+  });
+
+  return { totalClean, totalFlagged, totalFailed, totalCostCents, costUnknown };
 }
 
 /**
@@ -225,6 +336,10 @@ if (rawArgs.includes('--help') || rawArgs.includes('-h')) {
   console.log('                                as stalled (default: 30). Reporting only — see --reset above for');
   console.log('                                what actually abandons a stalled batch. Use 60+ for a longer grace');
   console.log('                                period before a slow batch is even reported as stalled.');
+  console.log('  --sync                        Rescue-run escape hatch: instead of submitting a batch job, calls');
+  console.log("                                OpenAI's regular synchronous endpoint directly and waits for every");
+  console.log('                                answer before exiting. Billed at standard, not batch-discounted,');
+  console.log('                                rates — pair with --limit to keep this to a handful of entries.');
   process.exit(0);
 }
 
@@ -268,6 +383,11 @@ const reset = rawArgs.includes('--reset');
 const stallThresholdMinutes = Number(flag('stall-threshold-minutes', 30));
 if (!Number.isInteger(stallThresholdMinutes) || stallThresholdMinutes < 1)
   throw new Error('--stall-threshold-minutes must be a positive integer');
+// Rescue-run escape hatch (see module doc comment): calls OpenAI's standard synchronous endpoint
+// directly instead of submitting a batch job, and waits for every answer before exiting. Billed
+// at standard, not batch-discounted, rates — intended for a handful of entries (pair with
+// --limit), not a full-corpus run.
+const sync = rawArgs.includes('--sync');
 
 if (batchId && !locale) {
   throw new Error(
@@ -277,6 +397,11 @@ if (batchId && !locale) {
 if (!locale && !checkOnly) {
   throw new Error(
     '--locale=<locale> is required (unless using --check-only without --locale, which checks every locale)',
+  );
+}
+if (sync && (checkOnly || batchId)) {
+  throw new Error(
+    '--sync cannot be combined with --check-only or --batch — both of those exit before any new work would run synchronously',
   );
 }
 
@@ -480,77 +605,22 @@ async function checkAndApply(loc, { batchFilter } = {}) {
         // Don't add to stillRunning — this batch is unrecoverable.
         continue; // Skip to next batch in loop
       }
-      const byCustomId = new Map(results.map((r) => [r.customId, r]));
-
-      candidates.forEach((candidate, index) => {
-        if (candidate === undefined) {
-          totalFailed += 1;
-          console.error(
-            `[${loc}] FAILED ${job.candidates[index].key}: entry no longer resolves against the current corpus`,
-          );
-          return;
-        }
-        const { entry } = candidate;
-        // Majority vote (#437): the judge's "generic trope" call is subjective and noisy — re-judging the same
-        // entry flips it — so each entry is judged `job.votes` times and flagged only when most ballots flag it.
-        // A job from before voting (no `votes`) has one ballot, under the plain index as its custom id.
-        const ballotIds =
-          job.votes === undefined
-            ? [String(index)]
-            : Array.from({ length: job.votes }, (_, vote) => `${String(index)}:${String(vote)}`);
-        const ballots = ballotIds.map((id) => byCustomId.get(id)).filter((ballot) => ballot !== undefined);
-        if (ballots.length === 0) {
-          totalFailed += 1;
-          console.error(`[${loc}] FAILED ${entry.key}: no result came back for this entry`);
-          return;
-        }
-        const valid = ballots.filter((ballot) => !ballot.error);
-        if (valid.length === 0) {
-          totalFailed += 1;
-          console.error(`[${loc}] FAILED ${entry.key}: ${ballots[0].error.message}`);
-          return;
-        }
-        for (const ballot of valid) {
-          const costCents = estimateBatchCostCents(
-            job.model,
-            ballot.usage?.prompt_tokens,
-            ballot.usage?.completion_tokens,
-          );
-          if (costCents === undefined) costUnknown = true;
-          else totalCostCents += costCents;
-        }
-        const verdict = majorityVerdict(valid);
-        const result = { result: { correct: verdict.correct, issues: verdict.issues } };
-        const existingTracking = findTracking(tracking, entry);
-        const now = new Date().toISOString();
-        if (result.result.correct === false) {
-          totalFlagged += 1;
-          upsertFeedback(feedback, {
-            key: entry.key,
-            locale: entry.locale,
-            originalText: entry.text,
-            issues: result.result.issues,
-            flaggedAt: now,
-          });
-          upsertTracking(tracking, {
-            key: entry.key,
-            locale: entry.locale,
-            clean: false,
-            evaluationCount: existingTracking?.evaluationCount ?? 0,
-            updatedAt: now,
-          });
-          console.log(`[${loc}] FLAGGED ${entry.key}: ${result.result.issues.join(' / ')}`);
-        } else {
-          totalClean += 1;
-          upsertTracking(tracking, {
-            key: entry.key,
-            locale: entry.locale,
-            clean: true,
-            evaluationCount: existingTracking?.evaluationCount ?? 0,
-            updatedAt: now,
-          });
-        }
+      const applied = applyBallotResults({
+        loc,
+        candidateKeys: job.candidates,
+        resolvedCandidates: candidates,
+        results,
+        model: job.model,
+        votesCount: job.votes,
+        tracking,
+        feedback,
+        costTier: 'batch',
       });
+      totalClean += applied.totalClean;
+      totalFlagged += applied.totalFlagged;
+      totalFailed += applied.totalFailed;
+      totalCostCents += applied.totalCostCents;
+      if (applied.costUnknown) costUnknown = true;
     }
   } catch (error) {
     // Unexpected error in batch loop — log and continue with cleanup
@@ -718,6 +788,59 @@ const requests = candidates.flatMap(({ entry, placement }, index) => {
     }),
   );
 });
+
+if (sync) {
+  console.log(
+    `\n[${locale}] running ${String(requests.length)} request${requests.length === 1 ? '' : 's'} (${String(votes)} vote${votes === 1 ? '' : 's'} per entry) synchronously (--sync — standard-tier pricing, not the Batch API's 50% discount)...`,
+  );
+  // No batch-job bookkeeping here: nothing is submitted, so there's nothing for a future run to
+  // check. A modest concurrency cap keeps this from either serializing one call at a time (slow
+  // for more than a couple of entries) or firing everything at once (risking rate limits) — fine
+  // for the small rescue runs this flag is meant for.
+  const concurrency = Math.min(5, requests.length);
+  const results = new Array(requests.length);
+  let nextIndex = 0;
+  async function worker() {
+    for (;;) {
+      const index = nextIndex++;
+      if (index >= requests.length) return;
+      results[index] = await callChatCompletionSync({ apiKey: process.env.OPENAI_API_KEY, request: requests[index] });
+    }
+  }
+  await Promise.all(Array.from({ length: concurrency }, worker));
+
+  const feedbackPath = join(root, 'tools', 'corpus-gen', 'feedback', `${locale}.json`);
+  const trackingPath = join(root, 'tools', 'corpus-gen', 'eval-tracking', `${locale}.json`);
+  const feedback = await readFeedback(feedbackPath);
+  const { totalClean, totalFlagged, totalFailed, totalCostCents, costUnknown } = applyBallotResults({
+    loc: locale,
+    candidateKeys: candidates.map(({ entry }) => ({ key: entry.key })),
+    resolvedCandidates: candidates,
+    results,
+    model,
+    votesCount: votes,
+    tracking,
+    feedback,
+    costTier: 'standard',
+  });
+  await mkdir(dirname(feedbackPath), { recursive: true });
+  await writeFeedback(feedbackPath, feedback);
+  await mkdir(dirname(trackingPath), { recursive: true });
+  await writeTracking(trackingPath, tracking);
+  // Nothing new was submitted — only write back whatever other jobs were already running.
+  if (stillRunning.length > 0) await writeBatchState(statePath, { jobs: stillRunning });
+  else await clearBatchState(statePath);
+
+  console.log(
+    `\n[${locale}] evaluation complete (sync): ${String(totalClean + totalFlagged + totalFailed)} checked — ${String(totalClean)} clean, ${String(totalFlagged)} flagged, ${String(totalFailed)} failed`,
+  );
+  console.log(
+    `[${locale}] estimated cost: ${formatCents(totalCostCents)}${costUnknown ? ` (+ unknown — no standard pricing on file for one or more models)` : ''}`,
+  );
+  console.log(`[${locale}] feedback written to ${feedbackPath}`);
+  console.log(`[${locale}] tracking written to ${trackingPath}`);
+  process.exit(0);
+}
 
 console.log(
   `\n[${locale}] submitting ${String(requests.length)} request${requests.length === 1 ? '' : 's'} (${String(votes)} vote${votes === 1 ? '' : 's'} per entry) as one batch job...`,

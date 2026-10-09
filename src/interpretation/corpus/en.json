@@ -83930,9 +83930,9 @@
   {
     "key": "composite-aspect-pair:quincunx:interpolatedLilith:jupiter",
     "locale": "en",
-    "text": "The dynamic between you constantly seeks meaning and expansion, but regularly clashes with unconscious desires for absolute independence and autonomy. This partnership constantly balances between the urge to explore shared horizons and the tendency to evade established frameworks or expectations. When external pressure increases, friction arises between the fabric of shared optimistic beliefs and the irreconcilable need to be unbound to anything.",
+    "text": "Your joint drive seeks expansive meaning and broad horizons, yet routinely stumbles against an untamed urge for absolute self-sovereignty. This pairing must constantly recalibrate how shared beliefs accommodate a quiet refusal to be pinned down by conventional frameworks. When outside expectations press too tightly, tension surfaces between the desire for wide opportunity and the impulse to slip past any established boundary.",
     "tier": "core",
-    "tags": [],
+    "tags": ["improved-via-feedback-loop"],
     "provenance": {
       "source": "generated",
       "model": "gemini-3.5-flash-lite",

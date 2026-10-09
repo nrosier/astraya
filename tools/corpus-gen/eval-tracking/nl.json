@@ -33622,31 +33622,23 @@
   {
     "key": "composite-aspect-pair:biquintile:juno:saturn",
     "locale": "nl",
-    "clean": false,
+    "clean": true,
     "evaluationCount": 1,
-    "updatedAt": "2026-10-08T14:02:20.899Z"
+    "updatedAt": "2026-10-08T14:41:00.256Z"
   },
   {
     "key": "composite-aspect-pair:semisextile:interpolatedLilith:pluto",
     "locale": "nl",
-    "clean": false,
+    "clean": true,
     "evaluationCount": 1,
-    "updatedAt": "2026-10-08T14:02:20.897Z"
+    "updatedAt": "2026-10-08T14:41:00.255Z"
   },
   {
     "key": "composite-aspect-pair:biquintile:ceres:neptune",
     "locale": "nl",
-    "clean": false,
-    "evaluationCount": 1,
-    "updatedAt": "2026-10-08T14:02:20.899Z",
-    "lastRejection": {
-      "issues": [
-        "The text describes a generic blend of imaginative care and blurred responsibilities, but does not convey the biquintile’s distinctive creative or skillful way of combining them.",
-        "The entry describes generic imaginative care and blurred responsibilities in a Ceres–Neptune blend, but does not convey the biquintile’s distinctive creative or skillful way of combining them.",
-        "The entry describes imaginative care and blurred responsibilities as a generic Ceres–Neptune blend, without showing the biquintile’s distinctive creative or skillful way of combining them."
-      ],
-      "reasoning": "The reviewer concerns repeatedly suggest adding mechanical aspect details that would violate constraints against technical jargon and overcomplicate a concise psychological disposition statement."
-    }
+    "clean": true,
+    "evaluationCount": 3,
+    "updatedAt": "2026-10-08T20:55:19.254Z"
   },
   {
     "key": "composite-planet-in-house:sun:4",
