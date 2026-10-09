@@ -89,9 +89,13 @@ function Paragraph({
   readonly showProvenance: boolean;
 }): React.JSX.Element {
   const provenance = describeParagraphProvenance(paragraph);
+  // degree-symbol (#405/#484) is a flat, always-secondary supplement next to the placement it
+  // sits beside (never scored into rules.ts's ranking) — rendered visually de-emphasized, the
+  // same muted/smaller style every other secondary note in this app already uses (`.hint`).
+  const isDegreeSymbol = paragraph.placement?.category === 'degree-symbol';
   return (
     <li className="report-paragraph">
-      <p>{paragraph.text}</p>
+      <p className={isDegreeSymbol ? 'hint' : undefined}>{paragraph.text}</p>
       {showProvenance && (
         <p className="report-provenance hint">
           {provenance.placement !== undefined && <>{provenance.placement} &middot; </>}

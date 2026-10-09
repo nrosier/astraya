@@ -108,6 +108,8 @@ describe('selectionPlacements (#415)', () => {
         expect([placement.bodyA, placement.bodyB]).toContain('sun');
       } else if (placement.category === 'dignity-state') {
         expect(placement.body).toBe('sun');
+      } else if (placement.category === 'degree-symbol') {
+        // #405/#484: has no body of its own — the Sun's own degree-symbol, checked separately below.
       } else {
         throw new Error(`unexpected category ${placement.category}`);
       }
@@ -136,8 +138,19 @@ describe('selectionPlacements (#415)', () => {
     expect(categories[1]).toBe('planet-in-house');
     const firstAspect = categories.indexOf('aspect-pair');
     expect(firstAspect).toBeGreaterThan(1);
-    // Once the aspects begin, nothing else follows them.
-    expect(categories.slice(firstAspect).every((category) => category === 'aspect-pair')).toBe(true);
+    // Once the aspects begin, nothing else follows them except the one thing that is never
+    // ranked alongside them: the body's own degree-symbol (#405/#484), always last of all.
+    expect(categories.slice(firstAspect).every((category) => category === 'aspect-pair')).toBe(false);
+    expect(categories.at(-1)).toBe('degree-symbol');
+    expect(categories.slice(firstAspect, -1).every((category) => category === 'aspect-pair')).toBe(true);
+  });
+
+  it('appends the body’s own degree-symbol last, unranked, for a planet selection (#405/#484)', () => {
+    const items = select({ kind: 'body', key: 'sun', ring: 0 });
+    const last = items.at(-1);
+    expect(last?.placement.category).toBe('degree-symbol');
+    expect(last?.salience).toBe(0);
+    expect(last?.factors).toEqual([]);
   });
 
   it('orders the aspects by salience, most salient first, as the report ranks them', () => {

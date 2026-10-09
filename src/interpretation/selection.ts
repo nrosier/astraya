@@ -6,7 +6,9 @@
  * exact set the Interpretation tab's report is built from — and orders it by the same salience, so
  * the wheel can never say something the report doesn't, or say it in a different order.
  *
- * - **A planet:** its sign, its house, its dignity if it has one, and every aspect it is part of.
+ * - **A planet:** its sign, its house, its dignity if it has one, every aspect it is part of, and
+ *   (#405/#484) its own degree-symbol — appended last, unranked, since `rules.ts` has nothing to
+ *   weigh a bare degree against.
  * - **A sign:** each planet in that sign, and the house cusp(s) that fall in it. (A sign has no entry
  *   of its own: what is written is about placements *in* it.)
  * - **An aspect line:** that one pair.
@@ -17,10 +19,12 @@
  * @conventions Selects from the same derivePlacements/rankPlacements the report is built from, ordered by the same salience, so the wheel can never show text the report doesn't or in a different order. Selection keys are parsed from the wheel's own `body:<id>`/`sign:<name>`/`aspect:<idA>|<idB>` string format.
  * @exports WheelSelection, parseSelectionKey, selectionPlacements
  */
-import { SIGNS } from '../astrology/signs.js';
+import { bodyByKey } from '../astrology/bodies.js';
+import { degreeSymbolNumber, SIGNS } from '../astrology/signs.js';
 import { parseBodyId } from '../chart/body-id.js';
 import type { ChartData } from '../domain/chart-compute.js';
 import { derivePlacements, rankPlacements, type SalientPlacement } from './rules.js';
+import { placementKey } from './schema.js';
 
 export type WheelSelection =
   | { readonly kind: 'body'; readonly key: string; readonly ring: number }
@@ -105,10 +109,31 @@ function categoryRank(item: SalientPlacement): number {
   return index === -1 ? CATEGORY_ORDER.length : index;
 }
 
-/** The chart's placements that belong to `selection`: basics first, then aspects; most salient first within each. */
+/**
+ * A clicked body's own degree-symbol (#405/#484), appended after everything `rules.ts` ranks —
+ * never submitted to that ranking itself. `degree-symbol` has no dignity/sect/angularity/aspect
+ * field for `rules.ts`'s weighting to key off (it is a bare degree, not a chart-relative fact),
+ * so it is built directly here with `salience: 0` and no factors, the same "enumerated, not
+ * selected" shape `report.ts`'s own degree-symbol paragraphs use. `undefined` when the clicked
+ * key is not a real body (the Ascendant/Midheaven are angles, not wheel-selectable bodies, so
+ * this never needs to run for them).
+ */
+function degreeSymbolPlacement(chart: ChartData, bodyKey: string): SalientPlacement | undefined {
+  const body = bodyByKey(bodyKey);
+  if (body === undefined) return undefined;
+  const position = chart.positions.find((candidate) => candidate.body === body.id);
+  if (position === undefined) return undefined;
+  const placement = { category: 'degree-symbol' as const, degree: degreeSymbolNumber(position.longitude) };
+  return { placement, key: placementKey(placement), salience: 0, factors: [] };
+}
+
+/** The chart's placements that belong to `selection`: basics first, then aspects, then (for a body) its degree-symbol last; most salient first within each. */
 export function selectionPlacements(chart: ChartData, selection: WheelSelection): readonly SalientPlacement[] {
   // `rankPlacements` already orders by salience, and `sort` is stable, so within a kind that order holds.
-  return rankPlacements(derivePlacements(chart))
+  const ranked = rankPlacements(derivePlacements(chart))
     .filter((item) => matches(item, selection))
     .sort((a, b) => categoryRank(a) - categoryRank(b));
+  if (selection.kind !== 'body') return ranked;
+  const degreeSymbol = degreeSymbolPlacement(chart, selection.key);
+  return degreeSymbol === undefined ? ranked : [...ranked, degreeSymbol];
 }
