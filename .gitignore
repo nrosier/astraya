@@ -49,6 +49,7 @@ playwright-report/
 # docs/archive/BENCHMARK_ASTROLOGYAPI.md), but the whole directory stays out of git
 # regardless, same reasoning as .playwright-mcp/ above.
 tools/corpus-gen/.data/
+tools/corpus-gen/archive/.data/
 
 # Point-in-time corpus snapshots taken before a batch regeneration (#368),
 # for local diffing/reference against whatever a run produces — not source,

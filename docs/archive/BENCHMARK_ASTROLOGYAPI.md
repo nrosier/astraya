@@ -220,10 +220,29 @@ caches both the raw response and the extracted text after one. It:
   texts can actually be read side by side rather than only trusted as a
   score. Never feeds the console report or `--out`, and never becomes a
   column on `benchmark_results` itself.
-- Lives in the same gitignored `tools/corpus-gen/.data/` directory as
-  everything else here — never committed, never distributed, never
-  reachable by an actual Astraya end user (the harm #368's own
-  no-redistribution constraint was written to prevent).
+- Lives in the same gitignored `.data/` directory as everything else here
+  (`tools/corpus-gen/.data/`, and `tools/corpus-gen/archive/.data/` since
+  the tooling was archived) — never reachable by an actual Astraya end
+  user (the harm #368's own no-redistribution constraint was written to
+  prevent).
+
+### No-distribution policy
+
+**The benchmark cache is never committed to Git and never distributed.**
+Both `.data/` paths above are in `.gitignore`. An earlier copy of
+`archive/.data/benchmark.sqlite` was accidentally tracked; it was removed
+from the index in #478 (the local file is kept on disk, untracked).
+
+- **What is retained locally:** `benchmark_results` holds only metadata —
+  placement facts, Astraya's own text, model names, judge scores and
+  verdicts. `thirdparty_cache` may hold vendor responses, and only on the
+  developer's own machine, until purged.
+- **Why it is retained:** reproducibility of past benchmark scores and to
+  avoid paying again for the same vendor calls while tuning the judges.
+- **Approval basis:** both the cache table and the dashboard detail view
+  were added on the maintainer's explicit request (see above), scoped to
+  local development only. No approval exists for committing or shipping
+  any of it.
 - Is explicitly **temporary**. Once the judges are "solved and grounded" —
   thresholds settled, extraction heuristics confirmed correct, the
   `all-minilm`/`gemma4` cross-checks validated — delete it:
