@@ -44,6 +44,14 @@ describe('placementHeading (#415)', () => {
     expect(heading({ category: 'pattern', pattern: 'grand-trine' })).toBeUndefined();
   });
 
+  it('names a degree-symbol by its sign and degree, with no body of its own (#405/#484)', () => {
+    expect(heading({ category: 'degree-symbol', degree: 1 })).toBe('Aries 1°');
+    expect(heading({ category: 'degree-symbol', degree: 101 })).toBe('Cancer 11°');
+    expect(heading({ category: 'degree-symbol', degree: 101 }, 'nl')).toBe('Kreeft 11°');
+    // Never falls through to the undefined every other unselectable category gets.
+    expect(heading({ category: 'degree-symbol', degree: 1 })).not.toBeUndefined();
+  });
+
   it('wraps a sign index outside 0-11 rather than printing nothing', () => {
     expect(heading({ category: 'planet-in-sign', body: 'sun', sign: 12 })).toBe('Sun — Aries');
   });

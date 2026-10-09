@@ -192,6 +192,33 @@ describe('ReportView corpus loading (locale comes from the shared locale.ts stor
     });
     container.remove();
   });
+
+  it('renders the Sun/Moon/Ascendant/Midheaven degree-symbol paragraphs visually de-emphasized (#405/#484)', async () => {
+    const { container, root } = await mount();
+
+    const coreIdentity = container.querySelector('#report-section-core-identity');
+    if (coreIdentity === null) throw new Error('test fixture bug: no core-identity section rendered');
+    const paragraphTexts = Array.from(coreIdentity.querySelectorAll('li.report-paragraph')).map((li) => ({
+      text: li.querySelector('p')?.textContent,
+      hint: li.querySelector('p')?.classList.contains('hint') ?? false,
+    }));
+
+    // Same fixture as interpretation-report.test.ts: Sun@10 (degree 11), Moon@100 (degree 101),
+    // Ascendant@0 (degree 1), Midheaven@270 (degree 271) via equalHouses(0).
+    const degreeSymbolEntries = paragraphTexts.filter((p) => p.text?.includes('degree of'));
+    expect(degreeSymbolEntries).toHaveLength(4);
+    expect(degreeSymbolEntries.every((p) => p.hint)).toBe(true);
+
+    // Every non-degree-symbol paragraph in this section renders without the de-emphasis class.
+    const otherEntries = paragraphTexts.filter((p) => !p.text?.includes('degree of'));
+    expect(otherEntries.length).toBeGreaterThan(0);
+    expect(otherEntries.every((p) => !p.hint)).toBe(true);
+
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+  });
 });
 
 function findTab(container: HTMLElement, label: string): HTMLButtonElement {

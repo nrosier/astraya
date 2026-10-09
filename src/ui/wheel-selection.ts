@@ -10,7 +10,7 @@
  * @exports SelectionHeadingLabels, placementHeading, SELECTION_TEXT_LIMIT
  */
 import type { CorpusPlacement, DignityState, Locale } from '../interpretation/schema.js';
-import { SIGNS } from '../astrology/signs.js';
+import { SIGNS, signAndDegreeFromDegreeSymbol } from '../astrology/signs.js';
 import { aspectDisplayName, bodyDisplayName, signDisplayName } from './astro-names.messages.js';
 
 export interface SelectionHeadingLabels {
@@ -40,6 +40,14 @@ export function placementHeading(
       return `${bodyDisplayName(placement.bodyA, locale)} ${aspectDisplayName(placement.aspect, locale).toLowerCase()} ${bodyDisplayName(placement.bodyB, locale)}`;
     case 'sign-on-cusp':
       return labels.cuspOf(signName(placement.sign, locale), placement.house);
+    // degree-symbol (#405/#484) has no body of its own (schema.ts: attached to whichever body
+    // occupies the degree, at display time) — named by sign+degree alone, same as sign-on-cusp
+    // doesn't repeat the house's own planet. The surrounding list is already scoped to one
+    // clicked body, so this heading never needs to restate it.
+    case 'degree-symbol': {
+      const { sign, degree } = signAndDegreeFromDegreeSymbol(placement.degree);
+      return `${signName(sign.index, locale)} ${String(degree)}°`;
+    }
     default:
       return undefined;
   }

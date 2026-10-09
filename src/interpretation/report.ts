@@ -67,7 +67,7 @@ import { dispositorChain, type DispositorChain } from '../astrology/dispositors.
 import { elementBalance, houseOf, modalityBalance } from '../astrology/emphasis.js';
 import { jonesBodyPositions, jonesShapeOf, type JonesShape } from '../astrology/jones-shapes.js';
 import type { Element, Modality } from '../astrology/signs.js';
-import { signIndex } from '../astrology/signs.js';
+import { degreeSymbolNumber, signIndex } from '../astrology/signs.js';
 import type { ChartData } from '../domain/chart-compute.js';
 import type { BodyId, Degrees } from '../ephemeris/types.js';
 import { composeFallbackText, findCorpusEntry } from './compose.js';
@@ -210,6 +210,11 @@ function planetInHouseParagraph(
   return resolveParagraph({ category, body: key, house }, locale, corpus);
 }
 
+/** A degree-symbol paragraph for a body's own longitude (#405/#484) — the traditional per-degree image/quality, independent of which body occupies it. */
+function degreeSymbolParagraph(longitude: Degrees, locale: Locale, corpus: readonly CorpusEntry[]): ReportParagraph {
+  return resolveParagraph({ category: 'degree-symbol', degree: degreeSymbolNumber(longitude) }, locale, corpus);
+}
+
 function coreIdentitySection(
   chart: ChartData,
   locale: Locale,
@@ -217,12 +222,22 @@ function coreIdentitySection(
   chartKind: 'natal' | 'composite',
 ): ReportSection {
   const ascendantSign = signIndex(chart.houses.ascendant);
+  // degree-symbol has no composite sibling (schema.ts: it isn't personal the way a placement
+  // is) — natal only, woven right after the placement paragraph it supplements, a flat
+  // enumerated extra never scored into rules.ts's salience ranking (that engine has nothing to
+  // weigh a bare degree against: no dignity, sect, angularity or aspect orb to key off).
+  const degreeSymbol = (longitude: Degrees): readonly ReportParagraph[] =>
+    chartKind === 'natal' ? [degreeSymbolParagraph(longitude, locale, corpus)] : [];
   return section('core-identity', locale, [
     planetInSignParagraph(chart, 'sun', locale, corpus, chartKind),
     planetInHouseParagraph(chart, 'sun', locale, corpus, chartKind),
+    ...degreeSymbol(bodyPosition(chart, 'sun').longitude),
     planetInSignParagraph(chart, 'moon', locale, corpus, chartKind),
     planetInHouseParagraph(chart, 'moon', locale, corpus, chartKind),
+    ...degreeSymbol(bodyPosition(chart, 'moon').longitude),
     resolveParagraph({ category: 'sign-on-cusp', sign: ascendantSign, house: 1 }, locale, corpus),
+    ...degreeSymbol(chart.houses.ascendant),
+    ...degreeSymbol(chart.houses.midheaven),
   ]);
 }
 

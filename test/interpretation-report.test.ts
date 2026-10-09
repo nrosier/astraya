@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { assembleReport, type ReportParagraph, type ReportSectionId } from '../src/interpretation/report.js';
+import {
+  assembleReport,
+  type ReportParagraph,
+  type ReportSection,
+  type ReportSectionId,
+} from '../src/interpretation/report.js';
 import { composeFallbackText } from '../src/interpretation/compose.js';
 import { bodyByKey } from '../src/astrology/bodies.js';
 import type { Aspect } from '../src/astrology/aspects.js';
@@ -157,9 +162,12 @@ describe('assembleReport (#61)', () => {
     // loaded in this test) happens to be the same mechanical sentence either way.
     const rest = composite.sections.slice(1);
     expect(rest.map((s) => s.id)).toEqual(natal.sections.map((s) => s.id));
-    expect(rest.map((s) => s.paragraphs.map((p) => p.text))).toEqual(
-      natal.sections.map((s) => s.paragraphs.map((p) => p.text)),
-    );
+    // degree-symbol (#405/#484) has no composite sibling (same reasoning sign-on-cusp/
+    // dignity-state don't, stated below) — natal's core-identity section carries it, composite's
+    // never does, so it's excluded from this otherwise-identical comparison on purpose.
+    const withoutDegreeSymbol = (section: ReportSection): readonly string[] =>
+      section.paragraphs.filter((p) => p.placement?.category !== 'degree-symbol').map((p) => p.text);
+    expect(rest.map((s) => s.paragraphs.map((p) => p.text))).toEqual(natal.sections.map(withoutDegreeSymbol));
     // This fixture has no aspects (see makeFullChart), so the aspect-patterns section is empty
     // either way; the composite-aware aspect-pair remapping is covered separately below, with a
     // chart that actually has aspects.
@@ -170,6 +178,8 @@ describe('assembleReport (#61)', () => {
     expect(compositeCategories).toContain('composite-planet-in-house');
     expect(compositeCategories).not.toContain('planet-in-sign');
     expect(compositeCategories).not.toContain('planet-in-house');
+    // degree-symbol has no composite sibling either (#405/#484) — natal only.
+    expect(compositeCategories).not.toContain('degree-symbol');
     // sign-on-cusp and dignity-state have no composite sibling (#451's own stated scope).
     const natalCategories = new Set(
       natal.sections.flatMap((s) => s.paragraphs.map((p) => p.placement?.category).filter((c) => c !== undefined)),
@@ -256,9 +266,17 @@ describe('core identity section (#61)', () => {
     expect(texts(paragraphs)).toEqual([
       composeFallbackText({ category: 'planet-in-sign', body: 'sun', sign: 0 }, 'en'),
       composeFallbackText({ category: 'planet-in-house', body: 'sun', house: 1 }, 'en'),
+      // Sun at longitude 10 (#405/#484): the 11th degree of Aries.
+      composeFallbackText({ category: 'degree-symbol', degree: 11 }, 'en'),
       composeFallbackText({ category: 'planet-in-sign', body: 'moon', sign: 3 }, 'en'),
       composeFallbackText({ category: 'planet-in-house', body: 'moon', house: 4 }, 'en'),
+      // Moon at longitude 100: the 11th degree of Cancer (global degree 101).
+      composeFallbackText({ category: 'degree-symbol', degree: 101 }, 'en'),
       composeFallbackText({ category: 'sign-on-cusp', sign: 0, house: 1 }, 'en'),
+      // Ascendant at longitude 0 (equalHouses(0)): the 1st degree of Aries.
+      composeFallbackText({ category: 'degree-symbol', degree: 1 }, 'en'),
+      // Midheaven at longitude 270: the 1st degree of Capricorn (global degree 271).
+      composeFallbackText({ category: 'degree-symbol', degree: 271 }, 'en'),
     ]);
     expect(paragraphs.every((p) => p.factors.length === 0)).toBe(true);
   });
