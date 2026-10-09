@@ -58,6 +58,7 @@ These cause build/CI failures if violated:
 - **Pattern:** Pure TS (`.ts`), thin React (`.tsx`); test math directly in `.ts`.
 - **Domain Integrity:** No invented numbers/orbs; cite sources or reference tests for all house systems/conventions.
 - **Dependencies:** AGPL-3.0 compatible only (MIT/BSD/Apache-2.0/ISC/CC0). Heavy deps use dynamic `import()`. `scripts/check-bundle-size.mjs` enforces lazy loading.
+- **Zero tolerance (purist standard):** All code must build with no errors and no warnings — `npm run check` clean, not just passing; a warning left in place is a defect, not a nit. Every `.md`/`.html` page must validate as pure W3C/spec-conformant markup — no non-standard syntax, no editor-only shortcuts.
 
 ## i18n & Testing
 
