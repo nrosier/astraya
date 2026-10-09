@@ -56,6 +56,7 @@ const ProgressionsView = lazy(async () => ({ default: (await personScreens()).Pr
 const ReturnView = lazy(async () => ({ default: (await personScreens()).ReturnView }));
 const ReportScreen = lazy(async () => ({ default: (await personScreens()).ReportScreen }));
 const SolarArcView = lazy(async () => ({ default: (await personScreens()).SolarArcView }));
+const PrimaryDirectionsView = lazy(async () => ({ default: (await personScreens()).PrimaryDirectionsView }));
 const SynastryView = lazy(async () => ({ default: (await personScreens()).SynastryView }));
 const TransitView = lazy(async () => ({ default: (await personScreens()).TransitView }));
 const RectificationView = lazy(async () => ({ default: (await import('./RectificationView.js')).RectificationView }));
@@ -410,6 +411,7 @@ function renderScreen(parsed: Route, seVersion: string | undefined): React.JSX.E
     parsed.kind === 'profections' ||
     parsed.kind === 'progressions' ||
     parsed.kind === 'solar-arc' ||
+    parsed.kind === 'primary-directions' ||
     parsed.kind === 'transit' ||
     parsed.kind === 'synastry' ||
     parsed.kind === 'composite' ||
@@ -433,6 +435,7 @@ type PersonRoute = Extract<
       | 'profections'
       | 'progressions'
       | 'solar-arc'
+      | 'primary-directions'
       | 'transit'
       | 'synastry'
       | 'composite'
@@ -466,6 +469,9 @@ function renderPersonView(parsed: PersonRoute): React.JSX.Element {
   if (parsed.kind === 'profections') return <ProfectionsView key={parsed.personId} personId={parsed.personId} />;
   if (parsed.kind === 'progressions') return <ProgressionsView key={parsed.personId} personId={parsed.personId} />;
   if (parsed.kind === 'solar-arc') return <SolarArcView key={parsed.personId} personId={parsed.personId} />;
+  if (parsed.kind === 'primary-directions') {
+    return <PrimaryDirectionsView key={parsed.personId} personId={parsed.personId} />;
+  }
   if (parsed.kind === 'transit') return <TransitView key={parsed.personId} personId={parsed.personId} />;
   if (parsed.kind === 'synastry') return <SynastryView key={parsed.personId} personId={parsed.personId} />;
   if (parsed.kind === 'composite') return <CompositeView key={parsed.personId} personId={parsed.personId} />;
