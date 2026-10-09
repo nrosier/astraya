@@ -1,7 +1,7 @@
 # Corpus key reference
 
 Issue #427. The source of truth is the header of `src/interpretation/schema.ts`; this is the readable copy
-(a fuller HTML version sits beside it: `docs/CORPUS_KEYS.html`).
+(a fuller HTML version sits beside it: `docs/html/CORPUS_KEYS.html`).
 
 ## What a key is
 

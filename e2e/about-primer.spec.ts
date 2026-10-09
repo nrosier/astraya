@@ -44,11 +44,22 @@ test('the About page includes an astrology primer section with all subsections',
   await expect(page.getByText(/The planets.*zodiac.*houses.*angular divisions/)).toBeVisible();
 
   // All subsections are present
-  const expectedSections = ['Planets and points', 'The zodiac and signs', 'Houses', 'Aspects', 'Dignity and rulership'];
+  const expectedSections = [
+    'A brief history',
+    'Planets and points',
+    'The zodiac and signs',
+    'Houses',
+    'Aspects',
+    'Dignity and rulership',
+  ];
 
   for (const section of expectedSections) {
     await expect(page.getByRole('heading', { name: section, level: 3 })).toBeVisible();
   }
+
+  // History subsection
+  await expect(page.getByText(/one of the oldest continuously practised traditions/)).toBeVisible();
+  await expect(page.getByText(/Babylonian celestial omen-reading/)).toBeVisible();
 
   // Planets subsection
   await expect(page.getByText(/Sun and Moon are not true planets/)).toBeVisible();
@@ -100,6 +111,7 @@ test('the About page primer renders in Dutch with full translation', async ({ pa
     'Licentie en broncode',
     'Dankwoord',
     'Astrologie-primer',
+    'Een korte geschiedenis',
     'Planeten en punten',
     'De dierenriem en tekens',
     'Huizen',

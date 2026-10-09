@@ -15,7 +15,7 @@
  * @module ProfectionsView
  * @purpose Annual and monthly profections screen for one person, as of a chosen date, with Lord of the Year/Month and profected-house meanings.
  * @conventions Gated the same way as ChartView.tsx's houses/angles tables for unknown birth time; uses ProfectionsView.messages.ts for en/nl text via useMessages().
- * @exports ProfectionsView
+ * @exports ProfectionsView; toRow, columns, ProfectionRow (reused by pdf-export-plan.ts)
  */
 import { useEffect, useMemo, useState } from 'react';
 import { resolvePlacementText } from '../interpretation/compose.js';
@@ -45,7 +45,7 @@ type Load =
   | { readonly kind: 'ready'; readonly data: ProfectionData }
   | { readonly kind: 'error'; readonly message: string };
 
-interface ProfectionRow {
+export interface ProfectionRow {
   readonly period: string;
   readonly sign: string;
   readonly degree: number;
@@ -57,7 +57,7 @@ interface ProfectionRow {
   readonly coRulerKey?: string;
 }
 
-function toRow(period: string, profected: ProfectedPeriod): ProfectionRow {
+export function toRow(period: string, profected: ProfectedPeriod): ProfectionRow {
   const parts = degreeParts(profected.longitude);
   const ruler = bodyById(profected.ruler);
   const coRuler = profected.coRuler === undefined ? undefined : bodyById(profected.coRuler);
@@ -70,7 +70,7 @@ function toRow(period: string, profected: ProfectedPeriod): ProfectionRow {
   };
 }
 
-function columns(t: typeof profectionsViewMessages.en, locale: Locale): readonly TableColumn<ProfectionRow>[] {
+export function columns(t: typeof profectionsViewMessages.en, locale: Locale): readonly TableColumn<ProfectionRow>[] {
   return [
     { key: 'period', label: t.periodLabel, valueOf: (row) => row.period },
     {

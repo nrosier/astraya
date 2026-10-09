@@ -19,23 +19,39 @@
 import { useId, useMemo, useState } from 'react';
 import {
   applyPdfPreset,
+  defaultAstrocartographySectionOptions,
   defaultChartSectionOptions,
   defaultCompositeSectionOptions,
+  defaultProfectionsSectionOptions,
+  defaultProgressionsSectionOptions,
+  defaultSolarArcSectionOptions,
   defaultSynastrySectionOptions,
   EMPTY_SELECTION,
   matchPdfPreset,
+  PDF_ACG_LINE_TYPES,
   PDF_CHART_TABLES,
   PDF_CHART_TYPES,
   PDF_PRESET_KEYS,
   pdfSelectionIsEmpty,
+  type PdfAcgLineType,
+  type PdfAstrocartographySectionOptions,
   type PdfChartSectionOptions,
   type PdfChartTable,
   type PdfCompositeSectionOptions,
+  type PdfProfectionsSectionOptions,
+  type PdfProgressionsSectionOptions,
+  type PdfProgressionTechnique,
   type PdfSelection,
+  type PdfSolarArcSectionOptions,
   type PdfSynastrySectionOptions,
 } from '../domain/pdf-export-sections.js';
+import { EXTENDED_ACG_BODY_IDS, TRADITIONAL_ACG_BODY_IDS } from '../domain/astrocartography.js';
 import type { Person } from '../domain/person.js';
+import { bodyById } from '../astrology/bodies.js';
+import type { ProgressedMcMethod } from '../astrology/progressions.js';
+import type { BodyId } from '../ephemeris/types.js';
 import type { ChartType } from './chart-sections.js';
+import { bodyDisplayName } from './astro-names.messages.js';
 import { chartViewMessages } from './ChartView.messages.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { useLocale } from './locale.js';
@@ -160,6 +176,98 @@ export function PdfExportBuilder(): React.JSX.Element {
         ? [...current.composite.tables, table]
         : current.composite.tables.filter((candidate) => candidate !== table);
       return { ...current, composite: { ...current.composite, tables } };
+    });
+  };
+
+  const toggleProgressions = (included: boolean): void => {
+    setSelection((current) => {
+      if (!included) {
+        const next = { ...current };
+        delete next.progressions;
+        return next;
+      }
+      return { ...current, progressions: defaultProgressionsSectionOptions() };
+    });
+  };
+
+  const patchProgressions = (patch: Partial<PdfProgressionsSectionOptions>): void => {
+    setSelection((current) =>
+      current.progressions === undefined
+        ? current
+        : { ...current, progressions: { ...current.progressions, ...patch } },
+    );
+  };
+
+  const toggleSolarArc = (included: boolean): void => {
+    setSelection((current) => {
+      if (!included) {
+        const next = { ...current };
+        delete next.solarArc;
+        return next;
+      }
+      return { ...current, solarArc: defaultSolarArcSectionOptions() };
+    });
+  };
+
+  const patchSolarArc = (patch: Partial<PdfSolarArcSectionOptions>): void => {
+    setSelection((current) =>
+      current.solarArc === undefined ? current : { ...current, solarArc: { ...current.solarArc, ...patch } },
+    );
+  };
+
+  const toggleProfections = (included: boolean): void => {
+    setSelection((current) => {
+      if (!included) {
+        const next = { ...current };
+        delete next.profections;
+        return next;
+      }
+      return { ...current, profections: defaultProfectionsSectionOptions() };
+    });
+  };
+
+  const patchProfections = (patch: Partial<PdfProfectionsSectionOptions>): void => {
+    setSelection((current) =>
+      current.profections === undefined ? current : { ...current, profections: { ...current.profections, ...patch } },
+    );
+  };
+
+  const toggleAstrocartography = (included: boolean): void => {
+    setSelection((current) => {
+      if (!included) {
+        const next = { ...current };
+        delete next.astrocartography;
+        return next;
+      }
+      return { ...current, astrocartography: defaultAstrocartographySectionOptions() };
+    });
+  };
+
+  const patchAstrocartography = (patch: Partial<PdfAstrocartographySectionOptions>): void => {
+    setSelection((current) =>
+      current.astrocartography === undefined
+        ? current
+        : { ...current, astrocartography: { ...current.astrocartography, ...patch } },
+    );
+  };
+
+  const toggleAstrocartographyLineType = (lineType: PdfAcgLineType, on: boolean): void => {
+    setSelection((current) => {
+      if (current.astrocartography === undefined) return current;
+      const lineTypes = on
+        ? [...current.astrocartography.lineTypes, lineType]
+        : current.astrocartography.lineTypes.filter((candidate) => candidate !== lineType);
+      return { ...current, astrocartography: { ...current.astrocartography, lineTypes } };
+    });
+  };
+
+  const toggleAstrocartographyBody = (body: BodyId, on: boolean): void => {
+    setSelection((current) => {
+      if (current.astrocartography === undefined) return current;
+      const bodies = on
+        ? [...current.astrocartography.bodies, body]
+        : current.astrocartography.bodies.filter((candidate) => candidate !== body);
+      return { ...current, astrocartography: { ...current.astrocartography, bodies } };
     });
   };
 
@@ -498,6 +606,265 @@ export function PdfExportBuilder(): React.JSX.Element {
                   {t.tableLabels[table]}
                 </label>
               ))}
+            </div>
+          )}
+        </div>
+      </fieldset>
+
+      <fieldset className="field-group">
+        <legend>{t.predictiveLegend}</legend>
+        <div>
+          <label>
+            <input
+              type="checkbox"
+              checked={fullSelection.progressions !== undefined}
+              onChange={(event) => {
+                toggleProgressions(event.target.checked);
+              }}
+            />{' '}
+            {t.progressionsLabel}
+          </label>
+          {fullSelection.progressions !== undefined && (
+            <div className="settings-card-indent">
+              <label htmlFor={`${id}-progressions-technique`}>{t.progressionTechniqueLabel}</label>{' '}
+              <select
+                id={`${id}-progressions-technique`}
+                value={fullSelection.progressions.technique}
+                onChange={(event) => {
+                  patchProgressions({ technique: event.target.value as PdfProgressionTechnique });
+                }}
+              >
+                {(['secondary', 'tertiary', 'minor'] as const).map((technique) => (
+                  <option key={technique} value={technique}>
+                    {t.progressionTechniqueOptions[technique]}
+                  </option>
+                ))}
+              </select>{' '}
+              {fullSelection.progressions.technique === 'secondary' && (
+                <>
+                  <label htmlFor={`${id}-progressions-mc-method`}>{t.mcMethodLabel}</label>{' '}
+                  <select
+                    id={`${id}-progressions-mc-method`}
+                    value={fullSelection.progressions.mcMethod}
+                    onChange={(event) => {
+                      patchProgressions({ mcMethod: event.target.value as ProgressedMcMethod });
+                    }}
+                  >
+                    {(['quotidian', 'naibod', 'solarArc'] as const).map((method) => (
+                      <option key={method} value={method}>
+                        {t.mcMethodOptions[method]}
+                      </option>
+                    ))}
+                  </select>{' '}
+                </>
+              )}
+              <br />
+              <label>
+                <input
+                  type="checkbox"
+                  checked={fullSelection.progressions.positionsTable}
+                  onChange={(event) => {
+                    patchProgressions({ positionsTable: event.target.checked });
+                  }}
+                />{' '}
+                {t.positionsTableLabel}
+              </label>{' '}
+              <label>
+                <input
+                  type="checkbox"
+                  checked={fullSelection.progressions.contactsTable}
+                  onChange={(event) => {
+                    patchProgressions({ contactsTable: event.target.checked });
+                  }}
+                />{' '}
+                {t.contactsTableLabel}
+              </label>{' '}
+              <label>
+                {t.asOfDateLabel}{' '}
+                <input
+                  type="date"
+                  value={fullSelection.progressions.asOfDate ?? ''}
+                  onChange={(event) => {
+                    patchProgressions({ asOfDate: event.target.value });
+                  }}
+                />
+              </label>
+            </div>
+          )}
+        </div>
+
+        <div>
+          <label>
+            <input
+              type="checkbox"
+              checked={fullSelection.solarArc !== undefined}
+              onChange={(event) => {
+                toggleSolarArc(event.target.checked);
+              }}
+            />{' '}
+            {t.solarArcLabel}
+          </label>
+          {fullSelection.solarArc !== undefined && (
+            <div className="settings-card-indent">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={fullSelection.solarArc.positionsTable}
+                  onChange={(event) => {
+                    patchSolarArc({ positionsTable: event.target.checked });
+                  }}
+                />{' '}
+                {t.positionsTableLabel}
+              </label>{' '}
+              <label>
+                <input
+                  type="checkbox"
+                  checked={fullSelection.solarArc.contactsTable}
+                  onChange={(event) => {
+                    patchSolarArc({ contactsTable: event.target.checked });
+                  }}
+                />{' '}
+                {t.contactsTableLabel}
+              </label>{' '}
+              <label>
+                {t.asOfDateLabel}{' '}
+                <input
+                  type="date"
+                  value={fullSelection.solarArc.asOfDate ?? ''}
+                  onChange={(event) => {
+                    patchSolarArc({ asOfDate: event.target.value });
+                  }}
+                />
+              </label>
+            </div>
+          )}
+        </div>
+
+        <div>
+          <label>
+            <input
+              type="checkbox"
+              checked={fullSelection.profections !== undefined}
+              onChange={(event) => {
+                toggleProfections(event.target.checked);
+              }}
+            />{' '}
+            {t.profectionsLabel}
+          </label>
+          {fullSelection.profections !== undefined && (
+            <div className="settings-card-indent">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={fullSelection.profections.table}
+                  onChange={(event) => {
+                    patchProfections({ table: event.target.checked });
+                  }}
+                />{' '}
+                {t.profectionsTableLabel}
+              </label>{' '}
+              <label>
+                <input
+                  type="checkbox"
+                  checked={fullSelection.profections.meanings}
+                  onChange={(event) => {
+                    patchProfections({ meanings: event.target.checked });
+                  }}
+                />{' '}
+                {t.meaningsLabel}
+              </label>{' '}
+              <label>
+                {t.asOfDateLabel}{' '}
+                <input
+                  type="date"
+                  value={fullSelection.profections.asOfDate ?? ''}
+                  onChange={(event) => {
+                    patchProfections({ asOfDate: event.target.value });
+                  }}
+                />
+              </label>
+            </div>
+          )}
+        </div>
+
+        <div>
+          <label>
+            <input
+              type="checkbox"
+              checked={fullSelection.astrocartography !== undefined}
+              onChange={(event) => {
+                toggleAstrocartography(event.target.checked);
+              }}
+            />{' '}
+            {t.astrocartographyLabel}
+          </label>
+          {fullSelection.astrocartography !== undefined && (
+            <div className="settings-card-indent">
+              {(() => {
+                const acg = fullSelection.astrocartography;
+                return (
+                  <>
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={acg.map}
+                        onChange={(event) => {
+                          patchAstrocartography({ map: event.target.checked });
+                        }}
+                      />{' '}
+                      {t.astrocartographyMapLabel}
+                    </label>{' '}
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={acg.meanings}
+                        onChange={(event) => {
+                          patchAstrocartography({ meanings: event.target.checked });
+                        }}
+                      />{' '}
+                      {t.meaningsLabel}
+                    </label>{' '}
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={acg.localSpace}
+                        onChange={(event) => {
+                          patchAstrocartography({ localSpace: event.target.checked });
+                        }}
+                      />{' '}
+                      {t.localSpaceLabel}
+                    </label>
+                    <br />
+                    <span>{t.lineTypesLabel}: </span>
+                    {PDF_ACG_LINE_TYPES.map((lineType) => (
+                      <label key={lineType}>
+                        <input
+                          type="checkbox"
+                          checked={acg.lineTypes.includes(lineType)}
+                          onChange={(event) => {
+                            toggleAstrocartographyLineType(lineType, event.target.checked);
+                          }}
+                        />{' '}
+                        {t.lineTypeOptions[lineType]}
+                      </label>
+                    ))}
+                    <br />
+                    <span>{t.bodiesLabel}: </span>
+                    {[...TRADITIONAL_ACG_BODY_IDS, ...EXTENDED_ACG_BODY_IDS].map((body) => (
+                      <label key={body}>
+                        <input
+                          type="checkbox"
+                          checked={acg.bodies.includes(body)}
+                          onChange={(event) => {
+                            toggleAstrocartographyBody(body, event.target.checked);
+                          }}
+                        />{' '}
+                        {bodyDisplayName(bodyById(body)?.key ?? String(body), locale)}
+                      </label>
+                    ))}
+                  </>
+                );
+              })()}
             </div>
           )}
         </div>

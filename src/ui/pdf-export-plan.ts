@@ -50,18 +50,28 @@ import {
 import { computeComposite } from '../domain/composite.js';
 import { computeTransit } from '../domain/transit.js';
 import { computePeriodicTransitForecast, type PeriodicTransitPeriods } from '../domain/periodic-transit.js';
+import { computeSecondaryProgression } from '../domain/secondary-progression.js';
+import { computeMinorProgression } from '../domain/minor-progression.js';
+import { computeSolarArcDirections } from '../domain/solar-arc-directions.js';
+import { computeProfections } from '../domain/profections.js';
+import { computeAstrocartography } from '../domain/astrocartography.js';
 import {
+  type PdfAstrocartographySectionOptions,
   type PdfChartSectionOptions,
   type PdfChartTable,
   type PdfCompositeSectionOptions,
   type PdfForecastSectionOptions,
+  type PdfProfectionsSectionOptions,
+  type PdfProgressionsSectionOptions,
   type PdfSelection,
+  type PdfSolarArcSectionOptions,
   type PdfSynastrySectionOptions,
   type PdfTransitsSectionOptions,
 } from '../domain/pdf-export-sections.js';
 import type { Person } from '../domain/person.js';
 import { computeSynastry, rankedSynastryAspects } from '../domain/synastry.js';
 import { renderChartSheetSvg } from '../chart/chart-sheet.js';
+import { renderAcgMapSvg, type AcgMapInput } from '../chart/acg-map.js';
 import { renderMultiWheelSvg, type CrossRingAspects } from '../chart/multi-wheel.js';
 import { standaloneSvg } from '../chart/standalone-svg.js';
 import { resolveWheelDisplayOptions } from '../chart/wheel-options.js';
@@ -69,6 +79,7 @@ import type { EphemerisProvider } from '../ephemeris/types.js';
 import type { CorpusEntry, Locale } from '../interpretation/schema.js';
 import type { BirthMomentInput } from '../time/types.js';
 import { assembleReport } from '../interpretation/report.js';
+import { resolvePlacementText } from '../interpretation/compose.js';
 import { loadRuntimeCorpus } from '../interpretation/corpus-client.js';
 import { generateTier2Interpretation, toTier2ChartPayload } from '../interpretation/tier2-client.js';
 import {
@@ -114,6 +125,23 @@ import {
   stationRows as forecastStationRows,
 } from './PeriodicTransitView.js';
 import { periodicTransitViewMessages } from './PeriodicTransitView.messages.js';
+import {
+  positionRows as progressionsPositionRows,
+  positionColumns as progressionsPositionColumns,
+  contactColumns as progressionsContactColumns,
+} from './ProgressionsView.js';
+import { progressionsViewMessages } from './ProgressionsView.messages.js';
+import {
+  positionRows as solarArcPositionRows,
+  positionColumns as solarArcPositionColumns,
+  contactColumns as solarArcContactColumns,
+  toContactRow as solarArcToContactRow,
+  formatExactDate as solarArcFormatExactDate,
+  type ContactRow as SolarArcContactRow,
+} from './SolarArcView.js';
+import { solarArcViewMessages } from './SolarArcView.messages.js';
+import { toRow as profectionToRow, columns as profectionColumns } from './ProfectionsView.js';
+import { profectionsViewMessages } from './ProfectionsView.messages.js';
 import type { TableColumn } from './table-sort.js';
 
 /** A table reduced to plain strings — the same conversion a CSV download already does for every cell. */
@@ -649,6 +677,168 @@ async function buildForecastSectionPlan(
   return sections;
 }
 
+/** The Progressions section's own place in the export: `ProgressionsView.tsx`'s positions and
+ * progressed-to-natal contacts tables for whichever technique was chosen, as of a chosen date (#441). */
+async function buildProgressionsSectionPlan(
+  options: PdfProgressionsSectionOptions,
+  context: PdfPlanContext,
+  pt: typeof pdfExportMessages.en,
+): Promise<PdfChartSectionPlan> {
+  const { person, provider, locale } = context;
+  if (person.moment === undefined) throw new Error('this person has no complete birth record');
+  const pgt = progressionsViewMessages[locale];
+  const targetJd = await targetJdOf(options.asOfDate, provider);
+  const data =
+    options.technique === 'secondary'
+      ? await computeSecondaryProgression(person.moment, targetJd, provider, { mcMethod: options.mcMethod })
+      : await computeMinorProgression(options.technique, person.moment, targetJd, provider);
+  const namePart = person.displayName === '' ? '' : ` — ${person.displayName}`;
+  const heading = `${pt.progressionsLabel} — ${pt.progressionTechniqueOptions[options.technique]}${namePart}`;
+
+  const tables: PdfTablePlan[] = [];
+  if (options.positionsTable) {
+    tables.push(
+      tablePlanOf(
+        pgt.positionsCaption,
+        progressionsPositionColumns(pgt, locale),
+        progressionsPositionRows(data.positions, data.houses),
+      ),
+    );
+  }
+  if (options.contactsTable) {
+    tables.push(
+      tablePlanOf(pgt.contactsCaption, progressionsContactColumns(pgt, locale), crossAspectRows(data.contacts)),
+    );
+  }
+
+  // Only secondary progressions carry an `mcMethod` — tertiary/minor have no MC-method choice to show.
+  const usedMcMethod = 'mcMethod' in data ? data.mcMethod : undefined;
+  const hint = usedMcMethod === undefined ? undefined : `${pt.mcMethodLabel}: ${pt.mcMethodOptions[usedMcMethod]}`;
+
+  return { kind: 'chart', heading, ...(hint === undefined ? {} : { hint }), tables };
+}
+
+/** The Solar Arc section's own place in the export: `SolarArcView.tsx`'s directed-positions and
+ * directed-to-natal contacts tables, as of a chosen date (#441). */
+async function buildSolarArcSectionPlan(
+  options: PdfSolarArcSectionOptions,
+  context: PdfPlanContext,
+  pt: typeof pdfExportMessages.en,
+): Promise<PdfChartSectionPlan> {
+  const { person, provider, locale } = context;
+  if (person.moment === undefined) throw new Error('this person has no complete birth record');
+  const st = solarArcViewMessages[locale];
+  const targetJd = await targetJdOf(options.asOfDate, provider);
+  const data = await computeSolarArcDirections(person.moment, targetJd, provider);
+  const heading = `${pt.solarArcLabel}${person.displayName === '' ? '' : ` — ${person.displayName}`}`;
+
+  const tables: PdfTablePlan[] = [];
+  if (options.positionsTable) {
+    tables.push(
+      tablePlanOf(
+        st.positionsCaption,
+        solarArcPositionColumns(st, locale),
+        solarArcPositionRows(data.directedPositions, data.houses),
+      ),
+    );
+  }
+  if (options.contactsTable) {
+    // `tablePlanOf` reduces every column to plain text via `valueOf()` only, never `render()` (see its
+    // own doc comment) — but the `exactJd` column's `valueOf` is the raw Julian Day float, with the
+    // formatted date living only in `render()`. Overriding just that one column's `valueOf` keeps the
+    // fix local to this one column rather than reaching into `tablePlanOf` itself.
+    const columns = solarArcContactColumns(st, locale).map((column) =>
+      column.key === 'exactJd'
+        ? { ...column, valueOf: (row: SolarArcContactRow) => solarArcFormatExactDate(row.exactJd, st) }
+        : column,
+    );
+    tables.push(tablePlanOf(st.contactsCaption, columns, data.contacts.map(solarArcToContactRow)));
+  }
+
+  return { kind: 'chart', heading, tables };
+}
+
+/** The Profections section's own place in the export: `ProfectionsView.tsx`'s year/month table and
+ * the profected-house meanings beneath it, as of a chosen date (#441). */
+async function buildProfectionsSectionPlan(
+  options: PdfProfectionsSectionOptions,
+  context: PdfPlanContext,
+  pt: typeof pdfExportMessages.en,
+): Promise<readonly PdfSectionPlan[]> {
+  const { person, provider, rulership, locale, corpusFetch } = context;
+  if (person.moment === undefined) throw new Error('this person has no complete birth record');
+  const pft = profectionsViewMessages[locale];
+  const targetJd = await targetJdOf(options.asOfDate, provider);
+  const data = await computeProfections(person.moment, targetJd, provider, { rulership });
+  const heading = `${pt.profectionsLabel}${person.displayName === '' ? '' : ` — ${person.displayName}`}`;
+
+  const tables: PdfTablePlan[] = [];
+  if (options.table) {
+    const rows = [profectionToRow(pft.yearPeriod, data.year), profectionToRow(pft.monthPeriod, data.month)];
+    tables.push(tablePlanOf(pft.profectionsCaption, profectionColumns(pft, locale), rows));
+  }
+
+  const sections: PdfSectionPlan[] = [{ kind: 'chart', heading, tables }];
+
+  if (options.meanings) {
+    const corpus = await loadRuntimeCorpus(locale, corpusFetch ?? fetch).catch((): readonly CorpusEntry[] => []);
+    const fields = [
+      { period: pft.yearPeriod, house: data.year.house },
+      { period: pft.monthPeriod, house: data.month.house },
+    ].map(({ period, house }) => ({
+      label: period,
+      value: resolvePlacementText({ category: 'profected-house', house }, locale, corpus),
+    }));
+    sections.push({ kind: 'fields', heading: pt.meaningsLabel, fields });
+  }
+
+  return sections;
+}
+
+/** The Astrocartography section's own place in the export: `AstrocartographyView.tsx`'s world map
+ * and its per-body/line meanings. No "as of" date — a natal ACG map is time-invariant (#441). */
+async function buildAstrocartographySectionPlan(
+  options: PdfAstrocartographySectionOptions,
+  context: PdfPlanContext,
+  pt: typeof pdfExportMessages.en,
+): Promise<readonly PdfSectionPlan[]> {
+  const { person, provider, locale, corpusFetch } = context;
+  if (person.moment === undefined) throw new Error('this person has no complete birth record');
+  const data = await computeAstrocartography(person.moment, provider, {
+    bodies: options.bodies,
+    lineTypes: options.lineTypes,
+    localSpace: options.localSpace,
+  });
+  const heading = `${pt.astrocartographyLabel}${person.displayName === '' ? '' : ` — ${person.displayName}`}`;
+
+  let svg: PdfChartSectionPlan['svg'];
+  if (options.map) {
+    const input: AcgMapInput = {
+      lines: data.lines,
+      localSpaceLines: data.localSpaceLines,
+      natalPlace: data.natalPlace,
+    };
+    const map = renderAcgMapSvg(input);
+    svg = { markup: standaloneSvg(map.markup), width: map.width, height: map.height };
+  }
+
+  const sections: PdfSectionPlan[] = [{ kind: 'chart', heading, ...(svg === undefined ? {} : { svg }), tables: [] }];
+
+  if (options.meanings && options.bodies.length > 0 && options.lineTypes.length > 0) {
+    const corpus = await loadRuntimeCorpus(locale, corpusFetch ?? fetch).catch((): readonly CorpusEntry[] => []);
+    const fields = options.bodies.flatMap((body) => {
+      const key = bodyKeyOf(body);
+      return options.lineTypes.map((lineType) => ({
+        label: `${bodyDisplayName(key, locale)} — ${pt.lineTypeOptions[lineType]}`,
+        value: resolvePlacementText({ category: 'astro-line', body: key, angle: lineType }, locale, corpus),
+      }));
+    });
+    sections.push({ kind: 'fields', heading: pt.meaningsLabel, fields });
+  }
+
+  return sections;
+}
+
 async function buildInterpretationSections(
   selection: PdfSelection['interpretation'],
   context: PdfPlanContext,
@@ -757,6 +947,44 @@ export async function buildPdfPlan(
       sections.push(...(await buildForecastSectionPlan(selection.forecast, context)));
     } catch (error) {
       errors.push(`${pt.forecastLabel}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  if (
+    selection.progressions !== undefined &&
+    (selection.progressions.positionsTable || selection.progressions.contactsTable)
+  ) {
+    try {
+      sections.push(await buildProgressionsSectionPlan(selection.progressions, context, pt));
+    } catch (error) {
+      errors.push(`${pt.progressionsLabel}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  if (selection.solarArc !== undefined && (selection.solarArc.positionsTable || selection.solarArc.contactsTable)) {
+    try {
+      sections.push(await buildSolarArcSectionPlan(selection.solarArc, context, pt));
+    } catch (error) {
+      errors.push(`${pt.solarArcLabel}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  if (selection.profections !== undefined && (selection.profections.table || selection.profections.meanings)) {
+    try {
+      sections.push(...(await buildProfectionsSectionPlan(selection.profections, context, pt)));
+    } catch (error) {
+      errors.push(`${pt.profectionsLabel}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  if (
+    selection.astrocartography !== undefined &&
+    (selection.astrocartography.map || selection.astrocartography.meanings)
+  ) {
+    try {
+      sections.push(...(await buildAstrocartographySectionPlan(selection.astrocartography, context, pt)));
+    } catch (error) {
+      errors.push(`${pt.astrocartographyLabel}: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 

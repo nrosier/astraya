@@ -130,7 +130,7 @@ A follow-up research pass (2026-09-28, desk research only — nothing below
 was spiked or run against a live model) asked whether Laya could be dropped
 in favor of a lightweight model served through Ollama, since this project
 already runs Ollama locally for corpus generation
-(`docs/OLLAMA_CORPUS_GENERATION.md`). Conclusion: **not as a like-for-like
+(`docs/archive/OLLAMA_CORPUS_GENERATION.md`). Conclusion: **not as a like-for-like
 swap.** Keep Laya for the calibrated judgment; Ollama has a real, narrower
 role instead. Full reasoning below.
 
@@ -191,7 +191,7 @@ than trusting a model's marketing page, the same lesson this doc's own
 written): `tools/corpus-gen/lib/ollama.mjs`'s request body now sets
 `options: { temperature, num_ctx: Number(process.env.OLLAMA_NUM_CTX) ||
 DEFAULT_NUM_CTX }`, configurable via `OLLAMA_NUM_CTX`
-(`docs/OLLAMA_CORPUS_GENERATION.md`) rather than left at whatever the
+(`docs/archive/OLLAMA_CORPUS_GENERATION.md`) rather than left at whatever the
 VRAM-tier default happens to resolve to.
 
 ### Models checked

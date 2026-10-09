@@ -21,7 +21,7 @@
  *   - **Laya** (`@receptron/laya`) — a calibrated, non-generative classifier.
  *     `grounded` (asked once per text, against just that text + the facts,
  *     to respect Laya's real ~300-320 token `state` budget — see
- *     docs/LAYA_INTERPRETATION_COMPARISON.md) and `preference`/`similarity`
+ *     docs/archive/LAYA_INTERPRETATION_COMPARISON.md) and `preference`/`similarity`
  *     (one combined call, since both need both texts together anyway).
  *   - **`all-minilm`** (local, via Ollama's `/api/embed`) — cosine
  *     similarity between embeddings. `similarity` = astraya-text vs.
@@ -32,7 +32,7 @@
  *   - **`gemma4`** (local generative LLM, via Ollama, temperature 0) — asked
  *     directly, in one structured-JSON call with both texts and the facts
  *     in context, for the same `grounded`/`similarity` judgments. The
- *     fallback docs/LAYA_INTERPRETATION_COMPARISON.md already reasoned
+ *     fallback docs/archive/LAYA_INTERPRETATION_COMPARISON.md already reasoned
  *     through ("only reach for a generative Ollama LLM ... if a spike shows
  *     Laya's calibration genuinely doesn't hold up") — early real runs
  *     turned up exactly that: implausibly low Laya `grounded` scores for
@@ -72,7 +72,7 @@
  * skipped on the next run — no repeat astrologyapi.com/Laya spend on
  * something already checked — unless `--force` is passed, which re-checks
  * and overwrites it. See `tools/corpus-gen/benchmark-dashboard.mjs` to view
- * accumulated results, and `docs/BENCHMARK_ASTROLOGYAPI.md` for the full
+ * accumulated results, and `docs/archive/BENCHMARK_ASTROLOGYAPI.md` for the full
  * write-up.
  *
  *   npx tsx --env-file=.env.local tools/corpus-gen/benchmark-batch.mjs [--sample-size=N] [--limit=N] [--provider=gemini|ollama] [--force] [--out=FILE]
@@ -153,7 +153,7 @@ if (rawArgs.includes('--help') || rawArgs.includes('-h')) {
       'Costs real money per astrologyapi.com call and, unless an entry is already shipped, per',
       'Gemini generation call; Laya/embedding/LLM judging itself is always free local Ollama. See',
       'tools/corpus-gen/benchmark-dashboard.mjs to view accumulated results, and',
-      'docs/BENCHMARK_ASTROLOGYAPI.md for the full write-up.',
+      'docs/archive/BENCHMARK_ASTROLOGYAPI.md for the full write-up.',
     ].join('\n'),
   );
   process.exit(0);
@@ -393,7 +393,7 @@ const laya = await Laya.load();
 
 const SIMILARITY_CRITERIA = ['Not similar', 'Slightly similar', 'Highly similar', 'Identical'];
 /** Laya's real `state` budget is ~300-320 tokens, not the 512/8192 marketing figures (see
- * docs/LAYA_INTERPRETATION_COMPARISON.md) — packing both texts into one `state` risks silently
+ * docs/archive/LAYA_INTERPRETATION_COMPARISON.md) — packing both texts into one `state` risks silently
  * truncating one of them. `grounded` is asked once per text, each against just that one text plus
  * the (short) facts string, so neither call risks truncation. `preference`/`similarity` inherently
  * need both texts together and keep that already-flagged risk. */
