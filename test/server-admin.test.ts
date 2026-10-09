@@ -183,6 +183,61 @@ describe('GET /api/admin/users', () => {
     expect(bob?.lastSyncAt).not.toBeNull();
     expect(bob?.lastAiUsageAt).not.toBeNull();
   });
+
+  it('returns one row per user with the true MAX of each child table when a user has many children (#477)', async () => {
+    const adminCookie = await setupAdmin(app);
+    const bobCookie = await createAndLoginUser(app, 'bob', 'correct-horse-battery');
+    const clockRef: ClockRef = { current: createClock(randomNodeId()) };
+    for (let i = 0; i < 4; i++) {
+      await pushOp(app, bobCookie, clockRef, {
+        entity: 'person',
+        entityId: `p-${String(i)}`,
+        field: 'name',
+        value: 'Ada',
+      });
+    }
+    for (let i = 0; i < 4; i++) {
+      await app.inject({
+        method: 'POST',
+        url: '/api/auth/login',
+        payload: { username: 'bob', password: 'correct-horse-battery' },
+      });
+    }
+
+    const raw = new DatabaseSync(dbPath);
+    const bobId = (raw.prepare('SELECT id FROM users WHERE username = ?').get('bob') as { id: string }).id;
+    const insertUsage = raw.prepare(
+      'INSERT INTO interpretation_usage (user_id, prompt_tokens, output_tokens, cost_cents, created_at) VALUES (?, ?, ?, ?, ?)',
+    );
+    const usageTimes = ['2026-01-01T00:00:00.000Z', '2026-03-01T00:00:00.000Z', '2026-02-01T00:00:00.000Z'];
+    for (const t of usageTimes) insertUsage.run(bobId, 1, 1, 0.1, t);
+    const expected = raw
+      .prepare(
+        `SELECT (SELECT MAX(last_seen_at) FROM sessions WHERE user_id = ?) AS seen,
+                (SELECT MAX(received_at) FROM ops WHERE user_id = ?) AS sync,
+                (SELECT COUNT(*) FROM ops WHERE user_id = ?) AS opCount,
+                (SELECT COUNT(*) FROM sessions WHERE user_id = ?) AS sessionCount`,
+      )
+      .get(bobId, bobId, bobId, bobId) as { seen: string; sync: string; opCount: number; sessionCount: number };
+    raw.close();
+    expect(expected.opCount).toBeGreaterThan(1);
+    expect(expected.sessionCount).toBeGreaterThan(1);
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/admin/users',
+      cookies: { [SESSION_COOKIE]: adminCookie },
+    });
+    const { users } = response.json<{
+      users: { username: string; lastSeenAt: string | null; lastSyncAt: string | null; lastAiUsageAt: string | null }[];
+    }>();
+    const bobs = users.filter((u) => u.username === 'bob');
+    expect(bobs).toHaveLength(1);
+    expect(users).toHaveLength(2);
+    expect(bobs[0]?.lastSeenAt).toBe(expected.seen);
+    expect(bobs[0]?.lastSyncAt).toBe(expected.sync);
+    expect(bobs[0]?.lastAiUsageAt).toBe('2026-03-01T00:00:00.000Z');
+  });
 });
 
 describe('POST /api/admin/users', () => {

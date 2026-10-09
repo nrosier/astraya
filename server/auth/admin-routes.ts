@@ -81,18 +81,22 @@ function toAdminUser(row: AdminUserRow): AdminUser {
 // actually pushed through the sync relay, and the most recent Tier 2 interpretation request
 // recorded for them, so an admin can tell a dormant account from a user who syncs/queries the AI
 // but never refreshes a session.
+// #477: each child table is pre-aggregated in its own derived table before joining, so the join
+// is always 1:1 per user instead of a sessions × ops × usage Cartesian product reduced by MAX().
 const ADMIN_USER_SELECT = `SELECT users.id, users.username, users.role, users.created_at, users.disabled_at,
-              MAX(sessions.last_seen_at) AS last_seen_at,
-              MAX(ops.received_at) AS last_sync_at,
-              MAX(interpretation_usage.created_at) AS last_ai_usage_at
+              s.last_seen_at AS last_seen_at,
+              o.last_sync_at AS last_sync_at,
+              u.last_ai_usage_at AS last_ai_usage_at
        FROM users
-       LEFT JOIN sessions ON sessions.user_id = users.id
-       LEFT JOIN ops ON ops.user_id = users.id
-       LEFT JOIN interpretation_usage ON interpretation_usage.user_id = users.id`;
+       LEFT JOIN (SELECT user_id, MAX(last_seen_at) AS last_seen_at FROM sessions GROUP BY user_id) s
+         ON s.user_id = users.id
+       LEFT JOIN (SELECT user_id, MAX(received_at) AS last_sync_at FROM ops GROUP BY user_id) o
+         ON o.user_id = users.id
+       LEFT JOIN (SELECT user_id, MAX(created_at) AS last_ai_usage_at FROM interpretation_usage GROUP BY user_id) u
+         ON u.user_id = users.id`;
 
 function getAdminUser(db: Database, id: string): AdminUser | null {
-  const row = db.prepare(`${ADMIN_USER_SELECT} WHERE users.id = ? GROUP BY users.id`).get(id) as
-    AdminUserRow | undefined;
+  const row = db.prepare(`${ADMIN_USER_SELECT} WHERE users.id = ?`).get(id) as AdminUserRow | undefined;
   return row ? toAdminUser(row) : null;
 }
 
@@ -149,9 +153,7 @@ export function registerAdminRoutes(app: FastifyInstance, db: Database): void {
     '/api/admin/users',
     { preHandler: requireAdmin(db), config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
     async (_request, reply) => {
-      const rows = db
-        .prepare(`${ADMIN_USER_SELECT} GROUP BY users.id ORDER BY users.created_at`)
-        .all() as unknown as AdminUserRow[];
+      const rows = db.prepare(`${ADMIN_USER_SELECT} ORDER BY users.created_at`).all() as unknown as AdminUserRow[];
       return reply.send({ users: rows.map(toAdminUser) });
     },
   );
