@@ -4,7 +4,9 @@
 
 1. Read `CLAUDE.md` + `docs/DEPENDENCIES.md`.
 2. Check local `MAP.md` in target directory before inspecting files.
-3. Use `.claudeignore` to exclude search paths; every major directory maintains its own `MAP.md`.
+3. For UI work, read `docs/UI-UX_GUIDELINES.md` before designing or changing a feature.
+4. For UI shell, navigation, settings, chart-workspace, or migration work, also follow `docs/UI-UX_IMPLEMENTATION_PLAN.md`.
+5. Use `.claudeignore` to exclude search paths; every major directory maintains its own `MAP.md`.
 
 ## Documentation Maintenance
 

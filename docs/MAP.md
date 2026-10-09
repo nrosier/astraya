@@ -7,6 +7,9 @@ Root files:
 - `CORPUS_KEYS.md` — Corpus key-shape reference (which placements get which key format). Deps: `src/interpretation/schema.ts`; paired with `html/CORPUS_KEYS.html`.
 - `DEPENDENCIES.md` — Hand-maintained dependency/licence inventory `CLAUDE.md`'s onboarding checklist points to. Deps: `node_modules/*/package.json` licence fields.
 - `RELEASING.md` — Release policy and tagging scheme (every milestone ends in a release).
+- `UI-UX_GUIDELINES.md` — Normative UI/UX implementation and behavior rules for future features. Deps: `src/ui`, `docs/UI-UX_REVIEW.md`.
+- `UI-UX_IMPLEMENTATION_PLAN.md` — Phased coding plan for migrating routes, shell, settings, controls, charts, and Astrocartography to the target experience. Deps: `src/ui`, `test`, `e2e`, `docs/UI-UX_GUIDELINES.md`.
+- `UI-UX_REVIEW.md` — Code-grounded 2026-10-09 design and usability audit with prioritized remediation. Deps: `src/ui`, `e2e/accessibility.spec.ts`.
 
 Subdirectories:
 
