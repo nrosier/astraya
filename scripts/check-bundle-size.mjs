@@ -23,9 +23,11 @@ import { join } from 'node:path';
 
 const assetsDir = 'dist/assets';
 
-// The eager graph is ~515 KiB of gzip-eligible source today. This leaves real headroom for
-// growth while still catching an accidental large dependency, or a lazy chunk quietly
-// becoming an eager one.
+// The eager graph is ~490 KiB today (#494 moved About/Changelog/SetPasswordForm/SetupForm
+// behind their own lazy import()s, which — along with Changelog's own embedded changelog text —
+// had been pulled into the entry chunk by oversight). 650 KiB leaves real headroom for growth
+// while still catching an accidental large dependency, or a lazy chunk quietly becoming an eager
+// one.
 const EAGER_JS_BUDGET_BYTES = 650 * 1024;
 
 const entries = await readdir(assetsDir);
@@ -96,6 +98,11 @@ const mustStayLazy = [
     pattern: /^AdminPanel-.*\.js$/,
     what: 'the admin panel (#338)',
     cost: 'a screen almost no visitor has a route to',
+  },
+  {
+    pattern: /^Changelog-.*\.js$/,
+    what: 'the Changelog screen and its embedded changelog text (#494)',
+    cost: 'a multi-hundred-release changelog nobody but someone clicking the version number asked for',
   },
 ];
 

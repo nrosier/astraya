@@ -88,6 +88,14 @@ export default defineConfig(({ mode }) => {
       // The Swiss Ephemeris data files are large and immutable per release; they
       // are served from public/ephe and fetched at runtime, never bundled.
       assetsInlineLimit: 0,
+      // Vite's default 500 kB warning threshold is tripped by one chunk that is already
+      // reviewed and deliberately accepted (#494): the lazy PDF-render chunk, which intentionally
+      // bundles jspdf/jspdf-autotable/svg2pdf.js together behind its own dynamic import() so the
+      // eager graph (gated separately and far more strictly by scripts/check-bundle-size.mjs)
+      // never pays for it. 530 kB leaves it unflagged while still catching any *other* chunk that
+      // grows past it unexpectedly — raise this deliberately, with an updated reason here, rather
+      // than letting it drift.
+      chunkSizeWarningLimit: 530,
     },
     worker: { format: 'es' },
     test: {
