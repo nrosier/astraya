@@ -30,9 +30,13 @@ planned and what is done.
   and sidereal, aspects, dignities, derived points, nakshatras.
 - **Progressions and returns** — secondary, solar-arc and tertiary progressions;
   solar, lunar and planetary returns; primary directions; bi-wheels.
-- **Interpretation** — a full written report. The prose corpus is drafted by an
-  LLM **at build time** and committed as source data; the shipped application
-  makes no model API calls, ever.
+- **Interpretation** — a full written report, generated entirely locally from a
+  prose corpus drafted by an LLM **at build time** and committed as source data;
+  reading it makes no network call of any kind. A separate, explicit, signed-in
+  action — "AI-customized interpretation" — sends your choice of style/tone/focus
+  instructions (and, in freeform mode, your chart data) to the server operator's
+  configured third-party model provider for that one request; it is never run
+  without that explicit action and consent.
 
 ## Design
 
@@ -42,7 +46,10 @@ planned and what is done.
 - **Optional sync.** Signing in (Authentik OIDC) syncs an append-only operation
   log to your own self-hosted server so your data reaches your other devices. The
   server stores opaque operations and never interprets them. Without signing in,
-  nothing leaves your device.
+  no sync record ever leaves your device. One signed-out exception: searching for
+  a birth place sends the search text to a geocoding provider (MapTiler, or
+  Nominatim by default) to resolve it to coordinates — the one network request
+  the app makes before you've signed in at all.
 
 ## Development
 
