@@ -85,11 +85,13 @@ describe('generateTier2Text', () => {
     expect(calls).toBe(1);
   });
 
-  it('does not add the model hint for a non-404 failure', async () => {
+  it('does not add the model hint for a non-404 failure, and does not echo the provider body (#490)', async () => {
     globalThis.fetch = async () => new Response('server error', { status: 400 });
-    await expect(generateTier2Text(config, 'system', 'user')).rejects.toThrow(
-      'Tier 2 model call failed (400): server error',
+    const assertion = expect(generateTier2Text(config, 'system', 'user')).rejects.toThrow(
+      'Tier 2 model call failed (400)',
     );
+    await assertion;
+    await expect(generateTier2Text(config, 'system', 'user')).rejects.not.toThrow(/server error/);
   });
 
   it('parses structured sections from a successful response (#376)', async () => {
@@ -116,6 +118,51 @@ describe('generateTier2Text', () => {
         { status: 200 },
       );
     await expect(generateTier2Text(config, 'system', 'user')).rejects.toThrow(/unexpected model response shape/);
+  });
+});
+
+describe('log confidentiality (#490)', () => {
+  /** Recursively stringifies everything a logger call received, so a marker buried in a nested field is still caught. */
+  function serializedCallArgs(calls: readonly (readonly unknown[])[]): string {
+    return calls.map((call) => JSON.stringify(call)).join('\n');
+  }
+
+  it('never logs request content, even across retries and a non-ok response', async () => {
+    const requestMarker = 'REQUEST_MARKER_7f3a';
+    const debug = vi.fn();
+    let calls = 0;
+    globalThis.fetch = async () => {
+      calls += 1;
+      // First attempt fails (retryable); the marker must not leak into that debug call either.
+      return new Response('irrelevant', { status: calls === 1 ? 503 : 400 });
+    };
+    await expect(
+      generateTier2Text(config, `system instruction containing ${requestMarker}`, requestMarker, 1, { debug }),
+    ).rejects.toThrow();
+    expect(serializedCallArgs(debug.mock.calls)).not.toContain(requestMarker);
+  });
+
+  it('never logs the model response text, including on a successful call', async () => {
+    const responseMarker = 'RESPONSE_MARKER_9c1e';
+    const debug = vi.fn();
+    globalThis.fetch = async () =>
+      new Response(
+        JSON.stringify({
+          candidates: [
+            { content: { parts: [{ text: JSON.stringify({ sections: [], description: responseMarker }) }] } },
+          ],
+          usageMetadata: { promptTokenCount: 1, candidatesTokenCount: 1 },
+        }),
+        { status: 200 },
+      );
+    await generateTier2Text(config, 'system', 'user', 2, { debug });
+    expect(serializedCallArgs(debug.mock.calls)).not.toContain(responseMarker);
+  });
+
+  it('never folds provider error-body text into the thrown Error (which request.log.error would log)', async () => {
+    const errorMarker = 'ERROR_BODY_MARKER_4b2d';
+    globalThis.fetch = async () => new Response(errorMarker, { status: 400 });
+    await expect(generateTier2Text(config, 'system', 'user')).rejects.not.toThrow(new RegExp(errorMarker));
   });
 });
 
