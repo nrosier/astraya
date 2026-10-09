@@ -26,7 +26,7 @@ jobs:
           while IFS= read -r subject; do
             [ -z "$subject" ] && continue
             if ! printf '%s' "$subject" \
-              | grep -qE '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-z0-9./#-]+\))?!?: .+'; then
+              | grep -qE '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-z0-9#./-]+\))?!?: .+'; then
               echo "Not a conventional commit subject: $subject" >&2
               bad=1
             fi
