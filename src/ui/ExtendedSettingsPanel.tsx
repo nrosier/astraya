@@ -273,6 +273,7 @@ export function ExtendedSettingsPanel({
             <p className="hint settings-card-tag">{t.appliesOnApply}</p>
             <label>
               <select
+                aria-label={t.presetLabel}
                 value={currentPreset ?? 'custom'}
                 onChange={(event) => {
                   choosePreset(event.target.value);

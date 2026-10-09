@@ -50,7 +50,7 @@ test('the rulers choice is modern by default, drives the dispositor table, and i
   await expect(page.locator('div.chart-wheel')).toBeVisible();
   await page.getByRole('tab', { name: 'Dignities', exact: true }).click();
 
-  // The control sits in the chart's Extended settings card, under "On this device".
+  // The control sits in the chart's Extended settings card, under "Rulership & dignities".
   await openSettings(page);
   const rulers = page.getByLabel('Planetary rulers', { exact: true });
   const plutoChain = page
