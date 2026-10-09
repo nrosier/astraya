@@ -652,9 +652,26 @@ function renderTableTab(
           />
           <h4 className="dispositors-section-header" style={{ marginTop: '1.5rem', marginBottom: '0.5rem' }}>
             {t.dispositorsCaption}{' '}
-            <span title={t.dispositorsTooltip} style={{ cursor: 'help', fontSize: '0.9em', verticalAlign: 'super' }}>
+            {/* A bare non-focusable <span title> only reaches a mouse-hover user (#456); this is
+                a real button with an aria-label so the same explanation is announced on keyboard
+                focus too, kept visually identical via inline chrome-reset styles. */}
+            <button
+              type="button"
+              title={t.dispositorsTooltip}
+              aria-label={t.dispositorsTooltip}
+              style={{
+                cursor: 'help',
+                fontSize: '0.9em',
+                verticalAlign: 'super',
+                border: 'none',
+                background: 'none',
+                padding: 0,
+                color: 'inherit',
+                font: 'inherit',
+              }}
+            >
               ?
-            </span>
+            </button>
           </h4>
           <p className="hint">{t.dispositorsHint}</p>
           <SortableTable
