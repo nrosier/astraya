@@ -4,6 +4,36 @@ All notable changes to Astraya are recorded here. Versions follow
 [semantic versioning](https://semver.org/), and every milestone ends in a release —
 see [docs/RELEASING.md](docs/RELEASING.md).
 
+## [0.34.0] — 2026-10-09
+
+**Primary directions — the oldest Western predictive timing technique — joins progressions and returns, a full 360-degree Sabian-style "degree symbol" corpus is now surfaced in the report and the wheel's click panel, and the PDF export builder gains Eclipses, Progressions, Solar Arc, Profections and Astrocartography sections.**
+
+M9 (Polish & launch) progress, not a finished milestone — v1.0.0 hasn't shipped yet. #120 (the milestone's own release-tracking issue) stays open: it still needs a verification pass by an astrology practitioner and a deployed-About-page check, which this release does not satisfy on its own.
+
+### Added
+
+- **Primary directions (#407).** The oldest Western predictive timing technique joins progressions and returns: significators (Ascendant, MC, Sun, Moon) are directed to promissors (Sun through Pluto) by the five Ptolemaic aspects, using the classical Placidus semi-arc method with a choice of Naibod or Ptolemy time keys. Direct directions only for now — converse directions are a future enhancement. Verified against two independently published historical calculations (Henry II of France, Prince Charles) to within one arcminute, a dedicated accuracy gate that must pass before this feature can ship, the same way the golden-chart gate guards the base ephemeris.
+- **A full 360-degree "degree symbol" corpus, drawn from a verified 1655 public-domain source, is now surfaced in the written report and the wheel's click-to-isolate panel (#405, #484).** Every Sun, Moon, Ascendant and Midheaven paragraph in the standard report now carries its traditional degree image and keynote alongside the usual sign placement, in both English and Dutch, de-emphasized as a secondary note; the same text appears when a body is clicked on the wheel. Natal charts only — a degree symbol has no composite equivalent.
+- **The PDF export builder gains its remaining sections: Eclipses, Progressions, Solar Arc, Profections and Astrocartography (#441).** Each follows the pattern already used by synastry/composite/transits — its own options, tables and date range — completing the export builder's checklist begun in v0.30.0. All are included in the complete-archive preset; progressions and solar arc also form a new "Full predictive report" preset.
+- **The About page's astrology primer gains a brief history section (#457)**, Babylonian origins through the Hellenistic, medieval and 20th-century split, in both locales.
+
+### Fixed
+
+- **The PDF export builder's Transits and Forecast checkboxes, missing since v0.33.0, now actually appear on screen (#441).** The underlying support shipped in v0.33.0, but the checkboxes to turn it on from the Export page were never wired up — the original issue's checklist had incorrectly marked that step done. Found while building the Eclipses section above and fixed alongside it.
+- **Two Extended Settings controls that were both labelled "Starting point" are now named for what they actually do (#460): "Tradition" for the zodiac/houses/rulers/points bundle, "Zodiac" for the tropical/sidereal choice.** A UI consistency pass along the way replaced several hardcoded colours that ignored dark mode, and caught a real bug: PDF and data exports computed a chart's dignity flags under the default rulership scheme regardless of the device's own setting, while the on-screen dignity scores already respected it — both now agree.
+- **Column-header and dispositor-chain tooltips are reachable by keyboard and announced by screen readers, not just visible on mouse hover (#456).** The almuten-of-the-ascendant hint gets its own tooltip, and the wheel's and aspect-matrix's retrograde "R" marks now carry an accessible explanation too.
+- **Tier 2 AI interpretation's daily cost cap is hardened against a slow-provider edge case (#476).** A provider call that hung past its reservation's expiry window could, under rare timing, slip past v0.33.0's own concurrency fix and let a request through without being capped. Provider calls now time out well before their reservation expires, and an expired reservation is charged in full rather than quietly dropped.
+
+### Internal tooling
+
+- **The corpus's evaluate/improve feedback loop reaches full convergence: both locales report 7328/7328 entries checked and clean, with zero disputed or exhausted (#381).** This is the baseline the degree-symbol corpus above was generated and reviewed against; it does not itself change any other shipped interpretation text.
+- **The admin Users table's activity query is restructured to aggregate each contributing table once instead of joining them directly (#477)**, avoiding a Cartesian-product blow-up as a user's session, operation and usage history grows. Same results, computed without the intermediate row explosion.
+- **Vendor benchmark cache files are no longer tracked in Git (#478)**, moved to a gitignored local-only path with a documented no-distribution rationale; no effect on the shipped app.
+
+### Notes for people running their own server
+
+- No database migration and no new configuration in this release.
+
 ## [0.33.0] — 2026-10-08
 
 **PDF exports can now include transits and forecast sections, the admin Users table distinguishes real activity from a backgrounded tab, chart tables explain more of their columns on hover, and Tier 2 AI interpretation's daily cost caps are now enforced correctly under concurrent requests.**

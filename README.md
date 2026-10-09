@@ -2,7 +2,7 @@
 
 <p align="center">
   <a href="https://github.com/nrosier/astraya/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/nrosier/astraya/actions/workflows/ci.yml/badge.svg"></a>
-  <a href="https://github.com/nrosier/astraya/releases"><img alt="Release" src="https://img.shields.io/badge/release-v0.33.0-blue"></a>
+  <a href="https://github.com/nrosier/astraya/releases"><img alt="Release" src="https://img.shields.io/badge/release-v0.34.0-blue"></a>
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-AGPL--3.0--or--later-blue"></a>
 </p>
 
@@ -18,7 +18,7 @@ plausible-looking number.
 
 ## Status
 
-Pre-1.0 (`v0.33.0`). Calculation, charting, interpretation (including optional
+Pre-1.0 (`v0.34.0`). Calculation, charting, interpretation (including optional
 AI-customized restyling), and sync are all built and shipping; M9 (polish and
 the `v1.0.0` launch itself) is what's left — see the
 [issues and milestones](https://github.com/nrosier/astraya/issues) for what is
@@ -29,7 +29,7 @@ planned and what is done.
 - **Natal charts** — all bodies, roughly 23 house systems, 48 ayanamsas, tropical
   and sidereal, aspects, dignities, derived points, nakshatras.
 - **Progressions and returns** — secondary, solar-arc and tertiary progressions;
-  solar, lunar and planetary returns; bi-wheels.
+  solar, lunar and planetary returns; primary directions; bi-wheels.
 - **Interpretation** — a full written report. The prose corpus is drafted by an
   LLM **at build time** and committed as source data; the shipped application
   makes no model API calls, ever.
