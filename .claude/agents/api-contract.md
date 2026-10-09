@@ -23,25 +23,28 @@ catches it until a user hits a runtime `undefined`.
 ## What to check on a route/client diff
 
 1. **Does the client interface still match the server shape field-for-field?**
-   Grep both sides — `server/auth/identity.ts`'s `User`/`AdminUser` shapes,
+   Grep both sides — `server/auth/identity.ts`'s `User` shape,
+   `server/auth/admin-routes.ts`'s `AdminUser` shape,
    `server/ops/routes.ts`'s response bodies — against their client-side mirror.
    A field renamed on one side and not the other is a silent contract break that
    `npm run typecheck` will *not* catch if both sides still independently
    compile (the client interface has no way to fail a build just because the
    server changed).
-2. **Error bodies are uniformly `{ error: string }`.** There is no per-field
-   validation-error shape (no Zod `error.issues`) anywhere in this codebase.
-   A new route returning a differently-shaped error, or a client expecting one,
-   is a regression from the one convention this API has.
-3. **Rate limiting is opt-in per route, not global.** `@fastify/rate-limit` is
-   registered with `global: false` (`server/index.ts`) — a route only gets a
-   limit if it explicitly carries `config: { rateLimit: { max, timeWindow } }`.
-   `/api/ops`, `/api/auth/login`, `/api/auth/oidc/callback`, `/api/setup`,
-   `/api/auth/set-password`, and every `/api/admin/*` route currently carry this;
-   a **new** route that forgets to opt in fails open (unlimited), not closed —
-   check any new route added to `server/auth/routes.ts`, `admin-routes.ts`, or
-   `ops/routes.ts` explicitly sets one rather than assuming the global default
-   covers it.
+2. **Error bodies are `{ error: string }` in the four route files above.**
+   There is no per-field validation-error shape (no Zod `error.issues`)
+   anywhere in this codebase — except one deliberate addition:
+   `server/interpretation-routes.ts:850-854` returns
+   `{ error, code: 'customization-rejected', reason }` for a rejected
+   customization instruction, consumed by
+   `src/interpretation/tier2-client.ts:56,68`. That's the one place a client
+   is expected to read more than `error`; a new route returning a *third*
+   differently-shaped error, or a client silently expecting one without that
+   precedent, is a regression from the convention.
+3. **Rate limiting is opt-in per route, not global** — `security-auditor` owns
+   the mechanism (`global: false`, which routes currently opt in). This
+   agent's angle: does a new route added to `server/auth/routes.ts`,
+   `admin-routes.ts`, or `ops/routes.ts` explicitly set
+   `config: { rateLimit: {...} } }`, since forgetting fails open, not closed.
 4. **The op-log wire format has its own forward-compatibility contract**
    (`src/store/ops.ts`) that both sides must honor: `toWire()`/`fromWire()` in
    `src/sync/engine.ts` translate between the client's `OpRecord` shape and the
@@ -52,9 +55,13 @@ catches it until a user hits a runtime `undefined`.
 5. **`postOps()`'s `{ seqs, skipped }` response shape is part of the contract,
    not an implementation detail** — the client's `quarantined()` tracking in
    `src/sync/engine.ts` depends on the server actually returning which ops were
-   skipped for clock skew rather than silently dropping or rejecting them. A
-   server change that stops returning `skipped` breaks that client-side count
-   without a compile error, since the field is optional on the response type.
+   skipped for clock skew rather than silently dropping or rejecting them.
+   `PushResult.skipped` is a required field, and the client runtime-validates
+   it: `postOps()` throws `SyncError('malformed', ...)` if the response is
+   malformed, rather than silently defaulting. So a server change that stops
+   returning `skipped` is no longer a silent type-level gap — it now fails
+   loudly at runtime — but check a new response-shape change still goes
+   through that validation rather than being read optimistically before it.
 6. Run `npm run typecheck` before reporting a type-shape finding as unverified —
    it catches a same-file-import mismatch; it will *not* catch two independently
    hand-written interfaces on either side of an HTTP boundary drifting apart.
@@ -76,9 +83,10 @@ catches it until a user hits a runtime `undefined`.
 ## What this agent does not need to check
 
 There's no PATCH omit-vs-null convention to verify (no partial-update routes of
-that shape exist), no CSRF token wrapper (session-cookie `sameSite: 'lax'` plus
-no state-changing GET is the actual defense here — that's a `security-auditor`
-question, not this agent's), and no client-side data-fetching library whose
+that shape exist), no CSRF token wrapper — the actual defenses are
+session-cookie `sameSite: 'lax'`, no state-changing GET, and `server/csrf.ts`'s
+Origin-header host-check (`isCrossOriginWrite`), all a `security-auditor`
+question, not this agent's — and no client-side data-fetching library whose
 cache-invalidation contract needs reviewing.
 
 ## Output format

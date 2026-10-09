@@ -38,7 +38,8 @@ scope and no plan for one — don't spend review budget on RTL layout concerns.
 ## Accessibility — check against the patterns already in place
 
 - **A disabled control needs its own accessible label, not just a bare `title`
-  tooltip.** `PersonNav.tsx`'s gated chart-type tabs are the existing precedent:
+  tooltip.** `AppNav.tsx`'s gated chart-type tabs (renamed from `PersonNav.tsx`
+  in #421) are the existing precedent:
   `disabled` plus a dedicated `aria-label` built from a messages-catalogue
   function (something like `t.disabledTabSuffix(label)`), because a `title`
   attribute is not reliably announced by a screen reader and is suppressed

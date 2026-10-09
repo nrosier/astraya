@@ -24,10 +24,11 @@ scope crosses a milestone boundary — surface the conflict.
 ## `npm run changelog:draft` seeds the changelog, it doesn't finish it
 
 The script drafts `CHANGELOG.md`'s new section from conventional-commit
-subjects since the last tag, and already excludes chore/CI/deps-bump/docs/
-refactor/test-only commits — don't manually re-filter those back in, and don't
-assume every commit belongs; check the draft against the actual commit log
-before treating it as final prose.
+subjects since the last tag. It silently drops chore/test/ci/build commits,
+flags style/revert commits to stderr for a human ruling, and files refactor
+commits under "Changed" rather than excluding them — don't manually re-filter
+refactor commits back out, and don't assume every commit belongs; check the
+draft against the actual commit log before treating it as final prose.
 
 ## The files a release touches
 
@@ -38,11 +39,13 @@ before treating it as final prose.
    surrounding context, never by line-counting.
 3. `CHANGELOG.md` — the section `changelog:draft` seeded, reviewed and edited
    for prose quality, inserted above the previous version's section.
-4. `README.md` — the release badge. Confirmed: **there is no roadmap table and
-   no separate "where it is now" status paragraph** in this README to update —
-   don't invent one from a different project's convention; check
-   `docker pull`/version-referencing lines if any exist and update those
-   instead.
+4. `README.md` — the release badge, **and the `## Status` section**, which
+   hard-codes a version string in its own prose (e.g. "Pre-1.0 (`v0.29.0`)...").
+   This is routinely forgotten — it was already four releases stale at the time
+   this file was last checked, because nothing in this checklist used to name
+   it. Update it in the same commit as the badge. There is no roadmap table.
+   Check `docker pull`/version-referencing lines if any exist and update those
+   too.
 
 `test/readme.test.ts` and `npm run check`'s overall gate exist partly to catch a
 forgotten version bump — run `npm run check` after the edits, not just before

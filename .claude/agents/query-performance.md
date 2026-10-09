@@ -55,9 +55,10 @@ comments already document the tradeoff this agent checks for:
 2. Does the fix change results under a concurrent write (a stale read racing
    another device's push), not just speed — if so it's also a `db-integrity`
    finding; flag it there too rather than treating it as pure optimization.
-3. For a server route: does it already carry a rate limit (`config: { rateLimit:
-   {...} } }`) bounding how often it can be hit? A slow-but-rare admin route is a
-   lower priority than a slow route on the hot sync path (`/api/ops`).
+3. For a server route: does it already carry a rate limit (`security-auditor`
+   owns the opt-in mechanism; `config: { rateLimit: {...} } }` is the shape)
+   bounding how often it can be hit? A slow-but-rare admin route is a lower
+   priority than a slow route on the hot sync path (`/api/ops`).
 
 ## Output format
 

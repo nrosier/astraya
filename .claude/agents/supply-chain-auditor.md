@@ -61,11 +61,15 @@ dependency's binary distribution.
    auto-merge path as expected, and does the PR carry the golden-chart-gate
    reminder? If a PR bypasses this (e.g. a manual `package.json` edit outside
    Renovate), the same re-verification is still required.
-4. Is there a CVE-scanning signal to check at all? There is currently no
-   `npm audit`-in-CI, no Trivy, no Snyk step in `.github/workflows/`. A
-   dependency bump's security justification, if any, has to come from the
-   changelog/advisory itself, not from a CI gate — say so rather than assuming
-   one exists.
+4. Is there a CVE-scanning signal to check at all? There is no
+   `npm audit`-in-CI, no Trivy, no Snyk step in `.github/workflows/` for
+   dependencies. There *is* a post-release image scan: `docker.yml`'s
+   `harbor-scan` job runs a Harbor vulnerability scan against the pushed
+   image, conditional on `HARBOR_URL` being configured — but that's a
+   release-time signal on the built image, not a pre-merge gate on a
+   dependency bump. A dependency bump's security justification still has to
+   come from the changelog/advisory itself at review time; say so rather than
+   assuming a pre-merge gate exists.
 
 ## Output format
 

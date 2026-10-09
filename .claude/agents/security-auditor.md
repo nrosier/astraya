@@ -133,12 +133,16 @@ session/auth code, not through a missing `WHERE` clause on a shared table.
   from `src/`) — the only carve-out is a configurable geocoding host. A new
   feature that needs to call out to a new origin is a CSP change to scrutinize,
   not a header to just widen.
-- **Purge is local-only** — deleting a person on one device removes it from
-  that device's log, but nothing today propagates that removal through sync to
-  the server or other already-synced devices (`src/store/oplog.ts`'s own
-  comment on `purgeEntity` says as much). Verify current behavior in
-  `src/sync/engine.ts` before treating a purge-adjacent feature as "the data is
-  gone" — it may only be gone from the device that ran it.
+- **Purge now propagates through sync and erases server-side** (#308, fixed by
+  commits `32066dc`/`8971eef`, after having been local-only) — a `purgeEntity`
+  call writes a `PURGED_FIELD` marker that syncs like any other op; the server
+  detects it (`isPurgeMarker`/`recordPurgeAndErase` in `server/ops/routes.ts` —
+  see `db-integrity` for the full mechanism, which owns this as canonical) and
+  records the entity in a `purged_entities` deny-list for real erasure, not
+  just a tombstone. This agent's angle is regression, not re-describing the
+  mechanism: a change to this path that stops the marker from syncing, or that
+  lets a later op resurrect a purged entity past the deny-list check, reopens
+  the exact "purge isn't really gone from a synced copy" risk #308 closed.
 
 ## Output format
 
