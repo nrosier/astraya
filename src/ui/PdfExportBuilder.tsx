@@ -22,10 +22,13 @@ import {
   defaultAstrocartographySectionOptions,
   defaultChartSectionOptions,
   defaultCompositeSectionOptions,
+  defaultEclipsesSectionOptions,
+  defaultForecastSectionOptions,
   defaultProfectionsSectionOptions,
   defaultProgressionsSectionOptions,
   defaultSolarArcSectionOptions,
   defaultSynastrySectionOptions,
+  defaultTransitsSectionOptions,
   EMPTY_SELECTION,
   matchPdfPreset,
   PDF_ACG_LINE_TYPES,
@@ -38,12 +41,16 @@ import {
   type PdfChartSectionOptions,
   type PdfChartTable,
   type PdfCompositeSectionOptions,
+  type PdfEclipsesSectionOptions,
+  type PdfForecastSectionOptions,
   type PdfProfectionsSectionOptions,
   type PdfProgressionsSectionOptions,
   type PdfProgressionTechnique,
   type PdfSelection,
   type PdfSolarArcSectionOptions,
   type PdfSynastrySectionOptions,
+  type PdfTransitFilterPreset,
+  type PdfTransitsSectionOptions,
 } from '../domain/pdf-export-sections.js';
 import { EXTENDED_ACG_BODY_IDS, TRADITIONAL_ACG_BODY_IDS } from '../domain/astrocartography.js';
 import type { Person } from '../domain/person.js';
@@ -177,6 +184,57 @@ export function PdfExportBuilder(): React.JSX.Element {
         : current.composite.tables.filter((candidate) => candidate !== table);
       return { ...current, composite: { ...current.composite, tables } };
     });
+  };
+
+  const toggleTransits = (included: boolean): void => {
+    setSelection((current) => {
+      if (!included) {
+        const next = { ...current };
+        delete next.transits;
+        return next;
+      }
+      return { ...current, transits: defaultTransitsSectionOptions() };
+    });
+  };
+
+  const patchTransits = (patch: Partial<PdfTransitsSectionOptions>): void => {
+    setSelection((current) =>
+      current.transits === undefined ? current : { ...current, transits: { ...current.transits, ...patch } },
+    );
+  };
+
+  const toggleForecast = (included: boolean): void => {
+    setSelection((current) => {
+      if (!included) {
+        const next = { ...current };
+        delete next.forecast;
+        return next;
+      }
+      return { ...current, forecast: defaultForecastSectionOptions() };
+    });
+  };
+
+  const patchForecast = (patch: Partial<PdfForecastSectionOptions>): void => {
+    setSelection((current) =>
+      current.forecast === undefined ? current : { ...current, forecast: { ...current.forecast, ...patch } },
+    );
+  };
+
+  const toggleEclipses = (included: boolean): void => {
+    setSelection((current) => {
+      if (!included) {
+        const next = { ...current };
+        delete next.eclipses;
+        return next;
+      }
+      return { ...current, eclipses: defaultEclipsesSectionOptions() };
+    });
+  };
+
+  const patchEclipses = (patch: Partial<PdfEclipsesSectionOptions>): void => {
+    setSelection((current) =>
+      current.eclipses === undefined ? current : { ...current, eclipses: { ...current.eclipses, ...patch } },
+    );
   };
 
   const toggleProgressions = (included: boolean): void => {
@@ -609,6 +667,191 @@ export function PdfExportBuilder(): React.JSX.Element {
             </div>
           )}
         </div>
+      </fieldset>
+
+      <fieldset className="field-group">
+        <legend>{t.transitsLegend}</legend>
+        <div>
+          <label>
+            <input
+              type="checkbox"
+              checked={fullSelection.transits !== undefined}
+              onChange={(event) => {
+                toggleTransits(event.target.checked);
+              }}
+            />{' '}
+            {t.transitsLabel}
+          </label>
+          {fullSelection.transits !== undefined && (
+            <div className="settings-card-indent">
+              <label htmlFor={`${id}-transits-filter`}>{t.filterPresetLabel}</label>{' '}
+              <select
+                id={`${id}-transits-filter`}
+                value={fullSelection.transits.filterPreset}
+                onChange={(event) => {
+                  patchTransits({ filterPreset: event.target.value as PdfTransitFilterPreset });
+                }}
+              >
+                {(['important', 'all'] as const).map((preset) => (
+                  <option key={preset} value={preset}>
+                    {t.filterPresetOptions[preset]}
+                  </option>
+                ))}
+              </select>
+              <br />
+              <label>
+                <input
+                  type="checkbox"
+                  checked={fullSelection.transits.wheel}
+                  onChange={(event) => {
+                    patchTransits({ wheel: event.target.checked });
+                  }}
+                />{' '}
+                {t.wheelLabel}
+              </label>{' '}
+              <label>
+                <input
+                  type="checkbox"
+                  checked={fullSelection.transits.aspectsTable}
+                  onChange={(event) => {
+                    patchTransits({ aspectsTable: event.target.checked });
+                  }}
+                />{' '}
+                {t.aspectsTableLabel}
+              </label>{' '}
+              <label>
+                {t.asOfDateLabel}{' '}
+                <input
+                  type="date"
+                  value={fullSelection.transits.asOfDate ?? ''}
+                  onChange={(event) => {
+                    patchTransits({ asOfDate: event.target.value });
+                  }}
+                />
+              </label>
+            </div>
+          )}
+        </div>
+
+        <div>
+          <label>
+            <input
+              type="checkbox"
+              checked={fullSelection.forecast !== undefined}
+              onChange={(event) => {
+                toggleForecast(event.target.checked);
+              }}
+            />{' '}
+            {t.forecastLabel}
+          </label>
+          {fullSelection.forecast !== undefined && (
+            <div className="settings-card-indent">
+              <label htmlFor={`${id}-forecast-filter`}>{t.filterPresetLabel}</label>{' '}
+              <select
+                id={`${id}-forecast-filter`}
+                value={fullSelection.forecast.filterPreset}
+                onChange={(event) => {
+                  patchForecast({ filterPreset: event.target.value as PdfTransitFilterPreset });
+                }}
+              >
+                {(['important', 'all'] as const).map((preset) => (
+                  <option key={preset} value={preset}>
+                    {t.filterPresetOptions[preset]}
+                  </option>
+                ))}
+              </select>
+              <br />
+              <label>
+                <input
+                  type="checkbox"
+                  checked={fullSelection.forecast.daily}
+                  onChange={(event) => {
+                    patchForecast({ daily: event.target.checked });
+                  }}
+                />{' '}
+                {t.forecastDailyLabel}
+              </label>{' '}
+              <label>
+                <input
+                  type="checkbox"
+                  checked={fullSelection.forecast.weekly}
+                  onChange={(event) => {
+                    patchForecast({ weekly: event.target.checked });
+                  }}
+                />{' '}
+                {t.forecastWeeklyLabel}
+              </label>{' '}
+              <label>
+                <input
+                  type="checkbox"
+                  checked={fullSelection.forecast.monthly}
+                  onChange={(event) => {
+                    patchForecast({ monthly: event.target.checked });
+                  }}
+                />{' '}
+                {t.forecastMonthlyLabel}
+              </label>{' '}
+              <label>
+                <input
+                  type="checkbox"
+                  checked={fullSelection.forecast.yearly}
+                  onChange={(event) => {
+                    patchForecast({ yearly: event.target.checked });
+                  }}
+                />{' '}
+                {t.forecastYearlyLabel}
+              </label>{' '}
+              <label>
+                {t.asOfDateLabel}{' '}
+                <input
+                  type="date"
+                  value={fullSelection.forecast.asOfDate ?? ''}
+                  onChange={(event) => {
+                    patchForecast({ asOfDate: event.target.value });
+                  }}
+                />
+              </label>
+            </div>
+          )}
+        </div>
+      </fieldset>
+
+      <fieldset className="field-group">
+        <legend>{t.eclipsesLegend}</legend>
+        <label>
+          <input
+            type="checkbox"
+            checked={fullSelection.eclipses !== undefined}
+            onChange={(event) => {
+              toggleEclipses(event.target.checked);
+            }}
+          />{' '}
+          {t.eclipsesLabel}
+        </label>
+        {fullSelection.eclipses !== undefined && (
+          <div className="settings-card-indent">
+            <label htmlFor={`${id}-eclipses-from`}>{t.fromYearLabel}</label>{' '}
+            <input
+              id={`${id}-eclipses-from`}
+              type="number"
+              value={fullSelection.eclipses.fromYear ?? ''}
+              onChange={(event) => {
+                if (event.target.value === '') return;
+                patchEclipses({ fromYear: Number(event.target.value) });
+              }}
+            />{' '}
+            <label htmlFor={`${id}-eclipses-to`}>{t.toYearLabel}</label>{' '}
+            <input
+              id={`${id}-eclipses-to`}
+              type="number"
+              value={fullSelection.eclipses.toYear ?? ''}
+              onChange={(event) => {
+                if (event.target.value === '') return;
+                patchEclipses({ toYear: Number(event.target.value) });
+              }}
+            />
+          </div>
+        )}
       </fieldset>
 
       <fieldset className="field-group">

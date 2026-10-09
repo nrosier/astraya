@@ -12,7 +12,8 @@
  * @module Signs
  * @purpose Defines the 12 tropical zodiac signs as a pure partition of ecliptic longitude, with element/modality classification.
  * @conventions Each sign spans exactly 30 degrees starting from 0 Aries, definitional rather than ephemeris-computed; sidereal placements use the same partition since only the longitude itself (already ayanamsa-shifted by the engine) differs, not the sign boundaries.
- * @exports SIGN_SPAN, SIGNS, signIndex, signOf, degreesInSign, oppositeSign
+ * @exports SIGN_SPAN, SIGNS, signIndex, signOf, degreesInSign, oppositeSign, degreeSymbolNumber,
+ *   signAndDegreeOf
  */
 import type { Degrees } from '../ephemeris/types.js';
 
@@ -72,4 +73,34 @@ export function degreesInSign(longitude: Degrees): Degrees {
 /** The sign 180 degrees opposite, wrapping around the zodiac. */
 export function oppositeSign(index: number): number {
   return (index + 6) % 12;
+}
+
+/**
+ * The global 1-360 "degree-symbol" number (#405) a longitude falls in — a traditional degree
+ * symbol's own counting convention, not a rounding of the decimal longitude: a body at 29.9°
+ * Aries is still "in the 30th degree of Aries" (`degree-symbol:30`), not Taurus' 1st, the same
+ * way an ordinal "1st, 2nd, … 30th degree" counts a span it hasn't yet completed. `floor+1`,
+ * never `round` — rounding would misattribute every longitude within half a degree of a sign
+ * boundary to the wrong sign's first degree.
+ */
+export function degreeSymbolNumber(longitude: Degrees): number {
+  return Math.floor(norm360(longitude)) + 1;
+}
+
+/** A longitude's sign and the ordinal (1-30) degree within it — the shape every "Nth degree of Sign" label needs (compose.ts, placement-label.ts, report-provenance.ts, degree-symbol lookups). */
+export function signAndDegreeOf(longitude: Degrees): { readonly sign: SignDefinition; readonly degree: number } {
+  const sign = signOf(longitude);
+  const degree = Math.floor(degreesInSign(longitude)) + 1;
+  return { sign, degree };
+}
+
+/** `signAndDegreeOf`'s inverse: a `degree-symbol` number's (1-360) own sign and ordinal degree within it, for labeling a `degree-symbol` placement that only carries the global number, not a longitude. */
+export function signAndDegreeFromDegreeSymbol(degreeSymbol: number): {
+  readonly sign: SignDefinition;
+  readonly degree: number;
+} {
+  const index = Math.floor((degreeSymbol - 1) / SIGN_SPAN);
+  const sign = SIGNS[index];
+  if (!sign) throw new Error(`unreachable: degree-symbol ${String(degreeSymbol)} out of range 1-360`);
+  return { sign, degree: ((degreeSymbol - 1) % SIGN_SPAN) + 1 };
 }

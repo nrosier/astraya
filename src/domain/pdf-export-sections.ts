@@ -20,13 +20,16 @@
  * techniques `ProgressionsView.tsx` offers), solar arc, profections, and astrocartography —
  * each a single optional field for the same reason transits/forecast are: there is only one
  * "the progressions"/"the solar arc"/etc. per selection, and none needs a partner picker, so
- * all four are allowed into a preset the same way transits/forecast are.
+ * all four are allowed into a preset the same way transits/forecast are. Fifth slice (#441):
+ * eclipses — a single optional field, same shape again, but keyed by a from/to year span
+ * (`EclipsesView.tsx`'s own search parameters) rather than a single "as of" date, since an
+ * eclipse list is inherently a range query, not a snapshot.
  */
 /**
  * @module pdf-export-sections
  * @purpose Declarative registry of what can go into a PDF export (#441): which pages/sections are selectable, each section's own options, and ready-made presets.
  * @conventions Pure and DOM-free, with neither jsPDF nor React dependencies, so it's Vitest-testable without a browser; `chart/pdf-export.ts` turns a selection into pages, `ui/PdfExportBuilder.tsx` builds a selection — neither needs this file's internals beyond its exported shape; synastry/composite are single optional fields needing a partner, transits/forecast/progressions/solarArc/profections/astrocartography are single optional fields needing no partner (so, unlike synastry/composite, they can appear in a preset); `charts` is the one array field.
- * @exports PdfSelection, PdfChartSectionOptions, PdfSynastrySectionOptions, PdfCompositeSectionOptions, PdfInterpretationOptions, PdfTransitsSectionOptions, PdfForecastSectionOptions, PdfTransitFilterPreset, PdfProgressionTechnique, PdfProgressionsSectionOptions, PdfSolarArcSectionOptions, PdfProfectionsSectionOptions, PdfAcgLineType, PDF_ACG_LINE_TYPES, PdfAstrocartographySectionOptions, PDF_CHART_TABLES, PDF_CHART_TYPES, EMPTY_SELECTION, PDF_PRESETS, PDF_PRESET_KEYS, applyPdfPreset, matchPdfPreset, pdfSelectionIsEmpty, defaultChartSectionOptions, defaultSynastrySectionOptions, defaultCompositeSectionOptions, defaultTransitsSectionOptions, defaultForecastSectionOptions, defaultProgressionsSectionOptions, defaultSolarArcSectionOptions, defaultProfectionsSectionOptions, defaultAstrocartographySectionOptions
+ * @exports PdfSelection, PdfChartSectionOptions, PdfSynastrySectionOptions, PdfCompositeSectionOptions, PdfInterpretationOptions, PdfTransitsSectionOptions, PdfForecastSectionOptions, PdfTransitFilterPreset, PdfProgressionTechnique, PdfProgressionsSectionOptions, PdfSolarArcSectionOptions, PdfProfectionsSectionOptions, PdfAcgLineType, PDF_ACG_LINE_TYPES, PdfAstrocartographySectionOptions, PdfEclipsesSectionOptions, PDF_CHART_TABLES, PDF_CHART_TYPES, EMPTY_SELECTION, PDF_PRESETS, PDF_PRESET_KEYS, applyPdfPreset, matchPdfPreset, pdfSelectionIsEmpty, defaultChartSectionOptions, defaultSynastrySectionOptions, defaultCompositeSectionOptions, defaultTransitsSectionOptions, defaultForecastSectionOptions, defaultProgressionsSectionOptions, defaultSolarArcSectionOptions, defaultProfectionsSectionOptions, defaultAstrocartographySectionOptions, defaultEclipsesSectionOptions
  */
 import type { ProgressedMcMethod } from '../astrology/progressions.js';
 import { EXTENDED_ACG_BODY_IDS, TRADITIONAL_ACG_BODY_IDS } from './astrocartography.js';
@@ -161,6 +164,17 @@ export interface PdfAstrocartographySectionOptions {
   readonly meanings: boolean;
 }
 
+/** Eclipses' own place in the export: `EclipsesView.tsx`'s list over a year span, with natal
+ * contacts computed when the person has a complete birth record (left out, same as the live
+ * screen, when the birth time is unknown — the Ascendant/Midheaven would be meaningless, not
+ * approximate). `fromYear`/`toYear` left unset means "this year − 1 through this year + 3", the
+ * live screen's own default span, resolved lazily at build time. */
+export interface PdfEclipsesSectionOptions {
+  readonly table: boolean;
+  readonly fromYear?: number;
+  readonly toYear?: number;
+}
+
 export interface PdfSelection {
   readonly personId: string;
   readonly birthRecord: boolean;
@@ -175,6 +189,7 @@ export interface PdfSelection {
   readonly solarArc?: PdfSolarArcSectionOptions;
   readonly profections?: PdfProfectionsSectionOptions;
   readonly astrocartography?: PdfAstrocartographySectionOptions;
+  readonly eclipses?: PdfEclipsesSectionOptions;
 }
 
 const EVERY_TABLE = PDF_CHART_TABLES;
@@ -284,6 +299,17 @@ function fullAstrocartographySection(): PdfAstrocartographySectionOptions {
   };
 }
 
+/** Eclipses' own default parameters, for when it is first ticked in the builder — matches the live screen's own default span (this year − 1 through this year + 3). */
+export function defaultEclipsesSectionOptions(): PdfEclipsesSectionOptions {
+  const thisYear = new Date().getUTCFullYear();
+  return { table: true, fromYear: thisYear - 1, toYear: thisYear + 3 };
+}
+
+/** Eclipses, table on, year span left unset so it resolves to the live screen's own default at build time — same lazy-default reasoning as `fullTransitsSection`'s `asOfDate`. */
+function fullEclipsesSection(): PdfEclipsesSectionOptions {
+  return { table: true };
+}
+
 /** One chart type, every table and the wheel on, with no type-specific parameters set. */
 function fullChartSection(type: ChartType): PdfChartSectionOptions {
   return { type, wheel: true, tables: EVERY_TABLE };
@@ -314,6 +340,7 @@ export const PDF_PRESETS: Readonly<Record<PdfPresetKey, Omit<PdfSelection, 'pers
     solarArc: fullSolarArcSection(),
     profections: fullProfectionsSection(),
     astrocartography: fullAstrocartographySection(),
+    eclipses: fullEclipsesSection(),
   },
   /** Natal wheel + transits + progressions + solar arc, named for the issue's own wording — a
    * forward-looking read of "what's coming," so profections and astrocartography (both about
@@ -410,6 +437,15 @@ function astrocartographyMatches(
   );
 }
 
+/** Same reasoning as `transitsMatches`, for the eclipses section (`fromYear`/`toYear` ignored, same as `asOfDate` elsewhere). */
+function eclipsesMatches(
+  selection: PdfEclipsesSectionOptions | undefined,
+  preset: PdfEclipsesSectionOptions | undefined,
+): boolean {
+  if (preset === undefined) return selection === undefined;
+  return selection?.table === preset.table;
+}
+
 /** Which preset (if any) a selection matches exactly, ignoring `personId`; `undefined` means "Custom". */
 export function matchPdfPreset(selection: PdfSelection): PdfPresetKey | undefined {
   return PDF_PRESET_KEYS.find((key) => {
@@ -434,6 +470,7 @@ export function matchPdfPreset(selection: PdfSelection): PdfPresetKey | undefine
       solarArcMatches(selection.solarArc, preset.solarArc) &&
       profectionsMatches(selection.profections, preset.profections) &&
       astrocartographyMatches(selection.astrocartography, preset.astrocartography) &&
+      eclipsesMatches(selection.eclipses, preset.eclipses) &&
       // No preset sets either — a partner is always picked separately — so a selection that
       // does include one, however it's filled in, can only ever be "Custom".
       selection.synastry === undefined &&
@@ -463,7 +500,8 @@ export function pdfSelectionIsEmpty(selection: PdfSelection): boolean {
     (selection.solarArc === undefined || (!selection.solarArc.positionsTable && !selection.solarArc.contactsTable)) &&
     (selection.profections === undefined || (!selection.profections.table && !selection.profections.meanings)) &&
     (selection.astrocartography === undefined ||
-      (!selection.astrocartography.map && !selection.astrocartography.meanings))
+      (!selection.astrocartography.map && !selection.astrocartography.meanings)) &&
+    !selection.eclipses?.table
   );
 }
 
