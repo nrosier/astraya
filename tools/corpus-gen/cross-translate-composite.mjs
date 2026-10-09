@@ -22,6 +22,15 @@
  * Cost: ~19 Gemini calls for translation + 1 per translation for validation,
  * or half of that under --batch.
  */
+/**
+ * @module cross-translate-composite
+ * @purpose One-off #451 cleanup: cross-translates undisputed `composite-*` corpus entries to
+ *   replace their disputed-language counterpart, rather than regenerating from scratch.
+ * @conventions CLI flag: --translate (required to do anything), --batch (optional, 50% Gemini
+ *   Batch API pricing instead of individual calls). Validates every translation for language
+ *   correctness via lib/language-quality.mjs before accepting it; resets eval-tracking afterward.
+ * @exports CLI entry point, no exports.
+ */
 
 import { readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';

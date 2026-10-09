@@ -82,7 +82,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `messages.ts` — Generic `useMessages()` hook for co-located `*.messages.ts`. Deps: `locale`.
 - `moment-labels.ts` — Wording for resolved birth-moment provenance + warnings. Deps: `time/types`.
 - `oidc-pkce.ts` — Client-side PKCE flow for Authentik OIDC sign-in. Deps: Web Crypto, sessionStorage.
-- `pdf-export-plan.ts` — Builds ordered PDF content plan from user selection. Deps: `domain/chart-compute`, `domain/chart-tables`, `domain/synastry`, `domain/composite`, `chart/chart-sheet`, `interpretation/report`.
+- `pdf-export-plan.ts` — Builds ordered PDF content plan from user selection. Deps: `domain/chart-compute`, `domain/chart-tables`, `domain/synastry`, `domain/composite`, `chart/chart-sheet`, `interpretation/report`, `ChartView.messages`, `SynastryView`, `TransitView`, `PeriodicTransitView.messages`, `ProgressionsView.messages`, `SolarArcView.messages`, `ProfectionsView`, `EclipsesView.messages`.
 - `pdf-export-render.ts` — Draws PDF via jsPDF + svg2pdf.js + jspdf-autotable (lazy-loaded). Deps: `./pdf-export-plan`, `chart/symbol-text`, `domain/export-filename`.
 - `pdf-export.messages.ts` — en/nl for PDF export builder. Deps: `domain/pdf-export-sections`, `./chart-sections`.
 - `people-list.messages.ts` — en/nl for incomplete person-record descriptions. Deps: none.

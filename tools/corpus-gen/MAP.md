@@ -1,8 +1,8 @@
 # tools/corpus-gen/ — Map
 
-Build-time interpretation-corpus tooling (16 scripts + shared lib in `lib/`). Regenerates `src/interpretation/corpus/en.json` and `nl.json`. Several scripts cost real API money (Gemini, OpenAI, astrologyapi.com).
+Build-time interpretation-corpus tooling (17 scripts + shared lib in `lib/`). Regenerates `src/interpretation/corpus/en.json` and `nl.json`. Several scripts cost real API money (Gemini, OpenAI, astrologyapi.com).
 
-**Critical:** Check `--help` before running any script. Never run from CI. Some write directly to shipped corpus/scratch state (batch-state/, eval-tracking/, feedback/, backups/, .data/) — not tracked here. This map documents the 16 active scripts only; see `lib/MAP.md` for shared library modules and `archive/MAP.md` for retired ones.
+**Critical:** Check `--help` before running any script. Never run from CI. Some write directly to shipped corpus/scratch state (batch-state/, eval-tracking/, feedback/, backups/, .data/) — not tracked here. This map documents the 17 active scripts only; see `lib/MAP.md` for shared library modules and `archive/MAP.md` for retired ones.
 
 Scripts:
 
@@ -12,6 +12,7 @@ Scripts:
 - `benchmark-dashboard.mjs` — Static HTML view of `benchmark-batch.mjs` history (sortable/filterable). Read-only, no API key.
 - `classical-triage-batch.mjs` — Check `dignity-state` corpus vs. William Lilly (#359). Judge model over entry + excerpt, tag divergences. Calls Gemini/Ollama.
 - `corpus-stats.mjs` — Visibility into #381 feedback-loop progress without re-running. Per-locale counts, in-flight batch jobs. Read-only, no API key.
+- `cross-translate-composite.mjs` — One-off #451 cleanup: cross-translate undisputed `composite-*` entries to replace their disputed-language counterpart, instead of regenerating from scratch. Calls Gemini.
 - `evaluate-corpus-batch.mjs` — Independent second opinion (#381 stage 1) using different model family (OpenAI). Detects generic-trope/stereotyped-shadow. Calls OpenAI Batch API.
 - `generate-batch.mjs` — Primary corpus writer (#56). Generates/regenerates full placement scope, resumably/idempotently; `degree-symbol` (#405) uses its own voice/length/fixed-tier branch. Calls Gemini/Ollama.
 - `generate-sample.mjs` — Fast demo + pre-flight provider smoke test: one entry for one placement, print with lint/dedupe diagnostics. No corpus touch. Calls Gemini/Ollama.
