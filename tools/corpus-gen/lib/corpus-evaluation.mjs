@@ -69,12 +69,28 @@ export const EVALUATION_RESPONSE_SCHEMA = {
   additionalProperties: false,
 };
 
+/**
+ * #405: for a `degree-symbol` entry, `factsDescription` is the raw 1655 source excerpt —
+ * fatalism and moral judgment included ("the man born under this degree will be a thief").
+ * Without this note, the judge compares the house-style entry against that literal wording as
+ * "the facts" and flags the deliberate departure as a defect — confirmed during #405's own smoke
+ * testing (2 of 10 flags wanted the source's judgment/prediction restored, which the reviser
+ * correctly rejected both times, but at the cost of a wasted round each time). This tells the
+ * judge what's actually being asked of the entry for this one category, the same way
+ * VARIANT_BODY_NOTE tells it what's expected for Lilith/node variants.
+ */
+const DEGREE_SYMBOL_NOTE = [
+  'If the placement facts above are a traditional "degree symbol" (a vivid 1655-era image plus the character or quality it was said to signify, not a planet/sign/house/aspect/dignity fact), the entry is EXPECTED to diverge from the source\'s own wording in two specific ways, and neither counts as a defect: dropping its fatalistic "a person born here will become X" framing in favor of describing a standing disposition, and dropping any flat moral judgment on a type of person (a "thief", "clown", "immodest person") in favor of the underlying quality or tension the image points to.',
+  "Only flag a degree-symbol entry if it lost the ONE specific, vivid image itself (what is pictured, doing what — generalizing it into generic astrology-speak), invented content not grounded in that image, or used a gendered pronoun. Do not flag it for omitting the source's prediction or moral judgment — that omission is the house style working correctly, not a shortcoming.",
+].join(' ');
+
 const SYSTEM_INSTRUCTION = [
   'You are an expert astrologer reviewing one short entry from an interpretation corpus for a specific placement.',
   "You are given the placement's computed facts (the only facts that exist for this entry) and the entry's text.",
   'Judge two things: (1) is the text factually consistent with the given facts — does it name a wrong body, sign, house, aspect, or dignity state? (2) does it actually capture this specific placement\'s meaning, or does it default to a generic trope/stereotype/cliché that would fit many other placements just as well, or describe a shadow as an extreme emotional symptom (e.g. "harsh self-criticism", "exhausting burden") rather than a specific functional tension?',
   "Set correct=false if there is a factual error OR a real shortcoming of kind (2) — not for minor stylistic preference. List each specific issue in issues as a short, concrete sentence (what is wrong AND why), in English regardless of the entry's own language. If there is no real issue, set correct=true and issues to an empty array.",
   VARIANT_BODY_NOTE,
+  DEGREE_SYMBOL_NOTE,
 ].join(' ');
 
 /**

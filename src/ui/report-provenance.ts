@@ -67,6 +67,11 @@ export function describePlacement(placement: CorpusPlacement): string {
       return `house ${String(placement.house)} profected`;
     case 'astro-line':
       return `${bodyLabel(placement.body)} ${placement.angle} line`;
+    case 'degree-symbol': {
+      const signIndex = Math.floor((placement.degree - 1) / 30);
+      const withinSign = ((placement.degree - 1) % 30) + 1;
+      return `${String(withinSign)}° ${signLabel(signIndex)}`;
+    }
   }
 }
 

@@ -95,6 +95,11 @@ const REFERENCE: Readonly<Record<CorpusCategory, Row>> = {
     key: 'composite-aspect-pair:square:mars:saturn',
     shape: /^composite-aspect-pair:[a-z]+:[A-Za-z]+:[A-Za-z]+$/,
   },
+  'degree-symbol': {
+    placement: { category: 'degree-symbol', degree: 1 },
+    key: 'degree-symbol:1',
+    shape: /^degree-symbol:(?:[1-9]|[1-9][0-9]|[12][0-9]{2}|3[0-5][0-9]|360)$/,
+  },
 };
 
 describe('the corpus key reference (#427)', () => {

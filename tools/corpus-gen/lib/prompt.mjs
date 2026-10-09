@@ -34,10 +34,14 @@
  *   (#56), transcribed from the issue's confirmed generation-run settings rather than re-derived.
  * @conventions Single source of truth shared by generate-batch.mjs and generate-sample.mjs so the
  *   real batch runner and the demo script can't drift apart. Consumed by scripts that cost real
- *   API money per call.
+ *   API money per call. degree-symbol (#405) gets its own voice/constraints/builders
+ *   (DEGREE_SYMBOL_*, buildDegreeSymbol*) rather than reusing the disposition-essay ones — see
+ *   those exports' own doc comments for why.
  * @exports NEUTRAL_SYSTEM_PROMPT, FORCE_LANGUAGE_DIRECTIVE, NEGATIVE_CONSTRAINTS,
  *   buildNegativeConstraintsBlock, buildAnchorsBlock, buildSystemInstruction, aspectFlavorHint,
- *   buildUserContent.
+ *   buildUserContent, DEGREE_SYMBOL_VOICE, DEGREE_SYMBOL_LENGTH_CONSTRAINT,
+ *   buildDegreeSymbolNegativeConstraintsBlock, buildDegreeSymbolSystemInstruction,
+ *   buildDegreeSymbolUserContent.
  */
 export const NEUTRAL_SYSTEM_PROMPT = {
   en: "You are a psychologically grounded, even-handed astrologer writing the default entry in an interpretation corpus — the text every reader sees before picking a more particular voice. Describe the placement's standing disposition by balancing three things: the core drive or gift it inherently builds toward, the functional mechanism — how that drive navigates boundaries, control or independence — and the shadow dilemma that surfaces when it meets an external limit or dependence. Write in plain, warm-but-precise prose, without dramatizing either side. Adopt no persona or signature style of your own — this is the chart speaking, not a character.",
@@ -159,5 +163,79 @@ export function buildUserContent({ placementDescription, corpusEntries, locale, 
     ...(flavorHint ? [flavorHint, ''] : []),
     ...(anchorsBlock ? [anchorsBlock, ''] : []),
     'Write one corpus entry for the target placement, in the voice above, obeying every hard constraint.',
+  ].join('\n');
+}
+
+/**
+ * #405's `degree-symbol` category gets its own voice, not `NEUTRAL_SYSTEM_PROMPT`: that voice
+ * asks for a gift/mechanism/shadow disposition essay reasoned from astrological symbolism (a
+ * planet's nature, a sign's nature). A degree-symbol is a single traditional image (from the
+ * CC0 1655 Angelus/Turner seed, `lib/placements.mjs`'s `degreeSymbolExcerpt`) plus the quality it
+ * traditionally signified — forcing that into the disposition-essay framing would invent
+ * structure the source material never had. The source is centuries-old, often fatalistic ("the
+ * man born under this degree will be...") and sometimes a flat moral judgment on a type of
+ * person (a "thief", "clown", "immodest person"); the voice below is explicit about stripping
+ * both while keeping the one vivid image, since that image IS the category's whole point.
+ */
+export const DEGREE_SYMBOL_VOICE = {
+  en: `You are rewriting a single traditional "degree symbol" — a vivid image historically associated with one exact degree of the zodiac, plus the character or quality it was traditionally said to signify — into the house style of a modern interpretation corpus.
+
+The 1655 source text given to you is centuries-old, often fatalistic ("the man born under this degree will be...") and sometimes casts a flat judgment on a type of person (a "thief", a "clown", an "immodest person"). Your job is NOT to translate or modernize its wording. It is to:
+- Keep the ONE specific, vivid image (what is pictured, doing what) — this is the whole point of a degree symbol; do not generalize it into generic astrology-speak.
+- Drop the fatalistic "a person born here will become X" framing entirely. Describe what the image evokes or symbolizes as a quality or disposition, the way the rest of this corpus describes a placement's standing disposition — not a fortune told about a person.
+- Drop any judgmental character-typing (thief, clown, immodest, idle) in favor of the underlying quality or tension the image points to.
+- Use no gendered pronouns ("he"/"she"/"the man"/"the woman") — the image itself can still include a figure, described without gendering the person it would apply to.
+- Write in plain, warm-but-precise prose. No persona, no signature style of your own.`,
+  nl: `Je herschrijft één traditioneel "graadsymbool" — een beeldend tafereel dat historisch bij precies één graad van de dierenriem hoort, plus de eigenschap of hoedanigheid die daar traditioneel aan werd toegeschreven — in de huisstijl van een modern interpretatiecorpus.
+
+De 1655-bronteks die je krijgt is eeuwenoud, vaak fatalistisch ("de man die onder deze graad geboren wordt, zal...") en spreekt soms een vlak moreel oordeel uit over een type persoon (een "dief", een "nar", een "onzedig persoon"). Je taak is NIET om de bewoording te vertalen of te moderniseren. Het is om:
+- Het ÉNE specifieke, beeldende tafereel te behouden (wat wordt afgebeeld, wat doet het) — dit is het hele punt van een graadsymbool; veralgemeen het niet tot generieke astrologietaal.
+- De fatalistische "wie hier geboren wordt, wordt X"-framing volledig te laten vallen. Beschrijf wat het beeld oproept of symboliseert als een eigenschap of aanleg, zoals de rest van dit corpus een blijvende aanleg beschrijft — geen voorspelling over een persoon.
+- Elke moralistische typering (dief, nar, onzedig, lui) te laten vallen ten gunste van de onderliggende eigenschap of spanning waar het beeld naar verwijst.
+- Geen gendered voornaamwoorden te gebruiken ("hij"/"zij"/"de man"/"de vrouw") — het beeld mag nog steeds een figuur bevatten, beschreven zonder die persoon een gender te geven.
+- In heldere, warme maar precieze taal te schrijven. Geen eigen persona of stijl.`,
+};
+
+/**
+ * `NEGATIVE_CONSTRAINTS`, length line swapped for this category's own 75-150 word floor instead
+ * of the shared 50-80: a degree-symbol entry carries both the specific image AND the quality it
+ * points to, not the quality alone, so it needs more room. Phrased as a hard floor the model must
+ * not go under — not an "aim for" — because a softer phrasing was observed landing every sample
+ * at 59-69 words anyway during #405's own smoke testing, barely moved from the shared category's
+ * 50-80. `generate-batch.mjs`'s length-floor retry (shares `--max-language-retries`'s budget) is
+ * the backstop for whatever this stronger wording still doesn't catch.
+ */
+export const DEGREE_SYMBOL_LENGTH_CONSTRAINT =
+  'Write AT LEAST 75 words and no more than 150, across 3 to 4 sentences. This is wider than the rest of this corpus’s 50-80 words, because a degree-symbol entry must carry both the specific image AND the quality it points to, not the quality alone — 75 words is a floor you must not go under, not an aspiration; an entry under 75 words has not done both halves of this job. Before answering, check your own draft’s word count and expand it if it is short. The corpus lint pass separately rejects anything under 40 or over 1600 characters regardless of quality, as a backstop, not the actual target.';
+
+/** `buildNegativeConstraintsBlock`'s degree-symbol sibling: every other hard constraint shared verbatim, only the length line swapped. */
+export function buildDegreeSymbolNegativeConstraintsBlock() {
+  return [
+    'HARD CONSTRAINTS (violating any of these makes the output unusable)',
+    ...NEGATIVE_CONSTRAINTS.filter((rule) => !rule.includes('50 to 80 words')).map((rule) => `- ${rule}`),
+    `- ${DEGREE_SYMBOL_LENGTH_CONSTRAINT}`,
+  ].join('\n');
+}
+
+/** `buildSystemInstruction`'s degree-symbol sibling: DEGREE_SYMBOL_VOICE instead of NEUTRAL_SYSTEM_PROMPT, no symbolismContext (not applicable — the source excerpt is the content, not a planet/sign to reason from). */
+export function buildDegreeSymbolSystemInstruction({ locale, forceLanguageDirective }) {
+  const voicePrompt = DEGREE_SYMBOL_VOICE[locale] ?? DEGREE_SYMBOL_VOICE.en;
+  const languageDirective = forceLanguageDirective ? FORCE_LANGUAGE_DIRECTIVE[locale] : undefined;
+  return [
+    ...(languageDirective ? [languageDirective, ''] : []),
+    voicePrompt,
+    '',
+    'Even in this voice, the output feeds a structured interpretation corpus, not a chat reply — the constraints below override any instinct the voice above has to hedge, moralize or use extended metaphor.',
+    '',
+    buildDegreeSymbolNegativeConstraintsBlock(),
+  ].join('\n');
+}
+
+/** `buildUserContent`'s degree-symbol sibling: "SOURCE IMAGE" framing instead of "TARGET PLACEMENT", no anchors block (anchors are gold examples of the shared voice, not applicable to a different one). */
+export function buildDegreeSymbolUserContent({ excerpt }) {
+  return [
+    `SOURCE IMAGE (1655 Angelus/Turner translation — rewrite its meaning, do not quote or keep its wording):\n${excerpt}`,
+    '',
+    "Write one corpus entry capturing this image's symbolic essence, in the voice and under the constraints above.",
   ].join('\n');
 }

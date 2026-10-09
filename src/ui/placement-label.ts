@@ -59,6 +59,7 @@ const CATEGORY_LABELS: Readonly<Record<Locale, Readonly<Record<CorpusCategory, s
     'composite-planet-in-sign': 'Composite planet in sign',
     'composite-planet-in-house': 'Composite planet in house',
     'composite-aspect-pair': 'Composite aspect between two planets',
+    'degree-symbol': 'Degree symbol',
   },
   nl: {
     'planet-in-sign': 'Planeet in teken',
@@ -75,6 +76,7 @@ const CATEGORY_LABELS: Readonly<Record<Locale, Readonly<Record<CorpusCategory, s
     'composite-planet-in-sign': 'Composietplaneet in teken',
     'composite-planet-in-house': 'Composietplaneet in huis',
     'composite-aspect-pair': 'Composietaspect tussen twee planeten',
+    'degree-symbol': 'Graadsymbool',
   },
 };
 
@@ -161,6 +163,13 @@ export function placementLabel(placement: CorpusPlacement, locale: Locale): stri
       const angle = ANGLE_NAMES[locale][placement.angle] ?? placement.angle;
       return nl ? `${body(placement.body)} op de ${angle}-lijn` : `${body(placement.body)} on the ${angle} line`;
     }
+    case 'degree-symbol': {
+      const signIndex = Math.floor((placement.degree - 1) / 30);
+      const withinSign = ordinal(((placement.degree - 1) % 30) + 1, locale);
+      return nl
+        ? `${withinSign} graad van ${sign(signIndex, locale)}`
+        : `${withinSign} degree of ${sign(signIndex, locale)}`;
+    }
   }
 }
 
@@ -210,6 +219,8 @@ export function placementSortKey(placement: CorpusPlacement): readonly (number |
       return [category, placement.house];
     case 'astro-line':
       return [category, bodyOrder(placement.body), ACG_ANGLES.indexOf(placement.angle)];
+    case 'degree-symbol':
+      return [category, placement.degree];
   }
 }
 
@@ -249,6 +260,8 @@ const CATEGORY_EXPLANATIONS: Readonly<Record<Locale, Readonly<Record<CorpusCateg
       'How a planet expresses itself in the sign it stands in, for the relationship or combination itself, not either person.',
     'composite-planet-in-house': 'Which area of the relationship or combination a planet works in.',
     'composite-aspect-pair': 'How two planets interact within the composite (relationship) chart.',
+    'degree-symbol':
+      'A traditional image and quality attached to this exact degree, independent of which planet stands there.',
   },
   nl: {
     'planet-in-sign': 'Hoe een planeet zich uit in het teken waarin hij staat.',
@@ -266,6 +279,8 @@ const CATEGORY_EXPLANATIONS: Readonly<Record<Locale, Readonly<Record<CorpusCateg
       'Hoe een planeet zich uit in het teken waarin hij staat, voor de relatie of combinatie zelf, niet voor een van beide personen.',
     'composite-planet-in-house': 'In welk gebied van de relatie of combinatie een planeet werkt.',
     'composite-aspect-pair': 'Hoe twee planeten samenwerken binnen de composietkaart (relatie).',
+    'degree-symbol':
+      'Een traditioneel beeld en kwaliteit die bij precies deze graad horen, los van welke planeet er staat.',
   },
 };
 

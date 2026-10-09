@@ -283,6 +283,12 @@ export function composeFallbackText(placement: CorpusPlacement, locale: Locale):
       const angle = ACG_ANGLE_NAMES[locale][placement.angle];
       return locale === 'nl' ? `${body} op de ${angle}-lijn.` : `${body} on the ${angle} line.`;
     }
+    case 'degree-symbol': {
+      const signIndex = Math.floor((placement.degree - 1) / 30);
+      const withinSign = ordinal(((placement.degree - 1) % 30) + 1, locale);
+      const sign = signName(signIndex, locale);
+      return locale === 'nl' ? `De ${withinSign} graad van ${sign}.` : `The ${withinSign} degree of ${sign}.`;
+    }
     case 'nakshatra':
     case 'pattern':
       throw new Error(`composeFallbackText: category "${placement.category}" is out of scope for #59 (see file doc)`);
