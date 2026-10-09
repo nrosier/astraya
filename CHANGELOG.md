@@ -4,6 +4,38 @@ All notable changes to Astraya are recorded here. Versions follow
 [semantic versioning](https://semver.org/), and every milestone ends in a release —
 see [docs/RELEASING.md](docs/RELEASING.md).
 
+## [0.33.0] — 2026-10-08
+
+**PDF exports can now include transits and forecast sections, the admin Users table distinguishes real activity from a backgrounded tab, chart tables explain more of their columns on hover, and Tier 2 AI interpretation's daily cost caps are now enforced correctly under concurrent requests.**
+
+M9 (Polish & launch) progress, not a finished milestone — v1.0.0 hasn't shipped yet. All of M9's other tracked issues are closed, but #120 (the milestone's own release-tracking issue) stays open: it still needs a verification pass by an astrology practitioner and a deployed-About-page check, which this release does not satisfy on its own.
+
+### Added
+
+- **PDF export gains transits and forecast sections (#441).** Each is a single optional field, like synastry/composite, with its own "as of" date and the "important vs. all" contact filter already offered on screen — chosen explicitly for the export rather than read off whatever the live view happens to show. Both are included in the complete-archive preset.
+- **The admin Users table shows who is actually using the app, not just who has a tab open (#445).** "Last seen" updates on any authenticated request, including a background session heartbeat — it doesn't distinguish real use from an idle tab. Two new columns, "Last sync" (a chart actually added or edited) and "Last AI usage" (the paid/metered Tier 2 feature), give a signal that means genuine activity.
+- **More table columns explain themselves on hover (#456).** Speed, Retrograde and Aspect in the positions/aspects tables, the fixed-star name column, the derived-point label column, and all eight dignity-state columns in the Dignities table now carry the same tooltip mechanism "applying" already used — the Dignities table previously had no tooltip coverage at all.
+
+### Fixed
+
+- **Tier 2's daily AI-interpretation cost caps are now enforced atomically under concurrency (#461).** The verification and generation calls in one request, or two concurrent requests, could both read the same stale daily-spend total and both pass a check that, combined, exceeded the cap, because spend was only recorded after a provider call returned. Each chargeable call now reserves a conservative worst-case cost inside a database transaction before calling the provider, is visible to any other concurrent request immediately, and is reconciled down to the real cost (or released on failure) once the call completes.
+- **The About page no longer claims no AI service is ever contacted (#462).** That was true before Tier 2 AI-customized interpretation shipped and false after: contacted only when a signed-in user explicitly opts in, for that one request. The privacy statement now says so in both locales, with a regression test pinning the exact wording.
+- **A superseded birth-place search can no longer overwrite a newer one's results (#463).** Submitting a new search while an older one was still in flight had no cancellation guard, so a slower earlier search could land its results after a faster later one and quietly swap in the wrong coordinates for the chart.
+- **The Changelog screen's chrome is translatable (#464).** "Back", "Changelog", "You are running" and "Full commit history" were hardcoded in English, unlike every other screen; they now come from a `Changelog.messages.ts` catalogue in both locales. The changelog text itself still stays in whatever language it was written in.
+- **The Dutch-locale e2e test for the About page primer now actually switches locale (#465).** It asserted the English headings under a "renders in Dutch" name without ever clicking the language toggle; it now clicks it and checks against the Dutch strings.
+- **A floating-point edge case at exactly 0° latitude no longer forces the quadrant-angle property test's tolerance to keep loosening (#467).** House system APC's cusps-based and Ascendant/Midheaven-based code paths genuinely disagree by several arcminutes, but only within a sub-micrometer band around the equator — not a realistic birth-chart input. The test now excludes that degenerate band for this one house system instead of loosening its tolerance again.
+- **19 composite-chart corpus entries that had fallen out of sync between English and Dutch are cross-translated and re-queued for evaluation (#451).** Each locale had a disputed entry the other locale's clean version could translate from; all 19 translations passed language validation.
+
+### Internal tooling
+
+- **The corpus generator's eval-tracking state is restored to a consistent 7328-entry baseline** after a cancelled evaluation batch left it with thousands of entries stuck in a stale re-check state; only the 19 entries actually touched by #451's cross-translation are marked for re-evaluation. None of this touches the shipped corpus content beyond #451's own fix above.
+- **A verified CC0 1655 degree-symbol source text (Angelus/Turner) is seeded for #405** as prep material for testing the LLM generator against a real historical source — not yet run through the generator or shipped as corpus content.
+- **The abandoned benchmark-dashboard tooling is archived**, superseded by the corpus evaluation/improvement loop already in use.
+
+### Notes for people running their own server
+
+- **New migration 15** adds the `interpretation_cost_reservations` table used by #461's atomic cost-cap check. It runs automatically on next startup; no configuration changes needed.
+
 ## [0.32.1] — 2026-10-07
 
 **A patch for v0.32.0: the same app, with its generated-constants check fixed so the release could be published.**
@@ -192,7 +224,7 @@ M9 (Polish & launch) progress, not a finished milestone — v1.0.0 hasn't shippe
 - **The natal chart in sections (#430).** One tab strip: Chart (the wheel, opened first), Chart shape, Positions, Houses, Aspects, Dignities and Derived points, each panel under its own heading. The wheel keeps your selection while you visit the tables, the PDF export prints every section in order, and a chart without a birth time shows only the sections it can. **Chart shape** is new: the diagram, an English and Dutch explanation of each shape worded as a convention (Marc Edmund Jones, 1941) rather than a verdict, the Moon phase and the sect.
 - **Two administrator levels (#431).** An **admin** can use every admin screen — the user list read-only with each account's role, AI usage and the corpus screens — but cannot create, change or delete accounts. A **super admin** can do everything, including granting roles. It is enforced on the server on every route; nobody can change their own role and the last usable super admin cannot be demoted, disabled or deleted. OIDC groups and local usernames can name either role (`ASTRAYA_OIDC_SUPER_ADMIN_GROUPS`, `ASTRAYA_SUPER_ADMIN_USERNAMES`).
 - **What the profected houses and astrocartography lines mean (#427).** The Profections screen explains the profected year and month house, and the Astrocartography screen explains each checked body on each checked line, from the reviewed corpus text.
-- **A corpus key reference and audit (#427).** `docs/CORPUS_KEYS.html` lists every key shape and its ordering; `npm run corpus:audit` checks the corpus for valid keys, duplicates, English/Dutch parity, coverage and a shifted sign or house index.
+- **A corpus key reference and audit (#427).** `docs/html/CORPUS_KEYS.html` lists every key shape and its ordering; `npm run corpus:audit` checks the corpus for valid keys, duplicates, English/Dutch parity, coverage and a shifted sign or house index.
 
 ### Changed
 

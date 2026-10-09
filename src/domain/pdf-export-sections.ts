@@ -16,15 +16,21 @@
  * synastry/composite neither needs a partner picker, so (unlike synastry/composite) both are
  * allowed into a preset. Both carry their own "as of" date and the same "important vs. all"
  * contact filter the live `TransitFilterPanel.tsx` offers, chosen here rather than read off
- * whatever a live screen happened to show. Progressions, solar arc, profections and
- * astrocartography are not sections here yet — see the issue for the follow-up.
+ * whatever a live screen happened to show. Fourth slice: progressions (any of the three
+ * techniques `ProgressionsView.tsx` offers), solar arc, profections, and astrocartography —
+ * each a single optional field for the same reason transits/forecast are: there is only one
+ * "the progressions"/"the solar arc"/etc. per selection, and none needs a partner picker, so
+ * all four are allowed into a preset the same way transits/forecast are.
  */
 /**
  * @module pdf-export-sections
  * @purpose Declarative registry of what can go into a PDF export (#441): which pages/sections are selectable, each section's own options, and ready-made presets.
- * @conventions Pure and DOM-free, with neither jsPDF nor React dependencies, so it's Vitest-testable without a browser; `chart/pdf-export.ts` turns a selection into pages, `ui/PdfExportBuilder.tsx` builds a selection — neither needs this file's internals beyond its exported shape; synastry/composite/transits/forecast are single optional fields (at most one of each per selection), unlike `charts` which is an array; transits/forecast need no partner, so unlike synastry/composite they can appear in a preset.
- * @exports PdfSelection, PdfChartSectionOptions, PdfSynastrySectionOptions, PdfCompositeSectionOptions, PdfInterpretationOptions, PdfTransitsSectionOptions, PdfForecastSectionOptions, PdfTransitFilterPreset, PDF_CHART_TABLES, PDF_CHART_TYPES, EMPTY_SELECTION, PDF_PRESETS, PDF_PRESET_KEYS, applyPdfPreset, matchPdfPreset, pdfSelectionIsEmpty, defaultChartSectionOptions, defaultSynastrySectionOptions, defaultCompositeSectionOptions, defaultTransitsSectionOptions, defaultForecastSectionOptions
+ * @conventions Pure and DOM-free, with neither jsPDF nor React dependencies, so it's Vitest-testable without a browser; `chart/pdf-export.ts` turns a selection into pages, `ui/PdfExportBuilder.tsx` builds a selection — neither needs this file's internals beyond its exported shape; synastry/composite are single optional fields needing a partner, transits/forecast/progressions/solarArc/profections/astrocartography are single optional fields needing no partner (so, unlike synastry/composite, they can appear in a preset); `charts` is the one array field.
+ * @exports PdfSelection, PdfChartSectionOptions, PdfSynastrySectionOptions, PdfCompositeSectionOptions, PdfInterpretationOptions, PdfTransitsSectionOptions, PdfForecastSectionOptions, PdfTransitFilterPreset, PdfProgressionTechnique, PdfProgressionsSectionOptions, PdfSolarArcSectionOptions, PdfProfectionsSectionOptions, PdfAcgLineType, PDF_ACG_LINE_TYPES, PdfAstrocartographySectionOptions, PDF_CHART_TABLES, PDF_CHART_TYPES, EMPTY_SELECTION, PDF_PRESETS, PDF_PRESET_KEYS, applyPdfPreset, matchPdfPreset, pdfSelectionIsEmpty, defaultChartSectionOptions, defaultSynastrySectionOptions, defaultCompositeSectionOptions, defaultTransitsSectionOptions, defaultForecastSectionOptions, defaultProgressionsSectionOptions, defaultSolarArcSectionOptions, defaultProfectionsSectionOptions, defaultAstrocartographySectionOptions
  */
+import type { ProgressedMcMethod } from '../astrology/progressions.js';
+import { EXTENDED_ACG_BODY_IDS, TRADITIONAL_ACG_BODY_IDS } from './astrocartography.js';
+import type { BodyId } from '../ephemeris/types.js';
 import type { ChartType } from '../ui/chart-sections.js';
 
 /** The data tables a chart-type section can include, independently of each other and of the wheel. */
@@ -105,6 +111,56 @@ export interface PdfForecastSectionOptions {
   readonly asOfDate?: string;
 }
 
+/** The three techniques `ProgressionsView.tsx` offers — same meaning, same default (`'secondary'`). */
+export type PdfProgressionTechnique = 'secondary' | 'tertiary' | 'minor';
+
+/** Progressions' own place in the export: the technique, the MC method (secondary only — ignored,
+ * but harmless if set, for tertiary/minor, same as `harmonicN` being ignored for a non-harmonic
+ * chart type), and the live screen's own two tables (progressed positions, progressed-to-natal
+ * contacts), as of a chosen date. */
+export interface PdfProgressionsSectionOptions {
+  readonly technique: PdfProgressionTechnique;
+  readonly mcMethod: ProgressedMcMethod;
+  readonly positionsTable: boolean;
+  readonly contactsTable: boolean;
+  readonly asOfDate?: string;
+}
+
+/** Solar arc's own place in the export: `SolarArcView.tsx`'s two tables (directed positions,
+ * directed-to-natal contacts with exact-date timing), as of a chosen date. No wheel/map of its
+ * own — same reasoning the forecast section has none: there is no single wheel a directed chart
+ * draws that isn't already the natal or progressed one. */
+export interface PdfSolarArcSectionOptions {
+  readonly positionsTable: boolean;
+  readonly contactsTable: boolean;
+  readonly asOfDate?: string;
+}
+
+/** Profections' own place in the export: `ProfectionsView.tsx`'s year/month table and the
+ * profected-house meanings beneath it, as of a chosen date. Rulership comes from the same
+ * `PdfPlanContext.rulership` every other section reads, not a separate choice here. */
+export interface PdfProfectionsSectionOptions {
+  readonly table: boolean;
+  readonly meanings: boolean;
+  readonly asOfDate?: string;
+}
+
+/** The four line types `AstrocartographyView.tsx` offers. */
+export const PDF_ACG_LINE_TYPES = ['MC', 'IC', 'AC', 'DC'] as const;
+export type PdfAcgLineType = (typeof PDF_ACG_LINE_TYPES)[number];
+
+/** Astrocartography's own place in the export: the rendered map, which line types and bodies it
+ * carries, whether Local Space lines are added, and the per-body/line meanings beneath it — the
+ * same options `AstrocartographyView.tsx` exposes, chosen here rather than read off that screen.
+ * No "as of" date: a natal ACG map is time-invariant, unlike every other section above it. */
+export interface PdfAstrocartographySectionOptions {
+  readonly map: boolean;
+  readonly lineTypes: readonly PdfAcgLineType[];
+  readonly bodies: readonly BodyId[];
+  readonly localSpace: boolean;
+  readonly meanings: boolean;
+}
+
 export interface PdfSelection {
   readonly personId: string;
   readonly birthRecord: boolean;
@@ -115,6 +171,10 @@ export interface PdfSelection {
   readonly composite?: PdfCompositeSectionOptions;
   readonly transits?: PdfTransitsSectionOptions;
   readonly forecast?: PdfForecastSectionOptions;
+  readonly progressions?: PdfProgressionsSectionOptions;
+  readonly solarArc?: PdfSolarArcSectionOptions;
+  readonly profections?: PdfProfectionsSectionOptions;
+  readonly astrocartography?: PdfAstrocartographySectionOptions;
 }
 
 const EVERY_TABLE = PDF_CHART_TABLES;
@@ -165,21 +225,79 @@ function fullForecastSection(): PdfForecastSectionOptions {
   return { filterPreset: 'all', daily: true, weekly: true, monthly: true, yearly: true };
 }
 
+/** Progressions' own default parameters, matching the live screen's own defaults (`'secondary'`, `'naibod'`). */
+export function defaultProgressionsSectionOptions(): PdfProgressionsSectionOptions {
+  return {
+    technique: 'secondary',
+    mcMethod: 'naibod',
+    positionsTable: true,
+    contactsTable: true,
+    asOfDate: todayDateString(),
+  };
+}
+
+/** Progressions, both tables on — same lazy `asOfDate` reasoning as `fullTransitsSection`. */
+function fullProgressionsSection(): PdfProgressionsSectionOptions {
+  return { technique: 'secondary', mcMethod: 'naibod', positionsTable: true, contactsTable: true };
+}
+
+/** Solar arc's own default parameters, for when it is first ticked in the builder. */
+export function defaultSolarArcSectionOptions(): PdfSolarArcSectionOptions {
+  return { positionsTable: true, contactsTable: true, asOfDate: todayDateString() };
+}
+
+/** Solar arc, both tables on — same lazy `asOfDate` reasoning as `fullTransitsSection`. */
+function fullSolarArcSection(): PdfSolarArcSectionOptions {
+  return { positionsTable: true, contactsTable: true };
+}
+
+/** Profections' own default parameters, for when it is first ticked in the builder. */
+export function defaultProfectionsSectionOptions(): PdfProfectionsSectionOptions {
+  return { table: true, meanings: true, asOfDate: todayDateString() };
+}
+
+/** Profections, table and meanings on — same lazy `asOfDate` reasoning as `fullTransitsSection`. */
+function fullProfectionsSection(): PdfProfectionsSectionOptions {
+  return { table: true, meanings: true };
+}
+
+/** Astrocartography's own default parameters, matching the live screen's own defaults (all four
+ * line types, the traditional seven bodies, Local Space off). */
+export function defaultAstrocartographySectionOptions(): PdfAstrocartographySectionOptions {
+  return {
+    map: true,
+    lineTypes: PDF_ACG_LINE_TYPES,
+    bodies: TRADITIONAL_ACG_BODY_IDS,
+    localSpace: false,
+    meanings: true,
+  };
+}
+
+/** Astrocartography, map and meanings on, every body (traditional and extended) and line type included. */
+function fullAstrocartographySection(): PdfAstrocartographySectionOptions {
+  return {
+    map: true,
+    lineTypes: PDF_ACG_LINE_TYPES,
+    bodies: [...TRADITIONAL_ACG_BODY_IDS, ...EXTENDED_ACG_BODY_IDS],
+    localSpace: false,
+    meanings: true,
+  };
+}
+
 /** One chart type, every table and the wheel on, with no type-specific parameters set. */
 function fullChartSection(type: ChartType): PdfChartSectionOptions {
   return { type, wheel: true, tables: EVERY_TABLE };
 }
 
-export type PdfPresetKey = 'executive-summary' | 'complete-archive';
+export type PdfPresetKey = 'executive-summary' | 'complete-archive' | 'full-predictive-report';
 
-export const PDF_PRESET_KEYS: readonly PdfPresetKey[] = ['executive-summary', 'complete-archive'];
+export const PDF_PRESET_KEYS: readonly PdfPresetKey[] = [
+  'executive-summary',
+  'complete-archive',
+  'full-predictive-report',
+];
 
-/**
- * What each preset fills a selection with — `personId` is always chosen separately, never by a preset.
- * "Full predictive report" (natal wheel + transits + progressions + solar arc) is not offered: those
- * sections do not exist here yet, and a preset promising a section that silently produces nothing
- * would be worse than not offering it.
- */
+/** What each preset fills a selection with — `personId` is always chosen separately, never by a preset. */
 export const PDF_PRESETS: Readonly<Record<PdfPresetKey, Omit<PdfSelection, 'personId'>>> = {
   'executive-summary': {
     birthRecord: true,
@@ -192,6 +310,22 @@ export const PDF_PRESETS: Readonly<Record<PdfPresetKey, Omit<PdfSelection, 'pers
     charts: PDF_CHART_TYPES.map(fullChartSection),
     transits: fullTransitsSection(),
     forecast: fullForecastSection(),
+    progressions: fullProgressionsSection(),
+    solarArc: fullSolarArcSection(),
+    profections: fullProfectionsSection(),
+    astrocartography: fullAstrocartographySection(),
+  },
+  /** Natal wheel + transits + progressions + solar arc, named for the issue's own wording — a
+   * forward-looking read of "what's coming," so profections and astrocartography (both about
+   * where/whose a period is, not what's approaching) are deliberately left out, same as the
+   * issue's own phrasing of this preset implies. */
+  'full-predictive-report': {
+    birthRecord: true,
+    interpretation: { base: true, aiCustomised: false },
+    charts: [fullChartSection('natal')],
+    transits: fullTransitsSection(),
+    progressions: fullProgressionsSection(),
+    solarArc: fullSolarArcSection(),
   },
 };
 
@@ -227,6 +361,55 @@ function forecastMatches(
   );
 }
 
+/** Same reasoning as `transitsMatches`, for the progressions section. */
+function progressionsMatches(
+  selection: PdfProgressionsSectionOptions | undefined,
+  preset: PdfProgressionsSectionOptions | undefined,
+): boolean {
+  if (preset === undefined) return selection === undefined;
+  return (
+    selection?.technique === preset.technique &&
+    selection.mcMethod === preset.mcMethod &&
+    selection.positionsTable === preset.positionsTable &&
+    selection.contactsTable === preset.contactsTable
+  );
+}
+
+/** Same reasoning as `transitsMatches`, for the solar arc section. */
+function solarArcMatches(
+  selection: PdfSolarArcSectionOptions | undefined,
+  preset: PdfSolarArcSectionOptions | undefined,
+): boolean {
+  if (preset === undefined) return selection === undefined;
+  return selection?.positionsTable === preset.positionsTable && selection.contactsTable === preset.contactsTable;
+}
+
+/** Same reasoning as `transitsMatches`, for the profections section. */
+function profectionsMatches(
+  selection: PdfProfectionsSectionOptions | undefined,
+  preset: PdfProfectionsSectionOptions | undefined,
+): boolean {
+  if (preset === undefined) return selection === undefined;
+  return selection?.table === preset.table && selection.meanings === preset.meanings;
+}
+
+/** Same reasoning as `transitsMatches`, for the astrocartography section. */
+function astrocartographyMatches(
+  selection: PdfAstrocartographySectionOptions | undefined,
+  preset: PdfAstrocartographySectionOptions | undefined,
+): boolean {
+  if (preset === undefined) return selection === undefined;
+  return (
+    selection?.map === preset.map &&
+    selection.localSpace === preset.localSpace &&
+    selection.meanings === preset.meanings &&
+    selection.lineTypes.length === preset.lineTypes.length &&
+    preset.lineTypes.every((lineType) => selection.lineTypes.includes(lineType)) &&
+    selection.bodies.length === preset.bodies.length &&
+    preset.bodies.every((body) => selection.bodies.includes(body))
+  );
+}
+
 /** Which preset (if any) a selection matches exactly, ignoring `personId`; `undefined` means "Custom". */
 export function matchPdfPreset(selection: PdfSelection): PdfPresetKey | undefined {
   return PDF_PRESET_KEYS.find((key) => {
@@ -247,6 +430,10 @@ export function matchPdfPreset(selection: PdfSelection): PdfPresetKey | undefine
       }) &&
       transitsMatches(selection.transits, preset.transits) &&
       forecastMatches(selection.forecast, preset.forecast) &&
+      progressionsMatches(selection.progressions, preset.progressions) &&
+      solarArcMatches(selection.solarArc, preset.solarArc) &&
+      profectionsMatches(selection.profections, preset.profections) &&
+      astrocartographyMatches(selection.astrocartography, preset.astrocartography) &&
       // No preset sets either — a partner is always picked separately — so a selection that
       // does include one, however it's filled in, can only ever be "Custom".
       selection.synastry === undefined &&
@@ -270,7 +457,13 @@ export function pdfSelectionIsEmpty(selection: PdfSelection): boolean {
       (!selection.forecast.daily &&
         !selection.forecast.weekly &&
         !selection.forecast.monthly &&
-        !selection.forecast.yearly))
+        !selection.forecast.yearly)) &&
+    (selection.progressions === undefined ||
+      (!selection.progressions.positionsTable && !selection.progressions.contactsTable)) &&
+    (selection.solarArc === undefined || (!selection.solarArc.positionsTable && !selection.solarArc.contactsTable)) &&
+    (selection.profections === undefined || (!selection.profections.table && !selection.profections.meanings)) &&
+    (selection.astrocartography === undefined ||
+      (!selection.astrocartography.map && !selection.astrocartography.meanings))
   );
 }
 

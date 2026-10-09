@@ -94,6 +94,9 @@ export function About({ seVersion }: { seVersion?: string | undefined }): React.
         {t.primerChartList}
       </p>
 
+      <h3>{t.primerHistoryHeading}</h3>
+      <p>{t.primerHistoryPara}</p>
+
       <h3>{t.primerBodiesHeading}</h3>
       <p>{t.primerBodiesPara}</p>
 

@@ -1,17 +1,20 @@
 /**
  * Unit tests for the cost reservation system (#461) — atomicity of reservations
- * under concurrency and correct reconciliation to real usage.
+ * under concurrency and correct reconciliation to real usage — and its lease-expiry
+ * handling (#476): an expired lease is charged, never silently dropped.
  */
 
-import { describe, test, expect, beforeEach } from 'vitest';
-import { DatabaseSync } from 'node:sqlite';
+import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
+import type { DatabaseSync } from 'node:sqlite';
 import { openDatabase } from '../server/db.ts';
 import {
+  RESERVATION_TTL_MS,
   reserveCostCents,
   releaseReservation,
   reconcileReservation,
 } from '../server/interpretation/cost-reservation.ts';
-import { userCostCentsSince, totalCostCentsSince } from '../server/interpretation/usage.ts';
+import { PROVIDER_CALL_DEADLINE_MS } from '../server/interpretation/llm-client.ts';
+import { totalCostCentsSince, userCostCentsSince } from '../server/interpretation/usage.ts';
 
 let db: DatabaseSync;
 
@@ -149,12 +152,13 @@ describe('cost-reservation', () => {
 
     if ('reservationId' in reservation) {
       // Reconcile with real cost 75 cents.
-      reconcileReservation(db, reservation.reservationId, {
+      const outcome = reconcileReservation(db, reservation, {
         userId,
         promptTokens: 1000,
         outputTokens: 500,
         costCents: 75,
       });
+      expect(outcome).toBe('reconciled');
 
       // Check that the reservation is gone.
       const rows = db
@@ -168,7 +172,7 @@ describe('cost-reservation', () => {
     }
   });
 
-  test('expired reservations are pruned and do not count against caps', () => {
+  test('expired reservations are pruned and charged at their full reserved amount (#476)', () => {
     const userId = 'test-user';
     const userCap = 200;
 
@@ -182,18 +186,105 @@ describe('cost-reservation', () => {
        VALUES (?, ?, ?, ?, ?)`,
     ).run(expiredId, userId, 150, pastTime.toISOString(), pastTime.toISOString());
 
-    // Try to reserve 100 cents — should succeed because the expired reservation is pruned.
-    const reservation = reserveCostCents(db, {
+    // An expired lease's call may still bill, so its 150 cents are charged when pruned rather than
+    // released: 150 + 100 > 200 rejects, and 150 + 50 fits.
+    const tooMuch = reserveCostCents(db, {
       userId,
       maxCents: 100,
       userDailyCapCents: userCap,
       totalDailyCapCents: 1000,
     });
+    expect(tooMuch).toEqual({ reason: 'user-cap' });
 
+    const reservation = reserveCostCents(db, {
+      userId,
+      maxCents: 50,
+      userDailyCapCents: userCap,
+      totalDailyCapCents: 1000,
+    });
     expect('reservationId' in reservation).toBe(true);
 
-    // Confirm the expired reservation was removed.
+    // Confirm the expired reservation was removed and charged exactly once.
     const rows = db.prepare(`SELECT id FROM interpretation_cost_reservations WHERE id = ?`).all(expiredId) as unknown[];
     expect(rows.length).toBe(0);
+    expect(userCostCentsSince(db, userId)).toBe(150);
+  });
+});
+
+describe('cost-reservation lease expiry (#476)', () => {
+  const userId = 'test-user';
+  const caps = { userDailyCapCents: 100, totalDailyCapCents: 100 } as const;
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  /** Committed usage plus every still-held reservation — the spend the caps must bound. */
+  function exposureCents(): number {
+    const reserved = db
+      .prepare('SELECT COALESCE(SUM(reserved_cents), 0) AS total FROM interpretation_cost_reservations')
+      .get() as unknown as { readonly total: number };
+    return totalCostCentsSince(db) + reserved.total;
+  }
+
+  test('the provider call deadline is shorter than the reservation lease', () => {
+    expect(PROVIDER_CALL_DEADLINE_MS).toBeLessThan(RESERVATION_TTL_MS);
+  });
+
+  test('late reconciliation after lease expiry cannot exceed cap', () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-10-09T12:00:00.000Z'));
+
+    const first = reserveCostCents(db, { userId, maxCents: 100, ...caps });
+    if (!('reservationId' in first)) throw new Error('first reservation should be accepted');
+
+    // The first call hangs past its lease.
+    vi.setSystemTime(Date.now() + RESERVATION_TTL_MS + 1000);
+
+    // A second reservation prunes the expired lease, but the cap headroom it held is charged, not freed.
+    const second = reserveCostCents(db, { userId, maxCents: 100, ...caps });
+    expect(second).toEqual({ reason: 'user-cap' });
+
+    // The first call finally completes at its full reserved cost and reconciles late.
+    const outcome = reconcileReservation(db, first, { userId, promptTokens: 1000, outputTokens: 500, costCents: 100 });
+    expect(outcome).toBe('late');
+
+    expect(totalCostCentsSince(db)).toBe(100);
+    expect(exposureCents()).toBeLessThanOrEqual(100);
+  });
+
+  test('late reconciliation records only the actual cost above the already-charged reservation', () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-10-09T12:00:00.000Z'));
+
+    const first = reserveCostCents(db, { userId, maxCents: 40, userDailyCapCents: 500, totalDailyCapCents: 500 });
+    if (!('reservationId' in first)) throw new Error('reservation should be accepted');
+
+    vi.setSystemTime(Date.now() + RESERVATION_TTL_MS + 1000);
+    // Pruning happens on the next reservation; this one is unrelated and released straight away.
+    const other = reserveCostCents(db, { userId, maxCents: 10, userDailyCapCents: 500, totalDailyCapCents: 500 });
+    if (!('reservationId' in other)) throw new Error('reservation should be accepted');
+    releaseReservation(db, other.reservationId);
+    expect(userCostCentsSince(db, userId)).toBe(40);
+
+    // Cheaper than reserved: already covered, nothing more is added.
+    expect(reconcileReservation(db, first, { userId, promptTokens: 10, outputTokens: 10, costCents: 25 })).toBe('late');
+    expect(userCostCentsSince(db, userId)).toBe(40);
+  });
+
+  test('a late reconciliation above the reserved amount still records the excess', () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-10-09T12:00:00.000Z'));
+
+    const first = reserveCostCents(db, { userId, maxCents: 40, userDailyCapCents: 500, totalDailyCapCents: 500 });
+    if (!('reservationId' in first)) throw new Error('reservation should be accepted');
+
+    vi.setSystemTime(Date.now() + RESERVATION_TTL_MS + 1000);
+    const other = reserveCostCents(db, { userId, maxCents: 10, userDailyCapCents: 500, totalDailyCapCents: 500 });
+    if (!('reservationId' in other)) throw new Error('reservation should be accepted');
+    releaseReservation(db, other.reservationId);
+
+    reconcileReservation(db, first, { userId, promptTokens: 10, outputTokens: 10, costCents: 55 });
+    expect(userCostCentsSince(db, userId)).toBe(55);
   });
 });

@@ -15,8 +15,8 @@
 /**
  * @module llm-client
  * @purpose The Tier 2 feature's real LLM provider client — the one place in the running server that reaches a third-party model (Gemini) over the network.
- * @conventions Never imported from `src/`, enforced by `test/no-runtime-llm-access.test.ts`; deliberately separate from `tools/corpus-gen`'s build-time generator client, since this one serves free-form prose inside a live per-user request rather than fixed-schema, build-time-only generation; retries only on transient 429/5xx statuses, surfacing 4xx immediately as a likely configuration problem.
- * @exports Tier2Config, loadTier2Config, Tier2Section, Tier2Result, generateTier2Text, CustomPromptVerdict, parseCustomPromptVerdict, verifyCustomPrompt, estimateCostCents, estimateVerificationMaxCostCents, estimateGenerationMaxCostCents
+ * @conventions Never imported from `src/`, enforced by `test/no-runtime-llm-access.test.ts`; deliberately separate from `tools/corpus-gen`'s build-time generator client, since this one serves free-form prose inside a live per-user request rather than fixed-schema, build-time-only generation; retries only on transient 429/5xx statuses, surfacing 4xx immediately as a likely configuration problem; every call — all attempts and backoff together — is aborted at `PROVIDER_CALL_DEADLINE_MS`, kept below `cost-reservation.ts`'s lease (#476).
+ * @exports PROVIDER_CALL_DEADLINE_MS, Tier2Config, loadTier2Config, Tier2Section, Tier2Result, generateTier2Text, CustomPromptVerdict, parseCustomPromptVerdict, verifyCustomPrompt, estimateCostCents, estimateVerificationMaxCostCents, estimateGenerationMaxCostCents
  */
 const DEFAULT_BASE_URL = 'https://generativelanguage.googleapis.com';
 const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504]);
@@ -25,6 +25,15 @@ const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504]);
 // bound. 4096 is generous for the structured-sections reply this call asks for, while still
 // giving `estimateGenerationMaxCostCents` below a real ceiling to reserve against.
 const MAX_GENERATION_OUTPUT_TOKENS = 4096;
+
+/**
+ * Hard ceiling (#476) on one `callModel` invocation — every attempt, response-body read, and
+ * retry backoff together — enforced with an `AbortController`. It must stay comfortably below
+ * `RESERVATION_TTL_MS` (5 min) in `cost-reservation.ts`, so a provider call can never still be
+ * running, and later bill, after the cost reservation covering it has expired.
+ * `test/server-interpretation-cost-reservation.test.ts` asserts that ordering.
+ */
+export const PROVIDER_CALL_DEADLINE_MS = 4.5 * 60 * 1000;
 
 export interface Tier2Config {
   readonly apiKey: string;
@@ -67,9 +76,22 @@ export interface Tier2Logger {
   debug(obj: Record<string, unknown>, msg?: string): void;
 }
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
+/** Backoff wait that rejects with the signal's reason as soon as the call's deadline aborts it. */
+function sleep(ms: number, signal: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal.aborted) {
+      reject(signal.reason as Error);
+      return;
+    }
+    const onAbort = () => {
+      clearTimeout(timer);
+      reject(signal.reason as Error);
+    };
+    const timer = setTimeout(() => {
+      signal.removeEventListener('abort', onAbort);
+      resolve();
+    }, ms);
+    signal.addEventListener('abort', onAbort, { once: true });
   });
 }
 
@@ -139,9 +161,9 @@ interface RawModelText {
 }
 
 /**
- * One `generateContent` call. Retries on 5xx/429 (transient, per
- * `gemini.mjs`'s own notes), surfaces 4xx immediately — those are almost
- * always a config problem retrying won't fix.
+ * One `generateContent` call, bounded as a whole by `PROVIDER_CALL_DEADLINE_MS` (#476): the
+ * abort reaches the in-flight `fetch`, its body read, and any backoff wait, and the call rejects
+ * with a timeout error rather than being retried.
  */
 async function callModel(
   config: Tier2Config,
@@ -150,6 +172,43 @@ async function callModel(
   generationConfig: Record<string, unknown>,
   maxRetries: number,
   logger: Tier2Logger | undefined,
+): Promise<RawModelText> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => {
+    controller.abort(
+      new Error(
+        `Tier 2 model call timed out after ${String(PROVIDER_CALL_DEADLINE_MS / 1000)}s (aborted before its cost reservation could expire).`,
+      ),
+    );
+  }, PROVIDER_CALL_DEADLINE_MS);
+  try {
+    return await callModelAttempts(
+      config,
+      systemInstruction,
+      userContent,
+      generationConfig,
+      maxRetries,
+      logger,
+      controller.signal,
+    );
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
+ * The attempts behind `callModel`. Retries on 5xx/429 (transient, per
+ * `gemini.mjs`'s own notes), surfaces 4xx immediately — those are almost
+ * always a config problem retrying won't fix. Never retries once `signal` has aborted.
+ */
+async function callModelAttempts(
+  config: Tier2Config,
+  systemInstruction: string,
+  userContent: string,
+  generationConfig: Record<string, unknown>,
+  maxRetries: number,
+  logger: Tier2Logger | undefined,
+  signal: AbortSignal,
 ): Promise<RawModelText> {
   const url = `${config.baseUrl}/v1beta/models/${config.model}:generateContent`;
   const body = {
@@ -167,11 +226,13 @@ async function callModel(
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-goog-api-key': config.apiKey },
         body: JSON.stringify(body),
+        signal,
       });
     } catch (networkError) {
+      if (signal.aborted) throw signal.reason as Error;
       lastError = networkError instanceof Error ? networkError : new Error(String(networkError));
       if (attempt === maxRetries) throw lastError;
-      await sleep(2 ** attempt * 500);
+      await sleep(2 ** attempt * 500, signal);
       continue;
     }
 
@@ -201,7 +262,7 @@ async function callModel(
         : '';
     lastError = new Error(`Tier 2 model call failed (${String(response.status)}): ${errorBody.slice(0, 1000)}${hint}`);
     if (!RETRYABLE_STATUS.has(response.status) || attempt === maxRetries) throw lastError;
-    await sleep(2 ** attempt * 500);
+    await sleep(2 ** attempt * 500, signal);
   }
   throw lastError ?? new Error('Tier 2 model call failed for an unknown reason.');
 }
