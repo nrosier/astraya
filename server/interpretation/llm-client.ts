@@ -141,15 +141,18 @@ function isTier2Section(value: unknown): value is Tier2Section {
  * letting a malformed `.sections` crash further downstream.
  */
 function parseTier2Reply(text: string): { readonly sections: readonly Tier2Section[]; readonly description: unknown } {
+  // Never interpolate provider text into this error (#490): it is thrown by the caller via
+  // `request.log.error`, which runs at the default log level — folding model output in here would
+  // leak user-selected instructions and generated interpretation prose into production logs.
   let parsed: unknown;
   try {
     parsed = JSON.parse(text);
   } catch {
-    throw new Error(`Tier 2: model response was not valid JSON: ${text.slice(0, 500)}`);
+    throw new Error('Tier 2: model response was not valid JSON');
   }
   const sections = (parsed as { sections?: unknown } | undefined)?.sections;
   if (!Array.isArray(sections) || !sections.every(isTier2Section)) {
-    throw new Error(`Tier 2: unexpected model response shape: ${JSON.stringify(parsed).slice(0, 500)}`);
+    throw new Error('Tier 2: unexpected model response shape');
   }
   return { sections, description: (parsed as { description?: unknown }).description };
 }
@@ -219,7 +222,10 @@ async function callModelAttempts(
 
   let lastError: Error | undefined;
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    logger?.debug({ url, body }, 'Tier 2 request payload');
+    // Bounded, content-free diagnostics only (#490): `body` carries the system instruction and
+    // user content — which can include a reader's customization instruction, resolved
+    // interpretation text, or exact chart facts — and must never reach a log, debug or otherwise.
+    logger?.debug({ model: config.model, attempt }, 'Tier 2 request started');
     let response: Response;
     try {
       response = await fetch(url, {
@@ -238,29 +244,32 @@ async function callModelAttempts(
 
     if (response.ok) {
       const payload = (await response.json()) as GeminiResponse;
-      logger?.debug({ payload }, 'Tier 2 response payload');
       const text = payload.candidates?.[0]?.content?.parts?.[0]?.text;
       if (typeof text !== 'string') {
-        throw new Error(`Tier 2: unexpected model response shape: ${JSON.stringify(payload).slice(0, 500)}`);
+        // Fixed message (#490): never fold the provider payload into an Error, which
+        // `request.log.error` would then log at the default level.
+        throw new Error('Tier 2: model response did not include the expected text content');
       }
-      return {
-        text,
-        promptTokens: payload.usageMetadata?.promptTokenCount ?? 0,
-        outputTokens: payload.usageMetadata?.candidatesTokenCount ?? 0,
-      };
+      const promptTokens = payload.usageMetadata?.promptTokenCount ?? 0;
+      const outputTokens = payload.usageMetadata?.candidatesTokenCount ?? 0;
+      logger?.debug({ status: response.status, promptTokens, outputTokens }, 'Tier 2 request completed');
+      return { text, promptTokens, outputTokens };
     }
 
     const errorBody = await response.text();
-    logger?.debug({ status: response.status, errorBody }, 'Tier 2 response payload (error)');
+    logger?.debug({ status: response.status, bodyLength: errorBody.length }, 'Tier 2 request failed');
     // Google returns a bare, often-empty-bodied 404 for an unknown model id — the single most
     // likely cause being a typo or a retired model in ASTRAYA_INTERPRETATION_MODEL (or its
     // hardcoded default above), not a transient issue. Name that suspect explicitly so it shows
-    // up in the server log instead of a bare "(404): " that gives the operator nothing to act on.
+    // up in the server log instead of a bare "(404)" that gives the operator nothing to act on.
     const hint =
       response.status === 404
         ? ` — model "${config.model}" not found; check ASTRAYA_INTERPRETATION_MODEL for a typo or a retired model id`
         : '';
-    lastError = new Error(`Tier 2 model call failed (${String(response.status)}): ${errorBody.slice(0, 1000)}${hint}`);
+    // Fixed message, no provider body (#490): `errorBody` can itself echo request content back
+    // (some provider error responses quote the offending input) and must not reach the logs this
+    // thrown Error eventually feeds (`request.log.error`, default log level).
+    lastError = new Error(`Tier 2 model call failed (${String(response.status)})${hint}`);
     if (!RETRYABLE_STATUS.has(response.status) || attempt === maxRetries) throw lastError;
     await sleep(2 ** attempt * 500, signal);
   }
