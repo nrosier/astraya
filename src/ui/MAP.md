@@ -39,6 +39,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `PeriodicTransitView.tsx` + `PeriodicTransitView.messages.ts` — Daily/weekly/monthly/yearly transit forecast. Deps: `domain/periodic-transit`, `domain/planetary-return`, `astrology/transit-importance`.
 - `PersonForm.tsx` + `PersonForm.messages.ts` — Birth-data entry/edit form. Deps: `domain/person-form`, `time/resolve`.
 - `PersonNotFound.tsx` — "No person" fallback screen. Deps: `shared.messages`.
+- `PersonSwitcher.tsx` + `PersonSwitcher.messages.ts` — Header's searchable person switcher (#506/#509), replaces the static person-name chip; preserves the current feature on switch when prerequisites are met, else routes to Overview. Deps: `./feature-registry`, `./people-list`, `./use-exclusive-open`.
 - `PrimaryDirectionsView.tsx` + `PrimaryDirectionsView.messages.ts` — Primary directions screen (time key, date/age, natal/directed bi-wheel, hit tables). Deps: `domain/primary-directions`, `chart/multi-wheel`.
 - `ProfectionsView.tsx` + `ProfectionsView.messages.ts` — Annual/monthly profections screen. Deps: `domain/profections`, `./rulership-setting`, `./wheel-corpus`.
 - `ProgressionsView.tsx` + `ProgressionsView.messages.ts` — Secondary/tertiary/minor progressions screen. Deps: `domain/secondary-progression`, `domain/minor-progression`.

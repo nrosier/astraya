@@ -42,6 +42,7 @@ import { activeToolKey, TOOLS } from './tools-nav.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { useExportItems, type ExportItem } from './export-registry.js';
 import { useLastPersonId, writeLastPersonId } from './last-person.js';
+import { PersonSwitcher } from './PersonSwitcher.js';
 import { useRulershipChoice } from './rulership-setting.js';
 import { useSymbolClass } from './symbol-setting.js';
 import { downloadText } from './download.js';
@@ -294,10 +295,14 @@ function PersonMenu({
   const name = person?.displayName ?? '';
   return (
     <>
-      {name !== '' && (
-        <span className="app-nav-person" title={t.personChipLabel(name)}>
-          {name}
-        </span>
+      {person !== undefined && (
+        <PersonSwitcher
+          personId={personId}
+          name={name === '' ? t.unnamedPerson : name}
+          route={route}
+          dropdown={dropdown}
+          onNavigate={onNavigate}
+        />
       )}
       {PERSON_TABS.filter((tab) => LEADING_KEYS.has(tab.key)).map((tab) => renderTab(tab, 'app-nav-item'))}
       {/* One page for every chart cast for this person (natal, draconic, harmonic, returns); its sections

@@ -1502,13 +1502,78 @@ label.stacked textarea:focus-visible {
 .app-nav-person {
   max-width: 11rem;
   margin-right: 0.3rem;
-  padding-right: 0.6rem;
+  padding: 0 0.6rem 0 0;
   overflow: hidden;
+  border: none;
   border-right: 1px solid var(--line);
+  background: none;
   color: var(--fg);
+  font: inherit;
   font-weight: 650;
   text-overflow: ellipsis;
   white-space: nowrap;
+  cursor: pointer;
+}
+
+/*
+ * The searchable person switcher (#506/#509), replacing the static person-name span. Shares
+ * `.app-nav-group`'s own relative-positioning anchor and `.app-nav-menu`'s popup shape/shadow
+ * rather than defining a third set of dropdown tokens.
+ */
+.person-switcher-popup {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: max(16rem, 100%);
+  max-height: 60vh;
+  padding: var(--space-3);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-popover);
+}
+
+.person-switcher-filter-label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+
+.person-switcher-list {
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.person-switcher-item {
+  display: block;
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--radius-sm);
+  color: var(--fg);
+  text-decoration: none;
+}
+
+.person-switcher-item:hover {
+  background: var(--surface-hover);
+}
+
+.person-switcher-item.active {
+  background: var(--surface-hover);
+  font-weight: 600;
+}
+
+.person-switcher-all {
+  padding-top: var(--space-1);
+  border-top: 1px solid var(--line);
+  font-size: var(--text-sm);
 }
 
 .app-nav-item,
