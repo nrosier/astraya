@@ -311,9 +311,7 @@ test('a solar return and a lunar return are charts like any other, with their co
   expect(results.violations).toEqual([]);
 });
 
-test('the Export menu exports everything as one file, the people as a spreadsheet, and the open chart', async ({
-  page,
-}) => {
+test('the Export menu lists the open chart’s own exports under "This page"', async ({ page }) => {
   test.setTimeout(90_000);
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   await createPerson(page, ADA);
@@ -325,32 +323,12 @@ test('the Export menu exports everything as one file, the people as a spreadshee
     return Buffer.concat(chunks).toString('utf-8');
   };
 
-  // Everything: one JSON file with each person's birth record and natal chart tables.
+  // Full-data export and the people CSV moved to Preferences → Data & privacy (#506/#510,
+  // e2e/preferences.spec.ts covers them); this menu no longer has them.
   await header.getByRole('button', { name: 'Export', exact: true }).click();
-  await expect(header.getByRole('button', { name: 'Everything (one file)', exact: true })).toBeVisible();
-  await expect(header.getByRole('button', { name: 'People (CSV)', exact: true })).toBeVisible();
-  const [everything] = await Promise.all([
-    page.waitForEvent('download'),
-    header.getByRole('button', { name: 'Everything (one file)', exact: true }).click(),
-  ]);
-  expect(everything.suggestedFilename()).toMatch(/^astraya-export-\d{4}-\d{2}-\d{2}\.json$/);
-  const archive = JSON.parse(await read(everything)) as {
-    format: string;
-    people: { displayName: string; notes: string; natalChart?: { positions: { bodyKey: string; sign: string }[] } }[];
-  };
-  expect(archive.format).toBe('astraya-export');
-  expect(archive.people.map((p) => p.displayName)).toEqual(['Ada Lovelace']);
-  expect(archive.people[0]?.natalChart?.positions.find((row) => row.bodyKey === 'sun')?.sign).toBe('Sagittarius');
-  await expect(page.getByText('everything exported.', { exact: false })).toBeVisible();
-
-  // The people as a spreadsheet.
-  await header.getByRole('button', { name: 'Export', exact: true }).click();
-  const [csv] = await Promise.all([
-    page.waitForEvent('download'),
-    header.getByRole('button', { name: 'People (CSV)', exact: true }).click(),
-  ]);
-  expect(csv.suggestedFilename()).toMatch(/^astraya-people-.*\.csv$/);
-  expect(await read(csv)).toContain('Ada Lovelace,1815-12-10,07:45:00,recorded');
+  await expect(header.getByRole('button', { name: 'Everything (one file)', exact: true })).toHaveCount(0);
+  await expect(header.getByRole('button', { name: 'People (CSV)', exact: true })).toHaveCount(0);
+  await page.keyboard.press('Escape');
 
   // On a chart, its own exports are listed under "This page", and the wheel no longer carries buttons.
   await openNatalChart(page);
@@ -376,9 +354,9 @@ test('the Export menu exports everything as one file, the people as a spreadshee
   expect(svg.suggestedFilename()).toBe('ada-lovelace-chart.svg');
   expect(await read(svg)).toContain('<svg');
 
-  // Leaving the chart takes its exports away; the two everyday ones stay.
+  // Leaving the chart takes its exports away; the PDF builder link stays.
   await openTool(page, 'Eclipses');
   await header.getByRole('button', { name: 'Export', exact: true }).click();
   await expect(header.getByRole('button', { name: 'Image (SVG)', exact: true })).toHaveCount(0);
-  await expect(header.getByRole('button', { name: 'People (CSV)', exact: true })).toBeVisible();
+  await expect(header.getByRole('link', { name: 'Build custom PDF…', exact: true })).toBeVisible();
 });

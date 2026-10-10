@@ -38,17 +38,10 @@ import { chartTypesMessages } from './ChartTypes.messages.js';
 import type { PersonTab } from './person-nav.js';
 import type { Route } from './route.js';
 import { useOptionalStore, useStoreState } from './store-context.js';
-import type { Person } from '../domain/person.js';
 import { activeToolKey, TOOL_GROUPS, TOOLS } from './tools-nav.js';
-import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { useExportItems, type ExportItem } from './export-registry.js';
 import { useLastPersonId, writeLastPersonId } from './last-person.js';
 import { PersonSwitcher } from './PersonSwitcher.js';
-import { useRulershipChoice } from './rulership-setting.js';
-import { useSymbolClass } from './symbol-setting.js';
-import { downloadText } from './download.js';
-import { APP_VERSION } from '../version.js';
-import { buildFullExport, fullExportFilename, peopleCsvFilename, peopleToCsv } from '../domain/full-export.js';
 import { useExclusiveOpen, type ExclusiveOpen } from './use-exclusive-open.js';
 
 // The chart is not here: it is a menu of the chart types (below), not a single link.
@@ -67,11 +60,17 @@ interface ExportStatus {
 }
 
 /**
- * The Export menu (#export): everything the user can export, in one place, not scattered under each screen.
- * "Everything" is one file; the rest is split because it should be: the people as a spreadsheet, and the
- * current screen's own exports (a chart's image, its print version) as submenus of "This page", registered
- * by the screen (`export-registry.tsx`) while it is mounted. The status of a running export is announced in
- * `AppNav`, since the menu closes as soon as something is chosen.
+ * The Export menu (#export): the current screen's own exports (a chart's image, its print
+ * version) as submenus of "This page", registered by the screen (`export-registry.tsx`) while it
+ * is mounted, plus the PDF builder link. The status of a running export is announced in `AppNav`,
+ * since the menu closes as soon as something is chosen.
+ *
+ * Full-data export and the people CSV used to live here too; they moved to Preferences → Data &
+ * privacy (#506/#510), where the guidelines' navigation table puts "Data & backup" — this menu no
+ * longer duplicates them. Moving "Build custom PDF…" to its own Documents destination, and moving
+ * each page's own exports (the submenus below) into a `PageHeader` instead of this global menu,
+ * are the remaining, not-yet-done parts of that same plan item (#509) — left for a later slice
+ * since they touch every person-scoped screen, not just this file.
  */
 function ExportMenu({
   dropdown,
@@ -81,39 +80,12 @@ function ExportMenu({
   readonly run: (what: string, action: () => void | Promise<void>) => void;
 }): React.JSX.Element {
   const t = useMessages(appNavMessages);
-  const store = useOptionalStore();
-  const { provider } = useEphemerisProvider();
-  const [rulership] = useRulershipChoice();
-  const [symbolClass] = useSymbolClass();
   const pageItems = useExportItems();
   const [openGroup, setOpenGroup] = useState<string | undefined>(undefined);
   const isOpen = dropdown.open === EXPORT_GROUP;
   useEffect(() => {
     if (!isOpen) setOpenGroup(undefined);
   }, [isOpen]);
-
-  const people = (): readonly Person[] => (store === undefined ? [] : [...store.state.people.values()]);
-  const everything = (): void => {
-    run(t.exportEverythingName, async () => {
-      if (provider === undefined) throw new Error(t.exportNeedsEngine);
-      const now = new Date();
-      const archive = await buildFullExport({
-        people: people(),
-        provider,
-        appVersion: APP_VERSION,
-        rulership,
-        symbolClass,
-        now,
-      });
-      downloadText(fullExportFilename(now), `${JSON.stringify(archive, null, 2)}\n`, 'application/json');
-    });
-  };
-  const peopleCsv = (): void => {
-    run(t.exportPeopleName, () => {
-      const now = new Date();
-      downloadText(peopleCsvFilename(now), peopleToCsv(people()), 'text/csv');
-    });
-  };
 
   const groups = new Map<string, ExportItem[]>();
   const ungrouped: ExportItem[] = [];
@@ -153,18 +125,6 @@ function ExportMenu({
       >
         {t.exportPdfBuilder}
       </a>
-      <button
-        type="button"
-        className="app-nav-menu-item"
-        title={t.exportEverythingHint}
-        disabled={store === undefined}
-        onClick={everything}
-      >
-        {t.exportEverything}
-      </button>
-      <button type="button" className="app-nav-menu-item" disabled={store === undefined} onClick={peopleCsv}>
-        {t.exportPeopleCsv}
-      </button>
       {pageItems.length > 0 && <p className="app-nav-menu-heading">{t.exportThisPage}</p>}
       {ungrouped.map(itemButton)}
       {[...groups].map(([group, items]) => {
