@@ -264,20 +264,23 @@ describe('the trigger and the starting points (#442)', () => {
     unmount(container, root);
   });
 
-  it('fills the profile in one go from a starting point, and shows Custom once it no longer matches', async () => {
+  it('replaces every profile-owned value from a built-in calculation profile, and shows Custom once it no longer matches', async () => {
     const onRedraw = vi.fn();
     const { container, root } = await mount(fakeProvider(), onRedraw);
     openCard(container);
 
     const preset = container.querySelector<HTMLSelectElement>('dialog select');
-    expect(preset?.value).toBe('modern');
+    expect(preset?.value).toBe('modern-western-v1');
     act(() => {
       if (preset === null) return;
-      Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value')?.set?.call(preset, 'traditional');
+      Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value')?.set?.call(
+        preset,
+        'traditional-western-v1',
+      );
       preset.dispatchEvent(new Event('change', { bubbles: true }));
     });
     expect(checkboxLabeled(container, 'Part of Fortune').checked).toBe(true);
-    expect(container.querySelector<HTMLSelectElement>('dialog select')?.value).toBe('traditional');
+    expect(container.querySelector<HTMLSelectElement>('dialog select')?.value).toBe('traditional-western-v1');
     // It also sets the (device-wide) rulers, but only when applied.
     expect(container.textContent).toContain('also sets the planetary rulers to Traditional');
     act(() => {
@@ -297,7 +300,7 @@ describe('the trigger and the starting points (#442)', () => {
     const preset = container.querySelector<HTMLSelectElement>('dialog select');
     act(() => {
       if (preset === null) return;
-      Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value')?.set?.call(preset, 'vedic');
+      Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value')?.set?.call(preset, 'sidereal-lahiri-v1');
       preset.dispatchEvent(new Event('change', { bubbles: true }));
     });
     act(() => {

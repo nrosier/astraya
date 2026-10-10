@@ -14,20 +14,21 @@ const en = {
   scopeNote:
     'These settings draw the natal chart and the solar and lunar returns. Draconic and harmonic charts, transits and synastry do not use them.',
 
-  presetLabel: 'Tradition',
+  presetLabel: 'Calculation profile',
   presetOptions: {
     custom: 'Custom',
-    modern: 'Modern Western',
-    traditional: 'Traditional / Hellenistic',
-    vedic: 'Vedic (Jyotish)',
+    'modern-western-v1': 'Modern Western',
+    'traditional-western-v1': 'Traditional Western',
+    'sidereal-lahiri-v1': 'Sidereal (Lahiri)',
   },
   presetNotes: {
-    custom: 'Your own combination. Choose a starting point to fill the zodiac, houses, points and rulers in one go.',
-    modern: 'Tropical zodiac, Placidus houses, modern rulers, the default points and aspects.',
-    traditional:
-      'Tropical zodiac, Whole Sign houses, traditional rulers, the Part of Fortune shown, no Chiron and no minor aspects. Orbs are left as they are: traditional orbs depend on the planet and are not set here.',
-    vedic:
-      'Sidereal zodiac with the Lahiri ayanamsa, Whole Sign houses, traditional rulers, no Chiron and no minor aspects. The node model and the orbs are left as they are.',
+    custom: 'Your own combination. Choose a built-in profile to replace every value it owns in one go.',
+    'modern-western-v1':
+      'Tropical zodiac, Placidus houses, modern rulers, Chiron shown, Fortune and Vertex hidden, five major aspects, mean node and Lilith, standard orbs.',
+    'traditional-western-v1':
+      'Tropical zodiac, Whole Sign houses, traditional rulers, the Part of Fortune shown, no Chiron, five major aspects, mean node and Lilith, standard orbs.',
+    'sidereal-lahiri-v1':
+      'Sidereal zodiac with the Lahiri ayanamsa, Whole Sign houses, traditional rulers, no Chiron or Fortune, five major aspects, mean node and Lilith, standard orbs.',
   },
   presetRulership: (scheme: string) => `Applying it also sets the planetary rulers to ${scheme} on this device.`,
   rulershipNames: { modern: 'Modern', traditional: 'Traditional', both: 'Both' },
@@ -145,21 +146,21 @@ const nl: typeof en = {
   scopeNote:
     'Deze instellingen bepalen de geboortehoroscoop en de zonne- en maanterugkeer. Draconische en harmonische horoscopen, transits en synastrie gebruiken ze niet.',
 
-  presetLabel: 'Traditie',
+  presetLabel: 'Berekeningsprofiel',
   presetOptions: {
     custom: 'Eigen keuze',
-    modern: 'Modern westers',
-    traditional: 'Traditioneel / Hellenistisch',
-    vedic: 'Vedisch (Jyotish)',
+    'modern-western-v1': 'Modern westers',
+    'traditional-western-v1': 'Traditioneel westers',
+    'sidereal-lahiri-v1': 'Siderisch (Lahiri)',
   },
   presetNotes: {
-    custom:
-      'Je eigen combinatie. Kies een beginpunt om dierenriem, huizen, punten en heersers in één keer in te vullen.',
-    modern: 'Tropische dierenriem, Placidus-huizen, moderne heersers, de standaardpunten en -aspecten.',
-    traditional:
-      'Tropische dierenriem, Whole Sign-huizen, traditionele heersers, het Fortuna-punt zichtbaar, geen Chiron en geen kleine aspecten. De orbs blijven zoals ze zijn: traditionele orbs hangen af van de planeet en worden hier niet ingesteld.',
-    vedic:
-      'Siderische dierenriem met de Lahiri-ayanamsa, Whole Sign-huizen, traditionele heersers, geen Chiron en geen kleine aspecten. Het knoopmodel en de orbs blijven zoals ze zijn.',
+    custom: 'Je eigen combinatie. Kies een ingebouwd profiel om elke waarde die het bepaalt in één keer te vervangen.',
+    'modern-western-v1':
+      'Tropische dierenriem, Placidus-huizen, moderne heersers, Chiron zichtbaar, Fortuna en Vertex verborgen, vijf hoofdaspecten, gemiddelde maansknoop en Lilith, standaardorbs.',
+    'traditional-western-v1':
+      'Tropische dierenriem, Whole Sign-huizen, traditionele heersers, het Fortuna-punt zichtbaar, geen Chiron, vijf hoofdaspecten, gemiddelde maansknoop en Lilith, standaardorbs.',
+    'sidereal-lahiri-v1':
+      'Siderische dierenriem met de Lahiri-ayanamsa, Whole Sign-huizen, traditionele heersers, geen Chiron of Fortuna, vijf hoofdaspecten, gemiddelde maansknoop en Lilith, standaardorbs.',
   },
   presetRulership: (scheme: string) => `Toepassen zet ook de planeetheersers op ${scheme} op dit apparaat.`,
   rulershipNames: { modern: 'modern', traditional: 'traditioneel', both: 'beide' },

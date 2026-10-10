@@ -26,8 +26,14 @@ import { ayanamsaByKey, AYANAMSAS } from '../astrology/ayanamsas.js';
 import { HOUSE_SYSTEMS } from '../astrology/houses.js';
 import type { RulershipChoice } from '../astrology/rulership.js';
 import { aspectDisplayName } from './astro-names.messages.js';
+import {
+  applyCalculationProfile,
+  CALCULATION_PROFILE_IDS,
+  CALCULATION_PROFILES,
+  matchCalculationProfile,
+  type CalculationProfileId,
+} from '../chart/calculation-profiles.js';
 import { DEFAULT_EXTENDED_SETTINGS, type ExtendedSettings } from '../chart/extended-settings.js';
-import { applyPreset, matchPreset, PRESET_KEYS, PRESETS, type PresetKey } from '../chart/extended-settings-presets.js';
 import { extendedSettingsPanelMessages } from './ExtendedSettingsPanel.messages.js';
 import { changedSettings, sameSettings } from './extended-settings-summary.js';
 import { useLocale } from './locale.js';
@@ -151,7 +157,7 @@ export function ExtendedSettingsPanel({
   }, [value, open]);
 
   const effectiveRulers = pendingRulers ?? rulers;
-  const currentPreset = matchPreset(draft, effectiveRulers);
+  const currentProfile = matchCalculationProfile(draft, effectiveRulers);
   const dirty = !sameSettings(draft, value) || pendingRulers !== undefined || symbolsChanged;
 
   const apply = (): void => {
@@ -167,11 +173,12 @@ export function ExtendedSettingsPanel({
     triggerRef.current?.focus();
   };
 
-  const choosePreset = (key: string): void => {
-    if (!(PRESET_KEYS as readonly string[]).includes(key)) return;
-    const preset = key as PresetKey;
-    setDraft((current) => applyPreset(current, preset));
-    setPendingRulers(PRESETS[preset].rulership === rulers ? undefined : PRESETS[preset].rulership);
+  const chooseProfile = (id: string): void => {
+    if (!(CALCULATION_PROFILE_IDS as readonly string[]).includes(id)) return;
+    const profileId = id as CalculationProfileId;
+    setDraft((current) => applyCalculationProfile(current, profileId));
+    const profileRulers = CALCULATION_PROFILES[profileId].rulership;
+    setPendingRulers(profileRulers === rulers ? undefined : profileRulers);
   };
 
   const ayanamsaId = draft.zodiac.kind === 'sidereal' ? draft.zodiac.ayanamsa : undefined;
@@ -274,25 +281,25 @@ export function ExtendedSettingsPanel({
             <label>
               <select
                 aria-label={t.presetLabel}
-                value={currentPreset ?? 'custom'}
+                value={currentProfile ?? 'custom'}
                 onChange={(event) => {
-                  choosePreset(event.target.value);
+                  chooseProfile(event.target.value);
                 }}
               >
-                <option value="custom" disabled={currentPreset !== undefined}>
+                <option value="custom" disabled={currentProfile !== undefined}>
                   {t.presetOptions.custom}
                 </option>
-                {PRESET_KEYS.map((key) => (
-                  <option key={key} value={key}>
-                    {t.presetOptions[key]}
+                {CALCULATION_PROFILE_IDS.map((id) => (
+                  <option key={id} value={id}>
+                    {t.presetOptions[id]}
                   </option>
                 ))}
               </select>
             </label>
             <p className="hint">
-              {t.presetNotes[currentPreset ?? 'custom']}
-              {currentPreset !== undefined && PRESETS[currentPreset].rulership !== rulers
-                ? ` ${t.presetRulership(t.rulershipNames[PRESETS[currentPreset].rulership])}`
+              {t.presetNotes[currentProfile ?? 'custom']}
+              {currentProfile !== undefined && CALCULATION_PROFILES[currentProfile].rulership !== rulers
+                ? ` ${t.presetRulership(t.rulershipNames[CALCULATION_PROFILES[currentProfile].rulership])}`
                 : ''}
             </p>
           </fieldset>

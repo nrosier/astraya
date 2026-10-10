@@ -55,7 +55,7 @@ test('the settings open as a card, apply together or are dropped, and the button
   const card = page.locator('dialog.settings-card');
   await expect(card.getByRole('heading', { name: 'Extended settings', level: 2 })).toBeVisible();
   await expect(card.locator('fieldset.settings-card-group > legend')).toHaveText([
-    'Tradition',
+    'Calculation profile',
     'Chart frame',
     'Bodies and points',
     'Aspects and orbs',
@@ -75,9 +75,9 @@ test('the settings open as a card, apply together or are dropped, and the button
   await expect(card.getByLabel('House system', { exact: true })).toHaveValue('P');
   await closeSettings(page);
 
-  // A tradition preset fills the profile in one go; applying it redraws and the button names what changed.
+  // A built-in calculation profile replaces every value it owns in one go; applying it redraws and the button names what changed.
   await openSettings(page);
-  await card.getByLabel('Tradition', { exact: true }).selectOption('traditional');
+  await card.getByLabel('Calculation profile', { exact: true }).selectOption('traditional-western-v1');
   await expect(card.getByText('also sets the planetary rulers to Traditional')).toBeVisible();
   await card.getByRole('button', { name: 'Apply and redraw', exact: true }).click();
   await expect(card).toBeHidden();
@@ -86,7 +86,7 @@ test('the settings open as a card, apply together or are dropped, and the button
   await expect(trigger).toContainText('changed');
   await openSettings(page);
   await expect(card.getByLabel('Planetary rulers', { exact: true })).toHaveValue('traditional');
-  await expect(card.getByLabel('Tradition', { exact: true })).toHaveValue('traditional');
+  await expect(card.getByLabel('Calculation profile', { exact: true })).toHaveValue('traditional-western-v1');
 
   // The orbs now in force are spelled out, not only a percentage.
   await card.getByRole('slider', { name: 'Orb scale' }).fill('-10');
