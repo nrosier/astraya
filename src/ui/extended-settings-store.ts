@@ -9,13 +9,14 @@
 /**
  * @module ui/extended-settings-store
  * @purpose Holds the chart's confirmed Extended settings (house system, zodiac, orbs, visible points) shared across every chart-drawing screen (natal, solar/lunar return).
- * @conventions In-memory for the page's lifetime only (chosen and redrawn per visit, never persisted); uses useSyncExternalStore so every screen reading the settings re-renders on change.
+ * @conventions In-memory for the page's lifetime only (chosen and redrawn per visit, never persisted) but seeded at module load from the device's saved default calculation profile (#510), falling back to DEFAULT_EXTENDED_SETTINGS when none is saved; uses useSyncExternalStore so every screen reading the settings re-renders on change.
  * @exports setExtendedSettings, resetExtendedSettings, useExtendedSettings
  */
 import { useSyncExternalStore } from 'react';
 import { DEFAULT_EXTENDED_SETTINGS, type ExtendedSettings } from '../chart/extended-settings.js';
+import { readDefaultCalculationProfile } from './default-calculation-profile.js';
 
-let current: ExtendedSettings = DEFAULT_EXTENDED_SETTINGS;
+let current: ExtendedSettings = readDefaultCalculationProfile()?.settings ?? DEFAULT_EXTENDED_SETTINGS;
 const listeners = new Set<() => void>();
 
 export function setExtendedSettings(next: ExtendedSettings): void {

@@ -124,6 +124,19 @@ export const SETTINGS: readonly SettingDefinition[] = [
     resetTarget: 'the real default (the "important" preset)',
   },
   {
+    key: 'astraya:defaultCalculationProfile',
+    scope: 'account',
+    owner:
+      'The calculation profile (zodiac/houses/rulers/orbs/points/aspects) every new chart starts from on this device',
+    describeDefault: 'unset (falls back to the Modern Western built-in profile)',
+    persistence: 'local-storage',
+    synced: false,
+    editingSurface: 'ExtendedSettingsPanel.tsx ("Save as my default")',
+    commitMode: 'staged',
+    sensitive: false,
+    resetTarget: 'Astraya default (modern-western-v1)',
+  },
+  {
     key: '(none — unchecked every render, never persisted)',
     scope: 'request',
     owner: 'Tier 2 AI-customized interpretation consent',

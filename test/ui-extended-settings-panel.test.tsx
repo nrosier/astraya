@@ -13,6 +13,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_EXTENDED_SETTINGS, type ExtendedSettings } from '../src/chart/extended-settings.js';
 import type { EphemerisProvider } from '../src/ephemeris/types.js';
+import { readDefaultCalculationProfile } from '../src/ui/default-calculation-profile.js';
 import { ExtendedSettingsPanel } from '../src/ui/ExtendedSettingsPanel.js';
 import { writeRulershipChoice } from '../src/ui/rulership-setting.js';
 
@@ -137,6 +138,28 @@ describe('ExtendedSettingsPanel', () => {
     expect(onRedraw).toHaveBeenCalledTimes(1);
     expect(onRedraw).toHaveBeenCalledWith({ ...DEFAULT_EXTENDED_SETTINGS, rainbowZodiac: true });
     expect(container.querySelector('dialog')?.hasAttribute('open')).toBe(false);
+
+    unmount(container, root);
+  });
+
+  it('remembers a Custom draft as the device default without redrawing the open chart (#510)', async () => {
+    const onRedraw = vi.fn();
+    const { container, root } = await mount(fakeProvider(), onRedraw);
+    openCard(container);
+
+    const rainbowCheckbox = checkboxLabeled(container, 'Rainbow Color Zodiac');
+    act(() => {
+      rainbowCheckbox.click();
+    });
+
+    act(() => {
+      buttonNamed(container, 'Save as my default')?.click();
+    });
+
+    expect(onRedraw).not.toHaveBeenCalled();
+    expect(container.querySelector('dialog')?.hasAttribute('open')).toBe(false);
+    expect(readDefaultCalculationProfile()?.settings).toEqual({ ...DEFAULT_EXTENDED_SETTINGS, rainbowZodiac: true });
+    expect(readDefaultCalculationProfile()?.rulership).toBe('modern');
 
     unmount(container, root);
   });

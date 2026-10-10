@@ -181,3 +181,39 @@ test('the Apply button enables when only Symbols are changed (#459)', async ({ p
 
   await closeSettings(page);
 });
+
+test('saving a profile as the device default applies it to a chart that was never touched (#510)', async ({ page }) => {
+  test.setTimeout(90_000);
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  await createPerson(page, ADA);
+  await openNatalChart(page);
+  await expect(page.locator('div.chart-wheel')).toBeVisible();
+
+  // Save Sidereal (Lahiri) as this device's default, without applying it to the chart open now.
+  await openSettings(page);
+  const card = page.locator('dialog.settings-card');
+  await card.getByLabel('Calculation profile', { exact: true }).selectOption('sidereal-lahiri-v1');
+  await card.getByRole('button', { name: 'Save as my default', exact: true }).click();
+  await expect(card).toBeHidden();
+  await openSettings(page);
+  await expect(card.getByLabel('House system', { exact: true })).toHaveValue('P');
+  await closeSettings(page);
+
+  // The in-memory ExtendedSettings store is seeded once per real page load (#510), not on every
+  // hash navigation within the same SPA session — matching `extended-settings-store.ts`'s own
+  // "held for the page's lifetime" design — so a genuine reload is needed to pick up the new default.
+  await page.reload();
+  await page.waitForLoadState('load');
+
+  // A second person's chart has never had its own settings touched, so it starts from the new default.
+  const BOB = { ...ADA, name: 'Bob Example' };
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  await createPerson(page, BOB);
+  await openNatalChart(page);
+  await expect(page.locator('div.chart-wheel')).toBeVisible();
+
+  await openSettings(page);
+  await expect(card.getByLabel('Calculation profile', { exact: true })).toHaveValue('sidereal-lahiri-v1');
+  await expect(card.getByLabel('House system', { exact: true })).toHaveValue('W');
+  await closeSettings(page);
+});

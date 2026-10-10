@@ -6,10 +6,9 @@
  *
  * The calculation-basis line is deliberately minimal (zodiac kind + rulership model only) rather
  * than resolving a house-system/ayanamsa display name, which needs an async `EphemerisProvider`
- * call (`ExtendedSettingsPanel.tsx`'s own `useNameLookup`): named calculation profiles are
- * Phase 3's job (#510), and this screen does not pre-empt that work with a half version of it.
- * Once profiles land, this line should read the active profile instead of
- * `DEFAULT_EXTENDED_SETTINGS` directly.
+ * call (`ExtendedSettingsPanel.tsx`'s own `useNameLookup`). Zodiac kind reads the device's saved
+ * default calculation profile (#510) via `default-calculation-profile.ts`, falling back to
+ * `DEFAULT_EXTENDED_SETTINGS` when none is saved.
  */
 /**
  * @module ui/Overview
@@ -28,6 +27,7 @@ import { sharedMessages } from './shared.messages.js';
 import { useStoreState } from './store-context.js';
 import { summary } from './people-list.js';
 import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
+import { useDefaultCalculationProfile } from './default-calculation-profile.js';
 
 export function Overview({ personId }: { readonly personId: string }): React.JSX.Element {
   const state = useStoreState();
@@ -37,13 +37,15 @@ export function Overview({ personId }: { readonly personId: string }): React.JSX
   const rulershipT = useMessages(rulershipSettingMessages);
   const [locale] = useLocale();
   const [rulership] = useRulershipChoice();
+  const [defaultProfile] = useDefaultCalculationProfile();
 
   if (person === undefined) {
     return <PersonNotFound />;
   }
 
   const hasBirthMoment = person.moment !== undefined;
-  const zodiacLabel = DEFAULT_EXTENDED_SETTINGS.zodiac.kind === 'sidereal' ? t.sidereal : t.tropical;
+  const zodiac = defaultProfile?.settings.zodiac ?? DEFAULT_EXTENDED_SETTINGS.zodiac;
+  const zodiacLabel = zodiac.kind === 'sidereal' ? t.sidereal : t.tropical;
 
   // Every next action but editing the birth record itself needs a complete birth moment —
   // same gate person-nav.ts's isTabEnabled applies to every other tab (only "birth-record"

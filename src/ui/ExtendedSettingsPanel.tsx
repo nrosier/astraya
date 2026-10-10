@@ -34,6 +34,7 @@ import {
   type CalculationProfileId,
 } from '../chart/calculation-profiles.js';
 import { DEFAULT_EXTENDED_SETTINGS, type ExtendedSettings } from '../chart/extended-settings.js';
+import { useDefaultCalculationProfile } from './default-calculation-profile.js';
 import { extendedSettingsPanelMessages } from './ExtendedSettingsPanel.messages.js';
 import { changedSettings, sameSettings } from './extended-settings-summary.js';
 import { useLocale } from './locale.js';
@@ -95,6 +96,7 @@ export function ExtendedSettingsPanel({
   const t = useMessages(extendedSettingsPanelMessages);
   const [locale] = useLocale();
   const [rulers, setRulers] = useRulershipChoice();
+  const [, setDefaultCalculationProfile] = useDefaultCalculationProfile();
 
   const houseSystemNames = useNameLookup(
     HOUSE_SYSTEMS.map((system) => system.code),
@@ -171,6 +173,13 @@ export function ExtendedSettingsPanel({
     setOpen(false);
     setPendingRulers(undefined);
     triggerRef.current?.focus();
+  };
+
+  /** "Save as my default" (#510): remembers the draft and rulers for every future chart on this device — never redraws the chart currently open, which stays Apply's job alone. */
+  const saveAsDefault = (): void => {
+    if (pendingRulers !== undefined) setRulers(pendingRulers);
+    setDefaultCalculationProfile(draft, effectiveRulers);
+    closeCard();
   };
 
   const chooseProfile = (id: string): void => {
@@ -610,6 +619,16 @@ export function ExtendedSettingsPanel({
             onClick={apply}
           >
             {t.applyButton}
+          </button>
+          <button
+            type="button"
+            className="quiet"
+            disabled={!dirty}
+            aria-label={dirty ? t.saveAsDefaultButton : `${t.saveAsDefaultButton} — ${t.nothingChanged}`}
+            title={t.saveAsDefaultHint}
+            onClick={saveAsDefault}
+          >
+            {t.saveAsDefaultButton}
           </button>
           <button type="button" className="quiet" onClick={closeCard}>
             {t.cancelButton}

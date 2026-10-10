@@ -120,6 +120,8 @@ const en = {
 
   applyButton: 'Apply and redraw',
   nothingChanged: 'nothing has changed',
+  saveAsDefaultButton: 'Save as my default',
+  saveAsDefaultHint: 'Applies to every new chart on this device.',
   cancelButton: 'Cancel',
   resetToDefaultsButton: 'Reset to defaults',
 
@@ -253,6 +255,8 @@ const nl: typeof en = {
 
   applyButton: 'Toepassen en opnieuw tekenen',
   nothingChanged: 'er is niets gewijzigd',
+  saveAsDefaultButton: 'Opslaan als mijn standaard',
+  saveAsDefaultHint: 'Geldt voor elke nieuwe grafiek op dit apparaat.',
   cancelButton: 'Annuleren',
   resetToDefaultsButton: 'Terugzetten naar standaard',
 
