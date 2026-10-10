@@ -116,7 +116,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `table-sort.ts` — Generic sorting/export engine for all data tables. Deps: none (domain-agnostic).
 - `theme-dom.ts` — DOM/storage half of light/dark theme override. Deps: `./theme`.
 - `theme.ts` — Pure theme-selection logic (cycle order/labels). Deps: `ThemeToggle.messages`.
-- `tools-nav.ts` — Tools menu backing (tool list/active-tool). Deps: `route`.
+- `tools-nav.ts` — Tools menu backing (tool list/groups/active-tool); grouped as Sky & cycles/Questions & planning/Birth data (#506/#509). Deps: `route`.
 - `use-exclusive-open.ts` — Shared open/close hook for dropdown-button rows. Deps: none (React only).
 - `void-of-course-text.ts` — Composes void-of-course Moon sentence (transit screen). Deps: `astrology/bodies`, `astrology/signs`, `astrology/void-of-course`, `time/julian`.
 - `wheel-corpus.ts` — Supplies + caches interpretation corpus to wheel-selection panel. Deps: `interpretation/corpus-client`.

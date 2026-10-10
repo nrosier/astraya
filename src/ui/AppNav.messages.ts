@@ -6,11 +6,11 @@
 /**
  * @module AppNav.messages
  * @purpose English/Dutch i18n strings for the header navigation: person tabs, chart-type/tool/export menu labels, and export status text.
- * @conventions Co-located i18n file exporting `{ en, nl }`, consumed by AppNav.tsx via `useMessages(appNavMessages)`; `nl` is typed as `typeof en`. Looks up labels by key for `person-nav.ts`'s `PersonTabKey`/`PersonTabFamilyKey` and `tools-nav.ts`'s `ToolKey` since those pure modules have no access to the current locale.
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed by AppNav.tsx via `useMessages(appNavMessages)`; `nl` is typed as `typeof en`. Looks up labels by key for `person-nav.ts`'s `PersonTabKey`/`PersonTabFamilyKey` and `tools-nav.ts`'s `ToolKey`/`ToolGroupKey` since those pure modules have no access to the current locale.
  * @exports appNavMessages
  */
 import type { PersonTabFamilyKey, PersonTabKey } from './person-nav.js';
-import type { ToolKey } from './tools-nav.js';
+import type { ToolGroupKey, ToolKey } from './tools-nav.js';
 
 const en = {
   mainNavAriaLabel: 'Main',
@@ -39,6 +39,11 @@ const en = {
     electional: 'Electional search',
     rectification: 'Birth-time rectification',
   } satisfies Record<ToolKey, string>,
+  toolGroupLabels: {
+    'sky-cycles': 'Sky & cycles',
+    'questions-planning': 'Questions & planning',
+    'birth-data': 'Birth data',
+  } satisfies Record<ToolGroupKey, string>,
   disabledTabSuffix: (label: string) => `${label} — complete the birth record first`,
   completeBirthRecordHint: 'Complete the birth record to unlock the other tabs.',
   subtabsAriaLabel: (familyLabel: string) => `${familyLabel} subtabs`,
@@ -93,6 +98,11 @@ const nl: typeof en = {
     electional: 'Electieve zoektocht',
     rectification: 'Geboortetijd-rectificatie',
   } satisfies Record<ToolKey, string>,
+  toolGroupLabels: {
+    'sky-cycles': 'Hemel & cycli',
+    'questions-planning': 'Vragen & planning',
+    'birth-data': 'Geboortegegevens',
+  } satisfies Record<ToolGroupKey, string>,
   disabledTabSuffix: (label: string) => `${label} — voltooi eerst de geboortegegevens`,
   completeBirthRecordHint: 'Vul de geboortegegevens in om de overige tabs te ontgrendelen.',
   subtabsAriaLabel: (familyLabel: string) => `Subtabs van ${familyLabel}`,

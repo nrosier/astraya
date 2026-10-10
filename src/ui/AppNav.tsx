@@ -7,8 +7,9 @@
  *   record, Charts (a dropdown of the chart types: natal, draconic, harmonic, solar and lunar return),
  *   Interpretation, Astrocartography and the three grouped dropdowns (Transits & Forecast, Progressions &
  *   Directions, Relationship Charts);
- * - **Tools**, on every screen: the calculators that are not about one person's chart
- *   (`tools-nav.ts`);
+ * - **Tools**, on every screen: the calculators that are not about one person's chart, grouped
+ *   under noninteractive headings (Sky & cycles / Questions & planning / Birth data) rather than
+ *   left as one flat list (`tools-nav.ts`, #506/#509);
  * - **Export**, on every screen.
  *
  * Admin is reached from the account area on the top bar (`AccountPanel.tsx`), not from here (#443):
@@ -28,7 +29,7 @@
  * @conventions Dropdowns share one `useExclusiveOpen` so only one is open at a time; folds behind a Menu button below 1024px; text comes from co-located `AppNav.messages.ts` via `useMessages()`.
  * @exports AppNav
  */
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { appNavMessages } from './AppNav.messages.js';
 import { useMessages } from './messages.js';
 import { activeTabKey, isTabEnabled, PERSON_TAB_FAMILIES, PERSON_TABS } from './person-nav.js';
@@ -38,7 +39,7 @@ import type { PersonTab } from './person-nav.js';
 import type { Route } from './route.js';
 import { useOptionalStore, useStoreState } from './store-context.js';
 import type { Person } from '../domain/person.js';
-import { activeToolKey, TOOLS } from './tools-nav.js';
+import { activeToolKey, TOOL_GROUPS, TOOLS } from './tools-nav.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { useExportItems, type ExportItem } from './export-registry.js';
 import { useLastPersonId, writeLastPersonId } from './last-person.js';
@@ -461,16 +462,25 @@ export function AppNav({ route }: { route: Route }): React.JSX.Element {
           active={activeTool !== null}
           dropdown={dropdown}
         >
-          {TOOLS.map((tool) => (
-            <a
-              key={tool.key}
-              href={tool.href}
-              className={tool.key === activeTool ? 'app-nav-menu-item active' : 'app-nav-menu-item'}
-              aria-current={tool.key === activeTool ? 'page' : undefined}
-              onClick={closeAll}
-            >
-              {t.toolLabels[tool.key]}
-            </a>
+          {TOOL_GROUPS.map((group) => (
+            // A Fragment, not a wrapping element: `.app-nav-menu` is itself the flex column that
+            // stacks every item one per row, so the heading and its tools must stay its *direct*
+            // children — a wrapping <div> would make them its own un-flexed inline flow instead,
+            // and anchors default to inline, wrapping side by side like text rather than stacking.
+            <Fragment key={group}>
+              <p className="app-nav-menu-heading">{t.toolGroupLabels[group]}</p>
+              {TOOLS.filter((tool) => tool.group === group).map((tool) => (
+                <a
+                  key={tool.key}
+                  href={tool.href}
+                  className={tool.key === activeTool ? 'app-nav-menu-item active' : 'app-nav-menu-item'}
+                  aria-current={tool.key === activeTool ? 'page' : undefined}
+                  onClick={closeAll}
+                >
+                  {t.toolLabels[tool.key]}
+                </a>
+              ))}
+            </Fragment>
           ))}
         </NavGroup>
         <ExportMenu dropdown={dropdown} run={runExport} />

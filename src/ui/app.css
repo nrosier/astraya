@@ -1692,7 +1692,9 @@ label.stacked textarea:focus-visible {
   font-weight: 600;
 }
 
-/* The Export menu's section heading and its submenus (a group of items that expands in place). */
+/* A noninteractive group heading inside a dropdown — the Export menu's "This page" section, and
+   the Tools menu's Sky & cycles/Questions & planning/Birth data groups (#506/#509, tools-nav.ts) —
+   plus the Export menu's own submenus (a group of items that expands in place). */
 .app-nav-menu-heading {
   margin: 0.4rem 0.8rem 0.1rem;
   color: var(--muted);

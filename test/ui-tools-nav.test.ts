@@ -4,7 +4,7 @@
 import { describe, expect, it } from 'vitest';
 import { newId } from '../src/domain/id.js';
 import { parseRoute, type Route } from '../src/ui/route.js';
-import { activeToolKey, TOOLS } from '../src/ui/tools-nav.js';
+import { activeToolKey, TOOL_GROUPS, TOOLS } from '../src/ui/tools-nav.js';
 import { appNavMessages } from '../src/ui/AppNav.messages.js';
 
 describe('the tools menu', () => {
@@ -26,10 +26,26 @@ describe('the tools menu', () => {
     for (const route of others) expect(activeToolKey(route)).toBeNull();
   });
 
-  it('has a label for every tool in both languages, and names the menu in both', () => {
+  it('groups every tool under one of the three Sky & cycles/Questions & planning/Birth data headings, consecutively', () => {
+    expect(TOOL_GROUPS).toEqual(['sky-cycles', 'questions-planning', 'birth-data']);
+    expect(TOOLS.map((tool) => tool.group)).toEqual([
+      'sky-cycles',
+      'sky-cycles',
+      'questions-planning',
+      'questions-planning',
+      'birth-data',
+    ]);
+    // Every group has at least one tool, and TOOL_GROUPS names every group TOOLS actually uses —
+    // AppNav.tsx's rendering assumes both.
+    for (const group of TOOL_GROUPS) expect(TOOLS.some((tool) => tool.group === group)).toBe(true);
+    for (const tool of TOOLS) expect(TOOL_GROUPS).toContain(tool.group);
+  });
+
+  it('has a label for every tool and every group in both languages, and names the menu in both', () => {
     for (const locale of ['en', 'nl'] as const) {
       const t = appNavMessages[locale];
       for (const tool of TOOLS) expect(t.toolLabels[tool.key].length).toBeGreaterThan(3);
+      for (const group of TOOL_GROUPS) expect(t.toolGroupLabels[group].length).toBeGreaterThan(3);
       expect(t.toolsLabel.length).toBeGreaterThan(3);
     }
     expect(appNavMessages.en.toolsLabel).toBe('Tools');
