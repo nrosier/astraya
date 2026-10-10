@@ -306,9 +306,17 @@
 }
 
 /* Anchors, focus and find-in-page scroll clear of the sticky header (#421), whatever element
-   they land on, without a rule per element. */
+   they land on, without a rule per element. Only applies below 64rem: at and above that width the
+   header is a left rail (`min-width: 64rem` below), which does not sit above the content at all,
+   so nothing needs scrolling clear of it vertically. */
 html {
   scroll-padding-top: calc(var(--app-header-size, var(--app-header-height)) + 0.75rem);
+}
+
+@media (min-width: 64rem) {
+  html {
+    scroll-padding-top: 0.75rem;
+  }
 }
 
 /* Shared pill shape for every corner control (#367) — box only. Cursor/hover stays on
@@ -1787,6 +1795,188 @@ label.stacked textarea:focus-visible {
   }
 }
 
+/*
+ * The workspace shell (#506/#509, `WorkspaceShell.tsx`): below 64rem this is a plain stack
+ * (header, then main content, same order and flow as before this component existed). At and
+ * above 64rem the header becomes a collapsible left rail per docs/UI-UX_GUIDELINES.md's "Target
+ * application shell" instead of a bar across the top — the brand/status at its head, the
+ * dropdown nav from `AppNav.tsx` filling the middle unchanged, and the account cluster anchored
+ * at its foot. The toggle collapses the whole rail rather than shrinking it to icon-only buttons
+ * with tooltips: this app has no icon set to shrink to, so hiding the rail outright (rather than
+ * degrading it to a label-less state) is what the guideline's "without losing labels to tooltips
+ * alone" rules out.
+ */
+.workspace-rail-toggle {
+  display: none;
+}
+
+@media (min-width: 64rem) {
+  .workspace-shell {
+    display: flex;
+    align-items: stretch;
+    min-height: 100vh;
+  }
+
+  .workspace-main {
+    display: flex;
+    flex: 1 1 auto;
+    min-width: 0;
+    flex-direction: column;
+  }
+
+  /* No `overflow-y: auto` here, even though the rail can in principle run taller than the
+     viewport (a person with every chart family plus Tools and Export): setting overflow on one
+     axis forces the other to a non-"visible" computed value too (CSS Overflow §3), which would
+     clip every flyout — opening sideways into the main content, not downward (below) — at this
+     box's own right edge instead of letting it render over the page. `min-height` plus `position:
+     sticky` is the trade-off: content taller than the viewport scrolls normally with the page
+     until the box's own bottom edge passes the top of the viewport, rather than gaining an inner
+     scrollbar; in return every flyout stays unclipped. */
+  .app-header,
+  .app-header-with-person {
+    position: sticky;
+    top: 0;
+    left: 0;
+    z-index: 20;
+    display: flex;
+    flex: 0 0 16rem;
+    /* Without this, `.workspace-shell`'s default `align-items: stretch` would stretch the rail to
+       match `.workspace-main`'s height — the whole page's content, not one viewport — since
+       `min-height` alone does not stop a flex item from being stretched taller by its siblings. */
+    align-self: flex-start;
+    flex-direction: column;
+    align-items: stretch;
+    width: 16rem;
+    min-height: 100vh;
+    gap: 1rem;
+    padding: 1rem;
+    border-right: 1px solid var(--line);
+    border-bottom: none;
+  }
+
+  .app-header-start {
+    flex: 0 0 auto;
+  }
+
+  .app-nav-wrap {
+    flex: 1 1 auto;
+    align-items: stretch;
+    justify-content: flex-start;
+  }
+
+  .app-nav {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    justify-content: flex-start;
+  }
+
+  .app-nav-item,
+  .app-nav-group-toggle,
+  .app-nav-person {
+    width: 100%;
+    text-align: left;
+  }
+
+  .app-nav-person {
+    max-width: none;
+    margin: 0 0 0.4rem;
+    padding: 0.4rem 0.6rem 0.6rem 0;
+    border-right: none;
+    border-bottom: 1px solid var(--line);
+  }
+
+  /* Sign-in/account, language and theme are not navigation, so they do not ride along inside the
+     rail at all: a fixed cluster in the content area's top-right corner is where this kind of
+     control sits in the layout the rail is modelled on. `.app-header`'s `backdrop-filter` would
+     otherwise make it the containing block for this `fixed` child (trapping it inside the rail's
+     own 16rem width, same as the mobile `.accountpanel-popover` rule already notes) — removed
+     below for exactly that reason, which also happens to be more correct now that the rail is a
+     true layout sibling of the content rather than a bar overlaying it. */
+  .app-header,
+  .app-header-with-person {
+    background: var(--surface);
+    backdrop-filter: none;
+  }
+
+  @supports not (backdrop-filter: blur(1px)) {
+    .app-header {
+      background: var(--surface);
+    }
+  }
+
+  .app-header-end {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 22;
+    flex: 0 0 auto;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    max-width: calc(100vw - 2rem);
+    margin-top: 0;
+  }
+
+  /* The default rule opens a flyout downward (`top: 100%`), which in a vertical list would cover
+     whatever nav item sits below it — Charts' open dropdown would overlay Tools and Export,
+     intercepting clicks meant for them. Pushing it into flow instead (matching the existing
+     mobile panel's own fix for the identical overlap) does not work here: `use-exclusive-open.ts`
+     closes the previous group on `pointerdown`, and a layout that reflows between `pointerdown`
+     and the following `click` moves the next click's real target out from under the pointer,
+     breaking "close Charts, open Tools" in one click. Opening sideways into the main content
+     instead avoids both: it never sits over a sibling item, and it never displaces one either. */
+  .app-nav-menu,
+  .person-switcher-popup {
+    top: 0;
+    left: 100%;
+    margin-left: 0.5rem;
+    width: max-content;
+    min-width: 12rem;
+    max-width: 16rem;
+  }
+
+  /* Fixed to the viewport, not the rail: a flex/sticky offset only takes effect once its axis
+     actually scrolls, which the rail's width never does, so a toggle that must stay in the same
+     place whether the rail is open or collapsed needs real fixed positioning instead. */
+  .workspace-rail-toggle {
+    position: fixed;
+    top: 1rem;
+    left: 16rem;
+    z-index: 21;
+    display: inline-flex;
+    width: 1.5rem;
+    height: 1.5rem;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transform: translateX(-50%);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--muted);
+    font-size: 0.7rem;
+    cursor: pointer;
+  }
+
+  .workspace-rail-toggle:hover {
+    color: var(--fg);
+    background: var(--surface-hover);
+  }
+
+  .workspace-shell-collapsed .app-header,
+  .workspace-shell-collapsed .app-header-with-person {
+    width: 0;
+    flex: 0 0 0;
+    padding: 1rem 0;
+    overflow: hidden;
+    border-right: none;
+  }
+
+  .workspace-shell-collapsed .workspace-rail-toggle {
+    left: 0;
+  }
+}
+
 /* Report tab (#62): named sections of paragraphs, with an optional per-paragraph provenance line. */
 .report-controls {
   display: flex;
@@ -2847,6 +3037,7 @@ svg text.chart-symbol-text-unicode {
   .report-controls,
   .pwastatus,
   .app-header,
+  .workspace-rail-toggle,
   .extended-settings,
   .birth-place-search,
   .hint {

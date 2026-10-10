@@ -64,6 +64,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `TransitFilterPanel.tsx` + `TransitFilterPanel.messages.ts` — Transit-filter controls (presets/orbs/bodies/aspects). Deps: `astrology/transit-importance`, `./rulership-setting`.
 - `TransitView.tsx` + `TransitView.messages.ts` — Transit bi-wheel (natal ↔ transiting). Deps: `domain/transit`, `astrology/void-of-course`, `chart/multi-wheel`.
 - `WheelSelectionText.tsx` — Renders wheel-selection interpretation text. Deps: `interpretation/compose`, `./wheel-corpus`.
+- `WorkspaceShell.tsx` + `WorkspaceShell.messages.ts` — Lays the header out as a collapsible left rail at >=64rem (#506/#509); AppNav.tsx's horizontal-bar/folding-panel behavior stays unchanged below that. Deps: `./workspace-rail-setting`.
 - `admin-nav.ts` — Admin tab strip logic (routes/active-tab). Deps: `route`.
 - `app.css` — Global stylesheet (design tokens, layout, components, no webfonts). Deps: none.
 - `astro-names.messages.ts` — i18n display names for astrological identifiers (signs/bodies/aspects). Deps: none.
@@ -120,4 +121,5 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `wheel-corpus.ts` — Supplies + caches interpretation corpus to wheel-selection panel. Deps: `interpretation/corpus-client`.
 - `wheel-interaction.ts` — Click-to-isolate wheel interaction (dims non-clicked). Deps: `chart/body-id`.
 - `wheel-selection.ts` — Composes wheel-selection heading text. Deps: `astrology/signs`, `interpretation/schema`, `./astro-names.messages`.
+- `workspace-rail-setting.ts` — Device preference for whether the desktop workspace rail is collapsed (#506/#509). Deps: none.
 - `year-range.ts` — Ephemeris data's valid year range (clamping). Deps: none.

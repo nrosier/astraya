@@ -1,6 +1,9 @@
 /**
- * The header navigation (#421): the Tools menu on every screen, the person's chip and tabs in the
- * header instead of a strip above the page, and the Menu button that folds it on a phone.
+ * The header navigation (#421, #506/#509): the Tools menu on every screen, the person's chip and
+ * tabs in the header instead of a strip above the page, and the Menu button that folds it on a
+ * phone. At >=64rem (Playwright's default viewport) `WorkspaceShell.tsx` lays this header out as
+ * a left rail instead of a bar across the top of the page; below 64rem it stays the original
+ * horizontal bar with its own folding panel, unchanged.
  */
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -175,7 +178,9 @@ test('on a phone the navigation folds behind a Menu button, and nothing scrolls 
   await expect(header.getByRole('button', { name: 'Menu', exact: true })).toBeFocused();
 });
 
-test('the header keeps the navigation reachable and the page content clear of it while scrolling', async ({ page }) => {
+test('the rail (#506/#509) keeps the navigation reachable while the page scrolls, clear of the content it sits beside, not above', async ({
+  page,
+}) => {
   test.setTimeout(60_000);
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   await createPerson(page, ADA);
@@ -183,28 +188,37 @@ test('the header keeps the navigation reachable and the page content clear of it
   await expect(page.locator('div.chart-wheel')).toBeVisible();
   await page.locator('footer').scrollIntoViewIfNeeded();
   const header = page.getByRole('banner');
+  // The rail is sticky to the left at its full height, so it stays reachable through any amount
+  // of vertical scroll — unlike the old top bar, nothing above the content needs clearing by
+  // scroll padding, since the rail no longer occupies any space above it (`app.css`'s `min-width:
+  // 64rem` override replaces the measured-header-height scroll padding with a small constant).
   await expect(header).toBeInViewport({ ratio: 1 });
-  // The header is a real row of the page at its true height: scroll padding follows it.
   const padding = await page.evaluate('parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop)');
-  const box = await header.boundingBox();
-  expect(padding).toBeGreaterThanOrEqual((box?.height ?? 0) - 1);
+  expect(padding).toBeLessThanOrEqual(20);
   await header.getByRole('button', { name: 'Tools', exact: true }).click();
   await expect(header.getByRole('link', { name: 'Eclipses', exact: true })).toBeVisible();
 });
 
-test('the navigation is centred in the header, with and without a person', async ({ page }) => {
+test('the rail holds brand then navigation; the account cluster sits apart from it, top-right of the content, with and without a person', async ({
+  page,
+}) => {
   test.setTimeout(60_000);
   await gotoAndSettle(page, `${baseUrl}/#/people`);
-  const centreOffset = async (): Promise<number> => {
-    const header = await page.getByRole('banner').boundingBox();
+  const layout = async (): Promise<void> => {
+    const brand = await page.getByRole('link', { name: 'Astraya, back to the people list' }).boundingBox();
     const nav = await page.getByRole('navigation', { name: 'Main', exact: true }).boundingBox();
-    if (header === null || nav === null) throw new Error('fixture bug: no header or navigation box');
-    return Math.abs(nav.x + nav.width / 2 - (header.x + header.width / 2));
+    const signIn = await page.getByRole('button', { name: 'Sign in', exact: true }).boundingBox();
+    if (brand === null || nav === null || signIn === null) throw new Error('fixture bug: missing rail element');
+    // The navigation starts below the brand inside the rail, whatever its own height (a person's
+    // many tabs make it taller, not shorter above it).
+    expect(nav.y).toBeGreaterThanOrEqual(brand.y + brand.height);
+    // Account/language/theme are not navigation (#506/#509): they sit apart from the rail
+    // entirely, fixed to the content area's top-right corner, clear of the rail's own right edge.
+    expect(signIn.x).toBeGreaterThanOrEqual(nav.x + nav.width);
   };
-  // No person: the navigation sits between the brand and the controls, not against the brand.
-  expect(await centreOffset()).toBeLessThanOrEqual(30);
+  await layout();
   await createPerson(page, ADA);
-  expect(await centreOffset()).toBeLessThanOrEqual(30);
+  await layout();
 });
 
 test('the Charts menu lists the chart types, and the page keeps the type and the section in the URL', async ({

@@ -1,6 +1,6 @@
 /**
  * @module App
- * @purpose Top-level application shell: hash-based routing between every screen, the sticky header (account/sync/language/theme controls), and the lazy-loading boundary for non-landing screens.
+ * @purpose Top-level application shell: hash-based routing between every screen, the header (account/sync/language/theme controls) laid out by WorkspaceShell as a collapsible rail, and the lazy-loading boundary for non-landing screens.
  * @conventions Hash routing via `parseRoute()`/`route.js` rather than a router library; every screen not needed by the landing route (the ten person-scoped screens, AdminPanel/export-builder/corpus admin screens, and About/Changelog/SetPasswordForm/SetupForm) is behind `lazy(() => import(...))` per the bundle-size budget (#338, #494); `Stored` gates routes needing the local IndexedDB store.
  * @exports App, HomeRedirect
  */
@@ -24,6 +24,7 @@ import { StoreProvider } from './store-context.js';
 import { SyncBadge } from './SyncBadge.js';
 import { SymbolToggle } from './SymbolToggle.js';
 import { ThemeToggle } from './ThemeToggle.js';
+import { WorkspaceShell } from './WorkspaceShell.js';
 import { APP_VERSION } from '../version.js';
 import type { Route } from './route.js';
 
@@ -246,8 +247,10 @@ function AppShell(): React.JSX.Element {
   }, [provider]);
 
   useEffect(() => {
-    // The header is one row on a wide screen and wraps to two when the navigation does not fit, so
-    // anchors and focus have to scroll clear of its real height, not a fixed one (#421).
+    // Below 64rem the header is still a horizontal bar (one row, wrapping to two when the
+    // navigation does not fit), so anchors and focus have to scroll clear of its real height, not
+    // a fixed one (#421). At >=64rem it is a left rail instead; app.css's own `min-width: 64rem`
+    // override replaces this measured value with a small constant there; see `html` there.
     const header = headerRef.current;
     if (header === null || typeof ResizeObserver === 'undefined') return undefined;
     const apply = (): void => {
@@ -291,46 +294,56 @@ function AppShell(): React.JSX.Element {
     <SessionProvider>
       <StoreFrame>
         <ExportRegistryProvider>
-          {/* The header is first in the DOM, so a keyboard user meets the skip link, then the
-          controls, before any page content — the order sighted users see them in. Its skip
-          link is the first focusable thing on every page (#421). `AccountPanel` sits right next
-          to `SyncBadge` (#230): sign-in/out is the thing that changes the sync badge's state.
-          The ephemeris status line joins the left side (#234) — once ready it is an
-          implementation detail again, but a silent failure here is precisely the bug class this
-          project is built to avoid, so it stays visible on every route. Language and theme are
-          side by side: both are "change how the page looks", picked together more often than
-          either alone. */}
-          <header ref={headerRef} className={'personId' in parsed ? 'app-header app-header-with-person' : 'app-header'}>
-            <a className="skip-link" href="#main-content" onClick={skipToContent}>
-              {t.skipToContent}
-            </a>
-            <div className="app-header-start">
-              <a className="app-header-brand" href="#/people" aria-label={t.homeLinkLabel}>
-                Astraya
-              </a>
-              {engineStatus !== 'ready' && <p className="status app-header-status">{engineStatus}</p>}
+          {/* `WorkspaceShell` places the header beside the screen as a collapsible left rail at
+          >=64rem (#506/#509, docs/UI-UX_GUIDELINES.md's "Target application shell"); below that
+          it stays `AppNav.tsx`'s existing horizontal bar with its own folding panel, unchanged.
+          The header is still first in the DOM, so a keyboard user meets the skip link, then the
+          controls, before any page content. Its skip link is the first focusable thing on every
+          page (#421). `AccountPanel` sits right next to `SyncBadge` (#230): sign-in/out is the
+          thing that changes the sync badge's state. The ephemeris status line joins the brand
+          (#234) — once ready it is an implementation detail again, but a silent failure here is
+          precisely the bug class this project is built to avoid, so it stays visible on every
+          route. Language and theme are side by side: both are "change how the page looks",
+          picked together more often than either alone. */}
+          <WorkspaceShell
+            header={
+              <header
+                ref={headerRef}
+                className={'personId' in parsed ? 'app-header app-header-with-person' : 'app-header'}
+              >
+                <a className="skip-link" href="#main-content" onClick={skipToContent}>
+                  {t.skipToContent}
+                </a>
+                <div className="app-header-start">
+                  <a className="app-header-brand" href="#/people" aria-label={t.homeLinkLabel}>
+                    Astraya
+                  </a>
+                  {engineStatus !== 'ready' && <p className="status app-header-status">{engineStatus}</p>}
+                </div>
+                <AppNav route={parsed} />
+                <div className="app-header-end">
+                  <SyncBadge />
+                  <AccountPanel />
+                  <LanguageToggle />
+                  <SymbolToggle />
+                  <ThemeToggle />
+                </div>
+              </header>
+            }
+          >
+            {/* One boundary around the whole screen slot rather than one per lazy route (#338):
+            every lazy screen wants the same fallback, and keeping the boundary outside
+            `Stored` means a chunk still in flight does not also restart the store. */}
+            <div id="main-content" className="main-content" tabIndex={-1}>
+              <Suspense fallback={<LoadingScreen />}>{screen}</Suspense>
             </div>
-            <AppNav route={parsed} />
-            <div className="app-header-end">
-              <SyncBadge />
-              <AccountPanel />
-              <LanguageToggle />
-              <SymbolToggle />
-              <ThemeToggle />
-            </div>
-          </header>
-          {/* One boundary around the whole screen slot rather than one per lazy route (#338):
-          every lazy screen wants the same fallback, and keeping the boundary outside
-          `Stored` means a chunk still in flight does not also restart the store. */}
-          <div id="main-content" className="main-content" tabIndex={-1}>
-            <Suspense fallback={<LoadingScreen />}>{screen}</Suspense>
-          </div>
-          <footer>
-            {/* The version itself is the changelog link: clicking a version to see what changed
-            in it is the behaviour people expect. Promoted here from the old landing page
-            (#234) so both routes stay reachable now that the landing page is gone. */}
-            <a href="#/changelog">{t.changelogLink(APP_VERSION)}</a> &middot; <a href="#/about">{t.aboutLink}</a>
-          </footer>
+            <footer>
+              {/* The version itself is the changelog link: clicking a version to see what changed
+              in it is the behaviour people expect. Promoted here from the old landing page
+              (#234) so both routes stay reachable now that the landing page is gone. */}
+              <a href="#/changelog">{t.changelogLink(APP_VERSION)}</a> &middot; <a href="#/about">{t.aboutLink}</a>
+            </footer>
+          </WorkspaceShell>
           <PwaStatus />
         </ExportRegistryProvider>
       </StoreFrame>

@@ -1,8 +1,12 @@
 /**
- * The sticky header (#421): one bar across the top of every screen holding the name, the sync and
- * account status, the language and the theme, in place of the two fixed corners they used to sit in.
- * It stays in view while a long page scrolls, opens the sign-in box beneath itself and inside the
- * screen, offers a skip link as the first thing a keyboard reaches, and is hidden when printing.
+ * The sticky header (#421, #506/#509): holds the name, the sync and account status, the language
+ * and the theme, in place of the two fixed corners they used to sit in. At >=64rem (Playwright's
+ * default viewport) `WorkspaceShell.tsx` lays the navigation out as a left rail rather than a bar
+ * across the top; the account/language/theme cluster is not navigation, so it does not move into
+ * the rail with it — it stays fixed in the content area's top-right corner instead, same place
+ * (and same downward-opening sign-in box) the old top-bar design always put it. The rail itself
+ * stays in view while a long page scrolls, offers a skip link as the first thing a keyboard
+ * reaches, and is hidden when printing.
  */
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -43,10 +47,11 @@ test('one header holds the name, account, language and theme, and the old fixed 
   await expect(header.locator('.theme-toggle:not(.language-toggle)')).toBeVisible();
   await expect(page.locator('.locale-bar')).toHaveCount(0);
   await expect(page.locator('.account-bar')).toHaveCount(0);
-  // It is a real page-flow header at the top, not an overlay in a corner.
+  // It is a real page-flow element at the leading edge (the left rail at >=64rem), not an overlay
+  // in a corner — it starts at the very top-left, and its own content fits inside its own width.
   const box = await header.boundingBox();
+  expect(box?.x).toBe(0);
   expect(box?.y).toBe(0);
-  expect(box?.width).toBe(page.viewportSize()?.width);
 });
 
 test('the header stays in view and usable while a long page scrolls', async ({ page }) => {
@@ -103,6 +108,9 @@ test('the sign-in box opens beneath the button, inside the screen, and can be us
   const popoverBox = await popover.boundingBox();
   const viewport = page.viewportSize();
   if (buttonBox === null || popoverBox === null || viewport === null) throw new Error('not laid out');
+  // The trigger (sign-in/account, language, theme — not navigation) sits fixed in the content
+  // area's top-right corner at >=64rem (`WorkspaceShell.tsx`, #506/#509), not inside the rail, so
+  // it keeps the room below it the old top-bar design always had.
   expect(popoverBox.y).toBeGreaterThanOrEqual(buttonBox.y + buttonBox.height);
   expect(popoverBox.x).toBeGreaterThanOrEqual(0);
   expect(popoverBox.x + popoverBox.width).toBeLessThanOrEqual(viewport.width);
