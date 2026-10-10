@@ -3529,8 +3529,7 @@ svg text.chart-symbol-text-unicode {
   display: block;
 }
 
-.settings-card-group [role='radiogroup'] label,
-.settings-card-group .rulership-setting label {
+.settings-card-group [role='radiogroup'] label {
   display: inline;
 }
 
@@ -3626,6 +3625,19 @@ svg text.chart-symbol-text-unicode {
 .primitive-control-compact {
   padding: 0.3rem 0.5rem;
   font-size: var(--text-sm);
+}
+
+/* `SymbolSetting.tsx`'s reactive explanation of the current symbol-class/weight choice — same
+   box this used to be as a hand-written inline style, moved here once the control itself moved
+   onto the shared `Select` primitive. */
+.symbol-setting-description {
+  margin: 0.75rem 0 1rem;
+  padding: 0.75rem;
+  border-left: 3px solid #007acc;
+  background: #fff;
+  color: #333;
+  font-size: 0.9em;
+  line-height: 1.5;
 }
 
 @media (pointer: coarse) {

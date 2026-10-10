@@ -82,7 +82,7 @@ test('the rulers choice is modern by default, drives the dispositor table, and i
   await expect(plutoChain).toContainText('Pluto → Mars');
 
   // The control and its explanation are accessible.
-  const axe = await new AxeBuilder({ page }).include('.rulership-setting').analyze();
+  const axe = await new AxeBuilder({ page }).include('dialog').analyze();
   expect(axe.violations.map((v) => v.id)).toEqual([]);
 });
 

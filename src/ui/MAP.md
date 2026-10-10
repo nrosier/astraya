@@ -50,14 +50,14 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `ReportScreen.tsx` + `ReportScreen.messages.ts` — Standalone written-report route. Deps: `domain/chart-compute`, `ReportView`.
 - `ReportView.tsx` + `ReportView.messages.ts` — Report rendering + provenance toggle + Tier 2 AI panel. Deps: `interpretation/report`, `interpretation/corpus-client`, `interpretation/tier2-client`.
 - `ReturnView.tsx` + `ReturnView.messages.ts` — Solar/lunar return charts (pick year/place/rendering). Deps: `domain/return-chart`.
-- `RulershipSetting.tsx` + `RulershipSetting.messages.ts` — Planetary-rulers preference (modern/traditional/both). Deps: `./rulership-setting`, `astrology/rulership`.
+- `RulershipSetting.tsx` + `RulershipSetting.messages.ts` — Planetary-rulers preference (modern/traditional/both), built on the shared `Select` primitive. Deps: `./rulership-setting`, `astrology/rulership`, `./primitives/Select`.
 - `settings-registry.ts` — #506/#509 typed registry of every persisted setting's scope/owner/persistence/sync/commit-model, pure metadata (existing modules keep owning values). Deps: none.
 - `SetPasswordForm.tsx` + `SetPasswordForm.messages.ts` — One-time-link password set/reset form. Deps: `sync/auth-client`.
 - `SetupForm.tsx` + `SetupForm.messages.ts` — First-boot admin account bootstrap. Deps: `session-context`.
 - `SharedChartView.tsx` + `SharedChartView.messages.ts` — No-account link-only shared-chart screen. Deps: `domain/chart-share`, `domain/chart-compute`.
 - `SolarArcView.tsx` + `SolarArcView.messages.ts` — Solar arc directions screen + exact-date timing. Deps: `domain/solar-arc-directions`.
 - `SortableTable.tsx` + `SortableTable.messages.ts` — Reusable sortable data table (copy/CSV download). Deps: `./table-sort`, `./download`.
-- `SymbolSetting.tsx` + `SymbolSetting.messages.ts` — Symbol-class/weight/variant device preferences. Deps: `./symbol-setting`, `./glyph-variant-setting`, `chart/symbol-class`.
+- `SymbolSetting.tsx` + `SymbolSetting.messages.ts` — Symbol-class/weight/variant device preferences, built on the shared `Select` primitive. Deps: `./symbol-setting`, `./glyph-variant-setting`, `chart/symbol-class`, `./primitives/Select`.
 - `SymbolToggle.tsx` + `SymbolToggle.messages.ts` — Header one-press symbol toggle (glyphs ↔ text). Deps: `./symbol-setting`.
 - `SynastryView.tsx` + `SynastryView.messages.ts` — Synastry bi-wheel (two-person comparison). Deps: `domain/synastry`, `chart/multi-wheel`, `RelationshipSummary`.
 - `SyncBadge.tsx` + `SyncBadge.messages.ts` — Always-visible sync-status badge. Deps: `session-context`, `./status`.

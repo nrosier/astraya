@@ -88,7 +88,7 @@ test('the symbol class changes the wheel, the tables and the export together, an
   await page.getByLabel('Symbols', { exact: true }).selectOption('drawn');
   await expect(page.locator('.chart-wheel text.chart-symbol-text')).toHaveCount(0);
 
-  const axe = await new AxeBuilder({ page }).include('.rulership-setting').analyze();
+  const axe = await new AxeBuilder({ page }).include('dialog').analyze();
   expect(axe.violations.map((v) => v.id)).toEqual([]);
 });
 
