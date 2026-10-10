@@ -28,10 +28,12 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `EntryLabel.tsx` — Renders corpus keys as human-readable placement names (admin UI). Deps: `./placement-label`.
 - `EphemerisProviderContext.tsx` — Web Worker-backed Swiss Ephemeris singleton context. Deps: `ephemeris/client`.
 - `ExtendedSettingsPanel.tsx` + `ExtendedSettingsPanel.messages.ts` — Chart settings modal (house system/zodiac/bodies/aspects/colours). Deps: `chart/extended-settings`, `astrology/houses`, `astrology/ayanamsas`.
+- `feature-registry.ts` — #506/#509 typed registry of every user-facing feature's scope/group/order/href/prerequisites/settings-mode/export-capabilities, derived from `person-nav`/`tools-nav`/`admin-nav`. Deps: `./person-nav`, `./tools-nav`, `./admin-nav`, `./route`.
 - `FocusInterpretation.tsx` + `FocusInterpretation.messages.ts` — Tier 2 AI-interpretation feature (consent + generate). Deps: `interpretation/tier2-client`, `interpretation/focus-context-schema`.
 - `HarmonicView.tsx` + `HarmonicView.messages.ts` — Harmonic & Varga divisional charts. Deps: `astrology/harmonics`, `domain/harmonic`.
 - `HoraryView.tsx` + `HoraryView.messages.ts` — Horary (question-chart) tool + considerations check. Deps: `astrology/horary`, `domain/horary`.
 - `LanguageToggle.tsx` + `LanguageToggle.messages.ts` — Language toggle button (en/nl). Deps: `./locale`, `interpretation/schema`.
+- `Overview.tsx` + `Overview.messages.ts` — Canonical per-person Overview screen (#506/#509): record readiness, calculation basis, real next actions. Deps: `./feature-registry`, `./people-list`, `./person-nav`.
 - `PdfExportBuilder.tsx` — PDF export builder screen (#441, lazy-loaded). Deps: `domain/pdf-export-sections`, `./pdf-export-plan`, `./pdf-export-render`.
 - `People.tsx` + `People.messages.ts` — Home/landing screen (list/create/restore people). Deps: `store-context`, `./people-list`.
 - `PeriodicTransitView.tsx` + `PeriodicTransitView.messages.ts` — Daily/weekly/monthly/yearly transit forecast. Deps: `domain/periodic-transit`, `domain/planetary-return`, `astrology/transit-importance`.
@@ -47,6 +49,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `ReportView.tsx` + `ReportView.messages.ts` — Report rendering + provenance toggle + Tier 2 AI panel. Deps: `interpretation/report`, `interpretation/corpus-client`, `interpretation/tier2-client`.
 - `ReturnView.tsx` + `ReturnView.messages.ts` — Solar/lunar return charts (pick year/place/rendering). Deps: `domain/return-chart`.
 - `RulershipSetting.tsx` + `RulershipSetting.messages.ts` — Planetary-rulers preference (modern/traditional/both). Deps: `./rulership-setting`, `astrology/rulership`.
+- `settings-registry.ts` — #506/#509 typed registry of every persisted setting's scope/owner/persistence/sync/commit-model, pure metadata (existing modules keep owning values). Deps: none.
 - `SetPasswordForm.tsx` + `SetPasswordForm.messages.ts` — One-time-link password set/reset form. Deps: `sync/auth-client`.
 - `SetupForm.tsx` + `SetupForm.messages.ts` — First-boot admin account bootstrap. Deps: `session-context`.
 - `SharedChartView.tsx` + `SharedChartView.messages.ts` — No-account link-only shared-chart screen. Deps: `domain/chart-share`, `domain/chart-compute`.
