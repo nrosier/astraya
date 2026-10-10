@@ -4,6 +4,33 @@ All notable changes to Astraya are recorded here. Versions follow
 [semantic versioning](https://semver.org/), and every milestone ends in a release —
 see [docs/RELEASING.md](docs/RELEASING.md).
 
+## [0.35.0] — 2026-10-11
+
+**Tier 2 AI interpretation no longer logs request/response content, the Transits/Forecast filter becomes a draft/Apply/Cancel card matching Extended Settings, and several storage- and bundle-size-related robustness fixes land.**
+
+### Security
+
+- **Tier 2 AI interpretation stopped logging request/response content (#490).** The provider request/response body — which can carry a reader's customization instruction, resolved interpretation text, or exact chart facts — was logged at debug level and, worse, folded directly into thrown `Error` messages that the request handler logs at error level by default, not only when debug logging is enabled. Replaced with bounded, content-free diagnostics (model/attempt/status/latency/token counts only); error messages are now fixed strings with no interpolated provider text.
+
+### Added
+
+- **The Transits/Forecast filter ("Adjust the filter") is rebuilt as a staged card (#489)**, matching Extended Settings' draft/Apply/Cancel modal exactly instead of applying every change live with no way to back out. Shared by both the Transits and Forecast screens. Adds a fourth button beyond Extended Settings' three — "Apply as Default" — to also remember the filter as this device's default for the context, separately from applying it to just this view.
+
+### Fixed
+
+- **Two storage-access robustness fixes**, both guarding against denied or unavailable `localStorage` access: the language setting (`locale.ts`, #493) now falls back to English instead of throwing before React ever renders if storage access is denied, and a write failure no longer silently desyncs the in-memory value from what's shown; the opt-in diagnostic tracer (`trace.ts`, #492) no longer touches the `localStorage` global under Node at all (merely referencing it under Node 24+ triggered an experimental-API warning this project's zero-warning standard forbids), and denied storage in a hardened browser can no longer throw between a store commit's persistence and its listener notification.
+- **Four screens the landing route never needs (About, Changelog, the set-password and admin-setup forms) are lazy-loaded (#494)**, restoring real headroom to the eager bundle-size budget (651,503 → 501,998 bytes, 97.9% → 75.4% of budget) after they were pulled into the eager entry chunk by oversight.
+
+### Documentation
+
+- **Fixed two false absolute privacy claims in the README (#491):** "the shipped application makes no model API calls, ever" (contradicted by Tier 2's real runtime call to a third-party model) and "without signing in, nothing leaves your device" (contradicted by signed-out birth-place search querying MapTiler/Nominatim). Later sections already described both features correctly; only the headline claims were stale.
+- Three stale `MAP.md` entries are fixed, and the `@module` header rule — documented as "build/lint enforced" but never actually enforced — now has a real lint rule (#495).
+
+### Internal tooling
+
+- **A one-off script to draft astrology-glossary terms with Gemini for human review (#456)** — not a build step, never writes to shipped app data.
+- `npm run test`/`npm run build` **now fail on a printed warning, not only on error (#496)**, closing the gap that let #494's bundle-size-threshold slip and #492's Node experimental-API warning both ship unnoticed.
+
 ## [0.34.0] — 2026-10-09
 
 **Primary directions — the oldest Western predictive timing technique — joins progressions and returns, a full 360-degree Sabian-style "degree symbol" corpus is now surfaced in the report and the wheel's click panel, and the PDF export builder gains Eclipses, Progressions, Solar Arc, Profections and Astrocartography sections.**
