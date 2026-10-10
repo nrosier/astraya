@@ -106,6 +106,7 @@ import { buildFocusObjectContext } from '../interpretation/focus-context.js';
 import { FocusInterpretation } from './FocusInterpretation.js';
 import { useRulershipChoice } from './rulership-setting.js';
 import type { RulershipChoice } from '../astrology/rulership.js';
+import { PageHeader } from './PageHeader.js';
 import { PersonNotFound } from './PersonNotFound.js';
 import { SortableTable } from './SortableTable.js';
 import { useStoreState } from './store-context.js';
@@ -1422,7 +1423,7 @@ export function ChartView({
         <p className="back">
           <a href={`#/person/${personId}`}>&larr; {person.displayName || t.personFallback}</a>
         </p>
-        <h1>{t.chartFallback}</h1>
+        <PageHeader title={t.chartFallback} />
         <p>
           {t.notCompleteChart(person.displayName || t.thisPersonCapitalized)}{' '}
           <a href={`#/person/${personId}`}>{t.personPageLink}</a>.
@@ -1438,7 +1439,7 @@ export function ChartView({
       <p className="back">
         <a href={`#/person/${personId}`}>&larr; {person.displayName || t.personFallback}</a>
       </p>
-      <h1>{person.displayName || t.chartFallback}</h1>
+      <PageHeader title={person.displayName || t.chartFallback} />
       <ChartTypeSelector personId={personId} type="natal" section={section} />
       <ShareLink moment={person.moment} housesKnown={showHouses} />
       <ChartDataView

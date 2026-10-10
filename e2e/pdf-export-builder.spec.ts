@@ -49,13 +49,13 @@ const CHARLES = {
   longitude: '-0.1276',
 };
 
-test('the Export menu opens the PDF builder, and a preset downloads a real PDF', async ({ page }) => {
+test('the header’s PDF-builder link opens the PDF builder, and a preset downloads a real PDF', async ({ page }) => {
   test.setTimeout(90_000);
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   await createPerson(page, ADA);
 
+  // A plain link, not a dropdown (#506/#509) — it is the only export action left in the header.
   const header = page.getByRole('banner');
-  await header.getByRole('button', { name: 'Export', exact: true }).click();
   await header.getByRole('link', { name: 'Build custom PDF…', exact: true }).click();
   await expect(page).toHaveURL(/#\/export$/);
   await expect(page.getByRole('heading', { name: 'Build a PDF', level: 1 })).toBeVisible();

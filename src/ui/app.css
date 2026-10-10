@@ -1704,44 +1704,6 @@ label.stacked textarea:focus-visible {
   text-transform: uppercase;
 }
 
-.app-nav-submenu-toggle::after {
-  content: ' \25B8';
-  font-size: 0.75em;
-}
-
-.app-nav-submenu-toggle[aria-expanded='true']::after {
-  content: ' \25BE';
-}
-
-.app-nav-submenu-items {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-  padding-left: 0.8rem;
-}
-
-/* What a running export says, since the menu has closed: a small notice at the foot of the screen. */
-.app-export-status {
-  position: fixed;
-  bottom: 1rem;
-  left: 50%;
-  z-index: 40;
-  max-width: calc(100vw - 2rem);
-  margin: 0;
-  padding: 0.5rem 0.9rem;
-  transform: translateX(-50%);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  box-shadow: 0 0.5rem 1.5rem rgb(0 0 0 / 20%);
-  font-size: 0.9rem;
-}
-
-.app-export-status.error {
-  border-color: var(--aspect-hard);
-  color: var(--aspect-hard);
-}
-
 @media (max-width: 63.99rem) {
   /* Brand and the Menu button on the first row, the controls under them, whatever the screen. */
   .app-header,
@@ -3782,4 +3744,117 @@ svg text.chart-symbol-text-unicode {
   font-weight: 400;
   line-height: var(--leading-body);
   color: var(--fg);
+}
+
+/*
+ * The content header (#506/#509, `PageHeader.tsx`): the page title and, when the screen has
+ * registered any, its own export dropdown — replacing the old global Export menu's "This page"
+ * section. New, page-scoped classes rather than reusing `.app-nav-menu`/`.app-nav-group`: those
+ * carry a `min-width: 64rem` override that opens the popup sideways, written for the header's
+ * narrow rail, which would be surprising on a full-width content page.
+ */
+.page-header {
+  margin-bottom: 1.5rem;
+}
+
+.page-header-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+.page-header-row h1 {
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.page-header-basis {
+  margin: 0.35rem 0 0;
+}
+
+.page-header-export {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.page-header-export-toggle {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--fg);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 550;
+  cursor: pointer;
+}
+
+.page-header-export-toggle::after {
+  content: ' \25BE';
+  font-size: 0.75em;
+  color: var(--muted);
+}
+
+.page-header-export-toggle:hover {
+  background: var(--surface-hover);
+}
+
+.page-header-export.open .page-header-export-toggle {
+  background: var(--surface-hover);
+}
+
+.page-header-export-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 14rem;
+  padding: 0.3rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-popover);
+}
+
+.page-header-export-item {
+  padding: 0.4rem 0.8rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-weight: 500;
+  font-size: 0.9em;
+  text-align: left;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.page-header-export-item:hover:not(:disabled) {
+  color: var(--fg);
+  background: var(--surface-hover);
+}
+
+.page-header-export-item:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.page-header-export-group-heading {
+  margin: 0.4rem 0.8rem 0.1rem;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.page-header-export-status {
+  margin: 0.5rem 0 0;
 }

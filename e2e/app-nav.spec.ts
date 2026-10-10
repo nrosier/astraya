@@ -311,7 +311,9 @@ test('a solar return and a lunar return are charts like any other, with their co
   expect(results.violations).toEqual([]);
 });
 
-test('the Export menu lists the open chart’s own exports under "This page"', async ({ page }) => {
+test('the header’s only export action is the PDF builder link; a chart’s own exports live in its own PageHeader', async ({
+  page,
+}) => {
   test.setTimeout(90_000);
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   await createPerson(page, ADA);
@@ -323,19 +325,20 @@ test('the Export menu lists the open chart’s own exports under "This page"', a
     return Buffer.concat(chunks).toString('utf-8');
   };
 
-  // Full-data export and the people CSV moved to Preferences → Data & privacy (#506/#510,
-  // e2e/preferences.spec.ts covers them); this menu no longer has them.
-  await header.getByRole('button', { name: 'Export', exact: true }).click();
-  await expect(header.getByRole('button', { name: 'Everything (one file)', exact: true })).toHaveCount(0);
-  await expect(header.getByRole('button', { name: 'People (CSV)', exact: true })).toHaveCount(0);
-  await page.keyboard.press('Escape');
+  // Full-data export and the people CSV moved to Preferences → Data & privacy (#510,
+  // e2e/preferences.spec.ts covers them); the old Export dropdown is gone entirely — a single
+  // item does not get a dropdown, so this is now a plain link, same shape as Overview/Birth record.
+  await expect(header.getByRole('button', { name: 'Export', exact: true })).toHaveCount(0);
+  await expect(header.getByRole('link', { name: 'Build custom PDF…', exact: true })).toBeVisible();
 
-  // On a chart, its own exports are listed under "This page", and the wheel no longer carries buttons.
+  // On a chart, its own exports are in the page’s own header (#506/#509’s PageHeader), not the
+  // site header, and the wheel no longer carries buttons either.
   await openNatalChart(page);
   await expect(page.locator('div.chart-wheel')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Download SVG', exact: true })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Export PDF…', exact: true })).toHaveCount(0);
-  await header.getByRole('button', { name: 'Export', exact: true }).click();
+  const main = page.getByRole('main');
+  await main.getByRole('button', { name: 'Export', exact: true }).click();
   for (const name of [
     'Image (SVG)',
     'Image (PNG), Small (600px)',
@@ -343,20 +346,20 @@ test('the Export menu lists the open chart’s own exports under "This page"', a
     'Image (PNG), Large (2400px)',
     'Document (PDF, via print)…',
   ]) {
-    await expect(header.getByRole('button', { name, exact: true })).toBeVisible();
+    await expect(main.getByRole('button', { name, exact: true })).toBeVisible();
   }
   const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
   expect(results.violations).toEqual([]);
   const [svg] = await Promise.all([
     page.waitForEvent('download'),
-    header.getByRole('button', { name: 'Image (SVG)', exact: true }).click(),
+    main.getByRole('button', { name: 'Image (SVG)', exact: true }).click(),
   ]);
   expect(svg.suggestedFilename()).toBe('ada-lovelace-chart.svg');
   expect(await read(svg)).toContain('<svg');
 
-  // Leaving the chart takes its exports away; the PDF builder link stays.
+  // Leaving the chart takes its PageHeader, and so its exports, away entirely; the site header is
+  // unaffected either way, since it never listed them.
   await openTool(page, 'Eclipses');
-  await header.getByRole('button', { name: 'Export', exact: true }).click();
-  await expect(header.getByRole('button', { name: 'Image (SVG)', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Export', exact: true })).toHaveCount(0);
   await expect(header.getByRole('link', { name: 'Build custom PDF…', exact: true })).toBeVisible();
 });

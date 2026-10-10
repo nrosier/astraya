@@ -10,7 +10,12 @@
  * - **Tools**, on every screen: the calculators that are not about one person's chart, grouped
  *   under noninteractive headings (Sky & cycles / Questions & planning / Birth data) rather than
  *   left as one flat list (`tools-nav.ts`, #506/#509);
- * - **Export**, on every screen.
+ * - **Build custom PDF…**, on every screen: a plain link, not a dropdown — it is the only export
+ *   action left here. Full-data/people-CSV export moved to Preferences → Data & privacy (#510),
+ *   and each screen's own exports (a chart's image, its print version) moved to that screen's own
+ *   `PageHeader` (#506/#509) — `ChartView.tsx` is the only screen that registers any today. Moving
+ *   this link itself to a future Documents destination is the one piece of that same plan item
+ *   still outstanding.
  *
  * Admin is reached from the account area on the top bar (`AccountPanel.tsx`), not from here (#443):
  * an administrator does not need the entry twice.
@@ -25,7 +30,7 @@
  */
 /**
  * @module AppNav
- * @purpose Renders the sticky header's main navigation: a person's chart tabs/dropdowns, the Tools menu, and the Export menu.
+ * @purpose Renders the sticky header's main navigation: a person's chart tabs/dropdowns, the Tools menu, and the PDF-builder link.
  * @conventions Dropdowns share one `useExclusiveOpen` so only one is open at a time; folds behind a Menu button below 1024px; text comes from co-located `AppNav.messages.ts` via `useMessages()`.
  * @exports AppNav
  */
@@ -39,7 +44,6 @@ import type { PersonTab } from './person-nav.js';
 import type { Route } from './route.js';
 import { useOptionalStore, useStoreState } from './store-context.js';
 import { activeToolKey, TOOL_GROUPS, TOOLS } from './tools-nav.js';
-import { useExportItems, type ExportItem } from './export-registry.js';
 import { useLastPersonId, writeLastPersonId } from './last-person.js';
 import { PersonSwitcher } from './PersonSwitcher.js';
 import { useExclusiveOpen, type ExclusiveOpen } from './use-exclusive-open.js';
@@ -52,103 +56,6 @@ const UNGROUPED_KEYS = new Set(['overview', 'birth-record', 'report', 'astrocart
 const LEADING_KEYS = new Set(['overview', 'birth-record']);
 const CHARTS_GROUP = 'charts';
 const TOOLS_GROUP = 'tools';
-const EXPORT_GROUP = 'export';
-
-interface ExportStatus {
-  readonly kind: 'busy' | 'done' | 'error';
-  readonly text: string;
-}
-
-/**
- * The Export menu (#export): the current screen's own exports (a chart's image, its print
- * version) as submenus of "This page", registered by the screen (`export-registry.tsx`) while it
- * is mounted, plus the PDF builder link. The status of a running export is announced in `AppNav`,
- * since the menu closes as soon as something is chosen.
- *
- * Full-data export and the people CSV used to live here too; they moved to Preferences → Data &
- * privacy (#506/#510), where the guidelines' navigation table puts "Data & backup" — this menu no
- * longer duplicates them. Moving "Build custom PDF…" to its own Documents destination, and moving
- * each page's own exports (the submenus below) into a `PageHeader` instead of this global menu,
- * are the remaining, not-yet-done parts of that same plan item (#509) — left for a later slice
- * since they touch every person-scoped screen, not just this file.
- */
-function ExportMenu({
-  dropdown,
-  run,
-}: {
-  readonly dropdown: ExclusiveOpen<string>;
-  readonly run: (what: string, action: () => void | Promise<void>) => void;
-}): React.JSX.Element {
-  const t = useMessages(appNavMessages);
-  const pageItems = useExportItems();
-  const [openGroup, setOpenGroup] = useState<string | undefined>(undefined);
-  const isOpen = dropdown.open === EXPORT_GROUP;
-  useEffect(() => {
-    if (!isOpen) setOpenGroup(undefined);
-  }, [isOpen]);
-
-  const groups = new Map<string, ExportItem[]>();
-  const ungrouped: ExportItem[] = [];
-  for (const item of pageItems) {
-    if (item.group === undefined) ungrouped.push(item);
-    else groups.set(item.group, [...(groups.get(item.group) ?? []), item]);
-  }
-  const itemButton = (item: ExportItem): React.JSX.Element => (
-    <button
-      key={item.key}
-      type="button"
-      className="app-nav-menu-item"
-      disabled={item.disabled === true}
-      onClick={() => {
-        run(item.label, item.run);
-      }}
-    >
-      {item.label}
-    </button>
-  );
-
-  return (
-    <NavGroup
-      groupKey={EXPORT_GROUP}
-      label={t.exportLabel}
-      popupAriaLabel={t.subtabsAriaLabel(t.exportLabel)}
-      active={false}
-      dropdown={dropdown}
-    >
-      <a
-        href="#/export"
-        className="app-nav-menu-item"
-        title={t.exportPdfBuilderHint}
-        onClick={() => {
-          dropdown.close();
-        }}
-      >
-        {t.exportPdfBuilder}
-      </a>
-      {pageItems.length > 0 && <p className="app-nav-menu-heading">{t.exportThisPage}</p>}
-      {ungrouped.map(itemButton)}
-      {[...groups].map(([group, items]) => {
-        const expanded = openGroup === group;
-        return (
-          <div key={group} className="app-nav-submenu">
-            <button
-              type="button"
-              className="app-nav-menu-item app-nav-submenu-toggle"
-              aria-label={group}
-              aria-expanded={expanded}
-              onClick={() => {
-                setOpenGroup(expanded ? undefined : group);
-              }}
-            >
-              {group}
-            </button>
-            {expanded && <div className="app-nav-submenu-items">{items.map(itemButton)}</div>}
-          </div>
-        );
-      })}
-    </NavGroup>
-  );
-}
 
 /** One dropdown button and its popup of links. */
 function NavGroup({
@@ -352,7 +259,6 @@ export function AppNav({ route }: { route: Route }): React.JSX.Element {
   const dropdown = useExclusiveOpen<string>(pageKey);
   const [menuOpen, setMenuOpen] = useState(false);
   const toggleRef = useRef<HTMLButtonElement>(null);
-  const [exportStatus, setExportStatus] = useState<ExportStatus | undefined>(undefined);
 
   useEffect(() => {
     setMenuOpen(false);
@@ -374,26 +280,6 @@ export function AppNav({ route }: { route: Route }): React.JSX.Element {
   const closeAll = (): void => {
     dropdown.close();
     setMenuOpen(false);
-  };
-
-  /** Runs an export, closing the menus and announcing what is happening, since the choice is gone from view. */
-  const runExport = (what: string, action: () => void | Promise<void>): void => {
-    closeAll();
-    setExportStatus({ kind: 'busy', text: t.exportPreparing(what) });
-    void Promise.resolve()
-      .then(action)
-      .then(() => {
-        setExportStatus({ kind: 'done', text: t.exportDone(what) });
-        window.setTimeout(() => {
-          setExportStatus((current) => (current?.kind === 'done' ? undefined : current));
-        }, 3000);
-      })
-      .catch((error: unknown) => {
-        setExportStatus({
-          kind: 'error',
-          text: t.exportFailed(error instanceof Error ? error.message : String(error)),
-        });
-      });
   };
 
   return (
@@ -443,27 +329,13 @@ export function AppNav({ route }: { route: Route }): React.JSX.Element {
             </Fragment>
           ))}
         </NavGroup>
-        <ExportMenu dropdown={dropdown} run={runExport} />
+        {/* The current screen's own exports now live in its PageHeader (#506/#509), not here; this
+            is the only export action that is not page-specific. A single-item dropdown would be
+            worse than a plain link, so it is one — same as Overview/Birth record above. */}
+        <a href="#/export" className="app-nav-item" title={t.exportPdfBuilderHint} onClick={closeAll}>
+          {t.exportPdfBuilder}
+        </a>
       </nav>
-      {exportStatus !== undefined && (
-        <p
-          className={`app-export-status ${exportStatus.kind}`}
-          role={exportStatus.kind === 'error' ? 'alert' : 'status'}
-        >
-          {exportStatus.text}
-          {exportStatus.kind === 'error' && (
-            <button
-              type="button"
-              className="quiet"
-              onClick={() => {
-                setExportStatus(undefined);
-              }}
-            >
-              ×
-            </button>
-          )}
-        </p>
-      )}
     </div>
   );
 }
