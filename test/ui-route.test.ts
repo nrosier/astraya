@@ -45,6 +45,15 @@ describe('parseRoute', () => {
     expect(parseRoute(`#/person/${ID}`)).toEqual({ kind: 'person', personId: ID });
   });
 
+  // The canonical Overview destination (#506/#509): added alongside the legacy #/person/:id
+  // route, not replacing it yet.
+  it('routes the canonical Overview destination', () => {
+    expect(parseRoute(`#/people/${ID}/overview`)).toEqual({ kind: 'person-overview', personId: ID });
+    expect(parseRoute(`#/people/${ID}/overview/`)).toEqual({ kind: 'person-overview', personId: ID });
+    expect(parseRoute(`#/people/${ID}/overview?x=1`)).toEqual({ kind: 'person-overview', personId: ID });
+    expect(parseRoute('#/people/nope/overview')).toEqual({ kind: 'home' });
+  });
+
   it('routes a chart id through', () => {
     expect(parseRoute(`#/chart/${ID}`)).toEqual({ kind: 'chart', personId: ID });
     expect(parseRoute(`#/chart/${ID}/`)).toEqual({ kind: 'chart', personId: ID });

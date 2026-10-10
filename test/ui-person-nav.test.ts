@@ -12,6 +12,7 @@ const ID = newId('p');
 
 describe('activeTabKey', () => {
   it('maps every person-scoped route kind to its tab', () => {
+    expect(activeTabKey({ kind: 'person-overview', personId: ID })).toBe('overview');
     expect(activeTabKey({ kind: 'person', personId: ID })).toBe('birth-record');
     expect(activeTabKey({ kind: 'chart', personId: ID })).toBe('chart');
     expect(activeTabKey({ kind: 'report', personId: ID })).toBe('report');
@@ -46,14 +47,16 @@ describe('activeTabKey', () => {
 });
 
 describe('isTabEnabled', () => {
-  it('always enables the birth record tab', () => {
+  it('always enables the overview and birth record tabs', () => {
+    expect(isTabEnabled('overview', false)).toBe(true);
+    expect(isTabEnabled('overview', true)).toBe(true);
     expect(isTabEnabled('birth-record', false)).toBe(true);
     expect(isTabEnabled('birth-record', true)).toBe(true);
   });
 
   it('gates every other tab on a stored birth moment', () => {
     for (const tab of PERSON_TABS) {
-      if (tab.key === 'birth-record') continue;
+      if (tab.key === 'overview' || tab.key === 'birth-record') continue;
       expect(isTabEnabled(tab.key, false)).toBe(false);
       expect(isTabEnabled(tab.key, true)).toBe(true);
     }
@@ -64,6 +67,7 @@ describe('PERSON_TABS', () => {
   it('builds the same hrefs the old nav chain used', () => {
     const hrefs = Object.fromEntries(PERSON_TABS.map((tab) => [tab.key, tab.buildHref(ID)]));
     expect(hrefs).toEqual({
+      overview: `#/people/${ID}/overview`,
       'birth-record': `#/person/${ID}`,
       chart: `#/chart/${ID}`,
       report: `#/report/${ID}`,
@@ -81,8 +85,9 @@ describe('PERSON_TABS', () => {
 });
 
 describe('PERSON_TAB_FAMILIES (#398)', () => {
-  it('keeps the three fixed tabs and astrocartography out of every family', () => {
+  it('keeps the four fixed tabs and astrocartography out of every family', () => {
     const grouped = new Set(PERSON_TAB_FAMILIES.flatMap((family) => family.members));
+    expect(grouped.has('overview')).toBe(false);
     expect(grouped.has('birth-record')).toBe(false);
     expect(grouped.has('chart')).toBe(false);
     expect(grouped.has('report')).toBe(false);
@@ -92,7 +97,11 @@ describe('PERSON_TAB_FAMILIES (#398)', () => {
   it('places every other tab in exactly one family', () => {
     const groupable = PERSON_TABS.filter(
       (tab) =>
-        tab.key !== 'birth-record' && tab.key !== 'chart' && tab.key !== 'report' && tab.key !== 'astrocartography',
+        tab.key !== 'overview' &&
+        tab.key !== 'birth-record' &&
+        tab.key !== 'chart' &&
+        tab.key !== 'report' &&
+        tab.key !== 'astrocartography',
     );
     for (const tab of groupable) {
       const matches = PERSON_TAB_FAMILIES.filter((family) => family.members.includes(tab.key));

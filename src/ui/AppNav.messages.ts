@@ -44,6 +44,7 @@ const en = {
   subtabsAriaLabel: (familyLabel: string) => `${familyLabel} subtabs`,
 
   tabLabels: {
+    overview: 'Overview',
     'birth-record': 'Birth record',
     chart: 'Charts',
     report: 'Interpretation',
@@ -97,6 +98,7 @@ const nl: typeof en = {
   subtabsAriaLabel: (familyLabel: string) => `Subtabs van ${familyLabel}`,
 
   tabLabels: {
+    overview: 'Overzicht',
     'birth-record': 'Geboortegegevens',
     chart: 'Horoscopen',
     report: 'Interpretatie',

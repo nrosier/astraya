@@ -12,6 +12,7 @@
 import type { Route } from './route.js';
 
 export type PersonTabKey =
+  | 'overview'
   | 'birth-record'
   | 'chart'
   | 'report'
@@ -34,6 +35,10 @@ export interface PersonTab {
 // Labels are translated, so they live in `PersonNav.messages.ts`, looked up by `key`,
 // rather than here — this module has no access to the current locale.
 export const PERSON_TABS: readonly PersonTab[] = [
+  // The canonical Overview destination (#506/#509): a complete person's landing tab. Still
+  // reachable before every other tab, same as birth-record, since both are the two places a
+  // person can land regardless of completeness (activeTabKey/isTabEnabled below).
+  { key: 'overview', buildHref: (id) => `#/people/${id}/overview` },
   { key: 'birth-record', buildHref: (id) => `#/person/${id}` },
   { key: 'chart', buildHref: (id) => `#/chart/${id}` },
   { key: 'report', buildHref: (id) => `#/report/${id}` },
@@ -84,6 +89,8 @@ export function familyForTab(key: PersonTabKey): PersonTabFamilyKey | undefined 
 /** Which tab a parsed route corresponds to, or `null` for a route with no tab (e.g. `home`, `about`). */
 export function activeTabKey(route: Route): PersonTabKey | null {
   switch (route.kind) {
+    case 'person-overview':
+      return 'overview';
     case 'person':
       return 'birth-record';
     case 'chart':
@@ -103,7 +110,7 @@ export function activeTabKey(route: Route): PersonTabKey | null {
   }
 }
 
-/** Every tab but Birth record requires a completed, stored birth moment (same gate `PersonForm` used). */
+/** Every tab but Overview and Birth record requires a completed, stored birth moment (same gate `PersonForm` used). */
 export function isTabEnabled(key: PersonTabKey, hasBirthMoment: boolean): boolean {
-  return key === 'birth-record' || hasBirthMoment;
+  return key === 'overview' || key === 'birth-record' || hasBirthMoment;
 }

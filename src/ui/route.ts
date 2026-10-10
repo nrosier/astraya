@@ -24,6 +24,12 @@ export type Route =
   | { readonly kind: 'changelog' }
   | { readonly kind: 'people' }
   | { readonly kind: 'person'; readonly personId: string }
+  // The canonical Overview destination (#506/#509): a complete person's landing screen,
+  // `#/people/:id/overview`. Added alongside the legacy `#/person/:id` (birth record) rather
+  // than replacing it yet — the full canonical-route cutover (removing every legacy hash
+  // shape app-wide) is its own later slice; this is the first canonical route to exist at all,
+  // so the feature registry and the new Overview screen have something real to point at.
+  | { readonly kind: 'person-overview'; readonly personId: string }
   // The Charts page: one route for every chart cast for one person. `chartType` is the kind of chart
   // (`?type=draconic`; absent means natal) and `section` its open section (`?section=shape`; absent
   // means the wheel). The old `#/draconic/<id>` and `#/harmonic/<id>` links land here too.
@@ -80,6 +86,7 @@ export type Route =
   | { readonly kind: 'setup' };
 
 const PERSON_PATH = /^#\/person\/(.+)$/;
+const PERSON_OVERVIEW_PATH = /^#\/people\/(.+)\/overview$/;
 const CHART_PATH = /^#\/chart\/(.+)$/;
 const REPORT_PATH = /^#\/report\/(.+)$/;
 const PROFECTIONS_PATH = /^#\/profections\/(.+)$/;
@@ -154,6 +161,11 @@ export function parseRoute(hash: string): Route {
   // unparseable id would open the form on a person the store has no records for, which
   // renders as "deleted, restorable from the list" — a lie about a URL that was simply
   // mistyped. Home is the honest answer.
+  const personOverview = PERSON_OVERVIEW_PATH.exec(path);
+  if (personOverview !== null && isPersonId(personOverview[1])) {
+    return { kind: 'person-overview', personId: personOverview[1] };
+  }
+
   const person = PERSON_PATH.exec(path);
   if (person !== null && isPersonId(person[1])) return { kind: 'person', personId: person[1] };
 

@@ -50,7 +50,11 @@ import { buildFullExport, fullExportFilename, peopleCsvFilename, peopleToCsv } f
 import { useExclusiveOpen, type ExclusiveOpen } from './use-exclusive-open.js';
 
 // The chart is not here: it is a menu of the chart types (below), not a single link.
-const UNGROUPED_KEYS = new Set(['birth-record', 'report', 'astrocartography']);
+const UNGROUPED_KEYS = new Set(['overview', 'birth-record', 'report', 'astrocartography']);
+// Rendered first, in this fixed order, before the Charts dropdown — the two tabs a person can
+// land on regardless of completeness (#506/#509's canonical Overview destination plus the
+// existing Birth record tab), per docs/UI-UX_GUIDELINES.md §2's person-workspace order.
+const LEADING_KEYS = new Set(['overview', 'birth-record']);
 const CHARTS_GROUP = 'charts';
 const TOOLS_GROUP = 'tools';
 const EXPORT_GROUP = 'export';
@@ -295,9 +299,7 @@ function PersonMenu({
           {name}
         </span>
       )}
-      {PERSON_TABS.filter((tab) => UNGROUPED_KEYS.has(tab.key) && tab.key === 'birth-record').map((tab) =>
-        renderTab(tab, 'app-nav-item'),
-      )}
+      {PERSON_TABS.filter((tab) => LEADING_KEYS.has(tab.key)).map((tab) => renderTab(tab, 'app-nav-item'))}
       {/* One page for every chart cast for this person (natal, draconic, harmonic, returns); its sections
           (wheel, shape, tables) are tabs on the page. */}
       {chartEnabled ? (
@@ -331,7 +333,7 @@ function PersonMenu({
           {typesT.chartsLabel}
         </button>
       )}
-      {PERSON_TABS.filter((tab) => UNGROUPED_KEYS.has(tab.key) && tab.key !== 'birth-record').map((tab) =>
+      {PERSON_TABS.filter((tab) => UNGROUPED_KEYS.has(tab.key) && !LEADING_KEYS.has(tab.key)).map((tab) =>
         renderTab(tab, 'app-nav-item'),
       )}
       {PERSON_TAB_FAMILIES.map((family) => {
