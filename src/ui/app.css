@@ -337,6 +337,23 @@ html {
   font-size: 0.875rem;
 }
 
+/* The Preferences link (#506/#510) is the one `.corner-pill` that is a real route link, not a
+   toggle button — needs its own cursor/hover/current-page treatment, same visual language as
+   `.app-nav-item.active` elsewhere. */
+a.corner-pill {
+  cursor: pointer;
+  text-decoration: none;
+}
+
+a.corner-pill:hover {
+  background: var(--surface-hover);
+}
+
+a.corner-pill.active {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 .theme-toggle {
   width: 2.25rem;
   padding: 0;

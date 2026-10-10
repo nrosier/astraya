@@ -18,6 +18,10 @@ describe('parseRoute', () => {
     expect(parseRoute('#/people')).toEqual({ kind: 'people' });
   });
 
+  it('routes the Preferences workspace (#506/#510)', () => {
+    expect(parseRoute('#/preferences')).toEqual({ kind: 'preferences' });
+  });
+
   it('routes an empty hash home, as a browser leaves it', () => {
     // A fresh visit, a bare '#' after an anchor click, and an explicit '#/' are the same
     // request. Any of them falling through to a 404 screen would be a bug nobody typed.

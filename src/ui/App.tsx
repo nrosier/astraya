@@ -63,6 +63,7 @@ const HoraryView = lazy(async () => ({ default: (await import('./HoraryView.js')
 const EclipsesView = lazy(async () => ({ default: (await import('./EclipsesView.js')).EclipsesView }));
 const CyclesView = lazy(async () => ({ default: (await import('./CyclesView.js')).CyclesView }));
 const PdfExportBuilder = lazy(async () => ({ default: (await import('./PdfExportBuilder.js')).PdfExportBuilder }));
+const PreferencesView = lazy(async () => ({ default: (await import('./PreferencesView.js')).PreferencesView }));
 const AdminPanel = lazy(async () => ({ default: (await import('./AdminPanel.js')).AdminPanel }));
 const AdminUsagePanel = lazy(async () => ({ default: (await import('./AdminPanel.js')).AdminUsagePanel }));
 const CorpusOverridesPanel = lazy(async () => ({
@@ -324,6 +325,13 @@ function AppShell(): React.JSX.Element {
                 <div className="app-header-end">
                   <SyncBadge />
                   <AccountPanel />
+                  <a
+                    className={parsed.kind === 'preferences' ? 'corner-pill active' : 'corner-pill'}
+                    href="#/preferences"
+                    aria-current={parsed.kind === 'preferences' ? 'page' : undefined}
+                  >
+                    {t.preferencesLinkLabel}
+                  </a>
                   <LanguageToggle />
                   <SymbolToggle />
                   <ThemeToggle />
@@ -419,6 +427,13 @@ function renderScreen(parsed: Route, seVersion: string | undefined): React.JSX.E
     return (
       <Stored>
         <PdfExportBuilder />
+      </Stored>
+    );
+  }
+  if (parsed.kind === 'preferences') {
+    return (
+      <Stored>
+        <PreferencesView />
       </Stored>
     );
   }

@@ -73,6 +73,11 @@ export type Route =
   // The PDF export builder (#441): the primary person is picked on the page itself, not the URL,
   // the same reasoning synastry's second person already uses.
   | { readonly kind: 'export-builder' }
+  // The Preferences workspace (#506/#510): durable account/device settings in one stable place,
+  // per docs/UI-UX_GUIDELINES.md's setting-scope model. No sub-path per subsection yet (General/
+  // Astrology defaults/Appearance & accessibility/Data & privacy are headings on one page, not
+  // separate routes) — added if a subsection ever needs its own shareable link.
+  | { readonly kind: 'preferences' }
   | { readonly kind: 'cycles' }
   | { readonly kind: 'eclipses' }
   | { readonly kind: 'horary' }
@@ -121,6 +126,10 @@ export function parseRoute(hash: string): Route {
     // #441: the PDF export builder — needs the store (to list people) but not person-scoped.
     case '#/export':
       return { kind: 'export-builder' };
+    // #506/#510: the Preferences workspace — needs the store (full-data export lists people)
+    // but not person-scoped.
+    case '#/preferences':
+      return { kind: 'preferences' };
     // #410: planetary cycles — ephemeris only, no person, no stored data.
     case '#/cycles':
       return { kind: 'cycles' };

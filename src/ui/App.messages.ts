@@ -20,6 +20,7 @@ const en = {
 
   skipToContent: 'Skip to main content',
   homeLinkLabel: 'Astraya, back to the people list',
+  preferencesLinkLabel: 'Preferences',
 
   changelogLink: (version: string) => `Version ${version}`,
   aboutLink: 'about & licence',
@@ -38,6 +39,7 @@ const nl: typeof en = {
 
   skipToContent: 'Ga naar de hoofdinhoud',
   homeLinkLabel: 'Astraya, terug naar de lijst met mensen',
+  preferencesLinkLabel: 'Voorkeuren',
 
   changelogLink: (version: string) => `Versie ${version}`,
   aboutLink: 'over & licentie',
