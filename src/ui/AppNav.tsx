@@ -37,7 +37,7 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
 import { appNavMessages } from './AppNav.messages.js';
 import { useMessages } from './messages.js';
-import { activePersonTabKey, activeToolKey } from './feature-registry.js';
+import { activeFeatureKey, activePersonTabKey, activeToolKey } from './feature-registry.js';
 import { isTabEnabled, PERSON_TAB_FAMILIES, PERSON_TABS } from './person-nav.js';
 import type { PersonTab } from './person-nav.js';
 import type { Route } from './route.js';
@@ -199,6 +199,8 @@ export function AppNav({ route }: { route: Route }): React.JSX.Element {
   const store = useOptionalStore();
   const routePersonId = 'personId' in route ? route.personId : undefined;
   const activeTool = activeToolKey(route);
+  // Documents has the one destination, the PDF builder; its active state comes from the registry like the rest.
+  const documentsActive = activeFeatureKey(route, 'document') === 'export-builder';
   const lastPersonId = useLastPersonId();
   // A tool page (#453) carries no person in its own route at all (`route.ts`) — falling back to
   // the last person seen there keeps their nav tabs showing instead of losing them, and lets a
@@ -294,7 +296,13 @@ export function AppNav({ route }: { route: Route }): React.JSX.Element {
         {/* The current screen's own exports now live in its PageHeader (#506/#509), not here; this
             is the only export action that is not page-specific. A single-item dropdown would be
             worse than a plain link, so it is one — same as Overview/Birth record above. */}
-        <a href="#/export" className="app-nav-item" title={t.exportPdfBuilderHint} onClick={closeAll}>
+        <a
+          href="#/export"
+          className={documentsActive ? 'app-nav-item active' : 'app-nav-item'}
+          aria-current={documentsActive ? 'page' : undefined}
+          title={t.exportPdfBuilderHint}
+          onClick={closeAll}
+        >
           {t.exportPdfBuilder}
         </a>
       </nav>
