@@ -86,6 +86,13 @@ describe('the field primitives share one label, help and error contract', () => 
   }
 });
 
+describe('Field wording', () => {
+  it('says "optional" in the reader\'s language', () => {
+    const host = mount(<TextField label="Nick" value="" onChange={noop} optional />);
+    expect(host.querySelector('.primitive-field-optional')?.textContent).toBe(' (optional)');
+  });
+});
+
 describe('the compact size', () => {
   it('is a class on each control and button that opts in, and standard has none', () => {
     const host = mount(

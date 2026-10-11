@@ -12,6 +12,8 @@
  * @exports Field, useFieldIds
  */
 import { useId } from 'react';
+import { useMessages } from '../messages.js';
+import { fieldMessages } from './Field.messages.js';
 
 export interface FieldIds {
   readonly inputId: string;
@@ -50,11 +52,12 @@ export function Field({
   children,
   className,
 }: FieldProps): React.JSX.Element {
+  const t = useMessages(fieldMessages);
   return (
     <div className={['primitive-field', className].filter((value) => value !== undefined).join(' ')}>
       <label htmlFor={ids.inputId}>
         {label}
-        {optional && <span className="primitive-field-optional"> (optional)</span>}
+        {optional && <span className="primitive-field-optional"> ({t.optional})</span>}
         {unit !== undefined && <span className="primitive-field-unit"> ({unit})</span>}
       </label>
       {children}
