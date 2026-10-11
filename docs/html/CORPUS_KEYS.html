@@ -420,6 +420,20 @@
                   <td>Aries 1&deg;'s traditional degree-symbol</td>
                   <td>&mdash; (no body: attached to whichever body occupies the degree, at display time)</td>
                 </tr>
+                <tr>
+                  <th scope="row"><code>derived-point-in-sign</code></th>
+                  <td><code>derived-point-in-sign:&lt;point&gt;:&lt;sign&gt;</code></td>
+                  <td><code>derived-point-in-sign:part-of-fortune:2</code></td>
+                  <td>Part of Fortune in Gemini</td>
+                  <td>&mdash; (no body: a calculated point, see <q>Derived-point categories</q>)</td>
+                </tr>
+                <tr>
+                  <th scope="row"><code>derived-point-in-house</code></th>
+                  <td><code>derived-point-in-house:&lt;point&gt;:&lt;house&gt;</code></td>
+                  <td><code>derived-point-in-house:part-of-fortune:3</code></td>
+                  <td>Part of Fortune in the 3rd house</td>
+                  <td>&mdash; (no body: a calculated point, see <q>Derived-point categories</q>)</td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -509,6 +523,21 @@
           <code>dignity-state</code> have no composite sibling: a house cusp's sign and a planet's essential dignity are
           facts about the chart's own structure, not a trait attributed to "you", so the plain natal category already
           reads fine for a composite chart too.
+        </p>
+
+        <h2>Derived-point categories</h2>
+        <p>
+          <code>derived-point-in-sign</code> and <code>derived-point-in-house</code> (#511) describe a calculated point
+          that is not a body by where it falls, the way <code>planet-in-sign</code> and <code>planet-in-house</code> do
+          for a planet. <code>&lt;point&gt;</code> is one of the closed list in
+          <code>src/astrology/derived-points.ts</code>: <code>part-of-fortune</code>, <code>part-of-spirit</code>,
+          <code>asc-mc-midpoint</code> and <code>sun-moon-midpoint</code> &mdash; the rows of the Derived points table.
+          A derived point has no motion, aspects or dignity, so there is no aspect or dignity category for it. The
+          English point names are used in both languages, as no vetted Dutch terms exist (#158). The categories are
+          registered in the schema and shown in the chart's selection inspector, which falls back to the mechanical
+          one-line sentence until entries exist. <strong>No entries have been generated yet:</strong> the generator,
+          evaluator and improver do not know these categories (tracked in a follow-up issue), and the reports do not
+          read them.
         </p>
 
         <h2>How this is kept true</h2>

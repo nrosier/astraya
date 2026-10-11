@@ -46,6 +46,7 @@
  */
 import { bodyByKey } from '../astrology/bodies.ts';
 import { aspectByKey } from '../astrology/aspects.ts';
+import { derivedPointByKey } from '../astrology/derived-points.ts';
 import { SIGNS } from '../astrology/signs.ts';
 import type { AcgAngle, CorpusEntry, CorpusPlacement, DignityState, Locale } from './schema.js';
 import { placementKey } from './schema.ts';
@@ -288,6 +289,15 @@ export function composeFallbackText(placement: CorpusPlacement, locale: Locale):
       const withinSign = ordinal(((placement.degree - 1) % 30) + 1, locale);
       const sign = signName(signIndex, locale);
       return locale === 'nl' ? `De ${withinSign} graad van ${sign}.` : `The ${withinSign} degree of ${sign}.`;
+    }
+    case 'derived-point-in-sign': {
+      const point = derivedPointByKey(placement.point)?.label ?? placement.point;
+      return `${point} in ${signName(placement.sign, locale)}.`;
+    }
+    case 'derived-point-in-house': {
+      const point = derivedPointByKey(placement.point)?.label ?? placement.point;
+      const house = ordinal(placement.house, locale);
+      return locale === 'nl' ? `${point} in het ${house} huis.` : `${point} in the ${house} house.`;
     }
     case 'nakshatra':
     case 'pattern':

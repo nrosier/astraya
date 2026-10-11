@@ -20,6 +20,7 @@
  */
 import { ASPECTS } from '../astrology/aspects.js';
 import { BODIES } from '../astrology/bodies.js';
+import { DERIVED_POINTS, derivedPointByKey } from '../astrology/derived-points.js';
 import { SIGNS } from '../astrology/signs.js';
 import {
   ACG_ANGLES,
@@ -60,6 +61,8 @@ const CATEGORY_LABELS: Readonly<Record<Locale, Readonly<Record<CorpusCategory, s
     'composite-planet-in-house': 'Composite planet in house',
     'composite-aspect-pair': 'Composite aspect between two planets',
     'degree-symbol': 'Degree symbol',
+    'derived-point-in-sign': 'Derived point in sign',
+    'derived-point-in-house': 'Derived point in house',
   },
   nl: {
     'planet-in-sign': 'Planeet in teken',
@@ -77,6 +80,8 @@ const CATEGORY_LABELS: Readonly<Record<Locale, Readonly<Record<CorpusCategory, s
     'composite-planet-in-house': 'Composietplaneet in huis',
     'composite-aspect-pair': 'Composietaspect tussen twee planeten',
     'degree-symbol': 'Graadsymbool',
+    'derived-point-in-sign': 'Afgeleid punt in teken',
+    'derived-point-in-house': 'Afgeleid punt in huis',
   },
 };
 
@@ -96,6 +101,9 @@ function sign(index: number, locale: Locale): string {
 function aspect(key: string, locale: Locale): string {
   return aspectDisplayName(key, locale).toLowerCase();
 }
+
+/** A derived point's name — the English label in both languages (no vetted Dutch terms, see `derivedPointRows`). */
+const pointName = (key: string): string => derivedPointByKey(key)?.label ?? key;
 
 /** The meaning of a placement, in words. */
 export function placementLabel(placement: CorpusPlacement, locale: Locale): string {
@@ -170,6 +178,12 @@ export function placementLabel(placement: CorpusPlacement, locale: Locale): stri
         ? `${withinSign} graad van ${sign(signIndex, locale)}`
         : `${withinSign} degree of ${sign(signIndex, locale)}`;
     }
+    case 'derived-point-in-sign':
+      return `${pointName(placement.point)} in ${sign(placement.sign, locale)}`;
+    case 'derived-point-in-house':
+      return nl
+        ? `${pointName(placement.point)} in het ${ordinal(placement.house, locale)} huis`
+        : `${pointName(placement.point)} in the ${ordinal(placement.house, locale)} house`;
   }
 }
 
@@ -185,6 +199,10 @@ export function labelForKey(key: string, locale: Locale): string {
 const BODY_ORDER: ReadonlyMap<string, number> = new Map(BODIES.map((body, index) => [body.key, index]));
 const ASPECT_ORDER: ReadonlyMap<string, number> = new Map(ASPECTS.map((a, index) => [a.key, index]));
 const bodyOrder = (key: string): number => BODY_ORDER.get(key) ?? BODIES.length;
+const derivedPointOrder = (key: string): number => {
+  const index = DERIVED_POINTS.findIndex((point) => point.key === key);
+  return index === -1 ? DERIVED_POINTS.length : index;
+};
 const aspectOrder = (key: string): number => ASPECT_ORDER.get(key) ?? ASPECTS.length;
 
 /**
@@ -221,6 +239,10 @@ export function placementSortKey(placement: CorpusPlacement): readonly (number |
       return [category, bodyOrder(placement.body), ACG_ANGLES.indexOf(placement.angle)];
     case 'degree-symbol':
       return [category, placement.degree];
+    case 'derived-point-in-sign':
+      return [category, derivedPointOrder(placement.point), placement.sign];
+    case 'derived-point-in-house':
+      return [category, derivedPointOrder(placement.point), placement.house];
   }
 }
 
@@ -262,6 +284,10 @@ const CATEGORY_EXPLANATIONS: Readonly<Record<Locale, Readonly<Record<CorpusCateg
     'composite-aspect-pair': 'How two planets interact within the composite (relationship) chart.',
     'degree-symbol':
       'A traditional image and quality attached to this exact degree, independent of which planet stands there.',
+    'derived-point-in-sign':
+      'How a calculated point (Part of Fortune, Part of Spirit, a midpoint) expresses itself in its sign.',
+    'derived-point-in-house':
+      'Which area of life a calculated point (Part of Fortune, Part of Spirit, a midpoint) works in.',
   },
   nl: {
     'planet-in-sign': 'Hoe een planeet zich uit in het teken waarin hij staat.',
@@ -281,6 +307,10 @@ const CATEGORY_EXPLANATIONS: Readonly<Record<Locale, Readonly<Record<CorpusCateg
     'composite-aspect-pair': 'Hoe twee planeten samenwerken binnen de composietkaart (relatie).',
     'degree-symbol':
       'Een traditioneel beeld en kwaliteit die bij precies deze graad horen, los van welke planeet er staat.',
+    'derived-point-in-sign':
+      'Hoe een berekend punt (Part of Fortune, Part of Spirit, een middelpunt) zich uit in zijn teken.',
+    'derived-point-in-house':
+      'In welk levensgebied een berekend punt (Part of Fortune, Part of Spirit, een middelpunt) werkt.',
   },
 };
 
