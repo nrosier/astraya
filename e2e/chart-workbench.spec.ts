@@ -135,7 +135,7 @@ test('a house number on the wheel selects that house, in the inspector and in it
   const inspector = page.locator('.selection-inspector');
 
   await page.locator('.chart-house[data-house="5"]').click();
-  await expect(inspector.locator('.selection-inspector-facts strong')).toContainText('on the cusp of house 5');
+  await expect(inspector.locator('.chart-isolation-head strong')).toContainText('on the cusp of house 5');
   await expect(page.locator('.chart-house[data-house="6"]')).toHaveClass(/chart-dimmed/);
 
   // The same selection is on the Placements table, reachable and clearable from the keyboard.
