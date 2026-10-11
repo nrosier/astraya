@@ -1,0 +1,79 @@
+{
+  "$comment": "Rule data for the derived-point corpus categories (derived-point-in-sign / derived-point-in-house, #517). There is no source text for a Lot in a sign or a house, so the generator is given these sourced rules and asked to COMPOSE from them (owner decision, 2026-10-11); it is never asked to recall astrology. Every rule cites passage ids in docs/references/derived-points.references.json, and test/tools-corpus-gen-derived-points.test.ts fails if a cited id does not exist.",
+  "schema_version": 1,
+  "references_file": "docs/references/derived-points.references.json",
+  "points": {
+    "part-of-fortune": {
+      "name": "Part of Fortune",
+      "nature": "the point of the body and of material fortune: how bodily life, livelihood and the crafts of the hands find their footing",
+      "sources": ["valens-ii19-en", "valens-iv4-en", "ptolemy-iv2-wealth-source", "lilly-ii-xxiii-use"],
+      "judged_through": "the sign it falls in, that sign's classical ruler, and the strength of its house"
+    },
+    "part-of-spirit": {
+      "name": "Part of Spirit",
+      "nature": "the point of the mind and will: the soul, and action carried out through words, dealings, gifts and receipts",
+      "sources": ["valens-ii19-en", "valens-iv4-en", "leo-glossary-spirit"],
+      "judged_through": "the sign it falls in, that sign's classical ruler, and the strength of its house"
+    }
+  },
+  "ruler_means": {
+    "$comment": "What a classical ruler of the sign brings to the Part of FORTUNE (Ptolemy IV.2, Valens II.4). Sourced for Fortune only. For the Part of Spirit no source gives a per-planet reading, so the generator is told the ruler's general nature instead and that this is synthesis.",
+    "saturn": {
+      "fortune": "livelihood through land, building, farming and the sea; prosperity in the work Saturn apportions",
+      "sources": ["ptolemy-iv2-planets", "valens-ii4-en"]
+    },
+    "jupiter": {
+      "fortune": "livelihood through office, governance, positions of trust or religious service; a fortunate start from youth",
+      "sources": ["ptolemy-iv2-planets", "valens-ii4-en"]
+    },
+    "mars": {
+      "fortune": "livelihood through command, military or forceful enterprise",
+      "sources": ["ptolemy-iv2-planets", "valens-ii4-en"]
+    },
+    "venus": {
+      "fortune": "livelihood through friends, gifts and women (including the dowry); renown and good things",
+      "sources": ["ptolemy-iv2-planets", "valens-ii4-en"]
+    },
+    "mercury": {
+      "fortune": "livelihood through learning, the sciences and trade",
+      "sources": ["ptolemy-iv2-planets", "valens-ii4-en"]
+    },
+    "sun": {
+      "fortune": "a luminary: its witness strengthens whatever the other rulers of the point promise, and on its own it names no particular means of livelihood",
+      "sources": ["ptolemy-iv2-rulers", "valens-ii4-en"]
+    },
+    "moon": {
+      "fortune": "a rise in stature, strongest when she stands in her own triplicity",
+      "sources": ["valens-ii4-en", "ptolemy-iii13-definition"]
+    }
+  },
+  "house_classes": {
+    "$comment": "Valens II.17 and Lilly II.xxiii state the angular / succedent / cadent principle for the Part of FORTUNE. The same principle is applied to the Part of Spirit by analogy (owner decision), which the generator is told.",
+    "angular": {
+      "houses": [1, 4, 7, 10],
+      "strength": "prominent and well supported: the point works openly and with weight",
+      "sources": ["valens-ii17-en", "lilly-ii-xxiii-use"]
+    },
+    "succedent": {
+      "houses": [2, 5, 8, 11],
+      "strength": "of moderate prominence: it works steadily rather than conspicuously",
+      "sources": ["valens-ii17-en"]
+    },
+    "cadent": {
+      "houses": [3, 6, 9, 12],
+      "strength": "less outwardly supported: it works more quietly and asks for more effort to show",
+      "sources": ["valens-ii17-en"]
+    }
+  },
+  "owner_examples": {
+    "$comment": "Illustrations of the intended register from the owner's decision, not sourced claims.",
+    "part-of-fortune": "Fortune in the 2nd house: material gain through personal effort.",
+    "part-of-spirit": "Spirit in the 10th house: vocation through public action."
+  },
+  "synthesis_rules": [
+    "Use only the facts supplied for the placement; add nothing from memory of astrological lore.",
+    "The point is a calculated sensitive point, not a planet: it has no will, motion or aspects of its own.",
+    "Describe a standing tendency, not an event: no ages, timing, sums of money, health outcomes, marriages or named professions.",
+    "Do not mention planets other than the sign's ruler where a ruler is supplied, and do not mention day or night births or any formula."
+  ]
+}

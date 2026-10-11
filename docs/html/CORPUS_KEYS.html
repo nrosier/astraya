@@ -537,9 +537,14 @@
           public-domain source gives them a meaning, so they stay a display option, with no entry and no chart
           selection. The categories are registered in the schema and shown in the chart's selection inspector, which
           falls back to the mechanical one-line sentence until entries exist.
-          <strong>No entries have been generated yet:</strong> the generator, evaluator and improver do not know these
-          categories (tracked in #517), and the reports do not read them. That is 48 entries per language (2 points
-          &times; 12 signs + 2 points &times; 12 houses).
+          <strong>No entries have been generated yet.</strong> No source describes either point in a sign or a house, so
+          the generator (<code>tools/corpus-gen</code>, #517) <em>composes</em> each entry from a short list of sourced
+          rules (<code>tools/corpus-gen/classical-texts/derived-point.rules.json</code>, each citing a passage in
+          <code>docs/references/derived-points.references.json</code>) in its own restrained voice, and the judge checks
+          only that the entry stays inside those facts. The generator skips these placements unless
+          <code>--include-derived-points</code> is passed, and <code>--dry-run</code> shows the plan and the first
+          prompt without any API call. That is 48 entries per language (2 points &times; 12 signs + 2 points &times; 12
+          houses); the reports do not read them.
         </p>
 
         <h2>How this is kept true</h2>

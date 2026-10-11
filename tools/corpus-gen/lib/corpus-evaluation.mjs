@@ -84,6 +84,20 @@ const DEGREE_SYMBOL_NOTE = [
   "Only flag a degree-symbol entry if it lost the ONE specific, vivid image itself (what is pictured, doing what — generalizing it into generic astrology-speak), invented content not grounded in that image, or used a gendered pronoun. Do not flag it for omitting the source's prediction or moral judgment — that omission is the house style working correctly, not a shortcoming.",
 ].join(' ');
 
+/**
+ * #517: a derived-point entry (the Part of Fortune or the Part of Spirit in a sign or house) is COMPOSED from a
+ * short list of supplied facts, by owner decision, because no source describes these points in a sign or house.
+ * The judge's usual question, "does this capture the placement's meaning or fall back on a generic trope?", is
+ * the wrong one here: the facts are deliberately general, so a modest general entry is correct. The question
+ * that matters is whether the entry stays inside the facts. This note moves the judge to that question and
+ * names the failures that count as hallucination for this category.
+ */
+const DERIVED_POINT_NOTE = [
+  'If the placement facts above are for a derived point (the Part of Fortune or the Part of Spirit in a sign or house), the entry was composed ONLY from the facts listed, which are deliberately general, so a modest, general entry is correct and must not be flagged as generic, vague or lacking specificity.',
+  'For this kind of entry, set correct=false only if the text goes beyond those facts: it states a specific event, age, timing, sum of money, health outcome, marriage, named profession or relationship outcome; it names a planet other than the ruler the facts supply; it describes the point as a planet or as something that acts or wants; it says the sign or house gives, causes or guarantees an outcome; it contradicts a fact (for example calls an angular house weak, or reads the Part of Fortune as mind and will instead of body and livelihood); it mentions how the point is calculated or day and night births; or it presents a fact marked as a synthesis as an established finding.',
+  'Do not flag it for leaving some of the facts unused.',
+].join(' ');
+
 const SYSTEM_INSTRUCTION = [
   'You are an expert astrologer reviewing one short entry from an interpretation corpus for a specific placement.',
   "You are given the placement's computed facts (the only facts that exist for this entry) and the entry's text.",
@@ -91,6 +105,7 @@ const SYSTEM_INSTRUCTION = [
   "Set correct=false if there is a factual error OR a real shortcoming of kind (2) — not for minor stylistic preference. List each specific issue in issues as a short, concrete sentence (what is wrong AND why), in English regardless of the entry's own language. If there is no real issue, set correct=true and issues to an empty array.",
   VARIANT_BODY_NOTE,
   DEGREE_SYMBOL_NOTE,
+  DERIVED_POINT_NOTE,
 ].join(' ');
 
 /**

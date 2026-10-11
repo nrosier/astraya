@@ -14,12 +14,14 @@ Scripts:
 - `corpus-stats.mjs` — Visibility into #381 feedback-loop progress without re-running. Per-locale counts, in-flight batch jobs. Read-only, no API key.
 - `cross-translate-composite.mjs` — One-off #451 cleanup: cross-translate undisputed `composite-*` entries to replace their disputed-language counterpart, instead of regenerating from scratch. Calls Gemini.
 - `evaluate-corpus-batch.mjs` — Independent second opinion (#381 stage 1) using different model family (OpenAI). Detects generic-trope/stereotyped-shadow. Calls OpenAI Batch API.
-- `generate-batch.mjs` — Primary corpus writer (#56). Generates/regenerates full placement scope, resumably/idempotently; `degree-symbol` (#405) uses its own voice/length/fixed-tier branch. Calls Gemini/Ollama.
+- `generate-batch.mjs` — Primary corpus writer (#56). Generates/regenerates full placement scope, resumably/idempotently; `degree-symbol` (#405) and the derived points (#517, opt-in via `--include-derived-points`) use their own voice/length/fixed-tier branches; `--dry-run` prints the plan and first prompts without any API call. Calls Gemini/Ollama.
 - `generate-sample.mjs` — Fast demo + pre-flight provider smoke test: one entry for one placement, print with lint/dedupe diagnostics. No corpus touch. Calls Gemini/Ollama.
-- `improve-corpus-batch.mjs` — Close #381 feedback loop: original model reviews judge's complaints, selectively acts on flagged entries. Applies lint-checked rewrites; branches to the degree-symbol voice (#405) when applicable. Calls Gemini Batch API.
+- `improve-corpus-batch.mjs` — Close #381 feedback loop: original model reviews judge's complaints, selectively acts on flagged entries. Applies lint-checked rewrites; branches to the degree-symbol (#405) or derived-point (#517) voice when applicable. Calls Gemini Batch API.
 - `language-quality-batch.mjs` — Catch fluency problems (typos, mixed-language) that keyword-count can't. Judges each entry's locale fluency, high-confidence auto-fixes + flag rest. Calls Gemini/Ollama.
 - `remove-by-model.mjs` — Retract bad/superseded model's output: dry-run-by-default removal per provenance.model, backup + concurrency guard. No API calls.
 - `remove-by-tag.mjs` — General cleanup by tag (e.g. language-quality flags): dry-run-by-default removal, backup + concurrency guard. No API calls.
 - `remove-same-point-variant-pairs.mjs` — Correction #395, kept for reuse if a future body addition recreates the same situation: remove aspect entries between calculation-method variants of same real point (meanNode/trueNode). No API calls.
 - `sample-degree-symbol.mjs` — Pre-decision smoke test for #405: runs the full generate→judge→revise loop over a sample of degree-symbol entries, synchronous transports, no corpus/schema touch. Calls Gemini + OpenAI.
 - `verify-batch.mjs` — First trustworthiness signal (#359): check each entry's text vs. computed facts, additively tag mismatches without altering text. Calls Gemini/Ollama.
+
+Seed data read by the scripts above (`classical-texts/`): `degree-symbol.en.json` (1655 images, #405), `dignity-state.en.json` (Lilly excerpts, #359) and `derived-point.rules.json` (sourced rules the derived-point entries are composed from, #517; every rule cites a passage in `docs/references/derived-points.references.json`).

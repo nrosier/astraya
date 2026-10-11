@@ -75,10 +75,14 @@ falls, the way `planet-in-sign`/`planet-in-house` do for a planet. `<point>` is 
 so there is no aspect or dignity category for it. The English point names are used in both languages (no vetted Dutch
 terms exist, see #158). The ASC/MC and Sun/Moon midpoints the Derived points table can show are **deliberately not
 corpus points**: no public-domain source gives them a meaning, so they stay a display option, with no entry and no chart
-selection. The categories are registered in the schema and shown in the chart's selection inspector, which falls back to
-the mechanical one-line sentence until entries exist; **no entries have been generated yet** — the generator, evaluator and
-improver do not know these categories (tracked in #517), and the reports do not read them. That is 48 entries per language
-(2 points × 12 signs + 2 points × 12 houses).
+selection. The categories are registered in the schema and shown in the chart's selection inspector, which falls back to the mechanical
+one-line sentence until entries exist. **No entries have been generated yet.** No source describes either point in a sign or a
+house, so the generator (`tools/corpus-gen`, #517) _composes_ each entry from a short list of sourced rules
+(`tools/corpus-gen/classical-texts/derived-point.rules.json`, each citing a passage in
+`docs/references/derived-points.references.json`) in its own restrained voice, and the judge checks only that the entry stays
+inside those facts. The generator skips these placements unless `--include-derived-points` is passed, and `--dry-run` shows
+the plan and the first prompt without any API call. That is 48 entries per language (2 points × 12 signs + 2 points × 12
+houses); the reports do not read them.
 
 ## How this is kept true
 

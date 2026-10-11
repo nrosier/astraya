@@ -90,6 +90,9 @@ import {
   buildUserContent,
   buildDegreeSymbolSystemInstruction,
   buildDegreeSymbolUserContent,
+  buildDerivedPointSystemInstruction,
+  buildDerivedPointUserContent,
+  DERIVED_POINT_MIN_WORDS,
 } from './lib/prompt.mjs';
 import { buildBatchRequest, submitBatch, pollBatch, extractBatchResults } from './lib/gemini-batch.mjs';
 import { writeCorpus } from './lib/write-corpus.mjs';
@@ -99,6 +102,7 @@ import {
   buildSymbolismContext,
   symbolismScopeFor,
   degreeSymbolExcerpt,
+  DERIVED_POINT_CATEGORIES,
 } from './lib/placements.mjs';
 import { CORPUS_ENTRY_RESPONSE_SCHEMA, placementKey } from '../../src/interpretation/schema.ts';
 import { lintCorpus, lintEntry } from '../../src/interpretation/lint.ts';
@@ -168,6 +172,12 @@ if (rawArgs.includes('--help') || rawArgs.includes('-h')) {
       '                        round per retry. Blocks and polls for the whole run, which can take',
       "                        anywhere from under a minute to Google's documented 48-hour hard",
       '                        expiry.',
+      '  --include-derived-points',
+      '                        Also generate the derived-point-in-sign/-house placements (#517: the',
+      '                        Parts of Fortune and Spirit). Off by default: they are composed from',
+      "                        sourced rules and need the owner's explicit go-ahead before spending.",
+      "  --dry-run             Print the placements that would be generated and the first request's",
+      '                        prompts, then exit. No API call, no write, no cost.',
       '  --seed-anchors-from=<path>',
       "                        Only acts when the target locale's own corpus has zero hand-written",
       "                        `anchor: true` entries. Copies that locale's anchor entries from the",
@@ -192,6 +202,11 @@ const MAX_LANGUAGE_RETRIES = Number(flag('max-language-retries', '4'));
 // Matches lib/prompt.mjs's DEGREE_SYMBOL_LENGTH_CONSTRAINT's own stated floor (#405).
 const DEGREE_SYMBOL_MIN_WORDS = 75;
 const useBatch = rawArgs.includes('--batch');
+// #517: the derived-point categories are composed from rules rather than a source, and generating them
+// needs the owner's explicit go-ahead, so a plain run never includes them — they must be asked for.
+const includeDerivedPoints = rawArgs.includes('--include-derived-points');
+// Prints what would be generated, and the first request's prompts, then exits before any API call.
+const dryRun = rawArgs.includes('--dry-run');
 
 const provider = flag('provider', 'gemini');
 if (provider !== 'gemini' && provider !== 'ollama')
@@ -221,7 +236,7 @@ try {
 // `--seed-anchors-from=<path>` still works if you *want* to prime a from-scratch corpus with
 // existing hand-written examples (a backup, or a git-restored copy) rather than going anchor-free.
 const seedAnchorsFrom = flag('seed-anchors-from');
-if (seedAnchorsFrom && corpus.filter((e) => e.anchor === true && e.locale === locale).length === 0) {
+if (seedAnchorsFrom && !dryRun && corpus.filter((e) => e.anchor === true && e.locale === locale).length === 0) {
   const seedCorpus = JSON.parse(await readFile(resolve(seedAnchorsFrom), 'utf8'));
   const seedAnchors = seedCorpus.filter((e) => e.anchor === true && e.locale === locale);
   if (seedAnchors.length === 0) {
@@ -247,6 +262,7 @@ corpus.forEach((entry, i) => {
 const allPlacements = buildPlacements();
 const pending = allPlacements
   .map((placement) => ({ placement, key: placementKey(placement) }))
+  .filter(({ placement }) => includeDerivedPoints || !DERIVED_POINT_CATEGORIES.includes(placement.category))
   .filter(({ key }) => {
     const idx = existingIndex.get(key);
     if (idx === undefined) return true; // genuinely missing — always generate
@@ -259,6 +275,26 @@ console.log(
   `[${locale}] provider: ${provider} (model: ${String(model)}) — restricted scope: ${String(allPlacements.length)} placements, ` +
     `${String(existingIndex.size)} already shipped, ${String(pending.length)} to ${force ? 'regenerate' : 'generate'}${force ? ' (--force)' : ''}`,
 );
+if (!includeDerivedPoints && allPlacements.some((p) => DERIVED_POINT_CATEGORIES.includes(p.category))) {
+  console.log(
+    `[${locale}] the derived-point placements (#517) are not included; pass --include-derived-points to generate them.`,
+  );
+}
+if (dryRun) {
+  const byCategory = new Map();
+  for (const { placement } of pending)
+    byCategory.set(placement.category, (byCategory.get(placement.category) ?? 0) + 1);
+  console.log(`[${locale}] DRY RUN — nothing will be sent or written. Pending by category:`);
+  for (const [category, count] of byCategory) console.log(`  ${category}: ${String(count)}`);
+  const first = pending[0];
+  if (first !== undefined) {
+    console.log(
+      `\nFirst pending placement: ${first.key}\n\n--- SYSTEM INSTRUCTION ---\n${systemInstructionFor(first.placement)}`,
+    );
+    console.log(`\n--- USER CONTENT ---\n${userContentFor(first.placement)}`);
+  }
+  process.exit(0);
+}
 if (pending.length === 0) {
   console.log(`[${locale}] nothing to do.`);
   process.exit(0);
@@ -306,6 +342,10 @@ function systemInstructionFor(placement) {
   if (placement.category === 'degree-symbol') {
     return buildDegreeSymbolSystemInstruction({ locale, forceLanguageDirective: provider === 'ollama' });
   }
+  // #517: composed from supplied facts, in its own restrained voice (lib/prompt.mjs's DERIVED_POINT_VOICE).
+  if (DERIVED_POINT_CATEGORIES.includes(placement.category)) {
+    return buildDerivedPointSystemInstruction({ locale, forceLanguageDirective: provider === 'ollama' });
+  }
   return buildSystemInstruction({
     symbolismContext: buildSymbolismContext(locale, symbolismScopeFor(placement)),
     locale,
@@ -317,6 +357,9 @@ function systemInstructionFor(placement) {
 function userContentFor(placement) {
   if (placement.category === 'degree-symbol') {
     return buildDegreeSymbolUserContent({ excerpt: degreeSymbolExcerpt(placement.degree) });
+  }
+  if (DERIVED_POINT_CATEGORIES.includes(placement.category)) {
+    return buildDerivedPointUserContent({ placementDescription: placementDescription(placement) });
   }
   return buildUserContent({
     placementDescription: placementDescription(placement),
@@ -334,7 +377,13 @@ function buildEntry({ key, placement, text, tier }) {
     // uniformly rather than asked of the model, which was observed guessing inconsistently.
     // Still requested via CORPUS_ENTRY_RESPONSE_SCHEMA like every category (no schema change);
     // the model's guess is just ignored here.
-    tier: placement.category === 'degree-symbol' ? 'nuance' : tier,
+    // #517: likewise fixed for the derived points, which are minor in every tradition that uses them.
+    tier:
+      placement.category === 'degree-symbol'
+        ? 'nuance'
+        : DERIVED_POINT_CATEGORIES.includes(placement.category)
+          ? 'notable'
+          : tier,
     text,
     tags: placement.category === 'dignity-state' ? [placement.state] : [],
     provenance: {
@@ -360,6 +409,12 @@ function retryReason(entry, placement) {
     const words = entry.text.trim().split(/\s+/).filter(Boolean).length;
     if (words < DEGREE_SYMBOL_MIN_WORDS) {
       return `degree-symbol entry is ${String(words)} words, under the ${String(DEGREE_SYMBOL_MIN_WORDS)}-word floor`;
+    }
+  }
+  if (DERIVED_POINT_CATEGORIES.includes(placement.category)) {
+    const words = entry.text.trim().split(/\s+/).filter(Boolean).length;
+    if (words < DERIVED_POINT_MIN_WORDS) {
+      return `${placement.category} entry is ${String(words)} words, under the ${String(DERIVED_POINT_MIN_WORDS)}-word floor`;
     }
   }
   return undefined;

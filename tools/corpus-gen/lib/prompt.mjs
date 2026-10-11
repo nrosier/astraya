@@ -36,12 +36,16 @@
  *   real batch runner and the demo script can't drift apart. Consumed by scripts that cost real
  *   API money per call. degree-symbol (#405) gets its own voice/constraints/builders
  *   (DEGREE_SYMBOL_*, buildDegreeSymbol*) rather than reusing the disposition-essay ones — see
- *   those exports' own doc comments for why.
+ *   those exports' own doc comments for why. The derived-point categories (#517) likewise get their
+ *   own (DERIVED_POINT_*, buildDerivedPoint*): they are composed from supplied facts, not written
+ *   from astrological symbolism.
  * @exports NEUTRAL_SYSTEM_PROMPT, FORCE_LANGUAGE_DIRECTIVE, NEGATIVE_CONSTRAINTS,
  *   buildNegativeConstraintsBlock, buildAnchorsBlock, buildSystemInstruction, aspectFlavorHint,
  *   buildUserContent, DEGREE_SYMBOL_VOICE, DEGREE_SYMBOL_LENGTH_CONSTRAINT,
  *   buildDegreeSymbolNegativeConstraintsBlock, buildDegreeSymbolSystemInstruction,
- *   buildDegreeSymbolUserContent.
+ *   buildDegreeSymbolUserContent, DERIVED_POINT_VOICE, DERIVED_POINT_MIN_WORDS,
+ *   DERIVED_POINT_CONSTRAINTS, buildDerivedPointNegativeConstraintsBlock,
+ *   buildDerivedPointSystemInstruction, buildDerivedPointUserContent.
  */
 export const NEUTRAL_SYSTEM_PROMPT = {
   en: "You are a psychologically grounded, even-handed astrologer writing the default entry in an interpretation corpus — the text every reader sees before picking a more particular voice. Describe the placement's standing disposition by balancing three things: the core drive or gift it inherently builds toward, the functional mechanism — how that drive navigates boundaries, control or independence — and the shadow dilemma that surfaces when it meets an external limit or dependence. Write in plain, warm-but-precise prose, without dramatizing either side. Adopt no persona or signature style of your own — this is the chart speaking, not a character.",
@@ -237,5 +241,75 @@ export function buildDegreeSymbolUserContent({ excerpt }) {
     `SOURCE IMAGE (1655 Angelus/Turner translation — rewrite its meaning, do not quote or keep its wording):\n${excerpt}`,
     '',
     "Write one corpus entry capturing this image's symbolic essence, in the voice and under the constraints above.",
+  ].join('\n');
+}
+
+/**
+ * #517's `derived-point-in-sign` / `-in-house` categories get their own voice, not `NEUTRAL_SYSTEM_PROMPT`.
+ * No source text exists for a Lot in a sign or a house, so the entry is COMPOSED from a short list of sourced
+ * rules the request supplies (`placements.mjs`'s `derivedPointFacts`), by owner decision (2026-10-11). The
+ * shared voice reasons freely from a planet's or sign's symbolism and asks for a gift / mechanism / shadow
+ * essay; that is exactly the licence this category must not have, since anything the facts do not state would
+ * be recalled astrology with no source behind it. So this voice is restrained: compose, do not recall.
+ */
+export const DERIVED_POINT_VOICE = {
+  en: `You are writing one short entry in an interpretation corpus for a calculated sensitive point of a chart (the Part of Fortune or the Part of Spirit) in a particular sign or house.
+
+There is no traditional text that describes this point in this sign or house. You are therefore COMPOSING the entry from the short list of FACTS TO USE in the request, and from nothing else. Your job is to join those facts into two or three plain sentences about a standing tendency:
+- Say only what the facts support. If a fact is marked as a synthesis, treat it as a tendency, not a finding.
+- Do not add astrological lore from memory: no extra planets, no timing, no events, no named professions, no money, no health or relationship outcomes, no claims about what the sign or house "always" does.
+- The point is not a planet and does not act or want anything; describe how the concerns of the point (the body and its livelihood for the Part of Fortune; the mind, will and action through words and dealings for the Part of Spirit) are coloured or carried by the sign or house.
+- Prefer a modest, general statement to a vivid, specific one: when in doubt, say less.
+- Write in plain, warm-but-precise prose. No persona, no signature style of your own.`,
+  nl: `Je schrijft één korte tekst in een interpretatiecorpus voor een berekend gevoelig punt van een horoscoop (de Part of Fortune of de Part of Spirit) in een bepaald teken of huis.
+
+Er bestaat geen traditionele tekst die dit punt in dit teken of huis beschrijft. Je STELT de tekst daarom SAMEN uit de korte lijst FACTS TO USE in het verzoek, en uit niets anders. Je taak is om die feiten in twee of drie heldere zinnen te verbinden tot een blijvende neiging:
+- Zeg alleen wat de feiten ondersteunen. Is een feit als synthese gemarkeerd, behandel het dan als een neiging, niet als een bevinding.
+- Voeg geen astrologische kennis uit het hoofd toe: geen extra planeten, geen timing, geen gebeurtenissen, geen genoemde beroepen, geen geld, geen gezondheids- of relatieuitkomsten, geen uitspraken over wat het teken of huis "altijd" doet.
+- Het punt is geen planeet en handelt of wil niets; beschrijf hoe de thema's van het punt (het lichaam en het levensonderhoud bij de Part of Fortune; de geest, de wil en het handelen via woorden en omgang bij de Part of Spirit) door het teken of huis worden gekleurd of gedragen.
+- Geef de voorkeur aan een bescheiden, algemene uitspraak boven een levendige, specifieke: zeg bij twijfel minder.
+- Schrijf in heldere, warme maar precieze taal. Geen eigen persona of stijl.`,
+};
+
+/** Hard floor for a derived-point entry's length: shorter than the shared 50-80 target, since little may be claimed. */
+export const DERIVED_POINT_MIN_WORDS = 35;
+
+/** The hard constraints specific to composing a derived-point entry, on top of the shared ones. */
+export const DERIVED_POINT_CONSTRAINTS = [
+  'Write 40 to 70 words, across 2 to 3 sentences, and never fewer than 35 words. The facts allow only a modest statement, so do not pad it, but a single clause is a stub.',
+  'Say nothing the FACTS TO USE do not state: no specific events, ages, timing, amounts of money, health outcomes, marriages or named professions, and no planets other than a ruler the facts name.',
+  'Do not describe the point as a planet or as something that acts or wants; do not say the sign or house "gives", "causes" or "guarantees" an outcome.',
+  'Do not mention day or night births, how the point is calculated, or that the entry was composed from supplied facts.',
+];
+
+/** `buildNegativeConstraintsBlock`'s derived-point sibling: the shared rules minus the 50-80 word line, plus this category's own. */
+export function buildDerivedPointNegativeConstraintsBlock() {
+  return [
+    'HARD CONSTRAINTS (violating any of these makes the output unusable)',
+    ...NEGATIVE_CONSTRAINTS.filter((rule) => !rule.includes('50 to 80 words')).map((rule) => `- ${rule}`),
+    ...DERIVED_POINT_CONSTRAINTS.map((rule) => `- ${rule}`),
+  ].join('\n');
+}
+
+/** `buildSystemInstruction`'s derived-point sibling: DERIVED_POINT_VOICE, no symbolism context (the facts in the request are the only content). */
+export function buildDerivedPointSystemInstruction({ locale, forceLanguageDirective }) {
+  const voicePrompt = DERIVED_POINT_VOICE[locale] ?? DERIVED_POINT_VOICE.en;
+  const languageDirective = forceLanguageDirective ? FORCE_LANGUAGE_DIRECTIVE[locale] : undefined;
+  return [
+    ...(languageDirective ? [languageDirective, ''] : []),
+    voicePrompt,
+    '',
+    'Even in this voice, the output feeds a structured interpretation corpus, not a chat reply — the constraints below override any instinct the voice above has to hedge, moralize or use extended metaphor.',
+    '',
+    buildDerivedPointNegativeConstraintsBlock(),
+  ].join('\n');
+}
+
+/** `buildUserContent`'s derived-point sibling: the facts bundle IS the target; no anchors block (anchors exemplify the disposition voice, not this one). */
+export function buildDerivedPointUserContent({ placementDescription }) {
+  return [
+    `TARGET PLACEMENT: ${placementDescription}`,
+    '',
+    'Write one corpus entry for the target placement by composing only the facts above, in the voice and under the constraints above.',
   ].join('\n');
 }

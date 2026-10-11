@@ -17,6 +17,7 @@ interface Passage {
   readonly kind: string;
   readonly text: string;
   readonly translation_of?: string;
+  readonly notes?: string;
 }
 
 interface ReferenceFile {
