@@ -1309,6 +1309,8 @@ label.stacked textarea:focus-visible {
 }
 
 .data-table-scroll {
+  /* The positioned ancestor of the headers' `.sr-only` spans: without it they escape this clip and stretch the page sideways on a phone. */
+  position: relative;
   overflow-x: auto;
   border: 1px solid var(--line);
   border-radius: var(--radius);

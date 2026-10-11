@@ -201,12 +201,10 @@ test('the natal chart views fit a phone: a labelled Select replaces the link row
   await expect(page.locator('nav.chart-view-nav')).toBeHidden();
   const overflow = await page.evaluate('document.documentElement.scrollWidth - window.innerWidth');
   expect(overflow).toBeLessThanOrEqual(1);
-  // Patterns also carries the Dignities table (7 columns): its own `.data-table-scroll` wrap already
-  // scrolls horizontally rather than the page — confirmed pre-existing and unrelated to this view
-  // split, not newly introduced here — so this view is not asserted page-overflow-free until that
-  // table gets its own narrow-screen treatment (deferred, like the rest of #511's responsive work).
   await select.selectOption('patterns');
   await expect(page.locator('.chart-shape-diagram')).toBeVisible();
+  // The Dignities table scrolls inside its own `.data-table-scroll` wrap, never the page.
+  expect(await page.evaluate('document.documentElement.scrollWidth - window.innerWidth')).toBeLessThanOrEqual(1);
 });
 
 test('a table row selects on the wheel and the wheel marks the table row (#418)', async ({ page }) => {
