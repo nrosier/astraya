@@ -160,6 +160,9 @@ test('the natal chart is split into views, opening on the wheel, and the wheel k
   });
   await openNatalChart(page);
 
+  // The page states its calculation basis and where it comes from (#510).
+  await expect(page.locator('.page-header-basis')).toHaveText('Calculation profile: Modern Western — Astraya default');
+
   // Route-level links (#511), not ARIA tabs.
   await expect(page.locator('nav.chart-view-nav [role="tab"]')).toHaveCount(0);
   const links = page.locator('nav.chart-view-nav .chart-view-link');

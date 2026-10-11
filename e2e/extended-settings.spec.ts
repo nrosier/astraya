@@ -63,7 +63,9 @@ test('the settings open as a card, apply together or are dropped, and the button
     'Rulership & dignities',
     'How planetary and zodiac symbols are displayed',
   ]);
-  await expect(card.getByText('Saved on this device and applied at once.').first()).toBeVisible();
+  await expect(
+    card.getByText('Shown at once, kept when you apply or save, and put back by Cancel.').first(),
+  ).toBeVisible();
   await expect(card.getByRole('button', { name: /^Apply and redraw/ })).toBeDisabled();
 
   // Cancel drops the draft: nothing is applied and the button still says nothing.
@@ -172,11 +174,17 @@ test('the Apply button enables when only Symbols are changed (#459)', async ({ p
   // Initially disabled
   await expect(applyButton).toBeDisabled();
 
-  // Change only the symbol class - should enable the apply button
-  await card.getByLabel('Symbols', { exact: true }).selectOption('drawn');
+  // Change only the symbol class (the default is already 'drawn') - should enable the apply button
+  await card.getByLabel('Symbols', { exact: true }).selectOption('unicode');
 
   // The button should now be enabled
   await expect(applyButton).toBeEnabled();
+
+  // Cancel puts the symbols back: nothing sticks, and reopening shows the original choice (#510)
+  await card.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await openSettings(page);
+  await expect(card.getByLabel('Symbols', { exact: true })).toHaveValue('drawn');
+  await expect(card.getByRole('button', { name: /^Apply and redraw/ })).toBeDisabled();
 
   await closeSettings(page);
 });

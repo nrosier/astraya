@@ -22,6 +22,7 @@ import { momentKey } from '../time/encode.js';
 import { aspectDisplayName, bodyDisplayName } from './astro-names.messages.js';
 import { ChartDataView } from './ChartView.js';
 import { ChartTypeSelector, changeChartView } from './ChartTypeSelector.js';
+import { useCalculationBasisLine } from './calculation-basis.js';
 import { chartHref, type ChartViewKind } from './chart-sections.js';
 import { todayInputValue } from './format.js';
 import { useLocale } from './locale.js';
@@ -100,6 +101,7 @@ export function ReturnView({
   const [locale] = useLocale();
   const [rulership] = useRulershipChoice();
   const [settings, setSettings] = useExtendedSettings();
+  const basisLine = useCalculationBasisLine(settings, rulership);
   const { provider } = useEphemerisProvider();
   const solar = kind === 'solar-return';
 
@@ -216,6 +218,7 @@ export function ReturnView({
         <a href={`#/person/${personId}`}>&larr; {person.displayName || t.personFallback}</a>
       </p>
       <h1>{heading}</h1>
+      <p className="hint page-header-basis">{basisLine}</p>
       <ChartTypeSelector personId={personId} type={kind} view={view} />
       <p className="hint">{solar ? t.solarHint : t.lunarHint}</p>
 

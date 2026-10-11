@@ -109,6 +109,7 @@ import { parseSelectionKey } from '../interpretation/selection.js';
 import { selectionKey } from '../interpretation/selection-key.js';
 import { buildFocusObjectContext } from '../interpretation/focus-context.js';
 import { AspectMatrix } from './AspectMatrix.js';
+import { useCalculationBasisLine } from './calculation-basis.js';
 import { EmphasisGrid } from './EmphasisGrid.js';
 import { SelectionInspector, type WheelIsolationFacts } from './SelectionInspector.js';
 import { useRulershipChoice } from './rulership-setting.js';
@@ -1587,6 +1588,7 @@ export function ChartView({
   // Shared with the solar and lunar return charts, so a house system chosen here applies there too.
   const [settings, setSettings] = useExtendedSettings();
   const [rulership] = useRulershipChoice();
+  const basisLine = useCalculationBasisLine(settings, rulership);
   const lastChartKey = useRef('');
   // Memoised: it is a dependency of the wheel's markup, and a new array on every render of this screen (which a
   // change of section now causes) would redraw the wheel and drop what was selected on it.
@@ -1662,7 +1664,7 @@ export function ChartView({
       <p className="back">
         <a href={`#/person/${personId}`}>&larr; {person.displayName || t.personFallback}</a>
       </p>
-      <PageHeader title={person.displayName || t.chartFallback} />
+      <PageHeader title={person.displayName || t.chartFallback} basis={basisLine} />
       <ChartTypeSelector personId={personId} type="natal" view={view} />
       <ShareLink moment={person.moment} housesKnown={showHouses} />
       <ChartDataView

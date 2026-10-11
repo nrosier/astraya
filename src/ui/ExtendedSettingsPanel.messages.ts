@@ -34,7 +34,7 @@ const en = {
   rulershipNames: { modern: 'Modern', traditional: 'Traditional', both: 'Both' },
 
   appliesOnApply: 'Applies when you choose “Apply and redraw”.',
-  savedOnDevice: 'Saved on this device and applied at once.',
+  devicePreview: 'Shown at once, kept when you apply or save, and put back by Cancel.',
 
   zodiacHousesLegend: 'Chart frame',
   houseSystemLegend: 'House system',
@@ -123,7 +123,8 @@ const en = {
   saveAsDefaultButton: 'Save as my default',
   saveAsDefaultHint: 'Applies to every new chart on this device.',
   cancelButton: 'Cancel',
-  resetToDefaultsButton: 'Reset to defaults',
+  resetToMyDefaultButton: 'Reset to my default',
+  resetToAstrayaDefaultButton: 'Reset to Astraya default',
 
   summary: {
     tropical: 'Tropical',
@@ -168,7 +169,7 @@ const nl: typeof en = {
   rulershipNames: { modern: 'modern', traditional: 'traditioneel', both: 'beide' },
 
   appliesOnApply: 'Wordt toegepast met “Toepassen en opnieuw tekenen”.',
-  savedOnDevice: 'Opgeslagen op dit apparaat en direct toegepast.',
+  devicePreview: 'Direct zichtbaar, behouden bij toepassen of opslaan en teruggezet door Annuleren.',
 
   zodiacHousesLegend: 'Grondvlak',
   houseSystemLegend: 'Huizensysteem',
@@ -258,7 +259,8 @@ const nl: typeof en = {
   saveAsDefaultButton: 'Opslaan als mijn standaard',
   saveAsDefaultHint: 'Geldt voor elke nieuwe grafiek op dit apparaat.',
   cancelButton: 'Annuleren',
-  resetToDefaultsButton: 'Terugzetten naar standaard',
+  resetToMyDefaultButton: 'Terugzetten naar mijn standaard',
+  resetToAstrayaDefaultButton: 'Terugzetten naar Astraya-standaard',
 
   summary: {
     tropical: 'Tropisch',

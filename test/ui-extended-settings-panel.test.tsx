@@ -100,6 +100,23 @@ function openCard(container: HTMLElement): void {
   });
 }
 
+/** The `<select>` a dialog label names, found the way a user's label click would: by `for`/`id`, or nested. */
+function selectLabeled(container: HTMLElement, text: string): HTMLSelectElement {
+  const label = Array.from(container.querySelectorAll('dialog label')).find((candidate) =>
+    candidate.textContent.includes(text),
+  );
+  const target = label?.querySelector('select') ?? (label instanceof HTMLLabelElement ? label.control : null);
+  if (!(target instanceof HTMLSelectElement)) throw new Error(`test fixture bug: no select labeled "${text}"`);
+  return target;
+}
+
+function chooseOption(select: HTMLSelectElement, value: string): void {
+  act(() => {
+    select.value = value;
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+}
+
 describe('ExtendedSettingsPanel', () => {
   it('shows a button, opens a modal card from it, and resolves house-system names asynchronously', async () => {
     const { container, root } = await mount(fakeProvider(), vi.fn());
@@ -330,6 +347,68 @@ describe('the trigger and the starting points (#442)', () => {
       buttonNamed(container, 'Cancel')?.click();
     });
     expect(localStorage.getItem('astraya:rulershipChoice')).not.toBe('traditional');
+    unmount(container, root);
+  });
+
+  it('previews a rulership or symbol change at once, and Cancel puts both back (#510)', async () => {
+    const { container, root } = await mount(fakeProvider(), vi.fn());
+    openCard(container);
+    expect(buttonNamed(container, 'Apply and redraw')?.disabled).toBe(true);
+    chooseOption(selectLabeled(container, 'Planetary rulers'), 'traditional');
+    expect(localStorage.getItem('astraya:rulershipChoice')).toBe('traditional');
+    const symbolsBefore = selectLabeled(container, 'Symbols').value;
+    const symbolsAfter = symbolsBefore === 'text' ? 'unicode' : 'text';
+    chooseOption(selectLabeled(container, 'Symbols'), symbolsAfter);
+    expect(selectLabeled(container, 'Symbols').value).toBe(symbolsAfter);
+    // A device preference changed in the card counts as a change to apply or drop.
+    expect(buttonNamed(container, 'Apply and redraw')?.disabled).toBe(false);
+
+    act(() => {
+      buttonNamed(container, 'Cancel')?.click();
+    });
+    expect(localStorage.getItem('astraya:rulershipChoice')).toBe('modern');
+    openCard(container);
+    expect(selectLabeled(container, 'Symbols').value).toBe(symbolsBefore);
+    unmount(container, root);
+  });
+
+  it('keeps a previewed rulership when the card is applied (#510)', async () => {
+    const { container, root } = await mount(fakeProvider(), vi.fn());
+    openCard(container);
+    chooseOption(selectLabeled(container, 'Planetary rulers'), 'traditional');
+    act(() => {
+      buttonNamed(container, 'Apply and redraw')?.click();
+    });
+    expect(localStorage.getItem('astraya:rulershipChoice')).toBe('traditional');
+    unmount(container, root);
+  });
+
+  it('has two resets that name their target: "my default" only when one is saved, and "Astraya default" always (#510)', async () => {
+    const { container, root } = await mount(fakeProvider(), vi.fn());
+    openCard(container);
+    expect(buttonNamed(container, 'Reset to my default')).toBeUndefined();
+    expect(buttonNamed(container, 'Reset to Astraya default')).toBeDefined();
+    expect(buttonNamed(container, 'Reset to defaults')).toBeUndefined();
+
+    // Save a Custom default, then wander off it: "my default" returns to it, "Astraya default" to the shipped one.
+    act(() => {
+      checkboxLabeled(container, 'Rainbow Color Zodiac').click();
+    });
+    act(() => {
+      buttonNamed(container, 'Save as my default')?.click();
+    });
+    expect(readDefaultCalculationProfile()?.settings.rainbowZodiac).toBe(true);
+
+    openCard(container);
+    expect(checkboxLabeled(container, 'Rainbow Color Zodiac').checked).toBe(false);
+    act(() => {
+      buttonNamed(container, 'Reset to my default')?.click();
+    });
+    expect(checkboxLabeled(container, 'Rainbow Color Zodiac').checked).toBe(true);
+    act(() => {
+      buttonNamed(container, 'Reset to Astraya default')?.click();
+    });
+    expect(checkboxLabeled(container, 'Rainbow Color Zodiac').checked).toBe(false);
     unmount(container, root);
   });
 });
