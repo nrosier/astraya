@@ -95,3 +95,70 @@ describe('hrefFor', () => {
     expect(() => hrefFor('not-a-real-feature')).toThrow();
   });
 });
+
+/**
+ * Every `Route` kind says whether it is a registered feature or why it is not. Typed as a full `Record`, so adding
+ * a route kind without deciding fails the type check here instead of leaving a page the registry never heard of.
+ */
+const ROUTE_KIND_STATUS: Readonly<Record<Route['kind'], 'feature' | 'not a feature'>> = {
+  home: 'not a feature',
+  about: 'not a feature',
+  changelog: 'not a feature',
+  people: 'not a feature',
+  person: 'feature',
+  'person-overview': 'feature',
+  chart: 'feature',
+  report: 'feature',
+  profections: 'feature',
+  progressions: 'feature',
+  'solar-arc': 'feature',
+  'primary-directions': 'feature',
+  transit: 'feature',
+  synastry: 'feature',
+  composite: 'feature',
+  'periodic-transit': 'feature',
+  astrocartography: 'feature',
+  shared: 'not a feature',
+  'export-builder': 'feature',
+  preferences: 'not a feature',
+  cycles: 'feature',
+  eclipses: 'feature',
+  horary: 'feature',
+  electional: 'feature',
+  rectification: 'feature',
+  admin: 'feature',
+  'admin-usage': 'feature',
+  'corpus-overrides': 'feature',
+  'corpus-candidates': 'feature',
+  'set-password': 'not a feature',
+  setup: 'not a feature',
+};
+
+describe('FEATURES against the routes (#509)', () => {
+  const featureKinds = new Set<string>(FEATURES.map((feature) => feature.routeKind));
+
+  it('registers exactly the route kinds that are features, and every feature points at a real route kind', () => {
+    for (const [kind, status] of Object.entries(ROUTE_KIND_STATUS)) {
+      expect(featureKinds.has(kind), `route kind "${kind}" is ${status}`).toBe(status === 'feature');
+    }
+    for (const feature of FEATURES) {
+      expect(Object.keys(ROUTE_KIND_STATUS), `feature "${feature.key}"`).toContain(feature.routeKind);
+    }
+  });
+
+  it('gives each route kind at most one feature, so a route can only resolve one way', () => {
+    expect(featureKinds.size).toBe(FEATURES.length);
+  });
+
+  it('builds a different href for every feature', () => {
+    const hrefs = FEATURES.map((feature) => feature.buildHref({ personId: ID }));
+    expect(new Set(hrefs).size).toBe(hrefs.length);
+  });
+
+  it('declares what each feature can export, "none" only on its own', () => {
+    for (const feature of FEATURES) {
+      expect(feature.exportCapabilities.length, `feature "${feature.key}"`).toBeGreaterThan(0);
+      if (feature.exportCapabilities.includes('none')) expect(feature.exportCapabilities).toEqual(['none']);
+    }
+  });
+});
