@@ -61,6 +61,7 @@ import {
   type PointVisibilityOptions,
   type PositionRow,
 } from '../domain/chart-tables.js';
+import { derivedPointPlacementFacts } from '../domain/derived-point-position.js';
 import { computeChartData, housesAreDefined, type ChartData } from '../domain/chart-compute.js';
 import { deriveExportFilename } from '../domain/export-filename.js';
 import { encodeChartShareLink } from '../domain/chart-share.js';
@@ -152,6 +153,8 @@ interface TableSelection {
 const bodySelectionKey = (bodyKey: string): string => `body:${bodyId(bodyKey, 0)}`;
 /** The wheel's selection key for a sign: its lowercase name, as `data-sign` carries it. */
 const signSelectionKey = (signName: string): string => `sign:${signName.toLowerCase()}`;
+/** The selection key for a derived point (#511): not drawn on the wheel, so only a table or a link makes it. */
+const derivedSelectionKey = (pointKey: string): string => `derived:${pointKey}`;
 /** The wheel's selection key for a house's cusp (#511). */
 const houseSelectionKey = (house: number): string => `house:${String(house)}`;
 const aspectSelectionKey = (row: AspectRow): string => aspectKeyFor(bodyId(row.bodyAKey, 0), bodyId(row.bodyBKey, 0));
@@ -552,8 +555,19 @@ export function fixedStarColumns(t: typeof chartViewMessages.en, locale: Locale)
 export function derivedPointColumns(
   t: typeof chartViewMessages.en,
   locale: Locale,
+  selection?: TableSelection,
 ): readonly TableColumn<DerivedPointRow>[] {
   return [
+    ...(selection === undefined
+      ? []
+      : [
+          selectColumn<DerivedPointRow>(
+            t,
+            selection,
+            (row) => derivedSelectionKey(row.pointKey),
+            (row) => row.label,
+          ),
+        ]),
     { key: 'label', label: t.pointLabel, labelTooltip: t.derivedPointTooltip, valueOf: (row) => row.label },
     ...degreeColumns<DerivedPointRow>(t, locale),
   ];
@@ -727,9 +741,14 @@ function renderTableTab(
       return (
         <SortableTable
           caption={t.derivedPointsCaption}
-          columns={derivedPointColumns(t, locale)}
+          columns={derivedPointColumns(t, locale, selection)}
           rows={derivedPointRows(data, pointVisibility)}
           getRowKey={(row) => row.label}
+          selectedRowKey={
+            derivedPointRows(data, pointVisibility).find(
+              (row) => derivedSelectionKey(row.pointKey) === selection?.selectedKey,
+            )?.label
+          }
           downloadFilename={deriveExportFilename(displayName, 'derived-points', 'csv')}
         />
       );
@@ -941,6 +960,26 @@ function resolveWheelIsolation(
       heading: positionRow !== undefined ? bodyDisplayName(positionRow.bodyKey, locale) : value,
       positionRow,
       relatedAspects: allAspects.filter((row) => row.bodyAKey === value || row.bodyBKey === value),
+    };
+  }
+
+  if (selection.kind === 'derived') {
+    const row = derivedPointRows(data, { fortuneVisible: true, midpointsVisible: true }).find(
+      (candidate) => candidate.pointKey === selection.point,
+    );
+    const facts = derivedPointPlacementFacts(data, selection.point);
+    return {
+      heading: row?.label ?? selection.point,
+      relatedAspects: [],
+      pointPosition:
+        row === undefined || facts === undefined
+          ? undefined
+          : {
+              sign: row.sign,
+              degree: row.degree,
+              minute: row.minute,
+              house: housesRenderable ? facts.house : undefined,
+            },
     };
   }
 

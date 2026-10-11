@@ -21,11 +21,12 @@ import { dispositorChain, isMutualReception } from '../astrology/dispositors.js'
 import { houseOf } from '../astrology/emphasis.js';
 import { fixedStarConjunctions } from '../astrology/fixed-stars.js';
 import { jonesBodyPositions, jonesShapeOf, type JonesShapeResult } from '../astrology/jones-shapes.js';
-import { midpointOf } from '../astrology/midpoints.js';
+import { derivedPointByKey, type DerivedPointKey } from '../astrology/derived-points.js';
 import { DEFAULT_RULERSHIP_CHOICE, primaryRulerOf, rulersOf, type RulershipChoice } from '../astrology/rulership.js';
 import { degreesInSign, signIndex, signOf } from '../astrology/signs.js';
 import { formatCoordinate } from '../ui/format.js';
 import { housesAreDefined, type ChartData } from './chart-compute.js';
+import { derivedPointLongitude } from './derived-point-position.js';
 import type { Aspect } from '../astrology/aspects.js';
 import type { Locale } from '../interpretation/schema.js';
 import type { BodyId, BodyPosition, Degrees } from '../ephemeris/types.js';
@@ -540,6 +541,8 @@ export function chartShapeOf(data: ChartData): JonesShapeResult | undefined {
 }
 
 export interface DerivedPointRow extends DegreeParts {
+  /** The corpus vocabulary's key for this point (`part-of-fortune`…), what a selection and its meaning are keyed by. */
+  readonly pointKey: DerivedPointKey;
   readonly label: string;
   readonly longitude: Degrees;
 }
@@ -553,28 +556,18 @@ export interface DerivedPointRow extends DegreeParts {
  * compound derived-point names, so #158's glossary treats them as out of scope.
  */
 export function derivedPointRows(data: ChartData, options: PointVisibilityOptions = {}): readonly DerivedPointRow[] {
-  const midpointRows: DerivedPointRow[] = [];
-  if (options.midpointsVisible === true) {
-    const ascMc = midpointOf(data.houses.ascendant, data.houses.midheaven);
-    midpointRows.push({ label: 'ASC/MC Midpoint', longitude: ascMc, ...degreeParts(ascMc) });
-
-    const sunBody = bodyByKey('sun');
-    const moonBody = bodyByKey('moon');
-    const sunPosition = sunBody && data.positions.find((position) => position.body === sunBody.id);
-    const moonPosition = moonBody && data.positions.find((position) => position.body === moonBody.id);
-    if (sunPosition && moonPosition) {
-      const sunMoon = midpointOf(sunPosition.longitude, moonPosition.longitude);
-      midpointRows.push({ label: 'Sun/Moon Midpoint', longitude: sunMoon, ...degreeParts(sunMoon) });
-    }
-  }
-
-  return [
-    ...(options.fortuneVisible === true
-      ? [{ label: 'Part of Fortune', longitude: data.partOfFortune, ...degreeParts(data.partOfFortune) }]
-      : []),
-    { label: 'Part of Spirit', longitude: data.partOfSpirit, ...degreeParts(data.partOfSpirit) },
-    ...midpointRows,
+  const visible: readonly DerivedPointKey[] = [
+    ...(options.fortuneVisible === true ? (['part-of-fortune'] as const) : []),
+    'part-of-spirit',
+    ...(options.midpointsVisible === true ? (['asc-mc-midpoint', 'sun-moon-midpoint'] as const) : []),
   ];
+  return visible.flatMap((pointKey): DerivedPointRow[] => {
+    const longitude = derivedPointLongitude(data, pointKey);
+    const label = derivedPointByKey(pointKey)?.label;
+    return longitude === undefined || label === undefined
+      ? []
+      : [{ pointKey, label, longitude, ...degreeParts(longitude) }];
+  });
 }
 
 /**

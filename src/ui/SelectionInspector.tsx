@@ -32,6 +32,10 @@ export interface WheelIsolationFacts {
   readonly aspectRow?: AspectRow | undefined;
   /** For a clicked sign: the bodies drawn in it. */
   readonly bodiesInSign?: readonly PositionRow[] | undefined;
+  /** For a derived point (#511): where it falls. Not a body, so there is no position row. */
+  readonly pointPosition?:
+    | { readonly sign: string; readonly degree: number; readonly minute: number; readonly house: number | undefined }
+    | undefined;
   /** For a selected house cusp: the bodies standing in that house. */
   readonly bodiesInHouse?: readonly PositionRow[] | undefined;
 }
@@ -102,6 +106,13 @@ export function SelectionInspector({
                 {signDisplayName(facts.positionRow.sign, locale)} {facts.positionRow.degree}°
                 {String(facts.positionRow.minute).padStart(2, '0')}'
                 {facts.positionRow.house !== undefined && ` — ${t.houseLabel} ${facts.positionRow.house}`}
+              </p>
+            )}
+            {facts.pointPosition !== undefined && (
+              <p>
+                {signDisplayName(facts.pointPosition.sign, locale)} {facts.pointPosition.degree}°
+                {String(facts.pointPosition.minute).padStart(2, '0')}'
+                {facts.pointPosition.house !== undefined && ` — ${t.houseLabel} ${facts.pointPosition.house}`}
               </p>
             )}
             {facts.relatedAspects.length > 0 && (

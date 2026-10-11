@@ -251,4 +251,31 @@ describe('a table row selects on the wheel (#418)', () => {
     await press(showButton(container, 'Show Capricorn on the chart'));
     expect(dimmed(container)).toBe(0);
   });
+
+  it('a Derived points row selects that point, with its position and meaning in the inspector, and toggles off (#511)', async () => {
+    const container = await mount();
+    await open(container, 'positions');
+    const button = showButton(container, 'Show Part of Spirit on the chart');
+    expect(button?.getAttribute('aria-pressed')).toBe('false');
+    await press(button);
+
+    // Not drawn on the wheel, so nothing on it dims — but the row, bar and inspector all say so.
+    expect(dimmed(container)).toBe(0);
+    expect(container.querySelector('tr.data-table-row-selected')?.textContent).toContain('Part of Spirit');
+    expect(container.querySelector('.chart-selection-bar')?.textContent).toContain('Part of Spirit');
+
+    const goTo = Array.from(container.querySelectorAll('.chart-selection-bar button')).find(
+      (b) => b.textContent === 'Go to the chart',
+    );
+    await press(goTo);
+    const facts = container.querySelector('.selection-inspector-facts');
+    expect(facts?.querySelector('.chart-isolation-head strong')?.textContent).toBe('Part of Spirit');
+    expect(facts?.textContent).toMatch(/°\d\d' — House \d+/);
+    // Its meaning section is there (the text itself comes from the corpus, or the mechanical sentence).
+    expect(facts?.querySelector('.chart-isolation-interpretation')).not.toBeNull();
+
+    await open(container, 'positions');
+    await press(showButton(container, 'Show Part of Spirit on the chart'));
+    expect(container.querySelector('.chart-selection-bar')).toBeNull();
+  });
 });

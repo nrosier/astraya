@@ -180,3 +180,35 @@ test('a sign is selectable from the Placements table by keyboard, and clearable 
   await expect(show).toHaveAttribute('aria-pressed', 'false');
   await expect(page.locator('.chart-selection-bar')).toHaveCount(0);
 });
+
+test('a derived point is selectable from the Placements table by keyboard, with its position in the inspector (#511)', async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await page.setViewportSize({ width: 1600, height: 1000 });
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  await createPerson(page, {
+    name: 'Ada Lovelace',
+    date: '1815-12-10',
+    time: '07:45:00',
+    latitude: '51.5072',
+    longitude: '-0.1276',
+  });
+  await openNatalChart(page, 'Placements');
+  const show = page.getByRole('button', { name: 'Show Part of Spirit on the chart', exact: true });
+  await show.focus();
+  await page.keyboard.press('Enter');
+  await expect(show).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('tr.data-table-row-selected')).toContainText('Part of Spirit');
+
+  await page.getByRole('link', { name: 'Wheel', exact: true }).click();
+  const facts = page.locator('.selection-inspector-facts');
+  await expect(facts.locator('.chart-isolation-head strong')).toHaveText('Part of Spirit');
+  await expect(facts).toContainText(/°\d\d' — House \d+/);
+  await expect(facts.locator('.chart-isolation-interpretation')).toBeVisible();
+
+  await page.getByRole('link', { name: 'Placements', exact: true }).click();
+  await show.focus();
+  await page.keyboard.press('Enter');
+  await expect(show).toHaveAttribute('aria-pressed', 'false');
+});

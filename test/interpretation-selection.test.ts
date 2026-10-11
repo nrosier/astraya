@@ -6,6 +6,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { bodyById, bodyByKey } from '../src/astrology/bodies.js';
 import { computeChartData, type ChartData } from '../src/domain/chart-compute.js';
 import { derivePlacements } from '../src/interpretation/rules.js';
+import { placementKey } from '../src/interpretation/schema.js';
 import { parseSelectionKey, selectionPlacements, type WheelSelection } from '../src/interpretation/selection.js';
 import { getEngine } from './engine-harness.js';
 
@@ -238,6 +239,34 @@ describe('selectionPlacements (#415)', () => {
     expect(categories).toEqual(
       [...categories].sort((a, b) => (a === 'sign-on-cusp' ? -1 : b === 'sign-on-cusp' ? 1 : 0)),
     );
+  });
+});
+
+describe('derived-point selection (#511)', () => {
+  it('parses derived:<point> for the closed list only', () => {
+    expect(parseSelectionKey('derived:part-of-fortune')).toEqual({ kind: 'derived', point: 'part-of-fortune' });
+    expect(parseSelectionKey('derived:sun-moon-midpoint')).toEqual({ kind: 'derived', point: 'sun-moon-midpoint' });
+    expect(parseSelectionKey('derived:part-of-luck')).toBeUndefined();
+    expect(parseSelectionKey('derived:')).toBeUndefined();
+  });
+
+  it('is the point in its sign, then in its house, built from the point’s own position', () => {
+    const items = selectionPlacements(chart, { kind: 'derived', point: 'part-of-spirit' });
+    expect(items.map((item) => item.placement.category)).toEqual(['derived-point-in-sign', 'derived-point-in-house']);
+    const sign = items[0]?.placement;
+    const house = items[1]?.placement;
+    expect(sign).toMatchObject({
+      point: 'part-of-spirit',
+      sign: Math.floor((((chart.partOfSpirit % 360) + 360) % 360) / 30),
+    });
+    expect(house).toMatchObject({ point: 'part-of-spirit' });
+    expect(items.map((item) => item.key)).toEqual(items.map((item) => placementKey(item.placement)));
+  });
+
+  it('gives every one of the four points a sign entry and a house entry', () => {
+    for (const point of ['part-of-fortune', 'part-of-spirit', 'asc-mc-midpoint', 'sun-moon-midpoint'] as const) {
+      expect(selectionPlacements(chart, { kind: 'derived', point })).toHaveLength(2);
+    }
   });
 });
 

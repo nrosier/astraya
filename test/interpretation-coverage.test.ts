@@ -197,3 +197,24 @@ describe('resolvePlacementText (#59)', () => {
     expect(resolvePlacementText(placement, 'en', [neutral])).toBe(neutral.text);
   });
 });
+
+describe('derived points (#511): no entries yet, so the mechanical sentence stands in', () => {
+  const POINTS = ['part-of-fortune', 'part-of-spirit', 'asc-mc-midpoint', 'sun-moon-midpoint'] as const;
+
+  it('never resolves to empty text for any point in any sign or house, in either language', () => {
+    const placements: CorpusPlacement[] = POINTS.flatMap((point) => [
+      ...SIGN_INDICES.map((sign) => ({ category: 'derived-point-in-sign' as const, point, sign })),
+      ...HOUSES.map((house) => ({ category: 'derived-point-in-house' as const, point, house })),
+    ]);
+    expect(placements).toHaveLength(POINTS.length * (SIGN_INDICES.length + HOUSES.length));
+    expectFullCoverage(placements, CORPUS);
+  });
+
+  it('names the point (in English in both languages) and where it falls', () => {
+    const sign = { category: 'derived-point-in-sign', point: 'part-of-fortune', sign: 2 } as const;
+    const house = { category: 'derived-point-in-house', point: 'part-of-fortune', house: 3 } as const;
+    expect(composeFallbackText(sign, 'en')).toBe('Part of Fortune in Gemini.');
+    expect(composeFallbackText(house, 'en')).toBe('Part of Fortune in the 3rd house.');
+    expect(composeFallbackText(house, 'nl')).toBe('Part of Fortune in het 3e huis.');
+  });
+});

@@ -587,22 +587,24 @@ describe('derivedPointRows (#44)', () => {
   };
 
   it('lists only Part of Spirit by default, omitting Part of Fortune and the midpoints', () => {
-    expect(derivedPointRows(data)).toEqual([{ label: 'Part of Spirit', longitude: 200, ...degreeParts(200) }]);
+    expect(derivedPointRows(data)).toEqual([
+      { pointKey: 'part-of-spirit', label: 'Part of Spirit', longitude: 200, ...degreeParts(200) },
+    ]);
   });
 
   it('includes Part of Fortune once fortuneVisible is true', () => {
     expect(derivedPointRows(data, { fortuneVisible: true })).toEqual([
-      { label: 'Part of Fortune', longitude: 45, ...degreeParts(45) },
-      { label: 'Part of Spirit', longitude: 200, ...degreeParts(200) },
+      { pointKey: 'part-of-fortune', label: 'Part of Fortune', longitude: 45, ...degreeParts(45) },
+      { pointKey: 'part-of-spirit', label: 'Part of Spirit', longitude: 200, ...degreeParts(200) },
     ]);
   });
 
   it('adds the ASC/MC and Sun/Moon midpoints once midpointsVisible is true', () => {
     // ASC 10, MC 280: shorter arc midpoint is 325 (Aquarius 25). Sun 10, Moon 100: midpoint is 55 (Taurus 25).
     expect(derivedPointRows(data, { midpointsVisible: true })).toEqual([
-      { label: 'Part of Spirit', longitude: 200, ...degreeParts(200) },
-      { label: 'ASC/MC Midpoint', longitude: 325, ...degreeParts(325) },
-      { label: 'Sun/Moon Midpoint', longitude: 55, ...degreeParts(55) },
+      { pointKey: 'part-of-spirit', label: 'Part of Spirit', longitude: 200, ...degreeParts(200) },
+      { pointKey: 'asc-mc-midpoint', label: 'ASC/MC Midpoint', longitude: 325, ...degreeParts(325) },
+      { pointKey: 'sun-moon-midpoint', label: 'Sun/Moon Midpoint', longitude: 55, ...degreeParts(55) },
     ]);
   });
 });

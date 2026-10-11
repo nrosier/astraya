@@ -83,7 +83,7 @@ function bodyOnRing(data: ChartData, ring: number, bodyKey: string): BodyOnRing 
 /** The facts for a selection key, or `undefined` when the key is not one the wheel makes or names nothing on these rings. */
 export function resolveBiWheelSelection(selectionKey: string, input: BiWheelInput): BiWheelFacts | undefined {
   const selection = parseSelectionKey(selectionKey);
-  if (selection === undefined || selection.kind === 'house') return undefined;
+  if (selection === undefined || selection.kind === 'house' || selection.kind === 'derived') return undefined;
 
   if (selection.kind === 'body') {
     const ring = input.rings[selection.ring];
