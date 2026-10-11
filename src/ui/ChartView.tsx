@@ -150,6 +150,8 @@ interface TableSelection {
 
 /** The wheel's selection key for a body, or an aspect between two. */
 const bodySelectionKey = (bodyKey: string): string => `body:${bodyId(bodyKey, 0)}`;
+/** The wheel's selection key for a sign: its lowercase name, as `data-sign` carries it. */
+const signSelectionKey = (signName: string): string => `sign:${signName.toLowerCase()}`;
 /** The wheel's selection key for a house's cusp (#511). */
 const houseSelectionKey = (house: number): string => `house:${String(house)}`;
 const aspectSelectionKey = (row: AspectRow): string => aspectKeyFor(bodyId(row.bodyAKey, 0), bodyId(row.bodyBKey, 0));
@@ -160,10 +162,15 @@ function selectColumn<T>(
   selection: TableSelection,
   keyOf: (row: T) => string | undefined,
   nameOf: (row: T) => string,
+  labels: { readonly key: string; readonly column: string; readonly button: string } = {
+    key: 'select',
+    column: t.showOnChartColumn,
+    button: t.showOnChartButton,
+  },
 ): TableColumn<T> {
   return {
-    key: 'select',
-    label: t.showOnChartColumn,
+    key: labels.key,
+    label: labels.column,
     valueOf: (row) => (keyOf(row) !== undefined && keyOf(row) === selection.selectedKey ? 0 : 1),
     renderCell: (row) => {
       const key = keyOf(row);
@@ -178,7 +185,7 @@ function selectColumn<T>(
             selection.onToggle(key);
           }}
         >
-          {t.showOnChartButton}
+          {labels.button}
         </button>
       );
     },
@@ -245,6 +252,18 @@ export function positionColumns(
       render: (row) => bodyDisplayName(row.bodyKey, locale),
     },
     ...degreeColumns<PositionRow>(t, locale),
+    // A sign has no table of its own, so its keyboard route to the wheel's sign selection is here, beside the sign it names (#511).
+    ...(selection === undefined
+      ? []
+      : [
+          selectColumn<PositionRow>(
+            t,
+            selection,
+            (row) => signSelectionKey(row.sign),
+            (row) => signDisplayName(row.sign, locale),
+            { key: 'selectSign', column: t.showSignColumn, button: t.showSignButton },
+          ),
+        ]),
     {
       key: 'house',
       label: t.houseLabel,

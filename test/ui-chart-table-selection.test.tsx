@@ -158,7 +158,10 @@ describe('a table row selects on the wheel (#418)', () => {
     await open(container, 'positions');
     const rows = Array.from(container.querySelectorAll('#chart-view-placements tbody tr'));
     const ascendant = rows.find((row) => row.textContent.includes('Ascendant'));
-    if (ascendant !== undefined) expect(ascendant.querySelector('button')).toBeNull();
+    // No body button on the Ascendant (nothing to select as a body), though its sign can still be shown.
+    if (ascendant !== undefined) {
+      expect(Array.from(ascendant.querySelectorAll('button')).map((b) => b.textContent)).toEqual(['Show sign']);
+    }
     act(() => {
       mounted?.root.unmount();
     });
@@ -217,5 +220,35 @@ describe('a table row selects on the wheel (#418)', () => {
     expect(container.querySelector('.selection-inspector-facts strong')?.textContent).toMatch(/house 3/);
     await open(container, 'positions');
     expect(showButton(container, 'Show House 3 on the chart')?.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('a “Show sign” button selects that sign on the wheel, the inspector and every button for it, and toggles off (#511)', async () => {
+    const container = await mount();
+    await open(container, 'positions');
+    const button = showButton(container, 'Show Capricorn on the chart');
+    expect(button?.textContent).toBe('Show sign');
+    expect(button?.getAttribute('aria-pressed')).toBe('false');
+    await press(button);
+
+    expect(container.querySelector('.chart-wheel [data-sign="capricorn"]')?.classList.contains('chart-dimmed')).toBe(
+      false,
+    );
+    expect(container.querySelector('.chart-wheel [data-sign="libra"]')?.classList.contains('chart-dimmed')).toBe(true);
+    expect(container.querySelector('.chart-selection-bar')?.textContent).toContain('Capricorn');
+    for (const other of container.querySelectorAll('button[aria-label="Show Capricorn on the chart"]')) {
+      expect(other.getAttribute('aria-pressed')).toBe('true');
+    }
+
+    const goTo = Array.from(container.querySelectorAll('.chart-selection-bar button')).find(
+      (b) => b.textContent === 'Go to the chart',
+    );
+    await press(goTo);
+    expect(container.querySelector('.selection-inspector-facts strong')?.textContent).toBe('Capricorn');
+    // The same meaning the wheel click gives: the planets standing in the sign.
+    expect(container.querySelector('.selection-inspector-facts')?.textContent).toContain('Sun');
+
+    await open(container, 'positions');
+    await press(showButton(container, 'Show Capricorn on the chart'));
+    expect(dimmed(container)).toBe(0);
   });
 });

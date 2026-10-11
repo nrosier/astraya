@@ -148,3 +148,35 @@ test('a house number on the wheel selects that house, in the inspector and in it
   await page.getByRole('link', { name: 'Wheel', exact: true }).click();
   await expect(inspector).toContainText('to explore it');
 });
+
+test('a sign is selectable from the Placements table by keyboard, and clearable the same way (#511)', async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await page.setViewportSize({ width: 1600, height: 1000 });
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  await createPerson(page, {
+    name: 'Ada Lovelace',
+    date: '1815-12-10',
+    time: '07:45:00',
+    latitude: '51.5072',
+    longitude: '-0.1276',
+  });
+  await openNatalChart(page, 'Placements');
+  // Ada's Sun is in Sagittarius.
+  const show = page.getByRole('button', { name: 'Show Sagittarius on the chart', exact: true }).first();
+  await show.focus();
+  await page.keyboard.press('Enter');
+  await expect(show).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('.chart-selection-bar')).toContainText('Sagittarius');
+
+  await page.getByRole('link', { name: 'Wheel', exact: true }).click();
+  await expect(page.locator('.selection-inspector-facts .chart-isolation-head strong')).toHaveText('Sagittarius');
+  await expect(page.locator('.chart-sign[data-sign="gemini"]')).toHaveClass(/chart-dimmed/);
+
+  await page.getByRole('link', { name: 'Placements', exact: true }).click();
+  await show.focus();
+  await page.keyboard.press('Space');
+  await expect(show).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.locator('.chart-selection-bar')).toHaveCount(0);
+});
