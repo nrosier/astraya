@@ -1,0 +1,344 @@
+{
+  "$comment": "Reference passages for seeding the derived-point corpus categories (derived-point-in-sign / derived-point-in-house, issue #517). Machine-readable; one passage per object. Nothing here is corpus text.",
+  "schema_version": 1,
+  "compiled": "2026-10-11",
+  "sources": {
+    "ptolemy-tetrabiblos": {
+      "title": "Ptolemy's Tetrabiblos, or Quadripartite",
+      "author": "Ptolemy",
+      "translator": "J. M. Ashmand",
+      "translation_year": 1822,
+      "edition_used": "W. Foulsham & Co. reprint, 1900, via Project Gutenberg eBook #70850",
+      "url": "https://www.gutenberg.org/ebooks/70850",
+      "licence": "Public domain; Project Gutenberg human-proofread transcription",
+      "text_quality": "clean; passages are verbatim apart from removed footnote markers and italics underscores"
+    },
+    "lilly-christian-astrology": {
+      "title": "Christian Astrology, modestly treated of in three books",
+      "author": "William Lilly",
+      "year": 1647,
+      "edition_used": "First edition, Wellcome Library copy, archive.org item b30338724 (machine OCR)",
+      "url": "https://archive.org/details/b30338724",
+      "licence": "Public domain",
+      "text_quality": "machine OCR with long-s misreads; passages are ocr-normalised (long s, ligatures, hyphen breaks and astrological glyphs resolved by context) and must be checked against the scan before being quoted"
+    },
+    "wilson-complete-dictionary": {
+      "title": "A Complete Dictionary of Astrology",
+      "author": "James Wilson",
+      "year": 1819,
+      "edition_used": "Wellcome Library copy, archive.org item b29298180 (machine OCR)",
+      "url": "https://archive.org/details/b29298180",
+      "licence": "Public domain",
+      "text_quality": "readable OCR; passages are verbatim apart from hyphen joins and OCR glyph noise resolved by context. Wilson is openly hostile to the Part of Fortune in nativities: use his reports of the tradition, not his verdicts, as grounding"
+    },
+    "leo-esoteric-astrology": {
+      "title": "Esoteric Astrology (Astrology for All series, re-issue)",
+      "author": "Alan Leo",
+      "year": 1918,
+      "edition_used": "archive.org item 2015.201007.Esoteric-Astrology (machine OCR); year as printed in the re-issue",
+      "url": "https://archive.org/details/2015.201007.Esoteric-Astrology",
+      "licence": "Public domain",
+      "text_quality": "readable OCR; passage is verbatim"
+    },
+    "placidus-primum-mobile": {
+      "title": "Primum Mobile",
+      "author": "Placidus de Titis",
+      "translator": "John Cooper",
+      "translation_year": 1814,
+      "edition_used": "Google Books scan with embedded OCR text layer (479 pages)",
+      "url": null,
+      "licence": "Public domain text; Google's own scan terms apply to the PDF",
+      "text_quality": "text layer reads prose well but loses astrological glyphs (the Part of Fortune, Sun and Moon come out as Q, O, D, ) and so on); passages are ocr-normalised with glyphs resolved by context, to be checked against the page image"
+    }
+  },
+  "convention_note": "Ptolemy, Lilly and Placidus compute the Part of Fortune the same way by day and night (Ascendant + Moon − Sun). Astraya's src/astrology/arabic-parts.ts reverses the Sun and Moon at night (the Hellenistic convention). Any seed text must state which convention it follows.",
+  "coverage": {
+    "part-of-fortune": {
+      "definition_and_formula": "yes",
+      "general_signification": "yes (estate/wealth, judged through its rulers and its strength)",
+      "by_sign": "none in any source",
+      "by_house": "none; Lilly gives strength only",
+      "day_night_convention": "yes (Ptolemy, Lilly and Placidus: no reversal)"
+    },
+    "part-of-spirit": {
+      "definition_and_formula": "one secondhand definition (Gadbury via Leo)",
+      "general_signification": "none",
+      "by_sign": "none",
+      "by_house": "none"
+    },
+    "midpoints": "dropped from the category (owner decision, #511): no source and no corpus entries"
+  },
+  "passages": [
+    {
+      "id": "ptolemy-iii13-definition",
+      "point": "part-of-fortune",
+      "topic": "formula",
+      "source": "ptolemy-tetrabiblos",
+      "locator": "Tetrabiblos III.13 (The Number of Prorogators, and also the Part of Fortune)",
+      "kind": "verbatim",
+      "text": "The part of Fortune is ascertained by computing the number of degrees between the Sun and the Moon; and it is placed at an equal number of degrees distant from the ascendant, in the order of the signs. It is in all cases, both by night and day, to be so computed and set down, that the Moon may hold with it the same relation as that which the Sun may hold with the ascendant; and it thus becomes, as it were, a lunar horoscope or ascendant.",
+      "notes": "Ptolemy gives one formula for day and night (Ascendant + Moon − Sun). Astraya's arabic-parts.ts reverses it by sect, the Hellenistic convention; see convention_note."
+    },
+    {
+      "id": "ptolemy-iii13-perugia-addition",
+      "point": "part-of-fortune",
+      "topic": "formula",
+      "source": "ptolemy-tetrabiblos",
+      "locator": "Tetrabiblos III.13, Ashmand footnote on the Perugia Latin translation of 1646",
+      "kind": "verbatim",
+      "text": "But it must be seen which luminary may follow the other in the succession of the signs; for if the Moon should so follow the Sun, the part of Fortune is also to be numbered from the horoscope or ascendant, according to the succession of the signs. But if the Moon precede the Sun, the part of Fortune must be numbered from the ascendant, contrary to the succession of the signs.",
+      "notes": "An editorial addition in a 1646 Latin translation, quoted by Ashmand; not in the Greek."
+    },
+    {
+      "id": "ptolemy-iii13-prorogator",
+      "point": "part-of-fortune",
+      "topic": "role",
+      "source": "ptolemy-tetrabiblos",
+      "locator": "Tetrabiblos III.13",
+      "kind": "verbatim",
+      "text": "After due attention has been given to the instructions in the preceding chapter, the Sun, the Moon, the Ascendant, and the part of Fortune, are to be considered as the four principally liable to be elected to the office of prorogator; and their positions, together with those of such planets as rule in the places of their positions, are to be observed."
+    },
+    {
+      "id": "ptolemy-iv2-wealth-source",
+      "point": "part-of-fortune",
+      "topic": "signification",
+      "source": "ptolemy-tetrabiblos",
+      "locator": "Tetrabiblos IV.2 (The Fortune of Wealth)",
+      "kind": "verbatim",
+      "text": "The circumstances regulating the fortune of wealth are to be judged of from that part alone, which is expressly denominated the Part of Fortune; the position of which is, in all cases, whether arising in the day or in the night, always as far removed from the ascendant as the Sun is distant from the Moon."
+    },
+    {
+      "id": "ptolemy-iv2-rulers",
+      "point": "part-of-fortune",
+      "topic": "signification",
+      "source": "ptolemy-tetrabiblos",
+      "locator": "Tetrabiblos IV.2",
+      "kind": "verbatim",
+      "text": "When the Part of Fortune has been determined, it must be ascertained to what planets the dominion of it belongs; and their power and connexion, as also the power and connexion of others configurated with them, or in elevation above them, whether of the same or of an adverse condition, are then to be observed: for, if the planets which assume dominion of the Part of Fortune be in full force, they will create much wealth, and especially should the luminaries also give them suitable testimony in addition."
+    },
+    {
+      "id": "ptolemy-iv2-planets",
+      "point": "part-of-fortune",
+      "topic": "signification",
+      "source": "ptolemy-tetrabiblos",
+      "locator": "Tetrabiblos IV.2",
+      "kind": "verbatim",
+      "text": "In this manner, Saturn will effect the acquirement of wealth by means of buildings, agriculture, or navigation; Jupiter, by holding some government, or office of trust, or by the priesthood; Mars, by the army and military command; Venus by means of friends, by the dowry of wives, or by other gifts proceeding from women; and Mercury by the sciences and by trade.",
+      "notes": "Ashmand's own footnote: he reads the Greek as covering both the dowry of wives and other gifts from women."
+    },
+    {
+      "id": "ptolemy-iv2-inheritance",
+      "point": "part-of-fortune",
+      "topic": "signification",
+      "source": "ptolemy-tetrabiblos",
+      "locator": "Tetrabiblos IV.2",
+      "kind": "verbatim",
+      "text": "Should Saturn, however, when thus in influence over the fortune of wealth, be also configurated with Jupiter, he particularly provides wealth through inheritance; especially, if the configuration should exist in the superior angles, Jupiter being also in a bicorporeal sign and receiving the application of the Moon; for, in such a case, the native will also be adopted by persons unallied to him, and will become heir to their property."
+    },
+    {
+      "id": "ptolemy-iv2-permanence",
+      "point": "part-of-fortune",
+      "topic": "signification",
+      "source": "ptolemy-tetrabiblos",
+      "locator": "Tetrabiblos IV.2",
+      "kind": "verbatim",
+      "text": "And, further, if other stars, of the same condition as those which rule the Part of Fortune, should likewise exhibit testimonies of dominion, the wealth will be permanent: but, on the other hand, if stars of an adverse condition should either be in elevation above the ruling places, or ascend in succession to them, the wealth will not continue."
+    },
+    {
+      "id": "ptolemy-centiloquy-xlvi",
+      "point": "part-of-fortune",
+      "topic": "signification",
+      "source": "ptolemy-tetrabiblos",
+      "locator": "Centiloquy, aphorism XLVI (appendix to the Ashmand edition)",
+      "kind": "verbatim",
+      "text": "In nativities much happiness is conferred by the fixed stars; and also by the angles of the new Moon, and by the place of a kingdom's Part of Fortune, should the ascendant be found in any of them."
+    },
+    {
+      "id": "ptolemy-centiloquy-lxxvii",
+      "point": "part-of-fortune",
+      "topic": "signification",
+      "source": "ptolemy-tetrabiblos",
+      "locator": "Centiloquy, aphorism LXXVII",
+      "kind": "verbatim",
+      "text": "Profection of the ascendant is to be made for matters affecting the body; of the Part of Fortune, for extrinsic circumstances; of the Moon, for the connection between the body and the spirit; and of the mid-heaven, for the employment or profession."
+    },
+    {
+      "id": "lilly-ii-xxiii-use",
+      "point": "part-of-fortune",
+      "topic": "signification",
+      "source": "lilly-christian-astrology",
+      "locator": "Book II, ch. XXIII \"Of the Part of Fortune, and how to take it, either by Day or Night\", p. 143",
+      "kind": "ocr-normalised",
+      "text": "Ptolomy doth not more consider a Planet then the Part of Fortune, thus characterd ⊕; it hath no aspect, but any Planets may cast their aspect unto it. The greatest use of it, that hitherto I have either read or made of it, is thus; That if we find it well placed in the heaven, in a good house, or in a good aspect of a Benevolent Planet, we judge the Fortune or estate of the querent to be correspondent unto its strength, viz. if it be well posited or in an angle or in those signs wherein it's fortunated, we judge the estate of the querent to be sound and firme, if ⊕ is otherwayes placed, we doe the contrary.",
+      "notes": "Lilly: the Part of Fortune shows the querent's fortune or estate, judged by its strength; he gives no meaning by house or sign, only strength. The glyph ⊕ is resolved from garbled OCR."
+    },
+    {
+      "id": "lilly-ii-xxiii-method",
+      "point": "part-of-fortune",
+      "topic": "formula",
+      "source": "lilly-christian-astrology",
+      "locator": "Book II, ch. XXIII, pp. 143-144",
+      "kind": "ocr-normalised",
+      "text": "The manner either night or day to take it is this: First, consider the Signe, degree and minute of the ☽. Secondly, the Signe, degree and minute of the ☉. Thirdly, substract the place of the ☉ from the ☽, by adding twelve Signes to the ☽ if you cannot doe it otherwayes; what remaines, reserve and adde to the Signe and degree of the Ascendant; if both added together make more then twelve Signes, cast away twelve, and what Signes, degrees and minutes remaine, let your Part of Fortune be there.",
+      "notes": "Long-s misreads corrected and the Moon and Sun glyphs resolved from context in the OCR; the worked example that follows in the book is not reproduced."
+    },
+    {
+      "id": "lilly-ii-xxiii-quarters",
+      "point": "part-of-fortune",
+      "topic": "formula",
+      "source": "lilly-christian-astrology",
+      "locator": "Book II, ch. XXIII, p. 144",
+      "kind": "ocr-normalised",
+      "text": "Whether your Figure be by day or night, observe this Method; for how many degrees the ☉ is distant from the ☽, so many is the ⊕ from the Ascendant. If the ⊕ be taken upon a new ☽, it will be in the Ascendant. If upon the first quarter, in the fourth house. If upon the full ☽, in the seventh house. If upon the last quarter, in the tenth house. After the change, and before the first quarter, you shall ever have her in the first, second or third house. After the first quarter untill the full ☽, in the fourth, fift or sixth. After the full ☽ untill the last quarter, in the seventh, eighth or ninth Houses. After the last quarter, either in the tenth, eleventh or twelfth.",
+      "notes": "'her' is the Part of Fortune in Lilly's wording (as printed)."
+    },
+    {
+      "id": "lilly-ii-xxiii-night-alternative",
+      "point": "part-of-fortune",
+      "topic": "day_night_convention",
+      "source": "lilly-christian-astrology",
+      "locator": "Book II, ch. XXIII, p. 144",
+      "kind": "ocr-normalised",
+      "text": "Some have used to take ⊕ in the night from the [☽] to the [☉]; which if you doe, you must then make the place of the [☉] your first place, and adde the Ascendant as in the former method. Ptolomie, day and night takes it as above directed, with whom al Practicioners at this day content.",
+      "notes": "OCR is badly garbled in this sentence; the bracketed glyphs are inferred from the sense (the night reversal) and are uncertain. Check against the scan before quoting. Lilly follows Ptolemy: no reversal at night."
+    },
+    {
+      "id": "lilly-ii-xxiii-other-parts",
+      "point": "part-of-fortune",
+      "topic": "other_parts",
+      "source": "lilly-christian-astrology",
+      "locator": "Book II, ch. XXIII, p. 145",
+      "kind": "ocr-normalised",
+      "text": "There are many other Parts which the Arabians have mentioned frequently in their Writings, of which we make very little use in this Age: I shall, as occasion offers, teach the finding them out, and what they said they did signifie: sometimes the ⊕ hath signification of Life, and sometimes of Sicknesse; which occasionally I shall teach, as matter and occasion offer, adhering to the true observation of the Aphorisms, but I am little hitherto satisfied concerning ⊕ its true effects; intending to take paines therein hereafter, and publish my intentions.",
+      "notes": "Lilly does not teach a Part of Spirit anywhere in the book."
+    },
+    {
+      "id": "lilly-ii-xxvii-second-house",
+      "point": "part-of-fortune",
+      "topic": "horary_use",
+      "source": "lilly-christian-astrology",
+      "locator": "Book II, ch. XXVII (Whether the Querent shall be rich), p. 162",
+      "kind": "ocr-normalised",
+      "text": "Consider the Signe ascending on the Cusp of the second House, the Lord thereof, the Planet or Planets therein posited, or aspecting the Lord of that house or Cusp thereof; the Part of Fortune, the Signe and place of Heaven where it is placed, and how aspected by the Planets, (for ⊕ it selfe emitteth no rayes, or casteth any aspect to any Planet [remainder of the parenthesis illegible in the OCR]).",
+      "notes": "The chapter number is as read from garbled OCR (XXVII); verify."
+    },
+    {
+      "id": "lilly-merchant-trade",
+      "point": "part-of-fortune",
+      "topic": "horary_use",
+      "source": "lilly-christian-astrology",
+      "locator": "Book II, in the discussion of where to travel or trade (before ch. XVIII)",
+      "kind": "ocr-normalised",
+      "text": "the Merchant he wholly aimes at Trade, and the encrease of his Stock, therefore in the Merchants Figure you must consider the Country or City subject to the Signe of the second house, or where the Part of Fortune is, or Lord of the second is, and which is most fortified, and thither let him Trade.",
+      "notes": "Locator approximate: the passage sits just before Book II ch. XVIII in the OCR."
+    },
+    {
+      "id": "wilson-definition",
+      "point": "part-of-fortune",
+      "topic": "definition",
+      "source": "wilson-complete-dictionary",
+      "locator": "entry PART OF FORTUNE, pp. 306-307",
+      "kind": "verbatim",
+      "text": "an imaginary point in the heavens, supposed as a moderator to contain equal power with the luminaries",
+      "notes": "Quoted only to the end of the neutral description; the rest of the entry is polemic (calls it a phantom with no influence) and is deliberately not quoted here."
+    },
+    {
+      "id": "wilson-method",
+      "point": "part-of-fortune",
+      "topic": "formula",
+      "source": "wilson-complete-dictionary",
+      "locator": "entry PART OF FORTUNE, p. 309",
+      "kind": "ocr-normalised",
+      "text": "The common way of taking the Part of Fortune is to add the sign, degree, and minute the Moon is in, to the sign, degree, and minute of the cusp of the horoscope, and from the sum subtract the place of the Sun, the remainder will be the place of the Part of Fortune.",
+      "notes": "Glyphs for 'Part of Fortune', Moon and Sun resolved by context. Wilson then argues the method is 'evidently incorrect' because the Moon should be taken with latitude, on the lunar parallels (the Negusantius/Placidus method)."
+    },
+    {
+      "id": "wilson-horary-symbol",
+      "point": "part-of-fortune",
+      "topic": "caution",
+      "source": "wilson-complete-dictionary",
+      "locator": "entry APHETA, closing lines (printed p. 9-10)",
+      "kind": "verbatim",
+      "text": "I would here be understood, as only denying the operation of the Part of Fortune in nativities as a cause, and not in horary questions as a symbol.",
+      "notes": "Wilson's position: no causal influence in nativities, acceptable as a symbol in horary."
+    },
+    {
+      "id": "wilson-modern-timing",
+      "point": "part-of-fortune",
+      "topic": "timing",
+      "source": "wilson-complete-dictionary",
+      "locator": "entry RICHES, p. 554",
+      "kind": "verbatim",
+      "text": "To this modern astrologers have added, that those planets angular cause riches in youth; succeedent, in the middle of life; and cadent, in old age; and the nearer they are to the cusp of the house the sooner it will be.",
+      "notes": "Refers to the planets that rule the Part of Fortune (Ptolemy's rulers), as Wilson reports a later tradition. He disowns it in the following lines."
+    },
+    {
+      "id": "wilson-sympathy",
+      "point": "part-of-fortune",
+      "topic": "relationship",
+      "source": "wilson-complete-dictionary",
+      "locator": "entry SYMPATHY",
+      "kind": "verbatim",
+      "text": "When this attachment arises from the position of the lights only, it will be the result of choice and sincere affection; but if from any agreement with the Part of Fortune, it will be from motives of gain; and if from a familiarity with the horoscope, it will be from motives of pleasure or enjoyment.",
+      "notes": "Reports Ptolemy's rule for friendship between two nativities."
+    },
+    {
+      "id": "wilson-adversary-means",
+      "point": "part-of-fortune",
+      "topic": "horary_use",
+      "source": "wilson-complete-dictionary",
+      "locator": "Horary Questions, Question 22 (Law-Suits)",
+      "kind": "verbatim",
+      "text": "the adversary's means may be known from the situation of the 8th house, its lord, and the adversary's Part of Fortune (which may be calculated for that purpose by considering the 7th house as the ascendant)."
+    },
+    {
+      "id": "leo-glossary-spirit",
+      "point": "part-of-spirit",
+      "topic": "definition",
+      "source": "leo-esoteric-astrology",
+      "locator": "Glossary, entry \"Part of Fortune\", p. 280",
+      "kind": "verbatim",
+      "text": "Gadbury says that the Part of Fortune reversed gives the Part of the Spirit, counting from the Moon to the Sun in the order of the signs and then marking the Part the same distance from the rising degree.",
+      "notes": "The only definition of the Part of Spirit in this reference set, and secondhand (Leo quoting the 17th-century author John Gadbury). It is the reverse of the Part of Fortune with no day/night switch. Verify against Gadbury before citing as his."
+    },
+    {
+      "id": "leo-glossary-fortune",
+      "point": "part-of-fortune",
+      "topic": "caution",
+      "source": "leo-esoteric-astrology",
+      "locator": "Glossary, entry \"Part of Fortune\", p. 280",
+      "kind": "verbatim",
+      "text": "This symbol may possibly have significance in connection with horary astrology, but it is generally discredited in nativities. It is as many degrees from the rising degree as the Moon is from the Sun, counting from the Sun in the direction of the signs."
+    },
+    {
+      "id": "cooper-p46-statement",
+      "point": "part-of-fortune",
+      "topic": "formula",
+      "source": "placidus-primum-mobile",
+      "locator": "Primum Mobile (Cooper), p. 46, PDF page 62",
+      "kind": "ocr-normalised",
+      "text": "The Part of Fortune is placed according to the Moon's distance from the Sun. And you must observe, what rays the Moon has to the Sun, for the latter ought to have the same, and with the same excess or deficiency as the ⊕ to the horoscope. As the Moon is to the Sun, so is ⊕ to the horoscope; and as the Sun is to the horoscope, so is the Moon to the Part of Fortune.",
+      "notes": "Placidus restates Ptolemy's rule; no day/night reversal is mentioned."
+    },
+    {
+      "id": "cooper-p308-ptolemy-rule",
+      "point": "part-of-fortune",
+      "topic": "formula",
+      "source": "placidus-primum-mobile",
+      "locator": "Primum Mobile (Cooper), Canon on the Part of Fortune, p. 308, PDF page 325",
+      "kind": "ocr-normalised",
+      "text": "The ⊕ (says he), if we may credit the precepts of Ptolemy, who asserts that it has the same position to the ☽ as the ☉ has to the horizon (Quadripart. Book III, chap. xii), ought to be described and defined in the lunar parallels.",
+      "notes": "Quoting Adrian Negusantius, whom Placidus reproduces 'word for word'. The chapter number is as printed (III.xii), where Ashmand's Gutenberg text numbers the passage XIII."
+    },
+    {
+      "id": "cooper-p308-placidus-verdict",
+      "point": "part-of-fortune",
+      "topic": "caution",
+      "source": "placidus-primum-mobile",
+      "locator": "Primum Mobile (Cooper), p. 308, PDF page 325",
+      "kind": "ocr-normalised",
+      "text": "I willingly confess, that, with regard to the ⊕, I have laboured a long time, and have not been able hitherto to find any truth in it.",
+      "notes": "Placidus's own words, which Wilson also quotes. Cooper's Canon (pp. 308-318) is about placing and directing the point, not about its meaning."
+    }
+  ]
+}
