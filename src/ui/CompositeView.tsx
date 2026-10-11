@@ -116,7 +116,7 @@ export function CompositeView({
     partner !== undefined ? `${person.displayName || t.personALabel} / ${partner.displayName || t.personBLabel}` : '';
 
   return (
-    <main className="shell">
+    <main className="shell shell--wide">
       <p className="back">
         <a href={`#/person/${personId}`}>&larr; {person.displayName || t.personFallback}</a>
       </p>

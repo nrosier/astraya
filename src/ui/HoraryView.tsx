@@ -78,7 +78,7 @@ export function HoraryView({ view }: { readonly view?: ChartViewKind | undefined
   const ready = result.kind === 'ready' ? result : undefined;
 
   return (
-    <main className="shell">
+    <main className="shell shell--wide">
       <p className="back">
         <a href="#/">&larr; {shared.back}</a>
       </p>

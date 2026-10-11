@@ -211,7 +211,7 @@ describe('wheel selection interpretation (#415)', () => {
     const container = await mount();
     await click(container, '.chart-point[data-body="sun"]');
     expect(section(container)?.textContent).toContain(chartViewMessages.en.selectionUnavailable);
-    expect(container.querySelector('.chart-isolation-panel strong')?.textContent).toBe('Sun');
+    expect(container.querySelector('.selection-inspector-facts strong')?.textContent).toBe('Sun');
     expect(texts(container)).toEqual([]);
   });
 

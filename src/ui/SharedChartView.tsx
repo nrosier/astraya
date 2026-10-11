@@ -90,7 +90,7 @@ export function SharedChartView(): React.JSX.Element {
   }, [initial.data, rulership, provider]);
 
   return (
-    <main className="shell">
+    <main className="shell shell--wide">
       <p className="back">
         <a href="#/">&larr; {shared.back}</a>
       </p>

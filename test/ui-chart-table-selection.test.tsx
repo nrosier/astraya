@@ -117,7 +117,7 @@ describe('a table row selects on the wheel (#418)', () => {
     );
     await press(goTo);
     expect(container.querySelector('#chart-view-wheel')?.hasAttribute('hidden')).toBe(false);
-    expect(container.querySelector('.chart-isolation-panel')).not.toBeNull();
+    expect(container.querySelector('.selection-inspector-facts')).not.toBeNull();
 
     await open(container, 'positions');
     const clear = Array.from(container.querySelectorAll('.chart-selection-bar button')).find(

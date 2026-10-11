@@ -107,7 +107,7 @@ export function HarmonicView({
   const displayName = person.displayName ? `${person.displayName} — ${label}` : label;
 
   return (
-    <main className="shell">
+    <main className="shell shell--wide">
       <p className="back">
         <a href={`#/person/${personId}`}>&larr; {person.displayName || t.personFallback}</a>
       </p>

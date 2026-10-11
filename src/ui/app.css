@@ -68,6 +68,8 @@
   /* The page's own content column width — shared by `.shell` and `.person-shelf` so they
      never drift out of sync whenever this gets tuned. */
   --shell-max-width: 64rem;
+  /* Chart workbenches (#511): the 68rem two-column state needs more than the general-content shell. */
+  --shell-max-width-wide: 80rem;
   /* The sticky header's height (#421): what the page scrolls under, so anchors and focus
      scroll clear of it (`html`'s `scroll-padding-top` below), and how much the mobile header
      is allowed to grow. */
@@ -625,6 +627,10 @@ body::before {
 
 ::selection {
   background: color-mix(in oklab, var(--accent) 32%, transparent);
+}
+
+.shell--wide {
+  max-width: var(--shell-max-width-wide);
 }
 
 .shell {
@@ -2139,9 +2145,57 @@ label.stacked textarea:focus-visible {
   height: auto;
 }
 
-/* The focused-info panel click-to-isolate (#400) opens below the wheel — plain accessible
-   text, unlike the wheel itself, since it's reached by a mouse/touch gesture but the content
-   it shows is ordinary prose with nothing wrong with a screen reader encountering it. */
+/*
+ * The chart workbench (#511): the dial and its SelectionInspector in one container. The shell is an
+ * inline-size query container, so the layout answers to the width the workbench actually gets, not
+ * the viewport. 68rem is the sum of the minimum useful dial (46rem), the inspector's minimum (20rem)
+ * and the 2rem gap: below it one column with the inspector directly under the dial, at and above it
+ * two columns. The dial stays first in DOM and focus order, and the inspector never scrolls on its own.
+ */
+.chart-workbench-shell {
+  container: chart-workbench / inline-size;
+}
+
+.chart-workbench {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem 2rem;
+  align-items: start;
+}
+
+@container chart-workbench (min-width: 68rem) {
+  .chart-workbench {
+    grid-template-columns: minmax(46rem, 1fr) minmax(20rem, 24rem);
+  }
+}
+
+.chart-workbench-dial .chart-wheel {
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+}
+
+/* The selection's facts and meaning (#400, #415): plain accessible text, unlike the wheel — reached by a
+   mouse/touch gesture or a table row's button, but ordinary prose a screen reader reads directly. Its
+   minimum height reserves room for a typical selection so the first one does not shove the page. */
+.selection-inspector {
+  min-height: 14rem;
+  padding: 0.85rem 1.1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-size: 0.9rem;
+}
+
+.selection-inspector-title {
+  margin: 0 0 0.5rem;
+  font-size: var(--text-base, 1rem);
+}
+
+.selection-inspector ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1.1rem;
+}
+
 .chart-isolation-panel {
   max-width: 55rem;
   margin: -1rem auto 1.5rem;
@@ -2152,16 +2206,16 @@ label.stacked textarea:focus-visible {
   font-size: 0.9rem;
 }
 
+.chart-isolation-panel ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1.1rem;
+}
+
 .chart-isolation-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-}
-
-.chart-isolation-panel ul {
-  margin: 0.5rem 0 0;
-  padding-left: 1.1rem;
 }
 
 /* The Jones chart-shape diagram (#401): a small standalone abstract pattern, not drawn into

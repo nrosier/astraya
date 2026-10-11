@@ -92,7 +92,7 @@ export function DraconicView({
   const displayName = person.displayName ? `${person.displayName} — ${t.headingFallback}` : t.headingFallback;
 
   return (
-    <main className="shell">
+    <main className="shell shell--wide">
       <p className="back">
         <a href={`#/person/${personId}`}>&larr; {person.displayName || t.personFallback}</a>
       </p>

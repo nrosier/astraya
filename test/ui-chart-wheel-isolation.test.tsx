@@ -120,7 +120,7 @@ describe('wheel click-to-isolate (#412)', () => {
     expect(focus()).toBeNull();
 
     await clickHitArea(wheel, '.chart-point[data-body="sun"]');
-    const card = container.querySelector('.chart-isolation-panel');
+    const card = container.querySelector('.selection-inspector-facts');
     expect(card).not.toBeNull();
     expect(focus()).not.toBeNull();
     // Below the card, not inside it.
@@ -163,7 +163,7 @@ describe('wheel click-to-isolate (#412)', () => {
       expect(ends.includes('moon') || ends.includes('uranus')).toBe(true);
     }
 
-    const panel = container.querySelector('.chart-isolation-panel');
+    const panel = container.querySelector('.selection-inspector-facts');
     expect(panel?.querySelector('strong')?.textContent).toBe('Libra');
     expect(panel?.textContent).toContain('Moon');
     expect(panel?.textContent).toContain('Uranus');

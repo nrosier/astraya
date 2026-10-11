@@ -101,10 +101,9 @@ import { CHART_VIEWS, chartHref, chartViewLabels, type ChartViewKind } from './c
 import { ChartTypeSelector, changeChartView } from './ChartTypeSelector.js';
 import { ChartViewNav } from './ChartViewNav.js';
 import { bodyId } from '../chart/body-id.js';
-import { WheelSelectionText } from './WheelSelectionText.js';
 import { parseSelectionKey } from '../interpretation/selection.js';
 import { buildFocusObjectContext } from '../interpretation/focus-context.js';
-import { FocusInterpretation } from './FocusInterpretation.js';
+import { SelectionInspector, type WheelIsolationFacts } from './SelectionInspector.js';
 import { useRulershipChoice } from './rulership-setting.js';
 import type { RulershipChoice } from '../astrology/rulership.js';
 import { PageHeader } from './PageHeader.js';
@@ -873,22 +872,6 @@ function formatElongation(elongation: number): string {
   return `${String(Math.floor(totalMinutes / 60))}°${String(totalMinutes % 60).padStart(2, '0')}'`;
 }
 
-/**
- * Click-to-isolate (#400, #412): what's currently clicked on the wheel, and everything derived
- * from it — which body, sign and aspect-pair keys stay at full strength, plus the focused-info
- * content. A mouse/touch-only enhancement layered on an already-`aria-hidden` wheel (see the
- * wheel div's own doc comment) — not a keyboard-accessible widget, since the data tables already
- * are the accessible path to every value this exposes.
- */
-interface WheelIsolationFacts {
-  readonly heading: string;
-  readonly positionRow?: PositionRow | undefined;
-  readonly relatedAspects: readonly AspectRow[];
-  readonly aspectRow?: AspectRow | undefined;
-  /** For a clicked sign: the bodies drawn in it. */
-  readonly bodiesInSign?: readonly PositionRow[] | undefined;
-}
-
 /** `data-sign` on the wheel is the sign's name lowercased (`multi-wheel.ts`). */
 function signKeyOf(row: PositionRow): string {
   return row.sign.toLowerCase();
@@ -1192,83 +1175,43 @@ export function ChartDataView({
     dial === undefined ? null : (
       <>
         <h2>{t.chartTabLabel}</h2>
-        <p className="hint chart-wheel-hint">{t.wheelClickHint}</p>
-        <div
-          ref={wheelRef}
-          className="chart-wheel chart-wheel-interactive"
-          // Hidden from assistive tech rather than given an aria-label (#69): a chart
-          // wheel packs dozens of positions/aspects into overlapping glyphs, and no short
-          // label does that justice. The data tables right below are the actual accessible
-          // equivalent — they carry every value the wheel draws, as text a screen reader
-          // can read directly. Click-to-isolate (#400) stays a mouse/touch-only
-          // enhancement layered on top of that decision, not a reason to revisit it: the
-          // tables remain the one accessible path to every value the wheel draws, clicked
-          // or not.
-          aria-hidden="true"
-          // The wheel is generated entirely by this app from data it just computed — never
-          // user-supplied markup — so injecting it is the same trust boundary as any other
-          // value this component renders, just carried as a string instead of JSX.
-          dangerouslySetInnerHTML={{ __html: dial.markup }}
-          onClick={handleWheelClick}
-        />
-
-        {isolation !== undefined && (
-          <div className="chart-isolation-panel">
-            <div className="chart-isolation-head">
-              <strong>{isolation.heading}</strong>
-              <button type="button" className="quiet" onClick={clearIsolation}>
-                {t.isolationClear}
-              </button>
+        {/* One workbench: the dial, then its inspector straight after it in DOM and focus order (#511).
+            The outer element is the inline-size query container; see `.chart-workbench` in app.css. */}
+        <div className="chart-workbench-shell">
+          <div className="chart-workbench">
+            <div className="chart-workbench-dial">
+              <p className="hint chart-wheel-hint">{t.wheelClickHint}</p>
+              <div
+                ref={wheelRef}
+                className="chart-wheel chart-wheel-interactive"
+                // Hidden from assistive tech rather than given an aria-label (#69): a chart
+                // wheel packs dozens of positions/aspects into overlapping glyphs, and no short
+                // label does that justice. The data tables right below are the actual accessible
+                // equivalent — they carry every value the wheel draws, as text a screen reader
+                // can read directly. Click-to-isolate (#400) stays a mouse/touch-only
+                // enhancement layered on top of that decision, not a reason to revisit it: the
+                // tables remain the one accessible path to every value the wheel draws, clicked
+                // or not.
+                aria-hidden="true"
+                // The wheel is generated entirely by this app from data it just computed — never
+                // user-supplied markup — so injecting it is the same trust boundary as any other
+                // value this component renders, just carried as a string instead of JSX.
+                dangerouslySetInnerHTML={{ __html: dial.markup }}
+                onClick={handleWheelClick}
+              />
             </div>
-            {isolation.bodiesInSign !== undefined &&
-              (isolation.bodiesInSign.length === 0 ? (
-                <p className="hint">{t.isolationSignEmpty}</p>
-              ) : (
-                <p>
-                  {isolation.bodiesInSign
-                    .map(
-                      (row) =>
-                        `${bodyDisplayName(row.bodyKey, locale)} ${String(row.degree)}°${String(row.minute).padStart(2, '0')}'`,
-                    )
-                    .join(', ')}
-                </p>
-              ))}
-            {isolation.positionRow !== undefined && (
-              <p>
-                {signDisplayName(isolation.positionRow.sign, locale)} {isolation.positionRow.degree}°
-                {String(isolation.positionRow.minute).padStart(2, '0')}'
-                {isolation.positionRow.house !== undefined && ` — ${t.houseLabel} ${isolation.positionRow.house}`}
-              </p>
-            )}
-            {isolation.relatedAspects.length > 0 && (
-              <ul>
-                {isolation.relatedAspects.map((row) => {
-                  const otherKey = row.bodyAKey === isolation.positionRow?.bodyKey ? row.bodyBKey : row.bodyAKey;
-                  const otherName = bodyDisplayName(otherKey, locale);
-                  return (
-                    <li key={`${row.bodyAKey}-${row.aspectKey}-${row.bodyBKey}`}>
-                      {aspectDisplayName(row.aspectKey, locale)} {otherName} ({row.orb.toFixed(2)}°,{' '}
-                      {row.applying ? t.applying : t.separating})
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-            {isolation.aspectRow !== undefined && (
-              <p>
-                {aspectDisplayName(isolation.aspectRow.aspectKey, locale)} — {t.orbLabel}{' '}
-                {isolation.aspectRow.orb.toFixed(2)}°, {isolation.aspectRow.applying ? t.applying : t.separating}
-              </p>
-            )}
-            {isolatedKey !== undefined && (
-              <WheelSelectionText chart={data} selectionKey={isolatedKey} locale={locale} />
+            {!printAll && (
+              <SelectionInspector
+                facts={isolation}
+                selectionKey={isolatedKey}
+                data={data}
+                focusContext={focusContext}
+                locale={locale}
+                onClear={clearIsolation}
+              />
             )}
           </div>
-        )}
-
-        {isolatedKey !== undefined && focusContext !== undefined && (
-          <FocusInterpretation context={focusContext} locale={locale} resetKey={isolatedKey} />
-        )}
+        </div>
 
         {/* AstroChart is a reference rendering kept alongside Astraya's own wheel so the
                   two can be compared during development (#231) — production users only ever
@@ -1533,7 +1476,7 @@ export function ChartView({
   const showHouses = person.timeAccuracy !== 'unknown';
 
   return (
-    <main className="shell">
+    <main className="shell shell--wide">
       <p className="back">
         <a href={`#/person/${personId}`}>&larr; {person.displayName || t.personFallback}</a>
       </p>

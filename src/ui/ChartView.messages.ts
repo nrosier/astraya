@@ -201,6 +201,9 @@ const en = {
   personPageLink: 'person page',
 
   isolationClear: 'Clear',
+  inspectorHeading: 'Selection',
+  inspectorEmpty:
+    'Nothing selected. Pick a sign, planet or aspect on the wheel, or use a table row’s button, to see what it means here.',
   selectionInterpretationHeading: 'What it means',
   selectionLoading: 'Loading the interpretation…',
   selectionUnavailable: 'The interpretation text could not be loaded.',
@@ -406,6 +409,9 @@ const nl: typeof en = {
   personPageLink: 'persoonspagina',
 
   isolationClear: 'Wissen',
+  inspectorHeading: 'Selectie',
+  inspectorEmpty:
+    'Niets geselecteerd. Kies een teken, planeet of aspect op het rad, of gebruik de knop in een tabelrij, om hier de betekenis te zien.',
   selectionInterpretationHeading: 'Wat het betekent',
   selectionLoading: 'De interpretatie wordt geladen…',
   selectionUnavailable: 'De interpretatietekst kon niet worden geladen.',

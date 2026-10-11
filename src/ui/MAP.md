@@ -18,6 +18,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `ChartTypeSelector.tsx` — Chart-type Select (natal/draconic/harmonic/returns) in the Charts page header. Deps: `./chart-sections`, `primitives/Select`.
 - `ChartTypes.messages.ts` — i18n labels for all chart types.
 - `ChartViewNav.tsx` — Chart screen's Wheel/Aspects/Placements/Patterns & condition navigation: ordinary links (wide) or a labelled Select (narrow), never ARIA tabs. Deps: `./chart-sections`, `./primitives/Select`.
+- `SelectionInspector.tsx` — Chart selection inspector (facts, corpus meaning, related aspects, Clear, optional AI after) shown after the dial. Deps: `./WheelSelectionText`, `./FocusInterpretation`, `./ChartView.messages`.
 - `ChartView.tsx` + `ChartView.messages.ts` — Primary chart screen + shared `ChartDataView` (Wheel/Aspects/Placements/Patterns & condition views, reused by composite/draconic/harmonic/returns/shared-chart/horary). Deps: `domain/chart-compute`, `domain/chart-tables`, `chart/chart-sheet`, `./ChartViewNav`.
 - `CompositeView.tsx` + `CompositeView.messages.ts` — Composite midpoint chart between two people. Deps: `domain/composite`, `ChartView`, `ReportView`.
 - `CorpusCandidatesPanel.tsx` + `CorpusCandidatesPanel.messages.ts` — Admin candidate-review queue (accept/reject). Deps: `sync/admin-client`, `./placement-label`.
