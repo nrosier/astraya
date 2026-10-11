@@ -4244,3 +4244,14 @@ svg text.chart-symbol-text-unicode {
   background: var(--bg);
   border-top: 1px solid var(--line);
 }
+
+/* The terms a screen relies on, as a quiet inline list of glossary terms under its heading (#456, #513). */
+.glossary-terms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  margin: 0 0 var(--space-4);
+  padding: 0;
+  list-style: none;
+  color: var(--muted);
+}

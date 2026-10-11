@@ -17,6 +17,7 @@
  * @conventions Gated the same way as ChartView.tsx's houses/angles tables for unknown birth time; uses ProfectionsView.messages.ts for en/nl text via useMessages().
  * @exports ProfectionsView; toRow, columns, ProfectionRow (reused by pdf-export-plan.ts)
  */
+import { GlossaryTerms } from './GlossaryTerm.js';
 import { personHref } from './route.js';
 import { useEffect, useMemo, useState } from 'react';
 import { resolvePlacementText } from '../interpretation/compose.js';
@@ -189,6 +190,7 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
         <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
       </p>
       <h1>{person.displayName ? t.heading(person.displayName) : t.profectionsFallback}</h1>
+      <GlossaryTerms terms={['profection', 'chartRuler', 'houses']} />
       <p className="hint">{t.hint}</p>
 
       <section className="profections-rulers-section" aria-labelledby="rulers-heading">

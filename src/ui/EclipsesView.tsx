@@ -10,6 +10,7 @@
  * @conventions Lives inside `Stored` because the person picker reads the local store, though the eclipse search itself needs only the ephemeris. Text comes from co-located `EclipsesView.messages.ts` via `useMessages()`.
  * @exports EclipsesView
  */
+import { GlossaryTerms } from './GlossaryTerm.js';
 import { formatFixed } from './format.js';
 import { Select } from './primitives/Select.js';
 import { TextField } from './primitives/TextField.js';
@@ -179,6 +180,7 @@ export function EclipsesView(): React.JSX.Element {
         <a href="#/">&larr; {shared.back}</a>
       </p>
       <h1>{t.heading}</h1>
+      <GlossaryTerms terms={['eclipse', 'aspect', 'houses']} />
       <p className="hint">{t.hint}</p>
 
       <div className="field-grid">

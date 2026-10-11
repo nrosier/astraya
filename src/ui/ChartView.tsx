@@ -123,6 +123,7 @@ import {
 import { SelectionInspector, type WheelIsolationFacts } from './SelectionInspector.js';
 import { useRulershipChoice } from './rulership-setting.js';
 import type { RulershipChoice } from '../astrology/rulership.js';
+import { GlossaryTerms } from './GlossaryTerm.js';
 import { PageHeader } from './PageHeader.js';
 import { PersonNotFound } from './PersonNotFound.js';
 import { SortableTable } from './SortableTable.js';
@@ -1621,6 +1622,19 @@ export function ChartView({
         <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
       </p>
       <PageHeader title={person.displayName || t.chartFallback} basis={basisLine} />
+      <GlossaryTerms
+        terms={[
+          'ascendant',
+          'midheaven',
+          'houses',
+          'aspect',
+          'dignity',
+          'dispositor',
+          'retrograde',
+          'declination',
+          'derivedPoint',
+        ]}
+      />
       <ChartTypeSelector personId={personId} type="natal" view={view} />
       <ShareLink moment={person.moment} housesKnown={showHouses} />
       <ChartDataView

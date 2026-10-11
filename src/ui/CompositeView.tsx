@@ -17,6 +17,7 @@
  * @conventions Uses the near-arc midpoint convention for both positions and house cusps (`domain/composite.js`), not the time/space-midpoint "Davison" method; reuses `ChartDataView`/`ReportView` wholesale since the composite is a single synthetic `ChartData`. Text comes from co-located `CompositeView.messages.ts` via `useMessages()`.
  * @exports CompositeView
  */
+import { GlossaryTerms } from './GlossaryTerm.js';
 import { personHref, routeHref } from './route.js';
 import { useEffect, useMemo, useState } from 'react';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
@@ -123,6 +124,7 @@ export function CompositeView({
         <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
       </p>
       <h1>{person.displayName ? t.heading(person.displayName) : t.compositeFallback}</h1>
+      <GlossaryTerms terms={['composite', 'aspect', 'midheaven']} />
       <p className="hint">{t.hint}</p>
 
       <p>

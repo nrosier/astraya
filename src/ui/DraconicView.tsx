@@ -13,6 +13,7 @@
  * @exports DraconicView
  */
 import { useEffect, useMemo, useState } from 'react';
+import { GlossaryTerms } from './GlossaryTerm.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { computeDraconic, type DraconicData } from '../domain/draconic.js';
 import { housesAreDefined } from '../domain/chart-compute.js';
@@ -99,6 +100,7 @@ export function DraconicView({
         <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
       </p>
       <h1>{person.displayName ? t.heading(person.displayName) : t.headingFallback}</h1>
+      <GlossaryTerms terms={['draconic', 'ascendant', 'aspect']} />
       <ChartTypeSelector personId={personId} type="draconic" view={view} />
       <p className="hint">{t.hint}</p>
 

@@ -16,6 +16,7 @@
  * @conventions Gated for unknown birth time the same way ProfectionsView.tsx/ChartView.tsx are; uses ProgressionsView.messages.ts for en/nl text via useMessages().
  * @exports ProgressionsView; positionRows, positionColumns, contactColumns, mcMethodLabel (reused by pdf-export-plan.ts)
  */
+import { GlossaryTerms } from './GlossaryTerm.js';
 import { personHref } from './route.js';
 import { DateField } from './primitives/DateField.js';
 import { Select } from './primitives/Select.js';
@@ -234,6 +235,7 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
         <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
       </p>
       <h1>{person.displayName ? t.heading(person.displayName) : t.progressionsFallback}</h1>
+      <GlossaryTerms terms={['progression', 'aspect', 'orb']} />
       <p className="hint">{t.hint}</p>
 
       <div className="field-grid">

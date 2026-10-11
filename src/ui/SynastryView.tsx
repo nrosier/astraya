@@ -21,6 +21,7 @@
  * @conventions Calls renderMultiWheelSvg directly like TransitView.tsx does, bypassing the single-chart AstroChartWheel; uses SynastryView.messages.ts for en/nl text via useMessages().
  * @exports SynastryView, aspectColumns
  */
+import { GlossaryTerms } from './GlossaryTerm.js';
 import { formatFixed } from './format.js';
 import { personHref } from './route.js';
 import { useSymbolClass } from './symbol-setting.js';
@@ -266,6 +267,7 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
         <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
       </p>
       <h1>{person.displayName ? t.heading(person.displayName) : t.synastryFallback}</h1>
+      <GlossaryTerms terms={['synastry', 'aspect', 'orb']} />
       <p className="hint">{t.hint}</p>
 
       <p>

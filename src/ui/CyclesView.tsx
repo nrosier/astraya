@@ -12,6 +12,7 @@
  * @conventions Independent of any person or stored data (ephemeris-only), so it lives outside `Stored`, like AdminPanel; the diagram is app-generated SVG, hidden from assistive tech since the table carries every value it plots.
  * @exports CyclesView
  */
+import { GlossaryTerms } from './GlossaryTerm.js';
 import { formatFixed } from './format.js';
 import { Select } from './primitives/Select.js';
 import { TextField } from './primitives/TextField.js';
@@ -274,6 +275,7 @@ export function CyclesView(): React.JSX.Element {
         <a href="#/">&larr; {shared.back}</a>
       </p>
       <h1>{t.heading}</h1>
+      <GlossaryTerms terms={['cycle', 'transit', 'retrograde']} />
       <p className="hint">{t.hint}</p>
 
       <div className="field-grid cycles-form">

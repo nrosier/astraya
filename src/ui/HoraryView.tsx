@@ -13,6 +13,7 @@
  * @conventions Needs no saved person or stored data (computed entirely in-browser), so it lives outside `Stored`, like ElectionalView; it reports only whether the chart is fit to be judged, never an answer to the question itself. Reuses the shared `ChartDataView`. Text comes from co-located `HoraryView.messages.ts` via `useMessages()`.
  * @exports HoraryView
  */
+import { GlossaryTerms } from './GlossaryTerm.js';
 import { routeHref } from './route.js';
 import { DateField } from './primitives/DateField.js';
 import { Select } from './primitives/Select.js';
@@ -89,6 +90,7 @@ export function HoraryView({ view }: { readonly view?: ChartViewKind | undefined
         <a href="#/">&larr; {shared.back}</a>
       </p>
       <h1>{t.heading}</h1>
+      <GlossaryTerms terms={['horary', 'ascendant', 'dignity']} />
       <p className="hint">{t.hint}</p>
 
       <div className="field-grid">

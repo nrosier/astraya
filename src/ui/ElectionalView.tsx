@@ -11,6 +11,7 @@
  * @conventions Needs no saved person or stored data (ephemeris-only), so it lives outside `Stored`; it ranks candidate times against rules, it does not recommend acting on any one of them. Text comes from co-located `ElectionalView.messages.ts` via `useMessages()`.
  * @exports ElectionalView
  */
+import { GlossaryTerms } from './GlossaryTerm.js';
 import { DateField } from './primitives/DateField.js';
 import { Select } from './primitives/Select.js';
 import { TextField } from './primitives/TextField.js';
@@ -143,6 +144,7 @@ export function ElectionalView(): React.JSX.Element {
         <a href="#/">&larr; {shared.back}</a>
       </p>
       <h1>{t.heading}</h1>
+      <GlossaryTerms terms={['electional', 'ascendant', 'houses']} />
       <p className="hint">{t.hint}</p>
 
       <div className="field-grid">

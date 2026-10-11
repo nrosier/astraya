@@ -12,6 +12,7 @@
  * @conventions Gated for incomplete/unknown-time birth records like other person-scoped views; uses ReturnView.messages.ts for en/nl text via useMessages().
  * @exports ReturnView
  */
+import { GlossaryTerms } from './GlossaryTerm.js';
 import { DateField } from './primitives/DateField.js';
 import { NumberField } from './primitives/NumberField.js';
 import { useEffect, useMemo, useState } from 'react';
@@ -222,6 +223,7 @@ export function ReturnView({
         <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
       </p>
       <h1>{heading}</h1>
+      <GlossaryTerms terms={['solarReturn', 'aspect', 'houses']} />
       <p className="hint page-header-basis">{basisLine}</p>
       <ChartTypeSelector personId={personId} type={kind} view={view} />
       <p className="hint">{solar ? t.solarHint : t.lunarHint}</p>

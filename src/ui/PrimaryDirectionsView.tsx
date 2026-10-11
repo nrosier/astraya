@@ -19,6 +19,7 @@
  * @conventions Gated for unknown birth time like other angle-dependent screens; draws the bi-wheel with renderMultiWheelSvg directly (no cross-ring lines), injected as app-generated SVG the same way TransitView.tsx does; uses PrimaryDirectionsView.messages.ts for en/nl text via useMessages().
  * @exports PrimaryDirectionsView
  */
+import { GlossaryTerms } from './GlossaryTerm.js';
 import { personHref } from './route.js';
 import { useEffect, useMemo, useState } from 'react';
 import { ageInYears, TROPICAL_YEAR_DAYS } from '../astrology/progressions.js';
@@ -259,6 +260,7 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
         <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
       </p>
       <h1>{person.displayName ? t.heading(person.displayName) : t.primaryDirectionsFallback}</h1>
+      <GlossaryTerms terms={['primaryDirection', 'ascendant', 'midheaven']} />
       <p className="hint">{t.hint}</p>
 
       <div className="field-grid">
