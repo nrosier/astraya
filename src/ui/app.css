@@ -3728,6 +3728,58 @@ svg text.chart-symbol-text-unicode {
   margin: 0;
 }
 
+/* The controls' own appearance (#508): a primitive looks the same wherever it sits, with or without a `.field-grid`
+   around it (that class is moving to layout only as the screens migrate). */
+.primitive-field > label {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 550;
+  letter-spacing: 0.02em;
+}
+
+.primitive-field input:not([type='checkbox']):not([type='radio']),
+.primitive-field select,
+.primitive-field textarea {
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--fg);
+  font: inherit;
+  font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.primitive-field textarea {
+  resize: vertical;
+}
+
+.primitive-field input:not([type='checkbox']):not([type='radio']):hover,
+.primitive-field select:hover,
+.primitive-field textarea:hover {
+  background: var(--surface-hover);
+}
+
+.primitive-field input:disabled,
+.primitive-field select:disabled,
+.primitive-field textarea:disabled {
+  opacity: 0.6;
+  cursor: default;
+  background: var(--surface);
+}
+
+.primitive-field input:not([type='checkbox']):not([type='radio']):focus-visible,
+.primitive-field select:focus-visible,
+.primitive-field textarea:focus-visible {
+  border-color: var(--accent);
+  outline: 2px solid color-mix(in oklab, var(--accent) 55%, transparent);
+  outline-offset: 0;
+}
+
+.primitive-field [aria-invalid] {
+  border-color: var(--color-danger);
+}
+
 .primitive-control-compact {
   padding: 0.3rem 0.5rem;
   font-size: var(--text-sm);
@@ -3762,6 +3814,9 @@ svg text.chart-symbol-text-unicode {
 .primitive-number-input {
   /* Browser-dependent spinners are suppressed; the shared stepper below replaces them (#508). */
   appearance: textfield;
+  /* Fills its column like every other field; the stepper, when there is one, sits beside it. */
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .primitive-number-input::-webkit-outer-spin-button,

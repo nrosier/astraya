@@ -29,8 +29,9 @@ export interface NumberFieldProps {
   readonly optional?: boolean | undefined;
   readonly min?: number | undefined;
   readonly max?: number | undefined;
-  /** Omit to render a plain number input with no stepper, per the guidelines. */
-  readonly step?: number | undefined;
+  /** A number renders the Decrease/Increase stepper; omit it, or give `'any'` (free decimals, as coordinates are), for a plain number input with no stepper, per the guidelines. */
+  readonly step?: number | 'any' | undefined;
+  readonly placeholder?: string | undefined;
   readonly size?: ButtonSize;
   readonly disabled?: boolean | undefined;
   /** Accessible names for the stepper buttons, e.g. "Decrease age" / "Increase age". Required when `step` is given. */
@@ -60,6 +61,7 @@ export function NumberField({
   min,
   max,
   step,
+  placeholder,
   size = 'standard',
   disabled,
   decreaseLabel,
@@ -83,6 +85,7 @@ export function NumberField({
           min={min}
           max={max}
           step={step}
+          placeholder={placeholder}
           disabled={disabled}
           aria-invalid={error !== undefined || undefined}
           aria-describedby={ids.describedBy}
@@ -91,7 +94,7 @@ export function NumberField({
           }}
           onBlur={onBlur}
         />
-        {step !== undefined && decreaseLabel !== undefined && increaseLabel !== undefined && (
+        {typeof step === 'number' && decreaseLabel !== undefined && increaseLabel !== undefined && (
           <div className="primitive-number-stepper">
             <button
               type="button"

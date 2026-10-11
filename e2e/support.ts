@@ -19,7 +19,10 @@ import type { Locator, Page } from '@playwright/test';
  * Username field (mounted alongside `PersonForm` on every `Stored` route) without an exact match.
  */
 export function labeledField(page: Page, label: RegExp, selector: string): Locator {
-  return page.locator('label').filter({ hasText: label }).locator(selector);
+  const nested = page.locator('label').filter({ hasText: label }).locator(selector);
+  // A shared primitive (`ui/primitives/Field`) keeps its control beside its label, tied by `for`/`id`, not inside it.
+  const associated = page.getByLabel(label).and(page.locator(selector));
+  return nested.or(associated);
 }
 
 export interface PersonInput {

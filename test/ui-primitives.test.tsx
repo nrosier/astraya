@@ -12,7 +12,9 @@ import { Button } from '../src/ui/primitives/Button.js';
 import { DateField } from '../src/ui/primitives/DateField.js';
 import { NumberField } from '../src/ui/primitives/NumberField.js';
 import { Select } from '../src/ui/primitives/Select.js';
+import { TextAreaField } from '../src/ui/primitives/TextAreaField.js';
 import { TextField } from '../src/ui/primitives/TextField.js';
+import { TimeField } from '../src/ui/primitives/TimeField.js';
 
 let root: Root | undefined;
 let container: HTMLElement | undefined;
@@ -183,5 +185,39 @@ describe('DateField', () => {
     if (input === null) throw new Error('test fixture bug: no input');
     change(input, '2001-02-03');
     expect(reported).toBe('2001-02-03');
+  });
+});
+
+describe('the form-only primitives (#508)', () => {
+  it("NumberField takes step 'any' for free decimals, with no stepper and a placeholder", () => {
+    const host = mount(<NumberField label="Latitude" value="" onChange={noop} step="any" placeholder="38.7478" />);
+    const input = host.querySelector('input');
+    expect(input?.getAttribute('step')).toBe('any');
+    expect(input?.getAttribute('placeholder')).toBe('38.7478');
+    expect(host.querySelectorAll('button')).toHaveLength(0);
+  });
+
+  it('TimeField is a time input that can show seconds, described by its own error and by one more element', () => {
+    const host = mount(
+      <>
+        <p id="why">Not used while unknown.</p>
+        <TimeField label="Time" value="07:45:00" onChange={noop} step={1} error="Required" extraDescribedBy="why" />
+      </>,
+    );
+    const input = host.querySelector('input');
+    expect(input?.type).toBe('time');
+    expect(input?.getAttribute('step')).toBe('1');
+    const ids = (input?.getAttribute('aria-describedby') ?? '').split(' ');
+    expect(ids.map((id) => host.querySelector(`#${CSS.escape(id)}`)?.textContent)).toEqual([
+      'Required',
+      'Not used while unknown.',
+    ]);
+  });
+
+  it('TextAreaField can hide its label visually and still name the control by it', () => {
+    const host = mount(<TextAreaField label="Notes" hideLabel value="" onChange={noop} />);
+    const label = host.querySelector('label');
+    expect(label?.className).toBe('sr-only');
+    expect(label?.getAttribute('for')).toBe(host.querySelector('textarea')?.id);
   });
 });

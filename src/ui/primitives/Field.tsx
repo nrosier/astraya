@@ -23,11 +23,13 @@ export interface FieldIds {
 }
 
 /** One stable id per slot, and the combined aria-describedby a control should pass through. */
-export function useFieldIds(hasHelp: boolean, hasError: boolean): FieldIds {
+export function useFieldIds(hasHelp: boolean, hasError: boolean, extraDescribedBy?: string): FieldIds {
   const base = useId();
   const helpId = hasHelp ? `${base}-help` : undefined;
   const errorId = hasError ? `${base}-error` : undefined;
-  const describedBy = [helpId, errorId].filter((id): id is string => id !== undefined).join(' ') || undefined;
+  const describedBy =
+    [helpId, errorId, extraDescribedBy].filter((id): id is string => id !== undefined && id !== '').join(' ') ||
+    undefined;
   return { inputId: base, helpId, errorId, describedBy };
 }
 
@@ -40,6 +42,8 @@ export interface FieldProps {
   readonly optional?: boolean | undefined;
   readonly children: React.ReactNode;
   readonly className?: string | undefined;
+  /** Hides the label visually while keeping it as the control's accessible name (a lone control the surrounding heading already introduces). */
+  readonly hideLabel?: boolean | undefined;
 }
 
 export function Field({
@@ -51,11 +55,12 @@ export function Field({
   optional = false,
   children,
   className,
+  hideLabel = false,
 }: FieldProps): React.JSX.Element {
   const t = useMessages(fieldMessages);
   return (
     <div className={['primitive-field', className].filter((value) => value !== undefined).join(' ')}>
-      <label htmlFor={ids.inputId}>
+      <label htmlFor={ids.inputId} className={hideLabel ? 'sr-only' : undefined}>
         {label}
         {optional && <span className="primitive-field-optional"> ({t.optional})</span>}
         {unit !== undefined && <span className="primitive-field-unit"> ({unit})</span>}
