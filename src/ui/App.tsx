@@ -7,6 +7,7 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { registerServiceWorker } from '../pwa/register.js';
 import { startWarming } from '../pwa/warm-status.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 import { AccountPanel } from './AccountPanel.js';
 import { appMessages } from './App.messages.js';
 import { EphemerisProviderProvider, useEphemerisProvider } from './EphemerisProviderContext.js';
@@ -97,7 +98,7 @@ function Stored({ children }: { children: React.ReactNode }): React.JSX.Element 
   if (status.kind === 'opening') {
     return (
       <main className="shell">
-        <p className="status">{t.openingLocalData}</p>
+        <StatusMessage kind="loading">{t.openingLocalData}</StatusMessage>
       </main>
     );
   }
@@ -109,9 +110,7 @@ function Stored({ children }: { children: React.ReactNode }): React.JSX.Element 
           <a href="#/">&larr; {shared.back}</a>
         </p>
         <h1>{t.noLocalStorage}</h1>
-        <p className="warning" role="alert">
-          {t.noLocalStorageWarning(status.message)}
-        </p>
+        <StatusMessage kind="error">{t.noLocalStorageWarning(status.message)}</StatusMessage>
         <p>{t.noLocalStorageHint}</p>
       </main>
     );
@@ -127,7 +126,7 @@ function LoadingScreen(): React.JSX.Element {
   const t = useMessages(appMessages);
   return (
     <main className="shell">
-      <p className="status">{t.loadingScreen}</p>
+      <StatusMessage kind="loading">{t.loadingScreen}</StatusMessage>
     </main>
   );
 }
@@ -370,7 +369,7 @@ export function HomeRedirect(): React.JSX.Element {
   }, []);
   return (
     <main className="shell">
-      <p className="status">{t.openingLocalData}</p>
+      <StatusMessage kind="loading">{t.openingLocalData}</StatusMessage>
     </main>
   );
 }

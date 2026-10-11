@@ -18,6 +18,7 @@ import { useId, useState } from 'react';
 import { draftFrom, draftToMutations, validateDraft, type Draft } from '../domain/person-form.js';
 import { personFormValidationMessages } from '../domain/person-form.messages.js';
 import { formatOffset, resolveMoment } from '../time/resolve.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 import { BirthPlaceSearch } from './BirthPlaceSearch.js';
 import { useMessages } from './messages.js';
 import { NEEDS_A_DECISION, PROVENANCE } from './moment-labels.js';
@@ -125,11 +126,7 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
       <h1>{current.displayName.trim() === '' ? t.newPerson : current.displayName}</h1>
       <p className="tagline">{t.tagline}</p>
 
-      {saveError !== undefined && (
-        <p className="warning" role="alert">
-          {t.saveFailed(saveError)}
-        </p>
-      )}
+      {saveError !== undefined && <StatusMessage kind="error">{t.saveFailed(saveError)}</StatusMessage>}
 
       <h2>{t.birthRecordHeading}</h2>
 

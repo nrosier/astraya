@@ -40,6 +40,7 @@ import type { TableColumn } from './table-sort.js';
 import type { CorpusEntry, Locale } from '../interpretation/schema.js';
 import { ordinal } from './placement-label.js';
 import { wheelCorpus } from './wheel-corpus.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -213,13 +214,9 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
         </label>
       </p>
 
-      {load.kind === 'loading' && <p className="status">{t.calculating}</p>}
+      {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
 
-      {load.kind === 'error' && (
-        <p className="warning" role="alert">
-          {t.error(load.message)}
-        </p>
-      )}
+      {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
 
       {load.kind === 'ready' && (
         <>

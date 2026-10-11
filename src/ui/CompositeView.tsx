@@ -32,6 +32,7 @@ import { momentKey } from '../time/encode.js';
 import { PersonNotFound } from './PersonNotFound.js';
 import { useStoreState } from './store-context.js';
 import type { ChartData } from '../domain/chart-compute.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 
 type Load =
   | { readonly kind: 'idle' }
@@ -144,9 +145,7 @@ export function CompositeView({
       </p>
 
       {partnerId !== '' && candidates.every((candidate) => candidate.id !== partnerId) && (
-        <p className="warning" role="alert">
-          {t.partnerGoneWarning}
-        </p>
+        <StatusMessage kind="error">{t.partnerGoneWarning}</StatusMessage>
       )}
 
       {partnerId !== '' && load.kind !== 'idle' && (
@@ -165,9 +164,7 @@ export function CompositeView({
       )}
 
       {partnerId !== '' && load.kind === 'ready' && !housesAreDefined(load.data.houses) && (
-        <p className="warning" role="alert">
-          {t.housesUndefined}
-        </p>
+        <StatusMessage kind="error">{t.housesUndefined}</StatusMessage>
       )}
       {partnerId !== '' && load.kind === 'ready' && housesAreDefined(load.data.houses) && (
         <ReportView chart={load.data} chartKind="composite" />

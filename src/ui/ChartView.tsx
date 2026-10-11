@@ -131,6 +131,7 @@ import type { TableColumn } from './table-sort.js';
 import type { EphemerisProvider } from '../ephemeris/types.js';
 import type { Locale } from '../interpretation/schema.js';
 import type { BirthMomentInput } from '../time/types.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -1382,20 +1383,14 @@ export function ChartDataView({
         />
       )}
 
-      {load.kind === 'loading' && <p className="status">{t.calculating}</p>}
+      {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
 
-      {load.kind === 'error' && (
-        <p className="warning" role="alert">
-          {t.chartError(load.message)}
-        </p>
-      )}
+      {load.kind === 'error' && <StatusMessage kind="error">{t.chartError(load.message)}</StatusMessage>}
 
       {load.kind === 'ready' && (
         <>
           {load.data.houses.warning !== undefined && (
-            <p className="warning" role="alert">
-              {load.data.houses.warning}
-            </p>
+            <StatusMessage kind="error">{load.data.houses.warning}</StatusMessage>
           )}
 
           {printAll ? (

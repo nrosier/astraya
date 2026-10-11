@@ -19,6 +19,7 @@ import { useSession } from './session-context.js';
 import { setupToken } from './route.js';
 import { setupFormMessages } from './SetupForm.messages.js';
 import { sharedMessages } from './shared.messages.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 
 export function SetupForm(): React.JSX.Element {
   const { setup } = useSession();
@@ -38,9 +39,7 @@ export function SetupForm(): React.JSX.Element {
           <a href="#/">&larr; {shared.back}</a>
         </p>
         <h1>{t.heading}</h1>
-        <p className="warning" role="alert">
-          {t.missingToken}
-        </p>
+        <StatusMessage kind="error">{t.missingToken}</StatusMessage>
       </main>
     );
   }
@@ -75,11 +74,7 @@ export function SetupForm(): React.JSX.Element {
         <a href="#/">&larr; {shared.back}</a>
       </p>
       <h1>{t.heading}</h1>
-      {error !== undefined && (
-        <p className="warning" role="alert">
-          {error}
-        </p>
-      )}
+      {error !== undefined && <StatusMessage kind="error">{error}</StatusMessage>}
       <form onSubmit={submit}>
         <div className="field-grid">
           <TextField label={shared.usernameLabel} autoComplete="username" value={username} onChange={setUsername} />

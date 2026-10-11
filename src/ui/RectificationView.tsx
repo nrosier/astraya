@@ -42,6 +42,7 @@ import { SortableTable } from './SortableTable.js';
 import { useStoreState } from './store-context.js';
 import type { TableColumn } from './table-sort.js';
 import type { Locale } from '../interpretation/schema.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 
 /** How many of the best candidates are listed, and given a detail section. */
 const SHOWN = 15;
@@ -329,16 +330,8 @@ export function RectificationView(): React.JSX.Element {
         </button>
       </p>
 
-      {fieldError !== undefined && (
-        <p className="warning" role="alert">
-          {errorText(fieldError)}
-        </p>
-      )}
-      {result.kind === 'error' && (
-        <p className="warning" role="alert">
-          {t.error(result.message)}
-        </p>
-      )}
+      {fieldError !== undefined && <StatusMessage kind="error">{errorText(fieldError)}</StatusMessage>}
+      {result.kind === 'error' && <StatusMessage kind="error">{t.error(result.message)}</StatusMessage>}
 
       {result.kind === 'ready' && (
         <>

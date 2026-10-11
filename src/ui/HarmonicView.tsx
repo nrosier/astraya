@@ -31,6 +31,7 @@ import { useMessages } from './messages.js';
 import { PersonNotFound } from './PersonNotFound.js';
 import { useStoreState } from './store-context.js';
 import type { ChartData } from '../domain/chart-compute.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 
 type Load =
   | { readonly kind: 'idle' }
@@ -134,11 +135,7 @@ export function HarmonicView({
       </div>
 
       {preset !== undefined && <p className="hint">{preset.description}</p>}
-      {presetKey === CUSTOM && !nValid && (
-        <p className="warning" role="alert">
-          {t.invalidHarmonicNumber}
-        </p>
-      )}
+      {presetKey === CUSTOM && !nValid && <StatusMessage kind="error">{t.invalidHarmonicNumber}</StatusMessage>}
 
       {nValid && load.kind !== 'idle' && (
         <ChartDataView
@@ -155,9 +152,7 @@ export function HarmonicView({
       )}
 
       {nValid && load.kind === 'ready' && !housesAreDefined(load.data.houses) && (
-        <p className="warning" role="alert">
-          {t.housesUndefined}
-        </p>
+        <StatusMessage kind="error">{t.housesUndefined}</StatusMessage>
       )}
       {nValid && load.kind === 'ready' && housesAreDefined(load.data.houses) && <ReportView chart={load.data} />}
     </main>

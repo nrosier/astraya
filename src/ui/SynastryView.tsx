@@ -50,6 +50,7 @@ import type { TableColumn } from './table-sort.js';
 import type { CorpusEntry, Locale } from '../interpretation/schema.js';
 import { synastryText } from './synastry-text.js';
 import { wheelCorpus } from './wheel-corpus.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 
 type Load =
   | { readonly kind: 'idle' }
@@ -287,18 +288,12 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
       </p>
 
       {partnerId !== '' && candidates.every((candidate) => candidate.id !== partnerId) && (
-        <p className="warning" role="alert">
-          {t.partnerGoneWarning}
-        </p>
+        <StatusMessage kind="error">{t.partnerGoneWarning}</StatusMessage>
       )}
 
-      {load.kind === 'loading' && <p className="status">{t.calculating}</p>}
+      {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
 
-      {load.kind === 'error' && (
-        <p className="warning" role="alert">
-          {t.error(load.message)}
-        </p>
-      )}
+      {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
 
       {load.kind === 'ready' && wheelMarkup !== undefined && (
         <>

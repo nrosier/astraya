@@ -41,6 +41,7 @@ import { sharedMessages } from './shared.messages.js';
 import type { AdminUser, DeletionImpact, InterpretationUsageReport } from '../sync/admin-client.js';
 import type { OidcConfig, Role } from '../sync/auth-client.js';
 import { useSessionUserOrUndefined } from './session-context.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 
 const ROLE_ORDER: readonly Role[] = ['user', 'admin', 'super_admin'];
 
@@ -100,11 +101,7 @@ function CreateUserForm({
 
   return (
     <form onSubmit={submit}>
-      {error !== undefined && (
-        <p className="warning" role="alert">
-          {error}
-        </p>
-      )}
+      {error !== undefined && <StatusMessage kind="error">{error}</StatusMessage>}
       <div className="field-grid">
         <TextField label={shared.usernameLabel} autoComplete="off" value={username} onChange={setUsername} />
         <Select
@@ -292,16 +289,12 @@ export function AdminPanel(): React.JSX.Element {
         <a href="#/">&larr; {shared.back}</a>
       </p>
       <h1>{t.heading}</h1>
-      {error !== undefined && (
-        <p className="warning" role="alert">
-          {error}
-        </p>
-      )}
+      {error !== undefined && <StatusMessage kind="error">{error}</StatusMessage>}
 
       {!canManage && <p className="hint">{t.readOnlyUsersHint}</p>}
 
       {canManage && pendingDelete !== undefined && (
-        <p className="warning" role="alert">
+        <StatusMessage kind="error">
           {t.deleteWarning(pendingDelete.user.username, describeImpact(pendingDelete.impact, t))}{' '}
           <button type="button" className="danger" onClick={confirmDelete}>
             {t.deletePermanentlyButton}
@@ -315,7 +308,7 @@ export function AdminPanel(): React.JSX.Element {
           >
             {t.cancelButton}
           </button>
-        </p>
+        </StatusMessage>
       )}
 
       {canManage && (
@@ -332,7 +325,7 @@ export function AdminPanel(): React.JSX.Element {
 
       <h2>{t.usersHeading}</h2>
       {users === undefined ? (
-        <p className="status">{t.loadingUsers}</p>
+        <StatusMessage kind="loading">{t.loadingUsers}</StatusMessage>
       ) : (
         <div className="data-table data-table-wrap">
           <div className="data-table-scroll">
@@ -405,13 +398,9 @@ export function AdminUsagePanel(): React.JSX.Element {
         <a href="#/">&larr; {shared.back}</a>
       </p>
       <h1>{t.usageHeading}</h1>
-      {error !== undefined && (
-        <p className="warning" role="alert">
-          {error}
-        </p>
-      )}
+      {error !== undefined && <StatusMessage kind="error">{error}</StatusMessage>}
       {usage === undefined ? (
-        <p className="status">{t.loadingUsage}</p>
+        <StatusMessage kind="loading">{t.loadingUsage}</StatusMessage>
       ) : usage.users.length === 0 ? (
         <p className="hint">{t.usageEmpty}</p>
       ) : (

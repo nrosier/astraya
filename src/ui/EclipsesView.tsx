@@ -29,6 +29,7 @@ import { SortableTable } from './SortableTable.js';
 import { useStoreState } from './store-context.js';
 import type { TableColumn } from './table-sort.js';
 import { clampEphemerisYear, MAX_EPHEMERIS_YEAR, MIN_EPHEMERIS_YEAR } from './year-range.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 
 type Result =
   | { readonly kind: 'idle' }
@@ -199,16 +200,8 @@ export function EclipsesView(): React.JSX.Element {
         </button>
       </p>
 
-      {validation !== undefined && (
-        <p className="warning" role="alert">
-          {validation}
-        </p>
-      )}
-      {result.kind === 'error' && (
-        <p className="warning" role="alert">
-          {t.error(result.message)}
-        </p>
-      )}
+      {validation !== undefined && <StatusMessage kind="error">{validation}</StatusMessage>}
+      {result.kind === 'error' && <StatusMessage kind="error">{t.error(result.message)}</StatusMessage>}
 
       {result.kind === 'ready' &&
         (result.rows.length === 0 ? (

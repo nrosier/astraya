@@ -17,6 +17,7 @@
  * @conventions Gated like PeriodicTransitView/TransitView on a known birth time (ACG lines shift ~15° longitude per hour of time error); embeds the SVG map via `dangerouslySetInnerHTML` and exports it through `standaloneSvg`/`downloadText`/`svgToPngBlob`, matching ChartView's trust-boundary pattern for app-generated markup. Reads interpretive text from the shared wheel corpus via `resolvePlacementText`.
  * @exports AstrocartographyView
  */
+import { StatusMessage } from './primitives/StatusMessage.js';
 import { personHref } from './route.js';
 import { useEffect, useMemo, useState } from 'react';
 import { resolvePlacementText } from '../interpretation/compose.js';
@@ -238,16 +239,12 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
       )}
 
       {(load.kind === 'loading' || updating) && (
-        <p className="status" role="status">
+        <StatusMessage kind={load.kind === 'loading' ? 'loading' : 'updating'}>
           {load.kind === 'loading' ? t.calculating : t.updating}
-        </p>
+        </StatusMessage>
       )}
 
-      {load.kind === 'error' && (
-        <p className="warning" role="alert">
-          {t.error(load.message)}
-        </p>
-      )}
+      {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
 
       {map !== undefined && (
         <>

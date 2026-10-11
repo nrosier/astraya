@@ -33,6 +33,7 @@ import { corpusCandidatesPanelMessages } from './CorpusCandidatesPanel.messages.
 import { sharedMessages } from './shared.messages.js';
 import type { CorpusCandidate } from '../sync/admin-client.js';
 import type { Locale } from '../interpretation/schema.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 
 export function CorpusCandidatesPanel(): React.JSX.Element {
   const t = useMessages(corpusCandidatesPanelMessages);
@@ -130,11 +131,7 @@ export function CorpusCandidatesPanel(): React.JSX.Element {
       <h1>{t.heading}</h1>
       <p>{t.intro}</p>
 
-      {loadError !== undefined && (
-        <p className="warning" role="alert">
-          {t.couldNotLoad(loadError)}
-        </p>
-      )}
+      {loadError !== undefined && <StatusMessage kind="error">{t.couldNotLoad(loadError)}</StatusMessage>}
 
       <div className="field-grid">
         <Select
@@ -147,19 +144,13 @@ export function CorpusCandidatesPanel(): React.JSX.Element {
         />
       </div>
 
-      {decideError !== undefined && (
-        <p className="warning" role="alert">
-          {t.decideFailed(decideError)}
-        </p>
-      )}
+      {decideError !== undefined && <StatusMessage kind="error">{t.decideFailed(decideError)}</StatusMessage>}
       {missingCount !== undefined && missingCount > 0 && (
-        <p className="warning" role="alert">
-          {t.missingWarning(String(missingCount))}
-        </p>
+        <StatusMessage kind="error">{t.missingWarning(String(missingCount))}</StatusMessage>
       )}
 
       {candidates === undefined ? (
-        <p className="status">{t.loadingCandidates}</p>
+        <StatusMessage kind="loading">{t.loadingCandidates}</StatusMessage>
       ) : candidates.length === 0 ? (
         <p className="empty">{t.noResults}</p>
       ) : (

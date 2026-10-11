@@ -32,6 +32,7 @@ import { useMessages } from './messages.js';
 import { sharedMessages } from './shared.messages.js';
 import { SortableTable } from './SortableTable.js';
 import type { TableColumn } from './table-sort.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 
 type Result =
   | { readonly kind: 'idle' }
@@ -219,16 +220,8 @@ export function ElectionalView(): React.JSX.Element {
         </button>
       </p>
 
-      {fieldError !== undefined && (
-        <p className="warning" role="alert">
-          {errorText(fieldError)}
-        </p>
-      )}
-      {result.kind === 'error' && (
-        <p className="warning" role="alert">
-          {t.error(result.message)}
-        </p>
-      )}
+      {fieldError !== undefined && <StatusMessage kind="error">{errorText(fieldError)}</StatusMessage>}
+      {result.kind === 'error' && <StatusMessage kind="error">{t.error(result.message)}</StatusMessage>}
 
       {result.kind === 'ready' &&
         (result.rows.length === 0 ? (

@@ -65,6 +65,7 @@ import { useStoreState } from './store-context.js';
 import type { TableColumn } from './table-sort.js';
 import type { BodyId, JulianDayUT } from '../ephemeris/types.js';
 import type { CorpusPlacement, Locale } from '../interpretation/schema.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -425,13 +426,9 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
         />
       )}
 
-      {load.kind === 'loading' && <p className="status">{t.calculating}</p>}
+      {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
 
-      {load.kind === 'error' && (
-        <p className="warning" role="alert">
-          {t.error(load.message)}
-        </p>
-      )}
+      {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
 
       {data !== undefined && (
         <>
@@ -609,12 +606,8 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
               />
             </div>
 
-            {returnLoad.kind === 'loading' && <p className="status">{t.calculating}</p>}
-            {returnLoad.kind === 'error' && (
-              <p className="warning" role="alert">
-                {t.error(returnLoad.message)}
-              </p>
-            )}
+            {returnLoad.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
+            {returnLoad.kind === 'error' && <StatusMessage kind="error">{t.error(returnLoad.message)}</StatusMessage>}
             {returnData !== undefined && (
               <>
                 <p>

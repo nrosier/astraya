@@ -21,6 +21,7 @@ import { caveated, ordered, summary } from './people-list.js';
 import { peopleMessages } from './People.messages.js';
 import { useStore, useStoreState } from './store-context.js';
 import { trace } from '../trace.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 
 export function People(): React.JSX.Element {
   const store = useStore();
@@ -75,9 +76,9 @@ export function People(): React.JSX.Element {
       <p className="tagline">{t.tagline}</p>
 
       {error !== undefined && (
-        <p className="warning" role="alert">
+        <StatusMessage kind="error">
           {t.saveFailed} {error}
-        </p>
+        </StatusMessage>
       )}
 
       <p>

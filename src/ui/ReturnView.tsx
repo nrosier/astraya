@@ -43,6 +43,7 @@ import type { ChartData } from '../domain/chart-compute.js';
 import type { GeoPosition } from '../ephemeris/types.js';
 import type { Locale } from '../interpretation/schema.js';
 import type { TableColumn } from './table-sort.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 
 type Load =
   | { readonly kind: 'idle' }
@@ -232,11 +233,7 @@ export function ReturnView({
           <DateField label={t.fromDateLabel} value={fromDate} onChange={setFromDate} />
         )}
       </div>
-      {!inputValid && (
-        <p className="warning" role="alert">
-          {solar ? t.invalidYear : t.invalidDate}
-        </p>
-      )}
+      {!inputValid && <StatusMessage kind="error">{solar ? t.invalidYear : t.invalidDate}</StatusMessage>}
 
       <fieldset className="field-group">
         <legend>{t.placeLegend}</legend>
@@ -293,16 +290,14 @@ export function ReturnView({
             </label>
           </div>
         )}
-        {placeInvalid && lat !== '' && lon !== '' && (
-          <p className="warning" role="alert">
-            {t.invalidPlace}
-          </p>
-        )}
+        {placeInvalid && lat !== '' && lon !== '' && <StatusMessage kind="error">{t.invalidPlace}</StatusMessage>}
       </fieldset>
 
-      {load.kind === 'ready' && <p className="status">{t.returnMoment(formatUtc(load.result.returnJd))}</p>}
+      {load.kind === 'ready' && (
+        <StatusMessage kind="loading">{t.returnMoment(formatUtc(load.result.returnJd))}</StatusMessage>
+      )}
       <p className="hint">{t.conventions}</p>
-      {load.kind === 'loading' && <p className="status">{t.calculating}</p>}
+      {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
 
       {load.kind !== 'idle' && (
         <ChartDataView
@@ -322,9 +317,7 @@ export function ReturnView({
       )}
 
       {load.kind === 'ready' && !housesAreDefined(load.data.houses) && (
-        <p className="warning" role="alert">
-          {t.housesUndefined}
-        </p>
+        <StatusMessage kind="error">{t.housesUndefined}</StatusMessage>
       )}
 
       {load.kind === 'ready' && (

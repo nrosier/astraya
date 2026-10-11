@@ -53,6 +53,7 @@ import { useStoreState } from './store-context.js';
 import { useSymbolClass } from './symbol-setting.js';
 import type { TableColumn } from './table-sort.js';
 import type { Locale } from '../interpretation/schema.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -297,28 +298,16 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
         />
       </div>
 
-      {load.kind === 'loading' && <p className="status">{t.calculating}</p>}
+      {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
 
-      {load.kind === 'error' && (
-        <p className="warning" role="alert">
-          {t.error(load.message)}
-        </p>
-      )}
+      {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
 
-      {data !== undefined && !data.defined && (
-        <p className="warning" role="alert">
-          {t.undefinedAtLatitude}
-        </p>
-      )}
+      {data !== undefined && !data.defined && <StatusMessage kind="error">{t.undefinedAtLatitude}</StatusMessage>}
 
       {data?.defined === true && (
         <>
-          {directed.kind === 'loading' && <p className="status">{t.calculating}</p>}
-          {directed.kind === 'error' && (
-            <p className="warning" role="alert">
-              {t.error(directed.message)}
-            </p>
-          )}
+          {directed.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
+          {directed.kind === 'error' && <StatusMessage kind="error">{t.error(directed.message)}</StatusMessage>}
           {directed.kind === 'before-birth' && <p className="hint">{t.beforeBirth}</p>}
 
           {directed.kind === 'ready' && (

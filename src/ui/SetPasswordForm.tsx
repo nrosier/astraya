@@ -17,6 +17,7 @@ import { useMessages } from './messages.js';
 import { setPasswordToken } from './route.js';
 import { setPasswordFormMessages } from './SetPasswordForm.messages.js';
 import { sharedMessages } from './shared.messages.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 
 export function SetPasswordForm(): React.JSX.Element {
   const [token] = useState(() => setPasswordToken(window.location.hash));
@@ -35,9 +36,7 @@ export function SetPasswordForm(): React.JSX.Element {
           <a href="#/">&larr; {shared.back}</a>
         </p>
         <h1>{t.heading}</h1>
-        <p className="warning" role="alert">
-          {t.missingToken}
-        </p>
+        <StatusMessage kind="error">{t.missingToken}</StatusMessage>
       </main>
     );
   }
@@ -80,11 +79,7 @@ export function SetPasswordForm(): React.JSX.Element {
         <a href="#/">&larr; {shared.back}</a>
       </p>
       <h1>{t.heading}</h1>
-      {error !== undefined && (
-        <p className="warning" role="alert">
-          {error}
-        </p>
-      )}
+      {error !== undefined && <StatusMessage kind="error">{error}</StatusMessage>}
       <form onSubmit={submit}>
         <div className="field-grid">
           <PasswordField

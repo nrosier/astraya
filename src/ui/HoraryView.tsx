@@ -34,6 +34,7 @@ import { sharedMessages } from './shared.messages.js';
 import { transitViewMessages } from './TransitView.messages.js';
 import { voidOfCourseSentence } from './void-of-course-text.js';
 import type { BirthMomentInput } from '../time/types.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 
 type Result =
   | { readonly kind: 'idle' }
@@ -141,22 +142,14 @@ export function HoraryView({ view }: { readonly view?: ChartViewKind | undefined
         </button>
       </p>
 
-      {fieldError !== undefined && (
-        <p className="warning" role="alert">
-          {t.fieldErrors[fieldError]}
-        </p>
-      )}
-      {result.kind === 'error' && (
-        <p className="warning" role="alert">
-          {t.error(result.message)}
-        </p>
-      )}
+      {fieldError !== undefined && <StatusMessage kind="error">{t.fieldErrors[fieldError]}</StatusMessage>}
+      {result.kind === 'error' && <StatusMessage kind="error">{t.error(result.message)}</StatusMessage>}
 
       {ready !== undefined && (
         <>
           <h2>{t.considerationsHeading}</h2>
           {/* Every consideration is a verdict on this chart, so none exists before one is cast. */}
-          {!ready.chart.housesAvailable && <p className="warning">{t.noHouses}</p>}
+          {!ready.chart.housesAvailable && <StatusMessage kind="partial">{t.noHouses}</StatusMessage>}
           <p className={isRadical(ready.chart.considerations) ? 'horary-verdict' : 'horary-verdict warning'}>
             {isRadical(ready.chart.considerations)
               ? t.radical

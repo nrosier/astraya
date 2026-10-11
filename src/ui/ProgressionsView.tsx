@@ -41,6 +41,7 @@ import { useStoreState } from './store-context.js';
 import type { TableColumn } from './table-sort.js';
 import type { BodyPosition, HousePositions } from '../ephemeris/types.js';
 import type { Locale } from '../interpretation/schema.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 
 type Technique = 'secondary' | 'tertiary' | 'minor';
 
@@ -265,13 +266,9 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
         <DateField label={t.asOfLabel} value={asOf} onChange={setAsOf} />
       </div>
 
-      {load.kind === 'loading' && <p className="status">{t.calculating}</p>}
+      {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
 
-      {load.kind === 'error' && (
-        <p className="warning" role="alert">
-          {t.error(load.message)}
-        </p>
-      )}
+      {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
 
       {load.kind === 'ready' && (
         <>

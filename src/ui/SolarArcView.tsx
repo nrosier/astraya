@@ -42,6 +42,7 @@ import { useStoreState } from './store-context.js';
 import type { TableColumn } from './table-sort.js';
 import type { HousePositions, JulianDayUT } from '../ephemeris/types.js';
 import type { Locale } from '../interpretation/schema.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -259,13 +260,9 @@ export function SolarArcView({ personId }: { personId: string }): React.JSX.Elem
         </label>
       </p>
 
-      {load.kind === 'loading' && <p className="status">{t.calculating}</p>}
+      {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
 
-      {load.kind === 'error' && (
-        <p className="warning" role="alert">
-          {t.error(load.message)}
-        </p>
-      )}
+      {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
 
       {load.kind === 'ready' && (
         <>

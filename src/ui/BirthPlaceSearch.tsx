@@ -24,6 +24,7 @@ import { forwardGeocode } from './forward-geocode.js';
 import { geocodeHost } from './geocode-provider.js';
 import { useMessages } from './messages.js';
 import type { ForwardGeocodeResult } from './forward-geocode.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 
 type SearchStatus = 'idle' | 'searching' | 'not-found' | 'error';
 
@@ -95,16 +96,8 @@ export function BirthPlaceSearch({
           {searchStatus === 'searching' ? t.searching : t.search}
         </button>
       </form>
-      {searchStatus === 'not-found' && (
-        <p className="warning" role="alert">
-          {t.searchNotFound}
-        </p>
-      )}
-      {searchStatus === 'error' && (
-        <p className="warning" role="alert">
-          {t.searchFailed}
-        </p>
-      )}
+      {searchStatus === 'not-found' && <StatusMessage kind="error">{t.searchNotFound}</StatusMessage>}
+      {searchStatus === 'error' && <StatusMessage kind="error">{t.searchFailed}</StatusMessage>}
       {searchResults.length > 0 && (
         <ul className="birth-place-search-results" aria-label={t.searchResultsLabel}>
           {searchResults.map((result) => (
