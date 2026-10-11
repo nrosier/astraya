@@ -117,3 +117,34 @@ test('selecting something fills the inspector in place, without moving it', asyn
   await inspector.getByRole('button', { name: 'Clear', exact: true }).click();
   await expect(inspector).toContainText('to explore it');
 });
+
+test('a house number on the wheel selects that house, in the inspector and in its table row (#511)', async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await page.setViewportSize({ width: 1600, height: 1000 });
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  await createPerson(page, {
+    name: 'Ada Lovelace',
+    date: '1815-12-10',
+    time: '07:45:00',
+    latitude: '51.5072',
+    longitude: '-0.1276',
+  });
+  await openNatalChart(page);
+  const inspector = page.locator('.selection-inspector');
+
+  await page.locator('.chart-house[data-house="5"]').click();
+  await expect(inspector.locator('.selection-inspector-facts strong')).toContainText('on the cusp of house 5');
+  await expect(page.locator('.chart-house[data-house="6"]')).toHaveClass(/chart-dimmed/);
+
+  // The same selection is on the Placements table, reachable and clearable from the keyboard.
+  await page.getByRole('link', { name: 'Placements', exact: true }).click();
+  const show = page.getByRole('button', { name: 'Show House 5 on the chart', exact: true });
+  await expect(show).toHaveAttribute('aria-pressed', 'true');
+  await show.focus();
+  await page.keyboard.press('Enter');
+  await expect(show).toHaveAttribute('aria-pressed', 'false');
+  await page.getByRole('link', { name: 'Wheel', exact: true }).click();
+  await expect(inspector).toContainText('to explore it');
+});

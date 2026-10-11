@@ -59,12 +59,13 @@ const DEFAULT_MIN_SEPARATION_DEG = 6;
 
 /**
  * The attributes that identify a body's elements on the wheel (#418): its key, which ring it is on
- * (a bi-wheel draws the same body in both) and the sign it stands in. One place builds them, so a
+ * (a bi-wheel draws the same body in both), the sign it stands in and its longitude. One place builds them, so a
  * glyph, its tick and its degree stack can never disagree about what they belong to.
  */
 export function bodyAttributes(key: string, longitude: Degrees, ring: number): string {
   const signName = SIGNS[Math.floor(norm360(longitude) / 30)]?.name.toLowerCase() ?? '';
-  return `data-body="${key}" data-ring="${String(ring)}" data-body-sign="${signName}"`;
+  // The longitude lets a house selection find the bodies standing in that house from the markup alone.
+  return `data-body="${key}" data-ring="${String(ring)}" data-body-sign="${signName}" data-body-longitude="${norm360(longitude).toFixed(4)}"`;
 }
 const MAX_RELAXATION_PASSES = 200;
 

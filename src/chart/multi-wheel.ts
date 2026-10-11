@@ -376,15 +376,22 @@ function renderBaseHousesSvg(
     const midLongitude = startDisplay + norm360(endDisplay - startDisplay) / 2;
     const angle = wheelAngle(midLongitude, ascendant, orientationOptions);
     const point = pointOnCircle(cx, cy, geometry.houseNumberRadius, angle);
+    // Each house number is a selectable mark (#511), carrying the house's span and its cusp's sign so a
+    // selection can be drawn from the markup alone, like the bodies and signs.
+    const cuspSign = SIGNS[Math.floor(norm360(start) / 30)]?.name.toLowerCase() ?? '';
     parts.push(
-      text(
-        point.x,
-        point.y + baselineOffset(geometry.houseNumberFontSize),
-        'middle',
-        'chart-house-number',
-        String(house),
-        geometry.houseNumberFontSize,
-      ),
+      `<g class="chart-house" data-house="${String(house)}" data-house-start="${norm360(start).toFixed(4)}" ` +
+        `data-house-end="${norm360(end).toFixed(4)}" data-house-sign="${cuspSign}">` +
+        hitAreaCircle(point.x, point.y, geometry.houseNumberFontSize * 1.1) +
+        text(
+          point.x,
+          point.y + baselineOffset(geometry.houseNumberFontSize),
+          'middle',
+          'chart-house-number',
+          String(house),
+          geometry.houseNumberFontSize,
+        ) +
+        `</g>`,
     );
   }
 

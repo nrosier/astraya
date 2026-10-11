@@ -150,6 +150,8 @@ interface TableSelection {
 
 /** The wheel's selection key for a body, or an aspect between two. */
 const bodySelectionKey = (bodyKey: string): string => `body:${bodyId(bodyKey, 0)}`;
+/** The wheel's selection key for a house's cusp (#511). */
+const houseSelectionKey = (house: number): string => `house:${String(house)}`;
 const aspectSelectionKey = (row: AspectRow): string => aspectKeyFor(bodyId(row.bodyAKey, 0), bodyId(row.bodyBKey, 0));
 
 /** The column of "show on the chart" buttons: a real button per row, so the keyboard reaches the wheel's selection too. */
@@ -278,8 +280,22 @@ export function positionColumns(
   ];
 }
 
-export function houseCuspColumns(t: typeof chartViewMessages.en, locale: Locale): readonly TableColumn<HouseCuspRow>[] {
+export function houseCuspColumns(
+  t: typeof chartViewMessages.en,
+  locale: Locale,
+  selection?: TableSelection,
+): readonly TableColumn<HouseCuspRow>[] {
   return [
+    ...(selection === undefined
+      ? []
+      : [
+          selectColumn<HouseCuspRow>(
+            t,
+            selection,
+            (row) => houseSelectionKey(row.house),
+            (row) => `${t.houseLabel} ${String(row.house)}`,
+          ),
+        ]),
     { key: 'house', label: t.houseLabel, valueOf: (row) => row.house },
     ...degreeColumns<HouseCuspRow>(t, locale),
   ];
@@ -566,9 +582,14 @@ function renderTableTab(
         <>
           <SortableTable
             caption={t.housesCaption}
-            columns={houseCuspColumns(t, locale)}
+            columns={houseCuspColumns(t, locale, selection)}
             rows={houseCuspRows(data)}
             getRowKey={(row) => String(row.house)}
+            selectedRowKey={
+              houseCuspRows(data).find((row) => houseSelectionKey(row.house) === selection?.selectedKey) === undefined
+                ? undefined
+                : selection?.selectedKey?.slice('house:'.length)
+            }
             downloadFilename={deriveExportFilename(displayName, 'houses', 'csv')}
           />
           <SortableTable
@@ -887,6 +908,7 @@ function resolveWheelIsolation(
   pointVisibility: PointVisibilityOptions,
   housesRenderable: boolean,
   locale: Locale,
+  t: typeof chartViewMessages.en,
 ): WheelIsolationFacts | undefined {
   const selection = parseSelectionKey(isolatedKey);
   if (selection === undefined) return undefined;
@@ -900,6 +922,16 @@ function resolveWheelIsolation(
       heading: positionRow !== undefined ? bodyDisplayName(positionRow.bodyKey, locale) : value,
       positionRow,
       relatedAspects: allAspects.filter((row) => row.bodyAKey === value || row.bodyBKey === value),
+    };
+  }
+
+  if (selection.kind === 'house') {
+    const cusp = data.houses.cusps[selection.house];
+    const signName = cusp === undefined ? '' : (SIGNS[Math.floor((((cusp % 360) + 360) % 360) / 30)]?.name ?? '');
+    return {
+      heading: t.cuspHeading(signDisplayName(signName, locale), selection.house),
+      relatedAspects: [],
+      bodiesInHouse: allPositions.filter((row) => row.speed !== undefined && row.house === selection.house),
     };
   }
 
@@ -1092,8 +1124,8 @@ export function ChartDataView({
 
   const isolation = useMemo(() => {
     if (isolatedKey === undefined || load.kind !== 'ready') return undefined;
-    return resolveWheelIsolation(isolatedKey, load.data, pointVisibility, housesRenderable, locale);
-  }, [isolatedKey, load, pointVisibility, housesRenderable, locale]);
+    return resolveWheelIsolation(isolatedKey, load.data, pointVisibility, housesRenderable, locale, t);
+  }, [isolatedKey, load, pointVisibility, housesRenderable, locale, t]);
 
   // What the "interpret the tensions of this placement" button would send: only for a selected planet (#424).
   const focusContext = useMemo(() => {

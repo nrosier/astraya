@@ -32,6 +32,31 @@ export interface WheelIsolationFacts {
   readonly aspectRow?: AspectRow | undefined;
   /** For a clicked sign: the bodies drawn in it. */
   readonly bodiesInSign?: readonly PositionRow[] | undefined;
+  /** For a selected house cusp: the bodies standing in that house. */
+  readonly bodiesInHouse?: readonly PositionRow[] | undefined;
+}
+
+/** The bodies in a sign or house with their degrees, or the empty-state sentence. */
+function BodyList({
+  rows,
+  emptyText,
+  locale,
+}: {
+  readonly rows: readonly PositionRow[];
+  readonly emptyText: string;
+  readonly locale: Locale;
+}): React.JSX.Element {
+  if (rows.length === 0) return <p className="hint">{emptyText}</p>;
+  return (
+    <p>
+      {rows
+        .map(
+          (row) =>
+            `${bodyDisplayName(row.bodyKey, locale)} ${String(row.degree)}°${String(row.minute).padStart(2, '0')}'`,
+        )
+        .join(', ')}
+    </p>
+  );
 }
 
 export function SelectionInspector({
@@ -66,19 +91,12 @@ export function SelectionInspector({
                 {t.isolationClear}
               </button>
             </div>
-            {facts.bodiesInSign !== undefined &&
-              (facts.bodiesInSign.length === 0 ? (
-                <p className="hint">{t.isolationSignEmpty}</p>
-              ) : (
-                <p>
-                  {facts.bodiesInSign
-                    .map(
-                      (row) =>
-                        `${bodyDisplayName(row.bodyKey, locale)} ${String(row.degree)}°${String(row.minute).padStart(2, '0')}'`,
-                    )
-                    .join(', ')}
-                </p>
-              ))}
+            {facts.bodiesInSign !== undefined && (
+              <BodyList rows={facts.bodiesInSign} emptyText={t.isolationSignEmpty} locale={locale} />
+            )}
+            {facts.bodiesInHouse !== undefined && (
+              <BodyList rows={facts.bodiesInHouse} emptyText={t.isolationHouseEmpty} locale={locale} />
+            )}
             {facts.positionRow !== undefined && (
               <p>
                 {signDisplayName(facts.positionRow.sign, locale)} {facts.positionRow.degree}°

@@ -2600,6 +2600,7 @@ svg text.chart-symbol-text-unicode {
    pointer cursor and a hover wash on each symbol's hit area, so it's clear what can be clicked. */
 .chart-wheel-interactive [data-body],
 .chart-wheel-interactive [data-sign],
+.chart-wheel-interactive [data-house],
 .chart-wheel-interactive [data-ring-legend],
 .chart-wheel-interactive [data-aspect-body-a] {
   cursor: pointer;
@@ -2607,7 +2608,8 @@ svg text.chart-symbol-text-unicode {
 }
 
 .chart-wheel-interactive .chart-point:hover .chart-hit-area,
-.chart-wheel-interactive .chart-sign:hover .chart-hit-area {
+.chart-wheel-interactive .chart-sign:hover .chart-hit-area,
+.chart-wheel-interactive .chart-house:hover .chart-hit-area {
   fill: color-mix(in oklab, var(--accent) 18%, transparent);
 }
 

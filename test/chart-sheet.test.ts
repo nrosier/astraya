@@ -149,8 +149,18 @@ describe('renderChartDialSvg (#511)', () => {
     const count = (markup: string, attribute: string): number => markup.split(attribute).length - 1;
     const dial = renderChartDialSvg(input).markup;
     const sheet = renderChartSheetSvg(input).markup;
-    for (const attribute of ['data-body=', 'data-sign=', 'data-aspect-body-a=']) {
+    for (const attribute of ['data-body=', 'data-sign=', 'data-house=', 'data-aspect-body-a=']) {
       expect(count(dial, attribute)).toBe(count(sheet, attribute));
     }
+  });
+
+  it('draws each house number as a selectable mark carrying its span and cusp sign (#511)', () => {
+    const { markup } = renderChartDialSvg(input);
+    expect(markup.split('data-house="').length - 1).toBe(12);
+    // houses(15): house 1 runs 15°-45° (a 30° house), its cusp in Aries.
+    expect(markup).toContain(
+      'data-house="1" data-house-start="15.0000" data-house-end="45.0000" data-house-sign="aries"',
+    );
+    expect(markup).toContain('data-body-longitude="10.5000"');
   });
 });

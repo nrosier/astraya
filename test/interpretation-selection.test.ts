@@ -222,4 +222,31 @@ describe('selectionPlacements (#415)', () => {
   it('for a body with no placements (an unknown key): nothing', () => {
     expect(select({ kind: 'body', key: 'nonexistent', ring: 0 })).toEqual([]);
   });
+
+  it('for a house cusp (#511): the sign on its cusp first, then each planet in that house, nothing from other houses', () => {
+    const items = select({ kind: 'house', house: 1 });
+    expect(items.length).toBeGreaterThan(0);
+    expect(items[0]?.placement.category).toBe('sign-on-cusp');
+    for (const item of items) {
+      const placement = item.placement;
+      expect(placement.category === 'sign-on-cusp' || placement.category === 'planet-in-house').toBe(true);
+      if (placement.category === 'sign-on-cusp' || placement.category === 'planet-in-house') {
+        expect(placement.house).toBe(1);
+      }
+    }
+    const categories = items.map((item) => item.placement.category);
+    expect(categories).toEqual(
+      [...categories].sort((a, b) => (a === 'sign-on-cusp' ? -1 : b === 'sign-on-cusp' ? 1 : 0)),
+    );
+  });
+});
+
+describe('parseSelectionKey: house cusps (#511)', () => {
+  it('reads house:<1-12> and rejects anything else', () => {
+    expect(parseSelectionKey('house:5')).toEqual({ kind: 'house', house: 5 });
+    expect(parseSelectionKey('house:12')).toEqual({ kind: 'house', house: 12 });
+    for (const bad of ['house:0', 'house:13', 'house:x', 'house:', 'house:2.5']) {
+      expect(parseSelectionKey(bad)).toBeUndefined();
+    }
+  });
 });

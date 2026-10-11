@@ -139,3 +139,55 @@ describe('ring legend dimming (#455)', () => {
     expect(legend1?.classList.contains('chart-dimmed')).toBe(false);
   });
 });
+
+describe('house selection (#511)', () => {
+  /** Three houses of 120° each; Sun at 10° (house 1), Moon at 130° (house 2), a ring-1 body at 20° (not this chart's). */
+  function houseFragment(): HTMLElement {
+    const root = document.createElement('div');
+    root.innerHTML = `
+      <svg>
+        <g class="chart-sign" data-sign="aries"><circle class="chart-hit-area" /></g>
+        <g class="chart-sign" data-sign="leo"><circle class="chart-hit-area" /></g>
+        <g class="chart-house" data-house="1" data-house-start="0.0000" data-house-end="120.0000" data-house-sign="aries"><circle class="chart-hit-area" /><text>1</text></g>
+        <g class="chart-house" data-house="2" data-house-start="120.0000" data-house-end="240.0000" data-house-sign="leo"><circle class="chart-hit-area" /><text>2</text></g>
+        <g data-body="sun" data-ring="0" data-body-sign="aries" data-body-longitude="10.0000"><text>Sun</text></g>
+        <g data-body="moon" data-ring="0" data-body-sign="leo" data-body-longitude="130.0000"><text>Moon</text></g>
+        <g data-body="mars" data-ring="1" data-body-sign="aries" data-body-longitude="20.0000"><text>Mars1</text></g>
+        <g data-aspect-body-a="sun" data-aspect-body-b="moon" data-ring-a="0" data-ring-b="0"><line class="chart-aspect" /></g>
+      </svg>
+    `;
+    return root;
+  }
+  const dimmed = (root: Element, selector: string): boolean =>
+    must(root.querySelector(selector)).classList.contains('chart-dimmed');
+
+  it('a click on a house number (or its hit area) is the house selection', () => {
+    const root = houseFragment();
+    expect(selectionKeyForTarget(must(root.querySelector('[data-house="2"] text')))).toBe('house:2');
+    expect(selectionKeyForTarget(must(root.querySelector('[data-house="1"] .chart-hit-area')))).toBe('house:1');
+  });
+
+  it('keeps that house number, its cusp sign and the bodies standing in it; dims the rest', () => {
+    const root = houseFragment();
+    applyIsolation(root, 'house:1');
+    expect(dimmed(root, '[data-house="1"]')).toBe(false);
+    expect(dimmed(root, '[data-house="2"]')).toBe(true);
+    expect(dimmed(root, '[data-sign="aries"]')).toBe(false);
+    expect(dimmed(root, '[data-sign="leo"]')).toBe(true);
+    expect(dimmed(root, '[data-body="sun"][data-ring="0"]')).toBe(false);
+    // The Moon is outside house 1 but aspects the Sun, so the connection keeps it lit (the body/sign rule).
+    expect(dimmed(root, '[data-body="moon"]')).toBe(false);
+    // Another ring's body is not standing in this chart's house.
+    expect(dimmed(root, '[data-body="mars"]')).toBe(true);
+  });
+
+  it('only a house selection dims house numbers, and clearing restores them', () => {
+    const root = houseFragment();
+    applyIsolation(root, 'body:sun@0');
+    expect(root.querySelectorAll('[data-house].chart-dimmed')).toHaveLength(0);
+    applyIsolation(root, 'house:2');
+    expect(dimmed(root, '[data-house="1"]')).toBe(true);
+    applyIsolation(root, undefined);
+    expect(root.querySelectorAll('.chart-dimmed')).toHaveLength(0);
+  });
+});

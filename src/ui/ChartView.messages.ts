@@ -213,6 +213,7 @@ const en = {
   dignityStateLabels: { ruler: 'Ruler (home sign)', exalted: 'Exalted', detriment: 'Detriment', fall: 'Fall' },
   cuspHeading: (sign: string, house: number) => `${sign} on the cusp of house ${String(house)}`,
   isolationSignEmpty: 'No planets in this sign.',
+  isolationHouseEmpty: 'No planets in this house.',
   wheelClickHint:
     'Click a planet, sign or aspect line to highlight it and its connections. Click it again, or an empty spot, to clear.',
 };
@@ -422,6 +423,7 @@ const nl: typeof en = {
   dignityStateLabels: { ruler: 'Heerser (eigen teken)', exalted: 'Verheffing', detriment: 'Schade', fall: 'Val' },
   cuspHeading: (sign: string, house: number) => `${sign} op de cusp van huis ${String(house)}`,
   isolationSignEmpty: 'Geen planeten in dit teken.',
+  isolationHouseEmpty: 'Geen planeten in dit huis.',
   wheelClickHint:
     'Klik op een planeet, teken of aspectlijn om die en zijn verbindingen uit te lichten. Klik nogmaals, of op een lege plek, om te wissen.',
 };

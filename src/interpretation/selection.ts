@@ -11,12 +11,13 @@
  *   weigh a bare degree against.
  * - **A sign:** each planet in that sign, and the house cusp(s) that fall in it. (A sign has no entry
  *   of its own: what is written is about placements *in* it.)
+ * - **A house cusp:** the sign on it, then each planet in that house.
  * - **An aspect line:** that one pair.
  */
 /**
  * @module interpretation/selection
- * @purpose Determines which interpretation entries belong to a wheel selection (a clicked planet, sign, or aspect line), so the wheel's shown text matches the Interpretation tab's report exactly.
- * @conventions Selects from the same derivePlacements/rankPlacements the report is built from, ordered by the same salience, so the wheel can never show text the report doesn't or in a different order. Selection keys are parsed from the wheel's own `body:<id>`/`sign:<name>`/`aspect:<idA>|<idB>` string format.
+ * @purpose Determines which interpretation entries belong to a wheel selection (a clicked planet, sign, house cusp, or aspect line), so the wheel's shown text matches the Interpretation tab's report exactly.
+ * @conventions Selects from the same derivePlacements/rankPlacements the report is built from, ordered by the same salience, so the wheel can never show text the report doesn't or in a different order. Selection keys are parsed from the wheel's own `body:<id>`/`sign:<name>`/`house:<n>`/`aspect:<idA>|<idB>` string format.
  * @exports WheelSelection, parseSelectionKey, selectionPlacements
  */
 import { bodyByKey } from '../astrology/bodies.js';
@@ -29,6 +30,7 @@ import { placementKey } from './schema.js';
 export type WheelSelection =
   | { readonly kind: 'body'; readonly key: string; readonly ring: number }
   | { readonly kind: 'sign'; readonly signIndex: number }
+  | { readonly kind: 'house'; readonly house: number }
   | {
       readonly kind: 'aspect';
       readonly bodyA: string;
@@ -38,7 +40,8 @@ export type WheelSelection =
     };
 
 /**
- * Reads the wheel's selection key: `body:<id>`, `sign:<lowercase sign name>` or `aspect:<idA>|<idB>`,
+ * Reads the wheel's selection key: `body:<id>`, `sign:<lowercase sign name>`, `house:<1-12>` (a house's
+ * cusp) or `aspect:<idA>|<idB>`,
  * where an id is a body key with an optional ring (`sun`, or `sun@1` — see `chart/body-id.ts`; a
  * bare key is ring 0). `undefined` for anything else, including a sign that does not exist.
  */
@@ -54,6 +57,10 @@ export function parseSelectionKey(key: string): WheelSelection | undefined {
   if (kind === 'sign') {
     const signIndex = SIGNS.findIndex((sign) => sign.name.toLowerCase() === value);
     return signIndex === -1 ? undefined : { kind: 'sign', signIndex };
+  }
+  if (kind === 'house') {
+    const house = Number(value);
+    return Number.isInteger(house) && house >= 1 && house <= 12 ? { kind: 'house', house } : undefined;
   }
   if (kind === 'aspect') {
     const [idA, idB] = value.split('|');
@@ -86,6 +93,11 @@ function matches(item: SalientPlacement, selection: WheelSelection): boolean {
         (placement.category === 'planet-in-sign' || placement.category === 'sign-on-cusp') &&
         placement.sign === selection.signIndex
       );
+    case 'house':
+      return (
+        (placement.category === 'sign-on-cusp' || placement.category === 'planet-in-house') &&
+        placement.house === selection.house
+      );
     case 'aspect':
       return (
         placement.category === 'aspect-pair' &&
@@ -104,9 +116,13 @@ const CATEGORY_ORDER: readonly string[] = [
   'aspect-pair',
 ];
 
-function categoryRank(item: SalientPlacement): number {
-  const index = CATEGORY_ORDER.indexOf(item.placement.category);
-  return index === -1 ? CATEGORY_ORDER.length : index;
+/** A house reads cusp first, then who is in it. */
+const HOUSE_CATEGORY_ORDER: readonly string[] = ['sign-on-cusp', 'planet-in-house'];
+
+function categoryRank(item: SalientPlacement, selection: WheelSelection): number {
+  const order = selection.kind === 'house' ? HOUSE_CATEGORY_ORDER : CATEGORY_ORDER;
+  const index = order.indexOf(item.placement.category);
+  return index === -1 ? order.length : index;
 }
 
 /**
@@ -132,7 +148,7 @@ export function selectionPlacements(chart: ChartData, selection: WheelSelection)
   // `rankPlacements` already orders by salience, and `sort` is stable, so within a kind that order holds.
   const ranked = rankPlacements(derivePlacements(chart))
     .filter((item) => matches(item, selection))
-    .sort((a, b) => categoryRank(a) - categoryRank(b));
+    .sort((a, b) => categoryRank(a, selection) - categoryRank(b, selection));
   if (selection.kind !== 'body') return ranked;
   const degreeSymbol = degreeSymbolPlacement(chart, selection.key);
   return degreeSymbol === undefined ? ranked : [...ranked, degreeSymbol];

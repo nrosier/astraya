@@ -177,4 +177,45 @@ describe('a table row selects on the wheel (#418)', () => {
     await press(showButton(container, 'Toon Zon op de horoscoop'));
     expect(container.querySelector('.chart-selection-bar')?.textContent).toContain('Geselecteerd op de horoscoop:');
   });
+
+  it('a Houses row’s button selects that house’s cusp: wheel, inspector heading, marked row, and back (#511)', async () => {
+    const container = await mount();
+    await open(container, 'positions');
+    const button = showButton(container, 'Show House 5 on the chart');
+    expect(button?.getAttribute('aria-pressed')).toBe('false');
+    await press(button);
+
+    expect(dimmed(container)).toBeGreaterThan(0);
+    expect(container.querySelector('.chart-wheel [data-house="5"]')?.classList.contains('chart-dimmed')).toBe(false);
+    expect(container.querySelector('.chart-wheel [data-house="6"]')?.classList.contains('chart-dimmed')).toBe(true);
+    expect(container.querySelector('tr.data-table-row-selected')?.textContent).toContain('5');
+    expect(showButton(container, 'Show House 5 on the chart')?.getAttribute('aria-pressed')).toBe('true');
+    expect(container.querySelector('.chart-selection-bar')?.textContent).toMatch(/on the cusp of house 5/);
+
+    // The inspector says the same, with the sign's meaning for that cusp.
+    const goTo = Array.from(container.querySelectorAll('.chart-selection-bar button')).find(
+      (b) => b.textContent === 'Go to the chart',
+    );
+    await press(goTo);
+    expect(container.querySelector('.selection-inspector-facts strong')?.textContent).toMatch(/on the cusp of house 5/);
+
+    // Pressing the same button again clears it everywhere.
+    await open(container, 'positions');
+    await press(showButton(container, 'Show House 5 on the chart'));
+    expect(dimmed(container)).toBe(0);
+    expect(container.querySelector('.chart-selection-bar')).toBeNull();
+  });
+
+  it('a click on a house number on the wheel selects the same house the table marks', async () => {
+    const container = await mount();
+    const house = container.querySelector<SVGElement>('.chart-wheel [data-house="3"]');
+    if (house === null) throw new Error('fixture bug: no house 3 on the wheel');
+    await act(async () => {
+      house.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+    expect(container.querySelector('.selection-inspector-facts strong')?.textContent).toMatch(/house 3/);
+    await open(container, 'positions');
+    expect(showButton(container, 'Show House 3 on the chart')?.getAttribute('aria-pressed')).toBe('true');
+  });
 });
