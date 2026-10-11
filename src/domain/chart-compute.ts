@@ -187,9 +187,11 @@ interface AspectPoint {
  *
  * Conventions: point-to-body only (points are never aspected to each other: Asc-MC is latitude geometry, and a lot to
  * the Ascendant is just the Sun-Moon aspect); the planet orbs of `orbFor`, with the luminary bonus from the body side
- * only. Source: the Solar Fire 9 User Guide (Esoteric Technologies, 2014), "Editing an Aspect Set" — luminary orbs
- * apply whenever one of the two points is the Sun or Moon, other orbs otherwise, and its Arabic Parts report lists
- * aspects to chart points with those same orbs (docs/references/SolarFire_v9.pdf). Applying/separating is the
+ * only. Consulted (2026-10-11, #516) to check that convention, since no classical source gives lots or the Vertex
+ * orbs of their own: the Solar Fire 9 User Guide (Esoteric Technologies, 2014), "Editing an Aspect Set" — luminary
+ * orbs apply whenever one of the two points is the Sun or Moon, other orbs otherwise, and its Arabic Parts report
+ * lists aspects to chart points with those same orbs. The manual is copyrighted and is not kept in the repo; it says
+ * nothing about orbs coming from "the aspecting planet". Applying/separating is the
  * diurnal sweep of the point, not an own-motion claim: this follows the Astro-Seek reference sheet (#413), whereas
  * Solar Fire holds chart angles stationary, so the two can differ on applying versus separating.
  */
