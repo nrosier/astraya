@@ -105,13 +105,20 @@ import { CHART_VIEWS, chartViewLabels, type ChartViewKind } from './chart-sectio
 import { chartHref, personHref } from './route.js';
 import { ChartTypeSelector, changeChartView } from './ChartTypeSelector.js';
 import { ChartViewNav } from './ChartViewNav.js';
-import { bodyId } from '../chart/body-id.js';
 import { parseSelectionKey } from '../interpretation/selection.js';
-import { selectionKey } from '../interpretation/selection-key.js';
 import { buildFocusObjectContext } from '../interpretation/focus-context.js';
 import { AspectMatrix } from './AspectMatrix.js';
 import { useCalculationBasisLine } from './calculation-basis.js';
 import { EmphasisGrid } from './EmphasisGrid.js';
+import {
+  aspectSelectionKey,
+  bodySelectionKey,
+  derivedSelectionKey,
+  houseSelectionKey,
+  selectColumn,
+  signSelectionKey,
+  type TableSelection,
+} from './table-selection.js';
 import { SelectionInspector, type WheelIsolationFacts } from './SelectionInspector.js';
 import { useRulershipChoice } from './rulership-setting.js';
 import type { RulershipChoice } from '../astrology/rulership.js';
@@ -145,65 +152,6 @@ const degreeColumns = <
   { key: 'minute', label: t.minLabel, valueOf: (row) => row.minute },
   { key: 'second', label: t.secLabel, valueOf: (row) => row.second },
 ];
-
-/**
- * What a table needs to be linked to the wheel (#418): the wheel's current selection, how to toggle one, and
- * which bodies the wheel actually draws (an Ascendant row has no body symbol to select). Absent when the
- * table stands alone, as in the PDF export.
- */
-interface TableSelection {
-  readonly selectedKey: string | undefined;
-  readonly onToggle: (key: string) => void;
-  readonly selectableBodies: ReadonlySet<string>;
-}
-
-/** The wheel's selection key for a body, or an aspect between two. */
-const bodySelectionKey = (bodyKey: string): string => selectionKey.body(bodyId(bodyKey, 0));
-/** The wheel's selection key for a sign: its lowercase name, as `data-sign` carries it. */
-const signSelectionKey = (signName: string): string => selectionKey.sign(signName);
-/** The selection key for a derived point (#511): not drawn on the wheel, so only a table or a link makes it. */
-const derivedSelectionKey = (pointKey: string | undefined): string | undefined =>
-  pointKey === undefined ? undefined : selectionKey.derived(pointKey);
-/** The wheel's selection key for a house's cusp (#511). */
-const houseSelectionKey = (house: number): string => selectionKey.house(house);
-const aspectSelectionKey = (row: AspectRow): string =>
-  selectionKey.aspect(bodyId(row.bodyAKey, 0), bodyId(row.bodyBKey, 0));
-
-/** The column of "show on the chart" buttons: a real button per row, so the keyboard reaches the wheel's selection too. */
-function selectColumn<T>(
-  t: typeof chartViewMessages.en,
-  selection: TableSelection,
-  keyOf: (row: T) => string | undefined,
-  nameOf: (row: T) => string,
-  labels: { readonly key: string; readonly column: string; readonly button: string } = {
-    key: 'select',
-    column: t.showOnChartColumn,
-    button: t.showOnChartButton,
-  },
-): TableColumn<T> {
-  return {
-    key: labels.key,
-    label: labels.column,
-    valueOf: (row) => (keyOf(row) !== undefined && keyOf(row) === selection.selectedKey ? 0 : 1),
-    renderCell: (row) => {
-      const key = keyOf(row);
-      if (key === undefined) return null;
-      return (
-        <button
-          type="button"
-          className="quiet"
-          aria-pressed={selection.selectedKey === key}
-          aria-label={t.showOnChart(nameOf(row))}
-          onClick={() => {
-            selection.onToggle(key);
-          }}
-        >
-          {labels.button}
-        </button>
-      );
-    },
-  };
-}
 
 /**
  * A body's symbol in a table cell, in the class the reader chose (#419): a small drawn glyph, the Unicode

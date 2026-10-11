@@ -4112,3 +4112,63 @@ svg text.chart-symbol-text-unicode {
     transition: none;
   }
 }
+
+/* Motion preference (#510): the reader's own "Reduce motion" (a root attribute) and the operating system's setting
+   both switch off every transition, animation and smooth scroll, app-wide, not only where a rule asked. */
+:root[data-motion='reduced'] *,
+:root[data-motion='reduced'] *::before,
+:root[data-motion='reduced'] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Density preference (#510): compact tightens forms and tables. It never shrinks a touch target: on a coarse pointer
+   the standard sizes come back, the same rule the compact control size follows. */
+:root[data-density='compact'] .primitive-field {
+  gap: var(--space-1);
+  margin-bottom: var(--space-2);
+}
+
+:root[data-density='compact'] .primitive-field input:not([type='checkbox']):not([type='radio']),
+:root[data-density='compact'] .primitive-field select,
+:root[data-density='compact'] .primitive-field textarea {
+  padding: 0.3rem 0.5rem;
+  font-size: var(--text-sm);
+}
+
+:root[data-density='compact'] .data-table th,
+:root[data-density='compact'] .data-table td {
+  padding: 0.3rem 0.6rem;
+}
+
+@media (pointer: coarse) {
+  :root[data-density='compact'] .primitive-field {
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
+  }
+
+  :root[data-density='compact'] .primitive-field input:not([type='checkbox']):not([type='radio']),
+  :root[data-density='compact'] .primitive-field select,
+  :root[data-density='compact'] .primitive-field textarea {
+    padding: 0.55rem 0.7rem;
+    font-size: 1rem;
+  }
+
+  :root[data-density='compact'] .data-table th,
+  :root[data-density='compact'] .data-table td {
+    padding: 0.5rem 0.85rem;
+  }
+}

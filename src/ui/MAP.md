@@ -11,6 +11,8 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `App.tsx` + `App.messages.ts` — Root router + sticky header + lazy-loading boundary. Deps: `route`, `session-context`, `store-context`, `person-screens`.
 - `EmphasisGrid.tsx` — The element x modality grid view: the sheet export's drawing, shown on screen beside its table. Deps: `chart/emphasis-grid`, `chart/sheet-geometry`.
 - `calculation-basis.ts` + `calculation-basis.messages.ts` — The calculation-basis line (profile name + whether it is Astraya's default, the saved default, or changed for this chart) shown on chart pages. Deps: `chart/calculation-profiles`, `default-calculation-profile`, `extended-settings-summary`, `ExtendedSettingsPanel.messages`.
+- `table-selection.tsx` — The table side of the wheel selection: `TableSelection`, each row kind's selection key, and the shared "Show on the chart" button column. Deps: `interpretation/selection-key`, `chart/body-id`, `table-sort`.
+- `appearance-settings.ts` — Motion (follow the system / reduce) and Density (standard / compact) device preferences, applied as root attributes. Deps: none.
 - `AspectMatrix.tsx` — The aspect matrix view: the sheet's grid with cells that select an aspect pair on the wheel. Deps: `chart/aspect-matrix`, `interpretation/selection-key`, `wheel-interaction`.
 - `AppNav.tsx` + `AppNav.messages.ts` — Primary navigation (person tabs, Tools/Export menus). Deps: `person-nav`, `tools-nav`, `export-registry`, `domain/full-export`.
 - `AstroChartWheel.tsx` — Dev-only reference wheel via `@astrodraw/astrochart`. Deps: `chart/astrochart-adapter`.

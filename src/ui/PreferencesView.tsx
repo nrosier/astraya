@@ -28,6 +28,16 @@ import { useEffect, useState } from 'react';
 import { buildFullExport, fullExportFilename, peopleCsvFilename, peopleToCsv } from '../domain/full-export.js';
 import { APP_VERSION } from '../version.js';
 import type { PreferencesSection } from './route.js';
+import {
+  DENSITY_CHOICES,
+  isDensityChoice,
+  isMotionChoice,
+  MOTION_CHOICES,
+  prefersReducedMotion,
+  useDensity,
+  useMotion,
+} from './appearance-settings.js';
+import { Select } from './primitives/Select.js';
 import { downloadText } from './download.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { LanguageToggle } from './LanguageToggle.js';
@@ -50,8 +60,7 @@ interface ExportStatus {
 function revealSection(section: PreferencesSection): void {
   const heading = document.getElementById(`preferences-${section}`);
   if (heading === null) return;
-  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  heading.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+  heading.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' });
   heading.focus({ preventScroll: true });
 }
 
@@ -59,6 +68,8 @@ export function PreferencesView({
   section,
 }: { readonly section?: PreferencesSection | undefined } = {}): React.JSX.Element {
   const t = useMessages(preferencesViewMessages);
+  const [motion, setMotion] = useMotion();
+  const [density, setDensity] = useDensity();
   const shared = useMessages(sharedMessages);
   const store = useOptionalStore();
   const { provider } = useEphemerisProvider();
@@ -133,6 +144,24 @@ export function PreferencesView({
       <p>{t.themeLabel}</p>
       <ThemeToggle />
       <SymbolSetting />
+      <Select
+        label={t.motionLabel}
+        value={motion}
+        help={t.motionHint}
+        options={MOTION_CHOICES.map((choice) => ({ value: choice, label: t.motionOptions[choice] }))}
+        onChange={(value) => {
+          if (isMotionChoice(value)) setMotion(value);
+        }}
+      />
+      <Select
+        label={t.densityLabel}
+        value={density}
+        help={t.densityHint}
+        options={DENSITY_CHOICES.map((choice) => ({ value: choice, label: t.densityOptions[choice] }))}
+        onChange={(value) => {
+          if (isDensityChoice(value)) setDensity(value);
+        }}
+      />
 
       <h2 id="preferences-data" tabIndex={-1}>
         {t.dataHeading}

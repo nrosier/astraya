@@ -62,6 +62,40 @@ test('a section link opens Preferences at that heading and moves focus there (#5
   await expect(page.getByRole('heading', { name: 'Preferences', level: 1 })).toHaveCount(0);
 });
 
+test('Motion and Density are device preferences: applied at once, kept across a reload, and compact never shrinks touch targets (#510)', async ({
+  page,
+}) => {
+  test.setTimeout(60_000);
+  await gotoAndSettle(page, `${baseUrl}/#/preferences/appearance`);
+  const root = page.locator('html');
+  await expect(root).not.toHaveAttribute('data-motion', /.*/);
+  await expect(root).not.toHaveAttribute('data-density', /.*/);
+
+  await page.getByLabel('Motion', { exact: true }).selectOption('reduced');
+  await page.getByLabel('Density', { exact: true }).selectOption('compact');
+  await expect(root).toHaveAttribute('data-motion', 'reduced');
+  await expect(root).toHaveAttribute('data-density', 'compact');
+  // Reduce motion really switches transitions off, everywhere.
+  const duration = await page.evaluate(
+    "getComputedStyle(document.querySelector('.primitive-field select')).transitionDuration",
+  );
+  expect(duration).toBe('1e-05s');
+
+  await page.reload();
+  await expect(root).toHaveAttribute('data-motion', 'reduced');
+  await expect(root).toHaveAttribute('data-density', 'compact');
+  await expect(page.getByLabel('Motion', { exact: true })).toHaveValue('reduced');
+
+  // A compact select is tighter than a standard one on a fine pointer…
+  const density = page.getByLabel('Density', { exact: true });
+  const heightOf = async (): Promise<number> => (await density.boundingBox())?.height ?? 0;
+  await expect.poll(heightOf).toBeGreaterThan(0);
+  const compact = await heightOf();
+  await density.selectOption('standard');
+  await expect(root).not.toHaveAttribute('data-density', /.*/);
+  await expect.poll(heightOf).toBeGreaterThan(compact);
+});
+
 test('the rulers choice changed here is the same one chart screens read, and survives a reload', async ({ page }) => {
   test.setTimeout(60_000);
   await gotoAndSettle(page, `${baseUrl}/#/people`);

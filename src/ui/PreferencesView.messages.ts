@@ -16,6 +16,13 @@ const en = {
   rulersSubtitle: 'Which planets rule which signs, wherever a ruler, dignity, or dispositor is shown.',
   appearanceHeading: 'Appearance & accessibility',
   themeLabel: 'Light, dark, or follow the system.',
+  motionLabel: 'Motion',
+  motionHint:
+    'Reduce motion switches off transitions and smooth scrolling. Your system’s own setting is always respected as well.',
+  motionOptions: { system: 'Follow the system', reduced: 'Reduce motion' },
+  densityLabel: 'Density',
+  densityHint: 'Compact tightens the spacing of forms and tables. Touch screens keep full-size controls either way.',
+  densityOptions: { standard: 'Standard', compact: 'Compact' },
   dataHeading: 'Data & privacy',
   exportEverythingHint:
     'Every person on this device with their birth record and natal chart data, as one JSON file, or just the people list as a spreadsheet.',
@@ -40,6 +47,14 @@ const nl: typeof en = {
     'Welke planeten welke tekens heersen, overal waar een heerser, waardigheid of dispositor wordt getoond.',
   appearanceHeading: 'Weergave & toegankelijkheid',
   themeLabel: 'Licht, donker, of het systeem volgen.',
+  motionLabel: 'Beweging',
+  motionHint:
+    'Minder beweging zet overgangen en vloeiend scrollen uit. De instelling van je systeem wordt altijd ook gerespecteerd.',
+  motionOptions: { system: 'Het systeem volgen', reduced: 'Minder beweging' },
+  densityLabel: 'Dichtheid',
+  densityHint:
+    'Compact maakt formulieren en tabellen krapper. Aanraakschermen houden in beide gevallen volledige bedieningselementen.',
+  densityOptions: { standard: 'Standaard', compact: 'Compact' },
   dataHeading: 'Gegevens & privacy',
   exportEverythingHint:
     'Elke persoon op dit apparaat met zijn of haar geboortegegevens en de gegevens van het geboortehoroscoop, als één JSON-bestand, of alleen de personenlijst als spreadsheet.',

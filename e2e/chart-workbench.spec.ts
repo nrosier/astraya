@@ -206,6 +206,13 @@ test('a derived point is selectable from the Placements table by keyboard, with 
   await expect(facts.locator('.chart-isolation-head strong')).toHaveText('Part of Spirit');
   await expect(facts).toContainText(/°\d\d' — House \d+/);
   await expect(facts.locator('.chart-isolation-interpretation')).toBeVisible();
+  // The corpus now carries real entries for the derived points: the meaning is written text, not the mechanical
+  // "Part of Spirit in Cancer." fallback sentence.
+  const meaning = page
+    .locator('.selection-inspector')
+    .getByText(/^The concerns of the mind and will/)
+    .first();
+  await expect(meaning).toBeVisible();
 
   await page.getByRole('link', { name: 'Placements', exact: true }).click();
   await show.focus();
