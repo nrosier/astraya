@@ -106,7 +106,11 @@ const en = {
   lunarNodesLabel: 'Lunar nodes:',
   nodeHelp: 'Mean and true differ by up to about 1.5°.',
   aspectsToLunarNodes: 'Draw aspects to the lunar nodes',
-  aspectsToHint: "Aspects to the Part of Fortune, Vertex, Ascendant and Midheaven aren't supported yet.",
+  aspectsToVertex: 'Draw aspects to the Vertex',
+  aspectsToPartOfFortune: 'Draw aspects to the Part of Fortune',
+  aspectsToPartOfSpirit: 'Draw aspects to the Part of Spirit',
+  aspectsToHint:
+    'The Ascendant and Midheaven always aspect the bodies. The Vertex and the two parts do so here, to bodies only, never to each other or the angles; a part is not aspected to the luminary it is built from, as that repeats an Ascendant aspect.',
 
   aspectsLegend: 'Aspects and orbs',
   scaleLabel: 'Orb scale: ',
@@ -242,7 +246,11 @@ const nl: typeof en = {
   lunarNodesLabel: 'Maansknopen:',
   nodeHelp: 'Gemiddeld en waar verschillen tot ongeveer 1,5°.',
   aspectsToLunarNodes: 'Aspecten naar de maansknopen tekenen',
-  aspectsToHint: 'Aspecten naar het Fortuna-punt, Vertex, Ascendant en Midheaven worden nog niet ondersteund.',
+  aspectsToVertex: 'Aspecten naar de Vertex tekenen',
+  aspectsToPartOfFortune: 'Aspecten naar het Fortuna-punt tekenen',
+  aspectsToPartOfSpirit: 'Aspecten naar het Part of Spirit tekenen',
+  aspectsToHint:
+    'De Ascendant en het Midheaven maken altijd aspecten met de lichamen. De Vertex en de twee punten doen dat hier, alleen met lichamen, nooit met elkaar of met de assen; een punt maakt geen aspect met het lichtgevend lichaam waaruit het is opgebouwd, omdat dat een Ascendant-aspect herhaalt.',
 
   aspectsLegend: 'Aspecten en orbs',
   scaleLabel: 'Orb-schaal: ',

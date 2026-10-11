@@ -39,6 +39,9 @@ export interface ExtendedSettings {
   readonly aspectsToChiron: boolean;
   readonly aspectsToLilith: boolean;
   readonly aspectsToLunarNodes: boolean;
+  readonly aspectsToVertex: boolean;
+  readonly aspectsToPartOfFortune: boolean;
+  readonly aspectsToPartOfSpirit: boolean;
 }
 
 /** Placidus, tropical, every default as documented on `DEFAULT_ORB_CONFIG` and `PointVisibilityOptions` — matches what a chart looks like with the panel never opened. */
@@ -57,6 +60,9 @@ export const DEFAULT_EXTENDED_SETTINGS: ExtendedSettings = {
   aspectsToChiron: false,
   aspectsToLilith: false,
   aspectsToLunarNodes: false,
+  aspectsToVertex: false,
+  aspectsToPartOfFortune: false,
+  aspectsToPartOfSpirit: false,
 };
 
 /** The half of `ExtendedSettings` that changes what `computeChartData` returns. */
@@ -76,6 +82,9 @@ export function toChartCalculationOptions(settings: ExtendedSettings): ChartCalc
       chiron: settings.aspectsToChiron,
       lilith: settings.aspectsToLilith,
       lunarNodes: settings.aspectsToLunarNodes,
+      vertex: settings.aspectsToVertex,
+      partOfFortune: settings.aspectsToPartOfFortune,
+      partOfSpirit: settings.aspectsToPartOfSpirit,
     },
   };
 }

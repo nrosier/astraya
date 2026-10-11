@@ -61,6 +61,9 @@ export type CalculationProfile = Pick<
   | 'aspectsToChiron'
   | 'aspectsToLilith'
   | 'aspectsToLunarNodes'
+  | 'aspectsToVertex'
+  | 'aspectsToPartOfFortune'
+  | 'aspectsToPartOfSpirit'
 > & { readonly rulership: RulershipChoice };
 
 /** Fields every built-in profile shares today — five major aspects, no minors, mean node/Lilith, unscaled standard orbs, no aspects to the non-core points, midpoints never shown. */
@@ -74,6 +77,9 @@ const COMMON: Pick<
   | 'aspectsToChiron'
   | 'aspectsToLilith'
   | 'aspectsToLunarNodes'
+  | 'aspectsToVertex'
+  | 'aspectsToPartOfFortune'
+  | 'aspectsToPartOfSpirit'
 > = {
   orbScalePercent: 0,
   enabledMinorAspects: [],
@@ -83,6 +89,9 @@ const COMMON: Pick<
   aspectsToChiron: false,
   aspectsToLilith: false,
   aspectsToLunarNodes: false,
+  aspectsToVertex: false,
+  aspectsToPartOfFortune: false,
+  aspectsToPartOfSpirit: false,
 };
 
 export const CALCULATION_PROFILES: Readonly<Record<CalculationProfileId, CalculationProfile>> = {
@@ -133,6 +142,9 @@ export function applyCalculationProfile(settings: ExtendedSettings, id: Calculat
     aspectsToChiron: profile.aspectsToChiron,
     aspectsToLilith: profile.aspectsToLilith,
     aspectsToLunarNodes: profile.aspectsToLunarNodes,
+    aspectsToVertex: profile.aspectsToVertex,
+    aspectsToPartOfFortune: profile.aspectsToPartOfFortune,
+    aspectsToPartOfSpirit: profile.aspectsToPartOfSpirit,
   };
 }
 
@@ -167,6 +179,9 @@ export function matchCalculationProfile(
       settings.aspectsToChiron === profile.aspectsToChiron &&
       settings.aspectsToLilith === profile.aspectsToLilith &&
       settings.aspectsToLunarNodes === profile.aspectsToLunarNodes &&
+      settings.aspectsToVertex === profile.aspectsToVertex &&
+      settings.aspectsToPartOfFortune === profile.aspectsToPartOfFortune &&
+      settings.aspectsToPartOfSpirit === profile.aspectsToPartOfSpirit &&
       rulership === profile.rulership
     );
   });

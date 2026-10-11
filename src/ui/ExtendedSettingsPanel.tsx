@@ -568,6 +568,36 @@ export function ExtendedSettingsPanel({
               />{' '}
               {t.aspectsToLunarNodes}
             </label>
+            <label className="settings-card-indent">
+              <input
+                type="checkbox"
+                checked={draft.aspectsToVertex}
+                onChange={(event) => {
+                  patch({ aspectsToVertex: event.target.checked });
+                }}
+              />{' '}
+              {t.aspectsToVertex}
+            </label>
+            <label className="settings-card-indent">
+              <input
+                type="checkbox"
+                checked={draft.aspectsToPartOfFortune}
+                onChange={(event) => {
+                  patch({ aspectsToPartOfFortune: event.target.checked });
+                }}
+              />{' '}
+              {t.aspectsToPartOfFortune}
+            </label>
+            <label className="settings-card-indent">
+              <input
+                type="checkbox"
+                checked={draft.aspectsToPartOfSpirit}
+                onChange={(event) => {
+                  patch({ aspectsToPartOfSpirit: event.target.checked });
+                }}
+              />{' '}
+              {t.aspectsToPartOfSpirit}
+            </label>
             <p className="hint">{t.aspectsToHint}</p>
           </fieldset>
 

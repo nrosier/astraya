@@ -26,7 +26,7 @@ import { midpointOf } from '../astrology/midpoints.js';
 import { DEFAULT_RULERSHIP_CHOICE, primaryRulerOf, rulersOf, type RulershipChoice } from '../astrology/rulership.js';
 import { degreesInSign, signIndex, signOf, type Element, type Modality } from '../astrology/signs.js';
 import { formatCoordinate } from '../ui/format.js';
-import { housesAreDefined, type ChartData } from './chart-compute.js';
+import { housesAreDefined, type AspectAngle, type ChartData } from './chart-compute.js';
 import { derivedPointLongitude } from './derived-point-position.js';
 import type { Aspect } from '../astrology/aspects.js';
 import type { Locale } from '../interpretation/schema.js';
@@ -688,6 +688,13 @@ export function chartSheetInput(
     { key: 'asc', label: 'AC', name: 'ASC', longitude: data.houses.ascendant },
     { key: 'mc', label: 'MC', name: 'MC', longitude: data.houses.midheaven },
   ];
+  // The Vertex and the two parts get a matrix row only when they aspect something (#516): their `aspectsTo` flag is not on `ChartData`.
+  const aspectedPoints = new Set((data.angleAspects ?? []).map((aspect) => aspect.angle));
+  const extraPoints = [
+    { key: 'vertex', label: 'VX', name: 'Vertex', longitude: data.houses.vertex },
+    { key: 'partOfFortune', label: 'PF', name: 'Part of Fortune', longitude: data.partOfFortune },
+    { key: 'partOfSpirit', label: 'PS', name: 'Part of Spirit', longitude: data.partOfSpirit },
+  ].filter((point) => aspectedPoints.has(point.key as AspectAngle));
   const keyOf = (body: BodyId): string => bodyById(body)?.key ?? String(body);
   return {
     metaLines,
@@ -706,6 +713,7 @@ export function chartSheetInput(
           };
         }),
         ...angleBodies,
+        ...extraPoints,
       ],
       aspects: [
         ...data.aspects.map((aspect) => ({
