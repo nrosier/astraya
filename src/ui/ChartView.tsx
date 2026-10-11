@@ -249,12 +249,14 @@ export function positionColumns(
       key: 'anaretic',
       label: t.anareticLabel,
       valueOf: (row) => row.anaretic,
+      align: 'center',
       render: (row) => (row.anaretic ? '✓' : ''),
     },
     {
       key: 'outOfBounds',
       label: t.outOfBoundsLabel,
       valueOf: (row) => row.outOfBounds ?? false,
+      align: 'center',
       render: (row) => (row.outOfBounds === true ? '✓' : ''),
     },
   ];
@@ -354,6 +356,7 @@ export function dignityColumns(t: typeof chartViewMessages.en, locale: Locale): 
       label: t.rulerLabel,
       labelTooltip: t.rulerTooltip,
       valueOf: (row) => row.ruler,
+      align: 'center',
       render: (row) => (row.ruler ? '✓' : ''),
     },
     {
@@ -361,6 +364,7 @@ export function dignityColumns(t: typeof chartViewMessages.en, locale: Locale): 
       label: t.exaltedLabel,
       labelTooltip: t.exaltedTooltip,
       valueOf: (row) => row.exalted,
+      align: 'center',
       render: (row) => (row.exalted ? '✓' : ''),
     },
     {
@@ -368,6 +372,7 @@ export function dignityColumns(t: typeof chartViewMessages.en, locale: Locale): 
       label: t.detrimentLabel,
       labelTooltip: t.detrimentTooltip,
       valueOf: (row) => row.detriment,
+      align: 'center',
       render: (row) => (row.detriment ? '✓' : ''),
     },
     {
@@ -375,6 +380,7 @@ export function dignityColumns(t: typeof chartViewMessages.en, locale: Locale): 
       label: t.fallLabel,
       labelTooltip: t.fallTooltip,
       valueOf: (row) => row.fall,
+      align: 'center',
       render: (row) => (row.fall ? '✓' : ''),
     },
     {
@@ -382,6 +388,7 @@ export function dignityColumns(t: typeof chartViewMessages.en, locale: Locale): 
       label: t.triplicityLabel,
       labelTooltip: t.triplicityTooltip,
       valueOf: (row) => row.triplicity,
+      align: 'center',
       render: (row) => (row.triplicity ? '✓' : ''),
     },
     {
@@ -389,6 +396,7 @@ export function dignityColumns(t: typeof chartViewMessages.en, locale: Locale): 
       label: t.boundLabel,
       labelTooltip: t.boundTooltip,
       valueOf: (row) => row.bound,
+      align: 'center',
       render: (row) => (row.bound ? '✓' : ''),
     },
     {
@@ -396,6 +404,7 @@ export function dignityColumns(t: typeof chartViewMessages.en, locale: Locale): 
       label: t.faceLabel,
       labelTooltip: t.faceTooltip,
       valueOf: (row) => row.face,
+      align: 'center',
       render: (row) => (row.face ? '✓' : ''),
     },
     { key: 'points', label: t.dignityPointsLabel, valueOf: (row) => row.points },
@@ -404,6 +413,7 @@ export function dignityColumns(t: typeof chartViewMessages.en, locale: Locale): 
       label: t.peregrineLabel,
       labelTooltip: t.peregrineTooltip,
       valueOf: (row) => row.peregrine,
+      align: 'center',
       render: (row) => (row.peregrine ? '✓' : ''),
     },
   ];
@@ -443,6 +453,7 @@ export function dispositorColumns(
       key: 'mutualReception',
       label: t.mutualReceptionLabel,
       valueOf: (row) => row.mutualReception,
+      align: 'center',
       render: (row) => (row.mutualReception ? '✓' : ''),
     },
   ];

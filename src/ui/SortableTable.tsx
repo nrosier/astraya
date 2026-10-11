@@ -19,7 +19,18 @@ import { downloadText } from './download.js';
 import { useMessages } from './messages.js';
 import { Tooltip } from './primitives/Tooltip.js';
 import { sortableTableMessages } from './SortableTable.messages.js';
-import { rowsToCsv, rowsToTsv, sortRows, toggleSort, type SortState, type TableColumn } from './table-sort.js';
+import {
+  columnAlign,
+  rowsToCsv,
+  rowsToTsv,
+  sortRows,
+  toggleSort,
+  type SortState,
+  type TableColumn,
+} from './table-sort.js';
+
+/** Past this many rows a table scrolls inside its own frame, so its header can stay in view while the rows pass. */
+const TALL_TABLE_ROWS = 12;
 
 export function SortableTable<T>({
   caption,
@@ -46,9 +57,7 @@ export function SortableTable<T>({
   // buttons can sit next to it without ending up inside the table's accessibility tree) —
   // aria-labelledby recovers the same table/heading association a real <caption> gives (#69).
   const captionId = useId();
-  // Shared prefix for the sr-only tooltip-description spans (#456) — one id per column, derived
-  // from this plus the column key, so each gets a stable, unique id without a useId() call per
-  // column (columns.map runs every render; useId() must be called the same number of times).
+  const aligns = new Map(columns.map((column) => [column.key, columnAlign(column, sorted)]));
 
   const copy = (): void => {
     void navigator.clipboard.writeText(rowsToTsv(columns, sorted)).then(
@@ -81,7 +90,9 @@ export function SortableTable<T>({
           </button>
         </div>
       </div>
-      <div className="data-table-scroll">
+      <div
+        className={sorted.length > TALL_TABLE_ROWS ? 'data-table-scroll data-table-scroll-tall' : 'data-table-scroll'}
+      >
         <table aria-labelledby={captionId}>
           <thead>
             <tr>
@@ -93,6 +104,7 @@ export function SortableTable<T>({
                   <th
                     key={column.key}
                     scope="col"
+                    data-align={aligns.get(column.key)}
                     aria-sort={
                       sort?.column === column.key ? (sort.direction === 'asc' ? 'ascending' : 'descending') : undefined
                     }
@@ -136,7 +148,11 @@ export function SortableTable<T>({
                   aria-current={selected ? 'true' : undefined}
                 >
                   {columns.map((column) => (
-                    <td key={column.key} className={column.wrapText ? 'data-table-cell-wrap' : undefined}>
+                    <td
+                      key={column.key}
+                      data-align={aligns.get(column.key)}
+                      className={column.wrapText ? 'data-table-cell-wrap' : undefined}
+                    >
                       {column.renderCell
                         ? column.renderCell(row)
                         : column.render

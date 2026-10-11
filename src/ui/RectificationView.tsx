@@ -14,6 +14,7 @@
  * @conventions Not person-scoped (optional pre-fill from a stored person); uses RectificationView.messages.ts for en/nl text via useMessages().
  * @exports RectificationView
  */
+import { Disclosure } from './primitives/Disclosure.js';
 import { DateField } from './primitives/DateField.js';
 import { Select } from './primitives/Select.js';
 import { TextField } from './primitives/TextField.js';
@@ -350,29 +351,35 @@ export function RectificationView(): React.JSX.Element {
           />
           <h2>{t.detailsHeading}</h2>
           {top.slice(0, DETAILED).map((candidate) => (
-            <details key={candidate.jd} className="rectification-detail">
-              <summary>{t.detailsSummary(candidate.localTime, candidate.score.toFixed(2))}</summary>
-              {candidate.contacts.length === 0 ? (
-                <p className="hint">{t.noContacts}</p>
-              ) : (
-                <ul>
-                  {result.events.map((event, eventIndex) => {
-                    const forEvent = candidate.contacts.filter((contact) => contact.eventIndex === eventIndex);
-                    if (forEvent.length === 0) return null;
-                    return (
-                      <li key={eventIndex}>
-                        <strong>{t.forEvent(eventIndex + 1, event.label)}</strong>
-                        <ul>
-                          {forEvent.map((contact, contactIndex) => (
-                            <li key={contactIndex}>{describeContact(contact)}</li>
-                          ))}
-                        </ul>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </details>
+            <div key={candidate.jd} className="rectification-detail">
+              <Disclosure
+                title={t.detailsSummary(candidate.localTime, candidate.score.toFixed(2))}
+                summary={t.contactCount(candidate.contacts.length)}
+                showLabel={t.showDetails}
+                hideLabel={t.hideDetails}
+              >
+                {candidate.contacts.length === 0 ? (
+                  <p className="hint">{t.noContacts}</p>
+                ) : (
+                  <ul>
+                    {result.events.map((event, eventIndex) => {
+                      const forEvent = candidate.contacts.filter((contact) => contact.eventIndex === eventIndex);
+                      if (forEvent.length === 0) return null;
+                      return (
+                        <li key={eventIndex}>
+                          <strong>{t.forEvent(eventIndex + 1, event.label)}</strong>
+                          <ul>
+                            {forEvent.map((contact, contactIndex) => (
+                              <li key={contactIndex}>{describeContact(contact)}</li>
+                            ))}
+                          </ul>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </Disclosure>
+            </div>
           ))}
         </>
       )}

@@ -9,7 +9,7 @@
  * @module ui/table-sort
  * @purpose Generic, domain-agnostic column sorting plus TSV/CSV serialization backing SortableTable (#44) and every other data table in the app.
  * @conventions Deliberately free of any chart/astrology knowledge — a TableColumn is just a key, label, and value accessor, so the same pair of helpers backs every table the app adds; `render`/`renderCell` are display-only and never used for copy/CSV/TSV output, which always use `valueOf`/`render` text.
- * @exports SortDirection, SortState, toggleSort, CellValue, TableColumn, sortRows, rowsToTsv, rowsToCsv
+ * @exports SortDirection, SortState, toggleSort, CellValue, ColumnAlign, columnAlign, TableColumn, sortRows, rowsToTsv, rowsToCsv
  */
 
 export type SortDirection = 'asc' | 'desc';
@@ -29,6 +29,9 @@ import type { ReactNode } from 'react';
 
 export type CellValue = string | number | boolean;
 
+/** How a column's cells and header line up: numbers read down a column when they share their right edge. */
+export type ColumnAlign = 'start' | 'end' | 'center';
+
 export interface TableColumn<T> {
   readonly key: string;
   readonly label: string;
@@ -47,6 +50,12 @@ export interface TableColumn<T> {
    * wrap within the column instead of forcing the whole table to scroll horizontally.
    */
   readonly wrapText?: boolean;
+  /**
+   * Alignment of the header and every cell. Omitted, it follows the data: a column whose values are all numbers
+   * lines up at the end, anything else at the start (`columnAlign`). Set it only where that is wrong, e.g. a
+   * column of check marks, which reads best centred.
+   */
+  readonly align?: ColumnAlign;
   /** Tooltip text for the column header (e.g., definition or hint). Shown on hover with cursor:help styling. */
   readonly labelTooltip?: string;
 }
@@ -96,4 +105,11 @@ export function rowsToCsv<T>(columns: readonly TableColumn<T>[], rows: readonly 
   const header = columns.map((column) => csvField(column.label)).join(',');
   const lines = rows.map((row) => columns.map((column) => csvField(cellText(column, row))).join(','));
   return [header, ...lines].join('\r\n');
+}
+
+/** The alignment a column is drawn with: its own, else the end for an all-numeric column and the start otherwise. */
+export function columnAlign<T>(column: TableColumn<T>, rows: readonly T[]): ColumnAlign {
+  if (column.align !== undefined) return column.align;
+  if (rows.length === 0) return 'start';
+  return rows.every((row) => typeof column.valueOf(row) === 'number') ? 'end' : 'start';
 }

@@ -1306,6 +1306,38 @@ label.stacked textarea:focus-visible {
   background: color-mix(in oklab, var(--surface) 70%, transparent);
 }
 
+.data-table th[data-align='end'],
+.data-table td[data-align='end'] {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.data-table th[data-align='center'],
+.data-table td[data-align='center'] {
+  text-align: center;
+}
+
+/* A long table scrolls inside its frame, so the header row stays in view while the rows pass (#513). */
+.data-table-scroll-tall {
+  max-height: min(70vh, 44rem);
+  overflow-y: auto;
+}
+
+.data-table-scroll-tall thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--bg);
+}
+
+/* A pointer that can aim at a small target gets the tighter rows; touch keeps the roomy ones (#513). */
+@media (pointer: fine) {
+  .data-table th,
+  .data-table td {
+    padding: 0.35rem 0.75rem;
+  }
+}
+
 .data-table th button {
   width: 100%;
   padding: 0;
@@ -1319,6 +1351,14 @@ label.stacked textarea:focus-visible {
   text-transform: uppercase;
   text-align: left;
   cursor: pointer;
+}
+
+.data-table th[data-align='end'] button {
+  text-align: right;
+}
+
+.data-table th[data-align='center'] button {
+  text-align: center;
 }
 
 .data-table th button:hover {
@@ -3214,11 +3254,6 @@ svg text.chart-symbol-text-unicode {
 
 .rectification-detail {
   margin: 0.5rem 0;
-}
-
-.rectification-detail summary {
-  cursor: pointer;
-  font-weight: 600;
 }
 
 .rectification-detail ul {
