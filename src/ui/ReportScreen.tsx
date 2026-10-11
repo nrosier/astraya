@@ -12,6 +12,7 @@
  * @conventions Gated for incomplete record/unknown time/undefined houses the same way other person-scoped views are; uses ReportScreen.messages.ts for en/nl text via useMessages().
  * @exports ReportScreen
  */
+import { personHref } from './route.js';
 import { useEffect, useState } from 'react';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { computeChartData, housesAreDefined, type ChartData } from '../domain/chart-compute.js';
@@ -65,12 +66,12 @@ export function ReportScreen({ personId }: { personId: string }): React.JSX.Elem
     return (
       <main className="shell">
         <p className="back">
-          <a href={`#/person/${personId}`}>&larr; {person.displayName || t.personFallback}</a>
+          <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
         </p>
         <h1>{t.reportFallback}</h1>
         <p>
           {t.notCompleteReport(person.displayName || t.thisPerson)}{' '}
-          <a href={`#/person/${personId}`}>{t.personPageLink}</a>.
+          <a href={personHref(personId)}>{t.personPageLink}</a>.
         </p>
       </main>
     );
@@ -83,7 +84,7 @@ export function ReportScreen({ personId }: { personId: string }): React.JSX.Elem
     return (
       <main className="shell">
         <p className="back">
-          <a href={`#/person/${personId}`}>&larr; {person.displayName || t.personFallback}</a>
+          <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
         </p>
         <h1>{t.reportFallback}</h1>
         <p>{t.needsKnownTime(person.displayName || t.thisPerson)}</p>
@@ -94,7 +95,7 @@ export function ReportScreen({ personId }: { personId: string }): React.JSX.Elem
   return (
     <main className="shell">
       <p className="back">
-        <a href={`#/person/${personId}`}>&larr; {person.displayName || t.personFallback}</a>
+        <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
       </p>
       <h1>{person.displayName ? t.heading(person.displayName) : t.reportFallback}</h1>
 

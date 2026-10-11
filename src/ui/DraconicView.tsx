@@ -19,7 +19,8 @@ import { housesAreDefined } from '../domain/chart-compute.js';
 import { momentKey } from '../time/encode.js';
 import { ChartDataView } from './ChartView.js';
 import { ChartTypeSelector, changeChartView } from './ChartTypeSelector.js';
-import { chartHref, type ChartViewKind } from './chart-sections.js';
+import { type ChartViewKind } from './chart-sections.js';
+import { chartHref, personHref } from './route.js';
 import { ReportView } from './ReportView.js';
 import { draconicViewMessages } from './DraconicView.messages.js';
 import { useMessages } from './messages.js';
@@ -78,12 +79,12 @@ export function DraconicView({
     return (
       <main className="shell">
         <p className="back">
-          <a href={`#/person/${personId}`}>&larr; {person.displayName || t.personFallback}</a>
+          <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
         </p>
         <h1>{t.draconicChartFallback}</h1>
         <p>
           {t.needsCompleteRecord(person.displayName || t.thisPerson)}{' '}
-          <a href={`#/person/${personId}`}>{t.personPageLink}</a>.
+          <a href={personHref(personId)}>{t.personPageLink}</a>.
         </p>
       </main>
     );
@@ -94,7 +95,7 @@ export function DraconicView({
   return (
     <main className="shell shell--wide">
       <p className="back">
-        <a href={`#/person/${personId}`}>&larr; {person.displayName || t.personFallback}</a>
+        <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
       </p>
       <h1>{person.displayName ? t.heading(person.displayName) : t.headingFallback}</h1>
       <ChartTypeSelector personId={personId} type="draconic" view={view} />

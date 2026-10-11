@@ -60,7 +60,7 @@ test('a diagram point and its table row select each other (#418)', async ({ page
   test.setTimeout(90_000);
   // Short enough that the table starts below the fold, so scrolling a selected row into view is visible.
   await page.setViewportSize({ width: 1100, height: 560 });
-  await gotoAndSettle(page, `${baseUrl}/#/cycles`);
+  await gotoAndSettle(page, `${baseUrl}/#/explore/cycles`);
   const table = page.getByRole('table');
   await expect(table).toBeVisible({ timeout: 60_000 });
 
@@ -121,7 +121,7 @@ test('a diagram point and its table row select each other (#418)', async ({ page
 test('the cycles screen has no automatically detectable accessibility violations', async ({ page }) => {
   test.setTimeout(90_000);
 
-  await gotoAndSettle(page, `${baseUrl}/#/cycles`);
+  await gotoAndSettle(page, `${baseUrl}/#/explore/cycles`);
   await expect(page.getByRole('table')).toBeVisible({ timeout: 60_000 });
 
   const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
@@ -131,7 +131,7 @@ test('the cycles screen has no automatically detectable accessibility violations
 test('a bad year is reported inline instead of searching', async ({ page }) => {
   test.setTimeout(90_000);
 
-  await gotoAndSettle(page, `${baseUrl}/#/cycles`);
+  await gotoAndSettle(page, `${baseUrl}/#/explore/cycles`);
   await expect(page.getByRole('table')).toBeVisible({ timeout: 60_000 });
   await page.getByLabel('From year').fill('abc');
   await page.getByRole('button', { name: 'Find', exact: true }).click();

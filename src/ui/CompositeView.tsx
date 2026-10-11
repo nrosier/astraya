@@ -17,6 +17,7 @@
  * @conventions Uses the near-arc midpoint convention for both positions and house cusps (`domain/composite.js`), not the time/space-midpoint "Davison" method; reuses `ChartDataView`/`ReportView` wholesale since the composite is a single synthetic `ChartData`. Text comes from co-located `CompositeView.messages.ts` via `useMessages()`.
  * @exports CompositeView
  */
+import { personHref, routeHref } from './route.js';
 import { useEffect, useMemo, useState } from 'react';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { computeComposite, type CompositeData } from '../domain/composite.js';
@@ -40,7 +41,7 @@ type Load =
 
 /** This screen's own view-href shape (#511): `#/composite/<id>`, with no chart-type axis to carry. */
 function compositeHref(personId: string, view: ChartViewKind): string {
-  return view === 'wheel' ? `#/composite/${personId}` : `#/composite/${personId}?view=${view}`;
+  return routeHref({ kind: 'composite', personId, view });
 }
 
 export function CompositeView({
@@ -101,12 +102,12 @@ export function CompositeView({
     return (
       <main className="shell">
         <p className="back">
-          <a href={`#/person/${personId}`}>&larr; {person.displayName || t.personFallback}</a>
+          <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
         </p>
         <h1>{t.compositeFallback}</h1>
         <p>
           {t.needsCompleteRecord(person.displayName || t.thisPerson)}{' '}
-          <a href={`#/person/${personId}`}>{t.personPageLink}</a>.
+          <a href={personHref(personId)}>{t.personPageLink}</a>.
         </p>
       </main>
     );
@@ -118,7 +119,7 @@ export function CompositeView({
   return (
     <main className="shell shell--wide">
       <p className="back">
-        <a href={`#/person/${personId}`}>&larr; {person.displayName || t.personFallback}</a>
+        <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
       </p>
       <h1>{person.displayName ? t.heading(person.displayName) : t.compositeFallback}</h1>
       <p className="hint">{t.hint}</p>

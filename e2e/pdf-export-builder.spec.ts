@@ -59,7 +59,7 @@ test('the header’s PDF-builder link opens the PDF builder, and a preset downlo
   const builderLink = header.getByRole('link', { name: 'Build custom PDF…', exact: true });
   await expect(builderLink).not.toHaveAttribute('aria-current', 'page');
   await builderLink.click();
-  await expect(page).toHaveURL(/#\/export$/);
+  await expect(page).toHaveURL(/#\/documents\/pdf$/);
   // The rail marks where you are, from the same feature registry as the rest of the navigation.
   await expect(builderLink).toHaveAttribute('aria-current', 'page');
   await expect(page.getByRole('heading', { name: 'Build a PDF', level: 1 })).toBeVisible();
@@ -91,7 +91,7 @@ test('ticking a chart type reveals its own tables and wheel checkbox, and untick
   test.setTimeout(60_000);
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   await createPerson(page, ADA);
-  await page.goto(`${baseUrl}/#/export`);
+  await page.goto(`${baseUrl}/#/documents/pdf`);
   await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Ada Lovelace' });
 
   await expect(page.getByLabel('Wheel', { exact: true })).toHaveCount(0);
@@ -106,7 +106,7 @@ test('the AI-customised narrative needs its own consent tick before Build PDF is
   test.setTimeout(60_000);
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   await createPerson(page, ADA);
-  await page.goto(`${baseUrl}/#/export`);
+  await page.goto(`${baseUrl}/#/documents/pdf`);
   await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Ada Lovelace' });
 
   const buildButton = page.getByRole('button', { name: 'Build PDF', exact: true });
@@ -124,7 +124,7 @@ test('the AI consent is spent by the build and never remembered: a new request n
   test.setTimeout(120_000);
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   await createPerson(page, ADA);
-  await page.goto(`${baseUrl}/#/export`);
+  await page.goto(`${baseUrl}/#/documents/pdf`);
   await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Ada Lovelace' });
 
   const consent = page.getByRole('checkbox', {
@@ -155,7 +155,7 @@ test('synastry and composite each get their own partner picker, and both build i
   await createPerson(page, ADA);
   await page.getByRole('link', { name: '← People' }).click();
   await createPerson(page, CHARLES);
-  await page.goto(`${baseUrl}/#/export`);
+  await page.goto(`${baseUrl}/#/documents/pdf`);
   await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Ada Lovelace' });
 
   // Neither partner picker exists until its own checkbox is ticked.
@@ -184,7 +184,7 @@ test('unticking Synastry hides its partner picker and drops it from the selectio
   await createPerson(page, ADA);
   await page.getByRole('link', { name: '← People' }).click();
   await createPerson(page, CHARLES);
-  await page.goto(`${baseUrl}/#/export`);
+  await page.goto(`${baseUrl}/#/documents/pdf`);
   await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Ada Lovelace' });
 
   await page.getByRole('checkbox', { name: 'Synastry', exact: true }).check();
@@ -199,7 +199,7 @@ test('ticking Progressions reveals its technique/MC-method controls, which colla
   test.setTimeout(60_000);
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   await createPerson(page, ADA);
-  await page.goto(`${baseUrl}/#/export`);
+  await page.goto(`${baseUrl}/#/documents/pdf`);
   await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Ada Lovelace' });
 
   const predictive = page.getByRole('group', { name: 'Progressions, solar arc, profections & astrocartography' });
@@ -221,7 +221,7 @@ test('ticking Astrocartography reveals its map/line-type/body controls, which co
   test.setTimeout(60_000);
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   await createPerson(page, ADA);
-  await page.goto(`${baseUrl}/#/export`);
+  await page.goto(`${baseUrl}/#/documents/pdf`);
   await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Ada Lovelace' });
 
   const predictive = page.getByRole('group', { name: 'Progressions, solar arc, profections & astrocartography' });
@@ -242,7 +242,7 @@ test('selecting the Full predictive report preset fills progressions and solar a
   test.setTimeout(90_000);
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   await createPerson(page, ADA);
-  await page.goto(`${baseUrl}/#/export`);
+  await page.goto(`${baseUrl}/#/documents/pdf`);
   await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Ada Lovelace' });
   await page
     .getByLabel('Starting point', { exact: true })
@@ -271,7 +271,7 @@ test('ticking Profections and Astrocartography on their own builds a real PDF wi
   test.setTimeout(90_000);
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   await createPerson(page, ADA);
-  await page.goto(`${baseUrl}/#/export`);
+  await page.goto(`${baseUrl}/#/documents/pdf`);
   await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Ada Lovelace' });
 
   const predictive = page.getByRole('group', { name: 'Progressions, solar arc, profections & astrocartography' });
@@ -295,7 +295,7 @@ test('ticking Transits reveals its filter/wheel/table/date controls, and ticking
   test.setTimeout(60_000);
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   await createPerson(page, ADA);
-  await page.goto(`${baseUrl}/#/export`);
+  await page.goto(`${baseUrl}/#/documents/pdf`);
   await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Ada Lovelace' });
 
   const transitsGroup = page.getByRole('group', { name: 'Transits & Forecast' });
@@ -323,7 +323,7 @@ test('ticking Eclipses reveals its from/to year controls, collapsing when untick
   test.setTimeout(90_000);
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   await createPerson(page, ADA);
-  await page.goto(`${baseUrl}/#/export`);
+  await page.goto(`${baseUrl}/#/documents/pdf`);
   await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Ada Lovelace' });
 
   const eclipsesGroup = page.getByRole('group', { name: 'Eclipses', exact: true });

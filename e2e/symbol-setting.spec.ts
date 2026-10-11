@@ -106,7 +106,7 @@ test('the transit wheel and the cycles diagram follow the class too', async ({ p
   await page.evaluate(() => {
     localStorage.setItem('astraya:symbolClass', 'text');
   });
-  await page.goto(`${baseUrl}/#/cycles`);
+  await page.goto(`${baseUrl}/#/explore/cycles`);
   await page.reload();
   await page.waitForEvent('load', { timeout: 5_000 }).catch(() => undefined);
   await expect(page.getByRole('heading', { name: 'Planetary cycles', level: 1 })).toBeVisible();

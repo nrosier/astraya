@@ -25,7 +25,8 @@ import { aspectDisplayName, bodyDisplayName } from './astro-names.messages.js';
 import { ChartDataView } from './ChartView.js';
 import { ChartTypeSelector, changeChartView } from './ChartTypeSelector.js';
 import { useCalculationBasisLine } from './calculation-basis.js';
-import { chartHref, type ChartViewKind } from './chart-sections.js';
+import { type ChartViewKind } from './chart-sections.js';
+import { chartHref, personHref } from './route.js';
 import { todayInputValue } from './format.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
@@ -200,12 +201,12 @@ export function ReturnView({
     return (
       <main className="shell">
         <p className="back">
-          <a href={`#/person/${personId}`}>&larr; {person.displayName || t.personFallback}</a>
+          <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
         </p>
         <h1>{fallback}</h1>
         <p>
           {t.needsCompleteRecord(person.displayName || t.thisPerson)}{' '}
-          <a href={`#/person/${personId}`}>{t.personPageLink}</a>.
+          <a href={personHref(personId)}>{t.personPageLink}</a>.
         </p>
       </main>
     );
@@ -217,7 +218,7 @@ export function ReturnView({
   return (
     <main className="shell shell--wide">
       <p className="back">
-        <a href={`#/person/${personId}`}>&larr; {person.displayName || t.personFallback}</a>
+        <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
       </p>
       <h1>{heading}</h1>
       <p className="hint page-header-basis">{basisLine}</p>

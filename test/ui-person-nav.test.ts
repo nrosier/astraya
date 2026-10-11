@@ -69,18 +69,18 @@ describe('PERSON_TABS', () => {
     const hrefs = Object.fromEntries(PERSON_TABS.map((tab) => [tab.key, tab.buildHref(ID)]));
     expect(hrefs).toEqual({
       overview: `#/people/${ID}/overview`,
-      'birth-record': `#/person/${ID}`,
-      chart: `#/chart/${ID}`,
-      report: `#/report/${ID}`,
-      profections: `#/profections/${ID}`,
-      progressions: `#/progressions/${ID}`,
-      'solar-arc': `#/solar-arc/${ID}`,
-      'primary-directions': `#/primary-directions/${ID}`,
-      transit: `#/transit/${ID}`,
-      synastry: `#/synastry/${ID}`,
-      composite: `#/composite/${ID}`,
-      'periodic-transit': `#/periodic-transit/${ID}`,
-      astrocartography: `#/astrocartography/${ID}`,
+      'birth-record': `#/people/${ID}/birth-record`,
+      chart: `#/people/${ID}/charts/natal/wheel`,
+      report: `#/people/${ID}/interpretation`,
+      profections: `#/people/${ID}/timing/profections`,
+      progressions: `#/people/${ID}/timing/progressions`,
+      'solar-arc': `#/people/${ID}/timing/solar-arc`,
+      'primary-directions': `#/people/${ID}/timing/primary-directions`,
+      transit: `#/people/${ID}/timing/transits`,
+      synastry: `#/people/${ID}/relationships/synastry`,
+      composite: `#/people/${ID}/relationships/composite`,
+      'periodic-transit': `#/people/${ID}/timing/forecast`,
+      astrocartography: `#/people/${ID}/location/astrocartography`,
     });
   });
 });

@@ -13,6 +13,7 @@
  * @conventions Needs no saved person or stored data (computed entirely in-browser), so it lives outside `Stored`, like ElectionalView; it reports only whether the chart is fit to be judged, never an answer to the question itself. Reuses the shared `ChartDataView`. Text comes from co-located `HoraryView.messages.ts` via `useMessages()`.
  * @exports HoraryView
  */
+import { routeHref } from './route.js';
 import { DateField } from './primitives/DateField.js';
 import { Select } from './primitives/Select.js';
 import { TextField } from './primitives/TextField.js';
@@ -42,7 +43,7 @@ type Result =
 
 /** This screen's own view-href shape (#511): `#/horary`, with no person id or chart-type axis to carry. */
 function horaryHref(view: ChartViewKind): string {
-  return view === 'wheel' ? '#/horary' : `#/horary?view=${view}`;
+  return routeHref({ kind: 'horary', view });
 }
 
 export function HoraryView({ view }: { readonly view?: ChartViewKind | undefined }): React.JSX.Element {

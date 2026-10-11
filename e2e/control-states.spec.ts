@@ -34,11 +34,11 @@ test.afterAll(async () => {
 /** Screens made of the primitives that need no person: a blank new person form and the tool screens. */
 const SCREENS: readonly (readonly [string, string])[] = [
   ['the new person form', '#/people'],
-  ['cycles', '#/cycles'],
-  ['eclipses', '#/eclipses'],
-  ['horary', '#/horary'],
-  ['electional', '#/electional'],
-  ['rectification', '#/rectification'],
+  ['cycles', '#/explore/cycles'],
+  ['eclipses', '#/explore/eclipses'],
+  ['horary', '#/explore/horary'],
+  ['electional', '#/explore/electional'],
+  ['rectification', '#/explore/rectification'],
 ];
 
 const LOCALES = ['en', 'nl'] as const;

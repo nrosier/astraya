@@ -51,6 +51,17 @@ test('Preferences is reachable from every screen, lists its four subsections, an
   expect(results.violations).toEqual([]);
 });
 
+test('a section link opens Preferences at that heading and moves focus there (#509)', async ({ page }) => {
+  test.setTimeout(60_000);
+  await gotoAndSettle(page, `${baseUrl}/#/preferences/data`);
+  await expect(page.getByRole('heading', { name: 'Data & privacy', level: 2 })).toBeFocused();
+  await gotoAndSettle(page, `${baseUrl}/#/preferences/astrology`);
+  await expect(page.getByRole('heading', { name: 'Astrology defaults', level: 2 })).toBeFocused();
+  // An unknown section is not a guess at one: the hash falls back to People.
+  await gotoAndSettle(page, `${baseUrl}/#/preferences/nope`);
+  await expect(page.getByRole('heading', { name: 'Preferences', level: 1 })).toHaveCount(0);
+});
+
 test('the rulers choice changed here is the same one chart screens read, and survives a reload', async ({ page }) => {
   test.setTimeout(60_000);
   await gotoAndSettle(page, `${baseUrl}/#/people`);

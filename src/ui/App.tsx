@@ -202,6 +202,9 @@ function AppShell(): React.JSX.Element {
       isFirstRoute.current = false;
       return;
     }
+    // A link to one section of Preferences lands on that section's heading, which the screen focuses itself.
+    const target = parseRoute(route);
+    if (target.kind === 'preferences' && target.section !== undefined) return;
     function focusHeading(): boolean {
       const heading = document.querySelector<HTMLElement>('main.shell h1');
       if (heading === null) return false;
@@ -433,7 +436,7 @@ function renderScreen(parsed: Route, seVersion: string | undefined): React.JSX.E
   if (parsed.kind === 'preferences') {
     return (
       <Stored>
-        <PreferencesView />
+        <PreferencesView section={parsed.section} />
       </Stored>
     );
   }

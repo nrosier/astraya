@@ -104,9 +104,9 @@ describe('presets', () => {
 });
 
 describe('route', () => {
-  it('routes #/cycles to the screen', () => {
-    expect(parseRoute('#/cycles')).toEqual({ kind: 'cycles' });
-    expect(parseRoute('#/cycles/')).toEqual({ kind: 'cycles' });
+  it('routes #/explore/cycles to the screen', () => {
+    expect(parseRoute('#/explore/cycles')).toEqual({ kind: 'cycles' });
+    expect(parseRoute('#/explore/cycles/')).toEqual({ kind: 'cycles' });
   });
 });
 

@@ -25,6 +25,8 @@ export type PersonTabKey =
   | 'periodic-transit'
   | 'astrocartography';
 
+import { routeHref } from './route.js';
+
 export interface PersonTab {
   readonly key: PersonTabKey;
   readonly buildHref: (personId: string) => string;
@@ -37,19 +39,19 @@ export const PERSON_TABS: readonly PersonTab[] = [
   // The canonical Overview destination (#506/#509): a complete person's landing tab. Still
   // reachable before every other tab, same as birth-record, since both are the two places a
   // person can land regardless of completeness (activeTabKey/isTabEnabled below).
-  { key: 'overview', buildHref: (id) => `#/people/${id}/overview` },
-  { key: 'birth-record', buildHref: (id) => `#/person/${id}` },
-  { key: 'chart', buildHref: (id) => `#/chart/${id}` },
-  { key: 'report', buildHref: (id) => `#/report/${id}` },
-  { key: 'profections', buildHref: (id) => `#/profections/${id}` },
-  { key: 'progressions', buildHref: (id) => `#/progressions/${id}` },
-  { key: 'solar-arc', buildHref: (id) => `#/solar-arc/${id}` },
-  { key: 'primary-directions', buildHref: (id) => `#/primary-directions/${id}` },
-  { key: 'transit', buildHref: (id) => `#/transit/${id}` },
-  { key: 'synastry', buildHref: (id) => `#/synastry/${id}` },
-  { key: 'composite', buildHref: (id) => `#/composite/${id}` },
-  { key: 'periodic-transit', buildHref: (id) => `#/periodic-transit/${id}` },
-  { key: 'astrocartography', buildHref: (id) => `#/astrocartography/${id}` },
+  { key: 'overview', buildHref: (id) => routeHref({ kind: 'person-overview', personId: id }) },
+  { key: 'birth-record', buildHref: (id) => routeHref({ kind: 'person', personId: id }) },
+  { key: 'chart', buildHref: (id) => routeHref({ kind: 'chart', personId: id }) },
+  { key: 'report', buildHref: (id) => routeHref({ kind: 'report', personId: id }) },
+  { key: 'profections', buildHref: (id) => routeHref({ kind: 'profections', personId: id }) },
+  { key: 'progressions', buildHref: (id) => routeHref({ kind: 'progressions', personId: id }) },
+  { key: 'solar-arc', buildHref: (id) => routeHref({ kind: 'solar-arc', personId: id }) },
+  { key: 'primary-directions', buildHref: (id) => routeHref({ kind: 'primary-directions', personId: id }) },
+  { key: 'transit', buildHref: (id) => routeHref({ kind: 'transit', personId: id }) },
+  { key: 'synastry', buildHref: (id) => routeHref({ kind: 'synastry', personId: id }) },
+  { key: 'composite', buildHref: (id) => routeHref({ kind: 'composite', personId: id }) },
+  { key: 'periodic-transit', buildHref: (id) => routeHref({ kind: 'periodic-transit', personId: id }) },
+  { key: 'astrocartography', buildHref: (id) => routeHref({ kind: 'astrocartography', personId: id }) },
 ];
 
 /**

@@ -76,7 +76,7 @@ test('choosing an item navigates and leaves no menu open', async ({ page }) => {
 
   await group(page, 'Progressions & Directions').click();
   await popup(page, 'Progressions & Directions').getByRole('link', { name: 'Profections', exact: true }).click();
-  await expect(page).toHaveURL(/#\/profections\//);
+  await expect(page).toHaveURL(/#\/people\/[^/]+\/timing\/profections$/);
   await expect(page.getByRole('navigation', { name: /subtabs$/ })).toHaveCount(0);
   // The group holding the current page is highlighted, but not held open.
   await expect(group(page, 'Progressions & Directions')).toHaveAttribute('aria-expanded', 'false');

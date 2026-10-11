@@ -23,6 +23,7 @@
  * @exports TransitView, contactColumns
  */
 
+import { personHref } from './route.js';
 import { useSymbolClass } from './symbol-setting.js';
 import { useGlyphVariants } from './glyph-variant-setting.js';
 import { useEffect, useMemo, useState } from 'react';
@@ -214,12 +215,12 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
     return (
       <main className="shell">
         <p className="back">
-          <a href={`#/person/${personId}`}>&larr; {person.displayName || t.personFallback}</a>
+          <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
         </p>
         <h1>{t.transitsFallback}</h1>
         <p>
           {t.notCompleteTransits(person.displayName || t.thisPerson)}{' '}
-          <a href={`#/person/${personId}`}>{t.personPageLink}</a>.
+          <a href={personHref(personId)}>{t.personPageLink}</a>.
         </p>
       </main>
     );
@@ -229,7 +230,7 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
     return (
       <main className="shell">
         <p className="back">
-          <a href={`#/person/${personId}`}>&larr; {person.displayName || t.personFallback}</a>
+          <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
         </p>
         <h1>{t.transitsFallback}</h1>
         <p>{t.needsKnownTime(person.displayName || t.thisPerson)}</p>
@@ -240,7 +241,7 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
   return (
     <main className="shell">
       <p className="back">
-        <a href={`#/person/${personId}`}>&larr; {person.displayName || t.personFallback}</a>
+        <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
       </p>
       <h1>{person.displayName ? t.heading(person.displayName) : t.transitsFallback}</h1>
       <p className="hint">{t.hint(person.displayName || t.thisPerson)}</p>

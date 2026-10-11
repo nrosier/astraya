@@ -85,9 +85,9 @@ describe('nowFields', () => {
 });
 
 describe('horary screen wiring', () => {
-  it('routes #/horary to the screen', () => {
-    expect(parseRoute('#/horary')).toEqual({ kind: 'horary' });
-    expect(parseRoute('#/horary/')).toEqual({ kind: 'horary' });
+  it('routes #/explore/horary to the screen', () => {
+    expect(parseRoute('#/explore/horary')).toEqual({ kind: 'horary' });
+    expect(parseRoute('#/explore/horary/')).toEqual({ kind: 'horary' });
   });
 
   it('offers Regiomontanus first, the horary tradition’s own system, with a label for each in both languages', () => {

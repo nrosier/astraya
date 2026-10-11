@@ -17,6 +17,7 @@
  * @conventions Gated like PeriodicTransitView/TransitView on a known birth time (ACG lines shift ~15° longitude per hour of time error); embeds the SVG map via `dangerouslySetInnerHTML` and exports it through `standaloneSvg`/`downloadText`/`svgToPngBlob`, matching ChartView's trust-boundary pattern for app-generated markup. Reads interpretive text from the shared wheel corpus via `resolvePlacementText`.
  * @exports AstrocartographyView
  */
+import { personHref } from './route.js';
 import { useEffect, useMemo, useState } from 'react';
 import { resolvePlacementText } from '../interpretation/compose.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
@@ -205,12 +206,11 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
     return (
       <main className="shell">
         <p className="back">
-          <a href={`#/person/${personId}`}>&larr; {person.displayName || t.personFallback}</a>
+          <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
         </p>
         <h1>{t.astrocartographyFallback}</h1>
         <p>
-          {t.notCompleteMap(person.displayName || t.thisPerson)} <a href={`#/person/${personId}`}>{t.personPageLink}</a>
-          .
+          {t.notCompleteMap(person.displayName || t.thisPerson)} <a href={personHref(personId)}>{t.personPageLink}</a>.
         </p>
       </main>
     );
@@ -220,7 +220,7 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
     return (
       <main className="shell">
         <p className="back">
-          <a href={`#/person/${personId}`}>&larr; {person.displayName || t.personFallback}</a>
+          <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
         </p>
         <h1>{t.astrocartographyFallback}</h1>
         <p>{t.needsKnownTime(person.displayName || t.thisPerson)}</p>
@@ -231,7 +231,7 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
   return (
     <main className="shell">
       <p className="back">
-        <a href={`#/person/${personId}`}>&larr; {person.displayName || t.personFallback}</a>
+        <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
       </p>
       <h1>{person.displayName ? t.heading(person.displayName) : t.astrocartographyFallback}</h1>
       <p className="hint">{t.hint}</p>

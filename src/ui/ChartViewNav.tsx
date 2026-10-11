@@ -6,9 +6,9 @@
  * labelled "Chart view", below it.
  *
  * Takes a `buildHref` callback rather than a personId/type pair: the chart, composite, shared-link and
- * horary screens that all render these four views have genuinely different URL shapes (`#/chart/<id>`,
- * `#/composite/<id>`, `#/shared?<token-query>`, `#/horary` — no id at all), so each caller supplies its
- * own hash-building rather than this component assuming `chart-sections.ts`'s chart-specific `chartHref`.
+ * horary screens that all render these four views have genuinely different URL shapes (`#/people/<id>/charts/<type>/<view>`,
+ * `#/people/<id>/relationships/composite`, `#/shared?<token-query>`, `#/explore/horary` — no id at all), so each caller supplies its
+ * own hash-building rather than this component assuming `route.ts`'s chart-specific `chartHref`.
  *
  * Each link also takes an `onNavigate` callback, called with `preventDefault()` already applied — the
  * same real-href-plus-programmatic-navigate shape most SPA router Link components use. A real `href`

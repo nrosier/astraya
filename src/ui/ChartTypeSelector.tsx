@@ -9,7 +9,8 @@
  * @conventions A labelled shared Select, not links; choosing a type sets the page's hash with the open view preserved. `changeChartView` keeps the open view in the URL via `history.replaceState` + a synthetic `hashchange`.
  * @exports ChartTypeSelector, changeChartView
  */
-import { CHART_TYPES, chartHref, type ChartType, type ChartViewKind } from './chart-sections.js';
+import { CHART_TYPES, type ChartType, type ChartViewKind } from './chart-sections.js';
+import { chartHref } from './route.js';
 import { chartTypesMessages } from './ChartTypes.messages.js';
 import { useMessages } from './messages.js';
 import { Select } from './primitives/Select.js';

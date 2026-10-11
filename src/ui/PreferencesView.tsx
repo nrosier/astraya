@@ -24,9 +24,10 @@
  * @conventions Every control is the same shared component/hook other screens already use (RulershipSetting.tsx, SymbolSetting.tsx, LanguageToggle.tsx, ThemeToggle.tsx) — this screen never reads or writes a setting's storage directly. Full-data export reuses domain/full-export.js's pure functions, the same ones AppNav.tsx's Export menu calls.
  * @exports PreferencesView
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { buildFullExport, fullExportFilename, peopleCsvFilename, peopleToCsv } from '../domain/full-export.js';
 import { APP_VERSION } from '../version.js';
+import type { PreferencesSection } from './route.js';
 import { downloadText } from './download.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { LanguageToggle } from './LanguageToggle.js';
@@ -45,7 +46,18 @@ interface ExportStatus {
   readonly text: string;
 }
 
-export function PreferencesView(): React.JSX.Element {
+/** Scrolls to a section heading, without animation for a reader who asked for less motion, and moves focus there: the link was followed on purpose. */
+function revealSection(section: PreferencesSection): void {
+  const heading = document.getElementById(`preferences-${section}`);
+  if (heading === null) return;
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  heading.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+  heading.focus({ preventScroll: true });
+}
+
+export function PreferencesView({
+  section,
+}: { readonly section?: PreferencesSection | undefined } = {}): React.JSX.Element {
   const t = useMessages(preferencesViewMessages);
   const shared = useMessages(sharedMessages);
   const store = useOptionalStore();
@@ -91,6 +103,10 @@ export function PreferencesView(): React.JSX.Element {
     });
   };
 
+  useEffect(() => {
+    if (section !== undefined) revealSection(section);
+  }, [section]);
+
   return (
     <main className="shell">
       <p className="back">
@@ -99,20 +115,28 @@ export function PreferencesView(): React.JSX.Element {
       <h1>{t.heading}</h1>
       <p>{t.intro}</p>
 
-      <h2 id="preferences-general">{t.generalHeading}</h2>
+      <h2 id="preferences-general" tabIndex={-1}>
+        {t.generalHeading}
+      </h2>
       <p>{t.languageLabel}</p>
       <LanguageToggle />
 
-      <h2 id="preferences-astrology">{t.astrologyHeading}</h2>
+      <h2 id="preferences-astrology" tabIndex={-1}>
+        {t.astrologyHeading}
+      </h2>
       <p>{t.rulersSubtitle}</p>
       <RulershipSetting />
 
-      <h2 id="preferences-appearance">{t.appearanceHeading}</h2>
+      <h2 id="preferences-appearance" tabIndex={-1}>
+        {t.appearanceHeading}
+      </h2>
       <p>{t.themeLabel}</p>
       <ThemeToggle />
       <SymbolSetting />
 
-      <h2 id="preferences-data">{t.dataHeading}</h2>
+      <h2 id="preferences-data" tabIndex={-1}>
+        {t.dataHeading}
+      </h2>
       <p>{t.exportEverythingHint}</p>
       <p>
         <button type="button" disabled={store === undefined} onClick={exportEverything}>

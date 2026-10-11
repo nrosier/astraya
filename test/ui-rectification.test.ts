@@ -140,9 +140,9 @@ describe('parseRectificationFields (#408)', () => {
 });
 
 describe('rectification screen wiring', () => {
-  it('routes #/rectification to the screen', () => {
-    expect(parseRoute('#/rectification')).toEqual({ kind: 'rectification' });
-    expect(parseRoute('#/rectification/')).toEqual({ kind: 'rectification' });
+  it('routes #/explore/rectification to the screen', () => {
+    expect(parseRoute('#/explore/rectification')).toEqual({ kind: 'rectification' });
+    expect(parseRoute('#/explore/rectification/')).toEqual({ kind: 'rectification' });
   });
 
   it('turns an event date into its parts, and rejects a date that does not exist', () => {

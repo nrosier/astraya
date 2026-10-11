@@ -76,7 +76,7 @@ test('searching for just the void-Moon rule reproduces the 8 March 2024 void win
 test('an empty rule set, a reversed span and a missing coordinate are reported inline', async ({ page }) => {
   test.setTimeout(60_000);
 
-  await gotoAndSettle(page, `${baseUrl}/#/electional`);
+  await gotoAndSettle(page, `${baseUrl}/#/explore/electional`);
   await fillLondonWindow(page);
 
   await page.getByLabel('Latitude', { exact: true }).fill('');
@@ -97,7 +97,7 @@ test('an empty rule set, a reversed span and a missing coordinate are reported i
 test('the electional screen has no automatically detectable accessibility violations', async ({ page }) => {
   test.setTimeout(120_000);
 
-  await gotoAndSettle(page, `${baseUrl}/#/electional`);
+  await gotoAndSettle(page, `${baseUrl}/#/explore/electional`);
   await fillLondonWindow(page);
   await page.getByRole('button', { name: 'Find times', exact: true }).click();
   await expect(page.getByRole('table')).toBeVisible({ timeout: 90_000 });

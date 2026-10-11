@@ -136,7 +136,7 @@ test('a tool page remembers the last person visited, and returning to their tabs
   // Still Ada's tabs, carried over from the person's screen the tool was opened from.
   await expect(header.getByText('Ada Lovelace', { exact: true })).toBeVisible();
   await header.getByRole('link', { name: 'Birth record', exact: true }).click();
-  await expect(page).toHaveURL(/#\/person\//);
+  await expect(page).toHaveURL(/#\/people\/[^/]+\/birth-record$/);
   await expect(header.getByText('Ada Lovelace', { exact: true })).toBeVisible();
 
   // The People list itself is not a tool page: it should not show a stale person's tabs.
@@ -248,15 +248,15 @@ test('Charts is one destination, and the page keeps the type and the view in the
   // Choosing a type opens that chart; natal needs no query.
   await selector.selectOption('draconic');
   await expect(page.getByRole('heading', { name: /draconic/i, level: 1 })).toBeVisible();
-  await expect(page).toHaveURL(/#\/chart\/[^?]+\?type=draconic$/);
+  await expect(page).toHaveURL(/#\/people\/[^/]+\/charts\/draconic\/wheel$/);
 
   // The views are ordinary links on the page (#511), and the open one is in the URL beside the type.
   await page.getByRole('link', { name: 'Aspects', exact: true }).click();
-  await expect(page).toHaveURL(/\?type=draconic&view=aspects$/);
+  await expect(page).toHaveURL(/\/charts\/draconic\/aspects$/);
 
   // Switching type keeps the view.
   await selector.selectOption('natal');
-  await expect(page).toHaveURL(/#\/chart\/[^?]+\?view=aspects$/);
+  await expect(page).toHaveURL(/\/charts\/natal\/aspects$/);
   await expect(page.getByRole('heading', { name: 'Aspects', level: 2 })).toBeVisible();
   await expect(selector).toHaveValue('natal');
 
@@ -268,14 +268,16 @@ test('Charts is one destination, and the page keeps the type and the view in the
   await page.waitForEvent('load', { timeout: 5_000 }).catch(() => undefined);
   await expect(page.getByRole('heading', { name: 'Aspects', level: 2 })).toBeVisible();
   await page.getByRole('link', { name: 'Wheel', exact: true }).click();
-  await expect(page).toHaveURL(/#\/chart\/[^?]+$/);
+  await expect(page).toHaveURL(/\/charts\/natal\/wheel$/);
   await expect(page.locator('div.chart-wheel')).toBeVisible();
   const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
   expect(results.violations).toEqual([]);
 
-  // The old links to the draconic and harmonic screens still land on the Charts page.
-  const personId = /#\/chart\/([^?]+)/.exec(page.url())?.[1];
+  // The old links to the draconic and harmonic screens are gone: they fall back to People, not to a guess.
+  const personId = /#\/people\/([^/]+)\/charts/.exec(page.url())?.[1];
   await page.goto(`${baseUrl}/#/draconic/${personId ?? ''}`);
+  await expect(page.getByRole('heading', { name: 'People', level: 1 })).toBeVisible();
+  await page.goto(`${baseUrl}/#/people/${personId ?? ''}/charts/draconic/wheel`);
   await expect(page.getByRole('heading', { name: /draconic/i, level: 1 })).toBeVisible();
 });
 
@@ -302,7 +304,7 @@ test('a solar return and a lunar return are charts like any other, with their co
   await expect(page.locator('div.chart-wheel')).toBeVisible();
   await expect(page.getByRole('table', { name: 'Contacts to the natal chart' })).toBeVisible();
   await page.getByRole('link', { name: 'Placements', exact: true }).click();
-  await expect(page).toHaveURL(/\?type=solar-return&view=placements$/);
+  await expect(page).toHaveURL(/\/charts\/solar-return\/placements$/);
 
   // Cast somewhere else: the same moment, another Ascendant.
   await page.getByRole('radio', { name: 'Another place' }).check();

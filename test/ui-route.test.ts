@@ -1,5 +1,5 @@
 /**
- * Tests for hash routing.
+ * Tests for hash routing, on the one canonical scheme (docs/UI-UX_IMPLEMENTATION_PLAN.md §3).
  *
  * The failures worth catching are the quiet ones: a link that lands on the home page
  * instead of the screen it names, and a mistyped person id that opens the form and reports
@@ -7,19 +7,164 @@
  */
 import { describe, expect, it } from 'vitest';
 import { newId } from '../src/domain/id.js';
-import { parseRoute, setPasswordToken, setupToken } from '../src/ui/route.js';
+import { CHART_TYPES, CHART_VIEWS } from '../src/ui/chart-sections.js';
+import {
+  chartHref,
+  PREFERENCES_SECTIONS,
+  parseRoute,
+  personHref,
+  routeHref,
+  setPasswordToken,
+  setupToken,
+  type Route,
+} from '../src/ui/route.js';
 
 const ID = newId('p');
+
+/** One of every route kind, with every optional part present where it has one, and the same without. */
+const ROUTES: readonly Route[] = [
+  { kind: 'about' },
+  { kind: 'changelog' },
+  { kind: 'people' },
+  { kind: 'person', personId: ID },
+  { kind: 'person-overview', personId: ID },
+  { kind: 'chart', personId: ID, chartType: 'natal', view: 'wheel' },
+  { kind: 'report', personId: ID },
+  { kind: 'profections', personId: ID },
+  { kind: 'progressions', personId: ID },
+  { kind: 'solar-arc', personId: ID },
+  { kind: 'primary-directions', personId: ID },
+  { kind: 'transit', personId: ID },
+  { kind: 'periodic-transit', personId: ID },
+  { kind: 'synastry', personId: ID },
+  { kind: 'composite', personId: ID },
+  { kind: 'composite', personId: ID, view: 'aspects' },
+  { kind: 'astrocartography', personId: ID },
+  { kind: 'shared' },
+  { kind: 'export-builder' },
+  { kind: 'preferences' },
+  { kind: 'preferences', section: 'data' },
+  { kind: 'cycles' },
+  { kind: 'eclipses' },
+  { kind: 'horary' },
+  { kind: 'horary', view: 'patterns' },
+  { kind: 'electional' },
+  { kind: 'rectification' },
+  { kind: 'admin' },
+  { kind: 'admin-usage' },
+  { kind: 'corpus-overrides' },
+  { kind: 'corpus-candidates' },
+  { kind: 'set-password' },
+  { kind: 'setup' },
+];
+
+describe('the canonical hashes', () => {
+  it('writes exactly the scheme of the plan (§3)', () => {
+    const hashes: Record<string, string> = {
+      people: routeHref({ kind: 'people' }),
+      overview: routeHref({ kind: 'person-overview', personId: ID }),
+      birthRecord: personHref(ID),
+      chart: chartHref(ID, 'aspects', 'draconic'),
+      interpretation: routeHref({ kind: 'report', personId: ID }),
+      transits: routeHref({ kind: 'transit', personId: ID }),
+      forecast: routeHref({ kind: 'periodic-transit', personId: ID }),
+      profections: routeHref({ kind: 'profections', personId: ID }),
+      synastry: routeHref({ kind: 'synastry', personId: ID }),
+      composite: routeHref({ kind: 'composite', personId: ID }),
+      astrocartography: routeHref({ kind: 'astrocartography', personId: ID }),
+      tool: routeHref({ kind: 'eclipses' }),
+      pdf: routeHref({ kind: 'export-builder' }),
+      preferences: routeHref({ kind: 'preferences', section: 'astrology' }),
+      admin: routeHref({ kind: 'admin-usage' }),
+    };
+    expect(hashes).toEqual({
+      people: '#/people',
+      overview: `#/people/${ID}/overview`,
+      birthRecord: `#/people/${ID}/birth-record`,
+      chart: `#/people/${ID}/charts/draconic/aspects`,
+      interpretation: `#/people/${ID}/interpretation`,
+      transits: `#/people/${ID}/timing/transits`,
+      forecast: `#/people/${ID}/timing/forecast`,
+      profections: `#/people/${ID}/timing/profections`,
+      synastry: `#/people/${ID}/relationships/synastry`,
+      composite: `#/people/${ID}/relationships/composite`,
+      astrocartography: `#/people/${ID}/location/astrocartography`,
+      tool: '#/explore/eclipses',
+      pdf: '#/documents/pdf',
+      preferences: '#/preferences/astrology',
+      admin: '#/admin/usage',
+    });
+  });
+
+  it('round-trips: parsing what routeHref wrote gives the route back, for every kind', () => {
+    for (const route of ROUTES) {
+      expect(parseRoute(routeHref(route)), routeHref(route)).toEqual(route);
+    }
+  });
+
+  it('covers every route kind (a new kind must be added to this list)', () => {
+    // `home` has no hash of its own: it is what an unknown hash falls back to.
+    const every: Record<Exclude<Route['kind'], 'home'>, true> = {
+      about: true,
+      changelog: true,
+      people: true,
+      person: true,
+      'person-overview': true,
+      chart: true,
+      report: true,
+      profections: true,
+      progressions: true,
+      'solar-arc': true,
+      'primary-directions': true,
+      transit: true,
+      'periodic-transit': true,
+      synastry: true,
+      composite: true,
+      astrocartography: true,
+      shared: true,
+      'export-builder': true,
+      preferences: true,
+      cycles: true,
+      eclipses: true,
+      horary: true,
+      electional: true,
+      rectification: true,
+      admin: true,
+      'admin-usage': true,
+      'corpus-overrides': true,
+      'corpus-candidates': true,
+      'set-password': true,
+      setup: true,
+    };
+    expect([...new Set(ROUTES.map((route) => route.kind))].sort()).toEqual(Object.keys(every).sort());
+  });
+
+  it('round-trips every chart type with every chart view', () => {
+    for (const chartType of CHART_TYPES) {
+      for (const view of CHART_VIEWS) {
+        const route: Route = { kind: 'chart', personId: ID, chartType, view };
+        expect(parseRoute(routeHref(route))).toEqual(route);
+      }
+    }
+  });
+
+  it('writes the default chart (natal, wheel) in full, so the hash always says what is open', () => {
+    expect(routeHref({ kind: 'chart', personId: ID })).toBe(`#/people/${ID}/charts/natal/wheel`);
+    expect(chartHref(ID)).toBe(`#/people/${ID}/charts/natal/wheel`);
+  });
+
+  it('round-trips every Preferences section', () => {
+    for (const section of PREFERENCES_SECTIONS) {
+      expect(parseRoute(routeHref({ kind: 'preferences', section }))).toEqual({ kind: 'preferences', section });
+    }
+  });
+});
 
 describe('parseRoute', () => {
   it('routes the named screens', () => {
     expect(parseRoute('#/about')).toEqual({ kind: 'about' });
     expect(parseRoute('#/changelog')).toEqual({ kind: 'changelog' });
     expect(parseRoute('#/people')).toEqual({ kind: 'people' });
-  });
-
-  it('routes the Preferences workspace (#506/#510)', () => {
-    expect(parseRoute('#/preferences')).toEqual({ kind: 'preferences' });
   });
 
   it('routes an empty hash home, as a browser leaves it', () => {
@@ -30,9 +175,15 @@ describe('parseRoute', () => {
     expect(parseRoute('#/')).toEqual({ kind: 'home' });
   });
 
-  it('keeps the query out of the match', () => {
-    expect(parseRoute(`#/chart/${ID}?x=1`)).toEqual({ kind: 'chart', personId: ID });
-    expect(parseRoute(`#/person/${ID}?x=1`)).toEqual({ kind: 'person', personId: ID });
+  it('keeps the query out of the match, and reads the view from it where a route has one', () => {
+    expect(parseRoute(`#/people/${ID}/birth-record?x=1`)).toEqual({ kind: 'person', personId: ID });
+    expect(parseRoute(`#/people/${ID}/relationships/composite?view=aspects`)).toEqual({
+      kind: 'composite',
+      personId: ID,
+      view: 'aspects',
+    });
+    expect(parseRoute('#/explore/horary?view=patterns')).toEqual({ kind: 'horary', view: 'patterns' });
+    expect(parseRoute('#/explore/horary?view=nope')).toEqual({ kind: 'horary' });
   });
 
   it('routes a shared chart link (#65), which also carries its whole record in the query', () => {
@@ -42,222 +193,81 @@ describe('parseRoute', () => {
 
   it('tolerates a trailing slash', () => {
     expect(parseRoute('#/people/')).toEqual({ kind: 'people' });
-    expect(parseRoute(`#/person/${ID}/`)).toEqual({ kind: 'person', personId: ID });
+    expect(parseRoute(`#/people/${ID}/birth-record/`)).toEqual({ kind: 'person', personId: ID });
+    expect(parseRoute('#/explore/cycles/')).toEqual({ kind: 'cycles' });
   });
 
-  it('carries a person id through', () => {
-    expect(parseRoute(`#/person/${ID}`)).toEqual({ kind: 'person', personId: ID });
+  it('sends a mistyped or foreign person id home, never to a person who does not exist', () => {
+    for (const hash of [
+      '#/people//overview',
+      '#/people/nope/overview',
+      '#/people/p-short/birth-record',
+      `#/people/${newId('c')}/birth-record`,
+      '#/people/../about',
+      '#/people/../overview',
+    ]) {
+      expect(parseRoute(hash), hash).toEqual({ kind: 'home' });
+    }
   });
 
-  // The canonical Overview destination (#506/#509): added alongside the legacy #/person/:id
-  // route, not replacing it yet.
-  it('routes the canonical Overview destination', () => {
-    expect(parseRoute(`#/people/${ID}/overview`)).toEqual({ kind: 'person-overview', personId: ID });
-    expect(parseRoute(`#/people/${ID}/overview/`)).toEqual({ kind: 'person-overview', personId: ID });
-    expect(parseRoute(`#/people/${ID}/overview?x=1`)).toEqual({ kind: 'person-overview', personId: ID });
-    expect(parseRoute('#/people/nope/overview')).toEqual({ kind: 'home' });
+  it('sends an unknown or incomplete person area home', () => {
+    for (const hash of [
+      `#/people/${ID}`,
+      `#/people/${ID}/nope`,
+      `#/people/${ID}/charts`,
+      `#/people/${ID}/charts/natal`,
+      `#/people/${ID}/charts/composite/wheel`,
+      `#/people/${ID}/charts/natal/nope`,
+      `#/people/${ID}/charts/natal/wheel/extra`,
+      `#/people/${ID}/timing`,
+      `#/people/${ID}/timing/nope`,
+      `#/people/${ID}/relationships/nope`,
+      `#/people/${ID}/location/nope`,
+      `#/people/${ID}/overview/extra`,
+    ]) {
+      expect(parseRoute(hash), hash).toEqual({ kind: 'home' });
+    }
   });
 
-  it('routes a chart id through', () => {
-    expect(parseRoute(`#/chart/${ID}`)).toEqual({ kind: 'chart', personId: ID });
-    expect(parseRoute(`#/chart/${ID}/`)).toEqual({ kind: 'chart', personId: ID });
-    expect(parseRoute(`#/chart/${ID}?x=1`)).toEqual({ kind: 'chart', personId: ID });
+  it('sends an unknown tool or Preferences section home', () => {
+    for (const hash of [
+      '#/explore',
+      '#/explore/nope',
+      '#/explore/cycles/extra',
+      '#/preferences/nope',
+      '#/documents',
+      '#/documents/nope',
+    ]) {
+      expect(parseRoute(hash), hash).toEqual({ kind: 'home' });
+    }
   });
 
-  it('sends a malformed chart id home rather than to a blank chart', () => {
-    expect(parseRoute('#/chart/')).toEqual({ kind: 'home' });
-    expect(parseRoute('#/chart/nope')).toEqual({ kind: 'home' });
-    expect(parseRoute('#/chart/../about')).toEqual({ kind: 'home' });
-  });
-
-  it('routes a report id through (#271)', () => {
-    expect(parseRoute(`#/report/${ID}`)).toEqual({ kind: 'report', personId: ID });
-    expect(parseRoute(`#/report/${ID}/`)).toEqual({ kind: 'report', personId: ID });
-    expect(parseRoute(`#/report/${ID}?x=1`)).toEqual({ kind: 'report', personId: ID });
-  });
-
-  it('sends a malformed report id home rather than to a blank screen', () => {
-    expect(parseRoute('#/report/')).toEqual({ kind: 'home' });
-    expect(parseRoute('#/report/nope')).toEqual({ kind: 'home' });
-    expect(parseRoute('#/report/../about')).toEqual({ kind: 'home' });
-  });
-
-  it('routes a profections id through (#168)', () => {
-    expect(parseRoute(`#/profections/${ID}`)).toEqual({ kind: 'profections', personId: ID });
-    expect(parseRoute(`#/profections/${ID}/`)).toEqual({ kind: 'profections', personId: ID });
-    expect(parseRoute(`#/profections/${ID}?x=1`)).toEqual({ kind: 'profections', personId: ID });
-  });
-
-  it('sends a malformed profections id home rather than to a blank screen', () => {
-    expect(parseRoute('#/profections/')).toEqual({ kind: 'home' });
-    expect(parseRoute('#/profections/nope')).toEqual({ kind: 'home' });
-    expect(parseRoute('#/profections/../about')).toEqual({ kind: 'home' });
-  });
-
-  it('routes a progressions id through (#398)', () => {
-    expect(parseRoute(`#/progressions/${ID}`)).toEqual({ kind: 'progressions', personId: ID });
-    expect(parseRoute(`#/progressions/${ID}/`)).toEqual({ kind: 'progressions', personId: ID });
-    expect(parseRoute(`#/progressions/${ID}?x=1`)).toEqual({ kind: 'progressions', personId: ID });
-  });
-
-  it('sends a malformed progressions id home rather than to a blank screen', () => {
-    expect(parseRoute('#/progressions/')).toEqual({ kind: 'home' });
-    expect(parseRoute('#/progressions/nope')).toEqual({ kind: 'home' });
-  });
-
-  it('routes a solar-arc id through (#398)', () => {
-    expect(parseRoute(`#/solar-arc/${ID}`)).toEqual({ kind: 'solar-arc', personId: ID });
-    expect(parseRoute(`#/solar-arc/${ID}/`)).toEqual({ kind: 'solar-arc', personId: ID });
-    expect(parseRoute(`#/solar-arc/${ID}?x=1`)).toEqual({ kind: 'solar-arc', personId: ID });
-  });
-
-  it('sends a malformed solar-arc id home rather than to a blank screen', () => {
-    expect(parseRoute('#/solar-arc/')).toEqual({ kind: 'home' });
-    expect(parseRoute('#/solar-arc/nope')).toEqual({ kind: 'home' });
-  });
-
-  it('routes a primary-directions id through (#407)', () => {
-    expect(parseRoute(`#/primary-directions/${ID}`)).toEqual({ kind: 'primary-directions', personId: ID });
-    expect(parseRoute(`#/primary-directions/${ID}/`)).toEqual({ kind: 'primary-directions', personId: ID });
-    expect(parseRoute(`#/primary-directions/${ID}?x=1`)).toEqual({ kind: 'primary-directions', personId: ID });
-  });
-
-  it('sends a malformed primary-directions id home rather than to a blank screen', () => {
-    expect(parseRoute('#/primary-directions/')).toEqual({ kind: 'home' });
-    expect(parseRoute('#/primary-directions/nope')).toEqual({ kind: 'home' });
-  });
-
-  it('routes a transit id through (#172)', () => {
-    expect(parseRoute(`#/transit/${ID}`)).toEqual({ kind: 'transit', personId: ID });
-    expect(parseRoute(`#/transit/${ID}/`)).toEqual({ kind: 'transit', personId: ID });
-    expect(parseRoute(`#/transit/${ID}?x=1`)).toEqual({ kind: 'transit', personId: ID });
-  });
-
-  it('sends a malformed transit id home rather than to a blank screen', () => {
-    expect(parseRoute('#/transit/')).toEqual({ kind: 'home' });
-    expect(parseRoute('#/transit/nope')).toEqual({ kind: 'home' });
-    expect(parseRoute('#/transit/../about')).toEqual({ kind: 'home' });
-  });
-
-  it('routes a synastry id through (#172)', () => {
-    expect(parseRoute(`#/synastry/${ID}`)).toEqual({ kind: 'synastry', personId: ID });
-    expect(parseRoute(`#/synastry/${ID}/`)).toEqual({ kind: 'synastry', personId: ID });
-    expect(parseRoute(`#/synastry/${ID}?x=1`)).toEqual({ kind: 'synastry', personId: ID });
-  });
-
-  it('sends a malformed synastry id home rather than to a blank screen', () => {
-    expect(parseRoute('#/synastry/')).toEqual({ kind: 'home' });
-    expect(parseRoute('#/synastry/nope')).toEqual({ kind: 'home' });
-    expect(parseRoute('#/synastry/../about')).toEqual({ kind: 'home' });
-  });
-
-  it('routes a composite id through (#169)', () => {
-    expect(parseRoute(`#/composite/${ID}`)).toEqual({ kind: 'composite', personId: ID });
-    expect(parseRoute(`#/composite/${ID}/`)).toEqual({ kind: 'composite', personId: ID });
-    expect(parseRoute(`#/composite/${ID}?x=1`)).toEqual({ kind: 'composite', personId: ID });
-  });
-
-  it('sends a malformed composite id home rather than to a blank screen', () => {
-    expect(parseRoute('#/composite/')).toEqual({ kind: 'home' });
-    expect(parseRoute('#/composite/nope')).toEqual({ kind: 'home' });
-    expect(parseRoute('#/composite/../about')).toEqual({ kind: 'home' });
-  });
-
-  it('sends the old harmonic link (#170) to the Charts page, as a harmonic chart', () => {
-    expect(parseRoute(`#/harmonic/${ID}`)).toEqual({ kind: 'chart', personId: ID, chartType: 'harmonic' });
-    expect(parseRoute(`#/harmonic/${ID}/`)).toEqual({ kind: 'chart', personId: ID, chartType: 'harmonic' });
-    expect(parseRoute(`#/harmonic/${ID}?x=1`)).toEqual({ kind: 'chart', personId: ID, chartType: 'harmonic' });
-  });
-
-  it('sends a malformed harmonic id home rather than to a blank screen', () => {
-    expect(parseRoute('#/harmonic/')).toEqual({ kind: 'home' });
-    expect(parseRoute('#/harmonic/nope')).toEqual({ kind: 'home' });
-    expect(parseRoute('#/harmonic/../about')).toEqual({ kind: 'home' });
-  });
-
-  it('sends the old draconic link (#398) to the Charts page, as a draconic chart', () => {
-    expect(parseRoute(`#/draconic/${ID}`)).toEqual({ kind: 'chart', personId: ID, chartType: 'draconic' });
-    expect(parseRoute(`#/draconic/${ID}/`)).toEqual({ kind: 'chart', personId: ID, chartType: 'draconic' });
-    expect(parseRoute(`#/draconic/${ID}?x=1`)).toEqual({ kind: 'chart', personId: ID, chartType: 'draconic' });
-  });
-
-  it('reads the chart type and view from the Charts page link, ignoring unknown ones (#511)', () => {
-    expect(parseRoute(`#/chart/${ID}?type=solar-return&view=placements`)).toEqual({
-      kind: 'chart',
-      personId: ID,
-      chartType: 'solar-return',
-      view: 'placements',
-    });
-    expect(parseRoute(`#/chart/${ID}?type=lunar-return`)).toEqual({
-      kind: 'chart',
-      personId: ID,
-      chartType: 'lunar-return',
-    });
-    expect(parseRoute(`#/chart/${ID}?type=nonsense&view=nope`)).toEqual({ kind: 'chart', personId: ID });
-  });
-
-  it('reads the view from the composite and horary routes too (#511)', () => {
-    expect(parseRoute(`#/composite/${ID}?view=aspects`)).toEqual({
-      kind: 'composite',
-      personId: ID,
-      view: 'aspects',
-    });
-    expect(parseRoute(`#/composite/${ID}`)).toEqual({ kind: 'composite', personId: ID });
-    expect(parseRoute('#/horary?view=patterns')).toEqual({ kind: 'horary', view: 'patterns' });
-    expect(parseRoute('#/horary')).toEqual({ kind: 'horary' });
-  });
-
-  it('sends a malformed draconic id home rather than to a blank screen', () => {
-    expect(parseRoute('#/draconic/')).toEqual({ kind: 'home' });
-    expect(parseRoute('#/draconic/nope')).toEqual({ kind: 'home' });
-    expect(parseRoute('#/draconic/../about')).toEqual({ kind: 'home' });
-  });
-
-  it('routes a periodic-transit id through (#207)', () => {
-    expect(parseRoute(`#/periodic-transit/${ID}`)).toEqual({ kind: 'periodic-transit', personId: ID });
-    expect(parseRoute(`#/periodic-transit/${ID}/`)).toEqual({ kind: 'periodic-transit', personId: ID });
-    expect(parseRoute(`#/periodic-transit/${ID}?x=1`)).toEqual({ kind: 'periodic-transit', personId: ID });
-  });
-
-  it('sends a malformed periodic-transit id home rather than to a blank screen', () => {
-    expect(parseRoute('#/periodic-transit/')).toEqual({ kind: 'home' });
-    expect(parseRoute('#/periodic-transit/nope')).toEqual({ kind: 'home' });
-    expect(parseRoute('#/periodic-transit/../about')).toEqual({ kind: 'home' });
-  });
-
-  it('sends an id that is not one of ours home rather than to an empty form', () => {
-    // The form would render "there is no person with that id — they may have been deleted",
-    // which is a confident, wrong explanation for a truncated link.
-    expect(parseRoute('#/person/')).toEqual({ kind: 'home' });
-    expect(parseRoute('#/person/nope')).toEqual({ kind: 'home' });
-    expect(parseRoute('#/person/p-short')).toEqual({ kind: 'home' });
-    // A chart id is well-formed and still not a person.
-    expect(parseRoute(`#/person/${newId('c')}`)).toEqual({ kind: 'home' });
-    // Path traversal in a hash cannot reach anything, but it must not become an id either.
-    expect(parseRoute('#/person/../about')).toEqual({ kind: 'home' });
-  });
-
-  it('sends an unknown route home', () => {
-    expect(parseRoute('#/nonsense')).toEqual({ kind: 'home' });
-    expect(parseRoute('#/aboutus')).toEqual({ kind: 'home' });
-  });
-
-  it('routes the admin and set-password screens (#135)', () => {
-    expect(parseRoute('#/admin')).toEqual({ kind: 'admin' });
-    expect(parseRoute('#/set-password')).toEqual({ kind: 'set-password' });
-    expect(parseRoute('#/set-password?token=abc123')).toEqual({ kind: 'set-password' });
-  });
-
-  it('routes the corpus-overrides screen (#292)', () => {
-    expect(parseRoute('#/admin/usage')).toEqual({ kind: 'admin-usage' });
-    expect(parseRoute('#/admin/usage/')).toEqual({ kind: 'admin-usage' });
-    expect(parseRoute('#/admin/corpus-overrides')).toEqual({ kind: 'corpus-overrides' });
-    expect(parseRoute('#/admin/corpus-overrides/')).toEqual({ kind: 'corpus-overrides' });
-  });
-
-  it('routes the admin-bootstrap screen', () => {
-    expect(parseRoute('#/setup')).toEqual({ kind: 'setup' });
-    expect(parseRoute('#/setup?token=abc123')).toEqual({ kind: 'setup' });
+  it('no longer knows the obsolete shapes, and does not redirect them to a guess', () => {
+    for (const hash of [
+      `#/person/${ID}`,
+      `#/chart/${ID}`,
+      `#/chart/${ID}?type=draconic&view=aspects`,
+      `#/report/${ID}`,
+      `#/profections/${ID}`,
+      `#/progressions/${ID}`,
+      `#/solar-arc/${ID}`,
+      `#/primary-directions/${ID}`,
+      `#/transit/${ID}`,
+      `#/periodic-transit/${ID}`,
+      `#/synastry/${ID}`,
+      `#/composite/${ID}`,
+      `#/harmonic/${ID}`,
+      `#/draconic/${ID}`,
+      `#/astrocartography/${ID}`,
+      '#/cycles',
+      '#/eclipses',
+      '#/horary',
+      '#/electional',
+      '#/rectification',
+      '#/export',
+    ]) {
+      expect(parseRoute(hash), hash).toEqual({ kind: 'home' });
+    }
   });
 });
 

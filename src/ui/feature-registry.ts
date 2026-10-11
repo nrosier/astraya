@@ -19,7 +19,7 @@
 import { PERSON_TABS, type PersonTabKey } from './person-nav.js';
 import { TOOLS, type ToolKey } from './tools-nav.js';
 import { ADMIN_TABS, type AdminTabKey } from './admin-nav.js';
-import type { Route } from './route.js';
+import { routeHref, type Route } from './route.js';
 
 export type FeatureScope = 'person' | 'global' | 'document' | 'preferences' | 'admin';
 
@@ -199,7 +199,7 @@ const MISCELLANEOUS_FEATURES: readonly FeatureDefinition[] = [
     group: 'documents',
     order: 0,
     routeKind: 'export-builder',
-    buildHref: () => '#/export',
+    buildHref: () => routeHref({ kind: 'export-builder' }),
     requiresBirthMoment: false,
     settingsMode: 'inline',
     exportCapabilities: ['pdf-document'],

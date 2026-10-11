@@ -85,9 +85,9 @@ describe('featureFor', () => {
 
 describe('hrefFor', () => {
   it('matches the feature it looks up by key', () => {
-    expect(hrefFor('chart', { personId: ID })).toBe(`#/chart/${ID}`);
+    expect(hrefFor('chart', { personId: ID })).toBe(`#/people/${ID}/charts/natal/wheel`);
     expect(hrefFor('overview', { personId: ID })).toBe(`#/people/${ID}/overview`);
-    expect(hrefFor('cycles')).toBe('#/cycles');
+    expect(hrefFor('cycles')).toBe('#/explore/cycles');
   });
 
   it('throws for an unregistered key', () => {

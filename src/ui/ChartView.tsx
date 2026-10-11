@@ -101,7 +101,8 @@ import { unicodeSymbol, textSymbol } from '../chart/symbol-text.js';
 import { useSymbolClass } from './symbol-setting.js';
 import { useGlyphVariants } from './glyph-variant-setting.js';
 import { useRegisterExports } from './export-registry.js';
-import { CHART_VIEWS, chartHref, chartViewLabels, type ChartViewKind } from './chart-sections.js';
+import { CHART_VIEWS, chartViewLabels, type ChartViewKind } from './chart-sections.js';
+import { chartHref, personHref } from './route.js';
 import { ChartTypeSelector, changeChartView } from './ChartTypeSelector.js';
 import { ChartViewNav } from './ChartViewNav.js';
 import { bodyId } from '../chart/body-id.js';
@@ -1646,12 +1647,12 @@ export function ChartView({
     return (
       <main className="shell">
         <p className="back">
-          <a href={`#/person/${personId}`}>&larr; {person.displayName || t.personFallback}</a>
+          <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
         </p>
         <PageHeader title={t.chartFallback} />
         <p>
           {t.notCompleteChart(person.displayName || t.thisPersonCapitalized)}{' '}
-          <a href={`#/person/${personId}`}>{t.personPageLink}</a>.
+          <a href={personHref(personId)}>{t.personPageLink}</a>.
         </p>
       </main>
     );
@@ -1662,7 +1663,7 @@ export function ChartView({
   return (
     <main className="shell shell--wide">
       <p className="back">
-        <a href={`#/person/${personId}`}>&larr; {person.displayName || t.personFallback}</a>
+        <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
       </p>
       <PageHeader title={person.displayName || t.chartFallback} basis={basisLine} />
       <ChartTypeSelector personId={personId} type="natal" view={view} />

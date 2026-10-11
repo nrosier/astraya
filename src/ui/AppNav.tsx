@@ -40,7 +40,7 @@ import { useMessages } from './messages.js';
 import { activeFeatureKey, activePersonTabKey, activeToolKey } from './feature-registry.js';
 import { isTabEnabled, PERSON_TAB_FAMILIES, PERSON_TABS } from './person-nav.js';
 import type { PersonTab } from './person-nav.js';
-import type { Route } from './route.js';
+import { routeHref, type Route } from './route.js';
 import { useOptionalStore, useStoreState } from './store-context.js';
 import { TOOL_GROUPS, TOOLS } from './tools-nav.js';
 import { useLastPersonId, writeLastPersonId } from './last-person.js';
@@ -307,7 +307,7 @@ export function AppNav({ route }: { route: Route }): React.JSX.Element {
             is the only export action that is not page-specific. A single-item dropdown would be
             worse than a plain link, so it is one — same as Overview/Birth record above. */}
         <a
-          href="#/export"
+          href={routeHref({ kind: 'export-builder' })}
           className={documentsActive ? 'app-nav-item active' : 'app-nav-item'}
           aria-current={documentsActive ? 'page' : undefined}
           title={t.exportPdfBuilderHint}
