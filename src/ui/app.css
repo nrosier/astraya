@@ -2166,6 +2166,10 @@ label.stacked textarea:focus-visible {
 }
 
 @container chart-workbench (min-width: 68rem) {
+  .selection-inspector {
+    min-height: 14rem;
+  }
+
   .chart-workbench {
     grid-template-columns: minmax(46rem, 1fr) minmax(20rem, 24rem);
   }
@@ -2178,9 +2182,10 @@ label.stacked textarea:focus-visible {
 
 /* The selection's facts and meaning (#400, #415): plain accessible text, unlike the wheel — reached by a
    mouse/touch gesture or a table row's button, but ordinary prose a screen reader reads directly. Its
-   minimum height reserves room for a typical selection so the first one does not shove the page. */
+   minimum height (two-column layout only) reserves room for a typical selection so the first one does not
+   shove the page. Stacked under the dial, as on a phone, nothing sits below it that could jump, so it
+   stays as short as its content instead of showing a tall empty box. */
 .selection-inspector {
-  min-height: 14rem;
   padding: 0.85rem 1.1rem;
   border: 1px solid var(--line);
   border-radius: var(--radius);
