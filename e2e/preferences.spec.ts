@@ -100,16 +100,16 @@ test('the rulers choice changed here is the same one chart screens read, and sur
   test.setTimeout(60_000);
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   await page.getByRole('link', { name: 'Preferences', exact: true }).click();
-  const select = page.getByLabel('Planetary rulers', { exact: true });
-  await expect(select).toHaveValue('modern');
-  await select.selectOption('traditional');
+  const group = page.getByRole('radiogroup', { name: 'Planetary rulers', exact: true });
+  await expect(group.getByRole('radio', { name: /^Modern/ })).toBeChecked();
+  await group.getByRole('radio', { name: /^Traditional/ }).check();
 
   await page.reload();
   await page.waitForEvent('load', { timeout: 5_000 }).catch(() => undefined);
-  await expect(page.getByLabel('Planetary rulers', { exact: true })).toHaveValue('traditional');
+  await expect(group.getByRole('radio', { name: /^Traditional/ })).toBeChecked();
 
   // Reset so this test leaves no state behind for the suite's shared ASTRAYA_DB_PATH-free run.
-  await page.getByLabel('Planetary rulers', { exact: true }).selectOption('modern');
+  await group.getByRole('radio', { name: /^Modern/ }).check();
 });
 
 test('exporting everything and the people CSV both produce real downloads', async ({ page }) => {

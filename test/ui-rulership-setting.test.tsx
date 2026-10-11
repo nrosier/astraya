@@ -53,11 +53,9 @@ async function mount(node: React.JSX.Element): Promise<HTMLElement> {
   return container;
 }
 
-const select = (container: HTMLElement): HTMLSelectElement => {
-  const found = container.querySelector('select');
-  if (found === null) throw new Error('fixture bug: no select');
-  return found;
-};
+const radios = (container: HTMLElement): readonly HTMLInputElement[] => [
+  ...container.querySelectorAll<HTMLInputElement>('[role="radiogroup"] input[type="radio"]'),
+];
 
 describe('the saved choice (#426)', () => {
   it('is modern when nothing is saved', () => {
@@ -126,14 +124,13 @@ describe('the hook (#426)', () => {
 });
 
 describe('RulershipSetting (#426)', () => {
-  it('offers the three choices, modern selected by default, with a label and an explanation linked to the select', async () => {
+  it('offers the three choices as option cards, modern selected by default, under a named group with its explanation', async () => {
     const container = await mount(<RulershipSetting />);
-    const control = select(container);
-    expect(control.value).toBe('modern');
-    expect([...control.options].map((option) => option.value)).toEqual(['modern', 'traditional', 'both']);
-    expect(container.querySelector(`label[for="${control.id}"]`)?.textContent).toContain('Planetary rulers');
-    const hint = container.querySelector(`[id="${control.getAttribute('aria-describedby') ?? ''}"]`);
-    expect(hint?.textContent).toContain('Scorpio, Aquarius and Pisces');
+    const group = container.querySelector('[role="radiogroup"]');
+    expect(group?.getAttribute('aria-label')).toBe('Planetary rulers');
+    expect(radios(container).map((radio) => radio.checked)).toEqual([true, false, false]);
+    expect(container.querySelector('.primitive-option-card-title')?.textContent).toBe('Modern');
+    expect(container.querySelector('.hint')?.textContent).toContain('Scorpio, Aquarius and Pisces');
   });
 
   it('saves the choice and tells the other components', async () => {
@@ -144,20 +141,18 @@ describe('RulershipSetting (#426)', () => {
       </>,
     );
     await act(async () => {
-      const control = select(container);
-      control.value = 'both' satisfies RulershipChoice;
-      control.dispatchEvent(new Event('change', { bubbles: true }));
+      radios(container)[2]?.click();
       await Promise.resolve();
     });
-    expect(localStorage.getItem(RULERSHIP_KEY)).toBe('both');
+    expect(localStorage.getItem(RULERSHIP_KEY)).toBe('both' satisfies RulershipChoice);
     expect(container.querySelector('[data-testid="reader"]')?.textContent).toBe('both');
-    expect(select(container).value).toBe('both');
+    expect(radios(container).map((radio) => radio.checked)).toEqual([false, false, true]);
   });
 
   it('is in Dutch when the language is Dutch', async () => {
     setLocale('nl');
     const container = await mount(<RulershipSetting />);
     expect(container.textContent).toContain('Heersende planeten');
-    expect(select(container).options[2]?.textContent).toBe('Beide (mede-heersers)');
+    expect(container.querySelectorAll('.primitive-option-card-title')[2]?.textContent).toBe('Beide');
   });
 });

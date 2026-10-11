@@ -40,6 +40,9 @@ import { extendedSettingsPanelMessages } from './ExtendedSettingsPanel.messages.
 import { changedSettings, sameSettings } from './extended-settings-summary.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
+import { ChoiceGroup } from './primitives/ChoiceGroup.js';
+import { OptionCards } from './primitives/OptionCards.js';
+import { Select } from './primitives/Select.js';
 import { RulershipSetting } from './RulershipSetting.js';
 import { useRulershipChoice } from './rulership-setting.js';
 import { SymbolSetting } from './SymbolSetting.js';
@@ -330,30 +333,26 @@ export function ExtendedSettingsPanel({
           <fieldset className="field-group settings-card-group">
             <legend>{t.presetLabel}</legend>
             <p className="hint settings-card-tag">{t.appliesOnApply}</p>
-            <label>
-              <select
-                aria-label={t.presetLabel}
-                value={currentProfile ?? 'custom'}
-                onChange={(event) => {
-                  chooseProfile(event.target.value);
-                }}
-              >
-                <option value="custom" disabled={currentProfile !== undefined}>
-                  {t.presetOptions.custom}
-                </option>
-                {CALCULATION_PROFILE_IDS.map((id) => (
-                  <option key={id} value={id}>
-                    {t.presetOptions[id]}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <p className="hint">
-              {t.presetNotes[currentProfile ?? 'custom']}
-              {currentProfile !== undefined && CALCULATION_PROFILES[currentProfile].rulership !== rulers
-                ? ` ${t.presetRulership(t.rulershipNames[CALCULATION_PROFILES[currentProfile].rulership])}`
-                : ''}
-            </p>
+            <OptionCards
+              label={t.presetLabel}
+              value={currentProfile ?? 'custom'}
+              options={[
+                ...(currentProfile === undefined
+                  ? [{ value: 'custom', title: t.presetOptions.custom, consequence: t.presetNotes.custom }]
+                  : []),
+                ...CALCULATION_PROFILE_IDS.map((id) => ({
+                  value: id,
+                  title: t.presetOptions[id],
+                  consequence: t.presetNotes[id],
+                })),
+              ]}
+              onChange={chooseProfile}
+            />
+            {currentProfile !== undefined && CALCULATION_PROFILES[currentProfile].rulership !== rulers && (
+              <p className="hint">
+                {t.presetRulership(t.rulershipNames[CALCULATION_PROFILES[currentProfile].rulership])}
+              </p>
+            )}
           </fieldset>
 
           <fieldset className="field-group settings-card-group">
@@ -362,72 +361,55 @@ export function ExtendedSettingsPanel({
             <p className="hint">{t.zodiacFrameSubtitle}</p>
 
             {/* Zodiac */}
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label className="settings-card-sublabel">{t.zodiacLegend}</label>
-              <div role="radiogroup" aria-label={t.zodiacLegend}>
-                <label>
-                  <input
-                    type="radio"
-                    name="extended-settings-zodiac"
-                    checked={draft.zodiac.kind === 'tropical'}
-                    onChange={() => {
-                      patch({ zodiac: { kind: 'tropical' } });
-                    }}
-                  />{' '}
-                  {t.tropical}
-                </label>{' '}
-                <label>
-                  <input
-                    type="radio"
-                    name="extended-settings-zodiac"
-                    checked={draft.zodiac.kind === 'sidereal'}
-                    onChange={() => {
-                      patch({ zodiac: { kind: 'sidereal', ayanamsa: LAHIRI_AYANAMSA_ID } });
-                    }}
-                  />{' '}
-                  {t.sidereal}
-                </label>
-              </div>
+            <div className="settings-card-block">
+              <ChoiceGroup
+                label={t.zodiacLegend}
+                value={draft.zodiac.kind}
+                options={[
+                  { value: 'tropical', label: t.tropical },
+                  { value: 'sidereal', label: t.sidereal },
+                ]}
+                onChange={(value) => {
+                  patch({
+                    zodiac:
+                      value === 'sidereal' ? { kind: 'sidereal', ayanamsa: LAHIRI_AYANAMSA_ID } : { kind: 'tropical' },
+                  });
+                }}
+              />
               <p className="settings-card-note">
                 {draft.zodiac.kind === 'tropical' ? t.tropicalDescription : t.siderealDescription}
               </p>
             </div>
 
             {draft.zodiac.kind === 'sidereal' && (
-              <label className="settings-card-indent" style={{ marginBottom: '1.5rem' }}>
-                {t.ayanamsaLabel}
-                <select
-                  aria-label={t.ayanamsaLabel}
-                  value={ayanamsaId}
-                  onChange={(event) => {
-                    patch({ zodiac: { kind: 'sidereal', ayanamsa: Number(event.target.value) } });
+              <div className="settings-card-indent settings-card-block">
+                <Select
+                  label={t.ayanamsaLabel}
+                  value={String(ayanamsaId)}
+                  options={AYANAMSAS.map((ayanamsa) => ({
+                    value: String(ayanamsa.id),
+                    label: ayanamsaNames.get(ayanamsa.id) ?? ayanamsa.key,
+                  }))}
+                  onChange={(value) => {
+                    patch({ zodiac: { kind: 'sidereal', ayanamsa: Number(value) } });
                   }}
-                >
-                  {AYANAMSAS.map((ayanamsa) => (
-                    <option key={ayanamsa.id} value={ayanamsa.id}>
-                      {ayanamsaNames.get(ayanamsa.id) ?? ayanamsa.key}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                />
+              </div>
             )}
 
             {/* House System */}
             <div>
-              <label className="settings-card-sublabel">{t.systemLabel}</label>
-              <select
-                aria-label={t.houseSystemLegend}
+              <Select
+                label={t.houseSystemLegend}
                 value={draft.houseSystem}
-                onChange={(event) => {
-                  patch({ houseSystem: event.target.value });
+                options={HOUSE_SYSTEMS.map((system) => ({
+                  value: system.code,
+                  label: houseSystemNames.get(system.code) ?? system.key,
+                }))}
+                onChange={(value) => {
+                  patch({ houseSystem: value });
                 }}
-              >
-                {HOUSE_SYSTEMS.map((system) => (
-                  <option key={system.code} value={system.code}>
-                    {houseSystemNames.get(system.code) ?? system.key}
-                  </option>
-                ))}
-              </select>
+              />
               <p className="settings-card-note">{t.houseSystemDescription(draft.houseSystem)}</p>
             </div>
           </fieldset>

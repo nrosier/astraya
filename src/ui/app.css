@@ -4213,3 +4213,13 @@ svg text.chart-symbol-text-unicode {
     padding: 0.5rem 0.85rem;
   }
 }
+
+/* The visible name of the planetary-rulers option cards (the radiogroup carries the same name for assistive technology). */
+.rulership-setting-label {
+  margin: 0 0 var(--space-2);
+  font-weight: 600;
+}
+
+.settings-card-block {
+  margin-bottom: var(--space-4);
+}

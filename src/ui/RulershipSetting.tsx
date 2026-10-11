@@ -7,12 +7,12 @@
 /**
  * @module RulershipSetting
  * @purpose Device-preference control for choosing modern/traditional/both planetary rulers, shared across every screen that shows a ruler, dignity, or dispositor.
- * @conventions Writes the shared device preference via rulership-setting.ts; uses RulershipSetting.messages.ts for en/nl text via useMessages(). Built on the shared `Select` primitive (#506/#508) so label/control/help anatomy matches every other field in the app, rather than a bespoke inline layout.
+ * @conventions Writes the shared device preference via rulership-setting.ts; uses RulershipSetting.messages.ts for en/nl text via useMessages(). Three exclusive choices that each need a consequence, so it is the shared `OptionCards` primitive (#513, `docs/UI-UX_GUIDELINES.md` §6) with the full explanation as a hint beneath.
  * @exports RulershipSetting
  */
 import { RULERSHIP_CHOICES, isRulershipChoice } from '../astrology/rulership.js';
 import { useMessages } from './messages.js';
-import { Select } from './primitives/Select.js';
+import { OptionCards } from './primitives/OptionCards.js';
 import { useRulershipChoice } from './rulership-setting.js';
 import { rulershipSettingMessages } from './RulershipSetting.messages.js';
 
@@ -21,14 +21,21 @@ export function RulershipSetting(): React.JSX.Element {
   const [choice, setChoice] = useRulershipChoice();
 
   return (
-    <Select
-      label={t.label}
-      value={choice}
-      help={t.hint}
-      options={RULERSHIP_CHOICES.map((option) => ({ value: option, label: t.options[option] }))}
-      onChange={(value) => {
-        if (isRulershipChoice(value)) setChoice(value);
-      }}
-    />
+    <div className="rulership-setting">
+      <p className="rulership-setting-label">{t.label}</p>
+      <OptionCards
+        label={t.label}
+        value={choice}
+        options={RULERSHIP_CHOICES.map((option) => ({
+          value: option,
+          title: t.titles[option],
+          consequence: t.consequences[option],
+        }))}
+        onChange={(value) => {
+          if (isRulershipChoice(value)) setChoice(value);
+        }}
+      />
+      <p className="hint">{t.hint}</p>
+    </div>
   );
 }

@@ -79,7 +79,10 @@ test('the settings open as a card, apply together or are dropped, and the button
 
   // A built-in calculation profile replaces every value it owns in one go; applying it redraws and the button names what changed.
   await openSettings(page);
-  await card.getByLabel('Calculation profile', { exact: true }).selectOption('traditional-western-v1');
+  await card
+    .getByRole('radiogroup', { name: 'Calculation profile', exact: true })
+    .getByRole('radio', { name: /^Traditional Western/ })
+    .check();
   await expect(card.getByText('also sets the planetary rulers to Traditional')).toBeVisible();
   await card.getByRole('button', { name: 'Apply and redraw', exact: true }).click();
   await expect(card).toBeHidden();
@@ -87,8 +90,16 @@ test('the settings open as a card, apply together or are dropped, and the button
   await expect(trigger).toContainText('Chiron hidden');
   await expect(trigger).toContainText('changed');
   await openSettings(page);
-  await expect(card.getByLabel('Planetary rulers', { exact: true })).toHaveValue('traditional');
-  await expect(card.getByLabel('Calculation profile', { exact: true })).toHaveValue('traditional-western-v1');
+  await expect(
+    card
+      .getByRole('radiogroup', { name: 'Planetary rulers', exact: true })
+      .getByRole('radio', { name: /^Traditional/ }),
+  ).toBeChecked();
+  await expect(
+    card
+      .getByRole('radiogroup', { name: 'Calculation profile', exact: true })
+      .getByRole('radio', { name: /^Traditional Western/ }),
+  ).toBeChecked();
 
   // The orbs now in force are spelled out, not only a percentage.
   await card.getByRole('slider', { name: 'Orb scale' }).fill('-10');
@@ -199,7 +210,10 @@ test('saving a profile as the device default applies it to a chart that was neve
   // Save Sidereal (Lahiri) as this device's default, without applying it to the chart open now.
   await openSettings(page);
   const card = page.locator('dialog.settings-card');
-  await card.getByLabel('Calculation profile', { exact: true }).selectOption('sidereal-lahiri-v1');
+  await card
+    .getByRole('radiogroup', { name: 'Calculation profile', exact: true })
+    .getByRole('radio', { name: /^Sidereal/ })
+    .check();
   await card.getByRole('button', { name: 'Save as my default', exact: true }).click();
   await expect(card).toBeHidden();
   await openSettings(page);
@@ -220,7 +234,11 @@ test('saving a profile as the device default applies it to a chart that was neve
   await expect(page.locator('div.chart-wheel')).toBeVisible();
 
   await openSettings(page);
-  await expect(card.getByLabel('Calculation profile', { exact: true })).toHaveValue('sidereal-lahiri-v1');
+  await expect(
+    card
+      .getByRole('radiogroup', { name: 'Calculation profile', exact: true })
+      .getByRole('radio', { name: /^Sidereal/ }),
+  ).toBeChecked();
   await expect(card.getByLabel('House system', { exact: true })).toHaveValue('W');
   await closeSettings(page);
 });
