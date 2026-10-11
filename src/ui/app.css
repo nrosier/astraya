@@ -3591,6 +3591,12 @@ svg text.chart-symbol-text-unicode {
   display: inline;
 }
 
+.settings-card-choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: 0.15rem 1rem;
+}
+
 .settings-card-footer {
   position: sticky;
   bottom: 0;

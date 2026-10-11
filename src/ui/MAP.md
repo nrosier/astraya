@@ -13,10 +13,11 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `calculation-basis.ts` + `calculation-basis.messages.ts` — The calculation-basis line (profile name + whether it is Astraya's default, the saved default, or changed for this chart) shown on chart pages. Deps: `chart/calculation-profiles`, `default-calculation-profile`, `extended-settings-summary`, `ExtendedSettingsPanel.messages`.
 - `table-selection.tsx` — The table side of the wheel selection: `TableSelection`, each row kind's selection key, and the shared "Show on the chart" button column. Deps: `interpretation/selection-key`, `chart/body-id`, `table-sort`.
 - `appearance-settings.ts` — Motion (follow the system / reduce) and Density (standard / compact) device preferences, applied as root attributes. Deps: none.
+- `MapSettingsDialog.tsx` + `MapSettingsDialog.messages.ts` + `map-settings.ts` — The Astrocartography map's staged settings dialog (line types, primary/additional bodies, Local Space, relocation), its applied-state summary and the pure settings logic. Deps: `primitives/StagedDialog`, `domain/astrocartography`.
 - `AspectMatrix.tsx` — The aspect matrix view: the sheet's grid with cells that select an aspect pair on the wheel. Deps: `chart/aspect-matrix`, `interpretation/selection-key`, `wheel-interaction`.
 - `AppNav.tsx` + `AppNav.messages.ts` — Primary navigation (person tabs, Tools/Export menus). Deps: `person-nav`, `tools-nav`, `export-registry`, `domain/full-export`.
 - `AstroChartWheel.tsx` — Dev-only reference wheel via `@astrodraw/astrochart`. Deps: `chart/astrochart-adapter`.
-- `AstrocartographyView.tsx` + `AstrocartographyView.messages.ts` — Astrocartography/local-space map with line-type/body/relocation controls. Deps: `domain/astrocartography`, `chart/acg-map`, `interpretation/compose`.
+- `AstrocartographyView.tsx` + `AstrocartographyView.messages.ts` — Astrocartography/local-space map; its settings live in `MapSettingsDialog`, its exports in the page header. Deps: `domain/astrocartography`, `chart/acg-map`, `interpretation/compose`.
 - `BiWheelSelectionPanel.tsx` + `BiWheelSelectionPanel.messages.ts` — Bi-wheel click-to-inspect panel (body/sign/aspect info). Deps: `./bi-wheel-selection`, `astro-names.messages`.
 - `BirthPlaceSearch.tsx` + `BirthPlaceSearch.messages.ts` — Geocoding place-name search field. Deps: `./forward-geocode`, `./geocode-provider`.
 - `Changelog.tsx` + `Changelog.messages.ts` — In-app CHANGELOG.md viewer. Deps: `./markdown`.
