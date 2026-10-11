@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UI behaviour baseline</title>
+    <style>
+      /*
+       * HTML-first documentation (#399, #427): reuses Astraya's own design tokens from
+       * src/ui/app.css verbatim rather than re-deriving them. Deliberately standalone:
+       * no build step, no external font, no dependency on the app's stylesheet.
+       */
+      :root {
+        color-scheme: dark light;
+
+        --bg: #0b0c18;
+        --surface: #15162a;
+        --surface-hover: #1d1e36;
+        --line: #2a2b45;
+
+        --fg: #eceafa;
+        --muted: #a09dc0;
+
+        --accent: #a390fb;
+        --aspect-hard: #ff8189;
+        --aspect-soft: #6ec3ff;
+        --aspect-minor: #8fe0a0;
+        --solar: #f2b75e;
+
+        --glow-a: rgb(124 92 255 / 18%);
+        --glow-b: rgb(242 183 94 / 8%);
+
+        --radius: 0.625rem;
+        --radius-sm: 0.375rem;
+      }
+
+      @media (prefers-color-scheme: light) {
+        :root {
+          --bg: #fbfaff;
+          --surface: #f3f1fa;
+          --surface-hover: #ebe8f6;
+          --line: #e2dff0;
+
+          --fg: #16152b;
+          --muted: #5c5878;
+
+          --accent: #5b3fd4;
+          --solar: #8f5a0e;
+          --aspect-hard: #b3261e;
+          --aspect-soft: #1857c4;
+          --aspect-minor: #0a4d28;
+
+          --glow-a: rgb(124 92 255 / 8%);
+          --glow-b: rgb(242 183 94 / 7%);
+        }
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 3rem 1.5rem 6rem;
+        background: var(--bg);
+        background-image:
+          radial-gradient(ellipse at top right, var(--glow-a), transparent 55%),
+          radial-gradient(ellipse at bottom left, var(--glow-b), transparent 55%);
+        background-attachment: fixed;
+        color: var(--fg);
+        font:
+          16px/1.65 system-ui,
+          -apple-system,
+          'Segoe UI',
+          Roboto,
+          sans-serif;
+      }
+
+      main {
+        max-width: 64rem;
+        margin: 0 auto;
+      }
+
+      header.adr-header {
+        margin-bottom: 2.5rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .adr-kicker {
+        margin: 0 0 0.5rem;
+        color: var(--accent);
+        font-weight: 650;
+        font-size: 0.8rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0 0 0.75rem;
+        font-size: 1.75rem;
+        font-weight: 680;
+        letter-spacing: -0.02em;
+        line-height: 1.25;
+      }
+
+      .adr-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.25rem;
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      .adr-meta dt {
+        display: inline;
+        font-weight: 620;
+        color: var(--fg);
+      }
+
+      .adr-meta dt::after {
+        content: ' ';
+      }
+
+      .adr-meta dd {
+        display: inline;
+        margin: 0;
+      }
+
+      .status-pill {
+        display: inline-block;
+        padding: 0.1em 0.6em;
+        border: 1px solid color-mix(in oklab, var(--aspect-minor) 45%, var(--line));
+        border-radius: 999px;
+        background: color-mix(in oklab, var(--aspect-minor) 16%, var(--surface));
+        color: var(--aspect-minor);
+        font-weight: 650;
+        font-size: 0.8rem;
+        text-transform: capitalize;
+      }
+
+      /* Prose: the decision narrative, styled after app.css's .prose class. */
+      .prose h2 {
+        margin: 2.5rem 0 0.75rem;
+        font-size: 1.35rem;
+        font-weight: 620;
+        letter-spacing: -0.015em;
+      }
+
+      .prose h2:first-of-type {
+        margin-top: 0;
+      }
+
+      .prose h3 {
+        margin: 2rem 0 0.4rem;
+        font-size: 1.1rem;
+        font-weight: 620;
+      }
+
+      .prose h4 {
+        margin: 1.5rem 0 0.3rem;
+        color: var(--accent);
+        font-size: 0.95rem;
+      }
+
+      .prose p {
+        margin: 0 0 1rem;
+      }
+
+      .prose ul,
+      .prose ol {
+        margin: 0.5rem 0 1.25rem;
+        padding-left: 1.15rem;
+      }
+
+      .prose ul ul,
+      .prose ul ol {
+        margin: 0.4rem 0 0.4rem;
+      }
+
+      .prose li {
+        margin-bottom: 0.5rem;
+      }
+
+      .prose li::marker {
+        color: var(--accent);
+      }
+
+      .prose strong {
+        color: var(--fg);
+        font-weight: 650;
+      }
+
+      code {
+        padding: 0.1em 0.35em;
+        border-radius: 0.25rem;
+        background: color-mix(in oklab, var(--fg) 8%, transparent);
+        font-size: 0.875em;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+
+      /* Tables: reproduces app.css's .data-table visual treatment. */
+      .data-table-wrap {
+        margin: 0 0 2rem;
+      }
+
+      .data-table-caption {
+        margin: 0 0 0.5rem;
+        color: var(--muted);
+        font-weight: 620;
+        font-size: 0.85rem;
+      }
+
+      .data-table-scroll {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+      }
+
+      table.data-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-variant-numeric: tabular-nums;
+        font-size: 0.9rem;
+      }
+
+      table.data-table th,
+      table.data-table td {
+        padding: 0.5rem 0.85rem;
+        text-align: left;
+        border-bottom: 1px solid color-mix(in oklab, var(--line) 65%, transparent);
+      }
+
+      table.data-table td.num {
+        text-align: right;
+        white-space: nowrap;
+      }
+
+      table.data-table tbody tr:last-child th,
+      table.data-table tbody tr:last-child td {
+        border-bottom: none;
+      }
+
+      table.data-table th {
+        background: color-mix(in oklab, var(--surface) 70%, transparent);
+        color: var(--muted);
+        font-weight: 650;
+        font-size: 0.8rem;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+      }
+
+      table.data-table strong {
+        color: var(--fg);
+      }
+
+      footer.adr-footer {
+        margin-top: 3rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>UI behaviour baseline</h1>
+      <p>
+        The end-to-end suite pins 142 behaviours across 32 specs (Playwright, against the built <code>dist/</code>).
+      </p>
+      <p>
+        This is the behaviour any redesign must keep, or change on purpose with the test changed in the same commit.
+      </p>
+      <p>
+        Each line is a test title, so the record is the tests; regenerate with
+        <code>node scripts/generate-ui-baseline.mjs</code>.
+      </p>
+      <p>
+        Persisted person data is the compatibility boundary (docs/UI-UX_IMPLEMENTATION_PLAN.md §4); routes and UI are
+        not.
+      </p>
+      <h2>Routes and navigation</h2>
+      <h3><code>e2e/about-primer.spec.ts</code></h3>
+      <ul>
+        <li>the About page includes an astrology primer section with all subsections</li>
+        <li>the About page primer renders in Dutch with full translation</li>
+        <li>the primer section is accessible and follows semantic structure</li>
+      </ul>
+      <h3><code>e2e/app-header.spec.ts</code></h3>
+      <ul>
+        <li>one header holds the name, account, language and theme, and the old fixed corners are gone</li>
+        <li>the header stays in view and usable while a long page scrolls</li>
+        <li>the first Tab reaches a skip link that moves focus to the content without changing the route</li>
+        <li>the sign-in box opens beneath the button, inside the screen, and can be used</li>
+        <li>on a phone-width screen the header and the sign-in box stay inside the screen</li>
+        <li>scrolling to an anchor or focusing a field leaves room for the header, and printing hides it</li>
+        <li>the header has no automatically detectable accessibility violations</li>
+      </ul>
+      <h3><code>e2e/app-nav.spec.ts</code></h3>
+      <ul>
+        <li>the Tools menu is in the header on every screen and opens each tool</li>
+        <li>a person’s screens carry their name and tabs in the header, with no strip above the page</li>
+        <li>a tool page remembers the last person visited, and returning to their tabs needs no re-pick (#453)</li>
+        <li>on a phone the navigation folds behind a Menu button, and nothing scrolls sideways</li>
+        <li>
+          the rail (#506/#509) keeps the navigation reachable while the page scrolls, clear of the content it sits
+          beside, not above
+        </li>
+        <li>
+          the rail holds brand then navigation; the account cluster sits apart from it, top-right of the content, with
+          and without a person
+        </li>
+        <li>Charts is one destination, and the page keeps the type and the view in the URL</li>
+        <li>a solar return and a lunar return are charts like any other, with their contacts to the natal chart</li>
+        <li>
+          the header’s only export action is the PDF builder link; a chart’s own exports live in its own PageHeader
+        </li>
+      </ul>
+      <h3><code>e2e/person-nav-dropdown.spec.ts</code></h3>
+      <ul>
+        <li>opening a second group closes the first, so only one dropdown is ever open</li>
+        <li>pressing the open group’s button again closes it</li>
+        <li>choosing an item navigates and leaves no menu open</li>
+        <li>a click on empty page, on content, or on another tab closes the open menu</li>
+        <li>Escape closes the menu and puts focus back on its button</li>
+        <li>tabbing out of an open group closes it</li>
+        <li>the open menu has no automatically detectable accessibility violations</li>
+      </ul>
+      <h2>Inputs: the birth record and place</h2>
+      <h3><code>e2e/astrocartography-golden-path.spec.ts</code></h3>
+      <ul>
+        <li>a person with a known birth time gets an Astrocartography map and the SVG export downloads</li>
+        <li>unchecking a line type removes it from the map</li>
+        <li>enabling Local Space adds lines for the checked bodies</li>
+        <li>a person with an unknown birth time is told the map needs one</li>
+      </ul>
+      <h3><code>e2e/birth-place-search.spec.ts</code></h3>
+      <ul>
+        <li>"Search for a place by name" stays visible whether or not coordinates already exist (#290)</li>
+        <li>
+          a single search match is still shown as a click-to-confirm list, and picking it fills coordinates and Place of
+          birth (#290)
+        </li>
+        <li>multiple search matches are each shown as a separate clickable result (#290)</li>
+        <li>a search with no matches shows an inline "not found" message (#290)</li>
+        <li>a search-request failure shows an inline message, and coordinates are still editable by hand (#290)</li>
+      </ul>
+      <h3><code>e2e/chart-golden-path.spec.ts</code></h3>
+      <ul>
+        <li>entering birth data renders the chart wheel and the SVG export downloads</li>
+        <li>clicking a glyph on the wheel isolates it and opens a focused-info panel (#400)</li>
+        <li>clicking an aspect line isolates just its two endpoint bodies (#400)</li>
+        <li>the Jones chart-shape diagram renders alongside its text sentence and explanation (#401, #430)</li>
+        <li>the natal chart is split into views, opening on the wheel, and the wheel keeps its selection (#511)</li>
+        <li>
+          the natal chart views fit a phone: a labelled Select replaces the link row, and nothing scrolls the page
+          sideways (#511)
+        </li>
+        <li>a table row selects on the wheel and the wheel marks the table row (#418)</li>
+      </ul>
+      <h3><code>e2e/composite-golden-path.spec.ts</code></h3>
+      <ul>
+        <li>two people with known birth times get a Composite screen with a wheel and data tables</li>
+        <li>a person with an unknown birth time is told a composite needs one</li>
+      </ul>
+      <h3><code>e2e/cycles-golden-path.spec.ts</code></h3>
+      <ul>
+        <li>the cycles screen lists the great conjunctions with a diagram, and narrows to the Venus pentagram</li>
+        <li>a diagram point and its table row select each other (#418)</li>
+        <li>the cycles screen has no automatically detectable accessibility violations</li>
+        <li>a bad year is reported inline instead of searching</li>
+      </ul>
+      <h3><code>e2e/draconic-golden-path.spec.ts</code></h3>
+      <ul>
+        <li>a person with a known birth time gets a Draconic screen with a wheel and data tables</li>
+        <li>a person with an unknown birth time is told a draconic chart needs one</li>
+      </ul>
+      <h3><code>e2e/eclipses-golden-path.spec.ts</code></h3>
+      <ul>
+        <li>the eclipses screen lists the four eclipses of 2024 with their degrees</li>
+        <li>choosing a person shows which of their natal points an eclipse touches</li>
+        <li>the eclipses screen has no automatically detectable accessibility violations</li>
+        <li>a span that is too long is refused inline</li>
+      </ul>
+      <h3><code>e2e/electional-golden-path.spec.ts</code></h3>
+      <ul>
+        <li>searching for just the void-Moon rule reproduces the 8 March 2024 void window</li>
+        <li>an empty rule set, a reversed span and a missing coordinate are reported inline</li>
+        <li>the electional screen has no automatically detectable accessibility violations</li>
+      </ul>
+      <h3><code>e2e/harmonic-golden-path.spec.ts</code></h3>
+      <ul>
+        <li>a person with a known birth time gets a Harmonic screen with a wheel and data tables</li>
+        <li>a custom harmonic number renders its own chart</li>
+        <li>a person with an unknown birth time is told a harmonic chart needs one</li>
+      </ul>
+      <h3><code>e2e/horary-golden-path.spec.ts</code></h3>
+      <ul>
+        <li>casting a horary chart shows the considerations before judgment and the chart</li>
+        <li>a missing date is reported inline instead of casting</li>
+        <li>the horary screen has no automatically detectable accessibility violations</li>
+      </ul>
+      <h3><code>e2e/multi-device-sync.spec.ts</code></h3>
+      <ul></ul>
+      <h3><code>e2e/periodic-transit-golden-path.spec.ts</code></h3>
+      <ul>
+        <li>a person with a known birth time gets a Forecast screen with all four tiers</li>
+        <li>changing the "as of" date recalculates the forecast</li>
+        <li>the planetary-return picker computes a return for the chosen body (#398)</li>
+        <li>a person with an unknown birth time is told a forecast needs one</li>
+      </ul>
+      <h3><code>e2e/person-form-time-order.spec.ts</code></h3>
+      <ul>
+        <li>the form asks how the time is known before it asks for the time</li>
+      </ul>
+      <h3><code>e2e/profections-golden-path.spec.ts</code></h3>
+      <ul>
+        <li>a person with a known birth time gets a Profections screen with a Year/Month table</li>
+        <li>a person with an unknown birth time is told profections need one</li>
+      </ul>
+      <h3><code>e2e/progressions-golden-path.spec.ts</code></h3>
+      <ul>
+        <li>a person with a known birth time gets a Progressions screen with technique/MC selectors and tables</li>
+        <li>a person with an unknown birth time is told progressions need one</li>
+      </ul>
+      <h3><code>e2e/rectification-golden-path.spec.ts</code></h3>
+      <ul>
+        <li>rectifying a day of candidate times recovers the true birth time from exact solar-arc events</li>
+        <li>a missing event, an event before birth and a bad time are reported inline</li>
+        <li>the rectification screen has no automatically detectable accessibility violations</li>
+      </ul>
+      <h3><code>e2e/solar-arc-golden-path.spec.ts</code></h3>
+      <ul>
+        <li>a person with a known birth time gets a Solar Arc screen with directed positions and contacts</li>
+        <li>a person with an unknown birth time is told solar arc directions need one</li>
+      </ul>
+      <h3><code>e2e/synastry-golden-path.spec.ts</code></h3>
+      <ul>
+        <li>two people with known birth times get a Synastry screen with a bi-wheel and aspect table</li>
+        <li>
+          the relationship summary panel groups contacts by theme, and its AI reading is gated on an account (#422)
+        </li>
+        <li>a person with an unknown birth time is told synastry needs one</li>
+        <li>clicking a ring legend entry dims the other person's legend (#455)</li>
+      </ul>
+      <h3><code>e2e/transit-golden-path.spec.ts</code></h3>
+      <ul>
+        <li>a person with a known birth time gets a Transit screen with a bi-wheel and contacts table</li>
+        <li>a person with an unknown birth time is told transits need one</li>
+      </ul>
+      <h2>Chart workspace and selection</h2>
+      <h3><code>e2e/chart-workbench.spec.ts</code></h3>
+      <ul>
+        <li>the inspector follows the dial, beside it from a 68rem workbench and below it under that</li>
+        <li>selecting something fills the inspector in place, without moving it</li>
+        <li>a house number on the wheel selects that house, in the inspector and in its table row (#511)</li>
+        <li>a sign is selectable from the Placements table by keyboard, and clearable the same way (#511)</li>
+        <li>
+          a derived point is selectable from the Placements table by keyboard, with its position in the inspector (#511)
+        </li>
+        <li>
+          the aspect matrix is a view of its own, and a cell selects its pair on the wheel by mouse and keyboard (#511)
+        </li>
+        <li>the elements and modalities grid is a view of its own, with its table and a CSV download (#511)</li>
+      </ul>
+      <h3><code>e2e/extended-settings.spec.ts</code></h3>
+      <ul>
+        <li>the settings open as a card, apply together or are dropped, and the button says what changed</li>
+        <li>the card works on a phone: it fills the screen, scrolls inside, and keeps Apply in reach</li>
+        <li>opening and cancelling the card keeps what is selected on the wheel (applying redraws, which clears it)</li>
+        <li>the card is not part of the printed page</li>
+        <li>the Apply button enables when only Symbols are changed (#459)</li>
+        <li>saving a profile as the device default applies it to a chart that was never touched (#510)</li>
+      </ul>
+      <h3><code>e2e/rulership-setting.spec.ts</code></h3>
+      <ul>
+        <li>the rulers choice is modern by default, drives the dispositor table, and is kept across a reload</li>
+        <li>the choice is shared by the other screens that show rulers (profections and transits)</li>
+      </ul>
+      <h3><code>e2e/symbol-setting.spec.ts</code></h3>
+      <ul>
+        <li>the symbol class changes the wheel, the tables and the export together, and is kept on this device</li>
+        <li>the transit wheel and the cycles diagram follow the class too</li>
+        <li>Uranus and Pluto can be drawn in either of their two forms, kept on this device</li>
+        <li>the header toggle writes the symbols as text, and the line weight changes the drawn glyphs</li>
+      </ul>
+      <h2>Calculation screens</h2>
+      <h2>Exports and documents</h2>
+      <h3><code>e2e/pdf-export-builder.spec.ts</code></h3>
+      <ul>
+        <li>the header’s PDF-builder link opens the PDF builder, and a preset downloads a real PDF</li>
+        <li>ticking a chart type reveals its own tables and wheel checkbox, and unticking collapses them</li>
+        <li>the AI-customised narrative needs its own consent tick before Build PDF is enabled</li>
+        <li>the AI consent is spent by the build and never remembered: a new request needs a fresh tick</li>
+        <li>synastry and composite each get their own partner picker, and both build into one PDF (#441)</li>
+        <li>unticking Synastry hides its partner picker and drops it from the selection</li>
+        <li>
+          ticking Progressions reveals its technique/MC-method controls, which collapse the MC method for non-secondary
+          techniques (#441)
+        </li>
+        <li>ticking Astrocartography reveals its map/line-type/body controls, which collapse when unticked (#441)</li>
+        <li>
+          selecting the Full predictive report preset fills progressions and solar arc, and builds a real PDF (#441)
+        </li>
+        <li>ticking Profections and Astrocartography on their own builds a real PDF with both sections (#441)</li>
+        <li>
+          ticking Transits reveals its filter/wheel/table/date controls, and ticking Forecast reveals its tier
+          checkboxes, both collapsing when unticked (#441)
+        </li>
+        <li>
+          ticking Eclipses reveals its from/to year controls, collapsing when unticked, and builds a real PDF (#441,
+          #484)
+        </li>
+      </ul>
+      <h2>Preferences, accounts and persistence</h2>
+      <h3><code>e2e/accessibility.spec.ts</code></h3>
+      <ul>
+        <li>
+          the bare landing page redirects to the people list with no automatically detectable accessibility violations
+        </li>
+        <li>a gated chart-type tab renders as a genuinely disabled control (#234)</li>
+        <li>the empty People list has no automatically detectable accessibility violations</li>
+        <li>a person's detail form has no automatically detectable accessibility violations</li>
+        <li>the chart view (wheel plus data tables) has no automatically detectable accessibility violations</li>
+        <li>every view of the natal chart has no automatically detectable accessibility violations (#511)</li>
+        <li>column-header and dispositor tooltips are reachable on keyboard focus, not just mouse hover (#456)</li>
+        <li>a tooltipped table column header is reachable by keyboard and exposes its tooltip text (#456)</li>
+        <li>the profections screen (#168) has no automatically detectable accessibility violations</li>
+        <li>the transit screen (#172) has no automatically detectable accessibility violations</li>
+        <li>the synastry screen (#172) has no automatically detectable accessibility violations</li>
+        <li>the composite screen (#169) has no automatically detectable accessibility violations</li>
+        <li>the harmonic screen (#170) has no automatically detectable accessibility violations</li>
+        <li>the periodic transit forecast screen (#207) has no automatically detectable accessibility violations</li>
+        <li>the astrocartography screen (#171) has no automatically detectable accessibility violations</li>
+        <li>
+          the interpretation view has no automatically detectable accessibility violations, on either sub-tab (#360)
+        </li>
+        <li>
+          the AI-Customized Generate button renders as a genuinely disabled control with an accessible reason (#360)
+        </li>
+        <li>the admin screen has no automatically detectable accessibility violations (#357)</li>
+        <li>the corpus-overrides admin screen has no automatically detectable accessibility violations (#357)</li>
+        <li>
+          the corpus-overrides table wraps its text instead of scrolling sideways, at desktop and phone width (#428)
+        </li>
+      </ul>
+      <h3><code>e2e/admin-roles.spec.ts</code></h3>
+      <ul>
+        <li>a super admin can create, change the role of, and remove accounts</li>
+        <li>an admin sees the accounts read-only, and still reaches the other admin screens</li>
+        <li>an ordinary member has no Admin menu</li>
+      </ul>
+      <h3><code>e2e/control-states.spec.ts</code></h3>
+      <ul></ul>
+      <h3><code>e2e/preferences.spec.ts</code></h3>
+      <ul>
+        <li>
+          Preferences is reachable from every screen, lists its four subsections, and has no automatically detectable
+          accessibility violations
+        </li>
+        <li>a section link opens Preferences at that heading and moves focus there (#509)</li>
+        <li>
+          Motion and Density are device preferences: applied at once, kept across a reload, and compact never shrinks
+          touch targets (#510)
+        </li>
+        <li>the rulers choice changed here is the same one chart screens read, and survives a reload</li>
+        <li>exporting everything and the people CSV both produce real downloads</li>
+      </ul>
+    </main>
+  </body>
+</html>
