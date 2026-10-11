@@ -92,13 +92,12 @@ export async function openChart(page: Page, type: string): Promise<void> {
 }
 
 /**
- * Opens the natal chart from the header's Charts menu (#430), at one of its sections: the wheel by
- * default, or `Chart shape`, `Positions`, `Houses`, `Aspects`, `Dignities` or `Derived points`, which
- * are the tabs on the chart page.
+ * Opens the natal chart from the header's Charts menu (#430), at one of its views (#511): the wheel
+ * by default, or `Aspects`, `Placements` or `Patterns & condition` — ordinary links, not ARIA tabs.
  */
-export async function openNatalChart(page: Page, section = 'Chart wheel'): Promise<void> {
+export async function openNatalChart(page: Page, view = 'Wheel'): Promise<void> {
   await openChart(page, 'Natal');
-  if (section !== 'Chart wheel') await page.getByRole('tab', { name: section, exact: true }).click();
+  if (view !== 'Wheel') await page.getByRole('link', { name: view, exact: true }).click();
 }
 
 /** Picks an export from the header's Export menu; `group` opens a submenu first, for an export that is in one. */

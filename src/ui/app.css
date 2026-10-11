@@ -3374,6 +3374,52 @@ svg text.chart-symbol-text-unicode {
   color: var(--fg);
 }
 
+/*
+ * The chart screen's own Wheel/Aspects/Placements/Patterns & condition navigation (#511):
+ * docs/UI-UX_GUIDELINES.md §2 calls these "route-level views with stable URLs and ordinary
+ * links, not ARIA tabs" — a row of links at and above the app's standing 64rem nav breakpoint,
+ * the shared Select below it. Exactly one of the two is ever visible.
+ */
+.chart-view-select {
+  margin: 1rem 0 0.5rem;
+}
+
+.chart-view-nav {
+  display: none;
+}
+
+@media (min-width: 64rem) {
+  .chart-view-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 1rem 0 0.5rem;
+  }
+
+  .chart-view-select {
+    display: none;
+  }
+}
+
+.chart-view-link {
+  padding: 0.35rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm, 0.4rem);
+  color: var(--muted);
+  font-weight: 550;
+  text-decoration: none;
+}
+
+.chart-view-link:hover:not(.active) {
+  background: var(--surface-hover);
+  color: var(--fg);
+}
+
+.chart-view-link.active {
+  border-color: var(--accent);
+  color: var(--fg);
+}
+
 /* The Extended settings (#442): a button that summarises what was changed, and the modal card it opens. */
 .extended-settings {
   margin: 0.75rem 0;

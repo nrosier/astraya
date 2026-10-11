@@ -18,6 +18,7 @@ import { isRadical } from '../astrology/horary.js';
 import { chartSheetMetaLines } from '../domain/chart-tables.js';
 import { computeHoraryChart, HORARY_DEFAULT_HOUSE_SYSTEM, type HoraryChart } from '../domain/horary.js';
 import { BirthPlaceSearch } from './BirthPlaceSearch.js';
+import type { ChartViewKind } from './chart-sections.js';
 import { ChartDataView } from './ChartView.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { HORARY_HOUSE_SYSTEMS, nowFields, parseHoraryFields, type HoraryFieldError } from './horary.js';
@@ -35,7 +36,12 @@ type Result =
   | { readonly kind: 'ready'; readonly chart: HoraryChart; readonly moment: BirthMomentInput }
   | { readonly kind: 'error'; readonly message: string };
 
-export function HoraryView(): React.JSX.Element {
+/** This screen's own view-href shape (#511): `#/horary`, with no person id or chart-type axis to carry. */
+function horaryHref(view: ChartViewKind): string {
+  return view === 'wheel' ? '#/horary' : `#/horary?view=${view}`;
+}
+
+export function HoraryView({ view }: { readonly view?: ChartViewKind | undefined }): React.JSX.Element {
   const t = useMessages(horaryViewMessages);
   const transit = useMessages(transitViewMessages);
   const shared = useMessages(sharedMessages);
@@ -193,6 +199,12 @@ export function HoraryView(): React.JSX.Element {
             displayName={t.chartName}
             showHouses={ready.chart.housesAvailable}
             metaLines={chartSheetMetaLines(t.chartName, ready.moment, locale)}
+            view={view ?? 'wheel'}
+            onViewChange={(next) => {
+              window.history.replaceState(null, '', horaryHref(next));
+              window.dispatchEvent(new HashChangeEvent('hashchange'));
+            }}
+            buildViewHref={horaryHref}
           />
         </>
       )}

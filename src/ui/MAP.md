@@ -17,7 +17,8 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `Changelog.tsx` + `Changelog.messages.ts` — In-app CHANGELOG.md viewer. Deps: `./markdown`.
 - `ChartTypeSelector.tsx` — Chart-type link row (natal/draconic/harmonic/returns). Deps: `./chart-sections`.
 - `ChartTypes.messages.ts` — i18n labels for all chart types.
-- `ChartView.tsx` + `ChartView.messages.ts` — Primary chart screen + shared `ChartDataView` tabbed UI (reused by composite/draconic/harmonic/shared-chart). Deps: `domain/chart-compute`, `domain/chart-tables`, `chart/chart-sheet`.
+- `ChartViewNav.tsx` — Chart screen's Wheel/Aspects/Placements/Patterns & condition navigation: ordinary links (wide) or a labelled Select (narrow), never ARIA tabs. Deps: `./chart-sections`, `./primitives/Select`.
+- `ChartView.tsx` + `ChartView.messages.ts` — Primary chart screen + shared `ChartDataView` (Wheel/Aspects/Placements/Patterns & condition views, reused by composite/draconic/harmonic/returns/shared-chart/horary). Deps: `domain/chart-compute`, `domain/chart-tables`, `chart/chart-sheet`, `./ChartViewNav`.
 - `CompositeView.tsx` + `CompositeView.messages.ts` — Composite midpoint chart between two people. Deps: `domain/composite`, `ChartView`, `ReportView`.
 - `CorpusCandidatesPanel.tsx` + `CorpusCandidatesPanel.messages.ts` — Admin candidate-review queue (accept/reject). Deps: `sync/admin-client`, `./placement-label`.
 - `CorpusOverridesPanel.tsx` + `CorpusOverridesPanel.messages.ts` — Admin corpus-entry editor (search/filter/override). Deps: `interpretation/corpus-client`, `sync/admin-client`.
@@ -72,7 +73,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `astro-names.messages.ts` — i18n display names for astrological identifiers (signs/bodies/aspects). Deps: none.
 - `bi-wheel-selection.ts` — Bi-wheel selection facts (clicked element/ring/cross-ring relations). Deps: `domain/chart-compute`, `domain/chart-tables`, `chart/aspect-web`, `interpretation/selection`.
 - `chart-raster.ts` — Rasterizes wheel SVG to PNG via `canvas`. Deps: none (browser APIs).
-- `chart-sections.ts` — Charts page URL axes (type + section). Deps: `ChartView.messages`.
+- `chart-sections.ts` — Charts page URL axes (type + view: wheel/aspects/placements/patterns). Deps: `ChartView.messages`.
 - `cycles.ts` — Planetary-cycles screen (body/aspect presets + row shaping). Deps: `astrology/bodies`, `astrology/mutual-aspects`, `astrology/signs`, `time/julian`.
 - `download.ts` — Shared file-download mechanism (object URL anchor). Deps: none (browser APIs).
 - `eclipses.ts` — Eclipses screen (search capping + display rows). Deps: `astrology/eclipses`, `astrology/signs`, `time/julian`.

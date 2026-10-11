@@ -118,6 +118,12 @@ const en = {
   selectedOnChart: (what: string) => `Selected on the chart: ${what}`,
   goToChart: 'Go to the chart',
   shapeTabLabel: 'Chart shape',
+  wheelViewLabel: 'Wheel',
+  aspectsViewLabel: 'Aspects',
+  placementsViewLabel: 'Placements',
+  patternsViewLabel: 'Patterns & condition',
+  chartViewNavLabel: 'Chart view navigation',
+  chartViewSelectLabel: 'Chart view',
   shapeSourceNote:
     'Chart shapes are a convention from Marc Edmund Jones (1941), widely taught in modern textbooks. They are not part of classical astrology and have not been validated empirically: read them as a tendency, never a verdict. The shape is worked out from the ten planets, Sun to Pluto, and its boundaries are approximate: a chart just either side of a boundary can fall in a neighbouring shape.',
   shapeCannotBeWorkedOut: 'The chart shape cannot be worked out: it needs at least two planets.',
@@ -184,8 +190,6 @@ const en = {
   exportPdf: 'Document (PDF, via print)…',
   exportPdfHint:
     '“Export PDF” opens your browser’s print dialog with the wheel and every data table laid out for paper — choose “Save as PDF” there.',
-
-  chartDataTablist: 'Chart data',
 
   thisPerson: 'this person',
   thisPersonCapitalized: 'This person',
@@ -320,6 +324,12 @@ const nl: typeof en = {
   selectedOnChart: (what: string) => `Geselecteerd op de horoscoop: ${what}`,
   goToChart: 'Ga naar de horoscoop',
   shapeTabLabel: 'Horoscoopvorm',
+  wheelViewLabel: 'Wiel',
+  aspectsViewLabel: 'Aspecten',
+  placementsViewLabel: 'Plaatsingen',
+  patternsViewLabel: 'Patronen & conditie',
+  chartViewNavLabel: 'Navigatie grafiekweergave',
+  chartViewSelectLabel: 'Grafiekweergave',
   shapeSourceNote:
     'Horoscoopvormen zijn een conventie van Marc Edmund Jones (1941), veel onderwezen in moderne leerboeken. Ze maken geen deel uit van de klassieke astrologie en zijn niet empirisch onderbouwd: lees ze als een neiging, nooit als een oordeel. De vorm wordt bepaald uit de tien planeten, Zon tot Pluto, en de grenzen zijn bij benadering: een horoscoop net aan de ene of andere kant van een grens kan in een naburige vorm vallen.',
   shapeCannotBeWorkedOut: 'De horoscoopvorm kan niet worden bepaald: er zijn minstens twee planeten nodig.',
@@ -385,8 +395,6 @@ const nl: typeof en = {
   exportPdf: 'Document (PDF, via afdrukken)…',
   exportPdfHint:
     '“PDF exporteren” opent het afdrukdialoogvenster van je browser met het wiel en elke gegevenstabel opgemaakt voor papier — kies daar “Opslaan als PDF”.',
-
-  chartDataTablist: 'Horoscoopgegevens',
 
   thisPerson: 'deze persoon',
   thisPersonCapitalized: 'Deze persoon',

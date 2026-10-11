@@ -11,6 +11,7 @@ import type { ChartData } from '../src/domain/chart-compute.js';
 import { computeChartData } from '../src/domain/chart-compute.js';
 import { setLocale } from '../src/ui/locale.js';
 import { ChartDataView } from '../src/ui/ChartView.js';
+import { chartViewMessages } from '../src/ui/ChartView.messages.js';
 import { getEngine } from './engine-harness.js';
 
 let data: ChartData;
@@ -43,16 +44,34 @@ async function mount(showHouses = true): Promise<HTMLElement> {
   document.body.append(container);
   const root = createRoot(container);
   await act(async () => {
-    root.render(<ChartDataView load={{ kind: 'ready', data }} displayName="Test" showHouses={showHouses} />);
+    root.render(
+      <ChartDataView
+        load={{ kind: 'ready', data }}
+        displayName="Test"
+        showHouses={showHouses}
+        buildViewHref={() => '#'}
+      />,
+    );
     await Promise.resolve();
   });
   mounted = { container, root };
   return container;
 }
 
-async function open(container: HTMLElement, key: string): Promise<void> {
+/** `'positions'`/`'aspects'`/`'chart'` are this file's own names for Placements/Aspects/Wheel (#511). */
+const LABEL_KEY = {
+  positions: 'placementsViewLabel',
+  aspects: 'aspectsViewLabel',
+  chart: 'wheelViewLabel',
+} as const satisfies Record<string, keyof typeof chartViewMessages.en>;
+async function open(container: HTMLElement, key: keyof typeof LABEL_KEY): Promise<void> {
+  const labelKey = LABEL_KEY[key];
+  // Matches either locale's label, so this helper works whichever language a test has set.
+  const labels: readonly string[] = [chartViewMessages.en[labelKey], chartViewMessages.nl[labelKey]];
   await act(async () => {
-    container.querySelector<HTMLButtonElement>(`#chart-tab-${key}`)?.click();
+    Array.from(container.querySelectorAll<HTMLAnchorElement>('.chart-view-link'))
+      .find((link) => labels.some((label) => link.textContent === label))
+      ?.click();
     await Promise.resolve();
   });
 }
@@ -97,7 +116,7 @@ describe('a table row selects on the wheel (#418)', () => {
       (button) => button.textContent === 'Go to the chart',
     );
     await press(goTo);
-    expect(container.querySelector('#chart-tabpanel-chart')?.hasAttribute('hidden')).toBe(false);
+    expect(container.querySelector('#chart-view-wheel')?.hasAttribute('hidden')).toBe(false);
     expect(container.querySelector('.chart-isolation-panel')).not.toBeNull();
 
     await open(container, 'positions');
@@ -112,7 +131,7 @@ describe('a table row selects on the wheel (#418)', () => {
     const container = await mount();
     await open(container, 'aspects');
     const buttons = Array.from(
-      container.querySelectorAll<HTMLButtonElement>('#chart-tabpanel-aspects button[aria-label^="Show "]'),
+      container.querySelectorAll<HTMLButtonElement>('#chart-view-aspects button[aria-label^="Show "]'),
     );
     expect(buttons.length).toBeGreaterThan(0);
     await press(buttons[0]);
@@ -137,7 +156,7 @@ describe('a table row selects on the wheel (#418)', () => {
   it('has no buttons on rows with no symbol on the wheel (the Ascendant), nor without a wheel at all', async () => {
     const container = await mount();
     await open(container, 'positions');
-    const rows = Array.from(container.querySelectorAll('#chart-tabpanel-positions tbody tr'));
+    const rows = Array.from(container.querySelectorAll('#chart-view-placements tbody tr'));
     const ascendant = rows.find((row) => row.textContent.includes('Ascendant'));
     if (ascendant !== undefined) expect(ascendant.querySelector('button')).toBeNull();
     act(() => {
@@ -148,7 +167,7 @@ describe('a table row selects on the wheel (#418)', () => {
 
     const noWheel = await mount(false);
     await open(noWheel, 'positions');
-    expect(noWheel.querySelectorAll('#chart-tabpanel-positions tbody button')).toHaveLength(0);
+    expect(noWheel.querySelectorAll('#chart-view-placements tbody button')).toHaveLength(0);
   });
 
   it('says it in Dutch when the language is Dutch', async () => {

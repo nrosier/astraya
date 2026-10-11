@@ -377,7 +377,7 @@ function renderScreen(parsed: Route, seVersion: string | undefined): React.JSX.E
   if (parsed.kind === 'changelog') return <Changelog />;
   if (parsed.kind === 'shared') return <SharedChartView />;
   if (parsed.kind === 'cycles') return <CyclesView />;
-  if (parsed.kind === 'horary') return <HoraryView />;
+  if (parsed.kind === 'horary') return <HoraryView view={parsed.view} />;
   if (parsed.kind === 'electional') return <ElectionalView />;
   if (parsed.kind === 'rectification') {
     return (
@@ -481,18 +481,18 @@ type PersonRoute = Extract<
 
 /** The Charts page: the view for the chart type the route names (natal when it names none). */
 function renderChart(parsed: Extract<Route, { kind: 'chart' }>): React.JSX.Element {
-  const { personId, section } = parsed;
+  const { personId, view } = parsed;
   switch (parsed.chartType ?? 'natal') {
     case 'draconic':
-      return <DraconicView key={personId} personId={personId} section={section} />;
+      return <DraconicView key={personId} personId={personId} view={view} />;
     case 'harmonic':
-      return <HarmonicView key={personId} personId={personId} section={section} />;
+      return <HarmonicView key={personId} personId={personId} view={view} />;
     case 'solar-return':
-      return <ReturnView key={personId} personId={personId} kind="solar-return" section={section} />;
+      return <ReturnView key={personId} personId={personId} kind="solar-return" view={view} />;
     case 'lunar-return':
-      return <ReturnView key={personId} personId={personId} kind="lunar-return" section={section} />;
+      return <ReturnView key={personId} personId={personId} kind="lunar-return" view={view} />;
     case 'natal':
-      return <ChartView key={personId} personId={personId} section={section} />;
+      return <ChartView key={personId} personId={personId} view={view} />;
   }
 }
 
@@ -510,7 +510,9 @@ function renderPersonView(parsed: PersonRoute): React.JSX.Element {
   }
   if (parsed.kind === 'transit') return <TransitView key={parsed.personId} personId={parsed.personId} />;
   if (parsed.kind === 'synastry') return <SynastryView key={parsed.personId} personId={parsed.personId} />;
-  if (parsed.kind === 'composite') return <CompositeView key={parsed.personId} personId={parsed.personId} />;
+  if (parsed.kind === 'composite') {
+    return <CompositeView key={parsed.personId} personId={parsed.personId} view={parsed.view} />;
+  }
   if (parsed.kind === 'periodic-transit') {
     return <PeriodicTransitView key={parsed.personId} personId={parsed.personId} />;
   }

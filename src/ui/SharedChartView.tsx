@@ -11,6 +11,7 @@
  * @exports SharedChartView
  */
 import { useEffect, useMemo, useState } from 'react';
+import { chartViewFromHash, type ChartViewKind } from './chart-sections.js';
 import { ChartDataView } from './ChartView.js';
 import { chartSheetMetaLines } from '../domain/chart-tables.js';
 import { computeChartData, type ChartData } from '../domain/chart-compute.js';
@@ -38,6 +39,15 @@ function fromLocation(): { data?: ChartShareData; error?: string } {
   }
 }
 
+/** This screen's own view-href shape (#511): the share-link token's query, with `view` set or removed. */
+function sharedViewHref(view: ChartViewKind): string {
+  const query = new URLSearchParams(window.location.hash.split('?')[1] ?? '');
+  if (view === 'wheel') query.delete('view');
+  else query.set('view', view);
+  const text = query.toString();
+  return text === '' ? '#/shared' : `#/shared?${text}`;
+}
+
 export function SharedChartView(): React.JSX.Element {
   const t = useMessages(sharedChartViewMessages);
   const shared = useMessages(sharedMessages);
@@ -46,6 +56,18 @@ export function SharedChartView(): React.JSX.Element {
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
   const { provider } = useEphemerisProvider();
   const [rulership] = useRulershipChoice();
+  // More volatile than the share-token data above, so this reads the hash itself on every
+  // navigation, not once at mount (#511).
+  const [view, setView] = useState<ChartViewKind>(() => chartViewFromHash(window.location.hash) ?? 'wheel');
+  useEffect(() => {
+    const onHashChange = (): void => {
+      setView(chartViewFromHash(window.location.hash) ?? 'wheel');
+    };
+    window.addEventListener('hashchange', onHashChange);
+    return () => {
+      window.removeEventListener('hashchange', onHashChange);
+    };
+  }, []);
 
   useEffect(() => {
     if (initial.data === undefined || provider === undefined) return undefined;
@@ -87,6 +109,12 @@ export function SharedChartView(): React.JSX.Element {
           displayName={t.sharedChart}
           showHouses={initial.data.housesKnown}
           metaLines={chartSheetMetaLines(t.sharedChart, initial.data.moment, locale)}
+          view={view}
+          onViewChange={(next) => {
+            window.history.replaceState(null, '', sharedViewHref(next));
+            window.dispatchEvent(new HashChangeEvent('hashchange'));
+          }}
+          buildViewHref={sharedViewHref}
         />
       )}
     </main>

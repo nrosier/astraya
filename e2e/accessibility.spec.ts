@@ -117,7 +117,7 @@ test('the chart view (wheel plus data tables) has no automatically detectable ac
   expect(results.violations).toEqual([]);
 });
 
-test('every section of the natal chart has no automatically detectable accessibility violations (#430)', async ({
+test('every view of the natal chart has no automatically detectable accessibility violations (#511)', async ({
   page,
 }) => {
   test.setTimeout(90_000);
@@ -133,11 +133,11 @@ test('every section of the natal chart has no automatically detectable accessibi
   await openNatalChart(page);
   await expect(page.locator('div.chart-wheel')).toBeVisible();
 
-  for (const name of ['Chart shape', 'Positions', 'Houses', 'Aspects', 'Dignities', 'Derived points']) {
-    await page.getByRole('tab', { name, exact: true }).click();
+  for (const name of ['Aspects', 'Placements', 'Patterns & condition']) {
+    await page.getByRole('link', { name, exact: true }).click();
     await expect(page.getByRole('heading', { name, level: 2 })).toBeVisible();
     const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
-    expect(results.violations, `section ${name}`).toEqual([]);
+    expect(results.violations, `view ${name}`).toEqual([]);
   }
 });
 
@@ -158,8 +158,8 @@ test('column-header and dispositor tooltips are reachable on keyboard focus, not
     longitude: '-0.1276',
   });
   await openNatalChart(page);
-  await page.getByRole('tab', { name: 'Dignities', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Dignities', level: 2 })).toBeVisible();
+  await page.getByRole('link', { name: 'Patterns & condition', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Dignities', level: 3 })).toBeVisible();
 
   // A column header with a glossary tooltip ("Ruler") exposes it as an accessible description
   // via aria-describedby, not only as a hover-only title. Matched by the sort button's own name
@@ -203,7 +203,7 @@ test('a tooltipped table column header is reachable by keyboard and exposes its 
     longitude: '-0.1276',
   });
   await openNatalChart(page);
-  await page.getByRole('tab', { name: 'Positions', exact: true }).click();
+  await page.getByRole('link', { name: 'Placements', exact: true }).click();
 
   const rxHeaderButton = page.getByRole('button', { name: 'Rx' });
   await rxHeaderButton.focus();

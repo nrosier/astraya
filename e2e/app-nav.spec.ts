@@ -192,7 +192,9 @@ test('the rail (#506/#509) keeps the navigation reachable while the page scrolls
   // of vertical scroll — unlike the old top bar, nothing above the content needs clearing by
   // scroll padding, since the rail no longer occupies any space above it (`app.css`'s `min-width:
   // 64rem` override replaces the measured-header-height scroll padding with a small constant).
-  await expect(header).toBeInViewport({ ratio: 1 });
+  // A tiny sub-pixel shortfall (document height not landing on a whole pixel) is tolerated here,
+  // not a real gap.
+  await expect(header).toBeInViewport({ ratio: 0.99 });
   const padding = await page.evaluate('parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop)');
   expect(padding).toBeLessThanOrEqual(20);
   await header.getByRole('button', { name: 'Tools', exact: true }).click();
@@ -239,14 +241,14 @@ test('the Charts menu lists the chart types, and the page keeps the type and the
   await expect(page).toHaveURL(/#\/chart\/[^?]+\?type=draconic$/);
   await expect(menu).toHaveCount(0);
 
-  // The sections are tabs on the page, and the open one is in the URL beside the type.
-  await page.getByRole('tab', { name: 'Aspects', exact: true }).click();
-  await expect(page).toHaveURL(/\?type=draconic&section=aspects$/);
+  // The views are ordinary links on the page (#511), and the open one is in the URL beside the type.
+  await page.getByRole('link', { name: 'Aspects', exact: true }).click();
+  await expect(page).toHaveURL(/\?type=draconic&view=aspects$/);
 
-  // The type selector on the page switches type and keeps the section.
+  // The type selector on the page switches type and keeps the view.
   const selector = page.getByRole('navigation', { name: 'Chart type' });
   await selector.getByRole('link', { name: 'Natal', exact: true }).click();
-  await expect(page).toHaveURL(/#\/chart\/[^?]+\?section=aspects$/);
+  await expect(page).toHaveURL(/#\/chart\/[^?]+\?view=aspects$/);
   await expect(page.getByRole('heading', { name: 'Aspects', level: 2 })).toBeVisible();
   await expect(selector.getByRole('link', { name: 'Natal', exact: true })).toHaveAttribute('aria-current', 'page');
 
@@ -255,11 +257,11 @@ test('the Charts menu lists the chart types, and the page keeps the type and the
   await expect(menu.getByRole('link', { name: 'Natal', exact: true })).toHaveAttribute('aria-current', 'page');
   await page.keyboard.press('Escape');
 
-  // A reload keeps the section; the wheel needs no query.
+  // A reload keeps the view; the wheel needs no query.
   await page.reload();
   await page.waitForEvent('load', { timeout: 5_000 }).catch(() => undefined);
   await expect(page.getByRole('heading', { name: 'Aspects', level: 2 })).toBeVisible();
-  await page.getByRole('tab', { name: 'Chart wheel', exact: true }).click();
+  await page.getByRole('link', { name: 'Wheel', exact: true }).click();
   await expect(page).toHaveURL(/#\/chart\/[^?]+$/);
   await expect(page.locator('div.chart-wheel')).toBeVisible();
   const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
@@ -293,8 +295,8 @@ test('a solar return and a lunar return are charts like any other, with their co
   await expect(page.getByText(/Exact return: 2025-12-/)).toBeVisible({ timeout: 30_000 });
   await expect(page.locator('div.chart-wheel')).toBeVisible();
   await expect(page.getByRole('table', { name: 'Contacts to the natal chart' })).toBeVisible();
-  await page.getByRole('tab', { name: 'Positions', exact: true }).click();
-  await expect(page).toHaveURL(/\?type=solar-return&section=positions$/);
+  await page.getByRole('link', { name: 'Placements', exact: true }).click();
+  await expect(page).toHaveURL(/\?type=solar-return&view=placements$/);
 
   // Cast somewhere else: the same moment, another Ascendant.
   await page.getByRole('radio', { name: 'Another place' }).check();

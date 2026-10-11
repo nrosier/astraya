@@ -21,8 +21,8 @@ import { housesAreDefined } from '../domain/chart-compute.js';
 import { momentKey } from '../time/encode.js';
 import { aspectDisplayName, bodyDisplayName } from './astro-names.messages.js';
 import { ChartDataView } from './ChartView.js';
-import { ChartTypeSelector, changeChartSection } from './ChartTypeSelector.js';
-import type { ChartSection } from './chart-sections.js';
+import { ChartTypeSelector, changeChartView } from './ChartTypeSelector.js';
+import { chartHref, type ChartViewKind } from './chart-sections.js';
 import { todayInputValue } from './format.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
@@ -88,11 +88,11 @@ function contactColumns(t: typeof returnViewMessages.en, locale: Locale): readon
 export function ReturnView({
   personId,
   kind,
-  section,
+  view,
 }: {
   personId: string;
   kind: 'solar-return' | 'lunar-return';
-  section?: ChartSection | undefined;
+  view?: ChartViewKind | undefined;
 }): React.JSX.Element {
   const state = useStoreState();
   const person = state.people.get(personId);
@@ -216,7 +216,7 @@ export function ReturnView({
         <a href={`#/person/${personId}`}>&larr; {person.displayName || t.personFallback}</a>
       </p>
       <h1>{heading}</h1>
-      <ChartTypeSelector personId={personId} type={kind} section={section} />
+      <ChartTypeSelector personId={personId} type={kind} view={view} />
       <p className="hint">{solar ? t.solarHint : t.lunarHint}</p>
 
       <div className="field-grid">
@@ -328,10 +328,11 @@ export function ReturnView({
           extendedSettings={settings}
           onExtendedSettingsChange={setSettings}
           settingsProvider={provider}
-          section={section ?? 'chart'}
-          onSectionChange={(next) => {
-            changeChartSection(personId, kind, next);
+          view={view ?? 'wheel'}
+          onViewChange={(next) => {
+            changeChartView(personId, kind, next);
           }}
+          buildViewHref={(next) => chartHref(personId, next, kind)}
         />
       )}
 

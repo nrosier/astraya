@@ -181,19 +181,30 @@ describe('parseRoute', () => {
     expect(parseRoute(`#/draconic/${ID}?x=1`)).toEqual({ kind: 'chart', personId: ID, chartType: 'draconic' });
   });
 
-  it('reads the chart type and section from the Charts page link, ignoring unknown ones', () => {
-    expect(parseRoute(`#/chart/${ID}?type=solar-return&section=positions`)).toEqual({
+  it('reads the chart type and view from the Charts page link, ignoring unknown ones (#511)', () => {
+    expect(parseRoute(`#/chart/${ID}?type=solar-return&view=placements`)).toEqual({
       kind: 'chart',
       personId: ID,
       chartType: 'solar-return',
-      section: 'positions',
+      view: 'placements',
     });
     expect(parseRoute(`#/chart/${ID}?type=lunar-return`)).toEqual({
       kind: 'chart',
       personId: ID,
       chartType: 'lunar-return',
     });
-    expect(parseRoute(`#/chart/${ID}?type=nonsense&section=nope`)).toEqual({ kind: 'chart', personId: ID });
+    expect(parseRoute(`#/chart/${ID}?type=nonsense&view=nope`)).toEqual({ kind: 'chart', personId: ID });
+  });
+
+  it('reads the view from the composite and horary routes too (#511)', () => {
+    expect(parseRoute(`#/composite/${ID}?view=aspects`)).toEqual({
+      kind: 'composite',
+      personId: ID,
+      view: 'aspects',
+    });
+    expect(parseRoute(`#/composite/${ID}`)).toEqual({ kind: 'composite', personId: ID });
+    expect(parseRoute('#/horary?view=patterns')).toEqual({ kind: 'horary', view: 'patterns' });
+    expect(parseRoute('#/horary')).toEqual({ kind: 'horary' });
   });
 
   it('sends a malformed draconic id home rather than to a blank screen', () => {

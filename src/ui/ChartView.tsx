@@ -97,8 +97,9 @@ import { unicodeSymbol, textSymbol } from '../chart/symbol-text.js';
 import { useSymbolClass } from './symbol-setting.js';
 import { useGlyphVariants } from './glyph-variant-setting.js';
 import { useRegisterExports } from './export-registry.js';
-import { CHART_SECTIONS, chartSectionLabels, type ChartSection } from './chart-sections.js';
-import { ChartTypeSelector, changeChartSection } from './ChartTypeSelector.js';
+import { CHART_VIEWS, chartHref, chartViewLabels, type ChartViewKind } from './chart-sections.js';
+import { ChartTypeSelector, changeChartView } from './ChartTypeSelector.js';
+import { ChartViewNav } from './ChartViewNav.js';
 import { bodyId } from '../chart/body-id.js';
 import { WheelSelectionText } from './WheelSelectionText.js';
 import { parseSelectionKey } from '../interpretation/selection.js';
@@ -524,10 +525,8 @@ export function derivedPointColumns(
   ];
 }
 
-/** The sections of the chart screen (#430), in reading order: the wheel, the overall pattern, then the detail. */
-type TabKey = ChartSection;
-/** The sections that are tables, as opposed to the wheel and the chart-shape panel. */
-type TableTabKey = Exclude<TabKey, 'chart' | 'shape'>;
+/** The granular table kinds `renderTableTab` knows how to build (#511: these are grouped into the Aspects/Placements/Patterns views, not shown as separate tabs). */
+type TableTabKey = 'positions' | 'houses' | 'aspects' | 'dignities' | 'derived';
 
 /**
  * The table(s) for one tab, factored out of the tab panel below so the same markup can also
@@ -762,10 +761,102 @@ function renderShapeSection(
   );
 }
 
-const tabLabels = chartSectionLabels;
+/**
+ * The Placements view (#511): Positions, Houses & angles, and Derived points, stacked with visible
+ * headings rather than as separate tabs — `docs/UI-UX_GUIDELINES.md` §2's exact wording. Houses and
+ * derived points are skipped (not the whole view) when the chart has no houses.
+ */
+function renderPlacementsView(
+  data: ChartData,
+  displayName: string,
+  pointVisibility: PointVisibilityOptions,
+  housesRenderable: boolean,
+  t: typeof chartViewMessages.en,
+  locale: Locale,
+  rulership: RulershipChoice,
+  symbolClass: SymbolClass,
+  selection?: TableSelection,
+): React.ReactNode {
+  return (
+    <>
+      {renderTableTab(
+        'positions',
+        data,
+        displayName,
+        pointVisibility,
+        housesRenderable,
+        t,
+        locale,
+        rulership,
+        symbolClass,
+        selection,
+      )}
+      {housesRenderable && (
+        <>
+          {renderTableTab(
+            'houses',
+            data,
+            displayName,
+            pointVisibility,
+            housesRenderable,
+            t,
+            locale,
+            rulership,
+            symbolClass,
+            selection,
+          )}
+          {renderTableTab(
+            'derived',
+            data,
+            displayName,
+            pointVisibility,
+            housesRenderable,
+            t,
+            locale,
+            rulership,
+            symbolClass,
+            selection,
+          )}
+        </>
+      )}
+    </>
+  );
+}
 
-/** Every tab in display order; the caller drops `chart` (no wheel), `houses` and `derived` when the chart has no houses. */
-const TAB_ORDER: readonly TabKey[] = CHART_SECTIONS;
+/**
+ * The Patterns & condition view (#511): the chart shape (with the Moon's phase and sect) next to its
+ * own explanation, then dignities and dispositors — `docs/UI-UX_GUIDELINES.md` §2's exact grouping.
+ */
+function renderPatternsView(
+  data: ChartData,
+  displayName: string,
+  pointVisibility: PointVisibilityOptions,
+  housesRenderable: boolean,
+  t: typeof chartViewMessages.en,
+  locale: Locale,
+  rulership: RulershipChoice,
+  symbolClass: SymbolClass,
+  selection?: TableSelection,
+): React.ReactNode {
+  return (
+    <>
+      <h3>{t.shapeTabLabel}</h3>
+      {renderShapeSection(data, housesRenderable, t, locale)}
+      {renderTableTab(
+        'dignities',
+        data,
+        displayName,
+        pointVisibility,
+        housesRenderable,
+        t,
+        locale,
+        rulership,
+        symbolClass,
+        selection,
+      )}
+    </>
+  );
+}
 
 /** PNG export resolutions (#67): the wheel's own default pixel size, and 2x/4x of it. */
 function pngSizes(t: typeof chartViewMessages.en): readonly { readonly label: string; readonly size: number }[] {
@@ -910,8 +1001,9 @@ export function ChartDataView({
   extendedSettings = DEFAULT_EXTENDED_SETTINGS,
   onExtendedSettingsChange,
   settingsProvider,
-  section,
-  onSectionChange,
+  view,
+  onViewChange,
+  buildViewHref,
 }: {
   readonly load: Load;
   readonly displayName: string;
@@ -938,20 +1030,20 @@ export function ChartDataView({
   readonly onExtendedSettingsChange?: (next: ExtendedSettings) => void;
   /** A long-lived provider for the panel's own house-system/ayanamsa name lookups. */
   readonly settingsProvider?: EphemerisProvider | undefined;
-  /** The open section, when the URL decides it (the natal chart); see `chart-sections.ts`. */
-  readonly section?: ChartSection | undefined;
-  readonly onSectionChange?: ((section: ChartSection) => void) | undefined;
+  /** The open view (#511: Wheel/Aspects/Placements/Patterns & condition), when a URL decides it (every real screen); otherwise this component's own state. */
+  readonly view?: ChartViewKind | undefined;
+  readonly onViewChange?: ((view: ChartViewKind) => void) | undefined;
+  /** Builds this chart's own URL for a given view, for `ChartViewNav`'s real links — every real caller's hash shape differs, so there is no sane default. */
+  readonly buildViewHref: (view: ChartViewKind) => string;
 }): React.JSX.Element {
   const t = useMessages(chartViewMessages);
   const [locale] = useLocale();
   const [rulership] = useRulershipChoice();
-  // Controlled by the URL where a screen supplies `section` (the natal chart: the header's menu and these tabs
-  // name the same sections); otherwise the tab is this component's own state.
-  const [ownTab, setOwnTab] = useState<TabKey>('chart');
-  const activeTab: TabKey = section ?? ownTab;
-  const setActiveTab = (next: TabKey): void => {
+  const [ownTab, setOwnTab] = useState<ChartViewKind>('wheel');
+  const activeTab: ChartViewKind = view ?? ownTab;
+  const setActiveTab = (next: ChartViewKind): void => {
     setOwnTab(next);
-    onSectionChange?.(next);
+    onViewChange?.(next);
   };
   const [symbolClass] = useSymbolClass();
   // The wheel's markup is cached on these, so a change of symbol form redraws it.
@@ -1086,30 +1178,15 @@ export function ChartDataView({
         ],
   );
 
-  // The sections this chart can show (#430): the wheel (and the Houses and Derived points tables) are built
-  // on the Ascendant, so a chart without houses has none of them and opens on the next section instead.
-  const tabs: readonly TabKey[] = TAB_ORDER.filter((tab) =>
-    tab === 'chart' ? sheet !== undefined : tab === 'houses' || tab === 'derived' ? housesRenderable : true,
-  );
-  // A chosen tab that has since gone (a setting made the houses undefined) falls back to the first one shown.
-  const currentTab: TabKey = tabs.includes(activeTab) ? activeTab : (tabs[0] ?? 'shape');
+  // The views this chart can show (#511): the Wheel is built on the Ascendant, so a chart without
+  // houses has none of it and opens on the next view instead. Aspects/Placements/Patterns & condition
+  // always have at least their Positions/Aspects/shape content, so they're never dropped outright —
+  // Placements and Patterns just skip their houses-dependent sub-sections (see the view renderers).
+  const tabs: readonly ChartViewKind[] = CHART_VIEWS.filter((view) => (view === 'wheel' ? sheet !== undefined : true));
+  // A chosen view that has since gone (a setting made the wheel unavailable) falls back to the first one shown.
+  const currentTab: ChartViewKind = tabs.includes(activeTab) ? activeTab : (tabs[0] ?? 'aspects');
 
-  const onTabKeyDown = (event: React.KeyboardEvent<HTMLDivElement>): void => {
-    const currentIndex = tabs.indexOf(currentTab);
-    let nextIndex: number | undefined;
-    if (event.key === 'ArrowRight') nextIndex = (currentIndex + 1) % tabs.length;
-    else if (event.key === 'ArrowLeft') nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
-    else if (event.key === 'Home') nextIndex = 0;
-    else if (event.key === 'End') nextIndex = tabs.length - 1;
-    if (nextIndex === undefined) return;
-    event.preventDefault();
-    const next = tabs[nextIndex];
-    if (next === undefined) return;
-    setActiveTab(next);
-    document.getElementById(`chart-tab-${next}`)?.focus();
-  };
-
-  /** The wheel, what a click isolates, the interpret button and the exports: everything the Chart section holds. */
+  /** The wheel, what a click isolates, the interpret button and the exports: everything the Wheel view holds. */
   const renderChartPanel = (data: ChartData): React.ReactNode =>
     sheet === undefined ? null : (
       <>
@@ -1242,24 +1319,45 @@ export function ChartDataView({
             <div className="chart-print-all">
               {tabs.map((tab) => (
                 <section key={tab}>
-                  {tab === 'chart' ? (
+                  {tab === 'wheel' ? (
                     renderChartPanel(load.data)
                   ) : (
                     <>
-                      <h2>{tabLabels(t)[tab]}</h2>
-                      {tab === 'shape'
-                        ? renderShapeSection(load.data, housesRenderable, t, locale)
-                        : renderTableTab(
-                            tab,
-                            load.data,
-                            displayName,
-                            pointVisibility,
-                            housesRenderable,
-                            t,
-                            locale,
-                            rulership,
-                            symbolClass,
-                          )}
+                      <h2>{chartViewLabels(t)[tab]}</h2>
+                      {tab === 'aspects' &&
+                        renderTableTab(
+                          'aspects',
+                          load.data,
+                          displayName,
+                          pointVisibility,
+                          housesRenderable,
+                          t,
+                          locale,
+                          rulership,
+                          symbolClass,
+                        )}
+                      {tab === 'placements' &&
+                        renderPlacementsView(
+                          load.data,
+                          displayName,
+                          pointVisibility,
+                          housesRenderable,
+                          t,
+                          locale,
+                          rulership,
+                          symbolClass,
+                        )}
+                      {tab === 'patterns' &&
+                        renderPatternsView(
+                          load.data,
+                          displayName,
+                          pointVisibility,
+                          housesRenderable,
+                          t,
+                          locale,
+                          rulership,
+                          symbolClass,
+                        )}
                     </>
                   )}
                 </section>
@@ -1267,47 +1365,23 @@ export function ChartDataView({
             </div>
           ) : (
             <>
-              <div className="tabs" role="tablist" aria-label={t.chartDataTablist} onKeyDown={onTabKeyDown}>
-                {tabs.map((tab) => (
-                  <button
-                    key={tab}
-                    type="button"
-                    id={`chart-tab-${tab}`}
-                    role="tab"
-                    aria-selected={currentTab === tab}
-                    aria-controls={`chart-tabpanel-${tab}`}
-                    tabIndex={currentTab === tab ? 0 : -1}
-                    className={currentTab === tab ? 'tab active' : 'tab'}
-                    onClick={() => {
-                      setActiveTab(tab);
-                    }}
-                  >
-                    {tabLabels(t)[tab]}
-                  </button>
-                ))}
-              </div>
+              <ChartViewNav
+                activeView={currentTab}
+                buildHref={buildViewHref}
+                onNavigate={setActiveTab}
+                availableViews={tabs}
+              />
 
-              {/* The wheel stays mounted while another section is open, so a selection on it survives a
-                  visit to the tables; every other section is only in the page while it is shown. */}
-              {tabs.includes('chart') && (
-                <div
-                  role="tabpanel"
-                  id="chart-tabpanel-chart"
-                  aria-labelledby="chart-tab-chart"
-                  tabIndex={0}
-                  hidden={currentTab !== 'chart'}
-                >
+              {/* The wheel stays mounted while another view is open, so a selection on it survives a
+                  visit to the tables; every other view is only in the page while it is shown. */}
+              {tabs.includes('wheel') && (
+                <div id="chart-view-wheel" hidden={currentTab !== 'wheel'}>
                   {renderChartPanel(load.data)}
                 </div>
               )}
-              {currentTab !== 'chart' && (
-                <div
-                  role="tabpanel"
-                  id={`chart-tabpanel-${currentTab}`}
-                  aria-labelledby={`chart-tab-${currentTab}`}
-                  tabIndex={0}
-                >
-                  <h2>{tabLabels(t)[currentTab]}</h2>
+              {currentTab !== 'wheel' && (
+                <div id={`chart-view-${currentTab}`}>
+                  <h2>{chartViewLabels(t)[currentTab]}</h2>
                   {tableSelection !== undefined && isolation !== undefined && (
                     <p className="chart-selection-bar" role="status">
                       {t.selectedOnChart(isolation.heading)}{' '}
@@ -1315,7 +1389,7 @@ export function ChartDataView({
                         type="button"
                         className="quiet"
                         onClick={() => {
-                          setActiveTab('chart');
+                          setActiveTab('wheel');
                         }}
                       >
                         {t.goToChart}
@@ -1325,20 +1399,43 @@ export function ChartDataView({
                       </button>
                     </p>
                   )}
-                  {currentTab === 'shape'
-                    ? renderShapeSection(load.data, housesRenderable, t, locale)
-                    : renderTableTab(
-                        currentTab,
-                        load.data,
-                        displayName,
-                        pointVisibility,
-                        housesRenderable,
-                        t,
-                        locale,
-                        rulership,
-                        symbolClass,
-                        tableSelection,
-                      )}
+                  {currentTab === 'aspects' &&
+                    renderTableTab(
+                      'aspects',
+                      load.data,
+                      displayName,
+                      pointVisibility,
+                      housesRenderable,
+                      t,
+                      locale,
+                      rulership,
+                      symbolClass,
+                      tableSelection,
+                    )}
+                  {currentTab === 'placements' &&
+                    renderPlacementsView(
+                      load.data,
+                      displayName,
+                      pointVisibility,
+                      housesRenderable,
+                      t,
+                      locale,
+                      rulership,
+                      symbolClass,
+                      tableSelection,
+                    )}
+                  {currentTab === 'patterns' &&
+                    renderPatternsView(
+                      load.data,
+                      displayName,
+                      pointVisibility,
+                      housesRenderable,
+                      t,
+                      locale,
+                      rulership,
+                      symbolClass,
+                      tableSelection,
+                    )}
                 </div>
               )}
             </>
@@ -1351,10 +1448,10 @@ export function ChartDataView({
 
 export function ChartView({
   personId,
-  section,
+  view,
 }: {
   personId: string;
-  section?: ChartSection | undefined;
+  view?: ChartViewKind | undefined;
 }): React.JSX.Element {
   const state = useStoreState();
   const person = state.people.get(personId);
@@ -1440,7 +1537,7 @@ export function ChartView({
         <a href={`#/person/${personId}`}>&larr; {person.displayName || t.personFallback}</a>
       </p>
       <PageHeader title={person.displayName || t.chartFallback} />
-      <ChartTypeSelector personId={personId} type="natal" section={section} />
+      <ChartTypeSelector personId={personId} type="natal" view={view} />
       <ShareLink moment={person.moment} housesKnown={showHouses} />
       <ChartDataView
         load={load}
@@ -1450,10 +1547,11 @@ export function ChartView({
         extendedSettings={settings}
         onExtendedSettingsChange={setSettings}
         settingsProvider={provider}
-        section={section ?? 'chart'}
-        onSectionChange={(next) => {
-          changeChartSection(personId, 'natal', next);
+        view={view ?? 'wheel'}
+        onViewChange={(next) => {
+          changeChartView(personId, 'natal', next);
         }}
+        buildViewHref={(next) => chartHref(personId, next, 'natal')}
       />
     </main>
   );

@@ -16,7 +16,7 @@
  * @exports Route, parseRoute, setPasswordToken, setupToken
  */
 import { isPersonId } from '../domain/id.js';
-import { chartSectionFromHash, chartTypeFromHash, type ChartSection, type ChartType } from './chart-sections.js';
+import { chartTypeFromHash, chartViewFromHash, type ChartType, type ChartViewKind } from './chart-sections.js';
 
 export type Route =
   | { readonly kind: 'home' }
@@ -31,13 +31,14 @@ export type Route =
   // so the feature registry and the new Overview screen have something real to point at.
   | { readonly kind: 'person-overview'; readonly personId: string }
   // The Charts page: one route for every chart cast for one person. `chartType` is the kind of chart
-  // (`?type=draconic`; absent means natal) and `section` its open section (`?section=shape`; absent
-  // means the wheel). The old `#/draconic/<id>` and `#/harmonic/<id>` links land here too.
+  // (`?type=draconic`; absent means natal) and `view` its open Wheel/Aspects/Placements/Patterns &
+  // condition view (#511, `?view=aspects`; absent means the wheel). The old `#/draconic/<id>` and
+  // `#/harmonic/<id>` links land here too.
   | {
       readonly kind: 'chart';
       readonly personId: string;
       readonly chartType?: ChartType;
-      readonly section?: ChartSection;
+      readonly view?: ChartViewKind;
     }
   // The written report (#271) — previously reached as `#/chart/:id?tab=report`, a query
   // modifier on the chart route rather than a route of its own like every sibling here.
@@ -60,7 +61,8 @@ export type Route =
   // often within one visit (trying several comparisons) than it's worth sharing as a link.
   | { readonly kind: 'synastry'; readonly personId: string }
   // Same reasoning as synastry (#169): the second person is picked in-screen, not the URL.
-  | { readonly kind: 'composite'; readonly personId: string }
+  // `view` is the same Wheel/Aspects/Placements/Patterns & condition axis as the chart route's (#511).
+  | { readonly kind: 'composite'; readonly personId: string; readonly view?: ChartViewKind }
   // Daily/weekly/monthly/yearly transit forecast (#207). No second parameter to pick — the
   // screen's own "as of" date input plays the role a harmonic number or comparison person
   // plays elsewhere, and that's already excluded from the URL for the same reasons those are.
@@ -80,7 +82,8 @@ export type Route =
   | { readonly kind: 'preferences' }
   | { readonly kind: 'cycles' }
   | { readonly kind: 'eclipses' }
-  | { readonly kind: 'horary' }
+  // `view` is the same Wheel/Aspects/Placements/Patterns & condition axis as the chart route's (#511).
+  | { readonly kind: 'horary'; readonly view?: ChartViewKind }
   | { readonly kind: 'electional' }
   | { readonly kind: 'rectification' }
   | { readonly kind: 'admin' }
@@ -137,8 +140,10 @@ export function parseRoute(hash: string): Route {
     case '#/eclipses':
       return { kind: 'eclipses' };
     // #406: a chart cast for the moment a question was asked — ephemeris only, no person.
-    case '#/horary':
-      return { kind: 'horary' };
+    case '#/horary': {
+      const view = chartViewFromHash(hash);
+      return { kind: 'horary', ...(view === undefined ? {} : { view }) };
+    }
     // #409: a search for the best times to begin something — ephemeris only, no person.
     case '#/electional':
       return { kind: 'electional' };
@@ -181,12 +186,12 @@ export function parseRoute(hash: string): Route {
   const chart = CHART_PATH.exec(path);
   if (chart !== null && isPersonId(chart[1])) {
     const chartType = chartTypeFromHash(hash);
-    const section = chartSectionFromHash(hash);
+    const view = chartViewFromHash(hash);
     return {
       kind: 'chart',
       personId: chart[1],
       ...(chartType === undefined ? {} : { chartType }),
-      ...(section === undefined ? {} : { section }),
+      ...(view === undefined ? {} : { view }),
     };
   }
 
@@ -214,7 +219,10 @@ export function parseRoute(hash: string): Route {
   if (synastry !== null && isPersonId(synastry[1])) return { kind: 'synastry', personId: synastry[1] };
 
   const composite = COMPOSITE_PATH.exec(path);
-  if (composite !== null && isPersonId(composite[1])) return { kind: 'composite', personId: composite[1] };
+  if (composite !== null && isPersonId(composite[1])) {
+    const view = chartViewFromHash(hash);
+    return { kind: 'composite', personId: composite[1], ...(view === undefined ? {} : { view }) };
+  }
 
   const harmonic = HARMONIC_PATH.exec(path);
   if (harmonic !== null && isPersonId(harmonic[1])) {

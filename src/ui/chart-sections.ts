@@ -3,27 +3,32 @@
  *
  * - The **type** of chart: natal, draconic, harmonic, solar return, lunar return. Each is a complete chart
  *   cast for one person, so they share everything below. Carried as `?type=draconic`; no `type` means natal.
- * - The **section** of the chart screen (#430), in reading order: the wheel, the shape, and the tables.
- *   Carried as `?section=shape`; no `section` means the wheel.
+ * - The **view** of the chart screen (#511): Wheel, Aspects, Placements, or Patterns & condition, per
+ *   `docs/UI-UX_GUIDELINES.md` §2's target chart page. Carried as `?view=aspects`; no `view` means the wheel.
  *
- * The header's Charts menu lists the types and the chart screen shows the sections as tabs, so the menu,
- * the type selector and the tabs have to agree: that is this file. Both are in the URL
- * (`#/chart/<id>?type=draconic&section=shape`), which makes every view linkable and keeps the menu's
- * highlight in step with what is open.
+ * These are route-level views with stable URLs and ordinary links — not ARIA tabs (the guideline's own
+ * wording) — so the header's Charts menu, the type selector, and `ChartViewNav` all have to agree on the
+ * same vocabulary: that is this file. Both axes are in the URL (`#/chart/<id>?type=draconic&view=aspects`),
+ * which makes every view linkable and keeps the menu's highlight in step with what is open.
+ *
+ * Supersedes the old 7-value `section` model (`chart`/`shape`/`positions`/`houses`/`aspects`/`dignities`/
+ * `derived`) with no compatibility alias: an old bookmarked `?section=` link simply falls back to the
+ * `wheel` default, consistent with this app's stated position that its hash routes carry no production
+ * compatibility requirement.
  *
  * Pure, like `route.ts`, so the parsing is tested without a DOM. Labels are translated and live with
- * the chart screen's messages (`chartSectionLabels`), looked up by key.
+ * the chart screen's messages (`chartViewLabels`), looked up by key.
  */
 /**
  * @module ui/chart-sections
- * @purpose Defines and parses the Chart screen's two URL-encoded axes — chart type (natal/draconic/harmonic/solar-return/lunar-return) and section (wheel/shape/positions/houses/aspects/dignities/derived) — so the header menu, type selector, and tabs stay in agreement.
- * @conventions Pure functions only (no DOM), parsed/tested like route.ts; labels are translated via ChartView's own messages object rather than owning its own *.messages.ts file.
- * @exports CHART_SECTIONS, ChartSection, CHART_TYPES, ChartType, isChartType, chartTypeFromHash, isChartSection, chartSectionFromHash, chartHref, chartSectionLabels
+ * @purpose Defines and parses the Chart screen's two URL-encoded axes — chart type (natal/draconic/harmonic/solar-return/lunar-return) and view (wheel/aspects/placements/patterns) — so the header menu, type selector, and ChartViewNav stay in agreement.
+ * @conventions Pure functions only (no DOM), parsed/tested like route.ts; labels are translated via ChartView's own messages object rather than owning its own *.messages.ts file. Views are route-level links per docs/UI-UX_GUIDELINES.md §2, not ARIA tabs.
+ * @exports CHART_VIEWS, ChartViewKind, CHART_TYPES, ChartType, isChartType, chartTypeFromHash, isChartView, chartViewFromHash, chartHref, chartViewLabels
  */
 import type { chartViewMessages } from './ChartView.messages.js';
 
-export const CHART_SECTIONS = ['chart', 'shape', 'positions', 'houses', 'aspects', 'dignities', 'derived'] as const;
-export type ChartSection = (typeof CHART_SECTIONS)[number];
+export const CHART_VIEWS = ['wheel', 'aspects', 'placements', 'patterns'] as const;
+export type ChartViewKind = (typeof CHART_VIEWS)[number];
 
 export const CHART_TYPES = ['natal', 'draconic', 'harmonic', 'solar-return', 'lunar-return'] as const;
 export type ChartType = (typeof CHART_TYPES)[number];
@@ -40,36 +45,33 @@ export function chartTypeFromHash(hash: string): ChartType | undefined {
   return isChartType(value) ? value : undefined;
 }
 
-export function isChartSection(value: unknown): value is ChartSection {
-  return typeof value === 'string' && (CHART_SECTIONS as readonly string[]).includes(value);
+export function isChartView(value: unknown): value is ChartViewKind {
+  return typeof value === 'string' && (CHART_VIEWS as readonly string[]).includes(value);
 }
 
-/** The section a hash names in its query, or `undefined` when it names none or an unknown one. */
-export function chartSectionFromHash(hash: string): ChartSection | undefined {
+/** The view a hash names in its query, or `undefined` when it names none or an unknown one. */
+export function chartViewFromHash(hash: string): ChartViewKind | undefined {
   const query = hash.split('?')[1];
   if (query === undefined) return undefined;
-  const value = new URLSearchParams(query).get('section');
-  return isChartSection(value) ? value : undefined;
+  const value = new URLSearchParams(query).get('view');
+  return isChartView(value) ? value : undefined;
 }
 
-/** The hash of a person's chart of `type` (natal when omitted), opened at `section` (the wheel when omitted). */
-export function chartHref(personId: string, section?: ChartSection, type?: ChartType): string {
+/** The hash of a person's chart of `type` (natal when omitted), opened at `view` (the wheel when omitted). */
+export function chartHref(personId: string, view?: ChartViewKind, type?: ChartType): string {
   const query = new URLSearchParams();
   if (type !== undefined && type !== 'natal') query.set('type', type);
-  if (section !== undefined && section !== 'chart') query.set('section', section);
+  if (view !== undefined && view !== 'wheel') query.set('view', view);
   const text = query.toString();
   return text === '' ? `#/chart/${personId}` : `#/chart/${personId}?${text}`;
 }
 
-/** The label of each section, from the chart screen's messages. */
-export function chartSectionLabels(t: typeof chartViewMessages.en): Record<ChartSection, string> {
+/** The label of each view, from the chart screen's messages. */
+export function chartViewLabels(t: typeof chartViewMessages.en): Record<ChartViewKind, string> {
   return {
-    chart: t.chartTabLabel,
-    shape: t.shapeTabLabel,
-    positions: t.positionsCaption,
-    houses: t.housesCaption,
-    aspects: t.aspectsCaption,
-    dignities: t.dignitiesCaption,
-    derived: t.derivedPointsCaption,
+    wheel: t.wheelViewLabel,
+    aspects: t.aspectsViewLabel,
+    placements: t.placementsViewLabel,
+    patterns: t.patternsViewLabel,
   };
 }

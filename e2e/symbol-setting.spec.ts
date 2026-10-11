@@ -55,20 +55,20 @@ test('the symbol class changes the wheel, the tables and the export together, an
   await expect(page.locator('.chart-wheel text.chart-symbol-text-text').first()).toBeVisible();
   await expect(page.locator('.chart-wheel text.chart-symbol-text-text', { hasText: 'SUN' }).first()).toBeAttached();
   await closeSettings(page);
-  await page.getByRole('tab', { name: 'Positions', exact: true }).click();
-  await expect(page.locator('#chart-tabpanel-positions .table-symbol-text', { hasText: 'SUN' })).toBeVisible();
+  await page.getByRole('link', { name: 'Placements', exact: true }).click();
+  await expect(page.locator('#chart-view-placements .table-symbol-text', { hasText: 'SUN' })).toBeVisible();
 
   // Unicode: the characters instead.
-  await page.getByRole('tab', { name: 'Chart wheel', exact: true }).click();
+  await page.getByRole('link', { name: 'Wheel', exact: true }).click();
   await openSettings(page);
   await symbols.selectOption('unicode');
   await expect(page.locator('.chart-wheel text.chart-symbol-text-unicode', { hasText: '☉' }).first()).toBeAttached();
   await closeSettings(page);
-  await page.getByRole('tab', { name: 'Positions', exact: true }).click();
-  await expect(page.locator('#chart-tabpanel-positions td', { hasText: '☉' }).first()).toBeVisible();
+  await page.getByRole('link', { name: 'Placements', exact: true }).click();
+  await expect(page.locator('#chart-view-placements td', { hasText: '☉' }).first()).toBeVisible();
 
   // The exported SVG carries the choice and the style that makes it readable outside the app.
-  await page.getByRole('tab', { name: 'Chart wheel', exact: true }).click();
+  await page.getByRole('link', { name: 'Wheel', exact: true }).click();
   await openSettings(page);
   await symbols.selectOption('text');
   await closeSettings(page);

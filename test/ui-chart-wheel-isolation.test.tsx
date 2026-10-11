@@ -47,7 +47,9 @@ async function mount(): Promise<HTMLElement> {
   document.body.append(container);
   const root = createRoot(container);
   await act(async () => {
-    root.render(<ChartDataView load={{ kind: 'ready', data }} displayName="Test" showHouses />);
+    root.render(
+      <ChartDataView load={{ kind: 'ready', data }} displayName="Test" showHouses buildViewHref={() => '#'} />,
+    );
     await Promise.resolve();
   });
   mounted = { container, root };

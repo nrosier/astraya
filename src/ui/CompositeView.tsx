@@ -21,6 +21,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { computeComposite, type CompositeData } from '../domain/composite.js';
 import { housesAreDefined } from '../domain/chart-compute.js';
+import type { ChartViewKind } from './chart-sections.js';
 import { ChartDataView } from './ChartView.js';
 import { ReportView } from './ReportView.js';
 import { compositeViewMessages } from './CompositeView.messages.js';
@@ -37,7 +38,18 @@ type Load =
   | { readonly kind: 'ready'; readonly data: ChartData }
   | { readonly kind: 'error'; readonly message: string };
 
-export function CompositeView({ personId }: { personId: string }): React.JSX.Element {
+/** This screen's own view-href shape (#511): `#/composite/<id>`, with no chart-type axis to carry. */
+function compositeHref(personId: string, view: ChartViewKind): string {
+  return view === 'wheel' ? `#/composite/${personId}` : `#/composite/${personId}?view=${view}`;
+}
+
+export function CompositeView({
+  personId,
+  view,
+}: {
+  personId: string;
+  view?: ChartViewKind | undefined;
+}): React.JSX.Element {
   const state = useStoreState();
   const person = state.people.get(personId);
   const t = useMessages(compositeViewMessages);
@@ -142,6 +154,12 @@ export function CompositeView({ personId }: { personId: string }): React.JSX.Ele
           displayName={displayName || t.compositeFallback}
           showHouses
           metaLines={[displayName]}
+          view={view ?? 'wheel'}
+          onViewChange={(next) => {
+            window.history.replaceState(null, '', compositeHref(personId, next));
+            window.dispatchEvent(new HashChangeEvent('hashchange'));
+          }}
+          buildViewHref={(next) => compositeHref(personId, next)}
         />
       )}
 

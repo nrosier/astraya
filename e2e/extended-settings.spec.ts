@@ -138,7 +138,7 @@ test('opening and cancelling the card keeps what is selected on the wheel (apply
   await openNatalChart(page);
   await expect(page.locator('div.chart-wheel')).toBeVisible();
 
-  await page.getByRole('tab', { name: 'Positions', exact: true }).click();
+  await page.getByRole('link', { name: 'Placements', exact: true }).click();
   await page.getByRole('button', { name: 'Show Sun on the chart', exact: true }).click();
   await expect(page.locator('tr.data-table-row-selected')).toContainText('Sun');
 
