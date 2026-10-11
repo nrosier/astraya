@@ -1,32 +1,33 @@
 /**
  * Tests for the persistent per-person tab bar's pure logic (#234). No DOM: `PersonNav.tsx`
- * itself is thin wiring around `activeTabKey`/`isTabEnabled`, so the behaviour worth pinning
+ * itself is thin wiring around `activeFeatureKey`/`isTabEnabled`, so the behaviour worth pinning
  * lives here rather than behind a component render.
  */
 import { describe, expect, it } from 'vitest';
 import { newId } from '../src/domain/id.js';
-import { activeTabKey, familyForTab, isTabEnabled, PERSON_TAB_FAMILIES, PERSON_TABS } from '../src/ui/person-nav.js';
+import { activeFeatureKey } from '../src/ui/feature-registry.js';
+import { familyForTab, isTabEnabled, PERSON_TAB_FAMILIES, PERSON_TABS } from '../src/ui/person-nav.js';
 import type { Route } from '../src/ui/route.js';
 
 const ID = newId('p');
 
-describe('activeTabKey', () => {
+describe('activeFeatureKey for the person tabs', () => {
   it('maps every person-scoped route kind to its tab', () => {
-    expect(activeTabKey({ kind: 'person-overview', personId: ID })).toBe('overview');
-    expect(activeTabKey({ kind: 'person', personId: ID })).toBe('birth-record');
-    expect(activeTabKey({ kind: 'chart', personId: ID })).toBe('chart');
-    expect(activeTabKey({ kind: 'report', personId: ID })).toBe('report');
-    expect(activeTabKey({ kind: 'profections', personId: ID })).toBe('profections');
-    expect(activeTabKey({ kind: 'progressions', personId: ID })).toBe('progressions');
-    expect(activeTabKey({ kind: 'solar-arc', personId: ID })).toBe('solar-arc');
-    expect(activeTabKey({ kind: 'primary-directions', personId: ID })).toBe('primary-directions');
-    expect(activeTabKey({ kind: 'transit', personId: ID })).toBe('transit');
-    expect(activeTabKey({ kind: 'synastry', personId: ID })).toBe('synastry');
-    expect(activeTabKey({ kind: 'composite', personId: ID })).toBe('composite');
+    expect(activeFeatureKey({ kind: 'person-overview', personId: ID }, 'person')).toBe('overview');
+    expect(activeFeatureKey({ kind: 'person', personId: ID }, 'person')).toBe('birth-record');
+    expect(activeFeatureKey({ kind: 'chart', personId: ID }, 'person')).toBe('chart');
+    expect(activeFeatureKey({ kind: 'report', personId: ID }, 'person')).toBe('report');
+    expect(activeFeatureKey({ kind: 'profections', personId: ID }, 'person')).toBe('profections');
+    expect(activeFeatureKey({ kind: 'progressions', personId: ID }, 'person')).toBe('progressions');
+    expect(activeFeatureKey({ kind: 'solar-arc', personId: ID }, 'person')).toBe('solar-arc');
+    expect(activeFeatureKey({ kind: 'primary-directions', personId: ID }, 'person')).toBe('primary-directions');
+    expect(activeFeatureKey({ kind: 'transit', personId: ID }, 'person')).toBe('transit');
+    expect(activeFeatureKey({ kind: 'synastry', personId: ID }, 'person')).toBe('synastry');
+    expect(activeFeatureKey({ kind: 'composite', personId: ID }, 'person')).toBe('composite');
     // Every chart type (natal, draconic, harmonic, returns) is the one Charts page.
-    expect(activeTabKey({ kind: 'chart', personId: ID, chartType: 'draconic' })).toBe('chart');
-    expect(activeTabKey({ kind: 'periodic-transit', personId: ID })).toBe('periodic-transit');
-    expect(activeTabKey({ kind: 'astrocartography', personId: ID })).toBe('astrocartography');
+    expect(activeFeatureKey({ kind: 'chart', personId: ID, chartType: 'draconic' }, 'person')).toBe('chart');
+    expect(activeFeatureKey({ kind: 'periodic-transit', personId: ID }, 'person')).toBe('periodic-transit');
+    expect(activeFeatureKey({ kind: 'astrocartography', personId: ID }, 'person')).toBe('astrocartography');
   });
 
   it('is null for routes with no tab of their own', () => {
@@ -41,7 +42,7 @@ describe('activeTabKey', () => {
       { kind: 'setup' },
     ];
     for (const route of nonPersonRoutes) {
-      expect(activeTabKey(route)).toBeNull();
+      expect(activeFeatureKey(route, 'person')).toBeNull();
     }
   });
 });

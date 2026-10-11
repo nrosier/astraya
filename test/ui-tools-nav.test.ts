@@ -4,7 +4,8 @@
 import { describe, expect, it } from 'vitest';
 import { newId } from '../src/domain/id.js';
 import { parseRoute, type Route } from '../src/ui/route.js';
-import { activeToolKey, TOOL_GROUPS, TOOLS } from '../src/ui/tools-nav.js';
+import { activeFeatureKey } from '../src/ui/feature-registry.js';
+import { TOOL_GROUPS, TOOLS } from '../src/ui/tools-nav.js';
 import { appNavMessages } from '../src/ui/AppNav.messages.js';
 
 describe('the tools menu', () => {
@@ -14,7 +15,7 @@ describe('the tools menu', () => {
   });
 
   it('knows which tool a route is on, and none for any other route', () => {
-    for (const tool of TOOLS) expect(activeToolKey(parseRoute(tool.href))).toBe(tool.key);
+    for (const tool of TOOLS) expect(activeFeatureKey(parseRoute(tool.href), 'global')).toBe(tool.key);
     const person = newId('p');
     const others: Route[] = [
       { kind: 'people' },
@@ -23,7 +24,7 @@ describe('the tools menu', () => {
       { kind: 'chart', personId: person },
       { kind: 'transit', personId: person },
     ];
-    for (const route of others) expect(activeToolKey(route)).toBeNull();
+    for (const route of others) expect(activeFeatureKey(route, 'global')).toBeNull();
   });
 
   it('groups every tool under one of the three Sky & cycles/Questions & planning/Birth data headings, consecutively', () => {

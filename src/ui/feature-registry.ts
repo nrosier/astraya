@@ -14,7 +14,7 @@
  * @module ui/feature-registry
  * @purpose Single typed registry of every user-facing feature's scope/group/order/href/prerequisites/settings-mode/export-capabilities (#506/#509), derived from person-nav.ts/tools-nav.ts/admin-nav.ts rather than duplicating them.
  * @conventions Pure data, no JSX, no locale — label text stays in each feature's own existing *.messages.ts catalogue, looked up by `labelKey` at render time, same convention person-nav.ts/tools-nav.ts already use. `routeKind` ties a definition back to route.ts's `Route['kind']` so the exhaustiveness test can catch a route with no feature metadata.
- * @exports FeatureKey, FeatureScope, FeatureGroup, SettingsMode, ExportCapability, FeatureContext, FeatureDefinition, FEATURES, featureFor, hrefFor
+ * @exports activeFeatureKey, activePersonTabKey, activeToolKey, FeatureKey, FeatureScope, FeatureGroup, SettingsMode, ExportCapability, FeatureContext, FeatureDefinition, FEATURES, featureFor, hrefFor
  */
 import { PERSON_TABS, type PersonTabKey } from './person-nav.js';
 import { TOOLS, type ToolKey } from './tools-nav.js';
@@ -218,6 +218,28 @@ export const FEATURES: readonly FeatureDefinition[] = [
 /** The feature a route resolves to, or `undefined` for a route with no feature metadata (e.g. `home`, `about`, `set-password`). */
 export function featureFor(route: Route): FeatureDefinition | undefined {
   return FEATURES.find((feature) => feature.routeKind === route.kind);
+}
+
+/**
+ * The key of the feature `route` belongs to, when it is one of the given scope: what the primary navigation
+ * highlights (#509). The one place the route-to-feature mapping lives, so a nav's active state can never disagree
+ * with the registry the titles and exports come from.
+ */
+export function activeFeatureKey(route: Route, scope: FeatureScope): FeatureKey | null {
+  const feature = featureFor(route);
+  return feature?.scope === scope ? feature.key : null;
+}
+
+/** `activeFeatureKey` narrowed to the person tabs, for the person navigation. */
+export function activePersonTabKey(route: Route): PersonTabKey | null {
+  const key = activeFeatureKey(route, 'person');
+  return PERSON_TABS.find((tab) => tab.key === key)?.key ?? null;
+}
+
+/** `activeFeatureKey` narrowed to the Explore tools, for the Tools menu. */
+export function activeToolKey(route: Route): ToolKey | null {
+  const key = activeFeatureKey(route, 'global');
+  return TOOLS.find((tool) => tool.key === key)?.key ?? null;
 }
 
 /** Shorthand for `feature.buildHref(context)` by key, for callers that only have the key on hand. */

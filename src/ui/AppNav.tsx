@@ -37,11 +37,12 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
 import { appNavMessages } from './AppNav.messages.js';
 import { useMessages } from './messages.js';
-import { activeTabKey, isTabEnabled, PERSON_TAB_FAMILIES, PERSON_TABS } from './person-nav.js';
+import { activePersonTabKey, activeToolKey } from './feature-registry.js';
+import { isTabEnabled, PERSON_TAB_FAMILIES, PERSON_TABS } from './person-nav.js';
 import type { PersonTab } from './person-nav.js';
 import type { Route } from './route.js';
 import { useOptionalStore, useStoreState } from './store-context.js';
-import { activeToolKey, TOOL_GROUPS, TOOLS } from './tools-nav.js';
+import { TOOL_GROUPS, TOOLS } from './tools-nav.js';
 import { useLastPersonId, writeLastPersonId } from './last-person.js';
 import { PersonSwitcher } from './PersonSwitcher.js';
 import { useExclusiveOpen, type ExclusiveOpen } from './use-exclusive-open.js';
@@ -121,7 +122,7 @@ function PersonMenu({
   const state = useStoreState();
   const person = state.people.get(personId);
   const hasBirthMoment = person?.moment !== undefined;
-  const active = activeTabKey(route);
+  const active = activePersonTabKey(route);
   const tabsByKey = new Map(PERSON_TABS.map((tab) => [tab.key, tab]));
 
   function renderTab(tab: PersonTab, className: string): React.JSX.Element {

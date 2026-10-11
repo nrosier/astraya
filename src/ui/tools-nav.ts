@@ -20,9 +20,8 @@
  * @module ui/tools-nav
  * @purpose Pure logic for the header's Tools menu (#421, #506/#509): the five not-person-scoped calculator screens (cycles/eclipses/horary/electional/rectification), grouped as Sky & cycles/Questions & planning/Birth data, and which one a route is on.
  * @conventions Pure, like person-nav.ts and admin-nav.ts, so menu/active-tool logic is tested without a DOM; labels are translated and live in AppNav.messages.ts, looked up by key. TOOL_GROUPS is in display order; TOOLS stays grouped (every member of one group appears consecutively) so AppNav.tsx can render one heading per group without re-sorting.
- * @exports ToolKey, ToolGroupKey, Tool, TOOL_GROUPS, TOOLS, activeToolKey
+ * @exports ToolKey, ToolGroupKey, Tool, TOOL_GROUPS, TOOLS
  */
-import type { Route } from './route.js';
 
 export type ToolKey = 'cycles' | 'eclipses' | 'horary' | 'electional' | 'rectification';
 export type ToolGroupKey = 'sky-cycles' | 'questions-planning' | 'birth-data';
@@ -44,17 +43,3 @@ export const TOOLS: readonly Tool[] = [
   { key: 'electional', href: '#/electional', group: 'questions-planning' },
   { key: 'rectification', href: '#/rectification', group: 'birth-data' },
 ];
-
-/** The tool a route is on, or `null` for any other route. */
-export function activeToolKey(route: Route): ToolKey | null {
-  switch (route.kind) {
-    case 'cycles':
-    case 'eclipses':
-    case 'horary':
-    case 'electional':
-    case 'rectification':
-      return route.kind;
-    default:
-      return null;
-  }
-}

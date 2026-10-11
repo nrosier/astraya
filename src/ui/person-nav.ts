@@ -7,9 +7,8 @@
  * @module ui/person-nav
  * @purpose Pure logic for the persistent per-person tab bar (#234/#398): the fixed tab list, which tabs group into families (Transits & Forecast, Progressions & Directions, Relationship Charts), and which tab/family is active for a given route.
  * @conventions Kept separate from PersonNav.tsx so active-tab/gating logic is testable without a DOM, following route.ts's own convention; tab labels are translated and live in PersonNav.messages.ts since this module has no access to the current locale.
- * @exports PersonTabKey, PersonTab, PERSON_TABS, PersonTabFamilyKey, PersonTabFamily, PERSON_TAB_FAMILIES, familyForTab, activeTabKey, isTabEnabled
+ * @exports PersonTabKey, PersonTab, PERSON_TABS, PersonTabFamilyKey, PersonTabFamily, PERSON_TAB_FAMILIES, familyForTab, isTabEnabled
  */
-import type { Route } from './route.js';
 
 export type PersonTabKey =
   | 'overview'
@@ -84,30 +83,6 @@ export const PERSON_TAB_FAMILIES: readonly PersonTabFamily[] = [
 /** Which family (if any) a tab belongs to — `undefined` for the three fixed tabs and `astrocartography`. */
 export function familyForTab(key: PersonTabKey): PersonTabFamilyKey | undefined {
   return PERSON_TAB_FAMILIES.find((family) => family.members.includes(key))?.key;
-}
-
-/** Which tab a parsed route corresponds to, or `null` for a route with no tab (e.g. `home`, `about`). */
-export function activeTabKey(route: Route): PersonTabKey | null {
-  switch (route.kind) {
-    case 'person-overview':
-      return 'overview';
-    case 'person':
-      return 'birth-record';
-    case 'chart':
-    case 'report':
-    case 'profections':
-    case 'progressions':
-    case 'solar-arc':
-    case 'primary-directions':
-    case 'transit':
-    case 'synastry':
-    case 'composite':
-    case 'periodic-transit':
-    case 'astrocartography':
-      return route.kind;
-    default:
-      return null;
-  }
 }
 
 /** Every tab but Overview and Birth record requires a completed, stored birth moment (same gate `PersonForm` used). */
