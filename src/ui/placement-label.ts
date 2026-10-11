@@ -284,10 +284,8 @@ const CATEGORY_EXPLANATIONS: Readonly<Record<Locale, Readonly<Record<CorpusCateg
     'composite-aspect-pair': 'How two planets interact within the composite (relationship) chart.',
     'degree-symbol':
       'A traditional image and quality attached to this exact degree, independent of which planet stands there.',
-    'derived-point-in-sign':
-      'How a calculated point (Part of Fortune, Part of Spirit, a midpoint) expresses itself in its sign.',
-    'derived-point-in-house':
-      'Which area of life a calculated point (Part of Fortune, Part of Spirit, a midpoint) works in.',
+    'derived-point-in-sign': 'How a calculated point (Part of Fortune or Part of Spirit) expresses itself in its sign.',
+    'derived-point-in-house': 'Which area of life a calculated point (Part of Fortune or Part of Spirit) works in.',
   },
   nl: {
     'planet-in-sign': 'Hoe een planeet zich uit in het teken waarin hij staat.',
@@ -307,10 +305,8 @@ const CATEGORY_EXPLANATIONS: Readonly<Record<Locale, Readonly<Record<CorpusCateg
     'composite-aspect-pair': 'Hoe twee planeten samenwerken binnen de composietkaart (relatie).',
     'degree-symbol':
       'Een traditioneel beeld en kwaliteit die bij precies deze graad horen, los van welke planeet er staat.',
-    'derived-point-in-sign':
-      'Hoe een berekend punt (Part of Fortune, Part of Spirit, een middelpunt) zich uit in zijn teken.',
-    'derived-point-in-house':
-      'In welk levensgebied een berekend punt (Part of Fortune, Part of Spirit, een middelpunt) werkt.',
+    'derived-point-in-sign': 'Hoe een berekend punt (Part of Fortune of Part of Spirit) zich uit in zijn teken.',
+    'derived-point-in-house': 'In welk levensgebied een berekend punt (Part of Fortune of Part of Spirit) werkt.',
   },
 };
 

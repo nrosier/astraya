@@ -199,7 +199,7 @@ describe('resolvePlacementText (#59)', () => {
 });
 
 describe('derived points (#511): no entries yet, so the mechanical sentence stands in', () => {
-  const POINTS = ['part-of-fortune', 'part-of-spirit', 'asc-mc-midpoint', 'sun-moon-midpoint'] as const;
+  const POINTS = ['part-of-fortune', 'part-of-spirit'] as const;
 
   it('never resolves to empty text for any point in any sign or house, in either language', () => {
     const placements: CorpusPlacement[] = POINTS.flatMap((point) => [

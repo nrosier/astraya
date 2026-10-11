@@ -603,8 +603,8 @@ describe('derivedPointRows (#44)', () => {
     // ASC 10, MC 280: shorter arc midpoint is 325 (Aquarius 25). Sun 10, Moon 100: midpoint is 55 (Taurus 25).
     expect(derivedPointRows(data, { midpointsVisible: true })).toEqual([
       { pointKey: 'part-of-spirit', label: 'Part of Spirit', longitude: 200, ...degreeParts(200) },
-      { pointKey: 'asc-mc-midpoint', label: 'ASC/MC Midpoint', longitude: 325, ...degreeParts(325) },
-      { pointKey: 'sun-moon-midpoint', label: 'Sun/Moon Midpoint', longitude: 55, ...degreeParts(55) },
+      { label: 'ASC/MC Midpoint', longitude: 325, ...degreeParts(325) },
+      { label: 'Sun/Moon Midpoint', longitude: 55, ...degreeParts(55) },
     ]);
   });
 });

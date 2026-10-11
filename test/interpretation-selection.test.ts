@@ -245,7 +245,9 @@ describe('selectionPlacements (#415)', () => {
 describe('derived-point selection (#511)', () => {
   it('parses derived:<point> for the closed list only', () => {
     expect(parseSelectionKey('derived:part-of-fortune')).toEqual({ kind: 'derived', point: 'part-of-fortune' });
-    expect(parseSelectionKey('derived:sun-moon-midpoint')).toEqual({ kind: 'derived', point: 'sun-moon-midpoint' });
+    // The midpoints are not derived-point selections (no source gives them a meaning).
+    expect(parseSelectionKey('derived:sun-moon-midpoint')).toBeUndefined();
+    expect(parseSelectionKey('derived:asc-mc-midpoint')).toBeUndefined();
     expect(parseSelectionKey('derived:part-of-luck')).toBeUndefined();
     expect(parseSelectionKey('derived:')).toBeUndefined();
   });
@@ -263,8 +265,8 @@ describe('derived-point selection (#511)', () => {
     expect(items.map((item) => item.key)).toEqual(items.map((item) => placementKey(item.placement)));
   });
 
-  it('gives every one of the four points a sign entry and a house entry', () => {
-    for (const point of ['part-of-fortune', 'part-of-spirit', 'asc-mc-midpoint', 'sun-moon-midpoint'] as const) {
+  it('gives each of the two points a sign entry and a house entry', () => {
+    for (const point of ['part-of-fortune', 'part-of-spirit'] as const) {
       expect(selectionPlacements(chart, { kind: 'derived', point })).toHaveLength(2);
     }
   });

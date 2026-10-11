@@ -165,10 +165,12 @@ describe('the corpus key reference (#427)', () => {
 
   it('derived points are a closed list: an unknown point key is refused, every known one is accepted', () => {
     expect(validateKey('derived-point-in-sign:part-of-fortune:0')).toEqual([]);
-    expect(validateKey('derived-point-in-house:sun-moon-midpoint:12')).toEqual([]);
+    expect(validateKey('derived-point-in-house:part-of-spirit:12')).toEqual([]);
+    // The midpoints were dropped from the category: no corpus key may name them.
+    expect(validateKey('derived-point-in-house:sun-moon-midpoint:12')).not.toEqual([]);
+    expect(validateKey('derived-point-in-sign:asc-mc-midpoint:0')).not.toEqual([]);
     expect(validateKey('derived-point-in-sign:part-of-luck:0')).not.toEqual([]);
     expect(parsePlacementKey('derived-point-in-house:part-of-luck:3')).toBeUndefined();
     expect(validateKey('derived-point-in-house:part-of-spirit:0')).not.toEqual([]);
-    expect(validateKey('derived-point-in-sign:asc-mc-midpoint:12')).not.toEqual([]);
   });
 });

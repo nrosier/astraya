@@ -71,12 +71,14 @@ attributed to "you", so the plain natal category already reads fine for a compos
 
 `derived-point-in-sign` and `derived-point-in-house` (#511) describe a calculated point that is not a body by where it
 falls, the way `planet-in-sign`/`planet-in-house` do for a planet. `<point>` is one of the closed list in
-`src/astrology/derived-points.ts`: `part-of-fortune`, `part-of-spirit`, `asc-mc-midpoint`, `sun-moon-midpoint` — the rows of
-the Derived points table. A derived point has no motion, aspects or dignity, so there is no aspect or dignity category for it.
-The English point names are used in both languages (no vetted Dutch terms exist, see #158). The categories are registered in
-the schema and shown in the chart's selection inspector, which falls back to the mechanical one-line sentence until entries
-exist; **no entries have been generated yet** — the generator, evaluator and improver do not know these categories (tracked
-in a follow-up issue), and the reports do not read them.
+`src/astrology/derived-points.ts`: `part-of-fortune` and `part-of-spirit`. A derived point has no motion, aspects or dignity,
+so there is no aspect or dignity category for it. The English point names are used in both languages (no vetted Dutch
+terms exist, see #158). The ASC/MC and Sun/Moon midpoints the Derived points table can show are **deliberately not
+corpus points**: no public-domain source gives them a meaning, so they stay a display option, with no entry and no chart
+selection. The categories are registered in the schema and shown in the chart's selection inspector, which falls back to
+the mechanical one-line sentence until entries exist; **no entries have been generated yet** — the generator, evaluator and
+improver do not know these categories (tracked in #517), and the reports do not read them. That is 48 entries per language
+(2 points × 12 signs + 2 points × 12 houses).
 
 ## How this is kept true
 

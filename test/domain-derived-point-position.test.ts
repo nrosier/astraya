@@ -24,16 +24,26 @@ beforeAll(async () => {
 
 describe('derivedPointLongitude', () => {
   it('locates every point in the closed list', () => {
+    expect(DERIVED_POINTS.map((point) => point.key)).toEqual(['part-of-fortune', 'part-of-spirit']);
     for (const point of DERIVED_POINTS) expect(derivedPointLongitude(chart, point.key)).toBeDefined();
   });
 
   it('agrees with the Derived points table row for row (same longitude, same label, same key)', () => {
-    const rows = derivedPointRows(chart, { fortuneVisible: true, midpointsVisible: true });
+    const rows = derivedPointRows(chart, { fortuneVisible: true });
     expect(rows.map((row) => row.pointKey)).toEqual(DERIVED_POINTS.map((point) => point.key));
     for (const row of rows) {
-      expect(row.longitude).toBe(derivedPointLongitude(chart, row.pointKey));
-      expect(row.label).toBe(DERIVED_POINTS.find((point) => point.key === row.pointKey)?.label);
+      const point = DERIVED_POINTS.find((candidate) => candidate.key === row.pointKey);
+      expect(point).toBeDefined();
+      if (point === undefined) continue;
+      expect(row.longitude).toBe(derivedPointLongitude(chart, point.key));
+      expect(row.label).toBe(point.label);
     }
+  });
+
+  it('keeps the midpoints as plain display rows: listed when asked for, with no point key to select or interpret', () => {
+    const rows = derivedPointRows(chart, { midpointsVisible: true });
+    expect(rows.map((row) => row.label)).toEqual(['Part of Spirit', 'ASC/MC Midpoint', 'Sun/Moon Midpoint']);
+    expect(rows.map((row) => row.pointKey)).toEqual(['part-of-spirit', undefined, undefined]);
   });
 
   it('keeps the table’s visibility rules: Fortune and midpoints only when asked for', () => {
@@ -49,10 +59,10 @@ describe('derivedPointPlacementFacts', () => {
   it('gives a zero-based sign and a one-based house', () => {
     for (const point of DERIVED_POINTS) {
       const facts = derivedPointPlacementFacts(chart, point.key);
-      expect(facts?.sign).toBeGreaterThanOrEqual(0);
-      expect(facts?.sign).toBeLessThanOrEqual(11);
-      expect(facts?.house).toBeGreaterThanOrEqual(1);
-      expect(facts?.house).toBeLessThanOrEqual(12);
+      expect(facts.sign).toBeGreaterThanOrEqual(0);
+      expect(facts.sign).toBeLessThanOrEqual(11);
+      expect(facts.house).toBeGreaterThanOrEqual(1);
+      expect(facts.house).toBeLessThanOrEqual(12);
     }
   });
 });

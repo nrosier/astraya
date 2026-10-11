@@ -12,7 +12,7 @@
  * - **A sign:** each planet in that sign, and the house cusp(s) that fall in it. (A sign has no entry
  *   of its own: what is written is about placements *in* it.)
  * - **A house cusp:** the sign on it, then each planet in that house.
- * - **A derived point** (Part of Fortune/Spirit, a midpoint): the point in its sign, then in its house.
+ * - **A derived point** (Part of Fortune or Spirit): the point in its sign, then in its house.
  * - **An aspect line:** that one pair.
  */
 /**
@@ -161,7 +161,6 @@ function degreeSymbolPlacement(chart: ChartData, bodyKey: string): SalientPlacem
  */
 function derivedPointPlacements(chart: ChartData, point: DerivedPointKey): readonly SalientPlacement[] {
   const facts = derivedPointPlacementFacts(chart, point);
-  if (facts === undefined) return [];
   const placements: CorpusPlacement[] = [{ category: 'derived-point-in-sign', point, sign: facts.sign }];
   if (facts.house !== undefined) placements.push({ category: 'derived-point-in-house', point, house: facts.house });
   return placements.map((placement) => ({ placement, key: placementKey(placement), salience: 0, factors: [] }));
