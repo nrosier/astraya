@@ -248,7 +248,7 @@ const nl: typeof en = {
   aspectsToLunarNodes: 'Aspecten naar de maansknopen tekenen',
   aspectsToVertex: 'Aspecten naar de Vertex tekenen',
   aspectsToPartOfFortune: 'Aspecten naar het Fortuna-punt tekenen',
-  aspectsToPartOfSpirit: 'Aspecten naar het Part of Spirit tekenen',
+  aspectsToPartOfSpirit: 'Aspecten naar het Lot van de Geest tekenen',
   aspectsToHint:
     'De Ascendant en het Midheaven maken altijd aspecten met de lichamen. De Vertex en de twee punten doen dat hier, alleen met lichamen, nooit met elkaar of met de assen; een punt maakt geen aspect met het lichtgevend lichaam waaruit het is opgebouwd, omdat dat een Ascendant-aspect herhaalt.',
 
