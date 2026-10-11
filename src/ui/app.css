@@ -840,50 +840,6 @@ footer {
   gap: 1rem;
 }
 
-.field-grid label {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  color: var(--muted);
-  font-size: 0.8rem;
-  font-weight: 550;
-  letter-spacing: 0.02em;
-}
-
-.field-grid input,
-.field-grid select {
-  padding: 0.55rem 0.7rem;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  color: var(--fg);
-  font: inherit;
-  font-size: 1rem;
-  font-variant-numeric: tabular-nums;
-}
-
-.field-grid input:hover,
-.field-grid select:hover {
-  background: var(--surface-hover);
-}
-
-/* A disabled field reads as intentionally unavailable, not broken (#420): dimmed, no hover
-   response and the default cursor. The text beside it says why. Disabled controls are exempt
-   from the contrast rule, so dimming does not cost legibility checks. */
-.field-grid input:disabled,
-.field-grid select:disabled {
-  opacity: 0.6;
-  cursor: default;
-  background: var(--surface);
-}
-
-.field-grid input:focus-visible,
-.field-grid select:focus-visible {
-  border-color: var(--accent);
-  outline: 2px solid color-mix(in oklab, var(--accent) 55%, transparent);
-  outline-offset: 0;
-}
-
 .hint,
 .muted {
   color: var(--muted);
@@ -1107,13 +1063,9 @@ button.danger:hover:not(:disabled) {
   gap: 0.75rem;
 }
 
-/* A field the form is refusing to save, marked by state rather than by a class so the
-   styling and the accessible name can never disagree. #506 finding 1: invalid input moves
-   onto --color-danger, same reasoning as button.danger above. */
-.field-grid [aria-invalid] {
-  border-color: var(--color-danger);
-}
-
+/* A field the form is refusing to save is marked by state (`aria-invalid`), not by a class, so the
+   styling and the accessible name can never disagree; the primitives' own rule sets its border
+   (#506 finding 1: invalid input uses --color-danger, same reasoning as button.danger above). */
 .field-error {
   color: var(--color-danger);
   font-size: 0.8rem;
@@ -3728,8 +3680,7 @@ svg text.chart-symbol-text-unicode {
   margin: 0;
 }
 
-/* The controls' own appearance (#508): a primitive looks the same wherever it sits, with or without a `.field-grid`
-   around it (that class is moving to layout only as the screens migrate). */
+/* The controls' own appearance (#508): a primitive looks the same wherever it sits. `.field-grid` is layout only. */
 .primitive-field > label {
   color: var(--muted);
   font-size: 0.8rem;

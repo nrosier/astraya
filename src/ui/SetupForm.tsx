@@ -11,6 +11,8 @@
  * @conventions Rendered outside the Stored local-store context; uses SetupForm.messages.ts for en/nl text via useMessages().
  * @exports SetupForm
  */
+import { PasswordField } from './primitives/PasswordField.js';
+import { TextField } from './primitives/TextField.js';
 import { useState } from 'react';
 import { useMessages } from './messages.js';
 import { useSession } from './session-context.js';
@@ -80,39 +82,19 @@ export function SetupForm(): React.JSX.Element {
       )}
       <form onSubmit={submit}>
         <div className="field-grid">
-          <label>
-            {shared.usernameLabel}
-            <input
-              type="text"
-              autoComplete="username"
-              value={username}
-              onChange={(event) => {
-                setUsername(event.target.value);
-              }}
-            />
-          </label>
-          <label>
-            {t.passwordLabel}
-            <input
-              type="password"
-              autoComplete="new-password"
-              value={password}
-              onChange={(event) => {
-                setPasswordInput(event.target.value);
-              }}
-            />
-          </label>
-          <label>
-            {shared.confirmPasswordLabel}
-            <input
-              type="password"
-              autoComplete="new-password"
-              value={confirm}
-              onChange={(event) => {
-                setConfirm(event.target.value);
-              }}
-            />
-          </label>
+          <TextField label={shared.usernameLabel} autoComplete="username" value={username} onChange={setUsername} />
+          <PasswordField
+            label={t.passwordLabel}
+            autoComplete="new-password"
+            value={password}
+            onChange={setPasswordInput}
+          />
+          <PasswordField
+            label={shared.confirmPasswordLabel}
+            autoComplete="new-password"
+            value={confirm}
+            onChange={setConfirm}
+          />
         </div>
         <p className="actions">
           <button type="submit" disabled={busy || username === '' || password === '' || confirm === ''}>

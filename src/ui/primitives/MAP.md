@@ -5,6 +5,7 @@ Shared UI primitives for the #506 UI/UX overhaul (Phase 1, #508). Business logic
 - `Button.tsx` — Primary/quiet/danger variants, standard/compact sizes, busy-label support. Deps: none.
 - `Field.tsx` + `Field.messages.ts` — Shared label/help/error/unit slot layout wrapping one form control (its own "optional" wording is translated); `useFieldIds` gives every other field primitive its id/aria-describedby wiring.
 - `TextField.tsx` — Single-line text input via `Field`. Deps: `./Field`.
+- `PasswordField.tsx` — Masked input via `Field` with a required autocomplete purpose. Deps: `./Field`.
 - `TimeField.tsx` — Time-of-day input via `Field`, with an optional extra describing id. Deps: `./Field`.
 - `TextAreaField.tsx` — Multi-line text input via `Field`; label can be visually hidden. Deps: `./Field`.
 - `NumberField.tsx` — Numeric input with the standard Decrease/Increase stepper via `Field`; reports the raw typed string, not a coerced number. Deps: `./Field`.

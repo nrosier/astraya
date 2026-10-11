@@ -17,6 +17,8 @@
  * @conventions Mounted globally alongside SyncBadge; reads session state via `useSession()`/`session-context.js`; text comes from co-located `AccountPanel.messages.ts` via `useMessages()`.
  * @exports AccountPanel
  */
+import { PasswordField } from './primitives/PasswordField.js';
+import { TextField } from './primitives/TextField.js';
 import { useEffect, useRef, useState } from 'react';
 import { removeAccountData, useSession } from './session-context.js';
 import { getOidcConfig } from '../sync/auth-client.js';
@@ -264,29 +266,19 @@ function SignInForm({
       )}
       <form onSubmit={submit}>
         <div className="field-grid">
-          <label>
-            {shared.usernameLabel}
-            <input
-              ref={usernameRef}
-              type="text"
-              autoComplete="username"
-              value={username}
-              onChange={(event) => {
-                setUsername(event.target.value);
-              }}
-            />
-          </label>
-          <label>
-            {t.passwordLabel}
-            <input
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(event) => {
-                setPassword(event.target.value);
-              }}
-            />
-          </label>
+          <TextField
+            label={shared.usernameLabel}
+            inputRef={usernameRef}
+            autoComplete="username"
+            value={username}
+            onChange={setUsername}
+          />
+          <PasswordField
+            label={t.passwordLabel}
+            autoComplete="current-password"
+            value={password}
+            onChange={setPassword}
+          />
         </div>
         <p className="actions">
           <button type="submit" disabled={busy || username.trim() === '' || password === ''}>

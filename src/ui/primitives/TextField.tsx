@@ -23,6 +23,8 @@ export interface TextFieldProps {
   readonly disabled?: boolean | undefined;
   readonly autoComplete?: string | undefined;
   /** The on-screen keyboard to offer, e.g. `numeric` for a year typed as text. */
+  /** For a caller that moves focus into the field, e.g. when a panel opens. */
+  readonly inputRef?: React.Ref<HTMLInputElement> | undefined;
   readonly inputMode?: 'text' | 'numeric' | 'decimal' | 'email' | 'search' | 'tel' | 'url' | undefined;
 }
 
@@ -39,12 +41,14 @@ export function TextField({
   disabled,
   autoComplete,
   inputMode,
+  inputRef,
 }: TextFieldProps): React.JSX.Element {
   const ids = useFieldIds(help !== undefined, error !== undefined);
   return (
     <Field label={label} ids={ids} help={help} error={error} unit={unit} optional={optional}>
       <input
         id={ids.inputId}
+        ref={inputRef}
         type="text"
         className={size === 'compact' ? 'primitive-control-compact' : undefined}
         value={value}
