@@ -65,7 +65,7 @@ import { computeChartData, housesAreDefined, type ChartData } from '../domain/ch
 import { deriveExportFilename } from '../domain/export-filename.js';
 import { encodeChartShareLink } from '../domain/chart-share.js';
 import { momentKey } from '../time/encode.js';
-import { renderChartSheetSvg } from '../chart/chart-sheet.js';
+import { renderChartDialSvg, renderChartSheetSvg } from '../chart/chart-sheet.js';
 import { renderJonesShapeDiagramSvg } from '../chart/jones-shape-diagram.js';
 import { lunarPhaseOf } from '../astrology/lunar-phase.js';
 import { jonesBodyPositions } from '../astrology/jones-shapes.js';
@@ -1064,21 +1064,22 @@ export function ChartDataView({
   const housesComputed = load.kind !== 'ready' || housesAreDefined(load.data.houses);
   const housesRenderable = showHouses && housesComputed;
 
-  const sheet = useMemo(() => {
-    if (load.kind !== 'ready' || !housesRenderable) return undefined;
-    return renderChartSheetSvg(
-      chartSheetInput(
-        load.data,
-        metaLines ?? [displayName || t.chartFallback],
-        displayName || t.natalFallback,
-        toPointVisibilityOptions(extendedSettings),
-        (bodyKey) => bodyShortName(bodyKey, locale),
-      ),
-      {
-        ...resolveWheelDisplayOptions({}),
-        signWedgeStyle: toSignWedgeStyle(extendedSettings),
-      },
+  // The export sheet (SVG/PNG/PDF) and the on-screen dial are two compositions of one computed chart (#511):
+  // the dial is the sheet's own wheel, drawn alone; everything else the sheet holds is shown as tables.
+  const { sheet, dial } = useMemo(() => {
+    if (load.kind !== 'ready' || !housesRenderable) return { sheet: undefined, dial: undefined };
+    const input = chartSheetInput(
+      load.data,
+      metaLines ?? [displayName || t.chartFallback],
+      displayName || t.natalFallback,
+      toPointVisibilityOptions(extendedSettings),
+      (bodyKey) => bodyShortName(bodyKey, locale),
     );
+    const options = {
+      ...resolveWheelDisplayOptions({}),
+      signWedgeStyle: toSignWedgeStyle(extendedSettings),
+    };
+    return { sheet: renderChartSheetSvg(input, options), dial: renderChartDialSvg(input, options) };
   }, [load, housesRenderable, displayName, metaLines, extendedSettings, t, locale, symbolClass, variants]);
 
   // Click-to-isolate (#400, #412, #418): the selection, its dimming of the wheel and its click
@@ -1091,12 +1092,12 @@ export function ChartDataView({
     clear: clearIsolation,
     toggle: toggleIsolation,
     onClick: handleWheelClick,
-  } = useWheelIsolation(sheet);
+  } = useWheelIsolation(dial);
 
   // The Positions and Aspects tables share the wheel's selection (#418): a button on a row selects it on the
   // wheel, and the row the wheel has selected is marked. Only where there is a wheel, and never in the PDF.
   const tableSelection = useMemo((): TableSelection | undefined => {
-    if (sheet === undefined || load.kind !== 'ready') return undefined;
+    if (dial === undefined || load.kind !== 'ready') return undefined;
     return {
       selectedKey: isolatedKey,
       onToggle: toggleIsolation,
@@ -1104,7 +1105,7 @@ export function ChartDataView({
         visiblePositions(load.data.positions, pointVisibility).map((position) => bodyById(position.body)?.key ?? ''),
       ),
     };
-  }, [sheet, load, isolatedKey, toggleIsolation, pointVisibility]);
+  }, [dial, load, isolatedKey, toggleIsolation, pointVisibility]);
 
   const isolation = useMemo(() => {
     if (isolatedKey === undefined || load.kind !== 'ready') return undefined;
@@ -1188,7 +1189,7 @@ export function ChartDataView({
 
   /** The wheel, what a click isolates, the interpret button and the exports: everything the Wheel view holds. */
   const renderChartPanel = (data: ChartData): React.ReactNode =>
-    sheet === undefined ? null : (
+    dial === undefined ? null : (
       <>
         <h2>{t.chartTabLabel}</h2>
         <p className="hint chart-wheel-hint">{t.wheelClickHint}</p>
@@ -1207,7 +1208,7 @@ export function ChartDataView({
           // The wheel is generated entirely by this app from data it just computed — never
           // user-supplied markup — so injecting it is the same trust boundary as any other
           // value this component renders, just carried as a string instead of JSX.
-          dangerouslySetInnerHTML={{ __html: sheet.markup }}
+          dangerouslySetInnerHTML={{ __html: dial.markup }}
           onClick={handleWheelClick}
         />
 

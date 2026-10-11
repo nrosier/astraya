@@ -16,7 +16,7 @@
  * @module chart/chart-sheet
  * @purpose Composes the wheel and the three data panels (aspect matrix, emphasis grid, degree strip) into one single SVG document representing the whole printable/exportable chart sheet.
  * @conventions Vertical layout is computed top-down purely from each panel's own returned `height` plus fractions of the shared content width — no panel's position is a hardcoded pixel figure, so a chart with more bodies/asteroids pushes later panels down rather than overlapping them; one SVG document is used because every export path (standalone SVG, PNG, print-to-PDF) takes a single SVG string.
- * @exports renderChartSheetSvg; ChartSheetInput, ChartSheetOptions, ChartSheet types.
+ * @exports renderChartSheetSvg, renderChartDialSvg; ChartSheetInput, ChartSheetOptions, ChartSheet types.
  */
 import type { AspectMatrixInput } from './aspect-matrix.js';
 import { renderAspectMatrixSvg } from './aspect-matrix.js';
@@ -63,6 +63,26 @@ export interface ChartSheet {
 }
 
 const DEFAULT_SIZE = 800;
+
+/**
+ * The wheel alone, for the screen (#511): the very group the sheet embeds — same size, same margin
+ * around it, same `translate` — minus the title block and the three panels below it. Nothing about
+ * the wheel's geometry or its `data-*` hit targets differs from the sheet's; only what surrounds it.
+ * `renderChartSheetSvg` stays the one composition every export takes.
+ */
+export function renderChartDialSvg(input: ChartSheetInput, options?: ChartSheetOptions): ChartSheet {
+  const size = options?.size ?? DEFAULT_SIZE;
+  const padding = resolveSheetGeometry(size).labelMargin;
+  const width = size + padding * 2;
+  const height = size + padding * 2;
+  const markup =
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${fmt(width)} ${fmt(height)}" ` +
+    `width="${fmt(width)}" height="${fmt(height)}" class="chart-sheet chart-dial">` +
+    `<g transform="translate(${fmt(padding)} ${fmt(padding)})">` +
+    renderMultiWheelSvg(input.rings, input.crossAspects ?? [], { ...options, size, bare: true }) +
+    `</g></svg>`;
+  return { markup, width, height };
+}
 
 /**
  * The element/modality table is a fraction of the content width, so it keeps its shape at every

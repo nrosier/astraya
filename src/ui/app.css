@@ -2126,9 +2126,9 @@ label.stacked textarea:focus-visible {
 .chart-wheel {
   margin: 1.5rem auto 2rem;
   /*
-   * Wider than a bare wheel would need: the sheet stacks an aspect grid, an
-   * element table and a degree strip under the wheel, and those carry text that
-   * stops being legible if the whole sheet is squeezed to wheel width.
+   * Kept at the width the wheel had while the screen still drew the whole sheet
+   * (#511), so extracting the dial leaves its on-screen size and hit targets as
+   * they were; the workbench layout task sizes it afresh.
    */
   max-width: 55rem;
 }
