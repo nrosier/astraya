@@ -102,18 +102,29 @@ async function unmount(): Promise<void> {
 const count = (container: HTMLElement): string => container.querySelector('[role="status"]')?.textContent ?? '';
 const totalCount = (): string => String(contacts.length);
 
-async function choose(container: HTMLElement, label: 'Show' | 'Orb', value: string): Promise<void> {
-  // By its label: the panel also holds the planetary-rulers select (#426), so an index would drift.
-  const labelled = [...container.querySelectorAll('label')].find((l) => l.textContent.trim() === label);
-  const select =
-    labelled === undefined ? null : container.querySelector<HTMLSelectElement>(`select[id="${labelled.htmlFor}"]`);
-  if (select === null) throw new Error(`fixture bug: no "${label}" select`);
+/** The radio of a named choice group (the preset row, or the orb scale in the dialog), by its visible label. */
+function radio(container: HTMLElement, group: 'Show' | 'Orb', label: string): HTMLInputElement {
+  const found = [...container.querySelectorAll(`[role="radiogroup"][aria-label="${group}"] label`)]
+    .find((candidate) => candidate.textContent.trim() === label)
+    ?.querySelector('input');
+  if (found === null || found === undefined) throw new Error(`fixture bug: no "${label}" in "${group}"`);
+  return found;
+}
+
+async function choose(container: HTMLElement, group: 'Show' | 'Orb', label: string): Promise<void> {
+  const input = radio(container, group, label);
   await act(async () => {
-    select.value = value;
-    select.dispatchEvent(new Event('change', { bubbles: true }));
+    input.click();
     await Promise.resolve();
   });
 }
+
+/** The label of the preset radio that is selected. */
+const selectedPreset = (container: HTMLElement): string | undefined =>
+  [...container.querySelectorAll<HTMLInputElement>('[role="radiogroup"][aria-label="Show"] input')]
+    .find((input) => input.checked)
+    ?.closest('label')
+    ?.textContent.trim();
 
 function checkboxUnder(container: HTMLElement, legend: string, label: string): HTMLInputElement {
   const group = [...container.querySelectorAll('fieldset')].find(
@@ -168,10 +179,8 @@ describe('TransitFilterPanel (#416)', () => {
   it('starts on the important transits and says how many of the total are shown, naming the preset', async () => {
     const container = await mount();
     const expected = filterTransits(contacts, transitPreset('important', RULES.daily));
-    expect(container.querySelector('select')?.value).toBe('important');
-    expect(count(container)).toBe(
-      `Showing ${String(expected.length)} of ${String(contacts.length)} transits (Important)`,
-    );
+    expect(selectedPreset(container)).toBe('Important');
+    expect(count(container)).toBe(`Important · ${String(expected.length)} of ${String(contacts.length)} shown`);
   });
 
   it('explains the daily rule on a daily screen and the yearly rule on a yearly one', async () => {
@@ -187,24 +196,19 @@ describe('TransitFilterPanel (#416)', () => {
     await unmount();
     const yearly = count(await mount('en', 'yearly'));
     expect(yearly).toBe(
-      `Showing ${String(filterTransits(contacts, transitPreset('important', RULES.yearly)).length)} of ${String(contacts.length)} transits (Important)`,
+      `Important · ${String(filterTransits(contacts, transitPreset('important', RULES.yearly)).length)} of ${String(contacts.length)} shown`,
     );
     expect(daily).toBe(
-      `Showing ${String(filterTransits(contacts, transitPreset('important', RULES.daily)).length)} of ${String(contacts.length)} transits (Important)`,
+      `Important · ${String(filterTransits(contacts, transitPreset('important', RULES.daily)).length)} of ${String(contacts.length)} shown`,
     );
   });
 
-  it('“Show all” shows everything, names the preset, and then disappears', async () => {
+  it('the “All” preset shows everything and names itself; no separate Show all button exists', async () => {
     const container = await mount();
-    const button = [...container.querySelectorAll('button')].find((b) => b.textContent === 'Show all');
-    if (button === undefined) throw new Error('fixture bug: no Show all button');
-    await act(async () => {
-      button.click();
-      await Promise.resolve();
-    });
-    expect(count(container)).toBe(`Showing ${totalCount()} of ${totalCount()} transits (All transits)`);
-    expect(container.querySelector('select')?.value).toBe('all');
     expect([...container.querySelectorAll('button')].some((b) => b.textContent === 'Show all')).toBe(false);
+    await choose(container, 'Show', 'All');
+    expect(count(container)).toBe(`All · ${totalCount()} of ${totalCount()} shown`);
+    expect(selectedPreset(container)).toBe('All');
     expect(container.textContent).not.toContain('Important, for a day');
   });
 
@@ -214,24 +218,24 @@ describe('TransitFilterPanel (#416)', () => {
     await check(container, 'Natal points', 'Jupiter');
     await check(container, 'Natal points', 'Saturn');
     // Still the live, unapplied filter — the whole point of staging (#489).
-    expect(container.querySelector('select')?.value).toBe('important');
+    expect(selectedPreset(container)).toBe('Important');
     await clickCardButton(container, 'Apply');
-    expect(container.querySelector('select')?.value).toBe('custom');
+    expect(selectedPreset(container)).toBe('Custom');
     const base = transitPreset('important', RULES.daily);
     const expected = filterTransits(contacts, { ...base, natal: [...base.natal, 'jupiter', 'saturn'] });
-    expect(count(container)).toBe(`Showing ${String(expected.length)} of ${String(contacts.length)} transits (Custom)`);
+    expect(count(container)).toBe(`Custom · ${String(expected.length)} of ${String(contacts.length)} shown`);
   });
 
   it('the orb scale re-filters once applied: Wide shows at least as many as Balanced, Tight no more', async () => {
     const container = await mount('en', 'yearly');
-    const shownOf = (): number => Number(/Showing (\d+)/.exec(count(container))?.[1]);
+    const shownOf = (): number => Number(/· (\d+) of/.exec(count(container))?.[1]);
     const balanced = shownOf();
     await openCard(container);
-    await choose(container, 'Orb', 'wide');
+    await choose(container, 'Orb', 'Wide (at least 5°)');
     await clickCardButton(container, 'Apply');
     const wide = shownOf();
     await openCard(container);
-    await choose(container, 'Orb', 'tight');
+    await choose(container, 'Orb', 'Tight (up to 1.5°)');
     await clickCardButton(container, 'Apply');
     const tight = shownOf();
     expect(wide).toBeGreaterThanOrEqual(balanced);
@@ -270,19 +274,26 @@ describe('TransitFilterPanel (#416)', () => {
       await check(container, 'Transiting planets', label);
     }
     await clickCardButton(container, 'Apply');
-    expect(count(container)).toContain('Showing 0 of');
-    expect(container.textContent).toContain('No transits match this filter');
+    expect(count(container)).toContain('· 0 of');
+    expect(container.textContent).toContain('No transits match the Custom filter');
+    const clear = [...container.querySelectorAll('button')].find((b) => b.textContent === 'Clear filters');
+    if (clear === undefined) throw new Error('fixture bug: no Clear filters button');
+    await act(async () => {
+      clear.click();
+      await Promise.resolve();
+    });
+    expect(selectedPreset(container)).toBe('All');
   });
 
   it('remembers the choice per screen on this device, and a preset is rebuilt rather than frozen', async () => {
     const container = await mount('en', 'daily');
-    await choose(container, 'Show', 'outer');
+    await choose(container, 'Show', 'Outer');
     await unmount();
     expect(JSON.parse(localStorage.getItem('astraya:transitFilter:daily') ?? 'null')).toEqual({ preset: 'outer' });
-    expect((await mount('en', 'daily')).querySelector('select')?.value).toBe('outer');
+    expect(selectedPreset(await mount('en', 'daily'))).toBe('Outer');
     await unmount();
     // The yearly screen is its own context and still starts on its default.
-    expect((await mount('en', 'yearly')).querySelector('select')?.value).toBe('important');
+    expect(selectedPreset(await mount('en', 'yearly'))).toBe('Important');
   });
 
   it('remembers a customised filter in full, once applied as the default', async () => {
@@ -293,7 +304,7 @@ describe('TransitFilterPanel (#416)', () => {
     const before = count(container);
     await unmount();
     const again = await mount();
-    expect(again.querySelector('select')?.value).toBe('custom');
+    expect(selectedPreset(again)).toBe('Custom');
     expect(count(again)).toBe(before);
   });
 
@@ -302,13 +313,13 @@ describe('TransitFilterPanel (#416)', () => {
     await openCard(container);
     await check(container, 'Aspects', 'Minor');
     await clickCardButton(container, 'Apply');
-    expect(container.querySelector('select')?.value).toBe('custom');
+    expect(selectedPreset(container)).toBe('Custom');
     expect(localStorage.getItem('astraya:transitFilter:daily')).toBeNull();
     await unmount();
     // A fresh mount reads from storage, not the unmounted screen's in-memory state — the applied
     // customization was never remembered, so it starts back on the real default.
     const again = await mount();
-    expect(again.querySelector('select')?.value).toBe('important');
+    expect(selectedPreset(again)).toBe('Important');
   });
 
   it('"Reset to Default" resets the draft, not the live filter, and does not close the card', async () => {
@@ -318,7 +329,7 @@ describe('TransitFilterPanel (#416)', () => {
     await clickCardButton(container, 'Reset to Default');
     // Still open, and the live filter untouched (never applied).
     expect(container.querySelector('dialog')?.hasAttribute('open')).toBe(true);
-    expect(container.querySelector('select')?.value).toBe('important');
+    expect(selectedPreset(container)).toBe('Important');
     expect(checkboxUnder(container, 'Aspects', 'Minor').checked).toBe(false);
   });
 
@@ -328,25 +339,27 @@ describe('TransitFilterPanel (#416)', () => {
     await check(container, 'Aspects', 'Minor');
     await clickCardButton(container, 'Cancel');
     expect(container.querySelector('dialog')?.hasAttribute('open')).toBe(false);
-    expect(container.querySelector('select')?.value).toBe('important');
+    expect(selectedPreset(container)).toBe('Important');
     await openCard(container);
     expect(checkboxUnder(container, 'Aspects', 'Minor').checked).toBe(false);
   });
 
   it('ignores a damaged saved value and starts on the default', async () => {
     localStorage.setItem('astraya:transitFilter:daily', '{"custom":{"transiting":"nope"}}');
-    expect((await mount()).querySelector('select')?.value).toBe('important');
+    expect(selectedPreset(await mount())).toBe('Important');
     await unmount();
     localStorage.setItem('astraya:transitFilter:daily', 'not json');
-    expect((await mount()).querySelector('select')?.value).toBe('important');
+    expect(selectedPreset(await mount())).toBe('Important');
   });
 
   it('has an accessible name for every control, and a legend for every group', async () => {
     const container = await mount();
+    await openCard(container);
     const unnamed = [...container.querySelectorAll('input, select')].filter(
       (control) => control.closest('label') === null && container.querySelector(`label[for="${control.id}"]`) === null,
     );
     expect(unnamed).toHaveLength(0);
+    expect(container.querySelectorAll('[role="radiogroup"][aria-label]').length).toBeGreaterThanOrEqual(1);
     expect(container.querySelectorAll('fieldset').length).toBe(3);
     expect(container.querySelectorAll('fieldset legend')).toHaveLength(3);
     expect(container.querySelector('[role="status"]')).not.toBeNull();
@@ -354,10 +367,42 @@ describe('TransitFilterPanel (#416)', () => {
 
   it('is in Dutch when the language is Dutch', async () => {
     const container = await mount('nl');
-    expect(count(container)).toMatch(/^\d+ van \d+ transits getoond \(Belangrijk\)$/);
-    expect(container.textContent).toContain('Toon alles');
+    expect(count(container)).toMatch(/^Belangrijk · \d+ van \d+ getoond$/);
+    expect(container.textContent).toContain('Filters wijzigen');
+    await openCard(container);
     expect(container.textContent).toContain('Alleen toenemend');
     expect(container.textContent).toContain('Belangrijk, voor een dag');
+  });
+});
+
+describe('the dialog’s group actions (#513)', () => {
+  it('All and Clear set every body in a group at once, as a draft', async () => {
+    const container = await mount();
+    await openCard(container);
+    const group = [...container.querySelectorAll('fieldset')].find(
+      (fieldset) => fieldset.querySelector('legend')?.textContent === 'Natal points',
+    );
+    const press = async (label: string): Promise<void> => {
+      const button = [...(group?.querySelectorAll('button') ?? [])].find((b) => b.textContent === label);
+      if (button === undefined) throw new Error(`fixture bug: no ${label}`);
+      await act(async () => {
+        button.click();
+        await Promise.resolve();
+      });
+    };
+    await press('Clear');
+    expect([...(group?.querySelectorAll('input') ?? [])].every((input) => !input.checked)).toBe(true);
+    await press('All');
+    expect([...(group?.querySelectorAll('input') ?? [])].every((input) => input.checked)).toBe(true);
+    // Still a draft: the live filter is the preset it was.
+    expect(selectedPreset(container)).toBe('Important');
+  });
+
+  it('keeps the global planetary-rulers preference out of the dialog and points to Preferences', async () => {
+    const container = await mount();
+    await openCard(container);
+    expect(container.querySelector('dialog [aria-label="Planetary rulers"]')).toBeNull();
+    expect(container.querySelector('dialog a[href="#/preferences/astrology"]')).not.toBeNull();
   });
 });
 

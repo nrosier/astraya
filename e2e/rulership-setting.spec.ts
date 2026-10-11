@@ -111,10 +111,13 @@ test('the choice is shared by the other screens that show rulers (profections an
   await rulersOption(page, 'Both').check();
   await expect(page.getByRole('table').first()).toBeVisible();
 
-  // Transits: inside the filter's staged "Adjust the filter" card (#489), and set to the same value.
+  // Transits: the rulers are a preference, not part of the filter (#513) — the staged "Change filters" dialog points to
+  // Preferences, where the same choice is shown.
   await page.getByRole('button', { name: 'Transits & Forecast', exact: true }).click();
   await page.getByRole('link', { name: 'Transits', exact: true }).click();
   await expect(page.getByRole('heading', { level: 1, name: /transits/i })).toBeVisible();
-  await page.getByRole('button', { name: 'Adjust the filter', exact: true }).click();
+  await page.getByRole('button', { name: 'Change filters', exact: true }).click();
+  await expect(rulersOption(page, 'Both')).toHaveCount(0);
+  await page.getByRole('link', { name: 'change them in Preferences' }).click();
   await expect(rulersOption(page, 'Both')).toBeChecked();
 });
