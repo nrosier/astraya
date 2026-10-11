@@ -54,6 +54,16 @@ test('the inspector follows the dial, beside it from a 68rem workbench and below
   );
   expect(dialFirst).toBeTruthy();
 
+  // Unpinned, a wide screen reaches the two-column state: the chart shell is wider than the 64rem
+  // general-content shell, or 68rem would be unreachable.
+  const naturalWidth = Number(
+    await page.evaluate("document.querySelector('.chart-workbench-shell').getBoundingClientRect().width"),
+  );
+  expect(naturalWidth).toBeGreaterThanOrEqual(68 * 16);
+  const dialBox = await dial.boundingBox();
+  const inspectorBox = await inspector.boundingBox();
+  expect(inspectorBox?.x ?? 0).toBeGreaterThan((dialBox?.x ?? 0) + (dialBox?.width ?? 0) - 1);
+
   // The container's own width decides, not the viewport: pin the workbench shell to either side of 68rem.
   const remPx = Number(await page.evaluate('parseFloat(getComputedStyle(document.documentElement).fontSize)'));
   const pin = async (rem: number): Promise<void> => {
@@ -69,8 +79,8 @@ test('the inspector follows the dial, beside it from a 68rem workbench and below
   await pin(67.99);
   expect(await sideBySide()).toBe(false);
   const below = await inspector.boundingBox();
-  const dialBox = await dial.boundingBox();
-  expect(below?.y ?? 0).toBeGreaterThanOrEqual((dialBox?.y ?? 0) + (dialBox?.height ?? 0) - 1);
+  const stackedDial = await dial.boundingBox();
+  expect(below?.y ?? 0).toBeGreaterThanOrEqual((stackedDial?.y ?? 0) + (stackedDial?.height ?? 0) - 1);
 
   await pin(68);
   expect(await sideBySide()).toBe(true);

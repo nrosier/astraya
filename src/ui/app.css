@@ -629,14 +629,14 @@ body::before {
   background: color-mix(in oklab, var(--accent) 32%, transparent);
 }
 
-.shell--wide {
-  max-width: var(--shell-max-width-wide);
-}
-
 .shell {
   max-width: var(--shell-max-width);
   margin: 0 auto;
   padding: 3.5rem 1.5rem 5rem;
+}
+
+.shell--wide {
+  max-width: var(--shell-max-width-wide);
 }
 
 h1 {
@@ -3403,6 +3403,7 @@ svg text.chart-symbol-text-unicode {
 
 /* The Charts page's chart-type Select: natal, draconic, harmonic, solar return, lunar return. */
 .chart-type-select {
+  max-width: 20rem;
   margin: 1rem 0 0.5rem;
 }
 
@@ -3413,6 +3414,7 @@ svg text.chart-symbol-text-unicode {
  * the shared Select below it. Exactly one of the two is ever visible.
  */
 .chart-view-select {
+  max-width: 20rem;
   margin: 1rem 0 0.5rem;
 }
 
