@@ -4229,3 +4229,18 @@ svg text.chart-symbol-text-unicode {
   gap: var(--space-2);
   margin-bottom: var(--space-2);
 }
+
+/* The primary action of a long form stays reachable at the bottom of the viewport while its fields scroll (#513). */
+.sticky-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+  padding: var(--space-3) 0;
+  background: var(--bg);
+  border-top: 1px solid var(--line);
+}

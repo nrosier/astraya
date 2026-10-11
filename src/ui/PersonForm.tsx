@@ -18,6 +18,7 @@ import { useId, useState } from 'react';
 import { draftFrom, draftToMutations, validateDraft, type Draft } from '../domain/person-form.js';
 import { personFormValidationMessages } from '../domain/person-form.messages.js';
 import { formatOffset, resolveMoment } from '../time/resolve.js';
+import { Button } from './primitives/Button.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { BirthPlaceSearch } from './BirthPlaceSearch.js';
 import { useMessages } from './messages.js';
@@ -326,10 +327,10 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
         </>
       )}
 
-      <p className="actions">
-        <button type="button" onClick={save} disabled={saving || moment === undefined}>
+      <p className="actions sticky-actions">
+        <Button variant="primary" onClick={save} disabled={saving || moment === undefined}>
           {saving ? t.saving : t.saveButton}
-        </button>
+        </Button>
         {saved && !saving && (
           <span className="status" role="status">
             {t.savedStatus}
