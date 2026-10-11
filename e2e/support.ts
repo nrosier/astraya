@@ -114,7 +114,14 @@ export async function openSettings(page: Page): Promise<void> {
   await expect(dialog).toBeVisible();
 }
 
-/** Closes the card without applying what is in its draft; the device preferences in it have already taken effect. */
+/** Closes the card keeping what was changed in it: the device preferences (rulers, symbols) it previewed stay (#510). */
+export async function applySettings(page: Page): Promise<void> {
+  const dialog = page.locator('dialog.settings-card');
+  await dialog.getByRole('button', { name: /^Apply and redraw/ }).click();
+  await expect(dialog).toBeHidden();
+}
+
+/** Closes the card without applying: whatever was previewed or drafted in it, rulers and symbols included, is put back. */
 export async function closeSettings(page: Page): Promise<void> {
   const dialog = page.locator('dialog.settings-card');
   if (await dialog.isVisible()) await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();

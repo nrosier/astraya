@@ -3869,6 +3869,35 @@ svg text.chart-symbol-text-unicode {
   border-bottom-color: var(--accent);
 }
 
+/* A column header: the sort button, and beside it the column's own explanation (#456, #508). */
+.data-table-head-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.data-table th .data-table-head-cell > button {
+  width: auto;
+}
+
+.data-table th .data-table-help .primitive-tooltip-trigger {
+  width: 1.1rem;
+  height: 1.1rem;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0;
+  text-transform: none;
+  text-align: center;
+}
+
+.data-table th .data-table-help .primitive-tooltip-popup {
+  letter-spacing: 0;
+  text-transform: none;
+}
+
 .primitive-tooltip-popup {
   position: absolute;
   z-index: 20;

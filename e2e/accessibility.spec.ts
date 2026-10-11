@@ -161,16 +161,26 @@ test('column-header and dispositor tooltips are reachable on keyboard focus, not
   await page.getByRole('link', { name: 'Patterns & condition', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Dignities', level: 3 })).toBeVisible();
 
-  // A column header with a glossary tooltip ("Ruler") exposes it as an accessible description
-  // via aria-describedby, not only as a hover-only title. Matched by the sort button's own name
-  // (exact), not the enclosing <th>'s: the <th>'s computed accessible name also picks up the
-  // sr-only tooltip span text (a sibling of the button, both inside the <th>), and several other
-  // dignity columns' tooltips happen to mention "ruler" too, so a substring/`columnheader` match
-  // resolves ambiguously to more than one column.
-  const rulerHeaderButton = page.getByRole('button', { name: 'Ruler', exact: true });
-  await expect(rulerHeaderButton).toHaveAccessibleDescription(
-    'Ruler (domicile): the planet is in the sign it rules — its own sign, where it is strongest',
-  );
+  // A column header with a glossary tooltip ("Ruler") has a real "About Ruler" button beside its sort button; the
+  // same visible text appears on keyboard focus, on hover, and when it is clicked open (the shared Tooltip, #508).
+  const definition = 'Ruler (domicile): the planet is in the sign it rules — its own sign, where it is strongest';
+  const rulerHelp = page.getByRole('button', { name: 'About Ruler', exact: true });
+  const popup = page.getByRole('tooltip');
+  await rulerHelp.focus();
+  await expect(popup).toHaveText(definition);
+  await page.keyboard.press('Escape');
+  await expect(popup).toHaveCount(0);
+  await rulerHelp.hover();
+  await expect(popup).toHaveText(definition);
+  await page.mouse.move(0, 0);
+  await expect(popup).toHaveCount(0);
+  await rulerHelp.click();
+  await expect(popup).toHaveText(definition);
+  // Clicked open, it stays open when the pointer leaves, until Escape.
+  await page.mouse.move(0, 0);
+  await expect(popup).toHaveText(definition);
+  await page.keyboard.press('Escape');
+  await expect(popup).toHaveCount(0);
 
   // The dispositors "?" is a focusable button with its own accessible name, not a bare
   // non-interactive <span title>.
@@ -182,15 +192,9 @@ test('column-header and dispositor tooltips are reachable on keyboard focus, not
   await expect(dispositorsHelp).toBeFocused();
 });
 
-// #456's remaining acceptance item ("test with keyboard navigation and screen readers") for the
-// `labelTooltip`/native-`title` tooltip pattern (`SortableTable.tsx`). What this test *can* verify
-// automatedly: the tooltipped header is a real `<button>` reachable by Tab, and the `title` text
-// is present in the DOM once focused. What it cannot verify — because native `title` announcement
-// on focus is browser/screen-reader-controlled, not something this app's code decides — is whether
-// VoiceOver/NVDA/JAWS actually speak it. That is still an open, manual-only check (see
-// `accessibility.spec.ts`'s own header comment: axe is "a floor, not the ceiling") — nobody has
-// run it with a real screen reader yet, so #456's acceptance box for that item stays unchecked
-// until someone does.
+// #456's remaining acceptance item ("test with keyboard navigation and screen readers"): the tooltipped header has a
+// real button reachable by Tab, named for its column, whose popup is announced as a `tooltip`. What this cannot verify is
+// what VoiceOver/NVDA/JAWS actually speak; that stays a manual check (axe is "a floor, not the ceiling").
 test('a tooltipped table column header is reachable by keyboard and exposes its tooltip text (#456)', async ({
   page,
 }) => {
@@ -205,12 +209,10 @@ test('a tooltipped table column header is reachable by keyboard and exposes its 
   await openNatalChart(page);
   await page.getByRole('link', { name: 'Placements', exact: true }).click();
 
-  const rxHeaderButton = page.getByRole('button', { name: 'Rx' });
-  await rxHeaderButton.focus();
-  await expect(rxHeaderButton).toBeFocused();
-
-  const tooltipSpan = rxHeaderButton.locator('span[title]');
-  await expect(tooltipSpan).toHaveAttribute('title', /retrograde/i);
+  const rxHelp = page.getByRole('button', { name: 'About Rx', exact: true });
+  await rxHelp.focus();
+  await expect(rxHelp).toBeFocused();
+  await expect(page.getByRole('tooltip')).toHaveText(/retrograde/i);
 });
 
 test('the profections screen (#168) has no automatically detectable accessibility violations', async ({ page }) => {

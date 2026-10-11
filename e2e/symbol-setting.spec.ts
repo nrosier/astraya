@@ -9,7 +9,15 @@ import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
-import { chooseExport, createPerson, gotoAndSettle, openNatalChart, closeSettings, openSettings } from './support.ts';
+import {
+  chooseExport,
+  createPerson,
+  gotoAndSettle,
+  openNatalChart,
+  applySettings,
+  closeSettings,
+  openSettings,
+} from './support.ts';
 
 let dir: string;
 let app: FastifyInstance;
@@ -54,7 +62,7 @@ test('the symbol class changes the wheel, the tables and the export together, an
   await symbols.selectOption('text');
   await expect(page.locator('.chart-wheel text.chart-symbol-text-text').first()).toBeVisible();
   await expect(page.locator('.chart-wheel text.chart-symbol-text-text', { hasText: 'SUN' }).first()).toBeAttached();
-  await closeSettings(page);
+  await applySettings(page);
   await page.getByRole('link', { name: 'Placements', exact: true }).click();
   await expect(page.locator('#chart-view-placements .table-symbol-text', { hasText: 'SUN' })).toBeVisible();
 
@@ -63,7 +71,7 @@ test('the symbol class changes the wheel, the tables and the export together, an
   await openSettings(page);
   await symbols.selectOption('unicode');
   await expect(page.locator('.chart-wheel text.chart-symbol-text-unicode', { hasText: '☉' }).first()).toBeAttached();
-  await closeSettings(page);
+  await applySettings(page);
   await page.getByRole('link', { name: 'Placements', exact: true }).click();
   await expect(page.locator('#chart-view-placements td', { hasText: '☉' }).first()).toBeVisible();
 
@@ -71,7 +79,7 @@ test('the symbol class changes the wheel, the tables and the export together, an
   await page.getByRole('link', { name: 'Wheel', exact: true }).click();
   await openSettings(page);
   await symbols.selectOption('text');
-  await closeSettings(page);
+  await applySettings(page);
   const [download] = await Promise.all([page.waitForEvent('download'), chooseExport(page, 'Image (SVG)')]);
   const chunks: Buffer[] = [];
   for await (const chunk of await download.createReadStream()) chunks.push(chunk as Buffer);

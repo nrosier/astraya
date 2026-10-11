@@ -40,15 +40,19 @@ export interface TooltipProps {
   readonly text: string;
   /** Rendered trigger element: 'button' for a standalone trigger (e.g. a column header's label), 'span' when the caller already renders its own interactive element and only wants this as a sibling disclosure (e.g. a dotted-underline term inside a sentence) — still a real button under the hood. */
   readonly className?: string | undefined;
+  /** The trigger's accessible name when its visible content (a "?") does not name itself, e.g. "About Ruler". */
+  readonly label?: string | undefined;
 }
 
-export function Tooltip({ children, text, className }: TooltipProps): React.JSX.Element {
+export function Tooltip({ children, text, className, label }: TooltipProps): React.JSX.Element {
   const [open, setOpen] = useState(false);
   const [sticky, setSticky] = useState(false);
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const wrapperRef = useRef<HTMLSpanElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const popoverId = useId();
+  // Escape returns focus to the trigger, which must not count as a focus that opens the popup again.
+  const restoringFocus = useRef(false);
 
   const openNow = (): void => {
     setOpen(true);
@@ -81,7 +85,9 @@ export function Tooltip({ children, text, className }: TooltipProps): React.JSX.
     const onKeyDown = (event: KeyboardEvent): void => {
       if (event.key !== 'Escape') return;
       closeFully();
+      restoringFocus.current = true;
       triggerRef.current?.focus();
+      restoringFocus.current = false;
     };
     document.addEventListener('pointerdown', onPointerDown);
     document.addEventListener('keydown', onKeyDown);
@@ -102,13 +108,16 @@ export function Tooltip({ children, text, className }: TooltipProps): React.JSX.
         ref={triggerRef}
         type="button"
         className="primitive-tooltip-trigger"
+        aria-label={label}
         aria-expanded={open}
         aria-controls={open ? popoverId : undefined}
         onClick={() => {
           setSticky((was) => !was);
           setOpen((was) => !was || !sticky);
         }}
-        onFocus={openNow}
+        onFocus={() => {
+          if (!restoringFocus.current) openNow();
+        }}
         onBlur={closeUnlessSticky}
       >
         {children}
