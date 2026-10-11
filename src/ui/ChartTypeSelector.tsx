@@ -1,17 +1,18 @@
 /**
- * The chart-type selector at the top of the Charts page: natal, draconic, harmonic, solar return, lunar
- * return. Plain links to the same page with another `?type=`, keeping the open view, so switching type
- * while reading (say) the Aspects view stays on the Aspects view.
+ * The chart-type control at the top of the Charts page (#511): one labelled Select for natal, draconic,
+ * harmonic, solar return and lunar return. Choosing a type goes to the same page with another `?type=`,
+ * keeping the open view, so switching type while reading (say) the Aspects view stays on the Aspects view.
  */
 /**
  * @module ChartTypeSelector
- * @purpose Renders the natal/draconic/harmonic/solar-return/lunar-return chart-type selector shown at the top of a person's Charts page.
- * @conventions Plain links to the same page with another `?type=`, preserving the open view; `changeChartView` keeps the open view in the URL via `history.replaceState` + a synthetic `hashchange`.
+ * @purpose Renders the one chart-type Select (natal/draconic/harmonic/solar-return/lunar-return) shown at the top of a person's Charts page.
+ * @conventions A labelled shared Select, not links; choosing a type sets the page's hash with the open view preserved. `changeChartView` keeps the open view in the URL via `history.replaceState` + a synthetic `hashchange`.
  * @exports ChartTypeSelector, changeChartView
  */
 import { CHART_TYPES, chartHref, type ChartType, type ChartViewKind } from './chart-sections.js';
 import { chartTypesMessages } from './ChartTypes.messages.js';
 import { useMessages } from './messages.js';
+import { Select } from './primitives/Select.js';
 
 export function ChartTypeSelector({
   personId,
@@ -24,18 +25,17 @@ export function ChartTypeSelector({
 }): React.JSX.Element {
   const t = useMessages(chartTypesMessages);
   return (
-    <nav className="chart-type-nav" aria-label={t.typeSelectorAriaLabel}>
-      {CHART_TYPES.map((candidate) => (
-        <a
-          key={candidate}
-          href={chartHref(personId, view, candidate)}
-          className={candidate === type ? 'chart-type-link active' : 'chart-type-link'}
-          aria-current={candidate === type ? 'page' : undefined}
-        >
-          {t.typeLabels[candidate]}
-        </a>
-      ))}
-    </nav>
+    <div className="chart-type-select">
+      <Select
+        label={t.typeSelectorLabel}
+        value={type}
+        options={CHART_TYPES.map((candidate) => ({ value: candidate, label: t.typeLabels[candidate] }))}
+        onChange={(value) => {
+          const next = CHART_TYPES.find((candidate) => candidate === value);
+          if (next !== undefined) window.location.hash = chartHref(personId, view, next);
+        }}
+      />
+    </div>
   );
 }
 

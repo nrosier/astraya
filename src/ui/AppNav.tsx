@@ -38,8 +38,6 @@ import { Fragment, useEffect, useRef, useState } from 'react';
 import { appNavMessages } from './AppNav.messages.js';
 import { useMessages } from './messages.js';
 import { activeTabKey, isTabEnabled, PERSON_TAB_FAMILIES, PERSON_TABS } from './person-nav.js';
-import { CHART_TYPES, chartHref } from './chart-sections.js';
-import { chartTypesMessages } from './ChartTypes.messages.js';
 import type { PersonTab } from './person-nav.js';
 import type { Route } from './route.js';
 import { useOptionalStore, useStoreState } from './store-context.js';
@@ -48,13 +46,12 @@ import { useLastPersonId, writeLastPersonId } from './last-person.js';
 import { PersonSwitcher } from './PersonSwitcher.js';
 import { useExclusiveOpen, type ExclusiveOpen } from './use-exclusive-open.js';
 
-// The chart is not here: it is a menu of the chart types (below), not a single link.
-const UNGROUPED_KEYS = new Set(['overview', 'birth-record', 'report', 'astrocartography']);
-// Rendered first, in this fixed order, before the Charts dropdown — the two tabs a person can
-// land on regardless of completeness (#506/#509's canonical Overview destination plus the
-// existing Birth record tab), per docs/UI-UX_GUIDELINES.md §2's person-workspace order.
+// Charts is one destination (#511): the chart type is chosen on the page, not in this navigation.
+const UNGROUPED_KEYS = new Set(['overview', 'birth-record', 'chart', 'report', 'astrocartography']);
+// Rendered first, in this fixed order — the two tabs a person can land on regardless of
+// completeness (#506/#509's canonical Overview destination plus the existing Birth record tab),
+// per docs/UI-UX_GUIDELINES.md §2's person-workspace order.
 const LEADING_KEYS = new Set(['overview', 'birth-record']);
-const CHARTS_GROUP = 'charts';
 const TOOLS_GROUP = 'tools';
 
 /** One dropdown button and its popup of links. */
@@ -157,9 +154,6 @@ function PersonMenu({
     );
   }
 
-  const typesT = useMessages(chartTypesMessages);
-  const chartEnabled = isTabEnabled('chart', hasBirthMoment);
-  const openType = route.kind === 'chart' ? (route.chartType ?? 'natal') : undefined;
   const name = person?.displayName ?? '';
   return (
     <>
@@ -173,39 +167,6 @@ function PersonMenu({
         />
       )}
       {PERSON_TABS.filter((tab) => LEADING_KEYS.has(tab.key)).map((tab) => renderTab(tab, 'app-nav-item'))}
-      {/* One page for every chart cast for this person (natal, draconic, harmonic, returns); its sections
-          (wheel, shape, tables) are tabs on the page. */}
-      {chartEnabled ? (
-        <NavGroup
-          groupKey={CHARTS_GROUP}
-          label={typesT.chartsLabel}
-          popupAriaLabel={t.subtabsAriaLabel(typesT.chartsLabel)}
-          active={route.kind === 'chart'}
-          dropdown={dropdown}
-        >
-          {CHART_TYPES.map((type) => (
-            <a
-              key={type}
-              href={chartHref(personId, undefined, type)}
-              className={type === openType ? 'app-nav-menu-item active' : 'app-nav-menu-item'}
-              aria-current={type === openType ? 'page' : undefined}
-              onClick={onNavigate}
-            >
-              {typesT.typeLabels[type]}
-            </a>
-          ))}
-        </NavGroup>
-      ) : (
-        <button
-          type="button"
-          disabled
-          className="app-nav-item disabled"
-          aria-label={t.disabledTabSuffix(typesT.chartsLabel)}
-          title={t.completeBirthRecordHint}
-        >
-          {typesT.chartsLabel}
-        </button>
-      )}
       {PERSON_TABS.filter((tab) => UNGROUPED_KEYS.has(tab.key) && !LEADING_KEYS.has(tab.key)).map((tab) =>
         renderTab(tab, 'app-nav-item'),
       )}

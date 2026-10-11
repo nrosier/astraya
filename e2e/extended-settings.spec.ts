@@ -109,8 +109,7 @@ test('the card works on a phone: it fills the screen, scrolls inside, and keeps 
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   await createPerson(page, ADA);
   await page.getByRole('button', { name: 'Menu', exact: true }).click();
-  await page.getByRole('button', { name: 'Charts', exact: true }).click();
-  await page.getByRole('link', { name: 'Natal', exact: true }).click();
+  await page.getByRole('link', { name: 'Charts', exact: true }).click();
   await expect(page.locator('div.chart-wheel')).toBeVisible();
 
   await openSettings(page);

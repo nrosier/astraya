@@ -85,14 +85,14 @@ export async function openTool(page: Page, name: string): Promise<void> {
   await page.getByRole('link', { name, exact: true }).click();
 }
 
-/** Opens one kind of chart (`Natal`, `Draconic`, `Harmonic`, `Solar return` or `Lunar return`) from the header's Charts menu. */
+/** Opens one kind of chart (`Natal`, `Draconic`, `Harmonic`, `Solar return` or `Lunar return`): the header's Charts link, then the page's Chart type select (#511). */
 export async function openChart(page: Page, type: string): Promise<void> {
-  await page.getByRole('button', { name: 'Charts', exact: true }).click();
-  await page.getByRole('banner').getByRole('link', { name: type, exact: true }).click();
+  await page.getByRole('banner').getByRole('link', { name: 'Charts', exact: true }).click();
+  await page.getByLabel('Chart type', { exact: true }).selectOption({ label: type });
 }
 
 /**
- * Opens the natal chart from the header's Charts menu (#430), at one of its views (#511): the wheel
+ * Opens the natal chart from the header's Charts link (#430), at one of its views (#511): the wheel
  * by default, or `Aspects`, `Placements` or `Patterns & condition` — ordinary links, not ARIA tabs.
  */
 export async function openNatalChart(page: Page, view = 'Wheel'): Promise<void> {

@@ -15,7 +15,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `BiWheelSelectionPanel.tsx` + `BiWheelSelectionPanel.messages.ts` — Bi-wheel click-to-inspect panel (body/sign/aspect info). Deps: `./bi-wheel-selection`, `astro-names.messages`.
 - `BirthPlaceSearch.tsx` + `BirthPlaceSearch.messages.ts` — Geocoding place-name search field. Deps: `./forward-geocode`, `./geocode-provider`.
 - `Changelog.tsx` + `Changelog.messages.ts` — In-app CHANGELOG.md viewer. Deps: `./markdown`.
-- `ChartTypeSelector.tsx` — Chart-type link row (natal/draconic/harmonic/returns). Deps: `./chart-sections`.
+- `ChartTypeSelector.tsx` — Chart-type Select (natal/draconic/harmonic/returns) in the Charts page header. Deps: `./chart-sections`, `primitives/Select`.
 - `ChartTypes.messages.ts` — i18n labels for all chart types.
 - `ChartViewNav.tsx` — Chart screen's Wheel/Aspects/Placements/Patterns & condition navigation: ordinary links (wide) or a labelled Select (narrow), never ARIA tabs. Deps: `./chart-sections`, `./primitives/Select`.
 - `ChartView.tsx` + `ChartView.messages.ts` — Primary chart screen + shared `ChartDataView` (Wheel/Aspects/Placements/Patterns & condition views, reused by composite/draconic/harmonic/returns/shared-chart/horary). Deps: `domain/chart-compute`, `domain/chart-tables`, `chart/chart-sheet`, `./ChartViewNav`.

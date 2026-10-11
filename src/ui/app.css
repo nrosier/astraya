@@ -3347,31 +3347,9 @@ svg text.chart-symbol-text-unicode {
   margin-top: 0.4rem;
 }
 
-/* The Charts page's chart-type selector: natal, draconic, harmonic, solar return, lunar return. */
-.chart-type-nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
+/* The Charts page's chart-type Select: natal, draconic, harmonic, solar return, lunar return. */
+.chart-type-select {
   margin: 1rem 0 0.5rem;
-}
-
-.chart-type-link {
-  padding: 0.35rem 0.8rem;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  color: var(--muted);
-  font-weight: 550;
-  text-decoration: none;
-}
-
-.chart-type-link:hover:not(.active) {
-  background: var(--surface-hover);
-  color: var(--fg);
-}
-
-.chart-type-link.active {
-  border-color: var(--accent);
-  color: var(--fg);
 }
 
 /*

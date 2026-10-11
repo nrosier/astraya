@@ -91,8 +91,8 @@ test('a person’s screens carry their name and tabs in the header, with no stri
   for (const name of ['Birth record', 'Interpretation', 'Astrocartography']) {
     await expect(header.getByRole('link', { name, exact: true })).toBeVisible();
   }
-  // The charts cast for this person are one menu, and the families come after it.
-  await expect(header.getByRole('button', { name: 'Charts', exact: true })).toBeVisible();
+  // The charts cast for this person are one destination (#511), and the families come after it.
+  await expect(header.getByRole('link', { name: 'Charts', exact: true })).toBeVisible();
   for (const name of ['Transits & Forecast', 'Progressions & Directions', 'Relationship Charts']) {
     await expect(header.getByRole('button', { name, exact: true })).toBeVisible();
   }
@@ -100,9 +100,9 @@ test('a person’s screens carry their name and tabs in the header, with no stri
   await expect(header.getByRole('link', { name: 'Birth record', exact: true })).toHaveAttribute('aria-current', 'page');
 
   // The person's tabs and the Tools menu share one open-at-a-time rule.
-  await header.getByRole('button', { name: 'Charts', exact: true }).click();
+  await header.getByRole('button', { name: 'Transits & Forecast', exact: true }).click();
   await header.getByRole('button', { name: 'Tools', exact: true }).click();
-  await expect(header.getByRole('navigation', { name: 'Charts subtabs' })).toHaveCount(0);
+  await expect(header.getByRole('navigation', { name: 'Transits & Forecast subtabs' })).toHaveCount(0);
   await expect(header.getByRole('navigation', { name: 'Tools subtabs' })).toBeVisible();
   const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
   expect(results.violations).toEqual([]);
@@ -112,7 +112,7 @@ test('a person’s screens carry their name and tabs in the header, with no stri
   await header.getByRole('link', { name: 'Planetary cycles', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Planetary cycles', level: 1 })).toBeVisible();
   await expect(header.getByText('Ada Lovelace', { exact: true })).toBeVisible();
-  await expect(header.getByRole('button', { name: 'Charts', exact: true })).toBeVisible();
+  await expect(header.getByRole('link', { name: 'Charts', exact: true })).toBeVisible();
   // None of the person's tabs is "current" on a tool page — it genuinely isn't one of them.
   await expect(header.getByRole('link', { name: 'Birth record', exact: true })).not.toHaveAttribute(
     'aria-current',
@@ -153,7 +153,7 @@ test('on a phone the navigation folds behind a Menu button, and nothing scrolls 
   await createPerson(page, ADA);
   const header = page.getByRole('banner');
 
-  await expect(header.getByRole('button', { name: 'Charts', exact: true })).toBeHidden();
+  await expect(header.getByRole('link', { name: 'Charts', exact: true })).toBeHidden();
   const menu = header.getByRole('button', { name: 'Menu', exact: true });
   await expect(menu).toHaveAttribute('aria-expanded', 'false');
   await menu.click();
@@ -161,7 +161,7 @@ test('on a phone the navigation folds behind a Menu button, and nothing scrolls 
     'aria-expanded',
     'true',
   );
-  await expect(header.getByRole('button', { name: 'Charts', exact: true })).toBeVisible();
+  await expect(header.getByRole('link', { name: 'Charts', exact: true })).toBeVisible();
   expect(await page.evaluate('document.documentElement.scrollWidth - window.innerWidth')).toBeLessThanOrEqual(1);
   const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
   expect(results.violations).toEqual([]);
@@ -223,39 +223,42 @@ test('the rail holds brand then navigation; the account cluster sits apart from 
   await layout();
 });
 
-test('the Charts menu lists the chart types, and the page keeps the type and the section in the URL', async ({
-  page,
-}) => {
+test('Charts is one destination, and the page keeps the type and the view in the URL', async ({ page }) => {
   test.setTimeout(90_000);
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   await createPerson(page, ADA);
   const header = page.getByRole('banner');
 
-  await header.getByRole('button', { name: 'Charts', exact: true }).click();
-  const menu = header.getByRole('navigation', { name: 'Charts subtabs' });
-  await expect(menu.getByRole('link')).toHaveText(['Natal', 'Draconic', 'Harmonic', 'Solar return', 'Lunar return']);
+  // The header has one Charts link and no chart-type menu; the type is chosen once, on the page.
+  await header.getByRole('link', { name: 'Charts', exact: true }).click();
+  await expect(header.getByRole('button', { name: 'Charts', exact: true })).toHaveCount(0);
+  const selector = page.getByLabel('Chart type', { exact: true });
+  await expect(selector.locator('option')).toHaveText([
+    'Natal',
+    'Draconic',
+    'Harmonic',
+    'Solar return',
+    'Lunar return',
+  ]);
+  await expect(selector).toHaveValue('natal');
 
-  // Choosing a type opens that chart and closes the menu; natal needs no query.
-  await menu.getByRole('link', { name: 'Draconic', exact: true }).click();
+  // Choosing a type opens that chart; natal needs no query.
+  await selector.selectOption('draconic');
   await expect(page.getByRole('heading', { name: /draconic/i, level: 1 })).toBeVisible();
   await expect(page).toHaveURL(/#\/chart\/[^?]+\?type=draconic$/);
-  await expect(menu).toHaveCount(0);
 
   // The views are ordinary links on the page (#511), and the open one is in the URL beside the type.
   await page.getByRole('link', { name: 'Aspects', exact: true }).click();
   await expect(page).toHaveURL(/\?type=draconic&view=aspects$/);
 
-  // The type selector on the page switches type and keeps the view.
-  const selector = page.getByRole('navigation', { name: 'Chart type' });
-  await selector.getByRole('link', { name: 'Natal', exact: true }).click();
+  // Switching type keeps the view.
+  await selector.selectOption('natal');
   await expect(page).toHaveURL(/#\/chart\/[^?]+\?view=aspects$/);
   await expect(page.getByRole('heading', { name: 'Aspects', level: 2 })).toBeVisible();
-  await expect(selector.getByRole('link', { name: 'Natal', exact: true })).toHaveAttribute('aria-current', 'page');
+  await expect(selector).toHaveValue('natal');
 
-  // The menu marks the open type.
-  await header.getByRole('button', { name: 'Charts', exact: true }).click();
-  await expect(menu.getByRole('link', { name: 'Natal', exact: true })).toHaveAttribute('aria-current', 'page');
-  await page.keyboard.press('Escape');
+  // The header's Charts link marks the chart page as current.
+  await expect(header.getByRole('link', { name: 'Charts', exact: true })).toHaveAttribute('aria-current', 'page');
 
   // A reload keeps the view; the wheel needs no query.
   await page.reload();
