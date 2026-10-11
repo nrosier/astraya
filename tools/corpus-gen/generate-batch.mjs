@@ -77,7 +77,7 @@
  *   restricted scope (#56) — the primary writer of src/interpretation/corpus/<locale>.json.
  * @conventions CLI flags: --locale=en|nl (required), --limit=N, --concurrency=N, --delay-ms=N,
  *   --skip-final-checks, --provider=gemini|ollama, --force, --max-language-retries=N, --batch,
- *   --seed-anchors-from=<path>. Costs real API money (Gemini) unless --provider=ollama.
+ *   --debug, --seed-anchors-from=<path>. Costs real API money (Gemini) unless --provider=ollama.
  *   Resumable/idempotent: every successful entry is written immediately and a re-run skips any
  *   key already shipped unless --force. Never regenerates a hand-written `anchor: true` entry.
  * @exports CLI entry point, no exports.
@@ -176,6 +176,7 @@ if (rawArgs.includes('--help') || rawArgs.includes('-h')) {
       '                        Also generate the derived-point-in-sign/-house placements (#517: the',
       '                        Parts of Fortune and Spirit). Off by default: they are composed from',
       "                        sourced rules and need the owner's explicit go-ahead before spending.",
+      '  --debug               When a key runs out of retries, also print the last rejected draft.',
       "  --dry-run             Print the placements that would be generated and the first request's",
       '                        prompts, then exit. No API call, no write, no cost.',
       '  --seed-anchors-from=<path>',
@@ -207,6 +208,14 @@ const useBatch = rawArgs.includes('--batch');
 const includeDerivedPoints = rawArgs.includes('--include-derived-points');
 // Prints what would be generated, and the first request's prompts, then exits before any API call.
 const dryRun = rawArgs.includes('--dry-run');
+// Prints the last rejected draft when a key runs out of retries, so the failure can be read, not guessed at.
+const debug = rawArgs.includes('--debug');
+
+/** The rejected draft, shown under `--debug` once a key has exhausted its retries. */
+function reportRejectedDraft(key, entry) {
+  if (!debug) return;
+  console.error(`[${locale}] ${key}: last rejected draft (tier ${String(entry.tier)}):\n${entry.text}\n---`);
+}
 
 const provider = flag('provider', 'gemini');
 if (provider !== 'gemini' && provider !== 'ollama')
@@ -344,7 +353,7 @@ function systemInstructionFor(placement) {
   }
   // #517: composed from supplied facts, in its own restrained voice (lib/prompt.mjs's DERIVED_POINT_VOICE).
   if (DERIVED_POINT_CATEGORIES.includes(placement.category)) {
-    return buildDerivedPointSystemInstruction({ locale, forceLanguageDirective: provider === 'ollama' });
+    return buildDerivedPointSystemInstruction({ locale });
   }
   return buildSystemInstruction({
     symbolismContext: buildSymbolismContext(locale, symbolismScopeFor(placement)),
@@ -359,7 +368,7 @@ function userContentFor(placement) {
     return buildDegreeSymbolUserContent({ excerpt: degreeSymbolExcerpt(placement.degree) });
   }
   if (DERIVED_POINT_CATEGORIES.includes(placement.category)) {
-    return buildDerivedPointUserContent({ placementDescription: placementDescription(placement) });
+    return buildDerivedPointUserContent({ placementDescription: placementDescription(placement), locale });
   }
   return buildUserContent({
     placementDescription: placementDescription(placement),
@@ -528,6 +537,7 @@ async function runBatchRounds() {
           console.error(
             `[${locale}] FAILED ${item.key}: ${retryIssue} (still wrong after ${String(MAX_LANGUAGE_RETRIES)} rounds)`,
           );
+          reportRejectedDraft(item.key, entry);
         }
         continue;
       }
@@ -586,7 +596,10 @@ if (useBatch) {
       // other bad response. A single bad draw from a model that only *sometimes* ignores the
       // locale in its own system prompt (qwen2.5:14b, observed), or a degree-symbol draft that
       // stays short (#405), would otherwise sail through untouched.
-      if (issue) throw new Error(`${issue} (still bad after ${String(MAX_LANGUAGE_RETRIES)} attempts)`);
+      if (issue) {
+        reportRejectedDraft(key, entry);
+        throw new Error(`${issue} (still bad after ${String(MAX_LANGUAGE_RETRIES)} attempts)`);
+      }
 
       await acceptEntry(key, entry);
       done += 1;

@@ -29,8 +29,9 @@ const derivedPointRules = derivedPointRulesUntyped as () => Rules;
 const factsDescription = factsDescriptionUntyped as (placement: CorpusPlacement) => string;
 const placementDescription = placementDescriptionUntyped as (placement: CorpusPlacement) => string;
 const prompt = promptUntyped as {
-  buildDerivedPointSystemInstruction: (options: { locale: string; forceLanguageDirective: boolean }) => string;
-  buildDerivedPointUserContent: (options: { placementDescription: string }) => string;
+  buildDerivedPointSystemInstruction: (options: { locale: string }) => string;
+  buildDerivedPointUserContent: (options: { placementDescription: string; locale?: string }) => string;
+  DERIVED_POINT_LANGUAGE_REMINDER: Record<string, string>;
   DERIVED_POINT_VOICE: Record<string, string>;
   DERIVED_POINT_MIN_WORDS: number;
 };
@@ -200,13 +201,13 @@ describe('the composed-from facts (#517)', () => {
 describe('the derived-point prompts and judge (#517)', () => {
   it('compose from supplied facts and forbid events, timing, other planets and the formula, in either language', () => {
     for (const locale of ['en', 'nl']) {
-      const system = prompt.buildDerivedPointSystemInstruction({ locale, forceLanguageDirective: false });
+      const system = prompt.buildDerivedPointSystemInstruction({ locale });
       expect(system).toContain('FACTS TO USE');
       expect(system).toContain('HARD CONSTRAINTS');
       expect(system).toMatch(/35 words/);
       expect(system).not.toContain('50 to 80 words');
     }
-    const en = prompt.buildDerivedPointSystemInstruction({ locale: 'en', forceLanguageDirective: false });
+    const en = prompt.buildDerivedPointSystemInstruction({ locale: 'en' });
     expect(en).toMatch(/no specific events, ages, timing/);
     expect(en).toMatch(/Do not mention day or night births/);
   });
@@ -220,6 +221,20 @@ describe('the derived-point prompts and judge (#517)', () => {
   it('puts the facts bundle in the user content', () => {
     const description = placementDescription(derived[0] as CorpusPlacement);
     expect(prompt.buildDerivedPointUserContent({ placementDescription: description })).toContain(description);
+  });
+
+  it('forces Dutch on every provider: the directive leads the system prompt and a reminder closes the request', () => {
+    const system = prompt.buildDerivedPointSystemInstruction({ locale: 'nl' });
+    expect(system.startsWith('BELANGRIJK: Schrijf uitsluitend in het Nederlands')).toBe(true);
+    expect(system.trimEnd().endsWith('Gebruik geen Engels.')).toBe(true);
+    const description = placementDescription(derived[0] as CorpusPlacement);
+    const user = prompt.buildDerivedPointUserContent({ placementDescription: description, locale: 'nl' });
+    expect(user.trimEnd().endsWith(prompt.DERIVED_POINT_LANGUAGE_REMINDER.nl ?? '')).toBe(true);
+    // English needs neither.
+    expect(prompt.buildDerivedPointSystemInstruction({ locale: 'en' })).not.toContain('BELANGRIJK');
+    expect(prompt.buildDerivedPointUserContent({ placementDescription: description, locale: 'en' })).not.toContain(
+      'TAAL',
+    );
   });
 
   it('tells the judge to flag claims beyond the facts but not generality', () => {
@@ -247,10 +262,10 @@ describe('generation is opt-in, and the audit knows the category (#517)', () => 
   });
 
   it('lists them, and sends nothing, when asked', () => {
-    const output = dryRun('--include-derived-points', '--limit=2');
+    const output = dryRun('--include-derived-points', '--force');
     expect(output).toContain('DRY RUN');
-    expect(output).toContain('derived-point-in-sign: 2');
-    expect(output).toContain('FACTS TO USE');
+    expect(output).toContain('derived-point-in-sign: 24');
+    expect(output).toContain('derived-point-in-house: 24');
     expect(output).not.toContain('are not included');
   });
 

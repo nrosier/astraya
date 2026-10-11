@@ -44,7 +44,7 @@
  *   buildUserContent, DEGREE_SYMBOL_VOICE, DEGREE_SYMBOL_LENGTH_CONSTRAINT,
  *   buildDegreeSymbolNegativeConstraintsBlock, buildDegreeSymbolSystemInstruction,
  *   buildDegreeSymbolUserContent, DERIVED_POINT_VOICE, DERIVED_POINT_MIN_WORDS,
- *   DERIVED_POINT_CONSTRAINTS, buildDerivedPointNegativeConstraintsBlock,
+ *   DERIVED_POINT_CONSTRAINTS, DERIVED_POINT_LANGUAGE_REMINDER, buildDerivedPointNegativeConstraintsBlock,
  *   buildDerivedPointSystemInstruction, buildDerivedPointUserContent.
  */
 export const NEUTRAL_SYSTEM_PROMPT = {
@@ -292,9 +292,11 @@ export function buildDerivedPointNegativeConstraintsBlock() {
 }
 
 /** `buildSystemInstruction`'s derived-point sibling: DERIVED_POINT_VOICE, no symbolism context (the facts in the request are the only content). */
-export function buildDerivedPointSystemInstruction({ locale, forceLanguageDirective }) {
+export function buildDerivedPointSystemInstruction({ locale }) {
   const voicePrompt = DERIVED_POINT_VOICE[locale] ?? DERIVED_POINT_VOICE.en;
-  const languageDirective = forceLanguageDirective ? FORCE_LANGUAGE_DIRECTIVE[locale] : undefined;
+  // Always on for a non-English locale, whatever the provider: every fact, label and constraint in this
+  // request is English, which pulls even Gemini back to English (observed: 10 of 10 retries in nl).
+  const languageDirective = FORCE_LANGUAGE_DIRECTIVE[locale];
   return [
     ...(languageDirective ? [languageDirective, ''] : []),
     voicePrompt,
@@ -302,14 +304,22 @@ export function buildDerivedPointSystemInstruction({ locale, forceLanguageDirect
     'Even in this voice, the output feeds a structured interpretation corpus, not a chat reply — the constraints below override any instinct the voice above has to hedge, moralize or use extended metaphor.',
     '',
     buildDerivedPointNegativeConstraintsBlock(),
+    ...(languageDirective ? ['', languageDirective] : []),
   ].join('\n');
 }
 
+/** Said last in the request, where it weighs most: the facts and constraints are English source material, the entry is not. */
+export const DERIVED_POINT_LANGUAGE_REMINDER = {
+  nl: 'TAAL: de feiten hierboven zijn Engels bronmateriaal. Schrijf de tekst zelf volledig in het Nederlands, in eigen woorden en zonder Engelse zinnen over te nemen. Een Engelse tekst wordt afgewezen. (The facts are English source material; the entry itself must be written entirely in Dutch.)',
+};
+
 /** `buildUserContent`'s derived-point sibling: the facts bundle IS the target; no anchors block (anchors exemplify the disposition voice, not this one). */
-export function buildDerivedPointUserContent({ placementDescription }) {
+export function buildDerivedPointUserContent({ placementDescription, locale }) {
+  const reminder = locale === undefined ? undefined : DERIVED_POINT_LANGUAGE_REMINDER[locale];
   return [
     `TARGET PLACEMENT: ${placementDescription}`,
     '',
     'Write one corpus entry for the target placement by composing only the facts above, in the voice and under the constraints above.',
+    ...(reminder ? ['', reminder] : []),
   ].join('\n');
 }

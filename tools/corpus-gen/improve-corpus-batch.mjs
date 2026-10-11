@@ -458,7 +458,7 @@ for (const record of records) {
     placement.category === 'degree-symbol'
       ? buildDegreeSymbolSystemInstruction({ locale, forceLanguageDirective: false })
       : DERIVED_POINT_CATEGORIES.includes(placement.category)
-        ? buildDerivedPointSystemInstruction({ locale, forceLanguageDirective: false })
+        ? buildDerivedPointSystemInstruction({ locale })
         : buildSystemInstruction({
             symbolismContext: buildSymbolismContext(locale, symbolismScopeFor(placement)),
             locale,
