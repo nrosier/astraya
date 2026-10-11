@@ -18,13 +18,13 @@ import { antiscialContacts, type AntiscialContact } from '../astrology/antiscia.
 import { bodyById, bodyByKey } from '../astrology/bodies.js';
 import { declinationContacts, isOutOfBounds } from '../astrology/declinations.js';
 import { dispositorChain, isMutualReception } from '../astrology/dispositors.js';
-import { houseOf } from '../astrology/emphasis.js';
+import { elementBalance, houseOf, modalityBalance } from '../astrology/emphasis.js';
 import { fixedStarConjunctions } from '../astrology/fixed-stars.js';
 import { jonesBodyPositions, jonesShapeOf, type JonesShapeResult } from '../astrology/jones-shapes.js';
 import { derivedPointByKey, type DerivedPointKey } from '../astrology/derived-points.js';
 import { midpointOf } from '../astrology/midpoints.js';
 import { DEFAULT_RULERSHIP_CHOICE, primaryRulerOf, rulersOf, type RulershipChoice } from '../astrology/rulership.js';
-import { degreesInSign, signIndex, signOf } from '../astrology/signs.js';
+import { degreesInSign, signIndex, signOf, type Element, type Modality } from '../astrology/signs.js';
 import { formatCoordinate } from '../ui/format.js';
 import { housesAreDefined, type ChartData } from './chart-compute.js';
 import { derivedPointLongitude } from './derived-point-position.js';
@@ -121,6 +121,21 @@ export function visiblePositions(
 ): readonly BodyPosition[] {
   if (options.chironVisible ?? true) return positions;
   return positions.filter((position) => bodyById(position.body)?.category !== 'centaur');
+}
+
+/** The elements in the conventional order, warm to cold, and the modalities across them: the same as the exported grid. */
+export const EMPHASIS_ELEMENTS: readonly Element[] = ['fire', 'earth', 'air', 'water'];
+export const EMPHASIS_MODALITIES: readonly Modality[] = ['cardinal', 'fixed', 'mutable'];
+
+/**
+ * One row of the element x modality table (#511): the bodies standing in each of the row's three signs, and the
+ * row's total. The `total` row (`rowKey: 'total'`) holds no bodies: its counts are the modality totals.
+ */
+export interface EmphasisRow {
+  readonly rowKey: Element | 'total';
+  readonly bodies: Readonly<Record<Modality, readonly string[]>>;
+  readonly counts: Readonly<Record<Modality, number>>;
+  readonly total: number;
 }
 
 export interface PositionRow extends DegreeParts {
@@ -714,4 +729,37 @@ export function chartSheetInput(
     emphasis: { bodies: bodies.map(({ body, key, longitude }) => ({ body, key, longitude })) },
     strip: { bodies: bodies.map(({ key, longitude }) => ({ key, longitude })) },
   };
+}
+
+/**
+ * The element x modality table, the same twelve cells the exported sheet's grid draws, as rows a reader can sort,
+ * copy and export: each element's bodies by modality and the totals, then a closing row of modality totals. The
+ * margins come from `elementBalance`/`modalityBalance`, as the drawing's do.
+ */
+export function emphasisRows(data: ChartData, options: PointVisibilityOptions = {}): readonly EmphasisRow[] {
+  const visible = visiblePositions(data.positions, options);
+  const positions = new Map(visible.map((position) => [position.body, position.longitude]));
+  const elements = elementBalance(positions);
+  const modalities = modalityBalance(positions);
+  const keyOf = (body: BodyId): string => bodyById(body)?.key ?? String(body);
+  const rows: EmphasisRow[] = EMPHASIS_ELEMENTS.map((element) => {
+    const bodies = { cardinal: [] as string[], fixed: [] as string[], mutable: [] as string[] };
+    for (const position of visible) {
+      const sign = signOf(position.longitude);
+      if (sign.element === element) bodies[sign.modality].push(keyOf(position.body));
+    }
+    return {
+      rowKey: element,
+      bodies,
+      counts: { cardinal: bodies.cardinal.length, fixed: bodies.fixed.length, mutable: bodies.mutable.length },
+      total: elements[element],
+    };
+  });
+  rows.push({
+    rowKey: 'total',
+    bodies: { cardinal: [], fixed: [], mutable: [] },
+    counts: { cardinal: modalities.cardinal, fixed: modalities.fixed, mutable: modalities.mutable },
+    total: visible.length,
+  });
+  return rows;
 }

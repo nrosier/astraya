@@ -15,8 +15,8 @@ import { bodyId } from '../chart/body-id.js';
 import { selectionKey } from '../interpretation/selection-key.js';
 import { selectionKeyForTarget } from './wheel-interaction.js';
 
-/** The drawing's width in its own units; CSS scales it to the column. */
-const MATRIX_WIDTH = 800;
+/** The drawing's width in its own units, shown 1:1 (CSS caps its width here) so its text is as large as the page's. */
+const MATRIX_WIDTH = 960;
 
 export interface AspectMatrixSelection {
   readonly selectedKey: string | undefined;

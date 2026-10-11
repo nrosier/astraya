@@ -249,3 +249,33 @@ test('the aspect matrix is a view of its own, and a cell selects its pair on the
   await page.keyboard.press('Enter');
   await expect(cell).toHaveAttribute('aria-pressed', 'false');
 });
+
+test('the elements and modalities grid is a view of its own, with its table and a CSV download (#511)', async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await page.setViewportSize({ width: 1600, height: 1000 });
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  await createPerson(page, {
+    name: 'Ada Lovelace',
+    date: '1815-12-10',
+    time: '07:45:00',
+    latitude: '51.5072',
+    longitude: '-0.1276',
+  });
+  await openNatalChart(page, 'Elements & modalities');
+  await expect(page.getByRole('heading', { name: 'Elements & modalities', level: 2 })).toBeVisible();
+  await expect(page.locator('.chart-emphasis-grid')).toBeVisible();
+
+  // The table holds every value the drawing does, as text: four elements and a totals row.
+  const table = page.getByRole('table', { name: 'Elements and modalities' });
+  await expect(table.locator('tbody tr')).toHaveCount(5);
+  await expect(table.getByRole('columnheader')).toHaveText(['Element', 'Cardinal', 'Fixed', 'Mutable', 'Total']);
+  await expect(table.locator('tbody tr').last()).toContainText('Total');
+
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.getByRole('button', { name: 'Download CSV', exact: true }).click(),
+  ]);
+  expect(download.suggestedFilename()).toBe('ada-lovelace-elements-modalities.csv');
+});

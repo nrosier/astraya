@@ -18,6 +18,7 @@ import {
   derivedPointRows,
   dignityRows,
   dispositorRows,
+  emphasisRows,
   fixedStarRows,
   houseCuspRows,
   positionRows,
@@ -855,5 +856,40 @@ describe('chartSheetMetaLines', () => {
 
   it('passes the name straight through, empty string included — a fallback is the caller’s job', () => {
     expect(chartSheetMetaLines('', moment, 'en')[0]).toBe('');
+  });
+});
+
+describe('emphasisRows (#511)', () => {
+  // Sun 10 Aries (fire cardinal), Moon 100 Cancer (water cardinal), Mars 101 Cancer, Chiron 50 Taurus (earth fixed).
+  const data: ChartData = {
+    positions: [position(SUN, 10), position(MOON, 100), position(MARS, 101), position(CHIRON, 50)],
+    houses: HOUSES,
+    aspects: [],
+    dignities: new Map(),
+    sect: 'day',
+    partOfFortune: 0,
+    partOfSpirit: 0,
+  };
+
+  it('lists each element warm to cold with the bodies in its cardinal, fixed and mutable signs, then a modality-totals row', () => {
+    const rows = emphasisRows(data);
+    expect(rows.map((row) => row.rowKey)).toEqual(['fire', 'earth', 'air', 'water', 'total']);
+    expect(rows[0]?.bodies).toEqual({ cardinal: ['sun'], fixed: [], mutable: [] });
+    expect(rows[1]?.bodies).toEqual({ cardinal: [], fixed: ['chiron'], mutable: [] });
+    expect(rows[3]?.bodies).toEqual({ cardinal: ['moon', 'mars'], fixed: [], mutable: [] });
+  });
+
+  it('takes the margins from the balance functions: element totals on the right, modality totals on the last row', () => {
+    const rows = emphasisRows(data);
+    expect(rows.map((row) => row.total)).toEqual([1, 1, 0, 2, 4]);
+    expect(rows[4]?.counts).toEqual({ cardinal: 3, fixed: 1, mutable: 0 });
+    // Every body is counted exactly once across the four element rows.
+    expect(rows.slice(0, 4).reduce((sum, row) => sum + row.total, 0)).toBe(rows[4]?.total);
+  });
+
+  it('leaves out a body the visibility options hide, as the grid and the other tables do', () => {
+    const rows = emphasisRows(data, { chironVisible: false });
+    expect(rows[1]?.bodies.fixed).toEqual([]);
+    expect(rows[4]?.total).toBe(3);
   });
 });

@@ -163,7 +163,14 @@ test('the natal chart is split into views, opening on the wheel, and the wheel k
   // Route-level links (#511), not ARIA tabs.
   await expect(page.locator('nav.chart-view-nav [role="tab"]')).toHaveCount(0);
   const links = page.locator('nav.chart-view-nav .chart-view-link');
-  await expect(links).toHaveText(['Wheel', 'Aspects', 'Aspect matrix', 'Placements', 'Patterns & condition']);
+  await expect(links).toHaveText([
+    'Wheel',
+    'Aspects',
+    'Aspect matrix',
+    'Elements & modalities',
+    'Placements',
+    'Patterns & condition',
+  ]);
   await expect(page.getByRole('link', { name: 'Wheel', exact: true })).toHaveAttribute('aria-current', 'page');
   await expect(page.locator('div.chart-wheel')).toBeVisible();
 

@@ -100,13 +100,14 @@ async function open(container: HTMLElement, label: string): Promise<void> {
 }
 
 describe('the chart views (#511)', () => {
-  it('has five views in reading order, opening on Wheel', async () => {
+  it('has six views in reading order, opening on Wheel', async () => {
     const container = await mount();
     const t = chartViewMessages.en;
     expect(viewLabels(container)).toEqual([
       t.wheelViewLabel,
       t.aspectsViewLabel,
       t.matrixViewLabel,
+      t.elementsViewLabel,
       t.placementsViewLabel,
       t.patternsViewLabel,
     ]);
@@ -177,7 +178,8 @@ describe('the chart views (#511)', () => {
     const container = await mount({ locale: 'nl' });
     expect(viewLabels(container)[0]).toBe(chartViewMessages.nl.wheelViewLabel);
     expect(viewLabels(container)[2]).toBe(chartViewMessages.nl.matrixViewLabel);
-    expect(viewLabels(container)[4]).toBe(chartViewMessages.nl.patternsViewLabel);
+    expect(viewLabels(container)[3]).toBe(chartViewMessages.nl.elementsViewLabel);
+    expect(viewLabels(container)[5]).toBe(chartViewMessages.nl.patternsViewLabel);
   });
 
   it('without houses (an unknown birth time) drops Wheel and opens on Aspects; Placements and Patterns skip their houses-dependent parts', async () => {
@@ -186,6 +188,7 @@ describe('the chart views (#511)', () => {
     expect(viewLabels(container)).toEqual([
       t.aspectsViewLabel,
       t.matrixViewLabel,
+      t.elementsViewLabel,
       t.placementsViewLabel,
       t.patternsViewLabel,
     ]);
@@ -219,6 +222,7 @@ describe('the chart views (#511)', () => {
       t.chartTabLabel,
       t.aspectsViewLabel,
       t.matrixViewLabel,
+      t.elementsViewLabel,
       t.placementsViewLabel,
       t.patternsViewLabel,
     ]);

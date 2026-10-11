@@ -9,6 +9,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `AdminNav.tsx` + `AdminNav.messages.ts` — Admin tab strip (users/usage/corpus/candidates). Deps: `./admin-nav`.
 - `AdminPanel.tsx` + `AdminPanel.messages.ts` — User CRUD + AI-usage reporting. Deps: `sync/admin-client`, `session-context`.
 - `App.tsx` + `App.messages.ts` — Root router + sticky header + lazy-loading boundary. Deps: `route`, `session-context`, `store-context`, `person-screens`.
+- `EmphasisGrid.tsx` — The element x modality grid view: the sheet export's drawing, shown on screen beside its table. Deps: `chart/emphasis-grid`, `chart/sheet-geometry`.
 - `AspectMatrix.tsx` — The aspect matrix view: the sheet's grid with cells that select an aspect pair on the wheel. Deps: `chart/aspect-matrix`, `interpretation/selection-key`, `wheel-interaction`.
 - `AppNav.tsx` + `AppNav.messages.ts` — Primary navigation (person tabs, Tools/Export menus). Deps: `person-nav`, `tools-nav`, `export-registry`, `domain/full-export`.
 - `AstroChartWheel.tsx` — Dev-only reference wheel via `@astrodraw/astrochart`. Deps: `chart/astrochart-adapter`.

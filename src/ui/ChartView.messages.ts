@@ -123,6 +123,15 @@ const en = {
   wheelViewLabel: 'Wheel',
   aspectsViewLabel: 'Aspects',
   matrixViewLabel: 'Aspect matrix',
+  elementsViewLabel: 'Elements & modalities',
+  emphasisCaption: 'Elements and modalities',
+  emphasisHint:
+    'Each body counted once, in the element and modality of the sign it stands in. The totals are along the right and the bottom.',
+  emphasisElementLabel: 'Element',
+  emphasisTotalLabel: 'Total',
+  emphasisNone: '—',
+  elementNames: { fire: 'Fire', earth: 'Earth', air: 'Air', water: 'Water' },
+  modalityNames: { cardinal: 'Cardinal', fixed: 'Fixed', mutable: 'Mutable' },
   matrixLabel: 'Aspect matrix: select a pair to show it on the chart',
   matrixHint:
     'Each cell is the aspect between the body named on its row and the one in its column. The aspect symbol is followed by the orb in degrees, and by a for applying or s for separating; a heavy border marks an aspect within a degree of exact.',
@@ -340,6 +349,15 @@ const nl: typeof en = {
   wheelViewLabel: 'Wiel',
   aspectsViewLabel: 'Aspecten',
   matrixViewLabel: 'Aspectenmatrix',
+  elementsViewLabel: 'Elementen & modaliteiten',
+  emphasisCaption: 'Elementen en modaliteiten',
+  emphasisHint:
+    'Elk hemellichaam telt één keer mee, in het element en de modaliteit van het teken waarin het staat. De totalen staan rechts en onderaan.',
+  emphasisElementLabel: 'Element',
+  emphasisTotalLabel: 'Totaal',
+  emphasisNone: '—',
+  elementNames: { fire: 'Vuur', earth: 'Aarde', air: 'Lucht', water: 'Water' },
+  modalityNames: { cardinal: 'Kardinaal', fixed: 'Vast', mutable: 'Veranderlijk' },
   matrixLabel: 'Aspectenmatrix: kies een paar om het op de horoscoop te tonen',
   matrixHint:
     'Elke cel is het aspect tussen het hemellichaam van de rij en dat van de kolom. Het aspectsymbool wordt gevolgd door de orb in graden en door a voor toenemend of s voor afnemend; een dikke rand markeert een aspect binnen een graad van exact.',

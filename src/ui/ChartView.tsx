@@ -30,7 +30,7 @@
  * @module ChartView
  * @purpose Renders the natal chart screen: the chart wheel plus every data table a chart computes (positions, houses, aspects, dignities, dispositors, declinations, antiscia, fixed stars, chart shape, derived points), and the SVG/PNG/PDF export + share-link controls.
  * @conventions Exports `ChartDataView`, the shared tabbed chart+tables UI reused by CompositeView/SharedChartView; every value is recomputed from the stored birth moment via `domain/chart-compute.js`/`domain/chart-tables.js` rather than read from a saved Chart record; houses/angles/derived-points tables are hidden when `timeAccuracy === 'unknown'`. Text comes from co-located `ChartView.messages.ts` via `useMessages()`.
- * @exports ChartView, ChartDataView, positionColumns, houseCuspColumns, angleColumns, aspectColumns, dignityColumns, dispositorColumns, declinationColumns, antisciaColumns, fixedStarColumns, derivedPointColumns
+ * @exports ChartView, ChartDataView, emphasisColumns, positionColumns, houseCuspColumns, angleColumns, aspectColumns, dignityColumns, dispositorColumns, declinationColumns, antisciaColumns, fixedStarColumns, derivedPointColumns
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -43,6 +43,8 @@ import {
   chartSheetMetaLines,
   declinationContactRows,
   derivedPointRows,
+  EMPHASIS_MODALITIES,
+  emphasisRows,
   dignityRows,
   dispositorRows,
   fixedStarRows,
@@ -56,6 +58,7 @@ import {
   type DerivedPointRow,
   type DignityRow,
   type DispositorRow,
+  type EmphasisRow,
   type FixedStarRow,
   type HouseCuspRow,
   type PointVisibilityOptions,
@@ -106,6 +109,7 @@ import { parseSelectionKey } from '../interpretation/selection.js';
 import { selectionKey } from '../interpretation/selection-key.js';
 import { buildFocusObjectContext } from '../interpretation/focus-context.js';
 import { AspectMatrix } from './AspectMatrix.js';
+import { EmphasisGrid } from './EmphasisGrid.js';
 import { SelectionInspector, type WheelIsolationFacts } from './SelectionInspector.js';
 import { useRulershipChoice } from './rulership-setting.js';
 import type { RulershipChoice } from '../astrology/rulership.js';
@@ -583,7 +587,51 @@ export function derivedPointColumns(
   ];
 }
 
-/** The granular table kinds `renderTableTab` knows how to build (#511: these are grouped into the Aspects/Placements/Patterns views, not shown as separate tabs). */
+/** The element x modality table's columns: the element, the bodies in each modality, and the totals. */
+export function emphasisColumns(t: typeof chartViewMessages.en, locale: Locale): readonly TableColumn<EmphasisRow>[] {
+  const rowName = (row: EmphasisRow): string =>
+    row.rowKey === 'total' ? t.emphasisTotalLabel : t.elementNames[row.rowKey];
+  return [
+    { key: 'element', label: t.emphasisElementLabel, valueOf: rowName },
+    ...EMPHASIS_MODALITIES.map((modality): TableColumn<EmphasisRow> => ({
+      key: modality,
+      label: t.modalityNames[modality],
+      valueOf: (row) => row.counts[modality],
+      render: (row) =>
+        row.rowKey === 'total'
+          ? String(row.counts[modality])
+          : row.bodies[modality].length === 0
+            ? t.emphasisNone
+            : row.bodies[modality].map((bodyKey) => bodyShortName(bodyKey, locale)).join(', '),
+    })),
+    { key: 'total', label: t.emphasisTotalLabel, valueOf: (row) => row.total },
+  ];
+}
+
+/** The Elements & modalities view (#511): the exported sheet's grid, and the same twelve cells as a table. */
+function renderElementsView(
+  data: ChartData,
+  displayName: string,
+  pointVisibility: PointVisibilityOptions,
+  t: typeof chartViewMessages.en,
+  locale: Locale,
+): React.ReactNode {
+  const input = chartSheetInput(data, [], displayName, pointVisibility, (bodyKey) => bodyShortName(bodyKey, locale));
+  return (
+    <>
+      <p className="hint">{t.emphasisHint}</p>
+      <EmphasisGrid input={input.emphasis} />
+      <SortableTable
+        caption={t.emphasisCaption}
+        columns={emphasisColumns(t, locale)}
+        rows={emphasisRows(data, pointVisibility)}
+        getRowKey={(row) => row.rowKey}
+        downloadFilename={deriveExportFilename(displayName, 'elements-modalities', 'csv')}
+      />
+    </>
+  );
+}
+
 /** The Aspect matrix view (#511): the sheet's own grid, its aspect cells selecting that pair on the wheel. */
 function renderMatrixView(
   data: ChartData,
@@ -616,6 +664,7 @@ function renderMatrixView(
   );
 }
 
+/** The granular table kinds `renderTableTab` knows how to build (#511: these are grouped into the Aspects/Placements/Patterns views, not shown as separate tabs). */
 type TableTabKey = 'positions' | 'houses' | 'aspects' | 'dignities' | 'derived';
 
 /**
@@ -1409,6 +1458,7 @@ export function ChartDataView({
                           symbolClass,
                         )}
                       {tab === 'matrix' && renderMatrixView(load.data, displayName, pointVisibility, t, locale)}
+                      {tab === 'elements' && renderElementsView(load.data, displayName, pointVisibility, t, locale)}
                       {tab === 'placements' &&
                         renderPlacementsView(
                           load.data,
@@ -1487,6 +1537,7 @@ export function ChartDataView({
                     )}
                   {currentTab === 'matrix' &&
                     renderMatrixView(load.data, displayName, pointVisibility, t, locale, tableSelection)}
+                  {currentTab === 'elements' && renderElementsView(load.data, displayName, pointVisibility, t, locale)}
                   {currentTab === 'placements' &&
                     renderPlacementsView(
                       load.data,

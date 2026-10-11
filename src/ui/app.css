@@ -2748,11 +2748,34 @@ svg text.chart-symbol-text-unicode {
   stroke-width: 1;
 }
 
-/* The matrix as a view of its own (#511): the sheet's drawing, scaled to the column, its aspect cells buttons. */
+/* The matrix and the elements grid as views of their own (#511): drawn 1:1 (the cap is the drawing's own width),
+   so a user unit is a pixel and their text matches the page's, instead of being scaled up to the column. */
 .chart-matrix-view svg {
   display: block;
   width: 100%;
   height: auto;
+}
+
+.chart-aspect-matrix {
+  max-width: 960px;
+}
+
+.chart-emphasis-grid {
+  max-width: 560px;
+}
+
+.chart-matrix-view .chart-sheet .chart-matrix-name,
+.chart-matrix-view .chart-sheet .chart-matrix-position,
+.chart-matrix-view .chart-sheet .chart-matrix-label,
+.chart-matrix-view .chart-sheet .chart-panel-heading,
+.chart-matrix-view .chart-sheet .chart-emphasis-total {
+  font-size: 0.85rem;
+}
+
+/* The orb and its a/s marker share a cell with the aspect symbol, so they stay a step smaller. */
+.chart-matrix-view .chart-sheet .chart-matrix-orb,
+.chart-matrix-view .chart-sheet .chart-matrix-direction {
+  font-size: 0.65rem;
 }
 
 .chart-matrix-pair {
