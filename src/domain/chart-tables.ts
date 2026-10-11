@@ -692,8 +692,8 @@ export function chartSheetInput(
   const aspectedPoints = new Set((data.angleAspects ?? []).map((aspect) => aspect.angle));
   const extraPoints = [
     { key: 'vertex', label: 'VX', name: 'Vertex', longitude: data.houses.vertex },
-    { key: 'partOfFortune', label: 'PF', name: 'Part of Fortune', longitude: data.partOfFortune },
-    { key: 'partOfSpirit', label: 'PS', name: 'Part of Spirit', longitude: data.partOfSpirit },
+    { key: 'partOfFortune', label: 'PF', name: 'Fortune', longitude: data.partOfFortune },
+    { key: 'partOfSpirit', label: 'PS', name: 'Spirit', longitude: data.partOfSpirit },
   ].filter((point) => aspectedPoints.has(point.key as AspectAngle));
   const keyOf = (body: BodyId): string => bodyById(body)?.key ?? String(body);
   return {
