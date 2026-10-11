@@ -98,6 +98,7 @@ test('a person’s screens carry their name and tabs in the header, with no stri
   }
   await expect(page.locator('.person-shelf')).toHaveCount(0);
   await expect(header.getByRole('link', { name: 'Birth record', exact: true })).toHaveAttribute('aria-current', 'page');
+  await expect(header.getByText('Return to', { exact: true })).toHaveCount(0);
 
   // The person's tabs and the Tools menu share one open-at-a-time rule.
   await header.getByRole('button', { name: 'Transits & Forecast', exact: true }).click();
@@ -113,6 +114,8 @@ test('a person’s screens carry their name and tabs in the header, with no stri
   await expect(page.getByRole('heading', { name: 'Planetary cycles', level: 1 })).toBeVisible();
   await expect(header.getByText('Ada Lovelace', { exact: true })).toBeVisible();
   await expect(header.getByRole('link', { name: 'Charts', exact: true })).toBeVisible();
+  // On a tool page the person is history, not the subject: the rail says so (and does not on their own pages).
+  await expect(header.getByText('Return to', { exact: true })).toBeVisible();
   // None of the person's tabs is "current" on a tool page — it genuinely isn't one of them.
   await expect(header.getByRole('link', { name: 'Birth record', exact: true })).not.toHaveAttribute(
     'aria-current',
