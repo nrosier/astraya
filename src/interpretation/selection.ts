@@ -19,67 +19,18 @@
  * @module interpretation/selection
  * @purpose Determines which interpretation entries belong to a wheel selection (a clicked planet, sign, house cusp, or aspect line), so the wheel's shown text matches the Interpretation tab's report exactly.
  * @conventions Selects from the same derivePlacements/rankPlacements the report is built from, ordered by the same salience, so the wheel can never show text the report doesn't or in a different order. Selection keys are parsed from the wheel's own `body:<id>`/`sign:<name>`/`house:<n>`/`derived:<point>`/`aspect:<idA>|<idB>` string format.
- * @exports WheelSelection, parseSelectionKey, selectionPlacements
+ * @exports WheelSelection, parseSelectionKey (re-exported from selection-key), selectionPlacements
  */
 import { bodyByKey } from '../astrology/bodies.js';
-import { isDerivedPointKey, type DerivedPointKey } from '../astrology/derived-points.js';
-import { degreeSymbolNumber, SIGNS } from '../astrology/signs.js';
-import { parseBodyId } from '../chart/body-id.js';
+import type { DerivedPointKey } from '../astrology/derived-points.js';
+import { degreeSymbolNumber } from '../astrology/signs.js';
 import type { ChartData } from '../domain/chart-compute.js';
 import { derivedPointPlacementFacts } from '../domain/derived-point-position.js';
 import { derivePlacements, rankPlacements, type SalientPlacement } from './rules.js';
 import { placementKey, type CorpusPlacement } from './schema.js';
+import type { WheelSelection } from './selection-key.js';
 
-export type WheelSelection =
-  | { readonly kind: 'body'; readonly key: string; readonly ring: number }
-  | { readonly kind: 'sign'; readonly signIndex: number }
-  | { readonly kind: 'house'; readonly house: number }
-  | { readonly kind: 'derived'; readonly point: DerivedPointKey }
-  | {
-      readonly kind: 'aspect';
-      readonly bodyA: string;
-      readonly ringA: number;
-      readonly bodyB: string;
-      readonly ringB: number;
-    };
-
-/**
- * Reads the wheel's selection key: `body:<id>`, `sign:<lowercase sign name>`, `house:<1-12>` (a house's
- * cusp) or `aspect:<idA>|<idB>`,
- * where an id is a body key with an optional ring (`sun`, or `sun@1` — see `chart/body-id.ts`; a
- * bare key is ring 0). `undefined` for anything else, including a sign that does not exist.
- */
-export function parseSelectionKey(key: string): WheelSelection | undefined {
-  const colon = key.indexOf(':');
-  if (colon === -1) return undefined;
-  const kind = key.slice(0, colon);
-  const value = key.slice(colon + 1);
-  if (kind === 'body') {
-    const { key: bodyKey, ring } = parseBodyId(value);
-    return bodyKey === '' ? undefined : { kind: 'body', key: bodyKey, ring };
-  }
-  if (kind === 'sign') {
-    const signIndex = SIGNS.findIndex((sign) => sign.name.toLowerCase() === value);
-    return signIndex === -1 ? undefined : { kind: 'sign', signIndex };
-  }
-  if (kind === 'derived') {
-    return isDerivedPointKey(value) ? { kind: 'derived', point: value } : undefined;
-  }
-  if (kind === 'house') {
-    const house = Number(value);
-    return Number.isInteger(house) && house >= 1 && house <= 12 ? { kind: 'house', house } : undefined;
-  }
-  if (kind === 'aspect') {
-    const [idA, idB] = value.split('|');
-    if (idA === undefined || idB === undefined) return undefined;
-    const a = parseBodyId(idA);
-    const b = parseBodyId(idB);
-    return a.key === '' || b.key === ''
-      ? undefined
-      : { kind: 'aspect', bodyA: a.key, ringA: a.ring, bodyB: b.key, ringB: b.ring };
-  }
-  return undefined;
-}
+export { parseSelectionKey, type WheelSelection } from './selection-key.js';
 
 function matches(item: SalientPlacement, selection: WheelSelection): boolean {
   const placement = item.placement;

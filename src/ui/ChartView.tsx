@@ -91,7 +91,7 @@ import { ExtendedSettingsPanel } from './ExtendedSettingsPanel.js';
 import { useExtendedSettings } from './extended-settings-store.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
-import { aspectKeyFor, useWheelIsolation } from './wheel-interaction.js';
+import { useWheelIsolation } from './wheel-interaction.js';
 import { bodyGlyph, renderGlyph } from '../chart/glyphs.js';
 import type { SymbolClass } from '../chart/symbol-class.js';
 import { unicodeSymbol, textSymbol } from '../chart/symbol-text.js';
@@ -103,6 +103,7 @@ import { ChartTypeSelector, changeChartView } from './ChartTypeSelector.js';
 import { ChartViewNav } from './ChartViewNav.js';
 import { bodyId } from '../chart/body-id.js';
 import { parseSelectionKey } from '../interpretation/selection.js';
+import { selectionKey } from '../interpretation/selection-key.js';
 import { buildFocusObjectContext } from '../interpretation/focus-context.js';
 import { SelectionInspector, type WheelIsolationFacts } from './SelectionInspector.js';
 import { useRulershipChoice } from './rulership-setting.js';
@@ -150,15 +151,16 @@ interface TableSelection {
 }
 
 /** The wheel's selection key for a body, or an aspect between two. */
-const bodySelectionKey = (bodyKey: string): string => `body:${bodyId(bodyKey, 0)}`;
+const bodySelectionKey = (bodyKey: string): string => selectionKey.body(bodyId(bodyKey, 0));
 /** The wheel's selection key for a sign: its lowercase name, as `data-sign` carries it. */
-const signSelectionKey = (signName: string): string => `sign:${signName.toLowerCase()}`;
+const signSelectionKey = (signName: string): string => selectionKey.sign(signName);
 /** The selection key for a derived point (#511): not drawn on the wheel, so only a table or a link makes it. */
 const derivedSelectionKey = (pointKey: string | undefined): string | undefined =>
-  pointKey === undefined ? undefined : `derived:${pointKey}`;
+  pointKey === undefined ? undefined : selectionKey.derived(pointKey);
 /** The wheel's selection key for a house's cusp (#511). */
-const houseSelectionKey = (house: number): string => `house:${String(house)}`;
-const aspectSelectionKey = (row: AspectRow): string => aspectKeyFor(bodyId(row.bodyAKey, 0), bodyId(row.bodyBKey, 0));
+const houseSelectionKey = (house: number): string => selectionKey.house(house);
+const aspectSelectionKey = (row: AspectRow): string =>
+  selectionKey.aspect(bodyId(row.bodyAKey, 0), bodyId(row.bodyBKey, 0));
 
 /** The column of "show on the chart" buttons: a real button per row, so the keyboard reaches the wheel's selection too. */
 function selectColumn<T>(
@@ -376,6 +378,12 @@ export function aspectColumns(
       render: (row) => (row.applying ? t.applying : t.separating),
     },
   ];
+}
+
+/** The Houses table's selected row: the house whose cusp the wheel has selected, if any. */
+function selectedHouseRowKey(data: ChartData, selection: TableSelection | undefined): string | undefined {
+  const row = houseCuspRows(data).find((candidate) => houseSelectionKey(candidate.house) === selection?.selectedKey);
+  return row === undefined ? undefined : String(row.house);
 }
 
 export function dignityColumns(t: typeof chartViewMessages.en, locale: Locale): readonly TableColumn<DignityRow>[] {
@@ -619,11 +627,7 @@ function renderTableTab(
             columns={houseCuspColumns(t, locale, selection)}
             rows={houseCuspRows(data)}
             getRowKey={(row) => String(row.house)}
-            selectedRowKey={
-              houseCuspRows(data).find((row) => houseSelectionKey(row.house) === selection?.selectedKey) === undefined
-                ? undefined
-                : selection?.selectedKey?.slice('house:'.length)
-            }
+            selectedRowKey={selectedHouseRowKey(data, selection)}
             downloadFilename={deriveExportFilename(displayName, 'houses', 'csv')}
           />
           <SortableTable

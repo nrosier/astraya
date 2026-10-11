@@ -24,6 +24,7 @@
  * @conventions Reads only the wheel's own markup data-attributes (data-body, data-ring, data-sign, data-aspect-body-a/b, data-ring-legend) rather than the underlying chart data, so one implementation serves every wheel type; applies classes directly to injected DOM (not React state) since the wheel markup is a raw string, not React elements.
  * @exports aspectKeyFor, selectionKeyForTarget, applyIsolation, WheelIsolation, useWheelIsolation
  */
+import { selectionKey } from '../interpretation/selection-key.js';
 import { useEffect, useRef, useState } from 'react';
 import { bodyId } from '../chart/body-id.js';
 
@@ -44,17 +45,17 @@ function endsOfLink(link: Element): readonly [string, string] {
 
 /** The pair key for two body ids, the same whichever is named first. */
 export function aspectKeyFor(idA: string, idB: string): string {
-  return `aspect:${[idA, idB].sort().join('|')}`;
+  return selectionKey.aspect(idA, idB);
 }
 
 /** The selection a click on `target` makes, or `undefined` when it landed on none of the wheel's symbols. */
 export function selectionKeyForTarget(target: Element): string | undefined {
   const body = target.closest('[data-body]');
-  if (body !== null) return `body:${idOfBodyElement(body)}`;
+  if (body !== null) return selectionKey.body(idOfBodyElement(body));
   const sign = target.closest('[data-sign]');
-  if (sign !== null) return `sign:${sign.getAttribute('data-sign') ?? ''}`;
+  if (sign !== null) return selectionKey.sign(sign.getAttribute('data-sign') ?? '');
   const house = target.closest('[data-house]');
-  if (house !== null) return `house:${house.getAttribute('data-house') ?? ''}`;
+  if (house !== null) return selectionKey.house(house.getAttribute('data-house') ?? '');
   const ringLegend = target.closest('[data-ring-legend]');
   if (ringLegend !== null) return `ring:${ringLegend.getAttribute('data-ring-legend') ?? ''}`;
   const link = target.closest('[data-aspect-body-a]');
