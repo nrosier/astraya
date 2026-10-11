@@ -12,6 +12,8 @@
  * @conventions Gated for incomplete/unknown-time birth records like other person-scoped views; uses ReturnView.messages.ts for en/nl text via useMessages().
  * @exports ReturnView
  */
+import { DateField } from './primitives/DateField.js';
+import { NumberField } from './primitives/NumberField.js';
 import { useEffect, useMemo, useState } from 'react';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { computeLunarReturnChart, computeSolarReturnChart, type ReturnChartData } from '../domain/return-chart.js';
@@ -224,30 +226,9 @@ export function ReturnView({
 
       <div className="field-grid">
         {solar ? (
-          <label>
-            {t.yearLabel}
-            <input
-              type="number"
-              min={MIN_YEAR}
-              max={MAX_YEAR}
-              step={1}
-              value={year}
-              onChange={(event) => {
-                setYear(event.target.value);
-              }}
-            />
-          </label>
+          <NumberField label={t.yearLabel} min={MIN_YEAR} max={MAX_YEAR} value={year} onChange={setYear} />
         ) : (
-          <label>
-            {t.fromDateLabel}
-            <input
-              type="date"
-              value={fromDate}
-              onChange={(event) => {
-                setFromDate(event.target.value);
-              }}
-            />
-          </label>
+          <DateField label={t.fromDateLabel} value={fromDate} onChange={setFromDate} />
         )}
       </div>
       {!inputValid && (

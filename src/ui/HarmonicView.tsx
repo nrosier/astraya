@@ -13,6 +13,8 @@
  * @conventions A single synthetic chart derived from one natal chart (not a comparison), so it reuses `ChartDataView` wholesale like CompositeView/DraconicView; the in-screen picker is a named Varga preset (`VARGA_PRESETS`) or any positive integer. Text comes from co-located `HarmonicView.messages.ts` via `useMessages()`.
  * @exports HarmonicView
  */
+import { NumberField } from './primitives/NumberField.js';
+import { Select } from './primitives/Select.js';
 import { useEffect, useMemo, useState } from 'react';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { VARGA_PRESETS } from '../astrology/harmonics.js';
@@ -116,35 +118,17 @@ export function HarmonicView({
       <p className="hint">{t.hint}</p>
 
       <div className="field-grid">
-        <label>
-          {t.divisionalChartLabel}
-          <select
-            value={presetKey}
-            onChange={(event) => {
-              setPresetKey(event.target.value);
-            }}
-          >
-            {VARGA_PRESETS.map((candidate) => (
-              <option key={candidate.key} value={candidate.key}>
-                {candidate.label}
-              </option>
-            ))}
-            <option value={CUSTOM}>{t.customHarmonicOption}</option>
-          </select>
-        </label>
+        <Select
+          label={t.divisionalChartLabel}
+          value={presetKey}
+          options={[
+            ...VARGA_PRESETS.map((candidate) => ({ value: candidate.key, label: candidate.label })),
+            { value: CUSTOM, label: t.customHarmonicOption },
+          ]}
+          onChange={setPresetKey}
+        />
         {presetKey === CUSTOM && (
-          <label>
-            {t.harmonicNumberLabel}
-            <input
-              type="number"
-              min={1}
-              step={1}
-              value={customN}
-              onChange={(event) => {
-                setCustomN(event.target.value);
-              }}
-            />
-          </label>
+          <NumberField label={t.harmonicNumberLabel} min={1} value={customN} onChange={setCustomN} />
         )}
       </div>
 

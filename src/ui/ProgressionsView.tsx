@@ -16,6 +16,8 @@
  * @conventions Gated for unknown birth time the same way ProfectionsView.tsx/ChartView.tsx are; uses ProgressionsView.messages.ts for en/nl text via useMessages().
  * @exports ProgressionsView; positionRows, positionColumns, contactColumns, mcMethodLabel (reused by pdf-export-plan.ts)
  */
+import { DateField } from './primitives/DateField.js';
+import { Select } from './primitives/Select.js';
 import { useEffect, useMemo, useState } from 'react';
 import { bodyById } from '../astrology/bodies.js';
 import type { ProgressedMcMethod } from '../astrology/progressions.js';
@@ -233,48 +235,34 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
       <p className="hint">{t.hint}</p>
 
       <div className="field-grid">
-        <label>
-          {t.techniqueLabel}
-          <select
-            value={technique}
-            onChange={(event) => {
-              setTechnique(event.target.value as Technique);
-            }}
-          >
-            <option value="secondary">{t.secondaryTechnique}</option>
-            <option value="tertiary">{t.tertiaryTechnique}</option>
-            <option value="minor">{t.minorTechnique}</option>
-          </select>
-        </label>
+        <Select
+          label={t.techniqueLabel}
+          value={technique}
+          options={[
+            { value: 'secondary', label: t.secondaryTechnique },
+            { value: 'tertiary', label: t.tertiaryTechnique },
+            { value: 'minor', label: t.minorTechnique },
+          ]}
+          onChange={(value) => {
+            setTechnique(value as Technique);
+          }}
+        />
         {technique === 'secondary' && (
-          <label>
-            {t.mcMethodLabel}
-            <select
-              value={mcMethod}
-              onChange={(event) => {
-                setMcMethod(event.target.value as ProgressedMcMethod);
-              }}
-            >
-              <option value="quotidian">{t.quotidianMethod}</option>
-              <option value="naibod">{t.naibodMethod}</option>
-              <option value="solarArc">{t.solarArcMethod}</option>
-            </select>
-          </label>
-        )}
-      </div>
-
-      <p>
-        <label>
-          {t.asOfLabel}{' '}
-          <input
-            type="date"
-            value={asOf}
-            onChange={(event) => {
-              setAsOf(event.target.value);
+          <Select
+            label={t.mcMethodLabel}
+            value={mcMethod}
+            options={[
+              { value: 'quotidian', label: t.quotidianMethod },
+              { value: 'naibod', label: t.naibodMethod },
+              { value: 'solarArc', label: t.solarArcMethod },
+            ]}
+            onChange={(value) => {
+              setMcMethod(value as ProgressedMcMethod);
             }}
           />
-        </label>
-      </p>
+        )}
+        <DateField label={t.asOfLabel} value={asOf} onChange={setAsOf} />
+      </div>
 
       {load.kind === 'loading' && <p className="status">{t.calculating}</p>}
 

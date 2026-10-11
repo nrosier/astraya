@@ -13,6 +13,10 @@
  * @conventions Needs no saved person or stored data (computed entirely in-browser), so it lives outside `Stored`, like ElectionalView; it reports only whether the chart is fit to be judged, never an answer to the question itself. Reuses the shared `ChartDataView`. Text comes from co-located `HoraryView.messages.ts` via `useMessages()`.
  * @exports HoraryView
  */
+import { DateField } from './primitives/DateField.js';
+import { Select } from './primitives/Select.js';
+import { TextField } from './primitives/TextField.js';
+import { TimeField } from './primitives/TimeField.js';
 import { useState } from 'react';
 import { isRadical } from '../astrology/horary.js';
 import { chartSheetMetaLines } from '../domain/chart-tables.js';
@@ -86,63 +90,42 @@ export function HoraryView({ view }: { readonly view?: ChartViewKind | undefined
       <p className="hint">{t.hint}</p>
 
       <div className="field-grid">
-        <label>
-          {t.dateLabel}
-          <input
-            type="date"
-            value={fields.date}
-            onChange={(event) => {
-              edit({ date: event.target.value });
-            }}
-          />
-        </label>
-        <label>
-          {t.timeLabel}
-          <input
-            type="time"
-            value={fields.time}
-            onChange={(event) => {
-              edit({ time: event.target.value });
-            }}
-          />
-        </label>
-        <label>
-          {t.latitudeLabel}
-          <input
-            type="text"
-            inputMode="decimal"
-            value={fields.latitude}
-            onChange={(event) => {
-              edit({ latitude: event.target.value });
-            }}
-          />
-        </label>
-        <label>
-          {t.longitudeLabel}
-          <input
-            type="text"
-            inputMode="decimal"
-            value={fields.longitude}
-            onChange={(event) => {
-              edit({ longitude: event.target.value });
-            }}
-          />
-        </label>
-        <label>
-          {t.houseSystemLabel}
-          <select
-            value={houseSystem}
-            onChange={(event) => {
-              setHouseSystem(event.target.value);
-            }}
-          >
-            {HORARY_HOUSE_SYSTEMS.map((code) => (
-              <option key={code} value={code}>
-                {t.houseSystems[code] ?? code}
-              </option>
-            ))}
-          </select>
-        </label>
+        <DateField
+          label={t.dateLabel}
+          value={fields.date}
+          onChange={(value) => {
+            edit({ date: value });
+          }}
+        />
+        <TimeField
+          label={t.timeLabel}
+          value={fields.time}
+          onChange={(value) => {
+            edit({ time: value });
+          }}
+        />
+        <TextField
+          label={t.latitudeLabel}
+          inputMode="decimal"
+          value={fields.latitude}
+          onChange={(value) => {
+            edit({ latitude: value });
+          }}
+        />
+        <TextField
+          label={t.longitudeLabel}
+          inputMode="decimal"
+          value={fields.longitude}
+          onChange={(value) => {
+            edit({ longitude: value });
+          }}
+        />
+        <Select
+          label={t.houseSystemLabel}
+          value={houseSystem}
+          options={HORARY_HOUSE_SYSTEMS.map((code) => ({ value: code, label: t.houseSystems[code] ?? code }))}
+          onChange={setHouseSystem}
+        />
       </div>
 
       <BirthPlaceSearch

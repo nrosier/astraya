@@ -22,6 +22,8 @@ export interface TextFieldProps {
   readonly size?: ButtonSize;
   readonly disabled?: boolean | undefined;
   readonly autoComplete?: string | undefined;
+  /** The on-screen keyboard to offer, e.g. `numeric` for a year typed as text. */
+  readonly inputMode?: 'text' | 'numeric' | 'decimal' | 'email' | 'search' | 'tel' | 'url' | undefined;
 }
 
 export function TextField({
@@ -36,6 +38,7 @@ export function TextField({
   size = 'standard',
   disabled,
   autoComplete,
+  inputMode,
 }: TextFieldProps): React.JSX.Element {
   const ids = useFieldIds(help !== undefined, error !== undefined);
   return (
@@ -48,6 +51,7 @@ export function TextField({
         placeholder={placeholder}
         disabled={disabled}
         autoComplete={autoComplete}
+        inputMode={inputMode}
         aria-invalid={error !== undefined || undefined}
         aria-describedby={ids.describedBy}
         onChange={(event) => {

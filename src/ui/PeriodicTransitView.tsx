@@ -26,6 +26,7 @@
  * @conventions Follows TransitView.tsx's person-not-found/incomplete-moment/unknown-time gating; uses PeriodicTransitView.messages.ts for en/nl text via useMessages().
  * @exports PeriodicTransitView, bodyName, formatUtc, localizedSignName, signHouseLabel, contactRows, contactColumns, exactEventRows, exactEventColumns, stationRows, stationColumns
  */
+import { Select } from './primitives/Select.js';
 import { useEffect, useMemo, useState } from 'react';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import type { Aspect } from '../astrology/aspects.js';
@@ -597,21 +598,14 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
             <h2>{t.planetaryReturnHeading}</h2>
             <p className="hint">{t.planetaryReturnHint}</p>
             <div className="field-grid">
-              <label>
-                {t.bodyLabel}
-                <select
-                  value={returnBodyKey}
-                  onChange={(event) => {
-                    setReturnBodyKey(event.target.value as ReturnBodyKey);
-                  }}
-                >
-                  {RETURN_BODY_KEYS.map((key) => (
-                    <option key={key} value={key}>
-                      {bodyDisplayName(key, locale)}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <Select
+                label={t.bodyLabel}
+                value={returnBodyKey}
+                options={RETURN_BODY_KEYS.map((key) => ({ value: key, label: bodyDisplayName(key, locale) }))}
+                onChange={(value) => {
+                  setReturnBodyKey(value as ReturnBodyKey);
+                }}
+              />
             </div>
 
             {returnLoad.kind === 'loading' && <p className="status">{t.calculating}</p>}
