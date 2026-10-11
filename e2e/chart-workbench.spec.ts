@@ -99,7 +99,7 @@ test('selecting something fills the inspector in place, without moving it', asyn
   });
   await openNatalChart(page);
   const inspector = page.locator('.selection-inspector');
-  await expect(inspector).toContainText('Nothing selected');
+  await expect(inspector).toContainText('to explore it');
   const pageTop = async (): Promise<number> =>
     Number(
       await page.evaluate(
@@ -115,5 +115,5 @@ test('selecting something fills the inspector in place, without moving it', asyn
   expect(await pageTop()).toBeCloseTo(before, 0);
 
   await inspector.getByRole('button', { name: 'Clear', exact: true }).click();
-  await expect(inspector).toContainText('Nothing selected');
+  await expect(inspector).toContainText('to explore it');
 });

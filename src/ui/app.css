@@ -3938,3 +3938,80 @@ svg text.chart-symbol-text-unicode {
 .page-header-export-status {
   margin: 0.5rem 0 0;
 }
+
+/* Disclosure (#506/#508): a full-width trigger row of at least 44px — title, what opens, explicit
+   Show/Hide wording, trailing chevron that turns when open — over a panel. */
+.primitive-disclosure {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.primitive-disclosure-trigger {
+  display: flex;
+  width: 100%;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.85rem;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.primitive-disclosure-trigger:hover {
+  background: var(--surface-hover);
+}
+
+.primitive-disclosure-text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.15rem 0.6rem;
+  min-width: 0;
+}
+
+.primitive-disclosure-title {
+  font-weight: 600;
+}
+
+.primitive-disclosure-summary {
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.primitive-disclosure-action {
+  color: var(--accent);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.primitive-disclosure-chevron {
+  width: 0.55rem;
+  height: 0.55rem;
+  flex: none;
+  border-right: 2px solid currentcolor;
+  border-bottom: 2px solid currentcolor;
+  transform: translateY(-0.15rem) rotate(45deg);
+  transition: transform var(--duration-fast, 120ms);
+}
+
+.primitive-disclosure.open > .primitive-disclosure-trigger .primitive-disclosure-chevron {
+  transform: translateY(0.1rem) rotate(-135deg);
+}
+
+.primitive-disclosure-panel {
+  padding: 0 0.85rem 0.85rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .primitive-disclosure-chevron {
+    transition: none;
+  }
+}

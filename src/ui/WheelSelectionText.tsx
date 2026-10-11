@@ -15,6 +15,7 @@
  * @exports WheelSelectionText
  */
 import { useEffect, useMemo, useState } from 'react';
+import { Disclosure } from './primitives/Disclosure.js';
 import type { ChartData } from '../domain/chart-compute.js';
 import { resolvePlacementText } from '../interpretation/compose.js';
 import type { CorpusEntry, Locale } from '../interpretation/schema.js';
@@ -36,7 +37,6 @@ export function WheelSelectionText({
   const t = useMessages(chartViewMessages);
   const [corpus, setCorpus] = useState<readonly CorpusEntry[] | undefined>(undefined);
   const [failed, setFailed] = useState(false);
-  const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -55,11 +55,6 @@ export function WheelSelectionText({
     };
   }, [locale]);
 
-  // A new selection starts collapsed again.
-  useEffect(() => {
-    setShowAll(false);
-  }, [selectionKey]);
-
   const items = useMemo(() => {
     const selection = parseSelectionKey(selectionKey);
     return selection === undefined ? [] : selectionPlacements(chart, selection);
@@ -72,7 +67,18 @@ export function WheelSelectionText({
     dignityStates: t.dignityStateLabels,
     cuspOf: t.cuspHeading,
   };
-  const shown = showAll ? items : items.slice(0, SELECTION_TEXT_LIMIT);
+  const shown = items.slice(0, SELECTION_TEXT_LIMIT);
+  const rest = items.slice(SELECTION_TEXT_LIMIT);
+  const renderItems = (list: typeof items): React.JSX.Element => (
+    <ul className="chart-isolation-texts">
+      {list.map((item) => (
+        <li key={item.key}>
+          <strong>{placementHeading(item.placement, locale, labels)}</strong>
+          <p>{resolvePlacementText(item.placement, locale, corpus ?? [])}</p>
+        </li>
+      ))}
+    </ul>
+  );
 
   return (
     <section className="chart-isolation-interpretation" aria-label={t.selectionInterpretationHeading}>
@@ -81,24 +87,18 @@ export function WheelSelectionText({
       {!failed && corpus === undefined && <p className="hint">{t.selectionLoading}</p>}
       {corpus !== undefined && (
         <>
-          <ul className="chart-isolation-texts">
-            {shown.map((item) => (
-              <li key={item.key}>
-                <strong>{placementHeading(item.placement, locale, labels)}</strong>
-                <p>{resolvePlacementText(item.placement, locale, corpus)}</p>
-              </li>
-            ))}
-          </ul>
-          {items.length > SELECTION_TEXT_LIMIT && (
-            <button
-              type="button"
-              className="quiet"
-              onClick={() => {
-                setShowAll((current) => !current);
-              }}
+          {renderItems(shown)}
+          {rest.length > 0 && (
+            // Keyed on the selection, so a new one starts collapsed again.
+            <Disclosure
+              key={selectionKey}
+              title={t.selectionMoreTitle}
+              summary={t.selectionMoreSummary(rest.length)}
+              showLabel={t.selectionShowAll}
+              hideLabel={t.selectionHideAll}
             >
-              {showAll ? t.selectionShowFewer : t.selectionShowAll(items.length)}
-            </button>
+              {renderItems(rest)}
+            </Disclosure>
           )}
         </>
       )}

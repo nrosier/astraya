@@ -61,8 +61,10 @@ describe('placementHeading (#415)', () => {
     expect(SELECTION_TEXT_LIMIT).toBeLessThanOrEqual(12);
   });
 
-  it('words the show-all control with its count, in both languages', () => {
-    expect(chartViewMessages.en.selectionShowAll(11)).toContain('11');
-    expect(chartViewMessages.nl.selectionShowAll(11)).toContain('11');
+  it('words the disclosure with what opens and what pressing it does, in both languages', () => {
+    for (const messages of [chartViewMessages.en, chartViewMessages.nl]) {
+      expect(messages.selectionMoreSummary(5)).toContain('5');
+      expect(messages.selectionShowAll).not.toBe(messages.selectionHideAll);
+    }
   });
 });

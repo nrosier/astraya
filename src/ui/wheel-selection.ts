@@ -53,5 +53,5 @@ export function placementHeading(
   }
 }
 
-/** How many entries are shown before a "show all" control, so a busy planet does not bury the facts. */
-export const SELECTION_TEXT_LIMIT = 6;
+/** How many entries are shown before the "Show all meanings" disclosure (#511: concise inspector, most relevant first), so a busy planet does not bury the facts. */
+export const SELECTION_TEXT_LIMIT = 3;
