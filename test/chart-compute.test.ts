@@ -282,3 +282,79 @@ describe('angle aspects (#413)', () => {
     expect((without.angleAspects ?? []).some((a) => a.body === centaur?.id)).toBe(false);
   });
 });
+
+/**
+ * Aspects to the Vertex, Part of Fortune and Part of Spirit (#516), on the same reference chart as the angle aspects
+ * (a day chart: the Sun is above the horizon).
+ */
+describe('point aspects (#516)', () => {
+  const REFERENCE: BirthMomentInput = {
+    civil: { year: 1970, month: 1, day: 1, hour: 0, minute: 0, second: 0 },
+    coordinates: { latitude: 41.1833, longitude: -84.7333 },
+    zoneOverride: 'America/New_York',
+  };
+  const ALL_ON = { vertex: true, partOfFortune: true, partOfSpirit: true } as const;
+
+  it('draws no aspects to the Vertex or the parts by default, and leaves Asc/MC unchanged by the flags', async () => {
+    const engine = await getEngine();
+    const off = await computeChartData(REFERENCE, engine);
+    const on = await computeChartData(REFERENCE, engine, { aspectsTo: ALL_ON });
+    expect((off.angleAspects ?? []).every((a) => a.angle === 'asc' || a.angle === 'mc')).toBe(true);
+    const angles = (data: typeof on) => (data.angleAspects ?? []).filter((a) => a.angle === 'asc' || a.angle === 'mc');
+    expect(angles(on)).toEqual(angles(off));
+  });
+
+  it('adds aspects for each enabled point only, and only to bodies', async () => {
+    const engine = await getEngine();
+    const only = await computeChartData(REFERENCE, engine, { aspectsTo: { partOfFortune: true } });
+    const points = new Set((only.angleAspects ?? []).map((a) => a.angle));
+    expect(points.has('partOfFortune')).toBe(true);
+    expect(points.has('vertex')).toBe(false);
+    expect(points.has('partOfSpirit')).toBe(false);
+    for (const aspect of only.angleAspects ?? []) expect(bodyById(aspect.body)).toBeDefined();
+  });
+
+  it.each([
+    ['day', 12],
+    ['night', 0],
+  ] as const)('in a %s chart, never aspects a part to the luminary it is built from', async (sect, hour) => {
+    const engine = await getEngine();
+    const data = await computeChartData({ ...REFERENCE, civil: { ...REFERENCE.civil, hour } }, engine, {
+      aspectsTo: ALL_ON,
+    });
+    expect(data.sect).toBe(sect);
+    const sun = bodyByKey('sun');
+    const moon = bodyByKey('moon');
+    if (!sun || !moon) throw new Error('sun/moon missing');
+    // Day: Fortune = Asc + Moon - Sun, Spirit = Asc + Sun - Moon. Night swaps the luminaries.
+    const fortunePlus = sect === 'day' ? moon : sun;
+    const fortuneMinus = sect === 'day' ? sun : moon;
+    const aspects = data.angleAspects ?? [];
+    expect(aspects.some((a) => a.angle === 'partOfFortune' && a.body === fortunePlus.id)).toBe(false);
+    expect(aspects.some((a) => a.angle === 'partOfSpirit' && a.body === fortuneMinus.id)).toBe(false);
+
+    // The suppressed pairs would repeat the Ascendant's separation from the other luminary.
+    const lon = (id: number): number => data.positions.find((p) => p.body === id)?.longitude ?? Number.NaN;
+    const separation = (x: number, y: number): number => {
+      const diff = Math.abs(x - y) % 360;
+      return diff > 180 ? 360 - diff : diff;
+    };
+    expect(separation(data.partOfFortune, lon(fortunePlus.id))).toBeCloseTo(
+      separation(data.houses.ascendant, lon(fortuneMinus.id)),
+      9,
+    );
+    expect(separation(data.partOfSpirit, lon(fortuneMinus.id))).toBeCloseTo(
+      separation(data.houses.ascendant, lon(fortunePlus.id)),
+      9,
+    );
+  });
+
+  it('returns no point aspects when the houses have no solution', async () => {
+    const engine = await getEngine();
+    const polar = await computeChartData({ ...REFERENCE, coordinates: { latitude: 80, longitude: -84.7333 } }, engine, {
+      houseSystem: 'P',
+      aspectsTo: ALL_ON,
+    });
+    if (!housesAreDefined(polar.houses)) expect(polar.angleAspects).toEqual([]);
+  });
+});

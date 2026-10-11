@@ -10,6 +10,7 @@
  * @conventions Rendered outside the Stored local-store context since it needs no local data; uses SetPasswordForm.messages.ts for en/nl text via useMessages().
  * @exports SetPasswordForm
  */
+import { PasswordField } from './primitives/PasswordField.js';
 import { useState } from 'react';
 import { setPassword } from '../sync/auth-client.js';
 import { useMessages } from './messages.js';
@@ -86,28 +87,18 @@ export function SetPasswordForm(): React.JSX.Element {
       )}
       <form onSubmit={submit}>
         <div className="field-grid">
-          <label>
-            {t.newPasswordLabel}
-            <input
-              type="password"
-              autoComplete="new-password"
-              value={password}
-              onChange={(event) => {
-                setPasswordInput(event.target.value);
-              }}
-            />
-          </label>
-          <label>
-            {shared.confirmPasswordLabel}
-            <input
-              type="password"
-              autoComplete="new-password"
-              value={confirm}
-              onChange={(event) => {
-                setConfirm(event.target.value);
-              }}
-            />
-          </label>
+          <PasswordField
+            label={t.newPasswordLabel}
+            autoComplete="new-password"
+            value={password}
+            onChange={setPasswordInput}
+          />
+          <PasswordField
+            label={shared.confirmPasswordLabel}
+            autoComplete="new-password"
+            value={confirm}
+            onChange={setConfirm}
+          />
         </div>
         <p className="actions">
           <button type="submit" disabled={busy || password === '' || confirm === ''}>

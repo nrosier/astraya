@@ -7,7 +7,7 @@
  * live in it, and the card says which is which: the calculation and display settings are edited in a local draft
  * (every one needs a real recompute, so nothing is committed per keystroke) and applied together with "Apply and
  * redraw", or thrown away with Cancel, Escape or a click outside; the planetary rulers and the symbols are device
- * preferences, saved and applied at once, outside the draft.
+ * preferences, previewed live (the chart behind the card shows them) and put back by Cancel, kept by Apply or Save as my default.
  *
  * The groups follow how a chart is set up: the frame (zodiac, then houses), what is drawn on it, then its aspects.
  * A starting point (a preset) fills the profile settings of a tradition in one go and shows "Custom" when the draft
@@ -17,17 +17,24 @@
 /**
  * @module ExtendedSettingsPanel
  * @purpose Renders the chart's "Extended settings" modal: house system, zodiac/ayanamsa, visible points/aspects, orb scale, minor aspects, wheel colours, plus the planetary-rulership and symbol device preferences.
- * @conventions Calculation/display settings are edited in a local draft and only committed via "Apply and redraw" (every change needs a real recompute); planetary rulers and symbols are device preferences applied immediately, outside the draft. A preset (`extended-settings-presets.js`) can fill the whole profile in one go. Text comes from co-located `ExtendedSettingsPanel.messages.ts` via `useMessages()`.
+ * @conventions Calculation/display settings are edited in a local draft and only committed via "Apply and redraw" (every change needs a real recompute); planetary rulers and symbols are device preferences previewed live and put back by Cancel, kept by Apply or Save as my default. A preset (`extended-settings-presets.js`) can fill the whole profile in one go. Text comes from co-located `ExtendedSettingsPanel.messages.ts` via `useMessages()`.
  * @exports ExtendedSettingsPanel
  */
 import { useEffect, useId, useRef, useState } from 'react';
 import { ASPECTS, DEFAULT_ORB_CONFIG } from '../astrology/aspects.js';
 import { ayanamsaByKey, AYANAMSAS } from '../astrology/ayanamsas.js';
 import { HOUSE_SYSTEMS } from '../astrology/houses.js';
-import type { RulershipChoice } from '../astrology/rulership.js';
+import { DEFAULT_RULERSHIP_CHOICE, type RulershipChoice } from '../astrology/rulership.js';
 import { aspectDisplayName } from './astro-names.messages.js';
+import {
+  applyCalculationProfile,
+  CALCULATION_PROFILE_IDS,
+  CALCULATION_PROFILES,
+  matchCalculationProfile,
+  type CalculationProfileId,
+} from '../chart/calculation-profiles.js';
 import { DEFAULT_EXTENDED_SETTINGS, type ExtendedSettings } from '../chart/extended-settings.js';
-import { applyPreset, matchPreset, PRESET_KEYS, PRESETS, type PresetKey } from '../chart/extended-settings-presets.js';
+import { useDefaultCalculationProfile } from './default-calculation-profile.js';
 import { extendedSettingsPanelMessages } from './ExtendedSettingsPanel.messages.js';
 import { changedSettings, sameSettings } from './extended-settings-summary.js';
 import { useLocale } from './locale.js';
@@ -35,6 +42,10 @@ import { useMessages } from './messages.js';
 import { RulershipSetting } from './RulershipSetting.js';
 import { useRulershipChoice } from './rulership-setting.js';
 import { SymbolSetting } from './SymbolSetting.js';
+import { useGlyphVariants, type GlyphLook } from './glyph-variant-setting.js';
+import { useSymbolClass } from './symbol-setting.js';
+import { VARIANT_BODIES } from '../chart/glyph-variants.js';
+import type { SymbolClass } from '../chart/symbol-class.js';
 import type { EphemerisProvider } from '../ephemeris/types.js';
 
 const MINOR_ASPECTS = ASPECTS.filter((aspect) => aspect.family === 'minor');
@@ -66,6 +77,13 @@ function useNameLookup<T extends number | string>(
   return names;
 }
 
+/** The device preferences the card can change live, as they were when it opened. */
+interface DeviceSnapshot {
+  readonly rulers: RulershipChoice;
+  readonly symbolClass: SymbolClass;
+  readonly look: GlyphLook;
+}
+
 export function ExtendedSettingsPanel({
   value,
   onRedraw,
@@ -78,8 +96,9 @@ export function ExtendedSettingsPanel({
   const [draft, setDraft] = useState<ExtendedSettings>(value);
   // A starting point can also set the planetary rulers, which are a device preference; they are written only on Apply.
   const [pendingRulers, setPendingRulers] = useState<RulershipChoice | undefined>(undefined);
-  // Symbols are also a device preference (localStorage), but we track if they changed to enable the Apply button.
-  const [symbolsChanged, setSymbolsChanged] = useState(false);
+  // The device preferences edited in the card (rulers, symbols) take effect as they are changed, so the chart
+  // behind it previews them; what they were when the card opened is kept so Cancel can put them back.
+  const [atOpen, setAtOpen] = useState<DeviceSnapshot | undefined>(undefined);
   const [open, setOpen] = useState(false);
   // Capture the current rulership choice for reactive description updates
   const [rulershipChoice] = useRulershipChoice();
@@ -89,6 +108,9 @@ export function ExtendedSettingsPanel({
   const t = useMessages(extendedSettingsPanelMessages);
   const [locale] = useLocale();
   const [rulers, setRulers] = useRulershipChoice();
+  const [savedDefault, setDefaultCalculationProfile] = useDefaultCalculationProfile();
+  const [symbolClass, setSymbolClass] = useSymbolClass();
+  const [look, setVariant, setWeight] = useGlyphVariants();
 
   const houseSystemNames = useNameLookup(
     HOUSE_SYSTEMS.map((system) => system.code),
@@ -114,7 +136,7 @@ export function ExtendedSettingsPanel({
   const openCard = (): void => {
     setDraft(value);
     setPendingRulers(undefined);
-    setSymbolsChanged(false);
+    setAtOpen({ rulers, symbolClass, look });
     setOpen(true);
     const dialog = dialogRef.current;
     if (dialog === null) return;
@@ -122,17 +144,26 @@ export function ExtendedSettingsPanel({
     else dialog.setAttribute('open', '');
   };
 
-  /** Closes the card; the browser returns focus to the trigger. Whatever was not applied is dropped. */
-  const closeCard = (): void => {
+  /**
+   * Closes the card; the browser returns focus to the trigger. Whatever was not applied is dropped — including the
+   * device preferences previewed in it (#510), unless `keepDevice` says they were saved.
+   */
+  const closeCard = (keepDevice = false): void => {
     const dialog = dialogRef.current;
     if (dialog !== null) {
       if (typeof dialog.close === 'function') dialog.close();
       else dialog.removeAttribute('open');
     }
+    if (!keepDevice && atOpen !== undefined) {
+      setRulers(atOpen.rulers);
+      setSymbolClass(atOpen.symbolClass);
+      setWeight(atOpen.look.weight);
+      for (const body of VARIANT_BODIES) setVariant(body, atOpen.look[body]);
+    }
     setOpen(false);
     setDraft(value);
     setPendingRulers(undefined);
-    setSymbolsChanged(false);
+    setAtOpen(undefined);
     triggerRef.current?.focus();
   };
 
@@ -151,8 +182,14 @@ export function ExtendedSettingsPanel({
   }, [value, open]);
 
   const effectiveRulers = pendingRulers ?? rulers;
-  const currentPreset = matchPreset(draft, effectiveRulers);
-  const dirty = !sameSettings(draft, value) || pendingRulers !== undefined || symbolsChanged;
+  const currentProfile = matchCalculationProfile(draft, effectiveRulers);
+  const deviceChanged =
+    atOpen !== undefined &&
+    (rulers !== atOpen.rulers ||
+      symbolClass !== atOpen.symbolClass ||
+      look.weight !== atOpen.look.weight ||
+      VARIANT_BODIES.some((body) => look[body] !== atOpen.look[body]));
+  const dirty = !sameSettings(draft, value) || pendingRulers !== undefined || deviceChanged;
 
   const apply = (): void => {
     if (pendingRulers !== undefined) setRulers(pendingRulers);
@@ -164,14 +201,29 @@ export function ExtendedSettingsPanel({
     }
     setOpen(false);
     setPendingRulers(undefined);
+    setAtOpen(undefined);
     triggerRef.current?.focus();
   };
 
-  const choosePreset = (key: string): void => {
-    if (!(PRESET_KEYS as readonly string[]).includes(key)) return;
-    const preset = key as PresetKey;
-    setDraft((current) => applyPreset(current, preset));
-    setPendingRulers(PRESETS[preset].rulership === rulers ? undefined : PRESETS[preset].rulership);
+  /** "Save as my default" (#510): remembers the draft and rulers for every future chart on this device — never redraws the chart currently open, which stays Apply's job alone. */
+  const saveAsDefault = (): void => {
+    if (pendingRulers !== undefined) setRulers(pendingRulers);
+    setDefaultCalculationProfile(draft, effectiveRulers);
+    closeCard(true);
+  };
+
+  /** Both resets name their target (#510): the draft and the rulers go back to that one profile, not to a mix. */
+  const resetTo = (settings: ExtendedSettings, rulership: RulershipChoice): void => {
+    setDraft(settings);
+    setPendingRulers(rulership === rulers ? undefined : rulership);
+  };
+
+  const chooseProfile = (id: string): void => {
+    if (!(CALCULATION_PROFILE_IDS as readonly string[]).includes(id)) return;
+    const profileId = id as CalculationProfileId;
+    setDraft((current) => applyCalculationProfile(current, profileId));
+    const profileRulers = CALCULATION_PROFILES[profileId].rulership;
+    setPendingRulers(profileRulers === rulers ? undefined : profileRulers);
   };
 
   const ayanamsaId = draft.zodiac.kind === 'sidereal' ? draft.zodiac.ayanamsa : undefined;
@@ -260,7 +312,14 @@ export function ExtendedSettingsPanel({
       >
         <div className="settings-card-header">
           <h2 id={headingId}>{t.heading}</h2>
-          <button type="button" className="quiet" aria-label={t.closeLabel} onClick={closeCard}>
+          <button
+            type="button"
+            className="quiet"
+            aria-label={t.closeLabel}
+            onClick={() => {
+              closeCard();
+            }}
+          >
             ×
           </button>
         </div>
@@ -274,25 +333,25 @@ export function ExtendedSettingsPanel({
             <label>
               <select
                 aria-label={t.presetLabel}
-                value={currentPreset ?? 'custom'}
+                value={currentProfile ?? 'custom'}
                 onChange={(event) => {
-                  choosePreset(event.target.value);
+                  chooseProfile(event.target.value);
                 }}
               >
-                <option value="custom" disabled={currentPreset !== undefined}>
+                <option value="custom" disabled={currentProfile !== undefined}>
                   {t.presetOptions.custom}
                 </option>
-                {PRESET_KEYS.map((key) => (
-                  <option key={key} value={key}>
-                    {t.presetOptions[key]}
+                {CALCULATION_PROFILE_IDS.map((id) => (
+                  <option key={id} value={id}>
+                    {t.presetOptions[id]}
                   </option>
                 ))}
               </select>
             </label>
             <p className="hint">
-              {t.presetNotes[currentPreset ?? 'custom']}
-              {currentPreset !== undefined && PRESETS[currentPreset].rulership !== rulers
-                ? ` ${t.presetRulership(t.rulershipNames[PRESETS[currentPreset].rulership])}`
+              {t.presetNotes[currentProfile ?? 'custom']}
+              {currentProfile !== undefined && CALCULATION_PROFILES[currentProfile].rulership !== rulers
+                ? ` ${t.presetRulership(t.rulershipNames[CALCULATION_PROFILES[currentProfile].rulership])}`
                 : ''}
             </p>
           </fieldset>
@@ -509,6 +568,36 @@ export function ExtendedSettingsPanel({
               />{' '}
               {t.aspectsToLunarNodes}
             </label>
+            <label className="settings-card-indent">
+              <input
+                type="checkbox"
+                checked={draft.aspectsToVertex}
+                onChange={(event) => {
+                  patch({ aspectsToVertex: event.target.checked });
+                }}
+              />{' '}
+              {t.aspectsToVertex}
+            </label>
+            <label className="settings-card-indent">
+              <input
+                type="checkbox"
+                checked={draft.aspectsToPartOfFortune}
+                onChange={(event) => {
+                  patch({ aspectsToPartOfFortune: event.target.checked });
+                }}
+              />{' '}
+              {t.aspectsToPartOfFortune}
+            </label>
+            <label className="settings-card-indent">
+              <input
+                type="checkbox"
+                checked={draft.aspectsToPartOfSpirit}
+                onChange={(event) => {
+                  patch({ aspectsToPartOfSpirit: event.target.checked });
+                }}
+              />{' '}
+              {t.aspectsToPartOfSpirit}
+            </label>
             <p className="hint">{t.aspectsToHint}</p>
           </fieldset>
 
@@ -572,7 +661,7 @@ export function ExtendedSettingsPanel({
 
           <fieldset className="field-group settings-card-group">
             <legend>{t.rulersLegend}</legend>
-            <p className="hint settings-card-tag">{t.appliesOnApply}</p>
+            <p className="hint settings-card-tag">{t.devicePreview}</p>
             <p className="hint">{t.rulersSubtitle}</p>
             <RulershipSetting />
             <p className="settings-card-note">
@@ -585,12 +674,8 @@ export function ExtendedSettingsPanel({
 
           <fieldset className="field-group settings-card-group">
             <legend>{t.symbolsFrameSubtitle}</legend>
-            <p className="hint settings-card-tag">{t.savedOnDevice}</p>
-            <SymbolSetting
-              onChanged={() => {
-                setSymbolsChanged(true);
-              }}
-            />
+            <p className="hint settings-card-tag">{t.devicePreview}</p>
+            <SymbolSetting />
           </fieldset>
         </div>
 
@@ -604,17 +689,44 @@ export function ExtendedSettingsPanel({
           >
             {t.applyButton}
           </button>
-          <button type="button" className="quiet" onClick={closeCard}>
-            {t.cancelButton}
+          <button
+            type="button"
+            className="quiet"
+            disabled={!dirty}
+            aria-label={dirty ? t.saveAsDefaultButton : `${t.saveAsDefaultButton} — ${t.nothingChanged}`}
+            title={t.saveAsDefaultHint}
+            onClick={saveAsDefault}
+          >
+            {t.saveAsDefaultButton}
           </button>
           <button
             type="button"
             className="quiet"
             onClick={() => {
-              setDraft(DEFAULT_EXTENDED_SETTINGS);
+              closeCard();
             }}
           >
-            {t.resetToDefaultsButton}
+            {t.cancelButton}
+          </button>
+          {savedDefault !== undefined && (
+            <button
+              type="button"
+              className="quiet"
+              onClick={() => {
+                resetTo(savedDefault.settings, savedDefault.rulership);
+              }}
+            >
+              {t.resetToMyDefaultButton}
+            </button>
+          )}
+          <button
+            type="button"
+            className="quiet"
+            onClick={() => {
+              resetTo(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE);
+            }}
+          >
+            {t.resetToAstrayaDefaultButton}
           </button>
         </div>
       </dialog>

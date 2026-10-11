@@ -65,7 +65,7 @@ test('choosing a person shows which of their natal points an eclipse touches', a
     longitude: '-0.1276',
   });
 
-  await page.goto(`${baseUrl}/#/eclipses`);
+  await page.goto(`${baseUrl}/#/explore/eclipses`);
   await page.getByLabel('From year').fill('2024');
   await page.getByLabel('To year').fill('2024');
   await page.getByLabel('Natal chart').selectOption({ label: 'Eclipse Tester' });
@@ -78,7 +78,7 @@ test('choosing a person shows which of their natal points an eclipse touches', a
 test('the eclipses screen has no automatically detectable accessibility violations', async ({ page }) => {
   test.setTimeout(90_000);
 
-  await gotoAndSettle(page, `${baseUrl}/#/eclipses`);
+  await gotoAndSettle(page, `${baseUrl}/#/explore/eclipses`);
   await expect(page.getByRole('table')).toBeVisible({ timeout: 60_000 });
 
   const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
@@ -88,7 +88,7 @@ test('the eclipses screen has no automatically detectable accessibility violatio
 test('a span that is too long is refused inline', async ({ page }) => {
   test.setTimeout(90_000);
 
-  await gotoAndSettle(page, `${baseUrl}/#/eclipses`);
+  await gotoAndSettle(page, `${baseUrl}/#/explore/eclipses`);
   await expect(page.getByRole('table')).toBeVisible({ timeout: 60_000 });
   await page.getByLabel('From year').fill('1900');
   await page.getByLabel('To year').fill('2100');

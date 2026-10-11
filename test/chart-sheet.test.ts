@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ChartSheetInput } from '../src/chart/chart-sheet.js';
-import { renderChartSheetSvg } from '../src/chart/chart-sheet.js';
+import { renderChartDialSvg, renderChartSheetSvg } from '../src/chart/chart-sheet.js';
 import type { HousePositions } from '../src/ephemeris/types.js';
 
 function houses(ascendant: number): HousePositions {
@@ -125,5 +125,42 @@ describe('renderChartSheetSvg', () => {
 
   it('rejects a sheet with no wheel ring rather than drawing an empty wheel', () => {
     expect(() => renderChartSheetSvg({ ...input, rings: [] })).toThrow(/at least one ring/);
+  });
+});
+
+describe('renderChartDialSvg (#511)', () => {
+  it("draws the sheet's own wheel, at the same size and margin, without its header or panels", () => {
+    const dial = renderChartDialSvg(input);
+    const sheet = renderChartSheetSvg(input);
+    expect(dial.width).toBeCloseTo(sheet.width, 6);
+    expect(dial.height).toBeCloseTo(dial.width, 6);
+    expect(dial.markup).toContain('wheel-ring-house');
+    for (const panel of ['chart-sheet-title', 'chart-matrix-diagonal', 'chart-emphasis-cell', 'chart-strip-axis']) {
+      expect(dial.markup).not.toContain(panel);
+    }
+    // Same markup inside, so geometry and every data-* hit target are the sheet's, byte for byte.
+    const open = dial.markup.indexOf('>', dial.markup.indexOf('<g transform')) + 1;
+    const wheelOnly = dial.markup.slice(open, dial.markup.lastIndexOf('</g></svg>'));
+    expect(wheelOnly.length).toBeGreaterThan(1000);
+    expect(sheet.markup).toContain(wheelOnly);
+  });
+
+  it('keeps every selectable symbol the sheet has', () => {
+    const count = (markup: string, attribute: string): number => markup.split(attribute).length - 1;
+    const dial = renderChartDialSvg(input).markup;
+    const sheet = renderChartSheetSvg(input).markup;
+    for (const attribute of ['data-body=', 'data-sign=', 'data-house=', 'data-aspect-body-a=']) {
+      expect(count(dial, attribute)).toBe(count(sheet, attribute));
+    }
+  });
+
+  it('draws each house number as a selectable mark carrying its span and cusp sign (#511)', () => {
+    const { markup } = renderChartDialSvg(input);
+    expect(markup.split('data-house="').length - 1).toBe(12);
+    // houses(15): house 1 runs 15°-45° (a 30° house), its cusp in Aries.
+    expect(markup).toContain(
+      'data-house="1" data-house-start="15.0000" data-house-end="45.0000" data-house-sign="aries"',
+    );
+    expect(markup).toContain('data-body-longitude="10.5000"');
   });
 });

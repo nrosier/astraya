@@ -60,7 +60,7 @@ test('rectifying a day of candidate times recovers the true birth time from exac
     longitude: '-0.1276',
   });
 
-  await page.goto(`${baseUrl}/#/rectification`);
+  await page.goto(`${baseUrl}/#/explore/rectification`);
   await page.getByLabel('Fill in from a person').selectOption({ label: 'Rectify Me' });
   await expect(page.getByLabel('Birth date')).toHaveValue('1985-03-12');
   await page.getByLabel('Earliest possible time').fill('00:00');
@@ -85,7 +85,7 @@ test('rectifying a day of candidate times recovers the true birth time from exac
 test('a missing event, an event before birth and a bad time are reported inline', async ({ page }) => {
   test.setTimeout(60_000);
 
-  await gotoAndSettle(page, `${baseUrl}/#/rectification`);
+  await gotoAndSettle(page, `${baseUrl}/#/explore/rectification`);
   await page.getByLabel('Birth date').fill('1985-03-12');
   await page.getByLabel('Latitude', { exact: true }).fill('51.5072');
   await page.getByLabel('Longitude', { exact: true }).fill('-0.1276');
@@ -107,7 +107,7 @@ test('a missing event, an event before birth and a bad time are reported inline'
 test('the rectification screen has no automatically detectable accessibility violations', async ({ page }) => {
   test.setTimeout(120_000);
 
-  await gotoAndSettle(page, `${baseUrl}/#/rectification`);
+  await gotoAndSettle(page, `${baseUrl}/#/explore/rectification`);
   await page.getByLabel('Birth date').fill('1985-03-12');
   await page.getByLabel('Latitude', { exact: true }).fill('51.5072');
   await page.getByLabel('Longitude', { exact: true }).fill('-0.1276');

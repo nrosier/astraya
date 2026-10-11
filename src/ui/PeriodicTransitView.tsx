@@ -26,6 +26,8 @@
  * @conventions Follows TransitView.tsx's person-not-found/incomplete-moment/unknown-time gating; uses PeriodicTransitView.messages.ts for en/nl text via useMessages().
  * @exports PeriodicTransitView, bodyName, formatUtc, localizedSignName, signHouseLabel, contactRows, contactColumns, exactEventRows, exactEventColumns, stationRows, stationColumns
  */
+import { personHref } from './route.js';
+import { Select } from './primitives/Select.js';
 import { useEffect, useMemo, useState } from 'react';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import type { Aspect } from '../astrology/aspects.js';
@@ -340,12 +342,12 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
     return (
       <main className="shell">
         <p className="back">
-          <a href={`#/person/${personId}`}>&larr; {person.displayName || t.personFallback}</a>
+          <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
         </p>
         <h1>{t.forecastFallback}</h1>
         <p>
           {t.notCompleteForecast(person.displayName || t.thisPerson)}{' '}
-          <a href={`#/person/${personId}`}>{t.personPageLink}</a>.
+          <a href={personHref(personId)}>{t.personPageLink}</a>.
         </p>
       </main>
     );
@@ -355,7 +357,7 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
     return (
       <main className="shell">
         <p className="back">
-          <a href={`#/person/${personId}`}>&larr; {person.displayName || t.personFallback}</a>
+          <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
         </p>
         <h1>{t.forecastFallback}</h1>
         <p>{t.needsKnownTime(person.displayName || t.thisPerson)}</p>
@@ -392,7 +394,7 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
   return (
     <main className="shell">
       <p className="back">
-        <a href={`#/person/${personId}`}>&larr; {person.displayName || t.personFallback}</a>
+        <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
       </p>
       <h1>{person.displayName ? t.heading(person.displayName) : t.forecastFallback}</h1>
       <p className="hint">{t.hint(person.displayName || t.thisFallback)}</p>
@@ -597,21 +599,14 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
             <h2>{t.planetaryReturnHeading}</h2>
             <p className="hint">{t.planetaryReturnHint}</p>
             <div className="field-grid">
-              <label>
-                {t.bodyLabel}
-                <select
-                  value={returnBodyKey}
-                  onChange={(event) => {
-                    setReturnBodyKey(event.target.value as ReturnBodyKey);
-                  }}
-                >
-                  {RETURN_BODY_KEYS.map((key) => (
-                    <option key={key} value={key}>
-                      {bodyDisplayName(key, locale)}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <Select
+                label={t.bodyLabel}
+                value={returnBodyKey}
+                options={RETURN_BODY_KEYS.map((key) => ({ value: key, label: bodyDisplayName(key, locale) }))}
+                onChange={(value) => {
+                  setReturnBodyKey(value as ReturnBodyKey);
+                }}
+              />
             </div>
 
             {returnLoad.kind === 'loading' && <p className="status">{t.calculating}</p>}

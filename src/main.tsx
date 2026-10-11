@@ -7,6 +7,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './ui/App.js';
+import './ui/appearance-settings.js';
 import { applyTheme, readStoredTheme } from './ui/theme-dom.js';
 import './ui/app.css';
 

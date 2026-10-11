@@ -11,6 +11,9 @@
  * @conventions Needs no saved person or stored data (ephemeris-only), so it lives outside `Stored`; it ranks candidate times against rules, it does not recommend acting on any one of them. Text comes from co-located `ElectionalView.messages.ts` via `useMessages()`.
  * @exports ElectionalView
  */
+import { DateField } from './primitives/DateField.js';
+import { Select } from './primitives/Select.js';
+import { TextField } from './primitives/TextField.js';
 import { useMemo, useRef, useState } from 'react';
 import { ELECTION_RULE_KEYS, findElectionWindows, type ElectionRuleKey } from '../astrology/electional.js';
 import { BirthPlaceSearch } from './BirthPlaceSearch.js';
@@ -142,63 +145,44 @@ export function ElectionalView(): React.JSX.Element {
       <p className="hint">{t.hint}</p>
 
       <div className="field-grid">
-        <label>
-          {t.fromDateLabel}
-          <input
-            type="date"
-            value={fields.fromDate}
-            onChange={(event) => {
-              edit({ fromDate: event.target.value });
-            }}
-          />
-        </label>
-        <label>
-          {t.toDateLabel}
-          <input
-            type="date"
-            value={fields.toDate}
-            onChange={(event) => {
-              edit({ toDate: event.target.value });
-            }}
-          />
-        </label>
-        <label>
-          {t.latitudeLabel}
-          <input
-            type="text"
-            inputMode="decimal"
-            value={fields.latitude}
-            onChange={(event) => {
-              edit({ latitude: event.target.value });
-            }}
-          />
-        </label>
-        <label>
-          {t.longitudeLabel}
-          <input
-            type="text"
-            inputMode="decimal"
-            value={fields.longitude}
-            onChange={(event) => {
-              edit({ longitude: event.target.value });
-            }}
-          />
-        </label>
-        <label>
-          {t.stepLabel}
-          <select
-            value={stepMinutes}
-            onChange={(event) => {
-              setStepMinutes(Number(event.target.value));
-            }}
-          >
-            {ELECTION_STEP_MINUTES.map((minutes) => (
-              <option key={minutes} value={minutes}>
-                {t.stepOption(minutes)}
-              </option>
-            ))}
-          </select>
-        </label>
+        <DateField
+          label={t.fromDateLabel}
+          value={fields.fromDate}
+          onChange={(value) => {
+            edit({ fromDate: value });
+          }}
+        />
+        <DateField
+          label={t.toDateLabel}
+          value={fields.toDate}
+          onChange={(value) => {
+            edit({ toDate: value });
+          }}
+        />
+        <TextField
+          label={t.latitudeLabel}
+          inputMode="decimal"
+          value={fields.latitude}
+          onChange={(value) => {
+            edit({ latitude: value });
+          }}
+        />
+        <TextField
+          label={t.longitudeLabel}
+          inputMode="decimal"
+          value={fields.longitude}
+          onChange={(value) => {
+            edit({ longitude: value });
+          }}
+        />
+        <Select
+          label={t.stepLabel}
+          value={String(stepMinutes)}
+          options={ELECTION_STEP_MINUTES.map((minutes) => ({ value: String(minutes), label: t.stepOption(minutes) }))}
+          onChange={(value) => {
+            setStepMinutes(Number(value));
+          }}
+        />
       </div>
 
       <BirthPlaceSearch

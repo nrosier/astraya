@@ -11,6 +11,7 @@
  */
 import type { CorpusPlacement, DignityState, Locale } from '../interpretation/schema.js';
 import { SIGNS, signAndDegreeFromDegreeSymbol } from '../astrology/signs.js';
+import { derivedPointByKey } from '../astrology/derived-points.js';
 import { aspectDisplayName, bodyDisplayName, signDisplayName } from './astro-names.messages.js';
 
 export interface SelectionHeadingLabels {
@@ -48,10 +49,14 @@ export function placementHeading(
       const { sign, degree } = signAndDegreeFromDegreeSymbol(placement.degree);
       return `${signName(sign.index, locale)} ${String(degree)}°`;
     }
+    case 'derived-point-in-sign':
+      return `${derivedPointByKey(placement.point)?.label ?? placement.point} — ${signName(placement.sign, locale)}`;
+    case 'derived-point-in-house':
+      return `${derivedPointByKey(placement.point)?.label ?? placement.point} — ${labels.house} ${String(placement.house)}`;
     default:
       return undefined;
   }
 }
 
-/** How many entries are shown before a "show all" control, so a busy planet does not bury the facts. */
-export const SELECTION_TEXT_LIMIT = 6;
+/** How many entries are shown before the "Show all meanings" disclosure (#511: concise inspector, most relevant first), so a busy planet does not bury the facts. */
+export const SELECTION_TEXT_LIMIT = 3;

@@ -142,9 +142,9 @@ describe('electionRows', () => {
 });
 
 describe('electional screen wiring', () => {
-  it('routes #/electional to the screen', () => {
-    expect(parseRoute('#/electional')).toEqual({ kind: 'electional' });
-    expect(parseRoute('#/electional/')).toEqual({ kind: 'electional' });
+  it('routes #/explore/electional to the screen', () => {
+    expect(parseRoute('#/explore/electional')).toEqual({ kind: 'electional' });
+    expect(parseRoute('#/explore/electional/')).toEqual({ kind: 'electional' });
   });
 
   it('offers a half hour, an hour and two hours, with a label in both languages', () => {

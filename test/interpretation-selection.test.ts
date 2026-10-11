@@ -6,6 +6,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { bodyById, bodyByKey } from '../src/astrology/bodies.js';
 import { computeChartData, type ChartData } from '../src/domain/chart-compute.js';
 import { derivePlacements } from '../src/interpretation/rules.js';
+import { placementKey } from '../src/interpretation/schema.js';
 import { parseSelectionKey, selectionPlacements, type WheelSelection } from '../src/interpretation/selection.js';
 import { getEngine } from './engine-harness.js';
 
@@ -221,5 +222,62 @@ describe('selectionPlacements (#415)', () => {
 
   it('for a body with no placements (an unknown key): nothing', () => {
     expect(select({ kind: 'body', key: 'nonexistent', ring: 0 })).toEqual([]);
+  });
+
+  it('for a house cusp (#511): the sign on its cusp first, then each planet in that house, nothing from other houses', () => {
+    const items = select({ kind: 'house', house: 1 });
+    expect(items.length).toBeGreaterThan(0);
+    expect(items[0]?.placement.category).toBe('sign-on-cusp');
+    for (const item of items) {
+      const placement = item.placement;
+      expect(placement.category === 'sign-on-cusp' || placement.category === 'planet-in-house').toBe(true);
+      if (placement.category === 'sign-on-cusp' || placement.category === 'planet-in-house') {
+        expect(placement.house).toBe(1);
+      }
+    }
+    const categories = items.map((item) => item.placement.category);
+    expect(categories).toEqual(
+      [...categories].sort((a, b) => (a === 'sign-on-cusp' ? -1 : b === 'sign-on-cusp' ? 1 : 0)),
+    );
+  });
+});
+
+describe('derived-point selection (#511)', () => {
+  it('parses derived:<point> for the closed list only', () => {
+    expect(parseSelectionKey('derived:part-of-fortune')).toEqual({ kind: 'derived', point: 'part-of-fortune' });
+    // The midpoints are not derived-point selections (no source gives them a meaning).
+    expect(parseSelectionKey('derived:sun-moon-midpoint')).toBeUndefined();
+    expect(parseSelectionKey('derived:asc-mc-midpoint')).toBeUndefined();
+    expect(parseSelectionKey('derived:part-of-luck')).toBeUndefined();
+    expect(parseSelectionKey('derived:')).toBeUndefined();
+  });
+
+  it('is the point in its sign, then in its house, built from the point’s own position', () => {
+    const items = selectionPlacements(chart, { kind: 'derived', point: 'part-of-spirit' });
+    expect(items.map((item) => item.placement.category)).toEqual(['derived-point-in-sign', 'derived-point-in-house']);
+    const sign = items[0]?.placement;
+    const house = items[1]?.placement;
+    expect(sign).toMatchObject({
+      point: 'part-of-spirit',
+      sign: Math.floor((((chart.partOfSpirit % 360) + 360) % 360) / 30),
+    });
+    expect(house).toMatchObject({ point: 'part-of-spirit' });
+    expect(items.map((item) => item.key)).toEqual(items.map((item) => placementKey(item.placement)));
+  });
+
+  it('gives each of the two points a sign entry and a house entry', () => {
+    for (const point of ['part-of-fortune', 'part-of-spirit'] as const) {
+      expect(selectionPlacements(chart, { kind: 'derived', point })).toHaveLength(2);
+    }
+  });
+});
+
+describe('parseSelectionKey: house cusps (#511)', () => {
+  it('reads house:<1-12> and rejects anything else', () => {
+    expect(parseSelectionKey('house:5')).toEqual({ kind: 'house', house: 5 });
+    expect(parseSelectionKey('house:12')).toEqual({ kind: 'house', house: 12 });
+    for (const bad of ['house:0', 'house:13', 'house:x', 'house:', 'house:2.5']) {
+      expect(parseSelectionKey(bad)).toBeUndefined();
+    }
   });
 });

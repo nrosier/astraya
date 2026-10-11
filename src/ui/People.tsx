@@ -12,6 +12,7 @@
  * @conventions A person is the primary entity (charts belong to people, not vice versa); a person with no birth moment is listed as exactly that rather than hidden or faked complete; deletes are tombstones, shown under "Deleted" with a restore option until purged. Text comes from co-located `People.messages.ts` via `useMessages()`.
  * @exports People
  */
+import { personHref } from './route.js';
 import { useState } from 'react';
 import { newId } from '../domain/id.js';
 import { useLocale } from './locale.js';
@@ -42,7 +43,7 @@ export function People(): React.JSX.Element {
     void store
       .mutate([{ entity: 'person', entityId: id, field: 'displayName', value: '' }])
       .then(() => {
-        window.location.hash = `#/person/${id}`;
+        window.location.hash = personHref(id);
       })
       .catch((cause: unknown) => {
         setError(cause instanceof Error ? cause.message : String(cause));
@@ -91,7 +92,7 @@ export function People(): React.JSX.Element {
         <ul className="people">
           {people.map((person) => (
             <li key={person.id}>
-              <a className="person" href={`#/person/${person.id}`}>
+              <a className="person" href={personHref(person.id)}>
                 <span className={person.displayName === '' ? 'name unnamed' : 'name'}>
                   {person.displayName === '' ? t.unnamed : person.displayName}
                 </span>

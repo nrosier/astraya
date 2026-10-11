@@ -82,7 +82,7 @@ test('clicking a glyph on the wheel isolates it and opens a focused-info panel (
   await expect(sunGlyph).toHaveCount(1);
   await sunGlyph.click();
 
-  const panel = page.locator('.chart-isolation-panel');
+  const panel = page.locator('.selection-inspector-facts');
   await expect(panel).toBeVisible();
   await expect(panel).toContainText('Sun');
   await expect(page.locator('.chart-wheel .chart-dimmed').first()).toBeVisible();
@@ -111,7 +111,7 @@ test('clicking an aspect line isolates just its two endpoint bodies (#400)', asy
   const line = page.locator('[data-aspect-body-a]').first();
   await line.click({ force: true });
 
-  const panel = page.locator('.chart-isolation-panel');
+  const panel = page.locator('.selection-inspector-facts');
   await expect(panel).toBeVisible();
   await expect(panel).toContainText('Orb');
 
@@ -134,8 +134,9 @@ test('the Jones chart-shape diagram renders alongside its text sentence and expl
   });
 
   await openNatalChart(page);
-  await page.getByRole('tab', { name: 'Chart shape', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Chart shape', level: 2 })).toBeVisible();
+  await page.getByRole('link', { name: 'Patterns & condition', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Patterns & condition', level: 2 })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Chart shape', level: 3 })).toBeVisible();
   await expect(page.getByText(/Chart shape: /)).toBeVisible();
   await expect(page.locator('.chart-shape-diagram')).toBeVisible();
   await expect(page.locator('.chart-shape-diagram .chart-shape-ring')).toBeVisible();
@@ -144,7 +145,7 @@ test('the Jones chart-shape diagram renders alongside its text sentence and expl
   await expect(page.getByText(/Sect: (Day|Night) chart/)).toBeVisible();
 });
 
-test('the natal chart is split into sections, opening on the wheel, and the wheel keeps its selection (#430)', async ({
+test('the natal chart is split into views, opening on the wheel, and the wheel keeps its selection (#511)', async ({
   page,
 }) => {
   test.setTimeout(60_000);
@@ -159,36 +160,36 @@ test('the natal chart is split into sections, opening on the wheel, and the whee
   });
   await openNatalChart(page);
 
-  const tabs = page.getByRole('tab');
-  await expect(tabs).toHaveText([
-    'Chart wheel',
-    'Chart shape',
-    'Positions',
-    'Houses',
+  // The page states its calculation basis and where it comes from (#510).
+  await expect(page.locator('.page-header-basis')).toHaveText('Calculation profile: Modern Western — Astraya default');
+
+  // Route-level links (#511), not ARIA tabs.
+  await expect(page.locator('nav.chart-view-nav [role="tab"]')).toHaveCount(0);
+  const links = page.locator('nav.chart-view-nav .chart-view-link');
+  await expect(links).toHaveText([
+    'Wheel',
     'Aspects',
-    'Dignities',
-    'Derived points',
+    'Aspect matrix',
+    'Elements & modalities',
+    'Placements',
+    'Patterns & condition',
   ]);
-  await expect(page.getByRole('tab', { name: 'Chart wheel', exact: true })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('link', { name: 'Wheel', exact: true })).toHaveAttribute('aria-current', 'page');
   await expect(page.locator('div.chart-wheel')).toBeVisible();
 
-  // Select a planet, visit another section, come back: the selection is still there.
+  // Select a planet, visit another view, come back: the selection is still there.
   await page.locator('.chart-point[data-body="sun"]').first().click({ force: true });
-  await expect(page.locator('.chart-isolation-panel')).toBeVisible();
-  await page.getByRole('tab', { name: 'Positions', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Positions', level: 2 })).toBeVisible();
+  await expect(page.locator('.selection-inspector-facts')).toBeVisible();
+  await page.getByRole('link', { name: 'Placements', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Placements', level: 2 })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Positions', level: 3 })).toBeVisible();
   await expect(page.locator('div.chart-wheel')).toBeHidden();
   await expect(page.getByRole('cell', { name: 'Sun', exact: true }).first()).toBeVisible();
-  await page.getByRole('tab', { name: 'Chart wheel', exact: true }).click();
-  await expect(page.locator('.chart-isolation-panel')).toBeVisible();
-
-  // The arrow keys walk the strip.
-  await page.getByRole('tab', { name: 'Chart wheel', exact: true }).focus();
-  await page.keyboard.press('ArrowRight');
-  await expect(page.getByRole('tab', { name: 'Chart shape', exact: true })).toBeFocused();
+  await page.getByRole('link', { name: 'Wheel', exact: true }).click();
+  await expect(page.locator('.selection-inspector-facts')).toBeVisible();
 });
 
-test('the natal chart sections fit a phone: the tab strip wraps instead of scrolling the page sideways (#430)', async ({
+test('the natal chart views fit a phone: a labelled Select replaces the link row, and nothing scrolls the page sideways (#511)', async ({
   page,
 }) => {
   test.setTimeout(60_000);
@@ -205,11 +206,14 @@ test('the natal chart sections fit a phone: the tab strip wraps instead of scrol
   // On a phone the navigation is folded behind the Menu button (#421).
   await page.getByRole('button', { name: 'Menu', exact: true }).click();
   await openNatalChart(page);
-  await expect(page.getByRole('tab', { name: 'Derived points', exact: true })).toBeVisible();
+  const select = page.getByLabel('Chart view', { exact: true });
+  await expect(select).toBeVisible();
+  await expect(page.locator('nav.chart-view-nav')).toBeHidden();
   const overflow = await page.evaluate('document.documentElement.scrollWidth - window.innerWidth');
   expect(overflow).toBeLessThanOrEqual(1);
-  await page.getByRole('tab', { name: 'Chart shape', exact: true }).click();
+  await select.selectOption('patterns');
   await expect(page.locator('.chart-shape-diagram')).toBeVisible();
+  // The Dignities table scrolls inside its own `.data-table-scroll` wrap, never the page.
   expect(await page.evaluate('document.documentElement.scrollWidth - window.innerWidth')).toBeLessThanOrEqual(1);
 });
 
@@ -228,7 +232,7 @@ test('a table row selects on the wheel and the wheel marks the table row (#418)'
   await expect(page.locator('div.chart-wheel')).toBeVisible();
 
   // Table to wheel: press Show on the Sun's row, then go to the chart: it is isolated there.
-  await page.getByRole('tab', { name: 'Positions', exact: true }).click();
+  await page.getByRole('link', { name: 'Placements', exact: true }).click();
   await page.getByRole('button', { name: 'Show Sun on the chart', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Show Sun on the chart', exact: true })).toHaveAttribute(
     'aria-pressed',
@@ -238,11 +242,11 @@ test('a table row selects on the wheel and the wheel marks the table row (#418)'
   await page.getByRole('button', { name: 'Go to the chart', exact: true }).click();
   await expect(page.locator('div.chart-wheel')).toBeVisible();
   await expect(page.locator('.chart-wheel .chart-dimmed').first()).toBeAttached();
-  await expect(page.locator('.chart-isolation-panel')).toBeVisible();
+  await expect(page.locator('.selection-inspector-facts')).toBeVisible();
 
   // Wheel to table: select the Moon on the wheel and the Positions table marks its row.
   await page.getByRole('button', { name: 'Clear', exact: true }).first().click();
   await page.locator('.chart-point[data-body="moon"]').first().click({ force: true });
-  await page.getByRole('tab', { name: 'Positions', exact: true }).click();
+  await page.getByRole('link', { name: 'Placements', exact: true }).click();
   await expect(page.locator('tr.data-table-row-selected')).toContainText('Moon');
 });

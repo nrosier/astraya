@@ -353,7 +353,7 @@ describe('renderMultiWheelSvg degree annotations', () => {
   it('stacks each body radially as glyph, degree, sign glyph and minutes, all tagged with its body key (#412)', () => {
     const svg = renderMultiWheelSvg([{ ...natalRing, bodies: [{ body: 1, key: 'sun', longitude: 280.37 }] }]);
     const stack =
-      /<g class="chart-body-stack" data-body="sun" data-ring="0" data-body-sign="capricorn">(.*?)<\/g><\/g>/.exec(
+      /<g class="chart-body-stack" data-body="sun" data-ring="0" data-body-sign="capricorn" data-body-longitude="[\d.]+">(.*?)<\/g><\/g>/.exec(
         svg,
       )?.[1] ?? '';
     expect(stack).toContain('>10°<');
@@ -372,7 +372,9 @@ describe('renderMultiWheelSvg degree annotations', () => {
       },
     ]);
     expect(svg.split('class="chart-retrograde">R<').length - 1).toBe(1);
-    expect(svg).toMatch(/data-body="saturn" data-ring="0" data-body-sign="[a-z]+">.*?class="chart-retrograde">R</);
+    expect(svg).toMatch(
+      /data-body="saturn" data-ring="0" data-body-sign="[a-z]+" data-body-longitude="[\d.]+">.*?class="chart-retrograde">R</,
+    );
   });
 
   it('ticks each body’s true degree on the house dial’s outer edge (#412)', () => {
@@ -392,9 +394,11 @@ describe('renderMultiWheelSvg degree annotations', () => {
   it('gives every body glyph a clickable group with an invisible hit area (#412)', () => {
     const svg = renderMultiWheelSvg([natalRing]);
     expect(svg).toMatch(
-      /<g class="chart-point" data-body="sun" data-ring="0" data-body-sign="aries"><circle [^>]*class="chart-hit-area" fill="none" stroke="none" pointer-events="all" \/>/,
+      /<g class="chart-point" data-body="sun" data-ring="0" data-body-sign="aries" data-body-longitude="[\d.]+"><circle [^>]*class="chart-hit-area" fill="none" stroke="none" pointer-events="all" \/>/,
     );
-    expect(svg).toMatch(/<g class="chart-point" data-body="moon" data-ring="0" data-body-sign="libra">/);
+    expect(svg).toMatch(
+      /<g class="chart-point" data-body="moon" data-ring="0" data-body-sign="libra" data-body-longitude="[\d.]+">/,
+    );
   });
 
   it('annotates at the spread angle, so a nudged glyph keeps its label beside it', () => {

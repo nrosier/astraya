@@ -7,11 +7,11 @@
  * @module ui/person-nav
  * @purpose Pure logic for the persistent per-person tab bar (#234/#398): the fixed tab list, which tabs group into families (Transits & Forecast, Progressions & Directions, Relationship Charts), and which tab/family is active for a given route.
  * @conventions Kept separate from PersonNav.tsx so active-tab/gating logic is testable without a DOM, following route.ts's own convention; tab labels are translated and live in PersonNav.messages.ts since this module has no access to the current locale.
- * @exports PersonTabKey, PersonTab, PERSON_TABS, PersonTabFamilyKey, PersonTabFamily, PERSON_TAB_FAMILIES, familyForTab, activeTabKey, isTabEnabled
+ * @exports PersonTabKey, PersonTab, PERSON_TABS, PersonTabFamilyKey, PersonTabFamily, PERSON_TAB_FAMILIES, familyForTab, isTabEnabled
  */
-import type { Route } from './route.js';
 
 export type PersonTabKey =
+  | 'overview'
   | 'birth-record'
   | 'chart'
   | 'report'
@@ -25,6 +25,8 @@ export type PersonTabKey =
   | 'periodic-transit'
   | 'astrocartography';
 
+import { routeHref } from './route.js';
+
 export interface PersonTab {
   readonly key: PersonTabKey;
   readonly buildHref: (personId: string) => string;
@@ -34,18 +36,22 @@ export interface PersonTab {
 // Labels are translated, so they live in `PersonNav.messages.ts`, looked up by `key`,
 // rather than here — this module has no access to the current locale.
 export const PERSON_TABS: readonly PersonTab[] = [
-  { key: 'birth-record', buildHref: (id) => `#/person/${id}` },
-  { key: 'chart', buildHref: (id) => `#/chart/${id}` },
-  { key: 'report', buildHref: (id) => `#/report/${id}` },
-  { key: 'profections', buildHref: (id) => `#/profections/${id}` },
-  { key: 'progressions', buildHref: (id) => `#/progressions/${id}` },
-  { key: 'solar-arc', buildHref: (id) => `#/solar-arc/${id}` },
-  { key: 'primary-directions', buildHref: (id) => `#/primary-directions/${id}` },
-  { key: 'transit', buildHref: (id) => `#/transit/${id}` },
-  { key: 'synastry', buildHref: (id) => `#/synastry/${id}` },
-  { key: 'composite', buildHref: (id) => `#/composite/${id}` },
-  { key: 'periodic-transit', buildHref: (id) => `#/periodic-transit/${id}` },
-  { key: 'astrocartography', buildHref: (id) => `#/astrocartography/${id}` },
+  // The canonical Overview destination (#506/#509): a complete person's landing tab. Still
+  // reachable before every other tab, same as birth-record, since both are the two places a
+  // person can land regardless of completeness (activeTabKey/isTabEnabled below).
+  { key: 'overview', buildHref: (id) => routeHref({ kind: 'person-overview', personId: id }) },
+  { key: 'birth-record', buildHref: (id) => routeHref({ kind: 'person', personId: id }) },
+  { key: 'chart', buildHref: (id) => routeHref({ kind: 'chart', personId: id }) },
+  { key: 'report', buildHref: (id) => routeHref({ kind: 'report', personId: id }) },
+  { key: 'profections', buildHref: (id) => routeHref({ kind: 'profections', personId: id }) },
+  { key: 'progressions', buildHref: (id) => routeHref({ kind: 'progressions', personId: id }) },
+  { key: 'solar-arc', buildHref: (id) => routeHref({ kind: 'solar-arc', personId: id }) },
+  { key: 'primary-directions', buildHref: (id) => routeHref({ kind: 'primary-directions', personId: id }) },
+  { key: 'transit', buildHref: (id) => routeHref({ kind: 'transit', personId: id }) },
+  { key: 'synastry', buildHref: (id) => routeHref({ kind: 'synastry', personId: id }) },
+  { key: 'composite', buildHref: (id) => routeHref({ kind: 'composite', personId: id }) },
+  { key: 'periodic-transit', buildHref: (id) => routeHref({ kind: 'periodic-transit', personId: id }) },
+  { key: 'astrocartography', buildHref: (id) => routeHref({ kind: 'astrocartography', personId: id }) },
 ];
 
 /**
@@ -81,29 +87,7 @@ export function familyForTab(key: PersonTabKey): PersonTabFamilyKey | undefined 
   return PERSON_TAB_FAMILIES.find((family) => family.members.includes(key))?.key;
 }
 
-/** Which tab a parsed route corresponds to, or `null` for a route with no tab (e.g. `home`, `about`). */
-export function activeTabKey(route: Route): PersonTabKey | null {
-  switch (route.kind) {
-    case 'person':
-      return 'birth-record';
-    case 'chart':
-    case 'report':
-    case 'profections':
-    case 'progressions':
-    case 'solar-arc':
-    case 'primary-directions':
-    case 'transit':
-    case 'synastry':
-    case 'composite':
-    case 'periodic-transit':
-    case 'astrocartography':
-      return route.kind;
-    default:
-      return null;
-  }
-}
-
-/** Every tab but Birth record requires a completed, stored birth moment (same gate `PersonForm` used). */
+/** Every tab but Overview and Birth record requires a completed, stored birth moment (same gate `PersonForm` used). */
 export function isTabEnabled(key: PersonTabKey, hasBirthMoment: boolean): boolean {
-  return key === 'birth-record' || hasBirthMoment;
+  return key === 'overview' || key === 'birth-record' || hasBirthMoment;
 }

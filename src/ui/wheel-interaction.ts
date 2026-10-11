@@ -12,7 +12,7 @@
  * A body is identified by its key *and its ring*, written `sun@1`: a bi-wheel draws the Sun twice,
  * and clicking one must not light up the other. A single wheel has only ring 0, so `sun@0`.
  *
- * Selection keys are `body:<id>`, `sign:<lowercase sign name>`, `aspect:<idA>|<idB>` (sorted, so
+ * Selection keys are `body:<id>`, `sign:<lowercase sign name>`, `house:<1-12>` (#511, from a house number's `data-house` span), `aspect:<idA>|<idB>` (sorted, so
  * the same pair is the same key whichever end was named first) and `ring:<index>` — the last from
  * clicking a ring's legend entry (#448), isolating every body on that ring plus every aspect, own
  * or cross-ring, touching one of them (the same "focus plus its connections" rule `body` and
@@ -24,8 +24,13 @@
  * @conventions Reads only the wheel's own markup data-attributes (data-body, data-ring, data-sign, data-aspect-body-a/b, data-ring-legend) rather than the underlying chart data, so one implementation serves every wheel type; applies classes directly to injected DOM (not React state) since the wheel markup is a raw string, not React elements.
  * @exports aspectKeyFor, selectionKeyForTarget, applyIsolation, WheelIsolation, useWheelIsolation
  */
+import { selectionKey } from '../interpretation/selection-key.js';
 import { useEffect, useRef, useState } from 'react';
 import { bodyId } from '../chart/body-id.js';
+
+function norm360(degrees: number): number {
+  return ((degrees % 360) + 360) % 360;
+}
 
 function idOfBodyElement(element: Element): string {
   return bodyId(element.getAttribute('data-body') ?? '', element.getAttribute('data-ring') ?? '0');
@@ -40,15 +45,17 @@ function endsOfLink(link: Element): readonly [string, string] {
 
 /** The pair key for two body ids, the same whichever is named first. */
 export function aspectKeyFor(idA: string, idB: string): string {
-  return `aspect:${[idA, idB].sort().join('|')}`;
+  return selectionKey.aspect(idA, idB);
 }
 
 /** The selection a click on `target` makes, or `undefined` when it landed on none of the wheel's symbols. */
 export function selectionKeyForTarget(target: Element): string | undefined {
   const body = target.closest('[data-body]');
-  if (body !== null) return `body:${idOfBodyElement(body)}`;
+  if (body !== null) return selectionKey.body(idOfBodyElement(body));
   const sign = target.closest('[data-sign]');
-  if (sign !== null) return `sign:${sign.getAttribute('data-sign') ?? ''}`;
+  if (sign !== null) return selectionKey.sign(sign.getAttribute('data-sign') ?? '');
+  const house = target.closest('[data-house]');
+  if (house !== null) return selectionKey.house(house.getAttribute('data-house') ?? '');
   const ringLegend = target.closest('[data-ring-legend]');
   if (ringLegend !== null) return `ring:${ringLegend.getAttribute('data-ring-legend') ?? ''}`;
   const link = target.closest('[data-aspect-body-a]');
@@ -72,6 +79,8 @@ interface Keep {
    * person's legend lit whenever any of their placements aspects the selected one).
    */
   readonly rings?: ReadonlySet<string>;
+  /** The house number(s) a `[data-house]` mark should stay lit for — set only by a house selection (#511). */
+  readonly houses?: ReadonlySet<string>;
 }
 
 /** What stays at full strength for `selectionKey`, worked out from the markup under `root`. */
@@ -110,6 +119,30 @@ function whatStays(root: Element, selectionKey: string): Keep | undefined {
   if (kind === 'sign') {
     const inSign = new Set([...signOfBody].filter(([, sign]) => sign === value).map(([id]) => id));
     return { ...withConnections(inSign), signs: new Set([value]) };
+  }
+  if (kind === 'house') {
+    const mark = [...root.querySelectorAll('[data-house]')].find(
+      (element) => element.getAttribute('data-house') === value,
+    );
+    if (mark === undefined) return undefined;
+    const start = Number(mark.getAttribute('data-house-start'));
+    const span = norm360(Number(mark.getAttribute('data-house-end')) - start);
+    // Only the base ring's own bodies stand in this chart's houses.
+    const inHouse = new Set(
+      bodyElements
+        .filter(
+          (element) =>
+            (element.getAttribute('data-ring') ?? '0') === '0' &&
+            norm360(Number(element.getAttribute('data-body-longitude')) - start) < span,
+        )
+        .map(idOfBodyElement),
+    );
+    const cuspSign = mark.getAttribute('data-house-sign') ?? '';
+    return {
+      ...withConnections(inHouse),
+      signs: new Set(cuspSign === '' ? [] : [cuspSign]),
+      houses: new Set([value]),
+    };
   }
   if (kind === 'ring') {
     const inRing = new Set(
@@ -159,6 +192,11 @@ export function applyIsolation(root: Element, selectionKey: string | undefined):
   }
   // Only a `ring` selection says anything about which legend entry to dim (#455) — `keep.rings`
   // is `undefined` for every other kind, so this loop is a no-op then, same as a fresh wheel.
+  // Likewise only a `house` selection dims house numbers (#511).
+  for (const element of root.querySelectorAll('[data-house]')) {
+    const house = element.getAttribute('data-house') ?? '';
+    element.classList.toggle('chart-dimmed', keep?.houses !== undefined && !keep.houses.has(house));
+  }
   for (const element of root.querySelectorAll('[data-ring-legend]')) {
     const ring = element.getAttribute('data-ring-legend') ?? '';
     element.classList.toggle('chart-dimmed', keep?.rings !== undefined && !keep.rings.has(ring));

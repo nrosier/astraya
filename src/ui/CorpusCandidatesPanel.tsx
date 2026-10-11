@@ -20,6 +20,7 @@
  * @conventions Accepting a candidate turns it into a live correction in CorpusOverridesPanel; nothing here is visible to a reader until accepted. The corpus-language selector is local state, independent from the app's own `useLocale()`. Text comes from co-located `CorpusCandidatesPanel.messages.ts` via `useMessages()`.
  * @exports CorpusCandidatesPanel
  */
+import { Select } from './primitives/Select.js';
 import { useEffect, useMemo, useState } from 'react';
 import { decideCorpusCandidates, listCorpusCandidates } from '../sync/admin-client.js';
 import { CORPUS_LOCALES } from '../interpretation/schema.js';
@@ -135,22 +136,14 @@ export function CorpusCandidatesPanel(): React.JSX.Element {
       )}
 
       <div className="field-grid">
-        <label>
-          {t.corpusLocaleLabel}
-          <select
-            value={corpusLocale}
-            onChange={(event) => {
-              const next = event.target.value;
-              if (isLocale(next)) setCorpusLocale(next);
-            }}
-          >
-            {CORPUS_LOCALES.map((locale) => (
-              <option key={locale} value={locale}>
-                {LOCALE_LABELS[locale]}
-              </option>
-            ))}
-          </select>
-        </label>
+        <Select
+          label={t.corpusLocaleLabel}
+          value={corpusLocale}
+          options={CORPUS_LOCALES.map((locale) => ({ value: locale, label: LOCALE_LABELS[locale] }))}
+          onChange={(value) => {
+            if (isLocale(value)) setCorpusLocale(value);
+          }}
+        />
       </div>
 
       {decideError !== undefined && (

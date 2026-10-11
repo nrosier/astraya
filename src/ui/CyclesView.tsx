@@ -12,6 +12,8 @@
  * @conventions Independent of any person or stored data (ephemeris-only), so it lives outside `Stored`, like AdminPanel; the diagram is app-generated SVG, hidden from assistive tech since the table carries every value it plots.
  * @exports CyclesView
  */
+import { Select } from './primitives/Select.js';
+import { TextField } from './primitives/TextField.js';
 import { useSymbolClass } from './symbol-setting.js';
 import { useGlyphVariants } from './glyph-variant-setting.js';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -273,102 +275,67 @@ export function CyclesView(): React.JSX.Element {
       <p className="hint">{t.hint}</p>
 
       <div className="field-grid cycles-form">
-        <label>
-          {t.presetLabel}
-          <select
-            value={presetKey}
-            onChange={(event) => {
-              choosePreset(event.target.value);
-            }}
-          >
-            <option value="custom">{t.presetCustom}</option>
-            {CYCLE_PRESETS.map((preset) => (
-              <option key={preset.key} value={preset.key}>
-                {t.presets[preset.key] ?? preset.key}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          {t.bodyALabel}
-          <select
-            value={params.bodyA}
-            onChange={(event) => {
-              edit({ bodyA: event.target.value });
-            }}
-          >
-            {CYCLE_BODY_KEYS.map((key) => (
-              <option key={key} value={key}>
-                {nameOf(key)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          {t.bodyBLabel}
-          <select
-            value={params.bodyB}
-            onChange={(event) => {
-              edit({ bodyB: event.target.value });
-            }}
-          >
-            {CYCLE_BODY_KEYS.map((key) => (
-              <option key={key} value={key}>
-                {nameOf(key)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          {t.aspectLabel}
-          <select
-            value={params.aspect}
-            onChange={(event) => {
-              edit({ aspect: event.target.value });
-            }}
-          >
-            {CYCLE_ASPECT_KEYS.map((key) => (
-              <option key={key} value={key}>
-                {aspectDisplayName(key, locale)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          {t.motionLabel}
-          <select
-            value={params.motion}
-            onChange={(event) => {
-              edit({ motion: event.target.value as MotionFilter });
-            }}
-          >
-            <option value="all">{t.motionAll}</option>
-            <option value="retrograde">{t.motionRetrograde}</option>
-            <option value="direct">{t.motionDirect}</option>
-          </select>
-        </label>
-        <label>
-          {t.fromYearLabel}
-          <input
-            type="text"
-            inputMode="numeric"
-            value={params.fromYear}
-            onChange={(event) => {
-              edit({ fromYear: event.target.value });
-            }}
-          />
-        </label>
-        <label>
-          {t.toYearLabel}
-          <input
-            type="text"
-            inputMode="numeric"
-            value={params.toYear}
-            onChange={(event) => {
-              edit({ toYear: event.target.value });
-            }}
-          />
-        </label>
+        <Select
+          label={t.presetLabel}
+          value={presetKey}
+          options={[
+            { value: 'custom', label: t.presetCustom },
+            ...CYCLE_PRESETS.map((preset) => ({ value: preset.key, label: t.presets[preset.key] ?? preset.key })),
+          ]}
+          onChange={choosePreset}
+        />
+        <Select
+          label={t.bodyALabel}
+          value={params.bodyA}
+          options={CYCLE_BODY_KEYS.map((key) => ({ value: key, label: nameOf(key) }))}
+          onChange={(value) => {
+            edit({ bodyA: value });
+          }}
+        />
+        <Select
+          label={t.bodyBLabel}
+          value={params.bodyB}
+          options={CYCLE_BODY_KEYS.map((key) => ({ value: key, label: nameOf(key) }))}
+          onChange={(value) => {
+            edit({ bodyB: value });
+          }}
+        />
+        <Select
+          label={t.aspectLabel}
+          value={params.aspect}
+          options={CYCLE_ASPECT_KEYS.map((key) => ({ value: key, label: aspectDisplayName(key, locale) }))}
+          onChange={(value) => {
+            edit({ aspect: value });
+          }}
+        />
+        <Select
+          label={t.motionLabel}
+          value={params.motion}
+          options={[
+            { value: 'all', label: t.motionAll },
+            { value: 'retrograde', label: t.motionRetrograde },
+            { value: 'direct', label: t.motionDirect },
+          ]}
+          onChange={(value) => {
+            edit({ motion: value as MotionFilter });
+          }}
+        />
+        <TextField
+          label={t.fromYearLabel}
+          inputMode="numeric"
+          value={params.fromYear}
+          onChange={(value) => {
+            edit({ fromYear: value });
+          }}
+        />
+        <TextField
+          label={t.toYearLabel}
+          inputMode="numeric"
+          value={params.toYear}
+          onChange={(value) => {
+            edit({ toYear: value });
+          }}
+        />
       </div>
       <p>
         <button

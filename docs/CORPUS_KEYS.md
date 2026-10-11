@@ -32,6 +32,8 @@ The admin screens show what an entry means in words, with the key as small secon
 | `composite-planet-in-house` | `composite-planet-in-house:<body>:<house>`     | `composite-planet-in-house:sun:3`          | The composite chart's Sun in the 3rd house     | —                                                                            |
 | `composite-aspect-pair`     | `composite-aspect-pair:<aspect>:<a>:<b>`       | `composite-aspect-pair:square:mars:saturn` | Mars square Saturn, within the composite chart | alphabetical, one entry per pair                                             |
 | `degree-symbol`             | `degree-symbol:<degree>`                       | `degree-symbol:1`                          | Aries 1°'s traditional degree-symbol           | — (no body: attached to whichever body occupies the degree, at display time) |
+| `derived-point-in-sign`     | `derived-point-in-sign:<point>:<sign>`         | `derived-point-in-sign:part-of-fortune:2`  | Part of Fortune in Gemini                      | — (no body: a calculated point, see below)                                   |
+| `derived-point-in-house`    | `derived-point-in-house:<point>:<house>`       | `derived-point-in-house:part-of-fortune:3` | Part of Fortune in the 3rd house               | — (no body: a calculated point, see below)                                   |
 
 ## Ordering
 
@@ -64,6 +66,23 @@ The admin screens show what an entry means in words, with the key as small secon
 person's own traits (the same reason `synastry-aspect` is its own category). `sign-on-cusp` and `dignity-state` have no
 composite sibling: a house cusp's sign and a planet's dignity are facts about the chart's structure, not a trait
 attributed to "you", so the plain natal category already reads fine for a composite chart.
+
+## Derived-point categories
+
+`derived-point-in-sign` and `derived-point-in-house` (#511) describe a calculated point that is not a body by where it
+falls, the way `planet-in-sign`/`planet-in-house` do for a planet. `<point>` is one of the closed list in
+`src/astrology/derived-points.ts`: `part-of-fortune` and `part-of-spirit`. A derived point has no motion, aspects or dignity,
+so there is no aspect or dignity category for it. The English point names are used in both languages (no vetted Dutch
+terms exist, see #158). The ASC/MC and Sun/Moon midpoints the Derived points table can show are **deliberately not
+corpus points**: no public-domain source gives them a meaning, so they stay a display option, with no entry and no chart
+selection. The categories are registered in the schema and shown in the chart's selection inspector, which falls back to the mechanical
+one-line sentence until entries exist. **No entries have been generated yet.** No source describes either point in a sign or a
+house, so the generator (`tools/corpus-gen`, #517) _composes_ each entry from a short list of sourced rules
+(`tools/corpus-gen/classical-texts/derived-point.rules.json`, each citing a passage in
+`docs/references/derived-points.references.json`) in its own restrained voice, and the judge checks only that the entry stays
+inside those facts. The generator skips these placements unless `--include-derived-points` is passed, and `--dry-run` shows
+the plan and the first prompt without any API call. That is 48 entries per language (2 points × 12 signs + 2 points × 12
+houses); the reports do not read them.
 
 ## How this is kept true
 

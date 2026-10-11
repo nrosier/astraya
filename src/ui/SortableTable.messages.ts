@@ -11,12 +11,14 @@ const en = {
   copied: 'Copied',
   copy: 'Copy',
   downloadCsv: 'Download CSV',
+  aboutColumn: (column: string) => `About ${column}`,
 };
 
 const nl: typeof en = {
   copied: 'Gekopieerd',
   copy: 'Kopiëren',
   downloadCsv: 'CSV downloaden',
+  aboutColumn: (column: string) => `Over ${column}`,
 };
 
 export const sortableTableMessages = { en, nl };

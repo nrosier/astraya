@@ -17,7 +17,7 @@
 /**
  * @module chart-compute
  * @purpose Computes a chart's positions, houses, aspects, dignities, sect and derived points from a birth moment (#44).
- * @conventions One ephemeris pass (one Julian day, one batch position call, one house call) then pure arithmetic; nothing is cached — results are cheap to recompute, not stored as a second source of truth; `housesAreDefined` must be checked before trusting house-derived fields.
+ * @conventions One ephemeris pass (one Julian day, one batch position call, one house call) then pure arithmetic; nothing is cached — results are cheap to recompute, not stored as a second source of truth; `housesAreDefined` must be checked before trusting house-derived fields. Point aspects (Asc/MC always; Vertex, Part of Fortune/Spirit opt-in via `aspectsTo`) are point-to-body only, use the planet orbs, and drop a part's aspect to its own "+" luminary (#516).
  * @exports computeChartData, computeChartDataAtJd, housesAreDefined, ChartData, ChartCalculationOptions, AngleAspect, NATAL_FIXED_STARS
  */
 import {
@@ -88,14 +88,21 @@ export interface ChartCalculationOptions {
     readonly chiron?: boolean;
     readonly lilith?: boolean;
     readonly lunarNodes?: boolean;
+    /** The Vertex, the Part of Fortune and the Part of Spirit as aspecting points (#516); the Ascendant and Midheaven always are. */
+    readonly vertex?: boolean;
+    readonly partOfFortune?: boolean;
+    readonly partOfSpirit?: boolean;
   };
 }
 
-/** Which chart angle an `AngleAspect` is to. */
-export type AspectAngle = 'asc' | 'mc';
+/**
+ * Which calculated point an `AngleAspect` is to (#413, #516): the Ascendant and Midheaven always, the Vertex and the
+ * two lots when their `aspectsTo` flag is on. They share one one-directional mechanism — a point has no `BodyId`.
+ */
+export type AspectAngle = 'asc' | 'mc' | 'vertex' | 'partOfFortune' | 'partOfSpirit';
 
 /**
- * An aspect between a chart angle (the Ascendant or Midheaven) and a body (#413). Separate from
+ * An aspect between a calculated point (an angle, the Vertex or a lot) and a body (#413, #516). Separate from
  * `Aspect` because an angle has no `BodyId`; `body` is the body side, `angle` the angle side.
  */
 export interface AngleAspect extends AspectMatch {
@@ -115,7 +122,8 @@ export interface ChartData {
   readonly houses: HousePositions;
   readonly aspects: readonly Aspect[];
   /**
-   * Aspects from the Ascendant and Midheaven to each body that takes part in `aspects` (#413).
+   * Aspects from the Ascendant and Midheaven (always), and the Vertex, Part of Fortune and Part of Spirit (when
+   * enabled in `aspectsTo`, #516), to each body that takes part in `aspects`. Points are never aspected to each other.
    * Undefined for a composite/harmonic chart (those have no real angles to aspect) and empty when
    * the houses have no solution.
    */
@@ -165,31 +173,47 @@ export function housesAreDefined(houses: HousePositions): boolean {
   );
 }
 
-/** Aspects from the Ascendant and Midheaven to every subject, treating each angle as a non-luminary point. */
-function findAngleAspects(
-  houses: HousePositions,
+/** A calculated point that aspects bodies: an angle, the Vertex or a lot, with the speed `isApplying` needs. */
+interface AspectPoint {
+  readonly id: AspectAngle;
+  readonly longitude: Degrees;
+  readonly speed: Degrees;
+  /** The one luminary whose aspect to this point only repeats an existing Ascendant-to-luminary aspect, or undefined. */
+  readonly redundantLuminary?: BodyId;
+}
+
+/**
+ * Aspects from each point to every subject, treating each point as a non-luminary (#413, #516).
+ *
+ * Conventions: point-to-body only (points are never aspected to each other: Asc-MC is latitude geometry, and a lot to
+ * the Ascendant is just the Sun-Moon aspect); the planet orbs of `orbFor`, with the luminary bonus from the body side
+ * only. Source: the Solar Fire 9 User Guide (Esoteric Technologies, 2014), "Editing an Aspect Set" — luminary orbs
+ * apply whenever one of the two points is the Sun or Moon, other orbs otherwise, and its Arabic Parts report lists
+ * aspects to chart points with those same orbs (docs/references/SolarFire_v9.pdf). Applying/separating is the
+ * diurnal sweep of the point, not an own-motion claim: this follows the Astro-Seek reference sheet (#413), whereas
+ * Solar Fire holds chart angles stationary, so the two can differ on applying versus separating.
+ */
+function findPointAspects(
+  points: readonly AspectPoint[],
   subjects: readonly AspectSubject[],
   orbConfig: OrbConfig,
 ): readonly AngleAspect[] {
-  const angles: readonly (readonly [AspectAngle, Degrees])[] = [
-    ['asc', houses.ascendant],
-    ['mc', houses.midheaven],
-  ];
   const result: AngleAspect[] = [];
-  for (const [angle, longitude] of angles) {
-    const anglePosition: BodyPosition = {
+  for (const point of points) {
+    const position: BodyPosition = {
       body: -1,
-      longitude,
+      longitude: point.longitude,
       latitude: 0,
       distance: 1,
-      longitudeSpeed: ANGLE_SPEED_DEG_PER_DAY,
+      longitudeSpeed: point.speed,
       latitudeSpeed: 0,
       distanceSpeed: 0,
       retrograde: false,
     };
     for (const subject of subjects) {
-      const match = matchAspect(anglePosition, 'planet', subject.position, subject.category, orbConfig);
-      if (match) result.push({ ...match, angle, body: subject.body });
+      if (subject.body === point.redundantLuminary) continue;
+      const match = matchAspect(position, 'planet', subject.position, subject.category, orbConfig);
+      if (match) result.push({ ...match, angle: point.id, body: subject.body });
     }
   }
   return result;
@@ -288,7 +312,6 @@ export async function computeChartDataAtJd(
   });
   const orbConfig = options.orbConfig ?? DEFAULT_ORB_CONFIG;
   const aspects = findAspects(subjects, orbConfig);
-  const angleAspects = housesAreDefined(houses) ? findAngleAspects(houses, subjects, orbConfig) : [];
 
   const dignities = new Map<BodyId, EssentialDignities>(
     positions.map((position) => [
@@ -307,6 +330,44 @@ export async function computeChartDataAtJd(
   }
 
   const sect = sectOf(sunPosition.longitude, houses.ascendant);
+  const partOfFortuneLongitude = partOfFortune(sect, houses.ascendant, sunPosition.longitude, moonPosition.longitude);
+  const partOfSpiritLongitude = partOfSpirit(sect, houses.ascendant, sunPosition.longitude, moonPosition.longitude);
+
+  // A lot is Asc + a - b, so it sweeps with the angle plus the difference of the two luminaries' own speeds; a lot to
+  // its own "+" luminary repeats the Ascendant's aspect to the "-" luminary and is dropped (#516).
+  const luminarySpeedGap = moonPosition.longitudeSpeed - sunPosition.longitudeSpeed;
+  const fortuneSpeed = ANGLE_SPEED_DEG_PER_DAY + (sect === 'day' ? luminarySpeedGap : -luminarySpeedGap);
+  const spiritSpeed = ANGLE_SPEED_DEG_PER_DAY + (sect === 'day' ? -luminarySpeedGap : luminarySpeedGap);
+  const plusOfFortune = sect === 'day' ? moon.id : sun.id;
+  const plusOfSpirit = sect === 'day' ? sun.id : moon.id;
+  const points: AspectPoint[] = [
+    { id: 'asc', longitude: houses.ascendant, speed: ANGLE_SPEED_DEG_PER_DAY },
+    { id: 'mc', longitude: houses.midheaven, speed: ANGLE_SPEED_DEG_PER_DAY },
+    ...(aspectsTo.vertex === true
+      ? [{ id: 'vertex', longitude: houses.vertex, speed: ANGLE_SPEED_DEG_PER_DAY } as const]
+      : []),
+    ...(aspectsTo.partOfFortune === true
+      ? [
+          {
+            id: 'partOfFortune',
+            longitude: partOfFortuneLongitude,
+            speed: fortuneSpeed,
+            redundantLuminary: plusOfFortune,
+          } as const,
+        ]
+      : []),
+    ...(aspectsTo.partOfSpirit === true
+      ? [
+          {
+            id: 'partOfSpirit',
+            longitude: partOfSpiritLongitude,
+            speed: spiritSpeed,
+            redundantLuminary: plusOfSpirit,
+          } as const,
+        ]
+      : []),
+  ];
+  const angleAspects = housesAreDefined(houses) ? findPointAspects(points, subjects, orbConfig) : [];
 
   return {
     positions,
@@ -315,8 +376,8 @@ export async function computeChartDataAtJd(
     angleAspects,
     dignities,
     sect,
-    partOfFortune: partOfFortune(sect, houses.ascendant, sunPosition.longitude, moonPosition.longitude),
-    partOfSpirit: partOfSpirit(sect, houses.ascendant, sunPosition.longitude, moonPosition.longitude),
+    partOfFortune: partOfFortuneLongitude,
+    partOfSpirit: partOfSpiritLongitude,
     declinations,
     obliquity,
     fixedStars,

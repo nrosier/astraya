@@ -22,6 +22,10 @@
  * @conventions Reuses `loadRuntimeCorpus` (the same function ReportView uses) so the admin sees the corpus already merged with existing corrections; the corpus-language selector is local state, independent from the app's own `useLocale()`. Text comes from co-located `CorpusOverridesPanel.messages.ts` via `useMessages()`.
  * @exports CorpusOverridesPanel
  */
+import { Checkbox } from './primitives/Checkbox.js';
+import { Select } from './primitives/Select.js';
+import { TextAreaField } from './primitives/TextAreaField.js';
+import { TextField } from './primitives/TextField.js';
 import { useEffect, useMemo, useState } from 'react';
 import {
   deleteCorpusOverride,
@@ -276,92 +280,47 @@ export function CorpusOverridesPanel(): React.JSX.Element {
       )}
 
       <div className="field-grid">
-        <label>
-          {t.corpusLocaleLabel}
-          <select
-            value={corpusLocale}
-            onChange={(event) => {
-              const next = event.target.value;
-              if (isLocale(next)) setCorpusLocale(next);
-            }}
-          >
-            {CORPUS_LOCALES.map((locale) => (
-              <option key={locale} value={locale}>
-                {LOCALE_LABELS[locale]}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          {t.searchLabel}
-          <input
-            type="text"
-            value={search}
-            onChange={(event) => {
-              setSearch(event.target.value);
-            }}
-          />
-        </label>
-        <label>
-          {t.categoryLabel}
-          <select
-            value={categoryFilter}
-            onChange={(event) => {
-              const next = event.target.value;
-              setCategoryFilter(isCorpusCategory(next) ? next : '');
-            }}
-          >
-            <option value="">{t.allCategories}</option>
-            {CORPUS_CATEGORIES.map((category) => (
-              <option key={category} value={category}>
-                {categoryLabel(category, uiLocale)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          {t.tierLabel}
-          <select
-            value={tierFilter}
-            onChange={(event) => {
-              const next = event.target.value;
-              setTierFilter(isCorpusTier(next) ? next : '');
-            }}
-          >
-            <option value="">{t.allTiers}</option>
-            {CORPUS_TIERS.map((tier) => (
-              <option key={tier} value={tier}>
-                {tierLabel(tier, uiLocale)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          {t.tagLabel}
-          <select
-            value={tagFilter}
-            onChange={(event) => {
-              setTagFilter(event.target.value);
-            }}
-          >
-            <option value="">{t.allTags}</option>
-            {availableTags.map((tag) => (
-              <option key={tag} value={tag}>
-                {tagLabel(tag, uiLocale)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={overriddenOnly}
-            onChange={(event) => {
-              setOverriddenOnly(event.target.checked);
-            }}
-          />
-          {t.overriddenOnlyLabel}
-        </label>
+        <Select
+          label={t.corpusLocaleLabel}
+          value={corpusLocale}
+          options={CORPUS_LOCALES.map((locale) => ({ value: locale, label: LOCALE_LABELS[locale] }))}
+          onChange={(value) => {
+            if (isLocale(value)) setCorpusLocale(value);
+          }}
+        />
+        <TextField label={t.searchLabel} value={search} onChange={setSearch} />
+        <Select
+          label={t.categoryLabel}
+          value={categoryFilter}
+          options={[
+            { value: '', label: t.allCategories },
+            ...CORPUS_CATEGORIES.map((category) => ({ value: category, label: categoryLabel(category, uiLocale) })),
+          ]}
+          onChange={(value) => {
+            setCategoryFilter(isCorpusCategory(value) ? value : '');
+          }}
+        />
+        <Select
+          label={t.tierLabel}
+          value={tierFilter}
+          options={[
+            { value: '', label: t.allTiers },
+            ...CORPUS_TIERS.map((tier) => ({ value: tier, label: tierLabel(tier, uiLocale) })),
+          ]}
+          onChange={(value) => {
+            setTierFilter(isCorpusTier(value) ? value : '');
+          }}
+        />
+        <Select
+          label={t.tagLabel}
+          value={tagFilter}
+          options={[
+            { value: '', label: t.allTags },
+            ...availableTags.map((tag) => ({ value: tag, label: tagLabel(tag, uiLocale) })),
+          ]}
+          onChange={setTagFilter}
+        />
+        <Checkbox label={t.overriddenOnlyLabel} checked={overriddenOnly} onChange={setOverriddenOnly} />
       </div>
 
       <p className="actions">
@@ -405,42 +364,29 @@ export function CorpusOverridesPanel(): React.JSX.Element {
           <p>
             <strong>{labelForKey(editing.key, uiLocale)}</strong> <code className="entry-key">{editing.key}</code>
           </p>
-          <label>
-            {t.textLabel}
-            <textarea
-              rows={4}
-              value={editing.text}
-              onChange={(event) => {
-                setEditing({ ...editing, text: event.target.value });
-              }}
-            />
-          </label>
-          <label>
-            {t.tierFieldLabel}
-            <select
-              value={editing.tier}
-              onChange={(event) => {
-                const next = event.target.value;
-                if (isCorpusTier(next)) setEditing({ ...editing, tier: next });
-              }}
-            >
-              {CORPUS_TIERS.map((tier) => (
-                <option key={tier} value={tier}>
-                  {tier}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            {t.tagsFieldLabel}
-            <input
-              type="text"
-              value={editing.tags}
-              onChange={(event) => {
-                setEditing({ ...editing, tags: event.target.value });
-              }}
-            />
-          </label>
+          <TextAreaField
+            label={t.textLabel}
+            rows={4}
+            value={editing.text}
+            onChange={(value) => {
+              setEditing({ ...editing, text: value });
+            }}
+          />
+          <Select
+            label={t.tierFieldLabel}
+            value={editing.tier}
+            options={CORPUS_TIERS.map((tier) => ({ value: tier, label: tier }))}
+            onChange={(value) => {
+              if (isCorpusTier(value)) setEditing({ ...editing, tier: value });
+            }}
+          />
+          <TextField
+            label={t.tagsFieldLabel}
+            value={editing.tags}
+            onChange={(value) => {
+              setEditing({ ...editing, tags: value });
+            }}
+          />
           <p className="actions">
             <button type="submit" disabled={busyKey === editing.key}>
               {busyKey === editing.key ? t.savingLabel : t.saveButton}

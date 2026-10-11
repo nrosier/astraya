@@ -41968,8 +41968,8 @@
     "key": "composite-aspect-pair:quincunx:interpolatedLilith:jupiter",
     "locale": "en",
     "clean": true,
-    "evaluationCount": 1,
-    "updatedAt": "2026-10-08T14:51:18.417Z"
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T10:13:12.906Z"
   },
   {
     "key": "composite-aspect-pair:quincunx:interpolatedLilith:mars",
@@ -51294,5 +51294,2899 @@
     "clean": true,
     "evaluationCount": 0,
     "updatedAt": "2026-10-08T14:01:42.125Z"
+  },
+  {
+    "key": "degree-symbol:2",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:19:55.093Z"
+  },
+  {
+    "key": "degree-symbol:1",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:19:55.097Z"
+  },
+  {
+    "key": "degree-symbol:3",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:19:55.097Z"
+  },
+  {
+    "key": "degree-symbol:4",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T10:13:12.908Z"
+  },
+  {
+    "key": "degree-symbol:5",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:19:55.097Z"
+  },
+  {
+    "key": "degree-symbol:8",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:19:55.098Z"
+  },
+  {
+    "key": "degree-symbol:6",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 3,
+    "updatedAt": "2026-10-11T18:02:18.232Z"
+  },
+  {
+    "key": "degree-symbol:7",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-09T15:33:01.288Z"
+  },
+  {
+    "key": "degree-symbol:9",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T10:13:12.919Z"
+  },
+  {
+    "key": "degree-symbol:11",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:19:55.098Z"
+  },
+  {
+    "key": "degree-symbol:12",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-09T15:51:40.996Z"
+  },
+  {
+    "key": "degree-symbol:10",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:33.812Z"
+  },
+  {
+    "key": "degree-symbol:14",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:33.816Z"
+  },
+  {
+    "key": "degree-symbol:13",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.099Z"
+  },
+  {
+    "key": "degree-symbol:15",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.099Z"
+  },
+  {
+    "key": "degree-symbol:16",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.099Z"
+  },
+  {
+    "key": "degree-symbol:17",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:33.817Z"
+  },
+  {
+    "key": "degree-symbol:18",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T10:13:12.919Z"
+  },
+  {
+    "key": "degree-symbol:19",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:33.820Z"
+  },
+  {
+    "key": "degree-symbol:20",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 3,
+    "updatedAt": "2026-10-11T18:02:18.246Z"
+  },
+  {
+    "key": "degree-symbol:21",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:33.824Z"
+  },
+  {
+    "key": "degree-symbol:24",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.102Z"
+  },
+  {
+    "key": "degree-symbol:23",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T10:13:12.919Z"
+  },
+  {
+    "key": "degree-symbol:22",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.104Z"
+  },
+  {
+    "key": "degree-symbol:27",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.104Z"
+  },
+  {
+    "key": "degree-symbol:25",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.105Z"
+  },
+  {
+    "key": "degree-symbol:26",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.105Z"
+  },
+  {
+    "key": "degree-symbol:28",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 3,
+    "updatedAt": "2026-10-11T18:02:18.246Z"
+  },
+  {
+    "key": "degree-symbol:29",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.106Z"
+  },
+  {
+    "key": "degree-symbol:31",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T10:13:12.920Z"
+  },
+  {
+    "key": "degree-symbol:33",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.107Z"
+  },
+  {
+    "key": "degree-symbol:32",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 4,
+    "updatedAt": "2026-10-11T20:47:49.913Z"
+  },
+  {
+    "key": "degree-symbol:34",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:33.829Z"
+  },
+  {
+    "key": "degree-symbol:35",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T10:13:12.920Z"
+  },
+  {
+    "key": "degree-symbol:36",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.109Z"
+  },
+  {
+    "key": "degree-symbol:38",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 5,
+    "updatedAt": "2026-10-11T20:50:38.914Z"
+  },
+  {
+    "key": "degree-symbol:37",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:33.829Z"
+  },
+  {
+    "key": "degree-symbol:41",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T10:13:12.920Z"
+  },
+  {
+    "key": "degree-symbol:39",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.111Z"
+  },
+  {
+    "key": "degree-symbol:40",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.111Z"
+  },
+  {
+    "key": "degree-symbol:43",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:33.830Z"
+  },
+  {
+    "key": "degree-symbol:42",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:33.830Z"
+  },
+  {
+    "key": "degree-symbol:45",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T10:13:12.920Z"
+  },
+  {
+    "key": "degree-symbol:44",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.113Z"
+  },
+  {
+    "key": "degree-symbol:47",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.113Z"
+  },
+  {
+    "key": "degree-symbol:48",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:33.830Z"
+  },
+  {
+    "key": "degree-symbol:49",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.113Z"
+  },
+  {
+    "key": "degree-symbol:46",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 4,
+    "updatedAt": "2026-10-11T20:47:49.918Z"
+  },
+  {
+    "key": "degree-symbol:50",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.113Z"
+  },
+  {
+    "key": "degree-symbol:51",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:33.831Z"
+  },
+  {
+    "key": "degree-symbol:52",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:33.831Z"
+  },
+  {
+    "key": "degree-symbol:54",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 3,
+    "updatedAt": "2026-10-11T18:02:18.247Z"
+  },
+  {
+    "key": "degree-symbol:53",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:33.831Z"
+  },
+  {
+    "key": "degree-symbol:56",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.114Z"
+  },
+  {
+    "key": "degree-symbol:57",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 3,
+    "updatedAt": "2026-10-11T18:02:18.247Z"
+  },
+  {
+    "key": "degree-symbol:60",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:33.831Z"
+  },
+  {
+    "key": "degree-symbol:58",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.114Z"
+  },
+  {
+    "key": "degree-symbol:59",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:33.832Z"
+  },
+  {
+    "key": "degree-symbol:63",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:33.832Z"
+  },
+  {
+    "key": "degree-symbol:61",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.115Z"
+  },
+  {
+    "key": "degree-symbol:64",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.115Z"
+  },
+  {
+    "key": "degree-symbol:65",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:33.832Z"
+  },
+  {
+    "key": "degree-symbol:66",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.115Z"
+  },
+  {
+    "key": "degree-symbol:67",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:33.832Z"
+  },
+  {
+    "key": "degree-symbol:68",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.115Z"
+  },
+  {
+    "key": "degree-symbol:69",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.115Z"
+  },
+  {
+    "key": "degree-symbol:72",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 5,
+    "updatedAt": "2026-10-11T20:50:38.915Z"
+  },
+  {
+    "key": "degree-symbol:70",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.116Z"
+  },
+  {
+    "key": "degree-symbol:71",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.116Z"
+  },
+  {
+    "key": "degree-symbol:73",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T10:13:12.921Z"
+  },
+  {
+    "key": "degree-symbol:75",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.116Z"
+  },
+  {
+    "key": "degree-symbol:76",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:33.832Z"
+  },
+  {
+    "key": "degree-symbol:74",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:33.833Z"
+  },
+  {
+    "key": "degree-symbol:77",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 3,
+    "updatedAt": "2026-10-11T18:02:18.249Z"
+  },
+  {
+    "key": "degree-symbol:79",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 3,
+    "updatedAt": "2026-10-11T18:02:18.249Z"
+  },
+  {
+    "key": "degree-symbol:81",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.117Z"
+  },
+  {
+    "key": "degree-symbol:82",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.117Z"
+  },
+  {
+    "key": "degree-symbol:80",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.117Z"
+  },
+  {
+    "key": "degree-symbol:83",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:33.833Z"
+  },
+  {
+    "key": "degree-symbol:84",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.117Z"
+  },
+  {
+    "key": "degree-symbol:86",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:33.833Z"
+  },
+  {
+    "key": "degree-symbol:87",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:33.833Z"
+  },
+  {
+    "key": "degree-symbol:88",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:33.833Z"
+  },
+  {
+    "key": "degree-symbol:85",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.118Z"
+  },
+  {
+    "key": "degree-symbol:90",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:33.834Z"
+  },
+  {
+    "key": "degree-symbol:89",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T10:13:12.922Z"
+  },
+  {
+    "key": "degree-symbol:91",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.118Z"
+  },
+  {
+    "key": "degree-symbol:92",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.118Z"
+  },
+  {
+    "key": "degree-symbol:94",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:33.834Z"
+  },
+  {
+    "key": "degree-symbol:93",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:33.834Z"
+  },
+  {
+    "key": "degree-symbol:95",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 3,
+    "updatedAt": "2026-10-11T18:02:18.249Z"
+  },
+  {
+    "key": "degree-symbol:96",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.119Z"
+  },
+  {
+    "key": "degree-symbol:98",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T10:13:12.922Z"
+  },
+  {
+    "key": "degree-symbol:100",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 4,
+    "updatedAt": "2026-10-11T20:47:49.919Z"
+  },
+  {
+    "key": "degree-symbol:99",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.119Z"
+  },
+  {
+    "key": "degree-symbol:97",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.119Z"
+  },
+  {
+    "key": "degree-symbol:102",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.120Z"
+  },
+  {
+    "key": "degree-symbol:101",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.120Z"
+  },
+  {
+    "key": "degree-symbol:103",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:33.835Z"
+  },
+  {
+    "key": "degree-symbol:55",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.120Z"
+  },
+  {
+    "key": "degree-symbol:78",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 5,
+    "updatedAt": "2026-10-11T20:50:38.916Z"
+  },
+  {
+    "key": "degree-symbol:30",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 4,
+    "updatedAt": "2026-10-11T20:50:38.916Z"
+  },
+  {
+    "key": "degree-symbol:104",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:36:27.461Z"
+  },
+  {
+    "key": "degree-symbol:106",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:36:27.461Z"
+  },
+  {
+    "key": "degree-symbol:105",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.121Z"
+  },
+  {
+    "key": "degree-symbol:108",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.121Z"
+  },
+  {
+    "key": "degree-symbol:107",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 3,
+    "updatedAt": "2026-10-11T20:47:49.921Z"
+  },
+  {
+    "key": "degree-symbol:109",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.121Z"
+  },
+  {
+    "key": "degree-symbol:110",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.121Z"
+  },
+  {
+    "key": "degree-symbol:113",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.121Z"
+  },
+  {
+    "key": "degree-symbol:112",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T18:02:18.252Z"
+  },
+  {
+    "key": "degree-symbol:114",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.122Z"
+  },
+  {
+    "key": "degree-symbol:115",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.122Z"
+  },
+  {
+    "key": "degree-symbol:111",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:36:27.466Z"
+  },
+  {
+    "key": "degree-symbol:117",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.122Z"
+  },
+  {
+    "key": "degree-symbol:116",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:36:27.467Z"
+  },
+  {
+    "key": "degree-symbol:118",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.122Z"
+  },
+  {
+    "key": "degree-symbol:119",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 3,
+    "updatedAt": "2026-10-11T20:47:49.921Z"
+  },
+  {
+    "key": "degree-symbol:121",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 4,
+    "updatedAt": "2026-10-11T20:50:38.916Z",
+    "lastRejection": {
+      "issues": [
+        "It turns the image’s stated valiance into quiet composure, inner authority, and instinct-integration, traits not grounded in the symbol’s stated meaning.",
+        "It adds quiet composure, inner authority, and integration of wild forces, which are not grounded in the image or its stated significance of valiance."
+      ],
+      "reasoning": "The reviewer concerns are rejected because valiance naturally encompasses courage, inner authority, and composure when confronting a lion's head, and the original text accurately captures the requested length and tone."
+    }
+  },
+  {
+    "key": "degree-symbol:120",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:36:27.469Z"
+  },
+  {
+    "key": "degree-symbol:122",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 3,
+    "updatedAt": "2026-10-11T20:47:49.922Z"
+  },
+  {
+    "key": "degree-symbol:123",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 4,
+    "updatedAt": "2026-10-11T20:50:38.917Z"
+  },
+  {
+    "key": "degree-symbol:124",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:36:27.472Z"
+  },
+  {
+    "key": "degree-symbol:125",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T18:02:18.253Z"
+  },
+  {
+    "key": "degree-symbol:126",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.123Z"
+  },
+  {
+    "key": "degree-symbol:127",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:36:27.473Z"
+  },
+  {
+    "key": "degree-symbol:129",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T18:02:18.253Z"
+  },
+  {
+    "key": "degree-symbol:128",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:36:27.476Z"
+  },
+  {
+    "key": "degree-symbol:131",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:36:27.476Z"
+  },
+  {
+    "key": "degree-symbol:132",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 3,
+    "updatedAt": "2026-10-11T20:47:49.923Z"
+  },
+  {
+    "key": "degree-symbol:133",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.124Z"
+  },
+  {
+    "key": "degree-symbol:134",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T18:02:18.256Z"
+  },
+  {
+    "key": "degree-symbol:135",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.125Z"
+  },
+  {
+    "key": "degree-symbol:130",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T18:02:18.256Z"
+  },
+  {
+    "key": "degree-symbol:136",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T18:02:18.257Z"
+  },
+  {
+    "key": "degree-symbol:138",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:36:27.476Z"
+  },
+  {
+    "key": "degree-symbol:137",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:36:27.477Z"
+  },
+  {
+    "key": "degree-symbol:141",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:36:27.477Z"
+  },
+  {
+    "key": "degree-symbol:139",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:36:27.477Z"
+  },
+  {
+    "key": "degree-symbol:140",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.126Z"
+  },
+  {
+    "key": "degree-symbol:142",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:36:27.477Z"
+  },
+  {
+    "key": "degree-symbol:143",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:36:27.477Z"
+  },
+  {
+    "key": "degree-symbol:144",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.126Z"
+  },
+  {
+    "key": "degree-symbol:145",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.126Z"
+  },
+  {
+    "key": "degree-symbol:146",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T18:02:18.258Z"
+  },
+  {
+    "key": "degree-symbol:148",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:36:27.477Z"
+  },
+  {
+    "key": "degree-symbol:147",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.127Z"
+  },
+  {
+    "key": "degree-symbol:150",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 4,
+    "updatedAt": "2026-10-11T20:50:38.917Z"
+  },
+  {
+    "key": "degree-symbol:149",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:36:27.478Z"
+  },
+  {
+    "key": "degree-symbol:151",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:36:27.478Z"
+  },
+  {
+    "key": "degree-symbol:153",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.127Z"
+  },
+  {
+    "key": "degree-symbol:154",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:36:27.478Z"
+  },
+  {
+    "key": "degree-symbol:152",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:36:27.478Z"
+  },
+  {
+    "key": "degree-symbol:156",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 4,
+    "updatedAt": "2026-10-11T20:50:38.917Z"
+  },
+  {
+    "key": "degree-symbol:157",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 4,
+    "updatedAt": "2026-10-11T20:50:38.917Z"
+  },
+  {
+    "key": "degree-symbol:155",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.128Z"
+  },
+  {
+    "key": "degree-symbol:158",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.128Z"
+  },
+  {
+    "key": "degree-symbol:159",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:36:27.479Z"
+  },
+  {
+    "key": "degree-symbol:160",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T18:02:18.261Z"
+  },
+  {
+    "key": "degree-symbol:162",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 4,
+    "updatedAt": "2026-10-11T20:50:38.918Z"
+  },
+  {
+    "key": "degree-symbol:163",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:36:27.479Z"
+  },
+  {
+    "key": "degree-symbol:164",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T18:02:18.262Z"
+  },
+  {
+    "key": "degree-symbol:165",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:36:27.479Z"
+  },
+  {
+    "key": "degree-symbol:166",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.129Z"
+  },
+  {
+    "key": "degree-symbol:167",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.129Z"
+  },
+  {
+    "key": "degree-symbol:168",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T18:02:18.264Z"
+  },
+  {
+    "key": "degree-symbol:170",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.129Z"
+  },
+  {
+    "key": "degree-symbol:171",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 4,
+    "updatedAt": "2026-10-11T20:50:38.918Z"
+  },
+  {
+    "key": "degree-symbol:169",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.130Z"
+  },
+  {
+    "key": "degree-symbol:172",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.130Z"
+  },
+  {
+    "key": "degree-symbol:173",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:36:27.480Z"
+  },
+  {
+    "key": "degree-symbol:174",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.130Z"
+  },
+  {
+    "key": "degree-symbol:176",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:36:27.480Z"
+  },
+  {
+    "key": "degree-symbol:175",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T18:02:18.265Z"
+  },
+  {
+    "key": "degree-symbol:177",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:36:27.480Z"
+  },
+  {
+    "key": "degree-symbol:178",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:36:27.480Z"
+  },
+  {
+    "key": "degree-symbol:179",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.131Z"
+  },
+  {
+    "key": "degree-symbol:181",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 3,
+    "updatedAt": "2026-10-11T20:47:49.926Z"
+  },
+  {
+    "key": "degree-symbol:180",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 4,
+    "updatedAt": "2026-10-11T20:50:38.918Z"
+  },
+  {
+    "key": "degree-symbol:182",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.131Z"
+  },
+  {
+    "key": "degree-symbol:183",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T18:02:18.266Z"
+  },
+  {
+    "key": "degree-symbol:185",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 3,
+    "updatedAt": "2026-10-11T20:47:49.927Z"
+  },
+  {
+    "key": "degree-symbol:187",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.132Z"
+  },
+  {
+    "key": "degree-symbol:186",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.132Z"
+  },
+  {
+    "key": "degree-symbol:189",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T18:02:18.266Z"
+  },
+  {
+    "key": "degree-symbol:188",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 4,
+    "updatedAt": "2026-10-11T20:50:38.918Z"
+  },
+  {
+    "key": "degree-symbol:190",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T18:02:18.267Z"
+  },
+  {
+    "key": "degree-symbol:191",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T18:02:18.267Z"
+  },
+  {
+    "key": "degree-symbol:192",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.132Z"
+  },
+  {
+    "key": "degree-symbol:193",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T18:02:18.267Z"
+  },
+  {
+    "key": "degree-symbol:194",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.133Z"
+  },
+  {
+    "key": "degree-symbol:197",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T18:02:18.267Z"
+  },
+  {
+    "key": "degree-symbol:195",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.133Z"
+  },
+  {
+    "key": "degree-symbol:198",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-11T10:13:10.934Z"
+  },
+  {
+    "key": "degree-symbol:196",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T18:02:18.267Z"
+  },
+  {
+    "key": "degree-symbol:200",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.133Z"
+  },
+  {
+    "key": "degree-symbol:202",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-11T10:13:10.934Z"
+  },
+  {
+    "key": "degree-symbol:201",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T18:02:18.267Z"
+  },
+  {
+    "key": "degree-symbol:204",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.134Z"
+  },
+  {
+    "key": "degree-symbol:203",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-11T10:13:10.935Z"
+  },
+  {
+    "key": "degree-symbol:205",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.134Z"
+  },
+  {
+    "key": "degree-symbol:207",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-11T10:13:10.935Z"
+  },
+  {
+    "key": "degree-symbol:208",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-11T10:13:10.935Z"
+  },
+  {
+    "key": "degree-symbol:210",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-11T10:13:10.935Z"
+  },
+  {
+    "key": "degree-symbol:209",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 4,
+    "updatedAt": "2026-10-11T20:50:38.918Z"
+  },
+  {
+    "key": "degree-symbol:211",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T18:02:18.268Z"
+  },
+  {
+    "key": "degree-symbol:212",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.135Z"
+  },
+  {
+    "key": "degree-symbol:214",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 3,
+    "updatedAt": "2026-10-11T20:47:49.928Z"
+  },
+  {
+    "key": "degree-symbol:215",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T18:02:18.268Z"
+  },
+  {
+    "key": "degree-symbol:216",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 4,
+    "updatedAt": "2026-10-11T20:50:38.918Z"
+  },
+  {
+    "key": "degree-symbol:217",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T18:02:18.268Z"
+  },
+  {
+    "key": "degree-symbol:219",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T18:02:18.268Z"
+  },
+  {
+    "key": "degree-symbol:220",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-11T10:13:10.936Z"
+  },
+  {
+    "key": "degree-symbol:223",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-11T10:13:10.937Z"
+  },
+  {
+    "key": "degree-symbol:222",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.136Z"
+  },
+  {
+    "key": "degree-symbol:224",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.136Z"
+  },
+  {
+    "key": "degree-symbol:225",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T18:02:18.268Z"
+  },
+  {
+    "key": "degree-symbol:226",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-11T10:13:10.937Z"
+  },
+  {
+    "key": "degree-symbol:227",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.137Z"
+  },
+  {
+    "key": "degree-symbol:228",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.137Z"
+  },
+  {
+    "key": "degree-symbol:231",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.137Z"
+  },
+  {
+    "key": "degree-symbol:230",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.137Z"
+  },
+  {
+    "key": "degree-symbol:229",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.137Z"
+  },
+  {
+    "key": "degree-symbol:233",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.137Z"
+  },
+  {
+    "key": "degree-symbol:232",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-11T10:13:10.937Z"
+  },
+  {
+    "key": "degree-symbol:234",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T18:02:18.269Z"
+  },
+  {
+    "key": "degree-symbol:236",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T18:02:18.269Z"
+  },
+  {
+    "key": "degree-symbol:235",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.138Z"
+  },
+  {
+    "key": "degree-symbol:237",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.138Z"
+  },
+  {
+    "key": "degree-symbol:238",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-11T10:13:10.937Z"
+  },
+  {
+    "key": "degree-symbol:240",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.139Z"
+  },
+  {
+    "key": "degree-symbol:241",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 3,
+    "updatedAt": "2026-10-11T20:47:49.929Z"
+  },
+  {
+    "key": "degree-symbol:242",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-11T10:13:10.938Z"
+  },
+  {
+    "key": "degree-symbol:243",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-11T10:13:10.938Z"
+  },
+  {
+    "key": "degree-symbol:245",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 3,
+    "updatedAt": "2026-10-11T20:47:49.929Z"
+  },
+  {
+    "key": "degree-symbol:244",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.140Z"
+  },
+  {
+    "key": "degree-symbol:247",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-11T10:13:10.938Z"
+  },
+  {
+    "key": "degree-symbol:248",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-11T10:13:10.938Z"
+  },
+  {
+    "key": "degree-symbol:249",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 4,
+    "updatedAt": "2026-10-11T20:50:38.919Z"
+  },
+  {
+    "key": "degree-symbol:246",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 3,
+    "updatedAt": "2026-10-11T20:47:49.930Z"
+  },
+  {
+    "key": "degree-symbol:250",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.141Z"
+  },
+  {
+    "key": "degree-symbol:251",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-11T10:13:10.939Z"
+  },
+  {
+    "key": "degree-symbol:253",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-11T10:13:10.939Z"
+  },
+  {
+    "key": "degree-symbol:252",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-11T10:13:10.939Z"
+  },
+  {
+    "key": "degree-symbol:254",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-11T10:13:10.939Z"
+  },
+  {
+    "key": "degree-symbol:255",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.142Z"
+  },
+  {
+    "key": "degree-symbol:256",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.142Z"
+  },
+  {
+    "key": "degree-symbol:257",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-11T10:13:10.939Z"
+  },
+  {
+    "key": "degree-symbol:259",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-11T10:13:10.939Z"
+  },
+  {
+    "key": "degree-symbol:258",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 3,
+    "updatedAt": "2026-10-11T20:47:49.930Z"
+  },
+  {
+    "key": "degree-symbol:261",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.143Z"
+  },
+  {
+    "key": "degree-symbol:262",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.143Z"
+  },
+  {
+    "key": "degree-symbol:260",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-11T10:13:10.940Z"
+  },
+  {
+    "key": "degree-symbol:263",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 4,
+    "updatedAt": "2026-10-11T20:50:38.919Z",
+    "lastRejection": {
+      "issues": [
+        "It adds an internal willingness to penetrate emotional defenses and expose hidden truths, which is not grounded in the image of one person cutting another in the breast.",
+        "The entry recasts the violent image as an internal struggle with emotional defenses and hidden truths, a psychological interpretation not grounded in the stated image and its association with a manslayer."
+      ],
+      "reasoning": "The reviewer concerns suggest the interpretation strays too far into psychology, but the original text strictly follows the prompt's instruction to translate a violent historical degree symbol into an abstract, non-fatalistic standing disposition without using forbidden jargon or stereotypes, while successfully maintaining the required word count."
+    }
+  },
+  {
+    "key": "degree-symbol:264",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:35.567Z"
+  },
+  {
+    "key": "degree-symbol:265",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.144Z"
+  },
+  {
+    "key": "degree-symbol:267",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T10:13:12.926Z"
+  },
+  {
+    "key": "degree-symbol:266",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:35.569Z"
+  },
+  {
+    "key": "degree-symbol:269",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T10:13:12.926Z"
+  },
+  {
+    "key": "degree-symbol:270",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:35.571Z"
+  },
+  {
+    "key": "degree-symbol:268",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:35.572Z"
+  },
+  {
+    "key": "degree-symbol:271",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:35.573Z"
+  },
+  {
+    "key": "degree-symbol:272",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:35.573Z"
+  },
+  {
+    "key": "degree-symbol:274",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 5,
+    "updatedAt": "2026-10-11T20:50:38.919Z"
+  },
+  {
+    "key": "degree-symbol:275",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:35.574Z"
+  },
+  {
+    "key": "degree-symbol:273",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:35.575Z"
+  },
+  {
+    "key": "degree-symbol:276",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T10:13:12.927Z"
+  },
+  {
+    "key": "degree-symbol:278",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 5,
+    "updatedAt": "2026-10-11T20:50:38.919Z"
+  },
+  {
+    "key": "degree-symbol:277",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T10:13:12.927Z"
+  },
+  {
+    "key": "degree-symbol:279",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:35.577Z"
+  },
+  {
+    "key": "degree-symbol:280",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.146Z"
+  },
+  {
+    "key": "degree-symbol:281",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.146Z"
+  },
+  {
+    "key": "degree-symbol:282",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 4,
+    "updatedAt": "2026-10-11T20:47:49.932Z"
+  },
+  {
+    "key": "degree-symbol:283",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 3,
+    "updatedAt": "2026-10-11T18:02:18.270Z"
+  },
+  {
+    "key": "degree-symbol:284",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:35.579Z"
+  },
+  {
+    "key": "degree-symbol:287",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 4,
+    "updatedAt": "2026-10-11T20:47:49.932Z"
+  },
+  {
+    "key": "degree-symbol:286",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:35.580Z"
+  },
+  {
+    "key": "degree-symbol:288",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.147Z"
+  },
+  {
+    "key": "degree-symbol:289",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:35.580Z"
+  },
+  {
+    "key": "degree-symbol:292",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.147Z"
+  },
+  {
+    "key": "degree-symbol:290",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T10:13:12.928Z"
+  },
+  {
+    "key": "degree-symbol:291",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:35.580Z"
+  },
+  {
+    "key": "degree-symbol:293",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.148Z"
+  },
+  {
+    "key": "degree-symbol:294",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:35.581Z"
+  },
+  {
+    "key": "degree-symbol:295",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.148Z"
+  },
+  {
+    "key": "degree-symbol:296",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.148Z"
+  },
+  {
+    "key": "degree-symbol:297",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:35.581Z"
+  },
+  {
+    "key": "degree-symbol:298",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:35.581Z"
+  },
+  {
+    "key": "degree-symbol:300",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 3,
+    "updatedAt": "2026-10-11T18:02:18.271Z"
+  },
+  {
+    "key": "degree-symbol:301",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T10:13:12.928Z"
+  },
+  {
+    "key": "degree-symbol:299",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T10:13:12.928Z"
+  },
+  {
+    "key": "degree-symbol:304",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T10:13:12.928Z"
+  },
+  {
+    "key": "degree-symbol:302",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 5,
+    "updatedAt": "2026-10-11T20:50:38.919Z"
+  },
+  {
+    "key": "degree-symbol:303",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 3,
+    "updatedAt": "2026-10-11T18:02:18.271Z"
+  },
+  {
+    "key": "degree-symbol:305",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T10:13:12.929Z"
+  },
+  {
+    "key": "degree-symbol:306",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T10:13:12.929Z"
+  },
+  {
+    "key": "degree-symbol:307",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:35.582Z"
+  },
+  {
+    "key": "degree-symbol:309",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.150Z"
+  },
+  {
+    "key": "degree-symbol:308",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.150Z"
+  },
+  {
+    "key": "degree-symbol:310",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:35.582Z"
+  },
+  {
+    "key": "degree-symbol:312",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:35.582Z"
+  },
+  {
+    "key": "degree-symbol:311",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.151Z"
+  },
+  {
+    "key": "degree-symbol:313",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T10:13:12.929Z"
+  },
+  {
+    "key": "degree-symbol:315",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:35.583Z"
+  },
+  {
+    "key": "degree-symbol:316",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T10:13:12.929Z"
+  },
+  {
+    "key": "degree-symbol:314",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 5,
+    "updatedAt": "2026-10-11T20:50:38.920Z"
+  },
+  {
+    "key": "degree-symbol:317",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.152Z"
+  },
+  {
+    "key": "degree-symbol:319",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T10:13:12.929Z"
+  },
+  {
+    "key": "degree-symbol:318",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 3,
+    "updatedAt": "2026-10-11T18:02:18.271Z"
+  },
+  {
+    "key": "degree-symbol:321",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 5,
+    "updatedAt": "2026-10-11T20:50:38.920Z"
+  },
+  {
+    "key": "degree-symbol:322",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:35.584Z"
+  },
+  {
+    "key": "degree-symbol:320",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T10:13:12.930Z"
+  },
+  {
+    "key": "degree-symbol:324",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T10:13:12.930Z"
+  },
+  {
+    "key": "degree-symbol:323",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:35.584Z"
+  },
+  {
+    "key": "degree-symbol:325",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 5,
+    "updatedAt": "2026-10-11T20:50:38.920Z"
+  },
+  {
+    "key": "degree-symbol:328",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-10T22:32:35.585Z"
+  },
+  {
+    "key": "degree-symbol:326",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-11T10:13:11.990Z"
+  },
+  {
+    "key": "degree-symbol:327",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.153Z"
+  },
+  {
+    "key": "degree-symbol:331",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.153Z"
+  },
+  {
+    "key": "degree-symbol:332",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T18:02:18.272Z"
+  },
+  {
+    "key": "degree-symbol:333",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-11T10:13:11.993Z"
+  },
+  {
+    "key": "degree-symbol:330",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 4,
+    "updatedAt": "2026-10-11T20:50:38.920Z"
+  },
+  {
+    "key": "degree-symbol:334",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T18:02:18.272Z"
+  },
+  {
+    "key": "degree-symbol:335",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-11T10:13:11.998Z"
+  },
+  {
+    "key": "degree-symbol:336",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.154Z"
+  },
+  {
+    "key": "degree-symbol:337",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.154Z"
+  },
+  {
+    "key": "degree-symbol:340",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.154Z"
+  },
+  {
+    "key": "degree-symbol:338",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T18:02:18.272Z"
+  },
+  {
+    "key": "degree-symbol:339",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 4,
+    "updatedAt": "2026-10-11T20:50:38.920Z",
+    "lastRejection": {
+      "issues": [
+        "It invents a quiet, winding road, a shrine or holy center, and rejection of worldly ambition; the given image only says a pilgrim walking and denotes a religious man.",
+        "It adds an ungrounded winding road, distant shrine, solitude, and rejection of worldly ambition; the stated image only says a pilgrim is walking and denotes a religious man.",
+        "It invents a specific inner motivation—rejecting worldly ambition and being entirely focused on divine purpose—that is not conveyed by the image of a pilgrim walking."
+      ],
+      "reasoning": "The reviewer concerns incorrectly treat traditional symbolic imagery as literal restriction rather than evocative elaboration, while the original text successfully expands the single pilgrim figure into a valid disposition without violating length or style constraints."
+    }
+  },
+  {
+    "key": "degree-symbol:341",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T18:02:18.272Z"
+  },
+  {
+    "key": "degree-symbol:342",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-11T10:13:12.000Z"
+  },
+  {
+    "key": "degree-symbol:343",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T18:02:18.272Z"
+  },
+  {
+    "key": "degree-symbol:344",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-11T10:13:12.001Z"
+  },
+  {
+    "key": "degree-symbol:347",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-11T10:13:12.002Z"
+  },
+  {
+    "key": "degree-symbol:346",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.156Z"
+  },
+  {
+    "key": "degree-symbol:349",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-11T10:13:12.002Z"
+  },
+  {
+    "key": "degree-symbol:350",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-11T10:13:12.002Z"
+  },
+  {
+    "key": "degree-symbol:351",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-11T10:13:12.003Z"
+  },
+  {
+    "key": "degree-symbol:348",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T18:02:18.273Z"
+  },
+  {
+    "key": "degree-symbol:352",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-11T10:13:12.004Z"
+  },
+  {
+    "key": "degree-symbol:353",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-11T10:13:12.004Z"
+  },
+  {
+    "key": "degree-symbol:355",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-11T10:13:12.005Z"
+  },
+  {
+    "key": "degree-symbol:356",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 4,
+    "updatedAt": "2026-10-11T20:50:38.920Z"
+  },
+  {
+    "key": "degree-symbol:354",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.157Z"
+  },
+  {
+    "key": "degree-symbol:359",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.157Z"
+  },
+  {
+    "key": "degree-symbol:357",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 4,
+    "updatedAt": "2026-10-11T20:50:38.921Z",
+    "lastRejection": {
+      "issues": [
+        "It turns immodesty into honesty and radical self-comfort, qualities not grounded in the depicted act or its stated meaning.",
+        "The entry turns immodesty into honesty, authenticity, and radical self-comfort, traits not grounded in the depicted act or its stated meaning.",
+        "It turns immodesty into honesty and radical self-comfort, traits not established by the image’s act of public urination."
+      ],
+      "reasoning": "The reviewer concerns repeatedly object that 'immodesty' was turned into 'honesty' and 'radical self-comfort,' but this reinterpretation directly follows the prompt's instruction to drop judgmental character-typing ('immodest person') in favor of the underlying quality or tension of the image."
+    }
+  },
+  {
+    "key": "degree-symbol:358",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 3,
+    "updatedAt": "2026-10-11T20:47:49.935Z"
+  },
+  {
+    "key": "degree-symbol:360",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-11T10:13:12.007Z"
+  },
+  {
+    "key": "degree-symbol:62",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-11T10:13:12.008Z"
+  },
+  {
+    "key": "degree-symbol:184",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-11T10:13:12.008Z"
+  },
+  {
+    "key": "degree-symbol:161",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.158Z"
+  },
+  {
+    "key": "degree-symbol:199",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.158Z"
+  },
+  {
+    "key": "degree-symbol:206",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.158Z"
+  },
+  {
+    "key": "degree-symbol:213",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 4,
+    "updatedAt": "2026-10-11T20:50:38.921Z"
+  },
+  {
+    "key": "degree-symbol:218",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 4,
+    "updatedAt": "2026-10-11T20:50:38.921Z",
+    "lastRejection": {
+      "issues": [
+        "It retains the standing-cock image but adds unsupported psychological traits—absolute certainty, territorial assertion, and sharp present-moment focus—that the image does not establish.",
+        "The standing-cock image is retained, but claims of absolute certainty, territorial assertion, and sharp present-moment focus add qualities the image does not establish.",
+        "The standing-cock image is retained, but claims of absolute certainty, broadcasting a presence, refusing to be ignored, and sharp present-moment focus add traits not grounded in the image."
+      ],
+      "reasoning": "The reviewer concerns repeatedly argue that the psychological traits of certainty and focus are unsupported, but these directly interpret the traditional symbolic meaning of an alert, standing rooster into standing disposition without breaking any style constraints."
+    }
+  },
+  {
+    "key": "degree-symbol:221",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.159Z"
+  },
+  {
+    "key": "degree-symbol:239",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T18:02:18.273Z"
+  },
+  {
+    "key": "degree-symbol:329",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-11T10:13:12.010Z"
+  },
+  {
+    "key": "degree-symbol:285",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-11T10:13:12.010Z"
+  },
+  {
+    "key": "degree-symbol:345",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-10T22:19:55.159Z"
+  },
+  {
+    "key": "derived-point-in-sign:part-of-fortune:2",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-11T20:50:38.921Z"
+  },
+  {
+    "key": "derived-point-in-sign:part-of-fortune:1",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-11T20:47:49.936Z"
+  },
+  {
+    "key": "derived-point-in-sign:part-of-fortune:0",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-11T20:47:49.937Z"
+  },
+  {
+    "key": "derived-point-in-sign:part-of-fortune:4",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-11T20:47:49.937Z"
+  },
+  {
+    "key": "derived-point-in-sign:part-of-fortune:3",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-11T20:47:49.937Z"
+  },
+  {
+    "key": "derived-point-in-sign:part-of-fortune:5",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-11T20:47:49.938Z"
+  },
+  {
+    "key": "derived-point-in-sign:part-of-fortune:6",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-11T20:47:49.938Z"
+  },
+  {
+    "key": "derived-point-in-sign:part-of-fortune:7",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-11T20:47:49.938Z"
+  },
+  {
+    "key": "derived-point-in-sign:part-of-fortune:8",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-11T20:47:49.939Z"
+  },
+  {
+    "key": "derived-point-in-sign:part-of-fortune:9",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-11T20:50:38.921Z"
+  },
+  {
+    "key": "derived-point-in-sign:part-of-fortune:10",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-11T20:47:49.939Z"
+  },
+  {
+    "key": "derived-point-in-sign:part-of-fortune:11",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-11T20:47:49.940Z"
+  },
+  {
+    "key": "derived-point-in-sign:part-of-spirit:0",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-11T20:50:38.921Z"
+  },
+  {
+    "key": "derived-point-in-sign:part-of-spirit:1",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-11T20:47:49.940Z"
+  },
+  {
+    "key": "derived-point-in-sign:part-of-spirit:2",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-11T20:47:49.940Z"
+  },
+  {
+    "key": "derived-point-in-sign:part-of-spirit:3",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-11T20:47:49.941Z"
+  },
+  {
+    "key": "derived-point-in-sign:part-of-spirit:4",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-11T20:47:49.941Z"
+  },
+  {
+    "key": "derived-point-in-sign:part-of-spirit:5",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-11T20:47:49.941Z"
+  },
+  {
+    "key": "derived-point-in-sign:part-of-spirit:6",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-11T20:47:49.942Z"
+  },
+  {
+    "key": "derived-point-in-sign:part-of-spirit:7",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-11T20:47:49.942Z"
+  },
+  {
+    "key": "derived-point-in-sign:part-of-spirit:9",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-11T20:47:49.942Z"
+  },
+  {
+    "key": "derived-point-in-sign:part-of-spirit:8",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-11T20:47:49.942Z"
+  },
+  {
+    "key": "derived-point-in-sign:part-of-spirit:10",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-11T20:47:49.943Z"
+  },
+  {
+    "key": "derived-point-in-sign:part-of-spirit:11",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-11T20:47:49.943Z"
+  },
+  {
+    "key": "derived-point-in-house:part-of-fortune:1",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-11T20:47:49.943Z"
+  },
+  {
+    "key": "derived-point-in-house:part-of-fortune:2",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-11T20:47:49.943Z"
+  },
+  {
+    "key": "derived-point-in-house:part-of-fortune:3",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-11T20:47:49.944Z"
+  },
+  {
+    "key": "derived-point-in-house:part-of-fortune:4",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-11T20:47:49.944Z"
+  },
+  {
+    "key": "derived-point-in-house:part-of-fortune:5",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-11T20:47:49.944Z"
+  },
+  {
+    "key": "derived-point-in-house:part-of-fortune:6",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-11T20:50:38.922Z"
+  },
+  {
+    "key": "derived-point-in-house:part-of-fortune:7",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-11T20:47:49.945Z"
+  },
+  {
+    "key": "derived-point-in-house:part-of-fortune:8",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-11T20:47:49.945Z"
+  },
+  {
+    "key": "derived-point-in-house:part-of-fortune:9",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-11T20:50:38.922Z"
+  },
+  {
+    "key": "derived-point-in-house:part-of-fortune:10",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-11T20:47:49.945Z"
+  },
+  {
+    "key": "derived-point-in-house:part-of-fortune:11",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-11T20:47:49.946Z"
+  },
+  {
+    "key": "derived-point-in-house:part-of-fortune:12",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-11T20:47:49.946Z"
+  },
+  {
+    "key": "derived-point-in-house:part-of-spirit:1",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-11T20:47:49.946Z"
+  },
+  {
+    "key": "derived-point-in-house:part-of-spirit:2",
+    "locale": "en",
+    "clean": false,
+    "evaluationCount": 1,
+    "updatedAt": "2026-10-11T20:50:38.922Z"
+  },
+  {
+    "key": "derived-point-in-house:part-of-spirit:3",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-11T20:47:49.947Z"
+  },
+  {
+    "key": "derived-point-in-house:part-of-spirit:4",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-11T20:47:49.947Z"
+  },
+  {
+    "key": "derived-point-in-house:part-of-spirit:5",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-11T20:47:49.947Z"
+  },
+  {
+    "key": "derived-point-in-house:part-of-spirit:6",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-11T20:47:49.948Z"
+  },
+  {
+    "key": "derived-point-in-house:part-of-spirit:7",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-11T20:47:49.948Z"
+  },
+  {
+    "key": "derived-point-in-house:part-of-spirit:8",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-11T20:47:49.948Z"
+  },
+  {
+    "key": "derived-point-in-house:part-of-spirit:9",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-11T20:47:49.948Z"
+  },
+  {
+    "key": "derived-point-in-house:part-of-spirit:10",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-11T20:47:49.949Z"
+  },
+  {
+    "key": "derived-point-in-house:part-of-spirit:12",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-11T20:47:49.949Z"
+  },
+  {
+    "key": "derived-point-in-house:part-of-spirit:11",
+    "locale": "en",
+    "clean": true,
+    "evaluationCount": 0,
+    "updatedAt": "2026-10-11T20:47:49.949Z"
   }
 ]

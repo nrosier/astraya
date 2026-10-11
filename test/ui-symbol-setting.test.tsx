@@ -11,6 +11,7 @@ import type { ChartData } from '../src/domain/chart-compute.js';
 import { computeChartData } from '../src/domain/chart-compute.js';
 import { setLocale } from '../src/ui/locale.js';
 import { ChartDataView } from '../src/ui/ChartView.js';
+import { chartViewMessages } from '../src/ui/ChartView.messages.js';
 import { readSymbolClass, SYMBOL_CLASS_KEY, writeSymbolClass } from '../src/ui/symbol-setting.js';
 import { SymbolSetting } from '../src/ui/SymbolSetting.js';
 import { getEngine } from './engine-harness.js';
@@ -104,14 +105,22 @@ describe('the Symbols control', () => {
 
 describe('the symbol column of the Positions table', () => {
   const sunRowCell = (container: HTMLElement): Element | null =>
-    Array.from(container.querySelectorAll('#chart-tabpanel-positions tbody tr'))
+    Array.from(container.querySelectorAll('#chart-view-placements tbody tr'))
       .find((row) => row.textContent.includes('Sun'))
       ?.querySelector('td:nth-child(2)') ?? null;
 
+  function clickView(container: HTMLElement, label: string): void {
+    Array.from(container.querySelectorAll<HTMLAnchorElement>('.chart-view-link'))
+      .find((link) => link.textContent === label)
+      ?.click();
+  }
+
   async function positions(): Promise<HTMLElement> {
-    const container = await mountNode(<ChartDataView load={{ kind: 'ready', data }} displayName="Test" showHouses />);
+    const container = await mountNode(
+      <ChartDataView load={{ kind: 'ready', data }} displayName="Test" showHouses buildViewHref={() => '#'} />,
+    );
     await act(async () => {
-      container.querySelector<HTMLButtonElement>('#chart-tab-positions')?.click();
+      clickView(container, chartViewMessages.en.placementsViewLabel);
       await Promise.resolve();
     });
     return container;
@@ -146,7 +155,7 @@ describe('the symbol column of the Positions table', () => {
   it('redraws the wheel when the class changes, and keeps the name column readable in every class', async () => {
     const container = await positions();
     await act(async () => {
-      container.querySelector<HTMLButtonElement>('#chart-tab-chart')?.click();
+      clickView(container, chartViewMessages.en.wheelViewLabel);
       await Promise.resolve();
     });
     expect(container.querySelector('.chart-wheel text.chart-symbol-text')).toBeNull();
@@ -157,11 +166,11 @@ describe('the symbol column of the Positions table', () => {
     expect(container.querySelector('.chart-wheel text.chart-symbol-text-text')?.textContent).toMatch(/^[A-Z]{3}$/);
 
     await act(async () => {
-      container.querySelector<HTMLButtonElement>('#chart-tab-positions')?.click();
+      clickView(container, chartViewMessages.en.placementsViewLabel);
       await Promise.resolve();
     });
     expect(
-      Array.from(container.querySelectorAll('#chart-tabpanel-positions tbody tr')).some((row) =>
+      Array.from(container.querySelectorAll('#chart-view-placements tbody tr')).some((row) =>
         row.textContent.includes('Sun'),
       ),
     ).toBe(true);

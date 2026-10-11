@@ -41,7 +41,10 @@ export function changedSettings(value: ExtendedSettings): readonly ChangedSettin
   if (
     value.aspectsToChiron !== defaults.aspectsToChiron ||
     value.aspectsToLilith !== defaults.aspectsToLilith ||
-    value.aspectsToLunarNodes !== defaults.aspectsToLunarNodes
+    value.aspectsToLunarNodes !== defaults.aspectsToLunarNodes ||
+    value.aspectsToVertex !== defaults.aspectsToVertex ||
+    value.aspectsToPartOfFortune !== defaults.aspectsToPartOfFortune ||
+    value.aspectsToPartOfSpirit !== defaults.aspectsToPartOfSpirit
   ) {
     changed.push('aspectsTo');
   }

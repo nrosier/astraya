@@ -17,6 +17,7 @@
 import { useId, useState } from 'react';
 import { downloadText } from './download.js';
 import { useMessages } from './messages.js';
+import { Tooltip } from './primitives/Tooltip.js';
 import { sortableTableMessages } from './SortableTable.messages.js';
 import { rowsToCsv, rowsToTsv, sortRows, toggleSort, type SortState, type TableColumn } from './table-sort.js';
 
@@ -48,7 +49,6 @@ export function SortableTable<T>({
   // Shared prefix for the sr-only tooltip-description spans (#456) — one id per column, derived
   // from this plus the column key, so each gets a stable, unique id without a useId() call per
   // column (columns.map runs every render; useId() must be called the same number of times).
-  const tooltipIdPrefix = useId();
 
   const copy = (): void => {
     void navigator.clipboard.writeText(rowsToTsv(columns, sorted)).then(
@@ -86,14 +86,9 @@ export function SortableTable<T>({
           <thead>
             <tr>
               {columns.map((column) => {
-                // `title` alone only reaches a mouse-hover user (#456): it isn't reliably shown on
-                // keyboard focus and isn't reliably announced by screen readers either. Pairing it
-                // with `aria-describedby` onto a `.sr-only` span exposes the same text as an
-                // accessible description regardless of input method — same shape as AppNav.tsx's
-                // disabled-tab fix, except here the tooltip is a *description* of an otherwise
-                // unchanged button name, not a replacement for it, so aria-describedby rather than
-                // aria-label.
-                const tooltipId = column.labelTooltip ? `${tooltipIdPrefix}-${column.key}` : undefined;
+                // A column's explanation is a real disclosure beside its sort button (#456, #508): the shared
+                // Tooltip shows the same visible text on hover, click and keyboard focus, which a `title`
+                // attribute does not reliably do for a keyboard user or a screen reader.
                 return (
                   <th
                     key={column.key}
@@ -102,29 +97,28 @@ export function SortableTable<T>({
                       sort?.column === column.key ? (sort.direction === 'asc' ? 'ascending' : 'descending') : undefined
                     }
                   >
-                    <button
-                      type="button"
-                      aria-describedby={tooltipId}
-                      onClick={() => {
-                        setSort((current) => toggleSort(current, column.key));
-                      }}
-                    >
-                      {column.labelTooltip ? (
-                        <span title={column.labelTooltip} style={{ cursor: 'help' }}>
-                          {column.label}
-                        </span>
-                      ) : (
-                        column.label
+                    <span className="data-table-head-cell">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSort((current) => toggleSort(current, column.key));
+                        }}
+                      >
+                        {column.label}
+                        {sort?.column === column.key && (
+                          <span aria-hidden="true">{sort.direction === 'asc' ? ' ▲' : ' ▼'}</span>
+                        )}
+                      </button>
+                      {column.labelTooltip !== undefined && (
+                        <Tooltip
+                          text={column.labelTooltip}
+                          label={t.aboutColumn(column.label)}
+                          className="data-table-help"
+                        >
+                          ?
+                        </Tooltip>
                       )}
-                      {sort?.column === column.key && (
-                        <span aria-hidden="true">{sort.direction === 'asc' ? ' ▲' : ' ▼'}</span>
-                      )}
-                    </button>
-                    {tooltipId && (
-                      <span id={tooltipId} className="sr-only">
-                        {column.labelTooltip}
-                      </span>
-                    )}
+                    </span>
                   </th>
                 );
               })}

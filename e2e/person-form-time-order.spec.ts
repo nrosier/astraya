@@ -64,7 +64,8 @@ test('the form asks how the time is known before it asks for the time', async ({
   await accuracy.selectOption('recorded');
   await expect(time).toBeEnabled();
   // An empty known time is an error, and the field is described by that, not by the unknown-time reason.
-  expect(await time.getAttribute('aria-describedby')).toBe('time-error');
+  await expect(time).toHaveAccessibleDescription(/\S/);
+  await expect(time).not.toHaveAccessibleDescription(/not used while/);
   await expect(page.getByText('The time is not used while it is set to Unknown.')).toHaveCount(0);
   await accuracy.focus();
   await page.keyboard.press('Tab');

@@ -14,6 +14,10 @@
  * @conventions Not person-scoped (optional pre-fill from a stored person); uses RectificationView.messages.ts for en/nl text via useMessages().
  * @exports RectificationView
  */
+import { DateField } from './primitives/DateField.js';
+import { Select } from './primitives/Select.js';
+import { TextField } from './primitives/TextField.js';
+import { TimeField } from './primitives/TimeField.js';
 import { useMemo, useRef, useState } from 'react';
 import { SIGNS } from '../astrology/signs.js';
 import { runRectification, type TimedCandidate } from '../domain/rectification.js';
@@ -199,92 +203,69 @@ export function RectificationView(): React.JSX.Element {
       <p className="warning">{t.caveat}</p>
 
       <div className="field-grid">
-        <label>
-          {t.personLabel}
-          <select
-            value={personId}
-            onChange={(event) => {
-              choosePerson(event.target.value);
-            }}
-          >
-            <option value="">{t.personNone}</option>
-            {people.map((person) => (
-              <option key={person.id} value={person.id}>
-                {person.displayName === '' ? t.unnamedPerson : person.displayName}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          {t.birthDateLabel}
-          <input
-            type="date"
-            value={fields.birthDate}
-            onChange={(event) => {
-              edit({ birthDate: event.target.value });
-              setZone({});
-            }}
-          />
-        </label>
-        <label>
-          {t.latitudeLabel}
-          <input
-            type="text"
-            inputMode="decimal"
-            value={fields.latitude}
-            onChange={(event) => {
-              edit({ latitude: event.target.value });
-              setZone({});
-            }}
-          />
-        </label>
-        <label>
-          {t.longitudeLabel}
-          <input
-            type="text"
-            inputMode="decimal"
-            value={fields.longitude}
-            onChange={(event) => {
-              edit({ longitude: event.target.value });
-              setZone({});
-            }}
-          />
-        </label>
-        <label>
-          {t.fromTimeLabel}
-          <input
-            type="time"
-            value={fields.fromTime}
-            onChange={(event) => {
-              edit({ fromTime: event.target.value });
-            }}
-          />
-        </label>
-        <label>
-          {t.toTimeLabel}
-          <input
-            type="time"
-            value={fields.toTime}
-            onChange={(event) => {
-              edit({ toTime: event.target.value });
-            }}
-          />
-        </label>
-        <label>
-          {t.stepLabel}
-          <select
-            value={stepMinutes}
-            onChange={(event) => {
-              setStepMinutes(Number(event.target.value));
-            }}
-          >
-            {RECTIFICATION_STEP_MINUTES.map((minutes) => (
-              <option key={minutes} value={minutes}>
-                {t.stepOption(minutes)}
-              </option>
-            ))}
-          </select>
-        </label>
+        <Select
+          label={t.personLabel}
+          value={personId}
+          options={[
+            { value: '', label: t.personNone },
+            ...people.map((person) => ({
+              value: person.id,
+              label: person.displayName === '' ? t.unnamedPerson : person.displayName,
+            })),
+          ]}
+          onChange={choosePerson}
+        />
+        <DateField
+          label={t.birthDateLabel}
+          value={fields.birthDate}
+          onChange={(value) => {
+            edit({ birthDate: value });
+            setZone({});
+          }}
+        />
+        <TextField
+          label={t.latitudeLabel}
+          inputMode="decimal"
+          value={fields.latitude}
+          onChange={(value) => {
+            edit({ latitude: value });
+            setZone({});
+          }}
+        />
+        <TextField
+          label={t.longitudeLabel}
+          inputMode="decimal"
+          value={fields.longitude}
+          onChange={(value) => {
+            edit({ longitude: value });
+            setZone({});
+          }}
+        />
+        <TimeField
+          label={t.fromTimeLabel}
+          value={fields.fromTime}
+          onChange={(value) => {
+            edit({ fromTime: value });
+          }}
+        />
+        <TimeField
+          label={t.toTimeLabel}
+          value={fields.toTime}
+          onChange={(value) => {
+            edit({ toTime: value });
+          }}
+        />
+        <Select
+          label={t.stepLabel}
+          value={String(stepMinutes)}
+          options={RECTIFICATION_STEP_MINUTES.map((minutes) => ({
+            value: String(minutes),
+            label: t.stepOption(minutes),
+          }))}
+          onChange={(value) => {
+            setStepMinutes(Number(value));
+          }}
+        />
       </div>
 
       <BirthPlaceSearch
@@ -300,27 +281,21 @@ export function RectificationView(): React.JSX.Element {
         <ul className="rectification-events">
           {events.map((event, index) => (
             <li key={index} className="field-grid">
-              <label>
-                {t.eventDateLabel(index + 1)}
-                <input
-                  type="date"
-                  value={event.date}
-                  onChange={(change) => {
-                    updateEvent(index, { date: change.target.value });
-                  }}
-                />
-              </label>
-              <label>
-                {t.eventLabelLabel(index + 1)}
-                <input
-                  type="text"
-                  value={event.label}
-                  placeholder={t.eventLabelPlaceholder}
-                  onChange={(change) => {
-                    updateEvent(index, { label: change.target.value });
-                  }}
-                />
-              </label>
+              <DateField
+                label={t.eventDateLabel(index + 1)}
+                value={event.date}
+                onChange={(value) => {
+                  updateEvent(index, { date: value });
+                }}
+              />
+              <TextField
+                label={t.eventLabelLabel(index + 1)}
+                placeholder={t.eventLabelPlaceholder}
+                value={event.label}
+                onChange={(value) => {
+                  updateEvent(index, { label: value });
+                }}
+              />
               {events.length > 1 && (
                 <button
                   type="button"

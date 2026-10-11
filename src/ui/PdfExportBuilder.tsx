@@ -16,6 +16,7 @@
  * @conventions Needs the store (to list people) but is not person-scoped in the URL — the primary person and any partner are picked on the page itself. jsPDF/svg2pdf.js/jspdf-autotable (`pdf-export-render.js`) are loaded only via dynamic `import()` once "Build PDF" is clicked, so they never enter the eager bundle. AI-customised interpretation consent is spent the moment the build request goes out (ADR 0003), never remembered.
  * @exports PdfExportBuilder
  */
+import { Select } from './primitives/Select.js';
 import { useId, useMemo, useState } from 'react';
 import {
   applyPdfPreset,
@@ -360,45 +361,26 @@ export function PdfExportBuilder(): React.JSX.Element {
       <h1>{t.heading}</h1>
       <p className="hint">{t.hint}</p>
 
-      <p className="field-grid">
-        <span>
-          {/* The label and select are siblings, not nested: a wrapping label's own text would otherwise
-              include the selected option's rendered text too, breaking an exact match on "Person" alone
-              once anything is chosen. */}
-          <label htmlFor={`${id}-person`}>{t.personLabel}</label>{' '}
-          <select
-            id={`${id}-person`}
-            value={personId}
-            onChange={(event) => {
-              setPersonId(event.target.value);
-            }}
-          >
-            {people.length === 0 && <option value="">{t.noPeople}</option>}
-            {people.map((candidate) => (
-              <option key={candidate.id} value={candidate.id}>
-                {candidate.displayName || t.unnamedOption}
-              </option>
-            ))}
-          </select>
-        </span>
-        <span>
-          <label htmlFor={`${id}-preset`}>{t.presetLabel}</label>{' '}
-          <select
-            id={`${id}-preset`}
-            value={currentPreset ?? 'custom'}
-            onChange={(event) => {
-              choosePreset(event.target.value);
-            }}
-          >
-            <option value="custom">{t.presetOptions.custom}</option>
-            {PDF_PRESET_KEYS.map((key) => (
-              <option key={key} value={key}>
-                {t.presetOptions[key]}
-              </option>
-            ))}
-          </select>
-        </span>
-      </p>
+      <div className="field-grid">
+        <Select
+          label={t.personLabel}
+          value={personId}
+          options={[
+            ...(people.length === 0 ? [{ value: '', label: t.noPeople }] : []),
+            ...people.map((candidate) => ({ value: candidate.id, label: candidate.displayName || t.unnamedOption })),
+          ]}
+          onChange={setPersonId}
+        />
+        <Select
+          label={t.presetLabel}
+          value={currentPreset ?? 'custom'}
+          options={[
+            { value: 'custom', label: t.presetOptions.custom },
+            ...PDF_PRESET_KEYS.map((key) => ({ value: key, label: t.presetOptions[key] })),
+          ]}
+          onChange={choosePreset}
+        />
+      </div>
 
       <fieldset className="field-group">
         <legend>{t.birthRecordLabel}</legend>

@@ -260,4 +260,27 @@ describe('long body names (#432)', () => {
     expect(shrunk).toBeLessThan(10);
     expect(21 * 0.58 * shrunk).toBeLessThanOrEqual(76 + 1e-9);
   });
+
+  it('draws nothing interactive unless asked, so the exported sheet stays static', () => {
+    const { markup } = renderAspectMatrixSvg(input, LAYOUT);
+    expect(markup).not.toContain('chart-matrix-pair');
+    expect(markup).not.toContain('tabindex');
+  });
+
+  it('makes each selectable aspect cell a labelled, focusable button naming its pair, with its pressed state', () => {
+    const { markup } = renderAspectMatrixSvg(input, LAYOUT, {
+      // The angles have no wheel symbol, so no label: those pairs stay plain cells.
+      describe: (a, b, aspect) =>
+        a.key === 'asc' || b.key === 'asc' ? undefined : `${a.name} ${aspect.aspectKey} ${b.name}`,
+      isSelected: (aKey, bKey) => [aKey, bKey].sort().join('|') === 'moon|sun',
+    });
+    expect(markup.split('class="chart-matrix-pair"').length - 1).toBe(2);
+    // The row body is `a`, the column body `b`; the pair is the same either way round.
+    expect(markup).toMatch(
+      /<g class="chart-matrix-pair" role="button" tabindex="0" aria-pressed="true" aria-label="Moon square Sun" data-aspect-body-a="moon" data-ring-a="0" data-aspect-body-b="sun" data-ring-b="0">/,
+    );
+    expect(markup).toContain('aria-pressed="false"');
+    // The cell's own drawing moves inside the button instead of being duplicated beside it.
+    expect(markup.split('class="chart-matrix-cell').length - 1).toBe(6);
+  });
 });

@@ -48,7 +48,7 @@ test('the rulers choice is modern by default, drives the dispositor table, and i
   });
   await openNatalChart(page);
   await expect(page.locator('div.chart-wheel')).toBeVisible();
-  await page.getByRole('tab', { name: 'Dignities', exact: true }).click();
+  await page.getByRole('link', { name: 'Patterns & condition', exact: true }).click();
 
   // The control sits in the chart's Extended settings card, under "Rulership & dignities".
   await openSettings(page);
@@ -76,13 +76,13 @@ test('the rulers choice is modern by default, drives the dispositor table, and i
   await rulers.selectOption('traditional');
   await page.reload();
   await page.waitForEvent('load', { timeout: 5_000 }).catch(() => undefined);
-  await page.getByRole('tab', { name: 'Dignities', exact: true }).click();
+  await page.getByRole('link', { name: 'Patterns & condition', exact: true }).click();
   await openSettings(page);
   await expect(page.getByLabel('Planetary rulers', { exact: true })).toHaveValue('traditional');
   await expect(plutoChain).toContainText('Pluto → Mars');
 
   // The control and its explanation are accessible.
-  const axe = await new AxeBuilder({ page }).include('.rulership-setting').analyze();
+  const axe = await new AxeBuilder({ page }).include('dialog').analyze();
   expect(axe.violations.map((v) => v.id)).toEqual([]);
 });
 

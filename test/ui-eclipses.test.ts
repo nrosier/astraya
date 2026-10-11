@@ -48,9 +48,9 @@ describe('eclipseRows (#404)', () => {
 });
 
 describe('eclipses screen wiring', () => {
-  it('routes #/eclipses to the screen', () => {
-    expect(parseRoute('#/eclipses')).toEqual({ kind: 'eclipses' });
-    expect(parseRoute('#/eclipses/')).toEqual({ kind: 'eclipses' });
+  it('routes #/explore/eclipses to the screen', () => {
+    expect(parseRoute('#/explore/eclipses')).toEqual({ kind: 'eclipses' });
+    expect(parseRoute('#/explore/eclipses/')).toEqual({ kind: 'eclipses' });
   });
 
   it('refuses a span long enough to be unreadable', () => {

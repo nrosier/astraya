@@ -9,7 +9,15 @@ import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
-import { chooseExport, createPerson, gotoAndSettle, openNatalChart, closeSettings, openSettings } from './support.ts';
+import {
+  chooseExport,
+  createPerson,
+  gotoAndSettle,
+  openNatalChart,
+  applySettings,
+  closeSettings,
+  openSettings,
+} from './support.ts';
 
 let dir: string;
 let app: FastifyInstance;
@@ -54,24 +62,24 @@ test('the symbol class changes the wheel, the tables and the export together, an
   await symbols.selectOption('text');
   await expect(page.locator('.chart-wheel text.chart-symbol-text-text').first()).toBeVisible();
   await expect(page.locator('.chart-wheel text.chart-symbol-text-text', { hasText: 'SUN' }).first()).toBeAttached();
-  await closeSettings(page);
-  await page.getByRole('tab', { name: 'Positions', exact: true }).click();
-  await expect(page.locator('#chart-tabpanel-positions .table-symbol-text', { hasText: 'SUN' })).toBeVisible();
+  await applySettings(page);
+  await page.getByRole('link', { name: 'Placements', exact: true }).click();
+  await expect(page.locator('#chart-view-placements .table-symbol-text', { hasText: 'SUN' })).toBeVisible();
 
   // Unicode: the characters instead.
-  await page.getByRole('tab', { name: 'Chart wheel', exact: true }).click();
+  await page.getByRole('link', { name: 'Wheel', exact: true }).click();
   await openSettings(page);
   await symbols.selectOption('unicode');
   await expect(page.locator('.chart-wheel text.chart-symbol-text-unicode', { hasText: '☉' }).first()).toBeAttached();
-  await closeSettings(page);
-  await page.getByRole('tab', { name: 'Positions', exact: true }).click();
-  await expect(page.locator('#chart-tabpanel-positions td', { hasText: '☉' }).first()).toBeVisible();
+  await applySettings(page);
+  await page.getByRole('link', { name: 'Placements', exact: true }).click();
+  await expect(page.locator('#chart-view-placements td', { hasText: '☉' }).first()).toBeVisible();
 
   // The exported SVG carries the choice and the style that makes it readable outside the app.
-  await page.getByRole('tab', { name: 'Chart wheel', exact: true }).click();
+  await page.getByRole('link', { name: 'Wheel', exact: true }).click();
   await openSettings(page);
   await symbols.selectOption('text');
-  await closeSettings(page);
+  await applySettings(page);
   const [download] = await Promise.all([page.waitForEvent('download'), chooseExport(page, 'Image (SVG)')]);
   const chunks: Buffer[] = [];
   for await (const chunk of await download.createReadStream()) chunks.push(chunk as Buffer);
@@ -88,7 +96,7 @@ test('the symbol class changes the wheel, the tables and the export together, an
   await page.getByLabel('Symbols', { exact: true }).selectOption('drawn');
   await expect(page.locator('.chart-wheel text.chart-symbol-text')).toHaveCount(0);
 
-  const axe = await new AxeBuilder({ page }).include('.rulership-setting').analyze();
+  const axe = await new AxeBuilder({ page }).include('dialog').analyze();
   expect(axe.violations.map((v) => v.id)).toEqual([]);
 });
 
@@ -98,7 +106,7 @@ test('the transit wheel and the cycles diagram follow the class too', async ({ p
   await page.evaluate(() => {
     localStorage.setItem('astraya:symbolClass', 'text');
   });
-  await page.goto(`${baseUrl}/#/cycles`);
+  await page.goto(`${baseUrl}/#/explore/cycles`);
   await page.reload();
   await page.waitForEvent('load', { timeout: 5_000 }).catch(() => undefined);
   await expect(page.getByRole('heading', { name: 'Planetary cycles', level: 1 })).toBeVisible();

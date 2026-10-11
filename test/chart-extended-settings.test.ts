@@ -26,6 +26,9 @@ describe('DEFAULT_EXTENDED_SETTINGS', () => {
     expect(DEFAULT_EXTENDED_SETTINGS.aspectsToChiron).toBe(false);
     expect(DEFAULT_EXTENDED_SETTINGS.aspectsToLilith).toBe(false);
     expect(DEFAULT_EXTENDED_SETTINGS.aspectsToLunarNodes).toBe(false);
+    expect(DEFAULT_EXTENDED_SETTINGS.aspectsToVertex).toBe(false);
+    expect(DEFAULT_EXTENDED_SETTINGS.aspectsToPartOfFortune).toBe(false);
+    expect(DEFAULT_EXTENDED_SETTINGS.aspectsToPartOfSpirit).toBe(false);
   });
 });
 
@@ -59,10 +62,24 @@ describe('toChartCalculationOptions', () => {
     });
   });
 
-  it('maps the three aspectsTo booleans by name', () => {
-    const settings = withOverrides({ aspectsToChiron: true, aspectsToLilith: false, aspectsToLunarNodes: true });
+  it('maps the six aspectsTo booleans by name', () => {
+    const settings = withOverrides({
+      aspectsToChiron: true,
+      aspectsToLilith: false,
+      aspectsToLunarNodes: true,
+      aspectsToVertex: true,
+      aspectsToPartOfFortune: false,
+      aspectsToPartOfSpirit: true,
+    });
     const options = toChartCalculationOptions(settings);
-    expect(options.aspectsTo).toEqual({ chiron: true, lilith: false, lunarNodes: true });
+    expect(options.aspectsTo).toEqual({
+      chiron: true,
+      lilith: false,
+      lunarNodes: true,
+      vertex: true,
+      partOfFortune: false,
+      partOfSpirit: true,
+    });
   });
 });
 

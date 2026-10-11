@@ -19,7 +19,10 @@ import type { Locator, Page } from '@playwright/test';
  * Username field (mounted alongside `PersonForm` on every `Stored` route) without an exact match.
  */
 export function labeledField(page: Page, label: RegExp, selector: string): Locator {
-  return page.locator('label').filter({ hasText: label }).locator(selector);
+  const nested = page.locator('label').filter({ hasText: label }).locator(selector);
+  // A shared primitive (`ui/primitives/Field`) keeps its control beside its label, tied by `for`/`id`, not inside it.
+  const associated = page.getByLabel(label).and(page.locator(selector));
+  return nested.or(associated);
 }
 
 export interface PersonInput {
@@ -85,20 +88,19 @@ export async function openTool(page: Page, name: string): Promise<void> {
   await page.getByRole('link', { name, exact: true }).click();
 }
 
-/** Opens one kind of chart (`Natal`, `Draconic`, `Harmonic`, `Solar return` or `Lunar return`) from the header's Charts menu. */
+/** Opens one kind of chart (`Natal`, `Draconic`, `Harmonic`, `Solar return` or `Lunar return`): the header's Charts link, then the page's Chart type select (#511). */
 export async function openChart(page: Page, type: string): Promise<void> {
-  await page.getByRole('button', { name: 'Charts', exact: true }).click();
-  await page.getByRole('banner').getByRole('link', { name: type, exact: true }).click();
+  await page.getByRole('banner').getByRole('link', { name: 'Charts', exact: true }).click();
+  await page.getByLabel('Chart type', { exact: true }).selectOption({ label: type });
 }
 
 /**
- * Opens the natal chart from the header's Charts menu (#430), at one of its sections: the wheel by
- * default, or `Chart shape`, `Positions`, `Houses`, `Aspects`, `Dignities` or `Derived points`, which
- * are the tabs on the chart page.
+ * Opens the natal chart from the header's Charts link (#430), at one of its views (#511): the wheel
+ * by default, or `Aspects`, `Placements` or `Patterns & condition` — ordinary links, not ARIA tabs.
  */
-export async function openNatalChart(page: Page, section = 'Chart wheel'): Promise<void> {
+export async function openNatalChart(page: Page, view = 'Wheel'): Promise<void> {
   await openChart(page, 'Natal');
-  if (section !== 'Chart wheel') await page.getByRole('tab', { name: section, exact: true }).click();
+  if (view !== 'Wheel') await page.getByRole('link', { name: view, exact: true }).click();
 }
 
 /** Picks an export from the header's Export menu; `group` opens a submenu first, for an export that is in one. */
@@ -115,7 +117,14 @@ export async function openSettings(page: Page): Promise<void> {
   await expect(dialog).toBeVisible();
 }
 
-/** Closes the card without applying what is in its draft; the device preferences in it have already taken effect. */
+/** Closes the card keeping what was changed in it: the device preferences (rulers, symbols) it previewed stay (#510). */
+export async function applySettings(page: Page): Promise<void> {
+  const dialog = page.locator('dialog.settings-card');
+  await dialog.getByRole('button', { name: /^Apply and redraw/ }).click();
+  await expect(dialog).toBeHidden();
+}
+
+/** Closes the card without applying: whatever was previewed or drafted in it, rulers and symbols included, is put back. */
 export async function closeSettings(page: Page): Promise<void> {
   const dialog = page.locator('dialog.settings-card');
   if (await dialog.isVisible()) await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();

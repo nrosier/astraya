@@ -22,6 +22,7 @@
  */
 import { bodyByKey } from '../astrology/bodies.js';
 import { aspectByKey } from '../astrology/aspects.js';
+import { derivedPointByKey } from '../astrology/derived-points.js';
 import { SIGNS } from '../astrology/signs.js';
 import type { ParagraphSource, ReportParagraph } from '../interpretation/report.js';
 import type { CorpusPlacement } from '../interpretation/schema.js';
@@ -29,6 +30,10 @@ import type { SalienceFactor } from '../interpretation/rules.js';
 
 function bodyLabel(key: string): string {
   return bodyByKey(key)?.name ?? key;
+}
+
+function pointLabel(key: string): string {
+  return derivedPointByKey(key)?.label ?? key;
 }
 
 function signLabel(index: number): string {
@@ -72,6 +77,10 @@ export function describePlacement(placement: CorpusPlacement): string {
       const withinSign = ((placement.degree - 1) % 30) + 1;
       return `${String(withinSign)}° ${signLabel(signIndex)}`;
     }
+    case 'derived-point-in-sign':
+      return `${pointLabel(placement.point)} in ${signLabel(placement.sign)}`;
+    case 'derived-point-in-house':
+      return `${pointLabel(placement.point)} in house ${String(placement.house)}`;
   }
 }
 

@@ -75,7 +75,7 @@ test('casting a horary chart shows the considerations before judgment and the ch
 test('a missing date is reported inline instead of casting', async ({ page }) => {
   test.setTimeout(90_000);
 
-  await gotoAndSettle(page, `${baseUrl}/#/horary`);
+  await gotoAndSettle(page, `${baseUrl}/#/explore/horary`);
   // A date input cannot hold an impossible day, so the realistic bad date is an empty one.
   await page.getByLabel('Date the question was asked').fill('');
   await page.getByLabel('Latitude', { exact: true }).fill('51.5');
@@ -88,7 +88,7 @@ test('a missing date is reported inline instead of casting', async ({ page }) =>
 test('the horary screen has no automatically detectable accessibility violations', async ({ page }) => {
   test.setTimeout(90_000);
 
-  await gotoAndSettle(page, `${baseUrl}/#/horary`);
+  await gotoAndSettle(page, `${baseUrl}/#/explore/horary`);
   await castLondonChart(page);
   await expect(page.locator('div.chart-wheel')).toBeVisible({ timeout: 60_000 });
 

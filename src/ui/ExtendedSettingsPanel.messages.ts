@@ -14,26 +14,27 @@ const en = {
   scopeNote:
     'These settings draw the natal chart and the solar and lunar returns. Draconic and harmonic charts, transits and synastry do not use them.',
 
-  presetLabel: 'Tradition',
+  presetLabel: 'Calculation profile',
   presetOptions: {
     custom: 'Custom',
-    modern: 'Modern Western',
-    traditional: 'Traditional / Hellenistic',
-    vedic: 'Vedic (Jyotish)',
+    'modern-western-v1': 'Modern Western',
+    'traditional-western-v1': 'Traditional Western',
+    'sidereal-lahiri-v1': 'Sidereal (Lahiri)',
   },
   presetNotes: {
-    custom: 'Your own combination. Choose a starting point to fill the zodiac, houses, points and rulers in one go.',
-    modern: 'Tropical zodiac, Placidus houses, modern rulers, the default points and aspects.',
-    traditional:
-      'Tropical zodiac, Whole Sign houses, traditional rulers, the Part of Fortune shown, no Chiron and no minor aspects. Orbs are left as they are: traditional orbs depend on the planet and are not set here.',
-    vedic:
-      'Sidereal zodiac with the Lahiri ayanamsa, Whole Sign houses, traditional rulers, no Chiron and no minor aspects. The node model and the orbs are left as they are.',
+    custom: 'Your own combination. Choose a built-in profile to replace every value it owns in one go.',
+    'modern-western-v1':
+      'Tropical zodiac, Placidus houses, modern rulers, Chiron shown, Fortune and Vertex hidden, five major aspects, mean node and Lilith, standard orbs.',
+    'traditional-western-v1':
+      'Tropical zodiac, Whole Sign houses, traditional rulers, the Part of Fortune shown, no Chiron, five major aspects, mean node and Lilith, standard orbs.',
+    'sidereal-lahiri-v1':
+      'Sidereal zodiac with the Lahiri ayanamsa, Whole Sign houses, traditional rulers, no Chiron or Fortune, five major aspects, mean node and Lilith, standard orbs.',
   },
   presetRulership: (scheme: string) => `Applying it also sets the planetary rulers to ${scheme} on this device.`,
   rulershipNames: { modern: 'Modern', traditional: 'Traditional', both: 'Both' },
 
   appliesOnApply: 'Applies when you choose “Apply and redraw”.',
-  savedOnDevice: 'Saved on this device and applied at once.',
+  devicePreview: 'Shown at once, kept when you apply or save, and put back by Cancel.',
 
   zodiacHousesLegend: 'Chart frame',
   houseSystemLegend: 'House system',
@@ -105,7 +106,11 @@ const en = {
   lunarNodesLabel: 'Lunar nodes:',
   nodeHelp: 'Mean and true differ by up to about 1.5°.',
   aspectsToLunarNodes: 'Draw aspects to the lunar nodes',
-  aspectsToHint: "Aspects to the Part of Fortune, Vertex, Ascendant and Midheaven aren't supported yet.",
+  aspectsToVertex: 'Draw aspects to the Vertex',
+  aspectsToPartOfFortune: 'Draw aspects to the Part of Fortune',
+  aspectsToPartOfSpirit: 'Draw aspects to the Part of Spirit',
+  aspectsToHint:
+    'The Ascendant and Midheaven always aspect the bodies. The Vertex and the two parts do so here, to bodies only, never to each other or the angles; a part is not aspected to the luminary it is built from, as that repeats an Ascendant aspect.',
 
   aspectsLegend: 'Aspects and orbs',
   scaleLabel: 'Orb scale: ',
@@ -119,8 +124,11 @@ const en = {
 
   applyButton: 'Apply and redraw',
   nothingChanged: 'nothing has changed',
+  saveAsDefaultButton: 'Save as my default',
+  saveAsDefaultHint: 'Applies to every new chart on this device.',
   cancelButton: 'Cancel',
-  resetToDefaultsButton: 'Reset to defaults',
+  resetToMyDefaultButton: 'Reset to my default',
+  resetToAstrayaDefaultButton: 'Reset to Astraya default',
 
   summary: {
     tropical: 'Tropical',
@@ -145,27 +153,27 @@ const nl: typeof en = {
   scopeNote:
     'Deze instellingen bepalen de geboortehoroscoop en de zonne- en maanterugkeer. Draconische en harmonische horoscopen, transits en synastrie gebruiken ze niet.',
 
-  presetLabel: 'Traditie',
+  presetLabel: 'Berekeningsprofiel',
   presetOptions: {
     custom: 'Eigen keuze',
-    modern: 'Modern westers',
-    traditional: 'Traditioneel / Hellenistisch',
-    vedic: 'Vedisch (Jyotish)',
+    'modern-western-v1': 'Modern westers',
+    'traditional-western-v1': 'Traditioneel westers',
+    'sidereal-lahiri-v1': 'Siderisch (Lahiri)',
   },
   presetNotes: {
-    custom:
-      'Je eigen combinatie. Kies een beginpunt om dierenriem, huizen, punten en heersers in één keer in te vullen.',
-    modern: 'Tropische dierenriem, Placidus-huizen, moderne heersers, de standaardpunten en -aspecten.',
-    traditional:
-      'Tropische dierenriem, Whole Sign-huizen, traditionele heersers, het Fortuna-punt zichtbaar, geen Chiron en geen kleine aspecten. De orbs blijven zoals ze zijn: traditionele orbs hangen af van de planeet en worden hier niet ingesteld.',
-    vedic:
-      'Siderische dierenriem met de Lahiri-ayanamsa, Whole Sign-huizen, traditionele heersers, geen Chiron en geen kleine aspecten. Het knoopmodel en de orbs blijven zoals ze zijn.',
+    custom: 'Je eigen combinatie. Kies een ingebouwd profiel om elke waarde die het bepaalt in één keer te vervangen.',
+    'modern-western-v1':
+      'Tropische dierenriem, Placidus-huizen, moderne heersers, Chiron zichtbaar, Fortuna en Vertex verborgen, vijf hoofdaspecten, gemiddelde maansknoop en Lilith, standaardorbs.',
+    'traditional-western-v1':
+      'Tropische dierenriem, Whole Sign-huizen, traditionele heersers, het Fortuna-punt zichtbaar, geen Chiron, vijf hoofdaspecten, gemiddelde maansknoop en Lilith, standaardorbs.',
+    'sidereal-lahiri-v1':
+      'Siderische dierenriem met de Lahiri-ayanamsa, Whole Sign-huizen, traditionele heersers, geen Chiron of Fortuna, vijf hoofdaspecten, gemiddelde maansknoop en Lilith, standaardorbs.',
   },
   presetRulership: (scheme: string) => `Toepassen zet ook de planeetheersers op ${scheme} op dit apparaat.`,
   rulershipNames: { modern: 'modern', traditional: 'traditioneel', both: 'beide' },
 
   appliesOnApply: 'Wordt toegepast met “Toepassen en opnieuw tekenen”.',
-  savedOnDevice: 'Opgeslagen op dit apparaat en direct toegepast.',
+  devicePreview: 'Direct zichtbaar, behouden bij toepassen of opslaan en teruggezet door Annuleren.',
 
   zodiacHousesLegend: 'Grondvlak',
   houseSystemLegend: 'Huizensysteem',
@@ -238,7 +246,11 @@ const nl: typeof en = {
   lunarNodesLabel: 'Maansknopen:',
   nodeHelp: 'Gemiddeld en waar verschillen tot ongeveer 1,5°.',
   aspectsToLunarNodes: 'Aspecten naar de maansknopen tekenen',
-  aspectsToHint: 'Aspecten naar het Fortuna-punt, Vertex, Ascendant en Midheaven worden nog niet ondersteund.',
+  aspectsToVertex: 'Aspecten naar de Vertex tekenen',
+  aspectsToPartOfFortune: 'Aspecten naar het Fortuna-punt tekenen',
+  aspectsToPartOfSpirit: 'Aspecten naar het Lot van de Geest tekenen',
+  aspectsToHint:
+    'De Ascendant en het Midheaven maken altijd aspecten met de lichamen. De Vertex en de twee punten doen dat hier, alleen met lichamen, nooit met elkaar of met de assen; een punt maakt geen aspect met het lichtgevend lichaam waaruit het is opgebouwd, omdat dat een Ascendant-aspect herhaalt.',
 
   aspectsLegend: 'Aspecten en orbs',
   scaleLabel: 'Orb-schaal: ',
@@ -252,8 +264,11 @@ const nl: typeof en = {
 
   applyButton: 'Toepassen en opnieuw tekenen',
   nothingChanged: 'er is niets gewijzigd',
+  saveAsDefaultButton: 'Opslaan als mijn standaard',
+  saveAsDefaultHint: 'Geldt voor elke nieuwe grafiek op dit apparaat.',
   cancelButton: 'Annuleren',
-  resetToDefaultsButton: 'Terugzetten naar standaard',
+  resetToMyDefaultButton: 'Terugzetten naar mijn standaard',
+  resetToAstrayaDefaultButton: 'Terugzetten naar Astraya-standaard',
 
   summary: {
     tropical: 'Tropisch',

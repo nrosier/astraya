@@ -17,6 +17,7 @@
  * @conventions Gated the same way as ChartView.tsx's houses/angles tables for unknown birth time; uses ProfectionsView.messages.ts for en/nl text via useMessages().
  * @exports ProfectionsView; toRow, columns, ProfectionRow (reused by pdf-export-plan.ts)
  */
+import { personHref } from './route.js';
 import { useEffect, useMemo, useState } from 'react';
 import { resolvePlacementText } from '../interpretation/compose.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
@@ -155,12 +156,12 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
     return (
       <main className="shell">
         <p className="back">
-          <a href={`#/person/${personId}`}>&larr; {person.displayName || t.personFallback}</a>
+          <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
         </p>
         <h1>{t.profectionsFallback}</h1>
         <p>
           {t.notCompleteProfections(person.displayName || t.thisPerson)}{' '}
-          <a href={`#/person/${personId}`}>{t.personPageLink}</a>.
+          <a href={personHref(personId)}>{t.personPageLink}</a>.
         </p>
       </main>
     );
@@ -170,7 +171,7 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
     return (
       <main className="shell">
         <p className="back">
-          <a href={`#/person/${personId}`}>&larr; {person.displayName || t.personFallback}</a>
+          <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
         </p>
         <h1>{t.profectionsFallback}</h1>
         <p>{t.needsKnownTime(person.displayName || t.thisPerson)}</p>
@@ -184,7 +185,7 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
   return (
     <main className="shell">
       <p className="back">
-        <a href={`#/person/${personId}`}>&larr; {person.displayName || t.personFallback}</a>
+        <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
       </p>
       <h1>{person.displayName ? t.heading(person.displayName) : t.profectionsFallback}</h1>
       <p className="hint">{t.hint}</p>

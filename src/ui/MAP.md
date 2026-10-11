@@ -2,20 +2,29 @@
 
 React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), hooks for device preferences, route parsing, and cross-cutting helpers (PDF export, table sorting, geocoding). Every route-scoped screen is lazy-loaded via `person-screens.ts`.
 
+**Subdirectory:** `primitives/` — shared UI primitives for the #506 UI/UX overhaul (Button, Field/TextField/NumberField/DateField/Select, Checkbox/Radio/ChoiceGroup/OptionCards, Tooltip). See its own `MAP.md`.
+
 - `About.tsx` + `About.messages.ts` — About/privacy/licence screen, version metadata. Deps: none (static content).
 - `AccountPanel.tsx` + `AccountPanel.messages.ts` — Sign-in/out + account adoption + local-data removal. Deps: `session-context`, `sync/auth-client`, `oidc-pkce`.
 - `AdminNav.tsx` + `AdminNav.messages.ts` — Admin tab strip (users/usage/corpus/candidates). Deps: `./admin-nav`.
 - `AdminPanel.tsx` + `AdminPanel.messages.ts` — User CRUD + AI-usage reporting. Deps: `sync/admin-client`, `session-context`.
 - `App.tsx` + `App.messages.ts` — Root router + sticky header + lazy-loading boundary. Deps: `route`, `session-context`, `store-context`, `person-screens`.
+- `EmphasisGrid.tsx` — The element x modality grid view: the sheet export's drawing, shown on screen beside its table. Deps: `chart/emphasis-grid`, `chart/sheet-geometry`.
+- `calculation-basis.ts` + `calculation-basis.messages.ts` — The calculation-basis line (profile name + whether it is Astraya's default, the saved default, or changed for this chart) shown on chart pages. Deps: `chart/calculation-profiles`, `default-calculation-profile`, `extended-settings-summary`, `ExtendedSettingsPanel.messages`.
+- `table-selection.tsx` — The table side of the wheel selection: `TableSelection`, each row kind's selection key, and the shared "Show on the chart" button column. Deps: `interpretation/selection-key`, `chart/body-id`, `table-sort`.
+- `appearance-settings.ts` — Motion (follow the system / reduce) and Density (standard / compact) device preferences, applied as root attributes. Deps: none.
+- `AspectMatrix.tsx` — The aspect matrix view: the sheet's grid with cells that select an aspect pair on the wheel. Deps: `chart/aspect-matrix`, `interpretation/selection-key`, `wheel-interaction`.
 - `AppNav.tsx` + `AppNav.messages.ts` — Primary navigation (person tabs, Tools/Export menus). Deps: `person-nav`, `tools-nav`, `export-registry`, `domain/full-export`.
 - `AstroChartWheel.tsx` — Dev-only reference wheel via `@astrodraw/astrochart`. Deps: `chart/astrochart-adapter`.
 - `AstrocartographyView.tsx` + `AstrocartographyView.messages.ts` — Astrocartography/local-space map with line-type/body/relocation controls. Deps: `domain/astrocartography`, `chart/acg-map`, `interpretation/compose`.
 - `BiWheelSelectionPanel.tsx` + `BiWheelSelectionPanel.messages.ts` — Bi-wheel click-to-inspect panel (body/sign/aspect info). Deps: `./bi-wheel-selection`, `astro-names.messages`.
 - `BirthPlaceSearch.tsx` + `BirthPlaceSearch.messages.ts` — Geocoding place-name search field. Deps: `./forward-geocode`, `./geocode-provider`.
 - `Changelog.tsx` + `Changelog.messages.ts` — In-app CHANGELOG.md viewer. Deps: `./markdown`.
-- `ChartTypeSelector.tsx` — Chart-type link row (natal/draconic/harmonic/returns). Deps: `./chart-sections`.
+- `ChartTypeSelector.tsx` — Chart-type Select (natal/draconic/harmonic/returns) in the Charts page header. Deps: `./chart-sections`, `primitives/Select`.
 - `ChartTypes.messages.ts` — i18n labels for all chart types.
-- `ChartView.tsx` + `ChartView.messages.ts` — Primary chart screen + shared `ChartDataView` tabbed UI (reused by composite/draconic/harmonic/shared-chart). Deps: `domain/chart-compute`, `domain/chart-tables`, `chart/chart-sheet`.
+- `ChartViewNav.tsx` — Chart screen's Wheel/Aspects/Placements/Patterns & condition navigation: ordinary links (wide) or a labelled Select (narrow), never ARIA tabs. Deps: `./chart-sections`, `./primitives/Select`.
+- `SelectionInspector.tsx` — Chart selection inspector (facts, corpus meaning, related aspects, Clear, optional AI after) shown after the dial. Deps: `./WheelSelectionText`, `./FocusInterpretation`, `./ChartView.messages`.
+- `ChartView.tsx` + `ChartView.messages.ts` — Primary chart screen + shared `ChartDataView` (Wheel/Aspects/Placements/Patterns & condition views, reused by composite/draconic/harmonic/returns/shared-chart/horary). Deps: `domain/chart-compute`, `domain/chart-tables`, `chart/chart-sheet`, `./ChartViewNav`.
 - `CompositeView.tsx` + `CompositeView.messages.ts` — Composite midpoint chart between two people. Deps: `domain/composite`, `ChartView`, `ReportView`.
 - `CorpusCandidatesPanel.tsx` + `CorpusCandidatesPanel.messages.ts` — Admin candidate-review queue (accept/reject). Deps: `sync/admin-client`, `./placement-label`.
 - `CorpusOverridesPanel.tsx` + `CorpusOverridesPanel.messages.ts` — Admin corpus-entry editor (search/filter/override). Deps: `interpretation/corpus-client`, `sync/admin-client`.
@@ -26,15 +35,20 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `EntryLabel.tsx` — Renders corpus keys as human-readable placement names (admin UI). Deps: `./placement-label`.
 - `EphemerisProviderContext.tsx` — Web Worker-backed Swiss Ephemeris singleton context. Deps: `ephemeris/client`.
 - `ExtendedSettingsPanel.tsx` + `ExtendedSettingsPanel.messages.ts` — Chart settings modal (house system/zodiac/bodies/aspects/colours). Deps: `chart/extended-settings`, `astrology/houses`, `astrology/ayanamsas`.
+- `feature-registry.ts` — #506/#509 typed registry of every user-facing feature's scope/group/order/href/prerequisites/settings-mode/export-capabilities, derived from `person-nav`/`tools-nav`/`admin-nav`. Deps: `./person-nav`, `./tools-nav`, `./admin-nav`, `./route`.
 - `FocusInterpretation.tsx` + `FocusInterpretation.messages.ts` — Tier 2 AI-interpretation feature (consent + generate). Deps: `interpretation/tier2-client`, `interpretation/focus-context-schema`.
 - `HarmonicView.tsx` + `HarmonicView.messages.ts` — Harmonic & Varga divisional charts. Deps: `astrology/harmonics`, `domain/harmonic`.
 - `HoraryView.tsx` + `HoraryView.messages.ts` — Horary (question-chart) tool + considerations check. Deps: `astrology/horary`, `domain/horary`.
 - `LanguageToggle.tsx` + `LanguageToggle.messages.ts` — Language toggle button (en/nl). Deps: `./locale`, `interpretation/schema`.
+- `Overview.tsx` + `Overview.messages.ts` — Canonical per-person Overview screen (#506/#509): record readiness, calculation basis, real next actions. Deps: `./feature-registry`, `./people-list`, `./person-nav`.
+- `PageHeader.tsx` + `PageHeader.messages.ts` — Content-header primitive (#506/#509): page title, optional basis line, and the current screen's own registered exports, replacing the old global "This page" Export submenu. Deps: `./export-registry`, `./use-exclusive-open`.
 - `PdfExportBuilder.tsx` — PDF export builder screen (#441, lazy-loaded). Deps: `domain/pdf-export-sections`, `./pdf-export-plan`, `./pdf-export-render`.
 - `People.tsx` + `People.messages.ts` — Home/landing screen (list/create/restore people). Deps: `store-context`, `./people-list`.
 - `PeriodicTransitView.tsx` + `PeriodicTransitView.messages.ts` — Daily/weekly/monthly/yearly transit forecast. Deps: `domain/periodic-transit`, `domain/planetary-return`, `astrology/transit-importance`.
 - `PersonForm.tsx` + `PersonForm.messages.ts` — Birth-data entry/edit form. Deps: `domain/person-form`, `time/resolve`.
 - `PersonNotFound.tsx` — "No person" fallback screen. Deps: `shared.messages`.
+- `PersonSwitcher.tsx` + `PersonSwitcher.messages.ts` — Header's searchable person switcher (#506/#509), replaces the static person-name chip; preserves the current feature on switch when prerequisites are met, else routes to Overview. Deps: `./feature-registry`, `./people-list`, `./use-exclusive-open`.
+- `PreferencesView.tsx` + `PreferencesView.messages.ts` — Preferences workspace (#506/#510, lazy-loaded): General/Astrology defaults/Appearance & accessibility/Data & privacy, reusing each setting's own existing control. Deps: `./RulershipSetting`, `./SymbolSetting`, `./LanguageToggle`, `./ThemeToggle`, `domain/full-export`.
 - `PrimaryDirectionsView.tsx` + `PrimaryDirectionsView.messages.ts` — Primary directions screen (time key, date/age, natal/directed bi-wheel, hit tables). Deps: `domain/primary-directions`, `chart/multi-wheel`.
 - `ProfectionsView.tsx` + `ProfectionsView.messages.ts` — Annual/monthly profections screen. Deps: `domain/profections`, `./rulership-setting`, `./wheel-corpus`.
 - `ProgressionsView.tsx` + `ProgressionsView.messages.ts` — Secondary/tertiary/minor progressions screen. Deps: `domain/secondary-progression`, `domain/minor-progression`.
@@ -44,13 +58,14 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `ReportScreen.tsx` + `ReportScreen.messages.ts` — Standalone written-report route. Deps: `domain/chart-compute`, `ReportView`.
 - `ReportView.tsx` + `ReportView.messages.ts` — Report rendering + provenance toggle + Tier 2 AI panel. Deps: `interpretation/report`, `interpretation/corpus-client`, `interpretation/tier2-client`.
 - `ReturnView.tsx` + `ReturnView.messages.ts` — Solar/lunar return charts (pick year/place/rendering). Deps: `domain/return-chart`.
-- `RulershipSetting.tsx` + `RulershipSetting.messages.ts` — Planetary-rulers preference (modern/traditional/both). Deps: `./rulership-setting`, `astrology/rulership`.
+- `RulershipSetting.tsx` + `RulershipSetting.messages.ts` — Planetary-rulers preference (modern/traditional/both), built on the shared `Select` primitive. Deps: `./rulership-setting`, `astrology/rulership`, `./primitives/Select`.
+- `settings-registry.ts` — #506/#509 typed registry of every persisted setting's scope/owner/persistence/sync/commit-model, pure metadata (existing modules keep owning values). Deps: none.
 - `SetPasswordForm.tsx` + `SetPasswordForm.messages.ts` — One-time-link password set/reset form. Deps: `sync/auth-client`.
 - `SetupForm.tsx` + `SetupForm.messages.ts` — First-boot admin account bootstrap. Deps: `session-context`.
 - `SharedChartView.tsx` + `SharedChartView.messages.ts` — No-account link-only shared-chart screen. Deps: `domain/chart-share`, `domain/chart-compute`.
 - `SolarArcView.tsx` + `SolarArcView.messages.ts` — Solar arc directions screen + exact-date timing. Deps: `domain/solar-arc-directions`.
 - `SortableTable.tsx` + `SortableTable.messages.ts` — Reusable sortable data table (copy/CSV download). Deps: `./table-sort`, `./download`.
-- `SymbolSetting.tsx` + `SymbolSetting.messages.ts` — Symbol-class/weight/variant device preferences. Deps: `./symbol-setting`, `./glyph-variant-setting`, `chart/symbol-class`.
+- `SymbolSetting.tsx` + `SymbolSetting.messages.ts` — Symbol-class/weight/variant device preferences, built on the shared `Select` primitive. Deps: `./symbol-setting`, `./glyph-variant-setting`, `chart/symbol-class`, `./primitives/Select`.
 - `SymbolToggle.tsx` + `SymbolToggle.messages.ts` — Header one-press symbol toggle (glyphs ↔ text). Deps: `./symbol-setting`.
 - `SynastryView.tsx` + `SynastryView.messages.ts` — Synastry bi-wheel (two-person comparison). Deps: `domain/synastry`, `chart/multi-wheel`, `RelationshipSummary`.
 - `SyncBadge.tsx` + `SyncBadge.messages.ts` — Always-visible sync-status badge. Deps: `session-context`, `./status`.
@@ -58,12 +73,13 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `TransitFilterPanel.tsx` + `TransitFilterPanel.messages.ts` — Transit-filter controls (presets/orbs/bodies/aspects). Deps: `astrology/transit-importance`, `./rulership-setting`.
 - `TransitView.tsx` + `TransitView.messages.ts` — Transit bi-wheel (natal ↔ transiting). Deps: `domain/transit`, `astrology/void-of-course`, `chart/multi-wheel`.
 - `WheelSelectionText.tsx` — Renders wheel-selection interpretation text. Deps: `interpretation/compose`, `./wheel-corpus`.
+- `WorkspaceShell.tsx` + `WorkspaceShell.messages.ts` — Lays the header out as a collapsible left rail at >=64rem (#506/#509); AppNav.tsx's horizontal-bar/folding-panel behavior stays unchanged below that. Deps: `./workspace-rail-setting`.
 - `admin-nav.ts` — Admin tab strip logic (routes/active-tab). Deps: `route`.
 - `app.css` — Global stylesheet (design tokens, layout, components, no webfonts). Deps: none.
 - `astro-names.messages.ts` — i18n display names for astrological identifiers (signs/bodies/aspects). Deps: none.
 - `bi-wheel-selection.ts` — Bi-wheel selection facts (clicked element/ring/cross-ring relations). Deps: `domain/chart-compute`, `domain/chart-tables`, `chart/aspect-web`, `interpretation/selection`.
 - `chart-raster.ts` — Rasterizes wheel SVG to PNG via `canvas`. Deps: none (browser APIs).
-- `chart-sections.ts` — Charts page URL axes (type + section). Deps: `ChartView.messages`.
+- `chart-sections.ts` — Charts page URL axes (type + view: wheel/aspects/placements/patterns). Deps: `ChartView.messages`.
 - `cycles.ts` — Planetary-cycles screen (body/aspect presets + row shaping). Deps: `astrology/bodies`, `astrology/mutual-aspects`, `astrology/signs`, `time/julian`.
 - `download.ts` — Shared file-download mechanism (object URL anchor). Deps: none (browser APIs).
 - `eclipses.ts` — Eclipses screen (search capping + display rows). Deps: `astrology/eclipses`, `astrology/signs`, `time/julian`.
@@ -108,10 +124,11 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `table-sort.ts` — Generic sorting/export engine for all data tables. Deps: none (domain-agnostic).
 - `theme-dom.ts` — DOM/storage half of light/dark theme override. Deps: `./theme`.
 - `theme.ts` — Pure theme-selection logic (cycle order/labels). Deps: `ThemeToggle.messages`.
-- `tools-nav.ts` — Tools menu backing (tool list/active-tool). Deps: `route`.
+- `tools-nav.ts` — Tools menu backing (tool list/groups/active-tool); grouped as Sky & cycles/Questions & planning/Birth data (#506/#509). Deps: `route`.
 - `use-exclusive-open.ts` — Shared open/close hook for dropdown-button rows. Deps: none (React only).
 - `void-of-course-text.ts` — Composes void-of-course Moon sentence (transit screen). Deps: `astrology/bodies`, `astrology/signs`, `astrology/void-of-course`, `time/julian`.
 - `wheel-corpus.ts` — Supplies + caches interpretation corpus to wheel-selection panel. Deps: `interpretation/corpus-client`.
 - `wheel-interaction.ts` — Click-to-isolate wheel interaction (dims non-clicked). Deps: `chart/body-id`.
 - `wheel-selection.ts` — Composes wheel-selection heading text. Deps: `astrology/signs`, `interpretation/schema`, `./astro-names.messages`.
+- `workspace-rail-setting.ts` — Device preference for whether the desktop workspace rail is collapsed (#506/#509). Deps: none.
 - `year-range.ts` — Ephemeris data's valid year range (clamping). Deps: none.

@@ -60,7 +60,7 @@ test('two people with known birth times get a Composite screen with a wheel and 
   await page.getByLabel('Compose with').selectOption({ label: 'Charles Babbage' });
 
   await expect(page.locator('div.chart-wheel')).toBeVisible();
-  await expect(page.getByRole('tab', { name: 'Positions' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Placements' })).toBeVisible();
 
   // #359: the composite chart now also renders real interpretive text via `ReportView`,
   // reusing `report.ts`'s `assembleReport` the same way the natal Report tab already does.

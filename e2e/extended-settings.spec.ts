@@ -55,7 +55,7 @@ test('the settings open as a card, apply together or are dropped, and the button
   const card = page.locator('dialog.settings-card');
   await expect(card.getByRole('heading', { name: 'Extended settings', level: 2 })).toBeVisible();
   await expect(card.locator('fieldset.settings-card-group > legend')).toHaveText([
-    'Tradition',
+    'Calculation profile',
     'Chart frame',
     'Bodies and points',
     'Aspects and orbs',
@@ -63,7 +63,9 @@ test('the settings open as a card, apply together or are dropped, and the button
     'Rulership & dignities',
     'How planetary and zodiac symbols are displayed',
   ]);
-  await expect(card.getByText('Saved on this device and applied at once.').first()).toBeVisible();
+  await expect(
+    card.getByText('Shown at once, kept when you apply or save, and put back by Cancel.').first(),
+  ).toBeVisible();
   await expect(card.getByRole('button', { name: /^Apply and redraw/ })).toBeDisabled();
 
   // Cancel drops the draft: nothing is applied and the button still says nothing.
@@ -75,9 +77,9 @@ test('the settings open as a card, apply together or are dropped, and the button
   await expect(card.getByLabel('House system', { exact: true })).toHaveValue('P');
   await closeSettings(page);
 
-  // A tradition preset fills the profile in one go; applying it redraws and the button names what changed.
+  // A built-in calculation profile replaces every value it owns in one go; applying it redraws and the button names what changed.
   await openSettings(page);
-  await card.getByLabel('Tradition', { exact: true }).selectOption('traditional');
+  await card.getByLabel('Calculation profile', { exact: true }).selectOption('traditional-western-v1');
   await expect(card.getByText('also sets the planetary rulers to Traditional')).toBeVisible();
   await card.getByRole('button', { name: 'Apply and redraw', exact: true }).click();
   await expect(card).toBeHidden();
@@ -86,7 +88,7 @@ test('the settings open as a card, apply together or are dropped, and the button
   await expect(trigger).toContainText('changed');
   await openSettings(page);
   await expect(card.getByLabel('Planetary rulers', { exact: true })).toHaveValue('traditional');
-  await expect(card.getByLabel('Tradition', { exact: true })).toHaveValue('traditional');
+  await expect(card.getByLabel('Calculation profile', { exact: true })).toHaveValue('traditional-western-v1');
 
   // The orbs now in force are spelled out, not only a percentage.
   await card.getByRole('slider', { name: 'Orb scale' }).fill('-10');
@@ -109,8 +111,7 @@ test('the card works on a phone: it fills the screen, scrolls inside, and keeps 
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   await createPerson(page, ADA);
   await page.getByRole('button', { name: 'Menu', exact: true }).click();
-  await page.getByRole('button', { name: 'Charts', exact: true }).click();
-  await page.getByRole('link', { name: 'Natal', exact: true }).click();
+  await page.getByRole('link', { name: 'Charts', exact: true }).click();
   await expect(page.locator('div.chart-wheel')).toBeVisible();
 
   await openSettings(page);
@@ -138,7 +139,7 @@ test('opening and cancelling the card keeps what is selected on the wheel (apply
   await openNatalChart(page);
   await expect(page.locator('div.chart-wheel')).toBeVisible();
 
-  await page.getByRole('tab', { name: 'Positions', exact: true }).click();
+  await page.getByRole('link', { name: 'Placements', exact: true }).click();
   await page.getByRole('button', { name: 'Show Sun on the chart', exact: true }).click();
   await expect(page.locator('tr.data-table-row-selected')).toContainText('Sun');
 
@@ -173,11 +174,53 @@ test('the Apply button enables when only Symbols are changed (#459)', async ({ p
   // Initially disabled
   await expect(applyButton).toBeDisabled();
 
-  // Change only the symbol class - should enable the apply button
-  await card.getByLabel('Symbols', { exact: true }).selectOption('drawn');
+  // Change only the symbol class (the default is already 'drawn') - should enable the apply button
+  await card.getByLabel('Symbols', { exact: true }).selectOption('unicode');
 
   // The button should now be enabled
   await expect(applyButton).toBeEnabled();
 
+  // Cancel puts the symbols back: nothing sticks, and reopening shows the original choice (#510)
+  await card.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await openSettings(page);
+  await expect(card.getByLabel('Symbols', { exact: true })).toHaveValue('drawn');
+  await expect(card.getByRole('button', { name: /^Apply and redraw/ })).toBeDisabled();
+
+  await closeSettings(page);
+});
+
+test('saving a profile as the device default applies it to a chart that was never touched (#510)', async ({ page }) => {
+  test.setTimeout(90_000);
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  await createPerson(page, ADA);
+  await openNatalChart(page);
+  await expect(page.locator('div.chart-wheel')).toBeVisible();
+
+  // Save Sidereal (Lahiri) as this device's default, without applying it to the chart open now.
+  await openSettings(page);
+  const card = page.locator('dialog.settings-card');
+  await card.getByLabel('Calculation profile', { exact: true }).selectOption('sidereal-lahiri-v1');
+  await card.getByRole('button', { name: 'Save as my default', exact: true }).click();
+  await expect(card).toBeHidden();
+  await openSettings(page);
+  await expect(card.getByLabel('House system', { exact: true })).toHaveValue('P');
+  await closeSettings(page);
+
+  // The in-memory ExtendedSettings store is seeded once per real page load (#510), not on every
+  // hash navigation within the same SPA session — matching `extended-settings-store.ts`'s own
+  // "held for the page's lifetime" design — so a genuine reload is needed to pick up the new default.
+  await page.reload();
+  await page.waitForLoadState('load');
+
+  // A second person's chart has never had its own settings touched, so it starts from the new default.
+  const BOB = { ...ADA, name: 'Bob Example' };
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  await createPerson(page, BOB);
+  await openNatalChart(page);
+  await expect(page.locator('div.chart-wheel')).toBeVisible();
+
+  await openSettings(page);
+  await expect(card.getByLabel('Calculation profile', { exact: true })).toHaveValue('sidereal-lahiri-v1');
+  await expect(card.getByLabel('House system', { exact: true })).toHaveValue('W');
   await closeSettings(page);
 });

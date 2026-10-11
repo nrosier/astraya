@@ -51,6 +51,8 @@ export const CORPUS_CATEGORIES = [
   'composite-planet-in-house',
   'composite-aspect-pair',
   'degree-symbol',
+  'derived-point-in-sign',
+  'derived-point-in-house',
 ] as const;
 export type CorpusCategory = (typeof CORPUS_CATEGORIES)[number];
 

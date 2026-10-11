@@ -39,6 +39,8 @@
  *   composite-planet-in-house  composite-planet-in-house:<body>:<house> composite-planet-in-house:sun:3   —
  *   composite-aspect-pair      composite-aspect-pair:<aspect>:<a>:<b>   composite-aspect-pair:square:mars:saturn  alphabetical
  *   degree-symbol              degree-symbol:<degree>                   degree-symbol:1                   — (degree is 1-360, floor(longitude)+1)
+ *   derived-point-in-sign      derived-point-in-sign:<point>:<sign>     derived-point-in-sign:part-of-fortune:2    —
+ *   derived-point-in-house     derived-point-in-house:<point>:<house>   derived-point-in-house:part-of-fortune:3   —
  *
  * Ordering conventions, stated once: an `aspect-pair` and a `synastry-aspect` are stored ONCE per
  * unordered pair, with the bodies in alphabetical order (the symmetric aspect needs one entry, not
@@ -86,6 +88,7 @@ import { bodyByKey } from '../astrology/bodies.ts';
 import { aspectByKey } from '../astrology/aspects.ts';
 import { SIGNS } from '../astrology/signs.ts';
 import { NAKSHATRAS } from '../astrology/nakshatras.ts';
+import { isDerivedPointKey } from '../astrology/derived-points.ts';
 import type { EssentialDignities } from '../astrology/dignities.js';
 
 export const CORPUS_CATEGORIES = [
@@ -104,6 +107,8 @@ export const CORPUS_CATEGORIES = [
   'composite-planet-in-house',
   'composite-aspect-pair',
   'degree-symbol',
+  'derived-point-in-sign',
+  'derived-point-in-house',
 ] as const;
 export type CorpusCategory = (typeof CORPUS_CATEGORIES)[number];
 
@@ -208,7 +213,9 @@ export type CorpusPlacement =
       readonly bodyA: string;
       readonly bodyB: string;
     }
-  | { readonly category: 'degree-symbol'; readonly degree: number };
+  | { readonly category: 'degree-symbol'; readonly degree: number }
+  | { readonly category: 'derived-point-in-sign'; readonly point: string; readonly sign: number }
+  | { readonly category: 'derived-point-in-house'; readonly point: string; readonly house: number };
 
 const PATTERN_KEY_RE = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/;
 
@@ -251,6 +258,10 @@ export function placementKey(placement: CorpusPlacement): string {
     }
     case 'degree-symbol':
       return `degree-symbol:${String(placement.degree)}`;
+    case 'derived-point-in-sign':
+      return `derived-point-in-sign:${placement.point}:${String(placement.sign)}`;
+    case 'derived-point-in-house':
+      return `derived-point-in-house:${placement.point}:${String(placement.house)}`;
   }
 }
 
@@ -345,6 +356,16 @@ export function parsePlacementKey(key: string): CorpusPlacement | undefined {
       if (degree === undefined) return undefined;
       return { category, degree: Number(degree) };
     }
+    case 'derived-point-in-sign': {
+      const [point, sign] = rest;
+      if (!isDerivedPointKey(point) || sign === undefined) return undefined;
+      return { category, point, sign: Number(sign) };
+    }
+    case 'derived-point-in-house': {
+      const [point, house] = rest;
+      if (!isDerivedPointKey(point) || house === undefined) return undefined;
+      return { category, point, house: Number(house) };
+    }
     default:
       return undefined;
   }
@@ -427,6 +448,9 @@ function validatePlacementFields(placement: CorpusPlacement): string[] {
       errors.push(`sign index ${String(sign)} out of range 0-${String(SIGNS.length - 1)} (${label})`);
     }
   };
+  const checkPoint = (point: string): void => {
+    if (!isDerivedPointKey(point)) errors.push(`unknown derived point key "${point}"`);
+  };
   const checkHouse = (house: number, label: string): void => {
     if (!Number.isInteger(house) || house < 1 || house > 12) {
       errors.push(`house ${String(house)} out of range 1-12 (${label})`);
@@ -498,6 +522,14 @@ function validatePlacementFields(placement: CorpusPlacement): string[] {
       if (!(ACG_ANGLES as readonly string[]).includes(placement.angle)) {
         errors.push(`unknown astro-line angle "${placement.angle}"`);
       }
+      break;
+    case 'derived-point-in-sign':
+      checkPoint(placement.point);
+      checkSign(placement.sign, 'sign');
+      break;
+    case 'derived-point-in-house':
+      checkPoint(placement.point);
+      checkHouse(placement.house, 'house');
       break;
     case 'composite-planet-in-sign':
       checkBody(placement.body, 'body');

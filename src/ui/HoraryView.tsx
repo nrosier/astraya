@@ -13,11 +13,17 @@
  * @conventions Needs no saved person or stored data (computed entirely in-browser), so it lives outside `Stored`, like ElectionalView; it reports only whether the chart is fit to be judged, never an answer to the question itself. Reuses the shared `ChartDataView`. Text comes from co-located `HoraryView.messages.ts` via `useMessages()`.
  * @exports HoraryView
  */
+import { routeHref } from './route.js';
+import { DateField } from './primitives/DateField.js';
+import { Select } from './primitives/Select.js';
+import { TextField } from './primitives/TextField.js';
+import { TimeField } from './primitives/TimeField.js';
 import { useState } from 'react';
 import { isRadical } from '../astrology/horary.js';
 import { chartSheetMetaLines } from '../domain/chart-tables.js';
 import { computeHoraryChart, HORARY_DEFAULT_HOUSE_SYSTEM, type HoraryChart } from '../domain/horary.js';
 import { BirthPlaceSearch } from './BirthPlaceSearch.js';
+import type { ChartViewKind } from './chart-sections.js';
 import { ChartDataView } from './ChartView.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { HORARY_HOUSE_SYSTEMS, nowFields, parseHoraryFields, type HoraryFieldError } from './horary.js';
@@ -35,7 +41,12 @@ type Result =
   | { readonly kind: 'ready'; readonly chart: HoraryChart; readonly moment: BirthMomentInput }
   | { readonly kind: 'error'; readonly message: string };
 
-export function HoraryView(): React.JSX.Element {
+/** This screen's own view-href shape (#511): `#/horary`, with no person id or chart-type axis to carry. */
+function horaryHref(view: ChartViewKind): string {
+  return routeHref({ kind: 'horary', view });
+}
+
+export function HoraryView({ view }: { readonly view?: ChartViewKind | undefined }): React.JSX.Element {
   const t = useMessages(horaryViewMessages);
   const transit = useMessages(transitViewMessages);
   const shared = useMessages(sharedMessages);
@@ -72,7 +83,7 @@ export function HoraryView(): React.JSX.Element {
   const ready = result.kind === 'ready' ? result : undefined;
 
   return (
-    <main className="shell">
+    <main className="shell shell--wide">
       <p className="back">
         <a href="#/">&larr; {shared.back}</a>
       </p>
@@ -80,63 +91,42 @@ export function HoraryView(): React.JSX.Element {
       <p className="hint">{t.hint}</p>
 
       <div className="field-grid">
-        <label>
-          {t.dateLabel}
-          <input
-            type="date"
-            value={fields.date}
-            onChange={(event) => {
-              edit({ date: event.target.value });
-            }}
-          />
-        </label>
-        <label>
-          {t.timeLabel}
-          <input
-            type="time"
-            value={fields.time}
-            onChange={(event) => {
-              edit({ time: event.target.value });
-            }}
-          />
-        </label>
-        <label>
-          {t.latitudeLabel}
-          <input
-            type="text"
-            inputMode="decimal"
-            value={fields.latitude}
-            onChange={(event) => {
-              edit({ latitude: event.target.value });
-            }}
-          />
-        </label>
-        <label>
-          {t.longitudeLabel}
-          <input
-            type="text"
-            inputMode="decimal"
-            value={fields.longitude}
-            onChange={(event) => {
-              edit({ longitude: event.target.value });
-            }}
-          />
-        </label>
-        <label>
-          {t.houseSystemLabel}
-          <select
-            value={houseSystem}
-            onChange={(event) => {
-              setHouseSystem(event.target.value);
-            }}
-          >
-            {HORARY_HOUSE_SYSTEMS.map((code) => (
-              <option key={code} value={code}>
-                {t.houseSystems[code] ?? code}
-              </option>
-            ))}
-          </select>
-        </label>
+        <DateField
+          label={t.dateLabel}
+          value={fields.date}
+          onChange={(value) => {
+            edit({ date: value });
+          }}
+        />
+        <TimeField
+          label={t.timeLabel}
+          value={fields.time}
+          onChange={(value) => {
+            edit({ time: value });
+          }}
+        />
+        <TextField
+          label={t.latitudeLabel}
+          inputMode="decimal"
+          value={fields.latitude}
+          onChange={(value) => {
+            edit({ latitude: value });
+          }}
+        />
+        <TextField
+          label={t.longitudeLabel}
+          inputMode="decimal"
+          value={fields.longitude}
+          onChange={(value) => {
+            edit({ longitude: value });
+          }}
+        />
+        <Select
+          label={t.houseSystemLabel}
+          value={houseSystem}
+          options={HORARY_HOUSE_SYSTEMS.map((code) => ({ value: code, label: t.houseSystems[code] ?? code }))}
+          onChange={setHouseSystem}
+        />
       </div>
 
       <BirthPlaceSearch
@@ -193,6 +183,12 @@ export function HoraryView(): React.JSX.Element {
             displayName={t.chartName}
             showHouses={ready.chart.housesAvailable}
             metaLines={chartSheetMetaLines(t.chartName, ready.moment, locale)}
+            view={view ?? 'wheel'}
+            onViewChange={(next) => {
+              window.history.replaceState(null, '', horaryHref(next));
+              window.dispatchEvent(new HashChangeEvent('hashchange'));
+            }}
+            buildViewHref={horaryHref}
           />
         </>
       )}

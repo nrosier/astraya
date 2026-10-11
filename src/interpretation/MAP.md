@@ -16,6 +16,7 @@ Prose corpus (committed JSON per locale) + composition pipeline → written repo
 - `result-basis.ts` — Stores saved AI interpretation's actual basis (not generic label). Deps: none (imported by server).
 - `rules.ts` — Ranks chart placements by weighted rules (dignity/sect/retrograde/angularity/aspects/house class). Deps: `astrology/aspects`, `astrology/bodies`, `astrology/emphasis`, `astrology/sect`, `astrology/signs`, `domain/chart-compute`, `./schema`.
 - `schema.ts` — Single source of truth for corpus-entry shape + key parsing + validation. Deps: `astrology/bodies`, `astrology/aspects`, `astrology/signs`, `astrology/nakshatras`, `astrology/dignities`.
+- `selection-key.ts` — Wheel selection keys: builders and parser for body/sign/house/derived/aspect keys. Deps: `astrology/derived-points`, `astrology/signs`, `chart/body-id`.
 - `selection.ts` — Wheel click → matching placements, same salience ranking as report. Deps: `astrology/signs`, `chart/body-id`, `domain/chart-compute`, `./rules`.
 - `symbolism.ts` — Reference symbolism sheets (core meaning + keywords, en/nl) + generation context builder. Deps: `astrology/bodies`, `astrology/signs`, `./compose`, `./schema`.
 - `tier2-client.ts` — Thin client for opt-in Tier 2 AI-customized interpretation (via server). Deps: `astrology/bodies`, `domain/chart-compute`, `domain/synastry`, `./focus-context-schema`, `./result-basis`, `./schema`.

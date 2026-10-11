@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * The lunar phase line in the Chart shape section (#403, moved there from Positions by #430), against a real computed chart: the
+ * The lunar phase line in the Patterns & condition view (#403, moved there from Positions by #430, then into Patterns & condition by #511), against a real computed chart: the
  * #412 reference chart, 1 Jan 1970 00:00 in Antwerp (Ohio), whose Moon is 272°57' ahead of the
  * Sun — a Last Quarter Moon, about 47% lit, which Astro-Seek names the same way.
  */
@@ -45,13 +45,17 @@ async function mount(locale: 'en' | 'nl'): Promise<HTMLElement> {
   document.body.append(container);
   const root = createRoot(container);
   await act(async () => {
-    root.render(<ChartDataView load={{ kind: 'ready', data }} displayName="Test" showHouses />);
+    root.render(
+      <ChartDataView load={{ kind: 'ready', data }} displayName="Test" showHouses buildViewHref={() => '#'} />,
+    );
     await Promise.resolve();
   });
   mounted = { container, root };
-  // The Chart tab is the default; the phase belongs to the Chart shape section.
+  // The Wheel view is the default; the phase belongs to Patterns & condition (#511).
   await act(async () => {
-    container.querySelector<HTMLButtonElement>('#chart-tab-shape')?.click();
+    Array.from(container.querySelectorAll<HTMLAnchorElement>('.chart-view-link'))
+      .find((link) => link.textContent === chartViewMessages[locale].patternsViewLabel)
+      ?.click();
     await Promise.resolve();
   });
   return container;

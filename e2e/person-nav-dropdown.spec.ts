@@ -54,8 +54,8 @@ test('opening a second group closes the first, so only one dropdown is ever open
   await expect(popup(page, 'Transits & Forecast')).toBeVisible();
   await expect(group(page, 'Transits & Forecast')).toHaveAttribute('aria-expanded', 'true');
 
-  await group(page, 'Charts').click();
-  await expect(popup(page, 'Charts')).toBeVisible();
+  await group(page, 'Progressions & Directions').click();
+  await expect(popup(page, 'Progressions & Directions')).toBeVisible();
   await expect(popup(page, 'Transits & Forecast')).toHaveCount(0);
   await expect(group(page, 'Transits & Forecast')).toHaveAttribute('aria-expanded', 'false');
 });
@@ -76,7 +76,7 @@ test('choosing an item navigates and leaves no menu open', async ({ page }) => {
 
   await group(page, 'Progressions & Directions').click();
   await popup(page, 'Progressions & Directions').getByRole('link', { name: 'Profections', exact: true }).click();
-  await expect(page).toHaveURL(/#\/profections\//);
+  await expect(page).toHaveURL(/#\/people\/[^/]+\/timing\/profections$/);
   await expect(page.getByRole('navigation', { name: /subtabs$/ })).toHaveCount(0);
   // The group holding the current page is highlighted, but not held open.
   await expect(group(page, 'Progressions & Directions')).toHaveAttribute('aria-expanded', 'false');
@@ -87,21 +87,21 @@ test('a click on empty page, on content, or on another tab closes the open menu'
   test.setTimeout(60_000);
   await personWithChart(page);
 
-  await group(page, 'Charts').click();
-  await expect(popup(page, 'Charts')).toBeVisible();
+  await group(page, 'Progressions & Directions').click();
+  await expect(popup(page, 'Progressions & Directions')).toBeVisible();
   await page.getByRole('heading', { level: 1 }).click();
-  await expect(popup(page, 'Charts')).toHaveCount(0);
+  await expect(popup(page, 'Progressions & Directions')).toHaveCount(0);
 
-  await group(page, 'Charts').click();
-  await expect(popup(page, 'Charts')).toBeVisible();
+  await group(page, 'Progressions & Directions').click();
+  await expect(popup(page, 'Progressions & Directions')).toBeVisible();
   // The page's own link: no route change follows, so only the outside press can close it.
   await page.getByRole('link', { name: 'Birth record', exact: true }).click();
-  await expect(popup(page, 'Charts')).toHaveCount(0);
+  await expect(popup(page, 'Progressions & Directions')).toHaveCount(0);
 
-  await group(page, 'Charts').click();
-  await expect(popup(page, 'Charts')).toBeVisible();
+  await group(page, 'Progressions & Directions').click();
+  await expect(popup(page, 'Progressions & Directions')).toBeVisible();
   await page.mouse.click(5, 400);
-  await expect(popup(page, 'Charts')).toHaveCount(0);
+  await expect(popup(page, 'Progressions & Directions')).toHaveCount(0);
 });
 
 test('Escape closes the menu and puts focus back on its button', async ({ page }) => {

@@ -10,6 +10,8 @@
  * @conventions Lives inside `Stored` because the person picker reads the local store, though the eclipse search itself needs only the ephemeris. Text comes from co-located `EclipsesView.messages.ts` via `useMessages()`.
  * @exports EclipsesView
  */
+import { Select } from './primitives/Select.js';
+import { TextField } from './primitives/TextField.js';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { bodyById } from '../astrology/bodies.js';
 import { eclipseContacts, findEclipses, type Eclipse, type NatalPoint } from '../astrology/eclipses.js';
@@ -178,44 +180,17 @@ export function EclipsesView(): React.JSX.Element {
       <p className="hint">{t.hint}</p>
 
       <div className="field-grid">
-        <label>
-          {t.fromYearLabel}
-          <input
-            type="text"
-            inputMode="numeric"
-            value={fromYear}
-            onChange={(event) => {
-              setFromYear(event.target.value);
-            }}
-          />
-        </label>
-        <label>
-          {t.toYearLabel}
-          <input
-            type="text"
-            inputMode="numeric"
-            value={toYear}
-            onChange={(event) => {
-              setToYear(event.target.value);
-            }}
-          />
-        </label>
-        <label>
-          {t.personLabel}
-          <select
-            value={personId}
-            onChange={(event) => {
-              setPersonId(event.target.value);
-            }}
-          >
-            <option value="">{t.personNone}</option>
-            {people.map((person) => (
-              <option key={person.id} value={person.id}>
-                {person.displayName || t.unnamedPerson}
-              </option>
-            ))}
-          </select>
-        </label>
+        <TextField label={t.fromYearLabel} inputMode="numeric" value={fromYear} onChange={setFromYear} />
+        <TextField label={t.toYearLabel} inputMode="numeric" value={toYear} onChange={setToYear} />
+        <Select
+          label={t.personLabel}
+          value={personId}
+          options={[
+            { value: '', label: t.personNone },
+            ...people.map((person) => ({ value: person.id, label: person.displayName || t.unnamedPerson })),
+          ]}
+          onChange={setPersonId}
+        />
       </div>
       <p>
         <button type="button" disabled={provider === undefined || result.kind === 'loading'} onClick={run}>

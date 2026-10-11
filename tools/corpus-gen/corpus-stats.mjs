@@ -56,7 +56,7 @@ if (rawArgs.includes('--help') || rawArgs.includes('-h')) {
 }
 
 const localeFilter = flag('locale');
-const evaluationLimit = Number(flag('evaluation-limit', 2));
+const evaluationLimit = Number(flag('evaluation-limit', 10));
 const locales = localeFilter ? [localeFilter] : ['en', 'nl'];
 
 function identityOf(item) {

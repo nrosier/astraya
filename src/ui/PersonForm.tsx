@@ -22,6 +22,12 @@ import { BirthPlaceSearch } from './BirthPlaceSearch.js';
 import { useMessages } from './messages.js';
 import { NEEDS_A_DECISION, PROVENANCE } from './moment-labels.js';
 import { personFormMessages } from './PersonForm.messages.js';
+import { DateField } from './primitives/DateField.js';
+import { NumberField } from './primitives/NumberField.js';
+import { Select } from './primitives/Select.js';
+import { TextAreaField } from './primitives/TextAreaField.js';
+import { TextField } from './primitives/TextField.js';
+import { TimeField } from './primitives/TimeField.js';
 import { PersonNotFound } from './PersonNotFound.js';
 import { sharedMessages } from './shared.messages.js';
 import { useStore, useStoreState } from './store-context.js';
@@ -111,22 +117,6 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
     );
   };
 
-  const field = (name: keyof Draft): { 'aria-invalid'?: true; 'aria-describedby'?: string } =>
-    errors[name] === undefined ? {} : { 'aria-invalid': true, 'aria-describedby': `${name}-error` };
-
-  // The time field is described by its own error, and — while the time is unknown — by why it is off.
-  const timeDescribedBy =
-    [errors.time === undefined ? undefined : 'time-error', unknown ? `${unknownTimeHintId}-reason` : undefined]
-      .filter((id) => id !== undefined)
-      .join(' ') || undefined;
-
-  const Error_ = ({ name }: { name: keyof Draft }): React.JSX.Element | null =>
-    errors[name] === undefined ? null : (
-      <span className="field-error" id={`${name}-error`}>
-        {errors[name]}
-      </span>
-    );
-
   return (
     <main className="shell">
       <p className="back">
@@ -146,81 +136,58 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
       <fieldset className="field-group">
         <legend>{t.whoLegend}</legend>
         <div className="field-grid">
-          <label>
-            {t.nameLabel}
-            <input
-              type="text"
-              value={current.displayName}
-              {...field('displayName')}
-              onChange={(event) => {
-                set('displayName', event.target.value);
-              }}
-            />
-            <Error_ name="displayName" />
-          </label>
-          <label>
-            {t.placeOfBirthLabel}
-            <input
-              type="text"
-              placeholder={t.placeOfBirthPlaceholder}
-              value={current.placeLabel}
-              onChange={(event) => {
-                set('placeLabel', event.target.value);
-              }}
-            />
-            {/* A label, not a lookup: the coordinates below are what the calculation uses, and
-                this text is only for the reader. "Search for a place by name" below can fill it
-                in from a search result, but the result is still just typed text afterward —
-                never re-derived or locked (#290). */}
-          </label>
+          <TextField
+            label={t.nameLabel}
+            value={current.displayName}
+            error={errors.displayName}
+            onChange={(value) => {
+              set('displayName', value);
+            }}
+          />
+          {/* A label, not a lookup: the coordinates below are what the calculation uses, and this text is only
+              for the reader. "Search for a place by name" below can fill it in from a search result, but the
+              result is still just typed text afterward — never re-derived or locked (#290). */}
+          <TextField
+            label={t.placeOfBirthLabel}
+            placeholder={t.placeOfBirthPlaceholder}
+            value={current.placeLabel}
+            onChange={(value) => {
+              set('placeLabel', value);
+            }}
+          />
         </div>
       </fieldset>
 
       <fieldset className="field-group">
         <legend>{t.whenLegend}</legend>
         <div className="field-grid">
-          <label>
-            {t.dateLabel}
-            <input
-              type="date"
-              value={current.date}
-              {...field('date')}
-              onChange={(event) => {
-                set('date', event.target.value);
-              }}
-            />
-            <Error_ name="date" />
-          </label>
-          <label>
-            {t.timeKnownLabel}
-            <select
-              value={current.timeAccuracy}
-              onChange={(event) => {
-                set('timeAccuracy', event.target.value as TimeAccuracy);
-              }}
-            >
-              {Object.entries(accuracyOptions(t)).map(([value, text]) => (
-                <option key={value} value={value}>
-                  {text}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            {t.timeLabel}
-            <input
-              type="time"
-              step={1}
-              value={current.time}
-              disabled={unknown}
-              {...field('time')}
-              aria-describedby={timeDescribedBy}
-              onChange={(event) => {
-                set('time', event.target.value);
-              }}
-            />
-            <Error_ name="time" />
-          </label>
+          <DateField
+            label={t.dateLabel}
+            value={current.date}
+            error={errors.date}
+            onChange={(value) => {
+              set('date', value);
+            }}
+          />
+          <Select
+            label={t.timeKnownLabel}
+            value={current.timeAccuracy}
+            options={Object.entries(accuracyOptions(t)).map(([value, text]) => ({ value, label: text }))}
+            onChange={(value) => {
+              set('timeAccuracy', value as TimeAccuracy);
+            }}
+          />
+          <TimeField
+            label={t.timeLabel}
+            step={1}
+            value={current.time}
+            disabled={unknown}
+            error={errors.time}
+            extraDescribedBy={unknown ? `${unknownTimeHintId}-reason` : undefined}
+            onChange={(value) => {
+              set('time', value);
+            }}
+          />
         </div>
         {unknown && (
           <>
@@ -237,38 +204,28 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
       <fieldset className="field-group">
         <legend>{t.coordinatesLegend}</legend>
         <div className="field-grid">
-          <label>
-            {t.latitudeLabel}
-            <input
-              type="number"
-              step="any"
-              inputMode="decimal"
-              placeholder="38.7478"
-              value={current.latitude}
-              {...field('latitude')}
-              onChange={(event) => {
-                // The raw text, not `valueAsNumber`: a half-typed "-" is a work in progress, and
-                // reading it as a number would turn it into a coordinate of zero.
-                set('latitude', event.target.value);
-              }}
-            />
-            <Error_ name="latitude" />
-          </label>
-          <label>
-            {t.longitudeLabel}
-            <input
-              type="number"
-              step="any"
-              inputMode="decimal"
-              placeholder="-85.0672"
-              value={current.longitude}
-              {...field('longitude')}
-              onChange={(event) => {
-                set('longitude', event.target.value);
-              }}
-            />
-            <Error_ name="longitude" />
-          </label>
+          {/* The raw text, not `valueAsNumber`: a half-typed "-" is a work in progress, and reading it as a
+              number would turn it into a coordinate of zero. */}
+          <NumberField
+            label={t.latitudeLabel}
+            step="any"
+            placeholder="38.7478"
+            value={current.latitude}
+            error={errors.latitude}
+            onChange={(value) => {
+              set('latitude', value);
+            }}
+          />
+          <NumberField
+            label={t.longitudeLabel}
+            step="any"
+            placeholder="-85.0672"
+            value={current.longitude}
+            error={errors.longitude}
+            onChange={(value) => {
+              set('longitude', value);
+            }}
+          />
         </div>
         <BirthPlaceSearch
           onPick={(lat, lng, placeLabel) => {
@@ -284,60 +241,51 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
       <fieldset className="field-group">
         <legend>{t.calendarZoneLegend}</legend>
         <div className="field-grid">
-          <label>
-            {t.calendarLabel}
-            <select
-              value={current.calendar}
-              onChange={(event) => {
-                set('calendar', event.target.value as Calendar);
-              }}
-            >
-              <option value="auto">{t.calendarAutomatic}</option>
-              <option value="gregorian">{t.calendarGregorian}</option>
-              <option value="julian">{t.calendarJulian}</option>
-            </select>
-          </label>
-          <label>
-            {t.utcOffsetOverrideLabel}
-            <input
-              type="number"
-              step="any"
-              placeholder={t.offsetOverridePlaceholder}
-              value={current.offsetOverride}
-              {...field('offsetOverride')}
-              onChange={(event) => {
-                set('offsetOverride', event.target.value);
-              }}
-            />
-            <Error_ name="offsetOverride" />
-          </label>
-          <label>
-            {t.timezoneOverrideLabel}
-            <input
-              type="text"
-              placeholder={t.timezoneOverridePlaceholder}
-              value={current.zoneOverride}
-              onChange={(event) => {
-                set('zoneOverride', event.target.value);
-              }}
-            />
-          </label>
+          <Select
+            label={t.calendarLabel}
+            value={current.calendar}
+            options={[
+              { value: 'auto', label: t.calendarAutomatic },
+              { value: 'gregorian', label: t.calendarGregorian },
+              { value: 'julian', label: t.calendarJulian },
+            ]}
+            onChange={(value) => {
+              set('calendar', value as Calendar);
+            }}
+          />
+          <NumberField
+            label={t.utcOffsetOverrideLabel}
+            step="any"
+            placeholder={t.offsetOverridePlaceholder}
+            value={current.offsetOverride}
+            error={errors.offsetOverride}
+            onChange={(value) => {
+              set('offsetOverride', value);
+            }}
+          />
+          <TextField
+            label={t.timezoneOverrideLabel}
+            placeholder={t.timezoneOverridePlaceholder}
+            value={current.zoneOverride}
+            onChange={(value) => {
+              set('zoneOverride', value);
+            }}
+          />
         </div>
         <p className="hint">{t.timezoneHint}</p>
       </fieldset>
 
       <fieldset className="field-group">
         <legend>{t.notesLegend}</legend>
-        <label className="stacked">
-          <span className="sr-only">{t.notesLabel}</span>
-          <textarea
-            rows={3}
-            value={current.notes}
-            onChange={(event) => {
-              set('notes', event.target.value);
-            }}
-          />
-        </label>
+        <TextAreaField
+          label={t.notesLabel}
+          hideLabel
+          rows={3}
+          value={current.notes}
+          onChange={(value) => {
+            set('notes', value);
+          }}
+        />
       </fieldset>
 
       {resolved !== undefined && (

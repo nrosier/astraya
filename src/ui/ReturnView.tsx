@@ -12,6 +12,8 @@
  * @conventions Gated for incomplete/unknown-time birth records like other person-scoped views; uses ReturnView.messages.ts for en/nl text via useMessages().
  * @exports ReturnView
  */
+import { DateField } from './primitives/DateField.js';
+import { NumberField } from './primitives/NumberField.js';
 import { useEffect, useMemo, useState } from 'react';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { computeLunarReturnChart, computeSolarReturnChart, type ReturnChartData } from '../domain/return-chart.js';
@@ -21,8 +23,10 @@ import { housesAreDefined } from '../domain/chart-compute.js';
 import { momentKey } from '../time/encode.js';
 import { aspectDisplayName, bodyDisplayName } from './astro-names.messages.js';
 import { ChartDataView } from './ChartView.js';
-import { ChartTypeSelector, changeChartSection } from './ChartTypeSelector.js';
-import type { ChartSection } from './chart-sections.js';
+import { ChartTypeSelector, changeChartView } from './ChartTypeSelector.js';
+import { useCalculationBasisLine } from './calculation-basis.js';
+import { type ChartViewKind } from './chart-sections.js';
+import { chartHref, personHref } from './route.js';
 import { todayInputValue } from './format.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
@@ -88,11 +92,11 @@ function contactColumns(t: typeof returnViewMessages.en, locale: Locale): readon
 export function ReturnView({
   personId,
   kind,
-  section,
+  view,
 }: {
   personId: string;
   kind: 'solar-return' | 'lunar-return';
-  section?: ChartSection | undefined;
+  view?: ChartViewKind | undefined;
 }): React.JSX.Element {
   const state = useStoreState();
   const person = state.people.get(personId);
@@ -100,6 +104,7 @@ export function ReturnView({
   const [locale] = useLocale();
   const [rulership] = useRulershipChoice();
   const [settings, setSettings] = useExtendedSettings();
+  const basisLine = useCalculationBasisLine(settings, rulership);
   const { provider } = useEphemerisProvider();
   const solar = kind === 'solar-return';
 
@@ -196,12 +201,12 @@ export function ReturnView({
     return (
       <main className="shell">
         <p className="back">
-          <a href={`#/person/${personId}`}>&larr; {person.displayName || t.personFallback}</a>
+          <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
         </p>
         <h1>{fallback}</h1>
         <p>
           {t.needsCompleteRecord(person.displayName || t.thisPerson)}{' '}
-          <a href={`#/person/${personId}`}>{t.personPageLink}</a>.
+          <a href={personHref(personId)}>{t.personPageLink}</a>.
         </p>
       </main>
     );
@@ -211,40 +216,20 @@ export function ReturnView({
   const displayName = person.displayName ? `${person.displayName} — ${label}` : label;
 
   return (
-    <main className="shell">
+    <main className="shell shell--wide">
       <p className="back">
-        <a href={`#/person/${personId}`}>&larr; {person.displayName || t.personFallback}</a>
+        <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
       </p>
       <h1>{heading}</h1>
-      <ChartTypeSelector personId={personId} type={kind} section={section} />
+      <p className="hint page-header-basis">{basisLine}</p>
+      <ChartTypeSelector personId={personId} type={kind} view={view} />
       <p className="hint">{solar ? t.solarHint : t.lunarHint}</p>
 
       <div className="field-grid">
         {solar ? (
-          <label>
-            {t.yearLabel}
-            <input
-              type="number"
-              min={MIN_YEAR}
-              max={MAX_YEAR}
-              step={1}
-              value={year}
-              onChange={(event) => {
-                setYear(event.target.value);
-              }}
-            />
-          </label>
+          <NumberField label={t.yearLabel} min={MIN_YEAR} max={MAX_YEAR} value={year} onChange={setYear} />
         ) : (
-          <label>
-            {t.fromDateLabel}
-            <input
-              type="date"
-              value={fromDate}
-              onChange={(event) => {
-                setFromDate(event.target.value);
-              }}
-            />
-          </label>
+          <DateField label={t.fromDateLabel} value={fromDate} onChange={setFromDate} />
         )}
       </div>
       {!inputValid && (
@@ -328,10 +313,11 @@ export function ReturnView({
           extendedSettings={settings}
           onExtendedSettingsChange={setSettings}
           settingsProvider={provider}
-          section={section ?? 'chart'}
-          onSectionChange={(next) => {
-            changeChartSection(personId, kind, next);
+          view={view ?? 'wheel'}
+          onViewChange={(next) => {
+            changeChartView(personId, kind, next);
           }}
+          buildViewHref={(next) => chartHref(personId, next, kind)}
         />
       )}
 

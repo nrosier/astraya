@@ -109,6 +109,8 @@ COPY --from=build /app/src/astrology/signs.ts ./src/astrology/signs.ts
 COPY --from=build /app/src/astrology/nakshatras.ts ./src/astrology/nakshatras.ts
 COPY --from=build /app/src/astrology/emphasis.ts ./src/astrology/emphasis.ts
 COPY --from=build /app/src/astrology/dignities.ts ./src/astrology/dignities.ts
+# The closed list of derived points the corpus's derived-point-in-* keys are validated against (#511).
+COPY --from=build /app/src/astrology/derived-points.ts ./src/astrology/derived-points.ts
 
 # Focus mode (#424, server/interpretation-routes.ts) validates its payload with
 # `validateFocusContext`, which lives in focus-context-schema.ts and reads the

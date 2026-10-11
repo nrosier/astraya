@@ -7,7 +7,7 @@
 /**
  * @module placements
  * @purpose Shared builder for the full restricted placement space (every body/sign/house/aspect/
- *   dignity/profection/astro-line/composite/degree-symbol combination the corpus covers) and the
+ *   dignity/profection/astro-line/composite/degree-symbol/derived-point combination the corpus covers) and the
  *   plain-English descriptions used both to prompt a generator and to state facts to a judge.
  * @conventions Single source of truth reused by generate-batch.mjs, sample-validate-batch.mjs,
  *   verify-batch.mjs, and others, so a batch runner and a validation tool can't drift apart on
@@ -15,7 +15,8 @@
  * @exports buildSymbolismContext, symbolismScopeFor, BODIES, SIGNS, ASPECTS, HOUSES,
  *   SIGN_INDICES, DIGNITY_STATES, CORE_BODY_KEYS, TRADITIONAL_RULER_KEYS,
  *   MODERN_OUTER_RULER_KEYS, MODERN_OUTER_DIGNITY_STATES, ACG_BODY_KEYS, ACG_ANGLES, DEGREES,
- *   degreeSymbolExcerpt, corePairs, buildPlacements, placementDescription, factsDescription.
+ *   degreeSymbolExcerpt, DERIVED_POINT_KEYS, DERIVED_POINT_CATEGORIES, derivedPointRules, derivedPointFacts,
+ *   corePairs, buildPlacements, placementDescription, factsDescription.
  */
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -27,6 +28,7 @@ import {
   symbolismScopeFor,
 } from '../../../src/interpretation/symbolism.ts';
 import { BODIES } from '../../../src/astrology/bodies.ts';
+import { DERIVED_POINTS, derivedPointByKey } from '../../../src/astrology/derived-points.ts';
 import { SIGNS } from '../../../src/astrology/signs.ts';
 import { ASPECTS } from '../../../src/astrology/aspects.ts';
 import { detrimentRulerOf, exaltationRulerOf, fallRulerOf, rulerOf } from '../../../src/astrology/dignities.ts';
@@ -58,6 +60,27 @@ export function degreeSymbolExcerpt(degree) {
   if (excerpt === undefined) throw new Error(`no degree-symbol seed excerpt for degree ${String(degree)}`);
   return excerpt;
 }
+
+// The sourced rules the derived-point entries are composed from (#517, owner decision 2026-10-11:
+// no source gives a Lot in a sign or house, so the generator composes from these instead of
+// recalling astrology). Loaded once, like the degree-symbol seed above.
+const derivedPointRulesPath = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  '..',
+  'classical-texts',
+  'derived-point.rules.json',
+);
+const derivedPointRulesData = JSON.parse(readFileSync(derivedPointRulesPath, 'utf8'));
+
+/** The sourced rules file for the derived-point categories (point natures, ruler means, house classes). */
+export function derivedPointRules() {
+  return derivedPointRulesData;
+}
+
+/** The two corpus categories for a calculated point that is not a body (#511/#517). */
+export const DERIVED_POINT_CATEGORIES = ['derived-point-in-sign', 'derived-point-in-house'];
+/** The closed list of points they cover: the Part of Fortune and the Part of Spirit. */
+export const DERIVED_POINT_KEYS = DERIVED_POINTS.map((point) => point.key);
 
 /** Every computed body — planet-in-sign/-house and aspect-pair cover all of them. */
 export const CORE_BODY_KEYS = BODIES.map((b) => b.key);
@@ -168,6 +191,13 @@ export function buildPlacements() {
   // #405: every degree has a seed excerpt (degreeSymbolExcerpt throws if one is ever missing),
   // so this is unconditional, same as every HOUSES/SIGN_INDICES loop above.
   for (const degree of DEGREES) placements.push({ category: 'degree-symbol', degree });
+  // #517: the Parts of Fortune and Spirit by sign and by house: 2 points x (12 + 12) = 48 per locale.
+  for (const point of DERIVED_POINT_KEYS) {
+    for (const sign of SIGN_INDICES) placements.push({ category: 'derived-point-in-sign', point, sign });
+  }
+  for (const point of DERIVED_POINT_KEYS) {
+    for (const house of HOUSES) placements.push({ category: 'derived-point-in-house', point, house });
+  }
   return placements;
 }
 
@@ -248,6 +278,73 @@ const ANGLE_GLOSS = {
 // The angle a line is drawn for, as a name rather than the raw `AC`/`MC` code.
 const ANGLE_WORDS = { AC: 'Ascendant', DC: 'Descendant', MC: 'Midheaven', IC: 'Imum Coeli' };
 
+/** Angular / succedent / cadent, for a house number (1-12). */
+function houseClassOf(house) {
+  const classes = derivedPointRulesData.house_classes;
+  for (const name of ['angular', 'succedent', 'cadent']) {
+    if (classes[name].houses.includes(house)) return name;
+  }
+  throw new Error(`house ${String(house)} is in no house class`);
+}
+
+/** The classical (traditional) ruler of a sign, as a body key. */
+function classicalRulerKey(sign) {
+  const id = rulerOf(sign, 'traditional');
+  return BODIES.find((b) => b.id === id)?.key;
+}
+
+/**
+ * The composed-from facts for one derived-point placement (#517), shared by the generator's prompt and
+ * the judge's ground truth so the two can never disagree about what an entry may claim. Every line is
+ * either a sourced rule from `derived-point.rules.json` or the computed placement itself; the lines
+ * flagged "(synthesis ...)" are the owner-approved bridges where no source speaks.
+ */
+export function derivedPointFacts(placement) {
+  const rules = derivedPointRulesData;
+  const point = rules.points[placement.point];
+  if (point === undefined) throw new Error(`unknown derived point "${String(placement.point)}"`);
+  const lines = [
+    `${point.name} is a calculated sensitive point, not a planet or a body: it has no will, motion or aspects of its own. It is ${point.nature}.`,
+  ];
+  if (placement.category === 'derived-point-in-sign') {
+    const sign = SIGNS[placement.sign];
+    const ruler = classicalRulerKey(placement.sign);
+    const rulerBase = BODIES.find((b) => b.key === ruler)?.name ?? String(ruler);
+    const rulerName = ruler === 'sun' || ruler === 'moon' ? `the ${rulerBase}` : rulerBase;
+    lines.push(
+      `It falls in ${sign?.name ?? String(placement.sign)}: element ${sign?.element ?? '?'}, modality ${sign?.modality ?? '?'}; the sign's own character is "${signSymbolism(placement.sign)?.core ?? ''}".`,
+    );
+    const means = rules.ruler_means[ruler ?? ''];
+    if (placement.point === 'part-of-fortune' && means !== undefined) {
+      lines.push(
+        `The sign's classical ruler is ${rulerName}, and a point is read through its ruler: for the Part of Fortune, ${rulerName} signifies ${means.fortune}.`,
+      );
+    } else {
+      lines.push(
+        `The sign's classical ruler is ${rulerName} (general nature: ${planetSymbolism(ruler ?? '')?.core ?? ''}). (synthesis: no classical source reads the ${point.name} through a particular ruler, so this is the ruler's general character colouring how the point's concerns are carried out, stated as a tendency only)`,
+      );
+    }
+    lines.push(
+      'A sign colours the point it holds: the sign itself acts together with the nature of whatever rules it, and on its own the sign names no specific outcome.',
+    );
+  } else {
+    const house = placement.house;
+    const cls = houseClassOf(house);
+    lines.push(
+      `It falls in house ${String(house)}, the house of ${houseGloss(house)}. This house is ${cls} — ${rules.house_classes[cls].strength}.`,
+    );
+    if (placement.point === 'part-of-spirit') {
+      lines.push(
+        '(synthesis: the angular / succedent / cadent principle is sourced for the Part of Fortune and applied to the Part of Spirit by analogy)',
+      );
+    }
+    lines.push(
+      `The point's nature, as above, is carried out through the matters of house ${String(house)}; nothing about the house beyond its stated topic and strength class is established.`,
+    );
+  }
+  return lines;
+}
+
 export function placementDescription(placement) {
   const bodyName = (key) => BODIES.find((b) => b.key === key)?.name ?? key;
   switch (placement.category) {
@@ -288,6 +385,19 @@ export function placementDescription(placement) {
     // category's "description" IS its source excerpt, not a derived sentence about it.
     case 'degree-symbol':
       return degreeSymbolExcerpt(placement.degree);
+    // #517: the facts are the description — a composed-from bundle, not a one-line label.
+    case 'derived-point-in-sign':
+      return `${derivedPointByKey(placement.point)?.label ?? placement.point} in ${SIGNS[placement.sign]?.name ?? String(placement.sign)}. FACTS TO USE (and nothing beyond them):\n${derivedPointFacts(
+        placement,
+      )
+        .map((line) => `- ${line}`)
+        .join('\n')}`;
+    case 'derived-point-in-house':
+      return `${derivedPointByKey(placement.point)?.label ?? placement.point} in house ${String(placement.house)}. FACTS TO USE (and nothing beyond them):\n${derivedPointFacts(
+        placement,
+      )
+        .map((line) => `- ${line}`)
+        .join('\n')}`;
     default:
       throw new Error(`unreachable: unhandled category "${placement.category}"`);
   }
@@ -330,6 +440,19 @@ export function factsDescription(placement) {
     // category.
     case 'degree-symbol':
       return degreeSymbolExcerpt(placement.degree);
+    // #517: the judge sees exactly the facts the generator was given, as the only ground truth.
+    case 'derived-point-in-sign':
+      return `${derivedPointByKey(placement.point)?.label ?? placement.point} in ${SIGNS[placement.sign]?.name ?? String(placement.sign)}. The entry may draw on these facts and no others:\n${derivedPointFacts(
+        placement,
+      )
+        .map((line) => `- ${line}`)
+        .join('\n')}`;
+    case 'derived-point-in-house':
+      return `${derivedPointByKey(placement.point)?.label ?? placement.point} in house ${String(placement.house)}. The entry may draw on these facts and no others:\n${derivedPointFacts(
+        placement,
+      )
+        .map((line) => `- ${line}`)
+        .join('\n')}`;
     default:
       throw new Error(`this tool does not (yet) support category "${placement.category}"`);
   }

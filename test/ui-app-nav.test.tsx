@@ -82,7 +82,13 @@ describe('the Tools menu', () => {
       'Birth-time rectification',
     ]);
     const hrefs = Array.from(box().querySelectorAll('.app-nav-menu a')).map((a) => a.getAttribute('href'));
-    expect(hrefs).toEqual(['#/cycles', '#/eclipses', '#/horary', '#/electional', '#/rectification']);
+    expect(hrefs).toEqual([
+      '#/explore/cycles',
+      '#/explore/eclipses',
+      '#/explore/horary',
+      '#/explore/electional',
+      '#/explore/rectification',
+    ]);
   });
 
   it('closes on Escape, on a click elsewhere, on choosing a tool, and when the page changes', async () => {
@@ -111,12 +117,12 @@ describe('the Tools menu', () => {
     expect(toolLinks()).toEqual([]);
 
     await click(button('Tools'));
-    await render(parseRoute('#/cycles'));
+    await render(parseRoute('#/explore/cycles'));
     expect(toolLinks()).toEqual([]);
   });
 
   it('marks the open tool as the current page and highlights the menu that holds it', async () => {
-    await mount(parseRoute('#/eclipses'));
+    await mount(parseRoute('#/explore/eclipses'));
     expect(box().querySelector('.app-nav-group')?.classList.contains('active')).toBe(true);
     await click(button('Tools'));
     const current = box().querySelector('.app-nav-menu a[aria-current="page"]');

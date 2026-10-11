@@ -4,17 +4,17 @@ Hand-rolled SVG rendering layer: chart wheels (single/bi-/tri-ring), aspect webs
 
 - `acg-map.ts` — Astrocartography world map (AC/DC/MC/IC + local-space lines). Deps: `astrology/astrocartography`, `astrology/bodies`, `domain/astrocartography`.
 - `antiscia-overlay.ts` — Antiscia/contra-antiscia chord overlay. Deps: `astrology/antiscia`, `./wheel`.
-- `aspect-matrix.ts` — Lower-triangular aspect staircase grid under wheel. Deps: `astrology/signs`, `./aspect-web`, `./glyphs`, `./sheet-geometry`.
+- `aspect-matrix.ts` — Lower-triangular aspect staircase grid: under the wheel in the sheet export, and as its own on-screen view with selectable cells. Deps: `astrology/signs`, `./aspect-web`, `./glyphs`, `./sheet-geometry`.
 - `aspect-web.ts` — Aspect chord rendering (cross-ring variant for bi-/tri-wheels). Deps: `astrology/aspects`, `astrology/bodies`, `./wheel`.
 - `astrochart-adapter.ts` — Interop with `@astrodraw/astrochart` library (dev-only reference wheel). Deps: `astrology/bodies`, `domain/chart-compute`.
 - `body-id.ts` — Multi-ring body identifier codec (`key@ring`). Deps: none (pure string codec).
-- `chart-sheet.ts` — Whole printable/exportable chart sheet (header + wheel + panels). Deps: `./aspect-matrix`, `./degree-strip`, `./emphasis-grid`, `./multi-wheel`, `./sheet-geometry`.
+- `calculation-profiles.ts` — Three built-in, versioned calculation profiles (Modern Western/Traditional Western/Sidereal (Lahiri)) as complete settings+rulership snapshots (#506/#510). Deps: `astrology/ayanamsas`, `astrology/rulership`, `./extended-settings`.
+- `chart-sheet.ts` — Whole printable/exportable chart sheet (header + wheel + panels), plus the wheel-only dial shown on screen. Deps: `./aspect-matrix`, `./degree-strip`, `./emphasis-grid`, `./multi-wheel`, `./sheet-geometry`.
 - `cycle-diagram.ts` — Planetary-cycle zodiac plot (successive exact-aspect points). Deps: `astrology/signs`, `./glyphs`, `./wheel`.
 - `declination-overlay.ts` — Parallel/contraparallel declination chord overlay. Deps: `astrology/declinations`, `./wheel`.
 - `degree-strip.ts` — 0–30° same-degree distribution strip. Deps: `astrology/signs`, `./glyphs`, `./sheet-geometry`.
 - `dial90.ts` — Traditional cosmobiology 90-degree dial. Deps: `astrology/midpoints`, `./glyph-layout`, `./wheel`.
 - `emphasis-grid.ts` — Element × modality balance table. Deps: `astrology/emphasis`, `astrology/signs`, `./glyphs`, `./sheet-geometry`.
-- `extended-settings-presets.ts` — Named tradition presets (modern/traditional/vedic) for chart settings. Deps: `astrology/ayanamsas`, `astrology/rulership`, `./extended-settings`.
 - `extended-settings.ts` — Chart settings bag (house system/zodiac/bodies/aspects/colours/wheel style). Deps: `astrology/aspects`, `domain/chart-compute`, `domain/chart-tables`, `./wheel`.
 - `glyph-layout.ts` — Glyph collision avoidance on wheel (spreads stelliums). Deps: `astrology/signs`, `./glyphs`, `./svg-primitives`, `./wheel`.
 - `glyph-variants.ts` — Alternate glyph forms (Uranus/Pluto historical variants). Deps: none (module state).

@@ -76,7 +76,9 @@ async function mount(locale: 'en' | 'nl' = 'en'): Promise<HTMLElement> {
   document.body.append(container);
   const root = createRoot(container);
   await act(async () => {
-    root.render(<ChartDataView load={{ kind: 'ready', data }} displayName="Test" showHouses />);
+    root.render(
+      <ChartDataView load={{ kind: 'ready', data }} displayName="Test" showHouses buildViewHref={() => '#'} />,
+    );
     await Promise.resolve();
   });
   mounted = { container, root };
@@ -144,16 +146,20 @@ describe('wheel selection interpretation (#415)', () => {
     expect(texts(container)).toHaveLength(SELECTION_TEXT_LIMIT);
 
     const toggle = (): HTMLButtonElement => {
-      const button = [...(section(container)?.querySelectorAll('button') ?? [])][0];
-      if (button === undefined) throw new Error('no show-all control');
+      const button = section(container)?.querySelector('button.primitive-disclosure-trigger');
+      if (!(button instanceof HTMLButtonElement)) throw new Error('no show-all control');
       return button;
     };
-    expect(toggle().textContent).toBe(chartViewMessages.en.selectionShowAll(total));
+    const en = chartViewMessages.en;
+    expect(toggle().textContent).toContain(en.selectionShowAll);
+    expect(toggle().textContent).toContain(en.selectionMoreSummary(total - SELECTION_TEXT_LIMIT));
+    expect(toggle().getAttribute('aria-expanded')).toBe('false');
     act(() => {
       toggle().click();
     });
     expect(texts(container)).toHaveLength(total);
-    expect(toggle().textContent).toBe(chartViewMessages.en.selectionShowFewer);
+    expect(toggle().textContent).toContain(en.selectionHideAll);
+    expect(toggle().getAttribute('aria-expanded')).toBe('true');
     act(() => {
       toggle().click();
     });
@@ -209,7 +215,7 @@ describe('wheel selection interpretation (#415)', () => {
     const container = await mount();
     await click(container, '.chart-point[data-body="sun"]');
     expect(section(container)?.textContent).toContain(chartViewMessages.en.selectionUnavailable);
-    expect(container.querySelector('.chart-isolation-panel strong')?.textContent).toBe('Sun');
+    expect(container.querySelector('.selection-inspector-facts strong')?.textContent).toBe('Sun');
     expect(texts(container)).toEqual([]);
   });
 

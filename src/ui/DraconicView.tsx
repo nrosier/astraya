@@ -18,8 +18,9 @@ import { computeDraconic, type DraconicData } from '../domain/draconic.js';
 import { housesAreDefined } from '../domain/chart-compute.js';
 import { momentKey } from '../time/encode.js';
 import { ChartDataView } from './ChartView.js';
-import { ChartTypeSelector, changeChartSection } from './ChartTypeSelector.js';
-import type { ChartSection } from './chart-sections.js';
+import { ChartTypeSelector, changeChartView } from './ChartTypeSelector.js';
+import { type ChartViewKind } from './chart-sections.js';
+import { chartHref, personHref } from './route.js';
 import { ReportView } from './ReportView.js';
 import { draconicViewMessages } from './DraconicView.messages.js';
 import { useMessages } from './messages.js';
@@ -34,10 +35,10 @@ type Load =
 
 export function DraconicView({
   personId,
-  section,
+  view,
 }: {
   personId: string;
-  section?: ChartSection | undefined;
+  view?: ChartViewKind | undefined;
 }): React.JSX.Element {
   const state = useStoreState();
   const person = state.people.get(personId);
@@ -78,12 +79,12 @@ export function DraconicView({
     return (
       <main className="shell">
         <p className="back">
-          <a href={`#/person/${personId}`}>&larr; {person.displayName || t.personFallback}</a>
+          <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
         </p>
         <h1>{t.draconicChartFallback}</h1>
         <p>
           {t.needsCompleteRecord(person.displayName || t.thisPerson)}{' '}
-          <a href={`#/person/${personId}`}>{t.personPageLink}</a>.
+          <a href={personHref(personId)}>{t.personPageLink}</a>.
         </p>
       </main>
     );
@@ -92,12 +93,12 @@ export function DraconicView({
   const displayName = person.displayName ? `${person.displayName} — ${t.headingFallback}` : t.headingFallback;
 
   return (
-    <main className="shell">
+    <main className="shell shell--wide">
       <p className="back">
-        <a href={`#/person/${personId}`}>&larr; {person.displayName || t.personFallback}</a>
+        <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
       </p>
       <h1>{person.displayName ? t.heading(person.displayName) : t.headingFallback}</h1>
-      <ChartTypeSelector personId={personId} type="draconic" section={section} />
+      <ChartTypeSelector personId={personId} type="draconic" view={view} />
       <p className="hint">{t.hint}</p>
 
       <ChartDataView
@@ -105,10 +106,11 @@ export function DraconicView({
         displayName={displayName}
         showHouses
         metaLines={metaLines}
-        section={section ?? 'chart'}
-        onSectionChange={(next) => {
-          changeChartSection(personId, 'draconic', next);
+        view={view ?? 'wheel'}
+        onViewChange={(next) => {
+          changeChartView(personId, 'draconic', next);
         }}
+        buildViewHref={(next) => chartHref(personId, next, 'draconic')}
       />
 
       {load.kind === 'ready' && !housesAreDefined(load.data.houses) && (

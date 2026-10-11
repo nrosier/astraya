@@ -7,40 +7,28 @@
 /**
  * @module RulershipSetting
  * @purpose Device-preference control for choosing modern/traditional/both planetary rulers, shared across every screen that shows a ruler, dignity, or dispositor.
- * @conventions Writes the shared device preference via rulership-setting.ts; uses RulershipSetting.messages.ts for en/nl text via useMessages().
+ * @conventions Writes the shared device preference via rulership-setting.ts; uses RulershipSetting.messages.ts for en/nl text via useMessages(). Built on the shared `Select` primitive (#506/#508) so label/control/help anatomy matches every other field in the app, rather than a bespoke inline layout.
  * @exports RulershipSetting
  */
-import { useId } from 'react';
 import { RULERSHIP_CHOICES, isRulershipChoice } from '../astrology/rulership.js';
 import { useMessages } from './messages.js';
+import { Select } from './primitives/Select.js';
 import { useRulershipChoice } from './rulership-setting.js';
 import { rulershipSettingMessages } from './RulershipSetting.messages.js';
 
 export function RulershipSetting(): React.JSX.Element {
   const t = useMessages(rulershipSettingMessages);
   const [choice, setChoice] = useRulershipChoice();
-  const id = useId();
+
   return (
-    <p className="rulership-setting">
-      <label htmlFor={`${id}-select`}>{t.label} </label>
-      <select
-        id={`${id}-select`}
-        value={choice}
-        aria-describedby={`${id}-hint`}
-        onChange={(event) => {
-          if (isRulershipChoice(event.target.value)) setChoice(event.target.value);
-        }}
-      >
-        {RULERSHIP_CHOICES.map((option) => (
-          <option key={option} value={option}>
-            {t.options[option]}
-          </option>
-        ))}
-      </select>
-      <span id={`${id}-hint`} className="hint rulership-setting-hint">
-        {' '}
-        {t.hint}
-      </span>
-    </p>
+    <Select
+      label={t.label}
+      value={choice}
+      help={t.hint}
+      options={RULERSHIP_CHOICES.map((option) => ({ value: option, label: t.options[option] }))}
+      onChange={(value) => {
+        if (isRulershipChoice(value)) setChoice(value);
+      }}
+    />
   );
 }

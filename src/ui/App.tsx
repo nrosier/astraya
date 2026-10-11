@@ -1,6 +1,6 @@
 /**
  * @module App
- * @purpose Top-level application shell: hash-based routing between every screen, the sticky header (account/sync/language/theme controls), and the lazy-loading boundary for non-landing screens.
+ * @purpose Top-level application shell: hash-based routing between every screen, the header (account/sync/language/theme controls) laid out by WorkspaceShell as a collapsible rail, and the lazy-loading boundary for non-landing screens.
  * @conventions Hash routing via `parseRoute()`/`route.js` rather than a router library; every screen not needed by the landing route (the ten person-scoped screens, AdminPanel/export-builder/corpus admin screens, and About/Changelog/SetPasswordForm/SetupForm) is behind `lazy(() => import(...))` per the bundle-size budget (#338, #494); `Stored` gates routes needing the local IndexedDB store.
  * @exports App, HomeRedirect
  */
@@ -24,6 +24,7 @@ import { StoreProvider } from './store-context.js';
 import { SyncBadge } from './SyncBadge.js';
 import { SymbolToggle } from './SymbolToggle.js';
 import { ThemeToggle } from './ThemeToggle.js';
+import { WorkspaceShell } from './WorkspaceShell.js';
 import { APP_VERSION } from '../version.js';
 import type { Route } from './route.js';
 
@@ -45,6 +46,7 @@ const ChartView = lazy(async () => ({ default: (await personScreens()).ChartView
 const CompositeView = lazy(async () => ({ default: (await personScreens()).CompositeView }));
 const DraconicView = lazy(async () => ({ default: (await personScreens()).DraconicView }));
 const HarmonicView = lazy(async () => ({ default: (await personScreens()).HarmonicView }));
+const Overview = lazy(async () => ({ default: (await personScreens()).Overview }));
 const PeriodicTransitView = lazy(async () => ({ default: (await personScreens()).PeriodicTransitView }));
 const PersonForm = lazy(async () => ({ default: (await personScreens()).PersonForm }));
 const ProfectionsView = lazy(async () => ({ default: (await personScreens()).ProfectionsView }));
@@ -61,6 +63,7 @@ const HoraryView = lazy(async () => ({ default: (await import('./HoraryView.js')
 const EclipsesView = lazy(async () => ({ default: (await import('./EclipsesView.js')).EclipsesView }));
 const CyclesView = lazy(async () => ({ default: (await import('./CyclesView.js')).CyclesView }));
 const PdfExportBuilder = lazy(async () => ({ default: (await import('./PdfExportBuilder.js')).PdfExportBuilder }));
+const PreferencesView = lazy(async () => ({ default: (await import('./PreferencesView.js')).PreferencesView }));
 const AdminPanel = lazy(async () => ({ default: (await import('./AdminPanel.js')).AdminPanel }));
 const AdminUsagePanel = lazy(async () => ({ default: (await import('./AdminPanel.js')).AdminUsagePanel }));
 const CorpusOverridesPanel = lazy(async () => ({
@@ -199,6 +202,9 @@ function AppShell(): React.JSX.Element {
       isFirstRoute.current = false;
       return;
     }
+    // A link to one section of Preferences lands on that section's heading, which the screen focuses itself.
+    const target = parseRoute(route);
+    if (target.kind === 'preferences' && target.section !== undefined) return;
     function focusHeading(): boolean {
       const heading = document.querySelector<HTMLElement>('main.shell h1');
       if (heading === null) return false;
@@ -245,8 +251,10 @@ function AppShell(): React.JSX.Element {
   }, [provider]);
 
   useEffect(() => {
-    // The header is one row on a wide screen and wraps to two when the navigation does not fit, so
-    // anchors and focus have to scroll clear of its real height, not a fixed one (#421).
+    // Below 64rem the header is still a horizontal bar (one row, wrapping to two when the
+    // navigation does not fit), so anchors and focus have to scroll clear of its real height, not
+    // a fixed one (#421). At >=64rem it is a left rail instead; app.css's own `min-width: 64rem`
+    // override replaces this measured value with a small constant there; see `html` there.
     const header = headerRef.current;
     if (header === null || typeof ResizeObserver === 'undefined') return undefined;
     const apply = (): void => {
@@ -290,46 +298,63 @@ function AppShell(): React.JSX.Element {
     <SessionProvider>
       <StoreFrame>
         <ExportRegistryProvider>
-          {/* The header is first in the DOM, so a keyboard user meets the skip link, then the
-          controls, before any page content — the order sighted users see them in. Its skip
-          link is the first focusable thing on every page (#421). `AccountPanel` sits right next
-          to `SyncBadge` (#230): sign-in/out is the thing that changes the sync badge's state.
-          The ephemeris status line joins the left side (#234) — once ready it is an
-          implementation detail again, but a silent failure here is precisely the bug class this
-          project is built to avoid, so it stays visible on every route. Language and theme are
-          side by side: both are "change how the page looks", picked together more often than
-          either alone. */}
-          <header ref={headerRef} className={'personId' in parsed ? 'app-header app-header-with-person' : 'app-header'}>
-            <a className="skip-link" href="#main-content" onClick={skipToContent}>
-              {t.skipToContent}
-            </a>
-            <div className="app-header-start">
-              <a className="app-header-brand" href="#/people" aria-label={t.homeLinkLabel}>
-                Astraya
-              </a>
-              {engineStatus !== 'ready' && <p className="status app-header-status">{engineStatus}</p>}
+          {/* `WorkspaceShell` places the header beside the screen as a collapsible left rail at
+          >=64rem (#506/#509, docs/UI-UX_GUIDELINES.md's "Target application shell"); below that
+          it stays `AppNav.tsx`'s existing horizontal bar with its own folding panel, unchanged.
+          The header is still first in the DOM, so a keyboard user meets the skip link, then the
+          controls, before any page content. Its skip link is the first focusable thing on every
+          page (#421). `AccountPanel` sits right next to `SyncBadge` (#230): sign-in/out is the
+          thing that changes the sync badge's state. The ephemeris status line joins the brand
+          (#234) — once ready it is an implementation detail again, but a silent failure here is
+          precisely the bug class this project is built to avoid, so it stays visible on every
+          route. Language and theme are side by side: both are "change how the page looks",
+          picked together more often than either alone. */}
+          <WorkspaceShell
+            header={
+              <header
+                ref={headerRef}
+                className={'personId' in parsed ? 'app-header app-header-with-person' : 'app-header'}
+              >
+                <a className="skip-link" href="#main-content" onClick={skipToContent}>
+                  {t.skipToContent}
+                </a>
+                <div className="app-header-start">
+                  <a className="app-header-brand" href="#/people" aria-label={t.homeLinkLabel}>
+                    Astraya
+                  </a>
+                  {engineStatus !== 'ready' && <p className="status app-header-status">{engineStatus}</p>}
+                </div>
+                <AppNav route={parsed} />
+                <div className="app-header-end">
+                  <SyncBadge />
+                  <AccountPanel />
+                  <a
+                    className={parsed.kind === 'preferences' ? 'corner-pill active' : 'corner-pill'}
+                    href="#/preferences"
+                    aria-current={parsed.kind === 'preferences' ? 'page' : undefined}
+                  >
+                    {t.preferencesLinkLabel}
+                  </a>
+                  <LanguageToggle />
+                  <SymbolToggle />
+                  <ThemeToggle />
+                </div>
+              </header>
+            }
+          >
+            {/* One boundary around the whole screen slot rather than one per lazy route (#338):
+            every lazy screen wants the same fallback, and keeping the boundary outside
+            `Stored` means a chunk still in flight does not also restart the store. */}
+            <div id="main-content" className="main-content" tabIndex={-1}>
+              <Suspense fallback={<LoadingScreen />}>{screen}</Suspense>
             </div>
-            <AppNav route={parsed} />
-            <div className="app-header-end">
-              <SyncBadge />
-              <AccountPanel />
-              <LanguageToggle />
-              <SymbolToggle />
-              <ThemeToggle />
-            </div>
-          </header>
-          {/* One boundary around the whole screen slot rather than one per lazy route (#338):
-          every lazy screen wants the same fallback, and keeping the boundary outside
-          `Stored` means a chunk still in flight does not also restart the store. */}
-          <div id="main-content" className="main-content" tabIndex={-1}>
-            <Suspense fallback={<LoadingScreen />}>{screen}</Suspense>
-          </div>
-          <footer>
-            {/* The version itself is the changelog link: clicking a version to see what changed
-            in it is the behaviour people expect. Promoted here from the old landing page
-            (#234) so both routes stay reachable now that the landing page is gone. */}
-            <a href="#/changelog">{t.changelogLink(APP_VERSION)}</a> &middot; <a href="#/about">{t.aboutLink}</a>
-          </footer>
+            <footer>
+              {/* The version itself is the changelog link: clicking a version to see what changed
+              in it is the behaviour people expect. Promoted here from the old landing page
+              (#234) so both routes stay reachable now that the landing page is gone. */}
+              <a href="#/changelog">{t.changelogLink(APP_VERSION)}</a> &middot; <a href="#/about">{t.aboutLink}</a>
+            </footer>
+          </WorkspaceShell>
           <PwaStatus />
         </ExportRegistryProvider>
       </StoreFrame>
@@ -355,7 +380,7 @@ function renderScreen(parsed: Route, seVersion: string | undefined): React.JSX.E
   if (parsed.kind === 'changelog') return <Changelog />;
   if (parsed.kind === 'shared') return <SharedChartView />;
   if (parsed.kind === 'cycles') return <CyclesView />;
-  if (parsed.kind === 'horary') return <HoraryView />;
+  if (parsed.kind === 'horary') return <HoraryView view={parsed.view} />;
   if (parsed.kind === 'electional') return <ElectionalView />;
   if (parsed.kind === 'rectification') {
     return (
@@ -408,8 +433,16 @@ function renderScreen(parsed: Route, seVersion: string | undefined): React.JSX.E
       </Stored>
     );
   }
+  if (parsed.kind === 'preferences') {
+    return (
+      <Stored>
+        <PreferencesView section={parsed.section} />
+      </Stored>
+    );
+  }
   if (
     parsed.kind === 'person' ||
+    parsed.kind === 'person-overview' ||
     parsed.kind === 'chart' ||
     parsed.kind === 'report' ||
     parsed.kind === 'profections' ||
@@ -434,6 +467,7 @@ type PersonRoute = Extract<
   {
     kind:
       | 'person'
+      | 'person-overview'
       | 'chart'
       | 'report'
       | 'profections'
@@ -450,24 +484,25 @@ type PersonRoute = Extract<
 
 /** The Charts page: the view for the chart type the route names (natal when it names none). */
 function renderChart(parsed: Extract<Route, { kind: 'chart' }>): React.JSX.Element {
-  const { personId, section } = parsed;
+  const { personId, view } = parsed;
   switch (parsed.chartType ?? 'natal') {
     case 'draconic':
-      return <DraconicView key={personId} personId={personId} section={section} />;
+      return <DraconicView key={personId} personId={personId} view={view} />;
     case 'harmonic':
-      return <HarmonicView key={personId} personId={personId} section={section} />;
+      return <HarmonicView key={personId} personId={personId} view={view} />;
     case 'solar-return':
-      return <ReturnView key={personId} personId={personId} kind="solar-return" section={section} />;
+      return <ReturnView key={personId} personId={personId} kind="solar-return" view={view} />;
     case 'lunar-return':
-      return <ReturnView key={personId} personId={personId} kind="lunar-return" section={section} />;
+      return <ReturnView key={personId} personId={personId} kind="lunar-return" view={view} />;
     case 'natal':
-      return <ChartView key={personId} personId={personId} section={section} />;
+      return <ChartView key={personId} personId={personId} view={view} />;
   }
 }
 
 /** Which chart-type view to show for a person-scoped route, keyed on the id so navigating from one person to another remounts the view rather than showing the previous person's data under a new name. */
 function renderPersonView(parsed: PersonRoute): React.JSX.Element {
   if (parsed.kind === 'person') return <PersonForm key={parsed.personId} personId={parsed.personId} />;
+  if (parsed.kind === 'person-overview') return <Overview key={parsed.personId} personId={parsed.personId} />;
   if (parsed.kind === 'chart') return renderChart(parsed);
   if (parsed.kind === 'report') return <ReportScreen key={parsed.personId} personId={parsed.personId} />;
   if (parsed.kind === 'profections') return <ProfectionsView key={parsed.personId} personId={parsed.personId} />;
@@ -478,7 +513,9 @@ function renderPersonView(parsed: PersonRoute): React.JSX.Element {
   }
   if (parsed.kind === 'transit') return <TransitView key={parsed.personId} personId={parsed.personId} />;
   if (parsed.kind === 'synastry') return <SynastryView key={parsed.personId} personId={parsed.personId} />;
-  if (parsed.kind === 'composite') return <CompositeView key={parsed.personId} personId={parsed.personId} />;
+  if (parsed.kind === 'composite') {
+    return <CompositeView key={parsed.personId} personId={parsed.personId} view={parsed.view} />;
+  }
   if (parsed.kind === 'periodic-transit') {
     return <PeriodicTransitView key={parsed.personId} personId={parsed.personId} />;
   }

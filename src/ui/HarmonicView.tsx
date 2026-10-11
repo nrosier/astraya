@@ -13,6 +13,8 @@
  * @conventions A single synthetic chart derived from one natal chart (not a comparison), so it reuses `ChartDataView` wholesale like CompositeView/DraconicView; the in-screen picker is a named Varga preset (`VARGA_PRESETS`) or any positive integer. Text comes from co-located `HarmonicView.messages.ts` via `useMessages()`.
  * @exports HarmonicView
  */
+import { NumberField } from './primitives/NumberField.js';
+import { Select } from './primitives/Select.js';
 import { useEffect, useMemo, useState } from 'react';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { VARGA_PRESETS } from '../astrology/harmonics.js';
@@ -20,8 +22,9 @@ import { computeHarmonic, type HarmonicData } from '../domain/harmonic.js';
 import { housesAreDefined } from '../domain/chart-compute.js';
 import { momentKey } from '../time/encode.js';
 import { ChartDataView } from './ChartView.js';
-import { ChartTypeSelector, changeChartSection } from './ChartTypeSelector.js';
-import type { ChartSection } from './chart-sections.js';
+import { ChartTypeSelector, changeChartView } from './ChartTypeSelector.js';
+import { type ChartViewKind } from './chart-sections.js';
+import { chartHref, personHref } from './route.js';
 import { ReportView } from './ReportView.js';
 import { harmonicViewMessages } from './HarmonicView.messages.js';
 import { useMessages } from './messages.js';
@@ -39,10 +42,10 @@ const CUSTOM = 'custom';
 
 export function HarmonicView({
   personId,
-  section,
+  view,
 }: {
   personId: string;
-  section?: ChartSection | undefined;
+  view?: ChartViewKind | undefined;
 }): React.JSX.Element {
   const state = useStoreState();
   const person = state.people.get(personId);
@@ -55,7 +58,7 @@ export function HarmonicView({
   const nValid = Number.isInteger(n) && n >= 1;
 
   const label = preset !== undefined ? preset.label : t.harmonicLabel(String(n));
-  // Memoised: a new array each render (a change of section re-renders this screen) would redraw the wheel and drop a selection.
+  // Memoised: a new array each render (a change of view re-renders this screen) would redraw the wheel and drop a selection.
   const metaLines = useMemo(() => [label], [label]);
 
   const { provider } = useEphemerisProvider();
@@ -93,12 +96,12 @@ export function HarmonicView({
     return (
       <main className="shell">
         <p className="back">
-          <a href={`#/person/${personId}`}>&larr; {person.displayName || t.personFallback}</a>
+          <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
         </p>
         <h1>{t.harmonicChartsFallback}</h1>
         <p>
           {t.needsCompleteRecord(person.displayName || t.thisPerson)}{' '}
-          <a href={`#/person/${personId}`}>{t.personPageLink}</a>.
+          <a href={personHref(personId)}>{t.personPageLink}</a>.
         </p>
       </main>
     );
@@ -107,44 +110,26 @@ export function HarmonicView({
   const displayName = person.displayName ? `${person.displayName} — ${label}` : label;
 
   return (
-    <main className="shell">
+    <main className="shell shell--wide">
       <p className="back">
-        <a href={`#/person/${personId}`}>&larr; {person.displayName || t.personFallback}</a>
+        <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
       </p>
       <h1>{person.displayName ? t.heading(person.displayName) : t.headingFallback}</h1>
-      <ChartTypeSelector personId={personId} type="harmonic" section={section} />
+      <ChartTypeSelector personId={personId} type="harmonic" view={view} />
       <p className="hint">{t.hint}</p>
 
       <div className="field-grid">
-        <label>
-          {t.divisionalChartLabel}
-          <select
-            value={presetKey}
-            onChange={(event) => {
-              setPresetKey(event.target.value);
-            }}
-          >
-            {VARGA_PRESETS.map((candidate) => (
-              <option key={candidate.key} value={candidate.key}>
-                {candidate.label}
-              </option>
-            ))}
-            <option value={CUSTOM}>{t.customHarmonicOption}</option>
-          </select>
-        </label>
+        <Select
+          label={t.divisionalChartLabel}
+          value={presetKey}
+          options={[
+            ...VARGA_PRESETS.map((candidate) => ({ value: candidate.key, label: candidate.label })),
+            { value: CUSTOM, label: t.customHarmonicOption },
+          ]}
+          onChange={setPresetKey}
+        />
         {presetKey === CUSTOM && (
-          <label>
-            {t.harmonicNumberLabel}
-            <input
-              type="number"
-              min={1}
-              step={1}
-              value={customN}
-              onChange={(event) => {
-                setCustomN(event.target.value);
-              }}
-            />
-          </label>
+          <NumberField label={t.harmonicNumberLabel} min={1} value={customN} onChange={setCustomN} />
         )}
       </div>
 
@@ -161,10 +146,11 @@ export function HarmonicView({
           displayName={displayName}
           showHouses
           metaLines={metaLines}
-          section={section ?? 'chart'}
-          onSectionChange={(next) => {
-            changeChartSection(personId, 'harmonic', next);
+          view={view ?? 'wheel'}
+          onViewChange={(next) => {
+            changeChartView(personId, 'harmonic', next);
           }}
+          buildViewHref={(next) => chartHref(personId, next, 'harmonic')}
         />
       )}
 

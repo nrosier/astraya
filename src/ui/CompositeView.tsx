@@ -17,10 +17,12 @@
  * @conventions Uses the near-arc midpoint convention for both positions and house cusps (`domain/composite.js`), not the time/space-midpoint "Davison" method; reuses `ChartDataView`/`ReportView` wholesale since the composite is a single synthetic `ChartData`. Text comes from co-located `CompositeView.messages.ts` via `useMessages()`.
  * @exports CompositeView
  */
+import { personHref, routeHref } from './route.js';
 import { useEffect, useMemo, useState } from 'react';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { computeComposite, type CompositeData } from '../domain/composite.js';
 import { housesAreDefined } from '../domain/chart-compute.js';
+import type { ChartViewKind } from './chart-sections.js';
 import { ChartDataView } from './ChartView.js';
 import { ReportView } from './ReportView.js';
 import { compositeViewMessages } from './CompositeView.messages.js';
@@ -37,7 +39,18 @@ type Load =
   | { readonly kind: 'ready'; readonly data: ChartData }
   | { readonly kind: 'error'; readonly message: string };
 
-export function CompositeView({ personId }: { personId: string }): React.JSX.Element {
+/** This screen's own view-href shape (#511): `#/composite/<id>`, with no chart-type axis to carry. */
+function compositeHref(personId: string, view: ChartViewKind): string {
+  return routeHref({ kind: 'composite', personId, view });
+}
+
+export function CompositeView({
+  personId,
+  view,
+}: {
+  personId: string;
+  view?: ChartViewKind | undefined;
+}): React.JSX.Element {
   const state = useStoreState();
   const person = state.people.get(personId);
   const t = useMessages(compositeViewMessages);
@@ -89,12 +102,12 @@ export function CompositeView({ personId }: { personId: string }): React.JSX.Ele
     return (
       <main className="shell">
         <p className="back">
-          <a href={`#/person/${personId}`}>&larr; {person.displayName || t.personFallback}</a>
+          <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
         </p>
         <h1>{t.compositeFallback}</h1>
         <p>
           {t.needsCompleteRecord(person.displayName || t.thisPerson)}{' '}
-          <a href={`#/person/${personId}`}>{t.personPageLink}</a>.
+          <a href={personHref(personId)}>{t.personPageLink}</a>.
         </p>
       </main>
     );
@@ -104,9 +117,9 @@ export function CompositeView({ personId }: { personId: string }): React.JSX.Ele
     partner !== undefined ? `${person.displayName || t.personALabel} / ${partner.displayName || t.personBLabel}` : '';
 
   return (
-    <main className="shell">
+    <main className="shell shell--wide">
       <p className="back">
-        <a href={`#/person/${personId}`}>&larr; {person.displayName || t.personFallback}</a>
+        <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
       </p>
       <h1>{person.displayName ? t.heading(person.displayName) : t.compositeFallback}</h1>
       <p className="hint">{t.hint}</p>
@@ -142,6 +155,12 @@ export function CompositeView({ personId }: { personId: string }): React.JSX.Ele
           displayName={displayName || t.compositeFallback}
           showHouses
           metaLines={[displayName]}
+          view={view ?? 'wheel'}
+          onViewChange={(next) => {
+            window.history.replaceState(null, '', compositeHref(personId, next));
+            window.dispatchEvent(new HashChangeEvent('hashchange'));
+          }}
+          buildViewHref={(next) => compositeHref(personId, next)}
         />
       )}
 

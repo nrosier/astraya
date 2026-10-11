@@ -18,6 +18,8 @@
  * @conventions Server enforces the real role check (super-admin vs admin vs user); this component only reads `useSessionUserOrUndefined()` to decide which controls to render. Text comes from co-located `AdminPanel.messages.ts` via `useMessages()`.
  * @exports AdminPanel, AdminUsagePanel
  */
+import { Select } from './primitives/Select.js';
+import { TextField } from './primitives/TextField.js';
 import { useEffect, useState } from 'react';
 import {
   createUser,
@@ -106,33 +108,16 @@ function CreateUserForm({
         </p>
       )}
       <div className="field-grid">
-        <label>
-          {shared.usernameLabel}
-          <input
-            type="text"
-            autoComplete="off"
-            value={username}
-            onChange={(event) => {
-              setUsername(event.target.value);
-            }}
-          />
-        </label>
-        <label>
-          {t.createRoleLabel}
-          <select
-            value={role}
-            onChange={(event) => {
-              const next = ROLE_ORDER.find((candidate) => candidate === event.target.value);
-              if (next !== undefined) setRole(next);
-            }}
-          >
-            {ROLE_ORDER.map((option) => (
-              <option key={option} value={option}>
-                {roleLabel(option, t)}
-              </option>
-            ))}
-          </select>
-        </label>
+        <TextField label={shared.usernameLabel} autoComplete="off" value={username} onChange={setUsername} />
+        <Select
+          label={t.createRoleLabel}
+          value={role}
+          options={ROLE_ORDER.map((option) => ({ value: option, label: roleLabel(option, t) }))}
+          onChange={(value) => {
+            const next = ROLE_ORDER.find((candidate) => candidate === value);
+            if (next !== undefined) setRole(next);
+          }}
+        />
       </div>
       <p className="actions">
         <button type="submit" disabled={busy || username.trim() === ''}>

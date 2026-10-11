@@ -68,10 +68,61 @@
   /* The page's own content column width — shared by `.shell` and `.person-shelf` so they
      never drift out of sync whenever this gets tuned. */
   --shell-max-width: 64rem;
+  /* Chart workbenches (#511): the 68rem two-column state needs more than the general-content shell. */
+  --shell-max-width-wide: 80rem;
   /* The sticky header's height (#421): what the page scrolls under, so anchors and focus
      scroll clear of it (`html`'s `scroll-padding-top` below), and how much the mobile header
      is allowed to grow. */
   --app-header-height: 3.5rem;
+
+  /*
+   * Design-system primitives (#506/#508). Added once, as the foundation every later migration
+   * phase builds shared components on — not yet the only values used throughout app.css (the
+   * audit's own plan is an incremental migration, not a single rewrite); new work should prefer
+   * these over a bare literal, and a feature-specific chart/SVG measurement is exempt by design.
+   */
+  /* 4px spacing grid. */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+
+  /* Major-second type scale. */
+  --text-xs: 0.79rem;
+  --text-sm: 0.889rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.266rem;
+  --text-2xl: 1.424rem;
+  --text-display: clamp(2rem, 1.6rem + 1.5vw, 2.5rem);
+
+  --leading-tight: 1.2;
+  --leading-body: 1.6;
+  /* Reports/prose read best at roughly 65-70 characters (#506 finding 2); tables, charts, and
+     builders keep using --shell-max-width/.shell--data, not this token. */
+  --measure-reading: 68ch;
+
+  /*
+   * Semantic state tokens, independent of astrology meaning (#506 finding 1): today `.warning`,
+   * `button.danger`, and `.field-error`/`[aria-invalid]` all resolve to `--solar`, so a user
+   * cannot tell a warning from a destructive action from an invalid field by colour alone.
+   * Danger moves to the hard-aspect red; warning keeps the solar gold it already had; success
+   * and info borrow the soft-aspect/minor-aspect hues, which are not used for UI state anywhere
+   * today. These are aliases, not new hues — reusing colours already proven to clear WCAG AA
+   * in this palette rather than inventing a fifth hue family.
+   */
+  --color-danger: var(--aspect-hard);
+  --color-warning: var(--solar);
+  --color-success: var(--aspect-minor);
+  --color-info: var(--aspect-soft);
+  --color-focus: var(--accent);
+
+  --shadow-popover: 0 0.5rem 1.5rem rgb(0 0 0 / 20%);
+  --duration-fast: 120ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
 }
 
 @media (prefers-color-scheme: light) {
@@ -110,6 +161,11 @@
  * unset (the `'system'` choice) falls straight through to the OS-driven rules as before.
  */
 :root[data-theme='dark'] {
+  /* #508: pin the browser's own UI (date/time pickers, form controls, scrollbars) to the
+     explicit override too, so it never contradicts a theme the user picked on purpose. Left
+     unset (the 'system' choice, no [data-theme] attribute) falls through to the plain `:root`
+     declaration above, which still says `dark light` and lets the OS decide. */
+  color-scheme: dark;
   --bg: #0b0c18;
   --surface: #15162a;
   --surface-hover: #1d1e36;
@@ -135,6 +191,7 @@
 }
 
 :root[data-theme='light'] {
+  color-scheme: light;
   --bg: #fbfaff;
   --surface: #f3f1fa;
   --surface-hover: #ebe8f6;
@@ -251,9 +308,17 @@
 }
 
 /* Anchors, focus and find-in-page scroll clear of the sticky header (#421), whatever element
-   they land on, without a rule per element. */
+   they land on, without a rule per element. Only applies below 64rem: at and above that width the
+   header is a left rail (`min-width: 64rem` below), which does not sit above the content at all,
+   so nothing needs scrolling clear of it vertically. */
 html {
   scroll-padding-top: calc(var(--app-header-size, var(--app-header-height)) + 0.75rem);
+}
+
+@media (min-width: 64rem) {
+  html {
+    scroll-padding-top: 0.75rem;
+  }
 }
 
 /* Shared pill shape for every corner control (#367) — box only. Cursor/hover stays on
@@ -272,6 +337,23 @@ html {
   background: var(--surface);
   color: var(--fg);
   font-size: 0.875rem;
+}
+
+/* The Preferences link (#506/#510) is the one `.corner-pill` that is a real route link, not a
+   toggle button — needs its own cursor/hover/current-page treatment, same visual language as
+   `.app-nav-item.active` elsewhere. */
+a.corner-pill {
+  cursor: pointer;
+  text-decoration: none;
+}
+
+a.corner-pill:hover {
+  background: var(--surface-hover);
+}
+
+a.corner-pill.active {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .theme-toggle {
@@ -553,6 +635,10 @@ body::before {
   padding: 3.5rem 1.5rem 5rem;
 }
 
+.shell--wide {
+  max-width: var(--shell-max-width-wide);
+}
+
 h1 {
   margin: 0 0 0.35rem;
   font-size: clamp(1.9rem, 1.4rem + 2vw, 2.6rem);
@@ -754,50 +840,6 @@ footer {
   gap: 1rem;
 }
 
-.field-grid label {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  color: var(--muted);
-  font-size: 0.8rem;
-  font-weight: 550;
-  letter-spacing: 0.02em;
-}
-
-.field-grid input,
-.field-grid select {
-  padding: 0.55rem 0.7rem;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  color: var(--fg);
-  font: inherit;
-  font-size: 1rem;
-  font-variant-numeric: tabular-nums;
-}
-
-.field-grid input:hover,
-.field-grid select:hover {
-  background: var(--surface-hover);
-}
-
-/* A disabled field reads as intentionally unavailable, not broken (#420): dimmed, no hover
-   response and the default cursor. The text beside it says why. Disabled controls are exempt
-   from the contrast rule, so dimming does not cost legibility checks. */
-.field-grid input:disabled,
-.field-grid select:disabled {
-  opacity: 0.6;
-  cursor: default;
-  background: var(--surface);
-}
-
-.field-grid input:focus-visible,
-.field-grid select:focus-visible {
-  border-color: var(--accent);
-  outline: 2px solid color-mix(in oklab, var(--accent) 55%, transparent);
-  outline-offset: 0;
-}
-
 .hint,
 .muted {
   color: var(--muted);
@@ -898,10 +940,10 @@ footer {
  */
 .warning {
   padding: 0.75rem 1rem;
-  border: 1px solid color-mix(in oklab, var(--solar) 35%, var(--line));
-  border-left: 3px solid var(--solar);
+  border: 1px solid color-mix(in oklab, var(--color-warning) 35%, var(--line));
+  border-left: 3px solid var(--color-warning);
   border-radius: var(--radius-sm);
-  background: color-mix(in oklab, var(--solar) 9%, transparent);
+  background: color-mix(in oklab, var(--color-warning) 9%, transparent);
 }
 
 /* Informational warnings keep the panel shape and drop the alarm colour. */
@@ -1003,13 +1045,15 @@ button.quiet:hover:not(:disabled) {
 }
 
 button.danger {
-  border-color: color-mix(in oklab, var(--solar) 40%, var(--line));
+  /* #506 finding 1: destructive actions move onto --color-danger, distinct from .warning's
+     --color-warning, so a user can tell "needs a decision" apart from "cannot be undone". */
+  border-color: color-mix(in oklab, var(--color-danger) 40%, var(--line));
   background: transparent;
-  color: var(--solar);
+  color: var(--color-danger);
 }
 
 button.danger:hover:not(:disabled) {
-  background: color-mix(in oklab, var(--solar) 12%, transparent);
+  background: color-mix(in oklab, var(--color-danger) 12%, transparent);
 }
 
 .actions {
@@ -1019,14 +1063,11 @@ button.danger:hover:not(:disabled) {
   gap: 0.75rem;
 }
 
-/* A field the form is refusing to save, marked by state rather than by a class so the
-   styling and the accessible name can never disagree. */
-.field-grid [aria-invalid] {
-  border-color: var(--solar);
-}
-
+/* A field the form is refusing to save is marked by state (`aria-invalid`), not by a class, so the
+   styling and the accessible name can never disagree; the primitives' own rule sets its border
+   (#506 finding 1: invalid input uses --color-danger, same reasoning as button.danger above). */
 .field-error {
-  color: var(--solar);
+  color: var(--color-danger);
   font-size: 0.8rem;
   font-weight: 500;
 }
@@ -1220,6 +1261,8 @@ label.stacked textarea:focus-visible {
 }
 
 .data-table-scroll {
+  /* The positioned ancestor of the headers' `.sr-only` spans: without it they escape this clip and stretch the page sideways on a phone. */
+  position: relative;
   overflow-x: auto;
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -1444,13 +1487,78 @@ label.stacked textarea:focus-visible {
 .app-nav-person {
   max-width: 11rem;
   margin-right: 0.3rem;
-  padding-right: 0.6rem;
+  padding: 0 0.6rem 0 0;
   overflow: hidden;
+  border: none;
   border-right: 1px solid var(--line);
+  background: none;
   color: var(--fg);
+  font: inherit;
   font-weight: 650;
   text-overflow: ellipsis;
   white-space: nowrap;
+  cursor: pointer;
+}
+
+/*
+ * The searchable person switcher (#506/#509), replacing the static person-name span. Shares
+ * `.app-nav-group`'s own relative-positioning anchor and `.app-nav-menu`'s popup shape/shadow
+ * rather than defining a third set of dropdown tokens.
+ */
+.person-switcher-popup {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: max(16rem, 100%);
+  max-height: 60vh;
+  padding: var(--space-3);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-popover);
+}
+
+.person-switcher-filter-label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+
+.person-switcher-list {
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.person-switcher-item {
+  display: block;
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--radius-sm);
+  color: var(--fg);
+  text-decoration: none;
+}
+
+.person-switcher-item:hover {
+  background: var(--surface-hover);
+}
+
+.person-switcher-item.active {
+  background: var(--surface-hover);
+  font-weight: 600;
+}
+
+.person-switcher-all {
+  padding-top: var(--space-1);
+  border-top: 1px solid var(--line);
+  font-size: var(--text-sm);
 }
 
 .app-nav-item,
@@ -1544,7 +1652,9 @@ label.stacked textarea:focus-visible {
   font-weight: 600;
 }
 
-/* The Export menu's section heading and its submenus (a group of items that expands in place). */
+/* A noninteractive group heading inside a dropdown — the Export menu's "This page" section, and
+   the Tools menu's Sky & cycles/Questions & planning/Birth data groups (#506/#509, tools-nav.ts) —
+   plus the Export menu's own submenus (a group of items that expands in place). */
 .app-nav-menu-heading {
   margin: 0.4rem 0.8rem 0.1rem;
   color: var(--muted);
@@ -1552,44 +1662,6 @@ label.stacked textarea:focus-visible {
   font-weight: 650;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-}
-
-.app-nav-submenu-toggle::after {
-  content: ' \25B8';
-  font-size: 0.75em;
-}
-
-.app-nav-submenu-toggle[aria-expanded='true']::after {
-  content: ' \25BE';
-}
-
-.app-nav-submenu-items {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-  padding-left: 0.8rem;
-}
-
-/* What a running export says, since the menu has closed: a small notice at the foot of the screen. */
-.app-export-status {
-  position: fixed;
-  bottom: 1rem;
-  left: 50%;
-  z-index: 40;
-  max-width: calc(100vw - 2rem);
-  margin: 0;
-  padding: 0.5rem 0.9rem;
-  transform: translateX(-50%);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  box-shadow: 0 0.5rem 1.5rem rgb(0 0 0 / 20%);
-  font-size: 0.9rem;
-}
-
-.app-export-status.error {
-  border-color: var(--aspect-hard);
-  color: var(--aspect-hard);
 }
 
 @media (max-width: 63.99rem) {
@@ -1661,6 +1733,188 @@ label.stacked textarea:focus-visible {
 
   .app-nav-menu-item {
     padding: 0.6rem 0.7rem;
+  }
+}
+
+/*
+ * The workspace shell (#506/#509, `WorkspaceShell.tsx`): below 64rem this is a plain stack
+ * (header, then main content, same order and flow as before this component existed). At and
+ * above 64rem the header becomes a collapsible left rail per docs/UI-UX_GUIDELINES.md's "Target
+ * application shell" instead of a bar across the top — the brand/status at its head, the
+ * dropdown nav from `AppNav.tsx` filling the middle unchanged, and the account cluster anchored
+ * at its foot. The toggle collapses the whole rail rather than shrinking it to icon-only buttons
+ * with tooltips: this app has no icon set to shrink to, so hiding the rail outright (rather than
+ * degrading it to a label-less state) is what the guideline's "without losing labels to tooltips
+ * alone" rules out.
+ */
+.workspace-rail-toggle {
+  display: none;
+}
+
+@media (min-width: 64rem) {
+  .workspace-shell {
+    display: flex;
+    align-items: stretch;
+    min-height: 100vh;
+  }
+
+  .workspace-main {
+    display: flex;
+    flex: 1 1 auto;
+    min-width: 0;
+    flex-direction: column;
+  }
+
+  /* No `overflow-y: auto` here, even though the rail can in principle run taller than the
+     viewport (a person with every chart family plus Tools and Export): setting overflow on one
+     axis forces the other to a non-"visible" computed value too (CSS Overflow §3), which would
+     clip every flyout — opening sideways into the main content, not downward (below) — at this
+     box's own right edge instead of letting it render over the page. `min-height` plus `position:
+     sticky` is the trade-off: content taller than the viewport scrolls normally with the page
+     until the box's own bottom edge passes the top of the viewport, rather than gaining an inner
+     scrollbar; in return every flyout stays unclipped. */
+  .app-header,
+  .app-header-with-person {
+    position: sticky;
+    top: 0;
+    left: 0;
+    z-index: 20;
+    display: flex;
+    flex: 0 0 16rem;
+    /* Without this, `.workspace-shell`'s default `align-items: stretch` would stretch the rail to
+       match `.workspace-main`'s height — the whole page's content, not one viewport — since
+       `min-height` alone does not stop a flex item from being stretched taller by its siblings. */
+    align-self: flex-start;
+    flex-direction: column;
+    align-items: stretch;
+    width: 16rem;
+    min-height: 100vh;
+    gap: 1rem;
+    padding: 1rem;
+    border-right: 1px solid var(--line);
+    border-bottom: none;
+  }
+
+  .app-header-start {
+    flex: 0 0 auto;
+  }
+
+  .app-nav-wrap {
+    flex: 1 1 auto;
+    align-items: stretch;
+    justify-content: flex-start;
+  }
+
+  .app-nav {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    justify-content: flex-start;
+  }
+
+  .app-nav-item,
+  .app-nav-group-toggle,
+  .app-nav-person {
+    width: 100%;
+    text-align: left;
+  }
+
+  .app-nav-person {
+    max-width: none;
+    margin: 0 0 0.4rem;
+    padding: 0.4rem 0.6rem 0.6rem 0;
+    border-right: none;
+    border-bottom: 1px solid var(--line);
+  }
+
+  /* Sign-in/account, language and theme are not navigation, so they do not ride along inside the
+     rail at all: a fixed cluster in the content area's top-right corner is where this kind of
+     control sits in the layout the rail is modelled on. `.app-header`'s `backdrop-filter` would
+     otherwise make it the containing block for this `fixed` child (trapping it inside the rail's
+     own 16rem width, same as the mobile `.accountpanel-popover` rule already notes) — removed
+     below for exactly that reason, which also happens to be more correct now that the rail is a
+     true layout sibling of the content rather than a bar overlaying it. */
+  .app-header,
+  .app-header-with-person {
+    background: var(--surface);
+    backdrop-filter: none;
+  }
+
+  @supports not (backdrop-filter: blur(1px)) {
+    .app-header {
+      background: var(--surface);
+    }
+  }
+
+  .app-header-end {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 22;
+    flex: 0 0 auto;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    max-width: calc(100vw - 2rem);
+    margin-top: 0;
+  }
+
+  /* The default rule opens a flyout downward (`top: 100%`), which in a vertical list would cover
+     whatever nav item sits below it — Charts' open dropdown would overlay Tools and Export,
+     intercepting clicks meant for them. Pushing it into flow instead (matching the existing
+     mobile panel's own fix for the identical overlap) does not work here: `use-exclusive-open.ts`
+     closes the previous group on `pointerdown`, and a layout that reflows between `pointerdown`
+     and the following `click` moves the next click's real target out from under the pointer,
+     breaking "close Charts, open Tools" in one click. Opening sideways into the main content
+     instead avoids both: it never sits over a sibling item, and it never displaces one either. */
+  .app-nav-menu,
+  .person-switcher-popup {
+    top: 0;
+    left: 100%;
+    margin-left: 0.5rem;
+    width: max-content;
+    min-width: 12rem;
+    max-width: 16rem;
+  }
+
+  /* Fixed to the viewport, not the rail: a flex/sticky offset only takes effect once its axis
+     actually scrolls, which the rail's width never does, so a toggle that must stay in the same
+     place whether the rail is open or collapsed needs real fixed positioning instead. */
+  .workspace-rail-toggle {
+    position: fixed;
+    top: 1rem;
+    left: 16rem;
+    z-index: 21;
+    display: inline-flex;
+    width: 1.5rem;
+    height: 1.5rem;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transform: translateX(-50%);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--muted);
+    font-size: 0.7rem;
+    cursor: pointer;
+  }
+
+  .workspace-rail-toggle:hover {
+    color: var(--fg);
+    background: var(--surface-hover);
+  }
+
+  .workspace-shell-collapsed .app-header,
+  .workspace-shell-collapsed .app-header-with-person {
+    width: 0;
+    flex: 0 0 0;
+    padding: 1rem 0;
+    overflow: hidden;
+    border-right: none;
+  }
+
+  .workspace-shell-collapsed .workspace-rail-toggle {
+    left: 0;
   }
 }
 
@@ -1832,9 +2086,9 @@ label.stacked textarea:focus-visible {
 .chart-wheel {
   margin: 1.5rem auto 2rem;
   /*
-   * Wider than a bare wheel would need: the sheet stacks an aspect grid, an
-   * element table and a degree strip under the wheel, and those carry text that
-   * stops being legible if the whole sheet is squeezed to wheel width.
+   * Kept at the width the wheel had while the screen still drew the whole sheet
+   * (#511), so extracting the dial leaves its on-screen size and hit targets as
+   * they were; the workbench layout task sizes it afresh.
    */
   max-width: 55rem;
 }
@@ -1845,9 +2099,62 @@ label.stacked textarea:focus-visible {
   height: auto;
 }
 
-/* The focused-info panel click-to-isolate (#400) opens below the wheel — plain accessible
-   text, unlike the wheel itself, since it's reached by a mouse/touch gesture but the content
-   it shows is ordinary prose with nothing wrong with a screen reader encountering it. */
+/*
+ * The chart workbench (#511): the dial and its SelectionInspector in one container. The shell is an
+ * inline-size query container, so the layout answers to the width the workbench actually gets, not
+ * the viewport. 68rem is the sum of the minimum useful dial (46rem), the inspector's minimum (20rem)
+ * and the 2rem gap: below it one column with the inspector directly under the dial, at and above it
+ * two columns. The dial stays first in DOM and focus order, and the inspector never scrolls on its own.
+ */
+.chart-workbench-shell {
+  container: chart-workbench / inline-size;
+}
+
+.chart-workbench {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem 2rem;
+  align-items: start;
+}
+
+@container chart-workbench (min-width: 68rem) {
+  .selection-inspector {
+    min-height: 14rem;
+  }
+
+  .chart-workbench {
+    grid-template-columns: minmax(46rem, 1fr) minmax(20rem, 24rem);
+  }
+}
+
+.chart-workbench-dial .chart-wheel {
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+}
+
+/* The selection's facts and meaning (#400, #415): plain accessible text, unlike the wheel — reached by a
+   mouse/touch gesture or a table row's button, but ordinary prose a screen reader reads directly. Its
+   minimum height (two-column layout only) reserves room for a typical selection so the first one does not
+   shove the page. Stacked under the dial, as on a phone, nothing sits below it that could jump, so it
+   stays as short as its content instead of showing a tall empty box. */
+.selection-inspector {
+  padding: 0.85rem 1.1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-size: 0.9rem;
+}
+
+.selection-inspector-title {
+  margin: 0 0 0.5rem;
+  font-size: var(--text-base, 1rem);
+}
+
+.selection-inspector ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1.1rem;
+}
+
 .chart-isolation-panel {
   max-width: 55rem;
   margin: -1rem auto 1.5rem;
@@ -1858,16 +2165,16 @@ label.stacked textarea:focus-visible {
   font-size: 0.9rem;
 }
 
+.chart-isolation-panel ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1.1rem;
+}
+
 .chart-isolation-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-}
-
-.chart-isolation-panel ul {
-  margin: 0.5rem 0 0;
-  padding-left: 1.1rem;
 }
 
 /* The Jones chart-shape diagram (#401): a small standalone abstract pattern, not drawn into
@@ -2252,6 +2559,7 @@ svg text.chart-symbol-text-unicode {
    pointer cursor and a hover wash on each symbol's hit area, so it's clear what can be clicked. */
 .chart-wheel-interactive [data-body],
 .chart-wheel-interactive [data-sign],
+.chart-wheel-interactive [data-house],
 .chart-wheel-interactive [data-ring-legend],
 .chart-wheel-interactive [data-aspect-body-a] {
   cursor: pointer;
@@ -2259,7 +2567,8 @@ svg text.chart-symbol-text-unicode {
 }
 
 .chart-wheel-interactive .chart-point:hover .chart-hit-area,
-.chart-wheel-interactive .chart-sign:hover .chart-hit-area {
+.chart-wheel-interactive .chart-sign:hover .chart-hit-area,
+.chart-wheel-interactive .chart-house:hover .chart-hit-area {
   fill: color-mix(in oklab, var(--accent) 18%, transparent);
 }
 
@@ -2389,6 +2698,59 @@ svg text.chart-symbol-text-unicode {
   fill: none;
   stroke: var(--line);
   stroke-width: 1;
+}
+
+/* The matrix and the elements grid as views of their own (#511): drawn 1:1 (the cap is the drawing's own width),
+   so a user unit is a pixel and their text matches the page's, instead of being scaled up to the column. */
+.chart-matrix-view svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.chart-aspect-matrix {
+  max-width: 960px;
+}
+
+.chart-emphasis-grid {
+  max-width: 560px;
+}
+
+.chart-matrix-view .chart-sheet .chart-matrix-name,
+.chart-matrix-view .chart-sheet .chart-matrix-position,
+.chart-matrix-view .chart-sheet .chart-matrix-label,
+.chart-matrix-view .chart-sheet .chart-panel-heading,
+.chart-matrix-view .chart-sheet .chart-emphasis-total {
+  font-size: 0.85rem;
+}
+
+/* The orb and its a/s marker share a cell with the aspect symbol, so they stay a step smaller. */
+.chart-matrix-view .chart-sheet .chart-matrix-orb,
+.chart-matrix-view .chart-sheet .chart-matrix-direction {
+  font-size: 0.65rem;
+}
+
+.chart-matrix-pair {
+  cursor: pointer;
+}
+
+.chart-matrix-pair rect {
+  pointer-events: all;
+}
+
+.chart-matrix-pair:hover rect.chart-matrix-cell,
+.chart-matrix-pair[aria-pressed='true'] rect.chart-matrix-cell {
+  fill: color-mix(in oklab, var(--accent) 14%, transparent);
+}
+
+.chart-matrix-pair[aria-pressed='true'] rect.chart-matrix-cell {
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.chart-matrix-pair:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
 }
 
 /* An aspect within 1° of exact: a heavy border, as on the reference sheet (#413). */
@@ -2724,6 +3086,7 @@ svg text.chart-symbol-text-unicode {
   .report-controls,
   .pwastatus,
   .app-header,
+  .workspace-rail-toggle,
   .extended-settings,
   .birth-place-search,
   .hint {
@@ -3052,29 +3415,55 @@ svg text.chart-symbol-text-unicode {
   margin-top: 0.4rem;
 }
 
-/* The Charts page's chart-type selector: natal, draconic, harmonic, solar return, lunar return. */
-.chart-type-nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
+/* The Charts page's chart-type Select: natal, draconic, harmonic, solar return, lunar return. */
+.chart-type-select {
+  max-width: 20rem;
   margin: 1rem 0 0.5rem;
 }
 
-.chart-type-link {
+/*
+ * The chart screen's own Wheel/Aspects/Placements/Patterns & condition navigation (#511):
+ * docs/UI-UX_GUIDELINES.md §2 calls these "route-level views with stable URLs and ordinary
+ * links, not ARIA tabs" — a row of links at and above the app's standing 64rem nav breakpoint,
+ * the shared Select below it. Exactly one of the two is ever visible.
+ */
+.chart-view-select {
+  max-width: 20rem;
+  margin: 1rem 0 0.5rem;
+}
+
+.chart-view-nav {
+  display: none;
+}
+
+@media (min-width: 64rem) {
+  .chart-view-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 1rem 0 0.5rem;
+  }
+
+  .chart-view-select {
+    display: none;
+  }
+}
+
+.chart-view-link {
   padding: 0.35rem 0.8rem;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: var(--radius-sm, 0.4rem);
   color: var(--muted);
   font-weight: 550;
   text-decoration: none;
 }
 
-.chart-type-link:hover:not(.active) {
+.chart-view-link:hover:not(.active) {
   background: var(--surface-hover);
   color: var(--fg);
 }
 
-.chart-type-link.active {
+.chart-view-link.active {
   border-color: var(--accent);
   color: var(--fg);
 }
@@ -3198,8 +3587,7 @@ svg text.chart-symbol-text-unicode {
   display: block;
 }
 
-.settings-card-group [role='radiogroup'] label,
-.settings-card-group .rulership-setting label {
+.settings-card-group [role='radiogroup'] label {
   display: inline;
 }
 
@@ -3235,4 +3623,552 @@ svg text.chart-symbol-text-unicode {
 
 .profections-rulers-description {
   margin-top: 1rem;
+}
+
+/*
+ * Shared primitive styling (#506/#508) — `src/ui/primitives/`'s own CSS, driven by the design
+ * tokens defined in :root above. Equivalent controls across every screen that adopts these
+ * primitives share this one block rather than each feature styling its own.
+ */
+
+.primitive-button-primary {
+  padding: 0.55rem 1.1rem;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: var(--bg);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.primitive-button-primary:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--accent) 85%, var(--bg) 15%);
+}
+
+.primitive-button-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.primitive-button-compact {
+  padding: 0.3rem 0.65rem;
+  font-size: var(--text-sm);
+}
+
+@media (pointer: coarse) {
+  /* Compact controls return to standard touch sizing on touch layouts (#508). */
+  .primitive-button-compact {
+    padding: 0.55rem 1.1rem;
+    font-size: var(--text-base);
+  }
+}
+
+.primitive-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.primitive-field-optional,
+.primitive-field-unit {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.primitive-field-help {
+  margin: 0;
+}
+
+/* The controls' own appearance (#508): a primitive looks the same wherever it sits. `.field-grid` is layout only. */
+.primitive-field > label {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 550;
+  letter-spacing: 0.02em;
+}
+
+.primitive-field input:not([type='checkbox']):not([type='radio']),
+.primitive-field select,
+.primitive-field textarea {
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--fg);
+  font: inherit;
+  font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.primitive-field textarea {
+  resize: vertical;
+}
+
+.primitive-field input:not([type='checkbox']):not([type='radio']):hover,
+.primitive-field select:hover,
+.primitive-field textarea:hover {
+  background: var(--surface-hover);
+}
+
+.primitive-field input:disabled,
+.primitive-field select:disabled,
+.primitive-field textarea:disabled {
+  opacity: 0.6;
+  cursor: default;
+  background: var(--surface);
+}
+
+.primitive-field input:not([type='checkbox']):not([type='radio']):focus-visible,
+.primitive-field select:focus-visible,
+.primitive-field textarea:focus-visible {
+  border-color: var(--accent);
+  outline: 2px solid color-mix(in oklab, var(--accent) 55%, transparent);
+  outline-offset: 0;
+}
+
+.primitive-field [aria-invalid] {
+  border-color: var(--color-danger);
+}
+
+.primitive-control-compact {
+  padding: 0.3rem 0.5rem;
+  font-size: var(--text-sm);
+}
+
+/* `SymbolSetting.tsx`'s reactive explanation of the current symbol-class/weight choice — same
+   box this used to be as a hand-written inline style, moved here once the control itself moved
+   onto the shared `Select` primitive. */
+.symbol-setting-description {
+  margin: 0.75rem 0 1rem;
+  padding: 0.75rem;
+  border-left: 3px solid #007acc;
+  background: #fff;
+  color: #333;
+  font-size: 0.9em;
+  line-height: 1.5;
+}
+
+@media (pointer: coarse) {
+  .primitive-control-compact {
+    padding: 0.55rem 0.75rem;
+    font-size: var(--text-base);
+  }
+}
+
+.primitive-number-field {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.primitive-number-input {
+  /* Browser-dependent spinners are suppressed; the shared stepper below replaces them (#508). */
+  appearance: textfield;
+  /* Fills its column like every other field; the stepper, when there is one, sits beside it. */
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.primitive-number-input::-webkit-outer-spin-button,
+.primitive-number-input::-webkit-inner-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+.primitive-number-stepper {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.primitive-number-step {
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  font-size: var(--text-lg);
+  line-height: 1;
+}
+
+@media (pointer: coarse) {
+  .primitive-number-step {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+}
+
+.primitive-choice {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 2.75rem;
+  cursor: pointer;
+}
+
+.primitive-choice-group {
+  display: flex;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.primitive-option-cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.primitive-option-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-1) var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color var(--duration-fast) var(--ease-standard);
+}
+
+.primitive-option-card input {
+  grid-row: 1 / span 2;
+  align-self: start;
+  margin-top: 0.2rem;
+}
+
+.primitive-option-card-title {
+  font-weight: 600;
+}
+
+.primitive-option-card-consequence {
+  grid-column: 2;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.primitive-option-card-selected {
+  border-color: var(--accent);
+  background: color-mix(in oklab, var(--accent) 8%, transparent);
+}
+
+/*
+ * The shared Tooltip primitive (#456, #508): a real <button> trigger (never a bare
+ * `<span title>`), with a dotted underline as the visual affordance for an inline glossary
+ * term — the pattern `docs/UI-UX_GUIDELINES.md` names explicitly as the alternative to
+ * `<abbr title>`, which shares native title's reliability problem.
+ */
+.primitive-tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+.primitive-tooltip-trigger {
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: none;
+  border-bottom: 1px dotted var(--muted);
+  cursor: help;
+}
+
+.primitive-tooltip-trigger:hover,
+.primitive-tooltip-trigger:focus-visible {
+  border-bottom-color: var(--accent);
+}
+
+/* A column header: the sort button, and beside it the column's own explanation (#456, #508). */
+.data-table-head-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.data-table th .data-table-head-cell > button {
+  width: auto;
+}
+
+.data-table th .data-table-help .primitive-tooltip-trigger {
+  width: 1.1rem;
+  height: 1.1rem;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0;
+  text-transform: none;
+  text-align: center;
+}
+
+.data-table th .data-table-help .primitive-tooltip-popup {
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.primitive-tooltip-popup {
+  position: absolute;
+  z-index: 20;
+  inset-block-start: 100%;
+  inset-inline-start: 0;
+  margin-top: var(--space-2);
+  width: max-content;
+  max-width: min(24rem, 90vw);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  box-shadow: var(--shadow-popover);
+  font-size: var(--text-sm);
+  font-weight: 400;
+  line-height: var(--leading-body);
+  color: var(--fg);
+}
+
+/*
+ * The content header (#506/#509, `PageHeader.tsx`): the page title and, when the screen has
+ * registered any, its own export dropdown — replacing the old global Export menu's "This page"
+ * section. New, page-scoped classes rather than reusing `.app-nav-menu`/`.app-nav-group`: those
+ * carry a `min-width: 64rem` override that opens the popup sideways, written for the header's
+ * narrow rail, which would be surprising on a full-width content page.
+ */
+.page-header {
+  margin-bottom: 1.5rem;
+}
+
+.page-header-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+.page-header-row h1 {
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.page-header-basis {
+  margin: 0.35rem 0 0;
+}
+
+.page-header-export {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.page-header-export-toggle {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--fg);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 550;
+  cursor: pointer;
+}
+
+.page-header-export-toggle::after {
+  content: ' \25BE';
+  font-size: 0.75em;
+  color: var(--muted);
+}
+
+.page-header-export-toggle:hover {
+  background: var(--surface-hover);
+}
+
+.page-header-export.open .page-header-export-toggle {
+  background: var(--surface-hover);
+}
+
+.page-header-export-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 14rem;
+  padding: 0.3rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-popover);
+}
+
+.page-header-export-item {
+  padding: 0.4rem 0.8rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-weight: 500;
+  font-size: 0.9em;
+  text-align: left;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.page-header-export-item:hover:not(:disabled) {
+  color: var(--fg);
+  background: var(--surface-hover);
+}
+
+.page-header-export-item:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.page-header-export-group-heading {
+  margin: 0.4rem 0.8rem 0.1rem;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.page-header-export-status {
+  margin: 0.5rem 0 0;
+}
+
+/* Disclosure (#506/#508): a full-width trigger row of at least 44px — title, what opens, explicit
+   Show/Hide wording, trailing chevron that turns when open — over a panel. */
+.primitive-disclosure {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.primitive-disclosure-trigger {
+  display: flex;
+  width: 100%;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.85rem;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.primitive-disclosure-trigger:hover {
+  background: var(--surface-hover);
+}
+
+.primitive-disclosure-text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.15rem 0.6rem;
+  min-width: 0;
+}
+
+.primitive-disclosure-title {
+  font-weight: 600;
+}
+
+.primitive-disclosure-summary {
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.primitive-disclosure-action {
+  color: var(--accent);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.primitive-disclosure-chevron {
+  width: 0.55rem;
+  height: 0.55rem;
+  flex: none;
+  border-right: 2px solid currentcolor;
+  border-bottom: 2px solid currentcolor;
+  transform: translateY(-0.15rem) rotate(45deg);
+  transition: transform var(--duration-fast, 120ms);
+}
+
+.primitive-disclosure.open > .primitive-disclosure-trigger .primitive-disclosure-chevron {
+  transform: translateY(0.1rem) rotate(-135deg);
+}
+
+.primitive-disclosure-panel {
+  padding: 0 0.85rem 0.85rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .primitive-disclosure-chevron {
+    transition: none;
+  }
+}
+
+/* Motion preference (#510): the reader's own "Reduce motion" (a root attribute) and the operating system's setting
+   both switch off every transition, animation and smooth scroll, app-wide, not only where a rule asked. */
+:root[data-motion='reduced'] *,
+:root[data-motion='reduced'] *::before,
+:root[data-motion='reduced'] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Density preference (#510): compact tightens forms and tables. It never shrinks a touch target: on a coarse pointer
+   the standard sizes come back, the same rule the compact control size follows. */
+:root[data-density='compact'] .primitive-field {
+  gap: var(--space-1);
+  margin-bottom: var(--space-2);
+}
+
+:root[data-density='compact'] .primitive-field input:not([type='checkbox']):not([type='radio']),
+:root[data-density='compact'] .primitive-field select,
+:root[data-density='compact'] .primitive-field textarea {
+  padding: 0.3rem 0.5rem;
+  font-size: var(--text-sm);
+}
+
+:root[data-density='compact'] .data-table th,
+:root[data-density='compact'] .data-table td {
+  padding: 0.3rem 0.6rem;
+}
+
+@media (pointer: coarse) {
+  :root[data-density='compact'] .primitive-field {
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
+  }
+
+  :root[data-density='compact'] .primitive-field input:not([type='checkbox']):not([type='radio']),
+  :root[data-density='compact'] .primitive-field select,
+  :root[data-density='compact'] .primitive-field textarea {
+    padding: 0.55rem 0.7rem;
+    font-size: 1rem;
+  }
+
+  :root[data-density='compact'] .data-table th,
+  :root[data-density='compact'] .data-table td {
+    padding: 0.5rem 0.85rem;
+  }
 }

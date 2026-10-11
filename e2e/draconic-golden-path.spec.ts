@@ -47,7 +47,7 @@ test('a person with a known birth time gets a Draconic screen with a wheel and d
   await expect(page.getByRole('heading', { name: /draconic/i, level: 1 })).toBeVisible();
 
   await expect(page.locator('div.chart-wheel')).toBeVisible();
-  await expect(page.getByRole('tab', { name: 'Positions' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Placements' })).toBeVisible();
   await expect(page.locator('.report-section').first()).toBeVisible();
   await expect(page.locator('.report-paragraph p').first()).not.toBeEmpty();
 });

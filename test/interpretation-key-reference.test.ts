@@ -100,6 +100,16 @@ const REFERENCE: Readonly<Record<CorpusCategory, Row>> = {
     key: 'degree-symbol:1',
     shape: /^degree-symbol:(?:[1-9]|[1-9][0-9]|[12][0-9]{2}|3[0-5][0-9]|360)$/,
   },
+  'derived-point-in-sign': {
+    placement: { category: 'derived-point-in-sign', point: 'part-of-fortune', sign: 2 },
+    key: 'derived-point-in-sign:part-of-fortune:2',
+    shape: /^derived-point-in-sign:[a-z]+(?:-[a-z]+)*:(?:[0-9]|1[01])$/,
+  },
+  'derived-point-in-house': {
+    placement: { category: 'derived-point-in-house', point: 'part-of-fortune', house: 3 },
+    key: 'derived-point-in-house:part-of-fortune:3',
+    shape: /^derived-point-in-house:[a-z]+(?:-[a-z]+)*:(?:[1-9]|1[0-2])$/,
+  },
 };
 
 describe('the corpus key reference (#427)', () => {
@@ -151,5 +161,16 @@ describe('the corpus key reference (#427)', () => {
     expect(Object.keys(ACG_ANGLE_POINT_KEYS).sort()).toEqual([...ACG_ANGLES].sort());
     const points: FocusAngle[] = ACG_ANGLES.map((angle) => ACG_ANGLE_POINT_KEYS[angle]);
     expect([...points].sort()).toEqual(['asc', 'dsc', 'ic', 'mc']);
+  });
+
+  it('derived points are a closed list: an unknown point key is refused, every known one is accepted', () => {
+    expect(validateKey('derived-point-in-sign:part-of-fortune:0')).toEqual([]);
+    expect(validateKey('derived-point-in-house:part-of-spirit:12')).toEqual([]);
+    // The midpoints were dropped from the category: no corpus key may name them.
+    expect(validateKey('derived-point-in-house:sun-moon-midpoint:12')).not.toEqual([]);
+    expect(validateKey('derived-point-in-sign:asc-mc-midpoint:0')).not.toEqual([]);
+    expect(validateKey('derived-point-in-sign:part-of-luck:0')).not.toEqual([]);
+    expect(parsePlacementKey('derived-point-in-house:part-of-luck:3')).toBeUndefined();
+    expect(validateKey('derived-point-in-house:part-of-spirit:0')).not.toEqual([]);
   });
 });
