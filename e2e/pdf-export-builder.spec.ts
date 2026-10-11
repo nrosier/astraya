@@ -114,6 +114,35 @@ test('the AI-customised narrative needs its own consent tick before Build PDF is
   await expect(buildButton).toBeEnabled();
 });
 
+test('the AI consent is spent by the build and never remembered: a new request needs a fresh tick', async ({
+  page,
+}) => {
+  test.setTimeout(120_000);
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  await createPerson(page, ADA);
+  await page.goto(`${baseUrl}/#/export`);
+  await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Ada Lovelace' });
+
+  const consent = page.getByRole('checkbox', {
+    name: 'I consent to generating an AI-customised narrative for this export.',
+  });
+  await page.getByRole('checkbox', { name: 'AI-customised narrative', exact: true }).check();
+  await consent.check();
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.getByRole('button', { name: 'Build PDF', exact: true }).click(),
+  ]);
+  expect(download.suggestedFilename()).toMatch(/\.pdf$/);
+  await expect(consent).not.toBeChecked();
+  await expect(page.getByRole('button', { name: 'Build PDF', exact: true })).toBeDisabled();
+
+  // Nothing is kept across a reload either.
+  await page.reload();
+  await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Ada Lovelace' });
+  await page.getByRole('checkbox', { name: 'AI-customised narrative', exact: true }).check();
+  await expect(consent).not.toBeChecked();
+});
+
 test('synastry and composite each get their own partner picker, and both build into one PDF (#441)', async ({
   page,
 }) => {
