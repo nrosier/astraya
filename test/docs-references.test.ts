@@ -16,6 +16,7 @@ interface Passage {
   readonly locator: string;
   readonly kind: string;
   readonly text: string;
+  readonly translation_of?: string;
 }
 
 interface ReferenceFile {
@@ -24,6 +25,8 @@ interface ReferenceFile {
     Record<string, { readonly title: string; readonly licence: string; readonly text_quality: string }>
   >;
   readonly coverage: Readonly<Record<string, unknown>>;
+  readonly decisions: readonly { readonly topic: string; readonly decision: string }[];
+  readonly convention_note: string;
   readonly passages: readonly Passage[];
 }
 
@@ -51,19 +54,48 @@ describe('docs/references/derived-points.references.json', () => {
     for (const passage of file.passages) {
       expect(Object.keys(file.sources), passage.id).toContain(passage.source);
       expect(passage.locator, passage.id).not.toBe('');
-      expect(['verbatim', 'ocr-normalised'], passage.id).toContain(passage.kind);
+      expect(['verbatim', 'ocr-normalised', 'greek-transcription', 'machine-translation'], passage.id).toContain(
+        passage.kind,
+      );
       expect(passage.text.trim().length, passage.id).toBeGreaterThan(20);
     }
   });
 
   it('only describes points the corpus categories actually have (the midpoints were dropped)', () => {
-    const points: readonly string[] = DERIVED_POINTS.map((point) => point.key);
+    const points: readonly string[] = [...DERIVED_POINTS.map((point) => point.key), 'both'];
     for (const passage of file.passages) expect(points, passage.id).toContain(passage.point);
   });
 
-  it('never presents an OCR-normalised passage without a note saying what was resolved', () => {
-    for (const passage of file.passages.filter((candidate) => candidate.kind === 'ocr-normalised')) {
+  it('never presents anything but a verbatim passage without a note saying what was resolved or assumed', () => {
+    for (const passage of file.passages.filter((candidate) => candidate.kind !== 'verbatim')) {
       expect(passage, passage.id).toHaveProperty('notes');
     }
+  });
+
+  it('ties every machine translation to the Greek passage it translates, and says it is unreviewed', () => {
+    const ids = new Set(file.passages.map((passage) => passage.id));
+    const translations = file.passages.filter((candidate) => candidate.kind === 'machine-translation');
+    expect(translations.length).toBeGreaterThan(0);
+    for (const passage of translations) {
+      expect(passage.translation_of, passage.id).toBeDefined();
+      expect(ids.has(passage.translation_of ?? ''), passage.id).toBe(true);
+      expect(file.passages.find((candidate) => candidate.id === passage.translation_of)?.kind, passage.id).toBe(
+        'greek-transcription',
+      );
+      expect(passage.notes, passage.id).toMatch(/unreviewed/i);
+    }
+  });
+
+  it('records the owner decisions and states the day/night convention with explicit formulas', () => {
+    const topics = file.decisions.map((decision) => decision.topic);
+    expect(topics).toEqual(
+      expect.arrayContaining([
+        'sign entries (24 per language)',
+        'house entries (24 per language)',
+        'day/night convention',
+      ]),
+    );
+    expect(file.convention_note).toContain('Ascendant + Moon - Sun');
+    expect(file.convention_note).toContain('Ascendant + Sun - Moon');
   });
 });

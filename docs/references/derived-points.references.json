@@ -49,22 +49,32 @@
       "url": null,
       "licence": "Public domain text; Google's own scan terms apply to the PDF",
       "text_quality": "text layer reads prose well but loses astrological glyphs (the Part of Fortune, Sun and Moon come out as Q, O, D, ) and so on); passages are ocr-normalised with glyphs resolved by context, to be checked against the page image"
+    },
+    "valens-anthologiae": {
+      "title": "Vettii Valentis Anthologiarum libri",
+      "author": "Vettius Valens (2nd century)",
+      "editor": "Wilhelm Kroll",
+      "year": 1908,
+      "edition_used": "Kroll's Greek critical edition (Berlin, Weidmann), archive.org item bub_gb_OQ_gAAAAMAAJ, page-image PDF (441 pages)",
+      "url": "https://archive.org/details/bub_gb_OQ_gAAAAMAAJ",
+      "licence": "Public domain (ancient Greek text; 1908 edition)",
+      "text_quality": "The archive.org OCR text is unusable (Greek read as Latin letters), so the Greek here was transcribed from the 300 dpi page images, not from it. Kroll's sigla are kept: ⟨ ⟩ editorial addition, [ ] editorial deletion or gloss, † corrupt text, * * or *** lacuna. The English passages are independent machine translations from that Greek, unreviewed; Valens' text is corrupt in places, so treat them as drafts for an astrologer or Hellenist to check. Mark Riley's copyrighted English translation was not used."
     }
   },
-  "convention_note": "Ptolemy, Lilly and Placidus compute the Part of Fortune the same way by day and night (Ascendant + Moon − Sun). Astraya's src/astrology/arabic-parts.ts reverses the Sun and Moon at night (the Hellenistic convention). Any seed text must state which convention it follows.",
+  "convention_note": "Ptolemy, Lilly and Placidus compute the Part of Fortune the same way by day and night: Ascendant + Moon - Sun. Astraya (src/astrology/arabic-parts.ts) adopts the Hellenistic convention of reversing the formula for night births. Part of Fortune: day = Ascendant + Moon - Sun, night = Ascendant + Sun - Moon. Part of Spirit is the mirror: day = Ascendant + Sun - Moon, night = Ascendant + Moon - Sun. Valens (Anthologiae IV.4) ties Fortune to the Moon and the body and the Daimon to the Sun and the mind, which is why the two are mirrored. Any seed text must state the convention it follows.",
   "coverage": {
     "part-of-fortune": {
       "definition_and_formula": "yes",
       "general_signification": "yes (estate/wealth, judged through its rulers and its strength)",
-      "by_sign": "none in any source",
-      "by_house": "none; Lilly gives strength only",
+      "by_sign": "none in any source as a sign; Valens II.4 and Ptolemy IV.2 read the Lot through the star that rules it (Valens: all seven planets, Sun and Moon included), which grounds a synthesised sign entry through the sign's classical ruler; synthesis is the owner's decision",
+      "by_house": "none in any source (Lilly gives strength only; Valens II.17/II.20 read places counted from the Lot); synthesised by owner decision",
       "day_night_convention": "yes (Ptolemy, Lilly and Placidus: no reversal)"
     },
     "part-of-spirit": {
-      "definition_and_formula": "one secondhand definition (Gadbury via Leo)",
-      "general_signification": "none",
-      "by_sign": "none",
-      "by_house": "none"
+      "definition_and_formula": "Gadbury via Leo (reversed Fortune); Valens IV.4 ties it to the Sun and mind (draft translation)",
+      "general_signification": "yes, from Valens II.19 and IV.4: soul, mind, and actions through words, gifts and receipts (draft translation)",
+      "by_sign": "none in any source; synthesised by owner decision",
+      "by_house": "none in any source; synthesised by owner decision"
     },
     "midpoints": "dropped from the category (owner decision, #511): no source and no corpus entries"
   },
@@ -339,6 +349,180 @@
       "kind": "ocr-normalised",
       "text": "I willingly confess, that, with regard to the ⊕, I have laboured a long time, and have not been able hitherto to find any truth in it.",
       "notes": "Placidus's own words, which Wilson also quotes. Cooper's Canon (pp. 308-318) is about placing and directing the point, not about its meaning."
+    },
+    {
+      "id": "valens-ii17-greek",
+      "point": "part-of-fortune",
+      "topic": "lot_as_horoscope",
+      "source": "valens-anthologiae",
+      "locator": "Anthologiae II.17 \"Περὶ ὡροσκόπου τοῦ τῆς τύχης κλήρου\", Kroll p. 79 l. 8 - p. 80 l. 7 (PDF pages 98-99)",
+      "kind": "greek-transcription",
+      "text": "Περὶ δὲ τριγωνικῆς τάξεως ἐκθέμενος μεταβήσομαι πάλιν εἰς τὸν περὶ εὐδαιμονίας καὶ τύχης κλῆρον καὶ δαίμονος. πρὸ πάντων οὖν δεῖ ἀκριβῶς στῆσαι τὸν κλῆρον τῆς τύχης καὶ σκοπεῖν, εἰς ποῖον μέρος τοῦ κόσμου ἐξέπεσε, πότερον ἐπὶ τῶν κέντρων ἢ τῶν ἐπαναφορῶν ἢ τῶν ἀποκλίσεων· ὁμοίως δὲ καὶ τὸν τούτου κύριον ζήτει. ἐὰν γὰρ ὡροσκοπῇ ἡμερινὸς ἢ καὶ ἐπί τινος ἑτέρου χρηματιστικοῦ ζῳδίου τύχη, ὑπὸ Ἡλίου καὶ Σελήνης καὶ τῶν ἀγαθοποιῶν μαρτυρούμενος, λαμπρὸν ἐπίσημον εὐτυχῆ τὸν γεννώμενον ποιήσει· ἐπὶ δὲ τῶν λοιπῶν κέντρων ἢ τῶν ἐπαναφορῶν μετριώτερος· ἐπὶ δὲ τῶν ἀποκλιμάτων ἐκπτώσεως † ὁ τρόπος ἐννοείσθω· οὗτοι γάρ εἰσιν ἑτερογνώμονες τόποι αἰτίας ἐπάγοντες καὶ καθαιρέσεις. ἄλλως τε ἐπιγνοὺς τὸν κεκληρωμένον τόπον τῆς τύχης σκόπει καὶ τὰ τούτου τετράγωνα καὶ τὰ λοιπά, ὅσα ποτὲ ἐπὶ τῶν γενεθλιακῶν κέντρων. ἐφέξει γὰρ αὐτὸς ὁ κλῆρος δύναμιν ὡροσκόπου καὶ ζωῆς, τὸ δὲ τούτου δέκατον μεσουρανήματος καὶ δόξης, τὸ δὲ ζʹ δυτικοῦ, τὸ δὲ δʹ ὑπογείου· καὶ οἱ λοιποὶ δὲ τόποι τὴν δύναμιν τῶν ιβʹ τοποθεσιῶν ἐφέξουσιν. ὑφίστανταί γάρ τινες μυστικῶς τὸν μὲν καθολικὸν ὡροσκόπον καὶ τὰ τούτου τετράγωνα κοσμικὰ κέντρα, τὸν δὲ κλῆρον καὶ τὰ τούτου τετράγωνα γενεθλιαλογικὰ κέντρα. ὅθεν καὶ ἐν τοῖς συντάγμασι προδηλοῦσι λέγοντες· ἐν δὲ ἑτεροτρόποις σχήμασι τῶν κέντρων ἢ κλήρου τὴν δυναστείαν λαχόντες *** καὶ οὔτε μὴν διὰ παντὸς τὰ τροπικὰ οὔτε τὰ στερεὰ οὔτε τὰ δίσωμα τὴν αὐτὴν δύναμιν ἐφέξει· δεῖ οὖν καὶ τὰς μαρτυρίας τῶν ἀστέρων ἢ συμπαρουσίας θεωρεῖν τὰς πρὸς τὸν κλῆρον, ἵν’ εἰ μὲν ἀγαθοποιὸς ἐπὶ τούτῳ ἐπείῃ ἢ καὶ τῷδε μαρτυρήσῃ, προδηλωτικὸς ἀγαθῶν καὶ δοτὴρ ὑπαρχόντων γένηται· εἰ δὲ φθοροποιός, ἀποβολῆς ὑπαρχόντων καὶ φθίσεως σώματος αἴτιος γενήσεται.",
+      "notes": "Transcribed from the page image; apparatus (variant readings in the footnotes) omitted. The chapter number is ιζʹ in the heading and 17 in Kroll's index; the page header reads cap. XVII. Contains a † corrupt passage and a *** lacuna."
+    },
+    {
+      "id": "valens-ii17-en",
+      "point": "part-of-fortune",
+      "topic": "lot_as_horoscope",
+      "source": "valens-anthologiae",
+      "locator": "Anthologiae II.17, Kroll p. 79-80",
+      "kind": "machine-translation",
+      "text": "Having set out the arrangement by triplicity, I shall turn back to the Lot of good fortune and happiness, of Fortune and of the Daimon. Before everything, then, one must fix the Lot of Fortune exactly and see into which part of the cosmos it has fallen: whether onto the angles, the succedents, or the cadents; and look likewise for its lord. For if the nativity is by day, and Fortune is on the horoscope or in some other money-making sign, and is witnessed by the Sun, the Moon and the benefics, it will make the native brilliant, distinguished and fortunate; on the other angles or the succedents, more moderate; and on the cadents [the manner of] a fall is to be understood (text corrupt): for these are places of a different mind, bringing blame and demotions. Moreover, having recognised the place allotted to Fortune, look at its squares and the rest, as one does for the nativity's angles. For the Lot itself will have the power of the horoscope and of life; the tenth from it the power of the midheaven and of reputation; the seventh that of the setting; the fourth that of the subterranean angle; and the remaining places will have the power of the twelve positions. For some hold, in a mystical way, that the universal horoscope and its squares are the cosmic angles, while the Lot and its squares are the angles of the nativity. [Lacuna.] Nor do the tropical, the solid and the double-bodied signs always have the same power; so one must also observe the stars' witnessing or co-presence with respect to the Lot: if a benefic is on it or witnesses it, it will foretell good things and give possessions; if a destroyer [a malefic], it will cause loss of possessions and wasting of the body.",
+      "notes": "Unreviewed machine translation of valens-ii17-greek; 'money-making sign' renders χρηματιστικοῦ ζῳδίου and 'places of a different mind' renders ἑτερογνώμονες τόποι (both uncertain). Valens treats the Lot of Fortune as a second horoscope: its own tenth, seventh and fourth carry the force of the midheaven, setting and subterranean angles.",
+      "translation_of": "valens-ii17-greek"
+    },
+    {
+      "id": "valens-ii19-greek",
+      "point": "both",
+      "topic": "signification",
+      "source": "valens-anthologiae",
+      "locator": "Anthologiae II.19 \"Περὶ κλήρου τύχης καὶ δαίμονος πρὸς εὐδαιμονίαν καὶ ἀποτροπὴν πράξεων\", Kroll p. 81 l. 3 - p. 82 l. 5 (PDF pages 100-101)",
+      "kind": "greek-transcription",
+      "text": "Ὅθεν περὶ τὰς ἐπιβολὰς τῶν πράξεων καὶ μετατροπὰς ὅ τε κλῆρος τῆς τύχης καὶ ὁ δαίμων πολλὴν δύναμιν ἐφέξει· ἡ μὲν γὰρ τὰ περὶ τὸ σῶμα καὶ τὰς διὰ χειρῶν τέχνας δηλοῖ, ὁ δὲ δαίμων καὶ ὁ κύριος τὰ περὶ ψυχὴν καὶ διάνοιαν καὶ τὰς διὰ λόγων καὶ δόσεων καὶ λήψεων πράξεις. προσβλέπειν οὖν δεήσει τοὺς τόπους καὶ τοὺς τούτων οἰκοδεσπότας, ἐν ποίοις ζῳδίοις εἰσί, καὶ τὰς τούτων φύσεις συναρμόζειν εἰς τὸν περὶ πράξεως καὶ τύχης λόγον καὶ εἰς τὸ εἶδος τῆς πράξεως. λαμπραὶ μὲν οὖν καὶ ἐπίδοξοι καὶ πρακτικαὶ νοηθήσονται γενέσεις ἐκ τε Ἡλίου καὶ Σελήνης τῶν ἀγαθοποιῶν ἐπόντων ἢ προσνευόντων τοῖς τόποις ἢ τοῖς οἰκοδεσπόταις, μέτριαι δὲ καὶ ἄδοξοι καὶ καθαιρετικαὶ καὶ ἐναντίαι ⟨αἱ⟩ γινόμεναι ἐκ τε Κρόνου καὶ Ἄρεως. βέλτιον μὲν οὖν καὶ τὸν κύριον τοῦ δαίμονος εὑρεῖν ἐπὶ τοῦ κλήρου τῆς τύχης ἢ τοῦ τούτου δεκάτου [ἵνα μεσουρανῇ τῷ κλήρῳ· ὅτι τὸ ἰδιοτοπεῖν καὶ τὸ ἐπίκεντρον ὡς ὅμοια καὶ ἴσα ἀντιδιέστειλε νῦν, καὶ ἐκ τοῦ ἐναντίου τὸ μὴ ἰδιοτοπεῖν καὶ τὸ ἀποκεκλιμένον ὡς ἴσα παρέθετο καὶ τὴν τῶν κακοποιῶν δὲ μαρτυρίαν ἢ ἀποστροφὴν ὡσαύτως ὡς εἶναι καὶ σχέσεις. ἢ καὶ ηʹ] ὅπερ ἐστὶ μεσουράνημα· καὶ οὕτως γὰρ λαμπραὶ καὶ ἐπίσημοι γενέσεις γίνονται. ἐὰν δὲ ἰδιοτοπῇ ἢ καὶ ἐπίκεντρος ἄλλως τύχῃ, πρακτικαὶ ⟨καὶ⟩ ἔνδοξοι κατὰ ποσὸν γενήσονται. ἐὰν δέ πως ἀπόστροφος τύχῃ ἰδίου τόπου ἢ καὶ ἄλλως ἀποκεκλικὼς ὑπὸ κακοποιῶν μαρτυρούμενος, φυγάδας σημαίνει καὶ ἐπὶ ξένης ἀσχημονοῦντας. καὶ ἐὰν μὲν ἀγαθοποιῷ συνυπάρχῃ ἢ ὑπὸ ἀγαθῶν μαρτυρηθῇ, ἐπὶ ξένης τὸν πολὺν χρόνον διανύσουσι, ποικίλως καὶ ἀνωμάλως τὸν βίον διάγοντες· ἐὰν δὲ κακοποιῷ, [καὶ] αἰτίας καὶ συνοχῆς πεῖραν λαβόντες ἐνδεεῖς καὶ κακόβιοι γενήσονται. ὁμοίως καὶ ἐὰν * * ἐναντιωθῇ τῷ τόπῳ, ἐπὶ ξένης ἀναστρεφομένους καὶ ἐν ταραχαῖς γινομένους προδηλοῖ. πολλάκις δὲ οἱ τοιοῦτοι ὑπὸ μὲν ἰδίων οὐ κληρονομοῦνται, ὑπὸ δὲ ἀλλοτρίων κληρονομοῦνται.",
+      "notes": "Transcribed from the page image; apparatus omitted. The words in [ ] are Kroll's: present in one manuscript only and likely a gloss. Contains a * * lacuna."
+    },
+    {
+      "id": "valens-ii19-en",
+      "point": "both",
+      "topic": "signification",
+      "source": "valens-anthologiae",
+      "locator": "Anthologiae II.19, Kroll p. 81-82",
+      "kind": "machine-translation",
+      "text": "Hence, for the undertakings of actions and for changes of course, both the Lot of Fortune and the Daimon will have great power: the one [Fortune] shows the things concerning the body and the crafts done through the hands, while the Daimon and its lord show the things concerning the soul and the mind, and the actions through words, gifts and receipts. One must therefore look to the places and to their house-masters, in which signs they are, and fit their natures to the account of action and fortune and to the kind of action. Nativities will be understood as brilliant, distinguished and active when the Sun and Moon or the benefics are on the places or incline toward the house-masters; moderate, undistinguished, destructive and adverse are those that come from Saturn and Mars. It is better, then, to find the lord of the Daimon on the Lot of Fortune or on its tenth [text in brackets: only in one manuscript and probably a gloss], that is, on the midheaven; for in this way, too, brilliant and distinguished nativities arise. If it [the lord] is in its own place or is otherwise angular, they will be active and glorious in some measure. But if it is somehow averse from its own place, or is otherwise declining and witnessed by malefics, it signifies exiles and people who live disgracefully abroad. And if it is joined with a benefic or witnessed by benefics, they will spend most of their time abroad, living a varied and uneven life; but if with a malefic, they will experience blame and confinement and will be needy and live badly. Likewise, if [a malefic?] opposes the place, it foretells people who live abroad and fall into disturbances. And often such people are not inherited from by their own, but are inherited from by strangers.",
+      "notes": "Unreviewed machine translation of valens-ii19-greek. The first sentence is the key distinction: Fortune is the body and manual crafts; the Daimon and its lord are soul, mind and actions through words, gifts and receipts. 'The one' is Fortune (feminine ἡ, τύχη). The source says nothing about a Lot standing in a particular sign or house; it reads each Lot through its lords and the places they occupy.",
+      "translation_of": "valens-ii19-greek"
+    },
+    {
+      "id": "valens-ii20-greek",
+      "point": "part-of-fortune",
+      "topic": "places_from_lot",
+      "source": "valens-anthologiae",
+      "locator": "Anthologiae II.20 \"Περὶ ⟨τοῦ ιαʹ⟩ τόπου τῆς τύχης πρὸς εὐδαιμονίαν\", Kroll p. 82 l. 8 - l. 26 (PDF page 101)",
+      "kind": "greek-transcription",
+      "text": "Εὕραμεν δὲ καὶ τὸν ιαʹ τόπον τῆς τύχης περιποιητικόν, ὑπαρχόντων καὶ ἀγαθῶν δοτῆρα, καὶ μάλιστα ἀγαθοποιῶν ἐπόντων ἢ μαρτυρούντων. Ἥλιος μὲν γὰρ καὶ Ζεὺς καὶ Ἀφροδίτη παρέχουσι χρυσὸν ἄργυρον καὶ κόσμον καὶ πλείστην ὕπαρξιν καὶ ἀπὸ μειζόνων τε καὶ βασιλέων δωρεὰς καὶ εὐπροαιρέτους ἐξοδιασμοὺς εἰς ὄχλους καὶ πολλῶν εὐεργέτας καθιστῶσι. Σελήνη δὲ καὶ Ἑρμῆς αὐξομειῶσιν τοῦ βίου καὶ ἀνωμαλίαν καὶ ὁτὲ μὲν ἑτέροις παρεκτικοὺς καὶ εὐμεταδότους, ὁτὲ δὲ ἐνδεεῖς ἢ δανείοις περιτρεπομένους διὰ τὸ τὴν μὲν Σελήνην αὐξομείωσιν τοῦ φωτὸς ἔχειν, τὸν δὲ Ἑρμῆν ἐπίκοινον εἶναι ἀγαθῶν τε καὶ κακῶν. Ἄρης τὰ μὲν διδόμενα ἢ ἐπικτώμενα ἀφαιρεῖται ἀποτελῶν μειώσεις ἁρπαγὰς ἐμπρησμοὺς κρίσεις, εἰς δημόσια ἢ εἰς βασιλικὰ πράγματα ἀναλίσκοντας ἢ αὐτεξουσίους γινομένους καὶ καταιτιωμένους, ἐκτὸς εἰ μὴ στρατιωτικὴ ἢ ἔνδοξος ἡ γένεσις τύχῃ· οὕτω γὰρ ἐκ τῆς τοιαύτης ἀφορμῆς καὶ βιαίων ἢ ἐπικινδύνων πραγμάτων καὶ κλοπῆς ἐν περιποιήσει γενήσονται, ἐάνπερ οἰκείως ⟨ὁ⟩ ἀστὴρ τύχῃ· πλὴν καὶ οὕτως ἐπιφόβως ἀνύσει καὶ μείωσιν ὑποίσει. Κρόνος δὲ [ἔτι] ἐπιτόπως σχηματισθεὶς θεμελίων κτημάτων κυρίους καθίστησιν, ἀτόπως δὲ ἢ παρ’ αἵρεσιν ἐκπτώσεις ἀφαιρέσεις ναυάγια ἐνδείας χρεωστίας ἀποτελεῖ.",
+      "notes": "Transcribed from the page image; apparatus omitted. Covers the first part of the chapter (one planet at a time); the planet combinations that follow are not transcribed here."
+    },
+    {
+      "id": "valens-ii20-en",
+      "point": "part-of-fortune",
+      "topic": "places_from_lot",
+      "source": "valens-anthologiae",
+      "locator": "Anthologiae II.20, Kroll p. 82",
+      "kind": "machine-translation",
+      "text": "We have found that the eleventh place from Fortune is acquisitive and a giver of possessions and goods, above all when benefics are on it or witness it. For the Sun, Jupiter and Venus provide gold, silver, adornment and abundant property, gifts from greater people and from kings, and generous outlay on the crowd, and they make people benefactors of many. The Moon and Mercury make a livelihood that waxes and wanes and is uneven: sometimes people who supply others and share readily, sometimes people in need or overturned by loans, because the Moon has the waxing and waning of light and Mercury is common to good things and bad. Mars takes away what is given or acquired, bringing diminutions, plunderings, burnings and lawsuits, people who spend on public or royal affairs, or become wilful and are accused, unless the nativity happens to be military or glorious; for then, from such a start and from violent or dangerous affairs and theft, they will come into possessions, provided the star is in its own place; yet even so he will achieve it fearfully and will suffer loss. Saturn, suitably placed, makes people lords of the foundations of estates; but unsuitably, or contrary to sect, he brings falls, removals, shipwrecks, want and debts.",
+      "notes": "Unreviewed machine translation of valens-ii20-greek. It concerns the eleventh place counted FROM the Lot of Fortune (the Lot treated as an ascendant), not the Lot standing in the chart's eleventh house. 'Contrary to sect' renders παρ’ αἵρεσιν. It is the only place-by-place reading in the Lot chapters, and it is by planet, not by sign or house.",
+      "translation_of": "valens-ii20-greek"
+    },
+    {
+      "id": "valens-ii20-end-greek",
+      "point": "part-of-fortune",
+      "topic": "sign_nature",
+      "source": "valens-anthologiae",
+      "locator": "Anthologiae II.20 (end), Kroll p. 83 ll. 1-7 (PDF page 102)",
+      "kind": "greek-transcription",
+      "text": "Καθολικῶς μὲν οὖν Κρόνος καὶ Ἄρης μεσουρανοῦντες ἢ ἐπαναφερόμενοι τῷ μεσουρανήματι τοῦ κλήρου καὶ τοῦ περιποιητικοῦ κυριεύσαντες ἐκπτώσεως δηλωτικοί. ἑκάστου οὖν ἀστέρος δεῖ τὰς φύσεις προορᾶν καὶ κατὰ τὴν ἰδίαν σύγκρισιν καὶ οἰκειότητα τὴν πρὸς ἑκάτερον ἀποφαίνεσθαι. οὐ μόνον δὲ οἱ ἀστέρες ⟨οἱ⟩ ἐπόντες τῷ περιποιητικῷ τόπῳ τὰ προκείμενα δηλώσουσιν, ἀλλὰ καὶ αὐτὸ τὸ ζῴδιον ἐνεργήσει πρός τε τὴν τοῦ ἀστέρος καὶ τὴν ἰδίαν φύσιν.",
+      "notes": "Transcribed from the page image; apparatus omitted."
+    },
+    {
+      "id": "valens-ii20-end-en",
+      "point": "part-of-fortune",
+      "topic": "sign_nature",
+      "source": "valens-anthologiae",
+      "locator": "Anthologiae II.20 (end), Kroll p. 83",
+      "kind": "machine-translation",
+      "text": "In general, then, Saturn and Mars, culminating or bearing on the midheaven of the Lot and ruling the acquisitive place, indicate a fall. One must foresee the natures of each star and declare according to its particular blend and its affinity to each of the two [the Lot and the place]. And not only will the stars on the acquisitive place show the matters set out; the sign itself will also act, in accordance with the star's nature and its own.",
+      "notes": "Unreviewed machine translation. The last sentence is the only classical statement in this set that the sign itself has a nature that acts together with the star's: a thin grounding for letting a sign's own nature colour a synthesised sign entry.",
+      "translation_of": "valens-ii20-end-greek"
+    },
+    {
+      "id": "valens-iv4-greek",
+      "point": "both",
+      "topic": "signification",
+      "source": "valens-anthologiae",
+      "locator": "Anthologiae IV.4 \"Περὶ χρόνων διαιρέσεως ἀπὸ κλήρου τύχης καὶ δαίμονος\", Kroll p. 160 ll. 3-21 (PDF page 179)",
+      "kind": "greek-transcription",
+      "text": "Καὶ ταύτην δὲ δυναστικὴν οὖσαν ὑποτάξω, τὴν ἀρχὴν τῆς ἀφέσεως ποιησάμενος ἀπὸ κλήρου τύχης καὶ δαίμονος, οἳ σημαίνουσιν Ἥλιόν τε καὶ Σελήνην· κοσμικῶς γὰρ ἡ Σελήνη τύχη ὑπάρχουσα καὶ σῶμα καὶ πνεῦμα περίγειος οὖσα καὶ τὴν ἀπόρροιαν εἰς ἡμᾶς πέμπουσα τὸ ὅμοιον ἀποτελεῖ, κυρία οὖσα τοῦ καθ’ ἡμᾶς σώματος. ὁ δὲ Ἥλιος νοῦς καὶ δαίμων κοσμικῶς ὑπάρχων διὰ τῆς ἰδίας ἐνεργείας καὶ φύσεως ἐρασμίου τὰς τῶν ἀνθρώπων ψυχὰς διεγείρων περὶ τὰς ἐγχειρήσεις αἴτιος πράξεως καὶ κινήσεως καθίσταται. ἐπὰν οὖν σωματικοὺς χρόνους ζητῶμεν, οἷον κλιμακτῆρας ἢ ἀσθενείας ἢ αἱμαγμούς, πτώσεις σίνη πάθη καὶ ὅσα ποτὲ ἀνήκει τῷ σώματι περὶ ῥώσεως τέρψεως ἡδονῆς καλλονῆς ἐπαφροδισίας, ἀπὸ τοῦ κλήρου τῆς τύχης δεῖ ἐκβάλλειν ζῳδιακῶς· ἐὰν δὲ περὶ πράξεως ἢ δόξης ζητῶμεν, τότε ἀπὸ τοῦ δαίμονος τὴν ἄφεσιν τῶν χρόνων ποιησόμεθα ζῳδιακῶς καὶ κατὰ τοὺς ἐπόντας ἢ μαρτυροῦντας ἀγαθοποιοὺς ἢ κακοποιοὺς τὴν διάκρισιν εὑρήσομεν.",
+      "notes": "Transcribed from the page image; apparatus omitted. The technical middle of the sentence on bodily times (locating the time-lords by sign) is left out; the rest of the chapter is not transcribed."
+    },
+    {
+      "id": "valens-iv4-en",
+      "point": "both",
+      "topic": "signification",
+      "source": "valens-anthologiae",
+      "locator": "Anthologiae IV.4, Kroll p. 160",
+      "kind": "machine-translation",
+      "text": "I shall subjoin this method too, which is a dynastic one, making the beginning of the release from the Lot of Fortune and the Daimon, which signify the Sun and the Moon. For, in the cosmic sense, the Moon, being Fortune, both body and a spirit that is round the earth, sending the emanation to us, produces the like, being lord of our body. The Sun, being in the cosmic sense mind and Daimon, rousing the souls of men to their undertakings by its own activity and lovable nature, is established as the cause of action and motion. When, therefore, we seek bodily times, such as climacteric years, illnesses or bleedings, falls, injuries, sufferings, and whatever belongs to the body concerning health, delight, pleasure, beauty and love-making, one must project zodiacally from the Lot of Fortune. But if we ask about action or reputation, then we shall make the release of the times from the Daimon, zodiacally, and we shall find the distinction by the benefics or malefics on it or witnessing it.",
+      "notes": "Unreviewed machine translation of valens-iv4-greek. The clearest statement in the set of what each Lot is: Fortune = the Moon = body and the near-earth spirit; the Daimon = the Sun = mind, and the cause of action and motion. 'Dynastic' renders δυναστικήν; 'round the earth' renders περίγειος.",
+      "translation_of": "valens-iv4-greek"
+    },
+    {
+      "id": "valens-ii3-greek",
+      "point": "part-of-fortune",
+      "topic": "formula",
+      "source": "valens-anthologiae",
+      "locator": "Anthologiae II.3 \"Περὶ κλήρου τύχης καὶ οἰκοδεσπότου\", Kroll p. 59 l. 20 - p. 60 l. 3 (PDF pages 78-79)",
+      "kind": "greek-transcription",
+      "text": "Ἀκριβέστερον δὲ βουλόμενος τὸν περὶ εὐδαιμονίας τόπον βεβαιῶσαι ἐπάνειμι εἰς τὸν κλῆρον τῆς τύχης ὄντα ἀναγκαιότατον καὶ δυναστικὸν τόπον, καθὼς καὶ ὁ βασιλεὺς ἐναρχόμενος ἐν τῇ ιγʹ βίβλῳ μυστικῶς ἐδήλωσε λέγων· εἶτʼ ἐχομένως δεήσει τοῖς ἡμέρας γεννωμένοις σαφῶς ἀριθμεῖν ἀπὸ Ἡλίου ἐπὶ Σελήνην, ἔμπαλιν δὲ ἀφʼ ὡροσκόπου ἰσότητα τάσσειν καὶ τὸν ἀποβάντα τόπον συνορᾶν, οὗτινος τέτευχεν ἀστέρος καὶ τίς ἢ τίνες ἐπὶ τούτου πρόσεισι, τά τε τετράγωνα ἢ τρίγωνα παντάπασιν ὡς κατηστέρηται. ἐκ γὰρ τῆσδε τῆς τῶν τόπων συγγνώσεως πρόδηλα κρινεῖς τῶν γεννωμένων τὰ πράγματα. ὁμοίως δὲ καὶ ὁ Πετόσιρις ἐν τοῖς ὅροις ἐδήλωσε τὸν τόπον, ἄλλοι δʼ ἄλλως διαλαμβάνουσιν, ὃν καὶ ἡμεῖς ἐκθησόμεθα ἐν δέοντι καιρῷ καὶ ἄλλας ἀγωγὰς δηλούσας εἰς τὸν περὶ εὐδαιμονίας λόγον. νυνὶ δὲ περὶ τοῦ προκειμένου λεκτέον.",
+      "notes": "Transcribed from the page image; apparatus omitted. 'The king' is the early astrological authority Valens quotes (Nechepso, in the usual identification; the text says only 'the king')."
+    },
+    {
+      "id": "valens-ii3-en",
+      "point": "part-of-fortune",
+      "topic": "formula",
+      "source": "valens-anthologiae",
+      "locator": "Anthologiae II.3, Kroll p. 59-60",
+      "kind": "machine-translation",
+      "text": "Wishing to confirm more exactly the place concerning good fortune, I return to the Lot of Fortune, which is a most necessary and powerful place, as the king also, beginning in the thirteenth book, indicated mystically, saying: 'Next, in order, one will need, for those born by day, to count clearly from the Sun to the Moon, and conversely to set an equal [distance] from the horoscope and to survey the place that results: which star it has obtained, and which star or stars come upon it, and the squares and trines, in short, as it is starred. For from this knowledge of the places you will judge plainly the affairs of the natives.' Likewise Petosiris indicated the place in the Terms, and others take it otherwise; of these we too shall set out [accounts] at the proper time, and other methods that show [the way] to the account of good fortune. But for now I must speak of the matter at hand.",
+      "notes": "Unreviewed machine translation of valens-ii3-greek. The quoted rule is stated for births BY DAY only: count from the Sun to the Moon and set the same distance from the horoscope (Ascendant + Moon - Sun). The passage gives no night rule, so it does not by itself settle the day/night convention. 'Starred' renders κατηστέρηται.",
+      "translation_of": "valens-ii3-greek"
+    },
+    {
+      "id": "valens-ii4-greek",
+      "point": "part-of-fortune",
+      "topic": "ruler_of_lot",
+      "source": "valens-anthologiae",
+      "locator": "Anthologiae II.4 \"Περὶ τοῦ λαχόντος τὴν ὥραν ἢ τὸν κλῆρον ἀστέρος\", Kroll p. 60 l. 6 - p. 61 l. 19 (PDF pages 79-80)",
+      "kind": "greek-transcription",
+      "text": "Κρόνος τὴν ὥραν λαχὼν ἢ τὸν κλῆρον οἰκοδεσποτήσας μὴ ἐναντιουμένου τοῦ Ἄρεως· ὁ τοιοῦτος εὐδαιμονήσει περὶ τῆς ὑπὸ Κρόνου μεριζομένης πράξεως· ἐὰν δὲ ὑπὸ Διὸς μαρτυρηθῇ, διπλασίονα· ἐὰν δὲ Ἀφροδίτης, διὰ γυναικὸς ἢ ἀσπέρμου· ἐὰν δὲ ὁ τοῦ Ἄρεως αὐτῷ συνῇ ἢ ἐναντιωθῇ, ὁ τοιοῦτος ἐν ταραχαῖς καὶ ἐναντιώμασιν ἔσται· ἐὰν δὲ ὁ τοῦ Ἑρμοῦ αὐτῷ συνωροσκοπήσῃ, ὁ τοιοῦτος ταῖς ἀκοαῖς παραποδισθήσεται. Ζεὺς τὴν ὥραν ἢ τὸν κλῆρον ὡροσκοπήσας εὐτυχεῖς ἄγαν ἀπὸ νεότητος ἀποτελεῖ· ἐὰν δὲ Ἄρης παρῇ ἢ ὁμόκεντρος ἢ τρίγωνος, ἐν λαμπραῖς στρατείαις προκόψει καὶ βίου περίκτησιν οἴσει· ἐὰν δὲ καὶ Κρόνος προσγένηται, ἐν ὑπεροχαῖς γίνονται· εἰ δὲ καὶ Ἀφροδίτη, ἔτι μᾶλλον· ἐὰν δὲ καὶ Ἑρμῆς, ἐν λήψεσι καὶ δόσεσι γίνονται. Ἄρης λαχὼν τὴν ὥραν ἢ τὸν κλῆρον ὡροσκοπῶν ποιεῖ ὁρμὴν ἐπὶ στρατείαν· ἐὰν δὲ καὶ Ζεὺς μαρτυρήσῃ, ἐν ἀξίᾳ προκόψει· ἐὰν δὲ καὶ Ἀφροδίτη, ἐν ἀξίαις οὐ ταῖς τυχούσαις γίνονται· ἐὰν δὲ καὶ Ἑρμῆς συμπαρῇ, μόνος παρακαταθήκην λαβὼν ἀρνήσεται· ἐὰν δὲ καὶ Ζεύς, ἀπὸ πολλῶν πολλὰ περικτήσεται, μετὰ δὲ τὸν θάνατον εἰς βασιλικὰ χωρήσει. Ἀφροδίτη τὴν ὥραν ἢ τὸν κλῆρον λαχοῦσα μεγάλα ἀγαθὰ σημαίνει καὶ μεγαλοδόξους ποιεῖ· ἐὰν δὲ συμπαρῇ Ἑρμῆς, μουσικοὺς ποιεῖ· τούτων οὕτως ἐχόντων Κρόνος διαμετρήσας αὐτοὺς ἢ καθυπερτερήσας ἐστέρησε τῶν ὑπαρχόντων. Ἑρμῆς τὴν ὥραν λαχὼν ἢ τὸν κλῆρον ὡροσκοπήσας ποιεῖ εὐτυχεῖς· ἐὰν δὲ καὶ ὁ τοῦ Διὸς συμπροσγένηται ἢ τετραγωνίσῃ, κριτηρίων καὶ πόλεων ἀρχὰς ἕξουσιν· ἐὰν δὲ καὶ ὁ τοῦ Κρόνου τοῖσδε συμπροσγένηται, διπλασίονας τάς τε ἀρχὰς καὶ τιμὰς καὶ τὰ ἀγαθὰ καὶ τὰς προκοπάς. Ἥλιος κληρωσάμενος τὴν ὥραν ἢ τὴν τύχην ὡροσκοπήσας, ἐὰν συμπαρῇ καὶ ὁ τοῦ Διὸς ἢ μαρτυρήσῃ τετράγωνος, ὁ γεννώμενος εὐτυχὴς ἔσται. ἐὰν δὲ καὶ ὁ τοῦ Ἑρμοῦ συμπαρῇ αὐτῷ, διὰ λόγων προκόψει· ἐὰν δὲ καὶ ὁ τοῦ Ἄρεως συμπαρῇ ἢ τετραγωνίσῃ σὺν τῷ τοῦ Διός, μέγας ἔσται καὶ κυριεύσει ζωῆς καὶ θανάτου. εἰ δὲ τούτων οὕτως ἐχόντων Κρόνος τετραγωνίσῃ ἢ διαμετρήσῃ, ἐν συμπτώμασι καὶ ζημίαις περιπεσοῦνται. Σελήνη κληρωσαμένη τὴν ὥραν ἢ τὸν κλῆρον τῆς τύχης μεγάλους ποιεῖ, μάλιστα δὲ ἐν ἰδίῳ τριγώνῳ· ἐὰν δὲ καὶ ὁ τῆς Ἀφροδίτης συνῇ ἢ τετράγωνος τύχῃ, τιμῆς μεγάλης καταξιωθήσεται· ἐὰν δὲ καὶ ὁ τοῦ Ἄρεως σὺν τῇ Σελήνῃ τύχῃ, ζωῆς καὶ θανάτου κυριεύσει· ἐὰν δὲ ὁ τοῦ Κρόνου, πολλῶν χωρῶν ἡγήσεται· ἐὰν δὲ καὶ ὁ τοῦ Διὸς συμπαρῇ ἢ τετραγωνίσῃ, βασιλεῖς μεγάλοι ἔσονται· εἰ δὲ τούτων ἀπόντων ὁ τοῦ Ἑρμοῦ σὺν Σελήνῃ σχηματισθῇ, ἀπὸ λόγων καὶ ἐντρεχείας αἱ προκοπαὶ ἔσονται· ἐὰν δὲ καὶ ὁ τοῦ Ἄρεως συμπροσγένηται ἢ τετραγωνίσῃ, τυράννους μεγιστᾶνας ποιεῖ· ἐὰν δὲ διαμετρήσῃ ὁ Ἄρης τὴν Σελήνην ἐκτὸς τῶν ἀγαθοποιῶν, ἐκθέσιμα ποιεῖ· ἐὰν δὲ τῷ Ἄρει ἀγαθοποιὸς συμπαρῇ, ἐκτεθέντα τραφήσεται.",
+      "notes": "Transcribed from the page image; apparatus omitted. 'The hour' is the horoscope (Ascendant); 'the Lot' is the Lot of Fortune. 'ὁ τοῦ Διός' etc. is Valens' idiom for 'the star of Zeus', Jupiter's. The chapter continues to p. 62 l. 7 with further Moon combinations and general rules; those lines are not transcribed here."
+    },
+    {
+      "id": "valens-ii4-en",
+      "point": "part-of-fortune",
+      "topic": "ruler_of_lot",
+      "source": "valens-anthologiae",
+      "locator": "Anthologiae II.4, Kroll p. 60-61",
+      "kind": "machine-translation",
+      "text": "Saturn, having obtained the hour or having been house-master of the Lot, with Mars not opposing: such a person will prosper in the activity apportioned by Saturn; if witnessed by Jupiter, doubly so; if by Venus, through a woman or through childlessness; if Mars's [star] is with him or opposes, such a person will be in disturbances and oppositions; if Mercury's is horoscoping together with him, such a person will be hindered in his hearing. Jupiter, horoscoping the hour or the Lot, makes people exceedingly fortunate from youth; if Mars is present, or in the same angle, or in trine, he will advance in brilliant military campaigns and bring acquisition of livelihood; if Saturn also joins, they come to eminence; if Venus too, still more; if Mercury too, they come into receipts and gifts. Mars, having obtained the hour or horoscoping the Lot, produces an impulse toward military service; if Jupiter also witnesses, he will advance in rank; if Venus, in no ordinary ranks; if Mercury is present, taking a deposit alone he will deny it; if Jupiter too, he will acquire much from many, and after death it will pass to royal [property]. Venus, having obtained the hour or the Lot, signifies great goods and makes people greatly renowned; if Mercury is present, she makes them musical; these things being so, Saturn, by opposing or overcoming them, deprives them of their possessions. Mercury, having obtained the hour or horoscoping the Lot, makes people fortunate; if Jupiter's also joins or squares, they will hold the offices of courts and cities; if Saturn's also joins them, the offices and honours and goods and advances are doubled. The Sun, having allotted the hour or horoscoping Fortune, if Jupiter's is present or witnesses by square, the native will be fortunate; if Mercury's is also present, he will advance through words; if Mars's is present or squares together with Jupiter's, he will be great and master of life and death; but if, these being so, Saturn squares or opposes, they will fall into misfortunes and losses. The Moon, having allotted the hour or the Lot of Fortune, makes people great, especially in her own triplicity; if Venus's is with her or in square, he will be thought worthy of great honour; if Mars's is with the Moon, he will be master of life and death; if Saturn's, he will lead many lands; if Jupiter's is also present or squares, they will be great kings; if, in their absence, Mercury's is configured with the Moon, the advances will be from words and from resourcefulness; if Mars's also joins or squares, she makes great tyrants; if Mars opposes the Moon without the benefics, she makes exposed [infants]; if a benefic is with Mars, the exposed will be reared.",
+      "notes": "Unreviewed machine translation of valens-ii4-greek. This is the grounding for reading a SIGN entry through its ruler: each of the seven classical planets, the Sun and Moon included, is read as the star that rules the Lot of Fortune, alone and in combination. It is written for a planet that holds 'the hour or the Lot', not for a sign as such, and its judgments (offices, kingship, 'masters of life and death') are far stronger than anything a general sign entry should assert.",
+      "translation_of": "valens-ii4-greek"
+    }
+  ],
+  "decisions": [
+    {
+      "date": "2026-10-11",
+      "topic": "sign entries (24 per language)",
+      "decision": "No source gives a Lot in a sign. Synthesise them from the Lot's sourced core nature (Fortune = body, material substance and the crafts of the hands; Spirit = soul, mind, will and action through words and dealings) combined with the sign's element, modality and classical ruler (and, for Fortune, Ptolemy IV.2's ruler-to-means mapping and Valens II.20's note that the sign itself acts with the star). The evaluator must flag any claim more specific than those inputs allow."
+    },
+    {
+      "date": "2026-10-11",
+      "topic": "house entries (24 per language)",
+      "decision": "No source gives a Lot in a house. Synthesise them from Lilly and Ptolemy's principles of house strength (angular, succedent, cadent) and the house's own topic, for example Fortune in the 2nd = material gain through personal effort, Spirit in the 10th = vocation through public action."
+    },
+    {
+      "date": "2026-10-11",
+      "topic": "Part of Spirit sources",
+      "decision": "Do not wait for a public-domain English Valens. Write original seed definitions of Spirit/Daimon from Valens (here, Kroll's Greek with independent translations of II.17, II.19, II.20 and IV.4). Riley's translation is not used and not quoted."
+    },
+    {
+      "date": "2026-10-11",
+      "topic": "day/night convention",
+      "decision": "Documented in convention_note: Ptolemy and Lilly do not reverse at night; Astraya does."
+    },
+    {
+      "date": "2026-10-11",
+      "topic": "corpus tooling (#517)",
+      "decision": "Build the generator, evaluator and improver for a fully synthesised seed strategy grounded in classical rules for the sign and house combinations."
     }
   ]
 }
