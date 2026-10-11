@@ -12,6 +12,7 @@
  * @conventions Independent of any person or stored data (ephemeris-only), so it lives outside `Stored`, like AdminPanel; the diagram is app-generated SVG, hidden from assistive tech since the table carries every value it plots.
  * @exports CyclesView
  */
+import { formatFixed } from './format.js';
 import { Select } from './primitives/Select.js';
 import { TextField } from './primitives/TextField.js';
 import { useSymbolClass } from './symbol-setting.js';
@@ -243,7 +244,7 @@ export function CyclesView(): React.JSX.Element {
         key: 'since',
         label: t.sinceColumn,
         valueOf: (row) => row.yearsSincePrevious ?? '',
-        render: (row) => (row.yearsSincePrevious === undefined ? t.none : row.yearsSincePrevious.toFixed(2)),
+        render: (row) => (row.yearsSincePrevious === undefined ? t.none : formatFixed(row.yearsSincePrevious, 2)),
       },
     ],
     // `nameOf` closes over `locale`, which is listed.

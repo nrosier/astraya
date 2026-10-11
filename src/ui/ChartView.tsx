@@ -32,6 +32,7 @@
  * @conventions Exports `ChartDataView`, the shared tabbed chart+tables UI reused by CompositeView/SharedChartView; every value is recomputed from the stored birth moment via `domain/chart-compute.js`/`domain/chart-tables.js` rather than read from a saved Chart record; houses/angles/derived-points tables are hidden when `timeAccuracy === 'unknown'`. Text comes from co-located `ChartView.messages.ts` via `useMessages()`.
  * @exports ChartView, ChartDataView, emphasisColumns, positionColumns, houseCuspColumns, angleColumns, aspectColumns, dignityColumns, dispositorColumns, declinationColumns, antisciaColumns, fixedStarColumns, derivedPointColumns
  */
+import { formatFixed } from './format.js';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   almutenOfAscendant,
@@ -236,7 +237,7 @@ export function positionColumns(
       label: t.speedLabel,
       labelTooltip: t.speedTooltip,
       valueOf: (row) => row.speed ?? '',
-      render: (row) => (row.speed === undefined ? '—' : row.speed.toFixed(4)),
+      render: (row) => (row.speed === undefined ? '—' : formatFixed(row.speed, 4)),
     },
     {
       key: 'retrograde',
@@ -326,7 +327,7 @@ export function aspectColumns(
       valueOf: (row) => row.bodyBName,
       render: (row) => bodyDisplayName(row.bodyBKey, locale),
     },
-    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => `${row.orb.toFixed(2)}°` },
+    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => `${formatFixed(row.orb, 2)}°` },
     {
       key: 'applying',
       label: t.applyingLabel,
@@ -483,7 +484,7 @@ export function declinationColumns(
       valueOf: (row) => row.kind,
       render: (row) => t[row.kind],
     },
-    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => `${row.orb.toFixed(2)}°` },
+    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => `${formatFixed(row.orb, 2)}°` },
   ];
 }
 
@@ -508,7 +509,7 @@ export function antisciaColumns(t: typeof chartViewMessages.en, locale: Locale):
       valueOf: (row) => row.kind,
       render: (row) => (row.kind === 'antiscion' ? t.antiscion : t.contraAntiscion),
     },
-    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => `${row.orb.toFixed(2)}°` },
+    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => `${formatFixed(row.orb, 2)}°` },
   ];
 }
 
@@ -523,7 +524,7 @@ export function fixedStarColumns(t: typeof chartViewMessages.en, locale: Locale)
       valueOf: (row) => row.bodyName,
       render: (row) => bodyDisplayName(row.bodyKey, locale),
     },
-    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => `${row.orb.toFixed(2)}°` },
+    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => `${formatFixed(row.orb, 2)}°` },
   ];
 }
 

@@ -30,7 +30,7 @@ import { houseOf } from '../astrology/emphasis.js';
 import { computeMinorProgression, type MinorProgressionData } from '../domain/minor-progression.js';
 import { computeSecondaryProgression, type SecondaryProgressionData } from '../domain/secondary-progression.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
-import { todayInputValue } from './format.js';
+import { formatFixed, todayInputValue } from './format.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { momentKey } from '../time/encode.js';
@@ -129,7 +129,7 @@ export function contactColumns(
       valueOf: (row) => row.bodyBName,
       render: (row) => bodyDisplayName(row.bodyBKey, locale),
     },
-    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => `${row.orb.toFixed(2)}°` },
+    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => `${formatFixed(row.orb, 2)}°` },
     {
       key: 'applying',
       label: t.applyingLabel,
@@ -276,7 +276,7 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
       {load.kind === 'ready' && (
         <>
           <p className="hint">
-            {t.ageLine(`${load.data.ageInYears.toFixed(2)}${load.data.ageInYears < 0 ? ` ${t.beforeBirth}` : ''}`)}
+            {t.ageLine(`${formatFixed(load.data.ageInYears, 2)}${load.data.ageInYears < 0 ? ` ${t.beforeBirth}` : ''}`)}
           </p>
           {usedMcMethod !== undefined && <p className="hint">{t.mcMethodLine(mcMethodLabel(t, usedMcMethod))}</p>}
 

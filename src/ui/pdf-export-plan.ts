@@ -107,7 +107,7 @@ import {
 import type { chartViewMessages } from './ChartView.messages.js';
 import type { pdfExportMessages } from './pdf-export.messages.js';
 import { aspectDisplayName, bodyDisplayName, bodyShortName, signDisplayName } from './astro-names.messages.js';
-import { formatCoordinate } from './format.js';
+import { formatCoordinate, formatFixed, utcDay } from './format.js';
 import { relationshipSummaryParagraphs } from './relationship-summary-pdf-text.js';
 import { aspectColumns as synastryAspectColumns } from './SynastryView.js';
 import { synastryViewMessages } from './SynastryView.messages.js';
@@ -304,7 +304,7 @@ async function computeSectionChartData(
       return result.chart;
     }
     case 'lunar-return': {
-      const fromDate = options.returnFromDate ?? new Date().toISOString().slice(0, 10);
+      const fromDate = options.returnFromDate ?? utcDay();
       const [y, m, d] = fromDate.split('-').map(Number);
       const fromJd = await provider.julianDay(y ?? 2000, m ?? 1, d ?? 1, 0);
       const result = await computeLunarReturnChart(person.moment, fromJd, provider, {
@@ -489,7 +489,7 @@ function transitRulesFor(
 
 /** Resolves a section's own `asOfDate` (unset means "today, at build time" — see `pdf-export-sections.ts`) into a target Julian day at noon, the same anchor `TransitView.tsx`/`PeriodicTransitView.tsx` use for their own "as of" date picker. */
 async function targetJdOf(asOfDate: string | undefined, provider: EphemerisProvider): Promise<number> {
-  const [y, m, d] = (asOfDate ?? new Date().toISOString().slice(0, 10)).split('-').map(Number);
+  const [y, m, d] = (asOfDate ?? utcDay()).split('-').map(Number);
   return provider.julianDayFromUtc(y ?? 2000, m ?? 1, d ?? 1, 12, 0, 0);
 }
 
@@ -536,7 +536,7 @@ async function buildForecastSectionPlan(
   const { person, provider, rulership, locale } = context;
   if (person.moment === undefined) throw new Error('this person has no complete birth record');
   const ft = periodicTransitViewMessages[locale];
-  const asOfDate = options.asOfDate ?? new Date().toISOString().slice(0, 10);
+  const asOfDate = options.asOfDate ?? utcDay();
   const [yearPart, monthPart, dayPart] = asOfDate.split('-').map(Number);
   const year = yearPart ?? new Date().getFullYear();
   const month = monthPart ?? 1;
@@ -876,7 +876,7 @@ function eclipsesPdfColumns(et: typeof eclipsesViewMessages.en, locale: Locale):
                 et.contact(
                   bodyDisplayName(contact.pointKey, locale),
                   aspectDisplayName(contact.kind, locale),
-                  `${contact.orb.toFixed(1)}°`,
+                  `${formatFixed(contact.orb, 1)}°`,
                 ),
               )
               .join('; '),

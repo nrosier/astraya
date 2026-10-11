@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { formatCoordinate, todayInputValue } from '../src/ui/format.js';
+import {
+  formatCents,
+  formatCoordinate,
+  formatDecimal,
+  formatFixed,
+  formatInteger,
+  formatTimestamp,
+  todayInputValue,
+  utcDay,
+} from '../src/ui/format.js';
 
 describe('todayInputValue', () => {
   it('matches the visitor-local calendar date in yyyy-mm-dd form', () => {
@@ -31,5 +40,51 @@ describe('formatCoordinate', () => {
 
   it('always prints a magnitude, never a signed number', () => {
     expect(formatCoordinate(-0, 'lat', 'en')).toBe('0.00°N');
+  });
+});
+
+describe('formatFixed', () => {
+  it('always uses a point and the asked number of decimals, in every language', () => {
+    expect(formatFixed(2.875, 2)).toBe('2.88');
+    expect(formatFixed(10, 2)).toBe('10.00');
+    expect(formatFixed(0.5, 0)).toMatch(/^[01]$/);
+  });
+
+  it('never shows a minus sign on a zero', () => {
+    expect(formatFixed(-0.001, 2)).toBe('0.00');
+    expect(formatFixed(-0.4, 0)).toBe('0');
+    expect(formatFixed(-0.01, 2)).toBe('-0.01');
+  });
+});
+
+describe('formatDecimal and formatInteger', () => {
+  it('follow the reader’s own notation', () => {
+    expect(formatDecimal(6.34, 1, 'en')).toBe('6.3');
+    expect(formatDecimal(6.34, 1, 'nl')).toBe('6,3');
+    expect(formatInteger(1234567, 'en')).toBe('1,234,567');
+    expect(formatInteger(1234567, 'nl')).toBe('1.234.567');
+  });
+});
+
+describe('formatCents', () => {
+  it('names dollars once, with the reader’s grouping', () => {
+    expect(formatCents(1234, 'en')).toBe('$12.34');
+    expect(formatCents(5, 'en')).toBe('$0.05');
+    expect(formatCents(1234, 'nl')).toMatch(/12,34/);
+  });
+});
+
+describe('formatTimestamp and utcDay', () => {
+  it('writes an instant in a fixed shape, whatever the browser’s locale', () => {
+    expect(formatTimestamp(new Date(2026, 9, 11, 21, 5))).toBe('2026-10-11 21:05');
+    expect(formatTimestamp(new Date(2026, 0, 2, 3, 4).toISOString())).toBe('2026-01-02 03:04');
+  });
+
+  it('hands back text it cannot read, rather than "NaN"', () => {
+    expect(formatTimestamp('never')).toBe('never');
+  });
+
+  it('stamps the UTC day', () => {
+    expect(utcDay(new Date(Date.UTC(2026, 9, 11, 23, 59)))).toBe('2026-10-11');
   });
 });

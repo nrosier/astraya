@@ -15,6 +15,7 @@
  * @conventions Follows FocusInterpretation.tsx's consent/generate/saved-history structure for the Tier 2 panel; uses RelationshipSummary.messages.ts for en/nl text via useMessages().
  * @exports RelationshipSummary
  */
+import { formatFixed } from './format.js';
 import { useEffect, useId, useState } from 'react';
 import { bodyById } from '../astrology/bodies.js';
 import { housesAreDefined } from '../domain/chart-compute.js';
@@ -64,7 +65,7 @@ function ContactLine({
   const aspect = aspectDisplayName(contact.aspect.aspect.key, locale);
   return (
     <li className={`relationship-contact relationship-contact-${aspectValence(contact.aspect.aspect.key)}`}>
-      {t.contactSentence(`${nameA}’s ${bodyA}`, aspect, `${nameB}’s ${bodyB}`, contact.aspect.orb.toFixed(1))}
+      {t.contactSentence(`${nameA}’s ${bodyA}`, aspect, `${nameB}’s ${bodyB}`, formatFixed(contact.aspect.orb, 1))}
     </li>
   );
 }

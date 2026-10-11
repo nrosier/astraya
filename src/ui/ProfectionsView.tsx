@@ -26,7 +26,7 @@ import { degreeParts } from '../domain/chart-tables.js';
 import { deriveExportFilename } from '../domain/export-filename.js';
 import { computeProfections, type ProfectedPeriod, type ProfectionData } from '../domain/profections.js';
 import { bodyDisplayName, signDisplayName } from './astro-names.messages.js';
-import { todayInputValue } from './format.js';
+import { formatFixed, todayInputValue } from './format.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { RulershipSetting } from './RulershipSetting.js';
@@ -224,7 +224,7 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
       {load.kind === 'ready' && (
         <>
           <p className="hint">
-            {t.ageLine(`${load.data.age.toFixed(2)}${load.data.age < 0 ? ` ${t.beforeBirth}` : ''}`)}
+            {t.ageLine(`${formatFixed(load.data.age, 2)}${load.data.age < 0 ? ` ${t.beforeBirth}` : ''}`)}
           </p>
           {rows !== undefined && (
             <SortableTable

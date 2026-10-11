@@ -18,6 +18,8 @@
  * @conventions Server enforces the real role check (super-admin vs admin vs user); this component only reads `useSessionUserOrUndefined()` to decide which controls to render. Text comes from co-located `AdminPanel.messages.ts` via `useMessages()`.
  * @exports AdminPanel, AdminUsagePanel
  */
+import { useLocale } from './locale.js';
+import { formatCents, formatInteger, formatTimestamp } from './format.js';
 import { Select } from './primitives/Select.js';
 import { TextField } from './primitives/TextField.js';
 import { useEffect, useState } from 'react';
@@ -44,10 +46,6 @@ const ROLE_ORDER: readonly Role[] = ['user', 'admin', 'super_admin'];
 
 function roleLabel(role: Role, t: typeof adminPanelMessages.en): string {
   return role === 'super_admin' ? t.superAdminRoleLabel : role === 'admin' ? t.adminRoleLabel : t.memberRoleLabel;
-}
-
-function formatCost(cents: number): string {
-  return `$${(cents / 100).toFixed(2)}`;
 }
 
 function describeImpact(impact: DeletionImpact, t: typeof adminPanelMessages.en): string {
@@ -179,9 +177,9 @@ function UserRow({
           roleLabel(user.role, t)
         )}
       </td>
-      <td>{user.lastSeenAt === null ? t.neverSeen : new Date(user.lastSeenAt).toLocaleString()}</td>
-      <td>{user.lastSyncAt === null ? t.neverSeen : new Date(user.lastSyncAt).toLocaleString()}</td>
-      <td>{user.lastAiUsageAt === null ? t.neverSeen : new Date(user.lastAiUsageAt).toLocaleString()}</td>
+      <td>{user.lastSeenAt === null ? t.neverSeen : formatTimestamp(user.lastSeenAt)}</td>
+      <td>{user.lastSyncAt === null ? t.neverSeen : formatTimestamp(user.lastSyncAt)}</td>
+      <td>{user.lastAiUsageAt === null ? t.neverSeen : formatTimestamp(user.lastAiUsageAt)}</td>
       {canManage && (
         <td className="actions">
           <button type="button" className="quiet" disabled={disabled} onClick={toggleEnabled}>
@@ -391,6 +389,7 @@ export function AdminUsagePanel(): React.JSX.Element {
   const [error, setError] = useState<string>();
   const t = useMessages(adminPanelMessages);
   const shared = useMessages(sharedMessages);
+  const [locale] = useLocale();
 
   useEffect(() => {
     void getInterpretationUsage()
@@ -434,13 +433,13 @@ export function AdminUsagePanel(): React.JSX.Element {
                   {usage.users.map((row) => (
                     <tr key={row.userId}>
                       <td>{row.username}</td>
-                      <td>{row.requestCount}</td>
+                      <td>{formatInteger(row.requestCount, locale)}</td>
                       <td>
-                        {row.promptTokens} / {row.outputTokens}
+                        {formatInteger(row.promptTokens, locale)} / {formatInteger(row.outputTokens, locale)}
                       </td>
-                      <td>{formatCost(row.costCents)}</td>
-                      <td>{formatCost(row.costCentsLast24h)}</td>
-                      <td>{row.lastUsedAt}</td>
+                      <td>{formatCents(row.costCents, locale)}</td>
+                      <td>{formatCents(row.costCentsLast24h, locale)}</td>
+                      <td>{formatTimestamp(row.lastUsedAt)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -449,9 +448,9 @@ export function AdminUsagePanel(): React.JSX.Element {
           </div>
           <p className="hint">
             {t.usageCapsNote(
-              formatCost(usage.caps.userDailyCapCents),
-              formatCost(usage.caps.totalDailyCapCents),
-              formatCost(usage.totalCostCentsLast24h),
+              formatCents(usage.caps.userDailyCapCents, locale),
+              formatCents(usage.caps.totalDailyCapCents, locale),
+              formatCents(usage.totalCostCentsLast24h, locale),
             )}
           </p>
         </>

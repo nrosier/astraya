@@ -16,6 +16,7 @@
  * @conventions Needs the store (to list people) but is not person-scoped in the URL — the primary person and any partner are picked on the page itself. jsPDF/svg2pdf.js/jspdf-autotable (`pdf-export-render.js`) are loaded only via dynamic `import()` once "Build PDF" is clicked, so they never enter the eager bundle. AI-customised interpretation consent is spent the moment the build request goes out (ADR 0003), never remembered.
  * @exports PdfExportBuilder
  */
+import { utcDay } from './format.js';
 import { Select } from './primitives/Select.js';
 import { useId, useMemo, useState } from 'react';
 import {
@@ -516,7 +517,7 @@ export function PdfExportBuilder(): React.JSX.Element {
                       {t.returnFromDateLabel}{' '}
                       <input
                         type="date"
-                        value={options.returnFromDate ?? new Date().toISOString().slice(0, 10)}
+                        value={options.returnFromDate ?? utcDay()}
                         onChange={(event) => {
                           patchChart(type, { returnFromDate: event.target.value });
                         }}

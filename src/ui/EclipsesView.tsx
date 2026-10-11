@@ -10,6 +10,7 @@
  * @conventions Lives inside `Stored` because the person picker reads the local store, though the eclipse search itself needs only the ephemeris. Text comes from co-located `EclipsesView.messages.ts` via `useMessages()`.
  * @exports EclipsesView
  */
+import { formatFixed } from './format.js';
 import { Select } from './primitives/Select.js';
 import { TextField } from './primitives/TextField.js';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -161,7 +162,7 @@ export function EclipsesView(): React.JSX.Element {
                   t.contact(
                     bodyDisplayName(contact.pointKey, locale),
                     aspectDisplayName(contact.kind, locale),
-                    `${contact.orb.toFixed(1)}°`,
+                    `${formatFixed(contact.orb, 1)}°`,
                   ),
                 )
                 .join('; '),

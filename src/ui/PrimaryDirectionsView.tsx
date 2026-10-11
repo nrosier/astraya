@@ -39,7 +39,7 @@ import { civilFromJulianDay } from '../time/julian.js';
 import { momentKey } from '../time/encode.js';
 import { aspectDisplayName, bodyDisplayName } from './astro-names.messages.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
-import { todayInputValue } from './format.js';
+import { formatFixed, todayInputValue } from './format.js';
 import { useGlyphVariants } from './glyph-variant-setting.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
@@ -116,8 +116,8 @@ function hitColumns(t: Messages, locale: Locale): readonly TableColumn<HitRow>[]
       label: t.promissorLabel,
       valueOf: (row) => bodyDisplayName(row.promissorKey, locale),
     },
-    { key: 'arc', label: t.arcLabel, valueOf: (row) => row.arc, render: (row) => `${row.arc.toFixed(2)}°` },
-    { key: 'age', label: t.ageColumnLabel, valueOf: (row) => row.age, render: (row) => row.age.toFixed(2) },
+    { key: 'arc', label: t.arcLabel, valueOf: (row) => row.arc, render: (row) => `${formatFixed(row.arc, 2)}°` },
+    { key: 'age', label: t.ageColumnLabel, valueOf: (row) => row.age, render: (row) => formatFixed(row.age, 2) },
     { key: 'description', label: t.descriptionLabel, valueOf: (row) => describe(row, t, locale) },
   ];
 }
@@ -281,7 +281,7 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
         />
         <NumberField
           label={t.ageLabel}
-          value={ageDraft ?? (shownAge === undefined ? '' : shownAge.toFixed(2))}
+          value={ageDraft ?? (shownAge === undefined ? '' : formatFixed(shownAge, 2))}
           min={0}
           step={0.1}
           disabled={data === undefined}
@@ -323,8 +323,8 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
 
           {directed.kind === 'ready' && (
             <>
-              <p className="hint">{t.ageLine(directed.chart.ageYears.toFixed(2))}</p>
-              <p className="hint">{t.arcLine(ageToArc(directed.chart.ageYears, data.key).toFixed(2))}</p>
+              <p className="hint">{t.ageLine(formatFixed(directed.chart.ageYears, 2))}</p>
+              <p className="hint">{t.arcLine(formatFixed(ageToArc(directed.chart.ageYears, data.key), 2))}</p>
               {wheelMarkup !== undefined && (
                 // App-generated SVG from just-computed chart data, never user-supplied markup —
                 // the same trust boundary ChartView.tsx's sheet markup is injected under.

@@ -14,6 +14,7 @@
  * @conventions Not person-scoped (optional pre-fill from a stored person); uses RectificationView.messages.ts for en/nl text via useMessages().
  * @exports RectificationView
  */
+import { formatFixed } from './format.js';
 import { Disclosure } from './primitives/Disclosure.js';
 import { DateField } from './primitives/DateField.js';
 import { Select } from './primitives/Select.js';
@@ -178,8 +179,8 @@ export function RectificationView(): React.JSX.Element {
         valueOf: (row) => row.midheaven,
         render: (row) => signPosition(row.midheaven, locale),
       },
-      { key: 'score', label: t.scoreColumn, valueOf: (row) => row.score, render: (row) => row.score.toFixed(2) },
-      { key: 'lift', label: t.liftColumn, valueOf: (row) => row.lift, render: (row) => `×${row.lift.toFixed(1)}` },
+      { key: 'score', label: t.scoreColumn, valueOf: (row) => row.score, render: (row) => formatFixed(row.score, 2) },
+      { key: 'lift', label: t.liftColumn, valueOf: (row) => row.lift, render: (row) => `×${formatFixed(row.lift, 1)}` },
       { key: 'contacts', label: t.contactsColumn, valueOf: (row) => row.contacts.length },
     ],
     [t, locale],
@@ -187,7 +188,7 @@ export function RectificationView(): React.JSX.Element {
 
   const describeContact = (contact: TimedCandidate['contacts'][number]): string => {
     const name = (key: string): string => bodyDisplayName(key, locale);
-    const orb = `${contact.orb.toFixed(2)}°`;
+    const orb = `${formatFixed(contact.orb, 2)}°`;
     const aspect = aspectDisplayName(contact.aspect, locale).toLowerCase();
     return contact.technique === 'solar-arc'
       ? t.solarArcContact(name(contact.moving), aspect, name(contact.natal), orb)
@@ -353,7 +354,7 @@ export function RectificationView(): React.JSX.Element {
           {top.slice(0, DETAILED).map((candidate) => (
             <div key={candidate.jd} className="rectification-detail">
               <Disclosure
-                title={t.detailsSummary(candidate.localTime, candidate.score.toFixed(2))}
+                title={t.detailsSummary(candidate.localTime, formatFixed(candidate.score, 2))}
                 summary={t.contactCount(candidate.contacts.length)}
                 showLabel={t.showDetails}
                 hideLabel={t.hideDetails}

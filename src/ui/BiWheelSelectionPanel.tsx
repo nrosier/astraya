@@ -10,6 +10,7 @@
  * @conventions Pure presentational component: the facts come from `resolveBiWheelSelection`/`bi-wheel-selection.js`, this module only words them in the active locale via co-located `BiWheelSelectionPanel.messages.ts`.
  * @exports BiWheelSelectionPanel
  */
+import { formatFixed } from './format.js';
 import type { Locale } from '../interpretation/schema.js';
 import { aspectDisplayName, bodyDisplayName, signDisplayName } from './astro-names.messages.js';
 import type { BiWheelAspect, BiWheelFacts, BodyOnRing } from './bi-wheel-selection.js';
@@ -39,7 +40,7 @@ export function BiWheelSelectionPanel({ facts, ringLabels, locale, onClear }: Pr
   const aspectItem = ({ row, other }: BiWheelAspect) => (
     <li key={`${row.bodyAKey}-${row.aspectKey}-${row.bodyBKey}-${String(other.ring)}`}>
       {aspectDisplayName(row.aspectKey, locale)} {bodyOnRing(other.bodyKey, other.ring)} (
-      {`${t.orbLabel} ${row.orb.toFixed(2)}°, ${row.applying ? t.applying : t.separating}`})
+      {`${t.orbLabel} ${formatFixed(row.orb, 2)}°, ${row.applying ? t.applying : t.separating}`})
     </li>
   );
 
@@ -54,7 +55,7 @@ export function BiWheelSelectionPanel({ facts, ringLabels, locale, onClear }: Pr
             bodyOnRing(facts.b.bodyKey, facts.b.ring),
           );
   const orbText = (orb: number, applying: boolean): string =>
-    `${t.orbLabel} ${orb.toFixed(2)}°, ${applying ? t.applying : t.separating}`;
+    `${t.orbLabel} ${formatFixed(orb, 2)}°, ${applying ? t.applying : t.separating}`;
 
   return (
     <div className="chart-isolation-panel">

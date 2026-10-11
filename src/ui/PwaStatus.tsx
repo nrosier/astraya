@@ -17,6 +17,7 @@
  * @conventions Present on every screen; uses PwaStatus.messages.ts for en/nl text via useMessages().
  * @exports PwaStatus
  */
+import { formatFixed } from './format.js';
 import { useSyncExternalStore } from 'react';
 import { useMessages } from './messages.js';
 import { applyUpdate, getUpdateState, subscribeToUpdates } from '../pwa/register.js';
@@ -24,7 +25,7 @@ import { pwaStatusMessages } from './PwaStatus.messages.js';
 import { getWarmState, subscribeToWarmState } from '../pwa/warm-status.js';
 
 function formatMebibytes(bytes: number): string {
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${formatFixed(bytes / (1024 * 1024), 1)} MB`;
 }
 
 export function PwaStatus(): React.JSX.Element | null {

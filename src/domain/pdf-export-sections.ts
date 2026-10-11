@@ -31,6 +31,7 @@
  * @conventions Pure and DOM-free, with neither jsPDF nor React dependencies, so it's Vitest-testable without a browser; `chart/pdf-export.ts` turns a selection into pages, `ui/PdfExportBuilder.tsx` builds a selection — neither needs this file's internals beyond its exported shape; synastry/composite are single optional fields needing a partner, transits/forecast/progressions/solarArc/profections/astrocartography are single optional fields needing no partner (so, unlike synastry/composite, they can appear in a preset); `charts` is the one array field.
  * @exports PdfSelection, PdfChartSectionOptions, PdfSynastrySectionOptions, PdfCompositeSectionOptions, PdfInterpretationOptions, PdfTransitsSectionOptions, PdfForecastSectionOptions, PdfTransitFilterPreset, PdfProgressionTechnique, PdfProgressionsSectionOptions, PdfSolarArcSectionOptions, PdfProfectionsSectionOptions, PdfAcgLineType, PDF_ACG_LINE_TYPES, PdfAstrocartographySectionOptions, PdfEclipsesSectionOptions, PDF_CHART_TABLES, PDF_CHART_TYPES, EMPTY_SELECTION, PDF_PRESETS, PDF_PRESET_KEYS, applyPdfPreset, matchPdfPreset, pdfSelectionIsEmpty, defaultChartSectionOptions, defaultSynastrySectionOptions, defaultCompositeSectionOptions, defaultTransitsSectionOptions, defaultForecastSectionOptions, defaultProgressionsSectionOptions, defaultSolarArcSectionOptions, defaultProfectionsSectionOptions, defaultAstrocartographySectionOptions, defaultEclipsesSectionOptions
  */
+import { utcDay } from '../ui/format.js';
 import type { ProgressedMcMethod } from '../astrology/progressions.js';
 import { EXTENDED_ACG_BODY_IDS, TRADITIONAL_ACG_BODY_IDS } from './astrocartography.js';
 import type { BodyId } from '../ephemeris/types.js';
@@ -210,7 +211,7 @@ export function defaultCompositeSectionOptions(partnerId: string): PdfCompositeS
 
 /** The same "today" default `returnFromDate`'s own builder-only default below uses, computed once a section is first ticked (presets leave `asOfDate` unset instead, resolved lazily at build time). */
 function todayDateString(): string {
-  return new Date().toISOString().slice(0, 10);
+  return utcDay();
 }
 
 /** Transits' own default parameters, for when it is first ticked in the builder — matches the live screen's own default filter (`'important'`). */
@@ -517,7 +518,7 @@ export function defaultChartSectionOptions(type: ChartType): PdfChartSectionOpti
         type,
         wheel: true,
         tables: EVERY_TABLE,
-        returnFromDate: new Date().toISOString().slice(0, 10),
+        returnFromDate: utcDay(),
       };
     default:
       return fullChartSection(type);

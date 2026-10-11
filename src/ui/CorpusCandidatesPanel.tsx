@@ -20,6 +20,7 @@
  * @conventions Accepting a candidate turns it into a live correction in CorpusOverridesPanel; nothing here is visible to a reader until accepted. The corpus-language selector is local state, independent from the app's own `useLocale()`. Text comes from co-located `CorpusCandidatesPanel.messages.ts` via `useMessages()`.
  * @exports CorpusCandidatesPanel
  */
+import { formatFixed } from './format.js';
 import { Select } from './primitives/Select.js';
 import { useEffect, useMemo, useState } from 'react';
 import { decideCorpusCandidates, listCorpusCandidates } from '../sync/admin-client.js';
@@ -252,7 +253,7 @@ export function CorpusCandidatesPanel(): React.JSX.Element {
                                   : candidate.triageSignal === 'no-baseline'
                                     ? t.triageNoBaseline
                                     : t.triageUnchecked}
-                              {candidate.triageScore !== undefined && ` (${candidate.triageScore.toFixed(2)})`}
+                              {candidate.triageScore !== undefined && ` (${formatFixed(candidate.triageScore, 2)})`}
                             </dd>
                             <dt>{t.tagsColumn}</dt>
                             <dd>

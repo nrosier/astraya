@@ -20,6 +20,7 @@
  * @conventions Calculation/display settings are edited in a local draft and only committed via "Apply and redraw" (every change needs a real recompute); planetary rulers and symbols are device preferences previewed live and put back by Cancel, kept by Apply or Save as my default. A preset (`extended-settings-presets.js`) can fill the whole profile in one go. Text comes from co-located `ExtendedSettingsPanel.messages.ts` via `useMessages()`.
  * @exports ExtendedSettingsPanel
  */
+import { formatDecimal } from './format.js';
 import { useEffect, useId, useRef, useState } from 'react';
 import { ASPECTS, DEFAULT_ORB_CONFIG } from '../astrology/aspects.js';
 import { ayanamsaByKey, AYANAMSAS } from '../astrology/ayanamsas.js';
@@ -273,8 +274,7 @@ export function ExtendedSettingsPanel({
 
   // The orbs now in force, so the slider's percentage is not the only thing said about them.
   const factor = 1 + draft.orbScalePercent / 100;
-  const number = new Intl.NumberFormat(locale === 'nl' ? 'nl-NL' : 'en-GB', { maximumFractionDigits: 1 });
-  const orb = (degrees: number): string => number.format(degrees * factor);
+  const orb = (degrees: number): string => formatDecimal(degrees * factor, 1, locale);
 
   return (
     <div className="extended-settings">
