@@ -122,6 +122,10 @@ const en = {
   shapeTabLabel: 'Chart shape',
   wheelViewLabel: 'Wheel',
   aspectsViewLabel: 'Aspects',
+  matrixViewLabel: 'Aspect matrix',
+  matrixLabel: 'Aspect matrix: select a pair to show it on the chart',
+  matrixHint:
+    'Each cell is the aspect between the body named on its row and the one in its column. The aspect symbol is followed by the orb in degrees, and by a for applying or s for separating; a heavy border marks an aspect within a degree of exact.',
   placementsViewLabel: 'Placements',
   patternsViewLabel: 'Patterns & condition',
   chartViewNavLabel: 'Chart view navigation',
@@ -335,6 +339,10 @@ const nl: typeof en = {
   shapeTabLabel: 'Horoscoopvorm',
   wheelViewLabel: 'Wiel',
   aspectsViewLabel: 'Aspecten',
+  matrixViewLabel: 'Aspectenmatrix',
+  matrixLabel: 'Aspectenmatrix: kies een paar om het op de horoscoop te tonen',
+  matrixHint:
+    'Elke cel is het aspect tussen het hemellichaam van de rij en dat van de kolom. Het aspectsymbool wordt gevolgd door de orb in graden en door a voor toenemend of s voor afnemend; een dikke rand markeert een aspect binnen een graad van exact.',
   placementsViewLabel: 'Plaatsingen',
   patternsViewLabel: 'Patronen & conditie',
   chartViewNavLabel: 'Navigatie grafiekweergave',

@@ -3,7 +3,7 @@
  *
  * - The **type** of chart: natal, draconic, harmonic, solar return, lunar return. Each is a complete chart
  *   cast for one person, so they share everything below. Carried as `?type=draconic`; no `type` means natal.
- * - The **view** of the chart screen (#511): Wheel, Aspects, Placements, or Patterns & condition, per
+ * - The **view** of the chart screen (#511): Wheel, Aspects, Aspect matrix, Placements, or Patterns & condition, per
  *   `docs/UI-UX_GUIDELINES.md` §2's target chart page. Carried as `?view=aspects`; no `view` means the wheel.
  *
  * These are route-level views with stable URLs and ordinary links — not ARIA tabs (the guideline's own
@@ -21,13 +21,13 @@
  */
 /**
  * @module ui/chart-sections
- * @purpose Defines and parses the Chart screen's two URL-encoded axes — chart type (natal/draconic/harmonic/solar-return/lunar-return) and view (wheel/aspects/placements/patterns) — so the header menu, type selector, and ChartViewNav stay in agreement.
+ * @purpose Defines and parses the Chart screen's two URL-encoded axes — chart type (natal/draconic/harmonic/solar-return/lunar-return) and view (wheel/aspects/matrix/placements/patterns) — so the header menu, type selector, and ChartViewNav stay in agreement.
  * @conventions Pure functions only (no DOM), parsed/tested like route.ts; labels are translated via ChartView's own messages object rather than owning its own *.messages.ts file. Views are route-level links per docs/UI-UX_GUIDELINES.md §2, not ARIA tabs.
  * @exports CHART_VIEWS, ChartViewKind, CHART_TYPES, ChartType, isChartType, chartTypeFromHash, isChartView, chartViewFromHash, chartHref, chartViewLabels
  */
 import type { chartViewMessages } from './ChartView.messages.js';
 
-export const CHART_VIEWS = ['wheel', 'aspects', 'placements', 'patterns'] as const;
+export const CHART_VIEWS = ['wheel', 'aspects', 'matrix', 'placements', 'patterns'] as const;
 export type ChartViewKind = (typeof CHART_VIEWS)[number];
 
 export const CHART_TYPES = ['natal', 'draconic', 'harmonic', 'solar-return', 'lunar-return'] as const;
@@ -71,6 +71,7 @@ export function chartViewLabels(t: typeof chartViewMessages.en): Record<ChartVie
   return {
     wheel: t.wheelViewLabel,
     aspects: t.aspectsViewLabel,
+    matrix: t.matrixViewLabel,
     placements: t.placementsViewLabel,
     patterns: t.patternsViewLabel,
   };

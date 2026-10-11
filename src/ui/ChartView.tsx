@@ -105,6 +105,7 @@ import { bodyId } from '../chart/body-id.js';
 import { parseSelectionKey } from '../interpretation/selection.js';
 import { selectionKey } from '../interpretation/selection-key.js';
 import { buildFocusObjectContext } from '../interpretation/focus-context.js';
+import { AspectMatrix } from './AspectMatrix.js';
 import { SelectionInspector, type WheelIsolationFacts } from './SelectionInspector.js';
 import { useRulershipChoice } from './rulership-setting.js';
 import type { RulershipChoice } from '../astrology/rulership.js';
@@ -583,6 +584,38 @@ export function derivedPointColumns(
 }
 
 /** The granular table kinds `renderTableTab` knows how to build (#511: these are grouped into the Aspects/Placements/Patterns views, not shown as separate tabs). */
+/** The Aspect matrix view (#511): the sheet's own grid, its aspect cells selecting that pair on the wheel. */
+function renderMatrixView(
+  data: ChartData,
+  displayName: string,
+  pointVisibility: PointVisibilityOptions,
+  t: typeof chartViewMessages.en,
+  locale: Locale,
+  selection?: TableSelection,
+): React.ReactNode {
+  const input = chartSheetInput(data, [], displayName, pointVisibility, (bodyKey) => bodyShortName(bodyKey, locale));
+  return (
+    <>
+      <p className="hint">{t.matrixHint}</p>
+      <AspectMatrix
+        input={input.matrix}
+        label={t.matrixLabel}
+        selection={
+          selection === undefined
+            ? undefined
+            : {
+                selectedKey: selection.selectedKey,
+                onToggle: selection.onToggle,
+                canSelect: (aKey, bKey) => selection.selectableBodies.has(aKey) && selection.selectableBodies.has(bKey),
+                describe: (aKey, bKey, aspectKey) =>
+                  `${bodyDisplayName(aKey, locale)} ${aspectDisplayName(aspectKey, locale)} ${bodyDisplayName(bKey, locale)}`,
+              }
+        }
+      />
+    </>
+  );
+}
+
 type TableTabKey = 'positions' | 'houses' | 'aspects' | 'dignities' | 'derived';
 
 /**
@@ -1375,6 +1408,7 @@ export function ChartDataView({
                           rulership,
                           symbolClass,
                         )}
+                      {tab === 'matrix' && renderMatrixView(load.data, displayName, pointVisibility, t, locale)}
                       {tab === 'placements' &&
                         renderPlacementsView(
                           load.data,
@@ -1451,6 +1485,8 @@ export function ChartDataView({
                       symbolClass,
                       tableSelection,
                     )}
+                  {currentTab === 'matrix' &&
+                    renderMatrixView(load.data, displayName, pointVisibility, t, locale, tableSelection)}
                   {currentTab === 'placements' &&
                     renderPlacementsView(
                       load.data,

@@ -4,7 +4,7 @@ Hand-rolled SVG rendering layer: chart wheels (single/bi-/tri-ring), aspect webs
 
 - `acg-map.ts` — Astrocartography world map (AC/DC/MC/IC + local-space lines). Deps: `astrology/astrocartography`, `astrology/bodies`, `domain/astrocartography`.
 - `antiscia-overlay.ts` — Antiscia/contra-antiscia chord overlay. Deps: `astrology/antiscia`, `./wheel`.
-- `aspect-matrix.ts` — Lower-triangular aspect staircase grid under wheel. Deps: `astrology/signs`, `./aspect-web`, `./glyphs`, `./sheet-geometry`.
+- `aspect-matrix.ts` — Lower-triangular aspect staircase grid: under the wheel in the sheet export, and as its own on-screen view with selectable cells. Deps: `astrology/signs`, `./aspect-web`, `./glyphs`, `./sheet-geometry`.
 - `aspect-web.ts` — Aspect chord rendering (cross-ring variant for bi-/tri-wheels). Deps: `astrology/aspects`, `astrology/bodies`, `./wheel`.
 - `astrochart-adapter.ts` — Interop with `@astrodraw/astrochart` library (dev-only reference wheel). Deps: `astrology/bodies`, `domain/chart-compute`.
 - `body-id.ts` — Multi-ring body identifier codec (`key@ring`). Deps: none (pure string codec).

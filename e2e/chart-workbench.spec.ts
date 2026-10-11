@@ -212,3 +212,40 @@ test('a derived point is selectable from the Placements table by keyboard, with 
   await page.keyboard.press('Enter');
   await expect(show).toHaveAttribute('aria-pressed', 'false');
 });
+
+test('the aspect matrix is a view of its own, and a cell selects its pair on the wheel by mouse and keyboard (#511)', async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await page.setViewportSize({ width: 1600, height: 1000 });
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  await createPerson(page, {
+    name: 'Ada Lovelace',
+    date: '1815-12-10',
+    time: '07:45:00',
+    latitude: '51.5072',
+    longitude: '-0.1276',
+  });
+  await openNatalChart(page, 'Aspect matrix');
+  await expect(page.getByRole('heading', { name: 'Aspect matrix', level: 2 })).toBeVisible();
+  await expect(page.locator('.chart-aspect-matrix')).toBeVisible();
+
+  // The Sun trines Mars in this chart: that cell is a button named for the pair.
+  const cell = page.getByRole('button', { name: /^Mars Trine Sun$|^Sun Trine Mars$/ });
+  await expect(cell).toHaveAttribute('aria-pressed', 'false');
+  await cell.click();
+  await expect(cell).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('.chart-selection-bar')).toBeVisible();
+
+  // The same selection is what the Aspects table shows, and the wheel's inspector.
+  await page.getByRole('link', { name: 'Aspects', exact: true }).click();
+  await expect(page.locator('tr.data-table-row-selected')).toContainText('Trine');
+  await page.getByRole('link', { name: 'Wheel', exact: true }).click();
+  await expect(page.locator('.selection-inspector-facts')).toBeVisible();
+
+  // Back on the matrix, Enter on the focused cell toggles it off.
+  await page.getByRole('link', { name: 'Aspect matrix', exact: true }).click();
+  await cell.focus();
+  await page.keyboard.press('Enter');
+  await expect(cell).toHaveAttribute('aria-pressed', 'false');
+});

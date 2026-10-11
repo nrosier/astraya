@@ -33,7 +33,7 @@
  * @module chart/aspect-matrix
  * @purpose Renders the Astro-Seek-style aspect grid (positions table + lower-triangular aspect staircase) that sits under the chart wheel.
  * @conventions Only the lower triangle below the diagonal is drawn (an aspect is symmetric); orb is shown as signed whole degrees (`separation - exact angle`, negative when short of exact) with an `a`/`s` applying/separating marker; cell/font sizes are fractions of a cell computed from panel width divided by row count, and the orb stack is hidden below `MIN_ORB_FONT_SIZE` to avoid overlapping, unreadably small text.
- * @exports renderAspectMatrixSvg, fitFontSize; MatrixBody, MatrixAspect, AspectMatrixInput types.
+ * @exports renderAspectMatrixSvg, fitFontSize; MatrixBody, MatrixAspect, MatrixInteraction, AspectMatrixInput types.
  */
 import { SIGNS } from '../astrology/signs.js';
 import type { Degrees } from '../ephemeris/types.js';
@@ -66,6 +66,16 @@ export interface MatrixAspect {
   /** `separation - exact angle`: negative when the pair is short of exact. */
   readonly signedOrb: Degrees;
   readonly applying: boolean;
+}
+
+/**
+ * Makes a drawn aspect cell a button (#511), for the on-screen grid: the exported sheet is static and passes none.
+ * A pair is only interactive where `describe` returns a label; the angles have no wheel symbol to select.
+ */
+export interface MatrixInteraction {
+  /** The accessible name of the pair's cell, or `undefined` when that pair cannot be selected. */
+  readonly describe: (a: MatrixBody, b: MatrixBody, aspect: MatrixAspect) => string | undefined;
+  readonly isSelected: (aKey: string, bKey: string) => boolean;
 }
 
 export interface AspectMatrixInput {
@@ -149,7 +159,11 @@ function positionParts(longitude: Degrees): {
  * the left. Nothing is drawn above the diagonal: an aspect is symmetric, so the upper triangle
  * would be the same data mirrored. `layout.width` is the width of the table plus the grid.
  */
-export function renderAspectMatrixSvg(input: AspectMatrixInput, layout: PanelLayout): PanelRender {
+export function renderAspectMatrixSvg(
+  input: AspectMatrixInput,
+  layout: PanelLayout,
+  interaction?: MatrixInteraction,
+): PanelRender {
   const count = input.bodies.length;
   if (count === 0) return { markup: '', height: 0 };
 
@@ -293,6 +307,8 @@ export function renderAspectMatrixSvg(input: AspectMatrixInput, layout: PanelLay
       if (columnBody === undefined) continue;
       const x = gridX + column * cell;
       const aspect = byPair.get(pairKey(rowBody.key, columnBody.key));
+      const label = aspect === undefined ? undefined : interaction?.describe(rowBody, columnBody, aspect);
+      const cellStart = parts.length;
       const tight =
         aspect !== undefined && Math.abs(aspect.signedOrb) < TIGHT_ORB_DEG ? ' chart-matrix-cell-tight' : '';
       parts.push(
@@ -337,6 +353,15 @@ export function renderAspectMatrixSvg(input: AspectMatrixInput, layout: PanelLay
             aspect.applying ? 'a' : 's',
             orbFont,
           ),
+        );
+      }
+      if (interaction !== undefined && label !== undefined) {
+        const pressed = interaction.isSelected(rowBody.key, columnBody.key);
+        const inner = parts.splice(cellStart).join('');
+        parts.push(
+          `<g class="chart-matrix-pair" role="button" tabindex="0" aria-pressed="${String(pressed)}" ` +
+            `aria-label="${escapeXml(label)}" data-aspect-body-a="${escapeXml(rowBody.key)}" data-ring-a="0" ` +
+            `data-aspect-body-b="${escapeXml(columnBody.key)}" data-ring-b="0">${inner}</g>`,
         );
       }
     }

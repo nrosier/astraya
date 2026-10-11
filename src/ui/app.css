@@ -2748,6 +2748,36 @@ svg text.chart-symbol-text-unicode {
   stroke-width: 1;
 }
 
+/* The matrix as a view of its own (#511): the sheet's drawing, scaled to the column, its aspect cells buttons. */
+.chart-matrix-view svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.chart-matrix-pair {
+  cursor: pointer;
+}
+
+.chart-matrix-pair rect {
+  pointer-events: all;
+}
+
+.chart-matrix-pair:hover rect.chart-matrix-cell,
+.chart-matrix-pair[aria-pressed='true'] rect.chart-matrix-cell {
+  fill: color-mix(in oklab, var(--accent) 14%, transparent);
+}
+
+.chart-matrix-pair[aria-pressed='true'] rect.chart-matrix-cell {
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.chart-matrix-pair:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
 /* An aspect within 1° of exact: a heavy border, as on the reference sheet (#413). */
 .chart-matrix-cell.chart-matrix-cell-tight {
   stroke: var(--fg);

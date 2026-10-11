@@ -133,7 +133,7 @@ test('every view of the natal chart has no automatically detectable accessibilit
   await openNatalChart(page);
   await expect(page.locator('div.chart-wheel')).toBeVisible();
 
-  for (const name of ['Aspects', 'Placements', 'Patterns & condition']) {
+  for (const name of ['Aspects', 'Aspect matrix', 'Placements', 'Patterns & condition']) {
     await page.getByRole('link', { name, exact: true }).click();
     await expect(page.getByRole('heading', { name, level: 2 })).toBeVisible();
     const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
