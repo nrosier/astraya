@@ -33,6 +33,7 @@
  * @exports ChartView, ChartDataView, emphasisColumns, positionColumns, houseCuspColumns, angleColumns, aspectColumns, dignityColumns, dispositorColumns, declinationColumns, antisciaColumns, fixedStarColumns, derivedPointColumns
  */
 import { formatFixed } from './format.js';
+import { Tooltip } from './primitives/Tooltip.js';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   almutenOfAscendant,
@@ -742,9 +743,9 @@ function renderTableTab(
           {almuten !== undefined && (
             <p className="hint">
               {t.almutenOfAscendantSentence(almuten.almutens.map((key) => bodyDisplayName(key, locale)).join(', '))}{' '}
-              <span title={t.almutenTooltip} style={{ cursor: 'help', fontSize: '0.9em', verticalAlign: 'super' }}>
+              <Tooltip text={t.almutenTooltip} label={t.almutenTooltipLabel}>
                 ?
-              </span>
+              </Tooltip>
             </p>
           )}
           <SortableTable
@@ -756,26 +757,13 @@ function renderTableTab(
           />
           <h4 className="dispositors-section-header" style={{ marginTop: '1.5rem', marginBottom: '0.5rem' }}>
             {t.dispositorsCaption}{' '}
-            {/* A bare non-focusable <span title> only reaches a mouse-hover user (#456); this is
-                a real button with an aria-label so the same explanation is announced on keyboard
-                focus too, kept visually identical via inline chrome-reset styles. */}
-            <button
-              type="button"
-              title={t.dispositorsTooltip}
-              aria-label={t.dispositorsTooltip}
-              style={{
-                cursor: 'help',
-                fontSize: '0.9em',
-                verticalAlign: 'super',
-                border: 'none',
-                background: 'none',
-                padding: 0,
-                color: 'inherit',
-                font: 'inherit',
-              }}
-            >
+            {/* The shared Tooltip (#456, #508) shows the same visible popup on hover, click and
+                keyboard focus — a bare <span title> or an unwired aria-label button only ever
+                reached a mouse-hover user, and never anyone who clicked expecting something to
+                open. */}
+            <Tooltip text={t.dispositorsTooltip} label={t.dispositorsTooltipLabel}>
               ?
-            </button>
+            </Tooltip>
           </h4>
           <p className="hint">{t.dispositorsHint}</p>
           <SortableTable
