@@ -1422,13 +1422,6 @@ label.stacked textarea:focus-visible {
   color: var(--fg);
 }
 
-/* The admin area (#414) sits apart at the end of the person strip, in the accent so an admin
-   finds it without it competing with the chart tabs. */
-.person-tab.person-tab-admin {
-  margin-left: auto;
-  color: var(--accent);
-}
-
 /* The two load-bearing details for the fused look: this background must match `.person-shelf
    .shell`'s exactly, and the negative margin pulls the tab down over the seam between the tab
    row and the content panel so no gap or line shows through underneath it. */
@@ -1982,62 +1975,6 @@ label.stacked textarea:focus-visible {
 
 .report-provenance {
   margin-top: 0.2rem;
-}
-
-/* Tier 2 mode picker (#411): a styled native select — keeps the platform's own keyboard and
-   screen-reader behavior — with the selected mode's description underneath. */
-.tier2-mode-select {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  margin: 0 0 1.25rem;
-  max-width: 32rem;
-}
-
-.tier2-mode-select label {
-  color: var(--muted);
-  font-size: 0.8rem;
-  font-weight: 650;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.tier2-mode-select select {
-  appearance: none;
-  width: 100%;
-  padding: 0.65rem 2.5rem 0.65rem 0.85rem;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background-color: var(--surface);
-  background-image:
-    linear-gradient(45deg, transparent 50%, var(--muted) 50%),
-    linear-gradient(135deg, var(--muted) 50%, transparent 50%);
-  background-position:
-    right 1.1rem center,
-    right 0.8rem center;
-  background-size: 0.3rem 0.3rem;
-  background-repeat: no-repeat;
-  color: var(--fg);
-  font: inherit;
-  font-size: 1rem;
-  cursor: pointer;
-  transition:
-    border-color 120ms ease,
-    background-color 120ms ease;
-}
-
-.tier2-mode-select select:hover {
-  background-color: var(--surface-hover);
-}
-
-.tier2-mode-select select:focus-visible {
-  border-color: var(--accent);
-  outline: 2px solid color-mix(in oklab, var(--accent) 55%, transparent);
-  outline-offset: 0;
-}
-
-.tier2-mode-select .hint {
-  margin: 0;
 }
 
 .ai-customized-rejection p {
@@ -3045,27 +2982,6 @@ svg text.chart-symbol-text-unicode {
   stroke: #1e293b;
 }
 
-/* Export controls under the wheel (#67): Download SVG/PNG and Export PDF. */
-.chart-export-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  margin: -0.5rem auto 1rem;
-}
-
-.chart-export-actions button,
-.chart-export-actions select {
-  padding: 0.35rem 0.85rem;
-  font-size: 0.8rem;
-}
-
-.chart-export-png {
-  display: flex;
-  gap: 0.5rem;
-}
-
 /* All tables stacked at once for the "Export PDF" print pass (#67); see the print rules below. */
 .chart-print-all {
   display: flex;
@@ -3086,7 +3002,6 @@ svg text.chart-symbol-text-unicode {
   .tabs,
   .person-nav,
   .chart-wheel-reference,
-  .chart-export-actions,
   .data-table-actions,
   .report-controls,
   .pwastatus,
@@ -3562,12 +3477,6 @@ svg text.chart-symbol-text-unicode {
 
 .settings-card-indent {
   margin-left: 1.5rem;
-}
-
-.settings-card-sublabel {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 600;
 }
 
 /* An informational note on the setting just above it, same shape as .warning but without the alarm colour. */
