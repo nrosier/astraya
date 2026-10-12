@@ -136,6 +136,18 @@ export const SETTINGS: readonly SettingDefinition[] = [
     resetTarget: 'This device default',
   },
   {
+    key: 'astraya:showDegreeSymbol',
+    scope: 'device',
+    owner: 'Whether degree-symbol (Sabian symbol) paragraphs show at all in the Report',
+    describeDefault: 'shown',
+    persistence: 'local-storage',
+    synced: false,
+    editingSurface: 'ReportView.tsx (report controls)',
+    commitMode: 'immediate',
+    sensitive: false,
+    resetTarget: 'This device default (shown)',
+  },
+  {
     key: 'astraya:transitFilter:<context>',
     scope: 'page',
     owner:

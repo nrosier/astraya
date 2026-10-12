@@ -71,6 +71,11 @@ const en = {
     definition:
       'A sensitive point worked out from other positions rather than a body in the sky, such as the Part of Fortune or a midpoint.',
   },
+  sabianSymbol: {
+    name: 'Sabian symbol',
+    definition:
+      'A traditional image and quality attached to one exact zodiac degree, independent of which planet or point stands there. Astraya shows it as an optional, secondary note next to a placement that falls on that degree.',
+  },
   ayanamsa: {
     name: 'Ayanamsa',
     definition:
@@ -223,6 +228,11 @@ const nl: { readonly [K in keyof typeof en]: Entry } = {
     name: 'Afgeleid punt',
     definition:
       'Een gevoelig punt dat uit andere posities wordt berekend in plaats van een lichaam aan de hemel te zijn, zoals het Fortuna-punt of een middelpunt.',
+  },
+  sabianSymbol: {
+    name: 'Sabian-symbool',
+    definition:
+      'Een traditioneel beeld en kwaliteit die bij precies één graad van de dierenriem horen, los van welke planeet of punt daar staat. Astraya toont dit als een optionele, secundaire aantekening naast een plaatsing die op die graad valt.',
   },
   ayanamsa: {
     name: 'Ayanamsa',

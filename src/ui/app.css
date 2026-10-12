@@ -1973,6 +1973,35 @@ label.stacked textarea:focus-visible {
   margin: 0;
 }
 
+/*
+ * Marks a degree-symbol (Sabian symbol) paragraph as its own distinct kind of note, not just
+ * another `.hint`-styled one (#527). Accent-tinted via `color-mix`, same approach as
+ * `.settings-card-note`, so it stays legible in both light and dark themes without a hardcoded
+ * color. The badge wraps a GlossaryTerm button; its default dotted-underline styling is
+ * overridden here so it reads as this pill's own label, not a separate inline control.
+ */
+.sabian-badge {
+  display: inline-flex;
+  align-items: center;
+  margin: 0 0 0.3rem;
+  padding: 0.1rem 0.55rem;
+  border: 1px solid color-mix(in oklab, var(--accent) 35%, var(--line));
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--accent) 12%, transparent);
+  color: var(--fg);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.sabian-badge .primitive-tooltip-trigger {
+  border-bottom: none;
+}
+
+.sabian-badge .primitive-tooltip-trigger:hover,
+.sabian-badge .primitive-tooltip-trigger:focus-visible {
+  text-decoration: underline;
+}
+
 .report-provenance {
   margin-top: 0.2rem;
 }

@@ -20,11 +20,17 @@
  * full, synchronous, every-locale corpus the test suite needs,
  * and importing it here would inline all of it into this app's JS bundle.
  * See corpus-client.ts for why.
+ *
+ * A second, always-visible control (#527) shows or hides degree-symbol (Sabian symbol)
+ * paragraphs altogether — a persisted per-device preference (`degree-symbol-setting.ts`), unlike
+ * "Show provenance", which is a dev-only, page-local one. A shown degree-symbol paragraph also
+ * carries a small named badge (`.sabian-badge`, linking `<GlossaryTerm id="sabianSymbol">`) so it
+ * reads as a distinct kind of note, not just another `.hint`-styled one.
  */
 /**
  * @module ReportView
- * @purpose Renders an interpretation Report's sections/paragraphs with a provenance toggle, plus the Tier 2 opt-in AI-customized interpretation sub-tab (grounded restyle or freeform full-chart modes).
- * @conventions Thin wiring over report-provenance.ts; fetches its corpus chunk at runtime via corpus-client.ts rather than importing the full synchronous CORPUS; uses ReportView.messages.ts for en/nl text via useMessages().
+ * @purpose Renders an interpretation Report's sections/paragraphs with a provenance toggle and a degree-symbol (Sabian symbol) visibility toggle, plus the Tier 2 opt-in AI-customized interpretation sub-tab (grounded restyle or freeform full-chart modes).
+ * @conventions Thin wiring over report-provenance.ts; fetches its corpus chunk at runtime via corpus-client.ts rather than importing the full synchronous CORPUS; uses ReportView.messages.ts for en/nl text via useMessages(); the degree-symbol toggle's persisted value lives in degree-symbol-setting.ts, not local state.
  * @exports ReportView
  */
 import { useEffect, useState } from 'react';
@@ -45,6 +51,8 @@ import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { RulershipSetting } from './RulershipSetting.js';
 import { useRulershipChoice } from './rulership-setting.js';
+import { useShowDegreeSymbol } from './degree-symbol-setting.js';
+import { GlossaryTerm } from './GlossaryTerm.js';
 import { useSessionUserOrUndefined } from './session-context.js';
 import { reportViewMessages } from './ReportView.messages.js';
 import {
@@ -87,6 +95,13 @@ function guardrailIssueMessage(t: typeof reportViewMessages.en, issue: Guardrail
   }
 }
 
+// degree-symbol (#405/#484) is a flat, always-secondary supplement next to the placement it
+// sits beside (never scored into rules.ts's ranking). Shared between the toggle's filter and
+// `Paragraph`'s own rendering, so the two never drift out of sync with each other.
+function isDegreeSymbolParagraph(paragraph: ReportParagraph): boolean {
+  return paragraph.placement?.category === 'degree-symbol';
+}
+
 function Paragraph({
   paragraph,
   showProvenance,
@@ -95,12 +110,18 @@ function Paragraph({
   readonly showProvenance: boolean;
 }): React.JSX.Element {
   const provenance = describeParagraphProvenance(paragraph);
-  // degree-symbol (#405/#484) is a flat, always-secondary supplement next to the placement it
-  // sits beside (never scored into rules.ts's ranking) — rendered visually de-emphasized, the
-  // same muted/smaller style every other secondary note in this app already uses (`.hint`).
-  const isDegreeSymbol = paragraph.placement?.category === 'degree-symbol';
+  // Rendered visually de-emphasized, the same muted/smaller style every other secondary note in
+  // this app already uses (`.hint`) — plus, since #527, a small named badge (not just `.hint`)
+  // so a reader can tell a Sabian-symbol note apart from an ordinary secondary one, and look up
+  // what it means without leaving the page.
+  const isDegreeSymbol = isDegreeSymbolParagraph(paragraph);
   return (
     <li className="report-paragraph">
+      {isDegreeSymbol && (
+        <div className="sabian-badge">
+          <GlossaryTerm id="sabianSymbol" />
+        </div>
+      )}
       <p className={isDegreeSymbol ? 'hint' : undefined}>{paragraph.text}</p>
       {showProvenance && (
         <p className="report-provenance hint">
@@ -367,6 +388,7 @@ export function ReportView({
   const [showProvenance, setShowProvenance] = useState(false);
   const [locale] = useLocale();
   const [rulership] = useRulershipChoice();
+  const [showDegreeSymbol, setShowDegreeSymbol] = useShowDegreeSymbol();
   const [corpus, setCorpus] = useState<readonly CorpusEntry[] | undefined>(undefined);
   const [loadError, setLoadError] = useState<string | undefined>(undefined);
 
@@ -421,6 +443,13 @@ export function ReportView({
   const controls = (
     <div className="report-controls">
       <RulershipSetting />
+      <Checkbox
+        label={t.showDegreeSymbol}
+        checked={showDegreeSymbol}
+        onChange={(value) => {
+          setShowDegreeSymbol(value);
+        }}
+      />
       {!import.meta.env.PROD && (
         <Checkbox
           label={t.showProvenance}
@@ -492,13 +521,15 @@ export function ReportView({
               <section key={section.id} id={`report-section-${section.id}`} className="report-section" tabIndex={-1}>
                 <h3>{section.title}</h3>
                 <ul>
-                  {section.paragraphs.map((paragraph, index) => (
-                    <Paragraph
-                      key={`${section.id}-${String(index)}`}
-                      paragraph={paragraph}
-                      showProvenance={showProvenance}
-                    />
-                  ))}
+                  {section.paragraphs
+                    .filter((paragraph) => showDegreeSymbol || !isDegreeSymbolParagraph(paragraph))
+                    .map((paragraph, index) => (
+                      <Paragraph
+                        key={`${section.id}-${String(index)}`}
+                        paragraph={paragraph}
+                        showProvenance={showProvenance}
+                      />
+                    ))}
                 </ul>
               </section>
             ))}

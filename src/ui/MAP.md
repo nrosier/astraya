@@ -62,7 +62,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `RectificationView.tsx` + `RectificationView.messages.ts` — Birth-time rectification screen (event-matching). Deps: `domain/rectification`, `astrology/signs`.
 - `RelationshipSummary.tsx` + `RelationshipSummary.messages.ts` — Grouped relationship-themes summary (contacts/overlays/Tier 2 AI). Deps: `domain/relationship-themes`, `domain/house-overlays`, `interpretation/tier2-client`.
 - `ReportScreen.tsx` + `ReportScreen.messages.ts` — Standalone written-report route. Deps: `domain/chart-compute`, `ReportView`.
-- `ReportView.tsx` + `ReportView.messages.ts` — Report rendering + provenance toggle + Tier 2 AI panel. Deps: `interpretation/report`, `interpretation/corpus-client`, `interpretation/tier2-client`.
+- `ReportView.tsx` + `ReportView.messages.ts` — Report rendering + provenance toggle + degree-symbol (Sabian symbol) visibility toggle and badge (#527) + Tier 2 AI panel. Deps: `interpretation/report`, `interpretation/corpus-client`, `interpretation/tier2-client`, `./degree-symbol-setting`, `./GlossaryTerm`.
 - `ReturnView.tsx` + `ReturnView.messages.ts` — Solar/lunar return charts (pick year/place/rendering). Deps: `domain/return-chart`.
 - `RulershipSetting.tsx` + `RulershipSetting.messages.ts` — Planetary-rulers preference (modern/traditional/both), built on the shared `Select` primitive. Deps: `./rulership-setting`, `astrology/rulership`, `./primitives/Select`.
 - `settings-registry.ts` — #506/#509 typed registry of every persisted setting's scope/owner/persistence/sync/commit-model, pure metadata (existing modules keep owning values). Deps: none.
@@ -87,6 +87,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `chart-raster.ts` — Rasterizes wheel SVG to PNG via `canvas`. Deps: none (browser APIs).
 - `chart-sections.ts` — Charts page URL axes (type + view: wheel/aspects/placements/patterns). Deps: `ChartView.messages`.
 - `cycles.ts` — Planetary-cycles screen (body/aspect presets + row shaping). Deps: `astrology/bodies`, `astrology/mutual-aspects`, `astrology/signs`, `time/julian`.
+- `degree-symbol-setting.ts` — Device preference for whether degree-symbol (Sabian symbol) paragraphs show in the Report (#527). Deps: none.
 - `download.ts` — Shared file-download mechanism (object URL anchor). Deps: none (browser APIs).
 - `eclipses.ts` — Eclipses screen (search capping + display rows). Deps: `astrology/eclipses`, `astrology/signs`, `time/julian`.
 - `electional.ts` — Electional screen (form parsing + result formatting). Deps: `astrology/electional`, `time/julian`, `./place-fields`.

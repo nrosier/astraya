@@ -219,6 +219,93 @@ describe('ReportView corpus loading (locale comes from the shared locale.ts stor
     });
     container.remove();
   });
+
+  function degreeSymbolCheckbox(container: HTMLElement): HTMLInputElement {
+    const label = Array.from(container.querySelectorAll('label')).find((candidate) =>
+      /sabian symbol notes|sabian-symboolnotities/i.test(candidate.textContent),
+    );
+    const input = label?.querySelector('input[type="checkbox"]');
+    if (!(input instanceof HTMLInputElement)) throw new Error('test fixture bug: no degree-symbol toggle rendered');
+    return input;
+  }
+
+  it('offers a degree-symbol (Sabian symbol) visibility toggle, checked by default (#527)', async () => {
+    const { container, root } = await mount();
+
+    const checkbox = degreeSymbolCheckbox(container);
+    expect(checkbox.checked).toBe(true);
+
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('hides the degree-symbol paragraphs, and their badge, when the toggle is unchecked (#527)', async () => {
+    const { container, root } = await mount();
+
+    const coreIdentity = container.querySelector('#report-section-core-identity');
+    if (coreIdentity === null) throw new Error('test fixture bug: no core-identity section rendered');
+    expect(coreIdentity.querySelector('.sabian-badge')).not.toBeNull();
+
+    await act(async () => {
+      degreeSymbolCheckbox(container).click();
+      await Promise.resolve();
+    });
+
+    const remainingTexts = Array.from(coreIdentity.querySelectorAll('li.report-paragraph')).map(
+      (li) => li.querySelector('p')?.textContent,
+    );
+    expect(remainingTexts.some((text) => text?.includes('degree of'))).toBe(false);
+    expect(coreIdentity.querySelector('.sabian-badge')).toBeNull();
+    // Unrelated paragraphs stay untouched by the filter.
+    expect(remainingTexts.length).toBeGreaterThan(0);
+
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('names the degree-symbol badge "Sabian symbol" with its glossary definition behind a tooltip (#527)', async () => {
+    const { container, root } = await mount();
+
+    const coreIdentity = container.querySelector('#report-section-core-identity');
+    const badge = coreIdentity?.querySelector('.sabian-badge');
+    if (badge === null || badge === undefined) throw new Error('test fixture bug: no sabian-badge rendered');
+    const trigger = badge.querySelector('.primitive-tooltip-trigger');
+    expect(trigger?.textContent).toBe('Sabian symbol');
+
+    await act(async () => {
+      (trigger as HTMLButtonElement).click();
+      await Promise.resolve();
+    });
+    expect(badge.querySelector('[role="tooltip"]')?.textContent).toContain('one exact zodiac degree');
+
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('is in Dutch when the language is Dutch (#527)', async () => {
+    setLocale('nl');
+    const { container, root } = await mount();
+
+    expect(degreeSymbolCheckbox(container).checked).toBe(true);
+    const label = Array.from(container.querySelectorAll('label')).find((candidate) =>
+      candidate.textContent.includes('Sabian-symboolnotities tonen'),
+    );
+    expect(label).toBeDefined();
+
+    const coreIdentity = container.querySelector('#report-section-core-identity');
+    expect(coreIdentity?.querySelector('.sabian-badge .primitive-tooltip-trigger')?.textContent).toBe('Sabian-symbool');
+
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+  });
 });
 
 function findTab(container: HTMLElement, label: string): HTMLButtonElement {
