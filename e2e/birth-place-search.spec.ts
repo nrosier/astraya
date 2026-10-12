@@ -118,7 +118,7 @@ test('a search with no matches shows an inline "not found" message (#290)', asyn
   await labeledField(page, /^Search for a place by name/, 'input[type="text"]').fill('Nowhereville');
   await page.getByRole('button', { name: 'Search', exact: true }).click();
 
-  await expect(page.getByRole('alert').filter({ hasText: 'No matching place was found' })).toBeVisible();
+  await expect(page.getByRole('status').filter({ hasText: 'No matching place was found' })).toBeVisible();
 });
 
 test('a search-request failure shows an inline message, and coordinates are still editable by hand (#290)', async ({

@@ -32,6 +32,9 @@ import { assembleReport, reportPlacementKeys, type Report, type ReportParagraph 
 import { loadRuntimeCorpus } from '../interpretation/corpus-client.js';
 import type { CorpusEntry, Locale } from '../interpretation/schema.js';
 import { checkCustomPrompt, type GuardrailIssue } from '../interpretation/prompt-guardrail.js';
+import { useOnline } from './online-status.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
+import { sharedMessages } from './shared.messages.js';
 import { describeParagraphProvenance } from './report-provenance.js';
 import { savedKindLabel } from './result-basis-label.js';
 import { formatSavedTime } from './saved-time.js';
@@ -136,6 +139,8 @@ function AiCustomizedPanel({
   readonly chartKind: 'natal' | 'composite';
 }): React.JSX.Element {
   const t = useMessages(reportViewMessages);
+  const shared = useMessages(sharedMessages);
+  const online = useOnline();
   const user = useSessionUserOrUndefined();
   const [consent, setConsent] = useState(false);
   const [mode, setMode] = useState<Tier2Mode>('grounded');
@@ -294,13 +299,20 @@ function AiCustomizedPanel({
       )}
       <button
         type="button"
-        disabled={!consent || (mode === 'grounded' && customPrompt === '') || guardrailIssues.length > 0 || generating}
+        disabled={
+          !consent ||
+          (mode === 'grounded' && customPrompt === '') ||
+          guardrailIssues.length > 0 ||
+          generating ||
+          !online
+        }
         aria-label={disabledReason === undefined ? undefined : `${t.tier2Generate} — ${disabledReason}`}
         onClick={handleGenerate}
       >
         {generating ? t.tier2Generating : t.tier2Generate}
       </button>
-      {error !== undefined && <p role="alert">{t.tier2Error(error)}</p>}
+      {!online && <StatusMessage kind="offline">{shared.offlineNeeded}</StatusMessage>}
+      {error !== undefined && <StatusMessage kind="error">{t.tier2Error(error)}</StatusMessage>}
       {rejection !== undefined && (
         <div className="ai-customized-rejection warning" role="alert">
           <p>{t.tier2CustomizationRejected}</p>

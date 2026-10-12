@@ -14,6 +14,7 @@ const en = {
   search: 'Search',
   searching: 'Searching…',
   searchNotFound: 'No matching place was found.',
+  offlineEnterCoordinates: 'You can still enter the coordinates yourself.',
   searchFailed: 'The place search failed. You can still enter coordinates yourself.',
   searchResultsLabel: 'Matching places — choose one',
 };
@@ -25,6 +26,7 @@ const nl: typeof en = {
   search: 'Zoeken',
   searching: 'Zoeken…',
   searchNotFound: 'Er is geen overeenkomende plaats gevonden.',
+  offlineEnterCoordinates: 'Je kunt nog steeds zelf de coördinaten invoeren.',
   searchFailed: 'Het zoeken naar de plaats is mislukt. Je kunt nog steeds zelf coördinaten invoeren.',
   searchResultsLabel: 'Overeenkomende plaatsen — kies er een',
 };

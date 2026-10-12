@@ -19,6 +19,8 @@
  * @exports BirthPlaceSearch
  */
 import { useEffect, useRef, useState } from 'react';
+import { useOnline } from './online-status.js';
+import { sharedMessages } from './shared.messages.js';
 import { birthPlaceSearchMessages } from './BirthPlaceSearch.messages.js';
 import { forwardGeocode } from './forward-geocode.js';
 import { geocodeHost } from './geocode-provider.js';
@@ -37,6 +39,8 @@ export function BirthPlaceSearch({
   const [searchStatus, setSearchStatus] = useState<SearchStatus>('idle');
   const [searchResults, setSearchResults] = useState<ForwardGeocodeResult[]>([]);
   const t = useMessages(birthPlaceSearchMessages);
+  const shared = useMessages(sharedMessages);
+  const online = useOnline();
   // The in-flight search's controller, so a newer search can cancel a slower older one (#463)
   // before applying its own results — otherwise an out-of-order response could overwrite a more
   // recent search with stale coordinates.
@@ -92,11 +96,18 @@ export function BirthPlaceSearch({
           />
         </label>
         <p className="hint">{t.searchDisclosure(geocodeHost)}</p>
-        <button type="submit" className="quiet" disabled={searchStatus === 'searching' || searchQuery.trim() === ''}>
+        <button
+          type="submit"
+          className="quiet"
+          disabled={searchStatus === 'searching' || searchQuery.trim() === '' || !online}
+        >
           {searchStatus === 'searching' ? t.searching : t.search}
         </button>
       </form>
-      {searchStatus === 'not-found' && <StatusMessage kind="error">{t.searchNotFound}</StatusMessage>}
+      {!online && (
+        <StatusMessage kind="offline">{`${shared.offlineNeeded} ${t.offlineEnterCoordinates}`}</StatusMessage>
+      )}
+      {searchStatus === 'not-found' && <StatusMessage kind="empty">{t.searchNotFound}</StatusMessage>}
       {searchStatus === 'error' && <StatusMessage kind="error">{t.searchFailed}</StatusMessage>}
       {searchResults.length > 0 && (
         <ul className="birth-place-search-results" aria-label={t.searchResultsLabel}>
