@@ -155,21 +155,17 @@ function UserRow({
       </td>
       <td>
         {canManage ? (
-          <select
-            aria-label={t.roleSelectLabel(user.username)}
+          <Select
+            label={t.roleSelectLabel(user.username)}
+            hideLabel
             value={user.role}
             disabled={disabled || isSelf}
-            onChange={(event) => {
-              const next = ROLE_ORDER.find((candidate) => candidate === event.target.value);
+            options={ROLE_ORDER.map((option) => ({ value: option, label: roleLabel(option, t) }))}
+            onChange={(value) => {
+              const next = ROLE_ORDER.find((candidate) => candidate === value);
               if (next !== undefined) changeRole(next);
             }}
-          >
-            {ROLE_ORDER.map((option) => (
-              <option key={option} value={option}>
-                {roleLabel(option, t)}
-              </option>
-            ))}
-          </select>
+          />
         ) : (
           roleLabel(user.role, t)
         )}

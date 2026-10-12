@@ -15,6 +15,7 @@
  * @conventions Follows FocusInterpretation.tsx's consent/generate/saved-history structure for the Tier 2 panel; uses RelationshipSummary.messages.ts for en/nl text via useMessages().
  * @exports RelationshipSummary
  */
+import { Checkbox } from './primitives/Checkbox.js';
 import { useOnline } from './online-status.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { sharedMessages } from './shared.messages.js';
@@ -251,16 +252,13 @@ export function RelationshipSummary({
 
       <h4>{t.tier2Heading}</h4>
       {user !== undefined && (
-        <label>
-          <input
-            type="checkbox"
-            checked={consent}
-            onChange={(event) => {
-              setConsent(event.target.checked);
-            }}
-          />{' '}
-          {t.tier2Consent}
-        </label>
+        <Checkbox
+          label={t.tier2Consent}
+          checked={consent}
+          onChange={(value) => {
+            setConsent(value);
+          }}
+        />
       )}
       <button
         type="button"

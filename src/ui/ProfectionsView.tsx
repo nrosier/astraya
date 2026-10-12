@@ -17,6 +17,7 @@
  * @conventions Gated the same way as ChartView.tsx's houses/angles tables for unknown birth time; uses ProfectionsView.messages.ts for en/nl text via useMessages().
  * @exports ProfectionsView; toRow, columns, ProfectionRow (reused by pdf-export-plan.ts)
  */
+import { DateField } from './primitives/DateField.js';
 import { GlossaryTerms } from './GlossaryTerm.js';
 import { personHref } from './route.js';
 import { useEffect, useMemo, useState } from 'react';
@@ -204,16 +205,7 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
       </section>
 
       <p>
-        <label>
-          {t.asOfLabel}{' '}
-          <input
-            type="date"
-            value={asOf}
-            onChange={(event) => {
-              setAsOf(event.target.value);
-            }}
-          />
-        </label>
+        <DateField label={t.asOfLabel} value={asOf} onChange={setAsOf} />
       </p>
 
       {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}

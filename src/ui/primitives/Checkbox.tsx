@@ -16,9 +16,21 @@ export interface CheckboxProps {
   readonly onChange: (checked: boolean) => void;
   readonly disabled?: boolean | undefined;
   readonly id?: string | undefined;
+  /** The label stays for assistive technology but is not drawn, e.g. a row-select box in a table. */
+  readonly hideLabel?: boolean | undefined;
+  /** One line of explanation under the label. */
+  readonly description?: string | undefined;
 }
 
-export function Checkbox({ label, checked, onChange, disabled, id }: CheckboxProps): React.JSX.Element {
+export function Checkbox({
+  label,
+  checked,
+  onChange,
+  disabled,
+  id,
+  hideLabel,
+  description,
+}: CheckboxProps): React.JSX.Element {
   return (
     <label className="primitive-choice">
       <input
@@ -30,7 +42,13 @@ export function Checkbox({ label, checked, onChange, disabled, id }: CheckboxPro
           onChange(event.target.checked);
         }}
       />{' '}
-      {label}
+      <span className={hideLabel === true ? 'sr-only' : undefined}>{label}</span>
+      {description !== undefined && (
+        <>
+          <br />
+          <span className="hint">{description}</span>
+        </>
+      )}
     </label>
   );
 }

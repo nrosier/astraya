@@ -19,6 +19,7 @@
  * @exports BirthPlaceSearch
  */
 import { useEffect, useRef, useState } from 'react';
+import { TextField } from './primitives/TextField.js';
 import { useOnline } from './online-status.js';
 import { sharedMessages } from './shared.messages.js';
 import { birthPlaceSearchMessages } from './BirthPlaceSearch.messages.js';
@@ -84,17 +85,12 @@ export function BirthPlaceSearch({
   return (
     <div className="birth-place-search">
       <form className="birth-place-search-form" onSubmit={searchByName}>
-        <label>
-          {t.searchByName}
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(event) => {
-              setSearchQuery(event.target.value);
-            }}
-            placeholder={t.searchByNamePlaceholder}
-          />
-        </label>
+        <TextField
+          label={t.searchByName}
+          value={searchQuery}
+          placeholder={t.searchByNamePlaceholder}
+          onChange={setSearchQuery}
+        />
         <p className="hint">{t.searchDisclosure(geocodeHost)}</p>
         <button
           type="submit"

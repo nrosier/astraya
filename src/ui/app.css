@@ -860,43 +860,16 @@ footer {
 }
 
 .birth-place-search-form {
-  display: flex;
-  align-items: flex-end;
-  gap: 0.5rem;
+  display: grid;
+  justify-items: start;
+  gap: var(--space-2);
   margin-bottom: 0.5rem;
 }
 
-.birth-place-search-form label {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  flex: 1;
+/* The shared TextField owns the input's look; the form only gives it the free width. */
+.birth-place-search-form .primitive-field {
+  width: 100%;
   min-width: 0;
-  color: var(--muted);
-  font-size: 0.8rem;
-  font-weight: 550;
-  letter-spacing: 0.02em;
-}
-
-.birth-place-search-form input {
-  min-width: 0;
-  padding: 0.55rem 0.7rem;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  color: var(--fg);
-  font: inherit;
-  font-size: 1rem;
-}
-
-.birth-place-search-form input:hover {
-  background: var(--surface-hover);
-}
-
-.birth-place-search-form input:focus-visible {
-  border-color: var(--accent);
-  outline: 2px solid color-mix(in oklab, var(--accent) 55%, transparent);
-  outline-offset: 0;
 }
 
 /* Click-to-confirm results (#290) — always a list, even for a single match, so a search never
@@ -1560,14 +1533,6 @@ label.stacked textarea:focus-visible {
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-popover);
-}
-
-.person-switcher-filter-label {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  font-size: var(--text-sm);
-  color: var(--muted);
 }
 
 .person-switcher-list {

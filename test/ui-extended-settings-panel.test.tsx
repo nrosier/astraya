@@ -286,11 +286,9 @@ describe('ExtendedSettingsPanel', () => {
     const { container, root } = await mount(fakeProvider(), onRedraw);
     openCard(container);
 
-    const interpolatedRadio = Array.from(container.querySelectorAll<HTMLInputElement>('input[type="radio"]')).find(
-      (radio) =>
-        radio.name === 'extended-settings-lilith' &&
-        (radio.closest('label')?.textContent ?? '').includes('Interpolated'),
-    );
+    const interpolatedRadio = Array.from(
+      container.querySelectorAll<HTMLInputElement>('[role="radiogroup"][aria-label*="Lilith"] input[type="radio"]'),
+    ).find((radio) => (radio.closest('label')?.textContent ?? '').includes('Interpolated'));
     expect(interpolatedRadio).not.toBeUndefined();
     act(() => {
       interpolatedRadio?.click();

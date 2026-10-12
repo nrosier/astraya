@@ -26,6 +26,7 @@
  * @conventions Follows TransitView.tsx's person-not-found/incomplete-moment/unknown-time gating; uses PeriodicTransitView.messages.ts for en/nl text via useMessages().
  * @exports PeriodicTransitView, bodyName, formatUtc, localizedSignName, signHouseLabel, contactRows, contactColumns, exactEventRows, exactEventColumns, stationRows, stationColumns
  */
+import { DateField } from './primitives/DateField.js';
 import { GlossaryTerms } from './GlossaryTerm.js';
 import { personHref } from './route.js';
 import { Select } from './primitives/Select.js';
@@ -403,16 +404,7 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
       <p className="hint">{t.hint(person.displayName || t.thisFallback)}</p>
 
       <p>
-        <label>
-          {t.asOfLabel}{' '}
-          <input
-            type="date"
-            value={asOf}
-            onChange={(event) => {
-              setAsOf(event.target.value);
-            }}
-          />
-        </label>
+        <DateField label={t.asOfLabel} value={asOf} onChange={setAsOf} />
       </p>
 
       {data !== undefined && (

@@ -25,6 +25,7 @@ import {
   type SavedInterpretationSummary,
   type Tier2Section,
 } from '../interpretation/tier2-client.js';
+import { Checkbox } from './primitives/Checkbox.js';
 import { useOnline } from './online-status.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { sharedMessages } from './shared.messages.js';
@@ -122,16 +123,13 @@ export function FocusInterpretation({
     <section className="focus-interpretation" aria-label={t.heading}>
       <h4>{t.heading}</h4>
       {user !== undefined && (
-        <label>
-          <input
-            type="checkbox"
-            checked={consent}
-            onChange={(event) => {
-              setConsent(event.target.checked);
-            }}
-          />{' '}
-          {t.consent}
-        </label>
+        <Checkbox
+          label={t.consent}
+          checked={consent}
+          onChange={(value) => {
+            setConsent(value);
+          }}
+        />
       )}
       <button
         type="button"

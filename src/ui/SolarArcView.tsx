@@ -15,6 +15,7 @@
  * @conventions Gated for unknown birth time like other angle-dependent screens; uses SolarArcView.messages.ts for en/nl text via useMessages().
  * @exports SolarArcView; positionRows, positionColumns, contactColumns, toContactRow, formatExactDate, ContactRow (reused by pdf-export-plan.ts)
  */
+import { DateField } from './primitives/DateField.js';
 import { GlossaryTerms } from './GlossaryTerm.js';
 import { personHref } from './route.js';
 import { useEffect, useMemo, useState } from 'react';
@@ -250,16 +251,7 @@ export function SolarArcView({ personId }: { personId: string }): React.JSX.Elem
       <p className="hint">{t.hint}</p>
 
       <p>
-        <label>
-          {t.asOfLabel}{' '}
-          <input
-            type="date"
-            value={asOf}
-            onChange={(event) => {
-              setAsOf(event.target.value);
-            }}
-          />
-        </label>
+        <DateField label={t.asOfLabel} value={asOf} onChange={setAsOf} />
       </p>
 
       {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}

@@ -12,6 +12,7 @@
  * @conventions Gated for incomplete/unknown-time birth records like other person-scoped views; uses ReturnView.messages.ts for en/nl text via useMessages().
  * @exports ReturnView
  */
+import { ChoiceGroup } from './primitives/ChoiceGroup.js';
 import { GlossaryTerms } from './GlossaryTerm.js';
 import { DateField } from './primitives/DateField.js';
 import { NumberField } from './primitives/NumberField.js';
@@ -240,56 +241,21 @@ export function ReturnView({
       <fieldset className="field-group">
         <legend>{t.placeLegend}</legend>
         <p className="hint">{t.placeHint}</p>
-        <label>
-          <input
-            type="radio"
-            name="return-place"
-            checked={!otherPlace}
-            onChange={() => {
-              setOtherPlace(false);
-            }}
-          />{' '}
-          {t.placeBirth}
-        </label>{' '}
-        <label>
-          <input
-            type="radio"
-            name="return-place"
-            checked={otherPlace}
-            onChange={() => {
-              setOtherPlace(true);
-            }}
-          />{' '}
-          {t.placeOther}
-        </label>
+        <ChoiceGroup
+          label={t.placeLegend}
+          value={otherPlace ? 'other' : 'birth'}
+          options={[
+            { value: 'birth', label: t.placeBirth },
+            { value: 'other', label: t.placeOther },
+          ]}
+          onChange={(value) => {
+            setOtherPlace(value === 'other');
+          }}
+        />
         {otherPlace && (
-          <div>
-            <label>
-              {t.latitudeLabel}{' '}
-              <input
-                type="number"
-                inputMode="decimal"
-                min={-90}
-                max={90}
-                value={lat}
-                onChange={(event) => {
-                  setLat(event.target.value);
-                }}
-              />
-            </label>{' '}
-            <label>
-              {t.longitudeLabel}{' '}
-              <input
-                type="number"
-                inputMode="decimal"
-                min={-180}
-                max={180}
-                value={lon}
-                onChange={(event) => {
-                  setLon(event.target.value);
-                }}
-              />
-            </label>
+          <div className="field-grid">
+            <NumberField label={t.latitudeLabel} step="any" min={-90} max={90} value={lat} onChange={setLat} />
+            <NumberField label={t.longitudeLabel} step="any" min={-180} max={180} value={lon} onChange={setLon} />
           </div>
         )}
         {placeInvalid && lat !== '' && lon !== '' && <StatusMessage kind="error">{t.invalidPlace}</StatusMessage>}

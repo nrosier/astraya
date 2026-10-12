@@ -15,7 +15,8 @@
  * @conventions Reuses AppNav.tsx's shared ExclusiveOpen instance and NavGroup-equivalent markup/CSS classes rather than a second dropdown mechanism; uses feature-registry.ts to decide the destination href, never a hand-written hash.
  * @exports PersonSwitcher
  */
-import { useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
+import { TextField } from './primitives/TextField.js';
 import { featureFor, hrefFor } from './feature-registry.js';
 import { useMessages } from './messages.js';
 import { ordered } from './people-list.js';
@@ -53,6 +54,10 @@ export function PersonSwitcher({
   const [filter, setFilter] = useState('');
   const popupId = useId();
   const isOpen = dropdown.open === GROUP_KEY;
+  const filterRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (isOpen) filterRef.current?.focus();
+  }, [isOpen]);
 
   const people = ordered(state.people).filter((candidate) =>
     candidate.displayName.toLowerCase().includes(filter.trim().toLowerCase()),
@@ -83,18 +88,13 @@ export function PersonSwitcher({
       </button>
       {isOpen && (
         <div id={popupId} className="person-switcher-popup" role="dialog" aria-label={t.popupLabel}>
-          <label className="person-switcher-filter-label">
-            {t.filterLabel}
-            <input
-              type="text"
-              value={filter}
-              autoFocus
-              placeholder={t.filterPlaceholder}
-              onChange={(event) => {
-                setFilter(event.target.value);
-              }}
-            />
-          </label>
+          <TextField
+            label={t.filterLabel}
+            value={filter}
+            inputRef={filterRef}
+            placeholder={t.filterPlaceholder}
+            onChange={setFilter}
+          />
           <ul className="person-switcher-list">
             {people.length === 0 && <li className="hint">{t.noMatches}</li>}
             {people.map((candidate) => (

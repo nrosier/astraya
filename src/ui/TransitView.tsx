@@ -23,6 +23,7 @@
  * @exports TransitView, contactColumns
  */
 
+import { DateField } from './primitives/DateField.js';
 import { GlossaryTerms } from './GlossaryTerm.js';
 import { personHref } from './route.js';
 import { useSymbolClass } from './symbol-setting.js';
@@ -250,16 +251,7 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
       <p className="hint">{t.hint(person.displayName || t.thisPerson)}</p>
 
       <p>
-        <label>
-          {t.asOfLabel}{' '}
-          <input
-            type="date"
-            value={asOf}
-            onChange={(event) => {
-              setAsOf(event.target.value);
-            }}
-          />
-        </label>
+        <DateField label={t.asOfLabel} value={asOf} onChange={setAsOf} />
       </p>
 
       {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}

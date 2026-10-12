@@ -20,6 +20,7 @@
  * @conventions Accepting a candidate turns it into a live correction in CorpusOverridesPanel; nothing here is visible to a reader until accepted. The corpus-language selector is local state, independent from the app's own `useLocale()`. Text comes from co-located `CorpusCandidatesPanel.messages.ts` via `useMessages()`.
  * @exports CorpusCandidatesPanel
  */
+import { Checkbox } from './primitives/Checkbox.js';
 import { formatFixed } from './format.js';
 import { Select } from './primitives/Select.js';
 import { useEffect, useMemo, useState } from 'react';
@@ -156,16 +157,13 @@ export function CorpusCandidatesPanel(): React.JSX.Element {
       ) : (
         <>
           <p className="actions">
-            <label>
-              <input
-                type="checkbox"
-                checked={selected.size > 0 && selected.size === candidates.length}
-                onChange={(event) => {
-                  toggleSelectAll(event.target.checked);
-                }}
-              />{' '}
-              {t.selectAllLabel}
-            </label>{' '}
+            <Checkbox
+              label={t.selectAllLabel}
+              checked={selected.size > 0 && selected.size === candidates.length}
+              onChange={(value) => {
+                toggleSelectAll(value);
+              }}
+            />{' '}
             {t.selectedCount(String(selected.size))}{' '}
             <button
               type="button"
@@ -205,13 +203,13 @@ export function CorpusCandidatesPanel(): React.JSX.Element {
                     return (
                       <tr key={candidate.id}>
                         <td>
-                          <input
-                            type="checkbox"
+                          <Checkbox
+                            hideLabel
+                            label={labelForKey(candidate.key, uiLocale)}
                             checked={selected.has(candidate.id)}
-                            onChange={(event) => {
-                              toggleSelected(candidate.id, event.target.checked);
+                            onChange={(value) => {
+                              toggleSelected(candidate.id, value);
                             }}
-                            aria-label={labelForKey(candidate.key, uiLocale)}
                           />
                         </td>
                         <td>

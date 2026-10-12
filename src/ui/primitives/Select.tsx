@@ -33,6 +33,8 @@ export interface SelectProps {
   readonly optional?: boolean | undefined;
   readonly size?: ButtonSize;
   readonly disabled?: boolean | undefined;
+  /** The label stays for assistive technology but is not drawn, e.g. a select inside a table cell. */
+  readonly hideLabel?: boolean | undefined;
 }
 
 export function Select({
@@ -45,10 +47,11 @@ export function Select({
   optional,
   size = 'standard',
   disabled,
+  hideLabel,
 }: SelectProps): React.JSX.Element {
   const ids = useFieldIds(help !== undefined, error !== undefined);
   return (
-    <Field label={label} ids={ids} help={help} error={error} optional={optional}>
+    <Field label={label} ids={ids} help={help} error={error} optional={optional} hideLabel={hideLabel}>
       <select
         id={ids.inputId}
         className={size === 'compact' ? 'primitive-control-compact' : undefined}

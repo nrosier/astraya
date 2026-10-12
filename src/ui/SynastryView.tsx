@@ -21,6 +21,7 @@
  * @conventions Calls renderMultiWheelSvg directly like TransitView.tsx does, bypassing the single-chart AstroChartWheel; uses SynastryView.messages.ts for en/nl text via useMessages().
  * @exports SynastryView, aspectColumns
  */
+import { Select } from './primitives/Select.js';
 import { GlossaryTerms } from './GlossaryTerm.js';
 import { formatFixed } from './format.js';
 import { personHref } from './route.js';
@@ -271,22 +272,18 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
       <p className="hint">{t.hint}</p>
 
       <p>
-        <label>
-          {t.compareWithLabel}{' '}
-          <select
-            value={partnerId}
-            onChange={(event) => {
-              setPartnerId(event.target.value);
-            }}
-          >
-            <option value="">{t.choosePersonOption}</option>
-            {candidates.map((candidate) => (
-              <option key={candidate.id} value={candidate.id}>
-                {candidate.displayName || t.unnamedOption}
-              </option>
-            ))}
-          </select>
-        </label>
+        <Select
+          label={t.compareWithLabel}
+          value={partnerId}
+          onChange={setPartnerId}
+          options={[
+            { value: '', label: t.choosePersonOption },
+            ...candidates.map((candidate) => ({
+              value: candidate.id,
+              label: candidate.displayName || t.unnamedOption,
+            })),
+          ]}
+        />
       </p>
 
       {partnerId !== '' && candidates.every((candidate) => candidate.id !== partnerId) && (

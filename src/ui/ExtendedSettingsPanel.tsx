@@ -20,8 +20,10 @@
  * @conventions Calculation/display settings are edited in a local draft and only committed via "Apply and redraw" (every change needs a real recompute); planetary rulers and symbols are device preferences previewed live and put back by Cancel, kept by Apply or Save as my default. A preset (`extended-settings-presets.js`) can fill the whole profile in one go. Text comes from co-located `ExtendedSettingsPanel.messages.ts` via `useMessages()`.
  * @exports ExtendedSettingsPanel
  */
+import { Checkbox } from './primitives/Checkbox.js';
+import { StagedDialog } from './primitives/StagedDialog.js';
 import { formatDecimal } from './format.js';
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ASPECTS, DEFAULT_ORB_CONFIG } from '../astrology/aspects.js';
 import { ayanamsaByKey, AYANAMSAS } from '../astrology/ayanamsas.js';
 import { HOUSE_SYSTEMS } from '../astrology/houses.js';
@@ -106,9 +108,7 @@ export function ExtendedSettingsPanel({
   const [open, setOpen] = useState(false);
   // Capture the current rulership choice for reactive description updates
   const [rulershipChoice] = useRulershipChoice();
-  const dialogRef = useRef<HTMLDialogElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const headingId = useId();
   const t = useMessages(extendedSettingsPanelMessages);
   const [locale] = useLocale();
   const [rulers, setRulers] = useRulershipChoice();
@@ -142,10 +142,6 @@ export function ExtendedSettingsPanel({
     setPendingRulers(undefined);
     setAtOpen({ rulers, symbolClass, look });
     setOpen(true);
-    const dialog = dialogRef.current;
-    if (dialog === null) return;
-    if (typeof dialog.showModal === 'function') dialog.showModal();
-    else dialog.setAttribute('open', '');
   };
 
   /**
@@ -153,11 +149,6 @@ export function ExtendedSettingsPanel({
    * device preferences previewed in it (#510), unless `keepDevice` says they were saved.
    */
   const closeCard = (keepDevice = false): void => {
-    const dialog = dialogRef.current;
-    if (dialog !== null) {
-      if (typeof dialog.close === 'function') dialog.close();
-      else dialog.removeAttribute('open');
-    }
     if (!keepDevice && atOpen !== undefined) {
       setRulers(atOpen.rulers);
       setSymbolClass(atOpen.symbolClass);
@@ -168,19 +159,9 @@ export function ExtendedSettingsPanel({
     setDraft(value);
     setPendingRulers(undefined);
     setAtOpen(undefined);
-    triggerRef.current?.focus();
   };
 
-  // Leaving the page closes the card (the same rule the menus follow), and a changed value from outside resets the draft.
-  useEffect(() => {
-    const onHashChange = (): void => {
-      if (open) closeCard();
-    };
-    window.addEventListener('hashchange', onHashChange);
-    return () => {
-      window.removeEventListener('hashchange', onHashChange);
-    };
-  });
+  // A changed value from outside resets the draft while the card is closed; leaving the page is StagedDialog's job.
   useEffect(() => {
     if (!open) setDraft(value);
   }, [value, open]);
@@ -198,15 +179,9 @@ export function ExtendedSettingsPanel({
   const apply = (): void => {
     if (pendingRulers !== undefined) setRulers(pendingRulers);
     onRedraw(draft);
-    const dialog = dialogRef.current;
-    if (dialog !== null) {
-      if (typeof dialog.close === 'function') dialog.close();
-      else dialog.removeAttribute('open');
-    }
     setOpen(false);
     setPendingRulers(undefined);
     setAtOpen(undefined);
-    triggerRef.current?.focus();
   };
 
   /** "Save as my default" (#510): remembers the draft and rulers for every future chart on this device — never redraws the chart currently open, which stays Apply's job alone. */
@@ -299,419 +274,344 @@ export function ExtendedSettingsPanel({
         )}
       </button>
 
-      <dialog
-        ref={dialogRef}
-        className="settings-card"
-        aria-labelledby={headingId}
-        onCancel={(event) => {
-          // Escape: the browser would close it silently; closing it ourselves also drops the draft.
-          event.preventDefault();
+      <StagedDialog
+        open={open}
+        heading={t.heading}
+        closeLabel={t.closeLabel}
+        onDiscard={() => {
           closeCard();
         }}
-        onClick={(event) => {
-          // A press on the backdrop is a press on the dialog element itself.
-          if (event.target === dialogRef.current) closeCard();
-        }}
-      >
-        <div className="settings-card-header">
-          <h2 id={headingId}>{t.heading}</h2>
-          <button
-            type="button"
-            className="quiet"
-            aria-label={t.closeLabel}
-            onClick={() => {
-              closeCard();
-            }}
-          >
-            ×
-          </button>
-        </div>
-
-        <div className="settings-card-body">
-          <p className="hint">{t.scopeNote}</p>
-
-          <fieldset className="field-group settings-card-group">
-            <legend>{t.presetLabel}</legend>
-            <p className="hint settings-card-tag">{t.appliesOnApply}</p>
-            <OptionCards
-              label={t.presetLabel}
-              value={currentProfile ?? 'custom'}
-              options={[
-                ...(currentProfile === undefined
-                  ? [{ value: 'custom', title: t.presetOptions.custom, consequence: t.presetNotes.custom }]
-                  : []),
-                ...CALCULATION_PROFILE_IDS.map((id) => ({
-                  value: id,
-                  title: t.presetOptions[id],
-                  consequence: t.presetNotes[id],
-                })),
-              ]}
-              onChange={chooseProfile}
-            />
-            {currentProfile !== undefined && CALCULATION_PROFILES[currentProfile].rulership !== rulers && (
-              <p className="hint">
-                {t.presetRulership(t.rulershipNames[CALCULATION_PROFILES[currentProfile].rulership])}
-              </p>
-            )}
-          </fieldset>
-
-          <fieldset className="field-group settings-card-group">
-            <legend>{t.zodiacHousesLegend}</legend>
-            <p className="hint settings-card-tag">{t.appliesOnApply}</p>
-            <p className="hint">{t.zodiacFrameSubtitle}</p>
-
-            {/* Zodiac */}
-            <div className="settings-card-block">
-              <ChoiceGroup
-                label={t.zodiacLegend}
-                value={draft.zodiac.kind}
-                options={[
-                  { value: 'tropical', label: t.tropical },
-                  { value: 'sidereal', label: t.sidereal },
-                ]}
-                onChange={(value) => {
-                  patch({
-                    zodiac:
-                      value === 'sidereal' ? { kind: 'sidereal', ayanamsa: LAHIRI_AYANAMSA_ID } : { kind: 'tropical' },
-                  });
-                }}
-              />
-              <p className="settings-card-note">
-                {draft.zodiac.kind === 'tropical' ? t.tropicalDescription : t.siderealDescription}
-              </p>
-            </div>
-
-            {draft.zodiac.kind === 'sidereal' && (
-              <div className="settings-card-indent settings-card-block">
-                <Select
-                  label={t.ayanamsaLabel}
-                  value={String(ayanamsaId)}
-                  options={AYANAMSAS.map((ayanamsa) => ({
-                    value: String(ayanamsa.id),
-                    label: ayanamsaNames.get(ayanamsa.id) ?? ayanamsa.key,
-                  }))}
-                  onChange={(value) => {
-                    patch({ zodiac: { kind: 'sidereal', ayanamsa: Number(value) } });
-                  }}
-                />
-              </div>
-            )}
-
-            {/* House System */}
-            <div>
-              <Select
-                label={t.houseSystemLegend}
-                value={draft.houseSystem}
-                options={HOUSE_SYSTEMS.map((system) => ({
-                  value: system.code,
-                  label: houseSystemNames.get(system.code) ?? system.key,
-                }))}
-                onChange={(value) => {
-                  patch({ houseSystem: value });
-                }}
-              />
-              <p className="settings-card-note">{t.houseSystemDescription(draft.houseSystem)}</p>
-            </div>
-          </fieldset>
-
-          <fieldset className="field-group settings-card-group">
-            <legend>{t.bodiesLegend}</legend>
-            <p className="hint settings-card-tag">{t.appliesOnApply}</p>
-            <label>
-              <input
-                type="checkbox"
-                checked={draft.fortuneVisible}
-                onChange={(event) => {
-                  patch({ fortuneVisible: event.target.checked });
-                }}
-              />{' '}
-              {t.partOfFortune}
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                checked={draft.vertexVisible}
-                onChange={(event) => {
-                  patch({ vertexVisible: event.target.checked });
-                }}
-              />{' '}
-              {t.vertex}
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                checked={draft.midpointsVisible}
-                onChange={(event) => {
-                  patch({ midpointsVisible: event.target.checked });
-                }}
-              />{' '}
-              {t.midpoints}
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                checked={draft.chironVisible}
-                onChange={(event) => {
-                  patch({ chironVisible: event.target.checked });
-                }}
-              />{' '}
-              {t.chiron}
-            </label>
-            <label className="settings-card-indent">
-              <input
-                type="checkbox"
-                checked={draft.aspectsToChiron}
-                onChange={(event) => {
-                  patch({ aspectsToChiron: event.target.checked });
-                }}
-              />{' '}
-              {t.aspectsToChiron}
-            </label>
-            <div className="settings-card-indent" role="radiogroup" aria-label={t.lilithModelAriaLabel}>
-              {t.lilithLabel}{' '}
-              <label>
-                <input
-                  type="radio"
-                  name="extended-settings-lilith"
-                  checked={draft.lilithVariant === 'mean'}
-                  onChange={() => {
-                    patch({ lilithVariant: 'mean' });
-                  }}
-                />{' '}
-                {t.mean}
-              </label>{' '}
-              <label>
-                <input
-                  type="radio"
-                  name="extended-settings-lilith"
-                  checked={draft.lilithVariant === 'true'}
-                  onChange={() => {
-                    patch({ lilithVariant: 'true' });
-                  }}
-                />{' '}
-                {t.true}
-              </label>{' '}
-              <label>
-                <input
-                  type="radio"
-                  name="extended-settings-lilith"
-                  checked={draft.lilithVariant === 'interpolated'}
-                  onChange={() => {
-                    patch({ lilithVariant: 'interpolated' });
-                  }}
-                />{' '}
-                {t.interpolated}
-              </label>
-            </div>
-            <p className="hint settings-card-indent">{t.lilithHelp}</p>
-            <label className="settings-card-indent">
-              <input
-                type="checkbox"
-                checked={draft.aspectsToLilith}
-                onChange={(event) => {
-                  patch({ aspectsToLilith: event.target.checked });
-                }}
-              />{' '}
-              {t.aspectsToLilith}
-            </label>
-            <div className="settings-card-indent" role="radiogroup" aria-label={t.lunarNodeModelAriaLabel}>
-              {t.lunarNodesLabel}{' '}
-              <label>
-                <input
-                  type="radio"
-                  name="extended-settings-node"
-                  checked={draft.nodeVariant === 'mean'}
-                  onChange={() => {
-                    patch({ nodeVariant: 'mean' });
-                  }}
-                />{' '}
-                {t.mean}
-              </label>{' '}
-              <label>
-                <input
-                  type="radio"
-                  name="extended-settings-node"
-                  checked={draft.nodeVariant === 'true'}
-                  onChange={() => {
-                    patch({ nodeVariant: 'true' });
-                  }}
-                />{' '}
-                {t.true}
-              </label>
-            </div>
-            <p className="hint settings-card-indent">{t.nodeHelp}</p>
-            <label className="settings-card-indent">
-              <input
-                type="checkbox"
-                checked={draft.aspectsToLunarNodes}
-                onChange={(event) => {
-                  patch({ aspectsToLunarNodes: event.target.checked });
-                }}
-              />{' '}
-              {t.aspectsToLunarNodes}
-            </label>
-            <label className="settings-card-indent">
-              <input
-                type="checkbox"
-                checked={draft.aspectsToVertex}
-                onChange={(event) => {
-                  patch({ aspectsToVertex: event.target.checked });
-                }}
-              />{' '}
-              {t.aspectsToVertex}
-            </label>
-            <label className="settings-card-indent">
-              <input
-                type="checkbox"
-                checked={draft.aspectsToPartOfFortune}
-                onChange={(event) => {
-                  patch({ aspectsToPartOfFortune: event.target.checked });
-                }}
-              />{' '}
-              {t.aspectsToPartOfFortune}
-            </label>
-            <label className="settings-card-indent">
-              <input
-                type="checkbox"
-                checked={draft.aspectsToPartOfSpirit}
-                onChange={(event) => {
-                  patch({ aspectsToPartOfSpirit: event.target.checked });
-                }}
-              />{' '}
-              {t.aspectsToPartOfSpirit}
-            </label>
-            <p className="hint">{t.aspectsToHint}</p>
-          </fieldset>
-
-          <fieldset className="field-group settings-card-group">
-            <legend>{t.aspectsLegend}</legend>
-            <p className="hint settings-card-tag">{t.appliesOnApply}</p>
-            <label>
-              {t.scaleLabel}
-              {draft.orbScalePercent > 0 ? '+' : ''}
-              {draft.orbScalePercent}%
-              <input
-                type="range"
-                aria-label={t.orbScaleAriaLabel}
-                min={-90}
-                max={90}
-                step={10}
-                value={draft.orbScalePercent}
-                onChange={(event) => {
-                  patch({ orbScalePercent: Number(event.target.value) });
-                }}
-              />
-            </label>
-            <p className="hint" aria-live="polite">
-              {t.orbPreview(
-                orb(DEFAULT_ORB_CONFIG.majorOrb.base),
-                orb(DEFAULT_ORB_CONFIG.majorOrb.base + DEFAULT_ORB_CONFIG.majorOrb.luminaryBonus),
-                orb(DEFAULT_ORB_CONFIG.sextileOrb.base),
-                orb(DEFAULT_ORB_CONFIG.sextileOrb.base + DEFAULT_ORB_CONFIG.sextileOrb.luminaryBonus),
-                orb(DEFAULT_ORB_CONFIG.minorOrb),
-              )}
-            </p>
-            <p>{t.minorAspectsLegend}</p>
-            {MINOR_ASPECTS.map((aspect) => (
-              <label key={aspect.key}>
-                <input
-                  type="checkbox"
-                  checked={draft.enabledMinorAspects.includes(aspect.key)}
-                  onChange={(event) => {
-                    setMinorAspect(aspect.key, event.target.checked);
-                  }}
-                />{' '}
-                {aspect.angle}° {aspectDisplayName(aspect.key, locale)}
-              </label>
-            ))}
-          </fieldset>
-
-          <fieldset className="field-group settings-card-group">
-            <legend>{t.wheelLegend}</legend>
-            <p className="hint settings-card-tag">{t.appliesOnApply}</p>
-            <label>
-              <input
-                type="checkbox"
-                checked={draft.rainbowZodiac}
-                onChange={(event) => {
-                  patch({ rainbowZodiac: event.target.checked });
-                }}
-              />{' '}
-              {t.rainbowColorZodiac}
-            </label>
-          </fieldset>
-
-          <fieldset className="field-group settings-card-group">
-            <legend>{t.rulersLegend}</legend>
-            <p className="hint settings-card-tag">{t.devicePreview}</p>
-            <p className="hint">{t.rulersSubtitle}</p>
-            <RulershipSetting />
-            <p className="settings-card-note">
-              {/* Display reactive description based on rulers choice */}
-              {rulershipChoice === 'modern' && t.modernRulersDescription}
-              {rulershipChoice === 'traditional' && t.traditionalRulersDescription}
-              {rulershipChoice === 'both' && t.coRulersDescription}
-            </p>
-          </fieldset>
-
-          <fieldset className="field-group settings-card-group">
-            <legend>{t.symbolsFrameSubtitle}</legend>
-            <p className="hint settings-card-tag">{t.devicePreview}</p>
-            <SymbolSetting />
-          </fieldset>
-        </div>
-
-        <div className="settings-card-footer">
-          <button
-            type="button"
-            className="quiet"
-            disabled={!dirty}
-            aria-label={dirty ? t.applyButton : `${t.applyButton} — ${t.nothingChanged}`}
-            onClick={apply}
-          >
-            {t.applyButton}
-          </button>
-          <button
-            type="button"
-            className="quiet"
-            disabled={!dirty}
-            aria-label={dirty ? t.saveAsDefaultButton : `${t.saveAsDefaultButton} — ${t.nothingChanged}`}
-            title={t.saveAsDefaultHint}
-            onClick={saveAsDefault}
-          >
-            {t.saveAsDefaultButton}
-          </button>
-          <button
-            type="button"
-            className="quiet"
-            onClick={() => {
-              closeCard();
-            }}
-          >
-            {t.cancelButton}
-          </button>
-          {savedDefault !== undefined && (
+        returnFocusTo={triggerRef}
+        footer={
+          <>
+            <button
+              type="button"
+              className="quiet"
+              disabled={!dirty}
+              aria-label={dirty ? t.applyButton : `${t.applyButton} — ${t.nothingChanged}`}
+              onClick={apply}
+            >
+              {t.applyButton}
+            </button>
+            <button
+              type="button"
+              className="quiet"
+              disabled={!dirty}
+              aria-label={dirty ? t.saveAsDefaultButton : `${t.saveAsDefaultButton} — ${t.nothingChanged}`}
+              title={t.saveAsDefaultHint}
+              onClick={saveAsDefault}
+            >
+              {t.saveAsDefaultButton}
+            </button>
             <button
               type="button"
               className="quiet"
               onClick={() => {
-                resetTo(savedDefault.settings, savedDefault.rulership);
+                closeCard();
               }}
             >
-              {t.resetToMyDefaultButton}
+              {t.cancelButton}
             </button>
+            {savedDefault !== undefined && (
+              <button
+                type="button"
+                className="quiet"
+                onClick={() => {
+                  resetTo(savedDefault.settings, savedDefault.rulership);
+                }}
+              >
+                {t.resetToMyDefaultButton}
+              </button>
+            )}
+            <button
+              type="button"
+              className="quiet"
+              onClick={() => {
+                resetTo(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE);
+              }}
+            >
+              {t.resetToAstrayaDefaultButton}
+            </button>
+          </>
+        }
+      >
+        <p className="hint">{t.scopeNote}</p>
+
+        <fieldset className="field-group settings-card-group">
+          <legend>{t.presetLabel}</legend>
+          <p className="hint settings-card-tag">{t.appliesOnApply}</p>
+          <OptionCards
+            label={t.presetLabel}
+            value={currentProfile ?? 'custom'}
+            options={[
+              ...(currentProfile === undefined
+                ? [{ value: 'custom', title: t.presetOptions.custom, consequence: t.presetNotes.custom }]
+                : []),
+              ...CALCULATION_PROFILE_IDS.map((id) => ({
+                value: id,
+                title: t.presetOptions[id],
+                consequence: t.presetNotes[id],
+              })),
+            ]}
+            onChange={chooseProfile}
+          />
+          {currentProfile !== undefined && CALCULATION_PROFILES[currentProfile].rulership !== rulers && (
+            <p className="hint">
+              {t.presetRulership(t.rulershipNames[CALCULATION_PROFILES[currentProfile].rulership])}
+            </p>
           )}
-          <button
-            type="button"
-            className="quiet"
-            onClick={() => {
-              resetTo(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE);
+        </fieldset>
+
+        <fieldset className="field-group settings-card-group">
+          <legend>{t.zodiacHousesLegend}</legend>
+          <p className="hint settings-card-tag">{t.appliesOnApply}</p>
+          <p className="hint">{t.zodiacFrameSubtitle}</p>
+
+          {/* Zodiac */}
+          <div className="settings-card-block">
+            <ChoiceGroup
+              label={t.zodiacLegend}
+              value={draft.zodiac.kind}
+              options={[
+                { value: 'tropical', label: t.tropical },
+                { value: 'sidereal', label: t.sidereal },
+              ]}
+              onChange={(value) => {
+                patch({
+                  zodiac:
+                    value === 'sidereal' ? { kind: 'sidereal', ayanamsa: LAHIRI_AYANAMSA_ID } : { kind: 'tropical' },
+                });
+              }}
+            />
+            <p className="settings-card-note">
+              {draft.zodiac.kind === 'tropical' ? t.tropicalDescription : t.siderealDescription}
+            </p>
+          </div>
+
+          {draft.zodiac.kind === 'sidereal' && (
+            <div className="settings-card-indent settings-card-block">
+              <Select
+                label={t.ayanamsaLabel}
+                value={String(ayanamsaId)}
+                options={AYANAMSAS.map((ayanamsa) => ({
+                  value: String(ayanamsa.id),
+                  label: ayanamsaNames.get(ayanamsa.id) ?? ayanamsa.key,
+                }))}
+                onChange={(value) => {
+                  patch({ zodiac: { kind: 'sidereal', ayanamsa: Number(value) } });
+                }}
+              />
+            </div>
+          )}
+
+          {/* House System */}
+          <div>
+            <Select
+              label={t.houseSystemLegend}
+              value={draft.houseSystem}
+              options={HOUSE_SYSTEMS.map((system) => ({
+                value: system.code,
+                label: houseSystemNames.get(system.code) ?? system.key,
+              }))}
+              onChange={(value) => {
+                patch({ houseSystem: value });
+              }}
+            />
+            <p className="settings-card-note">{t.houseSystemDescription(draft.houseSystem)}</p>
+          </div>
+        </fieldset>
+
+        <fieldset className="field-group settings-card-group">
+          <legend>{t.bodiesLegend}</legend>
+          <p className="hint settings-card-tag">{t.appliesOnApply}</p>
+          <Checkbox
+            label={t.partOfFortune}
+            checked={draft.fortuneVisible}
+            onChange={(value) => {
+              patch({ fortuneVisible: value });
             }}
-          >
-            {t.resetToAstrayaDefaultButton}
-          </button>
-        </div>
-      </dialog>
+          />
+          <Checkbox
+            label={t.vertex}
+            checked={draft.vertexVisible}
+            onChange={(value) => {
+              patch({ vertexVisible: value });
+            }}
+          />
+          <Checkbox
+            label={t.midpoints}
+            checked={draft.midpointsVisible}
+            onChange={(value) => {
+              patch({ midpointsVisible: value });
+            }}
+          />
+          <Checkbox
+            label={t.chiron}
+            checked={draft.chironVisible}
+            onChange={(value) => {
+              patch({ chironVisible: value });
+            }}
+          />
+          <div className="settings-card-indent">
+            <Checkbox
+              label={t.aspectsToChiron}
+              checked={draft.aspectsToChiron}
+              onChange={(value) => {
+                patch({ aspectsToChiron: value });
+              }}
+            />
+          </div>
+          <div className="settings-card-indent">
+            {t.lilithLabel}{' '}
+            <ChoiceGroup
+              label={t.lilithModelAriaLabel}
+              value={draft.lilithVariant}
+              options={[
+                { value: 'mean', label: t.mean },
+                { value: 'true', label: t.true },
+                { value: 'interpolated', label: t.interpolated },
+              ]}
+              onChange={(value) => {
+                if (value === 'mean' || value === 'true' || value === 'interpolated') patch({ lilithVariant: value });
+              }}
+            />
+          </div>
+          <p className="hint settings-card-indent">{t.lilithHelp}</p>
+          <div className="settings-card-indent">
+            <Checkbox
+              label={t.aspectsToLilith}
+              checked={draft.aspectsToLilith}
+              onChange={(value) => {
+                patch({ aspectsToLilith: value });
+              }}
+            />
+          </div>
+          <div className="settings-card-indent">
+            {t.lunarNodesLabel}{' '}
+            <ChoiceGroup
+              label={t.lunarNodeModelAriaLabel}
+              value={draft.nodeVariant}
+              options={[
+                { value: 'mean', label: t.mean },
+                { value: 'true', label: t.true },
+              ]}
+              onChange={(value) => {
+                if (value === 'mean' || value === 'true') patch({ nodeVariant: value });
+              }}
+            />
+          </div>
+          <p className="hint settings-card-indent">{t.nodeHelp}</p>
+          <div className="settings-card-indent">
+            <Checkbox
+              label={t.aspectsToLunarNodes}
+              checked={draft.aspectsToLunarNodes}
+              onChange={(value) => {
+                patch({ aspectsToLunarNodes: value });
+              }}
+            />
+          </div>
+          <div className="settings-card-indent">
+            <Checkbox
+              label={t.aspectsToVertex}
+              checked={draft.aspectsToVertex}
+              onChange={(value) => {
+                patch({ aspectsToVertex: value });
+              }}
+            />
+          </div>
+          <div className="settings-card-indent">
+            <Checkbox
+              label={t.aspectsToPartOfFortune}
+              checked={draft.aspectsToPartOfFortune}
+              onChange={(value) => {
+                patch({ aspectsToPartOfFortune: value });
+              }}
+            />
+          </div>
+          <div className="settings-card-indent">
+            <Checkbox
+              label={t.aspectsToPartOfSpirit}
+              checked={draft.aspectsToPartOfSpirit}
+              onChange={(value) => {
+                patch({ aspectsToPartOfSpirit: value });
+              }}
+            />
+          </div>
+          <p className="hint">{t.aspectsToHint}</p>
+        </fieldset>
+
+        <fieldset className="field-group settings-card-group">
+          <legend>{t.aspectsLegend}</legend>
+          <p className="hint settings-card-tag">{t.appliesOnApply}</p>
+          <label>
+            {t.scaleLabel}
+            {draft.orbScalePercent > 0 ? '+' : ''}
+            {draft.orbScalePercent}%
+            <input
+              type="range"
+              aria-label={t.orbScaleAriaLabel}
+              min={-90}
+              max={90}
+              step={10}
+              value={draft.orbScalePercent}
+              onChange={(event) => {
+                patch({ orbScalePercent: Number(event.target.value) });
+              }}
+            />
+          </label>
+          <p className="hint" aria-live="polite">
+            {t.orbPreview(
+              orb(DEFAULT_ORB_CONFIG.majorOrb.base),
+              orb(DEFAULT_ORB_CONFIG.majorOrb.base + DEFAULT_ORB_CONFIG.majorOrb.luminaryBonus),
+              orb(DEFAULT_ORB_CONFIG.sextileOrb.base),
+              orb(DEFAULT_ORB_CONFIG.sextileOrb.base + DEFAULT_ORB_CONFIG.sextileOrb.luminaryBonus),
+              orb(DEFAULT_ORB_CONFIG.minorOrb),
+            )}
+          </p>
+          <p>{t.minorAspectsLegend}</p>
+          {MINOR_ASPECTS.map((aspect) => (
+            <Checkbox
+              key={aspect.key}
+              label={`${String(aspect.angle)}° ${aspectDisplayName(aspect.key, locale)}`}
+              checked={draft.enabledMinorAspects.includes(aspect.key)}
+              onChange={(value) => {
+                setMinorAspect(aspect.key, value);
+              }}
+            />
+          ))}
+        </fieldset>
+
+        <fieldset className="field-group settings-card-group">
+          <legend>{t.wheelLegend}</legend>
+          <p className="hint settings-card-tag">{t.appliesOnApply}</p>
+          <Checkbox
+            label={t.rainbowColorZodiac}
+            checked={draft.rainbowZodiac}
+            onChange={(value) => {
+              patch({ rainbowZodiac: value });
+            }}
+          />
+        </fieldset>
+
+        <fieldset className="field-group settings-card-group">
+          <legend>{t.rulersLegend}</legend>
+          <p className="hint settings-card-tag">{t.devicePreview}</p>
+          <p className="hint">{t.rulersSubtitle}</p>
+          <RulershipSetting />
+          <p className="settings-card-note">
+            {/* Display reactive description based on rulers choice */}
+            {rulershipChoice === 'modern' && t.modernRulersDescription}
+            {rulershipChoice === 'traditional' && t.traditionalRulersDescription}
+            {rulershipChoice === 'both' && t.coRulersDescription}
+          </p>
+        </fieldset>
+
+        <fieldset className="field-group settings-card-group">
+          <legend>{t.symbolsFrameSubtitle}</legend>
+          <p className="hint settings-card-tag">{t.devicePreview}</p>
+          <SymbolSetting />
+        </fieldset>
+      </StagedDialog>
     </div>
   );
 }
