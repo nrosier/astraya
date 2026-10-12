@@ -737,7 +737,8 @@ function renderTableTab(
       );
     }
     case 'dignities': {
-      const almuten = almutenOfAscendant(data, rulership);
+      // Always traditional (#545) — almutenOfAscendant no longer takes a rulership/display-choice parameter.
+      const almuten = almutenOfAscendant(data);
       return (
         <>
           {almuten !== undefined && (
@@ -751,7 +752,7 @@ function renderTableTab(
           <SortableTable
             caption={t.dignitiesCaption}
             columns={dignityColumns(t, locale)}
-            rows={dignityRows(data, pointVisibility, rulership)}
+            rows={dignityRows(data, pointVisibility)}
             getRowKey={(row) => row.bodyKey}
             downloadFilename={deriveExportFilename(displayName, 'dignities', 'csv')}
           />

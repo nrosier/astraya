@@ -265,7 +265,8 @@ function tablesOf(
     }
     case 'dignities':
       return [
-        tablePlanOf(t.dignitiesCaption, dignityColumns(t, locale), dignityRows(data, {}, rulership)),
+        // Always traditional (#545) — dignityRows no longer takes a rulership/display-choice parameter.
+        tablePlanOf(t.dignitiesCaption, dignityColumns(t, locale), dignityRows(data, {})),
         tablePlanOf(t.dispositorsCaption, dispositorColumns(t, locale), dispositorRows(data, {}, rulership)),
       ];
     case 'derived':
@@ -337,7 +338,8 @@ async function buildChartSectionPlan(
     svg = { markup: standaloneSvg(sheet.markup), width: sheet.width, height: sheet.height };
   }
 
-  const almuten = almutenOfAscendant(data, rulership);
+  // Always traditional (#545) — almutenOfAscendant no longer takes a rulership/display-choice parameter.
+  const almuten = almutenOfAscendant(data);
   const hint =
     almuten === undefined
       ? undefined

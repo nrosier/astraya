@@ -97,15 +97,39 @@ describe('the chart’s own dignities follow the choice (#426)', () => {
 });
 
 describe('the tables agree with each other (#426)', () => {
-  it('a planet in its own sign is never peregrine, under any choice', async () => {
+  it('a planet in its own sign is never peregrine, under the fixed traditional scoring scheme', async () => {
     const engine = await getEngine();
+    const chart = await computeChartData(BIRTH, engine, { rulership: 'traditional' });
+    for (const row of dignityRows(chart, {})) {
+      if (row.ruler || row.exalted) {
+        expect(row.peregrine, row.bodyKey).toBe(false);
+        expect(row.points, row.bodyKey).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('point-scored dignity and peregrine status never change with the display rulership choice (#545)', async () => {
+    const engine = await getEngine();
+    const rowsByChoice = new Map<
+      'modern' | 'traditional' | 'both',
+      readonly ReturnType<typeof dignityRows>[number][]
+    >();
     for (const choice of ['modern', 'traditional', 'both'] as const) {
       const chart = await computeChartData(BIRTH, engine, { rulership: choice });
-      for (const row of dignityRows(chart, {}, choice)) {
-        if (row.ruler || row.exalted) {
-          expect(row.peregrine, `${row.bodyKey} (${choice})`).toBe(false);
-          expect(row.points, `${row.bodyKey} (${choice})`).toBeGreaterThan(0);
-        }
+      rowsByChoice.set(choice, dignityRows(chart, {}));
+    }
+    const traditional = rowsByChoice.get('traditional');
+    if (traditional === undefined) throw new Error('fixture bug');
+    for (const choice of ['modern', 'both'] as const) {
+      const rows = rowsByChoice.get(choice);
+      if (rows === undefined) throw new Error('fixture bug');
+      for (const row of traditional) {
+        const other = rows.find((r) => r.bodyKey === row.bodyKey);
+        expect(other?.points, `${row.bodyKey} (${choice})`).toBe(row.points);
+        expect(other?.peregrine, `${row.bodyKey} (${choice})`).toBe(row.peregrine);
+        expect(other?.triplicity, `${row.bodyKey} (${choice})`).toBe(row.triplicity);
+        expect(other?.bound, `${row.bodyKey} (${choice})`).toBe(row.bound);
+        expect(other?.face, `${row.bodyKey} (${choice})`).toBe(row.face);
       }
     }
   });
@@ -156,11 +180,24 @@ describe('the tables agree with each other (#426)', () => {
   });
 
   it('the almuten of the Ascendant is still chosen among the seven classical planets', () => {
-    const almuten = almutenOfAscendant(natal, 'modern');
+    // #545: almutenOfAscendant no longer takes a rulership/display-choice parameter at all.
+    const almuten = almutenOfAscendant(natal);
     expect(almuten?.almutens.length).toBeGreaterThan(0);
     for (const key of almuten?.almutens ?? []) {
       expect(['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn']).toContain(key);
     }
+  });
+
+  it('the almuten of the Ascendant never changes with the display rulership choice (#545)', async () => {
+    const engine = await getEngine();
+    const results = await Promise.all(
+      (['modern', 'traditional', 'both'] as const).map(async (choice) => {
+        const chart = await computeChartData(BIRTH, engine, { rulership: choice });
+        return almutenOfAscendant(chart)?.almutens;
+      }),
+    );
+    expect(results[1]).toEqual(results[0]);
+    expect(results[2]).toEqual(results[0]);
   });
 });
 
