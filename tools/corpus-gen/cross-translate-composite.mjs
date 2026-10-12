@@ -29,12 +29,15 @@
  * @conventions CLI flag: --translate (required to do anything), --batch (optional, 50% Gemini
  *   Batch API pricing instead of individual calls). Validates every translation for language
  *   correctness via lib/language-quality.mjs before accepting it; resets eval-tracking afterward.
+ *   Reconciles en/nl key order via lib/corpus-order.mjs after writing, so the two files never
+ *   drift out of sync with each other.
  * @exports CLI entry point, no exports.
  */
 
 import { readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { reconcileCorpusOrder } from './lib/corpus-order.mjs';
 import { readTracking } from './lib/eval-tracking.mjs';
 import { generateStructured, toGeminiSchema } from './lib/gemini.mjs';
 import { buildLanguageQualityPrompt, LANGUAGE_QUALITY_RESPONSE_SCHEMA } from './lib/language-quality.mjs';
@@ -395,6 +398,10 @@ async function translateAll(useBatch) {
   // Write back (pretty-print like the original files)
   await writeFile(join(root, 'src/interpretation/corpus/en.json'), JSON.stringify(corpusEn, null, 2) + '\n', 'utf8');
   await writeFile(join(root, 'src/interpretation/corpus/nl.json'), JSON.stringify(corpusNl, null, 2) + '\n', 'utf8');
+  // In-place `.find()` mutation above never reorders either array, but re-check anyway: this
+  // script's whole point is reconciling en/nl against each other, so leaving them out of key-order
+  // sync with each other would be exactly the kind of drift it exists to fix.
+  await reconcileCorpusOrder(root);
   await writeFile(
     join(root, 'tools/corpus-gen/eval-tracking/en.json'),
     JSON.stringify(trackingEn, null, 2) + '\n',

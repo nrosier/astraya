@@ -63,7 +63,8 @@
  *   Gemini Batch API money. Submit-and-exit, never blocks — batch state persisted to
  *   tools/corpus-gen/batch-state/improve-<locale>.json; re-run the same command later to check
  *   status and apply results. Writes to src/interpretation/corpus/<locale>.json and
- *   tools/corpus-gen/feedback/<locale>.json / eval-tracking/<locale>.json.
+ *   tools/corpus-gen/feedback/<locale>.json / eval-tracking/<locale>.json. Reconciles en/nl key
+ *   order via lib/corpus-order.mjs after every corpus write.
  * @exports CLI entry point, no exports.
  */
 import { readFile, mkdir, readdir } from 'node:fs/promises';
@@ -86,6 +87,7 @@ import { parsePlacementKey } from '../../src/interpretation/schema.ts';
 import { lintEntry } from '../../src/interpretation/lint.ts';
 import { containsPromptInjectionPhrase } from '../../src/interpretation/prompt-guardrail.ts';
 import { writeCorpus } from './lib/write-corpus.mjs';
+import { reconcileCorpusOrder } from './lib/corpus-order.mjs';
 import { readFeedback, writeFeedback, removeFeedback } from './lib/corpus-feedback.mjs';
 import {
   readTracking,
@@ -319,6 +321,12 @@ async function checkAndApply(loc) {
 
   if (anyTerminal) {
     await writeCorpus(corpusPath, corpus);
+    // writeCorpus() above only ever edits in place at this locale's own existing indices (it
+    // throws rather than reorder), so it can't itself desync en/nl — but re-check against the
+    // other locale's file on disk anyway, since this is the one place in the improve loop where a
+    // corpus file is actually written, and nothing else in the pipeline currently guarantees the
+    // two stayed in sync going into this run.
+    await reconcileCorpusOrder(root);
     await writeFeedback(feedbackPath, feedback);
     await mkdir(dirname(trackingPath), { recursive: true });
     await writeTracking(trackingPath, tracking);

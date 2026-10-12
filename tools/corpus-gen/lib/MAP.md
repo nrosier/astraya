@@ -9,6 +9,7 @@ Shared library modules for `tools/corpus-gen/` scripts (see parent directory for
 - `corpus-audit.mjs` — Codifies manual corpus checks (#427). Validates key/duplicates/locale-parity, sign/house theme-shift heuristic. Deps: placements, src/interpretation/schema.
 - `corpus-evaluation.mjs` — Independent second-opinion judge (#381 stage 1) for fact errors + generic-trope failure mode (a separate note judges derived points only on staying within their facts, #517). Builds prompt/schema, majority verdict. Deps: none.
 - `corpus-feedback.mjs` — Hand-off between #381 two batch stages: reads/writes `feedback/<locale>.json` (evaluate→improve). Deps: node:fs.
+- `corpus-order.mjs` — Canonical en/nl key order (digit runs compared numerically) so the two corpus files never drift out of sync with each other; `reconcileCorpusOrder()` is a no-op unless a locale's on-disk order has actually drifted. Deps: prettier.
 - `corpus-improvement.mjs` — Let original model review judge's complaint before applying blindly. Revision prompt/schema + narrowly-scoped last-resort. Deps: none.
 - `cost-estimate.mjs` — Consistent post-run cost estimate (provider/model/tier/tokens → USD cents). Pricing tables kept current vs. OpenAI/Gemini pages. Deps: none.
 - `eval-tracking.mjs` — Prevent re-checking already-judged-clean/exhausted entries (#381). Reads/writes `eval-tracking/<locale>.json`. Deps: node:fs.
