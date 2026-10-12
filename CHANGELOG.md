@@ -23,12 +23,16 @@ This is the UI/UX overhaul (#506, phases 0–6 and the cleanup of phase 7). Phas
 ### Added
 
 - **Astrology glossary (#456, #513).** 31 terms — dignities, dispositors, declination, antiscia, progressions, primary directions and more — with plain-language definitions in English and Dutch, opened by hover, click or keyboard from a "terms used on this page" list on every chart and timing screen, and from table column headers.
-- **Aspects to the Vertex, Part of Fortune and Part of Spirit (#516)**, with a Dutch name for the Part of Spirit toggle.
+- **Aspects to the Vertex, Part of Fortune and Part of Spirit (#516)**, with a Dutch name for the Part of Spirit toggle and short names for them in the aspect matrix.
 - **Real meaning text for derived points (#511, #517).** Selecting the Part of Fortune/Spirit or an ASC/MC–Sun/Moon point shows written text for its sign and house (96 entries, English and Dutch); their evaluation continues in #517.
 
 ### Fixed
 
 - Dignities table headers no longer stretch a phone-width page sideways (#511); the Field wrapper's "optional" wording is translated (#508).
+
+### Internal tooling
+
+- **The corpus near-duplicate check finds the same pairs in seconds instead of minutes (#520).**
 
 ### Notes for people running their own server
 
