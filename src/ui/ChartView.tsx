@@ -70,6 +70,7 @@ import { derivedPointPlacementFacts } from '../domain/derived-point-position.js'
 import { computeChartData, housesAreDefined, type ChartData } from '../domain/chart-compute.js';
 import { deriveExportFilename } from '../domain/export-filename.js';
 import { encodeChartShareLink } from '../domain/chart-share.js';
+import { buildCalculationSnapshot, calculationSnapshotToJson } from '../domain/calculation-snapshot.js';
 import { momentKey } from '../time/encode.js';
 import { renderChartDialSvg, renderChartSheetSvg } from '../chart/chart-sheet.js';
 import { renderJonesShapeDiagramSvg } from '../chart/jones-shape-diagram.js';
@@ -1056,22 +1057,30 @@ function resolveWheelIsolation(
 }
 
 /**
- * Copies a #65 share link for one birth moment to the clipboard — the chart itself is
- * always recomputed from `moment` on the recipient's end, so this is the entire payload;
- * nothing is sent anywhere to produce it.
+ * Copies a #65 share link for one birth moment to the clipboard — the chart itself is always
+ * recomputed from `moment` on the recipient's end, so this is the entire payload; nothing is
+ * sent anywhere to produce it. The link also carries the sender's own effective calculation
+ * settings (#541, as a `CalculationSnapshot`), so the recipient's browser recomputes under the
+ * same house system/zodiac/orbs/visibility/rulers the sender actually had in force — not
+ * whatever the recipient's own device happens to default to.
  */
 function ShareLink({
   moment,
   housesKnown,
+  settings,
+  rulership,
 }: {
   readonly moment: BirthMomentInput;
   readonly housesKnown: boolean;
+  readonly settings: ExtendedSettings;
+  readonly rulership: RulershipChoice;
 }): React.JSX.Element {
   const t = useMessages(chartViewMessages);
   const [copied, setCopied] = useState(false);
 
   const copy = (): void => {
-    const query = encodeChartShareLink({ moment, settings: {}, housesKnown }).toString();
+    const shareSettings = calculationSnapshotToJson(buildCalculationSnapshot(settings, rulership));
+    const query = encodeChartShareLink({ moment, settings: shareSettings, housesKnown }).toString();
     const url = `${window.location.origin}${window.location.pathname}#/shared?${query}`;
     void navigator.clipboard.writeText(url).then(
       () => {
@@ -1626,7 +1635,7 @@ export function ChartView({
         ]}
       />
       <ChartTypeSelector personId={personId} type="natal" view={view} />
-      <ShareLink moment={person.moment} housesKnown={showHouses} />
+      <ShareLink moment={person.moment} housesKnown={showHouses} settings={settings} rulership={rulership} />
       <ChartDataView
         load={load}
         displayName={person.displayName}

@@ -13,13 +13,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { chartViewFromHash, type ChartViewKind } from './chart-sections.js';
 import { ChartDataView } from './ChartView.js';
+import { toChartCalculationOptions } from '../chart/extended-settings.js';
 import { chartSheetMetaLines } from '../domain/chart-tables.js';
 import { computeChartData, type ChartData } from '../domain/chart-compute.js';
 import { decodeChartShareLink, type ChartShareData } from '../domain/chart-share.js';
+import { parseCalculationSnapshot } from '../domain/calculation-snapshot.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
-import { useRulershipChoice } from './rulership-setting.js';
 import { sharedChartViewMessages } from './SharedChartView.messages.js';
 import { sharedMessages } from './shared.messages.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
@@ -54,9 +55,16 @@ export function SharedChartView(): React.JSX.Element {
   const shared = useMessages(sharedMessages);
   const [locale] = useLocale();
   const initial = useMemo(fromLocation, []);
+  // The sender's own effective settings (#541), not this viewer's ambient device preference —
+  // a shared chart must recompute under what the sender actually had in force, not whatever
+  // this browser happens to default to. `parseCalculationSnapshot` always returns a complete,
+  // valid snapshot (full app defaults for an old pre-#541 link whose `settings` bag is empty).
+  const snapshot = useMemo(
+    () => (initial.data === undefined ? undefined : parseCalculationSnapshot(initial.data.settings)),
+    [initial.data],
+  );
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
   const { provider } = useEphemerisProvider();
-  const [rulership] = useRulershipChoice();
   // More volatile than the share-token data above, so this reads the hash itself on every
   // navigation, not once at mount (#511).
   const [view, setView] = useState<ChartViewKind>(() => chartViewFromHash(window.location.hash) ?? 'wheel');
@@ -71,13 +79,16 @@ export function SharedChartView(): React.JSX.Element {
   }, []);
 
   useEffect(() => {
-    if (initial.data === undefined || provider === undefined) return undefined;
+    if (initial.data === undefined || snapshot === undefined || provider === undefined) return undefined;
     const { moment } = initial.data;
     const effect = { cancelled: false };
 
     void (async () => {
       try {
-        const data = await computeChartData(moment, provider, { rulership });
+        const data = await computeChartData(moment, provider, {
+          ...toChartCalculationOptions(snapshot.settings),
+          rulership: snapshot.rulership,
+        });
         if (!effect.cancelled) setLoad({ kind: 'ready', data });
       } catch (error) {
         if (!effect.cancelled)
@@ -88,7 +99,7 @@ export function SharedChartView(): React.JSX.Element {
     return () => {
       effect.cancelled = true;
     };
-  }, [initial.data, rulership, provider]);
+  }, [initial.data, snapshot, provider]);
 
   return (
     <main className="shell shell--wide">
@@ -100,12 +111,13 @@ export function SharedChartView(): React.JSX.Element {
 
       {initial.error !== undefined && <StatusMessage kind="error">{t.linkCouldNotBeRead(initial.error)}</StatusMessage>}
 
-      {initial.data !== undefined && (
+      {initial.data !== undefined && snapshot !== undefined && (
         <ChartDataView
           load={load}
           displayName={t.sharedChart}
           showHouses={initial.data.housesKnown}
           metaLines={chartSheetMetaLines(t.sharedChart, initial.data.moment, locale)}
+          extendedSettings={snapshot.settings}
           view={view}
           onViewChange={(next) => {
             window.history.replaceState(null, '', sharedViewHref(next));

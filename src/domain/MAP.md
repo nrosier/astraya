@@ -3,6 +3,7 @@
 One level above `src/astrology/`: composes pure astrological calculations into shapes screens render. Still pure/async, no DOM/React.
 
 - `astrocartography.ts` — Astrocartography lines (MC/IC/AC/DC) + Local Space + relocated houses. Deps: `astrology/astrocartography`, `ephemeris/types`.
+- `calculation-snapshot.ts` — Versioned, fully-validated `CalculationSnapshot` (ExtendedSettings + rulership) carried through share/export/save (#541). Deps: `chart/extended-settings`, `astrology/rulership`, `store/ops` (JsonValue).
 - `chart-compute.ts` — Single source of truth: "what is in this chart" (positions, houses, aspects, dignities, sect, Arabic parts, declinations, fixed stars). Deps: `astrology/aspects`, `astrology/rulership`, `astrology/arabic-parts`, `astrology/sect`, `astrology/bodies`.
 - `chart-share.ts` — Share chart via URL (no server round-trip). Encodes/decodes birth moment + settings as versioned query params. Deps: `time/encode`, `store/ops` (JsonValue).
 - `chart-tables.ts` — Converts chart data into UI table/wheel/sheet rows. Deps: `astrology/almuten`, `astrology/antiscia`, `astrology/declinations`, `astrology/dispositors`, `astrology/fixed-stars`, `astrology/jones-shapes`, `astrology/signs`, `./chart-compute`.
