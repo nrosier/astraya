@@ -127,6 +127,16 @@ function profileCard(container: HTMLElement, title: string): HTMLInputElement {
   return radio;
 }
 
+/** The option card of a named orb profile (#543), by its title. */
+function orbProfileCard(container: HTMLElement, title: string): HTMLInputElement {
+  const card = Array.from(
+    container.querySelectorAll('[role="radiogroup"][aria-label="Orb profile"] .primitive-option-card'),
+  ).find((candidate) => candidate.querySelector('.primitive-option-card-title')?.textContent === title);
+  const radio = card?.querySelector('input');
+  if (radio === null || radio === undefined) throw new Error(`fixture bug: no orb profile card "${title}"`);
+  return radio;
+}
+
 /** Picks the nth planetary-rulers option card (modern, traditional, both). */
 function chooseRulers(container: HTMLElement, index: number): void {
   const radio = container
@@ -419,6 +429,40 @@ describe('the trigger and the starting points (#442)', () => {
       buttonNamed(container, 'Reset to Astraya default')?.click();
     });
     expect(checkboxLabeled(container, 'Rainbow Color Zodiac').checked).toBe(false);
+    unmount(container, root);
+  });
+});
+
+describe('the orb-profile quick-pick (#543)', () => {
+  it('starts on Standard, matching the unscaled default, with no Custom card shown', async () => {
+    const { container, root } = await mount(fakeProvider(), vi.fn());
+    openCard(container);
+    expect(orbProfileCard(container, 'Standard').checked).toBe(true);
+    expect(() => orbProfileCard(container, 'Custom')).toThrow();
+    unmount(container, root);
+  });
+
+  it('choosing Tight sets the scale slider and applies with it, without touching any other field', async () => {
+    const onRedraw = vi.fn();
+    const { container, root } = await mount(fakeProvider(), onRedraw);
+    openCard(container);
+    act(() => {
+      orbProfileCard(container, 'Tight').click();
+    });
+    expect(orbProfileCard(container, 'Tight').checked).toBe(true);
+    expect(container.textContent).toContain('-50%');
+    act(() => {
+      buttonNamed(container, 'Apply and redraw')?.click();
+    });
+    expect(onRedraw).toHaveBeenCalledWith(expect.objectContaining({ orbScalePercent: -50 }));
+    unmount(container, root);
+  });
+
+  it('shows Custom once the slider no longer matches any named profile', async () => {
+    const changed: ExtendedSettings = { ...DEFAULT_EXTENDED_SETTINGS, orbScalePercent: 20 };
+    const { container, root } = await mount(fakeProvider(), vi.fn(), changed);
+    openCard(container);
+    expect(orbProfileCard(container, 'Custom').checked).toBe(true);
     unmount(container, root);
   });
 });
