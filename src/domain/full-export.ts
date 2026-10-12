@@ -94,7 +94,8 @@ function chartExport(data: ChartData, rulership: RulershipChoice, withHouses: bo
         }
       : {}),
     aspects: aspectRows(data),
-    dignities: dignityRows(data, {}, rulership),
+    // Always traditional (#545) — dignityRows no longer takes a rulership/display-choice parameter.
+    dignities: dignityRows(data, {}),
     dispositors: dispositorRows(data, {}, rulership),
   };
 }

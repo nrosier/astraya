@@ -330,17 +330,24 @@ export interface DignityRow {
   readonly peregrine: boolean;
 }
 
-/** One row per visible body, in `ChartData.positions`' own order — every body, not only ones holding a dignity. */
-export function dignityRows(
-  data: ChartData,
-  options: PointVisibilityOptions = {},
-  rulership: RulershipChoice = DEFAULT_RULERSHIP_CHOICE,
-): readonly DignityRow[] {
+/**
+ * One row per visible body, in `ChartData.positions`' own order — every body, not only ones holding a dignity.
+ *
+ * The point-scored `triplicity`/`bound`/`face`/`points`/`peregrine` fields are always scored under the
+ * traditional rulership scheme (#545) — essential dignity and peregrine status are a historical-technique
+ * question, not a cosmetic one, and must not change when a user toggles their modern/traditional/both
+ * *display* rulership preference. Only the boolean `ruler`/`exalted`/`detriment`/`fall` fields (read from
+ * `data.dignities`, built from that display preference in `chart-compute.ts`) are meant to vary with it.
+ */
+export function dignityRows(data: ChartData, options: PointVisibilityOptions = {}): readonly DignityRow[] {
   return visiblePositions(data.positions, options).map((position) => {
     const body = bodyById(position.body);
     const dignities = data.dignities.get(position.body);
     // The same rulers as the chart's own `dignities`, so a planet in its own sign is never "peregrine".
-    const score = essentialDignityScoreOf(position.body, position.longitude, data.sect, { rulershipScheme: rulership });
+    // Always traditional (#545) — see the function's own doc comment.
+    const score = essentialDignityScoreOf(position.body, position.longitude, data.sect, {
+      rulershipScheme: 'traditional',
+    });
     return {
       bodyKey: body?.key ?? String(position.body),
       bodyName: body?.name ?? String(position.body),
@@ -362,13 +369,15 @@ export function dignityRows(
  * essential dignity at the Ascendant's own degree. More than one body can tie — `almutens`
  * carries all of them, same as `almuten.ts`'s own `AlmutenResult`. `undefined` when houses
  * aren't usable (`housesAreDefined`), the same gate `ChartView`'s own houses-dependent sections use.
+ *
+ * Always scored under the traditional rulership scheme (#545), never the user's modern/traditional/both
+ * *display* preference — the Almuten is a historical-technique result, not a cosmetic one. There is
+ * deliberately no `rulership` parameter here: forwarding the ambient display choice is exactly the leak
+ * #545 fixed, so don't reintroduce one.
  */
-export function almutenOfAscendant(
-  data: ChartData,
-  rulership: RulershipChoice = DEFAULT_RULERSHIP_CHOICE,
-): { readonly almutens: readonly string[] } | undefined {
+export function almutenOfAscendant(data: ChartData): { readonly almutens: readonly string[] } | undefined {
   if (!housesAreDefined(data.houses)) return undefined;
-  const result = almutenOf(data.houses.ascendant, data.sect, { rulershipScheme: rulership });
+  const result = almutenOf(data.houses.ascendant, data.sect, { rulershipScheme: 'traditional' });
   return { almutens: result.almutens.map((id) => bodyById(id)?.key ?? String(id)) };
 }
 
