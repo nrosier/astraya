@@ -15,6 +15,11 @@
  * @conventions Follows FocusInterpretation.tsx's consent/generate/saved-history structure for the Tier 2 panel; uses RelationshipSummary.messages.ts for en/nl text via useMessages().
  * @exports RelationshipSummary
  */
+import { Checkbox } from './primitives/Checkbox.js';
+import { useOnline } from './online-status.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
+import { sharedMessages } from './shared.messages.js';
+import { formatFixed } from './format.js';
 import { useEffect, useId, useState } from 'react';
 import { bodyById } from '../astrology/bodies.js';
 import { housesAreDefined } from '../domain/chart-compute.js';
@@ -64,7 +69,7 @@ function ContactLine({
   const aspect = aspectDisplayName(contact.aspect.aspect.key, locale);
   return (
     <li className={`relationship-contact relationship-contact-${aspectValence(contact.aspect.aspect.key)}`}>
-      {t.contactSentence(`${nameA}’s ${bodyA}`, aspect, `${nameB}’s ${bodyB}`, contact.aspect.orb.toFixed(1))}
+      {t.contactSentence(`${nameA}’s ${bodyA}`, aspect, `${nameB}’s ${bodyB}`, formatFixed(contact.aspect.orb, 1))}
     </li>
   );
 }
@@ -99,6 +104,8 @@ export function RelationshipSummary({
   readonly locale: Locale;
 }): React.JSX.Element {
   const t = useMessages(relationshipSummaryMessages);
+  const shared = useMessages(sharedMessages);
+  const online = useOnline();
   const user = useSessionUserOrUndefined();
   const [consent, setConsent] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -245,32 +252,30 @@ export function RelationshipSummary({
 
       <h4>{t.tier2Heading}</h4>
       {user !== undefined && (
-        <label>
-          <input
-            type="checkbox"
-            checked={consent}
-            onChange={(event) => {
-              setConsent(event.target.checked);
-            }}
-          />{' '}
-          {t.tier2Consent}
-        </label>
+        <Checkbox
+          label={t.tier2Consent}
+          checked={consent}
+          onChange={(value) => {
+            setConsent(value);
+          }}
+        />
       )}
       <button
         type="button"
-        disabled={disabledReason !== undefined || generating}
+        disabled={disabledReason !== undefined || generating || !online}
         aria-describedby={disabledReason === undefined ? undefined : reasonId}
         onClick={generate}
       >
         {generating ? t.tier2Generating : t.tier2Generate}
       </button>
+      {!online && <StatusMessage kind="offline">{shared.offlineNeeded}</StatusMessage>}
       {disabledReason !== undefined && (
         <span id={reasonId} className="hint">
           {' '}
           {user === undefined ? disabledReason : `(${disabledReason})`}
         </span>
       )}
-      {error !== undefined && <p role="alert">{t.tier2Error(error)}</p>}
+      {error !== undefined && <StatusMessage kind="error">{t.tier2Error(error)}</StatusMessage>}
       {sections !== undefined && (
         <div className="tier2-result" aria-live="polite">
           {sections.map((section) => (

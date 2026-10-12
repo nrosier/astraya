@@ -53,6 +53,9 @@ const en = {
   detailsHeading: 'Evidence for each time',
   detailsSummary: (time: string, score: string) => `${time} — score ${score}`,
   noContacts: 'No contacts within the orb for any event.',
+  contactCount: (count: number) => `${String(count)} ${count === 1 ? 'contact' : 'contacts'}`,
+  showDetails: 'Show contacts',
+  hideDetails: 'Hide contacts',
   forEvent: (n: number, label: string) => `Event ${String(n)}${label === '' ? '' : ` (${label})`}`,
   solarArcContact: (moving: string, aspect: string, natal: string, orb: string) =>
     `Solar arc: directed ${moving} ${aspect} natal ${natal} (${orb})`,
@@ -110,6 +113,9 @@ const nl: typeof en = {
   detailsHeading: 'Bewijs per tijd',
   detailsSummary: (time: string, score: string) => `${time} — score ${score}`,
   noContacts: 'Geen contacten binnen de orb voor welke gebeurtenis dan ook.',
+  contactCount: (count: number) => `${String(count)} ${count === 1 ? 'contact' : 'contacten'}`,
+  showDetails: 'Toon contacten',
+  hideDetails: 'Verberg contacten',
   forEvent: (n: number, label: string) => `Gebeurtenis ${String(n)}${label === '' ? '' : ` (${label})`}`,
   solarArcContact: (moving: string, aspect: string, natal: string, orb: string) =>
     `Solar arc: gedirigeerde ${moving} ${aspect} natale ${natal} (${orb})`,

@@ -13,6 +13,7 @@
  * @exports DraconicView
  */
 import { useEffect, useMemo, useState } from 'react';
+import { GlossaryTerms } from './GlossaryTerm.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { computeDraconic, type DraconicData } from '../domain/draconic.js';
 import { housesAreDefined } from '../domain/chart-compute.js';
@@ -27,6 +28,7 @@ import { useMessages } from './messages.js';
 import { PersonNotFound } from './PersonNotFound.js';
 import { useStoreState } from './store-context.js';
 import type { ChartData } from '../domain/chart-compute.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -98,6 +100,7 @@ export function DraconicView({
         <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
       </p>
       <h1>{person.displayName ? t.heading(person.displayName) : t.headingFallback}</h1>
+      <GlossaryTerms terms={['draconic', 'ascendant', 'aspect']} />
       <ChartTypeSelector personId={personId} type="draconic" view={view} />
       <p className="hint">{t.hint}</p>
 
@@ -114,9 +117,7 @@ export function DraconicView({
       />
 
       {load.kind === 'ready' && !housesAreDefined(load.data.houses) && (
-        <p className="warning" role="alert">
-          {t.housesUndefined}
-        </p>
+        <StatusMessage kind="error">{t.housesUndefined}</StatusMessage>
       )}
       {load.kind === 'ready' && housesAreDefined(load.data.houses) && <ReportView chart={load.data} />}
     </main>

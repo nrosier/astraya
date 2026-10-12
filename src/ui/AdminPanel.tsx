@@ -18,6 +18,8 @@
  * @conventions Server enforces the real role check (super-admin vs admin vs user); this component only reads `useSessionUserOrUndefined()` to decide which controls to render. Text comes from co-located `AdminPanel.messages.ts` via `useMessages()`.
  * @exports AdminPanel, AdminUsagePanel
  */
+import { useLocale } from './locale.js';
+import { formatCents, formatInteger, formatTimestamp } from './format.js';
 import { Select } from './primitives/Select.js';
 import { TextField } from './primitives/TextField.js';
 import { useEffect, useState } from 'react';
@@ -39,15 +41,12 @@ import { sharedMessages } from './shared.messages.js';
 import type { AdminUser, DeletionImpact, InterpretationUsageReport } from '../sync/admin-client.js';
 import type { OidcConfig, Role } from '../sync/auth-client.js';
 import { useSessionUserOrUndefined } from './session-context.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 
 const ROLE_ORDER: readonly Role[] = ['user', 'admin', 'super_admin'];
 
 function roleLabel(role: Role, t: typeof adminPanelMessages.en): string {
   return role === 'super_admin' ? t.superAdminRoleLabel : role === 'admin' ? t.adminRoleLabel : t.memberRoleLabel;
-}
-
-function formatCost(cents: number): string {
-  return `$${(cents / 100).toFixed(2)}`;
 }
 
 function describeImpact(impact: DeletionImpact, t: typeof adminPanelMessages.en): string {
@@ -102,11 +101,7 @@ function CreateUserForm({
 
   return (
     <form onSubmit={submit}>
-      {error !== undefined && (
-        <p className="warning" role="alert">
-          {error}
-        </p>
-      )}
+      {error !== undefined && <StatusMessage kind="error">{error}</StatusMessage>}
       <div className="field-grid">
         <TextField label={shared.usernameLabel} autoComplete="off" value={username} onChange={setUsername} />
         <Select
@@ -160,28 +155,24 @@ function UserRow({
       </td>
       <td>
         {canManage ? (
-          <select
-            aria-label={t.roleSelectLabel(user.username)}
+          <Select
+            label={t.roleSelectLabel(user.username)}
+            hideLabel
             value={user.role}
             disabled={disabled || isSelf}
-            onChange={(event) => {
-              const next = ROLE_ORDER.find((candidate) => candidate === event.target.value);
+            options={ROLE_ORDER.map((option) => ({ value: option, label: roleLabel(option, t) }))}
+            onChange={(value) => {
+              const next = ROLE_ORDER.find((candidate) => candidate === value);
               if (next !== undefined) changeRole(next);
             }}
-          >
-            {ROLE_ORDER.map((option) => (
-              <option key={option} value={option}>
-                {roleLabel(option, t)}
-              </option>
-            ))}
-          </select>
+          />
         ) : (
           roleLabel(user.role, t)
         )}
       </td>
-      <td>{user.lastSeenAt === null ? t.neverSeen : new Date(user.lastSeenAt).toLocaleString()}</td>
-      <td>{user.lastSyncAt === null ? t.neverSeen : new Date(user.lastSyncAt).toLocaleString()}</td>
-      <td>{user.lastAiUsageAt === null ? t.neverSeen : new Date(user.lastAiUsageAt).toLocaleString()}</td>
+      <td>{user.lastSeenAt === null ? t.neverSeen : formatTimestamp(user.lastSeenAt)}</td>
+      <td>{user.lastSyncAt === null ? t.neverSeen : formatTimestamp(user.lastSyncAt)}</td>
+      <td>{user.lastAiUsageAt === null ? t.neverSeen : formatTimestamp(user.lastAiUsageAt)}</td>
       {canManage && (
         <td className="actions">
           <button type="button" className="quiet" disabled={disabled} onClick={toggleEnabled}>
@@ -294,16 +285,12 @@ export function AdminPanel(): React.JSX.Element {
         <a href="#/">&larr; {shared.back}</a>
       </p>
       <h1>{t.heading}</h1>
-      {error !== undefined && (
-        <p className="warning" role="alert">
-          {error}
-        </p>
-      )}
+      {error !== undefined && <StatusMessage kind="error">{error}</StatusMessage>}
 
       {!canManage && <p className="hint">{t.readOnlyUsersHint}</p>}
 
       {canManage && pendingDelete !== undefined && (
-        <p className="warning" role="alert">
+        <StatusMessage kind="error">
           {t.deleteWarning(pendingDelete.user.username, describeImpact(pendingDelete.impact, t))}{' '}
           <button type="button" className="danger" onClick={confirmDelete}>
             {t.deletePermanentlyButton}
@@ -317,7 +304,7 @@ export function AdminPanel(): React.JSX.Element {
           >
             {t.cancelButton}
           </button>
-        </p>
+        </StatusMessage>
       )}
 
       {canManage && (
@@ -334,7 +321,7 @@ export function AdminPanel(): React.JSX.Element {
 
       <h2>{t.usersHeading}</h2>
       {users === undefined ? (
-        <p className="status">{t.loadingUsers}</p>
+        <StatusMessage kind="loading">{t.loadingUsers}</StatusMessage>
       ) : (
         <div className="data-table data-table-wrap">
           <div className="data-table-scroll">
@@ -391,6 +378,7 @@ export function AdminUsagePanel(): React.JSX.Element {
   const [error, setError] = useState<string>();
   const t = useMessages(adminPanelMessages);
   const shared = useMessages(sharedMessages);
+  const [locale] = useLocale();
 
   useEffect(() => {
     void getInterpretationUsage()
@@ -406,13 +394,9 @@ export function AdminUsagePanel(): React.JSX.Element {
         <a href="#/">&larr; {shared.back}</a>
       </p>
       <h1>{t.usageHeading}</h1>
-      {error !== undefined && (
-        <p className="warning" role="alert">
-          {error}
-        </p>
-      )}
+      {error !== undefined && <StatusMessage kind="error">{error}</StatusMessage>}
       {usage === undefined ? (
-        <p className="status">{t.loadingUsage}</p>
+        <StatusMessage kind="loading">{t.loadingUsage}</StatusMessage>
       ) : usage.users.length === 0 ? (
         <p className="hint">{t.usageEmpty}</p>
       ) : (
@@ -434,13 +418,13 @@ export function AdminUsagePanel(): React.JSX.Element {
                   {usage.users.map((row) => (
                     <tr key={row.userId}>
                       <td>{row.username}</td>
-                      <td>{row.requestCount}</td>
+                      <td>{formatInteger(row.requestCount, locale)}</td>
                       <td>
-                        {row.promptTokens} / {row.outputTokens}
+                        {formatInteger(row.promptTokens, locale)} / {formatInteger(row.outputTokens, locale)}
                       </td>
-                      <td>{formatCost(row.costCents)}</td>
-                      <td>{formatCost(row.costCentsLast24h)}</td>
-                      <td>{row.lastUsedAt}</td>
+                      <td>{formatCents(row.costCents, locale)}</td>
+                      <td>{formatCents(row.costCentsLast24h, locale)}</td>
+                      <td>{formatTimestamp(row.lastUsedAt)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -449,9 +433,9 @@ export function AdminUsagePanel(): React.JSX.Element {
           </div>
           <p className="hint">
             {t.usageCapsNote(
-              formatCost(usage.caps.userDailyCapCents),
-              formatCost(usage.caps.totalDailyCapCents),
-              formatCost(usage.totalCostCentsLast24h),
+              formatCents(usage.caps.userDailyCapCents, locale),
+              formatCents(usage.caps.totalDailyCapCents, locale),
+              formatCents(usage.totalCostCentsLast24h, locale),
             )}
           </p>
         </>

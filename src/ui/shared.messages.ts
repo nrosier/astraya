@@ -10,6 +10,7 @@
  */
 const en = {
   back: 'Back',
+  offlineNeeded: 'You are offline. This needs a connection; everything calculated on this device keeps working.',
   people: 'People',
   notFoundHeading: 'Not found',
   notFoundBody: 'There is no person with that id on this device. If they were deleted, they can be restored from the',
@@ -21,6 +22,8 @@ const en = {
 
 const nl: typeof en = {
   back: 'Terug',
+  offlineNeeded:
+    'Je bent offline. Dit heeft een verbinding nodig; alles wat op dit apparaat wordt berekend blijft werken.',
   people: 'Personen',
   notFoundHeading: 'Niet gevonden',
   notFoundBody:

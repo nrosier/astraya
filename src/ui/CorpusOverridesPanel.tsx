@@ -54,6 +54,7 @@ import { corpusOverridesPanelMessages } from './CorpusOverridesPanel.messages.js
 import { sharedMessages } from './shared.messages.js';
 import type { CorpusOverride } from '../sync/admin-client.js';
 import type { CorpusCategory, CorpusEntry, CorpusTier, Locale } from '../interpretation/schema.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 
 const PAGE_SIZE = 50;
 
@@ -273,11 +274,7 @@ export function CorpusOverridesPanel(): React.JSX.Element {
       <h1>{t.heading}</h1>
       <p>{t.intro}</p>
 
-      {loadError !== undefined && (
-        <p className="warning" role="alert">
-          {t.couldNotLoad(loadError)}
-        </p>
-      )}
+      {loadError !== undefined && <StatusMessage kind="error">{t.couldNotLoad(loadError)}</StatusMessage>}
 
       <div className="field-grid">
         <Select
@@ -329,14 +326,10 @@ export function CorpusOverridesPanel(): React.JSX.Element {
         </button>
       </p>
 
-      {saveError !== undefined && (
-        <p className="warning" role="alert">
-          {t.saveFailed(saveError)}
-        </p>
-      )}
+      {saveError !== undefined && <StatusMessage kind="error">{t.saveFailed(saveError)}</StatusMessage>}
 
       {pendingReset !== undefined && (
-        <p className="warning" role="alert">
+        <StatusMessage kind="error">
           {t.resetWarning(`${labelForKey(pendingReset.key, uiLocale)} (${pendingReset.key})`)}{' '}
           <button type="button" className="danger" onClick={confirmReset}>
             {t.resetPermanentlyButton}
@@ -350,7 +343,7 @@ export function CorpusOverridesPanel(): React.JSX.Element {
           >
             {t.cancelButton}
           </button>
-        </p>
+        </StatusMessage>
       )}
 
       {editing !== undefined && (
@@ -404,7 +397,7 @@ export function CorpusOverridesPanel(): React.JSX.Element {
       )}
 
       {data === undefined ? (
-        <p className="status">{t.loadingCorpus}</p>
+        <StatusMessage kind="loading">{t.loadingCorpus}</StatusMessage>
       ) : (
         <>
           {filtered.length === 0 ? (

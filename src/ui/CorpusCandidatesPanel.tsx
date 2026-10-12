@@ -20,6 +20,8 @@
  * @conventions Accepting a candidate turns it into a live correction in CorpusOverridesPanel; nothing here is visible to a reader until accepted. The corpus-language selector is local state, independent from the app's own `useLocale()`. Text comes from co-located `CorpusCandidatesPanel.messages.ts` via `useMessages()`.
  * @exports CorpusCandidatesPanel
  */
+import { Checkbox } from './primitives/Checkbox.js';
+import { formatFixed } from './format.js';
 import { Select } from './primitives/Select.js';
 import { useEffect, useMemo, useState } from 'react';
 import { decideCorpusCandidates, listCorpusCandidates } from '../sync/admin-client.js';
@@ -32,6 +34,7 @@ import { corpusCandidatesPanelMessages } from './CorpusCandidatesPanel.messages.
 import { sharedMessages } from './shared.messages.js';
 import type { CorpusCandidate } from '../sync/admin-client.js';
 import type { Locale } from '../interpretation/schema.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 
 export function CorpusCandidatesPanel(): React.JSX.Element {
   const t = useMessages(corpusCandidatesPanelMessages);
@@ -129,11 +132,7 @@ export function CorpusCandidatesPanel(): React.JSX.Element {
       <h1>{t.heading}</h1>
       <p>{t.intro}</p>
 
-      {loadError !== undefined && (
-        <p className="warning" role="alert">
-          {t.couldNotLoad(loadError)}
-        </p>
-      )}
+      {loadError !== undefined && <StatusMessage kind="error">{t.couldNotLoad(loadError)}</StatusMessage>}
 
       <div className="field-grid">
         <Select
@@ -146,34 +145,25 @@ export function CorpusCandidatesPanel(): React.JSX.Element {
         />
       </div>
 
-      {decideError !== undefined && (
-        <p className="warning" role="alert">
-          {t.decideFailed(decideError)}
-        </p>
-      )}
+      {decideError !== undefined && <StatusMessage kind="error">{t.decideFailed(decideError)}</StatusMessage>}
       {missingCount !== undefined && missingCount > 0 && (
-        <p className="warning" role="alert">
-          {t.missingWarning(String(missingCount))}
-        </p>
+        <StatusMessage kind="error">{t.missingWarning(String(missingCount))}</StatusMessage>
       )}
 
       {candidates === undefined ? (
-        <p className="status">{t.loadingCandidates}</p>
+        <StatusMessage kind="loading">{t.loadingCandidates}</StatusMessage>
       ) : candidates.length === 0 ? (
         <p className="empty">{t.noResults}</p>
       ) : (
         <>
           <p className="actions">
-            <label>
-              <input
-                type="checkbox"
-                checked={selected.size > 0 && selected.size === candidates.length}
-                onChange={(event) => {
-                  toggleSelectAll(event.target.checked);
-                }}
-              />{' '}
-              {t.selectAllLabel}
-            </label>{' '}
+            <Checkbox
+              label={t.selectAllLabel}
+              checked={selected.size > 0 && selected.size === candidates.length}
+              onChange={(value) => {
+                toggleSelectAll(value);
+              }}
+            />{' '}
             {t.selectedCount(String(selected.size))}{' '}
             <button
               type="button"
@@ -213,13 +203,13 @@ export function CorpusCandidatesPanel(): React.JSX.Element {
                     return (
                       <tr key={candidate.id}>
                         <td>
-                          <input
-                            type="checkbox"
+                          <Checkbox
+                            hideLabel
+                            label={labelForKey(candidate.key, uiLocale)}
                             checked={selected.has(candidate.id)}
-                            onChange={(event) => {
-                              toggleSelected(candidate.id, event.target.checked);
+                            onChange={(value) => {
+                              toggleSelected(candidate.id, value);
                             }}
-                            aria-label={labelForKey(candidate.key, uiLocale)}
                           />
                         </td>
                         <td>
@@ -252,7 +242,7 @@ export function CorpusCandidatesPanel(): React.JSX.Element {
                                   : candidate.triageSignal === 'no-baseline'
                                     ? t.triageNoBaseline
                                     : t.triageUnchecked}
-                              {candidate.triageScore !== undefined && ` (${candidate.triageScore.toFixed(2)})`}
+                              {candidate.triageScore !== undefined && ` (${formatFixed(candidate.triageScore, 2)})`}
                             </dd>
                             <dt>{t.tagsColumn}</dt>
                             <dd>

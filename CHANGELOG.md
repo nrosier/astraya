@@ -4,6 +4,40 @@ All notable changes to Astraya are recorded here. Versions follow
 [semantic versioning](https://semver.org/), and every milestone ends in a release —
 see [docs/RELEASING.md](docs/RELEASING.md).
 
+## [0.36.0] — 2026-10-12
+
+**A new interface: one navigation grouped by what you want to do, a Preferences workspace, a chart workspace with one selection panel, and one set of controls, messages and tables across every screen. Your people and their charts are unchanged.**
+
+This is the UI/UX overhaul (#506, phases 0–6 and the cleanup of phase 7). Phase 7's final-acceptance walkthrough with an astrology reader and a practitioner has not been run, and the manual screen-reader/zoom/high-contrast/touch passes are still open, so #514 and the epic stay open.
+
+### Changed
+
+- **Navigation and links (#509).** A person is now the persistent context: their name and tabs sit in the header, a searchable switcher changes the person without going back to the People list, and the tools are grouped (Sky & cycles, Questions & planning, Birth data). Every screen has one canonical address, such as `#/people/<id>/charts/natal/aspects`; **old bookmarked links no longer work** and open the People list. A new Overview screen is the landing page for a complete person; an incomplete one opens on their birth record.
+- **Preferences (#510).** Language, theme, symbols, planetary rulers, the default calculation profile, motion and density, and the full-data exports live in one Preferences page. Three named calculation profiles (Modern Western, Traditional Western, Sidereal Lahiri) fill the chart settings in one go; every chart states the profile it used. In the chart's Extended settings, rulers and symbols are previewed at once and Cancel puts them back; "Reset to my default" and "Reset to Astraya default" say what they reset.
+- **One chart workspace (#511).** The natal chart (and draconic, harmonic, returns, composite and shared charts) has four views — Wheel, Aspects, Placements, Patterns & condition — plus an aspect matrix and an elements & modalities view. Selecting a sign, body, house, aspect or derived point shows its facts and meaning in one panel next to the wheel (below it on a narrow screen), and every kind of selection can also be made from the keyboard through the tables. The combined chart sheet remains the PDF/PNG/SVG export, unchanged.
+- **Astrocartography (#512).** All map choices — line types, primary and additional bodies, Local Space and relocation — are one "Map settings" dialog; Apply recalculates once, and the previous map stays visible, marked as updating, meanwhile. Exports moved to the page header.
+- **Shared controls and states (#508, #513).** Every input, select, checkbox, date, number and dialog is one shared component with the same labels, help, errors and sizes, in English and Dutch, light and dark. Results use one message component for loading, updating, empty, zero-result, partial, offline and error states; place search and AI interpretation say when you are offline instead of failing. Tables align numbers and keep their header in view; dates, numbers and amounts are formatted the same way everywhere (the admin screen's mixed formats are fixed).
+- **Method choices and filters (#513).** Planetary rulers and calculation profiles are explained option cards; the zodiac and the Lilith/node models are segmented controls. The Transits and forecast filter shows its presets, a summary such as "Important · 12 of 48 shown" and one "Change filters" action, with Clear filters when nothing matches.
+- **Long forms (#513).** "Build PDF" and "Save" are primary buttons in a bar that stays in reach; the PDF builder's option groups collapse.
+
+### Added
+
+- **Astrology glossary (#456, #513).** 31 terms — dignities, dispositors, declination, antiscia, progressions, primary directions and more — with plain-language definitions in English and Dutch, opened by hover, click or keyboard from a "terms used on this page" list on every chart and timing screen, and from table column headers.
+- **Aspects to the Vertex, Part of Fortune and Part of Spirit (#516)**, with a Dutch name for the Part of Spirit toggle and short names for them in the aspect matrix.
+- **Real meaning text for derived points (#511, #517).** Selecting the Part of Fortune/Spirit or an ASC/MC–Sun/Moon point shows written text for its sign and house (96 entries, English and Dutch); their evaluation continues in #517.
+
+### Fixed
+
+- Dignities table headers no longer stretch a phone-width page sideways (#511); the Field wrapper's "optional" wording is translated (#508).
+
+### Internal tooling
+
+- **The corpus near-duplicate check finds the same pairs in seconds instead of minutes (#520).**
+
+### Notes for people running their own server
+
+- No database migration and no new configuration. Stored people and operation logs are untouched, and a test proves a person materialises identically from local and synchronised records.
+
 ## [0.35.0] — 2026-10-11
 
 **Tier 2 AI interpretation no longer logs request/response content, the Transits/Forecast filter becomes a draft/Apply/Cancel card matching Extended Settings, and several storage- and bundle-size-related robustness fixes land.**

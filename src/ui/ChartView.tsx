@@ -32,6 +32,7 @@
  * @conventions Exports `ChartDataView`, the shared tabbed chart+tables UI reused by CompositeView/SharedChartView; every value is recomputed from the stored birth moment via `domain/chart-compute.js`/`domain/chart-tables.js` rather than read from a saved Chart record; houses/angles/derived-points tables are hidden when `timeAccuracy === 'unknown'`. Text comes from co-located `ChartView.messages.ts` via `useMessages()`.
  * @exports ChartView, ChartDataView, emphasisColumns, positionColumns, houseCuspColumns, angleColumns, aspectColumns, dignityColumns, dispositorColumns, declinationColumns, antisciaColumns, fixedStarColumns, derivedPointColumns
  */
+import { formatFixed } from './format.js';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   almutenOfAscendant,
@@ -122,6 +123,7 @@ import {
 import { SelectionInspector, type WheelIsolationFacts } from './SelectionInspector.js';
 import { useRulershipChoice } from './rulership-setting.js';
 import type { RulershipChoice } from '../astrology/rulership.js';
+import { GlossaryTerms } from './GlossaryTerm.js';
 import { PageHeader } from './PageHeader.js';
 import { PersonNotFound } from './PersonNotFound.js';
 import { SortableTable } from './SortableTable.js';
@@ -130,6 +132,7 @@ import type { TableColumn } from './table-sort.js';
 import type { EphemerisProvider } from '../ephemeris/types.js';
 import type { Locale } from '../interpretation/schema.js';
 import type { BirthMomentInput } from '../time/types.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -236,7 +239,7 @@ export function positionColumns(
       label: t.speedLabel,
       labelTooltip: t.speedTooltip,
       valueOf: (row) => row.speed ?? '',
-      render: (row) => (row.speed === undefined ? '—' : row.speed.toFixed(4)),
+      render: (row) => (row.speed === undefined ? '—' : formatFixed(row.speed, 4)),
     },
     {
       key: 'retrograde',
@@ -249,12 +252,14 @@ export function positionColumns(
       key: 'anaretic',
       label: t.anareticLabel,
       valueOf: (row) => row.anaretic,
+      align: 'center',
       render: (row) => (row.anaretic ? '✓' : ''),
     },
     {
       key: 'outOfBounds',
       label: t.outOfBoundsLabel,
       valueOf: (row) => row.outOfBounds ?? false,
+      align: 'center',
       render: (row) => (row.outOfBounds === true ? '✓' : ''),
     },
   ];
@@ -324,7 +329,7 @@ export function aspectColumns(
       valueOf: (row) => row.bodyBName,
       render: (row) => bodyDisplayName(row.bodyBKey, locale),
     },
-    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => `${row.orb.toFixed(2)}°` },
+    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => `${formatFixed(row.orb, 2)}°` },
     {
       key: 'applying',
       label: t.applyingLabel,
@@ -354,6 +359,7 @@ export function dignityColumns(t: typeof chartViewMessages.en, locale: Locale): 
       label: t.rulerLabel,
       labelTooltip: t.rulerTooltip,
       valueOf: (row) => row.ruler,
+      align: 'center',
       render: (row) => (row.ruler ? '✓' : ''),
     },
     {
@@ -361,6 +367,7 @@ export function dignityColumns(t: typeof chartViewMessages.en, locale: Locale): 
       label: t.exaltedLabel,
       labelTooltip: t.exaltedTooltip,
       valueOf: (row) => row.exalted,
+      align: 'center',
       render: (row) => (row.exalted ? '✓' : ''),
     },
     {
@@ -368,6 +375,7 @@ export function dignityColumns(t: typeof chartViewMessages.en, locale: Locale): 
       label: t.detrimentLabel,
       labelTooltip: t.detrimentTooltip,
       valueOf: (row) => row.detriment,
+      align: 'center',
       render: (row) => (row.detriment ? '✓' : ''),
     },
     {
@@ -375,6 +383,7 @@ export function dignityColumns(t: typeof chartViewMessages.en, locale: Locale): 
       label: t.fallLabel,
       labelTooltip: t.fallTooltip,
       valueOf: (row) => row.fall,
+      align: 'center',
       render: (row) => (row.fall ? '✓' : ''),
     },
     {
@@ -382,6 +391,7 @@ export function dignityColumns(t: typeof chartViewMessages.en, locale: Locale): 
       label: t.triplicityLabel,
       labelTooltip: t.triplicityTooltip,
       valueOf: (row) => row.triplicity,
+      align: 'center',
       render: (row) => (row.triplicity ? '✓' : ''),
     },
     {
@@ -389,6 +399,7 @@ export function dignityColumns(t: typeof chartViewMessages.en, locale: Locale): 
       label: t.boundLabel,
       labelTooltip: t.boundTooltip,
       valueOf: (row) => row.bound,
+      align: 'center',
       render: (row) => (row.bound ? '✓' : ''),
     },
     {
@@ -396,6 +407,7 @@ export function dignityColumns(t: typeof chartViewMessages.en, locale: Locale): 
       label: t.faceLabel,
       labelTooltip: t.faceTooltip,
       valueOf: (row) => row.face,
+      align: 'center',
       render: (row) => (row.face ? '✓' : ''),
     },
     { key: 'points', label: t.dignityPointsLabel, valueOf: (row) => row.points },
@@ -404,6 +416,7 @@ export function dignityColumns(t: typeof chartViewMessages.en, locale: Locale): 
       label: t.peregrineLabel,
       labelTooltip: t.peregrineTooltip,
       valueOf: (row) => row.peregrine,
+      align: 'center',
       render: (row) => (row.peregrine ? '✓' : ''),
     },
   ];
@@ -443,6 +456,7 @@ export function dispositorColumns(
       key: 'mutualReception',
       label: t.mutualReceptionLabel,
       valueOf: (row) => row.mutualReception,
+      align: 'center',
       render: (row) => (row.mutualReception ? '✓' : ''),
     },
   ];
@@ -472,7 +486,7 @@ export function declinationColumns(
       valueOf: (row) => row.kind,
       render: (row) => t[row.kind],
     },
-    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => `${row.orb.toFixed(2)}°` },
+    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => `${formatFixed(row.orb, 2)}°` },
   ];
 }
 
@@ -497,7 +511,7 @@ export function antisciaColumns(t: typeof chartViewMessages.en, locale: Locale):
       valueOf: (row) => row.kind,
       render: (row) => (row.kind === 'antiscion' ? t.antiscion : t.contraAntiscion),
     },
-    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => `${row.orb.toFixed(2)}°` },
+    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => `${formatFixed(row.orb, 2)}°` },
   ];
 }
 
@@ -512,7 +526,7 @@ export function fixedStarColumns(t: typeof chartViewMessages.en, locale: Locale)
       valueOf: (row) => row.bodyName,
       render: (row) => bodyDisplayName(row.bodyKey, locale),
     },
-    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => `${row.orb.toFixed(2)}°` },
+    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => `${formatFixed(row.orb, 2)}°` },
   ];
 }
 
@@ -1370,20 +1384,14 @@ export function ChartDataView({
         />
       )}
 
-      {load.kind === 'loading' && <p className="status">{t.calculating}</p>}
+      {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
 
-      {load.kind === 'error' && (
-        <p className="warning" role="alert">
-          {t.chartError(load.message)}
-        </p>
-      )}
+      {load.kind === 'error' && <StatusMessage kind="error">{t.chartError(load.message)}</StatusMessage>}
 
       {load.kind === 'ready' && (
         <>
           {load.data.houses.warning !== undefined && (
-            <p className="warning" role="alert">
-              {load.data.houses.warning}
-            </p>
+            <StatusMessage kind="error">{load.data.houses.warning}</StatusMessage>
           )}
 
           {printAll ? (
@@ -1614,6 +1622,19 @@ export function ChartView({
         <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
       </p>
       <PageHeader title={person.displayName || t.chartFallback} basis={basisLine} />
+      <GlossaryTerms
+        terms={[
+          'ascendant',
+          'midheaven',
+          'houses',
+          'aspect',
+          'dignity',
+          'dispositor',
+          'retrograde',
+          'declination',
+          'derivedPoint',
+        ]}
+      />
       <ChartTypeSelector personId={personId} type="natal" view={view} />
       <ShareLink moment={person.moment} housesKnown={showHouses} />
       <ChartDataView

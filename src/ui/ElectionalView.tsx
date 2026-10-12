@@ -11,6 +11,8 @@
  * @conventions Needs no saved person or stored data (ephemeris-only), so it lives outside `Stored`; it ranks candidate times against rules, it does not recommend acting on any one of them. Text comes from co-located `ElectionalView.messages.ts` via `useMessages()`.
  * @exports ElectionalView
  */
+import { Checkbox } from './primitives/Checkbox.js';
+import { GlossaryTerms } from './GlossaryTerm.js';
 import { DateField } from './primitives/DateField.js';
 import { Select } from './primitives/Select.js';
 import { TextField } from './primitives/TextField.js';
@@ -32,6 +34,7 @@ import { useMessages } from './messages.js';
 import { sharedMessages } from './shared.messages.js';
 import { SortableTable } from './SortableTable.js';
 import type { TableColumn } from './table-sort.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 
 type Result =
   | { readonly kind: 'idle' }
@@ -142,6 +145,7 @@ export function ElectionalView(): React.JSX.Element {
         <a href="#/">&larr; {shared.back}</a>
       </p>
       <h1>{t.heading}</h1>
+      <GlossaryTerms terms={['electional', 'ascendant', 'houses']} />
       <p className="hint">{t.hint}</p>
 
       <div className="field-grid">
@@ -196,18 +200,14 @@ export function ElectionalView(): React.JSX.Element {
         <ul className="election-rules">
           {ELECTION_RULE_KEYS.map((key) => (
             <li key={key}>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={rules.has(key)}
-                  onChange={() => {
-                    toggleRule(key);
-                  }}
-                />{' '}
-                <strong>{t.rules[key]?.label ?? key}</strong>
-                <br />
-                <span className="hint">{t.rules[key]?.explanation}</span>
-              </label>
+              <Checkbox
+                label={t.rules[key]?.label ?? key}
+                description={t.rules[key]?.explanation}
+                checked={rules.has(key)}
+                onChange={() => {
+                  toggleRule(key);
+                }}
+              />
             </li>
           ))}
         </ul>
@@ -219,16 +219,8 @@ export function ElectionalView(): React.JSX.Element {
         </button>
       </p>
 
-      {fieldError !== undefined && (
-        <p className="warning" role="alert">
-          {errorText(fieldError)}
-        </p>
-      )}
-      {result.kind === 'error' && (
-        <p className="warning" role="alert">
-          {t.error(result.message)}
-        </p>
-      )}
+      {fieldError !== undefined && <StatusMessage kind="error">{errorText(fieldError)}</StatusMessage>}
+      {result.kind === 'error' && <StatusMessage kind="error">{t.error(result.message)}</StatusMessage>}
 
       {result.kind === 'ready' &&
         (result.rows.length === 0 ? (

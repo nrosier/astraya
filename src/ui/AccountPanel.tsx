@@ -28,6 +28,7 @@ import { startOidcHandshake } from './oidc-pkce.js';
 import { sharedMessages } from './shared.messages.js';
 import { IS_DEMO_MODE } from '../demo-mode.js';
 import type { AuthUser, OidcConfig } from '../sync/auth-client.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 
 function changes(count: number, t: typeof accountPanelMessages.en): string {
   return count === 1 ? t.oneChange : t.changesCount(String(count));
@@ -56,11 +57,7 @@ function AdoptionPanel({
   return (
     <div className="accountpanel-popover">
       <p>{t.adoptionPrompt(changes(recordCount, t))}</p>
-      {error !== undefined && (
-        <p className="warning" role="alert">
-          {t.adoptionFailed(error)}
-        </p>
-      )}
+      {error !== undefined && <StatusMessage kind="error">{t.adoptionFailed(error)}</StatusMessage>}
       <p className="actions">
         <button
           disabled={busy}
@@ -259,11 +256,7 @@ function SignInForm({
         </button>
       </p>
       <p>{t.signInExplainer}</p>
-      {error !== undefined && (
-        <p className="warning" role="alert">
-          {error}
-        </p>
-      )}
+      {error !== undefined && <StatusMessage kind="error">{error}</StatusMessage>}
       <form onSubmit={submit}>
         <div className="field-grid">
           <TextField
@@ -340,11 +333,7 @@ function SignedIn({
           {t.manageUsersLink}
         </button>
       )}
-      {error !== undefined && (
-        <p className="warning" role="alert">
-          {t.signOutFailed(error)}
-        </p>
-      )}
+      {error !== undefined && <StatusMessage kind="error">{t.signOutFailed(error)}</StatusMessage>}
     </div>
   );
 }
@@ -377,11 +366,7 @@ function RemoveAccountData({ userId, onRemoved }: { userId: string; onRemoved: (
   return (
     <div className="accountpanel-popover">
       <p>{t.removeDataPrompt}</p>
-      {error !== undefined && (
-        <p className="warning" role="alert">
-          {t.removeDataFailed(error)}
-        </p>
-      )}
+      {error !== undefined && <StatusMessage kind="error">{t.removeDataFailed(error)}</StatusMessage>}
       <p className="actions">
         <button className="quiet" disabled={busy} onClick={remove}>
           {t.removeDataButton}

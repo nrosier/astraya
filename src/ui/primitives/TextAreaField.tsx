@@ -18,6 +18,7 @@ export interface TextAreaFieldProps {
   readonly optional?: boolean | undefined;
   readonly rows?: number | undefined;
   readonly hideLabel?: boolean | undefined;
+  readonly placeholder?: string | undefined;
   readonly disabled?: boolean | undefined;
 }
 
@@ -30,6 +31,7 @@ export function TextAreaField({
   optional,
   rows = 3,
   hideLabel,
+  placeholder,
   disabled,
 }: TextAreaFieldProps): React.JSX.Element {
   const ids = useFieldIds(help !== undefined, error !== undefined);
@@ -39,6 +41,7 @@ export function TextAreaField({
         id={ids.inputId}
         rows={rows}
         value={value}
+        placeholder={placeholder}
         disabled={disabled}
         aria-invalid={error !== undefined || undefined}
         aria-describedby={ids.describedBy}

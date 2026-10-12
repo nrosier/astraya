@@ -17,6 +17,8 @@
  * @conventions Gated like PeriodicTransitView/TransitView on a known birth time (ACG lines shift ~15° longitude per hour of time error); embeds the SVG map via `dangerouslySetInnerHTML` and exports it through `standaloneSvg`/`downloadText`/`svgToPngBlob`, matching ChartView's trust-boundary pattern for app-generated markup. Reads interpretive text from the shared wheel corpus via `resolvePlacementText`.
  * @exports AstrocartographyView
  */
+import { GlossaryTerms } from './GlossaryTerm.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 import { personHref } from './route.js';
 import { useEffect, useMemo, useState } from 'react';
 import { resolvePlacementText } from '../interpretation/compose.js';
@@ -31,6 +33,11 @@ import {
   TRADITIONAL_ACG_BODY_IDS,
   type AstrocartographyData,
 } from '../domain/astrocartography.js';
+import { ALL_LINE_TYPES, DEFAULT_MAP_SETTINGS, relocationOf, type LineType, type MapSettings } from './map-settings.js';
+import { MapSettingsDialog } from './MapSettingsDialog.js';
+import { Disclosure } from './primitives/Disclosure.js';
+import { PageHeader } from './PageHeader.js';
+import { useRegisterExports } from './export-registry.js';
 import { bodyDisplayName, signDisplayName } from './astro-names.messages.js';
 import { deriveExportFilename } from '../domain/export-filename.js';
 import { momentKey } from '../time/encode.js';
@@ -44,9 +51,6 @@ import { useStoreState } from './store-context.js';
 import type { BodyId, GeoPosition } from '../ephemeris/types.js';
 import type { CorpusEntry, Locale } from '../interpretation/schema.js';
 import { wheelCorpus } from './wheel-corpus.js';
-
-type LineType = 'MC' | 'IC' | 'AC' | 'DC';
-const ALL_LINE_TYPES: readonly LineType[] = ['MC', 'IC', 'AC', 'DC'];
 
 function lineTypeLabels(t: typeof astrocartographyViewMessages.en): Record<LineType, string> {
   return { MC: t.mc, IC: t.ic, AC: t.ac, DC: t.dc };
@@ -79,27 +83,19 @@ function signDegreeLabel(longitude: number, locale: Locale): string {
   return `${String(degrees)}°${String(minutes).padStart(2, '0')}' ${signDisplayName(signOf(longitude).name, locale)}`;
 }
 
-function parseCoordinate(value: string, min: number, max: number): number | undefined {
-  if (value.trim() === '') return undefined;
-  const parsed = Number(value);
-  return Number.isFinite(parsed) && parsed >= min && parsed <= max ? parsed : undefined;
-}
-
 export function AstrocartographyView({ personId }: { personId: string }): React.JSX.Element {
   const state = useStoreState();
   const person = state.people.get(personId);
   const t = useMessages(astrocartographyViewMessages);
   const [locale] = useLocale();
   const { provider } = useEphemerisProvider();
-  const [lineTypes, setLineTypes] = useState<readonly LineType[]>(ALL_LINE_TYPES);
-  const [bodies, setBodies] = useState<readonly BodyId[]>(TRADITIONAL_ACG_BODY_IDS);
-  const [localSpace, setLocalSpace] = useState(false);
-  const [relocationLat, setRelocationLat] = useState('');
-  const [relocationLon, setRelocationLon] = useState('');
+  // What the map is drawn from. Edited as a draft in the Map settings dialog and replaced as a whole on Apply, so
+  // one commit is one recalculation and opening or cancelling the dialog never changes the map (#512).
+  const [settings, setSettings] = useState<MapSettings>(DEFAULT_MAP_SETTINGS);
+  const { lineTypes, bodies, localSpace } = settings;
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
-  const [pngSize, setPngSize] = useState(1800);
-  const [pngError, setPngError] = useState<string | undefined>(undefined);
-  const [pngBusy, setPngBusy] = useState(false);
+  // True while a recalculation runs. The last valid map stays on screen meanwhile, marked as updating, never blanked.
+  const [updating, setUpdating] = useState(false);
   // The reviewed text of each line (#427): the mechanical sentence until it arrives.
   const [corpus, setCorpus] = useState<readonly CorpusEntry[]>([]);
   useEffect(() => {
@@ -114,19 +110,17 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
       cancelled = true;
     };
   }, [locale]);
-  const sizes = pngSizes(t);
 
-  const relocationPlace: GeoPosition | undefined = useMemo(() => {
-    const latitude = parseCoordinate(relocationLat, -90, 90);
-    const longitude = parseCoordinate(relocationLon, -180, 180);
-    return latitude === undefined || longitude === undefined ? undefined : { latitude, longitude, altitude: 0 };
-  }, [relocationLat, relocationLon]);
+  const relocationPlace: GeoPosition | undefined = useMemo(
+    () => relocationOf(settings),
+    [settings.relocationLat, settings.relocationLon],
+  );
 
   useEffect(() => {
     if (person?.moment === undefined || provider === undefined) return undefined;
     const moment = person.moment;
     const effect = { cancelled: false };
-    setLoad({ kind: 'loading' });
+    setUpdating(true);
 
     void (async () => {
       try {
@@ -136,10 +130,15 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
           localSpace,
           ...(relocationPlace === undefined ? {} : { relocationPlace }),
         });
-        if (!effect.cancelled) setLoad({ kind: 'ready', data });
+        if (!effect.cancelled) {
+          setLoad({ kind: 'ready', data });
+          setUpdating(false);
+        }
       } catch (error) {
-        if (!effect.cancelled)
+        if (!effect.cancelled) {
           setLoad({ kind: 'error', message: error instanceof Error ? error.message : String(error) });
+          setUpdating(false);
+        }
       }
     })();
 
@@ -147,16 +146,6 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
       effect.cancelled = true;
     };
   }, [momentKey(person?.moment), provider, bodies, lineTypes, localSpace, relocationPlace]);
-
-  const toggleLineType = (lineType: LineType, checked: boolean): void => {
-    setLineTypes((current) =>
-      checked ? [...current, lineType] : current.filter((candidate) => candidate !== lineType),
-    );
-  };
-
-  const toggleBody = (body: BodyId, checked: boolean): void => {
-    setBodies((current) => (checked ? [...current, body] : current.filter((candidate) => candidate !== body)));
-  };
 
   const data = load.kind === 'ready' ? load.data : undefined;
   const map = useMemo(() => {
@@ -181,22 +170,26 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
     );
   };
 
-  const downloadPng = (): void => {
+  const downloadPng = async (size: number): Promise<void> => {
     if (map === undefined) return;
-    setPngError(undefined);
-    setPngBusy(true);
-    const pngHeight = Math.round((pngSize * map.height) / map.width);
-    void svgToPngBlob(standaloneSvg(map.markup), pngSize, pngHeight)
-      .then((blob) => {
-        downloadBlob(deriveExportFilename(displayName, 'astrocartography', 'png'), blob);
-      })
-      .catch((error: unknown) => {
-        setPngError(error instanceof Error ? error.message : String(error));
-      })
-      .finally(() => {
-        setPngBusy(false);
-      });
+    const pngHeight = Math.round((size * map.height) / map.width);
+    const blob = await svgToPngBlob(standaloneSvg(map.markup), size, pngHeight);
+    downloadBlob(deriveExportFilename(displayName, 'astrocartography', 'png'), blob);
   };
+
+  // The map's own exports live beside the page title, in the header's Export menu, like every other page's.
+  useRegisterExports(
+    map === undefined
+      ? undefined
+      : [
+          { key: 'acg-svg', label: t.downloadSvg, run: downloadSvg },
+          ...pngSizes(t).map((option) => ({
+            key: `acg-png-${String(option.size)}`,
+            label: `${t.downloadPng} — ${option.label}`,
+            run: () => downloadPng(option.size),
+          })),
+        ],
+  );
 
   if (person === undefined) {
     return <PersonNotFound />;
@@ -223,6 +216,7 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
           <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
         </p>
         <h1>{t.astrocartographyFallback}</h1>
+        <GlossaryTerms terms={['astrocartography', 'localSpace', 'ascendant', 'midheaven']} />
         <p>{t.needsKnownTime(person.displayName || t.thisPerson)}</p>
       </main>
     );
@@ -233,155 +227,38 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
       <p className="back">
         <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
       </p>
-      <h1>{person.displayName ? t.heading(person.displayName) : t.astrocartographyFallback}</h1>
+      <PageHeader title={person.displayName ? t.heading(person.displayName) : t.astrocartographyFallback} />
       <p className="hint">{t.hint}</p>
 
-      <fieldset className="field-group">
-        <legend>{t.lineTypesLegend}</legend>
-        {ALL_LINE_TYPES.map((lineType) => (
-          <label key={lineType}>
-            <input
-              type="checkbox"
-              checked={lineTypes.includes(lineType)}
-              onChange={(event) => {
-                toggleLineType(lineType, event.target.checked);
-              }}
-            />{' '}
-            {lineTypeLabels(t)[lineType]}
-          </label>
-        ))}
-      </fieldset>
-
-      <fieldset className="field-group">
-        <legend>{t.bodiesLegend}</legend>
-        {TRADITIONAL_ACG_BODY_IDS.map((body) => (
-          <label key={body}>
-            <input
-              type="checkbox"
-              checked={bodies.includes(body)}
-              onChange={(event) => {
-                toggleBody(body, event.target.checked);
-              }}
-            />{' '}
-            {bodyName(body, locale)}
-          </label>
-        ))}
-        <details>
-          <summary>{t.extendedSummary}</summary>
-          {EXTENDED_ACG_BODY_IDS.map((body) => (
-            <label key={body}>
-              <input
-                type="checkbox"
-                checked={bodies.includes(body)}
-                onChange={(event) => {
-                  toggleBody(body, event.target.checked);
-                }}
-              />{' '}
-              {bodyName(body, locale)}
-            </label>
-          ))}
-        </details>
-      </fieldset>
-
-      <fieldset className="field-group">
-        <legend>{t.localSpaceLegend}</legend>
-        <label>
-          <input
-            type="checkbox"
-            checked={localSpace}
-            onChange={(event) => {
-              setLocalSpace(event.target.checked);
-            }}
-          />{' '}
-          {t.showLocalSpaceLines}
-        </label>
-      </fieldset>
-
-      <fieldset className="field-group">
-        <legend>{t.relocationLegend}</legend>
-        <p className="hint">{t.relocationHint}</p>
-        <label>
-          {t.latitudeLabel}{' '}
-          <input
-            type="number"
-            inputMode="decimal"
-            min={-90}
-            max={90}
-            value={relocationLat}
-            onChange={(event) => {
-              setRelocationLat(event.target.value);
-            }}
-          />
-        </label>{' '}
-        <label>
-          {t.longitudeLabel}{' '}
-          <input
-            type="number"
-            inputMode="decimal"
-            min={-180}
-            max={180}
-            value={relocationLon}
-            onChange={(event) => {
-              setRelocationLon(event.target.value);
-            }}
-          />
-        </label>
-        {data?.relocatedHouses !== undefined && (
-          <p>
-            {t.relocatedAscendantMidheaven(
-              signDegreeLabel(data.relocatedHouses.ascendant, locale),
-              signDegreeLabel(data.relocatedHouses.midheaven, locale),
-            )}
-          </p>
-        )}
-      </fieldset>
-
-      {load.kind === 'loading' && <p className="status">{t.calculating}</p>}
-
-      {load.kind === 'error' && (
-        <p className="warning" role="alert">
-          {t.error(load.message)}
+      <MapSettingsDialog applied={settings} onApply={setSettings} lineTypeLabels={lineTypeLabels(t)} />
+      {data?.relocatedHouses !== undefined && (
+        <p>
+          {t.relocatedAscendantMidheaven(
+            signDegreeLabel(data.relocatedHouses.ascendant, locale),
+            signDegreeLabel(data.relocatedHouses.midheaven, locale),
+          )}
         </p>
       )}
+
+      {(load.kind === 'loading' || updating) && (
+        <StatusMessage kind={load.kind === 'loading' ? 'loading' : 'updating'}>
+          {load.kind === 'loading' ? t.calculating : t.updating}
+        </StatusMessage>
+      )}
+
+      {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
 
       {map !== undefined && (
         <>
           <div
-            className="acg-map"
+            className={updating ? 'acg-map acg-map-updating' : 'acg-map'}
+            aria-busy={updating}
             // Entirely generated by this app from data it just computed — never user-supplied
             // markup — the same trust boundary `ChartView.tsx` documents for its own wheel.
             aria-hidden="true"
             dangerouslySetInnerHTML={{ __html: map.markup }}
           />
 
-          <div className="chart-export-actions">
-            <button type="button" className="quiet" onClick={downloadSvg}>
-              {t.downloadSvg}
-            </button>
-            <span className="chart-export-png">
-              <select
-                aria-label={t.pngResolutionLabel}
-                value={pngSize}
-                onChange={(event) => {
-                  setPngSize(Number(event.target.value));
-                }}
-              >
-                {sizes.map((option) => (
-                  <option key={option.size} value={option.size}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              <button type="button" className="quiet" onClick={downloadPng} disabled={pngBusy}>
-                {pngBusy ? t.rendering : t.downloadPng}
-              </button>
-            </span>
-          </div>
-          {pngError !== undefined && (
-            <p className="warning" role="alert">
-              {pngError}
-            </p>
-          )}
           {lineTypes.length > 0 && bodies.length > 0 && (
             <section className="acg-meanings" aria-labelledby="acg-meanings-heading">
               <h2 id="acg-meanings-heading">{t.meaningsHeading}</h2>
@@ -391,8 +268,13 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
                 .map((body) => {
                   const key = bodyById(body)?.key ?? String(body);
                   return (
-                    <details key={body}>
-                      <summary>{bodyName(body, locale)}</summary>
+                    <Disclosure
+                      key={body}
+                      title={bodyName(body, locale)}
+                      summary={t.selectedLines(lineTypes.length)}
+                      showLabel={t.showMeanings}
+                      hideLabel={t.hideMeanings}
+                    >
                       <dl>
                         {ALL_LINE_TYPES.filter((lineType) => lineTypes.includes(lineType)).map((lineType) => (
                           <div key={lineType}>
@@ -407,7 +289,7 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
                           </div>
                         ))}
                       </dl>
-                    </details>
+                    </Disclosure>
                   );
                 })}
             </section>

@@ -23,6 +23,8 @@
  * @exports TransitView, contactColumns
  */
 
+import { DateField } from './primitives/DateField.js';
+import { GlossaryTerms } from './GlossaryTerm.js';
 import { personHref } from './route.js';
 import { useSymbolClass } from './symbol-setting.js';
 import { useGlyphVariants } from './glyph-variant-setting.js';
@@ -36,7 +38,7 @@ import { renderMultiWheelSvg, type CrossRingAspects } from '../chart/multi-wheel
 import { findVoidOfCourseMoon, type VoidOfCourseMoon } from '../astrology/void-of-course.js';
 import { voidOfCourseSentence } from './void-of-course-text.js';
 import { aspectDisplayName, bodyDisplayName } from './astro-names.messages.js';
-import { todayInputValue } from './format.js';
+import { formatFixed, todayInputValue } from './format.js';
 import { buildFocusObjectContext } from '../interpretation/focus-context.js';
 import { FocusInterpretation } from './FocusInterpretation.js';
 import { BiWheelSelectionPanel } from './BiWheelSelectionPanel.js';
@@ -61,6 +63,7 @@ import { useStoreState } from './store-context.js';
 import { transitViewMessages } from './TransitView.messages.js';
 import type { TableColumn } from './table-sort.js';
 import type { Locale } from '../interpretation/schema.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -88,7 +91,7 @@ export function contactColumns(t: typeof transitViewMessages.en, locale: Locale)
       valueOf: (row) => row.bodyBName,
       render: (row) => bodyDisplayName(row.bodyBKey, locale),
     },
-    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => `${row.orb.toFixed(2)}°` },
+    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => `${formatFixed(row.orb, 2)}°` },
     {
       key: 'applying',
       label: t.applyingLabel,
@@ -244,28 +247,16 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
         <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
       </p>
       <h1>{person.displayName ? t.heading(person.displayName) : t.transitsFallback}</h1>
+      <GlossaryTerms terms={['transit', 'aspect', 'orb', 'applying', 'retrograde']} />
       <p className="hint">{t.hint(person.displayName || t.thisPerson)}</p>
 
       <p>
-        <label>
-          {t.asOfLabel}{' '}
-          <input
-            type="date"
-            value={asOf}
-            onChange={(event) => {
-              setAsOf(event.target.value);
-            }}
-          />
-        </label>
+        <DateField label={t.asOfLabel} value={asOf} onChange={setAsOf} />
       </p>
 
-      {load.kind === 'loading' && <p className="status">{t.calculating}</p>}
+      {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
 
-      {load.kind === 'error' && (
-        <p className="warning" role="alert">
-          {t.error(load.message)}
-        </p>
-      )}
+      {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
 
       {load.kind === 'ready' && wheelMarkup !== undefined && (
         <>

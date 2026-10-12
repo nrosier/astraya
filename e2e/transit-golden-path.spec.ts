@@ -56,7 +56,7 @@ test('a person with a known birth time gets a Transit screen with a bi-wheel and
   // all agree, and "All transits" widens every one of them.
   const countText = async (): Promise<[number, number]> => {
     const text = (await page.locator('.transit-filter-count').textContent()) ?? '';
-    const match = /^Showing (\d+) of (\d+) transits/.exec(text);
+    const match = /· (\d+) of (\d+) shown$/.exec(text);
     if (match === null) throw new Error(`unexpected count text: ${text}`);
     return [Number(match[1]), Number(match[2])];
   };
@@ -66,10 +66,10 @@ test('a person with a known birth time gets a Transit screen with a bi-wheel and
   expect(shown).toBeLessThan(total);
   await expect(rows).toHaveCount(shown);
   await expect(crossLines).toHaveCount(shown);
-  await page.getByLabel('Show', { exact: true }).selectOption('all');
+  await page.getByRole('radiogroup', { name: 'Show', exact: true }).getByLabel('All', { exact: true }).check();
   await expect(rows).toHaveCount(total);
   await expect(crossLines).toHaveCount(total);
-  await page.getByLabel('Show', { exact: true }).selectOption('important');
+  await page.getByRole('radiogroup', { name: 'Show', exact: true }).getByLabel('Important', { exact: true }).check();
 
   // Click-to-isolate (#418): the transiting Saturn is picked out on its own ring, the panel names
   // the ring, and a second click clears it.

@@ -5,7 +5,7 @@ import {
   formatSimilarityReport,
 } from '../src/interpretation/dedupe.js';
 import { CORPUS } from '../src/interpretation/index.js';
-import type { CorpusEntry } from '../src/interpretation/schema.js';
+import type { CorpusEntry, Locale } from '../src/interpretation/schema.js';
 
 function entry(key: string, text: string, overrides: Partial<CorpusEntry> = {}): CorpusEntry {
   return {
@@ -75,18 +75,116 @@ describe('findNearDuplicates (#58)', () => {
     expect(report.pairs).toEqual([]);
   });
 
-  it(
-    'the shipped corpus has no near-duplicates',
-    () => {
-      // Empty until #55/#56 land, so this passes trivially today — it starts
-      // failing the moment two entries in the same locale read too much alike.
-      // The corpus is now ~33k entries across both locales, and this check is
-      // quadratic in entries-per-locale, so it needs far more than vitest's
-      // default 30s test timeout to actually finish.
-      expect(findNearDuplicates(CORPUS).pairs).toEqual([]);
+  it('the shipped corpus has no near-duplicates', () => {
+    expect(findNearDuplicates(CORPUS).pairs).toEqual([]);
+  });
+});
+
+/**
+ * The all-pairs scan `findNearDuplicates` replaced (#520), kept here as the reference it must agree with exactly.
+ * It is the original implementation, unchanged apart from taking the pair test out of the module.
+ */
+function findNearDuplicatesByEveryPair(entries: readonly CorpusEntry[], threshold: number): readonly object[] {
+  const trigrams = (text: string): Set<string> => {
+    const normalized = text.toLowerCase().trim().replace(/\s+/g, ' ');
+    const grams = new Set<string>();
+    for (let i = 0; i <= normalized.length - 3; i += 1) grams.add(normalized.slice(i, i + 3));
+    return grams;
+  };
+  const jaccard = (a: Set<string>, b: Set<string>): number => {
+    if (a.size === 0 || b.size === 0) return 0;
+    let intersection = 0;
+    for (const gram of a) if (b.has(gram)) intersection += 1;
+    return intersection / (a.size + b.size - intersection);
+  };
+  const byLocale = new Map<Locale, CorpusEntry[]>();
+  for (const e of entries) byLocale.set(e.locale, [...(byLocale.get(e.locale) ?? []), e]);
+  const pairs: { keyA: string; keyB: string; locale: Locale; similarity: number }[] = [];
+  for (const [locale, group] of byLocale) {
+    const items = group.map((e) => ({ e, grams: trigrams(e.text) })).sort((x, y) => x.grams.size - y.grams.size);
+    for (let i = 0; i < items.length; i += 1) {
+      const a = items[i];
+      if (!a) continue;
+      for (let j = i + 1; j < items.length; j += 1) {
+        const b = items[j];
+        if (!b) continue;
+        if (b.grams.size === 0 || a.grams.size / b.grams.size < threshold) break;
+        const similarity = jaccard(a.grams, b.grams);
+        if (similarity >= threshold) {
+          const [keyA, keyB] = a.e.key <= b.e.key ? [a.e.key, b.e.key] : [b.e.key, a.e.key];
+          pairs.push({ keyA, keyB, locale, similarity });
+        }
+      }
+    }
+  }
+  return pairs.sort((left, right) => right.similarity - left.similarity);
+}
+
+describe('findNearDuplicates agrees with comparing every pair (#520)', () => {
+  /** A small deterministic generator, so a failure can be reproduced from its seed. */
+  function random(seed: number): () => number {
+    let state = seed;
+    return () => {
+      state = (state * 1664525 + 1013904223) % 4294967296;
+      return state / 4294967296;
+    };
+  }
+
+  const WORDS = [
+    'restless',
+    'steady',
+    'curious',
+    'quick',
+    'patient',
+    'bold',
+    'calm',
+    'you',
+    'show',
+    'up',
+    'with',
+    'care',
+  ];
+
+  function corpus(seed: number, size: number): CorpusEntry[] {
+    const next = random(seed);
+    const pick = (n: number): number => Math.floor(next() * n);
+    const entries: CorpusEntry[] = [];
+    for (let i = 0; i < size; i += 1) {
+      const roll = next();
+      let text: string;
+      if (roll < 0.05) text = '';
+      else if (roll < 0.1) text = 'ab';
+      else if (roll < 0.25 && entries.length > 0) {
+        // A copy of an earlier text, sometimes with one word changed: exact and near repeats.
+        const source = entries[pick(entries.length)]?.text ?? '';
+        text = next() < 0.5 ? source : source.replace(/\b\w+\b/, WORDS[pick(WORDS.length)] ?? 'x');
+      } else {
+        text = Array.from({ length: 2 + pick(14) }, () => WORDS[pick(WORDS.length)]).join(' ');
+      }
+      entries.push(entry(`k${i}`, text, { locale: next() < 0.7 ? 'en' : 'nl' }));
+    }
+    return entries;
+  }
+
+  it.each([0, 0.1, 0.3, 0.5, 0.7, 0.85, 0.95, 1, 1.5])(
+    'finds the same pairs, in the same order, at threshold %s',
+    (threshold) => {
+      for (let seed = 1; seed <= 12; seed += 1) {
+        const entries = corpus(seed, 70);
+        expect(findNearDuplicates(entries, threshold).pairs, `seed ${seed}`).toEqual(
+          findNearDuplicatesByEveryPair(entries, threshold),
+        );
+      }
     },
-    30 * 60 * 1000,
   );
+
+  it('finds a pair that sits exactly on the threshold', () => {
+    // "abcd" and "abcde": trigram sets of 2 and 3 sharing 2, so exactly 2/3.
+    const entries = [entry('a', 'abcd'), entry('b', 'abcde')];
+    const exact = 2 / 3;
+    expect(findNearDuplicates(entries, exact).pairs).toEqual(findNearDuplicatesByEveryPair(entries, exact));
+    expect(findNearDuplicates(entries, exact).pairs).toHaveLength(1);
+  });
 });
 
 describe('formatSimilarityReport (#58)', () => {

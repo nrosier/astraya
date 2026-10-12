@@ -14,6 +14,9 @@
  * @conventions Not person-scoped (optional pre-fill from a stored person); uses RectificationView.messages.ts for en/nl text via useMessages().
  * @exports RectificationView
  */
+import { GlossaryTerms } from './GlossaryTerm.js';
+import { formatFixed } from './format.js';
+import { Disclosure } from './primitives/Disclosure.js';
 import { DateField } from './primitives/DateField.js';
 import { Select } from './primitives/Select.js';
 import { TextField } from './primitives/TextField.js';
@@ -40,6 +43,7 @@ import { SortableTable } from './SortableTable.js';
 import { useStoreState } from './store-context.js';
 import type { TableColumn } from './table-sort.js';
 import type { Locale } from '../interpretation/schema.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 
 /** How many of the best candidates are listed, and given a detail section. */
 const SHOWN = 15;
@@ -177,8 +181,8 @@ export function RectificationView(): React.JSX.Element {
         valueOf: (row) => row.midheaven,
         render: (row) => signPosition(row.midheaven, locale),
       },
-      { key: 'score', label: t.scoreColumn, valueOf: (row) => row.score, render: (row) => row.score.toFixed(2) },
-      { key: 'lift', label: t.liftColumn, valueOf: (row) => row.lift, render: (row) => `×${row.lift.toFixed(1)}` },
+      { key: 'score', label: t.scoreColumn, valueOf: (row) => row.score, render: (row) => formatFixed(row.score, 2) },
+      { key: 'lift', label: t.liftColumn, valueOf: (row) => row.lift, render: (row) => `×${formatFixed(row.lift, 1)}` },
       { key: 'contacts', label: t.contactsColumn, valueOf: (row) => row.contacts.length },
     ],
     [t, locale],
@@ -186,7 +190,7 @@ export function RectificationView(): React.JSX.Element {
 
   const describeContact = (contact: TimedCandidate['contacts'][number]): string => {
     const name = (key: string): string => bodyDisplayName(key, locale);
-    const orb = `${contact.orb.toFixed(2)}°`;
+    const orb = `${formatFixed(contact.orb, 2)}°`;
     const aspect = aspectDisplayName(contact.aspect, locale).toLowerCase();
     return contact.technique === 'solar-arc'
       ? t.solarArcContact(name(contact.moving), aspect, name(contact.natal), orb)
@@ -199,6 +203,7 @@ export function RectificationView(): React.JSX.Element {
         <a href="#/">&larr; {shared.back}</a>
       </p>
       <h1>{t.heading}</h1>
+      <GlossaryTerms terms={['rectification', 'ascendant', 'midheaven']} />
       <p className="hint">{t.hint}</p>
       <p className="warning">{t.caveat}</p>
 
@@ -327,16 +332,8 @@ export function RectificationView(): React.JSX.Element {
         </button>
       </p>
 
-      {fieldError !== undefined && (
-        <p className="warning" role="alert">
-          {errorText(fieldError)}
-        </p>
-      )}
-      {result.kind === 'error' && (
-        <p className="warning" role="alert">
-          {t.error(result.message)}
-        </p>
-      )}
+      {fieldError !== undefined && <StatusMessage kind="error">{errorText(fieldError)}</StatusMessage>}
+      {result.kind === 'error' && <StatusMessage kind="error">{t.error(result.message)}</StatusMessage>}
 
       {result.kind === 'ready' && (
         <>
@@ -350,29 +347,35 @@ export function RectificationView(): React.JSX.Element {
           />
           <h2>{t.detailsHeading}</h2>
           {top.slice(0, DETAILED).map((candidate) => (
-            <details key={candidate.jd} className="rectification-detail">
-              <summary>{t.detailsSummary(candidate.localTime, candidate.score.toFixed(2))}</summary>
-              {candidate.contacts.length === 0 ? (
-                <p className="hint">{t.noContacts}</p>
-              ) : (
-                <ul>
-                  {result.events.map((event, eventIndex) => {
-                    const forEvent = candidate.contacts.filter((contact) => contact.eventIndex === eventIndex);
-                    if (forEvent.length === 0) return null;
-                    return (
-                      <li key={eventIndex}>
-                        <strong>{t.forEvent(eventIndex + 1, event.label)}</strong>
-                        <ul>
-                          {forEvent.map((contact, contactIndex) => (
-                            <li key={contactIndex}>{describeContact(contact)}</li>
-                          ))}
-                        </ul>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </details>
+            <div key={candidate.jd} className="rectification-detail">
+              <Disclosure
+                title={t.detailsSummary(candidate.localTime, formatFixed(candidate.score, 2))}
+                summary={t.contactCount(candidate.contacts.length)}
+                showLabel={t.showDetails}
+                hideLabel={t.hideDetails}
+              >
+                {candidate.contacts.length === 0 ? (
+                  <p className="hint">{t.noContacts}</p>
+                ) : (
+                  <ul>
+                    {result.events.map((event, eventIndex) => {
+                      const forEvent = candidate.contacts.filter((contact) => contact.eventIndex === eventIndex);
+                      if (forEvent.length === 0) return null;
+                      return (
+                        <li key={eventIndex}>
+                          <strong>{t.forEvent(eventIndex + 1, event.label)}</strong>
+                          <ul>
+                            {forEvent.map((contact, contactIndex) => (
+                              <li key={contactIndex}>{describeContact(contact)}</li>
+                            ))}
+                          </ul>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </Disclosure>
+            </div>
           ))}
         </>
       )}

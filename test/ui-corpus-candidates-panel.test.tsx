@@ -96,7 +96,7 @@ describe('CorpusCandidatesPanel shows what a candidate means (#428)', () => {
   it('names the meaning in each row’s checkbox, not the key', async () => {
     const container = await mount();
     const labels = [...container.querySelectorAll('tbody input[type="checkbox"]')].map((box) =>
-      box.getAttribute('aria-label'),
+      box.closest('label')?.textContent.trim(),
     );
     expect(labels).toEqual([
       'Sun in Gemini',

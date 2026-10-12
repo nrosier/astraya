@@ -13,6 +13,7 @@
  * @conventions A single synthetic chart derived from one natal chart (not a comparison), so it reuses `ChartDataView` wholesale like CompositeView/DraconicView; the in-screen picker is a named Varga preset (`VARGA_PRESETS`) or any positive integer. Text comes from co-located `HarmonicView.messages.ts` via `useMessages()`.
  * @exports HarmonicView
  */
+import { GlossaryTerms } from './GlossaryTerm.js';
 import { NumberField } from './primitives/NumberField.js';
 import { Select } from './primitives/Select.js';
 import { useEffect, useMemo, useState } from 'react';
@@ -31,6 +32,7 @@ import { useMessages } from './messages.js';
 import { PersonNotFound } from './PersonNotFound.js';
 import { useStoreState } from './store-context.js';
 import type { ChartData } from '../domain/chart-compute.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 
 type Load =
   | { readonly kind: 'idle' }
@@ -115,6 +117,7 @@ export function HarmonicView({
         <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
       </p>
       <h1>{person.displayName ? t.heading(person.displayName) : t.headingFallback}</h1>
+      <GlossaryTerms terms={['harmonic', 'aspect', 'orb']} />
       <ChartTypeSelector personId={personId} type="harmonic" view={view} />
       <p className="hint">{t.hint}</p>
 
@@ -134,11 +137,7 @@ export function HarmonicView({
       </div>
 
       {preset !== undefined && <p className="hint">{preset.description}</p>}
-      {presetKey === CUSTOM && !nValid && (
-        <p className="warning" role="alert">
-          {t.invalidHarmonicNumber}
-        </p>
-      )}
+      {presetKey === CUSTOM && !nValid && <StatusMessage kind="error">{t.invalidHarmonicNumber}</StatusMessage>}
 
       {nValid && load.kind !== 'idle' && (
         <ChartDataView
@@ -155,9 +154,7 @@ export function HarmonicView({
       )}
 
       {nValid && load.kind === 'ready' && !housesAreDefined(load.data.houses) && (
-        <p className="warning" role="alert">
-          {t.housesUndefined}
-        </p>
+        <StatusMessage kind="error">{t.housesUndefined}</StatusMessage>
       )}
       {nValid && load.kind === 'ready' && housesAreDefined(load.data.houses) && <ReportView chart={load.data} />}
     </main>

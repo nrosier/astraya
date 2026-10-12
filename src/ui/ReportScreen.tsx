@@ -23,6 +23,7 @@ import { ReportView } from './ReportView.js';
 import { useMessages } from './messages.js';
 import { useRulershipChoice } from './rulership-setting.js';
 import { useStoreState } from './store-context.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -99,23 +100,15 @@ export function ReportScreen({ personId }: { personId: string }): React.JSX.Elem
       </p>
       <h1>{person.displayName ? t.heading(person.displayName) : t.reportFallback}</h1>
 
-      {load.kind === 'loading' && <p className="status">{t.calculating}</p>}
-      {load.kind === 'error' && (
-        <p className="warning" role="alert">
-          {t.error(load.message)}
-        </p>
-      )}
+      {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
+      {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
       {load.kind === 'ready' && !housesAreDefined(load.data.houses) && (
-        <p className="warning" role="alert">
-          {t.housesUndefined(person.displayName || t.thisPerson)}
-        </p>
+        <StatusMessage kind="error">{t.housesUndefined(person.displayName || t.thisPerson)}</StatusMessage>
       )}
       {load.kind === 'ready' && housesAreDefined(load.data.houses) && (
         <>
           {load.data.houses.warning !== undefined && (
-            <p className="warning" role="alert">
-              {load.data.houses.warning}
-            </p>
+            <StatusMessage kind="error">{load.data.houses.warning}</StatusMessage>
           )}
           <ReportView chart={load.data} />
         </>

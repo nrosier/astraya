@@ -12,6 +12,8 @@
  * @conventions Independent of any person or stored data (ephemeris-only), so it lives outside `Stored`, like AdminPanel; the diagram is app-generated SVG, hidden from assistive tech since the table carries every value it plots.
  * @exports CyclesView
  */
+import { GlossaryTerms } from './GlossaryTerm.js';
+import { formatFixed } from './format.js';
 import { Select } from './primitives/Select.js';
 import { TextField } from './primitives/TextField.js';
 import { useSymbolClass } from './symbol-setting.js';
@@ -39,6 +41,7 @@ import { sharedMessages } from './shared.messages.js';
 import { SortableTable } from './SortableTable.js';
 import { clampEphemerisYear, MAX_EPHEMERIS_YEAR, MIN_EPHEMERIS_YEAR } from './year-range.js';
 import type { TableColumn } from './table-sort.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 
 interface Params {
   readonly bodyA: string;
@@ -243,7 +246,7 @@ export function CyclesView(): React.JSX.Element {
         key: 'since',
         label: t.sinceColumn,
         valueOf: (row) => row.yearsSincePrevious ?? '',
-        render: (row) => (row.yearsSincePrevious === undefined ? t.none : row.yearsSincePrevious.toFixed(2)),
+        render: (row) => (row.yearsSincePrevious === undefined ? t.none : formatFixed(row.yearsSincePrevious, 2)),
       },
     ],
     // `nameOf` closes over `locale`, which is listed.
@@ -272,6 +275,7 @@ export function CyclesView(): React.JSX.Element {
         <a href="#/">&larr; {shared.back}</a>
       </p>
       <h1>{t.heading}</h1>
+      <GlossaryTerms terms={['cycle', 'transit', 'retrograde']} />
       <p className="hint">{t.hint}</p>
 
       <div className="field-grid cycles-form">
@@ -349,16 +353,8 @@ export function CyclesView(): React.JSX.Element {
         </button>
       </p>
 
-      {validation !== undefined && (
-        <p className="warning" role="alert">
-          {validation}
-        </p>
-      )}
-      {result.kind === 'error' && (
-        <p className="warning" role="alert">
-          {t.error(result.message)}
-        </p>
-      )}
+      {validation !== undefined && <StatusMessage kind="error">{validation}</StatusMessage>}
+      {result.kind === 'error' && <StatusMessage kind="error">{t.error(result.message)}</StatusMessage>}
 
       {result.kind === 'ready' &&
         (result.rows.length === 0 ? (

@@ -67,6 +67,9 @@ const en = {
   /** The no-LLM grouped/ranked text from `RelationshipSummary.tsx` (#422); never the opt-in AI reading. */
   relationshipSummaryLabel: 'Relationship summary',
   buildButton: 'Build PDF',
+  selectSomething: 'Tick at least one section to build a PDF.',
+  showSection: 'Show options',
+  hideSection: 'Hide options',
   buildingStatus: 'Building the PDF…',
   nothingSelected: 'nothing is selected',
   someSectionsSkipped: (count: string) => `${count} section(s) could not be included; see the end of the PDF.`,
@@ -180,6 +183,9 @@ const nl: typeof en = {
   aspectsTableLabel: 'Aspecten',
   relationshipSummaryLabel: 'Relatieoverzicht',
   buildButton: 'PDF samenstellen',
+  selectSomething: 'Vink minstens één onderdeel aan om een PDF samen te stellen.',
+  showSection: 'Opties tonen',
+  hideSection: 'Opties verbergen',
   buildingStatus: 'PDF wordt samengesteld…',
   nothingSelected: 'er is niets geselecteerd',
   someSectionsSkipped: (count: string) =>

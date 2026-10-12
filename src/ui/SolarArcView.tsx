@@ -15,6 +15,8 @@
  * @conventions Gated for unknown birth time like other angle-dependent screens; uses SolarArcView.messages.ts for en/nl text via useMessages().
  * @exports SolarArcView; positionRows, positionColumns, contactColumns, toContactRow, formatExactDate, ContactRow (reused by pdf-export-plan.ts)
  */
+import { DateField } from './primitives/DateField.js';
+import { GlossaryTerms } from './GlossaryTerm.js';
 import { personHref } from './route.js';
 import { useEffect, useMemo, useState } from 'react';
 import { bodyById } from '../astrology/bodies.js';
@@ -31,7 +33,7 @@ import {
 } from '../domain/solar-arc-directions.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { civilFromJulianDay } from '../time/julian.js';
-import { todayInputValue } from './format.js';
+import { formatFixed, todayInputValue } from './format.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { momentKey } from '../time/encode.js';
@@ -42,6 +44,7 @@ import { useStoreState } from './store-context.js';
 import type { TableColumn } from './table-sort.js';
 import type { HousePositions, JulianDayUT } from '../ephemeris/types.js';
 import type { Locale } from '../interpretation/schema.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -152,7 +155,7 @@ export function contactColumns(t: typeof solarArcViewMessages.en, locale: Locale
       valueOf: (row) => row.bodyBName,
       render: (row) => bodyDisplayName(row.bodyBKey, locale),
     },
-    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => `${row.orb.toFixed(2)}°` },
+    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => `${formatFixed(row.orb, 2)}°` },
     {
       key: 'applying',
       label: t.applyingLabel,
@@ -244,35 +247,23 @@ export function SolarArcView({ personId }: { personId: string }): React.JSX.Elem
         <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
       </p>
       <h1>{person.displayName ? t.heading(person.displayName) : t.solarArcFallback}</h1>
+      <GlossaryTerms terms={['solarArc', 'aspect', 'progression']} />
       <p className="hint">{t.hint}</p>
 
       <p>
-        <label>
-          {t.asOfLabel}{' '}
-          <input
-            type="date"
-            value={asOf}
-            onChange={(event) => {
-              setAsOf(event.target.value);
-            }}
-          />
-        </label>
+        <DateField label={t.asOfLabel} value={asOf} onChange={setAsOf} />
       </p>
 
-      {load.kind === 'loading' && <p className="status">{t.calculating}</p>}
+      {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
 
-      {load.kind === 'error' && (
-        <p className="warning" role="alert">
-          {t.error(load.message)}
-        </p>
-      )}
+      {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
 
       {load.kind === 'ready' && (
         <>
           <p className="hint">
-            {t.ageLine(`${load.data.ageInYears.toFixed(2)}${load.data.ageInYears < 0 ? ` ${t.beforeBirth}` : ''}`)}
+            {t.ageLine(`${formatFixed(load.data.ageInYears, 2)}${load.data.ageInYears < 0 ? ` ${t.beforeBirth}` : ''}`)}
           </p>
-          <p className="hint">{t.arcLine(load.data.arc.toFixed(2))}</p>
+          <p className="hint">{t.arcLine(formatFixed(load.data.arc, 2))}</p>
 
           {positions !== undefined && (
             <SortableTable

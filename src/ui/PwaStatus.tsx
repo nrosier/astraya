@@ -17,6 +17,8 @@
  * @conventions Present on every screen; uses PwaStatus.messages.ts for en/nl text via useMessages().
  * @exports PwaStatus
  */
+import { StatusMessage } from './primitives/StatusMessage.js';
+import { formatFixed } from './format.js';
 import { useSyncExternalStore } from 'react';
 import { useMessages } from './messages.js';
 import { applyUpdate, getUpdateState, subscribeToUpdates } from '../pwa/register.js';
@@ -24,7 +26,7 @@ import { pwaStatusMessages } from './PwaStatus.messages.js';
 import { getWarmState, subscribeToWarmState } from '../pwa/warm-status.js';
 
 function formatMebibytes(bytes: number): string {
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${formatFixed(bytes / (1024 * 1024), 1)} MB`;
 }
 
 export function PwaStatus(): React.JSX.Element | null {
@@ -46,11 +48,7 @@ export function PwaStatus(): React.JSX.Element | null {
           {t.warming(formatMebibytes(warm.loadedBytes), formatMebibytes(warm.totalBytes))}
         </p>
       )}
-      {warm.kind === 'failed' && (
-        <p className="warning" role="alert">
-          {t.warmFailed(warm.message)}
-        </p>
-      )}
+      {warm.kind === 'failed' && <StatusMessage kind="error">{t.warmFailed(warm.message)}</StatusMessage>}
     </div>
   );
 }

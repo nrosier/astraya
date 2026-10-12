@@ -8,6 +8,7 @@
  * @conventions The markup is `renderAspectMatrixSvg`'s own (the same drawing the sheet export uses), with its cells made focusable buttons by that renderer's `interaction` option; clicks and Enter/Space are read back through `selectionKeyForTarget`, so a cell selects exactly what the Aspects table's "Show" button does. Static when no selection is supplied (the PDF export).
  * @exports AspectMatrix
  */
+import { formatFixed } from './format.js';
 import { useMemo } from 'react';
 import type { KeyboardEvent, MouseEvent } from 'react';
 import { renderAspectMatrixSvg, type AspectMatrixInput } from '../chart/aspect-matrix.js';
@@ -50,7 +51,7 @@ export function AspectMatrix({
           },
     );
     return (
-      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${String(MATRIX_WIDTH)} ${height.toFixed(2)}" ` +
+      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${String(MATRIX_WIDTH)} ${formatFixed(height, 2)}" ` +
       `class="chart-sheet chart-aspect-matrix">${markup}</svg>`
     );
   }, [input, selection, selectedKey]);

@@ -17,6 +17,8 @@
  * @conventions Uses the near-arc midpoint convention for both positions and house cusps (`domain/composite.js`), not the time/space-midpoint "Davison" method; reuses `ChartDataView`/`ReportView` wholesale since the composite is a single synthetic `ChartData`. Text comes from co-located `CompositeView.messages.ts` via `useMessages()`.
  * @exports CompositeView
  */
+import { Select } from './primitives/Select.js';
+import { GlossaryTerms } from './GlossaryTerm.js';
 import { personHref, routeHref } from './route.js';
 import { useEffect, useMemo, useState } from 'react';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
@@ -32,6 +34,7 @@ import { momentKey } from '../time/encode.js';
 import { PersonNotFound } from './PersonNotFound.js';
 import { useStoreState } from './store-context.js';
 import type { ChartData } from '../domain/chart-compute.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 
 type Load =
   | { readonly kind: 'idle' }
@@ -122,31 +125,26 @@ export function CompositeView({
         <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
       </p>
       <h1>{person.displayName ? t.heading(person.displayName) : t.compositeFallback}</h1>
+      <GlossaryTerms terms={['composite', 'aspect', 'midheaven']} />
       <p className="hint">{t.hint}</p>
 
       <p>
-        <label>
-          {t.composeWithLabel}{' '}
-          <select
-            value={partnerId}
-            onChange={(event) => {
-              setPartnerId(event.target.value);
-            }}
-          >
-            <option value="">{t.choosePersonOption}</option>
-            {candidates.map((candidate) => (
-              <option key={candidate.id} value={candidate.id}>
-                {candidate.displayName || t.unnamedOption}
-              </option>
-            ))}
-          </select>
-        </label>
+        <Select
+          label={t.composeWithLabel}
+          value={partnerId}
+          onChange={setPartnerId}
+          options={[
+            { value: '', label: t.choosePersonOption },
+            ...candidates.map((candidate) => ({
+              value: candidate.id,
+              label: candidate.displayName || t.unnamedOption,
+            })),
+          ]}
+        />
       </p>
 
       {partnerId !== '' && candidates.every((candidate) => candidate.id !== partnerId) && (
-        <p className="warning" role="alert">
-          {t.partnerGoneWarning}
-        </p>
+        <StatusMessage kind="error">{t.partnerGoneWarning}</StatusMessage>
       )}
 
       {partnerId !== '' && load.kind !== 'idle' && (
@@ -165,9 +163,7 @@ export function CompositeView({
       )}
 
       {partnerId !== '' && load.kind === 'ready' && !housesAreDefined(load.data.houses) && (
-        <p className="warning" role="alert">
-          {t.housesUndefined}
-        </p>
+        <StatusMessage kind="error">{t.housesUndefined}</StatusMessage>
       )}
       {partnerId !== '' && load.kind === 'ready' && housesAreDefined(load.data.houses) && (
         <ReportView chart={load.data} chartKind="composite" />

@@ -13,7 +13,7 @@
  * @module ui/format
  * @purpose Locale-aware display formatting (#158) for values that aren't fixed strings — dates and geographic coordinates — complementing messages.ts's fixed-string i18n.
  * @conventions Framework-free like src/domain and src/chart: every function takes Locale explicitly rather than reading locale.ts's store, so non-UI modules (chart-tables.ts, multi-wheel.ts) can call in without a React/localStorage dependency.
- * @exports todayInputValue, formatCoordinate
+ * @exports todayInputValue, formatCoordinate, formatFixed, formatDecimal, formatInteger, formatTimestamp, formatCents, utcDay
  */
 import type { Locale } from '../interpretation/schema.js';
 
@@ -49,4 +49,47 @@ export function formatCoordinate(value: number, axis: 'lat' | 'lon', locale: Loc
     Math.abs(value),
   );
   return `${magnitude}°${letter}`;
+}
+
+/**
+ * A number shown with a fixed count of decimals, always with a point, whatever the language (#513): the orbs, ages
+ * and speeds in the tables read the same in English and Dutch and in the CSV, PDF and wheel they are copied into.
+ * The one place a displayed figure is rounded, so "-0.00" never appears.
+ */
+export function formatFixed(value: number, digits: number): string {
+  const text = value.toFixed(digits);
+  return /^-0(\.0+)?$/.test(text) ? text.slice(1) : text;
+}
+
+/**
+ * A number in the reader's own notation, up to `maxDigits` decimals (comma in Dutch): for prose and settings
+ * summaries, as opposed to the point-always figures in tables above.
+ */
+export function formatDecimal(value: number, maxDigits: number, locale: Locale): string {
+  return new Intl.NumberFormat(locale === 'nl' ? 'nl-NL' : 'en-GB', { maximumFractionDigits: maxDigits }).format(value);
+}
+
+/** A whole number grouped the way the reader's language groups it (1,234 / 1.234), for counts in tables and sentences. */
+export function formatInteger(value: number, locale: Locale): string {
+  return new Intl.NumberFormat(locale === 'nl' ? 'nl-NL' : 'en-GB', { maximumFractionDigits: 0 }).format(value);
+}
+
+/** An instant as `YYYY-MM-DD HH:mm` in the reader's own time zone: fixed shape, not the browser's locale style. */
+export function formatTimestamp(value: string | number | Date): string {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  const two = (n: number): string => String(n).padStart(2, '0');
+  return `${String(date.getFullYear()).padStart(4, '0')}-${two(date.getMonth() + 1)}-${two(date.getDate())} ${two(date.getHours())}:${two(date.getMinutes())}`;
+}
+
+/** An amount of US cents as dollars. The app prices only in USD, so the currency is named once, here. */
+export function formatCents(cents: number, locale: Locale): string {
+  return new Intl.NumberFormat(locale === 'nl' ? 'nl-NL' : 'en-US', { style: 'currency', currency: 'USD' }).format(
+    cents / 100,
+  );
+}
+
+/** The UTC calendar day of an instant (now by default) as `YYYY-MM-DD`: the day a PDF or an "as of" date is stamped with. */
+export function utcDay(date: Date = new Date()): string {
+  return date.toISOString().slice(0, 10);
 }

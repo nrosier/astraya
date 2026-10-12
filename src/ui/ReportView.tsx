@@ -32,6 +32,12 @@ import { assembleReport, reportPlacementKeys, type Report, type ReportParagraph 
 import { loadRuntimeCorpus } from '../interpretation/corpus-client.js';
 import type { CorpusEntry, Locale } from '../interpretation/schema.js';
 import { checkCustomPrompt, type GuardrailIssue } from '../interpretation/prompt-guardrail.js';
+import { TextAreaField } from './primitives/TextAreaField.js';
+import { Select } from './primitives/Select.js';
+import { Checkbox } from './primitives/Checkbox.js';
+import { useOnline } from './online-status.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
+import { sharedMessages } from './shared.messages.js';
 import { describeParagraphProvenance } from './report-provenance.js';
 import { savedKindLabel } from './result-basis-label.js';
 import { formatSavedTime } from './saved-time.js';
@@ -136,6 +142,8 @@ function AiCustomizedPanel({
   readonly chartKind: 'natal' | 'composite';
 }): React.JSX.Element {
   const t = useMessages(reportViewMessages);
+  const shared = useMessages(sharedMessages);
+  const online = useOnline();
   const user = useSessionUserOrUndefined();
   const [consent, setConsent] = useState(false);
   const [mode, setMode] = useState<Tier2Mode>('grounded');
@@ -238,51 +246,39 @@ function AiCustomizedPanel({
   return (
     <section className="report-section ai-customized-panel">
       <h3>{t.tier2Heading}</h3>
-      <div className="tier2-mode-select">
-        <label htmlFor="tier2-mode">{t.tier2ModeLabel}</label>
-        <select
-          id="tier2-mode"
-          value={mode}
-          aria-describedby="tier2-mode-description"
-          onChange={(event) => {
-            setMode(event.target.value as Tier2Mode);
-            // The consent statement's wording depends on mode (what it discloses sending
-            // differs) — switching mode re-requires a tick rather than carrying over consent
-            // given under a different, narrower claim (#391).
-            setConsent(false);
-          }}
-        >
-          <option value="grounded">{t.tier2ModeGrounded}</option>
-          <option value="freeform">{t.tier2ModeFreeform}</option>
-        </select>
-        <p id="tier2-mode-description" className="hint">
-          {mode === 'grounded' ? t.tier2ModeGroundedDescription : t.tier2ModeFreeformDescription}
-        </p>
-      </div>
-      <label>
-        <input
-          type="checkbox"
-          checked={consent}
-          onChange={(event) => {
-            setConsent(event.target.checked);
-          }}
-        />{' '}
-        {t.tier2ConsentLabel(mode)}
-      </label>
-      {
-        <label className="stacked">
-          {t.customPromptLabel}
-          {mode === 'freeform' && t.customPromptOptional}
-          <textarea
-            value={customPrompt}
-            placeholder={t.customPromptPlaceholder}
-            onChange={(event) => {
-              setCustomPrompt(event.target.value);
-              setRejection(undefined);
-            }}
-          />
-        </label>
-      }
+      <Select
+        label={t.tier2ModeLabel}
+        value={mode}
+        help={mode === 'grounded' ? t.tier2ModeGroundedDescription : t.tier2ModeFreeformDescription}
+        options={[
+          { value: 'grounded', label: t.tier2ModeGrounded },
+          { value: 'freeform', label: t.tier2ModeFreeform },
+        ]}
+        onChange={(value) => {
+          setMode(value as Tier2Mode);
+          // The consent statement's wording depends on mode (what it discloses sending
+          // differs) — switching mode re-requires a tick rather than carrying over consent
+          // given under a different, narrower claim (#391).
+          setConsent(false);
+        }}
+      />
+      <Checkbox
+        label={t.tier2ConsentLabel(mode)}
+        checked={consent}
+        onChange={(value) => {
+          setConsent(value);
+        }}
+      />
+      <TextAreaField
+        label={t.customPromptLabel}
+        optional={mode === 'freeform'}
+        placeholder={t.customPromptPlaceholder}
+        value={customPrompt}
+        onChange={(value) => {
+          setCustomPrompt(value);
+          setRejection(undefined);
+        }}
+      />
       {visibleGuardrailIssues.length > 0 && (
         <div className="ai-customized-guardrail-issues warning" aria-live="polite">
           <ul>
@@ -294,13 +290,20 @@ function AiCustomizedPanel({
       )}
       <button
         type="button"
-        disabled={!consent || (mode === 'grounded' && customPrompt === '') || guardrailIssues.length > 0 || generating}
+        disabled={
+          !consent ||
+          (mode === 'grounded' && customPrompt === '') ||
+          guardrailIssues.length > 0 ||
+          generating ||
+          !online
+        }
         aria-label={disabledReason === undefined ? undefined : `${t.tier2Generate} — ${disabledReason}`}
         onClick={handleGenerate}
       >
         {generating ? t.tier2Generating : t.tier2Generate}
       </button>
-      {error !== undefined && <p role="alert">{t.tier2Error(error)}</p>}
+      {!online && <StatusMessage kind="offline">{shared.offlineNeeded}</StatusMessage>}
+      {error !== undefined && <StatusMessage kind="error">{t.tier2Error(error)}</StatusMessage>}
       {rejection !== undefined && (
         <div className="ai-customized-rejection warning" role="alert">
           <p>{t.tier2CustomizationRejected}</p>
@@ -419,16 +422,13 @@ export function ReportView({
     <div className="report-controls">
       <RulershipSetting />
       {!import.meta.env.PROD && (
-        <label>
-          <input
-            type="checkbox"
-            checked={showProvenance}
-            onChange={(event) => {
-              setShowProvenance(event.target.checked);
-            }}
-          />{' '}
-          {t.showProvenance}
-        </label>
+        <Checkbox
+          label={t.showProvenance}
+          checked={showProvenance}
+          onChange={(value) => {
+            setShowProvenance(value);
+          }}
+        />
       )}
     </div>
   );

@@ -20,7 +20,6 @@ const en = {
   heading: (name: string) => `${name}’s astrocartography`,
   hint: 'Where in the world each body’s angles (MC/IC/AC/DC) fall on the horizon or meridian right now, plus optional Local Space lines (azimuth vectors from the birthplace). Line kind is shown by both colour and dash pattern, so it stays readable without colour.',
 
-  lineTypesLegend: 'Line types',
   mc: 'MC (Midheaven)',
   ic: 'IC (Nadir)',
   ac: 'AC (Ascendant)',
@@ -30,25 +29,17 @@ const en = {
   meaningsHint:
     'What each checked body is traditionally read to mean on each checked kind of line, as a starting point for reflection; astrocartography is an interpretive tradition, not a forecast.',
 
-  bodiesLegend: 'Bodies',
-  extendedSummary: 'Extended',
-
-  localSpaceLegend: 'Local Space',
-  showLocalSpaceLines: 'Show Local Space lines for the checked bodies',
-
-  relocationLegend: 'Relocation (optional)',
-  relocationHint: 'Recomputes the Ascendant/Midheaven for another place, without changing any line above.',
-  latitudeLabel: 'Latitude',
-  longitudeLabel: 'Longitude',
   relocatedAscendantMidheaven: (ascendant: string, midheaven: string) =>
     `Ascendant: ${ascendant} · Midheaven: ${midheaven}`,
 
   calculating: 'Calculating…',
+  updating: 'Updating the map…',
+  selectedLines: (count: number) => `${String(count)} ${count === 1 ? 'line type' : 'line types'} selected`,
+  showMeanings: 'Show meanings',
+  hideMeanings: 'Hide meanings',
   error: (message: string) => `The map could not be calculated. ${message}`,
 
   downloadSvg: 'Download SVG',
-  pngResolutionLabel: 'PNG resolution',
-  rendering: 'Rendering…',
   downloadPng: 'Download PNG',
 
   pngSmall: 'Small (900px)',
@@ -69,7 +60,6 @@ const nl: typeof en = {
   heading: (name: string) => `Astrocartografie van ${name}`,
   hint: 'Waar op de wereld de hoeken (MC/IC/AC/DC) van elk hemellichaam nu op de horizon of meridiaan vallen, plus optionele Local Space-lijnen (azimutvectoren vanaf de geboorteplaats). Het lijntype wordt zowel door kleur als streeppatroon getoond, zodat het ook zonder kleur leesbaar blijft.',
 
-  lineTypesLegend: 'Lijntypen',
   mc: 'MC (Midheaven)',
   ic: 'IC (Nadir)',
   ac: 'AC (Ascendant)',
@@ -79,26 +69,17 @@ const nl: typeof en = {
   meaningsHint:
     'Wat elk aangevinkt hemellichaam traditioneel betekent op elk aangevinkt type lijn, als startpunt voor reflectie; astrocartografie is een interpretatieve traditie, geen voorspelling.',
 
-  bodiesLegend: 'Hemellichamen',
-  extendedSummary: 'Uitgebreid',
-
-  localSpaceLegend: 'Local Space',
-  showLocalSpaceLines: 'Toon Local Space-lijnen voor de aangevinkte hemellichamen',
-
-  relocationLegend: 'Relocatie (optioneel)',
-  relocationHint:
-    'Berekent de Ascendant/Midheaven opnieuw voor een andere plaats, zonder de lijnen hierboven te wijzigen.',
-  latitudeLabel: 'Breedtegraad',
-  longitudeLabel: 'Lengtegraad',
   relocatedAscendantMidheaven: (ascendant: string, midheaven: string) =>
     `Ascendant: ${ascendant} · Midheaven: ${midheaven}`,
 
   calculating: 'Berekenen…',
+  updating: 'Kaart wordt bijgewerkt…',
+  selectedLines: (count: number) => `${String(count)} ${count === 1 ? 'lijntype' : 'lijntypen'} geselecteerd`,
+  showMeanings: 'Toon betekenissen',
+  hideMeanings: 'Verberg betekenissen',
   error: (message: string) => `De kaart kon niet worden berekend. ${message}`,
 
   downloadSvg: 'SVG downloaden',
-  pngResolutionLabel: 'PNG-resolutie',
-  rendering: 'Renderen…',
   downloadPng: 'PNG downloaden',
 
   pngSmall: 'Klein (900px)',

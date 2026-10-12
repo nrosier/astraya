@@ -438,7 +438,7 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
   }
 
   function modeSelect(container: HTMLElement): HTMLSelectElement {
-    const select = panelOf(container).querySelector('select#tier2-mode');
+    const select = panelOf(container).querySelector('select');
     if (!(select instanceof HTMLSelectElement)) throw new Error('test fixture bug: no mode dropdown rendered');
     return select;
   }
@@ -678,7 +678,7 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
       await Promise.resolve();
     });
     expect(modeSelect(container).value).toBe('freeform');
-    expect(panelOf(container).querySelector('#tier2-mode-description')?.textContent).toBe(
+    expect(panelOf(container).querySelector('.primitive-field-help')?.textContent).toBe(
       reportViewMessages.en.tier2ModeFreeformDescription,
     );
 
@@ -1145,7 +1145,7 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
       reportViewMessages.nl.tier2ModeGrounded,
       reportViewMessages.nl.tier2ModeFreeform,
     ]);
-    const label = panelOf(container).querySelector('label[for="tier2-mode"]');
+    const label = panelOf(container).querySelector(`label[for="${select.id}"]`);
     expect(label?.textContent).toBe(reportViewMessages.nl.tier2ModeLabel);
     const description = panelOf(container).querySelector(`#${select.getAttribute('aria-describedby') ?? ''}`);
     expect(description?.textContent).toBe(reportViewMessages.nl.tier2ModeGroundedDescription);

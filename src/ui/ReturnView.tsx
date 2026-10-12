@@ -12,6 +12,8 @@
  * @conventions Gated for incomplete/unknown-time birth records like other person-scoped views; uses ReturnView.messages.ts for en/nl text via useMessages().
  * @exports ReturnView
  */
+import { ChoiceGroup } from './primitives/ChoiceGroup.js';
+import { GlossaryTerms } from './GlossaryTerm.js';
 import { DateField } from './primitives/DateField.js';
 import { NumberField } from './primitives/NumberField.js';
 import { useEffect, useMemo, useState } from 'react';
@@ -27,7 +29,7 @@ import { ChartTypeSelector, changeChartView } from './ChartTypeSelector.js';
 import { useCalculationBasisLine } from './calculation-basis.js';
 import { type ChartViewKind } from './chart-sections.js';
 import { chartHref, personHref } from './route.js';
-import { todayInputValue } from './format.js';
+import { formatFixed, todayInputValue } from './format.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { PersonNotFound } from './PersonNotFound.js';
@@ -43,6 +45,7 @@ import type { ChartData } from '../domain/chart-compute.js';
 import type { GeoPosition } from '../ephemeris/types.js';
 import type { Locale } from '../interpretation/schema.js';
 import type { TableColumn } from './table-sort.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 
 type Load =
   | { readonly kind: 'idle' }
@@ -79,7 +82,7 @@ function contactColumns(t: typeof returnViewMessages.en, locale: Locale): readon
       valueOf: (row) => row.bodyBName,
       render: (row) => bodyDisplayName(row.bodyBKey, locale),
     },
-    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => `${row.orb.toFixed(2)}°` },
+    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => `${formatFixed(row.orb, 2)}°` },
     {
       key: 'applying',
       label: t.applyingLabel,
@@ -221,6 +224,7 @@ export function ReturnView({
         <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
       </p>
       <h1>{heading}</h1>
+      <GlossaryTerms terms={['solarReturn', 'aspect', 'houses']} />
       <p className="hint page-header-basis">{basisLine}</p>
       <ChartTypeSelector personId={personId} type={kind} view={view} />
       <p className="hint">{solar ? t.solarHint : t.lunarHint}</p>
@@ -232,77 +236,36 @@ export function ReturnView({
           <DateField label={t.fromDateLabel} value={fromDate} onChange={setFromDate} />
         )}
       </div>
-      {!inputValid && (
-        <p className="warning" role="alert">
-          {solar ? t.invalidYear : t.invalidDate}
-        </p>
-      )}
+      {!inputValid && <StatusMessage kind="error">{solar ? t.invalidYear : t.invalidDate}</StatusMessage>}
 
       <fieldset className="field-group">
         <legend>{t.placeLegend}</legend>
         <p className="hint">{t.placeHint}</p>
-        <label>
-          <input
-            type="radio"
-            name="return-place"
-            checked={!otherPlace}
-            onChange={() => {
-              setOtherPlace(false);
-            }}
-          />{' '}
-          {t.placeBirth}
-        </label>{' '}
-        <label>
-          <input
-            type="radio"
-            name="return-place"
-            checked={otherPlace}
-            onChange={() => {
-              setOtherPlace(true);
-            }}
-          />{' '}
-          {t.placeOther}
-        </label>
+        <ChoiceGroup
+          label={t.placeLegend}
+          value={otherPlace ? 'other' : 'birth'}
+          options={[
+            { value: 'birth', label: t.placeBirth },
+            { value: 'other', label: t.placeOther },
+          ]}
+          onChange={(value) => {
+            setOtherPlace(value === 'other');
+          }}
+        />
         {otherPlace && (
-          <div>
-            <label>
-              {t.latitudeLabel}{' '}
-              <input
-                type="number"
-                inputMode="decimal"
-                min={-90}
-                max={90}
-                value={lat}
-                onChange={(event) => {
-                  setLat(event.target.value);
-                }}
-              />
-            </label>{' '}
-            <label>
-              {t.longitudeLabel}{' '}
-              <input
-                type="number"
-                inputMode="decimal"
-                min={-180}
-                max={180}
-                value={lon}
-                onChange={(event) => {
-                  setLon(event.target.value);
-                }}
-              />
-            </label>
+          <div className="field-grid">
+            <NumberField label={t.latitudeLabel} step="any" min={-90} max={90} value={lat} onChange={setLat} />
+            <NumberField label={t.longitudeLabel} step="any" min={-180} max={180} value={lon} onChange={setLon} />
           </div>
         )}
-        {placeInvalid && lat !== '' && lon !== '' && (
-          <p className="warning" role="alert">
-            {t.invalidPlace}
-          </p>
-        )}
+        {placeInvalid && lat !== '' && lon !== '' && <StatusMessage kind="error">{t.invalidPlace}</StatusMessage>}
       </fieldset>
 
-      {load.kind === 'ready' && <p className="status">{t.returnMoment(formatUtc(load.result.returnJd))}</p>}
+      {load.kind === 'ready' && (
+        <StatusMessage kind="loading">{t.returnMoment(formatUtc(load.result.returnJd))}</StatusMessage>
+      )}
       <p className="hint">{t.conventions}</p>
-      {load.kind === 'loading' && <p className="status">{t.calculating}</p>}
+      {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
 
       {load.kind !== 'idle' && (
         <ChartDataView
@@ -322,9 +285,7 @@ export function ReturnView({
       )}
 
       {load.kind === 'ready' && !housesAreDefined(load.data.houses) && (
-        <p className="warning" role="alert">
-          {t.housesUndefined}
-        </p>
+        <StatusMessage kind="error">{t.housesUndefined}</StatusMessage>
       )}
 
       {load.kind === 'ready' && (

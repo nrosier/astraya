@@ -5,11 +5,10 @@
  * table and the wheel, and is remembered on this device — as a preset name, so an "Important" filter
  * is rebuilt for the chart being read (its chart ruler), or in full when the user customised it.
  *
- * The preset select, count bar and "Show all" button stay a direct, immediate choice — picking
- * one applies (and remembers) it on the spot, same as always. "Adjust the filter" (#489) is
- * different: it opens a staged `<dialog className="settings-card">` card, the same modal
- * `ExtendedSettingsPanel.tsx` uses, so a reader can try several changes before committing any of
- * them. Its own controls edit a local draft only; four buttons decide what happens to it — Apply
+ * The visible preset choice (Important / Outer / Personal / All) and its summary line stay a direct,
+ * immediate choice — picking one applies (and remembers) it on the spot. "Change filters" (#489,
+ * #513) opens the shared `StagedDialog`, so a reader can try several changes before committing any of
+ * them; a zero-result filter says so and offers "Clear filters". Its own controls edit a local draft only; four buttons decide what happens to it — Apply
  * (commits to this view only), Apply as Default (commits and remembers it, `useTransitFilter`'s
  * existing persist path), Reset to Default (resets the draft, not the live filter), and Cancel
  * (discards the draft).
@@ -17,7 +16,7 @@
 /**
  * @module TransitFilterPanel
  * @purpose Controls (preset, orb scale, aspect groups, applying-only, per-body checkboxes) deciding which transit contacts a screen shows, plus the useTransitFilter hook that persists the choice per context.
- * @conventions State is remembered per context in localStorage as a preset name or full custom filter. "Adjust the filter" (#489) is a staged settings-card dialog matching ExtendedSettingsPanel.tsx's draft/dirty/Apply pattern, with a fourth button (Apply as Default) splitting "apply to this view" from "apply and remember" — useTransitFilter exposes both a persisting setter and a session-only one for that split. Uses TransitFilterPanel.messages.ts for en/nl text via useMessages().
+ * @conventions State is remembered per context in localStorage as a preset name or full custom filter. "Change filters" (#489, #513) is the shared StagedDialog with a draft/dirty/Apply pattern; the global planetary-rulers preference deliberately lives in Preferences, not in it, with a fourth button (Apply as Default) splitting "apply to this view" from "apply and remember" — useTransitFilter exposes both a persisting setter and a session-only one for that split. Uses TransitFilterPanel.messages.ts for en/nl text via useMessages().
  * @exports TransitFilterPanel, useTransitFilter, EVERY_BODY_KEY
  */
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
@@ -40,8 +39,11 @@ import type { Locale } from '../interpretation/schema.js';
 import { bodyDisplayName } from './astro-names.messages.js';
 import { useMessages } from './messages.js';
 import { Checkbox } from './primitives/Checkbox.js';
-import { Select } from './primitives/Select.js';
-import { RulershipSetting } from './RulershipSetting.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
+import { Button } from './primitives/Button.js';
+import { ChoiceGroup } from './primitives/ChoiceGroup.js';
+import { StagedDialog } from './primitives/StagedDialog.js';
+import { routeHref } from './route.js';
 import { transitFilterPanelMessages } from './TransitFilterPanel.messages.js';
 
 export const EVERY_BODY_KEY: readonly string[] = BODIES.map((body) => body.key);
@@ -155,53 +157,40 @@ export function TransitFilterPanel({
 }: Props) {
   const t = useMessages(transitFilterPanelMessages);
   const id = useId();
-  const headingId = useId();
   const current = presetOf(filter, rules);
-  const presetName = t.presets[current ?? 'custom'];
+  const presetName = t.presetsShort[current ?? 'custom'];
 
-  // The Adjust card's own draft (#489): every control inside edits this, not the live filter —
-  // same shape as ExtendedSettingsPanel.tsx's `draft`/`dirty`/open-dialog pattern.
+  // The dialog's own draft (#489): every control inside edits this, not the live filter.
   const [draft, setDraft] = useState<TransitFilter>(filter);
   const [open, setOpen] = useState(false);
-  const dialogRef = useRef<HTMLDialogElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const dirty = !sameFilter(draft, filter);
 
   const openCard = (): void => {
     setDraft(filter);
     setOpen(true);
-    const dialog = dialogRef.current;
-    if (dialog === null) return;
-    if (typeof dialog.showModal === 'function') dialog.showModal();
-    else dialog.setAttribute('open', '');
   };
 
-  /** Closes the card; the browser returns focus to the trigger. Whatever was not applied is dropped. */
-  const closeCard = (): void => {
-    const dialog = dialogRef.current;
-    if (dialog !== null) {
-      if (typeof dialog.close === 'function') dialog.close();
-      else dialog.removeAttribute('open');
-    }
+  /** Closes the dialog and drops whatever was not applied; focus returns to the trigger. */
+  const closeCard = useCallback((): void => {
     setOpen(false);
     setDraft(filter);
-    triggerRef.current?.focus();
-  };
+  }, [filter]);
 
-  // A changed value from outside (e.g. the preset select) resets the draft while the card is closed.
+  // A changed value from outside (e.g. the preset choice) resets the draft while the dialog is closed.
   useEffect(() => {
     if (!open) setDraft(filter);
   }, [filter, open]);
 
   const apply = (): void => {
     onApply(draft);
-    closeCard();
+    setOpen(false);
   };
   const applyAsDefault = (): void => {
     onApplyAsDefault(draft);
-    closeCard();
+    setOpen(false);
   };
-  /** Resets the draft back to the actual default — never the live filter, and never closes the card. */
+  /** Resets the draft back to the actual default — never the live filter, and never closes the dialog. */
   const resetToDefault = (): void => {
     setDraft(transitPreset('important', rules));
   };
@@ -217,6 +206,24 @@ export function TransitFilterPanel({
   const bodyGroup = (legend: string, field: 'transiting' | 'natal') => (
     <fieldset className="transit-filter-group">
       <legend>{legend}</legend>
+      <div className="transit-filter-group-actions">
+        <Button
+          size="compact"
+          onClick={() => {
+            setDraft({ ...draft, [field]: [...EVERY_BODY_KEY] });
+          }}
+        >
+          {t.groupAll}
+        </Button>
+        <Button
+          size="compact"
+          onClick={() => {
+            setDraft({ ...draft, [field]: [] });
+          }}
+        >
+          {t.groupClear}
+        </Button>
+      </div>
       {EVERY_BODY_KEY.map((key) => (
         <Checkbox
           key={key}
@@ -233,27 +240,30 @@ export function TransitFilterPanel({
   return (
     <section className="transit-filter" aria-labelledby={`${id}-heading`}>
       <h3 id={`${id}-heading`}>{t.heading}</h3>
+      <ChoiceGroup
+        label={t.presetLabel}
+        value={current ?? 'custom'}
+        options={[
+          ...PRESETS.map((preset) => ({ value: preset, label: t.presetsShort[preset] })),
+          ...(current === undefined ? [{ value: 'custom', label: t.presetsShort.custom }] : []),
+        ]}
+        onChange={(value) => {
+          const preset = PRESETS.find((candidate) => candidate === value);
+          if (preset !== undefined) onChange(transitPreset(preset, rules));
+        }}
+      />
       <p>
-        <label htmlFor={`${id}-preset`}>{t.presetLabel} </label>
-        <select
-          id={`${id}-preset`}
-          value={current ?? 'custom'}
-          onChange={(event) => {
-            const preset = PRESETS.find((candidate) => candidate === event.target.value);
-            if (preset !== undefined) onChange(transitPreset(preset, rules));
-          }}
-        >
-          {PRESETS.map((preset) => (
-            <option key={preset} value={preset}>
-              {t.presets[preset]}
-            </option>
-          ))}
-          {current === undefined && <option value="custom">{t.presets.custom}</option>}
-        </select>{' '}
         <span role="status" className="transit-filter-count">
           {t.count(shown, total, presetName)}
         </span>{' '}
-        {current !== 'all' && (
+        <button type="button" className="quiet" ref={triggerRef} aria-haspopup="dialog" onClick={openCard}>
+          {t.adjust}
+        </button>
+      </p>
+      {current === 'important' && <p className="hint">{rules.context === 'daily' ? t.dailyNote : t.yearlyNote}</p>}
+      {shown === 0 && total > 0 && (
+        <StatusMessage kind="zero">
+          {t.empty(t.presets[current ?? 'custom'])}{' '}
           <button
             type="button"
             className="quiet"
@@ -261,106 +271,80 @@ export function TransitFilterPanel({
               onChange(transitPreset('all', rules));
             }}
           >
-            {t.showAll}
+            {t.clearFilters}
           </button>
-        )}
-      </p>
-      {current === 'important' && <p className="hint">{rules.context === 'daily' ? t.dailyNote : t.yearlyNote}</p>}
-      {shown === 0 && total > 0 && <p className="hint">{t.empty}</p>}
+        </StatusMessage>
+      )}
 
-      <button type="button" className="quiet" ref={triggerRef} aria-haspopup="dialog" onClick={openCard}>
-        {t.adjust}
-      </button>
-
-      <dialog
-        ref={dialogRef}
-        className="settings-card"
-        aria-labelledby={headingId}
-        onCancel={(event) => {
-          // Escape: the browser would close it silently; closing it ourselves also drops the draft.
-          event.preventDefault();
-          closeCard();
-        }}
-        onClick={(event) => {
-          // A press on the backdrop is a press on the dialog element itself.
-          if (event.target === dialogRef.current) closeCard();
-        }}
+      <StagedDialog
+        open={open}
+        heading={t.adjust}
+        closeLabel={t.closeLabel}
+        onDiscard={closeCard}
+        returnFocusTo={triggerRef}
+        footer={
+          <>
+            <Button
+              variant="primary"
+              disabled={!dirty}
+              aria-label={dirty ? t.applyButton : `${t.applyButton} — ${t.nothingChanged}`}
+              onClick={apply}
+            >
+              {t.applyButton}
+            </Button>
+            <Button
+              disabled={!dirty}
+              aria-label={dirty ? t.applyAsDefaultButton : `${t.applyAsDefaultButton} — ${t.nothingChanged}`}
+              onClick={applyAsDefault}
+            >
+              {t.applyAsDefaultButton}
+            </Button>
+            <Button onClick={resetToDefault}>{t.resetToDefaultButton}</Button>
+            <Button onClick={closeCard}>{t.cancelButton}</Button>
+          </>
+        }
       >
-        <div className="settings-card-header">
-          <h2 id={headingId}>{t.adjust}</h2>
-          <button type="button" className="quiet" aria-label={t.closeLabel} onClick={closeCard}>
-            ×
-          </button>
-        </div>
-
-        <div className="settings-card-body">
-          <RulershipSetting />
-          <Select
-            label={t.orbLabel}
-            value={draft.orbSensitivity}
-            options={SENSITIVITIES.map((sensitivity) => ({ value: sensitivity, label: t.orbs[sensitivity] }))}
-            onChange={(value) => {
-              const orbSensitivity = SENSITIVITIES.find((candidate) => candidate === value);
-              if (orbSensitivity !== undefined) setDraft({ ...draft, orbSensitivity });
-            }}
-          />
-          <fieldset className="transit-filter-group">
-            <legend>{t.aspectsLegend}</legend>
-            {(
-              [
-                [HARD_ASPECT_KEYS, t.hard],
-                [SOFT_ASPECT_KEYS, t.soft],
-                [MINOR_ASPECT_KEYS, t.minor],
-              ] as const
-            ).map(([keys, label]) => (
-              <Checkbox
-                key={label}
-                label={label}
-                checked={groupChecked(keys)}
-                onChange={() => {
-                  toggleGroup(keys);
-                }}
-              />
-            ))}
-          </fieldset>
-          <Checkbox
-            label={t.applyingOnly}
-            checked={draft.applyingOnly}
-            onChange={(checked) => {
-              setDraft({ ...draft, applyingOnly: checked });
-            }}
-          />
-          {bodyGroup(t.transitingLegend, 'transiting')}
-          {bodyGroup(t.natalLegend, 'natal')}
-        </div>
-
-        <div className="settings-card-footer">
-          <button
-            type="button"
-            className="quiet"
-            disabled={!dirty}
-            aria-label={dirty ? t.applyButton : `${t.applyButton} — ${t.nothingChanged}`}
-            onClick={apply}
-          >
-            {t.applyButton}
-          </button>
-          <button
-            type="button"
-            className="quiet"
-            disabled={!dirty}
-            aria-label={dirty ? t.applyAsDefaultButton : `${t.applyAsDefaultButton} — ${t.nothingChanged}`}
-            onClick={applyAsDefault}
-          >
-            {t.applyAsDefaultButton}
-          </button>
-          <button type="button" className="quiet" onClick={resetToDefault}>
-            {t.resetToDefaultButton}
-          </button>
-          <button type="button" className="quiet" onClick={closeCard}>
-            {t.cancelButton}
-          </button>
-        </div>
-      </dialog>
+        <ChoiceGroup
+          label={t.orbLabel}
+          value={draft.orbSensitivity}
+          options={SENSITIVITIES.map((sensitivity) => ({ value: sensitivity, label: t.orbs[sensitivity] }))}
+          onChange={(value) => {
+            const orbSensitivity = SENSITIVITIES.find((candidate) => candidate === value);
+            if (orbSensitivity !== undefined) setDraft({ ...draft, orbSensitivity });
+          }}
+        />
+        <fieldset className="transit-filter-group">
+          <legend>{t.aspectsLegend}</legend>
+          {(
+            [
+              [HARD_ASPECT_KEYS, t.hard],
+              [SOFT_ASPECT_KEYS, t.soft],
+              [MINOR_ASPECT_KEYS, t.minor],
+            ] as const
+          ).map(([keys, label]) => (
+            <Checkbox
+              key={label}
+              label={label}
+              checked={groupChecked(keys)}
+              onChange={() => {
+                toggleGroup(keys);
+              }}
+            />
+          ))}
+        </fieldset>
+        <Checkbox
+          label={t.applyingOnly}
+          checked={draft.applyingOnly}
+          onChange={(checked) => {
+            setDraft({ ...draft, applyingOnly: checked });
+          }}
+        />
+        {bodyGroup(t.transitingLegend, 'transiting')}
+        {bodyGroup(t.natalLegend, 'natal')}
+        <p className="hint">
+          {t.rulersNote} <a href={routeHref({ kind: 'preferences', section: 'astrology' })}>{t.rulersLink}</a>.
+        </p>
+      </StagedDialog>
     </section>
   );
 }

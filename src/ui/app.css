@@ -860,43 +860,16 @@ footer {
 }
 
 .birth-place-search-form {
-  display: flex;
-  align-items: flex-end;
-  gap: 0.5rem;
+  display: grid;
+  justify-items: start;
+  gap: var(--space-2);
   margin-bottom: 0.5rem;
 }
 
-.birth-place-search-form label {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  flex: 1;
+/* The shared TextField owns the input's look; the form only gives it the free width. */
+.birth-place-search-form .primitive-field {
+  width: 100%;
   min-width: 0;
-  color: var(--muted);
-  font-size: 0.8rem;
-  font-weight: 550;
-  letter-spacing: 0.02em;
-}
-
-.birth-place-search-form input {
-  min-width: 0;
-  padding: 0.55rem 0.7rem;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  color: var(--fg);
-  font: inherit;
-  font-size: 1rem;
-}
-
-.birth-place-search-form input:hover {
-  background: var(--surface-hover);
-}
-
-.birth-place-search-form input:focus-visible {
-  border-color: var(--accent);
-  outline: 2px solid color-mix(in oklab, var(--accent) 55%, transparent);
-  outline-offset: 0;
 }
 
 /* Click-to-confirm results (#290) — always a list, even for a single match, so a search never
@@ -1306,6 +1279,38 @@ label.stacked textarea:focus-visible {
   background: color-mix(in oklab, var(--surface) 70%, transparent);
 }
 
+.data-table th[data-align='end'],
+.data-table td[data-align='end'] {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.data-table th[data-align='center'],
+.data-table td[data-align='center'] {
+  text-align: center;
+}
+
+/* A long table scrolls inside its frame, so the header row stays in view while the rows pass (#513). */
+.data-table-scroll-tall {
+  max-height: min(70vh, 44rem);
+  overflow-y: auto;
+}
+
+.data-table-scroll-tall thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--bg);
+}
+
+/* A pointer that can aim at a small target gets the tighter rows; touch keeps the roomy ones (#513). */
+@media (pointer: fine) {
+  .data-table th,
+  .data-table td {
+    padding: 0.35rem 0.75rem;
+  }
+}
+
 .data-table th button {
   width: 100%;
   padding: 0;
@@ -1319,6 +1324,14 @@ label.stacked textarea:focus-visible {
   text-transform: uppercase;
   text-align: left;
   cursor: pointer;
+}
+
+.data-table th[data-align='end'] button {
+  text-align: right;
+}
+
+.data-table th[data-align='center'] button {
+  text-align: center;
 }
 
 .data-table th button:hover {
@@ -1407,13 +1420,6 @@ label.stacked textarea:focus-visible {
 
 .person-tab:hover:not(.active) {
   color: var(--fg);
-}
-
-/* The admin area (#414) sits apart at the end of the person strip, in the accent so an admin
-   finds it without it competing with the chart tabs. */
-.person-tab.person-tab-admin {
-  margin-left: auto;
-  color: var(--accent);
 }
 
 /* The two load-bearing details for the fused look: this background must match `.person-shelf
@@ -1520,14 +1526,6 @@ label.stacked textarea:focus-visible {
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-popover);
-}
-
-.person-switcher-filter-label {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  font-size: var(--text-sm);
-  color: var(--muted);
 }
 
 .person-switcher-list {
@@ -1977,62 +1975,6 @@ label.stacked textarea:focus-visible {
 
 .report-provenance {
   margin-top: 0.2rem;
-}
-
-/* Tier 2 mode picker (#411): a styled native select — keeps the platform's own keyboard and
-   screen-reader behavior — with the selected mode's description underneath. */
-.tier2-mode-select {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  margin: 0 0 1.25rem;
-  max-width: 32rem;
-}
-
-.tier2-mode-select label {
-  color: var(--muted);
-  font-size: 0.8rem;
-  font-weight: 650;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.tier2-mode-select select {
-  appearance: none;
-  width: 100%;
-  padding: 0.65rem 2.5rem 0.65rem 0.85rem;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background-color: var(--surface);
-  background-image:
-    linear-gradient(45deg, transparent 50%, var(--muted) 50%),
-    linear-gradient(135deg, var(--muted) 50%, transparent 50%);
-  background-position:
-    right 1.1rem center,
-    right 0.8rem center;
-  background-size: 0.3rem 0.3rem;
-  background-repeat: no-repeat;
-  color: var(--fg);
-  font: inherit;
-  font-size: 1rem;
-  cursor: pointer;
-  transition:
-    border-color 120ms ease,
-    background-color 120ms ease;
-}
-
-.tier2-mode-select select:hover {
-  background-color: var(--surface-hover);
-}
-
-.tier2-mode-select select:focus-visible {
-  border-color: var(--accent);
-  outline: 2px solid color-mix(in oklab, var(--accent) 55%, transparent);
-  outline-offset: 0;
-}
-
-.tier2-mode-select .hint {
-  margin: 0;
 }
 
 .ai-customized-rejection p {
@@ -3040,27 +2982,6 @@ svg text.chart-symbol-text-unicode {
   stroke: #1e293b;
 }
 
-/* Export controls under the wheel (#67): Download SVG/PNG and Export PDF. */
-.chart-export-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  margin: -0.5rem auto 1rem;
-}
-
-.chart-export-actions button,
-.chart-export-actions select {
-  padding: 0.35rem 0.85rem;
-  font-size: 0.8rem;
-}
-
-.chart-export-png {
-  display: flex;
-  gap: 0.5rem;
-}
-
 /* All tables stacked at once for the "Export PDF" print pass (#67); see the print rules below. */
 .chart-print-all {
   display: flex;
@@ -3081,7 +3002,6 @@ svg text.chart-symbol-text-unicode {
   .tabs,
   .person-nav,
   .chart-wheel-reference,
-  .chart-export-actions,
   .data-table-actions,
   .report-controls,
   .pwastatus,
@@ -3214,11 +3134,6 @@ svg text.chart-symbol-text-unicode {
 
 .rectification-detail {
   margin: 0.5rem 0;
-}
-
-.rectification-detail summary {
-  cursor: pointer;
-  font-weight: 600;
 }
 
 .rectification-detail ul {
@@ -3564,12 +3479,6 @@ svg text.chart-symbol-text-unicode {
   margin-left: 1.5rem;
 }
 
-.settings-card-sublabel {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 600;
-}
-
 /* An informational note on the setting just above it, same shape as .warning but without the alarm colour. */
 .settings-card-note {
   margin-top: 0.75rem;
@@ -3589,6 +3498,12 @@ svg text.chart-symbol-text-unicode {
 
 .settings-card-group [role='radiogroup'] label {
   display: inline;
+}
+
+.settings-card-choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: 0.15rem 1rem;
 }
 
 .settings-card-footer {
@@ -4171,4 +4086,46 @@ svg text.chart-symbol-text-unicode {
   :root[data-density='compact'] .data-table td {
     padding: 0.5rem 0.85rem;
   }
+}
+
+/* The visible name of the planetary-rulers option cards (the radiogroup carries the same name for assistive technology). */
+.rulership-setting-label {
+  margin: 0 0 var(--space-2);
+  font-weight: 600;
+}
+
+.settings-card-block {
+  margin-bottom: var(--space-4);
+}
+
+.transit-filter-group-actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+/* The primary action of a long form stays reachable at the bottom of the viewport while its fields scroll (#513). */
+.sticky-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+  padding: var(--space-3) 0;
+  background: var(--bg);
+  border-top: 1px solid var(--line);
+}
+
+/* The terms a screen relies on, as a quiet inline list of glossary terms under its heading (#456, #513). */
+.glossary-terms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  margin: 0 0 var(--space-4);
+  padding: 0;
+  list-style: none;
+  color: var(--muted);
 }

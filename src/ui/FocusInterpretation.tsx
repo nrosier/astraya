@@ -25,6 +25,10 @@ import {
   type SavedInterpretationSummary,
   type Tier2Section,
 } from '../interpretation/tier2-client.js';
+import { Checkbox } from './primitives/Checkbox.js';
+import { useOnline } from './online-status.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
+import { sharedMessages } from './shared.messages.js';
 import { focusInterpretationMessages } from './FocusInterpretation.messages.js';
 import { useMessages } from './messages.js';
 import { basisLabel } from './result-basis-label.js';
@@ -42,6 +46,8 @@ export function FocusInterpretation({
   readonly resetKey: string;
 }): React.JSX.Element | null {
   const t = useMessages(focusInterpretationMessages);
+  const shared = useMessages(sharedMessages);
+  const online = useOnline();
   const user = useSessionUserOrUndefined();
   const [consent, setConsent] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -117,32 +123,30 @@ export function FocusInterpretation({
     <section className="focus-interpretation" aria-label={t.heading}>
       <h4>{t.heading}</h4>
       {user !== undefined && (
-        <label>
-          <input
-            type="checkbox"
-            checked={consent}
-            onChange={(event) => {
-              setConsent(event.target.checked);
-            }}
-          />{' '}
-          {t.consent}
-        </label>
+        <Checkbox
+          label={t.consent}
+          checked={consent}
+          onChange={(value) => {
+            setConsent(value);
+          }}
+        />
       )}
       <button
         type="button"
-        disabled={disabledReason !== undefined || generating}
+        disabled={disabledReason !== undefined || generating || !online}
         aria-describedby={disabledReason === undefined ? undefined : reasonId}
         onClick={generate}
       >
         {generating ? t.generating : t.generate}
       </button>
+      {!online && <StatusMessage kind="offline">{shared.offlineNeeded}</StatusMessage>}
       {disabledReason !== undefined && (
         <span id={reasonId} className="hint">
           {' '}
           {user === undefined ? disabledReason : `(${disabledReason})`}
         </span>
       )}
-      {error !== undefined && <p role="alert">{t.error(error)}</p>}
+      {error !== undefined && <StatusMessage kind="error">{t.error(error)}</StatusMessage>}
       {sections !== undefined && (
         <div className="tier2-result" aria-live="polite">
           {sections.map((section) => (

@@ -21,6 +21,9 @@
  * @conventions Calls renderMultiWheelSvg directly like TransitView.tsx does, bypassing the single-chart AstroChartWheel; uses SynastryView.messages.ts for en/nl text via useMessages().
  * @exports SynastryView, aspectColumns
  */
+import { Select } from './primitives/Select.js';
+import { GlossaryTerms } from './GlossaryTerm.js';
+import { formatFixed } from './format.js';
 import { personHref } from './route.js';
 import { useSymbolClass } from './symbol-setting.js';
 import { useGlyphVariants } from './glyph-variant-setting.js';
@@ -49,6 +52,7 @@ import type { TableColumn } from './table-sort.js';
 import type { CorpusEntry, Locale } from '../interpretation/schema.js';
 import { synastryText } from './synastry-text.js';
 import { wheelCorpus } from './wheel-corpus.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 
 type Load =
   | { readonly kind: 'idle' }
@@ -84,7 +88,7 @@ export function aspectColumns(
       valueOf: (row) => row.bodyBName,
       render: (row) => bodyDisplayName(row.bodyBKey, locale),
     },
-    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => `${row.orb.toFixed(2)}°` },
+    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => `${formatFixed(row.orb, 2)}°` },
     {
       key: 'applying',
       label: t.applyingLabel,
@@ -264,40 +268,31 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
         <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
       </p>
       <h1>{person.displayName ? t.heading(person.displayName) : t.synastryFallback}</h1>
+      <GlossaryTerms terms={['synastry', 'aspect', 'orb']} />
       <p className="hint">{t.hint}</p>
 
       <p>
-        <label>
-          {t.compareWithLabel}{' '}
-          <select
-            value={partnerId}
-            onChange={(event) => {
-              setPartnerId(event.target.value);
-            }}
-          >
-            <option value="">{t.choosePersonOption}</option>
-            {candidates.map((candidate) => (
-              <option key={candidate.id} value={candidate.id}>
-                {candidate.displayName || t.unnamedOption}
-              </option>
-            ))}
-          </select>
-        </label>
+        <Select
+          label={t.compareWithLabel}
+          value={partnerId}
+          onChange={setPartnerId}
+          options={[
+            { value: '', label: t.choosePersonOption },
+            ...candidates.map((candidate) => ({
+              value: candidate.id,
+              label: candidate.displayName || t.unnamedOption,
+            })),
+          ]}
+        />
       </p>
 
       {partnerId !== '' && candidates.every((candidate) => candidate.id !== partnerId) && (
-        <p className="warning" role="alert">
-          {t.partnerGoneWarning}
-        </p>
+        <StatusMessage kind="error">{t.partnerGoneWarning}</StatusMessage>
       )}
 
-      {load.kind === 'loading' && <p className="status">{t.calculating}</p>}
+      {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
 
-      {load.kind === 'error' && (
-        <p className="warning" role="alert">
-          {t.error(load.message)}
-        </p>
-      )}
+      {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
 
       {load.kind === 'ready' && wheelMarkup !== undefined && (
         <>

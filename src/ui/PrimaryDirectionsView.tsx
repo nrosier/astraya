@@ -19,6 +19,7 @@
  * @conventions Gated for unknown birth time like other angle-dependent screens; draws the bi-wheel with renderMultiWheelSvg directly (no cross-ring lines), injected as app-generated SVG the same way TransitView.tsx does; uses PrimaryDirectionsView.messages.ts for en/nl text via useMessages().
  * @exports PrimaryDirectionsView
  */
+import { GlossaryTerms } from './GlossaryTerm.js';
 import { personHref } from './route.js';
 import { useEffect, useMemo, useState } from 'react';
 import { ageInYears, TROPICAL_YEAR_DAYS } from '../astrology/progressions.js';
@@ -39,7 +40,7 @@ import { civilFromJulianDay } from '../time/julian.js';
 import { momentKey } from '../time/encode.js';
 import { aspectDisplayName, bodyDisplayName } from './astro-names.messages.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
-import { todayInputValue } from './format.js';
+import { formatFixed, todayInputValue } from './format.js';
 import { useGlyphVariants } from './glyph-variant-setting.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
@@ -53,6 +54,7 @@ import { useStoreState } from './store-context.js';
 import { useSymbolClass } from './symbol-setting.js';
 import type { TableColumn } from './table-sort.js';
 import type { Locale } from '../interpretation/schema.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -116,8 +118,8 @@ function hitColumns(t: Messages, locale: Locale): readonly TableColumn<HitRow>[]
       label: t.promissorLabel,
       valueOf: (row) => bodyDisplayName(row.promissorKey, locale),
     },
-    { key: 'arc', label: t.arcLabel, valueOf: (row) => row.arc, render: (row) => `${row.arc.toFixed(2)}°` },
-    { key: 'age', label: t.ageColumnLabel, valueOf: (row) => row.age, render: (row) => row.age.toFixed(2) },
+    { key: 'arc', label: t.arcLabel, valueOf: (row) => row.arc, render: (row) => `${formatFixed(row.arc, 2)}°` },
+    { key: 'age', label: t.ageColumnLabel, valueOf: (row) => row.age, render: (row) => formatFixed(row.age, 2) },
     { key: 'description', label: t.descriptionLabel, valueOf: (row) => describe(row, t, locale) },
   ];
 }
@@ -258,6 +260,7 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
         <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
       </p>
       <h1>{person.displayName ? t.heading(person.displayName) : t.primaryDirectionsFallback}</h1>
+      <GlossaryTerms terms={['primaryDirection', 'ascendant', 'midheaven']} />
       <p className="hint">{t.hint}</p>
 
       <div className="field-grid">
@@ -281,7 +284,7 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
         />
         <NumberField
           label={t.ageLabel}
-          value={ageDraft ?? (shownAge === undefined ? '' : shownAge.toFixed(2))}
+          value={ageDraft ?? (shownAge === undefined ? '' : formatFixed(shownAge, 2))}
           min={0}
           step={0.1}
           disabled={data === undefined}
@@ -297,34 +300,22 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
         />
       </div>
 
-      {load.kind === 'loading' && <p className="status">{t.calculating}</p>}
+      {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
 
-      {load.kind === 'error' && (
-        <p className="warning" role="alert">
-          {t.error(load.message)}
-        </p>
-      )}
+      {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
 
-      {data !== undefined && !data.defined && (
-        <p className="warning" role="alert">
-          {t.undefinedAtLatitude}
-        </p>
-      )}
+      {data !== undefined && !data.defined && <StatusMessage kind="error">{t.undefinedAtLatitude}</StatusMessage>}
 
       {data?.defined === true && (
         <>
-          {directed.kind === 'loading' && <p className="status">{t.calculating}</p>}
-          {directed.kind === 'error' && (
-            <p className="warning" role="alert">
-              {t.error(directed.message)}
-            </p>
-          )}
+          {directed.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
+          {directed.kind === 'error' && <StatusMessage kind="error">{t.error(directed.message)}</StatusMessage>}
           {directed.kind === 'before-birth' && <p className="hint">{t.beforeBirth}</p>}
 
           {directed.kind === 'ready' && (
             <>
-              <p className="hint">{t.ageLine(directed.chart.ageYears.toFixed(2))}</p>
-              <p className="hint">{t.arcLine(ageToArc(directed.chart.ageYears, data.key).toFixed(2))}</p>
+              <p className="hint">{t.ageLine(formatFixed(directed.chart.ageYears, 2))}</p>
+              <p className="hint">{t.arcLine(formatFixed(ageToArc(directed.chart.ageYears, data.key), 2))}</p>
               {wheelMarkup !== undefined && (
                 // App-generated SVG from just-computed chart data, never user-supplied markup —
                 // the same trust boundary ChartView.tsx's sheet markup is injected under.

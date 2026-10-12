@@ -10,6 +10,8 @@
  * @conventions Lives inside `Stored` because the person picker reads the local store, though the eclipse search itself needs only the ephemeris. Text comes from co-located `EclipsesView.messages.ts` via `useMessages()`.
  * @exports EclipsesView
  */
+import { GlossaryTerms } from './GlossaryTerm.js';
+import { formatFixed } from './format.js';
 import { Select } from './primitives/Select.js';
 import { TextField } from './primitives/TextField.js';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -28,6 +30,7 @@ import { SortableTable } from './SortableTable.js';
 import { useStoreState } from './store-context.js';
 import type { TableColumn } from './table-sort.js';
 import { clampEphemerisYear, MAX_EPHEMERIS_YEAR, MIN_EPHEMERIS_YEAR } from './year-range.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 
 type Result =
   | { readonly kind: 'idle' }
@@ -161,7 +164,7 @@ export function EclipsesView(): React.JSX.Element {
                   t.contact(
                     bodyDisplayName(contact.pointKey, locale),
                     aspectDisplayName(contact.kind, locale),
-                    `${contact.orb.toFixed(1)}°`,
+                    `${formatFixed(contact.orb, 1)}°`,
                   ),
                 )
                 .join('; '),
@@ -177,6 +180,7 @@ export function EclipsesView(): React.JSX.Element {
         <a href="#/">&larr; {shared.back}</a>
       </p>
       <h1>{t.heading}</h1>
+      <GlossaryTerms terms={['eclipse', 'aspect', 'houses']} />
       <p className="hint">{t.hint}</p>
 
       <div className="field-grid">
@@ -198,16 +202,8 @@ export function EclipsesView(): React.JSX.Element {
         </button>
       </p>
 
-      {validation !== undefined && (
-        <p className="warning" role="alert">
-          {validation}
-        </p>
-      )}
-      {result.kind === 'error' && (
-        <p className="warning" role="alert">
-          {t.error(result.message)}
-        </p>
-      )}
+      {validation !== undefined && <StatusMessage kind="error">{validation}</StatusMessage>}
+      {result.kind === 'error' && <StatusMessage kind="error">{t.error(result.message)}</StatusMessage>}
 
       {result.kind === 'ready' &&
         (result.rows.length === 0 ? (

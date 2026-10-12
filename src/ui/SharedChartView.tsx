@@ -22,6 +22,7 @@ import { useMessages } from './messages.js';
 import { useRulershipChoice } from './rulership-setting.js';
 import { sharedChartViewMessages } from './SharedChartView.messages.js';
 import { sharedMessages } from './shared.messages.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -97,11 +98,7 @@ export function SharedChartView(): React.JSX.Element {
       <h1>{t.sharedChart}</h1>
       <p className="hint">{t.hint}</p>
 
-      {initial.error !== undefined && (
-        <p className="warning" role="alert">
-          {t.linkCouldNotBeRead(initial.error)}
-        </p>
-      )}
+      {initial.error !== undefined && <StatusMessage kind="error">{t.linkCouldNotBeRead(initial.error)}</StatusMessage>}
 
       {initial.data !== undefined && (
         <ChartDataView

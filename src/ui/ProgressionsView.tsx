@@ -16,6 +16,7 @@
  * @conventions Gated for unknown birth time the same way ProfectionsView.tsx/ChartView.tsx are; uses ProgressionsView.messages.ts for en/nl text via useMessages().
  * @exports ProgressionsView; positionRows, positionColumns, contactColumns, mcMethodLabel (reused by pdf-export-plan.ts)
  */
+import { GlossaryTerms } from './GlossaryTerm.js';
 import { personHref } from './route.js';
 import { DateField } from './primitives/DateField.js';
 import { Select } from './primitives/Select.js';
@@ -30,7 +31,7 @@ import { houseOf } from '../astrology/emphasis.js';
 import { computeMinorProgression, type MinorProgressionData } from '../domain/minor-progression.js';
 import { computeSecondaryProgression, type SecondaryProgressionData } from '../domain/secondary-progression.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
-import { todayInputValue } from './format.js';
+import { formatFixed, todayInputValue } from './format.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { momentKey } from '../time/encode.js';
@@ -41,6 +42,7 @@ import { useStoreState } from './store-context.js';
 import type { TableColumn } from './table-sort.js';
 import type { BodyPosition, HousePositions } from '../ephemeris/types.js';
 import type { Locale } from '../interpretation/schema.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 
 type Technique = 'secondary' | 'tertiary' | 'minor';
 
@@ -129,7 +131,7 @@ export function contactColumns(
       valueOf: (row) => row.bodyBName,
       render: (row) => bodyDisplayName(row.bodyBKey, locale),
     },
-    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => `${row.orb.toFixed(2)}°` },
+    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => `${formatFixed(row.orb, 2)}°` },
     {
       key: 'applying',
       label: t.applyingLabel,
@@ -233,6 +235,7 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
         <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
       </p>
       <h1>{person.displayName ? t.heading(person.displayName) : t.progressionsFallback}</h1>
+      <GlossaryTerms terms={['progression', 'aspect', 'orb']} />
       <p className="hint">{t.hint}</p>
 
       <div className="field-grid">
@@ -265,18 +268,14 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
         <DateField label={t.asOfLabel} value={asOf} onChange={setAsOf} />
       </div>
 
-      {load.kind === 'loading' && <p className="status">{t.calculating}</p>}
+      {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
 
-      {load.kind === 'error' && (
-        <p className="warning" role="alert">
-          {t.error(load.message)}
-        </p>
-      )}
+      {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
 
       {load.kind === 'ready' && (
         <>
           <p className="hint">
-            {t.ageLine(`${load.data.ageInYears.toFixed(2)}${load.data.ageInYears < 0 ? ` ${t.beforeBirth}` : ''}`)}
+            {t.ageLine(`${formatFixed(load.data.ageInYears, 2)}${load.data.ageInYears < 0 ? ` ${t.beforeBirth}` : ''}`)}
           </p>
           {usedMcMethod !== undefined && <p className="hint">{t.mcMethodLine(mcMethodLabel(t, usedMcMethod))}</p>}
 

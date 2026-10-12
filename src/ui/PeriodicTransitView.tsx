@@ -26,6 +26,8 @@
  * @conventions Follows TransitView.tsx's person-not-found/incomplete-moment/unknown-time gating; uses PeriodicTransitView.messages.ts for en/nl text via useMessages().
  * @exports PeriodicTransitView, bodyName, formatUtc, localizedSignName, signHouseLabel, contactRows, contactColumns, exactEventRows, exactEventColumns, stationRows, stationColumns
  */
+import { DateField } from './primitives/DateField.js';
+import { GlossaryTerms } from './GlossaryTerm.js';
 import { personHref } from './route.js';
 import { Select } from './primitives/Select.js';
 import { useEffect, useMemo, useState } from 'react';
@@ -45,7 +47,7 @@ import { composeFallbackText } from '../interpretation/compose.js';
 import type { StationEvent } from '../astrology/stations.js';
 import type { TransitAspectEvent } from '../astrology/transit-events.js';
 import { civilFromJulianDay } from '../time/julian.js';
-import { todayInputValue } from './format.js';
+import { formatFixed, todayInputValue } from './format.js';
 import { useMessages } from './messages.js';
 import { useRulershipChoice } from './rulership-setting.js';
 import { momentKey } from '../time/encode.js';
@@ -65,6 +67,7 @@ import { useStoreState } from './store-context.js';
 import type { TableColumn } from './table-sort.js';
 import type { BodyId, JulianDayUT } from '../ephemeris/types.js';
 import type { CorpusPlacement, Locale } from '../interpretation/schema.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -143,7 +146,7 @@ export function contactRows(aspects: readonly Aspect[], locale: Locale): readonl
 export function contactColumns(t: typeof periodicTransitViewMessages.en): readonly TableColumn<ContactRow>[] {
   return [
     { key: 'sentence', label: t.forecastLabel, valueOf: (row) => row.sentence },
-    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => `${row.orb.toFixed(2)}°` },
+    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => `${formatFixed(row.orb, 2)}°` },
     {
       key: 'applying',
       label: t.applyingLabel,
@@ -397,19 +400,11 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
         <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
       </p>
       <h1>{person.displayName ? t.heading(person.displayName) : t.forecastFallback}</h1>
+      <GlossaryTerms terms={['transit', 'aspect', 'orb', 'applying']} />
       <p className="hint">{t.hint(person.displayName || t.thisFallback)}</p>
 
       <p>
-        <label>
-          {t.asOfLabel}{' '}
-          <input
-            type="date"
-            value={asOf}
-            onChange={(event) => {
-              setAsOf(event.target.value);
-            }}
-          />
-        </label>
+        <DateField label={t.asOfLabel} value={asOf} onChange={setAsOf} />
       </p>
 
       {data !== undefined && (
@@ -425,13 +420,9 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
         />
       )}
 
-      {load.kind === 'loading' && <p className="status">{t.calculating}</p>}
+      {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
 
-      {load.kind === 'error' && (
-        <p className="warning" role="alert">
-          {t.error(load.message)}
-        </p>
-      )}
+      {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
 
       {data !== undefined && (
         <>
@@ -609,12 +600,8 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
               />
             </div>
 
-            {returnLoad.kind === 'loading' && <p className="status">{t.calculating}</p>}
-            {returnLoad.kind === 'error' && (
-              <p className="warning" role="alert">
-                {t.error(returnLoad.message)}
-              </p>
-            )}
+            {returnLoad.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
+            {returnLoad.kind === 'error' && <StatusMessage kind="error">{t.error(returnLoad.message)}</StatusMessage>}
             {returnData !== undefined && (
               <>
                 <p>

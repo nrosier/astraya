@@ -117,6 +117,27 @@ function chooseOption(select: HTMLSelectElement, value: string): void {
   });
 }
 
+/** The option card of a calculation profile, by its title. */
+function profileCard(container: HTMLElement, title: string): HTMLInputElement {
+  const card = Array.from(
+    container.querySelectorAll('[role="radiogroup"][aria-label="Calculation profile"] .primitive-option-card'),
+  ).find((candidate) => candidate.querySelector('.primitive-option-card-title')?.textContent === title);
+  const radio = card?.querySelector('input');
+  if (radio === null || radio === undefined) throw new Error(`fixture bug: no profile card "${title}"`);
+  return radio;
+}
+
+/** Picks the nth planetary-rulers option card (modern, traditional, both). */
+function chooseRulers(container: HTMLElement, index: number): void {
+  const radio = container
+    .querySelector('[role="radiogroup"][aria-label="Planetary rulers"]')
+    ?.querySelectorAll<HTMLInputElement>('input[type="radio"]')[index];
+  if (radio === undefined) throw new Error('fixture bug: no rulers option');
+  act(() => {
+    radio.click();
+  });
+}
+
 describe('ExtendedSettingsPanel', () => {
   it('shows a button, opens a modal card from it, and resolves house-system names asynchronously', async () => {
     const { container, root } = await mount(fakeProvider(), vi.fn());
@@ -241,12 +262,12 @@ describe('ExtendedSettingsPanel', () => {
     const { container, root } = await mount(fakeProvider(), vi.fn());
     openCard(container);
 
-    // The starting point, the house-system select, the planetary-rulers select (#426), the symbols and line-weight selects and
+    // The house-system select, the symbols and line-weight selects and
     // the Uranus and Pluto form selects (#419); the ayanamsa picker joins them.
-    expect(container.querySelectorAll('select')).toHaveLength(7);
-    const siderealRadio = Array.from(container.querySelectorAll<HTMLInputElement>('input[type="radio"]')).find(
-      (radio) => radio.name === 'extended-settings-zodiac' && !radio.checked,
-    );
+    expect(container.querySelectorAll('select')).toHaveLength(5);
+    const siderealRadio = Array.from(
+      container.querySelectorAll<HTMLInputElement>('[role="radiogroup"][aria-label="Zodiac"] input[type="radio"]'),
+    ).find((radio) => !radio.checked);
     expect(siderealRadio).not.toBeUndefined();
     act(() => {
       siderealRadio?.click();
@@ -255,7 +276,7 @@ describe('ExtendedSettingsPanel', () => {
     await act(async () => {
       await Promise.resolve();
     });
-    expect(container.querySelectorAll('select')).toHaveLength(8);
+    expect(container.querySelectorAll('select')).toHaveLength(6);
 
     unmount(container, root);
   });
@@ -265,11 +286,9 @@ describe('ExtendedSettingsPanel', () => {
     const { container, root } = await mount(fakeProvider(), onRedraw);
     openCard(container);
 
-    const interpolatedRadio = Array.from(container.querySelectorAll<HTMLInputElement>('input[type="radio"]')).find(
-      (radio) =>
-        radio.name === 'extended-settings-lilith' &&
-        (radio.closest('label')?.textContent ?? '').includes('Interpolated'),
-    );
+    const interpolatedRadio = Array.from(
+      container.querySelectorAll<HTMLInputElement>('[role="radiogroup"][aria-label*="Lilith"] input[type="radio"]'),
+    ).find((radio) => (radio.closest('label')?.textContent ?? '').includes('Interpolated'));
     expect(interpolatedRadio).not.toBeUndefined();
     act(() => {
       interpolatedRadio?.click();
@@ -309,18 +328,12 @@ describe('the trigger and the starting points (#442)', () => {
     const { container, root } = await mount(fakeProvider(), onRedraw);
     openCard(container);
 
-    const preset = container.querySelector<HTMLSelectElement>('dialog select');
-    expect(preset?.value).toBe('modern-western-v1');
+    expect(profileCard(container, 'Modern Western').checked).toBe(true);
     act(() => {
-      if (preset === null) return;
-      Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value')?.set?.call(
-        preset,
-        'traditional-western-v1',
-      );
-      preset.dispatchEvent(new Event('change', { bubbles: true }));
+      profileCard(container, 'Traditional Western').click();
     });
     expect(checkboxLabeled(container, 'Part of Fortune').checked).toBe(true);
-    expect(container.querySelector<HTMLSelectElement>('dialog select')?.value).toBe('traditional-western-v1');
+    expect(profileCard(container, 'Traditional Western').checked).toBe(true);
     // It also sets the (device-wide) rulers, but only when applied.
     expect(container.textContent).toContain('also sets the planetary rulers to Traditional');
     act(() => {
@@ -337,11 +350,8 @@ describe('the trigger and the starting points (#442)', () => {
   it('does not touch the rulers if the card is cancelled after choosing a starting point', async () => {
     const { container, root } = await mount(fakeProvider(), vi.fn());
     openCard(container);
-    const preset = container.querySelector<HTMLSelectElement>('dialog select');
     act(() => {
-      if (preset === null) return;
-      Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value')?.set?.call(preset, 'sidereal-lahiri-v1');
-      preset.dispatchEvent(new Event('change', { bubbles: true }));
+      profileCard(container, 'Sidereal (Lahiri)').click();
     });
     act(() => {
       buttonNamed(container, 'Cancel')?.click();
@@ -354,7 +364,7 @@ describe('the trigger and the starting points (#442)', () => {
     const { container, root } = await mount(fakeProvider(), vi.fn());
     openCard(container);
     expect(buttonNamed(container, 'Apply and redraw')?.disabled).toBe(true);
-    chooseOption(selectLabeled(container, 'Planetary rulers'), 'traditional');
+    chooseRulers(container, 1);
     expect(localStorage.getItem('astraya:rulershipChoice')).toBe('traditional');
     const symbolsBefore = selectLabeled(container, 'Symbols').value;
     const symbolsAfter = symbolsBefore === 'text' ? 'unicode' : 'text';
@@ -375,7 +385,7 @@ describe('the trigger and the starting points (#442)', () => {
   it('keeps a previewed rulership when the card is applied (#510)', async () => {
     const { container, root } = await mount(fakeProvider(), vi.fn());
     openCard(container);
-    chooseOption(selectLabeled(container, 'Planetary rulers'), 'traditional');
+    chooseRulers(container, 1);
     act(() => {
       buttonNamed(container, 'Apply and redraw')?.click();
     });

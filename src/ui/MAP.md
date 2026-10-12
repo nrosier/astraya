@@ -5,6 +5,11 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 **Subdirectory:** `primitives/` — shared UI primitives for the #506 UI/UX overhaul (Button, Field/TextField/NumberField/DateField/Select, Checkbox/Radio/ChoiceGroup/OptionCards, Tooltip). See its own `MAP.md`.
 
 - `About.tsx` + `About.messages.ts` — About/privacy/licence screen, version metadata. Deps: none (static content).
+- `default-calculation-profile.ts` — The saved default calculation profile (device preference, #510) that seeds the chart settings store. Deps: `chart/calculation-profiles`, `extended-settings-store`.
+- `online-status.ts` — Hook following the browser's online/offline state, so network-only actions can show the offline result state. Deps: none.
+- `astro-glossary.messages.ts` — Astrology glossary catalogue (en/nl name + definition per term), the one source for every GlossaryTerm. Deps: none.
+- `GlossaryTerm.tsx` — Inline `GlossaryTerm` and the per-screen `GlossaryTerms` list, opening definitions through the shared Tooltip. Deps: `astro-glossary.messages`, `GlossaryTerm.messages`, `primitives/Tooltip`.
+- `GlossaryTerm.messages.ts` — en/nl label of the terms list. Deps: none.
 - `AccountPanel.tsx` + `AccountPanel.messages.ts` — Sign-in/out + account adoption + local-data removal. Deps: `session-context`, `sync/auth-client`, `oidc-pkce`.
 - `AdminNav.tsx` + `AdminNav.messages.ts` — Admin tab strip (users/usage/corpus/candidates). Deps: `./admin-nav`.
 - `AdminPanel.tsx` + `AdminPanel.messages.ts` — User CRUD + AI-usage reporting. Deps: `sync/admin-client`, `session-context`.
@@ -13,10 +18,11 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `calculation-basis.ts` + `calculation-basis.messages.ts` — The calculation-basis line (profile name + whether it is Astraya's default, the saved default, or changed for this chart) shown on chart pages. Deps: `chart/calculation-profiles`, `default-calculation-profile`, `extended-settings-summary`, `ExtendedSettingsPanel.messages`.
 - `table-selection.tsx` — The table side of the wheel selection: `TableSelection`, each row kind's selection key, and the shared "Show on the chart" button column. Deps: `interpretation/selection-key`, `chart/body-id`, `table-sort`.
 - `appearance-settings.ts` — Motion (follow the system / reduce) and Density (standard / compact) device preferences, applied as root attributes. Deps: none.
+- `MapSettingsDialog.tsx` + `MapSettingsDialog.messages.ts` + `map-settings.ts` — The Astrocartography map's staged settings dialog (line types, primary/additional bodies, Local Space, relocation), its applied-state summary and the pure settings logic. Deps: `primitives/StagedDialog`, `domain/astrocartography`.
 - `AspectMatrix.tsx` — The aspect matrix view: the sheet's grid with cells that select an aspect pair on the wheel. Deps: `chart/aspect-matrix`, `interpretation/selection-key`, `wheel-interaction`.
 - `AppNav.tsx` + `AppNav.messages.ts` — Primary navigation (person tabs, Tools/Export menus). Deps: `person-nav`, `tools-nav`, `export-registry`, `domain/full-export`.
 - `AstroChartWheel.tsx` — Dev-only reference wheel via `@astrodraw/astrochart`. Deps: `chart/astrochart-adapter`.
-- `AstrocartographyView.tsx` + `AstrocartographyView.messages.ts` — Astrocartography/local-space map with line-type/body/relocation controls. Deps: `domain/astrocartography`, `chart/acg-map`, `interpretation/compose`.
+- `AstrocartographyView.tsx` + `AstrocartographyView.messages.ts` — Astrocartography/local-space map; its settings live in `MapSettingsDialog`, its exports in the page header. Deps: `domain/astrocartography`, `chart/acg-map`, `interpretation/compose`.
 - `BiWheelSelectionPanel.tsx` + `BiWheelSelectionPanel.messages.ts` — Bi-wheel click-to-inspect panel (body/sign/aspect info). Deps: `./bi-wheel-selection`, `astro-names.messages`.
 - `BirthPlaceSearch.tsx` + `BirthPlaceSearch.messages.ts` — Geocoding place-name search field. Deps: `./forward-geocode`, `./geocode-provider`.
 - `Changelog.tsx` + `Changelog.messages.ts` — In-app CHANGELOG.md viewer. Deps: `./markdown`.

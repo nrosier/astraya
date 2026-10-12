@@ -14,6 +14,7 @@
  * @conventions Browser-only — depends on jsPDF/svg2pdf.js/jspdf-autotable, which cannot be imported under Vitest (svg2pdf.js's ESM build does not resolve there), so this is covered by Playwright instead and loaded only via PdfExportBuilder.tsx's dynamic import() to keep these three libraries out of the eager bundle (scripts/check-bundle-size.mjs). Astrological glyphs are substituted with WinAnsi-safe text codes before drawing since jsPDF's core fonts can't render arbitrary Unicode.
  * @exports renderPdfPlan
  */
+import { utcDay } from './format.js';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { svg2pdf } from 'svg2pdf.js';
@@ -105,7 +106,7 @@ export async function renderPdfPlan(plan: PdfPlan): Promise<{ blob: Blob; filena
   doc.setFontSize(22);
   doc.text(pdfSafeText(plan.title), PAGE_MARGIN, 40);
   doc.setFontSize(11);
-  doc.text(`Generated ${plan.generatedAt.toISOString().slice(0, 10)} by Astraya`, PAGE_MARGIN, 50);
+  doc.text(`Generated ${utcDay(plan.generatedAt)} by Astraya`, PAGE_MARGIN, 50);
 
   // Table of contents page: drawn now as a placeholder, filled in with real page numbers once every
   // section's own starting page is known — jsPDF lets a finished document be revisited with setPage.

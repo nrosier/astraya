@@ -17,6 +17,8 @@
  * @conventions Gated the same way as ChartView.tsx's houses/angles tables for unknown birth time; uses ProfectionsView.messages.ts for en/nl text via useMessages().
  * @exports ProfectionsView; toRow, columns, ProfectionRow (reused by pdf-export-plan.ts)
  */
+import { DateField } from './primitives/DateField.js';
+import { GlossaryTerms } from './GlossaryTerm.js';
 import { personHref } from './route.js';
 import { useEffect, useMemo, useState } from 'react';
 import { resolvePlacementText } from '../interpretation/compose.js';
@@ -26,7 +28,7 @@ import { degreeParts } from '../domain/chart-tables.js';
 import { deriveExportFilename } from '../domain/export-filename.js';
 import { computeProfections, type ProfectedPeriod, type ProfectionData } from '../domain/profections.js';
 import { bodyDisplayName, signDisplayName } from './astro-names.messages.js';
-import { todayInputValue } from './format.js';
+import { formatFixed, todayInputValue } from './format.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { RulershipSetting } from './RulershipSetting.js';
@@ -40,6 +42,7 @@ import type { TableColumn } from './table-sort.js';
 import type { CorpusEntry, Locale } from '../interpretation/schema.js';
 import { ordinal } from './placement-label.js';
 import { wheelCorpus } from './wheel-corpus.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -188,6 +191,7 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
         <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
       </p>
       <h1>{person.displayName ? t.heading(person.displayName) : t.profectionsFallback}</h1>
+      <GlossaryTerms terms={['profection', 'chartRuler', 'houses']} />
       <p className="hint">{t.hint}</p>
 
       <section className="profections-rulers-section" aria-labelledby="rulers-heading">
@@ -201,30 +205,17 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
       </section>
 
       <p>
-        <label>
-          {t.asOfLabel}{' '}
-          <input
-            type="date"
-            value={asOf}
-            onChange={(event) => {
-              setAsOf(event.target.value);
-            }}
-          />
-        </label>
+        <DateField label={t.asOfLabel} value={asOf} onChange={setAsOf} />
       </p>
 
-      {load.kind === 'loading' && <p className="status">{t.calculating}</p>}
+      {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
 
-      {load.kind === 'error' && (
-        <p className="warning" role="alert">
-          {t.error(load.message)}
-        </p>
-      )}
+      {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
 
       {load.kind === 'ready' && (
         <>
           <p className="hint">
-            {t.ageLine(`${load.data.age.toFixed(2)}${load.data.age < 0 ? ` ${t.beforeBirth}` : ''}`)}
+            {t.ageLine(`${formatFixed(load.data.age, 2)}${load.data.age < 0 ? ` ${t.beforeBirth}` : ''}`)}
           </p>
           {rows !== undefined && (
             <SortableTable
