@@ -34,6 +34,8 @@ export interface ExtendedSettings {
   readonly fortuneVisible: boolean;
   readonly vertexVisible: boolean;
   readonly chironVisible: boolean;
+  /** Part of Spirit's own visibility (#542) — Fortune's sibling lot, previously always shown regardless of any setting. */
+  readonly spiritVisible: boolean;
   readonly midpointsVisible: boolean;
   readonly rainbowZodiac: boolean;
   readonly aspectsToChiron: boolean;
@@ -55,6 +57,7 @@ export const DEFAULT_EXTENDED_SETTINGS: ExtendedSettings = {
   fortuneVisible: false,
   vertexVisible: false,
   chironVisible: true,
+  spiritVisible: false,
   midpointsVisible: false,
   rainbowZodiac: false,
   aspectsToChiron: false,
@@ -95,6 +98,7 @@ export function toPointVisibilityOptions(settings: ExtendedSettings): PointVisib
     chironVisible: settings.chironVisible,
     fortuneVisible: settings.fortuneVisible,
     vertexVisible: settings.vertexVisible,
+    spiritVisible: settings.spiritVisible,
     midpointsVisible: settings.midpointsVisible,
   };
 }

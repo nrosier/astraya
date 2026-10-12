@@ -97,7 +97,9 @@ describe('buildFullExport', () => {
     const chart = ada?.natalChart;
     expect(chart?.positions.map((row) => row.bodyKey)).toEqual(expect.arrayContaining(['sun', 'moon', 'asc', 'mc']));
     expect(chart?.houses?.cusps).toHaveLength(12);
-    expect(chart?.houses?.derivedPoints.length).toBeGreaterThan(0);
+    // Empty under the app's own defaults is correct now (#542): Fortune/Vertex/Spirit/midpoints
+    // are all hidden by default, same as the live chart screen shows for a never-customized chart.
+    expect(chart?.houses?.derivedPoints).toEqual([]);
     expect((chart?.aspects.length ?? 0) > 0).toBe(true);
     expect(chart?.dignities.length).toBeGreaterThan(0);
     expect(['day', 'night']).toContain(chart?.sect);

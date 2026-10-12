@@ -84,17 +84,19 @@ describe('toChartCalculationOptions', () => {
 });
 
 describe('toPointVisibilityOptions', () => {
-  it('picks out exactly the four visibility flags', () => {
+  it('picks out exactly the five visibility flags (#542)', () => {
     const settings = withOverrides({
       chironVisible: false,
       fortuneVisible: true,
       vertexVisible: true,
+      spiritVisible: true,
       midpointsVisible: true,
     });
     expect(toPointVisibilityOptions(settings)).toEqual({
       chironVisible: false,
       fortuneVisible: true,
       vertexVisible: true,
+      spiritVisible: true,
       midpointsVisible: true,
     });
   });

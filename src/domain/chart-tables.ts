@@ -11,7 +11,7 @@
  * @module chart-tables
  * @purpose Shapes a computed `ChartData` into the flat rows a chart's data tables, wheel ring and sheet actually render (#44).
  * @conventions Pure and framework-free; kept separate from `chart-compute.ts` so the slow real-engine chart test and the fast pure row-shaping test can run independently; longitude is rounded to the nearest arcsecond before sign-splitting (`degreeParts`) to avoid a seconds rounding bumping the sign; the wheel's aspect web is limited to major aspects, tables show every aspect found.
- * @exports positionRows, houseCuspRows, angleRows, aspectRows, crossAspectRows, dignityRows, dispositorRows, declinationContactRows, antisciaRows, fixedStarRows, chartShapeOf, derivedPointRows, chartWheelRing, chartSheetMetaLines, chartSheetInput, degreeParts, visiblePositions, almutenOfAscendant
+ * @exports positionRows, houseCuspRows, angleRows, aspectRows, crossAspectRows, dignityRows, dispositorRows, declinationContactRows, antisciaRows, fixedStarRows, chartShapeOf, derivedPointRows, chartWheelRing, chartSheetMetaLines, chartSheetInput, degreeParts, visiblePositions, visibleAspects, visibleAngleAspects, almutenOfAscendant
  */
 import { almutenOf, essentialDignityScoreOf } from '../astrology/almuten.js';
 import { antiscialContacts, type AntiscialContact } from '../astrology/antiscia.js';
@@ -26,7 +26,7 @@ import { midpointOf } from '../astrology/midpoints.js';
 import { DEFAULT_RULERSHIP_CHOICE, primaryRulerOf, rulersOf, type RulershipChoice } from '../astrology/rulership.js';
 import { degreesInSign, signIndex, signOf, type Element, type Modality } from '../astrology/signs.js';
 import { formatCoordinate } from '../ui/format.js';
-import { housesAreDefined, type AspectAngle, type ChartData } from './chart-compute.js';
+import { housesAreDefined, type AngleAspect, type ChartData } from './chart-compute.js';
 import { derivedPointLongitude } from './derived-point-position.js';
 import type { Aspect } from '../astrology/aspects.js';
 import type { Locale } from '../interpretation/schema.js';
@@ -101,16 +101,26 @@ export function degreeParts(longitude: Degrees): DegreeParts {
 }
 
 /**
- * Which computed points a chart's tables and wheel actually show. Purely a
- * display filter, never touching `ChartData.positions`/`.aspects` themselves
- * — an aspect to a point hidden here still shows in the Aspects tab by name
- * if it was computed at all (that's `ChartCalculationOptions.aspectsTo`, a
- * compute-layer decision made before this filter ever runs).
+ * Which computed points a chart's tables, wheel and matrix actually show (#542).
+ *
+ * `ChartCalculationOptions.aspectsTo` is still the compute-layer decision for whether a point
+ * is a candidate for an aspect at all — a point this policy hides is never put back into
+ * contention there. But hiding a point here is the single, final word on whether it can be
+ * *seen* anywhere a user-facing surface draws from already-computed `ChartData`: the wheel, the
+ * position/derived-point tables, the aspect matrix, and the aspect list all run their aspects
+ * through `visibleAspects`/`visibleAngleAspects` below before rendering, so a point hidden here
+ * cannot still "speak" through an aspect to something else on any of those four surfaces, even
+ * though `ChartData.aspects`/`.angleAspects` themselves are untouched (the raw computed data
+ * still carries it — only these filtered views omit it). Interpretation text (`src/interpretation/`)
+ * does not yet consult this policy — see that module's own doc comment for why folding it in
+ * needs more care than a blanket filter, and is left as a follow-up.
  */
 export interface PointVisibilityOptions {
   readonly chironVisible?: boolean; // default true
   readonly fortuneVisible?: boolean; // default false
   readonly vertexVisible?: boolean; // default false
+  /** Part of Spirit's own visibility (#542) — previously always shown regardless of any setting, unlike its sibling Part of Fortune. */
+  readonly spiritVisible?: boolean; // default false
   readonly midpointsVisible?: boolean; // default false
 }
 
@@ -121,6 +131,42 @@ export function visiblePositions(
 ): readonly BodyPosition[] {
   if (options.chironVisible ?? true) return positions;
   return positions.filter((position) => bodyById(position.body)?.category !== 'centaur');
+}
+
+/**
+ * Drops any body-to-body aspect touching a currently-hidden body (#542) — today that means
+ * Chiron, the only body with both a visibility flag and an independent aspect-participation
+ * flag. The single filter `aspectRows`, `chartWheelRing` and `chartSheetInput` all apply before
+ * rendering an aspect list, so a hidden Chiron with `aspectsToChiron: true` cannot still appear
+ * in any of them.
+ */
+export function visibleAspects(aspects: readonly Aspect[], options: PointVisibilityOptions = {}): readonly Aspect[] {
+  if (options.chironVisible ?? true) return aspects;
+  return aspects.filter(
+    (aspect) => bodyById(aspect.bodyA)?.category !== 'centaur' && bodyById(aspect.bodyB)?.category !== 'centaur',
+  );
+}
+
+/**
+ * The angle/lot-side counterpart to `visibleAspects` (#542): drops an `AngleAspect` whose point
+ * side (Vertex/Fortune/Spirit) is currently hidden, or whose body side is a hidden Chiron. The
+ * Ascendant and Midheaven have no visibility flag — they are never filtered out. This is the
+ * fix for the matrix's old `aspectedPoints` workaround (`chartSheetInput`, below), which decided
+ * whether Vertex/Fortune/Spirit appeared at all by whether they *had* an aspect, never by
+ * whether the user had actually asked to see them.
+ */
+export function visibleAngleAspects(
+  angleAspects: readonly AngleAspect[] | undefined,
+  options: PointVisibilityOptions = {},
+): readonly AngleAspect[] {
+  if (angleAspects === undefined) return [];
+  return angleAspects.filter((aspect) => {
+    if (aspect.angle === 'vertex' && !(options.vertexVisible ?? false)) return false;
+    if (aspect.angle === 'partOfFortune' && !(options.fortuneVisible ?? false)) return false;
+    if (aspect.angle === 'partOfSpirit' && !(options.spiritVisible ?? false)) return false;
+    if (!(options.chironVisible ?? true) && bodyById(aspect.body)?.category === 'centaur') return false;
+    return true;
+  });
 }
 
 /** The elements in the conventional order, warm to cold, and the modalities across them: the same as the exported grid. */
@@ -296,9 +342,13 @@ function aspectRow(aspect: Aspect): AspectRow {
   };
 }
 
-/** One row per aspect found, in `ChartData.aspects`' own order. */
-export function aspectRows(data: ChartData): readonly AspectRow[] {
-  return data.aspects.map(aspectRow);
+/**
+ * One row per aspect found, in `ChartData.aspects`' own order — minus any aspect touching a
+ * currently-hidden point (`visibleAspects`, #542), so a hidden-but-still-aspecting Chiron can't
+ * appear here even if it was a candidate at compute time.
+ */
+export function aspectRows(data: ChartData, options: PointVisibilityOptions = {}): readonly AspectRow[] {
+  return visibleAspects(data.aspects, options).map(aspectRow);
 }
 
 /**
@@ -573,8 +623,9 @@ export interface DerivedPointRow extends DegreeParts {
 }
 
 /**
- * Part of Fortune (dropped unless `fortuneVisible` is true), Part of Spirit
- * (sect-corrected in `computeChartData` already), and — when `midpointsVisible`
+ * Part of Fortune (dropped unless `fortuneVisible` is true), Part of Spirit (sect-corrected in
+ * `computeChartData` already, dropped unless `spiritVisible` is true — #542 gave it the same
+ * independent visibility flag its sibling Fortune already had), and — when `midpointsVisible`
  * is true — the ASC/MC and Sun/Moon midpoints Astro-Seek shows by default.
  *
  * Same as `angleRows`, these `label`s stay untranslated — no vetted Dutch term exists for these
@@ -604,7 +655,9 @@ export function derivedPointRows(data: ChartData, options: PointVisibilityOption
 
   return [
     ...(options.fortuneVisible === true ? [keyed('part-of-fortune')] : []),
-    keyed('part-of-spirit'),
+    // Spirit now has its own visibility flag (#542) — it used to be shown unconditionally,
+    // unlike its sibling Fortune, which could already be hidden.
+    ...(options.spiritVisible === true ? [keyed('part-of-spirit')] : []),
     ...midpointRows,
   ];
 }
@@ -629,7 +682,7 @@ export function chartWheelRing(data: ChartData, label = 'Natal', options: PointV
       longitude: position.longitude,
       retrograde: position.retrograde,
     })),
-    aspects: filterAspectsForDisplay(data.aspects, { visibleFamilies: ['major'] }),
+    aspects: filterAspectsForDisplay(visibleAspects(data.aspects, options), { visibleFamilies: ['major'] }),
   };
 }
 
@@ -697,13 +750,21 @@ export function chartSheetInput(
     { key: 'asc', label: 'AC', name: 'ASC', longitude: data.houses.ascendant },
     { key: 'mc', label: 'MC', name: 'MC', longitude: data.houses.midheaven },
   ];
-  // The Vertex and the two parts get a matrix row only when they aspect something (#516): their `aspectsTo` flag is not on `ChartData`.
-  const aspectedPoints = new Set((data.angleAspects ?? []).map((aspect) => aspect.angle));
+  // The Vertex and the two parts get a matrix row exactly when the user has made them visible
+  // (#542) — previously this was driven by whether the point happened to have an aspect at all
+  // (`data.angleAspects`), which meant a visible point with no aspects never got a row (unlike
+  // every ordinary body, which always gets one), and a hidden point *with* an aspect still did.
   const extraPoints = [
-    { key: 'vertex', label: 'VX', name: 'Vertex', longitude: data.houses.vertex },
-    { key: 'partOfFortune', label: 'PF', name: 'Fortune', longitude: data.partOfFortune },
-    { key: 'partOfSpirit', label: 'PS', name: 'Spirit', longitude: data.partOfSpirit },
-  ].filter((point) => aspectedPoints.has(point.key as AspectAngle));
+    ...(options.vertexVisible === true
+      ? [{ key: 'vertex', label: 'VX', name: 'Vertex', longitude: data.houses.vertex }]
+      : []),
+    ...(options.fortuneVisible === true
+      ? [{ key: 'partOfFortune', label: 'PF', name: 'Fortune', longitude: data.partOfFortune }]
+      : []),
+    ...(options.spiritVisible === true
+      ? [{ key: 'partOfSpirit', label: 'PS', name: 'Spirit', longitude: data.partOfSpirit }]
+      : []),
+  ];
   const keyOf = (body: BodyId): string => bodyById(body)?.key ?? String(body);
   return {
     metaLines,
@@ -725,7 +786,7 @@ export function chartSheetInput(
         ...extraPoints,
       ],
       aspects: [
-        ...data.aspects.map((aspect) => ({
+        ...visibleAspects(data.aspects, options).map((aspect) => ({
           aKey: keyOf(aspect.bodyA),
           bKey: keyOf(aspect.bodyB),
           aspectKey: aspect.aspect.key,
@@ -733,7 +794,7 @@ export function chartSheetInput(
           signedOrb: aspect.separation - aspect.aspect.angle,
           applying: aspect.applying,
         })),
-        ...(data.angleAspects ?? []).map((aspect) => ({
+        ...visibleAngleAspects(data.angleAspects, options).map((aspect) => ({
           aKey: aspect.angle,
           bKey: keyOf(aspect.body),
           aspectKey: aspect.aspect.key,

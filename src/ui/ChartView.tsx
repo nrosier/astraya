@@ -695,13 +695,13 @@ function renderTableTab(
           <SortableTable
             caption={t.aspectsCaption}
             columns={aspectColumns(t, locale, selection)}
-            rows={aspectRows(data)}
+            rows={aspectRows(data, pointVisibility)}
             getRowKey={(row) => `${row.bodyAKey}-${row.aspect}-${row.bodyBKey}`}
             selectedRowKey={(() => {
               const chosen =
                 selection?.selectedKey === undefined
                   ? undefined
-                  : aspectRows(data).find((row) => aspectSelectionKey(row) === selection.selectedKey);
+                  : aspectRows(data, pointVisibility).find((row) => aspectSelectionKey(row) === selection.selectedKey);
               return chosen === undefined ? undefined : `${chosen.bodyAKey}-${chosen.aspect}-${chosen.bodyBKey}`;
             })()}
             downloadFilename={deriveExportFilename(displayName, 'aspects', 'csv')}
@@ -991,7 +991,7 @@ function resolveWheelIsolation(
   const selection = parseSelectionKey(isolatedKey);
   if (selection === undefined) return undefined;
   const allPositions = positionRows(data, pointVisibility, housesRenderable);
-  const allAspects = aspectRows(data);
+  const allAspects = aspectRows(data, pointVisibility);
 
   if (selection.kind === 'body') {
     const value = selection.key;
@@ -1004,9 +1004,10 @@ function resolveWheelIsolation(
   }
 
   if (selection.kind === 'derived') {
-    const row = derivedPointRows(data, { fortuneVisible: true }).find(
-      (candidate) => candidate.pointKey === selection.point,
-    );
+    // The real visibility settings (#542) — the matrix (the only place a hidden derived point's
+    // selection key could previously have come from) now also respects them, so there is no
+    // longer a hidden-but-selectable case to work around with a hardcoded override here.
+    const row = derivedPointRows(data, pointVisibility).find((candidate) => candidate.pointKey === selection.point);
     const facts = derivedPointPlacementFacts(data, selection.point);
     return {
       heading: row?.label ?? selection.point,

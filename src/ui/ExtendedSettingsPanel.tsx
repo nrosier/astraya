@@ -242,6 +242,8 @@ export function ExtendedSettingsPanel({
         return t.summary.fortune;
       case 'vertex':
         return t.summary.vertex;
+      case 'spirit':
+        return t.summary.spirit;
       case 'chiron':
         return t.summary.chironHidden;
       case 'midpoints':
@@ -445,6 +447,13 @@ export function ExtendedSettingsPanel({
             checked={draft.vertexVisible}
             onChange={(value) => {
               patch({ vertexVisible: value });
+            }}
+          />
+          <Checkbox
+            label={t.spirit}
+            checked={draft.spiritVisible}
+            onChange={(value) => {
+              patch({ spiritVisible: value });
             }}
           />
           <Checkbox
