@@ -6,7 +6,7 @@
  * correctly, and a mocked provider would only prove the wiring around a fake.
  */
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_ORB_CONFIG } from '../src/astrology/aspects.js';
+import { angularSeparation, DEFAULT_ORB_CONFIG } from '../src/astrology/aspects.js';
 import { bodyById, bodyByKey } from '../src/astrology/bodies.js';
 import {
   computeChartData,
@@ -14,6 +14,7 @@ import {
   housesAreDefined,
   NATAL_FIXED_STARS,
 } from '../src/domain/chart-compute.js';
+import { finiteDifferenceRate } from '../src/ephemeris/finite-difference.js';
 import type { HousePositions } from '../src/ephemeris/types.js';
 import { julianDayFor } from '../src/time/julian.js';
 import { resolveMoment } from '../src/time/resolve.js';
@@ -280,6 +281,138 @@ describe('angle aspects (#413)', () => {
     const without = await computeChartData(REFERENCE, engine);
     const centaur = bodyByKey('chiron');
     expect((without.angleAspects ?? []).some((a) => a.body === centaur?.id)).toBe(false);
+  });
+});
+
+/**
+ * Backs `FINITE_DIFFERENCE_DT_DAYS`'s own doc comment with the actual numbers: the one-minute
+ * step it pins sits in the sweet spot between truncation error (too large a step) and
+ * floating-point noise amplification (too small a step), for the Ascendant/Midheaven — the
+ * fastest-moving pair this module samples, so the hardest case for both failure modes.
+ */
+describe('finite-difference step is converged at one minute (#546)', () => {
+  it('one minute and ten seconds agree far more closely than one hour and one minute do', async () => {
+    const engine = await getEngine();
+    const resolved = resolveMoment(MOMENT);
+    const jd = await julianDayFor(engine, resolved);
+    const place = { ...MOMENT.coordinates, altitude: 0 };
+    const base = await engine.houses(jd, place, 'P');
+
+    const rateAt = async (dtDays: number): Promise<{ ascendant: number; midheaven: number }> => {
+      const sampled: HousePositions = await engine.houses(jd + dtDays, place, 'P');
+      return {
+        ascendant: finiteDifferenceRate(base.ascendant, sampled.ascendant, dtDays),
+        midheaven: finiteDifferenceRate(base.midheaven, sampled.midheaven, dtDays),
+      };
+    };
+
+    const oneHour = await rateAt(1 / 24);
+    const oneMinute = await rateAt(1 / 1440);
+    const tenSeconds = await rateAt(10 / 86400);
+
+    // An hour is coarse enough that the Ascendant/Midheaven's own rate visibly changes within it
+    // (truncation error); a minute versus ten seconds should agree far more closely than that —
+    // within about a hundredth of a degree/day, negligible next to the orb any aspect whose
+    // applying/separating direction matters still has left.
+    const hourVsMinute = Math.abs(oneHour.ascendant - oneMinute.ascendant);
+    const minuteVsTenSec = Math.abs(oneMinute.ascendant - tenSeconds.ascendant);
+    expect(minuteVsTenSec).toBeLessThan(0.1);
+    expect(minuteVsTenSec).toBeLessThan(hourVsMinute);
+
+    const minuteVsTenSecMc = Math.abs(oneMinute.midheaven - tenSeconds.midheaven);
+    expect(minuteVsTenSecMc).toBeLessThan(0.1);
+  });
+
+  it('going smaller than one minute does not keep improving — a tenth of a second is measurably noisier, not better', async () => {
+    const engine = await getEngine();
+    const resolved = resolveMoment(MOMENT);
+    const jd = await julianDayFor(engine, resolved);
+    const place = { ...MOMENT.coordinates, altitude: 0 };
+    const base = await engine.houses(jd, place, 'P');
+
+    const ascRateAt = async (dtDays: number): Promise<number> => {
+      const sampled: HousePositions = await engine.houses(jd + dtDays, place, 'P');
+      return finiteDifferenceRate(base.ascendant, sampled.ascendant, dtDays);
+    };
+
+    const oneMinute = await ascRateAt(1 / 1440);
+    const oneSecond = await ascRateAt(1 / 86400);
+    const tenthSecond = await ascRateAt(0.1 / 86400);
+
+    // One second is still within the converged region (close to the one-minute estimate); a tenth
+    // of a second has drifted further from it, not closer — confirming the one-minute step is
+    // past the point of further gain, not merely "small enough for now".
+    const minuteVsSecond = Math.abs(oneMinute - oneSecond);
+    const minuteVsTenth = Math.abs(oneMinute - tenthSecond);
+    expect(minuteVsTenth).toBeGreaterThan(minuteVsSecond);
+  });
+});
+
+/**
+ * The observable acceptance condition for #546, rather than a hardcoded speed value: an angle or
+ * lot's own real forward motion must actually carry an "applying" aspect closer to exact and a
+ * "separating" one further away. Samples two real moments a few minutes apart with the real
+ * engine and checks every angle/lot aspect found at the first moment against its own distance
+ * from exact at the second — independent of (larger than) `FINITE_DIFFERENCE_DT_DAYS` itself, so
+ * this is a genuine end-to-end check, not a restatement of the internal sampling step.
+ */
+describe('angle/lot applying-separating matches real forward motion (#546)', () => {
+  it('distance from exact shrinks when applying and grows when separating', async () => {
+    const engine = await getEngine();
+    const resolved = resolveMoment(MOMENT);
+    const jd = await julianDayFor(engine, resolved);
+    const place = { ...MOMENT.coordinates, altitude: 0 };
+    const options = { aspectsTo: { vertex: true, partOfFortune: true, partOfSpirit: true } };
+    // 10 seconds: an independent check computed by comparing two full, real chart computations
+    // (never calling the internal finite-difference helper itself), short enough that a contact
+    // already within a few hundredths of a degree of exact — the Vertex alone moves roughly
+    // 0.007°/second here — can't cross all the way through exactness and come out "the same
+    // distance but separating" within the step, which the stricter orb-skip threshold below
+    // backs up for anything closer than that.
+    const stepDays = 10 / 86400;
+    const [before, after] = await Promise.all([
+      computeChartDataAtJd(jd, place, engine, options),
+      computeChartDataAtJd(jd + stepDays, place, engine, options),
+    ]);
+
+    const angleLongitude = (data: typeof before, angle: string): number => {
+      switch (angle) {
+        case 'asc':
+          return data.houses.ascendant;
+        case 'mc':
+          return data.houses.midheaven;
+        case 'vertex':
+          return data.houses.vertex;
+        case 'partOfFortune':
+          return data.partOfFortune;
+        default:
+          return data.partOfSpirit;
+      }
+    };
+
+    const found = before.angleAspects ?? [];
+    expect(found.length).toBeGreaterThan(0);
+    for (const aspect of found) {
+      const bodyBefore = before.positions.find((p) => p.body === aspect.body)?.longitude;
+      const bodyAfter = after.positions.find((p) => p.body === aspect.body)?.longitude;
+      if (bodyBefore === undefined || bodyAfter === undefined) continue;
+      // Skip anything already within a few hundredths of a degree of exact — even a 10-second
+      // step could overshoot past exact for a contact this tight, which would make a simple
+      // before/after distance comparison flaky without being evidence of anything wrong.
+      if (Math.abs(aspect.orb) < 0.03) continue;
+      const distanceBefore = Math.abs(
+        angularSeparation(angleLongitude(before, aspect.angle), bodyBefore) - aspect.aspect.angle,
+      );
+      const distanceAfter = Math.abs(
+        angularSeparation(angleLongitude(after, aspect.angle), bodyAfter) - aspect.aspect.angle,
+      );
+      const label = `${aspect.angle}-${String(aspect.body)} (${aspect.aspect.key})`;
+      if (aspect.applying) {
+        expect(distanceAfter, label).toBeLessThan(distanceBefore);
+      } else {
+        expect(distanceAfter, label).toBeGreaterThan(distanceBefore);
+      }
+    }
   });
 });
 

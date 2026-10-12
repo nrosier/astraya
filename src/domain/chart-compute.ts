@@ -36,6 +36,7 @@ import { partOfFortune, partOfSpirit } from '../astrology/arabic-parts.js';
 import { sectOf, type Sect } from '../astrology/sect.js';
 import { julianDayFor } from '../time/julian.js';
 import { resolveMoment } from '../time/resolve.js';
+import { FINITE_DIFFERENCE_DT_DAYS, finiteDifferenceRate } from '../ephemeris/finite-difference.js';
 import type {
   BodyId,
   BodyPosition,
@@ -45,6 +46,7 @@ import type {
   HousePositions,
   HouseSystem,
   JulianDayUT,
+  PositionOptions,
   Zodiac,
 } from '../ephemeris/types.js';
 import type { BirthMomentInput } from '../time/types.js';
@@ -111,11 +113,54 @@ export interface AngleAspect extends AspectMatch {
 }
 
 /**
- * How fast the Ascendant and Midheaven sweep the ecliptic, in degrees per day — one turn of the
- * sky per sidereal day. Only used to decide applying/separating for an angle aspect, where the
- * angle's own motion dwarfs any body's, so its exact instantaneous rate doesn't matter.
+ * The Ascendant, Midheaven, Vertex and the two lots' own longitude a short time after `jd` (#546)
+ * — everything `findPointAspects` needs to turn into a real finite-difference rate for each,
+ * instead of assuming a fixed sidereal-day rotation rate for all of them alike. `houseSystem`/
+ * `zodiac`/`place` are the exact ones the first sample used, so the two samples differ only in
+ * time.
+ *
+ * The lots' `sect` is the first sample's own `sect`, deliberately not recomputed here: a lot's
+ * day/night formula is a property of the chart, held fixed everywhere else `sect` is used, not
+ * something allowed to flip between two samples a minute apart. (A birth time known to the exact
+ * minute of sunrise or sunset is the one case where the lot's own formula is genuinely
+ * discontinuous — that is a property of the lot's definition, not an artifact of estimating its
+ * rate this way, and is out of scope here.)
  */
-const ANGLE_SPEED_DEG_PER_DAY = 360.9856;
+async function anglePointLongitudesAfter(
+  jd: JulianDayUT,
+  place: GeoPosition,
+  provider: EphemerisProvider,
+  houseSystem: HouseSystem,
+  zodiac: Zodiac | undefined,
+  positionOptions: PositionOptions | undefined,
+  sunId: BodyId,
+  moonId: BodyId,
+  sect: Sect,
+): Promise<{
+  readonly ascendant: Degrees;
+  readonly midheaven: Degrees;
+  readonly vertex: Degrees;
+  readonly partOfFortune: Degrees;
+  readonly partOfSpirit: Degrees;
+}> {
+  const jdAfter = jd + FINITE_DIFFERENCE_DT_DAYS;
+  const [housesAfter, luminariesAfter] = await Promise.all([
+    provider.houses(jdAfter, place, houseSystem, zodiac),
+    provider.positions(jdAfter, [sunId, moonId], positionOptions),
+  ]);
+  const sunAfter = luminariesAfter.find((position) => position.body === sunId);
+  const moonAfter = luminariesAfter.find((position) => position.body === moonId);
+  if (sunAfter === undefined || moonAfter === undefined) {
+    throw new Error('unreachable: the ephemeris returned no position for the Sun or Moon');
+  }
+  return {
+    ascendant: housesAfter.ascendant,
+    midheaven: housesAfter.midheaven,
+    vertex: housesAfter.vertex,
+    partOfFortune: partOfFortune(sect, housesAfter.ascendant, sunAfter.longitude, moonAfter.longitude),
+    partOfSpirit: partOfSpirit(sect, housesAfter.ascendant, sunAfter.longitude, moonAfter.longitude),
+  };
+}
 
 export interface ChartData {
   readonly positions: readonly BodyPosition[];
@@ -128,6 +173,23 @@ export interface ChartData {
    * the houses have no solution.
    */
   readonly angleAspects?: readonly AngleAspect[];
+  /**
+   * The Ascendant, Midheaven, Vertex and the two lots' own instantaneous rate, in degrees/day, by
+   * finite difference (#546) — the same rates `angleAspects` was found with. Exposed so a
+   * cross-chart consumer that cannot itself resample the ephemeris (`relationship-themes.ts`'s
+   * synastry angle contacts, which stay deliberately synchronous and pure over an already-
+   * computed `ChartData`) can reuse this chart's own rates rather than falling back to a stand-in
+   * constant. Same undefined-when-houses-aren't-usable condition as `angleAspects`.
+   */
+  readonly anglePointSpeeds?:
+    | {
+        readonly ascendant: Degrees;
+        readonly midheaven: Degrees;
+        readonly vertex: Degrees;
+        readonly partOfFortune: Degrees;
+        readonly partOfSpirit: Degrees;
+      }
+    | undefined;
   readonly dignities: ReadonlyMap<BodyId, EssentialDignities>;
   readonly sect: Sect;
   readonly partOfFortune: Degrees;
@@ -334,48 +396,78 @@ export async function computeChartDataAtJd(
   const sect = sectOf(sunPosition.longitude, houses.ascendant);
   const partOfFortuneLongitude = partOfFortune(sect, houses.ascendant, sunPosition.longitude, moonPosition.longitude);
   const partOfSpiritLongitude = partOfSpirit(sect, houses.ascendant, sunPosition.longitude, moonPosition.longitude);
-
-  // A lot is Asc + a - b, so it sweeps with the angle plus the difference of the two luminaries' own speeds; a lot to
-  // its own "+" luminary repeats the Ascendant's aspect to the "-" luminary and is dropped (#516).
-  const luminarySpeedGap = moonPosition.longitudeSpeed - sunPosition.longitudeSpeed;
-  const fortuneSpeed = ANGLE_SPEED_DEG_PER_DAY + (sect === 'day' ? luminarySpeedGap : -luminarySpeedGap);
-  const spiritSpeed = ANGLE_SPEED_DEG_PER_DAY + (sect === 'day' ? -luminarySpeedGap : luminarySpeedGap);
   const plusOfFortune = sect === 'day' ? moon.id : sun.id;
   const plusOfSpirit = sect === 'day' ? sun.id : moon.id;
-  const points: AspectPoint[] = [
-    { id: 'asc', longitude: houses.ascendant, speed: ANGLE_SPEED_DEG_PER_DAY },
-    { id: 'mc', longitude: houses.midheaven, speed: ANGLE_SPEED_DEG_PER_DAY },
-    ...(aspectsTo.vertex === true
-      ? [{ id: 'vertex', longitude: houses.vertex, speed: ANGLE_SPEED_DEG_PER_DAY } as const]
-      : []),
-    ...(aspectsTo.partOfFortune === true
-      ? [
-          {
-            id: 'partOfFortune',
-            longitude: partOfFortuneLongitude,
-            speed: fortuneSpeed,
-            redundantLuminary: plusOfFortune,
-          } as const,
-        ]
-      : []),
-    ...(aspectsTo.partOfSpirit === true
-      ? [
-          {
-            id: 'partOfSpirit',
-            longitude: partOfSpiritLongitude,
-            speed: spiritSpeed,
-            redundantLuminary: plusOfSpirit,
-          } as const,
-        ]
-      : []),
-  ];
-  const angleAspects = housesAreDefined(houses) ? findPointAspects(points, subjects, orbConfig) : [];
+
+  // None of the Ascendant, Midheaven, Vertex or the two lots is a body with its own analytic
+  // speed — sampling a second time a short time later gives each its own real motion by finite
+  // difference instead of assuming a fixed sidereal-day rotation rate for all of them alike
+  // (#546). Only done when houses are usable at all: `angleAspects` is `[]` otherwise regardless.
+  const housesUsable = housesAreDefined(houses);
+  const after = housesUsable
+    ? await anglePointLongitudesAfter(
+        jd,
+        place,
+        provider,
+        options.houseSystem ?? DEFAULT_HOUSE_SYSTEM,
+        options.zodiac,
+        positionOptions,
+        sun.id,
+        moon.id,
+        sect,
+      )
+    : undefined;
+  // Named once so both `points` (below) and `ChartData.anglePointSpeeds` (returned at the bottom,
+  // for a cross-chart consumer like `relationship-themes.ts`'s synastry angle contacts to reuse
+  // rather than re-deriving, or falling back to its own stand-in constant) read the same rates.
+  const anglePointSpeeds =
+    after === undefined
+      ? undefined
+      : {
+          ascendant: finiteDifferenceRate(houses.ascendant, after.ascendant, FINITE_DIFFERENCE_DT_DAYS),
+          midheaven: finiteDifferenceRate(houses.midheaven, after.midheaven, FINITE_DIFFERENCE_DT_DAYS),
+          vertex: finiteDifferenceRate(houses.vertex, after.vertex, FINITE_DIFFERENCE_DT_DAYS),
+          partOfFortune: finiteDifferenceRate(partOfFortuneLongitude, after.partOfFortune, FINITE_DIFFERENCE_DT_DAYS),
+          partOfSpirit: finiteDifferenceRate(partOfSpiritLongitude, after.partOfSpirit, FINITE_DIFFERENCE_DT_DAYS),
+        };
+  const points: AspectPoint[] =
+    anglePointSpeeds === undefined
+      ? []
+      : [
+          { id: 'asc', longitude: houses.ascendant, speed: anglePointSpeeds.ascendant },
+          { id: 'mc', longitude: houses.midheaven, speed: anglePointSpeeds.midheaven },
+          ...(aspectsTo.vertex === true
+            ? [{ id: 'vertex', longitude: houses.vertex, speed: anglePointSpeeds.vertex } as const]
+            : []),
+          ...(aspectsTo.partOfFortune === true
+            ? [
+                {
+                  id: 'partOfFortune',
+                  longitude: partOfFortuneLongitude,
+                  speed: anglePointSpeeds.partOfFortune,
+                  redundantLuminary: plusOfFortune,
+                } as const,
+              ]
+            : []),
+          ...(aspectsTo.partOfSpirit === true
+            ? [
+                {
+                  id: 'partOfSpirit',
+                  longitude: partOfSpiritLongitude,
+                  speed: anglePointSpeeds.partOfSpirit,
+                  redundantLuminary: plusOfSpirit,
+                } as const,
+              ]
+            : []),
+        ];
+  const angleAspects = housesUsable ? findPointAspects(points, subjects, orbConfig) : [];
 
   return {
     positions,
     houses,
     aspects,
     angleAspects,
+    anglePointSpeeds,
     dignities,
     sect,
     partOfFortune: partOfFortuneLongitude,
