@@ -51668,9 +51668,9 @@
   {
     "key": "degree-symbol:55",
     "locale": "nl",
-    "clean": false,
-    "evaluationCount": 4,
-    "updatedAt": "2026-10-11T20:55:04.073Z"
+    "clean": true,
+    "evaluationCount": 6,
+    "updatedAt": "2026-10-11T21:44:02.624Z"
   },
   {
     "key": "degree-symbol:58",
@@ -51906,9 +51906,9 @@
   {
     "key": "degree-symbol:94",
     "locale": "nl",
-    "clean": false,
-    "evaluationCount": 4,
-    "updatedAt": "2026-10-11T20:55:04.074Z"
+    "clean": true,
+    "evaluationCount": 5,
+    "updatedAt": "2026-10-11T21:09:15.265Z"
   },
   {
     "key": "degree-symbol:95",
@@ -52116,9 +52116,9 @@
   {
     "key": "degree-symbol:123",
     "locale": "nl",
-    "clean": false,
-    "evaluationCount": 4,
-    "updatedAt": "2026-10-11T20:55:04.079Z"
+    "clean": true,
+    "evaluationCount": 7,
+    "updatedAt": "2026-10-11T22:07:18.231Z"
   },
   {
     "key": "degree-symbol:125",
@@ -52158,9 +52158,9 @@
   {
     "key": "degree-symbol:130",
     "locale": "nl",
-    "clean": false,
-    "evaluationCount": 4,
-    "updatedAt": "2026-10-11T20:55:04.080Z"
+    "clean": true,
+    "evaluationCount": 6,
+    "updatedAt": "2026-10-11T21:44:02.631Z"
   },
   {
     "key": "degree-symbol:131",
@@ -52333,9 +52333,9 @@
   {
     "key": "degree-symbol:156",
     "locale": "nl",
-    "clean": false,
-    "evaluationCount": 4,
-    "updatedAt": "2026-10-11T20:55:04.081Z"
+    "clean": true,
+    "evaluationCount": 7,
+    "updatedAt": "2026-10-11T22:07:18.232Z"
   },
   {
     "key": "degree-symbol:158",
@@ -52410,9 +52410,9 @@
   {
     "key": "degree-symbol:168",
     "locale": "nl",
-    "clean": false,
-    "evaluationCount": 4,
-    "updatedAt": "2026-10-11T20:55:04.082Z"
+    "clean": true,
+    "evaluationCount": 5,
+    "updatedAt": "2026-10-11T21:09:15.268Z"
   },
   {
     "key": "degree-symbol:171",
@@ -52487,9 +52487,9 @@
   {
     "key": "degree-symbol:183",
     "locale": "nl",
-    "clean": false,
-    "evaluationCount": 4,
-    "updatedAt": "2026-10-11T20:55:04.084Z"
+    "clean": true,
+    "evaluationCount": 10,
+    "updatedAt": "2026-10-12T06:39:33.763Z"
   },
   {
     "key": "degree-symbol:184",
@@ -52655,9 +52655,9 @@
   {
     "key": "degree-symbol:209",
     "locale": "nl",
-    "clean": false,
-    "evaluationCount": 4,
-    "updatedAt": "2026-10-11T20:55:04.085Z"
+    "clean": true,
+    "evaluationCount": 6,
+    "updatedAt": "2026-10-11T21:44:02.638Z"
   },
   {
     "key": "degree-symbol:210",
@@ -52683,9 +52683,9 @@
   {
     "key": "degree-symbol:213",
     "locale": "nl",
-    "clean": false,
-    "evaluationCount": 4,
-    "updatedAt": "2026-10-11T20:55:04.085Z"
+    "clean": true,
+    "evaluationCount": 5,
+    "updatedAt": "2026-10-11T21:09:15.268Z"
   },
   {
     "key": "degree-symbol:215",
@@ -52725,9 +52725,9 @@
   {
     "key": "degree-symbol:219",
     "locale": "nl",
-    "clean": false,
-    "evaluationCount": 4,
-    "updatedAt": "2026-10-11T20:55:04.085Z"
+    "clean": true,
+    "evaluationCount": 15,
+    "updatedAt": "2026-10-12T10:06:42.210Z"
   },
   {
     "key": "degree-symbol:221",
@@ -52767,9 +52767,9 @@
   {
     "key": "degree-symbol:225",
     "locale": "nl",
-    "clean": false,
-    "evaluationCount": 4,
-    "updatedAt": "2026-10-11T20:55:04.086Z"
+    "clean": true,
+    "evaluationCount": 6,
+    "updatedAt": "2026-10-11T21:44:02.640Z"
   },
   {
     "key": "degree-symbol:227",
@@ -52865,9 +52865,9 @@
   {
     "key": "degree-symbol:241",
     "locale": "nl",
-    "clean": false,
-    "evaluationCount": 4,
-    "updatedAt": "2026-10-11T20:55:04.087Z"
+    "clean": true,
+    "evaluationCount": 5,
+    "updatedAt": "2026-10-11T21:09:15.269Z"
   },
   {
     "key": "degree-symbol:240",
@@ -52914,9 +52914,9 @@
   {
     "key": "degree-symbol:247",
     "locale": "nl",
-    "clean": false,
-    "evaluationCount": 4,
-    "updatedAt": "2026-10-11T20:55:04.087Z"
+    "clean": true,
+    "evaluationCount": 6,
+    "updatedAt": "2026-10-11T21:44:02.640Z"
   },
   {
     "key": "degree-symbol:249",
@@ -52977,9 +52977,9 @@
   {
     "key": "degree-symbol:261",
     "locale": "nl",
-    "clean": false,
-    "evaluationCount": 4,
-    "updatedAt": "2026-10-11T20:55:04.088Z"
+    "clean": true,
+    "evaluationCount": 7,
+    "updatedAt": "2026-10-11T22:07:18.238Z"
   },
   {
     "key": "degree-symbol:262",
@@ -53019,9 +53019,9 @@
   {
     "key": "degree-symbol:268",
     "locale": "nl",
-    "clean": false,
-    "evaluationCount": 4,
-    "updatedAt": "2026-10-11T20:55:04.088Z"
+    "clean": true,
+    "evaluationCount": 10,
+    "updatedAt": "2026-10-12T06:39:33.766Z"
   },
   {
     "key": "degree-symbol:266",
@@ -53117,9 +53117,9 @@
   {
     "key": "degree-symbol:282",
     "locale": "nl",
-    "clean": false,
-    "evaluationCount": 3,
-    "updatedAt": "2026-10-11T20:55:04.089Z"
+    "clean": true,
+    "evaluationCount": 6,
+    "updatedAt": "2026-10-11T22:07:18.243Z"
   },
   {
     "key": "degree-symbol:283",
@@ -53236,16 +53236,16 @@
   {
     "key": "degree-symbol:299",
     "locale": "nl",
-    "clean": false,
-    "evaluationCount": 3,
-    "updatedAt": "2026-10-11T20:55:04.090Z"
+    "clean": true,
+    "evaluationCount": 5,
+    "updatedAt": "2026-10-11T21:44:02.642Z"
   },
   {
     "key": "degree-symbol:302",
     "locale": "nl",
-    "clean": false,
-    "evaluationCount": 3,
-    "updatedAt": "2026-10-11T20:55:04.091Z"
+    "clean": true,
+    "evaluationCount": 6,
+    "updatedAt": "2026-10-11T22:07:18.244Z"
   },
   {
     "key": "degree-symbol:300",
@@ -53292,9 +53292,9 @@
   {
     "key": "degree-symbol:308",
     "locale": "nl",
-    "clean": false,
-    "evaluationCount": 3,
-    "updatedAt": "2026-10-11T20:55:04.091Z"
+    "clean": true,
+    "evaluationCount": 4,
+    "updatedAt": "2026-10-11T21:09:15.270Z"
   },
   {
     "key": "degree-symbol:309",
@@ -53306,9 +53306,9 @@
   {
     "key": "degree-symbol:310",
     "locale": "nl",
-    "clean": false,
-    "evaluationCount": 3,
-    "updatedAt": "2026-10-11T20:55:04.091Z"
+    "clean": true,
+    "evaluationCount": 4,
+    "updatedAt": "2026-10-11T21:09:15.270Z"
   },
   {
     "key": "degree-symbol:311",
@@ -53320,9 +53320,9 @@
   {
     "key": "degree-symbol:314",
     "locale": "nl",
-    "clean": false,
-    "evaluationCount": 3,
-    "updatedAt": "2026-10-11T20:55:04.091Z"
+    "clean": true,
+    "evaluationCount": 4,
+    "updatedAt": "2026-10-11T21:09:15.271Z"
   },
   {
     "key": "degree-symbol:313",
@@ -53397,9 +53397,9 @@
   {
     "key": "degree-symbol:320",
     "locale": "nl",
-    "clean": false,
-    "evaluationCount": 3,
-    "updatedAt": "2026-10-11T20:55:04.092Z"
+    "clean": true,
+    "evaluationCount": 4,
+    "updatedAt": "2026-10-11T21:09:15.271Z"
   },
   {
     "key": "degree-symbol:325",
@@ -53544,9 +53544,9 @@
   {
     "key": "degree-symbol:347",
     "locale": "nl",
-    "clean": false,
-    "evaluationCount": 3,
-    "updatedAt": "2026-10-11T20:55:04.092Z"
+    "clean": true,
+    "evaluationCount": 4,
+    "updatedAt": "2026-10-11T21:09:15.271Z"
   },
   {
     "key": "degree-symbol:349",
@@ -54027,9 +54027,9 @@
   {
     "key": "derived-point-in-house:part-of-spirit:3",
     "locale": "nl",
-    "clean": false,
-    "evaluationCount": 2,
-    "updatedAt": "2026-10-11T20:55:04.093Z"
+    "clean": true,
+    "evaluationCount": 11,
+    "updatedAt": "2026-10-12T08:11:22.944Z"
   },
   {
     "key": "derived-point-in-house:part-of-spirit:4",

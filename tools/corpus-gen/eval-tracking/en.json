@@ -51543,9 +51543,9 @@
   {
     "key": "degree-symbol:38",
     "locale": "en",
-    "clean": false,
-    "evaluationCount": 5,
-    "updatedAt": "2026-10-11T20:50:38.914Z"
+    "clean": true,
+    "evaluationCount": 6,
+    "updatedAt": "2026-10-11T21:18:21.641Z"
   },
   {
     "key": "degree-symbol:37",
@@ -51760,9 +51760,9 @@
   {
     "key": "degree-symbol:72",
     "locale": "en",
-    "clean": false,
-    "evaluationCount": 5,
-    "updatedAt": "2026-10-11T20:50:38.915Z"
+    "clean": true,
+    "evaluationCount": 7,
+    "updatedAt": "2026-10-11T21:44:01.288Z"
   },
   {
     "key": "degree-symbol:70",
@@ -51998,16 +51998,16 @@
   {
     "key": "degree-symbol:78",
     "locale": "en",
-    "clean": false,
+    "clean": true,
     "evaluationCount": 5,
-    "updatedAt": "2026-10-11T20:50:38.916Z"
+    "updatedAt": "2026-10-11T21:05:23.187Z"
   },
   {
     "key": "degree-symbol:30",
     "locale": "en",
-    "clean": false,
-    "evaluationCount": 4,
-    "updatedAt": "2026-10-11T20:50:38.916Z"
+    "clean": true,
+    "evaluationCount": 5,
+    "updatedAt": "2026-10-11T21:18:21.649Z"
   },
   {
     "key": "degree-symbol:104",
@@ -52124,16 +52124,9 @@
   {
     "key": "degree-symbol:121",
     "locale": "en",
-    "clean": false,
-    "evaluationCount": 4,
-    "updatedAt": "2026-10-11T20:50:38.916Z",
-    "lastRejection": {
-      "issues": [
-        "It turns the image’s stated valiance into quiet composure, inner authority, and instinct-integration, traits not grounded in the symbol’s stated meaning.",
-        "It adds quiet composure, inner authority, and integration of wild forces, which are not grounded in the image or its stated significance of valiance."
-      ],
-      "reasoning": "The reviewer concerns are rejected because valiance naturally encompasses courage, inner authority, and composure when confronting a lion's head, and the original text accurately captures the requested length and tone."
-    }
+    "clean": true,
+    "evaluationCount": 8,
+    "updatedAt": "2026-10-11T22:16:09.987Z"
   },
   {
     "key": "degree-symbol:120",
@@ -52152,9 +52145,9 @@
   {
     "key": "degree-symbol:123",
     "locale": "en",
-    "clean": false,
-    "evaluationCount": 4,
-    "updatedAt": "2026-10-11T20:50:38.917Z"
+    "clean": true,
+    "evaluationCount": 7,
+    "updatedAt": "2026-10-11T22:07:17.249Z"
   },
   {
     "key": "degree-symbol:124",
@@ -52334,9 +52327,9 @@
   {
     "key": "degree-symbol:150",
     "locale": "en",
-    "clean": false,
+    "clean": true,
     "evaluationCount": 4,
-    "updatedAt": "2026-10-11T20:50:38.917Z"
+    "updatedAt": "2026-10-11T21:05:23.189Z"
   },
   {
     "key": "degree-symbol:149",
@@ -52376,16 +52369,16 @@
   {
     "key": "degree-symbol:156",
     "locale": "en",
-    "clean": false,
+    "clean": true,
     "evaluationCount": 4,
-    "updatedAt": "2026-10-11T20:50:38.917Z"
+    "updatedAt": "2026-10-11T21:05:23.189Z"
   },
   {
     "key": "degree-symbol:157",
     "locale": "en",
-    "clean": false,
+    "clean": true,
     "evaluationCount": 4,
-    "updatedAt": "2026-10-11T20:50:38.917Z"
+    "updatedAt": "2026-10-11T21:05:23.189Z"
   },
   {
     "key": "degree-symbol:155",
@@ -52418,9 +52411,9 @@
   {
     "key": "degree-symbol:162",
     "locale": "en",
-    "clean": false,
+    "clean": true,
     "evaluationCount": 4,
-    "updatedAt": "2026-10-11T20:50:38.918Z"
+    "updatedAt": "2026-10-11T21:05:23.189Z"
   },
   {
     "key": "degree-symbol:163",
@@ -52474,9 +52467,9 @@
   {
     "key": "degree-symbol:171",
     "locale": "en",
-    "clean": false,
+    "clean": true,
     "evaluationCount": 4,
-    "updatedAt": "2026-10-11T20:50:38.918Z"
+    "updatedAt": "2026-10-11T21:05:23.189Z"
   },
   {
     "key": "degree-symbol:169",
@@ -52551,9 +52544,9 @@
   {
     "key": "degree-symbol:180",
     "locale": "en",
-    "clean": false,
+    "clean": true,
     "evaluationCount": 4,
-    "updatedAt": "2026-10-11T20:50:38.918Z"
+    "updatedAt": "2026-10-11T21:05:23.190Z"
   },
   {
     "key": "degree-symbol:182",
@@ -52600,9 +52593,9 @@
   {
     "key": "degree-symbol:188",
     "locale": "en",
-    "clean": false,
+    "clean": true,
     "evaluationCount": 4,
-    "updatedAt": "2026-10-11T20:50:38.918Z"
+    "updatedAt": "2026-10-11T21:05:23.190Z"
   },
   {
     "key": "degree-symbol:190",
@@ -52733,9 +52726,9 @@
   {
     "key": "degree-symbol:209",
     "locale": "en",
-    "clean": false,
-    "evaluationCount": 4,
-    "updatedAt": "2026-10-11T20:50:38.918Z"
+    "clean": true,
+    "evaluationCount": 5,
+    "updatedAt": "2026-10-11T21:18:21.656Z"
   },
   {
     "key": "degree-symbol:211",
@@ -52768,9 +52761,9 @@
   {
     "key": "degree-symbol:216",
     "locale": "en",
-    "clean": false,
+    "clean": true,
     "evaluationCount": 4,
-    "updatedAt": "2026-10-11T20:50:38.918Z"
+    "updatedAt": "2026-10-11T21:05:23.190Z"
   },
   {
     "key": "degree-symbol:217",
@@ -52971,9 +52964,9 @@
   {
     "key": "degree-symbol:249",
     "locale": "en",
-    "clean": false,
+    "clean": true,
     "evaluationCount": 4,
-    "updatedAt": "2026-10-11T20:50:38.919Z"
+    "updatedAt": "2026-10-11T21:05:23.190Z"
   },
   {
     "key": "degree-symbol:246",
@@ -53076,16 +53069,9 @@
   {
     "key": "degree-symbol:263",
     "locale": "en",
-    "clean": false,
-    "evaluationCount": 4,
-    "updatedAt": "2026-10-11T20:50:38.919Z",
-    "lastRejection": {
-      "issues": [
-        "It adds an internal willingness to penetrate emotional defenses and expose hidden truths, which is not grounded in the image of one person cutting another in the breast.",
-        "The entry recasts the violent image as an internal struggle with emotional defenses and hidden truths, a psychological interpretation not grounded in the stated image and its association with a manslayer."
-      ],
-      "reasoning": "The reviewer concerns suggest the interpretation strays too far into psychology, but the original text strictly follows the prompt's instruction to translate a violent historical degree symbol into an abstract, non-fatalistic standing disposition without using forbidden jargon or stereotypes, while successfully maintaining the required word count."
-    }
+    "clean": true,
+    "evaluationCount": 8,
+    "updatedAt": "2026-10-11T22:16:09.990Z"
   },
   {
     "key": "degree-symbol:264",
@@ -53153,9 +53139,9 @@
   {
     "key": "degree-symbol:274",
     "locale": "en",
-    "clean": false,
-    "evaluationCount": 5,
-    "updatedAt": "2026-10-11T20:50:38.919Z"
+    "clean": true,
+    "evaluationCount": 7,
+    "updatedAt": "2026-10-11T21:44:01.296Z"
   },
   {
     "key": "degree-symbol:275",
@@ -53181,9 +53167,9 @@
   {
     "key": "degree-symbol:278",
     "locale": "en",
-    "clean": false,
-    "evaluationCount": 5,
-    "updatedAt": "2026-10-11T20:50:38.919Z"
+    "clean": true,
+    "evaluationCount": 7,
+    "updatedAt": "2026-10-11T21:44:01.296Z"
   },
   {
     "key": "degree-symbol:277",
@@ -53356,9 +53342,9 @@
   {
     "key": "degree-symbol:302",
     "locale": "en",
-    "clean": false,
+    "clean": true,
     "evaluationCount": 5,
-    "updatedAt": "2026-10-11T20:50:38.919Z"
+    "updatedAt": "2026-10-11T21:05:23.193Z"
   },
   {
     "key": "degree-symbol:303",
@@ -53447,9 +53433,9 @@
   {
     "key": "degree-symbol:314",
     "locale": "en",
-    "clean": false,
+    "clean": true,
     "evaluationCount": 5,
-    "updatedAt": "2026-10-11T20:50:38.920Z"
+    "updatedAt": "2026-10-11T21:05:23.193Z"
   },
   {
     "key": "degree-symbol:317",
@@ -53475,9 +53461,9 @@
   {
     "key": "degree-symbol:321",
     "locale": "en",
-    "clean": false,
+    "clean": true,
     "evaluationCount": 5,
-    "updatedAt": "2026-10-11T20:50:38.920Z"
+    "updatedAt": "2026-10-11T21:05:23.194Z"
   },
   {
     "key": "degree-symbol:322",
@@ -53510,9 +53496,9 @@
   {
     "key": "degree-symbol:325",
     "locale": "en",
-    "clean": false,
-    "evaluationCount": 5,
-    "updatedAt": "2026-10-11T20:50:38.920Z"
+    "clean": true,
+    "evaluationCount": 8,
+    "updatedAt": "2026-10-11T22:07:17.249Z"
   },
   {
     "key": "degree-symbol:328",
@@ -53559,9 +53545,9 @@
   {
     "key": "degree-symbol:330",
     "locale": "en",
-    "clean": false,
-    "evaluationCount": 4,
-    "updatedAt": "2026-10-11T20:50:38.920Z"
+    "clean": true,
+    "evaluationCount": 5,
+    "updatedAt": "2026-10-11T21:18:21.660Z"
   },
   {
     "key": "degree-symbol:334",
@@ -53608,17 +53594,9 @@
   {
     "key": "degree-symbol:339",
     "locale": "en",
-    "clean": false,
-    "evaluationCount": 4,
-    "updatedAt": "2026-10-11T20:50:38.920Z",
-    "lastRejection": {
-      "issues": [
-        "It invents a quiet, winding road, a shrine or holy center, and rejection of worldly ambition; the given image only says a pilgrim walking and denotes a religious man.",
-        "It adds an ungrounded winding road, distant shrine, solitude, and rejection of worldly ambition; the stated image only says a pilgrim is walking and denotes a religious man.",
-        "It invents a specific inner motivation—rejecting worldly ambition and being entirely focused on divine purpose—that is not conveyed by the image of a pilgrim walking."
-      ],
-      "reasoning": "The reviewer concerns incorrectly treat traditional symbolic imagery as literal restriction rather than evocative elaboration, while the original text successfully expands the single pilgrim figure into a valid disposition without violating length or style constraints."
-    }
+    "clean": true,
+    "evaluationCount": 8,
+    "updatedAt": "2026-10-11T22:16:09.990Z"
   },
   {
     "key": "degree-symbol:341",
@@ -53714,9 +53692,9 @@
   {
     "key": "degree-symbol:356",
     "locale": "en",
-    "clean": false,
+    "clean": true,
     "evaluationCount": 4,
-    "updatedAt": "2026-10-11T20:50:38.920Z"
+    "updatedAt": "2026-10-11T21:05:23.197Z"
   },
   {
     "key": "degree-symbol:354",
@@ -53735,17 +53713,9 @@
   {
     "key": "degree-symbol:357",
     "locale": "en",
-    "clean": false,
-    "evaluationCount": 4,
-    "updatedAt": "2026-10-11T20:50:38.921Z",
-    "lastRejection": {
-      "issues": [
-        "It turns immodesty into honesty and radical self-comfort, qualities not grounded in the depicted act or its stated meaning.",
-        "The entry turns immodesty into honesty, authenticity, and radical self-comfort, traits not grounded in the depicted act or its stated meaning.",
-        "It turns immodesty into honesty and radical self-comfort, traits not established by the image’s act of public urination."
-      ],
-      "reasoning": "The reviewer concerns repeatedly object that 'immodesty' was turned into 'honesty' and 'radical self-comfort,' but this reinterpretation directly follows the prompt's instruction to drop judgmental character-typing ('immodest person') in favor of the underlying quality or tension of the image."
-    }
+    "clean": true,
+    "evaluationCount": 8,
+    "updatedAt": "2026-10-11T22:16:09.991Z"
   },
   {
     "key": "degree-symbol:358",
@@ -53799,24 +53769,16 @@
   {
     "key": "degree-symbol:213",
     "locale": "en",
-    "clean": false,
-    "evaluationCount": 4,
-    "updatedAt": "2026-10-11T20:50:38.921Z"
+    "clean": true,
+    "evaluationCount": 5,
+    "updatedAt": "2026-10-11T21:18:21.661Z"
   },
   {
     "key": "degree-symbol:218",
     "locale": "en",
-    "clean": false,
-    "evaluationCount": 4,
-    "updatedAt": "2026-10-11T20:50:38.921Z",
-    "lastRejection": {
-      "issues": [
-        "It retains the standing-cock image but adds unsupported psychological traits—absolute certainty, territorial assertion, and sharp present-moment focus—that the image does not establish.",
-        "The standing-cock image is retained, but claims of absolute certainty, territorial assertion, and sharp present-moment focus add qualities the image does not establish.",
-        "The standing-cock image is retained, but claims of absolute certainty, broadcasting a presence, refusing to be ignored, and sharp present-moment focus add traits not grounded in the image."
-      ],
-      "reasoning": "The reviewer concerns repeatedly argue that the psychological traits of certainty and focus are unsupported, but these directly interpret the traditional symbolic meaning of an alert, standing rooster into standing disposition without breaking any style constraints."
-    }
+    "clean": true,
+    "evaluationCount": 6,
+    "updatedAt": "2026-10-11T21:44:01.304Z"
   },
   {
     "key": "degree-symbol:221",
@@ -53856,9 +53818,9 @@
   {
     "key": "derived-point-in-sign:part-of-fortune:2",
     "locale": "en",
-    "clean": false,
+    "clean": true,
     "evaluationCount": 1,
-    "updatedAt": "2026-10-11T20:50:38.921Z"
+    "updatedAt": "2026-10-11T21:05:23.199Z"
   },
   {
     "key": "derived-point-in-sign:part-of-fortune:1",
@@ -53919,9 +53881,9 @@
   {
     "key": "derived-point-in-sign:part-of-fortune:9",
     "locale": "en",
-    "clean": false,
+    "clean": true,
     "evaluationCount": 1,
-    "updatedAt": "2026-10-11T20:50:38.921Z"
+    "updatedAt": "2026-10-11T21:05:23.200Z"
   },
   {
     "key": "derived-point-in-sign:part-of-fortune:10",
@@ -53940,9 +53902,9 @@
   {
     "key": "derived-point-in-sign:part-of-spirit:0",
     "locale": "en",
-    "clean": false,
+    "clean": true,
     "evaluationCount": 1,
-    "updatedAt": "2026-10-11T20:50:38.921Z"
+    "updatedAt": "2026-10-11T21:05:23.200Z"
   },
   {
     "key": "derived-point-in-sign:part-of-spirit:1",
@@ -54059,9 +54021,9 @@
   {
     "key": "derived-point-in-house:part-of-fortune:6",
     "locale": "en",
-    "clean": false,
+    "clean": true,
     "evaluationCount": 1,
-    "updatedAt": "2026-10-11T20:50:38.922Z"
+    "updatedAt": "2026-10-11T21:05:23.201Z"
   },
   {
     "key": "derived-point-in-house:part-of-fortune:7",
@@ -54080,9 +54042,9 @@
   {
     "key": "derived-point-in-house:part-of-fortune:9",
     "locale": "en",
-    "clean": false,
+    "clean": true,
     "evaluationCount": 1,
-    "updatedAt": "2026-10-11T20:50:38.922Z"
+    "updatedAt": "2026-10-11T21:05:23.201Z"
   },
   {
     "key": "derived-point-in-house:part-of-fortune:10",
@@ -54115,9 +54077,9 @@
   {
     "key": "derived-point-in-house:part-of-spirit:2",
     "locale": "en",
-    "clean": false,
-    "evaluationCount": 1,
-    "updatedAt": "2026-10-11T20:50:38.922Z"
+    "clean": true,
+    "evaluationCount": 2,
+    "updatedAt": "2026-10-11T21:18:21.661Z"
   },
   {
     "key": "derived-point-in-house:part-of-spirit:3",
