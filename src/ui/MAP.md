@@ -35,6 +35,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `CorpusCandidatesPanel.tsx` + `CorpusCandidatesPanel.messages.ts` — Admin candidate-review queue (accept/reject). Deps: `sync/admin-client`, `./placement-label`.
 - `CorpusOverridesPanel.tsx` + `CorpusOverridesPanel.messages.ts` — Admin corpus-entry editor (search/filter/override). Deps: `interpretation/corpus-client`, `sync/admin-client`.
 - `CyclesView.tsx` + `CyclesView.messages.ts` — Planetary Cycles tool (exact-aspect search). Deps: `astrology/mutual-aspects`, `chart/cycle-diagram`.
+- `DegreeSymbolSetting.tsx` + `DegreeSymbolSetting.messages.ts` — Named, explained control for the degree-symbol (Sabian symbol) visibility preference (#527), same label+explanation+control shape as `RulershipSetting`. Deps: `./degree-symbol-setting`, `./primitives/Checkbox`.
 - `DraconicView.tsx` + `DraconicView.messages.ts` — Draconic chart screen (positions from North Node). Deps: `domain/draconic`.
 - `EclipsesView.tsx` + `EclipsesView.messages.ts` — Eclipses tool (solar/lunar search + natal contacts). Deps: `astrology/eclipses`, `domain/chart-compute`.
 - `ElectionalView.tsx` + `ElectionalView.messages.ts` — Electional Search tool (best-time-to-begin ranking). Deps: `astrology/electional`, `BirthPlaceSearch`.
@@ -62,7 +63,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `RectificationView.tsx` + `RectificationView.messages.ts` — Birth-time rectification screen (event-matching). Deps: `domain/rectification`, `astrology/signs`.
 - `RelationshipSummary.tsx` + `RelationshipSummary.messages.ts` — Grouped relationship-themes summary (contacts/overlays/Tier 2 AI). Deps: `domain/relationship-themes`, `domain/house-overlays`, `interpretation/tier2-client`.
 - `ReportScreen.tsx` + `ReportScreen.messages.ts` — Standalone written-report route. Deps: `domain/chart-compute`, `ReportView`.
-- `ReportView.tsx` + `ReportView.messages.ts` — Report rendering + provenance toggle + degree-symbol (Sabian symbol) visibility toggle and badge (#527) + Tier 2 AI panel. Deps: `interpretation/report`, `interpretation/corpus-client`, `interpretation/tier2-client`, `./degree-symbol-setting`, `./GlossaryTerm`.
+- `ReportView.tsx` + `ReportView.messages.ts` — Report rendering + provenance toggle + degree-symbol (Sabian symbol) badge (#527) + Tier 2 AI panel. Deps: `interpretation/report`, `interpretation/corpus-client`, `interpretation/tier2-client`, `./degree-symbol-setting`, `./DegreeSymbolSetting`, `./GlossaryTerm`.
 - `ReturnView.tsx` + `ReturnView.messages.ts` — Solar/lunar return charts (pick year/place/rendering). Deps: `domain/return-chart`.
 - `RulershipSetting.tsx` + `RulershipSetting.messages.ts` — Planetary-rulers preference (modern/traditional/both), built on the shared `Select` primitive. Deps: `./rulership-setting`, `astrology/rulership`, `./primitives/Select`.
 - `settings-registry.ts` — #506/#509 typed registry of every persisted setting's scope/owner/persistence/sync/commit-model, pure metadata (existing modules keep owning values). Deps: none.

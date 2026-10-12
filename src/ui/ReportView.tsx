@@ -21,16 +21,18 @@
  * and importing it here would inline all of it into this app's JS bundle.
  * See corpus-client.ts for why.
  *
- * A second, always-visible control (#527) shows or hides degree-symbol (Sabian symbol)
- * paragraphs altogether — a persisted per-device preference (`degree-symbol-setting.ts`), unlike
- * "Show provenance", which is a dev-only, page-local one. A shown degree-symbol paragraph also
- * carries a small named badge (`.sabian-badge`, linking `<GlossaryTerm id="sabianSymbol">`) so it
- * reads as a distinct kind of note, not just another `.hint`-styled one.
+ * A second, always-visible control (#527), `DegreeSymbolSetting`, shows or hides degree-symbol
+ * (Sabian symbol) paragraphs altogether — a persisted per-device preference
+ * (`degree-symbol-setting.ts`), unlike "Show provenance", which is a dev-only, page-local one.
+ * It's its own named-and-explained section, the same label+explanation+control shape as
+ * `RulershipSetting`, not a bare checkbox. A shown degree-symbol paragraph also carries a small
+ * named badge (`.sabian-badge`, linking `<GlossaryTerm id="sabianSymbol">`) so it reads as a
+ * distinct kind of note, not just another `.hint`-styled one.
  */
 /**
  * @module ReportView
  * @purpose Renders an interpretation Report's sections/paragraphs with a provenance toggle and a degree-symbol (Sabian symbol) visibility toggle, plus the Tier 2 opt-in AI-customized interpretation sub-tab (grounded restyle or freeform full-chart modes).
- * @conventions Thin wiring over report-provenance.ts; fetches its corpus chunk at runtime via corpus-client.ts rather than importing the full synchronous CORPUS; uses ReportView.messages.ts for en/nl text via useMessages(); the degree-symbol toggle's persisted value lives in degree-symbol-setting.ts, not local state.
+ * @conventions Thin wiring over report-provenance.ts; fetches its corpus chunk at runtime via corpus-client.ts rather than importing the full synchronous CORPUS; uses ReportView.messages.ts for en/nl text via useMessages(); the degree-symbol toggle's own label/explanation/control lives in DegreeSymbolSetting.tsx, its persisted value in degree-symbol-setting.ts — this file only reads that value to filter paragraphs.
  * @exports ReportView
  */
 import { useEffect, useState } from 'react';
@@ -52,6 +54,7 @@ import { useMessages } from './messages.js';
 import { RulershipSetting } from './RulershipSetting.js';
 import { useRulershipChoice } from './rulership-setting.js';
 import { useShowDegreeSymbol } from './degree-symbol-setting.js';
+import { DegreeSymbolSetting } from './DegreeSymbolSetting.js';
 import { GlossaryTerm } from './GlossaryTerm.js';
 import { useSessionUserOrUndefined } from './session-context.js';
 import { reportViewMessages } from './ReportView.messages.js';
@@ -388,7 +391,7 @@ export function ReportView({
   const [showProvenance, setShowProvenance] = useState(false);
   const [locale] = useLocale();
   const [rulership] = useRulershipChoice();
-  const [showDegreeSymbol, setShowDegreeSymbol] = useShowDegreeSymbol();
+  const [showDegreeSymbol] = useShowDegreeSymbol();
   const [corpus, setCorpus] = useState<readonly CorpusEntry[] | undefined>(undefined);
   const [loadError, setLoadError] = useState<string | undefined>(undefined);
 
@@ -443,13 +446,7 @@ export function ReportView({
   const controls = (
     <div className="report-controls">
       <RulershipSetting />
-      <Checkbox
-        label={t.showDegreeSymbol}
-        checked={showDegreeSymbol}
-        onChange={(value) => {
-          setShowDegreeSymbol(value);
-        }}
-      />
+      <DegreeSymbolSetting />
       {!import.meta.env.PROD && (
         <Checkbox
           label={t.showProvenance}

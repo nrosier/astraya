@@ -9,7 +9,6 @@
  */
 const en = {
   showProvenance: 'Show provenance (rule and corpus entry) for each paragraph',
-  showDegreeSymbol: 'Show Sabian symbol notes',
   couldNotLoad: (message: string) => `Could not load the interpretation text: ${message}`,
   loadingInterpretation: 'Loading interpretation…',
   interpretationDisclaimer:
@@ -63,7 +62,6 @@ const en = {
 
 const nl: typeof en = {
   showProvenance: 'Herkomst (regel en corpustekst) tonen voor elke paragraaf',
-  showDegreeSymbol: 'Sabian-symboolnotities tonen',
   couldNotLoad: (message: string) => `Kon de interpretatietekst niet laden: ${message}`,
   loadingInterpretation: 'Interpretatie wordt geladen…',
   interpretationDisclaimer:
