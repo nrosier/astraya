@@ -18,6 +18,7 @@ export type ChangedSetting =
   | 'minorAspects'
   | 'fortune'
   | 'vertex'
+  | 'spirit'
   | 'chiron'
   | 'midpoints'
   | 'lilith'
@@ -34,6 +35,7 @@ export function changedSettings(value: ExtendedSettings): readonly ChangedSettin
   if (value.enabledMinorAspects.length !== defaults.enabledMinorAspects.length) changed.push('minorAspects');
   if (value.fortuneVisible !== defaults.fortuneVisible) changed.push('fortune');
   if (value.vertexVisible !== defaults.vertexVisible) changed.push('vertex');
+  if (value.spiritVisible !== defaults.spiritVisible) changed.push('spirit');
   if (value.chironVisible !== defaults.chironVisible) changed.push('chiron');
   if (value.midpointsVisible !== defaults.midpointsVisible) changed.push('midpoints');
   if (value.lilithVariant !== defaults.lilithVariant) changed.push('lilith');
