@@ -43,6 +43,8 @@ import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { LanguageToggle } from './LanguageToggle.js';
 import { useMessages } from './messages.js';
 import { preferencesViewMessages } from './PreferencesView.messages.js';
+import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
+import { readDefaultCalculationProfile } from './default-calculation-profile.js';
 import { RulershipSetting } from './RulershipSetting.js';
 import { useRulershipChoice } from './rulership-setting.js';
 import { sharedMessages } from './shared.messages.js';
@@ -94,10 +96,14 @@ export function PreferencesView({
       if (provider === undefined) throw new Error(t.exportNeedsEngine);
       if (store === undefined) throw new Error(t.exportNeedsStore);
       const now = new Date();
+      // This device's own default calculation settings (#541) — not a fixed claim about
+      // "application defaults" that would go stale once a user has customized anything.
+      const settings = readDefaultCalculationProfile()?.settings ?? DEFAULT_EXTENDED_SETTINGS;
       const archive = await buildFullExport({
         people: [...store.state.people.values()],
         provider,
         appVersion: APP_VERSION,
+        settings,
         rulership,
         symbolClass,
         now,

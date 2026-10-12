@@ -17,8 +17,9 @@
  * @exports DEFAULT_CALCULATION_PROFILE_KEY, DefaultCalculationProfile, readDefaultCalculationProfile, writeDefaultCalculationProfile, useDefaultCalculationProfile, resetDefaultCalculationProfileMemory
  */
 import { useCallback, useSyncExternalStore } from 'react';
-import { isRulershipChoice, type RulershipChoice } from '../astrology/rulership.js';
+import type { RulershipChoice } from '../astrology/rulership.js';
 import type { ExtendedSettings } from '../chart/extended-settings.js';
+import { parseCalculationSnapshot } from '../domain/calculation-snapshot.js';
 
 export const DEFAULT_CALCULATION_PROFILE_KEY = 'astraya:defaultCalculationProfile';
 const CHANGED_EVENT = 'astraya:default-calculation-profile-changed';
@@ -28,21 +29,25 @@ export interface DefaultCalculationProfile {
   readonly rulership: RulershipChoice;
 }
 
-function isDefaultCalculationProfile(value: unknown): value is DefaultCalculationProfile {
-  if (typeof value !== 'object' || value === null) return false;
-  const candidate = value as Record<string, unknown>;
-  return (
-    typeof candidate.settings === 'object' && candidate.settings !== null && isRulershipChoice(candidate.rulership)
-  );
+/**
+ * Field-by-field, via `parseCalculationSnapshot` (#541) — not merely "is this a non-null
+ * object with a string rulership somewhere in it". A legacy or hand-edited value can have the
+ * right shape at the top level but a missing or wrong-typed field underneath; each such field
+ * is repaired to its own documented app default individually rather than silently passed
+ * through, or the whole value rejected.
+ */
+function parseDefaultCalculationProfile(value: unknown): DefaultCalculationProfile {
+  const snapshot = parseCalculationSnapshot(value);
+  return { settings: snapshot.settings, rulership: snapshot.rulership };
 }
 
-/** The saved default, or `undefined` when none is saved, it is malformed, or storage is unavailable. */
+/** The saved default, or `undefined` when none is saved or storage is unavailable — never malformed, since every field is individually validated/repaired on the way out. */
 export function readDefaultCalculationProfile(): DefaultCalculationProfile | undefined {
   try {
     const stored = localStorage.getItem(DEFAULT_CALCULATION_PROFILE_KEY);
     if (stored === null) return undefined;
     const parsed: unknown = JSON.parse(stored);
-    return isDefaultCalculationProfile(parsed) ? parsed : undefined;
+    return parseDefaultCalculationProfile(parsed);
   } catch {
     return undefined;
   }

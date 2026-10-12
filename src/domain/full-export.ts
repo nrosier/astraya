@@ -7,19 +7,26 @@
  * `version`, holds nothing the app cannot show on screen, and is the same whether the person is on
  * this device only or synced. People restorable from "Deleted" are not included — they are the
  * user's own decision to remove — and nothing from another user is, since a store holds only its
- * owner's data. Charts are computed here with the app's default calculation settings, and the file
- * says so, because a chart is derived and the person's birth record is what a restore would need.
+ * owner's data. Charts are computed here with this device's own effective calculation settings
+ * (#541) — not a fixed "application defaults" claim, which would silently go stale the moment a
+ * user customizes anything — and the file states exactly which settings those were.
  *
- * Pure apart from the ephemeris calls: the caller supplies the people, the provider and the moment
- * (`now`), so the document is reproducible and testable against the real engine.
+ * Pure apart from the ephemeris calls: the caller supplies the people, the provider, the settings
+ * and the moment (`now`), so the document is reproducible and testable against the real engine.
  */
 /**
  * @module full-export
  * @purpose Builds the whole-device export: every person's birth record plus (where possible) their computed natal chart tables, as one JSON document or a people CSV.
- * @conventions Plain JSON with its own `format`/`version` fields rather than a database dump; charts are computed with app default settings (Placidus, tropical, standard orbs) and the document states so; one person's chart failure is caught and reported per-person rather than failing the whole export; deleted people are excluded.
+ * @conventions Plain JSON with its own `format`/`version` fields rather than a database dump; charts are computed with the caller-supplied `ExtendedSettings`/`rulership` (#541), carried verbatim into `preferences` so the document states exactly what was in force; one person's chart failure is caught and reported per-person rather than failing the whole export; deleted people are excluded.
  * @exports buildFullExport, peopleToCsv, fullExportFilename, peopleCsvFilename, FullExport, ExportedPerson, ExportedChart, FULL_EXPORT_FORMAT, FULL_EXPORT_VERSION
  */
 import type { RulershipChoice } from '../astrology/rulership.js';
+import {
+  DEFAULT_EXTENDED_SETTINGS,
+  toChartCalculationOptions,
+  toPointVisibilityOptions,
+  type ExtendedSettings,
+} from '../chart/extended-settings.js';
 import { housesAreDefined, computeChartData, type ChartData } from './chart-compute.js';
 import {
   aspectRows,
@@ -29,6 +36,7 @@ import {
   dispositorRows,
   houseCuspRows,
   positionRows,
+  type PointVisibilityOptions,
 } from './chart-tables.js';
 import type { Person } from './person.js';
 import type { EphemerisProvider } from '../ephemeris/types.js';
@@ -70,33 +78,54 @@ export interface FullExport {
   readonly version: typeof FULL_EXPORT_VERSION;
   readonly exportedAt: string;
   readonly app: { readonly version: string };
-  /** Per-device choices that change how charts are shown, so a reader of the file knows what was in force. */
-  readonly preferences: { readonly rulership: RulershipChoice; readonly symbolClass: string };
+  /**
+   * The device's own effective calculation settings at export time, so a reader of the file
+   * knows exactly what was in force (#541) — `settings`/`rulership` are what charts below were
+   * actually computed with, not a fixed claim about "application defaults" that may no longer
+   * be true once a user has customized anything.
+   */
+  readonly preferences: {
+    readonly settings: ExtendedSettings;
+    readonly rulership: RulershipChoice;
+    readonly symbolClass: string;
+  };
   readonly note: string;
   readonly people: readonly ExportedPerson[];
 }
 
-const NOTE =
-  'Charts are calculated with the application defaults (Placidus houses, tropical zodiac, standard orbs). ' +
-  'The birth record is the source of truth; a chart can always be recalculated from it.';
+function noteFor(settings: ExtendedSettings, rulership: RulershipChoice): string {
+  const customized = JSON.stringify(settings) !== JSON.stringify(DEFAULT_EXTENDED_SETTINGS);
+  const basis = customized
+    ? "this device's own current calculation settings (see preferences, below)"
+    : 'the application defaults (Placidus houses, tropical zodiac, standard orbs)';
+  return (
+    `Charts are calculated with ${basis}, and the planetary rulers set to ${rulership}. ` +
+    'The birth record is the source of truth; a chart can always be recalculated from it.'
+  );
+}
 
-function chartExport(data: ChartData, rulership: RulershipChoice, withHouses: boolean): ExportedChart {
+function chartExport(
+  data: ChartData,
+  rulership: RulershipChoice,
+  visibility: PointVisibilityOptions,
+  withHouses: boolean,
+): ExportedChart {
   return {
     sect: data.sect,
-    positions: positionRows(data, {}, withHouses),
+    positions: positionRows(data, visibility, withHouses),
     ...(withHouses
       ? {
           houses: {
             cusps: houseCuspRows(data),
-            angles: angleRows(data, {}),
-            derivedPoints: derivedPointRows(data, {}),
+            angles: angleRows(data, visibility),
+            derivedPoints: derivedPointRows(data, visibility),
           },
         }
       : {}),
-    aspects: aspectRows(data),
+    aspects: aspectRows(data, visibility),
     // Always traditional (#545) — dignityRows no longer takes a rulership/display-choice parameter.
-    dignities: dignityRows(data, {}),
-    dispositors: dispositorRows(data, {}, rulership),
+    dignities: dignityRows(data, visibility),
+    dispositors: dispositorRows(data, visibility, rulership),
   };
 }
 
@@ -104,10 +133,13 @@ export async function buildFullExport(params: {
   readonly people: readonly Person[];
   readonly provider: EphemerisProvider;
   readonly appVersion: string;
+  readonly settings: ExtendedSettings;
   readonly rulership: RulershipChoice;
   readonly symbolClass: string;
   readonly now: Date;
 }): Promise<FullExport> {
+  const calcOptions = { ...toChartCalculationOptions(params.settings), rulership: params.rulership };
+  const visibility = toPointVisibilityOptions(params.settings);
   const people: ExportedPerson[] = [];
   for (const person of params.people) {
     const base = {
@@ -124,9 +156,9 @@ export async function buildFullExport(params: {
       continue;
     }
     try {
-      const data = await computeChartData(person.moment, params.provider, { rulership: params.rulership });
+      const data = await computeChartData(person.moment, params.provider, calcOptions);
       const withHouses = person.timeAccuracy !== 'unknown' && housesAreDefined(data.houses);
-      people.push({ ...base, natalChart: chartExport(data, params.rulership, withHouses) });
+      people.push({ ...base, natalChart: chartExport(data, params.rulership, visibility, withHouses) });
     } catch (error) {
       // One person's chart failing must not cost the user everyone else's data.
       people.push({ ...base, chartError: error instanceof Error ? error.message : String(error) });
@@ -137,8 +169,8 @@ export async function buildFullExport(params: {
     version: FULL_EXPORT_VERSION,
     exportedAt: params.now.toISOString(),
     app: { version: params.appVersion },
-    preferences: { rulership: params.rulership, symbolClass: params.symbolClass },
-    note: NOTE,
+    preferences: { settings: params.settings, rulership: params.rulership, symbolClass: params.symbolClass },
+    note: noteFor(params.settings, params.rulership),
     people,
   };
 }
