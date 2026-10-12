@@ -21,13 +21,8 @@
  * @conventions Both sides use `subjectsFrom` (each chart's own real natal speed), not `fixedSubjects`, because synastry has no "moving now vs. fixed reference" asymmetry the way a transit/progression/return/direction does — neither person's chart is "now" relative to the other; both charts are computed as independent, full `ChartData`.
  * @exports computeSynastry, rankedSynastryAspects, SynastryData
  */
-import {
-  DEFAULT_ORB_CONFIG,
-  findCrossAspects,
-  subjectsFrom,
-  type Aspect,
-  type OrbConfig,
-} from '../astrology/aspects.js';
+import { findCrossAspects, subjectsFrom, type Aspect, type OrbConfig } from '../astrology/aspects.js';
+import { SYNASTRY_DEFAULT_ORB_CONFIG } from '../astrology/orb-profiles.js';
 import { rankSynastryAspects, type RankedAspect } from '../astrology/synastry-importance.js';
 import { bodyById, type BodyCategory } from '../astrology/bodies.js';
 import { computeChartData, type ChartCalculationOptions, type ChartData } from './chart-compute.js';
@@ -62,13 +57,17 @@ export async function computeSynastry(
     computeChartData(momentB, provider, options),
   ]);
 
+  // Synastry's own documented default (#543), not the natal `DEFAULT_ORB_CONFIG` — see
+  // `orb-profiles.ts`'s own doc comment on why comparing two independently-real natal charts
+  // calls for a tighter default than a single chart's own aspects do.
+  const effectiveOrbConfig = orbConfig ?? SYNASTRY_DEFAULT_ORB_CONFIG;
   const aspects = findCrossAspects(
     subjectsFrom(chartA.positions, categoryOf),
     subjectsFrom(chartB.positions, categoryOf),
-    orbConfig,
+    effectiveOrbConfig,
   );
 
-  return { chartA, chartB, aspects, orbConfig: orbConfig ?? DEFAULT_ORB_CONFIG };
+  return { chartA, chartB, aspects, orbConfig: effectiveOrbConfig };
 }
 
 /**

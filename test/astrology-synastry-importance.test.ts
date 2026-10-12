@@ -5,6 +5,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { ASPECTS, DEFAULT_ORB_CONFIG, type Aspect } from '../src/astrology/aspects.js';
 import { bodyByKey } from '../src/astrology/bodies.js';
+import { SYNASTRY_DEFAULT_ORB_CONFIG } from '../src/astrology/orb-profiles.js';
 import {
   bodyWeight,
   rankSynastryAspects,
@@ -143,8 +144,8 @@ describe('a real synastry (#422)', () => {
     );
   }, 60_000);
 
-  it('keeps the orbs it was found with, defaulting to the standard ones', () => {
-    expect(data.orbConfig).toEqual(DEFAULT_ORB_CONFIG);
+  it('keeps the orbs it was found with, defaulting to the tighter synastry default (#543)', () => {
+    expect(data.orbConfig).toEqual(SYNASTRY_DEFAULT_ORB_CONFIG);
   });
 
   it('ranks exactly the contacts found, best first, each score in range and in order', () => {
