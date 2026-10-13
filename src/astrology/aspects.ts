@@ -10,13 +10,21 @@
  * quintile and biquintile. The decile (36°, a tenth of the circle) is
  * sometimes lumped in with it by name but is a different division, so it is
  * out of scope here rather than silently folded in.
+ *
+ * `harmonicFamilyOf` (#557) is a second, distinct grouping from the major/minor
+ * `AspectFamily` above: John Addey's harmonic theory ("Harmonics in Astrology", 1976) groups
+ * every aspect by the smallest division of the circle it is a multiple of — conjunction = H1,
+ * opposition = H2, trine = H3, square = H4, quintile/biquintile = H5 (both multiples of 72°),
+ * sextile = H6, semisquare/sesquiquadrate = H8, semisextile/quincunx = H12 — rather than the
+ * "major vs minor" distinction, which is a modern practical-use convention with no equivalent
+ * claim to a single historical source.
  */
 
 /**
  * @module Aspects
  * @purpose Computes Ptolemaic and minor aspects between bodies, including configurable orbs and applying/separating direction.
- * @conventions Three orb tiers (major, sextile, minor) widened for luminaries, scaled by a global percentage; defaults follow the Astro-Seek convention (majors 7°/10° with a luminary, sextile 4°/5°30', minors flat 2°30'); minor aspects are opt-in via enabledMinorAspects.
- * @exports ASPECTS, DEFAULT_ORB_CONFIG, orbFor, angularSeparation, matchAspect, findAspects, findCrossAspects, subjectsFrom, fixedSubjects
+ * @conventions Three orb tiers (major, sextile, minor) widened for luminaries, scaled by a global percentage; defaults follow the Astro-Seek convention (majors 7°/10° with a luminary, sextile 4°/5°30', minors flat 2°30'); minor aspects are opt-in via enabledMinorAspects; `harmonicFamilyOf` is Addey's harmonic-number grouping, a distinct concept from the major/minor `AspectFamily`.
+ * @exports ASPECTS, DEFAULT_ORB_CONFIG, orbFor, angularSeparation, matchAspect, findAspects, findCrossAspects, subjectsFrom, fixedSubjects, harmonicFamilyOf, aspectHarmonicFamily
  */
 import type { BodyCategory } from './bodies.js';
 import type { BodyId, BodyPosition, Degrees } from '../ephemeris/types.js';
@@ -49,6 +57,32 @@ const BY_KEY = new Map<string, AspectDefinition>(ASPECTS.map((aspect) => [aspect
 
 export function aspectByKey(key: string): AspectDefinition | undefined {
   return BY_KEY.get(key);
+}
+
+function gcd(a: number, b: number): number {
+  let x = Math.abs(a);
+  let y = Math.abs(b);
+  while (y !== 0) {
+    [x, y] = [y, x % y];
+  }
+  return x;
+}
+
+/**
+ * Addey's harmonic number for an aspect angle (#557): the smallest `n` such that `angle` is a
+ * whole-number multiple of `360/n` — e.g. a 90° square is H4 (`360/4 = 90`), a 72° quintile and
+ * a 144° biquintile are both H5. `gcd(0, 360) = 360`, so a 0° conjunction correctly comes back
+ * as H1 rather than dividing by zero.
+ */
+export function harmonicFamilyOf(angle: Degrees): number {
+  const divisor = gcd(angle, 360);
+  return divisor === 0 ? 1 : 360 / divisor;
+}
+
+/** `harmonicFamilyOf` for a named aspect, or `undefined` for an unknown key. */
+export function aspectHarmonicFamily(aspectKey: string): number | undefined {
+  const aspect = aspectByKey(aspectKey);
+  return aspect === undefined ? undefined : harmonicFamilyOf(aspect.angle);
 }
 
 /**
