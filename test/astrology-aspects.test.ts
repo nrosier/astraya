@@ -4,9 +4,11 @@ import {
   DEFAULT_ORB_CONFIG,
   angularSeparation,
   aspectByKey,
+  aspectHarmonicFamily,
   findAspects,
   findCrossAspects,
   fixedSubjects,
+  harmonicFamilyOf,
   matchAspect,
   orbFor,
   subjectsFrom,
@@ -319,5 +321,31 @@ describe('subjectsFrom and fixedSubjects (#51)', () => {
 
     expect(aspect?.aspect.key).toBe('square');
     expect(aspect?.applying).toBe(true);
+  });
+});
+
+describe('harmonicFamilyOf / aspectHarmonicFamily (#557)', () => {
+  it('groups every current aspect by Addey’s harmonic number', () => {
+    const expected: Record<string, number> = {
+      conjunction: 1,
+      opposition: 2,
+      trine: 3,
+      square: 4,
+      quintile: 5,
+      biquintile: 5,
+      sextile: 6,
+      semisquare: 8,
+      sesquiquadrate: 8,
+      semisextile: 12,
+      quincunx: 12,
+    };
+    for (const aspect of ASPECTS) {
+      expect(harmonicFamilyOf(aspect.angle)).toBe(expected[aspect.key]);
+      expect(aspectHarmonicFamily(aspect.key)).toBe(expected[aspect.key]);
+    }
+  });
+
+  it('is undefined for an unknown aspect key', () => {
+    expect(aspectHarmonicFamily('not-a-real-aspect')).toBeUndefined();
   });
 });

@@ -33,6 +33,7 @@
  * @exports ChartView, ChartDataView, emphasisColumns, positionColumns, houseCuspColumns, angleColumns, aspectColumns, dignityColumns, almutenCandidateColumns, conditionColumns, receptionColumns, dispositorColumns, declinationColumns, antisciaColumns, midpointTreeColumns, fixedStarColumns, derivedPointColumns
  */
 import { formatFixed } from './format.js';
+import { aspectHarmonicFamily } from '../astrology/aspects.js';
 import { Tooltip } from './primitives/Tooltip.js';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -348,6 +349,16 @@ export function aspectColumns(
       labelTooltip: t.applyingTooltip,
       valueOf: (row) => row.applying,
       render: (row) => (row.applying ? t.applying : t.separating),
+    },
+    {
+      key: 'harmonicFamily',
+      label: t.harmonicFamilyLabel,
+      labelTooltip: t.harmonicFamilyTooltip,
+      valueOf: (row) => aspectHarmonicFamily(row.aspectKey) ?? 0,
+      render: (row) => {
+        const family = aspectHarmonicFamily(row.aspectKey);
+        return family === undefined ? '' : `H${String(family)}`;
+      },
     },
   ];
 }
