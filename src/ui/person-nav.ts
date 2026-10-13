@@ -23,7 +23,8 @@ export type PersonTabKey =
   | 'synastry'
   | 'composite'
   | 'periodic-transit'
-  | 'astrocartography';
+  | 'astrocartography'
+  | 'multi-wheel';
 
 import { routeHref } from './route.js';
 
@@ -52,6 +53,7 @@ export const PERSON_TABS: readonly PersonTab[] = [
   { key: 'composite', buildHref: (id) => routeHref({ kind: 'composite', personId: id }) },
   { key: 'periodic-transit', buildHref: (id) => routeHref({ kind: 'periodic-transit', personId: id }) },
   { key: 'astrocartography', buildHref: (id) => routeHref({ kind: 'astrocartography', personId: id }) },
+  { key: 'multi-wheel', buildHref: (id) => routeHref({ kind: 'multi-wheel', personId: id }) },
 ];
 
 /**
@@ -64,7 +66,9 @@ export const PERSON_TABS: readonly PersonTab[] = [
  * two people's charts interact". The charts cast for one person alone (natal, draconic, harmonic, returns) are one
  * page, the Charts page, with the type picked there, so they need no family here.
  * `astrocartography` is deliberately NOT in any family — it's spatial, not a different lens on
- * the same chart data, with its own distinct vocabulary and practitioner audience.
+ * the same chart data, with its own distinct vocabulary and practitioner audience. `multi-wheel`
+ * (#558) is ungrouped for the same reason: it overlays whichever ring sources (natal + optional
+ * transit/relocated) the user picks in-screen, not one specific technique's own lens.
  */
 export type PersonTabFamilyKey = 'transits-forecast' | 'progressions-directions' | 'relationship-charts';
 
