@@ -27,6 +27,12 @@ import { useEffect, useRef, useState } from 'react';
 import { ASPECTS, DEFAULT_ORB_CONFIG } from '../astrology/aspects.js';
 import { ayanamsaByKey, AYANAMSAS } from '../astrology/ayanamsas.js';
 import { HOUSE_SYSTEMS } from '../astrology/houses.js';
+import {
+  CALCULATION_SCHEME_IDS,
+  CALCULATION_SCHEMES,
+  matchCalculationScheme,
+  type CalculationSchemeId,
+} from '../astrology/calculation-scheme.js';
 import { ORB_PROFILE_IDS, ORB_PROFILES, matchOrbProfile, type OrbProfileId } from '../astrology/orb-profiles.js';
 import { DEFAULT_RULERSHIP_CHOICE, type RulershipChoice } from '../astrology/rulership.js';
 import { aspectDisplayName } from './astro-names.messages.js';
@@ -170,6 +176,8 @@ export function ExtendedSettingsPanel({
   const effectiveRulers = pendingRulers ?? rulers;
   const currentProfile = matchCalculationProfile(draft, effectiveRulers);
   const currentOrbProfile = matchOrbProfile(draft.orbScalePercent);
+  const currentScheme =
+    currentOrbProfile === undefined ? undefined : matchCalculationScheme(draft.boundsScheme, currentOrbProfile);
   const deviceChanged =
     atOpen !== undefined &&
     (rulers !== atOpen.rulers ||
@@ -214,6 +222,17 @@ export function ExtendedSettingsPanel({
     patch({ orbScalePercent: ORB_PROFILES[profileId].config.scalePercent });
   };
 
+  /** Named traditional scheme quick-pick (#549) — sets bounds table and orb scale together, the one coherent unit a scheme bundle actually is. */
+  const chooseScheme = (id: string): void => {
+    if (!(CALCULATION_SCHEME_IDS as readonly string[]).includes(id)) return;
+    const schemeId = id as CalculationSchemeId;
+    const scheme = CALCULATION_SCHEMES[schemeId];
+    patch({
+      boundsScheme: scheme.boundsScheme,
+      orbScalePercent: ORB_PROFILES[scheme.orbProfileId].config.scalePercent,
+    });
+  };
+
   const ayanamsaId = draft.zodiac.kind === 'sidereal' ? draft.zodiac.ayanamsa : undefined;
 
   const houseName = (code: string): string =>
@@ -236,6 +255,8 @@ export function ExtendedSettingsPanel({
           : t.summary.tropical;
       case 'orbScale':
         return t.summary.orbs(percent);
+      case 'boundsScheme':
+        return t.summary.boundsScheme(value.boundsScheme);
       case 'minorAspects':
         return t.summary.minorAspects(String(value.enabledMinorAspects.length));
       case 'fortune':
@@ -556,6 +577,27 @@ export function ExtendedSettingsPanel({
             />
           </div>
           <p className="hint">{t.aspectsToHint}</p>
+        </fieldset>
+
+        <fieldset className="field-group settings-card-group">
+          <legend>{t.schemeLegend}</legend>
+          <p className="hint settings-card-tag">{t.appliesOnApply}</p>
+          <p className="hint">{t.schemeHint}</p>
+          <OptionCards
+            label={t.schemeLabel}
+            value={currentScheme ?? 'custom'}
+            options={[
+              ...(currentScheme === undefined
+                ? [{ value: 'custom', title: t.schemeOptions.custom, consequence: t.schemeNotes.custom }]
+                : []),
+              ...CALCULATION_SCHEME_IDS.map((id) => ({
+                value: id,
+                title: CALCULATION_SCHEMES[id].name,
+                consequence: CALCULATION_SCHEMES[id].description,
+              })),
+            ]}
+            onChange={chooseScheme}
+          />
         </fieldset>
 
         <fieldset className="field-group settings-card-group">

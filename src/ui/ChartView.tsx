@@ -30,7 +30,7 @@
  * @module ChartView
  * @purpose Renders the natal chart screen: the chart wheel plus every data table a chart computes (positions, houses, aspects, dignities, dispositors, declinations, antiscia, fixed stars, chart shape, derived points), and the SVG/PNG/PDF export + share-link controls.
  * @conventions Exports `ChartDataView`, the shared tabbed chart+tables UI reused by CompositeView/SharedChartView; every value is recomputed from the stored birth moment via `domain/chart-compute.js`/`domain/chart-tables.js` rather than read from a saved Chart record; houses/angles/derived-points tables are hidden when `timeAccuracy === 'unknown'`. Text comes from co-located `ChartView.messages.ts` via `useMessages()`.
- * @exports ChartView, ChartDataView, emphasisColumns, positionColumns, houseCuspColumns, angleColumns, aspectColumns, dignityColumns, dispositorColumns, declinationColumns, antisciaColumns, fixedStarColumns, derivedPointColumns
+ * @exports ChartView, ChartDataView, emphasisColumns, positionColumns, houseCuspColumns, angleColumns, aspectColumns, dignityColumns, almutenCandidateColumns, conditionColumns, receptionColumns, dispositorColumns, declinationColumns, antisciaColumns, fixedStarColumns, derivedPointColumns
  */
 import { formatFixed } from './format.js';
 import { Tooltip } from './primitives/Tooltip.js';
@@ -43,6 +43,7 @@ import {
   chartShapeOf,
   chartSheetInput,
   chartSheetMetaLines,
+  conditionRows,
   declinationContactRows,
   derivedPointRows,
   EMPHASIS_MODALITIES,
@@ -52,10 +53,13 @@ import {
   fixedStarRows,
   houseCuspRows,
   positionRows,
+  receptionRows,
   visiblePositions,
+  type AlmutenCandidateRow,
   type AngleRow,
   type AntisciaRow,
   type AspectRow,
+  type ConditionRow,
   type DeclinationContactRow,
   type DerivedPointRow,
   type DignityRow,
@@ -64,6 +68,7 @@ import {
   type FixedStarRow,
   type HouseCuspRow,
   type PointVisibilityOptions,
+  type ReceptionRow,
   type PositionRow,
 } from '../domain/chart-tables.js';
 import { derivedPointPlacementFacts } from '../domain/derived-point-position.js';
@@ -75,6 +80,8 @@ import { momentKey } from '../time/encode.js';
 import { renderChartDialSvg, renderChartSheetSvg } from '../chart/chart-sheet.js';
 import { renderJonesShapeDiagramSvg } from '../chart/jones-shape-diagram.js';
 import { lunarPhaseOf } from '../astrology/lunar-phase.js';
+import { lotFormulaByKey } from '../astrology/arabic-parts.js';
+import type { DignityType } from '../astrology/reception.js';
 import { jonesBodyPositions } from '../astrology/jones-shapes.js';
 import {
   DEFAULT_EXTENDED_SETTINGS,
@@ -125,6 +132,7 @@ import {
 import { SelectionInspector, type WheelIsolationFacts } from './SelectionInspector.js';
 import { useRulershipChoice } from './rulership-setting.js';
 import type { RulershipChoice } from '../astrology/rulership.js';
+import type { BoundsScheme } from '../astrology/bounds.js';
 import { GlossaryTerms } from './GlossaryTerm.js';
 import { PageHeader } from './PageHeader.js';
 import { PersonNotFound } from './PersonNotFound.js';
@@ -424,6 +432,147 @@ export function dignityColumns(t: typeof chartViewMessages.en, locale: Locale): 
   ];
 }
 
+/** Every Almuten-of-the-Ascendant candidate's own score breakdown (#551) — not only the winner's name. */
+export function almutenCandidateColumns(
+  t: typeof chartViewMessages.en,
+  locale: Locale,
+): readonly TableColumn<AlmutenCandidateRow>[] {
+  return [
+    {
+      key: 'bodyName',
+      label: t.bodyLabel,
+      valueOf: (row) => row.bodyName,
+      render: (row) => bodyDisplayName(row.bodyKey, locale),
+    },
+    {
+      key: 'ruler',
+      label: t.rulerLabel,
+      valueOf: (row) => row.ruler,
+      align: 'center',
+      render: (row) => (row.ruler ? '✓' : ''),
+    },
+    {
+      key: 'exalted',
+      label: t.exaltedLabel,
+      valueOf: (row) => row.exalted,
+      align: 'center',
+      render: (row) => (row.exalted ? '✓' : ''),
+    },
+    {
+      key: 'triplicity',
+      label: t.triplicityLabel,
+      valueOf: (row) => row.triplicity,
+      align: 'center',
+      render: (row) => (row.triplicity ? '✓' : ''),
+    },
+    {
+      key: 'bound',
+      label: t.boundLabel,
+      valueOf: (row) => row.bound,
+      align: 'center',
+      render: (row) => (row.bound ? '✓' : ''),
+    },
+    {
+      key: 'face',
+      label: t.faceLabel,
+      valueOf: (row) => row.face,
+      align: 'center',
+      render: (row) => (row.face ? '✓' : ''),
+    },
+    { key: 'points', label: t.dignityPointsLabel, valueOf: (row) => row.points },
+  ];
+}
+
+/** The traditional planetary-condition table (#547) — sect alignment, angularity, hayz, motion, besiegement, solar phase/proximity. */
+export function conditionColumns(t: typeof chartViewMessages.en, locale: Locale): readonly TableColumn<ConditionRow>[] {
+  const sectAlignmentLabel = (row: ConditionRow): string =>
+    row.sectAlignment === 'ofSect' ? t.ofSect : row.sectAlignment === 'contraSect' ? t.contraSect : t.sectNeutral;
+  const angularityLabel = (row: ConditionRow): string =>
+    row.angularity === 'angular'
+      ? t.angular
+      : row.angularity === 'succedent'
+        ? t.succedent
+        : row.angularity === 'cadent'
+          ? t.cadent
+          : '—';
+  const motionLabel = (row: ConditionRow): string =>
+    row.motion === 'retrograde' ? t.retrogradeLabel : row.motion === 'stationary' ? t.stationaryLabel : t.directLabel;
+  const solarPhaseLabel = (row: ConditionRow): string =>
+    row.solarPhase === 'oriental' ? t.oriental : row.solarPhase === 'occidental' ? t.occidental : '—';
+  const solarConditionLabel = (row: ConditionRow): string =>
+    row.solarCondition === 'cazimi'
+      ? t.cazimi
+      : row.solarCondition === 'combust'
+        ? t.combust
+        : row.solarCondition === 'underTheBeams'
+          ? t.underTheBeams
+          : row.solarCondition === 'free'
+            ? t.solarConditionFree
+            : '—';
+  return [
+    {
+      key: 'bodyName',
+      label: t.bodyLabel,
+      valueOf: (row) => row.bodyName,
+      render: (row) => bodyDisplayName(row.bodyKey, locale),
+    },
+    { key: 'points', label: t.dignityPointsLabel, valueOf: (row) => row.points },
+    {
+      key: 'peregrine',
+      label: t.peregrineLabel,
+      labelTooltip: t.peregrineTooltip,
+      valueOf: (row) => row.peregrine,
+      align: 'center',
+      render: (row) => (row.peregrine ? '✓' : ''),
+    },
+    {
+      key: 'sectAlignment',
+      label: t.sectAlignmentLabel,
+      labelTooltip: t.sectAlignmentTooltip,
+      valueOf: (row) => row.sectAlignment,
+      render: sectAlignmentLabel,
+    },
+    {
+      key: 'angularity',
+      label: t.angularityLabel,
+      labelTooltip: t.angularityTooltip,
+      valueOf: (row) => row.angularity ?? '',
+      render: angularityLabel,
+    },
+    { key: 'motion', label: t.motionLabel, valueOf: (row) => row.motion, render: motionLabel },
+    {
+      key: 'inHayz',
+      label: t.hayzLabel,
+      labelTooltip: t.hayzTooltip,
+      valueOf: (row) => row.inHayz ?? false,
+      align: 'center',
+      render: (row) => (row.inHayz === true ? '✓' : row.inHayz === false ? '' : '—'),
+    },
+    {
+      key: 'besieged',
+      label: t.besiegedLabel,
+      labelTooltip: t.besiegedTooltip,
+      valueOf: (row) => row.besieged,
+      align: 'center',
+      render: (row) => (row.besieged ? '✓' : ''),
+    },
+    {
+      key: 'solarPhase',
+      label: t.solarPhaseLabel,
+      labelTooltip: t.solarPhaseTooltip,
+      valueOf: (row) => row.solarPhase ?? '',
+      render: solarPhaseLabel,
+    },
+    {
+      key: 'solarCondition',
+      label: t.solarConditionLabel,
+      labelTooltip: t.solarConditionTooltip,
+      valueOf: (row) => row.solarCondition ?? '',
+      render: solarConditionLabel,
+    },
+  ];
+}
+
 export function dispositorColumns(
   t: typeof chartViewMessages.en,
   locale: Locale,
@@ -460,6 +609,76 @@ export function dispositorColumns(
       valueOf: (row) => row.mutualReception,
       align: 'center',
       render: (row) => (row.mutualReception ? '✓' : ''),
+    },
+  ];
+}
+
+/** Short, translated dignity-type name, reusing the exact labels `dignityColumns`' own headers already use. */
+function dignityTypeLabel(t: typeof chartViewMessages.en, dignityType: DignityType): string {
+  switch (dignityType) {
+    case 'domicile':
+      return t.rulerLabel;
+    case 'exaltation':
+      return t.exaltedLabel;
+    case 'triplicity':
+      return t.triplicityLabel;
+    case 'bound':
+      return t.boundLabel;
+    case 'face':
+      return t.faceLabel;
+    default:
+      return dignityType;
+  }
+}
+
+/** Every receiving pair among the traditional planets (#548) — mutual/one-way reception, by which dignity, and whether the pair is also in aspect. */
+export function receptionColumns(t: typeof chartViewMessages.en, locale: Locale): readonly TableColumn<ReceptionRow>[] {
+  return [
+    {
+      key: 'bodyAName',
+      label: t.bodyALabel,
+      valueOf: (row) => row.bodyAName,
+      render: (row) => bodyDisplayName(row.bodyAKey, locale),
+    },
+    {
+      key: 'bodyBName',
+      label: t.bodyBLabel,
+      valueOf: (row) => row.bodyBName,
+      render: (row) => bodyDisplayName(row.bodyBKey, locale),
+    },
+    {
+      key: 'kind',
+      label: t.receptionKindLabel,
+      valueOf: (row) => row.kind,
+      render: (row) => (row.kind === 'mutual' ? t.mutualReceptionKind : t.oneWayReceptionKind),
+    },
+    {
+      key: 'aFromBTypes',
+      label: t.receptionAFromBLabel,
+      valueOf: (row) => row.aFromBTypes.join(','),
+      render: (row) => row.aFromBTypes.map((type) => dignityTypeLabel(t, type)).join(', '),
+    },
+    {
+      key: 'bFromATypes',
+      label: t.receptionBFromALabel,
+      valueOf: (row) => row.bFromATypes.join(','),
+      render: (row) => row.bFromATypes.map((type) => dignityTypeLabel(t, type)).join(', '),
+    },
+    {
+      key: 'sameDignityType',
+      label: t.receptionSameTypeLabel,
+      labelTooltip: t.receptionSameTypeTooltip,
+      valueOf: (row) => row.sameDignityType,
+      align: 'center',
+      render: (row) => (row.sameDignityType ? '✓' : ''),
+    },
+    {
+      key: 'aspectLinked',
+      label: t.aspectLinkedLabel,
+      labelTooltip: t.aspectLinkedTooltip,
+      valueOf: (row) => row.aspectLinked,
+      align: 'center',
+      render: (row) => (row.aspectLinked ? '✓' : ''),
     },
   ];
 }
@@ -550,6 +769,15 @@ export function derivedPointColumns(
         ]),
     { key: 'label', label: t.pointLabel, labelTooltip: t.derivedPointTooltip, valueOf: (row) => row.label },
     ...degreeColumns<DerivedPointRow>(t, locale),
+    {
+      key: 'formula',
+      label: t.lotFormulaLabel,
+      labelTooltip: t.lotFormulaTooltip,
+      valueOf: (row) => {
+        const formula = row.pointKey === undefined ? undefined : lotFormulaByKey(row.pointKey);
+        return formula === undefined ? '' : `${formula.dayFormula} / ${formula.nightFormula}`;
+      },
+    },
   ];
 }
 
@@ -647,6 +875,7 @@ function renderTableTab(
   locale: Locale,
   rulership: RulershipChoice,
   symbolClass: SymbolClass,
+  boundsScheme: BoundsScheme,
   selection?: TableSelection,
 ): React.ReactNode {
   switch (tab) {
@@ -739,23 +968,47 @@ function renderTableTab(
     }
     case 'dignities': {
       // Always traditional (#545) — almutenOfAscendant no longer takes a rulership/display-choice parameter.
-      const almuten = almutenOfAscendant(data);
+      const almuten = almutenOfAscendant(data, boundsScheme);
       return (
         <>
           {almuten !== undefined && (
-            <p className="hint">
-              {t.almutenOfAscendantSentence(almuten.almutens.map((key) => bodyDisplayName(key, locale)).join(', '))}{' '}
-              <Tooltip text={t.almutenTooltip} label={t.almutenTooltipLabel}>
-                ?
-              </Tooltip>
-            </p>
+            <>
+              <p className="hint">
+                {t.almutenOfAscendantSentence(almuten.almutens.map((key) => bodyDisplayName(key, locale)).join(', '))}{' '}
+                <Tooltip text={t.almutenTooltip} label={t.almutenTooltipLabel}>
+                  ?
+                </Tooltip>
+              </p>
+              {/* Every candidate's own breakdown, not only the winner's name (#551). */}
+              <SortableTable
+                caption={t.almutenBreakdownCaption}
+                columns={almutenCandidateColumns(t, locale)}
+                rows={almuten.candidates}
+                getRowKey={(row) => row.bodyKey}
+                downloadFilename={deriveExportFilename(displayName, 'almuten', 'csv')}
+              />
+            </>
           )}
           <SortableTable
             caption={t.dignitiesCaption}
             columns={dignityColumns(t, locale)}
-            rows={dignityRows(data, pointVisibility)}
+            rows={dignityRows(data, pointVisibility, boundsScheme)}
             getRowKey={(row) => row.bodyKey}
             downloadFilename={deriveExportFilename(displayName, 'dignities', 'csv')}
+          />
+          <h4 className="condition-section-header" style={{ marginTop: '1.5rem', marginBottom: '0.5rem' }}>
+            {t.conditionCaption}{' '}
+            <Tooltip text={t.conditionTooltip} label={t.conditionTooltipLabel}>
+              ?
+            </Tooltip>
+          </h4>
+          <p className="hint">{t.conditionHint}</p>
+          <SortableTable
+            caption={t.conditionCaption}
+            columns={conditionColumns(t, locale)}
+            rows={conditionRows(data, undefined, boundsScheme)}
+            getRowKey={(row) => row.bodyKey}
+            downloadFilename={deriveExportFilename(displayName, 'condition', 'csv')}
           />
           <h4 className="dispositors-section-header" style={{ marginTop: '1.5rem', marginBottom: '0.5rem' }}>
             {t.dispositorsCaption}{' '}
@@ -774,6 +1027,20 @@ function renderTableTab(
             rows={dispositorRows(data, pointVisibility, rulership)}
             getRowKey={(row) => row.bodyKey}
             downloadFilename={deriveExportFilename(displayName, 'dispositors', 'csv')}
+          />
+          <h4 className="reception-section-header" style={{ marginTop: '1.5rem', marginBottom: '0.5rem' }}>
+            {t.receptionCaption}{' '}
+            <Tooltip text={t.receptionTooltip} label={t.receptionTooltipLabel}>
+              ?
+            </Tooltip>
+          </h4>
+          <p className="hint">{t.receptionHint}</p>
+          <SortableTable
+            caption={t.receptionCaption}
+            columns={receptionColumns(t, locale)}
+            rows={receptionRows(data, boundsScheme)}
+            getRowKey={(row) => `${row.bodyAKey}-${row.bodyBKey}`}
+            downloadFilename={deriveExportFilename(displayName, 'reception', 'csv')}
           />
         </>
       );
@@ -874,6 +1141,7 @@ function renderPlacementsView(
   locale: Locale,
   rulership: RulershipChoice,
   symbolClass: SymbolClass,
+  boundsScheme: BoundsScheme,
   selection?: TableSelection,
 ): React.ReactNode {
   return (
@@ -888,6 +1156,7 @@ function renderPlacementsView(
         locale,
         rulership,
         symbolClass,
+        boundsScheme,
         selection,
       )}
       {housesRenderable && (
@@ -902,6 +1171,7 @@ function renderPlacementsView(
             locale,
             rulership,
             symbolClass,
+            boundsScheme,
             selection,
           )}
           {renderTableTab(
@@ -914,6 +1184,7 @@ function renderPlacementsView(
             locale,
             rulership,
             symbolClass,
+            boundsScheme,
             selection,
           )}
         </>
@@ -935,6 +1206,7 @@ function renderPatternsView(
   locale: Locale,
   rulership: RulershipChoice,
   symbolClass: SymbolClass,
+  boundsScheme: BoundsScheme,
   selection?: TableSelection,
 ): React.ReactNode {
   return (
@@ -951,6 +1223,7 @@ function renderPatternsView(
         locale,
         rulership,
         symbolClass,
+        boundsScheme,
         selection,
       )}
     </>
@@ -1177,6 +1450,10 @@ export function ChartDataView({
   const [printAll, setPrintAll] = useState(false);
 
   const pointVisibility = toPointVisibilityOptions(extendedSettings);
+  // Which bound table the dignity/condition/reception/almuten tables use (#549) — threaded
+  // alongside `rulership` through the same render-tab functions, not through `pointVisibility`
+  // (it isn't a visibility concern).
+  const boundsScheme = extendedSettings.boundsScheme;
 
   // #378: `showHouses` alone (passed in from `person.timeAccuracy`) isn't enough — a *known*
   // birth time at a latitude where the chosen house system has no solution still produces
@@ -1413,6 +1690,7 @@ export function ChartDataView({
                           locale,
                           rulership,
                           symbolClass,
+                          boundsScheme,
                         )}
                       {tab === 'matrix' && renderMatrixView(load.data, displayName, pointVisibility, t, locale)}
                       {tab === 'elements' && renderElementsView(load.data, displayName, pointVisibility, t, locale)}
@@ -1426,6 +1704,7 @@ export function ChartDataView({
                           locale,
                           rulership,
                           symbolClass,
+                          boundsScheme,
                         )}
                       {tab === 'patterns' &&
                         renderPatternsView(
@@ -1437,6 +1716,7 @@ export function ChartDataView({
                           locale,
                           rulership,
                           symbolClass,
+                          boundsScheme,
                         )}
                     </>
                   )}
@@ -1490,6 +1770,7 @@ export function ChartDataView({
                       locale,
                       rulership,
                       symbolClass,
+                      boundsScheme,
                       tableSelection,
                     )}
                   {currentTab === 'matrix' &&
@@ -1505,6 +1786,7 @@ export function ChartDataView({
                       locale,
                       rulership,
                       symbolClass,
+                      boundsScheme,
                       tableSelection,
                     )}
                   {currentTab === 'patterns' &&
@@ -1517,6 +1799,7 @@ export function ChartDataView({
                       locale,
                       rulership,
                       symbolClass,
+                      boundsScheme,
                       tableSelection,
                     )}
                 </div>

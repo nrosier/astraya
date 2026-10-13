@@ -11,11 +11,12 @@
  * @module chart-tables
  * @purpose Shapes a computed `ChartData` into the flat rows a chart's data tables, wheel ring and sheet actually render (#44).
  * @conventions Pure and framework-free; kept separate from `chart-compute.ts` so the slow real-engine chart test and the fast pure row-shaping test can run independently; longitude is rounded to the nearest arcsecond before sign-splitting (`degreeParts`) to avoid a seconds rounding bumping the sign; the wheel's aspect web is limited to major aspects, tables show every aspect found.
- * @exports positionRows, houseCuspRows, angleRows, aspectRows, crossAspectRows, dignityRows, dispositorRows, declinationContactRows, antisciaRows, fixedStarRows, chartShapeOf, derivedPointRows, chartWheelRing, chartSheetMetaLines, chartSheetInput, degreeParts, visiblePositions, visibleAspects, visibleAngleAspects, almutenOfAscendant
+ * @exports positionRows, houseCuspRows, angleRows, aspectRows, crossAspectRows, dignityRows, conditionRows, receptionRows, dispositorRows, declinationContactRows, antisciaRows, fixedStarRows, chartShapeOf, derivedPointRows, chartWheelRing, chartSheetMetaLines, chartSheetInput, degreeParts, visiblePositions, visibleAspects, visibleAngleAspects, almutenOfAscendant, AlmutenCandidateRow
  */
 import { almutenOf, essentialDignityScoreOf } from '../astrology/almuten.js';
 import { antiscialContacts, type AntiscialContact } from '../astrology/antiscia.js';
 import { bodyById, bodyByKey } from '../astrology/bodies.js';
+import type { BoundsScheme } from '../astrology/bounds.js';
 import { declinationContacts, isOutOfBounds } from '../astrology/declinations.js';
 import { dispositorChain, isMutualReception } from '../astrology/dispositors.js';
 import { elementBalance, houseOf, modalityBalance } from '../astrology/emphasis.js';
@@ -23,12 +24,25 @@ import { fixedStarConjunctions } from '../astrology/fixed-stars.js';
 import { jonesBodyPositions, jonesShapeOf, type JonesShapeResult } from '../astrology/jones-shapes.js';
 import { derivedPointByKey, type DerivedPointKey } from '../astrology/derived-points.js';
 import { midpointOf } from '../astrology/midpoints.js';
+import { mutualReceptionBetween, type DignityType } from '../astrology/reception.js';
+import {
+  angularityOfHouse,
+  isBesieged,
+  isInHayz,
+  motionOf,
+  sectAlignmentOf,
+  TRADITIONAL_PLANET_IDS,
+  type Angularity,
+  type Motion,
+  type SectAlignment,
+} from '../astrology/planetary-condition.js';
 import { DEFAULT_RULERSHIP_CHOICE, primaryRulerOf, rulersOf, type RulershipChoice } from '../astrology/rulership.js';
+import { solarConditionOf, solarPhaseOf, type SolarCondition, type SolarPhase } from '../astrology/sect.js';
 import { degreesInSign, signIndex, signOf, type Element, type Modality } from '../astrology/signs.js';
 import { formatCoordinate } from '../ui/format.js';
 import { housesAreDefined, type AngleAspect, type ChartData } from './chart-compute.js';
 import { derivedPointLongitude } from './derived-point-position.js';
-import type { Aspect } from '../astrology/aspects.js';
+import { DEFAULT_ORB_CONFIG, type Aspect, type OrbConfig } from '../astrology/aspects.js';
 import type { Locale } from '../interpretation/schema.js';
 import type { BodyId, BodyPosition, Degrees } from '../ephemeris/types.js';
 import type { BirthMomentInput } from '../time/types.js';
@@ -389,14 +403,20 @@ export interface DignityRow {
  * *display* rulership preference. Only the boolean `ruler`/`exalted`/`detriment`/`fall` fields (read from
  * `data.dignities`, built from that display preference in `chart-compute.ts`) are meant to vary with it.
  */
-export function dignityRows(data: ChartData, options: PointVisibilityOptions = {}): readonly DignityRow[] {
+export function dignityRows(
+  data: ChartData,
+  options: PointVisibilityOptions = {},
+  boundsScheme: BoundsScheme = 'egyptian',
+): readonly DignityRow[] {
   return visiblePositions(data.positions, options).map((position) => {
     const body = bodyById(position.body);
     const dignities = data.dignities.get(position.body);
     // The same rulers as the chart's own `dignities`, so a planet in its own sign is never "peregrine".
-    // Always traditional (#545) — see the function's own doc comment.
+    // Always traditional (#545) — see the function's own doc comment. `boundsScheme` is the one
+    // axis a scheme bundle (#549) actually varies here.
     const score = essentialDignityScoreOf(position.body, position.longitude, data.sect, {
       rulershipScheme: 'traditional',
+      boundsScheme,
     });
     return {
       bodyKey: body?.key ?? String(position.body),
@@ -414,21 +434,193 @@ export function dignityRows(data: ChartData, options: PointVisibilityOptions = {
   });
 }
 
+export interface ConditionRow {
+  readonly bodyKey: string;
+  readonly bodyName: string;
+  /** Essential-dignity point score, same scale and traditional-only scoring as `DignityRow.points` (#398, #545). */
+  readonly points: number;
+  readonly peregrine: boolean;
+  readonly sectAlignment: SectAlignment;
+  /** `undefined` when houses aren't usable (`housesAreDefined`). */
+  readonly angularity?: Angularity;
+  readonly motion: Motion;
+  /** `undefined` when houses aren't usable — hayz needs the Ascendant. */
+  readonly inHayz?: boolean;
+  readonly besieged: boolean;
+  /** `undefined` for the Sun itself (no phase/proximity relative to itself), or when exactly conjunct/opposite the Sun, where orientality is not a meaningful distinction (`solarPhaseOf`'s own doc comment). */
+  readonly solarPhase?: SolarPhase | undefined;
+  readonly solarCondition?: SolarCondition;
+}
+
 /**
- * "Almuten of the Ascendant" summary line (#398): which traditional planet holds the most
- * essential dignity at the Ascendant's own degree. More than one body can tie — `almutens`
- * carries all of them, same as `almuten.ts`'s own `AlmutenResult`. `undefined` when houses
- * aren't usable (`housesAreDefined`), the same gate `ChartView`'s own houses-dependent sections use.
+ * The traditional planetary-condition table (#547): sect alignment, accidental dignity
+ * (angularity, hayz), motion, besiegement, and solar phase/proximity, for each of the seven
+ * traditional (Chaldean) planets — the standard first read of a traditional chart alongside
+ * essential dignity (`dignityRows`, not duplicated here). Scoped to those seven: sect, hayz and
+ * besiegement have no established reading for the outer planets, nodes, or asteroids
+ * (`planetary-condition.ts`'s own doc comment).
+ */
+export function conditionRows(
+  data: ChartData,
+  orbConfig: OrbConfig = DEFAULT_ORB_CONFIG,
+  boundsScheme: BoundsScheme = 'egyptian',
+): readonly ConditionRow[] {
+  const housesUsable = housesAreDefined(data.houses);
+  const sunBody = bodyByKey('sun');
+  const marsBody = bodyByKey('mars');
+  const saturnBody = bodyByKey('saturn');
+  const sunPosition = sunBody === undefined ? undefined : data.positions.find((p) => p.body === sunBody.id);
+  const marsPosition = marsBody === undefined ? undefined : data.positions.find((p) => p.body === marsBody.id);
+  const saturnPosition = saturnBody === undefined ? undefined : data.positions.find((p) => p.body === saturnBody.id);
+
+  const rows: ConditionRow[] = [];
+  for (const bodyId of TRADITIONAL_PLANET_IDS) {
+    const position = data.positions.find((p) => p.body === bodyId);
+    const body = bodyById(bodyId);
+    if (position === undefined || body === undefined) continue;
+    const score = essentialDignityScoreOf(bodyId, position.longitude, data.sect, {
+      rulershipScheme: 'traditional',
+      boundsScheme,
+    });
+    const isSun = sunBody?.id === bodyId;
+    rows.push({
+      bodyKey: body.key,
+      bodyName: body.name,
+      points: score.points,
+      peregrine: score.peregrine,
+      sectAlignment: sectAlignmentOf(bodyId, data.sect),
+      ...(housesUsable ? { angularity: angularityOfHouse(houseOf(position.longitude, data.houses.cusps)) } : {}),
+      motion: motionOf(position.longitudeSpeed),
+      ...(housesUsable ? { inHayz: isInHayz(bodyId, position.longitude, data.houses.ascendant, data.sect) } : {}),
+      besieged:
+        marsPosition !== undefined && saturnPosition !== undefined && !isSun
+          ? isBesieged(position.longitude, marsPosition.longitude, saturnPosition.longitude, orbConfig)
+          : false,
+      ...(isSun || sunPosition === undefined
+        ? {}
+        : {
+            solarPhase: solarPhaseOf(position.longitude, sunPosition.longitude),
+            solarCondition: solarConditionOf(position.longitude, sunPosition.longitude),
+          }),
+    });
+  }
+  return rows;
+}
+
+export interface ReceptionRow {
+  readonly bodyAKey: string;
+  readonly bodyAName: string;
+  readonly bodyBKey: string;
+  readonly bodyBName: string;
+  /** Never `'none'` — a pair with no reception at all is simply not a row. */
+  readonly kind: 'oneWay' | 'mutual';
+  /** Every dignity type A receives from B. */
+  readonly aFromBTypes: readonly DignityType[];
+  /** Every dignity type B receives from A. */
+  readonly bFromATypes: readonly DignityType[];
+  /** True for mutual reception of the *same* dignity type on both sides (e.g. both by domicile); false for mixed reception or a one-way pair. */
+  readonly sameDignityType: boolean;
+  /** Whether A and B are also in aspect to each other (#548) — reception "by aspect", traditionally the stronger, more immediately active case. */
+  readonly aspectLinked: boolean;
+}
+
+/**
+ * Every receiving pair among the seven traditional planets (#548) — one row per pair that has
+ * at least a one-way reception; a pair with none at all is simply absent, not a zeroed-out row.
+ * `data.aspects` is cross-referenced only to flag `aspectLinked`; this function never recomputes
+ * aspects itself.
+ */
+export function receptionRows(data: ChartData, boundsScheme: BoundsScheme = 'egyptian'): readonly ReceptionRow[] {
+  const rows: ReceptionRow[] = [];
+  for (let i = 0; i < TRADITIONAL_PLANET_IDS.length; i++) {
+    for (let j = i + 1; j < TRADITIONAL_PLANET_IDS.length; j++) {
+      const bodyAId = TRADITIONAL_PLANET_IDS[i];
+      const bodyBId = TRADITIONAL_PLANET_IDS[j];
+      if (bodyAId === undefined || bodyBId === undefined) continue;
+      const positionA = data.positions.find((p) => p.body === bodyAId);
+      const positionB = data.positions.find((p) => p.body === bodyBId);
+      if (positionA === undefined || positionB === undefined) continue;
+      const result = mutualReceptionBetween(
+        bodyAId,
+        positionA.longitude,
+        bodyBId,
+        positionB.longitude,
+        data.sect,
+        'traditional',
+        boundsScheme,
+      );
+      if (result.kind === 'none') continue;
+      const bodyA = bodyById(bodyAId);
+      const bodyB = bodyById(bodyBId);
+      const aspectLinked = data.aspects.some(
+        (aspect) =>
+          (aspect.bodyA === bodyAId && aspect.bodyB === bodyBId) ||
+          (aspect.bodyA === bodyBId && aspect.bodyB === bodyAId),
+      );
+      rows.push({
+        bodyAKey: bodyA?.key ?? String(bodyAId),
+        bodyAName: bodyA?.name ?? String(bodyAId),
+        bodyBKey: bodyB?.key ?? String(bodyBId),
+        bodyBName: bodyB?.name ?? String(bodyBId),
+        kind: result.kind,
+        aFromBTypes: result.aFromB.map((r) => r.dignityType),
+        bFromATypes: result.bFromA.map((r) => r.dignityType),
+        sameDignityType: result.sameDignityType,
+        aspectLinked,
+      });
+    }
+  }
+  return rows;
+}
+
+export interface AlmutenCandidateRow {
+  readonly bodyKey: string;
+  readonly bodyName: string;
+  readonly ruler: boolean;
+  readonly exalted: boolean;
+  readonly triplicity: boolean;
+  readonly bound: boolean;
+  readonly face: boolean;
+  readonly points: number;
+  readonly peregrine: boolean;
+}
+
+/**
+ * "Almuten of the Ascendant" summary (#398, #551): which traditional planet holds the most
+ * essential dignity at the Ascendant's own degree, and — unlike the original version of this
+ * function — every candidate's own score breakdown, not only the winner's name. More than one
+ * body can tie — `almutens` carries all of them, same as `almuten.ts`'s own `AlmutenResult`.
+ * `undefined` when houses aren't usable (`housesAreDefined`), the same gate `ChartView`'s own
+ * houses-dependent sections use.
  *
  * Always scored under the traditional rulership scheme (#545), never the user's modern/traditional/both
  * *display* preference — the Almuten is a historical-technique result, not a cosmetic one. There is
  * deliberately no `rulership` parameter here: forwarding the ambient display choice is exactly the leak
  * #545 fixed, so don't reintroduce one.
  */
-export function almutenOfAscendant(data: ChartData): { readonly almutens: readonly string[] } | undefined {
+export function almutenOfAscendant(
+  data: ChartData,
+  boundsScheme: BoundsScheme = 'egyptian',
+): { readonly almutens: readonly string[]; readonly candidates: readonly AlmutenCandidateRow[] } | undefined {
   if (!housesAreDefined(data.houses)) return undefined;
-  const result = almutenOf(data.houses.ascendant, data.sect, { rulershipScheme: 'traditional' });
-  return { almutens: result.almutens.map((id) => bodyById(id)?.key ?? String(id)) };
+  const result = almutenOf(data.houses.ascendant, data.sect, { rulershipScheme: 'traditional', boundsScheme });
+  return {
+    almutens: result.almutens.map((id) => bodyById(id)?.key ?? String(id)),
+    candidates: result.scores.map((score) => {
+      const body = bodyById(score.body);
+      return {
+        bodyKey: body?.key ?? String(score.body),
+        bodyName: body?.name ?? String(score.body),
+        ruler: score.ruler,
+        exalted: score.exalted,
+        triplicity: score.triplicity,
+        bound: score.bound,
+        face: score.face,
+        points: score.points,
+        peregrine: score.peregrine,
+      };
+    }),
+  };
 }
 
 export interface DispositorRow {

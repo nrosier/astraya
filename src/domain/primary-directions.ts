@@ -28,6 +28,17 @@
  * - **Tropical, Placidus.** Positions are tropical whatever the user's zodiac setting, since
  *   right ascension is measured from the vernal equinox; houses are Placidus, the house system
  *   built on the same semi-arcs the directions are measured by.
+ * - **Configurable significator/promissor sets (#553).** `significators`/`promissors` on
+ *   `PrimaryDirectionsOptions` default to the two lists above but can be widened or narrowed —
+ *   the Descendant/IC can now be asked for directly (`PRIMARY_DIRECTION_ANGLE_KEYS`), say.
+ *   `#553` also asked for converse directions, true in-mundo (real latitude rather than β = 0),
+ *   and explicit Regiomontanus support. None of those three are implemented here: this module's
+ *   spherical-trigonometry core is verified to the arcminute against two published worked
+ *   examples (see `src/astrology/primary-directions.ts`'s header), and getting a direction's
+ *   rotational sense or house-circle convention subtly wrong is exactly the kind of error that
+ *   bar exists to catch — not something to risk introducing without an equally verifiable
+ *   reference calculation for each new mode, which this change did not have in hand. Left as a
+ *   follow-up rather than an unverified addition.
  *
  * The directed chart for an age is the sphere turned by that age's arc: its houses are the
  * Placidus houses of the moment the RAMC had advanced by the arc (the real sky a few hours after
@@ -40,7 +51,7 @@
  * @module primary-directions
  * @purpose Computes a person's primary directions (#407): direct zodiacal Placidus-semi-arc directions of Sun–Pluto and their Ptolemaic aspects to the Ascendant, Midheaven, Sun and Moon, each with age, exact date and active window; plus the directed chart (houses and positions) at a chosen age for a bi-wheel.
  * @conventions PrimaryDirectionKey is a const object, not a TS enum (the project compiles under erasableSyntaxOnly); orb is a window in degrees of RA around each hit's arc (default 1°), stored per hit as activeFromAge/activeUntilAge so filtering never needs the key; tropical zodiac and Placidus houses always; at or beyond the polar circles (|φ| ≥ 90° − ε) returns defined: false with no hits instead of throwing.
- * @exports PrimaryDirectionKey, arcToAge, ageToArc, DEFAULT_PRIMARY_DIRECTION_ORB, DEFAULT_MAX_AGE_YEARS, PRIMARY_DIRECTION_SIGNIFICATORS, PRIMARY_DIRECTION_PROMISSORS, PrimaryDirection, PrimaryDirectionsOptions, PrimaryDirectionsData, generatePrimaryDirections, isDirectionActive, activeDirections, DirectedBodyPosition, DirectedChart, directedChartAt
+ * @exports PrimaryDirectionKey, arcToAge, ageToArc, DEFAULT_PRIMARY_DIRECTION_ORB, DEFAULT_MAX_AGE_YEARS, PRIMARY_DIRECTION_SIGNIFICATORS, PRIMARY_DIRECTION_ANGLE_KEYS, PRIMARY_DIRECTION_PROMISSORS, PrimaryDirection, PrimaryDirectionsOptions, PrimaryDirectionsData, generatePrimaryDirections, isDirectionActive, activeDirections, DirectedBodyPosition, DirectedChart, directedChartAt
  */
 import { bodyByKey } from '../astrology/bodies.js';
 import {
@@ -99,10 +110,19 @@ export const DEFAULT_PRIMARY_DIRECTION_ORB: Degrees = 1;
 /** How far into a life directions are listed — a display limit, not an astrological one. */
 export const DEFAULT_MAX_AGE_YEARS = 100;
 
-/** The hylegiacal points directed to, minus the Part of Fortune (see the header). */
+/** The hylegiacal points directed to, minus the Part of Fortune (see the header) — the default `significators` option. */
 export const PRIMARY_DIRECTION_SIGNIFICATORS = ['asc', 'mc', 'sun', 'moon'] as const;
 
-/** The bodies directed, by `BodyDefinition.key`. */
+/**
+ * Every significator key `generatePrimaryDirections` understands beyond a plain `BodyDefinition.key`
+ * (#553): the four angles. The Descendant/IC need no entry in the *default* list (see the header:
+ * their opposition arrives via the Ascendant/MC's own opposition aspect at the same arc), but a
+ * caller who wants them as first-class significators in their own right — not merely implied —
+ * can now ask for them directly.
+ */
+export const PRIMARY_DIRECTION_ANGLE_KEYS = ['asc', 'mc', 'dsc', 'ic'] as const;
+
+/** The bodies directed, by `BodyDefinition.key` — the default `promissors` option. */
 export const PRIMARY_DIRECTION_PROMISSORS = [
   'sun',
   'moon',
@@ -134,6 +154,15 @@ export interface PrimaryDirection extends DirectionHit {
 export interface PrimaryDirectionsOptions {
   /** Defaults to `DEFAULT_MAX_AGE_YEARS`. */
   readonly maxAgeYears?: number;
+  /**
+   * Which significators to direct to (#553). Defaults to `PRIMARY_DIRECTION_SIGNIFICATORS`. Each
+   * entry is either one of `PRIMARY_DIRECTION_ANGLE_KEYS` or a `BodyDefinition.key`. The method
+   * itself (Placidus semi-arcs, direct only, in zodiaco) is unchanged by this option — it only
+   * changes which points are asked about, never how an arc to one of them is computed.
+   */
+  readonly significators?: readonly string[];
+  /** Which bodies are directed (#553). Defaults to `PRIMARY_DIRECTION_PROMISSORS`. */
+  readonly promissors?: readonly string[];
 }
 
 export interface PrimaryDirectionsData {
@@ -167,10 +196,18 @@ function longitudeOf(natal: ChartData, key: string): Degrees {
   return position.longitude;
 }
 
-function significatorsOf(natal: ChartData): readonly DirectionSignificator[] {
-  return PRIMARY_DIRECTION_SIGNIFICATORS.map((key): DirectionSignificator => {
+/** Normalise to the half-open interval [0, 360) — the same convention `astrology/aspects.ts` uses. */
+function norm360(degrees: Degrees): Degrees {
+  const value = degrees % 360;
+  return value < 0 ? value + 360 : value;
+}
+
+function significatorsOf(natal: ChartData, keys: readonly string[]): readonly DirectionSignificator[] {
+  return keys.map((key): DirectionSignificator => {
     if (key === 'asc') return { key, longitude: natal.houses.ascendant, angle: 'asc' };
     if (key === 'mc') return { key, longitude: natal.houses.midheaven, angle: 'mc' };
+    if (key === 'dsc') return { key, longitude: norm360(natal.houses.ascendant + 180), angle: 'dsc' };
+    if (key === 'ic') return { key, longitude: norm360(natal.houses.midheaven + 180), angle: 'ic' };
     return { key, longitude: longitudeOf(natal, key) };
   });
 }
@@ -196,13 +233,13 @@ export async function generatePrimaryDirections(
   if (!isDefinedAtLatitude(frame.geoLatitude, frame.obliquity)) return { ...base, defined: false, hits: [] };
 
   const maxArc = ageToArc(options.maxAgeYears ?? DEFAULT_MAX_AGE_YEARS, key);
-  const promissors = PRIMARY_DIRECTION_PROMISSORS.map((promissorKey) => ({
+  const promissors = (options.promissors ?? PRIMARY_DIRECTION_PROMISSORS).map((promissorKey) => ({
     key: promissorKey,
     longitude: longitudeOf(natal, promissorKey),
   }));
 
   const hits: PrimaryDirection[] = [];
-  for (const significator of significatorsOf(natal)) {
+  for (const significator of significatorsOf(natal, options.significators ?? PRIMARY_DIRECTION_SIGNIFICATORS)) {
     for (const promissor of promissors) {
       if (promissor.key === significator.key) continue;
       for (const hit of calculatePrimaryDirections(significator, promissor, frame, { key }).directions) {

@@ -15,6 +15,7 @@ One level above `src/astrology/`: composes pure astrological calculations into s
 - `full-export.ts` — Whole-device backup export (every person + computable natal tables + CSV). Deps: `./chart-compute`, `./chart-tables`, `./person`, `astrology/rulership`.
 - `harmonic.ts` — Harmonic/Vedic Varga charts (D9 Navamsha, etc.). Deps: `astrology/harmonics`, `./chart-compute`.
 - `horary.ts` — Horary chart + considerations-before-judgment + void-of-course check. Deps: `astrology/horary`, `astrology/void-of-course`, `astrology/emphasis`, `./chart-compute`.
+- `horary-judgment.ts` — Significator selection, perfection (direct aspect, translation, collection, prohibition), reception, radicality (#552). Deps: `astrology/dignities`, `astrology/horary`, `astrology/reception`, `astrology/emphasis`, `./chart-compute`.
 - `house-overlays.ts` — Synastry house overlays (which houses each person's bodies fall in, both directions). Deps: `astrology/emphasis`, `./synastry`, `./chart-compute`.
 - `id.ts` — Local-first CSPRNG-backed prefixed base32 id generation (people/charts). Deps: Web Crypto API only.
 - `lunar-returns.ts` — Lunar returns (every Moon-to-natal-longitude each cycle). Deps: `astrology/solar-lunar-returns`, `astrology/aspects`, `ephemeris/generated-constants`.
@@ -35,4 +36,5 @@ One level above `src/astrology/`: composes pure astrological calculations into s
 - `solar-arc-directions.ts` — Solar arc directions (apply progressed Sun's arc to all bodies). Deps: `astrology/solar-arc-directions`, `astrology/progressions`, `astrology/aspects`.
 - `solar-return.ts` — Solar return (Sun returns to natal longitude each year). Deps: `astrology/solar-lunar-returns`, `astrology/aspects`, `ephemeris/generated-constants`.
 - `synastry.ts` — Two-person compatibility core (independent charts + cross-chart aspects + importance ranking). Deps: `astrology/aspects`, `astrology/synastry-importance`, `./chart-compute`.
+- `timing-timeline.ts` — Shared `TimingTimelineEvent` shape + adapters from zodiacal releasing/firdaria/profections onto one timeline axis (#554). Deps: `astrology/bodies`, `astrology/firdaria`, `astrology/zodiacal-releasing`, `astrology/signs`, `./profections`.
 - `transit.ts` — Transit bi-wheel (natal + moving positions + natal aspects). Deps: `astrology/aspects`, `./chart-compute`.

@@ -65,6 +65,9 @@ const en = {
     'A fixed star conjunct a planet or angle, within a tight orb — traditionally read as lending that star’s own character to the point it touches',
   derivedPointTooltip:
     'A point calculated from other positions rather than observed directly — e.g. the Part of Fortune, combining the Sun, Moon and Ascendant',
+  lotFormulaLabel: 'Formula',
+  lotFormulaTooltip:
+    'The lot’s own formula (#550): day-chart operand order, then night-chart (the two always reverse here) — blank for the midpoints, which have no lot formula of their own.',
   rulerTooltip: 'Ruler (domicile): the planet is in the sign it rules — its own sign, where it is strongest',
   exaltedTooltip:
     'Exalted: the planet is in a sign where it is especially strengthened, second only to its own rulership',
@@ -90,6 +93,60 @@ const en = {
   dispositorsTooltip:
     "A dispositor is the ruler of a planet's sign. Dispositor chains trace where each planet's rulership flows.",
   dispositorsTooltipLabel: 'About dispositors',
+  conditionCaption: 'Condition',
+  conditionHint:
+    "A traditional planet's condition: sect alignment, angularity, hayz, motion, besiegement, and solar phase/proximity — the standard first read of a traditional chart, alongside dignity above.",
+  conditionTooltip:
+    "Sect alignment (of/contrary to the chart's own day or night sect), angularity (angular/succedent/cadent house), hayz (of sect, on its own side of the horizon, in a sign of its own gender), motion, besiegement (hemmed in by Mars and Saturn), and solar phase/proximity (oriental or occidental, cazimi, combust, or under the beams).",
+  conditionTooltipLabel: 'About condition',
+  sectAlignmentLabel: 'Sect',
+  sectAlignmentTooltip:
+    "Whether this planet is of the chart's own day/night sect, contrary to it, or (Mercury) neutral to either.",
+  ofSect: 'Of sect',
+  contraSect: 'Contrary',
+  sectNeutral: 'Neutral',
+  angularityLabel: 'Angularity',
+  angularityTooltip: 'Angular (1st/4th/7th/10th house), succedent (2nd/5th/8th/11th), or cadent (3rd/6th/9th/12th).',
+  angular: 'Angular',
+  succedent: 'Succedent',
+  cadent: 'Cadent',
+  motionLabel: 'Motion',
+  directLabel: 'Direct',
+  retrogradeLabel: 'Retrograde',
+  stationaryLabel: 'Stationary',
+  hayzLabel: 'Hayz',
+  hayzTooltip:
+    "In hayz: of the chart's sect, on its own side of the horizon for that sect, and in a sign of its own gender (masculine for a diurnal planet, feminine for a nocturnal one).",
+  besiegedLabel: 'Besieged',
+  besiegedTooltip: 'Within conjunction orb of both Mars and Saturn at once, one on each side.',
+  solarPhaseLabel: 'Solar phase',
+  solarPhaseTooltip: 'Oriental (rising before the Sun) or occidental (rising after it).',
+  oriental: 'Oriental',
+  occidental: 'Occidental',
+  solarConditionLabel: 'Solar proximity',
+  solarConditionTooltip:
+    'How close to the Sun: cazimi (within its disk), combust, under the beams, or free of all three.',
+  cazimi: 'Cazimi',
+  combust: 'Combust',
+  underTheBeams: 'Under the beams',
+  solarConditionFree: 'Free',
+  receptionCaption: 'Reception',
+  receptionHint:
+    'Reception: a planet standing in another’s essential dignity. Mutual reception is each planet in the other’s dignity of the same kind (e.g. both by domicile); mixed reception is each in the other’s dignity of a different kind; one-way is only one side. Aspect-linked reception — the pair also in aspect — is traditionally the stronger, more immediately active case.',
+  receptionTooltip:
+    'Which pairs of traditional planets receive each other, by which dignity (ruler, exalted, triplicity, bound, face), whether it is the same dignity on both sides, and whether the pair is also in aspect.',
+  receptionTooltipLabel: 'About reception',
+  receptionKindLabel: 'Kind',
+  mutualReceptionKind: 'Mutual',
+  oneWayReceptionKind: 'One-way',
+  receptionAFromBLabel: 'A receives from B by',
+  receptionBFromALabel: 'B receives from A by',
+  receptionSameTypeLabel: 'Same dignity',
+  receptionSameTypeTooltip:
+    'Mutual reception of the same dignity type on both sides (e.g. both by domicile), rather than mixed reception by different types.',
+  aspectLinkedLabel: 'Aspect-linked',
+  aspectLinkedTooltip:
+    'The two planets are also in aspect to each other — traditionally the stronger, more immediately active case of reception.',
   declinationsCaption: 'Declinations',
   antisciaCaption: 'Antiscia',
   fixedStarsCaption: 'Fixed stars',
@@ -98,6 +155,7 @@ const en = {
   almutenTooltip:
     'The almuten is the planet with the most essential-dignity points at a chart point — found by scoring every dignity (rulership, exaltation, triplicity, bound/term, face) a planet holds there and taking the highest total.',
   almutenTooltipLabel: 'About the almuten',
+  almutenBreakdownCaption: 'Almuten candidates',
   // Jones' own seven pattern names (#35, #398) have no established Dutch astrological
   // vocabulary, the same out-of-scope treatment house-system names and "Harmonic"/"Solar
   // return" already get (#158's glossary) — kept untranslated in both locales.
@@ -294,6 +352,9 @@ const nl: typeof en = {
     'Een vaste ster die nauw samenvalt met een planeet of hoek — traditioneel gelezen als het overdragen van het eigen karakter van die ster aan het punt dat ze raakt',
   derivedPointTooltip:
     'Een punt dat berekend wordt uit andere posities in plaats van direct waargenomen — bijvoorbeeld de Fortuna, een combinatie van Zon, Maan en Ascendant',
+  lotFormulaLabel: 'Formule',
+  lotFormulaTooltip:
+    'De eigen formule van het lot (#550): operandvolgorde bij een dagkaart, dan bij een nachtkaart (die twee wisselen hier altijd om) — leeg bij de middelpunten, die geen eigen lotformule hebben.',
   rulerTooltip:
     'Heerser (domicilie): de planeet staat in het teken dat ze heerst — haar eigen teken, waar ze het sterkst is',
   exaltedTooltip:
@@ -321,6 +382,60 @@ const nl: typeof en = {
   dispositorsTooltip:
     'Een dispositor is de heerser van het teken van een planeet. Dispositorketens tonen hoe de heerserschap van elke planeet vloeit.',
   dispositorsTooltipLabel: 'Over dispositoren',
+  conditionCaption: 'Conditie',
+  conditionHint:
+    'De conditie van een traditionele planeet: sectafstemming, hoekstand, hayz, beweging, belegering en zonnefase/-nabijheid — de gebruikelijke eerste blik op een traditionele horoscoop, naast de waardigheden hierboven.',
+  conditionTooltip:
+    'Sectafstemming (overeenstemmend met of in strijd met de eigen dag- of nachtsect van de horoscoop), hoekstand (hoekig/opvolgend/val-huis), hayz (van de sect, aan de eigen kant van de horizon, in een teken van het eigen geslacht), beweging, belegering (ingesloten door Mars en Saturnus), en zonnefase/-nabijheid (oosters of westers, cazimi, combust, of onder de stralen).',
+  conditionTooltipLabel: 'Over conditie',
+  sectAlignmentLabel: 'Sect',
+  sectAlignmentTooltip:
+    'Of deze planeet overeenstemt met de eigen dag-/nachtsect van de horoscoop, daarmee in strijd is, of (Mercurius) neutraal is ten opzichte van beide.',
+  ofSect: 'Van de sect',
+  contraSect: 'In strijd',
+  sectNeutral: 'Neutraal',
+  angularityLabel: 'Hoekstand',
+  angularityTooltip: 'Hoekig (1e/4e/7e/10e huis), opvolgend (2e/5e/8e/11e), of val-huis (3e/6e/9e/12e).',
+  angular: 'Hoekig',
+  succedent: 'Opvolgend',
+  cadent: 'Val-huis',
+  motionLabel: 'Beweging',
+  directLabel: 'Direct',
+  retrogradeLabel: 'Retrograde',
+  stationaryLabel: 'Stationair',
+  hayzLabel: 'Hayz',
+  hayzTooltip:
+    'In hayz: van de sect van de horoscoop, aan de eigen kant van de horizon voor die sect, en in een teken van het eigen geslacht (mannelijk voor een dagplaneet, vrouwelijk voor een nachtplaneet).',
+  besiegedLabel: 'Belegerd',
+  besiegedTooltip: 'Binnen conjunctie-orb van zowel Mars als Saturnus tegelijk, één op elke kant.',
+  solarPhaseLabel: 'Zonnefase',
+  solarPhaseTooltip: 'Oosters (komt op vóór de zon) of westers (komt op na de zon).',
+  oriental: 'Oosters',
+  occidental: 'Westers',
+  solarConditionLabel: 'Zonnenabijheid',
+  solarConditionTooltip:
+    'Hoe dicht bij de zon: cazimi (binnen de schijf), combust, onder de stralen, of vrij van alle drie.',
+  cazimi: 'Cazimi',
+  combust: 'Combust',
+  underTheBeams: 'Onder de stralen',
+  solarConditionFree: 'Vrij',
+  receptionCaption: 'Receptie',
+  receptionHint:
+    'Receptie: een planeet die in de essentiële waardigheid van een andere staat. Wederzijdse receptie is elke planeet in de waardigheid van de ander van hetzelfde type (bijv. beide via heerserschap); gemengde receptie is elk in de waardigheid van de ander van een ander type; eenzijdig is slechts één kant. Receptie met aspect — het paar staat ook in aspect — is traditioneel het sterkere, directer actieve geval.',
+  receptionTooltip:
+    'Welke paren traditionele planeten elkaar ontvangen, door welke waardigheid (heerser, verheven, triplicitiet, bound, decaan), of dit dezelfde waardigheid is op beide kanten, en of het paar ook in aspect staat.',
+  receptionTooltipLabel: 'Over receptie',
+  receptionKindLabel: 'Soort',
+  mutualReceptionKind: 'Wederzijds',
+  oneWayReceptionKind: 'Eenzijdig',
+  receptionAFromBLabel: 'A ontvangt van B via',
+  receptionBFromALabel: 'B ontvangt van A via',
+  receptionSameTypeLabel: 'Zelfde waardigheid',
+  receptionSameTypeTooltip:
+    'Wederzijdse receptie van hetzelfde waardigheidstype op beide kanten (bijv. beide via heerserschap), in plaats van gemengde receptie via verschillende types.',
+  aspectLinkedLabel: 'Met aspect',
+  aspectLinkedTooltip:
+    'De twee planeten staan ook in aspect met elkaar — traditioneel het sterkere, directer actieve geval van receptie.',
   declinationsCaption: 'Declinaties',
   antisciaCaption: 'Antiscia',
   fixedStarsCaption: 'Vaste sterren',
@@ -329,6 +444,7 @@ const nl: typeof en = {
   almutenTooltip:
     'De almuten is de planeet met de meeste essentiële waardigheidspunten op een chartpunt — gevonden door elke waardigheid (heerschappij, exaltatie, triplicitair, grens/term, decanaat) die een planeet daar heeft te scoren en de hoogste totaalscore te nemen.',
   almutenTooltipLabel: 'Over de almuten',
+  almutenBreakdownCaption: 'Almuten-kandidaten',
   jonesShapeLabels: {
     bundle: 'Bundle',
     bowl: 'Bowl',

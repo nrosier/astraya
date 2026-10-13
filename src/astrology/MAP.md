@@ -10,6 +10,7 @@ Pure astrological calculation (no DOM/React): bodies, aspects, houses, dignities
 - `ayanamsas.ts` — UI's sidereal-mode picker list. Deps: `ephemeris/generated-constants`.
 - `bodies.ts` — Single source of truth: canonical body list (luminaries, planets, nodes, Lilith, Chiron, asteroids). Deps: `ephemeris/generated-constants`.
 - `bounds.ts` — Egyptian + Ptolemaic "terms" tables. Deps: `bodies`, `signs`.
+- `calculation-scheme.ts` — Named traditional scheme bundles (Hellenistic/Medieval Arabic/Renaissance-Lilly): bounds table + orb profile as one coherent choice (#549). Deps: `bounds`, `orb-profiles`.
 - `decans.ts` — Decan/face rulership for essential-dignity. Deps: `bodies`, `dignities`, `signs`.
 - `declinations.ts` — Equatorial contacts (parallels/contraparallels + out-of-bounds). Deps: ephemeris types only.
 - `dignities.ts` — Base essential-dignity tables (rulership, exaltation, detriment, fall, traditional/modern). Deps: `bodies`, `signs`.
@@ -18,6 +19,7 @@ Pure astrological calculation (no DOM/React): bodies, aspects, houses, dignities
 - `eclipses.ts` — Eclipse search + natal-contact analysis. Deps: `bodies`, `ephemeris/types`.
 - `electional.ts` — Electional astrology rule-scoring for auspicious timing. Deps: `aspects`, `bodies`, `emphasis`, `lunar-phase`, `void-of-course`.
 - `emphasis.ts` — Chart balance (element/modality/quadrant/hemisphere/dominant body/sign/house). Deps: `dignities`, `signs`.
+- `firdaria.ts` — Firdaria time-lord periods (seven classical planets + nodes, fixed years, day/night sect order) (#554). Deps: `sect`, `ephemeris/types`.
 - `fixed-stars.ts` — Fixed-star conjunctions + paran (angle-crossing). Deps: `aspects`.
 - `harmonics.ts` — Harmonic charts (Western) + Vedic Varga/divisional (D1/D9/D10). Deps: `signs`.
 - `horary.ts` — Horary "considerations before judgment" (radicality check via Lilly). Deps: `signs`.
@@ -29,10 +31,12 @@ Pure astrological calculation (no DOM/React): bodies, aspects, houses, dignities
 - `mutual-aspects.ts` — Planetary-cycle exact aspects (e.g. Jupiter-Saturn conjunctions). Deps: `aspects`.
 - `nakshatras.ts` — Vedic nakshatra (lunar mansion) placement. Deps: ephemeris types only.
 - `orb-profiles.ts` — Named/versioned orb-scale presets over `aspects.ts`'s `OrbConfig`, plus synastry's own tighter default. Deps: `aspects`.
+- `planetary-condition.ts` — Traditional condition (sect alignment, angularity, hayz, motion, besiegement) for the seven classical planets. Deps: `bodies`, `aspects`, `signs`, `sect`.
 - `planetary-returns.ts` — Return search (any body), demibirthday, progressed-lunar-return. Deps: `minor-progressions`, `progressions`, `ephemeris/generated-constants`.
 - `primary-directions.ts` — Primary directions engine (Placidus semi-arcs, in zodiaco at latitude 0, direct only; Naibod/Ptolemy keys). Deps: `aspects`, `progressions`.
 - `profections.ts` — Annual/monthly profections (Hellenistic house-per-year). Deps: `signs`.
 - `progressions.ts` — Secondary progressions (day-for-year, quotidian/naibod/solarArc MC). Deps: `ephemeris/types`.
+- `reception.ts` — Essential-dignity reception across all five dignity types, including mutual and mixed reception (#548). Deps: `rulership`, `dignities`, `triplicity`, `bounds`, `decans`, `signs`, `sect`.
 - `rectification.ts` — Birth-time rectification (score candidates by solar-arc/transit contacts). Deps: `bodies`, `progressions`.
 - `rulership.ts` — Single place for "who rules this sign" (modern/traditional/both), essential dignities. Deps: `dignities`, `signs`.
 - `sect.ts` — Sect (day/night) + Sun-proximity (oriental/occidental/cazimi/combust/under-beams). Deps: `aspects`.
@@ -45,3 +49,4 @@ Pure astrological calculation (no DOM/React): bodies, aspects, houses, dignities
 - `transit-importance.ts` — Transit filtering + ranking engine (daily/yearly presets). Deps: `aspects`, `bodies`, `rulership`.
 - `triplicity.ts` — Triplicity rulership (Dorothean/Lilly, day/night/participating). Deps: `bodies`, `signs`.
 - `void-of-course.ts` — Void-of-course Moon (last exact aspect before leaving sign). Deps: `aspects`, `bodies`.
+- `zodiacal-releasing.ts` — Zodiacal releasing, Level 1 only (sign/ruler/years periods walking forward from a Lot's natal sign) (#554). Deps: `bodies`, `dignities`, `signs`, `ephemeris/types`.
