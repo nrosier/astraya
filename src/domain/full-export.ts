@@ -26,10 +26,11 @@
  */
 /**
  * @module full-export
- * @purpose Builds the whole-device export: every person's birth record plus (where possible) their computed natal chart tables, as one JSON document or a people CSV.
- * @conventions Plain JSON with its own `format`/`version` fields rather than a database dump; charts are computed with the caller-supplied `ExtendedSettings`/`rulership` (#541), carried verbatim into `preferences` so the document states exactly what was in force; one person's chart failure is caught and reported per-person rather than failing the whole export; deleted people are excluded; `FULL_EXPORT_VERSION`'s own compatibility policy lives in docs/EXPORT_SCHEMA.md, not in this file.
- * @exports buildFullExport, peopleToCsv, fullExportFilename, peopleCsvFilename, FullExport, ExportedPerson, ExportedChart, FULL_EXPORT_FORMAT, FULL_EXPORT_VERSION
+ * @purpose Builds the whole-device export: every person's birth record plus (where possible) their computed natal and named Varga chart tables, as one JSON document or a people CSV.
+ * @conventions Plain JSON with its own `format`/`version` fields rather than a database dump; charts are computed with the caller-supplied `ExtendedSettings`/`rulership` (#541), carried verbatim into `preferences` so the document states exactly what was in force; each named Varga chart includes its radix-to-result longitude provenance; one person's chart failure is caught and reported per-person rather than failing the whole export; deleted people are excluded; `FULL_EXPORT_VERSION`'s own compatibility policy lives in docs/EXPORT_SCHEMA.md, not in this file.
+ * @exports buildFullExport, peopleToCsv, fullExportFilename, peopleCsvFilename, FullExport, ExportedPerson, ExportedChart, ExportedHarmonicChart, FULL_EXPORT_FORMAT, FULL_EXPORT_VERSION
  */
+import { VARGA_PRESETS } from '../astrology/harmonics.js';
 import type { RulershipChoice } from '../astrology/rulership.js';
 import {
   DEFAULT_EXTENDED_SETTINGS,
@@ -38,6 +39,7 @@ import {
   type ExtendedSettings,
 } from '../chart/extended-settings.js';
 import { housesAreDefined, computeChartData, type ChartData } from './chart-compute.js';
+import { computeHarmonic, harmonicPositionProvenance } from './harmonic.js';
 import {
   allMidpointsRows,
   antisciaRows,
@@ -80,6 +82,21 @@ export interface ExportedChart {
   readonly allMidpoints: ReturnType<typeof allMidpointsRows>;
 }
 
+/** A named, reproducible harmonic/Varga derivation from this person’s radix chart (#557). */
+export interface ExportedHarmonicChart {
+  readonly key: string;
+  readonly label: string;
+  readonly harmonic: number;
+  readonly source: {
+    readonly kind: 'radix';
+    readonly transform: 'longitude-times-n-mod-360';
+    readonly houses: 'whole-sign-from-harmonic-ascendant';
+  };
+  /** Per-body source and result longitudes, so a reader can verify the derivation. */
+  readonly radixPositions: ReturnType<typeof harmonicPositionProvenance>;
+  readonly chart: ExportedChart;
+}
+
 export interface ExportedPerson {
   readonly id: string;
   readonly displayName: string;
@@ -91,6 +108,8 @@ export interface ExportedPerson {
   /** Required fields the stored record lacks. */
   readonly missing: readonly string[];
   readonly natalChart?: ExportedChart;
+  /** Named Varga charts derived from the radix, absent when no usable houses are available. */
+  readonly harmonicCharts?: readonly ExportedHarmonicChart[];
   /** Why no chart is included for a person who has a birth moment, if its calculation failed. */
   readonly chartError?: string;
 }
@@ -155,6 +174,33 @@ function chartExport(
   };
 }
 
+async function harmonicExports(
+  moment: Person['moment'],
+  provider: EphemerisProvider,
+  options: ReturnType<typeof toChartCalculationOptions>,
+  rulership: RulershipChoice,
+  visibility: PointVisibilityOptions,
+): Promise<readonly ExportedHarmonicChart[]> {
+  if (moment === undefined) return [];
+  return Promise.all(
+    VARGA_PRESETS.map(async (preset) => {
+      const data = await computeHarmonic(moment, preset.n, provider, { ...options, rulership });
+      return {
+        key: preset.key,
+        label: preset.label,
+        harmonic: preset.n,
+        source: {
+          kind: 'radix',
+          transform: 'longitude-times-n-mod-360',
+          houses: 'whole-sign-from-harmonic-ascendant',
+        },
+        radixPositions: harmonicPositionProvenance(data),
+        chart: chartExport(data.harmonic, rulership, visibility, housesAreDefined(data.harmonic.houses)),
+      };
+    }),
+  );
+}
+
 export async function buildFullExport(params: {
   readonly people: readonly Person[];
   readonly provider: EphemerisProvider;
@@ -184,7 +230,14 @@ export async function buildFullExport(params: {
     try {
       const data = await computeChartData(person.moment, params.provider, calcOptions);
       const withHouses = person.timeAccuracy !== 'unknown' && housesAreDefined(data.houses);
-      people.push({ ...base, natalChart: chartExport(data, params.rulership, visibility, withHouses) });
+      const harmonicCharts = withHouses
+        ? await harmonicExports(person.moment, params.provider, calcOptions, params.rulership, visibility)
+        : undefined;
+      people.push({
+        ...base,
+        natalChart: chartExport(data, params.rulership, visibility, withHouses),
+        ...(harmonicCharts === undefined ? {} : { harmonicCharts }),
+      });
     } catch (error) {
       // One person's chart failing must not cost the user everyone else's data.
       people.push({ ...base, chartError: error instanceof Error ? error.message : String(error) });

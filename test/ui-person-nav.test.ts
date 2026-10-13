@@ -82,20 +82,18 @@ describe('PERSON_TABS', () => {
       composite: `#/people/${ID}/relationships/composite`,
       'periodic-transit': `#/people/${ID}/timing/forecast`,
       astrocartography: `#/people/${ID}/location/astrocartography`,
-      'multi-wheel': `#/people/${ID}/overlay/multi-wheel`,
     });
   });
 });
 
 describe('PERSON_TAB_FAMILIES (#398)', () => {
-  it('keeps the four fixed tabs, astrocartography, and multi-wheel out of every family', () => {
+  it('keeps the four fixed tabs and astrocartography out of every family', () => {
     const grouped = new Set(PERSON_TAB_FAMILIES.flatMap((family) => family.members));
     expect(grouped.has('overview')).toBe(false);
     expect(grouped.has('birth-record')).toBe(false);
     expect(grouped.has('chart')).toBe(false);
     expect(grouped.has('report')).toBe(false);
     expect(grouped.has('astrocartography')).toBe(false);
-    expect(grouped.has('multi-wheel')).toBe(false);
   });
 
   it('places every other tab in exactly one family', () => {
@@ -105,8 +103,7 @@ describe('PERSON_TAB_FAMILIES (#398)', () => {
         tab.key !== 'birth-record' &&
         tab.key !== 'chart' &&
         tab.key !== 'report' &&
-        tab.key !== 'astrocartography' &&
-        tab.key !== 'multi-wheel',
+        tab.key !== 'astrocartography',
     );
     for (const tab of groupable) {
       const matches = PERSON_TAB_FAMILIES.filter((family) => family.members.includes(tab.key));

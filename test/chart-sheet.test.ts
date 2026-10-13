@@ -163,4 +163,27 @@ describe('renderChartDialSvg (#511)', () => {
     );
     expect(markup).toContain('data-body-longitude="10.5000"');
   });
+
+  it('renders enabled antiscia, declination, and 90° dial layers in the shared SVG compositions (#556)', () => {
+    const withOverlays: ChartSheetInput = {
+      ...input,
+      overlays: {
+        positions: BODIES.map(({ body, key, longitude }) => ({ body, key, longitude })),
+        antiscia: [{ body: 0, contact: 1, kind: 'antiscion', orb: 0.2 }],
+        declinations: [{ a: 0, b: 2, kind: 'parallel', orb: 0.4 }],
+        midpointHits: [{ a: 0, b: 1, midpoint: 70.5, body: 2, orb: 0.1 }],
+      },
+    };
+    const dial = renderChartDialSvg(withOverlays);
+    const sheet = renderChartSheetSvg(withOverlays);
+
+    for (const markup of [dial.markup, sheet.markup]) {
+      expect(markup).toContain('chart-antiscia-antiscion');
+      expect(markup).toContain('chart-declination-parallel');
+      expect(markup).toContain('class="chart-dial90"');
+      expect(markup).toContain('dial90-midpoint-hit');
+    }
+    expect(dial.width).toBeCloseTo(1840, 6);
+    expect(sheet.height).toBeGreaterThan(renderChartSheetSvg(input).height);
+  });
 });

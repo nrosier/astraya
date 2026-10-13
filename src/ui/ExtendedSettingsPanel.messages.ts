@@ -116,9 +116,20 @@ const en = {
   aspectsToPartOfSpirit: 'Draw aspects to the Part of Spirit',
   aspectsToHint:
     'The Ascendant and Midheaven always aspect the bodies. The Vertex and the two parts do so here, to bodies only, never to each other or the angles; a part is not aspected to the luminary it is built from, as that repeats an Ascendant aspect.',
+  antiscia: 'Show antiscia and contra-antiscia on the wheel',
+  antisciaHint: 'Draws one chord for each visible antiscion or contra-antiscion contact within the orb below.',
+  antisciaMaxOrbLabel: 'Antiscia orb',
+  antisciaMaxOrbDecreaseLabel: 'Decrease antiscia orb',
+  antisciaMaxOrbIncreaseLabel: 'Increase antiscia orb',
+  declination: 'Show parallels and contraparallels on the wheel',
+  declinationHint:
+    'Draws one chord for each visible declination contact within the orb below. It is unavailable for synthetic charts without a real declination.',
+  declinationMaxOrbLabel: 'Declination orb',
+  declinationMaxOrbDecreaseLabel: 'Decrease declination orb',
+  declinationMaxOrbIncreaseLabel: 'Increase declination orb',
   dial90: 'Midpoint tree (90° dial)',
   dial90Hint:
-    'Lists every body sitting within the orb below of another pair’s midpoint, collapsed onto the 90° dial so conjunction, square and opposition hits are all caught — the standard cosmobiological midpoint-structure reading, shown as a table (not yet a wheel overlay).',
+    'Adds a 90° dial beside the wheel and lists every body sitting within the orb below of another pair’s midpoint, collapsed so conjunction, square and opposition hits are all caught.',
   midpointTreeOrbLabel: 'Midpoint tree orb',
   midpointTreeOrbDecreaseLabel: 'Decrease midpoint tree orb',
   midpointTreeOrbIncreaseLabel: 'Increase midpoint tree orb',
@@ -290,9 +301,20 @@ const nl: typeof en = {
   aspectsToPartOfSpirit: 'Aspecten naar het Lot van de Geest tekenen',
   aspectsToHint:
     'De Ascendant en het Midheaven maken altijd aspecten met de lichamen. De Vertex en de twee punten doen dat hier, alleen met lichamen, nooit met elkaar of met de assen; een punt maakt geen aspect met het lichtgevend lichaam waaruit het is opgebouwd, omdat dat een Ascendant-aspect herhaalt.',
+  antiscia: 'Antiscia en contra-antiscia op het wiel tonen',
+  antisciaHint: 'Tekent één koord voor elk zichtbaar antiscion- of contra-antiscioncontact binnen de orb hieronder.',
+  antisciaMaxOrbLabel: 'Antiscia-orb',
+  antisciaMaxOrbDecreaseLabel: 'Antiscia-orb verkleinen',
+  antisciaMaxOrbIncreaseLabel: 'Antiscia-orb vergroten',
+  declination: 'Parallellen en contraparallellen op het wiel tonen',
+  declinationHint:
+    'Tekent één koord voor elk zichtbaar declinatiecontact binnen de orb hieronder. Niet beschikbaar voor synthetische horoscopen zonder reële declinatie.',
+  declinationMaxOrbLabel: 'Declinatie-orb',
+  declinationMaxOrbDecreaseLabel: 'Declinatie-orb verkleinen',
+  declinationMaxOrbIncreaseLabel: 'Declinatie-orb vergroten',
   dial90: 'Middelpuntenboom (90°-dial)',
   dial90Hint:
-    'Toont elk lichaam dat binnen de orb hieronder op het middelpunt van een ander paar valt, samengevouwen op de 90°-dial zodat conjunctie, vierkant en oppositie allemaal worden gevonden — de gangbare cosmobiologische lezing van middelpuntstructuren, getoond als tabel (nog geen overlay op het wiel).',
+    'Voegt een 90°-dial naast het wiel toe en toont elk lichaam dat binnen de orb hieronder op het middelpunt van een ander paar valt, samengevouwen zodat conjunctie, vierkant en oppositie allemaal worden gevonden.',
   midpointTreeOrbLabel: 'Orb voor de middelpuntenboom',
   midpointTreeOrbDecreaseLabel: 'Orb voor de middelpuntenboom verkleinen',
   midpointTreeOrbIncreaseLabel: 'Orb voor de middelpuntenboom vergroten',

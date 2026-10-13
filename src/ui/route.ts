@@ -21,7 +21,6 @@
  *   #/people/:id/timing/:technique                        timeline|profections|progressions|solar-arc|primary-directions|transits|forecast
  *   #/people/:id/relationships/:technique                 synastry|composite (composite: ?view=)
  *   #/people/:id/location/astrocartography                Astrocartography
- *   #/people/:id/overlay/multi-wheel                       Multi-wheel overlay (natal + optional transit/relocated rings)
  *   #/explore/:tool                                       cycles|eclipses|horary|electional|rectification (horary: ?view=)
  *   #/documents/pdf                                       PDF builder
  *   #/preferences[/:section]                              Preferences (general|astrology|appearance|data)
@@ -92,9 +91,6 @@ export type Route =
   // Local Space toggle and relocation place are all picked in-screen, same reasoning as
   // periodic-transit's "as of" date above.
   | { readonly kind: 'astrocartography'; readonly personId: string }
-  // Multi-wheel overlay (#558): which rings (natal + optional transit/relocated) are picked
-  // in-screen, same reasoning as astrocartography/periodic-transit above.
-  | { readonly kind: 'multi-wheel'; readonly personId: string }
   | { readonly kind: 'shared' }
   // The PDF export builder (#441): the primary person is picked on the page itself, not the URL,
   // the same reasoning synastry's second person already uses.
@@ -164,7 +160,6 @@ function personSubRoute(personId: string, rest: readonly string[], hash: string)
     return { kind: 'composite', personId, ...(view === undefined ? {} : { view }) };
   }
   if (area === 'location' && second === 'astrocartography') return { kind: 'astrocartography', personId };
-  if (area === 'overlay' && second === 'multi-wheel') return { kind: 'multi-wheel', personId };
   return undefined;
 }
 
@@ -293,8 +288,6 @@ export function routeHref(route: Route): string {
     }
     case 'astrocartography':
       return person(route.personId, 'location', 'astrocartography');
-    case 'multi-wheel':
-      return person(route.personId, 'overlay', 'multi-wheel');
     case 'cycles':
     case 'event-search':
     case 'eclipses':

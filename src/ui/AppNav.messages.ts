@@ -53,7 +53,6 @@ const en = {
     composite: 'Composite',
     'periodic-transit': 'Forecast',
     astrocartography: 'Astrocartography',
-    'multi-wheel': 'Multi-wheel overlay',
   } satisfies Record<PersonTabKey, string>,
 
   familyLabels: {
@@ -104,7 +103,6 @@ const nl: typeof en = {
     composite: 'Composiet',
     'periodic-transit': 'Prognose',
     astrocartography: 'Astrocartografie',
-    'multi-wheel': 'Overlay met meerdere wielen',
   } satisfies Record<PersonTabKey, string>,
 
   familyLabels: {

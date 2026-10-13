@@ -42,7 +42,7 @@ import { degreesInSign, signIndex, signOf, type Element, type Modality } from '.
 import { formatCoordinate } from '../ui/format.js';
 import { housesAreDefined, type AngleAspect, type ChartData } from './chart-compute.js';
 import { derivedPointLongitude } from './derived-point-position.js';
-import { DEFAULT_ORB_CONFIG, type Aspect, type OrbConfig } from '../astrology/aspects.js';
+import { aspectHarmonicFamily, DEFAULT_ORB_CONFIG, type Aspect, type OrbConfig } from '../astrology/aspects.js';
 import type { Locale } from '../interpretation/schema.js';
 import type { BodyId, BodyPosition, Degrees } from '../ephemeris/types.js';
 import type { BirthMomentInput } from '../time/types.js';
@@ -138,6 +138,10 @@ export interface PointVisibilityOptions {
   /** Part of Spirit's own visibility (#542) — previously always shown regardless of any setting, unlike its sibling Part of Fortune. */
   readonly spiritVisible?: boolean; // default false
   readonly midpointsVisible?: boolean; // default false
+  readonly antisciaVisible?: boolean; // default false
+  readonly antisciaMaxOrb?: Degrees; // default 1
+  readonly declinationVisible?: boolean; // default false
+  readonly declinationMaxOrb?: Degrees; // default 1
   /** The 90°-dial midpoint-tree table's own visibility (#556) — previously computed and even rendered by `chart/dial90.ts`, but with no setting or UI surface reaching it at all. */
   readonly dial90Visible?: boolean; // default false
   readonly midpointTreeOrb?: Degrees; // default 1
@@ -368,6 +372,15 @@ function aspectRow(aspect: Aspect): AspectRow {
  */
 export function aspectRows(data: ChartData, options: PointVisibilityOptions = {}): readonly AspectRow[] {
   return visibleAspects(data.aspects, options).map(aspectRow);
+}
+
+/** Keeps only rows from one of Addey’s aspect harmonic families, or every row when no family is chosen. */
+export function filterAspectRowsByHarmonicFamily(
+  rows: readonly AspectRow[],
+  harmonicFamily: number | undefined,
+): readonly AspectRow[] {
+  if (harmonicFamily === undefined) return rows;
+  return rows.filter((row) => aspectHarmonicFamily(row.aspectKey) === harmonicFamily);
 }
 
 /**
@@ -1049,6 +1062,38 @@ export function chartSheetInput(
   return {
     metaLines,
     rings: [chartWheelRing(data, label, options)],
+    overlays: {
+      positions: bodies,
+      ...(options.antisciaVisible === true
+        ? {
+            antiscia: antiscialContacts(
+              new Map(bodies.map((body) => [body.body, body.longitude])),
+              options.antisciaMaxOrb ?? DEFAULT_ANTISCIA_ORB,
+            ),
+          }
+        : {}),
+      ...(options.declinationVisible === true && data.declinations !== undefined
+        ? {
+            declinations: declinationContacts(
+              new Map(
+                bodies.flatMap((body) => {
+                  const declination = data.declinations?.get(body.body);
+                  return declination === undefined ? [] : [[body.body, declination] as const];
+                }),
+              ),
+              options.declinationMaxOrb ?? DEFAULT_DECLINATION_ORB,
+            ),
+          }
+        : {}),
+      ...(options.dial90Visible === true
+        ? {
+            midpointHits: midpointTree(
+              new Map(bodies.map((body) => [body.body, body.longitude])),
+              options.midpointTreeOrb ?? DEFAULT_MIDPOINT_TREE_ORB,
+            ),
+          }
+        : {}),
+    },
     matrix: {
       bodies: [
         ...bodies.map((body) => {

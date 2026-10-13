@@ -10,7 +10,7 @@
 /**
  * @module HarmonicView
  * @purpose Renders the Harmonic & Varga (divisional) charts screen for a saved person: a chosen harmonic multiplies every longitude by a whole number and rebuilds whole-sign houses from the multiplied Ascendant.
- * @conventions A single synthetic chart derived from one natal chart (not a comparison), so it reuses `ChartDataView` wholesale like CompositeView/DraconicView; the in-screen picker is a named Varga preset (`VARGA_PRESETS`) or any positive integer. Text comes from co-located `HarmonicView.messages.ts` via `useMessages()`.
+ * @conventions A single synthetic chart derived from one natal chart (not a comparison), so it reuses `ChartDataView` wholesale like CompositeView/DraconicView; the in-screen picker is a named Varga preset (`VARGA_PRESETS`) or any positive integer, with a radix-to-result provenance table beside the derived chart. Text comes from co-located `HarmonicView.messages.ts` via `useMessages()`.
  * @exports HarmonicView
  */
 import { GlossaryTerms } from './GlossaryTerm.js';
@@ -19,7 +19,12 @@ import { Select } from './primitives/Select.js';
 import { useEffect, useMemo, useState } from 'react';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { VARGA_PRESETS } from '../astrology/harmonics.js';
-import { computeHarmonic, type HarmonicData } from '../domain/harmonic.js';
+import {
+  computeHarmonic,
+  harmonicPositionProvenance,
+  type HarmonicData,
+  type HarmonicPositionProvenanceRow,
+} from '../domain/harmonic.js';
 import { housesAreDefined } from '../domain/chart-compute.js';
 import { momentKey } from '../time/encode.js';
 import { ChartDataView } from './ChartView.js';
@@ -33,14 +38,39 @@ import { PersonNotFound } from './PersonNotFound.js';
 import { useStoreState } from './store-context.js';
 import type { ChartData } from '../domain/chart-compute.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
+import { SortableTable } from './SortableTable.js';
+import type { TableColumn } from './table-sort.js';
+import { formatFixed } from './format.js';
+import { deriveExportFilename } from '../domain/export-filename.js';
 
 type Load =
   | { readonly kind: 'idle' }
   | { readonly kind: 'loading' }
-  | { readonly kind: 'ready'; readonly data: ChartData }
+  | { readonly kind: 'ready'; readonly data: ChartData; readonly provenance: readonly HarmonicPositionProvenanceRow[] }
   | { readonly kind: 'error'; readonly message: string };
 
 const CUSTOM = 'custom';
+
+function provenanceColumns(
+  t: typeof harmonicViewMessages.en,
+  n: number,
+): readonly TableColumn<HarmonicPositionProvenanceRow>[] {
+  return [
+    { key: 'bodyName', label: t.bodyLabel, valueOf: (row) => row.bodyName },
+    {
+      key: 'radixLongitude',
+      label: t.radixLongitudeLabel,
+      valueOf: (row) => row.radixLongitude,
+      render: (row) => `${formatFixed(row.radixLongitude, 4)}°`,
+    },
+    {
+      key: 'harmonicLongitude',
+      label: t.harmonicLongitudeLabel(String(n)),
+      valueOf: (row) => row.harmonicLongitude,
+      render: (row) => `${formatFixed(row.harmonicLongitude, 4)}°`,
+    },
+  ];
+}
 
 export function HarmonicView({
   personId,
@@ -78,7 +108,8 @@ export function HarmonicView({
     void (async () => {
       try {
         const data: HarmonicData = await computeHarmonic(moment, n, provider);
-        if (!effect.cancelled) setLoad({ kind: 'ready', data: data.harmonic });
+        if (!effect.cancelled)
+          setLoad({ kind: 'ready', data: data.harmonic, provenance: harmonicPositionProvenance(data) });
       } catch (error) {
         if (!effect.cancelled)
           setLoad({ kind: 'error', message: error instanceof Error ? error.message : String(error) });
@@ -140,17 +171,32 @@ export function HarmonicView({
       {presetKey === CUSTOM && !nValid && <StatusMessage kind="error">{t.invalidHarmonicNumber}</StatusMessage>}
 
       {nValid && load.kind !== 'idle' && (
-        <ChartDataView
-          load={load}
-          displayName={displayName}
-          showHouses
-          metaLines={metaLines}
-          view={view ?? 'wheel'}
-          onViewChange={(next) => {
-            changeChartView(personId, 'harmonic', next);
-          }}
-          buildViewHref={(next) => chartHref(personId, next, 'harmonic')}
-        />
+        <>
+          {load.kind === 'ready' && (
+            <>
+              <p className="hint">{t.provenanceHint(String(n))}</p>
+              <SortableTable
+                caption={t.provenanceCaption}
+                columns={provenanceColumns(t, n)}
+                rows={load.provenance}
+                getRowKey={(row) => row.bodyKey}
+                downloadFilename={deriveExportFilename(displayName, 'harmonic-provenance', 'csv')}
+              />
+            </>
+          )}
+          <ChartDataView
+            load={load}
+            displayName={displayName}
+            showHouses
+            metaLines={metaLines}
+            view={view ?? 'wheel'}
+            onViewChange={(next) => {
+              changeChartView(personId, 'harmonic', next);
+            }}
+            buildViewHref={(next) => chartHref(personId, next, 'harmonic')}
+            overlayContext={provider === undefined ? undefined : { moment: person.moment, provider, baseLabel: label }}
+          />
+        </>
       )}
 
       {nValid && load.kind === 'ready' && !housesAreDefined(load.data.houses) && (

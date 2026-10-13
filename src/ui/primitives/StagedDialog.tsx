@@ -23,6 +23,8 @@ export interface StagedDialogProps {
   readonly children: React.ReactNode;
   /** The Apply / Cancel row. */
   readonly footer: React.ReactNode;
+  /** Feature-specific card class; defaults to the established settings-card hook. */
+  readonly dialogClassName?: string;
 }
 
 export function StagedDialog({
@@ -33,6 +35,7 @@ export function StagedDialog({
   returnFocusTo,
   children,
   footer,
+  dialogClassName = 'settings-card',
 }: StagedDialogProps): React.JSX.Element {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const headingId = useId();
@@ -65,7 +68,7 @@ export function StagedDialog({
   return (
     <dialog
       ref={dialogRef}
-      className="settings-card primitive-staged-dialog"
+      className={`${dialogClassName} primitive-staged-dialog`}
       aria-labelledby={headingId}
       onCancel={(event) => {
         // Escape: the browser would close it silently; closing it through the caller also drops the draft.

@@ -20,10 +20,18 @@
  */
 import type { AspectMatrixInput } from './aspect-matrix.js';
 import { renderAspectMatrixSvg } from './aspect-matrix.js';
+import { filterAntisciaForDisplay, renderAntisciaOverlaySvg } from './antiscia-overlay.js';
+import { renderDeclinationOverlaySvg } from './declination-overlay.js';
 import type { DegreeStripInput } from './degree-strip.js';
 import { renderDegreeStripSvg } from './degree-strip.js';
+import { renderDial90Svg } from './dial90.js';
 import type { EmphasisGridInput } from './emphasis-grid.js';
 import { renderEmphasisGridSvg } from './emphasis-grid.js';
+import type { AntiscialContact } from '../astrology/antiscia.js';
+import type { DeclinationContact } from '../astrology/declinations.js';
+import type { MidpointTreeHit } from '../astrology/midpoints.js';
+import { bodyById } from '../astrology/bodies.js';
+import type { BodyId, Degrees } from '../ephemeris/types.js';
 import type { CrossRingAspects, MultiWheelOptions, WheelRingInput } from './multi-wheel.js';
 import { renderMultiWheelSvg } from './multi-wheel.js';
 import type { PanelLayout } from './sheet-geometry.js';
@@ -37,9 +45,17 @@ export interface ChartSheetInput {
    * zodiac) is presentation, and `ChartData` deliberately carries none of it.
    */
   readonly metaLines: readonly string[];
-  /** Wheel rings, innermost first — a single natal ring, or a bi-/tri-wheel. */
+  /** Wheel rings, innermost first — a single natal ring or a multi-ring overlay. */
   readonly rings: readonly WheelRingInput[];
   readonly crossAspects?: readonly CrossRingAspects[];
+  /** Optional visual layers for a single-chart dial; each shares its positions with ring 0. */
+  readonly overlays?: {
+    readonly positions: readonly { readonly body: BodyId; readonly key: string; readonly longitude: Degrees }[];
+    readonly antiscia?: readonly AntiscialContact[];
+    readonly declinations?: readonly DeclinationContact[];
+    /** Defined (including as an empty list) when the 90° dial is enabled. */
+    readonly midpointHits?: readonly MidpointTreeHit[];
+  };
   readonly matrix: AspectMatrixInput;
   readonly emphasis: EmphasisGridInput;
   readonly strip: DegreeStripInput;
@@ -64,6 +80,65 @@ export interface ChartSheet {
 
 const DEFAULT_SIZE = 800;
 
+function renderWheelOverlays(input: ChartSheetInput, options: ChartSheetOptions | undefined, size: number): string {
+  const overlays = input.overlays;
+  const ring = input.rings[0];
+  if (overlays === undefined || ring === undefined) return '';
+  const longitudeByBody = new Map(overlays.positions.map((position) => [position.body, position.longitude]));
+  const longitudeOf = (body: BodyId): Degrees => {
+    const longitude = longitudeByBody.get(body);
+    if (longitude === undefined)
+      throw new Error(`renderChartDialSvg: overlay body ${String(body)} is not present in the wheel`);
+    return longitude;
+  };
+  const geometry = resolveSheetGeometry(size);
+  const parts: string[] = [];
+  if (overlays.antiscia !== undefined) {
+    parts.push(
+      `<g class="chart-wheel-overlay chart-wheel-overlay-antiscia">` +
+        renderAntisciaOverlaySvg(
+          filterAntisciaForDisplay(overlays.antiscia),
+          longitudeOf,
+          ring.houses.ascendant,
+          geometry.cx,
+          geometry.cy,
+          geometry.aspectCircle,
+          options,
+        ) +
+        `</g>`,
+    );
+  }
+  if (overlays.declinations !== undefined) {
+    parts.push(
+      `<g class="chart-wheel-overlay chart-wheel-overlay-declination">` +
+        renderDeclinationOverlaySvg(
+          overlays.declinations,
+          longitudeOf,
+          ring.houses.ascendant,
+          geometry.cx,
+          geometry.cy,
+          geometry.aspectCircle,
+          options,
+        ) +
+        `</g>`,
+    );
+  }
+  return parts.join('');
+}
+
+function renderDial90(input: ChartSheetInput, size: number): string {
+  const overlays = input.overlays;
+  if (overlays?.midpointHits === undefined) return '';
+  return renderDial90Svg(
+    {
+      positions: overlays.positions,
+      hits: overlays.midpointHits,
+      keyOf: (body) => bodyById(body)?.key ?? String(body),
+    },
+    { size },
+  );
+}
+
 /**
  * The wheel alone, for the screen (#511): the very group the sheet embeds — same size, same margin
  * around it, same `translate` — minus the title block and the three panels below it. Nothing about
@@ -73,15 +148,22 @@ const DEFAULT_SIZE = 800;
 export function renderChartDialSvg(input: ChartSheetInput, options?: ChartSheetOptions): ChartSheet {
   const size = options?.size ?? DEFAULT_SIZE;
   const padding = resolveSheetGeometry(size).labelMargin;
-  const width = size + padding * 2;
+  const dial90 = renderDial90(input, size);
+  const panelWidth = size + padding * 2;
+  const width = dial90 === '' ? panelWidth : panelWidth * 2;
   const height = size + padding * 2;
   const markup =
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${fmt(width)} ${fmt(height)}" ` +
     `width="${fmt(width)}" height="${fmt(height)}" class="chart-sheet chart-dial">` +
     `<g transform="translate(${fmt(padding)} ${fmt(padding)})">` +
     renderMultiWheelSvg(input.rings, input.crossAspects ?? [], { ...options, size, bare: true }) +
+    renderWheelOverlays(input, options, size) +
     `</g></svg>`;
-  return { markup, width, height };
+  const dialMarkup =
+    dial90 === ''
+      ? markup
+      : markup.replace('</svg>', `<g transform="translate(${fmt(panelWidth)} 0)">${dial90}</g></svg>`);
+  return { markup: dialMarkup, width, height };
 }
 
 /**
@@ -128,6 +210,7 @@ export function renderChartSheetSvg(input: ChartSheetInput, options?: ChartSheet
   parts.push(
     `<g transform="translate(${fmt(contentX)} ${fmt(y)})">` +
       renderMultiWheelSvg(input.rings, input.crossAspects ?? [], { ...options, size, bare: true }) +
+      renderWheelOverlays(input, options, size) +
       `</g>`,
   );
   y += size + gap;
@@ -172,6 +255,13 @@ export function renderChartSheetSvg(input: ChartSheetInput, options?: ChartSheet
   );
   parts.push(strip.markup);
   y += strip.height;
+
+  const dial90 = renderDial90(input, size);
+  if (dial90 !== '') {
+    y += gap;
+    parts.push(`<g transform="translate(${fmt(contentX)} ${fmt(y)})">${dial90}</g>`);
+    y += size;
+  }
 
   const width = contentWidth + padding * 2;
   const height = y + padding;

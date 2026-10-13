@@ -1,11 +1,11 @@
 /**
- * The chart wheel: one to three charts drawn as concentric rings around a
+ * The chart wheel: one or more charts drawn as concentric rings around a
  * shared center, on the layout `sheet-geometry.ts` resolves.
  *
  * One renderer covers both cases deliberately. A single ring is not a special
  * layout, it is `resolveRingBands(geometry, 1)` — the one band it returns *is*
  * the reference layout's planetary placement ring — so a natal wheel and a
- * bi-/tri-wheel cannot drift apart in tick tiers, glyph conventions or ring
+ * multi-ring wheel cannot drift apart in tick tiers, glyph conventions or ring
  * radii the way two separate renderers would.
  *
  * Every ring shares one wheel-space anchor — the innermost ring's Ascendant,
@@ -45,7 +45,7 @@
  */
 /**
  * @module chart/multi-wheel
- * @purpose The chart wheel renderer: draws one to three charts as concentric rings around a shared centre, covering both the single natal wheel and bi-/tri-wheel cases with one implementation.
+ * @purpose The chart wheel renderer: draws one or more charts as concentric rings around a shared centre, covering both the single natal wheel and multi-ring cases with one implementation.
  * @conventions A single ring is not a special case — it is `resolveRingBands(geometry, 1)`'s one band — so a natal wheel can never drift from a multi-wheel in tick tiers, glyph conventions or ring radii; every ring shares one wheel-space anchor (the innermost/base ring's Ascendant) so a given ecliptic degree lands at the same angular position in every ring, only the radius differs; aspect chords always end on the aspect circle and conjunctions are excluded from the web (the glyphs already show them); every clickable symbol is a `<g>` with `data-body`/`data-sign`/`data-aspect-body-*` attributes plus an invisible hit area for click-to-isolate; ring labels are a fixed corner legend, not radial text, to avoid upside-down labels on the far side of the circle.
  * @exports renderMultiWheelSvg; WheelRingInput, CrossRingAspects, MultiWheelOptions types.
  */
@@ -522,7 +522,7 @@ function renderBodyStacksSvg(
 }
 
 /**
- * Renders one to three chart rings as one SVG document around a shared center.
+ * Renders one or more chart rings as one SVG document around a shared center.
  * `rings` is ordered innermost first — by convention the base/natal chart at
  * index 0 — since that ring's Ascendant is what every ring, including the
  * shared zodiac ring, is oriented by, and its houses are the ones the numeric
@@ -554,6 +554,11 @@ export function renderMultiWheelSvg(
   const bands = resolveRingBands(geometry, rings.length);
 
   const parts: string[] = [renderZodiacRingSvg(geometry, ascendant, orientationOptions, signWedgeStyle)];
+  if (rings.length > 1) {
+    parts.unshift(
+      '<defs><marker id="chart-multiwheel-ring-arrowhead" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" class="chart-multiwheel-ring-arrowhead" /></marker></defs>',
+    );
+  }
   parts.push(renderBaseHousesSvg(baseRing.houses, geometry, ascendant, houseWedgeStyle, orientationOptions));
   parts.push(circle(cx, cy, geometry.aspectCircle, 'wheel-ring-aspect'));
 
@@ -572,7 +577,7 @@ export function renderMultiWheelSvg(
     }));
     parts.push(renderBodyTicksSvg(glyphInputs, geometry, ascendant, band, orientationOptions, index));
     // Only a single ring's band is wide enough for the radial degree/sign/minute stack;
-    // with two or three charts stacked, it would overlap the neighbouring ring's glyphs.
+    // with several charts stacked, it would overlap neighbouring rings' glyphs.
     if (rings.length === 1) {
       parts.push(
         renderBodyStacksSvg(glyphInputs, geometry, ascendant, band, minSeparationDeg, orientationOptions, index),
@@ -642,6 +647,11 @@ export function renderMultiWheelSvg(
     rings.forEach((ring, index) => {
       const x = -geometry.labelMargin + geometry.panelFontSize * 0.5;
       const y = -geometry.labelMargin + geometry.panelFontSize * (1 + index * 1.3);
+      const band = bands[index];
+      if (band === undefined) throw new Error('unreachable: resolveRingBands returns one band per ring');
+      const target = pointOnCircle(cx, cy, band.glyphRadius, 220);
+      const arrowStartX = x + swatchWidth + geometry.panelFontSize * 0.35;
+      const arrowStartY = y - geometry.panelFontSize * 0.45;
       // A short line sample, not a coloured dot (#448): what actually tells a ring's own
       // Ascendant/Midheaven spoke apart from another ring's is this same solid/dotted/
       // dash-dot line style, so the legend reuses the identical class rather than a fill-only
@@ -651,7 +661,8 @@ export function renderMultiWheelSvg(
       // planet or sign click already uses, so a reader can isolate one source's placements
       // and tensions by clicking its name instead of hunting for one of its bodies.
       parts.push(
-        `<g data-ring-legend="${String(index)}">` +
+        `<path data-ring-legend-arrow="${String(index)}" class="chart-multiwheel-ring-arrow chart-multiwheel-ring-${String(index)}" d="M ${fmt(arrowStartX)} ${fmt(arrowStartY)} L ${fmt(target.x)} ${fmt(target.y)}" marker-end="url(#chart-multiwheel-ring-arrowhead)" />` +
+          `<g data-ring-legend="${String(index)}" role="button" tabindex="0" aria-pressed="false">` +
           line(
             x,
             y - geometry.panelFontSize * 0.3,

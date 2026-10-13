@@ -19,6 +19,14 @@ const en = {
   headingFallback: 'Relocated chart',
   hint: 'The birth moment stays fixed; only the place changes. Planetary positions are identical to the natal chart — only houses, angles, and anything derived from the Ascendant (Vertex, Fortune, Spirit) move.',
 
+  savedLocationLabel: 'Saved locations',
+  savedLocationPlaceholder: 'Choose a saved location',
+  savedLocationOption: (label: string, latitude: number, longitude: number) => `${label} (${latitude}, ${longitude})`,
+  deleteSavedLocation: 'Delete saved location',
+  saveLocationName: 'Save this location as',
+  saveLocation: 'Save location',
+  savedLocationError: (message: string) => `The saved location could not be updated. ${message}`,
+
   latitudeLabel: 'Relocation latitude',
   longitudeLabel: 'Relocation longitude',
   latitudeDecreaseLabel: 'Decrease relocation latitude',
@@ -48,6 +56,14 @@ const nl: typeof en = {
   heading: (name: string) => `Verplaatste horoscoop van ${name}`,
   headingFallback: 'Verplaatste horoscoop',
   hint: 'Het geboortemoment blijft vast; alleen de plaats verandert. Planeetposities zijn identiek aan de geboortehoroscoop — alleen huizen, assen en wat van de Ascendant is afgeleid (Vertex, Fortuna, Lot van de Geest) verschuiven.',
+
+  savedLocationLabel: 'Opgeslagen locaties',
+  savedLocationPlaceholder: 'Kies een opgeslagen locatie',
+  savedLocationOption: (label: string, latitude: number, longitude: number) => `${label} (${latitude}, ${longitude})`,
+  deleteSavedLocation: 'Opgeslagen locatie verwijderen',
+  saveLocationName: 'Deze locatie opslaan als',
+  saveLocation: 'Locatie opslaan',
+  savedLocationError: (message: string) => `De opgeslagen locatie kon niet worden bijgewerkt. ${message}`,
 
   latitudeLabel: 'Breedtegraad van verplaatsing',
   longitudeLabel: 'Lengtegraad van verplaatsing',

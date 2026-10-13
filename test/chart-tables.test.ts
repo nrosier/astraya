@@ -22,6 +22,7 @@ import {
   emphasisRows,
   allMidpointsRows,
   fixedStarRows,
+  filterAspectRowsByHarmonicFamily,
   houseCuspRows,
   midpointTreeRows,
   positionRows,
@@ -277,6 +278,37 @@ describe('aspectRows (#44)', () => {
         applying: true,
       },
     ]);
+  });
+
+  it('filters rows by Addey harmonic family without changing the row shape (#557)', () => {
+    const rows = [
+      {
+        bodyAKey: 'sun',
+        bodyAName: 'Sun',
+        bodyBKey: 'moon',
+        bodyBName: 'Moon',
+        aspect: 'Square',
+        aspectKey: 'square',
+        angle: 90,
+        separation: 91,
+        orb: 1,
+        applying: true,
+      },
+      {
+        bodyAKey: 'sun',
+        bodyAName: 'Sun',
+        bodyBKey: 'mars',
+        bodyBName: 'Mars',
+        aspect: 'Trine',
+        aspectKey: 'trine',
+        angle: 120,
+        separation: 121,
+        orb: 1,
+        applying: false,
+      },
+    ];
+    expect(filterAspectRowsByHarmonicFamily(rows, 4).map((row) => row.aspectKey)).toEqual(['square']);
+    expect(filterAspectRowsByHarmonicFamily(rows, undefined)).toEqual(rows);
   });
 });
 

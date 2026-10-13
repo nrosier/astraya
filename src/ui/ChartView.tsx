@@ -36,8 +36,9 @@ import { formatFixed, formatTimestamp } from './format.js';
 import { PrintProvenance } from './PrintProvenance.js';
 import { HOUSE_SYSTEMS } from '../astrology/houses.js';
 import type { Zodiac } from '../ephemeris/types.js';
-import { aspectHarmonicFamily } from '../astrology/aspects.js';
+import { ASPECTS, aspectHarmonicFamily, type Aspect } from '../astrology/aspects.js';
 import { Tooltip } from './primitives/Tooltip.js';
+import { Select } from './primitives/Select.js';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   allMidpointsRows,
@@ -48,6 +49,7 @@ import {
   chartShapeOf,
   chartSheetInput,
   chartSheetMetaLines,
+  chartWheelRing,
   conditionRows,
   declinationContactRows,
   derivedPointRows,
@@ -56,6 +58,7 @@ import {
   dignityRows,
   dispositorRows,
   fixedStarRows,
+  filterAspectRowsByHarmonicFamily,
   houseCuspRows,
   midpointTreeRows,
   positionRows,
@@ -80,7 +83,19 @@ import {
   type PositionRow,
 } from '../domain/chart-tables.js';
 import { derivedPointPlacementFacts } from '../domain/derived-point-position.js';
-import { computeChartData, housesAreDefined, type ChartData } from '../domain/chart-compute.js';
+import {
+  computeChartData,
+  housesAreDefined,
+  type ChartCalculationOptions,
+  type ChartData,
+} from '../domain/chart-compute.js';
+import { computeDraconic } from '../domain/draconic.js';
+import { computeRelocatedChart } from '../domain/relocated-chart.js';
+import { computeSecondaryProgression, type SecondaryProgressionData } from '../domain/secondary-progression.js';
+import { computeTransit } from '../domain/transit.js';
+import { computeLunarReturnChart, computeSolarReturnChart } from '../domain/return-chart.js';
+import { directedChartAt, generatePrimaryDirections, type DirectedChart } from '../domain/primary-directions.js';
+import { ageInYears } from '../astrology/progressions.js';
 import { deriveExportFilename } from '../domain/export-filename.js';
 import { encodeChartShareLink } from '../domain/chart-share.js';
 import {
@@ -90,6 +105,7 @@ import {
 } from '../domain/calculation-snapshot.js';
 import { momentKey } from '../time/encode.js';
 import { renderChartDialSvg, renderChartSheetSvg } from '../chart/chart-sheet.js';
+import { renderMultiWheelSvg, type CrossRingAspects, type WheelRingInput } from '../chart/multi-wheel.js';
 import { renderJonesShapeDiagramSvg } from '../chart/jones-shape-diagram.js';
 import { lunarPhaseOf } from '../astrology/lunar-phase.js';
 import { lotFormulaByKey } from '../astrology/arabic-parts.js';
@@ -155,11 +171,80 @@ import type { EphemerisProvider } from '../ephemeris/types.js';
 import type { Locale } from '../interpretation/schema.js';
 import type { BirthMomentInput } from '../time/types.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
+import {
+  ChartOverlaySettingsPanel,
+  DEFAULT_CHART_OVERLAY_SETTINGS,
+  hasChartOverlays,
+  orderedChartOverlaySources,
+  type ChartOverlaySettings,
+  type ChartOverlaySource,
+} from './ChartOverlaySettingsPanel.js';
+import { chartOverlaySettingsPanelMessages } from './ChartOverlaySettingsPanel.messages.js';
+import { parseCoordinate } from './map-settings.js';
+import { TRANSIT_ORB_CONFIG } from '../astrology/transit-importance.js';
 
 type Load =
   | { readonly kind: 'loading' }
   | { readonly kind: 'ready'; readonly data: ChartData }
   | { readonly kind: 'error'; readonly message: string };
+
+export interface ChartOverlayContext {
+  readonly moment: BirthMomentInput;
+  readonly provider: EphemerisProvider;
+  readonly baseLabel: string;
+  readonly baseSource?: ChartOverlaySource | undefined;
+  /** The active calculation basis shared by every computed overlay ring. */
+  readonly options?: ChartCalculationOptions | undefined;
+}
+
+interface OverlayRingData {
+  readonly label: string;
+  readonly data?: ChartData | undefined;
+  readonly provenance: string;
+}
+
+type OverlayLoad =
+  | { readonly kind: 'idle' }
+  | { readonly kind: 'loading' }
+  | { readonly kind: 'ready'; readonly markup: string; readonly ringData: readonly OverlayRingData[] }
+  | { readonly kind: 'error'; readonly message: string };
+
+function progressedOverlayRing(data: SecondaryProgressionData, label: string): WheelRingInput {
+  return {
+    label,
+    houses: data.houses,
+    bodies: data.positions.map((position) => ({
+      body: position.body,
+      key: bodyById(position.body)?.key ?? String(position.body),
+      longitude: position.longitude,
+      retrograde: position.retrograde,
+    })),
+  };
+}
+
+function directedOverlayRing(data: DirectedChart, label: string): WheelRingInput {
+  return {
+    label,
+    houses: data.houses,
+    bodies: data.positions.map((position) => ({
+      body: position.body,
+      key: position.key,
+      longitude: position.longitude,
+    })),
+  };
+}
+
+function dateParts(value: string): readonly [number, number, number] | undefined {
+  const [year, month, day] = value.split('-').map(Number);
+  return year === undefined ||
+    month === undefined ||
+    day === undefined ||
+    !Number.isInteger(year) ||
+    !Number.isInteger(month) ||
+    !Number.isInteger(day)
+    ? undefined
+    : [year, month, day];
+}
 
 /**
  * Plain, synchronous labels for the print-provenance footer (#564) — deliberately not the same
@@ -959,6 +1044,14 @@ function renderMatrixView(
 /** The granular table kinds `renderTableTab` knows how to build (#511: these are grouped into the Aspects/Placements/Patterns views, not shown as separate tabs). */
 type TableTabKey = 'positions' | 'houses' | 'aspects' | 'dignities' | 'derived';
 
+const HARMONIC_FAMILY_FILTERS = Array.from(
+  new Set(
+    ASPECTS.map((aspect) => aspectHarmonicFamily(aspect.key)).filter(
+      (family): family is number => family !== undefined,
+    ),
+  ),
+).sort((a, b) => a - b);
+
 /**
  * The table(s) for one tab, factored out of the tab panel below so the same markup can also
  * be stacked for every tab at once in the PDF export (#67) without being duplicated.
@@ -975,6 +1068,7 @@ function renderTableTab(
   symbolClass: SymbolClass,
   boundsScheme: BoundsScheme,
   selection?: TableSelection,
+  aspectHarmonicFamilyFilter?: number,
 ): React.ReactNode {
   switch (tab) {
     case 'positions':
@@ -1015,6 +1109,7 @@ function renderTableTab(
         </>
       );
     case 'aspects': {
+      const rows = filterAspectRowsByHarmonicFamily(aspectRows(data, pointVisibility), aspectHarmonicFamilyFilter);
       const declinationRows = declinationContactRows(data);
       const antiscionRows = antisciaRows(data);
       const starRows = fixedStarRows(data, pointVisibility);
@@ -1026,13 +1121,13 @@ function renderTableTab(
           <SortableTable
             caption={t.aspectsCaption}
             columns={aspectColumns(t, locale, selection)}
-            rows={aspectRows(data, pointVisibility)}
+            rows={rows}
             getRowKey={(row) => `${row.bodyAKey}-${row.aspect}-${row.bodyBKey}`}
             selectedRowKey={(() => {
               const chosen =
                 selection?.selectedKey === undefined
                   ? undefined
-                  : aspectRows(data, pointVisibility).find((row) => aspectSelectionKey(row) === selection.selectedKey);
+                  : rows.find((row) => aspectSelectionKey(row) === selection.selectedKey);
               return chosen === undefined ? undefined : `${chosen.bodyAKey}-${chosen.aspect}-${chosen.bodyBKey}`;
             })()}
             downloadFilename={deriveExportFilename(displayName, 'aspects', 'csv')}
@@ -1380,17 +1475,38 @@ function resolveWheelIsolation(
   housesRenderable: boolean,
   locale: Locale,
   t: typeof chartViewMessages.en,
+  ringData?: readonly OverlayRingData[],
 ): WheelIsolationFacts | undefined {
+  if (isolatedKey.startsWith('ring:')) {
+    const ring = Number(isolatedKey.slice('ring:'.length));
+    const label = ringData?.[ring]?.label;
+    return label === undefined ? undefined : { heading: label, relatedAspects: [] };
+  }
   const selection = parseSelectionKey(isolatedKey);
   if (selection === undefined) return undefined;
-  const allPositions = positionRows(data, pointVisibility, housesRenderable);
-  const allAspects = aspectRows(data, pointVisibility);
+  const selectedData =
+    selection.kind === 'body'
+      ? (ringData?.[selection.ring]?.data ?? data)
+      : selection.kind === 'aspect' && selection.ringA === selection.ringB
+        ? (ringData?.[selection.ringA]?.data ?? data)
+        : data;
+  const sourceLabel =
+    selection.kind === 'body'
+      ? ringData?.[selection.ring]?.label
+      : selection.kind === 'aspect' && selection.ringA === selection.ringB
+        ? ringData?.[selection.ringA]?.label
+        : undefined;
+  const allPositions = positionRows(selectedData, pointVisibility, housesRenderable);
+  const allAspects = aspectRows(selectedData, pointVisibility);
 
   if (selection.kind === 'body') {
     const value = selection.key;
     const positionRow = allPositions.find((row) => row.bodyKey === value);
     return {
-      heading: positionRow !== undefined ? bodyDisplayName(positionRow.bodyKey, locale) : value,
+      heading:
+        positionRow !== undefined
+          ? `${bodyDisplayName(positionRow.bodyKey, locale)}${sourceLabel === undefined ? '' : ` — ${sourceLabel}`}`
+          : value,
       positionRow,
       relatedAspects: allAspects.filter((row) => row.bodyAKey === value || row.bodyBKey === value),
     };
@@ -1400,8 +1516,10 @@ function resolveWheelIsolation(
     // The real visibility settings (#542) — the matrix (the only place a hidden derived point's
     // selection key could previously have come from) now also respects them, so there is no
     // longer a hidden-but-selectable case to work around with a hardcoded override here.
-    const row = derivedPointRows(data, pointVisibility).find((candidate) => candidate.pointKey === selection.point);
-    const facts = derivedPointPlacementFacts(data, selection.point);
+    const row = derivedPointRows(selectedData, pointVisibility).find(
+      (candidate) => candidate.pointKey === selection.point,
+    );
+    const facts = derivedPointPlacementFacts(selectedData, selection.point);
     return {
       heading: row?.label ?? selection.point,
       relatedAspects: [],
@@ -1418,7 +1536,7 @@ function resolveWheelIsolation(
   }
 
   if (selection.kind === 'house') {
-    const cusp = data.houses.cusps[selection.house];
+    const cusp = selectedData.houses.cusps[selection.house];
     const signName = cusp === undefined ? '' : (SIGNS[Math.floor((((cusp % 360) + 360) % 360) / 30)]?.name ?? '');
     return {
       heading: t.cuspHeading(signDisplayName(signName, locale), selection.house),
@@ -1519,6 +1637,7 @@ export function ChartDataView({
   view,
   onViewChange,
   buildViewHref,
+  overlayContext,
 }: {
   readonly load: Load;
   readonly displayName: string;
@@ -1550,11 +1669,14 @@ export function ChartDataView({
   readonly onViewChange?: ((view: ChartViewKind) => void) | undefined;
   /** Builds this chart's own URL for a given view, for `ChartViewNav`'s real links — every real caller's hash shape differs, so there is no sane default. */
   readonly buildViewHref: (view: ChartViewKind) => string;
+  /** Optional person-bound sources for configuring extra rings in the Wheel workbench. */
+  readonly overlayContext?: ChartOverlayContext | undefined;
 }): React.JSX.Element {
   const t = useMessages(chartViewMessages);
   const [locale] = useLocale();
   const [rulership] = useRulershipChoice();
   const [ownTab, setOwnTab] = useState<ChartViewKind>('wheel');
+  const [aspectHarmonicFamilyFilter, setAspectHarmonicFamilyFilter] = useState('all');
   const activeTab: ChartViewKind = view ?? ownTab;
   const setActiveTab = (next: ChartViewKind): void => {
     setOwnTab(next);
@@ -1567,6 +1689,9 @@ export function ChartDataView({
   // (see `exportPdf` below): while true, every table renders at once instead of just the
   // active tab, so the PDF the browser's own "Save as PDF" produces has all of them (#67).
   const [printAll, setPrintAll] = useState(false);
+  const overlayT = useMessages(chartOverlaySettingsPanelMessages);
+  const [overlaySettings, setOverlaySettings] = useState<ChartOverlaySettings>(DEFAULT_CHART_OVERLAY_SETTINGS);
+  const [overlayLoad, setOverlayLoad] = useState<OverlayLoad>({ kind: 'idle' });
 
   const pointVisibility = toPointVisibilityOptions(extendedSettings);
   // Which bound table the dignity/condition/reception/almuten tables use (#549) — threaded
@@ -1582,6 +1707,189 @@ export function ChartDataView({
   // render below should gate on instead of the raw `showHouses` prop.
   const housesComputed = load.kind !== 'ready' || housesAreDefined(load.data.houses);
   const housesRenderable = showHouses && housesComputed;
+
+  useEffect(() => {
+    if (overlayContext === undefined || load.kind !== 'ready' || !hasChartOverlays(overlaySettings)) {
+      setOverlayLoad({ kind: 'idle' });
+      return undefined;
+    }
+    const effect = { cancelled: false };
+    setOverlayLoad({ kind: 'loading' });
+    void (async () => {
+      try {
+        const rings: WheelRingInput[] = [chartWheelRing(load.data, overlayContext.baseLabel)];
+        const snapshotIdentity = calculationSnapshotIdentity(buildCalculationSnapshot(extendedSettings, rulership));
+        const snapshot = overlayT.calculationSnapshot(snapshotIdentity);
+        const ringData: OverlayRingData[] = [
+          { label: overlayContext.baseLabel, data: load.data, provenance: snapshot },
+        ];
+        const crossAspects: CrossRingAspects[] = [];
+        const calculationOptions = overlayContext.options ?? {};
+        const overlays = new Map<
+          ChartOverlaySource,
+          {
+            readonly ring: WheelRingInput;
+            readonly data?: ChartData | undefined;
+            readonly contacts?: readonly Aspect[] | undefined;
+            readonly provenance: string;
+          }
+        >();
+        const addChart = (
+          source: ChartOverlaySource,
+          label: string,
+          data: ChartData,
+          contacts?: readonly Aspect[],
+        ): void => {
+          overlays.set(source, {
+            ring: chartWheelRing(data, label),
+            data,
+            ...(contacts === undefined ? {} : { contacts }),
+            provenance: snapshot,
+          });
+        };
+
+        if (overlaySettings.natal && overlayContext.baseSource !== 'natal') {
+          addChart(
+            'natal',
+            overlayT.natal,
+            await computeChartData(overlayContext.moment, overlayContext.provider, calculationOptions),
+          );
+        }
+        if (overlaySettings.draconic && overlayContext.baseSource !== 'draconic') {
+          const draconic = await computeDraconic(overlayContext.moment, overlayContext.provider, calculationOptions);
+          addChart('draconic', overlayT.draconic, draconic.draconic);
+        }
+        if (overlaySettings.transit) {
+          const parts = dateParts(overlaySettings.transitDate);
+          if (parts === undefined) throw new Error('Transit date is incomplete.');
+          const [year, month, day] = parts;
+          const targetJd = await overlayContext.provider.julianDayFromUtc(year, month, day, 12, 0, 0);
+          const transit = await computeTransit(
+            overlayContext.moment,
+            targetJd,
+            overlayContext.provider,
+            calculationOptions,
+            TRANSIT_ORB_CONFIG,
+          );
+          addChart('transit', overlayT.transit, transit.transit, transit.contacts);
+        }
+        if (overlaySettings.progressed) {
+          const parts = dateParts(overlaySettings.progressedDate);
+          if (parts === undefined) throw new Error('Progressed date is incomplete.');
+          const [year, month, day] = parts;
+          const targetJd = await overlayContext.provider.julianDayFromUtc(year, month, day, 12, 0, 0);
+          const progressed = await computeSecondaryProgression(
+            overlayContext.moment,
+            targetJd,
+            overlayContext.provider,
+            calculationOptions,
+          );
+          overlays.set('progressed', {
+            ring: progressedOverlayRing(progressed, overlayT.progressed),
+            contacts: progressed.contacts,
+            provenance: snapshot,
+          });
+        }
+        if (overlaySettings.directed) {
+          const parts = dateParts(overlaySettings.directedDate);
+          if (parts === undefined) throw new Error('Directed date is incomplete.');
+          const [year, month, day] = parts;
+          const targetJd = await overlayContext.provider.julianDayFromUtc(year, month, day, 12, 0, 0);
+          const directions = await generatePrimaryDirections(overlayContext.moment, overlayContext.provider);
+          if (!directions.defined) throw new RangeError('Primary directions are undefined at this birth latitude.');
+          const directed = await directedChartAt(
+            directions,
+            ageInYears(directions.natalJd, targetJd),
+            overlayContext.provider,
+          );
+          overlays.set('directed', {
+            ring: directedOverlayRing(directed, overlayT.directed),
+            provenance: `${snapshot} · ${overlayT.primaryDirectionsProvenance}`,
+          });
+        }
+        if (overlaySettings.return) {
+          const parts = dateParts(overlaySettings.returnDate);
+          if (parts === undefined) throw new Error('Return date is incomplete.');
+          const [year, month, day] = parts;
+          const targetJd = await overlayContext.provider.julianDayFromUtc(year, month, day, 12, 0, 0);
+          const returned =
+            overlaySettings.returnKind === 'solar'
+              ? await computeSolarReturnChart(overlayContext.moment, year, overlayContext.provider, calculationOptions)
+              : await computeLunarReturnChart(
+                  overlayContext.moment,
+                  targetJd,
+                  overlayContext.provider,
+                  calculationOptions,
+                );
+          addChart(
+            'return',
+            overlaySettings.returnKind === 'solar' ? overlayT.solarReturn : overlayT.lunarReturn,
+            returned.chart,
+            returned.contacts,
+          );
+        }
+        if (overlaySettings.relocated) {
+          const latitude = parseCoordinate(overlaySettings.latitude, -90, 90);
+          const longitude = parseCoordinate(overlaySettings.longitude, -180, 180);
+          if (latitude === undefined || longitude === undefined) {
+            throw new Error('A relocated overlay needs valid latitude and longitude.');
+          }
+          const relocated = await computeRelocatedChart(
+            overlayContext.moment,
+            { latitude, longitude, altitude: 0 },
+            overlayContext.provider,
+            calculationOptions,
+          );
+          // A relocated chart has exactly the natal longitudes, so cross-aspecting it to natal would only draw self-conjunctions.
+          addChart('relocated', overlayT.relocated, relocated.relocated);
+        }
+        for (const source of orderedChartOverlaySources(overlaySettings)) {
+          const overlay = overlays.get(source);
+          if (overlay === undefined) continue;
+          const outerRingIndex = rings.length;
+          rings.push(overlay.ring);
+          ringData.push({
+            label: overlay.ring.label,
+            ...(overlay.data === undefined ? {} : { data: overlay.data }),
+            provenance: overlay.provenance,
+          });
+          if (
+            overlaySettings.interRingAspects &&
+            overlayContext.baseSource === 'natal' &&
+            overlay.contacts !== undefined
+          ) {
+            crossAspects.push({ innerRingIndex: 0, outerRingIndex, aspects: overlay.contacts });
+          }
+        }
+        if (!effect.cancelled) {
+          setOverlayLoad({ kind: 'ready', markup: renderMultiWheelSvg(rings, crossAspects), ringData });
+        }
+      } catch (error) {
+        if (!effect.cancelled) {
+          setOverlayLoad({ kind: 'error', message: error instanceof Error ? error.message : String(error) });
+        }
+      }
+    })();
+    return () => {
+      effect.cancelled = true;
+    };
+  }, [
+    load,
+    overlayContext,
+    overlaySettings,
+    overlayT.draconic,
+    overlayT.directed,
+    overlayT.lunarReturn,
+    overlayT.natal,
+    overlayT.primaryDirectionsProvenance,
+    overlayT.progressed,
+    overlayT.relocated,
+    overlayT.solarReturn,
+    overlayT.transit,
+    overlayT.calculationSnapshot,
+    extendedSettings,
+    rulership,
+  ]);
 
   // The export sheet (SVG/PNG/PDF) and the on-screen dial are two compositions of one computed chart (#511):
   // the dial is the sheet's own wheel, drawn alone; everything else the sheet holds is shown as tables.
@@ -1601,6 +1909,9 @@ export function ChartDataView({
     return { sheet: renderChartSheetSvg(input, options), dial: renderChartDialSvg(input, options) };
   }, [load, housesRenderable, displayName, metaLines, extendedSettings, t, locale, symbolClass, variants]);
 
+  const wheelMarkup = overlayLoad.kind === 'ready' ? overlayLoad.markup : dial?.markup;
+  const overlayRingData = overlayLoad.kind === 'ready' ? overlayLoad.ringData : undefined;
+
   // Click-to-isolate (#400, #412, #418): the selection, its dimming of the wheel and its click
   // handling are shared with every other wheel (`wheel-interaction.ts`); only the panel of facts
   // below is this screen's own. A new sheet (redraw, person change, settings change) clears the
@@ -1611,12 +1922,13 @@ export function ChartDataView({
     clear: clearIsolation,
     toggle: toggleIsolation,
     onClick: handleWheelClick,
-  } = useWheelIsolation(dial);
+    onKeyDown: handleWheelKeyDown,
+  } = useWheelIsolation(wheelMarkup);
 
   // The Positions and Aspects tables share the wheel's selection (#418): a button on a row selects it on the
   // wheel, and the row the wheel has selected is marked. Only where there is a wheel, and never in the PDF.
   const tableSelection = useMemo((): TableSelection | undefined => {
-    if (dial === undefined || load.kind !== 'ready') return undefined;
+    if (wheelMarkup === undefined || load.kind !== 'ready') return undefined;
     return {
       selectedKey: isolatedKey,
       onToggle: toggleIsolation,
@@ -1624,21 +1936,36 @@ export function ChartDataView({
         visiblePositions(load.data.positions, pointVisibility).map((position) => bodyById(position.body)?.key ?? ''),
       ),
     };
-  }, [dial, load, isolatedKey, toggleIsolation, pointVisibility]);
+  }, [wheelMarkup, load, isolatedKey, toggleIsolation, pointVisibility]);
 
   const isolation = useMemo(() => {
     if (isolatedKey === undefined || load.kind !== 'ready') return undefined;
-    return resolveWheelIsolation(isolatedKey, load.data, pointVisibility, housesRenderable, locale, t);
-  }, [isolatedKey, load, pointVisibility, housesRenderable, locale, t]);
+    return resolveWheelIsolation(isolatedKey, load.data, pointVisibility, housesRenderable, locale, t, overlayRingData);
+  }, [isolatedKey, load, pointVisibility, housesRenderable, locale, t, overlayRingData]);
+
+  const inspectorData = useMemo(() => {
+    if (load.kind !== 'ready' || isolatedKey === undefined || overlayRingData === undefined)
+      return load.kind === 'ready' ? load.data : undefined;
+    const selection = parseSelectionKey(isolatedKey);
+    if (selection?.kind === 'body') return overlayRingData[selection.ring]?.data ?? load.data;
+    if (selection?.kind === 'aspect' && selection.ringA === selection.ringB) {
+      return overlayRingData[selection.ringA]?.data ?? load.data;
+    }
+    return load.data;
+  }, [load, isolatedKey, overlayRingData]);
 
   // What the "interpret the tensions of this placement" button would send: only for a selected planet (#424).
   const focusContext = useMemo(() => {
     if (isolatedKey === undefined || load.kind !== 'ready') return undefined;
     const selection = parseSelectionKey(isolatedKey);
+    const selectedData =
+      selection?.kind === 'body' && overlayRingData !== undefined
+        ? (overlayRingData[selection.ring]?.data ?? load.data)
+        : load.data;
     return selection?.kind === 'body'
-      ? buildFocusObjectContext(load.data, selection.key, undefined, rulership)
+      ? buildFocusObjectContext(selectedData, selection.key, undefined, rulership)
       : undefined;
-  }, [isolatedKey, load, rulership]);
+  }, [isolatedKey, load, rulership, overlayRingData]);
 
   useEffect(() => {
     if (!printAll) return undefined;
@@ -1708,9 +2035,33 @@ export function ChartDataView({
 
   /** The wheel, what a click isolates, the interpret button and the exports: everything the Wheel view holds. */
   const renderChartPanel = (data: ChartData): React.ReactNode =>
-    dial === undefined ? null : (
+    wheelMarkup === undefined ? null : (
       <>
         <h2>{t.chartTabLabel}</h2>
+        {overlayContext !== undefined && (
+          <ChartOverlaySettingsPanel
+            value={overlaySettings}
+            baseLabel={overlayContext.baseLabel}
+            unavailableSources={overlayContext.baseSource === undefined ? [] : [overlayContext.baseSource]}
+            onApply={setOverlaySettings}
+          />
+        )}
+        {overlayLoad.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
+        {overlayLoad.kind === 'error' && (
+          <StatusMessage kind="error">{t.chartError(overlayLoad.message)}</StatusMessage>
+        )}
+        {overlayRingData !== undefined && (
+          <section className="chart-overlay-provenance" aria-label={overlayT.ringProvenance}>
+            <h3>{overlayT.ringProvenance}</h3>
+            <ul>
+              {overlayRingData.map((ring) => (
+                <li key={ring.label}>
+                  <strong>{ring.label}</strong>: {ring.provenance}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
         {/* One workbench: the dial, then its inspector straight after it in DOM and focus order (#511).
             The outer element is the inline-size query container; see `.chart-workbench` in app.css. */}
         <div className="chart-workbench-shell">
@@ -1720,27 +2071,19 @@ export function ChartDataView({
               <div
                 ref={wheelRef}
                 className="chart-wheel chart-wheel-interactive"
-                // Hidden from assistive tech rather than given an aria-label (#69): a chart
-                // wheel packs dozens of positions/aspects into overlapping glyphs, and no short
-                // label does that justice. The data tables right below are the actual accessible
-                // equivalent — they carry every value the wheel draws, as text a screen reader
-                // can read directly. Click-to-isolate (#400) stays a mouse/touch-only
-                // enhancement layered on top of that decision, not a reason to revisit it: the
-                // tables remain the one accessible path to every value the wheel draws, clicked
-                // or not.
-                aria-hidden="true"
                 // The wheel is generated entirely by this app from data it just computed — never
                 // user-supplied markup — so injecting it is the same trust boundary as any other
                 // value this component renders, just carried as a string instead of JSX.
-                dangerouslySetInnerHTML={{ __html: dial.markup }}
+                dangerouslySetInnerHTML={{ __html: wheelMarkup }}
                 onClick={handleWheelClick}
+                onKeyDown={handleWheelKeyDown}
               />
             </div>
             {!printAll && (
               <SelectionInspector
                 facts={isolation}
                 selectionKey={isolatedKey}
-                data={data}
+                data={inspectorData ?? data}
                 focusContext={focusContext}
                 locale={locale}
                 onClear={clearIsolation}
@@ -1887,19 +2230,42 @@ export function ChartDataView({
                     </p>
                   )}
                   {currentTab === 'aspects' &&
-                    renderTableTab(
-                      'aspects',
-                      load.data,
-                      displayName,
-                      pointVisibility,
-                      housesRenderable,
-                      t,
-                      locale,
-                      rulership,
-                      symbolClass,
-                      boundsScheme,
-                      tableSelection,
-                    )}
+                    (() => {
+                      const harmonicFamily =
+                        aspectHarmonicFamilyFilter === 'all' ? undefined : Number(aspectHarmonicFamilyFilter);
+                      return (
+                        <>
+                          <div className="field-grid">
+                            <Select
+                              label={t.harmonicFamilyFilterLabel}
+                              value={aspectHarmonicFamilyFilter}
+                              options={[
+                                { value: 'all', label: t.allHarmonicFamilies },
+                                ...HARMONIC_FAMILY_FILTERS.map((family) => ({
+                                  value: String(family),
+                                  label: t.harmonicFamilyOption(String(family)),
+                                })),
+                              ]}
+                              onChange={setAspectHarmonicFamilyFilter}
+                            />
+                          </div>
+                          {renderTableTab(
+                            'aspects',
+                            load.data,
+                            displayName,
+                            pointVisibility,
+                            housesRenderable,
+                            t,
+                            locale,
+                            rulership,
+                            symbolClass,
+                            boundsScheme,
+                            tableSelection,
+                            harmonicFamily,
+                          )}
+                        </>
+                      );
+                    })()}
                   {currentTab === 'matrix' &&
                     renderMatrixView(load.data, displayName, pointVisibility, t, locale, tableSelection)}
                   {currentTab === 'elements' && renderElementsView(load.data, displayName, pointVisibility, t, locale)}
@@ -2059,6 +2425,17 @@ export function ChartView({
           changeChartView(personId, 'natal', next);
         }}
         buildViewHref={(next) => chartHref(personId, next, 'natal')}
+        overlayContext={
+          provider === undefined
+            ? undefined
+            : {
+                moment: person.moment,
+                provider,
+                baseLabel: t.natalFallback,
+                baseSource: 'natal',
+                options: { ...toChartCalculationOptions(settings), rulership },
+              }
+        }
       />
     </main>
   );

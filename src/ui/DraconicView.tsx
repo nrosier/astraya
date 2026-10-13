@@ -114,6 +114,11 @@ export function DraconicView({
           changeChartView(personId, 'draconic', next);
         }}
         buildViewHref={(next) => chartHref(personId, next, 'draconic')}
+        overlayContext={
+          provider === undefined
+            ? undefined
+            : { moment: person.moment, provider, baseLabel: t.headingFallback, baseSource: 'draconic' }
+        }
       />
 
       {load.kind === 'ready' && !housesAreDefined(load.data.houses) && (

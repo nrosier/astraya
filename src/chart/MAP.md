@@ -21,7 +21,7 @@ Hand-rolled SVG rendering layer: chart wheels (single/bi-/tri-ring), aspect webs
 - `glyph-weight.ts` — Glyph stroke-weight setting (fine/regular/bold). Deps: none (module state).
 - `glyphs.ts` — Vector-path glyph registry (all bodies/signs/aspects) + `renderGlyph`. Deps: `./glyph-variants`, `./glyph-weight`, `./symbol-class`, `./symbol-text`.
 - `jones-shape-diagram.ts` — Jones chart-shape abstract diagram. Deps: `astrology/jones-shapes`, `./svg-primitives`, `./wheel`.
-- `multi-wheel.ts` — Main chart wheel renderer (single/bi-/tri-ring with shared anchor, glyphs, cusps, aspect webs, legend). Deps: `astrology/aspects`, `astrology/signs`, `./aspect-web`, `./glyph-layout`, `./glyphs`, `./sheet-geometry`, `./wheel`.
+- `multi-wheel.ts` — Main chart wheel renderer (single/bi-/tri-ring with shared anchor, glyphs, cusps, aspect webs, accessible legend, leader arrows). Deps: `astrology/aspects`, `astrology/signs`, `./aspect-web`, `./glyph-layout`, `./glyphs`, `./sheet-geometry`, `./wheel`.
 - `overlay-options.ts` — Persisted overlay settings bridge (antiscia/declination/dial90/midpoint-tree). Deps: `store/ops` (JsonValue).
 - `sheet-geometry.ts` — Chart sheet layout authority (800px reference frame, linear scaling, per-ring planet bands). Deps: none (pure geometry).
 - `standalone-svg.ts` — Inlines `app.css` light-theme palette into exported SVG `<style>`. Deps: none (string manipulation).

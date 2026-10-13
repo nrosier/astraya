@@ -2406,10 +2406,9 @@ label.stacked textarea:focus-visible {
   stroke-width: 2;
 }
 
-/* A second or third ring's Ascendant/Midheaven spokes get their own colour AND dash pattern
-   (#448): colour alone isn't enough to tell whose line is whose (colourblind readers, or a
-   legend swatch reduced to a dot), so each extra ring is also a different line style — ring 1
-   dotted, ring 2 dash-dot. Ring 0 keeps the plain, solid `--accent` above unchanged. */
+/* Extra rings' Ascendant/Midheaven spokes get their own colour AND dash pattern (#448): colour
+   alone is not enough to tell whose line is whose, so the patterns repeat only after the first
+   three distinguishable styles. Ring 0 keeps the plain, solid `--accent` above unchanged. */
 .chart-multiwheel-ring-1.chart-multiwheel-cusp-angle {
   stroke: var(--ring-1-color);
   stroke-dasharray: 1 3;
@@ -2418,6 +2417,20 @@ label.stacked textarea:focus-visible {
 .chart-multiwheel-ring-2.chart-multiwheel-cusp-angle {
   stroke: var(--ring-2-color);
   stroke-dasharray: 6 2 1 2;
+}
+
+.chart-multiwheel-ring-3.chart-multiwheel-cusp-angle {
+  stroke-dasharray: 4 2;
+}
+
+.chart-multiwheel-ring-4.chart-multiwheel-cusp-angle {
+  stroke: var(--ring-1-color);
+  stroke-dasharray: 8 2;
+}
+
+.chart-multiwheel-ring-5.chart-multiwheel-cusp-angle {
+  stroke: var(--ring-2-color);
+  stroke-dasharray: 2 2 6 2;
 }
 
 .chart-glyph circle,
@@ -2547,6 +2560,11 @@ svg text.chart-symbol-text-unicode {
   fill: var(--accent);
 }
 
+.chart-wheel-interactive [data-ring-legend]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
 .chart-wheel-interactive .chart-aspect-link:hover .chart-aspect {
   stroke-width: 3;
   opacity: 1;
@@ -2606,6 +2624,74 @@ svg text.chart-symbol-text-unicode {
   stroke-width: 3;
 }
 
+/* Optional analytical wheel layers (#556) retain distinct dash patterns, so the contact
+   kind remains legible without relying on hue. They never catch pointer input; the wheel's
+   bodies, signs and legend remain the interactive targets. */
+.chart-wheel-overlay {
+  pointer-events: none;
+}
+
+.chart-antiscia {
+  stroke: var(--aspect-minor);
+  stroke-width: 1.4;
+  opacity: 0.75;
+  stroke-dasharray: 2 3;
+}
+
+.chart-antiscia-contra-antiscion {
+  stroke-dasharray: 6 2;
+}
+
+.chart-declination {
+  stroke: var(--aspect-soft);
+  stroke-width: 1.4;
+  opacity: 0.75;
+  stroke-dasharray: 5 2;
+}
+
+.chart-declination-contraparallel {
+  stroke: var(--aspect-hard);
+  stroke-dasharray: 1 3;
+}
+
+.chart-dial90 .dial90-ring-outer,
+.chart-dial90 .dial90-ring-inner {
+  fill: var(--surface);
+  fill-opacity: 0.45;
+  stroke: var(--line);
+  stroke-width: 1.5;
+}
+
+.chart-dial90 .dial90-quadrant-boundary {
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.chart-dial90 .dial90-tick-major,
+.chart-dial90 .dial90-tick-minor {
+  stroke: var(--muted);
+}
+
+.chart-dial90 .dial90-tick-major {
+  stroke-width: 1.25;
+}
+
+.chart-dial90 .dial90-tick-minor {
+  stroke-width: 0.75;
+}
+
+.chart-dial90 .dial90-tick-label,
+.chart-dial90 .dial90-midpoint-hit-label {
+  fill: var(--muted);
+  font-size: 0.7rem;
+}
+
+.chart-dial90 .dial90-midpoint-hit {
+  fill: var(--aspect-hard);
+  stroke: var(--surface);
+  stroke-width: 1;
+}
+
 /* A chord between two different rings (`aspect-web.ts` only emits this class for one that
    crosses rings, never a ring's own aspects) is dashed, so colour is never the only way to
    tell a cross-source aspect apart from one within a single ring (#448). */
@@ -2633,8 +2719,63 @@ svg text.chart-symbol-text-unicode {
   stroke-dasharray: 6 2 1 2;
 }
 
+.chart-multiwheel-ring-3.chart-multiwheel-legend-swatch {
+  stroke-dasharray: 4 2;
+}
+
+.chart-multiwheel-ring-4.chart-multiwheel-legend-swatch {
+  stroke: var(--ring-1-color);
+  stroke-dasharray: 8 2;
+}
+
+.chart-multiwheel-ring-5.chart-multiwheel-legend-swatch {
+  stroke: var(--ring-2-color);
+  stroke-dasharray: 2 2 6 2;
+}
+
 .chart-multiwheel-legend-label {
   fill: var(--fg);
+}
+
+.chart-multiwheel-ring-arrow {
+  visibility: hidden;
+  opacity: 0;
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  pointer-events: none;
+  transition: opacity 0.15s;
+}
+
+.chart-multiwheel-ring-arrowhead {
+  fill: var(--accent);
+}
+
+.chart-multiwheel-ring-arrow.chart-multiwheel-ring-1 {
+  stroke: var(--ring-1-color);
+}
+
+.chart-multiwheel-ring-arrow.chart-multiwheel-ring-2 {
+  stroke: var(--ring-2-color);
+}
+
+.chart-multiwheel-ring-arrow.chart-multiwheel-ring-3 {
+  stroke-dasharray: 4 2;
+}
+
+.chart-multiwheel-ring-arrow.chart-multiwheel-ring-4 {
+  stroke: var(--ring-1-color);
+  stroke-dasharray: 8 2;
+}
+
+.chart-multiwheel-ring-arrow.chart-multiwheel-ring-5 {
+  stroke: var(--ring-2-color);
+  stroke-dasharray: 2 2 6 2;
+}
+
+.chart-multiwheel-ring-arrow.chart-ring-arrow-active {
+  visibility: visible;
+  opacity: 1;
 }
 
 /*
@@ -3527,7 +3668,8 @@ svg text.chart-symbol-text-unicode {
   white-space: nowrap;
 }
 
-.settings-card {
+.settings-card,
+.chart-overlay-settings-card {
   width: min(46rem, calc(100vw - 2rem));
   max-height: calc(100vh - 2rem);
   padding: 0;
@@ -3537,12 +3679,14 @@ svg text.chart-symbol-text-unicode {
   color: var(--fg);
 }
 
-.settings-card[open] {
+.settings-card[open],
+.chart-overlay-settings-card[open] {
   display: flex;
   flex-direction: column;
 }
 
-.settings-card::backdrop {
+.settings-card::backdrop,
+.chart-overlay-settings-card::backdrop {
   background: rgb(0 0 0 / 0.45);
 }
 
@@ -3618,8 +3762,87 @@ svg text.chart-symbol-text-unicode {
   background: var(--bg);
 }
 
+.chart-overlay-rows {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.chart-overlay-row {
+  display: grid;
+  grid-template-columns: minmax(12rem, 0.7fr) minmax(0, 1.3fr);
+  align-items: end;
+  gap: 0.75rem 1rem;
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--line);
+}
+
+.chart-overlay-row-inputs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 0.75rem;
+}
+
+.chart-overlay-row-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.chart-overlay-row-order {
+  display: inline-flex;
+  gap: 0.25rem;
+}
+
+.chart-overlay-provenance {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  border-left: 3px solid var(--line);
+  background: var(--surface);
+  font-size: 0.875rem;
+}
+
+.chart-overlay-provenance h3,
+.chart-overlay-provenance ul {
+  margin: 0;
+}
+
+.chart-overlay-provenance ul {
+  margin-top: 0.25rem;
+  padding-left: 1.25rem;
+}
+
+.chart-overlay-row--inactive .chart-overlay-row-inputs {
+  opacity: 0.6;
+}
+
+.relocation-saved-places,
+.relocation-save-place {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+
+.relocation-saved-places .primitive-field,
+.relocation-save-place .primitive-field {
+  display: grid;
+  flex: 1 1 16rem;
+  gap: 0.25rem;
+}
+
 @media (max-width: 40rem) {
-  .settings-card {
+  .chart-overlay-row {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+}
+
+@media (max-width: 40rem) {
+  .settings-card,
+  .chart-overlay-settings-card {
     width: 100vw;
     max-width: 100vw;
     height: 100vh;

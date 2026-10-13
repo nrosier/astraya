@@ -1,9 +1,8 @@
 /**
- * Integration test for MultiWheelView's own ring composition (#558): natal + transit +
- * progressed as three independent rings in one `renderMultiWheelSvg` call. `renderMultiWheelSvg`'s own N-ary support
- * is already covered generically in `chart-multi-wheel.test.ts`; this test is specifically that
- * MultiWheelView's three real ring sources compose without error and render all three labels —
- * the first screen to actually exercise more than two rings at once.
+ * Integration test for the canonical Wheel overlay composition (#569): natal + transit +
+ * progressed as three independent rings in one `renderMultiWheelSvg` call. The renderer's own
+ * N-ary support is covered generically in `chart-multi-wheel.test.ts`; this test verifies the
+ * real domain sources compose without error and retain their labels.
  */
 import { describe, expect, it } from 'vitest';
 import { bodyById } from '../src/astrology/bodies.js';

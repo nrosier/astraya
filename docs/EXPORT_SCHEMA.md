@@ -41,7 +41,21 @@ interface ExportedPerson {
   birth?: BirthMomentInput; // absent if the birth record is incomplete
   missing: string[]; // required fields the stored record lacks
   natalChart?: ExportedChart; // absent if birth is incomplete, or chartError explains a failure
+  harmonicCharts?: ExportedHarmonicChart[]; // named Varga charts, absent without usable houses
   chartError?: string;
+}
+
+interface ExportedHarmonicChart {
+  key: string; // Varga preset key, currently D1/D9/D10
+  label: string;
+  harmonic: number;
+  source: {
+    kind: 'radix';
+    transform: 'longitude-times-n-mod-360';
+    houses: 'whole-sign-from-harmonic-ascendant';
+  };
+  radixPositions: HarmonicPositionProvenanceRow[]; // each body’s radix and transformed longitudes
+  chart: ExportedChart;
 }
 
 interface ExportedChart {
@@ -92,7 +106,8 @@ JSON Schema file does enumerate them structurally.
   These fields were actually added across two earlier changes in the same work session (#556, then #555) _without_
   a version bump — a lapse against the policy this document itself states. This bump corrects that retroactively
   (the shape a v1-labelled file could have had was already stale by the time this document was written) and is the
-  first version bump made under the policy above, going forward.
+  first version bump made under the policy above, going forward. #557 later added optional `harmonicCharts` with
+  radix-to-result position provenance for the named Varga presets; it is additive, so the version remains v2.
 
 ## How this is kept true
 

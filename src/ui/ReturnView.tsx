@@ -281,6 +281,16 @@ export function ReturnView({
             changeChartView(personId, kind, next);
           }}
           buildViewHref={(next) => chartHref(personId, next, kind)}
+          overlayContext={
+            provider === undefined
+              ? undefined
+              : {
+                  moment: person.moment,
+                  provider,
+                  baseLabel: displayName,
+                  options: { ...toChartCalculationOptions(settings), rulership },
+                }
+          }
         />
       )}
 
