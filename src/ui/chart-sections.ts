@@ -1,8 +1,9 @@
 /**
  * The Charts page's two axes, and what a URL names of them.
  *
- * - The **type** of chart: natal, draconic, harmonic, solar return, lunar return. Each is a complete chart
- *   cast for one person, so they share everything below. A path segment of the chart route (`.../charts/draconic/aspects`).
+ * - The **type** of chart: natal, draconic, harmonic, solar return, lunar return, relocated (#559). Each is
+ *   a complete chart cast for one person, so they share everything below. A path segment of the chart
+ *   route (`.../charts/draconic/aspects`).
  * - The **view** of the chart screen (#511): Wheel, Aspects, Aspect matrix, Elements & modalities, Placements, or Patterns & condition, per
  *   `docs/UI-UX_GUIDELINES.md` §2's target chart page. The last path segment of the chart route.
  *
@@ -29,7 +30,7 @@ import type { chartViewMessages } from './ChartView.messages.js';
 export const CHART_VIEWS = ['wheel', 'aspects', 'matrix', 'elements', 'placements', 'patterns'] as const;
 export type ChartViewKind = (typeof CHART_VIEWS)[number];
 
-export const CHART_TYPES = ['natal', 'draconic', 'harmonic', 'solar-return', 'lunar-return'] as const;
+export const CHART_TYPES = ['natal', 'draconic', 'harmonic', 'solar-return', 'lunar-return', 'relocated'] as const;
 export type ChartType = (typeof CHART_TYPES)[number];
 
 export function isChartType(value: unknown): value is ChartType {

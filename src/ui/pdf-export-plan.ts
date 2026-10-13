@@ -28,6 +28,7 @@ import {
   type ChartData,
 } from '../domain/chart-compute.js';
 import { computeDraconic } from '../domain/draconic.js';
+import { computeRelocatedChart } from '../domain/relocated-chart.js';
 import { computeHarmonic } from '../domain/harmonic.js';
 import { computeSolarReturnChart, computeLunarReturnChart } from '../domain/return-chart.js';
 import {
@@ -332,6 +333,14 @@ async function computeSectionChartData(
         ...(place === undefined ? {} : { place }),
       });
       return result.chart;
+    }
+    case 'relocated': {
+      // Not currently selectable from PdfExportBuilder's own UI (PDF_CHART_TYPES omits it) — this
+      // case exists only so the switch stays exhaustive over the full ChartType union (#559).
+      // `place` falls back to the birthplace, matching solar/lunar return's own convention above.
+      const relocationPlace = place ?? { ...person.moment.coordinates, altitude: 0 };
+      const result = await computeRelocatedChart(person.moment, relocationPlace, provider, calcOptions);
+      return result.relocated;
     }
   }
 }
