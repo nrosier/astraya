@@ -80,6 +80,7 @@ import { momentKey } from '../time/encode.js';
 import { renderChartDialSvg, renderChartSheetSvg } from '../chart/chart-sheet.js';
 import { renderJonesShapeDiagramSvg } from '../chart/jones-shape-diagram.js';
 import { lunarPhaseOf } from '../astrology/lunar-phase.js';
+import { lotFormulaByKey } from '../astrology/arabic-parts.js';
 import type { DignityType } from '../astrology/reception.js';
 import { jonesBodyPositions } from '../astrology/jones-shapes.js';
 import {
@@ -768,6 +769,15 @@ export function derivedPointColumns(
         ]),
     { key: 'label', label: t.pointLabel, labelTooltip: t.derivedPointTooltip, valueOf: (row) => row.label },
     ...degreeColumns<DerivedPointRow>(t, locale),
+    {
+      key: 'formula',
+      label: t.lotFormulaLabel,
+      labelTooltip: t.lotFormulaTooltip,
+      valueOf: (row) => {
+        const formula = row.pointKey === undefined ? undefined : lotFormulaByKey(row.pointKey);
+        return formula === undefined ? '' : `${formula.dayFormula} / ${formula.nightFormula}`;
+      },
+    },
   ];
 }
 
