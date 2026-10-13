@@ -35,18 +35,31 @@ function mount(element: React.ReactElement): HTMLElement {
 describe('PrintProvenance (#564)', () => {
   it('renders the house system, zodiac, rulership and generated-at text', () => {
     const container = mount(
-      <PrintProvenance houseSystem="Placidus" zodiac="Tropical" rulership="Modern" generatedAt="2026-10-13 09:00" />,
+      <PrintProvenance
+        houseSystem="Placidus"
+        zodiac="Tropical"
+        rulership="Modern"
+        snapshotIdentity="v1-deadbeef"
+        generatedAt="2026-10-13 09:00"
+      />,
     );
     const text = container.textContent;
     expect(text).toContain('Placidus');
     expect(text).toContain('Tropical');
     expect(text).toContain('Modern');
+    expect(text).toContain('v1-deadbeef');
     expect(text).toContain('2026-10-13 09:00');
   });
 
   it('renders into an element the print stylesheet can target', () => {
     const container = mount(
-      <PrintProvenance houseSystem="Koch" zodiac="Sidereal (ayanamsa 1)" rulership="Traditional" generatedAt="x" />,
+      <PrintProvenance
+        houseSystem="Koch"
+        zodiac="Sidereal (ayanamsa 1)"
+        rulership="Traditional"
+        snapshotIdentity="v1-00000000"
+        generatedAt="x"
+      />,
     );
     expect(container.querySelector('.print-provenance')).not.toBeNull();
   });

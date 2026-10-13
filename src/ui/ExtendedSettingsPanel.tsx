@@ -44,7 +44,7 @@ import {
   matchCalculationProfile,
   type CalculationProfileId,
 } from '../chart/calculation-profiles.js';
-import { DEFAULT_EXTENDED_SETTINGS, type ExtendedSettings } from '../chart/extended-settings.js';
+import { DEFAULT_EXTENDED_SETTINGS, type ExtendedSettings, type ModernPointKey } from '../chart/extended-settings.js';
 import { useDefaultCalculationProfile } from './default-calculation-profile.js';
 import { extendedSettingsPanelMessages } from './ExtendedSettingsPanel.messages.js';
 import { changedSettings, sameSettings } from './extended-settings-summary.js';
@@ -65,6 +65,14 @@ import type { EphemerisProvider } from '../ephemeris/types.js';
 const MINOR_ASPECTS = ASPECTS.filter((aspect) => aspect.family === 'minor');
 
 const LAHIRI_AYANAMSA_ID = ayanamsaByKey('lahiri')?.id ?? AYANAMSAS[0]?.id ?? 1;
+
+function lilithPointKey(variant: ExtendedSettings['lilithVariant']): ModernPointKey {
+  return variant === 'true' ? 'osculatingLilith' : variant === 'interpolated' ? 'interpolatedLilith' : 'meanLilith';
+}
+
+function nodePointKey(variant: ExtendedSettings['nodeVariant']): ModernPointKey {
+  return variant === 'true' ? 'trueNode' : 'meanNode';
+}
 
 /** Fetches every house-system/ayanamsa display name once, falling back to the machine key while pending. */
 function useNameLookup<T extends number | string>(
@@ -268,6 +276,8 @@ export function ExtendedSettingsPanel({
         return t.summary.spirit;
       case 'chiron':
         return t.summary.chironHidden;
+      case 'modernPoints':
+        return t.summary.modernPoints;
       case 'midpoints':
         return t.summary.midpoints;
       case 'lilith':
@@ -519,6 +529,20 @@ export function ExtendedSettingsPanel({
           <p className="hint settings-card-indent">{t.lilithHelp}</p>
           <div className="settings-card-indent">
             <Checkbox
+              label={t.showSelectedLilith}
+              checked={draft.modernPointVisibility[lilithPointKey(draft.lilithVariant)]}
+              onChange={(value) => {
+                patch({
+                  modernPointVisibility: {
+                    ...draft.modernPointVisibility,
+                    [lilithPointKey(draft.lilithVariant)]: value,
+                  },
+                });
+              }}
+            />
+          </div>
+          <div className="settings-card-indent">
+            <Checkbox
               label={t.aspectsToLilith}
               checked={draft.aspectsToLilith}
               onChange={(value) => {
@@ -543,6 +567,17 @@ export function ExtendedSettingsPanel({
           <p className="hint settings-card-indent">{t.nodeHelp}</p>
           <div className="settings-card-indent">
             <Checkbox
+              label={t.showSelectedNode}
+              checked={draft.modernPointVisibility[nodePointKey(draft.nodeVariant)]}
+              onChange={(value) => {
+                patch({
+                  modernPointVisibility: { ...draft.modernPointVisibility, [nodePointKey(draft.nodeVariant)]: value },
+                });
+              }}
+            />
+          </div>
+          <div className="settings-card-indent">
+            <Checkbox
               label={t.aspectsToLunarNodes}
               checked={draft.aspectsToLunarNodes}
               onChange={(value) => {
@@ -550,6 +585,19 @@ export function ExtendedSettingsPanel({
               }}
             />
           </div>
+          <fieldset className="settings-card-indent">
+            <legend>{t.minorPlanetsLegend}</legend>
+            {(['ceres', 'pallas', 'juno', 'vesta'] as const).map((key) => (
+              <Checkbox
+                key={key}
+                label={t.modernPointLabels[key]}
+                checked={draft.modernPointVisibility[key]}
+                onChange={(value) => {
+                  patch({ modernPointVisibility: { ...draft.modernPointVisibility, [key]: value } });
+                }}
+              />
+            ))}
+          </fieldset>
           <div className="settings-card-indent">
             <Checkbox
               label={t.aspectsToVertex}

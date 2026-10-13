@@ -57,6 +57,7 @@ export type CalculationProfile = Pick<
   | 'fortuneVisible'
   | 'vertexVisible'
   | 'chironVisible'
+  | 'modernPointVisibility'
   | 'midpointsVisible'
   | 'aspectsToChiron'
   | 'aspectsToLilith'
@@ -74,6 +75,7 @@ const COMMON: Pick<
   | 'lilithVariant'
   | 'nodeVariant'
   | 'midpointsVisible'
+  | 'modernPointVisibility'
   | 'aspectsToChiron'
   | 'aspectsToLilith'
   | 'aspectsToLunarNodes'
@@ -86,6 +88,7 @@ const COMMON: Pick<
   lilithVariant: 'mean',
   nodeVariant: 'mean',
   midpointsVisible: false,
+  modernPointVisibility: DEFAULT_EXTENDED_SETTINGS.modernPointVisibility,
   aspectsToChiron: false,
   aspectsToLilith: false,
   aspectsToLunarNodes: false,
@@ -138,6 +141,7 @@ export function applyCalculationProfile(settings: ExtendedSettings, id: Calculat
     fortuneVisible: profile.fortuneVisible,
     vertexVisible: profile.vertexVisible,
     chironVisible: profile.chironVisible,
+    modernPointVisibility: profile.modernPointVisibility,
     midpointsVisible: profile.midpointsVisible,
     aspectsToChiron: profile.aspectsToChiron,
     aspectsToLilith: profile.aspectsToLilith,
@@ -175,6 +179,7 @@ export function matchCalculationProfile(
       settings.fortuneVisible === profile.fortuneVisible &&
       settings.vertexVisible === profile.vertexVisible &&
       settings.chironVisible === profile.chironVisible &&
+      JSON.stringify(settings.modernPointVisibility) === JSON.stringify(profile.modernPointVisibility) &&
       settings.midpointsVisible === profile.midpointsVisible &&
       settings.aspectsToChiron === profile.aspectsToChiron &&
       settings.aspectsToLilith === profile.aspectsToLilith &&

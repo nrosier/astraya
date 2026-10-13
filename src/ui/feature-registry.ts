@@ -149,6 +149,7 @@ function personFeatures(): readonly FeatureDefinition[] {
 
 const EXPLORE_GROUP_FOR_TOOL: Readonly<Record<ToolKey, FeatureGroup>> = {
   cycles: 'explore-sky-cycles',
+  'event-search': 'explore-sky-cycles',
   eclipses: 'explore-sky-cycles',
   horary: 'explore-questions-planning',
   electional: 'explore-questions-planning',
@@ -170,7 +171,12 @@ function exploreFeatures(): readonly FeatureDefinition[] {
       buildHref: () => tool.href,
       requiresBirthMoment: false,
       settingsMode: 'inline',
-      exportCapabilities: tool.key === 'cycles' || tool.key === 'eclipses' ? ['chart-image'] : ['none'],
+      exportCapabilities:
+        tool.key === 'cycles' || tool.key === 'eclipses'
+          ? ['chart-image']
+          : tool.key === 'event-search'
+            ? ['csv']
+            : ['none'],
       labelKey: tool.key,
     } satisfies FeatureDefinition;
   });

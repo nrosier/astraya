@@ -3,7 +3,7 @@
  */
 /**
  * @module MultiWheelView.messages
- * @purpose English/Dutch i18n strings for the multi-wheel overlay screen: ring toggles, the transit date and relocation lat/lon inputs, and ring labels.
+ * @purpose English/Dutch i18n strings for the multi-wheel overlay screen: ring toggles, transit/progression dates, relocation lat/lon inputs, and ring labels.
  * @conventions Co-located i18n file exporting `{ en, nl }`, consumed by MultiWheelView.tsx via `useMessages(multiWheelViewMessages)`; `nl` is typed as `typeof en`.
  * @exports multiWheelViewMessages
  */
@@ -17,14 +17,17 @@ const en = {
 
   heading: (name: string) => `${name}’s multi-wheel overlay`,
   headingFallback: 'Multi-wheel overlay',
-  hint: 'Natal is always the innermost ring. Add a transit or relocated ring independently — each is computed and labelled on its own; positions never change between rings except for the ones each ring’s own technique actually moves.',
+  hint: 'Natal is always the innermost ring. Add transit, progressed, or relocated rings independently — each is computed and labelled on its own; positions never change between rings except for the ones each ring’s own technique actually moves.',
 
   natalLabel: 'Natal',
   transitRingLabel: 'Transit',
+  progressedRingLabel: 'Progressed',
   relocatedRingLabel: 'Relocated',
 
   includeTransit: 'Add a transit ring',
   transitDateLabel: 'Transit date',
+  includeProgressed: 'Add a progressed ring',
+  progressedDateLabel: 'Progressed to date',
   includeRelocated: 'Add a relocated ring',
   latitudeLabel: 'Relocation latitude',
   longitudeLabel: 'Relocation longitude',
@@ -49,14 +52,17 @@ const nl: typeof en = {
 
   heading: (name: string) => `Overlay met meerdere wielen van ${name}`,
   headingFallback: 'Overlay met meerdere wielen',
-  hint: 'De geboortehoroscoop is altijd het binnenste wiel. Voeg onafhankelijk een transit- of verplaatsingswiel toe — elk wordt apart berekend en gelabeld; posities veranderen alleen voor wat de techniek van dat wiel daadwerkelijk verplaatst.',
+  hint: 'De geboortehoroscoop is altijd het binnenste wiel. Voeg onafhankelijk transit-, progressie- of verplaatsingswielen toe — elk wordt apart berekend en gelabeld; posities veranderen alleen voor wat de techniek van dat wiel daadwerkelijk verplaatst.',
 
   natalLabel: 'Geboortehoroscoop',
   transitRingLabel: 'Transit',
+  progressedRingLabel: 'Progressie',
   relocatedRingLabel: 'Verplaatst',
 
   includeTransit: 'Transitwiel toevoegen',
   transitDateLabel: 'Transitdatum',
+  includeProgressed: 'Progressiewiel toevoegen',
+  progressedDateLabel: 'Gevorderd tot datum',
   includeRelocated: 'Verplaatsingswiel toevoegen',
   latitudeLabel: 'Breedtegraad van verplaatsing',
   longitudeLabel: 'Lengtegraad van verplaatsing',

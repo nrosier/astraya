@@ -23,6 +23,7 @@ const en = {
   returnToLabel: 'Return to',
   toolLabels: {
     cycles: 'Planetary cycles',
+    'event-search': 'Ephemeris research',
     eclipses: 'Eclipses',
     horary: 'Horary chart',
     electional: 'Electional search',
@@ -73,6 +74,7 @@ const nl: typeof en = {
   returnToLabel: 'Terug naar',
   toolLabels: {
     cycles: 'Planetaire cycli',
+    'event-search': 'Ephemerisonderzoek',
     eclipses: 'Verduisteringen',
     horary: 'Horoscoop voor een vraag',
     electional: 'Electieve zoektocht',

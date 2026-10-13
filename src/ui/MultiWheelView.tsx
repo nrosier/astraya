@@ -1,6 +1,6 @@
 /**
  * Multi-wheel overlay for one saved person (#558): natal always innermost, with an optional
- * transit ring and/or an optional relocated ring, each independently toggled — not a fixed
+ * transit ring, progressed ring, and/or an optional relocated ring, each independently toggled — not a fixed
  * biwheel like TransitView/SynastryView/PrimaryDirectionsView, which each hardcode exactly two
  * ring sources. `chart/multi-wheel.ts`'s `renderMultiWheelSvg` and
  * `chart/sheet-geometry.ts`'s `resolveRingBands` already support an arbitrary ring count (see
@@ -8,8 +8,8 @@
  * rings at once, composing `chartWheelRing` outputs from independent `compute*` calls rather
  * than adding anything to the renderer itself.
  *
- * Cross-ring aspects are only drawn between natal and the transit ring (reusing
- * `computeTransit`'s own `contacts`, exactly `TransitView.tsx`'s own convention): a relocated
+ * Cross-ring aspects are drawn between natal and the selected transit/progressed ring, reusing
+ * each technique's own natal contacts. A relocated
  * ring's positions are identical to natal's (same moment, different place only moves
  * houses/angles — see `domain/relocated-chart.ts`'s own header), so "cross aspects" between
  * natal and relocated would be meaningless — every body would be marked exactly conjunct
@@ -17,8 +17,8 @@
  */
 /**
  * @module MultiWheelView
- * @purpose Renders the multi-wheel overlay screen: natal ring always present, independently toggled transit and relocated rings, composed via chartWheelRing + renderMultiWheelSvg.
- * @conventions Reuses chartWheelRing (one adapter per ring source) and renderMultiWheelSvg directly, bypassing the single-ring AstroChartWheel wrapper, same as TransitView/SynastryView/PrimaryDirectionsView; the transit ring reuses TransitView's own date-to-noon-UTC-JD convention and orb config; the relocated ring reuses domain/relocated-chart.ts's own location-input idiom. Text comes from co-located MultiWheelView.messages.ts via useMessages().
+ * @purpose Renders the multi-wheel overlay screen: natal ring always present, independently toggled transit, progressed, and relocated rings, composed via chartWheelRing + renderMultiWheelSvg.
+ * @conventions Reuses chartWheelRing (one adapter per ring source) and renderMultiWheelSvg directly, bypassing the single-ring AstroChartWheel wrapper, same as TransitView/SynastryView/PrimaryDirectionsView; transit/progressed rings reuse each technique's own noon-UTC date convention and natal contacts; the relocated ring reuses domain/relocated-chart.ts's own location-input idiom. Text comes from co-located MultiWheelView.messages.ts via useMessages().
  * @exports MultiWheelView
  */
 import { useEffect, useMemo, useState } from 'react';
@@ -26,8 +26,10 @@ import { GlossaryTerms } from './GlossaryTerm.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { computeChartData, housesAreDefined, type ChartData } from '../domain/chart-compute.js';
 import type { Aspect } from '../astrology/aspects.js';
+import { bodyById } from '../astrology/bodies.js';
 import { computeTransit } from '../domain/transit.js';
 import { computeRelocatedChart } from '../domain/relocated-chart.js';
+import { computeSecondaryProgression, type SecondaryProgressionData } from '../domain/secondary-progression.js';
 import { chartWheelRing } from '../domain/chart-tables.js';
 import { TRANSIT_ORB_CONFIG } from '../astrology/transit-importance.js';
 import { renderMultiWheelSvg, type CrossRingAspects } from '../chart/multi-wheel.js';
@@ -44,6 +46,19 @@ import { PersonNotFound } from './PersonNotFound.js';
 import { useStoreState } from './store-context.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 
+function progressedWheelRing(data: SecondaryProgressionData, label: string) {
+  return {
+    label,
+    houses: data.houses,
+    bodies: data.positions.map((position) => ({
+      body: position.body,
+      key: bodyById(position.body)?.key ?? String(position.body),
+      longitude: position.longitude,
+      retrograde: position.retrograde,
+    })),
+  };
+}
+
 type Load =
   | { readonly kind: 'idle' }
   | { readonly kind: 'loading' }
@@ -52,6 +67,7 @@ type Load =
       readonly natal: ChartData;
       readonly transit?: ChartData | undefined;
       readonly transitContacts?: readonly Aspect[] | undefined;
+      readonly progressed?: SecondaryProgressionData | undefined;
       readonly relocated?: ChartData | undefined;
     }
   | { readonly kind: 'error'; readonly message: string };
@@ -63,6 +79,8 @@ export function MultiWheelView({ personId }: { personId: string }): React.JSX.El
 
   const [includeTransit, setIncludeTransit] = useState(false);
   const [transitDate, setTransitDate] = useState(todayInputValue);
+  const [includeProgressed, setIncludeProgressed] = useState(false);
+  const [progressedDate, setProgressedDate] = useState(todayInputValue);
 
   const [includeRelocated, setIncludeRelocated] = useState(false);
   const [latInput, setLatInput] = useState('');
@@ -102,13 +120,22 @@ export function MultiWheelView({ personId }: { personId: string }): React.JSX.El
           }
         }
 
+        let progressed: SecondaryProgressionData | undefined;
+        if (includeProgressed) {
+          const [year, month, day] = progressedDate.split('-').map(Number);
+          if (year !== undefined && month !== undefined && day !== undefined) {
+            const targetJd = await provider.julianDayFromUtc(year, month, day, 12, 0, 0);
+            progressed = await computeSecondaryProgression(moment, targetJd, provider);
+          }
+        }
+
         let relocated: ChartData | undefined;
         if (includeRelocated && latitude !== undefined && longitude !== undefined) {
           const relocatedData = await computeRelocatedChart(moment, { latitude, longitude, altitude: 0 }, provider);
           relocated = relocatedData.relocated;
         }
 
-        if (!effect.cancelled) setLoad({ kind: 'ready', natal, transit, transitContacts, relocated });
+        if (!effect.cancelled) setLoad({ kind: 'ready', natal, transit, transitContacts, progressed, relocated });
       } catch (error) {
         if (!effect.cancelled)
           setLoad({ kind: 'error', message: error instanceof Error ? error.message : String(error) });
@@ -118,7 +145,17 @@ export function MultiWheelView({ personId }: { personId: string }): React.JSX.El
     return () => {
       effect.cancelled = true;
     };
-  }, [momentKey(person?.moment), provider, includeTransit, transitDate, includeRelocated, latitude, longitude]);
+  }, [
+    momentKey(person?.moment),
+    provider,
+    includeTransit,
+    transitDate,
+    includeProgressed,
+    progressedDate,
+    includeRelocated,
+    latitude,
+    longitude,
+  ]);
 
   const wheelMarkup = useMemo(() => {
     if (load.kind !== 'ready') return undefined;
@@ -129,6 +166,9 @@ export function MultiWheelView({ personId }: { personId: string }): React.JSX.El
       if (load.transitContacts !== undefined) {
         crossAspects.push({ innerRingIndex: 0, outerRingIndex: rings.length - 1, aspects: load.transitContacts });
       }
+    }
+    if (load.progressed !== undefined) {
+      rings.push(progressedWheelRing(load.progressed, t.progressedRingLabel));
     }
     if (load.relocated !== undefined) {
       rings.push(chartWheelRing(load.relocated, t.relocatedRingLabel));
@@ -167,6 +207,10 @@ export function MultiWheelView({ personId }: { personId: string }): React.JSX.El
       <div className="field-grid">
         <Checkbox label={t.includeTransit} checked={includeTransit} onChange={setIncludeTransit} />
         {includeTransit && <DateField label={t.transitDateLabel} value={transitDate} onChange={setTransitDate} />}
+        <Checkbox label={t.includeProgressed} checked={includeProgressed} onChange={setIncludeProgressed} />
+        {includeProgressed && (
+          <DateField label={t.progressedDateLabel} value={progressedDate} onChange={setProgressedDate} />
+        )}
       </div>
 
       <div className="field-grid">

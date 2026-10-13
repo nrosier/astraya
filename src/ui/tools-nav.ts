@@ -25,7 +25,7 @@
 
 import { routeHref } from './route.js';
 
-export type ToolKey = 'cycles' | 'eclipses' | 'horary' | 'electional' | 'rectification';
+export type ToolKey = 'cycles' | 'event-search' | 'eclipses' | 'horary' | 'electional' | 'rectification';
 export type ToolGroupKey = 'sky-cycles' | 'questions-planning' | 'birth-data';
 
 export interface Tool {
@@ -40,6 +40,7 @@ export const TOOL_GROUPS: readonly ToolGroupKey[] = ['sky-cycles', 'questions-pl
 /** In menu order, grouped: every member of one group appears consecutively, in `TOOL_GROUPS` order. */
 export const TOOLS: readonly Tool[] = [
   { key: 'cycles', href: routeHref({ kind: 'cycles' }), group: 'sky-cycles' },
+  { key: 'event-search', href: routeHref({ kind: 'event-search' }), group: 'sky-cycles' },
   { key: 'eclipses', href: routeHref({ kind: 'eclipses' }), group: 'sky-cycles' },
   { key: 'horary', href: routeHref({ kind: 'horary' }), group: 'questions-planning' },
   { key: 'electional', href: routeHref({ kind: 'electional' }), group: 'questions-planning' },

@@ -83,7 +83,11 @@ import { derivedPointPlacementFacts } from '../domain/derived-point-position.js'
 import { computeChartData, housesAreDefined, type ChartData } from '../domain/chart-compute.js';
 import { deriveExportFilename } from '../domain/export-filename.js';
 import { encodeChartShareLink } from '../domain/chart-share.js';
-import { buildCalculationSnapshot, calculationSnapshotToJson } from '../domain/calculation-snapshot.js';
+import {
+  buildCalculationSnapshot,
+  calculationSnapshotIdentity,
+  calculationSnapshotToJson,
+} from '../domain/calculation-snapshot.js';
 import { momentKey } from '../time/encode.js';
 import { renderChartDialSvg, renderChartSheetSvg } from '../chart/chart-sheet.js';
 import { renderJonesShapeDiagramSvg } from '../chart/jones-shape-diagram.js';
@@ -1768,6 +1772,7 @@ export function ChartDataView({
         houseSystem={houseSystemLabel(extendedSettings.houseSystem)}
         zodiac={zodiacLabel(extendedSettings.zodiac)}
         rulership={rulershipLabel(rulership)}
+        snapshotIdentity={calculationSnapshotIdentity(buildCalculationSnapshot(extendedSettings, rulership))}
         generatedAt={formatTimestamp(new Date())}
       />
       {!showHouses && <p className="hint">{t.housesUnknownHint(displayName || t.thisPerson)}</p>}
