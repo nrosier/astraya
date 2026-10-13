@@ -3070,6 +3070,78 @@ svg text.chart-symbol-text-unicode {
     break-inside: avoid;
     page-break-inside: avoid;
   }
+
+  /* A heading/caption stranded alone at the bottom of a page, with its own table or figure
+     pushed to the next, is the single most common print-layout complaint — keep each with
+     whatever immediately follows it (#564). */
+  h1,
+  h2,
+  h3,
+  caption,
+  .data-table caption {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  /*
+   * Monochrome-safe aspect lines (#564): on screen, aspect family is colour-coded (see the
+   * `.chart-aspect-*` rules above, by design hue-only — "two colour axes on one line read as
+   * neither"). A printed, especially grayscale, page has no such guarantee: most consumer
+   * printers render colour as a flattened gray, and the soft/minor families already share one
+   * stroke-width on screen, so without a non-colour cue they can become visually
+   * indistinguishable in print. Printing forces black ink plus a distinct dash pattern per
+   * family instead — solid for hard aspects, dashed for soft, dotted for minor — so a reader
+   * can tell them apart by shape alone, not by trusting a printer's colour rendering.
+   */
+  .chart-aspect-semisquare,
+  .chart-aspect-square,
+  .chart-aspect-sesquiquadrate,
+  .chart-aspect-opposition {
+    stroke: #000;
+    stroke-width: 2;
+    stroke-dasharray: none;
+    opacity: 0.85;
+  }
+
+  .chart-aspect-conjunction,
+  .chart-aspect-semisextile,
+  .chart-aspect-sextile,
+  .chart-aspect-trine {
+    stroke: #000;
+    stroke-width: 1.5;
+    stroke-dasharray: 5 3;
+    opacity: 0.75;
+  }
+
+  .chart-aspect-quintile,
+  .chart-aspect-biquintile,
+  .chart-aspect-quincunx {
+    stroke: #000;
+    stroke-width: 1;
+    stroke-dasharray: 1 2;
+    opacity: 0.65;
+  }
+
+  /* A screen-only affordance — the on-page provenance footer (#564) is a `position: fixed`
+     element instead, repeated on every printed page by the browser's own print engine. */
+  .print-provenance {
+    display: block;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-top: 1px solid #000;
+    padding: 2mm 0 0;
+    font-size: 0.65rem;
+    color: #000;
+    text-align: center;
+    background: #fff;
+  }
+}
+
+/* Hidden outside @media print — see the print-only rule above for what shows it. */
+.print-provenance {
+  display: none;
 }
 
 /* Planetary cycles (#410): the zodiac with a cycle's exact aspects joined in order. */
