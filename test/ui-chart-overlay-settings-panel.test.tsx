@@ -74,6 +74,8 @@ describe('ChartOverlaySettingsPanel', () => {
 
   it('keeps inputs inactive until their overlay is selected and commits only on Apply', async () => {
     const container = await mount();
+    expect(container.querySelector('dialog.chart-overlay-settings-card')).not.toBeNull();
+    expect(container.querySelector('dialog.settings-card')).toBeNull();
     await click(
       must([...container.querySelectorAll('button')].find((button) => button.textContent === 'Overlay settings')),
     );

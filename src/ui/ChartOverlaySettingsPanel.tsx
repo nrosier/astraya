@@ -194,6 +194,7 @@ export function ChartOverlaySettingsPanel({
         closeLabel={t.closeLabel}
         onDiscard={discard}
         returnFocusTo={triggerRef}
+        dialogClassName="chart-overlay-settings-card"
         footer={
           <>
             <button

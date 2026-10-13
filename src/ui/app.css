@@ -3668,7 +3668,8 @@ svg text.chart-symbol-text-unicode {
   white-space: nowrap;
 }
 
-.settings-card {
+.settings-card,
+.chart-overlay-settings-card {
   width: min(46rem, calc(100vw - 2rem));
   max-height: calc(100vh - 2rem);
   padding: 0;
@@ -3678,12 +3679,14 @@ svg text.chart-symbol-text-unicode {
   color: var(--fg);
 }
 
-.settings-card[open] {
+.settings-card[open],
+.chart-overlay-settings-card[open] {
   display: flex;
   flex-direction: column;
 }
 
-.settings-card::backdrop {
+.settings-card::backdrop,
+.chart-overlay-settings-card::backdrop {
   background: rgb(0 0 0 / 0.45);
 }
 
@@ -3838,7 +3841,8 @@ svg text.chart-symbol-text-unicode {
 }
 
 @media (max-width: 40rem) {
-  .settings-card {
+  .settings-card,
+  .chart-overlay-settings-card {
     width: 100vw;
     max-width: 100vw;
     height: 100vh;
