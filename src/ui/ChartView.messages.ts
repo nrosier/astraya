@@ -127,6 +127,23 @@ const en = {
   combust: 'Combust',
   underTheBeams: 'Under the beams',
   solarConditionFree: 'Free',
+  receptionCaption: 'Reception',
+  receptionHint:
+    'Reception: a planet standing in another’s essential dignity. Mutual reception is each planet in the other’s dignity of the same kind (e.g. both by domicile); mixed reception is each in the other’s dignity of a different kind; one-way is only one side. Aspect-linked reception — the pair also in aspect — is traditionally the stronger, more immediately active case.',
+  receptionTooltip:
+    'Which pairs of traditional planets receive each other, by which dignity (ruler, exalted, triplicity, bound, face), whether it is the same dignity on both sides, and whether the pair is also in aspect.',
+  receptionTooltipLabel: 'About reception',
+  receptionKindLabel: 'Kind',
+  mutualReceptionKind: 'Mutual',
+  oneWayReceptionKind: 'One-way',
+  receptionAFromBLabel: 'A receives from B by',
+  receptionBFromALabel: 'B receives from A by',
+  receptionSameTypeLabel: 'Same dignity',
+  receptionSameTypeTooltip:
+    'Mutual reception of the same dignity type on both sides (e.g. both by domicile), rather than mixed reception by different types.',
+  aspectLinkedLabel: 'Aspect-linked',
+  aspectLinkedTooltip:
+    'The two planets are also in aspect to each other — traditionally the stronger, more immediately active case of reception.',
   declinationsCaption: 'Declinations',
   antisciaCaption: 'Antiscia',
   fixedStarsCaption: 'Fixed stars',
@@ -395,6 +412,23 @@ const nl: typeof en = {
   combust: 'Combust',
   underTheBeams: 'Onder de stralen',
   solarConditionFree: 'Vrij',
+  receptionCaption: 'Receptie',
+  receptionHint:
+    'Receptie: een planeet die in de essentiële waardigheid van een andere staat. Wederzijdse receptie is elke planeet in de waardigheid van de ander van hetzelfde type (bijv. beide via heerserschap); gemengde receptie is elk in de waardigheid van de ander van een ander type; eenzijdig is slechts één kant. Receptie met aspect — het paar staat ook in aspect — is traditioneel het sterkere, directer actieve geval.',
+  receptionTooltip:
+    'Welke paren traditionele planeten elkaar ontvangen, door welke waardigheid (heerser, verheven, triplicitiet, bound, decaan), of dit dezelfde waardigheid is op beide kanten, en of het paar ook in aspect staat.',
+  receptionTooltipLabel: 'Over receptie',
+  receptionKindLabel: 'Soort',
+  mutualReceptionKind: 'Wederzijds',
+  oneWayReceptionKind: 'Eenzijdig',
+  receptionAFromBLabel: 'A ontvangt van B via',
+  receptionBFromALabel: 'B ontvangt van A via',
+  receptionSameTypeLabel: 'Zelfde waardigheid',
+  receptionSameTypeTooltip:
+    'Wederzijdse receptie van hetzelfde waardigheidstype op beide kanten (bijv. beide via heerserschap), in plaats van gemengde receptie via verschillende types.',
+  aspectLinkedLabel: 'Met aspect',
+  aspectLinkedTooltip:
+    'De twee planeten staan ook in aspect met elkaar — traditioneel het sterkere, directer actieve geval van receptie.',
   declinationsCaption: 'Declinaties',
   antisciaCaption: 'Antiscia',
   fixedStarsCaption: 'Vaste sterren',

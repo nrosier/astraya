@@ -17,7 +17,7 @@
  * @module astrology/planetary-condition
  * @purpose Classifies a traditional planet's sect alignment, angularity, hayz, motion, and besiegement.
  * @conventions Scoped to the seven traditional (Chaldean) planets — Sun/Moon/Mercury/Venus/Mars/Jupiter/Saturn — since sect, hayz and besiegement are classical concepts with no established reading for the outer planets, nodes, or asteroids. Mercury is sect-neutral (common to both sects) and so never "of sect" or in hayz.
- * @exports DIURNAL_PLANETS, NOCTURNAL_PLANETS, SectAlignment, sectAlignmentOf, Angularity, angularityOfHouse, Motion, motionOf, isInHayz, isBesieged
+ * @exports TRADITIONAL_PLANET_IDS, DIURNAL_PLANETS, NOCTURNAL_PLANETS, SectAlignment, sectAlignmentOf, Angularity, angularityOfHouse, Motion, motionOf, isInHayz, isBesieged
  */
 import type { BodyId, Degrees } from '../ephemeris/types.js';
 import { bodyByKey } from './bodies.js';
@@ -36,6 +36,13 @@ function norm360(degrees: Degrees): Degrees {
   const value = degrees % 360;
   return value < 0 ? value + 360 : value;
 }
+
+/** Sun through Saturn, the Chaldean order — the shared "which bodies does a traditional technique apply to" list every module in this file (and `reception.ts`, `chart-tables.ts`'s `conditionRows`/`dignityRows`) uses. */
+export const TRADITIONAL_PLANET_IDS: readonly BodyId[] = (
+  ['saturn', 'jupiter', 'mars', 'sun', 'venus', 'mercury', 'moon'] as const
+)
+  .map((key) => bodyByKey(key)?.id)
+  .filter((id): id is BodyId => id !== undefined);
 
 export const DIURNAL_PLANETS: readonly BodyId[] = [idOf('sun'), idOf('jupiter'), idOf('saturn')];
 export const NOCTURNAL_PLANETS: readonly BodyId[] = [idOf('moon'), idOf('venus'), idOf('mars')];
