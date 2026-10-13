@@ -15,6 +15,7 @@ export type PersonTabKey =
   | 'birth-record'
   | 'chart'
   | 'report'
+  | 'timing-timeline'
   | 'profections'
   | 'progressions'
   | 'solar-arc'
@@ -44,6 +45,7 @@ export const PERSON_TABS: readonly PersonTab[] = [
   { key: 'birth-record', buildHref: (id) => routeHref({ kind: 'person', personId: id }) },
   { key: 'chart', buildHref: (id) => routeHref({ kind: 'chart', personId: id }) },
   { key: 'report', buildHref: (id) => routeHref({ kind: 'report', personId: id }) },
+  { key: 'timing-timeline', buildHref: (id) => routeHref({ kind: 'timing-timeline', personId: id }) },
   { key: 'profections', buildHref: (id) => routeHref({ kind: 'profections', personId: id }) },
   { key: 'progressions', buildHref: (id) => routeHref({ kind: 'progressions', personId: id }) },
   { key: 'solar-arc', buildHref: (id) => routeHref({ kind: 'solar-arc', personId: id }) },
@@ -82,7 +84,10 @@ export interface PersonTabFamily {
 // periodic-transit screen rather than a new member here.
 export const PERSON_TAB_FAMILIES: readonly PersonTabFamily[] = [
   { key: 'transits-forecast', members: ['transit', 'periodic-transit'] },
-  { key: 'progressions-directions', members: ['profections', 'progressions', 'solar-arc', 'primary-directions'] },
+  {
+    key: 'progressions-directions',
+    members: ['timing-timeline', 'profections', 'progressions', 'solar-arc', 'primary-directions'],
+  },
   { key: 'relationship-charts', members: ['synastry', 'composite'] },
 ];
 

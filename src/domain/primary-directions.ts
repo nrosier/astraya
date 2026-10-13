@@ -1,5 +1,5 @@
 /**
- * Primary directions for one birth chart (#407): every direct zodiacal direction of the planets
+ * Primary directions for one birth chart (#407): every direct/converse, zodiacal/in-mundo direction of the planets
  * to the four classical significators over a lifetime, each with the age and date it perfects
  * under the chosen time key, the window around it in which it counts as active, and — for any
  * chosen age — the directed chart to draw against the natal one.
@@ -10,7 +10,7 @@
  * - **Significators: Ascendant, Midheaven, Sun and Moon.** The hylegiacal points Ptolemy and most
  *   classical authors directed to are those four plus the Part of Fortune (Gansten 2009 ch. 1);
  *   the Part is left out because Parts were traditionally directed converse (Gansten 2009 ch. 1,
- *   quoting ar-Rijāl), and only direct directions are computed. The Descendant and IC need no
+ *   quoting ar-Rijāl). The Descendant and IC need no
  *   entries of their own: a point directed to the Ascendant brings its opposition to the
  *   Descendant at the same arc (Gansten 2009 ch. 1), and the opposition is one of the aspects
  *   directed.
@@ -31,14 +31,10 @@
  * - **Configurable significator/promissor sets (#553).** `significators`/`promissors` on
  *   `PrimaryDirectionsOptions` default to the two lists above but can be widened or narrowed —
  *   the Descendant/IC can now be asked for directly (`PRIMARY_DIRECTION_ANGLE_KEYS`), say.
- *   `#553` also asked for converse directions, true in-mundo (real latitude rather than β = 0),
- *   and explicit Regiomontanus support. None of those three are implemented here: this module's
- *   spherical-trigonometry core is verified to the arcminute against two published worked
- *   examples (see `src/astrology/primary-directions.ts`'s header), and getting a direction's
- *   rotational sense or house-circle convention subtly wrong is exactly the kind of error that
- *   bar exists to catch — not something to risk introducing without an equally verifiable
- *   reference calculation for each new mode, which this change did not have in hand. Left as a
- *   follow-up rather than an unverified addition.
+ *   `mode` selects which side primary motion carries, and `method` selects in-zodiaco latitude 0
+ *   or in-mundo real body latitude. The school remains explicitly Placidus: its semi-arcs and
+ *   mundane positions are a coherent convention, while a Regiomontanus house-circle calculation
+ *   would be a different technique rather than an option that can safely share this engine.
  *
  * The directed chart for an age is the sphere turned by that age's arc: its houses are the
  * Placidus houses of the moment the RAMC had advanced by the arc (the real sky a few hours after
@@ -49,7 +45,7 @@
 
 /**
  * @module primary-directions
- * @purpose Computes a person's primary directions (#407): direct zodiacal Placidus-semi-arc directions of Sun–Pluto and their Ptolemaic aspects to the Ascendant, Midheaven, Sun and Moon, each with age, exact date and active window; plus the directed chart (houses and positions) at a chosen age for a bi-wheel.
+ * @purpose Computes a person's Placidus primary directions (#407): direct/converse and zodiacal/in-mundo directions of Sun–Pluto and their Ptolemaic aspects to selected significators, each with age, exact date and active window; plus the directed chart at a chosen age for a bi-wheel.
  * @conventions PrimaryDirectionKey is a const object, not a TS enum (the project compiles under erasableSyntaxOnly); orb is a window in degrees of RA around each hit's arc (default 1°), stored per hit as activeFromAge/activeUntilAge so filtering never needs the key; tropical zodiac and Placidus houses always; at or beyond the polar circles (|φ| ≥ 90° − ε) returns defined: false with no hits instead of throwing.
  * @exports PrimaryDirectionKey, arcToAge, ageToArc, DEFAULT_PRIMARY_DIRECTION_ORB, DEFAULT_MAX_AGE_YEARS, PRIMARY_DIRECTION_SIGNIFICATORS, PRIMARY_DIRECTION_ANGLE_KEYS, PRIMARY_DIRECTION_PROMISSORS, PrimaryDirection, PrimaryDirectionsOptions, PrimaryDirectionsData, generatePrimaryDirections, isDirectionActive, activeDirections, DirectedBodyPosition, DirectedChart, directedChartAt
  */
@@ -64,6 +60,8 @@ import {
   yearsToArc,
   type DirectionHit,
   type DirectionSignificator,
+  type PrimaryDirectionMethod,
+  type PrimaryDirectionMode,
   type PrimaryDirectionTimeKey,
   type SphereFrame,
 } from '../astrology/primary-directions.js';
@@ -157,18 +155,26 @@ export interface PrimaryDirectionsOptions {
   /**
    * Which significators to direct to (#553). Defaults to `PRIMARY_DIRECTION_SIGNIFICATORS`. Each
    * entry is either one of `PRIMARY_DIRECTION_ANGLE_KEYS` or a `BodyDefinition.key`. The method
-   * itself (Placidus semi-arcs, direct only, in zodiaco) is unchanged by this option — it only
+   * method itself (Placidus semi-arcs, with separately chosen direction and latitude modes) is unchanged by this option — it only
    * changes which points are asked about, never how an arc to one of them is computed.
    */
   readonly significators?: readonly string[];
   /** Which bodies are directed (#553). Defaults to `PRIMARY_DIRECTION_PROMISSORS`. */
   readonly promissors?: readonly string[];
+  /** Direct carries the promissor to the significator; converse reverses that motion. */
+  readonly mode?: PrimaryDirectionMode;
+  /** Placidus directions in zodiaco (default) or in mundo using each body's real latitude. */
+  readonly method?: PrimaryDirectionMethod;
 }
 
 export interface PrimaryDirectionsData {
   readonly natalJd: JulianDayUT;
   readonly place: GeoPosition;
   readonly key: PrimaryDirectionKey;
+  /** Which point the directions carry; a bi-wheel only has a meaningful outer ring for direct directions. */
+  readonly mode: PrimaryDirectionMode;
+  /** Latitude convention used for every computed hit and the direct bi-wheel. */
+  readonly method: PrimaryDirectionMethod;
   readonly orb: Degrees;
   readonly frame: SphereFrame;
   /** The natal chart (tropical, Placidus), for the bi-wheel's inner ring. */
@@ -196,6 +202,13 @@ function longitudeOf(natal: ChartData, key: string): Degrees {
   return position.longitude;
 }
 
+function latitudeOf(natal: ChartData, key: string): Degrees {
+  const id = bodyIdOf(key);
+  const position = natal.positions.find((candidate) => candidate.body === id);
+  if (position === undefined) throw new Error(`unreachable: the natal chart always carries ${key}`);
+  return position.latitude;
+}
+
 /** Normalise to the half-open interval [0, 360) — the same convention `astrology/aspects.ts` uses. */
 function norm360(degrees: Degrees): Degrees {
   const value = degrees % 360;
@@ -208,7 +221,7 @@ function significatorsOf(natal: ChartData, keys: readonly string[]): readonly Di
     if (key === 'mc') return { key, longitude: natal.houses.midheaven, angle: 'mc' };
     if (key === 'dsc') return { key, longitude: norm360(natal.houses.ascendant + 180), angle: 'dsc' };
     if (key === 'ic') return { key, longitude: norm360(natal.houses.midheaven + 180), angle: 'ic' };
-    return { key, longitude: longitudeOf(natal, key) };
+    return { key, longitude: longitudeOf(natal, key), latitude: latitudeOf(natal, key) };
   });
 }
 
@@ -228,7 +241,9 @@ export async function generatePrimaryDirections(
   const natal = await computeChartDataAtJd(natalJd, place, provider, { houseSystem: HOUSE_SYSTEM });
   const obliquity = natal.obliquity ?? (await provider.obliquity(natalJd));
   const frame: SphereFrame = { ramc: natal.houses.armc, obliquity, geoLatitude: place.latitude };
-  const base = { natalJd, place, key, orb: orbDefault, frame, natal };
+  const mode = options.mode ?? 'direct';
+  const method = options.method ?? 'zodiacal';
+  const base = { natalJd, place, key, mode, method, orb: orbDefault, frame, natal };
 
   if (!isDefinedAtLatitude(frame.geoLatitude, frame.obliquity)) return { ...base, defined: false, hits: [] };
 
@@ -236,13 +251,14 @@ export async function generatePrimaryDirections(
   const promissors = (options.promissors ?? PRIMARY_DIRECTION_PROMISSORS).map((promissorKey) => ({
     key: promissorKey,
     longitude: longitudeOf(natal, promissorKey),
+    latitude: latitudeOf(natal, promissorKey),
   }));
 
   const hits: PrimaryDirection[] = [];
   for (const significator of significatorsOf(natal, options.significators ?? PRIMARY_DIRECTION_SIGNIFICATORS)) {
     for (const promissor of promissors) {
       if (promissor.key === significator.key) continue;
-      for (const hit of calculatePrimaryDirections(significator, promissor, frame, { key }).directions) {
+      for (const hit of calculatePrimaryDirections(significator, promissor, frame, { key, mode, method }).directions) {
         if (hit.arcRA <= 0 || hit.arcRA > maxArc) continue;
         hits.push({
           ...hit,
@@ -322,10 +338,14 @@ export async function directedChartAt(
   ageYears: number,
   provider: EphemerisProvider,
 ): Promise<DirectedChart> {
+  if (data.mode === 'converse') {
+    throw new RangeError('a directed bi-wheel has no unambiguous outer ring for converse primary directions');
+  }
   const arc = ageToArc(ageYears, data.key);
   const houses = await directedHouses(provider, data.natalJd, data.place, data.frame.ramc, arc);
   const positions = PRIMARY_DIRECTION_PROMISSORS.map((key): DirectedBodyPosition => {
-    const natalPoint = eclipticToEquatorial(longitudeOf(data.natal, key), 0, data.frame.obliquity);
+    const latitude = data.method === 'in-mundo' ? latitudeOf(data.natal, key) : 0;
+    const natalPoint = eclipticToEquatorial(longitudeOf(data.natal, key), latitude, data.frame.obliquity);
     const mundanePosition = placidianMundanePosition(natalPoint, data.frame);
     return { body: bodyIdOf(key), key, longitude: directedLongitude(mundanePosition, arc, data.frame) };
   });

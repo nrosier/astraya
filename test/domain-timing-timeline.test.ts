@@ -7,12 +7,14 @@
  */
 import { describe, expect, it } from 'vitest';
 import { firdariaPeriods } from '../src/astrology/firdaria.js';
-import { zodiacalReleasingPeriods } from '../src/astrology/zodiacal-releasing.js';
+import { zodiacalReleasingPeriods, zodiacalReleasingSubperiods } from '../src/astrology/zodiacal-releasing.js';
 import { computeProfections } from '../src/domain/profections.js';
 import {
   firdariaPeriodsToTimelineEvents,
   profectionToTimelineEvents,
   releasingPeriodsToTimelineEvents,
+  releasingSubperiodsToTimelineEvents,
+  timingTimelineTracks,
 } from '../src/domain/timing-timeline.js';
 import { julianDayFor } from '../src/time/julian.js';
 import { resolveMoment } from '../src/time/resolve.js';
@@ -35,6 +37,16 @@ describe('releasingPeriodsToTimelineEvents (#554)', () => {
     expect(events[0]?.endJd).toBe(periods[0]?.endJd);
     expect(events[0]?.label).toContain('Taurus');
     expect(events[0]?.sourceModule).toBe('astrology/zodiacal-releasing');
+  });
+});
+
+describe('releasingSubperiodsToTimelineEvents (#554)', () => {
+  it('keeps Level-2 periods on the zodiacal-releasing track and makes a bond release visible', () => {
+    const parent = zodiacalReleasingPeriods(305, 0, 1)[0];
+    if (parent === undefined) throw new Error('fixture bug: no parent period');
+    const events = releasingSubperiodsToTimelineEvents(zodiacalReleasingSubperiods(parent));
+    expect(events.some((event) => event.label.includes('L2 Leo / sun (loosing of the bond)'))).toBe(true);
+    expect(events.every((event) => event.kind === 'zodiacal-releasing')).toBe(true);
   });
 });
 
@@ -69,5 +81,27 @@ describe('profectionToTimelineEvents (#554)', () => {
     // The month window sits inside the year window.
     expect(monthEvent?.startJd ?? 0).toBeGreaterThanOrEqual(yearEvent?.startJd ?? 0);
     expect(monthEvent?.endJd ?? 0).toBeLessThanOrEqual(yearEvent?.endJd ?? 0);
+  });
+});
+
+describe('timingTimelineTracks (#554)', () => {
+  it('overlays at least three techniques on one requested date range', () => {
+    const tracks = timingTimelineTracks(
+      [
+        { kind: 'zodiacal-releasing', startJd: 0, endJd: 100, label: 'Aries / mars', sourceModule: 'fixture' },
+        { kind: 'firdaria', startJd: 0, endJd: 100, label: 'sun', sourceModule: 'fixture' },
+        { kind: 'profection-year', startJd: 20, endJd: 40, label: 'Leo / house 5', sourceModule: 'fixture' },
+        { kind: 'transit', startJd: 30, endJd: 30, label: 'mars square sun', sourceModule: 'fixture' },
+      ],
+      25,
+      35,
+    );
+
+    expect(tracks.filter((track) => track.events.length > 0).map((track) => track.track)).toEqual([
+      'zodiacal-releasing',
+      'firdaria',
+      'profections',
+      'transit',
+    ]);
   });
 });

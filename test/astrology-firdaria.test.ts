@@ -1,5 +1,6 @@
 /**
- * Unit tests for firdaria (#554) — pure, no engine needed.
+ * Reference fixtures for firdaria (#554), following al-Qabisi, *Introduction to Traditional
+ * Astrology*, VII.3: the day sequence begins at Sun and the night sequence at Moon.
  */
 import { describe, expect, it } from 'vitest';
 import {

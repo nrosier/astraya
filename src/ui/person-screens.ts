@@ -36,3 +36,4 @@ export { ReturnView } from './ReturnView.js';
 export { SolarArcView } from './SolarArcView.js';
 export { SynastryView } from './SynastryView.js';
 export { TransitView } from './TransitView.js';
+export { TimingTimelineView } from './TimingTimelineView.js';

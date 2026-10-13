@@ -56,7 +56,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `PersonNotFound.tsx` — "No person" fallback screen. Deps: `shared.messages`.
 - `PersonSwitcher.tsx` + `PersonSwitcher.messages.ts` — Header's searchable person switcher (#506/#509), replaces the static person-name chip; preserves the current feature on switch when prerequisites are met, else routes to Overview. Deps: `./feature-registry`, `./people-list`, `./use-exclusive-open`.
 - `PreferencesView.tsx` + `PreferencesView.messages.ts` — Preferences workspace (#506/#510, lazy-loaded): General/Astrology defaults/Appearance & accessibility/Data & privacy, reusing each setting's own existing control. Deps: `./RulershipSetting`, `./SymbolSetting`, `./LanguageToggle`, `./ThemeToggle`, `domain/full-export`.
-- `PrimaryDirectionsView.tsx` + `PrimaryDirectionsView.messages.ts` — Primary directions screen (time key, date/age, natal/directed bi-wheel, hit tables). Deps: `domain/primary-directions`, `chart/multi-wheel`.
+- `PrimaryDirectionsView.tsx` + `PrimaryDirectionsView.messages.ts` — Configurable primary-directions screen (mode, method, points, date/age, direct bi-wheel, hit tables). Deps: `domain/primary-directions`, `chart/multi-wheel`.
 - `PrintProvenance.tsx` + `PrintProvenance.messages.ts` — Printed-page provenance footer (house system/zodiac/rulership/generated-at), invisible outside `@media print` (#564). Deps: none (thin, caller-resolved labels); wired into `ChartView.tsx` only so far.
 - `MultiWheelView.tsx` + `MultiWheelView.messages.ts` — Multi-wheel overlay screen: natal + independently-toggled transit/relocated rings (#558). Deps: `domain/transit`, `domain/relocated-chart`, `domain/chart-tables`, `chart/multi-wheel`.
 - `ProfectionsView.tsx` + `ProfectionsView.messages.ts` — Annual/monthly profections screen. Deps: `domain/profections`, `./rulership-setting`, `./wheel-corpus`.
@@ -82,6 +82,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `ThemeToggle.tsx` + `ThemeToggle.messages.ts` — Light/dark/system theme override. Deps: `./theme-dom`, `./theme`.
 - `TransitFilterPanel.tsx` + `TransitFilterPanel.messages.ts` — Transit-filter controls (presets/orbs/bodies/aspects). Deps: `astrology/transit-importance`, `./rulership-setting`.
 - `TransitView.tsx` + `TransitView.messages.ts` — Transit bi-wheel (natal ↔ transiting). Deps: `domain/transit`, `astrology/void-of-course`, `chart/multi-wheel`.
+- `TimingTimelineView.tsx` + `TimingTimelineView.messages.ts` — Shared date-axis rendering and overlay for Level-1/2 releasing, timing techniques, and forecast events. Deps: `domain/timing-timeline`, `domain/profections`, `domain/primary-directions`, `domain/secondary-progression`, `domain/solar-arc-directions`, `domain/transit`, `domain/periodic-transit`.
 - `WheelSelectionText.tsx` — Renders wheel-selection interpretation text. Deps: `interpretation/compose`, `./wheel-corpus`.
 - `WorkspaceShell.tsx` + `WorkspaceShell.messages.ts` — Lays the header out as a collapsible left rail at >=64rem (#506/#509); AppNav.tsx's horizontal-bar/folding-panel behavior stays unchanged below that. Deps: `./workspace-rail-setting`.
 - `admin-nav.ts` — Admin tab strip logic (routes/active-tab). Deps: `route`.

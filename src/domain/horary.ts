@@ -16,7 +16,7 @@ import { bodyByKey } from '../astrology/bodies.js';
 import { houseOf } from '../astrology/emphasis.js';
 import { horaryConsiderations, type HoraryConsideration } from '../astrology/horary.js';
 import { findVoidOfCourseMoon, type VoidOfCourseMoon } from '../astrology/void-of-course.js';
-import type { EphemerisProvider, HouseSystem } from '../ephemeris/types.js';
+import type { EphemerisProvider, HouseSystem, JulianDayUT } from '../ephemeris/types.js';
 import { julianDayFor } from '../time/julian.js';
 import { resolveMoment } from '../time/resolve.js';
 import type { BirthMomentInput } from '../time/types.js';
@@ -30,6 +30,7 @@ export const HORARY_DEFAULT_HOUSE_SYSTEM: HouseSystem = 'R';
 
 export interface HoraryChart {
   readonly data: ChartData;
+  readonly jd: JulianDayUT;
   readonly considerations: readonly HoraryConsideration[];
   readonly voidOfCourse: VoidOfCourseMoon;
   /** False when the houses came back undefined (no finite cusps), so no Ascendant exists to check. */
@@ -56,6 +57,7 @@ export async function computeHoraryChart(
   const housesAvailable = housesAreDefined(data.houses);
   return {
     data,
+    jd,
     voidOfCourse,
     housesAvailable,
     considerations: horaryConsiderations({
