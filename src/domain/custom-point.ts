@@ -17,8 +17,32 @@
  */
 import { bodyById, bodyByKey } from '../astrology/bodies.js';
 import { evaluateFormula, FormulaError, type IdentifierResolver } from '../astrology/formula-parser.js';
-import type { Degrees } from '../ephemeris/types.js';
+import type { BodyId, BodyPosition, Degrees } from '../ephemeris/types.js';
 import type { ChartData } from './chart-compute.js';
+import type { CustomPointDefinition } from './person.js';
+
+/** A saved formula point materialized for one computed chart. */
+export interface ComputedCustomPoint {
+  /** Stable point identity derived from the persisted definition id, kept outside Swiss Ephemeris ids. */
+  readonly body: BodyId;
+  readonly id: string;
+  readonly name: string;
+  readonly formula: string;
+  readonly position: BodyPosition;
+}
+
+/**
+ * Converts an opaque persisted id into a deterministic negative `BodyId`, avoiding every Swiss
+ * Ephemeris id and the `-1` sentinel used internally for angle-aspect matching.
+ */
+export function customPointBodyId(id: string): BodyId {
+  let hash = 2_166_136_261;
+  for (const character of id) {
+    hash ^= character.charCodeAt(0);
+    hash = Math.imul(hash, 16_777_619);
+  }
+  return -2 - (hash >>> 0);
+}
 
 // A `Map`, not a plain object literal: an object literal's lookup falls through the prototype
 // chain, so a user-typed name like "__proto__"/"constructor" would silently resolve to a
@@ -74,6 +98,44 @@ export function redundantBuiltInPoint(data: ChartData, formula: string, toleranc
     if (separation <= tolerance) return candidate;
   }
   return undefined;
+}
+
+/** Resolves persisted formula definitions into chart positions without executing user code. */
+export function materializeCustomPoints(
+  data: ChartData,
+  definitions: readonly CustomPointDefinition[] | undefined,
+): readonly ComputedCustomPoint[] {
+  if (definitions === undefined || definitions.length === 0) return [];
+  const usedBodies = new Set<BodyId>();
+  return definitions
+    .filter((definition) => definition.enabled !== false)
+    .map((definition) => {
+      const body = customPointBodyId(definition.id);
+      if (usedBodies.has(body)) throw new FormulaError(`Custom point id collision for "${definition.name}"`);
+      usedBodies.add(body);
+      const longitude = customPointLongitude(data, definition.formula);
+      return {
+        body,
+        id: definition.id,
+        name: definition.name,
+        formula: definition.formula,
+        position: {
+          body,
+          longitude,
+          latitude: 0,
+          distance: 0,
+          longitudeSpeed: 0,
+          latitudeSpeed: 0,
+          distanceSpeed: 0,
+          retrograde: false,
+        },
+      };
+    });
+}
+
+/** Returns the materialized custom point for a numeric chart-body identity. */
+export function customPointByBody(data: ChartData, body: BodyId): ComputedCustomPoint | undefined {
+  return data.customPoints?.find((point) => point.body === body);
 }
 
 export { FormulaError };

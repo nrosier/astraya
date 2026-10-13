@@ -276,6 +276,7 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
       <h1>{person.displayName ? t.heading(person.displayName) : t.synastryFallback}</h1>
       <GlossaryTerms terms={['synastry', 'aspect', 'orb']} />
       <p className="hint">{t.hint}</p>
+      <p className="hint">{t.overlayContext}</p>
 
       <p>
         <Select

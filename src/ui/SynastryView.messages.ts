@@ -19,6 +19,8 @@ const en = {
 
   heading: (name: string) => `${name}’s synastry`,
   hint: 'A bi-wheel comparing two natal charts, plus the aspects between them. Only people with a complete, known-time birth record can be compared.',
+  overlayContext:
+    'This relationship wheel already compares two people, so it does not add the single-chart Overlay settings. Select a legend entry to isolate that person; its arrow identifies the matching ring.',
 
   compareWithLabel: 'Compare with',
   choosePersonOption: 'Choose a person…',
@@ -56,6 +58,8 @@ const nl: typeof en = {
 
   heading: (name: string) => `Synastrie van ${name}`,
   hint: 'Een biwiel dat twee natale horoscopen vergelijkt, plus de aspecten daartussen. Alleen mensen met een volledig, bekend-tijd geboorterecord kunnen worden vergeleken.',
+  overlayContext:
+    'Dit relatie-wiel vergelijkt al twee mensen en gebruikt daarom niet de Overlayinstellingen voor één horoscoop. Selecteer een legenda-item om die persoon te isoleren; de pijl wijst naar de bijbehorende ring.',
 
   compareWithLabel: 'Vergelijken met',
   choosePersonOption: 'Kies een persoon…',

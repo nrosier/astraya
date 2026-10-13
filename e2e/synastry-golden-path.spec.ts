@@ -190,6 +190,10 @@ test("clicking a ring legend entry dims the other person's legend (#455)", async
   // Initially, both legend entries should be visible and not dimmed
   await expect(adaLegendEntry).toBeVisible();
   await expect(charlesLegendEntry).toBeVisible();
+  const adaArrow = page.locator('[data-ring-legend-arrow="0"]');
+  const charlesArrow = page.locator('[data-ring-legend-arrow="1"]');
+  await expect(adaArrow).toBeAttached();
+  await expect(charlesArrow).toBeAttached();
   await expect(adaLegendEntry).not.toHaveClass(/chart-dimmed/);
   await expect(charlesLegendEntry).not.toHaveClass(/chart-dimmed/);
 
@@ -199,13 +203,18 @@ test("clicking a ring legend entry dims the other person's legend (#455)", async
   // Now Ada's entry should not be dimmed, but Charles's should be
   await expect(adaLegendEntry).not.toHaveClass(/chart-dimmed/);
   await expect(charlesLegendEntry).toHaveClass(/chart-dimmed/);
+  await expect(adaArrow).toBeVisible();
+  await expect(charlesArrow).toBeHidden();
 
-  // Click on Charles's legend entry to isolate his ring
-  await charlesLegendEntry.click();
+  // Keyboard activation keeps the legend isolation behavior available without a pointer.
+  await charlesLegendEntry.focus();
+  await page.keyboard.press('Enter');
 
   // Now Charles's entry should not be dimmed, but Ada's should be
   await expect(charlesLegendEntry).not.toHaveClass(/chart-dimmed/);
   await expect(adaLegendEntry).toHaveClass(/chart-dimmed/);
+  await expect(charlesArrow).toBeVisible();
+  await expect(adaArrow).toBeHidden();
 
   // Click on an empty area of the wheel to clear the selection
   await page.locator('div.chart-wheel svg').click({ position: { x: 50, y: 50 } });
@@ -213,4 +222,6 @@ test("clicking a ring legend entry dims the other person's legend (#455)", async
   // Both should be visible and not dimmed again
   await expect(adaLegendEntry).not.toHaveClass(/chart-dimmed/);
   await expect(charlesLegendEntry).not.toHaveClass(/chart-dimmed/);
+  await expect(adaArrow).toBeHidden();
+  await expect(charlesArrow).toBeHidden();
 });

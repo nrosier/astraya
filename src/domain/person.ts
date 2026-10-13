@@ -79,6 +79,8 @@ export interface CustomPointDefinition {
   readonly name: string;
   /** Restricted arithmetic parsed by `formula-parser.ts`; never executable code. */
   readonly formula: string;
+  /** Disabled points remain saved but are omitted from calculated chart data. Legacy definitions default to enabled. */
+  readonly enabled?: boolean | undefined;
 }
 
 export interface Person {
@@ -231,7 +233,7 @@ export function readCustomPoints(value: unknown): readonly CustomPointDefinition
   const names = new Set<string>();
   for (const candidate of value) {
     if (!isRecordValue(candidate)) return undefined;
-    const { id, name, formula } = candidate;
+    const { id, name, formula, enabled } = candidate;
     const normalizedName = typeof name === 'string' ? name.trim() : '';
     if (
       typeof id !== 'string' ||
@@ -241,6 +243,7 @@ export function readCustomPoints(value: unknown): readonly CustomPointDefinition
       normalizedName.length > 128 ||
       typeof formula !== 'string' ||
       formula.trim() === '' ||
+      (enabled !== undefined && typeof enabled !== 'boolean') ||
       ids.has(id) ||
       names.has(normalizedName.toLocaleLowerCase())
     ) {
@@ -253,7 +256,7 @@ export function readCustomPoints(value: unknown): readonly CustomPointDefinition
     }
     ids.add(id);
     names.add(normalizedName.toLocaleLowerCase());
-    points.push({ id, name: normalizedName, formula });
+    points.push({ id, name: normalizedName, formula, ...(enabled === false ? { enabled: false } : {}) });
   }
   return points;
 }

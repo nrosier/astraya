@@ -17,6 +17,8 @@ const en = {
 
   heading: (name: string) => `${name}’s composite`,
   hint: 'A synthetic midpoint chart between two natal charts — every position and house cusp is the near-arc midpoint of the two. Only people with a complete, known-time birth record can be combined.',
+  overlayContext:
+    'A composite is one synthetic midpoint chart, not a base chart with independent source rings, so Overlay settings are unavailable here. Use Synastry to compare two individual rings.',
 
   composeWithLabel: 'Compose with',
   choosePersonOption: 'Choose a person…',
@@ -39,6 +41,8 @@ const nl: typeof en = {
 
   heading: (name: string) => `Composiet van ${name}`,
   hint: 'Een synthetische middelpunt-horoscoop tussen twee natale horoscopen — elke positie en huisspits is het kortste-boog-middelpunt van de twee. Alleen mensen met een volledig, bekend-tijd geboorterecord kunnen worden gecombineerd.',
+  overlayContext:
+    'Een composiet is één synthetische middelpunt-horoscoop, geen basishoroscoop met onafhankelijke bronringen. Overlayinstellingen zijn hier daarom niet beschikbaar. Gebruik Synastrie om twee afzonderlijke ringen te vergelijken.',
 
   composeWithLabel: 'Combineren met',
   choosePersonOption: 'Kies een persoon…',

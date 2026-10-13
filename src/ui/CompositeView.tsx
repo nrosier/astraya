@@ -127,6 +127,7 @@ export function CompositeView({
       <h1>{person.displayName ? t.heading(person.displayName) : t.compositeFallback}</h1>
       <GlossaryTerms terms={['composite', 'aspect', 'midheaven']} />
       <p className="hint">{t.hint}</p>
+      <p className="hint">{t.overlayContext}</p>
 
       <p>
         <Select

@@ -8,6 +8,7 @@ Root files:
 - `ui-baselines/` — Reference screenshots of the restructured UI surfaces (both themes, 390/1280/1440 wide), written by `e2e/ui-baselines.spec.ts` when asked; documentation, not assertions.
 - `astronomy_terms.md` — Combined 573-term astrology/astronomy glossary merged from six draft sources, staged as source material for #456's glossary tooltip content. Deps: none yet (not wired into `src/ui` — pending integration).
 - `CORPUS_KEYS.md` — Corpus key-shape reference (which placements get which key format). Deps: `src/interpretation/schema.ts`; paired with `html/CORPUS_KEYS.html`.
+- `CHART_OVERLAYS.md` — Supported chart-overlay contexts, intentional relationship-chart exceptions, interaction, and export behavior. Deps: `src/ui/ChartView.tsx`, `src/ui/SynastryView.tsx`, `src/chart/multi-wheel.ts`.
 - `DEPENDENCIES.md` — Hand-maintained dependency/licence inventory `CLAUDE.md`'s onboarding checklist points to. Deps: `node_modules/*/package.json` licence fields.
 - `EXPORT_SCHEMA.md` — Astraya full-export JSON schema reference: shape, compatibility policy, version history (#561). Deps: `src/domain/full-export.ts`, `src/domain/chart-tables.ts`; paired with `schema/astraya-export.schema.json`.
 - `RELEASING.md` — Release policy and tagging scheme (every milestone ends in a release).

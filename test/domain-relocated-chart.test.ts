@@ -12,10 +12,26 @@ import { getEngine } from './engine-harness.js';
 const PERSON: BirthMomentInput = {
   civil: { year: 1990, month: 6, day: 15, hour: 14, minute: 30, second: 0 },
   coordinates: { latitude: 38.7478, longitude: -85.0672 }, // Louisville, KY
+  offsetOverrideMinutes: -240,
 };
 
 // Sydney, Australia — far enough from the birthplace that houses/angles are guaranteed to shift.
 const SYDNEY = { latitude: -33.8688, longitude: 151.2093, altitude: 0 };
+
+// Swiss Ephemeris 2.10 `swe_houses_ex` reference vector for the fixed UTC moment above,
+// using Placidus houses at Sydney. The independently pinned values cover every axis quadrant.
+const SYDNEY_REFERENCE = {
+  natal: {
+    ascendant: 185.02162279590797,
+    midheaven: 95.70221351248591,
+  },
+  relocated: {
+    ascendant: 52.0848252660692,
+    midheaven: 330.41676079123437,
+    cusp4: 150.41676079123437,
+    cusp7: 232.0848252660692,
+  },
+};
 
 describe('computeRelocatedChart (#559)', () => {
   it('computes full, independent ChartData for the natal chart and the relocated chart', async () => {
@@ -51,6 +67,17 @@ describe('computeRelocatedChart (#559)', () => {
     expect(data.relocated.houses.ascendant).toBeCloseTo(data.natal.houses.ascendant, 6);
     expect(data.relocated.houses.midheaven).toBeCloseTo(data.natal.houses.midheaven, 6);
   });
+
+  it('matches the fixed Swiss Ephemeris Sydney reference for angles and houses (#559)', async () => {
+    const engine = await getEngine();
+    const data = await computeRelocatedChart(PERSON, SYDNEY, engine);
+    expect(data.natal.houses.ascendant).toBeCloseTo(SYDNEY_REFERENCE.natal.ascendant, 6);
+    expect(data.natal.houses.midheaven).toBeCloseTo(SYDNEY_REFERENCE.natal.midheaven, 6);
+    expect(data.relocated.houses.ascendant).toBeCloseTo(SYDNEY_REFERENCE.relocated.ascendant, 6);
+    expect(data.relocated.houses.midheaven).toBeCloseTo(SYDNEY_REFERENCE.relocated.midheaven, 6);
+    expect(data.relocated.houses.cusps[4]).toBeCloseTo(SYDNEY_REFERENCE.relocated.cusp4, 6);
+    expect(data.relocated.houses.cusps[7]).toBeCloseTo(SYDNEY_REFERENCE.relocated.cusp7, 6);
+  });
 });
 
 describe('relocatedComparisonRows (#559)', () => {
@@ -59,7 +86,7 @@ describe('relocatedComparisonRows (#559)', () => {
     const data = await computeRelocatedChart(PERSON, SYDNEY, engine);
     const rows = relocatedComparisonRows(data);
 
-    expect(rows).toHaveLength(12 + 5); // 12 houses + angleRows' own 5 non-cusp angles (vertex excluded by default)
+    expect(rows).toHaveLength(12 + 2 + 5); // 12 houses + Ascendant/Midheaven + angleRows' own 5 auxiliary angles (vertex excluded by default)
     for (const row of rows) {
       expect(row.natal.sign).toBeDefined();
       expect(row.relocated.sign).toBeDefined();
