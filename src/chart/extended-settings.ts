@@ -41,6 +41,8 @@ export interface ExtendedSettings {
   readonly fortuneVisible: boolean;
   readonly vertexVisible: boolean;
   readonly chironVisible: boolean;
+  /** Explicit per-point opt-ins for modern/sensitive computed bodies (#560). */
+  readonly modernPointVisibility: Readonly<Record<ModernPointKey, boolean>>;
   /** Part of Spirit's own visibility (#542) — Fortune's sibling lot, previously always shown regardless of any setting. */
   readonly spiritVisible: boolean;
   readonly midpointsVisible: boolean;
@@ -62,6 +64,31 @@ export interface ExtendedSettings {
   readonly aspectsToPartOfSpirit: boolean;
 }
 
+export const MODERN_POINT_KEYS = [
+  'meanNode',
+  'trueNode',
+  'meanLilith',
+  'osculatingLilith',
+  'interpolatedLilith',
+  'ceres',
+  'pallas',
+  'juno',
+  'vesta',
+] as const;
+export type ModernPointKey = (typeof MODERN_POINT_KEYS)[number];
+
+const DEFAULT_MODERN_POINT_VISIBILITY: Readonly<Record<ModernPointKey, boolean>> = {
+  meanNode: false,
+  trueNode: false,
+  meanLilith: false,
+  osculatingLilith: false,
+  interpolatedLilith: false,
+  ceres: false,
+  pallas: false,
+  juno: false,
+  vesta: false,
+};
+
 /** Placidus, tropical, every default as documented on `DEFAULT_ORB_CONFIG` and `PointVisibilityOptions` — matches what a chart looks like with the panel never opened. */
 export const DEFAULT_EXTENDED_SETTINGS: ExtendedSettings = {
   houseSystem: 'P',
@@ -74,6 +101,7 @@ export const DEFAULT_EXTENDED_SETTINGS: ExtendedSettings = {
   fortuneVisible: false,
   vertexVisible: false,
   chironVisible: true,
+  modernPointVisibility: DEFAULT_MODERN_POINT_VISIBILITY,
   spiritVisible: false,
   midpointsVisible: false,
   dial90Visible: false,
@@ -115,6 +143,7 @@ export function toChartCalculationOptions(settings: ExtendedSettings): ChartCalc
 export function toPointVisibilityOptions(settings: ExtendedSettings): PointVisibilityOptions {
   return {
     chironVisible: settings.chironVisible,
+    bodyVisibility: settings.modernPointVisibility,
     fortuneVisible: settings.fortuneVisible,
     vertexVisible: settings.vertexVisible,
     spiritVisible: settings.spiritVisible,

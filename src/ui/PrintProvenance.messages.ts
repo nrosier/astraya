@@ -8,13 +8,13 @@
  * @exports printProvenanceMessages
  */
 const en = {
-  summary: (houseSystem: string, zodiac: string, rulership: string, generatedAt: string) =>
-    `Astraya — ${houseSystem} houses, ${zodiac} zodiac, ${rulership} rulers — printed ${generatedAt}`,
+  summary: (houseSystem: string, zodiac: string, rulership: string, snapshotIdentity: string, generatedAt: string) =>
+    `Astraya — ${houseSystem} houses, ${zodiac} zodiac, ${rulership} rulers, snapshot ${snapshotIdentity} — printed ${generatedAt}`,
 };
 
 const nl: typeof en = {
-  summary: (houseSystem: string, zodiac: string, rulership: string, generatedAt: string) =>
-    `Astraya — ${houseSystem}-huizen, ${zodiac} dierenriem, ${rulership} heersers — afgedrukt op ${generatedAt}`,
+  summary: (houseSystem: string, zodiac: string, rulership: string, snapshotIdentity: string, generatedAt: string) =>
+    `Astraya — ${houseSystem}-huizen, ${zodiac} dierenriem, ${rulership} heersers, snapshot ${snapshotIdentity} — afgedrukt op ${generatedAt}`,
 };
 
 export const printProvenanceMessages = { en, nl };

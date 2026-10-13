@@ -6,20 +6,16 @@
  * on; this module is only the "which identifier names does a chart actually have, and what are
  * their longitudes" half — the parser itself has no opinion on chart vocabulary.
  *
- * Deliberately the computational core only: parsing, identifier resolution, and the resulting
- * longitude. No persistence, no UI for naming/saving a formula, and no wiring into
- * `ChartData`'s own aspect/wheel/speed machinery (that would mean threading a new dynamic field
- * through `chart-compute.ts` the way `partOfFortune`/`partOfSpirit` already are, baked in at
- * natal-computation time — a materially bigger change than this pass, left for a follow-up once
- * there is a real UI/storage story to wire it into).
+ * Formula validation stays separate from persistence and rendering: callers can reject a custom
+ * name/formula that is redundant with a built-in point before adding it to their own chart view.
  */
 /**
  * @module domain/custom-point
- * @purpose Resolves a chart's bodies/angles by name and evaluates a user-typed formula against them, as the computational core of user-defined points.
- * @conventions Identifier names are the same lowercase body keys `bodies.ts` already uses (`sun`, `moon`, …) plus `ascendant`/`midheaven`/`vertex`/`partoffortune`/`partofspirit` for the angles/lots `ChartData` carries directly (not in `positions`) — case-insensitive, matching how a user is likely to type a formula, not an enforced style. No wiring into ChartData's own aspect/wheel/speed pipeline — see the module's own header for why.
- * @exports resolveChartIdentifier, customPointLongitude
+ * @purpose Resolves a chart's bodies/angles by name, evaluates a user-typed formula against them, and detects built-in-point redundancy.
+ * @conventions Identifier names are the same lowercase body keys `bodies.ts` already uses (`sun`, `moon`, …) plus `ascendant`/`midheaven`/`vertex`/`partoffortune`/`partofspirit` for the angles/lots `ChartData` carries directly (not in `positions`) — case-insensitive, matching how a user is likely to type a formula, not an enforced style.
+ * @exports resolveChartIdentifier, customPointLongitude, redundantBuiltInPoint
  */
-import { bodyByKey } from '../astrology/bodies.js';
+import { bodyById, bodyByKey } from '../astrology/bodies.js';
 import { evaluateFormula, FormulaError, type IdentifierResolver } from '../astrology/formula-parser.js';
 import type { Degrees } from '../ephemeris/types.js';
 import type { ChartData } from './chart-compute.js';
@@ -58,6 +54,26 @@ export function resolveChartIdentifier(data: ChartData, name: string): Degrees |
 export function customPointLongitude(data: ChartData, formula: string): Degrees {
   const resolve: IdentifierResolver = (name) => resolveChartIdentifier(data, name);
   return evaluateFormula(formula, resolve);
+}
+
+/** A built-in identifier the formula duplicates at the supplied chart moment, or `undefined` when it is distinct. */
+export function redundantBuiltInPoint(data: ChartData, formula: string, tolerance = 1e-9): string | undefined {
+  const longitude = customPointLongitude(data, formula);
+  const candidates = [
+    ...data.positions.map((position) => bodyById(position.body)?.key),
+    'ascendant',
+    'midheaven',
+    'vertex',
+    'partoffortune',
+    'partofspirit',
+  ].filter((candidate): candidate is string => candidate !== undefined);
+  for (const candidate of candidates) {
+    const candidateLongitude = resolveChartIdentifier(data, candidate);
+    if (candidateLongitude === undefined) continue;
+    const separation = Math.abs(((longitude - candidateLongitude + 540) % 360) - 180);
+    if (separation <= tolerance) return candidate;
+  }
+  return undefined;
 }
 
 export { FormulaError };

@@ -131,6 +131,8 @@ export function degreeParts(longitude: Degrees): DegreeParts {
  */
 export interface PointVisibilityOptions {
   readonly chironVisible?: boolean; // default true
+  /** Per-body visibility for independently opted-in modern/sensitive points (#560). Omitted keys remain visible. */
+  readonly bodyVisibility?: Readonly<Record<string, boolean>>;
   readonly fortuneVisible?: boolean; // default false
   readonly vertexVisible?: boolean; // default false
   /** Part of Spirit's own visibility (#542) — previously always shown regardless of any setting, unlike its sibling Part of Fortune. */
@@ -141,27 +143,27 @@ export interface PointVisibilityOptions {
   readonly midpointTreeOrb?: Degrees; // default 1
 }
 
-/** Drops Chiron from a position list when `chironVisible` is false. */
+function isBodyVisible(body: BodyId, options: PointVisibilityOptions): boolean {
+  const definition = bodyById(body);
+  if (definition?.category === 'centaur' && !(options.chironVisible ?? true)) return false;
+  return options.bodyVisibility?.[definition?.key ?? String(body)] ?? true;
+}
+
+/** Drops an independently-hidden modern point from a position list before every visible surface consumes it. */
 export function visiblePositions(
   positions: readonly BodyPosition[],
   options: PointVisibilityOptions = {},
 ): readonly BodyPosition[] {
-  if (options.chironVisible ?? true) return positions;
-  return positions.filter((position) => bodyById(position.body)?.category !== 'centaur');
+  return positions.filter((position) => isBodyVisible(position.body, options));
 }
 
 /**
- * Drops any body-to-body aspect touching a currently-hidden body (#542) — today that means
- * Chiron, the only body with both a visibility flag and an independent aspect-participation
- * flag. The single filter `aspectRows`, `chartWheelRing` and `chartSheetInput` all apply before
- * rendering an aspect list, so a hidden Chiron with `aspectsToChiron: true` cannot still appear
- * in any of them.
+ * Drops any body-to-body aspect touching a currently-hidden body. The single filter
+ * `aspectRows`, `chartWheelRing` and `chartSheetInput` all apply before rendering an aspect
+ * list, so an opted-out modern point cannot still appear through a contact elsewhere.
  */
 export function visibleAspects(aspects: readonly Aspect[], options: PointVisibilityOptions = {}): readonly Aspect[] {
-  if (options.chironVisible ?? true) return aspects;
-  return aspects.filter(
-    (aspect) => bodyById(aspect.bodyA)?.category !== 'centaur' && bodyById(aspect.bodyB)?.category !== 'centaur',
-  );
+  return aspects.filter((aspect) => isBodyVisible(aspect.bodyA, options) && isBodyVisible(aspect.bodyB, options));
 }
 
 /**
@@ -181,7 +183,7 @@ export function visibleAngleAspects(
     if (aspect.angle === 'vertex' && !(options.vertexVisible ?? false)) return false;
     if (aspect.angle === 'partOfFortune' && !(options.fortuneVisible ?? false)) return false;
     if (aspect.angle === 'partOfSpirit' && !(options.spiritVisible ?? false)) return false;
-    if (!(options.chironVisible ?? true) && bodyById(aspect.body)?.category === 'centaur') return false;
+    if (!isBodyVisible(aspect.body, options)) return false;
     return true;
   });
 }

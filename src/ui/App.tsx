@@ -66,6 +66,7 @@ const ElectionalView = lazy(async () => ({ default: (await import('./ElectionalV
 const HoraryView = lazy(async () => ({ default: (await import('./HoraryView.js')).HoraryView }));
 const EclipsesView = lazy(async () => ({ default: (await import('./EclipsesView.js')).EclipsesView }));
 const CyclesView = lazy(async () => ({ default: (await import('./CyclesView.js')).CyclesView }));
+const EventSearchView = lazy(async () => ({ default: (await import('./EventSearchView.js')).EventSearchView }));
 const PdfExportBuilder = lazy(async () => ({ default: (await import('./PdfExportBuilder.js')).PdfExportBuilder }));
 const PreferencesView = lazy(async () => ({ default: (await import('./PreferencesView.js')).PreferencesView }));
 const AdminPanel = lazy(async () => ({ default: (await import('./AdminPanel.js')).AdminPanel }));
@@ -382,6 +383,7 @@ function renderScreen(parsed: Route, seVersion: string | undefined): React.JSX.E
   if (parsed.kind === 'changelog') return <Changelog />;
   if (parsed.kind === 'shared') return <SharedChartView />;
   if (parsed.kind === 'cycles') return <CyclesView />;
+  if (parsed.kind === 'event-search') return <EventSearchView />;
   if (parsed.kind === 'horary') return <HoraryView view={parsed.view} />;
   if (parsed.kind === 'electional') return <ElectionalView />;
   if (parsed.kind === 'rectification') {

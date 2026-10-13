@@ -86,7 +86,7 @@ describe('toChartCalculationOptions', () => {
 });
 
 describe('toPointVisibilityOptions', () => {
-  it('picks out exactly the five visibility flags plus the dial90 pair (#542, #556)', () => {
+  it('picks out every visibility option, including individual modern-point opt-ins (#542, #556, #560)', () => {
     const settings = withOverrides({
       chironVisible: false,
       fortuneVisible: true,
@@ -95,6 +95,7 @@ describe('toPointVisibilityOptions', () => {
       midpointsVisible: true,
       dial90Visible: true,
       midpointTreeOrb: 2,
+      modernPointVisibility: { ...DEFAULT_EXTENDED_SETTINGS.modernPointVisibility, meanLilith: true, ceres: true },
     });
     expect(toPointVisibilityOptions(settings)).toEqual({
       chironVisible: false,
@@ -104,6 +105,7 @@ describe('toPointVisibilityOptions', () => {
       midpointsVisible: true,
       dial90Visible: true,
       midpointTreeOrb: 2,
+      bodyVisibility: { ...DEFAULT_EXTENDED_SETTINGS.modernPointVisibility, meanLilith: true, ceres: true },
     });
   });
 });

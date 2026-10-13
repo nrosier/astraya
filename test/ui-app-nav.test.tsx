@@ -67,7 +67,7 @@ async function click(element: HTMLElement): Promise<void> {
 const toolLinks = (): string[] => Array.from(box().querySelectorAll('.app-nav-menu a')).map((a) => a.textContent);
 
 describe('the Tools menu', () => {
-  it('is on every screen, closed until opened, and lists the five tools as links', async () => {
+  it('is on every screen, closed until opened, and lists the six tools as links', async () => {
     await mount(parseRoute('#/people'));
     expect(box().querySelector('nav[aria-label="Main"]')).not.toBeNull();
     expect(toolLinks()).toEqual([]);
@@ -76,6 +76,7 @@ describe('the Tools menu', () => {
     expect(button('Tools').getAttribute('aria-expanded')).toBe('true');
     expect(toolLinks()).toEqual([
       'Planetary cycles',
+      'Ephemeris research',
       'Eclipses',
       'Horary chart',
       'Electional search',
@@ -84,6 +85,7 @@ describe('the Tools menu', () => {
     const hrefs = Array.from(box().querySelectorAll('.app-nav-menu a')).map((a) => a.getAttribute('href'));
     expect(hrefs).toEqual([
       '#/explore/cycles',
+      '#/explore/event-search',
       '#/explore/eclipses',
       '#/explore/horary',
       '#/explore/electional',

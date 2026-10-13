@@ -35,6 +35,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `CorpusCandidatesPanel.tsx` + `CorpusCandidatesPanel.messages.ts` — Admin candidate-review queue (accept/reject). Deps: `sync/admin-client`, `./placement-label`.
 - `CorpusOverridesPanel.tsx` + `CorpusOverridesPanel.messages.ts` — Admin corpus-entry editor (search/filter/override). Deps: `interpretation/corpus-client`, `sync/admin-client`.
 - `CyclesView.tsx` + `CyclesView.messages.ts` — Planetary Cycles tool (exact-aspect search). Deps: `astrology/mutual-aspects`, `chart/cycle-diagram`.
+- `EventSearchView.tsx` + `EventSearchView.messages.ts` — UTC batch ephemeris research and reproducible CSV tool. Deps: `domain/event-search`, `EphemerisProviderContext`.
 - `DegreeSymbolSetting.tsx` + `DegreeSymbolSetting.messages.ts` — Named, explained control for the degree-symbol (Sabian symbol) visibility preference (#527), same label+explanation+control shape as `RulershipSetting`. Deps: `./degree-symbol-setting`, `./primitives/Checkbox`.
 - `DraconicView.tsx` + `DraconicView.messages.ts` — Draconic chart screen (positions from North Node). Deps: `domain/draconic`.
 - `EclipsesView.tsx` + `EclipsesView.messages.ts` — Eclipses tool (solar/lunar search + natal contacts). Deps: `astrology/eclipses`, `domain/chart-compute`.
@@ -58,7 +59,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `PreferencesView.tsx` + `PreferencesView.messages.ts` — Preferences workspace (#506/#510, lazy-loaded): General/Astrology defaults/Appearance & accessibility/Data & privacy, reusing each setting's own existing control. Deps: `./RulershipSetting`, `./SymbolSetting`, `./LanguageToggle`, `./ThemeToggle`, `domain/full-export`.
 - `PrimaryDirectionsView.tsx` + `PrimaryDirectionsView.messages.ts` — Configurable primary-directions screen (mode, method, points, date/age, direct bi-wheel, hit tables). Deps: `domain/primary-directions`, `chart/multi-wheel`.
 - `PrintProvenance.tsx` + `PrintProvenance.messages.ts` — Printed-page provenance footer (house system/zodiac/rulership/generated-at), invisible outside `@media print` (#564). Deps: none (thin, caller-resolved labels); wired into `ChartView.tsx` only so far.
-- `MultiWheelView.tsx` + `MultiWheelView.messages.ts` — Multi-wheel overlay screen: natal + independently-toggled transit/relocated rings (#558). Deps: `domain/transit`, `domain/relocated-chart`, `domain/chart-tables`, `chart/multi-wheel`.
+- `MultiWheelView.tsx` + `MultiWheelView.messages.ts` — Multi-wheel overlay screen: natal + independently-toggled transit/progressed/relocated rings (#558). Deps: `domain/transit`, `domain/secondary-progression`, `domain/relocated-chart`, `domain/chart-tables`, `chart/multi-wheel`.
 - `ProfectionsView.tsx` + `ProfectionsView.messages.ts` — Annual/monthly profections screen. Deps: `domain/profections`, `./rulership-setting`, `./wheel-corpus`.
 - `ProgressionsView.tsx` + `ProgressionsView.messages.ts` — Secondary/tertiary/minor progressions screen. Deps: `domain/secondary-progression`, `domain/minor-progression`.
 - `PwaStatus.tsx` + `PwaStatus.messages.ts` — PWA update + offline-cache warming banner. Deps: `pwa/register`, `pwa/warm-status`.

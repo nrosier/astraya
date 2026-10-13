@@ -103,6 +103,7 @@ export type Route =
   // per docs/UI-UX_GUIDELINES.md's setting-scope model. `section` links straight to one of its headings.
   | { readonly kind: 'preferences'; readonly section?: PreferencesSection }
   | { readonly kind: 'cycles' }
+  | { readonly kind: 'event-search' }
   | { readonly kind: 'eclipses' }
   // `view` is the same Wheel/Aspects/Placements/Patterns & condition axis as the chart route's (#511).
   | { readonly kind: 'horary'; readonly view?: ChartViewKind }
@@ -133,7 +134,7 @@ const TIMING_SEGMENT_FOR_KIND = {
   transit: 'transits',
   'periodic-transit': 'forecast',
 } as const;
-const TOOL_KINDS = ['cycles', 'eclipses', 'horary', 'electional', 'rectification'] as const;
+const TOOL_KINDS = ['cycles', 'event-search', 'eclipses', 'horary', 'electional', 'rectification'] as const;
 type ToolKind = (typeof TOOL_KINDS)[number];
 
 function isToolKind(value: string | undefined): value is ToolKind {
@@ -295,6 +296,7 @@ export function routeHref(route: Route): string {
     case 'multi-wheel':
       return person(route.personId, 'overlay', 'multi-wheel');
     case 'cycles':
+    case 'event-search':
     case 'eclipses':
     case 'electional':
     case 'rectification':

@@ -17,9 +17,9 @@
  * @module domain/calculation-snapshot
  * @purpose Defines a versioned, fully-validated CalculationSnapshot (settings + rulership) and the pure functions that build/parse/serialize one.
  * @conventions `version` is bumped only when the *shape* a snapshot must satisfy changes incompatibly; `parseCalculationSnapshot` never throws — an invalid or missing field is filled from the documented app defaults, the same defaults a never-customized chart already shows.
- * @exports CURRENT_SNAPSHOT_VERSION, CalculationSnapshot, buildCalculationSnapshot, parseCalculationSnapshot, calculationSnapshotToJson
+ * @exports CURRENT_SNAPSHOT_VERSION, CalculationSnapshot, buildCalculationSnapshot, calculationSnapshotIdentity, parseCalculationSnapshot, calculationSnapshotToJson
  */
-import { DEFAULT_EXTENDED_SETTINGS, type ExtendedSettings } from '../chart/extended-settings.js';
+import { DEFAULT_EXTENDED_SETTINGS, MODERN_POINT_KEYS, type ExtendedSettings } from '../chart/extended-settings.js';
 import { DEFAULT_RULERSHIP_CHOICE, RULERSHIP_CHOICES, type RulershipChoice } from '../astrology/rulership.js';
 import type { Zodiac } from '../ephemeris/types.js';
 import type { JsonValue } from '../store/ops.js';
@@ -34,6 +34,17 @@ export interface CalculationSnapshot {
 
 export function buildCalculationSnapshot(settings: ExtendedSettings, rulership: RulershipChoice): CalculationSnapshot {
   return { version: CURRENT_SNAPSHOT_VERSION, settings, rulership };
+}
+
+/** A short stable identifier for a complete snapshot, suitable for print/export provenance (not a security hash). */
+export function calculationSnapshotIdentity(snapshot: CalculationSnapshot): string {
+  const serialized = JSON.stringify(snapshot);
+  let hash = 2166136261;
+  for (let index = 0; index < serialized.length; index += 1) {
+    hash ^= serialized.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return `v${String(snapshot.version)}-${(hash >>> 0).toString(16).padStart(8, '0')}`;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -64,6 +75,14 @@ function parseNonNegativeNumber(value: unknown, fallback: number): number {
   return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : fallback;
 }
 
+function parseModernPointVisibility(value: unknown): ExtendedSettings['modernPointVisibility'] {
+  const defaults = DEFAULT_EXTENDED_SETTINGS.modernPointVisibility;
+  const parsed: Record<(typeof MODERN_POINT_KEYS)[number], boolean> = { ...defaults };
+  if (!isRecord(value)) return parsed;
+  for (const key of MODERN_POINT_KEYS) parsed[key] = parseBool(value[key], defaults[key]);
+  return parsed;
+}
+
 /**
  * Every field checked individually, never trusting the shape as a whole — a `settings` bag
  * that is merely "some object" (the old `isDefaultCalculationProfile` guard's entire check)
@@ -87,6 +106,7 @@ function parseExtendedSettings(value: unknown): ExtendedSettings {
     fortuneVisible: parseBool(value.fortuneVisible, d.fortuneVisible),
     vertexVisible: parseBool(value.vertexVisible, d.vertexVisible),
     chironVisible: parseBool(value.chironVisible, d.chironVisible),
+    modernPointVisibility: parseModernPointVisibility(value.modernPointVisibility),
     spiritVisible: parseBool(value.spiritVisible, d.spiritVisible),
     midpointsVisible: parseBool(value.midpointsVisible, d.midpointsVisible),
     dial90Visible: parseBool(value.dial90Visible, d.dial90Visible),

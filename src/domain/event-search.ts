@@ -1,6 +1,6 @@
 /**
  * Batch ephemeris/research tool (#562): scan a date range for sky events — planetary stations,
- * sign ingresses, and lunations (New/Full Moon) — and get back one navigable, chronologically
+ * sign ingresses, lunations (New/Full Moon), and exact aspects between two moving bodies — and get back one navigable, chronologically
  * sorted list, exportable as a reproducible CSV (the exact search parameters used are written
  * into the file itself, per the issue's own acceptance criterion, so a result set can be
  * regenerated later without having to remember what was searched).
@@ -15,11 +15,12 @@
 /**
  * @module domain/event-search
  * @purpose Batch-searches a date range for station/sign-ingress/lunation sky events and formats the results (plus the exact search parameters) as a reproducible CSV.
- * @conventions Composes three existing finders (astrology/stations.ts, astrology/sign-ingress.ts, astrology/lunations.ts) into one chronologically sorted result list; deliberately excludes natal-chart-dependent exact-transit-aspect scanning (see the module's own header for why); CSV rows carry the exact search parameters as leading `#`-prefixed comment lines, not just the results.
+ * @conventions Composes the existing station/ingress/lunation and moving-body aspect finders into one chronologically sorted result list; the aspect filter is intentionally a pair of moving bodies (rather than a natal-dependent transit scan), so the tool stays person-independent. CSV rows carry the exact search parameters as leading `#`-prefixed comment lines, not just the results.
  * @exports EventSearchKind, EventSearchFilter, EventSearchResult, searchEvents, eventSearchToCsv, eventSearchCsvFilename
  */
 import { BODIES, bodyById } from '../astrology/bodies.js';
 import { findLunations } from '../astrology/lunations.js';
+import { findMutualAspects } from '../astrology/mutual-aspects.js';
 import { findSignIngresses } from '../astrology/sign-ingress.js';
 import { findStations } from '../astrology/stations.js';
 import { SIGNS } from '../astrology/signs.js';
@@ -31,7 +32,7 @@ const DEFAULT_STATION_BODIES: readonly BodyId[] = BODIES.filter((body) => body.c
   (body) => body.id,
 );
 
-export type EventSearchKind = 'station' | 'ingress' | 'lunation';
+export type EventSearchKind = 'station' | 'ingress' | 'lunation' | 'aspect';
 
 export interface EventSearchFilter {
   readonly kinds: readonly EventSearchKind[];
@@ -39,6 +40,10 @@ export interface EventSearchFilter {
   readonly stationBodies?: readonly BodyId[];
   /** Bodies to search for sign ingresses on — unlike stations, there is no sensible universal default (every body ingresses; searching all of them by default would bury the common case, the Sun's own ingresses, in noise), so this is required whenever `'ingress'` is in `kinds`. */
   readonly ingressBodies?: readonly BodyId[];
+  /** Moving body pairs whose exact aspects the search should find. Required for an `'aspect'` search. */
+  readonly aspectPairs?: readonly (readonly [BodyId, BodyId])[];
+  /** Exact aspect keys to find for every `aspectPairs` entry. Defaults to conjunction. */
+  readonly aspectKeys?: readonly string[];
   readonly zodiac?: Zodiac;
   readonly stepDays?: number;
 }
@@ -47,6 +52,9 @@ export interface EventSearchResult {
   readonly kind: EventSearchKind;
   readonly jd: JulianDayUT;
   readonly bodyKey?: string;
+  /** The second moving body for an exact moving-body aspect result. */
+  readonly relatedBodyKey?: string;
+  readonly aspectKey?: string;
   readonly label: string;
 }
 
@@ -61,6 +69,10 @@ function ingressLabel(bodyKey: string, sign: number, retrograde: boolean): strin
 
 function lunationLabel(kind: 'new' | 'full'): string {
   return kind === 'new' ? 'New Moon' : 'Full Moon';
+}
+
+function aspectLabel(bodyAKey: string, bodyBKey: string, aspectKey: string): string {
+  return `${bodyAKey} exact ${aspectKey} ${bodyBKey}`;
 }
 
 /** Runs every search `filter.kinds` names, over `[fromJd, toJd]`, and returns one chronologically sorted result list. */
@@ -105,6 +117,30 @@ export async function searchEvents(
     }
   }
 
+  if (filter.kinds.includes('aspect')) {
+    for (const [bodyA, bodyB] of filter.aspectPairs ?? []) {
+      const bodyAKey = bodyById(bodyA)?.key ?? String(bodyA);
+      const bodyBKey = bodyById(bodyB)?.key ?? String(bodyB);
+      if (bodyA === bodyB) continue;
+      const aspects = await findMutualAspects(provider, bodyA, bodyB, fromJd, toJd, {
+        ...(filter.zodiac === undefined ? {} : { zodiac: filter.zodiac }),
+        ...(filter.aspectKeys === undefined ? {} : { aspectKeys: filter.aspectKeys }),
+        ...(filter.stepDays === undefined ? {} : { sampleStepDays: filter.stepDays }),
+        bodyKeys: [bodyAKey, bodyBKey],
+      });
+      for (const aspect of aspects) {
+        results.push({
+          kind: 'aspect',
+          jd: aspect.jd,
+          bodyKey: bodyAKey,
+          relatedBodyKey: bodyBKey,
+          aspectKey: aspect.aspect.key,
+          label: aspectLabel(bodyAKey, bodyBKey, aspect.aspect.key),
+        });
+      }
+    }
+  }
+
   return results.slice().sort((a, b) => a.jd - b.jd);
 }
 
@@ -136,12 +172,27 @@ export function eventSearchToCsv(
     `# kinds: ${filter.kinds.join(', ')}`,
     `# stationBodies: ${(filter.stationBodies ?? []).map((id) => bodyById(id)?.key ?? String(id)).join(', ') || '(default)'}`,
     `# ingressBodies: ${(filter.ingressBodies ?? []).map((id) => bodyById(id)?.key ?? String(id)).join(', ') || '(none)'}`,
+    `# aspectPairs: ${
+      (filter.aspectPairs ?? [])
+        .map(([bodyA, bodyB]) => `${bodyById(bodyA)?.key ?? String(bodyA)}:${bodyById(bodyB)?.key ?? String(bodyB)}`)
+        .join(', ') || '(none)'
+    }`,
+    `# aspectKeys: ${filter.aspectKeys?.join(', ') ?? '(conjunction)'}`,
     `# zodiac: ${filter.zodiac === undefined ? 'tropical' : JSON.stringify(filter.zodiac)}`,
     `# stepDays: ${String(filter.stepDays ?? '(default)')}`,
   ];
-  const header = ['date', 'kind', 'body', 'event'];
+  const header = ['date', 'kind', 'body', 'relatedBody', 'aspect', 'event'];
   const rows = results.map((result) =>
-    [isoFromJd(result.jd), result.kind, result.bodyKey ?? '', result.label].map(csvField).join(','),
+    [
+      isoFromJd(result.jd),
+      result.kind,
+      result.bodyKey ?? '',
+      result.relatedBodyKey ?? '',
+      result.aspectKey ?? '',
+      result.label,
+    ]
+      .map(csvField)
+      .join(','),
   );
   return [...parameterLines, header.join(','), ...rows].join('\n');
 }

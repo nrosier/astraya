@@ -64,3 +64,13 @@ describe('customPointLongitude (#566)', () => {
     expect(() => customPointLongitude(data, 'sun + nibiru')).toThrow(FormulaError);
   });
 });
+
+describe('redundantBuiltInPoint (#566)', () => {
+  it('identifies a formula that duplicates a built-in point, without executing code', async () => {
+    const { redundantBuiltInPoint } = await import('../src/domain/custom-point.js');
+    const engine = await getEngine();
+    const data = await computeChartData(PERSON, engine);
+    expect(redundantBuiltInPoint(data, 'Sun')).toBe('sun');
+    expect(redundantBuiltInPoint(data, 'Sun + Moon - Ascendant')).toBeUndefined();
+  });
+});

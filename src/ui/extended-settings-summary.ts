@@ -21,6 +21,7 @@ export type ChangedSetting =
   | 'vertex'
   | 'spirit'
   | 'chiron'
+  | 'modernPoints'
   | 'midpoints'
   | 'lilith'
   | 'node'
@@ -39,6 +40,8 @@ export function changedSettings(value: ExtendedSettings): readonly ChangedSettin
   if (value.vertexVisible !== defaults.vertexVisible) changed.push('vertex');
   if (value.spiritVisible !== defaults.spiritVisible) changed.push('spirit');
   if (value.chironVisible !== defaults.chironVisible) changed.push('chiron');
+  if (JSON.stringify(value.modernPointVisibility) !== JSON.stringify(defaults.modernPointVisibility))
+    changed.push('modernPoints');
   if (value.midpointsVisible !== defaults.midpointsVisible) changed.push('midpoints');
   if (value.lilithVariant !== defaults.lilithVariant) changed.push('lilith');
   if (value.nodeVariant !== defaults.nodeVariant) changed.push('node');

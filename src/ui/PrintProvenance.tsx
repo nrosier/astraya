@@ -22,13 +22,15 @@ export function PrintProvenance({
   houseSystem,
   zodiac,
   rulership,
+  snapshotIdentity,
   generatedAt,
 }: {
   readonly houseSystem: string;
   readonly zodiac: string;
   readonly rulership: string;
+  readonly snapshotIdentity: string;
   readonly generatedAt: string;
 }): React.JSX.Element {
   const t = useMessages(printProvenanceMessages);
-  return <p className="print-provenance">{t.summary(houseSystem, zodiac, rulership, generatedAt)}</p>;
+  return <p className="print-provenance">{t.summary(houseSystem, zodiac, rulership, snapshotIdentity, generatedAt)}</p>;
 }

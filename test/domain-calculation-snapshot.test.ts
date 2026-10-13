@@ -6,6 +6,7 @@ import { DEFAULT_EXTENDED_SETTINGS, type ExtendedSettings } from '../src/chart/e
 import { DEFAULT_RULERSHIP_CHOICE } from '../src/astrology/rulership.js';
 import {
   buildCalculationSnapshot,
+  calculationSnapshotIdentity,
   calculationSnapshotToJson,
   CURRENT_SNAPSHOT_VERSION,
   parseCalculationSnapshot,
@@ -53,6 +54,14 @@ describe('buildCalculationSnapshot / parseCalculationSnapshot round-trip (#541)'
     const snapshot = buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, 'modern');
     expect(snapshot.version).toBe(CURRENT_SNAPSHOT_VERSION);
     expect(calculationSnapshotToJson(snapshot).version).toBe(CURRENT_SNAPSHOT_VERSION);
+  });
+
+  it('has a stable, settings-sensitive provenance identity', () => {
+    const defaults = buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, 'modern');
+    const custom = buildCalculationSnapshot(CUSTOM_SETTINGS, 'traditional');
+    expect(calculationSnapshotIdentity(defaults)).toMatch(/^v1-[0-9a-f]{8}$/);
+    expect(calculationSnapshotIdentity(defaults)).toBe(calculationSnapshotIdentity(defaults));
+    expect(calculationSnapshotIdentity(custom)).not.toBe(calculationSnapshotIdentity(defaults));
   });
 });
 
