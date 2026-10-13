@@ -31,6 +31,7 @@ import { computeDraconic } from '../domain/draconic.js';
 import { computeHarmonic } from '../domain/harmonic.js';
 import { computeSolarReturnChart, computeLunarReturnChart } from '../domain/return-chart.js';
 import {
+  allMidpointsRows,
   almutenOfAscendant,
   angleRows,
   antisciaRows,
@@ -94,6 +95,7 @@ import {
   type TransitRuleContext,
 } from '../astrology/transit-importance.js';
 import {
+  allMidpointsColumns,
   angleColumns,
   antisciaColumns,
   aspectColumns,
@@ -279,8 +281,15 @@ function tablesOf(
         tablePlanOf(t.dignitiesCaption, dignityColumns(t, locale), dignityRows(data, {})),
         tablePlanOf(t.dispositorsCaption, dispositorColumns(t, locale), dispositorRows(data, {}, rulership)),
       ];
-    case 'derived':
-      return [tablePlanOf(t.derivedPointsCaption, derivedPointColumns(t, locale), derivedPointRows(data, {}))];
+    case 'derived': {
+      const allMidpoints = allMidpointsRows(data);
+      return [
+        tablePlanOf(t.derivedPointsCaption, derivedPointColumns(t, locale), derivedPointRows(data, {})),
+        ...(allMidpoints.length === 0
+          ? []
+          : [tablePlanOf(t.allMidpointsCaption, allMidpointsColumns(t, locale), allMidpoints)]),
+      ];
+    }
   }
 }
 

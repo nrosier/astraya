@@ -150,7 +150,11 @@ const en = {
   declinationsCaption: 'Declinations',
   antisciaCaption: 'Antiscia',
   midpointTreeCaption: 'Midpoint tree (90° dial)',
+  allMidpointsCaption: 'All midpoints',
   pairLabel: 'Pair',
+  midpointKindTooltip: 'Direct: half the shorter arc between the pair; Indirect: that point’s antipode',
+  directMidpoint: 'Direct',
+  indirectMidpoint: 'Indirect',
   harmonicFamilyLabel: 'Family',
   harmonicFamilyTooltip:
     'Addey’s harmonic grouping: the smallest division of the circle this aspect is a multiple of (conjunction H1, opposition H2, trine H3, square H4, quintile/biquintile H5, sextile H6, semisquare/sesquiquadrate H8, semisextile/quincunx H12)',
@@ -444,7 +448,11 @@ const nl: typeof en = {
   declinationsCaption: 'Declinaties',
   antisciaCaption: 'Antiscia',
   midpointTreeCaption: 'Middelpuntenboom (90°-dial)',
+  allMidpointsCaption: 'Alle middelpunten',
   pairLabel: 'Paar',
+  midpointKindTooltip: 'Direct: de helft van de kortste boog tussen het paar; Indirect: het antipode punt daarvan',
+  directMidpoint: 'Direct',
+  indirectMidpoint: 'Indirect',
   harmonicFamilyLabel: 'Familie',
   harmonicFamilyTooltip:
     'Addeys harmonische indeling: de kleinste verdeling van de cirkel waarvan dit aspect een veelvoud is (conjunctie H1, oppositie H2, driehoek H3, vierkant H4, kwintiel/bikwintiel H5, sextiel H6, halfvierkant/anderhalfvierkant H8, halfsextiel/quincunx H12)',

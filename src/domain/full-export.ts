@@ -29,6 +29,7 @@ import {
 } from '../chart/extended-settings.js';
 import { housesAreDefined, computeChartData, type ChartData } from './chart-compute.js';
 import {
+  allMidpointsRows,
   antisciaRows,
   aspectRows,
   angleRows,
@@ -65,6 +66,8 @@ export interface ExportedChart {
   readonly declinations: ReturnType<typeof declinationContactRows>;
   /** 90°-dial midpoint-tree hits (#556) — only computed when `dial90Visible` is set, otherwise empty, matching the on-screen table's own gate. */
   readonly midpointTree: ReturnType<typeof midpointTreeRows>;
+  /** Every body-pair midpoint, direct and indirect (#555) — only computed when `midpointsVisible` is set, otherwise empty, matching the on-screen table's own gate. */
+  readonly allMidpoints: ReturnType<typeof allMidpointsRows>;
 }
 
 export interface ExportedPerson {
@@ -138,6 +141,7 @@ function chartExport(
     antiscia: antisciaRows(data),
     declinations: declinationContactRows(data),
     midpointTree: visibility.dial90Visible === true ? midpointTreeRows(data, visibility.midpointTreeOrb) : [],
+    allMidpoints: visibility.midpointsVisible === true ? allMidpointsRows(data) : [],
   };
 }
 
