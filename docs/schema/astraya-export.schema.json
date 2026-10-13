@@ -1,0 +1,202 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/nrosier/astraya/docs/schema/astraya-export.schema.json",
+  "title": "Astraya full export",
+  "description": "Hand-authored structural counterpart to src/domain/full-export.ts's FullExport/ExportedPerson/ExportedChart TypeScript interfaces (#561). See ../EXPORT_SCHEMA.md for the compatibility policy and version history. This document is maintained by hand, not generated — keep it in step with the TypeScript source when either changes.",
+  "type": "object",
+  "required": ["format", "version", "exportedAt", "app", "preferences", "note", "people"],
+  "additionalProperties": false,
+  "properties": {
+    "format": { "const": "astraya-export" },
+    "version": { "type": "integer", "minimum": 1 },
+    "exportedAt": { "type": "string", "format": "date-time" },
+    "app": {
+      "type": "object",
+      "required": ["version"],
+      "additionalProperties": false,
+      "properties": { "version": { "type": "string" } }
+    },
+    "preferences": {
+      "type": "object",
+      "required": ["settings", "rulership", "symbolClass"],
+      "additionalProperties": false,
+      "properties": {
+        "settings": { "type": "object", "description": "ExtendedSettings — see src/chart/extended-settings.ts" },
+        "rulership": { "enum": ["modern", "traditional", "both"] },
+        "symbolClass": { "type": "string" }
+      }
+    },
+    "note": { "type": "string" },
+    "people": { "type": "array", "items": { "$ref": "#/$defs/exportedPerson" } }
+  },
+  "$defs": {
+    "degreeParts": {
+      "type": "object",
+      "required": ["sign", "degree", "minute", "second"],
+      "properties": {
+        "sign": { "type": "string" },
+        "degree": { "type": "integer" },
+        "minute": { "type": "integer" },
+        "second": { "type": "integer" }
+      }
+    },
+    "exportedPerson": {
+      "type": "object",
+      "required": ["id", "displayName", "placeLabel", "timeAccuracy", "notes", "missing"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "displayName": { "type": "string" },
+        "placeLabel": { "type": "string" },
+        "timeAccuracy": { "enum": ["recorded", "estimated", "unknown"] },
+        "notes": { "type": "string" },
+        "birth": { "type": "object", "description": "BirthMomentInput — see src/time/types.ts" },
+        "missing": { "type": "array", "items": { "type": "string" } },
+        "natalChart": { "$ref": "#/$defs/exportedChart" },
+        "chartError": { "type": "string" }
+      }
+    },
+    "exportedChart": {
+      "type": "object",
+      "required": [
+        "sect",
+        "positions",
+        "aspects",
+        "dignities",
+        "dispositors",
+        "antiscia",
+        "declinations",
+        "midpointTree",
+        "allMidpoints"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "sect": { "enum": ["day", "night"] },
+        "positions": { "type": "array", "items": { "type": "object" } },
+        "houses": {
+          "type": "object",
+          "required": ["cusps", "angles", "derivedPoints"],
+          "additionalProperties": false,
+          "properties": {
+            "cusps": { "type": "array", "items": { "type": "object" } },
+            "angles": { "type": "array", "items": { "type": "object" } },
+            "derivedPoints": { "type": "array", "items": { "type": "object" } }
+          }
+        },
+        "aspects": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "bodyAKey",
+              "bodyAName",
+              "bodyBKey",
+              "bodyBName",
+              "aspect",
+              "aspectKey",
+              "angle",
+              "separation",
+              "orb",
+              "applying"
+            ],
+            "properties": {
+              "bodyAKey": { "type": "string" },
+              "bodyAName": { "type": "string" },
+              "bodyBKey": { "type": "string" },
+              "bodyBName": { "type": "string" },
+              "aspect": { "type": "string" },
+              "aspectKey": { "type": "string" },
+              "angle": { "type": "number" },
+              "separation": { "type": "number" },
+              "orb": { "type": "number" },
+              "applying": { "type": "boolean" }
+            }
+          }
+        },
+        "dignities": { "type": "array", "items": { "type": "object" } },
+        "dispositors": { "type": "array", "items": { "type": "object" } },
+        "antiscia": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["bodyKey", "bodyName", "contactKey", "contactName", "kind", "orb"],
+            "properties": {
+              "bodyKey": { "type": "string" },
+              "bodyName": { "type": "string" },
+              "contactKey": { "type": "string" },
+              "contactName": { "type": "string" },
+              "kind": { "enum": ["antiscion", "contraAntiscion"] },
+              "orb": { "type": "number" }
+            }
+          }
+        },
+        "declinations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["bodyAKey", "bodyAName", "bodyBKey", "bodyBName", "kind", "orb"],
+            "properties": {
+              "bodyAKey": { "type": "string" },
+              "bodyAName": { "type": "string" },
+              "bodyBKey": { "type": "string" },
+              "bodyBName": { "type": "string" },
+              "kind": { "enum": ["parallel", "contraparallel"] },
+              "orb": { "type": "number" }
+            }
+          }
+        },
+        "midpointTree": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              { "$ref": "#/$defs/degreeParts" },
+              {
+                "type": "object",
+                "required": [
+                  "bodyKey",
+                  "bodyName",
+                  "pairAKey",
+                  "pairAName",
+                  "pairBKey",
+                  "pairBName",
+                  "midpoint",
+                  "orb"
+                ],
+                "properties": {
+                  "bodyKey": { "type": "string" },
+                  "bodyName": { "type": "string" },
+                  "pairAKey": { "type": "string" },
+                  "pairAName": { "type": "string" },
+                  "pairBKey": { "type": "string" },
+                  "pairBName": { "type": "string" },
+                  "midpoint": { "type": "number" },
+                  "orb": { "type": "number" }
+                }
+              }
+            ]
+          }
+        },
+        "allMidpoints": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              { "$ref": "#/$defs/degreeParts" },
+              {
+                "type": "object",
+                "required": ["bodyAKey", "bodyAName", "bodyBKey", "bodyBName", "kind", "midpoint"],
+                "properties": {
+                  "bodyAKey": { "type": "string" },
+                  "bodyAName": { "type": "string" },
+                  "bodyBKey": { "type": "string" },
+                  "bodyBName": { "type": "string" },
+                  "kind": { "enum": ["direct", "indirect"] },
+                  "midpoint": { "type": "number" }
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}
