@@ -17,7 +17,7 @@ const en = {
 
   heading: (name: string) => `${name}’s harmonic chart`,
   headingFallback: 'Harmonic chart',
-  hint: 'Every longitude multiplied by a whole number and wrapped back into the zodiac, with whole-sign houses built from the multiplied Ascendant — the general mechanism behind both harmonic charts and Vedic Varga (divisional) charts. See the named presets’ own note on which Varga convention each one follows.',
+  hint: 'Every longitude multiplied by a whole number and wrapped back into the zodiac, with whole-sign houses built from the multiplied Ascendant — the general mechanism behind both harmonic charts and Vedic Varga (divisional) charts. See the named presets’ own note on which Varga convention each one follows. This screen computes divisional-chart positions only — it has no Vimshottari dasha timing or planetary-yoga detection, so it is not a full Jyotish toolkit.',
 
   divisionalChartLabel: 'Divisional chart',
   customHarmonicOption: 'Custom harmonic…',
@@ -38,7 +38,7 @@ const nl: typeof en = {
 
   heading: (name: string) => `Harmonische horoscoop van ${name}`,
   headingFallback: 'Harmonische horoscoop',
-  hint: 'Elke lengtegraad vermenigvuldigd met een geheel getal en teruggevouwen in de dierenriem, met huizen-per-heel-teken opgebouwd uit de vermenigvuldigde Ascendant — het algemene mechanisme achter zowel harmonische horoscopen als Vedische Varga (divisionele) horoscopen. Zie de eigen toelichting van de benoemde presets over welke Varga-conventie elke preset volgt.',
+  hint: 'Elke lengtegraad vermenigvuldigd met een geheel getal en teruggevouwen in de dierenriem, met huizen-per-heel-teken opgebouwd uit de vermenigvuldigde Ascendant — het algemene mechanisme achter zowel harmonische horoscopen als Vedische Varga (divisionele) horoscopen. Zie de eigen toelichting van de benoemde presets over welke Varga-conventie elke preset volgt. Dit scherm berekent alleen divisionele posities — er is geen Vimshottari-dasha-timing of yoga-detectie, dus dit is geen volledig Jyotish-instrumentarium.',
 
   divisionalChartLabel: 'Divisionele horoscoop',
   customHarmonicOption: 'Aangepast harmonisch getal…',
