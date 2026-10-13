@@ -131,6 +131,7 @@ import {
 import { SelectionInspector, type WheelIsolationFacts } from './SelectionInspector.js';
 import { useRulershipChoice } from './rulership-setting.js';
 import type { RulershipChoice } from '../astrology/rulership.js';
+import type { BoundsScheme } from '../astrology/bounds.js';
 import { GlossaryTerms } from './GlossaryTerm.js';
 import { PageHeader } from './PageHeader.js';
 import { PersonNotFound } from './PersonNotFound.js';
@@ -864,6 +865,7 @@ function renderTableTab(
   locale: Locale,
   rulership: RulershipChoice,
   symbolClass: SymbolClass,
+  boundsScheme: BoundsScheme,
   selection?: TableSelection,
 ): React.ReactNode {
   switch (tab) {
@@ -956,7 +958,7 @@ function renderTableTab(
     }
     case 'dignities': {
       // Always traditional (#545) — almutenOfAscendant no longer takes a rulership/display-choice parameter.
-      const almuten = almutenOfAscendant(data);
+      const almuten = almutenOfAscendant(data, boundsScheme);
       return (
         <>
           {almuten !== undefined && (
@@ -980,7 +982,7 @@ function renderTableTab(
           <SortableTable
             caption={t.dignitiesCaption}
             columns={dignityColumns(t, locale)}
-            rows={dignityRows(data, pointVisibility)}
+            rows={dignityRows(data, pointVisibility, boundsScheme)}
             getRowKey={(row) => row.bodyKey}
             downloadFilename={deriveExportFilename(displayName, 'dignities', 'csv')}
           />
@@ -994,7 +996,7 @@ function renderTableTab(
           <SortableTable
             caption={t.conditionCaption}
             columns={conditionColumns(t, locale)}
-            rows={conditionRows(data)}
+            rows={conditionRows(data, undefined, boundsScheme)}
             getRowKey={(row) => row.bodyKey}
             downloadFilename={deriveExportFilename(displayName, 'condition', 'csv')}
           />
@@ -1026,7 +1028,7 @@ function renderTableTab(
           <SortableTable
             caption={t.receptionCaption}
             columns={receptionColumns(t, locale)}
-            rows={receptionRows(data)}
+            rows={receptionRows(data, boundsScheme)}
             getRowKey={(row) => `${row.bodyAKey}-${row.bodyBKey}`}
             downloadFilename={deriveExportFilename(displayName, 'reception', 'csv')}
           />
@@ -1129,6 +1131,7 @@ function renderPlacementsView(
   locale: Locale,
   rulership: RulershipChoice,
   symbolClass: SymbolClass,
+  boundsScheme: BoundsScheme,
   selection?: TableSelection,
 ): React.ReactNode {
   return (
@@ -1143,6 +1146,7 @@ function renderPlacementsView(
         locale,
         rulership,
         symbolClass,
+        boundsScheme,
         selection,
       )}
       {housesRenderable && (
@@ -1157,6 +1161,7 @@ function renderPlacementsView(
             locale,
             rulership,
             symbolClass,
+            boundsScheme,
             selection,
           )}
           {renderTableTab(
@@ -1169,6 +1174,7 @@ function renderPlacementsView(
             locale,
             rulership,
             symbolClass,
+            boundsScheme,
             selection,
           )}
         </>
@@ -1190,6 +1196,7 @@ function renderPatternsView(
   locale: Locale,
   rulership: RulershipChoice,
   symbolClass: SymbolClass,
+  boundsScheme: BoundsScheme,
   selection?: TableSelection,
 ): React.ReactNode {
   return (
@@ -1206,6 +1213,7 @@ function renderPatternsView(
         locale,
         rulership,
         symbolClass,
+        boundsScheme,
         selection,
       )}
     </>
@@ -1432,6 +1440,10 @@ export function ChartDataView({
   const [printAll, setPrintAll] = useState(false);
 
   const pointVisibility = toPointVisibilityOptions(extendedSettings);
+  // Which bound table the dignity/condition/reception/almuten tables use (#549) — threaded
+  // alongside `rulership` through the same render-tab functions, not through `pointVisibility`
+  // (it isn't a visibility concern).
+  const boundsScheme = extendedSettings.boundsScheme;
 
   // #378: `showHouses` alone (passed in from `person.timeAccuracy`) isn't enough — a *known*
   // birth time at a latitude where the chosen house system has no solution still produces
@@ -1668,6 +1680,7 @@ export function ChartDataView({
                           locale,
                           rulership,
                           symbolClass,
+                          boundsScheme,
                         )}
                       {tab === 'matrix' && renderMatrixView(load.data, displayName, pointVisibility, t, locale)}
                       {tab === 'elements' && renderElementsView(load.data, displayName, pointVisibility, t, locale)}
@@ -1681,6 +1694,7 @@ export function ChartDataView({
                           locale,
                           rulership,
                           symbolClass,
+                          boundsScheme,
                         )}
                       {tab === 'patterns' &&
                         renderPatternsView(
@@ -1692,6 +1706,7 @@ export function ChartDataView({
                           locale,
                           rulership,
                           symbolClass,
+                          boundsScheme,
                         )}
                     </>
                   )}
@@ -1745,6 +1760,7 @@ export function ChartDataView({
                       locale,
                       rulership,
                       symbolClass,
+                      boundsScheme,
                       tableSelection,
                     )}
                   {currentTab === 'matrix' &&
@@ -1760,6 +1776,7 @@ export function ChartDataView({
                       locale,
                       rulership,
                       symbolClass,
+                      boundsScheme,
                       tableSelection,
                     )}
                   {currentTab === 'patterns' &&
@@ -1772,6 +1789,7 @@ export function ChartDataView({
                       locale,
                       rulership,
                       symbolClass,
+                      boundsScheme,
                       tableSelection,
                     )}
                 </div>

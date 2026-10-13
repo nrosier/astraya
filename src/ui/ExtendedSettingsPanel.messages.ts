@@ -113,6 +113,13 @@ const en = {
   aspectsToHint:
     'The Ascendant and Midheaven always aspect the bodies. The Vertex and the two parts do so here, to bodies only, never to each other or the angles; a part is not aspected to the luminary it is built from, as that repeats an Ascendant aspect.',
 
+  schemeLegend: 'Traditional scheme',
+  schemeHint:
+    'A named scheme sets the bound (term) table and orb scale together, as one coherent historical choice, rather than letting them be mixed arbitrarily. Choosing one here also sets the orb profile below; the two can still be adjusted independently afterward, which shows as Custom.',
+  schemeLabel: 'Scheme',
+  schemeOptions: { custom: 'Custom' },
+  schemeNotes: { custom: 'Your own combination of bound table and orb scale, set independently below.' },
+
   aspectsLegend: 'Aspects and orbs',
   orbProfileLabel: 'Orb profile',
   orbProfileOptions: {
@@ -148,6 +155,7 @@ const en = {
     tropical: 'Tropical',
     sidereal: (ayanamsa: string) => `Sidereal (${ayanamsa})`,
     orbs: (percent: string) => `Orbs ${percent}%`,
+    boundsScheme: (scheme: string) => `${scheme} bounds`,
     minorAspects: (count: string) => `${count} minor aspects`,
     fortune: 'Part of Fortune',
     vertex: 'Vertex',
@@ -268,6 +276,13 @@ const nl: typeof en = {
   aspectsToHint:
     'De Ascendant en het Midheaven maken altijd aspecten met de lichamen. De Vertex en de twee punten doen dat hier, alleen met lichamen, nooit met elkaar of met de assen; een punt maakt geen aspect met het lichtgevend lichaam waaruit het is opgebouwd, omdat dat een Ascendant-aspect herhaalt.',
 
+  schemeLegend: 'Traditioneel schema',
+  schemeHint:
+    'Een benoemd schema stelt de bound-tabel (term) en orb-schaal samen in, als één coherente historische keuze, in plaats van ze willekeurig te laten mengen. Het kiezen hier stelt ook het orb-profiel hieronder in; beide kunnen daarna nog onafhankelijk worden aangepast, wat als Eigen keuze wordt getoond.',
+  schemeLabel: 'Schema',
+  schemeOptions: { custom: 'Eigen keuze' },
+  schemeNotes: { custom: 'Je eigen combinatie van bound-tabel en orb-schaal, apart hieronder ingesteld.' },
+
   aspectsLegend: 'Aspecten en orbs',
   orbProfileLabel: 'Orb-profiel',
   orbProfileOptions: {
@@ -303,6 +318,7 @@ const nl: typeof en = {
     tropical: 'Tropisch',
     sidereal: (ayanamsa: string) => `Siderisch (${ayanamsa})`,
     orbs: (percent: string) => `Orbs ${percent}%`,
+    boundsScheme: (scheme: string) => `${scheme} bounds`,
     minorAspects: (count: string) => `${count} kleine aspecten`,
     fortune: 'Fortuna-punt',
     vertex: 'Vertex',
