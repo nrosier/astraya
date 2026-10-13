@@ -4,6 +4,12 @@ All notable changes to Astraya are recorded here. Versions follow
 [semantic versioning](https://semver.org/), and every milestone ends in a release —
 see [docs/RELEASING.md](docs/RELEASING.md).
 
+## [0.37.2] — 2026-10-13
+
+### Fixed
+
+- **The printed-page provenance footer now also appears on the three bi-wheel screens that bypass the standard chart view (#564).** Synastry, Transits and Primary Directions render their multi-wheel SVG directly rather than through `ChartDataView`, so v0.37.0's footer — which records which house system, zodiac and rulership scheme produced the printed chart — never reached them. It now does, truthfully stating the engine defaults those three screens actually compute with, since none of them yet expose a per-screen settings UI.
+
 ## [0.37.1] — 2026-10-13
 
 **Corrective release: v0.37.0 was tagged before the final chart-workspace commits reached main. This release delivers that completed work as a tested, reproducible build.**
