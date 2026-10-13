@@ -62,6 +62,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `PwaStatus.tsx` + `PwaStatus.messages.ts` — PWA update + offline-cache warming banner. Deps: `pwa/register`, `pwa/warm-status`.
 - `RectificationView.tsx` + `RectificationView.messages.ts` — Birth-time rectification screen (event-matching). Deps: `domain/rectification`, `astrology/signs`.
 - `RelationshipSummary.tsx` + `RelationshipSummary.messages.ts` — Grouped relationship-themes summary (contacts/overlays/Tier 2 AI). Deps: `domain/relationship-themes`, `domain/house-overlays`, `interpretation/tier2-client`.
+- `RelocatedChartView.tsx` + `RelocatedChartView.messages.ts` — Relocated-chart screen: lat/lon picker, relocated wheel, natal-vs-relocated comparison table (#559). Deps: `domain/relocated-chart`, `./map-settings`, `./ChartView`.
 - `ReportScreen.tsx` + `ReportScreen.messages.ts` — Standalone written-report route. Deps: `domain/chart-compute`, `ReportView`.
 - `ReportView.tsx` + `ReportView.messages.ts` — Report rendering + provenance toggle + degree-symbol (Sabian symbol) badge (#527) + Tier 2 AI panel. Deps: `interpretation/report`, `interpretation/corpus-client`, `interpretation/tier2-client`, `./degree-symbol-setting`, `./DegreeSymbolSetting`, `./GlossaryTerm`.
 - `ReturnView.tsx` + `ReturnView.messages.ts` — Solar/lunar return charts (pick year/place/rendering). Deps: `domain/return-chart`.

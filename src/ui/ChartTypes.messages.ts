@@ -18,6 +18,7 @@ const en = {
     harmonic: 'Harmonic',
     'solar-return': 'Solar return',
     'lunar-return': 'Lunar return',
+    relocated: 'Relocated',
   } satisfies Record<ChartType, string>,
 };
 
@@ -29,6 +30,7 @@ const nl: typeof en = {
     harmonic: 'Harmonisch',
     'solar-return': 'Zonneterugkeer',
     'lunar-return': 'Maanterugkeer',
+    relocated: 'Verplaatst',
   } satisfies Record<ChartType, string>,
 };
 
