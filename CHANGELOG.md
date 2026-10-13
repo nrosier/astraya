@@ -4,6 +4,43 @@ All notable changes to Astraya are recorded here. Versions follow
 [semantic versioning](https://semver.org/), and every milestone ends in a release —
 see [docs/RELEASING.md](docs/RELEASING.md).
 
+## [0.37.0] — 2026-10-13
+
+**A major professional-practice release: a chart's effective calculation rules now travel with it, traditional and modern technique suites gain their missing decision tools, and research/export workflows become reproducible artifacts rather than screen-only results.**
+
+### Calculation integrity
+
+- **Every saved, shared, reloaded, or exported chart now carries its immutable calculation snapshot (#541, #544).** A recipient sees the sender's actual zodiac, house system, ayanamsa, orb profile, point rules and other effective settings, rather than silently recalculating under their own defaults. Snapshot parity is guarded across every persistence and export route.
+- **Visibility and aspect participation are one explicit policy (#542).** Body and derived-point appearance, table inclusion and aspect eligibility cannot drift apart between the wheel, tables, exports and shared charts.
+- **Named, versioned orb profiles make aspect rules reproducible (#543).** Synastry receives a deliberately tighter default, while a custom profile remains fully inspectable in the calculation provenance.
+- **Traditional scoring no longer leaks presentation preferences (#545), and applying/separating states for angles and lots use finite-difference motion (#546).**
+
+### Traditional practice
+
+- **The traditional condition table is complete (#547).** It brings dignity, sect, phase, speed, angularity, hayz, combustion/cazimi and besiegement into one cited, inspectable assessment.
+- **Reception and scheme bundles are first-class calculation tools (#548, #549).** Full five-dignity reception, mutual and mixed forms, and aspect-linked reception now work with Hellenistic, Medieval-Arabic, Renaissance-Lilly and Custom bundles.
+- **Lots and Almuten Figuris explain their methods (#550, #551).** Fortune and Spirit display structured formula provenance, while every Almuten candidate exposes its own scoring breakdown and historical-method citation.
+- **Horary judgment and primary directions become configurable workflows (#552, #553).** The horary toolkit covers significators, perfection, reception and prohibition; primary directions expose significator/promissor set choices.
+
+### Modern, timing and research tools
+
+- **Timing techniques now share one timeline shape (#554).** Zodiacal releasing and firdaria join the existing predictive work with consistent, exportable results.
+- **Midpoint, dial and harmonic analysis expand substantially (#555–#557).** All-pairs direct/indirect midpoints, 45° and 90° dials, midpoint trees, consistent antiscia/declination exposure, and Addey harmonic-family grouping are available across settings, tables and exports.
+- **Comparison and relocation workflows become first class (#558, #559).** Multi-wheel overlays support independently configurable rings, and relocated natal charts retain their own explicit setup.
+- **The new event-search tool finds stations, ingresses and lunations in batches and produces reproducible CSV (#562).** A dedicated chart-setup entry point in Preferences improves consultation preparation (#563).
+
+### Exchange, printing and scope
+
+- **Astraya exports now have a documented, versioned stable schema (#561).** The app identifies both its producing version and its export-schema version, with documented provenance instead of an unqualified AAF/A93 compatibility claim.
+- **Printing is monochrome-safe and traceable (#564).** Aspect styling survives black-and-white printing, page breaks are disciplined, and a provenance footer records the calculation context.
+- **Sidereal/Varga UI labels now state the implemented Jyotish boundary (#565).** Sidereal coordinates are supported; this is not presented as a complete dasha, Varga or yoga system.
+- **The custom-point engine adds a safe formula parser (#566).** Its computational core and calculation snapshot preserve the defined formula without executing arbitrary input.
+
+### Fixed
+
+- The Traditional-profile e2e suite now follows the actual scheme group and Spirit's default-off visibility state (#508).
+- Updated build and test tooling dependencies, including Node, Vite, TypeScript, ESLint, Vitest, Playwright and Prettier.
+
 ## [0.36.0] — 2026-10-12
 
 **A new interface: one navigation grouped by what you want to do, a Preferences workspace, a chart workspace with one selection panel, and one set of controls, messages and tables across every screen. Your people and their charts are unchanged.**
