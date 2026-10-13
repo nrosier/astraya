@@ -182,14 +182,15 @@ test('column-header and dispositor tooltips are reachable on keyboard focus, not
   await page.keyboard.press('Escape');
   await expect(popup).toHaveCount(0);
 
-  // The dispositors "?" is a focusable button with its own accessible name, not a bare
-  // non-interactive <span title>.
-  const dispositorsHelp = page.getByRole('button', {
-    name: "A dispositor is the ruler of a planet's sign. Dispositor chains trace where each planet's rulership flows.",
-  });
+  // The dispositors "?" is a focusable button with its own accessible name, not a bare non-interactive
+  // <span title>; its explanation shows in the same shared tooltip popup on keyboard focus (#508).
+  const dispositorsHelp = page.getByRole('button', { name: 'About dispositors', exact: true });
   await expect(dispositorsHelp).toBeVisible();
   await dispositorsHelp.focus();
   await expect(dispositorsHelp).toBeFocused();
+  await expect(popup).toHaveText(
+    "A dispositor is the ruler of a planet's sign. Dispositor chains trace where each planet's rulership flows.",
+  );
 });
 
 // #456's remaining acceptance item ("test with keyboard navigation and screen readers"): the tooltipped header has a
