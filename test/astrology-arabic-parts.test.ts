@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { arabicPart, partOfFortune, partOfSpirit, sectReversingPart } from '../src/astrology/arabic-parts.js';
+import {
+  arabicPart,
+  LOT_FORMULAS,
+  lotFormulaByKey,
+  partOfFortune,
+  partOfSpirit,
+  sectReversingPart,
+} from '../src/astrology/arabic-parts.js';
 
 describe('arabicPart (#29)', () => {
   it('computes base + a - b, wrapped to a longitude', () => {
@@ -57,5 +64,34 @@ describe('partOfSpirit (#29)', () => {
 
   it('differs between day and night charts for the same positions', () => {
     expect(partOfSpirit('day', ascendant, sun, moon)).not.toBe(partOfSpirit('night', ascendant, sun, moon));
+  });
+});
+
+describe('LOT_FORMULAS / lotFormulaByKey (#550)', () => {
+  it('has exactly one entry per lot, each resolving to itself', () => {
+    expect(LOT_FORMULAS).toHaveLength(2);
+    for (const lot of LOT_FORMULAS) {
+      expect(lotFormulaByKey(lot.key)).toBe(lot);
+    }
+  });
+
+  it('is undefined for a key with no lot (e.g. a midpoint)', () => {
+    expect(lotFormulaByKey('asc-mc-midpoint')).toBeUndefined();
+  });
+
+  it('both lots reverse by sect, and Spirit is the Sun/Moon mirror of Fortune', () => {
+    const fortune = lotFormulaByKey('part-of-fortune');
+    const spirit = lotFormulaByKey('part-of-spirit');
+    expect(fortune?.reversesBySect).toBe(true);
+    expect(spirit?.reversesBySect).toBe(true);
+    expect(fortune?.dayFormula).toBe(spirit?.nightFormula);
+    expect(fortune?.nightFormula).toBe(spirit?.dayFormula);
+  });
+
+  it('carries non-empty authority and source provenance for both lots', () => {
+    for (const lot of LOT_FORMULAS) {
+      expect(lot.authority.length).toBeGreaterThan(0);
+      expect(lot.source.length).toBeGreaterThan(0);
+    }
   });
 });

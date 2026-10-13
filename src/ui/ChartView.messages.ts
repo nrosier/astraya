@@ -65,6 +65,9 @@ const en = {
     'A fixed star conjunct a planet or angle, within a tight orb — traditionally read as lending that star’s own character to the point it touches',
   derivedPointTooltip:
     'A point calculated from other positions rather than observed directly — e.g. the Part of Fortune, combining the Sun, Moon and Ascendant',
+  lotFormulaLabel: 'Formula',
+  lotFormulaTooltip:
+    'The lot’s own formula (#550): day-chart operand order, then night-chart (the two always reverse here) — blank for the midpoints, which have no lot formula of their own.',
   rulerTooltip: 'Ruler (domicile): the planet is in the sign it rules — its own sign, where it is strongest',
   exaltedTooltip:
     'Exalted: the planet is in a sign where it is especially strengthened, second only to its own rulership',
@@ -349,6 +352,9 @@ const nl: typeof en = {
     'Een vaste ster die nauw samenvalt met een planeet of hoek — traditioneel gelezen als het overdragen van het eigen karakter van die ster aan het punt dat ze raakt',
   derivedPointTooltip:
     'Een punt dat berekend wordt uit andere posities in plaats van direct waargenomen — bijvoorbeeld de Fortuna, een combinatie van Zon, Maan en Ascendant',
+  lotFormulaLabel: 'Formule',
+  lotFormulaTooltip:
+    'De eigen formule van het lot (#550): operandvolgorde bij een dagkaart, dan bij een nachtkaart (die twee wisselen hier altijd om) — leeg bij de middelpunten, die geen eigen lotformule hebben.',
   rulerTooltip:
     'Heerser (domicilie): de planeet staat in het teken dat ze heerst — haar eigen teken, waar ze het sterkst is',
   exaltedTooltip:
