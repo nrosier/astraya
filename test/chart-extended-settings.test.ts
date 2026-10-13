@@ -22,6 +22,10 @@ describe('DEFAULT_EXTENDED_SETTINGS', () => {
     expect(DEFAULT_EXTENDED_SETTINGS.fortuneVisible).toBe(false);
     expect(DEFAULT_EXTENDED_SETTINGS.vertexVisible).toBe(false);
     expect(DEFAULT_EXTENDED_SETTINGS.midpointsVisible).toBe(false);
+    expect(DEFAULT_EXTENDED_SETTINGS.antisciaVisible).toBe(false);
+    expect(DEFAULT_EXTENDED_SETTINGS.antisciaMaxOrb).toBe(1);
+    expect(DEFAULT_EXTENDED_SETTINGS.declinationVisible).toBe(false);
+    expect(DEFAULT_EXTENDED_SETTINGS.declinationMaxOrb).toBe(1);
     expect(DEFAULT_EXTENDED_SETTINGS.dial90Visible).toBe(false);
     expect(DEFAULT_EXTENDED_SETTINGS.midpointTreeOrb).toBe(1);
     expect(DEFAULT_EXTENDED_SETTINGS.rainbowZodiac).toBe(false);
@@ -93,6 +97,10 @@ describe('toPointVisibilityOptions', () => {
       vertexVisible: true,
       spiritVisible: true,
       midpointsVisible: true,
+      antisciaVisible: true,
+      antisciaMaxOrb: 1.5,
+      declinationVisible: true,
+      declinationMaxOrb: 0.5,
       dial90Visible: true,
       midpointTreeOrb: 2,
       modernPointVisibility: { ...DEFAULT_EXTENDED_SETTINGS.modernPointVisibility, meanLilith: true, ceres: true },
@@ -103,6 +111,10 @@ describe('toPointVisibilityOptions', () => {
       vertexVisible: true,
       spiritVisible: true,
       midpointsVisible: true,
+      antisciaVisible: true,
+      antisciaMaxOrb: 1.5,
+      declinationVisible: true,
+      declinationMaxOrb: 0.5,
       dial90Visible: true,
       midpointTreeOrb: 2,
       bodyVisibility: { ...DEFAULT_EXTENDED_SETTINGS.modernPointVisibility, meanLilith: true, ceres: true },

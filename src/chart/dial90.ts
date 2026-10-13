@@ -24,7 +24,7 @@
  * @module chart/dial90
  * @purpose Renders the traditional cosmobiology 90-degree dial: the ring geometry, each body plotted at all four of its dial arms, and midpoint-tree hit markers.
  * @conventions A dial degree (`dialPosition`) collapses conjunction/square/opposition to one 0-90 value, so each body is plotted at all four synthetic longitudes 90° apart (`dialArmLongitudes`) rather than a single point, letting two bodies in hard aspect visibly coincide; body placement delegates to `glyph-layout.ts`'s `renderGlyphRingSvg` with a fixed `{ orientation: 'aries-up', sweep: 'counterclockwise' }` anchor, reusing its collision-spreading/leader-line logic unmodified.
- * @exports dialArmLongitudes, renderDial90RingSvg, renderDial90BodiesSvg, renderDial90MidpointHitsSvg; Dial90GeometryOptions type.
+ * @exports dialArmLongitudes, renderDial90RingSvg, renderDial90Svg, renderDial90BodiesSvg, renderDial90MidpointHitsSvg; Dial90GeometryOptions, Dial90Input types.
  */
 import type { MidpointTreeHit } from '../astrology/midpoints.js';
 import { dialPosition } from '../astrology/midpoints.js';
@@ -59,6 +59,12 @@ export interface Dial90GeometryOptions {
   readonly tickIntervalDeg?: number;
   readonly majorTickIntervalDeg?: number;
   readonly labelMargin?: number;
+}
+
+export interface Dial90Input {
+  readonly positions: readonly GlyphLayoutInput[];
+  readonly hits: readonly MidpointTreeHit[];
+  readonly keyOf: (body: BodyId) => string;
 }
 
 interface ResolvedGeometry {
@@ -104,8 +110,8 @@ function text(x: number, y: number, anchor: string, className: string, content: 
  * every 90 degrees (instead of a sign boundary every 30) and its 0-90 tick
  * label scale repeated in each of the four quadrants.
  */
-export function renderDial90RingSvg(options?: Dial90GeometryOptions): string {
-  const { size, ringWidth, tickIntervalDeg, majorTickIntervalDeg, labelMargin } = resolveGeometry(options);
+function renderDial90RingContentSvg(geometry: ResolvedGeometry): string {
+  const { size, ringWidth, tickIntervalDeg, majorTickIntervalDeg } = geometry;
   const cx = size / 2;
   const cy = size / 2;
   const outerRadius = size / 2 - 2;
@@ -137,13 +143,43 @@ export function renderDial90RingSvg(options?: Dial90GeometryOptions): string {
       }
     }
   }
+  return parts.join('');
+}
 
+export function renderDial90RingSvg(options?: Dial90GeometryOptions): string {
+  const { size, ringWidth, tickIntervalDeg, majorTickIntervalDeg, labelMargin } = resolveGeometry(options);
   const viewBoxOrigin = -labelMargin;
   const viewBoxSize = size + labelMargin * 2;
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${fmt(viewBoxOrigin)} ${fmt(viewBoxOrigin)} ${fmt(viewBoxSize)} ${fmt(viewBoxSize)}" ` +
     `width="${String(size)}" height="${String(size)}" class="chart-dial90">` +
-    `${parts.join('')}</svg>`
+    `${renderDial90RingContentSvg({ size, ringWidth, tickIntervalDeg, majorTickIntervalDeg, labelMargin })}</svg>`
+  );
+}
+
+/** Renders a complete 90° dial, including body arms and midpoint-tree hit markers. */
+export function renderDial90Svg(input: Dial90Input, options?: Dial90GeometryOptions): string {
+  const geometry = resolveGeometry(options);
+  const { size, labelMargin } = geometry;
+  const cx = size / 2;
+  const cy = size / 2;
+  const outerRadius = size / 2 - 2;
+  const ringInnerRadius = outerRadius - geometry.ringWidth;
+  const viewBoxOrigin = -labelMargin;
+  const viewBoxSize = size + labelMargin * 2;
+  return (
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${fmt(viewBoxOrigin)} ${fmt(viewBoxOrigin)} ${fmt(viewBoxSize)} ${fmt(viewBoxSize)}" ` +
+    `width="${String(size)}" height="${String(size)}" class="chart-dial90">` +
+    renderDial90RingContentSvg(geometry) +
+    renderDial90BodiesSvg(
+      input.positions,
+      cx,
+      cy,
+      (outerRadius + ringInnerRadius) / 2,
+      outerRadius - geometry.ringWidth * 0.2,
+    ) +
+    renderDial90MidpointHitsSvg(input.hits, input.keyOf, cx, cy, ringInnerRadius - geometry.ringWidth * 0.35) +
+    `</svg>`
   );
 }
 

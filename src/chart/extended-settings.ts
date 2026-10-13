@@ -46,6 +46,14 @@ export interface ExtendedSettings {
   /** Part of Spirit's own visibility (#542) — Fortune's sibling lot, previously always shown regardless of any setting. */
   readonly spiritVisible: boolean;
   readonly midpointsVisible: boolean;
+  /** Draw antiscion/contra-antiscion contacts as chords on the wheel (#556). */
+  readonly antisciaVisible: boolean;
+  /** Maximum antiscion/contra-antiscion orb shown on the wheel, in degrees. */
+  readonly antisciaMaxOrb: Degrees;
+  /** Draw parallel/contraparallel declination contacts as chords on the wheel (#556). */
+  readonly declinationVisible: boolean;
+  /** Maximum parallel/contraparallel declination orb shown on the wheel, in degrees. */
+  readonly declinationMaxOrb: Degrees;
   /**
    * The 90°-dial midpoint-tree table's own visibility (#556) — the dial-collapsed midpoint
    * structure (`astrology/midpoints.ts`'s `midpointTree`) was already computed and even had a
@@ -104,6 +112,10 @@ export const DEFAULT_EXTENDED_SETTINGS: ExtendedSettings = {
   modernPointVisibility: DEFAULT_MODERN_POINT_VISIBILITY,
   spiritVisible: false,
   midpointsVisible: false,
+  antisciaVisible: false,
+  antisciaMaxOrb: 1,
+  declinationVisible: false,
+  declinationMaxOrb: 1,
   dial90Visible: false,
   midpointTreeOrb: 1,
   rainbowZodiac: false,
@@ -148,6 +160,10 @@ export function toPointVisibilityOptions(settings: ExtendedSettings): PointVisib
     vertexVisible: settings.vertexVisible,
     spiritVisible: settings.spiritVisible,
     midpointsVisible: settings.midpointsVisible,
+    antisciaVisible: settings.antisciaVisible,
+    antisciaMaxOrb: settings.antisciaMaxOrb,
+    declinationVisible: settings.declinationVisible,
+    declinationMaxOrb: settings.declinationMaxOrb,
     dial90Visible: settings.dial90Visible,
     midpointTreeOrb: settings.midpointTreeOrb,
   };

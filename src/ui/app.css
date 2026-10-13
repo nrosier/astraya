@@ -2624,6 +2624,74 @@ svg text.chart-symbol-text-unicode {
   stroke-width: 3;
 }
 
+/* Optional analytical wheel layers (#556) retain distinct dash patterns, so the contact
+   kind remains legible without relying on hue. They never catch pointer input; the wheel's
+   bodies, signs and legend remain the interactive targets. */
+.chart-wheel-overlay {
+  pointer-events: none;
+}
+
+.chart-antiscia {
+  stroke: var(--aspect-minor);
+  stroke-width: 1.4;
+  opacity: 0.75;
+  stroke-dasharray: 2 3;
+}
+
+.chart-antiscia-contra-antiscion {
+  stroke-dasharray: 6 2;
+}
+
+.chart-declination {
+  stroke: var(--aspect-soft);
+  stroke-width: 1.4;
+  opacity: 0.75;
+  stroke-dasharray: 5 2;
+}
+
+.chart-declination-contraparallel {
+  stroke: var(--aspect-hard);
+  stroke-dasharray: 1 3;
+}
+
+.chart-dial90 .dial90-ring-outer,
+.chart-dial90 .dial90-ring-inner {
+  fill: var(--surface);
+  fill-opacity: 0.45;
+  stroke: var(--line);
+  stroke-width: 1.5;
+}
+
+.chart-dial90 .dial90-quadrant-boundary {
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.chart-dial90 .dial90-tick-major,
+.chart-dial90 .dial90-tick-minor {
+  stroke: var(--muted);
+}
+
+.chart-dial90 .dial90-tick-major {
+  stroke-width: 1.25;
+}
+
+.chart-dial90 .dial90-tick-minor {
+  stroke-width: 0.75;
+}
+
+.chart-dial90 .dial90-tick-label,
+.chart-dial90 .dial90-midpoint-hit-label {
+  fill: var(--muted);
+  font-size: 0.7rem;
+}
+
+.chart-dial90 .dial90-midpoint-hit {
+  fill: var(--aspect-hard);
+  stroke: var(--surface);
+  stroke-width: 1;
+}
+
 /* A chord between two different rings (`aspect-web.ts` only emits this class for one that
    crosses rings, never a ring's own aspects) is dashed, so colour is never the only way to
    tell a cross-source aspect apart from one within a single ring (#448). */

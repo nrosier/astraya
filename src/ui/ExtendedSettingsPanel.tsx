@@ -627,6 +627,52 @@ export function ExtendedSettingsPanel({
           </div>
           <p className="hint">{t.aspectsToHint}</p>
           <Checkbox
+            label={t.antiscia}
+            checked={draft.antisciaVisible}
+            onChange={(value) => {
+              patch({ antisciaVisible: value });
+            }}
+          />
+          <div className="settings-card-indent">
+            <NumberField
+              label={t.antisciaMaxOrbLabel}
+              value={String(draft.antisciaMaxOrb)}
+              min={0}
+              max={10}
+              step={0.5}
+              decreaseLabel={t.antisciaMaxOrbDecreaseLabel}
+              increaseLabel={t.antisciaMaxOrbIncreaseLabel}
+              onChange={(value) => {
+                const parsed = Number(value);
+                if (value !== '' && Number.isFinite(parsed) && parsed >= 0) patch({ antisciaMaxOrb: parsed });
+              }}
+            />
+          </div>
+          <p className="hint settings-card-indent">{t.antisciaHint}</p>
+          <Checkbox
+            label={t.declination}
+            checked={draft.declinationVisible}
+            onChange={(value) => {
+              patch({ declinationVisible: value });
+            }}
+          />
+          <div className="settings-card-indent">
+            <NumberField
+              label={t.declinationMaxOrbLabel}
+              value={String(draft.declinationMaxOrb)}
+              min={0}
+              max={10}
+              step={0.5}
+              decreaseLabel={t.declinationMaxOrbDecreaseLabel}
+              increaseLabel={t.declinationMaxOrbIncreaseLabel}
+              onChange={(value) => {
+                const parsed = Number(value);
+                if (value !== '' && Number.isFinite(parsed) && parsed >= 0) patch({ declinationMaxOrb: parsed });
+              }}
+            />
+          </div>
+          <p className="hint settings-card-indent">{t.declinationHint}</p>
+          <Checkbox
             label={t.dial90}
             checked={draft.dial90Visible}
             onChange={(value) => {
