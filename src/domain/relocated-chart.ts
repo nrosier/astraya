@@ -56,7 +56,7 @@ export interface RelocatedComparisonRow {
 }
 
 /**
- * House cusps 1–12 plus the four non-cusp angles (#559), natal vs relocated, one row each —
+ * House cusps 1–12 plus the primary and auxiliary angles (#559), natal vs relocated, one row each —
  * the "comparison view shows both charts' angles/houses side by side" the issue asks for.
  * Positions/aspects/dignities are deliberately not compared row-by-row here: they are identical
  * between the two charts (see this module's own header), so a comparison table for them would
@@ -77,10 +77,22 @@ export function relocatedComparisonRows(data: RelocatedChartData): readonly Relo
     };
   });
 
-  const natalAngles = angleRows(data.natal);
-  const relocatedAngles = angleRows(data.relocated);
-  const angleCompareRows = natalAngles.map((natalRow, index): RelocatedComparisonRow => {
-    const relocatedRow = relocatedAngles[index];
+  const primaryAngles: readonly (readonly [string, Degrees, Degrees])[] = [
+    ['Ascendant', data.natal.houses.ascendant, data.relocated.houses.ascendant],
+    ['Midheaven', data.natal.houses.midheaven, data.relocated.houses.midheaven],
+  ];
+  const primaryAngleRows = primaryAngles.map(([label, natalLongitude, relocatedLongitude]): RelocatedComparisonRow => ({
+    label,
+    natalLongitude,
+    natal: degreeParts(natalLongitude),
+    relocatedLongitude,
+    relocated: degreeParts(relocatedLongitude),
+  }));
+
+  const natalAuxiliaryAngles = angleRows(data.natal);
+  const relocatedAuxiliaryAngles = angleRows(data.relocated);
+  const auxiliaryAngleRows = natalAuxiliaryAngles.map((natalRow, index): RelocatedComparisonRow => {
+    const relocatedRow = relocatedAuxiliaryAngles[index];
     const relocatedLongitude = relocatedRow?.longitude ?? natalRow.longitude;
     return {
       label: natalRow.label,
@@ -91,5 +103,5 @@ export function relocatedComparisonRows(data: RelocatedChartData): readonly Relo
     };
   });
 
-  return [...houseRows, ...angleCompareRows];
+  return [...houseRows, ...primaryAngleRows, ...auxiliaryAngleRows];
 }
