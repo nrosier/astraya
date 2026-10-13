@@ -137,6 +137,16 @@ function orbProfileCard(container: HTMLElement, title: string): HTMLInputElement
   return radio;
 }
 
+/** The option card of a named traditional scheme (#549), by its title. */
+function schemeCard(container: HTMLElement, title: string): HTMLInputElement {
+  const card = Array.from(
+    container.querySelectorAll('[role="radiogroup"][aria-label="Scheme"] .primitive-option-card'),
+  ).find((candidate) => candidate.querySelector('.primitive-option-card-title')?.textContent === title);
+  const radio = card?.querySelector('input');
+  if (radio === null || radio === undefined) throw new Error(`fixture bug: no scheme card "${title}"`);
+  return radio;
+}
+
 /** Picks the nth planetary-rulers option card (modern, traditional, both). */
 function chooseRulers(container: HTMLElement, index: number): void {
   const radio = container
@@ -463,6 +473,46 @@ describe('the orb-profile quick-pick (#543)', () => {
     const { container, root } = await mount(fakeProvider(), vi.fn(), changed);
     openCard(container);
     expect(orbProfileCard(container, 'Custom').checked).toBe(true);
+    unmount(container, root);
+  });
+});
+
+describe('the traditional-scheme quick-pick (#549)', () => {
+  it('starts on Hellenistic — the app defaults (Egyptian bounds, standard orbs) are exactly that bundle', async () => {
+    const { container, root } = await mount(fakeProvider(), vi.fn());
+    openCard(container);
+    expect(schemeCard(container, 'Hellenistic').checked).toBe(true);
+    unmount(container, root);
+  });
+
+  it('choosing Renaissance (Lilly) sets Ptolemaic bounds and the Wide orb profile together, and applies both', async () => {
+    const onRedraw = vi.fn();
+    const { container, root } = await mount(fakeProvider(), onRedraw);
+    openCard(container);
+    act(() => {
+      schemeCard(container, 'Renaissance (Lilly)').click();
+    });
+    expect(schemeCard(container, 'Renaissance (Lilly)').checked).toBe(true);
+    expect(orbProfileCard(container, 'Wide').checked).toBe(true);
+    act(() => {
+      buttonNamed(container, 'Apply and redraw')?.click();
+    });
+    expect(onRedraw).toHaveBeenCalledWith(expect.objectContaining({ boundsScheme: 'ptolemaic', orbScalePercent: 40 }));
+    unmount(container, root);
+  });
+
+  it('shows Custom once the orb slider no longer matches any bundle at the chosen bounds table', async () => {
+    const { container, root } = await mount(fakeProvider(), vi.fn());
+    openCard(container);
+    act(() => {
+      schemeCard(container, 'Renaissance (Lilly)').click();
+    });
+    expect(schemeCard(container, 'Renaissance (Lilly)').checked).toBe(true);
+    // Ptolemaic bounds + Standard orbs is not any named bundle (only Wide pairs with Ptolemaic here).
+    act(() => {
+      orbProfileCard(container, 'Standard').click();
+    });
+    expect(schemeCard(container, 'Custom').checked).toBe(true);
     unmount(container, root);
   });
 });

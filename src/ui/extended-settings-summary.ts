@@ -15,6 +15,7 @@ export type ChangedSetting =
   | 'houseSystem'
   | 'zodiac'
   | 'orbScale'
+  | 'boundsScheme'
   | 'minorAspects'
   | 'fortune'
   | 'vertex'
@@ -32,6 +33,7 @@ export function changedSettings(value: ExtendedSettings): readonly ChangedSettin
   if (value.houseSystem !== defaults.houseSystem) changed.push('houseSystem');
   if (JSON.stringify(value.zodiac) !== JSON.stringify(defaults.zodiac)) changed.push('zodiac');
   if (value.orbScalePercent !== defaults.orbScalePercent) changed.push('orbScale');
+  if (value.boundsScheme !== defaults.boundsScheme) changed.push('boundsScheme');
   if (value.enabledMinorAspects.length !== defaults.enabledMinorAspects.length) changed.push('minorAspects');
   if (value.fortuneVisible !== defaults.fortuneVisible) changed.push('fortune');
   if (value.vertexVisible !== defaults.vertexVisible) changed.push('vertex');

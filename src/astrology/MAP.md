@@ -10,6 +10,7 @@ Pure astrological calculation (no DOM/React): bodies, aspects, houses, dignities
 - `ayanamsas.ts` — UI's sidereal-mode picker list. Deps: `ephemeris/generated-constants`.
 - `bodies.ts` — Single source of truth: canonical body list (luminaries, planets, nodes, Lilith, Chiron, asteroids). Deps: `ephemeris/generated-constants`.
 - `bounds.ts` — Egyptian + Ptolemaic "terms" tables. Deps: `bodies`, `signs`.
+- `calculation-scheme.ts` — Named traditional scheme bundles (Hellenistic/Medieval Arabic/Renaissance-Lilly): bounds table + orb profile as one coherent choice (#549). Deps: `bounds`, `orb-profiles`.
 - `decans.ts` — Decan/face rulership for essential-dignity. Deps: `bodies`, `dignities`, `signs`.
 - `declinations.ts` — Equatorial contacts (parallels/contraparallels + out-of-bounds). Deps: ephemeris types only.
 - `dignities.ts` — Base essential-dignity tables (rulership, exaltation, detriment, fall, traditional/modern). Deps: `bodies`, `signs`.

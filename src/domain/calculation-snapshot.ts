@@ -73,6 +73,7 @@ function parseExtendedSettings(value: unknown): ExtendedSettings {
     houseSystem: typeof value.houseSystem === 'string' ? value.houseSystem : d.houseSystem,
     zodiac: parseZodiac(value.zodiac),
     orbScalePercent: typeof value.orbScalePercent === 'number' ? value.orbScalePercent : d.orbScalePercent,
+    boundsScheme: isOneOf(value.boundsScheme, ['egyptian', 'ptolemaic'] as const) ? value.boundsScheme : d.boundsScheme,
     enabledMinorAspects:
       value.enabledMinorAspects === undefined ? d.enabledMinorAspects : parseStringArray(value.enabledMinorAspects),
     lilithVariant: isOneOf(value.lilithVariant, ['mean', 'true', 'interpolated'] as const)

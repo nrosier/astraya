@@ -17,6 +17,7 @@
  * @exports DEFAULT_EXTENDED_SETTINGS, toChartCalculationOptions, toPointVisibilityOptions, toSignWedgeStyle; ExtendedSettings type.
  */
 import { DEFAULT_ORB_CONFIG, type OrbConfig } from '../astrology/aspects.js';
+import type { BoundsScheme } from '../astrology/bounds.js';
 import type { ChartCalculationOptions } from '../domain/chart-compute.js';
 import type { PointVisibilityOptions } from '../domain/chart-tables.js';
 import type { HouseSystem, Zodiac } from '../ephemeris/types.js';
@@ -27,6 +28,12 @@ export interface ExtendedSettings {
   readonly zodiac: Zodiac;
   /** -90..90, matching `OrbConfig.scalePercent`. */
   readonly orbScalePercent: number;
+  /**
+   * Which bound (term) table the dignity/condition/reception/almuten tables use (#549) — not a
+   * `computeChartData` input, since no bound lookup happens there; threaded directly into
+   * `chart-tables.ts`'s own dignity-consuming functions instead of through `toChartCalculationOptions`.
+   */
+  readonly boundsScheme: BoundsScheme;
   /** Minor-aspect keys to consider; empty means every minor aspect is off. */
   readonly enabledMinorAspects: readonly string[];
   readonly lilithVariant: 'mean' | 'true' | 'interpolated';
@@ -51,6 +58,7 @@ export const DEFAULT_EXTENDED_SETTINGS: ExtendedSettings = {
   houseSystem: 'P',
   zodiac: { kind: 'tropical' },
   orbScalePercent: 0,
+  boundsScheme: 'egyptian',
   enabledMinorAspects: [],
   lilithVariant: 'mean',
   nodeVariant: 'mean',

@@ -16,6 +16,7 @@
 import { almutenOf, essentialDignityScoreOf } from '../astrology/almuten.js';
 import { antiscialContacts, type AntiscialContact } from '../astrology/antiscia.js';
 import { bodyById, bodyByKey } from '../astrology/bodies.js';
+import type { BoundsScheme } from '../astrology/bounds.js';
 import { declinationContacts, isOutOfBounds } from '../astrology/declinations.js';
 import { dispositorChain, isMutualReception } from '../astrology/dispositors.js';
 import { elementBalance, houseOf, modalityBalance } from '../astrology/emphasis.js';
@@ -402,14 +403,20 @@ export interface DignityRow {
  * *display* rulership preference. Only the boolean `ruler`/`exalted`/`detriment`/`fall` fields (read from
  * `data.dignities`, built from that display preference in `chart-compute.ts`) are meant to vary with it.
  */
-export function dignityRows(data: ChartData, options: PointVisibilityOptions = {}): readonly DignityRow[] {
+export function dignityRows(
+  data: ChartData,
+  options: PointVisibilityOptions = {},
+  boundsScheme: BoundsScheme = 'egyptian',
+): readonly DignityRow[] {
   return visiblePositions(data.positions, options).map((position) => {
     const body = bodyById(position.body);
     const dignities = data.dignities.get(position.body);
     // The same rulers as the chart's own `dignities`, so a planet in its own sign is never "peregrine".
-    // Always traditional (#545) — see the function's own doc comment.
+    // Always traditional (#545) — see the function's own doc comment. `boundsScheme` is the one
+    // axis a scheme bundle (#549) actually varies here.
     const score = essentialDignityScoreOf(position.body, position.longitude, data.sect, {
       rulershipScheme: 'traditional',
+      boundsScheme,
     });
     return {
       bodyKey: body?.key ?? String(position.body),
@@ -453,7 +460,11 @@ export interface ConditionRow {
  * besiegement have no established reading for the outer planets, nodes, or asteroids
  * (`planetary-condition.ts`'s own doc comment).
  */
-export function conditionRows(data: ChartData, orbConfig: OrbConfig = DEFAULT_ORB_CONFIG): readonly ConditionRow[] {
+export function conditionRows(
+  data: ChartData,
+  orbConfig: OrbConfig = DEFAULT_ORB_CONFIG,
+  boundsScheme: BoundsScheme = 'egyptian',
+): readonly ConditionRow[] {
   const housesUsable = housesAreDefined(data.houses);
   const sunBody = bodyByKey('sun');
   const marsBody = bodyByKey('mars');
@@ -467,7 +478,10 @@ export function conditionRows(data: ChartData, orbConfig: OrbConfig = DEFAULT_OR
     const position = data.positions.find((p) => p.body === bodyId);
     const body = bodyById(bodyId);
     if (position === undefined || body === undefined) continue;
-    const score = essentialDignityScoreOf(bodyId, position.longitude, data.sect, { rulershipScheme: 'traditional' });
+    const score = essentialDignityScoreOf(bodyId, position.longitude, data.sect, {
+      rulershipScheme: 'traditional',
+      boundsScheme,
+    });
     const isSun = sunBody?.id === bodyId;
     rows.push({
       bodyKey: body.key,
@@ -516,7 +530,7 @@ export interface ReceptionRow {
  * `data.aspects` is cross-referenced only to flag `aspectLinked`; this function never recomputes
  * aspects itself.
  */
-export function receptionRows(data: ChartData): readonly ReceptionRow[] {
+export function receptionRows(data: ChartData, boundsScheme: BoundsScheme = 'egyptian'): readonly ReceptionRow[] {
   const rows: ReceptionRow[] = [];
   for (let i = 0; i < TRADITIONAL_PLANET_IDS.length; i++) {
     for (let j = i + 1; j < TRADITIONAL_PLANET_IDS.length; j++) {
@@ -526,7 +540,15 @@ export function receptionRows(data: ChartData): readonly ReceptionRow[] {
       const positionA = data.positions.find((p) => p.body === bodyAId);
       const positionB = data.positions.find((p) => p.body === bodyBId);
       if (positionA === undefined || positionB === undefined) continue;
-      const result = mutualReceptionBetween(bodyAId, positionA.longitude, bodyBId, positionB.longitude, data.sect);
+      const result = mutualReceptionBetween(
+        bodyAId,
+        positionA.longitude,
+        bodyBId,
+        positionB.longitude,
+        data.sect,
+        'traditional',
+        boundsScheme,
+      );
       if (result.kind === 'none') continue;
       const bodyA = bodyById(bodyAId);
       const bodyB = bodyById(bodyBId);
@@ -578,9 +600,10 @@ export interface AlmutenCandidateRow {
  */
 export function almutenOfAscendant(
   data: ChartData,
+  boundsScheme: BoundsScheme = 'egyptian',
 ): { readonly almutens: readonly string[]; readonly candidates: readonly AlmutenCandidateRow[] } | undefined {
   if (!housesAreDefined(data.houses)) return undefined;
-  const result = almutenOf(data.houses.ascendant, data.sect, { rulershipScheme: 'traditional' });
+  const result = almutenOf(data.houses.ascendant, data.sect, { rulershipScheme: 'traditional', boundsScheme });
   return {
     almutens: result.almutens.map((id) => bodyById(id)?.key ?? String(id)),
     candidates: result.scores.map((score) => {
