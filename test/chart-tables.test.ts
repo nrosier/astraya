@@ -384,6 +384,38 @@ describe('almutenOfAscendant (#398)', () => {
     expect(result?.almutens).toEqual(['sun']);
   });
 
+  it('reports every candidate’s own score breakdown, not only the winner’s name (#551)', () => {
+    const data: ChartData = {
+      positions: [],
+      houses: HOUSES, // same 10 Aries day-chart Ascendant as above
+      aspects: [],
+      dignities: new Map(),
+      sect: 'day',
+      partOfFortune: 0,
+      partOfSpirit: 0,
+    };
+    const result = almutenOfAscendant(data);
+    expect(result?.candidates).toHaveLength(7);
+    const sun = result?.candidates.find((row) => row.bodyKey === 'sun');
+    const mars = result?.candidates.find((row) => row.bodyKey === 'mars');
+    const moon = result?.candidates.find((row) => row.bodyKey === 'moon');
+    expect(sun).toEqual({
+      bodyKey: 'sun',
+      bodyName: 'Sun',
+      ruler: false,
+      exalted: true,
+      triplicity: true,
+      bound: false,
+      face: true,
+      points: 8,
+      peregrine: false,
+    });
+    expect(mars?.ruler).toBe(true);
+    expect(mars?.points).toBe(5);
+    expect(moon?.peregrine).toBe(true);
+    expect(moon?.points).toBe(0);
+  });
+
   it('is undefined when houses have no valid solution (#378)', () => {
     const degenerateHouses: HousePositions = { ...HOUSES, cusps: HOUSES.cusps.map(() => Number.NaN) };
     const data: ChartData = {

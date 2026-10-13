@@ -11,7 +11,7 @@
  * @module chart-tables
  * @purpose Shapes a computed `ChartData` into the flat rows a chart's data tables, wheel ring and sheet actually render (#44).
  * @conventions Pure and framework-free; kept separate from `chart-compute.ts` so the slow real-engine chart test and the fast pure row-shaping test can run independently; longitude is rounded to the nearest arcsecond before sign-splitting (`degreeParts`) to avoid a seconds rounding bumping the sign; the wheel's aspect web is limited to major aspects, tables show every aspect found.
- * @exports positionRows, houseCuspRows, angleRows, aspectRows, crossAspectRows, dignityRows, conditionRows, receptionRows, dispositorRows, declinationContactRows, antisciaRows, fixedStarRows, chartShapeOf, derivedPointRows, chartWheelRing, chartSheetMetaLines, chartSheetInput, degreeParts, visiblePositions, visibleAspects, visibleAngleAspects, almutenOfAscendant
+ * @exports positionRows, houseCuspRows, angleRows, aspectRows, crossAspectRows, dignityRows, conditionRows, receptionRows, dispositorRows, declinationContactRows, antisciaRows, fixedStarRows, chartShapeOf, derivedPointRows, chartWheelRing, chartSheetMetaLines, chartSheetInput, degreeParts, visiblePositions, visibleAspects, visibleAngleAspects, almutenOfAscendant, AlmutenCandidateRow
  */
 import { almutenOf, essentialDignityScoreOf } from '../astrology/almuten.js';
 import { antiscialContacts, type AntiscialContact } from '../astrology/antiscia.js';
@@ -551,21 +551,53 @@ export function receptionRows(data: ChartData): readonly ReceptionRow[] {
   return rows;
 }
 
+export interface AlmutenCandidateRow {
+  readonly bodyKey: string;
+  readonly bodyName: string;
+  readonly ruler: boolean;
+  readonly exalted: boolean;
+  readonly triplicity: boolean;
+  readonly bound: boolean;
+  readonly face: boolean;
+  readonly points: number;
+  readonly peregrine: boolean;
+}
+
 /**
- * "Almuten of the Ascendant" summary line (#398): which traditional planet holds the most
- * essential dignity at the Ascendant's own degree. More than one body can tie — `almutens`
- * carries all of them, same as `almuten.ts`'s own `AlmutenResult`. `undefined` when houses
- * aren't usable (`housesAreDefined`), the same gate `ChartView`'s own houses-dependent sections use.
+ * "Almuten of the Ascendant" summary (#398, #551): which traditional planet holds the most
+ * essential dignity at the Ascendant's own degree, and — unlike the original version of this
+ * function — every candidate's own score breakdown, not only the winner's name. More than one
+ * body can tie — `almutens` carries all of them, same as `almuten.ts`'s own `AlmutenResult`.
+ * `undefined` when houses aren't usable (`housesAreDefined`), the same gate `ChartView`'s own
+ * houses-dependent sections use.
  *
  * Always scored under the traditional rulership scheme (#545), never the user's modern/traditional/both
  * *display* preference — the Almuten is a historical-technique result, not a cosmetic one. There is
  * deliberately no `rulership` parameter here: forwarding the ambient display choice is exactly the leak
  * #545 fixed, so don't reintroduce one.
  */
-export function almutenOfAscendant(data: ChartData): { readonly almutens: readonly string[] } | undefined {
+export function almutenOfAscendant(
+  data: ChartData,
+): { readonly almutens: readonly string[]; readonly candidates: readonly AlmutenCandidateRow[] } | undefined {
   if (!housesAreDefined(data.houses)) return undefined;
   const result = almutenOf(data.houses.ascendant, data.sect, { rulershipScheme: 'traditional' });
-  return { almutens: result.almutens.map((id) => bodyById(id)?.key ?? String(id)) };
+  return {
+    almutens: result.almutens.map((id) => bodyById(id)?.key ?? String(id)),
+    candidates: result.scores.map((score) => {
+      const body = bodyById(score.body);
+      return {
+        bodyKey: body?.key ?? String(score.body),
+        bodyName: body?.name ?? String(score.body),
+        ruler: score.ruler,
+        exalted: score.exalted,
+        triplicity: score.triplicity,
+        bound: score.bound,
+        face: score.face,
+        points: score.points,
+        peregrine: score.peregrine,
+      };
+    }),
+  };
 }
 
 export interface DispositorRow {
