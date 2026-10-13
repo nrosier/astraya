@@ -45,6 +45,8 @@ import { useMessages } from './messages.js';
 import { preferencesViewMessages } from './PreferencesView.messages.js';
 import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
 import { readDefaultCalculationProfile } from './default-calculation-profile.js';
+import { ExtendedSettingsPanel } from './ExtendedSettingsPanel.js';
+import { useExtendedSettings } from './extended-settings-store.js';
 import { RulershipSetting } from './RulershipSetting.js';
 import { useRulershipChoice } from './rulership-setting.js';
 import { sharedMessages } from './shared.messages.js';
@@ -76,6 +78,7 @@ export function PreferencesView({
   const store = useOptionalStore();
   const { provider } = useEphemerisProvider();
   const [rulership] = useRulershipChoice();
+  const [extendedSettings, setExtendedSettings] = useExtendedSettings();
   const [symbolClass] = useSymbolClass();
   const [status, setStatus] = useState<ExportStatus | undefined>(undefined);
 
@@ -143,6 +146,19 @@ export function PreferencesView({
       </h2>
       <p>{t.rulersSubtitle}</p>
       <RulershipSetting />
+
+      {/* The chart-setup editor (#563): the same ExtendedSettingsPanel every chart screen
+          already uses, reachable here as its own dedicated entry point rather than only hidden
+          behind a chart's own "Extended settings" trigger — one place to review every
+          calculation-affecting setting before computing, per the audit's own ask. Bound to the
+          same page-lifetime-shared store (extended-settings-store.ts) ChartView.tsx reads, so a
+          change made here previews on the next chart drawn, exactly like changing it there. */}
+      <p>{t.chartSetupSubtitle}</p>
+      {provider === undefined ? (
+        <p className="hint">{t.chartSetupNeedsEngine}</p>
+      ) : (
+        <ExtendedSettingsPanel value={extendedSettings} onRedraw={setExtendedSettings} provider={provider} />
+      )}
 
       <h2 id="preferences-appearance" tabIndex={-1}>
         {t.appearanceHeading}
