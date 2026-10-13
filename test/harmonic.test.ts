@@ -17,6 +17,20 @@ const PERSON: BirthMomentInput = {
   offsetOverrideMinutes: -300,
 };
 
+// Swiss Ephemeris 2.10 reference vector: tropical geocentric positions for 1990-06-15
+// 19:30 UTC, transformed with the documented D9 `longitude × 9 mod 360` convention.
+const D9_REFERENCE = {
+  positions: new Map([
+    [0, 39.85218315364341],
+    [1, 265.9609024407723],
+    [2, 236.06251693274896],
+    [3, 82.30624122401565],
+    [4, 101.39332428232996],
+  ]),
+  ascendant: 334.3839122297554,
+  midheaven: 266.7396914476818,
+};
+
 describe('computeHarmonic (#170)', () => {
   it('computes full, independent ChartData for the natal chart and the harmonic chart', async () => {
     const engine = await getEngine();
@@ -81,6 +95,16 @@ describe('computeHarmonic (#170)', () => {
       expect(bodyA).toBeDefined();
       expect(bodyB).toBeDefined();
     }
+  });
+
+  it('matches the fixed Swiss Ephemeris D9 reference vector (#557)', async () => {
+    const engine = await getEngine();
+    const data = await computeHarmonic(PERSON, 9, engine);
+    for (const [body, longitude] of D9_REFERENCE.positions) {
+      expect(data.harmonic.positions.find((position) => position.body === body)?.longitude).toBeCloseTo(longitude, 6);
+    }
+    expect(data.harmonic.houses.ascendant).toBeCloseTo(D9_REFERENCE.ascendant, 6);
+    expect(data.harmonic.houses.midheaven).toBeCloseTo(D9_REFERENCE.midheaven, 6);
   });
 
   it('excludes Chiron, Lilith and the lunar nodes from harmonic aspects by default', async () => {
