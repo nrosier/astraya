@@ -32,7 +32,10 @@
  * @conventions Exports `ChartDataView`, the shared tabbed chart+tables UI reused by CompositeView/SharedChartView; every value is recomputed from the stored birth moment via `domain/chart-compute.js`/`domain/chart-tables.js` rather than read from a saved Chart record; houses/angles/derived-points tables are hidden when `timeAccuracy === 'unknown'`. Text comes from co-located `ChartView.messages.ts` via `useMessages()`.
  * @exports ChartView, ChartDataView, emphasisColumns, positionColumns, houseCuspColumns, angleColumns, aspectColumns, dignityColumns, almutenCandidateColumns, conditionColumns, receptionColumns, dispositorColumns, declinationColumns, antisciaColumns, midpointTreeColumns, allMidpointsColumns, fixedStarColumns, derivedPointColumns
  */
-import { formatFixed } from './format.js';
+import { formatFixed, formatTimestamp } from './format.js';
+import { PrintProvenance } from './PrintProvenance.js';
+import { HOUSE_SYSTEMS } from '../astrology/houses.js';
+import type { Zodiac } from '../ephemeris/types.js';
 import { aspectHarmonicFamily } from '../astrology/aspects.js';
 import { Tooltip } from './primitives/Tooltip.js';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -153,6 +156,26 @@ type Load =
   | { readonly kind: 'loading' }
   | { readonly kind: 'ready'; readonly data: ChartData }
   | { readonly kind: 'error'; readonly message: string };
+
+/**
+ * Plain, synchronous labels for the print-provenance footer (#564) — deliberately not the same
+ * localized/async-fetched names `ExtendedSettingsPanel.tsx`'s own `useNameLookup` resolves via
+ * `provider.houseSystemName`/`ayanamsaName`: a footer repeated on every printed page should
+ * never depend on an ephemeris-provider round trip succeeding, and `HouseSystemDefinition.key`
+ * is already a readable (if English-only) identifier with no further lookup needed.
+ */
+function houseSystemLabel(code: string): string {
+  const key = HOUSE_SYSTEMS.find((system) => system.code === code)?.key ?? code;
+  return key.charAt(0).toUpperCase() + key.slice(1);
+}
+
+function zodiacLabel(zodiac: Zodiac): string {
+  return zodiac.kind === 'tropical' ? 'Tropical' : `Sidereal (ayanamsa ${String(zodiac.ayanamsa)})`;
+}
+
+function rulershipLabel(rulership: string): string {
+  return rulership.charAt(0).toUpperCase() + rulership.slice(1);
+}
 
 const degreeColumns = <
   T extends { readonly sign: string; readonly degree: number; readonly minute: number; readonly second: number },
@@ -1740,6 +1763,13 @@ export function ChartDataView({
 
   return (
     <>
+      {/* Invisible outside @media print (#564) — see app.css's own `.print-provenance` rule. */}
+      <PrintProvenance
+        houseSystem={houseSystemLabel(extendedSettings.houseSystem)}
+        zodiac={zodiacLabel(extendedSettings.zodiac)}
+        rulership={rulershipLabel(rulership)}
+        generatedAt={formatTimestamp(new Date())}
+      />
       {!showHouses && <p className="hint">{t.housesUnknownHint(displayName || t.thisPerson)}</p>}
       {showHouses && !housesComputed && <p className="hint">{t.housesUndefinedHint(displayName || t.thisPerson)}</p>}
 
