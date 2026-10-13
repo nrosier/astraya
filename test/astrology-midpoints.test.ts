@@ -62,6 +62,12 @@ describe('dialPosition (#30)', () => {
   it('wraps longitude before projecting', () => {
     expect(dialPosition(-10)).toBe(dialPosition(350));
   });
+
+  it('at the 45° divisor (#555), additionally collapses semisquare/sesquiquadrate onto the same position', () => {
+    const position = dialPosition(35, 45);
+    expect(dialPosition(35 + 45, 45)).toBe(position);
+    expect(dialPosition(35 + 135, 45)).toBe(position);
+  });
 });
 
 describe('midpointTree (#30)', () => {
@@ -98,5 +104,19 @@ describe('midpointTree (#30)', () => {
       [2, 50], // far from the Sun/Moon midpoint (15) on the dial
     ]);
     expect(midpointTree(positions, 1)).toHaveLength(0);
+  });
+
+  it('at the 45° divisor (#555), also catches a semisquare/sesquiquadrate hit the 90° dial misses', () => {
+    // Sun/Moon midpoint is 15. A body at 60.5 is a semisquare (45° away) — invisible to the
+    // default 90° dial (dialSeparation would be 45.5, outside any sane orb) but a near-hit on
+    // the 45° dial (separation 0.5).
+    const positions = new Map([
+      [0, 10],
+      [1, 20],
+      [2, 60.5],
+    ]);
+    expect(midpointTree(positions, 1, 90)).toHaveLength(0);
+    const hits = midpointTree(positions, 1, 45);
+    expect(hits).toEqual(expect.arrayContaining([expect.objectContaining({ body: 2, a: 0, b: 1 })]));
   });
 });

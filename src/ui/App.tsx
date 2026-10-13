@@ -47,11 +47,13 @@ const ChartView = lazy(async () => ({ default: (await personScreens()).ChartView
 const CompositeView = lazy(async () => ({ default: (await personScreens()).CompositeView }));
 const DraconicView = lazy(async () => ({ default: (await personScreens()).DraconicView }));
 const HarmonicView = lazy(async () => ({ default: (await personScreens()).HarmonicView }));
+const MultiWheelView = lazy(async () => ({ default: (await personScreens()).MultiWheelView }));
 const Overview = lazy(async () => ({ default: (await personScreens()).Overview }));
 const PeriodicTransitView = lazy(async () => ({ default: (await personScreens()).PeriodicTransitView }));
 const PersonForm = lazy(async () => ({ default: (await personScreens()).PersonForm }));
 const ProfectionsView = lazy(async () => ({ default: (await personScreens()).ProfectionsView }));
 const ProgressionsView = lazy(async () => ({ default: (await personScreens()).ProgressionsView }));
+const RelocatedChartView = lazy(async () => ({ default: (await personScreens()).RelocatedChartView }));
 const ReturnView = lazy(async () => ({ default: (await personScreens()).ReturnView }));
 const ReportScreen = lazy(async () => ({ default: (await personScreens()).ReportScreen }));
 const SolarArcView = lazy(async () => ({ default: (await personScreens()).SolarArcView }));
@@ -452,7 +454,8 @@ function renderScreen(parsed: Route, seVersion: string | undefined): React.JSX.E
     parsed.kind === 'synastry' ||
     parsed.kind === 'composite' ||
     parsed.kind === 'periodic-transit' ||
-    parsed.kind === 'astrocartography'
+    parsed.kind === 'astrocartography' ||
+    parsed.kind === 'multi-wheel'
   ) {
     // The person's tabs live in the header's navigation (#421), so the view stands on its own.
     return <Stored>{renderPersonView(parsed)}</Stored>;
@@ -477,7 +480,8 @@ type PersonRoute = Extract<
       | 'synastry'
       | 'composite'
       | 'periodic-transit'
-      | 'astrocartography';
+      | 'astrocartography'
+      | 'multi-wheel';
   }
 >;
 
@@ -493,6 +497,8 @@ function renderChart(parsed: Extract<Route, { kind: 'chart' }>): React.JSX.Eleme
       return <ReturnView key={personId} personId={personId} kind="solar-return" view={view} />;
     case 'lunar-return':
       return <ReturnView key={personId} personId={personId} kind="lunar-return" view={view} />;
+    case 'relocated':
+      return <RelocatedChartView key={personId} personId={personId} view={view} />;
     case 'natal':
       return <ChartView key={personId} personId={personId} view={view} />;
   }
@@ -517,6 +523,9 @@ function renderPersonView(parsed: PersonRoute): React.JSX.Element {
   }
   if (parsed.kind === 'periodic-transit') {
     return <PeriodicTransitView key={parsed.personId} personId={parsed.personId} />;
+  }
+  if (parsed.kind === 'multi-wheel') {
+    return <MultiWheelView key={parsed.personId} personId={parsed.personId} />;
   }
   return <AstrocartographyView key={parsed.personId} personId={parsed.personId} />;
 }

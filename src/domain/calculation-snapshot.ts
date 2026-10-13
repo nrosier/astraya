@@ -60,6 +60,10 @@ function parseBool(value: unknown, fallback: boolean): boolean {
   return typeof value === 'boolean' ? value : fallback;
 }
 
+function parseNonNegativeNumber(value: unknown, fallback: number): number {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : fallback;
+}
+
 /**
  * Every field checked individually, never trusting the shape as a whole — a `settings` bag
  * that is merely "some object" (the old `isDefaultCalculationProfile` guard's entire check)
@@ -85,6 +89,8 @@ function parseExtendedSettings(value: unknown): ExtendedSettings {
     chironVisible: parseBool(value.chironVisible, d.chironVisible),
     spiritVisible: parseBool(value.spiritVisible, d.spiritVisible),
     midpointsVisible: parseBool(value.midpointsVisible, d.midpointsVisible),
+    dial90Visible: parseBool(value.dial90Visible, d.dial90Visible),
+    midpointTreeOrb: parseNonNegativeNumber(value.midpointTreeOrb, d.midpointTreeOrb),
     rainbowZodiac: parseBool(value.rainbowZodiac, d.rainbowZodiac),
     aspectsToChiron: parseBool(value.aspectsToChiron, d.aspectsToChiron),
     aspectsToLilith: parseBool(value.aspectsToLilith, d.aspectsToLilith),

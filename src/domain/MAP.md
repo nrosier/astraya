@@ -31,6 +31,7 @@ One level above `src/astrology/`: composes pure astrological calculations into s
 - `progressed-lunar-return.ts` — Progressed-lunar-return timing (monthly Solar-Return analogue). Deps: `astrology/planetary-returns`, `astrology/aspects`.
 - `rectification.ts` — Birth-time rectification (ranks candidate times by life-event contacts). Deps: `astrology/rectification`, `time/julian`, `time/resolve`.
 - `relationship-themes.ts` — Synastry relationship-summary themes (bond, attraction, communication, etc.). Deps: `astrology/aspects`, `astrology/bodies`, `./synastry`, `./chart-compute`.
+- `relocated-chart.ts` — Relocated natal chart: same birth moment, different place, natal + relocated ChartData + a houses/angles comparison (#559). Deps: `./chart-compute`, `./chart-tables`, `time/julian`, `time/resolve`.
 - `return-chart.ts` — Solar/lunar return as first-class displayable chart (with natal contacts). Deps: `./chart-compute`, `./lunar-returns`, `./solar-return`, `astrology/aspects`.
 - `secondary-progression.ts` — Secondary progressions (day-for-year, three MC methods). Deps: `astrology/progressions`, `astrology/aspects`, `astrology/bodies`.
 - `solar-arc-directions.ts` — Solar arc directions (apply progressed Sun's arc to all bodies). Deps: `astrology/solar-arc-directions`, `astrology/progressions`, `astrology/aspects`.

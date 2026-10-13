@@ -11,7 +11,7 @@
  * @module chart-tables
  * @purpose Shapes a computed `ChartData` into the flat rows a chart's data tables, wheel ring and sheet actually render (#44).
  * @conventions Pure and framework-free; kept separate from `chart-compute.ts` so the slow real-engine chart test and the fast pure row-shaping test can run independently; longitude is rounded to the nearest arcsecond before sign-splitting (`degreeParts`) to avoid a seconds rounding bumping the sign; the wheel's aspect web is limited to major aspects, tables show every aspect found.
- * @exports positionRows, houseCuspRows, angleRows, aspectRows, crossAspectRows, dignityRows, conditionRows, receptionRows, dispositorRows, declinationContactRows, antisciaRows, fixedStarRows, chartShapeOf, derivedPointRows, chartWheelRing, chartSheetMetaLines, chartSheetInput, degreeParts, visiblePositions, visibleAspects, visibleAngleAspects, almutenOfAscendant, AlmutenCandidateRow
+ * @exports positionRows, houseCuspRows, angleRows, aspectRows, crossAspectRows, dignityRows, conditionRows, receptionRows, dispositorRows, declinationContactRows, antisciaRows, midpointTreeRows, allMidpointsRows, fixedStarRows, chartShapeOf, derivedPointRows, chartWheelRing, chartSheetMetaLines, chartSheetInput, degreeParts, visiblePositions, visibleAspects, visibleAngleAspects, almutenOfAscendant, AlmutenCandidateRow
  */
 import { almutenOf, essentialDignityScoreOf } from '../astrology/almuten.js';
 import { antiscialContacts, type AntiscialContact } from '../astrology/antiscia.js';
@@ -23,7 +23,7 @@ import { elementBalance, houseOf, modalityBalance } from '../astrology/emphasis.
 import { fixedStarConjunctions } from '../astrology/fixed-stars.js';
 import { jonesBodyPositions, jonesShapeOf, type JonesShapeResult } from '../astrology/jones-shapes.js';
 import { derivedPointByKey, type DerivedPointKey } from '../astrology/derived-points.js';
-import { midpointOf } from '../astrology/midpoints.js';
+import { allMidpoints, midpointOf, midpointTree, oppositeMidpointOf } from '../astrology/midpoints.js';
 import { mutualReceptionBetween, type DignityType } from '../astrology/reception.js';
 import {
   angularityOfHouse,
@@ -136,6 +136,9 @@ export interface PointVisibilityOptions {
   /** Part of Spirit's own visibility (#542) — previously always shown regardless of any setting, unlike its sibling Part of Fortune. */
   readonly spiritVisible?: boolean; // default false
   readonly midpointsVisible?: boolean; // default false
+  /** The 90°-dial midpoint-tree table's own visibility (#556) — previously computed and even rendered by `chart/dial90.ts`, but with no setting or UI surface reaching it at all. */
+  readonly dial90Visible?: boolean; // default false
+  readonly midpointTreeOrb?: Degrees; // default 1
 }
 
 /** Drops Chiron from a position list when `chironVisible` is false. */
@@ -758,6 +761,89 @@ export function antisciaRows(data: ChartData, orb: Degrees = DEFAULT_ANTISCIA_OR
       kind: contact.kind,
       orb: contact.orb,
     });
+  }
+  return rows;
+}
+
+export interface MidpointTreeRow extends DegreeParts {
+  readonly bodyKey: string;
+  readonly bodyName: string;
+  readonly pairAKey: string;
+  readonly pairAName: string;
+  readonly pairBKey: string;
+  readonly pairBName: string;
+  readonly midpoint: Degrees;
+  readonly orb: Degrees;
+}
+
+/** Default 90°-dial midpoint-tree orb (#556) — matches `overlay-options.ts`'s own `DEFAULT_MAX_ORB`. */
+const DEFAULT_MIDPOINT_TREE_ORB: Degrees = 1;
+
+/**
+ * Every "hit" in `astrology/midpoints.ts`'s dial midpoint tree (#556, #555): a body sitting
+ * within `orb` of another pair's midpoint, collapsed onto the dial (default 90°, optionally 45°
+ * for the finer Uranian-school reading — see `midpoints.ts`'s own doc comment) so
+ * conjunction/square/opposition (and, at 45°, semisquare/sesquiquadrate too) hits are all
+ * caught, not just exact conjunctions to the raw midpoint longitude.
+ */
+export function midpointTreeRows(
+  data: ChartData,
+  orb: Degrees = DEFAULT_MIDPOINT_TREE_ORB,
+  divisor: Degrees = 90,
+): readonly MidpointTreeRow[] {
+  const positions = new Map<BodyId, Degrees>(data.positions.map((position) => [position.body, position.longitude]));
+  return midpointTree(positions, orb, divisor).map((hit) => {
+    const body = bodyById(hit.body);
+    const pairA = bodyById(hit.a);
+    const pairB = bodyById(hit.b);
+    return {
+      bodyKey: body?.key ?? String(hit.body),
+      bodyName: body?.name ?? String(hit.body),
+      pairAKey: pairA?.key ?? String(hit.a),
+      pairAName: pairA?.name ?? String(hit.a),
+      pairBKey: pairB?.key ?? String(hit.b),
+      pairBName: pairB?.name ?? String(hit.b),
+      midpoint: hit.midpoint,
+      orb: hit.orb,
+      ...degreeParts(hit.midpoint),
+    };
+  });
+}
+
+export interface AllMidpointsRow extends DegreeParts {
+  readonly bodyAKey: string;
+  readonly bodyAName: string;
+  readonly bodyBKey: string;
+  readonly bodyBName: string;
+  readonly kind: 'direct' | 'indirect';
+  readonly midpoint: Degrees;
+}
+
+/**
+ * Every body-pair midpoint (#555) — not just the two fixed pairs `derivedPointRows` has always
+ * shown (ASC/MC, Sun/Moon) — both the conventional near/"direct" midpoint (half the shorter
+ * arc, Ebertin's convention) and the far/"indirect" one (its antipode), one row each, so a
+ * caller sorting or filtering by `kind` sees both without a second call. Angles (ASC/MC/Vertex)
+ * are deliberately excluded: `astrology/midpoints.ts`'s `BodyId`-keyed functions only accept
+ * real Swiss Ephemeris body ids, and angles have none — see that module's own doc comment;
+ * `derivedPointRows`' existing hand-rolled ASC/MC midpoint row is unaffected and still the only
+ * angle-involving midpoint this codebase computes.
+ */
+export function allMidpointsRows(data: ChartData): readonly AllMidpointsRow[] {
+  const positions = new Map<BodyId, Degrees>(data.positions.map((position) => [position.body, position.longitude]));
+  const rows: AllMidpointsRow[] = [];
+  for (const pair of allMidpoints(positions)) {
+    const bodyA = bodyById(pair.a);
+    const bodyB = bodyById(pair.b);
+    const shared = {
+      bodyAKey: bodyA?.key ?? String(pair.a),
+      bodyAName: bodyA?.name ?? String(pair.a),
+      bodyBKey: bodyB?.key ?? String(pair.b),
+      bodyBName: bodyB?.name ?? String(pair.b),
+    };
+    rows.push({ ...shared, kind: 'direct', midpoint: pair.midpoint, ...degreeParts(pair.midpoint) });
+    const indirect = oppositeMidpointOf(positions.get(pair.a) ?? 0, positions.get(pair.b) ?? 0);
+    rows.push({ ...shared, kind: 'indirect', midpoint: indirect, ...degreeParts(indirect) });
   }
   return rows;
 }

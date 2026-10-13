@@ -28,9 +28,11 @@ import {
   type ChartData,
 } from '../domain/chart-compute.js';
 import { computeDraconic } from '../domain/draconic.js';
+import { computeRelocatedChart } from '../domain/relocated-chart.js';
 import { computeHarmonic } from '../domain/harmonic.js';
 import { computeSolarReturnChart, computeLunarReturnChart } from '../domain/return-chart.js';
 import {
+  allMidpointsRows,
   almutenOfAscendant,
   angleRows,
   antisciaRows,
@@ -42,6 +44,7 @@ import {
   dispositorRows,
   fixedStarRows,
   houseCuspRows,
+  midpointTreeRows,
   positionRows,
   aspectRows,
   chartSheetInput,
@@ -93,6 +96,7 @@ import {
   type TransitRuleContext,
 } from '../astrology/transit-importance.js';
 import {
+  allMidpointsColumns,
   angleColumns,
   antisciaColumns,
   aspectColumns,
@@ -102,6 +106,7 @@ import {
   dispositorColumns,
   fixedStarColumns,
   houseCuspColumns,
+  midpointTreeColumns,
   positionColumns,
 } from './ChartView.js';
 import type { chartViewMessages } from './ChartView.messages.js';
@@ -254,6 +259,11 @@ function tablesOf(
       const antiscion = antisciaRows(data);
       const declinations = declinationContactRows(data);
       const stars = fixedStarRows(data, {});
+      // Same "shown only when non-empty" convention as antiscia/declination above — this
+      // section ignores the live `ExtendedSettings.dial90Visible` toggle the same way it
+      // already ignores every other point-visibility setting (see the `{}` passed throughout
+      // this function); #556 only wires it into the on-screen table and both export formats.
+      const midpointTreeHits = midpointTreeRows(data);
       return [
         tablePlanOf(t.aspectsCaption, aspectColumns(t, locale), aspectRows(data)),
         ...(antiscion.length === 0 ? [] : [tablePlanOf(t.antisciaCaption, antisciaColumns(t, locale), antiscion)]),
@@ -261,6 +271,9 @@ function tablesOf(
           ? []
           : [tablePlanOf(t.declinationsCaption, declinationColumns(t, locale), declinations)]),
         ...(stars.length === 0 ? [] : [tablePlanOf(t.fixedStarsCaption, fixedStarColumns(t, locale), stars)]),
+        ...(midpointTreeHits.length === 0
+          ? []
+          : [tablePlanOf(t.midpointTreeCaption, midpointTreeColumns(t, locale), midpointTreeHits)]),
       ];
     }
     case 'dignities':
@@ -269,8 +282,15 @@ function tablesOf(
         tablePlanOf(t.dignitiesCaption, dignityColumns(t, locale), dignityRows(data, {})),
         tablePlanOf(t.dispositorsCaption, dispositorColumns(t, locale), dispositorRows(data, {}, rulership)),
       ];
-    case 'derived':
-      return [tablePlanOf(t.derivedPointsCaption, derivedPointColumns(t, locale), derivedPointRows(data, {}))];
+    case 'derived': {
+      const allMidpoints = allMidpointsRows(data);
+      return [
+        tablePlanOf(t.derivedPointsCaption, derivedPointColumns(t, locale), derivedPointRows(data, {})),
+        ...(allMidpoints.length === 0
+          ? []
+          : [tablePlanOf(t.allMidpointsCaption, allMidpointsColumns(t, locale), allMidpoints)]),
+      ];
+    }
   }
 }
 
@@ -313,6 +333,14 @@ async function computeSectionChartData(
         ...(place === undefined ? {} : { place }),
       });
       return result.chart;
+    }
+    case 'relocated': {
+      // Not currently selectable from PdfExportBuilder's own UI (PDF_CHART_TYPES omits it) — this
+      // case exists only so the switch stays exhaustive over the full ChartType union (#559).
+      // `place` falls back to the birthplace, matching solar/lunar return's own convention above.
+      const relocationPlace = place ?? { ...person.moment.coordinates, altitude: 0 };
+      const result = await computeRelocatedChart(person.moment, relocationPlace, provider, calcOptions);
+      return result.relocated;
     }
   }
 }

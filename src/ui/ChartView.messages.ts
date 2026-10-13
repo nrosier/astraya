@@ -149,6 +149,15 @@ const en = {
     'The two planets are also in aspect to each other — traditionally the stronger, more immediately active case of reception.',
   declinationsCaption: 'Declinations',
   antisciaCaption: 'Antiscia',
+  midpointTreeCaption: 'Midpoint tree (90° dial)',
+  allMidpointsCaption: 'All midpoints',
+  pairLabel: 'Pair',
+  midpointKindTooltip: 'Direct: half the shorter arc between the pair; Indirect: that point’s antipode',
+  directMidpoint: 'Direct',
+  indirectMidpoint: 'Indirect',
+  harmonicFamilyLabel: 'Family',
+  harmonicFamilyTooltip:
+    'Addey’s harmonic grouping: the smallest division of the circle this aspect is a multiple of (conjunction H1, opposition H2, trine H3, square H4, quintile/biquintile H5, sextile H6, semisquare/sesquiquadrate H8, semisextile/quincunx H12)',
   fixedStarsCaption: 'Fixed stars',
 
   almutenOfAscendantSentence: (names: string) => `Almuten of the Ascendant: ${names}`,
@@ -438,6 +447,15 @@ const nl: typeof en = {
     'De twee planeten staan ook in aspect met elkaar — traditioneel het sterkere, directer actieve geval van receptie.',
   declinationsCaption: 'Declinaties',
   antisciaCaption: 'Antiscia',
+  midpointTreeCaption: 'Middelpuntenboom (90°-dial)',
+  allMidpointsCaption: 'Alle middelpunten',
+  pairLabel: 'Paar',
+  midpointKindTooltip: 'Direct: de helft van de kortste boog tussen het paar; Indirect: het antipode punt daarvan',
+  directMidpoint: 'Direct',
+  indirectMidpoint: 'Indirect',
+  harmonicFamilyLabel: 'Familie',
+  harmonicFamilyTooltip:
+    'Addeys harmonische indeling: de kleinste verdeling van de cirkel waarvan dit aspect een veelvoud is (conjunctie H1, oppositie H2, driehoek H3, vierkant H4, kwintiel/bikwintiel H5, sextiel H6, halfvierkant/anderhalfvierkant H8, halfsextiel/quincunx H12)',
   fixedStarsCaption: 'Vaste sterren',
 
   almutenOfAscendantSentence: (names: string) => `Almuten van de Ascendant: ${names}`,

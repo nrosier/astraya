@@ -30,12 +30,14 @@
  * @module ChartView
  * @purpose Renders the natal chart screen: the chart wheel plus every data table a chart computes (positions, houses, aspects, dignities, dispositors, declinations, antiscia, fixed stars, chart shape, derived points), and the SVG/PNG/PDF export + share-link controls.
  * @conventions Exports `ChartDataView`, the shared tabbed chart+tables UI reused by CompositeView/SharedChartView; every value is recomputed from the stored birth moment via `domain/chart-compute.js`/`domain/chart-tables.js` rather than read from a saved Chart record; houses/angles/derived-points tables are hidden when `timeAccuracy === 'unknown'`. Text comes from co-located `ChartView.messages.ts` via `useMessages()`.
- * @exports ChartView, ChartDataView, emphasisColumns, positionColumns, houseCuspColumns, angleColumns, aspectColumns, dignityColumns, almutenCandidateColumns, conditionColumns, receptionColumns, dispositorColumns, declinationColumns, antisciaColumns, fixedStarColumns, derivedPointColumns
+ * @exports ChartView, ChartDataView, emphasisColumns, positionColumns, houseCuspColumns, angleColumns, aspectColumns, dignityColumns, almutenCandidateColumns, conditionColumns, receptionColumns, dispositorColumns, declinationColumns, antisciaColumns, midpointTreeColumns, allMidpointsColumns, fixedStarColumns, derivedPointColumns
  */
 import { formatFixed } from './format.js';
+import { aspectHarmonicFamily } from '../astrology/aspects.js';
 import { Tooltip } from './primitives/Tooltip.js';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  allMidpointsRows,
   almutenOfAscendant,
   angleRows,
   antisciaRows,
@@ -52,9 +54,11 @@ import {
   dispositorRows,
   fixedStarRows,
   houseCuspRows,
+  midpointTreeRows,
   positionRows,
   receptionRows,
   visiblePositions,
+  type AllMidpointsRow,
   type AlmutenCandidateRow,
   type AngleRow,
   type AntisciaRow,
@@ -67,6 +71,7 @@ import {
   type EmphasisRow,
   type FixedStarRow,
   type HouseCuspRow,
+  type MidpointTreeRow,
   type PointVisibilityOptions,
   type ReceptionRow,
   type PositionRow,
@@ -346,6 +351,16 @@ export function aspectColumns(
       labelTooltip: t.applyingTooltip,
       valueOf: (row) => row.applying,
       render: (row) => (row.applying ? t.applying : t.separating),
+    },
+    {
+      key: 'harmonicFamily',
+      label: t.harmonicFamilyLabel,
+      labelTooltip: t.harmonicFamilyTooltip,
+      valueOf: (row) => aspectHarmonicFamily(row.aspectKey) ?? 0,
+      render: (row) => {
+        const family = aspectHarmonicFamily(row.aspectKey);
+        return family === undefined ? '' : `H${String(family)}`;
+      },
     },
   ];
 }
@@ -736,6 +751,62 @@ export function antisciaColumns(t: typeof chartViewMessages.en, locale: Locale):
   ];
 }
 
+/**
+ * The 90°-dial midpoint-tree table's columns (#556): which body sits on which pair's dial
+ * point, the midpoint longitude itself (sign/degree/minute/second, reusing `degreeColumns`),
+ * and the orb of the hit.
+ */
+export function midpointTreeColumns(
+  t: typeof chartViewMessages.en,
+  locale: Locale,
+): readonly TableColumn<MidpointTreeRow>[] {
+  return [
+    {
+      key: 'bodyName',
+      label: t.bodyLabel,
+      valueOf: (row) => row.bodyName,
+      render: (row) => bodyDisplayName(row.bodyKey, locale),
+    },
+    {
+      key: 'pair',
+      label: t.pairLabel,
+      valueOf: (row) => `${row.pairAName}/${row.pairBName}`,
+      render: (row) => `${bodyDisplayName(row.pairAKey, locale)}/${bodyDisplayName(row.pairBKey, locale)}`,
+    },
+    ...degreeColumns<MidpointTreeRow>(t, locale),
+    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => `${formatFixed(row.orb, 2)}°` },
+  ];
+}
+
+/** The all-pairs midpoint table's columns (#555): every body pair's near ("direct") and far ("indirect") midpoint. */
+export function allMidpointsColumns(
+  t: typeof chartViewMessages.en,
+  locale: Locale,
+): readonly TableColumn<AllMidpointsRow>[] {
+  return [
+    {
+      key: 'bodyAName',
+      label: t.bodyALabel,
+      valueOf: (row) => row.bodyAName,
+      render: (row) => bodyDisplayName(row.bodyAKey, locale),
+    },
+    {
+      key: 'bodyBName',
+      label: t.bodyBLabel,
+      valueOf: (row) => row.bodyBName,
+      render: (row) => bodyDisplayName(row.bodyBKey, locale),
+    },
+    {
+      key: 'kind',
+      label: t.kindLabel,
+      labelTooltip: t.midpointKindTooltip,
+      valueOf: (row) => row.kind,
+      render: (row) => (row.kind === 'direct' ? t.directMidpoint : t.indirectMidpoint),
+    },
+    ...degreeColumns<AllMidpointsRow>(t, locale),
+  ];
+}
+
 export function fixedStarColumns(t: typeof chartViewMessages.en, locale: Locale): readonly TableColumn<FixedStarRow>[] {
   return [
     // Star names (Regulus, Spica, ...) are proper nouns, the same in both locales — no glossary
@@ -920,6 +991,9 @@ function renderTableTab(
       const declinationRows = declinationContactRows(data);
       const antiscionRows = antisciaRows(data);
       const starRows = fixedStarRows(data, pointVisibility);
+      const midpointTreeHitRows =
+        pointVisibility.dial90Visible === true ? midpointTreeRows(data, pointVisibility.midpointTreeOrb) : [];
+      const allMidpointRows = pointVisibility.midpointsVisible === true ? allMidpointsRows(data) : [];
       return (
         <>
           <SortableTable
@@ -961,6 +1035,24 @@ function renderTableTab(
               rows={starRows}
               getRowKey={(row) => `${row.star}-${row.bodyKey}`}
               downloadFilename={deriveExportFilename(displayName, 'fixed-stars', 'csv')}
+            />
+          )}
+          {midpointTreeHitRows.length > 0 && (
+            <SortableTable
+              caption={t.midpointTreeCaption}
+              columns={midpointTreeColumns(t, locale)}
+              rows={midpointTreeHitRows}
+              getRowKey={(row) => `${row.bodyKey}-${row.pairAKey}-${row.pairBKey}`}
+              downloadFilename={deriveExportFilename(displayName, 'midpoint-tree', 'csv')}
+            />
+          )}
+          {allMidpointRows.length > 0 && (
+            <SortableTable
+              caption={t.allMidpointsCaption}
+              columns={allMidpointsColumns(t, locale)}
+              rows={allMidpointRows}
+              getRowKey={(row) => `${row.bodyAKey}-${row.bodyBKey}-${row.kind}`}
+              downloadFilename={deriveExportFilename(displayName, 'midpoints', 'csv')}
             />
           )}
         </>
