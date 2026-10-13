@@ -14,7 +14,7 @@ One level above `src/astrology/`: composes pure astrological calculations into s
 - `draconic.ts` — Draconic chart (lunar-node-based zodiac shift, same houses). Deps: `astrology/draconic`, `./chart-compute`.
 - `event-search.ts` — Batch stations/ingresses/lunations/exact aspects plus reproducible CSV. Deps: `astrology/stations`, `astrology/sign-ingress`, `astrology/lunations`, `astrology/mutual-aspects`, `astrology/bodies`, `astrology/signs`, `time/julian`.
 - `export-filename.ts` — Safe filename from person + chart kind. Deps: none (pure string).
-- `full-export.ts` — Whole-device backup export (every person + computable natal tables + CSV). Deps: `./chart-compute`, `./chart-tables`, `./person`, `astrology/rulership`.
+- `full-export.ts` — Whole-device backup export (every person + computable natal/named-Varga tables + CSV). Deps: `./chart-compute`, `./harmonic`, `./chart-tables`, `./person`, `astrology/rulership`.
 - `harmonic.ts` — Harmonic/Vedic Varga charts (D9 Navamsha, etc.). Deps: `astrology/harmonics`, `./chart-compute`.
 - `horary.ts` — Horary chart, question-moment Julian day, considerations-before-judgment, and void-of-course check. Deps: `astrology/horary`, `astrology/void-of-course`, `astrology/emphasis`, `./chart-compute`.
 - `horary-judgment.ts` — Horary significators, perfection/reception, prohibition, and relative-motion timing estimates (#552). Deps: `astrology/dignities`, `astrology/horary`, `astrology/reception`, `astrology/emphasis`, `./chart-compute`.

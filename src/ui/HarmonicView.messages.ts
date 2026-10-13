@@ -24,6 +24,12 @@ const en = {
   harmonicNumberLabel: 'Harmonic number',
   harmonicLabel: (n: string) => `Harmonic ${n}`,
   invalidHarmonicNumber: 'Enter a whole number of 1 or more.',
+  provenanceCaption: 'Radix → harmonic provenance',
+  provenanceHint: (n: string) =>
+    `Each row preserves the radix longitude used to calculate this Harmonic ${n} position (radix longitude × ${n}, wrapped into 0°–360°).`,
+  bodyLabel: 'Body',
+  radixLongitudeLabel: 'Radix longitude',
+  harmonicLongitudeLabel: (n: string) => `Harmonic ${n} longitude`,
   housesUndefined:
     'The underlying natal chart’s houses have no valid solution — this person’s birth place falls at a latitude the chosen house system can’t resolve. Try a different house system in Extended settings on their chart page, or a location further from the poles.',
 };
@@ -45,6 +51,12 @@ const nl: typeof en = {
   harmonicNumberLabel: 'Harmonisch getal',
   harmonicLabel: (n: string) => `Harmonisch ${n}`,
   invalidHarmonicNumber: 'Voer een geheel getal van 1 of meer in.',
+  provenanceCaption: 'Radix → harmonische herkomst',
+  provenanceHint: (n: string) =>
+    `Elke rij bewaart de radixlengtegraad waarmee deze Harmonisch ${n}-positie is berekend (radixlengtegraad × ${n}, teruggevouwen naar 0°–360°).`,
+  bodyLabel: 'Lichaam',
+  radixLongitudeLabel: 'Radixlengtegraad',
+  harmonicLongitudeLabel: (n: string) => `Harmonisch ${n}-lengtegraad`,
   housesUndefined:
     'De huizen van de onderliggende natale horoscoop hebben geen geldige oplossing — de geboorteplaats van deze persoon valt op een breedtegraad die het gekozen huizensysteem niet kan oplossen. Probeer een ander huizensysteem bij Uitgebreide instellingen op de horoscooppagina, of een locatie verder van de polen.',
 };

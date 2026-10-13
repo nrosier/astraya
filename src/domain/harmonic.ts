@@ -13,7 +13,7 @@
  * @module harmonic
  * @purpose Computes a harmonic or Vedic Varga chart (e.g. D9 Navamsha) from one person's natal chart (#170).
  * @conventions Synthetic chart, not a comparison, so reuses the single-chart engine on positions/houses already transformed by `astrology/harmonics.ts`; `n` must be a positive integer, with `n=1` reproducing the natal chart (whole-sign houses in place of whatever system the natal chart used).
- * @exports computeHarmonic, HarmonicData
+ * @exports computeHarmonic, harmonicPositionProvenance, HarmonicData, HarmonicPositionProvenanceRow
  */
 import { DEFAULT_ORB_CONFIG, findAspects, subjectsFrom, type Aspect, type OrbConfig } from '../astrology/aspects.js';
 import { bodyByKey, bodyById, type BodyCategory } from '../astrology/bodies.js';
@@ -46,6 +46,33 @@ export interface HarmonicData {
   readonly natal: ChartData;
   /** The harmonic/Varga chart itself: transformed positions, whole-sign houses, and its own aspects, dignities, sect and Arabic parts. */
   readonly harmonic: ChartData;
+}
+
+/** One body’s radix longitude alongside its transformed harmonic longitude. */
+export interface HarmonicPositionProvenanceRow {
+  readonly bodyKey: string;
+  readonly bodyName: string;
+  readonly radixLongitude: number;
+  readonly harmonicLongitude: number;
+}
+
+/** Pairs every transformed body with its radix source position for UI and export provenance. */
+export function harmonicPositionProvenance(data: HarmonicData): readonly HarmonicPositionProvenanceRow[] {
+  const radixByBody = new Map(data.natal.positions.map((position) => [position.body, position.longitude]));
+  return data.harmonic.positions.flatMap((position) => {
+    const radixLongitude = radixByBody.get(position.body);
+    const body = bodyById(position.body);
+    return radixLongitude === undefined
+      ? []
+      : [
+          {
+            bodyKey: body?.key ?? String(position.body),
+            bodyName: body?.name ?? String(position.body),
+            radixLongitude,
+            harmonicLongitude: position.longitude,
+          },
+        ];
+  });
 }
 
 /**

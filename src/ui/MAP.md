@@ -46,7 +46,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `ExtendedSettingsPanel.tsx` + `ExtendedSettingsPanel.messages.ts` — Chart settings modal (house system/zodiac/bodies/aspects/colours). Deps: `chart/extended-settings`, `astrology/houses`, `astrology/ayanamsas`.
 - `feature-registry.ts` — #506/#509 typed registry of every user-facing feature's scope/group/order/href/prerequisites/settings-mode/export-capabilities, derived from `person-nav`/`tools-nav`/`admin-nav`. Deps: `./person-nav`, `./tools-nav`, `./admin-nav`, `./route`.
 - `FocusInterpretation.tsx` + `FocusInterpretation.messages.ts` — Tier 2 AI-interpretation feature (consent + generate). Deps: `interpretation/tier2-client`, `interpretation/focus-context-schema`.
-- `HarmonicView.tsx` + `HarmonicView.messages.ts` — Harmonic & Varga divisional charts. Deps: `astrology/harmonics`, `domain/harmonic`.
+- `HarmonicView.tsx` + `HarmonicView.messages.ts` — Harmonic & Varga divisional charts with radix-to-result provenance. Deps: `astrology/harmonics`, `domain/harmonic`, `SortableTable`.
 - `HoraryView.tsx` + `HoraryView.messages.ts` — Horary (question-chart) tool + considerations check. Deps: `astrology/horary`, `domain/horary`.
 - `LanguageToggle.tsx` + `LanguageToggle.messages.ts` — Language toggle button (en/nl). Deps: `./locale`, `interpretation/schema`.
 - `Overview.tsx` + `Overview.messages.ts` — Canonical per-person Overview screen (#506/#509): record readiness, calculation basis, real next actions. Deps: `./feature-registry`, `./people-list`, `./person-nav`.

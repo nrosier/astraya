@@ -76,7 +76,13 @@ describe('docs/schema/astraya-export.schema.json (#561)', () => {
     assertKeysKnown(schema, archive as unknown as Record<string, unknown>, 'FullExport');
 
     const chartSchema = (schema as unknown as { $defs: { exportedChart: JsonSchemaLike } }).$defs.exportedChart;
+    const personSchema = (schema as unknown as { $defs: { exportedPerson: JsonSchemaLike } }).$defs.exportedPerson;
     const chart = archive.people[0]?.natalChart;
+    const person = archive.people[0];
+    expect(person).toBeDefined();
+    if (person !== undefined) {
+      assertKeysKnown(personSchema, person as unknown as Record<string, unknown>, 'ExportedPerson');
+    }
     expect(chart).toBeDefined();
     if (chart !== undefined) {
       assertKeysKnown(chartSchema, chart as unknown as Record<string, unknown>, 'ExportedChart');

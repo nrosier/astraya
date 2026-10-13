@@ -36,8 +36,9 @@ import { formatFixed, formatTimestamp } from './format.js';
 import { PrintProvenance } from './PrintProvenance.js';
 import { HOUSE_SYSTEMS } from '../astrology/houses.js';
 import type { Zodiac } from '../ephemeris/types.js';
-import { aspectHarmonicFamily, type Aspect } from '../astrology/aspects.js';
+import { ASPECTS, aspectHarmonicFamily, type Aspect } from '../astrology/aspects.js';
 import { Tooltip } from './primitives/Tooltip.js';
+import { Select } from './primitives/Select.js';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   allMidpointsRows,
@@ -57,6 +58,7 @@ import {
   dignityRows,
   dispositorRows,
   fixedStarRows,
+  filterAspectRowsByHarmonicFamily,
   houseCuspRows,
   midpointTreeRows,
   positionRows,
@@ -1042,6 +1044,14 @@ function renderMatrixView(
 /** The granular table kinds `renderTableTab` knows how to build (#511: these are grouped into the Aspects/Placements/Patterns views, not shown as separate tabs). */
 type TableTabKey = 'positions' | 'houses' | 'aspects' | 'dignities' | 'derived';
 
+const HARMONIC_FAMILY_FILTERS = Array.from(
+  new Set(
+    ASPECTS.map((aspect) => aspectHarmonicFamily(aspect.key)).filter(
+      (family): family is number => family !== undefined,
+    ),
+  ),
+).sort((a, b) => a - b);
+
 /**
  * The table(s) for one tab, factored out of the tab panel below so the same markup can also
  * be stacked for every tab at once in the PDF export (#67) without being duplicated.
@@ -1058,6 +1068,7 @@ function renderTableTab(
   symbolClass: SymbolClass,
   boundsScheme: BoundsScheme,
   selection?: TableSelection,
+  aspectHarmonicFamilyFilter?: number,
 ): React.ReactNode {
   switch (tab) {
     case 'positions':
@@ -1098,6 +1109,7 @@ function renderTableTab(
         </>
       );
     case 'aspects': {
+      const rows = filterAspectRowsByHarmonicFamily(aspectRows(data, pointVisibility), aspectHarmonicFamilyFilter);
       const declinationRows = declinationContactRows(data);
       const antiscionRows = antisciaRows(data);
       const starRows = fixedStarRows(data, pointVisibility);
@@ -1109,13 +1121,13 @@ function renderTableTab(
           <SortableTable
             caption={t.aspectsCaption}
             columns={aspectColumns(t, locale, selection)}
-            rows={aspectRows(data, pointVisibility)}
+            rows={rows}
             getRowKey={(row) => `${row.bodyAKey}-${row.aspect}-${row.bodyBKey}`}
             selectedRowKey={(() => {
               const chosen =
                 selection?.selectedKey === undefined
                   ? undefined
-                  : aspectRows(data, pointVisibility).find((row) => aspectSelectionKey(row) === selection.selectedKey);
+                  : rows.find((row) => aspectSelectionKey(row) === selection.selectedKey);
               return chosen === undefined ? undefined : `${chosen.bodyAKey}-${chosen.aspect}-${chosen.bodyBKey}`;
             })()}
             downloadFilename={deriveExportFilename(displayName, 'aspects', 'csv')}
@@ -1664,6 +1676,7 @@ export function ChartDataView({
   const [locale] = useLocale();
   const [rulership] = useRulershipChoice();
   const [ownTab, setOwnTab] = useState<ChartViewKind>('wheel');
+  const [aspectHarmonicFamilyFilter, setAspectHarmonicFamilyFilter] = useState('all');
   const activeTab: ChartViewKind = view ?? ownTab;
   const setActiveTab = (next: ChartViewKind): void => {
     setOwnTab(next);
@@ -2217,19 +2230,42 @@ export function ChartDataView({
                     </p>
                   )}
                   {currentTab === 'aspects' &&
-                    renderTableTab(
-                      'aspects',
-                      load.data,
-                      displayName,
-                      pointVisibility,
-                      housesRenderable,
-                      t,
-                      locale,
-                      rulership,
-                      symbolClass,
-                      boundsScheme,
-                      tableSelection,
-                    )}
+                    (() => {
+                      const harmonicFamily =
+                        aspectHarmonicFamilyFilter === 'all' ? undefined : Number(aspectHarmonicFamilyFilter);
+                      return (
+                        <>
+                          <div className="field-grid">
+                            <Select
+                              label={t.harmonicFamilyFilterLabel}
+                              value={aspectHarmonicFamilyFilter}
+                              options={[
+                                { value: 'all', label: t.allHarmonicFamilies },
+                                ...HARMONIC_FAMILY_FILTERS.map((family) => ({
+                                  value: String(family),
+                                  label: t.harmonicFamilyOption(String(family)),
+                                })),
+                              ]}
+                              onChange={setAspectHarmonicFamilyFilter}
+                            />
+                          </div>
+                          {renderTableTab(
+                            'aspects',
+                            load.data,
+                            displayName,
+                            pointVisibility,
+                            housesRenderable,
+                            t,
+                            locale,
+                            rulership,
+                            symbolClass,
+                            boundsScheme,
+                            tableSelection,
+                            harmonicFamily,
+                          )}
+                        </>
+                      );
+                    })()}
                   {currentTab === 'matrix' &&
                     renderMatrixView(load.data, displayName, pointVisibility, t, locale, tableSelection)}
                   {currentTab === 'elements' && renderElementsView(load.data, displayName, pointVisibility, t, locale)}

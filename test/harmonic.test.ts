@@ -7,7 +7,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { harmonicLongitude } from '../src/astrology/harmonics.js';
-import { computeHarmonic } from '../src/domain/harmonic.js';
+import { computeHarmonic, harmonicPositionProvenance } from '../src/domain/harmonic.js';
 import type { BirthMomentInput } from '../src/time/types.js';
 import { getEngine } from './engine-harness.js';
 
@@ -48,6 +48,19 @@ describe('computeHarmonic (#170)', () => {
     const engine = await getEngine();
     const data = await computeHarmonic(PERSON, 1, engine);
     expect(data.harmonic.houses.ascendant).toBeCloseTo(data.natal.houses.ascendant, 9);
+  });
+
+  it('returns radix-to-harmonic provenance for every transformed body (#557)', async () => {
+    const engine = await getEngine();
+    const data = await computeHarmonic(PERSON, 9, engine);
+    const rows = harmonicPositionProvenance(data);
+
+    expect(rows).toHaveLength(data.harmonic.positions.length);
+    const sun = rows.find((row) => row.bodyKey === 'sun');
+    const radixSun = data.natal.positions.find((position) => position.body === 0);
+    const harmonicSun = data.harmonic.positions.find((position) => position.body === 0);
+    expect(sun?.radixLongitude).toBeCloseTo(radixSun?.longitude ?? Number.NaN, 9);
+    expect(sun?.harmonicLongitude).toBeCloseTo(harmonicSun?.longitude ?? Number.NaN, 9);
   });
 
   it('rejects a non-positive-integer harmonic number', async () => {

@@ -42,7 +42,7 @@ import { degreesInSign, signIndex, signOf, type Element, type Modality } from '.
 import { formatCoordinate } from '../ui/format.js';
 import { housesAreDefined, type AngleAspect, type ChartData } from './chart-compute.js';
 import { derivedPointLongitude } from './derived-point-position.js';
-import { DEFAULT_ORB_CONFIG, type Aspect, type OrbConfig } from '../astrology/aspects.js';
+import { aspectHarmonicFamily, DEFAULT_ORB_CONFIG, type Aspect, type OrbConfig } from '../astrology/aspects.js';
 import type { Locale } from '../interpretation/schema.js';
 import type { BodyId, BodyPosition, Degrees } from '../ephemeris/types.js';
 import type { BirthMomentInput } from '../time/types.js';
@@ -372,6 +372,15 @@ function aspectRow(aspect: Aspect): AspectRow {
  */
 export function aspectRows(data: ChartData, options: PointVisibilityOptions = {}): readonly AspectRow[] {
   return visibleAspects(data.aspects, options).map(aspectRow);
+}
+
+/** Keeps only rows from one of Addey’s aspect harmonic families, or every row when no family is chosen. */
+export function filterAspectRowsByHarmonicFamily(
+  rows: readonly AspectRow[],
+  harmonicFamily: number | undefined,
+): readonly AspectRow[] {
+  if (harmonicFamily === undefined) return rows;
+  return rows.filter((row) => aspectHarmonicFamily(row.aspectKey) === harmonicFamily);
 }
 
 /**

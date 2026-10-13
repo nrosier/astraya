@@ -53,6 +53,7 @@
         "birth": { "type": "object", "description": "BirthMomentInput — see src/time/types.ts" },
         "missing": { "type": "array", "items": { "type": "string" } },
         "natalChart": { "$ref": "#/$defs/exportedChart" },
+        "harmonicCharts": { "type": "array", "items": { "$ref": "#/$defs/exportedHarmonicChart" } },
         "chartError": { "type": "string" }
       }
     },
@@ -196,6 +197,41 @@
             ]
           }
         }
+      }
+    },
+    "exportedHarmonicChart": {
+      "type": "object",
+      "required": ["key", "label", "harmonic", "source", "radixPositions", "chart"],
+      "additionalProperties": false,
+      "properties": {
+        "key": { "type": "string" },
+        "label": { "type": "string" },
+        "harmonic": { "type": "integer", "minimum": 1 },
+        "source": {
+          "type": "object",
+          "required": ["kind", "transform", "houses"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "radix" },
+            "transform": { "const": "longitude-times-n-mod-360" },
+            "houses": { "const": "whole-sign-from-harmonic-ascendant" }
+          }
+        },
+        "radixPositions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["bodyKey", "bodyName", "radixLongitude", "harmonicLongitude"],
+            "additionalProperties": false,
+            "properties": {
+              "bodyKey": { "type": "string" },
+              "bodyName": { "type": "string" },
+              "radixLongitude": { "type": "number" },
+              "harmonicLongitude": { "type": "number" }
+            }
+          }
+        },
+        "chart": { "$ref": "#/$defs/exportedChart" }
       }
     }
   }

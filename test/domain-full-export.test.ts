@@ -144,6 +144,16 @@ describe('buildFullExport', () => {
     expect(Array.isArray(chart?.declinations)).toBe(true);
     expect(chart?.midpointTree).toEqual([]);
     expect(chart?.allMidpoints).toEqual([]);
+    expect(ada?.harmonicCharts?.map((harmonic) => harmonic.key)).toEqual(['D1', 'D9', 'D10']);
+    for (const harmonic of ada?.harmonicCharts ?? []) {
+      expect(harmonic.source).toEqual({
+        kind: 'radix',
+        transform: 'longitude-times-n-mod-360',
+        houses: 'whole-sign-from-harmonic-ascendant',
+      });
+      expect(harmonic.radixPositions.length).toBeGreaterThan(0);
+      expect(harmonic.chart.houses?.cusps).toHaveLength(12);
+    }
   });
 
   it('includes 90°-dial midpoint-tree hits once dial90Visible is set (#556)', async () => {
@@ -199,6 +209,7 @@ describe('buildFullExport', () => {
     const [person] = (await build([UNKNOWN_TIME])).people;
     expect(person?.natalChart?.houses).toBeUndefined();
     expect(person?.natalChart?.positions.some((row) => row.bodyKey === 'asc')).toBe(false);
+    expect(person?.harmonicCharts).toBeUndefined();
   });
 
   it('keeps a person with no usable birth moment, saying what is missing, and never invents a chart', async () => {
