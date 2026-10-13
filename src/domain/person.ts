@@ -25,8 +25,9 @@
  * @module person
  * @purpose Defines the `Person` entity — the primary entity and owner of birth data that every computed chart derives from — and assembles it from op-log register values.
  * @conventions Stores the civil-time/coordinates input as typed, never a resolved UTC offset, since historical timezone data can change (an `OffsetWitness` records what a past resolution said, for detecting drift, not for reuse); a field this build cannot read is reported as absent via `missing`, never defaulted (e.g. `{0,0}` is a real place, so it is never substituted for missing coordinates); `TimeAccuracy` distinguishes a genuinely unknown birth time, for which houses/angles are meaningless rather than merely approximate.
- * @exports Person, TimeAccuracy, OffsetWitness, RelocationPlace, PERSON_FIELDS, buildPerson, readCivil, readCoordinates, readCalendar, readTimeAccuracy, readWitness, readOffsetOverride, readText, readRelocationPlaces
+ * @exports Person, TimeAccuracy, OffsetWitness, RelocationPlace, CustomPointDefinition, PERSON_FIELDS, buildPerson, readCivil, readCoordinates, readCalendar, readTimeAccuracy, readWitness, readOffsetOverride, readText, readRelocationPlaces, readCustomPoints
  */
+import { parseFormula } from '../astrology/formula-parser.js';
 import type { BirthMomentInput, Calendar, CivilDateTime, Coordinates } from '../time/types.js';
 
 /**
@@ -70,6 +71,16 @@ export interface RelocationPlace {
   readonly longitude: number;
 }
 
+/** A named, persisted formula point owned by one person (#566). */
+export interface CustomPointDefinition {
+  /** Stable local identifier for editing/removal; not an ephemeris body id. */
+  readonly id: string;
+  /** Reader-facing label, kept separate from the formula’s identifier vocabulary. */
+  readonly name: string;
+  /** Restricted arithmetic parsed by `formula-parser.ts`; never executable code. */
+  readonly formula: string;
+}
+
 export interface Person {
   readonly id: string;
   /** May be empty: a person can be created before there is anything to call them. */
@@ -90,6 +101,8 @@ export interface Person {
   readonly witness?: OffsetWitness;
   /** Valid named alternate places; absent in records written before #559. */
   readonly relocationPlaces?: readonly RelocationPlace[] | undefined;
+  /** Valid custom formula points; absent in records written before #566. */
+  readonly customPoints?: readonly CustomPointDefinition[] | undefined;
   /** Field names that are required for a chart and are missing or unreadable. */
   readonly missing: readonly string[];
 }
@@ -107,6 +120,7 @@ export const PERSON_FIELDS = [
   'notes',
   'witness',
   'relocationPlaces',
+  'customPoints',
 ] as const;
 
 function isRecordValue(value: unknown): value is Record<string, unknown> {
@@ -207,6 +221,44 @@ export function readRelocationPlaces(value: unknown): readonly RelocationPlace[]
 }
 
 /**
+ * Reads custom formula points atomically: a malformed formula or duplicate id/name invalidates
+ * the whole saved list rather than silently calculating a plausible partial configuration.
+ */
+export function readCustomPoints(value: unknown): readonly CustomPointDefinition[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const points: CustomPointDefinition[] = [];
+  const ids = new Set<string>();
+  const names = new Set<string>();
+  for (const candidate of value) {
+    if (!isRecordValue(candidate)) return undefined;
+    const { id, name, formula } = candidate;
+    const normalizedName = typeof name === 'string' ? name.trim() : '';
+    if (
+      typeof id !== 'string' ||
+      id.length === 0 ||
+      id.length > 128 ||
+      normalizedName === '' ||
+      normalizedName.length > 128 ||
+      typeof formula !== 'string' ||
+      formula.trim() === '' ||
+      ids.has(id) ||
+      names.has(normalizedName.toLocaleLowerCase())
+    ) {
+      return undefined;
+    }
+    try {
+      parseFormula(formula);
+    } catch {
+      return undefined;
+    }
+    ids.add(id);
+    names.add(normalizedName.toLocaleLowerCase());
+    points.push({ id, name: normalizedName, formula });
+  }
+  return points;
+}
+
+/**
  * Assemble a person from field values, reporting what is unusable.
  *
  * Takes already-read register values rather than the log, so it can be tested — and so
@@ -220,6 +272,7 @@ export function buildPerson(id: string, fields: ReadonlyMap<string, unknown>): P
   const offsetOverrideMinutes = readOffsetOverride(fields.get('offsetOverrideMinutes'));
   const witness = readWitness(fields.get('witness'));
   const relocationPlaces = readRelocationPlaces(fields.get('relocationPlaces'));
+  const customPoints = readCustomPoints(fields.get('customPoints'));
 
   const missing: string[] = [];
   if (civil === undefined) missing.push('civil');
@@ -248,6 +301,7 @@ export function buildPerson(id: string, fields: ReadonlyMap<string, unknown>): P
     notes: readText(fields.get('notes')) ?? '',
     ...(witness === undefined ? {} : { witness }),
     ...(relocationPlaces === undefined ? {} : { relocationPlaces }),
+    ...(customPoints === undefined ? {} : { customPoints }),
     missing,
   };
 }
