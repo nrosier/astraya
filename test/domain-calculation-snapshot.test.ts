@@ -24,6 +24,8 @@ const CUSTOM_SETTINGS: ExtendedSettings = {
   chironVisible: false,
   spiritVisible: true,
   midpointsVisible: true,
+  dial90Visible: true,
+  midpointTreeOrb: 2.5,
   rainbowZodiac: true,
   aspectsToChiron: true,
   aspectsToLilith: true,
