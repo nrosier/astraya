@@ -12,6 +12,7 @@ import {
   chartSheetInput,
   chartSheetMetaLines,
   chartWheelRing,
+  conditionRows,
   crossAspectRows,
   declinationContactRows,
   degreeParts,
@@ -894,5 +895,91 @@ describe('emphasisRows (#511)', () => {
     const rows = emphasisRows(data, { chironVisible: false });
     expect(rows[1]?.bodies.fixed).toEqual([]);
     expect(rows[4]?.total).toBe(3);
+  });
+});
+
+describe('conditionRows (#547)', () => {
+  const SATURN = idOf('saturn');
+  const JUPITER = idOf('jupiter');
+  const VENUS = idOf('venus');
+  const MERCURY = idOf('mercury');
+  const URANUS = idOf('uranus');
+
+  // Ascendant 10°: above-horizon half is longitude >= 190 or < 10.
+  const DAY_HOUSES: HousePositions = { ...HOUSES, ascendant: 10 };
+
+  const data: ChartData = {
+    positions: [
+      position(SUN, 0),
+      position(MOON, 300),
+      position(MERCURY, 50),
+      position(VENUS, 95, -1), // retrograde, near Mars below for besiegement
+      position(MARS, 90),
+      position(JUPITER, 250), // Sagittarius (fire, masculine), above horizon: hayz candidate
+      position(SATURN, 100), // the other besieging malefic for Venus (5° ahead, within the 7° major orb)
+      position(URANUS, 15), // not a traditional planet — must be excluded
+      position(CHIRON, 15), // not a traditional planet — must be excluded
+    ],
+    houses: DAY_HOUSES,
+    aspects: [],
+    dignities: new Map(),
+    sect: 'day',
+    partOfFortune: 0,
+    partOfSpirit: 0,
+  };
+
+  it('has exactly one row per traditional planet, excluding Uranus/Chiron/every other body', () => {
+    const rows = conditionRows(data);
+    expect(rows.map((row) => row.bodyKey).sort()).toEqual(
+      ['jupiter', 'mars', 'mercury', 'moon', 'saturn', 'sun', 'venus'].sort(),
+    );
+  });
+
+  it('scores dignity the same way dignityRows does, for the same body', () => {
+    const conditionRow = conditionRows(data).find((row) => row.bodyKey === 'jupiter');
+    const dignityRow = dignityRows(data).find((row) => row.bodyKey === 'jupiter');
+    expect(conditionRow?.points).toBe(dignityRow?.points);
+    expect(conditionRow?.peregrine).toBe(dignityRow?.peregrine);
+  });
+
+  it('reports sect alignment correctly: Jupiter (diurnal) ofSect in this day chart, Venus (nocturnal) contraSect', () => {
+    const rows = conditionRows(data);
+    expect(rows.find((row) => row.bodyKey === 'jupiter')?.sectAlignment).toBe('ofSect');
+    expect(rows.find((row) => row.bodyKey === 'venus')?.sectAlignment).toBe('contraSect');
+    expect(rows.find((row) => row.bodyKey === 'mercury')?.sectAlignment).toBe('neutral');
+  });
+
+  it('reports motion from the position’s own speed, matching the retrograde flag', () => {
+    const rows = conditionRows(data);
+    expect(rows.find((row) => row.bodyKey === 'venus')?.motion).toBe('retrograde');
+    expect(rows.find((row) => row.bodyKey === 'sun')?.motion).toBe('direct');
+  });
+
+  it('finds Jupiter in hayz: of sect, above the horizon, in a masculine sign', () => {
+    expect(conditionRows(data).find((row) => row.bodyKey === 'jupiter')?.inHayz).toBe(true);
+  });
+
+  it('finds Venus besieged between Mars (behind) and Saturn (ahead), both within conjunction orb', () => {
+    const row = conditionRows(data).find((row) => row.bodyKey === 'venus');
+    expect(row?.besieged).toBe(true);
+  });
+
+  it('omits solar phase/condition for the Sun itself, reports it for every other body', () => {
+    const rows = conditionRows(data);
+    expect(rows.find((row) => row.bodyKey === 'sun')?.solarPhase).toBeUndefined();
+    expect(rows.find((row) => row.bodyKey === 'sun')?.solarCondition).toBeUndefined();
+    const mercuryRow = rows.find((row) => row.bodyKey === 'mercury');
+    expect(mercuryRow?.solarPhase).toBeDefined();
+    expect(mercuryRow?.solarCondition).toBeDefined();
+  });
+
+  it('omits angularity and hayz when houses are not usable', () => {
+    const noHouses: ChartData = {
+      ...data,
+      houses: { ...DAY_HOUSES, cusps: DAY_HOUSES.cusps.map((c, i) => (i === 0 ? c : Number.NaN)) },
+    };
+    const rows = conditionRows(noHouses);
+    expect(rows.every((row) => row.angularity === undefined)).toBe(true);
+    expect(rows.every((row) => row.inHayz === undefined)).toBe(true);
   });
 });
