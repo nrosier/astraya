@@ -21,6 +21,7 @@ Pure astrological calculation (no DOM/React): bodies, aspects, houses, dignities
 - `emphasis.ts` — Chart balance (element/modality/quadrant/hemisphere/dominant body/sign/house). Deps: `dignities`, `signs`.
 - `firdaria.ts` — Firdaria time-lord periods (seven classical planets + nodes, fixed years, day/night sect order) (#554). Deps: `sect`, `ephemeris/types`.
 - `fixed-stars.ts` — Fixed-star conjunctions + paran (angle-crossing). Deps: `aspects`.
+- `formula-parser.ts` — Safe recursive-descent arithmetic-expression parser/evaluator for user-defined points, no eval (#566). Deps: `ephemeris/types`.
 - `harmonics.ts` — Harmonic charts (Western) + Vedic Varga/divisional (D1/D9/D10). Deps: `signs`.
 - `horary.ts` — Horary "considerations before judgment" (radicality check via Lilly). Deps: `signs`.
 - `houses.ts` — UI's house-system picker list. Deps: `ephemeris/types`.
