@@ -36,4 +36,5 @@ One level above `src/astrology/`: composes pure astrological calculations into s
 - `solar-arc-directions.ts` — Solar arc directions (apply progressed Sun's arc to all bodies). Deps: `astrology/solar-arc-directions`, `astrology/progressions`, `astrology/aspects`.
 - `solar-return.ts` — Solar return (Sun returns to natal longitude each year). Deps: `astrology/solar-lunar-returns`, `astrology/aspects`, `ephemeris/generated-constants`.
 - `synastry.ts` — Two-person compatibility core (independent charts + cross-chart aspects + importance ranking). Deps: `astrology/aspects`, `astrology/synastry-importance`, `./chart-compute`.
+- `timing-timeline.ts` — Shared `TimingTimelineEvent` shape + adapters from zodiacal releasing/firdaria/profections onto one timeline axis (#554). Deps: `astrology/bodies`, `astrology/firdaria`, `astrology/zodiacal-releasing`, `astrology/signs`, `./profections`.
 - `transit.ts` — Transit bi-wheel (natal + moving positions + natal aspects). Deps: `astrology/aspects`, `./chart-compute`.

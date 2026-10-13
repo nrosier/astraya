@@ -19,6 +19,7 @@ Pure astrological calculation (no DOM/React): bodies, aspects, houses, dignities
 - `eclipses.ts` — Eclipse search + natal-contact analysis. Deps: `bodies`, `ephemeris/types`.
 - `electional.ts` — Electional astrology rule-scoring for auspicious timing. Deps: `aspects`, `bodies`, `emphasis`, `lunar-phase`, `void-of-course`.
 - `emphasis.ts` — Chart balance (element/modality/quadrant/hemisphere/dominant body/sign/house). Deps: `dignities`, `signs`.
+- `firdaria.ts` — Firdaria time-lord periods (seven classical planets + nodes, fixed years, day/night sect order) (#554). Deps: `sect`, `ephemeris/types`.
 - `fixed-stars.ts` — Fixed-star conjunctions + paran (angle-crossing). Deps: `aspects`.
 - `harmonics.ts` — Harmonic charts (Western) + Vedic Varga/divisional (D1/D9/D10). Deps: `signs`.
 - `horary.ts` — Horary "considerations before judgment" (radicality check via Lilly). Deps: `signs`.
@@ -48,3 +49,4 @@ Pure astrological calculation (no DOM/React): bodies, aspects, houses, dignities
 - `transit-importance.ts` — Transit filtering + ranking engine (daily/yearly presets). Deps: `aspects`, `bodies`, `rulership`.
 - `triplicity.ts` — Triplicity rulership (Dorothean/Lilly, day/night/participating). Deps: `bodies`, `signs`.
 - `void-of-course.ts` — Void-of-course Moon (last exact aspect before leaving sign). Deps: `aspects`, `bodies`.
+- `zodiacal-releasing.ts` — Zodiacal releasing, Level 1 only (sign/ruler/years periods walking forward from a Lot's natal sign) (#554). Deps: `bodies`, `dignities`, `signs`, `ephemeris/types`.
