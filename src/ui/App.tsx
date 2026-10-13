@@ -45,6 +45,7 @@ const personScreens = () => import('./person-screens.js');
 const AstrocartographyView = lazy(async () => ({ default: (await personScreens()).AstrocartographyView }));
 const ChartView = lazy(async () => ({ default: (await personScreens()).ChartView }));
 const CompositeView = lazy(async () => ({ default: (await personScreens()).CompositeView }));
+const ConsultationView = lazy(async () => ({ default: (await personScreens()).ConsultationView }));
 const DraconicView = lazy(async () => ({ default: (await personScreens()).DraconicView }));
 const HarmonicView = lazy(async () => ({ default: (await personScreens()).HarmonicView }));
 const Overview = lazy(async () => ({ default: (await personScreens()).Overview }));
@@ -446,6 +447,7 @@ function renderScreen(parsed: Route, seVersion: string | undefined): React.JSX.E
   if (
     parsed.kind === 'person' ||
     parsed.kind === 'person-overview' ||
+    parsed.kind === 'consultation' ||
     parsed.kind === 'chart' ||
     parsed.kind === 'report' ||
     parsed.kind === 'profections' ||
@@ -471,6 +473,7 @@ type PersonRoute = Extract<
     kind:
       | 'person'
       | 'person-overview'
+      | 'consultation'
       | 'chart'
       | 'report'
       | 'timing-timeline'
@@ -509,6 +512,7 @@ function renderChart(parsed: Extract<Route, { kind: 'chart' }>): React.JSX.Eleme
 function renderPersonView(parsed: PersonRoute): React.JSX.Element {
   if (parsed.kind === 'person') return <PersonForm key={parsed.personId} personId={parsed.personId} />;
   if (parsed.kind === 'person-overview') return <Overview key={parsed.personId} personId={parsed.personId} />;
+  if (parsed.kind === 'consultation') return <ConsultationView key={parsed.personId} personId={parsed.personId} />;
   if (parsed.kind === 'chart') return renderChart(parsed);
   if (parsed.kind === 'report') return <ReportScreen key={parsed.personId} personId={parsed.personId} />;
   if (parsed.kind === 'timing-timeline') return <TimingTimelineView key={parsed.personId} personId={parsed.personId} />;

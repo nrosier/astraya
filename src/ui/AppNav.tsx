@@ -48,7 +48,9 @@ import { PersonSwitcher } from './PersonSwitcher.js';
 import { useExclusiveOpen, type ExclusiveOpen } from './use-exclusive-open.js';
 
 // Charts is one destination (#511): the chart type is chosen on the page, not in this navigation.
-const UNGROUPED_KEYS = new Set(['overview', 'birth-record', 'chart', 'report', 'astrocartography']);
+// 'consultation' (#563) is here too, not in LEADING_KEYS below — it needs a complete birth
+// moment (isTabEnabled), unlike the two tabs that are always reachable.
+const UNGROUPED_KEYS = new Set(['overview', 'consultation', 'birth-record', 'chart', 'report', 'astrocartography']);
 // Rendered first, in this fixed order — the two tabs a person can land on regardless of
 // completeness (#506/#509's canonical Overview destination plus the existing Birth record tab),
 // per docs/UI-UX_GUIDELINES.md §2's person-workspace order.

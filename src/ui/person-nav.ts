@@ -12,6 +12,7 @@
 
 export type PersonTabKey =
   | 'overview'
+  | 'consultation'
   | 'birth-record'
   | 'chart'
   | 'report'
@@ -41,6 +42,10 @@ export const PERSON_TABS: readonly PersonTab[] = [
   // reachable before every other tab, same as birth-record, since both are the two places a
   // person can land regardless of completeness (activeTabKey/isTabEnabled below).
   { key: 'overview', buildHref: (id) => routeHref({ kind: 'person-overview', personId: id }) },
+  // The consultation dashboard (#563): second in the workspace, right after Overview — both are
+  // aggregation/landing screens, but unlike Overview it needs a complete birth moment
+  // (isTabEnabled below), since it has nothing to show without one.
+  { key: 'consultation', buildHref: (id) => routeHref({ kind: 'consultation', personId: id }) },
   { key: 'birth-record', buildHref: (id) => routeHref({ kind: 'person', personId: id }) },
   { key: 'chart', buildHref: (id) => routeHref({ kind: 'chart', personId: id }) },
   { key: 'report', buildHref: (id) => routeHref({ kind: 'report', personId: id }) },
