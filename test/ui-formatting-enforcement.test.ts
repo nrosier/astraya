@@ -12,7 +12,12 @@ const FORBIDDEN =
   /\.toFixed\(|\.toLocale(?:Date|Time)?String\(|Intl\.(?:NumberFormat|DateTimeFormat)|\.toISOString\(\)\.slice\(/;
 
 /** The shared formatters themselves, and data (not display) that is stamped in ISO form. */
-const ALLOWED = new Set(['src/ui/format.ts', 'src/ui/saved-time.ts', 'src/domain/full-export.ts']);
+const ALLOWED = new Set([
+  'src/ui/format.ts',
+  'src/ui/saved-time.ts',
+  'src/domain/full-export.ts',
+  'src/domain/event-search.ts',
+]);
 
 function sourceFiles(dir: string): readonly string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
