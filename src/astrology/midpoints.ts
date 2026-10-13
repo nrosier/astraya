@@ -12,12 +12,20 @@
  * conjunction, square, and opposition to the same dial position, so a
  * single distance check catches a body in any hard aspect to a midpoint,
  * not only an exact conjunction.
+ *
+ * The 45-degree dial (#555) is the same idea one division finer: projecting
+ * onto an eighth-circle (`longitude mod 45`) additionally collapses the
+ * semisquare and sesquiquadrate onto the same dial position as a
+ * conjunction/square/opposition hit — the standard Uranian-school refinement
+ * over the plain 90° dial. `dialPosition`/`midpointTree` both take the
+ * divisor as a parameter (default 90, so every existing caller is
+ * unaffected) rather than this module defining two near-duplicate functions.
  */
 
 /**
  * @module Midpoints
- * @purpose Computes midpoints between bodies, midpoint trees, and 90-degree dial projections for midpoint analysis.
- * @conventions The conventional midpoint is the near one — half of the shorter arc, per Ebertin's cosmobiology — not the naive (a+b)/2; the 90-degree dial projects longitude mod 90 so conjunction/square/opposition to a midpoint collapse to the same dial position.
+ * @purpose Computes midpoints between bodies, midpoint trees, and dial projections (90° default, 45° optional) for midpoint analysis.
+ * @conventions The conventional midpoint is the near one — half of the shorter arc, per Ebertin's cosmobiology — not the naive (a+b)/2; the dial projects longitude mod `divisor` (default 90, optionally 45) so conjunction/square/opposition (and, at 45°, semisquare/sesquiquadrate too) to a midpoint collapse to the same dial position.
  * @exports midpointOf, oppositeMidpointOf, allMidpoints, dialPosition, midpointTree
  */
 import type { BodyId, Degrees } from '../ephemeris/types.js';
@@ -57,15 +65,15 @@ export function allMidpoints(positions: ReadonlyMap<BodyId, Degrees>): readonly 
   return result;
 }
 
-/** Projects a longitude onto the 90-degree dial: 0/90/180/270 all land at the same dial position. */
-export function dialPosition(longitude: Degrees): Degrees {
-  return norm360(longitude) % 90;
+/** Projects a longitude onto the dial (default 90°, optionally 45°): e.g. at 90°, 0/90/180/270 all land at the same dial position. */
+export function dialPosition(longitude: Degrees, divisor: Degrees = 90): Degrees {
+  return norm360(longitude) % divisor;
 }
 
-/** Shortest distance between two dial positions, wrapping at the 0/90 seam. */
-function dialSeparation(a: Degrees, b: Degrees): Degrees {
-  const diff = Math.abs(dialPosition(a) - dialPosition(b));
-  return Math.min(diff, 90 - diff);
+/** Shortest distance between two dial positions, wrapping at the dial's own seam. */
+function dialSeparation(a: Degrees, b: Degrees, divisor: Degrees): Degrees {
+  const diff = Math.abs(dialPosition(a, divisor) - dialPosition(b, divisor));
+  return Math.min(diff, divisor - diff);
 }
 
 export interface MidpointTreeHit extends BodyPairMidpoint {
@@ -75,17 +83,22 @@ export interface MidpointTreeHit extends BodyPairMidpoint {
 }
 
 /**
- * Every body that falls, on the 90-degree dial and within `orb`, on some
- * other pair's midpoint. A dial hit means a hard aspect (conjunction,
- * square, or opposition) to that midpoint — the traditional midpoint tree.
+ * Every body that falls, on the dial (default 90°, optionally 45°) and within `orb`, on some
+ * other pair's midpoint. A 90° dial hit means a hard aspect (conjunction, square, or opposition)
+ * to that midpoint; a 45° dial additionally catches semisquare/sesquiquadrate — the traditional
+ * midpoint tree, and the finer Uranian-school refinement of it.
  */
-export function midpointTree(positions: ReadonlyMap<BodyId, Degrees>, orb: Degrees): readonly MidpointTreeHit[] {
+export function midpointTree(
+  positions: ReadonlyMap<BodyId, Degrees>,
+  orb: Degrees,
+  divisor: Degrees = 90,
+): readonly MidpointTreeHit[] {
   const pairs = allMidpoints(positions);
   const hits: MidpointTreeHit[] = [];
   for (const [body, longitude] of positions) {
     for (const pair of pairs) {
       if (pair.a === body || pair.b === body) continue;
-      const separation = dialSeparation(longitude, pair.midpoint);
+      const separation = dialSeparation(longitude, pair.midpoint, divisor);
       if (separation <= orb) hits.push({ ...pair, body, orb: separation });
     }
   }

@@ -20,6 +20,7 @@ import {
   dignityRows,
   dispositorRows,
   emphasisRows,
+  allMidpointsRows,
   fixedStarRows,
   houseCuspRows,
   midpointTreeRows,
@@ -574,6 +575,31 @@ describe('midpointTreeRows (#556)', () => {
       partOfSpirit: 0,
     };
     expect(midpointTreeRows(data, 1)).toEqual([]);
+  });
+});
+
+describe('allMidpointsRows (#555)', () => {
+  it('returns one direct and one indirect row per unique body pair', () => {
+    const data: ChartData = {
+      positions: [position(SUN, 10), position(MOON, 30), position(MARS, 61)],
+      houses: HOUSES,
+      aspects: [],
+      dignities: new Map(),
+      sect: 'day',
+      partOfFortune: 0,
+      partOfSpirit: 0,
+    };
+    const rows = allMidpointsRows(data);
+    // 3 bodies -> 3 unique pairs, 2 rows (direct + indirect) each.
+    expect(rows).toHaveLength(6);
+    const sunMoonDirect = rows.find(
+      (row) => row.bodyAKey === 'sun' && row.bodyBKey === 'moon' && row.kind === 'direct',
+    );
+    const sunMoonIndirect = rows.find(
+      (row) => row.bodyAKey === 'sun' && row.bodyBKey === 'moon' && row.kind === 'indirect',
+    );
+    expect(sunMoonDirect?.midpoint).toBeCloseTo(20, 6);
+    expect(sunMoonIndirect?.midpoint).toBeCloseTo(200, 6);
   });
 });
 

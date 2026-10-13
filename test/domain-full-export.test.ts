@@ -138,11 +138,12 @@ describe('buildFullExport', () => {
     // The same Sun the chart screen shows: Ada Lovelace's Sun is in Sagittarius.
     expect(chart?.positions.find((row) => row.bodyKey === 'sun')?.sign).toBe('Sagittarius');
     // #556: antiscia/declinations are always included (same "compute, don't gate" convention
-    // as the live chart screen); midpoint tree is empty under default settings, since
-    // `dial90Visible` is off by default.
+    // as the live chart screen); midpoint tree and all-midpoints are empty under default
+    // settings, since `dial90Visible`/`midpointsVisible` are both off by default.
     expect(Array.isArray(chart?.antiscia)).toBe(true);
     expect(Array.isArray(chart?.declinations)).toBe(true);
     expect(chart?.midpointTree).toEqual([]);
+    expect(chart?.allMidpoints).toEqual([]);
   });
 
   it('includes 90°-dial midpoint-tree hits once dial90Visible is set (#556)', async () => {
@@ -162,6 +163,23 @@ describe('buildFullExport', () => {
     for (const row of chart?.midpointTree ?? []) {
       expect(row.orb).toBeLessThanOrEqual(3);
     }
+  });
+
+  it('includes every body-pair midpoint (direct and indirect) once midpointsVisible is set (#555)', async () => {
+    const archive = await buildFullExport({
+      people: [ADA],
+      provider: engine,
+      appVersion: '9.9.9',
+      settings: { ...DEFAULT_EXTENDED_SETTINGS, midpointsVisible: true },
+      rulership: 'modern',
+      symbolClass: 'drawn',
+      now: NOW,
+    });
+    const chart = archive.people[0]?.natalChart;
+    expect(chart?.allMidpoints.length ?? 0).toBeGreaterThan(0);
+    expect(chart?.allMidpoints.filter((row) => row.kind === 'direct').length).toBe(
+      chart?.allMidpoints.filter((row) => row.kind === 'indirect').length,
+    );
   });
 
   it('computes dignities under the device’s own rulership scheme, not a hardcoded one (#460)', async () => {
