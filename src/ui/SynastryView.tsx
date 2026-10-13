@@ -18,13 +18,18 @@
 /**
  * @module SynastryView
  * @purpose Synastry bi-wheel screen comparing a saved person against a second saved person: cross-chart aspects, ranked contacts, house overlays via RelationshipSummary, and interpretation text.
- * @conventions Calls renderMultiWheelSvg directly like TransitView.tsx does, bypassing the single-chart AstroChartWheel; uses SynastryView.messages.ts for en/nl text via useMessages().
+ * @conventions Calls renderMultiWheelSvg directly like TransitView.tsx does, bypassing the single-chart AstroChartWheel; uses SynastryView.messages.ts for en/nl text via useMessages(). Carries its own PrintProvenance footer (#564) labelled with engine defaults, since computeSynastry doesn't yet take a user-configurable calculation snapshot.
  * @exports SynastryView, aspectColumns
  */
 import { Select } from './primitives/Select.js';
 import { GlossaryTerms } from './GlossaryTerm.js';
-import { formatFixed } from './format.js';
+import { formatFixed, formatTimestamp } from './format.js';
 import { personHref } from './route.js';
+import { houseSystemLabel, rulershipLabel, zodiacLabel } from './ChartView.js';
+import { PrintProvenance } from './PrintProvenance.js';
+import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
+import { DEFAULT_RULERSHIP_CHOICE } from '../astrology/rulership.js';
+import { buildCalculationSnapshot, calculationSnapshotIdentity } from '../domain/calculation-snapshot.js';
 import { useSymbolClass } from './symbol-setting.js';
 import { useGlyphVariants } from './glyph-variant-setting.js';
 import { useEffect, useMemo, useState } from 'react';
@@ -270,6 +275,19 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
 
   return (
     <main className="shell">
+      {/* Invisible outside @media print (#564) — see app.css's own `.print-provenance` rule.
+          This screen doesn't yet thread a user-configurable calculation snapshot through
+          `computeSynastry` (see PrintProvenance.tsx's doc comment), so the footer truthfully
+          names the engine defaults both charts are actually computed with. */}
+      <PrintProvenance
+        houseSystem={houseSystemLabel(DEFAULT_EXTENDED_SETTINGS.houseSystem)}
+        zodiac={zodiacLabel(DEFAULT_EXTENDED_SETTINGS.zodiac)}
+        rulership={rulershipLabel(DEFAULT_RULERSHIP_CHOICE)}
+        snapshotIdentity={calculationSnapshotIdentity(
+          buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE),
+        )}
+        generatedAt={formatTimestamp(new Date())}
+      />
       <p className="back">
         <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
       </p>

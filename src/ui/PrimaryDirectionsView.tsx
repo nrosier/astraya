@@ -16,11 +16,16 @@
 /**
  * @module PrimaryDirectionsView
  * @purpose Primary directions screen for one person: time-key picker, date and age inputs kept in step, natal/directed bi-wheel at the chosen age, the directions active at that age and the full lifetime list sorted by age.
- * @conventions Gated for unknown birth time like other angle-dependent screens; draws the bi-wheel with renderMultiWheelSvg directly (no cross-ring lines), injected as app-generated SVG the same way TransitView.tsx does; uses PrimaryDirectionsView.messages.ts for en/nl text via useMessages().
+ * @conventions Gated for unknown birth time like other angle-dependent screens; draws the bi-wheel with renderMultiWheelSvg directly (no cross-ring lines), injected as app-generated SVG the same way TransitView.tsx does; uses PrimaryDirectionsView.messages.ts for en/nl text via useMessages(). Carries its own PrintProvenance footer (#564) labelled with engine defaults, since generatePrimaryDirections doesn't yet take a user-configurable calculation snapshot.
  * @exports PrimaryDirectionsView
  */
 import { GlossaryTerms } from './GlossaryTerm.js';
 import { personHref } from './route.js';
+import { houseSystemLabel, rulershipLabel, zodiacLabel } from './ChartView.js';
+import { PrintProvenance } from './PrintProvenance.js';
+import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
+import { DEFAULT_RULERSHIP_CHOICE } from '../astrology/rulership.js';
+import { buildCalculationSnapshot, calculationSnapshotIdentity } from '../domain/calculation-snapshot.js';
 import { useEffect, useMemo, useState } from 'react';
 import { ageInYears, TROPICAL_YEAR_DAYS } from '../astrology/progressions.js';
 import { renderMultiWheelSvg, type WheelRingInput } from '../chart/multi-wheel.js';
@@ -43,7 +48,7 @@ import { civilFromJulianDay } from '../time/julian.js';
 import { momentKey } from '../time/encode.js';
 import { aspectDisplayName, bodyDisplayName } from './astro-names.messages.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
-import { formatFixed, todayInputValue } from './format.js';
+import { formatFixed, formatTimestamp, todayInputValue } from './format.js';
 import { useGlyphVariants } from './glyph-variant-setting.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
@@ -277,6 +282,19 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
 
   return (
     <main className="shell">
+      {/* Invisible outside @media print (#564) — see app.css's own `.print-provenance` rule.
+          This screen doesn't yet thread a user-configurable calculation snapshot through
+          `generatePrimaryDirections` (see PrintProvenance.tsx's doc comment), so the footer
+          truthfully names the engine defaults the bi-wheel is actually computed with. */}
+      <PrintProvenance
+        houseSystem={houseSystemLabel(DEFAULT_EXTENDED_SETTINGS.houseSystem)}
+        zodiac={zodiacLabel(DEFAULT_EXTENDED_SETTINGS.zodiac)}
+        rulership={rulershipLabel(DEFAULT_RULERSHIP_CHOICE)}
+        snapshotIdentity={calculationSnapshotIdentity(
+          buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE),
+        )}
+        generatedAt={formatTimestamp(new Date())}
+      />
       <p className="back">
         <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
       </p>
