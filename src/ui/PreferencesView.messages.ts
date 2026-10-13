@@ -14,6 +14,9 @@ const en = {
   languageLabel: 'Interface and interpretation-report language.',
   astrologyHeading: 'Astrology defaults',
   rulersSubtitle: 'Which planets rule which signs, wherever a ruler, dignity, or dispositor is shown.',
+  chartSetupSubtitle:
+    'House system, zodiac, orbs, and which points show — every calculation-affecting setting in one place, before you compute a chart. The same control every chart screen’s own "Extended settings" opens.',
+  chartSetupNeedsEngine: 'Chart setup needs the calculation engine, which is still loading.',
   appearanceHeading: 'Appearance & accessibility',
   themeLabel: 'Light, dark, or follow the system.',
   motionLabel: 'Motion',
@@ -45,6 +48,9 @@ const nl: typeof en = {
   astrologyHeading: 'Astrologische standaardinstellingen',
   rulersSubtitle:
     'Welke planeten welke tekens heersen, overal waar een heerser, waardigheid of dispositor wordt getoond.',
+  chartSetupSubtitle:
+    'Huizensysteem, dierenriem, orbs en welke punten worden getoond — elke berekeningsinstelling op één plek, voordat je een horoscoop berekent. Dezelfde bediening die "Uitgebreide instellingen" op elk horoscoopscherm opent.',
+  chartSetupNeedsEngine: 'Horoscoopinstellingen hebben de rekenmachine nodig, die nog wordt geladen.',
   appearanceHeading: 'Weergave & toegankelijkheid',
   themeLabel: 'Licht, donker, of het systeem volgen.',
   motionLabel: 'Beweging',
