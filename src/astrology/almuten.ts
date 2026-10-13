@@ -1,14 +1,21 @@
 /**
- * Peregrine detection and almuten scoring (#27).
+ * Peregrine detection and almuten scoring (#27, #551).
  *
  * Classical essential-dignity scoring weights each of the five dignities a
  * planet can hold at a degree: 5 points for domicile rulership, 4 for
  * exaltation, 3 for its sect-appropriate triplicity rulership, 2 for its
- * bound (term), 1 for its face (decan) — the scheme used throughout, e.g.
- * DCCCXIII/astro's `almuten/figuris.go` implementing Ibn Ezra's Almuten
- * Figuris. A planet with none of the five at a given degree is "peregrine"
- * there (score 0) — traditionally read as lacking any foothold of dignity,
- * for better or worse depending on the planet's other conditions.
+ * bound (term), 1 for its face (decan). This 5/4/3/2/1 weighting is the one
+ * most commonly attributed to Ibn Ezra's Almuten Figuris in modern
+ * traditional-astrology secondary literature (e.g. summarized in Benjamin
+ * Dykes' writing on the technique, and implemented identically by other
+ * open tools such as DCCCXIII/astro's `almuten/figuris.go`) — this project
+ * has not independently verified it against Ibn Ezra's own medieval text,
+ * only against that convergent modern-secondary-source agreement, which is
+ * worth noting explicitly rather than implying a primary-source citation
+ * that was never actually checked. A planet with none of the five at a
+ * given degree is "peregrine" there (score 0) — traditionally read as
+ * lacking any foothold of dignity, for better or worse depending on the
+ * planet's other conditions.
  *
  * Only triplicity's sect-appropriate ruler counts (the day ruler in a day
  * chart, the night ruler in a night chart) — never the participating ruler,

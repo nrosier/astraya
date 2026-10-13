@@ -30,7 +30,7 @@
  * @module ChartView
  * @purpose Renders the natal chart screen: the chart wheel plus every data table a chart computes (positions, houses, aspects, dignities, dispositors, declinations, antiscia, fixed stars, chart shape, derived points), and the SVG/PNG/PDF export + share-link controls.
  * @conventions Exports `ChartDataView`, the shared tabbed chart+tables UI reused by CompositeView/SharedChartView; every value is recomputed from the stored birth moment via `domain/chart-compute.js`/`domain/chart-tables.js` rather than read from a saved Chart record; houses/angles/derived-points tables are hidden when `timeAccuracy === 'unknown'`. Text comes from co-located `ChartView.messages.ts` via `useMessages()`.
- * @exports ChartView, ChartDataView, emphasisColumns, positionColumns, houseCuspColumns, angleColumns, aspectColumns, dignityColumns, conditionColumns, receptionColumns, dispositorColumns, declinationColumns, antisciaColumns, fixedStarColumns, derivedPointColumns
+ * @exports ChartView, ChartDataView, emphasisColumns, positionColumns, houseCuspColumns, angleColumns, aspectColumns, dignityColumns, almutenCandidateColumns, conditionColumns, receptionColumns, dispositorColumns, declinationColumns, antisciaColumns, fixedStarColumns, derivedPointColumns
  */
 import { formatFixed } from './format.js';
 import { Tooltip } from './primitives/Tooltip.js';
@@ -55,6 +55,7 @@ import {
   positionRows,
   receptionRows,
   visiblePositions,
+  type AlmutenCandidateRow,
   type AngleRow,
   type AntisciaRow,
   type AspectRow,
@@ -426,6 +427,57 @@ export function dignityColumns(t: typeof chartViewMessages.en, locale: Locale): 
       align: 'center',
       render: (row) => (row.peregrine ? '✓' : ''),
     },
+  ];
+}
+
+/** Every Almuten-of-the-Ascendant candidate's own score breakdown (#551) — not only the winner's name. */
+export function almutenCandidateColumns(
+  t: typeof chartViewMessages.en,
+  locale: Locale,
+): readonly TableColumn<AlmutenCandidateRow>[] {
+  return [
+    {
+      key: 'bodyName',
+      label: t.bodyLabel,
+      valueOf: (row) => row.bodyName,
+      render: (row) => bodyDisplayName(row.bodyKey, locale),
+    },
+    {
+      key: 'ruler',
+      label: t.rulerLabel,
+      valueOf: (row) => row.ruler,
+      align: 'center',
+      render: (row) => (row.ruler ? '✓' : ''),
+    },
+    {
+      key: 'exalted',
+      label: t.exaltedLabel,
+      valueOf: (row) => row.exalted,
+      align: 'center',
+      render: (row) => (row.exalted ? '✓' : ''),
+    },
+    {
+      key: 'triplicity',
+      label: t.triplicityLabel,
+      valueOf: (row) => row.triplicity,
+      align: 'center',
+      render: (row) => (row.triplicity ? '✓' : ''),
+    },
+    {
+      key: 'bound',
+      label: t.boundLabel,
+      valueOf: (row) => row.bound,
+      align: 'center',
+      render: (row) => (row.bound ? '✓' : ''),
+    },
+    {
+      key: 'face',
+      label: t.faceLabel,
+      valueOf: (row) => row.face,
+      align: 'center',
+      render: (row) => (row.face ? '✓' : ''),
+    },
+    { key: 'points', label: t.dignityPointsLabel, valueOf: (row) => row.points },
   ];
 }
 
@@ -908,12 +960,22 @@ function renderTableTab(
       return (
         <>
           {almuten !== undefined && (
-            <p className="hint">
-              {t.almutenOfAscendantSentence(almuten.almutens.map((key) => bodyDisplayName(key, locale)).join(', '))}{' '}
-              <Tooltip text={t.almutenTooltip} label={t.almutenTooltipLabel}>
-                ?
-              </Tooltip>
-            </p>
+            <>
+              <p className="hint">
+                {t.almutenOfAscendantSentence(almuten.almutens.map((key) => bodyDisplayName(key, locale)).join(', '))}{' '}
+                <Tooltip text={t.almutenTooltip} label={t.almutenTooltipLabel}>
+                  ?
+                </Tooltip>
+              </p>
+              {/* Every candidate's own breakdown, not only the winner's name (#551). */}
+              <SortableTable
+                caption={t.almutenBreakdownCaption}
+                columns={almutenCandidateColumns(t, locale)}
+                rows={almuten.candidates}
+                getRowKey={(row) => row.bodyKey}
+                downloadFilename={deriveExportFilename(displayName, 'almuten', 'csv')}
+              />
+            </>
           )}
           <SortableTable
             caption={t.dignitiesCaption}
