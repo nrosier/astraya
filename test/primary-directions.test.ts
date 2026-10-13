@@ -341,6 +341,34 @@ describe('against the real Swiss Ephemeris', () => {
     expect(new Set(data.hits.map((hit) => hit.significator))).toEqual(new Set(['asc', 'mc', 'sun', 'moon']));
   });
 
+  it('directs to exactly the configured significator/promissor sets, not the defaults (#553)', async () => {
+    const engine = await getEngine();
+    const data = await generatePrimaryDirections(PRINCE_CHARLES, engine, PrimaryDirectionKey.NAIBOD, undefined, {
+      significators: ['dsc', 'ic'],
+      promissors: ['venus', 'mars'],
+    });
+    expect(new Set(data.hits.map((hit) => hit.significator))).toEqual(new Set(['dsc', 'ic']));
+    expect(new Set(data.hits.map((hit) => hit.promissor))).toEqual(new Set(['venus', 'mars']));
+  });
+
+  it('directs the Moon to the IC (opposition) at the same arc as to the MC (conjunction) — the same ASC/DSC geometric relationship the module’s own header cites, now checked directly now that IC can be asked for on its own (#553)', async () => {
+    const engine = await getEngine();
+    const defaultData = await generatePrimaryDirections(PRINCE_CHARLES, engine, PrimaryDirectionKey.NAIBOD);
+    const angleData = await generatePrimaryDirections(PRINCE_CHARLES, engine, PrimaryDirectionKey.NAIBOD, undefined, {
+      significators: ['ic'],
+      promissors: ['moon'],
+    });
+    const mcConjunction = defaultData.hits.find(
+      (hit) => hit.significator === 'mc' && hit.promissor === 'moon' && hit.aspect === 'conjunction',
+    );
+    const icOpposition = angleData.hits.find(
+      (hit) => hit.significator === 'ic' && hit.promissor === 'moon' && hit.aspect === 'opposition',
+    );
+    expect(mcConjunction).toBeDefined();
+    expect(icOpposition).toBeDefined();
+    expect(icOpposition?.arcRA).toBeCloseTo(mcConjunction?.arcRA ?? Number.NaN, 6);
+  });
+
   it('marks a direction active within ±orb of arc of its own, and only there (orb filtering)', async () => {
     const engine = await getEngine();
     const data = await generatePrimaryDirections(PRINCE_CHARLES, engine, PrimaryDirectionKey.NAIBOD);
