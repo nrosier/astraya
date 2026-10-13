@@ -21,6 +21,7 @@
  * @exports ExtendedSettingsPanel
  */
 import { Checkbox } from './primitives/Checkbox.js';
+import { NumberField } from './primitives/NumberField.js';
 import { StagedDialog } from './primitives/StagedDialog.js';
 import { formatDecimal } from './format.js';
 import { useEffect, useRef, useState } from 'react';
@@ -577,6 +578,29 @@ export function ExtendedSettingsPanel({
             />
           </div>
           <p className="hint">{t.aspectsToHint}</p>
+          <Checkbox
+            label={t.dial90}
+            checked={draft.dial90Visible}
+            onChange={(value) => {
+              patch({ dial90Visible: value });
+            }}
+          />
+          <div className="settings-card-indent">
+            <NumberField
+              label={t.midpointTreeOrbLabel}
+              value={String(draft.midpointTreeOrb)}
+              min={0}
+              max={10}
+              step={0.5}
+              decreaseLabel={t.midpointTreeOrbDecreaseLabel}
+              increaseLabel={t.midpointTreeOrbIncreaseLabel}
+              onChange={(value) => {
+                const parsed = Number(value);
+                if (value !== '' && Number.isFinite(parsed) && parsed >= 0) patch({ midpointTreeOrb: parsed });
+              }}
+            />
+          </div>
+          <p className="hint settings-card-indent">{t.dial90Hint}</p>
         </fieldset>
 
         <fieldset className="field-group settings-card-group">

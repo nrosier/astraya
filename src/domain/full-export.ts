@@ -29,12 +29,15 @@ import {
 } from '../chart/extended-settings.js';
 import { housesAreDefined, computeChartData, type ChartData } from './chart-compute.js';
 import {
+  antisciaRows,
   aspectRows,
   angleRows,
+  declinationContactRows,
   derivedPointRows,
   dignityRows,
   dispositorRows,
   houseCuspRows,
+  midpointTreeRows,
   positionRows,
   type PointVisibilityOptions,
 } from './chart-tables.js';
@@ -56,6 +59,12 @@ export interface ExportedChart {
   readonly aspects: ReturnType<typeof aspectRows>;
   readonly dignities: ReturnType<typeof dignityRows>;
   readonly dispositors: ReturnType<typeof dispositorRows>;
+  /** Antiscion/contra-antiscion contacts (#556) — empty when none fall within the default orb. */
+  readonly antiscia: ReturnType<typeof antisciaRows>;
+  /** Parallel/contraparallel declination contacts (#556) — empty when `ChartData.declinations` is unavailable or none fall within the default orb. */
+  readonly declinations: ReturnType<typeof declinationContactRows>;
+  /** 90°-dial midpoint-tree hits (#556) — only computed when `dial90Visible` is set, otherwise empty, matching the on-screen table's own gate. */
+  readonly midpointTree: ReturnType<typeof midpointTreeRows>;
 }
 
 export interface ExportedPerson {
@@ -126,6 +135,9 @@ function chartExport(
     // Always traditional (#545) — dignityRows no longer takes a rulership/display-choice parameter.
     dignities: dignityRows(data, visibility),
     dispositors: dispositorRows(data, visibility, rulership),
+    antiscia: antisciaRows(data),
+    declinations: declinationContactRows(data),
+    midpointTree: visibility.dial90Visible === true ? midpointTreeRows(data, visibility.midpointTreeOrb) : [],
   };
 }
 

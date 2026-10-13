@@ -112,6 +112,12 @@ const en = {
   aspectsToPartOfSpirit: 'Draw aspects to the Part of Spirit',
   aspectsToHint:
     'The Ascendant and Midheaven always aspect the bodies. The Vertex and the two parts do so here, to bodies only, never to each other or the angles; a part is not aspected to the luminary it is built from, as that repeats an Ascendant aspect.',
+  dial90: 'Midpoint tree (90° dial)',
+  dial90Hint:
+    'Lists every body sitting within the orb below of another pair’s midpoint, collapsed onto the 90° dial so conjunction, square and opposition hits are all caught — the standard cosmobiological midpoint-structure reading, shown as a table (not yet a wheel overlay).',
+  midpointTreeOrbLabel: 'Midpoint tree orb',
+  midpointTreeOrbDecreaseLabel: 'Decrease midpoint tree orb',
+  midpointTreeOrbIncreaseLabel: 'Increase midpoint tree orb',
 
   schemeLegend: 'Traditional scheme',
   schemeHint:
@@ -275,6 +281,12 @@ const nl: typeof en = {
   aspectsToPartOfSpirit: 'Aspecten naar het Lot van de Geest tekenen',
   aspectsToHint:
     'De Ascendant en het Midheaven maken altijd aspecten met de lichamen. De Vertex en de twee punten doen dat hier, alleen met lichamen, nooit met elkaar of met de assen; een punt maakt geen aspect met het lichtgevend lichaam waaruit het is opgebouwd, omdat dat een Ascendant-aspect herhaalt.',
+  dial90: 'Middelpuntenboom (90°-dial)',
+  dial90Hint:
+    'Toont elk lichaam dat binnen de orb hieronder op het middelpunt van een ander paar valt, samengevouwen op de 90°-dial zodat conjunctie, vierkant en oppositie allemaal worden gevonden — de gangbare cosmobiologische lezing van middelpuntstructuren, getoond als tabel (nog geen overlay op het wiel).',
+  midpointTreeOrbLabel: 'Orb voor de middelpuntenboom',
+  midpointTreeOrbDecreaseLabel: 'Orb voor de middelpuntenboom verkleinen',
+  midpointTreeOrbIncreaseLabel: 'Orb voor de middelpuntenboom vergroten',
 
   schemeLegend: 'Traditioneel schema',
   schemeHint:

@@ -22,6 +22,8 @@ describe('DEFAULT_EXTENDED_SETTINGS', () => {
     expect(DEFAULT_EXTENDED_SETTINGS.fortuneVisible).toBe(false);
     expect(DEFAULT_EXTENDED_SETTINGS.vertexVisible).toBe(false);
     expect(DEFAULT_EXTENDED_SETTINGS.midpointsVisible).toBe(false);
+    expect(DEFAULT_EXTENDED_SETTINGS.dial90Visible).toBe(false);
+    expect(DEFAULT_EXTENDED_SETTINGS.midpointTreeOrb).toBe(1);
     expect(DEFAULT_EXTENDED_SETTINGS.rainbowZodiac).toBe(false);
     expect(DEFAULT_EXTENDED_SETTINGS.aspectsToChiron).toBe(false);
     expect(DEFAULT_EXTENDED_SETTINGS.aspectsToLilith).toBe(false);
@@ -84,13 +86,15 @@ describe('toChartCalculationOptions', () => {
 });
 
 describe('toPointVisibilityOptions', () => {
-  it('picks out exactly the five visibility flags (#542)', () => {
+  it('picks out exactly the five visibility flags plus the dial90 pair (#542, #556)', () => {
     const settings = withOverrides({
       chironVisible: false,
       fortuneVisible: true,
       vertexVisible: true,
       spiritVisible: true,
       midpointsVisible: true,
+      dial90Visible: true,
+      midpointTreeOrb: 2,
     });
     expect(toPointVisibilityOptions(settings)).toEqual({
       chironVisible: false,
@@ -98,6 +102,8 @@ describe('toPointVisibilityOptions', () => {
       vertexVisible: true,
       spiritVisible: true,
       midpointsVisible: true,
+      dial90Visible: true,
+      midpointTreeOrb: 2,
     });
   });
 });

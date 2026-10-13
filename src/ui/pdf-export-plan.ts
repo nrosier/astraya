@@ -42,6 +42,7 @@ import {
   dispositorRows,
   fixedStarRows,
   houseCuspRows,
+  midpointTreeRows,
   positionRows,
   aspectRows,
   chartSheetInput,
@@ -102,6 +103,7 @@ import {
   dispositorColumns,
   fixedStarColumns,
   houseCuspColumns,
+  midpointTreeColumns,
   positionColumns,
 } from './ChartView.js';
 import type { chartViewMessages } from './ChartView.messages.js';
@@ -254,6 +256,11 @@ function tablesOf(
       const antiscion = antisciaRows(data);
       const declinations = declinationContactRows(data);
       const stars = fixedStarRows(data, {});
+      // Same "shown only when non-empty" convention as antiscia/declination above — this
+      // section ignores the live `ExtendedSettings.dial90Visible` toggle the same way it
+      // already ignores every other point-visibility setting (see the `{}` passed throughout
+      // this function); #556 only wires it into the on-screen table and both export formats.
+      const midpointTreeHits = midpointTreeRows(data);
       return [
         tablePlanOf(t.aspectsCaption, aspectColumns(t, locale), aspectRows(data)),
         ...(antiscion.length === 0 ? [] : [tablePlanOf(t.antisciaCaption, antisciaColumns(t, locale), antiscion)]),
@@ -261,6 +268,9 @@ function tablesOf(
           ? []
           : [tablePlanOf(t.declinationsCaption, declinationColumns(t, locale), declinations)]),
         ...(stars.length === 0 ? [] : [tablePlanOf(t.fixedStarsCaption, fixedStarColumns(t, locale), stars)]),
+        ...(midpointTreeHits.length === 0
+          ? []
+          : [tablePlanOf(t.midpointTreeCaption, midpointTreeColumns(t, locale), midpointTreeHits)]),
       ];
     }
     case 'dignities':

@@ -20,7 +20,7 @@ import { DEFAULT_ORB_CONFIG, type OrbConfig } from '../astrology/aspects.js';
 import type { BoundsScheme } from '../astrology/bounds.js';
 import type { ChartCalculationOptions } from '../domain/chart-compute.js';
 import type { PointVisibilityOptions } from '../domain/chart-tables.js';
-import type { HouseSystem, Zodiac } from '../ephemeris/types.js';
+import type { Degrees, HouseSystem, Zodiac } from '../ephemeris/types.js';
 import type { SignWedgeStyle } from './wheel.js';
 
 export interface ExtendedSettings {
@@ -44,6 +44,15 @@ export interface ExtendedSettings {
   /** Part of Spirit's own visibility (#542) — Fortune's sibling lot, previously always shown regardless of any setting. */
   readonly spiritVisible: boolean;
   readonly midpointsVisible: boolean;
+  /**
+   * The 90°-dial midpoint-tree table's own visibility (#556) — the dial-collapsed midpoint
+   * structure (`astrology/midpoints.ts`'s `midpointTree`) was already computed and even had a
+   * dead SVG renderer (`chart/dial90.ts`), but no setting reached either; this is its first real
+   * opt-in.
+   */
+  readonly dial90Visible: boolean;
+  /** Orb for the dial90 midpoint-tree table above, in degrees. */
+  readonly midpointTreeOrb: Degrees;
   readonly rainbowZodiac: boolean;
   readonly aspectsToChiron: boolean;
   readonly aspectsToLilith: boolean;
@@ -67,6 +76,8 @@ export const DEFAULT_EXTENDED_SETTINGS: ExtendedSettings = {
   chironVisible: true,
   spiritVisible: false,
   midpointsVisible: false,
+  dial90Visible: false,
+  midpointTreeOrb: 1,
   rainbowZodiac: false,
   aspectsToChiron: false,
   aspectsToLilith: false,
@@ -108,6 +119,8 @@ export function toPointVisibilityOptions(settings: ExtendedSettings): PointVisib
     vertexVisible: settings.vertexVisible,
     spiritVisible: settings.spiritVisible,
     midpointsVisible: settings.midpointsVisible,
+    dial90Visible: settings.dial90Visible,
+    midpointTreeOrb: settings.midpointTreeOrb,
   };
 }
 

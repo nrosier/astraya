@@ -22,6 +22,7 @@ import {
   emphasisRows,
   fixedStarRows,
   houseCuspRows,
+  midpointTreeRows,
   positionRows,
   receptionRows,
 } from '../src/domain/chart-tables.js';
@@ -537,6 +538,42 @@ describe('antisciaRows (#398)', () => {
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({ kind: 'antiscion' });
     expect([rows[0]?.bodyKey, rows[0]?.contactKey].sort()).toEqual(['moon', 'sun']);
+  });
+});
+
+describe('midpointTreeRows (#556)', () => {
+  it('finds a body on another pair’s 90°-dial midpoint, within orb', () => {
+    const data: ChartData = {
+      // Sun/Moon midpoint is 20°; Mars sits 0.3° off it on the dial.
+      positions: [position(SUN, 10), position(MOON, 30), position(MARS, 20.3)],
+      houses: HOUSES,
+      aspects: [],
+      dignities: new Map(),
+      sect: 'day',
+      partOfFortune: 0,
+      partOfSpirit: 0,
+    };
+    const rows = midpointTreeRows(data, 1);
+    const hit = rows.find((row) => row.bodyKey === 'mars' && row.pairAKey === 'sun' && row.pairBKey === 'moon');
+    expect(hit).toBeDefined();
+    expect(hit?.midpoint).toBeCloseTo(20, 6);
+    expect(hit?.orb).toBeCloseTo(0.3, 6);
+  });
+
+  it('finds nothing when no body is within the given orb of any midpoint', () => {
+    const data: ChartData = {
+      // Chosen so no body lands within 1° of either other pair's midpoint on the dial:
+      // Sun/Moon=23.5, Sun/Mars=35.5, Moon/Mars=49 — Moon is 1.5° off Sun/Mars, Mars 37.5° off
+      // Sun/Moon (dial-wrapped), Sun 39° off Moon/Mars.
+      positions: [position(SUN, 10), position(MOON, 37), position(MARS, 61)],
+      houses: HOUSES,
+      aspects: [],
+      dignities: new Map(),
+      sect: 'day',
+      partOfFortune: 0,
+      partOfSpirit: 0,
+    };
+    expect(midpointTreeRows(data, 1)).toEqual([]);
   });
 });
 

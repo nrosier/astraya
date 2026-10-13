@@ -149,6 +149,8 @@ const en = {
     'The two planets are also in aspect to each other — traditionally the stronger, more immediately active case of reception.',
   declinationsCaption: 'Declinations',
   antisciaCaption: 'Antiscia',
+  midpointTreeCaption: 'Midpoint tree (90° dial)',
+  pairLabel: 'Pair',
   fixedStarsCaption: 'Fixed stars',
 
   almutenOfAscendantSentence: (names: string) => `Almuten of the Ascendant: ${names}`,
@@ -438,6 +440,8 @@ const nl: typeof en = {
     'De twee planeten staan ook in aspect met elkaar — traditioneel het sterkere, directer actieve geval van receptie.',
   declinationsCaption: 'Declinaties',
   antisciaCaption: 'Antiscia',
+  midpointTreeCaption: 'Middelpuntenboom (90°-dial)',
+  pairLabel: 'Paar',
   fixedStarsCaption: 'Vaste sterren',
 
   almutenOfAscendantSentence: (names: string) => `Almuten van de Ascendant: ${names}`,
