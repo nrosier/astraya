@@ -204,6 +204,32 @@ describe('time keys', () => {
   });
 });
 
+describe('direct/converse and zodiacal/in-mundo variants (#553)', () => {
+  it('keeps all four Placidus variants reproducible from the Makransky semi-arc frame', () => {
+    // The frame is the Prince Charles Placidus speculum documented in the verification gate
+    // above (Makransky 1988, ch. VII). Non-zero latitudes exercise the in-mundo branch.
+    const frame: SphereFrame = { ramc: 12.37, obliquity: 23.4459, geoLatitude: 51.5 };
+    const significator = { key: 'sun', longitude: 232.42, latitude: 0.35 } as const;
+    const promissor = { key: 'moon', longitude: 30.44, latitude: 4.9 } as const;
+    const conjunctionArc = (mode: 'direct' | 'converse', method: 'zodiacal' | 'in-mundo'): number => {
+      const hit = calculatePrimaryDirections(significator, promissor, frame, {
+        key: 'ptolemy',
+        mode,
+        method,
+      }).directions.find((candidate) => candidate.aspect === 'conjunction');
+      if (hit === undefined) throw new Error('fixture must include the conjunction');
+      expect(hit.mode).toBe(mode);
+      expect(hit.method).toBe(method);
+      return hit.arcRA;
+    };
+
+    expect(conjunctionArc('direct', 'zodiacal')).toBeCloseTo(171.3443226619, 9);
+    expect(conjunctionArc('direct', 'in-mundo')).toBeCloseTo(171.5161354583, 9);
+    expect(conjunctionArc('converse', 'zodiacal')).toBeCloseTo(207.7126289098, 9);
+    expect(conjunctionArc('converse', 'in-mundo')).toBeCloseTo(209.3614155643, 9);
+  });
+});
+
 describe('Placidian mundane position', () => {
   const frame: SphereFrame = { ramc: 12.37, obliquity: 23.4459, geoLatitude: 51.5 };
 
@@ -349,6 +375,37 @@ describe('against the real Swiss Ephemeris', () => {
     });
     expect(new Set(data.hits.map((hit) => hit.significator))).toEqual(new Set(['dsc', 'ic']));
     expect(new Set(data.hits.map((hit) => hit.promissor))).toEqual(new Set(['venus', 'mars']));
+  });
+
+  it('retains selected mode and latitude method in the data used by its result table and bi-wheel', async () => {
+    const engine = await getEngine();
+    const zodiacal = await generatePrimaryDirections(PRINCE_CHARLES, engine, PrimaryDirectionKey.NAIBOD, undefined, {
+      method: 'zodiacal',
+    });
+    const inMundo = await generatePrimaryDirections(PRINCE_CHARLES, engine, PrimaryDirectionKey.NAIBOD, undefined, {
+      method: 'in-mundo',
+    });
+    expect(zodiacal.mode).toBe('direct');
+    expect(zodiacal.method).toBe('zodiacal');
+    expect(inMundo.method).toBe('in-mundo');
+
+    const age = 25;
+    const zodiacalMoon = (await directedChartAt(zodiacal, age, engine)).positions.find(
+      (position) => position.key === 'moon',
+    );
+    const mundaneMoon = (await directedChartAt(inMundo, age, engine)).positions.find(
+      (position) => position.key === 'moon',
+    );
+    expect(zodiacalMoon).toBeDefined();
+    expect(mundaneMoon).toBeDefined();
+    expect(
+      arcsecondsBetween(zodiacalMoon?.longitude ?? Number.NaN, mundaneMoon?.longitude ?? Number.NaN),
+    ).toBeGreaterThan(1);
+
+    const converse = await generatePrimaryDirections(PRINCE_CHARLES, engine, PrimaryDirectionKey.NAIBOD, undefined, {
+      mode: 'converse',
+    });
+    await expect(directedChartAt(converse, age, engine)).rejects.toThrow('converse primary directions');
   });
 
   it('directs the Moon to the IC (opposition) at the same arc as to the MC (conjunction) — the same ASC/DSC geometric relationship the module’s own header cites, now checked directly now that IC can be asked for on its own (#553)', async () => {

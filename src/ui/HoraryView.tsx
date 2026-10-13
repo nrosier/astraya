@@ -19,7 +19,7 @@ import { DateField } from './primitives/DateField.js';
 import { Select } from './primitives/Select.js';
 import { TextField } from './primitives/TextField.js';
 import { TimeField } from './primitives/TimeField.js';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { isRadical } from '../astrology/horary.js';
 import { chartSheetMetaLines } from '../domain/chart-tables.js';
 import { computeHoraryChart, HORARY_DEFAULT_HOUSE_SYSTEM, type HoraryChart } from '../domain/horary.js';
@@ -36,6 +36,8 @@ import { transitViewMessages } from './TransitView.messages.js';
 import { voidOfCourseSentence } from './void-of-course-text.js';
 import type { BirthMomentInput } from '../time/types.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
+import { formatFixed } from './format.js';
+import { judgeHoraryWithMotion, type HoraryJudgment } from '../domain/horary-judgment.js';
 
 type Result =
   | { readonly kind: 'idle' }
@@ -56,6 +58,7 @@ export function HoraryView({ view }: { readonly view?: ChartViewKind | undefined
   const { provider } = useEphemerisProvider();
   const [fields, setFields] = useState(() => ({ ...nowFields(), latitude: '', longitude: '' }));
   const [houseSystem, setHouseSystem] = useState(HORARY_DEFAULT_HOUSE_SYSTEM);
+  const [quesitedHouse, setQuesitedHouse] = useState('7');
   const [fieldError, setFieldError] = useState<HoraryFieldError>();
   const [result, setResult] = useState<Result>({ kind: 'idle' });
 
@@ -83,6 +86,24 @@ export function HoraryView({ view }: { readonly view?: ChartViewKind | undefined
   };
 
   const ready = result.kind === 'ready' ? result : undefined;
+  const [judgment, setJudgment] = useState<HoraryJudgment>();
+
+  useEffect(() => {
+    if (ready?.chart.housesAvailable !== true || provider === undefined) {
+      setJudgment(undefined);
+      return undefined;
+    }
+    let cancelled = false;
+    setJudgment(undefined);
+    void judgeHoraryWithMotion(ready.chart.data, ready.chart.jd, provider, Number(quesitedHouse), {
+      isVoidOfCourse: ready.chart.voidOfCourse.isVoid,
+    }).then((next) => {
+      if (!cancelled) setJudgment(next);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [provider, quesitedHouse, ready]);
 
   return (
     <main className="shell shell--wide">
@@ -130,6 +151,15 @@ export function HoraryView({ view }: { readonly view?: ChartViewKind | undefined
           options={HORARY_HOUSE_SYSTEMS.map((code) => ({ value: code, label: t.houseSystems[code] ?? code }))}
           onChange={setHouseSystem}
         />
+        <Select
+          label={t.quesitedHouseLabel}
+          value={quesitedHouse}
+          options={Array.from({ length: 12 }, (_, index) => ({
+            value: String(index + 1),
+            label: t.houseOption(index + 1),
+          }))}
+          onChange={setQuesitedHouse}
+        />
       </div>
 
       <BirthPlaceSearch
@@ -172,6 +202,20 @@ export function HoraryView({ view }: { readonly view?: ChartViewKind | undefined
             })}
           </ul>
           <p className="hint">{voidOfCourseSentence(ready.chart.voidOfCourse, transit, locale)}</p>
+
+          {judgment !== undefined && (
+            <section aria-labelledby="horary-judgment-heading">
+              <h2 id="horary-judgment-heading">{t.judgmentHeading}</h2>
+              <p className="hint">{t.judgmentSource}</p>
+              <p>{t.significators(judgment.querent.rulerKey, judgment.quesited.rulerKey, judgment.quesited.house)}</p>
+              <p>{t.perfection[judgment.perfection.kind]}</p>
+              {judgment.perfection.timeToPerfectDays !== undefined && (
+                <p className="hint">{t.timing(formatFixed(judgment.perfection.timeToPerfectDays, 1))}</p>
+              )}
+              <p>{t.reception[judgment.reception.kind]}</p>
+              {judgment.receptionAidsPerfection && <p className="hint">{t.receptionAidsPerfection}</p>}
+            </section>
+          )}
 
           <ChartDataView
             load={{ kind: 'ready', data: ready.chart.data }}

@@ -7,23 +7,20 @@
  *
  * The schools disagree on almost every choice, so every one made here is stated:
  *
- * - **Direct directions only.** A promissor (a planet, or one of its zodiacal aspect points) is
- *   carried by the east-to-west primary motion to the natal mundane place of a significator,
- *   which stays fixed (Gansten 2009 ch. 1: "the promissor … being carried by the east-to-west
- *   primary motion to the natal place of the significator … constitutes a direct or right
- *   direction"). Converse directions — the significator carried to the promissor — are not
- *   computed. Every arc is therefore in [0, 360).
+ * - **Direct and converse directions.** A direct direction carries a promissor (a planet, or one
+ *   of its zodiacal aspect points) by the east-to-west primary motion to the natal mundane place
+ *   of a fixed significator (Gansten 2009 ch. 1). A converse direction reverses the carried point:
+ *   the significator advances to the promissor's mundane place. Every resulting arc is in [0, 360).
  * - **Placidus semi-arc system.** "Mundane place" is the Placidian one: two points are conjunct
  *   when they lie in the same quadrant at the same ratio of meridian distance to semi-arc (Bob
  *   Makransky, *Primary Directions: A Primer of Calculation*, 1988, ch. VII, "The Correct
  *   Placidus Method"). Not Regiomontanus, whose house circles divide the equator instead and give
  *   different arcs for every significator off the angles. At the four angles the two agree:
  *   directions to the MC are by right ascension, to the Ascendant by oblique ascension.
- * - **In zodiaco, at ecliptic latitude 0.** Both the promissor's aspect point and the
- *   significator are taken at their zodiacal longitude only, projected onto the ecliptic
- *   (β = 0) — not "in mundo", which would use each body's actual latitude. The significator's
- *   latitude is never used. A promissor latitude can be passed (`beta`, Makransky's "field
- *   plane" variant) but defaults to 0 and the domain layer never sets it.
+ * - **In zodiaco and in mundo.** The default takes both points at ecliptic latitude 0. The
+ *   `in-mundo` variant instead projects each body's real ecliptic latitude into the same Placidus
+ *   semi-arc calculation; an aspect point keeps its promissor's latitude. Angles remain fixed by
+ *   definition. Both modes follow the Placidus convention rather than mixing house-circle schools.
  * - **Time keys.** Naibod: 0°59′08.33″ of right ascension per year — the mean Sun's daily
  *   motion, `NAIBOD_DAILY_MOTION` in progressions.ts, 360 / 365.2425 = 0.985647° (Makransky 1988
  *   ch. III gives the same rate as 1.0146 years per degree). Ptolemy: 1° per year.
@@ -58,8 +55,8 @@
 
 /**
  * @module PrimaryDirections
- * @purpose Spherical-trigonometry engine for zodiacal primary directions under the Placidus semi-arc system: ecliptic-to-equatorial conversion, semi-arcs, Placidian mundane position and its inverse, arcs of direction, the time keys, and the directed zodiacal degree of a significator after a given arc.
- * @conventions Direct directions only (arcs in [0, 360)); significators and promissor aspect points at ecliptic latitude 0 (in zodiaco) unless `beta` is passed for the promissor; mundane position on Makransky's 0–360 scale (ASC 0, IC 90, DSC 180, MC 270); Naibod key reuses progressions.ts's NAIBOD_DAILY_MOTION, Ptolemy is 1°/year; circumpolar points throw RangeError rather than yield an arc.
+ * @purpose Spherical-trigonometry engine for direct/converse, zodiacal/in-mundo primary directions under the Placidus semi-arc system: ecliptic-to-equatorial conversion, semi-arcs, Placidian mundane position and its inverse, arcs of direction, time keys, and directed zodiacal degrees.
+ * @conventions Direct carries the promissor and converse carries the significator; zodiacal directions use latitude 0 while in-mundo directions use actual body latitude; mundane position uses Makransky's 0–360 scale (ASC 0, IC 90, DSC 180, MC 270); Naibod key reuses progressions.ts's NAIBOD_DAILY_MOTION, Ptolemy is 1°/year; circumpolar points throw RangeError rather than yield an arc.
  * @exports PrimaryDirectionTimeKey, TIME_KEY_DEGREES_PER_YEAR, arcToYears, yearsToArc, SphereFrame, EquatorialPosition, SemiArcs, eclipticToEquatorial, eclipticLongitudeFromRightAscension, semiArcs, isDefinedAtLatitude, placidianMundanePosition, hourAngleAtMundanePosition, directArc, midheavenLongitude, ascendantLongitude, eclipticPointAtMundanePosition, directedLongitude, DirectionAngle, ANGLE_MUNDANE_POSITIONS, DIRECTION_ASPECT_OFFSETS, DirectionSignificator, DirectionPromissor, DirectionHit, PrimaryDirectionOptions, PrimaryDirectionResult, significatorMundanePosition, calculatePrimaryDirections
  */
 import { ASPECTS } from './aspects.js';
@@ -332,8 +329,10 @@ export const DIRECTION_ASPECT_OFFSETS: readonly { readonly aspect: string; reado
 export interface DirectionSignificator {
   /** Identifier carried into each hit — a `BodyDefinition.key`, or `'asc'`/`'mc'`. */
   readonly key: string;
-  /** Zodiacal longitude; its latitude is never used (in zodiaco). Informational for an angle. */
+  /** Zodiacal longitude. Informational for an angle. */
   readonly longitude: Degrees;
+  /** Actual ecliptic latitude, used only by the in-mundo Placidus variant. */
+  readonly latitude?: Degrees;
   /** Set for an angle, whose mundane position is fixed by definition (`ANGLE_MUNDANE_POSITIONS`). */
   readonly angle?: DirectionAngle;
 }
@@ -342,7 +341,15 @@ export interface DirectionSignificator {
 export interface DirectionPromissor {
   readonly key: string;
   readonly longitude: Degrees;
+  /** Actual ecliptic latitude, used only by the in-mundo Placidus variant. */
+  readonly latitude?: Degrees;
 }
+
+/** Which body is carried by primary motion. Both conventions use Placidus semi-arcs. */
+export type PrimaryDirectionMode = 'direct' | 'converse';
+
+/** Whether directions use zodiacal positions or each body's real ecliptic latitude. */
+export type PrimaryDirectionMethod = 'zodiacal' | 'in-mundo';
 
 /** One promissor point reaching one significator. */
 export interface DirectionHit {
@@ -358,11 +365,15 @@ export interface DirectionHit {
   readonly arcRA: Degrees;
   /** `arcRA` in years of life under the requested key. */
   readonly ageYears: number;
+  readonly mode: PrimaryDirectionMode;
+  readonly method: PrimaryDirectionMethod;
 }
 
 export interface PrimaryDirectionOptions {
-  /** The promissor's ecliptic latitude for every aspect point. 0 (zodiacal, the default) unless a latitude variant is wanted. */
-  readonly beta?: Degrees;
+  /** Direct carries the promissor to the significator; converse carries the significator to the promissor. */
+  readonly mode?: PrimaryDirectionMode;
+  /** Placidus directions in zodiaco (default) or in mundo with real body latitude. */
+  readonly method?: PrimaryDirectionMethod;
   /** Defaults to Naibod. */
   readonly key?: PrimaryDirectionTimeKey;
 }
@@ -375,15 +386,49 @@ export interface PrimaryDirectionResult {
   readonly directions: readonly DirectionHit[];
 }
 
-/** A significator's natal mundane position: exact for an angle, from its zodiacal degree (β = 0) otherwise. */
-export function significatorMundanePosition(significator: DirectionSignificator, frame: SphereFrame): Degrees {
+/** A significator's natal mundane position: exact for an angle, otherwise from its chosen latitude convention. */
+export function significatorMundanePosition(
+  significator: DirectionSignificator,
+  frame: SphereFrame,
+  method: PrimaryDirectionMethod = 'zodiacal',
+): Degrees {
   if (significator.angle !== undefined) return ANGLE_MUNDANE_POSITIONS[significator.angle];
-  return placidianMundanePosition(eclipticToEquatorial(significator.longitude, 0, frame.obliquity), frame);
+  return placidianMundanePosition(
+    eclipticToEquatorial(
+      significator.longitude,
+      method === 'in-mundo' ? (significator.latitude ?? 0) : 0,
+      frame.obliquity,
+    ),
+    frame,
+  );
+}
+
+function significatorPoint(
+  significator: DirectionSignificator,
+  frame: SphereFrame,
+  method: PrimaryDirectionMethod,
+): EquatorialPosition {
+  if (significator.angle === undefined) {
+    return eclipticToEquatorial(
+      significator.longitude,
+      method === 'in-mundo' ? (significator.latitude ?? 0) : 0,
+      frame.obliquity,
+    );
+  }
+  const angleLongitude =
+    significator.angle === 'asc'
+      ? ascendantLongitude(frame)
+      : significator.angle === 'mc'
+        ? midheavenLongitude(frame.ramc, frame.obliquity)
+        : significator.angle === 'dsc'
+          ? norm360(ascendantLongitude(frame) + 180)
+          : norm360(midheavenLongitude(frame.ramc, frame.obliquity) + 180);
+  return eclipticToEquatorial(angleLongitude, 0, frame.obliquity);
 }
 
 /**
- * Every direct zodiacal direction of one promissor (its place and its Ptolemaic aspect points) to
- * one significator. Throws `RangeError` when either point is circumpolar at `frame.geoLatitude`.
+ * Every direct or converse Placidus direction of one promissor (its place and its Ptolemaic aspect
+ * points) to one significator. Throws `RangeError` when either point is circumpolar at the place.
  */
 export function calculatePrimaryDirections(
   significator: DirectionSignificator,
@@ -392,12 +437,22 @@ export function calculatePrimaryDirections(
   options: PrimaryDirectionOptions = {},
 ): PrimaryDirectionResult {
   const key = options.key ?? 'naibod';
-  const beta = options.beta ?? 0;
-  const target = significatorMundanePosition(significator, frame);
+  const mode = options.mode ?? 'direct';
+  const method = options.method ?? 'zodiacal';
+  const significatorTarget = significatorMundanePosition(significator, frame, method);
+  const significatorEquatorial = significatorPoint(significator, frame, method);
 
   const directions = DIRECTION_ASPECT_OFFSETS.map(({ aspect, offset }): DirectionHit => {
     const promissorPoint = norm360(promissor.longitude + offset);
-    const arcRA = directArc(eclipticToEquatorial(promissorPoint, beta, frame.obliquity), target, frame);
+    const promissorEquatorial = eclipticToEquatorial(
+      promissorPoint,
+      method === 'in-mundo' ? (promissor.latitude ?? 0) : 0,
+      frame.obliquity,
+    );
+    const arcRA =
+      mode === 'direct'
+        ? directArc(promissorEquatorial, significatorTarget, frame)
+        : directArc(significatorEquatorial, placidianMundanePosition(promissorEquatorial, frame), frame);
     return {
       significator: significator.key,
       promissor: promissor.key,
@@ -406,6 +461,8 @@ export function calculatePrimaryDirections(
       promissorPoint,
       arcRA,
       ageYears: arcToYears(arcRA, key),
+      mode,
+      method,
     };
   }).sort((a, b) => a.arcRA - b.arcRA);
 

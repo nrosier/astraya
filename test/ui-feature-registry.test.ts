@@ -109,6 +109,7 @@ const ROUTE_KIND_STATUS: Readonly<Record<Route['kind'], 'feature' | 'not a featu
   'person-overview': 'feature',
   chart: 'feature',
   report: 'feature',
+  'timing-timeline': 'feature',
   profections: 'feature',
   progressions: 'feature',
   'solar-arc': 'feature',

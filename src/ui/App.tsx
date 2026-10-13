@@ -60,6 +60,7 @@ const SolarArcView = lazy(async () => ({ default: (await personScreens()).SolarA
 const PrimaryDirectionsView = lazy(async () => ({ default: (await personScreens()).PrimaryDirectionsView }));
 const SynastryView = lazy(async () => ({ default: (await personScreens()).SynastryView }));
 const TransitView = lazy(async () => ({ default: (await personScreens()).TransitView }));
+const TimingTimelineView = lazy(async () => ({ default: (await personScreens()).TimingTimelineView }));
 const RectificationView = lazy(async () => ({ default: (await import('./RectificationView.js')).RectificationView }));
 const ElectionalView = lazy(async () => ({ default: (await import('./ElectionalView.js')).ElectionalView }));
 const HoraryView = lazy(async () => ({ default: (await import('./HoraryView.js')).HoraryView }));
@@ -472,6 +473,7 @@ type PersonRoute = Extract<
       | 'person-overview'
       | 'chart'
       | 'report'
+      | 'timing-timeline'
       | 'profections'
       | 'progressions'
       | 'solar-arc'
@@ -510,6 +512,7 @@ function renderPersonView(parsed: PersonRoute): React.JSX.Element {
   if (parsed.kind === 'person-overview') return <Overview key={parsed.personId} personId={parsed.personId} />;
   if (parsed.kind === 'chart') return renderChart(parsed);
   if (parsed.kind === 'report') return <ReportScreen key={parsed.personId} personId={parsed.personId} />;
+  if (parsed.kind === 'timing-timeline') return <TimingTimelineView key={parsed.personId} personId={parsed.personId} />;
   if (parsed.kind === 'profections') return <ProfectionsView key={parsed.personId} personId={parsed.personId} />;
   if (parsed.kind === 'progressions') return <ProgressionsView key={parsed.personId} personId={parsed.personId} />;
   if (parsed.kind === 'solar-arc') return <SolarArcView key={parsed.personId} personId={parsed.personId} />;

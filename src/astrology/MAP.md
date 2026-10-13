@@ -52,4 +52,4 @@ Pure astrological calculation (no DOM/React): bodies, aspects, houses, dignities
 - `transit-importance.ts` — Transit filtering + ranking engine (daily/yearly presets). Deps: `aspects`, `bodies`, `rulership`.
 - `triplicity.ts` — Triplicity rulership (Dorothean/Lilly, day/night/participating). Deps: `bodies`, `signs`.
 - `void-of-course.ts` — Void-of-course Moon (last exact aspect before leaving sign). Deps: `aspects`, `bodies`.
-- `zodiacal-releasing.ts` — Zodiacal releasing, Level 1 only (sign/ruler/years periods walking forward from a Lot's natal sign) (#554). Deps: `bodies`, `dignities`, `signs`, `ephemeris/types`.
+- `zodiacal-releasing.ts` — Zodiacal releasing Levels 1–2 with Valens’ sign periods and Level-2 loosing-of-the-bond jump (#554). Deps: `dignities`, `signs`, `ephemeris/types`.

@@ -18,10 +18,20 @@ const en = {
     `Primary directions need a known birth time. ${name}’s birth time is unknown — the same reason their chart has no houses.`,
 
   heading: (name: string) => `${name}’s primary directions`,
-  hint: 'Primary directions turn the whole birth sky by its daily rotation: every degree of right ascension it turns after birth stands for about a year of life. These are direct, zodiacal directions measured by Placidus semi-arcs, with each planet and aspect point taken on the ecliptic. The outer ring shows the chart directed to the chosen age.',
+  hint: 'Primary directions turn the whole birth sky by its daily rotation: every degree of right ascension it turns after birth stands for about a year of life. Choose direct or converse motion and zodiacal or in-mundo latitude under the Placidus semi-arc method. The outer ring is available for direct directions only, because converse directions carry the selected significator rather than one whole sky.',
+  source: 'Method: Bob Makransky, Primary Directions: A Primer of Calculation (1988), ch. VII (Placidian semi-arcs).',
   asOfLabel: 'As of',
   ageLabel: 'Age (years)',
   keyLabel: 'Time key',
+  modeLabel: 'Direction',
+  directMode: 'Direct (promissor carried)',
+  converseMode: 'Converse (significator carried)',
+  methodLabel: 'Placidus method',
+  zodiacalMethod: 'In zodiaco',
+  inMundoMethod: 'In mundo (real latitude)',
+  significatorsPickerLabel: 'Significators',
+  promissorsPickerLabel: 'Promissors',
+  angleLabels: { asc: 'Ascendant', mc: 'Midheaven', dsc: 'Descendant', ic: 'Imum Coeli' },
   naibodKey: 'Naibod (0°59′08″ a year)',
   ptolemyKey: 'Ptolemy (1° a year)',
   calculating: 'Calculating…',
@@ -31,6 +41,8 @@ const en = {
 
   ageLine: (age: string) => `Age ${age}`,
   beforeBirth: 'This date is before birth; primary directions start at birth.',
+  converseWheelUnavailable:
+    'A bi-wheel is not shown for converse directions: this method carries the selected significator, not a single outer chart.',
   arcLine: (arc: string) => `Arc for this age: ${arc}°`,
 
   natalRingLabel: 'Natal',
@@ -62,10 +74,21 @@ const nl: typeof en = {
     `Primaire directies vereisen een bekende geboortetijd. De geboortetijd van ${name} is onbekend — dezelfde reden waarom hun horoscoop geen huizen heeft.`,
 
   heading: (name: string) => `Primaire directies van ${name}`,
-  hint: 'Primaire directies draaien de hele geboortehemel met zijn dagelijkse omwenteling: elke graad rechte klimming die hij na de geboorte draait, staat voor ongeveer een levensjaar. Dit zijn directe, zodiakale directies, gemeten met de semi-bogen van Placidus, met elke planeet en elk aspectpunt op de ecliptica genomen. De buitenste ring toont de horoscoop gedirigeerd naar de gekozen leeftijd.',
+  hint: 'Primaire directies draaien de hele geboortehemel met zijn dagelijkse omwenteling: elke graad rechte klimming die hij na de geboorte draait, staat voor ongeveer een levensjaar. Kies directe of converse beweging en zodiakale of in-mundo-breedte binnen de methode met Placidus-semi-bogen. De buitenste ring is alleen beschikbaar voor directe directies, omdat converse directies de gekozen significator dragen en niet één volledige hemel.',
+  source:
+    'Methode: Bob Makransky, Primary Directions: A Primer of Calculation (1988), hfst. VII (Placidus-semi-bogen).',
   asOfLabel: 'Vanaf',
   ageLabel: 'Leeftijd (jaren)',
   keyLabel: 'Tijdsleutel',
+  modeLabel: 'Directie',
+  directMode: 'Direct (promissor beweegt)',
+  converseMode: 'Converse (significator beweegt)',
+  methodLabel: 'Placidus-methode',
+  zodiacalMethod: 'In zodiaco',
+  inMundoMethod: 'In mundo (werkelijke breedte)',
+  significatorsPickerLabel: 'Significatoren',
+  promissorsPickerLabel: 'Promissors',
+  angleLabels: { asc: 'Ascendant', mc: 'Medium Coeli', dsc: 'Descendant', ic: 'Imum Coeli' },
   naibodKey: 'Naibod (0°59′08″ per jaar)',
   ptolemyKey: 'Ptolemaeus (1° per jaar)',
   calculating: 'Berekenen…',
@@ -75,6 +98,8 @@ const nl: typeof en = {
 
   ageLine: (age: string) => `Leeftijd ${age}`,
   beforeBirth: 'Deze datum ligt vóór de geboorte; primaire directies beginnen bij de geboorte.',
+  converseWheelUnavailable:
+    'Voor converse directies wordt geen bi-wheel getoond: deze methode draagt de gekozen significator, niet één vaste buitenste horoscoop.',
   arcLine: (arc: string) => `Boog voor deze leeftijd: ${arc}°`,
 
   natalRingLabel: 'Natal',

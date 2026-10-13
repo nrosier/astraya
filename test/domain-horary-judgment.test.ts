@@ -5,7 +5,12 @@
 import { describe, expect, it } from 'vitest';
 import { bodyByKey } from '../src/astrology/bodies.js';
 import type { Aspect } from '../src/astrology/aspects.js';
-import { judgeHorary, judgePerfection, significatorOf } from '../src/domain/horary-judgment.js';
+import {
+  judgeHorary,
+  judgePerfection,
+  receptionAidsPerfection,
+  significatorOf,
+} from '../src/domain/horary-judgment.js';
 import { computeChartData, type ChartData } from '../src/domain/chart-compute.js';
 import { getEngine } from './engine-harness.js';
 
@@ -90,6 +95,114 @@ describe('judgePerfection (#552)', () => {
   it('prefers direct aspect over prohibition when the direct aspect itself has the tightest orb', () => {
     const aspects = [aspect(SUN, MOON, true, 1), aspect(VENUS, SUN, true, 5)];
     expect(judgePerfection(aspects, SUN, MOON).kind).toBe('directAspect');
+  });
+
+  it('uses relative motion, rather than orb alone, to identify the first perfection', () => {
+    const aspects = [aspect(SUN, MOON, true, 5), aspect(VENUS, SUN, true, 1)];
+    const positions = [
+      {
+        body: SUN,
+        longitude: 0,
+        latitude: 0,
+        distance: 1,
+        longitudeSpeed: 1,
+        latitudeSpeed: 0,
+        distanceSpeed: 0,
+        retrograde: false,
+      },
+      {
+        body: MOON,
+        longitude: 125,
+        latitude: 0,
+        distance: 1,
+        longitudeSpeed: 0.9,
+        latitudeSpeed: 0,
+        distanceSpeed: 0,
+        retrograde: false,
+      },
+      {
+        body: VENUS,
+        longitude: 120,
+        latitude: 0,
+        distance: 1,
+        longitudeSpeed: 0.99,
+        latitudeSpeed: 0,
+        distanceSpeed: 0,
+        retrograde: false,
+      },
+    ];
+    const result = judgePerfection(aspects, SUN, MOON, positions);
+    expect(result.kind).toBe('directAspect');
+    expect(result.timeToPerfectDays).toBeCloseTo(50);
+  });
+
+  it('reports frustration when a significator changes sign before perfection', () => {
+    const aspects = [aspect(SUN, MOON, true, 5)];
+    const result = judgePerfection(aspects, SUN, MOON, undefined, {
+      signChangeDays: new Map([[SUN, 2]]),
+    });
+    expect(result.kind).toBe('frustration');
+    expect(result.impedimentBody).toBe(SUN);
+  });
+
+  it('reports refranation when a significator stations before perfection', () => {
+    const aspects = [aspect(SUN, MOON, true, 5)];
+    const result = judgePerfection(aspects, SUN, MOON, undefined, {
+      stationDays: new Map([[MOON, 2]]),
+    });
+    expect(result.kind).toBe('refranation');
+    expect(result.impedimentBody).toBe(MOON);
+  });
+});
+
+describe('reception-aided perfection (#552)', () => {
+  const mutualReception = { kind: 'mutual' as const, aFromB: [], bFromA: [], sameDignityType: false };
+
+  it('counts reception as testimony only when an applying perfection is already present', () => {
+    expect(receptionAidsPerfection({ kind: 'directAspect' }, mutualReception)).toBe(true);
+    expect(receptionAidsPerfection({ kind: 'translation', thirdBody: VENUS }, mutualReception)).toBe(true);
+    expect(receptionAidsPerfection({ kind: 'prohibition', thirdBody: MARS }, mutualReception)).toBe(false);
+    expect(
+      receptionAidsPerfection(
+        { kind: 'directAspect' },
+        { kind: 'none', aFromB: [], bFromA: [], sameDignityType: false },
+      ),
+    ).toBe(false);
+  });
+});
+
+describe('Lilly merchant-ship worked judgment (#552)', () => {
+  it('models Lilly’s Cancer ascendant, applying Moon–Jupiter trine, and stated two-day timing', () => {
+    // Lilly, *Christian Astrology* II (1647), pp. 162–64: the merchant’s ship is signified by
+    // Cancer/Moon, and Lilly judges the Moon’s imminent trine to Jupiter to perfect that night or
+    // in two days. His prose gives the conclusion rather than a modern speed table, so the
+    // normalized relative-motion fixture below encodes only its published two-day interval.
+    const cusps = [0, 101.55, 130, 160, 190, 220, 250, 280, 310, 340, 10, 40, 70];
+    expect(significatorOf(1, cusps).ruler).toBe(MOON);
+    const perfection = judgePerfection([aspect(MOON, JUPITER, true, 0.5)], MOON, JUPITER, [
+      {
+        body: MOON,
+        longitude: 0,
+        latitude: 0,
+        distance: 1,
+        longitudeSpeed: 0.5,
+        latitudeSpeed: 0,
+        distanceSpeed: 0,
+        retrograde: false,
+      },
+      {
+        body: JUPITER,
+        longitude: 120.5,
+        latitude: 0,
+        distance: 1,
+        longitudeSpeed: 0.25,
+        latitudeSpeed: 0,
+        distanceSpeed: 0,
+        retrograde: false,
+      },
+    ]);
+    expect(perfection.kind).toBe('directAspect');
+    expect(perfection.timeToPerfectDays).toBeCloseTo(2);
   });
 });
 

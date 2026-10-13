@@ -18,7 +18,7 @@
  *   #/people/:id/birth-record                             Edit birth record
  *   #/people/:id/charts/:chartType/:chartView             Chart (natal|draconic|harmonic|solar-return|lunar-return × wheel|aspects|matrix|elements|placements|patterns)
  *   #/people/:id/interpretation                           Interpretation (the written report)
- *   #/people/:id/timing/:technique                        profections|progressions|solar-arc|primary-directions|transits|forecast
+ *   #/people/:id/timing/:technique                        timeline|profections|progressions|solar-arc|primary-directions|transits|forecast
  *   #/people/:id/relationships/:technique                 synastry|composite (composite: ?view=)
  *   #/people/:id/location/astrocartography                Astrocartography
  *   #/people/:id/overlay/multi-wheel                       Multi-wheel overlay (natal + optional transit/relocated rings)
@@ -75,6 +75,7 @@ export type Route =
   // Primary directions (#407) — its own route for the same reason solar arc has one: a
   // lifetime list of significator/promissor arcs is a different table from any progression.
   | { readonly kind: 'primary-directions'; readonly personId: string }
+  | { readonly kind: 'timing-timeline'; readonly personId: string }
   | { readonly kind: 'transit'; readonly personId: string }
   // The second person is picked from within the screen, not the URL (#172) — every other
   // multi-word route here names exactly one person, and a synastry pairing changes far more
@@ -115,6 +116,7 @@ export type Route =
   | { readonly kind: 'setup' };
 
 const TIMING_TECHNIQUES = {
+  timeline: 'timing-timeline',
   profections: 'profections',
   progressions: 'progressions',
   'solar-arc': 'solar-arc',
@@ -123,6 +125,7 @@ const TIMING_TECHNIQUES = {
   forecast: 'periodic-transit',
 } as const;
 const TIMING_SEGMENT_FOR_KIND = {
+  'timing-timeline': 'timeline',
   profections: 'profections',
   progressions: 'progressions',
   'solar-arc': 'solar-arc',
@@ -274,6 +277,7 @@ export function routeHref(route: Route): string {
     case 'chart':
       return person(route.personId, 'charts', route.chartType ?? 'natal', route.view ?? 'wheel');
     case 'profections':
+    case 'timing-timeline':
     case 'progressions':
     case 'solar-arc':
     case 'primary-directions':

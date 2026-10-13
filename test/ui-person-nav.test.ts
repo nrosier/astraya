@@ -72,6 +72,7 @@ describe('PERSON_TABS', () => {
       'birth-record': `#/people/${ID}/birth-record`,
       chart: `#/people/${ID}/charts/natal/wheel`,
       report: `#/people/${ID}/interpretation`,
+      'timing-timeline': `#/people/${ID}/timing/timeline`,
       profections: `#/people/${ID}/timing/profections`,
       progressions: `#/people/${ID}/timing/progressions`,
       'solar-arc': `#/people/${ID}/timing/solar-arc`,

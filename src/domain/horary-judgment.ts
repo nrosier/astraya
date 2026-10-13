@@ -1,6 +1,6 @@
 /**
  * Horary judgment (#552): significator selection, perfection by direct aspect, reception,
- * translation of light, collection of light, and prohibition — the apparatus a horary question
+ * translation of light, collection of light, prohibition, frustration, and refranation — the apparatus a horary question
  * needs beyond `horary.ts`'s existing "considerations before judgment" (#406), which only checks
  * whether a chart is fit to be judged at all, not what it says once it is.
  *
@@ -13,21 +13,15 @@
  * prohibitors): horary's own tradition never uses the outer planets, nodes, or asteroids in this
  * role, matching the same scope `planetary-condition.ts`/`reception.ts` already use.
  *
- * **Prohibition is a documented simplification.** The classical test is which of two applying
- * aspects *perfects first in time* — a third body's aspect to a significator, versus the
- * significators' own aspect to each other. Computing an actual time-to-perfection needs a
- * forward search (how long until each pair's separation reaches its aspect's exact angle, given
- * each body's own current speed) that this module does not attempt. Instead, the simplification
- * here compares which applying aspect currently has the *smaller orb* — closer to exact now is a
- * reasonable, commonly-used-in-practice proxy for "perfects sooner", but it is not the same
- * claim, and the two can disagree when speeds differ enough. Stated plainly rather than silently
- * presented as the real classical test.
+ * Prohibition uses relative-motion estimates when positions are supplied. Frustration is reported
+ * when a significator changes sign before that estimate can perfect; refranation is reported when
+ * a supplied station forecast turns a significator retrograde/direct before perfection.
  */
 /**
  * @module domain/horary-judgment
- * @purpose Horary significator selection, perfection by direct aspect, reception, translation/collection of light, and prohibition.
- * @conventions Scoped to the seven classical planets; prohibition is an orb-proximity simplification, not a true time-to-perfection search — documented in the module's own header. Reuses rulerOf/aspects.ts/reception.ts rather than recomputing anything.
- * @exports HORARY_PLANET_IDS, Significator, significatorOf, PerfectionKind, PerfectionResult, judgePerfection, HoraryJudgmentOptions, HoraryMoonInput, HoraryJudgment, judgeHorary
+ * @purpose Horary significator selection, perfection and impediment detection, reception, and relative-motion timing.
+ * @conventions Scoped to the seven classical planets; forward station forecasts are supplied by the caller because ChartData has no future ephemeris context.
+ * @exports HORARY_PLANET_IDS, Significator, significatorOf, PerfectionKind, PerfectionResult, HoraryMotionForecast, judgePerfection, HoraryJudgmentOptions, HoraryMoonInput, HoraryJudgment, receptionAidsPerfection, judgeHorary
  */
 import { bodyById, bodyByKey } from '../astrology/bodies.js';
 import type { Aspect } from '../astrology/aspects.js';
@@ -35,7 +29,8 @@ import { rulerOf, type RulershipScheme } from '../astrology/dignities.js';
 import { horaryConsiderations, isRadical, type HoraryConsideration, type HoraryInput } from '../astrology/horary.js';
 import { mutualReceptionBetween, type MutualReceptionResult } from '../astrology/reception.js';
 import { signIndex } from '../astrology/signs.js';
-import type { BodyId, Degrees } from '../ephemeris/types.js';
+import { findStations } from '../astrology/stations.js';
+import type { BodyId, BodyPosition, Degrees, EphemerisProvider, JulianDayUT } from '../ephemeris/types.js';
 import type { ChartData } from './chart-compute.js';
 import { houseOf } from '../astrology/emphasis.js';
 
@@ -76,7 +71,8 @@ function aspectBetween(aspects: readonly Aspect[], a: BodyId, b: BodyId): Aspect
   );
 }
 
-export type PerfectionKind = 'directAspect' | 'translation' | 'collection' | 'prohibition' | 'none';
+export type PerfectionKind =
+  'directAspect' | 'translation' | 'collection' | 'prohibition' | 'frustration' | 'refranation' | 'none';
 
 export interface PerfectionResult {
   readonly kind: PerfectionKind;
@@ -85,6 +81,25 @@ export interface PerfectionResult {
   /** The carrying/collecting/prohibiting body, set for every kind but `'directAspect'`/`'none'`. */
   readonly thirdBody?: BodyId;
   readonly thirdBodyKey?: string;
+  /** Linear relative-motion estimate from the current chart to exactness, in days. */
+  readonly timeToPerfectDays?: number;
+  readonly impedimentBody?: BodyId;
+}
+
+export interface HoraryMotionForecast {
+  /** Days from the question moment to a significator's next station, if one occurs in the search window. */
+  readonly stationDays?: ReadonlyMap<BodyId, number>;
+  /** Days from the question moment to a significator's next sign change under its current motion. */
+  readonly signChangeDays?: ReadonlyMap<BodyId, number>;
+}
+
+function timeToPerfect(aspect: Aspect, positions: readonly BodyPosition[] | undefined): number | undefined {
+  if (positions === undefined) return undefined;
+  const a = positions.find((position) => position.body === aspect.bodyA);
+  const b = positions.find((position) => position.body === aspect.bodyB);
+  if (a === undefined || b === undefined) return undefined;
+  const relativeSpeed = Math.abs(a.longitudeSpeed - b.longitudeSpeed);
+  return relativeSpeed === 0 ? undefined : aspect.orb / relativeSpeed;
 }
 
 /**
@@ -96,22 +111,64 @@ export interface PerfectionResult {
  * translation of light is checked next, then collection; otherwise no perfection is found among
  * the seven classical planets.
  */
-export function judgePerfection(aspects: readonly Aspect[], querent: BodyId, quesited: BodyId): PerfectionResult {
+export function judgePerfection(
+  aspects: readonly Aspect[],
+  querent: BodyId,
+  quesited: BodyId,
+  positions?: readonly BodyPosition[],
+  motionForecast?: HoraryMotionForecast,
+): PerfectionResult {
   const direct = aspectBetween(aspects, querent, quesited);
   const others = HORARY_PLANET_IDS.filter((id) => id !== querent && id !== quesited);
 
   if (direct?.applying === true) {
+    const directTiming = timeToPerfect(direct, positions);
     // Prohibition (simplification — see the module's own header): a third body's applying
     // aspect to either significator with a tighter orb reaches its own perfection first.
     for (const third of others) {
       for (const target of [querent, quesited]) {
         const toThird = aspectBetween(aspects, third, target);
-        if (toThird?.applying === true && toThird.orb < direct.orb) {
-          return { kind: 'prohibition', thirdBody: third, thirdBodyKey: bodyById(third)?.key ?? String(third) };
+        const interferenceTiming = toThird === undefined ? undefined : timeToPerfect(toThird, positions);
+        const perfectsFirst =
+          interferenceTiming !== undefined && directTiming !== undefined
+            ? interferenceTiming < directTiming
+            : toThird?.orb !== undefined && toThird.orb < direct.orb;
+        if (toThird?.applying === true && perfectsFirst) {
+          return {
+            kind: 'prohibition',
+            thirdBody: third,
+            thirdBodyKey: bodyById(third)?.key ?? String(third),
+            ...(interferenceTiming === undefined ? {} : { timeToPerfectDays: interferenceTiming }),
+          };
         }
       }
     }
-    return { kind: 'directAspect', aspect: direct };
+    const significatorIds = [querent, quesited];
+    for (const body of significatorIds) {
+      const stationDays = motionForecast?.stationDays?.get(body);
+      if (stationDays !== undefined && (directTiming === undefined || stationDays < directTiming)) {
+        return {
+          kind: 'refranation',
+          aspect: direct,
+          ...(directTiming === undefined ? {} : { timeToPerfectDays: directTiming }),
+          impedimentBody: body,
+        };
+      }
+      const signChangeDays = motionForecast?.signChangeDays?.get(body);
+      if (signChangeDays !== undefined && (directTiming === undefined || signChangeDays < directTiming)) {
+        return {
+          kind: 'frustration',
+          aspect: direct,
+          ...(directTiming === undefined ? {} : { timeToPerfectDays: directTiming }),
+          impedimentBody: body,
+        };
+      }
+    }
+    return {
+      kind: 'directAspect',
+      aspect: direct,
+      ...(directTiming === undefined ? {} : { timeToPerfectDays: directTiming }),
+    };
   }
 
   // Translation: a third body separating from one significator, applying to the other.
@@ -139,6 +196,7 @@ export function judgePerfection(aspects: readonly Aspect[], querent: BodyId, que
 
 export interface HoraryJudgmentOptions {
   readonly rulershipScheme?: RulershipScheme;
+  readonly motionForecast?: HoraryMotionForecast;
 }
 
 /**
@@ -157,8 +215,18 @@ export interface HoraryJudgment {
   readonly quesited: Significator;
   readonly perfection: PerfectionResult;
   readonly reception: MutualReceptionResult;
+  /** Reception can strengthen an otherwise-applying perfection; it never becomes a verdict by itself. */
+  readonly receptionAidsPerfection: boolean;
   readonly considerations: readonly HoraryConsideration[];
   readonly radical: boolean;
+}
+
+/** Whether reception accompanies a method of perfection rather than merely describing the two significators' condition. */
+export function receptionAidsPerfection(perfection: PerfectionResult, reception: MutualReceptionResult): boolean {
+  return (
+    reception.kind !== 'none' &&
+    (perfection.kind === 'directAspect' || perfection.kind === 'translation' || perfection.kind === 'collection')
+  );
 }
 
 /**
@@ -177,7 +245,13 @@ export function judgeHorary(
   const scheme = options.rulershipScheme ?? 'traditional';
   const querent = significatorOf(1, data.houses.cusps, scheme);
   const quesited = significatorOf(quesitedHouse, data.houses.cusps, scheme);
-  const perfection = judgePerfection(data.aspects, querent.ruler, quesited.ruler);
+  const perfection = judgePerfection(
+    data.aspects,
+    querent.ruler,
+    quesited.ruler,
+    data.positions,
+    options.motionForecast,
+  );
 
   const querentPosition = data.positions.find((p) => p.body === querent.ruler);
   const quesitedPosition = data.positions.find((p) => p.body === quesited.ruler);
@@ -202,5 +276,53 @@ export function judgeHorary(
     moonIsVoid: moon.isVoidOfCourse,
   } satisfies HoraryInput);
 
-  return { querent, quesited, perfection, reception, considerations, radical: isRadical(considerations) };
+  return {
+    querent,
+    quesited,
+    perfection,
+    reception,
+    receptionAidsPerfection: receptionAidsPerfection(perfection, reception),
+    considerations,
+    radical: isRadical(considerations),
+  };
+}
+
+function signChangeDays(position: BodyPosition): number | undefined {
+  if (position.longitudeSpeed === 0) return undefined;
+  const sign = signIndex(position.longitude);
+  const boundary = position.longitudeSpeed > 0 ? (sign + 1) * 30 : sign * 30;
+  const distance =
+    position.longitudeSpeed > 0
+      ? (boundary - position.longitude + 360) % 360
+      : (position.longitude - boundary + 360) % 360;
+  return distance === 0 ? 0 : distance / Math.abs(position.longitudeSpeed);
+}
+
+/** Runs a short real-ephemeris station search, then judges with frustration/refranation enabled. */
+export async function judgeHoraryWithMotion(
+  data: ChartData,
+  questionJd: JulianDayUT,
+  provider: EphemerisProvider,
+  quesitedHouse: number,
+  moon: HoraryMoonInput,
+  options: HoraryJudgmentOptions = {},
+): Promise<HoraryJudgment> {
+  const initial = judgeHorary(data, quesitedHouse, moon, options);
+  const directTiming = initial.perfection.timeToPerfectDays ?? 30;
+  const bodies = [initial.querent.ruler, initial.quesited.ruler];
+  const stations = await findStations(provider, bodies, questionJd, questionJd + Math.max(30, directTiming * 2));
+  const stationDays = new Map<BodyId, number>();
+  for (const station of stations) {
+    if (!stationDays.has(station.body)) stationDays.set(station.body, station.jd - questionJd);
+  }
+  const signChanges = new Map<BodyId, number>();
+  for (const body of bodies) {
+    const position = data.positions.find((candidate) => candidate.body === body);
+    const days = position === undefined ? undefined : signChangeDays(position);
+    if (days !== undefined) signChanges.set(body, days);
+  }
+  return judgeHorary(data, quesitedHouse, moon, {
+    ...options,
+    motionForecast: { stationDays, signChangeDays: signChanges },
+  });
 }

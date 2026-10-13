@@ -8,11 +8,15 @@
 const en = {
   heading: 'Horary chart',
   hint: 'Cast a chart for the moment and place a question was asked, and check the traditional considerations before judgment. This tells you whether the chart is fit to be judged; it does not answer the question.',
+  judgmentSource:
+    'Judgment method: William Lilly, Christian Astrology, Book II, pp. 162–64 (the merchant’s-ship judgment).',
   dateLabel: 'Date the question was asked',
   timeLabel: 'Local time',
   latitudeLabel: 'Latitude',
   longitudeLabel: 'Longitude',
   houseSystemLabel: 'House system',
+  quesitedHouseLabel: 'House of the matter asked about',
+  houseOption: (house: number) => `House ${String(house)}`,
   houseSystems: {
     R: 'Regiomontanus (the horary tradition’s)',
     P: 'Placidus',
@@ -33,6 +37,25 @@ const en = {
     `${String(count)} ${count === 1 ? 'consideration applies' : 'considerations apply'}. Traditionally the chart should then not be judged, or judged only with great care.`,
   applies: 'Applies',
   clear: 'Clear',
+  judgmentHeading: 'Judgment toolkit',
+  significators: (querent: string, quesited: string, house: number) =>
+    `Querent: ${querent}. Quesited (house ${String(house)}): ${quesited}.`,
+  perfection: {
+    directAspect: 'The significators form a direct applying aspect.',
+    translation: 'A third planet translates light between the significators.',
+    collection: 'A third planet collects light from both significators.',
+    prohibition: 'Another application perfects first and prohibits the matter.',
+    frustration: 'A significator changes sign before the applying aspect can perfect: the matter is frustrated.',
+    refranation: 'A significator stations before perfection and refrains from completing the aspect.',
+    none: 'No perfection is found among the classical significators.',
+  },
+  timing: (days: string) => `Estimated time to perfection: ${days} days.`,
+  reception: {
+    none: 'No essential reception is found.',
+    oneWay: 'One-way essential reception is present.',
+    mutual: 'Mutual essential reception is present.',
+  },
+  receptionAidsPerfection: 'Reception accompanies this applying perfection; it is testimony, not an automatic verdict.',
   considerations: {
     'ascendant-too-early': {
       label: 'Ascendant too early',
@@ -63,11 +86,15 @@ const en = {
 const nl: typeof en = {
   heading: 'Horoscoop voor een vraag',
   hint: 'Maak een horoscoop voor het moment en de plaats waarop een vraag werd gesteld, en controleer de traditionele overwegingen vóór het oordeel. Dit zegt of de horoscoop geschikt is om te beoordelen; het beantwoordt de vraag niet.',
+  judgmentSource:
+    'Oordeelmethode: William Lilly, Christian Astrology, Boek II, pp. 162–64 (het oordeel over het koopvaardijschip).',
   dateLabel: 'Datum waarop de vraag werd gesteld',
   timeLabel: 'Lokale tijd',
   latitudeLabel: 'Breedtegraad',
   longitudeLabel: 'Lengtegraad',
   houseSystemLabel: 'Huizensysteem',
+  quesitedHouseLabel: 'Huis van de gevraagde zaak',
+  houseOption: (house: number) => `Huis ${String(house)}`,
   houseSystems: {
     R: 'Regiomontanus (dat van de horaire traditie)',
     P: 'Placidus',
@@ -88,6 +115,26 @@ const nl: typeof en = {
     `${String(count)} ${count === 1 ? 'overweging is van toepassing' : 'overwegingen zijn van toepassing'}. Traditioneel moet de horoscoop dan niet worden beoordeeld, of alleen met grote zorg.`,
   applies: 'Van toepassing',
   clear: 'Niet van toepassing',
+  judgmentHeading: 'Oordeelhulpmiddel',
+  significators: (querent: string, quesited: string, house: number) =>
+    `Vragensteller: ${querent}. Gevraagde zaak (huis ${String(house)}): ${quesited}.`,
+  perfection: {
+    directAspect: 'De significatoren vormen een direct toepassend aspect.',
+    translation: 'Een derde planeet vertaalt licht tussen de significatoren.',
+    collection: 'Een derde planeet verzamelt licht van beide significatoren.',
+    prohibition: 'Een andere toepassing perfectioneert eerst en verhindert de zaak.',
+    frustration: 'Een significator verandert van teken vóór het aspect perfectioneert: de zaak wordt gefrustreerd.',
+    refranation: 'Een significator stationeert vóór de perfectionering en voltooit het aspect niet.',
+    none: 'Er is geen perfectionering onder de klassieke significatoren.',
+  },
+  timing: (days: string) => `Geschatte tijd tot perfectionering: ${days} dagen.`,
+  reception: {
+    none: 'Er is geen essentiële receptie gevonden.',
+    oneWay: 'Er is eenzijdige essentiële receptie aanwezig.',
+    mutual: 'Er is wederzijdse essentiële receptie aanwezig.',
+  },
+  receptionAidsPerfection:
+    'Receptie begeleidt deze toepassende perfectionering; het is getuigenis, geen automatisch oordeel.',
   considerations: {
     'ascendant-too-early': {
       label: 'Ascendant te vroeg',

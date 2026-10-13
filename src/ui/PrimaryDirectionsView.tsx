@@ -28,6 +28,9 @@ import { chartWheelRing } from '../domain/chart-tables.js';
 import { deriveExportFilename } from '../domain/export-filename.js';
 import {
   PrimaryDirectionKey,
+  PRIMARY_DIRECTION_ANGLE_KEYS,
+  PRIMARY_DIRECTION_PROMISSORS,
+  PRIMARY_DIRECTION_SIGNIFICATORS,
   activeDirections,
   ageToArc,
   directedChartAt,
@@ -55,6 +58,8 @@ import { useSymbolClass } from './symbol-setting.js';
 import type { TableColumn } from './table-sort.js';
 import type { Locale } from '../interpretation/schema.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
+import { Checkbox } from './primitives/Checkbox.js';
+import type { PrimaryDirectionMethod, PrimaryDirectionMode } from '../astrology/primary-directions.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -64,6 +69,7 @@ type Load =
 type DirectedLoad =
   | { readonly kind: 'loading' }
   | { readonly kind: 'before-birth'; readonly ageYears: number }
+  | { readonly kind: 'unavailable' }
   | { readonly kind: 'ready'; readonly chart: DirectedChart }
   | { readonly kind: 'error'; readonly message: string };
 
@@ -141,6 +147,10 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
   // field is not reformatted under the caret; undefined shows the age the date implies.
   const [ageDraft, setAgeDraft] = useState<string | undefined>(undefined);
   const [key, setKey] = useState<PrimaryDirectionKey>(PrimaryDirectionKey.NAIBOD);
+  const [mode, setMode] = useState<PrimaryDirectionMode>('direct');
+  const [method, setMethod] = useState<PrimaryDirectionMethod>('zodiacal');
+  const [significators, setSignificators] = useState<readonly string[]>(PRIMARY_DIRECTION_SIGNIFICATORS);
+  const [promissors, setPromissors] = useState<readonly string[]>(PRIMARY_DIRECTION_PROMISSORS);
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
   const [directed, setDirected] = useState<DirectedLoad>({ kind: 'loading' });
 
@@ -157,7 +167,12 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
 
     void (async () => {
       try {
-        const data = await generatePrimaryDirections(moment, provider, key);
+        const data = await generatePrimaryDirections(moment, provider, key, undefined, {
+          mode,
+          method,
+          significators,
+          promissors,
+        });
         if (!effect.cancelled) setLoad({ kind: 'ready', data });
       } catch (error) {
         if (!effect.cancelled)
@@ -168,13 +183,17 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
     return () => {
       effect.cancelled = true;
     };
-  }, [momentKey(person?.moment), provider, key]);
+  }, [momentKey(person?.moment), provider, key, method, mode, promissors, significators]);
 
   useEffect(() => {
     if (load.kind !== 'ready' || !load.data.defined || provider === undefined || targetDate === undefined) {
       return undefined;
     }
     const data = load.data;
+    if (data.mode === 'converse') {
+      setDirected({ kind: 'unavailable' });
+      return undefined;
+    }
     const effect = { cancelled: false };
     setDirected({ kind: 'loading' });
 
@@ -262,6 +281,7 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
       <h1>{person.displayName ? t.heading(person.displayName) : t.primaryDirectionsFallback}</h1>
       <GlossaryTerms terms={['primaryDirection', 'ascendant', 'midheaven']} />
       <p className="hint">{t.hint}</p>
+      <p className="hint">{t.source}</p>
 
       <div className="field-grid">
         <ChoiceGroup
@@ -275,6 +295,82 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
             setKey(value === PrimaryDirectionKey.PTOLEMY ? PrimaryDirectionKey.PTOLEMY : PrimaryDirectionKey.NAIBOD);
           }}
         />
+        <ChoiceGroup
+          label={t.modeLabel}
+          value={mode}
+          options={[
+            { value: 'direct', label: t.directMode },
+            { value: 'converse', label: t.converseMode },
+          ]}
+          onChange={(value) => {
+            setMode(value === 'converse' ? 'converse' : 'direct');
+          }}
+        />
+        <ChoiceGroup
+          label={t.methodLabel}
+          value={method}
+          options={[
+            { value: 'zodiacal', label: t.zodiacalMethod },
+            { value: 'in-mundo', label: t.inMundoMethod },
+          ]}
+          onChange={(value) => {
+            setMethod(value === 'in-mundo' ? 'in-mundo' : 'zodiacal');
+          }}
+        />
+        <fieldset>
+          <legend>{t.significatorsPickerLabel}</legend>
+          {PRIMARY_DIRECTION_ANGLE_KEYS.map((option) => (
+            <Checkbox
+              key={option}
+              label={t.angleLabels[option]}
+              checked={significators.includes(option)}
+              onChange={() => {
+                setSignificators((current) =>
+                  current.includes(option)
+                    ? current.length === 1
+                      ? current
+                      : current.filter((value) => value !== option)
+                    : [...current, option],
+                );
+              }}
+            />
+          ))}
+          {PRIMARY_DIRECTION_PROMISSORS.map((option) => (
+            <Checkbox
+              key={option}
+              label={bodyDisplayName(option, locale)}
+              checked={significators.includes(option)}
+              onChange={() => {
+                setSignificators((current) =>
+                  current.includes(option)
+                    ? current.length === 1
+                      ? current
+                      : current.filter((value) => value !== option)
+                    : [...current, option],
+                );
+              }}
+            />
+          ))}
+        </fieldset>
+        <fieldset>
+          <legend>{t.promissorsPickerLabel}</legend>
+          {PRIMARY_DIRECTION_PROMISSORS.map((option) => (
+            <Checkbox
+              key={option}
+              label={bodyDisplayName(option, locale)}
+              checked={promissors.includes(option)}
+              onChange={() => {
+                setPromissors((current) =>
+                  current.includes(option)
+                    ? current.length === 1
+                      ? current
+                      : current.filter((value) => value !== option)
+                    : [...current, option],
+                );
+              }}
+            />
+          ))}
+        </fieldset>
         <DateField
           label={t.asOfLabel}
           value={asOf}
@@ -311,6 +407,7 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
           {directed.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
           {directed.kind === 'error' && <StatusMessage kind="error">{t.error(directed.message)}</StatusMessage>}
           {directed.kind === 'before-birth' && <p className="hint">{t.beforeBirth}</p>}
+          {directed.kind === 'unavailable' && <p className="hint">{t.converseWheelUnavailable}</p>}
 
           {directed.kind === 'ready' && (
             <>
