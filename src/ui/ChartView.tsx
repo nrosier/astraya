@@ -30,7 +30,7 @@
  * @module ChartView
  * @purpose Renders the natal chart screen: the chart wheel plus every data table a chart computes (positions, houses, aspects, dignities, dispositors, declinations, antiscia, fixed stars, chart shape, derived points), and the SVG/PNG/PDF export + share-link controls.
  * @conventions Exports `ChartDataView`, the shared tabbed chart+tables UI reused by CompositeView/SharedChartView; every value is recomputed from the stored birth moment via `domain/chart-compute.js`/`domain/chart-tables.js` rather than read from a saved Chart record; houses/angles/derived-points tables are hidden when `timeAccuracy === 'unknown'`. Text comes from co-located `ChartView.messages.ts` via `useMessages()`.
- * @exports ChartView, ChartDataView, emphasisColumns, positionColumns, houseCuspColumns, angleColumns, aspectColumns, dignityColumns, conditionColumns, dispositorColumns, declinationColumns, antisciaColumns, fixedStarColumns, derivedPointColumns
+ * @exports ChartView, ChartDataView, emphasisColumns, positionColumns, houseCuspColumns, angleColumns, aspectColumns, dignityColumns, conditionColumns, receptionColumns, dispositorColumns, declinationColumns, antisciaColumns, fixedStarColumns, derivedPointColumns
  */
 import { formatFixed } from './format.js';
 import { Tooltip } from './primitives/Tooltip.js';
@@ -53,6 +53,7 @@ import {
   fixedStarRows,
   houseCuspRows,
   positionRows,
+  receptionRows,
   visiblePositions,
   type AngleRow,
   type AntisciaRow,
@@ -66,6 +67,7 @@ import {
   type FixedStarRow,
   type HouseCuspRow,
   type PointVisibilityOptions,
+  type ReceptionRow,
   type PositionRow,
 } from '../domain/chart-tables.js';
 import { derivedPointPlacementFacts } from '../domain/derived-point-position.js';
@@ -77,6 +79,7 @@ import { momentKey } from '../time/encode.js';
 import { renderChartDialSvg, renderChartSheetSvg } from '../chart/chart-sheet.js';
 import { renderJonesShapeDiagramSvg } from '../chart/jones-shape-diagram.js';
 import { lunarPhaseOf } from '../astrology/lunar-phase.js';
+import type { DignityType } from '../astrology/reception.js';
 import { jonesBodyPositions } from '../astrology/jones-shapes.js';
 import {
   DEFAULT_EXTENDED_SETTINGS,
@@ -556,6 +559,76 @@ export function dispositorColumns(
   ];
 }
 
+/** Short, translated dignity-type name, reusing the exact labels `dignityColumns`' own headers already use. */
+function dignityTypeLabel(t: typeof chartViewMessages.en, dignityType: DignityType): string {
+  switch (dignityType) {
+    case 'domicile':
+      return t.rulerLabel;
+    case 'exaltation':
+      return t.exaltedLabel;
+    case 'triplicity':
+      return t.triplicityLabel;
+    case 'bound':
+      return t.boundLabel;
+    case 'face':
+      return t.faceLabel;
+    default:
+      return dignityType;
+  }
+}
+
+/** Every receiving pair among the traditional planets (#548) — mutual/one-way reception, by which dignity, and whether the pair is also in aspect. */
+export function receptionColumns(t: typeof chartViewMessages.en, locale: Locale): readonly TableColumn<ReceptionRow>[] {
+  return [
+    {
+      key: 'bodyAName',
+      label: t.bodyALabel,
+      valueOf: (row) => row.bodyAName,
+      render: (row) => bodyDisplayName(row.bodyAKey, locale),
+    },
+    {
+      key: 'bodyBName',
+      label: t.bodyBLabel,
+      valueOf: (row) => row.bodyBName,
+      render: (row) => bodyDisplayName(row.bodyBKey, locale),
+    },
+    {
+      key: 'kind',
+      label: t.receptionKindLabel,
+      valueOf: (row) => row.kind,
+      render: (row) => (row.kind === 'mutual' ? t.mutualReceptionKind : t.oneWayReceptionKind),
+    },
+    {
+      key: 'aFromBTypes',
+      label: t.receptionAFromBLabel,
+      valueOf: (row) => row.aFromBTypes.join(','),
+      render: (row) => row.aFromBTypes.map((type) => dignityTypeLabel(t, type)).join(', '),
+    },
+    {
+      key: 'bFromATypes',
+      label: t.receptionBFromALabel,
+      valueOf: (row) => row.bFromATypes.join(','),
+      render: (row) => row.bFromATypes.map((type) => dignityTypeLabel(t, type)).join(', '),
+    },
+    {
+      key: 'sameDignityType',
+      label: t.receptionSameTypeLabel,
+      labelTooltip: t.receptionSameTypeTooltip,
+      valueOf: (row) => row.sameDignityType,
+      align: 'center',
+      render: (row) => (row.sameDignityType ? '✓' : ''),
+    },
+    {
+      key: 'aspectLinked',
+      label: t.aspectLinkedLabel,
+      labelTooltip: t.aspectLinkedTooltip,
+      valueOf: (row) => row.aspectLinked,
+      align: 'center',
+      render: (row) => (row.aspectLinked ? '✓' : ''),
+    },
+  ];
+}
+
 export function declinationColumns(
   t: typeof chartViewMessages.en,
   locale: Locale,
@@ -880,6 +953,20 @@ function renderTableTab(
             rows={dispositorRows(data, pointVisibility, rulership)}
             getRowKey={(row) => row.bodyKey}
             downloadFilename={deriveExportFilename(displayName, 'dispositors', 'csv')}
+          />
+          <h4 className="reception-section-header" style={{ marginTop: '1.5rem', marginBottom: '0.5rem' }}>
+            {t.receptionCaption}{' '}
+            <Tooltip text={t.receptionTooltip} label={t.receptionTooltipLabel}>
+              ?
+            </Tooltip>
+          </h4>
+          <p className="hint">{t.receptionHint}</p>
+          <SortableTable
+            caption={t.receptionCaption}
+            columns={receptionColumns(t, locale)}
+            rows={receptionRows(data)}
+            getRowKey={(row) => `${row.bodyAKey}-${row.bodyBKey}`}
+            downloadFilename={deriveExportFilename(displayName, 'reception', 'csv')}
           />
         </>
       );

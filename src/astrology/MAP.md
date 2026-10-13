@@ -34,6 +34,7 @@ Pure astrological calculation (no DOM/React): bodies, aspects, houses, dignities
 - `primary-directions.ts` — Primary directions engine (Placidus semi-arcs, in zodiaco at latitude 0, direct only; Naibod/Ptolemy keys). Deps: `aspects`, `progressions`.
 - `profections.ts` — Annual/monthly profections (Hellenistic house-per-year). Deps: `signs`.
 - `progressions.ts` — Secondary progressions (day-for-year, quotidian/naibod/solarArc MC). Deps: `ephemeris/types`.
+- `reception.ts` — Essential-dignity reception across all five dignity types, including mutual and mixed reception (#548). Deps: `rulership`, `dignities`, `triplicity`, `bounds`, `decans`, `signs`, `sect`.
 - `rectification.ts` — Birth-time rectification (score candidates by solar-arc/transit contacts). Deps: `bodies`, `progressions`.
 - `rulership.ts` — Single place for "who rules this sign" (modern/traditional/both), essential dignities. Deps: `dignities`, `signs`.
 - `sect.ts` — Sect (day/night) + Sun-proximity (oriental/occidental/cazimi/combust/under-beams). Deps: `aspects`.

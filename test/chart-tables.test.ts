@@ -23,6 +23,7 @@ import {
   fixedStarRows,
   houseCuspRows,
   positionRows,
+  receptionRows,
 } from '../src/domain/chart-tables.js';
 import type { BodyId, BodyPosition, HousePositions } from '../src/ephemeris/types.js';
 import type { BirthMomentInput } from '../src/time/types.js';
@@ -981,5 +982,80 @@ describe('conditionRows (#547)', () => {
     const rows = conditionRows(noHouses);
     expect(rows.every((row) => row.angularity === undefined)).toBe(true);
     expect(rows.every((row) => row.inHayz === undefined)).toBe(true);
+  });
+});
+
+describe('receptionRows (#548)', () => {
+  const JUPITER = idOf('jupiter');
+
+  it('reports mutual reception by domicile for Mars in Cancer and Moon in Scorpio, aspect-linked when the aspect is present', () => {
+    const linkedAspect: Aspect = {
+      bodyA: MARS,
+      bodyB: MOON,
+      aspect: { key: 'opposition', name: 'Opposition', angle: 180, family: 'major' },
+      separation: 120,
+      orb: 10,
+      applying: true,
+    };
+    const data: ChartData = {
+      positions: [position(MARS, 100), position(MOON, 220)],
+      houses: HOUSES,
+      aspects: [linkedAspect],
+      dignities: new Map(),
+      sect: 'day',
+      partOfFortune: 0,
+      partOfSpirit: 0,
+    };
+    const rows = receptionRows(data);
+    expect(rows).toHaveLength(1);
+    const row = rows[0];
+    expect(row?.kind).toBe('mutual');
+    expect(row?.sameDignityType).toBe(true);
+    expect(row?.aFromBTypes).toContain('domicile');
+    expect(row?.bFromATypes).toContain('domicile');
+    expect(row?.aspectLinked).toBe(true);
+  });
+
+  it('is not aspect-linked when the two bodies have no aspect between them', () => {
+    const data: ChartData = {
+      positions: [position(MARS, 100), position(MOON, 220)],
+      houses: HOUSES,
+      aspects: [],
+      dignities: new Map(),
+      sect: 'day',
+      partOfFortune: 0,
+      partOfSpirit: 0,
+    };
+    expect(receptionRows(data)[0]?.aspectLinked).toBe(false);
+  });
+
+  it('omits a pair with no reception at all, rather than a zeroed-out row', () => {
+    const data: ChartData = {
+      positions: [position(JUPITER, 100), position(MARS, 15)],
+      houses: HOUSES,
+      aspects: [],
+      dignities: new Map(),
+      sect: 'day',
+      partOfFortune: 0,
+      partOfSpirit: 0,
+    };
+    expect(receptionRows(data)).toEqual([]);
+  });
+
+  it('ignores a traditional planet with no position in the chart', () => {
+    const data: ChartData = {
+      positions: [position(MARS, 100), position(MOON, 220)],
+      houses: HOUSES,
+      aspects: [],
+      dignities: new Map(),
+      sect: 'day',
+      partOfFortune: 0,
+      partOfSpirit: 0,
+    };
+    // Saturn/Jupiter have no positions here — must not throw or produce spurious rows for them.
+    expect(() => receptionRows(data)).not.toThrow();
+    const keys = receptionRows(data).flatMap((row) => [row.bodyAKey, row.bodyBKey]);
+    expect(keys).not.toContain('saturn');
+    expect(keys).not.toContain('jupiter');
   });
 });

@@ -11,7 +11,7 @@
  * @module chart-tables
  * @purpose Shapes a computed `ChartData` into the flat rows a chart's data tables, wheel ring and sheet actually render (#44).
  * @conventions Pure and framework-free; kept separate from `chart-compute.ts` so the slow real-engine chart test and the fast pure row-shaping test can run independently; longitude is rounded to the nearest arcsecond before sign-splitting (`degreeParts`) to avoid a seconds rounding bumping the sign; the wheel's aspect web is limited to major aspects, tables show every aspect found.
- * @exports positionRows, houseCuspRows, angleRows, aspectRows, crossAspectRows, dignityRows, conditionRows, dispositorRows, declinationContactRows, antisciaRows, fixedStarRows, chartShapeOf, derivedPointRows, chartWheelRing, chartSheetMetaLines, chartSheetInput, degreeParts, visiblePositions, visibleAspects, visibleAngleAspects, almutenOfAscendant
+ * @exports positionRows, houseCuspRows, angleRows, aspectRows, crossAspectRows, dignityRows, conditionRows, receptionRows, dispositorRows, declinationContactRows, antisciaRows, fixedStarRows, chartShapeOf, derivedPointRows, chartWheelRing, chartSheetMetaLines, chartSheetInput, degreeParts, visiblePositions, visibleAspects, visibleAngleAspects, almutenOfAscendant
  */
 import { almutenOf, essentialDignityScoreOf } from '../astrology/almuten.js';
 import { antiscialContacts, type AntiscialContact } from '../astrology/antiscia.js';
@@ -23,12 +23,14 @@ import { fixedStarConjunctions } from '../astrology/fixed-stars.js';
 import { jonesBodyPositions, jonesShapeOf, type JonesShapeResult } from '../astrology/jones-shapes.js';
 import { derivedPointByKey, type DerivedPointKey } from '../astrology/derived-points.js';
 import { midpointOf } from '../astrology/midpoints.js';
+import { mutualReceptionBetween, type DignityType } from '../astrology/reception.js';
 import {
   angularityOfHouse,
   isBesieged,
   isInHayz,
   motionOf,
   sectAlignmentOf,
+  TRADITIONAL_PLANET_IDS,
   type Angularity,
   type Motion,
   type SectAlignment,
@@ -46,13 +48,6 @@ import type { BirthMomentInput } from '../time/types.js';
 import type { WheelRingInput } from '../chart/multi-wheel.js';
 import type { ChartSheetInput } from '../chart/chart-sheet.js';
 import { filterAspectsForDisplay } from '../chart/aspect-web.js';
-
-/** Sun through Saturn (the Chaldean order), the only bodies `conditionRows` scores (#547). */
-const TRADITIONAL_PLANET_IDS: readonly BodyId[] = (
-  ['saturn', 'jupiter', 'mars', 'sun', 'venus', 'mercury', 'moon'] as const
-)
-  .map((key) => bodyByKey(key)?.id)
-  .filter((id): id is BodyId => id !== undefined);
 
 /**
  * Text glyphs for the Positions table's leftmost column, keyed by `BodyDefinition.key`
@@ -494,6 +489,64 @@ export function conditionRows(data: ChartData, orbConfig: OrbConfig = DEFAULT_OR
             solarCondition: solarConditionOf(position.longitude, sunPosition.longitude),
           }),
     });
+  }
+  return rows;
+}
+
+export interface ReceptionRow {
+  readonly bodyAKey: string;
+  readonly bodyAName: string;
+  readonly bodyBKey: string;
+  readonly bodyBName: string;
+  /** Never `'none'` — a pair with no reception at all is simply not a row. */
+  readonly kind: 'oneWay' | 'mutual';
+  /** Every dignity type A receives from B. */
+  readonly aFromBTypes: readonly DignityType[];
+  /** Every dignity type B receives from A. */
+  readonly bFromATypes: readonly DignityType[];
+  /** True for mutual reception of the *same* dignity type on both sides (e.g. both by domicile); false for mixed reception or a one-way pair. */
+  readonly sameDignityType: boolean;
+  /** Whether A and B are also in aspect to each other (#548) — reception "by aspect", traditionally the stronger, more immediately active case. */
+  readonly aspectLinked: boolean;
+}
+
+/**
+ * Every receiving pair among the seven traditional planets (#548) — one row per pair that has
+ * at least a one-way reception; a pair with none at all is simply absent, not a zeroed-out row.
+ * `data.aspects` is cross-referenced only to flag `aspectLinked`; this function never recomputes
+ * aspects itself.
+ */
+export function receptionRows(data: ChartData): readonly ReceptionRow[] {
+  const rows: ReceptionRow[] = [];
+  for (let i = 0; i < TRADITIONAL_PLANET_IDS.length; i++) {
+    for (let j = i + 1; j < TRADITIONAL_PLANET_IDS.length; j++) {
+      const bodyAId = TRADITIONAL_PLANET_IDS[i];
+      const bodyBId = TRADITIONAL_PLANET_IDS[j];
+      if (bodyAId === undefined || bodyBId === undefined) continue;
+      const positionA = data.positions.find((p) => p.body === bodyAId);
+      const positionB = data.positions.find((p) => p.body === bodyBId);
+      if (positionA === undefined || positionB === undefined) continue;
+      const result = mutualReceptionBetween(bodyAId, positionA.longitude, bodyBId, positionB.longitude, data.sect);
+      if (result.kind === 'none') continue;
+      const bodyA = bodyById(bodyAId);
+      const bodyB = bodyById(bodyBId);
+      const aspectLinked = data.aspects.some(
+        (aspect) =>
+          (aspect.bodyA === bodyAId && aspect.bodyB === bodyBId) ||
+          (aspect.bodyA === bodyBId && aspect.bodyB === bodyAId),
+      );
+      rows.push({
+        bodyAKey: bodyA?.key ?? String(bodyAId),
+        bodyAName: bodyA?.name ?? String(bodyAId),
+        bodyBKey: bodyB?.key ?? String(bodyBId),
+        bodyBName: bodyB?.name ?? String(bodyBId),
+        kind: result.kind,
+        aFromBTypes: result.aFromB.map((r) => r.dignityType),
+        bFromATypes: result.bFromA.map((r) => r.dignityType),
+        sameDignityType: result.sameDignityType,
+        aspectLinked,
+      });
+    }
   }
   return rows;
 }
