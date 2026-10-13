@@ -4,6 +4,21 @@ All notable changes to Astraya are recorded here. Versions follow
 [semantic versioning](https://semver.org/), and every milestone ends in a release —
 see [docs/RELEASING.md](docs/RELEASING.md).
 
+## [0.37.1] — 2026-10-13
+
+**Corrective release: v0.37.0 was tagged before the final chart-workspace commits reached main. This release delivers that completed work as a tested, reproducible build.**
+
+### Added
+
+- **Custom formula points are now first-class across derived charts and exports (#566, #573).** A saved formula point keeps its identity, name, position, visibility and standard-orb aspects in natal, harmonic, draconic and relocated charts, and in their full-export data and harmonic provenance.
+- **The Wheel workspace now has configurable multi-ring overlays (#558, #569).** Natal, transit and progressed rings can be enabled, ordered, attributed and exported from the canonical chart experience rather than a disconnected menu.
+- **Relocated charts carry a cited angle/house reference and full saved-location browser workflow (#559).** Natal-versus-relocated comparisons include the Ascendant, Midheaven and auxiliary angles.
+
+### Fixed
+
+- **Relationship-chart legends retain both isolation and a ring-targeting arrow (#574).** Keyboard activation, restoration and exports are covered alongside the documented chart-context matrix.
+- **Harmonic reference vectors and formula points remain stable through the transformed chart calculation (#557, #573).**
+
 ## [0.37.0] — 2026-10-13
 
 **A major professional-practice release: a chart's effective calculation rules now travel with it, traditional and modern technique suites gain their missing decision tools, and research/export workflows become reproducible artifacts rather than screen-only results.**
