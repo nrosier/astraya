@@ -150,6 +150,7 @@ export function HarmonicView({
             changeChartView(personId, 'harmonic', next);
           }}
           buildViewHref={(next) => chartHref(personId, next, 'harmonic')}
+          overlayContext={provider === undefined ? undefined : { moment: person.moment, provider, baseLabel: label }}
         />
       )}
 

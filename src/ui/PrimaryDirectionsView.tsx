@@ -48,6 +48,7 @@ import { useGlyphVariants } from './glyph-variant-setting.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { PersonNotFound } from './PersonNotFound.js';
+import { useWheelIsolation } from './wheel-interaction.js';
 import { primaryDirectionsViewMessages } from './PrimaryDirectionsView.messages.js';
 import { ChoiceGroup } from './primitives/ChoiceGroup.js';
 import { DateField } from './primitives/DateField.js';
@@ -234,6 +235,7 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
     };
     return renderMultiWheelSvg([natalRing, directedRing]);
   }, [load, directed, t, symbolClass, variants]);
+  const { wheelRef, onClick: handleWheelClick, onKeyDown: handleWheelKeyDown } = useWheelIsolation(wheelMarkup);
 
   if (person === undefined) {
     return <PersonNotFound />;
@@ -416,7 +418,13 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
               {wheelMarkup !== undefined && (
                 // App-generated SVG from just-computed chart data, never user-supplied markup —
                 // the same trust boundary ChartView.tsx's sheet markup is injected under.
-                <div className="chart-wheel" aria-hidden="true" dangerouslySetInnerHTML={{ __html: wheelMarkup }} />
+                <div
+                  ref={wheelRef}
+                  className="chart-wheel chart-wheel-interactive"
+                  dangerouslySetInnerHTML={{ __html: wheelMarkup }}
+                  onClick={handleWheelClick}
+                  onKeyDown={handleWheelKeyDown}
+                />
               )}
             </>
           )}

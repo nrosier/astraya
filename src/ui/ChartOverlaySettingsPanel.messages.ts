@@ -1,0 +1,71 @@
+/**
+ * @module ChartOverlaySettingsPanel.messages
+ * @purpose English/Dutch labels for the chart overlay settings modal.
+ * @conventions Co-located `{ en, nl }` catalogue consumed through `useMessages`; Dutch retains the same keys as English.
+ * @exports chartOverlaySettingsPanelMessages
+ */
+const en = {
+  heading: 'Overlay settings',
+  trigger: 'Overlay settings',
+  closeLabel: 'Close without applying overlay changes',
+  baseChart: (label: string) => `Base chart: ${label}`,
+  hint: 'Choose the additional rings to draw. Changes stay in this dialog until you apply them.',
+  ringProvenance: 'Ring calculation basis',
+  calculationSnapshot: (identity: string) => `Calculation snapshot ${identity}`,
+  primaryDirectionsProvenance: 'Primary directions: Naibod key, direct, Placidus',
+  natal: 'Natal chart',
+  draconic: 'Draconic chart',
+  transit: 'Transit ring',
+  transitDate: 'Transit date',
+  progressed: 'Secondary progressed ring',
+  progressedDate: 'Progressed to date',
+  directed: 'Primary directed ring',
+  directedDate: 'Directed to date',
+  return: 'Return ring',
+  returnKind: 'Return type',
+  solarReturn: 'Solar return',
+  lunarReturn: 'Lunar return',
+  returnDate: 'Return date',
+  relocated: 'Relocated chart',
+  latitude: 'Relocated latitude',
+  longitude: 'Relocated longitude',
+  interRingAspects: 'Show inter-ring aspects',
+  moveUp: (label: string) => `Move ${label} inward`,
+  moveDown: (label: string) => `Move ${label} outward`,
+  apply: 'Apply overlays',
+  cancel: 'Cancel',
+};
+
+const nl: typeof en = {
+  heading: 'Overlayinstellingen',
+  trigger: 'Overlayinstellingen',
+  closeLabel: 'Sluiten zonder overlaywijzigingen toe te passen',
+  baseChart: (label: string) => `Basishoroscoop: ${label}`,
+  hint: 'Kies de extra ringen om te tekenen. Wijzigingen blijven in dit venster tot je ze toepast.',
+  ringProvenance: 'Berekeningsbasis per ring',
+  calculationSnapshot: (identity: string) => `Berekeningssnapshot ${identity}`,
+  primaryDirectionsProvenance: 'Primaire directies: Naibod-sleutel, direct, Placidus',
+  natal: 'Geboortehoroscoop',
+  draconic: 'Draconische horoscoop',
+  transit: 'Transitring',
+  transitDate: 'Transitdatum',
+  progressed: 'Secundair gevorderde ring',
+  progressedDate: 'Gevorderd tot datum',
+  directed: 'Primaire gerichte ring',
+  directedDate: 'Gericht tot datum',
+  return: 'Terugkeerring',
+  returnKind: 'Type terugkeer',
+  solarReturn: 'Zonneterugkeer',
+  lunarReturn: 'Maandterugkeer',
+  returnDate: 'Datum terugkeer',
+  relocated: 'Verplaatste horoscoop',
+  latitude: 'Verplaatste breedtegraad',
+  longitude: 'Verplaatste lengtegraad',
+  interRingAspects: 'Aspecten tussen ringen tonen',
+  moveUp: (label: string) => `${label} naar binnen verplaatsen`,
+  moveDown: (label: string) => `${label} naar buiten verplaatsen`,
+  apply: 'Overlays toepassen',
+  cancel: 'Annuleren',
+};
+
+export const chartOverlaySettingsPanelMessages = { en, nl };

@@ -54,7 +54,7 @@ function Harness({ locale }: { locale: 'en' | 'nl' }) {
       ),
     [],
   );
-  const { wheelRef, selectionKey, clear, onClick } = useWheelIsolation(markup);
+  const { wheelRef, selectionKey, clear, onClick, onKeyDown } = useWheelIsolation(markup);
   const facts =
     selectionKey === undefined
       ? undefined
@@ -74,6 +74,7 @@ function Harness({ locale }: { locale: 'en' | 'nl' }) {
         className="chart-wheel chart-wheel-interactive"
         dangerouslySetInnerHTML={{ __html: markup }}
         onClick={onClick}
+        onKeyDown={onKeyDown}
       />
       {facts !== undefined && (
         <BiWheelSelectionPanel facts={facts} ringLabels={['Natal', 'Transit']} locale={locale} onClear={clear} />
@@ -157,6 +158,20 @@ describe('bi-wheel click-to-isolate (#418)', () => {
     await click(container, point('sun', 1));
     expect(container.querySelector('.chart-isolation-head strong')?.textContent).toBe('Sun (Transit)');
     expect(dimmed(container, point('sun', 1))).toBe(false);
+  });
+
+  it('lets a keyboard user select a legend and draws its leader arrow', async () => {
+    const container = await mount();
+    const legend = container.querySelector('[data-ring-legend="1"]');
+    if (legend === null) throw new Error('test fixture bug: missing transit legend');
+    await act(async () => {
+      legend.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      await Promise.resolve();
+    });
+    expect(legend.getAttribute('aria-pressed')).toBe('true');
+    expect(container.querySelector('[data-ring-legend-arrow="1"]')?.classList.contains('chart-ring-arrow-active')).toBe(
+      true,
+    );
   });
 
   it('says where the transiting planet is and which natal house it is in', async () => {

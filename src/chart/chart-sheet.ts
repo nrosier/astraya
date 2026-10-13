@@ -37,7 +37,7 @@ export interface ChartSheetInput {
    * zodiac) is presentation, and `ChartData` deliberately carries none of it.
    */
   readonly metaLines: readonly string[];
-  /** Wheel rings, innermost first — a single natal ring, or a bi-/tri-wheel. */
+  /** Wheel rings, innermost first — a single natal ring or a multi-ring overlay. */
   readonly rings: readonly WheelRingInput[];
   readonly crossAspects?: readonly CrossRingAspects[];
   readonly matrix: AspectMatrixInput;

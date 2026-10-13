@@ -200,7 +200,13 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
   }, [load, person, partner, t, symbolClass, variants]);
 
   const wheelT = useMessages(biWheelSelectionPanelMessages);
-  const { wheelRef, selectionKey, clear: clearIsolation, onClick: handleWheelClick } = useWheelIsolation(wheelMarkup);
+  const {
+    wheelRef,
+    selectionKey,
+    clear: clearIsolation,
+    onClick: handleWheelClick,
+    onKeyDown: handleWheelKeyDown,
+  } = useWheelIsolation(wheelMarkup);
   const nameA: string = person?.displayName ?? '';
   const nameB: string = partner?.displayName ?? '';
   const ringLabels = [nameA || t.personALabel, nameB || t.personBLabel];
@@ -302,9 +308,9 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
           <div
             ref={wheelRef}
             className="chart-wheel chart-wheel-interactive"
-            aria-hidden="true"
             dangerouslySetInnerHTML={{ __html: wheelMarkup }}
             onClick={handleWheelClick}
+            onKeyDown={handleWheelKeyDown}
           />
           {biWheelFacts !== undefined && (
             <BiWheelSelectionPanel

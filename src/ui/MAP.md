@@ -30,7 +30,8 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `ChartTypes.messages.ts` — i18n labels for all chart types.
 - `ChartViewNav.tsx` — Chart screen's Wheel/Aspects/Placements/Patterns & condition navigation: ordinary links (wide) or a labelled Select (narrow), never ARIA tabs. Deps: `./chart-sections`, `./primitives/Select`.
 - `SelectionInspector.tsx` — Chart selection inspector (facts, corpus meaning, related aspects, Clear, optional AI after) shown after the dial. Deps: `./WheelSelectionText`, `./FocusInterpretation`, `./ChartView.messages`.
-- `ChartView.tsx` + `ChartView.messages.ts` — Primary chart screen + shared `ChartDataView` (Wheel/Aspects/Placements/Patterns & condition views, reused by composite/draconic/harmonic/returns/shared-chart/horary). Deps: `domain/chart-compute`, `domain/chart-tables`, `chart/chart-sheet`, `./ChartViewNav`.
+- `ChartView.tsx` + `ChartView.messages.ts` — Primary chart screen + shared `ChartDataView`, including configurable multi-ring overlays and per-ring calculation basis. Deps: chart/domain calculations, `chart/multi-wheel`, `chart/chart-sheet`, `./ChartViewNav`.
+- `ChartOverlaySettingsPanel.tsx` + `ChartOverlaySettingsPanel.messages.ts` — Staged additional-ring source, order, contextual-input, and cross-aspect configuration for the canonical chart Wheel. Deps: `primitives/StagedDialog`, field primitives.
 - `CompositeView.tsx` + `CompositeView.messages.ts` — Composite midpoint chart between two people. Deps: `domain/composite`, `ChartView`, `ReportView`.
 - `CorpusCandidatesPanel.tsx` + `CorpusCandidatesPanel.messages.ts` — Admin candidate-review queue (accept/reject). Deps: `sync/admin-client`, `./placement-label`.
 - `CorpusOverridesPanel.tsx` + `CorpusOverridesPanel.messages.ts` — Admin corpus-entry editor (search/filter/override). Deps: `interpretation/corpus-client`, `sync/admin-client`.
@@ -59,13 +60,12 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `PreferencesView.tsx` + `PreferencesView.messages.ts` — Preferences workspace (#506/#510, lazy-loaded): General/Astrology defaults/Appearance & accessibility/Data & privacy, reusing each setting's own existing control. Deps: `./RulershipSetting`, `./SymbolSetting`, `./LanguageToggle`, `./ThemeToggle`, `domain/full-export`.
 - `PrimaryDirectionsView.tsx` + `PrimaryDirectionsView.messages.ts` — Configurable primary-directions screen (mode, method, points, date/age, direct bi-wheel, hit tables). Deps: `domain/primary-directions`, `chart/multi-wheel`.
 - `PrintProvenance.tsx` + `PrintProvenance.messages.ts` — Printed-page provenance footer (house system/zodiac/rulership/generated-at), invisible outside `@media print` (#564). Deps: none (thin, caller-resolved labels); wired into `ChartView.tsx` only so far.
-- `MultiWheelView.tsx` + `MultiWheelView.messages.ts` — Multi-wheel overlay screen: natal + independently-toggled transit/progressed/relocated rings (#558). Deps: `domain/transit`, `domain/secondary-progression`, `domain/relocated-chart`, `domain/chart-tables`, `chart/multi-wheel`.
 - `ProfectionsView.tsx` + `ProfectionsView.messages.ts` — Annual/monthly profections screen. Deps: `domain/profections`, `./rulership-setting`, `./wheel-corpus`.
 - `ProgressionsView.tsx` + `ProgressionsView.messages.ts` — Secondary/tertiary/minor progressions screen. Deps: `domain/secondary-progression`, `domain/minor-progression`.
 - `PwaStatus.tsx` + `PwaStatus.messages.ts` — PWA update + offline-cache warming banner. Deps: `pwa/register`, `pwa/warm-status`.
 - `RectificationView.tsx` + `RectificationView.messages.ts` — Birth-time rectification screen (event-matching). Deps: `domain/rectification`, `astrology/signs`.
 - `RelationshipSummary.tsx` + `RelationshipSummary.messages.ts` — Grouped relationship-themes summary (contacts/overlays/Tier 2 AI). Deps: `domain/relationship-themes`, `domain/house-overlays`, `interpretation/tier2-client`.
-- `RelocatedChartView.tsx` + `RelocatedChartView.messages.ts` — Relocated-chart screen: lat/lon picker, relocated wheel, natal-vs-relocated comparison table (#559). Deps: `domain/relocated-chart`, `./map-settings`, `./ChartView`.
+- `RelocatedChartView.tsx` + `RelocatedChartView.messages.ts` — Relocated-chart screen: saved or manual locations, relocated wheel, natal-vs-relocated comparison table (#559). Deps: `domain/relocated-chart`, store, `./map-settings`, `./ChartView`.
 - `ReportScreen.tsx` + `ReportScreen.messages.ts` — Standalone written-report route. Deps: `domain/chart-compute`, `ReportView`.
 - `ReportView.tsx` + `ReportView.messages.ts` — Report rendering + provenance toggle + degree-symbol (Sabian symbol) badge (#527) + Tier 2 AI panel. Deps: `interpretation/report`, `interpretation/corpus-client`, `interpretation/tier2-client`, `./degree-symbol-setting`, `./DegreeSymbolSetting`, `./GlossaryTerm`.
 - `ReturnView.tsx` + `ReturnView.messages.ts` — Solar/lunar return charts (pick year/place/rendering). Deps: `domain/return-chart`.
@@ -141,7 +141,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `use-exclusive-open.ts` — Shared open/close hook for dropdown-button rows. Deps: none (React only).
 - `void-of-course-text.ts` — Composes void-of-course Moon sentence (transit screen). Deps: `astrology/bodies`, `astrology/signs`, `astrology/void-of-course`, `time/julian`.
 - `wheel-corpus.ts` — Supplies + caches interpretation corpus to wheel-selection panel. Deps: `interpretation/corpus-client`.
-- `wheel-interaction.ts` — Click-to-isolate wheel interaction (dims non-clicked). Deps: `chart/body-id`.
+- `wheel-interaction.ts` — Pointer/keyboard wheel isolation, ring legend activation, and leader-arrow state. Deps: `chart/body-id`.
 - `wheel-selection.ts` — Composes wheel-selection heading text. Deps: `astrology/signs`, `interpretation/schema`, `./astro-names.messages`.
 - `workspace-rail-setting.ts` — Device preference for whether the desktop workspace rail is collapsed (#506/#509). Deps: none.
 - `year-range.ts` — Ephemeris data's valid year range (clamping). Deps: none.

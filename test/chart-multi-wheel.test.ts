@@ -129,6 +129,10 @@ describe('renderMultiWheelSvg (#52)', () => {
     expect(svg).toContain('>Transiting<');
     expect(svg).toContain('>Progressed<');
     expect(countClass(svg, 'chart-multiwheel-legend-label')).toBe(3);
+    expect(svg).toContain('role="button" tabindex="0" aria-pressed="false"');
+    expect(svg).toContain('data-ring-legend-arrow="0"');
+    expect(svg).toContain('data-ring-legend-arrow="2"');
+    expect(svg).toContain('marker-end="url(#chart-multiwheel-ring-arrowhead)"');
   });
 
   it('escapes special characters in a ring label', () => {

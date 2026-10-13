@@ -182,7 +182,13 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
   }, [load, t, shownContacts, symbolClass, variants]);
 
   const wheelT = useMessages(biWheelSelectionPanelMessages);
-  const { wheelRef, selectionKey, clear: clearIsolation, onClick: handleWheelClick } = useWheelIsolation(wheelMarkup);
+  const {
+    wheelRef,
+    selectionKey,
+    clear: clearIsolation,
+    onClick: handleWheelClick,
+    onKeyDown: handleWheelKeyDown,
+  } = useWheelIsolation(wheelMarkup);
   const biWheelFacts = useMemo(() => {
     if (load.kind !== 'ready' || selectionKey === undefined) return undefined;
     return resolveBiWheelSelection(selectionKey, {
@@ -277,9 +283,9 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
           <div
             ref={wheelRef}
             className="chart-wheel chart-wheel-interactive"
-            aria-hidden="true"
             dangerouslySetInnerHTML={{ __html: wheelMarkup }}
             onClick={handleWheelClick}
+            onKeyDown={handleWheelKeyDown}
           />
           {biWheelFacts !== undefined && (
             <BiWheelSelectionPanel

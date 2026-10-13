@@ -83,7 +83,6 @@ const PERSON_GROUP_FOR_TAB: Readonly<Record<PersonTabKey, FeatureGroup>> = {
   composite: 'person-relationships',
   'periodic-transit': 'person-timing',
   astrocartography: 'person-location',
-  'multi-wheel': 'person-charts',
 };
 
 const PERSON_ROUTE_KIND_FOR_TAB: Readonly<Record<PersonTabKey, Route['kind']>> = {
@@ -101,7 +100,6 @@ const PERSON_ROUTE_KIND_FOR_TAB: Readonly<Record<PersonTabKey, Route['kind']>> =
   composite: 'composite',
   'periodic-transit': 'periodic-transit',
   astrocartography: 'astrocartography',
-  'multi-wheel': 'multi-wheel',
 };
 
 const PERSON_EXPORTS_FOR_TAB: Readonly<Record<PersonTabKey, readonly ExportCapability[]>> = {
@@ -119,7 +117,6 @@ const PERSON_EXPORTS_FOR_TAB: Readonly<Record<PersonTabKey, readonly ExportCapab
   composite: ['chart-image', 'csv'],
   'periodic-transit': ['csv'],
   astrocartography: ['map'],
-  'multi-wheel': ['chart-image'],
 };
 
 /** Order within each person group follows PERSON_TABS' own order, grouped. */

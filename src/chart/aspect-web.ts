@@ -19,7 +19,7 @@
  */
 /**
  * @module chart/aspect-web
- * @purpose Renders computed aspects as chords across the wheel's inner circle, including a cross-ring variant for bi-/tri-wheels.
+ * @purpose Renders computed aspects as chords across the wheel's inner circle, including a cross-ring variant for multi-ring wheels.
  * @conventions One `<line>` per `Aspect` at a fixed radius (the aspect circle, not wherever glyph collision-spreading moved a body); styling (aspect key, applying/separating, tight-orb) is carried only as CSS classes, never inline colour; each chord is wrapped in a `<g>` with a wide invisible hit line for clickability and `data-aspect-*`/`data-ring-*` attributes for click-to-isolate.
  * @exports filterAspectsForDisplay, renderAspectWebSvg, renderCrossRingAspectWebSvg, TIGHT_ORB_DEG; AspectDisplayFilter type.
  */

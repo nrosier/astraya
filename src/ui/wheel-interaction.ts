@@ -14,9 +14,8 @@
  *
  * Selection keys are `body:<id>`, `sign:<lowercase sign name>`, `house:<1-12>` (#511, from a house number's `data-house` span), `aspect:<idA>|<idB>` (sorted, so
  * the same pair is the same key whichever end was named first) and `ring:<index>` — the last from
- * clicking a ring's legend entry (#448), isolating every body on that ring plus every aspect, own
- * or cross-ring, touching one of them (the same "focus plus its connections" rule `body` and
- * `sign` already use, just seeded with a whole ring's bodies instead of one or a sign's worth).
+ * clicking a ring's legend entry (#448), isolating that source's own bodies and aspects so a
+ * relationship chart can show one person alone while its leader arrow identifies the source ring.
  */
 /**
  * @module ui/wheel-interaction
@@ -151,7 +150,13 @@ function whatStays(root: Element, selectionKey: string): Keep | undefined {
     const signs = new Set(
       [...inRing].map((id) => signOfBody.get(id)).filter((sign): sign is string => sign !== undefined && sign !== ''),
     );
-    return { ...withConnections(inRing), signs, rings: new Set([value]) };
+    const ownLinks = new Set(
+      links.filter((link) => {
+        const [a, b] = endsOfLink(link);
+        return inRing.has(a) && inRing.has(b);
+      }),
+    );
+    return { bodies: inRing, signs, links: ownLinks, rings: new Set([value]) };
   }
   if (kind === 'aspect') {
     const [a, b] = value.split('|');
@@ -200,6 +205,11 @@ export function applyIsolation(root: Element, selectionKey: string | undefined):
   for (const element of root.querySelectorAll('[data-ring-legend]')) {
     const ring = element.getAttribute('data-ring-legend') ?? '';
     element.classList.toggle('chart-dimmed', keep?.rings !== undefined && !keep.rings.has(ring));
+    element.setAttribute('aria-pressed', String(keep?.rings?.has(ring) ?? false));
+  }
+  for (const element of root.querySelectorAll('[data-ring-legend-arrow]')) {
+    const ring = element.getAttribute('data-ring-legend-arrow') ?? '';
+    element.classList.toggle('chart-ring-arrow-active', keep?.rings?.has(ring) ?? false);
   }
 }
 
@@ -213,6 +223,8 @@ export interface WheelIsolation {
   readonly toggle: (key: string) => void;
   /** Goes on the same element as `wheelRef`. */
   readonly onClick: (event: React.MouseEvent<HTMLDivElement>) => void;
+  /** Lets a focused ring legend toggle isolation with Enter or Space. */
+  readonly onKeyDown: (event: React.KeyboardEvent<HTMLDivElement>) => void;
 }
 
 /**
@@ -244,6 +256,13 @@ export function useWheelIsolation(resetKey: unknown): WheelIsolation {
     onClick: (event) => {
       const next = selectionKeyForTarget(event.target as Element);
       // Clicking the selected symbol again, or empty space, clears it.
+      setSelectionKey((current) => (current === next ? undefined : next));
+    },
+    onKeyDown: (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      const next = selectionKeyForTarget(event.target as Element);
+      if (next?.startsWith('ring:') !== true) return;
+      event.preventDefault();
       setSelectionKey((current) => (current === next ? undefined : next));
     },
   };

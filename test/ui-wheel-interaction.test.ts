@@ -19,10 +19,12 @@ function biWheelFragment(): HTMLElement {
   const root = document.createElement('div');
   root.innerHTML = `
     <svg>
+      <path data-ring-legend-arrow="0" />
       <g data-ring-legend="0">
         <line class="chart-multiwheel-legend-swatch chart-multiwheel-ring-0" />
         <text class="chart-multiwheel-legend-label">Ada</text>
       </g>
+      <path data-ring-legend-arrow="1" />
       <g data-ring-legend="1">
         <line class="chart-multiwheel-legend-swatch chart-multiwheel-ring-1" />
         <text class="chart-multiwheel-legend-label">Charles</text>
@@ -54,7 +56,7 @@ describe('selectionKeyForTarget (#448)', () => {
 });
 
 describe('applyIsolation with a ring selection (#448)', () => {
-  it('keeps a ring’s own bodies, its own aspects and any cross-ring aspect touching it, dimming the rest', () => {
+  it('keeps only the selected ring’s bodies and own aspects, dimming the other source and cross-ring contacts', () => {
     const root = biWheelFragment();
     applyIsolation(root, 'ring:0');
 
@@ -63,16 +65,12 @@ describe('applyIsolation with a ring selection (#448)', () => {
     const sun1 = root.querySelector('[data-body="sun"][data-ring="1"]');
     expect(sun0?.classList.contains('chart-dimmed')).toBe(false);
     expect(moon0?.classList.contains('chart-dimmed')).toBe(false);
-    // Ring 1's Sun isn't dimmed either: it's the far end of the cross-ring aspect ring 0's
-    // selection keeps, the same "connected bodies stay lit too" rule a body/sign click already
-    // applies — isolating a ring shows that person's tensions, including the ones with the
-    // other person, not just their own chart in a vacuum.
-    expect(sun1?.classList.contains('chart-dimmed')).toBe(false);
+    expect(sun1?.classList.contains('chart-dimmed')).toBe(true);
 
     const ownAspect = root.querySelector('[data-aspect-body-a="sun"][data-ring-a="0"][data-ring-b="0"]');
     const crossAspect = root.querySelector('[data-aspect-body-a="sun"][data-ring-a="0"][data-ring-b="1"]');
     expect(ownAspect?.classList.contains('chart-dimmed')).toBe(false);
-    expect(crossAspect?.classList.contains('chart-dimmed')).toBe(false);
+    expect(crossAspect?.classList.contains('chart-dimmed')).toBe(true);
   });
 
   it('dims a ring that has no bodies at all under that selection (an out-of-range index)', () => {
@@ -114,6 +112,14 @@ describe('ring legend dimming (#455)', () => {
 
     expect(legend0?.classList.contains('chart-dimmed')).toBe(true);
     expect(legend1?.classList.contains('chart-dimmed')).toBe(false);
+    expect(legend0?.getAttribute('aria-pressed')).toBe('false');
+    expect(legend1?.getAttribute('aria-pressed')).toBe('true');
+    expect(root.querySelector('[data-ring-legend-arrow="0"]')?.classList.contains('chart-ring-arrow-active')).toBe(
+      false,
+    );
+    expect(root.querySelector('[data-ring-legend-arrow="1"]')?.classList.contains('chart-ring-arrow-active')).toBe(
+      true,
+    );
   });
 
   it('clears legend dimming when selection is cleared', () => {
@@ -126,6 +132,7 @@ describe('ring legend dimming (#455)', () => {
 
     expect(legend0?.classList.contains('chart-dimmed')).toBe(false);
     expect(legend1?.classList.contains('chart-dimmed')).toBe(false);
+    expect(root.querySelectorAll('.chart-ring-arrow-active')).toHaveLength(0);
   });
 
   it('does not dim ring legends for non-ring selections (body/sign/aspect)', () => {
