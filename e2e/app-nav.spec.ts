@@ -242,6 +242,7 @@ test('Charts is one destination, and the page keeps the type and the view in the
     'Harmonic',
     'Solar return',
     'Lunar return',
+    'Relocated',
   ]);
   await expect(selector).toHaveValue('natal');
 

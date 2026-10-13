@@ -47,7 +47,7 @@ const en = {
   tropicalDescription:
     'The Tropical zodiac is fixed to the seasons. The vernal equinox (Spring) is always at 0° Aries, regardless of where the background stars have moved. This is the standard in Western astrology and most popular software.',
   siderealDescription:
-    'The Sidereal zodiac is fixed to the background stars as they are now. Because the stars have precessed about 24° since the tropical zodiac was defined, your Sun sign in sidereal astrology is typically one sign earlier than in tropical (e.g., Western Aries becomes Pisces in sidereal). This is the standard in Vedic astrology.',
+    'The Sidereal zodiac is fixed to the background stars as they are now. Because the stars have precessed about 24° since the tropical zodiac was defined, your Sun sign in sidereal astrology is typically one sign earlier than in tropical (e.g., Western Aries becomes Pisces in sidereal). This is the coordinate system Vedic (Jyotish) astrology uses — but choosing it here only changes which zodiac longitudes are measured against; it does not add Vimshottari dasha timing, planetary yoga detection, or any other Jyotish-specific technique, none of which this app computes.',
   houseSystemDescription: (system: string) => {
     const descriptions: Record<string, string> = {
       placidus:

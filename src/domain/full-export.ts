@@ -13,11 +13,21 @@
  *
  * Pure apart from the ephemeris calls: the caller supplies the people, the provider, the settings
  * and the moment (`now`), so the document is reproducible and testable against the real engine.
+ *
+ * `FULL_EXPORT_VERSION` and the compatibility policy that governs it are documented in
+ * `docs/EXPORT_SCHEMA.md` (#561) — the published, versioned schema an external tool can rely on,
+ * alongside a hand-authored `docs/schema/astraya-export.schema.json` reference. Bumped from 1 to
+ * 2 here to catch up with two shape changes earlier this session (antiscia/declinations, then
+ * midpointTree/allMidpoints) that landed without a version bump — a lapse against the very
+ * policy this issue adds, corrected rather than carried forward silently. AAF/A93 import/export
+ * was considered and explicitly declined for now: this project has no verified knowledge of
+ * either wire format's actual field-level specification or licensing, and `docs/EXPORT_SCHEMA.md`
+ * states that rather than guessing at a compatibility claim this project cannot back up.
  */
 /**
  * @module full-export
  * @purpose Builds the whole-device export: every person's birth record plus (where possible) their computed natal chart tables, as one JSON document or a people CSV.
- * @conventions Plain JSON with its own `format`/`version` fields rather than a database dump; charts are computed with the caller-supplied `ExtendedSettings`/`rulership` (#541), carried verbatim into `preferences` so the document states exactly what was in force; one person's chart failure is caught and reported per-person rather than failing the whole export; deleted people are excluded.
+ * @conventions Plain JSON with its own `format`/`version` fields rather than a database dump; charts are computed with the caller-supplied `ExtendedSettings`/`rulership` (#541), carried verbatim into `preferences` so the document states exactly what was in force; one person's chart failure is caught and reported per-person rather than failing the whole export; deleted people are excluded; `FULL_EXPORT_VERSION`'s own compatibility policy lives in docs/EXPORT_SCHEMA.md, not in this file.
  * @exports buildFullExport, peopleToCsv, fullExportFilename, peopleCsvFilename, FullExport, ExportedPerson, ExportedChart, FULL_EXPORT_FORMAT, FULL_EXPORT_VERSION
  */
 import type { RulershipChoice } from '../astrology/rulership.js';
@@ -46,7 +56,7 @@ import type { Person } from './person.js';
 import type { EphemerisProvider } from '../ephemeris/types.js';
 
 export const FULL_EXPORT_FORMAT = 'astraya-export';
-export const FULL_EXPORT_VERSION = 1;
+export const FULL_EXPORT_VERSION = 2;
 
 export interface ExportedChart {
   readonly sect: ChartData['sect'];

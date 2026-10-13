@@ -21,11 +21,13 @@ Pure astrological calculation (no DOM/React): bodies, aspects, houses, dignities
 - `emphasis.ts` — Chart balance (element/modality/quadrant/hemisphere/dominant body/sign/house). Deps: `dignities`, `signs`.
 - `firdaria.ts` — Firdaria time-lord periods (seven classical planets + nodes, fixed years, day/night sect order) (#554). Deps: `sect`, `ephemeris/types`.
 - `fixed-stars.ts` — Fixed-star conjunctions + paran (angle-crossing). Deps: `aspects`.
+- `formula-parser.ts` — Safe recursive-descent arithmetic-expression parser/evaluator for user-defined points, no eval (#566). Deps: `ephemeris/types`.
 - `harmonics.ts` — Harmonic charts (Western) + Vedic Varga/divisional (D1/D9/D10). Deps: `signs`.
 - `horary.ts` — Horary "considerations before judgment" (radicality check via Lilly). Deps: `signs`.
 - `houses.ts` — UI's house-system picker list. Deps: `ephemeris/types`.
 - `jones-shapes.ts` — Marc Edmund Jones chart-shape classification (bundle/bowl/locomotive/etc.). Deps: `bodies`.
 - `lunar-phase.ts` — Moon-phase name + waxing/waning + illumination. Deps: ephemeris types only.
+- `lunations.ts` — Exact New/Full Moon instant finder, sample-then-bisect (#562). Deps: `bodies`, `ephemeris/types`.
 - `midpoints.ts` — Midpoint astrology (near/far + 90-degree dial tree). Deps: ephemeris types only.
 - `minor-progressions.ts` — Tertiary/minor progressions (day-for-lunar-month / lunar-month-for-year). Deps: `progressions`.
 - `mutual-aspects.ts` — Planetary-cycle exact aspects (e.g. Jupiter-Saturn conjunctions). Deps: `aspects`.
@@ -40,6 +42,7 @@ Pure astrological calculation (no DOM/React): bodies, aspects, houses, dignities
 - `rectification.ts` — Birth-time rectification (score candidates by solar-arc/transit contacts). Deps: `bodies`, `progressions`.
 - `rulership.ts` — Single place for "who rules this sign" (modern/traditional/both), essential dignities. Deps: `dignities`, `signs`.
 - `sect.ts` — Sect (day/night) + Sun-proximity (oriental/occidental/cazimi/combust/under-beams). Deps: `aspects`.
+- `sign-ingress.ts` — Exact sign-ingress instant finder, sample-then-bisect (#562). Deps: `signs`, `ephemeris/types`.
 - `signs.ts` — 12 tropical signs (element/modality + sign-index/degree helpers). Deps: ephemeris types only.
 - `solar-arc-directions.ts` — Solar arc directions (shift all bodies by progressed Sun's arc). Deps: `aspects`, `bodies`, `progressions`.
 - `solar-lunar-returns.ts` — Solar + lunar returns (via ephemeris root-finders). Deps: `ephemeris/types`.

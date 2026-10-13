@@ -9,8 +9,10 @@ One level above `src/astrology/`: composes pure astrological calculations into s
 - `chart-tables.ts` — Converts chart data into UI table/wheel/sheet rows. Deps: `astrology/almuten`, `astrology/antiscia`, `astrology/declinations`, `astrology/dispositors`, `astrology/fixed-stars`, `astrology/jones-shapes`, `astrology/signs`, `./chart-compute`.
 - `chart.ts` — Persisted "chart" entity (distinct from computed ChartData): person ref, kind, label, settings. Deps: `store/ops`, `./id`.
 - `composite.ts` — Composite chart (synthetic midpoint + fresh aspect/dignity/sect/parts). Deps: `astrology/aspects`, `astrology/midpoints`, `astrology/rulership`, `astrology/sect`, `astrology/arabic-parts`, `./chart-compute`.
+- `custom-point.ts` — User-defined-point computational core: resolves chart body/angle names, evaluates a user-typed formula (#566). Deps: `astrology/bodies`, `astrology/formula-parser`, `./chart-compute`.
 - `demibirthday.ts` — Demibirthday timing (Sun opposes natal longitude each year). Deps: `astrology/aspects`, `astrology/planetary-returns`, `ephemeris/generated-constants`.
 - `draconic.ts` — Draconic chart (lunar-node-based zodiac shift, same houses). Deps: `astrology/draconic`, `./chart-compute`.
+- `event-search.ts` — Batch sky-event search (stations/sign-ingresses/lunations) + reproducible CSV with the exact search parameters (#562). Deps: `astrology/stations`, `astrology/sign-ingress`, `astrology/lunations`, `astrology/bodies`, `astrology/signs`, `time/julian`.
 - `export-filename.ts` — Safe filename from person + chart kind. Deps: none (pure string).
 - `full-export.ts` — Whole-device backup export (every person + computable natal tables + CSV). Deps: `./chart-compute`, `./chart-tables`, `./person`, `astrology/rulership`.
 - `harmonic.ts` — Harmonic/Vedic Varga charts (D9 Navamsha, etc.). Deps: `astrology/harmonics`, `./chart-compute`.
