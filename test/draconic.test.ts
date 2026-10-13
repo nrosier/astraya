@@ -81,4 +81,27 @@ describe('computeDraconic (#398)', () => {
     });
     expect(withExtras.draconic.aspects.length).toBeGreaterThanOrEqual(withoutExtras.draconic.aspects.length);
   });
+
+  it('retains transformed custom formula points with standard non-luminary aspects', async () => {
+    const engine = await getEngine();
+    const data = await computeDraconic(PERSON, engine, {
+      customPoints: [{ id: 'formula-point', name: 'Formula point', formula: 'ascendant + moon - sun' }],
+    });
+
+    const [natalPoint] = data.natal.customPoints ?? [];
+    const [draconicPoint] = data.draconic.customPoints ?? [];
+    const meanNode = bodyByKey('meanNode');
+    const natalNode = data.natal.positions.find((position) => position.body === meanNode?.id);
+    expect(draconicPoint?.body).toBe(natalPoint?.body);
+    expect(draconicPoint?.name).toBe('Formula point');
+    expect(draconicPoint?.position.longitude).toBeCloseTo(
+      draconicLongitude(natalPoint?.position.longitude ?? NaN, natalNode?.longitude ?? NaN),
+      9,
+    );
+    expect(
+      data.draconic.aspects.some(
+        (aspect) => aspect.bodyA === draconicPoint?.body || aspect.bodyB === draconicPoint?.body,
+      ),
+    ).toBe(true);
+  });
 });

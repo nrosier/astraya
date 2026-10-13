@@ -78,6 +78,19 @@ describe('computeRelocatedChart (#559)', () => {
     expect(data.relocated.houses.cusps[4]).toBeCloseTo(SYDNEY_REFERENCE.relocated.cusp4, 6);
     expect(data.relocated.houses.cusps[7]).toBeCloseTo(SYDNEY_REFERENCE.relocated.cusp7, 6);
   });
+
+  it('materializes custom points against each chart’s own angles', async () => {
+    const engine = await getEngine();
+    const data = await computeRelocatedChart(PERSON, SYDNEY, engine, {
+      customPoints: [{ id: 'formula-point', name: 'Formula point', formula: 'ascendant + moon - sun' }],
+    });
+
+    const [natalPoint] = data.natal.customPoints ?? [];
+    const [relocatedPoint] = data.relocated.customPoints ?? [];
+    expect(relocatedPoint?.body).toBe(natalPoint?.body);
+    expect(relocatedPoint?.name).toBe('Formula point');
+    expect(relocatedPoint?.position.longitude).not.toBeCloseTo(natalPoint?.position.longitude ?? NaN, 6);
+  });
 });
 
 describe('relocatedComparisonRows (#559)', () => {

@@ -28,8 +28,7 @@ import type { BirthMomentInput } from '../time/types.js';
 
 function categoryOf(body: BodyId): BodyCategory {
   const definition = bodyById(body);
-  if (definition === undefined) throw new Error(`unreachable: ${String(body)} is always one of BODIES`);
-  return definition.category;
+  return definition?.category ?? 'asteroid';
 }
 
 /** Same three families `computeChartDataAtJd` excludes by default — see its own doc comment. */
@@ -91,6 +90,10 @@ export async function computeDraconic(
   }
 
   const sect: Sect = sectOf(sunPosition.longitude, houses.ascendant);
+  const customPoints = natal.customPoints?.flatMap((point) => {
+    const position = positionByBody.get(point.body);
+    return position === undefined ? [] : [{ ...point, position }];
+  });
 
   const draconic: ChartData = {
     positions,
@@ -100,6 +103,7 @@ export async function computeDraconic(
     sect,
     partOfFortune: partOfFortune(sect, houses.ascendant, sunPosition.longitude, moonPosition.longitude),
     partOfSpirit: partOfSpirit(sect, houses.ascendant, sunPosition.longitude, moonPosition.longitude),
+    ...(customPoints === undefined ? {} : { customPoints }),
   };
 
   return { natal, draconic };

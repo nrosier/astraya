@@ -95,6 +95,7 @@ export function HarmonicView({
 
   const { provider } = useEphemerisProvider();
   const [load, setLoad] = useState<Load>({ kind: 'idle' });
+  const customPointsKey = JSON.stringify(person?.customPoints ?? []);
 
   useEffect(() => {
     if (person?.moment === undefined || provider === undefined || !nValid) {
@@ -107,7 +108,12 @@ export function HarmonicView({
 
     void (async () => {
       try {
-        const data: HarmonicData = await computeHarmonic(moment, n, provider);
+        const data: HarmonicData = await computeHarmonic(
+          moment,
+          n,
+          provider,
+          person.customPoints === undefined ? {} : { customPoints: person.customPoints },
+        );
         if (!effect.cancelled)
           setLoad({ kind: 'ready', data: data.harmonic, provenance: harmonicPositionProvenance(data) });
       } catch (error) {
@@ -119,7 +125,7 @@ export function HarmonicView({
     return () => {
       effect.cancelled = true;
     };
-  }, [momentKey(person?.moment), provider, n, nValid]);
+  }, [momentKey(person?.moment), provider, n, nValid, customPointsKey]);
 
   if (person === undefined) {
     return <PersonNotFound />;
@@ -194,7 +200,16 @@ export function HarmonicView({
               changeChartView(personId, 'harmonic', next);
             }}
             buildViewHref={(next) => chartHref(personId, next, 'harmonic')}
-            overlayContext={provider === undefined ? undefined : { moment: person.moment, provider, baseLabel: label }}
+            overlayContext={
+              provider === undefined
+                ? undefined
+                : {
+                    moment: person.moment,
+                    provider,
+                    baseLabel: label,
+                    ...(person.customPoints === undefined ? {} : { options: { customPoints: person.customPoints } }),
+                  }
+            }
           />
         </>
       )}

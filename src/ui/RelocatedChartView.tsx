@@ -164,6 +164,7 @@ export function RelocatedChartView({
 
   const { provider } = useEphemerisProvider();
   const [load, setLoad] = useState<Load>({ kind: 'idle' });
+  const customPointsKey = JSON.stringify(person?.customPoints ?? []);
 
   useEffect(() => {
     if (person?.moment === undefined || provider === undefined || relocationPlace === undefined) {
@@ -177,7 +178,12 @@ export function RelocatedChartView({
 
     void (async () => {
       try {
-        const data = await computeRelocatedChart(moment, place, provider);
+        const data = await computeRelocatedChart(
+          moment,
+          place,
+          provider,
+          person.customPoints === undefined ? {} : { customPoints: person.customPoints },
+        );
         if (!effect.cancelled) setLoad({ kind: 'ready', data });
       } catch (error) {
         if (!effect.cancelled)
@@ -188,7 +194,7 @@ export function RelocatedChartView({
     return () => {
       effect.cancelled = true;
     };
-  }, [momentKey(person?.moment), provider, relocationPlace?.latitude, relocationPlace?.longitude]);
+  }, [momentKey(person?.moment), provider, relocationPlace?.latitude, relocationPlace?.longitude, customPointsKey]);
 
   if (person === undefined) {
     return <PersonNotFound />;
@@ -306,7 +312,14 @@ export function RelocatedChartView({
             }}
             buildViewHref={(next) => chartHref(personId, next, 'relocated')}
             overlayContext={
-              provider === undefined ? undefined : { moment: person.moment, provider, baseLabel: displayName }
+              provider === undefined
+                ? undefined
+                : {
+                    moment: person.moment,
+                    provider,
+                    baseLabel: displayName,
+                    ...(person.customPoints === undefined ? {} : { options: { customPoints: person.customPoints } }),
+                  }
             }
           />
 

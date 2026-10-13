@@ -51,6 +51,7 @@ export function DraconicView({
 
   const { provider } = useEphemerisProvider();
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
+  const customPointsKey = JSON.stringify(person?.customPoints ?? []);
 
   useEffect(() => {
     if (person?.moment === undefined || provider === undefined) return undefined;
@@ -60,7 +61,11 @@ export function DraconicView({
 
     void (async () => {
       try {
-        const data: DraconicData = await computeDraconic(moment, provider);
+        const data: DraconicData = await computeDraconic(
+          moment,
+          provider,
+          person.customPoints === undefined ? {} : { customPoints: person.customPoints },
+        );
         if (!effect.cancelled) setLoad({ kind: 'ready', data: data.draconic });
       } catch (error) {
         if (!effect.cancelled)
@@ -71,7 +76,7 @@ export function DraconicView({
     return () => {
       effect.cancelled = true;
     };
-  }, [momentKey(person?.moment), provider]);
+  }, [momentKey(person?.moment), provider, customPointsKey]);
 
   if (person === undefined) {
     return <PersonNotFound />;
@@ -117,7 +122,13 @@ export function DraconicView({
         overlayContext={
           provider === undefined
             ? undefined
-            : { moment: person.moment, provider, baseLabel: t.headingFallback, baseSource: 'draconic' }
+            : {
+                moment: person.moment,
+                provider,
+                baseLabel: t.headingFallback,
+                baseSource: 'draconic',
+                ...(person.customPoints === undefined ? {} : { options: { customPoints: person.customPoints } }),
+              }
         }
       />
 

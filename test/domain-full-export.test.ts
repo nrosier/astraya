@@ -156,6 +156,20 @@ describe('buildFullExport', () => {
     }
   });
 
+  it('includes saved custom formula points in natal and harmonic exports', async () => {
+    const person: Person = {
+      ...ADA,
+      customPoints: [{ id: 'formula-point', name: 'Formula point', formula: 'ascendant + moon - sun' }],
+    };
+    const [exported] = (await build([person])).people;
+
+    expect(exported?.natalChart?.positions.some((row) => row.bodyName === 'Formula point')).toBe(true);
+    for (const harmonic of exported?.harmonicCharts ?? []) {
+      expect(harmonic.chart.positions.some((row) => row.bodyName === 'Formula point')).toBe(true);
+      expect(harmonic.radixPositions.some((row) => row.bodyName === 'Formula point')).toBe(true);
+    }
+  });
+
   it('includes 90°-dial midpoint-tree hits once dial90Visible is set (#556)', async () => {
     const archive = await buildFullExport({
       people: [ADA],

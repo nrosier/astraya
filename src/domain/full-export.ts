@@ -180,11 +180,16 @@ async function harmonicExports(
   options: ReturnType<typeof toChartCalculationOptions>,
   rulership: RulershipChoice,
   visibility: PointVisibilityOptions,
+  customPoints: Person['customPoints'],
 ): Promise<readonly ExportedHarmonicChart[]> {
   if (moment === undefined) return [];
   return Promise.all(
     VARGA_PRESETS.map(async (preset) => {
-      const data = await computeHarmonic(moment, preset.n, provider, { ...options, rulership });
+      const data = await computeHarmonic(moment, preset.n, provider, {
+        ...options,
+        rulership,
+        ...(customPoints === undefined ? {} : { customPoints }),
+      });
       return {
         key: preset.key,
         label: preset.label,
@@ -234,7 +239,14 @@ export async function buildFullExport(params: {
       });
       const withHouses = person.timeAccuracy !== 'unknown' && housesAreDefined(data.houses);
       const harmonicCharts = withHouses
-        ? await harmonicExports(person.moment, params.provider, calcOptions, params.rulership, visibility)
+        ? await harmonicExports(
+            person.moment,
+            params.provider,
+            calcOptions,
+            params.rulership,
+            visibility,
+            person.customPoints,
+          )
         : undefined;
       people.push({
         ...base,

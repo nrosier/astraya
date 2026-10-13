@@ -23,13 +23,13 @@ import { partOfFortune, partOfSpirit } from '../astrology/arabic-parts.js';
 import { harmonicHouses, harmonicPosition } from '../astrology/harmonics.js';
 import { sectOf, type Sect } from '../astrology/sect.js';
 import { computeChartData, type ChartCalculationOptions, type ChartData } from './chart-compute.js';
+import { chartBodyKey, chartBodyName } from './chart-tables.js';
 import type { BodyId, BodyPosition, EphemerisProvider } from '../ephemeris/types.js';
 import type { BirthMomentInput } from '../time/types.js';
 
 function categoryOf(body: BodyId): BodyCategory {
   const definition = bodyById(body);
-  if (definition === undefined) throw new Error(`unreachable: ${String(body)} is always one of BODIES`);
-  return definition.category;
+  return definition?.category ?? 'asteroid';
 }
 
 /** Same three families `computeChartDataAtJd` excludes by default — see its own doc comment. */
@@ -61,13 +61,12 @@ export function harmonicPositionProvenance(data: HarmonicData): readonly Harmoni
   const radixByBody = new Map(data.natal.positions.map((position) => [position.body, position.longitude]));
   return data.harmonic.positions.flatMap((position) => {
     const radixLongitude = radixByBody.get(position.body);
-    const body = bodyById(position.body);
     return radixLongitude === undefined
       ? []
       : [
           {
-            bodyKey: body?.key ?? String(position.body),
-            bodyName: body?.name ?? String(position.body),
+            bodyKey: chartBodyKey(data.harmonic, position.body),
+            bodyName: chartBodyName(data.harmonic, position.body),
             radixLongitude,
             harmonicLongitude: position.longitude,
           },
@@ -118,6 +117,10 @@ export async function computeHarmonic(
   }
 
   const sect: Sect = sectOf(sunPosition.longitude, houses.ascendant);
+  const customPoints = natal.customPoints?.flatMap((point) => {
+    const position = positionByBody.get(point.body);
+    return position === undefined ? [] : [{ ...point, position }];
+  });
 
   const harmonic: ChartData = {
     positions,
@@ -127,6 +130,7 @@ export async function computeHarmonic(
     sect,
     partOfFortune: partOfFortune(sect, houses.ascendant, sunPosition.longitude, moonPosition.longitude),
     partOfSpirit: partOfSpirit(sect, houses.ascendant, sunPosition.longitude, moonPosition.longitude),
+    ...(customPoints === undefined ? {} : { customPoints }),
   };
 
   return { natal, harmonic };

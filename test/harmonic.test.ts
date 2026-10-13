@@ -115,4 +115,25 @@ describe('computeHarmonic (#170)', () => {
     });
     expect(withExtras.harmonic.aspects.length).toBeGreaterThanOrEqual(withoutExtras.harmonic.aspects.length);
   });
+
+  it('retains transformed custom formula points with standard non-luminary aspects', async () => {
+    const engine = await getEngine();
+    const data = await computeHarmonic(PERSON, 9, engine, {
+      customPoints: [{ id: 'formula-point', name: 'Formula point', formula: 'ascendant + moon - sun' }],
+    });
+
+    const [natalPoint] = data.natal.customPoints ?? [];
+    const [harmonicPoint] = data.harmonic.customPoints ?? [];
+    expect(harmonicPoint?.body).toBe(natalPoint?.body);
+    expect(harmonicPoint?.name).toBe('Formula point');
+    expect(harmonicPoint?.position.longitude).toBeCloseTo(
+      harmonicLongitude(natalPoint?.position.longitude ?? NaN, 9),
+      9,
+    );
+    expect(
+      data.harmonic.aspects.some(
+        (aspect) => aspect.bodyA === harmonicPoint?.body || aspect.bodyB === harmonicPoint?.body,
+      ),
+    ).toBe(true);
+  });
 });
