@@ -10,7 +10,7 @@ import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
-import { createPerson, gotoAndSettle, openNatalChart } from './support.ts';
+import { applySettings, createPerson, gotoAndSettle, openNatalChart, openSettings } from './support.ts';
 
 let dir: string;
 let app: FastifyInstance;
@@ -195,6 +195,10 @@ test('a derived point is selectable from the Placements table by keyboard, with 
     longitude: '-0.1276',
   });
   await openNatalChart(page, 'Placements');
+  // Part of Spirit is hidden until switched on (#542), like Part of Fortune.
+  await openSettings(page);
+  await page.locator('dialog.settings-card').getByRole('checkbox', { name: 'Part of Spirit', exact: true }).check();
+  await applySettings(page);
   const show = page.getByRole('button', { name: 'Show Part of Spirit on the chart', exact: true });
   await show.focus();
   await page.keyboard.press('Enter');

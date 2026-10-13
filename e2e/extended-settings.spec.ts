@@ -58,6 +58,7 @@ test('the settings open as a card, apply together or are dropped, and the button
     'Calculation profile',
     'Chart frame',
     'Bodies and points',
+    'Traditional scheme',
     'Aspects and orbs',
     'Wheel colours',
     'Rulership & dignities',
