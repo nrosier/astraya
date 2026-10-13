@@ -30,7 +30,7 @@
  * @module ChartView
  * @purpose Renders the natal chart screen: the chart wheel plus every data table a chart computes (positions, houses, aspects, dignities, dispositors, declinations, antiscia, fixed stars, chart shape, derived points), and the SVG/PNG/PDF export + share-link controls.
  * @conventions Exports `ChartDataView`, the shared tabbed chart+tables UI reused by CompositeView/SharedChartView; every value is recomputed from the stored birth moment via `domain/chart-compute.js`/`domain/chart-tables.js` rather than read from a saved Chart record; houses/angles/derived-points tables are hidden when `timeAccuracy === 'unknown'`. Text comes from co-located `ChartView.messages.ts` via `useMessages()`.
- * @exports ChartView, ChartDataView, emphasisColumns, positionColumns, houseCuspColumns, angleColumns, aspectColumns, dignityColumns, dispositorColumns, declinationColumns, antisciaColumns, fixedStarColumns, derivedPointColumns
+ * @exports ChartView, ChartDataView, emphasisColumns, positionColumns, houseCuspColumns, angleColumns, aspectColumns, dignityColumns, conditionColumns, dispositorColumns, declinationColumns, antisciaColumns, fixedStarColumns, derivedPointColumns
  */
 import { formatFixed } from './format.js';
 import { Tooltip } from './primitives/Tooltip.js';
@@ -43,6 +43,7 @@ import {
   chartShapeOf,
   chartSheetInput,
   chartSheetMetaLines,
+  conditionRows,
   declinationContactRows,
   derivedPointRows,
   EMPHASIS_MODALITIES,
@@ -56,6 +57,7 @@ import {
   type AngleRow,
   type AntisciaRow,
   type AspectRow,
+  type ConditionRow,
   type DeclinationContactRow,
   type DerivedPointRow,
   type DignityRow,
@@ -424,6 +426,96 @@ export function dignityColumns(t: typeof chartViewMessages.en, locale: Locale): 
   ];
 }
 
+/** The traditional planetary-condition table (#547) — sect alignment, angularity, hayz, motion, besiegement, solar phase/proximity. */
+export function conditionColumns(t: typeof chartViewMessages.en, locale: Locale): readonly TableColumn<ConditionRow>[] {
+  const sectAlignmentLabel = (row: ConditionRow): string =>
+    row.sectAlignment === 'ofSect' ? t.ofSect : row.sectAlignment === 'contraSect' ? t.contraSect : t.sectNeutral;
+  const angularityLabel = (row: ConditionRow): string =>
+    row.angularity === 'angular'
+      ? t.angular
+      : row.angularity === 'succedent'
+        ? t.succedent
+        : row.angularity === 'cadent'
+          ? t.cadent
+          : '—';
+  const motionLabel = (row: ConditionRow): string =>
+    row.motion === 'retrograde' ? t.retrogradeLabel : row.motion === 'stationary' ? t.stationaryLabel : t.directLabel;
+  const solarPhaseLabel = (row: ConditionRow): string =>
+    row.solarPhase === 'oriental' ? t.oriental : row.solarPhase === 'occidental' ? t.occidental : '—';
+  const solarConditionLabel = (row: ConditionRow): string =>
+    row.solarCondition === 'cazimi'
+      ? t.cazimi
+      : row.solarCondition === 'combust'
+        ? t.combust
+        : row.solarCondition === 'underTheBeams'
+          ? t.underTheBeams
+          : row.solarCondition === 'free'
+            ? t.solarConditionFree
+            : '—';
+  return [
+    {
+      key: 'bodyName',
+      label: t.bodyLabel,
+      valueOf: (row) => row.bodyName,
+      render: (row) => bodyDisplayName(row.bodyKey, locale),
+    },
+    { key: 'points', label: t.dignityPointsLabel, valueOf: (row) => row.points },
+    {
+      key: 'peregrine',
+      label: t.peregrineLabel,
+      labelTooltip: t.peregrineTooltip,
+      valueOf: (row) => row.peregrine,
+      align: 'center',
+      render: (row) => (row.peregrine ? '✓' : ''),
+    },
+    {
+      key: 'sectAlignment',
+      label: t.sectAlignmentLabel,
+      labelTooltip: t.sectAlignmentTooltip,
+      valueOf: (row) => row.sectAlignment,
+      render: sectAlignmentLabel,
+    },
+    {
+      key: 'angularity',
+      label: t.angularityLabel,
+      labelTooltip: t.angularityTooltip,
+      valueOf: (row) => row.angularity ?? '',
+      render: angularityLabel,
+    },
+    { key: 'motion', label: t.motionLabel, valueOf: (row) => row.motion, render: motionLabel },
+    {
+      key: 'inHayz',
+      label: t.hayzLabel,
+      labelTooltip: t.hayzTooltip,
+      valueOf: (row) => row.inHayz ?? false,
+      align: 'center',
+      render: (row) => (row.inHayz === true ? '✓' : row.inHayz === false ? '' : '—'),
+    },
+    {
+      key: 'besieged',
+      label: t.besiegedLabel,
+      labelTooltip: t.besiegedTooltip,
+      valueOf: (row) => row.besieged,
+      align: 'center',
+      render: (row) => (row.besieged ? '✓' : ''),
+    },
+    {
+      key: 'solarPhase',
+      label: t.solarPhaseLabel,
+      labelTooltip: t.solarPhaseTooltip,
+      valueOf: (row) => row.solarPhase ?? '',
+      render: solarPhaseLabel,
+    },
+    {
+      key: 'solarCondition',
+      label: t.solarConditionLabel,
+      labelTooltip: t.solarConditionTooltip,
+      valueOf: (row) => row.solarCondition ?? '',
+      render: solarConditionLabel,
+    },
+  ];
+}
+
 export function dispositorColumns(
   t: typeof chartViewMessages.en,
   locale: Locale,
@@ -756,6 +848,20 @@ function renderTableTab(
             rows={dignityRows(data, pointVisibility)}
             getRowKey={(row) => row.bodyKey}
             downloadFilename={deriveExportFilename(displayName, 'dignities', 'csv')}
+          />
+          <h4 className="condition-section-header" style={{ marginTop: '1.5rem', marginBottom: '0.5rem' }}>
+            {t.conditionCaption}{' '}
+            <Tooltip text={t.conditionTooltip} label={t.conditionTooltipLabel}>
+              ?
+            </Tooltip>
+          </h4>
+          <p className="hint">{t.conditionHint}</p>
+          <SortableTable
+            caption={t.conditionCaption}
+            columns={conditionColumns(t, locale)}
+            rows={conditionRows(data)}
+            getRowKey={(row) => row.bodyKey}
+            downloadFilename={deriveExportFilename(displayName, 'condition', 'csv')}
           />
           <h4 className="dispositors-section-header" style={{ marginTop: '1.5rem', marginBottom: '0.5rem' }}>
             {t.dispositorsCaption}{' '}

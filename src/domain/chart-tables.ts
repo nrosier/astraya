@@ -11,7 +11,7 @@
  * @module chart-tables
  * @purpose Shapes a computed `ChartData` into the flat rows a chart's data tables, wheel ring and sheet actually render (#44).
  * @conventions Pure and framework-free; kept separate from `chart-compute.ts` so the slow real-engine chart test and the fast pure row-shaping test can run independently; longitude is rounded to the nearest arcsecond before sign-splitting (`degreeParts`) to avoid a seconds rounding bumping the sign; the wheel's aspect web is limited to major aspects, tables show every aspect found.
- * @exports positionRows, houseCuspRows, angleRows, aspectRows, crossAspectRows, dignityRows, dispositorRows, declinationContactRows, antisciaRows, fixedStarRows, chartShapeOf, derivedPointRows, chartWheelRing, chartSheetMetaLines, chartSheetInput, degreeParts, visiblePositions, visibleAspects, visibleAngleAspects, almutenOfAscendant
+ * @exports positionRows, houseCuspRows, angleRows, aspectRows, crossAspectRows, dignityRows, conditionRows, dispositorRows, declinationContactRows, antisciaRows, fixedStarRows, chartShapeOf, derivedPointRows, chartWheelRing, chartSheetMetaLines, chartSheetInput, degreeParts, visiblePositions, visibleAspects, visibleAngleAspects, almutenOfAscendant
  */
 import { almutenOf, essentialDignityScoreOf } from '../astrology/almuten.js';
 import { antiscialContacts, type AntiscialContact } from '../astrology/antiscia.js';
@@ -23,18 +23,36 @@ import { fixedStarConjunctions } from '../astrology/fixed-stars.js';
 import { jonesBodyPositions, jonesShapeOf, type JonesShapeResult } from '../astrology/jones-shapes.js';
 import { derivedPointByKey, type DerivedPointKey } from '../astrology/derived-points.js';
 import { midpointOf } from '../astrology/midpoints.js';
+import {
+  angularityOfHouse,
+  isBesieged,
+  isInHayz,
+  motionOf,
+  sectAlignmentOf,
+  type Angularity,
+  type Motion,
+  type SectAlignment,
+} from '../astrology/planetary-condition.js';
 import { DEFAULT_RULERSHIP_CHOICE, primaryRulerOf, rulersOf, type RulershipChoice } from '../astrology/rulership.js';
+import { solarConditionOf, solarPhaseOf, type SolarCondition, type SolarPhase } from '../astrology/sect.js';
 import { degreesInSign, signIndex, signOf, type Element, type Modality } from '../astrology/signs.js';
 import { formatCoordinate } from '../ui/format.js';
 import { housesAreDefined, type AngleAspect, type ChartData } from './chart-compute.js';
 import { derivedPointLongitude } from './derived-point-position.js';
-import type { Aspect } from '../astrology/aspects.js';
+import { DEFAULT_ORB_CONFIG, type Aspect, type OrbConfig } from '../astrology/aspects.js';
 import type { Locale } from '../interpretation/schema.js';
 import type { BodyId, BodyPosition, Degrees } from '../ephemeris/types.js';
 import type { BirthMomentInput } from '../time/types.js';
 import type { WheelRingInput } from '../chart/multi-wheel.js';
 import type { ChartSheetInput } from '../chart/chart-sheet.js';
 import { filterAspectsForDisplay } from '../chart/aspect-web.js';
+
+/** Sun through Saturn (the Chaldean order), the only bodies `conditionRows` scores (#547). */
+const TRADITIONAL_PLANET_IDS: readonly BodyId[] = (
+  ['saturn', 'jupiter', 'mars', 'sun', 'venus', 'mercury', 'moon'] as const
+)
+  .map((key) => bodyByKey(key)?.id)
+  .filter((id): id is BodyId => id !== undefined);
 
 /**
  * Text glyphs for the Positions table's leftmost column, keyed by `BodyDefinition.key`
@@ -412,6 +430,72 @@ export function dignityRows(data: ChartData, options: PointVisibilityOptions = {
       peregrine: score.peregrine,
     };
   });
+}
+
+export interface ConditionRow {
+  readonly bodyKey: string;
+  readonly bodyName: string;
+  /** Essential-dignity point score, same scale and traditional-only scoring as `DignityRow.points` (#398, #545). */
+  readonly points: number;
+  readonly peregrine: boolean;
+  readonly sectAlignment: SectAlignment;
+  /** `undefined` when houses aren't usable (`housesAreDefined`). */
+  readonly angularity?: Angularity;
+  readonly motion: Motion;
+  /** `undefined` when houses aren't usable — hayz needs the Ascendant. */
+  readonly inHayz?: boolean;
+  readonly besieged: boolean;
+  /** `undefined` for the Sun itself (no phase/proximity relative to itself), or when exactly conjunct/opposite the Sun, where orientality is not a meaningful distinction (`solarPhaseOf`'s own doc comment). */
+  readonly solarPhase?: SolarPhase | undefined;
+  readonly solarCondition?: SolarCondition;
+}
+
+/**
+ * The traditional planetary-condition table (#547): sect alignment, accidental dignity
+ * (angularity, hayz), motion, besiegement, and solar phase/proximity, for each of the seven
+ * traditional (Chaldean) planets — the standard first read of a traditional chart alongside
+ * essential dignity (`dignityRows`, not duplicated here). Scoped to those seven: sect, hayz and
+ * besiegement have no established reading for the outer planets, nodes, or asteroids
+ * (`planetary-condition.ts`'s own doc comment).
+ */
+export function conditionRows(data: ChartData, orbConfig: OrbConfig = DEFAULT_ORB_CONFIG): readonly ConditionRow[] {
+  const housesUsable = housesAreDefined(data.houses);
+  const sunBody = bodyByKey('sun');
+  const marsBody = bodyByKey('mars');
+  const saturnBody = bodyByKey('saturn');
+  const sunPosition = sunBody === undefined ? undefined : data.positions.find((p) => p.body === sunBody.id);
+  const marsPosition = marsBody === undefined ? undefined : data.positions.find((p) => p.body === marsBody.id);
+  const saturnPosition = saturnBody === undefined ? undefined : data.positions.find((p) => p.body === saturnBody.id);
+
+  const rows: ConditionRow[] = [];
+  for (const bodyId of TRADITIONAL_PLANET_IDS) {
+    const position = data.positions.find((p) => p.body === bodyId);
+    const body = bodyById(bodyId);
+    if (position === undefined || body === undefined) continue;
+    const score = essentialDignityScoreOf(bodyId, position.longitude, data.sect, { rulershipScheme: 'traditional' });
+    const isSun = sunBody?.id === bodyId;
+    rows.push({
+      bodyKey: body.key,
+      bodyName: body.name,
+      points: score.points,
+      peregrine: score.peregrine,
+      sectAlignment: sectAlignmentOf(bodyId, data.sect),
+      ...(housesUsable ? { angularity: angularityOfHouse(houseOf(position.longitude, data.houses.cusps)) } : {}),
+      motion: motionOf(position.longitudeSpeed),
+      ...(housesUsable ? { inHayz: isInHayz(bodyId, position.longitude, data.houses.ascendant, data.sect) } : {}),
+      besieged:
+        marsPosition !== undefined && saturnPosition !== undefined && !isSun
+          ? isBesieged(position.longitude, marsPosition.longitude, saturnPosition.longitude, orbConfig)
+          : false,
+      ...(isSun || sunPosition === undefined
+        ? {}
+        : {
+            solarPhase: solarPhaseOf(position.longitude, sunPosition.longitude),
+            solarCondition: solarConditionOf(position.longitude, sunPosition.longitude),
+          }),
+    });
+  }
+  return rows;
 }
 
 /**
