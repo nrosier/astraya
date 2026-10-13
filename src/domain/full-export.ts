@@ -228,7 +228,10 @@ export async function buildFullExport(params: {
       continue;
     }
     try {
-      const data = await computeChartData(person.moment, params.provider, calcOptions);
+      const data = await computeChartData(person.moment, params.provider, {
+        ...calcOptions,
+        ...(person.customPoints === undefined ? {} : { customPoints: person.customPoints }),
+      });
       const withHouses = person.timeAccuracy !== 'unknown' && housesAreDefined(data.houses);
       const harmonicCharts = withHouses
         ? await harmonicExports(person.moment, params.provider, calcOptions, params.rulership, visibility)

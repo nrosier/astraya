@@ -35,6 +35,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `CompositeView.tsx` + `CompositeView.messages.ts` — Composite midpoint chart between two people. Deps: `domain/composite`, `ChartView`, `ReportView`.
 - `CorpusCandidatesPanel.tsx` + `CorpusCandidatesPanel.messages.ts` — Admin candidate-review queue (accept/reject). Deps: `sync/admin-client`, `./placement-label`.
 - `CorpusOverridesPanel.tsx` + `CorpusOverridesPanel.messages.ts` — Admin corpus-entry editor (search/filter/override). Deps: `interpretation/corpus-client`, `sync/admin-client`.
+- `CustomPointEditor.tsx` + `CustomPointEditor.messages.ts` — Chart-side editor for a person's safe custom formula points. Deps: `domain/custom-point`, `store-context`.
 - `CyclesView.tsx` + `CyclesView.messages.ts` — Planetary Cycles tool (exact-aspect search). Deps: `astrology/mutual-aspects`, `chart/cycle-diagram`.
 - `EventSearchView.tsx` + `EventSearchView.messages.ts` — UTC batch ephemeris research and reproducible CSV tool. Deps: `domain/event-search`, `EphemerisProviderContext`.
 - `DegreeSymbolSetting.tsx` + `DegreeSymbolSetting.messages.ts` — Named, explained control for the degree-symbol (Sabian symbol) visibility preference (#527), same label+explanation+control shape as `RulershipSetting`. Deps: `./degree-symbol-setting`, `./primitives/Checkbox`.

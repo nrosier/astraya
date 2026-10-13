@@ -30,6 +30,8 @@ import {
   type OrbConfig,
 } from '../astrology/aspects.js';
 import { bodyByKey, BODIES } from '../astrology/bodies.js';
+import { materializeCustomPoints, type ComputedCustomPoint } from './custom-point.js';
+import type { CustomPointDefinition } from './person.js';
 import type { EssentialDignities } from '../astrology/dignities.js';
 import { DEFAULT_RULERSHIP_CHOICE, essentialDignitiesFor, type RulershipChoice } from '../astrology/rulership.js';
 import { partOfFortune, partOfSpirit } from '../astrology/arabic-parts.js';
@@ -80,6 +82,8 @@ export interface ChartCalculationOptions {
   readonly lilithVariant?: 'mean' | 'true' | 'interpolated';
   /** Which lunar-node model `data.positions` carries; the other is dropped. Default 'mean'. */
   readonly nodeVariant?: 'mean' | 'true';
+  /** Persisted user formulas materialized as chart points after the ephemeris calculation (#566). */
+  readonly customPoints?: readonly CustomPointDefinition[];
   /**
    * Whether these point families participate in aspect-finding at all. All
    * default to false — Chiron, Lilith and the Nodes are still computed and
@@ -164,6 +168,8 @@ async function anglePointLongitudesAfter(
 
 export interface ChartData {
   readonly positions: readonly BodyPosition[];
+  /** User-defined formula points materialized into `positions`, retained for labels/provenance. */
+  readonly customPoints?: readonly ComputedCustomPoint[];
   readonly houses: HousePositions;
   readonly aspects: readonly Aspect[];
   /**
@@ -462,7 +468,7 @@ export async function computeChartDataAtJd(
         ];
   const angleAspects = housesUsable ? findPointAspects(points, subjects, orbConfig) : [];
 
-  return {
+  const baseData: ChartData = {
     positions,
     houses,
     aspects,
@@ -475,5 +481,25 @@ export async function computeChartDataAtJd(
     declinations,
     obliquity,
     fixedStars,
+  };
+  const customPoints = materializeCustomPoints(baseData, options.customPoints);
+  if (customPoints.length === 0) return baseData;
+
+  const customSubjects: AspectSubject[] = customPoints.map((point) => ({
+    body: point.body,
+    position: point.position,
+    // A constructed point is neither a luminary nor an ephemeris body with a bespoke orb tier.
+    // It therefore receives the standard non-luminary orb rules already used for ordinary points.
+    category: 'asteroid',
+  }));
+  const customBodyIds = new Set(customPoints.map((point) => point.body));
+  const customAspects = findAspects([...subjects, ...customSubjects], orbConfig).filter(
+    (aspect) => customBodyIds.has(aspect.bodyA) || customBodyIds.has(aspect.bodyB),
+  );
+  return {
+    ...baseData,
+    positions: [...positions, ...customPoints.map((point) => point.position)],
+    aspects: [...aspects, ...customAspects],
+    customPoints,
   };
 }

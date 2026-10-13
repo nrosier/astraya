@@ -16,6 +16,7 @@
 import { almutenOf, essentialDignityScoreOf } from '../astrology/almuten.js';
 import { antiscialContacts, type AntiscialContact } from '../astrology/antiscia.js';
 import { bodyById, bodyByKey } from '../astrology/bodies.js';
+import { customPointByBody } from './custom-point.js';
 import type { BoundsScheme } from '../astrology/bounds.js';
 import { declinationContacts, isOutOfBounds } from '../astrology/declinations.js';
 import { dispositorChain, isMutualReception } from '../astrology/dispositors.js';
@@ -147,6 +148,16 @@ export interface PointVisibilityOptions {
   readonly midpointTreeOrb?: Degrees; // default 1
 }
 
+/** Stable display/selection key for an ephemeris body or a materialized user formula point. */
+export function chartBodyKey(data: ChartData, body: BodyId): string {
+  return customPointByBody(data, body)?.name ?? bodyById(body)?.key ?? String(body);
+}
+
+/** Reader-facing name for an ephemeris body or a materialized user formula point. */
+export function chartBodyName(data: ChartData, body: BodyId): string {
+  return customPointByBody(data, body)?.name ?? bodyById(body)?.name ?? String(body);
+}
+
 function isBodyVisible(body: BodyId, options: PointVisibilityOptions): boolean {
   const definition = bodyById(body);
   if (definition?.category === 'centaur' && !(options.chironVisible ?? true)) return false;
@@ -250,13 +261,12 @@ export function positionRows(
   // treats those differently) renders as "—", the same as the Ascendant/Midheaven rows.
   const housesUsable = housesAreDefined(data.houses);
   const bodyRows = visiblePositions(data.positions, options).map((position) => {
-    const body = bodyById(position.body);
-    const key = body?.key ?? String(position.body);
+    const key = chartBodyKey(data, position.body);
     const parts = degreeParts(position.longitude);
     const declination = data.declinations?.get(position.body);
     return {
       bodyKey: key,
-      bodyName: body?.name ?? String(position.body),
+      bodyName: chartBodyName(data, position.body),
       glyph: bodySymbol(key),
       longitude: position.longitude,
       speed: position.longitudeSpeed,
@@ -348,7 +358,7 @@ export interface AspectRow {
   readonly applying: boolean;
 }
 
-function aspectRow(aspect: Aspect): AspectRow {
+function basicAspectRow(aspect: Aspect): AspectRow {
   const bodyA = bodyById(aspect.bodyA);
   const bodyB = bodyById(aspect.bodyB);
   return {
@@ -365,13 +375,28 @@ function aspectRow(aspect: Aspect): AspectRow {
   };
 }
 
+function aspectRow(data: ChartData, aspect: Aspect): AspectRow {
+  return {
+    bodyAKey: chartBodyKey(data, aspect.bodyA),
+    bodyAName: chartBodyName(data, aspect.bodyA),
+    bodyBKey: chartBodyKey(data, aspect.bodyB),
+    bodyBName: chartBodyName(data, aspect.bodyB),
+    aspect: aspect.aspect.name,
+    aspectKey: aspect.aspect.key,
+    angle: aspect.aspect.angle,
+    separation: aspect.separation,
+    orb: aspect.orb,
+    applying: aspect.applying,
+  };
+}
+
 /**
  * One row per aspect found, in `ChartData.aspects`' own order — minus any aspect touching a
  * currently-hidden point (`visibleAspects`, #542), so a hidden-but-still-aspecting Chiron can't
  * appear here even if it was a candidate at compute time.
  */
 export function aspectRows(data: ChartData, options: PointVisibilityOptions = {}): readonly AspectRow[] {
-  return visibleAspects(data.aspects, options).map(aspectRow);
+  return visibleAspects(data.aspects, options).map((aspect) => aspectRow(data, aspect));
 }
 
 /** Keeps only rows from one of Addey’s aspect harmonic families, or every row when no family is chosen. */
@@ -390,7 +415,7 @@ export function filterAspectRowsByHarmonicFamily(
  * charts, not one.
  */
 export function crossAspectRows(aspects: readonly Aspect[]): readonly AspectRow[] {
-  return aspects.map(aspectRow);
+  return aspects.map(basicAspectRow);
 }
 
 export interface DignityRow {
@@ -971,7 +996,7 @@ export function chartWheelRing(data: ChartData, label = 'Natal', options: PointV
     houses: data.houses,
     bodies: visiblePositions(data.positions, options).map((position) => ({
       body: position.body,
-      key: bodyById(position.body)?.key ?? String(position.body),
+      key: chartBodyKey(data, position.body),
       longitude: position.longitude,
       retrograde: position.retrograde,
     })),
@@ -1029,11 +1054,10 @@ export function chartSheetInput(
   nameOf: (bodyKey: string) => string = (bodyKey) => bodyByKey(bodyKey)?.name ?? bodyKey,
 ): ChartSheetInput {
   const bodies = visiblePositions(data.positions, options).map((position) => {
-    const body = bodyById(position.body);
     return {
       body: position.body,
-      key: body?.key ?? String(position.body),
-      label: body?.name ?? String(position.body),
+      key: chartBodyKey(data, position.body),
+      label: chartBodyName(data, position.body),
       longitude: position.longitude,
       retrograde: position.retrograde,
     };

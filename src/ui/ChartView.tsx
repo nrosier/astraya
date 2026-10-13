@@ -180,6 +180,7 @@ import {
   type ChartOverlaySource,
 } from './ChartOverlaySettingsPanel.js';
 import { chartOverlaySettingsPanelMessages } from './ChartOverlaySettingsPanel.messages.js';
+import { CustomPointEditor } from './CustomPointEditor.js';
 import { parseCoordinate } from './map-settings.js';
 import { TRANSIT_ORB_CONFIG } from '../astrology/transit-importance.js';
 
@@ -2326,6 +2327,7 @@ export function ChartView({
   const t = useMessages(chartViewMessages);
   const [locale] = useLocale();
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
+  const [lastReadyData, setLastReadyData] = useState<ChartData | undefined>();
   // Shared with the solar and lunar return charts, so a house system chosen here applies there too.
   const [settings, setSettings] = useExtendedSettings();
   const [rulership] = useRulershipChoice();
@@ -2354,19 +2356,29 @@ export function ChartView({
   const { provider } = useEphemerisProvider();
 
   useEffect(() => {
+    if (load.kind === 'ready') setLastReadyData(load.data);
+  }, [load]);
+
+  useEffect(() => {
     if (person?.moment === undefined || provider === undefined) return undefined;
     const moment = person.moment;
     // A mutable holder rather than a `let`, matching `App.tsx`'s own effect below.
     const effect = { cancelled: false };
     // Only the planetary rulers changed (#426): keep the chart on screen while it is recalculated
     // rather than going back to "loading", so the settings panel the choice was made in stays open.
-    const sameChart = lastChartKey.current === `${personId}|${momentKey(moment)}|${JSON.stringify(settings)}`;
-    lastChartKey.current = `${personId}|${momentKey(moment)}|${JSON.stringify(settings)}`;
+    const customPointsKey = JSON.stringify(person.customPoints ?? []);
+    const chartKey = `${personId}|${momentKey(moment)}|${JSON.stringify(settings)}|${customPointsKey}`;
+    const sameChart = lastChartKey.current === chartKey;
+    lastChartKey.current = chartKey;
     setLoad((current) => (sameChart && current.kind === 'ready' ? current : { kind: 'loading' }));
 
     void (async () => {
       try {
-        const data = await computeChartData(moment, provider, { ...toChartCalculationOptions(settings), rulership });
+        const data = await computeChartData(moment, provider, {
+          ...toChartCalculationOptions(settings),
+          rulership,
+          ...(person.customPoints === undefined ? {} : { customPoints: person.customPoints }),
+        });
         if (!effect.cancelled) setLoad({ kind: 'ready', data });
       } catch (error) {
         if (!effect.cancelled)
@@ -2377,7 +2389,7 @@ export function ChartView({
     return () => {
       effect.cancelled = true;
     };
-  }, [personId, momentKey(person?.moment), settings, rulership, provider]);
+  }, [personId, momentKey(person?.moment), person?.customPoints, settings, rulership, provider]);
 
   if (person === undefined) {
     return <PersonNotFound />;
@@ -2442,10 +2454,15 @@ export function ChartView({
                 provider,
                 baseLabel: t.natalFallback,
                 baseSource: 'natal',
-                options: { ...toChartCalculationOptions(settings), rulership },
+                options: {
+                  ...toChartCalculationOptions(settings),
+                  rulership,
+                  ...(person.customPoints === undefined ? {} : { customPoints: person.customPoints }),
+                },
               }
         }
       />
+      {lastReadyData !== undefined && <CustomPointEditor person={person} data={lastReadyData} />}
     </main>
   );
 }

@@ -66,7 +66,6 @@ test('a natal, transit, and progressed triwheel is independently configurable (#
   await chooseExport(page, 'Image (SVG)');
   const download = await downloadPromise;
   const downloadPath = await download.path();
-  if (downloadPath === null) throw new Error('SVG export did not produce a downloadable file');
   expect(readFileSync(downloadPath, 'utf8')).toContain('data-ring-legend="2"');
 
   await page.getByRole('button', { name: 'Overlay settings', exact: true }).click();

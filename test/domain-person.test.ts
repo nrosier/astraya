@@ -46,6 +46,15 @@ describe('custom formula points (#566)', () => {
     ]);
   });
 
+  it('retains a disabled formula point for later re-enabling', () => {
+    const person = buildPerson(
+      'p-test',
+      new Map([['customPoints', [{ id: 'saved', name: 'Saved', formula: 'sun + moon', enabled: false }]]]),
+    );
+
+    expect(person.customPoints).toEqual([{ id: 'saved', name: 'Saved', formula: 'sun + moon', enabled: false }]);
+  });
+
   it('rejects malformed formulas and duplicate names atomically', () => {
     expect(
       readCustomPoints([

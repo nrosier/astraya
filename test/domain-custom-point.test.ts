@@ -7,6 +7,7 @@
 import { describe, expect, it } from 'vitest';
 import { bodyByKey } from '../src/astrology/bodies.js';
 import { computeChartData } from '../src/domain/chart-compute.js';
+import { aspectRows, chartWheelRing, positionRows } from '../src/domain/chart-tables.js';
 import { customPointLongitude, FormulaError, resolveChartIdentifier } from '../src/domain/custom-point.js';
 import type { BirthMomentInput } from '../src/time/types.js';
 import { getEngine } from './engine-harness.js';
@@ -62,6 +63,38 @@ describe('customPointLongitude (#566)', () => {
     const engine = await getEngine();
     const data = await computeChartData(PERSON, engine);
     expect(() => customPointLongitude(data, 'sun + nibiru')).toThrow(FormulaError);
+  });
+});
+
+describe('materialized custom points (#573)', () => {
+  it('adds stable named positions and standard-orb aspects to the shared chart data', async () => {
+    const engine = await getEngine();
+    const data = await computeChartData(PERSON, engine, {
+      customPoints: [{ id: 'fortune-like', name: 'Fortune-like', formula: 'ascendant + moon - sun' }],
+    });
+
+    const [point] = data.customPoints ?? [];
+    expect(point).toMatchObject({ id: 'fortune-like', name: 'Fortune-like', formula: 'ascendant + moon - sun' });
+    expect(point?.body).toBeLessThan(-1);
+    expect(data.positions.find((position) => position.body === point?.body)?.longitude).toBeCloseTo(
+      customPointLongitude(data, 'ascendant + moon - sun'),
+      9,
+    );
+    expect(positionRows(data).some((row) => row.bodyName === 'Fortune-like')).toBe(true);
+    expect(chartWheelRing(data).bodies.some((body) => body.key === 'Fortune-like')).toBe(true);
+    expect(aspectRows(data).some((row) => row.bodyAName === 'Fortune-like' || row.bodyBName === 'Fortune-like')).toBe(
+      true,
+    );
+  });
+
+  it('keeps a disabled definition persisted but omits it from chart positions and aspects', async () => {
+    const engine = await getEngine();
+    const data = await computeChartData(PERSON, engine, {
+      customPoints: [{ id: 'disabled-point', name: 'Disabled point', formula: 'sun + moon', enabled: false }],
+    });
+
+    expect(data.customPoints).toBeUndefined();
+    expect(positionRows(data).some((row) => row.bodyName === 'Disabled point')).toBe(false);
   });
 });
 
