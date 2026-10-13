@@ -19,13 +19,18 @@
 /**
  * @module TransitView
  * @purpose Transit bi-wheel screen for one saved person against a chosen date: natal chart on the inner ring, transiting positions on the outer ring, with filtered cross-chart contacts and void-of-course Moon.
- * @conventions Calls renderMultiWheelSvg directly, bypassing the single-chart AstroChartWheel wrapper, same as SynastryView.tsx; uses TransitView.messages.ts for en/nl text via useMessages().
+ * @conventions Calls renderMultiWheelSvg directly, bypassing the single-chart AstroChartWheel wrapper, same as SynastryView.tsx; uses TransitView.messages.ts for en/nl text via useMessages(). Carries its own PrintProvenance footer (#564) labelled with engine defaults, since computeTransit doesn't yet take a user-configurable calculation snapshot.
  * @exports TransitView, contactColumns
  */
 
 import { DateField } from './primitives/DateField.js';
 import { GlossaryTerms } from './GlossaryTerm.js';
 import { personHref } from './route.js';
+import { houseSystemLabel, rulershipLabel, zodiacLabel } from './ChartView.js';
+import { PrintProvenance } from './PrintProvenance.js';
+import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
+import { DEFAULT_RULERSHIP_CHOICE } from '../astrology/rulership.js';
+import { buildCalculationSnapshot, calculationSnapshotIdentity } from '../domain/calculation-snapshot.js';
 import { useSymbolClass } from './symbol-setting.js';
 import { useGlyphVariants } from './glyph-variant-setting.js';
 import { useEffect, useMemo, useState } from 'react';
@@ -38,7 +43,7 @@ import { renderMultiWheelSvg, type CrossRingAspects } from '../chart/multi-wheel
 import { findVoidOfCourseMoon, type VoidOfCourseMoon } from '../astrology/void-of-course.js';
 import { voidOfCourseSentence } from './void-of-course-text.js';
 import { aspectDisplayName, bodyDisplayName } from './astro-names.messages.js';
-import { formatFixed, todayInputValue } from './format.js';
+import { formatFixed, formatTimestamp, todayInputValue } from './format.js';
 import { buildFocusObjectContext } from '../interpretation/focus-context.js';
 import { FocusInterpretation } from './FocusInterpretation.js';
 import { BiWheelSelectionPanel } from './BiWheelSelectionPanel.js';
@@ -249,6 +254,20 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
 
   return (
     <main className="shell">
+      {/* Invisible outside @media print (#564) — see app.css's own `.print-provenance` rule.
+          This screen doesn't yet thread a user-configurable calculation snapshot through
+          `computeTransit` (see PrintProvenance.tsx's doc comment) — `rulership` above only
+          ranks contacts, it isn't passed into the chart calculation itself — so the footer
+          truthfully names the engine defaults both rings are actually computed with. */}
+      <PrintProvenance
+        houseSystem={houseSystemLabel(DEFAULT_EXTENDED_SETTINGS.houseSystem)}
+        zodiac={zodiacLabel(DEFAULT_EXTENDED_SETTINGS.zodiac)}
+        rulership={rulershipLabel(DEFAULT_RULERSHIP_CHOICE)}
+        snapshotIdentity={calculationSnapshotIdentity(
+          buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE),
+        )}
+        generatedAt={formatTimestamp(new Date())}
+      />
       <p className="back">
         <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
       </p>

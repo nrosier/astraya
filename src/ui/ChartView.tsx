@@ -30,7 +30,7 @@
  * @module ChartView
  * @purpose Renders the natal chart screen: the chart wheel plus every data table a chart computes (positions, houses, aspects, dignities, dispositors, declinations, antiscia, fixed stars, chart shape, derived points), and the SVG/PNG/PDF export + share-link controls.
  * @conventions Exports `ChartDataView`, the shared tabbed chart+tables UI reused by CompositeView/SharedChartView; every value is recomputed from the stored birth moment via `domain/chart-compute.js`/`domain/chart-tables.js` rather than read from a saved Chart record; houses/angles/derived-points tables are hidden when `timeAccuracy === 'unknown'`. Text comes from co-located `ChartView.messages.ts` via `useMessages()`.
- * @exports ChartView, ChartDataView, emphasisColumns, positionColumns, houseCuspColumns, angleColumns, aspectColumns, dignityColumns, almutenCandidateColumns, conditionColumns, receptionColumns, dispositorColumns, declinationColumns, antisciaColumns, midpointTreeColumns, allMidpointsColumns, fixedStarColumns, derivedPointColumns
+ * @exports ChartView, ChartDataView, emphasisColumns, positionColumns, houseCuspColumns, angleColumns, aspectColumns, dignityColumns, almutenCandidateColumns, conditionColumns, receptionColumns, dispositorColumns, declinationColumns, antisciaColumns, midpointTreeColumns, allMidpointsColumns, fixedStarColumns, derivedPointColumns, houseSystemLabel, zodiacLabel, rulershipLabel
  */
 import { formatFixed, formatTimestamp } from './format.js';
 import { PrintProvenance } from './PrintProvenance.js';
@@ -252,18 +252,20 @@ function dateParts(value: string): readonly [number, number, number] | undefined
  * localized/async-fetched names `ExtendedSettingsPanel.tsx`'s own `useNameLookup` resolves via
  * `provider.houseSystemName`/`ayanamsaName`: a footer repeated on every printed page should
  * never depend on an ephemeris-provider round trip succeeding, and `HouseSystemDefinition.key`
- * is already a readable (if English-only) identifier with no further lookup needed.
+ * is already a readable (if English-only) identifier with no further lookup needed. Exported so
+ * the bi-wheel screens that don't route through `ChartDataView` (`SynastryView.tsx`,
+ * `TransitView.tsx`, `PrimaryDirectionsView.tsx`) can build their own footer with the same labels.
  */
-function houseSystemLabel(code: string): string {
+export function houseSystemLabel(code: string): string {
   const key = HOUSE_SYSTEMS.find((system) => system.code === code)?.key ?? code;
   return key.charAt(0).toUpperCase() + key.slice(1);
 }
 
-function zodiacLabel(zodiac: Zodiac): string {
+export function zodiacLabel(zodiac: Zodiac): string {
   return zodiac.kind === 'tropical' ? 'Tropical' : `Sidereal (ayanamsa ${String(zodiac.ayanamsa)})`;
 }
 
-function rulershipLabel(rulership: string): string {
+export function rulershipLabel(rulership: string): string {
   return rulership.charAt(0).toUpperCase() + rulership.slice(1);
 }
 
