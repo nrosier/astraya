@@ -70,6 +70,7 @@ import { derivedPointPlacementFacts } from '../domain/derived-point-position.js'
 import { computeChartData, housesAreDefined, type ChartData } from '../domain/chart-compute.js';
 import { deriveExportFilename } from '../domain/export-filename.js';
 import { encodeChartShareLink } from '../domain/chart-share.js';
+import { buildCalculationSnapshot, calculationSnapshotToJson } from '../domain/calculation-snapshot.js';
 import { momentKey } from '../time/encode.js';
 import { renderChartDialSvg, renderChartSheetSvg } from '../chart/chart-sheet.js';
 import { renderJonesShapeDiagramSvg } from '../chart/jones-shape-diagram.js';
@@ -695,13 +696,13 @@ function renderTableTab(
           <SortableTable
             caption={t.aspectsCaption}
             columns={aspectColumns(t, locale, selection)}
-            rows={aspectRows(data)}
+            rows={aspectRows(data, pointVisibility)}
             getRowKey={(row) => `${row.bodyAKey}-${row.aspect}-${row.bodyBKey}`}
             selectedRowKey={(() => {
               const chosen =
                 selection?.selectedKey === undefined
                   ? undefined
-                  : aspectRows(data).find((row) => aspectSelectionKey(row) === selection.selectedKey);
+                  : aspectRows(data, pointVisibility).find((row) => aspectSelectionKey(row) === selection.selectedKey);
               return chosen === undefined ? undefined : `${chosen.bodyAKey}-${chosen.aspect}-${chosen.bodyBKey}`;
             })()}
             downloadFilename={deriveExportFilename(displayName, 'aspects', 'csv')}
@@ -737,7 +738,8 @@ function renderTableTab(
       );
     }
     case 'dignities': {
-      const almuten = almutenOfAscendant(data, rulership);
+      // Always traditional (#545) — almutenOfAscendant no longer takes a rulership/display-choice parameter.
+      const almuten = almutenOfAscendant(data);
       return (
         <>
           {almuten !== undefined && (
@@ -751,7 +753,7 @@ function renderTableTab(
           <SortableTable
             caption={t.dignitiesCaption}
             columns={dignityColumns(t, locale)}
-            rows={dignityRows(data, pointVisibility, rulership)}
+            rows={dignityRows(data, pointVisibility)}
             getRowKey={(row) => row.bodyKey}
             downloadFilename={deriveExportFilename(displayName, 'dignities', 'csv')}
           />
@@ -990,7 +992,7 @@ function resolveWheelIsolation(
   const selection = parseSelectionKey(isolatedKey);
   if (selection === undefined) return undefined;
   const allPositions = positionRows(data, pointVisibility, housesRenderable);
-  const allAspects = aspectRows(data);
+  const allAspects = aspectRows(data, pointVisibility);
 
   if (selection.kind === 'body') {
     const value = selection.key;
@@ -1003,9 +1005,10 @@ function resolveWheelIsolation(
   }
 
   if (selection.kind === 'derived') {
-    const row = derivedPointRows(data, { fortuneVisible: true }).find(
-      (candidate) => candidate.pointKey === selection.point,
-    );
+    // The real visibility settings (#542) — the matrix (the only place a hidden derived point's
+    // selection key could previously have come from) now also respects them, so there is no
+    // longer a hidden-but-selectable case to work around with a hardcoded override here.
+    const row = derivedPointRows(data, pointVisibility).find((candidate) => candidate.pointKey === selection.point);
     const facts = derivedPointPlacementFacts(data, selection.point);
     return {
       heading: row?.label ?? selection.point,
@@ -1054,22 +1057,30 @@ function resolveWheelIsolation(
 }
 
 /**
- * Copies a #65 share link for one birth moment to the clipboard — the chart itself is
- * always recomputed from `moment` on the recipient's end, so this is the entire payload;
- * nothing is sent anywhere to produce it.
+ * Copies a #65 share link for one birth moment to the clipboard — the chart itself is always
+ * recomputed from `moment` on the recipient's end, so this is the entire payload; nothing is
+ * sent anywhere to produce it. The link also carries the sender's own effective calculation
+ * settings (#541, as a `CalculationSnapshot`), so the recipient's browser recomputes under the
+ * same house system/zodiac/orbs/visibility/rulers the sender actually had in force — not
+ * whatever the recipient's own device happens to default to.
  */
 function ShareLink({
   moment,
   housesKnown,
+  settings,
+  rulership,
 }: {
   readonly moment: BirthMomentInput;
   readonly housesKnown: boolean;
+  readonly settings: ExtendedSettings;
+  readonly rulership: RulershipChoice;
 }): React.JSX.Element {
   const t = useMessages(chartViewMessages);
   const [copied, setCopied] = useState(false);
 
   const copy = (): void => {
-    const query = encodeChartShareLink({ moment, settings: {}, housesKnown }).toString();
+    const shareSettings = calculationSnapshotToJson(buildCalculationSnapshot(settings, rulership));
+    const query = encodeChartShareLink({ moment, settings: shareSettings, housesKnown }).toString();
     const url = `${window.location.origin}${window.location.pathname}#/shared?${query}`;
     void navigator.clipboard.writeText(url).then(
       () => {
@@ -1624,7 +1635,7 @@ export function ChartView({
         ]}
       />
       <ChartTypeSelector personId={personId} type="natal" view={view} />
-      <ShareLink moment={person.moment} housesKnown={showHouses} />
+      <ShareLink moment={person.moment} housesKnown={showHouses} settings={settings} rulership={rulership} />
       <ChartDataView
         load={load}
         displayName={person.displayName}

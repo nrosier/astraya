@@ -69,10 +69,22 @@ describe('the saved default (#510)', () => {
     expect(saved?.settings.zodiac).toEqual({ kind: 'sidereal', ayanamsa: 1 });
   });
 
-  it('ignores a damaged saved value', () => {
-    for (const value of ['', 'not json', '{"settings":{}}', '{"rulership":"modern"}', 'null', '"string"']) {
+  it('treats unparseable JSON as unset', () => {
+    for (const value of ['', 'not json']) {
       localStorage.setItem(DEFAULT_CALCULATION_PROFILE_KEY, value);
       expect(readDefaultCalculationProfile()).toBeUndefined();
+    }
+  });
+
+  it('repairs a damaged-but-parseable saved value field by field instead of rejecting it outright (#541)', () => {
+    // Each of these is valid JSON but not a well-formed profile — #541 elevated this from
+    // "reject the whole thing" to "fill in whatever is missing or wrong-typed", the same
+    // contract parseCalculationSnapshot documents for every untrusted-JSON entry point.
+    for (const value of ['{"settings":{}}', '{"rulership":"modern"}', 'null', '"string"']) {
+      localStorage.setItem(DEFAULT_CALCULATION_PROFILE_KEY, value);
+      const read = readDefaultCalculationProfile();
+      expect(read?.settings).toEqual(DEFAULT_EXTENDED_SETTINGS);
+      expect(read?.rulership).toBe('modern');
     }
   });
 

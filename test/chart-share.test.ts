@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { ChartShareLinkError, decodeChartShareLink, encodeChartShareLink } from '../src/domain/chart-share.js';
 import type { ChartShareData } from '../src/domain/chart-share.js';
+import {
+  buildCalculationSnapshot,
+  calculationSnapshotToJson,
+  parseCalculationSnapshot,
+} from '../src/domain/calculation-snapshot.js';
+import { DEFAULT_EXTENDED_SETTINGS, type ExtendedSettings } from '../src/chart/extended-settings.js';
+import { DEFAULT_RULERSHIP_CHOICE } from '../src/astrology/rulership.js';
 import type { BirthMomentInput } from '../src/time/types.js';
 
 const MOMENT: BirthMomentInput = {
@@ -101,5 +108,54 @@ describe('encodeChartShareLink / decodeChartShareLink (#65)', () => {
     const query = params.toString();
     expect(query).toContain('d=1960-06-15');
     expect(query).toContain('t=14%3A30');
+  });
+});
+
+/**
+ * The real pipeline `ShareLink`/`SharedChartView` use end to end (#541), minus the DOM: a
+ * sender's `CalculationSnapshot` → JSON → `cs` query param → decoded back → parsed into a
+ * complete snapshot a recipient's browser can recompute from, with no dependency on that
+ * recipient's own ambient device settings.
+ */
+describe('a CalculationSnapshot survives the full share-link round-trip (#541)', () => {
+  const CUSTOM_SETTINGS: ExtendedSettings = {
+    ...DEFAULT_EXTENDED_SETTINGS,
+    houseSystem: 'K',
+    zodiac: { kind: 'sidereal', ayanamsa: 1 },
+    orbScalePercent: -40,
+    chironVisible: false,
+    fortuneVisible: true,
+  };
+
+  it('round-trips a fully customized snapshot exactly, through the real query-string encoding', () => {
+    const sent = buildCalculationSnapshot(CUSTOM_SETTINGS, 'traditional');
+    const params = encodeChartShareLink({
+      moment: MOMENT,
+      settings: calculationSnapshotToJson(sent),
+      housesKnown: true,
+    });
+    const decoded = decodeChartShareLink(params);
+    const received = parseCalculationSnapshot(decoded.settings);
+    expect(received).toEqual(sent);
+  });
+
+  it('a pre-#541 link with no settings at all still resolves to a complete, valid snapshot (the app defaults)', () => {
+    const params = encodeChartShareLink({ moment: MOMENT, settings: {}, housesKnown: true });
+    const decoded = decodeChartShareLink(params);
+    const received = parseCalculationSnapshot(decoded.settings);
+    expect(received).toEqual(buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE));
+  });
+
+  it('the received rulership is whatever the sender actually chose, independent of any particular device default', () => {
+    for (const rulership of ['modern', 'traditional', 'both'] as const) {
+      const sent = buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, rulership);
+      const params = encodeChartShareLink({
+        moment: MOMENT,
+        settings: calculationSnapshotToJson(sent),
+        housesKnown: true,
+      });
+      const received = parseCalculationSnapshot(decodeChartShareLink(params).settings);
+      expect(received.rulership).toBe(rulership);
+    }
   });
 });

@@ -18,7 +18,7 @@
 import { bodyById } from '../astrology/bodies.js';
 import { matchAspect, type Aspect, type AspectMatch, type OrbConfig } from '../astrology/aspects.js';
 import { rankedSynastryAspects, type SynastryData } from './synastry.js';
-import { housesAreDefined } from './chart-compute.js';
+import { housesAreDefined, type ChartData } from './chart-compute.js';
 import type { BodyId, BodyPosition, Degrees } from '../ephemeris/types.js';
 
 export const RELATIONSHIP_THEMES = [
@@ -106,16 +106,23 @@ export function groupedRelationshipContacts(
   return groups;
 }
 
-/** A real body's own rotation rate is irrelevant to a fixed angle's own motion — the same stand-in `computeChartDataAtJd`'s own angle-aspect search uses for "is this still forming". */
-const ANGLE_SPEED_DEG_PER_DAY = 360.9856;
+/**
+ * Used only as a last resort, if a `ChartData` somehow reaches here without its own
+ * `anglePointSpeeds` (#546) — every real caller of `relationshipAngleContacts` passes a
+ * `SynastryData` built from `computeChartData`, which always populates it whenever `houses` is
+ * itself usable, the same condition `contactsToAngles` already requires below. Kept only so this
+ * function stays total rather than fabricating a crash for a hand-built `ChartData` (a test
+ * fixture, say) that omits the field.
+ */
+const FALLBACK_ANGLE_SPEED_DEG_PER_DAY = 360.9856;
 
-function angleBodyPosition(longitude: Degrees): BodyPosition {
+function angleBodyPosition(longitude: Degrees, speed: Degrees): BodyPosition {
   return {
     body: -1,
     longitude,
     latitude: 0,
     distance: 1,
-    longitudeSpeed: ANGLE_SPEED_DEG_PER_DAY,
+    longitudeSpeed: speed,
     latitudeSpeed: 0,
     distanceSpeed: 0,
     retrograde: false,
@@ -125,17 +132,21 @@ function angleBodyPosition(longitude: Degrees): BodyPosition {
 function contactsToAngles(
   bodies: readonly BodyPosition[],
   houses: SynastryData['chartA']['houses'],
+  anglePointSpeeds: ChartData['anglePointSpeeds'],
   side: 'a' | 'b',
   orbConfig: OrbConfig,
 ): readonly AngleContact[] {
   if (!housesAreDefined(houses)) return [];
-  const targets: readonly ['asc' | 'mc', Degrees][] = [
-    ['asc', houses.ascendant],
-    ['mc', houses.midheaven],
+  // The owning chart's own real finite-difference rate (#546) — `chart-compute.ts`'s own
+  // `anglePointSpeeds` doc comment explains why this cross-chart consumer reuses it rather than
+  // resampling the ephemeris itself.
+  const targets: readonly ['asc' | 'mc', Degrees, Degrees][] = [
+    ['asc', houses.ascendant, anglePointSpeeds?.ascendant ?? FALLBACK_ANGLE_SPEED_DEG_PER_DAY],
+    ['mc', houses.midheaven, anglePointSpeeds?.midheaven ?? FALLBACK_ANGLE_SPEED_DEG_PER_DAY],
   ];
   const contacts: AngleContact[] = [];
-  for (const [angle, longitude] of targets) {
-    const anglePosition = angleBodyPosition(longitude);
+  for (const [angle, longitude, speed] of targets) {
+    const anglePosition = angleBodyPosition(longitude, speed);
     for (const body of bodies) {
       const bodyDefinition = bodyById(body.body);
       if (bodyDefinition === undefined) continue;
@@ -155,7 +166,7 @@ function contactsToAngles(
 export function relationshipAngleContacts(data: SynastryData): readonly AngleContact[] {
   const orbConfig = data.orbConfig;
   return [
-    ...contactsToAngles(data.chartA.positions, data.chartB.houses, 'a', orbConfig),
-    ...contactsToAngles(data.chartB.positions, data.chartA.houses, 'b', orbConfig),
+    ...contactsToAngles(data.chartA.positions, data.chartB.houses, data.chartB.anglePointSpeeds, 'a', orbConfig),
+    ...contactsToAngles(data.chartB.positions, data.chartA.houses, data.chartA.anglePointSpeeds, 'b', orbConfig),
   ];
 }

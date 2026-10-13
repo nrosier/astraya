@@ -13,6 +13,7 @@ import {
 } from '../src/domain/full-export.js';
 import type { Person } from '../src/domain/person.js';
 import type { EphemerisProvider } from '../src/ephemeris/types.js';
+import { DEFAULT_EXTENDED_SETTINGS } from '../src/chart/extended-settings.js';
 import { getEngine } from './engine-harness.js';
 
 let engine: EphemerisProvider;
@@ -67,6 +68,7 @@ const build = (people: readonly Person[], rulership: 'modern' | 'traditional' | 
     people,
     provider: engine,
     appVersion: '9.9.9',
+    settings: DEFAULT_EXTENDED_SETTINGS,
     rulership,
     symbolClass: 'drawn',
     now: NOW,
@@ -85,6 +87,36 @@ describe('buildFullExport', () => {
     expect(archive.note).toMatch(/recalculated/);
   });
 
+  it('states this device’s own effective settings, not a fixed "application defaults" claim (#541)', async () => {
+    const customSettings = { ...DEFAULT_EXTENDED_SETTINGS, houseSystem: 'K', orbScalePercent: -40 };
+    const archive = await buildFullExport({
+      people: [ADA],
+      provider: engine,
+      appVersion: '9.9.9',
+      settings: customSettings,
+      rulership: 'traditional',
+      symbolClass: 'drawn',
+      now: NOW,
+    });
+    expect(archive.preferences.settings).toEqual(customSettings);
+    expect(archive.note).toContain("this device's own current calculation settings");
+    expect(archive.note).toContain('traditional');
+    expect(archive.note).not.toContain('application defaults');
+
+    // The chart itself was actually computed under Koch houses, not silently defaulted to Placidus.
+    const defaultArchive = await build([ADA]);
+    const kochCusps = archive.people[0]?.natalChart?.houses?.cusps;
+    const placidusCusps = defaultArchive.people[0]?.natalChart?.houses?.cusps;
+    expect(kochCusps).toBeDefined();
+    expect(kochCusps).not.toEqual(placidusCusps);
+  });
+
+  it('says plainly when the application defaults really were used, unchanged', async () => {
+    const archive = await build([ADA]);
+    expect(archive.preferences.settings).toEqual(DEFAULT_EXTENDED_SETTINGS);
+    expect(archive.note).toContain('application defaults');
+  });
+
   it('holds the birth record as stored and the natal chart’s data for a person with a complete moment', async () => {
     const [ada] = (await build([ADA])).people;
     expect(ada).toMatchObject({
@@ -97,7 +129,9 @@ describe('buildFullExport', () => {
     const chart = ada?.natalChart;
     expect(chart?.positions.map((row) => row.bodyKey)).toEqual(expect.arrayContaining(['sun', 'moon', 'asc', 'mc']));
     expect(chart?.houses?.cusps).toHaveLength(12);
-    expect(chart?.houses?.derivedPoints.length).toBeGreaterThan(0);
+    // Empty under the app's own defaults is correct now (#542): Fortune/Vertex/Spirit/midpoints
+    // are all hidden by default, same as the live chart screen shows for a never-customized chart.
+    expect(chart?.houses?.derivedPoints).toEqual([]);
     expect((chart?.aspects.length ?? 0) > 0).toBe(true);
     expect(chart?.dignities.length).toBeGreaterThan(0);
     expect(['day', 'night']).toContain(chart?.sect);

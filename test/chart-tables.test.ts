@@ -587,15 +587,18 @@ describe('derivedPointRows (#44)', () => {
     partOfSpirit: 200,
   };
 
-  it('lists only Part of Spirit by default, omitting Part of Fortune and the midpoints', () => {
-    expect(derivedPointRows(data)).toEqual([
-      { pointKey: 'part-of-spirit', label: 'Part of Spirit', longitude: 200, ...degreeParts(200) },
+  it('lists nothing by default — Fortune, Spirit and the midpoints are all hidden until asked for (#542)', () => {
+    expect(derivedPointRows(data)).toEqual([]);
+  });
+
+  it('includes Part of Fortune once fortuneVisible is true, independently of Spirit', () => {
+    expect(derivedPointRows(data, { fortuneVisible: true })).toEqual([
+      { pointKey: 'part-of-fortune', label: 'Part of Fortune', longitude: 45, ...degreeParts(45) },
     ]);
   });
 
-  it('includes Part of Fortune once fortuneVisible is true', () => {
-    expect(derivedPointRows(data, { fortuneVisible: true })).toEqual([
-      { pointKey: 'part-of-fortune', label: 'Part of Fortune', longitude: 45, ...degreeParts(45) },
+  it('includes Part of Spirit once spiritVisible is true (#542) — it has its own flag now, like Fortune', () => {
+    expect(derivedPointRows(data, { spiritVisible: true })).toEqual([
       { pointKey: 'part-of-spirit', label: 'Part of Spirit', longitude: 200, ...degreeParts(200) },
     ]);
   });
@@ -603,7 +606,6 @@ describe('derivedPointRows (#44)', () => {
   it('adds the ASC/MC and Sun/Moon midpoints once midpointsVisible is true', () => {
     // ASC 10, MC 280: shorter arc midpoint is 325 (Aquarius 25). Sun 10, Moon 100: midpoint is 55 (Taurus 25).
     expect(derivedPointRows(data, { midpointsVisible: true })).toEqual([
-      { pointKey: 'part-of-spirit', label: 'Part of Spirit', longitude: 200, ...degreeParts(200) },
       { label: 'ASC/MC Midpoint', longitude: 325, ...degreeParts(325) },
       { label: 'Sun/Moon Midpoint', longitude: 55, ...degreeParts(55) },
     ]);
@@ -682,7 +684,7 @@ describe('chartWheelRing (#52)', () => {
     expect(chartWheelRing(data).aspects).toEqual([major]);
   });
 
-  it('keeps Chiron in the wheel bodies by default, dropping it when chironVisible is false, aspects untouched', () => {
+  it('keeps Chiron in the wheel bodies and its aspects by default, dropping both when chironVisible is false (#542)', () => {
     const aspect: Aspect = {
       bodyA: SUN,
       bodyB: CHIRON,
@@ -708,7 +710,8 @@ describe('chartWheelRing (#52)', () => {
     expect(chartWheelRing(data, 'Natal', { chironVisible: false }).bodies).toEqual([
       { body: SUN, key: 'sun', longitude: 10, retrograde: false },
     ]);
-    expect(chartWheelRing(data, 'Natal', { chironVisible: false }).aspects).toEqual([aspect]);
+    // #542: a hidden Chiron can no longer still "speak" through an aspect on the wheel either.
+    expect(chartWheelRing(data, 'Natal', { chironVisible: false }).aspects).toEqual([]);
   });
 });
 

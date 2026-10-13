@@ -27,6 +27,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ASPECTS, DEFAULT_ORB_CONFIG } from '../astrology/aspects.js';
 import { ayanamsaByKey, AYANAMSAS } from '../astrology/ayanamsas.js';
 import { HOUSE_SYSTEMS } from '../astrology/houses.js';
+import { ORB_PROFILE_IDS, ORB_PROFILES, matchOrbProfile, type OrbProfileId } from '../astrology/orb-profiles.js';
 import { DEFAULT_RULERSHIP_CHOICE, type RulershipChoice } from '../astrology/rulership.js';
 import { aspectDisplayName } from './astro-names.messages.js';
 import {
@@ -168,6 +169,7 @@ export function ExtendedSettingsPanel({
 
   const effectiveRulers = pendingRulers ?? rulers;
   const currentProfile = matchCalculationProfile(draft, effectiveRulers);
+  const currentOrbProfile = matchOrbProfile(draft.orbScalePercent);
   const deviceChanged =
     atOpen !== undefined &&
     (rulers !== atOpen.rulers ||
@@ -205,6 +207,13 @@ export function ExtendedSettingsPanel({
     setPendingRulers(profileRulers === rulers ? undefined : profileRulers);
   };
 
+  /** Named orb-scale quick-pick (#543) — only ever touches `orbScalePercent`, never any other field, unlike `chooseProfile`. */
+  const chooseOrbProfile = (id: string): void => {
+    if (!(ORB_PROFILE_IDS as readonly string[]).includes(id)) return;
+    const profileId = id as OrbProfileId;
+    patch({ orbScalePercent: ORB_PROFILES[profileId].config.scalePercent });
+  };
+
   const ayanamsaId = draft.zodiac.kind === 'sidereal' ? draft.zodiac.ayanamsa : undefined;
 
   const houseName = (code: string): string =>
@@ -233,6 +242,8 @@ export function ExtendedSettingsPanel({
         return t.summary.fortune;
       case 'vertex':
         return t.summary.vertex;
+      case 'spirit':
+        return t.summary.spirit;
       case 'chiron':
         return t.summary.chironHidden;
       case 'midpoints':
@@ -439,6 +450,13 @@ export function ExtendedSettingsPanel({
             }}
           />
           <Checkbox
+            label={t.spirit}
+            checked={draft.spiritVisible}
+            onChange={(value) => {
+              patch({ spiritVisible: value });
+            }}
+          />
+          <Checkbox
             label={t.midpoints}
             checked={draft.midpointsVisible}
             onChange={(value) => {
@@ -543,6 +561,21 @@ export function ExtendedSettingsPanel({
         <fieldset className="field-group settings-card-group">
           <legend>{t.aspectsLegend}</legend>
           <p className="hint settings-card-tag">{t.appliesOnApply}</p>
+          <OptionCards
+            label={t.orbProfileLabel}
+            value={currentOrbProfile ?? 'custom'}
+            options={[
+              ...(currentOrbProfile === undefined
+                ? [{ value: 'custom', title: t.orbProfileOptions.custom, consequence: t.orbProfileNotes.custom }]
+                : []),
+              ...ORB_PROFILE_IDS.map((id) => ({
+                value: id,
+                title: t.orbProfileOptions[id],
+                consequence: t.orbProfileNotes[id],
+              })),
+            ]}
+            onChange={chooseOrbProfile}
+          />
           <label>
             {t.scaleLabel}
             {draft.orbScalePercent > 0 ? '+' : ''}

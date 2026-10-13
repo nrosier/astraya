@@ -9,6 +9,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import type { ChartData } from '../src/domain/chart-compute.js';
 import { computeChartData } from '../src/domain/chart-compute.js';
+import { DEFAULT_EXTENDED_SETTINGS, type ExtendedSettings } from '../src/chart/extended-settings.js';
 import { setLocale } from '../src/ui/locale.js';
 import { ChartDataView } from '../src/ui/ChartView.js';
 import { chartViewMessages } from '../src/ui/ChartView.messages.js';
@@ -39,7 +40,10 @@ afterEach(() => {
   setLocale('en');
 });
 
-async function mount(showHouses = true): Promise<HTMLElement> {
+async function mount(
+  showHouses = true,
+  extendedSettings: ExtendedSettings = DEFAULT_EXTENDED_SETTINGS,
+): Promise<HTMLElement> {
   const container = document.createElement('div');
   document.body.append(container);
   const root = createRoot(container);
@@ -49,6 +53,7 @@ async function mount(showHouses = true): Promise<HTMLElement> {
         load={{ kind: 'ready', data }}
         displayName="Test"
         showHouses={showHouses}
+        extendedSettings={extendedSettings}
         buildViewHref={() => '#'}
       />,
     );
@@ -253,7 +258,8 @@ describe('a table row selects on the wheel (#418)', () => {
   });
 
   it('a Derived points row selects that point, with its position and meaning in the inspector, and toggles off (#511)', async () => {
-    const container = await mount();
+    // Spirit has its own visibility flag now (#542) — it used to be shown unconditionally.
+    const container = await mount(true, { ...DEFAULT_EXTENDED_SETTINGS, spiritVisible: true });
     await open(container, 'positions');
     const button = showButton(container, 'Show Part of Spirit on the chart');
     expect(button?.getAttribute('aria-pressed')).toBe('false');

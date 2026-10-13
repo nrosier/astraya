@@ -28,6 +28,7 @@ Pure astrological calculation (no DOM/React): bodies, aspects, houses, dignities
 - `minor-progressions.ts` — Tertiary/minor progressions (day-for-lunar-month / lunar-month-for-year). Deps: `progressions`.
 - `mutual-aspects.ts` — Planetary-cycle exact aspects (e.g. Jupiter-Saturn conjunctions). Deps: `aspects`.
 - `nakshatras.ts` — Vedic nakshatra (lunar mansion) placement. Deps: ephemeris types only.
+- `orb-profiles.ts` — Named/versioned orb-scale presets over `aspects.ts`'s `OrbConfig`, plus synastry's own tighter default. Deps: `aspects`.
 - `planetary-returns.ts` — Return search (any body), demibirthday, progressed-lunar-return. Deps: `minor-progressions`, `progressions`, `ephemeris/generated-constants`.
 - `primary-directions.ts` — Primary directions engine (Placidus semi-arcs, in zodiaco at latitude 0, direct only; Naibod/Ptolemy keys). Deps: `aspects`, `progressions`.
 - `profections.ts` — Annual/monthly profections (Hellenistic house-per-year). Deps: `signs`.

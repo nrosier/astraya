@@ -91,6 +91,7 @@ const en = {
   bodiesLegend: 'Bodies and points',
   partOfFortune: 'Part of Fortune',
   vertex: 'Vertex',
+  spirit: 'Part of Spirit',
   chiron: 'Chiron',
   midpoints: 'Midpoints (ASC/MC, Sun/Moon)',
   aspectsToChiron: 'Draw aspects to Chiron',
@@ -113,6 +114,19 @@ const en = {
     'The Ascendant and Midheaven always aspect the bodies. The Vertex and the two parts do so here, to bodies only, never to each other or the angles; a part is not aspected to the luminary it is built from, as that repeats an Ascendant aspect.',
 
   aspectsLegend: 'Aspects and orbs',
+  orbProfileLabel: 'Orb profile',
+  orbProfileOptions: {
+    custom: 'Custom',
+    'standard-v1': 'Standard',
+    'tight-v1': 'Tight',
+    'wide-v1': 'Wide',
+  },
+  orbProfileNotes: {
+    custom: 'Your own orb scale, set with the slider below.',
+    'standard-v1': "This app's long-standing default tiers, unscaled.",
+    'tight-v1': 'The standard tiers scaled down by half — only the closest, most clearly active contacts.',
+    'wide-v1': 'The standard tiers scaled up by 40% — catches looser, still-forming contacts too.',
+  },
   scaleLabel: 'Orb scale: ',
   orbScaleAriaLabel: 'Orb scale',
   orbPreview: (major: string, majorLuminary: string, sextile: string, sextileLuminary: string, minor: string) =>
@@ -137,6 +151,7 @@ const en = {
     minorAspects: (count: string) => `${count} minor aspects`,
     fortune: 'Part of Fortune',
     vertex: 'Vertex',
+    spirit: 'Part of Spirit',
     chironHidden: 'Chiron hidden',
     midpoints: 'Midpoints',
     lilith: (model: string) => `Lilith ${model}`,
@@ -231,6 +246,7 @@ const nl: typeof en = {
   bodiesLegend: 'Hemellichamen en punten',
   partOfFortune: 'Fortuna-punt',
   vertex: 'Vertex',
+  spirit: 'Lot van de Geest',
   chiron: 'Chiron',
   midpoints: 'Middelpunten (ASC/MC, Zon/Maan)',
   aspectsToChiron: 'Aspecten naar Chiron tekenen',
@@ -253,6 +269,19 @@ const nl: typeof en = {
     'De Ascendant en het Midheaven maken altijd aspecten met de lichamen. De Vertex en de twee punten doen dat hier, alleen met lichamen, nooit met elkaar of met de assen; een punt maakt geen aspect met het lichtgevend lichaam waaruit het is opgebouwd, omdat dat een Ascendant-aspect herhaalt.',
 
   aspectsLegend: 'Aspecten en orbs',
+  orbProfileLabel: 'Orb-profiel',
+  orbProfileOptions: {
+    custom: 'Eigen keuze',
+    'standard-v1': 'Standaard',
+    'tight-v1': 'Strak',
+    'wide-v1': 'Ruim',
+  },
+  orbProfileNotes: {
+    custom: 'Je eigen orb-schaal, ingesteld met de schuifregelaar hieronder.',
+    'standard-v1': 'De langlopende standaardtiers van deze app, ongeschaald.',
+    'tight-v1': 'De standaardtiers op de helft geschaald — alleen de dichtstbijzijnde, duidelijk actieve contacten.',
+    'wide-v1': 'De standaardtiers met 40% opgeschaald — vangt ook lossere, nog vormende contacten.',
+  },
   scaleLabel: 'Orb-schaal: ',
   orbScaleAriaLabel: 'Orb-schaal',
   orbPreview: (major: string, majorLuminary: string, sextile: string, sextileLuminary: string, minor: string) =>
@@ -277,6 +306,7 @@ const nl: typeof en = {
     minorAspects: (count: string) => `${count} kleine aspecten`,
     fortune: 'Fortuna-punt',
     vertex: 'Vertex',
+    spirit: 'Lot van de Geest',
     chironHidden: 'Chiron verborgen',
     midpoints: 'Middelpunten',
     lilith: (model: string) => `Lilith ${model}`,
