@@ -1717,7 +1717,7 @@ export function ChartDataView({
     setOverlayLoad({ kind: 'loading' });
     void (async () => {
       try {
-        const rings: WheelRingInput[] = [chartWheelRing(load.data, overlayContext.baseLabel)];
+        const rings: WheelRingInput[] = [chartWheelRing(load.data, overlayContext.baseLabel, pointVisibility)];
         const snapshotIdentity = calculationSnapshotIdentity(buildCalculationSnapshot(extendedSettings, rulership));
         const snapshot = overlayT.calculationSnapshot(snapshotIdentity);
         const ringData: OverlayRingData[] = [
@@ -1741,7 +1741,7 @@ export function ChartDataView({
           contacts?: readonly Aspect[],
         ): void => {
           overlays.set(source, {
-            ring: chartWheelRing(data, label),
+            ring: chartWheelRing(data, label, pointVisibility),
             data,
             ...(contacts === undefined ? {} : { contacts }),
             provenance: snapshot,
@@ -1858,7 +1858,14 @@ export function ChartDataView({
             overlayContext.baseSource === 'natal' &&
             overlay.contacts !== undefined
           ) {
-            crossAspects.push({ innerRingIndex: 0, outerRingIndex, aspects: overlay.contacts });
+            const [baseRing] = rings;
+            if (baseRing === undefined) throw new Error('unreachable: overlay charts always have a base ring');
+            const outerBodies = new Set(overlay.ring.bodies.map((body) => body.body));
+            const innerBodies = new Set(baseRing.bodies.map((body) => body.body));
+            const visibleContacts = overlay.contacts.filter(
+              (contact) => outerBodies.has(contact.bodyA) && innerBodies.has(contact.bodyB),
+            );
+            crossAspects.push({ innerRingIndex: 0, outerRingIndex, aspects: visibleContacts });
           }
         }
         if (!effect.cancelled) {
@@ -1995,17 +2002,19 @@ export function ChartDataView({
 
   const downloadSvg = (): void => {
     if (sheet === undefined) return;
-    downloadText(deriveExportFilename(displayName, 'chart', 'svg'), standaloneSvg(sheet.markup), 'image/svg+xml');
+    const markup = overlayLoad.kind === 'ready' ? overlayLoad.markup : sheet.markup;
+    downloadText(deriveExportFilename(displayName, 'chart', 'svg'), standaloneSvg(markup), 'image/svg+xml');
   };
 
   /** Rejects with the rasterizer's own message, which the header's export status shows. */
   const downloadPng = async (size: number): Promise<void> => {
     if (sheet === undefined) return;
+    const markup = overlayLoad.kind === 'ready' ? overlayLoad.markup : sheet.markup;
     // The sheet is taller than it is wide, so the chosen size is its width and
     // the height follows its own aspect ratio — rasterizing it square would
     // squash the wheel into an ellipse.
-    const pngHeight = Math.round((size * sheet.height) / sheet.width);
-    const blob = await svgToPngBlob(standaloneSvg(sheet.markup), size, pngHeight);
+    const pngHeight = overlayLoad.kind === 'ready' ? size : Math.round((size * sheet.height) / sheet.width);
+    const blob = await svgToPngBlob(standaloneSvg(markup), size, pngHeight);
     downloadBlob(deriveExportFilename(displayName, 'chart', 'png'), blob);
   };
 
