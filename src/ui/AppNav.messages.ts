@@ -40,6 +40,7 @@ const en = {
 
   tabLabels: {
     overview: 'Overview',
+    consultation: 'Consultation',
     'birth-record': 'Birth record',
     chart: 'Charts',
     report: 'Interpretation',
@@ -90,6 +91,7 @@ const nl: typeof en = {
 
   tabLabels: {
     overview: 'Overzicht',
+    consultation: 'Consult',
     'birth-record': 'Geboortegegevens',
     chart: 'Horoscopen',
     report: 'Interpretatie',

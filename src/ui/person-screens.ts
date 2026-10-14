@@ -16,11 +16,12 @@
  * @module ui/person-screens
  * @purpose Barrel module re-exporting every screen under the person tab strip, so App.tsx can lazy-load all of them behind one dynamic import() (#338) instead of ten separate chunks.
  * @conventions Must be imported ONLY from App.tsx via dynamic import() — a static import anywhere on the main chunk's path would defeat the code-splitting that scripts/check-bundle-size.mjs enforces.
- * @exports AstrocartographyView, ChartView, CompositeView, DraconicView, HarmonicView, Overview, PeriodicTransitView, PersonForm, PrimaryDirectionsView, ProfectionsView, ProgressionsView, RelocatedChartView, ReportScreen, ReturnView, SolarArcView, SynastryView, TransitView
+ * @exports AstrocartographyView, ChartView, CompositeView, ConsultationView, DraconicView, HarmonicView, Overview, PeriodicTransitView, PersonForm, PrimaryDirectionsView, ProfectionsView, ProgressionsView, RelocatedChartView, ReportScreen, ReturnView, SolarArcView, SynastryView, TransitView
  */
 export { AstrocartographyView } from './AstrocartographyView.js';
 export { ChartView } from './ChartView.js';
 export { CompositeView } from './CompositeView.js';
+export { ConsultationView } from './ConsultationView.js';
 export { DraconicView } from './DraconicView.js';
 export { HarmonicView } from './HarmonicView.js';
 export { Overview } from './Overview.js';

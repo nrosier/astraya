@@ -15,6 +15,7 @@
  *
  *   #/people                                              People
  *   #/people/:id/overview                                 Overview
+ *   #/people/:id/consultation                             Consultation dashboard
  *   #/people/:id/birth-record                             Edit birth record
  *   #/people/:id/charts/:chartType/:chartView             Chart (natal|draconic|harmonic|solar-return|lunar-return × wheel|aspects|matrix|elements|placements|patterns)
  *   #/people/:id/interpretation                           Interpretation (the written report)
@@ -51,6 +52,10 @@ export type Route =
   | { readonly kind: 'person'; readonly personId: string }
   // A complete person's landing screen (#506/#509).
   | { readonly kind: 'person-overview'; readonly personId: string }
+  // The consultation dashboard (#563): current transits, active timing techniques and chart
+  // highlights for one person, for "now" only — second in the person workspace, right after
+  // Overview.
+  | { readonly kind: 'consultation'; readonly personId: string }
   // The Charts page: one route for every chart cast for one person. `chartType` is the kind of chart
   // (absent means natal) and `view` its open Wheel/Aspects/Aspect matrix/Elements/Placements/Patterns view
   // (#511; absent means the wheel). Both are path segments of the canonical hash.
@@ -143,6 +148,7 @@ function personSubRoute(personId: string, rest: readonly string[], hash: string)
   if (extra.length > 0) return undefined;
   if (rest.length === 1) {
     if (area === 'overview') return { kind: 'person-overview', personId };
+    if (area === 'consultation') return { kind: 'consultation', personId };
     if (area === 'birth-record') return { kind: 'person', personId };
     if (area === 'interpretation') return { kind: 'report', personId };
     return undefined;
@@ -266,6 +272,8 @@ export function routeHref(route: Route): string {
       return '#/setup';
     case 'person-overview':
       return person(route.personId, 'overview');
+    case 'consultation':
+      return person(route.personId, 'consultation');
     case 'person':
       return person(route.personId, 'birth-record');
     case 'report':

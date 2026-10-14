@@ -34,6 +34,7 @@ Astraya
 ├ People
 │ └ Current person: Ada Lovelace [switch]
 │   ├ Overview
+│   ├ Consultation
 │   ├ Edit birth record
 │   ├ Chart
 │   ├ Interpretation
@@ -81,6 +82,7 @@ Keep hash routing because the built application must work as static files. New l
 | ----------------------- | --------------------------------------------------------------------- |
 | People                  | `#/people`                                                            |
 | Person overview         | `#/people/:personId/overview`                                         |
+| Consultation dashboard  | `#/people/:personId/consultation`                                     |
 | Edit birth record       | `#/people/:personId/birth-record`                                     |
 | Chart view              | `#/people/:personId/charts/:chartType/:chartView`                     |
 | Interpretation          | `#/people/:personId/interpretation`                                   |

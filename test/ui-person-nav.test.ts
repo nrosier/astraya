@@ -69,6 +69,7 @@ describe('PERSON_TABS', () => {
     const hrefs = Object.fromEntries(PERSON_TABS.map((tab) => [tab.key, tab.buildHref(ID)]));
     expect(hrefs).toEqual({
       overview: `#/people/${ID}/overview`,
+      consultation: `#/people/${ID}/consultation`,
       'birth-record': `#/people/${ID}/birth-record`,
       chart: `#/people/${ID}/charts/natal/wheel`,
       report: `#/people/${ID}/interpretation`,
@@ -87,9 +88,10 @@ describe('PERSON_TABS', () => {
 });
 
 describe('PERSON_TAB_FAMILIES (#398)', () => {
-  it('keeps the four fixed tabs and astrocartography out of every family', () => {
+  it('keeps the five fixed tabs and astrocartography out of every family', () => {
     const grouped = new Set(PERSON_TAB_FAMILIES.flatMap((family) => family.members));
     expect(grouped.has('overview')).toBe(false);
+    expect(grouped.has('consultation')).toBe(false);
     expect(grouped.has('birth-record')).toBe(false);
     expect(grouped.has('chart')).toBe(false);
     expect(grouped.has('report')).toBe(false);
@@ -100,6 +102,7 @@ describe('PERSON_TAB_FAMILIES (#398)', () => {
     const groupable = PERSON_TABS.filter(
       (tab) =>
         tab.key !== 'overview' &&
+        tab.key !== 'consultation' &&
         tab.key !== 'birth-record' &&
         tab.key !== 'chart' &&
         tab.key !== 'report' &&

@@ -28,6 +28,7 @@ const ROUTES: readonly Route[] = [
   { kind: 'people' },
   { kind: 'person', personId: ID },
   { kind: 'person-overview', personId: ID },
+  { kind: 'consultation', personId: ID },
   { kind: 'chart', personId: ID, chartType: 'natal', view: 'wheel' },
   { kind: 'report', personId: ID },
   { kind: 'timing-timeline', personId: ID },
@@ -65,6 +66,7 @@ describe('the canonical hashes', () => {
     const hashes: Record<string, string> = {
       people: routeHref({ kind: 'people' }),
       overview: routeHref({ kind: 'person-overview', personId: ID }),
+      consultation: routeHref({ kind: 'consultation', personId: ID }),
       birthRecord: personHref(ID),
       chart: chartHref(ID, 'aspects', 'draconic'),
       interpretation: routeHref({ kind: 'report', personId: ID }),
@@ -83,6 +85,7 @@ describe('the canonical hashes', () => {
     expect(hashes).toEqual({
       people: '#/people',
       overview: `#/people/${ID}/overview`,
+      consultation: `#/people/${ID}/consultation`,
       birthRecord: `#/people/${ID}/birth-record`,
       chart: `#/people/${ID}/charts/draconic/aspects`,
       interpretation: `#/people/${ID}/interpretation`,
@@ -114,6 +117,7 @@ describe('the canonical hashes', () => {
       people: true,
       person: true,
       'person-overview': true,
+      consultation: true,
       chart: true,
       report: true,
       'timing-timeline': true,

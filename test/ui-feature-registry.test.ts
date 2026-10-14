@@ -107,6 +107,7 @@ const ROUTE_KIND_STATUS: Readonly<Record<Route['kind'], 'feature' | 'not a featu
   people: 'not a feature',
   person: 'feature',
   'person-overview': 'feature',
+  consultation: 'feature',
   chart: 'feature',
   report: 'feature',
   'timing-timeline': 'feature',

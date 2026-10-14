@@ -44,7 +44,7 @@ Organize primary navigation around user goals:
 
 | Area               | Order and grouping                                                                                                        |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------- |
-| Person workspace   | **Overview → Charts → Interpretation → Timing & forecasts → Relationships → Location**                                    |
+| Person workspace   | **Overview → Consultation → Charts → Interpretation → Timing & forecasts → Relationships → Location**                     |
 | Person details     | **Edit birth record** from Overview and the person selector; route incomplete/new people here automatically               |
 | Charts             | One direct destination; choose Natal, Draconic, Harmonic, Solar return, or Lunar return in the chart page header          |
 | Timing & forecasts | **Current sky:** Transits, Forecast. **Symbolic timing:** Profections, Progressions, Solar Arc, Primary Directions        |
@@ -86,6 +86,8 @@ Keep page exports with their page. Put Build PDF under Documents. Put full-data/
 On calculated views, show the effective basis in a compact line such as **Tropical · Placidus · Modern rulers · Standard orbs**, with an **Edit** action. Carry that basis into reports, shared charts, and exports.
 
 Overview is a task launchpad, not a generic dashboard. Show record readiness, essential natal context, current calculation basis, and a small set of real next actions. Do not add decorative metrics, charts without a decision purpose, or a feed of arbitrary recommendations.
+
+Consultation is a separate, person-scoped screen for a live session: current transits, each active timing technique as of today, and a short, literal slice of chart highlights (shape, angular/luminary dignities, notable conditions) already shown in full elsewhere. The same "no decorative metrics, no invented recommendations" rule applies — every figure on it must be the same deterministic data its own canonical screen (Transits, Timing & forecasts, Charts) already computes, surfaced here only as a read-only summary with a link to that full view. It carries no settings surface and no date control of its own.
 
 Add continuation actions only where they advance the current task: **Open interpretation** after a natal chart, **View transits** from Overview, **Compare with another person** from relationship work, and **Build PDF** from a completed report. Preserve the person and effective chart configuration across the transition.
 

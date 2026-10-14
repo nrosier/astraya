@@ -30,6 +30,7 @@ export type FeatureScope = 'person' | 'global' | 'document' | 'preferences' | 'a
  */
 export type FeatureGroup =
   | 'person-overview'
+  | 'person-consultation'
   | 'person-charts'
   | 'person-interpretation'
   | 'person-timing'
@@ -70,6 +71,7 @@ export interface FeatureDefinition {
 
 const PERSON_GROUP_FOR_TAB: Readonly<Record<PersonTabKey, FeatureGroup>> = {
   overview: 'person-overview',
+  consultation: 'person-consultation',
   'birth-record': 'person-overview',
   chart: 'person-charts',
   report: 'person-interpretation',
@@ -87,6 +89,7 @@ const PERSON_GROUP_FOR_TAB: Readonly<Record<PersonTabKey, FeatureGroup>> = {
 
 const PERSON_ROUTE_KIND_FOR_TAB: Readonly<Record<PersonTabKey, Route['kind']>> = {
   overview: 'person-overview',
+  consultation: 'consultation',
   'birth-record': 'person',
   chart: 'chart',
   report: 'report',
@@ -104,6 +107,7 @@ const PERSON_ROUTE_KIND_FOR_TAB: Readonly<Record<PersonTabKey, Route['kind']>> =
 
 const PERSON_EXPORTS_FOR_TAB: Readonly<Record<PersonTabKey, readonly ExportCapability[]>> = {
   overview: ['none'],
+  consultation: ['none'],
   'birth-record': ['none'],
   chart: ['chart-image', 'csv'],
   report: ['pdf-document'],
