@@ -1,333 +1,409 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Next Issue Recommendations - Astraya</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: #f5f5f5;
-            color: #333;
-            line-height: 1.6;
-        }
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        header {
-            background: white;
-            padding: 30px;
-            border-radius: 8px;
-            margin-bottom: 30px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        h1 { font-size: 28px; margin-bottom: 15px; }
-        .subtitle { color: #666; font-size: 14px; margin-bottom: 20px; }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: #f5f5f5;
+        color: #333;
+        line-height: 1.6;
+      }
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      header {
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        margin-bottom: 30px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        font-size: 28px;
+        margin-bottom: 15px;
+      }
+      .subtitle {
+        color: #666;
+        font-size: 14px;
+        margin-bottom: 20px;
+      }
 
-        .status-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(550px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
+      .status-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(550px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+      }
 
-        .card {
-            background: white;
-            border-radius: 8px;
-            padding: 25px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            border-top: 5px solid;
-            transition: all 0.2s;
-        }
+      .card {
+        background: white;
+        border-radius: 8px;
+        padding: 25px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        border-top: 5px solid;
+        transition: all 0.2s;
+      }
 
-        .card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+      .card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
 
-        .card.complete { border-top-color: #28a745; background: linear-gradient(135deg, rgba(40,167,69,0.03) 0%, transparent 100%); }
-        .card.active { border-top-color: #ffc107; background: linear-gradient(135deg, rgba(255,193,7,0.03) 0%, transparent 100%); }
-        .card.ready { border-top-color: #17a2b8; background: linear-gradient(135deg, rgba(23,162,184,0.03) 0%, transparent 100%); }
-        .card.blocked { border-top-color: #6c757d; background: linear-gradient(135deg, rgba(108,117,125,0.03) 0%, transparent 100%); }
+      .card.complete {
+        border-top-color: #28a745;
+        background: linear-gradient(135deg, rgba(40, 167, 69, 0.03) 0%, transparent 100%);
+      }
+      .card.active {
+        border-top-color: #ffc107;
+        background: linear-gradient(135deg, rgba(255, 193, 7, 0.03) 0%, transparent 100%);
+      }
+      .card.ready {
+        border-top-color: #17a2b8;
+        background: linear-gradient(135deg, rgba(23, 162, 184, 0.03) 0%, transparent 100%);
+      }
+      .card.blocked {
+        border-top-color: #6c757d;
+        background: linear-gradient(135deg, rgba(108, 117, 125, 0.03) 0%, transparent 100%);
+      }
 
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 15px;
-            gap: 12px;
-        }
+      .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 15px;
+        gap: 12px;
+      }
 
-        .card-title { font-size: 18px; font-weight: 700; }
+      .card-title {
+        font-size: 18px;
+        font-weight: 700;
+      }
 
-        .badge {
-            display: inline-block;
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            white-space: nowrap;
-        }
+      .badge {
+        display: inline-block;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
 
-        .badge-complete { background: #d4edda; color: #155724; }
-        .badge-active { background: #fff3cd; color: #856404; }
-        .badge-ready { background: #d1ecf1; color: #0c5460; }
-        .badge-blocked { background: #e2e3e5; color: #383d41; }
+      .badge-complete {
+        background: #d4edda;
+        color: #155724;
+      }
+      .badge-active {
+        background: #fff3cd;
+        color: #856404;
+      }
+      .badge-ready {
+        background: #d1ecf1;
+        color: #0c5460;
+      }
+      .badge-blocked {
+        background: #e2e3e5;
+        color: #383d41;
+      }
 
-        .label {
-            display: inline-block;
-            background: #f0f0f0;
-            padding: 4px 10px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: 600;
-            color: #666;
-            margin-bottom: 8px;
-            margin-right: 6px;
-        }
+      .label {
+        display: inline-block;
+        background: #f0f0f0;
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #666;
+        margin-bottom: 8px;
+        margin-right: 6px;
+      }
 
-        .description { color: #555; font-size: 14px; margin: 12px 0; line-height: 1.5; }
+      .description {
+        color: #555;
+        font-size: 14px;
+        margin: 12px 0;
+        line-height: 1.5;
+      }
 
-        .details {
-            background: #f9f9f9;
-            border: 1px solid #e0e0e0;
-            border-radius: 4px;
-            padding: 12px;
-            font-size: 13px;
-            color: #555;
-        }
+      .details {
+        background: #f9f9f9;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+        padding: 12px;
+        font-size: 13px;
+        color: #555;
+      }
 
-        .details dt { font-weight: 600; margin-top: 8px; color: #333; }
-        .details dd { margin-left: 0; color: #666; }
+      .details dt {
+        font-weight: 600;
+        margin-top: 8px;
+        color: #333;
+      }
+      .details dd {
+        margin-left: 0;
+        color: #666;
+      }
 
-        .priority-high { color: #d93f0b; font-weight: bold; }
-        .priority-medium { color: #f0ad4e; font-weight: bold; }
-        .priority-low { color: #5cb85c; font-weight: bold; }
+      .priority-high {
+        color: #d93f0b;
+        font-weight: bold;
+      }
+      .priority-medium {
+        color: #f0ad4e;
+        font-weight: bold;
+      }
+      .priority-low {
+        color: #5cb85c;
+        font-weight: bold;
+      }
 
-        .recommendation {
-            background: #e3f2fd;
-            border: 1px solid #90caf9;
-            border-radius: 6px;
-            padding: 20px;
-            margin: 30px 0;
-            border-left: 4px solid #2196f3;
-        }
+      .recommendation {
+        background: #e3f2fd;
+        border: 1px solid #90caf9;
+        border-radius: 6px;
+        padding: 20px;
+        margin: 30px 0;
+        border-left: 4px solid #2196f3;
+      }
 
-        .recommendation h2 {
-            color: #1565c0;
-            margin-bottom: 12px;
-            font-size: 18px;
-        }
+      .recommendation h2 {
+        color: #1565c0;
+        margin-bottom: 12px;
+        font-size: 18px;
+      }
 
-        .recommendation p {
-            color: #1565c0;
-            font-size: 14px;
-            margin-bottom: 8px;
-        }
+      .recommendation p {
+        color: #1565c0;
+        font-size: 14px;
+        margin-bottom: 8px;
+      }
 
-        .recommendation ul {
-            margin-left: 20px;
-            color: #555;
-            font-size: 13px;
-        }
+      .recommendation ul {
+        margin-left: 20px;
+        color: #555;
+        font-size: 13px;
+      }
 
-        .recommendation li { margin-bottom: 6px; }
+      .recommendation li {
+        margin-bottom: 6px;
+      }
 
-        section {
-            margin-top: 40px;
-        }
+      section {
+        margin-top: 40px;
+      }
 
-        .section-title {
-            font-size: 20px;
-            font-weight: 700;
-            color: #1a1a1a;
-            padding: 15px 0;
-            border-bottom: 2px solid #2196f3;
-            margin-bottom: 25px;
-        }
+      .section-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: #1a1a1a;
+        padding: 15px 0;
+        border-bottom: 2px solid #2196f3;
+        margin-bottom: 25px;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <header>
-            <h1>🎯 What Should We Work On Next?</h1>
-            <p class="subtitle">Open issues status & recommendations — October 14, 2026</p>
-            <p style="color: #666; font-size: 13px;">
-                <strong>Project Status:</strong> v0.37.2 released | 27 active feature branches | #563 just completed
-            </p>
-        </header>
+      <header>
+        <h1>🎯 What Should We Work On Next?</h1>
+        <p class="subtitle">Open issues status & recommendations — October 14, 2026</p>
+        <p style="color: #666; font-size: 13px">
+          <strong>Project Status:</strong> v0.37.2 released | 27 active feature branches | #563 just completed
+        </p>
+      </header>
 
-        <section>
-            <div class="section-title">✅ Just Completed</div>
-            <div class="card complete">
-                <div class="card-header">
-                    <div>
-                        <span class="label">EPIC COMPLETE</span>
-                        <div class="card-title">#563 — Documents Workspace</div>
-                    </div>
-                    <span class="badge badge-complete">3/3 DONE</span>
-                </div>
-                <p class="description">
-                    All three pieces of the issue are now merged and on main:
-                    <ul style="margin-left: 20px; margin-top: 8px;">
-                        <li>Consultation dashboard (person-scoped workspace)</li>
-                        <li>Chart-setup editor (Preferences subsection)</li>
-                        <li>Documents workspace (app-scoped PDF + saved charts)</li>
-                    </ul>
-                </p>
+      <section>
+        <div class="section-title">✅ Just Completed</div>
+        <div class="card complete">
+          <div class="card-header">
+            <div>
+              <span class="label">EPIC COMPLETE</span>
+              <div class="card-title">#563 — Documents Workspace</div>
             </div>
-        </section>
+            <span class="badge badge-complete">3/3 DONE</span>
+          </div>
+          <p class="description">All three pieces of the issue are now merged and on main:</p>
+          <ul style="margin-left: 20px; margin-top: 8px; margin-bottom: 12px">
+            <li>Consultation dashboard (person-scoped workspace)</li>
+            <li>Chart-setup editor (Preferences subsection)</li>
+            <li>Documents workspace (app-scoped PDF + saved charts)</li>
+          </ul>
+        </div>
+      </section>
 
-        <section>
-            <div class="section-title">🚀 Recommended Next Issues</div>
+      <section>
+        <div class="section-title">🚀 Recommended Next Issues</div>
 
-            <!-- #577 -->
-            <div class="card ready">
-                <div class="card-header">
-                    <div>
-                        <span class="label">LOW FRICTION</span>
-                        <div class="card-title">#577 — UI/UX Skills Cleanup</div>
-                    </div>
-                    <span class="badge badge-ready">READY</span>
-                </div>
-                <p class="description">
-                    Split UI/UX guidelines and agent duplication into Claude Code skills for reusability.
-                </p>
-                <div class="details">
-                    <dt>Priority:</dt>
-                    <dd><span class="priority-low">Low</span> — Documentation/tooling</dd>
-                    <dt>Branch:</dt>
-                    <dd>chore/577-agents-skills-cleanup (exists, ready to continue)</dd>
-                    <dt>Effort:</dt>
-                    <dd>~1-2 hours (skill definition + docs restructuring)</dd>
-                </div>
+        <!-- #577 -->
+        <div class="card ready">
+          <div class="card-header">
+            <div>
+              <span class="label">LOW FRICTION</span>
+              <div class="card-title">#577 — UI/UX Skills Cleanup</div>
             </div>
-
-            <!-- #536 -->
-            <div class="card active" style="margin-top: 20px;">
-                <div class="card-header">
-                    <div>
-                        <span class="label">HIGH PRIORITY</span>
-                        <div class="card-title">#536 — Professional Astrology Audit</div>
-                    </div>
-                    <span class="badge badge-active">IN PROGRESS</span>
-                </div>
-                <p class="description">
-                    Close the chart-contract & professional-practice gaps identified in the audit.
-                </p>
-                <div class="details">
-                    <dt>Priority:</dt>
-                    <dd><span class="priority-high">HIGH</span> — Real user/astrology impact</dd>
-                    <dt>Status:</dt>
-                    <dd>6 feature branches actively implementing audit findings</dd>
-                    <dt>Branches:</dt>
-                    <dd>feat/543-orb-rule-engine, feat/552-horary-judgment, feat/553-primary-directions-config, feat/554-timing-timeline, feat/555-all-pairs-midpoints, feat/556-dial-antiscia-declination-exposure</dd>
-                </div>
-            </div>
-
-            <!-- #539 & #540 -->
-            <div class="card active" style="margin-top: 20px;">
-                <div class="card-header">
-                    <div>
-                        <span class="label">AUDIT PHASES</span>
-                        <div class="card-title">#539 & #540 — Audit Phases C & D</div>
-                    </div>
-                    <span class="badge badge-active">IN PROGRESS</span>
-                </div>
-                <p class="description">
-                    Phase C (Modern & cosmobiological suite) and Phase D (Exchange & institutional confidence) with supporting branches.
-                </p>
-                <div class="details">
-                    <dt>Priority:</dt>
-                    <dd><span class="priority-medium">Medium</span> — Enhancement/polish</dd>
-                    <dt>Combined branches:</dt>
-                    <dd>feat/557-aspect-harmonic-families, feat/558-multi-wheel-overlay, feat/559-relocated-chart, feat/562-batch-event-search</dd>
-                </div>
-            </div>
-
-            <!-- #560 -->
-            <div class="card active" style="margin-top: 20px;">
-                <div class="card-header">
-                    <div>
-                        <span class="label">ENHANCEMENT</span>
-                        <div class="card-title">#560 — Modern Points Opt-Ins</div>
-                    </div>
-                    <span class="badge badge-active">IN PROGRESS</span>
-                </div>
-                <p class="description">
-                    Treat modern points (Chiron, Black Moon, Vertex, Eris) as independent, explicitly-labelled opt-ins.
-                </p>
-                <div class="details">
-                    <dt>Priority:</dt>
-                    <dd><span class="priority-low">Low</span> — Polish/hardening</dd>
-                    <dt>Status:</dt>
-                    <dd>3 supporting branches: feat/548-reception-engine, feat/550-lots-catalogue, feat/551-almuten-figuris</dd>
-                </div>
-            </div>
-
-            <!-- #439 -->
-            <div class="card ready" style="margin-top: 20px;">
-                <div class="card-header">
-                    <div>
-                        <span class="label">UI FEATURE</span>
-                        <div class="card-title">#439 — Side-by-Side Chart Compare</div>
-                    </div>
-                    <span class="badge badge-ready">READY</span>
-                </div>
-                <p class="description">
-                    Compare two chart types side by side (e.g., natal and draconic) on the Charts page.
-                </p>
-                <div class="details">
-                    <dt>Priority:</dt>
-                    <dd><span class="priority-medium">Medium</span> — UX enhancement</dd>
-                    <dt>Status:</dt>
-                    <dd>No active branch — fresh start</dd>
-                    <dt>Effort:</dt>
-                    <dd>~4-6 hours (layout + routing + UI integration)</dd>
-                </div>
-            </div>
-        </section>
-
-        <section>
-            <div class="section-title">❌ Blocked Issues (Human-Only)</div>
-
-            <div class="card blocked">
-                <div class="card-header">
-                    <div>
-                        <div class="card-title">#122 — Dependency Dashboard</div>
-                    </div>
-                    <span class="badge badge-blocked">BLOCKED</span>
-                </div>
-                <p class="description">Requires direct user intervention — Claude Code cannot act on this.</p>
-            </div>
-
-            <div class="card blocked" style="margin-top: 20px;">
-                <div class="card-header">
-                    <div>
-                        <div class="card-title">#120 — Release v1.0.0 Launch</div>
-                    </div>
-                    <span class="badge badge-blocked">BLOCKED</span>
-                </div>
-                <p class="description">Requires direct user intervention — Claude Code cannot act on this.</p>
-            </div>
-        </section>
-
-        <div class="recommendation">
-            <h2>🎯 Recommendation</h2>
-            <p><strong>Best Next Move:</strong> Continue #536 (Professional Astrology Audit) with the existing 6 branches</p>
-            <ul>
-                <li><strong>Why:</strong> High-priority, actively in progress with strong momentum (6 feature branches)</li>
-                <li><strong>Momentum:</strong> Already have foundational work done; can focus on refinement and testing</li>
-                <li><strong>Impact:</strong> Closes real professional-practice gaps that affect astrology users</li>
-                <li><strong>Alternative:</strong> If you want lower friction, #577 (skills cleanup) is quick and improves tooling</li>
-                <li><strong>Parallel:</strong> #560, #539, #540 can be worked on alongside #536 since they have separate branches</li>
-            </ul>
+            <span class="badge badge-ready">READY</span>
+          </div>
+          <p class="description">
+            Split UI/UX guidelines and agent duplication into Claude Code skills for reusability.
+          </p>
+          <div class="details">
+            <dt>Priority:</dt>
+            <dd><span class="priority-low">Low</span> — Documentation/tooling</dd>
+            <dt>Branch:</dt>
+            <dd>chore/577-agents-skills-cleanup (exists, ready to continue)</dd>
+            <dt>Effort:</dt>
+            <dd>~1-2 hours (skill definition + docs restructuring)</dd>
+          </div>
         </div>
 
-        <section style="border-top: 2px solid #e0e0e0; padding-top: 30px; margin-top: 40px;">
-            <p style="color: #999; font-size: 12px; text-align: center;">
-                Last updated: 2026-10-14 after #563 completion<br/>
-                Main branch: v0.37.2 | 27 active feature branches<br/>
-                Ready to start: select an issue and create a branch
-            </p>
-        </section>
+        <!-- #536 -->
+        <div class="card active" style="margin-top: 20px">
+          <div class="card-header">
+            <div>
+              <span class="label">HIGH PRIORITY</span>
+              <div class="card-title">#536 — Professional Astrology Audit</div>
+            </div>
+            <span class="badge badge-active">IN PROGRESS</span>
+          </div>
+          <p class="description">Close the chart-contract & professional-practice gaps identified in the audit.</p>
+          <div class="details">
+            <dt>Priority:</dt>
+            <dd><span class="priority-high">HIGH</span> — Real user/astrology impact</dd>
+            <dt>Status:</dt>
+            <dd>6 feature branches actively implementing audit findings</dd>
+            <dt>Branches:</dt>
+            <dd>
+              feat/543-orb-rule-engine, feat/552-horary-judgment, feat/553-primary-directions-config,
+              feat/554-timing-timeline, feat/555-all-pairs-midpoints, feat/556-dial-antiscia-declination-exposure
+            </dd>
+          </div>
+        </div>
+
+        <!-- #539 & #540 -->
+        <div class="card active" style="margin-top: 20px">
+          <div class="card-header">
+            <div>
+              <span class="label">AUDIT PHASES</span>
+              <div class="card-title">#539 & #540 — Audit Phases C & D</div>
+            </div>
+            <span class="badge badge-active">IN PROGRESS</span>
+          </div>
+          <p class="description">
+            Phase C (Modern & cosmobiological suite) and Phase D (Exchange & institutional confidence) with supporting
+            branches.
+          </p>
+          <div class="details">
+            <dt>Priority:</dt>
+            <dd><span class="priority-medium">Medium</span> — Enhancement/polish</dd>
+            <dt>Combined branches:</dt>
+            <dd>
+              feat/557-aspect-harmonic-families, feat/558-multi-wheel-overlay, feat/559-relocated-chart,
+              feat/562-batch-event-search
+            </dd>
+          </div>
+        </div>
+
+        <!-- #560 -->
+        <div class="card active" style="margin-top: 20px">
+          <div class="card-header">
+            <div>
+              <span class="label">ENHANCEMENT</span>
+              <div class="card-title">#560 — Modern Points Opt-Ins</div>
+            </div>
+            <span class="badge badge-active">IN PROGRESS</span>
+          </div>
+          <p class="description">
+            Treat modern points (Chiron, Black Moon, Vertex, Eris) as independent, explicitly-labelled opt-ins.
+          </p>
+          <div class="details">
+            <dt>Priority:</dt>
+            <dd><span class="priority-low">Low</span> — Polish/hardening</dd>
+            <dt>Status:</dt>
+            <dd>3 supporting branches: feat/548-reception-engine, feat/550-lots-catalogue, feat/551-almuten-figuris</dd>
+          </div>
+        </div>
+
+        <!-- #439 -->
+        <div class="card ready" style="margin-top: 20px">
+          <div class="card-header">
+            <div>
+              <span class="label">UI FEATURE</span>
+              <div class="card-title">#439 — Side-by-Side Chart Compare</div>
+            </div>
+            <span class="badge badge-ready">READY</span>
+          </div>
+          <p class="description">Compare two chart types side by side (e.g., natal and draconic) on the Charts page.</p>
+          <div class="details">
+            <dt>Priority:</dt>
+            <dd><span class="priority-medium">Medium</span> — UX enhancement</dd>
+            <dt>Status:</dt>
+            <dd>No active branch — fresh start</dd>
+            <dt>Effort:</dt>
+            <dd>~4-6 hours (layout + routing + UI integration)</dd>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-title">❌ Blocked Issues (Human-Only)</div>
+
+        <div class="card blocked">
+          <div class="card-header">
+            <div>
+              <div class="card-title">#122 — Dependency Dashboard</div>
+            </div>
+            <span class="badge badge-blocked">BLOCKED</span>
+          </div>
+          <p class="description">Requires direct user intervention — Claude Code cannot act on this.</p>
+        </div>
+
+        <div class="card blocked" style="margin-top: 20px">
+          <div class="card-header">
+            <div>
+              <div class="card-title">#120 — Release v1.0.0 Launch</div>
+            </div>
+            <span class="badge badge-blocked">BLOCKED</span>
+          </div>
+          <p class="description">Requires direct user intervention — Claude Code cannot act on this.</p>
+        </div>
+      </section>
+
+      <div class="recommendation">
+        <h2>🎯 Recommendation</h2>
+        <p>
+          <strong>Best Next Move:</strong> Continue #536 (Professional Astrology Audit) with the existing 6 branches
+        </p>
+        <ul>
+          <li><strong>Why:</strong> High-priority, actively in progress with strong momentum (6 feature branches)</li>
+          <li><strong>Momentum:</strong> Already have foundational work done; can focus on refinement and testing</li>
+          <li><strong>Impact:</strong> Closes real professional-practice gaps that affect astrology users</li>
+          <li>
+            <strong>Alternative:</strong> If you want lower friction, #577 (skills cleanup) is quick and improves
+            tooling
+          </li>
+          <li>
+            <strong>Parallel:</strong> #560, #539, #540 can be worked on alongside #536 since they have separate
+            branches
+          </li>
+        </ul>
+      </div>
+
+      <section style="border-top: 2px solid #e0e0e0; padding-top: 30px; margin-top: 40px">
+        <p style="color: #999; font-size: 12px; text-align: center">
+          Last updated: 2026-10-14 after #563 completion<br />
+          Main branch: v0.37.2 | 27 active feature branches<br />
+          Ready to start: select an issue and create a branch
+        </p>
+      </section>
     </div>
-</body>
+  </body>
 </html>
