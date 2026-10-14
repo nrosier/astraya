@@ -339,8 +339,9 @@ test('the header’s only export action is the PDF builder link; a chart’s own
   // Full-data export and the people CSV moved to Preferences → Data & privacy (#510,
   // e2e/preferences.spec.ts covers them); the old Export dropdown is gone entirely — a single
   // item does not get a dropdown, so this is now a plain link, same shape as Overview/Birth record.
+  // The PDF builder link has moved to the Documents workspace (#563), renamed to "Documents".
   await expect(header.getByRole('button', { name: 'Export', exact: true })).toHaveCount(0);
-  await expect(header.getByRole('link', { name: 'Build custom PDF…', exact: true })).toBeVisible();
+  await expect(header.getByRole('link', { name: 'Documents', exact: true })).toBeVisible();
 
   // On a chart, its own exports are in the page’s own header (#506/#509’s PageHeader), not the
   // site header, and the wheel no longer carries buttons either.
@@ -372,5 +373,5 @@ test('the header’s only export action is the PDF builder link; a chart’s own
   // unaffected either way, since it never listed them.
   await openTool(page, 'Eclipses');
   await expect(page.getByRole('button', { name: 'Export', exact: true })).toHaveCount(0);
-  await expect(header.getByRole('link', { name: 'Build custom PDF…', exact: true })).toBeVisible();
+  await expect(header.getByRole('link', { name: 'Documents', exact: true })).toBeVisible();
 });

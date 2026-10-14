@@ -56,10 +56,10 @@ test('the header’s PDF-builder link opens the PDF builder, and a preset downlo
 
   // A plain link, not a dropdown (#506/#509) — it is the only export action left in the header.
   const header = page.getByRole('banner');
-  const builderLink = header.getByRole('link', { name: 'Build custom PDF…', exact: true });
+  const builderLink = header.getByRole('link', { name: 'Documents', exact: true });
   await expect(builderLink).not.toHaveAttribute('aria-current', 'page');
   await builderLink.click();
-  await expect(page).toHaveURL(/#\/documents\/pdf$/);
+  await expect(page).toHaveURL(/#\/documents$/);
   // The rail marks where you are, from the same feature registry as the rest of the navigation.
   await expect(builderLink).toHaveAttribute('aria-current', 'page');
   await expect(page.getByRole('heading', { name: 'Build a PDF', level: 1 })).toBeVisible();
