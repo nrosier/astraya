@@ -43,8 +43,9 @@ export function ChartTypeSelector({
 /**
  * Records the open view in the URL, so the header's menu and the type selector keep it and it can be
  * linked. Replaced, not pushed (a view switch is not a page), and announced so the app's router sees it.
+ * When in comparison mode, preserves the compareType in the query param (#439).
  */
-export function changeChartView(personId: string, type: ChartType, view: ChartViewKind): void {
-  window.history.replaceState(null, '', chartHref(personId, view, type));
+export function changeChartView(personId: string, type: ChartType, view: ChartViewKind, compareType?: ChartType): void {
+  window.history.replaceState(null, '', chartHref(personId, view, type, compareType));
   window.dispatchEvent(new HashChangeEvent('hashchange'));
 }

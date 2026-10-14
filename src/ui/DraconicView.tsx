@@ -20,7 +20,7 @@ import { housesAreDefined } from '../domain/chart-compute.js';
 import { momentKey } from '../time/encode.js';
 import { ChartDataView } from './ChartView.js';
 import { ChartTypeSelector, changeChartView } from './ChartTypeSelector.js';
-import { type ChartViewKind } from './chart-sections.js';
+import { type ChartType, type ChartViewKind } from './chart-sections.js';
 import { chartHref, personHref } from './route.js';
 import { ReportView } from './ReportView.js';
 import { draconicViewMessages } from './DraconicView.messages.js';
@@ -35,13 +35,19 @@ type Load =
   | { readonly kind: 'ready'; readonly data: ChartData }
   | { readonly kind: 'error'; readonly message: string };
 
+// Comparison mode (compareType) will be implemented in a follow-up (#439)
 export function DraconicView({
   personId,
   view,
+  compareType,
 }: {
   personId: string;
   view?: ChartViewKind | undefined;
+  compareType?: ChartType | undefined;
 }): React.JSX.Element {
+  if (compareType !== undefined) {
+    // TODO: implement comparison mode for draconic charts (#439)
+  }
   const state = useStoreState();
   const person = state.people.get(personId);
   const t = useMessages(draconicViewMessages);

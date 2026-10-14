@@ -27,7 +27,7 @@ import { aspectDisplayName, bodyDisplayName } from './astro-names.messages.js';
 import { ChartDataView } from './ChartView.js';
 import { ChartTypeSelector, changeChartView } from './ChartTypeSelector.js';
 import { useCalculationBasisLine } from './calculation-basis.js';
-import { type ChartViewKind } from './chart-sections.js';
+import { type ChartType, type ChartViewKind } from './chart-sections.js';
 import { chartHref, personHref } from './route.js';
 import { formatFixed, todayInputValue } from './format.js';
 import { useLocale } from './locale.js';
@@ -92,15 +92,21 @@ function contactColumns(t: typeof returnViewMessages.en, locale: Locale): readon
   ];
 }
 
+// Comparison mode (compareType) will be implemented in a follow-up (#439)
 export function ReturnView({
   personId,
   kind,
   view,
+  compareType,
 }: {
   personId: string;
   kind: 'solar-return' | 'lunar-return';
   view?: ChartViewKind | undefined;
+  compareType?: ChartType | undefined;
 }): React.JSX.Element {
+  if (compareType !== undefined) {
+    // TODO: implement comparison mode for return charts (#439)
+  }
   const state = useStoreState();
   const person = state.people.get(personId);
   const t = useMessages(returnViewMessages);

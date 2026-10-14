@@ -499,20 +499,24 @@ type PersonRoute = Extract<
 
 /** The Charts page: the view for the chart type the route names (natal when it names none). */
 function renderChart(parsed: Extract<Route, { kind: 'chart' }>): React.JSX.Element {
-  const { personId, view } = parsed;
+  const { personId, view, compareType } = parsed;
   switch (parsed.chartType ?? 'natal') {
     case 'draconic':
-      return <DraconicView key={personId} personId={personId} view={view} />;
+      return <DraconicView key={personId} personId={personId} view={view} compareType={compareType} />;
     case 'harmonic':
-      return <HarmonicView key={personId} personId={personId} view={view} />;
+      return <HarmonicView key={personId} personId={personId} view={view} compareType={compareType} />;
     case 'solar-return':
-      return <ReturnView key={personId} personId={personId} kind="solar-return" view={view} />;
+      return (
+        <ReturnView key={personId} personId={personId} kind="solar-return" view={view} compareType={compareType} />
+      );
     case 'lunar-return':
-      return <ReturnView key={personId} personId={personId} kind="lunar-return" view={view} />;
+      return (
+        <ReturnView key={personId} personId={personId} kind="lunar-return" view={view} compareType={compareType} />
+      );
     case 'relocated':
-      return <RelocatedChartView key={personId} personId={personId} view={view} />;
+      return <RelocatedChartView key={personId} personId={personId} view={view} compareType={compareType} />;
     case 'natal':
-      return <ChartView key={personId} personId={personId} view={view} />;
+      return <ChartView key={personId} personId={personId} view={view} compareType={compareType} />;
   }
 }
 

@@ -139,7 +139,7 @@ import { unicodeSymbol, textSymbol } from '../chart/symbol-text.js';
 import { useSymbolClass } from './symbol-setting.js';
 import { useGlyphVariants } from './glyph-variant-setting.js';
 import { useRegisterExports } from './export-registry.js';
-import { CHART_VIEWS, chartViewLabels, type ChartViewKind } from './chart-sections.js';
+import { CHART_VIEWS, chartViewLabels, type ChartViewKind, type ChartType } from './chart-sections.js';
 import { chartHref, personHref } from './route.js';
 import { ChartTypeSelector, changeChartView } from './ChartTypeSelector.js';
 import { ChartViewNav } from './ChartViewNav.js';
@@ -2320,15 +2320,18 @@ export function ChartDataView({
 export function ChartView({
   personId,
   view,
+  compareType,
 }: {
   personId: string;
   view?: ChartViewKind | undefined;
+  compareType?: ChartType | undefined;
 }): React.JSX.Element {
   const state = useStoreState();
   const person = state.people.get(personId);
   const t = useMessages(chartViewMessages);
   const [locale] = useLocale();
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
+  const [compareLoad, setCompareLoad] = useState<Load>({ kind: 'loading' });
   const [lastReadyData, setLastReadyData] = useState<ChartData | undefined>();
   // Shared with the solar and lunar return charts, so a house system chosen here applies there too.
   const [settings, setSettings] = useExtendedSettings();
@@ -2393,6 +2396,50 @@ export function ChartView({
     };
   }, [personId, momentKey(person?.moment), person?.customPoints, settings, rulership, provider]);
 
+  // Compute comparison chart when compareType is provided (#439)
+  useEffect(() => {
+    if (compareType === undefined) {
+      setCompareLoad({ kind: 'loading' });
+      return;
+    }
+    if (person?.moment === undefined || provider === undefined) return undefined;
+
+    const moment = person.moment;
+    const effect = { cancelled: false };
+    const options = {
+      ...toChartCalculationOptions(settings),
+      rulership,
+      ...(person.customPoints === undefined ? {} : { customPoints: person.customPoints }),
+    };
+
+    setCompareLoad({ kind: 'loading' });
+
+    void (async () => {
+      try {
+        let data: ChartData;
+        switch (compareType) {
+          case 'draconic': {
+            const draconicData = await computeDraconic(moment, provider, options);
+            data = draconicData.draconic;
+            break;
+          }
+          case 'natal':
+          default:
+            data = await computeChartData(moment, provider, options);
+            break;
+        }
+        if (!effect.cancelled) setCompareLoad({ kind: 'ready', data });
+      } catch (error) {
+        if (!effect.cancelled)
+          setCompareLoad({ kind: 'error', message: error instanceof Error ? error.message : String(error) });
+      }
+    })();
+
+    return () => {
+      effect.cancelled = true;
+    };
+  }, [personId, momentKey(person?.moment), person?.customPoints, settings, rulership, provider, compareType]);
+
   if (person === undefined) {
     return <PersonNotFound />;
   }
@@ -2413,6 +2460,68 @@ export function ChartView({
   }
 
   const showHouses = person.timeAccuracy !== 'unknown';
+
+  // When comparing, show both charts side-by-side (#439)
+  if (compareType !== undefined) {
+    const compareDisplayName = person.displayName ? `${person.displayName} — Comparison` : 'Comparison';
+
+    return (
+      <main className="shell shell--wide">
+        <p className="back">
+          <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
+        </p>
+        <PageHeader title={person.displayName || t.chartFallback} basis={basisLine} />
+        <GlossaryTerms
+          terms={[
+            'ascendant',
+            'midheaven',
+            'houses',
+            'aspect',
+            'dignity',
+            'dispositor',
+            'retrograde',
+            'declination',
+            'derivedPoint',
+          ]}
+        />
+        <ChartTypeSelector personId={personId} type="natal" view={view} />
+        <ShareLink moment={person.moment} housesKnown={showHouses} settings={settings} rulership={rulership} />
+        <div className="comparison-container" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+          <div>
+            <h2>Natal</h2>
+            <ChartDataView
+              load={load}
+              displayName={person.displayName}
+              showHouses={showHouses}
+              metaLines={metaLines}
+              extendedSettings={settings}
+              onExtendedSettingsChange={setSettings}
+              settingsProvider={provider}
+              view={view ?? 'wheel'}
+              onViewChange={(next) => {
+                changeChartView(personId, 'natal', next, compareType);
+              }}
+              buildViewHref={(next) => chartHref(personId, next, 'natal', compareType)}
+            />
+          </div>
+          <div>
+            <h2>{compareType.charAt(0).toUpperCase() + compareType.slice(1).replace(/-/g, ' ')}</h2>
+            <ChartDataView
+              load={compareLoad}
+              displayName={compareDisplayName}
+              showHouses={showHouses}
+              metaLines={metaLines}
+              extendedSettings={settings}
+              settingsProvider={provider}
+              view={view ?? 'wheel'}
+              buildViewHref={(next) => chartHref(personId, next, 'natal', compareType)}
+            />
+          </div>
+        </div>
+        {lastReadyData !== undefined && <CustomPointEditor person={person} data={lastReadyData} />}
+      </main>
+    );
+  }
 
   return (
     <main className="shell shell--wide">

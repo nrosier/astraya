@@ -58,12 +58,14 @@ export type Route =
   | { readonly kind: 'consultation'; readonly personId: string }
   // The Charts page: one route for every chart cast for one person. `chartType` is the kind of chart
   // (absent means natal) and `view` its open Wheel/Aspects/Aspect matrix/Elements/Placements/Patterns view
-  // (#511; absent means the wheel). Both are path segments of the canonical hash.
+  // (#511; absent means the wheel). Both are path segments of the canonical hash. Optional `compareType`
+  // enables side-by-side comparison of two chart types (#439), passed as `?compare=` query param.
   | {
       readonly kind: 'chart';
       readonly personId: string;
       readonly chartType?: ChartType;
       readonly view?: ChartViewKind;
+      readonly compareType?: ChartType;
     }
   // The written report (#271): Interpretation in the navigation.
   | { readonly kind: 'report'; readonly personId: string }
@@ -156,7 +158,15 @@ function personSubRoute(personId: string, rest: readonly string[], hash: string)
     return undefined;
   }
   if (area === 'charts' && isChartType(second) && isChartView(third)) {
-    return { kind: 'chart', personId, chartType: second, view: third };
+    const compareParam = new URLSearchParams(hash.split('?')[1] ?? '').get('compare');
+    const compare = isChartType(compareParam) ? compareParam : undefined;
+    return {
+      kind: 'chart',
+      personId,
+      chartType: second,
+      view: third,
+      ...(compare === undefined ? {} : { compareType: compare }),
+    };
   }
   if (rest.length !== 2) return undefined;
   if (area === 'timing' && second !== undefined && second in TIMING_TECHNIQUES) {
@@ -285,8 +295,10 @@ export function routeHref(route: Route): string {
       return person(route.personId, 'birth-record');
     case 'report':
       return person(route.personId, 'interpretation');
-    case 'chart':
-      return person(route.personId, 'charts', route.chartType ?? 'natal', route.view ?? 'wheel');
+    case 'chart': {
+      const base = person(route.personId, 'charts', route.chartType ?? 'natal', route.view ?? 'wheel');
+      return route.compareType === undefined ? base : `${base}?compare=${route.compareType}`;
+    }
     case 'profections':
     case 'timing-timeline':
     case 'progressions':
@@ -316,13 +328,14 @@ export function routeHref(route: Route): string {
   }
 }
 
-/** The hash of a person's chart of `type` (natal when omitted), opened at `view` (the wheel when omitted). */
-export function chartHref(personId: string, view?: ChartViewKind, type?: ChartType): string {
+/** The hash of a person's chart of `type` (natal when omitted), opened at `view` (the wheel when omitted), optionally in comparison mode with `compareType` (#439). */
+export function chartHref(personId: string, view?: ChartViewKind, type?: ChartType, compareType?: ChartType): string {
   return routeHref({
     kind: 'chart',
     personId,
     ...(type === undefined ? {} : { chartType: type }),
     ...(view === undefined ? {} : { view }),
+    ...(compareType === undefined ? {} : { compareType }),
   });
 }
 
