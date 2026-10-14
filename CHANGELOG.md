@@ -4,6 +4,12 @@ All notable changes to Astraya are recorded here. Versions follow
 [semantic versioning](https://semver.org/), and every milestone ends in a release —
 see [docs/RELEASING.md](docs/RELEASING.md).
 
+## [0.38.0] — 2026-10-14
+
+### Added
+
+- **Side-by-side chart comparison is now available on the Charts page (#439).** View two chart types simultaneously (e.g., natal and draconic) using the `?compare=` query parameter. Both charts share the same view/section, and switching between wheel/aspects/positions/elements/patterns keeps both synchronized. Desktop layout renders at 50/50 split; mobile support and table row alignment coming in future phases.
+
 ## [0.37.2] — 2026-10-13
 
 ### Fixed
