@@ -121,6 +121,7 @@ const ROUTE_KIND_STATUS: Readonly<Record<Route['kind'], 'feature' | 'not a featu
   'periodic-transit': 'feature',
   astrocartography: 'feature',
   shared: 'not a feature',
+  documents: 'feature',
   'export-builder': 'feature',
   preferences: 'not a feature',
   cycles: 'feature',

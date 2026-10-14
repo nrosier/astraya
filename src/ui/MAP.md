@@ -41,6 +41,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `EventSearchView.tsx` + `EventSearchView.messages.ts` — UTC batch ephemeris research and reproducible CSV tool. Deps: `domain/event-search`, `EphemerisProviderContext`.
 - `DegreeSymbolSetting.tsx` + `DegreeSymbolSetting.messages.ts` — Named, explained control for the degree-symbol (Sabian symbol) visibility preference (#527), same label+explanation+control shape as `RulershipSetting`. Deps: `./degree-symbol-setting`, `./primitives/Checkbox`.
 - `DraconicView.tsx` + `DraconicView.messages.ts` — Draconic chart screen (positions from North Node). Deps: `domain/draconic`.
+- `DocumentsView.tsx` + `DocumentsView.messages.ts` — App-scoped Documents workspace (#563): PDF export builder and saved charts. Deps: `PdfExportBuilder`, `shared.messages`.
 - `EclipsesView.tsx` + `EclipsesView.messages.ts` — Eclipses tool (solar/lunar search + natal contacts). Deps: `astrology/eclipses`, `domain/chart-compute`.
 - `ElectionalView.tsx` + `ElectionalView.messages.ts` — Electional Search tool (best-time-to-begin ranking). Deps: `astrology/electional`, `BirthPlaceSearch`.
 - `EntryLabel.tsx` — Renders corpus keys as human-readable placement names (admin UI). Deps: `./placement-label`.

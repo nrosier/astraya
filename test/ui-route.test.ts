@@ -43,6 +43,7 @@ const ROUTES: readonly Route[] = [
   { kind: 'composite', personId: ID, view: 'aspects' },
   { kind: 'astrocartography', personId: ID },
   { kind: 'shared' },
+  { kind: 'documents' },
   { kind: 'export-builder' },
   { kind: 'preferences' },
   { kind: 'preferences', section: 'data' },
@@ -131,6 +132,7 @@ describe('the canonical hashes', () => {
       composite: true,
       astrocartography: true,
       shared: true,
+      documents: true,
       'export-builder': true,
       preferences: true,
       cycles: true,
@@ -245,7 +247,6 @@ describe('parseRoute', () => {
       '#/explore/nope',
       '#/explore/cycles/extra',
       '#/preferences/nope',
-      '#/documents',
       '#/documents/nope',
     ]) {
       expect(parseRoute(hash), hash).toEqual({ kind: 'home' });

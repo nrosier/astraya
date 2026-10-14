@@ -48,7 +48,7 @@ export type SettingsMode = 'none' | 'inline' | 'staged-dialog' | 'workspace';
 /** Declarative, not the live runtime list `export-registry.tsx` holds — see that module for the actual per-mount items. This says what *kind* of export a feature's screen is expected to offer, so a feature claiming none can be told apart from one that just hasn't registered anything yet. */
 export type ExportCapability = 'chart-image' | 'csv' | 'map' | 'pdf-document' | 'none';
 
-export type FeatureKey = PersonTabKey | ToolKey | AdminTabKey | 'export-builder';
+export type FeatureKey = PersonTabKey | ToolKey | AdminTabKey | 'export-builder' | 'documents';
 
 export interface FeatureContext {
   readonly personId?: string | undefined;
@@ -207,10 +207,22 @@ function adminFeatures(): readonly FeatureDefinition[] {
 
 const MISCELLANEOUS_FEATURES: readonly FeatureDefinition[] = [
   {
+    key: 'documents',
+    scope: 'global',
+    group: 'documents',
+    order: 0,
+    routeKind: 'documents',
+    buildHref: () => routeHref({ kind: 'documents' }),
+    requiresBirthMoment: false,
+    settingsMode: 'none',
+    exportCapabilities: ['pdf-document'],
+    labelKey: 'documents',
+  },
+  {
     key: 'export-builder',
     scope: 'document',
     group: 'documents',
-    order: 0,
+    order: 1,
     routeKind: 'export-builder',
     buildHref: () => routeHref({ kind: 'export-builder' }),
     requiresBirthMoment: false,

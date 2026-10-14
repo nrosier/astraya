@@ -23,7 +23,7 @@
  *   #/people/:id/relationships/:technique                 synastry|composite (composite: ?view=)
  *   #/people/:id/location/astrocartography                Astrocartography
  *   #/explore/:tool                                       cycles|eclipses|horary|electional|rectification (horary: ?view=)
- *   #/documents/pdf                                       PDF builder
+ *   #/documents                                           Documents (PDF builder, saved charts)
  *   #/preferences[/:section]                              Preferences (general|astrology|appearance|data)
  *   #/admin, #/admin/usage, #/admin/corpus-overrides, #/admin/corpus-candidates, #/shared, #/about, #/changelog,
  *   #/set-password, #/setup                               unchanged
@@ -97,6 +97,8 @@ export type Route =
   // periodic-transit's "as of" date above.
   | { readonly kind: 'astrocartography'; readonly personId: string }
   | { readonly kind: 'shared' }
+  // The Documents workspace (#563): PDF export builder and saved charts. App-scoped, no person context.
+  | { readonly kind: 'documents' }
   // The PDF export builder (#441): the primary person is picked on the page itself, not the URL,
   // the same reasoning synastry's second person already uses.
   | { readonly kind: 'export-builder' }
@@ -188,6 +190,9 @@ export function parseRoute(hash: string): Route {
     // #441: the PDF export builder — needs the store (to list people) but not person-scoped.
     case '#/documents/pdf':
       return { kind: 'export-builder' };
+    // #563: the Documents workspace — PDF builder and saved charts, app-scoped.
+    case '#/documents':
+      return { kind: 'documents' };
     // #506/#510: the Preferences workspace — needs the store (full-data export lists people)
     // but not person-scoped.
     case '#/preferences':
@@ -254,6 +259,8 @@ export function routeHref(route: Route): string {
       return '#/people';
     case 'shared':
       return '#/shared';
+    case 'documents':
+      return '#/documents';
     case 'export-builder':
       return '#/documents/pdf';
     case 'preferences':
