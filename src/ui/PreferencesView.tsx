@@ -17,16 +17,22 @@
  * menu, where it still *also* lives today — moving it out of there, and moving Build PDF to a
  * Documents destination, is the remaining Phase 2 task this screen's existence unblocks, not
  * done in this slice).
+ *
+ * Restore (#587) and "Check a calculation file" (#582) are two separate actions, deliberately:
+ * restoring people and verifying an old chart's calculation are different questions, and restore
+ * never trusts a `calculation` field for what it writes. Check only ever reads a file and shows
+ * results — it writes nothing, so it has no confirm step the way restore does.
  */
 /**
  * @module ui/PreferencesView
  * @purpose Preferences workspace (#506/#510): General/Astrology defaults/Appearance & accessibility/Data & privacy, each reusing the screen's own existing device/account-preference controls rather than duplicating them.
- * @conventions Every control is the same shared component/hook other screens already use (RulershipSetting.tsx, SymbolSetting.tsx, LanguageToggle.tsx, ThemeToggle.tsx) — this screen never reads or writes a setting's storage directly. Full-data export reuses domain/full-export.js's pure functions, the same ones AppNav.tsx's Export menu calls.
+ * @conventions Every control is the same shared component/hook other screens already use (RulershipSetting.tsx, SymbolSetting.tsx, LanguageToggle.tsx, ThemeToggle.tsx) — this screen never reads or writes a setting's storage directly. Full-data export reuses domain/full-export.js's pure functions, the same ones AppNav.tsx's Export menu calls. "Check a calculation file" (#582) reuses validateFullExport for the same format/version errors Restore gives, but reads `calculation` off the raw parsed JSON directly, since the validated FullExport never carries that field.
  * @exports PreferencesView
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { buildFullExport, fullExportFilename, peopleCsvFilename, peopleToCsv } from '../domain/full-export.js';
 import { stageFullExportRestore, validateFullExport, type RestorePreview } from '../domain/full-export-importer.js';
+import { checkExportedCalculations, type PersonCalculationCheck } from '../domain/full-export-check.js';
 import { APP_VERSION } from '../version.js';
 import type { PreferencesSection } from './route.js';
 import {
@@ -86,6 +92,13 @@ export function PreferencesView({
   const [status, setStatus] = useState<ExportStatus | undefined>(undefined);
   const [preview, setPreview] = useState<RestorePreview | undefined>(undefined);
   const [restoring, setRestoring] = useState(false);
+  const [checks, setChecks] = useState<readonly PersonCalculationCheck[] | undefined>(undefined);
+  // Two near-identical result tables can be on screen at once (restore, then check, or vice
+  // versa) — each gets its own caption, matching SortableTable.tsx's own panel-identity
+  // convention, so a reader scanning the page isn't left telling them apart by column header
+  // text alone.
+  const restorePreviewCaptionId = useId();
+  const checkResultsCaptionId = useId();
 
   const run = (what: string, action: () => void | Promise<void>): void => {
     setStatus({ kind: 'busy', text: t.exportPreparing(what) });
@@ -189,6 +202,53 @@ export function PreferencesView({
       });
   };
 
+  // Reads a calculation file and checks it (#582) — never writes anything, so there is no
+  // confirm step, unlike restore. Reads `calculation` off the *raw* parsed JSON, not off
+  // `validateFullExport`'s own result, which deliberately never carries that field through.
+  const onCheckFileChosen = (file: File | undefined): void => {
+    if (file === undefined) return;
+    if (provider === undefined) {
+      setStatus({ kind: 'error', text: t.exportNeedsEngine });
+      return;
+    }
+    setChecks(undefined);
+    setStatus({ kind: 'busy', text: t.checkPreparing });
+    void file
+      .text()
+      .then(async (text) => {
+        let parsed: unknown;
+        try {
+          parsed = JSON.parse(text);
+        } catch {
+          throw new Error(t.restoreInvalidJson);
+        }
+        const result = validateFullExport(parsed);
+        if (!result.ok) throw new Error(t.restoreInvalid(result.error));
+        const rawPeople =
+          typeof parsed === 'object' && parsed !== null && Array.isArray((parsed as { people?: unknown }).people)
+            ? (parsed as { people: readonly unknown[] }).people
+            : [];
+        const current = { astrayaVersion: APP_VERSION, swephVersion: await provider.version() };
+        const results = await checkExportedCalculations(result.value, rawPeople, provider, current);
+        setChecks(results);
+        const counts = { verified: 0, changed: 0, inconsistent: 0, 'no-artifact': 0, error: 0 };
+        for (const { outcome } of results) counts[outcome.kind] += 1;
+        setStatus({
+          kind: 'done',
+          text: t.checkStaged(
+            counts.verified,
+            counts.changed,
+            counts.inconsistent,
+            counts['no-artifact'],
+            counts.error,
+          ),
+        });
+      })
+      .catch((error: unknown) => {
+        setStatus({ kind: 'error', text: t.checkFailed(error instanceof Error ? error.message : String(error)) });
+      });
+  };
+
   useEffect(() => {
     if (section !== undefined) revealSection(section);
   }, [section]);
@@ -284,8 +344,11 @@ export function PreferencesView({
             )}
           </p>
           <div className="data-table data-table-wrap">
+            <div className="data-table-head">
+              <h3 id={restorePreviewCaptionId}>{t.restorePreviewHeading}</h3>
+            </div>
             <div className="data-table-scroll data-table-scroll-tall">
-              <table>
+              <table aria-labelledby={restorePreviewCaptionId}>
                 <thead>
                   <tr>
                     <th>{t.restoreNameColumn}</th>
@@ -308,6 +371,41 @@ export function PreferencesView({
               {t.restoreApply}
             </Button>
           </p>
+        </div>
+      )}
+      <p>{t.checkHint}</p>
+      <p>
+        <FileInput
+          buttonLabel={t.checkFromFile}
+          accept="application/json"
+          disabled={provider === undefined}
+          disabledReason={t.exportNeedsEngine}
+          onChange={onCheckFileChosen}
+        />
+      </p>
+      {checks !== undefined && (
+        <div className="data-table data-table-wrap">
+          <div className="data-table-head">
+            <h3 id={checkResultsCaptionId}>{t.checkResultsHeading}</h3>
+          </div>
+          <div className="data-table-scroll data-table-scroll-tall">
+            <table aria-labelledby={checkResultsCaptionId}>
+              <thead>
+                <tr>
+                  <th>{t.restoreNameColumn}</th>
+                  <th>{t.checkResultColumn}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {checks.map((check) => (
+                  <tr key={check.id}>
+                    <td>{check.displayName === '' ? t.restoreNoName : check.displayName}</td>
+                    <td>{t.checkResult(check.outcome)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
       {status !== undefined && (
