@@ -12,7 +12,8 @@
  */
 import { useEffect, useMemo, useState } from 'react';
 import { chartViewFromHash, type ChartViewKind } from './chart-sections.js';
-import { ChartDataView } from './ChartView.js';
+import { buildChartArtifact, ChartDataView } from './ChartView.js';
+import type { CalculationArtifact } from '../domain/calculation-artifact.js';
 import { toChartCalculationOptions } from '../chart/extended-settings.js';
 import { chartSheetMetaLines } from '../domain/chart-tables.js';
 import { computeChartData, type ChartData } from '../domain/chart-compute.js';
@@ -27,7 +28,7 @@ import { StatusMessage } from './primitives/StatusMessage.js';
 
 type Load =
   | { readonly kind: 'loading' }
-  | { readonly kind: 'ready'; readonly data: ChartData }
+  | { readonly kind: 'ready'; readonly data: ChartData; readonly artifact?: CalculationArtifact | undefined }
   | { readonly kind: 'error'; readonly message: string };
 
 /** Reads the shared chart from the URL query, once, at mount. */
@@ -85,11 +86,15 @@ export function SharedChartView(): React.JSX.Element {
 
     void (async () => {
       try {
+        // The sender's own formula points too (#582) — without them the recipient's chart would
+        // silently show fewer objects than the one that was shared.
         const data = await computeChartData(moment, provider, {
           ...toChartCalculationOptions(snapshot.settings),
           rulership: snapshot.rulership,
+          ...(snapshot.customPoints.length === 0 ? {} : { customPoints: snapshot.customPoints }),
         });
-        if (!effect.cancelled) setLoad({ kind: 'ready', data });
+        const artifact = await buildChartArtifact(snapshot, data, provider);
+        if (!effect.cancelled) setLoad({ kind: 'ready', data, artifact });
       } catch (error) {
         if (!effect.cancelled)
           setLoad({ kind: 'error', message: error instanceof Error ? error.message : String(error) });

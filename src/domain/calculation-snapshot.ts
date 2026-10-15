@@ -15,7 +15,7 @@
  */
 /**
  * @module domain/calculation-snapshot
- * @purpose Defines a versioned, fully-validated CalculationSnapshot (settings + rulership) and the pure functions that build/parse/serialize one.
+ * @purpose Defines a versioned, fully-validated CalculationSnapshot (settings, rulership and custom points) and the pure functions that build/parse/serialize one.
  * @conventions `version` is bumped only when the *shape* a snapshot must satisfy changes incompatibly; `parseCalculationSnapshot` never throws — an invalid or missing field is filled from the documented app defaults, the same defaults a never-customized chart already shows; strict validation checks registered house systems, aspect keys, and bounds schemes against canonical registries.
  * @exports CURRENT_SNAPSHOT_VERSION, CalculationSnapshot, buildCalculationSnapshot, calculationSnapshotIdentity, parseCalculationSnapshot, calculationSnapshotToJson
  */
@@ -25,13 +25,23 @@ import { houseSystemByCode } from '../astrology/houses.js';
 import { aspectByKey } from '../astrology/aspects.js';
 import type { Zodiac } from '../ephemeris/types.js';
 import type { JsonValue } from '../store/ops.js';
+import type { CustomPointDefinition } from './person.js';
 
-export const CURRENT_SNAPSHOT_VERSION = 1;
+/**
+ * 2 (#582): adds `customPoints`. A v1 snapshot (or a pre-#541 link with no version at all) still
+ * parses — it simply had no way to carry formula points, so it reads back with none.
+ */
+export const CURRENT_SNAPSHOT_VERSION = 2;
 
 export interface CalculationSnapshot {
   readonly version: typeof CURRENT_SNAPSHOT_VERSION;
   readonly settings: ExtendedSettings;
   readonly rulership: RulershipChoice;
+  /**
+   * The person's own formula points (#582) — part of what produced the chart, so a shared or
+   * exported chart that drops them silently shows different objects from the sender's.
+   */
+  readonly customPoints: readonly CustomPointDefinition[];
 }
 
 /**
@@ -67,8 +77,12 @@ export function validateMinorAspects(value: unknown): readonly string[] {
   return value.filter((item): item is string => typeof item === 'string' && isValidAspect(item));
 }
 
-export function buildCalculationSnapshot(settings: ExtendedSettings, rulership: RulershipChoice): CalculationSnapshot {
-  return { version: CURRENT_SNAPSHOT_VERSION, settings, rulership };
+export function buildCalculationSnapshot(
+  settings: ExtendedSettings,
+  rulership: RulershipChoice,
+  customPoints: readonly CustomPointDefinition[] = [],
+): CalculationSnapshot {
+  return { version: CURRENT_SNAPSHOT_VERSION, settings, rulership, customPoints };
 }
 
 /** A short stable identifier for a complete snapshot, suitable for print/export provenance (not a security hash). */
@@ -103,6 +117,21 @@ function parseBool(value: unknown, fallback: boolean): boolean {
 
 function parseNonNegativeNumber(value: unknown, fallback: number): number {
   return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : fallback;
+}
+
+/**
+ * Keeps only well-formed definitions: a point with a non-string id/name/formula cannot be
+ * evaluated or labelled, so it is dropped rather than guessed at. The formula itself is
+ * validated where it is evaluated (`formula-parser.ts`), not here.
+ */
+function parseCustomPoints(value: unknown): readonly CustomPointDefinition[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item): CustomPointDefinition[] => {
+    if (!isRecord(item)) return [];
+    const { id, name, formula, enabled } = item;
+    if (typeof id !== 'string' || typeof name !== 'string' || typeof formula !== 'string') return [];
+    return [{ id, name, formula, ...(typeof enabled === 'boolean' ? { enabled } : {}) }];
+  });
 }
 
 function parseModernPointVisibility(value: unknown): ExtendedSettings['modernPointVisibility'] {
@@ -178,7 +207,11 @@ function parseExtendedSettings(value: unknown): ExtendedSettings {
 export function parseCalculationSnapshot(value: unknown): CalculationSnapshot {
   if (!isRecord(value)) return buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE);
   const rulership = isOneOf(value.rulership, RULERSHIP_CHOICES) ? value.rulership : DEFAULT_RULERSHIP_CHOICE;
-  return buildCalculationSnapshot(parseExtendedSettings(value.settings), rulership);
+  return buildCalculationSnapshot(
+    parseExtendedSettings(value.settings),
+    rulership,
+    parseCustomPoints(value.customPoints),
+  );
 }
 
 /**

@@ -102,7 +102,15 @@ import {
   buildCalculationSnapshot,
   calculationSnapshotIdentity,
   calculationSnapshotToJson,
+  type CalculationSnapshot,
 } from '../domain/calculation-snapshot.js';
+import {
+  buildCalculationArtifact,
+  calculationArtifactIdentity,
+  type CalculationArtifact,
+} from '../domain/calculation-artifact.js';
+import type { CustomPointDefinition } from '../domain/person.js';
+import { APP_VERSION } from '../version.js';
 import { momentKey } from '../time/encode.js';
 import { renderChartDialSvg, renderChartSheetSvg } from '../chart/chart-sheet.js';
 import { renderMultiWheelSvg, type CrossRingAspects, type WheelRingInput } from '../chart/multi-wheel.js';
@@ -186,8 +194,41 @@ import { TRANSIT_ORB_CONFIG } from '../astrology/transit-importance.js';
 
 type Load =
   | { readonly kind: 'loading' }
-  | { readonly kind: 'ready'; readonly data: ChartData }
+  | {
+      readonly kind: 'ready';
+      readonly data: ChartData;
+      /** The completed calculation's artifact (#582), when its builder had one to give. */
+      readonly artifact?: CalculationArtifact | undefined;
+    }
   | { readonly kind: 'error'; readonly message: string };
+
+/**
+ * The artifact for a calculation that has just completed (#582), or `undefined` when it cannot
+ * be built — Web Crypto's `subtle` only exists in a secure context, and a self-hosted instance
+ * served over plain HTTP on a LAN is not one. The chart is shown either way; only its printed
+ * fingerprint falls back to the snapshot's own short tag (`provenanceIdentity`).
+ */
+export async function buildChartArtifact(
+  snapshot: CalculationSnapshot,
+  data: ChartData,
+  provider: EphemerisProvider,
+): Promise<CalculationArtifact | undefined> {
+  try {
+    return await buildCalculationArtifact(snapshot, data, {
+      astrayaVersion: APP_VERSION,
+      swephVersion: await provider.version(),
+    });
+  } catch {
+    return undefined;
+  }
+}
+
+/** The fingerprint printed with a chart: the artifact's when there is one, else the snapshot's own tag. */
+function provenanceIdentity(load: Load, settings: ExtendedSettings, rulership: RulershipChoice): string {
+  return load.kind === 'ready' && load.artifact !== undefined
+    ? calculationArtifactIdentity(load.artifact)
+    : calculationSnapshotIdentity(buildCalculationSnapshot(settings, rulership));
+}
 
 export interface ChartOverlayContext {
   readonly moment: BirthMomentInput;
@@ -1582,17 +1623,20 @@ function ShareLink({
   housesKnown,
   settings,
   rulership,
+  customPoints,
 }: {
   readonly moment: BirthMomentInput;
   readonly housesKnown: boolean;
   readonly settings: ExtendedSettings;
   readonly rulership: RulershipChoice;
+  /** The person's formula points (#582): without them the recipient's chart shows different objects. */
+  readonly customPoints: readonly CustomPointDefinition[];
 }): React.JSX.Element {
   const t = useMessages(chartViewMessages);
   const [copied, setCopied] = useState(false);
 
   const copy = (): void => {
-    const shareSettings = calculationSnapshotToJson(buildCalculationSnapshot(settings, rulership));
+    const shareSettings = calculationSnapshotToJson(buildCalculationSnapshot(settings, rulership, customPoints));
     const query = encodeChartShareLink({ moment, settings: shareSettings, housesKnown }).toString();
     const url = `${window.location.origin}${window.location.pathname}#/shared?${query}`;
     void navigator.clipboard.writeText(url).then(
@@ -1721,7 +1765,7 @@ export function ChartDataView({
     void (async () => {
       try {
         const rings: WheelRingInput[] = [chartWheelRing(load.data, overlayContext.baseLabel, pointVisibility)];
-        const snapshotIdentity = calculationSnapshotIdentity(buildCalculationSnapshot(extendedSettings, rulership));
+        const snapshotIdentity = provenanceIdentity(load, extendedSettings, rulership);
         const snapshot = overlayT.calculationSnapshot(snapshotIdentity);
         const ringData: OverlayRingData[] = [
           { label: overlayContext.baseLabel, data: load.data, provenance: snapshot },
@@ -2127,7 +2171,7 @@ export function ChartDataView({
         houseSystem={houseSystemLabel(extendedSettings.houseSystem)}
         zodiac={zodiacLabel(extendedSettings.zodiac)}
         rulership={rulershipLabel(rulership)}
-        snapshotIdentity={calculationSnapshotIdentity(buildCalculationSnapshot(extendedSettings, rulership))}
+        snapshotIdentity={provenanceIdentity(load, extendedSettings, rulership)}
         generatedAt={formatTimestamp(new Date())}
       />
       {!showHouses && <p className="hint">{t.housesUnknownHint(displayName || t.thisPerson)}</p>}
@@ -2384,7 +2428,9 @@ export function ChartView({
           rulership,
           ...(person.customPoints === undefined ? {} : { customPoints: person.customPoints }),
         });
-        if (!effect.cancelled) setLoad({ kind: 'ready', data });
+        const snapshot = buildCalculationSnapshot(settings, rulership, person.customPoints ?? []);
+        const artifact = await buildChartArtifact(snapshot, data, provider);
+        if (!effect.cancelled) setLoad({ kind: 'ready', data, artifact });
       } catch (error) {
         if (!effect.cancelled)
           setLoad({ kind: 'error', message: error instanceof Error ? error.message : String(error) });
@@ -2485,7 +2531,13 @@ export function ChartView({
           ]}
         />
         <ChartTypeSelector personId={personId} type="natal" view={view} />
-        <ShareLink moment={person.moment} housesKnown={showHouses} settings={settings} rulership={rulership} />
+        <ShareLink
+          moment={person.moment}
+          housesKnown={showHouses}
+          settings={settings}
+          rulership={rulership}
+          customPoints={person.customPoints ?? []}
+        />
         <div className="comparison-container" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
           <div>
             <h2>{t.natalLabel}</h2>
@@ -2543,7 +2595,13 @@ export function ChartView({
         ]}
       />
       <ChartTypeSelector personId={personId} type="natal" view={view} />
-      <ShareLink moment={person.moment} housesKnown={showHouses} settings={settings} rulership={rulership} />
+      <ShareLink
+        moment={person.moment}
+        housesKnown={showHouses}
+        settings={settings}
+        rulership={rulership}
+        customPoints={person.customPoints ?? []}
+      />
       <ChartDataView
         load={load}
         displayName={person.displayName}
