@@ -83,8 +83,7 @@ export async function checkExportedCalculations(
   current: CalculationArtifactInputs,
 ): Promise<readonly PersonCalculationCheck[]> {
   const checks: PersonCalculationCheck[] = [];
-  for (let index = 0; index < archive.people.length; index += 1) {
-    const person = archive.people[index];
+  for (const [index, person] of archive.people.entries()) {
     const raw = rawPeople[index];
     const calculation = isRecord(raw) ? raw.calculation : undefined;
     if (calculation === undefined) {
