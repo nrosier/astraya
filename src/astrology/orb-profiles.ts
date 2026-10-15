@@ -1,140 +1,81 @@
 /**
- * Named orb profiles with per-body and per-aspect rules (#590).
+ * Named, versioned orb-scale presets layered on `aspects.ts`'s already fully configurable
+ * `OrbConfig` (#543), so a user can pick "Tight" or "Wide" by name instead of hand-tuning the
+ * raw scale percentage, and a tighter documented default for synastry — comparing two
+ * independently-real natal charts does not carry the same "this aspect matters across a
+ * lifetime" argument a single chart's own aspects do, and reusing the natal default there
+ * reports too many loosely-related contacts to be useful.
  *
- * Orbs are traditionally expressed as a single flat value ("7° for major aspects"),
- * but different bodies and aspect types warrant different tolerances. This module
- * defines named profiles that can be selected per-chart, each with rules for:
- * - Body-specific overrides (e.g., Sun/Moon wider than other bodies)
- * - Aspect-specific overrides (e.g., conjunction tighter than sextile)
- * - Fallback defaults for unspecified combinations
- *
- * Profiles include provenance (cited source, date) so users can trace and compare
- * different schools of thought (traditional orbs, modern, Astro-Seek, Café Astrology, etc.).
+ * Deliberately does not add true per-body "moieties" (a half-orb owned by each planet, summed
+ * per pair) that the professional-astrology audit raising this issue also asked for: every
+ * classical moiety table checked while implementing this carried numbers that could not be
+ * independently verified against a citable primary source here, and CLAUDE.md's domain-
+ * integrity rule would rather this profile be absent than guessed at. `aspects.ts`'s own
+ * category-tiered luminary bonus already gives a coarser per-body distinction (luminary or
+ * not); a true per-body table is a follow-up once a specific edition/page can be cited.
  */
-
 /**
  * @module astrology/orb-profiles
- * @purpose Defines named orb profiles with per-body and per-aspect rules, replacing flat default values.
- * @conventions Each profile is immutable; rules are checked in order (body+aspect most specific, body alone, aspect alone, default); provenance includes source URL and date for traceability; profiles are stored in extended-settings and applied during chart computation.
- * @exports OrbProfile, OrbProfileRegistry, DEFAULT_ORB_PROFILE, getOrbForBodyAspect, getAvailableProfiles
+ * @purpose Named, versioned orb-scale presets layered on aspects.ts's OrbConfig, plus a documented tighter default for synastry.
+ * @conventions Each profile is immutable once published — a correction creates a new id/version rather than editing one in place, matching `chart/calculation-profiles.ts`'s own convention; `'custom'` is not a profile here, it is the absence of a match from `matchOrbProfile`.
+ * @exports OrbProfileId, ORB_PROFILE_IDS, OrbProfile, ORB_PROFILES, orbConfigForProfile, matchOrbProfile, SYNASTRY_DEFAULT_ORB_CONFIG
  */
+import { DEFAULT_ORB_CONFIG, type OrbConfig } from './aspects.js';
 
-import type { BodyId } from '../ephemeris/types.js';
+export type OrbProfileId = 'standard-v1' | 'tight-v1' | 'wide-v1';
 
-/** One orb rule override: for a given body and/or aspect type. */
-export interface OrbRule {
-  /** Body ID, or undefined to apply to all bodies */
-  readonly bodyId?: BodyId;
-  /** Aspect key, or undefined to apply to all aspects */
-  readonly aspectKey?: string;
-  /** Base orb in degrees */
-  readonly base: number;
-  /** Additional orb when either body is a luminary (Sun/Moon) */
-  readonly luminaryBonus?: number;
-}
+export const ORB_PROFILE_IDS: readonly OrbProfileId[] = ['standard-v1', 'tight-v1', 'wide-v1'];
 
-/** Named orb profile with rules and provenance. */
 export interface OrbProfile {
-  readonly key: string;
-  readonly label: string;
-  /** Where these orbs come from: source URL, astrologer name, tradition, etc. */
-  readonly provenance: string;
-  /** ISO 8601 date when this profile was added or last verified. */
-  readonly date: string;
-  /** Ordered list of override rules — most specific (body + aspect) to least (default only). */
-  readonly rules: readonly OrbRule[];
-  /** Fallback orb when no rule matches */
-  readonly defaultBase: number;
-  readonly defaultLuminaryBonus?: number;
+  readonly id: OrbProfileId;
+  readonly name: string;
+  readonly description: string;
+  readonly config: OrbConfig;
 }
 
-/**
- * Get the effective orb for a body-aspect pair using a profile.
- * Checks rules in order: (body, aspect), then (body), then (aspect), then default.
- */
-export function getOrbForBodyAspect(
-  bodyId: BodyId,
-  aspectKey: string,
-  profile: OrbProfile,
-): { readonly base: number; readonly luminaryBonus: number } {
-  // Most specific: body + aspect
-  const specificRule = profile.rules.find(
-    (r) => r.bodyId === bodyId && r.aspectKey === aspectKey,
-  );
-  if (specificRule) {
-    return { base: specificRule.base, luminaryBonus: specificRule.luminaryBonus ?? 0 };
-  }
-
-  // Body only
-  const bodyRule = profile.rules.find((r) => r.bodyId === bodyId && !r.aspectKey);
-  if (bodyRule) {
-    return { base: bodyRule.base, luminaryBonus: bodyRule.luminaryBonus ?? 0 };
-  }
-
-  // Aspect only
-  const aspectRule = profile.rules.find((r) => !r.bodyId && r.aspectKey === aspectKey);
-  if (aspectRule) {
-    return { base: aspectRule.base, luminaryBonus: aspectRule.luminaryBonus ?? 0 };
-  }
-
-  // Default
-  return { base: profile.defaultBase, luminaryBonus: profile.defaultLuminaryBonus ?? 0 };
-}
-
-/**
- * The traditional default orb profile (Astro-Seek conventions):
- * - Major aspects: 7° (10° with luminary)
- * - Sextile: 4° (5.5° with luminary)
- * - Minor aspects: 2.5° flat
- */
-export const DEFAULT_ORB_PROFILE: OrbProfile = {
-  key: 'default',
-  label: 'Default (Astro-Seek)',
-  provenance: 'Astro-Seek.com conventions, modern standard',
-  date: '2024-01-01',
-  rules: [
-    // No specific overrides in default profile; all major aspects get the standard treatment
-  ],
-  defaultBase: 7,
-  defaultLuminaryBonus: 3,
+export const ORB_PROFILES: Readonly<Record<OrbProfileId, OrbProfile>> = {
+  'standard-v1': {
+    id: 'standard-v1',
+    name: 'Standard',
+    description:
+      "This app's long-standing default tiers, unscaled (Astro-Seek's own convention): majors 7°/10° with a luminary, sextile 4°/5°30', minors flat 2°30'.",
+    config: DEFAULT_ORB_CONFIG,
+  },
+  'tight-v1': {
+    id: 'tight-v1',
+    name: 'Tight',
+    description:
+      'The standard tiers scaled down by half, for a reading that only wants to see the closest, most clearly active contacts.',
+    config: { ...DEFAULT_ORB_CONFIG, scalePercent: -50 },
+  },
+  'wide-v1': {
+    id: 'wide-v1',
+    name: 'Wide',
+    description:
+      'The standard tiers scaled up by 40%, for a reading that wants to catch looser, still-forming contacts too.',
+    config: { ...DEFAULT_ORB_CONFIG, scalePercent: 40 },
+  },
 };
 
-/**
- * Available built-in orb profiles. Users can eventually add custom profiles too.
- */
-export const BUILT_IN_PROFILES: readonly OrbProfile[] = [
-  DEFAULT_ORB_PROFILE,
-  {
-    key: 'tight',
-    label: 'Tight (Classical)',
-    provenance: 'Classical astrology conventions',
-    date: '2024-01-01',
-    rules: [],
-    defaultBase: 5,
-    defaultLuminaryBonus: 2,
-  },
-  {
-    key: 'wide',
-    label: 'Wide (Modern)',
-    provenance: 'Modern astrology, liberal orb allowance',
-    date: '2024-01-01',
-    rules: [],
-    defaultBase: 9,
-    defaultLuminaryBonus: 4,
-  },
-];
-
-/**
- * Registry of available profiles by key.
- */
-export function getAvailableProfiles(): ReadonlyMap<string, OrbProfile> {
-  return new Map(BUILT_IN_PROFILES.map((profile) => [profile.key, profile]));
+export function orbConfigForProfile(id: OrbProfileId): OrbConfig {
+  return ORB_PROFILES[id].config;
 }
 
 /**
- * Get a profile by key, or the default if not found.
+ * Which named profile a given orb scale matches exactly, or `undefined` for "Custom" — the same
+ * "Custom means no exact match" convention `chart/calculation-profiles.ts`'s `matchCalculationProfile`
+ * uses. Compares only `scalePercent`, the one field these profiles vary — `enabledMinorAspects`
+ * stays its own independent setting, exactly as `ExtendedSettings` already treats the two.
  */
-export function getProfileByKey(key: string): OrbProfile {
-  const profiles = getAvailableProfiles();
-  return profiles.get(key) ?? DEFAULT_ORB_PROFILE;
+export function matchOrbProfile(scalePercent: number): OrbProfileId | undefined {
+  return ORB_PROFILE_IDS.find((id) => ORB_PROFILES[id].config.scalePercent === scalePercent);
 }
+
+/**
+ * Synastry's own default when no caller supplies an explicit `OrbConfig` (#543) — tighter than
+ * `DEFAULT_ORB_CONFIG`, which this app's natal chart, progressions, directions and returns all
+ * share by default. Picked here as a documented, overridable default rather than a specific
+ * named source's exact numbers: every synastry-specific orb table checked while implementing
+ * this varies by author, so the scale percentage below is this app's own choice, not a citation.
+ */
+export const SYNASTRY_DEFAULT_ORB_CONFIG: OrbConfig = { ...DEFAULT_ORB_CONFIG, scalePercent: -30 };

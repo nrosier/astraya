@@ -32,20 +32,15 @@
 /**
  * @module interpretation/tier2-client
  * @purpose Thin fetch() client for POST /api/interpretation/generate — the one runtime path in Astraya that calls a third-party model provider, proxied entirely through the server per ADR 0003.
- * @conventions Three modes: 'grounded' sends only de-identified placementKeys (server re-resolves Tier-1 text, no interpretation prose crosses the wire); 'freeform' sends computed chartData and gives up the "no chart data crosses the wire" guarantee for that mode only; 'focus' sends one placement's enriched FocusContext. Shared contract interfaces at tier2-contract.ts (#588); hand-mirror server-side shapes (server/interpretation/llm-client.ts, server/interpretation-routes.ts) since there is no shared schema library between client and server. `locale` always rides alongside the payload.
- * @exports Tier2Error, toTier2ChartPayload, toTier2RelationshipPayload, generateTier2Interpretation, listSavedInterpretations, getSavedInterpretation, SavedInterpretationSummary, SavedInterpretationDetail
+ * @conventions Three modes: 'grounded' sends only de-identified placementKeys (server re-resolves Tier-1 text, no interpretation prose crosses the wire); 'freeform' sends computed chartData and gives up the "no chart data crosses the wire" guarantee for that mode only; 'focus' sends one placement's enriched FocusContext. Interfaces here hand-mirror server-side shapes (server/interpretation/llm-client.ts, server/interpretation-routes.ts) since there is no shared schema library between client and server. `locale` always rides alongside the payload.
+ * @exports Tier2Error, Tier2Section, Tier2ChartDataPayload, toTier2ChartPayload, Tier2PositionsHousesPayload, Tier2RelationshipDataPayload, toTier2RelationshipPayload, Tier2Request, SavedInterpretationSummary, SavedInterpretationDetail
  */
 import { bodyByKey } from '../astrology/bodies.js';
 import type { ChartData } from '../domain/chart-compute.js';
 import type { SynastryData } from '../domain/synastry.js';
+import type { FocusContext } from './focus-context-schema.js';
 import type { ResultBasis, ResultKind } from './result-basis.js';
-import type {
-  Tier2Section,
-  Tier2ChartDataPayload,
-  Tier2PositionsHousesPayload,
-  Tier2RelationshipDataPayload,
-  Tier2Request,
-} from './tier2-contract.js';
+import type { Locale } from './schema.js';
 
 export class Tier2Error extends Error {
   readonly status: number;
@@ -80,6 +75,29 @@ async function errorFrom(response: Response): Promise<Tier2Error> {
   return new Tier2Error(`Request failed with status ${String(response.status)}`, response.status);
 }
 
+/** Hand-mirrors `server/interpretation/llm-client.ts`'s `Tier2Section` — no shared schema library between client and server. */
+export interface Tier2Section {
+  readonly heading: string;
+  readonly body: string;
+}
+
+/**
+ * Hand-mirrors `server/interpretation-routes.ts`'s `chartData` validation
+ * shape for freeform mode. Deliberately a subset of `ChartData` — only
+ * `positions`/`houses`/`aspects`, not `dignities`/`sect`/`partOfFortune`/
+ * `partOfSpirit`, which freeform mode doesn't send.
+ */
+export interface Tier2ChartDataPayload {
+  readonly positions: readonly { readonly body: number; readonly longitude: number }[];
+  readonly houses: { readonly cusps: readonly number[]; readonly ascendant: number; readonly midheaven: number };
+  readonly aspects: readonly {
+    readonly bodyA: number;
+    readonly bodyB: number;
+    readonly aspectKey: string;
+    readonly separation: number;
+    readonly orb: number;
+  }[];
+}
 
 /** Flattens a computed `ChartData` into freeform mode's wire payload. */
 export function toTier2ChartPayload(chart: ChartData): Tier2ChartDataPayload {
@@ -100,6 +118,29 @@ export function toTier2ChartPayload(chart: ChartData): Tier2ChartDataPayload {
   };
 }
 
+/** One side of `Tier2RelationshipDataPayload` — `Tier2ChartDataPayload` without the `aspects`, which the relationship payload carries once, cross-chart, instead of per side. */
+export interface Tier2PositionsHousesPayload {
+  readonly positions: readonly { readonly body: number; readonly longitude: number }[];
+  readonly houses: { readonly cusps: readonly number[]; readonly ascendant: number; readonly midheaven: number };
+}
+
+/** Hand-mirrors `server/interpretation-routes.ts`'s `relationshipData` validation shape (#422). */
+export interface Tier2RelationshipDataPayload {
+  readonly chartA: Tier2PositionsHousesPayload;
+  readonly chartB: Tier2PositionsHousesPayload;
+  readonly crossAspects: readonly {
+    readonly bodyA: number;
+    readonly bodyB: number;
+    readonly aspectKey: string;
+    readonly separation: number;
+    readonly orb: number;
+  }[];
+  readonly houseOverlays: readonly {
+    readonly body: number;
+    readonly house: number;
+    readonly direction: 'a-in-b' | 'b-in-a';
+  }[];
+}
 
 function toPositionsHouses(chart: ChartData): Tier2PositionsHousesPayload {
   return {
@@ -131,6 +172,40 @@ export function toTier2RelationshipPayload(
   };
 }
 
+export type Tier2Request =
+  | {
+      readonly mode: 'grounded';
+      readonly placementKeys: readonly string[];
+      readonly customPrompt: string;
+      readonly locale: Locale;
+    }
+  | {
+      readonly mode: 'freeform';
+      readonly chartData: Tier2ChartDataPayload;
+      /**
+       * What kind of chart `chartData` is (#454); absent means `'natal'`. A composite chart's
+       * data is a two-person midpoint synthesis, not an individual's own placements — without
+       * this, the model has no way to know it isn't reading an ordinary natal chart.
+       */
+      readonly chartKind?: 'natal' | 'composite';
+      /** Optional: without one the model writes a balanced reading of the whole chart (#425). */
+      readonly customPrompt?: string;
+      readonly locale: Locale;
+    }
+  | {
+      /** The tensions of one selected placement (#424): a fixed task, so no instruction. */
+      readonly mode: 'focus';
+      readonly focusContext: FocusContext;
+      readonly locale: Locale;
+    }
+  | {
+      /** A synastry reading from both charts (#422): no name, date, time or place of either person. */
+      readonly mode: 'relationship';
+      readonly relationshipData: Tier2RelationshipDataPayload;
+      /** Optional, same as freeform's own (#425). */
+      readonly customPrompt?: string;
+      readonly locale: Locale;
+    };
 
 /** Generates one Tier-2, AI-customized interpretation for the given request. */
 export async function generateTier2Interpretation(request: Tier2Request): Promise<readonly Tier2Section[]> {

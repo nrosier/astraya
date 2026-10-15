@@ -64,10 +64,7 @@ export function text(
   // HTML `title` attribute for raw SVG markup (#456's wheel audit: the retrograde "R" mark
   // had no accessible explanation at all, unlike its table counterpart's `labelTooltip`).
   const titleChild = title === undefined ? '' : `<title>${escapeXml(title)}</title>`;
-  // Escape the text content for proper XML representation (#581): ensures totals in
-  // EmphasisGrid export correctly to PDF with proper encoding
-  const escapedContent = escapeXml(content);
-  return `<text x="${fmt(x)}" y="${fmt(y)}" text-anchor="${anchor}"${size} class="${escapeXml(className)}">${escapedContent}${titleChild}</text>`;
+  return `<text x="${fmt(x)}" y="${fmt(y)}" text-anchor="${anchor}"${size} class="${className}">${content}${titleChild}</text>`;
 }
 
 /**
