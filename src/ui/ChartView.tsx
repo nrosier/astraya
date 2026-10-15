@@ -2463,7 +2463,7 @@ export function ChartView({
 
   // When comparing, show both charts side-by-side (#439)
   if (compareType !== undefined) {
-    const compareDisplayName = person.displayName ? `${person.displayName} — Comparison` : 'Comparison';
+    const compareDisplayName = person.displayName ? `${person.displayName} — ${t.comparisonLabel}` : t.comparisonLabel;
 
     return (
       <main className="shell shell--wide">
@@ -2488,7 +2488,7 @@ export function ChartView({
         <ShareLink moment={person.moment} housesKnown={showHouses} settings={settings} rulership={rulership} />
         <div className="comparison-container" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
           <div>
-            <h2>Natal</h2>
+            <h2>{t.natalLabel}</h2>
             <ChartDataView
               load={load}
               displayName={person.displayName}
