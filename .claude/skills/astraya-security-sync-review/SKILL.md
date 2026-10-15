@@ -1,0 +1,23 @@
+# Astraya Security & Sync Review
+
+Use while writing or changing a route in `server/auth/`, `server/ops/`, `server/corpus-overrides-routes.ts`, or the matching client caller in `src/sync/`/`src/store/` — not as a replacement for the `security-auditor`, `db-integrity`, `api-contract`, or `query-performance` agents' PR-time review. This skill is the checklist to run *while coding* so the review doesn't surface the mistake after the fact; it points to the owning agent for the full reasoning behind each rule rather than restating it.
+
+## The four load-bearing facts to hold while writing this code
+
+1. **The server is an opaque relay.** It never interprets a stored payload except one documented exception (purge-marker detection). A new route or helper that reads into the payload for a second reason is eroding that guarantee one exception at a time — don't add a second one without the same explicit justification the first one got.
+2. **Rate limiting is opt-in per route, and fails open, not closed.** `global: false` in `server/index.ts` means a new route in `server/auth/routes.ts`, `admin-routes.ts`, `server/ops/routes.ts`, or `server/corpus-overrides-routes.ts` that omits `config: { rateLimit: {...} } }` is **unlimited**, not safely defaulted — this is the opposite of the usual assumption. Add the config in the same commit as the route, not as a follow-up. (The `server-route-rate-limit` skill has the limit-value table by route type.)
+3. **The client/server contract has no schema library on either side.** `npm run typecheck` catches a same-file mismatch; it will **not** catch two independently hand-written interfaces on either side of the HTTP boundary drifting apart. If you change a response shape in `server/auth/routes.ts`, `admin-routes.ts`, or `server/ops/routes.ts`, grep for its client-side mirror (`src/sync/auth-client.ts`, `admin-client.ts`, `engine.ts`) in the same change — don't rely on the build staying green as proof the shapes still match.
+4. **`node:sqlite`'s `DatabaseSync` is synchronous and blocks the whole event loop.** A slow query in a new route stalls every other signed-in user's request for its duration, not just the caller's. A new admin/ops route that runs an inline aggregate or scan needs a cap (`SCAN_LIMIT`-style, falling back to `approximate` on truncation) the way `server/ops/deletion-impact.ts` already does — don't write an unbounded scan and plan to optimize later.
+
+## Checklist while writing the code
+
+- **New route**: does it set `rateLimit`? Does its error body stay `{ error: string }` (the one documented exception is `interpretation-routes.ts`'s `code`/`reason` shape — don't invent a third shape)? Is it `requireAdmin`/`requireSuperAdmin` as appropriate, using `isOnlyRemainingSuperAdmin` rather than a raw role count if it's a lifecycle mutation?
+- **New client interface mirroring a server shape**: does it match field-for-field right now, and does the comment say which server type it mirrors (so the next person greps correctly)?
+- **New op-log/wire-format touch** (`src/store/ops.ts`, `toWire`/`fromWire` in `src/sync/engine.ts`): does `Spine` (`opVersion`/`hlc`/`deviceId`) stay unchanged? New fields belong in the body, behind a version bump with an `UPCASTS` entry and a replaying fixture at the old version — not a direct `Spine` change.
+- **New batch/relay code path in `server/ops/routes.ts`**: does it stay inside one transaction, respect `MAX_OPS_PER_USER`, and handle clock-skewed ops via `{ seqs, skipped }` rather than accepting them or rejecting the whole batch?
+- **New decrypt-adjacent code**: does it follow `deletion-impact.ts`'s "honest about being partial" shape (capped scan, `approximate` flag) rather than a silent full decrypt, and is the justification as narrow and documented as that one deliberate exception?
+- **New admin-promotion or role-granting code path**: does it only ever raise a role, never lower one (demotion stays the manual route)? Is an OIDC group claim already signature/issuer-verified by `verifyIdToken` before it's read for a promotion decision?
+
+## Cross-reference, don't duplicate
+
+For the full exploit scenario, severity framing, and ADR 0002 citation behind any of the above, that's `security-auditor`'s output format. For the op-log/HLC replay correctness and cross-account-bleed angle specifically, that's `db-integrity`. For the client/server shape-drift mechanics in more depth, that's `api-contract`. For whether a query/loop will get slow as data grows (distinct from whether it's correct), that's `query-performance`. Run this skill's checklist while coding so those agents find less at review time, not instead of them.
