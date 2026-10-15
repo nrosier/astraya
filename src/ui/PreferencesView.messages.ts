@@ -4,9 +4,11 @@
 /**
  * @module ui/PreferencesView.messages
  * @purpose English/Dutch i18n strings for the Preferences workspace.
- * @conventions Co-located i18n file exporting `{ en, nl }`, consumed via `useMessages()`.
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed via `useMessages()`. `restoreInvalid` formats an `ImportError` from `domain/full-export-importer.js` per locale, rather than exposing its internal `kind`/`path` strings directly to a reader.
  * @exports preferencesViewMessages
  */
+import type { ImportError } from '../domain/full-export-importer.js';
+
 const en = {
   heading: 'Preferences',
   intro: 'Durable settings for this account and this device, in one place.',
@@ -38,6 +40,60 @@ const en = {
   exportNeedsStore: 'The local data store is not open yet.',
   exportEverythingName: 'everything',
   exportPeopleName: 'the people list',
+  restoreHint:
+    'Restore people from a full export made on this or another device. Nothing is written until you review and confirm it.',
+  restoreFromFile: 'Restore from file…',
+  restorePreparing: 'Reading the file…',
+  restoreInvalidJson: 'This file is not valid JSON.',
+  restoreInvalid: (error: ImportError): string => {
+    switch (error.kind) {
+      case 'wrong-format':
+        return 'This file is not an Astraya export.';
+      case 'wrong-version':
+        return error.direction === 'older'
+          ? `This file was exported by an older version of Astraya (version ${String(error.got)}) and can no longer be read.`
+          : error.direction === 'newer'
+            ? 'This file was exported by a newer version of Astraya and cannot be read here.'
+            : "This file's version could not be recognised.";
+      case 'malformed':
+        return `This file is malformed at ${error.path}: ${error.reason}.`;
+    }
+  },
+  restoreReadyToReview: 'Review the list below before applying.',
+  restoreStaged: (
+    newCount: number,
+    updatedCount: number,
+    unchangedCount: number,
+    deletedLocallyCount: number,
+  ): string =>
+    `${String(newCount)} new, ${String(updatedCount)} updated, ${String(unchangedCount)} unchanged` +
+    (deletedLocallyCount > 0
+      ? `, ${String(deletedLocallyCount)} already deleted on this device (their data will update, but they will stay hidden under Deleted)`
+      : '') +
+    '. Nothing has been written yet.',
+  restoreNameColumn: 'Name',
+  restoreStatusColumn: 'Status',
+  restoreNoName: '(no name)',
+  restoreStatusWord: {
+    new: 'new',
+    updated: 'updated',
+    unchanged: 'unchanged',
+    deletedLocally: 'deleted on this device',
+  },
+  restoreApply: 'Apply restore',
+  restoreConfirm: (newCount: number, updatedCount: number, deletedLocallyCount: number): string => {
+    const affected = updatedCount + deletedLocallyCount;
+    const note =
+      deletedLocallyCount > 0
+        ? ` ${String(deletedLocallyCount)} of those ${deletedLocallyCount === 1 ? 'is' : 'are'} deleted on this device and will stay hidden under Deleted.`
+        : '';
+    return `This will add ${String(newCount)} new ${newCount === 1 ? 'person' : 'people'} and overwrite fields on ${String(affected)} existing ${affected === 1 ? 'person' : 'people'}.${note} Continue?`;
+  },
+  restoreNothingToApply: 'Nothing in this file differs from what is already here.',
+  restoreApplying: 'Applying the restore…',
+  restoreApplied: (newCount: number, updatedCount: number, deletedLocallyCount: number): string =>
+    `Restore applied: ${String(newCount)} new, ${String(updatedCount + deletedLocallyCount)} updated.`,
+  restoreFailed: (message: string): string => `The restore failed: ${message}`,
 };
 
 const nl: typeof en = {
@@ -73,6 +129,60 @@ const nl: typeof en = {
   exportNeedsStore: 'De lokale gegevensopslag is nog niet geopend.',
   exportEverythingName: 'alles',
   exportPeopleName: 'de personenlijst',
+  restoreHint:
+    'Herstel personen uit een volledige export, gemaakt op dit of een ander apparaat. Er wordt niets geschreven voordat je het hebt bekeken en bevestigd.',
+  restoreFromFile: 'Herstellen vanuit bestand…',
+  restorePreparing: 'Bestand wordt gelezen…',
+  restoreInvalidJson: 'Dit bestand is geen geldige JSON.',
+  restoreInvalid: (error: ImportError): string => {
+    switch (error.kind) {
+      case 'wrong-format':
+        return 'Dit bestand is geen Astraya-export.';
+      case 'wrong-version':
+        return error.direction === 'older'
+          ? `Dit bestand is geëxporteerd door een oudere versie van Astraya (versie ${String(error.got)}) en kan niet meer worden gelezen.`
+          : error.direction === 'newer'
+            ? 'Dit bestand is geëxporteerd door een nieuwere versie van Astraya en kan hier niet worden gelezen.'
+            : 'De versie van dit bestand kon niet worden herkend.';
+      case 'malformed':
+        return `Dit bestand is onjuist bij ${error.path}: ${error.reason}.`;
+    }
+  },
+  restoreReadyToReview: 'Bekijk de lijst hieronder voordat je het toepast.',
+  restoreStaged: (
+    newCount: number,
+    updatedCount: number,
+    unchangedCount: number,
+    deletedLocallyCount: number,
+  ): string =>
+    `${String(newCount)} nieuw, ${String(updatedCount)} bijgewerkt, ${String(unchangedCount)} ongewijzigd` +
+    (deletedLocallyCount > 0
+      ? `, ${String(deletedLocallyCount)} al verwijderd op dit apparaat (hun gegevens worden bijgewerkt, maar ze blijven verborgen onder Verwijderd)`
+      : '') +
+    '. Er is nog niets geschreven.',
+  restoreNameColumn: 'Naam',
+  restoreStatusColumn: 'Status',
+  restoreNoName: '(geen naam)',
+  restoreStatusWord: {
+    new: 'nieuw',
+    updated: 'bijgewerkt',
+    unchanged: 'ongewijzigd',
+    deletedLocally: 'verwijderd op dit apparaat',
+  },
+  restoreApply: 'Herstel toepassen',
+  restoreConfirm: (newCount: number, updatedCount: number, deletedLocallyCount: number): string => {
+    const affected = updatedCount + deletedLocallyCount;
+    const note =
+      deletedLocallyCount > 0
+        ? ` Daarvan ${deletedLocallyCount === 1 ? 'is er 1' : `zijn er ${String(deletedLocallyCount)}`} verwijderd op dit apparaat en blijven verborgen onder Verwijderd.`
+        : '';
+    return `Dit voegt ${String(newCount)} nieuwe ${newCount === 1 ? 'persoon' : 'personen'} toe en overschrijft velden van ${String(affected)} bestaande ${affected === 1 ? 'persoon' : 'personen'}.${note} Doorgaan?`;
+  },
+  restoreNothingToApply: 'Niets in dit bestand verschilt van wat hier al staat.',
+  restoreApplying: 'Herstel wordt toegepast…',
+  restoreApplied: (newCount: number, updatedCount: number, deletedLocallyCount: number): string =>
+    `Herstel toegepast: ${String(newCount)} nieuw, ${String(updatedCount + deletedLocallyCount)} bijgewerkt.`,
+  restoreFailed: (message: string): string => `Het herstellen is mislukt: ${message}`,
 };
 
 export const preferencesViewMessages = { en, nl };

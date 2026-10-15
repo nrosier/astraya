@@ -174,6 +174,23 @@ describe('buildFullExport', () => {
     }
   });
 
+  it('carries relocationPlaces/customPoints back out, so a restore (#587) is not lossy', async () => {
+    const withBoth: Person = {
+      ...ADA,
+      relocationPlaces: [{ id: 'place-1', label: 'Paris', latitude: 48.8566, longitude: 2.3522 }],
+      customPoints: [{ id: 'formula-point', name: 'Formula point', formula: 'ascendant + moon - sun' }],
+    };
+    const [exported] = (await build([withBoth])).people;
+    expect(exported?.relocationPlaces).toEqual(withBoth.relocationPlaces);
+    expect(exported?.customPoints).toEqual(withBoth.customPoints);
+
+    // A person with neither omits both keys entirely, matching `birth`'s own absence rule —
+    // never an empty array standing in for "nothing saved".
+    const [plain] = (await build([ADA])).people;
+    expect(plain).not.toHaveProperty('relocationPlaces');
+    expect(plain).not.toHaveProperty('customPoints');
+  });
+
   it('includes 90°-dial midpoint-tree hits once dial90Visible is set (#556)', async () => {
     const archive = await buildFullExport({
       people: [ADA],

@@ -37,7 +37,7 @@
  * @module store/ops
  * @purpose Defines the operation envelope — the exact shape of a single mutation on disk and on the wire — and the decode/encode logic that keeps old and new clients mutually interpretable forever.
  * @conventions The spine (`opVersion`, `hlc`, `deviceId`) is frozen forever and can never change shape, since an old client must still be able to order and forward an operation whose body it cannot read; only the body is versioned, with an `UPCASTS` chain upgrading older bodies to the current version; `entity`/`field` form an open vocabulary validated structurally rather than against a closed list, so a newer client's new entity kind does not require a version bump; `decode` always returns a verdict (`known`/`future`/`corrupt`) rather than throwing, since one bad record must not fail a whole sync; `newRecord` is the opposite and throws, since a bad value there is this build's own bug.
- * @exports OP_VERSION, OpRecord, JsonValue, isJsonValue, Spine, OpBody, BODY_KEYS, SPINE_KEYS, Decoded, Upcast, UPCASTS, upcastBody, decode, newRecord
+ * @exports OP_VERSION, OpRecord, JsonValue, isJsonValue, Spine, OpBody, BODY_KEYS, SPINE_KEYS, RESERVED_NAMES, Decoded, Upcast, UPCASTS, upcastBody, decode, newRecord
  */
 import { decodeHlc, isHlc, isNodeId, type Hlc, type NodeId } from './hlc.js';
 
@@ -137,7 +137,7 @@ export const SPINE_KEYS: readonly string[] = ['opVersion', 'hlc', 'deviceId'];
  * it refuses three names no legitimate record can carry (`domain/id.ts` generates none of
  * them), so a newer client inventing an entity kind is unaffected.
  */
-const RESERVED_NAMES: readonly string[] = ['__proto__', 'constructor', 'prototype'];
+export const RESERVED_NAMES: readonly string[] = ['__proto__', 'constructor', 'prototype'];
 
 /** A verdict on a stored record. Never a reason to discard it. */
 export type Decoded =

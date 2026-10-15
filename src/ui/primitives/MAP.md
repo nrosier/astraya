@@ -19,3 +19,4 @@ Shared UI primitives for the #506 UI/UX overhaul (Phase 1, #508). Business logic
 - `Disclosure.tsx` — Shared expandable region: full-width 44px trigger row (title, summary, Show/Hide wording, chevron) over a panel (#511 first user). Deps: none.
 - `StatusMessage.tsx` — Shared result-state message (loading/updating/empty/zero/partial/offline/success/error) with the right live-region role. Deps: none.
 - `Tooltip.tsx` — Shared hover/click/keyboard-focus term-disclosure popup (#456), replacing every native-`title` tooltip in the app. Deps: none.
+- `FileInput.tsx` — Shared file picker (#587): hidden native `<input type="file">` opened by an accessible button, since the file-chooser dialog itself cannot be restyled. Deps: none.

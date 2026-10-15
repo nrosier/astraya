@@ -23,11 +23,16 @@
  * was considered and explicitly declined for now: this project has no verified knowledge of
  * either wire format's actual field-level specification or licensing, and `docs/EXPORT_SCHEMA.md`
  * states that rather than guessing at a compatibility claim this project cannot back up.
+ *
+ * `ExportedPerson.relocationPlaces`/`customPoints` (#587) were added so a restore
+ * (`full-export-importer.ts`) is not lossy: both are read internally for chart computation
+ * already, but were never carried back out, so a round trip through this file used to silently
+ * drop a person's saved places and formula points. Both additive — no version bump.
  */
 /**
  * @module full-export
  * @purpose Builds the whole-device export: every person's birth record plus (where possible) their computed natal and named Varga chart tables, as one JSON document or a people CSV.
- * @conventions Plain JSON with its own `format`/`version` fields rather than a database dump; charts are computed with the caller-supplied `ExtendedSettings`/`rulership` (#541), carried verbatim into `preferences` so the document states exactly what was in force; each named Varga chart includes its radix-to-result longitude provenance; one person's chart failure is caught and reported per-person rather than failing the whole export; deleted people are excluded; `FULL_EXPORT_VERSION`'s own compatibility policy lives in docs/EXPORT_SCHEMA.md, not in this file.
+ * @conventions Plain JSON with its own `format`/`version` fields rather than a database dump; charts are computed with the caller-supplied `ExtendedSettings`/`rulership` (#541), carried verbatim into `preferences` so the document states exactly what was in force; each named Varga chart includes its radix-to-result longitude provenance; one person's chart failure is caught and reported per-person rather than failing the whole export; deleted people are excluded; `FULL_EXPORT_VERSION`'s own compatibility policy lives in docs/EXPORT_SCHEMA.md, not in this file; `full-export-importer.ts` is this file's restore counterpart.
  * @exports buildFullExport, peopleToCsv, fullExportFilename, peopleCsvFilename, FullExport, ExportedPerson, ExportedChart, ExportedHarmonicChart, FULL_EXPORT_FORMAT, FULL_EXPORT_VERSION
  */
 import { VARGA_PRESETS } from '../astrology/harmonics.js';
@@ -56,7 +61,7 @@ import {
   positionRows,
   type PointVisibilityOptions,
 } from './chart-tables.js';
-import type { Person } from './person.js';
+import type { CustomPointDefinition, Person, RelocationPlace } from './person.js';
 import type { EphemerisProvider } from '../ephemeris/types.js';
 
 export const FULL_EXPORT_FORMAT = 'astraya-export';
@@ -109,6 +114,10 @@ export interface ExportedPerson {
   readonly birth?: NonNullable<Person['moment']>;
   /** Required fields the stored record lacks. */
   readonly missing: readonly string[];
+  /** Named alternate places for a relocated chart (#559); absent if none are saved. Needed for a restore to be complete — see #587. */
+  readonly relocationPlaces?: readonly RelocationPlace[];
+  /** Custom formula points (#566); absent if none are saved. Needed for a restore to be complete — see #587. */
+  readonly customPoints?: readonly CustomPointDefinition[];
   readonly natalChart?: ExportedChart;
   /** Named Varga charts derived from the radix, absent when no usable houses are available. */
   readonly harmonicCharts?: readonly ExportedHarmonicChart[];
@@ -251,6 +260,8 @@ export async function buildFullExport(params: {
       timeAccuracy: person.timeAccuracy,
       notes: person.notes,
       ...(person.moment === undefined ? {} : { birth: person.moment }),
+      ...(person.relocationPlaces === undefined ? {} : { relocationPlaces: person.relocationPlaces }),
+      ...(person.customPoints === undefined ? {} : { customPoints: person.customPoints }),
       missing: person.missing,
     };
     if (person.moment === undefined) {
