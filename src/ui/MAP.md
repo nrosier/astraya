@@ -94,7 +94,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `astro-names.messages.ts` — i18n display names for astrological identifiers (signs/bodies/aspects). Deps: none.
 - `bi-wheel-selection.ts` — Bi-wheel selection facts (clicked element/ring/cross-ring relations). Deps: `domain/chart-compute`, `domain/chart-tables`, `chart/aspect-web`, `interpretation/selection`.
 - `chart-raster.ts` — Rasterizes wheel SVG to PNG via `canvas`. Deps: none (browser APIs).
-- `chart-artifact.ts` — Builds a completed chart's CalculationArtifact with this build's app and Swiss Ephemeris versions (#582). Deps: `domain/calculation-artifact`, `version`.
+- `chart-artifact.ts` — Builds a completed chart's or technique's CalculationArtifact with this build's app and Swiss Ephemeris versions, and the fingerprint its print line shows (#582). Deps: `domain/calculation-artifact`, `domain/calculation-snapshot`, `version`.
 - `chart-sections.ts` — Charts page URL axes (type + view: wheel/aspects/placements/patterns). Deps: `ChartView.messages`.
 - `cycles.ts` — Planetary-cycles screen (body/aspect presets + row shaping). Deps: `astrology/bodies`, `astrology/mutual-aspects`, `astrology/signs`, `time/julian`.
 - `degree-symbol-setting.ts` — Device preference for whether degree-symbol (Sabian symbol) paragraphs show in the Report (#527). Deps: none.

@@ -3,7 +3,7 @@
 One level above `src/astrology/`: composes pure astrological calculations into shapes screens render. Still pure/async, no DOM/React.
 
 - `astrocartography.ts` — Astrocartography lines (MC/IC/AC/DC) + Local Space + relocated houses. Deps: `astrology/astrocartography`, `ephemeris/types`.
-- `calculation-artifact.ts` — Completed calculation as birth moment + snapshot + execution and time-resolution provenance + SHA-256 input/result fingerprints (#582). Deps: `./calculation-snapshot`, `./chart-compute`, `ephemeris/assets`, `time/resolve`.
+- `calculation-artifact.ts` — Completed calculation (natal, or a transit/synastry/primary-directions technique on it) as inputs + execution and time-resolution provenance + SHA-256 input/result fingerprints, and verification by recomputation (#582). Deps: `./calculation-snapshot`, `./chart-compute`, `./transit`, `./synastry`, `./primary-directions`, `ephemeris/assets`, `time/resolve`.
 - `calculation-snapshot.ts` — Versioned calculation snapshot (settings, rulership, custom points) with validated parsing and a short provenance tag. Deps: `chart/extended-settings`, `astrology/rulership`, `./person`, `store/ops` (JsonValue).
 - `chart-compute.ts` — Single source of truth: "what is in this chart" (positions, houses, aspects, dignities, sect, Arabic parts, declinations, fixed stars). Deps: `astrology/aspects`, `astrology/rulership`, `astrology/arabic-parts`, `astrology/sect`, `astrology/bodies`.
 - `chart-share.ts` — Share chart via URL (no server round-trip). Encodes/decodes birth moment + settings as versioned query params. Deps: `time/encode`, `store/ops` (JsonValue).

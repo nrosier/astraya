@@ -17,9 +17,15 @@
  * @module domain/calculation-snapshot
  * @purpose Defines a versioned, fully-validated CalculationSnapshot (settings, rulership and custom points) and the pure functions that build/parse/serialize one.
  * @conventions `version` is bumped only when the *shape* a snapshot must satisfy changes incompatibly; `parseCalculationSnapshot` never throws — an invalid or missing field is filled from the documented app defaults, the same defaults a never-customized chart already shows; strict validation checks registered house systems, aspect keys, and bounds schemes against canonical registries.
- * @exports CURRENT_SNAPSHOT_VERSION, CalculationSnapshot, buildCalculationSnapshot, calculationSnapshotIdentity, parseCalculationSnapshot, calculationSnapshotToJson
+ * @exports CURRENT_SNAPSHOT_VERSION, CalculationSnapshot, buildCalculationSnapshot, snapshotCalculationOptions, calculationSnapshotIdentity, parseCalculationSnapshot, calculationSnapshotToJson
  */
-import { DEFAULT_EXTENDED_SETTINGS, MODERN_POINT_KEYS, type ExtendedSettings } from '../chart/extended-settings.js';
+import {
+  DEFAULT_EXTENDED_SETTINGS,
+  MODERN_POINT_KEYS,
+  toChartCalculationOptions,
+  type ExtendedSettings,
+} from '../chart/extended-settings.js';
+import type { ChartCalculationOptions } from './chart-compute.js';
 import { DEFAULT_RULERSHIP_CHOICE, RULERSHIP_CHOICES, type RulershipChoice } from '../astrology/rulership.js';
 import { houseSystemByCode } from '../astrology/houses.js';
 import { aspectByKey } from '../astrology/aspects.js';
@@ -83,6 +89,19 @@ export function buildCalculationSnapshot(
   customPoints: readonly CustomPointDefinition[] = [],
 ): CalculationSnapshot {
   return { version: CURRENT_SNAPSHOT_VERSION, settings, rulership, customPoints };
+}
+
+/**
+ * The exact `computeChartData` options a snapshot stands for (#582): its settings, its rulers, and
+ * its custom points when there are any. Every screen that records a snapshot computes with this,
+ * so the snapshot is the calculation's real input rather than a description written beside it.
+ */
+export function snapshotCalculationOptions(snapshot: CalculationSnapshot): ChartCalculationOptions {
+  return {
+    ...toChartCalculationOptions(snapshot.settings),
+    rulership: snapshot.rulership,
+    ...(snapshot.customPoints.length === 0 ? {} : { customPoints: snapshot.customPoints }),
+  };
 }
 
 /** A short stable identifier for a complete snapshot, suitable for print/export provenance (not a security hash). */
