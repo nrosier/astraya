@@ -11,6 +11,7 @@ import {
   CURRENT_SNAPSHOT_VERSION,
   parseCalculationSnapshot,
 } from '../src/domain/calculation-snapshot.js';
+import { decodeChartShareLink, encodeChartShareLink } from '../src/domain/chart-share.js';
 
 const CUSTOM_SETTINGS: ExtendedSettings = {
   ...DEFAULT_EXTENDED_SETTINGS,
@@ -59,9 +60,65 @@ describe('buildCalculationSnapshot / parseCalculationSnapshot round-trip (#541)'
   it('has a stable, settings-sensitive provenance identity', () => {
     const defaults = buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, 'modern');
     const custom = buildCalculationSnapshot(CUSTOM_SETTINGS, 'traditional');
-    expect(calculationSnapshotIdentity(defaults)).toMatch(/^v1-[0-9a-f]{8}$/);
+    expect(calculationSnapshotIdentity(defaults)).toMatch(/^v2-[0-9a-f]{8}$/);
     expect(calculationSnapshotIdentity(defaults)).toBe(calculationSnapshotIdentity(defaults));
     expect(calculationSnapshotIdentity(custom)).not.toBe(calculationSnapshotIdentity(defaults));
+  });
+});
+
+describe('custom points in the snapshot (#582)', () => {
+  const POINTS = [
+    { id: 'fortune-like', name: 'Fortune-like', formula: 'ascendant + moon - sun' },
+    { id: 'off', name: 'Switched off', formula: 'sun + moon', enabled: false },
+  ];
+
+  it('round-trips custom points, including a disabled one, through JSON exactly', () => {
+    const snapshot = buildCalculationSnapshot(CUSTOM_SETTINGS, 'traditional', POINTS);
+    expect(parseCalculationSnapshot(calculationSnapshotToJson(snapshot))).toEqual(snapshot);
+  });
+
+  it('round-trips custom points through a real share link', () => {
+    const snapshot = buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, 'modern', POINTS);
+    const query = encodeChartShareLink({
+      moment: {
+        civil: { year: 1990, month: 6, day: 15, hour: 14, minute: 30, second: 0 },
+        coordinates: { latitude: 1, longitude: 2 },
+      },
+      settings: calculationSnapshotToJson(snapshot),
+      housesKnown: true,
+    });
+    const decoded = decodeChartShareLink(new URLSearchParams(query.toString()));
+    expect(parseCalculationSnapshot(decoded.settings).customPoints).toEqual(POINTS);
+  });
+
+  it('reads a v1 snapshot, which could not carry custom points, as having none', () => {
+    const v1 = {
+      version: 1,
+      settings: calculationSnapshotToJson(buildCalculationSnapshot(CUSTOM_SETTINGS, 'traditional')).settings,
+      rulership: 'traditional',
+    };
+    const parsed = parseCalculationSnapshot(v1);
+    expect(parsed.customPoints).toEqual([]);
+    expect(parsed.settings).toEqual(CUSTOM_SETTINGS);
+  });
+
+  it('drops malformed definitions instead of guessing at them', () => {
+    const parsed = parseCalculationSnapshot({
+      customPoints: [
+        POINTS[0],
+        { id: 7, name: 'bad id', formula: 'sun' },
+        { id: 'no-formula', name: 'x' },
+        'not an object',
+        { id: 'odd-enabled', name: 'y', formula: 'moon', enabled: 'yes' },
+      ],
+    });
+    expect(parsed.customPoints).toEqual([POINTS[0], { id: 'odd-enabled', name: 'y', formula: 'moon' }]);
+  });
+
+  it('makes the provenance identity sensitive to custom points', () => {
+    const without = buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, 'modern');
+    const withPoints = buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, 'modern', POINTS);
+    expect(calculationSnapshotIdentity(withPoints)).not.toBe(calculationSnapshotIdentity(without));
   });
 });
 

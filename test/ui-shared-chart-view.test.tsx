@@ -97,6 +97,31 @@ describe('a shared chart recomputes under the sender’s own settings, not the v
     }
   });
 
+  it('recomputes with the sender’s own custom points, so the shared chart shows the same objects (#582)', async () => {
+    const points = [{ id: 'fortune-like', name: 'Fortune-like', formula: 'ascendant + moon - sun' }];
+    const sent = buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, 'modern', points);
+    const query = encodeChartShareLink({
+      moment: MOMENT,
+      settings: calculationSnapshotToJson(sent),
+      housesKnown: true,
+    }).toString();
+
+    const { container, root } = await mountWithHash(`#/shared?${query}`);
+    try {
+      await act(async () => {
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+      expect(computeChartData).toHaveBeenCalledTimes(1);
+      expect(vi.mocked(computeChartData).mock.calls[0]?.[2]?.customPoints).toEqual(points);
+    } finally {
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+    }
+  });
+
   it('a pre-#541 link with an empty settings bag still computes under the app defaults, without crashing', async () => {
     const query = encodeChartShareLink({ moment: MOMENT, settings: {}, housesKnown: true }).toString();
     const { container, root } = await mountWithHash(`#/shared?${query}`);
