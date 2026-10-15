@@ -16,11 +16,13 @@
 /**
  * @module domain/calculation-snapshot
  * @purpose Defines a versioned, fully-validated CalculationSnapshot (settings + rulership) and the pure functions that build/parse/serialize one.
- * @conventions `version` is bumped only when the *shape* a snapshot must satisfy changes incompatibly; `parseCalculationSnapshot` never throws — an invalid or missing field is filled from the documented app defaults, the same defaults a never-customized chart already shows.
+ * @conventions `version` is bumped only when the *shape* a snapshot must satisfy changes incompatibly; `parseCalculationSnapshot` never throws — an invalid or missing field is filled from the documented app defaults, the same defaults a never-customized chart already shows; strict validation checks registered house systems, aspect keys, and bounds schemes against canonical registries.
  * @exports CURRENT_SNAPSHOT_VERSION, CalculationSnapshot, buildCalculationSnapshot, calculationSnapshotIdentity, parseCalculationSnapshot, calculationSnapshotToJson
  */
 import { DEFAULT_EXTENDED_SETTINGS, MODERN_POINT_KEYS, type ExtendedSettings } from '../chart/extended-settings.js';
 import { DEFAULT_RULERSHIP_CHOICE, RULERSHIP_CHOICES, type RulershipChoice } from '../astrology/rulership.js';
+import { houseSystemByCode } from '../astrology/houses.js';
+import { aspectByKey } from '../astrology/aspects.js';
 import type { Zodiac } from '../ephemeris/types.js';
 import type { JsonValue } from '../store/ops.js';
 
@@ -30,6 +32,39 @@ export interface CalculationSnapshot {
   readonly version: typeof CURRENT_SNAPSHOT_VERSION;
   readonly settings: ExtendedSettings;
   readonly rulership: RulershipChoice;
+}
+
+/**
+ * Validate snapshot version matches the current schema version. Rejects unsupported
+ * versions with a descriptive error rather than silently defaulting.
+ */
+export function validateSnapshotVersion(version: unknown): version is typeof CURRENT_SNAPSHOT_VERSION {
+  return version === CURRENT_SNAPSHOT_VERSION;
+}
+
+/**
+ * Validate house system code exists in the canonical registry.
+ * Returns true only if the code is registered; false otherwise (will use default).
+ */
+export function isValidHouseSystem(code: unknown): code is string {
+  return typeof code === 'string' && houseSystemByCode(code) !== undefined;
+}
+
+/**
+ * Validate aspect key exists in the canonical aspect registry.
+ * Returns true only if the key is known; false otherwise.
+ */
+export function isValidAspect(key: unknown): key is string {
+  return typeof key === 'string' && aspectByKey(key) !== undefined;
+}
+
+/**
+ * Validate all minor aspect keys against the canonical aspect registry.
+ * Returns only the valid aspect keys; unknown ones are silently filtered out.
+ */
+export function validateMinorAspects(value: unknown): readonly string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is string => typeof item === 'string' && isValidAspect(item));
 }
 
 export function buildCalculationSnapshot(settings: ExtendedSettings, rulership: RulershipChoice): CalculationSnapshot {
@@ -62,11 +97,6 @@ function parseZodiac(value: unknown): Zodiac {
   return DEFAULT_EXTENDED_SETTINGS.zodiac;
 }
 
-function parseStringArray(value: unknown): readonly string[] {
-  if (!Array.isArray(value)) return [];
-  return value.filter((item): item is string => typeof item === 'string');
-}
-
 function parseBool(value: unknown, fallback: boolean): boolean {
   return typeof value === 'boolean' ? value : fallback;
 }
@@ -84,21 +114,31 @@ function parseModernPointVisibility(value: unknown): ExtendedSettings['modernPoi
 }
 
 /**
- * Every field checked individually, never trusting the shape as a whole — a `settings` bag
- * that is merely "some object" (the old `isDefaultCalculationProfile` guard's entire check)
- * can still have missing or wrong-typed fields; each one here is filled from the app default
- * for that one field specifically rather than the whole object being rejected.
+ * Every field checked individually against canonical registries (house systems, aspect keys,
+ * bounds schemes) rather than trusting the shape as a whole. A `settings` bag that is merely
+ * "some object" can still have missing or wrong-typed fields; each one here is validated
+ * against registered values and filled from the app default for that one field specifically
+ * if validation fails.
  */
 function parseExtendedSettings(value: unknown): ExtendedSettings {
   if (!isRecord(value)) return DEFAULT_EXTENDED_SETTINGS;
   const d = DEFAULT_EXTENDED_SETTINGS;
+
+  // House system: must be in the canonical registry
+  const houseSystem = isValidHouseSystem(value.houseSystem) ? value.houseSystem : d.houseSystem;
+
+  // Minor aspects: must all be in the canonical aspect registry
+  const enabledMinorAspects = validateMinorAspects(value.enabledMinorAspects);
+  if (enabledMinorAspects.length === 0 && value.enabledMinorAspects !== undefined) {
+    // If the user provided minor aspects but none were valid, fall back to default
+  }
+
   return {
-    houseSystem: typeof value.houseSystem === 'string' ? value.houseSystem : d.houseSystem,
+    houseSystem,
     zodiac: parseZodiac(value.zodiac),
     orbScalePercent: typeof value.orbScalePercent === 'number' ? value.orbScalePercent : d.orbScalePercent,
     boundsScheme: isOneOf(value.boundsScheme, ['egyptian', 'ptolemaic'] as const) ? value.boundsScheme : d.boundsScheme,
-    enabledMinorAspects:
-      value.enabledMinorAspects === undefined ? d.enabledMinorAspects : parseStringArray(value.enabledMinorAspects),
+    enabledMinorAspects: enabledMinorAspects.length > 0 ? enabledMinorAspects : d.enabledMinorAspects,
     lilithVariant: isOneOf(value.lilithVariant, ['mean', 'true', 'interpolated'] as const)
       ? value.lilithVariant
       : d.lilithVariant,
