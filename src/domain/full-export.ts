@@ -28,6 +28,14 @@
  * (`full-export-importer.ts`) is not lossy: both are read internally for chart computation
  * already, but were never carried back out, so a round trip through this file used to silently
  * drop a person's saved places and formula points. Both additive — no version bump.
+ *
+ * #585 collapsed `ExtendedSettings`' eleven scattered point-visibility/`aspectsTo*` fields into
+ * one `objectPolicies` field — no version bump here, deliberately: `full-export-importer.ts`'s
+ * `validatePreferences` only checks `preferences.settings` is a record and never reads a
+ * specific field from it (restore only needs it to round-trip for display, same as the
+ * `relocationPlaces`/`customPoints` note above), so a restore of an old-shaped export is
+ * unaffected either way. `calculation-snapshot.ts`'s own `CURRENT_SNAPSHOT_VERSION` is the one
+ * that actually deep-parses `ExtendedSettings` and is the one that bumped for this.
  */
 /**
  * @module full-export

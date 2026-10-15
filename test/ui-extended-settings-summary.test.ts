@@ -12,15 +12,25 @@ describe('changedSettings', () => {
         houseSystem: 'W',
         orbScalePercent: -10,
         enabledMinorAspects: ['quintile'],
-        chironVisible: false,
-        aspectsToLilith: true,
+        objectPolicies: {
+          ...DEFAULT_EXTENDED_SETTINGS.objectPolicies,
+          chiron: { ...DEFAULT_EXTENDED_SETTINGS.objectPolicies.chiron, visible: false },
+        },
         lilithVariant: 'true',
       }),
-    ).toEqual(['houseSystem', 'orbScale', 'minorAspects', 'chiron', 'lilith', 'aspectsTo']);
+    ).toEqual(['houseSystem', 'orbScale', 'minorAspects', 'objectPolicies', 'lilith']);
   });
 
   it('compares two settings field by field', () => {
     expect(sameSettings(DEFAULT_EXTENDED_SETTINGS, { ...DEFAULT_EXTENDED_SETTINGS })).toBe(true);
-    expect(sameSettings(DEFAULT_EXTENDED_SETTINGS, { ...DEFAULT_EXTENDED_SETTINGS, vertexVisible: true })).toBe(false);
+    expect(
+      sameSettings(DEFAULT_EXTENDED_SETTINGS, {
+        ...DEFAULT_EXTENDED_SETTINGS,
+        objectPolicies: {
+          ...DEFAULT_EXTENDED_SETTINGS.objectPolicies,
+          vertex: { ...DEFAULT_EXTENDED_SETTINGS.objectPolicies.vertex, visible: true },
+        },
+      }),
+    ).toBe(false);
   });
 });

@@ -45,9 +45,7 @@ describe('aspect matrix with point aspects (#516, #542)', () => {
 
     // All three made visible: each gets exactly one row, used by every aspect that refers to it.
     const shown = chartSheetInput(data, [], 'Natal', {
-      vertexVisible: true,
-      fortuneVisible: true,
-      spiritVisible: true,
+      bodyVisibility: { vertex: true, partOfFortune: true, partOfSpirit: true },
     });
     const shownKeys = new Set(shown.matrix.bodies.map((body) => body.key));
     for (const point of ['vertex', 'partOfFortune', 'partOfSpirit']) expect(shownKeys.has(point)).toBe(true);
@@ -69,7 +67,9 @@ describe('aspect matrix with point aspects (#516, #542)', () => {
         sextileOrb: { base: 0, luminaryBonus: 0 },
       },
     });
-    const { matrix } = chartSheetInput(data, [], 'Natal', { vertexVisible: true, fortuneVisible: true });
+    const { matrix } = chartSheetInput(data, [], 'Natal', {
+      bodyVisibility: { vertex: true, partOfFortune: true },
+    });
     const keys = new Set(matrix.bodies.map((body) => body.key));
     expect(keys.has('vertex')).toBe(true);
     expect(keys.has('partOfFortune')).toBe(true);
@@ -90,10 +90,7 @@ describe('aspect matrix with point aspects (#516, #542)', () => {
       },
     });
     const { matrix } = chartSheetInput(data, [], 'Natal', {
-      chironVisible: true,
-      vertexVisible: true,
-      fortuneVisible: true,
-      spiritVisible: true,
+      bodyVisibility: { chiron: true, vertex: true, partOfFortune: true, partOfSpirit: true },
     });
     const { markup, height } = renderAspectMatrixSvg(matrix, { x: 0, y: 0, width: 1000 });
     expect(markup).not.toContain('NaN');

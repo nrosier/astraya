@@ -28,6 +28,7 @@ import { computeSynastry } from '../src/domain/synastry.js';
 import { computeTransit } from '../src/domain/transit.js';
 import {
   buildCalculationSnapshot,
+  CURRENT_SNAPSHOT_VERSION,
   snapshotCalculationOptions,
   type CalculationSnapshot,
 } from '../src/domain/calculation-snapshot.js';
@@ -162,7 +163,9 @@ describe('buildCalculationArtifact against the real engine (#582)', () => {
     expect(artifact.provenance.ephemerisAssetHashes).toEqual(
       Object.fromEntries(ALL_ASSETS.map((asset) => [asset.file, asset.sha256])),
     );
-    expect(calculationArtifactIdentity(artifact)).toMatch(/^v2-[0-9a-f]{12}\/[0-9a-f]{12}$/);
+    expect(calculationArtifactIdentity(artifact)).toMatch(
+      new RegExp(`^v${String(CURRENT_SNAPSHOT_VERSION)}-[0-9a-f]{12}/[0-9a-f]{12}$`),
+    );
     expect(calculationArtifactIdentity(artifact).slice(3, 15)).toBe(artifact.fingerprint.inputHash.slice(0, 12));
   }, 60_000);
 });
@@ -216,12 +219,60 @@ describe('real-engine parity fixtures (#582)', () => {
     ['true (osculating) Lilith', { lilithVariant: 'true' }],
     ['sidereal, Lahiri', { zodiac: { kind: 'sidereal', ayanamsa: 1 } }],
     ['minor aspects on', { enabledMinorAspects: ['semisextile', 'quincunx', 'semisquare', 'sesquiquadrate'] }],
-    ['aspects to Chiron', { aspectsToChiron: true }],
-    ['aspects to Lilith', { aspectsToLilith: true }],
-    ['aspects to the lunar nodes', { aspectsToLunarNodes: true }],
-    ['aspects to the Vertex', { aspectsToVertex: true }],
-    ['aspects to the Part of Fortune', { aspectsToPartOfFortune: true }],
-    ['aspects to the Part of Spirit', { aspectsToPartOfSpirit: true }],
+    [
+      'aspects to Chiron',
+      {
+        objectPolicies: {
+          ...DEFAULT_EXTENDED_SETTINGS.objectPolicies,
+          chiron: { visible: true, aspectParticipant: true },
+        },
+      },
+    ],
+    [
+      'aspects to Lilith',
+      {
+        objectPolicies: {
+          ...DEFAULT_EXTENDED_SETTINGS.objectPolicies,
+          meanLilith: { visible: true, aspectParticipant: true },
+        },
+      },
+    ],
+    [
+      'aspects to the lunar nodes',
+      {
+        objectPolicies: {
+          ...DEFAULT_EXTENDED_SETTINGS.objectPolicies,
+          meanNode: { visible: true, aspectParticipant: true },
+        },
+      },
+    ],
+    [
+      'aspects to the Vertex',
+      {
+        objectPolicies: {
+          ...DEFAULT_EXTENDED_SETTINGS.objectPolicies,
+          vertex: { visible: true, aspectParticipant: true },
+        },
+      },
+    ],
+    [
+      'aspects to the Part of Fortune',
+      {
+        objectPolicies: {
+          ...DEFAULT_EXTENDED_SETTINGS.objectPolicies,
+          partOfFortune: { visible: true, aspectParticipant: true },
+        },
+      },
+    ],
+    [
+      'aspects to the Part of Spirit',
+      {
+        objectPolicies: {
+          ...DEFAULT_EXTENDED_SETTINGS.objectPolicies,
+          partOfSpirit: { visible: true, aspectParticipant: true },
+        },
+      },
+    ],
     ['wider orbs', { orbScalePercent: 40 }],
   ];
 

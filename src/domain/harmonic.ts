@@ -22,7 +22,12 @@ import { DEFAULT_RULERSHIP_CHOICE, essentialDignitiesFor } from '../astrology/ru
 import { partOfFortune, partOfSpirit } from '../astrology/arabic-parts.js';
 import { harmonicHouses, harmonicPosition } from '../astrology/harmonics.js';
 import { sectOf, type Sect } from '../astrology/sect.js';
-import { computeChartData, type ChartCalculationOptions, type ChartData } from './chart-compute.js';
+import {
+  computeChartData,
+  isAspectParticipant,
+  type ChartCalculationOptions,
+  type ChartData,
+} from './chart-compute.js';
 import { chartBodyKey, chartBodyName } from './chart-tables.js';
 import type { BodyId, BodyPosition, EphemerisProvider } from '../ephemeris/types.js';
 import type { BirthMomentInput } from '../time/types.js';
@@ -30,16 +35,6 @@ import type { BirthMomentInput } from '../time/types.js';
 function categoryOf(body: BodyId): BodyCategory {
   const definition = bodyById(body);
   return definition?.category ?? 'asteroid';
-}
-
-/** Same three families `computeChartDataAtJd` excludes by default — see its own doc comment. */
-function isAspectEligible(body: BodyId, aspectsTo: ChartCalculationOptions['aspectsTo']): boolean {
-  const definition = bodyById(body);
-  if (definition === undefined) return true;
-  if (definition.category === 'centaur') return aspectsTo?.chiron === true;
-  if (definition.category === 'lilith') return aspectsTo?.lilith === true;
-  if (definition.category === 'node') return aspectsTo?.lunarNodes === true;
-  return true;
 }
 
 export interface HarmonicData {
@@ -93,7 +88,7 @@ export async function computeHarmonic(
   const positions: BodyPosition[] = natal.positions.map((position) => harmonicPosition(position, n));
   const houses = harmonicHouses(natal.houses, n);
 
-  const eligiblePositions = positions.filter((position) => isAspectEligible(position.body, options.aspectsTo));
+  const eligiblePositions = positions.filter((position) => isAspectParticipant(position.body, options.aspectsTo));
   const aspects: readonly Aspect[] = findAspects(
     subjectsFrom(eligiblePositions, categoryOf),
     orbConfig ?? DEFAULT_ORB_CONFIG,

@@ -21,20 +21,19 @@ const CUSTOM_SETTINGS: ExtendedSettings = {
   enabledMinorAspects: ['semisextile', 'quincunx'],
   lilithVariant: 'true',
   nodeVariant: 'true',
-  fortuneVisible: true,
-  vertexVisible: true,
-  chironVisible: false,
-  spiritVisible: true,
+  objectPolicies: {
+    ...DEFAULT_EXTENDED_SETTINGS.objectPolicies,
+    chiron: { visible: false, aspectParticipant: true },
+    osculatingLilith: { visible: true, aspectParticipant: true },
+    trueNode: { visible: true, aspectParticipant: true },
+    vertex: { visible: true, aspectParticipant: true },
+    partOfFortune: { visible: true, aspectParticipant: true },
+    partOfSpirit: { visible: true, aspectParticipant: true },
+  },
   midpointsVisible: true,
   dial90Visible: true,
   midpointTreeOrb: 2.5,
   rainbowZodiac: true,
-  aspectsToChiron: true,
-  aspectsToLilith: true,
-  aspectsToLunarNodes: true,
-  aspectsToVertex: true,
-  aspectsToPartOfFortune: true,
-  aspectsToPartOfSpirit: true,
 };
 
 describe('buildCalculationSnapshot / parseCalculationSnapshot round-trip (#541)', () => {
@@ -60,7 +59,9 @@ describe('buildCalculationSnapshot / parseCalculationSnapshot round-trip (#541)'
   it('has a stable, settings-sensitive provenance identity', () => {
     const defaults = buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, 'modern');
     const custom = buildCalculationSnapshot(CUSTOM_SETTINGS, 'traditional');
-    expect(calculationSnapshotIdentity(defaults)).toMatch(/^v2-[0-9a-f]{8}$/);
+    expect(calculationSnapshotIdentity(defaults)).toMatch(
+      new RegExp(`^v${String(CURRENT_SNAPSHOT_VERSION)}-[0-9a-f]{8}$`),
+    );
     expect(calculationSnapshotIdentity(defaults)).toBe(calculationSnapshotIdentity(defaults));
     expect(calculationSnapshotIdentity(custom)).not.toBe(calculationSnapshotIdentity(defaults));
   });
@@ -145,9 +146,63 @@ describe('parseCalculationSnapshot defends against untrusted input (#541)', () =
       rulership: 'not-a-real-choice',
     });
     expect(parsed.settings.houseSystem).toBe(DEFAULT_EXTENDED_SETTINGS.houseSystem);
-    expect(parsed.settings.chironVisible).toBe(DEFAULT_EXTENDED_SETTINGS.chironVisible);
+    // No `objectPolicies` field at all here, so this falls through to the legacy-field migration
+    // (#585); `chironVisible: 'yes'` is not a real boolean, so that migration itself falls back
+    // to the default for Chiron's own `visible`, same as the pre-#585 behavior this replaces.
+    expect(parsed.settings.objectPolicies.chiron.visible).toBe(DEFAULT_EXTENDED_SETTINGS.objectPolicies.chiron.visible);
     expect(parsed.settings.enabledMinorAspects).toEqual(DEFAULT_EXTENDED_SETTINGS.enabledMinorAspects);
     expect(parsed.rulership).toBe(DEFAULT_RULERSHIP_CHOICE);
+  });
+
+  it('migrates a pre-#585 settings bag (no objectPolicies field) to the identical effective policy', () => {
+    const legacy = {
+      fortuneVisible: true,
+      vertexVisible: false,
+      chironVisible: false,
+      spiritVisible: true,
+      modernPointVisibility: { meanNode: true, trueNode: false, ceres: true },
+      aspectsToChiron: true,
+      aspectsToLilith: false,
+      aspectsToLunarNodes: true,
+      aspectsToVertex: false,
+      aspectsToPartOfFortune: true,
+      aspectsToPartOfSpirit: false,
+    };
+    const parsed = parseCalculationSnapshot({ settings: legacy });
+    expect(parsed.settings.objectPolicies.partOfFortune).toEqual({ visible: true, aspectParticipant: true });
+    expect(parsed.settings.objectPolicies.vertex).toEqual({ visible: false, aspectParticipant: false });
+    expect(parsed.settings.objectPolicies.chiron).toEqual({ visible: false, aspectParticipant: true });
+    expect(parsed.settings.objectPolicies.partOfSpirit).toEqual({ visible: true, aspectParticipant: false });
+    expect(parsed.settings.objectPolicies.meanNode).toEqual({ visible: true, aspectParticipant: true });
+    expect(parsed.settings.objectPolicies.trueNode).toEqual({ visible: false, aspectParticipant: true });
+    expect(parsed.settings.objectPolicies.ceres).toEqual({ visible: true, aspectParticipant: true });
+    // Planets had no legacy field of either kind — always defaulted visible and participating.
+    expect(parsed.settings.objectPolicies.sun).toEqual({ visible: true, aspectParticipant: true });
+    // aspectsToLilith: false collectively covers all three Lilith variants — none named in
+    // modernPointVisibility, so visibility falls to each one's own default (false).
+    expect(parsed.settings.objectPolicies.meanLilith).toEqual({ visible: false, aspectParticipant: false });
+    expect(parsed.settings.objectPolicies.osculatingLilith).toEqual({ visible: false, aspectParticipant: false });
+    expect(parsed.settings.objectPolicies.interpolatedLilith).toEqual({ visible: false, aspectParticipant: false });
+  });
+
+  it('ignores legacy fields entirely once objectPolicies is present, even when they disagree', () => {
+    const parsed = parseCalculationSnapshot({
+      settings: {
+        objectPolicies: {
+          ...DEFAULT_EXTENDED_SETTINGS.objectPolicies,
+          chiron: { visible: true, aspectParticipant: true },
+        },
+        // Deliberately contradicts objectPolicies.chiron above, and partOfFortune's default —
+        // a half-migrated writer must never win once the new field exists.
+        chironVisible: false,
+        aspectsToChiron: false,
+        fortuneVisible: true,
+      },
+    });
+    expect(parsed.settings.objectPolicies.chiron).toEqual({ visible: true, aspectParticipant: true });
+    expect(parsed.settings.objectPolicies.partOfFortune).toEqual(
+      DEFAULT_EXTENDED_SETTINGS.objectPolicies.partOfFortune,
+    );
   });
 
   it('drops non-string entries from an enabledMinorAspects array instead of rejecting the whole snapshot', () => {

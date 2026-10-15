@@ -10,6 +10,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_RULERSHIP_CHOICE } from '../src/astrology/rulership.js';
 import { DEFAULT_EXTENDED_SETTINGS } from '../src/chart/extended-settings.js';
+import { CURRENT_SNAPSHOT_VERSION } from '../src/domain/calculation-snapshot.js';
 import { TRADITIONAL_ACG_BODY_IDS } from '../src/domain/astrocartography.js';
 import { EMPTY_SELECTION, type PdfSelection } from '../src/domain/pdf-export-sections.js';
 import type { Person } from '../src/domain/person.js';
@@ -740,7 +741,9 @@ describe('PDF chart sections use the Charts page’s own calculation settings (#
   it('prints the natal calculation fingerprint, which changes with the settings', async () => {
     const placidus = await natalSection(ADA, DEFAULT_EXTENDED_SETTINGS);
     const wholeSign = await natalSection(ADA, WHOLE_SIGN);
-    expect(placidus.provenance).toMatch(/^Calculation fingerprint: v2-[0-9a-f]{12}\/[0-9a-f]{12}$/);
+    expect(placidus.provenance).toMatch(
+      new RegExp(`^Calculation fingerprint: v${String(CURRENT_SNAPSHOT_VERSION)}-[0-9a-f]{12}/[0-9a-f]{12}$`),
+    );
     expect(wholeSign.provenance).not.toBe(placidus.provenance);
   }, 30_000);
 

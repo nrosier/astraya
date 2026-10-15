@@ -49,6 +49,25 @@ describe('computeSolarReturnChart', () => {
     expect(result.place.latitude).toBeCloseTo(38.7478, 4);
   }, 60_000);
 
+  it('includes Lilith and Node contacts once asked for via per-object aspectsTo keys (#585)', async () => {
+    // Regression for #585: this module's own `chartContacts` filter used to key off the
+    // pre-#585 grouped 'lilith'/'lunarNodes' aspectsTo names, which `toChartCalculationOptions`
+    // no longer produces (one key per object now) — so this silently stayed excluded forever
+    // once the shape changed, with nothing exercising the non-default path to notice.
+    const withoutExtras = await computeSolarReturnChart(BIRTH, 2025, engine);
+    const withExtras = await computeSolarReturnChart(BIRTH, 2025, engine, {
+      aspectsTo: { meanLilith: true, meanNode: true },
+    });
+    const categoriesWithout = new Set(
+      withoutExtras.contacts.flatMap((c) => [bodyById(c.bodyA)?.category, bodyById(c.bodyB)?.category]),
+    );
+    const categoriesWith = new Set(
+      withExtras.contacts.flatMap((c) => [bodyById(c.bodyA)?.category, bodyById(c.bodyB)?.category]),
+    );
+    expect(categoriesWithout.has('lilith') || categoriesWithout.has('node')).toBe(false);
+    expect(categoriesWith.has('lilith') || categoriesWith.has('node')).toBe(true);
+  }, 60_000);
+
   it('casts the same moment at another place when relocated', async () => {
     const home = await computeSolarReturnChart(BIRTH, 2025, engine);
     const away = await computeSolarReturnChart(BIRTH, 2025, engine, {

@@ -31,9 +31,9 @@ describe('calculation profiles', () => {
     expect(traditional).toMatchObject({
       houseSystem: 'W',
       zodiac: { kind: 'tropical' },
-      fortuneVisible: true,
-      chironVisible: false,
     });
+    expect(traditional.objectPolicies.partOfFortune.visible).toBe(true);
+    expect(traditional.objectPolicies.chiron.visible).toBe(false);
     expect(CALCULATION_PROFILES['traditional-western-v1'].rulership).toBe('traditional');
     // Orb scale and the node/Lilith model ARE profile-owned now (unlike the old presets):
     // applying a profile overwrites a previously-customized value rather than leaving it.

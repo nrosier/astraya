@@ -36,7 +36,7 @@ import {
 } from '../astrology/calculation-scheme.js';
 import { ORB_PROFILE_IDS, ORB_PROFILES, matchOrbProfile, type OrbProfileId } from '../astrology/orb-profiles.js';
 import { DEFAULT_RULERSHIP_CHOICE, type RulershipChoice } from '../astrology/rulership.js';
-import { aspectDisplayName } from './astro-names.messages.js';
+import { aspectDisplayName, bodyDisplayName } from './astro-names.messages.js';
 import {
   applyCalculationProfile,
   CALCULATION_PROFILE_IDS,
@@ -44,12 +44,20 @@ import {
   matchCalculationProfile,
   type CalculationProfileId,
 } from '../chart/calculation-profiles.js';
-import { DEFAULT_EXTENDED_SETTINGS, type ExtendedSettings, type ModernPointKey } from '../chart/extended-settings.js';
+import { DEFAULT_EXTENDED_SETTINGS, type ExtendedSettings } from '../chart/extended-settings.js';
+import {
+  matchObjectPolicyPreset,
+  OBJECT_POLICY_PRESET_IDS,
+  PRESET_OBJECT_POLICIES,
+  type ObjectKey,
+  type ObjectPolicy,
+} from '../chart/object-policy.js';
 import { useDefaultCalculationProfile } from './default-calculation-profile.js';
 import { extendedSettingsPanelMessages } from './ExtendedSettingsPanel.messages.js';
 import { changedSettings, sameSettings } from './extended-settings-summary.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
+import { Button } from './primitives/Button.js';
 import { ChoiceGroup } from './primitives/ChoiceGroup.js';
 import { OptionCards } from './primitives/OptionCards.js';
 import { Select } from './primitives/Select.js';
@@ -66,11 +74,26 @@ const MINOR_ASPECTS = ASPECTS.filter((aspect) => aspect.family === 'minor');
 
 const LAHIRI_AYANAMSA_ID = ayanamsaByKey('lahiri')?.id ?? AYANAMSAS[0]?.id ?? 1;
 
-function lilithPointKey(variant: ExtendedSettings['lilithVariant']): ModernPointKey {
+const PLANET_KEYS: readonly ObjectKey[] = [
+  'sun',
+  'moon',
+  'mercury',
+  'venus',
+  'mars',
+  'jupiter',
+  'saturn',
+  'uranus',
+  'neptune',
+  'pluto',
+];
+const ASTEROID_KEYS: readonly ObjectKey[] = ['ceres', 'pallas', 'juno', 'vesta'];
+const POINT_KEYS: readonly ObjectKey[] = ['vertex', 'partOfFortune', 'partOfSpirit'];
+
+function lilithPointKey(variant: ExtendedSettings['lilithVariant']): ObjectKey {
   return variant === 'true' ? 'osculatingLilith' : variant === 'interpolated' ? 'interpolatedLilith' : 'meanLilith';
 }
 
-function nodePointKey(variant: ExtendedSettings['nodeVariant']): ModernPointKey {
+function nodePointKey(variant: ExtendedSettings['nodeVariant']): ObjectKey {
   return variant === 'true' ? 'trueNode' : 'meanNode';
 }
 
@@ -145,6 +168,78 @@ export function ExtendedSettingsPanel({
     setDraft((current) => ({ ...current, ...partial }));
   };
 
+  /** One object's whole policy, replaced atomically — never a hybrid of two partial patches racing each other. */
+  const setObjectPolicy = (key: ObjectKey, next: Partial<ObjectPolicy>): void => {
+    patch({ objectPolicies: { ...draft.objectPolicies, [key]: { ...draft.objectPolicies[key], ...next } } });
+  };
+
+  /** Group-level "All"/"Clear" (#585), matching `TransitFilterPanel.tsx`'s own established pattern for a long checkbox group. */
+  const setGroupPolicy = (keys: readonly ObjectKey[], policy: ObjectPolicy): void => {
+    const updates: Partial<Record<ObjectKey, ObjectPolicy>> = {};
+    for (const key of keys) updates[key] = policy;
+    patch({ objectPolicies: { ...draft.objectPolicies, ...updates } });
+  };
+
+  /** Named object-visibility preset (#585) — applies a complete `ObjectPolicies` snapshot, the same atomic-replace pattern `chooseProfile` uses for a calculation profile. */
+  const choosePreset = (id: string): void => {
+    if (!(OBJECT_POLICY_PRESET_IDS as readonly string[]).includes(id)) return;
+    patch({ objectPolicies: PRESET_OBJECT_POLICIES[id as (typeof OBJECT_POLICY_PRESET_IDS)[number]] });
+  };
+
+  /** One object's row: its name once, then its two independent checkboxes — visible, and whether it takes aspects. */
+  const objectRow = (key: ObjectKey, label: string): React.JSX.Element => {
+    const policy: ObjectPolicy = draft.objectPolicies[key];
+    return (
+      <div className="settings-card-object-row" key={key}>
+        <span className="settings-card-object-name">{label}</span>
+        <Checkbox
+          label={t.objectVisibleLabel(label)}
+          checked={policy.visible}
+          onChange={(value) => {
+            setObjectPolicy(key, { visible: value });
+          }}
+        />
+        <Checkbox
+          label={t.objectParticipatesLabel(label)}
+          checked={policy.aspectParticipant}
+          onChange={(value) => {
+            setObjectPolicy(key, { aspectParticipant: value });
+          }}
+        />
+      </div>
+    );
+  };
+
+  /** A group of object rows with the long-list "Select all"/"Clear" convention (`docs/UI-UX_GUIDELINES.md`'s decision matrix). */
+  const objectGroup = (
+    legend: string,
+    keys: readonly ObjectKey[],
+    labelFor: (key: ObjectKey) => string,
+  ): React.JSX.Element => (
+    <fieldset className="field-group settings-card-indent">
+      <legend>{legend}</legend>
+      <div className="transit-filter-group-actions">
+        <Button
+          size="compact"
+          onClick={() => {
+            setGroupPolicy(keys, { visible: true, aspectParticipant: true });
+          }}
+        >
+          {t.groupAll}
+        </Button>
+        <Button
+          size="compact"
+          onClick={() => {
+            setGroupPolicy(keys, { visible: false, aspectParticipant: false });
+          }}
+        >
+          {t.groupClear}
+        </Button>
+      </div>
+      {keys.map((key) => objectRow(key, labelFor(key)))}
+    </fieldset>
+  );
+
   const setMinorAspect = (key: string, enabled: boolean): void => {
     patch({
       enabledMinorAspects: enabled
@@ -184,6 +279,7 @@ export function ExtendedSettingsPanel({
 
   const effectiveRulers = pendingRulers ?? rulers;
   const currentProfile = matchCalculationProfile(draft, effectiveRulers);
+  const currentObjectPreset = matchObjectPolicyPreset(draft.objectPolicies);
   const currentOrbProfile = matchOrbProfile(draft.orbScalePercent);
   const currentScheme =
     currentOrbProfile === undefined ? undefined : matchCalculationScheme(draft.boundsScheme, currentOrbProfile);
@@ -268,24 +364,14 @@ export function ExtendedSettingsPanel({
         return t.summary.boundsScheme(value.boundsScheme);
       case 'minorAspects':
         return t.summary.minorAspects(String(value.enabledMinorAspects.length));
-      case 'fortune':
-        return t.summary.fortune;
-      case 'vertex':
-        return t.summary.vertex;
-      case 'spirit':
-        return t.summary.spirit;
-      case 'chiron':
-        return t.summary.chironHidden;
-      case 'modernPoints':
-        return t.summary.modernPoints;
+      case 'objectPolicies':
+        return t.summary.objectPolicies;
       case 'midpoints':
         return t.summary.midpoints;
       case 'lilith':
         return t.summary.lilith(modelName(value.lilithVariant));
       case 'node':
         return t.summary.node(modelName(value.nodeVariant));
-      case 'aspectsTo':
-        return t.summary.aspectsTo;
       case 'rainbow':
         return t.summary.rainbow;
     }
@@ -468,49 +554,45 @@ export function ExtendedSettingsPanel({
           <legend>{t.bodiesLegend}</legend>
           <p className="hint settings-card-tag">{t.appliesOnApply}</p>
           <Checkbox
-            label={t.partOfFortune}
-            checked={draft.fortuneVisible}
-            onChange={(value) => {
-              patch({ fortuneVisible: value });
-            }}
-          />
-          <Checkbox
-            label={t.vertex}
-            checked={draft.vertexVisible}
-            onChange={(value) => {
-              patch({ vertexVisible: value });
-            }}
-          />
-          <Checkbox
-            label={t.spirit}
-            checked={draft.spiritVisible}
-            onChange={(value) => {
-              patch({ spiritVisible: value });
-            }}
-          />
-          <Checkbox
             label={t.midpoints}
             checked={draft.midpointsVisible}
             onChange={(value) => {
               patch({ midpointsVisible: value });
             }}
           />
-          <Checkbox
-            label={t.chiron}
-            checked={draft.chironVisible}
-            onChange={(value) => {
-              patch({ chironVisible: value });
-            }}
-          />
-          <div className="settings-card-indent">
-            <Checkbox
-              label={t.aspectsToChiron}
-              checked={draft.aspectsToChiron}
-              onChange={(value) => {
-                patch({ aspectsToChiron: value });
-              }}
+
+          {/* Object visibility/aspect-participation (#585): one unified policy, replacing what
+              used to be eleven separate fields. Three presets apply a complete policy at once,
+              matching how a calculation profile below applies a complete snapshot. */}
+          <div className="settings-card-block">
+            <OptionCards
+              label={t.objectPresetLabel}
+              value={currentObjectPreset ?? 'custom'}
+              options={[
+                ...(currentObjectPreset === undefined
+                  ? [{ value: 'custom', title: t.objectPresetOptions.custom, consequence: t.objectPresetNotes.custom }]
+                  : []),
+                ...OBJECT_POLICY_PRESET_IDS.map((id) => ({
+                  value: id,
+                  title: t.objectPresetOptions[id],
+                  consequence: t.objectPresetNotes[id],
+                })),
+              ]}
+              onChange={choosePreset}
             />
           </div>
+          <p className="hint" role="status">
+            {t.objectVisibleCount(
+              String(Object.values(draft.objectPolicies).filter((policy) => policy.visible).length),
+              String(Object.keys(draft.objectPolicies).length),
+            )}
+          </p>
+
+          {objectGroup(t.planetsGroupLabel, PLANET_KEYS, (key) => bodyDisplayName(key, locale))}
+
+          <div className="settings-card-indent">{objectRow('chiron', t.chiron)}</div>
+          {objectGroup(t.minorPlanetsLegend, ASTEROID_KEYS, (key) => bodyDisplayName(key, locale))}
+
           <div className="settings-card-indent">
             {t.lilithLabel}{' '}
             <ChoiceGroup
@@ -528,28 +610,9 @@ export function ExtendedSettingsPanel({
           </div>
           <p className="hint settings-card-indent">{t.lilithHelp}</p>
           <div className="settings-card-indent">
-            <Checkbox
-              label={t.showSelectedLilith}
-              checked={draft.modernPointVisibility[lilithPointKey(draft.lilithVariant)]}
-              onChange={(value) => {
-                patch({
-                  modernPointVisibility: {
-                    ...draft.modernPointVisibility,
-                    [lilithPointKey(draft.lilithVariant)]: value,
-                  },
-                });
-              }}
-            />
+            {objectRow(lilithPointKey(draft.lilithVariant), t.lilithObjectName)}
           </div>
-          <div className="settings-card-indent">
-            <Checkbox
-              label={t.aspectsToLilith}
-              checked={draft.aspectsToLilith}
-              onChange={(value) => {
-                patch({ aspectsToLilith: value });
-              }}
-            />
-          </div>
+
           <div className="settings-card-indent">
             {t.lunarNodesLabel}{' '}
             <ChoiceGroup
@@ -566,65 +629,12 @@ export function ExtendedSettingsPanel({
           </div>
           <p className="hint settings-card-indent">{t.nodeHelp}</p>
           <div className="settings-card-indent">
-            <Checkbox
-              label={t.showSelectedNode}
-              checked={draft.modernPointVisibility[nodePointKey(draft.nodeVariant)]}
-              onChange={(value) => {
-                patch({
-                  modernPointVisibility: { ...draft.modernPointVisibility, [nodePointKey(draft.nodeVariant)]: value },
-                });
-              }}
-            />
+            {objectRow(nodePointKey(draft.nodeVariant), t.lunarNodesObjectName)}
           </div>
-          <div className="settings-card-indent">
-            <Checkbox
-              label={t.aspectsToLunarNodes}
-              checked={draft.aspectsToLunarNodes}
-              onChange={(value) => {
-                patch({ aspectsToLunarNodes: value });
-              }}
-            />
-          </div>
-          <fieldset className="settings-card-indent">
-            <legend>{t.minorPlanetsLegend}</legend>
-            {(['ceres', 'pallas', 'juno', 'vesta'] as const).map((key) => (
-              <Checkbox
-                key={key}
-                label={t.modernPointLabels[key]}
-                checked={draft.modernPointVisibility[key]}
-                onChange={(value) => {
-                  patch({ modernPointVisibility: { ...draft.modernPointVisibility, [key]: value } });
-                }}
-              />
-            ))}
-          </fieldset>
-          <div className="settings-card-indent">
-            <Checkbox
-              label={t.aspectsToVertex}
-              checked={draft.aspectsToVertex}
-              onChange={(value) => {
-                patch({ aspectsToVertex: value });
-              }}
-            />
-          </div>
-          <div className="settings-card-indent">
-            <Checkbox
-              label={t.aspectsToPartOfFortune}
-              checked={draft.aspectsToPartOfFortune}
-              onChange={(value) => {
-                patch({ aspectsToPartOfFortune: value });
-              }}
-            />
-          </div>
-          <div className="settings-card-indent">
-            <Checkbox
-              label={t.aspectsToPartOfSpirit}
-              checked={draft.aspectsToPartOfSpirit}
-              onChange={(value) => {
-                patch({ aspectsToPartOfSpirit: value });
-              }}
-            />
-          </div>
+
+          {objectGroup(t.pointsGroupLabel, POINT_KEYS, (key) =>
+            key === 'vertex' ? t.vertex : key === 'partOfFortune' ? t.partOfFortune : t.spirit,
+          )}
           <p className="hint">{t.aspectsToHint}</p>
           <Checkbox
             label={t.antiscia}

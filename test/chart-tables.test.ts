@@ -135,7 +135,10 @@ describe('positionRows (#44)', () => {
   it('keeps Chiron by default but drops it when chironVisible is false', () => {
     const withChiron: ChartData = { ...data, positions: [...data.positions, position(CHIRON, 50)] };
     expect(positionRows(withChiron).map((row) => row.bodyKey)).toEqual(['sun', 'moon', 'chiron']);
-    expect(positionRows(withChiron, { chironVisible: false }).map((row) => row.bodyKey)).toEqual(['sun', 'moon']);
+    expect(positionRows(withChiron, { bodyVisibility: { chiron: false } }).map((row) => row.bodyKey)).toEqual([
+      'sun',
+      'moon',
+    ]);
   });
 
   it('appends the Ascendant and Midheaven when includeAngles is true, with no house/speed/retrograde', () => {
@@ -233,7 +236,7 @@ describe('angleRows (#44)', () => {
       partOfFortune: 0,
       partOfSpirit: 0,
     };
-    const rows = angleRows(data, { vertexVisible: true });
+    const rows = angleRows(data, { bodyVisibility: { vertex: true } });
     expect(rows.map((row) => row.label)).toEqual([
       'ARMC',
       'Vertex',
@@ -395,7 +398,7 @@ describe('dignityRows (#44)', () => {
       partOfSpirit: 0,
     };
     expect(dignityRows(data).map((row) => row.bodyKey)).toEqual(['sun', 'chiron']);
-    expect(dignityRows(data, { chironVisible: false }).map((row) => row.bodyKey)).toEqual(['sun']);
+    expect(dignityRows(data, { bodyVisibility: { chiron: false } }).map((row) => row.bodyKey)).toEqual(['sun']);
   });
 });
 
@@ -721,13 +724,13 @@ describe('derivedPointRows (#44)', () => {
   });
 
   it('includes Part of Fortune once fortuneVisible is true, independently of Spirit', () => {
-    expect(derivedPointRows(data, { fortuneVisible: true })).toEqual([
+    expect(derivedPointRows(data, { bodyVisibility: { partOfFortune: true } })).toEqual([
       { pointKey: 'part-of-fortune', label: 'Part of Fortune', longitude: 45, ...degreeParts(45) },
     ]);
   });
 
   it('includes Part of Spirit once spiritVisible is true (#542) — it has its own flag now, like Fortune', () => {
-    expect(derivedPointRows(data, { spiritVisible: true })).toEqual([
+    expect(derivedPointRows(data, { bodyVisibility: { partOfSpirit: true } })).toEqual([
       { pointKey: 'part-of-spirit', label: 'Part of Spirit', longitude: 200, ...degreeParts(200) },
     ]);
   });
@@ -836,11 +839,11 @@ describe('chartWheelRing (#52)', () => {
       { body: CHIRON, key: 'chiron', longitude: 100, retrograde: false },
     ]);
     expect(chartWheelRing(data).aspects).toEqual([aspect]);
-    expect(chartWheelRing(data, 'Natal', { chironVisible: false }).bodies).toEqual([
+    expect(chartWheelRing(data, 'Natal', { bodyVisibility: { chiron: false } }).bodies).toEqual([
       { body: SUN, key: 'sun', longitude: 10, retrograde: false },
     ]);
     // #542: a hidden Chiron can no longer still "speak" through an aspect on the wheel either.
-    expect(chartWheelRing(data, 'Natal', { chironVisible: false }).aspects).toEqual([]);
+    expect(chartWheelRing(data, 'Natal', { bodyVisibility: { chiron: false } }).aspects).toEqual([]);
   });
 });
 
@@ -939,7 +942,7 @@ describe('chartSheetInput', () => {
     expect(shown.strip.bodies.map((body) => body.key)).toEqual(['sun', 'moon', 'mars', 'chiron']);
     expect(shown.rings[0]?.bodies.map((body) => body.key)).toEqual(['sun', 'moon', 'mars', 'chiron']);
 
-    const hidden = chartSheetInput(withChiron, [], 'Natal', { chironVisible: false });
+    const hidden = chartSheetInput(withChiron, [], 'Natal', { bodyVisibility: { chiron: false } });
     expect(hidden.matrix.bodies.map((body) => body.key)).toEqual(['sun', 'moon', 'mars', 'asc', 'mc']);
     expect(hidden.emphasis.bodies.map((body) => body.key)).toEqual(['sun', 'moon', 'mars']);
     expect(hidden.strip.bodies.map((body) => body.key)).toEqual(['sun', 'moon', 'mars']);
@@ -1020,7 +1023,7 @@ describe('emphasisRows (#511)', () => {
   });
 
   it('leaves out a body the visibility options hide, as the grid and the other tables do', () => {
-    const rows = emphasisRows(data, { chironVisible: false });
+    const rows = emphasisRows(data, { bodyVisibility: { chiron: false } });
     expect(rows[1]?.bodies.fixed).toEqual([]);
     expect(rows[4]?.total).toBe(3);
   });

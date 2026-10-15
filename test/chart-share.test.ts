@@ -123,8 +123,11 @@ describe('a CalculationSnapshot survives the full share-link round-trip (#541)',
     houseSystem: 'K',
     zodiac: { kind: 'sidereal', ayanamsa: 1 },
     orbScalePercent: -40,
-    chironVisible: false,
-    fortuneVisible: true,
+    objectPolicies: {
+      ...DEFAULT_EXTENDED_SETTINGS.objectPolicies,
+      chiron: { visible: false, aspectParticipant: false },
+      partOfFortune: { visible: true, aspectParticipant: false },
+    },
   };
 
   it('round-trips a fully customized snapshot exactly, through the real query-string encoding', () => {

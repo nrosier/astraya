@@ -131,13 +131,14 @@ export function degreeParts(longitude: Degrees): DegreeParts {
  * needs more care than a blanket filter, and is left as a follow-up.
  */
 export interface PointVisibilityOptions {
-  readonly chironVisible?: boolean; // default true
-  /** Per-body visibility for independently opted-in modern/sensitive points (#560). Omitted keys remain visible. */
+  /**
+   * Per-object visibility (#585), keyed the same way `chart/object-policy.ts`'s `ObjectKey`
+   * is: every body plus `'vertex'`/`'partOfFortune'`/`'partOfSpirit'`. A body key omitted here
+   * stays visible (`isBodyVisible`'s own default); the three point keys default to hidden
+   * instead (`pointVisible`'s own default) — the same asymmetry this file had before #585,
+   * just both read from one map now instead of four separate named fields.
+   */
   readonly bodyVisibility?: Readonly<Record<string, boolean>>;
-  readonly fortuneVisible?: boolean; // default false
-  readonly vertexVisible?: boolean; // default false
-  /** Part of Spirit's own visibility (#542) — previously always shown regardless of any setting, unlike its sibling Part of Fortune. */
-  readonly spiritVisible?: boolean; // default false
   readonly midpointsVisible?: boolean; // default false
   readonly antisciaVisible?: boolean; // default false
   readonly antisciaMaxOrb?: Degrees; // default 1
@@ -160,8 +161,12 @@ export function chartBodyName(data: ChartData, body: BodyId): string {
 
 function isBodyVisible(body: BodyId, options: PointVisibilityOptions): boolean {
   const definition = bodyById(body);
-  if (definition?.category === 'centaur' && !(options.chironVisible ?? true)) return false;
   return options.bodyVisibility?.[definition?.key ?? String(body)] ?? true;
+}
+
+/** The Vertex/Part of Fortune/Part of Spirit counterpart to `isBodyVisible` — these three default hidden, not visible, matching their pre-#585 defaults. */
+function pointVisible(key: 'vertex' | 'partOfFortune' | 'partOfSpirit', options: PointVisibilityOptions): boolean {
+  return options.bodyVisibility?.[key] ?? false;
 }
 
 /** Drops an independently-hidden modern point from a position list before every visible surface consumes it. */
@@ -195,9 +200,9 @@ export function visibleAngleAspects(
 ): readonly AngleAspect[] {
   if (angleAspects === undefined) return [];
   return angleAspects.filter((aspect) => {
-    if (aspect.angle === 'vertex' && !(options.vertexVisible ?? false)) return false;
-    if (aspect.angle === 'partOfFortune' && !(options.fortuneVisible ?? false)) return false;
-    if (aspect.angle === 'partOfSpirit' && !(options.spiritVisible ?? false)) return false;
+    if (aspect.angle === 'vertex' && !pointVisible('vertex', options)) return false;
+    if (aspect.angle === 'partOfFortune' && !pointVisible('partOfFortune', options)) return false;
+    if (aspect.angle === 'partOfSpirit' && !pointVisible('partOfSpirit', options)) return false;
     if (!isBodyVisible(aspect.body, options)) return false;
     return true;
   });
@@ -326,7 +331,7 @@ export interface AngleRow extends DegreeParts {
  * The angles `HousePositions` carries alongside the cusps themselves, other than the
  * Ascendant and Midheaven — those two now live in the Positions table instead (see
  * `positionRows`' `includeAngles`), matching Astro-Seek's combined layout. The Vertex is
- * dropped unless `vertexVisible` is true.
+ * dropped unless its `bodyVisibility` entry (#585) is true.
  *
  * These `label`s are deliberately left untranslated by #158's glossary (`astro-names.messages.ts`):
  * unlike signs/bodies/aspects, there's no established Dutch astrological vocabulary for ARMC,
@@ -336,7 +341,7 @@ export interface AngleRow extends DegreeParts {
 export function angleRows(data: ChartData, options: PointVisibilityOptions = {}): readonly AngleRow[] {
   const angles: readonly (readonly [string, Degrees])[] = [
     ['ARMC', data.houses.armc],
-    ...(options.vertexVisible === true ? [['Vertex', data.houses.vertex] as const] : []),
+    ...(pointVisible('vertex', options) ? [['Vertex', data.houses.vertex] as const] : []),
     ['Equatorial Ascendant', data.houses.equatorialAscendant],
     ['Co-Ascendant (Koch)', data.houses.coAscendantKoch],
     ['Co-Ascendant (Munkasey)', data.houses.coAscendantMunkasey],
@@ -941,10 +946,10 @@ export interface DerivedPointRow extends DegreeParts {
 }
 
 /**
- * Part of Fortune (dropped unless `fortuneVisible` is true), Part of Spirit (sect-corrected in
- * `computeChartData` already, dropped unless `spiritVisible` is true — #542 gave it the same
- * independent visibility flag its sibling Fortune already had), and — when `midpointsVisible`
- * is true — the ASC/MC and Sun/Moon midpoints Astro-Seek shows by default.
+ * Part of Fortune and Part of Spirit (sect-corrected in `computeChartData` already), each
+ * dropped unless its own `bodyVisibility` entry (#585, formerly separate `fortuneVisible`/
+ * `spiritVisible` flags) is true, and — when `midpointsVisible` is true — the ASC/MC and
+ * Sun/Moon midpoints Astro-Seek shows by default.
  *
  * Same as `angleRows`, these `label`s stay untranslated — no vetted Dutch term exists for these
  * compound derived-point names, so #158's glossary treats them as out of scope.
@@ -972,10 +977,10 @@ export function derivedPointRows(data: ChartData, options: PointVisibilityOption
   }
 
   return [
-    ...(options.fortuneVisible === true ? [keyed('part-of-fortune')] : []),
-    // Spirit now has its own visibility flag (#542) — it used to be shown unconditionally,
+    ...(pointVisible('partOfFortune', options) ? [keyed('part-of-fortune')] : []),
+    // Spirit has its own visibility entry too (#542) — it used to be shown unconditionally,
     // unlike its sibling Fortune, which could already be hidden.
-    ...(options.spiritVisible === true ? [keyed('part-of-spirit')] : []),
+    ...(pointVisible('partOfSpirit', options) ? [keyed('part-of-spirit')] : []),
     ...midpointRows,
   ];
 }
@@ -1072,13 +1077,13 @@ export function chartSheetInput(
   // (`data.angleAspects`), which meant a visible point with no aspects never got a row (unlike
   // every ordinary body, which always gets one), and a hidden point *with* an aspect still did.
   const extraPoints = [
-    ...(options.vertexVisible === true
+    ...(pointVisible('vertex', options)
       ? [{ key: 'vertex', label: 'VX', name: 'Vertex', longitude: data.houses.vertex }]
       : []),
-    ...(options.fortuneVisible === true
+    ...(pointVisible('partOfFortune', options)
       ? [{ key: 'partOfFortune', label: 'PF', name: 'Fortune', longitude: data.partOfFortune }]
       : []),
-    ...(options.spiritVisible === true
+    ...(pointVisible('partOfSpirit', options)
       ? [{ key: 'partOfSpirit', label: 'PS', name: 'Spirit', longitude: data.partOfSpirit }]
       : []),
   ];

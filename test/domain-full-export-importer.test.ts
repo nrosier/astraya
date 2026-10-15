@@ -218,6 +218,33 @@ describe('version check is wired to the right constant (#605 regression)', () =>
   });
 });
 
+describe('FULL_EXPORT_VERSION stayed at 2 through #585 (preferences.settings is never deeply validated)', () => {
+  it('accepts a real archive whose preferences.settings is still pre-#585-shaped, with no objectPolicies field', async () => {
+    const archive = roundTripped(await build([ADA])) as Record<string, unknown>;
+    const preferences = archive.preferences as Record<string, unknown>;
+    const legacyShaped = {
+      ...archive,
+      preferences: {
+        ...preferences,
+        // The exact pre-#585 shape: scattered booleans, no objectPolicies at all. #585
+        // deliberately did not bump FULL_EXPORT_VERSION because validatePreferences only checks
+        // `settings` is an object and never reads a field inside it — this is the regression
+        // test for that claim, not just a doc comment asserting it.
+        settings: {
+          houseSystem: 'P',
+          fortuneVisible: true,
+          vertexVisible: false,
+          chironVisible: false,
+          aspectsToChiron: true,
+          modernPointVisibility: { meanNode: true },
+        },
+      },
+    };
+    const result = validateFullExport(legacyShaped);
+    expect(result.ok).toBe(true);
+  });
+});
+
 describe('stageFullExportRestore', () => {
   it('classifies new/updated/unchanged, and an update only touches the fields that actually differ', async () => {
     const bob: Person = {

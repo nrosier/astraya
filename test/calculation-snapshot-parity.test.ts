@@ -56,15 +56,14 @@ const NON_DEFAULT_SETTINGS: ExtendedSettings = {
   enabledMinorAspects: ['semisextile', 'quincunx'],
   lilithVariant: 'true',
   nodeVariant: 'true',
-  fortuneVisible: true,
-  vertexVisible: true,
-  chironVisible: false,
-  spiritVisible: true,
+  objectPolicies: {
+    ...DEFAULT_EXTENDED_SETTINGS.objectPolicies,
+    chiron: { visible: false, aspectParticipant: false },
+    vertex: { visible: true, aspectParticipant: true },
+    partOfFortune: { visible: true, aspectParticipant: true },
+    partOfSpirit: { visible: true, aspectParticipant: true },
+  },
   midpointsVisible: true,
-  aspectsToChiron: false,
-  aspectsToVertex: true,
-  aspectsToPartOfFortune: true,
-  aspectsToPartOfSpirit: true,
 };
 const NON_DEFAULT_RULERSHIP = 'traditional' as const;
 const SENT = buildCalculationSnapshot(NON_DEFAULT_SETTINGS, NON_DEFAULT_RULERSHIP);

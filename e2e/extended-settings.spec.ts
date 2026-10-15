@@ -87,8 +87,9 @@ test('the settings open as a card, apply together or are dropped, and the button
   await expect(card.getByText('also sets the planetary rulers to Traditional')).toBeVisible();
   await card.getByRole('button', { name: 'Apply and redraw', exact: true }).click();
   await expect(card).toBeHidden();
-  await expect(trigger).toContainText('Part of Fortune');
-  await expect(trigger).toContainText('Chiron hidden');
+  // Fortune/Chiron visibility now live in one unified policy (#585), so the trigger names the
+  // whole policy as changed rather than each affected object individually.
+  await expect(trigger).toContainText('Object visibility customized');
   await expect(trigger).toContainText('changed');
   await openSettings(page);
   await expect(
@@ -158,6 +159,46 @@ test('opening and cancelling the card keeps what is selected on the wheel (apply
   await openSettings(page);
   await closeSettings(page);
   await expect(page.locator('tr.data-table-row-selected')).toContainText('Sun');
+});
+
+test('the unified object-visibility checklist: presets, group actions, and the live count (#585)', async ({ page }) => {
+  test.setTimeout(90_000);
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  await createPerson(page, ADA);
+  await openNatalChart(page);
+  await expect(page.locator('div.chart-wheel')).toBeVisible();
+
+  await openSettings(page);
+  const card = page.locator('dialog.settings-card');
+  const bodiesGroup = card.locator('fieldset.settings-card-group', { hasText: 'Bodies and points' });
+
+  // Starts on no named preset (the shipped default isn't exactly Core/Traditional/All).
+  const presets = bodiesGroup.getByRole('radiogroup', { name: 'Object visibility preset', exact: true });
+  await expect(presets.getByRole('radio', { name: /^Custom/ })).toBeChecked();
+
+  // Choosing "Core" applies a complete policy at once: Jupiter (not core) drops out, Sun stays.
+  await presets.getByRole('radio', { name: /^Core/ }).check();
+  await expect(bodiesGroup.getByLabel('Jupiter — visible', { exact: true })).not.toBeChecked();
+  await expect(bodiesGroup.getByLabel('Sun — visible', { exact: true })).toBeChecked();
+  await expect(presets.getByRole('radio', { name: /^Core/ })).toBeChecked();
+
+  // The Planets group's own "All" button turns every planet back on, independent of the preset.
+  const planetsGroup = bodiesGroup
+    .locator('fieldset.field-group')
+    .filter({ has: page.locator('legend', { hasText: /^Planets$/ }) });
+  await planetsGroup.getByRole('button', { name: 'All', exact: true }).click();
+  await expect(bodiesGroup.getByLabel('Jupiter — visible', { exact: true })).toBeChecked();
+  // No longer any named preset once a group action diverges from it.
+  await expect(presets.getByRole('radio', { name: /^Custom/ })).toBeChecked();
+
+  await card.getByRole('button', { name: 'Apply and redraw', exact: true }).click();
+  await expect(card).toBeHidden();
+  await expect(page.locator('button.extended-settings-trigger')).toContainText('Object visibility customized');
+
+  // A fresh pass against the checklist's own interactive state, not just the dialog at rest.
+  await openSettings(page);
+  const results = await new AxeBuilder({ page }).include('dialog.settings-card').analyze();
+  expect(results.violations.map((v) => v.id)).toEqual([]);
 });
 
 test('the card is not part of the printed page', async ({ page }) => {

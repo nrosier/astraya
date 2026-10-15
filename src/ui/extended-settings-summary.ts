@@ -17,15 +17,11 @@ export type ChangedSetting =
   | 'orbScale'
   | 'boundsScheme'
   | 'minorAspects'
-  | 'fortune'
-  | 'vertex'
-  | 'spirit'
-  | 'chiron'
-  | 'modernPoints'
+  /** Any object's visibility or aspect-participation differs from the defaults (#585) — collapses what used to be six separate flags (fortune/vertex/spirit/chiron/modernPoints/aspectsTo) into one, since they all now live in one `objectPolicies` field. */
+  | 'objectPolicies'
   | 'midpoints'
   | 'lilith'
   | 'node'
-  | 'aspectsTo'
   | 'rainbow';
 
 export function changedSettings(value: ExtendedSettings): readonly ChangedSetting[] {
@@ -36,25 +32,12 @@ export function changedSettings(value: ExtendedSettings): readonly ChangedSettin
   if (value.orbScalePercent !== defaults.orbScalePercent) changed.push('orbScale');
   if (value.boundsScheme !== defaults.boundsScheme) changed.push('boundsScheme');
   if (value.enabledMinorAspects.length !== defaults.enabledMinorAspects.length) changed.push('minorAspects');
-  if (value.fortuneVisible !== defaults.fortuneVisible) changed.push('fortune');
-  if (value.vertexVisible !== defaults.vertexVisible) changed.push('vertex');
-  if (value.spiritVisible !== defaults.spiritVisible) changed.push('spirit');
-  if (value.chironVisible !== defaults.chironVisible) changed.push('chiron');
-  if (JSON.stringify(value.modernPointVisibility) !== JSON.stringify(defaults.modernPointVisibility))
-    changed.push('modernPoints');
+  if (JSON.stringify(value.objectPolicies) !== JSON.stringify(defaults.objectPolicies)) {
+    changed.push('objectPolicies');
+  }
   if (value.midpointsVisible !== defaults.midpointsVisible) changed.push('midpoints');
   if (value.lilithVariant !== defaults.lilithVariant) changed.push('lilith');
   if (value.nodeVariant !== defaults.nodeVariant) changed.push('node');
-  if (
-    value.aspectsToChiron !== defaults.aspectsToChiron ||
-    value.aspectsToLilith !== defaults.aspectsToLilith ||
-    value.aspectsToLunarNodes !== defaults.aspectsToLunarNodes ||
-    value.aspectsToVertex !== defaults.aspectsToVertex ||
-    value.aspectsToPartOfFortune !== defaults.aspectsToPartOfFortune ||
-    value.aspectsToPartOfSpirit !== defaults.aspectsToPartOfSpirit
-  ) {
-    changed.push('aspectsTo');
-  }
   if (value.rainbowZodiac !== defaults.rainbowZodiac) changed.push('rainbow');
   return changed;
 }

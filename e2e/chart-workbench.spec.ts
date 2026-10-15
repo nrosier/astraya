@@ -197,7 +197,11 @@ test('a derived point is selectable from the Placements table by keyboard, with 
   await openNatalChart(page, 'Placements');
   // Part of Spirit is hidden until switched on (#542), like Part of Fortune.
   await openSettings(page);
-  await page.locator('dialog.settings-card').getByRole('checkbox', { name: 'Part of Spirit', exact: true }).check();
+  // The checkbox's accessible name now disambiguates visible/participates in aspects (#585).
+  await page
+    .locator('dialog.settings-card')
+    .getByRole('checkbox', { name: 'Part of Spirit — visible', exact: true })
+    .check();
   await applySettings(page);
   const show = page.getByRole('button', { name: 'Show Part of Spirit on the chart', exact: true });
   await show.focus();
