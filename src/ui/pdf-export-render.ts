@@ -28,8 +28,13 @@ import {
 } from '../chart/symbol-text.js';
 import { deriveExportFilename } from '../domain/export-filename.js';
 import type { PdfPlan } from './pdf-export-plan.js';
+import { fitSvgOnPage } from './pdf-svg-fit.js';
 
 const PAGE_MARGIN = 15;
+/** y where content starts on a fresh page — the same 20 mm every page break below already uses. */
+const PAGE_TOP = 20;
+/** The widest a chart is drawn, even with a whole page free (the width charts were always drawn at before #579). */
+const MAX_SVG_WIDTH = 160;
 
 /**
  * jsPDF's standard built-in fonts (the core PDF fonts, e.g. Helvetica) only cover the WinAnsi
@@ -145,19 +150,21 @@ export async function renderPdfPlan(plan: PdfPlan): Promise<{ blob: Blob; filena
         y += 4;
       }
       if (section.svg !== undefined) {
-        const size = Math.min(contentWidth, 160);
-        const height = (size * section.svg.height) / section.svg.width;
-        // The wheel is a fixed-aspect block that cannot itself be split across a page break (unlike a
-        // table, which can carry on past one): if it wouldn't fit in what's left of the current page,
-        // start it on a fresh one instead of letting it run past the bottom margin and get cut off (#446).
-        if (y + height > pageHeight - PAGE_MARGIN) {
-          doc.addPage();
-          y = 20;
-        }
+        // A chart is a fixed-aspect block that cannot be split across a page break (unlike a table):
+        // it is scaled to fit what is left of this page, under its heading, and only moved to a fresh
+        // page when that would shrink it too far — never drawn past the bottom margin (#446, #579).
+        const fit = fitSvgOnPage(section.svg.width, section.svg.height, y, {
+          left: PAGE_MARGIN,
+          contentWidth,
+          maxWidth: MAX_SVG_WIDTH,
+          top: PAGE_TOP,
+          bottom: pageHeight - PAGE_MARGIN,
+        });
+        if (fit.newPage) doc.addPage();
         const svgEl = mountSvg(section.svg.markup);
         try {
-          await svg2pdf(svgEl, doc, { x: PAGE_MARGIN, y, width: size, height });
-          y += height + 6;
+          await svg2pdf(svgEl, doc, { x: fit.x, y: fit.y, width: fit.width, height: fit.height });
+          y = fit.y + fit.height + 6;
         } finally {
           svgEl.remove();
         }
