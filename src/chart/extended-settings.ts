@@ -22,7 +22,6 @@ import type { ChartCalculationOptions } from '../domain/chart-compute.js';
 import type { PointVisibilityOptions } from '../domain/chart-tables.js';
 import type { Degrees, HouseSystem, Zodiac } from '../ephemeris/types.js';
 import type { SignWedgeStyle } from './wheel.js';
-import { DEFAULT_OBJECT_POLICY, type ObjectPolicy, createObjectPolicy } from './object-policy.js';
 
 export interface ExtendedSettings {
   readonly houseSystem: HouseSystem;
@@ -39,13 +38,6 @@ export interface ExtendedSettings {
   readonly enabledMinorAspects: readonly string[];
   readonly lilithVariant: 'mean' | 'true' | 'interpolated';
   readonly nodeVariant: 'mean' | 'true';
-  /** Unified visibility policy for all calculated objects (#585) — replaces individual point-specific booleans. */
-  readonly objectPolicy: ObjectPolicy;
-  /**
-   * Legacy individual visibility flags — maintained for backward compatibility but should be
-   * read from objectPolicy instead. These will be deprecated in a future version.
-   * @deprecated Use objectPolicy instead
-   */
   readonly fortuneVisible: boolean;
   readonly vertexVisible: boolean;
   readonly chironVisible: boolean;
@@ -114,7 +106,6 @@ export const DEFAULT_EXTENDED_SETTINGS: ExtendedSettings = {
   enabledMinorAspects: [],
   lilithVariant: 'mean',
   nodeVariant: 'mean',
-  objectPolicy: DEFAULT_OBJECT_POLICY,
   fortuneVisible: false,
   vertexVisible: false,
   chironVisible: true,
