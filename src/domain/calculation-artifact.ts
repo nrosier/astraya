@@ -20,9 +20,12 @@
  * synastry, primary directions — adds its own inputs there (target date, partner, orbs, key) and
  * its `resultHash` covers that technique's whole result, not just the natal chart under it.
  *
- * `verifyCalculationArtifact` recomputes any artifact from its own recorded inputs: what a
- * restore (#587) or an auditor runs to tell whether a stored result is still what this engine
- * produces, and, when it is not, which recorded provenance differs.
+ * `verifyCalculationArtifact` recomputes any artifact from its own recorded inputs: what
+ * `full-export-check.ts`'s "Check a calculation file" (#582) runs to tell whether a stored
+ * result is still what this engine produces, and, when it is not, which recorded provenance
+ * differs. (An earlier version of this comment said a restore, #587, called this — it never
+ * did; #587's restore deliberately never reads a `calculation` field at all, by its own module
+ * doc. Corrected here rather than left standing after the GitHub issue thread caught it.)
  */
 /**
  * @module domain/calculation-artifact

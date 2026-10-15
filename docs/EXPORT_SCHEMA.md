@@ -116,6 +116,18 @@ JSON Schema file does enumerate them structurally.
   claiming a "new" person who, after confirming, stays invisible. The UI (`PreferencesView.tsx`, Data &
   privacy) previews this before writing anything, and applies it as one `store.mutate` call so the whole
   restore commits atomically (one IndexedDB transaction) or not at all.
+- **Check** (#582 follow-up). `verifyCalculationArtifact` (`src/domain/calculation-artifact.ts`) existed and
+  was tested in isolation but had no caller anywhere in the app — #582's own stated goal, verifying an old
+  result after an ephemeris/timezone/policy upgrade, had no UI. `src/domain/full-export-check.ts`'s
+  `checkExportedCalculations` is the one place that reads a `calculation` field at all, deliberately apart from
+  restore: checking whether an old chart still reproduces is a different question from deciding whether to
+  restore people from the same file, and restore's own validator never trusts that field for what it writes.
+  It reads `calculation` straight off the file's raw, unvalidated `people` array (matched by index against
+  `validateFullExport`'s trusted `id`/`displayName`), and relies on `verifyCalculationArtifact`'s own SHA-256
+  integrity check — rather than a second parallel shape validator — to turn a malformed artifact into an
+  `'inconsistent'` verdict or a caught, per-person `'error'`, never a crash. The UI (`PreferencesView.tsx`,
+  Data & privacy, "Check a calculation file…") only ever reads a file and shows verified/changed/inconsistent/
+  no-artifact/error per person — it writes nothing, so unlike Restore it has no confirm step.
 
 ## Version history
 

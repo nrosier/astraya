@@ -4,10 +4,66 @@
 /**
  * @module ui/PreferencesView.messages
  * @purpose English/Dutch i18n strings for the Preferences workspace.
- * @conventions Co-located i18n file exporting `{ en, nl }`, consumed via `useMessages()`. `restoreInvalid` formats an `ImportError` from `domain/full-export-importer.js` per locale, rather than exposing its internal `kind`/`path` strings directly to a reader.
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed via `useMessages()`. `restoreInvalid` formats an `ImportError` from `domain/full-export-importer.js` per locale, rather than exposing its internal `kind`/`path` strings directly to a reader. `checkResult` does the same for a `CalculationCheckOutcome` from `domain/full-export-check.js` (#582), via a per-locale word lookup declared once and reused rather than duplicated inline.
  * @exports preferencesViewMessages
  */
 import type { ImportError } from '../domain/full-export-importer.js';
+import type { CalculationCheckOutcome } from '../domain/full-export-check.js';
+import type { ProvenanceDifference } from '../domain/calculation-artifact.js';
+
+type CheckOutcomeWords = Record<CalculationCheckOutcome['kind'], string>;
+type ProvenanceFieldWords = Record<ProvenanceDifference['field'], string>;
+
+function formatCheckOutcome(
+  outcome: CalculationCheckOutcome,
+  words: CheckOutcomeWords,
+  fieldWords: ProvenanceFieldWords,
+): string {
+  switch (outcome.kind) {
+    case 'changed':
+      return outcome.differences.length === 0
+        ? words.changed
+        : `${words.changed}: ${outcome.differences.map((difference) => fieldWords[difference.field]).join(', ')}`;
+    case 'error':
+      return `${words.error}: ${outcome.message}`;
+    default:
+      return words[outcome.kind];
+  }
+}
+
+const enCheckOutcomeWord: CheckOutcomeWords = {
+  'no-artifact': 'no calculation to check',
+  error: 'could not check',
+  verified: 'verified',
+  inconsistent: 'inconsistent',
+  changed: 'changed',
+};
+
+const nlCheckOutcomeWord: CheckOutcomeWords = {
+  'no-artifact': 'geen berekening om te controleren',
+  error: 'kon niet worden gecontroleerd',
+  verified: 'geverifieerd',
+  inconsistent: 'inconsistent',
+  changed: 'gewijzigd',
+};
+
+const enProvenanceFieldWord: ProvenanceFieldWords = {
+  astrayaVersion: 'app version',
+  swephVersion: 'ephemeris engine version',
+  ephemerisAssets: 'ephemeris data files',
+  tzdb: 'timezone database',
+  timeResolution: 'birth-time resolution',
+  houseSystem: 'house system',
+};
+
+const nlProvenanceFieldWord: ProvenanceFieldWords = {
+  astrayaVersion: 'appversie',
+  swephVersion: 'versie van de ephemeris-engine',
+  ephemerisAssets: 'ephemeris-gegevensbestanden',
+  tzdb: 'tijdzonedatabase',
+  timeResolution: 'resolutie van de geboortetijd',
+  houseSystem: 'huizensysteem',
+};
 
 const en = {
   heading: 'Preferences',
@@ -71,6 +127,7 @@ const en = {
       ? `, ${String(deletedLocallyCount)} already deleted on this device (their data will update, but they will stay hidden under Deleted)`
       : '') +
     '. Nothing has been written yet.',
+  restorePreviewHeading: 'What this restore would change',
   restoreNameColumn: 'Name',
   restoreStatusColumn: 'Status',
   restoreNoName: '(no name)',
@@ -94,6 +151,17 @@ const en = {
   restoreApplied: (newCount: number, updatedCount: number, deletedLocallyCount: number): string =>
     `Restore applied: ${String(newCount)} new, ${String(updatedCount + deletedLocallyCount)} updated.`,
   restoreFailed: (message: string): string => `The restore failed: ${message}`,
+  checkHint:
+    'Check whether a full export’s recorded natal calculations still reproduce on this device’s current engine and data — useful after an app, ephemeris, or timezone-database update. Nothing is written; this only reads the file.',
+  checkFromFile: 'Check a calculation file…',
+  checkPreparing: 'Reading and checking the file…',
+  checkResultsHeading: 'What this file’s calculations check against',
+  checkResultColumn: 'Result',
+  checkResult: (outcome: CalculationCheckOutcome): string =>
+    formatCheckOutcome(outcome, enCheckOutcomeWord, enProvenanceFieldWord),
+  checkStaged: (verified: number, changed: number, inconsistent: number, noArtifact: number, error: number): string =>
+    `${String(verified)} verified, ${String(changed)} changed, ${String(inconsistent)} inconsistent, ${String(noArtifact)} with no calculation to check, ${String(error)} could not be checked.`,
+  checkFailed: (message: string): string => `The check failed: ${message}`,
 };
 
 const nl: typeof en = {
@@ -160,6 +228,7 @@ const nl: typeof en = {
       ? `, ${String(deletedLocallyCount)} al verwijderd op dit apparaat (hun gegevens worden bijgewerkt, maar ze blijven verborgen onder Verwijderd)`
       : '') +
     '. Er is nog niets geschreven.',
+  restorePreviewHeading: 'Wat dit herstel zou wijzigen',
   restoreNameColumn: 'Naam',
   restoreStatusColumn: 'Status',
   restoreNoName: '(geen naam)',
@@ -183,6 +252,17 @@ const nl: typeof en = {
   restoreApplied: (newCount: number, updatedCount: number, deletedLocallyCount: number): string =>
     `Herstel toegepast: ${String(newCount)} nieuw, ${String(updatedCount + deletedLocallyCount)} bijgewerkt.`,
   restoreFailed: (message: string): string => `Het herstellen is mislukt: ${message}`,
+  checkHint:
+    'Controleer of de geboortehoroscoop-berekeningen uit een volledige export nog hetzelfde resultaat geven met de huidige rekenmachine en gegevens van dit apparaat — nuttig na een update van de app, de ephemeris of de tijdzonedatabase. Er wordt niets geschreven; dit leest alleen het bestand.',
+  checkFromFile: 'Berekening controleren…',
+  checkPreparing: 'Bestand wordt gelezen en gecontroleerd…',
+  checkResultsHeading: 'Waartegen de berekeningen uit dit bestand zijn gecontroleerd',
+  checkResultColumn: 'Resultaat',
+  checkResult: (outcome: CalculationCheckOutcome): string =>
+    formatCheckOutcome(outcome, nlCheckOutcomeWord, nlProvenanceFieldWord),
+  checkStaged: (verified: number, changed: number, inconsistent: number, noArtifact: number, error: number): string =>
+    `${String(verified)} geverifieerd, ${String(changed)} gewijzigd, ${String(inconsistent)} inconsistent, ${String(noArtifact)} zonder berekening om te controleren, ${String(error)} konden niet worden gecontroleerd.`,
+  checkFailed: (message: string): string => `De controle is mislukt: ${message}`,
 };
 
 export const preferencesViewMessages = { en, nl };
