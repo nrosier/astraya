@@ -29,6 +29,7 @@ import {
 import { deriveExportFilename } from '../domain/export-filename.js';
 import type { PdfPlan } from './pdf-export-plan.js';
 import { fitSvgOnPage } from './pdf-svg-fit.js';
+import { normalizeSvgForPdf } from './pdf-svg-normalize.js';
 
 const PAGE_MARGIN = 15;
 /** y where content starts on a fresh page — the same 20 mm every page break below already uses. */
@@ -72,22 +73,10 @@ function wrapAndPrint(doc: jsPDF, text: string, x: number, y: number, maxWidth: 
   return y + lines.length * lineHeight;
 }
 
-/**
- * svg2pdf.js's own CSS parser does not resolve `var(--name, fallback)` (used by `standalone-svg.ts` for the
- * drawn symbols' line weight, #419): it hands the unresolved text on to jsPDF as a stroke width, which throws
- * `jsPDF.scale: Invalid argument` the moment it tries to scale `NaN`. The live app and the SVG/PNG export never
- * hit this — a browser's own CSS engine resolves it before anything is drawn — only this one path does, since
- * svg2pdf re-parses the markup itself rather than reading computed styles. Substituting the fallback is exact
- * for the default (regular) line weight, which is what every exported chart uses here regardless of the device
- * preference it was set to — a smaller scope cut than resolving each element's own inline override, left for later.
- */
-function resolveCssVariables(markup: string): string {
-  return markup.replace(/var\(\s*--[\w-]+\s*,\s*([^)]+?)\s*\)/g, '$1');
-}
-
 /** Parses a standalone SVG string into a detached `SVGSVGElement`, mounted off-screen so font/text metrics resolve. */
 function mountSvg(markup: string): SVGSVGElement {
-  const parsed = new DOMParser().parseFromString(resolveCssVariables(markup), 'image/svg+xml').documentElement;
+  // svg2pdf.js reads CSS itself and gets `var()`, `rem` and numeric weights wrong (#580, #581) — see pdf-svg-normalize.ts.
+  const parsed = new DOMParser().parseFromString(normalizeSvgForPdf(markup), 'image/svg+xml').documentElement;
   const el = parsed as unknown as SVGSVGElement;
   el.style.position = 'fixed';
   el.style.left = '-99999px';
