@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Astraya Audit Issues Status</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    header {
+      background: white;
+      border-radius: 8px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 0.5rem;
+      font-size: 2rem;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    .stat-card {
+      background: #f5f5f5;
+      padding: 1rem;
+      border-radius: 6px;
+      border-left: 4px solid #667eea;
+    }
+    .stat-number {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #667eea;
+    }
+    .stat-label {
+      font-size: 0.875rem;
+      color: #666;
+      margin-top: 0.25rem;
+    }
+    .issues-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 1.5rem;
+    }
+    .issue-card {
+      background: white;
+      border-radius: 8px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      border-top: 4px solid #ccc;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .issue-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+    }
+    .issue-card.done {
+      border-top-color: #10b981;
+      background: #f0fdf4;
+    }
+    .issue-card.ready {
+      border-top-color: #3b82f6;
+      background: #f0f9ff;
+    }
+    .issue-card.blocked {
+      border-top-color: #ef4444;
+      background: #fef2f2;
+    }
+    .issue-card.complex {
+      border-top-color: #f59e0b;
+      background: #fffbf0;
+    }
+    .issue-number {
+      font-weight: bold;
+      color: #667eea;
+      font-size: 1.1rem;
+    }
+    .issue-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin: 0.5rem 0;
+      color: #333;
+    }
+    .issue-scope {
+      font-size: 0.875rem;
+      color: #666;
+      margin-bottom: 0.75rem;
+    }
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .badge.status-done {
+      background: #d1fae5;
+      color: #065f46;
+    }
+    .badge.status-ready {
+      background: #dbeafe;
+      color: #0c4a6e;
+    }
+    .badge.status-blocked {
+      background: #fee2e2;
+      color: #7c2d12;
+    }
+    .badge.effort-easy {
+      background: #c6f6d5;
+      color: #22543d;
+    }
+    .badge.effort-moderate {
+      background: #fce7f3;
+      color: #831843;
+    }
+    .badge.effort-complex {
+      background: #fed7aa;
+      color: #92400e;
+    }
+    .dependency {
+      font-size: 0.875rem;
+      color: #dc2626;
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid #e5e7eb;
+    }
+    .dependency strong {
+      font-weight: 600;
+    }
+    section {
+      margin-bottom: 2rem;
+    }
+    section > h2 {
+      background: white;
+      padding: 1rem 1.5rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      color: #333;
+      font-size: 1.25rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .critical-path {
+      background: white;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      border-left: 4px solid #dc2626;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .critical-path h3 {
+      color: #dc2626;
+      margin-bottom: 1rem;
+      font-size: 1.1rem;
+    }
+    .critical-path ol {
+      margin-left: 1.5rem;
+      color: #666;
+      line-height: 1.8;
+    }
+    .critical-path li {
+      margin-bottom: 0.75rem;
+    }
+    .critical-path strong {
+      color: #333;
+    }
+    footer {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 8px;
+      text-align: center;
+      color: #666;
+      font-size: 0.875rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🔍 Astraya Audit Issues Status</h1>
+      <p style="color: #666; margin-top: 0.5rem;">Comprehensive Audit Fix Implementation Progress</p>
+      <div class="stats">
+        <div class="stat-card">
+          <div class="stat-number">4</div>
+          <div class="stat-label">Completed</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">3</div>
+          <div class="stat-label">Ready to Start</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">4</div>
+          <div class="stat-label">Blocked (Dependencies)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">3</div>
+          <div class="stat-label">Complex Issues</div>
+        </div>
+      </div>
+    </header>
+
+    <section>
+      <div class="critical-path">
+        <h3>🎯 Recommended Next Steps</h3>
+        <ol>
+          <li><strong>#582</strong> - Calculation artifact (COMPLEX, now unblocked after #583 ✅)</li>
+          <li><strong>#587</strong> - Export restore/import (MODERATE, independent)</li>
+          <li><strong>#589</strong> - Lazy chart enrichments (MODERATE, independent)</li>
+          <li><strong>#588</strong> - Tier 2 DTOs (MODERATE, independent)</li>
+          <li><strong>#581</strong> - PDF elements amounts (MODERATE, independent)</li>
+        </ol>
+      </div>
+    </section>
+
+    <section>
+      <h2>✅ Completed Issues (4)</h2>
+      <div class="issues-grid">
+        <div class="issue-card done">
+          <div class="issue-number">#586 [I18N-01]</div>
+          <div class="issue-title">Comparison i18n</div>
+          <div class="issue-scope">Localize chart comparison labels</div>
+          <div class="badges">
+            <span class="badge status-done">Done</span>
+            <span class="badge effort-easy">Easy</span>
+          </div>
+          <div style="font-size: 0.875rem; color: #666; margin-top: 0.75rem;">
+            ✓ PR #594 merged<br>
+            ✓ Added en/nl message keys<br>
+            ✓ Updated ChartView.tsx
+          </div>
+        </div>
+
+        <div class="issue-card done">
+          <div class="issue-number">#584 [SEC-01]</div>
+          <div class="issue-title">GitHub Actions pinning</div>
+          <div class="issue-scope">Pin workflows to commit SHAs</div>
+          <div class="badges">
+            <span class="badge status-done">Done</span>
+            <span class="badge effort-easy">Easy</span>
+          </div>
+          <div style="font-size: 0.875rem; color: #666; margin-top: 0.75rem;">
+            ✓ PR #595 merged<br>
+            ✓ Pinned 8 actions<br>
+            ✓ ci.yml & docker.yml updated
+          </div>
+        </div>
+
+        <div class="issue-card done">
+          <div class="issue-number">#583 [QUAL-01]</div>
+          <div class="issue-title">Snapshot validation</div>
+          <div class="issue-scope">Strict validation against registries</div>
+          <div class="badges">
+            <span class="badge status-done">Done</span>
+            <span class="badge effort-moderate">Moderate</span>
+          </div>
+          <div style="font-size: 0.875rem; color: #666; margin-top: 0.75rem;">
+            ✓ PR #596 merged<br>
+            ✓ House system validation<br>
+            ✓ Aspect key validation
+          </div>
+        </div>
+
+        <div class="issue-card done">
+          <div class="issue-number">#592 [DOC-01]</div>
+          <div class="issue-title">Documentation reconciliation</div>
+          <div class="issue-scope">Update export schema docs</div>
+          <div class="badges">
+            <span class="badge status-done">Done</span>
+            <span class="badge effort-easy">Easy</span>
+          </div>
+          <div style="font-size: 0.875rem; color: #666; margin-top: 0.75rem;">
+            ✓ PR #593 merged<br>
+            ✓ EXPORT_SCHEMA.md updated<br>
+            ✓ Before v0.38.0 release
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>🚀 Ready to Start (3)</h2>
+      <div class="issues-grid">
+        <div class="issue-card ready">
+          <div class="issue-number">#587 [LOCAL-01]</div>
+          <div class="issue-title">Export restore/import</div>
+          <div class="issue-scope">Validated restore with conflict preview</div>
+          <div class="badges">
+            <span class="badge status-ready">Ready</span>
+            <span class="badge effort-moderate">Moderate</span>
+          </div>
+          <div style="font-size: 0.875rem; color: #666; margin-top: 0.75rem;">
+            Files: src/domain/full-export.ts<br>
+            New importer module
+          </div>
+        </div>
+
+        <div class="issue-card ready">
+          <div class="issue-number">#589 [PERF-01]</div>
+          <div class="issue-title">Lazy chart enrichments</div>
+          <div class="issue-scope">Split core from enrichments, cache by artifact</div>
+          <div class="badges">
+            <span class="badge status-ready">Ready</span>
+            <span class="badge effort-moderate">Moderate</span>
+          </div>
+          <div style="font-size: 0.875rem; color: #666; margin-top: 0.75rem;">
+            Files: src/domain/chart-compute.ts<br>
+            src/ephemeris/worker.ts
+          </div>
+        </div>
+
+        <div class="issue-card ready">
+          <div class="issue-number">#588 [ARCH-01]</div>
+          <div class="issue-title">Tier 2 DTOs</div>
+          <div class="issue-scope">Extract shared DTOs into pure module</div>
+          <div class="badges">
+            <span class="badge status-ready">Ready</span>
+            <span class="badge effort-moderate">Moderate</span>
+          </div>
+          <div style="font-size: 0.875rem; color: #666; margin-top: 0.75rem;">
+            New: src/interpretation/tier2-contract.ts<br>
+            Client/server code updates
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>⏸️ Blocked by Dependencies (4)</h2>
+      <div class="issues-grid">
+        <div class="issue-card blocked">
+          <div class="issue-number">#582 [ASTRO-01]</div>
+          <div class="issue-title">Calculation artifact</div>
+          <div class="issue-scope">Immutable artifact with SHA-256 hash</div>
+          <div class="badges">
+            <span class="badge status-blocked">NOW READY</span>
+            <span class="badge effort-complex">Complex</span>
+          </div>
+          <div class="dependency">
+            <strong>✅ Unblocked:</strong> #583 complete
+          </div>
+          <div style="font-size: 0.875rem; color: #666; margin-top: 0.75rem;">
+            Files: src/domain/chart-share.ts<br>
+            src/ui/ChartView.tsx
+          </div>
+        </div>
+
+        <div class="issue-card blocked">
+          <div class="issue-number">#585 [UX-01]</div>
+          <div class="issue-title">All-body visibility policy</div>
+          <div class="issue-scope">Replace point booleans with ObjectPolicy</div>
+          <div class="badges">
+            <span class="badge status-blocked">Blocked</span>
+            <span class="badge effort-complex">Complex</span>
+          </div>
+          <div class="dependency">
+            <strong>⏳ Waiting on:</strong> Architectural review
+          </div>
+        </div>
+
+        <div class="issue-card blocked">
+          <div class="issue-number">#590 [DOMAIN-01]</div>
+          <div class="issue-title">Orb profiles</div>
+          <div class="issue-scope">Per-body/per-aspect rules with provenance</div>
+          <div class="badges">
+            <span class="badge status-blocked">Blocked</span>
+            <span class="badge effort-complex">Complex</span>
+          </div>
+          <div class="dependency">
+            <strong>⏳ Waiting on:</strong> Architectural review
+          </div>
+        </div>
+
+        <div class="issue-card blocked">
+          <div class="issue-number">#591 [DOMAIN-02]</div>
+          <div class="issue-title">AAF/A93 interchange</div>
+          <div class="issue-scope">Research & implement verified standard</div>
+          <div class="badges">
+            <span class="badge status-blocked">Blocked</span>
+            <span class="badge effort-complex">Complex</span>
+          </div>
+          <div class="dependency">
+            <strong>⏳ Depends on:</strong> #590 complete
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>⚡ Complex Issues (3 PDF)</h2>
+      <div class="issues-grid">
+        <div class="issue-card complex">
+          <div class="issue-number">#579</div>
+          <div class="issue-title">PDF SVG scaling overflow</div>
+          <div class="issue-scope">Scale SVG graphs to fit page</div>
+          <div class="badges">
+            <span class="badge status-blocked">Pending</span>
+            <span class="badge effort-complex">Complex</span>
+          </div>
+          <div style="font-size: 0.875rem; color: #666; margin-top: 0.75rem;">
+            Files: src/domain/pdf-export-plan.ts<br>
+            SVG rendering modules
+          </div>
+        </div>
+
+        <div class="issue-card complex">
+          <div class="issue-number">#580</div>
+          <div class="issue-title">PDF missing text labels</div>
+          <div class="issue-scope">Ensure text elements export to PDF</div>
+          <div class="badges">
+            <span class="badge status-blocked">Pending</span>
+            <span class="badge effort-complex">Complex</span>
+          </div>
+          <div style="font-size: 0.875rem; color: #666; margin-top: 0.75rem;">
+            Files: SVG rendering modules<br>
+            (wheel, matrix, aspects)
+          </div>
+        </div>
+
+        <div class="issue-card complex">
+          <div class="issue-number">#581</div>
+          <div class="issue-title">PDF elements missing amounts</div>
+          <div class="issue-scope">Fix text rendering in elements grid</div>
+          <div class="badges">
+            <span class="badge status-ready">Ready</span>
+            <span class="badge effort-moderate">Moderate</span>
+          </div>
+          <div style="font-size: 0.875rem; color: #666; margin-top: 0.75rem;">
+            Files: src/ui/EmphasisGrid.tsx<br>
+            SVG rendering
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <p>📊 Status as of 2026-10-15 | Total Issues: 14 | Completed: 4 (29%) | Estimated Effort Remaining: ~18 hours</p>
+      <p style="margin-top: 0.5rem;">Workflow: branch per issue → commit with attribution → PR → auto-merge</p>
+    </footer>
+  </div>
+</body>
+</html>
