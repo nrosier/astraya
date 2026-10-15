@@ -116,8 +116,9 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `moment-labels.ts` — Wording for resolved birth-moment provenance + warnings. Deps: `time/types`.
 - `oidc-pkce.ts` — Client-side PKCE flow for Authentik OIDC sign-in. Deps: Web Crypto, sessionStorage.
 - `pdf-export-plan.ts` — Builds ordered PDF content plan from user selection. Deps: `domain/chart-compute`, `domain/chart-tables`, `domain/synastry`, `domain/composite`, `chart/chart-sheet`, `interpretation/report`, `ChartView.messages`, `SynastryView`, `TransitView`, `PeriodicTransitView.messages`, `ProgressionsView.messages`, `SolarArcView.messages`, `ProfectionsView`, `EclipsesView.messages`.
-- `pdf-export-render.ts` — Draws PDF via jsPDF + svg2pdf.js + jspdf-autotable (lazy-loaded). Deps: `./pdf-export-plan`, `./pdf-svg-fit`, `chart/symbol-text`, `domain/export-filename`.
+- `pdf-export-render.ts` — Draws PDF via jsPDF + svg2pdf.js + jspdf-autotable (lazy-loaded). Deps: `./pdf-export-plan`, `./pdf-svg-fit`, `./pdf-svg-normalize`, `chart/symbol-text`, `domain/export-filename`.
 - `pdf-svg-fit.ts` — Fits a chart SVG into the space left on a PDF page, never past the bottom margin (#579). Deps: none.
+- `pdf-svg-normalize.ts` — Rewrites a chart SVG's CSS into what svg2pdf.js renders (`var()` fallbacks, `rem` as px, weights as normal/bold) so PDF chart text is not lost (#580, #581). Deps: none.
 - `pdf-export.messages.ts` — en/nl for PDF export builder. Deps: `domain/pdf-export-sections`, `./chart-sections`.
 - `people-list.messages.ts` — en/nl for incomplete person-record descriptions. Deps: none.
 - `people-list.ts` — Sorts people + flags caveated resolutions + composes summaries. Deps: `time/resolve`, `domain/person`.
