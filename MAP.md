@@ -1,0 +1,41 @@
+# Root — Map
+
+Top-level application, release, and audit artifacts. Read the local map in each major subdirectory before inspecting its contents.
+
+- `.github/` — CI, Docker, Pages, and release automation. Deps: `package.json`, Docker Hub, GitHub Actions.
+- `data/` — Runtime SQLite database mount location and ignored generated data. Deps: `server/db.ts`, Docker volume.
+- `docs/` — Product, architecture, release, dependency, and audit documentation. Deps: source and test maps.
+- `e2e/` — Playwright browser workflows and accessibility regression coverage. Deps: `dist/`, `server/index.ts`.
+- `public/` — Browser-served static assets, ephemeris files, and split corpus chunks. Deps: Vite, `scripts`.
+- `scripts/` — Build, release, ephemeris, corpus, and Docker gate scripts. Deps: `package.json`, source assets.
+- `server/` — Fastify auth, sync, data, and optional Tier 2 runtime services. Deps: `src/`, SQLite.
+- `src/` — Browser application, chart engine, ephemeris boundary, persistence, and UI. Deps: package runtime dependencies.
+- `test/` — Vitest unit, integration, golden-chart, and architecture-boundary tests. Deps: `src/`, `server/`.
+- `tools/` — Build-time corpus and MCP tooling; never browser-shipped. Deps: `src/interpretation`.
+- `.claudeignore` — Search exclusions for generated, sensitive, corpus, and build artifacts. Deps: agent tooling.
+- `.dockerignore` — Docker build-context exclusions. Deps: Dockerfile.
+- `.env.example` — Documented environment-variable template with no secrets. Deps: server, corpus tooling, Vite.
+- `.gitignore` — Git exclusions, including local runtime and secret files. Deps: Git.
+- `AGENTS.md` — Repository operating, quality, documentation, and release rules. Deps: all contributors.
+- `CHANGELOG.md` — Versioned product change history. Deps: release workflow.
+- `CLAUDE.md` — Legacy-compatible contributor guidance mirroring repository rules. Deps: `docs/DEPENDENCIES.md`.
+- `COMPREHENSIVE_AUDIT.md` — Evidence-backed nine-domain repository and astrological-engine audit dated 2026-10-14. Deps: source, tests, CI, Docker, documentation.
+- `Dockerfile` — Production container image, CSP/health release gate target. Deps: `server/`, `dist/`, `public/`.
+- `Dockerfile.alpine` — Alternate Alpine-based container definition. Deps: package runtime.
+- `LICENSE` — AGPL-3.0-or-later license text. Deps: none.
+- `NOTICE` — Third-party and distribution notices. Deps: dependencies.
+- `README.md` — Project overview, install, usage, and release badge. Deps: package metadata.
+- `eslint.config.js` — Strict TypeScript, architecture-boundary, and module-header lint configuration. Deps: ESLint.
+- `index.html` — Vite SPA document shell and baseline CSP meta tag. Deps: `src/main.tsx`.
+- `package.json` — Project metadata, scripts, runtime, and development dependencies. Deps: npm.
+- `package-lock.json` — Locked npm dependency graph. Deps: `package.json`.
+- `playwright.config.ts` — Browser-test server, projects, and retry configuration. Deps: `e2e/`, `dist/`.
+- `renovate.json` — Dependency update and Swiss Ephemeris review policy. Deps: Renovate.
+- `tsconfig.json` — TypeScript project-reference root. Deps: TypeScript configs.
+- `tsconfig.app.json` — Strict browser application TypeScript configuration. Deps: `src/`.
+- `tsconfig.e2e.json` — Playwright TypeScript configuration. Deps: `e2e/`.
+- `tsconfig.node.json` — Node/Vite TypeScript configuration. Deps: scripts and config files.
+- `tsconfig.server.json` — Server TypeScript configuration. Deps: `server/`.
+- `tsconfig.test.json` — Vitest TypeScript configuration. Deps: `test/`.
+- `vite.config.ts` — Main Vite build, chunking, CSP, and asset configuration. Deps: `src/`, `public/`.
+- `vite.sw.config.ts` — Service-worker Vite build configuration. Deps: `src/sw.ts`.

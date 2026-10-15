@@ -95,8 +95,9 @@ JSON Schema file does enumerate them structurally.
   without changing its shape (e.g. a sign-index convention changing from 0-based to 1-based).
 - There is currently no reader/importer for `FullExport` (`buildFullExport` is write-only) — so there is no
   automated backward-compatibility _test_ against an old version's output yet. A future importer, if built, should
-  treat an unrecognised `version` the same way `calculation-snapshot.ts`'s own `parseCalculationSnapshot` treats
-  unrecognised settings: fail closed and name what's unsupported, never guess.
+  strictly validate the schema version and reject unsupported versions with a clear error. Note: `parseCalculationSnapshot`
+  currently uses best-effort defaulting for missing fields rather than strict validation (see #583); a future importer
+  should instead fail closed and name what's unsupported, never guess or silently default.
 
 ## Version history
 
