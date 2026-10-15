@@ -26,7 +26,7 @@ jobs:
     outputs:
       moved-latest: ${{ steps.latest.outputs.tags != '' }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       # A pull request from a fork gets no secrets, so the image name cannot be
       # built from DOCKERHUB_USERNAME there. Building is still worth doing on a fork
@@ -39,20 +39,20 @@ jobs:
           OWNER: ${{ secrets.DOCKERHUB_USERNAME }}
         run: echo "name=${OWNER:-fork-pr-build}/astraya" >> "$GITHUB_OUTPUT"
 
-      - uses: docker/setup-qemu-action@v4
-      - uses: docker/setup-buildx-action@v4
+      - uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
 
       # A pull request builds to verify the Dockerfile still works, and stops there.
       - name: Log in to Docker Hub
         if: github.event_name != 'pull_request'
-        uses: docker/login-action@v4
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Work out the tags
         id: meta
-        uses: docker/metadata-action@v6
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6
         with:
           images: ${{ steps.image.outputs.name }}
           tags: |
@@ -91,7 +91,7 @@ jobs:
       # still needs to actually run the image below) builds amd64 only and loads it
       # instead of pushing it. A tag push builds both platforms and pushes as before.
       - name: Build ${{ github.event_name == 'pull_request' && '(amd64, local)' || 'and push' }}
-        uses: docker/build-push-action@v7
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
         with:
           context: .
           platforms: ${{ github.event_name == 'pull_request' && 'linux/amd64' || 'linux/amd64,linux/arm64' }}
