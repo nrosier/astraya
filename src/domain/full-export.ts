@@ -39,6 +39,8 @@ import {
   type ExtendedSettings,
 } from '../chart/extended-settings.js';
 import { housesAreDefined, computeChartData, type ChartData } from './chart-compute.js';
+import { buildCalculationArtifact, type CalculationArtifact } from './calculation-artifact.js';
+import { buildCalculationSnapshot, type CalculationSnapshot } from './calculation-snapshot.js';
 import { computeHarmonic, harmonicPositionProvenance } from './harmonic.js';
 import {
   allMidpointsRows,
@@ -112,6 +114,12 @@ export interface ExportedPerson {
   readonly harmonicCharts?: readonly ExportedHarmonicChart[];
   /** Why no chart is included for a person who has a birth moment, if its calculation failed. */
   readonly chartError?: string;
+  /**
+   * The natal calculation's artifact (#582): its complete inputs, execution provenance and
+   * SHA-256 fingerprints — what a later reader recomputes against to verify `natalChart` still
+   * comes out the same. Absent where Web Crypto is unavailable (a non-secure context).
+   */
+  readonly calculation?: CalculationArtifact;
 }
 
 export interface FullExport {
@@ -206,6 +214,23 @@ async function harmonicExports(
   );
 }
 
+/** The natal artifact, or `undefined` where it cannot be built (no Web Crypto) — never a reason to fail the export. */
+async function natalArtifact(
+  snapshot: CalculationSnapshot,
+  moment: NonNullable<Person['moment']>,
+  data: ChartData,
+  params: { readonly provider: EphemerisProvider; readonly appVersion: string },
+): Promise<CalculationArtifact | undefined> {
+  try {
+    return await buildCalculationArtifact(snapshot, moment, data, {
+      astrayaVersion: params.appVersion,
+      swephVersion: await params.provider.version(),
+    });
+  } catch {
+    return undefined;
+  }
+}
+
 export async function buildFullExport(params: {
   readonly people: readonly Person[];
   readonly provider: EphemerisProvider;
@@ -248,10 +273,17 @@ export async function buildFullExport(params: {
             person.customPoints,
           )
         : undefined;
+      const calculation = await natalArtifact(
+        buildCalculationSnapshot(params.settings, params.rulership, person.customPoints ?? []),
+        person.moment,
+        data,
+        params,
+      );
       people.push({
         ...base,
         natalChart: chartExport(data, params.rulership, visibility, withHouses),
         ...(harmonicCharts === undefined ? {} : { harmonicCharts }),
+        ...(calculation === undefined ? {} : { calculation }),
       });
     } catch (error) {
       // One person's chart failing must not cost the user everyone else's data.

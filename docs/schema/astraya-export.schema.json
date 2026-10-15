@@ -54,7 +54,27 @@
         "missing": { "type": "array", "items": { "type": "string" } },
         "natalChart": { "$ref": "#/$defs/exportedChart" },
         "harmonicCharts": { "type": "array", "items": { "$ref": "#/$defs/exportedHarmonicChart" } },
-        "chartError": { "type": "string" }
+        "chartError": { "type": "string" },
+        "calculation": {
+          "type": "object",
+          "description": "CalculationArtifact (#582) — see src/domain/calculation-artifact.ts",
+          "required": ["moment", "snapshot", "provenance", "fingerprint"],
+          "properties": {
+            "moment": { "type": "object" },
+            "snapshot": { "type": "object" },
+            "provenance": { "type": "object" },
+            "fingerprint": {
+              "type": "object",
+              "required": ["algorithm", "snapshotHash", "inputHash", "resultHash"],
+              "properties": {
+                "algorithm": { "const": "sha-256" },
+                "snapshotHash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+                "inputHash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+                "resultHash": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+              }
+            }
+          }
+        }
       }
     },
     "exportedChart": {

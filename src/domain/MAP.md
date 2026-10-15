@@ -3,7 +3,7 @@
 One level above `src/astrology/`: composes pure astrological calculations into shapes screens render. Still pure/async, no DOM/React.
 
 - `astrocartography.ts` — Astrocartography lines (MC/IC/AC/DC) + Local Space + relocated houses. Deps: `astrology/astrocartography`, `ephemeris/types`.
-- `calculation-artifact.ts` — Completed calculation as snapshot + execution provenance + SHA-256 input/result fingerprints (#582). Deps: `./calculation-snapshot`, `./chart-compute`, `ephemeris/assets`.
+- `calculation-artifact.ts` — Completed calculation as birth moment + snapshot + execution and time-resolution provenance + SHA-256 input/result fingerprints (#582). Deps: `./calculation-snapshot`, `./chart-compute`, `ephemeris/assets`, `time/resolve`.
 - `calculation-snapshot.ts` — Versioned calculation snapshot (settings, rulership, custom points) with validated parsing and a short provenance tag. Deps: `chart/extended-settings`, `astrology/rulership`, `./person`, `store/ops` (JsonValue).
 - `chart-compute.ts` — Single source of truth: "what is in this chart" (positions, houses, aspects, dignities, sect, Arabic parts, declinations, fixed stars). Deps: `astrology/aspects`, `astrology/rulership`, `astrology/arabic-parts`, `astrology/sect`, `astrology/bodies`.
 - `chart-share.ts` — Share chart via URL (no server round-trip). Encodes/decodes birth moment + settings as versioned query params. Deps: `time/encode`, `store/ops` (JsonValue).
@@ -15,7 +15,7 @@ One level above `src/astrology/`: composes pure astrological calculations into s
 - `draconic.ts` — Draconic chart (lunar-node-based zodiac shift, same houses). Deps: `astrology/draconic`, `./chart-compute`.
 - `event-search.ts` — Batch stations/ingresses/lunations/exact aspects plus reproducible CSV. Deps: `astrology/stations`, `astrology/sign-ingress`, `astrology/lunations`, `astrology/mutual-aspects`, `astrology/bodies`, `astrology/signs`, `time/julian`.
 - `export-filename.ts` — Safe filename from person + chart kind. Deps: none (pure string).
-- `full-export.ts` — Whole-device backup export (every person + computable natal/named-Varga tables + CSV). Deps: `./chart-compute`, `./harmonic`, `./chart-tables`, `./person`, `astrology/rulership`.
+- `full-export.ts` — Whole-device backup export (every person + computable natal/named-Varga tables + natal calculation artifact + CSV). Deps: `./chart-compute`, `./calculation-artifact`, `./harmonic`, `./chart-tables`, `./person`, `astrology/rulership`.
 - `harmonic.ts` — Harmonic/Vedic Varga charts (D9 Navamsha, etc.). Deps: `astrology/harmonics`, `./chart-compute`.
 - `horary.ts` — Horary chart, question-moment Julian day, considerations-before-judgment, and void-of-course check. Deps: `astrology/horary`, `astrology/void-of-course`, `astrology/emphasis`, `./chart-compute`.
 - `horary-judgment.ts` — Horary significators, perfection/reception, prohibition, and relative-motion timing estimates (#552). Deps: `astrology/dignities`, `astrology/horary`, `astrology/reception`, `astrology/emphasis`, `./chart-compute`.

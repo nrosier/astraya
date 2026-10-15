@@ -149,6 +149,12 @@ export async function renderPdfPlan(plan: PdfPlan): Promise<{ blob: Blob; filena
         y = wrapAndPrint(doc, section.hint, PAGE_MARGIN, y, contentWidth);
         y += 4;
       }
+      if (section.provenance !== undefined) {
+        doc.setFontSize(8);
+        y = wrapAndPrint(doc, section.provenance, PAGE_MARGIN, y, contentWidth, 4);
+        doc.setFontSize(10);
+        y += 3;
+      }
       if (section.svg !== undefined) {
         // A chart is a fixed-aspect block that cannot be split across a page break (unlike a table):
         // it is scaled to fit what is left of this page, under its heading, and only moved to a fresh

@@ -21,6 +21,10 @@
  */
 import { bodyById } from '../astrology/bodies.js';
 import type { RulershipChoice } from '../astrology/rulership.js';
+import { toChartCalculationOptions, type ExtendedSettings } from '../chart/extended-settings.js';
+import { calculationArtifactIdentity } from '../domain/calculation-artifact.js';
+import { buildCalculationSnapshot } from '../domain/calculation-snapshot.js';
+import { buildChartArtifact } from './chart-artifact.js';
 import {
   housesAreDefined,
   computeChartData,
@@ -165,6 +169,8 @@ export interface PdfChartSectionPlan {
   readonly heading: string;
   readonly svg?: { readonly markup: string; readonly width: number; readonly height: number };
   readonly hint?: string;
+  /** The calculation's fingerprint line (#582) — the same one the chart screen prints — when one could be built. */
+  readonly provenance?: string;
   readonly tables: readonly PdfTablePlan[];
 }
 
@@ -194,6 +200,12 @@ export interface PdfPlan {
 export interface PdfPlanContext {
   readonly person: Person;
   readonly provider: EphemerisProvider;
+  /**
+   * The chart's confirmed Extended settings — what the Charts page is drawing with right now
+   * (#582). A chart section uses them exactly where that page's own view does, so the PDF shows
+   * the chart on screen rather than a default-settings chart under the same heading.
+   */
+  readonly settings: ExtendedSettings;
   readonly rulership: RulershipChoice;
   readonly locale: Locale;
   /** Spent on this one build, per `generateTier2Interpretation`'s own consent rule (ADR 0003) — never a standing preference. */
@@ -298,15 +310,44 @@ function chartTypeLabel(type: PdfChartSectionOptions['type'], t: typeof pdfExpor
   return t.chartTypeLabels[type];
 }
 
+/**
+ * The calculation options a chart section's own type uses — mirroring each Charts-page view
+ * exactly (#582), since the PDF must show the chart that page shows:
+ * - natal: the Extended settings, the rulers and the person's custom points (`ChartView`)
+ * - solar/lunar return: the Extended settings and the rulers (`ReturnView`)
+ * - draconic/harmonic/relocated: the custom points only — those views transform the natal
+ *   positions rather than reading the Extended settings (`extended-settings-store.ts`)
+ */
+export function sectionCalculationOptions(
+  type: PdfChartSectionOptions['type'],
+  person: Person,
+  settings: ExtendedSettings,
+  rulership: RulershipChoice,
+): ChartCalculationOptions {
+  const customPoints = person.customPoints === undefined ? {} : { customPoints: person.customPoints };
+  switch (type) {
+    case 'natal':
+      return { ...toChartCalculationOptions(settings), rulership, ...customPoints };
+    case 'solar-return':
+    case 'lunar-return':
+      return { ...toChartCalculationOptions(settings), rulership };
+    case 'draconic':
+    case 'harmonic':
+    case 'relocated':
+      return { rulership, ...customPoints };
+  }
+}
+
 /** Computes the one `ChartData` a chart section's own options name — the same compute functions the Charts page uses. */
 async function computeSectionChartData(
   options: PdfChartSectionOptions,
   person: Person,
   provider: EphemerisProvider,
+  settings: ExtendedSettings,
   rulership: RulershipChoice,
 ): Promise<ChartData> {
   if (person.moment === undefined) throw new Error('this person has no complete birth record');
-  const calcOptions: ChartCalculationOptions = { rulership };
+  const calcOptions = sectionCalculationOptions(options.type, person, settings, rulership);
   const place = options.place === undefined ? undefined : { ...options.place, altitude: 0 };
   switch (options.type) {
     case 'natal':
@@ -351,9 +392,21 @@ async function buildChartSectionPlan(
   t: typeof chartViewMessages.en,
   pt: typeof pdfExportMessages.en,
 ): Promise<PdfChartSectionPlan> {
-  const { person, provider, rulership, locale } = context;
-  const data = await computeSectionChartData(options, person, provider, rulership);
+  const { person, provider, settings, rulership, locale } = context;
+  const data = await computeSectionChartData(options, person, provider, settings, rulership);
   const label = chartTypeLabel(options.type, pt);
+  // Only the natal chart prints a fingerprint on screen (#564, #582), so only it carries one here.
+  const artifact =
+    options.type === 'natal' && person.moment !== undefined
+      ? await buildChartArtifact(
+          buildCalculationSnapshot(settings, rulership, person.customPoints ?? []),
+          person.moment,
+          data,
+          provider,
+        )
+      : undefined;
+  const provenance =
+    artifact === undefined ? undefined : pt.calculationFingerprint(calculationArtifactIdentity(artifact));
   const heading = `${label}${person.displayName === '' ? '' : ` — ${person.displayName}`}`;
   const housesRenderable = housesAreDefined(data.houses);
 
@@ -380,6 +433,7 @@ async function buildChartSectionPlan(
     heading,
     ...(svg === undefined ? {} : { svg }),
     ...(hint === undefined ? {} : { hint }),
+    ...(provenance === undefined ? {} : { provenance }),
     tables,
   };
 }
