@@ -316,10 +316,20 @@ export function PreferencesView({
       </h2>
       <p>{t.exportEverythingHint}</p>
       <p>
-        <button type="button" disabled={store === undefined} onClick={exportEverything}>
+        <button
+          type="button"
+          disabled={store === undefined}
+          aria-label={store === undefined ? `${t.exportEverything} — ${t.exportNeedsStore}` : undefined}
+          onClick={exportEverything}
+        >
           {t.exportEverything}
         </button>{' '}
-        <button type="button" disabled={store === undefined} onClick={exportPeopleCsv}>
+        <button
+          type="button"
+          disabled={store === undefined}
+          aria-label={store === undefined ? `${t.exportPeopleCsv} — ${t.exportNeedsStore}` : undefined}
+          onClick={exportPeopleCsv}
+        >
           {t.exportPeopleCsv}
         </button>
       </p>
