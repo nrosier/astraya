@@ -29,7 +29,10 @@ import { houseSystemLabel, rulershipLabel, zodiacLabel } from './ChartView.js';
 import { PrintProvenance } from './PrintProvenance.js';
 import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
 import { DEFAULT_RULERSHIP_CHOICE } from '../astrology/rulership.js';
-import { buildCalculationSnapshot, calculationSnapshotIdentity } from '../domain/calculation-snapshot.js';
+import { buildCalculationSnapshot, snapshotCalculationOptions } from '../domain/calculation-snapshot.js';
+import type { CalculationArtifact } from '../domain/calculation-artifact.js';
+import { SYNASTRY_DEFAULT_ORB_CONFIG } from '../astrology/orb-profiles.js';
+import { artifactProvenanceIdentity, buildTechniqueChartArtifact } from './chart-artifact.js';
 import { useSymbolClass } from './symbol-setting.js';
 import { useGlyphVariants } from './glyph-variant-setting.js';
 import { useEffect, useMemo, useState } from 'react';
@@ -62,10 +65,21 @@ import { StatusMessage } from './primitives/StatusMessage.js';
 type Load =
   | { readonly kind: 'idle' }
   | { readonly kind: 'loading' }
-  | { readonly kind: 'ready'; readonly data: SynastryData }
+  | {
+      readonly kind: 'ready';
+      readonly data: SynastryData;
+      /** The calculation's artifact (#582), when one could be built. */
+      readonly artifact?: CalculationArtifact | undefined;
+    }
   | { readonly kind: 'error'; readonly message: string };
 
 const bodyKeyOf = (id: number): string => bodyById(id)?.key ?? String(id);
+
+/**
+ * What both charts are computed with (#582): the engine defaults and synastry's own default orbs,
+ * explicit so the calculation's artifact records its real inputs. Same results as passing none.
+ */
+const ENGINE_DEFAULTS_SNAPSHOT = buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE);
 
 /** Exported for the PDF export builder (#441), which reuses the same columns a CSV download would. */
 export function aspectColumns(
@@ -150,8 +164,17 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
 
     void (async () => {
       try {
-        const data = await computeSynastry(momentA, momentB, provider);
-        if (!effect.cancelled) setLoad({ kind: 'ready', data });
+        const options = snapshotCalculationOptions(ENGINE_DEFAULTS_SNAPSHOT);
+        const data = await computeSynastry(momentA, momentB, provider, options, SYNASTRY_DEFAULT_ORB_CONFIG);
+        const artifact = await buildTechniqueChartArtifact(
+          ENGINE_DEFAULTS_SNAPSHOT,
+          momentA,
+          { kind: 'synastry', partner: momentB, orbConfig: SYNASTRY_DEFAULT_ORB_CONFIG },
+          data.chartA,
+          data,
+          provider,
+        );
+        if (!effect.cancelled) setLoad({ kind: 'ready', data, artifact });
       } catch (error) {
         if (!effect.cancelled)
           setLoad({ kind: 'error', message: error instanceof Error ? error.message : String(error) });
@@ -283,8 +306,9 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
         houseSystem={houseSystemLabel(DEFAULT_EXTENDED_SETTINGS.houseSystem)}
         zodiac={zodiacLabel(DEFAULT_EXTENDED_SETTINGS.zodiac)}
         rulership={rulershipLabel(DEFAULT_RULERSHIP_CHOICE)}
-        snapshotIdentity={calculationSnapshotIdentity(
-          buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE),
+        snapshotIdentity={artifactProvenanceIdentity(
+          load.kind === 'ready' ? load.artifact : undefined,
+          ENGINE_DEFAULTS_SNAPSHOT,
         )}
         generatedAt={formatTimestamp(new Date())}
       />

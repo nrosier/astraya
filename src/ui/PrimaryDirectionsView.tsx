@@ -25,7 +25,9 @@ import { houseSystemLabel, rulershipLabel, zodiacLabel } from './ChartView.js';
 import { PrintProvenance } from './PrintProvenance.js';
 import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
 import { DEFAULT_RULERSHIP_CHOICE } from '../astrology/rulership.js';
-import { buildCalculationSnapshot, calculationSnapshotIdentity } from '../domain/calculation-snapshot.js';
+import { buildCalculationSnapshot } from '../domain/calculation-snapshot.js';
+import type { CalculationArtifact } from '../domain/calculation-artifact.js';
+import { artifactProvenanceIdentity, buildTechniqueChartArtifact } from './chart-artifact.js';
 import { useEffect, useMemo, useState } from 'react';
 import { ageInYears, TROPICAL_YEAR_DAYS } from '../astrology/progressions.js';
 import { renderMultiWheelSvg, type WheelRingInput } from '../chart/multi-wheel.js';
@@ -36,6 +38,7 @@ import {
   PRIMARY_DIRECTION_ANGLE_KEYS,
   PRIMARY_DIRECTION_PROMISSORS,
   PRIMARY_DIRECTION_SIGNIFICATORS,
+  DEFAULT_PRIMARY_DIRECTION_ORB,
   activeDirections,
   ageToArc,
   directedChartAt,
@@ -69,8 +72,16 @@ import type { PrimaryDirectionMethod, PrimaryDirectionMode } from '../astrology/
 
 type Load =
   | { readonly kind: 'loading' }
-  | { readonly kind: 'ready'; readonly data: PrimaryDirectionsData }
+  | {
+      readonly kind: 'ready';
+      readonly data: PrimaryDirectionsData;
+      /** The calculation's artifact (#582), when one could be built. */
+      readonly artifact?: CalculationArtifact | undefined;
+    }
   | { readonly kind: 'error'; readonly message: string };
+
+/** The engine defaults the bi-wheel's natal chart is computed with, as a snapshot (#582). */
+const ENGINE_DEFAULTS_SNAPSHOT = buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE);
 
 type DirectedLoad =
   | { readonly kind: 'loading' }
@@ -173,13 +184,17 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
 
     void (async () => {
       try {
-        const data = await generatePrimaryDirections(moment, provider, key, undefined, {
-          mode,
-          method,
-          significators,
-          promissors,
-        });
-        if (!effect.cancelled) setLoad({ kind: 'ready', data });
+        const options = { mode, method, significators, promissors };
+        const data = await generatePrimaryDirections(moment, provider, key, DEFAULT_PRIMARY_DIRECTION_ORB, options);
+        const artifact = await buildTechniqueChartArtifact(
+          ENGINE_DEFAULTS_SNAPSHOT,
+          moment,
+          { kind: 'primary-directions', key, orb: DEFAULT_PRIMARY_DIRECTION_ORB, options },
+          data.natal,
+          data,
+          provider,
+        );
+        if (!effect.cancelled) setLoad({ kind: 'ready', data, artifact });
       } catch (error) {
         if (!effect.cancelled)
           setLoad({ kind: 'error', message: error instanceof Error ? error.message : String(error) });
@@ -290,8 +305,9 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
         houseSystem={houseSystemLabel(DEFAULT_EXTENDED_SETTINGS.houseSystem)}
         zodiac={zodiacLabel(DEFAULT_EXTENDED_SETTINGS.zodiac)}
         rulership={rulershipLabel(DEFAULT_RULERSHIP_CHOICE)}
-        snapshotIdentity={calculationSnapshotIdentity(
-          buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE),
+        snapshotIdentity={artifactProvenanceIdentity(
+          load.kind === 'ready' ? load.artifact : undefined,
+          ENGINE_DEFAULTS_SNAPSHOT,
         )}
         generatedAt={formatTimestamp(new Date())}
       />

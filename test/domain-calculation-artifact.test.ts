@@ -10,11 +10,27 @@ import { DEFAULT_RULERSHIP_CHOICE } from '../src/astrology/rulership.js';
 import { DEFAULT_EXTENDED_SETTINGS, toChartCalculationOptions } from '../src/chart/extended-settings.js';
 import {
   buildCalculationArtifact,
+  buildTechniqueArtifact,
   calculationArtifactIdentity,
   canonicalJson,
   sha256Hex,
+  verifyCalculationArtifact,
+  type CalculationArtifact,
 } from '../src/domain/calculation-artifact.js';
-import { buildCalculationSnapshot, type CalculationSnapshot } from '../src/domain/calculation-snapshot.js';
+import { SYNASTRY_DEFAULT_ORB_CONFIG } from '../src/astrology/orb-profiles.js';
+import { TRANSIT_ORB_CONFIG } from '../src/astrology/transit-importance.js';
+import {
+  DEFAULT_PRIMARY_DIRECTION_ORB,
+  generatePrimaryDirections,
+  PrimaryDirectionKey,
+} from '../src/domain/primary-directions.js';
+import { computeSynastry } from '../src/domain/synastry.js';
+import { computeTransit } from '../src/domain/transit.js';
+import {
+  buildCalculationSnapshot,
+  snapshotCalculationOptions,
+  type CalculationSnapshot,
+} from '../src/domain/calculation-snapshot.js';
 import { computeChartData } from '../src/domain/chart-compute.js';
 import { ALL_ASSETS } from '../src/ephemeris/assets.js';
 import type { EphemerisProvider } from '../src/ephemeris/types.js';
@@ -254,5 +270,141 @@ describe('real-engine parity fixtures (#582)', () => {
     ];
     expect(b.fingerprint.inputHash).toBe(a.fingerprint.inputHash);
     expect(b.fingerprint.resultHash).not.toBe(a.fingerprint.resultHash);
+  }, 60_000);
+});
+
+describe('technique artifacts and verification (#582)', () => {
+  const PARTNER: BirthMomentInput = {
+    civil: { year: 1985, month: 2, day: 3, hour: 8, minute: 10, second: 0 },
+    coordinates: { latitude: 52.37, longitude: 4.89 },
+  };
+  const DEFAULTS = buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE);
+  const TARGET_JD = 2461000.5;
+  const PD_OPTIONS = {
+    mode: 'direct',
+    method: 'zodiacal',
+    significators: ['asc', 'mc'],
+    promissors: ['sun', 'moon'],
+  } as const;
+
+  it('computing with no options and with the defaults snapshot’s own options gives identical results', async () => {
+    const options = snapshotCalculationOptions(DEFAULTS);
+    expect(canonicalJson(await computeChartData(PERSON, engine, options))).toBe(
+      canonicalJson(await computeChartData(PERSON, engine, {})),
+    );
+    expect(canonicalJson(await computeTransit(PERSON, TARGET_JD, engine, options, TRANSIT_ORB_CONFIG))).toBe(
+      canonicalJson(await computeTransit(PERSON, TARGET_JD, engine, {}, TRANSIT_ORB_CONFIG)),
+    );
+    expect(canonicalJson(await computeSynastry(PERSON, PARTNER, engine, options))).toBe(
+      canonicalJson(await computeSynastry(PERSON, PARTNER, engine)),
+    );
+  }, 60_000);
+
+  async function transitArtifact(targetJd = TARGET_JD) {
+    const data = await computeTransit(
+      PERSON,
+      targetJd,
+      engine,
+      snapshotCalculationOptions(DEFAULTS),
+      TRANSIT_ORB_CONFIG,
+    );
+    return buildTechniqueArtifact(
+      DEFAULTS,
+      PERSON,
+      { kind: 'transit', targetJd, orbConfig: TRANSIT_ORB_CONFIG },
+      data.natal,
+      data,
+      INPUTS,
+    );
+  }
+  async function synastryArtifact(partner = PARTNER) {
+    const data = await computeSynastry(
+      PERSON,
+      partner,
+      engine,
+      snapshotCalculationOptions(DEFAULTS),
+      SYNASTRY_DEFAULT_ORB_CONFIG,
+    );
+    return buildTechniqueArtifact(
+      DEFAULTS,
+      PERSON,
+      { kind: 'synastry', partner, orbConfig: SYNASTRY_DEFAULT_ORB_CONFIG },
+      data.chartA,
+      data,
+      INPUTS,
+    );
+  }
+  async function directionsArtifact(key: PrimaryDirectionKey = PrimaryDirectionKey.NAIBOD) {
+    const data = await generatePrimaryDirections(PERSON, engine, key, DEFAULT_PRIMARY_DIRECTION_ORB, PD_OPTIONS);
+    return buildTechniqueArtifact(
+      DEFAULTS,
+      PERSON,
+      { kind: 'primary-directions', key, orb: DEFAULT_PRIMARY_DIRECTION_ORB, options: PD_OPTIONS },
+      data.natal,
+      data,
+      INPUTS,
+    );
+  }
+
+  it('verifies a natal, transit, synastry and primary-directions artifact against a fresh computation', async () => {
+    const natal = await artifactFor(PERSON, DEFAULTS);
+    for (const artifact of [natal, await transitArtifact(), await synastryArtifact(), await directionsArtifact()]) {
+      expect(await verifyCalculationArtifact(artifact, engine, INPUTS)).toEqual({ status: 'verified' });
+    }
+  }, 120_000);
+
+  it('verifies an artifact that went through JSON, as one restored from an export would', async () => {
+    const stored = JSON.parse(JSON.stringify(await synastryArtifact())) as CalculationArtifact;
+    expect(await verifyCalculationArtifact(stored, engine, INPUTS)).toEqual({ status: 'verified' });
+  }, 60_000);
+
+  it('changes the input hash with each technique’s own inputs, and records the partner’s time resolution', async () => {
+    const [transitA, transitB] = [await transitArtifact(), await transitArtifact(TARGET_JD + 1)];
+    expect(transitB.fingerprint.inputHash).not.toBe(transitA.fingerprint.inputHash);
+    expect(transitB.fingerprint.snapshotHash).toBe(transitA.fingerprint.snapshotHash);
+
+    const other = { ...PARTNER, civil: { ...PARTNER.civil, hour: 9 } };
+    const [synA, synB] = [await synastryArtifact(), await synastryArtifact(other)];
+    expect(synB.fingerprint.inputHash).not.toBe(synA.fingerprint.inputHash);
+    expect(synA.provenance.partnerTime).toMatchObject({ offsetSource: 'tzdb', zone: 'Europe/Amsterdam' });
+
+    const [naibod, ptolemy] = [await directionsArtifact(), await directionsArtifact(PrimaryDirectionKey.PTOLEMY)];
+    expect(ptolemy.fingerprint.inputHash).not.toBe(naibod.fingerprint.inputHash);
+    expect(ptolemy.fingerprint.resultHash).not.toBe(naibod.fingerprint.resultHash);
+  }, 120_000);
+
+  it('leaves a natal artifact’s input hash exactly what it was before techniques existed', async () => {
+    const natal = await artifactFor(PERSON, DEFAULTS);
+    expect(natal.technique).toBeUndefined();
+    expect(natal.fingerprint.inputHash).toBe(await sha256Hex(canonicalJson({ moment: PERSON, snapshot: DEFAULTS })));
+  }, 60_000);
+
+  it('reports an edited record as inconsistent instead of recomputing from the edit', async () => {
+    const natal = await artifactFor(PERSON, DEFAULTS);
+    const edited = { ...natal, moment: { ...natal.moment, civil: { ...natal.moment.civil, hour: 3 } } };
+    const result = await verifyCalculationArtifact(edited, engine, INPUTS);
+    expect(result.status).toBe('inconsistent');
+  }, 60_000);
+
+  it('reports a result this engine no longer produces as changed, naming the provenance that differs', async () => {
+    const natal = await artifactFor(PERSON, DEFAULTS);
+    const fromOlderEngine: CalculationArtifact = {
+      ...natal,
+      provenance: {
+        ...natal.provenance,
+        swephVersion: '2.09-old',
+        time: { ...natal.provenance.time, tzdbFingerprint: 'old' },
+      },
+      fingerprint: { ...natal.fingerprint, resultHash: '0'.repeat(64) },
+    };
+    const result = await verifyCalculationArtifact(fromOlderEngine, engine, INPUTS);
+    if (result.status !== 'changed') throw new Error(`expected changed, got ${result.status}`);
+    expect(result.currentResultHash).toBe(natal.fingerprint.resultHash);
+    expect(result.differences.map((d) => d.field).sort()).toEqual(['swephVersion', 'tzdb']);
+    expect(result.differences.find((d) => d.field === 'swephVersion')).toEqual({
+      field: 'swephVersion',
+      recorded: '2.09-old',
+      current: INPUTS.swephVersion,
+    });
   }, 60_000);
 });

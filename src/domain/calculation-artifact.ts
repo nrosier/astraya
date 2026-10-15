@@ -15,19 +15,35 @@
  * into an instant — offset, its source, zone, calendar, DST ambiguity and the runtime's tzdb
  * fingerprint — is part of the provenance, since a time-zone database update can move a stored
  * chart without any input changing.
+ *
+ * A natal chart's artifact has no `technique`. A technique built on the natal chart — transits,
+ * synastry, primary directions — adds its own inputs there (target date, partner, orbs, key) and
+ * its `resultHash` covers that technique's whole result, not just the natal chart under it.
+ *
+ * `verifyCalculationArtifact` recomputes any artifact from its own recorded inputs: what a
+ * restore (#587) or an auditor runs to tell whether a stored result is still what this engine
+ * produces, and, when it is not, which recorded provenance differs.
  */
 /**
  * @module domain/calculation-artifact
  * @purpose Builds a CalculationArtifact — snapshot, execution provenance and SHA-256 fingerprints of inputs and result — once a chart calculation completes (#582).
  * @conventions Hashes are SHA-256 over a canonical JSON text (sorted keys, Maps as sorted entries, non-finite numbers as strings, `undefined` fields omitted) via Web Crypto, so they are stable across key insertion order and identical in the browser and Node. Provenance values that need the app build or the engine (`astrayaVersion`, `swephVersion`) are passed in, keeping this module pure apart from the digest.
- * @exports CalculationArtifact, CalculationProvenance, TimeProvenance, CalculationFingerprint, CalculationArtifactInputs, buildCalculationArtifact, calculationArtifactIdentity, canonicalJson, sha256Hex
+ * @exports CalculationArtifact, CalculationTechnique, CalculationProvenance, TimeProvenance, CalculationFingerprint, CalculationArtifactInputs, ArtifactVerification, ProvenanceDifference, buildCalculationArtifact, buildTechniqueArtifact, verifyCalculationArtifact, calculationArtifactIdentity, canonicalJson, sha256Hex
  */
+import type { OrbConfig } from '../astrology/aspects.js';
 import { ALL_ASSETS } from '../ephemeris/assets.js';
-import type { HouseSystem } from '../ephemeris/types.js';
+import type { Degrees, EphemerisProvider, HouseSystem, JulianDayUT } from '../ephemeris/types.js';
 import { resolveMoment } from '../time/resolve.js';
 import type { BirthMomentInput, OffsetProvenance, TimeWarningCode } from '../time/types.js';
-import type { CalculationSnapshot } from './calculation-snapshot.js';
-import { housesAreDefined, type ChartData } from './chart-compute.js';
+import { snapshotCalculationOptions, type CalculationSnapshot } from './calculation-snapshot.js';
+import { computeChartData, housesAreDefined, type ChartData } from './chart-compute.js';
+import {
+  generatePrimaryDirections,
+  type PrimaryDirectionKey,
+  type PrimaryDirectionsOptions,
+} from './primary-directions.js';
+import { computeSynastry } from './synastry.js';
+import { computeTransit } from './transit.js';
 
 /**
  * How the birth moment's wall-clock time became an instant (#582): the same resolution
@@ -49,8 +65,25 @@ export interface TimeProvenance {
   readonly tzdbFingerprint: string;
 }
 
+/**
+ * The inputs of a technique computed on top of the natal chart (#582) — everything beyond the
+ * moment and snapshot that its result depends on, including orbs a caller left at their default,
+ * recorded at their actual value so a later default change shows up as a changed input.
+ */
+export type CalculationTechnique =
+  | { readonly kind: 'transit'; readonly targetJd: JulianDayUT; readonly orbConfig: OrbConfig }
+  | { readonly kind: 'synastry'; readonly partner: BirthMomentInput; readonly orbConfig: OrbConfig }
+  | {
+      readonly kind: 'primary-directions';
+      readonly key: PrimaryDirectionKey;
+      readonly orb: Degrees;
+      readonly options: PrimaryDirectionsOptions;
+    };
+
 export interface CalculationProvenance {
   readonly time: TimeProvenance;
+  /** Synastry only: how the partner's birth time was resolved. */
+  readonly partnerTime?: TimeProvenance;
   readonly astrayaVersion: string;
   readonly swephVersion: string;
   /** Pinned SHA-256 of every ephemeris data file, the fixed-star catalogue and the WASM binary, by file name. */
@@ -70,9 +103,9 @@ export interface CalculationFingerprint {
   readonly algorithm: 'sha-256';
   /** Hex SHA-256 of the canonical snapshot: the calculation settings, rulers and custom points. */
   readonly snapshotHash: string;
-  /** Hex SHA-256 of the canonical birth moment and snapshot together: the complete calculation inputs. */
+  /** Hex SHA-256 of the canonical birth moment, snapshot and technique together: the complete calculation inputs. */
   readonly inputHash: string;
-  /** Hex SHA-256 of the canonical `ChartData`: the complete computed result. */
+  /** Hex SHA-256 of the canonical result: the natal `ChartData`, or the technique's whole result. */
   readonly resultHash: string;
 }
 
@@ -80,6 +113,8 @@ export interface CalculationArtifact {
   /** The birth moment as entered: civil time, place and any stated offset or zone. */
   readonly moment: BirthMomentInput;
   readonly snapshot: CalculationSnapshot;
+  /** Absent for a natal chart; otherwise the technique computed on top of it, with its own inputs. */
+  readonly technique?: CalculationTechnique;
   readonly provenance: CalculationProvenance;
   readonly fingerprint: CalculationFingerprint;
 }
@@ -140,35 +175,164 @@ function timeProvenance(moment: BirthMomentInput): TimeProvenance {
   };
 }
 
-/** Builds the artifact for a calculation of `moment` that has just completed from `snapshot`, producing `data`. */
+/** Builds the artifact for a natal calculation of `moment` that has just completed from `snapshot`, producing `data`. */
 export async function buildCalculationArtifact(
   snapshot: CalculationSnapshot,
   moment: BirthMomentInput,
   data: ChartData,
   inputs: CalculationArtifactInputs,
 ): Promise<CalculationArtifact> {
-  const housesDefined = housesAreDefined(data.houses);
+  return buildArtifact(snapshot, moment, undefined, data, data, inputs);
+}
+
+/**
+ * Builds the artifact for a technique computed on top of `moment`'s natal chart: `subject` is
+ * that natal chart (whose houses the provenance reports), `result` the technique's whole result.
+ */
+export async function buildTechniqueArtifact(
+  snapshot: CalculationSnapshot,
+  moment: BirthMomentInput,
+  technique: CalculationTechnique,
+  subject: ChartData,
+  result: unknown,
+  inputs: CalculationArtifactInputs,
+): Promise<CalculationArtifact> {
+  return buildArtifact(snapshot, moment, technique, subject, result, inputs);
+}
+
+async function buildArtifact(
+  snapshot: CalculationSnapshot,
+  moment: BirthMomentInput,
+  technique: CalculationTechnique | undefined,
+  subject: ChartData,
+  result: unknown,
+  inputs: CalculationArtifactInputs,
+): Promise<CalculationArtifact> {
+  const housesDefined = housesAreDefined(subject.houses);
+  // `technique: undefined` is omitted by `canonicalJson`, so a natal input hash is unchanged by its existence.
   const [snapshotHash, inputHash, resultHash] = await Promise.all([
     sha256Hex(canonicalJson(snapshot)),
-    sha256Hex(canonicalJson({ moment, snapshot })),
-    sha256Hex(canonicalJson(data)),
+    sha256Hex(canonicalJson({ moment, snapshot, technique })),
+    sha256Hex(canonicalJson(result)),
   ]);
   return {
     moment,
     snapshot,
+    ...(technique === undefined ? {} : { technique }),
     provenance: {
       time: timeProvenance(moment),
+      ...(technique?.kind === 'synastry' ? { partnerTime: timeProvenance(technique.partner) } : {}),
       astrayaVersion: inputs.astrayaVersion,
       swephVersion: inputs.swephVersion,
       ephemerisAssetHashes: EPHEMERIS_ASSET_HASHES,
       requestedHouseSystem: snapshot.settings.houseSystem,
-      effectiveHouseSystem: housesDefined ? data.houses.system : undefined,
+      effectiveHouseSystem: housesDefined ? subject.houses.system : undefined,
       warnings: [
-        ...(data.houses.warning === undefined ? [] : [data.houses.warning]),
+        ...(subject.houses.warning === undefined ? [] : [subject.houses.warning]),
         ...(housesDefined ? [] : ['houses-undefined']),
       ],
     },
     fingerprint: { algorithm: 'sha-256', snapshotHash, inputHash, resultHash },
+  };
+}
+
+/** One recorded provenance value that this runtime no longer has — a likely reason for a changed result. */
+export interface ProvenanceDifference {
+  readonly field: 'astrayaVersion' | 'swephVersion' | 'ephemerisAssets' | 'tzdb' | 'timeResolution' | 'houseSystem';
+  readonly recorded: string;
+  readonly current: string;
+}
+
+export type ArtifactVerification =
+  /** Recomputing from the recorded inputs gives the recorded result, exactly. */
+  | { readonly status: 'verified' }
+  /** The recorded inputs no longer match the recorded input hash: the record was edited or damaged. */
+  | { readonly status: 'inconsistent'; readonly recordedInputHash: string; readonly actualInputHash: string }
+  /** The inputs are intact but this runtime computes a different result; `differences` names the likely causes. */
+  | {
+      readonly status: 'changed';
+      readonly recordedResultHash: string;
+      readonly currentResultHash: string;
+      readonly differences: readonly ProvenanceDifference[];
+    };
+
+/** Recomputes the result an artifact's own inputs describe, the same way the screen that recorded it did. */
+async function recompute(
+  artifact: CalculationArtifact,
+  provider: EphemerisProvider,
+): Promise<{ readonly subject: ChartData; readonly result: unknown }> {
+  const options = snapshotCalculationOptions(artifact.snapshot);
+  const technique = artifact.technique;
+  if (technique === undefined) {
+    const data = await computeChartData(artifact.moment, provider, options);
+    return { subject: data, result: data };
+  }
+  switch (technique.kind) {
+    case 'transit': {
+      const data = await computeTransit(artifact.moment, technique.targetJd, provider, options, technique.orbConfig);
+      return { subject: data.natal, result: data };
+    }
+    case 'synastry': {
+      const data = await computeSynastry(artifact.moment, technique.partner, provider, options, technique.orbConfig);
+      return { subject: data.chartA, result: data };
+    }
+    case 'primary-directions': {
+      const data = await generatePrimaryDirections(
+        artifact.moment,
+        provider,
+        technique.key,
+        technique.orb,
+        technique.options,
+      );
+      return { subject: data.natal, result: data };
+    }
+  }
+}
+
+function differencesBetween(recorded: CalculationProvenance, current: CalculationProvenance): ProvenanceDifference[] {
+  const differences: ProvenanceDifference[] = [];
+  const add = (field: ProvenanceDifference['field'], a: string, b: string): void => {
+    if (a !== b) differences.push({ field, recorded: a, current: b });
+  };
+  add('astrayaVersion', recorded.astrayaVersion, current.astrayaVersion);
+  add('swephVersion', recorded.swephVersion, current.swephVersion);
+  add('ephemerisAssets', canonicalJson(recorded.ephemerisAssetHashes), canonicalJson(current.ephemerisAssetHashes));
+  add('tzdb', recorded.time.tzdbFingerprint, current.time.tzdbFingerprint);
+  const resolution = (time: TimeProvenance | undefined): string =>
+    time === undefined ? '' : canonicalJson({ ...time, tzdbFingerprint: undefined });
+  add(
+    'timeResolution',
+    resolution(recorded.time) + resolution(recorded.partnerTime),
+    resolution(current.time) + resolution(current.partnerTime),
+  );
+  add('houseSystem', recorded.effectiveHouseSystem ?? 'undefined', current.effectiveHouseSystem ?? 'undefined');
+  return differences;
+}
+
+/**
+ * Recomputes `artifact` from its own recorded inputs on `provider` and compares. `current` is
+ * this runtime's own app and engine version, recorded into the comparison artifact so a changed
+ * result comes back with the provenance that differs — the likely reason it changed.
+ */
+export async function verifyCalculationArtifact(
+  artifact: CalculationArtifact,
+  provider: EphemerisProvider,
+  current: CalculationArtifactInputs,
+): Promise<ArtifactVerification> {
+  const actualInputHash = await sha256Hex(
+    canonicalJson({ moment: artifact.moment, snapshot: artifact.snapshot, technique: artifact.technique }),
+  );
+  if (actualInputHash !== artifact.fingerprint.inputHash) {
+    return { status: 'inconsistent', recordedInputHash: artifact.fingerprint.inputHash, actualInputHash };
+  }
+  const { subject, result } = await recompute(artifact, provider);
+  const now = await buildArtifact(artifact.snapshot, artifact.moment, artifact.technique, subject, result, current);
+  if (now.fingerprint.resultHash === artifact.fingerprint.resultHash) return { status: 'verified' };
+  return {
+    status: 'changed',
+    recordedResultHash: artifact.fingerprint.resultHash,
+    currentResultHash: now.fingerprint.resultHash,
+    differences: differencesBetween(artifact.provenance, now.provenance),
   };
 }
 

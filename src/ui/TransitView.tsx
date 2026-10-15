@@ -30,7 +30,15 @@ import { houseSystemLabel, rulershipLabel, zodiacLabel } from './ChartView.js';
 import { PrintProvenance } from './PrintProvenance.js';
 import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
 import { DEFAULT_RULERSHIP_CHOICE } from '../astrology/rulership.js';
-import { buildCalculationSnapshot, calculationSnapshotIdentity } from '../domain/calculation-snapshot.js';
+import { buildCalculationSnapshot, snapshotCalculationOptions } from '../domain/calculation-snapshot.js';
+import type { CalculationArtifact } from '../domain/calculation-artifact.js';
+import { artifactProvenanceIdentity, buildTechniqueChartArtifact } from './chart-artifact.js';
+
+/**
+ * What both rings are computed with (#582): the engine defaults, as an explicit snapshot so the
+ * calculation's artifact records its real inputs. Same results as passing no options at all.
+ */
+const ENGINE_DEFAULTS_SNAPSHOT = buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE);
 import { useSymbolClass } from './symbol-setting.js';
 import { useGlyphVariants } from './glyph-variant-setting.js';
 import { useEffect, useMemo, useState } from 'react';
@@ -72,7 +80,13 @@ import { StatusMessage } from './primitives/StatusMessage.js';
 
 type Load =
   | { readonly kind: 'loading' }
-  | { readonly kind: 'ready'; readonly data: TransitData; readonly voidOfCourse: VoidOfCourseMoon | undefined }
+  | {
+      readonly kind: 'ready';
+      readonly data: TransitData;
+      readonly voidOfCourse: VoidOfCourseMoon | undefined;
+      /** The calculation's artifact (#582), when one could be built. */
+      readonly artifact?: CalculationArtifact | undefined;
+    }
   | { readonly kind: 'error'; readonly message: string };
 
 /** Exported for `pdf-export-plan.ts` (#441): the same contacts table this screen shows, reused as-is for the PDF export's Transits section. */
@@ -132,10 +146,19 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
         // day, not a moment, and noon keeps the civil day intact under any offset the target's
         // own calculation might apply.
         const targetJd = await provider.julianDayFromUtc(targetDate.year, targetDate.month, targetDate.day, 12, 0, 0);
-        const data = await computeTransit(moment, targetJd, provider, {}, TRANSIT_ORB_CONFIG);
+        const options = snapshotCalculationOptions(ENGINE_DEFAULTS_SNAPSHOT);
+        const data = await computeTransit(moment, targetJd, provider, options, TRANSIT_ORB_CONFIG);
+        const artifact = await buildTechniqueChartArtifact(
+          ENGINE_DEFAULTS_SNAPSHOT,
+          moment,
+          { kind: 'transit', targetJd, orbConfig: TRANSIT_ORB_CONFIG },
+          data.natal,
+          data,
+          provider,
+        );
         // Secondary to the wheel: if the Moon search fails, the screen still shows the transit.
         const voidOfCourse = await findVoidOfCourseMoon(provider, targetJd).catch(() => undefined);
-        if (!effect.cancelled) setLoad({ kind: 'ready', data, voidOfCourse });
+        if (!effect.cancelled) setLoad({ kind: 'ready', data, voidOfCourse, artifact });
       } catch (error) {
         if (!effect.cancelled)
           setLoad({ kind: 'error', message: error instanceof Error ? error.message : String(error) });
@@ -263,8 +286,9 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
         houseSystem={houseSystemLabel(DEFAULT_EXTENDED_SETTINGS.houseSystem)}
         zodiac={zodiacLabel(DEFAULT_EXTENDED_SETTINGS.zodiac)}
         rulership={rulershipLabel(DEFAULT_RULERSHIP_CHOICE)}
-        snapshotIdentity={calculationSnapshotIdentity(
-          buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE),
+        snapshotIdentity={artifactProvenanceIdentity(
+          load.kind === 'ready' ? load.artifact : undefined,
+          ENGINE_DEFAULTS_SNAPSHOT,
         )}
         generatedAt={formatTimestamp(new Date())}
       />
