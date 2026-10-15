@@ -116,8 +116,12 @@ describe('computeComposite (#169)', () => {
     const engine = await getEngine();
     const withoutExtras = await computeComposite(PERSON_A, PERSON_B, engine);
     const withExtras = await computeComposite(PERSON_A, PERSON_B, engine, {
-      aspectsTo: { chiron: true, lilith: true, lunarNodes: true },
+      // Per-object keys (#585), not the old grouped 'lilith'/'lunarNodes' — only the Mean
+      // variants are actually present by default (nodeVariant/lilithVariant default to 'mean'),
+      // so a strict '>' here would have caught #585's four-sibling-module regression where
+      // these modules kept reading the pre-#585 grouped key shape after it was removed.
+      aspectsTo: { chiron: true, meanLilith: true, meanNode: true },
     });
-    expect(withExtras.composite.aspects.length).toBeGreaterThanOrEqual(withoutExtras.composite.aspects.length);
+    expect(withExtras.composite.aspects.length).toBeGreaterThan(withoutExtras.composite.aspects.length);
   });
 });

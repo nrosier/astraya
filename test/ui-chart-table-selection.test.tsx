@@ -258,8 +258,15 @@ describe('a table row selects on the wheel (#418)', () => {
   });
 
   it('a Derived points row selects that point, with its position and meaning in the inspector, and toggles off (#511)', async () => {
-    // Spirit has its own visibility flag now (#542) — it used to be shown unconditionally.
-    const container = await mount(true, { ...DEFAULT_EXTENDED_SETTINGS, spiritVisible: true });
+    // Spirit has its own visibility entry now (#542, unified into objectPolicies by #585) — it
+    // used to be shown unconditionally.
+    const container = await mount(true, {
+      ...DEFAULT_EXTENDED_SETTINGS,
+      objectPolicies: {
+        ...DEFAULT_EXTENDED_SETTINGS.objectPolicies,
+        partOfSpirit: { ...DEFAULT_EXTENDED_SETTINGS.objectPolicies.partOfSpirit, visible: true },
+      },
+    });
     await open(container, 'positions');
     const button = showButton(container, 'Show Part of Spirit on the chart');
     expect(button?.getAttribute('aria-pressed')).toBe('false');

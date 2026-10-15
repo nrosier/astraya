@@ -16,7 +16,7 @@ import type { Person } from '../src/domain/person.js';
 import type { EphemerisProvider } from '../src/ephemeris/types.js';
 import { DEFAULT_EXTENDED_SETTINGS, toChartCalculationOptions } from '../src/chart/extended-settings.js';
 import { buildCalculationArtifact } from '../src/domain/calculation-artifact.js';
-import { parseCalculationSnapshot } from '../src/domain/calculation-snapshot.js';
+import { CURRENT_SNAPSHOT_VERSION, parseCalculationSnapshot } from '../src/domain/calculation-snapshot.js';
 import { computeChartData } from '../src/domain/chart-compute.js';
 import { getEngine } from './engine-harness.js';
 
@@ -308,7 +308,7 @@ describe('the natal calculation artifact in a full export (#582)', () => {
     const archive = await build([WITH_POINT], 'traditional');
     const calculation = archive.people[0]?.calculation;
     expect(calculation?.moment).toEqual(WITH_POINT.moment);
-    expect(calculation?.snapshot).toMatchObject({ version: 2, rulership: 'traditional' });
+    expect(calculation?.snapshot).toMatchObject({ version: CURRENT_SNAPSHOT_VERSION, rulership: 'traditional' });
     expect(calculation?.snapshot.customPoints).toEqual(WITH_POINT.customPoints);
     expect(calculation?.provenance.astrayaVersion).toBe('9.9.9');
     expect(calculation?.provenance.swephVersion).toBe(await engine.version());

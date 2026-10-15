@@ -15,10 +15,14 @@
  * @exports computeSolarReturnChart, computeLunarReturnChart, ReturnChartData, ReturnChartOptions, LUNAR_RETURN_SEARCH_DAYS
  */
 import type { Aspect, OrbConfig } from '../astrology/aspects.js';
-import { bodyById } from '../astrology/bodies.js';
 import type { BirthMomentInput } from '../time/types.js';
 import type { EphemerisProvider, GeoPosition, JulianDayUT } from '../ephemeris/types.js';
-import { computeChartDataAtJd, type ChartCalculationOptions, type ChartData } from './chart-compute.js';
+import {
+  computeChartDataAtJd,
+  isAspectParticipant,
+  type ChartCalculationOptions,
+  type ChartData,
+} from './chart-compute.js';
 import { computeLunarReturns } from './lunar-returns.js';
 import { computeSolarReturn } from './solar-return.js';
 
@@ -49,14 +53,7 @@ function chartContacts(
   aspectsTo: ChartCalculationOptions['aspectsTo'],
 ): readonly Aspect[] {
   const shown = new Set(chart.positions.map((position) => position.body));
-  const eligible = (body: Aspect['bodyA']): boolean => {
-    if (!shown.has(body)) return false;
-    const category = bodyById(body)?.category;
-    if (category === 'centaur') return aspectsTo?.chiron === true;
-    if (category === 'lilith') return aspectsTo?.lilith === true;
-    if (category === 'node') return aspectsTo?.lunarNodes === true;
-    return true;
-  };
+  const eligible = (body: Aspect['bodyA']): boolean => shown.has(body) && isAspectParticipant(body, aspectsTo);
   return contacts.filter((contact) => eligible(contact.bodyA) && eligible(contact.bodyB));
 }
 

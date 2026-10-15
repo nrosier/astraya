@@ -328,18 +328,22 @@ describe('the trigger and the starting points (#442)', () => {
       ...DEFAULT_EXTENDED_SETTINGS,
       houseSystem: 'W',
       zodiac: { kind: 'sidereal', ayanamsa: 1 },
-      fortuneVisible: true,
-      chironVisible: false,
+      objectPolicies: {
+        ...DEFAULT_EXTENDED_SETTINGS.objectPolicies,
+        partOfFortune: { ...DEFAULT_EXTENDED_SETTINGS.objectPolicies.partOfFortune, visible: true },
+        chiron: { ...DEFAULT_EXTENDED_SETTINGS.objectPolicies.chiron, visible: false },
+      },
     };
     const { container, root } = await mount(fakeProvider(), vi.fn(), changed);
     const text = trigger(container).textContent;
     expect(text).toContain('House system W');
     expect(text).toContain('Sidereal (Ayanamsa 1)');
-    expect(text).toContain('Part of Fortune');
-    expect(text).toContain('Chiron hidden');
-    expect(text).toContain('4 changed');
+    // Fortune and Chiron's visibility now live in one unified policy (#585) — both changes
+    // collapse into a single "Object visibility customized" segment, not two named ones.
+    expect(text).toContain('Object visibility customized');
+    expect(text).toContain('3 changed');
     expect(text).not.toContain('Rainbow');
-    expect(trigger(container).getAttribute('aria-label')).toContain('Chiron hidden');
+    expect(trigger(container).getAttribute('aria-label')).toContain('Object visibility customized');
     unmount(container, root);
   });
 
@@ -359,9 +363,10 @@ describe('the trigger and the starting points (#442)', () => {
     act(() => {
       buttonNamed(container, 'Apply and redraw')?.click();
     });
-    expect(onRedraw).toHaveBeenCalledWith(
-      expect.objectContaining({ houseSystem: 'W', fortuneVisible: true, chironVisible: false }),
-    );
+    const applied = onRedraw.mock.calls[0]?.[0] as ExtendedSettings | undefined;
+    expect(applied?.houseSystem).toBe('W');
+    expect(applied?.objectPolicies.partOfFortune.visible).toBe(true);
+    expect(applied?.objectPolicies.chiron.visible).toBe(false);
     expect(localStorage.getItem('astraya:rulershipChoice')).toBe('traditional');
 
     unmount(container, root);

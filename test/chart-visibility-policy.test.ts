@@ -5,8 +5,15 @@
  */
 import { describe, expect, it } from 'vitest';
 import { bodyByKey } from '../src/astrology/bodies.js';
+import { DEFAULT_EXTENDED_SETTINGS, toPointVisibilityOptions } from '../src/chart/extended-settings.js';
 import { computeChartData } from '../src/domain/chart-compute.js';
-import { aspectRows, chartSheetInput, chartWheelRing } from '../src/domain/chart-tables.js';
+import {
+  angleRows,
+  aspectRows,
+  chartSheetInput,
+  chartWheelRing,
+  derivedPointRows,
+} from '../src/domain/chart-tables.js';
 import type { BirthMomentInput } from '../src/time/types.js';
 import { getEngine } from './engine-harness.js';
 
@@ -48,7 +55,7 @@ describe('a hidden Chiron cannot still speak through an aspect anywhere (#542)',
 
     // chironVisible: false — gone from all three surfaces, even though aspectsTo.chiron was true
     // at compute time and `data.aspects` itself still carries the raw contact unchanged.
-    const hidden = { chironVisible: false };
+    const hidden = { bodyVisibility: { chiron: false } };
     expect(aspectRows(data, hidden).some((row) => row.bodyAKey === 'chiron' || row.bodyBKey === 'chiron')).toBe(false);
     expect(chartWheelRing(data, 'Natal', hidden).bodies.some((body) => body.key === 'chiron')).toBe(false);
     expect(chartWheelRing(data, 'Natal', hidden).aspects?.some((aspect) => hasChiron(aspect.bodyA, aspect.bodyB))).toBe(
@@ -60,5 +67,40 @@ describe('a hidden Chiron cannot still speak through an aspect anywhere (#542)',
 
     // The raw computed data is untouched by any of this — only the display-side views are filtered.
     expect(data.aspects.some((aspect) => hasChiron(aspect.bodyA, aspect.bodyB))).toBe(true);
+  });
+});
+
+describe('ExtendedSettings -> toPointVisibilityOptions -> chart-tables.ts, end to end (#585 regression)', () => {
+  it('shows Vertex/Fortune/Spirit once a real ExtendedSettings policy turns them on, not just a hand-built PointVisibilityOptions literal', async () => {
+    // Regression for the mid-#585 bug where extended-settings.ts stopped populating the
+    // dedicated chironVisible/fortuneVisible/vertexVisible/spiritVisible fields but
+    // chart-tables.ts still read those (now permanently undefined) fields directly — every
+    // other test in this suite exercises chart-tables.ts with a hand-built PointVisibilityOptions
+    // literal, which can't see a producer/consumer disagreement like that; this one chains the
+    // real producer (toPointVisibilityOptions) into the real consumer (chart-tables.ts).
+    const engine = await getEngine();
+    const settings = {
+      ...DEFAULT_EXTENDED_SETTINGS,
+      objectPolicies: {
+        ...DEFAULT_EXTENDED_SETTINGS.objectPolicies,
+        vertex: { visible: true, aspectParticipant: false },
+        partOfFortune: { visible: true, aspectParticipant: false },
+        partOfSpirit: { visible: true, aspectParticipant: false },
+      },
+    };
+    const data = await computeChartData(MOMENT, engine, {});
+    const options = toPointVisibilityOptions(settings);
+
+    expect(angleRows(data, options).some((row) => row.label === 'Vertex')).toBe(true);
+    const derived = derivedPointRows(data, options);
+    expect(derived.some((row) => row.pointKey === 'part-of-fortune')).toBe(true);
+    expect(derived.some((row) => row.pointKey === 'part-of-spirit')).toBe(true);
+    const matrixKeys = chartSheetInput(data, [], 'Natal', options).matrix.bodies.map((body) => body.key);
+    expect(matrixKeys).toEqual(expect.arrayContaining(['vertex', 'partOfFortune', 'partOfSpirit']));
+
+    // And the default policy (all three off) still hides them through the same real pipeline.
+    const defaultOptions = toPointVisibilityOptions(DEFAULT_EXTENDED_SETTINGS);
+    expect(angleRows(data, defaultOptions).some((row) => row.label === 'Vertex')).toBe(false);
+    expect(derivedPointRows(data, defaultOptions)).toHaveLength(0);
   });
 });

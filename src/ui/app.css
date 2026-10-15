@@ -4436,6 +4436,21 @@ svg text.chart-symbol-text-unicode {
   margin-bottom: var(--space-2);
 }
 
+/* One object's row in the Extended Settings "Bodies and points" checklist (#585): its name, then
+   its two independent checkboxes (visible, participates in aspects), aligned into two columns
+   across every row in a group so the second checkbox lines up regardless of name length. */
+.settings-card-object-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 2.75rem;
+}
+
+.settings-card-object-name {
+  flex: 0 0 9rem;
+  min-width: 0;
+}
+
 /* The primary action of a long form stays reachable at the bottom of the viewport while its fields scroll (#513). */
 .sticky-actions {
   position: sticky;

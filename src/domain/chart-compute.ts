@@ -18,7 +18,7 @@
  * @module chart-compute
  * @purpose Computes a chart's positions, houses, aspects, dignities, sect and derived points from a birth moment (#44).
  * @conventions One ephemeris pass (one Julian day, one batch position call, one house call) then pure arithmetic; nothing is cached — results are cheap to recompute, not stored as a second source of truth; `housesAreDefined` must be checked before trusting house-derived fields. Point aspects (Asc/MC always; Vertex, Part of Fortune/Spirit opt-in via `aspectsTo`) are point-to-body only, use the planet orbs, and drop a part's aspect to its own "+" luminary (#516). Enrichments (declinations, fixedStars, obliquity) are optional fields computed alongside core chart data (#589) but can be lazy-loaded separately for better performance when not needed.
- * @exports computeChartData, computeChartDataAtJd, enrichChartData, housesAreDefined, ChartData, ChartCalculationOptions, AngleAspect, NATAL_FIXED_STARS
+ * @exports computeChartData, computeChartDataAtJd, enrichChartData, housesAreDefined, isAspectParticipant, ChartData, ChartCalculationOptions, AngleAspect, NATAL_FIXED_STARS
  */
 import {
   DEFAULT_ORB_CONFIG,
@@ -29,7 +29,7 @@ import {
   type AspectSubject,
   type OrbConfig,
 } from '../astrology/aspects.js';
-import { bodyByKey, BODIES } from '../astrology/bodies.js';
+import { bodyById, bodyByKey, BODIES } from '../astrology/bodies.js';
 import { materializeCustomPoints, type ComputedCustomPoint } from './custom-point.js';
 import type { CustomPointDefinition } from './person.js';
 import type { EssentialDignities } from '../astrology/dignities.js';
@@ -85,20 +85,39 @@ export interface ChartCalculationOptions {
   /** Persisted user formulas materialized as chart points after the ephemeris calculation (#566). */
   readonly customPoints?: readonly CustomPointDefinition[];
   /**
-   * Whether these point families participate in aspect-finding at all. All
-   * default to false — Chiron, Lilith and the Nodes are still computed and
-   * appear in `data.positions`, just excluded from the pairs `findAspects`
-   * checks, matching most astrology tools' own "aspects to" defaults.
+   * Per-object aspect participation (#585), keyed by `astrology/bodies.ts` body keys plus
+   * `'vertex'`/`'partOfFortune'`/`'partOfSpirit'` — deliberately a plain string-keyed map, not
+   * `chart/object-policy.ts`'s `ObjectKey` union, so this module stays decoupled from the
+   * settings/UI layer the way it always has been; `extended-settings.ts`'s
+   * `toChartCalculationOptions` is what actually populates every key from an `ObjectPolicies`.
+   * A key absent from this map falls back to the implicit default it always had before this
+   * existed: luminaries, planets and asteroids participate; Chiron, Lilith, the Nodes, the
+   * Vertex and the two lots do not (matching most astrology tools' own "aspects to" defaults).
    */
-  readonly aspectsTo?: {
-    readonly chiron?: boolean;
-    readonly lilith?: boolean;
-    readonly lunarNodes?: boolean;
-    /** The Vertex, the Part of Fortune and the Part of Spirit as aspecting points (#516); the Ascendant and Midheaven always are. */
-    readonly vertex?: boolean;
-    readonly partOfFortune?: boolean;
-    readonly partOfSpirit?: boolean;
-  };
+  readonly aspectsTo?: Readonly<Partial<Record<string, boolean>>>;
+}
+
+/**
+ * Whether `body` takes part in aspect-finding, per `aspectsTo` (#585) — the one place this
+ * default/override logic lives, so `composite.ts`/`draconic.ts`/`harmonic.ts`/`return-chart.ts`
+ * (each needing the same answer for their own cross-chart aspect-finding or contacts-table
+ * filtering) read it from here rather than re-deriving their own copy. A prior, pre-#585 shape
+ * grouped Lilith/the Nodes under single `lilith`/`lunarNodes` `aspectsTo` keys; those four
+ * modules' own hand-rolled copies of this check still assumed that shape until this function
+ * replaced them, which had silently broken Lilith/Node participation for every chart type but
+ * the natal one once `aspectsTo` moved to one key per body (caught in #585 review, not by any
+ * test — none of those modules' tests drive `aspectsTo` through `extended-settings.ts`'s
+ * `toChartCalculationOptions`, only by hand in the old shape).
+ */
+export function isAspectParticipant(body: BodyId, aspectsTo: ChartCalculationOptions['aspectsTo']): boolean {
+  const definition = bodyById(body);
+  if (definition === undefined) return true;
+  // Luminaries, planets and asteroids participated unconditionally before #585 ever gated
+  // anything, so that stays the implicit default for a key `aspectsTo` doesn't name — only
+  // Chiron/Lilith/the Nodes keep defaulting to excluded, matching their pre-#585 behavior.
+  const participatesByDefault =
+    definition.category === 'luminary' || definition.category === 'planet' || definition.category === 'asteroid';
+  return aspectsTo?.[definition.key] ?? participatesByDefault;
 }
 
 /**
@@ -408,9 +427,7 @@ export async function computeChartDataAtJd(
   const subjects: AspectSubject[] = bodies.flatMap((body) => {
     const position = positionByBody.get(body.id);
     if (position === undefined) return [];
-    if (body.category === 'centaur' && aspectsTo.chiron !== true) return [];
-    if (body.category === 'lilith' && aspectsTo.lilith !== true) return [];
-    if (body.category === 'node' && aspectsTo.lunarNodes !== true) return [];
+    if (!isAspectParticipant(body.id, aspectsTo)) return [];
     return [{ body: body.id, position, category: body.category }];
   });
   const orbConfig = options.orbConfig ?? DEFAULT_ORB_CONFIG;

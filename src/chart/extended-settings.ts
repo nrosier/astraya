@@ -21,6 +21,7 @@ import type { BoundsScheme } from '../astrology/bounds.js';
 import type { ChartCalculationOptions } from '../domain/chart-compute.js';
 import type { PointVisibilityOptions } from '../domain/chart-tables.js';
 import type { Degrees, HouseSystem, Zodiac } from '../ephemeris/types.js';
+import { DEFAULT_OBJECT_POLICIES, OBJECT_KEYS, type ObjectKey, type ObjectPolicies } from './object-policy.js';
 import type { SignWedgeStyle } from './wheel.js';
 
 export interface ExtendedSettings {
@@ -38,13 +39,12 @@ export interface ExtendedSettings {
   readonly enabledMinorAspects: readonly string[];
   readonly lilithVariant: 'mean' | 'true' | 'interpolated';
   readonly nodeVariant: 'mean' | 'true';
-  readonly fortuneVisible: boolean;
-  readonly vertexVisible: boolean;
-  readonly chironVisible: boolean;
-  /** Explicit per-point opt-ins for modern/sensitive computed bodies (#560). */
-  readonly modernPointVisibility: Readonly<Record<ModernPointKey, boolean>>;
-  /** Part of Spirit's own visibility (#542) — Fortune's sibling lot, previously always shown regardless of any setting. */
-  readonly spiritVisible: boolean;
+  /**
+   * Per-object visibility and aspect-participation (#585), covering every planet, node, Lilith
+   * variant, Chiron, asteroid, and the Vertex/Fortune/Spirit points — replacing what used to be
+   * eleven separate booleans with one policy keyed by `chart/object-policy.ts`'s `ObjectKey`.
+   */
+  readonly objectPolicies: ObjectPolicies;
   readonly midpointsVisible: boolean;
   /** Draw antiscion/contra-antiscion contacts as chords on the wheel (#556). */
   readonly antisciaVisible: boolean;
@@ -64,40 +64,9 @@ export interface ExtendedSettings {
   /** Orb for the dial90 midpoint-tree table above, in degrees. */
   readonly midpointTreeOrb: Degrees;
   readonly rainbowZodiac: boolean;
-  readonly aspectsToChiron: boolean;
-  readonly aspectsToLilith: boolean;
-  readonly aspectsToLunarNodes: boolean;
-  readonly aspectsToVertex: boolean;
-  readonly aspectsToPartOfFortune: boolean;
-  readonly aspectsToPartOfSpirit: boolean;
 }
 
-export const MODERN_POINT_KEYS = [
-  'meanNode',
-  'trueNode',
-  'meanLilith',
-  'osculatingLilith',
-  'interpolatedLilith',
-  'ceres',
-  'pallas',
-  'juno',
-  'vesta',
-] as const;
-export type ModernPointKey = (typeof MODERN_POINT_KEYS)[number];
-
-const DEFAULT_MODERN_POINT_VISIBILITY: Readonly<Record<ModernPointKey, boolean>> = {
-  meanNode: false,
-  trueNode: false,
-  meanLilith: false,
-  osculatingLilith: false,
-  interpolatedLilith: false,
-  ceres: false,
-  pallas: false,
-  juno: false,
-  vesta: false,
-};
-
-/** Placidus, tropical, every default as documented on `DEFAULT_ORB_CONFIG` and `PointVisibilityOptions` — matches what a chart looks like with the panel never opened. */
+/** Placidus, tropical, every default as documented on `DEFAULT_ORB_CONFIG` and `DEFAULT_OBJECT_POLICIES` — matches what a chart looks like with the panel never opened. */
 export const DEFAULT_EXTENDED_SETTINGS: ExtendedSettings = {
   houseSystem: 'P',
   zodiac: { kind: 'tropical' },
@@ -106,11 +75,7 @@ export const DEFAULT_EXTENDED_SETTINGS: ExtendedSettings = {
   enabledMinorAspects: [],
   lilithVariant: 'mean',
   nodeVariant: 'mean',
-  fortuneVisible: false,
-  vertexVisible: false,
-  chironVisible: true,
-  modernPointVisibility: DEFAULT_MODERN_POINT_VISIBILITY,
-  spiritVisible: false,
+  objectPolicies: DEFAULT_OBJECT_POLICIES,
   midpointsVisible: false,
   antisciaVisible: false,
   antisciaMaxOrb: 1,
@@ -119,12 +84,6 @@ export const DEFAULT_EXTENDED_SETTINGS: ExtendedSettings = {
   dial90Visible: false,
   midpointTreeOrb: 1,
   rainbowZodiac: false,
-  aspectsToChiron: false,
-  aspectsToLilith: false,
-  aspectsToLunarNodes: false,
-  aspectsToVertex: false,
-  aspectsToPartOfFortune: false,
-  aspectsToPartOfSpirit: false,
 };
 
 /** The half of `ExtendedSettings` that changes what `computeChartData` returns. */
@@ -134,31 +93,26 @@ export function toChartCalculationOptions(settings: ExtendedSettings): ChartCalc
     scalePercent: settings.orbScalePercent,
     enabledMinorAspects: settings.enabledMinorAspects,
   };
+  const aspectsTo = Object.fromEntries(
+    OBJECT_KEYS.map((key) => [key, settings.objectPolicies[key].aspectParticipant]),
+  ) as Record<ObjectKey, boolean>;
   return {
     houseSystem: settings.houseSystem,
     zodiac: settings.zodiac,
     orbConfig,
     lilithVariant: settings.lilithVariant,
     nodeVariant: settings.nodeVariant,
-    aspectsTo: {
-      chiron: settings.aspectsToChiron,
-      lilith: settings.aspectsToLilith,
-      lunarNodes: settings.aspectsToLunarNodes,
-      vertex: settings.aspectsToVertex,
-      partOfFortune: settings.aspectsToPartOfFortune,
-      partOfSpirit: settings.aspectsToPartOfSpirit,
-    },
+    aspectsTo,
   };
 }
 
 /** The half that only changes which already-computed points the tables/wheel show. */
 export function toPointVisibilityOptions(settings: ExtendedSettings): PointVisibilityOptions {
+  const bodyVisibility = Object.fromEntries(
+    OBJECT_KEYS.map((key) => [key, settings.objectPolicies[key].visible]),
+  ) as Record<ObjectKey, boolean>;
   return {
-    chironVisible: settings.chironVisible,
-    bodyVisibility: settings.modernPointVisibility,
-    fortuneVisible: settings.fortuneVisible,
-    vertexVisible: settings.vertexVisible,
-    spiritVisible: settings.spiritVisible,
+    bodyVisibility,
     midpointsVisible: settings.midpointsVisible,
     antisciaVisible: settings.antisciaVisible,
     antisciaMaxOrb: settings.antisciaMaxOrb,

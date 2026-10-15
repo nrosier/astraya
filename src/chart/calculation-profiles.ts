@@ -34,6 +34,7 @@
 import { ayanamsaByKey, AYANAMSAS } from '../astrology/ayanamsas.js';
 import type { RulershipChoice } from '../astrology/rulership.js';
 import { DEFAULT_EXTENDED_SETTINGS, type ExtendedSettings } from './extended-settings.js';
+import { DEFAULT_OBJECT_POLICIES, OBJECT_KEYS, type ObjectKey, type ObjectPolicies } from './object-policy.js';
 
 export type CalculationProfileId = 'modern-western-v1' | 'traditional-western-v1' | 'sidereal-lahiri-v1';
 
@@ -54,80 +55,69 @@ export type CalculationProfile = Pick<
   | 'enabledMinorAspects'
   | 'lilithVariant'
   | 'nodeVariant'
-  | 'fortuneVisible'
-  | 'vertexVisible'
-  | 'chironVisible'
-  | 'modernPointVisibility'
+  | 'objectPolicies'
   | 'midpointsVisible'
-  | 'aspectsToChiron'
-  | 'aspectsToLilith'
-  | 'aspectsToLunarNodes'
-  | 'aspectsToVertex'
-  | 'aspectsToPartOfFortune'
-  | 'aspectsToPartOfSpirit'
 > & { readonly rulership: RulershipChoice };
 
-/** Fields every built-in profile shares today — five major aspects, no minors, mean node/Lilith, unscaled standard orbs, no aspects to the non-core points, midpoints never shown. */
+/** `base` with only the named keys' `visible` replaced — `aspectParticipant` and every other key are untouched. */
+function withVisibility(
+  base: ObjectPolicies,
+  overrides: Readonly<Partial<Record<ObjectKey, boolean>>>,
+): ObjectPolicies {
+  return Object.fromEntries(
+    OBJECT_KEYS.map((key) => [
+      key,
+      overrides[key] === undefined ? base[key] : { ...base[key], visible: overrides[key] },
+    ]),
+  ) as ObjectPolicies;
+}
+
+/** Fields every built-in profile shares today — five major aspects, no minors, mean node/Lilith, unscaled standard orbs, midpoints never shown. */
 const COMMON: Pick<
   CalculationProfile,
-  | 'orbScalePercent'
-  | 'enabledMinorAspects'
-  | 'lilithVariant'
-  | 'nodeVariant'
-  | 'midpointsVisible'
-  | 'modernPointVisibility'
-  | 'aspectsToChiron'
-  | 'aspectsToLilith'
-  | 'aspectsToLunarNodes'
-  | 'aspectsToVertex'
-  | 'aspectsToPartOfFortune'
-  | 'aspectsToPartOfSpirit'
+  'orbScalePercent' | 'enabledMinorAspects' | 'lilithVariant' | 'nodeVariant' | 'midpointsVisible'
 > = {
   orbScalePercent: 0,
   enabledMinorAspects: [],
   lilithVariant: 'mean',
   nodeVariant: 'mean',
   midpointsVisible: false,
-  modernPointVisibility: DEFAULT_EXTENDED_SETTINGS.modernPointVisibility,
-  aspectsToChiron: false,
-  aspectsToLilith: false,
-  aspectsToLunarNodes: false,
-  aspectsToVertex: false,
-  aspectsToPartOfFortune: false,
-  aspectsToPartOfSpirit: false,
 };
 
 export const CALCULATION_PROFILES: Readonly<Record<CalculationProfileId, CalculationProfile>> = {
+  // Chiron visible, Fortune/Vertex hidden — identical to `DEFAULT_OBJECT_POLICIES` (#585), since
+  // that default was itself derived from this profile's own pre-#585 point-visibility values.
   'modern-western-v1': {
     ...COMMON,
     zodiac: DEFAULT_EXTENDED_SETTINGS.zodiac,
     houseSystem: DEFAULT_EXTENDED_SETTINGS.houseSystem,
-    fortuneVisible: false,
-    vertexVisible: false,
-    chironVisible: true,
+    objectPolicies: DEFAULT_OBJECT_POLICIES,
     rulership: 'modern',
   },
   'traditional-western-v1': {
     ...COMMON,
     zodiac: { kind: 'tropical' },
     houseSystem: 'W',
-    fortuneVisible: true,
-    vertexVisible: false,
-    chironVisible: false,
+    objectPolicies: withVisibility(DEFAULT_OBJECT_POLICIES, { chiron: false, partOfFortune: true }),
     rulership: 'traditional',
   },
   'sidereal-lahiri-v1': {
     ...COMMON,
     zodiac: { kind: 'sidereal', ayanamsa: LAHIRI_AYANAMSA_ID },
     houseSystem: 'W',
-    fortuneVisible: false,
-    vertexVisible: false,
-    chironVisible: false,
+    objectPolicies: withVisibility(DEFAULT_OBJECT_POLICIES, { chiron: false }),
     rulership: 'traditional',
   },
 };
 
-/** `settings` with every field `profile` owns replaced by it — a full snapshot, not a merge: a previously-customized orb scale or node model does not survive. */
+/**
+ * `settings` with every field `profile` owns replaced by it — a full snapshot, not a merge: a
+ * previously-customized orb scale or node model does not survive. `objectPolicies` is likewise
+ * fully replaced, including the Part of Spirit entry — before #585, Spirit's visibility was
+ * accidentally left out of the old field-by-field `Pick` and so never actually reset by a
+ * profile, unlike every other point; folding it into one `objectPolicies` field means a profile
+ * is now genuinely the complete snapshot this module's own doc comment already claimed it was.
+ */
 export function applyCalculationProfile(settings: ExtendedSettings, id: CalculationProfileId): ExtendedSettings {
   const profile = CALCULATION_PROFILES[id];
   return {
@@ -138,17 +128,8 @@ export function applyCalculationProfile(settings: ExtendedSettings, id: Calculat
     enabledMinorAspects: profile.enabledMinorAspects,
     lilithVariant: profile.lilithVariant,
     nodeVariant: profile.nodeVariant,
-    fortuneVisible: profile.fortuneVisible,
-    vertexVisible: profile.vertexVisible,
-    chironVisible: profile.chironVisible,
-    modernPointVisibility: profile.modernPointVisibility,
+    objectPolicies: profile.objectPolicies,
     midpointsVisible: profile.midpointsVisible,
-    aspectsToChiron: profile.aspectsToChiron,
-    aspectsToLilith: profile.aspectsToLilith,
-    aspectsToLunarNodes: profile.aspectsToLunarNodes,
-    aspectsToVertex: profile.aspectsToVertex,
-    aspectsToPartOfFortune: profile.aspectsToPartOfFortune,
-    aspectsToPartOfSpirit: profile.aspectsToPartOfSpirit,
   };
 }
 
@@ -176,17 +157,8 @@ export function matchCalculationProfile(
       settings.enabledMinorAspects.every((aspect) => profile.enabledMinorAspects.includes(aspect)) &&
       settings.lilithVariant === profile.lilithVariant &&
       settings.nodeVariant === profile.nodeVariant &&
-      settings.fortuneVisible === profile.fortuneVisible &&
-      settings.vertexVisible === profile.vertexVisible &&
-      settings.chironVisible === profile.chironVisible &&
-      JSON.stringify(settings.modernPointVisibility) === JSON.stringify(profile.modernPointVisibility) &&
+      JSON.stringify(settings.objectPolicies) === JSON.stringify(profile.objectPolicies) &&
       settings.midpointsVisible === profile.midpointsVisible &&
-      settings.aspectsToChiron === profile.aspectsToChiron &&
-      settings.aspectsToLilith === profile.aspectsToLilith &&
-      settings.aspectsToLunarNodes === profile.aspectsToLunarNodes &&
-      settings.aspectsToVertex === profile.aspectsToVertex &&
-      settings.aspectsToPartOfFortune === profile.aspectsToPartOfFortune &&
-      settings.aspectsToPartOfSpirit === profile.aspectsToPartOfSpirit &&
       rulership === profile.rulership
     );
   });

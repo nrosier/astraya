@@ -77,9 +77,13 @@ describe('computeDraconic (#398)', () => {
     const engine = await getEngine();
     const withoutExtras = await computeDraconic(PERSON, engine);
     const withExtras = await computeDraconic(PERSON, engine, {
-      aspectsTo: { chiron: true, lilith: true, lunarNodes: true },
+      // Per-object keys (#585), not the old grouped 'lilith'/'lunarNodes' — only the Mean
+      // variants are actually present by default (nodeVariant/lilithVariant default to 'mean'),
+      // so a strict '>' here would have caught #585's four-sibling-module regression where
+      // these modules kept reading the pre-#585 grouped key shape after it was removed.
+      aspectsTo: { chiron: true, meanLilith: true, meanNode: true },
     });
-    expect(withExtras.draconic.aspects.length).toBeGreaterThanOrEqual(withoutExtras.draconic.aspects.length);
+    expect(withExtras.draconic.aspects.length).toBeGreaterThan(withoutExtras.draconic.aspects.length);
   });
 
   it('retains transformed custom formula points with standard non-luminary aspects', async () => {

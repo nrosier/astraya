@@ -21,10 +21,16 @@
  */
 import {
   DEFAULT_EXTENDED_SETTINGS,
-  MODERN_POINT_KEYS,
   toChartCalculationOptions,
   type ExtendedSettings,
 } from '../chart/extended-settings.js';
+import {
+  DEFAULT_OBJECT_POLICIES,
+  OBJECT_KEYS,
+  type ObjectKey,
+  type ObjectPolicies,
+  type ObjectPolicy,
+} from '../chart/object-policy.js';
 import type { ChartCalculationOptions } from './chart-compute.js';
 import { DEFAULT_RULERSHIP_CHOICE, RULERSHIP_CHOICES, type RulershipChoice } from '../astrology/rulership.js';
 import { houseSystemByCode } from '../astrology/houses.js';
@@ -34,10 +40,14 @@ import type { JsonValue } from '../store/ops.js';
 import type { CustomPointDefinition } from './person.js';
 
 /**
- * 2 (#582): adds `customPoints`. A v1 snapshot (or a pre-#541 link with no version at all) still
- * parses — it simply had no way to carry formula points, so it reads back with none.
+ * 2 (#582): adds `customPoints`. 3 (#585): the eleven scattered point-visibility/`aspectsTo*`
+ * booleans collapse into one `objectPolicies` field — a breaking shape change per this file's
+ * own versioning policy, even though `parseExtendedSettings` keeps reading an old-shaped
+ * snapshot losslessly via `objectPoliciesFromLegacyFields` below, so no existing share link or
+ * saved default actually changes behavior. A v1 snapshot (or a pre-#541 link with no version at
+ * all) still parses — it simply had no way to carry formula points, so it reads back with none.
  */
-export const CURRENT_SNAPSHOT_VERSION = 2;
+export const CURRENT_SNAPSHOT_VERSION = 3;
 
 export interface CalculationSnapshot {
   readonly version: typeof CURRENT_SNAPSHOT_VERSION;
@@ -153,12 +163,61 @@ function parseCustomPoints(value: unknown): readonly CustomPointDefinition[] {
   });
 }
 
-function parseModernPointVisibility(value: unknown): ExtendedSettings['modernPointVisibility'] {
-  const defaults = DEFAULT_EXTENDED_SETTINGS.modernPointVisibility;
-  const parsed: Record<(typeof MODERN_POINT_KEYS)[number], boolean> = { ...defaults };
-  if (!isRecord(value)) return parsed;
-  for (const key of MODERN_POINT_KEYS) parsed[key] = parseBool(value[key], defaults[key]);
-  return parsed;
+function parseObjectPolicy(value: unknown, fallback: ObjectPolicy): ObjectPolicy {
+  if (!isRecord(value)) return fallback;
+  return {
+    visible: parseBool(value.visible, fallback.visible),
+    aspectParticipant: parseBool(value.aspectParticipant, fallback.aspectParticipant),
+  };
+}
+
+/**
+ * Reconstructs #585's unified `ObjectPolicies` from the pre-#585 scattered fields a share link,
+ * saved default or export made before this shipped still carries, so it keeps parsing to the
+ * identical effective policy rather than silently resetting to the new defaults. Only used when
+ * `objectPolicies` itself is absent (`parseObjectPolicies` below) — a snapshot that already has
+ * the new field never consults this.
+ */
+function objectPoliciesFromLegacyFields(value: Record<string, unknown>): ObjectPolicies {
+  const legacyModernVisibility = isRecord(value.modernPointVisibility) ? value.modernPointVisibility : {};
+  const visible = (key: ObjectKey, fallback: boolean): boolean => {
+    if (key in legacyModernVisibility) return parseBool(legacyModernVisibility[key], fallback);
+    if (key === 'chiron') return parseBool(value.chironVisible, fallback);
+    if (key === 'vertex') return parseBool(value.vertexVisible, fallback);
+    if (key === 'partOfFortune') return parseBool(value.fortuneVisible, fallback);
+    if (key === 'partOfSpirit') return parseBool(value.spiritVisible, fallback);
+    return fallback; // Sun..Pluto: no legacy field existed, so they always defaulted visible.
+  };
+  const participant = (key: ObjectKey, fallback: boolean): boolean => {
+    if (key === 'chiron') return parseBool(value.aspectsToChiron, fallback);
+    if (key === 'meanLilith' || key === 'osculatingLilith' || key === 'interpolatedLilith') {
+      return parseBool(value.aspectsToLilith, fallback);
+    }
+    if (key === 'meanNode' || key === 'trueNode') return parseBool(value.aspectsToLunarNodes, fallback);
+    if (key === 'vertex') return parseBool(value.aspectsToVertex, fallback);
+    if (key === 'partOfFortune') return parseBool(value.aspectsToPartOfFortune, fallback);
+    if (key === 'partOfSpirit') return parseBool(value.aspectsToPartOfSpirit, fallback);
+    return fallback; // Sun..Pluto and the four asteroids: no participation gate existed at all.
+  };
+  return Object.fromEntries(
+    OBJECT_KEYS.map((key) => [
+      key,
+      {
+        visible: visible(key, DEFAULT_OBJECT_POLICIES[key].visible),
+        aspectParticipant: participant(key, DEFAULT_OBJECT_POLICIES[key].aspectParticipant),
+      },
+    ]),
+  ) as ObjectPolicies;
+}
+
+/** Per-key, per-field repair when `value` already has the new shape; a full legacy-field migration when it doesn't. */
+function parseObjectPolicies(value: unknown, legacySource: Record<string, unknown>): ObjectPolicies {
+  if (isRecord(value)) {
+    return Object.fromEntries(
+      OBJECT_KEYS.map((key) => [key, parseObjectPolicy(value[key], DEFAULT_OBJECT_POLICIES[key])]),
+    ) as ObjectPolicies;
+  }
+  return objectPoliciesFromLegacyFields(legacySource);
 }
 
 /**
@@ -191,11 +250,7 @@ function parseExtendedSettings(value: unknown): ExtendedSettings {
       ? value.lilithVariant
       : d.lilithVariant,
     nodeVariant: isOneOf(value.nodeVariant, ['mean', 'true'] as const) ? value.nodeVariant : d.nodeVariant,
-    fortuneVisible: parseBool(value.fortuneVisible, d.fortuneVisible),
-    vertexVisible: parseBool(value.vertexVisible, d.vertexVisible),
-    chironVisible: parseBool(value.chironVisible, d.chironVisible),
-    modernPointVisibility: parseModernPointVisibility(value.modernPointVisibility),
-    spiritVisible: parseBool(value.spiritVisible, d.spiritVisible),
+    objectPolicies: parseObjectPolicies(value.objectPolicies, value),
     midpointsVisible: parseBool(value.midpointsVisible, d.midpointsVisible),
     antisciaVisible: parseBool(value.antisciaVisible, d.antisciaVisible),
     antisciaMaxOrb: parseNonNegativeNumber(value.antisciaMaxOrb, d.antisciaMaxOrb),
@@ -204,12 +259,6 @@ function parseExtendedSettings(value: unknown): ExtendedSettings {
     dial90Visible: parseBool(value.dial90Visible, d.dial90Visible),
     midpointTreeOrb: parseNonNegativeNumber(value.midpointTreeOrb, d.midpointTreeOrb),
     rainbowZodiac: parseBool(value.rainbowZodiac, d.rainbowZodiac),
-    aspectsToChiron: parseBool(value.aspectsToChiron, d.aspectsToChiron),
-    aspectsToLilith: parseBool(value.aspectsToLilith, d.aspectsToLilith),
-    aspectsToLunarNodes: parseBool(value.aspectsToLunarNodes, d.aspectsToLunarNodes),
-    aspectsToVertex: parseBool(value.aspectsToVertex, d.aspectsToVertex),
-    aspectsToPartOfFortune: parseBool(value.aspectsToPartOfFortune, d.aspectsToPartOfFortune),
-    aspectsToPartOfSpirit: parseBool(value.aspectsToPartOfSpirit, d.aspectsToPartOfSpirit),
   };
 }
 

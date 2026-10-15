@@ -29,7 +29,7 @@ describe('derivedPointLongitude', () => {
   });
 
   it('agrees with the Derived points table row for row (same longitude, same label, same key)', () => {
-    const rows = derivedPointRows(chart, { fortuneVisible: true, spiritVisible: true });
+    const rows = derivedPointRows(chart, { bodyVisibility: { partOfFortune: true, partOfSpirit: true } });
     expect(rows.map((row) => row.pointKey)).toEqual(DERIVED_POINTS.map((point) => point.key));
     for (const row of rows) {
       const point = DERIVED_POINTS.find((candidate) => candidate.key === row.pointKey);
@@ -48,12 +48,17 @@ describe('derivedPointLongitude', () => {
 
   it('keeps the table’s visibility rules: Fortune, Spirit and midpoints only when asked for (#542)', () => {
     expect(derivedPointRows(chart, {}).map((row) => row.pointKey)).toEqual([]);
-    expect(derivedPointRows(chart, { fortuneVisible: true }).map((row) => row.pointKey)).toEqual(['part-of-fortune']);
-    expect(derivedPointRows(chart, { spiritVisible: true }).map((row) => row.pointKey)).toEqual(['part-of-spirit']);
-    expect(derivedPointRows(chart, { fortuneVisible: true, spiritVisible: true }).map((row) => row.pointKey)).toEqual([
+    expect(derivedPointRows(chart, { bodyVisibility: { partOfFortune: true } }).map((row) => row.pointKey)).toEqual([
       'part-of-fortune',
+    ]);
+    expect(derivedPointRows(chart, { bodyVisibility: { partOfSpirit: true } }).map((row) => row.pointKey)).toEqual([
       'part-of-spirit',
     ]);
+    expect(
+      derivedPointRows(chart, { bodyVisibility: { partOfFortune: true, partOfSpirit: true } }).map(
+        (row) => row.pointKey,
+      ),
+    ).toEqual(['part-of-fortune', 'part-of-spirit']);
   });
 });
 

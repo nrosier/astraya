@@ -7,20 +7,25 @@ import {
   toSignWedgeStyle,
   type ExtendedSettings,
 } from '../src/chart/extended-settings.js';
+import { DEFAULT_OBJECT_POLICIES, OBJECT_KEYS } from '../src/chart/object-policy.js';
 
 function withOverrides(overrides: Partial<ExtendedSettings>): ExtendedSettings {
   return { ...DEFAULT_EXTENDED_SETTINGS, ...overrides };
 }
 
 describe('DEFAULT_EXTENDED_SETTINGS', () => {
-  it('matches a chart with the panel never opened: Placidus, tropical, no minor aspects, no aspects to Chiron/Lilith/Nodes', () => {
+  it('matches a chart with the panel never opened: Placidus, tropical, no minor aspects, the default object policy (#585)', () => {
     expect(DEFAULT_EXTENDED_SETTINGS.houseSystem).toBe('P');
     expect(DEFAULT_EXTENDED_SETTINGS.zodiac).toEqual({ kind: 'tropical' });
     expect(DEFAULT_EXTENDED_SETTINGS.orbScalePercent).toBe(0);
     expect(DEFAULT_EXTENDED_SETTINGS.enabledMinorAspects).toEqual([]);
-    expect(DEFAULT_EXTENDED_SETTINGS.chironVisible).toBe(true);
-    expect(DEFAULT_EXTENDED_SETTINGS.fortuneVisible).toBe(false);
-    expect(DEFAULT_EXTENDED_SETTINGS.vertexVisible).toBe(false);
+    expect(DEFAULT_EXTENDED_SETTINGS.objectPolicies).toEqual(DEFAULT_OBJECT_POLICIES);
+    // Spot-checks reproducing the pre-#585 scattered defaults directly, not just via equality
+    // with the (also newly-written) DEFAULT_OBJECT_POLICIES constant.
+    expect(DEFAULT_EXTENDED_SETTINGS.objectPolicies.chiron).toEqual({ visible: true, aspectParticipant: false });
+    expect(DEFAULT_EXTENDED_SETTINGS.objectPolicies.sun).toEqual({ visible: true, aspectParticipant: true });
+    expect(DEFAULT_EXTENDED_SETTINGS.objectPolicies.ceres).toEqual({ visible: false, aspectParticipant: true });
+    expect(DEFAULT_EXTENDED_SETTINGS.objectPolicies.vertex).toEqual({ visible: false, aspectParticipant: false });
     expect(DEFAULT_EXTENDED_SETTINGS.midpointsVisible).toBe(false);
     expect(DEFAULT_EXTENDED_SETTINGS.antisciaVisible).toBe(false);
     expect(DEFAULT_EXTENDED_SETTINGS.antisciaMaxOrb).toBe(1);
@@ -29,12 +34,6 @@ describe('DEFAULT_EXTENDED_SETTINGS', () => {
     expect(DEFAULT_EXTENDED_SETTINGS.dial90Visible).toBe(false);
     expect(DEFAULT_EXTENDED_SETTINGS.midpointTreeOrb).toBe(1);
     expect(DEFAULT_EXTENDED_SETTINGS.rainbowZodiac).toBe(false);
-    expect(DEFAULT_EXTENDED_SETTINGS.aspectsToChiron).toBe(false);
-    expect(DEFAULT_EXTENDED_SETTINGS.aspectsToLilith).toBe(false);
-    expect(DEFAULT_EXTENDED_SETTINGS.aspectsToLunarNodes).toBe(false);
-    expect(DEFAULT_EXTENDED_SETTINGS.aspectsToVertex).toBe(false);
-    expect(DEFAULT_EXTENDED_SETTINGS.aspectsToPartOfFortune).toBe(false);
-    expect(DEFAULT_EXTENDED_SETTINGS.aspectsToPartOfSpirit).toBe(false);
   });
 });
 
@@ -68,34 +67,28 @@ describe('toChartCalculationOptions', () => {
     });
   });
 
-  it('maps the six aspectsTo booleans by name', () => {
+  it('maps every object key’s aspectParticipant by name (#585)', () => {
     const settings = withOverrides({
-      aspectsToChiron: true,
-      aspectsToLilith: false,
-      aspectsToLunarNodes: true,
-      aspectsToVertex: true,
-      aspectsToPartOfFortune: false,
-      aspectsToPartOfSpirit: true,
+      objectPolicies: {
+        ...DEFAULT_EXTENDED_SETTINGS.objectPolicies,
+        chiron: { visible: true, aspectParticipant: true },
+        vertex: { visible: false, aspectParticipant: true },
+        sun: { visible: true, aspectParticipant: false },
+      },
     });
     const options = toChartCalculationOptions(settings);
-    expect(options.aspectsTo).toEqual({
-      chiron: true,
-      lilith: false,
-      lunarNodes: true,
-      vertex: true,
-      partOfFortune: false,
-      partOfSpirit: true,
-    });
+    expect(options.aspectsTo?.chiron).toBe(true);
+    expect(options.aspectsTo?.vertex).toBe(true);
+    expect(options.aspectsTo?.sun).toBe(false);
+    for (const key of OBJECT_KEYS) {
+      expect(options.aspectsTo?.[key]).toBe(settings.objectPolicies[key].aspectParticipant);
+    }
   });
 });
 
 describe('toPointVisibilityOptions', () => {
-  it('picks out every visibility option, including individual modern-point opt-ins (#542, #556, #560)', () => {
+  it('picks out the feature-toggle fields and builds bodyVisibility from every object’s policy (#542, #556, #560, #585)', () => {
     const settings = withOverrides({
-      chironVisible: false,
-      fortuneVisible: true,
-      vertexVisible: true,
-      spiritVisible: true,
       midpointsVisible: true,
       antisciaVisible: true,
       antisciaMaxOrb: 1.5,
@@ -103,13 +96,17 @@ describe('toPointVisibilityOptions', () => {
       declinationMaxOrb: 0.5,
       dial90Visible: true,
       midpointTreeOrb: 2,
-      modernPointVisibility: { ...DEFAULT_EXTENDED_SETTINGS.modernPointVisibility, meanLilith: true, ceres: true },
+      objectPolicies: {
+        ...DEFAULT_EXTENDED_SETTINGS.objectPolicies,
+        chiron: { visible: false, aspectParticipant: false },
+        partOfFortune: { visible: true, aspectParticipant: false },
+        vertex: { visible: true, aspectParticipant: false },
+        meanLilith: { visible: true, aspectParticipant: false },
+        ceres: { visible: true, aspectParticipant: true },
+      },
     });
-    expect(toPointVisibilityOptions(settings)).toEqual({
-      chironVisible: false,
-      fortuneVisible: true,
-      vertexVisible: true,
-      spiritVisible: true,
+    const options = toPointVisibilityOptions(settings);
+    expect(options).toMatchObject({
       midpointsVisible: true,
       antisciaVisible: true,
       antisciaMaxOrb: 1.5,
@@ -117,8 +114,10 @@ describe('toPointVisibilityOptions', () => {
       declinationMaxOrb: 0.5,
       dial90Visible: true,
       midpointTreeOrb: 2,
-      bodyVisibility: { ...DEFAULT_EXTENDED_SETTINGS.modernPointVisibility, meanLilith: true, ceres: true },
     });
+    for (const key of OBJECT_KEYS) {
+      expect(options.bodyVisibility?.[key]).toBe(settings.objectPolicies[key].visible);
+    }
   });
 });
 

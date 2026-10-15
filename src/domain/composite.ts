@@ -33,7 +33,12 @@ import { DEFAULT_RULERSHIP_CHOICE, essentialDignitiesFor } from '../astrology/ru
 import { partOfFortune, partOfSpirit } from '../astrology/arabic-parts.js';
 import { midpointOf } from '../astrology/midpoints.js';
 import { sectOf, type Sect } from '../astrology/sect.js';
-import { computeChartData, type ChartCalculationOptions, type ChartData } from './chart-compute.js';
+import {
+  computeChartData,
+  isAspectParticipant,
+  type ChartCalculationOptions,
+  type ChartData,
+} from './chart-compute.js';
 import type { BodyId, BodyPosition, EphemerisProvider, HousePositions } from '../ephemeris/types.js';
 import type { BirthMomentInput } from '../time/types.js';
 
@@ -41,16 +46,6 @@ function categoryOf(body: BodyId): BodyCategory {
   const definition = bodyById(body);
   if (definition === undefined) throw new Error(`unreachable: ${String(body)} is always one of BODIES`);
   return definition.category;
-}
-
-/** Whether `body` participates in the composite's own aspect-finding, per `aspectsTo` — same three families `computeChartDataAtJd` excludes by default. */
-function isAspectEligible(body: BodyId, aspectsTo: ChartCalculationOptions['aspectsTo']): boolean {
-  const definition = bodyById(body);
-  if (definition === undefined) return true;
-  if (definition.category === 'centaur') return aspectsTo?.chiron === true;
-  if (definition.category === 'lilith') return aspectsTo?.lilith === true;
-  if (definition.category === 'node') return aspectsTo?.lunarNodes === true;
-  return true;
 }
 
 /** Near-arc midpoint of every corresponding field in two `HousePositions` — see this module's doc comment. */
@@ -125,7 +120,7 @@ export async function computeComposite(
 
   const houses = midpointHouses(chartA.houses, chartB.houses);
 
-  const eligiblePositions = positions.filter((position) => isAspectEligible(position.body, options.aspectsTo));
+  const eligiblePositions = positions.filter((position) => isAspectParticipant(position.body, options.aspectsTo));
   const aspects: readonly Aspect[] = findAspects(
     subjectsFrom(eligiblePositions, categoryOf),
     orbConfig ?? DEFAULT_ORB_CONFIG,
