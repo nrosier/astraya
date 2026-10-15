@@ -48,10 +48,18 @@
         "id": { "type": "string" },
         "displayName": { "type": "string" },
         "placeLabel": { "type": "string" },
-        "timeAccuracy": { "enum": ["recorded", "estimated", "unknown"] },
+        "timeAccuracy": { "enum": ["recorded", "remembered", "approximate", "unknown"] },
         "notes": { "type": "string" },
         "birth": { "type": "object", "description": "BirthMomentInput — see src/time/types.ts" },
         "missing": { "type": "array", "items": { "type": "string" } },
+        "relocationPlaces": {
+          "type": "array",
+          "items": { "type": "object", "description": "RelocationPlace — see src/domain/person.ts" }
+        },
+        "customPoints": {
+          "type": "array",
+          "items": { "type": "object", "description": "CustomPointDefinition — see src/domain/person.ts" }
+        },
         "natalChart": { "$ref": "#/$defs/exportedChart" },
         "harmonicCharts": { "type": "array", "items": { "$ref": "#/$defs/exportedHarmonicChart" } },
         "chartError": { "type": "string" },

@@ -36,10 +36,12 @@ interface ExportedPerson {
   id: string;
   displayName: string;
   placeLabel: string;
-  timeAccuracy: 'recorded' | 'estimated' | 'unknown'; // Person['timeAccuracy']
+  timeAccuracy: 'recorded' | 'remembered' | 'approximate' | 'unknown'; // Person['timeAccuracy']
   notes: string;
   birth?: BirthMomentInput; // absent if the birth record is incomplete
   missing: string[]; // required fields the stored record lacks
+  relocationPlaces?: RelocationPlace[]; // #587 — named alternate places (#559), absent if none are saved
+  customPoints?: CustomPointDefinition[]; // #587 — custom formula points (#566), absent if none are saved
   natalChart?: ExportedChart; // absent if birth is incomplete, or chartError explains a failure
   harmonicCharts?: ExportedHarmonicChart[]; // named Varga charts, absent without usable houses
   chartError?: string;
@@ -94,11 +96,26 @@ JSON Schema file does enumerate them structurally.
 - **Breaking change — version bump required, and must be noted in this document's own changelog below:** removing
   a field, renaming a field, changing a field's type or required-ness, or changing the meaning of an existing value
   without changing its shape (e.g. a sign-index convention changing from 0-based to 1-based).
-- There is currently no reader/importer for `FullExport` (`buildFullExport` is write-only) — so there is no
-  automated backward-compatibility _test_ against an old version's output yet. A future importer, if built, should
-  strictly validate the schema version and reject unsupported versions with a clear error. Note: `parseCalculationSnapshot`
-  currently uses best-effort defaulting for missing fields rather than strict validation (see #583); a future importer
-  should instead fail closed and name what's unsupported, never guess or silently default.
+- **Restore** (#587). `src/domain/full-export-importer.ts` validates and stages a restore:
+  `validateFullExport` strictly checks `format` and `version` against `FULL_EXPORT_VERSION` — rejecting both
+  older and newer files by name, never guessing — and the per-field shape of each `ExportedPerson`'s birth
+  record, named places and custom points, reusing the same field readers `src/domain/person.ts` already applies
+  to the op-log itself (not a second, looser validator), and rejects two people sharing one id or a person id
+  that is itself a reserved register name (`__proto__`/`constructor`/`prototype`), rather than letting either
+  reach `store.mutate` and fail in a way the preview never explained. It deliberately never validates or restores
+  `natalChart`/`harmonicCharts`/`chartError`/`calculation`: the birth record is this file's own stated source of
+  truth, and a chart is always recomputable, so restoring a stale computed chart from a file would be restoring
+  exactly what this project refuses to treat as truth. `parseCalculationSnapshot` still uses best-effort
+  defaulting for missing fields rather than strict validation (see #583); the importer deliberately does not
+  repeat that — it fails closed and names what's unsupported.
+  `stageFullExportRestore` then classifies each person new/updated/unchanged against this device's current
+  people and builds the exact field-level mutations a restore would write, touching only fields that actually
+  differ. A person already soft-deleted on this device (`store.state.deleted.people`) is classified
+  `deletedLocally` instead of `new`: `deleted` is its own last-write-wins register (`fold.ts`), untouched by a
+  restore, so writing every other field would not make them reappear — the preview says so rather than
+  claiming a "new" person who, after confirming, stays invisible. The UI (`PreferencesView.tsx`, Data &
+  privacy) previews this before writing anything, and applies it as one `store.mutate` call so the whole
+  restore commits atomically (one IndexedDB transaction) or not at all.
 
 ## Version history
 
@@ -111,6 +128,9 @@ JSON Schema file does enumerate them structurally.
   first version bump made under the policy above, going forward. #557 later added optional `harmonicCharts` with
   radix-to-result position provenance for the named Varga presets; it is additive, so the version remains v2.
   #582 added optional `ExportedPerson.calculation`, the natal chart's `CalculationArtifact`; also additive, still v2.
+  #587 added optional `ExportedPerson.relocationPlaces`/`customPoints` — both read internally for chart
+  computation since #559/#566 but never carried back out, so a restore built on an export missing them would
+  have been lossy; also additive, still v2.
 
 ## Calculation artifact
 
@@ -135,3 +155,14 @@ browser had no Web Crypto (a non-secure context).
   fields gated on their settings).
 - `docs/schema/astraya-export.schema.json` is the external-tooling-facing structural counterpart; keep both in
   step with `src/domain/full-export.ts`/`src/domain/chart-tables.ts` when either changes.
+- `test/domain-full-export-importer.test.ts` exercises the restore side: `validateFullExport` against a real
+  archive and against versions both older and newer than `FULL_EXPORT_VERSION`, malformed-field and
+  duplicate/reserved-id rejection, `stageFullExportRestore`'s new/updated/unchanged/deletedLocally
+  classification (including that a soft-deleted person's fields update without un-deleting them), and —
+  against a real store — that a restore batch containing one malformed mutation commits none of it. A separate
+  `describe` block in the same file asserts, structurally, that the version check imports `FULL_EXPORT_VERSION`
+  and never references `calculation-snapshot.ts` — a numeric-mismatch test alone can't tell "the right
+  constant" from "a wrong one that currently happens to share its value," which is exactly how #605 slipped
+  through once already. `test/ui-PreferencesView.messages.test.ts` checks the restore strings' actual wording
+  (pluralization, per-locale status words) in both `en` and `nl`, which key-parity and compile-time checks
+  don't catch.

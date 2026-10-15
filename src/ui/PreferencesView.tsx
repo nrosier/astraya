@@ -26,6 +26,7 @@
  */
 import { useEffect, useState } from 'react';
 import { buildFullExport, fullExportFilename, peopleCsvFilename, peopleToCsv } from '../domain/full-export.js';
+import { stageFullExportRestore, validateFullExport, type RestorePreview } from '../domain/full-export-importer.js';
 import { APP_VERSION } from '../version.js';
 import type { PreferencesSection } from './route.js';
 import {
@@ -37,6 +38,8 @@ import {
   useDensity,
   useMotion,
 } from './appearance-settings.js';
+import { Button } from './primitives/Button.js';
+import { FileInput } from './primitives/FileInput.js';
 import { Select } from './primitives/Select.js';
 import { downloadText } from './download.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
@@ -81,6 +84,8 @@ export function PreferencesView({
   const [extendedSettings, setExtendedSettings] = useExtendedSettings();
   const [symbolClass] = useSymbolClass();
   const [status, setStatus] = useState<ExportStatus | undefined>(undefined);
+  const [preview, setPreview] = useState<RestorePreview | undefined>(undefined);
+  const [restoring, setRestoring] = useState(false);
 
   const run = (what: string, action: () => void | Promise<void>): void => {
     setStatus({ kind: 'busy', text: t.exportPreparing(what) });
@@ -121,6 +126,67 @@ export function PreferencesView({
       const now = new Date();
       downloadText(peopleCsvFilename(now), peopleToCsv([...store.state.people.values()]), 'text/csv');
     });
+  };
+
+  // Validate and stage only — nothing is written here. `confirmRestore` below is the one
+  // place that calls `store.mutate`, and it does so once, for every person's mutations
+  // flattened into a single batch, so the whole restore commits atomically or not at all.
+  const onRestoreFileChosen = (file: File | undefined): void => {
+    if (file === undefined) return;
+    if (store === undefined) {
+      setStatus({ kind: 'error', text: t.exportNeedsStore });
+      return;
+    }
+    setPreview(undefined);
+    setStatus({ kind: 'busy', text: t.restorePreparing });
+    void file
+      .text()
+      .then((text) => {
+        let parsed: unknown;
+        try {
+          parsed = JSON.parse(text);
+        } catch {
+          throw new Error(t.restoreInvalidJson);
+        }
+        const result = validateFullExport(parsed);
+        if (!result.ok) throw new Error(t.restoreInvalid(result.error));
+        const staged = stageFullExportRestore(result.value, store.state.people, store.state.deleted.people);
+        setPreview(staged);
+        // The counts themselves are shown once, inside the preview panel below (`restoreStaged`)
+        // — this status line only has to say there's something to look at, not repeat it.
+        setStatus({ kind: 'done', text: t.restoreReadyToReview });
+      })
+      .catch((error: unknown) => {
+        setStatus({ kind: 'error', text: error instanceof Error ? error.message : String(error) });
+      });
+  };
+
+  const confirmRestore = (): void => {
+    if (preview === undefined || store === undefined) return;
+    const mutations = preview.items.flatMap((item) => item.mutations);
+    if (mutations.length === 0) {
+      setPreview(undefined);
+      setStatus({ kind: 'done', text: t.restoreNothingToApply });
+      return;
+    }
+    if (!window.confirm(t.restoreConfirm(preview.newCount, preview.updatedCount, preview.deletedLocallyCount))) return;
+    setRestoring(true);
+    setStatus({ kind: 'busy', text: t.restoreApplying });
+    void store
+      .mutate(mutations)
+      .then(() => {
+        setPreview(undefined);
+        setStatus({
+          kind: 'done',
+          text: t.restoreApplied(preview.newCount, preview.updatedCount, preview.deletedLocallyCount),
+        });
+      })
+      .catch((error: unknown) => {
+        setStatus({ kind: 'error', text: t.restoreFailed(error instanceof Error ? error.message : String(error)) });
+      })
+      .finally(() => {
+        setRestoring(false);
+      });
   };
 
   useEffect(() => {
@@ -197,6 +263,53 @@ export function PreferencesView({
           {t.exportPeopleCsv}
         </button>
       </p>
+      <p>{t.restoreHint}</p>
+      <p>
+        <FileInput
+          buttonLabel={t.restoreFromFile}
+          accept="application/json"
+          disabled={store === undefined}
+          disabledReason={t.exportNeedsStore}
+          onChange={onRestoreFileChosen}
+        />
+      </p>
+      {preview !== undefined && (
+        <div>
+          <p>
+            {t.restoreStaged(
+              preview.newCount,
+              preview.updatedCount,
+              preview.unchangedCount,
+              preview.deletedLocallyCount,
+            )}
+          </p>
+          <div className="data-table data-table-wrap">
+            <div className="data-table-scroll data-table-scroll-tall">
+              <table>
+                <thead>
+                  <tr>
+                    <th>{t.restoreNameColumn}</th>
+                    <th>{t.restoreStatusColumn}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {preview.items.map((item) => (
+                    <tr key={item.id}>
+                      <td>{item.displayName === '' ? t.restoreNoName : item.displayName}</td>
+                      <td>{t.restoreStatusWord[item.status]}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <p>
+            <Button variant="primary" busy={restoring} busyLabel={t.restoreApplying} onClick={confirmRestore}>
+              {t.restoreApply}
+            </Button>
+          </p>
+        </div>
+      )}
       {status !== undefined && (
         <p
           className={`status preferences-export-status ${status.kind}`}
