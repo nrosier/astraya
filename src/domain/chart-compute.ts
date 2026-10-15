@@ -17,8 +17,8 @@
 /**
  * @module chart-compute
  * @purpose Computes a chart's positions, houses, aspects, dignities, sect and derived points from a birth moment (#44).
- * @conventions One ephemeris pass (one Julian day, one batch position call, one house call) then pure arithmetic; nothing is cached — results are cheap to recompute, not stored as a second source of truth; `housesAreDefined` must be checked before trusting house-derived fields. Point aspects (Asc/MC always; Vertex, Part of Fortune/Spirit opt-in via `aspectsTo`) are point-to-body only, use the planet orbs, and drop a part's aspect to its own "+" luminary (#516).
- * @exports computeChartData, computeChartDataAtJd, housesAreDefined, ChartData, ChartCalculationOptions, AngleAspect, NATAL_FIXED_STARS
+ * @conventions One ephemeris pass (one Julian day, one batch position call, one house call) then pure arithmetic; nothing is cached — results are cheap to recompute, not stored as a second source of truth; `housesAreDefined` must be checked before trusting house-derived fields. Point aspects (Asc/MC always; Vertex, Part of Fortune/Spirit opt-in via `aspectsTo`) are point-to-body only, use the planet orbs, and drop a part's aspect to its own "+" luminary (#516). Enrichments (declinations, fixedStars, obliquity) are optional fields computed alongside core chart data (#589) but can be lazy-loaded separately for better performance when not needed.
+ * @exports computeChartData, computeChartDataAtJd, enrichChartData, housesAreDefined, ChartData, ChartCalculationOptions, AngleAspect, NATAL_FIXED_STARS
  */
 import {
   DEFAULT_ORB_CONFIG,
@@ -287,6 +287,39 @@ function findPointAspects(
     }
   }
   return result;
+}
+
+/**
+ * Extracts chart enrichments (declinations, fixedStars, obliquity) for a computed chart.
+ * These are optional fields that can be lazy-loaded after the core chart is already computed (#589).
+ * Useful for performance when enrichments aren't needed immediately.
+ */
+export async function enrichChartData(
+  jd: JulianDayUT,
+  provider: EphemerisProvider,
+  positions: readonly BodyPosition[],
+  positionOptions?: PositionOptions,
+): Promise<{
+  readonly declinations: ReadonlyMap<BodyId, Degrees>;
+  readonly obliquity: Degrees;
+  readonly fixedStars: ReadonlyMap<string, Degrees>;
+}> {
+  const bodyIds = Array.from(positions, (p) => p.body) as readonly number[];
+  const [equatorialPositions, obliquity, fixedStarPositions] = await Promise.all([
+    provider.positions(jd, bodyIds, { equatorial: true }),
+    provider.obliquity(jd),
+    Promise.all(NATAL_FIXED_STARS.map((name) => provider.fixedStar(jd, name, positionOptions))),
+  ]);
+
+  const declinations = new Map<BodyId, Degrees>(
+    equatorialPositions.map((position) => [position.body, position.latitude]),
+  );
+
+  const fixedStars = new Map<string, Degrees>(
+    fixedStarPositions.map((star, index) => [NATAL_FIXED_STARS[index] ?? '', star.longitude]),
+  );
+
+  return { declinations, obliquity, fixedStars };
 }
 
 /**
