@@ -11,22 +11,46 @@
  * zero) — and hashed. The same inputs on the same engine and data therefore give the same
  * `resultHash`; a change to any input, the ephemeris files, or the calculation itself does not.
  *
- * Not covered yet (tracked on #582): a time-zone database fingerprint and resolved birth-time
- * provenance, calculation warnings beyond the house-division case, and the PDF/export/restore
- * paths consuming the artifact instead of recomputing from ambient settings.
+ * The birth moment is part of the inputs (`inputHash`), and how its wall-clock time was turned
+ * into an instant — offset, its source, zone, calendar, DST ambiguity and the runtime's tzdb
+ * fingerprint — is part of the provenance, since a time-zone database update can move a stored
+ * chart without any input changing.
  */
 /**
  * @module domain/calculation-artifact
  * @purpose Builds a CalculationArtifact — snapshot, execution provenance and SHA-256 fingerprints of inputs and result — once a chart calculation completes (#582).
  * @conventions Hashes are SHA-256 over a canonical JSON text (sorted keys, Maps as sorted entries, non-finite numbers as strings, `undefined` fields omitted) via Web Crypto, so they are stable across key insertion order and identical in the browser and Node. Provenance values that need the app build or the engine (`astrayaVersion`, `swephVersion`) are passed in, keeping this module pure apart from the digest.
- * @exports CalculationArtifact, CalculationProvenance, CalculationFingerprint, CalculationArtifactInputs, buildCalculationArtifact, calculationArtifactIdentity, canonicalJson, sha256Hex
+ * @exports CalculationArtifact, CalculationProvenance, TimeProvenance, CalculationFingerprint, CalculationArtifactInputs, buildCalculationArtifact, calculationArtifactIdentity, canonicalJson, sha256Hex
  */
 import { ALL_ASSETS } from '../ephemeris/assets.js';
 import type { HouseSystem } from '../ephemeris/types.js';
+import { resolveMoment } from '../time/resolve.js';
+import type { BirthMomentInput, OffsetProvenance, TimeWarningCode } from '../time/types.js';
 import type { CalculationSnapshot } from './calculation-snapshot.js';
 import { housesAreDefined, type ChartData } from './chart-compute.js';
 
+/**
+ * How the birth moment's wall-clock time became an instant (#582): the same resolution
+ * `computeChartData` performs, recorded so a stored result can be told apart from one a later
+ * time-zone database would give for the same input.
+ */
+export interface TimeProvenance {
+  /** Minutes east of UTC that was applied. */
+  readonly offsetMinutes: number;
+  /** Whether the offset was stated by the user, read from tzdb, or Local Mean Time. */
+  readonly offsetSource: OffsetProvenance;
+  /** The IANA zone used, or `null` for a stated offset or Local Mean Time. */
+  readonly zone: string | null;
+  readonly calendar: 'gregorian' | 'julian';
+  /** Other offsets that would give the same wall-clock time — non-empty only in a DST overlap. */
+  readonly alternativeOffsetMinutes: readonly number[];
+  readonly warnings: readonly TimeWarningCode[];
+  /** `zones.ts`'s probe of this runtime's tzdb: different text means different historical offsets. */
+  readonly tzdbFingerprint: string;
+}
+
 export interface CalculationProvenance {
+  readonly time: TimeProvenance;
   readonly astrayaVersion: string;
   readonly swephVersion: string;
   /** Pinned SHA-256 of every ephemeris data file, the fixed-star catalogue and the WASM binary, by file name. */
@@ -44,13 +68,17 @@ export interface CalculationProvenance {
 
 export interface CalculationFingerprint {
   readonly algorithm: 'sha-256';
-  /** Hex SHA-256 of the canonical snapshot: the complete calculation inputs. */
+  /** Hex SHA-256 of the canonical snapshot: the calculation settings, rulers and custom points. */
   readonly snapshotHash: string;
+  /** Hex SHA-256 of the canonical birth moment and snapshot together: the complete calculation inputs. */
+  readonly inputHash: string;
   /** Hex SHA-256 of the canonical `ChartData`: the complete computed result. */
   readonly resultHash: string;
 }
 
 export interface CalculationArtifact {
+  /** The birth moment as entered: civil time, place and any stated offset or zone. */
+  readonly moment: BirthMomentInput;
   readonly snapshot: CalculationSnapshot;
   readonly provenance: CalculationProvenance;
   readonly fingerprint: CalculationFingerprint;
@@ -99,20 +127,37 @@ const EPHEMERIS_ASSET_HASHES: Readonly<Record<string, string>> = Object.fromEntr
   ALL_ASSETS.map((asset) => [asset.file, asset.sha256]),
 );
 
-/** Builds the artifact for a calculation that has just completed from `snapshot`, producing `data`. */
+function timeProvenance(moment: BirthMomentInput): TimeProvenance {
+  const resolved = resolveMoment(moment);
+  return {
+    offsetMinutes: resolved.offsetMinutes,
+    offsetSource: resolved.provenance,
+    zone: resolved.zone,
+    calendar: resolved.calendar,
+    alternativeOffsetMinutes: resolved.alternativeOffsetMinutes,
+    warnings: resolved.warnings.map((warning) => warning.code),
+    tzdbFingerprint: resolved.tzdbFingerprint,
+  };
+}
+
+/** Builds the artifact for a calculation of `moment` that has just completed from `snapshot`, producing `data`. */
 export async function buildCalculationArtifact(
   snapshot: CalculationSnapshot,
+  moment: BirthMomentInput,
   data: ChartData,
   inputs: CalculationArtifactInputs,
 ): Promise<CalculationArtifact> {
   const housesDefined = housesAreDefined(data.houses);
-  const [snapshotHash, resultHash] = await Promise.all([
+  const [snapshotHash, inputHash, resultHash] = await Promise.all([
     sha256Hex(canonicalJson(snapshot)),
+    sha256Hex(canonicalJson({ moment, snapshot })),
     sha256Hex(canonicalJson(data)),
   ]);
   return {
+    moment,
     snapshot,
     provenance: {
+      time: timeProvenance(moment),
       astrayaVersion: inputs.astrayaVersion,
       swephVersion: inputs.swephVersion,
       ephemerisAssetHashes: EPHEMERIS_ASSET_HASHES,
@@ -123,16 +168,16 @@ export async function buildCalculationArtifact(
         ...(housesDefined ? [] : ['houses-undefined']),
       ],
     },
-    fingerprint: { algorithm: 'sha-256', snapshotHash, resultHash },
+    fingerprint: { algorithm: 'sha-256', snapshotHash, inputHash, resultHash },
   };
 }
 
 /**
  * The short form printed on a chart (#564's provenance line): snapshot version, then the first
- * 12 hex digits of the input and result hashes. Enough to tell two printouts apart or match one
+ * 12 hex digits of the complete-input and result hashes. Enough to tell two printouts apart or match one
  * to its full artifact; the full hashes stay in the artifact itself.
  */
 export function calculationArtifactIdentity(artifact: CalculationArtifact): string {
-  const { snapshotHash, resultHash } = artifact.fingerprint;
-  return `v${String(artifact.snapshot.version)}-${snapshotHash.slice(0, 12)}/${resultHash.slice(0, 12)}`;
+  const { inputHash, resultHash } = artifact.fingerprint;
+  return `v${String(artifact.snapshot.version)}-${inputHash.slice(0, 12)}/${resultHash.slice(0, 12)}`;
 }

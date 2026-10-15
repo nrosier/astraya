@@ -42,7 +42,7 @@ async function artifactFor(moment: BirthMomentInput, snapshot: CalculationSnapsh
     rulership: snapshot.rulership,
     ...(snapshot.customPoints.length === 0 ? {} : { customPoints: snapshot.customPoints }),
   });
-  return buildCalculationArtifact(snapshot, data, INPUTS);
+  return buildCalculationArtifact(snapshot, moment, data, INPUTS);
 }
 
 describe('canonicalJson (#582)', () => {
@@ -147,5 +147,112 @@ describe('buildCalculationArtifact against the real engine (#582)', () => {
       Object.fromEntries(ALL_ASSETS.map((asset) => [asset.file, asset.sha256])),
     );
     expect(calculationArtifactIdentity(artifact)).toMatch(/^v2-[0-9a-f]{12}\/[0-9a-f]{12}$/);
+    expect(calculationArtifactIdentity(artifact).slice(3, 15)).toBe(artifact.fingerprint.inputHash.slice(0, 12));
+  }, 60_000);
+});
+
+describe('birth moment and time provenance in the artifact (#582)', () => {
+  const DEFAULTS = buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE);
+
+  it('records a stated offset as manual, with no zone', async () => {
+    const artifact = await artifactFor(PERSON, DEFAULTS);
+    expect(artifact.moment).toEqual(PERSON);
+    expect(artifact.provenance.time).toMatchObject({
+      offsetMinutes: -300,
+      offsetSource: 'manual',
+      zone: null,
+      calendar: 'gregorian',
+    });
+    expect(artifact.provenance.time.tzdbFingerprint).not.toBe('');
+  }, 60_000);
+
+  it('records the tzdb zone and its offset when none was stated', async () => {
+    const london: BirthMomentInput = {
+      civil: { year: 1990, month: 6, day: 15, hour: 14, minute: 30, second: 0 },
+      coordinates: { latitude: 51.5072, longitude: -0.1276 },
+    };
+    const artifact = await artifactFor(london, DEFAULTS);
+    expect(artifact.provenance.time).toMatchObject({ offsetMinutes: 60, offsetSource: 'tzdb', zone: 'Europe/London' });
+  }, 60_000);
+
+  it('records Local Mean Time, and its warning, before standard time existed', async () => {
+    const ada: BirthMomentInput = {
+      civil: { year: 1815, month: 12, day: 10, hour: 7, minute: 45, second: 0 },
+      coordinates: { latitude: 51.5072, longitude: -0.1276 },
+    };
+    const artifact = await artifactFor(ada, DEFAULTS);
+    expect(artifact.provenance.time.offsetSource).toBe('lmt');
+    expect(artifact.provenance.time.warnings).toContain('lmt-used');
+  }, 60_000);
+
+  it('changes the input hash, but not the snapshot hash, when only the birth moment changes', async () => {
+    const later: BirthMomentInput = { ...PERSON, civil: { ...PERSON.civil, minute: 31 } };
+    const [a, b] = [await artifactFor(PERSON, DEFAULTS), await artifactFor(later, DEFAULTS)];
+    expect(b.fingerprint.snapshotHash).toBe(a.fingerprint.snapshotHash);
+    expect(b.fingerprint.inputHash).not.toBe(a.fingerprint.inputHash);
+    expect(b.fingerprint.resultHash).not.toBe(a.fingerprint.resultHash);
+  }, 60_000);
+});
+
+describe('real-engine parity fixtures (#582)', () => {
+  const VARIANTS: readonly (readonly [string, Partial<typeof DEFAULT_EXTENDED_SETTINGS>])[] = [
+    ['true node', { nodeVariant: 'true' }],
+    ['true (osculating) Lilith', { lilithVariant: 'true' }],
+    ['sidereal, Lahiri', { zodiac: { kind: 'sidereal', ayanamsa: 1 } }],
+    ['minor aspects on', { enabledMinorAspects: ['semisextile', 'quincunx', 'semisquare', 'sesquiquadrate'] }],
+    ['aspects to Chiron', { aspectsToChiron: true }],
+    ['aspects to Lilith', { aspectsToLilith: true }],
+    ['aspects to the lunar nodes', { aspectsToLunarNodes: true }],
+    ['aspects to the Vertex', { aspectsToVertex: true }],
+    ['aspects to the Part of Fortune', { aspectsToPartOfFortune: true }],
+    ['aspects to the Part of Spirit', { aspectsToPartOfSpirit: true }],
+    ['wider orbs', { orbScalePercent: 40 }],
+  ];
+
+  async function dataFor(settings: typeof DEFAULT_EXTENDED_SETTINGS) {
+    return computeChartData(PERSON, engine, toChartCalculationOptions(settings));
+  }
+
+  for (const [label, change] of VARIANTS) {
+    it(`${label}: recomputes to the same hashes, and changes the result hash`, async () => {
+      const settings = { ...DEFAULT_EXTENDED_SETTINGS, ...change };
+      const snapshot = buildCalculationSnapshot(settings, DEFAULT_RULERSHIP_CHOICE);
+      const [first, second] = [await artifactFor(PERSON, snapshot), await artifactFor(PERSON, snapshot)];
+      expect(second.fingerprint).toEqual(first.fingerprint);
+
+      const baseline = await artifactFor(
+        PERSON,
+        buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE),
+      );
+      expect(first.fingerprint.snapshotHash).not.toBe(baseline.fingerprint.snapshotHash);
+      // Every variant here changes this chart's computed data (checked once against the engine), so
+      // the result hash must change too — a fixture that changed nothing would prove nothing.
+      expect(canonicalJson(await dataFor(settings))).not.toBe(canonicalJson(await dataFor(DEFAULT_EXTENDED_SETTINGS)));
+      expect(first.fingerprint.resultHash).not.toBe(baseline.fingerprint.resultHash);
+    }, 60_000);
+  }
+
+  it('the sidereal result really is the tropical one shifted by the ayanamsa, so the fixture tests a real change', async () => {
+    const tropical = await dataFor(DEFAULT_EXTENDED_SETTINGS);
+    const sidereal = await dataFor({ ...DEFAULT_EXTENDED_SETTINGS, zodiac: { kind: 'sidereal', ayanamsa: 1 } });
+    const sunOf = (data: typeof tropical) => data.positions[0]?.longitude ?? Number.NaN;
+    const shift = (((sunOf(tropical) - sunOf(sidereal)) % 360) + 360) % 360;
+    // Lahiri was about 23.7° in 1990.
+    expect(shift).toBeGreaterThan(23.5);
+    expect(shift).toBeLessThan(24);
+  }, 60_000);
+
+  it('covers each aspect’s applying/separating state: flipping one changes the result hash', async () => {
+    const snapshot = buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE);
+    const data = await dataFor(DEFAULT_EXTENDED_SETTINGS);
+    const [first, ...rest] = data.aspects;
+    if (first === undefined) throw new Error('fixture chart has no aspects');
+    const flipped = { ...data, aspects: [{ ...first, applying: !first.applying }, ...rest] };
+    const [a, b] = [
+      await buildCalculationArtifact(snapshot, PERSON, data, INPUTS),
+      await buildCalculationArtifact(snapshot, PERSON, flipped, INPUTS),
+    ];
+    expect(b.fingerprint.inputHash).toBe(a.fingerprint.inputHash);
+    expect(b.fingerprint.resultHash).not.toBe(a.fingerprint.resultHash);
   }, 60_000);
 });

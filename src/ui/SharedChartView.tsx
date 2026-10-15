@@ -12,7 +12,8 @@
  */
 import { useEffect, useMemo, useState } from 'react';
 import { chartViewFromHash, type ChartViewKind } from './chart-sections.js';
-import { buildChartArtifact, ChartDataView } from './ChartView.js';
+import { ChartDataView } from './ChartView.js';
+import { buildChartArtifact } from './chart-artifact.js';
 import type { CalculationArtifact } from '../domain/calculation-artifact.js';
 import { toChartCalculationOptions } from '../chart/extended-settings.js';
 import { chartSheetMetaLines } from '../domain/chart-tables.js';
@@ -93,7 +94,7 @@ export function SharedChartView(): React.JSX.Element {
           rulership: snapshot.rulership,
           ...(snapshot.customPoints.length === 0 ? {} : { customPoints: snapshot.customPoints }),
         });
-        const artifact = await buildChartArtifact(snapshot, data, provider);
+        const artifact = await buildChartArtifact(snapshot, moment, data, provider);
         if (!effect.cancelled) setLoad({ kind: 'ready', data, artifact });
       } catch (error) {
         if (!effect.cancelled)

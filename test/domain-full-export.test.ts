@@ -10,10 +10,14 @@ import {
   fullExportFilename,
   peopleCsvFilename,
   peopleToCsv,
+  type FullExport,
 } from '../src/domain/full-export.js';
 import type { Person } from '../src/domain/person.js';
 import type { EphemerisProvider } from '../src/ephemeris/types.js';
-import { DEFAULT_EXTENDED_SETTINGS } from '../src/chart/extended-settings.js';
+import { DEFAULT_EXTENDED_SETTINGS, toChartCalculationOptions } from '../src/chart/extended-settings.js';
+import { buildCalculationArtifact } from '../src/domain/calculation-artifact.js';
+import { parseCalculationSnapshot } from '../src/domain/calculation-snapshot.js';
+import { computeChartData } from '../src/domain/chart-compute.js';
 import { getEngine } from './engine-harness.js';
 
 let engine: EphemerisProvider;
@@ -274,5 +278,53 @@ describe('peopleToCsv and the filenames', () => {
   it('names the files by day', () => {
     expect(fullExportFilename(NOW)).toBe('astraya-export-2026-10-04.json');
     expect(peopleCsvFilename(NOW)).toBe('astraya-people-2026-10-04.csv');
+  });
+});
+
+describe('the natal calculation artifact in a full export (#582)', () => {
+  const WITH_POINT: Person = {
+    ...ADA,
+    customPoints: [{ id: 'fortune-like', name: 'Fortune-like', formula: 'ascendant + moon - sun' }],
+  };
+
+  it('carries the complete inputs, versions and SHA-256 fingerprints', async () => {
+    const archive = await build([WITH_POINT], 'traditional');
+    const calculation = archive.people[0]?.calculation;
+    expect(calculation?.moment).toEqual(WITH_POINT.moment);
+    expect(calculation?.snapshot).toMatchObject({ version: 2, rulership: 'traditional' });
+    expect(calculation?.snapshot.customPoints).toEqual(WITH_POINT.customPoints);
+    expect(calculation?.provenance.astrayaVersion).toBe('9.9.9');
+    expect(calculation?.provenance.swephVersion).toBe(await engine.version());
+    expect(calculation?.fingerprint.resultHash).toMatch(/^[0-9a-f]{64}$/);
+  });
+
+  it('is verifiable: recomputing from the exported inputs alone reproduces the result hash', async () => {
+    const archive = JSON.parse(JSON.stringify(await build([WITH_POINT]))) as FullExport;
+    const calculation = archive.people[0]?.calculation;
+    if (calculation === undefined) throw new Error('expected a calculation artifact');
+    const snapshot = parseCalculationSnapshot(calculation.snapshot);
+    const data = await computeChartData(calculation.moment, engine, {
+      ...toChartCalculationOptions(snapshot.settings),
+      rulership: snapshot.rulership,
+      customPoints: snapshot.customPoints,
+    });
+    const recomputed = await buildCalculationArtifact(snapshot, calculation.moment, data, {
+      astrayaVersion: calculation.provenance.astrayaVersion,
+      swephVersion: calculation.provenance.swephVersion,
+    });
+    expect(recomputed.fingerprint).toEqual(calculation.fingerprint);
+  });
+
+  it('leaves out the artifact, not the person, when there is no birth moment to calculate', async () => {
+    const withoutMoment: Person = {
+      id: ADA.id,
+      displayName: ADA.displayName,
+      placeLabel: ADA.placeLabel,
+      timeAccuracy: ADA.timeAccuracy,
+      notes: ADA.notes,
+      missing: ['date'],
+    };
+    const archive = await build([withoutMoment]);
+    expect(archive.people[0]?.calculation).toBeUndefined();
   });
 });

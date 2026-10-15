@@ -43,6 +43,7 @@ interface ExportedPerson {
   natalChart?: ExportedChart; // absent if birth is incomplete, or chartError explains a failure
   harmonicCharts?: ExportedHarmonicChart[]; // named Varga charts, absent without usable houses
   chartError?: string;
+  calculation?: CalculationArtifact; // #582 — natal inputs, provenance and SHA-256 fingerprints; see below
 }
 
 interface ExportedHarmonicChart {
@@ -109,6 +110,23 @@ JSON Schema file does enumerate them structurally.
   (the shape a v1-labelled file could have had was already stale by the time this document was written) and is the
   first version bump made under the policy above, going forward. #557 later added optional `harmonicCharts` with
   radix-to-result position provenance for the named Varga presets; it is additive, so the version remains v2.
+  #582 added optional `ExportedPerson.calculation`, the natal chart's `CalculationArtifact`; also additive, still v2.
+
+## Calculation artifact
+
+`ExportedPerson.calculation` (#582) records what produced `natalChart`, defined in `src/domain/calculation-artifact.ts`:
+
+- `moment` and `snapshot` — the complete inputs: the birth record, and the settings, rulers and custom points.
+- `provenance` — the app and Swiss Ephemeris versions, the pinned SHA-256 of every ephemeris data file, the requested
+  and effective house system (they differ when the engine falls back, e.g. Placidus inside a polar circle) with the
+  engine's warning, and how the birth time became an instant: offset, its source (`manual`, `tzdb`, `lmt`), zone,
+  calendar, DST alternatives, time warnings and the runtime's tzdb fingerprint.
+- `fingerprint` — lower-case hex SHA-256 of a canonical JSON text (object keys sorted, `Map`s as key-sorted entry
+  lists, `NaN`/`Infinity` as strings, `undefined` fields omitted): `snapshotHash` over the snapshot, `inputHash` over
+  `{ moment, snapshot }`, and `resultHash` over the full computed `ChartData`, not over the exported rows.
+
+The same inputs on the same engine, data files and tzdb give the same `resultHash`. It is absent when the exporting
+browser had no Web Crypto (a non-secure context).
 
 ## How this is kept true
 

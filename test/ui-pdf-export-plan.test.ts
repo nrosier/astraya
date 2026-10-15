@@ -9,11 +9,12 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_RULERSHIP_CHOICE } from '../src/astrology/rulership.js';
+import { DEFAULT_EXTENDED_SETTINGS } from '../src/chart/extended-settings.js';
 import { TRADITIONAL_ACG_BODY_IDS } from '../src/domain/astrocartography.js';
 import { EMPTY_SELECTION, type PdfSelection } from '../src/domain/pdf-export-sections.js';
 import type { Person } from '../src/domain/person.js';
 import { chartViewMessages } from '../src/ui/ChartView.messages.js';
-import { buildPdfPlan, type PdfPlanContext } from '../src/ui/pdf-export-plan.js';
+import { buildPdfPlan, sectionCalculationOptions, type PdfPlanContext } from '../src/ui/pdf-export-plan.js';
 import { pdfExportMessages } from '../src/ui/pdf-export.messages.js';
 import { solarArcViewMessages } from '../src/ui/SolarArcView.messages.js';
 import { getEngine } from './engine-harness.js';
@@ -69,6 +70,7 @@ describe('buildPdfPlan', () => {
     const context: PdfPlanContext = {
       person: ADA,
       provider,
+      settings: DEFAULT_EXTENDED_SETTINGS,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
       aiConsent: false,
@@ -86,6 +88,7 @@ describe('buildPdfPlan', () => {
     const context: PdfPlanContext = {
       person: ADA,
       provider,
+      settings: DEFAULT_EXTENDED_SETTINGS,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
       aiConsent: false,
@@ -109,6 +112,7 @@ describe('buildPdfPlan', () => {
     const context: PdfPlanContext = {
       person: ADA,
       provider,
+      settings: DEFAULT_EXTENDED_SETTINGS,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
       aiConsent: false,
@@ -138,6 +142,7 @@ describe('buildPdfPlan', () => {
     const context: PdfPlanContext = {
       person: ADA,
       provider,
+      settings: DEFAULT_EXTENDED_SETTINGS,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
       aiConsent: false,
@@ -161,6 +166,7 @@ describe('buildPdfPlan', () => {
     const context: PdfPlanContext = {
       person: ADA,
       provider,
+      settings: DEFAULT_EXTENDED_SETTINGS,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
       aiConsent: false,
@@ -181,6 +187,7 @@ describe('buildPdfPlan', () => {
     const context: PdfPlanContext = {
       person: ADA,
       provider,
+      settings: DEFAULT_EXTENDED_SETTINGS,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
       aiConsent: false,
@@ -203,6 +210,7 @@ describe('buildPdfPlan', () => {
     const context: PdfPlanContext = {
       person: ADA,
       provider,
+      settings: DEFAULT_EXTENDED_SETTINGS,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
       aiConsent: false,
@@ -232,6 +240,7 @@ describe('buildPdfPlan', () => {
     const context: PdfPlanContext = {
       person: incomplete,
       provider,
+      settings: DEFAULT_EXTENDED_SETTINGS,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
       aiConsent: false,
@@ -252,6 +261,7 @@ describe('buildPdfPlan', () => {
     const context: PdfPlanContext = {
       person: ADA,
       provider,
+      settings: DEFAULT_EXTENDED_SETTINGS,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
       aiConsent: false,
@@ -290,6 +300,7 @@ describe('buildPdfPlan', () => {
     const context: PdfPlanContext = {
       person: ADA,
       provider,
+      settings: DEFAULT_EXTENDED_SETTINGS,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
       aiConsent: false,
@@ -312,6 +323,7 @@ describe('buildPdfPlan', () => {
     const context: PdfPlanContext = {
       person: ADA,
       provider,
+      settings: DEFAULT_EXTENDED_SETTINGS,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
       aiConsent: false,
@@ -334,6 +346,7 @@ describe('buildPdfPlan', () => {
     const context: PdfPlanContext = {
       person: ADA,
       provider,
+      settings: DEFAULT_EXTENDED_SETTINGS,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
       aiConsent: false,
@@ -368,6 +381,7 @@ describe('buildPdfPlan', () => {
     const context: PdfPlanContext = {
       person: ADA,
       provider,
+      settings: DEFAULT_EXTENDED_SETTINGS,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
       aiConsent: false,
@@ -402,6 +416,7 @@ describe('buildPdfPlan', () => {
     const context: PdfPlanContext = {
       person: ADA,
       provider,
+      settings: DEFAULT_EXTENDED_SETTINGS,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
       aiConsent: false,
@@ -425,6 +440,7 @@ describe('buildPdfPlan', () => {
     const context: PdfPlanContext = {
       person: ADA,
       provider,
+      settings: DEFAULT_EXTENDED_SETTINGS,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
       aiConsent: false,
@@ -462,6 +478,7 @@ describe('buildPdfPlan', () => {
     const context: PdfPlanContext = {
       person: ADA,
       provider,
+      settings: DEFAULT_EXTENDED_SETTINGS,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
       aiConsent: false,
@@ -489,6 +506,7 @@ describe('buildPdfPlan', () => {
     const context: PdfPlanContext = {
       person: ADA,
       provider,
+      settings: DEFAULT_EXTENDED_SETTINGS,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
       aiConsent: false,
@@ -516,6 +534,7 @@ describe('buildPdfPlan', () => {
     const context: PdfPlanContext = {
       person: ADA,
       provider,
+      settings: DEFAULT_EXTENDED_SETTINGS,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
       aiConsent: false,
@@ -544,6 +563,7 @@ describe('buildPdfPlan', () => {
     const context: PdfPlanContext = {
       person: ADA,
       provider,
+      settings: DEFAULT_EXTENDED_SETTINGS,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
       aiConsent: false,
@@ -565,6 +585,7 @@ describe('buildPdfPlan', () => {
     const context: PdfPlanContext = {
       person: ADA,
       provider,
+      settings: DEFAULT_EXTENDED_SETTINGS,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
       aiConsent: false,
@@ -596,6 +617,7 @@ describe('buildPdfPlan', () => {
     const context: PdfPlanContext = {
       person: ADA,
       provider,
+      settings: DEFAULT_EXTENDED_SETTINGS,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
       aiConsent: false,
@@ -617,6 +639,7 @@ describe('buildPdfPlan', () => {
     const context: PdfPlanContext = {
       person: ADA,
       provider,
+      settings: DEFAULT_EXTENDED_SETTINGS,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
       aiConsent: false,
@@ -654,6 +677,7 @@ describe('buildPdfPlan', () => {
     const context: PdfPlanContext = {
       person: NO_RECORD,
       provider,
+      settings: DEFAULT_EXTENDED_SETTINGS,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
       aiConsent: false,
@@ -667,4 +691,71 @@ describe('buildPdfPlan', () => {
     expect(table?.body.length).toBeGreaterThan(0);
     expect(table?.body.every((row) => row[3] === '—')).toBe(true);
   }, 30_000);
+});
+
+describe('PDF chart sections use the Charts page’s own calculation settings (#582)', () => {
+  const WITH_POINT: Person = {
+    ...ADA,
+    customPoints: [{ id: 'fortune-like', name: 'Fortune-like', formula: 'ascendant + moon - sun' }],
+  };
+  const WHOLE_SIGN = { ...DEFAULT_EXTENDED_SETTINGS, houseSystem: 'W' };
+
+  async function natalSection(person: Person, settings: typeof DEFAULT_EXTENDED_SETTINGS) {
+    const provider = await getEngine();
+    const selection: PdfSelection = {
+      personId: person.id,
+      ...EMPTY_SELECTION,
+      charts: [{ type: 'natal', wheel: false, tables: ['positions', 'houses'] }],
+    };
+    const context: PdfPlanContext = {
+      person,
+      provider,
+      settings,
+      rulership: DEFAULT_RULERSHIP_CHOICE,
+      locale: 'en',
+      aiConsent: false,
+      corpusFetch,
+    };
+    const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
+    const [section] = plan.sections;
+    if (section?.kind !== 'chart') throw new Error('expected a chart section');
+    return section;
+  }
+
+  it('draws the natal houses in the house system in force, not always Placidus', async () => {
+    const placidus = await natalSection(ADA, DEFAULT_EXTENDED_SETTINGS);
+    const wholeSign = await natalSection(ADA, WHOLE_SIGN);
+    const housesOf = (section: Awaited<ReturnType<typeof natalSection>>) =>
+      section.tables.find((table) => table.caption === chartViewMessages.en.housesCaption)?.body;
+    expect(housesOf(placidus)).toBeDefined();
+    expect(housesOf(wholeSign)).not.toEqual(housesOf(placidus));
+  }, 30_000);
+
+  it('includes the person’s custom points in the natal positions, as the chart screen does', async () => {
+    const section = await natalSection(WITH_POINT, DEFAULT_EXTENDED_SETTINGS);
+    const positions = section.tables.find((table) => table.caption === chartViewMessages.en.positionsCaption);
+    expect(positions?.body.some((row) => row.includes('Fortune-like'))).toBe(true);
+  }, 30_000);
+
+  it('prints the natal calculation fingerprint, which changes with the settings', async () => {
+    const placidus = await natalSection(ADA, DEFAULT_EXTENDED_SETTINGS);
+    const wholeSign = await natalSection(ADA, WHOLE_SIGN);
+    expect(placidus.provenance).toMatch(/^Calculation fingerprint: v2-[0-9a-f]{12}\/[0-9a-f]{12}$/);
+    expect(wholeSign.provenance).not.toBe(placidus.provenance);
+  }, 30_000);
+
+  it('maps each chart type to the options its own Charts-page view uses', () => {
+    const options = (type: Parameters<typeof sectionCalculationOptions>[0]) =>
+      sectionCalculationOptions(type, WITH_POINT, WHOLE_SIGN, 'traditional');
+    expect(options('natal')).toMatchObject({ houseSystem: 'W', rulership: 'traditional' });
+    expect(options('natal').customPoints).toEqual(WITH_POINT.customPoints);
+    for (const type of ['solar-return', 'lunar-return'] as const) {
+      expect(options(type)).toMatchObject({ houseSystem: 'W', rulership: 'traditional' });
+      expect(options(type).customPoints).toBeUndefined();
+    }
+    for (const type of ['draconic', 'harmonic', 'relocated'] as const) {
+      expect(options(type).houseSystem).toBeUndefined();
+      expect(options(type).customPoints).toEqual(WITH_POINT.customPoints);
+    }
+  });
 });

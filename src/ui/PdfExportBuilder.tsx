@@ -74,6 +74,7 @@ import { useMessages } from './messages.js';
 import { ordered } from './people-list.js';
 import { pdfExportMessages } from './pdf-export.messages.js';
 import { useRulershipChoice } from './rulership-setting.js';
+import { useExtendedSettings } from './extended-settings-store.js';
 import { useStoreState } from './store-context.js';
 
 type BuildStatus =
@@ -103,6 +104,8 @@ export function PdfExportBuilder(): React.JSX.Element {
   const ct = useMessages(chartViewMessages);
   const [locale] = useLocale();
   const [rulership] = useRulershipChoice();
+  // The calculation settings the Charts page is drawing with (#582): a PDF chart must be that chart.
+  const [extendedSettings] = useExtendedSettings();
   const { provider } = useEphemerisProvider();
   const state = useStoreState();
   const people = useMemo(() => ordered(state.people), [state.people]);
@@ -344,7 +347,7 @@ export function PdfExportBuilder(): React.JSX.Element {
       const { buildPdfPlan } = await import('./pdf-export-plan.js');
       const plan = await buildPdfPlan(
         fullSelection,
-        { person, provider, rulership, locale, aiConsent, people: state.people },
+        { person, provider, settings: extendedSettings, rulership, locale, aiConsent, people: state.people },
         ct,
         t,
       );

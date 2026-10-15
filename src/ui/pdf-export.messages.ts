@@ -19,6 +19,8 @@ import type { ChartType } from './chart-sections.js';
 import type { TimeAccuracy } from '../domain/person.js';
 
 const en = {
+  /** Printed under a natal chart's heading (#582): the same fingerprint the chart screen's print line shows. */
+  calculationFingerprint: (identity: string) => `Calculation fingerprint: ${identity}`,
   heading: 'Build a PDF',
   hint: 'Pick what goes into one PDF document: the birth record, the interpretation, and any of the charts, each with its own options — chosen here, not read off a screen you had open.',
   personLabel: 'Person',
@@ -136,6 +138,7 @@ const en = {
 };
 
 const nl: typeof en = {
+  calculationFingerprint: (identity: string) => `Vingerafdruk van de berekening: ${identity}`,
   heading: 'PDF samenstellen',
   hint: 'Kies wat in één PDF-document komt: de geboortegegevens, de interpretatie, en elke horoscoop met zijn eigen opties — hier gekozen, niet overgenomen van een scherm dat open stond.',
   personLabel: 'Persoon',

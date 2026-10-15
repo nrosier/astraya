@@ -102,15 +102,10 @@ import {
   buildCalculationSnapshot,
   calculationSnapshotIdentity,
   calculationSnapshotToJson,
-  type CalculationSnapshot,
 } from '../domain/calculation-snapshot.js';
-import {
-  buildCalculationArtifact,
-  calculationArtifactIdentity,
-  type CalculationArtifact,
-} from '../domain/calculation-artifact.js';
+import { calculationArtifactIdentity, type CalculationArtifact } from '../domain/calculation-artifact.js';
 import type { CustomPointDefinition } from '../domain/person.js';
-import { APP_VERSION } from '../version.js';
+import { buildChartArtifact } from './chart-artifact.js';
 import { momentKey } from '../time/encode.js';
 import { renderChartDialSvg, renderChartSheetSvg } from '../chart/chart-sheet.js';
 import { renderMultiWheelSvg, type CrossRingAspects, type WheelRingInput } from '../chart/multi-wheel.js';
@@ -201,27 +196,6 @@ type Load =
       readonly artifact?: CalculationArtifact | undefined;
     }
   | { readonly kind: 'error'; readonly message: string };
-
-/**
- * The artifact for a calculation that has just completed (#582), or `undefined` when it cannot
- * be built — Web Crypto's `subtle` only exists in a secure context, and a self-hosted instance
- * served over plain HTTP on a LAN is not one. The chart is shown either way; only its printed
- * fingerprint falls back to the snapshot's own short tag (`provenanceIdentity`).
- */
-export async function buildChartArtifact(
-  snapshot: CalculationSnapshot,
-  data: ChartData,
-  provider: EphemerisProvider,
-): Promise<CalculationArtifact | undefined> {
-  try {
-    return await buildCalculationArtifact(snapshot, data, {
-      astrayaVersion: APP_VERSION,
-      swephVersion: await provider.version(),
-    });
-  } catch {
-    return undefined;
-  }
-}
 
 /** The fingerprint printed with a chart: the artifact's when there is one, else the snapshot's own tag. */
 function provenanceIdentity(load: Load, settings: ExtendedSettings, rulership: RulershipChoice): string {
@@ -2429,7 +2403,7 @@ export function ChartView({
           ...(person.customPoints === undefined ? {} : { customPoints: person.customPoints }),
         });
         const snapshot = buildCalculationSnapshot(settings, rulership, person.customPoints ?? []);
-        const artifact = await buildChartArtifact(snapshot, data, provider);
+        const artifact = await buildChartArtifact(snapshot, moment, data, provider);
         if (!effect.cancelled) setLoad({ kind: 'ready', data, artifact });
       } catch (error) {
         if (!effect.cancelled)
