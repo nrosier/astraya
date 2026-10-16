@@ -46,7 +46,8 @@ import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { chartWheelRing, crossAspectRows, type AspectRow } from '../domain/chart-tables.js';
 import { deriveExportFilename } from '../domain/export-filename.js';
 import { computeTransit, type TransitData } from '../domain/transit.js';
-import { TRANSIT_ORB_CONFIG } from '../astrology/transit-importance.js';
+import { OrbProfileEditor } from './OrbProfileEditor.js';
+import { orbConfigForContext } from '../astrology/orb-profiles.js';
 import { renderMultiWheelSvg, type CrossRingAspects } from '../chart/multi-wheel.js';
 import { findVoidOfCourseMoon, type VoidOfCourseMoon } from '../astrology/void-of-course.js';
 import { voidOfCourseSentence } from './void-of-course-text.js';
@@ -129,6 +130,7 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
   const { provider } = useEphemerisProvider();
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
 
+  const orbProfileKey = JSON.stringify(person?.orbProfile ?? null);
   const targetDate = useMemo(() => {
     const [year, month, day] = asOf.split('-').map(Number);
     return year !== undefined && month !== undefined && day !== undefined ? { year, month, day } : undefined;
@@ -137,6 +139,7 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
   useEffect(() => {
     if (person?.moment === undefined || provider === undefined || targetDate === undefined) return undefined;
     const moment = person.moment;
+    const orbProfile = person.orbProfile;
     const effect = { cancelled: false };
     setLoad({ kind: 'loading' });
 
@@ -147,11 +150,12 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
         // own calculation might apply.
         const targetJd = await provider.julianDayFromUtc(targetDate.year, targetDate.month, targetDate.day, 12, 0, 0);
         const options = snapshotCalculationOptions(ENGINE_DEFAULTS_SNAPSHOT);
-        const data = await computeTransit(moment, targetJd, provider, options, TRANSIT_ORB_CONFIG);
+        const orbConfig = orbConfigForContext('transit', orbProfile);
+        const data = await computeTransit(moment, targetJd, provider, options, orbConfig);
         const artifact = await buildTechniqueChartArtifact(
           ENGINE_DEFAULTS_SNAPSHOT,
           moment,
-          { kind: 'transit', targetJd, orbConfig: TRANSIT_ORB_CONFIG },
+          { kind: 'transit', targetJd, orbConfig },
           data.natal,
           data,
           provider,
@@ -168,7 +172,7 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
     return () => {
       effect.cancelled = true;
     };
-  }, [momentKey(person?.moment), provider, targetDate]);
+  }, [momentKey(person?.moment), provider, targetDate, orbProfileKey]);
 
   const [rulership] = useRulershipChoice();
   const [symbolClass] = useSymbolClass();
@@ -298,6 +302,7 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
       <h1>{person.displayName ? t.heading(person.displayName) : t.transitsFallback}</h1>
       <GlossaryTerms terms={['transit', 'aspect', 'orb', 'applying', 'retrograde']} />
       <p className="hint">{t.hint(person.displayName || t.thisPerson)}</p>
+      <OrbProfileEditor person={person} />
 
       <p>
         <DateField label={t.asOfLabel} value={asOf} onChange={setAsOf} />

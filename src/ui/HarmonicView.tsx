@@ -213,6 +213,7 @@ export function HarmonicView({
                     moment: person.moment,
                     provider,
                     baseLabel: label,
+                    orbProfile: person.orbProfile,
                     ...(person.customPoints === undefined ? {} : { options: { customPoints: person.customPoints } }),
                   }
             }

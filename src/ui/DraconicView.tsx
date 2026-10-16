@@ -133,6 +133,7 @@ export function DraconicView({
                 provider,
                 baseLabel: t.headingFallback,
                 baseSource: 'draconic',
+                orbProfile: person.orbProfile,
                 ...(person.customPoints === undefined ? {} : { options: { customPoints: person.customPoints } }),
               }
         }

@@ -16,7 +16,7 @@
  * @module astrology/orb-profiles
  * @purpose Named, versioned orb profiles over aspects.ts's OrbConfig: the three built-ins (each with its revision and source), per-context defaults for natal/transit/synastry, and validated user-defined custom profiles (#590).
  * @conventions Built-ins are immutable: a changed value gets a new id, and `revision` counts revisions of a custom profile. A built-in's source is `null`-locator until a passage is cited in docs/references. Custom profiles hold plain objects only, never Set/Map, and are validated before use — malformed input yields `undefined`, not a partial profile. `'custom'` is not a profile here; it is the absence of a match from `matchOrbProfile`.
- * @exports OrbProfileId, ORB_PROFILE_IDS, OrbProfileSource, OrbProfile, ORB_PROFILES, orbConfigForProfile, matchOrbProfile, SYNASTRY_DEFAULT_ORB_CONFIG, OrbContext, ORB_CONTEXTS, ORB_CONTEXT_DEFAULTS, CustomOrbProfile, validateCustomOrbProfile, orbConfigFromCustom
+ * @exports OrbProfileId, ORB_PROFILE_IDS, OrbProfileSource, OrbProfile, ORB_PROFILES, orbConfigForProfile, matchOrbProfile, SYNASTRY_DEFAULT_ORB_CONFIG, OrbContext, ORB_CONTEXTS, ORB_CONTEXT_DEFAULTS, CustomOrbProfile, validateCustomOrbProfile, validateOrbRules, orbConfigFromCustom, orbConfigForContext
  */
 import { aspectByKey, DEFAULT_ORB_CONFIG, type OrbConfig, type OrbRule } from './aspects.js';
 import { bodyByKey } from './bodies.js';
@@ -221,4 +221,16 @@ export function orbConfigFromCustom(profile: CustomOrbProfile): OrbConfig {
     aspectOrbs: profile.aspectOrbs,
     bodyOrbs: profile.bodyOrbs,
   };
+}
+
+/**
+ * The orbs a chart context calculates with (#590): that context's built-in default, or the person's
+ * own profile when they keep one. A profile replaces the scale and the per-aspect and per-body rules
+ * but never the context's minor-aspect set, so a transit still calculates the minors its filter can
+ * show and a synastry still leaves them off.
+ */
+export function orbConfigForContext(context: OrbContext, custom?: CustomOrbProfile): OrbConfig {
+  const builtIn = ORB_CONTEXT_DEFAULTS[context];
+  if (custom === undefined) return builtIn;
+  return { ...orbConfigFromCustom(custom), enabledMinorAspects: builtIn.enabledMinorAspects };
 }

@@ -185,7 +185,7 @@ import {
 import { chartOverlaySettingsPanelMessages } from './ChartOverlaySettingsPanel.messages.js';
 import { CustomPointEditor } from './CustomPointEditor.js';
 import { parseCoordinate } from './map-settings.js';
-import { TRANSIT_ORB_CONFIG } from '../astrology/transit-importance.js';
+import { orbConfigForContext, type CustomOrbProfile } from '../astrology/orb-profiles.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -211,6 +211,8 @@ export interface ChartOverlayContext {
   readonly baseSource?: ChartOverlaySource | undefined;
   /** The active calculation basis shared by every computed overlay ring. */
   readonly options?: ChartCalculationOptions | undefined;
+  /** The person's own orb profile (#590); the transit ring is calculated with it when set. */
+  readonly orbProfile?: CustomOrbProfile | undefined;
 }
 
 interface OverlayRingData {
@@ -1790,7 +1792,7 @@ export function ChartDataView({
             targetJd,
             overlayContext.provider,
             calculationOptions,
-            TRANSIT_ORB_CONFIG,
+            orbConfigForContext('transit', overlayContext.orbProfile),
           );
           addChart('transit', overlayT.transit, transit.transit, transit.contacts);
         }
@@ -2597,6 +2599,7 @@ export function ChartView({
                 provider,
                 baseLabel: t.natalFallback,
                 baseSource: 'natal',
+                orbProfile: person.orbProfile,
                 options: {
                   ...toChartCalculationOptions(settings),
                   rulership,

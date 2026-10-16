@@ -324,6 +324,7 @@ export function RelocatedChartView({
                     moment: person.moment,
                     provider,
                     baseLabel: displayName,
+                    orbProfile: person.orbProfile,
                     ...(person.customPoints === undefined ? {} : { options: { customPoints: person.customPoints } }),
                   }
             }

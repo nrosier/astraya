@@ -294,6 +294,7 @@ export function ReturnView({
                   moment: person.moment,
                   provider,
                   baseLabel: displayName,
+                  orbProfile: person.orbProfile,
                   options: { ...toChartCalculationOptions(settings), rulership },
                 }
           }

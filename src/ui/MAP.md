@@ -56,6 +56,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `PageHeader.tsx` + `PageHeader.messages.ts` — Content-header primitive (#506/#509): page title, optional basis line, and the current screen's own registered exports, replacing the old global "This page" Export submenu. Deps: `./export-registry`, `./use-exclusive-open`.
 - `PdfExportBuilder.tsx` — PDF export builder screen (#441, lazy-loaded). Deps: `domain/pdf-export-sections`, `./pdf-export-plan`, `./pdf-export-render`.
 - `People.tsx` + `People.messages.ts` — Home/landing screen (list/create/restore people). Deps: `store-context`, `./people-list`.
+- `OrbProfileEditor.tsx` + `OrbProfileEditor.messages.ts` — A person's own orb profile editor (scale, per-aspect, per-body) shown on the transit and synastry screens (#590). Deps: `astrology/orb-profiles`, `store-context`.
 - `PeriodicTransitView.tsx` + `PeriodicTransitView.messages.ts` — Daily/weekly/monthly/yearly transit forecast. Deps: `domain/periodic-transit`, `domain/planetary-return`, `astrology/transit-importance`.
 - `PersonForm.tsx` + `PersonForm.messages.ts` — Birth-data entry/edit form. Deps: `domain/person-form`, `time/resolve`.
 - `PersonNotFound.tsx` — "No person" fallback screen. Deps: `shared.messages`.

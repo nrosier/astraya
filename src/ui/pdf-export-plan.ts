@@ -78,6 +78,7 @@ import {
   type PdfTransitsSectionOptions,
 } from '../domain/pdf-export-sections.js';
 import type { Person } from '../domain/person.js';
+import { orbConfigForContext } from '../astrology/orb-profiles.js';
 import { computeSynastry, rankedSynastryAspects } from '../domain/synastry.js';
 import { renderChartSheetSvg } from '../chart/chart-sheet.js';
 import { renderAcgMapSvg, type AcgMapInput } from '../chart/acg-map.js';
@@ -96,7 +97,6 @@ import {
   filterTransits,
   rankTransits,
   transitPreset,
-  TRANSIT_ORB_CONFIG,
   type TransitRuleContext,
 } from '../astrology/transit-importance.js';
 import {
@@ -462,7 +462,13 @@ async function buildSynastrySectionPlan(
   const momentA = person.moment;
   const momentB = partner.moment;
   const st = synastryViewMessages[locale];
-  const data = await computeSynastry(momentA, momentB, provider);
+  const data = await computeSynastry(
+    momentA,
+    momentB,
+    provider,
+    undefined,
+    orbConfigForContext('synastry', person.orbProfile),
+  );
   const nameA = person.displayName || st.personALabel;
   const nameB = partner.displayName || st.personBLabel;
   const heading = `${pt.synastryLabel} — ${nameA} / ${nameB}`;
@@ -587,7 +593,13 @@ async function buildTransitsSectionPlan(
   if (person.moment === undefined) throw new Error('this person has no complete birth record');
   const vt = transitViewMessages[locale];
   const targetJd = await targetJdOf(options.asOfDate, provider);
-  const data = await computeTransit(person.moment, targetJd, provider, { rulership }, TRANSIT_ORB_CONFIG);
+  const data = await computeTransit(
+    person.moment,
+    targetJd,
+    provider,
+    { rulership },
+    orbConfigForContext('transit', person.orbProfile),
+  );
   const rules = transitRulesFor(data.natal, rulership, 'daily');
   const filter = transitPreset(options.filterPreset, rules);
   const shown = rankTransits(filterTransits(data.contacts, filter), filter, rules.chartRulerKeys);

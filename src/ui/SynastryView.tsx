@@ -31,7 +31,8 @@ import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
 import { DEFAULT_RULERSHIP_CHOICE } from '../astrology/rulership.js';
 import { buildCalculationSnapshot, snapshotCalculationOptions } from '../domain/calculation-snapshot.js';
 import type { CalculationArtifact } from '../domain/calculation-artifact.js';
-import { SYNASTRY_DEFAULT_ORB_CONFIG } from '../astrology/orb-profiles.js';
+import { OrbProfileEditor } from './OrbProfileEditor.js';
+import { orbConfigForContext } from '../astrology/orb-profiles.js';
 import { artifactProvenanceIdentity, buildTechniqueChartArtifact } from './chart-artifact.js';
 import { useSymbolClass } from './symbol-setting.js';
 import { useGlyphVariants } from './glyph-variant-setting.js';
@@ -149,6 +150,7 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
   const [partnerId, setPartnerId] = useState<string>('');
   const partner = partnerId === '' ? undefined : state.people.get(partnerId);
 
+  const orbProfileKey = JSON.stringify(person?.orbProfile ?? null);
   const { provider } = useEphemerisProvider();
   const [load, setLoad] = useState<Load>({ kind: 'idle' });
 
@@ -159,17 +161,18 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
     }
     const momentA = person.moment;
     const momentB = partner.moment;
+    const orbConfig = orbConfigForContext('synastry', person.orbProfile);
     const effect = { cancelled: false };
     setLoad({ kind: 'loading' });
 
     void (async () => {
       try {
         const options = snapshotCalculationOptions(ENGINE_DEFAULTS_SNAPSHOT);
-        const data = await computeSynastry(momentA, momentB, provider, options, SYNASTRY_DEFAULT_ORB_CONFIG);
+        const data = await computeSynastry(momentA, momentB, provider, options, orbConfig);
         const artifact = await buildTechniqueChartArtifact(
           ENGINE_DEFAULTS_SNAPSHOT,
           momentA,
-          { kind: 'synastry', partner: momentB, orbConfig: SYNASTRY_DEFAULT_ORB_CONFIG },
+          { kind: 'synastry', partner: momentB, orbConfig },
           data.chartA,
           data,
           provider,
@@ -184,7 +187,7 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
     return () => {
       effect.cancelled = true;
     };
-  }, [momentKey(person?.moment), momentKey(partner?.moment), provider]);
+  }, [momentKey(person?.moment), momentKey(partner?.moment), provider, orbProfileKey]);
 
   // The reviewed interpretation texts are fetched once a synastry is on screen, and kept per language;
   // until they arrive (or if they cannot) the rows show the mechanical sentence.
@@ -319,6 +322,7 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
       <GlossaryTerms terms={['synastry', 'aspect', 'orb']} />
       <p className="hint">{t.hint}</p>
       <p className="hint">{t.overlayContext}</p>
+      <OrbProfileEditor person={person} />
 
       <p>
         <Select

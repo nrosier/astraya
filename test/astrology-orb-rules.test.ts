@@ -7,6 +7,8 @@ import { describe, expect, it } from 'vitest';
 import { DEFAULT_ORB_CONFIG, orbFor, type OrbConfig } from '../src/astrology/aspects.js';
 import {
   ORB_CONTEXT_DEFAULTS,
+  ORB_CONTEXTS,
+  orbConfigForContext,
   ORB_PROFILES,
   orbConfigFromCustom,
   validateCustomOrbProfile,
@@ -145,5 +147,36 @@ describe('ORB_CONTEXT_DEFAULTS (#590)', () => {
       expect(profile.source.locator).toBeNull();
       expect(profile.source.authority.length).toBeGreaterThan(0);
     }
+  });
+});
+
+describe('orbConfigForContext (#590)', () => {
+  const mine: CustomOrbProfile = {
+    name: 'Mine',
+    basedOn: 'standard-v1',
+    revision: 1,
+    scalePercent: 20,
+    aspectOrbs: { trine: { base: 6, luminaryBonus: 1 } },
+    bodyOrbs: { venus: 4, mars: 3 },
+  };
+
+  it('is the context’s own built-in default when the person keeps no profile', () => {
+    expect(orbConfigForContext('natal')).toBe(DEFAULT_ORB_CONFIG);
+    expect(orbConfigForContext('transit')).toBe(TRANSIT_ORB_CONFIG);
+    expect(orbConfigForContext('synastry')).toBe(ORB_CONTEXT_DEFAULTS.synastry);
+  });
+
+  it('applies the person’s scale and rules in every context', () => {
+    for (const context of ORB_CONTEXTS) {
+      const config = orbConfigForContext(context, mine);
+      expect(config.scalePercent).toBe(20);
+      expect(config.aspectOrbs).toEqual(mine.aspectOrbs);
+      expect(config.bodyOrbs).toEqual(mine.bodyOrbs);
+    }
+  });
+
+  it('keeps the context’s own minor aspects: transit shows its three, synastry none', () => {
+    expect(orbConfigForContext('transit', mine).enabledMinorAspects).toEqual(TRANSIT_ORB_CONFIG.enabledMinorAspects);
+    expect(orbConfigForContext('synastry', mine).enabledMinorAspects).toEqual([]);
   });
 });
