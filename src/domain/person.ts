@@ -25,9 +25,10 @@
  * @module person
  * @purpose Defines the `Person` entity — the primary entity and owner of birth data that every computed chart derives from — and assembles it from op-log register values.
  * @conventions Stores the civil-time/coordinates input as typed, never a resolved UTC offset, since historical timezone data can change (an `OffsetWitness` records what a past resolution said, for detecting drift, not for reuse); a field this build cannot read is reported as absent via `missing`, never defaulted (e.g. `{0,0}` is a real place, so it is never substituted for missing coordinates); `TimeAccuracy` distinguishes a genuinely unknown birth time, for which houses/angles are meaningless rather than merely approximate.
- * @exports Person, TimeAccuracy, OffsetWitness, RelocationPlace, CustomPointDefinition, PERSON_FIELDS, buildPerson, readCivil, readCoordinates, readCalendar, readTimeAccuracy, readWitness, readOffsetOverride, readText, readRelocationPlaces, readCustomPoints
+ * @exports Person, TimeAccuracy, OffsetWitness, RelocationPlace, CustomPointDefinition, PERSON_FIELDS, buildPerson, readCivil, readCoordinates, readCalendar, readTimeAccuracy, readWitness, readOffsetOverride, readText, readRelocationPlaces, readCustomPoints, readOrbProfile
  */
 import { parseFormula } from '../astrology/formula-parser.js';
+import { validateCustomOrbProfile, type CustomOrbProfile } from '../astrology/orb-profiles.js';
 import type { BirthMomentInput, Calendar, CivilDateTime, Coordinates } from '../time/types.js';
 
 /**
@@ -105,6 +106,8 @@ export interface Person {
   readonly relocationPlaces?: readonly RelocationPlace[] | undefined;
   /** Valid custom formula points; absent in records written before #566. */
   readonly customPoints?: readonly CustomPointDefinition[] | undefined;
+  /** This person's own orb rules for transit and synastry (#590); absent means each context's built-in default. */
+  readonly orbProfile?: CustomOrbProfile | undefined;
   /** Field names that are required for a chart and are missing or unreadable. */
   readonly missing: readonly string[];
 }
@@ -123,6 +126,7 @@ export const PERSON_FIELDS = [
   'witness',
   'relocationPlaces',
   'customPoints',
+  'orbProfile',
 ] as const;
 
 function isRecordValue(value: unknown): value is Record<string, unknown> {
@@ -226,6 +230,14 @@ export function readRelocationPlaces(value: unknown): readonly RelocationPlace[]
  * Reads custom formula points atomically: a malformed formula or duplicate id/name invalidates
  * the whole saved list rather than silently calculating a plausible partial configuration.
  */
+/**
+ * A saved orb profile, validated before use (#590). A stored value that fails validation reads as
+ * absent rather than as a partial profile, so a damaged record falls back to the context default.
+ */
+export function readOrbProfile(value: unknown): CustomOrbProfile | undefined {
+  return validateCustomOrbProfile(value);
+}
+
 export function readCustomPoints(value: unknown): readonly CustomPointDefinition[] | undefined {
   if (!Array.isArray(value)) return undefined;
   const points: CustomPointDefinition[] = [];
@@ -276,6 +288,7 @@ export function buildPerson(id: string, fields: ReadonlyMap<string, unknown>): P
   const witness = readWitness(fields.get('witness'));
   const relocationPlaces = readRelocationPlaces(fields.get('relocationPlaces'));
   const customPoints = readCustomPoints(fields.get('customPoints'));
+  const orbProfile = readOrbProfile(fields.get('orbProfile'));
 
   const missing: string[] = [];
   if (civil === undefined) missing.push('civil');
@@ -305,6 +318,7 @@ export function buildPerson(id: string, fields: ReadonlyMap<string, unknown>): P
     ...(witness === undefined ? {} : { witness }),
     ...(relocationPlaces === undefined ? {} : { relocationPlaces }),
     ...(customPoints === undefined ? {} : { customPoints }),
+    ...(orbProfile === undefined ? {} : { orbProfile }),
     missing,
   };
 }
