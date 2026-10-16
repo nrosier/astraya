@@ -174,6 +174,8 @@ const en = {
   orbScaleAriaLabel: 'Orb scale',
   orbPreview: (major: string, majorLuminary: string, sextile: string, sextileLuminary: string, minor: string) =>
     `Orbs now: major aspects ${major}° (${majorLuminary}° with a luminary), sextile ${sextile}° (${sextileLuminary}°), minor aspects ${minor}°.`,
+  orbRulesInvalid:
+    'Check the orb rules: each orb must be a number from 0° to 30°. Apply is unavailable until they are.',
   minorAspectsLegend: 'Minor aspects',
 
   wheelLegend: 'Wheel colours',
@@ -191,6 +193,7 @@ const en = {
     tropical: 'Tropical',
     sidereal: (ayanamsa: string) => `Sidereal (${ayanamsa})`,
     orbs: (percent: string) => `Orbs ${percent}%`,
+    orbRules: 'Own orb rules',
     boundsScheme: (scheme: string) => `${scheme} bounds`,
     minorAspects: (count: string) => `${count} minor aspects`,
     objectPolicies: 'Object visibility customized',
@@ -369,6 +372,8 @@ const nl: typeof en = {
   orbScaleAriaLabel: 'Orb-schaal',
   orbPreview: (major: string, majorLuminary: string, sextile: string, sextileLuminary: string, minor: string) =>
     `Orbs nu: hoofdaspecten ${major}° (${majorLuminary}° met een lichtgever), sextiel ${sextile}° (${sextileLuminary}°), kleine aspecten ${minor}°.`,
+  orbRulesInvalid:
+    'Controleer de orbisregels: elke orbis moet een getal van 0° tot 30° zijn. Toepassen kan pas als ze kloppen.',
   minorAspectsLegend: 'Kleine aspecten',
 
   wheelLegend: 'Wielkleuren',
@@ -386,6 +391,7 @@ const nl: typeof en = {
     tropical: 'Tropisch',
     sidereal: (ayanamsa: string) => `Siderisch (${ayanamsa})`,
     orbs: (percent: string) => `Orbs ${percent}%`,
+    orbRules: 'Eigen orbisregels',
     boundsScheme: (scheme: string) => `${scheme} bounds`,
     minorAspects: (count: string) => `${count} kleine aspecten`,
     objectPolicies: 'Zichtbaarheid van objecten aangepast',

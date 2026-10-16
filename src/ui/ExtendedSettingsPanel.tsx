@@ -39,6 +39,7 @@ import { DEFAULT_RULERSHIP_CHOICE, type RulershipChoice } from '../astrology/rul
 import { aspectDisplayName, bodyDisplayName } from './astro-names.messages.js';
 import {
   applyCalculationProfile,
+  withoutOrbRules,
   CALCULATION_PROFILE_IDS,
   CALCULATION_PROFILES,
   matchCalculationProfile,
@@ -55,9 +56,12 @@ import {
 import { useDefaultCalculationProfile } from './default-calculation-profile.js';
 import { extendedSettingsPanelMessages } from './ExtendedSettingsPanel.messages.js';
 import { changedSettings, sameSettings } from './extended-settings-summary.js';
+import { orbRulesDraftFrom, orbRulesFromDraft, withOrbRules, type OrbRulesDraft } from './orb-rules-draft.js';
+import { OrbRulesFields } from './OrbRulesFields.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { Button } from './primitives/Button.js';
+import { StatusMessage } from './primitives/StatusMessage.js';
 import { ChoiceGroup } from './primitives/ChoiceGroup.js';
 import { OptionCards } from './primitives/OptionCards.js';
 import { Select } from './primitives/Select.js';
@@ -139,6 +143,9 @@ export function ExtendedSettingsPanel({
   readonly provider: EphemerisProvider;
 }): React.JSX.Element {
   const [draft, setDraft] = useState<ExtendedSettings>(value);
+  // The practitioner's own orb rules (#590) are typed as strings and only become settings when every entry parses,
+  // so a half-typed number never reaches the chart. `draft.orbRules` is not read; `effective` below is the draft.
+  const [rulesText, setRulesText] = useState<OrbRulesDraft>(() => orbRulesDraftFrom(value.orbRules));
   // A starting point can also set the planetary rulers, which are a device preference; they are written only on Apply.
   const [pendingRulers, setPendingRulers] = useState<RulershipChoice | undefined>(undefined);
   // The device preferences edited in the card (rulers, symbols) take effect as they are changed, so the chart
@@ -166,6 +173,12 @@ export function ExtendedSettingsPanel({
 
   const patch = (partial: Partial<ExtendedSettings>): void => {
     setDraft((current) => ({ ...current, ...partial }));
+  };
+
+  /** Puts a whole settings value (and its orb rules) into the draft, the one way every reset and quick-pick does. */
+  const replaceDraft = (next: ExtendedSettings): void => {
+    setDraft(next);
+    setRulesText(orbRulesDraftFrom(next.orbRules));
   };
 
   /** One object's whole policy, replaced atomically — never a hybrid of two partial patches racing each other. */
@@ -249,7 +262,7 @@ export function ExtendedSettingsPanel({
   };
 
   const openCard = (): void => {
-    setDraft(value);
+    replaceDraft(value);
     setPendingRulers(undefined);
     setAtOpen({ rulers, symbolClass, look });
     setOpen(true);
@@ -267,20 +280,24 @@ export function ExtendedSettingsPanel({
       for (const body of VARIANT_BODIES) setVariant(body, atOpen.look[body]);
     }
     setOpen(false);
-    setDraft(value);
+    replaceDraft(value);
     setPendingRulers(undefined);
     setAtOpen(undefined);
   };
 
   // A changed value from outside resets the draft while the card is closed; leaving the page is StagedDialog's job.
   useEffect(() => {
-    if (!open) setDraft(value);
+    if (!open) replaceDraft(value);
   }, [value, open]);
 
+  const parsedRules = orbRulesFromDraft(rulesText);
+  const rulesValid = parsedRules !== undefined;
+  // What Apply and Save as my default would use: the draft with its typed orb rules turned into real ones.
+  const effective = withOrbRules(draft, parsedRules);
   const effectiveRulers = pendingRulers ?? rulers;
-  const currentProfile = matchCalculationProfile(draft, effectiveRulers);
+  const currentProfile = matchCalculationProfile(effective, effectiveRulers);
   const currentObjectPreset = matchObjectPolicyPreset(draft.objectPolicies);
-  const currentOrbProfile = matchOrbProfile(draft.orbScalePercent);
+  const currentOrbProfile = effective.orbRules === undefined ? matchOrbProfile(draft.orbScalePercent) : undefined;
   const currentScheme =
     currentOrbProfile === undefined ? undefined : matchCalculationScheme(draft.boundsScheme, currentOrbProfile);
   const deviceChanged =
@@ -289,11 +306,11 @@ export function ExtendedSettingsPanel({
       symbolClass !== atOpen.symbolClass ||
       look.weight !== atOpen.look.weight ||
       VARIANT_BODIES.some((body) => look[body] !== atOpen.look[body]));
-  const dirty = !sameSettings(draft, value) || pendingRulers !== undefined || deviceChanged;
+  const dirty = !sameSettings(effective, value) || pendingRulers !== undefined || deviceChanged;
 
   const apply = (): void => {
     if (pendingRulers !== undefined) setRulers(pendingRulers);
-    onRedraw(draft);
+    onRedraw(effective);
     setOpen(false);
     setPendingRulers(undefined);
     setAtOpen(undefined);
@@ -302,20 +319,20 @@ export function ExtendedSettingsPanel({
   /** "Save as my default" (#510): remembers the draft and rulers for every future chart on this device — never redraws the chart currently open, which stays Apply's job alone. */
   const saveAsDefault = (): void => {
     if (pendingRulers !== undefined) setRulers(pendingRulers);
-    setDefaultCalculationProfile(draft, effectiveRulers);
+    setDefaultCalculationProfile(effective, effectiveRulers);
     closeCard(true);
   };
 
   /** Both resets name their target (#510): the draft and the rulers go back to that one profile, not to a mix. */
   const resetTo = (settings: ExtendedSettings, rulership: RulershipChoice): void => {
-    setDraft(settings);
+    replaceDraft(settings);
     setPendingRulers(rulership === rulers ? undefined : rulership);
   };
 
   const chooseProfile = (id: string): void => {
     if (!(CALCULATION_PROFILE_IDS as readonly string[]).includes(id)) return;
     const profileId = id as CalculationProfileId;
-    setDraft((current) => applyCalculationProfile(current, profileId));
+    replaceDraft(applyCalculationProfile(effective, profileId));
     const profileRulers = CALCULATION_PROFILES[profileId].rulership;
     setPendingRulers(profileRulers === rulers ? undefined : profileRulers);
   };
@@ -324,7 +341,7 @@ export function ExtendedSettingsPanel({
   const chooseOrbProfile = (id: string): void => {
     if (!(ORB_PROFILE_IDS as readonly string[]).includes(id)) return;
     const profileId = id as OrbProfileId;
-    patch({ orbScalePercent: ORB_PROFILES[profileId].config.scalePercent });
+    replaceDraft({ ...withoutOrbRules(effective), orbScalePercent: ORB_PROFILES[profileId].config.scalePercent });
   };
 
   /** Named traditional scheme quick-pick (#549) — sets bounds table and orb scale together, the one coherent unit a scheme bundle actually is. */
@@ -332,7 +349,8 @@ export function ExtendedSettingsPanel({
     if (!(CALCULATION_SCHEME_IDS as readonly string[]).includes(id)) return;
     const schemeId = id as CalculationSchemeId;
     const scheme = CALCULATION_SCHEMES[schemeId];
-    patch({
+    replaceDraft({
+      ...withoutOrbRules(effective),
       boundsScheme: scheme.boundsScheme,
       orbScalePercent: ORB_PROFILES[scheme.orbProfileId].config.scalePercent,
     });
@@ -360,6 +378,8 @@ export function ExtendedSettingsPanel({
           : t.summary.tropical;
       case 'orbScale':
         return t.summary.orbs(percent);
+      case 'orbRules':
+        return t.summary.orbRules;
       case 'boundsScheme':
         return t.summary.boundsScheme(value.boundsScheme);
       case 'minorAspects':
@@ -416,7 +436,7 @@ export function ExtendedSettingsPanel({
             <button
               type="button"
               className="quiet"
-              disabled={!dirty}
+              disabled={!dirty || !rulesValid}
               aria-label={dirty ? t.applyButton : `${t.applyButton} — ${t.nothingChanged}`}
               onClick={apply}
             >
@@ -425,7 +445,7 @@ export function ExtendedSettingsPanel({
             <button
               type="button"
               className="quiet"
-              disabled={!dirty}
+              disabled={!dirty || !rulesValid}
               aria-label={dirty ? t.saveAsDefaultButton : `${t.saveAsDefaultButton} — ${t.nothingChanged}`}
               title={t.saveAsDefaultHint}
               onClick={saveAsDefault}
@@ -762,15 +782,19 @@ export function ExtendedSettingsPanel({
               }}
             />
           </label>
-          <p className="hint" aria-live="polite">
-            {t.orbPreview(
-              orb(DEFAULT_ORB_CONFIG.majorOrb.base),
-              orb(DEFAULT_ORB_CONFIG.majorOrb.base + DEFAULT_ORB_CONFIG.majorOrb.luminaryBonus),
-              orb(DEFAULT_ORB_CONFIG.sextileOrb.base),
-              orb(DEFAULT_ORB_CONFIG.sextileOrb.base + DEFAULT_ORB_CONFIG.sextileOrb.luminaryBonus),
-              orb(DEFAULT_ORB_CONFIG.minorOrb),
-            )}
-          </p>
+          {effective.orbRules === undefined && (
+            <p className="hint" aria-live="polite">
+              {t.orbPreview(
+                orb(DEFAULT_ORB_CONFIG.majorOrb.base),
+                orb(DEFAULT_ORB_CONFIG.majorOrb.base + DEFAULT_ORB_CONFIG.majorOrb.luminaryBonus),
+                orb(DEFAULT_ORB_CONFIG.sextileOrb.base),
+                orb(DEFAULT_ORB_CONFIG.sextileOrb.base + DEFAULT_ORB_CONFIG.sextileOrb.luminaryBonus),
+                orb(DEFAULT_ORB_CONFIG.minorOrb),
+              )}
+            </p>
+          )}
+          <OrbRulesFields draft={rulesText} onChange={setRulesText} />
+          {!rulesValid && <StatusMessage kind="error">{t.orbRulesInvalid}</StatusMessage>}
           <p>{t.minorAspectsLegend}</p>
           {MINOR_ASPECTS.map((aspect) => (
             <Checkbox

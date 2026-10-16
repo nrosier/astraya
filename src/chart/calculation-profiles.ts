@@ -29,7 +29,7 @@
  * @module chart/calculation-profiles
  * @purpose Defines the three built-in, versioned calculation profiles (Modern Western/Traditional Western/Sidereal (Lahiri)) as complete ExtendedSettings+rulership snapshots, replacing the old partial tradition-preset model.
  * @conventions A profile asserts every field it owns (zodiac, house system, rulership, orb scale, Lilith/node variant, visible points, aspects-to toggles) rather than leaving some untouched; applying one fully replaces the draft's owned fields rather than merging. Built-in definitions are immutable — a future change creates a new id.
- * @exports CalculationProfileId, CALCULATION_PROFILE_IDS, CalculationProfile, CALCULATION_PROFILES, applyCalculationProfile, matchCalculationProfile
+ * @exports CalculationProfileId, CALCULATION_PROFILE_IDS, CalculationProfile, CALCULATION_PROFILES, withoutOrbRules, applyCalculationProfile, matchCalculationProfile
  */
 import { ayanamsaByKey, AYANAMSAS } from '../astrology/ayanamsas.js';
 import type { RulershipChoice } from '../astrology/rulership.js';
@@ -118,10 +118,18 @@ export const CALCULATION_PROFILES: Readonly<Record<CalculationProfileId, Calcula
  * profile, unlike every other point; folding it into one `objectPolicies` field means a profile
  * is now genuinely the complete snapshot this module's own doc comment already claimed it was.
  */
+/** The settings with the practitioner's own orb rules (#590) removed — a built-in orb profile replaces them. */
+export function withoutOrbRules(settings: ExtendedSettings): ExtendedSettings {
+  const copy = { ...settings };
+  delete copy.orbRules;
+  return copy;
+}
+
 export function applyCalculationProfile(settings: ExtendedSettings, id: CalculationProfileId): ExtendedSettings {
   const profile = CALCULATION_PROFILES[id];
+  // A profile owns the orb definition outright (#590): the practitioner's own orb rules do not survive it.
   return {
-    ...settings,
+    ...withoutOrbRules(settings),
     zodiac: profile.zodiac,
     houseSystem: profile.houseSystem,
     orbScalePercent: profile.orbScalePercent,
@@ -153,6 +161,7 @@ export function matchCalculationProfile(
       sameZodiac(settings.zodiac, profile.zodiac) &&
       settings.houseSystem === profile.houseSystem &&
       settings.orbScalePercent === profile.orbScalePercent &&
+      settings.orbRules === undefined &&
       settings.enabledMinorAspects.length === profile.enabledMinorAspects.length &&
       settings.enabledMinorAspects.every((aspect) => profile.enabledMinorAspects.includes(aspect)) &&
       settings.lilithVariant === profile.lilithVariant &&

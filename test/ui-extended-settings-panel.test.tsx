@@ -520,4 +520,97 @@ describe('the traditional-scheme quick-pick (#549)', () => {
     expect(schemeCard(container, 'Custom').checked).toBe(true);
     unmount(container, root);
   });
+
+  describe('the practitioner’s own orb rules (#590)', () => {
+    /** Types into the number input inside the dialog whose label is `label`, the way a user's keystroke reaches React. */
+    function typeInto(container: HTMLElement, legend: string, label: string, text: string): void {
+      const group = Array.from(container.querySelectorAll('dialog fieldset')).find(
+        (candidate) => candidate.querySelector('legend')?.textContent === legend,
+      );
+      const field = Array.from(group?.querySelectorAll('label') ?? []).find((candidate) =>
+        candidate.textContent.startsWith(label),
+      );
+      const input = field instanceof HTMLLabelElement ? field.control : null;
+      if (!(input instanceof HTMLInputElement)) throw new Error(`fixture bug: no "${label}" input in "${legend}"`);
+      act(() => {
+        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(input, text);
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+    }
+    const openGroup = (container: HTMLElement, name: string): void => {
+      act(() => {
+        Array.from(container.querySelectorAll<HTMLButtonElement>('dialog .primitive-disclosure-trigger'))
+          .find((button) => button.textContent.startsWith(name))
+          ?.click();
+      });
+    };
+
+    it('applies a typed per-aspect orb as a rule, and nothing else changes', async () => {
+      const onRedraw = vi.fn();
+      const { container, root } = await mount(fakeProvider(), onRedraw);
+      openCard(container);
+      openGroup(container, 'Orb per aspect');
+      typeInto(container, 'Trine', 'Orb', '9');
+      act(() => {
+        buttonNamed(container, 'Apply and redraw')?.click();
+      });
+      expect(onRedraw).toHaveBeenCalledWith({
+        ...DEFAULT_EXTENDED_SETTINGS,
+        orbRules: { aspectOrbs: { trine: { base: 9, luminaryBonus: 0 } } },
+      });
+      unmount(container, root);
+    });
+
+    it('does not offer Apply while a typed orb is out of range, and says why', async () => {
+      const { container, root } = await mount(fakeProvider(), vi.fn());
+      openCard(container);
+      openGroup(container, 'Orb per aspect');
+      typeInto(container, 'Trine', 'Orb', '45');
+      expect(buttonNamed(container, 'Apply and redraw')?.disabled).toBe(true);
+      expect(container.querySelector('dialog [role="alert"]')?.textContent).toContain('Check the orb rules');
+      typeInto(container, 'Trine', 'Orb', '9');
+      expect(buttonNamed(container, 'Apply and redraw')?.disabled).toBe(false);
+      unmount(container, root);
+    });
+
+    it('shows Custom, and a built-in orb profile quick-pick clears the rules again', async () => {
+      const onRedraw = vi.fn();
+      const withRules: ExtendedSettings = {
+        ...DEFAULT_EXTENDED_SETTINGS,
+        orbRules: { bodyOrbs: { venus: 4, mars: 3 } },
+      };
+      const { container, root } = await mount(fakeProvider(), onRedraw, withRules);
+      openCard(container);
+      expect(orbProfileCard(container, 'Custom').checked).toBe(true);
+      act(() => {
+        orbProfileCard(container, 'Standard').click();
+      });
+      act(() => {
+        buttonNamed(container, 'Apply and redraw')?.click();
+      });
+      expect(onRedraw).toHaveBeenCalledWith(DEFAULT_EXTENDED_SETTINGS);
+      unmount(container, root);
+    });
+
+    it('Cancel puts back the rules the card opened with', async () => {
+      const withRules: ExtendedSettings = {
+        ...DEFAULT_EXTENDED_SETTINGS,
+        orbRules: { aspectOrbs: { trine: { base: 6, luminaryBonus: 1 } } },
+      };
+      const { container, root } = await mount(fakeProvider(), vi.fn(), withRules);
+      openCard(container);
+      openGroup(container, 'Orb per aspect');
+      typeInto(container, 'Trine', 'Orb', '9');
+      act(() => {
+        buttonNamed(container, 'Cancel')?.click();
+      });
+      openCard(container);
+      openGroup(container, 'Orb per aspect');
+      const trine = Array.from(container.querySelectorAll('dialog fieldset')).find(
+        (candidate) => candidate.querySelector('legend')?.textContent === 'Trine',
+      );
+      expect(trine?.querySelector('input')?.value).toBe('6');
+      unmount(container, root);
+    });
+  });
 });

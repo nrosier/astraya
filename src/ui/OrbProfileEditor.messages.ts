@@ -16,13 +16,6 @@ const en = {
   scale: 'Scale',
   decreaseScale: 'Decrease scale',
   increaseScale: 'Increase scale',
-  aspectsTitle: 'Orb per aspect',
-  aspectsHint:
-    'The orb for an aspect replaces its built-in tier. The luminary bonus is added when the Sun or Moon is involved.',
-  aspectBase: 'Orb',
-  aspectBonus: 'Luminary bonus',
-  bodiesTitle: 'Orb per body',
-  bodiesHint: 'A half-orb for a body. When both bodies of a pair have one, their sum is the orb for that pair.',
   save: 'Save orb profile',
   remove: 'Remove orb profile',
   invalid: 'Check the values: orbs run from 0° to 30°, the scale from −90% to 90%, and every entry must be a number.',
@@ -43,14 +36,6 @@ const nl: typeof en = {
   scale: 'Schaal',
   decreaseScale: 'Schaal verlagen',
   increaseScale: 'Schaal verhogen',
-  aspectsTitle: 'Orbis per aspect',
-  aspectsHint:
-    'De orbis voor een aspect vervangt de ingebouwde stap. De bonus voor lichten komt erbij als Zon of Maan meedoet.',
-  aspectBase: 'Orbis',
-  aspectBonus: 'Bonus voor lichten',
-  bodiesTitle: 'Orbis per lichaam',
-  bodiesHint:
-    'Een halve orbis voor een lichaam. Hebben beide lichamen van een paar er een, dan is de som de orbis voor dat paar.',
   save: 'Orbisprofiel opslaan',
   remove: 'Orbisprofiel verwijderen',
   invalid:

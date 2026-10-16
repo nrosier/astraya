@@ -5,8 +5,6 @@
  * @exports OrbProfileEditor
  */
 import { useState } from 'react';
-import { ASPECTS } from '../astrology/aspects.js';
-import { BODIES } from '../astrology/bodies.js';
 import {
   ORB_PROFILE_IDS,
   ORB_PROFILES,
@@ -15,9 +13,9 @@ import {
   type OrbProfileId,
 } from '../astrology/orb-profiles.js';
 import type { Person } from '../domain/person.js';
-import { aspectDisplayName, bodyDisplayName } from './astro-names.messages.js';
-import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
+import { emptyOrbRulesDraft, orbRulesDraftFrom, orbRulesFromDraft, type OrbRulesDraft } from './orb-rules-draft.js';
+import { OrbRulesFields } from './OrbRulesFields.js';
 import { Disclosure } from './primitives/Disclosure.js';
 import { NumberField } from './primitives/NumberField.js';
 import { Select } from './primitives/Select.js';
@@ -31,8 +29,7 @@ interface Draft {
   readonly name: string;
   readonly basedOn: OrbProfileId;
   readonly scale: string;
-  readonly aspects: Readonly<Record<string, { readonly base: string; readonly bonus: string }>>;
-  readonly bodies: Readonly<Record<string, string>>;
+  readonly rules: OrbRulesDraft;
 }
 
 function draftFrom(profile: CustomOrbProfile | undefined): Draft {
@@ -40,34 +37,20 @@ function draftFrom(profile: CustomOrbProfile | undefined): Draft {
     name: profile?.name ?? '',
     basedOn: profile?.basedOn ?? 'standard-v1',
     scale: String(profile?.scalePercent ?? 0),
-    aspects: Object.fromEntries(
-      Object.entries(profile?.aspectOrbs ?? {}).map(([key, rule]) => [
-        key,
-        { base: String(rule.base), bonus: String(rule.luminaryBonus) },
-      ]),
-    ),
-    bodies: Object.fromEntries(Object.entries(profile?.bodyOrbs ?? {}).map(([key, degrees]) => [key, String(degrees)])),
+    rules: profile === undefined ? emptyOrbRulesDraft : orbRulesDraftFrom(profile),
   };
 }
 
 /** The profile a draft stands for, or `undefined` when a typed value is not a number or the validator refuses it. */
 function profileFrom(draft: Draft, revision: number): CustomOrbProfile | undefined {
-  const aspectOrbs: Record<string, { base: number; luminaryBonus: number }> = {};
-  for (const [key, row] of Object.entries(draft.aspects)) {
-    if (row.base.trim() === '') continue;
-    aspectOrbs[key] = { base: Number(row.base), luminaryBonus: row.bonus.trim() === '' ? 0 : Number(row.bonus) };
-  }
-  const bodyOrbs: Record<string, number> = {};
-  for (const [key, text] of Object.entries(draft.bodies)) {
-    if (text.trim() !== '') bodyOrbs[key] = Number(text);
-  }
+  const rules = orbRulesFromDraft(draft.rules);
+  if (rules === undefined) return undefined;
   return validateCustomOrbProfile({
     name: draft.name.trim(),
     basedOn: draft.basedOn,
     revision,
     scalePercent: Number(draft.scale),
-    aspectOrbs,
-    bodyOrbs,
+    ...rules,
   });
 }
 
@@ -91,7 +74,6 @@ function toJson(profile: CustomOrbProfile): JsonValue {
 export function OrbProfileEditor({ person }: { readonly person: Person }): React.JSX.Element {
   const store = useStore();
   const t = useMessages(orbProfileEditorMessages);
-  const [locale] = useLocale();
   const saved = person.orbProfile;
   const [draft, setDraft] = useState<Draft>(() => draftFrom(saved));
   const [error, setError] = useState<string | undefined>();
@@ -125,13 +107,6 @@ export function OrbProfileEditor({ person }: { readonly person: Person }): React
   const remove = (): void => {
     setDraft(draftFrom(undefined));
     write(null, t.removed);
-  };
-
-  const setAspect = (key: string, part: 'base' | 'bonus', value: string): void => {
-    setDraft((current) => ({
-      ...current,
-      aspects: { ...current.aspects, [key]: { base: '', bonus: '', ...current.aspects[key], [part]: value } },
-    }));
   };
 
   return (
@@ -173,60 +148,12 @@ export function OrbProfileEditor({ person }: { readonly person: Person }): React
           }}
         />
       </div>
-      <Disclosure title={t.aspectsTitle} showLabel={t.show} hideLabel={t.hide}>
-        <p className="hint">{t.aspectsHint}</p>
-        <div className="field-grid">
-          {ASPECTS.map((aspect) => (
-            <fieldset key={aspect.key} className="field-group">
-              <legend>{aspectDisplayName(aspect.key, locale)}</legend>
-              <NumberField
-                label={t.aspectBase}
-                unit="°"
-                min={0}
-                max={30}
-                step="any"
-                optional
-                value={draft.aspects[aspect.key]?.base ?? ''}
-                onChange={(value) => {
-                  setAspect(aspect.key, 'base', value);
-                }}
-              />
-              <NumberField
-                label={t.aspectBonus}
-                unit="°"
-                min={0}
-                max={30}
-                step="any"
-                optional
-                value={draft.aspects[aspect.key]?.bonus ?? ''}
-                onChange={(value) => {
-                  setAspect(aspect.key, 'bonus', value);
-                }}
-              />
-            </fieldset>
-          ))}
-        </div>
-      </Disclosure>
-      <Disclosure title={t.bodiesTitle} showLabel={t.show} hideLabel={t.hide}>
-        <p className="hint">{t.bodiesHint}</p>
-        <div className="field-grid">
-          {BODIES.map((body) => (
-            <NumberField
-              key={body.key}
-              label={bodyDisplayName(body.key, locale)}
-              unit="°"
-              min={0}
-              max={30}
-              step="any"
-              optional
-              value={draft.bodies[body.key] ?? ''}
-              onChange={(value) => {
-                setDraft((current) => ({ ...current, bodies: { ...current.bodies, [body.key]: value } }));
-              }}
-            />
-          ))}
-        </div>
-      </Disclosure>
+      <OrbRulesFields
+        draft={draft.rules}
+        onChange={(rules) => {
+          setDraft((current) => ({ ...current, rules }));
+        }}
+      />
       {error !== undefined && <StatusMessage kind="error">{error}</StatusMessage>}
       {status !== undefined && <StatusMessage kind="success">{status}</StatusMessage>}
       <p>
