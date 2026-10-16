@@ -33,7 +33,7 @@
  * @conventions Hashes are SHA-256 over a canonical JSON text (sorted keys, Maps as sorted entries, non-finite numbers as strings, `undefined` fields omitted) via Web Crypto, so they are stable across key insertion order and identical in the browser and Node. Provenance values that need the app build or the engine (`astrayaVersion`, `swephVersion`) are passed in, keeping this module pure apart from the digest.
  * @exports CalculationArtifact, CalculationTechnique, CalculationProvenance, TimeProvenance, CalculationFingerprint, CalculationArtifactInputs, ArtifactVerification, ProvenanceDifference, buildCalculationArtifact, buildTechniqueArtifact, verifyCalculationArtifact, calculationArtifactIdentity, canonicalJson, sha256Hex
  */
-import type { OrbConfig } from '../astrology/aspects.js';
+import { DEFAULT_ORB_CONFIG, type OrbConfig } from '../astrology/aspects.js';
 import { ALL_ASSETS } from '../ephemeris/assets.js';
 import type { Degrees, EphemerisProvider, HouseSystem, JulianDayUT } from '../ephemeris/types.js';
 import { resolveMoment } from '../time/resolve.js';
@@ -100,6 +100,12 @@ export interface CalculationProvenance {
   readonly effectiveHouseSystem: HouseSystem | undefined;
   /** The engine's own house warning, if any, then `'houses-undefined'` when the houses are unusable. */
   readonly warnings: readonly string[];
+  /**
+   * The exact orb tiers, scale and rules a natal chart was computed with (#590). Recorded so a later
+   * change to the code's default tiers shows up in the provenance, not only as a changed result hash.
+   * Informational and outside `inputHash`, so artifacts written before this existed stay verifiable.
+   */
+  readonly orbs?: OrbConfig | undefined;
 }
 
 export interface CalculationFingerprint {
@@ -234,6 +240,9 @@ async function buildArtifact(
         ...(subject.houses.warning === undefined ? [] : [subject.houses.warning]),
         ...(housesDefined ? [] : ['houses-undefined']),
       ],
+      ...(technique === undefined
+        ? { orbs: snapshotCalculationOptions(snapshot).orbConfig ?? DEFAULT_ORB_CONFIG }
+        : {}),
     },
     fingerprint: { algorithm: 'sha-256', snapshotHash, inputHash, resultHash },
   };
@@ -241,7 +250,8 @@ async function buildArtifact(
 
 /** One recorded provenance value that this runtime no longer has — a likely reason for a changed result. */
 export interface ProvenanceDifference {
-  readonly field: 'astrayaVersion' | 'swephVersion' | 'ephemerisAssets' | 'tzdb' | 'timeResolution' | 'houseSystem';
+  readonly field:
+    'astrayaVersion' | 'swephVersion' | 'ephemerisAssets' | 'tzdb' | 'timeResolution' | 'houseSystem' | 'orbs';
   readonly recorded: string;
   readonly current: string;
 }
@@ -309,6 +319,10 @@ function differencesBetween(recorded: CalculationProvenance, current: Calculatio
     resolution(current.time) + resolution(current.partnerTime),
   );
   add('houseSystem', recorded.effectiveHouseSystem ?? 'undefined', current.effectiveHouseSystem ?? 'undefined');
+  // Only a natal record carries its tiers (#590); a technique's own orbConfig is already part of its input hash.
+  if (recorded.orbs !== undefined && current.orbs !== undefined) {
+    add('orbs', canonicalJson(recorded.orbs), canonicalJson(current.orbs));
+  }
   return differences;
 }
 

@@ -7,6 +7,7 @@
 import { createHash } from 'node:crypto';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { DEFAULT_RULERSHIP_CHOICE } from '../src/astrology/rulership.js';
+import { DEFAULT_ORB_CONFIG } from '../src/astrology/aspects.js';
 import { DEFAULT_EXTENDED_SETTINGS, toChartCalculationOptions } from '../src/chart/extended-settings.js';
 import {
   buildCalculationArtifact,
@@ -458,4 +459,59 @@ describe('technique artifacts and verification (#582)', () => {
       current: INPUTS.swephVersion,
     });
   }, 60_000);
+});
+
+describe('the orb tiers a natal artifact was computed with (#590)', () => {
+  it('records the exact effective OrbConfig on a natal artifact', async () => {
+    const artifact = await artifactFor(
+      PERSON,
+      buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE),
+    );
+    expect(artifact.provenance.orbs).toBeDefined();
+    expect(artifact.provenance.orbs?.majorOrb).toEqual({ base: 7, luminaryBonus: 3 });
+    expect(artifact.provenance.orbs?.scalePercent).toBe(0);
+  });
+
+  it('records the custom rules a snapshot carries, so they are inspectable in the provenance', async () => {
+    const settings = {
+      ...DEFAULT_EXTENDED_SETTINGS,
+      orbRules: { aspectOrbs: { trine: { base: 6, luminaryBonus: 2 } }, bodyOrbs: { venus: 4, mars: 3 } },
+    };
+    const artifact = await artifactFor(PERSON, buildCalculationSnapshot(settings, DEFAULT_RULERSHIP_CHOICE));
+    expect(artifact.provenance.orbs?.aspectOrbs).toEqual({ trine: { base: 6, luminaryBonus: 2 } });
+    expect(artifact.provenance.orbs?.bodyOrbs).toEqual({ venus: 4, mars: 3 });
+  });
+
+  it('an artifact written before orbs were recorded still verifies, because nothing about it is hashed differently', async () => {
+    const current = await artifactFor(
+      PERSON,
+      buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE),
+    );
+    const legacy: CalculationArtifact = {
+      ...current,
+      provenance: { ...current.provenance, orbs: undefined },
+    };
+    expect(legacy.fingerprint.inputHash).toBe(current.fingerprint.inputHash);
+    expect(await verifyCalculationArtifact(legacy, engine, INPUTS)).toEqual({ status: 'verified' });
+  });
+
+  it('reports a natal artifact as changed, naming the orb tiers, when a default tier changed since it was recorded', async () => {
+    const natal = await artifactFor(
+      PERSON,
+      buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE),
+    );
+    // The record says the major tier was 12° when it was made; this runtime's default is 7°. Its
+    // inputs are intact, so only the recorded orbs and the result hash disagree with this runtime.
+    const fromOlderDefaults: CalculationArtifact = {
+      ...natal,
+      provenance: {
+        ...natal.provenance,
+        orbs: { ...DEFAULT_ORB_CONFIG, majorOrb: { base: 12, luminaryBonus: 3 } },
+      },
+      fingerprint: { ...natal.fingerprint, resultHash: '0'.repeat(64) },
+    };
+    const result = await verifyCalculationArtifact(fromOlderDefaults, engine, INPUTS);
+    if (result.status !== 'changed') throw new Error(`expected changed, got ${result.status}`);
+    expect(result.differences.map((d) => d.field)).toEqual(['orbs']);
+  });
 });
