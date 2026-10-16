@@ -158,20 +158,32 @@
       "locator": "Book I, p. 122 (PDF leaf 156)",
       "kind": "page-image-transcription",
       "text": "It's not safe to judge when the Moon is in the later degrees of a Signe, especially in Gemini, Scorpio or Capricorn; or as some say, when she is in Via Combusta, which is, when she is in the last 15 degrees of Libra, or the first fifteen degrees of Scorpio. / All manner of matters goe hardly on (except the principall significators be very strong) when the Moon is voyd of course; yet somewhat she performes if voyd of course, and be either in Taurus, Cancer, Sagittarius or Pisces.",
-      "notes": "Lilly softens void-of-course for the Moon in Taurus, Cancer, Sagittarius or Pisces. horary.ts does not model that exception. The Via Combusta is 'as some say'."
+      "notes": "Lilly softens void-of-course for the Moon in Taurus, Cancer, Sagittarius or Pisces. horary.ts models this: the caution still applies but does not make the chart not radical. The Via Combusta is 'as some say'."
+    },
+    {
+      "id": "lilly-ii-aphorism-9",
+      "topic": "Moon void of course, and where it matters less",
+      "source": "lilly-christian-astrology-1647",
+      "locator": "Book II, p. 299 (aphorism 9), PDF leaf 333 of the Wellcome scan",
+      "kind": "page-image-transcription",
+      "text": "Generally consider the state of the Moon, for if she be void of course there's no great hopes of the Question propounded, that it shall be effected; yet if she be in Cancer, Taurus, Sagittarius or Pisces, your fear may be lesse, for then she is not much impedited by being voyd of course.",
+      "values": {
+        "softenedSigns": ["taurus", "cancer", "sagittarius", "pisces"]
+      },
+      "notes": "Agrees with Book I p. 122, which names the same four signs in a different order."
     },
     {
       "id": "lilly-ii-aphorism-26",
       "topic": "under the beams and cazimi, the Book II aphorism",
       "source": "lilly-christian-astrology-1647",
-      "locator": "Book II, p. 300 (aphorism 26)",
+      "locator": "Book II, p. 300 (aphorism 26), PDF leaf 334 of the Wellcome scan",
       "kind": "page-image-transcription",
-      "text": "A Planet within 12 degrees of the Sun, is said to be under his Beames, and then hath no fortitude, let it be in what Signe it will; when a Planet is within 16 minutes of the Sun, he is said to be in Cazimi, or heat of the Sun, and then it's an addition of fortune, and he is wonderous strong.",
+      "text": "A Planet within twelve degrees of the Sun, is said to be under his Beames, and then hath no fortitude, let it be in what Signe it will; when a Planet is within sixteen minutes of the Sun, he is said to be in Cazimi, or heat of the Sun, and then it's an addition of fortune, and he is wonderous strong.",
       "values": {
         "underTheBeamsDeg": 12,
         "cazimiArcminutes": 16
       },
-      "notes": "Read from a web transcription of Book II (mithras93.tripod.com), checked against that page image; not yet compared with the 1647 scan. It conflicts with Book I (17 degrees, 17 minutes). Both are Lilly's."
+      "notes": "Read from the page image of the 1647 Wellcome scan (archive.org b30338724, leaf 334); it matches the web transcription of Book II. It conflicts with Book I p. 113 (17 degrees, 17 minutes); both are Lilly's, and Book I is followed. Lilly writes the numbers out ('twelve', 'sixteen')."
     }
   ],
   "decisions": [

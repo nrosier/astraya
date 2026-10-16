@@ -14,6 +14,7 @@ our own choice, not a citation.
 | Under the beams within 17°                                                                                      | `sect.ts`                                                | **Cited**           | Lilly Book I, p. 113 (Book II p. 300 gives 12°, not followed)                                           |
 | Ascendant too early below 3°, too late above 27°                                                                | `horary.ts`                                              | **Cited**           | Lilly Book I, p. 122 (0–2 and 27–29 degrees ascending)                                                  |
 | Dignity weights 5/4/3/2/1                                                                                       | `almuten.ts`                                             | **Cited** (weights) | Lilly Book I, p. 115                                                                                    |
+| Void Moon softened in Taurus, Cancer, Sagittarius, Pisces                                                       | `horary.ts`                                              | **Cited**           | Lilly Book I p. 122; Book II aphorism 9, p. 299                                                         |
 | Majors 7°/10°, sextile 4°/5°30′, minors 2°30′                                                                   | `DEFAULT_ORB_CONFIG`, Standard                           | Astraya default     | Astro-Seek was the stated basis; its pages could not be read (HTTP 403), so the attribution was removed |
 | Tight (−50%), Wide (+40%)                                                                                       | `ORB_PROFILES`                                           | Astraya default     | scale multipliers of the above                                                                          |
 | Synastry scale −30%                                                                                             | `SYNASTRY_SCALE_OFFSET`                                  | Astraya default     | no published synastry orb table found                                                                   |
@@ -27,10 +28,8 @@ our own choice, not a citation.
 - The scan read is the Wellcome Library copy of the 1647 first edition (archive.org `b30338724`). Its OCR is
   unreliable; the figures here were read from the page images.
 - Not used: Deborah Houlding's retyped edition (© 1999) and the "mithras93" web transcription of Book II. They
-  helped locate passages; nothing is copied from them. The Book II aphorism (12°, 16′) is recorded as read from
-  that transcription and not yet compared with the 1647 scan.
+  helped locate passages; nothing is copied from them. The Book II aphorisms 9 and 26 were checked against the 1647 scan.
 
 ## Still open
 
-The Moon's softer void-of-course rule in Taurus, Cancer,
-Sagittarius and Pisces (p. 122) is not modelled.
+Nothing from the Lilly checks.

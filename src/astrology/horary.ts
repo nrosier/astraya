@@ -15,8 +15,9 @@
  *   matter is not yet ripe to judge; too late, it is already decided.
  * - **Moon void of course** — the Moon will make no further exact aspect before leaving its sign
  *   (see `void-of-course.ts` for the convention used: major aspects to the Sun and Mercury–Pluto).
- *   "Nothing will come of the matter." Lilly (p. 122) says matters "goe hardly on" when the Moon is void, yet
- *   she "performes somewhat" in Taurus, Cancer, Sagittarius or Pisces; that exception is not modelled here.
+ *   "Nothing will come of the matter." Lilly (Book I p. 122; Book II aphorism 9, p. 299) says matters "goe hardly on"
+ *   when the Moon is void, yet she "performes somewhat" in Taurus, Cancer, Sagittarius or Pisces, "for then she is not
+ *   much impedited": there the caution is still shown but is softened, and does not make the chart not radical.
  * - **Moon in the Via Combusta** — the Moon between 15° Libra and 15° Scorpio, the "burnt way" (Lilly
  *   gives it as "as some say", p. 122).
  * - **Saturn in the seventh house** — Saturn, as the traditional malefic, in the house of the
@@ -36,7 +37,7 @@
  * @exports horaryConsiderations, isRadical, ASCENDANT_EARLY_LIMIT_DEG, ASCENDANT_LATE_LIMIT_DEG, VIA_COMBUSTA_START_DEG, VIA_COMBUSTA_END_DEG
  */
 import type { Degrees } from '../ephemeris/types.js';
-import { degreesInSign } from './signs.js';
+import { degreesInSign, signIndex } from './signs.js';
 
 export type HoraryConsiderationKey =
   'ascendant-too-early' | 'ascendant-too-late' | 'moon-void-of-course' | 'moon-via-combusta' | 'saturn-in-seventh';
@@ -53,7 +54,15 @@ export interface HoraryConsideration {
   readonly key: HoraryConsiderationKey;
   /** True when the condition holds, i.e. the chart carries this caution. */
   readonly applies: boolean;
+  /**
+   * True when the condition holds but Lilly says it weighs less: a void Moon in Taurus, Cancer, Sagittarius or
+   * Pisces. Such a consideration still applies and is still shown, but does not make the chart not radical.
+   */
+  readonly softened: boolean;
 }
+
+/** Signs in which a void Moon is "not much impedited" (Lilly, Book II, aphorism 9, p. 299; Book I, p. 122): Taurus, Cancer, Sagittarius, Pisces. */
+export const VOID_MOON_SOFTENED_SIGNS: readonly number[] = [1, 3, 8, 11];
 
 export interface HoraryInput {
   readonly ascendant: Degrees;
@@ -71,16 +80,21 @@ function norm360(degrees: Degrees): Degrees {
 export function horaryConsiderations(input: HoraryInput): readonly HoraryConsideration[] {
   const ascendantDegree = degreesInSign(input.ascendant);
   const moon = norm360(input.moonLongitude);
+  const voidMoonSoftened = input.moonIsVoid && VOID_MOON_SOFTENED_SIGNS.includes(signIndex(moon));
   return [
-    { key: 'ascendant-too-early', applies: ascendantDegree < ASCENDANT_EARLY_LIMIT_DEG },
-    { key: 'ascendant-too-late', applies: ascendantDegree > ASCENDANT_LATE_LIMIT_DEG },
-    { key: 'moon-void-of-course', applies: input.moonIsVoid },
-    { key: 'moon-via-combusta', applies: moon >= VIA_COMBUSTA_START_DEG && moon < VIA_COMBUSTA_END_DEG },
-    { key: 'saturn-in-seventh', applies: input.saturnHouse === 7 },
+    { key: 'ascendant-too-early', applies: ascendantDegree < ASCENDANT_EARLY_LIMIT_DEG, softened: false },
+    { key: 'ascendant-too-late', applies: ascendantDegree > ASCENDANT_LATE_LIMIT_DEG, softened: false },
+    { key: 'moon-void-of-course', applies: input.moonIsVoid, softened: voidMoonSoftened },
+    {
+      key: 'moon-via-combusta',
+      applies: moon >= VIA_COMBUSTA_START_DEG && moon < VIA_COMBUSTA_END_DEG,
+      softened: false,
+    },
+    { key: 'saturn-in-seventh', applies: input.saturnHouse === 7, softened: false },
   ];
 }
 
-/** A chart is "radical" — fit to be judged — when it carries none of the cautions. */
+/** A chart is "radical" — fit to be judged — when it carries none of the cautions. A softened caution does not count against it. */
 export function isRadical(considerations: readonly HoraryConsideration[]): boolean {
-  return considerations.every((consideration) => !consideration.applies);
+  return considerations.every((consideration) => !consideration.applies || consideration.softened);
 }
