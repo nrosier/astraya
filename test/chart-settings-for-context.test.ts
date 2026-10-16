@@ -46,4 +46,14 @@ describe('settingsForContext', () => {
     const result = settingsForContext(card, 'transit', { profiles: [bare] }, { transit: 'house-style' });
     expect('orbRules' in result).toBe(false);
   });
+
+  it('uses a cited Lilly preset for a context, replacing the card’s own orbs', () => {
+    const ruled: ExtendedSettings = { ...card, orbRules: { aspectOrbs: { trine: { base: 5, luminaryBonus: 0 } } } };
+    const result = settingsForContext(ruled, 'synastry', { profiles: [] }, { synastry: 'lilly-1647-second-v1' });
+    expect(result.orbScalePercent).toBe(0);
+    expect(result.orbRules).toEqual({
+      bodyOrbs: { saturn: 4.5, jupiter: 4.5, mars: 3.5, sun: 7.5, venus: 3.5, mercury: 3.5, moon: 6 },
+    });
+    expect(result.houseSystem).toBe('W');
+  });
 });

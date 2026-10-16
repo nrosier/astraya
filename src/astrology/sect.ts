@@ -63,11 +63,17 @@ export function solarPhaseOf(bodyLongitude: Degrees, sunLongitude: Degrees): Sol
 
 export type SolarCondition = 'cazimi' | 'combust' | 'underTheBeams' | 'free';
 
-/** Within the Sun's own disk — roughly its apparent radius, 17 arcminutes. */
+/*
+ * Lilly, Christian Astrology (1647), Book I, p. 113, gives cazimi within 17 arcminutes, combustion within
+ * 8 degrees 30 minutes in the same sign, and under the beams within 17 degrees. Book II, p. 300 (aphorism 26),
+ * gives 12 degrees and 16 minutes instead. Astraya's cazimi matches Book I; its combustion (8) and under-the-
+ * beams (15) values are its own choices, narrower than Book I's. See docs/references/orb-conventions.references.json.
+ */
+/** Within the Sun's own disk — roughly its apparent radius, 17 arcminutes (Lilly, Book I, p. 113). */
 const CAZIMI_ORB: Degrees = 17 / 60;
-/** Traditional combustion orb. */
+/** Combustion orb: Astraya's 8 degrees, against Lilly's 8 degrees 30 minutes (Book I, p. 113). */
 const COMBUSTION_ORB: Degrees = 8;
-/** Traditional under-the-beams orb, wider than and inclusive of combustion. */
+/** Under-the-beams orb, wider than and inclusive of combustion: Astraya's 15, against Lilly's 17 (Book I, p. 113). */
 const UNDER_THE_BEAMS_ORB: Degrees = 15;
 
 /**

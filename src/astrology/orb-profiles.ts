@@ -16,7 +16,7 @@
  * @module astrology/orb-profiles
  * @purpose Named, versioned orb presets over aspects.ts's OrbConfig (Standard/Tight/Wide), the synastry scale offset, and validated per-aspect and per-body orb rules (#590).
  * @conventions Built-ins are immutable: a changed value gets a new id, and `revision` counts revisions. A built-in's source is `null`-locator until a passage is cited in docs/references. Rules are validated as a whole: malformed input yields `undefined`, never a partial set.
- * @exports OrbProfileId, ORB_PROFILE_IDS, OrbProfileSource, OrbProfile, ORB_PROFILES, orbConfigForProfile, matchOrbProfile, SYNASTRY_SCALE_OFFSET, SYNASTRY_DEFAULT_ORB_CONFIG, OrbContext, ORB_CONTEXTS, OrbRulesValue, validateOrbRules, orbConfigForContext
+ * @exports OrbProfileId, ORB_PROFILE_IDS, OrbProfileSource, OrbProfile, ORB_PROFILES, orbConfigForProfile, matchOrbProfile, CitedOrbPresetId, CITED_ORB_PRESET_IDS, CitedOrbPreset, CITED_ORB_PRESETS, citedPresetSettings, isCitedOrbPresetId, matchCitedOrbPreset, SYNASTRY_SCALE_OFFSET, SYNASTRY_DEFAULT_ORB_CONFIG, OrbContext, ORB_CONTEXTS, OrbRulesValue, validateOrbRules, orbConfigForContext
  */
 import { aspectByKey, DEFAULT_ORB_CONFIG, type OrbConfig, type OrbRule } from './aspects.js';
 import { bodyByKey } from './bodies.js';
@@ -102,6 +102,104 @@ export function matchOrbProfile(scalePercent: number): OrbProfileId | undefined 
  * named source's exact numbers: every synastry-specific orb table checked while implementing
  * this varies by author, so the scale percentage below is this app's own choice, not a citation.
  */
+/**
+ * Orb presets with a real citation (#590). Each is a set of per-body moieties (half-orbs, summed per pair)
+ * taken from William Lilly's own table of the orbs of the planets, *Christian Astrology* (1647), Book I,
+ * p. 107. Lilly gives two columns and says he uses either; both are offered. He predates Uranus, Neptune
+ * and Pluto, so a pair that includes any body he does not list falls back to the aspect's own tier.
+ * The transcription, with its page and scan, is in `docs/references/orb-conventions.references.json`.
+ */
+export type CitedOrbPresetId = 'lilly-1647-first-v1' | 'lilly-1647-second-v1';
+
+export const CITED_ORB_PRESET_IDS: readonly CitedOrbPresetId[] = ['lilly-1647-first-v1', 'lilly-1647-second-v1'];
+
+export interface CitedOrbPreset {
+  readonly id: CitedOrbPresetId;
+  readonly revision: number;
+  readonly name: string;
+  readonly description: string;
+  readonly source: { readonly authority: string; readonly locator: string };
+  /** Half of each planet's orb, by body key. */
+  readonly bodyOrbs: Readonly<Record<string, number>>;
+}
+
+/** Lilly's orbs in degrees (minutes as decimals), read from the page image: the first and second columns. */
+const LILLY_FIRST_COLUMN: Readonly<Record<string, number>> = {
+  saturn: 10,
+  jupiter: 12,
+  mars: 7.5,
+  sun: 17,
+  venus: 8,
+  mercury: 7,
+  moon: 12.5,
+};
+const LILLY_SECOND_COLUMN: Readonly<Record<string, number>> = {
+  saturn: 9,
+  jupiter: 9,
+  mars: 7,
+  sun: 15,
+  venus: 7,
+  mercury: 7,
+  moon: 12,
+};
+
+/** A moiety is half the orb: Lilly's own worked example gives Saturn 5 and Venus 4 from orbs of 10 and 8. */
+function moieties(orbs: Readonly<Record<string, number>>): Readonly<Record<string, number>> {
+  return Object.fromEntries(Object.entries(orbs).map(([body, orb]) => [body, orb / 2]));
+}
+
+const LILLY_AUTHORITY = 'William Lilly, Christian Astrology (1647), Book I';
+
+export const CITED_ORB_PRESETS: Readonly<Record<CitedOrbPresetId, CitedOrbPreset>> = {
+  'lilly-1647-first-v1': {
+    id: 'lilly-1647-first-v1',
+    revision: 1,
+    name: 'Lilly (1647), first column',
+    description:
+      "Lilly's first set of planetary orbs: Saturn 10°, Jupiter 12°, Mars 7°30', Sun 17°, Venus 8°, Mercury 7°, Moon 12°30'. Two planets are in aspect within half of each orb added together.",
+    source: { authority: LILLY_AUTHORITY, locator: 'p. 107, table of the quantity of their orbs (first column)' },
+    bodyOrbs: moieties(LILLY_FIRST_COLUMN),
+  },
+  'lilly-1647-second-v1': {
+    id: 'lilly-1647-second-v1',
+    revision: 1,
+    name: 'Lilly (1647), second column',
+    description:
+      "Lilly's second set of planetary orbs: Saturn 9°, Jupiter 9°, Mars 7°, Sun 15°, Venus 7°, Mercury 7°, Moon 12°. Two planets are in aspect within half of each orb added together.",
+    source: { authority: LILLY_AUTHORITY, locator: 'p. 107, table of the quantity of their orbs (second column)' },
+    bodyOrbs: moieties(LILLY_SECOND_COLUMN),
+  },
+};
+
+/** The orb settings a cited preset stands for: the moieties, no scaling, no per-aspect rules. */
+export function citedPresetSettings(id: CitedOrbPresetId): {
+  readonly scalePercent: number;
+  readonly bodyOrbs: Readonly<Record<string, number>>;
+} {
+  return { scalePercent: 0, bodyOrbs: { ...CITED_ORB_PRESETS[id].bodyOrbs } };
+}
+
+export function isCitedOrbPresetId(value: string): value is CitedOrbPresetId {
+  return (CITED_ORB_PRESET_IDS as readonly string[]).includes(value);
+}
+
+/** Which cited preset a scale and rules exactly equal, or `undefined`. Per-aspect rules or a scale rule it out. */
+export function matchCitedOrbPreset(
+  scalePercent: number,
+  rules:
+    | { readonly aspectOrbs?: Readonly<Record<string, unknown>>; readonly bodyOrbs?: Readonly<Record<string, number>> }
+    | undefined,
+): CitedOrbPresetId | undefined {
+  if (scalePercent !== 0 || rules?.bodyOrbs === undefined) return undefined;
+  if (rules.aspectOrbs !== undefined && Object.keys(rules.aspectOrbs).length > 0) return undefined;
+  const given = rules.bodyOrbs;
+  return CITED_ORB_PRESET_IDS.find((id) => {
+    const preset = CITED_ORB_PRESETS[id].bodyOrbs;
+    const keys = Object.keys(preset);
+    return keys.length === Object.keys(given).length && keys.every((key) => given[key] === preset[key]);
+  });
+}
+
 /**
  * Synastry's scale offset from the orbs in force (#543): a 30% tighter contact limit. An Astraya default
  * choice: no published synastry orb table has been verified for it (#590).

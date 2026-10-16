@@ -12,6 +12,7 @@ import {
   type OrbContextSource,
   type OrbProfileRecord,
 } from '../astrology/orb-library.js';
+import { CITED_ORB_PRESET_IDS, CITED_ORB_PRESETS } from '../astrology/orb-profiles.js';
 import { orbRulesDraftFrom, orbRulesFromDraft, type OrbRulesDraft } from './orb-rules-draft.js';
 import { OrbRulesFields } from './OrbRulesFields.js';
 import { orbLibraryEditorMessages } from './OrbLibraryEditor.messages.js';
@@ -103,6 +104,7 @@ export function OrbLibraryEditor({
 
   const sourceOptions = [
     { value: CARD_SOURCE, label: t.cardOption },
+    ...CITED_ORB_PRESET_IDS.map((id) => ({ value: id, label: CITED_ORB_PRESETS[id].name })),
     ...profiles.map((profile) => ({
       value: profile.id,
       label: `${profile.name} (${t.revisionLabel(profile.revision)})`,

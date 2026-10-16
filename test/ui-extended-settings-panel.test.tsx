@@ -521,6 +521,62 @@ describe('the traditional-scheme quick-pick (#549)', () => {
     unmount(container, root);
   });
 
+  describe('the cited Lilly orb presets (#590)', () => {
+    it('applies Lilly’s moieties at scale 0, and reads back as that preset', async () => {
+      const onRedraw = vi.fn();
+      const { container, root } = await mount(fakeProvider(), onRedraw);
+      openCard(container);
+      act(() => {
+        orbProfileCard(container, 'Lilly (1647), first column').click();
+      });
+      expect(orbProfileCard(container, 'Lilly (1647), first column').checked).toBe(true);
+      act(() => {
+        buttonNamed(container, 'Apply and redraw')?.click();
+      });
+      const applied = onRedraw.mock.calls[0]?.[0] as ExtendedSettings;
+      expect(applied.orbScalePercent).toBe(0);
+      expect(applied.orbRules?.bodyOrbs).toEqual({
+        saturn: 5,
+        jupiter: 6,
+        mars: 3.75,
+        sun: 8.5,
+        venus: 4,
+        mercury: 3.5,
+        moon: 6.25,
+      });
+      unmount(container, root);
+    });
+
+    it('is the selected card when the settings already hold exactly its moieties', async () => {
+      const lilly: ExtendedSettings = {
+        ...DEFAULT_EXTENDED_SETTINGS,
+        orbRules: { bodyOrbs: { saturn: 4.5, jupiter: 4.5, mars: 3.5, sun: 7.5, venus: 3.5, mercury: 3.5, moon: 6 } },
+      };
+      const { container, root } = await mount(fakeProvider(), vi.fn(), lilly);
+      openCard(container);
+      expect(orbProfileCard(container, 'Lilly (1647), second column').checked).toBe(true);
+      expect(() => orbProfileCard(container, 'Custom')).toThrow();
+      unmount(container, root);
+    });
+
+    it('picking a built-in orb profile afterwards clears the moieties again', async () => {
+      const onRedraw = vi.fn();
+      const { container, root } = await mount(fakeProvider(), onRedraw);
+      openCard(container);
+      act(() => {
+        orbProfileCard(container, 'Lilly (1647), first column').click();
+      });
+      act(() => {
+        orbProfileCard(container, 'Standard').click();
+      });
+      act(() => {
+        buttonNamed(container, 'Apply and redraw')?.click();
+      });
+      expect(onRedraw).not.toHaveBeenCalled();
+      unmount(container, root);
+    });
+  });
+
   describe('the practitioner’s own orb rules (#590)', () => {
     /** Types into the number input inside the dialog whose label is `label`, the way a user's keystroke reaches React. */
     function typeInto(container: HTMLElement, legend: string, label: string, text: string): void {

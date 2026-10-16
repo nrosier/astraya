@@ -104,3 +104,42 @@ test('a named orb profile chosen for transits changes them, leaves the card alon
   // A wider scale finds more contacts than the first revision did, so the new revision is what the screen uses.
   expect(await count()).toBeGreaterThan(withProfile);
 });
+
+test('a cited Lilly preset is offered on the card, applies, and can be chosen for transits (#590)', async ({
+  page,
+}) => {
+  test.setTimeout(120_000);
+
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  await createPerson(page, {
+    name: 'Ada Lovelace',
+    date: '1815-12-10',
+    time: '07:45:00',
+    latitude: '51.5072',
+    longitude: '-0.1276',
+  });
+
+  // On the card: the preset names its source and page, and applying it is reported in the settings button.
+  await openNatalChart(page, 'Aspects');
+  await openSettings(page);
+  const card = page.locator('dialog.settings-card');
+  const orbGroup = card.getByRole('radiogroup', { name: 'Orb profile' });
+  await expect(orbGroup.getByRole('radio', { name: /^Lilly \(1647\), first column/ })).toBeVisible();
+  await expect(card.getByText(/Christian Astrology \(1647\), Book I, p\. 107/).first()).toBeVisible();
+  await orbGroup.getByRole('radio', { name: /^Lilly \(1647\), first column/ }).check();
+  await card.getByRole('button', { name: 'Apply and redraw', exact: true }).click();
+  await expect(card).toBeHidden();
+  await expect(page.locator('button.extended-settings-trigger')).toContainText('Own orb rules');
+  await openSettings(page);
+  await expect(orbGroup.getByRole('radio', { name: /^Lilly \(1647\), first column/ })).toBeChecked();
+  const axe = await new AxeBuilder({ page }).include('dialog.settings-card').analyze();
+  expect(axe.violations.map((v) => v.id)).toEqual([]);
+  await card.getByRole('button', { name: 'Cancel', exact: true }).click();
+
+  // On Preferences: the preset is a choice for synastry with no profile created.
+  await gotoAndSettle(page, `${baseUrl}/#/preferences/astrology`);
+  await page
+    .getByRole('combobox', { name: 'Synastry', exact: true })
+    .selectOption({ label: 'Lilly (1647), second column' });
+  await expect(page.getByText('Orb choice saved.')).toBeVisible();
+});

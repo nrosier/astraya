@@ -34,7 +34,16 @@ import {
   matchCalculationScheme,
   type CalculationSchemeId,
 } from '../astrology/calculation-scheme.js';
-import { ORB_PROFILE_IDS, ORB_PROFILES, matchOrbProfile, type OrbProfileId } from '../astrology/orb-profiles.js';
+import {
+  CITED_ORB_PRESET_IDS,
+  ORB_PROFILE_IDS,
+  ORB_PROFILES,
+  citedPresetSettings,
+  isCitedOrbPresetId,
+  matchCitedOrbPreset,
+  matchOrbProfile,
+  type OrbProfileId,
+} from '../astrology/orb-profiles.js';
 import { DEFAULT_RULERSHIP_CHOICE, type RulershipChoice } from '../astrology/rulership.js';
 import { aspectDisplayName, bodyDisplayName } from './astro-names.messages.js';
 import {
@@ -298,6 +307,7 @@ export function ExtendedSettingsPanel({
   const currentProfile = matchCalculationProfile(effective, effectiveRulers);
   const currentObjectPreset = matchObjectPolicyPreset(draft.objectPolicies);
   const currentOrbProfile = effective.orbRules === undefined ? matchOrbProfile(draft.orbScalePercent) : undefined;
+  const currentCitedPreset = matchCitedOrbPreset(draft.orbScalePercent, effective.orbRules);
   const currentScheme =
     currentOrbProfile === undefined ? undefined : matchCalculationScheme(draft.boundsScheme, currentOrbProfile);
   const deviceChanged =
@@ -339,6 +349,17 @@ export function ExtendedSettingsPanel({
 
   /** Named orb-scale quick-pick (#543) — only ever touches `orbScalePercent`, never any other field, unlike `chooseProfile`. */
   const chooseOrbProfile = (id: string): void => {
+    if (isCitedOrbPresetId(id)) {
+      // A cited preset is its moieties at scale 0 and replaces any rules of the card's own (#590).
+      const preset = citedPresetSettings(id);
+      replaceDraft(
+        withOrbRules(
+          { ...effective, orbScalePercent: preset.scalePercent },
+          { aspectOrbs: {}, bodyOrbs: preset.bodyOrbs },
+        ),
+      );
+      return;
+    }
     if (!(ORB_PROFILE_IDS as readonly string[]).includes(id)) return;
     const profileId = id as OrbProfileId;
     replaceDraft({ ...withoutOrbRules(effective), orbScalePercent: ORB_PROFILES[profileId].config.scalePercent });
@@ -753,15 +774,20 @@ export function ExtendedSettingsPanel({
           <p className="hint settings-card-tag">{t.appliesOnApply}</p>
           <OptionCards
             label={t.orbProfileLabel}
-            value={currentOrbProfile ?? 'custom'}
+            value={currentCitedPreset ?? currentOrbProfile ?? 'custom'}
             options={[
-              ...(currentOrbProfile === undefined
+              ...(currentOrbProfile === undefined && currentCitedPreset === undefined
                 ? [{ value: 'custom', title: t.orbProfileOptions.custom, consequence: t.orbProfileNotes.custom }]
                 : []),
               ...ORB_PROFILE_IDS.map((id) => ({
                 value: id,
                 title: t.orbProfileOptions[id],
                 consequence: t.orbProfileNotes[id],
+              })),
+              ...CITED_ORB_PRESET_IDS.map((id) => ({
+                value: id,
+                title: t.citedOrbPresetOptions[id],
+                consequence: t.citedOrbPresetNotes[id],
               })),
             ]}
             onChange={chooseOrbProfile}

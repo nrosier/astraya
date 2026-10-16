@@ -10,7 +10,7 @@
  * @conventions Plain objects only, validated as a whole. A profile id is stable across revisions; each edit increments `revision`. A context's source is `'card'` (the Extended settings' orbs) or a profile id; an unknown id falls back to the card rather than failing. Synastry's tightening is applied by `computeSynastry`, not here.
  * @exports OrbProfileRecord, OrbLibrary, OrbContextSource, OrbSourceChoice, CARD_SOURCE, validateOrbProfileRecord, validateOrbLibrary, nextRevision, sourceForContext, orbSettingsFor
  */
-import { validateOrbRules, type OrbRulesValue } from './orb-profiles.js';
+import { citedPresetSettings, isCitedOrbPresetId, validateOrbRules, type OrbRulesValue } from './orb-profiles.js';
 
 /** A named, revisioned set of orbs (#590). */
 export interface OrbProfileRecord {
@@ -52,7 +52,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 export function validateOrbProfileRecord(value: unknown): OrbProfileRecord | undefined {
   if (!isRecord(value)) return undefined;
   const { id, name, revision, scalePercent } = value;
-  if (typeof id !== 'string' || !ID_PATTERN.test(id) || id === CARD_SOURCE) return undefined;
+  if (typeof id !== 'string' || !ID_PATTERN.test(id) || id === CARD_SOURCE || isCitedOrbPresetId(id)) return undefined;
   if (typeof name !== 'string' || name.trim() === '' || name.length > MAX_NAME_LENGTH) return undefined;
   if (typeof revision !== 'number' || !Number.isInteger(revision) || revision < 1) return undefined;
   if (typeof scalePercent !== 'number' || !Number.isFinite(scalePercent)) return undefined;
@@ -89,6 +89,8 @@ export function sourceForContext(
 ): OrbSourceChoice {
   const choice = sources[context] ?? CARD_SOURCE;
   if (choice === CARD_SOURCE) return CARD_SOURCE;
+  // A cited preset (#590) is built in, so it needs no library entry.
+  if (isCitedOrbPresetId(choice)) return choice;
   return library.profiles.some((profile) => profile.id === choice) ? choice : CARD_SOURCE;
 }
 
@@ -110,6 +112,10 @@ export function orbSettingsFor(
   readonly bodyOrbs?: OrbRulesValue['bodyOrbs'];
 } {
   if (choice === CARD_SOURCE) return { ...card };
+  if (isCitedOrbPresetId(choice)) {
+    const preset = citedPresetSettings(choice);
+    return { scalePercent: preset.scalePercent, aspectOrbs: {}, bodyOrbs: { ...preset.bodyOrbs } };
+  }
   const profile = library.profiles.find((candidate) => candidate.id === choice);
   if (profile === undefined) return { ...card };
   return {

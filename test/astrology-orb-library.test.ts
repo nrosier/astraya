@@ -92,3 +92,19 @@ describe('orbSettingsFor', () => {
     expect(resolved.aspectOrbs).not.toBe(good.aspectOrbs);
   });
 });
+
+describe('cited presets as a source (#590)', () => {
+  it('a cited preset needs no library entry and resolves to its moieties at scale 0', () => {
+    expect(sourceForContext({ profiles: [] }, { transit: 'lilly-1647-first-v1' }, 'transit')).toBe(
+      'lilly-1647-first-v1',
+    );
+    const resolved = orbSettingsFor({ profiles: [] }, 'lilly-1647-first-v1', { scalePercent: 25 });
+    expect(resolved.scalePercent).toBe(0);
+    expect(resolved.bodyOrbs?.saturn).toBe(5);
+    expect(resolved.bodyOrbs?.venus).toBe(4);
+  });
+
+  it('a profile cannot take a cited preset’s id', () => {
+    expect(validateOrbProfileRecord({ ...good, id: 'lilly-1647-first-v1' })).toBeUndefined();
+  });
+});

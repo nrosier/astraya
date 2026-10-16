@@ -4,20 +4,24 @@
  *
  * Horary reads a chart cast for the moment of a *question*, not a birth, and the tradition opens
  * with a short list of conditions under which the chart is said not to be "radical" — not safe to
- * answer from (William Lilly, *Christian Astrology*, 1647, ch. XXXVI; the same list is repeated
- * in most later horary texts). They are warnings to the astrologer, not hard prohibitions: a chart
+ * answer from (William Lilly, *Christian Astrology*, 1647, Book I, "Considerations before Judgment",
+ * pp. 121-123; the same list is repeated in most later horary texts). They are warnings to the astrologer, not hard prohibitions: a chart
  * that trips one is still a chart, and some practitioners would judge it anyway with care.
  *
  * Stated here, since schools differ on the finer points:
  *
- * - **Ascendant too early / too late** — the Ascendant is in the first 3° or the last 3° of its
- *   sign: too early, the matter is not yet ripe to judge; too late, it is already decided.
+ * - **Ascendant too early / too late** — Lilly says not to judge when 0, 1 or 2 degrees ascend, or when
+ *   27, 28 or 29 degrees ascend (p. 122), which is the first and last 3° of the sign: too early, the
+ *   matter is not yet ripe to judge; too late, it is already decided.
  * - **Moon void of course** — the Moon will make no further exact aspect before leaving its sign
  *   (see `void-of-course.ts` for the convention used: major aspects to the Sun and Mercury–Pluto).
- *   "Nothing will come of the matter."
- * - **Moon in the Via Combusta** — the Moon between 15° Libra and 15° Scorpio, the "burnt way".
+ *   "Nothing will come of the matter." Lilly (p. 122) says matters "goe hardly on" when the Moon is void, yet
+ *   she "performes somewhat" in Taurus, Cancer, Sagittarius or Pisces; that exception is not modelled here.
+ * - **Moon in the Via Combusta** — the Moon between 15° Libra and 15° Scorpio, the "burnt way" (Lilly
+ *   gives it as "as some say", p. 122).
  * - **Saturn in the seventh house** — Saturn, as the traditional malefic, in the house of the
- *   astrologer, impairs the astrologer's own judgment.
+ *   astrologer, impairs the astrologer's own judgment (Lilly attributes this to Alkindus and the Arabians,
+ *   pp. 122-123).
  *
  * Only these four are checked. Lilly lists further considerations (the lord of the Ascendant
  * combust, the querent's and quesited's significators afflicted, and so on) that depend on *what
@@ -28,7 +32,7 @@
 /**
  * @module Horary
  * @purpose Checks the classical "considerations before judgment" that determine whether a horary chart is fit to be judged (radical).
- * @conventions Based on Lilly's Christian Astrology (1647), ch. XXXVI; only four of Lilly's considerations are checked (Ascendant too early/late, Moon void of course, Moon in the Via Combusta, Saturn in the seventh house), since the rest depend on the content of the question asked, which no chart alone can tell.
+ * @conventions Based on Lilly's Christian Astrology (1647), Book I, "Considerations before Judgment", pp. 121-123 (transcribed in docs/references/orb-conventions.references.json); only four of Lilly's considerations are checked (Ascendant too early/late, Moon void of course, Moon in the Via Combusta, Saturn in the seventh house), since the rest depend on the content of the question asked, which no chart alone can tell.
  * @exports horaryConsiderations, isRadical, ASCENDANT_EARLY_LIMIT_DEG, ASCENDANT_LATE_LIMIT_DEG, VIA_COMBUSTA_START_DEG, VIA_COMBUSTA_END_DEG
  */
 import type { Degrees } from '../ephemeris/types.js';
@@ -37,7 +41,7 @@ import { degreesInSign } from './signs.js';
 export type HoraryConsiderationKey =
   'ascendant-too-early' | 'ascendant-too-late' | 'moon-void-of-course' | 'moon-via-combusta' | 'saturn-in-seventh';
 
-/** The Ascendant is "too early" below 3° into its sign and "too late" above 27°. */
+/** The Ascendant is "too early" below 3° into its sign and "too late" above 27° (Lilly, Book I, p. 122: 0-2 and 27-29 degrees). */
 export const ASCENDANT_EARLY_LIMIT_DEG = 3;
 export const ASCENDANT_LATE_LIMIT_DEG = 27;
 
