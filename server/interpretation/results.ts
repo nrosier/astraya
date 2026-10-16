@@ -15,7 +15,7 @@ import { randomUUID } from 'node:crypto';
 import type { Database } from '../db.ts';
 import { CURRENT_KEY_VERSION, decryptPayload, encryptPayload } from '../ops/crypto.ts';
 import { kindForMode, parseBasis, type ResultBasis, type ResultKind } from '../../src/interpretation/result-basis.ts';
-import type { Tier2Section } from './llm-client.ts';
+import type { Tier2Section } from '../../src/interpretation/tier2-contract.ts';
 
 export interface InterpretationResultSummary {
   readonly id: string;

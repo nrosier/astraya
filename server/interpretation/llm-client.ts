@@ -16,8 +16,10 @@
  * @module llm-client
  * @purpose The Tier 2 feature's real LLM provider client — the one place in the running server that reaches a third-party model (Gemini) over the network.
  * @conventions Never imported from `src/`, enforced by `test/no-runtime-llm-access.test.ts`; deliberately separate from `tools/corpus-gen`'s build-time generator client, since this one serves free-form prose inside a live per-user request rather than fixed-schema, build-time-only generation; retries only on transient 429/5xx statuses, surfacing 4xx immediately as a likely configuration problem; every call — all attempts and backoff together — is aborted at `PROVIDER_CALL_DEADLINE_MS`, kept below `cost-reservation.ts`'s lease (#476).
- * @exports PROVIDER_CALL_DEADLINE_MS, Tier2Config, loadTier2Config, Tier2Section, Tier2Result, generateTier2Text, CustomPromptVerdict, parseCustomPromptVerdict, verifyCustomPrompt, estimateCostCents, estimateVerificationMaxCostCents, estimateGenerationMaxCostCents
+ * @exports PROVIDER_CALL_DEADLINE_MS, Tier2Config, loadTier2Config, Tier2Result, generateTier2Text, CustomPromptVerdict, parseCustomPromptVerdict, verifyCustomPrompt, estimateCostCents, estimateVerificationMaxCostCents, estimateGenerationMaxCostCents
  */
+import { isTier2Section, type Tier2Section } from '../../src/interpretation/tier2-contract.ts';
+
 const DEFAULT_BASE_URL = 'https://generativelanguage.googleapis.com';
 const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504]);
 
@@ -56,11 +58,6 @@ export function loadTier2Config(env: NodeJS.ProcessEnv = process.env): Tier2Conf
         ? DEFAULT_BASE_URL
         : env.ASTRAYA_INTERPRETATION_BASE_URL,
   };
-}
-
-export interface Tier2Section {
-  readonly heading: string;
-  readonly body: string;
 }
 
 export interface Tier2Result {
@@ -123,15 +120,6 @@ const TIER2_RESPONSE_SCHEMA = {
   },
   required: ['sections'],
 };
-
-function isTier2Section(value: unknown): value is Tier2Section {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    typeof (value as { heading?: unknown }).heading === 'string' &&
-    typeof (value as { body?: unknown }).body === 'string'
-  );
-}
 
 /**
  * Parses the model's structured-output JSON string into `{ sections, description }`. The

@@ -19,4 +19,5 @@ Prose corpus (committed JSON per locale) + composition pipeline → written repo
 - `selection-key.ts` — Wheel selection keys: builders and parser for body/sign/house/derived/aspect keys. Deps: `astrology/derived-points`, `astrology/signs`, `chart/body-id`.
 - `selection.ts` — Wheel click → matching placements, same salience ranking as report. Deps: `astrology/signs`, `chart/body-id`, `domain/chart-compute`, `./rules`.
 - `symbolism.ts` — Reference symbolism sheets (core meaning + keywords, en/nl) + generation context builder. Deps: `astrology/bodies`, `astrology/signs`, `./compose`, `./schema`.
-- `tier2-client.ts` — Thin client for opt-in Tier 2 AI-customized interpretation (via server). Deps: `astrology/bodies`, `domain/chart-compute`, `domain/synastry`, `./focus-context-schema`, `./result-basis`, `./schema`.
+- `tier2-client.ts` — Thin client for opt-in Tier 2 AI-customized interpretation (via server). Deps: `astrology/bodies`, `domain/chart-compute`, `domain/synastry`, `./focus-context-schema`, `./result-basis`, `./schema`, `./tier2-contract`.
+- `tier2-contract.ts` — Tier 2 freeform/relationship wire shapes, section shape and their closed-set validators, defined once for both browser and server (#588). Deps: `astrology/aspects`, `astrology/bodies`.

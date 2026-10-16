@@ -123,6 +123,9 @@ COPY --from=build /app/src/interpretation/focus-context-schema.ts ./src/interpre
 COPY --from=build /app/src/astrology/rulership.ts ./src/astrology/rulership.ts
 # The kind and basis stored with each saved AI interpretation (#423): no imports of its own.
 COPY --from=build /app/src/interpretation/result-basis.ts ./src/interpretation/result-basis.ts
+# The Tier 2 wire shapes and their validators, shared with the browser client (#588): imports only
+# the bodies and aspects tables already copied above.
+COPY --from=build /app/src/interpretation/tier2-contract.ts ./src/interpretation/tier2-contract.ts
 COPY --from=build /app/src/ephemeris/generated-constants.ts ./src/ephemeris/generated-constants.ts
 
 # `data/` is the one writable path in the tree — it holds the SQLite file plus
