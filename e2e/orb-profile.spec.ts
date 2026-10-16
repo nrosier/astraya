@@ -1,6 +1,6 @@
 /**
- * A person's own orb profile (#590): saved from the Transit screen, it survives a reload, changes
- * how many contacts the screen finds, and removing it brings the built-in orbs back. Real server,
+ * The orbs are the device's Extended settings (#590): a rule set on the card changes the natal aspects,
+ * and it changes the Transit screen's contacts too, since transits use the same orbs. Real server,
  * store and ephemeris, as `transit-golden-path.spec.ts` uses.
  */
 import { mkdtempSync, rmSync } from 'node:fs';
@@ -31,7 +31,7 @@ test.afterAll(async () => {
   rmSync(dir, { recursive: true, force: true });
 });
 
-test('a saved orb profile changes the transit contacts, persists, and can be removed', async ({ page }) => {
+test('a rule set on the card changes the transit contacts too (#590)', async ({ page }) => {
   test.setTimeout(90_000);
 
   await gotoAndSettle(page, `${baseUrl}/#/people`);
@@ -54,26 +54,19 @@ test('a saved orb profile changes the transit contacts, persists, and can be rem
   };
   const builtInTotal = await totalCount();
 
-  await page.getByRole('button', { name: /Show orb profile/ }).click();
-  await page.getByLabel('Profile name', { exact: true }).fill('Tight house');
-  await page.getByRole('spinbutton', { name: /^Scale/ }).fill('-90');
-  await page.mouse.move(0, 0);
-  const axe = await new AxeBuilder({ page }).include('.primitive-disclosure').analyze();
-  expect(axe.violations.map((v) => v.id)).toEqual([]);
-  await page.getByRole('button', { name: 'Save orb profile' }).click();
-  await expect(page.getByText('Saved as revision 1.')).toBeVisible();
+  // The orbs are set on the Charts page, where the card lives; the Transit screen then uses them.
+  await openNatalChart(page);
+  await openSettings(page);
+  const card = page.locator('dialog.settings-card');
+  await card.getByRole('button', { name: /Show aspect orbs/ }).click();
+  await card.getByRole('group', { name: 'Conjunction', exact: true }).getByRole('spinbutton').first().fill('0');
+  await card.getByRole('button', { name: 'Apply and redraw', exact: true }).click();
+  await expect(card).toBeHidden();
 
-  await expect.poll(totalCount).toBeLessThan(builtInTotal);
-  const tightTotal = await totalCount();
-
-  await page.reload();
+  await page.getByRole('button', { name: 'Transits & Forecast', exact: true }).click();
+  await page.getByRole('link', { name: 'Transits', exact: true }).click();
   await expect(page.getByRole('table', { name: 'Contacts' })).toBeVisible();
-  await expect.poll(totalCount).toBe(tightTotal);
-  await expect(page.getByText('Tight house, revision 1')).toBeVisible();
-
-  await page.getByRole('button', { name: /Show orb profile/ }).click();
-  await page.getByRole('button', { name: 'Remove orb profile' }).click();
-  await expect.poll(totalCount).toBe(builtInTotal);
+  await expect.poll(totalCount).toBeLessThan(builtInTotal);
 });
 
 test('own orb rules on the natal chart change its aspects, name themselves in the settings button, and survive a profile reset', async ({

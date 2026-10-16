@@ -344,22 +344,19 @@ describe('technique artifacts and verification (#582)', () => {
     expect(canonicalJson(await computeChartData(PERSON, engine, options))).toBe(
       canonicalJson(await computeChartData(PERSON, engine, {})),
     );
-    expect(canonicalJson(await computeTransit(PERSON, TARGET_JD, engine, options, TRANSIT_ORB_CONFIG))).toBe(
-      canonicalJson(await computeTransit(PERSON, TARGET_JD, engine, {}, TRANSIT_ORB_CONFIG)),
-    );
+    expect(
+      canonicalJson(await computeTransit(PERSON, TARGET_JD, engine, { ...options, orbConfig: TRANSIT_ORB_CONFIG })),
+    ).toBe(canonicalJson(await computeTransit(PERSON, TARGET_JD, engine, { orbConfig: TRANSIT_ORB_CONFIG })));
     expect(canonicalJson(await computeSynastry(PERSON, PARTNER, engine, options))).toBe(
       canonicalJson(await computeSynastry(PERSON, PARTNER, engine)),
     );
   }, 60_000);
 
   async function transitArtifact(targetJd = TARGET_JD) {
-    const data = await computeTransit(
-      PERSON,
-      targetJd,
-      engine,
-      snapshotCalculationOptions(DEFAULTS),
-      TRANSIT_ORB_CONFIG,
-    );
+    const data = await computeTransit(PERSON, targetJd, engine, {
+      ...snapshotCalculationOptions(DEFAULTS),
+      orbConfig: TRANSIT_ORB_CONFIG,
+    });
     return buildTechniqueArtifact(
       DEFAULTS,
       PERSON,
@@ -370,13 +367,10 @@ describe('technique artifacts and verification (#582)', () => {
     );
   }
   async function synastryArtifact(partner = PARTNER) {
-    const data = await computeSynastry(
-      PERSON,
-      partner,
-      engine,
-      snapshotCalculationOptions(DEFAULTS),
-      SYNASTRY_DEFAULT_ORB_CONFIG,
-    );
+    const data = await computeSynastry(PERSON, partner, engine, {
+      ...snapshotCalculationOptions(DEFAULTS),
+      orbConfig: SYNASTRY_DEFAULT_ORB_CONFIG,
+    });
     return buildTechniqueArtifact(
       DEFAULTS,
       PERSON,

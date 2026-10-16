@@ -46,6 +46,8 @@ function categoryOf(body: BodyId): BodyCategory {
 }
 
 export interface MinorProgressionOptions {
+  /** The orbs the cross-chart aspects are found with (#590); the Extended settings' orbs when a chart is drawn from them. */
+  readonly orbConfig?: OrbConfig;
   readonly houseSystem?: HouseSystem;
   readonly zodiac?: Zodiac;
 }
@@ -72,7 +74,6 @@ export async function computeMinorProgression(
   targetJd: JulianDayUT,
   provider: EphemerisProvider,
   options: MinorProgressionOptions = {},
-  orbConfig?: OrbConfig,
 ): Promise<MinorProgressionData> {
   const resolved = resolveMoment(natalMoment);
   const natalJd = await julianDayFor(provider, resolved);
@@ -98,7 +99,7 @@ export async function computeMinorProgression(
   const contacts = findCrossAspects(
     subjectsFrom(positions, categoryOf),
     fixedSubjects(natalPositions, categoryOf),
-    orbConfig,
+    options.orbConfig,
   );
 
   return { method, natalJd, progressedJd, ageInYears: ageInYears(natalJd, targetJd), positions, houses, contacts };

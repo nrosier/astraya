@@ -282,11 +282,17 @@ async function recompute(
   }
   switch (technique.kind) {
     case 'transit': {
-      const data = await computeTransit(artifact.moment, technique.targetJd, provider, options, technique.orbConfig);
+      const data = await computeTransit(artifact.moment, technique.targetJd, provider, {
+        ...options,
+        orbConfig: technique.orbConfig,
+      });
       return { subject: data.natal, result: data };
     }
     case 'synastry': {
-      const data = await computeSynastry(artifact.moment, technique.partner, provider, options, technique.orbConfig);
+      const data = await computeSynastry(artifact.moment, technique.partner, provider, {
+        ...options,
+        orbConfig: technique.orbConfig,
+      });
       return { subject: data.chartA, result: data };
     }
     case 'primary-directions': {

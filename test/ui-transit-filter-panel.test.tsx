@@ -40,8 +40,7 @@ beforeAll(async () => {
       },
       target,
       engine,
-      {},
-      TRANSIT_ORB_CONFIG,
+      { orbConfig: TRANSIT_ORB_CONFIG },
     )
   ).contacts;
 }, 60_000);

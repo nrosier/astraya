@@ -45,6 +45,8 @@ import type { BirthMomentInput } from '../time/types.js';
 const DEFAULT_HOUSE_SYSTEM: HouseSystem = 'P';
 
 export interface SolarArcDirectionsOptions {
+  /** The orbs the cross-chart aspects are found with (#590); the Extended settings' orbs when a chart is drawn from them. */
+  readonly orbConfig?: OrbConfig;
   readonly houseSystem?: HouseSystem;
   readonly zodiac?: Zodiac;
 }
@@ -80,7 +82,6 @@ export async function computeSolarArcDirections(
   targetJd: JulianDayUT,
   provider: EphemerisProvider,
   options: SolarArcDirectionsOptions = {},
-  orbConfig?: OrbConfig,
 ): Promise<SolarArcDirectionsData> {
   const resolved = resolveMoment(natalMoment);
   const natalJd = await julianDayFor(provider, resolved);
@@ -113,7 +114,7 @@ export async function computeSolarArcDirections(
 
   const directedSide = directedSubjects(directed, categoryOf, progressedSun.longitudeSpeed);
   const natalSide = fixedNatalSubjects(natalPositions, categoryOf);
-  const found = findCrossAspects(directedSide, natalSide, orbConfig);
+  const found = findCrossAspects(directedSide, natalSide, options.orbConfig);
 
   const natalLongitude = new Map<BodyId, Degrees>(
     natalPositions.map((position) => [position.body, position.longitude]),

@@ -27,12 +27,11 @@ import { formatFixed, formatTimestamp } from './format.js';
 import { personHref } from './route.js';
 import { houseSystemLabel, rulershipLabel, zodiacLabel } from './ChartView.js';
 import { PrintProvenance } from './PrintProvenance.js';
-import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
+import { DEFAULT_EXTENDED_SETTINGS, withOrbsOf } from '../chart/extended-settings.js';
 import { DEFAULT_RULERSHIP_CHOICE } from '../astrology/rulership.js';
+import { useExtendedSettings } from './extended-settings-store.js';
 import { buildCalculationSnapshot, snapshotCalculationOptions } from '../domain/calculation-snapshot.js';
 import type { CalculationArtifact } from '../domain/calculation-artifact.js';
-import { OrbProfileEditor } from './OrbProfileEditor.js';
-import { orbConfigForContext } from '../astrology/orb-profiles.js';
 import { artifactProvenanceIdentity, buildTechniqueChartArtifact } from './chart-artifact.js';
 import { useSymbolClass } from './symbol-setting.js';
 import { useGlyphVariants } from './glyph-variant-setting.js';
@@ -75,12 +74,6 @@ type Load =
   | { readonly kind: 'error'; readonly message: string };
 
 const bodyKeyOf = (id: number): string => bodyById(id)?.key ?? String(id);
-
-/**
- * What both charts are computed with (#582): the engine defaults and synastry's own default orbs,
- * explicit so the calculation's artifact records its real inputs. Same results as passing none.
- */
-const ENGINE_DEFAULTS_SNAPSHOT = buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE);
 
 /** Exported for the PDF export builder (#441), which reuses the same columns a CSV download would. */
 export function aspectColumns(
@@ -150,9 +143,15 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
   const [partnerId, setPartnerId] = useState<string>('');
   const partner = partnerId === '' ? undefined : state.people.get(partnerId);
 
-  const orbProfileKey = JSON.stringify(person?.orbProfile ?? null);
   const { provider } = useEphemerisProvider();
   const [load, setLoad] = useState<Load>({ kind: 'idle' });
+  // The orbs are the device's Extended settings (#590), tightened for synastry (#543); everything else stays at
+  // the engine defaults, as this screen's footer says.
+  const [extendedSettings] = useExtendedSettings();
+  const snapshot = useMemo(
+    () => buildCalculationSnapshot(withOrbsOf(DEFAULT_EXTENDED_SETTINGS, extendedSettings), DEFAULT_RULERSHIP_CHOICE),
+    [extendedSettings],
+  );
 
   useEffect(() => {
     if (person?.moment === undefined || partner?.moment === undefined || provider === undefined) {
@@ -161,18 +160,17 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
     }
     const momentA = person.moment;
     const momentB = partner.moment;
-    const orbConfig = orbConfigForContext('synastry', person.orbProfile);
     const effect = { cancelled: false };
     setLoad({ kind: 'loading' });
 
     void (async () => {
       try {
-        const options = snapshotCalculationOptions(ENGINE_DEFAULTS_SNAPSHOT);
-        const data = await computeSynastry(momentA, momentB, provider, options, orbConfig);
+        const options = snapshotCalculationOptions(snapshot);
+        const data = await computeSynastry(momentA, momentB, provider, options);
         const artifact = await buildTechniqueChartArtifact(
-          ENGINE_DEFAULTS_SNAPSHOT,
+          snapshot,
           momentA,
-          { kind: 'synastry', partner: momentB, orbConfig },
+          { kind: 'synastry', partner: momentB, orbConfig: data.orbConfig },
           data.chartA,
           data,
           provider,
@@ -187,7 +185,7 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
     return () => {
       effect.cancelled = true;
     };
-  }, [momentKey(person?.moment), momentKey(partner?.moment), provider, orbProfileKey]);
+  }, [momentKey(person?.moment), momentKey(partner?.moment), provider]);
 
   // The reviewed interpretation texts are fetched once a synastry is on screen, and kept per language;
   // until they arrive (or if they cannot) the rows show the mechanical sentence.
@@ -309,10 +307,7 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
         houseSystem={houseSystemLabel(DEFAULT_EXTENDED_SETTINGS.houseSystem)}
         zodiac={zodiacLabel(DEFAULT_EXTENDED_SETTINGS.zodiac)}
         rulership={rulershipLabel(DEFAULT_RULERSHIP_CHOICE)}
-        snapshotIdentity={artifactProvenanceIdentity(
-          load.kind === 'ready' ? load.artifact : undefined,
-          ENGINE_DEFAULTS_SNAPSHOT,
-        )}
+        snapshotIdentity={artifactProvenanceIdentity(load.kind === 'ready' ? load.artifact : undefined, snapshot)}
         generatedAt={formatTimestamp(new Date())}
       />
       <p className="back">
@@ -322,7 +317,6 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
       <GlossaryTerms terms={['synastry', 'aspect', 'orb']} />
       <p className="hint">{t.hint}</p>
       <p className="hint">{t.overlayContext}</p>
-      <OrbProfileEditor person={person} />
 
       <p>
         <Select

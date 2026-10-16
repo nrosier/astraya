@@ -20,10 +20,20 @@
  * @exports PdfTablePlan, PdfChartSectionPlan, PdfTextSectionPlan, PdfFieldsSectionPlan, PdfSectionPlan, PdfPlan, PdfPlanContext, buildPdfPlan
  */
 import { bodyById } from '../astrology/bodies.js';
-import type { RulershipChoice } from '../astrology/rulership.js';
-import { toChartCalculationOptions, type ExtendedSettings } from '../chart/extended-settings.js';
+import { DEFAULT_RULERSHIP_CHOICE, type RulershipChoice } from '../astrology/rulership.js';
+import {
+  DEFAULT_EXTENDED_SETTINGS,
+  toChartCalculationOptions,
+  orbsOf,
+  withOrbsOf,
+  type ExtendedSettings,
+} from '../chart/extended-settings.js';
 import { calculationArtifactIdentity } from '../domain/calculation-artifact.js';
-import { buildCalculationSnapshot } from '../domain/calculation-snapshot.js';
+import {
+  buildCalculationSnapshot,
+  snapshotCalculationOptions,
+  type CalculationSnapshot,
+} from '../domain/calculation-snapshot.js';
 import { buildChartArtifact } from './chart-artifact.js';
 import {
   housesAreDefined,
@@ -78,7 +88,6 @@ import {
   type PdfTransitsSectionOptions,
 } from '../domain/pdf-export-sections.js';
 import type { Person } from '../domain/person.js';
-import { orbConfigForContext } from '../astrology/orb-profiles.js';
 import { computeSynastry, rankedSynastryAspects } from '../domain/synastry.js';
 import { renderChartSheetSvg } from '../chart/chart-sheet.js';
 import { renderAcgMapSvg, type AcgMapInput } from '../chart/acg-map.js';
@@ -315,8 +324,9 @@ function chartTypeLabel(type: PdfChartSectionOptions['type'], t: typeof pdfExpor
  * exactly (#582), since the PDF must show the chart that page shows:
  * - natal: the Extended settings, the rulers and the person's custom points (`ChartView`)
  * - solar/lunar return: the Extended settings and the rulers (`ReturnView`)
- * - draconic/harmonic/relocated: the custom points only — those views transform the natal
- *   positions rather than reading the Extended settings (`extended-settings-store.ts`)
+ * - draconic/harmonic/relocated: the orbs from the Extended settings (#590) and the custom points.
+ *   These views transform the natal positions, so the house system and zodiac don't come from the
+ *   settings, but their aspects use the same orbs as every other chart.
  */
 export function sectionCalculationOptions(
   type: PdfChartSectionOptions['type'],
@@ -334,7 +344,7 @@ export function sectionCalculationOptions(
     case 'draconic':
     case 'harmonic':
     case 'relocated':
-      return { rulership, ...customPoints };
+      return { rulership, ...orbsOf(settings), ...customPoints };
   }
 }
 
@@ -462,13 +472,8 @@ async function buildSynastrySectionPlan(
   const momentA = person.moment;
   const momentB = partner.moment;
   const st = synastryViewMessages[locale];
-  const data = await computeSynastry(
-    momentA,
-    momentB,
-    provider,
-    undefined,
-    orbConfigForContext('synastry', person.orbProfile),
-  );
+  const synastryOptions = snapshotCalculationOptions(engineDefaultsWithOrbs(context.settings));
+  const data = await computeSynastry(momentA, momentB, provider, synastryOptions);
   const nameA = person.displayName || st.personALabel;
   const nameB = partner.displayName || st.personBLabel;
   const heading = `${pt.synastryLabel} — ${nameA} / ${nameB}`;
@@ -583,6 +588,14 @@ async function targetJdOf(asOfDate: string | undefined, provider: EphemerisProvi
   return provider.julianDayFromUtc(y ?? 2000, m ?? 1, d ?? 1, 12, 0, 0);
 }
 
+/**
+ * The engine defaults with the device's orbs (#590): what the Transit and Synastry screens calculate with,
+ * so a PDF section matches the screen it came from.
+ */
+function engineDefaultsWithOrbs(settings: ExtendedSettings): CalculationSnapshot {
+  return buildCalculationSnapshot(withOrbsOf(DEFAULT_EXTENDED_SETTINGS, settings), DEFAULT_RULERSHIP_CHOICE);
+}
+
 /** The Transits section's own place in the export: `TransitView.tsx`'s bi-wheel and single contacts table, as of a chosen date (#441). */
 async function buildTransitsSectionPlan(
   options: PdfTransitsSectionOptions,
@@ -593,13 +606,8 @@ async function buildTransitsSectionPlan(
   if (person.moment === undefined) throw new Error('this person has no complete birth record');
   const vt = transitViewMessages[locale];
   const targetJd = await targetJdOf(options.asOfDate, provider);
-  const data = await computeTransit(
-    person.moment,
-    targetJd,
-    provider,
-    { rulership },
-    orbConfigForContext('transit', person.orbProfile),
-  );
+  const transitOptions = snapshotCalculationOptions(engineDefaultsWithOrbs(context.settings));
+  const data = await computeTransit(person.moment, targetJd, provider, transitOptions);
   const rules = transitRulesFor(data.natal, rulership, 'daily');
   const filter = transitPreset(options.filterPreset, rules);
   const shown = rankTransits(filterTransits(data.contacts, filter), filter, rules.chartRulerKeys);

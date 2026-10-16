@@ -14,7 +14,7 @@
  * @conventions The place defaults to the birthplace; `chartContacts` filters the return's natal contacts down to exactly the bodies the chart itself displays (one Lilith/Node model, Chiron/Lilith/Nodes only when `aspectsTo` allows), so the contacts table never disagrees with the rendered chart.
  * @exports computeSolarReturnChart, computeLunarReturnChart, ReturnChartData, ReturnChartOptions, LUNAR_RETURN_SEARCH_DAYS
  */
-import type { Aspect, OrbConfig } from '../astrology/aspects.js';
+import type { Aspect } from '../astrology/aspects.js';
 import type { BirthMomentInput } from '../time/types.js';
 import type { EphemerisProvider, GeoPosition, JulianDayUT } from '../ephemeris/types.js';
 import {
@@ -57,10 +57,6 @@ function chartContacts(
   return contacts.filter((contact) => eligible(contact.bodyA) && eligible(contact.bodyB));
 }
 
-function orbOf(options: ReturnChartOptions): OrbConfig | undefined {
-  return options.orbConfig;
-}
-
 /** The solar return of a calendar year, as a chart. */
 export async function computeSolarReturnChart(
   natalMoment: BirthMomentInput,
@@ -68,17 +64,12 @@ export async function computeSolarReturnChart(
   provider: EphemerisProvider,
   options: ReturnChartOptions = {},
 ): Promise<ReturnChartData> {
-  const found = await computeSolarReturn(
-    natalMoment,
-    year,
-    provider,
-    {
-      ...(options.place === undefined ? {} : { place: options.place }),
-      ...(options.houseSystem === undefined ? {} : { houseSystem: options.houseSystem }),
-      ...(options.zodiac === undefined ? {} : { zodiac: options.zodiac }),
-    },
-    orbOf(options),
-  );
+  const found = await computeSolarReturn(natalMoment, year, provider, {
+    ...(options.place === undefined ? {} : { place: options.place }),
+    ...(options.houseSystem === undefined ? {} : { houseSystem: options.houseSystem }),
+    ...(options.zodiac === undefined ? {} : { zodiac: options.zodiac }),
+    ...(options.orbConfig === undefined ? {} : { orbConfig: options.orbConfig }),
+  });
   const chart = await computeChartDataAtJd(found.returnJd, found.place, provider, options);
   return {
     returnJd: found.returnJd,
@@ -95,18 +86,12 @@ export async function computeLunarReturnChart(
   provider: EphemerisProvider,
   options: ReturnChartOptions = {},
 ): Promise<ReturnChartData> {
-  const found = await computeLunarReturns(
-    natalMoment,
-    fromJd,
-    fromJd + LUNAR_RETURN_SEARCH_DAYS,
-    provider,
-    {
-      ...(options.place === undefined ? {} : { place: options.place }),
-      ...(options.houseSystem === undefined ? {} : { houseSystem: options.houseSystem }),
-      ...(options.zodiac === undefined ? {} : { zodiac: options.zodiac }),
-    },
-    orbOf(options),
-  );
+  const found = await computeLunarReturns(natalMoment, fromJd, fromJd + LUNAR_RETURN_SEARCH_DAYS, provider, {
+    ...(options.place === undefined ? {} : { place: options.place }),
+    ...(options.houseSystem === undefined ? {} : { houseSystem: options.houseSystem }),
+    ...(options.zodiac === undefined ? {} : { zodiac: options.zodiac }),
+    ...(options.orbConfig === undefined ? {} : { orbConfig: options.orbConfig }),
+  });
   const first = found.returns[0];
   if (first === undefined) throw new RangeError('No lunar return was found in this period.');
   const chart = await computeChartDataAtJd(first.returnJd, first.place, provider, options);

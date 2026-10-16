@@ -52,6 +52,8 @@ const DEFAULT_HOUSE_SYSTEM: HouseSystem = 'P';
 const DEFAULT_MC_METHOD: ProgressedMcMethod = 'naibod';
 
 export interface SecondaryProgressionOptions {
+  /** The orbs the cross-chart aspects are found with (#590); the Extended settings' orbs when a chart is drawn from them. */
+  readonly orbConfig?: OrbConfig;
   readonly houseSystem?: HouseSystem;
   readonly mcMethod?: ProgressedMcMethod;
   readonly zodiac?: Zodiac;
@@ -80,7 +82,6 @@ export async function computeSecondaryProgression(
   targetJd: JulianDayUT,
   provider: EphemerisProvider,
   options: SecondaryProgressionOptions = {},
-  orbConfig?: OrbConfig,
 ): Promise<SecondaryProgressionData> {
   const resolved = resolveMoment(natalMoment);
   const natalJd = await julianDayFor(provider, resolved);
@@ -125,7 +126,7 @@ export async function computeSecondaryProgression(
   const contacts = findCrossAspects(
     subjectsFrom(positions, categoryOf),
     fixedSubjects(natalPositions, categoryOf),
-    orbConfig,
+    options.orbConfig,
   );
 
   return {

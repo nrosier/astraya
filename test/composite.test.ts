@@ -87,19 +87,15 @@ describe('computeComposite (#169)', () => {
   it('narrows to fewer composite aspects with a tighter orb config', async () => {
     const engine = await getEngine();
     const wide = await computeComposite(PERSON_A, PERSON_B, engine);
-    const tight = await computeComposite(
-      PERSON_A,
-      PERSON_B,
-      engine,
-      {},
-      {
+    const tight = await computeComposite(PERSON_A, PERSON_B, engine, {
+      orbConfig: {
         majorOrb: { base: -1, luminaryBonus: 0 },
         sextileOrb: { base: -1, luminaryBonus: 0 },
         minorOrb: -1,
         scalePercent: 0,
         enabledMinorAspects: [],
       },
-    );
+    });
     expect(tight.composite.aspects).toHaveLength(0);
     expect(wide.composite.aspects.length).toBeGreaterThan(0);
   });

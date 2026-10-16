@@ -9,14 +9,14 @@
  * The built-ins never ship a per-body "moiety" (a half-orb owned by each planet, summed per pair):
  * every classical moiety table checked carried numbers that could not be verified against a
  * citable primary source, and CLAUDE.md's domain-integrity rule would rather a value be absent
- * than guessed at. #590 adds the *mechanism* (`OrbConfig.bodyOrbs`, `CustomOrbProfile`) so a
- * practitioner can enter their own moieties; a built-in moiety preset waits for a cited source.
+ * than guessed at. #590 adds the *mechanism* (`OrbConfig.bodyOrbs`, `OrbRulesValue`) so a practitioner
+ * can enter their own moieties; a built-in moiety preset waits for a cited source.
  */
 /**
  * @module astrology/orb-profiles
- * @purpose Named, versioned orb profiles over aspects.ts's OrbConfig: the three built-ins (each with its revision and source), per-context defaults for natal/transit/synastry, and validated user-defined custom profiles (#590).
- * @conventions Built-ins are immutable: a changed value gets a new id, and `revision` counts revisions of a custom profile. A built-in's source is `null`-locator until a passage is cited in docs/references. Custom profiles hold plain objects only, never Set/Map, and are validated before use — malformed input yields `undefined`, not a partial profile. `'custom'` is not a profile here; it is the absence of a match from `matchOrbProfile`.
- * @exports OrbProfileId, ORB_PROFILE_IDS, OrbProfileSource, OrbProfile, ORB_PROFILES, orbConfigForProfile, matchOrbProfile, SYNASTRY_DEFAULT_ORB_CONFIG, OrbContext, ORB_CONTEXTS, ORB_CONTEXT_DEFAULTS, CustomOrbProfile, validateCustomOrbProfile, validateOrbRules, orbConfigFromCustom, orbConfigForContext
+ * @purpose Named, versioned orb presets over aspects.ts's OrbConfig (Standard/Tight/Wide), the synastry scale offset, and validated per-aspect and per-body orb rules (#590).
+ * @conventions Built-ins are immutable: a changed value gets a new id, and `revision` counts revisions. A built-in's source is `null`-locator until a passage is cited in docs/references. Rules are validated as a whole: malformed input yields `undefined`, never a partial set.
+ * @exports OrbProfileId, ORB_PROFILE_IDS, OrbProfileSource, OrbProfile, ORB_PROFILES, orbConfigForProfile, matchOrbProfile, SYNASTRY_SCALE_OFFSET, SYNASTRY_DEFAULT_ORB_CONFIG, OrbContext, ORB_CONTEXTS, OrbRulesValue, validateOrbRules, orbConfigForContext
  */
 import { aspectByKey, DEFAULT_ORB_CONFIG, type OrbConfig, type OrbRule } from './aspects.js';
 import { bodyByKey } from './bodies.js';
@@ -102,38 +102,25 @@ export function matchOrbProfile(scalePercent: number): OrbProfileId | undefined 
  * named source's exact numbers: every synastry-specific orb table checked while implementing
  * this varies by author, so the scale percentage below is this app's own choice, not a citation.
  */
-export const SYNASTRY_DEFAULT_ORB_CONFIG: OrbConfig = { ...DEFAULT_ORB_CONFIG, scalePercent: -30 };
+/** Synastry's scale offset from the orbs in force (#543): a 30% tighter contact limit. */
+export const SYNASTRY_SCALE_OFFSET = -30;
+
+export const SYNASTRY_DEFAULT_ORB_CONFIG: OrbConfig = { ...DEFAULT_ORB_CONFIG, scalePercent: SYNASTRY_SCALE_OFFSET };
 
 /**
- * The chart contexts an orb profile can apply to (#590). Natal orbs live in `ExtendedSettings`;
- * transit and synastry each have a fixed default today, named here so they can be inspected and
- * overridden per context rather than being invisible constants.
+ * The chart contexts that calculate orbs (#590, #543). Every chart uses the Extended settings' orbs
+ * (`ExtendedSettings`), except synastry, which tightens them, and transit, which keeps the three minor
+ * aspects its filter can show even when the chart's own minors are off.
  */
 export type OrbContext = 'natal' | 'transit' | 'synastry';
 
 export const ORB_CONTEXTS: readonly OrbContext[] = ['natal', 'transit', 'synastry'];
 
-/** Each context's built-in default. `natal` is the Standard profile; transit and synastry are the constants above. */
-export const ORB_CONTEXT_DEFAULTS: Readonly<Record<OrbContext, OrbConfig>> = {
-  natal: DEFAULT_ORB_CONFIG,
-  transit: TRANSIT_ORB_CONFIG,
-  synastry: SYNASTRY_DEFAULT_ORB_CONFIG,
-};
-
 /** Bounds on a user-entered orb (#590): wide enough for any practitioner's rule, narrow enough to reject a typo'd magnitude. */
 const MAX_CUSTOM_ORB_DEG = 30;
-const SCALE_RANGE = { min: -90, max: 90 } as const;
 
-/**
- * A practitioner's own orb rules, saved as an immutable value (#590). `basedOn` names the built-in
- * it started from, and `revision` counts edits, so two saves of the same name stay distinguishable.
- * Holds plain objects only — never a Set/Map — so it survives share links, saved defaults and exports.
- */
-export interface CustomOrbProfile {
-  readonly name: string;
-  readonly basedOn: OrbProfileId;
-  readonly revision: number;
-  readonly scalePercent: number;
+/** The per-aspect and per-body rules a settings bag may carry, validated (#590). */
+export interface OrbRulesValue {
   readonly aspectOrbs: Readonly<Record<string, OrbRule>>;
   readonly bodyOrbs: Readonly<Record<string, number>>;
 }
@@ -147,40 +134,13 @@ function isOrbDegrees(value: unknown): value is number {
 }
 
 /**
- * Validates just the per-aspect and per-body rules a settings bag may carry, with the same checks
- * `validateCustomOrbProfile` applies to a saved profile. `undefined` when either part is malformed.
+ * Validates a practitioner's per-aspect and per-body orb rules (#590). Used wherever rules come in
+ * from outside: the Extended settings card, a share link, a saved default. A malformed part makes the
+ * whole set `undefined`, never a partial set. Keys are checked against the aspect and body registries.
  */
-export function validateOrbRules(value: unknown):
-  | {
-      readonly aspectOrbs: Readonly<Record<string, OrbRule>>;
-      readonly bodyOrbs: Readonly<Record<string, number>>;
-    }
-  | undefined {
-  const probe = validateCustomOrbProfile({
-    name: 'rules',
-    basedOn: 'standard-v1',
-    revision: 1,
-    scalePercent: 0,
-    aspectOrbs: isRecord(value) ? value.aspectOrbs : undefined,
-    bodyOrbs: isRecord(value) ? value.bodyOrbs : undefined,
-  });
-  if (!isRecord(value) || probe === undefined) return undefined;
-  return { aspectOrbs: probe.aspectOrbs, bodyOrbs: probe.bodyOrbs };
-}
-
-/**
- * Checks untrusted input (a share link, a saved default, an import) against the rules above and
- * rebuilds it from known keys only. Returns the cleaned profile, or `undefined` if any part is
- * malformed — the caller then drops the whole custom profile rather than guessing at part of it.
- */
-export function validateCustomOrbProfile(value: unknown): CustomOrbProfile | undefined {
+export function validateOrbRules(value: unknown): OrbRulesValue | undefined {
   if (!isRecord(value)) return undefined;
-  const { name, basedOn, revision, scalePercent, aspectOrbs, bodyOrbs } = value;
-  if (typeof name !== 'string' || name.trim() === '' || name.length > 80) return undefined;
-  if (typeof basedOn !== 'string' || !(ORB_PROFILE_IDS as readonly string[]).includes(basedOn)) return undefined;
-  if (typeof revision !== 'number' || !Number.isInteger(revision) || revision < 1) return undefined;
-  if (typeof scalePercent !== 'number' || !Number.isFinite(scalePercent)) return undefined;
-  if (scalePercent < SCALE_RANGE.min || scalePercent > SCALE_RANGE.max) return undefined;
+  const { aspectOrbs, bodyOrbs } = value;
 
   const cleanAspects: Record<string, OrbRule> = {};
   if (aspectOrbs !== undefined) {
@@ -202,35 +162,17 @@ export function validateCustomOrbProfile(value: unknown): CustomOrbProfile | und
     }
   }
 
-  return {
-    name,
-    basedOn: basedOn as OrbProfileId,
-    revision,
-    scalePercent,
-    aspectOrbs: cleanAspects,
-    bodyOrbs: cleanBodies,
-  };
-}
-
-/** The `OrbConfig` a custom profile stands for: its `basedOn` built-in's tiers, with its own scale and rules applied. */
-export function orbConfigFromCustom(profile: CustomOrbProfile): OrbConfig {
-  const base = ORB_PROFILES[profile.basedOn].config;
-  return {
-    ...base,
-    scalePercent: profile.scalePercent,
-    aspectOrbs: profile.aspectOrbs,
-    bodyOrbs: profile.bodyOrbs,
-  };
+  return { aspectOrbs: cleanAspects, bodyOrbs: cleanBodies };
 }
 
 /**
- * The orbs a chart context calculates with (#590): that context's built-in default, or the person's
- * own profile when they keep one. A profile replaces the scale and the per-aspect and per-body rules
- * but never the context's minor-aspect set, so a transit still calculates the minors its filter can
- * show and a synastry still leaves them off.
+ * The orbs a context calculates with, given the orbs the Extended settings put in force (#590, #543).
+ * Natal and returns use them as they are. Synastry applies its own tighter scale on top, so a default
+ * user sees the same synastry contacts as before. Transit keeps its own three minor aspects on, since
+ * its filter shows them whatever the chart's minor-aspect setting is.
  */
-export function orbConfigForContext(context: OrbContext, custom?: CustomOrbProfile): OrbConfig {
-  const builtIn = ORB_CONTEXT_DEFAULTS[context];
-  if (custom === undefined) return builtIn;
-  return { ...orbConfigFromCustom(custom), enabledMinorAspects: builtIn.enabledMinorAspects };
+export function orbConfigForContext(context: OrbContext, settings: OrbConfig): OrbConfig {
+  if (context === 'synastry') return { ...settings, scalePercent: settings.scalePercent + SYNASTRY_SCALE_OFFSET };
+  if (context === 'transit') return { ...settings, enabledMinorAspects: [...TRANSIT_ORB_CONFIG.enabledMinorAspects] };
+  return settings;
 }

@@ -69,19 +69,15 @@ describe('computeTransit (#172)', () => {
     const targetJd = natalJd + 365.2425 * 5;
 
     const wide = await computeTransit(NATAL, targetJd, engine);
-    const tight = await computeTransit(
-      NATAL,
-      targetJd,
-      engine,
-      {},
-      {
+    const tight = await computeTransit(NATAL, targetJd, engine, {
+      orbConfig: {
         majorOrb: { base: -1, luminaryBonus: 0 },
         sextileOrb: { base: -1, luminaryBonus: 0 },
         minorOrb: -1,
         scalePercent: 0,
         enabledMinorAspects: [],
       },
-    );
+    });
     expect(tight.contacts).toHaveLength(0);
     expect(wide.contacts.length).toBeGreaterThan(0);
   });

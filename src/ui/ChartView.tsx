@@ -36,7 +36,7 @@ import { formatFixed, formatTimestamp } from './format.js';
 import { PrintProvenance } from './PrintProvenance.js';
 import { HOUSE_SYSTEMS } from '../astrology/houses.js';
 import type { Zodiac } from '../ephemeris/types.js';
-import { ASPECTS, aspectHarmonicFamily, type Aspect } from '../astrology/aspects.js';
+import { ASPECTS, aspectHarmonicFamily, DEFAULT_ORB_CONFIG, type Aspect } from '../astrology/aspects.js';
 import { Tooltip } from './primitives/Tooltip.js';
 import { Select } from './primitives/Select.js';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -185,7 +185,7 @@ import {
 import { chartOverlaySettingsPanelMessages } from './ChartOverlaySettingsPanel.messages.js';
 import { CustomPointEditor } from './CustomPointEditor.js';
 import { parseCoordinate } from './map-settings.js';
-import { orbConfigForContext, type CustomOrbProfile } from '../astrology/orb-profiles.js';
+import { orbConfigForContext } from '../astrology/orb-profiles.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -211,8 +211,6 @@ export interface ChartOverlayContext {
   readonly baseSource?: ChartOverlaySource | undefined;
   /** The active calculation basis shared by every computed overlay ring. */
   readonly options?: ChartCalculationOptions | undefined;
-  /** The person's own orb profile (#590); the transit ring is calculated with it when set. */
-  readonly orbProfile?: CustomOrbProfile | undefined;
 }
 
 interface OverlayRingData {
@@ -1787,13 +1785,10 @@ export function ChartDataView({
           if (parts === undefined) throw new Error('Transit date is incomplete.');
           const [year, month, day] = parts;
           const targetJd = await overlayContext.provider.julianDayFromUtc(year, month, day, 12, 0, 0);
-          const transit = await computeTransit(
-            overlayContext.moment,
-            targetJd,
-            overlayContext.provider,
-            calculationOptions,
-            orbConfigForContext('transit', overlayContext.orbProfile),
-          );
+          const transit = await computeTransit(overlayContext.moment, targetJd, overlayContext.provider, {
+            ...calculationOptions,
+            orbConfig: orbConfigForContext('transit', calculationOptions.orbConfig ?? DEFAULT_ORB_CONFIG),
+          });
           addChart('transit', overlayT.transit, transit.transit, transit.contacts);
         }
         if (overlaySettings.progressed) {
@@ -2599,7 +2594,6 @@ export function ChartView({
                 provider,
                 baseLabel: t.natalFallback,
                 baseSource: 'natal',
-                orbProfile: person.orbProfile,
                 options: {
                   ...toChartCalculationOptions(settings),
                   rulership,

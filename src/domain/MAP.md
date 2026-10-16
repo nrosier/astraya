@@ -41,6 +41,6 @@ One level above `src/astrology/`: composes pure astrological calculations into s
 - `secondary-progression.ts` — Secondary progressions (day-for-year, three MC methods). Deps: `astrology/progressions`, `astrology/aspects`, `astrology/bodies`.
 - `solar-arc-directions.ts` — Solar arc directions (apply progressed Sun's arc to all bodies). Deps: `astrology/solar-arc-directions`, `astrology/progressions`, `astrology/aspects`.
 - `solar-return.ts` — Solar return (Sun returns to natal longitude each year). Deps: `astrology/solar-lunar-returns`, `astrology/aspects`, `ephemeris/generated-constants`.
-- `synastry.ts` — Two-person compatibility core (independent charts + cross-chart aspects + importance ranking). Deps: `astrology/aspects`, `astrology/synastry-importance`, `./chart-compute`.
+- `synastry.ts` — Two-person compatibility core (independent charts + cross-chart aspects + importance ranking); applies synastry's tighter orbs to the orbs it is given. Deps: `astrology/aspects`, `astrology/orb-profiles`, `astrology/synastry-importance`, `./chart-compute`.
 - `timing-timeline.ts` — Normalizes Level-1/2 time-lord periods and timing contacts/events onto one date axis (#554). Deps: `astrology/aspects`, `astrology/firdaria`, `astrology/transit-events`, `astrology/zodiacal-releasing`, `./profections`, `./primary-directions`, `./secondary-progression`, `./solar-arc-directions`, `./transit`, `./periodic-transit`.
-- `transit.ts` — Transit bi-wheel (natal + moving positions + natal aspects). Deps: `astrology/aspects`, `./chart-compute`.
+- `transit.ts` — Transit bi-wheel (natal + moving positions + natal aspects); its contacts always include the three minor aspects its filter shows. Deps: `astrology/aspects`, `astrology/orb-profiles`, `./chart-compute`.

@@ -64,8 +64,7 @@ beforeAll(async () => {
     },
     target,
     engine,
-    {},
-    TRANSIT_ORB_CONFIG,
+    { orbConfig: TRANSIT_ORB_CONFIG },
   );
   contacts = transit.contacts;
   rulerKey = MODERN_RULER[Math.floor(transit.natal.houses.ascendant / 30)];

@@ -39,6 +39,8 @@ function categoryOf(body: BodyId): BodyCategory {
 }
 
 export interface ProgressedLunarReturnOptions {
+  /** The orbs the cross-chart aspects are found with (#590); the Extended settings' orbs when a chart is drawn from them. */
+  readonly orbConfig?: OrbConfig;
   readonly place?: GeoPosition;
   readonly houseSystem?: HouseSystem;
   readonly zodiac?: Zodiac;
@@ -61,7 +63,6 @@ export async function computeProgressedLunarReturn(
   targetJd: JulianDayUT,
   provider: EphemerisProvider,
   options: ProgressedLunarReturnOptions = {},
-  orbConfig?: OrbConfig,
 ): Promise<ProgressedLunarReturnData> {
   const resolved = resolveMoment(natalMoment);
   const natalJd = await julianDayFor(provider, resolved);
@@ -89,7 +90,7 @@ export async function computeProgressedLunarReturn(
   const contacts = findCrossAspects(
     subjectsFrom(positions, categoryOf),
     fixedSubjects(natalPositions, categoryOf),
-    orbConfig,
+    options.orbConfig,
   );
 
   return {

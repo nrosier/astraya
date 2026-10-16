@@ -14,7 +14,7 @@
  * @module chart/extended-settings
  * @purpose Defines the Extended settings panel's single settings bag (`ExtendedSettings`) and the pure split functions that derive each of its three consumers' own option shapes from it.
  * @conventions One settings object is split three ways rather than kept as three separate pieces of UI state: `toChartCalculationOptions` feeds `computeChartData`, `toPointVisibilityOptions` feeds `chart-tables.ts`'s display filtering, and `toSignWedgeStyle` feeds the wheel's cosmetic fill — keeping the split here means neither the panel component nor `ChartView` needs to know any destination's shape.
- * @exports DEFAULT_EXTENDED_SETTINGS, toChartCalculationOptions, toPointVisibilityOptions, toSignWedgeStyle; ExtendedSettings type.
+ * @exports DEFAULT_EXTENDED_SETTINGS, orbsOf, withOrbsOf, toChartCalculationOptions, toPointVisibilityOptions, toSignWedgeStyle; ExtendedSettings type.
  */
 import { DEFAULT_ORB_CONFIG, type OrbConfig, type OrbRule } from '../astrology/aspects.js';
 import type { BoundsScheme } from '../astrology/bounds.js';
@@ -39,8 +39,8 @@ export interface ExtendedSettings {
   readonly enabledMinorAspects: readonly string[];
   /**
    * The practitioner's own per-aspect and per-body orb rules (#590), copied by value into the
-   * settings — never a reference to a saved profile, so a later edit to a saved profile cannot
-   * change an existing chart. Absent (the default) means the tiers apply unchanged.
+   * settings, so a chart's orbs are fixed by the settings it was drawn with. Absent (the default)
+   * means the tiers apply unchanged.
    */
   readonly orbRules?: {
     readonly aspectOrbs?: Readonly<Record<string, OrbRule>>;
@@ -94,6 +94,22 @@ export const DEFAULT_EXTENDED_SETTINGS: ExtendedSettings = {
   midpointTreeOrb: 1,
   rainbowZodiac: false,
 };
+
+/** The orb options the Extended settings put in force (#590): the scale and the practitioner's own rules, always concrete. */
+export function orbsOf(settings: ExtendedSettings): { readonly orbConfig: OrbConfig } {
+  return { orbConfig: toChartCalculationOptions(settings).orbConfig ?? DEFAULT_ORB_CONFIG };
+}
+
+/**
+ * `settings` with only its orb fields (#590) taken from `orbs`: the scale and the practitioner's own rules.
+ * A screen whose footer names fixed engine defaults for everything else uses this, so the orbs it
+ * calculates with are the device's and the rest of what it says stays true.
+ */
+export function withOrbsOf(settings: ExtendedSettings, orbs: ExtendedSettings): ExtendedSettings {
+  const copy = { ...settings, orbScalePercent: orbs.orbScalePercent };
+  delete copy.orbRules;
+  return orbs.orbRules === undefined ? copy : { ...copy, orbRules: orbs.orbRules };
+}
 
 /** The half of `ExtendedSettings` that changes what `computeChartData` returns. */
 export function toChartCalculationOptions(settings: ExtendedSettings): ChartCalculationOptions {

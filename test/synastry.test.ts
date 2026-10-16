@@ -63,19 +63,15 @@ describe('computeSynastry (#172)', () => {
   it('narrows to fewer aspects with a tighter orb config', async () => {
     const engine = await getEngine();
     const wide = await computeSynastry(PERSON_A, PERSON_B, engine);
-    const tight = await computeSynastry(
-      PERSON_A,
-      PERSON_B,
-      engine,
-      {},
-      {
+    const tight = await computeSynastry(PERSON_A, PERSON_B, engine, {
+      orbConfig: {
         majorOrb: { base: -1, luminaryBonus: 0 },
         sextileOrb: { base: -1, luminaryBonus: 0 },
         minorOrb: -1,
         scalePercent: 0,
         enabledMinorAspects: [],
       },
-    );
+    });
     expect(tight.aspects).toHaveLength(0);
     expect(wide.aspects.length).toBeGreaterThan(0);
   });

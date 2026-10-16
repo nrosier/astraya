@@ -113,20 +113,15 @@ describe('computeLunarReturns (#49)', () => {
     const natalJd = await julianDayFor(engine, resolveMoment(NATAL));
 
     const wide = await computeLunarReturns(NATAL, natalJd, natalJd + 90, engine);
-    const tight = await computeLunarReturns(
-      NATAL,
-      natalJd,
-      natalJd + 90,
-      engine,
-      {},
-      {
+    const tight = await computeLunarReturns(NATAL, natalJd, natalJd + 90, engine, {
+      orbConfig: {
         majorOrb: { base: -1, luminaryBonus: 0 },
         sextileOrb: { base: -1, luminaryBonus: 0 },
         minorOrb: -1,
         scalePercent: 0,
         enabledMinorAspects: [],
       },
-    );
+    });
     expect(tight.returns.every((chart) => chart.contacts.length === 0)).toBe(true);
     expect(wide.returns.some((chart) => chart.contacts.length > 0)).toBe(true);
   });

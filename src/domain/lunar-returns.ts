@@ -37,6 +37,8 @@ function categoryOf(body: BodyId): BodyCategory {
 }
 
 export interface LunarReturnsOptions {
+  /** The orbs the cross-chart aspects are found with (#590); the Extended settings' orbs when a chart is drawn from them. */
+  readonly orbConfig?: OrbConfig;
   readonly place?: GeoPosition;
   readonly houseSystem?: HouseSystem;
   readonly zodiac?: Zodiac;
@@ -62,7 +64,6 @@ export async function computeLunarReturns(
   periodEndJd: JulianDayUT,
   provider: EphemerisProvider,
   options: LunarReturnsOptions = {},
-  orbConfig?: OrbConfig,
 ): Promise<LunarReturnsData> {
   const resolved = resolveMoment(natalMoment);
   const natalJd = await julianDayFor(provider, resolved);
@@ -98,7 +99,7 @@ export async function computeLunarReturns(
         ),
         provider.houses(returnJd, place, houseSystem, options.zodiac),
       ]);
-      const contacts = findCrossAspects(subjectsFrom(positions, categoryOf), natalSide, orbConfig);
+      const contacts = findCrossAspects(subjectsFrom(positions, categoryOf), natalSide, options.orbConfig);
       return { returnJd, place, positions, houses, contacts };
     }),
   );
