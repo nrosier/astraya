@@ -14,10 +14,17 @@
  * @module chart/extended-settings
  * @purpose Defines the Extended settings panel's single settings bag (`ExtendedSettings`) and the pure split functions that derive each of its three consumers' own option shapes from it.
  * @conventions One settings object is split three ways rather than kept as three separate pieces of UI state: `toChartCalculationOptions` feeds `computeChartData`, `toPointVisibilityOptions` feeds `chart-tables.ts`'s display filtering, and `toSignWedgeStyle` feeds the wheel's cosmetic fill — keeping the split here means neither the panel component nor `ChartView` needs to know any destination's shape.
- * @exports DEFAULT_EXTENDED_SETTINGS, orbsOf, withOrbsOf, toChartCalculationOptions, toPointVisibilityOptions, toSignWedgeStyle; ExtendedSettings type.
+ * @exports DEFAULT_EXTENDED_SETTINGS, orbsOf, withOrbsOf, settingsForContext, toChartCalculationOptions, toPointVisibilityOptions, toSignWedgeStyle; ExtendedSettings type.
  */
 import { DEFAULT_ORB_CONFIG, type OrbConfig, type OrbRule } from '../astrology/aspects.js';
 import type { BoundsScheme } from '../astrology/bounds.js';
+import {
+  CARD_SOURCE,
+  orbSettingsFor,
+  sourceForContext,
+  type OrbContextSource,
+  type OrbLibrary,
+} from '../astrology/orb-library.js';
 import type { ChartCalculationOptions } from '../domain/chart-compute.js';
 import type { PointVisibilityOptions } from '../domain/chart-tables.js';
 import type { Degrees, HouseSystem, Zodiac } from '../ephemeris/types.js';
@@ -109,6 +116,33 @@ export function withOrbsOf(settings: ExtendedSettings, orbs: ExtendedSettings): 
   const copy = { ...settings, orbScalePercent: orbs.orbScalePercent };
   delete copy.orbRules;
   return orbs.orbRules === undefined ? copy : { ...copy, orbRules: orbs.orbRules };
+}
+
+/**
+ * The settings a chart context calculates with, given the device's orb library and per-context choice (#590).
+ * With no choice made (the default), this is `settings` unchanged. When the context names a profile, that
+ * profile's scale and rules replace the settings' orbs, copied by value so the chart records what it used.
+ */
+export function settingsForContext(
+  settings: ExtendedSettings,
+  context: keyof OrbContextSource,
+  library: OrbLibrary,
+  sources: OrbContextSource,
+): ExtendedSettings {
+  const choice = sourceForContext(library, sources, context);
+  if (choice === CARD_SOURCE) return settings;
+  const resolved = orbSettingsFor(library, choice, { scalePercent: settings.orbScalePercent });
+  const copy: ExtendedSettings = { ...settings, orbScalePercent: resolved.scalePercent };
+  delete (copy as { orbRules?: ExtendedSettings['orbRules'] }).orbRules;
+  const aspectOrbs = resolved.aspectOrbs ?? {};
+  const bodyOrbs = resolved.bodyOrbs ?? {};
+  const hasAspects = Object.keys(aspectOrbs).length > 0;
+  const hasBodies = Object.keys(bodyOrbs).length > 0;
+  if (!hasAspects && !hasBodies) return copy;
+  return {
+    ...copy,
+    orbRules: { ...(hasAspects ? { aspectOrbs } : {}), ...(hasBodies ? { bodyOrbs } : {}) },
+  };
 }
 
 /** The half of `ExtendedSettings` that changes what `computeChartData` returns. */

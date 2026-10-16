@@ -120,6 +120,7 @@ import {
   toPointVisibilityOptions,
   toSignWedgeStyle,
   type ExtendedSettings,
+  settingsForContext,
 } from '../chart/extended-settings.js';
 import { standaloneSvg } from '../chart/standalone-svg.js';
 import { resolveWheelDisplayOptions } from '../chart/wheel-options.js';
@@ -133,6 +134,7 @@ import { downloadBlob, downloadText } from './download.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { ExtendedSettingsPanel } from './ExtendedSettingsPanel.js';
 import { useExtendedSettings } from './extended-settings-store.js';
+import { useOrbContextSource, useOrbLibrary } from './orb-library-store.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { useWheelIsolation } from './wheel-interaction.js';
@@ -1653,6 +1655,7 @@ export function ChartDataView({
   showHouses,
   metaLines,
   extendedSettings = DEFAULT_EXTENDED_SETTINGS,
+  cardSettings,
   onExtendedSettingsChange,
   settingsProvider,
   view,
@@ -1677,6 +1680,11 @@ export function ChartDataView({
    * it did before this feature existed.
    */
   readonly extendedSettings?: ExtendedSettings;
+  /**
+   * The card's own settings, when the chart is drawn with other orbs because the device chose a named orb profile for
+   * it (#590). The panel edits these, not the resolved ones, so Apply never saves a profile's orbs as the card's.
+   */
+  readonly cardSettings?: ExtendedSettings;
   /**
    * Set together with `settingsProvider`: when both are given, the "Extended
    * settings" panel is rendered and this is wired as its `onRedraw`. Omitted by
@@ -2151,7 +2159,7 @@ export function ChartDataView({
       {/* Outside the loaded-chart gate: a setting that might fix a failed or slow calculation stays reachable (#442). */}
       {onExtendedSettingsChange !== undefined && settingsProvider !== undefined && (
         <ExtendedSettingsPanel
-          value={extendedSettings}
+          value={cardSettings ?? extendedSettings}
           onRedraw={onExtendedSettingsChange}
           provider={settingsProvider}
         />
@@ -2349,7 +2357,15 @@ export function ChartView({
   const [compareLoad, setCompareLoad] = useState<Load>({ kind: 'loading' });
   const [lastReadyData, setLastReadyData] = useState<ChartData | undefined>();
   // Shared with the solar and lunar return charts, so a house system chosen here applies there too.
-  const [settings, setSettings] = useExtendedSettings();
+  const [cardSettings, setSettings] = useExtendedSettings();
+  // The natal chart uses the card's orbs unless the device chose a named orb profile for natal charts (#590); the
+  // settings it resolves to are what the chart, its snapshot and its share link all record.
+  const orbLibrary = useOrbLibrary();
+  const orbSources = useOrbContextSource();
+  const settings = useMemo(
+    () => settingsForContext(cardSettings, 'natal', orbLibrary, orbSources),
+    [cardSettings, orbLibrary, orbSources],
+  );
   const [rulership] = useRulershipChoice();
   const basisLine = useCalculationBasisLine(settings, rulership);
   const lastChartKey = useRef('');
@@ -2518,6 +2534,7 @@ export function ChartView({
               showHouses={showHouses}
               metaLines={metaLines}
               extendedSettings={settings}
+              cardSettings={cardSettings}
               onExtendedSettingsChange={setSettings}
               settingsProvider={provider}
               view={view ?? 'wheel'}
@@ -2579,6 +2596,7 @@ export function ChartView({
         showHouses={showHouses}
         metaLines={metaLines}
         extendedSettings={settings}
+        cardSettings={cardSettings}
         onExtendedSettingsChange={setSettings}
         settingsProvider={provider}
         view={view ?? 'wheel'}

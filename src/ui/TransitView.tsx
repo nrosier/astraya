@@ -28,7 +28,7 @@ import { GlossaryTerms } from './GlossaryTerm.js';
 import { personHref } from './route.js';
 import { houseSystemLabel, rulershipLabel, zodiacLabel } from './ChartView.js';
 import { PrintProvenance } from './PrintProvenance.js';
-import { DEFAULT_EXTENDED_SETTINGS, withOrbsOf } from '../chart/extended-settings.js';
+import { DEFAULT_EXTENDED_SETTINGS, settingsForContext, withOrbsOf } from '../chart/extended-settings.js';
 import { DEFAULT_RULERSHIP_CHOICE } from '../astrology/rulership.js';
 import { DEFAULT_ORB_CONFIG } from '../astrology/aspects.js';
 import { buildCalculationSnapshot, snapshotCalculationOptions } from '../domain/calculation-snapshot.js';
@@ -43,6 +43,7 @@ import { chartWheelRing, crossAspectRows, type AspectRow } from '../domain/chart
 import { deriveExportFilename } from '../domain/export-filename.js';
 import { computeTransit, type TransitData } from '../domain/transit.js';
 import { useExtendedSettings } from './extended-settings-store.js';
+import { useOrbContextSource, useOrbLibrary } from './orb-library-store.js';
 import { renderMultiWheelSvg, type CrossRingAspects } from '../chart/multi-wheel.js';
 import { findVoidOfCourseMoon, type VoidOfCourseMoon } from '../astrology/void-of-course.js';
 import { voidOfCourseSentence } from './void-of-course-text.js';
@@ -127,9 +128,15 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
   // The orbs are the device's Extended settings (#590): transits use the same orbs as the natal chart.
   // Everything else stays at the engine defaults, as this screen's footer says.
   const [extendedSettings] = useExtendedSettings();
+  const orbLibrary = useOrbLibrary();
+  const orbSources = useOrbContextSource();
   const snapshot = useMemo(
-    () => buildCalculationSnapshot(withOrbsOf(DEFAULT_EXTENDED_SETTINGS, extendedSettings), DEFAULT_RULERSHIP_CHOICE),
-    [extendedSettings],
+    () =>
+      buildCalculationSnapshot(
+        withOrbsOf(DEFAULT_EXTENDED_SETTINGS, settingsForContext(extendedSettings, 'transit', orbLibrary, orbSources)),
+        DEFAULT_RULERSHIP_CHOICE,
+      ),
+    [extendedSettings, orbLibrary, orbSources],
   );
 
   const targetDate = useMemo(() => {

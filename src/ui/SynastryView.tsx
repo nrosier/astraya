@@ -27,9 +27,11 @@ import { formatFixed, formatTimestamp } from './format.js';
 import { personHref } from './route.js';
 import { houseSystemLabel, rulershipLabel, zodiacLabel } from './ChartView.js';
 import { PrintProvenance } from './PrintProvenance.js';
-import { DEFAULT_EXTENDED_SETTINGS, withOrbsOf } from '../chart/extended-settings.js';
+import { DEFAULT_EXTENDED_SETTINGS, settingsForContext, withOrbsOf } from '../chart/extended-settings.js';
 import { DEFAULT_RULERSHIP_CHOICE } from '../astrology/rulership.js';
 import { useExtendedSettings } from './extended-settings-store.js';
+import { useOrbContextSource, useOrbLibrary } from './orb-library-store.js';
+import { DEFAULT_ORB_CONFIG } from '../astrology/aspects.js';
 import { buildCalculationSnapshot, snapshotCalculationOptions } from '../domain/calculation-snapshot.js';
 import type { CalculationArtifact } from '../domain/calculation-artifact.js';
 import { artifactProvenanceIdentity, buildTechniqueChartArtifact } from './chart-artifact.js';
@@ -148,9 +150,15 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
   // The orbs are the device's Extended settings (#590), tightened for synastry (#543); everything else stays at
   // the engine defaults, as this screen's footer says.
   const [extendedSettings] = useExtendedSettings();
+  const orbLibrary = useOrbLibrary();
+  const orbSources = useOrbContextSource();
   const snapshot = useMemo(
-    () => buildCalculationSnapshot(withOrbsOf(DEFAULT_EXTENDED_SETTINGS, extendedSettings), DEFAULT_RULERSHIP_CHOICE),
-    [extendedSettings],
+    () =>
+      buildCalculationSnapshot(
+        withOrbsOf(DEFAULT_EXTENDED_SETTINGS, settingsForContext(extendedSettings, 'synastry', orbLibrary, orbSources)),
+        DEFAULT_RULERSHIP_CHOICE,
+      ),
+    [extendedSettings, orbLibrary, orbSources],
   );
 
   useEffect(() => {
@@ -170,7 +178,8 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
         const artifact = await buildTechniqueChartArtifact(
           snapshot,
           momentA,
-          { kind: 'synastry', partner: momentB, orbConfig: data.orbConfig },
+          // The orbs given, not the tightened result: replay tightens them again, exactly once.
+          { kind: 'synastry', partner: momentB, orbConfig: options.orbConfig ?? DEFAULT_ORB_CONFIG },
           data.chartA,
           data,
           provider,

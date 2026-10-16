@@ -25,9 +25,11 @@ import {
   DEFAULT_EXTENDED_SETTINGS,
   toChartCalculationOptions,
   orbsOf,
+  settingsForContext,
   withOrbsOf,
   type ExtendedSettings,
 } from '../chart/extended-settings.js';
+import type { OrbContextSource, OrbLibrary } from '../astrology/orb-library.js';
 import { calculationArtifactIdentity } from '../domain/calculation-artifact.js';
 import {
   buildCalculationSnapshot,
@@ -223,6 +225,9 @@ export interface PdfPlanContext {
   readonly corpusFetch?: typeof fetch;
   /** Every stored person, so a synastry/composite section's own `partnerId` can be resolved; absent (or missing the id) if neither section is in the selection. */
   readonly people?: ReadonlyMap<string, Person>;
+  /** The device's named orb profiles and each context's source (#590); absent means the card's orbs everywhere. */
+  readonly orbLibrary?: OrbLibrary;
+  readonly orbSources?: OrbContextSource;
 }
 
 function tablePlanOf<T>(caption: string, columns: readonly TableColumn<T>[], rows: readonly T[]): PdfTablePlan {
@@ -472,7 +477,7 @@ async function buildSynastrySectionPlan(
   const momentA = person.moment;
   const momentB = partner.moment;
   const st = synastryViewMessages[locale];
-  const synastryOptions = snapshotCalculationOptions(engineDefaultsWithOrbs(context.settings));
+  const synastryOptions = snapshotCalculationOptions(engineDefaultsWithOrbs(contextSettings(context, 'synastry')));
   const data = await computeSynastry(momentA, momentB, provider, synastryOptions);
   const nameA = person.displayName || st.personALabel;
   const nameB = partner.displayName || st.personBLabel;
@@ -592,6 +597,11 @@ async function targetJdOf(asOfDate: string | undefined, provider: EphemerisProvi
  * The engine defaults with the device's orbs (#590): what the Transit and Synastry screens calculate with,
  * so a PDF section matches the screen it came from.
  */
+/** The settings a context calculates with, with the device's orb library and source for that context applied (#590). */
+function contextSettings(context: PdfPlanContext, ctx: keyof OrbContextSource): ExtendedSettings {
+  return settingsForContext(context.settings, ctx, context.orbLibrary ?? { profiles: [] }, context.orbSources ?? {});
+}
+
 function engineDefaultsWithOrbs(settings: ExtendedSettings): CalculationSnapshot {
   return buildCalculationSnapshot(withOrbsOf(DEFAULT_EXTENDED_SETTINGS, settings), DEFAULT_RULERSHIP_CHOICE);
 }
@@ -606,7 +616,7 @@ async function buildTransitsSectionPlan(
   if (person.moment === undefined) throw new Error('this person has no complete birth record');
   const vt = transitViewMessages[locale];
   const targetJd = await targetJdOf(options.asOfDate, provider);
-  const transitOptions = snapshotCalculationOptions(engineDefaultsWithOrbs(context.settings));
+  const transitOptions = snapshotCalculationOptions(engineDefaultsWithOrbs(contextSettings(context, 'transit')));
   const data = await computeTransit(person.moment, targetJd, provider, transitOptions);
   const rules = transitRulesFor(data.natal, rulership, 'daily');
   const filter = transitPreset(options.filterPreset, rules);

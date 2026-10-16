@@ -18,7 +18,6 @@ import {
   verifyCalculationArtifact,
   type CalculationArtifact,
 } from '../src/domain/calculation-artifact.js';
-import { SYNASTRY_DEFAULT_ORB_CONFIG } from '../src/astrology/orb-profiles.js';
 import { TRANSIT_ORB_CONFIG } from '../src/astrology/transit-importance.js';
 import {
   DEFAULT_PRIMARY_DIRECTION_ORB,
@@ -369,12 +368,12 @@ describe('technique artifacts and verification (#582)', () => {
   async function synastryArtifact(partner = PARTNER) {
     const data = await computeSynastry(PERSON, partner, engine, {
       ...snapshotCalculationOptions(DEFAULTS),
-      orbConfig: SYNASTRY_DEFAULT_ORB_CONFIG,
+      orbConfig: DEFAULT_ORB_CONFIG,
     });
     return buildTechniqueArtifact(
       DEFAULTS,
       PERSON,
-      { kind: 'synastry', partner, orbConfig: SYNASTRY_DEFAULT_ORB_CONFIG },
+      { kind: 'synastry', partner, orbConfig: DEFAULT_ORB_CONFIG },
       data.chartA,
       data,
       INPUTS,
@@ -398,6 +397,19 @@ describe('technique artifacts and verification (#582)', () => {
       expect(await verifyCalculationArtifact(artifact, engine, INPUTS)).toEqual({ status: 'verified' });
     }
   }, 120_000);
+
+  it('a synastry artifact records the orbs given, so replay tightens them once and still verifies (#590)', async () => {
+    const artifact = await synastryArtifact();
+    expect(artifact.technique).toMatchObject({ kind: 'synastry', orbConfig: DEFAULT_ORB_CONFIG });
+    expect(await verifyCalculationArtifact(artifact, engine, INPUTS)).toEqual({ status: 'verified' });
+    // Recording the already-tightened result instead would make replay tighten twice and not match.
+    const tightened = await computeSynastry(PERSON, PARTNER, engine, { orbConfig: DEFAULT_ORB_CONFIG });
+    const wrong = {
+      ...artifact,
+      technique: { kind: 'synastry' as const, partner: PARTNER, orbConfig: tightened.orbConfig },
+    };
+    expect((await verifyCalculationArtifact(wrong, engine, INPUTS)).status).not.toBe('verified');
+  }, 60_000);
 
   it('verifies an artifact that went through JSON, as one restored from an export would', async () => {
     const stored = JSON.parse(JSON.stringify(await synastryArtifact())) as CalculationArtifact;
