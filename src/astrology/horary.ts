@@ -28,6 +28,13 @@
  * combust, the querent's and quesited's significators afflicted, and so on) that depend on *what
  * was asked*, which no chart can tell — those belong to the judgment itself, which this module does
  * not attempt.
+ *
+ * One consideration Lilly states about the chart alone is deliberately NOT checked: that it is "not safe
+ * to judge when the Moon is in the later degrees of a Signe, especially in Gemini, Scorpio or
+ * Capricorn" (Book I, p. 122). He gives no number for "the later degrees", and this module does not
+ * invent one: using the Ascendant's 27° would present a guess as his rule. A chart with the Moon at the
+ * end of a sign can therefore read as fit to be judged. See `lilly-i-moon-later-degrees` in
+ * `docs/references/orb-conventions.references.json`; if a source gives a threshold, add it there first.
  */
 
 /**

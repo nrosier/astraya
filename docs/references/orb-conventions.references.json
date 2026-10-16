@@ -161,6 +161,19 @@
       "notes": "Lilly softens void-of-course for the Moon in Taurus, Cancer, Sagittarius or Pisces. horary.ts models this: the caution still applies but does not make the chart not radical. The Via Combusta is 'as some say'."
     },
     {
+      "id": "lilly-i-moon-later-degrees",
+      "topic": "considerations before judgment: the Moon in the later degrees of a sign",
+      "source": "lilly-christian-astrology-1647",
+      "locator": "Book I, p. 122 (PDF leaf 156), the first clause of the sentence quoted in lilly-i-via-combusta-void-of-course",
+      "kind": "page-image-transcription",
+      "text": "It's not safe to judge when the Moon is in the later degrees of a Signe, especially in Gemini, Scorpio or Capricorn...",
+      "values": {
+        "degreeThreshold": null,
+        "especiallyIn": ["gemini", "scorpio", "capricorn"]
+      },
+      "notes": "Lilly gives NO number for 'the later degrees'. The 1647 Book I and Book II, and the Houlding edition's notes, were searched; the only other uses of 'later degrees' concern moles on the body (p. 119) and a disease changing when 28 degrees of a common sign lie on the sixth cusp (Vol. 2 p. 268), and neither says what counts as later for the Moon. For the Ascendant he does give numbers (27, 28 or 29 degrees), but he does not say the Moon uses them. 'Especially in Gemini, Scorpio or Capricorn' is a qualifier: the caution is stated for any sign. Not implemented; see the decision 'moon in the later degrees'."
+    },
+    {
       "id": "lilly-ii-aphorism-9",
       "topic": "Moon void of course, and where it matters less",
       "source": "lilly-christian-astrology-1647",
@@ -198,6 +211,10 @@
     {
       "topic": "combustion and beams",
       "decision": "Book I's figures are adopted: combustion within 8°30′ in the same sign, under the beams within 17°, cazimi within 17′. Book II's aphorism (12°, 16′) is recorded but not followed, because Book I is the fuller statement and matches the cazimi value."
+    },
+    {
+      "topic": "moon in the later degrees",
+      "decision": "Not checked. Lilly names the caution but gives no threshold, and Astraya does not invent one: borrowing the Ascendant's 27 degrees would present a guess as his rule. The horary screen therefore does not flag it, and a chart with the Moon at the end of a sign can read as fit to be judged. If a source with a threshold is found, add it here first, then to horary.ts."
     }
   ]
 }

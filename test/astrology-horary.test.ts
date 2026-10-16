@@ -128,6 +128,21 @@ describe('horaryConsiderations (#406)', () => {
     });
   });
 
+  // Lilly, Book I p. 122: "not safe to judge when the Moon is in the later degrees of a Signe, especially in Gemini,
+  // Scorpio or Capricorn". He gives no threshold, so Astraya does not check it (decision `moon in the later degrees`).
+  it('does not flag the Moon in the last degrees of a sign, because Lilly gives no threshold for it', () => {
+    // Gemini, Scorpio and Capricorn are the signs Lilly names; Libra's last 15 degrees are the Via Combusta, which is its own rule.
+    for (const sign of [2, 7, 9]) {
+      for (const degree of [20, 27, 29.9]) {
+        expect(
+          applying({ moonLongitude: sign * 30 + degree }),
+          `sign ${String(sign)} degree ${String(degree)}`,
+        ).toEqual([]);
+      }
+    }
+    expect(applying({ moonLongitude: 6 * 30 + 29 })).toEqual(['moon-via-combusta']);
+  });
+
   it('flags Saturn in the seventh house only', () => {
     expect(applying({ saturnHouse: 7 })).toEqual(['saturn-in-seventh']);
     for (const house of [1, 2, 6, 8, 12]) expect(applying({ saturnHouse: house })).toEqual([]);

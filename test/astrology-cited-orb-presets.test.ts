@@ -109,6 +109,16 @@ describe('matching and identifying cited presets', () => {
   });
 });
 
+describe('the Moon in the later degrees of a sign (#590)', () => {
+  it('is recorded with no degree threshold, which is why it is not checked', () => {
+    const passage = (file.passages as readonly { id: string; values?: { degreeThreshold?: number | null } }[]).find(
+      (candidate) => candidate.id === 'lilly-i-moon-later-degrees',
+    );
+    expect(passage, 'the passage is recorded').toBeDefined();
+    expect(passage?.values?.degreeThreshold).toBeNull();
+  });
+});
+
 describe('the references file', () => {
   it('has unique ids, a locator and a kind on every passage', () => {
     const ids = file.passages.map((passage) => passage.id);

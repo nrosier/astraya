@@ -32,4 +32,6 @@ our own choice, not a citation.
 
 ## Still open
 
-Nothing from the Lilly checks.
+- The Moon in "the later degrees of a Signe, especially in Gemini, Scorpio or Capricorn" (Lilly, Book I, p. 122) is
+  not checked: he gives no degree threshold, and Astraya does not invent one. See `lilly-i-moon-later-degrees` in
+  `orb-conventions.references.json`.
