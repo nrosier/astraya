@@ -88,6 +88,13 @@ import {
 import { CORPUS_LOCALES, parsePlacementKey, validateKey, type Locale } from '../src/interpretation/schema.ts';
 import { resolvePlacementText } from '../src/interpretation/compose.ts';
 import { CORPUS } from '../src/interpretation/index.ts';
+import {
+  validateChartData,
+  validateRelationshipData,
+  type Tier2ChartDataPayload,
+  type Tier2PositionsHousesPayload,
+  type Tier2RelationshipDataPayload,
+} from '../src/interpretation/tier2-contract.ts';
 import { bodyById } from '../src/astrology/bodies.ts';
 import { aspectByKey } from '../src/astrology/aspects.ts';
 import { signOf, degreesInSign } from '../src/astrology/signs.ts';
@@ -128,11 +135,6 @@ type ChartKind = 'natal' | 'composite';
 
 function isChartKind(value: unknown): value is ChartKind {
   return value === 'natal' || value === 'composite';
-}
-
-/** Freeform mode's validated wire shape — hand-mirrors `src/interpretation/tier2-client.ts`'s `Tier2ChartDataPayload`. */
-interface ChartDataPayload extends PositionsHousesPayload {
-  readonly aspects: readonly AspectPayload[];
 }
 
 /** `requireUser` is this route's preHandler, so by the time a handler body runs this cannot be unset. */
@@ -288,7 +290,7 @@ const RELATIONSHIP_SYSTEM_INSTRUCTION = [
   DESCRIPTION_RULE,
 ].join(' ');
 
-function formatRelationshipFact(label: string, chart: PositionsHousesPayload): string[] {
+function formatRelationshipFact(label: string, chart: Tier2PositionsHousesPayload): string[] {
   const facts: string[] = [];
   for (const position of chart.positions) {
     const body = bodyById(position.body);
@@ -299,8 +301,8 @@ function formatRelationshipFact(label: string, chart: PositionsHousesPayload): s
   return facts;
 }
 
-/** Turns a validated `RelationshipDataPayload` into the facts the model reasons over — generic "Person A"/"Person B" labels only, never a name. */
-function buildRelationshipFacts(data: RelationshipDataPayload): string[] {
+/** Turns a validated `Tier2RelationshipDataPayload` into the facts the model reasons over — generic "Person A"/"Person B" labels only, never a name. */
+function buildRelationshipFacts(data: Tier2RelationshipDataPayload): string[] {
   const facts: string[] = [
     ...formatRelationshipFact('Person A', data.chartA),
     ...formatRelationshipFact('Person B', data.chartB),
@@ -344,13 +346,6 @@ function buildRelationshipUserContent(
 // A real report has a few dozen placements at most; this is a generous ceiling against
 // a request padded with junk entries to inflate token usage/cost per call.
 const MAX_PLACEMENT_KEYS = 200;
-
-// A real chart has a couple dozen bodies at most (planets, angles, nodes, asteroids); a
-// full house wheel is always 13 entries (index 0 unused, 1..12 real); a real chart has at
-// most a few hundred aspect pairs. Generous ceilings against a padded request inflating cost.
-const MAX_BODIES = 40;
-const HOUSE_CUSP_COUNT = 13;
-const MAX_ASPECTS = 200;
 
 /**
  * Reads a cost-cap env var, failing closed (cap of 0, i.e. blocked) on a
@@ -417,232 +412,12 @@ function buildFreeformUserContent(
   ].join('\n');
 }
 
-/** `max` is exclusive — matches longitude's `[0, 360)` convention. */
-function isFiniteNumberInRange(value: unknown, min: number, max: number): value is number {
-  return typeof value === 'number' && Number.isFinite(value) && value >= min && value < max;
-}
-
-function isFiniteNumberInClosedRange(value: unknown, min: number, max: number): value is number {
-  return typeof value === 'number' && Number.isFinite(value) && value >= min && value <= max;
-}
-
-interface PositionsHousesPayload {
-  readonly positions: readonly { readonly body: number; readonly longitude: number }[];
-  readonly houses: { readonly cusps: readonly number[]; readonly ascendant: number; readonly midheaven: number };
-}
-
-interface AspectPayload {
-  readonly bodyA: number;
-  readonly bodyB: number;
-  readonly aspectKey: string;
-  readonly separation: number;
-  readonly orb: number;
-}
-
-/**
- * The `positions`/`houses` half shared by `chartData` (one chart) and `relationshipData` (two
- * charts, #422) — split out so the same closed-set checks aren't written twice. `label` names
- * the field in an error message ("chartData" or "relationshipData.chartA").
- */
-function validatePositionsAndHouses(
-  payload: unknown,
-  label: string,
-): { value: PositionsHousesPayload } | { errors: string[] } {
-  const errors: string[] = [];
-  if (typeof payload !== 'object' || payload === null) {
-    return { errors: [`${label} must be an object`] };
-  }
-  const { positions, houses } = payload as Record<string, unknown>;
-
-  if (!Array.isArray(positions) || positions.length === 0) {
-    errors.push(`${label}.positions must be a non-empty array`);
-  } else if (positions.length > MAX_BODIES) {
-    errors.push(`${label}.positions must not exceed ${String(MAX_BODIES)} entries`);
-  } else {
-    for (const [index, entry] of positions.entries()) {
-      if (typeof entry !== 'object' || entry === null) {
-        errors.push(`${label}.positions[${String(index)}] must be an object`);
-        continue;
-      }
-      const { body, longitude } = entry as Record<string, unknown>;
-      if (typeof body !== 'number' || bodyById(body) === undefined) {
-        errors.push(`${label}.positions[${String(index)}].body must be a known body id`);
-      }
-      if (!isFiniteNumberInRange(longitude, 0, 360)) {
-        errors.push(`${label}.positions[${String(index)}].longitude must be a number in [0, 360)`);
-      }
-    }
-  }
-
-  if (typeof houses !== 'object' || houses === null) {
-    errors.push(`${label}.houses must be an object`);
-  } else {
-    const { cusps, ascendant, midheaven } = houses as Record<string, unknown>;
-    if (!Array.isArray(cusps) || cusps.length !== HOUSE_CUSP_COUNT) {
-      errors.push(`${label}.houses.cusps must be an array of exactly ${String(HOUSE_CUSP_COUNT)} entries`);
-    } else if (
-      // Index 0 is unused (see `HOUSE_CUSP_COUNT`'s own comment and `HousePositions.cusps`'s
-      // doc comment in `ephemeris/types.ts`) — `houseOf` (this route's only reader of
-      // `chartData.houses.cusps`, below) never looks at it, so it is never a real degree
-      // value and must not be held to the same [0, 360) requirement as indices 1..12. Checking
-      // it anyway rejected every single freeform request, always, regardless of chart (#372's
-      // sibling bug report): `toTier2ChartPayload` sends `HousePositions` verbatim, so
-      // `cusps[0]` was always this placeholder, never a real house cusp.
-      !cusps.slice(1).every((cusp) => isFiniteNumberInRange(cusp, 0, 360))
-    ) {
-      errors.push(`${label}.houses.cusps entries 1..12 must all be numbers in [0, 360)`);
-    }
-    if (!isFiniteNumberInRange(ascendant, 0, 360)) {
-      errors.push(`${label}.houses.ascendant must be a number in [0, 360)`);
-    }
-    if (!isFiniteNumberInRange(midheaven, 0, 360)) {
-      errors.push(`${label}.houses.midheaven must be a number in [0, 360)`);
-    }
-  }
-
-  if (errors.length > 0) return { errors };
-  return { value: payload as PositionsHousesPayload };
-}
-
-/** An aspect list's own closed-set checks, shared by `chartData.aspects` and `relationshipData.crossAspects` (#422). */
-function validateAspectList(
-  payload: unknown,
-  label: string,
-): { value: readonly AspectPayload[] } | { errors: string[] } {
-  if (!Array.isArray(payload)) return { errors: [`${label} must be an array`] };
-  if (payload.length > MAX_ASPECTS) return { errors: [`${label} must not exceed ${String(MAX_ASPECTS)} entries`] };
-  const errors: string[] = [];
-  for (const [index, entry] of payload.entries()) {
-    if (typeof entry !== 'object' || entry === null) {
-      errors.push(`${label}[${String(index)}] must be an object`);
-      continue;
-    }
-    const { bodyA, bodyB, aspectKey, separation, orb } = entry as Record<string, unknown>;
-    if (typeof bodyA !== 'number' || bodyById(bodyA) === undefined) {
-      errors.push(`${label}[${String(index)}].bodyA must be a known body id`);
-    }
-    if (typeof bodyB !== 'number' || bodyById(bodyB) === undefined) {
-      errors.push(`${label}[${String(index)}].bodyB must be a known body id`);
-    }
-    if (typeof aspectKey !== 'string' || aspectByKey(aspectKey) === undefined) {
-      errors.push(`${label}[${String(index)}].aspectKey must be a known aspect key`);
-    }
-    if (!isFiniteNumberInClosedRange(separation, 0, 180)) {
-      errors.push(`${label}[${String(index)}].separation must be a number in [0, 180]`);
-    }
-    if (typeof orb !== 'number' || !Number.isFinite(orb) || orb < 0) {
-      errors.push(`${label}[${String(index)}].orb must be a non-negative number`);
-    }
-  }
-  if (errors.length > 0) return { errors };
-  return { value: payload as readonly AspectPayload[] };
-}
-
-/**
- * Re-derives and closed-set-validates freeform mode's `chartData` payload —
- * the same reason `validateKey` does this for grounded mode's
- * `placementKeys`: an attacker-chosen body id, aspect key, or out-of-range
- * angle would otherwise be echoed into the model prompt unchecked.
- */
-function validateChartData(payload: unknown): { chartData: ChartDataPayload } | { errors: string[] } {
-  const base = validatePositionsAndHouses(payload, 'chartData');
-  const aspectsPayload =
-    typeof payload === 'object' && payload !== null ? (payload as Record<string, unknown>).aspects : undefined;
-  const aspects = validateAspectList(aspectsPayload, 'chartData.aspects');
-  const errors = [...('errors' in base ? base.errors : []), ...('errors' in aspects ? aspects.errors : [])];
-  if (errors.length > 0) return { errors };
-  // Safe: both validated above.
-  return {
-    chartData: {
-      ...(base as { value: PositionsHousesPayload }).value,
-      aspects: (aspects as { value: readonly AspectPayload[] }).value,
-    },
-  };
-}
-
-export interface HouseOverlayPayload {
-  readonly body: number;
-  readonly house: number;
-  readonly direction: 'a-in-b' | 'b-in-a';
-}
-
-const MAX_HOUSE_OVERLAYS = MAX_BODIES * 2;
-
-function validateHouseOverlays(payload: unknown): { value: readonly HouseOverlayPayload[] } | { errors: string[] } {
-  if (!Array.isArray(payload)) return { errors: ['relationshipData.houseOverlays must be an array'] };
-  if (payload.length > MAX_HOUSE_OVERLAYS) {
-    return { errors: [`relationshipData.houseOverlays must not exceed ${String(MAX_HOUSE_OVERLAYS)} entries`] };
-  }
-  const errors: string[] = [];
-  for (const [index, entry] of payload.entries()) {
-    if (typeof entry !== 'object' || entry === null) {
-      errors.push(`relationshipData.houseOverlays[${String(index)}] must be an object`);
-      continue;
-    }
-    const { body, house, direction } = entry as Record<string, unknown>;
-    if (typeof body !== 'number' || bodyById(body) === undefined) {
-      errors.push(`relationshipData.houseOverlays[${String(index)}].body must be a known body id`);
-    }
-    if (typeof house !== 'number' || !Number.isInteger(house) || house < 1 || house > 12) {
-      errors.push(`relationshipData.houseOverlays[${String(index)}].house must be an integer in [1, 12]`);
-    }
-    if (direction !== 'a-in-b' && direction !== 'b-in-a') {
-      errors.push(`relationshipData.houseOverlays[${String(index)}].direction must be 'a-in-b' or 'b-in-a'`);
-    }
-  }
-  if (errors.length > 0) return { errors };
-  return { value: payload as readonly HouseOverlayPayload[] };
-}
-
-export interface RelationshipDataPayload {
-  readonly chartA: PositionsHousesPayload;
-  readonly chartB: PositionsHousesPayload;
-  readonly crossAspects: readonly AspectPayload[];
-  readonly houseOverlays: readonly HouseOverlayPayload[];
-}
-
-/**
- * Re-derives and closed-set-validates the relationship mode's two-chart payload (#422): both
- * charts' own positions/houses (no personal data — never a name, date or place, only the same
- * computed facts `chartData` already sends for one chart), the cross-aspects between them, and
- * the house-overlay list — every one checked against the same closed sets `validateChartData`
- * already uses, for the same reason: untrusted client data must never reach the model prompt
- * unchecked.
- */
-function validateRelationshipData(
-  payload: unknown,
-): { relationshipData: RelationshipDataPayload } | { errors: string[] } {
-  if (typeof payload !== 'object' || payload === null) {
-    return { errors: ['relationshipData must be an object'] };
-  }
-  const { chartA, chartB, crossAspects, houseOverlays } = payload as Record<string, unknown>;
-  const a = validatePositionsAndHouses(chartA, 'relationshipData.chartA');
-  const b = validatePositionsAndHouses(chartB, 'relationshipData.chartB');
-  const cross = validateAspectList(crossAspects, 'relationshipData.crossAspects');
-  const overlays = validateHouseOverlays(houseOverlays);
-  const errors = [
-    ...('errors' in a ? a.errors : []),
-    ...('errors' in b ? b.errors : []),
-    ...('errors' in cross ? cross.errors : []),
-    ...('errors' in overlays ? overlays.errors : []),
-  ];
-  if (errors.length > 0) return { errors };
-  return {
-    relationshipData: {
-      chartA: (a as { value: PositionsHousesPayload }).value,
-      chartB: (b as { value: PositionsHousesPayload }).value,
-      crossAspects: (cross as { value: readonly AspectPayload[] }).value,
-      houseOverlays: (overlays as { value: readonly HouseOverlayPayload[] }).value,
-    },
-  };
-}
-
 function formatLongitude(longitude: number): string {
   return `${degreesInSign(longitude).toFixed(1)}° ${signOf(longitude).name}`;
 }
 
 /** Turns validated `chartData` into human-readable facts the model can originate an interpretation from — reusing the same sign/house formatting primitives `report.ts` already uses, not new formatting logic. */
-function buildFreeformFacts(chartData: ChartDataPayload): string[] {
+function buildFreeformFacts(chartData: Tier2ChartDataPayload): string[] {
   const facts: string[] = [];
   for (const position of chartData.positions) {
     const body = bodyById(position.body);

@@ -32,7 +32,7 @@
 /**
  * @module interpretation/tier2-client
  * @purpose Thin fetch() client for POST /api/interpretation/generate — the one runtime path in Astraya that calls a third-party model provider, proxied entirely through the server per ADR 0003.
- * @conventions Three modes: 'grounded' sends only de-identified placementKeys (server re-resolves Tier-1 text, no interpretation prose crosses the wire); 'freeform' sends computed chartData and gives up the "no chart data crosses the wire" guarantee for that mode only; 'focus' sends one placement's enriched FocusContext. Interfaces here hand-mirror server-side shapes (server/interpretation/llm-client.ts, server/interpretation-routes.ts) since there is no shared schema library between client and server. `locale` always rides alongside the payload.
+ * @conventions Three modes: 'grounded' sends only de-identified placementKeys (server re-resolves Tier-1 text, no interpretation prose crosses the wire); 'freeform' sends computed chartData and gives up the "no chart data crosses the wire" guarantee for that mode only; 'focus' sends one placement's enriched FocusContext. The wire shapes are defined once in ./tier2-contract and shared with the server, never redeclared here (#588). `locale` always rides alongside the payload.
  * @exports Tier2Error, Tier2Section, Tier2ChartDataPayload, toTier2ChartPayload, Tier2PositionsHousesPayload, Tier2RelationshipDataPayload, toTier2RelationshipPayload, Tier2Request, SavedInterpretationSummary, SavedInterpretationDetail
  */
 import { bodyByKey } from '../astrology/bodies.js';
@@ -41,6 +41,20 @@ import type { SynastryData } from '../domain/synastry.js';
 import type { FocusContext } from './focus-context-schema.js';
 import type { ResultBasis, ResultKind } from './result-basis.js';
 import type { Locale } from './schema.js';
+import {
+  isTier2Section,
+  type Tier2ChartDataPayload,
+  type Tier2PositionsHousesPayload,
+  type Tier2RelationshipDataPayload,
+  type Tier2Section,
+} from './tier2-contract.js';
+
+export type {
+  Tier2ChartDataPayload,
+  Tier2PositionsHousesPayload,
+  Tier2RelationshipDataPayload,
+  Tier2Section,
+} from './tier2-contract.js';
 
 export class Tier2Error extends Error {
   readonly status: number;
@@ -75,30 +89,6 @@ async function errorFrom(response: Response): Promise<Tier2Error> {
   return new Tier2Error(`Request failed with status ${String(response.status)}`, response.status);
 }
 
-/** Hand-mirrors `server/interpretation/llm-client.ts`'s `Tier2Section` — no shared schema library between client and server. */
-export interface Tier2Section {
-  readonly heading: string;
-  readonly body: string;
-}
-
-/**
- * Hand-mirrors `server/interpretation-routes.ts`'s `chartData` validation
- * shape for freeform mode. Deliberately a subset of `ChartData` — only
- * `positions`/`houses`/`aspects`, not `dignities`/`sect`/`partOfFortune`/
- * `partOfSpirit`, which freeform mode doesn't send.
- */
-export interface Tier2ChartDataPayload {
-  readonly positions: readonly { readonly body: number; readonly longitude: number }[];
-  readonly houses: { readonly cusps: readonly number[]; readonly ascendant: number; readonly midheaven: number };
-  readonly aspects: readonly {
-    readonly bodyA: number;
-    readonly bodyB: number;
-    readonly aspectKey: string;
-    readonly separation: number;
-    readonly orb: number;
-  }[];
-}
-
 /** Flattens a computed `ChartData` into freeform mode's wire payload. */
 export function toTier2ChartPayload(chart: ChartData): Tier2ChartDataPayload {
   return {
@@ -116,30 +106,6 @@ export function toTier2ChartPayload(chart: ChartData): Tier2ChartDataPayload {
       orb: aspect.orb,
     })),
   };
-}
-
-/** One side of `Tier2RelationshipDataPayload` — `Tier2ChartDataPayload` without the `aspects`, which the relationship payload carries once, cross-chart, instead of per side. */
-export interface Tier2PositionsHousesPayload {
-  readonly positions: readonly { readonly body: number; readonly longitude: number }[];
-  readonly houses: { readonly cusps: readonly number[]; readonly ascendant: number; readonly midheaven: number };
-}
-
-/** Hand-mirrors `server/interpretation-routes.ts`'s `relationshipData` validation shape (#422). */
-export interface Tier2RelationshipDataPayload {
-  readonly chartA: Tier2PositionsHousesPayload;
-  readonly chartB: Tier2PositionsHousesPayload;
-  readonly crossAspects: readonly {
-    readonly bodyA: number;
-    readonly bodyB: number;
-    readonly aspectKey: string;
-    readonly separation: number;
-    readonly orb: number;
-  }[];
-  readonly houseOverlays: readonly {
-    readonly body: number;
-    readonly house: number;
-    readonly direction: 'a-in-b' | 'b-in-a';
-  }[];
 }
 
 function toPositionsHouses(chart: ChartData): Tier2PositionsHousesPayload {
@@ -215,7 +181,12 @@ export async function generateTier2Interpretation(request: Tier2Request): Promis
     body: JSON.stringify(request),
   });
   if (!response.ok) throw await errorFrom(response);
-  const { sections } = (await response.json()) as { sections: readonly Tier2Section[] };
+  const { sections } = (await response.json()) as { sections?: unknown };
+  // The one place a mismatched or older server could hand back something this client's types
+  // wrongly promise (#588) — checked with the same guard the server applies to the model's reply.
+  if (!Array.isArray(sections) || !sections.every(isTier2Section)) {
+    throw new Tier2Error('The server returned an interpretation in an unexpected shape.', response.status);
+  }
   return sections;
 }
 

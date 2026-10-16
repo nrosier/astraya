@@ -287,6 +287,23 @@ describe('generateTier2Interpretation', () => {
     });
   });
 
+  it('throws a Tier2Error instead of returning sections the server sent in an unexpected shape (#588)', async () => {
+    for (const body of [{ sections: [{ heading: 'No body' }] }, { sections: 'nope' }, {}]) {
+      globalThis.fetch = () => Promise.resolve(new Response(JSON.stringify(body), { status: 200 }));
+      await expect(
+        generateTier2Interpretation({
+          mode: 'grounded',
+          placementKeys: ['dignity-state:sun:ruler'],
+          customPrompt: 'x',
+          locale: 'en',
+        }),
+      ).rejects.toMatchObject({
+        name: 'Tier2Error',
+        message: 'The server returned an interpretation in an unexpected shape.',
+      });
+    }
+  });
+
   it('is a plain Error subclass carrying the HTTP status', () => {
     const error = new Tier2Error('nope', 503);
     expect(error).toBeInstanceOf(Error);

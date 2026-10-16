@@ -12,7 +12,7 @@ import {
   listInterpretationResults,
   getInterpretationResult,
 } from '../server/interpretation/results.ts';
-import type { Tier2Section } from '../server/interpretation/llm-client.ts';
+import type { Tier2Section } from '../src/interpretation/tier2-contract.ts';
 
 function makeUser(db: Database, username: string): string {
   const id = randomUUID();
