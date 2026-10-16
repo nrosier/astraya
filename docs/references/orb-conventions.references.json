@@ -24,13 +24,48 @@
       "table": {
         "unit": "degrees, minutes",
         "rows": [
-          { "body": "saturn", "first": [10, 0], "second": [9, 0], "secondLabel": "According to others" },
-          { "body": "jupiter", "first": [12, 0], "second": [9, 0], "secondLabel": "As some have wrote" },
-          { "body": "mars", "first": [7, 30], "second": [7, 0], "secondLabel": "All consent" },
-          { "body": "sun", "first": [17, 0], "second": [15, 0], "secondLabel": "Most say" },
-          { "body": "venus", "first": [8, 0], "second": [7, 0], "secondLabel": "Many write but" },
-          { "body": "mercury", "first": [7, 0], "second": [7, 0], "secondLabel": "All consent onely" },
-          { "body": "moon", "first": [12, 30], "second": [12, 0], "secondLabel": "Generally but" }
+          {
+            "body": "saturn",
+            "first": [10, 0],
+            "second": [9, 0],
+            "secondLabel": "According to others"
+          },
+          {
+            "body": "jupiter",
+            "first": [12, 0],
+            "second": [9, 0],
+            "secondLabel": "As some have wrote"
+          },
+          {
+            "body": "mars",
+            "first": [7, 30],
+            "second": [7, 0],
+            "secondLabel": "All consent"
+          },
+          {
+            "body": "sun",
+            "first": [17, 0],
+            "second": [15, 0],
+            "secondLabel": "Most say"
+          },
+          {
+            "body": "venus",
+            "first": [8, 0],
+            "second": [7, 0],
+            "secondLabel": "Many write but"
+          },
+          {
+            "body": "mercury",
+            "first": [7, 0],
+            "second": [7, 0],
+            "secondLabel": "All consent onely"
+          },
+          {
+            "body": "moon",
+            "first": [12, 30],
+            "second": [12, 0],
+            "secondLabel": "Generally but"
+          }
         ]
       },
       "marginalNote": "I sometimes use the one, and sometimes the other, as my Memory best remembereth them, and this without error.",
@@ -61,8 +96,11 @@
       "locator": "Book I, p. 113 (PDF leaf 147)",
       "kind": "page-image-transcription",
       "text": "A Planet is said to be Combust of the Sun, when in the same Signe where the Sun is in, he is not distant from the Sun eight degrees and thirty minutes, either before or after the Sun... I allow the moyity of his owne Orbs to shew the time of combustion, and not of Jupiter; for by that rule Jupiter should not be combust before he is within foure degrees and a half of the Sun. I know many are against this opinion.",
-      "values": { "combustDeg": [8, 30], "sameSignOnly": true },
-      "notes": "Lilly states 8 deg 30 min, and records his own alternative of using the planet's own moiety, which he knows others reject."
+      "values": {
+        "combustDeg": [8, 30],
+        "sameSignOnly": true
+      },
+      "notes": "Lilly states 8 deg 30 min, and records his own alternative of using the planet's own moiety, which he knows others reject. Adopted by Astraya in sect.ts: combustion within 8°30′ and in the same sign only."
     },
     {
       "id": "lilly-i-under-the-beams-cazimi",
@@ -71,8 +109,11 @@
       "locator": "Book I, p. 113 (PDF leaf 147)",
       "kind": "page-image-transcription",
       "text": "A Planet is said to be still under the Sun-beames, untill he is fully elongated or distant from his body 17 degr. either before or after him. / A Planet is in the heart of the Sunne, or in Cazimi, when he is not removed from him 17 min. or is within 17 min. forward or backward.",
-      "values": { "underTheBeamsDeg": 17, "cazimiArcminutes": 17 },
-      "notes": "Book II (1647 vol. 2, p. 300, aphorism 26) gives different figures, 12 degrees and 16 minutes; see lilly-ii-aphorism-26."
+      "values": {
+        "underTheBeamsDeg": 17,
+        "cazimiArcminutes": 17
+      },
+      "notes": "Book II (1647 vol. 2, p. 300, aphorism 26) gives different figures, 12 degrees and 16 minutes; see lilly-ii-aphorism-26. Adopted by Astraya in sect.ts: under the beams within 17°."
     },
     {
       "id": "lilly-i-fortitudes-table",
@@ -81,8 +122,18 @@
       "locator": "Book I, p. 115 (PDF leaf 149), 'A ready Table whereby to examine the Fortitudes and Debilities of the Planets'",
       "kind": "page-image-transcription",
       "table": {
-        "essentialDignities": { "domicile": 5, "exaltation": 4, "triplicity": 3, "term": 2, "face": 1 },
-        "essentialDebilities": { "detriment": -5, "fall": -4, "peregrine": -5 }
+        "essentialDignities": {
+          "domicile": 5,
+          "exaltation": 4,
+          "triplicity": 3,
+          "term": 2,
+          "face": 1
+        },
+        "essentialDebilities": {
+          "detriment": -5,
+          "fall": -4,
+          "peregrine": -5
+        }
       },
       "text": "In his owne house, or in mutuall reception with another Planet by house: 5. In his exaltation, or reception by exaltation: 4. In his owne Triplicity: 3. In his owne Terme: 2. Decanate or Face: 1. Debilities: in his Detriment 5, in his Fall 4, Peregrine 5.",
       "notes": "The weights are shown as 5/4/3/2/1. On the debility side the table prints 5, 4, 5 without minus signs; they are subtracted. Accidental fortitudes on the same page are not transcribed here."
@@ -94,7 +145,10 @@
       "locator": "Book I, p. 122 (PDF leaf 156)",
       "kind": "page-image-transcription",
       "text": "When either 00. degrees, or the first or second degrees of a Signe ascend (especially in Signes of short ascensions...) you may not adventure judgment, unlesse the Querent be very young... If 27, 28, or 29 degrees ascend of any Signe, it's no wayes safe to give judgment, except the Querent be in yeers corresponding to the number of degrees ascending...",
-      "values": { "tooEarly": "0, 1 or 2 degrees (below 3)", "tooLate": "27, 28 or 29 degrees (from 27)" },
+      "values": {
+        "tooEarly": "0, 1 or 2 degrees (below 3)",
+        "tooLate": "27, 28 or 29 degrees (from 27)"
+      },
       "notes": "Source for horary.ts's 3 and 27 degree limits. This is the section 'Considerations before Judgment' at the end of Book I (pp. 121-123); it is not in Book II, and horary.ts's 'ch. XXXVI' does not match it."
     },
     {
@@ -113,7 +167,10 @@
       "locator": "Book II, p. 300 (aphorism 26)",
       "kind": "page-image-transcription",
       "text": "A Planet within 12 degrees of the Sun, is said to be under his Beames, and then hath no fortitude, let it be in what Signe it will; when a Planet is within 16 minutes of the Sun, he is said to be in Cazimi, or heat of the Sun, and then it's an addition of fortune, and he is wonderous strong.",
-      "values": { "underTheBeamsDeg": 12, "cazimiArcminutes": 16 },
+      "values": {
+        "underTheBeamsDeg": 12,
+        "cazimiArcminutes": 16
+      },
       "notes": "Read from a web transcription of Book II (mithras93.tripod.com), checked against that page image; not yet compared with the 1647 scan. It conflicts with Book I (17 degrees, 17 minutes). Both are Lilly's."
     }
   ],
@@ -128,7 +185,7 @@
     },
     {
       "topic": "combustion and beams",
-      "decision": "Lilly gives 8 deg 30 min, 17 degrees and 17 minutes in Book I and 12 degrees and 16 minutes in Book II. The app's values are cited against Book I and the difference noted."
+      "decision": "Book I's figures are adopted: combustion within 8°30′ in the same sign, under the beams within 17°, cazimi within 17′. Book II's aphorism (12°, 16′) is recorded but not followed, because Book I is the fuller statement and matches the cazimi value."
     }
   ]
 }

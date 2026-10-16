@@ -10,8 +10,8 @@ our own choice, not a citation.
 | Per-planet orbs, second column (9, 9, 7, 15, 7, 7, 12)                                                          | `CITED_ORB_PRESETS['lilly-1647-second-v1']`              | **Cited**           | same page, second column                                                                                |
 | Moiety is half the orb, pairs sum                                                                               | `orbFor`, `bodyOrbs`                                     | **Cited**           | Lilly p. 107 (Venus/Saturn example) and p. 110 (Sun/Moon 13°30′)                                        |
 | Cazimi within 17′                                                                                               | `sect.ts`                                                | **Cited**           | Lilly Book I, p. 113 (Book II p. 300 says 16′)                                                          |
-| Combust 8°                                                                                                      | `sect.ts`                                                | Astraya default     | Lilly says 8°30′ in the same sign (p. 113); we use 8°                                                   |
-| Under the beams 15°                                                                                             | `sect.ts`                                                | Astraya default     | Lilly says 17° (p. 113), or 12° (Book II p. 300)                                                        |
+| Combust within 8°30′, same sign only                                                                            | `sect.ts`                                                | **Cited**           | Lilly Book I, p. 113                                                                                    |
+| Under the beams within 17°                                                                                      | `sect.ts`                                                | **Cited**           | Lilly Book I, p. 113 (Book II p. 300 gives 12°, not followed)                                           |
 | Ascendant too early below 3°, too late above 27°                                                                | `horary.ts`                                              | **Cited**           | Lilly Book I, p. 122 (0–2 and 27–29 degrees ascending)                                                  |
 | Dignity weights 5/4/3/2/1                                                                                       | `almuten.ts`                                             | **Cited** (weights) | Lilly Book I, p. 115                                                                                    |
 | Majors 7°/10°, sextile 4°/5°30′, minors 2°30′                                                                   | `DEFAULT_ORB_CONFIG`, Standard                           | Astraya default     | Astro-Seek was the stated basis; its pages could not be read (HTTP 403), so the attribution was removed |
@@ -32,6 +32,5 @@ our own choice, not a citation.
 
 ## Still open
 
-Combust and under-the-beams values differ from Lilly's. Changing them alters which planets read as combust, so
-it is a behaviour change to decide separately. The Moon's softer void-of-course rule in Taurus, Cancer,
+The Moon's softer void-of-course rule in Taurus, Cancer,
 Sagittarius and Pisces (p. 122) is not modelled.

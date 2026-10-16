@@ -28,6 +28,7 @@
  * @exports Sect, isAboveHorizon, sectOf, solarPhaseOf, solarConditionOf, solarConditionOfPosition
  */
 import type { BodyPosition, Degrees } from '../ephemeris/types.js';
+import { signIndex } from './signs.js';
 import { angularSeparation } from './aspects.js';
 
 /** Normalise to the half-open interval [0, 360). */
@@ -64,17 +65,17 @@ export function solarPhaseOf(bodyLongitude: Degrees, sunLongitude: Degrees): Sol
 export type SolarCondition = 'cazimi' | 'combust' | 'underTheBeams' | 'free';
 
 /*
- * Lilly, Christian Astrology (1647), Book I, p. 113, gives cazimi within 17 arcminutes, combustion within
- * 8 degrees 30 minutes in the same sign, and under the beams within 17 degrees. Book II, p. 300 (aphorism 26),
- * gives 12 degrees and 16 minutes instead. Astraya's cazimi matches Book I; its combustion (8) and under-the-
- * beams (15) values are its own choices, narrower than Book I's. See docs/references/orb-conventions.references.json.
+ * Lilly, Christian Astrology (1647), Book I, p. 113: cazimi within 17 arcminutes of the Sun; combust within
+ * 8 degrees 30 minutes of it, in the same sign; under the beams until 17 degrees. Book II, p. 300 (aphorism 26)
+ * gives under the beams within 12 degrees and cazimi within 16 minutes; Book I is followed because it is the
+ * fuller statement. See docs/references/orb-conventions.references.json.
  */
-/** Within the Sun's own disk — roughly its apparent radius, 17 arcminutes (Lilly, Book I, p. 113). */
+/** Within the Sun's own disk, 17 arcminutes (Lilly, Book I, p. 113). */
 const CAZIMI_ORB: Degrees = 17 / 60;
-/** Combustion orb: Astraya's 8 degrees, against Lilly's 8 degrees 30 minutes (Book I, p. 113). */
-const COMBUSTION_ORB: Degrees = 8;
-/** Under-the-beams orb, wider than and inclusive of combustion: Astraya's 15, against Lilly's 17 (Book I, p. 113). */
-const UNDER_THE_BEAMS_ORB: Degrees = 15;
+/** Combustion: within 8°30′ of the Sun and in the same sign (Lilly, Book I, p. 113). */
+const COMBUSTION_ORB: Degrees = 8.5;
+/** Under the beams, inclusive of combustion: until 17 degrees from the Sun (Lilly, Book I, p. 113). */
+const UNDER_THE_BEAMS_ORB: Degrees = 17;
 
 /**
  * How close a body is to the Sun, classified into the traditional bands.
@@ -85,7 +86,8 @@ const UNDER_THE_BEAMS_ORB: Degrees = 15;
 export function solarConditionOf(bodyLongitude: Degrees, sunLongitude: Degrees): SolarCondition {
   const separation = angularSeparation(bodyLongitude, sunLongitude);
   if (separation <= CAZIMI_ORB) return 'cazimi';
-  if (separation <= COMBUSTION_ORB) return 'combust';
+  // Lilly counts combustion only within the Sun's own sign (p. 113): a planet just across a sign boundary from the Sun is not combust, however close.
+  if (separation <= COMBUSTION_ORB && signIndex(bodyLongitude) === signIndex(sunLongitude)) return 'combust';
   if (separation <= UNDER_THE_BEAMS_ORB) return 'underTheBeams';
   return 'free';
 }
