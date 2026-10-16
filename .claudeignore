@@ -35,3 +35,6 @@ nl.json
 
 # Git metadata
 .git/
+
+# Lavish Editor review artifacts
+.lavish/

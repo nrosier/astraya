@@ -65,3 +65,6 @@ tools/corpus-gen/feedback/
 # server/index.ts's default ASTRAYA_DB_PATH when the env var is unset (local `npm run serve`,
 # or a manual run with no override) — a per-machine SQLite file, never something the repo ships.
 data/
+
+# Lavish Editor review artifacts: per-session HTML pages, never part of the repo.
+.lavish/
