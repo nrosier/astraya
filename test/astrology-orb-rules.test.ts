@@ -7,6 +7,7 @@ import { describe, expect, it } from 'vitest';
 import { DEFAULT_ORB_CONFIG, orbFor, type OrbConfig } from '../src/astrology/aspects.js';
 import {
   orbConfigForContext,
+  ORB_PROFILES,
   SYNASTRY_DEFAULT_ORB_CONFIG,
   SYNASTRY_SCALE_OFFSET,
   validateOrbRules,
@@ -107,5 +108,15 @@ describe('orbConfigForContext (#590, #543)', () => {
       TRANSIT_ORB_CONFIG.enabledMinorAspects,
     );
     expect(orbConfigForContext('transit', settings).scalePercent).toBe(20);
+  });
+});
+
+describe('built-in orb profiles claim no source they cannot cite (#590)', () => {
+  it('has no verified locator and does not attribute its numbers to a named product', () => {
+    for (const profile of Object.values(ORB_PROFILES)) {
+      expect(profile.source.locator).toBeNull();
+      expect(profile.source.authority).toMatch(/^Astraya default/);
+      expect(profile.source.authority + profile.description).not.toMatch(/astro-?seek/i);
+    }
   });
 });

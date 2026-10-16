@@ -85,6 +85,7 @@ export const PERSONAL_PLANET_KEYS = ['sun', 'moon', 'mercury', 'venus', 'mars'] 
 const NODE_KEYS = ['meanNode', 'trueNode'] as const;
 export const HARD_ASPECT_KEYS = ['conjunction', 'square', 'opposition'] as const;
 export const SOFT_ASPECT_KEYS = ['sextile', 'trine'] as const;
+/** Transit orbs are Astraya's own choice (#416): no published source for them has been verified (#590). */
 /** The minor aspects Astraya calculates for transits (the semisextile and quintiles are left out). */
 export const MINOR_ASPECT_KEYS = ['semisquare', 'sesquiquadrate', 'quincunx'] as const;
 const MAJOR_ASPECT_KEYS = [...HARD_ASPECT_KEYS, ...SOFT_ASPECT_KEYS] as const;

@@ -47,7 +47,7 @@ export interface OrbProfile {
 }
 
 const ASTRAYA_DEFAULT_SOURCE: OrbProfileSource = {
-  authority: "Astraya default; tiers follow Astro-Seek's published defaults",
+  authority: 'Astraya default; no published source has been verified for these numbers',
   locator: null,
 };
 
@@ -57,7 +57,7 @@ export const ORB_PROFILES: Readonly<Record<OrbProfileId, OrbProfile>> = {
     revision: 1,
     name: 'Standard',
     description:
-      "This app's long-standing default tiers, unscaled (Astro-Seek's own convention): majors 7°/10° with a luminary, sextile 4°/5°30', minors flat 2°30'.",
+      "This app's long-standing default tiers, unscaled: majors 7°/10° with a luminary, sextile 4°/5°30', minors flat 2°30'.",
     source: ASTRAYA_DEFAULT_SOURCE,
     config: DEFAULT_ORB_CONFIG,
   },
@@ -102,7 +102,10 @@ export function matchOrbProfile(scalePercent: number): OrbProfileId | undefined 
  * named source's exact numbers: every synastry-specific orb table checked while implementing
  * this varies by author, so the scale percentage below is this app's own choice, not a citation.
  */
-/** Synastry's scale offset from the orbs in force (#543): a 30% tighter contact limit. */
+/**
+ * Synastry's scale offset from the orbs in force (#543): a 30% tighter contact limit. An Astraya default
+ * choice: no published synastry orb table has been verified for it (#590).
+ */
 export const SYNASTRY_SCALE_OFFSET = -30;
 
 export const SYNASTRY_DEFAULT_ORB_CONFIG: OrbConfig = { ...DEFAULT_ORB_CONFIG, scalePercent: SYNASTRY_SCALE_OFFSET };

@@ -23,7 +23,7 @@
 /**
  * @module Aspects
  * @purpose Computes Ptolemaic and minor aspects between bodies, including configurable orbs and applying/separating direction.
- * @conventions Three orb tiers (major, sextile, minor) widened for luminaries, scaled by a global percentage; defaults follow the Astro-Seek convention (majors 7°/10° with a luminary, sextile 4°/5°30', minors flat 2°30'); minor aspects are opt-in via enabledMinorAspects; `harmonicFamilyOf` is Addey's harmonic-number grouping, a distinct concept from the major/minor `AspectFamily`.
+ * @conventions Three orb tiers (major, sextile, minor) widened for luminaries, scaled by a global percentage; Astraya's own defaults, with no verified published source (majors 7°/10° with a luminary, sextile 4°/5°30', minors flat 2°30'); minor aspects are opt-in via enabledMinorAspects; `harmonicFamilyOf` is Addey's harmonic-number grouping, a distinct concept from the major/minor `AspectFamily`.
  * @exports ASPECTS, DEFAULT_ORB_CONFIG, orbFor, angularSeparation, matchAspect, findAspects, findCrossAspects, subjectsFrom, fixedSubjects, harmonicFamilyOf, aspectHarmonicFamily
  */
 import { bodyById, type BodyCategory } from './bodies.ts';
@@ -93,10 +93,11 @@ export function aspectHarmonicFamily(aspectKey: string): number | undefined {
  * "reach" — followed by a global percentage scale applied to every tier at
  * once.
  *
- * These three tiers and their numbers are the ones most astrology sites,
- * including Astro-Seek, use as their own defaults: major aspects at 7°,
- * enlarged to 10° with a luminary; sextile at 4°, enlarged to 5°30'; every
- * minor aspect at a flat 2°30' regardless of which bodies are involved.
+ * These three tiers and their numbers are Astraya's own defaults: major aspects
+ * at 7°, enlarged to 10° with a luminary; sextile at 4°, enlarged to 5°30'; every
+ * minor aspect at a flat 2°30' regardless of which bodies are involved. They were
+ * set to resemble common astrology software, but no published source for them has
+ * been verified (see #590), so they are not presented as a citation.
  * `enabledMinorAspects` is which of the six minor aspects `matchAspect`
  * considers at all — empty by default, since minor aspects are opt-in on
  * most tools rather than shown alongside the majors unconditionally.
