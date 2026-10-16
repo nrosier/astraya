@@ -16,7 +16,7 @@
  * @conventions One settings object is split three ways rather than kept as three separate pieces of UI state: `toChartCalculationOptions` feeds `computeChartData`, `toPointVisibilityOptions` feeds `chart-tables.ts`'s display filtering, and `toSignWedgeStyle` feeds the wheel's cosmetic fill — keeping the split here means neither the panel component nor `ChartView` needs to know any destination's shape.
  * @exports DEFAULT_EXTENDED_SETTINGS, toChartCalculationOptions, toPointVisibilityOptions, toSignWedgeStyle; ExtendedSettings type.
  */
-import { DEFAULT_ORB_CONFIG, type OrbConfig } from '../astrology/aspects.js';
+import { DEFAULT_ORB_CONFIG, type OrbConfig, type OrbRule } from '../astrology/aspects.js';
 import type { BoundsScheme } from '../astrology/bounds.js';
 import type { ChartCalculationOptions } from '../domain/chart-compute.js';
 import type { PointVisibilityOptions } from '../domain/chart-tables.js';
@@ -37,6 +37,15 @@ export interface ExtendedSettings {
   readonly boundsScheme: BoundsScheme;
   /** Minor-aspect keys to consider; empty means every minor aspect is off. */
   readonly enabledMinorAspects: readonly string[];
+  /**
+   * The practitioner's own per-aspect and per-body orb rules (#590), copied by value into the
+   * settings — never a reference to a saved profile, so a later edit to a saved profile cannot
+   * change an existing chart. Absent (the default) means the tiers apply unchanged.
+   */
+  readonly orbRules?: {
+    readonly aspectOrbs?: Readonly<Record<string, OrbRule>>;
+    readonly bodyOrbs?: Readonly<Record<string, number>>;
+  };
   readonly lilithVariant: 'mean' | 'true' | 'interpolated';
   readonly nodeVariant: 'mean' | 'true';
   /**
@@ -92,6 +101,8 @@ export function toChartCalculationOptions(settings: ExtendedSettings): ChartCalc
     ...DEFAULT_ORB_CONFIG,
     scalePercent: settings.orbScalePercent,
     enabledMinorAspects: settings.enabledMinorAspects,
+    ...(settings.orbRules?.aspectOrbs === undefined ? {} : { aspectOrbs: settings.orbRules.aspectOrbs }),
+    ...(settings.orbRules?.bodyOrbs === undefined ? {} : { bodyOrbs: settings.orbRules.bodyOrbs }),
   };
   const aspectsTo = Object.fromEntries(
     OBJECT_KEYS.map((key) => [key, settings.objectPolicies[key].aspectParticipant]),

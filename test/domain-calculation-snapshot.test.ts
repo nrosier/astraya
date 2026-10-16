@@ -223,3 +223,33 @@ describe('parseCalculationSnapshot defends against untrusted input (#541)', () =
     );
   });
 });
+
+describe('user-defined orb rules in the snapshot (#590)', () => {
+  it('round-trips aspect and body rules through JSON exactly', () => {
+    const withRules: ExtendedSettings = {
+      ...DEFAULT_EXTENDED_SETTINGS,
+      orbRules: { aspectOrbs: { trine: { base: 6, luminaryBonus: 2 } }, bodyOrbs: { venus: 4, mars: 3 } },
+    };
+    const snapshot = buildCalculationSnapshot(withRules, DEFAULT_RULERSHIP_CHOICE);
+    const parsed = parseCalculationSnapshot(calculationSnapshotToJson(snapshot));
+    expect(parsed.settings.orbRules).toEqual(withRules.orbRules);
+  });
+
+  it('a snapshot written before this field existed parses with no rules at all', () => {
+    const parsed = parseCalculationSnapshot({ settings: { orbScalePercent: -10 } });
+    expect(parsed.settings.orbRules).toBeUndefined();
+    expect(parsed.settings.orbScalePercent).toBe(-10);
+  });
+
+  it('a malformed rules bag is dropped whole, not applied in part', () => {
+    const parsed = parseCalculationSnapshot({
+      settings: { orbRules: { aspectOrbs: { trine: { base: 6, luminaryBonus: 2 } }, bodyOrbs: { notABody: 2 } } },
+    });
+    expect(parsed.settings.orbRules).toBeUndefined();
+  });
+
+  it('empty rule sets are normalized away, so an empty bag equals no bag', () => {
+    const parsed = parseCalculationSnapshot({ settings: { orbRules: { aspectOrbs: {}, bodyOrbs: {} } } });
+    expect(parsed.settings.orbRules).toBeUndefined();
+  });
+});

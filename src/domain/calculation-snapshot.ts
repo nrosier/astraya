@@ -35,6 +35,7 @@ import type { ChartCalculationOptions } from './chart-compute.js';
 import { DEFAULT_RULERSHIP_CHOICE, RULERSHIP_CHOICES, type RulershipChoice } from '../astrology/rulership.js';
 import { houseSystemByCode } from '../astrology/houses.js';
 import { aspectByKey } from '../astrology/aspects.js';
+import { validateOrbRules } from '../astrology/orb-profiles.js';
 import type { Zodiac } from '../ephemeris/types.js';
 import type { JsonValue } from '../store/ops.js';
 import type { CustomPointDefinition } from './person.js';
@@ -227,6 +228,25 @@ function parseObjectPolicies(value: unknown, legacySource: Record<string, unknow
  * against registered values and filled from the app default for that one field specifically
  * if validation fails.
  */
+/**
+ * Orb rules (#590) are parsed only when the whole bag is valid: a malformed part drops the rules
+ * entirely rather than applying half of them. Empty rule sets are dropped too, so a settings bag
+ * with no rules is byte-identical to one written before this field existed.
+ */
+function parseOrbRules(value: unknown): { orbRules?: NonNullable<ExtendedSettings['orbRules']> } {
+  const rules = validateOrbRules(value);
+  if (rules === undefined) return {};
+  const hasAspects = Object.keys(rules.aspectOrbs).length > 0;
+  const hasBodies = Object.keys(rules.bodyOrbs).length > 0;
+  if (!hasAspects && !hasBodies) return {};
+  return {
+    orbRules: {
+      ...(hasAspects ? { aspectOrbs: rules.aspectOrbs } : {}),
+      ...(hasBodies ? { bodyOrbs: rules.bodyOrbs } : {}),
+    },
+  };
+}
+
 function parseExtendedSettings(value: unknown): ExtendedSettings {
   if (!isRecord(value)) return DEFAULT_EXTENDED_SETTINGS;
   const d = DEFAULT_EXTENDED_SETTINGS;
@@ -251,6 +271,9 @@ function parseExtendedSettings(value: unknown): ExtendedSettings {
       : d.lilithVariant,
     nodeVariant: isOneOf(value.nodeVariant, ['mean', 'true'] as const) ? value.nodeVariant : d.nodeVariant,
     objectPolicies: parseObjectPolicies(value.objectPolicies, value),
+    // An absent or invalid rules bag is simply no rules: the same result a never-customized chart
+    // has. Validation happens here, so a snapshot's orb rules are always well-formed when used.
+    ...parseOrbRules(value.orbRules),
     midpointsVisible: parseBool(value.midpointsVisible, d.midpointsVisible),
     antisciaVisible: parseBool(value.antisciaVisible, d.antisciaVisible),
     antisciaMaxOrb: parseNonNegativeNumber(value.antisciaMaxOrb, d.antisciaMaxOrb),
