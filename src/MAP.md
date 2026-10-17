@@ -11,7 +11,6 @@ Index to subdirectories. See each subdirectory's own MAP.md:
 - **src/store/** — IndexedDB op-log: HLC-ordered operations, last-write-wins fold, persistence.
 - **src/sync/** — Fetch clients to server routes (auth, admin, ops, corpus overrides/candidates).
 - **src/time/** — Birth-moment resolution: timezone, DST, calendar handling, URL encoding.
-- **src/types/** — Ambient `.d.ts` for untyped dependencies.
 - **src/ui/** — React SPA: root router, 150+ components (screens, panels, forms, glyphs), sticky header.
 
 Root files:
