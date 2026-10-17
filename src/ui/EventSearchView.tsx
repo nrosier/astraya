@@ -12,11 +12,14 @@ import { ASPECTS } from '../astrology/aspects.js';
 import { BODIES, bodyByKey } from '../astrology/bodies.js';
 import {
   eventSearchCsvFilename,
+  eventSearchIcsFilename,
   eventSearchToCsv,
   searchEvents,
   type EventSearchKind,
   type EventSearchResult,
 } from '../domain/event-search.js';
+import { eventSearchToIcs } from '../domain/event-search-ics.js';
+import { downloadText } from './download.js';
 import { useRef, useState } from 'react';
 import { Checkbox } from './primitives/Checkbox.js';
 import { Select } from './primitives/Select.js';
@@ -152,12 +155,14 @@ export function EventSearchView(): React.JSX.Element {
       },
       result.rows,
     );
-    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = eventSearchCsvFilename(new Date());
-    anchor.click();
-    URL.revokeObjectURL(url);
+    downloadText(eventSearchCsvFilename(new Date()), csv, 'text/csv;charset=utf-8');
+  };
+
+  /** The same results as an iCalendar file (#639). Sky events only, so no birth data is in it. */
+  const downloadIcs = (): void => {
+    if (result.kind !== 'ready') return;
+    const now = new Date();
+    downloadText(eventSearchIcsFilename(now), eventSearchToIcs(result.rows, now), 'text/calendar;charset=utf-8');
   };
 
   return (
@@ -249,6 +254,9 @@ export function EventSearchView(): React.JSX.Element {
           <p>
             <button type="button" onClick={download}>
               {t.downloadCsv}
+            </button>{' '}
+            <button type="button" onClick={downloadIcs}>
+              {t.downloadIcs}
             </button>
           </p>
           <div className="data-table-scroll">

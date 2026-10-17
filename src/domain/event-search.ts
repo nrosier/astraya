@@ -16,7 +16,7 @@
  * @module domain/event-search
  * @purpose Batch-searches a date range for station/sign-ingress/lunation sky events and formats the results (plus the exact search parameters) as a reproducible CSV.
  * @conventions Composes the existing station/ingress/lunation and moving-body aspect finders into one chronologically sorted result list; the aspect filter is intentionally a pair of moving bodies (rather than a natal-dependent transit scan), so the tool stays person-independent. CSV rows carry the exact search parameters as leading `#`-prefixed comment lines, not just the results.
- * @exports EventSearchKind, EventSearchFilter, EventSearchResult, searchEvents, eventSearchToCsv, eventSearchCsvFilename
+ * @exports EventSearchKind, EventSearchFilter, EventSearchResult, searchEvents, eventSearchToCsv, eventSearchCsvFilename, eventSearchIcsFilename
  */
 import { BODIES, bodyById } from '../astrology/bodies.js';
 import { findLunations } from '../astrology/lunations.js';
@@ -199,4 +199,9 @@ export function eventSearchToCsv(
 
 export function eventSearchCsvFilename(now: Date): string {
   return `astraya-event-search-${now.toISOString().slice(0, 10)}.csv`;
+}
+
+/** The same results as an iCalendar file (#639). */
+export function eventSearchIcsFilename(now: Date): string {
+  return `astraya-event-search-${now.toISOString().slice(0, 10)}.ics`;
 }
