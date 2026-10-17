@@ -35,24 +35,24 @@ tracking, not licence compliance.
 
 ## Build and test (never shipped — not subject to the AGPL-compatibility constraint above)
 
-| Package                                        | Purpose                                                                                              | Licence              |
-| :--------------------------------------------- | :--------------------------------------------------------------------------------------------------- | :------------------- |
-| `typescript`                                   | Compiler/type-checker (`npm run typecheck`).                                                         | Apache-2.0           |
-| `typescript-eslint`                            | Type-aware ESLint rules (`strictTypeChecked`).                                                       | MIT                  |
-| `eslint`, `@eslint/js`, `globals`              | Lint engine and its rule/environment data.                                                           | MIT                  |
-| `eslint-plugin-react-hooks`                    | Rules of Hooks and exhaustive effect dependencies, both at error for the React source (#638).        | MIT                  |
-| `prettier`                                     | Formatting (`npm run format`/`format:check`).                                                        | MIT                  |
-| `vite`                                         | Dev server and production bundler.                                                                   | MIT                  |
-| `@vitejs/plugin-react`                         | Vite's React/JSX transform.                                                                          | MIT                  |
-| `vitest`, `fast-check`                         | Unit/property test runner.                                                                           | MIT                  |
-| `@vitest/coverage-v8`                          | Coverage report (`npm run test:coverage`), report only with no threshold (#613).                     | MIT                  |
-| `knip`                                         | Unused files, exports and dependencies report (`npm run knip`), report only and never a gate (#613). | ISC                  |
-| `@playwright/test`, `@axe-core/playwright`     | E2E runner and its accessibility-assertion integration.                                              | Apache-2.0 / MPL-2.0 |
-| `jsdom`                                        | DOM environment for component tests.                                                                 | MIT                  |
-| `fake-indexeddb`                               | In-memory IndexedDB for store tests.                                                                 | Apache-2.0           |
-| `tsx`                                          | Runs `.ts` scripts/tools directly (`tools/corpus-gen/`, ops scripts).                                | MIT                  |
-| `@types/*`                                     | TypeScript ambient types for the above.                                                              | MIT                  |
-| `@modelcontextprotocol/sdk`, `@receptron/laya` | Agent/tooling support (`tools/`), excluded from `src/` by the `tools/` import boundary.              | MIT                  |
+| Package                                    | Purpose                                                                                              | Licence              |
+| :----------------------------------------- | :--------------------------------------------------------------------------------------------------- | :------------------- |
+| `typescript`                               | Compiler/type-checker (`npm run typecheck`).                                                         | Apache-2.0           |
+| `typescript-eslint`                        | Type-aware ESLint rules (`strictTypeChecked`).                                                       | MIT                  |
+| `eslint`, `@eslint/js`, `globals`          | Lint engine and its rule/environment data.                                                           | MIT                  |
+| `eslint-plugin-react-hooks`                | Rules of Hooks and exhaustive effect dependencies, both at error for the React source (#638).        | MIT                  |
+| `prettier`                                 | Formatting (`npm run format`/`format:check`).                                                        | MIT                  |
+| `vite`                                     | Dev server and production bundler.                                                                   | MIT                  |
+| `@vitejs/plugin-react`                     | Vite's React/JSX transform.                                                                          | MIT                  |
+| `vitest`, `fast-check`                     | Unit/property test runner.                                                                           | MIT                  |
+| `@vitest/coverage-v8`                      | Coverage report (`npm run test:coverage`), report only with no threshold (#613).                     | MIT                  |
+| `knip`                                     | Unused files, exports and dependencies report (`npm run knip`), report only and never a gate (#613). | ISC                  |
+| `@playwright/test`, `@axe-core/playwright` | E2E runner and its accessibility-assertion integration.                                              | Apache-2.0 / MPL-2.0 |
+| `jsdom`                                    | DOM environment for component tests.                                                                 | MIT                  |
+| `fake-indexeddb`                           | In-memory IndexedDB for store tests.                                                                 | Apache-2.0           |
+| `tsx`                                      | Runs `.ts` scripts/tools directly (`tools/corpus-gen/`, ops scripts).                                | MIT                  |
+| `@types/*`                                 | TypeScript ambient types for the above.                                                              | MIT                  |
+| `@modelcontextprotocol/sdk`                | Agent/tooling support (`tools/`), excluded from `src/` by the `tools/` import boundary.              | MIT                  |
 
 `@axe-core/playwright` is MPL-2.0, outside the MIT/BSD/Apache-2.0/ISC/CC0 set
 `CLAUDE.md` names. It is a devDependency used only by the Playwright a11y
