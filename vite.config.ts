@@ -104,6 +104,14 @@ export default defineConfig(({ mode }) => {
       include: ['test/**/*.test.ts', 'test/**/*.test.tsx', 'src/**/*.test.ts'],
       // The WASM module takes a moment to instantiate on first use.
       testTimeout: 30_000,
+      // Report only, deliberately: no threshold. A global percentage invites gaming; the risky paths
+      // (auth, sync, restore, error handling) are what the report is for. Run with `npm run test:coverage`.
+      coverage: {
+        provider: 'v8',
+        include: ['src/**/*.{ts,tsx}', 'server/**/*.ts'],
+        reporter: ['text-summary', 'text'],
+        reportsDirectory: 'coverage',
+      },
     },
   };
 });
