@@ -12,7 +12,13 @@
  * has not independently verified it against Ibn Ezra's own medieval text,
  * only against that convergent modern-secondary-source agreement, which is
  * worth noting explicitly rather than implying a primary-source citation
- * that was never actually checked. A planet with none of the five at a
+ * that was never actually checked. The same 5/4/3/2/1 weights for domicile,
+ * exaltation, triplicity, term and face are, however, printed in Lilly's
+ * "ready Table whereby to examine the Fortitudes and Debilities of the
+ * Planets" (Christian Astrology, 1647, Book I, p. 115, read from the page
+ * image; see docs/references/orb-conventions.references.json). That is a
+ * strength-scoring table, not the almuten procedure, so it is a primary-source
+ * confirmation of the weights and not of Ibn Ezra's use of them. A planet with none of the five at a
  * given degree is "peregrine" there (score 0) — traditionally read as
  * lacking any foothold of dignity, for better or worse depending on the
  * planet's other conditions.

@@ -54,6 +54,7 @@ const enProvenanceFieldWord: ProvenanceFieldWords = {
   tzdb: 'timezone database',
   timeResolution: 'birth-time resolution',
   houseSystem: 'house system',
+  orbs: 'orb tiers',
 };
 
 const nlProvenanceFieldWord: ProvenanceFieldWords = {
@@ -63,6 +64,7 @@ const nlProvenanceFieldWord: ProvenanceFieldWords = {
   tzdb: 'tijdzonedatabase',
   timeResolution: 'resolutie van de geboortetijd',
   houseSystem: 'huizensysteem',
+  orbs: 'orbisniveaus',
 };
 
 const en = {

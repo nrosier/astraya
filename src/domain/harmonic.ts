@@ -15,7 +15,7 @@
  * @conventions Synthetic chart, not a comparison, so reuses the single-chart engine on positions/houses already transformed by `astrology/harmonics.ts`; `n` must be a positive integer, with `n=1` reproducing the natal chart (whole-sign houses in place of whatever system the natal chart used).
  * @exports computeHarmonic, harmonicPositionProvenance, HarmonicData, HarmonicPositionProvenanceRow
  */
-import { DEFAULT_ORB_CONFIG, findAspects, subjectsFrom, type Aspect, type OrbConfig } from '../astrology/aspects.js';
+import { DEFAULT_ORB_CONFIG, findAspects, subjectsFrom, type Aspect } from '../astrology/aspects.js';
 import { bodyByKey, bodyById, type BodyCategory } from '../astrology/bodies.js';
 import type { EssentialDignities } from '../astrology/dignities.js';
 import { DEFAULT_RULERSHIP_CHOICE, essentialDignitiesFor } from '../astrology/rulership.js';
@@ -79,7 +79,6 @@ export async function computeHarmonic(
   n: number,
   provider: EphemerisProvider,
   options: ChartCalculationOptions = {},
-  orbConfig?: OrbConfig,
 ): Promise<HarmonicData> {
   if (!Number.isInteger(n) || n < 1) throw new Error(`harmonic number must be a positive integer, got ${String(n)}`);
 
@@ -91,7 +90,7 @@ export async function computeHarmonic(
   const eligiblePositions = positions.filter((position) => isAspectParticipant(position.body, options.aspectsTo));
   const aspects: readonly Aspect[] = findAspects(
     subjectsFrom(eligiblePositions, categoryOf),
-    orbConfig ?? DEFAULT_ORB_CONFIG,
+    options.orbConfig ?? DEFAULT_ORB_CONFIG,
   );
 
   const dignities = new Map<BodyId, EssentialDignities>(

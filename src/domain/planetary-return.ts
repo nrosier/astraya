@@ -37,6 +37,8 @@ function categoryOf(body: BodyId): BodyCategory {
 }
 
 export interface PlanetaryReturnOptions {
+  /** The orbs the cross-chart aspects are found with (#590); the Extended settings' orbs when a chart is drawn from them. */
+  readonly orbConfig?: OrbConfig;
   readonly place?: GeoPosition;
   readonly houseSystem?: HouseSystem;
   readonly zodiac?: Zodiac;
@@ -68,7 +70,6 @@ export async function computePlanetaryReturn(
   searchFromJd: JulianDayUT,
   provider: EphemerisProvider,
   options: PlanetaryReturnOptions = {},
-  orbConfig?: OrbConfig,
 ): Promise<PlanetaryReturnData> {
   const resolved = resolveMoment(natalMoment);
   const natalJd = await julianDayFor(provider, resolved);
@@ -104,7 +105,7 @@ export async function computePlanetaryReturn(
   const contacts = findCrossAspects(
     subjectsFrom(positions, categoryOf),
     fixedSubjects(natalPositions, categoryOf),
-    orbConfig,
+    options.orbConfig,
   );
 
   return { body, natalJd, returnJd, place, positions, houses, contacts };

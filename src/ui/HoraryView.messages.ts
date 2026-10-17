@@ -36,7 +36,10 @@ const en = {
   notRadical: (count: number) =>
     `${String(count)} ${count === 1 ? 'consideration applies' : 'considerations apply'}. Traditionally the chart should then not be judged, or judged only with great care.`,
   applies: 'Applies',
+  appliesSoftened: 'Applies, but weighs less',
   clear: 'Clear',
+  radicalWithSoftened:
+    'Only a softened consideration applies: Lilly says a void Moon matters less in Taurus, Cancer, Sagittarius and Pisces, so the chart is still fit to be judged.',
   judgmentHeading: 'Judgment toolkit',
   significators: (querent: string, quesited: string, house: number) =>
     `Querent: ${querent}. Quesited (house ${String(house)}): ${quesited}.`,
@@ -67,7 +70,8 @@ const en = {
     },
     'moon-void-of-course': {
       label: 'Moon void of course',
-      explanation: 'The Moon makes no further major aspect before leaving its sign: nothing will come of the matter.',
+      explanation:
+        'The Moon makes no further major aspect before leaving its sign: nothing will come of the matter. In Taurus, Cancer, Sagittarius and Pisces Lilly says it matters less, because the Moon is not much impeded there.',
     },
     'moon-via-combusta': {
       label: 'Moon in the Via Combusta',
@@ -114,7 +118,10 @@ const nl: typeof en = {
   notRadical: (count: number) =>
     `${String(count)} ${count === 1 ? 'overweging is van toepassing' : 'overwegingen zijn van toepassing'}. Traditioneel moet de horoscoop dan niet worden beoordeeld, of alleen met grote zorg.`,
   applies: 'Van toepassing',
+  appliesSoftened: 'Van toepassing, maar weegt minder',
   clear: 'Niet van toepassing',
+  radicalWithSoftened:
+    'Alleen een verzwakte overweging is van toepassing: volgens Lilly telt een lege Maan minder in Stier, Kreeft, Boogschutter en Vissen, dus de horoscoop is nog steeds geschikt om te beoordelen.',
   judgmentHeading: 'Oordeelhulpmiddel',
   significators: (querent: string, quesited: string, house: number) =>
     `Vragensteller: ${querent}. Gevraagde zaak (huis ${String(house)}): ${quesited}.`,
@@ -146,7 +153,8 @@ const nl: typeof en = {
     },
     'moon-void-of-course': {
       label: 'Maan zonder koers',
-      explanation: 'De Maan maakt geen hoofdaspect meer voordat ze haar teken verlaat: er komt niets van de zaak.',
+      explanation:
+        'De Maan maakt geen hoofdaspect meer voordat ze haar teken verlaat: er komt niets van de zaak. In Stier, Kreeft, Boogschutter en Vissen telt het volgens Lilly minder, omdat de Maan daar niet veel gehinderd wordt.',
     },
     'moon-via-combusta': {
       label: 'Maan in de Via Combusta',

@@ -42,6 +42,8 @@ import { SortableTable } from './SortableTable.js';
 import type { TableColumn } from './table-sort.js';
 import { formatFixed } from './format.js';
 import { deriveExportFilename } from '../domain/export-filename.js';
+import { useExtendedSettings } from './extended-settings-store.js';
+import { orbsOf } from '../chart/extended-settings.js';
 
 type Load =
   | { readonly kind: 'idle' }
@@ -102,6 +104,9 @@ export function HarmonicView({
   const { provider } = useEphemerisProvider();
   const [load, setLoad] = useState<Load>({ kind: 'idle' });
   const customPointsKey = JSON.stringify(person?.customPoints ?? []);
+  // The aspects use the device's orbs (#590), as the natal chart does.
+  const [extendedSettings] = useExtendedSettings();
+  const orbsKey = JSON.stringify(extendedSettings.orbScalePercent) + JSON.stringify(extendedSettings.orbRules ?? null);
 
   useEffect(() => {
     if (person?.moment === undefined || provider === undefined || !nValid) {
@@ -114,12 +119,10 @@ export function HarmonicView({
 
     void (async () => {
       try {
-        const data: HarmonicData = await computeHarmonic(
-          moment,
-          n,
-          provider,
-          person.customPoints === undefined ? {} : { customPoints: person.customPoints },
-        );
+        const data: HarmonicData = await computeHarmonic(moment, n, provider, {
+          ...orbsOf(extendedSettings),
+          ...(person.customPoints === undefined ? {} : { customPoints: person.customPoints }),
+        });
         if (!effect.cancelled)
           setLoad({ kind: 'ready', data: data.harmonic, provenance: harmonicPositionProvenance(data) });
       } catch (error) {
@@ -131,7 +134,7 @@ export function HarmonicView({
     return () => {
       effect.cancelled = true;
     };
-  }, [momentKey(person?.moment), provider, n, nValid, customPointsKey]);
+  }, [momentKey(person?.moment), provider, n, nValid, customPointsKey, orbsKey]);
 
   if (person === undefined) {
     return <PersonNotFound />;

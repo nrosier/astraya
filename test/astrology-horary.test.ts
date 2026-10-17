@@ -72,6 +72,77 @@ describe('horaryConsiderations (#406)', () => {
     expect(applying({ moonIsVoid: false })).toEqual([]);
   });
 
+  // Lilly, Christian Astrology (1647), Book II aphorism 9 (p. 299): a void Moon matters less in Taurus, Cancer, Sagittarius, Pisces.
+  describe('a void Moon in the signs where Lilly says it matters less', () => {
+    const signStart = (index: number): number => index * 30 + 15; // the middle of the sign, clear of any boundary
+    const TAURUS = 1;
+    const CANCER = 3;
+    const SAGITTARIUS = 8;
+    const PISCES = 11;
+    const voidConsideration = (moonLongitude: number): { applies: boolean; softened: boolean } | undefined =>
+      horaryConsiderations({ ...BASE, moonLongitude, moonIsVoid: true }).find((c) => c.key === 'moon-void-of-course');
+
+    it('still applies, but is softened, in Taurus, Cancer, Sagittarius and Pisces', () => {
+      for (const sign of [TAURUS, CANCER, SAGITTARIUS, PISCES]) {
+        expect(voidConsideration(signStart(sign)), `sign ${String(sign)}`).toEqual({
+          key: 'moon-void-of-course',
+          applies: true,
+          softened: true,
+        });
+      }
+    });
+
+    it('is not softened in any other sign', () => {
+      for (const sign of [0, 2, 4, 5, 6, 7, 9, 10]) {
+        expect(voidConsideration(signStart(sign))?.softened, `sign ${String(sign)}`).toBe(false);
+      }
+    });
+
+    it('keeps the chart radical when only the softened void Moon applies', () => {
+      const considerations = horaryConsiderations({ ...BASE, moonLongitude: signStart(TAURUS), moonIsVoid: true });
+      expect(applying({ moonLongitude: signStart(TAURUS), moonIsVoid: true })).toEqual(['moon-void-of-course']);
+      expect(isRadical(considerations)).toBe(true);
+    });
+
+    it('makes the chart not radical for a void Moon elsewhere, and for a softened one with another caution', () => {
+      expect(isRadical(horaryConsiderations({ ...BASE, moonLongitude: signStart(4), moonIsVoid: true }))).toBe(false);
+      expect(
+        isRadical(
+          horaryConsiderations({ ...BASE, moonLongitude: signStart(TAURUS), moonIsVoid: true, saturnHouse: 7 }),
+        ),
+      ).toBe(false);
+    });
+
+    it('is never softened when the Moon is not void', () => {
+      const all = horaryConsiderations({ ...BASE, moonLongitude: signStart(TAURUS), moonIsVoid: false });
+      expect(all.find((c) => c.key === 'moon-void-of-course')).toEqual({
+        key: 'moon-void-of-course',
+        applies: false,
+        softened: false,
+      });
+    });
+
+    it('softens by the sign the Moon is in, with a longitude outside 0-360 wrapped first', () => {
+      expect(voidConsideration(signStart(TAURUS) + 360)?.softened).toBe(true);
+      expect(voidConsideration(signStart(TAURUS) - 360)?.softened).toBe(true);
+    });
+  });
+
+  // Lilly, Book I p. 122: "not safe to judge when the Moon is in the later degrees of a Signe, especially in Gemini,
+  // Scorpio or Capricorn". He gives no threshold, so Astraya does not check it (decision `moon in the later degrees`).
+  it('does not flag the Moon in the last degrees of a sign, because Lilly gives no threshold for it', () => {
+    // Gemini, Scorpio and Capricorn are the signs Lilly names; Libra's last 15 degrees are the Via Combusta, which is its own rule.
+    for (const sign of [2, 7, 9]) {
+      for (const degree of [20, 27, 29.9]) {
+        expect(
+          applying({ moonLongitude: sign * 30 + degree }),
+          `sign ${String(sign)} degree ${String(degree)}`,
+        ).toEqual([]);
+      }
+    }
+    expect(applying({ moonLongitude: 6 * 30 + 29 })).toEqual(['moon-via-combusta']);
+  });
+
   it('flags Saturn in the seventh house only', () => {
     expect(applying({ saturnHouse: 7 })).toEqual(['saturn-in-seventh']);
     for (const house of [1, 2, 6, 8, 12]) expect(applying({ saturnHouse: house })).toEqual([]);
@@ -135,6 +206,11 @@ describe('computeHoraryChart (#406)', () => {
       const asc = chart.data.houses.ascendant % 30;
       const moon = chart.data.positions.find((p) => p.body === 1)?.longitude ?? Number.NaN;
       const byKey = new Map(chart.considerations.map((c) => [c.key, c.applies]));
+      const voidConsideration = chart.considerations.find((c) => c.key === 'moon-void-of-course');
+      // Softened exactly when the Moon is void in Taurus, Cancer, Sagittarius or Pisces.
+      expect(voidConsideration?.softened).toBe(
+        chart.voidOfCourse.isVoid && [1, 3, 8, 11].includes(Math.floor(moon / 30)),
+      );
       expect(byKey.get('ascendant-too-early')).toBe(asc < 3);
       expect(byKey.get('ascendant-too-late')).toBe(asc > 27);
       expect(byKey.get('moon-via-combusta')).toBe(moon >= 195 && moon < 225);

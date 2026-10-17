@@ -164,6 +164,16 @@ const en = {
     'tight-v1': 'Tight',
     'wide-v1': 'Wide',
   },
+  citedOrbPresetOptions: {
+    'lilly-1647-first-v1': 'Lilly (1647), first column',
+    'lilly-1647-second-v1': 'Lilly (1647), second column',
+  },
+  citedOrbPresetNotes: {
+    'lilly-1647-first-v1':
+      'William Lilly’s own orbs per planet, Christian Astrology (1647), Book I, p. 107: Saturn 10°, Jupiter 12°, Mars 7°30′, Sun 17°, Venus 8°, Mercury 7°, Moon 12°30′. Two planets are in aspect within half of each orb added together. Uranus, Neptune and Pluto have no orb of his, so they use the standard tiers.',
+    'lilly-1647-second-v1':
+      'Lilly’s second set, same page: Saturn 9°, Jupiter 9°, Mars 7°, Sun 15°, Venus 7°, Mercury 7°, Moon 12°. Two planets are in aspect within half of each orb added together. Uranus, Neptune and Pluto use the standard tiers.',
+  },
   orbProfileNotes: {
     custom: 'Your own orb scale, set with the slider below.',
     'standard-v1': "This app's long-standing default tiers, unscaled.",
@@ -174,6 +184,8 @@ const en = {
   orbScaleAriaLabel: 'Orb scale',
   orbPreview: (major: string, majorLuminary: string, sextile: string, sextileLuminary: string, minor: string) =>
     `Orbs now: major aspects ${major}° (${majorLuminary}° with a luminary), sextile ${sextile}° (${sextileLuminary}°), minor aspects ${minor}°.`,
+  orbRulesInvalid:
+    'Check the orb rules: each orb must be a number from 0° to 30°. Apply is unavailable until they are.',
   minorAspectsLegend: 'Minor aspects',
 
   wheelLegend: 'Wheel colours',
@@ -191,6 +203,7 @@ const en = {
     tropical: 'Tropical',
     sidereal: (ayanamsa: string) => `Sidereal (${ayanamsa})`,
     orbs: (percent: string) => `Orbs ${percent}%`,
+    orbRules: 'Own orb rules',
     boundsScheme: (scheme: string) => `${scheme} bounds`,
     minorAspects: (count: string) => `${count} minor aspects`,
     objectPolicies: 'Object visibility customized',
@@ -359,6 +372,16 @@ const nl: typeof en = {
     'tight-v1': 'Strak',
     'wide-v1': 'Ruim',
   },
+  citedOrbPresetOptions: {
+    'lilly-1647-first-v1': 'Lilly (1647), eerste kolom',
+    'lilly-1647-second-v1': 'Lilly (1647), tweede kolom',
+  },
+  citedOrbPresetNotes: {
+    'lilly-1647-first-v1':
+      'De eigen orbissen per planeet van William Lilly, Christian Astrology (1647), Boek I, p. 107: Saturnus 10°, Jupiter 12°, Mars 7°30′, Zon 17°, Venus 8°, Mercurius 7°, Maan 12°30′. Twee planeten staan in aspect binnen de helft van elke orbis bij elkaar opgeteld. Uranus, Neptunus en Pluto hebben geen orbis van hem, dus gebruiken ze de standaardtiers.',
+    'lilly-1647-second-v1':
+      'Lilly’s tweede reeks, zelfde pagina: Saturnus 9°, Jupiter 9°, Mars 7°, Zon 15°, Venus 7°, Mercurius 7°, Maan 12°. Twee planeten staan in aspect binnen de helft van elke orbis bij elkaar opgeteld. Uranus, Neptunus en Pluto gebruiken de standaardtiers.',
+  },
   orbProfileNotes: {
     custom: 'Je eigen orb-schaal, ingesteld met de schuifregelaar hieronder.',
     'standard-v1': 'De langlopende standaardtiers van deze app, ongeschaald.',
@@ -369,6 +392,8 @@ const nl: typeof en = {
   orbScaleAriaLabel: 'Orb-schaal',
   orbPreview: (major: string, majorLuminary: string, sextile: string, sextileLuminary: string, minor: string) =>
     `Orbs nu: hoofdaspecten ${major}° (${majorLuminary}° met een lichtgever), sextiel ${sextile}° (${sextileLuminary}°), kleine aspecten ${minor}°.`,
+  orbRulesInvalid:
+    'Controleer de orbisregels: elke orbis moet een getal van 0° tot 30° zijn. Toepassen kan pas als ze kloppen.',
   minorAspectsLegend: 'Kleine aspecten',
 
   wheelLegend: 'Wielkleuren',
@@ -386,6 +411,7 @@ const nl: typeof en = {
     tropical: 'Tropisch',
     sidereal: (ayanamsa: string) => `Siderisch (${ayanamsa})`,
     orbs: (percent: string) => `Orbs ${percent}%`,
+    orbRules: 'Eigen orbisregels',
     boundsScheme: (scheme: string) => `${scheme} bounds`,
     minorAspects: (count: string) => `${count} kleine aspecten`,
     objectPolicies: 'Zichtbaarheid van objecten aangepast',

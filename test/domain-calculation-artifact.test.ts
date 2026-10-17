@@ -7,6 +7,7 @@
 import { createHash } from 'node:crypto';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { DEFAULT_RULERSHIP_CHOICE } from '../src/astrology/rulership.js';
+import { DEFAULT_ORB_CONFIG } from '../src/astrology/aspects.js';
 import { DEFAULT_EXTENDED_SETTINGS, toChartCalculationOptions } from '../src/chart/extended-settings.js';
 import {
   buildCalculationArtifact,
@@ -17,7 +18,6 @@ import {
   verifyCalculationArtifact,
   type CalculationArtifact,
 } from '../src/domain/calculation-artifact.js';
-import { SYNASTRY_DEFAULT_ORB_CONFIG } from '../src/astrology/orb-profiles.js';
 import { TRANSIT_ORB_CONFIG } from '../src/astrology/transit-importance.js';
 import {
   DEFAULT_PRIMARY_DIRECTION_ORB,
@@ -343,22 +343,19 @@ describe('technique artifacts and verification (#582)', () => {
     expect(canonicalJson(await computeChartData(PERSON, engine, options))).toBe(
       canonicalJson(await computeChartData(PERSON, engine, {})),
     );
-    expect(canonicalJson(await computeTransit(PERSON, TARGET_JD, engine, options, TRANSIT_ORB_CONFIG))).toBe(
-      canonicalJson(await computeTransit(PERSON, TARGET_JD, engine, {}, TRANSIT_ORB_CONFIG)),
-    );
+    expect(
+      canonicalJson(await computeTransit(PERSON, TARGET_JD, engine, { ...options, orbConfig: TRANSIT_ORB_CONFIG })),
+    ).toBe(canonicalJson(await computeTransit(PERSON, TARGET_JD, engine, { orbConfig: TRANSIT_ORB_CONFIG })));
     expect(canonicalJson(await computeSynastry(PERSON, PARTNER, engine, options))).toBe(
       canonicalJson(await computeSynastry(PERSON, PARTNER, engine)),
     );
   }, 60_000);
 
   async function transitArtifact(targetJd = TARGET_JD) {
-    const data = await computeTransit(
-      PERSON,
-      targetJd,
-      engine,
-      snapshotCalculationOptions(DEFAULTS),
-      TRANSIT_ORB_CONFIG,
-    );
+    const data = await computeTransit(PERSON, targetJd, engine, {
+      ...snapshotCalculationOptions(DEFAULTS),
+      orbConfig: TRANSIT_ORB_CONFIG,
+    });
     return buildTechniqueArtifact(
       DEFAULTS,
       PERSON,
@@ -369,17 +366,14 @@ describe('technique artifacts and verification (#582)', () => {
     );
   }
   async function synastryArtifact(partner = PARTNER) {
-    const data = await computeSynastry(
-      PERSON,
-      partner,
-      engine,
-      snapshotCalculationOptions(DEFAULTS),
-      SYNASTRY_DEFAULT_ORB_CONFIG,
-    );
+    const data = await computeSynastry(PERSON, partner, engine, {
+      ...snapshotCalculationOptions(DEFAULTS),
+      orbConfig: DEFAULT_ORB_CONFIG,
+    });
     return buildTechniqueArtifact(
       DEFAULTS,
       PERSON,
-      { kind: 'synastry', partner, orbConfig: SYNASTRY_DEFAULT_ORB_CONFIG },
+      { kind: 'synastry', partner, orbConfig: DEFAULT_ORB_CONFIG },
       data.chartA,
       data,
       INPUTS,
@@ -403,6 +397,19 @@ describe('technique artifacts and verification (#582)', () => {
       expect(await verifyCalculationArtifact(artifact, engine, INPUTS)).toEqual({ status: 'verified' });
     }
   }, 120_000);
+
+  it('a synastry artifact records the orbs given, so replay tightens them once and still verifies (#590)', async () => {
+    const artifact = await synastryArtifact();
+    expect(artifact.technique).toMatchObject({ kind: 'synastry', orbConfig: DEFAULT_ORB_CONFIG });
+    expect(await verifyCalculationArtifact(artifact, engine, INPUTS)).toEqual({ status: 'verified' });
+    // Recording the already-tightened result instead would make replay tighten twice and not match.
+    const tightened = await computeSynastry(PERSON, PARTNER, engine, { orbConfig: DEFAULT_ORB_CONFIG });
+    const wrong = {
+      ...artifact,
+      technique: { kind: 'synastry' as const, partner: PARTNER, orbConfig: tightened.orbConfig },
+    };
+    expect((await verifyCalculationArtifact(wrong, engine, INPUTS)).status).not.toBe('verified');
+  }, 60_000);
 
   it('verifies an artifact that went through JSON, as one restored from an export would', async () => {
     const stored = JSON.parse(JSON.stringify(await synastryArtifact())) as CalculationArtifact;
@@ -458,4 +465,59 @@ describe('technique artifacts and verification (#582)', () => {
       current: INPUTS.swephVersion,
     });
   }, 60_000);
+});
+
+describe('the orb tiers a natal artifact was computed with (#590)', () => {
+  it('records the exact effective OrbConfig on a natal artifact', async () => {
+    const artifact = await artifactFor(
+      PERSON,
+      buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE),
+    );
+    expect(artifact.provenance.orbs).toBeDefined();
+    expect(artifact.provenance.orbs?.majorOrb).toEqual({ base: 7, luminaryBonus: 3 });
+    expect(artifact.provenance.orbs?.scalePercent).toBe(0);
+  });
+
+  it('records the custom rules a snapshot carries, so they are inspectable in the provenance', async () => {
+    const settings = {
+      ...DEFAULT_EXTENDED_SETTINGS,
+      orbRules: { aspectOrbs: { trine: { base: 6, luminaryBonus: 2 } }, bodyOrbs: { venus: 4, mars: 3 } },
+    };
+    const artifact = await artifactFor(PERSON, buildCalculationSnapshot(settings, DEFAULT_RULERSHIP_CHOICE));
+    expect(artifact.provenance.orbs?.aspectOrbs).toEqual({ trine: { base: 6, luminaryBonus: 2 } });
+    expect(artifact.provenance.orbs?.bodyOrbs).toEqual({ venus: 4, mars: 3 });
+  });
+
+  it('an artifact written before orbs were recorded still verifies, because nothing about it is hashed differently', async () => {
+    const current = await artifactFor(
+      PERSON,
+      buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE),
+    );
+    const legacy: CalculationArtifact = {
+      ...current,
+      provenance: { ...current.provenance, orbs: undefined },
+    };
+    expect(legacy.fingerprint.inputHash).toBe(current.fingerprint.inputHash);
+    expect(await verifyCalculationArtifact(legacy, engine, INPUTS)).toEqual({ status: 'verified' });
+  });
+
+  it('reports a natal artifact as changed, naming the orb tiers, when a default tier changed since it was recorded', async () => {
+    const natal = await artifactFor(
+      PERSON,
+      buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE),
+    );
+    // The record says the major tier was 12° when it was made; this runtime's default is 7°. Its
+    // inputs are intact, so only the recorded orbs and the result hash disagree with this runtime.
+    const fromOlderDefaults: CalculationArtifact = {
+      ...natal,
+      provenance: {
+        ...natal.provenance,
+        orbs: { ...DEFAULT_ORB_CONFIG, majorOrb: { base: 12, luminaryBonus: 3 } },
+      },
+      fingerprint: { ...natal.fingerprint, resultHash: '0'.repeat(64) },
+    };
+    const result = await verifyCalculationArtifact(fromOlderDefaults, engine, INPUTS);
+    if (result.status !== 'changed') throw new Error(`expected changed, got ${result.status}`);
+    expect(result.differences.map((d) => d.field)).toEqual(['orbs']);
+  });
 });

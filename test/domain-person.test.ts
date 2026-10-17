@@ -1,6 +1,6 @@
 /** Tests persisted person fields that require strict reader validation. */
 import { describe, expect, it } from 'vitest';
-import { buildPerson, readCustomPoints, readRelocationPlaces } from '../src/domain/person.js';
+import { buildPerson, PERSON_FIELDS, readCustomPoints, readRelocationPlaces } from '../src/domain/person.js';
 
 describe('saved relocation places (#559)', () => {
   it('materialises valid named locations from the person register', () => {
@@ -68,5 +68,13 @@ describe('custom formula points (#566)', () => {
         { id: 'two', name: 'point', formula: 'sun - moon' },
       ]),
     ).toBeUndefined();
+  });
+});
+
+describe('the person record and the retired per-person orb profile (#590)', () => {
+  it('ignores an orb profile stored by an earlier build: orbs are the device’s, not the person’s', () => {
+    const person = buildPerson('p-test', new Map([['orbProfile', { name: 'old', basedOn: 'standard-v1' }]]));
+    expect(PERSON_FIELDS).not.toContain('orbProfile');
+    expect('orbProfile' in person).toBe(false);
   });
 });

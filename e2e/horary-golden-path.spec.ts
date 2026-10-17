@@ -95,3 +95,24 @@ test('the horary screen has no automatically detectable accessibility violations
   const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
   expect(results.violations).toEqual([]);
 });
+
+test('a void Moon in a sign where Lilly says it matters less is shown, but the chart is still fit to be judged', async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+
+  await gotoAndSettle(page, `${baseUrl}/#/explore/horary`);
+  // 4 March 2024, 18:00 London: the Moon is void of course in Cancer, with no other caution (found against the real ephemeris).
+  await page.getByLabel('Date the question was asked').fill('2024-03-04');
+  await page.getByLabel('Local time').fill('18:00');
+  await page.getByLabel('Latitude', { exact: true }).fill('51.5072');
+  await page.getByLabel('Longitude', { exact: true }).fill('-0.1276');
+  await page.getByRole('button', { name: 'Cast chart', exact: true }).click();
+
+  const voidItem = page.locator('.horary-considerations li', { hasText: 'Moon void of course' });
+  await expect(voidItem).toBeVisible({ timeout: 60_000 });
+  await expect(voidItem).toContainText('Applies, but weighs less');
+  await expect(voidItem).toContainText('Taurus, Cancer, Sagittarius and Pisces');
+  await expect(page.locator('.horary-verdict')).toContainText('still fit to be judged');
+  await expect(page.locator('.horary-verdict')).not.toHaveClass(/warning/);
+});

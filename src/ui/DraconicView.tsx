@@ -29,6 +29,8 @@ import { PersonNotFound } from './PersonNotFound.js';
 import { useStoreState } from './store-context.js';
 import type { ChartData } from '../domain/chart-compute.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
+import { useExtendedSettings } from './extended-settings-store.js';
+import { orbsOf } from '../chart/extended-settings.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -58,6 +60,9 @@ export function DraconicView({
   const { provider } = useEphemerisProvider();
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
   const customPointsKey = JSON.stringify(person?.customPoints ?? []);
+  // The aspects use the device's orbs (#590), as the natal chart does.
+  const [extendedSettings] = useExtendedSettings();
+  const orbsKey = JSON.stringify(extendedSettings.orbScalePercent) + JSON.stringify(extendedSettings.orbRules ?? null);
 
   useEffect(() => {
     if (person?.moment === undefined || provider === undefined) return undefined;
@@ -67,11 +72,10 @@ export function DraconicView({
 
     void (async () => {
       try {
-        const data: DraconicData = await computeDraconic(
-          moment,
-          provider,
-          person.customPoints === undefined ? {} : { customPoints: person.customPoints },
-        );
+        const data: DraconicData = await computeDraconic(moment, provider, {
+          ...orbsOf(extendedSettings),
+          ...(person.customPoints === undefined ? {} : { customPoints: person.customPoints }),
+        });
         if (!effect.cancelled) setLoad({ kind: 'ready', data: data.draconic });
       } catch (error) {
         if (!effect.cancelled)
@@ -82,7 +86,7 @@ export function DraconicView({
     return () => {
       effect.cancelled = true;
     };
-  }, [momentKey(person?.moment), provider, customPointsKey]);
+  }, [momentKey(person?.moment), provider, customPointsKey, orbsKey]);
 
   if (person === undefined) {
     return <PersonNotFound />;

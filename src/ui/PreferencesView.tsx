@@ -57,6 +57,8 @@ import { readDefaultCalculationProfile } from './default-calculation-profile.js'
 import { ExtendedSettingsPanel } from './ExtendedSettingsPanel.js';
 import { useExtendedSettings } from './extended-settings-store.js';
 import { RulershipSetting } from './RulershipSetting.js';
+import { OrbLibraryEditor } from './OrbLibraryEditor.js';
+import { useOrbContextSource, useOrbLibrary } from './orb-library-store.js';
 import { useRulershipChoice } from './rulership-setting.js';
 import { sharedMessages } from './shared.messages.js';
 import { SymbolSetting } from './SymbolSetting.js';
@@ -88,6 +90,8 @@ export function PreferencesView({
   const { provider } = useEphemerisProvider();
   const [rulership] = useRulershipChoice();
   const [extendedSettings, setExtendedSettings] = useExtendedSettings();
+  const orbLibrary = useOrbLibrary();
+  const orbSources = useOrbContextSource();
   const [symbolClass] = useSymbolClass();
   const [status, setStatus] = useState<ExportStatus | undefined>(undefined);
   const [preview, setPreview] = useState<RestorePreview | undefined>(undefined);
@@ -272,6 +276,8 @@ export function PreferencesView({
       </h2>
       <p>{t.rulersSubtitle}</p>
       <RulershipSetting />
+
+      <OrbLibraryEditor profiles={orbLibrary.profiles} sources={orbSources} />
 
       {/* The chart-setup editor (#563): the same ExtendedSettingsPanel every chart screen
           already uses, reachable here as its own dedicated entry point rather than only hidden

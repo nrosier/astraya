@@ -14,10 +14,17 @@
  * @module chart/extended-settings
  * @purpose Defines the Extended settings panel's single settings bag (`ExtendedSettings`) and the pure split functions that derive each of its three consumers' own option shapes from it.
  * @conventions One settings object is split three ways rather than kept as three separate pieces of UI state: `toChartCalculationOptions` feeds `computeChartData`, `toPointVisibilityOptions` feeds `chart-tables.ts`'s display filtering, and `toSignWedgeStyle` feeds the wheel's cosmetic fill — keeping the split here means neither the panel component nor `ChartView` needs to know any destination's shape.
- * @exports DEFAULT_EXTENDED_SETTINGS, toChartCalculationOptions, toPointVisibilityOptions, toSignWedgeStyle; ExtendedSettings type.
+ * @exports DEFAULT_EXTENDED_SETTINGS, orbsOf, withOrbsOf, settingsForContext, toChartCalculationOptions, toPointVisibilityOptions, toSignWedgeStyle; ExtendedSettings type.
  */
-import { DEFAULT_ORB_CONFIG, type OrbConfig } from '../astrology/aspects.js';
+import { DEFAULT_ORB_CONFIG, type OrbConfig, type OrbRule } from '../astrology/aspects.js';
 import type { BoundsScheme } from '../astrology/bounds.js';
+import {
+  CARD_SOURCE,
+  orbSettingsFor,
+  sourceForContext,
+  type OrbContextSource,
+  type OrbLibrary,
+} from '../astrology/orb-library.js';
 import type { ChartCalculationOptions } from '../domain/chart-compute.js';
 import type { PointVisibilityOptions } from '../domain/chart-tables.js';
 import type { Degrees, HouseSystem, Zodiac } from '../ephemeris/types.js';
@@ -37,6 +44,15 @@ export interface ExtendedSettings {
   readonly boundsScheme: BoundsScheme;
   /** Minor-aspect keys to consider; empty means every minor aspect is off. */
   readonly enabledMinorAspects: readonly string[];
+  /**
+   * The practitioner's own per-aspect and per-body orb rules (#590), copied by value into the
+   * settings, so a chart's orbs are fixed by the settings it was drawn with. Absent (the default)
+   * means the tiers apply unchanged.
+   */
+  readonly orbRules?: {
+    readonly aspectOrbs?: Readonly<Record<string, OrbRule>>;
+    readonly bodyOrbs?: Readonly<Record<string, number>>;
+  };
   readonly lilithVariant: 'mean' | 'true' | 'interpolated';
   readonly nodeVariant: 'mean' | 'true';
   /**
@@ -86,12 +102,57 @@ export const DEFAULT_EXTENDED_SETTINGS: ExtendedSettings = {
   rainbowZodiac: false,
 };
 
+/** The orb options the Extended settings put in force (#590): the scale and the practitioner's own rules, always concrete. */
+export function orbsOf(settings: ExtendedSettings): { readonly orbConfig: OrbConfig } {
+  return { orbConfig: toChartCalculationOptions(settings).orbConfig ?? DEFAULT_ORB_CONFIG };
+}
+
+/**
+ * `settings` with only its orb fields (#590) taken from `orbs`: the scale and the practitioner's own rules.
+ * A screen whose footer names fixed engine defaults for everything else uses this, so the orbs it
+ * calculates with are the device's and the rest of what it says stays true.
+ */
+export function withOrbsOf(settings: ExtendedSettings, orbs: ExtendedSettings): ExtendedSettings {
+  const copy = { ...settings, orbScalePercent: orbs.orbScalePercent };
+  delete copy.orbRules;
+  return orbs.orbRules === undefined ? copy : { ...copy, orbRules: orbs.orbRules };
+}
+
+/**
+ * The settings a chart context calculates with, given the device's orb library and per-context choice (#590).
+ * With no choice made (the default), this is `settings` unchanged. When the context names a profile, that
+ * profile's scale and rules replace the settings' orbs, copied by value so the chart records what it used.
+ */
+export function settingsForContext(
+  settings: ExtendedSettings,
+  context: keyof OrbContextSource,
+  library: OrbLibrary,
+  sources: OrbContextSource,
+): ExtendedSettings {
+  const choice = sourceForContext(library, sources, context);
+  if (choice === CARD_SOURCE) return settings;
+  const resolved = orbSettingsFor(library, choice, { scalePercent: settings.orbScalePercent });
+  const copy: ExtendedSettings = { ...settings, orbScalePercent: resolved.scalePercent };
+  delete (copy as { orbRules?: ExtendedSettings['orbRules'] }).orbRules;
+  const aspectOrbs = resolved.aspectOrbs ?? {};
+  const bodyOrbs = resolved.bodyOrbs ?? {};
+  const hasAspects = Object.keys(aspectOrbs).length > 0;
+  const hasBodies = Object.keys(bodyOrbs).length > 0;
+  if (!hasAspects && !hasBodies) return copy;
+  return {
+    ...copy,
+    orbRules: { ...(hasAspects ? { aspectOrbs } : {}), ...(hasBodies ? { bodyOrbs } : {}) },
+  };
+}
+
 /** The half of `ExtendedSettings` that changes what `computeChartData` returns. */
 export function toChartCalculationOptions(settings: ExtendedSettings): ChartCalculationOptions {
   const orbConfig: OrbConfig = {
     ...DEFAULT_ORB_CONFIG,
     scalePercent: settings.orbScalePercent,
     enabledMinorAspects: settings.enabledMinorAspects,
+    ...(settings.orbRules?.aspectOrbs === undefined ? {} : { aspectOrbs: settings.orbRules.aspectOrbs }),
+    ...(settings.orbRules?.bodyOrbs === undefined ? {} : { bodyOrbs: settings.orbRules.bodyOrbs }),
   };
   const aspectsTo = Object.fromEntries(
     OBJECT_KEYS.map((key) => [key, settings.objectPolicies[key].aspectParticipant]),

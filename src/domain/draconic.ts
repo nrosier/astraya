@@ -15,7 +15,7 @@
  * @conventions Synthetic chart, not a comparison, so reuses the single-chart engine (`findAspects`, `essentialDignitiesFor`, `sectOf`, Arabic parts) on the transformed positions; unlike harmonic charts, houses are carried through from the natal chart unchanged, so sect/Arabic parts use the natal Ascendant.
  * @exports computeDraconic, DraconicData
  */
-import { DEFAULT_ORB_CONFIG, findAspects, subjectsFrom, type Aspect, type OrbConfig } from '../astrology/aspects.js';
+import { DEFAULT_ORB_CONFIG, findAspects, subjectsFrom, type Aspect } from '../astrology/aspects.js';
 import { bodyByKey, bodyById, type BodyCategory } from '../astrology/bodies.js';
 import type { EssentialDignities } from '../astrology/dignities.js';
 import { DEFAULT_RULERSHIP_CHOICE, essentialDignitiesFor } from '../astrology/rulership.js';
@@ -47,7 +47,6 @@ export async function computeDraconic(
   moment: BirthMomentInput,
   provider: EphemerisProvider,
   options: ChartCalculationOptions = {},
-  orbConfig?: OrbConfig,
 ): Promise<DraconicData> {
   const natal = await computeChartData(moment, provider, options);
 
@@ -64,7 +63,7 @@ export async function computeDraconic(
   const eligiblePositions = positions.filter((position) => isAspectParticipant(position.body, options.aspectsTo));
   const aspects: readonly Aspect[] = findAspects(
     subjectsFrom(eligiblePositions, categoryOf),
-    orbConfig ?? DEFAULT_ORB_CONFIG,
+    options.orbConfig ?? DEFAULT_ORB_CONFIG,
   );
 
   const dignities = new Map<BodyId, EssentialDignities>(

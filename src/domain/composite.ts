@@ -26,7 +26,7 @@
  * @conventions Every body's position is the near-arc midpoint (`midpointOf`, Ebertin's convention: half the shorter arc, not the naive average); houses use the "midpoint of cusps" method rather than the Davison time/space-midpoint method, since there is no single real Julian day to ask the ephemeris for houses; the composite's own aspects/dignities/sect/parts are computed fresh via the single-chart engine.
  * @exports computeComposite, CompositeData
  */
-import { DEFAULT_ORB_CONFIG, findAspects, subjectsFrom, type Aspect, type OrbConfig } from '../astrology/aspects.js';
+import { DEFAULT_ORB_CONFIG, findAspects, subjectsFrom, type Aspect } from '../astrology/aspects.js';
 import { bodyByKey, bodyById, type BodyCategory } from '../astrology/bodies.js';
 import type { EssentialDignities } from '../astrology/dignities.js';
 import { DEFAULT_RULERSHIP_CHOICE, essentialDignitiesFor } from '../astrology/rulership.js';
@@ -103,7 +103,6 @@ export async function computeComposite(
   momentB: BirthMomentInput,
   provider: EphemerisProvider,
   options: ChartCalculationOptions = {},
-  orbConfig?: OrbConfig,
 ): Promise<CompositeData> {
   const [chartA, chartB] = await Promise.all([
     computeChartData(momentA, provider, options),
@@ -123,7 +122,7 @@ export async function computeComposite(
   const eligiblePositions = positions.filter((position) => isAspectParticipant(position.body, options.aspectsTo));
   const aspects: readonly Aspect[] = findAspects(
     subjectsFrom(eligiblePositions, categoryOf),
-    orbConfig ?? DEFAULT_ORB_CONFIG,
+    options.orbConfig ?? DEFAULT_ORB_CONFIG,
   );
 
   const dignities = new Map<BodyId, EssentialDignities>(

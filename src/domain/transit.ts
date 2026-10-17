@@ -25,7 +25,14 @@
  * @conventions Uses `subjectsFrom` for the transiting (moving) side and `fixedSubjects` for the natal (reference) side, mirroring `secondary-progression.ts`'s convention with "transiting" standing in for "progressed"; the transiting ring is cast at the natal place, since Astraya has no other recorded place for a saved person; both rings are full `ChartData`, so any single-chart table/wheel/sheet helper works unchanged for either ring.
  * @exports computeTransit, TransitData
  */
-import { findCrossAspects, fixedSubjects, subjectsFrom, type Aspect, type OrbConfig } from '../astrology/aspects.js';
+import {
+  DEFAULT_ORB_CONFIG,
+  findCrossAspects,
+  fixedSubjects,
+  subjectsFrom,
+  type Aspect,
+} from '../astrology/aspects.js';
+import { orbConfigForContext } from '../astrology/orb-profiles.js';
 import { bodyById, type BodyCategory } from '../astrology/bodies.js';
 import {
   computeChartData,
@@ -60,7 +67,6 @@ export async function computeTransit(
   targetJd: JulianDayUT,
   provider: EphemerisProvider,
   options: ChartCalculationOptions = {},
-  orbConfig?: OrbConfig,
 ): Promise<TransitData> {
   const place: GeoPosition = { ...natalMoment.coordinates, altitude: 0 };
   const [natal, transit] = await Promise.all([
@@ -68,10 +74,12 @@ export async function computeTransit(
     computeChartDataAtJd(targetJd, place, provider, options),
   ]);
 
+  // The transit contacts always include the three minor aspects their filter can show (#590), whatever the
+  // chart's own minor-aspect setting is; the chart's own aspects are left as the settings have them.
   const contacts = findCrossAspects(
     subjectsFrom(transit.positions, categoryOf),
     fixedSubjects(natal.positions, categoryOf),
-    orbConfig,
+    orbConfigForContext('transit', options.orbConfig ?? DEFAULT_ORB_CONFIG),
   );
 
   return { natal, transit, contacts };

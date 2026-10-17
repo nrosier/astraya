@@ -33,4 +33,10 @@ describe('changedSettings', () => {
       }),
     ).toBe(false);
   });
+
+  it('names the practitioner’s own orb rules once any are set (#590)', () => {
+    expect(changedSettings({ ...DEFAULT_EXTENDED_SETTINGS, orbRules: { bodyOrbs: { venus: 4 } } })).toEqual([
+      'orbRules',
+    ]);
+  });
 });

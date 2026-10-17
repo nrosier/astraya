@@ -20,10 +20,22 @@
  * @exports PdfTablePlan, PdfChartSectionPlan, PdfTextSectionPlan, PdfFieldsSectionPlan, PdfSectionPlan, PdfPlan, PdfPlanContext, buildPdfPlan
  */
 import { bodyById } from '../astrology/bodies.js';
-import type { RulershipChoice } from '../astrology/rulership.js';
-import { toChartCalculationOptions, type ExtendedSettings } from '../chart/extended-settings.js';
+import { DEFAULT_RULERSHIP_CHOICE, type RulershipChoice } from '../astrology/rulership.js';
+import {
+  DEFAULT_EXTENDED_SETTINGS,
+  toChartCalculationOptions,
+  orbsOf,
+  settingsForContext,
+  withOrbsOf,
+  type ExtendedSettings,
+} from '../chart/extended-settings.js';
+import type { OrbContextSource, OrbLibrary } from '../astrology/orb-library.js';
 import { calculationArtifactIdentity } from '../domain/calculation-artifact.js';
-import { buildCalculationSnapshot } from '../domain/calculation-snapshot.js';
+import {
+  buildCalculationSnapshot,
+  snapshotCalculationOptions,
+  type CalculationSnapshot,
+} from '../domain/calculation-snapshot.js';
 import { buildChartArtifact } from './chart-artifact.js';
 import {
   housesAreDefined,
@@ -96,7 +108,6 @@ import {
   filterTransits,
   rankTransits,
   transitPreset,
-  TRANSIT_ORB_CONFIG,
   type TransitRuleContext,
 } from '../astrology/transit-importance.js';
 import {
@@ -214,6 +225,9 @@ export interface PdfPlanContext {
   readonly corpusFetch?: typeof fetch;
   /** Every stored person, so a synastry/composite section's own `partnerId` can be resolved; absent (or missing the id) if neither section is in the selection. */
   readonly people?: ReadonlyMap<string, Person>;
+  /** The device's named orb profiles and each context's source (#590); absent means the card's orbs everywhere. */
+  readonly orbLibrary?: OrbLibrary;
+  readonly orbSources?: OrbContextSource;
 }
 
 function tablePlanOf<T>(caption: string, columns: readonly TableColumn<T>[], rows: readonly T[]): PdfTablePlan {
@@ -315,8 +329,9 @@ function chartTypeLabel(type: PdfChartSectionOptions['type'], t: typeof pdfExpor
  * exactly (#582), since the PDF must show the chart that page shows:
  * - natal: the Extended settings, the rulers and the person's custom points (`ChartView`)
  * - solar/lunar return: the Extended settings and the rulers (`ReturnView`)
- * - draconic/harmonic/relocated: the custom points only — those views transform the natal
- *   positions rather than reading the Extended settings (`extended-settings-store.ts`)
+ * - draconic/harmonic/relocated: the orbs from the Extended settings (#590) and the custom points.
+ *   These views transform the natal positions, so the house system and zodiac don't come from the
+ *   settings, but their aspects use the same orbs as every other chart.
  */
 export function sectionCalculationOptions(
   type: PdfChartSectionOptions['type'],
@@ -334,7 +349,7 @@ export function sectionCalculationOptions(
     case 'draconic':
     case 'harmonic':
     case 'relocated':
-      return { rulership, ...customPoints };
+      return { rulership, ...orbsOf(settings), ...customPoints };
   }
 }
 
@@ -462,7 +477,8 @@ async function buildSynastrySectionPlan(
   const momentA = person.moment;
   const momentB = partner.moment;
   const st = synastryViewMessages[locale];
-  const data = await computeSynastry(momentA, momentB, provider);
+  const synastryOptions = snapshotCalculationOptions(engineDefaultsWithOrbs(contextSettings(context, 'synastry')));
+  const data = await computeSynastry(momentA, momentB, provider, synastryOptions);
   const nameA = person.displayName || st.personALabel;
   const nameB = partner.displayName || st.personBLabel;
   const heading = `${pt.synastryLabel} — ${nameA} / ${nameB}`;
@@ -577,6 +593,19 @@ async function targetJdOf(asOfDate: string | undefined, provider: EphemerisProvi
   return provider.julianDayFromUtc(y ?? 2000, m ?? 1, d ?? 1, 12, 0, 0);
 }
 
+/**
+ * The engine defaults with the device's orbs (#590): what the Transit and Synastry screens calculate with,
+ * so a PDF section matches the screen it came from.
+ */
+/** The settings a context calculates with, with the device's orb library and source for that context applied (#590). */
+function contextSettings(context: PdfPlanContext, ctx: keyof OrbContextSource): ExtendedSettings {
+  return settingsForContext(context.settings, ctx, context.orbLibrary ?? { profiles: [] }, context.orbSources ?? {});
+}
+
+function engineDefaultsWithOrbs(settings: ExtendedSettings): CalculationSnapshot {
+  return buildCalculationSnapshot(withOrbsOf(DEFAULT_EXTENDED_SETTINGS, settings), DEFAULT_RULERSHIP_CHOICE);
+}
+
 /** The Transits section's own place in the export: `TransitView.tsx`'s bi-wheel and single contacts table, as of a chosen date (#441). */
 async function buildTransitsSectionPlan(
   options: PdfTransitsSectionOptions,
@@ -587,7 +616,8 @@ async function buildTransitsSectionPlan(
   if (person.moment === undefined) throw new Error('this person has no complete birth record');
   const vt = transitViewMessages[locale];
   const targetJd = await targetJdOf(options.asOfDate, provider);
-  const data = await computeTransit(person.moment, targetJd, provider, { rulership }, TRANSIT_ORB_CONFIG);
+  const transitOptions = snapshotCalculationOptions(engineDefaultsWithOrbs(contextSettings(context, 'transit')));
+  const data = await computeTransit(person.moment, targetJd, provider, transitOptions);
   const rules = transitRulesFor(data.natal, rulership, 'daily');
   const filter = transitPreset(options.filterPreset, rules);
   const shown = rankTransits(filterTransits(data.contacts, filter), filter, rules.chartRulerKeys);

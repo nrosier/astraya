@@ -56,6 +56,10 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `PageHeader.tsx` + `PageHeader.messages.ts` — Content-header primitive (#506/#509): page title, optional basis line, and the current screen's own registered exports, replacing the old global "This page" Export submenu. Deps: `./export-registry`, `./use-exclusive-open`.
 - `PdfExportBuilder.tsx` — PDF export builder screen (#441, lazy-loaded). Deps: `domain/pdf-export-sections`, `./pdf-export-plan`, `./pdf-export-render`.
 - `People.tsx` + `People.messages.ts` — Home/landing screen (list/create/restore people). Deps: `store-context`, `./people-list`.
+- `OrbRulesFields.tsx` + `OrbRulesFields.messages.ts` — Per-aspect and per-body orb inputs in the Extended settings card (#590). Deps: `orb-rules-draft`, `astro-names.messages`.
+- `OrbLibraryEditor.tsx` + `OrbLibraryEditor.messages.ts` — Preferences section: named orb profiles (revisioned) and which orbs transit, synastry and natal charts use (#590). Deps: `astrology/orb-library`, `orb-library-store`, `orb-rules-draft`, `OrbRulesFields`.
+- `orb-library-store.ts` — Device-stored orb library and per-context orb source, validated on every read (#590). Deps: `astrology/orb-library`.
+- `orb-rules-draft.ts` — Typed-string drafts of orb rules and their checked conversion to settings (#590). Deps: `astrology/orb-profiles`, `chart/extended-settings`.
 - `PeriodicTransitView.tsx` + `PeriodicTransitView.messages.ts` — Daily/weekly/monthly/yearly transit forecast. Deps: `domain/periodic-transit`, `domain/planetary-return`, `astrology/transit-importance`.
 - `PersonForm.tsx` + `PersonForm.messages.ts` — Birth-data entry/edit form. Deps: `domain/person-form`, `time/resolve`.
 - `PersonNotFound.tsx` — "No person" fallback screen. Deps: `shared.messages`.

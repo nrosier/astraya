@@ -28,17 +28,13 @@ import { GlossaryTerms } from './GlossaryTerm.js';
 import { personHref } from './route.js';
 import { houseSystemLabel, rulershipLabel, zodiacLabel } from './ChartView.js';
 import { PrintProvenance } from './PrintProvenance.js';
-import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
+import { DEFAULT_EXTENDED_SETTINGS, settingsForContext, withOrbsOf } from '../chart/extended-settings.js';
 import { DEFAULT_RULERSHIP_CHOICE } from '../astrology/rulership.js';
+import { DEFAULT_ORB_CONFIG } from '../astrology/aspects.js';
 import { buildCalculationSnapshot, snapshotCalculationOptions } from '../domain/calculation-snapshot.js';
 import type { CalculationArtifact } from '../domain/calculation-artifact.js';
 import { artifactProvenanceIdentity, buildTechniqueChartArtifact } from './chart-artifact.js';
 
-/**
- * What both rings are computed with (#582): the engine defaults, as an explicit snapshot so the
- * calculation's artifact records its real inputs. Same results as passing no options at all.
- */
-const ENGINE_DEFAULTS_SNAPSHOT = buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE);
 import { useSymbolClass } from './symbol-setting.js';
 import { useGlyphVariants } from './glyph-variant-setting.js';
 import { useEffect, useMemo, useState } from 'react';
@@ -46,7 +42,8 @@ import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { chartWheelRing, crossAspectRows, type AspectRow } from '../domain/chart-tables.js';
 import { deriveExportFilename } from '../domain/export-filename.js';
 import { computeTransit, type TransitData } from '../domain/transit.js';
-import { TRANSIT_ORB_CONFIG } from '../astrology/transit-importance.js';
+import { useExtendedSettings } from './extended-settings-store.js';
+import { useOrbContextSource, useOrbLibrary } from './orb-library-store.js';
 import { renderMultiWheelSvg, type CrossRingAspects } from '../chart/multi-wheel.js';
 import { findVoidOfCourseMoon, type VoidOfCourseMoon } from '../astrology/void-of-course.js';
 import { voidOfCourseSentence } from './void-of-course-text.js';
@@ -128,6 +125,19 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
   const [asOf, setAsOf] = useState(todayInputValue);
   const { provider } = useEphemerisProvider();
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
+  // The orbs are the device's Extended settings (#590): transits use the same orbs as the natal chart.
+  // Everything else stays at the engine defaults, as this screen's footer says.
+  const [extendedSettings] = useExtendedSettings();
+  const orbLibrary = useOrbLibrary();
+  const orbSources = useOrbContextSource();
+  const snapshot = useMemo(
+    () =>
+      buildCalculationSnapshot(
+        withOrbsOf(DEFAULT_EXTENDED_SETTINGS, settingsForContext(extendedSettings, 'transit', orbLibrary, orbSources)),
+        DEFAULT_RULERSHIP_CHOICE,
+      ),
+    [extendedSettings, orbLibrary, orbSources],
+  );
 
   const targetDate = useMemo(() => {
     const [year, month, day] = asOf.split('-').map(Number);
@@ -146,12 +156,12 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
         // day, not a moment, and noon keeps the civil day intact under any offset the target's
         // own calculation might apply.
         const targetJd = await provider.julianDayFromUtc(targetDate.year, targetDate.month, targetDate.day, 12, 0, 0);
-        const options = snapshotCalculationOptions(ENGINE_DEFAULTS_SNAPSHOT);
-        const data = await computeTransit(moment, targetJd, provider, options, TRANSIT_ORB_CONFIG);
+        const options = snapshotCalculationOptions(snapshot);
+        const data = await computeTransit(moment, targetJd, provider, options);
         const artifact = await buildTechniqueChartArtifact(
-          ENGINE_DEFAULTS_SNAPSHOT,
+          snapshot,
           moment,
-          { kind: 'transit', targetJd, orbConfig: TRANSIT_ORB_CONFIG },
+          { kind: 'transit', targetJd, orbConfig: options.orbConfig ?? DEFAULT_ORB_CONFIG },
           data.natal,
           data,
           provider,
@@ -168,7 +178,7 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
     return () => {
       effect.cancelled = true;
     };
-  }, [momentKey(person?.moment), provider, targetDate]);
+  }, [momentKey(person?.moment), provider, targetDate, snapshot]);
 
   const [rulership] = useRulershipChoice();
   const [symbolClass] = useSymbolClass();
@@ -286,10 +296,7 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
         houseSystem={houseSystemLabel(DEFAULT_EXTENDED_SETTINGS.houseSystem)}
         zodiac={zodiacLabel(DEFAULT_EXTENDED_SETTINGS.zodiac)}
         rulership={rulershipLabel(DEFAULT_RULERSHIP_CHOICE)}
-        snapshotIdentity={artifactProvenanceIdentity(
-          load.kind === 'ready' ? load.artifact : undefined,
-          ENGINE_DEFAULTS_SNAPSHOT,
-        )}
+        snapshotIdentity={artifactProvenanceIdentity(load.kind === 'ready' ? load.artifact : undefined, snapshot)}
         generatedAt={formatTimestamp(new Date())}
       />
       <p className="back">

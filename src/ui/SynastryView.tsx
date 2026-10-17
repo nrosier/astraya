@@ -27,11 +27,13 @@ import { formatFixed, formatTimestamp } from './format.js';
 import { personHref } from './route.js';
 import { houseSystemLabel, rulershipLabel, zodiacLabel } from './ChartView.js';
 import { PrintProvenance } from './PrintProvenance.js';
-import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
+import { DEFAULT_EXTENDED_SETTINGS, settingsForContext, withOrbsOf } from '../chart/extended-settings.js';
 import { DEFAULT_RULERSHIP_CHOICE } from '../astrology/rulership.js';
+import { useExtendedSettings } from './extended-settings-store.js';
+import { useOrbContextSource, useOrbLibrary } from './orb-library-store.js';
+import { DEFAULT_ORB_CONFIG } from '../astrology/aspects.js';
 import { buildCalculationSnapshot, snapshotCalculationOptions } from '../domain/calculation-snapshot.js';
 import type { CalculationArtifact } from '../domain/calculation-artifact.js';
-import { SYNASTRY_DEFAULT_ORB_CONFIG } from '../astrology/orb-profiles.js';
 import { artifactProvenanceIdentity, buildTechniqueChartArtifact } from './chart-artifact.js';
 import { useSymbolClass } from './symbol-setting.js';
 import { useGlyphVariants } from './glyph-variant-setting.js';
@@ -74,12 +76,6 @@ type Load =
   | { readonly kind: 'error'; readonly message: string };
 
 const bodyKeyOf = (id: number): string => bodyById(id)?.key ?? String(id);
-
-/**
- * What both charts are computed with (#582): the engine defaults and synastry's own default orbs,
- * explicit so the calculation's artifact records its real inputs. Same results as passing none.
- */
-const ENGINE_DEFAULTS_SNAPSHOT = buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE);
 
 /** Exported for the PDF export builder (#441), which reuses the same columns a CSV download would. */
 export function aspectColumns(
@@ -151,6 +147,19 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
 
   const { provider } = useEphemerisProvider();
   const [load, setLoad] = useState<Load>({ kind: 'idle' });
+  // The orbs are the device's Extended settings (#590), tightened for synastry (#543); everything else stays at
+  // the engine defaults, as this screen's footer says.
+  const [extendedSettings] = useExtendedSettings();
+  const orbLibrary = useOrbLibrary();
+  const orbSources = useOrbContextSource();
+  const snapshot = useMemo(
+    () =>
+      buildCalculationSnapshot(
+        withOrbsOf(DEFAULT_EXTENDED_SETTINGS, settingsForContext(extendedSettings, 'synastry', orbLibrary, orbSources)),
+        DEFAULT_RULERSHIP_CHOICE,
+      ),
+    [extendedSettings, orbLibrary, orbSources],
+  );
 
   useEffect(() => {
     if (person?.moment === undefined || partner?.moment === undefined || provider === undefined) {
@@ -164,12 +173,13 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
 
     void (async () => {
       try {
-        const options = snapshotCalculationOptions(ENGINE_DEFAULTS_SNAPSHOT);
-        const data = await computeSynastry(momentA, momentB, provider, options, SYNASTRY_DEFAULT_ORB_CONFIG);
+        const options = snapshotCalculationOptions(snapshot);
+        const data = await computeSynastry(momentA, momentB, provider, options);
         const artifact = await buildTechniqueChartArtifact(
-          ENGINE_DEFAULTS_SNAPSHOT,
+          snapshot,
           momentA,
-          { kind: 'synastry', partner: momentB, orbConfig: SYNASTRY_DEFAULT_ORB_CONFIG },
+          // The orbs given, not the tightened result: replay tightens them again, exactly once.
+          { kind: 'synastry', partner: momentB, orbConfig: options.orbConfig ?? DEFAULT_ORB_CONFIG },
           data.chartA,
           data,
           provider,
@@ -306,10 +316,7 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
         houseSystem={houseSystemLabel(DEFAULT_EXTENDED_SETTINGS.houseSystem)}
         zodiac={zodiacLabel(DEFAULT_EXTENDED_SETTINGS.zodiac)}
         rulership={rulershipLabel(DEFAULT_RULERSHIP_CHOICE)}
-        snapshotIdentity={artifactProvenanceIdentity(
-          load.kind === 'ready' ? load.artifact : undefined,
-          ENGINE_DEFAULTS_SNAPSHOT,
-        )}
+        snapshotIdentity={artifactProvenanceIdentity(load.kind === 'ready' ? load.artifact : undefined, snapshot)}
         generatedAt={formatTimestamp(new Date())}
       />
       <p className="back">

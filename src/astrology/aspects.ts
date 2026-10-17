@@ -23,10 +23,10 @@
 /**
  * @module Aspects
  * @purpose Computes Ptolemaic and minor aspects between bodies, including configurable orbs and applying/separating direction.
- * @conventions Three orb tiers (major, sextile, minor) widened for luminaries, scaled by a global percentage; defaults follow the Astro-Seek convention (majors 7°/10° with a luminary, sextile 4°/5°30', minors flat 2°30'); minor aspects are opt-in via enabledMinorAspects; `harmonicFamilyOf` is Addey's harmonic-number grouping, a distinct concept from the major/minor `AspectFamily`.
+ * @conventions Three orb tiers (major, sextile, minor) widened for luminaries, scaled by a global percentage; Astraya's own defaults, with no verified published source (majors 7°/10° with a luminary, sextile 4°/5°30', minors flat 2°30'); minor aspects are opt-in via enabledMinorAspects; `harmonicFamilyOf` is Addey's harmonic-number grouping, a distinct concept from the major/minor `AspectFamily`.
  * @exports ASPECTS, DEFAULT_ORB_CONFIG, orbFor, angularSeparation, matchAspect, findAspects, findCrossAspects, subjectsFrom, fixedSubjects, harmonicFamilyOf, aspectHarmonicFamily
  */
-import type { BodyCategory } from './bodies.js';
+import { bodyById, type BodyCategory } from './bodies.ts';
 import type { BodyId, BodyPosition, Degrees } from '../ephemeris/types.js';
 
 export type AspectFamily = 'major' | 'minor';
@@ -93,10 +93,11 @@ export function aspectHarmonicFamily(aspectKey: string): number | undefined {
  * "reach" — followed by a global percentage scale applied to every tier at
  * once.
  *
- * These three tiers and their numbers are the ones most astrology sites,
- * including Astro-Seek, use as their own defaults: major aspects at 7°,
- * enlarged to 10° with a luminary; sextile at 4°, enlarged to 5°30'; every
- * minor aspect at a flat 2°30' regardless of which bodies are involved.
+ * These three tiers and their numbers are Astraya's own defaults: major aspects
+ * at 7°, enlarged to 10° with a luminary; sextile at 4°, enlarged to 5°30'; every
+ * minor aspect at a flat 2°30' regardless of which bodies are involved. They were
+ * set to resemble common astrology software, but no published source for them has
+ * been verified (see #590), so they are not presented as a citation.
  * `enabledMinorAspects` is which of the six minor aspects `matchAspect`
  * considers at all — empty by default, since minor aspects are opt-in on
  * most tools rather than shown alongside the majors unconditionally.
@@ -114,6 +115,18 @@ export interface OrbConfig {
   readonly scalePercent: number;
   /** Which minor-family aspect keys `matchAspect` considers; empty means none. */
   readonly enabledMinorAspects: readonly string[];
+  /**
+   * User-defined per-aspect orbs (#590), keyed by aspect key, each replacing that aspect's
+   * tier (base plus luminary bonus). Absent means every aspect uses its tier, as before.
+   * A plain object, never a Map, so it survives JSON round trips (share links, exports).
+   */
+  readonly aspectOrbs?: Readonly<Record<string, OrbRule>>;
+  /**
+   * User-defined per-body half-orbs, "moieties" (#590), keyed by body key. When both bodies of a
+   * pair have an entry the pair's orb is their sum; with one or none the aspect's own orb applies.
+   * Astraya ships no moiety values: these exist only when a practitioner enters their own.
+   */
+  readonly bodyOrbs?: Readonly<Record<string, Degrees>>;
 }
 
 export const DEFAULT_ORB_CONFIG: OrbConfig = {
@@ -124,17 +137,34 @@ export const DEFAULT_ORB_CONFIG: OrbConfig = {
   enabledMinorAspects: [],
 };
 
+/**
+ * The orb limit for one aspect between two bodies. Resolution order (#590): a per-body moiety sum
+ * when `bodies` is given and both have a `bodyOrbs` entry; else the aspect's own `aspectOrbs`
+ * entry; else its tier. `scalePercent` then multiplies whichever applied. With neither new field
+ * set the result is exactly the tiered value it always was.
+ */
 export function orbFor(
   aspectKey: string,
   categoryA: BodyCategory,
   categoryB: BodyCategory,
   config: OrbConfig = DEFAULT_ORB_CONFIG,
+  bodies?: { readonly a: string; readonly b: string },
 ): Degrees {
   const aspect = aspectByKey(aspectKey);
   if (aspect === undefined) {
     throw new RangeError(`no orb configured for aspect "${aspectKey}"`);
   }
+  const scale = 1 + config.scalePercent / 100;
+  if (bodies !== undefined && config.bodyOrbs !== undefined) {
+    const halfA = config.bodyOrbs[bodies.a];
+    const halfB = config.bodyOrbs[bodies.b];
+    if (halfA !== undefined && halfB !== undefined) return (halfA + halfB) * scale;
+  }
   const hasLuminary = categoryA === 'luminary' || categoryB === 'luminary';
+  const override = config.aspectOrbs?.[aspectKey];
+  if (override !== undefined) {
+    return (hasLuminary ? override.base + override.luminaryBonus : override.base) * scale;
+  }
   const raw =
     aspectKey === 'sextile'
       ? hasLuminary
@@ -145,7 +175,7 @@ export function orbFor(
           ? config.majorOrb.base + config.majorOrb.luminaryBonus
           : config.majorOrb.base
         : config.minorOrb;
-  return raw * (1 + config.scalePercent / 100);
+  return raw * scale;
 }
 
 /** Normalise to the half-open interval [0, 360). */
@@ -209,10 +239,13 @@ export function matchAspect(
 ): AspectMatch | undefined {
   const separation = angularSeparation(a.longitude, b.longitude);
   let best: AspectMatch | undefined;
+  const keyA = bodyById(a.body)?.key;
+  const keyB = bodyById(b.body)?.key;
+  const bodyKeys = keyA === undefined || keyB === undefined ? undefined : { a: keyA, b: keyB };
   for (const aspect of ASPECTS) {
     if (aspect.family === 'minor' && !config.enabledMinorAspects.includes(aspect.key)) continue;
     const orb = Math.abs(separation - aspect.angle);
-    if (orb > orbFor(aspect.key, categoryA, categoryB, config)) continue;
+    if (orb > orbFor(aspect.key, categoryA, categoryB, config, bodyKeys)) continue;
     if (best !== undefined && orb >= best.orb) continue;
     best = { aspect, separation, orb, applying: isApplying(a, b, aspect.angle) };
   }

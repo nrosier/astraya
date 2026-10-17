@@ -62,23 +62,31 @@ describe('solarConditionOf (#28)', () => {
     expect(solarConditionOf(sun + 17 / 60, sun)).toBe('cazimi');
   });
 
-  it('is combust beyond cazimi and within 8 degrees', () => {
+  // Lilly, Christian Astrology (1647), Book I, p. 113: combust within 8°30′ in the same sign; under the beams until 17°.
+  it('is combust beyond cazimi and within 8 degrees 30 minutes, in the same sign', () => {
     expect(solarConditionOf(sun + 1, sun)).toBe('combust');
-    expect(solarConditionOf(sun + 8, sun)).toBe('combust');
+    expect(solarConditionOf(sun + 8.5, sun)).toBe('combust');
   });
 
-  it('is under the beams beyond combustion and within 15 degrees', () => {
+  it('is under the beams beyond combustion and within 17 degrees', () => {
     expect(solarConditionOf(sun + 9, sun)).toBe('underTheBeams');
-    expect(solarConditionOf(sun + 15, sun)).toBe('underTheBeams');
+    expect(solarConditionOf(sun + 17, sun)).toBe('underTheBeams');
   });
 
-  it('is free beyond 15 degrees', () => {
-    expect(solarConditionOf(sun + 16, sun)).toBe('free');
+  it('is free beyond 17 degrees', () => {
+    expect(solarConditionOf(sun + 17.5, sun)).toBe('free');
     expect(solarConditionOf(sun + 180, sun)).toBe('free'); // opposition: full phase, nowhere near the sun
   });
 
   it('uses unsigned separation regardless of direction', () => {
     expect(solarConditionOf(sun - 5, sun)).toBe('combust');
+  });
+
+  // Sun at 29°30′ Aries and a planet at 1°30′ Taurus: 2° apart, but in different signs.
+  it('is not combust across a sign boundary, even within 8°30′ (Lilly: "in the same Signe")', () => {
+    const sunNearEnd = 29.5; // 29°30′ Aries
+    const planetAcrossBoundary = 31; // 1°30′ Taurus: 1.5° away, but in another sign
+    expect(solarConditionOf(planetAcrossBoundary, sunNearEnd)).toBe('underTheBeams');
   });
 });
 

@@ -48,7 +48,7 @@
  * @conventions Follows the natal/transiting split `computeTransit` models (`fixedSubjects` for natal, real speed for transiting); daily uses in-orb Moon aspects plus exact-today events/stations, weekly/monthly use exact-aspect search excluding the Moon (too fast to be meaningful at that grain), yearly delegates to `computeSolarReturn`/`computeDemibirthday`; produces structured events only — turning an event into a sentence is `interpretation/compose.ts`'s job.
  * @exports computePeriodicTransitForecast, PeriodicTransitForecast, PeriodicTransitPeriods, PeriodicTransitOptions, DailyTransitForecast, WeeklyTransitForecast, MonthlyTransitForecast, YearlyTransitForecast
  */
-import { findCrossAspects, fixedSubjects, subjectsFrom, type Aspect, type OrbConfig } from '../astrology/aspects.js';
+import { findCrossAspects, fixedSubjects, subjectsFrom, type Aspect } from '../astrology/aspects.js';
 import { BODIES, bodyById, bodyByKey, type BodyCategory } from '../astrology/bodies.js';
 import { houseOf } from '../astrology/emphasis.js';
 import { findStations, type StationEvent } from '../astrology/stations.js';
@@ -167,12 +167,12 @@ export async function computePeriodicTransitForecast(
   periods: PeriodicTransitPeriods,
   provider: EphemerisProvider,
   options: PeriodicTransitOptions = {},
-  orbConfig?: OrbConfig,
 ): Promise<PeriodicTransitForecast> {
   const { dayJd, monthFromJd, monthToJd, year } = periods;
   const weekFromJd = dayJd;
   const weekToJd = dayJd + 7;
   const zodiacOption = options.zodiac === undefined ? {} : { zodiac: options.zodiac };
+  const orbOption = options.orbConfig === undefined ? {} : { orbConfig: options.orbConfig };
 
   // Shared by every return-shaped tier below (solar return, demibirthday, progressed lunar
   // return, lunar returns) — all four take the exact same `{place?, houseSystem?, zodiac?}` shape.
@@ -180,6 +180,7 @@ export async function computePeriodicTransitForecast(
     ...(options.solarReturnPlace === undefined ? {} : { place: options.solarReturnPlace }),
     ...(options.houseSystem === undefined ? {} : { houseSystem: options.houseSystem }),
     ...zodiacOption,
+    ...orbOption,
   };
 
   // The natal chart is needed (for its longitudes) before any of the transit searches below can
@@ -212,10 +213,10 @@ export async function computePeriodicTransitForecast(
       ...zodiacOption,
       sampleStepDays: 0.1,
     }),
-    computeSolarReturn(natalMoment, year, provider, returnOptions, orbConfig),
-    computeDemibirthday(natalMoment, year, provider, returnOptions, orbConfig),
-    computeProgressedLunarReturn(natalMoment, monthFromJd, provider, returnOptions, orbConfig),
-    computeLunarReturns(natalMoment, weekFromJd, weekToJd, provider, returnOptions, orbConfig),
+    computeSolarReturn(natalMoment, year, provider, returnOptions),
+    computeDemibirthday(natalMoment, year, provider, returnOptions),
+    computeProgressedLunarReturn(natalMoment, monthFromJd, provider, returnOptions),
+    computeLunarReturns(natalMoment, weekFromJd, weekToJd, provider, returnOptions),
   ]);
 
   const moonPosition = moonPositions[0];
@@ -223,7 +224,7 @@ export async function computePeriodicTransitForecast(
   const moonAspects = findCrossAspects(
     subjectsFrom([moonPosition], categoryOf),
     fixedSubjects(natal.positions, categoryOf),
-    orbConfig,
+    options.orbConfig,
   );
 
   // Any other body's exact aspect landing today is already inside the weekly window (which

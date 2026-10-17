@@ -184,8 +184,13 @@ export function HoraryView({ view }: { readonly view?: ChartViewKind | undefined
           {!ready.chart.housesAvailable && <StatusMessage kind="partial">{t.noHouses}</StatusMessage>}
           <p className={isRadical(ready.chart.considerations) ? 'horary-verdict' : 'horary-verdict warning'}>
             {isRadical(ready.chart.considerations)
-              ? t.radical
-              : t.notRadical(ready.chart.considerations.filter((consideration) => consideration.applies).length)}
+              ? ready.chart.considerations.some((consideration) => consideration.applies)
+                ? t.radicalWithSoftened
+                : t.radical
+              : t.notRadical(
+                  ready.chart.considerations.filter((consideration) => consideration.applies && !consideration.softened)
+                    .length,
+                )}
           </p>
           <ul className="horary-considerations">
             {ready.chart.considerations.map((consideration) => {
@@ -194,7 +199,9 @@ export function HoraryView({ view }: { readonly view?: ChartViewKind | undefined
                 <li key={consideration.key} className={consideration.applies ? 'applies' : 'clear'}>
                   <strong>{copy?.label ?? consideration.key}</strong>
                   {' — '}
-                  <span className="horary-status">{consideration.applies ? t.applies : t.clear}</span>
+                  <span className="horary-status">
+                    {consideration.applies ? (consideration.softened ? t.appliesSoftened : t.applies) : t.clear}
+                  </span>
                   <br />
                   <span className="hint">{copy?.explanation}</span>
                 </li>
