@@ -63,6 +63,10 @@ fixed, without waiting for a milestone — a wrong chart is not something to sit
 9. Close the milestone.
 10. Confirm the deployed app's About page shows the new version and commit, and that
     `docker pull niqck/astraya:latest` gets that same version.
+11. Record the manual UI/UX checks for the release in `UI-UX_RELEASE_CHECKS.md`:
+    screen reader, 200 % zoom, forced colours, touch, reduced motion, keyboard only,
+    and (after a shell, navigation, settings or chart-workflow change) the eight tasks.
+    A row left "Not run" says why; it does not block the tag.
 
 ## Docker image tags
 

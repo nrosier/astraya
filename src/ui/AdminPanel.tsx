@@ -23,6 +23,8 @@ import { formatCents, formatInteger, formatTimestamp } from './format.js';
 import { Select } from './primitives/Select.js';
 import { TextField } from './primitives/TextField.js';
 import { useEffect, useState } from 'react';
+import { SortableTable } from './SortableTable.js';
+import type { TableColumn } from './table-sort.js';
 import {
   createUser,
   disableUser,
@@ -123,78 +125,6 @@ function CreateUserForm({
   );
 }
 
-function UserRow({
-  user,
-  canManage,
-  isSelf,
-  passwordLink,
-  disabled,
-  toggleEnabled,
-  changeRole,
-  requestReset,
-  requestDelete,
-}: {
-  user: AdminUser;
-  /** A super admin: may change this account. An admin sees the row without the controls. */
-  canManage: boolean;
-  /** Nobody can change their own role, so the control is disabled for the signed-in user's own row. */
-  isSelf: boolean;
-  passwordLink: string | undefined;
-  disabled: boolean;
-  toggleEnabled: () => void;
-  changeRole: (role: Role) => void;
-  requestReset: () => void;
-  requestDelete: () => void;
-}): React.JSX.Element {
-  const t = useMessages(adminPanelMessages);
-  return (
-    <tr>
-      <td>
-        {user.username}
-        {user.disabledAt !== null && t.disabledSuffix}
-      </td>
-      <td>
-        {canManage ? (
-          <Select
-            label={t.roleSelectLabel(user.username)}
-            hideLabel
-            value={user.role}
-            disabled={disabled || isSelf}
-            options={ROLE_ORDER.map((option) => ({ value: option, label: roleLabel(option, t) }))}
-            onChange={(value) => {
-              const next = ROLE_ORDER.find((candidate) => candidate === value);
-              if (next !== undefined) changeRole(next);
-            }}
-          />
-        ) : (
-          roleLabel(user.role, t)
-        )}
-      </td>
-      <td>{user.lastSeenAt === null ? t.neverSeen : formatTimestamp(user.lastSeenAt)}</td>
-      <td>{user.lastSyncAt === null ? t.neverSeen : formatTimestamp(user.lastSyncAt)}</td>
-      <td>{user.lastAiUsageAt === null ? t.neverSeen : formatTimestamp(user.lastAiUsageAt)}</td>
-      {canManage && (
-        <td className="actions">
-          <button type="button" className="quiet" disabled={disabled} onClick={toggleEnabled}>
-            {user.disabledAt === null ? t.disableButton : t.enableButton}
-          </button>
-          <button type="button" className="quiet" disabled={disabled} onClick={requestReset}>
-            {t.resetPasswordButton}
-          </button>
-          <button type="button" className="danger" disabled={disabled} onClick={requestDelete}>
-            {t.deleteButton}
-          </button>
-          {passwordLink !== undefined && (
-            <p className="hint">
-              {t.copyLinkNow} <code>{passwordLink}</code>
-            </p>
-          )}
-        </td>
-      )}
-    </tr>
-  );
-}
-
 export function AdminPanel(): React.JSX.Element {
   const [users, setUsers] = useState<readonly AdminUser[]>();
   const [oidcConfig, setOidcConfig] = useState<OidcConfig>();
@@ -279,6 +209,114 @@ export function AdminPanel(): React.JSX.Element {
     run(target.user.id, () => deleteUser(target.user.id));
   };
 
+  const userColumns = ((): readonly TableColumn<AdminUser>[] => {
+    const seen = (value: string | null): string => (value === null ? t.neverSeen : formatTimestamp(value));
+    const columns: TableColumn<AdminUser>[] = [
+      {
+        key: 'username',
+        label: shared.usernameLabel,
+        valueOf: (user) => user.username,
+        renderCell: (user) => (
+          <>
+            {user.username}
+            {user.disabledAt !== null && t.disabledSuffix}
+          </>
+        ),
+      },
+      {
+        key: 'role',
+        label: t.roleColumn,
+        valueOf: (user) => roleLabel(user.role, t),
+        renderCell: (user) =>
+          canManage ? (
+            <Select
+              label={t.roleSelectLabel(user.username)}
+              hideLabel
+              value={user.role}
+              // Nobody can change their own role.
+              disabled={busyUserId === user.id || user.id === sessionUser.id}
+              options={ROLE_ORDER.map((option) => ({ value: option, label: roleLabel(option, t) }))}
+              onChange={(value) => {
+                const next = ROLE_ORDER.find((candidate) => candidate === value);
+                if (next !== undefined) changeRole(user, next);
+              }}
+            />
+          ) : (
+            roleLabel(user.role, t)
+          ),
+      },
+      {
+        key: 'lastSeen',
+        label: t.lastSeenColumn,
+        valueOf: (user) => user.lastSeenAt ?? '',
+        render: (user) => seen(user.lastSeenAt),
+      },
+      {
+        key: 'lastSync',
+        label: t.lastSyncColumn,
+        valueOf: (user) => user.lastSyncAt ?? '',
+        render: (user) => seen(user.lastSyncAt),
+      },
+      {
+        key: 'lastAiUsage',
+        label: t.lastAiUsageColumn,
+        valueOf: (user) => user.lastAiUsageAt ?? '',
+        render: (user) => seen(user.lastAiUsageAt),
+      },
+    ];
+    if (canManage) {
+      columns.push({
+        key: 'actions',
+        label: t.actionsColumn,
+        sortable: false,
+        valueOf: () => '',
+        renderCell: (user) => {
+          const disabled = busyUserId === user.id;
+          return (
+            <span className="actions">
+              <button
+                type="button"
+                className="quiet"
+                disabled={disabled}
+                onClick={() => {
+                  toggleEnabled(user);
+                }}
+              >
+                {user.disabledAt === null ? t.disableButton : t.enableButton}
+              </button>
+              <button
+                type="button"
+                className="quiet"
+                disabled={disabled}
+                onClick={() => {
+                  requestReset(user);
+                }}
+              >
+                {t.resetPasswordButton}
+              </button>
+              <button
+                type="button"
+                className="danger"
+                disabled={disabled}
+                onClick={() => {
+                  requestDelete(user);
+                }}
+              >
+                {t.deleteButton}
+              </button>
+              {passwordLink?.userId === user.id && (
+                <p className="hint">
+                  {t.copyLinkNow} <code>{passwordLink.url}</code>
+                </p>
+              )}
+            </span>
+          );
+        },
+      });
+    }
+    return columns;
+  })();
+
   return (
     <main className="shell">
       <p className="back">
@@ -319,50 +357,20 @@ export function AdminPanel(): React.JSX.Element {
         </>
       )}
 
-      <h2>{t.usersHeading}</h2>
       {users === undefined ? (
-        <StatusMessage kind="loading">{t.loadingUsers}</StatusMessage>
+        <>
+          <h2>{t.usersHeading}</h2>
+          <StatusMessage kind="loading">{t.loadingUsers}</StatusMessage>
+        </>
       ) : (
-        <div className="data-table data-table-wrap">
-          <div className="data-table-scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th>{shared.usernameLabel}</th>
-                  <th>{t.roleColumn}</th>
-                  <th>{t.lastSeenColumn}</th>
-                  <th>{t.lastSyncColumn}</th>
-                  <th>{t.lastAiUsageColumn}</th>
-                  {canManage && <th>{t.actionsColumn}</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((user) => (
-                  <UserRow
-                    key={user.id}
-                    user={user}
-                    canManage={canManage}
-                    isSelf={user.id === sessionUser?.id}
-                    disabled={busyUserId === user.id}
-                    passwordLink={passwordLink?.userId === user.id ? passwordLink.url : undefined}
-                    toggleEnabled={() => {
-                      toggleEnabled(user);
-                    }}
-                    changeRole={(role) => {
-                      changeRole(user, role);
-                    }}
-                    requestReset={() => {
-                      requestReset(user);
-                    }}
-                    requestDelete={() => {
-                      requestDelete(user);
-                    }}
-                  />
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <SortableTable
+          wrap
+          headingLevel={2}
+          caption={t.usersHeading}
+          columns={userColumns}
+          rows={users}
+          getRowKey={(user) => user.id}
+        />
       )}
     </main>
   );
@@ -388,6 +396,40 @@ export function AdminUsagePanel(): React.JSX.Element {
       });
   }, []);
 
+  const usageColumns: readonly TableColumn<InterpretationUsageReport['users'][number]>[] = [
+    { key: 'user', label: t.usageUserColumn, valueOf: (row) => row.username },
+    {
+      key: 'requests',
+      label: t.usageRequestsColumn,
+      valueOf: (row) => row.requestCount,
+      render: (row) => formatInteger(row.requestCount, locale),
+    },
+    {
+      key: 'tokens',
+      label: t.usageTokensColumn,
+      valueOf: (row) => row.promptTokens + row.outputTokens,
+      render: (row) => `${formatInteger(row.promptTokens, locale)} / ${formatInteger(row.outputTokens, locale)}`,
+    },
+    {
+      key: 'cost',
+      label: t.usageCostColumn,
+      valueOf: (row) => row.costCents,
+      render: (row) => formatCents(row.costCents, locale),
+    },
+    {
+      key: 'cost24h',
+      label: t.usageCostLast24hColumn,
+      valueOf: (row) => row.costCentsLast24h,
+      render: (row) => formatCents(row.costCentsLast24h, locale),
+    },
+    {
+      key: 'lastUsed',
+      label: t.usageLastUsedColumn,
+      valueOf: (row) => row.lastUsedAt,
+      render: (row) => formatTimestamp(row.lastUsedAt),
+    },
+  ];
+
   return (
     <main className="shell">
       <p className="back">
@@ -401,36 +443,13 @@ export function AdminUsagePanel(): React.JSX.Element {
         <p className="hint">{t.usageEmpty}</p>
       ) : (
         <>
-          <div className="data-table">
-            <div className="data-table-scroll">
-              <table>
-                <thead>
-                  <tr>
-                    <th>{t.usageUserColumn}</th>
-                    <th>{t.usageRequestsColumn}</th>
-                    <th>{t.usageTokensColumn}</th>
-                    <th>{t.usageCostColumn}</th>
-                    <th>{t.usageCostLast24hColumn}</th>
-                    <th>{t.usageLastUsedColumn}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {usage.users.map((row) => (
-                    <tr key={row.userId}>
-                      <td>{row.username}</td>
-                      <td>{formatInteger(row.requestCount, locale)}</td>
-                      <td>
-                        {formatInteger(row.promptTokens, locale)} / {formatInteger(row.outputTokens, locale)}
-                      </td>
-                      <td>{formatCents(row.costCents, locale)}</td>
-                      <td>{formatCents(row.costCentsLast24h, locale)}</td>
-                      <td>{formatTimestamp(row.lastUsedAt)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <SortableTable
+            headingLevel={2}
+            caption={t.usageTableHeading}
+            columns={usageColumns}
+            rows={usage.users}
+            getRowKey={(row) => row.userId}
+          />
           <p className="hint">
             {t.usageCapsNote(
               formatCents(usage.caps.userDailyCapCents, locale),

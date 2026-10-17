@@ -29,7 +29,7 @@
  * @conventions Every control is the same shared component/hook other screens already use (RulershipSetting.tsx, SymbolSetting.tsx, LanguageToggle.tsx, ThemeToggle.tsx) — this screen never reads or writes a setting's storage directly. Full-data export reuses domain/full-export.js's pure functions, the same ones AppNav.tsx's Export menu calls. "Check a calculation file" (#582) reuses validateFullExport for the same format/version errors Restore gives, but reads `calculation` off the raw parsed JSON directly, since the validated FullExport never carries that field.
  * @exports PreferencesView
  */
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { aafToExportedPeople, isAafText, peopleToAaf } from '../domain/aaf-people.js';
 import {
   buildFullExport,
@@ -38,7 +38,12 @@ import {
   peopleCsvFilename,
   peopleToCsv,
 } from '../domain/full-export.js';
-import { stageFullExportRestore, validateFullExport, type RestorePreview } from '../domain/full-export-importer.js';
+import {
+  stageFullExportRestore,
+  validateFullExport,
+  type RestoreItem,
+  type RestorePreview,
+} from '../domain/full-export-importer.js';
 import { checkExportedCalculations, type PersonCalculationCheck } from '../domain/full-export-check.js';
 import { APP_VERSION } from '../version.js';
 import type { PreferencesSection } from './route.js';
@@ -58,6 +63,8 @@ import { downloadText } from './download.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { LanguageToggle } from './LanguageToggle.js';
 import { useMessages } from './messages.js';
+import { SortableTable } from './SortableTable.js';
+import type { TableColumn } from './table-sort.js';
 import { preferencesViewMessages } from './PreferencesView.messages.js';
 import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
 import { readDefaultCalculationProfile } from './default-calculation-profile.js';
@@ -104,12 +111,30 @@ export function PreferencesView({
   const [preview, setPreview] = useState<RestorePreview | undefined>(undefined);
   const [restoring, setRestoring] = useState(false);
   const [checks, setChecks] = useState<readonly PersonCalculationCheck[] | undefined>(undefined);
-  // Two near-identical result tables can be on screen at once (restore, then check, or vice
-  // versa) — each gets its own caption, matching SortableTable.tsx's own panel-identity
-  // convention, so a reader scanning the page isn't left telling them apart by column header
-  // text alone.
-  const restorePreviewCaptionId = useId();
-  const checkResultsCaptionId = useId();
+  // Two near-identical result tables can be on screen at once (restore, then check, or vice versa); each has its
+  // own caption, so a reader is not left telling them apart by column header text alone.
+  const restoreColumns = useMemo<readonly TableColumn<RestoreItem>[]>(
+    () => [
+      {
+        key: 'name',
+        label: t.restoreNameColumn,
+        valueOf: (item) => (item.displayName === '' ? t.restoreNoName : item.displayName),
+      },
+      { key: 'status', label: t.restoreStatusColumn, valueOf: (item) => t.restoreStatusWord[item.status] },
+    ],
+    [t],
+  );
+  const checkColumns = useMemo<readonly TableColumn<PersonCalculationCheck>[]>(
+    () => [
+      {
+        key: 'name',
+        label: t.restoreNameColumn,
+        valueOf: (check) => (check.displayName === '' ? t.restoreNoName : check.displayName),
+      },
+      { key: 'result', label: t.checkResultColumn, valueOf: (check) => t.checkResult(check.outcome) },
+    ],
+    [t],
+  );
 
   const run = (what: string, action: () => void | Promise<void>): void => {
     setStatus({ kind: 'busy', text: t.exportPreparing(what) });
@@ -401,29 +426,13 @@ export function PreferencesView({
               preview.deletedLocallyCount,
             )}
           </p>
-          <div className="data-table data-table-wrap">
-            <div className="data-table-head">
-              <h3 id={restorePreviewCaptionId}>{t.restorePreviewHeading}</h3>
-            </div>
-            <div className="data-table-scroll data-table-scroll-tall">
-              <table aria-labelledby={restorePreviewCaptionId}>
-                <thead>
-                  <tr>
-                    <th>{t.restoreNameColumn}</th>
-                    <th>{t.restoreStatusColumn}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {preview.items.map((item) => (
-                    <tr key={item.id}>
-                      <td>{item.displayName === '' ? t.restoreNoName : item.displayName}</td>
-                      <td>{t.restoreStatusWord[item.status]}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <SortableTable
+            wrap
+            caption={t.restorePreviewHeading}
+            columns={restoreColumns}
+            rows={preview.items}
+            getRowKey={(item) => item.id}
+          />
           <p>
             <Button variant="primary" busy={restoring} busyLabel={t.restoreApplying} onClick={confirmRestore}>
               {t.restoreApply}
@@ -442,29 +451,13 @@ export function PreferencesView({
         />
       </p>
       {checks !== undefined && (
-        <div className="data-table data-table-wrap">
-          <div className="data-table-head">
-            <h3 id={checkResultsCaptionId}>{t.checkResultsHeading}</h3>
-          </div>
-          <div className="data-table-scroll data-table-scroll-tall">
-            <table aria-labelledby={checkResultsCaptionId}>
-              <thead>
-                <tr>
-                  <th>{t.restoreNameColumn}</th>
-                  <th>{t.checkResultColumn}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {checks.map((check) => (
-                  <tr key={check.id}>
-                    <td>{check.displayName === '' ? t.restoreNoName : check.displayName}</td>
-                    <td>{t.checkResult(check.outcome)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <SortableTable
+          wrap
+          caption={t.checkResultsHeading}
+          columns={checkColumns}
+          rows={checks}
+          getRowKey={(check) => check.id}
+        />
       )}
       {status !== undefined && (
         <p

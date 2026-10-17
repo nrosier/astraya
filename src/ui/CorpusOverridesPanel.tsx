@@ -27,6 +27,8 @@ import { Select } from './primitives/Select.js';
 import { TextAreaField } from './primitives/TextAreaField.js';
 import { TextField } from './primitives/TextField.js';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { SortableTable } from './SortableTable.js';
+import type { TableColumn } from './table-sort.js';
 import {
   deleteCorpusOverride,
   exportCorpusOverrides,
@@ -54,6 +56,7 @@ import { corpusOverridesPanelMessages } from './CorpusOverridesPanel.messages.js
 import { sharedMessages } from './shared.messages.js';
 import type { CorpusOverride } from '../sync/admin-client.js';
 import type { CorpusCategory, CorpusEntry, CorpusTier, Locale } from '../interpretation/schema.js';
+import { FilterSummary } from './primitives/FilterSummary.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 
 const PAGE_SIZE = 50;
@@ -269,6 +272,68 @@ export function CorpusOverridesPanel(): React.JSX.Element {
       });
   };
 
+  const columns: readonly TableColumn<(typeof visible)[number]>[] = [
+    {
+      key: 'key',
+      label: t.keyColumn,
+      valueOf: (entry) => labelForKey(entry.key, uiLocale),
+      renderCell: (entry) => <EntryLabel entryKey={entry.key} locale={uiLocale} />,
+    },
+    {
+      key: 'details',
+      label: t.detailsColumn,
+      sortable: false,
+      valueOf: (entry) => entry.text,
+      renderCell: (entry) => (
+        <dl className="entry-details">
+          <dt>{t.categoryColumn}</dt>
+          <dd>
+            {categoryLabelOf(entry.key)}
+            <span className="cell-explanation">{categoryExplanationOf(entry.key)}</span>
+          </dd>
+          <dt>{t.tierColumn}</dt>
+          <dd>
+            {tierLabel(entry.tier, uiLocale)}
+            <span className="cell-explanation">{tierExplanation(entry.tier, uiLocale)}</span>
+          </dd>
+          <dt>{t.tagsColumn}</dt>
+          <dd>
+            {entry.tags.map((tag) => (
+              <span key={tag} className="cell-tag">
+                {tagLabel(tag, uiLocale)}
+                <span className="cell-explanation">{tagExplanation(tag, uiLocale)}</span>
+              </span>
+            ))}
+          </dd>
+          <dt>{t.textColumn}</dt>
+          <dd className="entry-text">{entry.text}</dd>
+          <dt>{t.statusColumn}</dt>
+          <dd>{overrideMap.has(entry.key) ? t.overriddenStatus : t.defaultStatus}</dd>
+        </dl>
+      ),
+    },
+    {
+      key: 'actions',
+      label: t.actionsColumn,
+      sortable: false,
+      valueOf: () => '',
+      renderCell: (entry) => (
+        <span className="actions">
+          <button
+            type="button"
+            className="quiet"
+            disabled={busyKey === entry.key}
+            onClick={() => {
+              startEdit(entry);
+            }}
+          >
+            {busyKey === entry.key ? t.savingLabel : t.editButton}
+          </button>
+        </span>
+      ),
+    },
+  ];
+
   return (
     <main className="shell">
       <p className="back">
@@ -406,78 +471,17 @@ export function CorpusOverridesPanel(): React.JSX.Element {
           {filtered.length === 0 ? (
             <p className="empty">{t.noResults}</p>
           ) : (
-            <div className="data-table data-table-wrap">
-              <div className="data-table-scroll">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>{t.keyColumn}</th>
-                      <th>{t.detailsColumn}</th>
-                      <th>{t.actionsColumn}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {visible.map((entry) => {
-                      const identity = entry.key;
-                      const overridden = overrideMap.has(identity);
-                      return (
-                        <tr key={identity}>
-                          <td>
-                            <EntryLabel entryKey={entry.key} locale={uiLocale} />
-                          </td>
-                          {/* Everything about the entry in one cell, with the whole text, so a reviewer reads it
-                              without opening it: nothing is cut short. */}
-                          <td>
-                            <dl className="entry-details">
-                              <dt>{t.categoryColumn}</dt>
-                              <dd>
-                                {categoryLabelOf(entry.key)}
-                                <span className="cell-explanation">{categoryExplanationOf(entry.key)}</span>
-                              </dd>
-                              <dt>{t.tierColumn}</dt>
-                              <dd>
-                                {tierLabel(entry.tier, uiLocale)}
-                                <span className="cell-explanation">{tierExplanation(entry.tier, uiLocale)}</span>
-                              </dd>
-                              <dt>{t.tagsColumn}</dt>
-                              <dd>
-                                {entry.tags.map((tag) => (
-                                  <span key={tag} className="cell-tag">
-                                    {tagLabel(tag, uiLocale)}
-                                    <span className="cell-explanation">{tagExplanation(tag, uiLocale)}</span>
-                                  </span>
-                                ))}
-                              </dd>
-                              <dt>{t.textColumn}</dt>
-                              <dd className="entry-text">{entry.text}</dd>
-                              <dt>{t.statusColumn}</dt>
-                              <dd>{overridden ? t.overriddenStatus : t.defaultStatus}</dd>
-                            </dl>
-                          </td>
-                          <td className="actions">
-                            <button
-                              type="button"
-                              className="quiet"
-                              disabled={busyKey === identity}
-                              onClick={() => {
-                                startEdit(entry);
-                              }}
-                            >
-                              {busyKey === identity ? t.savingLabel : t.editButton}
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            <SortableTable
+              wrap
+              headingLevel={2}
+              caption={t.entriesHeading}
+              columns={columns}
+              rows={visible}
+              getRowKey={(entry) => entry.key}
+            />
           )}
 
-          <p className="hint" role="status" aria-live="polite">
-            {t.resultCount(String(visible.length), String(filtered.length))}
-          </p>
+          <FilterSummary summary={t.resultCount(String(visible.length), String(filtered.length))} />
           {visible.length < filtered.length && (
             <p className="actions">
               <button

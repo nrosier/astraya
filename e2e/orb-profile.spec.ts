@@ -47,7 +47,7 @@ test('a rule set on the card changes the transit contacts too (#590)', async ({ 
   await expect(page.getByRole('table', { name: 'Contacts' })).toBeVisible();
 
   const totalCount = async (): Promise<number> => {
-    const text = (await page.locator('.transit-filter-count').textContent()) ?? '';
+    const text = (await page.locator('.filter-summary-count').textContent()) ?? '';
     const match = /of (\d+) shown$/.exec(text);
     if (match === null) throw new Error(`unexpected count text: ${text}`);
     return Number(match[1]);

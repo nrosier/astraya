@@ -24,6 +24,8 @@ import { Checkbox } from './primitives/Checkbox.js';
 import { formatFixed } from './format.js';
 import { Select } from './primitives/Select.js';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { SortableTable } from './SortableTable.js';
+import type { TableColumn } from './table-sort.js';
 import { decideCorpusCandidates, listCorpusCandidates } from '../sync/admin-client.js';
 import { CORPUS_LOCALES } from '../interpretation/schema.js';
 import { LOCALE_LABELS, isLocale, useLocale } from './locale.js';
@@ -127,6 +129,107 @@ export function CorpusCandidatesPanel(): React.JSX.Element {
       });
   };
 
+  const columns: readonly TableColumn<CorpusCandidate>[] = [
+    {
+      key: 'select',
+      label: t.selectColumn,
+      sortable: false,
+      valueOf: (candidate) => selected.has(candidate.id),
+      renderCell: (candidate) => (
+        <Checkbox
+          hideLabel
+          label={labelForKey(candidate.key, uiLocale)}
+          checked={selected.has(candidate.id)}
+          onChange={(value) => {
+            toggleSelected(candidate.id, value);
+          }}
+        />
+      ),
+    },
+    {
+      key: 'key',
+      label: t.keyColumn,
+      valueOf: (candidate) => labelForKey(candidate.key, uiLocale),
+      renderCell: (candidate) => (
+        <>
+          <EntryLabel entryKey={candidate.key} locale={uiLocale} />
+          {duplicateIdentities.has(candidate.key) && (
+            <>
+              {' '}
+              <span className="hint" role="img" aria-label={t.duplicateKeyHint} title={t.duplicateKeyHint}>
+                ⚠
+              </span>
+            </>
+          )}
+        </>
+      ),
+    },
+    {
+      key: 'details',
+      label: t.detailsColumn,
+      sortable: false,
+      valueOf: (candidate) => candidate.text,
+      renderCell: (candidate) => (
+        <dl className="entry-details">
+          <dt>{t.sourceColumn}</dt>
+          <dd>{candidate.source === 'classical-seed' ? t.sourceClassicalSeed : t.sourceLlmFill}</dd>
+          <dt>{t.triageColumn}</dt>
+          <dd>
+            {candidate.triageSignal === 'match'
+              ? t.triageMatch
+              : candidate.triageSignal === 'mismatch'
+                ? t.triageMismatch
+                : candidate.triageSignal === 'no-baseline'
+                  ? t.triageNoBaseline
+                  : t.triageUnchecked}
+            {candidate.triageScore !== undefined && ` (${formatFixed(candidate.triageScore, 2)})`}
+          </dd>
+          <dt>{t.tagsColumn}</dt>
+          <dd>
+            {candidate.tags.map((tag) => (
+              <span key={tag} className="cell-tag">
+                {tagLabel(tag, uiLocale)}
+                <span className="cell-explanation">{tagExplanation(tag, uiLocale)}</span>
+              </span>
+            ))}
+          </dd>
+          <dt>{t.textColumn}</dt>
+          <dd className="entry-text">{candidate.text}</dd>
+        </dl>
+      ),
+    },
+    {
+      key: 'actions',
+      label: t.actionsColumn,
+      sortable: false,
+      valueOf: () => '',
+      renderCell: (candidate) => (
+        <span className="actions">
+          <button
+            type="button"
+            className="quiet"
+            disabled={deciding}
+            onClick={() => {
+              decide([candidate.id], 'accept');
+            }}
+          >
+            {t.acceptButton}
+          </button>{' '}
+          <button
+            type="button"
+            className="quiet danger"
+            disabled={deciding}
+            onClick={() => {
+              decide([candidate.id], 'reject');
+            }}
+          >
+            {t.rejectButton}
+          </button>
+        </span>
+      ),
+    },
+  ];
+
   return (
     <main className="shell">
       <p className="back">
@@ -189,106 +292,14 @@ export function CorpusCandidatesPanel(): React.JSX.Element {
             </button>
           </p>
 
-          <div className="data-table data-table-wrap">
-            <div className="data-table-scroll">
-              <table>
-                <thead>
-                  <tr>
-                    <th aria-hidden="true" />
-                    <th>{t.keyColumn}</th>
-                    <th>{t.detailsColumn}</th>
-                    <th>{t.actionsColumn}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {candidates.map((candidate) => {
-                    const isDuplicate = duplicateIdentities.has(candidate.key);
-                    return (
-                      <tr key={candidate.id}>
-                        <td>
-                          <Checkbox
-                            hideLabel
-                            label={labelForKey(candidate.key, uiLocale)}
-                            checked={selected.has(candidate.id)}
-                            onChange={(value) => {
-                              toggleSelected(candidate.id, value);
-                            }}
-                          />
-                        </td>
-                        <td>
-                          <EntryLabel entryKey={candidate.key} locale={uiLocale} />
-                          {isDuplicate && (
-                            <>
-                              {' '}
-                              <span
-                                className="hint"
-                                role="img"
-                                aria-label={t.duplicateKeyHint}
-                                title={t.duplicateKeyHint}
-                              >
-                                ⚠
-                              </span>
-                            </>
-                          )}
-                        </td>
-                        {/* Source, triage, tags and the whole text in one cell, so a reviewer reads the candidate without opening it. */}
-                        <td>
-                          <dl className="entry-details">
-                            <dt>{t.sourceColumn}</dt>
-                            <dd>{candidate.source === 'classical-seed' ? t.sourceClassicalSeed : t.sourceLlmFill}</dd>
-                            <dt>{t.triageColumn}</dt>
-                            <dd>
-                              {candidate.triageSignal === 'match'
-                                ? t.triageMatch
-                                : candidate.triageSignal === 'mismatch'
-                                  ? t.triageMismatch
-                                  : candidate.triageSignal === 'no-baseline'
-                                    ? t.triageNoBaseline
-                                    : t.triageUnchecked}
-                              {candidate.triageScore !== undefined && ` (${formatFixed(candidate.triageScore, 2)})`}
-                            </dd>
-                            <dt>{t.tagsColumn}</dt>
-                            <dd>
-                              {candidate.tags.map((tag) => (
-                                <span key={tag} className="cell-tag">
-                                  {tagLabel(tag, uiLocale)}
-                                  <span className="cell-explanation">{tagExplanation(tag, uiLocale)}</span>
-                                </span>
-                              ))}
-                            </dd>
-                            <dt>{t.textColumn}</dt>
-                            <dd className="entry-text">{candidate.text}</dd>
-                          </dl>
-                        </td>
-                        <td className="actions">
-                          <button
-                            type="button"
-                            className="quiet"
-                            disabled={deciding}
-                            onClick={() => {
-                              decide([candidate.id], 'accept');
-                            }}
-                          >
-                            {t.acceptButton}
-                          </button>{' '}
-                          <button
-                            type="button"
-                            className="quiet danger"
-                            disabled={deciding}
-                            onClick={() => {
-                              decide([candidate.id], 'reject');
-                            }}
-                          >
-                            {t.rejectButton}
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <SortableTable
+            wrap
+            headingLevel={2}
+            caption={t.candidatesHeading}
+            columns={columns}
+            rows={candidates}
+            getRowKey={(candidate) => candidate.id}
+          />
         </>
       )}
     </main>

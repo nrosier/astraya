@@ -49,7 +49,7 @@ test('a named orb profile chosen for transits changes them, leaves the card alon
   await page.getByRole('link', { name: 'Transits', exact: true }).click();
   await expect(page.getByRole('table', { name: 'Contacts' })).toBeVisible();
   const count = async (): Promise<number> => {
-    const text = (await page.locator('.transit-filter-count').textContent()) ?? '';
+    const text = (await page.locator('.filter-summary-count').textContent()) ?? '';
     const match = /of (\d+) shown$/.exec(text);
     if (match === null) throw new Error(`unexpected count text: ${text}`);
     return Number(match[1]);

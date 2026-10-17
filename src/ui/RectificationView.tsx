@@ -43,6 +43,7 @@ import { SortableTable } from './SortableTable.js';
 import { useStoreState } from './store-context.js';
 import type { TableColumn } from './table-sort.js';
 import type { Locale } from '../interpretation/schema.js';
+import { Notice } from './primitives/Notice.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 
 /** How many of the best candidates are listed, and given a detail section. */
@@ -205,7 +206,7 @@ export function RectificationView(): React.JSX.Element {
       <h1>{t.heading}</h1>
       <GlossaryTerms terms={['rectification', 'ascendant', 'midheaven']} />
       <p className="hint">{t.hint}</p>
-      <p className="warning">{t.caveat}</p>
+      <Notice>{t.caveat}</Notice>
 
       <div className="field-grid">
         <Select

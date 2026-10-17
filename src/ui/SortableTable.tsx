@@ -39,15 +39,25 @@ export function SortableTable<T>({
   getRowKey,
   downloadFilename,
   selectedRowKey,
+  wrap = false,
+  headingLevel = 3,
 }: {
   readonly caption: string;
   readonly columns: readonly TableColumn<T>[];
   readonly rows: readonly T[];
   readonly getRowKey: (row: T) => string;
-  /** Filename for this table's CSV download (#68), already derived from the person and chart. */
-  readonly downloadFilename: string;
+  /**
+   * Filename for this table's CSV download (#68), already derived from the person and chart. Omitted, the table
+   * has no Copy or CSV buttons at all: for a table whose rows are not data to take away (a restore preview, an
+   * account list), or whose screen already offers its own export.
+   */
+  readonly downloadFilename?: string | undefined;
   /** The row to mark as selected (#418): highlighted, and exposed to assistive technology as the current row. */
   readonly selectedRowKey?: string | undefined;
+  /** True for a table of prose or controls (the admin tables, #428): cells wrap to the page width instead of scrolling sideways. */
+  readonly wrap?: boolean;
+  /** The caption's heading level: 2 where the page's own heading is an `h1`, so no level is skipped. */
+  readonly headingLevel?: 2 | 3;
 }): React.JSX.Element {
   const t = useMessages(sortableTableMessages);
   const [sort, setSort] = useState<SortState>();
@@ -57,6 +67,7 @@ export function SortableTable<T>({
   // buttons can sit next to it without ending up inside the table's accessibility tree) —
   // aria-labelledby recovers the same table/heading association a real <caption> gives (#69).
   const captionId = useId();
+  const Heading = headingLevel === 2 ? 'h2' : 'h3';
   const aligns = new Map(columns.map((column) => [column.key, columnAlign(column, sorted)]));
 
   const copy = (): void => {
@@ -74,21 +85,24 @@ export function SortableTable<T>({
   };
 
   const download = (): void => {
-    downloadText(downloadFilename, rowsToCsv(columns, sorted), 'text/csv;charset=utf-8');
+    if (downloadFilename !== undefined)
+      downloadText(downloadFilename, rowsToCsv(columns, sorted), 'text/csv;charset=utf-8');
   };
 
   return (
-    <section className="data-table">
+    <section className={wrap ? 'data-table data-table-wrap' : 'data-table'}>
       <div className="data-table-head">
-        <h3 id={captionId}>{caption}</h3>
-        <div className="data-table-actions">
-          <button type="button" className="quiet" onClick={copy}>
-            {copied ? t.copied : t.copy}
-          </button>
-          <button type="button" className="quiet" onClick={download}>
-            {t.downloadCsv}
-          </button>
-        </div>
+        <Heading id={captionId}>{caption}</Heading>
+        {downloadFilename !== undefined && (
+          <div className="data-table-actions">
+            <button type="button" className="quiet" onClick={copy}>
+              {copied ? t.copied : t.copy}
+            </button>
+            <button type="button" className="quiet" onClick={download}>
+              {t.downloadCsv}
+            </button>
+          </div>
+        )}
       </div>
       <div
         className={sorted.length > TALL_TABLE_ROWS ? 'data-table-scroll data-table-scroll-tall' : 'data-table-scroll'}
@@ -110,17 +124,21 @@ export function SortableTable<T>({
                     }
                   >
                     <span className="data-table-head-cell">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSort((current) => toggleSort(current, column.key));
-                        }}
-                      >
-                        {column.label}
-                        {sort?.column === column.key && (
-                          <span aria-hidden="true">{sort.direction === 'asc' ? ' ▲' : ' ▼'}</span>
-                        )}
-                      </button>
+                      {column.sortable === false ? (
+                        <span className="data-table-label">{column.label}</span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSort((current) => toggleSort(current, column.key));
+                          }}
+                        >
+                          {column.label}
+                          {sort?.column === column.key && (
+                            <span aria-hidden="true">{sort.direction === 'asc' ? ' ▲' : ' ▼'}</span>
+                          )}
+                        </button>
+                      )}
                       {column.labelTooltip !== undefined && (
                         <Tooltip
                           text={column.labelTooltip}
