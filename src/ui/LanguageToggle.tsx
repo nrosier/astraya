@@ -29,7 +29,7 @@ export function LanguageToggle(): React.JSX.Element {
         const index = CORPUS_LOCALES.indexOf(locale);
         setLocale(CORPUS_LOCALES[(index + 1) % CORPUS_LOCALES.length] ?? locale);
       }}
-      aria-label={t.languageLabel(LOCALE_LABELS[locale])}
+      aria-label={t.languageLabel(LOCALE_LABELS[locale], locale.toUpperCase())}
       title={LOCALE_LABELS[locale]}
     >
       {locale.toUpperCase()}
