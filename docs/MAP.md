@@ -10,6 +10,7 @@ Root files:
 - `CORPUS_KEYS.md` — Corpus key-shape reference (which placements get which key format). Deps: `src/interpretation/schema.ts`; paired with `html/CORPUS_KEYS.html`.
 - `CHART_OVERLAYS.md` — Supported chart-overlay contexts, intentional relationship-chart exceptions, interaction, and export behavior. Deps: `src/ui/ChartView.tsx`, `src/ui/SynastryView.tsx`, `src/chart/multi-wheel.ts`.
 - `DEPENDENCIES.md` — Hand-maintained dependency/licence inventory `CLAUDE.md`'s onboarding checklist points to. Deps: `node_modules/*/package.json` licence fields.
+- `AAF_INTERCHANGE.md` — AAF birth-record interchange: the AAF'97 source, the field mapping, the Astraya extension chunk, and what is not claimed (#591). Deps: `src/domain/aaf.ts`, `src/domain/aaf-people.ts`, `references/aaf-chunks.references.json`.
 - `EXPORT_SCHEMA.md` — Astraya full-export JSON schema reference: shape, compatibility policy, version history (#561). Deps: `src/domain/full-export.ts`, `src/domain/chart-tables.ts`; paired with `schema/astraya-export.schema.json`.
 - `RELEASING.md` — Release policy and tagging scheme (every milestone ends in a release).
 - `UI-UX_GUIDELINES.md` — Normative UI/UX implementation and behavior rules for future features. Deps: `src/ui`, `docs/UI-UX_REVIEW.md`.

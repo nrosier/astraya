@@ -6,14 +6,11 @@ TypeScript interfaces; this is the readable copy, paired with a hand-authored JS
 
 ## What this covers, and what it doesn't
 
-This is the **documented, versioned Astraya JSON schema** half of #561's two acceptance paths — not AAF/A93
-compatibility. AAF (Astrological Automated Format) and A93 are referenced in `docs/audit/ASTROLOGY_REVIEW.md` as a
-gap, but this project has no verified knowledge of either wire format's actual field-level specification or
-licensing terms, and researching those external specs was out of scope for this pass. Rather than guess at a
-compatibility claim this project cannot back up, this document commits only to Astraya's own schema being stable,
-versioned, and backward-compatibility-tracked — exactly what the issue's acceptance criterion asks for even when an
-external format adapter can't ship ("the documented Astraya schema satisfies the issue even if an external format
-cannot be implemented safely," per `docs/audit/IMPLEMENTATION_PLAN.md`'s own framing of this task).
+This is the **documented, versioned Astraya JSON schema** half of #561's two acceptance paths. Birth records can
+also be exchanged with other astrology programs as **AAF** (whose records begin with an `#A93` chunk), from the
+AAF'97 specification; that is a separate format with its own mapping and limits, documented in
+`docs/AAF_INTERCHANGE.md` (#591). This document commits only to Astraya's own JSON schema being stable, versioned,
+and backward-compatibility-tracked.
 
 ## Top-level shape
 

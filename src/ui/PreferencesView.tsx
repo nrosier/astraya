@@ -30,7 +30,14 @@
  * @exports PreferencesView
  */
 import { useEffect, useId, useState } from 'react';
-import { buildFullExport, fullExportFilename, peopleCsvFilename, peopleToCsv } from '../domain/full-export.js';
+import { aafToExportedPeople, isAafText, peopleToAaf } from '../domain/aaf-people.js';
+import {
+  buildFullExport,
+  fullExportFilename,
+  peopleAafFilename,
+  peopleCsvFilename,
+  peopleToCsv,
+} from '../domain/full-export.js';
 import { stageFullExportRestore, validateFullExport, type RestorePreview } from '../domain/full-export-importer.js';
 import { checkExportedCalculations, type PersonCalculationCheck } from '../domain/full-export-check.js';
 import { APP_VERSION } from '../version.js';
@@ -137,6 +144,18 @@ export function PreferencesView({
     });
   };
 
+  const exportPeopleAaf = (): void => {
+    if (store === undefined) {
+      setStatus({ kind: 'error', text: t.exportNeedsStore });
+      return;
+    }
+    const { text, skipped } = peopleToAaf([...store.state.people.values()]);
+    downloadText(peopleAafFilename(new Date()), text, 'text/plain');
+    // AAF needs a date and a place, so a person without them cannot be written; the status says who was left out.
+    const done = t.exportDone(t.exportPeopleAafName);
+    setStatus({ kind: 'done', text: skipped.length === 0 ? done : `${done} ${t.exportAafSkipped(skipped.length)}` });
+  };
+
   const exportPeopleCsv = (): void => {
     run(t.exportPeopleName, () => {
       if (store === undefined) throw new Error(t.exportNeedsStore);
@@ -159,6 +178,21 @@ export function PreferencesView({
     void file
       .text()
       .then((text) => {
+        // An AAF file (#591) is staged through the same reviewed restore as a full export.
+        if (isAafText(text)) {
+          const { people, errors } = aafToExportedPeople(text);
+          const staged = stageFullExportRestore({ people }, store.state.people, store.state.deleted.people);
+          setPreview(staged);
+          const firstError = errors[0];
+          setStatus({
+            kind: 'done',
+            text:
+              firstError === undefined
+                ? t.restoreReadyToReview
+                : `${t.restoreReadyToReview} ${t.restoreAafErrors(errors.length, `line ${String(firstError.line)}: ${firstError.message}`)}`,
+          });
+          return;
+        }
         let parsed: unknown;
         try {
           parsed = JSON.parse(text);
@@ -337,13 +371,21 @@ export function PreferencesView({
           onClick={exportPeopleCsv}
         >
           {t.exportPeopleCsv}
+        </button>{' '}
+        <button
+          type="button"
+          disabled={store === undefined}
+          aria-label={store === undefined ? `${t.exportPeopleAaf} — ${t.exportNeedsStore}` : undefined}
+          onClick={exportPeopleAaf}
+        >
+          {t.exportPeopleAaf}
         </button>
       </p>
       <p>{t.restoreHint}</p>
       <p>
         <FileInput
           buttonLabel={t.restoreFromFile}
-          accept="application/json"
+          accept="application/json,.json,.aaf,text/plain"
           disabled={store === undefined}
           disabledReason={t.exportNeedsStore}
           onChange={onRestoreFileChosen}
