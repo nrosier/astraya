@@ -110,6 +110,12 @@ describe('ChartOverlaySettingsPanel', () => {
 
     expect(container.textContent).toContain('Primary directed ring');
     expect(container.textContent).toContain('Return ring');
-    expect(container.querySelector<HTMLSelectElement>('select')?.disabled).toBe(true);
+    // The return type is a segmented choice (#615), disabled until a return ring is turned on.
+    const returnType = [...container.querySelectorAll<HTMLElement>('[role="radiogroup"]')].find(
+      (group) => group.getAttribute('aria-label') === 'Return type',
+    );
+    const radios = [...(returnType?.querySelectorAll<HTMLInputElement>('input[type="radio"]') ?? [])];
+    expect(radios).toHaveLength(2);
+    expect(radios.every((radio) => radio.disabled)).toBe(true);
   });
 });
