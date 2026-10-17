@@ -28,6 +28,8 @@ const en = {
   missingWarning: (count: string) =>
     `${count} of the selected candidates were already decided elsewhere and were skipped.`,
 
+  candidatesHeading: 'Candidates',
+  selectColumn: 'Select',
   keyColumn: 'Entry',
   detailsColumn: 'Details',
   sourceColumn: 'Source',
@@ -69,6 +71,8 @@ const nl: typeof en = {
   missingWarning: (count: string) =>
     `${count} van de geselecteerde kandidaten waren elders al besloten en zijn overgeslagen.`,
 
+  candidatesHeading: 'Kandidaten',
+  selectColumn: 'Selecteren',
   keyColumn: 'Onderdeel',
   detailsColumn: 'Details',
   sourceColumn: 'Bron',

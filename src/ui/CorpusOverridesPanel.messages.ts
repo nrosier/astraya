@@ -31,6 +31,7 @@ const en = {
   loadMoreButton: 'Load more',
   exportButton: 'Export corrections',
 
+  entriesHeading: 'Entries',
   keyColumn: 'Entry',
   detailsColumn: 'Details',
   categoryColumn: 'Category',
@@ -80,6 +81,7 @@ const nl: typeof en = {
   loadMoreButton: 'Meer laden',
   exportButton: 'Correcties exporteren',
 
+  entriesHeading: 'Onderdelen',
   keyColumn: 'Onderdeel',
   detailsColumn: 'Details',
   categoryColumn: 'Categorie',

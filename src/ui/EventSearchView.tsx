@@ -20,8 +20,10 @@ import {
 } from '../domain/event-search.js';
 import { eventSearchToIcs } from '../domain/event-search-ics.js';
 import { downloadText } from './download.js';
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Checkbox } from './primitives/Checkbox.js';
+import { SortableTable } from './SortableTable.js';
+import type { TableColumn } from './table-sort.js';
 import { Select } from './primitives/Select.js';
 import { TextField } from './primitives/TextField.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
@@ -77,6 +79,19 @@ function toggle(
 
 export function EventSearchView(): React.JSX.Element {
   const t = useMessages(eventSearchViewMessages);
+  const columns = useMemo<readonly TableColumn<EventSearchResult>[]>(
+    () => [
+      {
+        key: 'date',
+        label: t.date,
+        valueOf: (row) => row.jd,
+        render: (row) => new Date((row.jd - 2440587.5) * 86400000).toISOString().replace('.000Z', 'Z'),
+      },
+      { key: 'kind', label: t.kind, valueOf: (row) => t.kindLabels[row.kind] },
+      { key: 'event', label: t.event, valueOf: (row) => row.label },
+    ],
+    [t],
+  );
   const { provider } = useEphemerisProvider();
   const [parameters, setParameters] = useState<Parameters>({
     from: '2026-01-01',
@@ -259,26 +274,13 @@ export function EventSearchView(): React.JSX.Element {
               {t.downloadIcs}
             </button>
           </p>
-          <div className="data-table-scroll">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>{t.date}</th>
-                  <th>{t.kind}</th>
-                  <th>{t.event}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {result.rows.map((row) => (
-                  <tr key={`${row.kind}-${row.jd}-${row.label}`}>
-                    <td>{new Date((row.jd - 2440587.5) * 86400000).toISOString().replace('.000Z', 'Z')}</td>
-                    <td>{t.kindLabels[row.kind]}</td>
-                    <td>{row.label}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <SortableTable
+            headingLevel={2}
+            caption={t.resultsHeading}
+            columns={columns}
+            rows={result.rows}
+            getRowKey={(row) => `${row.kind}-${String(row.jd)}-${row.label}`}
+          />
         </section>
       )}
     </main>

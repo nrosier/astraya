@@ -56,6 +56,8 @@ export interface TableColumn<T> {
    * column of check marks, which reads best centred.
    */
   readonly align?: ColumnAlign;
+  /** False for a column of controls (row actions, a selection checkbox), whose header is a plain label, not a sort button. */
+  readonly sortable?: boolean;
   /** Tooltip text for the column header (e.g., definition or hint). Shown on hover with cursor:help styling. */
   readonly labelTooltip?: string;
 }

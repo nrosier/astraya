@@ -39,6 +39,7 @@ import type { Locale } from '../interpretation/schema.js';
 import { bodyDisplayName } from './astro-names.messages.js';
 import { useMessages } from './messages.js';
 import { Checkbox } from './primitives/Checkbox.js';
+import { FilterSummary } from './primitives/FilterSummary.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { Button } from './primitives/Button.js';
 import { ChoiceGroup } from './primitives/ChoiceGroup.js';
@@ -252,14 +253,13 @@ export function TransitFilterPanel({
           if (preset !== undefined) onChange(transitPreset(preset, rules));
         }}
       />
-      <p>
-        <span role="status" className="transit-filter-count">
-          {t.count(shown, total, presetName)}
-        </span>{' '}
-        <button type="button" className="quiet" ref={triggerRef} aria-haspopup="dialog" onClick={openCard}>
-          {t.adjust}
-        </button>
-      </p>
+      <FilterSummary
+        summary={t.count(shown, total, presetName)}
+        changeLabel={t.adjust}
+        onChange={openCard}
+        changeRef={triggerRef}
+        changeProps={{ 'aria-haspopup': 'dialog' }}
+      />
       {current === 'important' && <p className="hint">{rules.context === 'daily' ? t.dailyNote : t.yearlyNote}</p>}
       {shown === 0 && total > 0 && (
         <StatusMessage kind="zero">

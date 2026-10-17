@@ -88,6 +88,7 @@ import { todayInputValue } from './format.js';
 import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
 import { useDefaultCalculationProfile } from './default-calculation-profile.js';
 import { rulershipSettingMessages } from './RulershipSetting.messages.js';
+import { FilterSummary } from './primitives/FilterSummary.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { consultationViewMessages } from './ConsultationView.messages.js';
 
@@ -291,13 +292,13 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
       {load.kind === 'ready' && (
         <>
           <h2>{t.transitsHeading}</h2>
-          <p className="hint">
-            {transitFilterT.count(
+          <FilterSummary
+            summary={transitFilterT.count(
               filteredContacts.length,
               load.transit.contacts.length,
               transitFilterT.presetsShort[presetOf(filter, rules) ?? 'custom'],
             )}
-          </p>
+          />
           {shownContactRows.length === 0 ? (
             <p className="hint">{t.noShownTransits}</p>
           ) : (

@@ -158,7 +158,7 @@ function tableRows(container: HTMLElement): readonly HTMLTableRowElement[] {
 function editButtonForKey(container: HTMLElement, key: string): HTMLButtonElement {
   // The row's entry cell shows what the entry means, with the key as small secondary text (#428).
   const row = tableRows(container).find((candidate) => candidate.querySelector('td .entry-key')?.textContent === key);
-  const button = row?.querySelector('td.actions button');
+  const button = row?.querySelector('.actions button');
   if (!(button instanceof HTMLButtonElement)) throw new Error(`test fixture bug: no edit button for row "${key}"`);
   return button;
 }

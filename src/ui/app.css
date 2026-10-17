@@ -1223,6 +1223,11 @@ label.stacked textarea:focus-visible {
   font-weight: 620;
 }
 
+/* A table that is the main content of its page names itself with an h2, at the size of any other h2. */
+.data-table-head h2 {
+  margin: 0;
+}
+
 .data-table-actions {
   display: flex;
   gap: 0.5rem;
@@ -3531,6 +3536,11 @@ svg text.chart-symbol-text-unicode {
   vertical-align: top;
 }
 
+/* Headers keep their words whole; only cell content may break anywhere. */
+.data-table-wrap th {
+  overflow-wrap: normal;
+}
+
 .data-table-wrap .actions {
   white-space: nowrap;
 }
@@ -4125,6 +4135,15 @@ svg text.chart-symbol-text-unicode {
 
 .data-table th .data-table-head-cell > button {
   width: auto;
+}
+
+/* A header that is not a sort button (a column of controls) matches the sort buttons' type. */
+.data-table .data-table-label {
+  color: var(--muted);
+  font-weight: 650;
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
 
 .data-table th .data-table-help .primitive-tooltip-trigger {

@@ -175,6 +175,7 @@ import type { TableColumn } from './table-sort.js';
 import type { EphemerisProvider } from '../ephemeris/types.js';
 import type { Locale } from '../interpretation/schema.js';
 import type { BirthMomentInput } from '../time/types.js';
+import { Notice } from './primitives/Notice.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import {
   ChartOverlaySettingsPanel,
@@ -1640,7 +1641,7 @@ function ShareLink({
       {/* `.warning`, not the `.hint` above it (#341). There is no server-side state behind
           a share link, so there is nothing to revoke — the only place that can be said is
           before the link exists, and grey small print is how it would be missed. */}
-      <p className="warning share-warning">{t.shareLinkWarning}</p>
+      <Notice className="share-warning">{t.shareLinkWarning}</Notice>
     </>
   );
 }

@@ -55,7 +55,7 @@ test('a person with a known birth time gets a Transit screen with a bi-wheel and
   // Important-only by default (#416): the count, the table rows and the wheel's cross-ring lines
   // all agree, and "All transits" widens every one of them.
   const countText = async (): Promise<[number, number]> => {
-    const text = (await page.locator('.transit-filter-count').textContent()) ?? '';
+    const text = (await page.locator('.filter-summary-count').textContent()) ?? '';
     const match = /· (\d+) of (\d+) shown$/.exec(text);
     if (match === null) throw new Error(`unexpected count text: ${text}`);
     return [Number(match[1]), Number(match[2])];

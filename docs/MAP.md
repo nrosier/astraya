@@ -4,6 +4,7 @@ Project documentation. Pick the right bucket below for a new doc rather than dro
 
 Root files:
 
+- `UI-UX_RELEASE_CHECKS.md` — Per-release record of the manual UI/UX checks and section 16 tasks that no automated test performs (#615). Deps: `UI-UX_GUIDELINES.md`, `RELEASING.md`; paired with `html/UI-UX_RELEASE_CHECKS.html`.
 - `UI-UX_BASELINE.md` — The behaviour the end-to-end suite pins (routes, inputs, outputs, selection, exports, persistence), generated from the test titles. Deps: `scripts/generate-ui-baseline.mjs`; paired with `html/UI-UX_BASELINE.html`.
 - `ui-baselines/` — Reference screenshots of the restructured UI surfaces (both themes, 390/1280/1440 wide), written by `e2e/ui-baselines.spec.ts` when asked; documentation, not assertions.
 - `astronomy_terms.md` — Combined 573-term astrology/astronomy glossary merged from six draft sources, staged as source material for #456's glossary tooltip content. Deps: none yet (not wired into `src/ui` — pending integration).
