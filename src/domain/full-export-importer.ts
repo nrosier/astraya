@@ -350,7 +350,8 @@ function restoreMutations(entityId: string, exported: ExportedPerson, existing: 
  * confirming will (and will not) do.
  */
 export function stageFullExportRestore(
-  archive: FullExport,
+  // Only the people are staged, so only they are required: an AAF import (#591) has people and nothing else.
+  archive: Pick<FullExport, 'people'>,
   existingPeople: ReadonlyMap<string, Person>,
   deletedPeople: ReadonlyMap<string, Person> = new Map(),
 ): RestorePreview {

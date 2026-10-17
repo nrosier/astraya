@@ -91,6 +91,12 @@ const en = {
     'Every person on this device with their birth record and natal chart data, as one JSON file, or just the people list as a spreadsheet.',
   exportEverything: 'Export everything (one file)',
   exportPeopleCsv: 'Export people (CSV)',
+  exportPeopleAaf: 'Export people (AAF)',
+  exportPeopleAafName: 'the people list as AAF',
+  exportAafSkipped: (count: number) =>
+    `${String(count)} ${count === 1 ? 'person has' : 'people have'} no complete birth record and ${count === 1 ? 'was' : 'were'} left out: AAF needs a date and a place.`,
+  restoreAafErrors: (count: number, first: string) =>
+    `${String(count)} ${count === 1 ? 'record' : 'records'} in the AAF file could not be read and ${count === 1 ? 'was' : 'were'} skipped. First: ${first}`,
   exportPreparing: (what: string) => `Preparing ${what}…`,
   exportDone: (what: string) => `${what} exported.`,
   exportFailed: (message: string) => `The export failed: ${message}`,
@@ -99,7 +105,7 @@ const en = {
   exportEverythingName: 'everything',
   exportPeopleName: 'the people list',
   restoreHint:
-    'Restore people from a full export made on this or another device. Nothing is written until you review and confirm it.',
+    'Restore people from a full export made on this or another device, or import birth records from an AAF file made by another astrology program. Nothing is written until you review and confirm it.',
   restoreFromFile: 'Restore from file…',
   restorePreparing: 'Reading the file…',
   restoreInvalidJson: 'This file is not valid JSON.',
@@ -192,6 +198,12 @@ const nl: typeof en = {
     'Elke persoon op dit apparaat met zijn of haar geboortegegevens en de gegevens van het geboortehoroscoop, als één JSON-bestand, of alleen de personenlijst als spreadsheet.',
   exportEverything: 'Alles exporteren (één bestand)',
   exportPeopleCsv: 'Personen exporteren (CSV)',
+  exportPeopleAaf: 'Personen exporteren (AAF)',
+  exportPeopleAafName: 'de personenlijst als AAF',
+  exportAafSkipped: (count: number) =>
+    `${String(count)} ${count === 1 ? 'persoon heeft' : 'personen hebben'} geen volledige geboortegegevens en ${count === 1 ? 'is' : 'zijn'} weggelaten: AAF heeft een datum en een plaats nodig.`,
+  restoreAafErrors: (count: number, first: string) =>
+    `${String(count)} ${count === 1 ? 'record' : 'records'} in het AAF-bestand ${count === 1 ? 'kon' : 'konden'} niet worden gelezen en ${count === 1 ? 'is' : 'zijn'} overgeslagen. Eerste: ${first}`,
   exportPreparing: (what: string) => `${what} voorbereiden…`,
   exportDone: (what: string) => `${what} geëxporteerd.`,
   exportFailed: (message: string) => `De export is mislukt: ${message}`,
@@ -200,7 +212,7 @@ const nl: typeof en = {
   exportEverythingName: 'alles',
   exportPeopleName: 'de personenlijst',
   restoreHint:
-    'Herstel personen uit een volledige export, gemaakt op dit of een ander apparaat. Er wordt niets geschreven voordat je het hebt bekeken en bevestigd.',
+    'Herstel personen uit een volledige export, gemaakt op dit of een ander apparaat, of importeer geboortegegevens uit een AAF-bestand van een ander astrologieprogramma. Er wordt niets geschreven voordat je het hebt bekeken en bevestigd.',
   restoreFromFile: 'Herstellen vanuit bestand…',
   restorePreparing: 'Bestand wordt gelezen…',
   restoreInvalidJson: 'Dit bestand is geen geldige JSON.',
