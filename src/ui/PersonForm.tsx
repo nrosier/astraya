@@ -26,6 +26,7 @@ import { NEEDS_A_DECISION, PROVENANCE } from './moment-labels.js';
 import { personFormMessages } from './PersonForm.messages.js';
 import { DateField } from './primitives/DateField.js';
 import { NumberField } from './primitives/NumberField.js';
+import { ChoiceGroup } from './primitives/ChoiceGroup.js';
 import { Select } from './primitives/Select.js';
 import { TextAreaField } from './primitives/TextAreaField.js';
 import { TextField } from './primitives/TextField.js';
@@ -239,18 +240,21 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
       <fieldset className="field-group">
         <legend>{t.calendarZoneLegend}</legend>
         <div className="field-grid">
-          <Select
-            label={t.calendarLabel}
-            value={current.calendar}
-            options={[
-              { value: 'auto', label: t.calendarAutomatic },
-              { value: 'gregorian', label: t.calendarGregorian },
-              { value: 'julian', label: t.calendarJulian },
-            ]}
-            onChange={(value) => {
-              set('calendar', value as Calendar);
-            }}
-          />
+          <div className="primitive-field">
+            <span className="primitive-field-label">{t.calendarLabel}</span>
+            <ChoiceGroup
+              label={t.calendarLabel}
+              value={current.calendar}
+              options={[
+                { value: 'auto', label: t.calendarAutomatic },
+                { value: 'gregorian', label: t.calendarGregorian },
+                { value: 'julian', label: t.calendarJulian },
+              ]}
+              onChange={(value) => {
+                set('calendar', value as Calendar);
+              }}
+            />
+          </div>
           <NumberField
             label={t.utcOffsetOverrideLabel}
             step="any"

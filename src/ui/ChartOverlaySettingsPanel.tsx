@@ -7,7 +7,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { DateField } from './primitives/DateField.js';
 import { NumberField } from './primitives/NumberField.js';
-import { Select } from './primitives/Select.js';
+import { ChoiceGroup } from './primitives/ChoiceGroup.js';
 import { StagedDialog } from './primitives/StagedDialog.js';
 import { Checkbox } from './primitives/Checkbox.js';
 import { chartOverlaySettingsPanelMessages } from './ChartOverlaySettingsPanel.messages.js';
@@ -294,18 +294,21 @@ export function ChartOverlaySettingsPanel({
               update({ return: returnRing });
             }}
           >
-            <Select
-              label={t.returnKind}
-              value={draft.returnKind}
-              disabled={!draft.return}
-              options={[
-                { value: 'solar', label: t.solarReturn },
-                { value: 'lunar', label: t.lunarReturn },
-              ]}
-              onChange={(returnKind) => {
-                update({ returnKind: returnKind as ChartOverlayReturnKind });
-              }}
-            />
+            <div className="primitive-field">
+              <span className="primitive-field-label">{t.returnKind}</span>
+              <ChoiceGroup
+                label={t.returnKind}
+                value={draft.returnKind}
+                disabled={!draft.return}
+                options={[
+                  { value: 'solar', label: t.solarReturn },
+                  { value: 'lunar', label: t.lunarReturn },
+                ]}
+                onChange={(returnKind) => {
+                  update({ returnKind: returnKind as ChartOverlayReturnKind });
+                }}
+              />
+            </div>
             <DateField
               label={t.returnDate}
               value={draft.returnDate}
