@@ -4,6 +4,32 @@ All notable changes to Astraya are recorded here. Versions follow
 [semantic versioning](https://semver.org/), and every milestone ends in a release —
 see [docs/RELEASING.md](docs/RELEASING.md).
 
+## [0.39.0] — 2026-10-17
+
+**Orbs now work the same way on every chart, can be set to a historical source, and a calculation can be checked later.**
+
+### Added
+
+- **One set of orbs for every chart, with your own per-aspect and per-body orbs (#590).** The orbs you choose in the chart settings now reach the natal chart, returns, draconic, harmonic and relocated charts, transits, synastry, composites, progressions, directions and the PDF. Before, only the natal chart used them. Synastry still applies its tighter limit, and transits keep their three minor aspects.
+- **Orbs from William Lilly's own table (#590).** Two new presets, _Lilly (1647), first column_ and _second column_, use the orb he gives for each planet in _Christian Astrology_ (1647), Book I, p. 107, and the moiety rule he describes there: two planets are in aspect within half of each orb added together. Lilly has no orb for Uranus, Neptune or Pluto, so those use the standard tiers. Standard, Tight and Wide, the synastry limit and the transit orbs remain Astraya's own defaults; no published source for them could be verified, and the app now says so instead of crediting another program.
+- **Named orb profiles, and a choice of orbs per kind of chart (#590).** Save profiles under Preferences → Astrology; each edit is a new revision. Choose, for natal, transit and synastry charts separately, whether to use the settings card's orbs, a profile, or a Lilly preset. A chart records the orbs and revision it used, so editing a profile later never changes one already drawn.
+- **Check a calculation file (#582).** Load a saved calculation and Astraya recomputes it and tells you whether it still comes out the same, naming the cause if it does not (a different engine, time-zone database or orbs).
+- **Restore people from a full export (#587).** Restore from file reads an Astraya export, shows what would be added or changed, and writes nothing until you confirm.
+- **One setting for what is shown and what takes aspects (#585).** Each object has a visibility box and an aspect-participation box, and presets fill them together.
+- **Transit, synastry and primary-direction results now carry their own verifiable calculation record (#582).**
+
+### Changed
+
+- **Combustion and the Sun's beams follow Lilly (#28).** A planet is combust within 8°30′ of the Sun and only in the Sun's own sign (before: 8°, any sign), and under the beams until 17° (before: 15°). A few more planets read as under the beams, and a planet just across a sign boundary from the Sun no longer reads as combust.
+- **A void Moon in Taurus, Cancer, Sagittarius or Pisces no longer makes a horary chart "not radical" (#590).** Lilly says it matters less there. It is still listed, marked "Applies, but weighs less". The Moon in the later degrees of a sign, which Lilly also cautions about without giving a number, is not checked.
+- **The horary considerations now cite the right passage (#590).** They came from Book I, "Considerations before Judgment", pp. 121–123, not "chapter XXXVI".
+
+### Fixed
+
+- **PDF charts were drawn too large and without text (#579, #580, #581).** Chart graphs now fit the page, and their labels, and the Elements grid's amounts, appear.
+- **The export buttons now say why they are disabled (#617).**
+- **Comparison chart labels are translated (#586).**
+
 ## [0.38.0] — 2026-10-14
 
 ### Added
