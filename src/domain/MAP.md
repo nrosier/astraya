@@ -2,6 +2,8 @@
 
 One level above `src/astrology/`: composes pure astrological calculations into shapes screens render. Still pure/async, no DOM/React.
 
+- `aaf.ts` — AAF'97 birth-record format: encodes and decodes #A93/#B93 plus #SRC/#VIA/#COM and an extension in a #: chunk (#591). Deps: `time/types`.
+- `aaf-people.ts` — Maps people to and from AAF records and stages an AAF import as a reviewed restore (#591). Deps: `./aaf`, `./person`, `./full-export`.
 - `astrocartography.ts` — Astrocartography lines (MC/IC/AC/DC) + Local Space + relocated houses. Deps: `astrology/astrocartography`, `ephemeris/types`.
 - `calculation-artifact.ts` — Completed calculation (natal, or a transit/synastry/primary-directions technique on it) as inputs + execution and time-resolution provenance + SHA-256 input/result fingerprints, and verification by recomputation (#582). Deps: `./calculation-snapshot`, `./chart-compute`, `./transit`, `./synastry`, `./primary-directions`, `ephemeris/assets`, `time/resolve`.
 - `calculation-snapshot.ts` — Versioned calculation snapshot (settings, rulership, custom points) with validated parsing and a short provenance tag. Deps: `chart/extended-settings`, `astrology/rulership`, `./person`, `store/ops` (JsonValue).
