@@ -30,11 +30,11 @@ import { ReportView } from './ReportView.js';
 import { compositeViewMessages } from './CompositeView.messages.js';
 import { useMessages } from './messages.js';
 import { ordered } from './people-list.js';
-import { momentKey } from '../time/encode.js';
 import { PersonNotFound } from './PersonNotFound.js';
 import { useStoreState } from './store-context.js';
 import type { ChartData } from '../domain/chart-compute.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
+import { useStableMoment } from './use-stable-moment.js';
 
 type Load =
   | { readonly kind: 'idle' }
@@ -56,6 +56,7 @@ export function CompositeView({
 }): React.JSX.Element {
   const state = useStoreState();
   const person = state.people.get(personId);
+  const personMoment = useStableMoment(person?.moment);
   const t = useMessages(compositeViewMessages);
 
   const candidates = useMemo(
@@ -68,17 +69,18 @@ export function CompositeView({
   );
   const [partnerId, setPartnerId] = useState<string>('');
   const partner = partnerId === '' ? undefined : state.people.get(partnerId);
+  const partnerMoment = useStableMoment(partner?.moment);
 
   const { provider } = useEphemerisProvider();
   const [load, setLoad] = useState<Load>({ kind: 'idle' });
 
   useEffect(() => {
-    if (person?.moment === undefined || partner?.moment === undefined || provider === undefined) {
+    if (personMoment === undefined || partnerMoment === undefined || provider === undefined) {
       setLoad({ kind: 'idle' });
       return undefined;
     }
-    const momentA = person.moment;
-    const momentB = partner.moment;
+    const momentA = personMoment;
+    const momentB = partnerMoment;
     const effect = { cancelled: false };
     setLoad({ kind: 'loading' });
 
@@ -95,7 +97,7 @@ export function CompositeView({
     return () => {
       effect.cancelled = true;
     };
-  }, [momentKey(person?.moment), momentKey(partner?.moment), provider]);
+  }, [personMoment, partnerMoment, provider]);
 
   if (person === undefined) {
     return <PersonNotFound />;

@@ -50,7 +50,6 @@ import { civilFromJulianDay } from '../time/julian.js';
 import { formatFixed, todayInputValue } from './format.js';
 import { useMessages } from './messages.js';
 import { useRulershipChoice } from './rulership-setting.js';
-import { momentKey } from '../time/encode.js';
 import {
   chartRulerKeysOf,
   filterTransits,
@@ -68,6 +67,7 @@ import type { TableColumn } from './table-sort.js';
 import type { BodyId, JulianDayUT } from '../ephemeris/types.js';
 import type { CorpusPlacement, Locale } from '../interpretation/schema.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
+import { useStableMoment } from './use-stable-moment.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -240,6 +240,7 @@ export function signHouseLabel(
 export function PeriodicTransitView({ personId }: { personId: string }): React.JSX.Element {
   const state = useStoreState();
   const person = state.people.get(personId);
+  const personMoment = useStableMoment(person?.moment);
   const t = useMessages(periodicTransitViewMessages);
   const [locale] = useLocale();
   const [asOf, setAsOf] = useState(todayInputValue);
@@ -266,8 +267,8 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
   }, [asOf]);
 
   useEffect(() => {
-    if (person?.moment === undefined || provider === undefined || targetDate === undefined) return undefined;
-    const moment = person.moment;
+    if (personMoment === undefined || provider === undefined || targetDate === undefined) return undefined;
+    const moment = personMoment;
     const effect = { cancelled: false };
     setLoad({ kind: 'loading' });
 
@@ -295,17 +296,17 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
     return () => {
       effect.cancelled = true;
     };
-  }, [momentKey(person?.moment), provider, targetDate]);
+  }, [personMoment, provider, targetDate]);
 
   const [returnBodyKey, setReturnBodyKey] = useState<ReturnBodyKey>('jupiter');
   const [returnLoad, setReturnLoad] = useState<PlanetaryReturnLoad>({ kind: 'idle' });
 
   useEffect(() => {
-    if (person?.moment === undefined || provider === undefined || targetDate === undefined) {
+    if (personMoment === undefined || provider === undefined || targetDate === undefined) {
       setReturnLoad({ kind: 'idle' });
       return undefined;
     }
-    const moment = person.moment;
+    const moment = personMoment;
     const body = bodyByKey(returnBodyKey);
     if (body === undefined) {
       setReturnLoad({ kind: 'idle' });
@@ -335,7 +336,7 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
     return () => {
       effect.cancelled = true;
     };
-  }, [momentKey(person?.moment), provider, targetDate, returnBodyKey]);
+  }, [personMoment, provider, targetDate, returnBodyKey]);
 
   if (person === undefined) {
     return <PersonNotFound />;

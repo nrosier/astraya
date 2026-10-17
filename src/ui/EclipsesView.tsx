@@ -14,7 +14,7 @@ import { GlossaryTerms } from './GlossaryTerm.js';
 import { formatFixed } from './format.js';
 import { Select } from './primitives/Select.js';
 import { TextField } from './primitives/TextField.js';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 import { bodyById } from '../astrology/bodies.js';
 import { eclipseContacts, findEclipses, type Eclipse, type NatalPoint } from '../astrology/eclipses.js';
 import { computeChartData } from '../domain/chart-compute.js';
@@ -125,22 +125,27 @@ export function EclipsesView(): React.JSX.Element {
     })();
   };
 
-  // Opens on a result: the default span is searched as soon as the ephemeris is ready.
+  // Opens on a result: the default span is searched as soon as the ephemeris is ready. An effect event, so the
+  // search reads the span as it is then and the effect itself depends on the provider alone.
   const started = useRef(false);
+  const searchOnOpen = useEffectEvent(run);
   useEffect(() => {
     if (provider === undefined || started.current) return;
     started.current = true;
-    run();
+    searchOnOpen();
   }, [provider]);
 
-  const typeOf = (row: EclipseRow): string => {
-    const family = t.families[row.family];
-    const kind =
-      row.family === 'solar'
-        ? t.solarKinds[row.kind as keyof typeof t.solarKinds]
-        : t.lunarKinds[row.kind as keyof typeof t.lunarKinds];
-    return `${family} — ${kind.toLowerCase()}`;
-  };
+  const typeOf = useCallback(
+    (row: EclipseRow): string => {
+      const family = t.families[row.family];
+      const kind =
+        row.family === 'solar'
+          ? t.solarKinds[row.kind as keyof typeof t.solarKinds]
+          : t.lunarKinds[row.kind as keyof typeof t.lunarKinds];
+      return `${family} — ${kind.toLowerCase()}`;
+    },
+    [t],
+  );
 
   const columns = useMemo<readonly TableColumn<EclipseRow>[]>(
     () => [
@@ -170,8 +175,7 @@ export function EclipsesView(): React.JSX.Element {
                 .join('; '),
       },
     ],
-    // `typeOf` reads `t`, which is listed.
-    [t, locale],
+    [t, locale, typeOf],
   );
 
   return (

@@ -48,7 +48,6 @@ import {
   type PrimaryDirectionsData,
 } from '../domain/primary-directions.js';
 import { civilFromJulianDay } from '../time/julian.js';
-import { momentKey } from '../time/encode.js';
 import { aspectDisplayName, bodyDisplayName } from './astro-names.messages.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { formatFixed, formatTimestamp, todayInputValue } from './format.js';
@@ -69,6 +68,7 @@ import type { Locale } from '../interpretation/schema.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { Checkbox } from './primitives/Checkbox.js';
 import type { PrimaryDirectionMethod, PrimaryDirectionMode } from '../astrology/primary-directions.js';
+import { useStableMoment } from './use-stable-moment.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -156,6 +156,7 @@ function dateInputValue(jd: number): string {
 export function PrimaryDirectionsView({ personId }: { personId: string }): React.JSX.Element {
   const state = useStoreState();
   const person = state.people.get(personId);
+  const personMoment = useStableMoment(person?.moment);
   const t = useMessages(primaryDirectionsViewMessages);
   const [locale] = useLocale();
   const { provider } = useEphemerisProvider();
@@ -177,8 +178,8 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
   }, [asOf]);
 
   useEffect(() => {
-    if (person?.moment === undefined || provider === undefined) return undefined;
-    const moment = person.moment;
+    if (personMoment === undefined || provider === undefined) return undefined;
+    const moment = personMoment;
     const effect = { cancelled: false };
     setLoad({ kind: 'loading' });
 
@@ -204,7 +205,7 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
     return () => {
       effect.cancelled = true;
     };
-  }, [momentKey(person?.moment), provider, key, method, mode, promissors, significators]);
+  }, [personMoment, provider, key, method, mode, promissors, significators]);
 
   useEffect(() => {
     if (load.kind !== 'ready' || !load.data.defined || provider === undefined || targetDate === undefined) {
@@ -254,6 +255,7 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
       bodies: directed.chart.positions,
     };
     return renderMultiWheelSvg([natalRing, directedRing]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the wheel renderers read the glyph settings from module state, so these are cache keys, not inputs the callback reads.
   }, [load, directed, t, symbolClass, variants]);
   const { wheelRef, onClick: handleWheelClick, onKeyDown: handleWheelKeyDown } = useWheelIsolation(wheelMarkup);
 

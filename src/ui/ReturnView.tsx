@@ -22,7 +22,6 @@ import { computeLunarReturnChart, computeSolarReturnChart, type ReturnChartData 
 import { crossAspectRows, type AspectRow } from '../domain/chart-tables.js';
 import { deriveExportFilename } from '../domain/export-filename.js';
 import { housesAreDefined } from '../domain/chart-compute.js';
-import { momentKey } from '../time/encode.js';
 import { aspectDisplayName, bodyDisplayName } from './astro-names.messages.js';
 import { ChartDataView } from './ChartView.js';
 import { ChartTypeSelector, changeChartView } from './ChartTypeSelector.js';
@@ -46,6 +45,7 @@ import type { GeoPosition } from '../ephemeris/types.js';
 import type { Locale } from '../interpretation/schema.js';
 import type { TableColumn } from './table-sort.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
+import { useStableMoment } from './use-stable-moment.js';
 
 type Load =
   | { readonly kind: 'idle' }
@@ -109,6 +109,7 @@ export function ReturnView({
   }
   const state = useStoreState();
   const person = state.people.get(personId);
+  const personMoment = useStableMoment(person?.moment);
   const t = useMessages(returnViewMessages);
   const [locale] = useLocale();
   const [rulership] = useRulershipChoice();
@@ -146,11 +147,11 @@ export function ReturnView({
   const placeInvalid = otherPlace && place === undefined;
 
   useEffect(() => {
-    if (person?.moment === undefined || provider === undefined || !inputValid || placeInvalid) {
+    if (personMoment === undefined || provider === undefined || !inputValid || placeInvalid) {
       setLoad({ kind: 'idle' });
       return undefined;
     }
-    const moment = person.moment;
+    const moment = personMoment;
     const effect = { cancelled: false };
     setLoad({ kind: 'loading' });
 
@@ -179,18 +180,7 @@ export function ReturnView({
     return () => {
       effect.cancelled = true;
     };
-  }, [
-    momentKey(person?.moment),
-    provider,
-    solar,
-    yearNumber,
-    fromJdParts,
-    place,
-    placeInvalid,
-    inputValid,
-    rulership,
-    settings,
-  ]);
+  }, [personMoment, provider, solar, yearNumber, fromJdParts, place, placeInvalid, inputValid, rulership, settings]);
 
   const baseLabel = solar ? t.solarLabel(year) : t.lunarLabel;
   const label =

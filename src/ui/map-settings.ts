@@ -75,7 +75,7 @@ export function relocationErrors(settings: MapSettings): RelocationErrors {
 }
 
 /** The relocation place, once both fields are valid; `undefined` otherwise. */
-export function relocationOf(settings: MapSettings): GeoPosition | undefined {
+export function relocationOf(settings: Pick<MapSettings, 'relocationLat' | 'relocationLon'>): GeoPosition | undefined {
   const latitude = parseCoordinate(settings.relocationLat, -90, 90);
   const longitude = parseCoordinate(settings.relocationLon, -180, 180);
   return latitude === undefined || longitude === undefined ? undefined : { latitude, longitude, altitude: 0 };

@@ -52,7 +52,6 @@ import { useWheelIsolation } from './wheel-interaction.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { ordered } from './people-list.js';
-import { momentKey } from '../time/encode.js';
 import { PersonNotFound } from './PersonNotFound.js';
 import { RelationshipSummary } from './RelationshipSummary.js';
 import { SortableTable } from './SortableTable.js';
@@ -63,6 +62,7 @@ import type { CorpusEntry, Locale } from '../interpretation/schema.js';
 import { synastryText } from './synastry-text.js';
 import { wheelCorpus } from './wheel-corpus.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
+import { useStableMoment } from './use-stable-moment.js';
 
 type Load =
   | { readonly kind: 'idle' }
@@ -128,6 +128,7 @@ export function aspectColumns(
 export function SynastryView({ personId }: { personId: string }): React.JSX.Element {
   const state = useStoreState();
   const person = state.people.get(personId);
+  const personMoment = useStableMoment(person?.moment);
   const t = useMessages(synastryViewMessages);
   const [symbolClass] = useSymbolClass();
   // The wheel's markup is cached on these, so a change of symbol form redraws it.
@@ -144,6 +145,7 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
   );
   const [partnerId, setPartnerId] = useState<string>('');
   const partner = partnerId === '' ? undefined : state.people.get(partnerId);
+  const partnerMoment = useStableMoment(partner?.moment);
 
   const { provider } = useEphemerisProvider();
   const [load, setLoad] = useState<Load>({ kind: 'idle' });
@@ -162,12 +164,12 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
   );
 
   useEffect(() => {
-    if (person?.moment === undefined || partner?.moment === undefined || provider === undefined) {
+    if (personMoment === undefined || partnerMoment === undefined || provider === undefined) {
       setLoad({ kind: 'idle' });
       return undefined;
     }
-    const momentA = person.moment;
-    const momentB = partner.moment;
+    const momentA = personMoment;
+    const momentB = partnerMoment;
     const effect = { cancelled: false };
     setLoad({ kind: 'loading' });
 
@@ -194,7 +196,7 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
     return () => {
       effect.cancelled = true;
     };
-  }, [momentKey(person?.moment), momentKey(partner?.moment), provider]);
+  }, [personMoment, partnerMoment, provider, snapshot]);
 
   // The reviewed interpretation texts are fetched once a synastry is on screen, and kept per language;
   // until they arrive (or if they cannot) the rows show the mechanical sentence.
@@ -235,6 +237,7 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
       { outerRingIndex: 0, innerRingIndex: 1, aspects: load.data.aspects },
     ];
     return renderMultiWheelSvg([ringA, ringB], crossAspects);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the wheel renderers read the glyph settings from module state, so these are cache keys, not inputs the callback reads.
   }, [load, person, partner, t, symbolClass, variants]);
 
   const wheelT = useMessages(biWheelSelectionPanelMessages);

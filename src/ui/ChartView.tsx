@@ -188,6 +188,7 @@ import { chartOverlaySettingsPanelMessages } from './ChartOverlaySettingsPanel.m
 import { CustomPointEditor } from './CustomPointEditor.js';
 import { parseCoordinate } from './map-settings.js';
 import { orbConfigForContext } from '../astrology/orb-profiles.js';
+import { useStableBy, useStableMoment } from './use-stable-moment.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -1722,7 +1723,7 @@ export function ChartDataView({
   const [overlaySettings, setOverlaySettings] = useState<ChartOverlaySettings>(DEFAULT_CHART_OVERLAY_SETTINGS);
   const [overlayLoad, setOverlayLoad] = useState<OverlayLoad>({ kind: 'idle' });
 
-  const pointVisibility = toPointVisibilityOptions(extendedSettings);
+  const pointVisibility = useMemo(() => toPointVisibilityOptions(extendedSettings), [extendedSettings]);
   // Which bound table the dignity/condition/reception/almuten tables use (#549) — threaded
   // alongside `rulership` through the same render-tab functions, not through `pointVisibility`
   // (it isn't a visibility concern).
@@ -1906,23 +1907,7 @@ export function ChartDataView({
     return () => {
       effect.cancelled = true;
     };
-  }, [
-    load,
-    overlayContext,
-    overlaySettings,
-    overlayT.draconic,
-    overlayT.directed,
-    overlayT.lunarReturn,
-    overlayT.natal,
-    overlayT.primaryDirectionsProvenance,
-    overlayT.progressed,
-    overlayT.relocated,
-    overlayT.solarReturn,
-    overlayT.transit,
-    overlayT.calculationSnapshot,
-    extendedSettings,
-    rulership,
-  ]);
+  }, [load, overlayContext, overlaySettings, overlayT, pointVisibility, extendedSettings, rulership]);
 
   // The export sheet (SVG/PNG/PDF) and the on-screen dial are two compositions of one computed chart (#511):
   // the dial is the sheet's own wheel, drawn alone; everything else the sheet holds is shown as tables.
@@ -1940,6 +1925,7 @@ export function ChartDataView({
       signWedgeStyle: toSignWedgeStyle(extendedSettings),
     };
     return { sheet: renderChartSheetSvg(input, options), dial: renderChartDialSvg(input, options) };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the wheel renderers read the glyph settings from module state, so these are cache keys, not inputs the callback reads.
   }, [load, housesRenderable, displayName, metaLines, extendedSettings, t, locale, symbolClass, variants]);
 
   const wheelMarkup = overlayLoad.kind === 'ready' ? overlayLoad.markup : dial?.markup;
@@ -2351,6 +2337,8 @@ export function ChartView({
 }): React.JSX.Element {
   const state = useStoreState();
   const person = state.people.get(personId);
+  const personMoment = useStableMoment(person?.moment);
+  const customPoints = useStableBy(person?.customPoints, (points) => JSON.stringify(points ?? []));
   const t = useMessages(chartViewMessages);
   const [locale] = useLocale();
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
@@ -2371,7 +2359,6 @@ export function ChartView({
   const lastChartKey = useRef('');
   // Memoised: it is a dependency of the wheel's markup, and a new array on every render of this screen (which a
   // change of section now causes) would redraw the wheel and drop what was selected on it.
-  const personMoment = person?.moment;
   const personName = person?.displayName ?? '';
   const metaLines = useMemo(
     () =>
@@ -2396,13 +2383,13 @@ export function ChartView({
   }, [load]);
 
   useEffect(() => {
-    if (person?.moment === undefined || provider === undefined) return undefined;
-    const moment = person.moment;
+    if (personMoment === undefined || provider === undefined) return undefined;
+    const moment = personMoment;
     // A mutable holder rather than a `let`, matching `App.tsx`'s own effect below.
     const effect = { cancelled: false };
     // Only the planetary rulers changed (#426): keep the chart on screen while it is recalculated
     // rather than going back to "loading", so the settings panel the choice was made in stays open.
-    const customPointsKey = JSON.stringify(person.customPoints ?? []);
+    const customPointsKey = JSON.stringify(customPoints ?? []);
     const chartKey = `${personId}|${momentKey(moment)}|${JSON.stringify(settings)}|${customPointsKey}`;
     const sameChart = lastChartKey.current === chartKey;
     lastChartKey.current = chartKey;
@@ -2413,9 +2400,9 @@ export function ChartView({
         const data = await computeChartData(moment, provider, {
           ...toChartCalculationOptions(settings),
           rulership,
-          ...(person.customPoints === undefined ? {} : { customPoints: person.customPoints }),
+          ...(customPoints === undefined ? {} : { customPoints }),
         });
-        const snapshot = buildCalculationSnapshot(settings, rulership, person.customPoints ?? []);
+        const snapshot = buildCalculationSnapshot(settings, rulership, customPoints ?? []);
         const artifact = await buildChartArtifact(snapshot, moment, data, provider);
         if (!effect.cancelled) setLoad({ kind: 'ready', data, artifact });
       } catch (error) {
@@ -2427,7 +2414,7 @@ export function ChartView({
     return () => {
       effect.cancelled = true;
     };
-  }, [personId, momentKey(person?.moment), person?.customPoints, settings, rulership, provider]);
+  }, [personId, personMoment, customPoints, settings, rulership, provider]);
 
   // Compute comparison chart when compareType is provided (#439)
   useEffect(() => {
@@ -2435,14 +2422,14 @@ export function ChartView({
       setCompareLoad({ kind: 'loading' });
       return;
     }
-    if (person?.moment === undefined || provider === undefined) return undefined;
+    if (personMoment === undefined || provider === undefined) return undefined;
 
-    const moment = person.moment;
+    const moment = personMoment;
     const effect = { cancelled: false };
     const options = {
       ...toChartCalculationOptions(settings),
       rulership,
-      ...(person.customPoints === undefined ? {} : { customPoints: person.customPoints }),
+      ...(customPoints === undefined ? {} : { customPoints }),
     };
 
     setCompareLoad({ kind: 'loading' });
@@ -2471,7 +2458,7 @@ export function ChartView({
     return () => {
       effect.cancelled = true;
     };
-  }, [personId, momentKey(person?.moment), person?.customPoints, settings, rulership, provider, compareType]);
+  }, [personId, personMoment, customPoints, settings, rulership, provider, compareType]);
 
   if (person === undefined) {
     return <PersonNotFound />;

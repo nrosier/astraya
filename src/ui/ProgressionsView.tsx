@@ -34,7 +34,6 @@ import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { formatFixed, todayInputValue } from './format.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
-import { momentKey } from '../time/encode.js';
 import { PersonNotFound } from './PersonNotFound.js';
 import { progressionsViewMessages } from './ProgressionsView.messages.js';
 import { SortableTable } from './SortableTable.js';
@@ -43,6 +42,7 @@ import type { TableColumn } from './table-sort.js';
 import type { BodyPosition, HousePositions } from '../ephemeris/types.js';
 import type { Locale } from '../interpretation/schema.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
+import { useStableMoment } from './use-stable-moment.js';
 
 type Technique = 'secondary' | 'tertiary' | 'minor';
 
@@ -155,6 +155,7 @@ export function mcMethodLabel(t: typeof progressionsViewMessages.en, method: Pro
 export function ProgressionsView({ personId }: { personId: string }): React.JSX.Element {
   const state = useStoreState();
   const person = state.people.get(personId);
+  const personMoment = useStableMoment(person?.moment);
   const t = useMessages(progressionsViewMessages);
   const [locale] = useLocale();
   const [technique, setTechnique] = useState<Technique>('secondary');
@@ -169,8 +170,8 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
   }, [asOf]);
 
   useEffect(() => {
-    if (person?.moment === undefined || provider === undefined || targetDate === undefined) return undefined;
-    const moment = person.moment;
+    if (personMoment === undefined || provider === undefined || targetDate === undefined) return undefined;
+    const moment = personMoment;
     const effect = { cancelled: false };
     setLoad({ kind: 'loading' });
 
@@ -192,7 +193,7 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
     return () => {
       effect.cancelled = true;
     };
-  }, [momentKey(person?.moment), provider, targetDate, technique, mcMethod]);
+  }, [personMoment, provider, targetDate, technique, mcMethod]);
 
   if (person === undefined) {
     return <PersonNotFound />;

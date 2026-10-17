@@ -16,7 +16,7 @@ import { GlossaryTerms } from './GlossaryTerm.js';
 import { DateField } from './primitives/DateField.js';
 import { Select } from './primitives/Select.js';
 import { TextField } from './primitives/TextField.js';
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { ELECTION_RULE_KEYS, findElectionWindows, type ElectionRuleKey } from '../astrology/electional.js';
 import { BirthPlaceSearch } from './BirthPlaceSearch.js';
 import {
@@ -100,8 +100,11 @@ export function ElectionalView(): React.JSX.Element {
     })();
   };
 
-  const ruleLabels = (keys: readonly ElectionRuleKey[]): string =>
-    keys.length === 0 ? t.none : keys.map((key) => t.rules[key]?.label ?? key).join('; ');
+  const ruleLabels = useCallback(
+    (keys: readonly ElectionRuleKey[]): string =>
+      keys.length === 0 ? t.none : keys.map((key) => t.rules[key]?.label ?? key).join('; '),
+    [t],
+  );
 
   const columns = useMemo<readonly TableColumn<ElectionRow>[]>(
     () => [
@@ -132,8 +135,7 @@ export function ElectionalView(): React.JSX.Element {
         render: (row) => ruleLabels(row.violated),
       },
     ],
-    // `ruleLabels` reads `t`, which is listed.
-    [t],
+    [t, ruleLabels],
   );
 
   const errorText = (error: ElectionFieldError): string =>

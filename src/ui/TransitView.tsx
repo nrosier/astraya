@@ -66,7 +66,6 @@ import { EVERY_BODY_KEY, TransitFilterPanel, useTransitFilter } from './TransitF
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { useRulershipChoice } from './rulership-setting.js';
-import { momentKey } from '../time/encode.js';
 import { PersonNotFound } from './PersonNotFound.js';
 import { SortableTable } from './SortableTable.js';
 import { useStoreState } from './store-context.js';
@@ -74,6 +73,7 @@ import { transitViewMessages } from './TransitView.messages.js';
 import type { TableColumn } from './table-sort.js';
 import type { Locale } from '../interpretation/schema.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
+import { useStableMoment } from './use-stable-moment.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -120,6 +120,7 @@ export function contactColumns(t: typeof transitViewMessages.en, locale: Locale)
 export function TransitView({ personId }: { personId: string }): React.JSX.Element {
   const state = useStoreState();
   const person = state.people.get(personId);
+  const personMoment = useStableMoment(person?.moment);
   const t = useMessages(transitViewMessages);
   const [locale] = useLocale();
   const [asOf, setAsOf] = useState(todayInputValue);
@@ -145,8 +146,8 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
   }, [asOf]);
 
   useEffect(() => {
-    if (person?.moment === undefined || provider === undefined || targetDate === undefined) return undefined;
-    const moment = person.moment;
+    if (personMoment === undefined || provider === undefined || targetDate === undefined) return undefined;
+    const moment = personMoment;
     const effect = { cancelled: false };
     setLoad({ kind: 'loading' });
 
@@ -178,7 +179,7 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
     return () => {
       effect.cancelled = true;
     };
-  }, [momentKey(person?.moment), provider, targetDate, snapshot]);
+  }, [personMoment, provider, targetDate, snapshot]);
 
   const [rulership] = useRulershipChoice();
   const [symbolClass] = useSymbolClass();
@@ -217,6 +218,7 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
       { innerRingIndex: 0, outerRingIndex: 1, aspects: shownContacts },
     ];
     return renderMultiWheelSvg([natalRing, transitRing], crossAspects);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the wheel renderers read the glyph settings from module state, so these are cache keys, not inputs the callback reads.
   }, [load, t, shownContacts, symbolClass, variants]);
 
   const wheelT = useMessages(biWheelSelectionPanelMessages);

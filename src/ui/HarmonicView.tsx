@@ -26,7 +26,6 @@ import {
   type HarmonicPositionProvenanceRow,
 } from '../domain/harmonic.js';
 import { housesAreDefined } from '../domain/chart-compute.js';
-import { momentKey } from '../time/encode.js';
 import { ChartDataView } from './ChartView.js';
 import { ChartTypeSelector, changeChartView } from './ChartTypeSelector.js';
 import { type ChartType, type ChartViewKind } from './chart-sections.js';
@@ -44,6 +43,7 @@ import { formatFixed } from './format.js';
 import { deriveExportFilename } from '../domain/export-filename.js';
 import { useExtendedSettings } from './extended-settings-store.js';
 import { orbsOf } from '../chart/extended-settings.js';
+import { useStableBy, useStableMoment } from './use-stable-moment.js';
 
 type Load =
   | { readonly kind: 'idle' }
@@ -89,6 +89,7 @@ export function HarmonicView({
   }
   const state = useStoreState();
   const person = state.people.get(personId);
+  const personMoment = useStableMoment(person?.moment);
   const t = useMessages(harmonicViewMessages);
 
   const [presetKey, setPresetKey] = useState<string>(VARGA_PRESETS[0]?.key ?? CUSTOM);
@@ -103,25 +104,25 @@ export function HarmonicView({
 
   const { provider } = useEphemerisProvider();
   const [load, setLoad] = useState<Load>({ kind: 'idle' });
-  const customPointsKey = JSON.stringify(person?.customPoints ?? []);
+  const customPoints = useStableBy(person?.customPoints, (points) => JSON.stringify(points ?? []));
   // The aspects use the device's orbs (#590), as the natal chart does.
   const [extendedSettings] = useExtendedSettings();
-  const orbsKey = JSON.stringify(extendedSettings.orbScalePercent) + JSON.stringify(extendedSettings.orbRules ?? null);
+  const orbs = useStableBy(orbsOf(extendedSettings), (config) => JSON.stringify(config));
 
   useEffect(() => {
-    if (person?.moment === undefined || provider === undefined || !nValid) {
+    if (personMoment === undefined || provider === undefined || !nValid) {
       setLoad({ kind: 'idle' });
       return undefined;
     }
-    const moment = person.moment;
+    const moment = personMoment;
     const effect = { cancelled: false };
     setLoad({ kind: 'loading' });
 
     void (async () => {
       try {
         const data: HarmonicData = await computeHarmonic(moment, n, provider, {
-          ...orbsOf(extendedSettings),
-          ...(person.customPoints === undefined ? {} : { customPoints: person.customPoints }),
+          ...orbs,
+          ...(customPoints === undefined ? {} : { customPoints }),
         });
         if (!effect.cancelled)
           setLoad({ kind: 'ready', data: data.harmonic, provenance: harmonicPositionProvenance(data) });
@@ -134,7 +135,7 @@ export function HarmonicView({
     return () => {
       effect.cancelled = true;
     };
-  }, [momentKey(person?.moment), provider, n, nValid, customPointsKey, orbsKey]);
+  }, [personMoment, provider, n, nValid, customPoints, orbs]);
 
   if (person === undefined) {
     return <PersonNotFound />;

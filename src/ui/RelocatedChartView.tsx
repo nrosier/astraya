@@ -20,7 +20,6 @@ import { GlossaryTerms } from './GlossaryTerm.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { computeRelocatedChart, relocatedComparisonRows, type RelocatedChartData } from '../domain/relocated-chart.js';
 import { housesAreDefined } from '../domain/chart-compute.js';
-import { momentKey } from '../time/encode.js';
 import { ChartDataView } from './ChartView.js';
 import { ChartTypeSelector, changeChartView } from './ChartTypeSelector.js';
 import { type ChartType, type ChartViewKind } from './chart-sections.js';
@@ -44,6 +43,7 @@ import type { RelocatedComparisonRow } from '../domain/relocated-chart.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { useExtendedSettings } from './extended-settings-store.js';
 import { orbsOf } from '../chart/extended-settings.js';
+import { useStableBy, useStableMoment } from './use-stable-moment.js';
 
 type Load =
   | { readonly kind: 'idle' }
@@ -85,6 +85,7 @@ export function RelocatedChartView({
   const store = useStore();
   const state = useStoreState();
   const person = state.people.get(personId);
+  const personMoment = useStableMoment(person?.moment);
   const t = useMessages(relocatedChartViewMessages);
   const [locale] = useLocale();
 
@@ -96,7 +97,10 @@ export function RelocatedChartView({
   const latitude = parseCoordinate(latInput, -90, 90);
   const longitude = parseCoordinate(lonInput, -180, 180);
   const hasBothFields = latInput.trim() !== '' && lonInput.trim() !== '';
-  const relocationPlace = latitude === undefined || longitude === undefined ? undefined : { latitude, longitude };
+  const relocationPlace = useMemo(
+    () => (latitude === undefined || longitude === undefined ? undefined : { latitude, longitude }),
+    [latitude, longitude],
+  );
 
   const selectLocation = (id: string): void => {
     setSelectedLocationId(id);
@@ -172,17 +176,17 @@ export function RelocatedChartView({
 
   const { provider } = useEphemerisProvider();
   const [load, setLoad] = useState<Load>({ kind: 'idle' });
-  const customPointsKey = JSON.stringify(person?.customPoints ?? []);
+  const customPoints = useStableBy(person?.customPoints, (points) => JSON.stringify(points ?? []));
   // The aspects use the device's orbs (#590), as the natal chart does.
   const [extendedSettings] = useExtendedSettings();
-  const orbsKey = JSON.stringify(extendedSettings.orbScalePercent) + JSON.stringify(extendedSettings.orbRules ?? null);
+  const orbs = useStableBy(orbsOf(extendedSettings), (config) => JSON.stringify(config));
 
   useEffect(() => {
-    if (person?.moment === undefined || provider === undefined || relocationPlace === undefined) {
+    if (personMoment === undefined || provider === undefined || relocationPlace === undefined) {
       setLoad({ kind: 'idle' });
       return undefined;
     }
-    const moment = person.moment;
+    const moment = personMoment;
     const place = { ...relocationPlace, altitude: 0 };
     const effect = { cancelled: false };
     setLoad({ kind: 'loading' });
@@ -190,8 +194,8 @@ export function RelocatedChartView({
     void (async () => {
       try {
         const data = await computeRelocatedChart(moment, place, provider, {
-          ...orbsOf(extendedSettings),
-          ...(person.customPoints === undefined ? {} : { customPoints: person.customPoints }),
+          ...orbs,
+          ...(customPoints === undefined ? {} : { customPoints }),
         });
         if (!effect.cancelled) setLoad({ kind: 'ready', data });
       } catch (error) {
@@ -203,14 +207,7 @@ export function RelocatedChartView({
     return () => {
       effect.cancelled = true;
     };
-  }, [
-    momentKey(person?.moment),
-    provider,
-    relocationPlace?.latitude,
-    relocationPlace?.longitude,
-    customPointsKey,
-    orbsKey,
-  ]);
+  }, [personMoment, provider, relocationPlace, customPoints, orbs]);
 
   if (person === undefined) {
     return <PersonNotFound />;
