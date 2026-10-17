@@ -240,7 +240,7 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
       <fieldset className="field-group">
         <legend>{t.calendarZoneLegend}</legend>
         <div className="field-grid">
-          <div className="primitive-field">
+          <div className="primitive-choice-field">
             <span className="primitive-field-label">{t.calendarLabel}</span>
             <ChoiceGroup
               label={t.calendarLabel}

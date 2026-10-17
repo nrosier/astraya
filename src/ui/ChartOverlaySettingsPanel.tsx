@@ -294,7 +294,7 @@ export function ChartOverlaySettingsPanel({
               update({ return: returnRing });
             }}
           >
-            <div className="primitive-field">
+            <div className="primitive-choice-field">
               <span className="primitive-field-label">{t.returnKind}</span>
               <ChoiceGroup
                 label={t.returnKind}
