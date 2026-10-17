@@ -4,13 +4,8 @@
  * and a UID that is the same for the same event. Pure, no ephemeris.
  */
 import { describe, expect, it } from 'vitest';
-import type { EventSearchResult } from '../src/domain/event-search.js';
-import {
-  escapeIcsText,
-  eventSearchIcsFilename,
-  eventSearchToIcs,
-  foldIcsLine,
-} from '../src/domain/event-search-ics.js';
+import { eventSearchIcsFilename, type EventSearchResult } from '../src/domain/event-search.js';
+import { escapeIcsText, eventSearchToIcs, foldIcsLine } from '../src/domain/event-search-ics.js';
 
 // 2024-03-25 07:00:00 UTC is JD 2460394.791666667 (the full Moon of March 2024, rounded).
 const FULL_MOON: EventSearchResult = { kind: 'lunation', jd: 2460394.7916666665, label: 'Full Moon' };

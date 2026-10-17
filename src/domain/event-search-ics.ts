@@ -17,7 +17,7 @@
  * @module domain/event-search-ics
  * @purpose Formats event-search results as an RFC 5545 iCalendar file (#639).
  * @conventions Pure. UIDs are a hash of the event's identity plus `@astraya`, so importing the same event twice does not duplicate it; DTSTAMP is passed in, never read from the clock, so output is reproducible. Folding counts UTF-8 octets, not characters.
- * @exports eventSearchToIcs, eventSearchIcsFilename, foldIcsLine, escapeIcsText
+ * @exports eventSearchToIcs, foldIcsLine, escapeIcsText
  */
 import { civilFromJulianDay } from '../time/julian.js';
 import type { JulianDayUT } from '../ephemeris/types.js';
@@ -116,8 +116,4 @@ export function eventSearchToIcs(results: readonly EventSearchResult[], now: Dat
   }
   lines.push('END:VCALENDAR');
   return `${lines.map(foldIcsLine).join(CRLF)}${CRLF}`;
-}
-
-export function eventSearchIcsFilename(now: Date): string {
-  return `astraya-event-search-${now.toISOString().slice(0, 10)}.ics`;
 }

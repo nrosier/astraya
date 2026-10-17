@@ -12,12 +12,13 @@ import { ASPECTS } from '../astrology/aspects.js';
 import { BODIES, bodyByKey } from '../astrology/bodies.js';
 import {
   eventSearchCsvFilename,
+  eventSearchIcsFilename,
   eventSearchToCsv,
   searchEvents,
   type EventSearchKind,
   type EventSearchResult,
 } from '../domain/event-search.js';
-import { eventSearchIcsFilename, eventSearchToIcs } from '../domain/event-search-ics.js';
+import { eventSearchToIcs } from '../domain/event-search-ics.js';
 import { downloadText } from './download.js';
 import { useRef, useState } from 'react';
 import { Checkbox } from './primitives/Checkbox.js';
