@@ -1,0 +1,6 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": ["scripts/**/*.mjs", "tools/**/*.mjs", "test/**/*.{ts,tsx}", "e2e/**/*.ts"],
+  "project": ["src/**/*.{ts,tsx}", "server/**/*.ts", "tools/**/*.mjs", "scripts/**/*.mjs"],
+  "ignore": ["tools/corpus-gen/archive/**"]
+}

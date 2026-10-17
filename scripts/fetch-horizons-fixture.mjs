@@ -13,8 +13,7 @@
  *
  * What is being validated is Astraya's *use* of the ephemeris — time conversion,
  * flags, coordinate frame, normalisation — rather than the underlying DE431 data,
- * which Horizons also derives from. For an independent check of the data itself,
- * see the astronomy-engine cross-check in the same test file.
+ * which Horizons also derives from. There is no independent check of the data itself.
  *
  * Quantity 31 is observer ecliptic longitude and latitude: apparent, light-time
  * corrected, referred to the true ecliptic and equinox of date. That matches the
