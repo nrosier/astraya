@@ -25,7 +25,7 @@ Top-level application, release, and audit artifacts. Read the local map in each 
 - `LICENSE` — AGPL-3.0-or-later license text. Deps: none.
 - `NOTICE` — Third-party and distribution notices. Deps: dependencies.
 - `README.md` — Project overview, install, usage, and release badge. Deps: package metadata.
-- `eslint.config.js` — Strict TypeScript, architecture-boundary, and module-header lint configuration. Deps: ESLint.
+- `eslint.config.js` — Strict TypeScript, architecture-boundary, module-header and React-hooks lint configuration. Deps: ESLint.
 - `index.html` — Vite SPA document shell and baseline CSP meta tag. Deps: `src/main.tsx`.
 - `package.json` — Project metadata, scripts, runtime, and development dependencies. Deps: npm.
 - `package-lock.json` — Locked npm dependency graph. Deps: `package.json`.

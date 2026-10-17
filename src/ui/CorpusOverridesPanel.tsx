@@ -26,7 +26,7 @@ import { Checkbox } from './primitives/Checkbox.js';
 import { Select } from './primitives/Select.js';
 import { TextAreaField } from './primitives/TextAreaField.js';
 import { TextField } from './primitives/TextField.js';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   deleteCorpusOverride,
   exportCorpusOverrides,
@@ -106,10 +106,13 @@ export function CorpusOverridesPanel(): React.JSX.Element {
   const [busyKey, setBusyKey] = useState<string>();
   const [saveError, setSaveError] = useState<string>();
 
-  const load = (): Promise<void> =>
-    Promise.all([loadRuntimeCorpus(corpusLocale), listCorpusOverrides(corpusLocale)]).then(([corpus, overrides]) => {
-      setData({ corpus, overrides });
-    });
+  const load = useCallback(
+    (): Promise<void> =>
+      Promise.all([loadRuntimeCorpus(corpusLocale), listCorpusOverrides(corpusLocale)]).then(([corpus, overrides]) => {
+        setData({ corpus, overrides });
+      }),
+    [corpusLocale],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -121,7 +124,7 @@ export function CorpusOverridesPanel(): React.JSX.Element {
     return () => {
       cancelled = true;
     };
-  }, [corpusLocale]);
+  }, [load]);
 
   useEffect(() => {
     setPage(1);

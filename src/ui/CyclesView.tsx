@@ -18,7 +18,7 @@ import { Select } from './primitives/Select.js';
 import { TextField } from './primitives/TextField.js';
 import { useSymbolClass } from './symbol-setting.js';
 import { useGlyphVariants } from './glyph-variant-setting.js';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 import { findMutualAspects, type MutualAspectEvent } from '../astrology/mutual-aspects.js';
 import { renderCycleDiagramSvg } from '../chart/cycle-diagram.js';
 import { aspectDisplayName, bodyDisplayName, signDisplayName } from './astro-names.messages.js';
@@ -148,11 +148,13 @@ export function CyclesView(): React.JSX.Element {
 
   // The first preset is searched as soon as the ephemeris is ready, so the screen opens on a result.
   const started = useRef(false);
+  const searchOnOpen = useEffectEvent(() => {
+    run(params);
+  });
   useEffect(() => {
     if (provider === undefined || started.current) return;
     started.current = true;
-    run(params);
-    // Only when the provider first appears.
+    searchOnOpen();
   }, [provider]);
 
   const choosePreset = (key: string): void => {
@@ -169,7 +171,7 @@ export function CyclesView(): React.JSX.Element {
     setParams((current) => ({ ...current, ...patch }));
   };
 
-  const nameOf = (key: string): string => bodyDisplayName(key, locale);
+  const nameOf = useCallback((key: string): string => bodyDisplayName(key, locale), [locale]);
 
   // A new result is a new set of events: nothing stays selected from the last one.
   useEffect(() => {
@@ -249,8 +251,7 @@ export function CyclesView(): React.JSX.Element {
         render: (row) => (row.yearsSincePrevious === undefined ? t.none : formatFixed(row.yearsSincePrevious, 2)),
       },
     ],
-    // `nameOf` closes over `locale`, which is listed.
-    [t, locale, result, stepOf, selectedId],
+    [t, locale, result, stepOf, selectedId, nameOf],
   );
 
   const diagram = useMemo(
@@ -266,6 +267,7 @@ export function CyclesView(): React.JSX.Element {
             selectedId,
           )
         : undefined,
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the wheel renderers read the glyph settings from module state, so these are cache keys, not inputs the callback reads.
     [result, selectedId, symbolClass, variants],
   );
 

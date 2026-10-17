@@ -36,7 +36,6 @@ import { civilFromJulianDay } from '../time/julian.js';
 import { formatFixed, todayInputValue } from './format.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
-import { momentKey } from '../time/encode.js';
 import { PersonNotFound } from './PersonNotFound.js';
 import { SortableTable } from './SortableTable.js';
 import { solarArcViewMessages } from './SolarArcView.messages.js';
@@ -45,6 +44,7 @@ import type { TableColumn } from './table-sort.js';
 import type { HousePositions, JulianDayUT } from '../ephemeris/types.js';
 import type { Locale } from '../interpretation/schema.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
+import { useStableMoment } from './use-stable-moment.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -174,6 +174,7 @@ export function contactColumns(t: typeof solarArcViewMessages.en, locale: Locale
 export function SolarArcView({ personId }: { personId: string }): React.JSX.Element {
   const state = useStoreState();
   const person = state.people.get(personId);
+  const personMoment = useStableMoment(person?.moment);
   const t = useMessages(solarArcViewMessages);
   const [locale] = useLocale();
   const [asOf, setAsOf] = useState(todayInputValue);
@@ -186,8 +187,8 @@ export function SolarArcView({ personId }: { personId: string }): React.JSX.Elem
   }, [asOf]);
 
   useEffect(() => {
-    if (person?.moment === undefined || provider === undefined || targetDate === undefined) return undefined;
-    const moment = person.moment;
+    if (personMoment === undefined || provider === undefined || targetDate === undefined) return undefined;
+    const moment = personMoment;
     const effect = { cancelled: false };
     setLoad({ kind: 'loading' });
 
@@ -205,7 +206,7 @@ export function SolarArcView({ personId }: { personId: string }): React.JSX.Elem
     return () => {
       effect.cancelled = true;
     };
-  }, [momentKey(person?.moment), provider, targetDate]);
+  }, [personMoment, provider, targetDate]);
 
   if (person === undefined) {
     return <PersonNotFound />;

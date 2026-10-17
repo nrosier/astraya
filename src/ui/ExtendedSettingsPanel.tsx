@@ -24,7 +24,7 @@ import { Checkbox } from './primitives/Checkbox.js';
 import { NumberField } from './primitives/NumberField.js';
 import { StagedDialog } from './primitives/StagedDialog.js';
 import { formatDecimal } from './format.js';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ASPECTS, DEFAULT_ORB_CONFIG } from '../astrology/aspects.js';
 import { ayanamsaByKey, AYANAMSAS } from '../astrology/ayanamsas.js';
 import { HOUSE_SYSTEMS } from '../astrology/houses.js';
@@ -110,6 +110,9 @@ function nodePointKey(variant: ExtendedSettings['nodeVariant']): ObjectKey {
   return variant === 'true' ? 'trueNode' : 'meanNode';
 }
 
+const HOUSE_SYSTEM_CODES = HOUSE_SYSTEMS.map((system) => system.code);
+const AYANAMSA_IDS = AYANAMSAS.map((ayanamsa) => ayanamsa.id);
+
 /** Fetches every house-system/ayanamsa display name once, falling back to the machine key while pending. */
 function useNameLookup<T extends number | string>(
   ids: readonly T[],
@@ -129,8 +132,7 @@ function useNameLookup<T extends number | string>(
     return () => {
       effect.cancelled = true;
     };
-    // `ids`/`fetchName` are treated as stable for the lifetime of one provider instance.
-  }, [fetchName === undefined]);
+  }, [ids, fetchName]);
 
   return names;
 }
@@ -172,12 +174,12 @@ export function ExtendedSettingsPanel({
   const [look, setVariant, setWeight] = useGlyphVariants();
 
   const houseSystemNames = useNameLookup(
-    HOUSE_SYSTEMS.map((system) => system.code),
-    (code) => provider.houseSystemName(code),
+    HOUSE_SYSTEM_CODES,
+    useCallback((code: string) => provider.houseSystemName(code), [provider]),
   );
   const ayanamsaNames = useNameLookup(
-    AYANAMSAS.map((ayanamsa) => ayanamsa.id),
-    (id) => provider.ayanamsaName(id),
+    AYANAMSA_IDS,
+    useCallback((id: number) => provider.ayanamsaName(id), [provider]),
   );
 
   const patch = (partial: Partial<ExtendedSettings>): void => {

@@ -4,7 +4,7 @@
  * @conventions Hash routing via `parseRoute()`/`route.js` rather than a router library; every screen not needed by the landing route (the ten person-scoped screens, AdminPanel/export-builder/corpus admin screens, and About/Changelog/SetPasswordForm/SetupForm) is behind `lazy(() => import(...))` per the bundle-size budget (#338, #494); `Stored` gates routes needing the local IndexedDB store.
  * @exports App, HomeRedirect
  */
-import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useEffectEvent, useRef, useState } from 'react';
 import { registerServiceWorker } from '../pwa/register.js';
 import { startWarming } from '../pwa/warm-status.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
@@ -181,6 +181,8 @@ function AppShell(): React.JSX.Element {
   const engineStatus = engineError ?? versionError ?? (seVersion === undefined ? t.loadingEphemeris : 'ready');
   const isFirstRoute = useRef(true);
   const routePath = route.split('?')[0] ?? route;
+  // The whole route (with its query) as it is when the effect below runs; the effect itself follows the path only.
+  const routeNow = useEffectEvent(() => route);
   const headerRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -207,7 +209,7 @@ function AppShell(): React.JSX.Element {
       return;
     }
     // A link to one section of Preferences lands on that section's heading, which the screen focuses itself.
-    const target = parseRoute(route);
+    const target = parseRoute(routeNow());
     if (target.kind === 'preferences' && target.section !== undefined) return;
     function focusHeading(): boolean {
       const heading = document.querySelector<HTMLElement>('main.shell h1');

@@ -33,7 +33,6 @@ import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { RulershipSetting } from './RulershipSetting.js';
 import { useRulershipChoice } from './rulership-setting.js';
-import { momentKey } from '../time/encode.js';
 import { PersonNotFound } from './PersonNotFound.js';
 import { profectionsViewMessages } from './ProfectionsView.messages.js';
 import { SortableTable } from './SortableTable.js';
@@ -43,6 +42,7 @@ import type { CorpusEntry, Locale } from '../interpretation/schema.js';
 import { ordinal } from './placement-label.js';
 import { wheelCorpus } from './wheel-corpus.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
+import { useStableMoment } from './use-stable-moment.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -100,6 +100,7 @@ export function columns(t: typeof profectionsViewMessages.en, locale: Locale): r
 export function ProfectionsView({ personId }: { personId: string }): React.JSX.Element {
   const state = useStoreState();
   const person = state.people.get(personId);
+  const personMoment = useStableMoment(person?.moment);
   const t = useMessages(profectionsViewMessages);
   const [locale] = useLocale();
   const [asOf, setAsOf] = useState(todayInputValue);
@@ -127,8 +128,8 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
   }, [asOf]);
 
   useEffect(() => {
-    if (person?.moment === undefined || provider === undefined || targetDate === undefined) return undefined;
-    const moment = person.moment;
+    if (personMoment === undefined || provider === undefined || targetDate === undefined) return undefined;
+    const moment = personMoment;
     const effect = { cancelled: false };
     setLoad({ kind: 'loading' });
 
@@ -149,7 +150,7 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
     return () => {
       effect.cancelled = true;
     };
-  }, [momentKey(person?.moment), provider, targetDate, rulership]);
+  }, [personMoment, provider, targetDate, rulership]);
 
   if (person === undefined) {
     return <PersonNotFound />;

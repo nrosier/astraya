@@ -17,7 +17,6 @@ import { GlossaryTerms } from './GlossaryTerm.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { computeDraconic, type DraconicData } from '../domain/draconic.js';
 import { housesAreDefined } from '../domain/chart-compute.js';
-import { momentKey } from '../time/encode.js';
 import { ChartDataView } from './ChartView.js';
 import { ChartTypeSelector, changeChartView } from './ChartTypeSelector.js';
 import { type ChartType, type ChartViewKind } from './chart-sections.js';
@@ -31,6 +30,7 @@ import type { ChartData } from '../domain/chart-compute.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { useExtendedSettings } from './extended-settings-store.js';
 import { orbsOf } from '../chart/extended-settings.js';
+import { useStableBy, useStableMoment } from './use-stable-moment.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -52,6 +52,7 @@ export function DraconicView({
   }
   const state = useStoreState();
   const person = state.people.get(personId);
+  const personMoment = useStableMoment(person?.moment);
   const t = useMessages(draconicViewMessages);
 
   // Memoised: a new array each render (a change of section re-renders this screen) would redraw the wheel and drop a selection.
@@ -59,22 +60,22 @@ export function DraconicView({
 
   const { provider } = useEphemerisProvider();
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
-  const customPointsKey = JSON.stringify(person?.customPoints ?? []);
+  const customPoints = useStableBy(person?.customPoints, (points) => JSON.stringify(points ?? []));
   // The aspects use the device's orbs (#590), as the natal chart does.
   const [extendedSettings] = useExtendedSettings();
-  const orbsKey = JSON.stringify(extendedSettings.orbScalePercent) + JSON.stringify(extendedSettings.orbRules ?? null);
+  const orbs = useStableBy(orbsOf(extendedSettings), (config) => JSON.stringify(config));
 
   useEffect(() => {
-    if (person?.moment === undefined || provider === undefined) return undefined;
-    const moment = person.moment;
+    if (personMoment === undefined || provider === undefined) return undefined;
+    const moment = personMoment;
     const effect = { cancelled: false };
     setLoad({ kind: 'loading' });
 
     void (async () => {
       try {
         const data: DraconicData = await computeDraconic(moment, provider, {
-          ...orbsOf(extendedSettings),
-          ...(person.customPoints === undefined ? {} : { customPoints: person.customPoints }),
+          ...orbs,
+          ...(customPoints === undefined ? {} : { customPoints }),
         });
         if (!effect.cancelled) setLoad({ kind: 'ready', data: data.draconic });
       } catch (error) {
@@ -86,7 +87,7 @@ export function DraconicView({
     return () => {
       effect.cancelled = true;
     };
-  }, [momentKey(person?.moment), provider, customPointsKey, orbsKey]);
+  }, [personMoment, provider, customPoints, orbs]);
 
   if (person === undefined) {
     return <PersonNotFound />;

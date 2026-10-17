@@ -16,7 +16,6 @@ import { personHref } from './route.js';
 import { useEffect, useState } from 'react';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { computeChartData, housesAreDefined, type ChartData } from '../domain/chart-compute.js';
-import { momentKey } from '../time/encode.js';
 import { PersonNotFound } from './PersonNotFound.js';
 import { reportScreenMessages } from './ReportScreen.messages.js';
 import { ReportView } from './ReportView.js';
@@ -24,6 +23,7 @@ import { useMessages } from './messages.js';
 import { useRulershipChoice } from './rulership-setting.js';
 import { useStoreState } from './store-context.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
+import { useStableMoment } from './use-stable-moment.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -33,14 +33,15 @@ type Load =
 export function ReportScreen({ personId }: { personId: string }): React.JSX.Element {
   const state = useStoreState();
   const person = state.people.get(personId);
+  const personMoment = useStableMoment(person?.moment);
   const t = useMessages(reportScreenMessages);
   const { provider } = useEphemerisProvider();
   const [rulership] = useRulershipChoice();
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
 
   useEffect(() => {
-    if (person?.moment === undefined || provider === undefined) return undefined;
-    const moment = person.moment;
+    if (personMoment === undefined || provider === undefined) return undefined;
+    const moment = personMoment;
     const effect = { cancelled: false };
     setLoad({ kind: 'loading' });
 
@@ -57,7 +58,7 @@ export function ReportScreen({ personId }: { personId: string }): React.JSX.Elem
     return () => {
       effect.cancelled = true;
     };
-  }, [momentKey(person?.moment), rulership, provider]);
+  }, [personMoment, rulership, provider]);
 
   if (person === undefined) {
     return <PersonNotFound />;

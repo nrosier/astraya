@@ -1,6 +1,7 @@
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import globals from 'globals';
+import reactHooks from 'eslint-plugin-react-hooks';
 
 /**
  * Lint configuration for Astraya.
@@ -128,5 +129,11 @@ export default tseslint.config(
       },
     },
     rules: { 'local/require-module-header': 'error' },
+  },
+  {
+    // React hooks (#638): a stale dependency array means a chart that does not redraw after a setting changes.
+    files: ['src/**/*.tsx', 'src/ui/**/*.ts'],
+    plugins: { 'react-hooks': reactHooks },
+    rules: { 'react-hooks/rules-of-hooks': 'error', 'react-hooks/exhaustive-deps': 'error' },
   },
 );

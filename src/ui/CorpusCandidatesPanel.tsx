@@ -23,7 +23,7 @@
 import { Checkbox } from './primitives/Checkbox.js';
 import { formatFixed } from './format.js';
 import { Select } from './primitives/Select.js';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { decideCorpusCandidates, listCorpusCandidates } from '../sync/admin-client.js';
 import { CORPUS_LOCALES } from '../interpretation/schema.js';
 import { LOCALE_LABELS, isLocale, useLocale } from './locale.js';
@@ -59,11 +59,14 @@ export function CorpusCandidatesPanel(): React.JSX.Element {
   const [decideError, setDecideError] = useState<string>();
   const [missingCount, setMissingCount] = useState<number>();
 
-  const load = (): Promise<void> =>
-    listCorpusCandidates(corpusLocale).then((loaded) => {
-      setCandidates(loaded);
-      setSelected(new Set());
-    });
+  const load = useCallback(
+    (): Promise<void> =>
+      listCorpusCandidates(corpusLocale).then((loaded) => {
+        setCandidates(loaded);
+        setSelected(new Set());
+      }),
+    [corpusLocale],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -75,7 +78,7 @@ export function CorpusCandidatesPanel(): React.JSX.Element {
     return () => {
       cancelled = true;
     };
-  }, [corpusLocale]);
+  }, [load]);
 
   // Which keys have more than one still-pending candidate — the collision
   // #370's own "Dedup" requirement asks a reviewer be able to see, e.g. a classical-seed and

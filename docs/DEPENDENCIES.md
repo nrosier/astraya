@@ -40,8 +40,7 @@ tracking, not licence compliance.
 | `typescript`                                   | Compiler/type-checker (`npm run typecheck`).                                                                           | Apache-2.0           |
 | `typescript-eslint`                            | Type-aware ESLint rules (`strictTypeChecked`).                                                                         | MIT                  |
 | `eslint`, `@eslint/js`, `globals`              | Lint engine and its rule/environment data.                                                                             | MIT                  |
-| `eslint-plugin-react-hooks`                    | Hooks-rules-of-react lint plugin.                                                                                      | MIT                  |
-| `eslint-plugin-react-refresh`                  | Fast-refresh-safety lint plugin.                                                                                       | MIT                  |
+| `eslint-plugin-react-hooks`                    | Rules of Hooks and exhaustive effect dependencies, both at error for the React source (#638).                          | MIT                  |
 | `prettier`                                     | Formatting (`npm run format`/`format:check`).                                                                          | MIT                  |
 | `vite`                                         | Dev server and production bundler.                                                                                     | MIT                  |
 | `@vitejs/plugin-react`                         | Vite's React/JSX transform.                                                                                            | MIT                  |

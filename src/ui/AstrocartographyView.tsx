@@ -40,7 +40,6 @@ import { PageHeader } from './PageHeader.js';
 import { useRegisterExports } from './export-registry.js';
 import { bodyDisplayName, signDisplayName } from './astro-names.messages.js';
 import { deriveExportFilename } from '../domain/export-filename.js';
-import { momentKey } from '../time/encode.js';
 import { astrocartographyViewMessages } from './AstrocartographyView.messages.js';
 import { svgToPngBlob } from './chart-raster.js';
 import { downloadBlob, downloadText } from './download.js';
@@ -51,6 +50,7 @@ import { useStoreState } from './store-context.js';
 import type { BodyId, GeoPosition } from '../ephemeris/types.js';
 import type { CorpusEntry, Locale } from '../interpretation/schema.js';
 import { wheelCorpus } from './wheel-corpus.js';
+import { useStableMoment } from './use-stable-moment.js';
 
 function lineTypeLabels(t: typeof astrocartographyViewMessages.en): Record<LineType, string> {
   return { MC: t.mc, IC: t.ic, AC: t.ac, DC: t.dc };
@@ -86,6 +86,7 @@ function signDegreeLabel(longitude: number, locale: Locale): string {
 export function AstrocartographyView({ personId }: { personId: string }): React.JSX.Element {
   const state = useStoreState();
   const person = state.people.get(personId);
+  const personMoment = useStableMoment(person?.moment);
   const t = useMessages(astrocartographyViewMessages);
   const [locale] = useLocale();
   const { provider } = useEphemerisProvider();
@@ -112,13 +113,13 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
   }, [locale]);
 
   const relocationPlace: GeoPosition | undefined = useMemo(
-    () => relocationOf(settings),
+    () => relocationOf({ relocationLat: settings.relocationLat, relocationLon: settings.relocationLon }),
     [settings.relocationLat, settings.relocationLon],
   );
 
   useEffect(() => {
-    if (person?.moment === undefined || provider === undefined) return undefined;
-    const moment = person.moment;
+    if (personMoment === undefined || provider === undefined) return undefined;
+    const moment = personMoment;
     const effect = { cancelled: false };
     setUpdating(true);
 
@@ -145,7 +146,7 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
     return () => {
       effect.cancelled = true;
     };
-  }, [momentKey(person?.moment), provider, bodies, lineTypes, localSpace, relocationPlace]);
+  }, [personMoment, provider, bodies, lineTypes, localSpace, relocationPlace]);
 
   const data = load.kind === 'ready' ? load.data : undefined;
   const map = useMemo(() => {
