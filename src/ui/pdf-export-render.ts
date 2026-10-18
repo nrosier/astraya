@@ -67,8 +67,63 @@ const PDF_UNSAFE_PATTERN = new RegExp(
   'g',
 );
 
-/** Substitutes every character jsPDF's standard fonts can't draw with its WinAnsi-safe text code. */
-function pdfSafeText(text: string): string {
+/**
+ * The fonts embedded so the astrological symbols, the prime of `21°46′`, ℞ and → draw as themselves (#655): DejaVu
+ * Sans, subset by `scripts/build-pdf-fonts.sh` and fetched only when a PDF is built.
+ */
+const EMBEDDED_FAMILY = 'DejaVuSans';
+const EMBEDDED_FILES = [
+  ['DejaVuSans.ttf', 'normal'],
+  ['DejaVuSans-Bold.ttf', 'bold'],
+  ['DejaVuSans-Oblique.ttf', 'italic'],
+] as const;
+
+/** The four aspect glyphs DejaVu Sans lacks, drawn as their text codes rather than as empty boxes. */
+const MISSING_FROM_EMBEDDED: ReadonlyMap<string, string> = new Map(
+  (['semisextile', 'sextile', 'quincunx', 'sesquiquadrate'] as const).flatMap((key): [string, string][] => {
+    const glyph = ASPECT_UNICODE[key];
+    return glyph === undefined ? [] : [[glyph, ASPECT_CODES[key] ?? glyph]];
+  }),
+);
+
+const MISSING_PATTERN = new RegExp(`[${[...MISSING_FROM_EMBEDDED.keys()].join('')}]`, 'gu');
+
+/** Which family each document draws with: the embedded one once loaded, else the built-in Helvetica. */
+const familyOf = new WeakMap<jsPDF, string>();
+const family = (doc: jsPDF): string => familyOf.get(doc) ?? 'helvetica';
+
+function toBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let index = 0; index < bytes.length; index += 0x8000) {
+    binary += String.fromCharCode(...bytes.subarray(index, index + 0x8000));
+  }
+  return btoa(binary);
+}
+
+/** Embeds the fonts; on any failure (offline, the static demo without them) the document keeps Helvetica and text codes. */
+async function embedFonts(doc: jsPDF): Promise<void> {
+  try {
+    const files = await Promise.all(
+      EMBEDDED_FILES.map(async ([file]) => {
+        const response = await fetch(`${import.meta.env.BASE_URL}fonts/pdf/${file}`);
+        if (!response.ok) throw new Error(`font ${file}: HTTP ${String(response.status)}`);
+        return toBase64(await response.arrayBuffer());
+      }),
+    );
+    EMBEDDED_FILES.forEach(([file, style], index) => {
+      doc.addFileToVFS(file, files[index] ?? '');
+      doc.addFont(file, EMBEDDED_FAMILY, style);
+    });
+    familyOf.set(doc, EMBEDDED_FAMILY);
+  } catch {
+    // Helvetica with the WinAnsi-safe codes below, as before #655.
+  }
+}
+
+/** The text as this document's font can draw it: only DejaVu's four missing aspects swapped, or every non-WinAnsi character under Helvetica. */
+function pdfSafeText(doc: jsPDF, text: string): string {
+  if (familyOf.has(doc)) return text.replace(MISSING_PATTERN, (char) => MISSING_FROM_EMBEDDED.get(char) ?? char);
   return text.replace(PDF_UNSAFE_PATTERN, (char) => PDF_UNSAFE_TO_SAFE.get(char) ?? char);
 }
 
@@ -78,7 +133,7 @@ function flowArea(doc: jsPDF): PageFlowArea {
 }
 
 function splitLines(doc: jsPDF, text: string, maxWidth: number): string[] {
-  return doc.splitTextToSize(pdfSafeText(text), maxWidth) as string[];
+  return doc.splitTextToSize(pdfSafeText(doc, text), maxWidth) as string[];
 }
 
 /** Prints `text` wrapped to `maxWidth`, continuing on a new page wherever a line would pass the bottom margin (#665). */
@@ -120,13 +175,15 @@ function mountSvg(markup: string): SVGSVGElement {
  */
 export async function renderPdfPlan(plan: PdfPlan): Promise<{ blob: Blob; filename: string }> {
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  await embedFonts(doc);
+  doc.setFont(family(doc), 'normal');
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const contentWidth = pageWidth - PAGE_MARGIN * 2;
 
   // Cover page.
   doc.setFontSize(22);
-  doc.text(pdfSafeText(plan.title), PAGE_MARGIN, 40);
+  doc.text(pdfSafeText(doc, plan.title), PAGE_MARGIN, 40);
   doc.setFontSize(11);
   doc.text(`Generated ${utcDay(plan.generatedAt)} by Astraya`, PAGE_MARGIN, 50);
 
@@ -167,12 +224,12 @@ export async function renderPdfPlan(plan: PdfPlan): Promise<{ blob: Blob; filena
         const firstLead = first === undefined ? 0 : paragraphLead(first);
         // A body's sub-heading (#654), once, above the paragraphs that are about it.
         if (group.body !== undefined) {
-          doc.setFont('helvetica', 'bold');
+          doc.setFont(family(doc), 'bold');
           doc.setFontSize(12);
           y = keepTogether(doc, y, splitLines(doc, group.body, contentWidth).length * 6 + 1 + firstLead);
           y = wrapAndPrint(doc, group.body, PAGE_MARGIN, y, contentWidth);
           doc.setFontSize(10);
-          doc.setFont('helvetica', 'normal');
+          doc.setFont(family(doc), 'normal');
           y += 1;
         }
         for (const paragraph of group.paragraphs) {
@@ -181,18 +238,18 @@ export async function renderPdfPlan(plan: PdfPlan): Promise<{ blob: Blob; filena
             y = wrapAndPrint(doc, paragraph, PAGE_MARGIN, y, contentWidth);
           } else if ('label' in paragraph) {
             // The placement this paragraph is about (#654), in bold above its text.
-            doc.setFont('helvetica', 'bold');
+            doc.setFont(family(doc), 'bold');
             y = wrapAndPrint(doc, paragraph.label, PAGE_MARGIN, y, contentWidth);
-            doc.setFont('helvetica', 'normal');
+            doc.setFont(family(doc), 'normal');
             y = wrapAndPrint(doc, paragraph.text, PAGE_MARGIN, y, contentWidth);
           } else {
             // A Sabian symbol (#653): the image in quotation marks, then the labelled reading in italics.
-            doc.setFont('helvetica', 'normal');
+            doc.setFont(family(doc), 'normal');
             y = wrapAndPrint(doc, `\u201C${paragraph.image}\u201D`, PAGE_MARGIN, y, contentWidth);
             if (paragraph.insight !== undefined) {
-              doc.setFont('helvetica', 'italic');
+              doc.setFont(family(doc), 'italic');
               y = wrapAndPrint(doc, `${paragraph.insightLabel}: ${paragraph.insight}`, PAGE_MARGIN, y, contentWidth);
-              doc.setFont('helvetica', 'normal');
+              doc.setFont(family(doc), 'normal');
             }
           }
           y += 3;
@@ -233,15 +290,15 @@ export async function renderPdfPlan(plan: PdfPlan): Promise<{ blob: Blob; filena
         // The caption and the table's header and first rows stay on one page (#665).
         y = keepTogether(doc, y, TABLE_LEAD);
         doc.setFontSize(11);
-        doc.text(pdfSafeText(table.caption), PAGE_MARGIN, y);
+        doc.text(pdfSafeText(doc, table.caption), PAGE_MARGIN, y);
         y += 2;
         let finalY = y;
         autoTable(doc, {
-          head: [table.head.map(pdfSafeText)],
-          body: table.body.map((row) => row.map(pdfSafeText)),
+          head: [table.head.map((cell) => pdfSafeText(doc, cell))],
+          body: table.body.map((row) => row.map((cell) => pdfSafeText(doc, cell))),
           startY: y,
           margin: { left: PAGE_MARGIN, right: PAGE_MARGIN },
-          styles: { fontSize: 8 },
+          styles: { fontSize: 8, font: family(doc) },
           didDrawPage: (data) => {
             finalY = data.cursor?.y ?? finalY;
           },
@@ -265,7 +322,7 @@ export async function renderPdfPlan(plan: PdfPlan): Promise<{ blob: Blob; filena
   let tocY = 32;
   doc.setFontSize(11);
   for (const entry of tocEntries) {
-    doc.text(pdfSafeText(entry.heading), PAGE_MARGIN, tocY);
+    doc.text(pdfSafeText(doc, entry.heading), PAGE_MARGIN, tocY);
     doc.text(String(entry.page), pageWidth - PAGE_MARGIN, tocY, { align: 'right' });
     tocY += 7;
   }
