@@ -23,6 +23,9 @@ const en = {
   transitsHeading: 'Current transits',
   viewAllTransits: 'View all transits',
   noShownTransits: 'No transits currently pass this filter.',
+  fastToday: (contacts: string) => `Today: ${contacts}`,
+  noFastToday: 'Today: no fast contacts within orb.',
+  listSeparator: '; ',
 
   timingHeading: 'Active timing techniques',
   asOfToday: 'As of today',
@@ -63,6 +66,9 @@ const nl: typeof en = {
   transitsHeading: 'Actuele transits',
   viewAllTransits: 'Alle transits bekijken',
   noShownTransits: 'Er voldoen momenteel geen transits aan dit filter.',
+  fastToday: (contacts: string) => `Vandaag: ${contacts}`,
+  noFastToday: 'Vandaag: geen snelle contacten binnen orb.',
+  listSeparator: '; ',
 
   timingHeading: 'Actieve tijdtechnieken',
   asOfToday: 'Vandaag',

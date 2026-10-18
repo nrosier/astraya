@@ -46,7 +46,7 @@
  * @module TransitImportance
  * @purpose Defines transit filter presets (daily/yearly, important/outer/personal/all) and a deterministic importance score for ranking transit contacts.
  * @conventions Fixed, documented convention (#416): daily default favors fast triggers (Sun through Mars, plus slow planets only within 1° of exact) at 1.5° orb; yearly favors Jupiter through Chiron at 3.5° orb; score = W_transit × W_natal × W_aspect × orb multiplier × applying bonus (1.15x); the chart ruler stands in for the (uncovered) Ascendant as a natal target.
- * @exports TRANSIT_ORB_CONFIG, transitPreset, presetOf, sameFilter, orbLimitFor, passesTransitFilter, filterTransits, chartRulerKeysOf, transitImportance, rankTransits
+ * @exports TRANSIT_ORB_CONFIG, transitPreset, presetOf, sameFilter, orbLimitFor, passesTransitFilter, filterTransits, chartRulerKeysOf, transitImportance, rankTransits, fastTriggers
  */
 import { DEFAULT_ORB_CONFIG, type Aspect, type OrbConfig } from './aspects.js';
 import { bodyById } from './bodies.js';
@@ -315,4 +315,17 @@ export function rankTransits(
     .map((contact, index) => ({ contact, index, score: transitImportance(contact, filter, chartRulerKeys) }))
     .sort((a, b) => b.score - a.score || a.index - b.index)
     .map(({ contact }) => contact);
+}
+
+/**
+ * Today's fast triggers (#672): the contacts the daily rule set passes whose transiting body is a personal planet
+ * (Sun to Mars), most important first. The consultation page ranks by the yearly rules and shows these on a line of
+ * their own, so a slow planet's chapter and the day's weather are read apart.
+ */
+export function fastTriggers(contacts: readonly Aspect[], rules: TransitRuleContext, limit: number): readonly Aspect[] {
+  const daily = transitPreset('important', { ...rules, context: 'daily' });
+  const fast = filterTransits(contacts, daily).filter((contact) =>
+    (PERSONAL_PLANET_KEYS as readonly string[]).includes(keyOf(contact.bodyA)),
+  );
+  return rankTransits(fast, daily, rules.chartRulerKeys).slice(0, limit);
 }

@@ -5,9 +5,10 @@
  *
  * This screen computes nothing new. Each section reuses an existing, already-reviewed pipeline,
  * just windowed to "today" instead of a chosen date or a multi-year span:
- * - Transits: the exact `useTransitFilter`/`filterTransits`/`rankTransits` pipeline
- *   `TransitView.tsx` uses, with the same `context: 'daily'` so the remembered filter preset is
- *   shared with Transits rather than kept twice.
+ * - Transits: the exact `useTransitFilter`/`filterTransits`/`rankTransits` pipeline, with the
+ *   yearly rule set (#672): a consultation reads the year's chapters, so the slow planets lead, and
+ *   the remembered filter preset is the Forecast screen's. Today's fast contacts (the daily rules,
+ *   Sun to Mars transiting) follow on one line of their own (`fastTriggers`).
  * - Timing techniques: the same `Promise.all` of per-technique computations and
  *   `*ToTimelineEvents` adapters `TimingTimelineView.tsx` runs, rendered with that same module's
  *   exported `TimingTimelineTracks`, but `timingTimelineTracks(events, todayJd, todayJd)` instead
@@ -63,6 +64,7 @@ import {
 } from '../domain/chart-tables.js';
 import {
   chartRulerKeysOf,
+  fastTriggers,
   filterTransits,
   presetOf,
   rankTransits,
@@ -109,6 +111,8 @@ type Load =
 
 /** The top handful of ranked transit contacts, most important first — this screen only ever shows a glance. */
 const SHOWN_TRANSIT_COUNT = 5;
+/** Today's fast contacts, on one line under the year's transits (#672). */
+const SHOWN_FAST_COUNT = 3;
 
 /**
  * Only the period/discrete-hit tracks, per this module's own doc comment — `transit` and
@@ -200,7 +204,7 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
   const rules = useMemo<TransitRuleContext>(
     () => ({
       everyBodyKey: EVERY_BODY_KEY,
-      context: 'daily',
+      context: 'yearly',
       chartRulerKeys:
         natalHouses !== undefined && housesAreDefined(natalHouses)
           ? chartRulerKeysOf(natalHouses.ascendant, rulership)
@@ -219,6 +223,10 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
   const shownContactRows = useMemo(
     () => crossAspectRows(filteredContacts.slice(0, SHOWN_TRANSIT_COUNT)),
     [filteredContacts],
+  );
+  const fastRows = useMemo(
+    () => (load.kind === 'ready' ? crossAspectRows(fastTriggers(load.transit.contacts, rules, SHOWN_FAST_COUNT)) : []),
+    [load, rules],
   );
 
   if (person === undefined) return <PersonNotFound />;
@@ -309,6 +317,18 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
               ))}
             </ul>
           )}
+          <p>
+            {fastRows.length === 0
+              ? t.noFastToday
+              : t.fastToday(
+                  fastRows
+                    .map(
+                      (row) =>
+                        `${bodyDisplayName(row.bodyAKey, locale)} ${aspectDisplayName(row.aspectKey, locale).toLowerCase()} ${bodyDisplayName(row.bodyBKey, locale)}`,
+                    )
+                    .join(t.listSeparator),
+                )}
+          </p>
           <p>
             <a href={hrefFor('transit', { personId })}>{t.viewAllTransits}</a>
           </p>

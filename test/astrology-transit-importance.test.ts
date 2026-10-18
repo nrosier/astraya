@@ -9,6 +9,7 @@ import { BODIES, bodyById, bodyByKey } from '../src/astrology/bodies.js';
 import {
   TRANSIT_ORB_CONFIG,
   chartRulerKeysOf,
+  fastTriggers,
   filterTransits,
   orbLimitFor,
   presetOf,
@@ -319,5 +320,25 @@ describe('transit score (#416)', () => {
     expect(new Set(ranked)).toEqual(new Set(contacts));
     const scores = ranked.map((c) => transitImportance(c, filter, rulerKey === undefined ? [] : [rulerKey]));
     expect(scores).toEqual([...scores].sort((a, b) => b - a));
+  });
+});
+
+describe('fastTriggers (#672)', () => {
+  it('keeps only contacts the daily rules pass with a personal planet transiting, most important first, up to the limit', () => {
+    const context = rules('daily', rulerKey);
+    const daily = transitPreset('important', context);
+    const fast = fastTriggers(contacts, rules('yearly', rulerKey), 3);
+    expect(fast.length).toBeGreaterThan(0);
+    expect(fast.length).toBeLessThanOrEqual(3);
+    for (const contact of fast) {
+      expect(PERSONAL).toContain(keyOf(contact.bodyA));
+      expect(filterTransits([contact], daily)).toHaveLength(1);
+    }
+    const expected = rankTransits(
+      filterTransits(contacts, daily).filter((contact) => PERSONAL.includes(keyOf(contact.bodyA))),
+      daily,
+      context.chartRulerKeys,
+    ).slice(0, 3);
+    expect(fast).toEqual(expected);
   });
 });
