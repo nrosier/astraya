@@ -7,7 +7,7 @@
 import { APP_BUILT_AT, APP_COMMIT, APP_VERSION, SOURCE_URL, SOURCE_URL_FOR_BUILD } from '../version.js';
 import { aboutMessages } from './About.messages.js';
 import { useMessages } from './messages.js';
-import { sharedMessages } from './shared.messages.js';
+import { BackLink } from './BackLink.js';
 
 /**
  * About page.
@@ -20,12 +20,9 @@ import { sharedMessages } from './shared.messages.js';
  */
 export function About({ seVersion }: { seVersion?: string | undefined }): React.JSX.Element {
   const t = useMessages(aboutMessages);
-  const shared = useMessages(sharedMessages);
   return (
     <main className="shell">
-      <p className="back">
-        <a href="#/">&larr; {shared.back}</a>
-      </p>
+      <BackLink fallback="#/people" />
       <h1>{t.heading}</h1>
 
       <h2>{t.versionHeading}</h2>

@@ -44,6 +44,7 @@ import { deriveExportFilename } from '../domain/export-filename.js';
 import { useExtendedSettings } from './extended-settings-store.js';
 import { orbsOf } from '../chart/extended-settings.js';
 import { useStableBy, useStableMoment } from './use-stable-moment.js';
+import { BackLink } from './BackLink.js';
 
 type Load =
   | { readonly kind: 'idle' }
@@ -144,9 +145,7 @@ export function HarmonicView({
   if (person.moment === undefined || person.timeAccuracy === 'unknown') {
     return (
       <main className="shell">
-        <p className="back">
-          <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
-        </p>
+        <BackLink fallback={personHref(personId)} />
         <h1>{t.harmonicChartsFallback}</h1>
         <p>
           {t.needsCompleteRecord(person.displayName || t.thisPerson)}{' '}
@@ -160,9 +159,7 @@ export function HarmonicView({
 
   return (
     <main className="shell shell--wide">
-      <p className="back">
-        <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
-      </p>
+      <BackLink fallback={personHref(personId)} />
       <h1>{person.displayName ? t.heading(person.displayName) : t.headingFallback}</h1>
       <GlossaryTerms terms={['harmonic', 'aspect', 'orb']} />
       <ChartTypeSelector personId={personId} type="harmonic" view={view} />

@@ -74,6 +74,7 @@ import type { TableColumn } from './table-sort.js';
 import type { Locale } from '../interpretation/schema.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { useStableMoment } from './use-stable-moment.js';
+import { BackLink } from './BackLink.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -263,9 +264,7 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
   if (person.moment === undefined) {
     return (
       <main className="shell">
-        <p className="back">
-          <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
-        </p>
+        <BackLink fallback={personHref(personId)} />
         <h1>{t.transitsFallback}</h1>
         <p>
           {t.notCompleteTransits(person.displayName || t.thisPerson)}{' '}
@@ -278,9 +277,7 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
   if (person.timeAccuracy === 'unknown') {
     return (
       <main className="shell">
-        <p className="back">
-          <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
-        </p>
+        <BackLink fallback={personHref(personId)} />
         <h1>{t.transitsFallback}</h1>
         <p>{t.needsKnownTime(person.displayName || t.thisPerson)}</p>
       </main>
@@ -301,9 +298,7 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
         snapshotIdentity={artifactProvenanceIdentity(load.kind === 'ready' ? load.artifact : undefined, snapshot)}
         generatedAt={formatTimestamp(new Date())}
       />
-      <p className="back">
-        <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
-      </p>
+      <BackLink fallback={personHref(personId)} />
       <h1>{person.displayName ? t.heading(person.displayName) : t.transitsFallback}</h1>
       <GlossaryTerms terms={['transit', 'aspect', 'orb', 'applying', 'retrograde']} />
       <p className="hint">{t.hint(person.displayName || t.thisPerson)}</p>

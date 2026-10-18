@@ -69,6 +69,7 @@ import { StatusMessage } from './primitives/StatusMessage.js';
 import { Checkbox } from './primitives/Checkbox.js';
 import type { PrimaryDirectionMethod, PrimaryDirectionMode } from '../astrology/primary-directions.js';
 import { useStableMoment } from './use-stable-moment.js';
+import { BackLink } from './BackLink.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -266,9 +267,7 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
   if (person.moment === undefined) {
     return (
       <main className="shell">
-        <p className="back">
-          <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
-        </p>
+        <BackLink fallback={personHref(personId)} />
         <h1>{t.primaryDirectionsFallback}</h1>
         <p>
           {t.notCompletePrimaryDirections(person.displayName || t.thisPerson)}{' '}
@@ -281,9 +280,7 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
   if (person.timeAccuracy === 'unknown') {
     return (
       <main className="shell">
-        <p className="back">
-          <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
-        </p>
+        <BackLink fallback={personHref(personId)} />
         <h1>{t.primaryDirectionsFallback}</h1>
         <p>{t.needsKnownTime(person.displayName || t.thisPerson)}</p>
       </main>
@@ -313,9 +310,7 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
         )}
         generatedAt={formatTimestamp(new Date())}
       />
-      <p className="back">
-        <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
-      </p>
+      <BackLink fallback={personHref(personId)} />
       <h1>{person.displayName ? t.heading(person.displayName) : t.primaryDirectionsFallback}</h1>
       <GlossaryTerms terms={['primaryDirection', 'ascendant', 'midheaven']} />
       <p className="hint">{t.hint}</p>

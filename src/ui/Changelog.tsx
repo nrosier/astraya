@@ -15,17 +15,14 @@ import changelogSource from '../../CHANGELOG.md?raw';
 import { changelogMessages } from './Changelog.messages.js';
 import { renderMarkdown } from './markdown.js';
 import { useMessages } from './messages.js';
-import { sharedMessages } from './shared.messages.js';
 import { APP_VERSION, SOURCE_URL, sourceFileUrl } from '../version.js';
+import { BackLink } from './BackLink.js';
 
 export function Changelog(): React.JSX.Element {
   const t = useMessages(changelogMessages);
-  const shared = useMessages(sharedMessages);
   return (
     <main className="shell">
-      <p className="back">
-        <a href="#/">&larr; {shared.back}</a>
-      </p>
+      <BackLink fallback="#/people" />
       <h1>{t.heading}</h1>
       <p className="tagline">
         {t.runningBefore}

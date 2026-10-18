@@ -148,6 +148,8 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `theme-dom.ts` — DOM/storage half of light/dark theme override. Deps: `./theme`.
 - `theme.ts` — Pure theme-selection logic (cycle order/labels). Deps: `ThemeToggle.messages`.
 - `tools-nav.ts` — Tools menu backing (tool list/groups/active-tool); grouped as Sky & cycles/Questions & planning/Birth data (#506/#509). Deps: `route`.
+- `BackLink.tsx` — Every screen's Back link (#652): history when the tab came from inside the app, else a fixed fallback. Deps: `./nav-history`, `shared.messages`.
+- `nav-history.ts` — Stamps each history entry with its in-app position, so Back can tell whether the previous page is inside the app; `replaceRoute` for in-place view changes. Deps: none.
 - `use-stable-moment.ts` — Hooks that keep a birth moment (or any value) the same object while its content is unchanged, so chart effects can list it as a dependency. Deps: `../time/encode`.
 - `use-exclusive-open.ts` — Shared open/close hook for dropdown-button rows. Deps: none (React only).
 - `void-of-course-text.ts` — Composes void-of-course Moon sentence (transit screen). Deps: `astrology/bodies`, `astrology/signs`, `astrology/void-of-course`, `time/julian`.

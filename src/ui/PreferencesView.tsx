@@ -74,11 +74,11 @@ import { RulershipSetting } from './RulershipSetting.js';
 import { OrbLibraryEditor } from './OrbLibraryEditor.js';
 import { useOrbContextSource, useOrbLibrary } from './orb-library-store.js';
 import { useRulershipChoice } from './rulership-setting.js';
-import { sharedMessages } from './shared.messages.js';
 import { SymbolSetting } from './SymbolSetting.js';
 import { useOptionalStore } from './store-context.js';
 import { ThemeToggle } from './ThemeToggle.js';
 import { useSymbolClass } from './symbol-setting.js';
+import { BackLink } from './BackLink.js';
 
 interface ExportStatus {
   readonly kind: 'busy' | 'done' | 'error';
@@ -99,7 +99,6 @@ export function PreferencesView({
   const t = useMessages(preferencesViewMessages);
   const [motion, setMotion] = useMotion();
   const [density, setDensity] = useDensity();
-  const shared = useMessages(sharedMessages);
   const store = useOptionalStore();
   const { provider } = useEphemerisProvider();
   const [rulership] = useRulershipChoice();
@@ -318,9 +317,7 @@ export function PreferencesView({
 
   return (
     <main className="shell">
-      <p className="back">
-        <a href="#/people">&larr; {shared.back}</a>
-      </p>
+      <BackLink fallback="#/people" />
       <h1>{t.heading}</h1>
       <p>{t.intro}</p>
 

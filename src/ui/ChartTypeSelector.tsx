@@ -14,6 +14,7 @@ import { chartHref } from './route.js';
 import { chartTypesMessages } from './ChartTypes.messages.js';
 import { useMessages } from './messages.js';
 import { Select } from './primitives/Select.js';
+import { replaceRoute } from './nav-history.js';
 
 export function ChartTypeSelector({
   personId,
@@ -46,6 +47,5 @@ export function ChartTypeSelector({
  * When in comparison mode, preserves the compareType in the query param (#439).
  */
 export function changeChartView(personId: string, type: ChartType, view: ChartViewKind, compareType?: ChartType): void {
-  window.history.replaceState(null, '', chartHref(personId, view, type, compareType));
-  window.dispatchEvent(new HashChangeEvent('hashchange'));
+  replaceRoute(chartHref(personId, view, type, compareType));
 }

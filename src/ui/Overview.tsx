@@ -23,17 +23,16 @@ import { overviewMessages } from './Overview.messages.js';
 import { PersonNotFound } from './PersonNotFound.js';
 import { rulershipSettingMessages } from './RulershipSetting.messages.js';
 import { useRulershipChoice } from './rulership-setting.js';
-import { sharedMessages } from './shared.messages.js';
 import { useStoreState } from './store-context.js';
 import { summary } from './people-list.js';
 import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
 import { useDefaultCalculationProfile } from './default-calculation-profile.js';
+import { BackLink } from './BackLink.js';
 
 export function Overview({ personId }: { readonly personId: string }): React.JSX.Element {
   const state = useStoreState();
   const person = state.people.get(personId);
   const t = useMessages(overviewMessages);
-  const shared = useMessages(sharedMessages);
   const rulershipT = useMessages(rulershipSettingMessages);
   const [locale] = useLocale();
   const [rulership] = useRulershipChoice();
@@ -64,9 +63,7 @@ export function Overview({ personId }: { readonly personId: string }): React.JSX
 
   return (
     <main className="shell">
-      <p className="back">
-        <a href="#/people">&larr; {shared.back}</a>
-      </p>
+      <BackLink fallback="#/people" />
       <h1>{t.heading(person.displayName || t.personFallback)}</h1>
       <p>{summary(person, locale)}</p>
 

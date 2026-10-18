@@ -43,6 +43,7 @@ import type { BodyPosition, HousePositions } from '../ephemeris/types.js';
 import type { Locale } from '../interpretation/schema.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { useStableMoment } from './use-stable-moment.js';
+import { BackLink } from './BackLink.js';
 
 type Technique = 'secondary' | 'tertiary' | 'minor';
 
@@ -202,9 +203,7 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
   if (person.moment === undefined) {
     return (
       <main className="shell">
-        <p className="back">
-          <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
-        </p>
+        <BackLink fallback={personHref(personId)} />
         <h1>{t.progressionsFallback}</h1>
         <p>
           {t.notCompleteProgressions(person.displayName || t.thisPerson)}{' '}
@@ -217,9 +216,7 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
   if (person.timeAccuracy === 'unknown') {
     return (
       <main className="shell">
-        <p className="back">
-          <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
-        </p>
+        <BackLink fallback={personHref(personId)} />
         <h1>{t.progressionsFallback}</h1>
         <p>{t.needsKnownTime(person.displayName || t.thisPerson)}</p>
       </main>
@@ -232,9 +229,7 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
 
   return (
     <main className="shell">
-      <p className="back">
-        <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
-      </p>
+      <BackLink fallback={personHref(personId)} />
       <h1>{person.displayName ? t.heading(person.displayName) : t.progressionsFallback}</h1>
       <GlossaryTerms terms={['progression', 'aspect', 'orb']} />
       <p className="hint">{t.hint}</p>

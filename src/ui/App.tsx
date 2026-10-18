@@ -20,7 +20,6 @@ import { ExportRegistryProvider } from './export-registry.js';
 import { PwaStatus } from './PwaStatus.js';
 import { parseRoute } from './route.js';
 import { SessionProvider, useStoreStatus } from './session-context.js';
-import { sharedMessages } from './shared.messages.js';
 import { StoreProvider } from './store-context.js';
 import { SyncBadge } from './SyncBadge.js';
 import { SymbolToggle } from './SymbolToggle.js';
@@ -28,6 +27,8 @@ import { ThemeToggle } from './ThemeToggle.js';
 import { WorkspaceShell } from './WorkspaceShell.js';
 import { APP_VERSION } from '../version.js';
 import type { Route } from './route.js';
+import { BackLink } from './BackLink.js';
+import { trackNavigation } from './nav-history.js';
 
 /**
  * The screens that are not on the path to first paint, behind dynamic `import()`s (#338).
@@ -98,7 +99,6 @@ const SetupForm = lazy(async () => ({ default: (await import('./SetupForm.js')).
 function Stored({ children }: { children: React.ReactNode }): React.JSX.Element {
   const status = useStoreStatus();
   const t = useMessages(appMessages);
-  const shared = useMessages(sharedMessages);
 
   if (status.kind === 'opening') {
     return (
@@ -111,9 +111,7 @@ function Stored({ children }: { children: React.ReactNode }): React.JSX.Element 
   if (status.kind === 'failed') {
     return (
       <main className="shell">
-        <p className="back">
-          <a href="#/">&larr; {shared.back}</a>
-        </p>
+        <BackLink fallback="#/people" />
         <h1>{t.noLocalStorage}</h1>
         <StatusMessage kind="error">{t.noLocalStorageWarning(status.message)}</StatusMessage>
         <p>{t.noLocalStorageHint}</p>
@@ -184,6 +182,9 @@ function AppShell(): React.JSX.Element {
   // The whole route (with its query) as it is when the effect below runs; the effect itself follows the path only.
   const routeNow = useEffectEvent(() => route);
   const headerRef = useRef<HTMLElement>(null);
+
+  // Before the route listener below, so a Back link rendered for the new route already knows where it is (#652).
+  useEffect(() => trackNavigation(), []);
 
   useEffect(() => {
     const onHashChange = (): void => {
@@ -372,7 +373,8 @@ function AppShell(): React.JSX.Element {
 export function HomeRedirect(): React.JSX.Element {
   const t = useMessages(appMessages);
   useEffect(() => {
-    window.location.hash = '#/people';
+    // Replaced, not pushed: `#/` is not a page, so Back from the people list must not return to it and bounce forward again.
+    window.location.replace('#/people');
   }, []);
   return (
     <main className="shell">

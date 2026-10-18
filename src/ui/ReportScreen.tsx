@@ -24,6 +24,7 @@ import { useRulershipChoice } from './rulership-setting.js';
 import { useStoreState } from './store-context.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { useStableMoment } from './use-stable-moment.js';
+import { BackLink } from './BackLink.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -67,9 +68,7 @@ export function ReportScreen({ personId }: { personId: string }): React.JSX.Elem
   if (person.moment === undefined) {
     return (
       <main className="shell">
-        <p className="back">
-          <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
-        </p>
+        <BackLink fallback={personHref(personId)} />
         <h1>{t.reportFallback}</h1>
         <p>
           {t.notCompleteReport(person.displayName || t.thisPerson)}{' '}
@@ -85,9 +84,7 @@ export function ReportScreen({ personId }: { personId: string }): React.JSX.Elem
   if (person.timeAccuracy === 'unknown') {
     return (
       <main className="shell">
-        <p className="back">
-          <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
-        </p>
+        <BackLink fallback={personHref(personId)} />
         <h1>{t.reportFallback}</h1>
         <p>{t.needsKnownTime(person.displayName || t.thisPerson)}</p>
       </main>
@@ -96,9 +93,7 @@ export function ReportScreen({ personId }: { personId: string }): React.JSX.Elem
 
   return (
     <main className="shell">
-      <p className="back">
-        <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
-      </p>
+      <BackLink fallback={personHref(personId)} />
       <h1>{person.displayName ? t.heading(person.displayName) : t.reportFallback}</h1>
 
       {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}

@@ -44,6 +44,7 @@ import type { AdminUser, DeletionImpact, InterpretationUsageReport } from '../sy
 import type { OidcConfig, Role } from '../sync/auth-client.js';
 import { useSessionUserOrUndefined } from './session-context.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
+import { BackLink } from './BackLink.js';
 
 const ROLE_ORDER: readonly Role[] = ['user', 'admin', 'super_admin'];
 
@@ -319,9 +320,7 @@ export function AdminPanel(): React.JSX.Element {
 
   return (
     <main className="shell">
-      <p className="back">
-        <a href="#/">&larr; {shared.back}</a>
-      </p>
+      <BackLink fallback="#/people" />
       <h1>{t.heading}</h1>
       {error !== undefined && <StatusMessage kind="error">{error}</StatusMessage>}
 
@@ -385,7 +384,6 @@ export function AdminUsagePanel(): React.JSX.Element {
   const [usage, setUsage] = useState<InterpretationUsageReport>();
   const [error, setError] = useState<string>();
   const t = useMessages(adminPanelMessages);
-  const shared = useMessages(sharedMessages);
   const [locale] = useLocale();
 
   useEffect(() => {
@@ -432,9 +430,7 @@ export function AdminUsagePanel(): React.JSX.Element {
 
   return (
     <main className="shell">
-      <p className="back">
-        <a href="#/">&larr; {shared.back}</a>
-      </p>
+      <BackLink fallback="#/people" />
       <h1>{t.usageHeading}</h1>
       {error !== undefined && <StatusMessage kind="error">{error}</StatusMessage>}
       {usage === undefined ? (

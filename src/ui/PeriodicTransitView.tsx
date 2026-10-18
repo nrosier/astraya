@@ -68,6 +68,7 @@ import type { BodyId, JulianDayUT } from '../ephemeris/types.js';
 import type { CorpusPlacement, Locale } from '../interpretation/schema.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { useStableMoment } from './use-stable-moment.js';
+import { BackLink } from './BackLink.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -345,9 +346,7 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
   if (person.moment === undefined) {
     return (
       <main className="shell">
-        <p className="back">
-          <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
-        </p>
+        <BackLink fallback={personHref(personId)} />
         <h1>{t.forecastFallback}</h1>
         <p>
           {t.notCompleteForecast(person.displayName || t.thisPerson)}{' '}
@@ -360,9 +359,7 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
   if (person.timeAccuracy === 'unknown') {
     return (
       <main className="shell">
-        <p className="back">
-          <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
-        </p>
+        <BackLink fallback={personHref(personId)} />
         <h1>{t.forecastFallback}</h1>
         <p>{t.needsKnownTime(person.displayName || t.thisPerson)}</p>
       </main>
@@ -397,9 +394,7 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
 
   return (
     <main className="shell">
-      <p className="back">
-        <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
-      </p>
+      <BackLink fallback={personHref(personId)} />
       <h1>{person.displayName ? t.heading(person.displayName) : t.forecastFallback}</h1>
       <GlossaryTerms terms={['transit', 'aspect', 'orb', 'applying']} />
       <p className="hint">{t.hint(person.displayName || t.thisFallback)}</p>

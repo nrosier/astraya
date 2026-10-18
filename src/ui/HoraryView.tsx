@@ -31,13 +31,14 @@ import { HORARY_HOUSE_SYSTEMS, nowFields, parseHoraryFields, type HoraryFieldErr
 import { horaryViewMessages } from './HoraryView.messages.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
-import { sharedMessages } from './shared.messages.js';
 import { transitViewMessages } from './TransitView.messages.js';
 import { voidOfCourseSentence } from './void-of-course-text.js';
 import type { BirthMomentInput } from '../time/types.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { formatFixed } from './format.js';
 import { judgeHoraryWithMotion, type HoraryJudgment } from '../domain/horary-judgment.js';
+import { BackLink } from './BackLink.js';
+import { replaceRoute } from './nav-history.js';
 
 type Result =
   | { readonly kind: 'idle' }
@@ -53,7 +54,6 @@ function horaryHref(view: ChartViewKind): string {
 export function HoraryView({ view }: { readonly view?: ChartViewKind | undefined }): React.JSX.Element {
   const t = useMessages(horaryViewMessages);
   const transit = useMessages(transitViewMessages);
-  const shared = useMessages(sharedMessages);
   const [locale] = useLocale();
   const { provider } = useEphemerisProvider();
   const [fields, setFields] = useState(() => ({ ...nowFields(), latitude: '', longitude: '' }));
@@ -107,9 +107,7 @@ export function HoraryView({ view }: { readonly view?: ChartViewKind | undefined
 
   return (
     <main className="shell shell--wide">
-      <p className="back">
-        <a href="#/">&larr; {shared.back}</a>
-      </p>
+      <BackLink fallback="#/people" />
       <h1>{t.heading}</h1>
       <GlossaryTerms terms={['horary', 'ascendant', 'dignity']} />
       <p className="hint">{t.hint}</p>
@@ -231,8 +229,7 @@ export function HoraryView({ view }: { readonly view?: ChartViewKind | undefined
             metaLines={chartSheetMetaLines(t.chartName, ready.moment, locale)}
             view={view ?? 'wheel'}
             onViewChange={(next) => {
-              window.history.replaceState(null, '', horaryHref(next));
-              window.dispatchEvent(new HashChangeEvent('hashchange'));
+              replaceRoute(horaryHref(next));
             }}
             buildViewHref={horaryHref}
           />

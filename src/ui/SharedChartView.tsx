@@ -24,8 +24,9 @@ import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { sharedChartViewMessages } from './SharedChartView.messages.js';
-import { sharedMessages } from './shared.messages.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
+import { BackLink } from './BackLink.js';
+import { replaceRoute } from './nav-history.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -54,7 +55,6 @@ function sharedViewHref(view: ChartViewKind): string {
 
 export function SharedChartView(): React.JSX.Element {
   const t = useMessages(sharedChartViewMessages);
-  const shared = useMessages(sharedMessages);
   const [locale] = useLocale();
   const initial = useMemo(fromLocation, []);
   // The sender's own effective settings (#541), not this viewer's ambient device preference —
@@ -109,9 +109,7 @@ export function SharedChartView(): React.JSX.Element {
 
   return (
     <main className="shell shell--wide">
-      <p className="back">
-        <a href="#/">&larr; {shared.back}</a>
-      </p>
+      <BackLink fallback="#/people" />
       <h1>{t.sharedChart}</h1>
       <p className="hint">{t.hint}</p>
 
@@ -126,8 +124,7 @@ export function SharedChartView(): React.JSX.Element {
           extendedSettings={snapshot.settings}
           view={view}
           onViewChange={(next) => {
-            window.history.replaceState(null, '', sharedViewHref(next));
-            window.dispatchEvent(new HashChangeEvent('hashchange'));
+            replaceRoute(sharedViewHref(next));
           }}
           buildViewHref={sharedViewHref}
         />

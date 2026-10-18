@@ -17,23 +17,19 @@
  */
 import { useMessages } from './messages.js';
 import { documentsViewMessages } from './DocumentsView.messages.js';
-import { sharedMessages } from './shared.messages.js';
 import { PdfExportBuilder } from './PdfExportBuilder.js';
+import { BackLink } from './BackLink.js';
 
 export function DocumentsView(): React.JSX.Element {
   const t = useMessages(documentsViewMessages);
-  const shared = useMessages(sharedMessages);
 
   return (
     <main className="shell">
-      <p className="back">
-        <a href="#/people">&larr; {shared.back}</a>
-      </p>
+      <BackLink fallback="#/people" />
       <h1>{t.heading}</h1>
       <p>{t.intro}</p>
 
-      <h2>{t.pdfExportHeading}</h2>
-      <PdfExportBuilder />
+      <PdfExportBuilder embedded />
     </main>
   );
 }

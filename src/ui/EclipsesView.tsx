@@ -25,12 +25,12 @@ import { eclipsesViewMessages } from './EclipsesView.messages.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
-import { sharedMessages } from './shared.messages.js';
 import { SortableTable } from './SortableTable.js';
 import { useStoreState } from './store-context.js';
 import type { TableColumn } from './table-sort.js';
 import { clampEphemerisYear, MAX_EPHEMERIS_YEAR, MIN_EPHEMERIS_YEAR } from './year-range.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
+import { BackLink } from './BackLink.js';
 
 type Result =
   | { readonly kind: 'idle' }
@@ -47,7 +47,6 @@ type Result =
 
 export function EclipsesView(): React.JSX.Element {
   const t = useMessages(eclipsesViewMessages);
-  const shared = useMessages(sharedMessages);
   const [locale] = useLocale();
   const state = useStoreState();
   const { provider } = useEphemerisProvider();
@@ -180,9 +179,7 @@ export function EclipsesView(): React.JSX.Element {
 
   return (
     <main className="shell">
-      <p className="back">
-        <a href="#/">&larr; {shared.back}</a>
-      </p>
+      <BackLink fallback="#/people" />
       <h1>{t.heading}</h1>
       <GlossaryTerms terms={['eclipse', 'aspect', 'houses']} />
       <p className="hint">{t.hint}</p>

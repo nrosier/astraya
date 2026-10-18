@@ -32,10 +32,11 @@ import { TextAreaField } from './primitives/TextAreaField.js';
 import { TextField } from './primitives/TextField.js';
 import { TimeField } from './primitives/TimeField.js';
 import { PersonNotFound } from './PersonNotFound.js';
-import { sharedMessages } from './shared.messages.js';
 import { useStore, useStoreState } from './store-context.js';
 import type { Calendar } from '../time/types.js';
 import type { TimeAccuracy } from '../domain/person.js';
+import { BackLink } from './BackLink.js';
+import { sharedMessages } from './shared.messages.js';
 
 function accuracyOptions(t: typeof personFormMessages.en): Record<TimeAccuracy, string> {
   return {
@@ -51,8 +52,8 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
   const state = useStoreState();
   const person = state.people.get(personId);
   const t = useMessages(personFormMessages);
-  const unknownTimeHintId = useId();
   const shared = useMessages(sharedMessages);
+  const unknownTimeHintId = useId();
   const validationT = useMessages(personFormValidationMessages);
 
   // The stored person, as a draft, recomputed every render rather than memoized: until the user
@@ -122,9 +123,7 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
 
   return (
     <main className="shell">
-      <p className="back">
-        <a href="#/people">&larr; {shared.people}</a>
-      </p>
+      <BackLink fallback="#/people" label={shared.people} />
       <h1>{current.displayName.trim() === '' ? t.newPerson : current.displayName}</h1>
       <p className="tagline">{t.tagline}</p>
 

@@ -51,6 +51,7 @@ import type { BodyId, GeoPosition } from '../ephemeris/types.js';
 import type { CorpusEntry, Locale } from '../interpretation/schema.js';
 import { wheelCorpus } from './wheel-corpus.js';
 import { useStableMoment } from './use-stable-moment.js';
+import { BackLink } from './BackLink.js';
 
 function lineTypeLabels(t: typeof astrocartographyViewMessages.en): Record<LineType, string> {
   return { MC: t.mc, IC: t.ic, AC: t.ac, DC: t.dc };
@@ -199,9 +200,7 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
   if (person.moment === undefined) {
     return (
       <main className="shell">
-        <p className="back">
-          <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
-        </p>
+        <BackLink fallback={personHref(personId)} />
         <h1>{t.astrocartographyFallback}</h1>
         <p>
           {t.notCompleteMap(person.displayName || t.thisPerson)} <a href={personHref(personId)}>{t.personPageLink}</a>.
@@ -213,9 +212,7 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
   if (person.timeAccuracy === 'unknown') {
     return (
       <main className="shell">
-        <p className="back">
-          <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
-        </p>
+        <BackLink fallback={personHref(personId)} />
         <h1>{t.astrocartographyFallback}</h1>
         <GlossaryTerms terms={['astrocartography', 'localSpace', 'ascendant', 'midheaven']} />
         <p>{t.needsKnownTime(person.displayName || t.thisPerson)}</p>
@@ -225,9 +222,7 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
 
   return (
     <main className="shell">
-      <p className="back">
-        <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
-      </p>
+      <BackLink fallback={personHref(personId)} />
       <PageHeader title={person.displayName ? t.heading(person.displayName) : t.astrocartographyFallback} />
       <p className="hint">{t.hint}</p>
 

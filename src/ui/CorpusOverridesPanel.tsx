@@ -53,11 +53,11 @@ import {
 } from './placement-label.js';
 import { useMessages } from './messages.js';
 import { corpusOverridesPanelMessages } from './CorpusOverridesPanel.messages.js';
-import { sharedMessages } from './shared.messages.js';
 import type { CorpusOverride } from '../sync/admin-client.js';
 import type { CorpusCategory, CorpusEntry, CorpusTier, Locale } from '../interpretation/schema.js';
 import { FilterSummary } from './primitives/FilterSummary.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
+import { BackLink } from './BackLink.js';
 
 const PAGE_SIZE = 50;
 
@@ -88,7 +88,6 @@ interface PendingReset {
 
 export function CorpusOverridesPanel(): React.JSX.Element {
   const t = useMessages(corpusOverridesPanelMessages);
-  const shared = useMessages(sharedMessages);
   // The admin's interface language: what an entry means is worded in it, whichever corpus language is browsed.
   const [uiLocale] = useLocale();
 
@@ -336,9 +335,7 @@ export function CorpusOverridesPanel(): React.JSX.Element {
 
   return (
     <main className="shell">
-      <p className="back">
-        <a href="#/admin">&larr; {shared.back}</a>
-      </p>
+      <BackLink fallback="#/admin" />
       <h1>{t.heading}</h1>
       <p>{t.intro}</p>
 

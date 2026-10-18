@@ -11,13 +11,11 @@
 const en = {
   heading: 'Documents',
   intro: 'Build PDF exports from your charts and manage saved documents.',
-  pdfExportHeading: 'PDF Export Builder',
 };
 
 const nl: typeof en = {
   heading: 'Documenten',
   intro: 'Bouw PDF-exports van uw horoscopen en beheer opgeslagen documenten.',
-  pdfExportHeading: 'PDF-exportbuilder',
 };
 
 export const documentsViewMessages = { en, nl };

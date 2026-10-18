@@ -20,6 +20,7 @@ import { setupToken } from './route.js';
 import { setupFormMessages } from './SetupForm.messages.js';
 import { sharedMessages } from './shared.messages.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
+import { BackLink } from './BackLink.js';
 
 export function SetupForm(): React.JSX.Element {
   const { setup } = useSession();
@@ -35,9 +36,7 @@ export function SetupForm(): React.JSX.Element {
   if (token === null) {
     return (
       <main className="shell">
-        <p className="back">
-          <a href="#/">&larr; {shared.back}</a>
-        </p>
+        <BackLink fallback="#/people" />
         <h1>{t.heading}</h1>
         <StatusMessage kind="error">{t.missingToken}</StatusMessage>
       </main>
@@ -70,9 +69,7 @@ export function SetupForm(): React.JSX.Element {
 
   return (
     <main className="shell">
-      <p className="back">
-        <a href="#/">&larr; {shared.back}</a>
-      </p>
+      <BackLink fallback="#/people" />
       <h1>{t.heading}</h1>
       {error !== undefined && <StatusMessage kind="error">{error}</StatusMessage>}
       <form onSubmit={submit}>

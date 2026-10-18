@@ -39,6 +39,7 @@ import { useStoreState } from './store-context.js';
 import { todayInputValue } from './format.js';
 import { useMessages } from './messages.js';
 import { timingTimelineViewMessages } from './TimingTimelineView.messages.js';
+import { BackLink } from './BackLink.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -155,9 +156,7 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
   if (person.moment === undefined) {
     return (
       <main className="shell">
-        <p className="back">
-          <a href={personHref(personId)}>&larr; {person.displayName || t.fallback}</a>
-        </p>
+        <BackLink fallback={personHref(personId)} />
         <h1>{t.fallback}</h1>
         <p>
           {t.notComplete(person.displayName || t.fallback)} <a href={personHref(personId)}>{t.personPageLink}</a>.
@@ -172,9 +171,7 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
 
   return (
     <main className="shell shell--wide">
-      <p className="back">
-        <a href={personHref(personId)}>&larr; {person.displayName || t.fallback}</a>
-      </p>
+      <BackLink fallback={personHref(personId)} />
       <h1>{person.displayName ? t.heading(person.displayName) : t.fallback}</h1>
       <p className="hint">{t.hint}</p>
       <p className="hint">{t.source}</p>

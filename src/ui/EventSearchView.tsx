@@ -30,6 +30,7 @@ import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { useMessages } from './messages.js';
 import { eventSearchViewMessages } from './EventSearchView.messages.js';
+import { BackLink } from './BackLink.js';
 
 interface Parameters {
   readonly from: string;
@@ -182,6 +183,7 @@ export function EventSearchView(): React.JSX.Element {
 
   return (
     <main className="shell">
+      <BackLink fallback="#/people" />
       <h1>{t.heading}</h1>
       <p>{t.intro}</p>
       <fieldset className="field-group">

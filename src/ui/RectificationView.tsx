@@ -38,13 +38,13 @@ import {
   type RectificationFieldError,
 } from './rectification.js';
 import { rectificationViewMessages } from './RectificationView.messages.js';
-import { sharedMessages } from './shared.messages.js';
 import { SortableTable } from './SortableTable.js';
 import { useStoreState } from './store-context.js';
 import type { TableColumn } from './table-sort.js';
 import type { Locale } from '../interpretation/schema.js';
 import { Notice } from './primitives/Notice.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
+import { BackLink } from './BackLink.js';
 
 /** How many of the best candidates are listed, and given a detail section. */
 const SHOWN = 15;
@@ -72,7 +72,6 @@ function signPosition(longitude: number, locale: Locale): string {
 
 export function RectificationView(): React.JSX.Element {
   const t = useMessages(rectificationViewMessages);
-  const shared = useMessages(sharedMessages);
   const [locale] = useLocale();
   const state = useStoreState();
   const { provider } = useEphemerisProvider();
@@ -200,9 +199,7 @@ export function RectificationView(): React.JSX.Element {
 
   return (
     <main className="shell">
-      <p className="back">
-        <a href="#/">&larr; {shared.back}</a>
-      </p>
+      <BackLink fallback="#/people" />
       <h1>{t.heading}</h1>
       <GlossaryTerms terms={['rectification', 'ascendant', 'midheaven']} />
       <p className="hint">{t.hint}</p>
