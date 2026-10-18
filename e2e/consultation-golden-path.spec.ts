@@ -53,27 +53,27 @@ test('a person with a known birth time gets a Consultation screen with transits,
   // The page is cast for the moment it opened, to the minute, and Now recasts it (#676).
   await expect(page.getByText(/^As of \d{4}-\d{2}-\d{2} \d{2}:\d{2}, your local time/).first()).toBeVisible();
   await page.getByRole('button', { name: 'Now', exact: true }).click();
-  await expect(page.getByRole('heading', { level: 2, name: 'Current transits' })).toBeVisible();
 
-  // "View all transits"/"Open timing timeline"/"Open natal chart" each appear twice — once
-  // beside their own section, once again in "Next" (#506/#509's launchpad pattern) — so these
-  // are counted, not asserted singly.
-  await expect(page.getByRole('heading', { level: 2, name: 'Current transits' })).toBeVisible();
+  // Summary first, then the grouped sections (#669), each one heading level below the title.
+  await expect(page.getByRole('heading', { level: 2, name: 'At a glance' })).toBeVisible();
+  for (const term of ['Sun', 'Moon', 'Ascendant', 'Chart ruler', 'Profection year']) {
+    await expect(page.locator('.consultation-glance dt', { hasText: term }).first()).toBeVisible();
+  }
+  for (const heading of ['This year', 'Major transits now', 'Directions', 'Chart highlights']) {
+    await expect(page.getByRole('heading', { level: 2, name: heading })).toBeVisible();
+  }
   // Transits to the angles are listed apart from the ranked ones (#678).
   await expect(page.getByRole('heading', { level: 3, name: 'Transits to the Ascendant and Midheaven' })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'View all transits', exact: true })).toHaveCount(2);
-
-  await expect(page.getByRole('heading', { level: 2, name: 'Active timing techniques' })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Open timing timeline', exact: true })).toHaveCount(2);
-
-  await expect(page.getByRole('heading', { level: 2, name: 'Chart highlights' })).toBeVisible();
+  // No duplicate launchpad: one link per section, the rest in the page header.
+  await expect(page.getByRole('heading', { level: 2, name: 'Next' })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'View all transits', exact: true })).toHaveCount(1);
   await expect(page.getByRole('link', { name: 'Open Patterns & condition', exact: true })).toBeVisible();
-
-  await expect(page.getByRole('heading', { level: 2, name: 'Next' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Open interpretation', exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Build PDF', exact: true })).toBeVisible();
+  // Detail a session rarely needs first is behind a disclosure.
+  await expect(page.getByRole('button', { name: /More chart detail/ })).toBeVisible();
 
   // The link actually opens the full canonical screen (one home per feature).
-  await page.getByRole('link', { name: 'View all transits', exact: true }).first().click();
+  await page.getByRole('link', { name: 'View all transits', exact: true }).click();
   await expect(page.getByRole('heading', { level: 1, name: /transits/i })).toBeVisible();
 });
