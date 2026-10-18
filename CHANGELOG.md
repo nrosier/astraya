@@ -4,6 +4,25 @@ All notable changes to Astraya are recorded here. Versions follow
 [semantic versioning](https://semver.org/), and every milestone ends in a release —
 see [docs/RELEASING.md](docs/RELEASING.md).
 
+## [0.41.0] — 2026-10-18
+
+**Back takes you to the page you came from, Preferences is split into tabs, and the written report says which placement each paragraph is about.**
+
+### Added
+
+- **Report paragraphs are grouped by body and labelled with their placement (#654).** A body's sign and house paragraphs now sit under one heading, such as _Sun_, and each paragraph shows its placement above the text: a sign with its degree (_Sun in Sagittarius · 17°40′_), a house without one (_Sun in the 9th house_). The PDF uses the same groups and labels.
+- **Sign-in asks first whether to use a local account or single sign-on (#651).** When Authentik is configured, the sign-in panel opens on two choices and then shows only the one picked: the username and password form, or a _Continue to Authentik_ button that says where it goes. Without single sign-on the panel is the password form, as before.
+
+### Changed
+
+- **Preferences is split into three tabs (#650):** Appearance & accessibility (the language setting moves here), Astrology defaults, and Data & privacy. Each tab says how its settings are stored. Links to a Preferences section still open the right tab, and Back leaves Preferences instead of stepping through the tabs.
+- **A Sabian symbol's image is set apart from its reading (#653).** The traditional image shows in quotation marks, followed by the reading under a _Key insight_ label, in the Report and the PDF.
+
+### Fixed
+
+- **Back returns to the previous page (#652).** Back links went to a fixed parent screen, whichever page you had come from. They now go back in the browser history when you reached the page inside the app, and fall back to the parent screen in a fresh tab or from a shared link. The PDF builder and Event search gain a Back link, and Back from the people list no longer bounces forward.
+- **The PDF builder has its own Sabian symbol notes option (#660).** The PDF included the notes even when the setting hid them in the Report. _Include Sabian symbol notes_ now starts from that setting, and changing it in the builder affects only that document.
+
 ## [0.40.0] — 2026-10-18
 
 **Event search exports to calendars, people move between astrology programs in the AAF standard, and a wrong time zone in Ciudad Juárez is fixed.**
