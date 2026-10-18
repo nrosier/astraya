@@ -207,9 +207,15 @@ describe('buildPdfPlan', () => {
     };
     const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
     expect(plan.errors).toHaveLength(0);
-    expect(plan.sections.length).toBeGreaterThan(0);
-    expect(plan.sections.every((s) => s.kind === 'text')).toBe(true);
-    expect(plan.sections.every((s) => s.kind === 'text' && paragraphsOf(s).length > 0)).toBe(true);
+    // The chart overview first (#691), then the reading as text.
+    const [overview, ...reading] = plan.sections;
+    if (overview?.kind !== 'fields') throw new Error('expected the overview first');
+    expect(overview.heading).toBe('At a glance');
+    expect(overview.fields.map((field) => field.label)).toEqual(
+      expect.arrayContaining(['Sun', 'Moon', 'Ascendant', 'Chart ruler', 'Temperament']),
+    );
+    expect(reading.length).toBeGreaterThan(0);
+    expect(reading.every((s) => s.kind === 'text' && paragraphsOf(s).length > 0)).toBe(true);
   }, 30_000);
 
   it.each(['en', 'nl'] as const)(

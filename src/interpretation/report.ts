@@ -64,11 +64,12 @@
 import { bodyById, bodyByKey, type BodyDefinition } from '../astrology/bodies.js';
 import { DEFAULT_RULERSHIP_CHOICE, primaryRulerOf, rulersOf, type RulershipChoice } from '../astrology/rulership.js';
 import { dispositorChain, type DispositorChain } from '../astrology/dispositors.js';
-import { elementBalance, houseOf, modalityBalance } from '../astrology/emphasis.js';
+import { houseOf } from '../astrology/emphasis.js';
 import { jonesBodyPositions, jonesShapeOf, type JonesShape } from '../astrology/jones-shapes.js';
 import type { Element, Modality } from '../astrology/signs.js';
 import { degreeSymbolNumber, signIndex } from '../astrology/signs.js';
 import type { ChartData } from '../domain/chart-compute.js';
+import { chartOverview, ELEMENT_ORDER, MODALITY_ORDER, type Temperament } from '../domain/chart-overview.js';
 import type { BodyId, Degrees } from '../ephemeris/types.js';
 import { composeFallbackText, findCorpusEntry } from './compose.js';
 import { derivePlacements, rankPlacements, type SalienceFactor } from './rules.js';
@@ -254,12 +255,12 @@ function coreIdentitySection(
   ]);
 }
 
-/** Classical Hippocratic-Galenic element-temperament correspondence — standard, not requiring verification. */
-const ELEMENT_TEMPERAMENT: Readonly<Record<Element, Readonly<Record<Locale, string>>>> = {
-  fire: { en: 'choleric', nl: 'cholerisch' },
-  earth: { en: 'melancholic', nl: 'melancholisch' },
-  air: { en: 'sanguine', nl: 'sanguinisch' },
-  water: { en: 'phlegmatic', nl: 'flegmatisch' },
+/** The temperament names; which element gives which is `chart-overview.ts`'s `ELEMENT_TEMPERAMENT` (#691). */
+const TEMPERAMENT_NAMES: Readonly<Record<Temperament, Readonly<Record<Locale, string>>>> = {
+  choleric: { en: 'choleric', nl: 'cholerisch' },
+  melancholic: { en: 'melancholic', nl: 'melancholisch' },
+  sanguine: { en: 'sanguine', nl: 'sanguinisch' },
+  phlegmatic: { en: 'phlegmatic', nl: 'flegmatisch' },
 };
 
 const ELEMENT_NAMES: Readonly<Record<Element, Readonly<Record<Locale, string>>>> = {
@@ -275,19 +276,6 @@ const MODALITY_NAMES: Readonly<Record<Modality, Readonly<Record<Locale, string>>
   mutable: { en: 'Mutable', nl: 'Beweeglijk' },
 };
 
-const ELEMENT_ORDER: readonly Element[] = ['fire', 'earth', 'air', 'water'];
-const MODALITY_ORDER: readonly Modality[] = ['cardinal', 'fixed', 'mutable'];
-
-/** The key with the highest tally in `balance`; ties broken by earliest position in `order`. */
-function dominantOf<K extends string>(balance: Readonly<Record<K, number>>, order: readonly K[]): K {
-  let best = order[0];
-  if (best === undefined) throw new Error('unreachable: order is never empty');
-  for (const key of order) {
-    if (balance[key] > balance[best]) best = key;
-  }
-  return best;
-}
-
 function tallyFactors<K extends string>(
   rule: string,
   balance: Readonly<Record<K, number>>,
@@ -296,12 +284,9 @@ function tallyFactors<K extends string>(
   return order.map((key) => ({ rule, weight: balance[key], detail: `${key}: ${String(balance[key])}` }));
 }
 
-function temperamentSection(chart: ChartData, locale: Locale): ReportSection {
-  const positions = positionsMap(chart);
-  const elements = elementBalance(positions);
-  const modalities = modalityBalance(positions);
-  const dominantElement = dominantOf(elements, ELEMENT_ORDER);
-  const dominantModality = dominantOf(modalities, MODALITY_ORDER);
+function temperamentSection(chart: ChartData, locale: Locale, rulership: RulershipChoice): ReportSection {
+  // The same tallies and temperament the consultation page and the PDF summary show (#691).
+  const { elements, modalities, dominantElement, dominantModality, temperament } = chartOverview(chart, rulership);
 
   const elementSentence =
     locale === 'nl'
@@ -310,8 +295,8 @@ function temperamentSection(chart: ChartData, locale: Locale): ReportSection {
 
   const temperamentSentence =
     locale === 'nl'
-      ? `Dat wijst op een ${ELEMENT_TEMPERAMENT[dominantElement].nl} temperament, met een ${MODALITY_NAMES[dominantModality].nl.toLowerCase()} inslag.`
-      : `That points to a ${ELEMENT_TEMPERAMENT[dominantElement].en} temperament, with a ${MODALITY_NAMES[dominantModality].en.toLowerCase()} bent.`;
+      ? `Dat wijst op een ${TEMPERAMENT_NAMES[temperament].nl} temperament, met een ${MODALITY_NAMES[dominantModality].nl.toLowerCase()} inslag.`
+      : `That points to a ${TEMPERAMENT_NAMES[temperament].en} temperament, with a ${MODALITY_NAMES[dominantModality].en.toLowerCase()} bent.`;
 
   const elementFactors = tallyFactors('element-balance', elements, ELEMENT_ORDER);
   const modalityFactors = tallyFactors('modality-balance', modalities, MODALITY_ORDER);
@@ -537,7 +522,7 @@ export function assembleReport(
     sections: [
       ...(chartKind === 'composite' ? [compositeIntroSection(locale)] : []),
       coreIdentitySection(chart, locale, corpus, chartKind),
-      temperamentSection(chart, locale),
+      temperamentSection(chart, locale, rulership),
       chartRulerSection(chart, locale, corpus, rulership, chartKind),
       housesSection(chart, locale, corpus, chartKind),
       aspectPatternsSection(chart, locale, corpus, chartKind),

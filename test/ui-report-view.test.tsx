@@ -289,6 +289,24 @@ describe('ReportView corpus loading (locale comes from the shared locale.ts stor
     container.remove();
   });
 
+  it('opens with the chart overview, as a term and value per fact (#691)', async () => {
+    const { container, root } = await mount();
+    const overview = container.querySelector('section.chart-overview');
+    if (overview === null) throw new Error('expected the chart overview');
+    expect(overview.querySelector('h3')?.textContent).toBe('At a glance');
+    const terms = Array.from(overview.querySelectorAll('dt')).map((dt) => dt.textContent);
+    expect(terms).toEqual(expect.arrayContaining(['Sun', 'Moon', 'Ascendant', 'Chart ruler', 'Temperament']));
+    expect(overview.querySelectorAll('dd')).toHaveLength(terms.length);
+    // It comes before the table of contents and the reading.
+    const toc = container.querySelector('nav.report-toc');
+    expect(toc !== null && overview.compareDocumentPosition(toc) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
   it('leaves an ordinary paragraph as one plain block, with no label (#653)', async () => {
     const { container, root } = await mount();
     const ordinary = Array.from(container.querySelectorAll('li.report-paragraph')).find(
