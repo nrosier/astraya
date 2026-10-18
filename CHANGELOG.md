@@ -4,6 +4,14 @@ All notable changes to Astraya are recorded here. Versions follow
 [semantic versioning](https://semver.org/), and every milestone ends in a release —
 see [docs/RELEASING.md](docs/RELEASING.md).
 
+## [0.42.1] — 2026-10-18
+
+**A livelier birth-record easter egg.**
+
+### Changed
+
+- **The optional birth-record easter egg (#706)** has rainbow bursts in mixed patterns, motion-blur trails and a spark trail behind the cursor. It is still off unless a deployment sets `ASTRAYA_EASTER_EGG`, and it does not run when the reader asks for reduced motion.
+
 ## [0.42.0] — 2026-10-18
 
 **The consultation page reads summary first, the PDF draws real astrological symbols and reads like a report, a person can be exported and imported from their birth record, and aspect configurations are detected.**
