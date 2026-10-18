@@ -304,6 +304,8 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
               transitFilterT.presetsShort[presetOf(filter, rules) ?? 'custom'],
             )}
           />
+          {/* The weights and orbs have no published source (transit-importance.ts, #590), so say so (#681). */}
+          <p className="hint">{t.rankingConvention}</p>
           {shownContactRows.length === 0 ? (
             <p className="hint">{t.noShownTransits}</p>
           ) : (
