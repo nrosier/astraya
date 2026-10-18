@@ -4,6 +4,37 @@ All notable changes to Astraya are recorded here. Versions follow
 [semantic versioning](https://semver.org/), and every milestone ends in a release —
 see [docs/RELEASING.md](docs/RELEASING.md).
 
+## [0.42.0] — 2026-10-18
+
+**The consultation page reads summary first, the PDF draws real astrological symbols and reads like a report, a person can be exported and imported from their birth record, and aspect configurations are detected.**
+
+### Added
+
+- **One overview of the chart (#691).** A natal Report opens with "At a glance": Sun, Moon and Ascendant, chart ruler, sect, the element and modality balance, temperament, the dominant planet and the final dispositor. The PDF and the consultation page show the same facts from the same calculation.
+- **Aspect configurations (#640).** The chart's Patterns & condition view lists any Stellium, Grand Trine, T-Square, Grand Cross, Yod, Cradle or Mystic Rectangle among the ten planets, following the rules in the Astrolog 8.00 documentation: every aspect in a shape within its own orb, and a stellium three or four mutually conjunct planets. Yods appear when the quincunx is turned on in the orb settings.
+- **Export and import one person (#699).** The birth-record page downloads the person as AAF, Astraya JSON or CSV, and replaces their birth data from an AAF or Astraya JSON file. You see each change before anything is saved; the name and notes stay.
+- **Transits to the Ascendant and Midheaven (#678).** The consultation page lists slow planets in orb to the natal angles, with orb, applying or separating, and every exact pass within three years.
+- **Zodiacal releasing from Spirit (#680)** as well as Fortune, each period labelled with its lot, on the consultation page and the Timing timeline.
+- **The astrocartography map names its lines, has a legend and shows coastlines (#667),** on screen, in the SVG and PNG downloads and in the PDF. The coastlines are Natural Earth's public-domain data, loaded only with the map.
+- **An optional easter egg on the birth-record screen (#697),** off unless a deployment sets `ASTRAYA_EASTER_EGG` (see `.env.example`).
+
+### Changed
+
+- **The consultation page reads summary first (#669).** An at-a-glance block, then This year, Major transits now, Directions and Chart highlights, two to a row on a wide screen. Detail a session rarely needs first sits behind "Show". Transit rows give orb, applying or separating and the exact dates.
+- **The consultation page ranks transits by the yearly rules (#672),** so the slow planets lead, with today's fast contacts on one line of their own. It says that the order is Astraya's own convention (#681), and it is cast for the moment it opens, with a Now button (#676).
+- **The PDF reads like a report (#655).** It embeds DejaVu Sans, so planet and sign symbols, ℞ and the prime of 21°46′ print as themselves instead of codes such as SUN and VIR. Shorter lines, more space above headings, placement labels as small pills, Sabian symbols as a callout, and tables with numbers aligned and aspect names tinted by family. The on-screen Report gets the same pill and callout.
+- **Orbs show as degrees and minutes (#666),** 1°34′ instead of 1.56°, everywhere. Under a body's heading, a placement label no longer repeats the body: "Virgo · 21°46′" under Sun.
+- **A profected year runs from birthday to birthday at the local birth time (#677),** not in steps of 365.2425 days, so the year turns on the right day. The page says which convention it uses.
+- **Solar arc directions count as active within 1° of exact (#673),** about a year either side, instead of only on the exact day.
+
+### Fixed
+
+- **PDF tables printed raw Julian days, long decimal orbs and true/false (#664).** They now show the same text as the screen.
+- **PDF text could run past the bottom of the page (#665),** and a heading could end a page alone. Long paragraphs now continue on the next page.
+- **The Timing timeline and consultation page showed English labels in Dutch (#674).**
+- **Consultation highlights ignored a Traditional or Both rulership setting (#679).** They now follow the setting and say which rules each list uses.
+- **The consultation empty-state text described filters the page does not apply (#675).**
+
 ## [0.41.0] — 2026-10-18
 
 **Back takes you to the page you came from, Preferences is split into tabs, and the written report says which placement each paragraph is about.**
