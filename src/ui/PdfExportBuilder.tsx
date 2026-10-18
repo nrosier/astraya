@@ -79,6 +79,7 @@ import { useRulershipChoice } from './rulership-setting.js';
 import { useExtendedSettings } from './extended-settings-store.js';
 import { useOrbContextSource, useOrbLibrary } from './orb-library-store.js';
 import { useStoreState } from './store-context.js';
+import { readLastPersonId } from './last-person.js';
 
 type BuildStatus =
   | { readonly kind: 'idle' }
@@ -119,7 +120,11 @@ export function PdfExportBuilder({ embedded = false }: { readonly embedded?: boo
   const state = useStoreState();
   const people = useMemo(() => ordered(state.people), [state.people]);
 
-  const [personId, setPersonId] = useState<string>(people[0]?.id ?? '');
+  // Start on the person whose pages were open (#709), as the header's tool links do (#453); else the first person.
+  const [personId, setPersonId] = useState<string>(() => {
+    const last = readLastPersonId();
+    return last !== undefined && state.people.has(last) ? last : (people[0]?.id ?? '');
+  });
   // The Sabian notes start from the device setting, so the PDF matches the Report on screen until changed here (#660).
   const [showDegreeSymbol] = useShowDegreeSymbol();
   const [selection, setSelection] = useState<Draft>(() => ({
