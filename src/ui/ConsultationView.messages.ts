@@ -27,6 +27,13 @@ const en = {
   fastToday: (contacts: string) => `Today: ${contacts}`,
   noFastToday: 'Today: no fast contacts within orb.',
   listSeparator: '; ',
+  anglesHeading: 'Transits to the Ascendant and Midheaven',
+  anglesNeedBirthTime: 'These need a known birth time.',
+  noAngleTransits: 'No slow planet is within 3.5° of the Ascendant or Midheaven.',
+  angleTransit: (body: string, aspect: string, angle: string, orb: string, motion: string, exact: string) =>
+    `${body} ${aspect} ${angle} · ${orb} · ${motion} · ${exact}`,
+  exactOn: (dates: string) => `exact ${dates}`,
+  noExactDate: 'no exact pass within three years',
 
   timingHeading: 'Active timing techniques',
   asOf: (time: string) => `As of ${time}, your local time`,
@@ -74,6 +81,13 @@ const nl: typeof en = {
   fastToday: (contacts: string) => `Vandaag: ${contacts}`,
   noFastToday: 'Vandaag: geen snelle contacten binnen orb.',
   listSeparator: '; ',
+  anglesHeading: 'Transits naar de Ascendant en het Hemelmidden',
+  anglesNeedBirthTime: 'Hiervoor is een bekende geboortetijd nodig.',
+  noAngleTransits: 'Geen trage planeet staat binnen 3,5° van de Ascendant of het Hemelmidden.',
+  angleTransit: (body: string, aspect: string, angle: string, orb: string, motion: string, exact: string) =>
+    `${body} ${aspect} ${angle} · ${orb} · ${motion} · ${exact}`,
+  exactOn: (dates: string) => `exact op ${dates}`,
+  noExactDate: 'geen exacte passage binnen drie jaar',
 
   timingHeading: 'Actieve tijdtechnieken',
   asOf: (time: string) => `Per ${time}, je lokale tijd`,

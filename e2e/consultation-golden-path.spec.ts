@@ -59,6 +59,8 @@ test('a person with a known birth time gets a Consultation screen with transits,
   // beside their own section, once again in "Next" (#506/#509's launchpad pattern) — so these
   // are counted, not asserted singly.
   await expect(page.getByRole('heading', { level: 2, name: 'Current transits' })).toBeVisible();
+  // Transits to the angles are listed apart from the ranked ones (#678).
+  await expect(page.getByRole('heading', { level: 3, name: 'Transits to the Ascendant and Midheaven' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'View all transits', exact: true })).toHaveCount(2);
 
   await expect(page.getByRole('heading', { level: 2, name: 'Active timing techniques' })).toBeVisible();
