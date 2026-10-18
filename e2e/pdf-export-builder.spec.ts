@@ -82,6 +82,15 @@ test('the header’s PDF-builder link opens the PDF builder, and a preset downlo
   const pdf = Buffer.concat(chunks);
   expect(pdf.subarray(0, 5).toString('latin1')).toBe('%PDF-');
   expect(pdf.length).toBeGreaterThan(1000);
+  // The interpretation sets each Sabian symbol apart (#653): the labelled reading is drawn in the oblique font. jsPDF
+  // writes these streams uncompressed, so look in the bytes: find which font name the page resources give the
+  // oblique font, and check the text run that starts with the label is set in exactly that one.
+  const raw = pdf.toString('latin1');
+  const obliqueObject = /(\d+) 0 obj\s*<<\s*\/Type \/Font\s*\/BaseFont \/Helvetica-Oblique\b/.exec(raw)?.[1];
+  expect(obliqueObject).toBeDefined();
+  const obliqueName = new RegExp(`/(F\\d+) ${obliqueObject ?? ''} 0 R`).exec(raw)?.[1];
+  expect(obliqueName).toBeDefined();
+  expect(raw).toMatch(new RegExp(`/${obliqueName ?? ''} 10 Tf[^]{0,200}?\\(Key insight: `));
 
   await expect(page.getByRole('status')).toHaveText('✓');
   const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();

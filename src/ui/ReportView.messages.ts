@@ -11,6 +11,7 @@ const en = {
   showProvenance: 'Show provenance (rule and corpus entry) for each paragraph',
   couldNotLoad: (message: string) => `Could not load the interpretation text: ${message}`,
   loadingInterpretation: 'Loading interpretation…',
+  keyInsightLabel: 'Key insight',
   interpretationDisclaimer:
     'Read this as pieces of a whole, not standalone verdicts: a computer-generated interpretation describes one placement at a time, but no position or aspect means much on its own — only alongside everything else in the chart.',
   tocHeading: 'Contents',
@@ -64,6 +65,7 @@ const nl: typeof en = {
   showProvenance: 'Herkomst (regel en corpustekst) tonen voor elke paragraaf',
   couldNotLoad: (message: string) => `Kon de interpretatietekst niet laden: ${message}`,
   loadingInterpretation: 'Interpretatie wordt geladen…',
+  keyInsightLabel: 'Kerninzicht',
   interpretationDisclaimer:
     'Lees dit als onderdelen van een geheel, niet als losse oordelen: een door een computer gegenereerde interpretatie beschrijft één plaatsing per keer, maar geen enkele positie of aspect betekent veel op zichzelf — alleen samen met de rest van de horoscoop.',
   tocHeading: 'Inhoud',

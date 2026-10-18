@@ -220,6 +220,65 @@ describe('ReportView corpus loading (locale comes from the shared locale.ts stor
     container.remove();
   });
 
+  it('sets each Sabian symbol apart: the image in quotation marks, then a labelled reading in italics (#653)', async () => {
+    // The fixture corpus is empty, so serve real-shaped degree-symbol entries (an image sentence, then a reading) for
+    // the four degrees the fixture chart lands on: Sun 11, Moon 101, Ascendant 1, Midheaven 271.
+    const entry = (degree: number): object => ({
+      key: `degree-symbol:${String(degree)}`,
+      locale: 'en',
+      tier: 'notable',
+      tags: [],
+      provenance: { source: 'generated', model: 'test', generatedAt: '2026-10-18' },
+      text: `Image number ${String(degree)} stands in the light. This reading of ${String(degree)} says what it means. It goes on a little.`,
+    });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((input: RequestInfo | URL) => {
+        const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+        const body = url.startsWith('/api/corpus-overrides/') ? { entries: [] } : [11, 101, 1, 271].map(entry);
+        return Promise.resolve({ ok: true, json: () => Promise.resolve(body) }) as unknown as ReturnType<typeof fetch>;
+      }),
+    );
+    const { container, root } = await mount();
+
+    const coreIdentity = container.querySelector('#report-section-core-identity');
+    if (coreIdentity === null) throw new Error('test fixture bug: no core-identity section rendered');
+    const sabian = Array.from(coreIdentity.querySelectorAll('li.report-paragraph')).filter(
+      (li) => li.querySelector('.sabian-badge') !== null,
+    );
+    expect(sabian).toHaveLength(4);
+    for (const li of sabian) {
+      const image = li.querySelector('.sabian-image');
+      const insight = li.querySelector('.sabian-insight');
+      // The image is one sentence in quotation marks…
+      expect(image?.textContent).toMatch(/^\u201CImage number \d+ stands in the light\.\u201D$/);
+      // …and the reading follows under its label, in italics, so a screen reader hears the label.
+      expect(insight?.querySelector('strong')?.textContent).toBe(`${reportViewMessages.en.keyInsightLabel}:`);
+      expect(insight?.querySelector('em')?.textContent).toMatch(
+        /^This reading of \d+ says what it means\. It goes on a little\.$/,
+      );
+    }
+
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('leaves an ordinary paragraph as one plain block, with no label (#653)', async () => {
+    const { container, root } = await mount();
+    const ordinary = Array.from(container.querySelectorAll('li.report-paragraph')).find(
+      (li) => li.querySelector('.sabian-badge') === null,
+    );
+    expect(ordinary?.querySelector('.sabian-insight')).toBeNull();
+    expect(ordinary?.querySelector('em')).toBeNull();
+
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
   function degreeSymbolCheckbox(container: HTMLElement): HTMLInputElement {
     const label = Array.from(container.querySelectorAll('label')).find((candidate) =>
       /sabian symbol notes|sabian-symboolnotities/i.test(candidate.textContent),

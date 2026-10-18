@@ -27,7 +27,9 @@
  * It's its own named-and-explained section, the same label+explanation+control shape as
  * `RulershipSetting`, not a bare checkbox. A shown degree-symbol paragraph also carries a small
  * named badge (`.sabian-badge`, linking `<GlossaryTerm id="sabianSymbol">`) so it reads as a
- * distinct kind of note, not just another `.hint`-styled one.
+ * distinct kind of note, not just another `.hint`-styled one. Since #653 its text is set apart: the
+ * traditional image in quotation marks, then the reading under a "Key insight" label in italics
+ * (`splitSabianText`; the corpus keeps one flat string per entry).
  */
 /**
  * @module ReportView
@@ -54,6 +56,7 @@ import { useMessages } from './messages.js';
 import { Tabs, tabPanelProps } from './primitives/Tabs.js';
 import { RulershipSetting } from './RulershipSetting.js';
 import { useRulershipChoice } from './rulership-setting.js';
+import { splitSabianText } from '../interpretation/sabian-split.js';
 import { useShowDegreeSymbol } from './degree-symbol-setting.js';
 import { DegreeSymbolSetting } from './DegreeSymbolSetting.js';
 import { GlossaryTerm } from './GlossaryTerm.js';
@@ -106,6 +109,25 @@ function isDegreeSymbolParagraph(paragraph: ReportParagraph): boolean {
   return paragraph.placement?.category === 'degree-symbol';
 }
 
+/**
+ * A Sabian paragraph (#653): the traditional image in quotation marks, then the reading under a "Key insight" label
+ * in italics. The label, not the italics, carries the structure, so it reads the same to a screen reader.
+ */
+function SabianText({ text }: { readonly text: string }): React.JSX.Element {
+  const t = useMessages(reportViewMessages);
+  const { image, insight } = splitSabianText(text);
+  return (
+    <>
+      <p className="hint sabian-image">&ldquo;{image}&rdquo;</p>
+      {insight !== undefined && (
+        <p className="hint sabian-insight">
+          <strong>{t.keyInsightLabel}:</strong> <em>{insight}</em>
+        </p>
+      )}
+    </>
+  );
+}
+
 function Paragraph({
   paragraph,
   showProvenance,
@@ -126,7 +148,7 @@ function Paragraph({
           <GlossaryTerm id="sabianSymbol" />
         </div>
       )}
-      <p className={isDegreeSymbol ? 'hint' : undefined}>{paragraph.text}</p>
+      {isDegreeSymbol ? <SabianText text={paragraph.text} /> : <p>{paragraph.text}</p>}
       {showProvenance && (
         <p className="report-provenance hint">
           {provenance.placement !== undefined && <>{provenance.placement} &middot; </>}

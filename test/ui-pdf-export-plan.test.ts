@@ -201,6 +201,40 @@ describe('buildPdfPlan', () => {
     expect(plan.sections.every((s) => s.kind === 'text' && s.paragraphs.length > 0)).toBe(true);
   }, 30_000);
 
+  it.each(['en', 'nl'] as const)(
+    'sets each Sabian symbol apart as an image and a labelled reading, and leaves every other paragraph plain (%s, #653)',
+    async (locale) => {
+      const provider = await getEngine();
+      const selection: PdfSelection = {
+        personId: ADA.id,
+        ...EMPTY_SELECTION,
+        interpretation: { base: true, aiCustomised: false },
+      };
+      const context: PdfPlanContext = {
+        person: ADA,
+        provider,
+        settings: DEFAULT_EXTENDED_SETTINGS,
+        rulership: DEFAULT_RULERSHIP_CHOICE,
+        locale,
+        aiConsent: false,
+        corpusFetch,
+      };
+      const messages = pdfExportMessages[locale];
+      const plan = await buildPdfPlan(selection, context, chartViewMessages[locale], messages);
+      const paragraphs = plan.sections.flatMap((s) => (s.kind === 'text' ? s.paragraphs : []));
+      const sabian = paragraphs.filter((p) => typeof p !== 'string');
+      // Sun, Moon, Ascendant and Midheaven each get one.
+      expect(sabian).toHaveLength(4);
+      for (const p of sabian) {
+        expect(p.image.length).toBeGreaterThan(0);
+        expect(p.insight?.length ?? 0).toBeGreaterThan(p.image.length);
+        expect(p.insightLabel).toBe(locale === 'en' ? 'Key insight' : 'Kerninzicht');
+      }
+      expect(paragraphs.length).toBeGreaterThan(sabian.length);
+    },
+    30_000,
+  );
+
   it('records a skip, not a crash, when the AI-customised narrative is ticked without consent', async () => {
     const provider = await getEngine();
     const selection: PdfSelection = {
@@ -288,7 +322,7 @@ describe('buildPdfPlan', () => {
     expect(summarySection.heading).toContain('Ada Lovelace');
     expect(summarySection.heading).toContain('Charles Babbage');
     expect(summarySection.paragraphs.length).toBeGreaterThanOrEqual(2);
-    expect(summarySection.paragraphs.every((p) => p.length > 0)).toBe(true);
+    expect(summarySection.paragraphs.every((p) => typeof p === 'string' && p.length > 0)).toBe(true);
   }, 30_000);
 
   it('omits the relationship summary text when its own checkbox is off, keeping the chart section', async () => {

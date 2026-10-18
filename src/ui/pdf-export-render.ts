@@ -130,7 +130,18 @@ export async function renderPdfPlan(plan: PdfPlan): Promise<{ blob: Blob; filena
           doc.addPage();
           y = 20;
         }
-        y = wrapAndPrint(doc, paragraph, PAGE_MARGIN, y, contentWidth);
+        if (typeof paragraph === 'string') {
+          y = wrapAndPrint(doc, paragraph, PAGE_MARGIN, y, contentWidth);
+        } else {
+          // A Sabian symbol (#653): the image in quotation marks, then the labelled reading in italics.
+          doc.setFont('helvetica', 'normal');
+          y = wrapAndPrint(doc, `\u201C${paragraph.image}\u201D`, PAGE_MARGIN, y, contentWidth);
+          if (paragraph.insight !== undefined) {
+            doc.setFont('helvetica', 'italic');
+            y = wrapAndPrint(doc, `${paragraph.insightLabel}: ${paragraph.insight}`, PAGE_MARGIN, y, contentWidth);
+            doc.setFont('helvetica', 'normal');
+          }
+        }
         y += 3;
       }
     } else {
