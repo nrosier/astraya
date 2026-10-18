@@ -309,3 +309,19 @@ describe('setupToken', () => {
     expect(setupToken('#/setup?foo=bar')).toBeNull();
   });
 });
+
+describe('Preferences sections (#650)', () => {
+  it('has three tabs, appearance first', () => {
+    expect(PREFERENCES_SECTIONS).toEqual(['appearance', 'astrology', 'data']);
+  });
+
+  it('sends the old general section to appearance, where the language now lives', () => {
+    expect(parseRoute('#/preferences/general')).toEqual({ kind: 'preferences', section: 'appearance' });
+  });
+
+  it('round-trips every tab', () => {
+    for (const section of PREFERENCES_SECTIONS) {
+      expect(parseRoute(routeHref({ kind: 'preferences', section }))).toEqual({ kind: 'preferences', section });
+    }
+  });
+});

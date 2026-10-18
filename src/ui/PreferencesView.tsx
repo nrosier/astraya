@@ -7,11 +7,11 @@
  * shared device/account preference those screens read — this page is one more place to reach
  * it, not a second source of truth for it.
  *
- * Four stable subsections (General / Astrology defaults / Appearance & accessibility / Data &
- * privacy) as headings on one page rather than separate routes or tabs: there is no content yet
- * that would make a reader scroll past a screenful per subsection, so a subsection picker would
- * be premature per `docs/UI-UX_IMPLEMENTATION_PLAN.md`'s own "use ordinary links on wide layouts
- * ... if the subsection navigation cannot fit" — it already fits.
+ * Three tabs (Appearance & accessibility / Astrology defaults / Data & privacy, #650): the page had
+ * grown past a screenful per subsection, and the panels are mutually exclusive and share one
+ * context, which is the guidelines' case for same-page tabs (§5). `#/preferences/:section` still
+ * deep-links to a tab; switching tabs replaces the URL in place, so it adds no history entry. Language
+ * sits under Appearance, with the other things that change how the app looks and reads.
  *
  * Full-data/CSV export lives under Data & privacy per the guidelines (not the header's Export
  * menu, where it still *also* lives today — moving it out of there, and moving Build PDF to a
@@ -29,7 +29,7 @@
  * @conventions Every control is the same shared component/hook other screens already use (RulershipSetting.tsx, SymbolSetting.tsx, LanguageToggle.tsx, ThemeToggle.tsx) — this screen never reads or writes a setting's storage directly. Full-data export reuses domain/full-export.js's pure functions, the same ones AppNav.tsx's Export menu calls. "Check a calculation file" (#582) reuses validateFullExport for the same format/version errors Restore gives, but reads `calculation` off the raw parsed JSON directly, since the validated FullExport never carries that field.
  * @exports PreferencesView
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { aafToExportedPeople, isAafText, peopleToAaf } from '../domain/aaf-people.js';
 import {
   buildFullExport,
@@ -46,13 +46,14 @@ import {
 } from '../domain/full-export-importer.js';
 import { checkExportedCalculations, type PersonCalculationCheck } from '../domain/full-export-check.js';
 import { APP_VERSION } from '../version.js';
-import type { PreferencesSection } from './route.js';
+import { PREFERENCES_SECTIONS, routeHref, type PreferencesSection } from './route.js';
+import { replaceRoute } from './nav-history.js';
+import { Tabs, tabPanelProps } from './primitives/Tabs.js';
 import {
   DENSITY_CHOICES,
   isDensityChoice,
   isMotionChoice,
   MOTION_CHOICES,
-  prefersReducedMotion,
   useDensity,
   useMotion,
 } from './appearance-settings.js';
@@ -85,12 +86,13 @@ interface ExportStatus {
   readonly text: string;
 }
 
-/** Scrolls to a section heading, without animation for a reader who asked for less motion, and moves focus there: the link was followed on purpose. */
-function revealSection(section: PreferencesSection): void {
-  const heading = document.getElementById(`preferences-${section}`);
-  if (heading === null) return;
-  heading.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' });
-  heading.focus({ preventScroll: true });
+/**
+ * Puts focus on a tab's heading when a link to that section was followed: on purpose, so a screen reader says where
+ * it landed. It does not scroll: the tabs sit just above the heading, and scrolling the heading to the top would
+ * hide the page title and the tab strip the reader needs to move on.
+ */
+function focusSection(section: PreferencesSection): void {
+  document.getElementById(`preferences-${section}`)?.focus({ preventScroll: true });
 }
 
 export function PreferencesView({
@@ -311,9 +313,24 @@ export function PreferencesView({
       });
   };
 
+  // Set by a tab switch, so the effect below does not pull focus off the tab the reader is on (#650). A link to a
+  // section (the other way the section changes) is followed on purpose and does move focus to the panel heading.
+  const switchedByTab = useRef(false);
   useEffect(() => {
-    if (section !== undefined) revealSection(section);
+    if (switchedByTab.current) {
+      switchedByTab.current = false;
+      return;
+    }
+    if (section !== undefined) focusSection(section);
   }, [section]);
+
+  const tabItems = PREFERENCES_SECTIONS.map((key) => ({ key, label: t.tabLabels[key] }));
+  // A tab switch is a view of one page, not a page (it adds no history entry); a link to a section opens its tab.
+  const active: PreferencesSection = section ?? PREFERENCES_SECTIONS[0];
+  const selectTab = (next: PreferencesSection): void => {
+    switchedByTab.current = true;
+    replaceRoute(routeHref({ kind: 'preferences', section: next }));
+  };
 
   return (
     <main className="shell">
@@ -321,149 +338,158 @@ export function PreferencesView({
       <h1>{t.heading}</h1>
       <p>{t.intro}</p>
 
-      <h2 id="preferences-general" tabIndex={-1}>
-        {t.generalHeading}
-      </h2>
-      <p>{t.languageLabel}</p>
-      <LanguageToggle />
+      <Tabs idBase="preferences" label={t.tablistLabel} items={tabItems} active={active} onSelect={selectTab} />
 
-      <h2 id="preferences-astrology" tabIndex={-1}>
-        {t.astrologyHeading}
-      </h2>
-      <p>{t.rulersSubtitle}</p>
-      <RulershipSetting />
+      <div {...tabPanelProps('preferences', active)} className="preferences-panel">
+        <h2 id={`preferences-${active}`} tabIndex={-1}>
+          {t.tabLabels[active]}
+        </h2>
+        <p className="hint preferences-scope">{t.scope[active]}</p>
 
-      <OrbLibraryEditor profiles={orbLibrary.profiles} sources={orbSources} />
+        {active === 'appearance' && (
+          <>
+            <p>{t.languageLabel}</p>
+            <LanguageToggle />
 
-      {/* The chart-setup editor (#563): the same ExtendedSettingsPanel every chart screen
+            <p>{t.themeLabel}</p>
+            <ThemeToggle />
+            <SymbolSetting />
+            <Select
+              label={t.motionLabel}
+              value={motion}
+              help={t.motionHint}
+              options={MOTION_CHOICES.map((choice) => ({ value: choice, label: t.motionOptions[choice] }))}
+              onChange={(value) => {
+                if (isMotionChoice(value)) setMotion(value);
+              }}
+            />
+            <Select
+              label={t.densityLabel}
+              value={density}
+              help={t.densityHint}
+              options={DENSITY_CHOICES.map((choice) => ({ value: choice, label: t.densityOptions[choice] }))}
+              onChange={(value) => {
+                if (isDensityChoice(value)) setDensity(value);
+              }}
+            />
+          </>
+        )}
+
+        {active === 'astrology' && (
+          <>
+            <p>{t.rulersSubtitle}</p>
+            <RulershipSetting />
+
+            <OrbLibraryEditor profiles={orbLibrary.profiles} sources={orbSources} />
+
+            {/* The chart-setup editor (#563): the same ExtendedSettingsPanel every chart screen
           already uses, reachable here as its own dedicated entry point rather than only hidden
           behind a chart's own "Extended settings" trigger — one place to review every
           calculation-affecting setting before computing, per the audit's own ask. Bound to the
           same page-lifetime-shared store (extended-settings-store.ts) ChartView.tsx reads, so a
           change made here previews on the next chart drawn, exactly like changing it there. */}
-      <p>{t.chartSetupSubtitle}</p>
-      {provider === undefined ? (
-        <p className="hint">{t.chartSetupNeedsEngine}</p>
-      ) : (
-        <ExtendedSettingsPanel value={extendedSettings} onRedraw={setExtendedSettings} provider={provider} />
-      )}
-
-      <h2 id="preferences-appearance" tabIndex={-1}>
-        {t.appearanceHeading}
-      </h2>
-      <p>{t.themeLabel}</p>
-      <ThemeToggle />
-      <SymbolSetting />
-      <Select
-        label={t.motionLabel}
-        value={motion}
-        help={t.motionHint}
-        options={MOTION_CHOICES.map((choice) => ({ value: choice, label: t.motionOptions[choice] }))}
-        onChange={(value) => {
-          if (isMotionChoice(value)) setMotion(value);
-        }}
-      />
-      <Select
-        label={t.densityLabel}
-        value={density}
-        help={t.densityHint}
-        options={DENSITY_CHOICES.map((choice) => ({ value: choice, label: t.densityOptions[choice] }))}
-        onChange={(value) => {
-          if (isDensityChoice(value)) setDensity(value);
-        }}
-      />
-
-      <h2 id="preferences-data" tabIndex={-1}>
-        {t.dataHeading}
-      </h2>
-      <p>{t.exportEverythingHint}</p>
-      <p>
-        <button
-          type="button"
-          disabled={store === undefined}
-          aria-label={store === undefined ? `${t.exportEverything} — ${t.exportNeedsStore}` : undefined}
-          onClick={exportEverything}
-        >
-          {t.exportEverything}
-        </button>{' '}
-        <button
-          type="button"
-          disabled={store === undefined}
-          aria-label={store === undefined ? `${t.exportPeopleCsv} — ${t.exportNeedsStore}` : undefined}
-          onClick={exportPeopleCsv}
-        >
-          {t.exportPeopleCsv}
-        </button>{' '}
-        <button
-          type="button"
-          disabled={store === undefined}
-          aria-label={store === undefined ? `${t.exportPeopleAaf} — ${t.exportNeedsStore}` : undefined}
-          onClick={exportPeopleAaf}
-        >
-          {t.exportPeopleAaf}
-        </button>
-      </p>
-      <p>{t.restoreHint}</p>
-      <p>
-        <FileInput
-          buttonLabel={t.restoreFromFile}
-          accept="application/json,.json,.aaf,text/plain"
-          disabled={store === undefined}
-          disabledReason={t.exportNeedsStore}
-          onChange={onRestoreFileChosen}
-        />
-      </p>
-      {preview !== undefined && (
-        <div>
-          <p>
-            {t.restoreStaged(
-              preview.newCount,
-              preview.updatedCount,
-              preview.unchangedCount,
-              preview.deletedLocallyCount,
+            <p>{t.chartSetupSubtitle}</p>
+            {provider === undefined ? (
+              <p className="hint">{t.chartSetupNeedsEngine}</p>
+            ) : (
+              <ExtendedSettingsPanel value={extendedSettings} onRedraw={setExtendedSettings} provider={provider} />
             )}
-          </p>
-          <SortableTable
-            wrap
-            caption={t.restorePreviewHeading}
-            columns={restoreColumns}
-            rows={preview.items}
-            getRowKey={(item) => item.id}
-          />
-          <p>
-            <Button variant="primary" busy={restoring} busyLabel={t.restoreApplying} onClick={confirmRestore}>
-              {t.restoreApply}
-            </Button>
-          </p>
-        </div>
-      )}
-      <p>{t.checkHint}</p>
-      <p>
-        <FileInput
-          buttonLabel={t.checkFromFile}
-          accept="application/json"
-          disabled={provider === undefined}
-          disabledReason={t.exportNeedsEngine}
-          onChange={onCheckFileChosen}
-        />
-      </p>
-      {checks !== undefined && (
-        <SortableTable
-          wrap
-          caption={t.checkResultsHeading}
-          columns={checkColumns}
-          rows={checks}
-          getRowKey={(check) => check.id}
-        />
-      )}
-      {status !== undefined && (
-        <p
-          className={`status preferences-export-status ${status.kind}`}
-          role={status.kind === 'error' ? 'alert' : 'status'}
-        >
-          {status.text}
-        </p>
-      )}
+          </>
+        )}
+
+        {active === 'data' && (
+          <>
+            <p>{t.exportEverythingHint}</p>
+            <p>
+              <button
+                type="button"
+                disabled={store === undefined}
+                aria-label={store === undefined ? `${t.exportEverything} — ${t.exportNeedsStore}` : undefined}
+                onClick={exportEverything}
+              >
+                {t.exportEverything}
+              </button>{' '}
+              <button
+                type="button"
+                disabled={store === undefined}
+                aria-label={store === undefined ? `${t.exportPeopleCsv} — ${t.exportNeedsStore}` : undefined}
+                onClick={exportPeopleCsv}
+              >
+                {t.exportPeopleCsv}
+              </button>{' '}
+              <button
+                type="button"
+                disabled={store === undefined}
+                aria-label={store === undefined ? `${t.exportPeopleAaf} — ${t.exportNeedsStore}` : undefined}
+                onClick={exportPeopleAaf}
+              >
+                {t.exportPeopleAaf}
+              </button>
+            </p>
+            <p>{t.restoreHint}</p>
+            <p>
+              <FileInput
+                buttonLabel={t.restoreFromFile}
+                accept="application/json,.json,.aaf,text/plain"
+                disabled={store === undefined}
+                disabledReason={t.exportNeedsStore}
+                onChange={onRestoreFileChosen}
+              />
+            </p>
+            {preview !== undefined && (
+              <div>
+                <p>
+                  {t.restoreStaged(
+                    preview.newCount,
+                    preview.updatedCount,
+                    preview.unchangedCount,
+                    preview.deletedLocallyCount,
+                  )}
+                </p>
+                <SortableTable
+                  wrap
+                  caption={t.restorePreviewHeading}
+                  columns={restoreColumns}
+                  rows={preview.items}
+                  getRowKey={(item) => item.id}
+                />
+                <p>
+                  <Button variant="primary" busy={restoring} busyLabel={t.restoreApplying} onClick={confirmRestore}>
+                    {t.restoreApply}
+                  </Button>
+                </p>
+              </div>
+            )}
+            <p>{t.checkHint}</p>
+            <p>
+              <FileInput
+                buttonLabel={t.checkFromFile}
+                accept="application/json"
+                disabled={provider === undefined}
+                disabledReason={t.exportNeedsEngine}
+                onChange={onCheckFileChosen}
+              />
+            </p>
+            {checks !== undefined && (
+              <SortableTable
+                wrap
+                caption={t.checkResultsHeading}
+                columns={checkColumns}
+                rows={checks}
+                getRowKey={(check) => check.id}
+              />
+            )}
+            {status !== undefined && (
+              <p
+                className={`status preferences-export-status ${status.kind}`}
+                role={status.kind === 'error' ? 'alert' : 'status'}
+              >
+                {status.text}
+              </p>
+            )}
+          </>
+        )}
+      </div>
     </main>
   );
 }

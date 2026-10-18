@@ -246,12 +246,11 @@ Consent authorizes the specific action described beside it. AI consent must rema
 
 ## 4. Use a predictable settings surface
 
-Global Preferences must use one stable, responsive route with these groups:
+Global Preferences must use one stable, responsive route with these groups, shown as same-page tabs (`#/preferences/:section` deep-links to one):
 
-1. **General:** language, regional formats, display timezone policy.
+1. **Appearance & accessibility:** language and regional formats, theme, symbols, glyph variants/weight, density, motion. (Language was a separate General group until #650, which held nothing else.)
 2. **Astrology defaults:** rulership, calculation preset, house system, zodiac/ayanamsa, orbs, points/aspects, default filters.
-3. **Appearance & accessibility:** theme, symbols, glyph variants/weight, density, motion.
-4. **Data & privacy:** sync/account status, local-storage persistence, export, and account-data removal.
+3. **Data & privacy:** sync/account status, local-storage persistence, export, and account-data removal.
 
 Every group must display its scope: **Your account** or **This device**. Application-wide controls belong to Admin and must be labelled there.
 

@@ -34,7 +34,7 @@ test.afterAll(async () => {
   rmSync(dir, { recursive: true, force: true });
 });
 
-test('Preferences is reachable from every screen, lists its four subsections, and has no automatically detectable accessibility violations', async ({
+test('Preferences is reachable from every screen, has three tabs, and every tab has no automatically detectable accessibility violations', async ({
   page,
 }) => {
   test.setTimeout(60_000);
@@ -42,13 +42,55 @@ test('Preferences is reachable from every screen, lists its four subsections, an
   await page.getByRole('link', { name: 'Preferences', exact: true }).click();
   await expect(page).toHaveURL(/#\/preferences$/);
   await expect(page.getByRole('heading', { name: 'Preferences', level: 1 })).toBeVisible();
-  for (const heading of ['General', 'Astrology defaults', 'Appearance & accessibility', 'Data & privacy']) {
-    await expect(page.getByRole('heading', { name: heading, level: 2 })).toBeVisible();
-  }
+  const tabs = page.getByRole('tablist', { name: 'Preferences sections' });
+  await expect(tabs.getByRole('tab')).toHaveText([
+    'Appearance & accessibility',
+    'Astrology defaults',
+    'Data & privacy',
+  ]);
+  // Opens on Appearance, where the language now lives, and says what the tab's settings are stored as.
+  await expect(tabs.getByRole('tab', { name: 'Appearance & accessibility' })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('heading', { name: 'Appearance & accessibility', level: 2 })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Language: English/ }).first()).toBeVisible();
+  await expect(page.getByText(/^This device\./).first()).toBeVisible();
   // The link marks itself current while here, same convention as every other nav link.
   await expect(page.getByRole('link', { name: 'Preferences', exact: true })).toHaveAttribute('aria-current', 'page');
-  const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
-  expect(results.violations).toEqual([]);
+  for (const name of ['Appearance & accessibility', 'Astrology defaults', 'Data & privacy']) {
+    await tabs.getByRole('tab', { name }).click();
+    await expect(page.getByRole('heading', { name, level: 2 })).toBeVisible();
+    const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
+    expect(results.violations, name).toEqual([]);
+  }
+});
+
+test('the tabs follow the arrow keys, keep one panel on screen, and do not add history entries (#650)', async ({
+  page,
+}) => {
+  test.setTimeout(60_000);
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  await page.getByRole('link', { name: 'Preferences', exact: true }).click();
+  const tabs = page.getByRole('tablist', { name: 'Preferences sections' });
+  const appearance = tabs.getByRole('tab', { name: 'Appearance & accessibility' });
+  await appearance.focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(tabs.getByRole('tab', { name: 'Astrology defaults' })).toBeFocused();
+  await expect(tabs.getByRole('tab', { name: 'Astrology defaults' })).toHaveAttribute('aria-selected', 'true');
+  await expect(page).toHaveURL(/#\/preferences\/astrology$/);
+  // One panel at a time: the other tabs' controls are not in the page.
+  await expect(page.getByRole('radiogroup', { name: 'Planetary rulers' })).toBeVisible();
+  await expect(page.getByLabel('Motion', { exact: true })).toHaveCount(0);
+  await page.keyboard.press('End');
+  await expect(tabs.getByRole('tab', { name: 'Data & privacy' })).toHaveAttribute('aria-selected', 'true');
+  await page.keyboard.press('Home');
+  await expect(appearance).toHaveAttribute('aria-selected', 'true');
+  // Three switches later, Back still leaves Preferences instead of stepping through the tabs.
+  await page.goBack();
+  await expect(page).toHaveURL(/#\/people$/);
+});
+
+test('an old #/preferences/general link opens Appearance, where the language moved (#650)', async ({ page }) => {
+  await gotoAndSettle(page, `${baseUrl}/#/preferences/general`);
+  await expect(page.getByRole('heading', { name: 'Appearance & accessibility', level: 2 })).toBeVisible();
 });
 
 test('a section link opens Preferences at that heading and moves focus there (#509)', async ({ page }) => {
@@ -100,6 +142,7 @@ test('the rulers choice changed here is the same one chart screens read, and sur
   test.setTimeout(60_000);
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   await page.getByRole('link', { name: 'Preferences', exact: true }).click();
+  await page.getByRole('tab', { name: 'Astrology defaults' }).click();
   const group = page.getByRole('radiogroup', { name: 'Planetary rulers', exact: true });
   await expect(group.getByRole('radio', { name: /^Modern/ })).toBeChecked();
   await group.getByRole('radio', { name: /^Traditional/ }).check();
@@ -123,6 +166,7 @@ test('exporting everything and the people CSV both produce real downloads', asyn
     longitude: '-0.1276',
   });
   await page.getByRole('link', { name: 'Preferences', exact: true }).click();
+  await page.getByRole('tab', { name: 'Data & privacy' }).click();
 
   const read = async (download: Download): Promise<string> => {
     const chunks: Buffer[] = [];
