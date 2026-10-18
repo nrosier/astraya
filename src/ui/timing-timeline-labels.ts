@@ -17,6 +17,7 @@ export function timelineSubjectLabel(subject: TimelineSubject, locale: Locale): 
   switch (subject.kind) {
     case 'releasing': {
       const label = (subject.level === 1 ? t.releasing : t.releasingLevel2)(
+        t.lots[subject.lot],
         signDisplayName(subject.sign, locale),
         name(subject.ruler),
       );

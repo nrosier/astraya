@@ -10,7 +10,7 @@
  * @module domain/timing-timeline
  * @purpose Shared `TimingTimelineEvent` shape plus adapters for each timing technique exposed by TimingTimelineView.
  * @conventions Adapters are pure and one-way (technique output → events, never the reverse). An event says what it is about as data (`TimelineSubject`: keys and numbers), never as words, so the screen words it in the reader's language (#674).
- * @exports TimingTimelineEvent, TimelineSubject, TimelineReturn, TimingTimelineTrack, TIMING_TIMELINE_TRACKS, timingTimelineTracks, releasingPeriodsToTimelineEvents, firdariaPeriodsToTimelineEvents, profectionToTimelineEvents, primaryDirectionsToTimelineEvents, secondaryProgressionToTimelineEvents, solarArcToTimelineEvents, transitToTimelineEvents, periodicTransitToTimelineEvents
+ * @exports TimingTimelineEvent, TimelineSubject, TimelineReturn, ReleasingLot, TimingTimelineTrack, TIMING_TIMELINE_TRACKS, timingTimelineTracks, releasingPeriodsToTimelineEvents, firdariaPeriodsToTimelineEvents, profectionToTimelineEvents, primaryDirectionsToTimelineEvents, secondaryProgressionToTimelineEvents, solarArcToTimelineEvents, transitToTimelineEvents, periodicTransitToTimelineEvents
  */
 import { bodyById } from '../astrology/bodies.js';
 import type { Aspect } from '../astrology/aspects.js';
@@ -27,6 +27,9 @@ import type { SolarArcDirectionsData } from './solar-arc-directions.js';
 import type { TransitData } from './transit.js';
 import type { PeriodicTransitForecast } from './periodic-transit.js';
 
+/** The lot zodiacal releasing starts from (#680): Fortune for the body and life, Spirit for action and career. */
+export type ReleasingLot = 'fortune' | 'spirit';
+
 export type TimelineReturn = 'solar-return' | 'demibirthday' | 'progressed-lunar-return' | 'lunar-return';
 
 /**
@@ -36,6 +39,8 @@ export type TimelineReturn = 'solar-return' | 'demibirthday' | 'progressed-lunar
 export type TimelineSubject =
   | {
       readonly kind: 'releasing';
+      /** The lot released from (#680). */
+      readonly lot: ReleasingLot;
       readonly level: 1 | 2;
       readonly sign: string;
       readonly ruler: string;
@@ -100,17 +105,33 @@ export function timingTimelineTracks(
 
 const bodyKeyOf = (id: number): string => bodyById(id)?.key ?? String(id);
 
-function releasingSubject(level: 1 | 2, sign: number, ruler: number, loosingOfBond: boolean): TimelineSubject {
-  return { kind: 'releasing', level, sign: SIGNS[sign]?.name ?? String(sign), ruler: bodyKeyOf(ruler), loosingOfBond };
+function releasingSubject(
+  lot: ReleasingLot,
+  level: 1 | 2,
+  sign: number,
+  ruler: number,
+  loosingOfBond: boolean,
+): TimelineSubject {
+  return {
+    kind: 'releasing',
+    lot,
+    level,
+    sign: SIGNS[sign]?.name ?? String(sign),
+    ruler: bodyKeyOf(ruler),
+    loosingOfBond,
+  };
 }
 
 /** Zodiacal-releasing (#554) Level-1 periods as timeline events, one per sign period. */
-export function releasingPeriodsToTimelineEvents(periods: readonly ReleasingPeriod[]): readonly TimingTimelineEvent[] {
+export function releasingPeriodsToTimelineEvents(
+  periods: readonly ReleasingPeriod[],
+  lot: ReleasingLot,
+): readonly TimingTimelineEvent[] {
   return periods.map((period) => ({
     kind: 'zodiacal-releasing',
     startJd: period.startJd,
     endJd: period.endJd,
-    subject: releasingSubject(1, period.sign, period.ruler, false),
+    subject: releasingSubject(lot, 1, period.sign, period.ruler, false),
     sourceModule: 'astrology/zodiacal-releasing',
   }));
 }
@@ -118,12 +139,13 @@ export function releasingPeriodsToTimelineEvents(periods: readonly ReleasingPeri
 /** Level-2 zodiacal-releasing subperiods, labelled apart from the enclosing Level-1 periods. */
 export function releasingSubperiodsToTimelineEvents(
   periods: readonly ReleasingSubperiod[],
+  lot: ReleasingLot,
 ): readonly TimingTimelineEvent[] {
   return periods.map((period) => ({
     kind: 'zodiacal-releasing',
     startJd: period.startJd,
     endJd: period.endJd,
-    subject: releasingSubject(2, period.sign, period.ruler, period.loosingOfBond),
+    subject: releasingSubject(lot, 2, period.sign, period.ruler, period.loosingOfBond),
     sourceModule: 'astrology/zodiacal-releasing',
   }));
 }

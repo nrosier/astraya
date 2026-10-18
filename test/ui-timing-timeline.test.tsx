@@ -20,7 +20,7 @@ const tracks: readonly TimingTimelineTrackEvents[] = [
         kind: 'zodiacal-releasing',
         startJd: 0,
         endJd: 30,
-        subject: { kind: 'releasing', level: 1, sign: 'Leo', ruler: 'sun', loosingOfBond: false },
+        subject: { kind: 'releasing', lot: 'fortune', level: 1, sign: 'Leo', ruler: 'sun', loosingOfBond: false },
         sourceModule: 'fixture',
       },
     ],
@@ -74,7 +74,7 @@ describe('TimingTimelineTracks (#554)', () => {
       for (const track of ['zodiacal-releasing', 'firdaria', 'profections']) {
         expect(container.querySelector(`#${track}-heading`)?.textContent).toBe(track);
       }
-      expect(container.textContent).toContain('Leo, ruled by Sun');
+      expect(container.textContent).toContain('From Fortune: Leo, ruled by Sun');
       expect(container.textContent).toContain('Leo, 5th house');
       expect(container.textContent).toContain('JD 0 to JD 30');
       expect(container.querySelector('[aria-labelledby="profections-heading"] .hint')?.textContent).toBe(
@@ -92,8 +92,11 @@ describe('TimingTimelineTracks (#554)', () => {
 describe('timelineSubjectLabel (#674)', () => {
   it('words every subject in Dutch, with no English left over', () => {
     expect(
-      timelineSubjectLabel({ kind: 'releasing', level: 2, sign: 'Leo', ruler: 'sun', loosingOfBond: true }, 'nl'),
-    ).toBe('L2 Leeuw, met als heerser Zon (loosing of the bond)');
+      timelineSubjectLabel(
+        { kind: 'releasing', lot: 'spirit', level: 2, sign: 'Leo', ruler: 'sun', loosingOfBond: true },
+        'nl',
+      ),
+    ).toBe('Vanaf Spirit, L2: Leeuw, met als heerser Zon (loosing of the bond)');
     expect(timelineSubjectLabel({ kind: 'profection', sign: 'Leo', house: 5 }, 'nl')).toBe('Leeuw, 5e huis');
     expect(timelineSubjectLabel({ kind: 'firdaria', ruler: 'northNode' }, 'nl')).toBe('Noordelijke Maansknoop');
     expect(timelineSubjectLabel({ kind: 'aspect', from: 'jupiter', aspect: 'square', to: 'ic' }, 'nl')).toBe(

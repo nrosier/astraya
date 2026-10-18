@@ -33,13 +33,14 @@ const NATAL: BirthMomentInput = {
 describe('releasingPeriodsToTimelineEvents (#554)', () => {
   it('carries each period’s own boundaries and labels it by sign and ruler', () => {
     const periods = zodiacalReleasingPeriods(35, 0, 2); // Taurus/Venus, then Gemini/Mercury
-    const events = releasingPeriodsToTimelineEvents(periods);
+    const events = releasingPeriodsToTimelineEvents(periods, 'fortune');
     expect(events).toHaveLength(2);
     expect(events[0]?.kind).toBe('zodiacal-releasing');
     expect(events[0]?.startJd).toBe(periods[0]?.startJd);
     expect(events[0]?.endJd).toBe(periods[0]?.endJd);
     expect(events[0]?.subject).toEqual({
       kind: 'releasing',
+      lot: 'fortune',
       level: 1,
       sign: 'Taurus',
       ruler: 'venus',
@@ -53,7 +54,7 @@ describe('releasingSubperiodsToTimelineEvents (#554)', () => {
   it('keeps Level-2 periods on the zodiacal-releasing track and makes a bond release visible', () => {
     const parent = zodiacalReleasingPeriods(305, 0, 1)[0];
     if (parent === undefined) throw new Error('fixture bug: no parent period');
-    const events = releasingSubperiodsToTimelineEvents(zodiacalReleasingSubperiods(parent));
+    const events = releasingSubperiodsToTimelineEvents(zodiacalReleasingSubperiods(parent), 'spirit');
     expect(
       events.some(
         (event) =>
