@@ -17,6 +17,11 @@ const en = {
   personPageLink: 'birth record',
   axis: (start: string, end: string) => `Shared date axis: ${start} to ${end}`,
   noEvents: 'No timing events fall in this window.',
+  /** Under a track: the convention it follows, where there is more than one in use (#677). */
+  trackNotes: {
+    profections:
+      'A profected year runs from one birthday to the next, at the local time of birth; its months are twelve equal parts of that year.',
+  } as Partial<Record<string, string>>,
   range: (start: string, end: string) => `${start} to ${end}`,
   releasing: (sign: string, ruler: string) => `${sign}, ruled by ${ruler}`,
   releasingLevel2: (sign: string, ruler: string) => `L2 ${sign}, ruled by ${ruler}`,
@@ -59,6 +64,10 @@ const nl = {
   personPageLink: 'geboortegegevens',
   axis: (start, end) => `Gedeelde datumas: ${start} tot ${end}`,
   noEvents: 'Er vallen geen tijdgebeurtenissen binnen dit venster.',
+  trackNotes: {
+    profections:
+      'Een geprofecteerd jaar loopt van verjaardag tot verjaardag, op de lokale geboortetijd; de maanden zijn twaalf gelijke delen van dat jaar.',
+  },
   range: (start, end) => `${start} tot ${end}`,
   releasing: (sign, ruler) => `${sign}, met als heerser ${ruler}`,
   releasingLevel2: (sign, ruler) => `L2 ${sign}, met als heerser ${ruler}`,

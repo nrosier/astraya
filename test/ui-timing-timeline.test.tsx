@@ -66,6 +66,7 @@ describe('TimingTimelineTracks (#554)', () => {
             dateLabel={(jd) => `JD ${String(jd)}`}
             describe={(subject) => timelineSubjectLabel(subject, 'en')}
             range={(start, end) => `${start} to ${end}`}
+            notes={{ profections: 'Birthday to birthday.' }}
           />,
         );
       });
@@ -76,6 +77,9 @@ describe('TimingTimelineTracks (#554)', () => {
       expect(container.textContent).toContain('Leo, ruled by Sun');
       expect(container.textContent).toContain('Leo, 5th house');
       expect(container.textContent).toContain('JD 0 to JD 30');
+      expect(container.querySelector('[aria-labelledby="profections-heading"] .hint')?.textContent).toBe(
+        'Birthday to birthday.',
+      );
     } finally {
       act(() => {
         root.unmount();

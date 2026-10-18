@@ -72,8 +72,27 @@ export interface ProfectionData {
   readonly targetJd: JulianDayUT;
   readonly ascendant: Degrees;
   readonly age: number;
-  readonly year: ProfectedPeriod;
-  readonly month: ProfectedPeriod & { readonly monthIndex: number };
+  /** The profected year's bounds: one birthday to the next, each at the local clock time of birth (#677). */
+  readonly year: ProfectedPeriod & { readonly startJd: JulianDayUT; readonly endJd: JulianDayUT };
+  /** The profected month: one of twelve equal parts of that year (#677). */
+  readonly month: ProfectedPeriod & {
+    readonly monthIndex: number;
+    readonly startJd: JulianDayUT;
+    readonly endJd: JulianDayUT;
+  };
+}
+
+const isGregorianLeapYear = (year: number): boolean => (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+
+/**
+ * The birthday in `year` at the local clock time of birth, resolved through the same time-zone rules as the birth
+ * itself, so a summer-time birthday lands on the right UT (#677). A 29 February birthday falls on 28 February in a
+ * common year.
+ */
+async function birthdayJd(natal: BirthMomentInput, year: number, provider: EphemerisProvider): Promise<JulianDayUT> {
+  const { civil } = natal;
+  const day = civil.month === 2 && civil.day === 29 && !isGregorianLeapYear(year) ? 28 : civil.day;
+  return julianDayFor(provider, resolveMoment({ ...natal, civil: { ...civil, year, day } }));
 }
 
 /** `provider` must already be initialized. `targetJd` may be before birth (`age` comes back negative, not an error). */
@@ -96,9 +115,24 @@ export async function computeProfections(
 
   const natalHouses = await provider.houses(natalJd, place, houseSystem, options.zodiac);
   const age = ageInYears(natalJd, targetJd);
-
-  const year = annualProfection(natalHouses.ascendant, age);
-  const month = monthlyProfection(natalHouses.ascendant, age);
+  // A profected year runs from one birthday to the next (#677), not in steps of a tropical year from birth.
+  const birthYear = natalMoment.civil.year;
+  let years = Math.floor(age);
+  let yearStartJd = await birthdayJd(natalMoment, birthYear + years, provider);
+  if (yearStartJd > targetJd) {
+    years -= 1;
+    yearStartJd = await birthdayJd(natalMoment, birthYear + years, provider);
+  }
+  let yearEndJd = await birthdayJd(natalMoment, birthYear + years + 1, provider);
+  if (yearEndJd <= targetJd) {
+    years += 1;
+    yearStartJd = yearEndJd;
+    yearEndJd = await birthdayJd(natalMoment, birthYear + years + 1, provider);
+  }
+  const monthLengthJd = (yearEndJd - yearStartJd) / 12;
+  const monthIndex = Math.min(11, Math.max(0, Math.floor((targetJd - yearStartJd) / monthLengthJd)));
+  const year = annualProfection(natalHouses.ascendant, years);
+  const month = monthlyProfection(natalHouses.ascendant, years + (monthIndex + 0.5) / 12);
 
   return {
     natalJd,
@@ -111,6 +145,8 @@ export async function computeProfections(
       signName: signOf(year.longitude).name,
       longitude: year.longitude,
       ...lords(year.signIndex),
+      startJd: yearStartJd,
+      endJd: yearEndJd,
     },
     month: {
       signIndex: month.signIndex,
@@ -119,6 +155,8 @@ export async function computeProfections(
       longitude: month.longitude,
       ...lords(month.signIndex),
       monthIndex: month.monthIndex,
+      startJd: yearStartJd + monthIndex * monthLengthJd,
+      endJd: yearStartJd + (monthIndex + 1) * monthLengthJd,
     },
   };
 }

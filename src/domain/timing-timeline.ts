@@ -142,33 +142,23 @@ export function firdariaPeriodsToTimelineEvents(periods: readonly FirdariaPeriod
 const TROPICAL_YEAR_DAYS = 365.2425;
 
 /**
- * One `ProfectionData` snapshot (#168, already computed for a single target moment) as the pair
- * of timeline events — year and month — active at that moment. Unlike the releasing/firdaria
- * adapters, this is adapting a single point-in-time result rather than a pre-built sequence,
- * since `computeProfections` itself only ever answers "what is active right now", not "give me
- * the next N periods" — reconstructing the boundaries here from `natalJd`/`age` rather than
- * changing `profections.ts`'s own return shape.
+ * One `ProfectionData` snapshot (#168, computed for a single target moment) as the pair of timeline events — year
+ * and month — active at that moment, with the bounds `computeProfections` found: birthday to birthday, and equal
+ * twelfths of that year (#677).
  */
 export function profectionToTimelineEvents(data: ProfectionData): readonly TimingTimelineEvent[] {
-  const years = Math.floor(data.age);
-  const yearStartJd = data.natalJd + years * TROPICAL_YEAR_DAYS;
-  const yearEndJd = yearStartJd + TROPICAL_YEAR_DAYS;
-  const monthLengthJd = TROPICAL_YEAR_DAYS / 12;
-  const monthStartJd = yearStartJd + data.month.monthIndex * monthLengthJd;
-  const monthEndJd = monthStartJd + monthLengthJd;
-
   return [
     {
       kind: 'profection-year',
-      startJd: yearStartJd,
-      endJd: yearEndJd,
+      startJd: data.year.startJd,
+      endJd: data.year.endJd,
       subject: { kind: 'profection', sign: data.year.signName, house: data.year.house },
       sourceModule: 'domain/profections',
     },
     {
       kind: 'profection-month',
-      startJd: monthStartJd,
-      endJd: monthEndJd,
+      startJd: data.month.startJd,
+      endJd: data.month.endJd,
       subject: { kind: 'profection', sign: data.month.signName, house: data.month.house },
       sourceModule: 'domain/profections',
     },

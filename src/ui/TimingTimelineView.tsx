@@ -66,6 +66,8 @@ export interface TimingTimelineTracksProps {
   readonly describe: (subject: TimelineSubject) => string;
   /** A start and end date as one range, in the reader's language. */
   readonly range: (start: string, end: string) => string;
+  /** A note under a track's heading, such as the convention it follows (#677). */
+  readonly notes?: Partial<Record<string, string>>;
 }
 
 /** The render-only shared-axis track list, separated so concurrent-technique output is testable without an ephemeris worker. */
@@ -77,6 +79,7 @@ export function TimingTimelineTracks({
   dateLabel: formatDate,
   describe,
   range,
+  notes = {},
 }: TimingTimelineTracksProps): React.JSX.Element {
   return (
     <section aria-label={axisLabel}>
@@ -86,6 +89,7 @@ export function TimingTimelineTracks({
       {tracks.map(({ track, events }) => (
         <section key={track} className="timing-timeline-track" aria-labelledby={`${track}-heading`}>
           <h2 id={`${track}-heading`}>{labels[track]}</h2>
+          {notes[track] !== undefined && <p className="hint">{notes[track]}</p>}
           {events.length === 0 ? (
             <p className="hint">{noEvents}</p>
           ) : (
@@ -199,6 +203,7 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
           dateLabel={dateLabel}
           describe={(subject) => timelineSubjectLabel(subject, locale)}
           range={t.range}
+          notes={t.trackNotes}
         />
       )}
     </main>

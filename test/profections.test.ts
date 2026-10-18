@@ -34,14 +34,16 @@ describe('computeProfections (#168)', () => {
     expect(profected.month.signIndex).toBe(signIndex(natalHouses.ascendant));
   });
 
-  it('advances the year profection by one sign per completed 365.2425-day year of age', async () => {
+  it('advances the year profection by one sign per birthday passed', async () => {
     const engine = await getEngine();
     const natalJd = await julianDayFor(engine, resolveMoment(NATAL));
     const natalHouses = await engine.houses(natalJd, NATAL_PLACE, 'P');
-    const targetJd = natalJd + 365.2425 * 5;
+    const fifthBirthday = await julianDayFor(
+      engine,
+      resolveMoment({ ...NATAL, civil: { ...NATAL.civil, year: 1995 } }),
+    );
 
-    const profected = await computeProfections(NATAL, targetJd, engine);
-    expect(profected.age).toBeCloseTo(5, 5);
+    const profected = await computeProfections(NATAL, fifthBirthday + 1, engine);
     expect(profected.year.signIndex).toBe((signIndex(natalHouses.ascendant) + 5) % 12);
   });
 
@@ -101,18 +103,59 @@ describe('computeProfections (#168)', () => {
     }
   });
 
-  it('subdivides the year into monthly profections that start at the year’s own sign', async () => {
+  it('subdivides the year into twelve equal monthly profections that start at the year’s own sign (#677)', async () => {
     const engine = await getEngine();
-    const natalJd = await julianDayFor(engine, resolveMoment(NATAL));
-    const targetJd = natalJd + 365.2425 * 3;
+    const thirdBirthday = await julianDayFor(
+      engine,
+      resolveMoment({ ...NATAL, civil: { ...NATAL.civil, year: 1993 } }),
+    );
+    const fourthBirthday = await julianDayFor(
+      engine,
+      resolveMoment({ ...NATAL, civil: { ...NATAL.civil, year: 1994 } }),
+    );
 
-    const startOfYear = await computeProfections(NATAL, targetJd, engine);
+    const startOfYear = await computeProfections(NATAL, thirdBirthday + 1 / 24, engine);
     expect(startOfYear.month.monthIndex).toBe(0);
     expect(startOfYear.month.signIndex).toBe(startOfYear.year.signIndex);
+    expect(startOfYear.year.startJd).toBeCloseTo(thirdBirthday, 8);
+    expect(startOfYear.year.endJd).toBeCloseTo(fourthBirthday, 8);
 
-    const sixMonthsIn = await computeProfections(NATAL, targetJd + 365.2425 / 2, engine);
+    const sixMonthsIn = await computeProfections(NATAL, (thirdBirthday + fourthBirthday) / 2 + 1 / 24, engine);
     expect(sixMonthsIn.month.monthIndex).toBe(6);
     expect(sixMonthsIn.month.signIndex).toBe((startOfYear.year.signIndex + 6) % 12);
+    const twelfth = (fourthBirthday - thirdBirthday) / 12;
+    expect(sixMonthsIn.month.startJd).toBeCloseTo(thirdBirthday + 6 * twelfth, 8);
+    expect(sixMonthsIn.month.endJd).toBeCloseTo(thirdBirthday + 7 * twelfth, 8);
+  });
+
+  it('starts a profected year on the birthday at the local birth time, not after a tropical year (#677)', async () => {
+    const engine = await getEngine();
+    const thirdBirthday = await julianDayFor(
+      engine,
+      resolveMoment({ ...NATAL, civil: { ...NATAL.civil, year: 1993 } }),
+    );
+    const natalJd = await julianDayFor(engine, resolveMoment(NATAL));
+    // Three tropical years from this birth fall about six hours before the third birthday (1992 was a leap year).
+    expect(natalJd + 3 * 365.2425).toBeLessThan(thirdBirthday);
+
+    const before = await computeProfections(NATAL, thirdBirthday - 1 / 24, engine);
+    const after = await computeProfections(NATAL, thirdBirthday + 1 / 24, engine);
+    expect(before.month.monthIndex).toBe(11);
+    expect(after.month.monthIndex).toBe(0);
+    expect(after.year.signIndex).toBe((before.year.signIndex + 1) % 12);
+  });
+
+  it('resolves each birthday through the birth place’s own clock changes (#677)', async () => {
+    const engine = await getEngine();
+    // Britain kept summer time all winter from 1968 to 1971: a January 1970 noon birth in London was 11:00 UT,
+    // but the 1980 birthday at noon is 12:00 UT.
+    const london: BirthMomentInput = {
+      civil: { year: 1970, month: 1, day: 15, hour: 12, minute: 0, second: 0 },
+      coordinates: { latitude: 51.5072, longitude: -0.1276 },
+    };
+    const birthday1980 = await engine.julianDayFromUtc(1980, 1, 15, 12, 0, 0);
+    const profected = await computeProfections(london, birthday1980 + 30, engine);
+    expect(profected.year.startJd).toBeCloseTo(birthday1980, 6);
   });
 
   it('accepts an alternate house system for the natal Ascendant', async () => {
