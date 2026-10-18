@@ -51,6 +51,7 @@ import { savedKindLabel } from './result-basis-label.js';
 import { formatSavedTime } from './saved-time.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
+import { Tabs, tabPanelProps } from './primitives/Tabs.js';
 import { RulershipSetting } from './RulershipSetting.js';
 import { useRulershipChoice } from './rulership-setting.js';
 import { useShowDegreeSymbol } from './degree-symbol-setting.js';
@@ -411,21 +412,6 @@ export function ReportView({
     };
   }, [locale]);
 
-  const onTabKeyDown = (event: React.KeyboardEvent<HTMLDivElement>): void => {
-    const currentIndex = TAB_ORDER.indexOf(activeTab);
-    let nextIndex: number | undefined;
-    if (event.key === 'ArrowRight') nextIndex = (currentIndex + 1) % TAB_ORDER.length;
-    else if (event.key === 'ArrowLeft') nextIndex = (currentIndex - 1 + TAB_ORDER.length) % TAB_ORDER.length;
-    else if (event.key === 'Home') nextIndex = 0;
-    else if (event.key === 'End') nextIndex = TAB_ORDER.length - 1;
-    if (nextIndex === undefined) return;
-    event.preventDefault();
-    const next = TAB_ORDER[nextIndex];
-    if (next === undefined) return;
-    setActiveTab(next);
-    document.getElementById(`interpretation-tab-${next}`)?.focus();
-  };
-
   if (loadError !== undefined) {
     return (
       <div className="report">
@@ -461,32 +447,15 @@ export function ReportView({
 
   return (
     <div className="report">
-      <div className="tabs" role="tablist" aria-label={t.interpretationTablist} onKeyDown={onTabKeyDown}>
-        {TAB_ORDER.map((tab) => (
-          <button
-            key={tab}
-            type="button"
-            id={`interpretation-tab-${tab}`}
-            role="tab"
-            aria-selected={activeTab === tab}
-            aria-controls={`interpretation-tabpanel-${tab}`}
-            tabIndex={activeTab === tab ? 0 : -1}
-            className={activeTab === tab ? 'tab active' : 'tab'}
-            onClick={() => {
-              setActiveTab(tab);
-            }}
-          >
-            {tabLabels(t)[tab]}
-          </button>
-        ))}
-      </div>
+      <Tabs
+        idBase="interpretation"
+        label={t.interpretationTablist}
+        items={TAB_ORDER.map((tab) => ({ key: tab, label: tabLabels(t)[tab] }))}
+        active={activeTab}
+        onSelect={setActiveTab}
+      />
 
-      <div
-        role="tabpanel"
-        id={`interpretation-tabpanel-${activeTab}`}
-        aria-labelledby={`interpretation-tab-${activeTab}`}
-        tabIndex={0}
-      >
+      <div {...tabPanelProps('interpretation', activeTab)}>
         <p className="hint">{t.interpretationDisclaimer}</p>
         {activeTab === 'standard' ? (
           <>

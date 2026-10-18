@@ -70,14 +70,20 @@ const nlProvenanceFieldWord: ProvenanceFieldWords = {
 const en = {
   heading: 'Preferences',
   intro: 'Durable settings for this account and this device, in one place.',
-  generalHeading: 'General',
+  tablistLabel: 'Preferences sections',
+  tabLabels: { appearance: 'Appearance & accessibility', astrology: 'Astrology defaults', data: 'Data & privacy' },
+  // What each tab's settings are stored as. Every one is saved in this browser and none is synced to an account yet,
+  // so "This device" is the true scope for all of them (the guidelines' account scope waits for profile sync).
+  scope: {
+    appearance: 'This device. Saved in this browser, and not synced to your account.',
+    astrology: 'This device. Saved in this browser, and not synced to your account.',
+    data: 'This device. Nothing here is sent anywhere; a file you export or restore stays between you and this browser.',
+  },
   languageLabel: 'Interface and interpretation-report language.',
-  astrologyHeading: 'Astrology defaults',
   rulersSubtitle: 'Which planets rule which signs, wherever a ruler, dignity, or dispositor is shown.',
   chartSetupSubtitle:
     'House system, zodiac, orbs, and which points show — every calculation-affecting setting in one place, before you compute a chart. The same control every chart screen’s own "Extended settings" opens.',
   chartSetupNeedsEngine: 'Chart setup needs the calculation engine, which is still loading.',
-  appearanceHeading: 'Appearance & accessibility',
   themeLabel: 'Light, dark, or follow the system.',
   motionLabel: 'Motion',
   motionHint:
@@ -86,7 +92,6 @@ const en = {
   densityLabel: 'Density',
   densityHint: 'Compact tightens the spacing of forms and tables. Touch screens keep full-size controls either way.',
   densityOptions: { standard: 'Standard', compact: 'Compact' },
-  dataHeading: 'Data & privacy',
   exportEverythingHint:
     'Every person on this device with their birth record and natal chart data, as one JSON file, or just the people list as a spreadsheet.',
   exportEverything: 'Export everything (one file)',
@@ -175,15 +180,23 @@ const en = {
 const nl: typeof en = {
   heading: 'Voorkeuren',
   intro: 'Blijvende instellingen voor dit account en dit apparaat, op één plek.',
-  generalHeading: 'Algemeen',
+  tablistLabel: 'Onderdelen van de voorkeuren',
+  tabLabels: {
+    appearance: 'Weergave & toegankelijkheid',
+    astrology: 'Astrologische standaardinstellingen',
+    data: 'Gegevens & privacy',
+  },
+  scope: {
+    appearance: 'Dit apparaat. Opgeslagen in deze browser en niet gesynchroniseerd met je account.',
+    astrology: 'Dit apparaat. Opgeslagen in deze browser en niet gesynchroniseerd met je account.',
+    data: 'Dit apparaat. Niets hier wordt ergens naartoe gestuurd; een bestand dat je exporteert of terugzet blijft tussen jou en deze browser.',
+  },
   languageLabel: 'Taal van de interface en het interpretatierapport.',
-  astrologyHeading: 'Astrologische standaardinstellingen',
   rulersSubtitle:
     'Welke planeten welke tekens heersen, overal waar een heerser, waardigheid of dispositor wordt getoond.',
   chartSetupSubtitle:
     'Huizensysteem, dierenriem, orbs en welke punten worden getoond — elke berekeningsinstelling op één plek, voordat je een horoscoop berekent. Dezelfde bediening die "Uitgebreide instellingen" op elk horoscoopscherm opent.',
   chartSetupNeedsEngine: 'Horoscoopinstellingen hebben de rekenmachine nodig, die nog wordt geladen.',
-  appearanceHeading: 'Weergave & toegankelijkheid',
   themeLabel: 'Licht, donker, of het systeem volgen.',
   motionLabel: 'Beweging',
   motionHint:
@@ -193,7 +206,6 @@ const nl: typeof en = {
   densityHint:
     'Compact maakt formulieren en tabellen krapper. Aanraakschermen houden in beide gevallen volledige bedieningselementen.',
   densityOptions: { standard: 'Standaard', compact: 'Compact' },
-  dataHeading: 'Gegevens & privacy',
   exportEverythingHint:
     'Elke persoon op dit apparaat met zijn of haar geboortegegevens en de gegevens van het geboortehoroscoop, als één JSON-bestand, of alleen de personenlijst als spreadsheet.',
   exportEverything: 'Alles exporteren (één bestand)',

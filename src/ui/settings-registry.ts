@@ -45,7 +45,7 @@ export const SETTINGS: readonly SettingDefinition[] = [
     describeDefault: "'en'",
     persistence: 'local-storage',
     synced: false,
-    editingSurface: 'LanguageToggle.tsx',
+    editingSurface: 'LanguageToggle.tsx; PreferencesView.tsx (Appearance & accessibility)',
     commitMode: 'immediate',
     sensitive: false,
     resetTarget: 'Astraya default (en)',

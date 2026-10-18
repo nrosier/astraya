@@ -24,7 +24,7 @@
  *   #/people/:id/location/astrocartography                Astrocartography
  *   #/explore/:tool                                       cycles|eclipses|horary|electional|rectification (horary: ?view=)
  *   #/documents                                           Documents (PDF builder, saved charts)
- *   #/preferences[/:section]                              Preferences (general|astrology|appearance|data)
+ *   #/preferences[/:section]                              Preferences (appearance|astrology|data)
  *   #/admin, #/admin/usage, #/admin/corpus-overrides, #/admin/corpus-candidates, #/shared, #/about, #/changelog,
  *   #/set-password, #/setup                               unchanged
  */
@@ -37,7 +37,8 @@
 import { isPersonId } from '../domain/id.js';
 import { chartViewFromHash, isChartType, isChartView, type ChartType, type ChartViewKind } from './chart-sections.js';
 
-export const PREFERENCES_SECTIONS = ['general', 'astrology', 'appearance', 'data'] as const;
+/** The tabs of Preferences (#650), in the order they are shown. The first is where a bare `#/preferences` opens. */
+export const PREFERENCES_SECTIONS = ['appearance', 'astrology', 'data'] as const;
 export type PreferencesSection = (typeof PREFERENCES_SECTIONS)[number];
 
 function isPreferencesSection(value: string | undefined): value is PreferencesSection {
@@ -241,6 +242,8 @@ export function parseRoute(hash: string): Route {
   }
   if (segments[1] === 'preferences' && segments.length === 3) {
     const section = segments[2];
+    // `general` held only the language, which moved to Appearance (#650); an old link still lands somewhere sensible.
+    if (section === 'general') return { kind: 'preferences', section: 'appearance' };
     return isPreferencesSection(section) ? { kind: 'preferences', section } : { kind: 'home' };
   }
   // Validated as one of our ids, not merely as "some characters after the slash". An
