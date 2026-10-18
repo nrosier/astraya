@@ -172,7 +172,8 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
         // out at render time (see this module's own doc comment), so skipping them keeps this
         // "glance" screen's load lighter than `TimingTimelineView`'s own full computation.
         const [natal, profections, directions, solarArc, transit] = await Promise.all([
-          computeChartData(moment, provider),
+          // The reader's rulership (#679), so a "ruler" highlight follows the setting the basis line names.
+          computeChartData(moment, provider, { rulership }),
           computeProfections(moment, todayJd, provider),
           generatePrimaryDirections(moment, provider),
           computeSolarArcDirections(moment, todayJd, provider),
@@ -210,7 +211,7 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
     return () => {
       effect.cancelled = true;
     };
-  }, [person?.moment, provider, now]);
+  }, [person?.moment, provider, now, rulership]);
 
   const natalHouses = load.kind === 'ready' ? load.transit.natal.houses : undefined;
   const rules = useMemo<TransitRuleContext>(
@@ -294,7 +295,6 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
             return notes.map((note) => t.conditionNote(name, note));
           })
       : [];
-  const highlights = [...dignityHighlights, ...conditionHighlights];
 
   return (
     <main className="shell">
@@ -379,14 +379,29 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
           ) : (
             <p>{chartT.jonesShapeLabels[load.shape.shape]}</p>
           )}
-          {highlights.length === 0 ? (
+          {dignityHighlights.length === 0 && conditionHighlights.length === 0 && (
             <p className="hint">{t.noNotableConditions}</p>
-          ) : (
-            <ul>
-              {highlights.map((line) => (
-                <li key={line}>{line}</li>
-              ))}
-            </ul>
+          )}
+          {/* Each list says which rules it follows (#679): dignities the reader's rulership, conditions the traditional seven. */}
+          {dignityHighlights.length > 0 && (
+            <>
+              <p className="hint">{t.dignityCaption(rulershipT.options[rulership])}</p>
+              <ul>
+                {dignityHighlights.map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
+              </ul>
+            </>
+          )}
+          {conditionHighlights.length > 0 && (
+            <>
+              <p className="hint">{t.conditionCaption}</p>
+              <ul>
+                {conditionHighlights.map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
+              </ul>
+            </>
           )}
           <p>
             <a href={hrefFor('chart', { personId })}>{t.openPatternsAndCondition}</a>
