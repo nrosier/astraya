@@ -209,7 +209,11 @@ export function secondaryProgressionToTimelineEvents(
   return contactsToTimelineEvents('secondary-progression', 'domain/secondary-progression', data.contacts, targetJd);
 }
 
-/** Solar-arc contacts with an independently calculated exact date. */
+/**
+ * Solar-arc contacts as the span they are active (#673): from coming within 1° of exact to passing 1° beyond it
+ * (`SOLAR_ARC_ACTIVE_ORB_DEG`), the way primary directions show their active window. A contact with no exact date
+ * inside the search window is left out.
+ */
 export function solarArcToTimelineEvents(data: SolarArcDirectionsData): readonly TimingTimelineEvent[] {
   return data.contacts.flatMap((contact) =>
     contact.exactJd === undefined
@@ -217,8 +221,8 @@ export function solarArcToTimelineEvents(data: SolarArcDirectionsData): readonly
       : [
           {
             kind: 'solar-arc',
-            startJd: contact.exactJd,
-            endJd: contact.exactJd,
+            startJd: contact.activeFromJd ?? contact.exactJd,
+            endJd: contact.activeUntilJd ?? contact.exactJd,
             subject: aspectSubject(contact),
             sourceModule: 'domain/solar-arc-directions',
           },

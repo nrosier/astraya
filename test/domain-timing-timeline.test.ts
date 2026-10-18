@@ -6,14 +6,17 @@
  * itself only comes from a real houses call.
  */
 import { describe, expect, it } from 'vitest';
+import { ASPECTS } from '../src/astrology/aspects.js';
 import { firdariaPeriods } from '../src/astrology/firdaria.js';
 import { zodiacalReleasingPeriods, zodiacalReleasingSubperiods } from '../src/astrology/zodiacal-releasing.js';
 import { computeProfections } from '../src/domain/profections.js';
+import type { SolarArcDirectionsData } from '../src/domain/solar-arc-directions.js';
 import {
   firdariaPeriodsToTimelineEvents,
   profectionToTimelineEvents,
   releasingPeriodsToTimelineEvents,
   releasingSubperiodsToTimelineEvents,
+  solarArcToTimelineEvents,
   timingTimelineTracks,
 } from '../src/domain/timing-timeline.js';
 import { julianDayFor } from '../src/time/julian.js';
@@ -142,5 +145,29 @@ describe('timingTimelineTracks (#554)', () => {
       'profections',
       'transit',
     ]);
+  });
+});
+
+describe('solarArcToTimelineEvents (#673)', () => {
+  it('spans each contact’s active window, not only the day it is exact', () => {
+    const contact = {
+      bodyA: 0,
+      bodyB: 1,
+      aspect: ASPECTS[0],
+      orb: 0.4,
+      applying: true,
+      exactJd: 2_460_000,
+      activeFromJd: 2_459_635,
+      activeUntilJd: 2_460_366,
+    };
+    const [event] = solarArcToTimelineEvents({ contacts: [contact] } as unknown as SolarArcDirectionsData);
+    expect(event?.startJd).toBe(2_459_635);
+    expect(event?.endJd).toBe(2_460_366);
+    // So a page asking "what is active today" finds it months before and after the exact day.
+    expect(
+      timingTimelineTracks(event === undefined ? [] : [event], 2_459_800, 2_459_800).find(
+        (t) => t.track === 'solar-arc',
+      )?.events,
+    ).toHaveLength(1);
   });
 });

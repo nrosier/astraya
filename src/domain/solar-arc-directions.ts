@@ -14,7 +14,7 @@
  * @module solar-arc-directions
  * @purpose Computes a solar arc directions chart for a target date (#47): the natal Sun's own progressed arc applied uniformly to every body and angle.
  * @conventions Mirrors `secondary-progression.ts`'s shape (natal Julian day, one house and one batch position call), but applies the shared solar arc to every body/angle rather than only rotating angles (secondary progression's `'solarArc'` MC method); contacts to the fixed natal chart use `findCrossAspects`, and each found contact is additionally resolved to its exact date against the real ephemeris since the arc is not perfectly linear in time.
- * @exports computeSolarArcDirections, SolarArcDirectionsData, SolarArcDirectionsOptions, DirectedContact
+ * @exports computeSolarArcDirections, SolarArcDirectionsData, SolarArcDirectionsOptions, DirectedContact, SOLAR_ARC_ACTIVE_ORB_DEG
  */
 import { findCrossAspects, type Aspect, type OrbConfig } from '../astrology/aspects.js';
 import { BODIES, bodyByKey, bodyById, type BodyCategory } from '../astrology/bodies.js';
@@ -51,9 +51,20 @@ export interface SolarArcDirectionsOptions {
   readonly zodiac?: Zodiac;
 }
 
+/**
+ * How far from exact a solar arc contact counts as active (#673): 1° of arc, about a year either side of the exact
+ * date. The same window primary directions use by default (`primary-directions.ts`'s orb), so the two kinds of
+ * direction read alike on one timeline.
+ */
+export const SOLAR_ARC_ACTIVE_ORB_DEG = 1;
+
 export interface DirectedContact extends Aspect {
   /** The Julian day the contact becomes exact, or undefined if not within a 150-year search window. */
   readonly exactJd: JulianDayUT | undefined;
+  /** When the arc comes within `SOLAR_ARC_ACTIVE_ORB_DEG` of exact (birth, if it already was); undefined with `exactJd`. */
+  readonly activeFromJd: JulianDayUT | undefined;
+  /** When the arc passes `SOLAR_ARC_ACTIVE_ORB_DEG` beyond exact; undefined past the search window. */
+  readonly activeUntilJd: JulianDayUT | undefined;
 }
 
 export interface SolarArcDirectionsData {
@@ -130,8 +141,15 @@ export async function computeSolarArcDirections(
       const requiredArc = candidates.reduce((closest, candidate) =>
         Math.abs(candidate - arc) < Math.abs(closest - arc) ? candidate : closest,
       );
-      const exactJd = await findExactnessJd(provider, natalJd, natalSun.longitude, requiredArc);
-      return { ...contact, exactJd };
+      // Each bound found against the real ephemeris, like the exact date: the arc is not linear in time.
+      const [exactJd, activeFromJd, activeUntilJd] = await Promise.all([
+        findExactnessJd(provider, natalJd, natalSun.longitude, requiredArc),
+        requiredArc - SOLAR_ARC_ACTIVE_ORB_DEG <= 0
+          ? Promise.resolve(natalJd)
+          : findExactnessJd(provider, natalJd, natalSun.longitude, requiredArc - SOLAR_ARC_ACTIVE_ORB_DEG),
+        findExactnessJd(provider, natalJd, natalSun.longitude, requiredArc + SOLAR_ARC_ACTIVE_ORB_DEG),
+      ]);
+      return { ...contact, exactJd, activeFromJd: exactJd === undefined ? undefined : activeFromJd, activeUntilJd };
     }),
   );
 

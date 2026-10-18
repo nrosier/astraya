@@ -116,6 +116,27 @@ describe('computeSolarArcDirections (#47)', () => {
     }
   });
 
+  it('gives each contact an active span about a year either side of exact, at 1° of arc (#673)', async () => {
+    const engine = await getEngine();
+    const natalJd = await julianDayFor(engine, resolveMoment(NATAL));
+    const targetJd = natalJd + 365.2425 * 80;
+    const result = await computeSolarArcDirections(NATAL, targetJd, engine);
+    const dated = result.contacts.filter(
+      (contact) => contact.exactJd !== undefined && contact.exactJd > natalJd + 2 * 365.2425,
+    );
+    expect(dated.length).toBeGreaterThan(0);
+    for (const contact of dated) {
+      const { exactJd, activeFromJd, activeUntilJd } = contact;
+      if (exactJd === undefined || activeFromJd === undefined || activeUntilJd === undefined)
+        throw new Error('expected a dated span');
+      // The solar arc grows about 0.95–1.02° a year, so 1° of arc is a little under or over a year.
+      for (const years of [(exactJd - activeFromJd) / 365.2425, (activeUntilJd - exactJd) / 365.2425]) {
+        expect(years).toBeGreaterThan(0.95);
+        expect(years).toBeLessThan(1.06);
+      }
+    }
+  });
+
   it('respects an explicit house system for the directed angles', async () => {
     const engine = await getEngine();
     const result = await computeSolarArcDirections(NATAL, 2460000, engine, { houseSystem: 'K' });
