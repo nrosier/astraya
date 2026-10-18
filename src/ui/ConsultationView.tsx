@@ -363,6 +363,7 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
             dateLabel={dateLabel}
             describe={(subject) => timelineSubjectLabel(subject, locale)}
             range={timingT.range}
+            notes={timingT.trackNotes}
           />
           <p>
             <a href={hrefFor('timing-timeline', { personId })}>{t.openTimingTimeline}</a>
