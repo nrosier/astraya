@@ -16,7 +16,7 @@
 /**
  * @module ui/pdf-export-plan
  * @purpose Builds the PDF export feature's (#441) ordered, declarative `PdfPlan` content tree from a user's `PdfSelection`, reusing the same domain compute functions and table-column definitions the on-screen chart/synastry/composite views use.
- * @conventions Deliberately free of jsPDF/svg2pdf.js/jspdf-autotable — svg2pdf.js's UMD entry fails to load under Vitest/Node, so any top-level import of it here would break every test importing this module; the rendering half using those libraries lives in pdf-export-render.ts instead, covered by Playwright. Table cells are reduced to plain strings via each table's `valueOf()` (never `render()`, which may return JSX), matching the existing CSV-download convention.
+ * @conventions Deliberately free of jsPDF/svg2pdf.js/jspdf-autotable — svg2pdf.js's UMD entry fails to load under Vitest/Node, so any top-level import of it here would break every test importing this module; the rendering half using those libraries lives in pdf-export-render.ts instead, covered by Playwright. Table cells are reduced to plain strings with `cellText` (`render`, else `valueOf`), the same text Copy and the CSV download use (#664).
  * @exports PdfTablePlan, PdfChartSectionPlan, PdfTextSectionPlan, PdfFieldsSectionPlan, PdfSectionPlan, PdfPlan, PdfPlanContext, buildPdfPlan
  */
 import { bodyById } from '../astrology/bodies.js';
@@ -161,15 +161,13 @@ import {
   positionColumns as solarArcPositionColumns,
   contactColumns as solarArcContactColumns,
   toContactRow as solarArcToContactRow,
-  formatExactDate as solarArcFormatExactDate,
-  type ContactRow as SolarArcContactRow,
 } from './SolarArcView.js';
 import { solarArcViewMessages } from './SolarArcView.messages.js';
 import { toRow as profectionToRow, columns as profectionColumns } from './ProfectionsView.js';
 import { profectionsViewMessages } from './ProfectionsView.messages.js';
 import { eclipseRows, type EclipseRow } from './eclipses.js';
 import { eclipsesViewMessages } from './EclipsesView.messages.js';
-import type { TableColumn } from './table-sort.js';
+import { cellText, type TableColumn } from './table-sort.js';
 
 /** A table reduced to plain strings — the same conversion a CSV download already does for every cell. */
 export interface PdfTablePlan {
@@ -273,11 +271,8 @@ function tablePlanOf<T>(caption: string, columns: readonly TableColumn<T>[], row
   return {
     caption,
     head: columns.map((column) => column.label),
-    // Plain-text extraction for PDF uses valueOf() only, never render() — the latter returns JSX that
-    // can't be stringified safely (e.g. the dispositor chain's → symbol becomes corrupted). valueOf() is
-    // the authoritative textual representation, already passed through a TextFilter when needed (see
-    // table-sort.ts); render() is visual layout for the live table and may include React elements (#447).
-    body: rows.map((row) => columns.map((column) => String(column.valueOf(row)))),
+    // The text the screen's Copy and CSV give (#664): `render` holds the formatted date or orb, `valueOf` only the sort key.
+    body: rows.map((row) => columns.map((column) => cellText(column, row))),
   };
 }
 
@@ -900,16 +895,9 @@ async function buildSolarArcSectionPlan(
     );
   }
   if (options.contactsTable) {
-    // `tablePlanOf` reduces every column to plain text via `valueOf()` only, never `render()` (see its
-    // own doc comment) — but the `exactJd` column's `valueOf` is the raw Julian Day float, with the
-    // formatted date living only in `render()`. Overriding just that one column's `valueOf` keeps the
-    // fix local to this one column rather than reaching into `tablePlanOf` itself.
-    const columns = solarArcContactColumns(st, locale).map((column) =>
-      column.key === 'exactJd'
-        ? { ...column, valueOf: (row: SolarArcContactRow) => solarArcFormatExactDate(row.exactJd, st) }
-        : column,
+    tables.push(
+      tablePlanOf(st.contactsCaption, solarArcContactColumns(st, locale), data.contacts.map(solarArcToContactRow)),
     );
-    tables.push(tablePlanOf(st.contactsCaption, columns, data.contacts.map(solarArcToContactRow)));
   }
 
   return { kind: 'chart', heading, tables };
@@ -1006,9 +994,8 @@ function eclipseTypeLabel(row: EclipseRow, et: typeof eclipsesViewMessages.en): 
   return `${family} — ${kind.toLowerCase()}`;
 }
 
-/** Plain-text columns for the PDF table — unlike `EclipsesView.tsx`'s own `columns`, whose `valueOf`
- * returns a sort key (a raw JD or longitude number), not display text; `tablePlanOf` stringifies
- * `valueOf` directly, so these must return the same text `EclipsesView.tsx`'s `render` would. */
+/** Plain-text columns for the PDF table, giving the same text as `EclipsesView.tsx`'s `render`; that
+ * screen builds its own columns inside the component, so they cannot be imported here. */
 function eclipsesPdfColumns(et: typeof eclipsesViewMessages.en, locale: Locale): readonly TableColumn<EclipseRow>[] {
   return [
     { key: 'date', label: et.dateColumn, valueOf: (row) => row.date },
