@@ -25,7 +25,7 @@ const en = {
   } satisfies Record<RelationshipTheme, string>,
   seenFrom: (name: string) => `${name}’s`,
   contactSentence: (bodyA: string, aspect: string, bodyB: string, orb: string) =>
-    `${bodyA} ${aspect} ${bodyB} (orb ${orb}°)`,
+    `${bodyA} ${aspect} ${bodyB} (orb ${orb})`,
   angleContactSentence: (name: string, body: string, aspect: string, angleName: string, otherName: string) =>
     `${name}’s ${body} ${aspect} ${otherName}’s ${angleName}`,
   angleNames: { asc: 'Ascendant', mc: 'Midheaven' },
@@ -75,7 +75,7 @@ const nl: typeof en = {
     other: 'Overige contacten',
   } satisfies Record<RelationshipTheme, string>,
   seenFrom: (name: string) => `${name}’s`,
-  contactSentence: (bodyA, aspect, bodyB, orb) => `${bodyA} ${aspect} ${bodyB} (orb ${orb}°)`,
+  contactSentence: (bodyA, aspect, bodyB, orb) => `${bodyA} ${aspect} ${bodyB} (orb ${orb})`,
   angleContactSentence: (name, body, aspect, angleName, otherName) =>
     `${name}’s ${body} ${aspect} ${otherName}’s ${angleName}`,
   angleNames: { asc: 'Ascendant', mc: 'Middenhemelpunt' },

@@ -135,17 +135,20 @@ function Paragraph({
   paragraph,
   showProvenance,
   locale,
+  underBodyHeading = false,
 }: {
   readonly paragraph: ReportParagraph;
   readonly showProvenance: boolean;
   readonly locale: Locale;
+  /** True under a body's heading, whose name the label then leaves out (#666). */
+  readonly underBodyHeading?: boolean;
 }): React.JSX.Element {
   const provenance = describeParagraphProvenance(paragraph);
   // What the paragraph is about, in words and (for a sign) its degree (#654). A paragraph with no placement has no label.
   const label =
     paragraph.placement === undefined || paragraph.placement.category === 'degree-symbol'
       ? undefined
-      : reportParagraphLabel(paragraph.placement, locale, paragraph.longitude);
+      : reportParagraphLabel(paragraph.placement, locale, paragraph.longitude, underBodyHeading);
   // Rendered visually de-emphasized, the same muted/smaller style every other secondary note in
   // this app already uses (`.hint`) — plus, since #527, a small named badge (not just `.hint`)
   // so a reader can tell a Sabian-symbol note apart from an ordinary secondary one, and look up
@@ -547,6 +550,7 @@ export function ReportView({
                             paragraph={paragraph}
                             showProvenance={showProvenance}
                             locale={locale}
+                            underBodyHeading
                           />
                         ))}
                       </ul>

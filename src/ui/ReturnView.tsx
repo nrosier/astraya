@@ -28,7 +28,7 @@ import { ChartTypeSelector, changeChartView } from './ChartTypeSelector.js';
 import { useCalculationBasisLine } from './calculation-basis.js';
 import { type ChartType, type ChartViewKind } from './chart-sections.js';
 import { chartHref, personHref } from './route.js';
-import { formatFixed, todayInputValue } from './format.js';
+import { formatOrb, todayInputValue } from './format.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { PersonNotFound } from './PersonNotFound.js';
@@ -83,7 +83,7 @@ function contactColumns(t: typeof returnViewMessages.en, locale: Locale): readon
       valueOf: (row) => row.bodyBName,
       render: (row) => bodyDisplayName(row.bodyBKey, locale),
     },
-    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => `${formatFixed(row.orb, 2)}°` },
+    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => formatOrb(row.orb) },
     {
       key: 'applying',
       label: t.applyingLabel,

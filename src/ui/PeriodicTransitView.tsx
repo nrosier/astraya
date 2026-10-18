@@ -47,7 +47,7 @@ import { composeFallbackText } from '../interpretation/compose.js';
 import type { StationEvent } from '../astrology/stations.js';
 import type { TransitAspectEvent } from '../astrology/transit-events.js';
 import { civilFromJulianDay } from '../time/julian.js';
-import { formatFixed, todayInputValue } from './format.js';
+import { formatOrb, todayInputValue } from './format.js';
 import { useMessages } from './messages.js';
 import { useRulershipChoice } from './rulership-setting.js';
 import {
@@ -147,7 +147,7 @@ export function contactRows(aspects: readonly Aspect[], locale: Locale): readonl
 export function contactColumns(t: typeof periodicTransitViewMessages.en): readonly TableColumn<ContactRow>[] {
   return [
     { key: 'sentence', label: t.forecastLabel, valueOf: (row) => row.sentence },
-    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => `${formatFixed(row.orb, 2)}°` },
+    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => formatOrb(row.orb) },
     {
       key: 'applying',
       label: t.applyingLabel,

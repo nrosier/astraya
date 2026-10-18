@@ -23,7 +23,7 @@
  */
 import { Select } from './primitives/Select.js';
 import { GlossaryTerms } from './GlossaryTerm.js';
-import { formatFixed, formatTimestamp } from './format.js';
+import { formatOrb, formatTimestamp } from './format.js';
 import { personHref } from './route.js';
 import { houseSystemLabel, rulershipLabel, zodiacLabel } from './ChartView.js';
 import { PrintProvenance } from './PrintProvenance.js';
@@ -104,7 +104,7 @@ export function aspectColumns(
       valueOf: (row) => row.bodyBName,
       render: (row) => bodyDisplayName(row.bodyBKey, locale),
     },
-    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => `${formatFixed(row.orb, 2)}°` },
+    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => formatOrb(row.orb) },
     {
       key: 'applying',
       label: t.applyingLabel,

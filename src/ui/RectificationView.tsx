@@ -15,7 +15,7 @@
  * @exports RectificationView
  */
 import { GlossaryTerms } from './GlossaryTerm.js';
-import { formatFixed } from './format.js';
+import { formatFixed, formatOrb } from './format.js';
 import { Disclosure } from './primitives/Disclosure.js';
 import { DateField } from './primitives/DateField.js';
 import { Select } from './primitives/Select.js';
@@ -190,7 +190,7 @@ export function RectificationView(): React.JSX.Element {
 
   const describeContact = (contact: TimedCandidate['contacts'][number]): string => {
     const name = (key: string): string => bodyDisplayName(key, locale);
-    const orb = `${formatFixed(contact.orb, 2)}°`;
+    const orb = formatOrb(contact.orb);
     const aspect = aspectDisplayName(contact.aspect, locale).toLowerCase();
     return contact.technique === 'solar-arc'
       ? t.solarArcContact(name(contact.moving), aspect, name(contact.natal), orb)

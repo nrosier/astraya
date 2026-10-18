@@ -257,4 +257,15 @@ describe('reportParagraphLabel (#654): the degree goes on sign placements only',
   it('pads the minutes to two digits, so 3′ never reads as 3 minutes of a different width', () => {
     expect(reportParagraphLabel(SUN_IN_VIRGO, 'en', 150 + 5 + 3 / 60)).toBe('Sun in Virgo · 5°03′');
   });
+
+  it('leaves out the body under its own heading (#666)', () => {
+    expect(reportParagraphLabel(SUN_IN_VIRGO, 'en', 150 + 21 + 46 / 60, true)).toBe('Virgo · 21°46′');
+    expect(reportParagraphLabel(SUN_IN_VIRGO, 'nl', 150 + 21 + 46 / 60, true)).toBe('Maagd · 21°46′');
+    expect(reportParagraphLabel(SUN_IN_NINTH, 'en', undefined, true)).toBe('9th house');
+    expect(reportParagraphLabel(SUN_IN_NINTH, 'nl', undefined, true)).toBe('9e huis');
+  });
+
+  it('keeps the full label under a heading for a placement that is not one body’s sign or house', () => {
+    expect(reportParagraphLabel(CUSP, 'en', 24 + 22 / 60, true)).toBe('Aries on the cusp of the 1st house · 24°22′');
+  });
 });

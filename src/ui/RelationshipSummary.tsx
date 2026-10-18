@@ -19,7 +19,7 @@ import { Checkbox } from './primitives/Checkbox.js';
 import { useOnline } from './online-status.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { sharedMessages } from './shared.messages.js';
-import { formatFixed } from './format.js';
+import { formatOrb } from './format.js';
 import { useEffect, useId, useState } from 'react';
 import { bodyById } from '../astrology/bodies.js';
 import { housesAreDefined } from '../domain/chart-compute.js';
@@ -69,7 +69,7 @@ function ContactLine({
   const aspect = aspectDisplayName(contact.aspect.aspect.key, locale);
   return (
     <li className={`relationship-contact relationship-contact-${aspectValence(contact.aspect.aspect.key)}`}>
-      {t.contactSentence(`${nameA}’s ${bodyA}`, aspect, `${nameB}’s ${bodyB}`, formatFixed(contact.aspect.orb, 1))}
+      {t.contactSentence(`${nameA}’s ${bodyA}`, aspect, `${nameB}’s ${bodyB}`, formatOrb(contact.aspect.orb))}
     </li>
   );
 }

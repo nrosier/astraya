@@ -5,6 +5,7 @@ import {
   formatDecimal,
   formatFixed,
   formatInteger,
+  formatOrb,
   formatSignDegree,
   formatTimestamp,
   todayInputValue,
@@ -87,6 +88,24 @@ describe('formatTimestamp and utcDay', () => {
 
   it('stamps the UTC day', () => {
     expect(utcDay(new Date(Date.UTC(2026, 9, 11, 23, 59)))).toBe('2026-10-11');
+  });
+});
+
+describe('formatOrb (#666)', () => {
+  it('shows an orb as degrees and minutes', () => {
+    expect(formatOrb(1.560225698828276)).toBe('1°34′');
+    expect(formatOrb(0.027294796260378007)).toBe('0°02′');
+    expect(formatOrb(0)).toBe('0°00′');
+  });
+
+  it('rounds to the nearest minute, carrying into the degree', () => {
+    expect(formatOrb(0.9999)).toBe('1°00′');
+    expect(formatOrb(2.5 / 60)).toBe('0°03′');
+  });
+
+  it('keeps the sign of a signed orb, but never shows -0°00′', () => {
+    expect(formatOrb(-1.5)).toBe('-1°30′');
+    expect(formatOrb(-0.001)).toBe('0°00′');
   });
 });
 

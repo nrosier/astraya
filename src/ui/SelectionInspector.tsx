@@ -11,7 +11,7 @@
  * @conventions Facts and corpus text come first; the optional AI block (`FocusInterpretation`) is only ever appended after them. Always rendered (an empty prompt when nothing is selected) so its space is reserved; a polite live region so a selection made from a table row button is announced.
  * @exports SelectionInspector, WheelIsolationFacts
  */
-import { formatFixed } from './format.js';
+import { formatOrb } from './format.js';
 import type { ChartData } from '../domain/chart-compute.js';
 import type { AspectRow, PositionRow } from '../domain/chart-tables.js';
 import type { FocusContext } from '../interpretation/focus-context-schema.js';
@@ -123,8 +123,7 @@ export function SelectionInspector({
                   return (
                     <li key={`${row.bodyAKey}-${row.aspectKey}-${row.bodyBKey}`}>
                       {aspectDisplayName(row.aspectKey, locale)} {bodyDisplayName(otherKey, locale)} (
-                      {formatFixed(row.orb, 2)}
-                      °, {row.applying ? t.applying : t.separating})
+                      {formatOrb(row.orb)}, {row.applying ? t.applying : t.separating})
                     </li>
                   );
                 })}
@@ -132,8 +131,8 @@ export function SelectionInspector({
             )}
             {facts.aspectRow !== undefined && (
               <p>
-                {aspectDisplayName(facts.aspectRow.aspectKey, locale)} — {t.orbLabel}{' '}
-                {formatFixed(facts.aspectRow.orb, 2)}°, {facts.aspectRow.applying ? t.applying : t.separating}
+                {aspectDisplayName(facts.aspectRow.aspectKey, locale)} — {t.orbLabel} {formatOrb(facts.aspectRow.orb)},{' '}
+                {facts.aspectRow.applying ? t.applying : t.separating}
               </p>
             )}
             <WheelSelectionText chart={data} selectionKey={selectionKey} locale={locale} />

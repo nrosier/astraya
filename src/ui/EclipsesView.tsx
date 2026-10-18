@@ -11,7 +11,7 @@
  * @exports EclipsesView
  */
 import { GlossaryTerms } from './GlossaryTerm.js';
-import { formatFixed } from './format.js';
+import { formatOrb } from './format.js';
 import { Select } from './primitives/Select.js';
 import { TextField } from './primitives/TextField.js';
 import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
@@ -168,7 +168,7 @@ export function EclipsesView(): React.JSX.Element {
                   t.contact(
                     bodyDisplayName(contact.pointKey, locale),
                     aspectDisplayName(contact.kind, locale),
-                    `${formatFixed(contact.orb, 1)}°`,
+                    formatOrb(contact.orb),
                   ),
                 )
                 .join('; '),
