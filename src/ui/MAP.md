@@ -121,6 +121,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `oidc-pkce.ts` — Client-side PKCE flow for Authentik OIDC sign-in. Deps: Web Crypto, sessionStorage.
 - `pdf-export-plan.ts` — Builds ordered PDF content plan from user selection. Deps: `domain/chart-compute`, `domain/chart-tables`, `domain/synastry`, `domain/composite`, `chart/chart-sheet`, `interpretation/report`, `ChartView.messages`, `SynastryView`, `TransitView`, `PeriodicTransitView.messages`, `ProgressionsView.messages`, `SolarArcView.messages`, `ProfectionsView`, `EclipsesView.messages`.
 - `pdf-export-render.ts` — Draws PDF via jsPDF + svg2pdf.js + jspdf-autotable (lazy-loaded). Deps: `./pdf-export-plan`, `./pdf-svg-fit`, `./pdf-svg-normalize`, `chart/symbol-text`, `domain/export-filename`.
+- `pdf-page-flow.ts` — Places PDF text lines and keep-together blocks so nothing passes the bottom margin and no heading is orphaned (#665). Deps: none.
 - `pdf-svg-fit.ts` — Fits a chart SVG into the space left on a PDF page, never past the bottom margin (#579). Deps: none.
 - `pdf-svg-normalize.ts` — Rewrites a chart SVG's CSS into what svg2pdf.js renders (`var()` fallbacks, `rem` as px, weights as normal/bold) so PDF chart text is not lost (#580, #581). Deps: none.
 - `pdf-export.messages.ts` — en/nl for PDF export builder. Deps: `domain/pdf-export-sections`, `./chart-sections`.
