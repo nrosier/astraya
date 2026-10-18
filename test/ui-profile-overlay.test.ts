@@ -54,6 +54,17 @@ describe('initProfileOverlay (#697)', () => {
     expect(context.fillRect).toHaveBeenCalled();
   });
 
+  it('leaves a spark trail behind the cursor during the show, and still removes itself after (#706)', () => {
+    initProfileOverlay();
+    vi.advanceTimersByTime(100);
+    const before = context.fillRect.mock.calls.length;
+    window.dispatchEvent(new PointerEvent('pointermove', { clientX: 200, clientY: 150 }));
+    vi.advanceTimersByTime(50);
+    expect(context.fillRect.mock.calls.length).toBeGreaterThan(before);
+    vi.advanceTimersByTime(20_000);
+    expect(document.querySelector('canvas.profile-overlay')).toBeNull();
+  });
+
   it('stops at once when ended early', () => {
     const stop = initProfileOverlay();
     vi.advanceTimersByTime(500);

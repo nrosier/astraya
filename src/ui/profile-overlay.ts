@@ -43,12 +43,62 @@ interface Spark {
   vx: number;
   vy: number;
   life: number;
+  readonly decay: number;
   readonly hue: number;
+  readonly size: number;
   readonly rocket: boolean;
 }
 
-const RUN_MS = 10_000;
-const GRAVITY = 0.05;
+/** The show's settings (#706). */
+const SHOW = {
+  /** How long new rockets go up; the last sparks then fade before the overlay removes itself. */
+  runMs: 10_000,
+  /** One automatic launch every this many milliseconds. */
+  launchEveryMs: 600,
+  /** Sparks in one burst. */
+  burstCount: 90,
+  /** Multiplies every burst's speed. */
+  explosionForce: 1,
+  /** Downward pull added to each spark every frame, in CSS pixels. */
+  gravity: 0.08,
+  /** Air drag: each frame keeps this share of a spark's speed. */
+  airKeep: 0.985,
+  /** How much of the previous frame each frame fades out: lower leaves longer motion-blur trails. */
+  trailFade: 0.15,
+} as const;
+
+type BurstPattern = 'sphere' | 'ring' | 'double-ring' | 'star' | 'heart' | 'willow';
+const PATTERNS: readonly BurstPattern[] = ['sphere', 'ring', 'double-ring', 'star', 'heart', 'willow'];
+
+/** A spark's starting velocity in a burst, by pattern: `t` runs 0 to 1 around the burst, `speed` is its base speed. */
+function burstVelocity(pattern: BurstPattern, t: number, speed: number): { vx: number; vy: number; slow: boolean } {
+  const angle = t * Math.PI * 2;
+  switch (pattern) {
+    case 'sphere': {
+      const random = Math.random() * Math.PI * 2;
+      const reach = speed * Math.sqrt(Math.random());
+      return { vx: Math.cos(random) * reach, vy: Math.sin(random) * reach, slow: false };
+    }
+    case 'ring':
+      return { vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, slow: false };
+    case 'double-ring': {
+      const reach = speed * (Math.round(t * 90) % 2 === 0 ? 1 : 0.55);
+      return { vx: Math.cos(angle) * reach, vy: Math.sin(angle) * reach, slow: false };
+    }
+    case 'star': {
+      const reach = speed * (0.45 + 0.55 * Math.abs(Math.cos(angle * 2.5)));
+      return { vx: Math.cos(angle) * reach, vy: Math.sin(angle) * reach, slow: false };
+    }
+    case 'heart': {
+      // The classic heart curve, scaled to the burst's speed; y grows downward on a canvas.
+      const hx = 16 * Math.sin(angle) ** 3;
+      const hy = 13 * Math.cos(angle) - 5 * Math.cos(2 * angle) - 2 * Math.cos(3 * angle) - Math.cos(4 * angle);
+      return { vx: (hx / 17) * speed, vy: (-hy / 17) * speed, slow: false };
+    }
+    case 'willow':
+      return { vx: Math.cos(angle) * speed * 0.8, vy: Math.sin(angle) * speed * 0.8, slow: true };
+  }
+}
 
 /** Runs the overlay; returns a function that ends it early (e.g. when the screen unmounts). */
 export function initProfileOverlay(doc: Document = document): () => void {
@@ -72,26 +122,55 @@ export function initProfileOverlay(doc: Document = document): () => void {
   let nextLaunch = 0;
   let frame = 0;
   let stopped = false;
+  let launching = true;
+  let trailHue = 0;
+
+  // A short rainbow spark trail behind the cursor while the show runs (#706); the canvas itself never takes the pointer.
+  const onPointerMove = (event: PointerEvent): void => {
+    if (!launching) return;
+    for (let index = 0; index < 3; index++) {
+      trailHue = (trailHue + 7) % 360;
+      sparks.push({
+        x: event.clientX * ratio,
+        y: event.clientY * ratio,
+        vx: (Math.random() - 0.5) * 1.6 * ratio,
+        vy: (Math.random() - 0.8) * 1.6 * ratio,
+        life: 1,
+        decay: 0.03,
+        hue: trailHue,
+        size: 1.8,
+        rocket: false,
+      });
+    }
+  };
+  view.addEventListener('pointermove', onPointerMove, { passive: true });
 
   const stop = (): void => {
     if (stopped) return;
     stopped = true;
     view.cancelAnimationFrame(frame);
     view.removeEventListener('resize', resize);
+    view.removeEventListener('pointermove', onPointerMove);
     canvas.remove();
   };
 
   const burst = (rocket: Spark): void => {
-    for (let index = 0; index < 60; index++) {
-      const angle = (index / 60) * Math.PI * 2;
-      const speed = (1 + Math.random() * 3) * ratio;
+    const pattern = PATTERNS[Math.floor(Math.random() * PATTERNS.length)] ?? 'sphere';
+    const speed = (2.6 + Math.random() * 1.4) * SHOW.explosionForce * ratio;
+    // Rainbow: the hues run once around the spectrum across the burst, from a random starting colour.
+    const offset = Math.random() * 360;
+    for (let index = 0; index < SHOW.burstCount; index++) {
+      const t = index / SHOW.burstCount;
+      const { vx, vy, slow } = burstVelocity(pattern, t, speed);
       sparks.push({
         x: rocket.x,
         y: rocket.y,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed,
+        vx,
+        vy,
         life: 1,
-        hue: rocket.hue + Math.random() * 30,
+        decay: slow ? 0.008 : 0.012 + Math.random() * 0.006,
+        hue: (offset + t * 360) % 360,
+        size: 2.4,
         rocket: false,
       });
     }
@@ -99,7 +178,7 @@ export function initProfileOverlay(doc: Document = document): () => void {
 
   const tick = (now: number): void => {
     start ??= now;
-    const launching = now - start < RUN_MS;
+    launching = now - start < SHOW.runMs;
     if (launching && now >= nextLaunch) {
       sparks.push({
         x: canvas.width * (0.15 + Math.random() * 0.7),
@@ -107,19 +186,27 @@ export function initProfileOverlay(doc: Document = document): () => void {
         vx: (Math.random() - 0.5) * 2 * ratio,
         vy: -(canvas.height / 90) * (0.85 + Math.random() * 0.3),
         life: 1,
+        decay: 0,
         hue: Math.random() * 360,
+        size: 2.6,
         rocket: true,
       });
-      nextLaunch = now + 250 + Math.random() * 450;
+      nextLaunch = now + SHOW.launchEveryMs;
     }
 
-    context?.clearRect(0, 0, canvas.width, canvas.height);
+    if (context !== null) {
+      // Fade the last frame rather than clearing it, which leaves motion-blur trails on a transparent canvas.
+      context.globalCompositeOperation = 'destination-out';
+      context.globalAlpha = SHOW.trailFade;
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.globalCompositeOperation = 'lighter';
+    }
     for (let index = sparks.length - 1; index >= 0; index--) {
       const spark = sparks[index];
       if (spark === undefined) continue;
       spark.x += spark.vx;
       spark.y += spark.vy;
-      spark.vy += GRAVITY * ratio;
+      spark.vy += SHOW.gravity * ratio;
       if (spark.rocket) {
         if (spark.vy >= 0) {
           sparks.splice(index, 1);
@@ -127,7 +214,9 @@ export function initProfileOverlay(doc: Document = document): () => void {
           continue;
         }
       } else {
-        spark.life -= 0.012;
+        spark.vx *= SHOW.airKeep;
+        spark.vy *= SHOW.airKeep;
+        spark.life -= spark.decay;
         if (spark.life <= 0) {
           sparks.splice(index, 1);
           continue;
@@ -135,8 +224,8 @@ export function initProfileOverlay(doc: Document = document): () => void {
       }
       if (context !== null) {
         context.globalAlpha = Math.max(spark.life, 0);
-        context.fillStyle = `hsl(${String(spark.hue)} 90% 60%)`;
-        context.fillRect(spark.x, spark.y, 2.5 * ratio, 2.5 * ratio);
+        context.fillStyle = `hsl(${String(Math.round(spark.hue))} 95% 62%)`;
+        context.fillRect(spark.x, spark.y, spark.size * ratio, spark.size * ratio);
       }
     }
 
