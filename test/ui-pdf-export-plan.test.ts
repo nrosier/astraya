@@ -247,6 +247,39 @@ describe('buildPdfPlan', () => {
     30_000,
   );
 
+  it.each([
+    ['included when the option is on', true, true],
+    ['included when the option is absent, the report’s own default', undefined, true],
+    ['left out when the option is off', false, false],
+  ])(
+    'Sabian symbol notes are %s (#660)',
+    async (_label, sabianSymbols, expectSabian) => {
+      const provider = await getEngine();
+      const interpretation = {
+        base: true,
+        aiCustomised: false,
+        ...(sabianSymbols === undefined ? {} : { sabianSymbols }),
+      };
+      const selection: PdfSelection = { personId: ADA.id, ...EMPTY_SELECTION, interpretation };
+      const context: PdfPlanContext = {
+        person: ADA,
+        provider,
+        settings: DEFAULT_EXTENDED_SETTINGS,
+        rulership: DEFAULT_RULERSHIP_CHOICE,
+        locale: 'en',
+        aiConsent: false,
+        corpusFetch,
+      };
+      const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
+      const paragraphs = plan.sections.flatMap((s) => (s.kind === 'text' ? paragraphsOf(s) : []));
+      const sabian = paragraphs.filter((p) => typeof p !== 'string' && 'image' in p);
+      expect(sabian.length > 0).toBe(expectSabian);
+      // Only the Sabian paragraphs go; the rest of the report is the same either way.
+      expect(paragraphs.filter((p) => typeof p === 'string' || !('image' in p)).length).toBeGreaterThan(0);
+    },
+    30_000,
+  );
+
   it('records a skip, not a crash, when the AI-customised narrative is ticked without consent', async () => {
     const provider = await getEngine();
     const selection: PdfSelection = {

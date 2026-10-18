@@ -75,9 +75,10 @@ describe('findNearDuplicates (#58)', () => {
     expect(report.pairs).toEqual([]);
   });
 
+  // A full pass over the committed corpus takes around 30 s on its own; the default limit is too tight under a loaded run.
   it('the shipped corpus has no near-duplicates', () => {
     expect(findNearDuplicates(CORPUS).pairs).toEqual([]);
-  });
+  }, 120_000);
 });
 
 /**

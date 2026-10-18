@@ -63,6 +63,12 @@ export interface PdfInterpretationOptions {
   readonly base: boolean;
   /** Costs an API call and needs its own consent tick in the builder — never defaulted on by a preset. */
   readonly aiCustomised: boolean;
+  /**
+   * Whether the written report includes its Sabian symbol notes (#660). Absent means included, the report's own
+   * default; the builder starts it from the device's "Show Sabian symbol notes" setting, so a PDF matches the screen
+   * unless the reader changes it for this one document.
+   */
+  readonly sabianSymbols?: boolean;
 }
 
 /** Synastry's own place in the export: the partner it's compared against, and the wheel/table on. */
