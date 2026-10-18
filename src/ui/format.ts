@@ -42,13 +42,14 @@ const CARDINALS: Readonly<Record<Locale, typeof enCardinals>> = { en: enCardinal
  * English gives S/E); the decimal separator follows `Intl.NumberFormat`, which already renders
  * `nl` with a comma.
  */
-export function formatCoordinate(value: number, axis: 'lat' | 'lon', locale: Locale): string {
+export function formatCoordinate(value: number, axis: 'lat' | 'lon', locale: Locale, digits = 2): string {
   const cardinals = CARDINALS[locale];
   const letter =
     axis === 'lat' ? (value < 0 ? cardinals.south : cardinals.north) : value < 0 ? cardinals.west : cardinals.east;
-  const magnitude = new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
-    Math.abs(value),
-  );
+  const magnitude = new Intl.NumberFormat(locale, {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  }).format(Math.abs(value));
   return `${magnitude}°${letter}`;
 }
 

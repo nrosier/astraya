@@ -35,6 +35,18 @@ const en = {
     'full-predictive-report': 'Full predictive report (natal wheel, transits, progressions, solar arc)',
   } satisfies Record<'custom' | PdfPresetKey, string>,
   birthRecordLabel: 'Birth record',
+  /** The cover's line under the name (#711): the preset's short name, or a generic one for a hand-picked selection. */
+  coverKinds: {
+    custom: 'Astrology report',
+    'executive-summary': 'Executive summary',
+    'complete-archive': 'Complete archive',
+    'full-predictive-report': 'Full predictive report',
+  } satisfies Record<'custom' | PdfPresetKey, string>,
+  coverGenerated: (date: string) => `Generated on ${date}`,
+  contentsHeading: 'Contents',
+  /** The PDF map's pin label when the nearest town is 15 to 40 km away (#711); only on the map, never stored. */
+  mapNear: (town: string) => `near ${town}`,
+  mapSource: 'Map: Natural Earth (public domain). The label names the nearest listed town, not the stored place.',
   interpretationLabel: 'Interpretation',
   interpretationBaseLabel: 'Written report (included at no extra cost)',
   interpretationSabianLabel: 'Include Sabian symbol notes',
@@ -155,6 +167,17 @@ const nl: typeof en = {
     'full-predictive-report': 'Volledig voorspellend verslag (geboortewiel, transits, progressies, solar arc)',
   } satisfies Record<'custom' | PdfPresetKey, string>,
   birthRecordLabel: 'Geboortegegevens',
+  coverKinds: {
+    custom: 'Astrologisch verslag',
+    'executive-summary': 'Samenvatting',
+    'complete-archive': 'Volledig archief',
+    'full-predictive-report': 'Volledig voorspellend verslag',
+  } satisfies Record<'custom' | PdfPresetKey, string>,
+  coverGenerated: (date: string) => `Gemaakt op ${date}`,
+  contentsHeading: 'Inhoud',
+  mapNear: (town: string) => `bij ${town}`,
+  mapSource:
+    'Kaart: Natural Earth (publiek domein). Het label noemt de dichtstbijzijnde stad in de lijst, niet de opgeslagen plaats.',
   interpretationLabel: 'Interpretatie',
   interpretationBaseLabel: 'Geschreven verslag (zonder extra kosten)',
   interpretationSabianLabel: 'Sabian-symboolnotities opnemen',
