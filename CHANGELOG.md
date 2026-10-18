@@ -4,6 +4,21 @@ All notable changes to Astraya are recorded here. Versions follow
 [semantic versioning](https://semver.org/), and every milestone ends in a release —
 see [docs/RELEASING.md](docs/RELEASING.md).
 
+## [0.42.2] — 2026-10-18
+
+**The PDF gets a cover page, a map of the birthplace and clickable contents, and Documents starts on the person you were viewing.**
+
+### Added
+
+- **A PDF cover page (#711):** the name centred in letter-spaced capitals over the report's kind, a faint glyph of the Sun's sign, and the date and app version along the bottom.
+- **A map of the birthplace in the PDF's birth record (#711),** as wide as the record above it. It is drawn from bundled Natural Earth data, so no map service ever sees the coordinates, and its pin names the nearest town. The person's stored place and coordinates are not changed.
+- **Clickable contents in the PDF (#711):** each line links to its section, with dot leaders to the page number, and the sections appear as bookmarks in the PDF viewer.
+
+### Fixed
+
+- **Documents started on the first person in the list (#709)** instead of the person whose pages were open.
+- **In the PDF's birth record, "How the time is known" ran into its value (#711).**
+
 ## [0.42.1] — 2026-10-18
 
 **A livelier birth-record easter egg.**
