@@ -7,6 +7,7 @@
 - `corpus-overrides-routes.ts` — Admin corpus corrections + public read route (merged into runtime corpus). `GET /api/corpus-overrides/:locale`, `requireAdmin` list/upsert/delete/export. Deps: corpus-overrides, auth/identity, src/interpretation/lint.
 - `corpus-overrides.ts` — Data layer: CRUD `corpus_overrides` table, shape back to `CorpusEntry`, optional username hiding for public route. Deps: db, type-only imports from src/interpretation/schema.
 - `csp.ts` — Single CSP definition (structural truth: "shipped app never calls model provider at runtime"). Builds response-header + meta-tag strings, strips static tag once issuer set. Deps: none.
+- `profile-overlay.ts` — Serves the optional `ASTRAYA_EASTER_EGG` setting read-only for the birth-record easter egg (#697). Deps: none.
 - `csrf.ts` — CSRF defence (Origin header host check against allowed hosts, never relay on SameSite). Deps: none.
 - `db.ts` — SQLite: accounts, sessions, opaque per-user op-log, admin-curated exceptions (corpus overrides/candidates, Tier 2 usage/results). Opens, numbered migrations, append-only. Deps: node:sqlite.
 - `index.ts` — HTTP server (Fastify, SPA with SPA fallback, CSP/security headers, CSRF check, database, route registration). Deps: db, csp, csrf, auth/routes, auth/admin-routes, auth/oidc, auth/admin-promotion, ops/routes, corpus-overrides-routes, corpus-candidates-routes, interpretation-routes.

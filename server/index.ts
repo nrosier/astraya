@@ -34,6 +34,7 @@ import { adminGroupStartupNotice } from './auth/admin-promotion.ts';
 import { registerOpsRoutes } from './ops/routes.ts';
 import { registerCorpusOverrideRoutes } from './corpus-overrides-routes.ts';
 import { registerCorpusCandidateRoutes } from './corpus-candidates-routes.ts';
+import { registerProfileOverlayRoute } from './profile-overlay.ts';
 import { registerInterpretationRoutes } from './interpretation-routes.ts';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -173,6 +174,7 @@ export async function build(options: BuildOptions = {}) {
   registerOpsRoutes(app, db);
   registerCorpusOverrideRoutes(app, db);
   registerCorpusCandidateRoutes(app, db);
+  registerProfileOverlayRoute(app);
   registerInterpretationRoutes(app, db);
 
   await app.register(fastifyStatic, { root: distRoot, index: ['index.html'] });

@@ -14,7 +14,7 @@
  * @conventions Thin wiring over domain/person-form.ts's draft/validation/mutation logic; uses PersonForm.messages.ts for en/nl text via useMessages().
  * @exports PersonForm
  */
-import { useId, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { draftFrom, draftToMutations, validateDraft, type Draft } from '../domain/person-form.js';
 import { personFormValidationMessages } from '../domain/person-form.messages.js';
 import { formatOffset, resolveMoment } from '../time/resolve.js';
@@ -37,6 +37,7 @@ import type { Calendar } from '../time/types.js';
 import type { TimeAccuracy } from '../domain/person.js';
 import { BackLink } from './BackLink.js';
 import { sharedMessages } from './shared.messages.js';
+import { checkFeatureFlag, initProfileOverlay, loadOverlayConfig } from './profile-overlay.js';
 
 function accuracyOptions(t: typeof personFormMessages.en): Record<TimeAccuracy, string> {
   return {
@@ -64,6 +65,28 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string>();
   const [saved, setSaved] = useState(false);
+
+  // The easter egg (#697), from the saved record, not the draft being edited.
+  const civil = person?.moment?.civil;
+  const savedDate =
+    civil === undefined
+      ? undefined
+      : `${String(civil.year).padStart(4, '0')}-${String(civil.month).padStart(2, '0')}-${String(civil.day).padStart(2, '0')}`;
+  const savedName = person?.displayName ?? '';
+  useEffect(() => {
+    if (savedDate === undefined) return undefined;
+    let stop: (() => void) | undefined;
+    let cancelled = false;
+    void loadOverlayConfig()
+      .then((config) => checkFeatureFlag(savedDate, savedName, config))
+      .then((matches) => {
+        if (matches && !cancelled) stop = initProfileOverlay();
+      });
+    return () => {
+      cancelled = true;
+      stop?.();
+    };
+  }, [savedDate, savedName]);
 
   if (person === undefined) {
     return <PersonNotFound />;
