@@ -4577,3 +4577,47 @@ svg text.chart-symbol-text-unicode {
   list-style: none;
   color: var(--muted);
 }
+
+/*
+ * Consultation page (#669): the at-a-glance summary on top, then the four sections in a grid that is one column on a
+ * phone and two side by side once the page itself is wide enough (a container query, so it follows the shell, not
+ * the window).
+ */
+.consultation-layout {
+  container: consultation / inline-size;
+  display: grid;
+  gap: var(--space-8);
+}
+
+.consultation-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-8) var(--space-6);
+  align-items: start;
+}
+
+@container consultation (min-width: 48rem) {
+  .consultation-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.consultation-section {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.consultation-section > h2,
+.consultation-glance > h2 {
+  margin: 0;
+}
+
+/* The section's grid gap spaces its blocks; their own margins would double it. */
+.consultation-section > :is(p, ul, dl, h3, .primitive-disclosure) {
+  margin-block: 0;
+}
+
+.consultation-date {
+  white-space: nowrap;
+}

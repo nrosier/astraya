@@ -13,7 +13,7 @@
  * @module domain/angle-transits
  * @purpose Finds the slow planets' current transits to the natal Ascendant and Midheaven, with orb, applying/separating and exact dates, for the consultation page (#678).
  * @conventions Reuses the yearly transit rules for bodies, aspects and orb, and `findExactTransitAspects` (keyed by angle) for the exact dates; unscored, ordered by the next exact date. Needs a known birth time: callers skip it when the natal houses are not defined.
- * @exports AngleKey, AngleTransit, ANGLE_TRANSIT_SEARCH_YEARS, angleTransits
+ * @exports AngleKey, AngleTransit, ANGLE_TRANSIT_SEARCH_YEARS, angleTransits, TransitPassQuery, exactPassDates
  */
 import { aspectByKey } from '../astrology/aspects.js';
 import { bodyById, bodyByKey } from '../astrology/bodies.js';
@@ -84,32 +84,62 @@ export async function angleTransits(
   }
   if (inOrb.length === 0) return [];
 
-  const bodies = [...new Set(inOrb.map((contact) => contact.transitingKey))].flatMap((key) => {
-    const body = bodyByKey(key);
-    return body === undefined ? [] : [body.id];
-  });
-  const hits = await findExactTransitAspects<AngleKey>(
+  const dates = await exactPassDates(
     provider,
-    bodies,
     new Map(angles),
-    nowJd - ANGLE_TRANSIT_SEARCH_YEARS * YEAR_DAYS,
-    nowJd + ANGLE_TRANSIT_SEARCH_YEARS * YEAR_DAYS,
-    { sampleStepDays: SAMPLE_STEP_DAYS },
+    inOrb.map((contact) => ({
+      transitingKey: contact.transitingKey,
+      aspectKey: contact.aspectKey,
+      target: contact.angle,
+    })),
+    nowJd,
   );
-
-  const withDates = inOrb.map((contact) => ({
-    ...contact,
-    exactJds: hits
-      .filter(
-        (hit) =>
-          hit.natalBody === contact.angle &&
-          hit.aspect.key === contact.aspectKey &&
-          bodyById(hit.transitingBody)?.key === contact.transitingKey,
-      )
-      .map((hit) => hit.jd),
-  }));
+  const withDates = inOrb.map((contact, index) => ({ ...contact, exactJds: dates[index] ?? [] }));
   // Time order: by the next exact date from now, or the last one when every pass is already behind.
   const nextExact = (contact: AngleTransit): number =>
     contact.exactJds.find((jd) => jd >= nowJd) ?? contact.exactJds.at(-1) ?? Number.POSITIVE_INFINITY;
   return withDates.sort((a, b) => nextExact(a) - nextExact(b));
+}
+
+/** A slow transit to name the exact dates of: its transiting body, aspect and the natal point it aims at. */
+export interface TransitPassQuery<K> {
+  readonly transitingKey: string;
+  readonly aspectKey: string;
+  readonly target: K;
+}
+
+/**
+ * Every exact pass of each queried contact within `ANGLE_TRANSIT_SEARCH_YEARS` either side of now, in time order
+ * (#678, #669): a retrograde can make three. One search covers every query, so the cost is one sweep of the
+ * transiting bodies however many contacts are asked about. `targets` maps each query's target to its natal longitude.
+ */
+export async function exactPassDates<K>(
+  provider: EphemerisProvider,
+  targets: ReadonlyMap<K, Degrees>,
+  queries: readonly TransitPassQuery<K>[],
+  nowJd: JulianDayUT,
+): Promise<readonly (readonly JulianDayUT[])[]> {
+  if (queries.length === 0) return [];
+  const bodies = [...new Set(queries.map((query) => query.transitingKey))].flatMap((key) => {
+    const body = bodyByKey(key);
+    return body === undefined ? [] : [body.id];
+  });
+  const hits = await findExactTransitAspects<K>(
+    provider,
+    bodies,
+    targets,
+    nowJd - ANGLE_TRANSIT_SEARCH_YEARS * YEAR_DAYS,
+    nowJd + ANGLE_TRANSIT_SEARCH_YEARS * YEAR_DAYS,
+    { sampleStepDays: SAMPLE_STEP_DAYS },
+  );
+  return queries.map((query) =>
+    hits
+      .filter(
+        (hit) =>
+          hit.natalBody === query.target &&
+          hit.aspect.key === query.aspectKey &&
+          bodyById(hit.transitingBody)?.key === query.transitingKey,
+      )
+      .map((hit) => hit.jd),
+  );
 }
