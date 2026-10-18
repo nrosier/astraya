@@ -39,11 +39,11 @@
 import { ASPECTS, DEFAULT_ORB_CONFIG, type AspectDefinition, type OrbConfig } from './aspects.js';
 import type { BodyId, Degrees, EphemerisProvider, JulianDayUT, PositionOptions, Zodiac } from '../ephemeris/types.js';
 
-/** One exact transit-to-natal aspect, at the moment it is exact. */
-export interface TransitAspectEvent {
+/** One exact transit-to-natal aspect, at the moment it is exact. `K` is the natal point's key: a body, or an angle (#678). */
+export interface TransitAspectEvent<K = BodyId> {
   readonly jd: JulianDayUT;
   readonly transitingBody: BodyId;
-  readonly natalBody: BodyId;
+  readonly natalBody: K;
   readonly aspect: AspectDefinition;
   /** Whether the transiting body is retrograde at this exact moment. */
   readonly retrograde: boolean;
@@ -141,14 +141,14 @@ export interface FindExactTransitAspectsOptions {
  * natal bodies, aspects and the two targets per aspect is pure arithmetic
  * over the already-fetched samples, not additional ephemeris calls.
  */
-export async function findExactTransitAspects(
+export async function findExactTransitAspects<K = BodyId>(
   provider: EphemerisProvider,
   transitingBodies: readonly BodyId[],
-  natalLongitudes: ReadonlyMap<BodyId, Degrees>,
+  natalLongitudes: ReadonlyMap<K, Degrees>,
   fromJd: JulianDayUT,
   toJd: JulianDayUT,
   options: FindExactTransitAspectsOptions = {},
-): Promise<readonly TransitAspectEvent[]> {
+): Promise<readonly TransitAspectEvent<K>[]> {
   if (toJd < fromJd) throw new RangeError('toJd must not be before fromJd');
   const config = options.orbConfig ?? DEFAULT_ORB_CONFIG;
   const aspects = enabledAspects(config);
@@ -159,7 +159,7 @@ export async function findExactTransitAspects(
   const jds = sampleJds(fromJd, toJd, step);
   const samplesAtEachJd = await Promise.all(jds.map((jd) => provider.positions(jd, transitingBodies, positionOptions)));
 
-  const events: TransitAspectEvent[] = [];
+  const events: TransitAspectEvent<K>[] = [];
 
   for (let bodyIndex = 0; bodyIndex < transitingBodies.length; bodyIndex++) {
     const transitingBody = transitingBodies[bodyIndex];

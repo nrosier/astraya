@@ -2,6 +2,7 @@
 
 One level above `src/astrology/`: composes pure astrological calculations into shapes screens render. Still pure/async, no DOM/React.
 
+- `angle-transits.ts` — Slow transits to the natal Ascendant and MC with orb, motion and exact dates, unscored (#678). Deps: `astrology/transit-events`, `astrology/transit-importance`.
 - `aaf.ts` — AAF'97 birth-record format: encodes and decodes #A93/#B93 plus #SRC/#VIA/#COM and an extension in a #: chunk (#591). Deps: `time/types`.
 - `aaf-people.ts` — Maps people to and from AAF records and stages an AAF import as a reviewed restore (#591). Deps: `./aaf`, `./person`, `./full-export`.
 - `astrocartography.ts` — Astrocartography lines (MC/IC/AC/DC) + Local Space + relocated houses. Deps: `astrology/astrocartography`, `ephemeris/types`.
