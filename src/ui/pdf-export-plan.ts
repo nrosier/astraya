@@ -20,6 +20,7 @@
  * @exports PdfTablePlan, PdfChartSectionPlan, PdfTextSectionPlan, PdfFieldsSectionPlan, PdfSectionPlan, PdfPlan, PdfPlanContext, buildPdfPlan
  */
 import { bodyById } from '../astrology/bodies.js';
+import { splitSabianText } from '../interpretation/sabian-split.js';
 import { DEFAULT_RULERSHIP_CHOICE, type RulershipChoice } from '../astrology/rulership.js';
 import {
   DEFAULT_EXTENDED_SETTINGS,
@@ -185,10 +186,17 @@ export interface PdfChartSectionPlan {
   readonly tables: readonly PdfTablePlan[];
 }
 
+/**
+ * One paragraph of a text section. A plain string is ordinary text. A Sabian (degree-symbol) paragraph is an
+ * `image` and an optional `insight` (#653), so the renderer can set the image apart from its reading.
+ */
+export type PdfParagraphPlan =
+  string | { readonly image: string; readonly insight: string | undefined; readonly insightLabel: string };
+
 export interface PdfTextSectionPlan {
   readonly kind: 'text';
   readonly heading: string;
-  readonly paragraphs: readonly string[];
+  readonly paragraphs: readonly PdfParagraphPlan[];
 }
 
 export interface PdfFieldsSectionPlan {
@@ -1060,7 +1068,15 @@ async function buildInterpretationSections(
       const corpus = await loadRuntimeCorpus(locale, corpusFetch ?? fetch);
       const report = assembleReport(chart, locale, corpus, rulership);
       for (const section of report.sections) {
-        sections.push({ kind: 'text', heading: section.title, paragraphs: section.paragraphs.map((p) => p.text) });
+        sections.push({
+          kind: 'text',
+          heading: section.title,
+          paragraphs: section.paragraphs.map((p) =>
+            p.placement?.category === 'degree-symbol'
+              ? { ...splitSabianText(p.text), insightLabel: pt.keyInsightLabel }
+              : p.text,
+          ),
+        });
       }
     } catch (error) {
       errors.push(`Interpretation (base): ${error instanceof Error ? error.message : String(error)}`);

@@ -2007,6 +2007,15 @@ label.stacked textarea:focus-visible {
   text-decoration: underline;
 }
 
+/* A Sabian symbol (#653): the image, then its reading right under it as one unit, not two separate paragraphs. */
+.sabian-image {
+  margin-bottom: 0.2rem;
+}
+
+.sabian-insight {
+  margin-top: 0;
+}
+
 .report-provenance {
   margin-top: 0.2rem;
 }
