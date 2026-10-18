@@ -87,7 +87,8 @@ import { useRulershipChoice } from './rulership-setting.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { useStoreState } from './store-context.js';
-import { formatTimestamp } from './format.js';
+import { formatOrb, formatTimestamp } from './format.js';
+import { angleTransits, type AngleTransit } from '../domain/angle-transits.js';
 import { Button } from './primitives/Button.js';
 import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
 import { useDefaultCalculationProfile } from './default-calculation-profile.js';
@@ -107,6 +108,8 @@ type Load =
       readonly dignities: readonly DignityRow[];
       readonly conditions: readonly ConditionRow[];
       readonly shape: ReturnType<typeof chartShapeOf>;
+      /** Slow transits to the natal Ascendant and MC (#678); undefined without a known birth time. */
+      readonly angles: readonly AngleTransit[] | undefined;
     }
   | { readonly kind: 'error'; readonly message: string };
 
@@ -179,6 +182,10 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
           computeSolarArcDirections(moment, todayJd, provider),
           computeTransit(moment, todayJd, provider),
         ]);
+        // The angles are never among the ranked contacts (#678), so they are found and listed apart.
+        const angles = housesAreDefined(natal.houses)
+          ? await angleTransits(transit.transit.positions, natal.houses, todayJd, provider)
+          : undefined;
         // Released from both lots (#680): Fortune for the body and life, Spirit for action and career.
         const fromFortune = zodiacalReleasingPeriods(natal.partOfFortune, natalJd, 18);
         const fromSpirit = zodiacalReleasingPeriods(natal.partOfSpirit, natalJd, 18);
@@ -201,6 +208,7 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
             dignities: dignityRows(natal),
             conditions: conditionRows(natal),
             shape: chartShapeOf(natal),
+            angles,
           });
         }
       } catch (error) {
@@ -354,6 +362,30 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
                     .join(t.listSeparator),
                 )}
           </p>
+          <h3>{t.anglesHeading}</h3>
+          {load.angles === undefined ? (
+            <p className="hint">{t.anglesNeedBirthTime}</p>
+          ) : load.angles.length === 0 ? (
+            <p className="hint">{t.noAngleTransits}</p>
+          ) : (
+            // In time order, unscored: no weight is invented for an angle (#678).
+            <ul>
+              {load.angles.map((contact) => (
+                <li key={`${contact.transitingKey}-${contact.aspectKey}-${contact.angle}`}>
+                  {t.angleTransit(
+                    bodyDisplayName(contact.transitingKey, locale),
+                    aspectDisplayName(contact.aspectKey, locale).toLowerCase(),
+                    bodyDisplayName(contact.angle, locale),
+                    formatOrb(contact.orb),
+                    contact.applying ? chartT.applying.toLowerCase() : chartT.separating.toLowerCase(),
+                    contact.exactJds.length === 0
+                      ? t.noExactDate
+                      : t.exactOn(contact.exactJds.map(dateLabel).join(t.listSeparator)),
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
           <p>
             <a href={hrefFor('transit', { personId })}>{t.viewAllTransits}</a>
           </p>
