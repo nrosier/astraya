@@ -9,8 +9,8 @@
 /**
  * @module domain/timing-timeline
  * @purpose Shared `TimingTimelineEvent` shape plus adapters for each timing technique exposed by TimingTimelineView.
- * @conventions Adapters are pure and one-way (technique output → events, never the reverse).
- * @exports TimingTimelineEvent, TimingTimelineTrack, TIMING_TIMELINE_TRACKS, timingTimelineTracks, releasingPeriodsToTimelineEvents, firdariaPeriodsToTimelineEvents, profectionToTimelineEvents, primaryDirectionsToTimelineEvents, secondaryProgressionToTimelineEvents, solarArcToTimelineEvents, transitToTimelineEvents, periodicTransitToTimelineEvents
+ * @conventions Adapters are pure and one-way (technique output → events, never the reverse). An event says what it is about as data (`TimelineSubject`: keys and numbers), never as words, so the screen words it in the reader's language (#674).
+ * @exports TimingTimelineEvent, TimelineSubject, TimelineReturn, TimingTimelineTrack, TIMING_TIMELINE_TRACKS, timingTimelineTracks, releasingPeriodsToTimelineEvents, firdariaPeriodsToTimelineEvents, profectionToTimelineEvents, primaryDirectionsToTimelineEvents, secondaryProgressionToTimelineEvents, solarArcToTimelineEvents, transitToTimelineEvents, periodicTransitToTimelineEvents
  */
 import { bodyById } from '../astrology/bodies.js';
 import type { Aspect } from '../astrology/aspects.js';
@@ -27,12 +27,32 @@ import type { SolarArcDirectionsData } from './solar-arc-directions.js';
 import type { TransitData } from './transit.js';
 import type { PeriodicTransitForecast } from './periodic-transit.js';
 
+export type TimelineReturn = 'solar-return' | 'demibirthday' | 'progressed-lunar-return' | 'lunar-return';
+
+/**
+ * What a timeline event is about, as keys and numbers for the screen to put into words (#674). Signs are
+ * `SignDefinition.name`s and bodies `BodyDefinition.key`s (or a primary-direction angle key, a firdaria node key).
+ */
+export type TimelineSubject =
+  | {
+      readonly kind: 'releasing';
+      readonly level: 1 | 2;
+      readonly sign: string;
+      readonly ruler: string;
+      readonly loosingOfBond: boolean;
+    }
+  | { readonly kind: 'firdaria'; readonly ruler: string }
+  | { readonly kind: 'profection'; readonly sign: string; readonly house: number }
+  | { readonly kind: 'aspect'; readonly from: string; readonly aspect: string; readonly to: string }
+  | { readonly kind: 'station'; readonly body: string; readonly direction: 'retrograde' | 'direct' }
+  | { readonly kind: 'return'; readonly which: TimelineReturn };
+
 export interface TimingTimelineEvent {
   readonly kind: string;
   readonly startJd: JulianDayUT;
   /** Open-ended if omitted — not used by any adapter here, since every technique adapted so far has a known end. */
   readonly endJd?: JulianDayUT;
-  readonly label: string;
+  readonly subject: TimelineSubject;
   /** Which module computed this event, for a timeline UI to group/color/filter by technique. */
   readonly sourceModule: string;
 }
@@ -78,13 +98,19 @@ export function timingTimelineTracks(
   }));
 }
 
+const bodyKeyOf = (id: number): string => bodyById(id)?.key ?? String(id);
+
+function releasingSubject(level: 1 | 2, sign: number, ruler: number, loosingOfBond: boolean): TimelineSubject {
+  return { kind: 'releasing', level, sign: SIGNS[sign]?.name ?? String(sign), ruler: bodyKeyOf(ruler), loosingOfBond };
+}
+
 /** Zodiacal-releasing (#554) Level-1 periods as timeline events, one per sign period. */
 export function releasingPeriodsToTimelineEvents(periods: readonly ReleasingPeriod[]): readonly TimingTimelineEvent[] {
   return periods.map((period) => ({
     kind: 'zodiacal-releasing',
     startJd: period.startJd,
     endJd: period.endJd,
-    label: `${SIGNS[period.sign]?.name ?? String(period.sign)} / ${bodyById(period.ruler)?.key ?? String(period.ruler)}`,
+    subject: releasingSubject(1, period.sign, period.ruler, false),
     sourceModule: 'astrology/zodiacal-releasing',
   }));
 }
@@ -97,7 +123,7 @@ export function releasingSubperiodsToTimelineEvents(
     kind: 'zodiacal-releasing',
     startJd: period.startJd,
     endJd: period.endJd,
-    label: `L2 ${SIGNS[period.sign]?.name ?? String(period.sign)} / ${bodyById(period.ruler)?.key ?? String(period.ruler)}${period.loosingOfBond ? ' (loosing of the bond)' : ''}`,
+    subject: releasingSubject(2, period.sign, period.ruler, period.loosingOfBond),
     sourceModule: 'astrology/zodiacal-releasing',
   }));
 }
@@ -108,7 +134,7 @@ export function firdariaPeriodsToTimelineEvents(periods: readonly FirdariaPeriod
     kind: 'firdaria',
     startJd: period.startJd,
     endJd: period.endJd,
-    label: period.ruler,
+    subject: { kind: 'firdaria', ruler: period.ruler },
     sourceModule: 'astrology/firdaria',
   }));
 }
@@ -136,14 +162,14 @@ export function profectionToTimelineEvents(data: ProfectionData): readonly Timin
       kind: 'profection-year',
       startJd: yearStartJd,
       endJd: yearEndJd,
-      label: `${data.year.signName} / house ${String(data.year.house)}`,
+      subject: { kind: 'profection', sign: data.year.signName, house: data.year.house },
       sourceModule: 'domain/profections',
     },
     {
       kind: 'profection-month',
       startJd: monthStartJd,
       endJd: monthEndJd,
-      label: `${data.month.signName} / house ${String(data.month.house)}`,
+      subject: { kind: 'profection', sign: data.month.signName, house: data.month.house },
       sourceModule: 'domain/profections',
     },
   ];
@@ -157,15 +183,13 @@ export function primaryDirectionsToTimelineEvents(
     kind: `primary-direction-${direction.mode}`,
     startJd: direction.exactJd + (direction.activeFromAge - direction.ageYears) * TROPICAL_YEAR_DAYS,
     endJd: direction.exactJd + (direction.activeUntilAge - direction.ageYears) * TROPICAL_YEAR_DAYS,
-    label: `${direction.promissor} ${direction.aspect} ${direction.significator}`,
+    subject: { kind: 'aspect', from: direction.promissor, aspect: direction.aspect, to: direction.significator },
     sourceModule: 'domain/primary-directions',
   }));
 }
 
-function aspectLabel(aspect: Aspect): string {
-  const a = bodyById(aspect.bodyA)?.key ?? String(aspect.bodyA);
-  const b = bodyById(aspect.bodyB)?.key ?? String(aspect.bodyB);
-  return `${a} ${aspect.aspect.name} ${b}`;
+function aspectSubject(aspect: Aspect): TimelineSubject {
+  return { kind: 'aspect', from: bodyKeyOf(aspect.bodyA), aspect: aspect.aspect.key, to: bodyKeyOf(aspect.bodyB) };
 }
 
 function contactsToTimelineEvents(
@@ -174,7 +198,7 @@ function contactsToTimelineEvents(
   contacts: readonly Aspect[],
   jd: JulianDayUT,
 ): readonly TimingTimelineEvent[] {
-  return contacts.map((contact) => ({ kind, startJd: jd, endJd: jd, label: aspectLabel(contact), sourceModule }));
+  return contacts.map((contact) => ({ kind, startJd: jd, endJd: jd, subject: aspectSubject(contact), sourceModule }));
 }
 
 /** Secondary-progression contacts as a dated snapshot at the selected target moment. */
@@ -195,7 +219,7 @@ export function solarArcToTimelineEvents(data: SolarArcDirectionsData): readonly
             kind: 'solar-arc',
             startJd: contact.exactJd,
             endJd: contact.exactJd,
-            label: aspectLabel(contact),
+            subject: aspectSubject(contact),
             sourceModule: 'domain/solar-arc-directions',
           },
         ],
@@ -212,7 +236,12 @@ function exactTransitEvents(events: readonly TransitAspectEvent[]): readonly Tim
     kind: 'periodic-transit',
     startJd: event.jd,
     endJd: event.jd,
-    label: `${bodyById(event.transitingBody)?.key ?? String(event.transitingBody)} ${event.aspect.name} ${bodyById(event.natalBody)?.key ?? String(event.natalBody)}`,
+    subject: {
+      kind: 'aspect',
+      from: bodyKeyOf(event.transitingBody),
+      aspect: event.aspect.key,
+      to: bodyKeyOf(event.natalBody),
+    },
     sourceModule: 'domain/periodic-transit',
   }));
 }
@@ -222,22 +251,28 @@ function stationEvents(events: readonly StationEvent[]): readonly TimingTimeline
     kind: 'periodic-transit',
     startJd: event.jd,
     endJd: event.jd,
-    label: `${bodyById(event.body)?.key ?? String(event.body)} stations ${event.direction}`,
+    subject: { kind: 'station', body: bodyKeyOf(event.body), direction: event.direction },
     sourceModule: 'domain/periodic-transit',
   }));
 }
 
-function returnEvent(kind: string, jd: JulianDayUT, label: string): TimingTimelineEvent {
-  return { kind, startJd: jd, endJd: jd, label, sourceModule: 'domain/periodic-transit' };
+function returnEvent(jd: JulianDayUT, which: TimelineReturn): TimingTimelineEvent {
+  return {
+    kind: 'return',
+    startJd: jd,
+    endJd: jd,
+    subject: { kind: 'return', which },
+    sourceModule: 'domain/periodic-transit',
+  };
 }
 
 /** Exact transit and station events from the daily, weekly, and monthly forecast tiers. */
 export function periodicTransitToTimelineEvents(data: PeriodicTransitForecast): readonly TimingTimelineEvent[] {
   return [
-    returnEvent('return', data.yearly.solarReturn.returnJd, 'solar return'),
-    returnEvent('return', data.yearly.demibirthday.demibirthdayJd, 'demibirthday'),
-    returnEvent('return', data.monthly.progressedLunarReturn.returnJd, 'progressed lunar return'),
-    ...data.weekly.lunarReturns.returns.map((entry) => returnEvent('return', entry.returnJd, 'lunar return')),
+    returnEvent(data.yearly.solarReturn.returnJd, 'solar-return'),
+    returnEvent(data.yearly.demibirthday.demibirthdayJd, 'demibirthday'),
+    returnEvent(data.monthly.progressedLunarReturn.returnJd, 'progressed-lunar-return'),
+    ...data.weekly.lunarReturns.returns.map((entry) => returnEvent(entry.returnJd, 'lunar-return')),
     ...exactTransitEvents(data.daily.exactToday),
     ...stationEvents(data.daily.stationsToday),
     ...exactTransitEvents(data.weekly.events),

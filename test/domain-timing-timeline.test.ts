@@ -35,7 +35,13 @@ describe('releasingPeriodsToTimelineEvents (#554)', () => {
     expect(events[0]?.kind).toBe('zodiacal-releasing');
     expect(events[0]?.startJd).toBe(periods[0]?.startJd);
     expect(events[0]?.endJd).toBe(periods[0]?.endJd);
-    expect(events[0]?.label).toContain('Taurus');
+    expect(events[0]?.subject).toEqual({
+      kind: 'releasing',
+      level: 1,
+      sign: 'Taurus',
+      ruler: 'venus',
+      loosingOfBond: false,
+    });
     expect(events[0]?.sourceModule).toBe('astrology/zodiacal-releasing');
   });
 });
@@ -45,7 +51,16 @@ describe('releasingSubperiodsToTimelineEvents (#554)', () => {
     const parent = zodiacalReleasingPeriods(305, 0, 1)[0];
     if (parent === undefined) throw new Error('fixture bug: no parent period');
     const events = releasingSubperiodsToTimelineEvents(zodiacalReleasingSubperiods(parent));
-    expect(events.some((event) => event.label.includes('L2 Leo / sun (loosing of the bond)'))).toBe(true);
+    expect(
+      events.some(
+        (event) =>
+          event.subject.kind === 'releasing' &&
+          event.subject.level === 2 &&
+          event.subject.sign === 'Leo' &&
+          event.subject.ruler === 'sun' &&
+          event.subject.loosingOfBond,
+      ),
+    ).toBe(true);
     expect(events.every((event) => event.kind === 'zodiacal-releasing')).toBe(true);
   });
 });
@@ -56,7 +71,7 @@ describe('firdariaPeriodsToTimelineEvents (#554)', () => {
     const events = firdariaPeriodsToTimelineEvents(periods);
     expect(events).toHaveLength(2);
     expect(events[0]?.kind).toBe('firdaria');
-    expect(events[0]?.label).toBe('sun');
+    expect(events[0]?.subject).toEqual({ kind: 'firdaria', ruler: 'sun' });
     expect(events[0]?.startJd).toBe(periods[0]?.startJd);
     expect(events[0]?.endJd).toBe(periods[0]?.endJd);
   });
@@ -88,10 +103,34 @@ describe('timingTimelineTracks (#554)', () => {
   it('overlays at least three techniques on one requested date range', () => {
     const tracks = timingTimelineTracks(
       [
-        { kind: 'zodiacal-releasing', startJd: 0, endJd: 100, label: 'Aries / mars', sourceModule: 'fixture' },
-        { kind: 'firdaria', startJd: 0, endJd: 100, label: 'sun', sourceModule: 'fixture' },
-        { kind: 'profection-year', startJd: 20, endJd: 40, label: 'Leo / house 5', sourceModule: 'fixture' },
-        { kind: 'transit', startJd: 30, endJd: 30, label: 'mars square sun', sourceModule: 'fixture' },
+        {
+          kind: 'zodiacal-releasing',
+          startJd: 0,
+          endJd: 100,
+          subject: { kind: 'firdaria', ruler: 'mars' },
+          sourceModule: 'fixture',
+        },
+        {
+          kind: 'firdaria',
+          startJd: 0,
+          endJd: 100,
+          subject: { kind: 'firdaria', ruler: 'sun' },
+          sourceModule: 'fixture',
+        },
+        {
+          kind: 'profection-year',
+          startJd: 20,
+          endJd: 40,
+          subject: { kind: 'profection', sign: 'Leo', house: 5 },
+          sourceModule: 'fixture',
+        },
+        {
+          kind: 'transit',
+          startJd: 30,
+          endJd: 30,
+          subject: { kind: 'aspect', from: 'mars', aspect: 'square', to: 'sun' },
+          sourceModule: 'fixture',
+        },
       ],
       25,
       35,

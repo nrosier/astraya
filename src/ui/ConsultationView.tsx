@@ -75,6 +75,7 @@ import { EVERY_BODY_KEY, useTransitFilter } from './TransitFilterPanel.js';
 import { transitFilterPanelMessages } from './TransitFilterPanel.messages.js';
 import { TimingTimelineTracks } from './TimingTimelineView.js';
 import { timingTimelineViewMessages } from './TimingTimelineView.messages.js';
+import { timelineSubjectLabel } from './timing-timeline-labels.js';
 import { chartViewMessages } from './ChartView.messages.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { PersonNotFound } from './PersonNotFound.js';
@@ -319,6 +320,8 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
             labels={timingT.tracks}
             noEvents={timingT.noEvents}
             dateLabel={dateLabel}
+            describe={(subject) => timelineSubjectLabel(subject, locale)}
+            range={timingT.range}
           />
           <p>
             <a href={hrefFor('timing-timeline', { personId })}>{t.openTimingTimeline}</a>
