@@ -31,7 +31,8 @@ const en = {
   highlightsHeading: 'Chart highlights',
   openPatternsAndCondition: 'Open Patterns & condition',
   shapeCannotBeWorkedOut: 'The chart shape could not be worked out.',
-  noNotableConditions: 'No angular/luminary dignities or notable conditions stand out today.',
+  noNotableConditions:
+    'No planet in the birth chart is in its own sign or exaltation, cazimi, combust, besieged or retrograde.',
   dignityNote: (body: string, dignity: string) => `${body}: ${dignity}`,
   rulerDignity: 'ruler',
   exaltedDignity: 'exalted',
@@ -70,7 +71,8 @@ const nl: typeof en = {
   highlightsHeading: 'Horoscoophoogtepunten',
   openPatternsAndCondition: 'Patronen & conditie openen',
   shapeCannotBeWorkedOut: 'De horoscoopvorm kon niet worden bepaald.',
-  noNotableConditions: 'Geen opvallende hoekwaardigheden of condities vandaag.',
+  noNotableConditions:
+    'Geen planeet in de geboortehoroscoop staat in eigen teken of verhoging, of is cazimi, combust, belegerd of retrograde.',
   dignityNote: (body: string, dignity: string) => `${body}: ${dignity}`,
   rulerDignity: 'heerser',
   exaltedDignity: 'verheven',
