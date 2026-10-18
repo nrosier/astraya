@@ -25,6 +25,7 @@ import {
   solarArcToTimelineEvents,
   timingTimelineTracks,
   transitToTimelineEvents,
+  type TimelineSubject,
   type TimingTimelineEvent,
   type TimingTimelineTrackEvents,
 } from '../domain/timing-timeline.js';
@@ -39,6 +40,8 @@ import { useStoreState } from './store-context.js';
 import { todayInputValue } from './format.js';
 import { useMessages } from './messages.js';
 import { timingTimelineViewMessages } from './TimingTimelineView.messages.js';
+import { timelineSubjectLabel } from './timing-timeline-labels.js';
+import { useLocale } from './locale.js';
 import { BackLink } from './BackLink.js';
 
 type Load =
@@ -59,6 +62,10 @@ export interface TimingTimelineTracksProps {
   readonly labels: Readonly<Record<TimingTimelineTrackEvents['track'], string>>;
   readonly noEvents: string;
   readonly dateLabel: (jd: number) => string;
+  /** An event's subject in words, in the reader's language (`timelineSubjectLabel`, #674). */
+  readonly describe: (subject: TimelineSubject) => string;
+  /** A start and end date as one range, in the reader's language. */
+  readonly range: (start: string, end: string) => string;
 }
 
 /** The render-only shared-axis track list, separated so concurrent-technique output is testable without an ephemeris worker. */
@@ -68,6 +75,8 @@ export function TimingTimelineTracks({
   labels,
   noEvents,
   dateLabel: formatDate,
+  describe,
+  range,
 }: TimingTimelineTracksProps): React.JSX.Element {
   return (
     <section aria-label={axisLabel}>
@@ -81,10 +90,12 @@ export function TimingTimelineTracks({
             <p className="hint">{noEvents}</p>
           ) : (
             <ol>
-              {events.map((event) => (
-                <li key={`${event.kind}-${event.startJd}-${event.label}`}>
-                  <strong>{event.label}</strong> — {formatDate(event.startJd)}
-                  {event.endJd === undefined || event.endJd === event.startJd ? '' : ` to ${formatDate(event.endJd)}`}
+              {events.map((event, index) => (
+                <li key={`${event.kind}-${String(event.startJd)}-${String(index)}`}>
+                  <strong>{describe(event.subject)}</strong> —{' '}
+                  {event.endJd === undefined || event.endJd === event.startJd
+                    ? formatDate(event.startJd)
+                    : range(formatDate(event.startJd), formatDate(event.endJd))}
                 </li>
               ))}
             </ol>
@@ -100,6 +111,7 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
   const person = state.people.get(personId);
   const { provider } = useEphemerisProvider();
   const t = useMessages(timingTimelineViewMessages);
+  const [locale] = useLocale();
   const [asOf, setAsOf] = useState(todayInputValue);
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
   const target = useMemo(() => {
@@ -185,6 +197,8 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
           labels={t.tracks}
           noEvents={t.noEvents}
           dateLabel={dateLabel}
+          describe={(subject) => timelineSubjectLabel(subject, locale)}
+          range={t.range}
         />
       )}
     </main>
