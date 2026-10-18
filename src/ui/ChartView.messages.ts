@@ -213,6 +213,22 @@ const en = {
   patternsViewLabel: 'Patterns & condition',
   chartViewNavLabel: 'Chart view navigation',
   chartViewSelectLabel: 'Chart view',
+  aspectPatternsHeading: 'Aspect configurations',
+  aspectPatternNames: {
+    stellium: 'Stellium',
+    'grand-trine': 'Grand Trine',
+    't-square': 'T-Square',
+    'grand-cross': 'Grand Cross',
+    yod: 'Yod',
+    cradle: 'Cradle',
+    'mystic-rectangle': 'Mystic Rectangle',
+  },
+  aspectPatternLine: (pattern: string, bodies: string, apex: string | undefined) =>
+    apex === undefined ? `${pattern}: ${bodies}` : `${pattern}: ${bodies} (apex ${apex})`,
+  aspectPatternSeparator: ', ',
+  noAspectPatterns: 'No aspect configuration among the ten planets with the orbs in force.',
+  aspectPatternsSourceNote:
+    'Shapes and rules as Astrolog 8.00 defines them: every aspect in a shape is within its own orb, and a stellium is three or four mutually conjunct planets. Yods need the quincunx turned on in the orb settings. Kite is not detected.',
   shapeSourceNote:
     'Chart shapes are a convention from Marc Edmund Jones (1941), widely taught in modern textbooks. They are not part of classical astrology and have not been validated empirically: read them as a tendency, never a verdict. The shape is worked out from the ten planets, Sun to Pluto, and its boundaries are approximate: a chart just either side of a boundary can fall in a neighbouring shape.',
   shapeCannotBeWorkedOut: 'The chart shape cannot be worked out: it needs at least two planets.',
@@ -513,6 +529,22 @@ const nl: typeof en = {
   patternsViewLabel: 'Patronen & conditie',
   chartViewNavLabel: 'Navigatie grafiekweergave',
   chartViewSelectLabel: 'Grafiekweergave',
+  aspectPatternsHeading: 'Aspectconfiguraties',
+  aspectPatternNames: {
+    stellium: 'Stellium',
+    'grand-trine': 'Grote driehoek',
+    't-square': 'T-vierkant',
+    'grand-cross': 'Groot kruis',
+    yod: 'Yod',
+    cradle: 'Wieg',
+    'mystic-rectangle': 'Mystieke rechthoek',
+  },
+  aspectPatternLine: (pattern: string, bodies: string, apex: string | undefined) =>
+    apex === undefined ? `${pattern}: ${bodies}` : `${pattern}: ${bodies} (top ${apex})`,
+  aspectPatternSeparator: ', ',
+  noAspectPatterns: 'Geen aspectconfiguratie tussen de tien planeten met de geldende orbs.',
+  aspectPatternsSourceNote:
+    'Vormen en regels zoals Astrolog 8.00 ze definieert: elk aspect in een vorm valt binnen zijn eigen orb, en een stellium is drie of vier planeten die onderling conjunct staan. Voor een Yod moet de quincunx aan staan in de orbinstellingen. De vlieger wordt niet herkend.',
   shapeSourceNote:
     'Horoscoopvormen zijn een conventie van Marc Edmund Jones (1941), veel onderwezen in moderne leerboeken. Ze maken geen deel uit van de klassieke astrologie en zijn niet empirisch onderbouwd: lees ze als een neiging, nooit als een oordeel. De vorm wordt bepaald uit de tien planeten, Zon tot Pluto, en de grenzen zijn bij benadering: een horoscoop net aan de ene of andere kant van een grens kan in een naburige vorm vallen.',
   shapeCannotBeWorkedOut: 'De horoscoopvorm kan niet worden bepaald: er zijn minstens twee planeten nodig.',
