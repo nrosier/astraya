@@ -4,6 +4,30 @@ All notable changes to Astraya are recorded here. Versions follow
 [semantic versioning](https://semver.org/), and every milestone ends in a release —
 see [docs/RELEASING.md](docs/RELEASING.md).
 
+## [0.40.0] — 2026-10-18
+
+**Event search exports to calendars, people move between astrology programs in the AAF standard, and a wrong time zone in Ciudad Juárez is fixed.**
+
+### Added
+
+- **Event search results download as a calendar file (#639).** A new _Download calendar (.ics)_ button beside the CSV one gives an iCalendar file that most calendar apps import. Each event has a stable identifier, so importing the same file twice does not duplicate it.
+- **Exchange birth records as AAF'97 (#591).** Preferences → Data exports people in the AAF'97 format that other astrology programs read, and a restore reads an AAF file as well as an Astraya export. Astraya-only data (the calculation profile, for instance) travels in a labelled extension so it is not lost on the way back.
+- **A per-release record of the manual UI/UX checks (#615).** `docs/UI-UX_RELEASE_CHECKS.md` lists the screen-reader, zoom, forced-colour, touch, reduced-motion and keyboard checks, and the representative tasks, for each release to record against.
+
+### Changed
+
+- **The transit filter, the consultation list and the corpus corrections show their filter in one consistent line (#615),** with a single action to change the filter.
+- **Caveats on rectification and the share link use the same warning block (#615).**
+- **Event search, the admin user and AI usage tables, the corpus lists and the restore preview are sortable tables with the same headers and copy behaviour (#615).**
+- **Short exclusive choices use the segmented control (#615),** for the person form's calendar and the chart overlay's return type.
+
+### Fixed
+
+- **Birth places in Ciudad Juárez resolve to the right time zone (#624).** The time-zone data was from 2019 and gave the wrong offset for the city. The lookup now uses current boundary data. Western Tutuila (Pago Pago) still resolves to the wrong zone; see #624.
+- **The language button's name for screen readers starts with the letters on it, EN or NL (#644).** Speech-control users can say "EN" to reach it.
+- **Chart overlays are checked for stale inputs (#638).** The React hook rules now run on every screen, and they found 54 effects that did not list everything they read. The natal chart's overlay effect was missing the text language and the point-visibility options, which could leave an overlay drawn with out-of-date labels. Not reproduced in a browser before the fix.
+- **Event search filenames match between the CSV and the calendar download (#639).**
+
 ## [0.39.0] — 2026-10-17
 
 **Orbs now work the same way on every chart, can be set to a historical source, and a calculation can be checked later.**

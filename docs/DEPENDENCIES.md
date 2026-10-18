@@ -55,10 +55,12 @@ tracking, not licence compliance.
 | `@modelcontextprotocol/sdk`                | Agent/tooling support (`tools/`), excluded from `src/` by the `tools/` import boundary.              | MIT                  |
 
 `@axe-core/playwright` is MPL-2.0, outside the MIT/BSD/Apache-2.0/ISC/CC0 set
-`CLAUDE.md` names. It is a devDependency used only by the Playwright a11y
-suite and is never bundled or distributed with Astraya, so the AGPL
-distribution question this project cares about does not apply to it — but it
-is called out here explicitly rather than silently folded into the "all
+`CLAUDE.md` names. It is a devDependency used only by the Playwright a11y suite
+and is never bundled or distributed with Astraya: the Docker runtime stage
+installs with `npm ci --omit=dev`. MPL-2.0's copyleft obligations, such as
+making modified files available, are triggered only by distributing the
+software, so none applies to a tool that stays on the developer's and CI's
+machines. It is called out here rather than silently folded into the "all
 permissive" summary, since `CLAUDE.md`'s rule is written without a scope
 qualifier.
 
