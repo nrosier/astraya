@@ -27,7 +27,8 @@ import {
   SIGN_UNICODE,
 } from '../chart/symbol-text.js';
 import { deriveExportFilename } from '../domain/export-filename.js';
-import type { PdfPlan } from './pdf-export-plan.js';
+import type { PdfParagraphGroupPlan, PdfPlan } from './pdf-export-plan.js';
+import { flowLines, startBlock, type PageFlowArea } from './pdf-page-flow.js';
 import { fitSvgOnPage } from './pdf-svg-fit.js';
 import { normalizeSvgForPdf } from './pdf-svg-normalize.js';
 
@@ -36,6 +37,8 @@ const PAGE_MARGIN = 15;
 const PAGE_TOP = 20;
 /** The widest a chart is drawn, even with a whole page free (the width charts were always drawn at before #579). */
 const MAX_SVG_WIDTH = 160;
+/** Room kept below a table caption for the table's header and first rows: the 30 mm the renderer always left before #665. */
+const TABLE_LEAD = 30 - PAGE_MARGIN;
 
 /**
  * jsPDF's standard built-in fonts (the core PDF fonts, e.g. Helvetica) only cover the WinAnsi
@@ -69,10 +72,33 @@ function pdfSafeText(text: string): string {
   return text.replace(PDF_UNSAFE_PATTERN, (char) => PDF_UNSAFE_TO_SAFE.get(char) ?? char);
 }
 
+/** The content area's vertical extent on this document's pages. */
+function flowArea(doc: jsPDF): PageFlowArea {
+  return { top: PAGE_TOP, bottom: doc.internal.pageSize.getHeight() - PAGE_MARGIN };
+}
+
+function splitLines(doc: jsPDF, text: string, maxWidth: number): string[] {
+  return doc.splitTextToSize(pdfSafeText(text), maxWidth) as string[];
+}
+
+/** Prints `text` wrapped to `maxWidth`, continuing on a new page wherever a line would pass the bottom margin (#665). */
 function wrapAndPrint(doc: jsPDF, text: string, x: number, y: number, maxWidth: number, lineHeight = 6): number {
-  const lines = doc.splitTextToSize(pdfSafeText(text), maxWidth) as string[];
-  doc.text(lines, x, y);
-  return y + lines.length * lineHeight;
+  const lines = splitLines(doc, text, maxWidth);
+  const flow = flowLines(lines.length, y, lineHeight, flowArea(doc));
+  lines.forEach((line, index) => {
+    const placement = flow.lines[index];
+    if (placement === undefined) return;
+    if (placement.newPage) doc.addPage();
+    doc.text(line, x, placement.y);
+  });
+  return flow.y;
+}
+
+/** Starts a fresh page first when the next `needed` mm of baselines would not fit above the bottom margin (#665). */
+function keepTogether(doc: jsPDF, y: number, needed: number): number {
+  const start = startBlock(y, needed, flowArea(doc));
+  if (start.newPage) doc.addPage();
+  return start.y;
 }
 
 /** Parses a standalone SVG string into a detached `SVGSVGElement`, mounted off-screen so font/text metrics resolve. */
@@ -127,25 +153,30 @@ export async function renderPdfPlan(plan: PdfPlan): Promise<{ blob: Blob; filena
       for (const field of section.fields)
         y = wrapAndPrint(doc, `${field.label}: ${field.value}`, PAGE_MARGIN, y, contentWidth);
     } else if (section.kind === 'text') {
+      // How far below its first baseline a paragraph's second line of text is: a label, or a heading
+      // above it, is never the last thing on a page (#665).
+      const textLead = (text: string): number => (Math.min(2, splitLines(doc, text, contentWidth).length) - 1) * 6;
+      const paragraphLead = (paragraph: PdfParagraphGroupPlan['paragraphs'][number]): number => {
+        if (typeof paragraph === 'string') return textLead(paragraph);
+        if ('label' in paragraph)
+          return splitLines(doc, paragraph.label, contentWidth).length * 6 + textLead(paragraph.text);
+        return textLead(`\u201C${paragraph.image}\u201D`);
+      };
       for (const group of section.groups) {
+        const [first] = group.paragraphs;
+        const firstLead = first === undefined ? 0 : paragraphLead(first);
         // A body's sub-heading (#654), once, above the paragraphs that are about it.
         if (group.body !== undefined) {
-          if (y > pageHeight - PAGE_MARGIN) {
-            doc.addPage();
-            y = 20;
-          }
           doc.setFont('helvetica', 'bold');
           doc.setFontSize(12);
+          y = keepTogether(doc, y, splitLines(doc, group.body, contentWidth).length * 6 + 1 + firstLead);
           y = wrapAndPrint(doc, group.body, PAGE_MARGIN, y, contentWidth);
           doc.setFontSize(10);
           doc.setFont('helvetica', 'normal');
           y += 1;
         }
         for (const paragraph of group.paragraphs) {
-          if (y > pageHeight - PAGE_MARGIN) {
-            doc.addPage();
-            y = 20;
-          }
+          y = keepTogether(doc, y, paragraphLead(paragraph));
           if (typeof paragraph === 'string') {
             y = wrapAndPrint(doc, paragraph, PAGE_MARGIN, y, contentWidth);
           } else if ('label' in paragraph) {
@@ -199,10 +230,8 @@ export async function renderPdfPlan(plan: PdfPlan): Promise<{ blob: Blob; filena
         }
       }
       for (const table of section.tables) {
-        if (y > pageHeight - 30) {
-          doc.addPage();
-          y = 20;
-        }
+        // The caption and the table's header and first rows stay on one page (#665).
+        y = keepTogether(doc, y, TABLE_LEAD);
         doc.setFontSize(11);
         doc.text(pdfSafeText(table.caption), PAGE_MARGIN, y);
         y += 2;
