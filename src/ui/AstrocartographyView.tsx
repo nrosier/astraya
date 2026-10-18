@@ -101,6 +101,22 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
   const [updating, setUpdating] = useState(false);
   // The reviewed text of each line (#427): the mechanical sentence until it arrives.
   const [corpus, setCorpus] = useState<readonly CorpusEntry[]>([]);
+  // The coastlines (#667), loaded as their own chunk only when this screen opens.
+  const [coastline, setCoastline] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    let cancelled = false;
+    void import('../chart/coastline-110m.js').then(
+      ({ COASTLINE_110M_PATH }) => {
+        if (!cancelled) setCoastline(COASTLINE_110M_PATH);
+      },
+      () => {
+        // Without coastlines the map still shows its grid and lines.
+      },
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   useEffect(() => {
     let cancelled = false;
     wheelCorpus(locale).then(
@@ -158,10 +174,11 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
       localSpaceLines: data.localSpaceLines,
       natalPlace: data.natalPlace,
       ...(relocationPlace === undefined ? {} : { relocationPlace }),
+      ...(coastline === undefined ? {} : { coastline }),
     };
     // Line names and a legend drawn into the map itself (#667), so the download reads on its own too.
     return renderAcgMapSvg(input, { labels: acgMapLabels(locale) });
-  }, [data, relocationPlace, locale]);
+  }, [data, relocationPlace, locale, coastline]);
 
   const displayName = person?.displayName ?? '';
 

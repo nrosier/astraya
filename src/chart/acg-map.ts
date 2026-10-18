@@ -35,6 +35,11 @@ export interface AcgMapInput {
   readonly localSpaceLines: readonly LocalSpaceLine[];
   readonly natalPlace: GeoPosition;
   readonly relocationPlace?: GeoPosition;
+  /**
+   * The coastlines as an SVG path in degree space (x = longitude + 180, y = 90 − latitude), drawn under the lines
+   * (#667): `coastline-110m.ts`, which callers load with a dynamic import() so it stays out of other chunks.
+   */
+  readonly coastline?: string;
 }
 
 /** The words for the legend and line labels (#667), in the reader's language; the renderer itself has no locale. */
@@ -142,6 +147,14 @@ export function renderAcgMapSvg(input: AcgMapInput, options?: AcgMapOptions): Ac
   for (let longitude = -180; longitude <= 180; longitude += GRATICULE_STEP_DEG) {
     const x = project({ latitude: 0, longitude }).x;
     parts.push(line(x, 0, x, mapHeight, 'acg-graticule'));
+  }
+
+  if (input.coastline !== undefined) {
+    // Scaled from the 360 × 180 degree box to the map; the stroke width is given in degrees so it draws at about 0.8px.
+    const scale = width / 360;
+    parts.push(
+      `<path d="${escapeXml(input.coastline)}" class="acg-coast" transform="scale(${String(scale)})" stroke-width="${String(0.8 / scale)}"/>`,
+    );
   }
 
   // MC and IC labels step through a few rows, in order across the map, so neighbouring lines keep apart.
