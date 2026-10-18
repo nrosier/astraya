@@ -9,7 +9,7 @@
  * @module ui/table-sort
  * @purpose Generic, domain-agnostic column sorting plus TSV/CSV serialization backing SortableTable (#44) and every other data table in the app.
  * @conventions Deliberately free of any chart/astrology knowledge — a TableColumn is just a key, label, and value accessor, so the same pair of helpers backs every table the app adds; `render`/`renderCell` are display-only and never used for copy/CSV/TSV output, which always use `valueOf`/`render` text.
- * @exports SortDirection, SortState, toggleSort, CellValue, ColumnAlign, columnAlign, TableColumn, sortRows, rowsToTsv, rowsToCsv
+ * @exports SortDirection, SortState, toggleSort, CellValue, ColumnAlign, columnAlign, TableColumn, sortRows, cellText, rowsToTsv, rowsToCsv
  */
 
 export type SortDirection = 'asc' | 'desc';
@@ -85,7 +85,8 @@ export function sortRows<T>(
   });
 }
 
-function cellText<T>(column: TableColumn<T>, row: T): string {
+/** The text a cell shows as plain text: `render` when the column has one, else `valueOf`. Copy, CSV/TSV and the PDF (#664) all use it. */
+export function cellText<T>(column: TableColumn<T>, row: T): string {
   return column.render ? column.render(row) : String(column.valueOf(row));
 }
 

@@ -709,6 +709,46 @@ describe('buildPdfPlan', () => {
     expect(plan.sections.every((section) => section.kind === 'chart' || section.kind === 'text')).toBe(true);
   }, 30_000);
 
+  it('fills table cells with the text the screen shows, not the sort value (#664)', async () => {
+    const provider = await getEngine();
+    const selection: PdfSelection = {
+      personId: ADA.id,
+      ...EMPTY_SELECTION,
+      charts: [{ type: 'natal', wheel: false, tables: ['aspects'] }],
+      forecast: {
+        filterPreset: 'all',
+        daily: true,
+        weekly: true,
+        monthly: true,
+        yearly: false,
+        asOfDate: '2025-01-01',
+      },
+    };
+    const context: PdfPlanContext = {
+      person: ADA,
+      provider,
+      settings: DEFAULT_EXTENDED_SETTINGS,
+      rulership: DEFAULT_RULERSHIP_CHOICE,
+      locale: 'en',
+      aiConsent: false,
+      corpusFetch,
+    };
+    const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
+    expect(plan.errors).toHaveLength(0);
+    const cells = plan.sections.flatMap((section) =>
+      section.kind === 'chart' ? section.tables.flatMap((table) => table.body.flat()) : [],
+    );
+    expect(cells.length).toBeGreaterThan(0);
+    // A Julian day (`2460676.5…`), an unrounded float (`1.560225…`) or a bare boolean is a sort value leaking through.
+    expect(cells.filter((cell) => /^\d{7}\.\d+$|\d\.\d{4,}|^(true|false)$/.test(cell))).toEqual([]);
+    const aspects = plan.sections
+      .flatMap((section) => (section.kind === 'chart' ? section.tables : []))
+      .find((table) => table.caption === chartViewMessages.en.aspectsCaption);
+    const orbColumn = aspects?.head.indexOf(chartViewMessages.en.orbLabel) ?? -1;
+    expect(orbColumn).toBeGreaterThanOrEqual(0);
+    expect(aspects?.body.every((row) => (row[orbColumn] ?? '').includes('°'))).toBe(true);
+  }, 30_000);
+
   it('builds an eclipses section listing eclipses in the given span, with natal contacts for a known birth time (#441, #484)', async () => {
     const provider = await getEngine();
     const selection: PdfSelection = {
