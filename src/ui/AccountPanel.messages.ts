@@ -16,7 +16,16 @@ const en = {
   addToAccountButton: 'Add it to my account',
   leaveOnDeviceButton: 'Leave it on this device',
 
-  signInWithOidcButton: 'Sign in with Authentik',
+  chooseMethodLabel: 'How do you want to sign in?',
+  localTitle: 'Local account',
+  localConsequence: 'A username and password kept by this Astraya server.',
+  ssoTitle: 'Authentik',
+  ssoConsequence: 'Single sign-on: you sign in at Authentik and come back here.',
+  chooseAnotherWay: 'Choose another way',
+  localExplainer: 'Sign in with the username and password of your Astraya account.',
+  ssoExplainer: 'You will go to Authentik to sign in, then return here. Astraya never sees your Authentik password.',
+  ssoContinueButton: 'Continue to Authentik',
+  ssoContinuing: 'Opening Authentik…',
 
   signInButton: 'Sign in',
   closeLabel: 'Close',
@@ -47,7 +56,17 @@ const nl: typeof en = {
   addToAccountButton: 'Toevoegen aan mijn account',
   leaveOnDeviceButton: 'Op dit apparaat laten staan',
 
-  signInWithOidcButton: 'Inloggen met Authentik',
+  chooseMethodLabel: 'Hoe wil je inloggen?',
+  localTitle: 'Lokaal account',
+  localConsequence: 'Een gebruikersnaam en wachtwoord die deze Astraya-server bewaart.',
+  ssoTitle: 'Authentik',
+  ssoConsequence: 'Single sign-on: je logt in bij Authentik en komt hier terug.',
+  chooseAnotherWay: 'Andere manier kiezen',
+  localExplainer: 'Log in met de gebruikersnaam en het wachtwoord van je Astraya-account.',
+  ssoExplainer:
+    'Je gaat naar Authentik om in te loggen en komt daarna hier terug. Astraya ziet je Authentik-wachtwoord nooit.',
+  ssoContinueButton: 'Doorgaan naar Authentik',
+  ssoContinuing: 'Authentik openen…',
 
   signInButton: 'Inloggen',
   closeLabel: 'Sluiten',
