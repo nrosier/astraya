@@ -37,7 +37,7 @@
  * @conventions Thin wiring over report-provenance.ts; fetches its corpus chunk at runtime via corpus-client.ts rather than importing the full synchronous CORPUS; uses ReportView.messages.ts for en/nl text via useMessages(); the degree-symbol toggle's own label/explanation/control lives in DegreeSymbolSetting.tsx, its persisted value in degree-symbol-setting.ts — this file only reads that value to filter paragraphs.
  * @exports ReportView
  */
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { assembleReport, reportPlacementKeys, type Report, type ReportParagraph } from '../interpretation/report.js';
 import { loadRuntimeCorpus } from '../interpretation/corpus-client.js';
 import type { CorpusEntry, Locale } from '../interpretation/schema.js';
@@ -59,6 +59,9 @@ import { useRulershipChoice } from './rulership-setting.js';
 import { splitSabianText } from '../interpretation/sabian-split.js';
 import { groupParagraphsByBody } from '../interpretation/report-groups.js';
 import { reportParagraphLabel } from './placement-label.js';
+import { chartOverview } from '../domain/chart-overview.js';
+import { chartOverviewRows } from './chart-overview-rows.js';
+import { chartOverviewMessages } from './chart-overview.messages.js';
 import { bodyDisplayName } from './astro-names.messages.js';
 import { useShowDegreeSymbol } from './degree-symbol-setting.js';
 import { DegreeSymbolSetting } from './DegreeSymbolSetting.js';
@@ -424,6 +427,7 @@ export function ReportView({
   readonly chartKind?: 'natal' | 'composite';
 }): React.JSX.Element {
   const t = useMessages(reportViewMessages);
+  const overviewT = useMessages(chartOverviewMessages);
   const [activeTab, setActiveTab] = useState<InterpretationTabKey>('standard');
   const [showProvenance, setShowProvenance] = useState(false);
   const [locale] = useLocale();
@@ -496,6 +500,20 @@ export function ReportView({
         {activeTab === 'standard' ? (
           <>
             {controls}
+            {chartKind === 'natal' && (
+              // The chart's headline facts, the same rows the PDF and the consultation page show (#691).
+              <section className="chart-overview" aria-labelledby="chart-overview-heading">
+                <h3 id="chart-overview-heading">{overviewT.heading}</h3>
+                <dl>
+                  {chartOverviewRows(chartOverview(chart, rulership), locale).map((row) => (
+                    <Fragment key={row.term}>
+                      <dt>{row.term}</dt>
+                      <dd>{row.value}</dd>
+                    </Fragment>
+                  ))}
+                </dl>
+              </section>
+            )}
             <nav className="report-toc" aria-label={t.tocAriaLabel}>
               <h3>{t.tocHeading}</h3>
               <ul>

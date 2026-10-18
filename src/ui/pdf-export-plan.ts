@@ -23,6 +23,9 @@ import { bodyById } from '../astrology/bodies.js';
 import { splitSabianText } from '../interpretation/sabian-split.js';
 import { groupParagraphsByBody } from '../interpretation/report-groups.js';
 import { reportParagraphLabel } from './placement-label.js';
+import { chartOverview } from '../domain/chart-overview.js';
+import { chartOverviewRows } from './chart-overview-rows.js';
+import { chartOverviewMessages } from './chart-overview.messages.js';
 import { DEFAULT_RULERSHIP_CHOICE, type RulershipChoice } from '../astrology/rulership.js';
 import {
   DEFAULT_EXTENDED_SETTINGS,
@@ -1081,13 +1084,22 @@ async function buildInterpretationSections(
   context: PdfPlanContext,
   pt: typeof pdfExportMessages.en,
   errors: string[],
-): Promise<readonly PdfTextSectionPlan[]> {
+): Promise<readonly (PdfTextSectionPlan | PdfFieldsSectionPlan)[]> {
   const { person, provider, rulership, locale, corpusFetch } = context;
   if (person.moment === undefined || (!selection.base && !selection.aiCustomised)) return [];
   const chart = await computeChartData(person.moment, provider, { rulership });
-  const sections: PdfTextSectionPlan[] = [];
+  const sections: (PdfTextSectionPlan | PdfFieldsSectionPlan)[] = [];
 
   if (selection.base) {
+    // The chart's headline facts ahead of the reading, the same rows the Report shows (#691).
+    sections.push({
+      kind: 'fields',
+      heading: chartOverviewMessages[locale].heading,
+      fields: chartOverviewRows(chartOverview(chart, rulership), locale).map((row) => ({
+        label: row.term,
+        value: row.value,
+      })),
+    });
     try {
       const corpus = await loadRuntimeCorpus(locale, corpusFetch ?? fetch);
       const report = assembleReport(chart, locale, corpus, rulership);
