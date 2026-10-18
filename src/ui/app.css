@@ -3131,6 +3131,13 @@ svg text.chart-symbol-text-unicode {
   stroke-dasharray: 2 2;
 }
 
+/* Natural Earth coastlines under the lines (#667); stroke width comes from the markup, scaled with the map. */
+.acg-coast {
+  fill: none;
+  stroke: var(--muted);
+  opacity: 0.55;
+}
+
 .acg-graticule {
   fill: none;
   stroke: var(--line);

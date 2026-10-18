@@ -182,3 +182,29 @@ describe('renderAcgMapSvg labels and legend (#667)', () => {
     expect(legend).toContain('acg-line-mc-mars');
   });
 });
+
+describe('renderAcgMapSvg coastline (#667)', () => {
+  it('draws the coastline under the lines, scaled from degrees to the map', () => {
+    const map = renderAcgMapSvg(
+      baseInput({ coastline: 'M0 0l10 10', lines: [{ kind: 'MC', body: SE.SE_SUN, longitude: 0 }] }),
+      {
+        width: 720,
+      },
+    );
+    expect(map.markup).toContain('<path d="M0 0l10 10" class="acg-coast" transform="scale(2)"');
+    expect(map.markup.indexOf('acg-coast')).toBeLessThan(map.markup.indexOf('acg-line-mc'));
+  });
+
+  it('ships the generated Natural Earth path, small enough to load with the map', async () => {
+    const { COASTLINE_110M_PATH } = await import('../src/chart/coastline-110m.js');
+    expect(COASTLINE_110M_PATH.startsWith('M')).toBe(true);
+    expect(COASTLINE_110M_PATH.length).toBeLessThan(50_000);
+    // Degree space: every absolute move stays inside the 360 × 180 box.
+    for (const [, x, y] of COASTLINE_110M_PATH.matchAll(/M(-?[\d.]+) (-?[\d.]+)/g)) {
+      expect(Number(x)).toBeGreaterThanOrEqual(0);
+      expect(Number(x)).toBeLessThanOrEqual(360);
+      expect(Number(y)).toBeGreaterThanOrEqual(0);
+      expect(Number(y)).toBeLessThanOrEqual(180);
+    }
+  });
+});

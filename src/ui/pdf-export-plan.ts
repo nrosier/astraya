@@ -971,10 +971,13 @@ async function buildAstrocartographySectionPlan(
 
   let svg: PdfChartSectionPlan['svg'];
   if (options.map) {
+    // The coastlines (#667), as their own chunk, loaded only when a map goes into the PDF.
+    const { COASTLINE_110M_PATH } = await import('../chart/coastline-110m.js');
     const input: AcgMapInput = {
       lines: data.lines,
       localSpaceLines: data.localSpaceLines,
       natalPlace: data.natalPlace,
+      coastline: COASTLINE_110M_PATH,
     };
     const map = renderAcgMapSvg(input, { labels: acgMapLabels(locale) });
     svg = { markup: standaloneSvg(map.markup), width: map.width, height: map.height };

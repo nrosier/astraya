@@ -132,6 +132,7 @@ const STANDALONE_STYLE = [
   '.acg-legend-sample-AC { stroke-dasharray: 1 3; stroke-linecap: round; }',
   '.acg-legend-sample-DC { stroke-dasharray: 8 3 2 3; }',
   '.acg-legend-sample-localSpace { stroke-width: 1.5; stroke-dasharray: 2 2; }',
+  '.acg-coast { fill: none; stroke: #5c5878; opacity: 0.55; }',
   '.acg-graticule { fill: none; stroke: #e2dff0; stroke-width: 0.5; opacity: 0.6; }',
   '.acg-marker-natal { fill: #5b3fd4; stroke: #fbfaff; stroke-width: 1.5; }',
   '.acg-marker-relocation { fill: #b3261e; stroke: #fbfaff; stroke-width: 1.5; }',
