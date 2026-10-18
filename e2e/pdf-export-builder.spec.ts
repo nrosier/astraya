@@ -12,7 +12,7 @@ import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
-import { createPerson, gotoAndSettle } from './support.ts';
+import { createPerson, gotoAndSettle, pdfTextRuns } from './support.ts';
 
 let dir: string;
 let app: FastifyInstance;
@@ -82,15 +82,17 @@ test('the header’s PDF-builder link opens the PDF builder, and a preset downlo
   const pdf = Buffer.concat(chunks);
   expect(pdf.subarray(0, 5).toString('latin1')).toBe('%PDF-');
   expect(pdf.length).toBeGreaterThan(1000);
-  // The interpretation sets each Sabian symbol apart (#653): the labelled reading is drawn in the oblique font. jsPDF
-  // writes these streams uncompressed, so look in the bytes: find which font name the page resources give the
-  // oblique font, and check the text run that starts with the label is set in exactly that one.
-  const raw = pdf.toString('latin1');
-  const obliqueObject = /(\d+) 0 obj\s*<<\s*\/Type \/Font\s*\/BaseFont \/Helvetica-Oblique\b/.exec(raw)?.[1];
-  expect(obliqueObject).toBeDefined();
-  const obliqueName = new RegExp(`/(F\\d+) ${obliqueObject ?? ''} 0 R`).exec(raw)?.[1];
-  expect(obliqueName).toBeDefined();
-  expect(raw).toMatch(new RegExp(`/${obliqueName ?? ''} 10 Tf[^]{0,200}?\\(Key insight: `));
+  // The interpretation sets each Sabian symbol apart (#653) as a callout (#655): a KEY INSIGHT tag, then the reading in
+  // a font other than the body text's (the oblique). Read through the embedded font's ToUnicode map (`pdfTextRuns`).
+  const runs = pdfTextRuns(pdf.toString('latin1'));
+  const tag = runs.findIndex((run) => run.text === 'KEY INSIGHT');
+  expect(tag).toBeGreaterThan(0);
+  const body = runs.find((run) => run.text.startsWith('Your core drive'));
+  const reading = runs[tag + 1];
+  expect(reading?.text.length).toBeGreaterThan(10);
+  expect(reading?.font).not.toBe(body?.font);
+  // The prime of a degree draws as itself, no longer as an apostrophe.
+  expect(runs.some((run) => /\d+°\d{2}′/.test(run.text))).toBe(true);
 
   await expect(page.getByRole('status')).toHaveText('✓');
   const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
@@ -385,7 +387,7 @@ test('the PDF builder has its own Sabian symbol notes option, starting from the 
   ]);
   const chunks: Buffer[] = [];
   for await (const chunk of await download.createReadStream()) chunks.push(chunk as Buffer);
-  const raw = Buffer.concat(chunks).toString('latin1');
-  expect(raw).toContain('(Core identity');
-  expect(raw).not.toContain('(Key insight: ');
+  const runs = pdfTextRuns(Buffer.concat(chunks).toString('latin1'));
+  expect(runs.some((run) => run.text.startsWith('Core identity'))).toBe(true);
+  expect(runs.some((run) => run.text === 'KEY INSIGHT')).toBe(false);
 });

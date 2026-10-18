@@ -171,13 +171,17 @@ import { toRow as profectionToRow, columns as profectionColumns } from './Profec
 import { profectionsViewMessages } from './ProfectionsView.messages.js';
 import { eclipseRows, type EclipseRow } from './eclipses.js';
 import { eclipsesViewMessages } from './EclipsesView.messages.js';
-import { cellText, type TableColumn } from './table-sort.js';
+import { cellText, columnAlign, type ColumnAlign, type TableColumn } from './table-sort.js';
 
 /** A table reduced to plain strings — the same conversion a CSV download already does for every cell. */
 export interface PdfTablePlan {
   readonly caption: string;
   readonly head: readonly string[];
   readonly body: readonly (readonly string[])[];
+  /** Each column's alignment, as the screen decides it (`columnAlign`): numbers line up at the end (#655). */
+  readonly align: readonly ColumnAlign[];
+  /** The aspect column, if any, and each row's aspect key, so the PDF can tint the aspect's name by family (#655). */
+  readonly aspects?: { readonly column: number; readonly keys: readonly (string | undefined)[] };
 }
 
 export interface PdfChartSectionPlan {
@@ -277,12 +281,20 @@ export interface PdfPlanContext {
   readonly orbSources?: OrbContextSource;
 }
 
+function aspectKeyOf(row: unknown): string | undefined {
+  if (typeof row !== 'object' || row === null || !('aspectKey' in row)) return undefined;
+  return typeof row.aspectKey === 'string' ? row.aspectKey : undefined;
+}
+
 function tablePlanOf<T>(caption: string, columns: readonly TableColumn<T>[], rows: readonly T[]): PdfTablePlan {
+  const aspectColumn = columns.findIndex((column) => column.key === 'aspect');
   return {
     caption,
     head: columns.map((column) => column.label),
     // The text the screen's Copy and CSV give (#664): `render` holds the formatted date or orb, `valueOf` only the sort key.
     body: rows.map((row) => columns.map((column) => cellText(column, row))),
+    align: columns.map((column) => columnAlign(column, rows)),
+    ...(aspectColumn === -1 ? {} : { aspects: { column: aspectColumn, keys: rows.map(aspectKeyOf) } }),
   };
 }
 

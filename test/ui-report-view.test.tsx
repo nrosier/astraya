@@ -253,7 +253,7 @@ describe('ReportView corpus loading (locale comes from the shared locale.ts stor
       // The image is one sentence in quotation marks…
       expect(image?.textContent).toMatch(/^\u201CImage number \d+ stands in the light\.\u201D$/);
       // …and the reading follows under its label, in italics, so a screen reader hears the label.
-      expect(insight?.querySelector('strong')?.textContent).toBe(`${reportViewMessages.en.keyInsightLabel}:`);
+      expect(insight?.querySelector('strong')?.textContent).toBe(reportViewMessages.en.keyInsightLabel);
       expect(insight?.querySelector('em')?.textContent).toMatch(
         /^This reading of \d+ says what it means\. It goes on a little\.$/,
       );
