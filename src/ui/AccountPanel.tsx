@@ -14,9 +14,11 @@
 /**
  * @module AccountPanel
  * @purpose Renders the sign-in/sign-out control mounted in the sticky app header, plus the one-time account-adoption prompt and local-data-removal flow.
- * @conventions Mounted globally alongside SyncBadge; reads session state via `useSession()`/`session-context.js`; text comes from co-located `AccountPanel.messages.ts` via `useMessages()`.
+ * @conventions Mounted globally alongside SyncBadge; reads session state via `useSession()`/`session-context.js`; the sign-in popover opens on a choice between a local account and single sign-on when SSO is configured (#651), and goes straight to the password form when it is not; text comes from co-located `AccountPanel.messages.ts` via `useMessages()`.
  * @exports AccountPanel
  */
+import { Button } from './primitives/Button.js';
+import { OptionCards } from './primitives/OptionCards.js';
 import { PasswordField } from './primitives/PasswordField.js';
 import { TextField } from './primitives/TextField.js';
 import { useEffect, useRef, useState } from 'react';
@@ -137,17 +139,14 @@ function OidcSignIn({ config }: { config: { clientId: string; authorizationEndpo
   };
 
   return (
-    <p className="actions">
-      <button type="button" disabled={busy} onClick={start}>
-        {t.signInWithOidcButton}
-      </button>
-      {error !== undefined && (
-        <span className="warning" role="alert">
-          {' '}
-          {error}
-        </span>
-      )}
-    </p>
+    <>
+      {error !== undefined && <StatusMessage kind="error">{error}</StatusMessage>}
+      <p className="actions">
+        <Button variant="primary" busy={busy} busyLabel={t.ssoContinuing} onClick={start}>
+          {t.ssoContinueButton}
+        </Button>
+      </p>
+    </>
   );
 }
 
@@ -158,6 +157,8 @@ function OidcSignIn({ config }: { config: { clientId: string; authorizationEndpo
  * a small popover beneath the button; closing it (the × or a successful sign-in) hides
  * the form again without losing anything typed elsewhere on the page.
  */
+type SignInMethod = 'local' | 'sso';
+
 const SIGNIN_POPOVER_ID = 'accountpanel-signin-popover';
 const SIGNIN_POPOVER_HEADING_ID = 'accountpanel-signin-popover-heading';
 
@@ -169,6 +170,11 @@ function SignInForm({
   oidcConfig: OidcConfig | undefined;
 }): React.JSX.Element {
   const [open, setOpen] = useState(false);
+  // Which way in the reader picked (#651). With no single sign-on configured there is only one way, so the choice
+  // is skipped; otherwise the panel opens on the choice, so the form that follows is plainly one path.
+  const ssoConfig = oidcConfig?.enabled === true ? oidcConfig : undefined;
+  const [picked, setPicked] = useState<SignInMethod | undefined>();
+  const method: SignInMethod | 'choose' = ssoConfig === undefined ? 'local' : (picked ?? 'choose');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
@@ -181,14 +187,20 @@ function SignInForm({
   const t = useMessages(accountPanelMessages);
   const shared = useMessages(sharedMessages);
 
+  const choiceRef = useRef<HTMLDivElement>(null);
+
   const close = (): void => {
     setOpen(false);
+    setPicked(undefined);
     triggerRef.current?.focus();
   };
 
+  // Focus follows the step: the first choice card, or the first field of the chosen form.
   useEffect(() => {
-    if (open) usernameRef.current?.focus();
-  }, [open]);
+    if (!open) return;
+    if (method === 'choose') choiceRef.current?.querySelector('input')?.focus();
+    else if (method === 'local') usernameRef.current?.focus();
+  }, [open, method]);
 
   useEffect(() => {
     // Otherwise this floats open over whatever screen the user navigates to next —
@@ -251,35 +263,77 @@ function SignInForm({
     >
       <p className="accountpanel-popover-head">
         <span id={SIGNIN_POPOVER_HEADING_ID}>{t.signInPopoverHeading}</span>
-        <button type="button" className="quiet" aria-label={t.closeLabel} onClick={close}>
+        <Button size="compact" aria-label={t.closeLabel} onClick={close}>
           ×
-        </button>
+        </Button>
       </p>
-      <p>{t.signInExplainer}</p>
-      {error !== undefined && <StatusMessage kind="error">{error}</StatusMessage>}
-      <form onSubmit={submit}>
-        <div className="field-grid">
-          <TextField
-            label={shared.usernameLabel}
-            inputRef={usernameRef}
-            autoComplete="username"
-            value={username}
-            onChange={setUsername}
-          />
-          <PasswordField
-            label={t.passwordLabel}
-            autoComplete="current-password"
-            value={password}
-            onChange={setPassword}
+      {method === 'choose' ? (
+        <div ref={choiceRef}>
+          <p>{t.signInExplainer}</p>
+          <OptionCards
+            label={t.chooseMethodLabel}
+            value=""
+            options={[
+              { value: 'local', title: t.localTitle, consequence: t.localConsequence },
+              { value: 'sso', title: t.ssoTitle, consequence: t.ssoConsequence },
+            ]}
+            onChange={(value) => {
+              setError(undefined);
+              setPicked(value === 'sso' ? 'sso' : 'local');
+            }}
           />
         </div>
-        <p className="actions">
-          <button type="submit" disabled={busy || username.trim() === '' || password === ''}>
-            {t.signInButton}
-          </button>
-        </p>
-      </form>
-      {oidcConfig?.enabled === true && <OidcSignIn config={oidcConfig} />}
+      ) : (
+        <>
+          {ssoConfig !== undefined && (
+            <p className="accountpanel-step">
+              <button
+                type="button"
+                className="quiet"
+                onClick={() => {
+                  setError(undefined);
+                  setPicked(undefined);
+                }}
+              >
+                &larr; {t.chooseAnotherWay}
+              </button>
+            </p>
+          )}
+          {method === 'sso' && ssoConfig !== undefined ? (
+            <>
+              <p>{t.ssoExplainer}</p>
+              <OidcSignIn config={ssoConfig} />
+            </>
+          ) : (
+            <>
+              <p>{ssoConfig === undefined ? t.signInExplainer : t.localExplainer}</p>
+              {error !== undefined && <StatusMessage kind="error">{error}</StatusMessage>}
+              <form onSubmit={submit}>
+                <div className="field-grid">
+                  <TextField
+                    label={shared.usernameLabel}
+                    inputRef={usernameRef}
+                    autoComplete="username"
+                    value={username}
+                    onChange={setUsername}
+                  />
+                  <PasswordField
+                    label={t.passwordLabel}
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={setPassword}
+                  />
+                </div>
+                <p className="actions">
+                  <Button type="submit" variant="primary" disabled={busy || username.trim() === '' || password === ''}>
+                    {t.signInButton}
+                  </Button>
+                </p>
+              </form>
+            </>
+          )}
+        </>
+      )}
     </div>
   );
 }
