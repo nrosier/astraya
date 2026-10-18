@@ -50,6 +50,11 @@ test('a person with a known birth time gets a Consultation screen with transits,
   await page.getByRole('link', { name: 'Consultation', exact: true }).click();
   await expect(page.getByRole('heading', { level: 1, name: /consultation/i })).toBeVisible();
 
+  // The page is cast for the moment it opened, to the minute, and Now recasts it (#676).
+  await expect(page.getByText(/^As of \d{4}-\d{2}-\d{2} \d{2}:\d{2}, your local time/).first()).toBeVisible();
+  await page.getByRole('button', { name: 'Now', exact: true }).click();
+  await expect(page.getByRole('heading', { level: 2, name: 'Current transits' })).toBeVisible();
+
   // "View all transits"/"Open timing timeline"/"Open natal chart" each appear twice — once
   // beside their own section, once again in "Next" (#506/#509's launchpad pattern) — so these
   // are counted, not asserted singly.

@@ -87,7 +87,8 @@ import { useRulershipChoice } from './rulership-setting.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { useStoreState } from './store-context.js';
-import { todayInputValue } from './format.js';
+import { formatTimestamp } from './format.js';
+import { Button } from './primitives/Button.js';
 import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
 import { useDefaultCalculationProfile } from './default-calculation-profile.js';
 import { rulershipSettingMessages } from './RulershipSetting.messages.js';
@@ -147,6 +148,8 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
   const [rulership] = useRulershipChoice();
   const [defaultProfile] = useDefaultCalculationProfile();
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
+  // The session's moment (#676): when the page opened, or when Now was last pressed. Not noon UT, where the Moon can be 6° off.
+  const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
     if (person?.moment === undefined || provider === undefined) return undefined;
@@ -155,9 +158,14 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
     setLoad({ kind: 'loading' });
     void (async () => {
       try {
-        const today = todayInputValue();
-        const [year, month, day] = today.split('-').map(Number) as [number, number, number];
-        const todayJd = await provider.julianDayFromUtc(year, month, day, 12, 0, 0);
+        const todayJd = await provider.julianDayFromUtc(
+          now.getUTCFullYear(),
+          now.getUTCMonth() + 1,
+          now.getUTCDate(),
+          now.getUTCHours(),
+          now.getUTCMinutes(),
+          now.getUTCSeconds(),
+        );
         const natalJd = await julianDayFor(provider, resolveMoment(moment));
         // Only the techniques that feed a `GLANCE_TRACKS` track are computed here —
         // secondary progression and the periodic-transit forecast would only be filtered back
@@ -198,7 +206,7 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
     return () => {
       effect.cancelled = true;
     };
-  }, [person?.moment, provider]);
+  }, [person?.moment, provider, now]);
 
   const natalHouses = load.kind === 'ready' ? load.transit.natal.houses : undefined;
   const rules = useMemo<TransitRuleContext>(
@@ -291,6 +299,17 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
 
       <h2>{t.basisHeading}</h2>
       <p>{t.basisLine(zodiacLabel, rulershipT.options[rulership])}</p>
+      <p>
+        {t.asOf(formatTimestamp(now))}{' '}
+        <Button
+          size="compact"
+          onClick={() => {
+            setNow(new Date());
+          }}
+        >
+          {t.refreshNow}
+        </Button>
+      </p>
 
       {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
       {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
@@ -337,7 +356,7 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
 
           <h2>{t.timingHeading}</h2>
           <TimingTimelineTracks
-            axisLabel={t.asOfToday}
+            axisLabel={t.asOf(formatTimestamp(now))}
             tracks={tracks}
             labels={timingT.tracks}
             noEvents={timingT.noEvents}
