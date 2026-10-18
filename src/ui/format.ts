@@ -62,6 +62,16 @@ export function formatSignDegree(longitude: number): string {
 }
 
 /**
+ * An orb as degrees and minutes, `1°34′`, rounded to the nearest minute so `0.9999` is `1°00′` (#666): the same
+ * notation as a sign degree, in every table, the CSV and the PDF. Sorting keeps the numeric orb.
+ */
+export function formatOrb(orb: number): string {
+  const totalMinutes = Math.round(Math.abs(orb) * 60);
+  const sign = orb < 0 && totalMinutes > 0 ? '-' : '';
+  return `${sign}${String(Math.floor(totalMinutes / 60))}°${String(totalMinutes % 60).padStart(2, '0')}′`;
+}
+
+/**
  * A number shown with a fixed count of decimals, always with a point, whatever the language (#513): the orbs, ages
  * and speeds in the tables read the same in English and Dutch and in the CSV, PDF and wheel they are copied into.
  * The one place a displayed figure is rounded, so "-0.00" never appears.

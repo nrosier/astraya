@@ -189,16 +189,36 @@ export function placementLabel(placement: CorpusPlacement, locale: Locale): stri
 }
 
 /**
+ * A body's own placement without the body's name (#666), for a paragraph under that body's heading: `Virgo`,
+ * `9th house`. Undefined for a placement that is not one body's sign or house.
+ */
+function placementWithoutBody(placement: CorpusPlacement, locale: Locale): string | undefined {
+  switch (placement.category) {
+    case 'planet-in-sign':
+    case 'composite-planet-in-sign':
+      return sign(placement.sign, locale);
+    case 'planet-in-house':
+    case 'composite-planet-in-house':
+      return locale === 'nl' ? `${ordinal(placement.house, locale)} huis` : `${ordinal(placement.house, locale)} house`;
+    default:
+      return undefined;
+  }
+}
+
+/**
  * The label that sits above a report paragraph (#654): the placement in words, with the degree added for a sign
  * placement only. A house placement, an aspect or a derived paragraph has no degree of its own to show beside it;
- * the sign it sits in is already the planet's sign paragraph's business.
+ * the sign it sits in is already the planet's sign paragraph's business. Under a body's heading the body's name is
+ * left out, since the heading already says it (#666): `Virgo · 21°46′` under **Sun**.
  */
 export function reportParagraphLabel(
   placement: CorpusPlacement,
   locale: Locale,
   longitude: number | undefined,
+  underBodyHeading = false,
 ): string {
-  const label = placementLabel(placement, locale);
+  const label =
+    (underBodyHeading ? placementWithoutBody(placement, locale) : undefined) ?? placementLabel(placement, locale);
   const showsDegree = placement.category === 'planet-in-sign' || placement.category === 'sign-on-cusp';
   return showsDegree && longitude !== undefined ? `${label} · ${formatSignDegree(longitude)}` : label;
 }

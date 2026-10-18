@@ -33,7 +33,7 @@ import {
 } from '../domain/solar-arc-directions.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { civilFromJulianDay } from '../time/julian.js';
-import { formatFixed, todayInputValue } from './format.js';
+import { formatFixed, formatOrb, todayInputValue } from './format.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { PersonNotFound } from './PersonNotFound.js';
@@ -156,7 +156,7 @@ export function contactColumns(t: typeof solarArcViewMessages.en, locale: Locale
       valueOf: (row) => row.bodyBName,
       render: (row) => bodyDisplayName(row.bodyBKey, locale),
     },
-    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => `${formatFixed(row.orb, 2)}°` },
+    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => formatOrb(row.orb) },
     {
       key: 'applying',
       label: t.applyingLabel,

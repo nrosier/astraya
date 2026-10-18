@@ -130,7 +130,7 @@ import {
 import type { chartViewMessages } from './ChartView.messages.js';
 import type { pdfExportMessages } from './pdf-export.messages.js';
 import { aspectDisplayName, bodyDisplayName, bodyShortName, signDisplayName } from './astro-names.messages.js';
-import { formatCoordinate, formatFixed, utcDay } from './format.js';
+import { formatCoordinate, formatOrb, utcDay } from './format.js';
 import { relationshipSummaryParagraphs } from './relationship-summary-pdf-text.js';
 import { aspectColumns as synastryAspectColumns } from './SynastryView.js';
 import { synastryViewMessages } from './SynastryView.messages.js';
@@ -215,10 +215,16 @@ function ungrouped(paragraphs: readonly PdfParagraphPlan[]): readonly PdfParagra
  * One report paragraph as the PDF draws it (#653, #654): a Sabian symbol as its image and reading, and any other
  * paragraph as text under the label that says which placement it is, when it has one.
  */
-function paragraphPlanOf(p: ReportParagraph, locale: Locale, pt: typeof pdfExportMessages.en): PdfParagraphPlan {
+function paragraphPlanOf(
+  p: ReportParagraph,
+  locale: Locale,
+  pt: typeof pdfExportMessages.en,
+  underBodyHeading: boolean,
+): PdfParagraphPlan {
   if (p.placement?.category === 'degree-symbol')
     return { ...splitSabianText(p.text), insightLabel: pt.keyInsightLabel };
-  const label = p.placement === undefined ? undefined : reportParagraphLabel(p.placement, locale, p.longitude);
+  const label =
+    p.placement === undefined ? undefined : reportParagraphLabel(p.placement, locale, p.longitude, underBodyHeading);
   return label === undefined ? p.text : { label, text: p.text };
 }
 
@@ -1016,7 +1022,7 @@ function eclipsesPdfColumns(et: typeof eclipsesViewMessages.en, locale: Locale):
                 et.contact(
                   bodyDisplayName(contact.pointKey, locale),
                   aspectDisplayName(contact.kind, locale),
-                  `${formatFixed(contact.orb, 1)}°`,
+                  formatOrb(contact.orb),
                 ),
               )
               .join('; '),
@@ -1095,7 +1101,7 @@ async function buildInterpretationSections(
               : section.paragraphs,
           ).map((group) => ({
             body: group.bodyKey === undefined ? undefined : bodyDisplayName(group.bodyKey, locale),
-            paragraphs: group.paragraphs.map((p) => paragraphPlanOf(p, locale, pt)),
+            paragraphs: group.paragraphs.map((p) => paragraphPlanOf(p, locale, pt, group.bodyKey !== undefined)),
           })),
         });
       }

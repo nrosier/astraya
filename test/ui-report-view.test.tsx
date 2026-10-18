@@ -277,9 +277,10 @@ describe('ReportView corpus loading (locale comes from the shared locale.ts stor
     expect(sunGroup?.querySelectorAll('li.report-paragraph').length).toBeGreaterThanOrEqual(2);
 
     const labels = Array.from(coreIdentity.querySelectorAll('.report-placement-label')).map((p) => p.textContent);
-    // A sign has its degree; a house does not.
-    expect(labels.some((text) => /^Sun in [A-Za-z]+ · \d+°\d{2}′$/.test(text))).toBe(true);
-    expect(labels.some((text) => /^Sun in the \d+(st|nd|rd|th) house$/.test(text))).toBe(true);
+    const sunLabels = Array.from(sunGroup?.querySelectorAll('.report-placement-label') ?? []).map((p) => p.textContent);
+    // A sign has its degree; a house does not. Under the Sun heading neither repeats "Sun" (#666).
+    expect(sunLabels.some((text) => /^[A-Za-z]+ · \d+°\d{2}′$/.test(text))).toBe(true);
+    expect(sunLabels.some((text) => /^\d+(st|nd|rd|th) house$/.test(text))).toBe(true);
     // The only label with a degree and a house is the cusp (the Ascendant), which is a sign on a house cusp, not a planet in a house.
     expect(labels.filter((text) => /house.*·/.test(text)).every((text) => text.includes('cusp'))).toBe(true);
 

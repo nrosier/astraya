@@ -12,7 +12,7 @@
  * @conventions Never duplicates the underlying classification logic (groupedRelationshipContacts, relationshipAngleContacts, houseOverlays, aspectValence from domain/relationship-themes.js) — only the sentence-joining is PDF-specific; text/labels come from RelationshipSummary.messages.ts.
  * @exports relationshipSummaryParagraphs
  */
-import { formatFixed } from './format.js';
+import { formatOrb } from './format.js';
 import { bodyById } from '../astrology/bodies.js';
 import { housesAreDefined } from '../domain/chart-compute.js';
 import { houseOverlays } from '../domain/house-overlays.js';
@@ -42,7 +42,7 @@ function contactSentence(
   const bodyA = bodyDisplayName(bodyKeyOf(contact.aspect.bodyA), locale);
   const bodyB = bodyDisplayName(bodyKeyOf(contact.aspect.bodyB), locale);
   const aspect = aspectDisplayName(contact.aspect.aspect.key, locale);
-  return t.contactSentence(`${nameA}’s ${bodyA}`, aspect, `${nameB}’s ${bodyB}`, formatFixed(contact.aspect.orb, 1));
+  return t.contactSentence(`${nameA}’s ${bodyA}`, aspect, `${nameB}’s ${bodyB}`, formatOrb(contact.aspect.orb));
 }
 
 /**
