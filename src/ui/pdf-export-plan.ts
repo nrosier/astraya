@@ -96,6 +96,7 @@ import type { Person } from '../domain/person.js';
 import { computeSynastry, rankedSynastryAspects } from '../domain/synastry.js';
 import { renderChartSheetSvg } from '../chart/chart-sheet.js';
 import { renderAcgMapSvg, type AcgMapInput } from '../chart/acg-map.js';
+import { acgMapLabels } from './acg-map-labels.js';
 import { renderMultiWheelSvg, type CrossRingAspects } from '../chart/multi-wheel.js';
 import { standaloneSvg } from '../chart/standalone-svg.js';
 import { resolveWheelDisplayOptions } from '../chart/wheel-options.js';
@@ -975,7 +976,7 @@ async function buildAstrocartographySectionPlan(
       localSpaceLines: data.localSpaceLines,
       natalPlace: data.natalPlace,
     };
-    const map = renderAcgMapSvg(input);
+    const map = renderAcgMapSvg(input, { labels: acgMapLabels(locale) });
     svg = { markup: standaloneSvg(map.markup), width: map.width, height: map.height };
   }
 

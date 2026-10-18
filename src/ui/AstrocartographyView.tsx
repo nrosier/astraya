@@ -24,6 +24,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { resolvePlacementText } from '../interpretation/compose.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { renderAcgMapSvg, type AcgMapInput } from '../chart/acg-map.js';
+import { acgMapLabels } from './acg-map-labels.js';
 import { standaloneSvg } from '../chart/standalone-svg.js';
 import { bodyById } from '../astrology/bodies.js';
 import { degreesInSign, signOf } from '../astrology/signs.js';
@@ -158,8 +159,9 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
       natalPlace: data.natalPlace,
       ...(relocationPlace === undefined ? {} : { relocationPlace }),
     };
-    return renderAcgMapSvg(input);
-  }, [data, relocationPlace]);
+    // Line names and a legend drawn into the map itself (#667), so the download reads on its own too.
+    return renderAcgMapSvg(input, { labels: acgMapLabels(locale) });
+  }, [data, relocationPlace, locale]);
 
   const displayName = person?.displayName ?? '';
 

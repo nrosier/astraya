@@ -121,3 +121,64 @@ describe('renderAcgMapSvg (#171)', () => {
     expect(countTags(map.markup, 'line')).toBe(20);
   });
 });
+
+describe('renderAcgMapSvg labels and legend (#667)', () => {
+  const LABELS = {
+    bodyName: (key: string) => ({ sun: 'Sun', moon: 'Moon', mars: 'Mars <&>' })[key] ?? key,
+    kinds: { MC: 'MC', IC: 'IC', AC: 'AC', DC: 'DC' },
+    legendKinds: {
+      MC: 'MC (Midheaven)',
+      IC: 'IC (Nadir)',
+      AC: 'AC (Ascendant)',
+      DC: 'DC (Descendant)',
+      localSpace: 'Local Space',
+    },
+  };
+  const lines: AcgLine[] = [
+    { kind: 'MC', body: SE.SE_SUN, longitude: 10 },
+    { kind: 'IC', body: SE.SE_SUN, longitude: -170 },
+    {
+      kind: 'AC',
+      body: SE.SE_MARS,
+      segments: [
+        [
+          { latitude: 40, longitude: 20 },
+          { latitude: 2, longitude: 25 },
+          { latitude: -40, longitude: 30 },
+        ],
+      ],
+    },
+  ];
+
+  it('draws nothing extra without labels, so the map stays exactly 2:1', () => {
+    const map = renderAcgMapSvg(baseInput({ lines }), { width: 900 });
+    expect(map.height).toBe(450);
+    expect(map.markup).not.toContain('acg-label');
+    expect(map.markup).not.toContain('acg-legend');
+  });
+
+  it('names each line on the map, escaping the text', () => {
+    const map = renderAcgMapSvg(baseInput({ lines }), { width: 900, labels: LABELS });
+    expect(map.markup).toContain('>Sun MC</text>');
+    expect(map.markup).toContain('>Sun IC</text>');
+    expect(map.markup).toContain('>Mars &lt;&amp;&gt; AC</text>');
+  });
+
+  it('adds a legend below the map with each line type and body on it', () => {
+    const map = renderAcgMapSvg(baseInput({ lines }), { width: 900, labels: LABELS });
+    expect(map.height).toBeGreaterThan(450);
+    expect(map.markup).toContain(`viewBox="0 0 900 ${String(map.height)}"`);
+    const legend = map.markup.slice(map.markup.indexOf('<g class="acg-legend">'));
+    for (const name of ['MC (Midheaven)', 'IC (Nadir)', 'AC (Ascendant)', '>Sun<', '>Mars &lt;&amp;&gt;<']) {
+      expect(legend).toContain(name);
+    }
+    // Only the line types on this map: no DC line, no Local Space.
+    expect(legend).not.toContain('DC (Descendant)');
+    expect(legend).not.toContain('Local Space');
+    // Legend strokes are not counted as map lines.
+    expect(legend).not.toMatch(/class="acg-line-(mc|ic|ac|dc)[ "]/);
+    // Each body's swatch carries its own colour class.
+    expect(legend).toContain('acg-line-mc-sun');
+    expect(legend).toContain('acg-line-mc-mars');
+  });
+});
