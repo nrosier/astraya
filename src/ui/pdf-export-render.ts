@@ -55,6 +55,8 @@ const PDF_UNSAFE_TO_SAFE: ReadonlyMap<string, string> = new Map([
   ...Object.entries(ASPECT_UNICODE).map(([key, glyph]): [string, string] => [glyph, ASPECT_CODES[key] ?? glyph]),
   ['℞', 'Rx'],
   ['→', '->'],
+  // The minute mark of a sign degree (`21°46′`, #654). WinAnsi has no prime; the apostrophe is the nearest it draws.
+  ['′', "'"],
 ]);
 
 const PDF_UNSAFE_PATTERN = new RegExp(
@@ -125,24 +127,45 @@ export async function renderPdfPlan(plan: PdfPlan): Promise<{ blob: Blob; filena
       for (const field of section.fields)
         y = wrapAndPrint(doc, `${field.label}: ${field.value}`, PAGE_MARGIN, y, contentWidth);
     } else if (section.kind === 'text') {
-      for (const paragraph of section.paragraphs) {
-        if (y > pageHeight - PAGE_MARGIN) {
-          doc.addPage();
-          y = 20;
-        }
-        if (typeof paragraph === 'string') {
-          y = wrapAndPrint(doc, paragraph, PAGE_MARGIN, y, contentWidth);
-        } else {
-          // A Sabian symbol (#653): the image in quotation marks, then the labelled reading in italics.
-          doc.setFont('helvetica', 'normal');
-          y = wrapAndPrint(doc, `\u201C${paragraph.image}\u201D`, PAGE_MARGIN, y, contentWidth);
-          if (paragraph.insight !== undefined) {
-            doc.setFont('helvetica', 'italic');
-            y = wrapAndPrint(doc, `${paragraph.insightLabel}: ${paragraph.insight}`, PAGE_MARGIN, y, contentWidth);
-            doc.setFont('helvetica', 'normal');
+      for (const group of section.groups) {
+        // A body's sub-heading (#654), once, above the paragraphs that are about it.
+        if (group.body !== undefined) {
+          if (y > pageHeight - PAGE_MARGIN) {
+            doc.addPage();
+            y = 20;
           }
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(12);
+          y = wrapAndPrint(doc, group.body, PAGE_MARGIN, y, contentWidth);
+          doc.setFontSize(10);
+          doc.setFont('helvetica', 'normal');
+          y += 1;
         }
-        y += 3;
+        for (const paragraph of group.paragraphs) {
+          if (y > pageHeight - PAGE_MARGIN) {
+            doc.addPage();
+            y = 20;
+          }
+          if (typeof paragraph === 'string') {
+            y = wrapAndPrint(doc, paragraph, PAGE_MARGIN, y, contentWidth);
+          } else if ('label' in paragraph) {
+            // The placement this paragraph is about (#654), in bold above its text.
+            doc.setFont('helvetica', 'bold');
+            y = wrapAndPrint(doc, paragraph.label, PAGE_MARGIN, y, contentWidth);
+            doc.setFont('helvetica', 'normal');
+            y = wrapAndPrint(doc, paragraph.text, PAGE_MARGIN, y, contentWidth);
+          } else {
+            // A Sabian symbol (#653): the image in quotation marks, then the labelled reading in italics.
+            doc.setFont('helvetica', 'normal');
+            y = wrapAndPrint(doc, `\u201C${paragraph.image}\u201D`, PAGE_MARGIN, y, contentWidth);
+            if (paragraph.insight !== undefined) {
+              doc.setFont('helvetica', 'italic');
+              y = wrapAndPrint(doc, `${paragraph.insightLabel}: ${paragraph.insight}`, PAGE_MARGIN, y, contentWidth);
+              doc.setFont('helvetica', 'normal');
+            }
+          }
+          y += 3;
+        }
       }
     } else {
       if (section.hint !== undefined) {

@@ -7,6 +7,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { CORPUS_CATEGORIES, parsePlacementKey, type CorpusEntry } from '../src/interpretation/schema.js';
 import {
+  reportParagraphLabel,
   categoryLabel,
   compareSortKeys,
   labelForKey,
@@ -226,5 +227,34 @@ describe('sorting by meaning (#428)', () => {
       if (placement === undefined) throw new Error(`fixture bug: ${key}`);
       expect(sortKeyForKey(key)).toEqual(placementSortKey(placement));
     }
+  });
+});
+
+describe('reportParagraphLabel (#654): the degree goes on sign placements only', () => {
+  const SUN_IN_VIRGO = { category: 'planet-in-sign', body: 'sun', sign: 5 } as const;
+  const SUN_IN_NINTH = { category: 'planet-in-house', body: 'sun', house: 9 } as const;
+  const CUSP = { category: 'sign-on-cusp', sign: 0, house: 1 } as const;
+
+  it('gives a sign placement its degree, as sign · degree', () => {
+    // Virgo is sign 5, which starts at 150°; 21°46′ into it is 150 + 21 + 46/60.
+    expect(reportParagraphLabel(SUN_IN_VIRGO, 'en', 150 + 21 + 46 / 60)).toBe('Sun in Virgo · 21°46′');
+    expect(reportParagraphLabel(SUN_IN_VIRGO, 'nl', 150 + 21 + 46 / 60)).toBe('Zon in Maagd · 21°46′');
+  });
+
+  it('leaves a house placement without its degree: the sign is the sign paragraph’s business', () => {
+    expect(reportParagraphLabel(SUN_IN_NINTH, 'en', 150 + 21 + 46 / 60)).toBe('Sun in the 9th house');
+    expect(reportParagraphLabel(SUN_IN_NINTH, 'nl', 150 + 21 + 46 / 60)).toBe('Zon in het 9e huis');
+  });
+
+  it('gives a cusp its degree, as an angle or cusp would show it', () => {
+    expect(reportParagraphLabel(CUSP, 'en', 24 + 22 / 60)).toBe('Aries on the cusp of the 1st house · 24°22′');
+  });
+
+  it('shows only the placement when no longitude is known', () => {
+    expect(reportParagraphLabel(SUN_IN_VIRGO, 'en', undefined)).toBe('Sun in Virgo');
+  });
+
+  it('pads the minutes to two digits, so 3′ never reads as 3 minutes of a different width', () => {
+    expect(reportParagraphLabel(SUN_IN_VIRGO, 'en', 150 + 5 + 3 / 60)).toBe('Sun in Virgo · 5°03′');
   });
 });

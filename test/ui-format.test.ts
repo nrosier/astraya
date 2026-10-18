@@ -5,6 +5,7 @@ import {
   formatDecimal,
   formatFixed,
   formatInteger,
+  formatSignDegree,
   formatTimestamp,
   todayInputValue,
   utcDay,
@@ -86,5 +87,18 @@ describe('formatTimestamp and utcDay', () => {
 
   it('stamps the UTC day', () => {
     expect(utcDay(new Date(Date.UTC(2026, 9, 11, 23, 59)))).toBe('2026-10-11');
+  });
+});
+
+describe('formatSignDegree (#654)', () => {
+  it('writes a position within a sign as degrees and two-digit minutes, in every language alike', () => {
+    expect(formatSignDegree(21 + 46 / 60)).toBe('21°46′');
+    expect(formatSignDegree(24 + 22 / 60)).toBe('24°22′');
+    expect(formatSignDegree(5 + 3 / 60)).toBe('5°03′');
+  });
+
+  it('shows the whole degree, dropping the seconds rather than rounding them into the next minute', () => {
+    expect(formatSignDegree(0)).toBe('0°00′');
+    expect(formatSignDegree(29 + 59 / 60 + 59 / 3600)).toBe('29°59′');
   });
 });

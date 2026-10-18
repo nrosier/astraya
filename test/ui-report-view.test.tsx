@@ -265,6 +265,30 @@ describe('ReportView corpus loading (locale comes from the shared locale.ts stor
     container.remove();
   });
 
+  it('groups Sun and Moon under a heading each, and labels a sign with its degree and a house without one (#654)', async () => {
+    const { container, root } = await mount();
+    const coreIdentity = container.querySelector('#report-section-core-identity');
+    if (coreIdentity === null) throw new Error('test fixture bug: no core-identity section rendered');
+
+    const headings = Array.from(coreIdentity.querySelectorAll('.report-body-heading')).map((h) => h.textContent);
+    expect(headings).toEqual(['Sun', 'Moon']);
+    // Each body's own group holds its sign and its house, and nothing from the other body.
+    const sunGroup = coreIdentity.querySelector('section[aria-label="Sun"]');
+    expect(sunGroup?.querySelectorAll('li.report-paragraph').length).toBeGreaterThanOrEqual(2);
+
+    const labels = Array.from(coreIdentity.querySelectorAll('.report-placement-label')).map((p) => p.textContent);
+    // A sign has its degree; a house does not.
+    expect(labels.some((text) => /^Sun in [A-Za-z]+ · \d+°\d{2}′$/.test(text))).toBe(true);
+    expect(labels.some((text) => /^Sun in the \d+(st|nd|rd|th) house$/.test(text))).toBe(true);
+    // The only label with a degree and a house is the cusp (the Ascendant), which is a sign on a house cusp, not a planet in a house.
+    expect(labels.filter((text) => /house.*·/.test(text)).every((text) => text.includes('cusp'))).toBe(true);
+
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
   it('leaves an ordinary paragraph as one plain block, with no label (#653)', async () => {
     const { container, root } = await mount();
     const ordinary = Array.from(container.querySelectorAll('li.report-paragraph')).find(

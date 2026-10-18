@@ -57,6 +57,9 @@ import { Tabs, tabPanelProps } from './primitives/Tabs.js';
 import { RulershipSetting } from './RulershipSetting.js';
 import { useRulershipChoice } from './rulership-setting.js';
 import { splitSabianText } from '../interpretation/sabian-split.js';
+import { groupParagraphsByBody } from '../interpretation/report-groups.js';
+import { reportParagraphLabel } from './placement-label.js';
+import { bodyDisplayName } from './astro-names.messages.js';
 import { useShowDegreeSymbol } from './degree-symbol-setting.js';
 import { DegreeSymbolSetting } from './DegreeSymbolSetting.js';
 import { GlossaryTerm } from './GlossaryTerm.js';
@@ -131,11 +134,18 @@ function SabianText({ text }: { readonly text: string }): React.JSX.Element {
 function Paragraph({
   paragraph,
   showProvenance,
+  locale,
 }: {
   readonly paragraph: ReportParagraph;
   readonly showProvenance: boolean;
+  readonly locale: Locale;
 }): React.JSX.Element {
   const provenance = describeParagraphProvenance(paragraph);
+  // What the paragraph is about, in words and (for a sign) its degree (#654). A paragraph with no placement has no label.
+  const label =
+    paragraph.placement === undefined || paragraph.placement.category === 'degree-symbol'
+      ? undefined
+      : reportParagraphLabel(paragraph.placement, locale, paragraph.longitude);
   // Rendered visually de-emphasized, the same muted/smaller style every other secondary note in
   // this app already uses (`.hint`) — plus, since #527, a small named badge (not just `.hint`)
   // so a reader can tell a Sabian-symbol note apart from an ordinary secondary one, and look up
@@ -143,6 +153,7 @@ function Paragraph({
   const isDegreeSymbol = isDegreeSymbolParagraph(paragraph);
   return (
     <li className="report-paragraph">
+      {label !== undefined && <p className="report-placement-label">{label}</p>}
       {isDegreeSymbol && (
         <div className="sabian-badge">
           <GlossaryTerm id="sabianSymbol" />
@@ -508,17 +519,40 @@ export function ReportView({
             {report.sections.map((section) => (
               <section key={section.id} id={`report-section-${section.id}`} className="report-section" tabIndex={-1}>
                 <h3>{section.title}</h3>
-                <ul>
-                  {section.paragraphs
-                    .filter((paragraph) => showDegreeSymbol || !isDegreeSymbolParagraph(paragraph))
-                    .map((paragraph, index) => (
-                      <Paragraph
-                        key={`${section.id}-${String(index)}`}
-                        paragraph={paragraph}
-                        showProvenance={showProvenance}
-                      />
-                    ))}
-                </ul>
+                {groupParagraphsByBody(
+                  section.paragraphs.filter((paragraph) => showDegreeSymbol || !isDegreeSymbolParagraph(paragraph)),
+                ).map((group, groupIndex) =>
+                  group.bodyKey === undefined ? (
+                    <ul key={`${section.id}-${String(groupIndex)}`}>
+                      {group.paragraphs.map((paragraph, index) => (
+                        <Paragraph
+                          key={`${section.id}-${String(groupIndex)}-${String(index)}`}
+                          paragraph={paragraph}
+                          showProvenance={showProvenance}
+                          locale={locale}
+                        />
+                      ))}
+                    </ul>
+                  ) : (
+                    <section
+                      key={`${section.id}-${String(groupIndex)}`}
+                      className="report-body-group"
+                      aria-label={bodyDisplayName(group.bodyKey, locale)}
+                    >
+                      <h4 className="report-body-heading">{bodyDisplayName(group.bodyKey, locale)}</h4>
+                      <ul>
+                        {group.paragraphs.map((paragraph, index) => (
+                          <Paragraph
+                            key={`${section.id}-${String(groupIndex)}-${String(index)}`}
+                            paragraph={paragraph}
+                            showProvenance={showProvenance}
+                            locale={locale}
+                          />
+                        ))}
+                      </ul>
+                    </section>
+                  ),
+                )}
               </section>
             ))}
           </>

@@ -2007,6 +2007,27 @@ label.stacked textarea:focus-visible {
   text-decoration: underline;
 }
 
+/* A body's group in the Report (#654): its name as a sub-heading over the sign and house paragraphs about it. */
+.report-body-group {
+  margin: 0 0 1.25rem;
+}
+
+.report-body-heading {
+  margin: 0 0 0.35rem;
+  font-size: 1.05rem;
+  font-weight: 650;
+  color: var(--accent);
+}
+
+/* The placement a paragraph is about (#654), above its text, so the reader sees what it describes before reading it. */
+.report-placement-label {
+  margin: 0 0 0.15rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
 /* A Sabian symbol (#653): the image, then its reading right under it as one unit, not two separate paragraphs. */
 .sabian-image {
   margin-bottom: 0.2rem;
