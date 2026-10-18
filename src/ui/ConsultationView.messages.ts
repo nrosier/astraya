@@ -29,7 +29,8 @@ const en = {
   listSeparator: '; ',
 
   timingHeading: 'Active timing techniques',
-  asOfToday: 'As of today',
+  asOf: (time: string) => `As of ${time}, your local time`,
+  refreshNow: 'Now',
   openTimingTimeline: 'Open timing timeline',
 
   highlightsHeading: 'Chart highlights',
@@ -72,7 +73,8 @@ const nl: typeof en = {
   listSeparator: '; ',
 
   timingHeading: 'Actieve tijdtechnieken',
-  asOfToday: 'Vandaag',
+  asOf: (time: string) => `Per ${time}, je lokale tijd`,
+  refreshNow: 'Nu',
   openTimingTimeline: 'Tijdlijn openen',
 
   highlightsHeading: 'Horoscoophoogtepunten',
