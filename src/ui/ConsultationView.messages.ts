@@ -38,6 +38,8 @@ const en = {
   shapeCannotBeWorkedOut: 'The chart shape could not be worked out.',
   noNotableConditions:
     'No planet in the birth chart is in its own sign or exaltation, cazimi, combust, besieged or retrograde.',
+  dignityCaption: (rulership: string) => `Own sign or exaltation, by your rulership: ${rulership}`,
+  conditionCaption: 'Condition, by traditional rules (the seven classical planets)',
   dignityNote: (body: string, dignity: string) => `${body}: ${dignity}`,
   rulerDignity: 'ruler',
   exaltedDignity: 'exalted',
@@ -83,6 +85,8 @@ const nl: typeof en = {
   shapeCannotBeWorkedOut: 'De horoscoopvorm kon niet worden bepaald.',
   noNotableConditions:
     'Geen planeet in de geboortehoroscoop staat in eigen teken of verhoging, of is cazimi, combust, belegerd of retrograde.',
+  dignityCaption: (rulership: string) => `Eigen teken of verhoging, volgens je heerserschap: ${rulership}`,
+  conditionCaption: 'Conditie, volgens traditionele regels (de zeven klassieke planeten)',
   dignityNote: (body: string, dignity: string) => `${body}: ${dignity}`,
   rulerDignity: 'heerser',
   exaltedDignity: 'verheven',
