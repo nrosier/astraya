@@ -21,6 +21,8 @@
  */
 import { bodyById } from '../astrology/bodies.js';
 import { splitSabianText } from '../interpretation/sabian-split.js';
+import { groupParagraphsByBody } from '../interpretation/report-groups.js';
+import { reportParagraphLabel } from './placement-label.js';
 import { DEFAULT_RULERSHIP_CHOICE, type RulershipChoice } from '../astrology/rulership.js';
 import {
   DEFAULT_EXTENDED_SETTINGS,
@@ -100,7 +102,7 @@ import { resolveWheelDisplayOptions } from '../chart/wheel-options.js';
 import type { EphemerisProvider } from '../ephemeris/types.js';
 import type { CorpusEntry, Locale } from '../interpretation/schema.js';
 import type { BirthMomentInput } from '../time/types.js';
-import { assembleReport } from '../interpretation/report.js';
+import { assembleReport, type ReportParagraph } from '../interpretation/report.js';
 import { resolvePlacementText } from '../interpretation/compose.js';
 import { loadRuntimeCorpus } from '../interpretation/corpus-client.js';
 import { generateTier2Interpretation, toTier2ChartPayload } from '../interpretation/tier2-client.js';
@@ -187,16 +189,45 @@ export interface PdfChartSectionPlan {
 }
 
 /**
- * One paragraph of a text section. A plain string is ordinary text. A Sabian (degree-symbol) paragraph is an
- * `image` and an optional `insight` (#653), so the renderer can set the image apart from its reading.
+ * One paragraph of a text section. A plain string is ordinary text. A report paragraph about a placement is its
+ * `label` (which placement it is, #654) and its `text`. A Sabian (degree-symbol) paragraph is an `image` and an
+ * optional `insight` (#653), so the renderer can set the image apart from its reading.
  */
 export type PdfParagraphPlan =
-  string | { readonly image: string; readonly insight: string | undefined; readonly insightLabel: string };
+  | string
+  | { readonly label: string; readonly text: string }
+  | { readonly image: string; readonly insight: string | undefined; readonly insightLabel: string };
+
+/**
+ * A run of paragraphs about one body (#654): a sub-heading with the body's name, then its paragraphs, each with the
+ * label that says which placement it is. A paragraph with no body stands alone with no sub-heading.
+ */
+export interface PdfParagraphGroupPlan {
+  /** The body's name, already in the document's language; `undefined` for paragraphs with no sub-heading. */
+  readonly body: string | undefined;
+  readonly paragraphs: readonly PdfParagraphPlan[];
+}
+
+/** A text section's paragraphs with no body to group them under: one group, no sub-heading. */
+function ungrouped(paragraphs: readonly PdfParagraphPlan[]): readonly PdfParagraphGroupPlan[] {
+  return [{ body: undefined, paragraphs }];
+}
+
+/**
+ * One report paragraph as the PDF draws it (#653, #654): a Sabian symbol as its image and reading, and any other
+ * paragraph as text under the label that says which placement it is, when it has one.
+ */
+function paragraphPlanOf(p: ReportParagraph, locale: Locale, pt: typeof pdfExportMessages.en): PdfParagraphPlan {
+  if (p.placement?.category === 'degree-symbol')
+    return { ...splitSabianText(p.text), insightLabel: pt.keyInsightLabel };
+  const label = p.placement === undefined ? undefined : reportParagraphLabel(p.placement, locale, p.longitude);
+  return label === undefined ? p.text : { label, text: p.text };
+}
 
 export interface PdfTextSectionPlan {
   readonly kind: 'text';
   readonly heading: string;
-  readonly paragraphs: readonly PdfParagraphPlan[];
+  readonly groups: readonly PdfParagraphGroupPlan[];
 }
 
 export interface PdfFieldsSectionPlan {
@@ -539,7 +570,7 @@ async function buildSynastrySectionPlan(
     sections.push({
       kind: 'text',
       heading: `${pt.relationshipSummaryLabel} — ${nameA} / ${nameB}`,
-      paragraphs: relationshipSummaryParagraphs(data, nameA, nameB, locale),
+      groups: ungrouped(relationshipSummaryParagraphs(data, nameA, nameB, locale)),
     });
   }
 
@@ -1071,11 +1102,10 @@ async function buildInterpretationSections(
         sections.push({
           kind: 'text',
           heading: section.title,
-          paragraphs: section.paragraphs.map((p) =>
-            p.placement?.category === 'degree-symbol'
-              ? { ...splitSabianText(p.text), insightLabel: pt.keyInsightLabel }
-              : p.text,
-          ),
+          groups: groupParagraphsByBody(section.paragraphs).map((group) => ({
+            body: group.bodyKey === undefined ? undefined : bodyDisplayName(group.bodyKey, locale),
+            paragraphs: group.paragraphs.map((p) => paragraphPlanOf(p, locale, pt)),
+          })),
         });
       }
     } catch (error) {
@@ -1096,7 +1126,7 @@ async function buildInterpretationSections(
         sections.push({
           kind: 'text',
           heading: pt.aiNarrativeHeading,
-          paragraphs: result.map((section) => `${section.heading}: ${section.body}`),
+          groups: ungrouped(result.map((section) => `${section.heading}: ${section.body}`)),
         });
       } catch (error) {
         errors.push(`Interpretation (AI-customised): ${error instanceof Error ? error.message : String(error)}`);

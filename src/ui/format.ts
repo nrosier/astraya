@@ -13,8 +13,9 @@
  * @module ui/format
  * @purpose Locale-aware display formatting (#158) for values that aren't fixed strings — dates and geographic coordinates — complementing messages.ts's fixed-string i18n.
  * @conventions Framework-free like src/domain and src/chart: every function takes Locale explicitly rather than reading locale.ts's store, so non-UI modules (chart-tables.ts, multi-wheel.ts) can call in without a React/localStorage dependency.
- * @exports todayInputValue, formatCoordinate, formatFixed, formatDecimal, formatInteger, formatTimestamp, formatCents, utcDay
+ * @exports todayInputValue, formatCoordinate, formatSignDegree, formatFixed, formatDecimal, formatInteger, formatTimestamp, formatCents, utcDay
  */
+import { degreeParts } from '../domain/chart-tables.js';
 import type { Locale } from '../interpretation/schema.js';
 
 /**
@@ -49,6 +50,15 @@ export function formatCoordinate(value: number, axis: 'lat' | 'lon', locale: Loc
     Math.abs(value),
   );
   return `${magnitude}°${letter}`;
+}
+
+/**
+ * A position within its sign as the reader writes it: `21°46′`, degrees and minutes with the minutes always two
+ * digits, the same in every language (#654). Seconds are not shown; a degree label is for the chart, not an ephemeris.
+ */
+export function formatSignDegree(longitude: number): string {
+  const { degree, minute } = degreeParts(longitude);
+  return `${String(degree)}°${String(minute).padStart(2, '0')}′`;
 }
 
 /**

@@ -100,6 +100,12 @@ export type ParagraphSource =
 
 export interface ReportParagraph {
   readonly text: string;
+  /**
+   * The ecliptic longitude the placement stands at, for a paragraph about a point on the chart (a planet or angle in
+   * a sign, a cusp). It lets the reader see the degree beside the sign (#654); absent where there is no single point
+   * (a house placement, an aspect, a derived paragraph).
+   */
+  readonly longitude?: Degrees;
   /** The placement this text resolves. Absent for a `'derived'` paragraph, which has no `CorpusPlacement` of its own. */
   readonly placement?: CorpusPlacement;
   readonly source: ParagraphSource;
@@ -154,11 +160,12 @@ function resolveParagraph(
   locale: Locale,
   corpus: readonly CorpusEntry[],
   factors: readonly SalienceFactor[] = [],
+  longitude?: Degrees,
 ): ReportParagraph {
   const entry = findCorpusEntry(placement, locale, corpus);
   const text = entry !== undefined ? entry.text : composeFallbackText(placement, locale);
   const source: ParagraphSource = entry !== undefined ? { kind: 'corpus', entry } : { kind: 'fallback' };
-  return { text, placement, source, factors };
+  return { text, placement, source, factors, ...(longitude === undefined ? {} : { longitude }) };
 }
 
 /**
@@ -194,7 +201,7 @@ function planetInSignParagraph(
 ): ReportParagraph {
   const { longitude } = bodyPosition(chart, key);
   const category = chartKind === 'composite' ? 'composite-planet-in-sign' : 'planet-in-sign';
-  return resolveParagraph({ category, body: key, sign: signIndex(longitude) }, locale, corpus);
+  return resolveParagraph({ category, body: key, sign: signIndex(longitude) }, locale, corpus, [], longitude);
 }
 
 function planetInHouseParagraph(
@@ -235,7 +242,13 @@ function coreIdentitySection(
     planetInSignParagraph(chart, 'moon', locale, corpus, chartKind),
     planetInHouseParagraph(chart, 'moon', locale, corpus, chartKind),
     ...degreeSymbol(bodyPosition(chart, 'moon').longitude),
-    resolveParagraph({ category: 'sign-on-cusp', sign: ascendantSign, house: 1 }, locale, corpus),
+    resolveParagraph(
+      { category: 'sign-on-cusp', sign: ascendantSign, house: 1 },
+      locale,
+      corpus,
+      [],
+      chart.houses.ascendant,
+    ),
     ...degreeSymbol(chart.houses.ascendant),
     ...degreeSymbol(chart.houses.midheaven),
   ]);
@@ -348,6 +361,8 @@ function chartRulerSection(
       { category: rulerSignCategory, body: ruler.key, sign: signIndex(rulerPosition.longitude) },
       locale,
       corpus,
+      [],
+      rulerPosition.longitude,
     );
   });
 
@@ -400,7 +415,9 @@ function housesSection(
   for (let house = 1; house <= houseCount; house++) {
     const cusp = chart.houses.cusps[house];
     if (cusp === undefined) continue;
-    paragraphs.push(resolveParagraph({ category: 'sign-on-cusp', sign: signIndex(cusp), house }, locale, corpus));
+    paragraphs.push(
+      resolveParagraph({ category: 'sign-on-cusp', sign: signIndex(cusp), house }, locale, corpus, [], cusp),
+    );
     for (const bodyId of bodiesByHouse.get(house) ?? []) {
       const body = bodyById(bodyId);
       if (body === undefined) continue;

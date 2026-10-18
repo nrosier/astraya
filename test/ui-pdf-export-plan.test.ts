@@ -15,7 +15,13 @@ import { TRADITIONAL_ACG_BODY_IDS } from '../src/domain/astrocartography.js';
 import { EMPTY_SELECTION, type PdfSelection } from '../src/domain/pdf-export-sections.js';
 import type { Person } from '../src/domain/person.js';
 import { chartViewMessages } from '../src/ui/ChartView.messages.js';
-import { buildPdfPlan, sectionCalculationOptions, type PdfPlanContext } from '../src/ui/pdf-export-plan.js';
+import {
+  buildPdfPlan,
+  sectionCalculationOptions,
+  type PdfParagraphPlan,
+  type PdfPlanContext,
+  type PdfTextSectionPlan,
+} from '../src/ui/pdf-export-plan.js';
 import { pdfExportMessages } from '../src/ui/pdf-export.messages.js';
 import { solarArcViewMessages } from '../src/ui/SolarArcView.messages.js';
 import { getEngine } from './engine-harness.js';
@@ -63,6 +69,11 @@ const PEOPLE = new Map([
   [ADA.id, ADA],
   [CHARLES.id, CHARLES],
 ]);
+
+/** A text section's paragraphs in order, whatever body group they sit in (#654). */
+function paragraphsOf(section: PdfTextSectionPlan): readonly PdfParagraphPlan[] {
+  return section.groups.flatMap((group) => group.paragraphs);
+}
 
 describe('buildPdfPlan', () => {
   it('builds nothing but the title when the selection is empty', async () => {
@@ -198,7 +209,7 @@ describe('buildPdfPlan', () => {
     expect(plan.errors).toHaveLength(0);
     expect(plan.sections.length).toBeGreaterThan(0);
     expect(plan.sections.every((s) => s.kind === 'text')).toBe(true);
-    expect(plan.sections.every((s) => s.kind === 'text' && s.paragraphs.length > 0)).toBe(true);
+    expect(plan.sections.every((s) => s.kind === 'text' && paragraphsOf(s).length > 0)).toBe(true);
   }, 30_000);
 
   it.each(['en', 'nl'] as const)(
@@ -221,11 +232,12 @@ describe('buildPdfPlan', () => {
       };
       const messages = pdfExportMessages[locale];
       const plan = await buildPdfPlan(selection, context, chartViewMessages[locale], messages);
-      const paragraphs = plan.sections.flatMap((s) => (s.kind === 'text' ? s.paragraphs : []));
-      const sabian = paragraphs.filter((p) => typeof p !== 'string');
+      const paragraphs = plan.sections.flatMap((s) => (s.kind === 'text' ? paragraphsOf(s) : []));
+      const sabian = paragraphs.filter((p) => typeof p !== 'string' && 'image' in p);
       // Sun, Moon, Ascendant and Midheaven each get one.
       expect(sabian).toHaveLength(4);
       for (const p of sabian) {
+        if (typeof p === 'string' || !('image' in p)) throw new Error('unreachable: filtered to Sabian paragraphs');
         expect(p.image.length).toBeGreaterThan(0);
         expect(p.insight?.length ?? 0).toBeGreaterThan(p.image.length);
         expect(p.insightLabel).toBe(locale === 'en' ? 'Key insight' : 'Kerninzicht');
@@ -321,8 +333,8 @@ describe('buildPdfPlan', () => {
     expect(summarySection.heading).toContain('Relationship summary');
     expect(summarySection.heading).toContain('Ada Lovelace');
     expect(summarySection.heading).toContain('Charles Babbage');
-    expect(summarySection.paragraphs.length).toBeGreaterThanOrEqual(2);
-    expect(summarySection.paragraphs.every((p) => typeof p === 'string' && p.length > 0)).toBe(true);
+    expect(paragraphsOf(summarySection).length).toBeGreaterThanOrEqual(2);
+    expect(paragraphsOf(summarySection).every((p) => typeof p === 'string' && p.length > 0)).toBe(true);
   }, 30_000);
 
   it('omits the relationship summary text when its own checkbox is off, keeping the chart section', async () => {

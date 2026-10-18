@@ -16,7 +16,7 @@
  * @module ui/placement-label
  * @purpose Turns a corpus key/placement (#428) into human-readable wording — e.g. `planet-in-house:sun:3` into "Sun in the 3rd house" — for the admin corpus screens' labels, search, and sort order.
  * @conventions Wording follows the interface locale (en/nl) and reuses the same body/sign/aspect names as every other screen (astro-names.messages.ts); pure functions, a key that doesn't parse is shown as-is rather than hidden; also supplies tier/tag/category explanatory text for the admin UI.
- * @exports ordinal, categoryLabel, placementLabel, labelForKey, placementSortKey, sortKeyForKey, compareSortKeys, categoryExplanation, tierLabel, tierExplanation, tagLabel, tagExplanation
+ * @exports ordinal, categoryLabel, placementLabel, reportParagraphLabel, labelForKey, placementSortKey, sortKeyForKey, compareSortKeys, categoryExplanation, tierLabel, tierExplanation, tagLabel, tagExplanation
  */
 import { ASPECTS } from '../astrology/aspects.js';
 import { BODIES } from '../astrology/bodies.js';
@@ -34,6 +34,7 @@ import {
   type Locale,
 } from '../interpretation/schema.js';
 import { aspectDisplayName, bodyDisplayName, signDisplayName } from './astro-names.messages.js';
+import { formatSignDegree } from './format.js';
 
 /** `3rd`, `11th`, `21st` in English; `3e` in Dutch. */
 export function ordinal(n: number, locale: Locale): string {
@@ -185,6 +186,21 @@ export function placementLabel(placement: CorpusPlacement, locale: Locale): stri
         ? `${pointName(placement.point)} in het ${ordinal(placement.house, locale)} huis`
         : `${pointName(placement.point)} in the ${ordinal(placement.house, locale)} house`;
   }
+}
+
+/**
+ * The label that sits above a report paragraph (#654): the placement in words, with the degree added for a sign
+ * placement only. A house placement, an aspect or a derived paragraph has no degree of its own to show beside it;
+ * the sign it sits in is already the planet's sign paragraph's business.
+ */
+export function reportParagraphLabel(
+  placement: CorpusPlacement,
+  locale: Locale,
+  longitude: number | undefined,
+): string {
+  const label = placementLabel(placement, locale);
+  const showsDegree = placement.category === 'planet-in-sign' || placement.category === 'sign-on-cusp';
+  return showsDegree && longitude !== undefined ? `${label} · ${formatSignDegree(longitude)}` : label;
 }
 
 /**
