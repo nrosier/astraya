@@ -166,10 +166,14 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
           computeSolarArcDirections(moment, todayJd, provider),
           computeTransit(moment, todayJd, provider),
         ]);
-        const releasing = zodiacalReleasingPeriods(natal.partOfFortune, natalJd, 18);
+        // Released from both lots (#680): Fortune for the body and life, Spirit for action and career.
+        const fromFortune = zodiacalReleasingPeriods(natal.partOfFortune, natalJd, 18);
+        const fromSpirit = zodiacalReleasingPeriods(natal.partOfSpirit, natalJd, 18);
         const events = [
-          ...releasingPeriodsToTimelineEvents(releasing),
-          ...releasingSubperiodsToTimelineEvents(releasing.flatMap(zodiacalReleasingSubperiods)),
+          ...releasingPeriodsToTimelineEvents(fromFortune, 'fortune'),
+          ...releasingSubperiodsToTimelineEvents(fromFortune.flatMap(zodiacalReleasingSubperiods), 'fortune'),
+          ...releasingPeriodsToTimelineEvents(fromSpirit, 'spirit'),
+          ...releasingSubperiodsToTimelineEvents(fromSpirit.flatMap(zodiacalReleasingSubperiods), 'spirit'),
           ...firdariaPeriodsToTimelineEvents(firdariaPeriods(natal.sect, natalJd, 18)),
           ...profectionToTimelineEvents(profections),
           ...primaryDirectionsToTimelineEvents(directions.hits),
