@@ -122,15 +122,16 @@ function isDegreeSymbolParagraph(paragraph: ReportParagraph): boolean {
 function SabianText({ text }: { readonly text: string }): React.JSX.Element {
   const t = useMessages(reportViewMessages);
   const { image, insight } = splitSabianText(text);
+  // A callout (#655): a tinted block with an accent bar, the same in the Report and the PDF.
   return (
-    <>
+    <div className="sabian-callout">
       <p className="hint sabian-image">&ldquo;{image}&rdquo;</p>
       {insight !== undefined && (
         <p className="hint sabian-insight">
-          <strong>{t.keyInsightLabel}:</strong> <em>{insight}</em>
+          <strong className="sabian-insight-tag">{t.keyInsightLabel}</strong> <em>{insight}</em>
         </p>
       )}
-    </>
+    </div>
   );
 }
 

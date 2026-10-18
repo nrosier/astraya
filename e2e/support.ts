@@ -130,3 +130,47 @@ export async function closeSettings(page: Page): Promise<void> {
   if (await dialog.isVisible()) await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
   await expect(dialog).toBeHidden();
 }
+
+/** One text-showing operation in a PDF: the font resource it is set in (`F15`) and its text. */
+export interface PdfTextRun {
+  readonly font: string;
+  readonly text: string;
+}
+
+/**
+ * The text a jsPDF-generated PDF draws, run by run, in drawing order (#655). jsPDF writes its streams uncompressed;
+ * text in an embedded font is hex glyph codes (`<0022…> Tj`), read back through that font's ToUnicode map, and
+ * text in a built-in font is a literal string (`(…) Tj`).
+ */
+export function pdfTextRuns(raw: string): readonly PdfTextRun[] {
+  const objectBody = (id: string): string => new RegExp(`\\n${id} 0 obj([^]*?)endobj`).exec(raw)?.[1] ?? '';
+  const maps = new Map<string, Map<string, string>>();
+  const mapFor = (resource: string): Map<string, string> => {
+    const cached = maps.get(resource);
+    if (cached !== undefined) return cached;
+    const fontObject = new RegExp(`/${resource} (\\d+) 0 R`).exec(raw)?.[1];
+    const toUnicode = fontObject === undefined ? undefined : /\/ToUnicode (\d+) 0 R/.exec(objectBody(fontObject))?.[1];
+    const map = new Map<string, string>();
+    if (toUnicode !== undefined) {
+      for (const [, code, unicode] of objectBody(toUnicode).matchAll(/<([0-9a-f]{4})><([0-9a-f]{4,8})>/gi)) {
+        if (code !== undefined && unicode !== undefined)
+          map.set(code.toLowerCase(), String.fromCodePoint(parseInt(unicode, 16)));
+      }
+    }
+    maps.set(resource, map);
+    return map;
+  };
+  const runs: PdfTextRun[] = [];
+  let font = '';
+  for (const [, resource, hex, literal] of raw.matchAll(
+    /\/(F\d+) [\d.]+ Tf|<([0-9a-f]+)> Tj|\(((?:\\.|[^\\)])*)\) Tj/gi,
+  )) {
+    if (resource !== undefined) font = resource;
+    else if (hex !== undefined) {
+      const map = mapFor(font);
+      const text = (hex.toLowerCase().match(/.{4}/g) ?? []).map((code) => map.get(code) ?? '').join('');
+      runs.push({ font, text });
+    } else if (literal !== undefined) runs.push({ font, text: literal.replace(/\\(.)/g, '$1') });
+  }
+  return runs;
+}

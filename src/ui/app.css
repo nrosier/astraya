@@ -2019,22 +2019,46 @@ label.stacked textarea:focus-visible {
   color: var(--accent);
 }
 
-/* The placement a paragraph is about (#654), above its text, so the reader sees what it describes before reading it. */
+/*
+ * The placement a paragraph is about (#654), above its text, so the reader sees what it describes before reading it:
+ * a small tinted pill, the same as in the PDF (#655).
+ */
 .report-placement-label {
-  margin: 0 0 0.15rem;
-  font-size: 0.85rem;
+  display: inline-block;
+  margin: 0 0 0.3rem;
+  padding: 0.05rem 0.55rem;
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 0.8rem;
   font-weight: 600;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
 
-/* A Sabian symbol (#653): the image, then its reading right under it as one unit, not two separate paragraphs. */
-.sabian-image {
-  margin-bottom: 0.2rem;
+/*
+ * A Sabian symbol (#653) as a callout (#655): the image, then its reading under a small KEY INSIGHT tag, in one tinted
+ * block with an accent bar, the same as in the PDF.
+ */
+.sabian-callout {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  background: color-mix(in oklab, var(--accent) 6%, var(--surface));
 }
 
-.sabian-insight {
-  margin-top: 0;
+.sabian-callout p {
+  margin: 0;
+}
+
+.sabian-insight-tag {
+  display: block;
+  margin-bottom: var(--space-1);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
 }
 
 .report-provenance {
