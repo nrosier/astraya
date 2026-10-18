@@ -141,6 +141,7 @@ import { useWheelIsolation } from './wheel-interaction.js';
 import { bodyGlyph, renderGlyph } from '../chart/glyphs.js';
 import type { SymbolClass } from '../chart/symbol-class.js';
 import { unicodeSymbol, textSymbol } from '../chart/symbol-text.js';
+import { findAspectPatterns, PATTERN_BODY_KEYS } from '../astrology/aspect-patterns.js';
 import { useSymbolClass } from './symbol-setting.js';
 import { useGlyphVariants } from './glyph-variant-setting.js';
 import { useRegisterExports } from './export-registry.js';
@@ -1360,7 +1361,42 @@ function renderShapeSection(
           {t.sectPrefix} {data.sect === 'day' ? t.dayChart : t.nightChart}
         </p>
       )}
+      {renderAspectPatterns(data, t, locale)}
     </>
+  );
+}
+
+/**
+ * Aspect configurations (#640): the multi-body shapes among the ten planets, read off the chart's own aspects, so they
+ * follow the orbs in force. Named only; no interpretation text exists for them yet.
+ */
+function renderAspectPatterns(data: ChartData, t: typeof chartViewMessages.en, locale: Locale): React.ReactNode {
+  const planets = PATTERN_BODY_KEYS.flatMap((key) => {
+    const body = bodyByKey(key);
+    return body === undefined ? [] : [body.id];
+  });
+  const patterns = findAspectPatterns(data.aspects, planets);
+  const name = (id: number): string => bodyDisplayName(bodyById(id)?.key ?? '', locale);
+  return (
+    <section aria-labelledby="aspect-patterns-heading">
+      <h3 id="aspect-patterns-heading">{t.aspectPatternsHeading}</h3>
+      {patterns.length === 0 ? (
+        <p className="hint">{t.noAspectPatterns}</p>
+      ) : (
+        <ul>
+          {patterns.map((pattern) => (
+            <li key={`${pattern.kind}-${pattern.bodies.join('-')}`}>
+              {t.aspectPatternLine(
+                t.aspectPatternNames[pattern.kind],
+                pattern.bodies.map(name).join(t.aspectPatternSeparator),
+                pattern.kind === 't-square' || pattern.kind === 'yod' ? name(pattern.bodies[0] ?? -1) : undefined,
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+      <p className="hint">{t.aspectPatternsSourceNote}</p>
+    </section>
   );
 }
 
