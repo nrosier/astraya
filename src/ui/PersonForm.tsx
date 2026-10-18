@@ -36,6 +36,7 @@ import { useStore, useStoreState } from './store-context.js';
 import type { Calendar } from '../time/types.js';
 import type { TimeAccuracy } from '../domain/person.js';
 import { BackLink } from './BackLink.js';
+import { PersonFileActions } from './PersonFileActions.js';
 import { sharedMessages } from './shared.messages.js';
 import { checkFeatureFlag, initProfileOverlay, loadOverlayConfig } from './profile-overlay.js';
 
@@ -370,6 +371,14 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
           </span>
         )}
       </p>
+
+      <PersonFileActions
+        person={person}
+        accuracyLabels={accuracyOptions(t)}
+        onReplaced={() => {
+          setDraft(undefined);
+        }}
+      />
 
       <h2>{t.deleteHeading}</h2>
       <p className="hint">{t.deleteHint}</p>

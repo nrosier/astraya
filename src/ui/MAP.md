@@ -64,6 +64,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `orb-rules-draft.ts` — Typed-string drafts of orb rules and their checked conversion to settings (#590). Deps: `astrology/orb-profiles`, `chart/extended-settings`.
 - `PeriodicTransitView.tsx` + `PeriodicTransitView.messages.ts` — Daily/weekly/monthly/yearly transit forecast. Deps: `domain/periodic-transit`, `domain/planetary-return`, `astrology/transit-importance`.
 - `PersonForm.tsx` + `PersonForm.messages.ts` — Birth-data entry/edit form. Deps: `domain/person-form`, `time/resolve`.
+- `PersonFileActions.tsx` + `.messages.ts` — Birth-record export (AAF, Astraya JSON, CSV) and replace-from-file with preview (#699). Deps: `domain/person-file`, `domain/aaf-people`, `domain/full-export`.
 - `profile-overlay.ts` — Birth-record easter egg (#697): fetches the deployment setting, checks it, draws a short self-removing canvas overlay; skipped under reduced motion. Deps: none.
 - `PersonNotFound.tsx` — "No person" fallback screen. Deps: `shared.messages`.
 - `PersonSwitcher.tsx` + `PersonSwitcher.messages.ts` — Header's searchable person switcher (#506/#509), replaces the static person-name chip; preserves the current feature on switch when prerequisites are met, else routes to Overview. Deps: `./feature-registry`, `./people-list`, `./use-exclusive-open`.
