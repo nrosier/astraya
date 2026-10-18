@@ -22,6 +22,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `AspectMatrix.tsx` — The aspect matrix view: the sheet's grid with cells that select an aspect pair on the wheel. Deps: `chart/aspect-matrix`, `interpretation/selection-key`, `wheel-interaction`.
 - `AppNav.tsx` + `AppNav.messages.ts` — Primary navigation (person tabs, Tools/Export menus). Deps: `person-nav`, `tools-nav`, `export-registry`, `domain/full-export`.
 - `AstroChartWheel.tsx` — Dev-only reference wheel via `@astrodraw/astrochart`. Deps: `chart/astrochart-adapter`.
+- `acg-map-labels.ts` — En/nl words for the astrocartography map's line names and legend, shared by screen and PDF (#667). Deps: `chart/acg-map`, `./astro-names.messages`, `./AstrocartographyView.messages`.
 - `AstrocartographyView.tsx` + `AstrocartographyView.messages.ts` — Astrocartography/local-space map; its settings live in `MapSettingsDialog`, its exports in the page header. Deps: `domain/astrocartography`, `chart/acg-map`, `interpretation/compose`.
 - `BiWheelSelectionPanel.tsx` + `BiWheelSelectionPanel.messages.ts` — Bi-wheel click-to-inspect panel (body/sign/aspect info). Deps: `./bi-wheel-selection`, `astro-names.messages`.
 - `BirthPlaceSearch.tsx` + `BirthPlaceSearch.messages.ts` — Geocoding place-name search field. Deps: `./forward-geocode`, `./geocode-provider`.

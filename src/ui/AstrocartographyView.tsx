@@ -24,6 +24,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { resolvePlacementText } from '../interpretation/compose.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { renderAcgMapSvg, type AcgMapInput } from '../chart/acg-map.js';
+import { acgMapLabels } from './acg-map-labels.js';
 import { standaloneSvg } from '../chart/standalone-svg.js';
 import { bodyById } from '../astrology/bodies.js';
 import { degreesInSign, signOf } from '../astrology/signs.js';
@@ -100,6 +101,22 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
   const [updating, setUpdating] = useState(false);
   // The reviewed text of each line (#427): the mechanical sentence until it arrives.
   const [corpus, setCorpus] = useState<readonly CorpusEntry[]>([]);
+  // The coastlines (#667), loaded as their own chunk only when this screen opens.
+  const [coastline, setCoastline] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    let cancelled = false;
+    void import('../chart/coastline-110m.js').then(
+      ({ COASTLINE_110M_PATH }) => {
+        if (!cancelled) setCoastline(COASTLINE_110M_PATH);
+      },
+      () => {
+        // Without coastlines the map still shows its grid and lines.
+      },
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   useEffect(() => {
     let cancelled = false;
     wheelCorpus(locale).then(
@@ -157,9 +174,11 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
       localSpaceLines: data.localSpaceLines,
       natalPlace: data.natalPlace,
       ...(relocationPlace === undefined ? {} : { relocationPlace }),
+      ...(coastline === undefined ? {} : { coastline }),
     };
-    return renderAcgMapSvg(input);
-  }, [data, relocationPlace]);
+    // Line names and a legend drawn into the map itself (#667), so the download reads on its own too.
+    return renderAcgMapSvg(input, { labels: acgMapLabels(locale) });
+  }, [data, relocationPlace, locale, coastline]);
 
   const displayName = person?.displayName ?? '';
 

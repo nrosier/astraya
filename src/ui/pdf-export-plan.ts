@@ -99,6 +99,7 @@ import type { Person } from '../domain/person.js';
 import { computeSynastry, rankedSynastryAspects } from '../domain/synastry.js';
 import { renderChartSheetSvg } from '../chart/chart-sheet.js';
 import { renderAcgMapSvg, type AcgMapInput } from '../chart/acg-map.js';
+import { acgMapLabels } from './acg-map-labels.js';
 import { renderMultiWheelSvg, type CrossRingAspects } from '../chart/multi-wheel.js';
 import { standaloneSvg } from '../chart/standalone-svg.js';
 import { resolveWheelDisplayOptions } from '../chart/wheel-options.js';
@@ -967,12 +968,15 @@ async function buildAstrocartographySectionPlan(
 
   let svg: PdfChartSectionPlan['svg'];
   if (options.map) {
+    // The coastlines (#667), as their own chunk, loaded only when a map goes into the PDF.
+    const { COASTLINE_110M_PATH } = await import('../chart/coastline-110m.js');
     const input: AcgMapInput = {
       lines: data.lines,
       localSpaceLines: data.localSpaceLines,
       natalPlace: data.natalPlace,
+      coastline: COASTLINE_110M_PATH,
     };
-    const map = renderAcgMapSvg(input);
+    const map = renderAcgMapSvg(input, { labels: acgMapLabels(locale) });
     svg = { markup: standaloneSvg(map.markup), width: map.width, height: map.height };
   }
 

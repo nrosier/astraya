@@ -24,6 +24,7 @@ const en = {
   ic: 'IC (Nadir)',
   ac: 'AC (Ascendant)',
   dc: 'DC (Descendant)',
+  localSpaceLegend: 'Local Space',
 
   meaningsHeading: 'What the lines mean',
   meaningsHint:
@@ -64,6 +65,7 @@ const nl: typeof en = {
   ic: 'IC (Nadir)',
   ac: 'AC (Ascendant)',
   dc: 'DC (Descendant)',
+  localSpaceLegend: 'Local Space',
 
   meaningsHeading: 'Wat de lijnen betekenen',
   meaningsHint:
