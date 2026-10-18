@@ -358,3 +358,34 @@ test('ticking Eclipses reveals its from/to year controls, collapsing when untick
   await eclipsesGroup.getByRole('checkbox', { name: 'Eclipses', exact: true }).uncheck();
   await expect(eclipsesGroup.getByLabel('From year', { exact: true })).toHaveCount(0);
 });
+
+test('the PDF builder has its own Sabian symbol notes option, starting from the device setting, and unticking it leaves them out of the PDF (#660)', async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  await createPerson(page, ADA);
+  await page.goto(`${baseUrl}/#/documents`);
+  await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Ada Lovelace' });
+  await page
+    .getByLabel('Starting point', { exact: true })
+    .selectOption({ label: 'Executive summary (natal wheel, positions, interpretation)' });
+
+  // The option appears with the written report, and starts from the device setting, which is on by default: the PDF
+  // matches the Report on screen until the reader changes it here.
+  await page.getByRole('checkbox', { name: 'Written report (included at no extra cost)', exact: true }).check();
+  const option = page.getByRole('checkbox', { name: 'Include Sabian symbol notes', exact: true });
+  await expect(option).toBeChecked();
+  await option.uncheck();
+  await expect(option).not.toBeChecked();
+
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.getByRole('button', { name: 'Build PDF', exact: true }).click(),
+  ]);
+  const chunks: Buffer[] = [];
+  for await (const chunk of await download.createReadStream()) chunks.push(chunk as Buffer);
+  const raw = Buffer.concat(chunks).toString('latin1');
+  expect(raw).toContain('(Core identity');
+  expect(raw).not.toContain('(Key insight: ');
+});

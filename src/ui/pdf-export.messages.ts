@@ -37,6 +37,7 @@ const en = {
   birthRecordLabel: 'Birth record',
   interpretationLabel: 'Interpretation',
   interpretationBaseLabel: 'Written report (included at no extra cost)',
+  interpretationSabianLabel: 'Include Sabian symbol notes',
   interpretationAiLabel: 'AI-customised narrative',
   interpretationAiHint: 'Generated on request and costs an API call. Needs its own consent, spent on this one build.',
   interpretationAiConsentLabel: 'I consent to generating an AI-customised narrative for this export.',
@@ -156,6 +157,7 @@ const nl: typeof en = {
   birthRecordLabel: 'Geboortegegevens',
   interpretationLabel: 'Interpretatie',
   interpretationBaseLabel: 'Geschreven verslag (zonder extra kosten)',
+  interpretationSabianLabel: 'Sabian-symboolnotities opnemen',
   interpretationAiLabel: 'AI-aangepast verhaal',
   interpretationAiHint:
     'Wordt op verzoek gegenereerd en kost een API-aanroep. Vereist eigen toestemming, besteed aan deze ene export.',

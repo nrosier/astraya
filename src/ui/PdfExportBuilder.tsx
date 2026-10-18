@@ -71,6 +71,7 @@ import { chartViewMessages } from './ChartView.messages.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { useLocale } from './locale.js';
 import { BackLink } from './BackLink.js';
+import { useShowDegreeSymbol } from './degree-symbol-setting.js';
 import { useMessages } from './messages.js';
 import { ordered } from './people-list.js';
 import { pdfExportMessages } from './pdf-export.messages.js';
@@ -119,7 +120,12 @@ export function PdfExportBuilder({ embedded = false }: { readonly embedded?: boo
   const people = useMemo(() => ordered(state.people), [state.people]);
 
   const [personId, setPersonId] = useState<string>(people[0]?.id ?? '');
-  const [selection, setSelection] = useState<Draft>(EMPTY_SELECTION);
+  // The Sabian notes start from the device setting, so the PDF matches the Report on screen until changed here (#660).
+  const [showDegreeSymbol] = useShowDegreeSymbol();
+  const [selection, setSelection] = useState<Draft>(() => ({
+    ...EMPTY_SELECTION,
+    interpretation: { ...EMPTY_SELECTION.interpretation, sabianSymbols: showDegreeSymbol },
+  }));
   const [aiConsent, setAiConsent] = useState(false);
   const [status, setStatus] = useState<BuildStatus>({ kind: 'idle' });
   const id = useId();
@@ -137,7 +143,11 @@ export function PdfExportBuilder({ embedded = false }: { readonly embedded?: boo
     if (value === 'custom') return;
     if (!(PDF_PRESET_KEYS as readonly string[]).includes(value)) return;
     const preset = applyPdfPreset(value as (typeof PDF_PRESET_KEYS)[number], personId);
-    setSelection(preset);
+    // A preset decides what is in the document, not how the reader wants the notes in it: keep their choice (#660).
+    setSelection((current) => ({
+      ...preset,
+      interpretation: { ...preset.interpretation, sabianSymbols: current.interpretation.sabianSymbols ?? true },
+    }));
   };
 
   const toggleChart = (type: ChartType, included: boolean): void => {
@@ -435,6 +445,18 @@ export function PdfExportBuilder({ embedded = false }: { readonly embedded?: boo
             }));
           }}
         />
+        {selection.interpretation.base && (
+          <Checkbox
+            label={t.interpretationSabianLabel}
+            checked={selection.interpretation.sabianSymbols ?? true}
+            onChange={(value) => {
+              setSelection((current) => ({
+                ...current,
+                interpretation: { ...current.interpretation, sabianSymbols: value },
+              }));
+            }}
+          />
+        )}
         <Checkbox
           label={t.interpretationAiLabel}
           checked={selection.interpretation.aiCustomised}

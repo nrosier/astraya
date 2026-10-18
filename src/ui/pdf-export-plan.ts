@@ -1102,7 +1102,11 @@ async function buildInterpretationSections(
         sections.push({
           kind: 'text',
           heading: section.title,
-          groups: groupParagraphsByBody(section.paragraphs).map((group) => ({
+          groups: groupParagraphsByBody(
+            selection.sabianSymbols === false
+              ? section.paragraphs.filter((p) => p.placement?.category !== 'degree-symbol')
+              : section.paragraphs,
+          ).map((group) => ({
             body: group.bodyKey === undefined ? undefined : bodyDisplayName(group.bodyKey, locale),
             paragraphs: group.paragraphs.map((p) => paragraphPlanOf(p, locale, pt)),
           })),
