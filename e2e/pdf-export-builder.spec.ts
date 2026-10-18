@@ -91,6 +91,9 @@ test('the header’s PDF-builder link opens the PDF builder, and a preset downlo
   const reading = runs[tag + 1];
   expect(reading?.text.length).toBeGreaterThan(10);
   expect(reading?.font).not.toBe(body?.font);
+  // The cover names the person in capitals, and every contents line links to its page (#711).
+  expect(runs.some((run) => run.text === 'ADA LOVELACE')).toBe(true);
+  expect(pdf.toString('latin1').split('/Subtype /Link').length - 1).toBeGreaterThan(3);
   // The prime of a degree draws as itself, no longer as an apostrophe.
   expect(runs.some((run) => /\d+°\d{2}′/.test(run.text))).toBe(true);
 

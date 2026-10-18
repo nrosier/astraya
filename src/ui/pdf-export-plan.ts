@@ -19,7 +19,10 @@
  * @conventions Deliberately free of jsPDF/svg2pdf.js/jspdf-autotable — svg2pdf.js's UMD entry fails to load under Vitest/Node, so any top-level import of it here would break every test importing this module; the rendering half using those libraries lives in pdf-export-render.ts instead, covered by Playwright. Table cells are reduced to plain strings with `cellText` (`render`, else `valueOf`), the same text Copy and the CSV download use (#664).
  * @exports PdfTablePlan, PdfChartSectionPlan, PdfTextSectionPlan, PdfFieldsSectionPlan, PdfSectionPlan, PdfPlan, PdfPlanContext, buildPdfPlan
  */
-import { bodyById } from '../astrology/bodies.js';
+import { bodyById, bodyByKey } from '../astrology/bodies.js';
+import { signIndex } from '../astrology/signs.js';
+import { julianDayFor } from '../time/julian.js';
+import { resolveMoment } from '../time/resolve.js';
 import { splitSabianText } from '../interpretation/sabian-split.js';
 import { groupParagraphsByBody } from '../interpretation/report-groups.js';
 import { reportParagraphLabel } from './placement-label.js';
@@ -82,6 +85,7 @@ import { computeProfections } from '../domain/profections.js';
 import { computeAstrocartography } from '../domain/astrocartography.js';
 import { findEclipses, eclipseContacts, type NatalPoint } from '../astrology/eclipses.js';
 import {
+  matchPdfPreset,
   type PdfAstrocartographySectionOptions,
   type PdfChartSectionOptions,
   type PdfChartTable,
@@ -246,12 +250,19 @@ export interface PdfFieldsSectionPlan {
   readonly kind: 'fields';
   readonly heading: string;
   readonly fields: readonly { readonly label: string; readonly value: string }[];
+  /** The birth record's regional map (#711), drawn locally; the same width as the fields panel. */
+  readonly map?: { readonly markup: string; readonly width: number; readonly height: number; readonly note: string };
 }
 
 export type PdfSectionPlan = PdfChartSectionPlan | PdfTextSectionPlan | PdfFieldsSectionPlan;
 
 export interface PdfPlan {
   readonly title: string;
+  /** The cover page (#711): the name, the report's kind, and the Sun's sign index for the watermark when known. */
+  readonly cover: { readonly name: string; readonly kind: string; readonly sunSign?: number };
+  /** "Generated on …" for the cover's footer, and the contents page's heading, in the reader's language. */
+  readonly coverGenerated: string;
+  readonly contentsHeading: string;
   readonly personName: string;
   readonly generatedAt: Date;
   readonly sections: readonly PdfSectionPlan[];
@@ -298,6 +309,16 @@ function tablePlanOf<T>(caption: string, columns: readonly TableColumn<T>[], row
   };
 }
 
+/** The Sun's sign index at birth, for the cover's watermark (#711); nothing without a birth record. */
+async function sunSignOf(person: Person, provider: EphemerisProvider): Promise<{ readonly sunSign?: number }> {
+  if (person.moment === undefined) return {};
+  const sun = bodyByKey('sun');
+  if (sun === undefined) return {};
+  const jd = await julianDayFor(provider, resolveMoment(person.moment));
+  const [position] = await provider.positions(jd, [sun.id]);
+  return position === undefined ? {} : { sunSign: signIndex(position.longitude) };
+}
+
 function birthFieldsPlan(person: Person, locale: Locale, t: typeof pdfExportMessages.en): PdfFieldsSectionPlan {
   const moment = person.moment;
   const civil = moment?.civil;
@@ -318,6 +339,49 @@ function birthFieldsPlan(person: Person, locale: Locale, t: typeof pdfExportMess
   }
   fields.push({ label: t.timeAccuracyLabel, value: t.timeAccuracyValues[person.timeAccuracy] });
   return { kind: 'fields', heading: t.birthRecordLabel, fields };
+}
+
+/** The light palette the PDF prints in (`app.css` light theme), for the birth-place map. */
+const MAP_COLORS = {
+  sea: '#e6e3f1',
+  land: '#f8f7fd',
+  coast: '#5c5878',
+  border: '#9e98b8',
+  pin: '#5b3fd4',
+  ink: '#16152b',
+  muted: '#5c5878',
+};
+
+/**
+ * The birth record with its regional map (#711). The map data loads only here; the pin is labelled with the nearest
+ * town, worked out on the fly for the PDF and never stored. The record's own place and coordinates stay as entered.
+ */
+async function birthRecordPlan(
+  person: Person,
+  locale: Locale,
+  t: typeof pdfExportMessages.en,
+): Promise<PdfFieldsSectionPlan> {
+  const record = birthFieldsPlan(person, locale, t);
+  const coordinates = person.moment?.coordinates;
+  if (coordinates === undefined) return record;
+  const [{ birthMapSvg }, data] = await Promise.all([
+    import('../chart/birth-map.js'),
+    import('../chart/pdf-map-data.js'),
+  ]);
+  // Town level, like the label: one decimal place is about 11 km.
+  const round = (value: number): number => Math.round(value * 10) / 10;
+  const map = birthMapSvg(
+    coordinates.latitude,
+    coordinates.longitude,
+    { land: data.LAND_50M, borders: data.BORDERS_50M, places: data.PLACES_10M },
+    {
+      near: t.mapNear,
+      coordinates: `${formatCoordinate(round(coordinates.latitude), 'lat', locale, 1)}, ${formatCoordinate(round(coordinates.longitude), 'lon', locale, 1)}`,
+    },
+    { width: 680, height: 300 },
+    MAP_COLORS,
+  );
+  return { ...record, map: { ...map, note: t.mapSource } };
 }
 
 function tablesOf(
@@ -1173,7 +1237,7 @@ export async function buildPdfPlan(
   const sections: PdfSectionPlan[] = [];
   const errors: string[] = [];
 
-  if (selection.birthRecord) sections.push(birthFieldsPlan(person, context.locale, pt));
+  if (selection.birthRecord) sections.push(await birthRecordPlan(person, context.locale, pt));
 
   sections.push(...(await buildInterpretationSections(selection.interpretation, context, pt, errors)));
 
@@ -1274,6 +1338,13 @@ export async function buildPdfPlan(
 
   return {
     title: `${person.displayName || t.personFallback} — Astraya`,
+    cover: {
+      name: person.displayName || t.personFallback,
+      kind: pt.coverKinds[matchPdfPreset(selection) ?? 'custom'],
+      ...(await sunSignOf(person, context.provider)),
+    },
+    coverGenerated: pt.coverGenerated(utcDay()),
+    contentsHeading: pt.contentsHeading,
     personName: person.displayName,
     generatedAt: new Date(),
     sections,

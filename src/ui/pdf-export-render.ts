@@ -14,8 +14,7 @@
  * @conventions Browser-only — depends on jsPDF/svg2pdf.js/jspdf-autotable, which cannot be imported under Vitest (svg2pdf.js's ESM build does not resolve there), so this is covered by Playwright instead and loaded only via PdfExportBuilder.tsx's dynamic import() to keep these three libraries out of the eager bundle (scripts/check-bundle-size.mjs). Astrological glyphs are substituted with WinAnsi-safe text codes before drawing since jsPDF's core fonts can't render arbitrary Unicode.
  * @exports renderPdfPlan
  */
-import { utcDay } from './format.js';
-import jsPDF from 'jspdf';
+import jsPDF, { GState } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { svg2pdf } from 'svg2pdf.js';
 import {
@@ -27,6 +26,8 @@ import {
   SIGN_UNICODE,
 } from '../chart/symbol-text.js';
 import { deriveExportFilename } from '../domain/export-filename.js';
+import { SIGNS } from '../astrology/signs.js';
+import { APP_VERSION } from '../version.js';
 import type { PdfParagraphGroupPlan, PdfPlan } from './pdf-export-plan.js';
 import { flowLines, startBlock, type PageFlowArea } from './pdf-page-flow.js';
 import { fitSvgOnPage } from './pdf-svg-fit.js';
@@ -51,6 +52,8 @@ const MUTED: Rgb = [92, 88, 120];
 const ACCENT: Rgb = [91, 63, 212];
 const TINT: Rgb = [243, 241, 250];
 const RULE: Rgb = [226, 223, 240];
+/** The contents' dot leaders: a quiet grey that still reads on paper. */
+const RULE_DARK: Rgb = [158, 152, 184];
 const ASPECT_TONE: Readonly<Record<string, Rgb>> = {
   semisquare: [179, 38, 30],
   square: [179, 38, 30],
@@ -219,18 +222,36 @@ export async function renderPdfPlan(plan: PdfPlan): Promise<{ blob: Blob; filena
     doc.setTextColor(...color);
   };
 
-  // Cover page.
-  doc.setFontSize(22);
-  doc.text(pdfSafeText(doc, plan.title), SIDE_MARGIN, 40);
-  doc.setFontSize(11);
-  doc.text(`Generated ${utcDay(plan.generatedAt)} by Astraya`, SIDE_MARGIN, 50);
+  // Cover page (#711): the name centred in letter-spaced capitals over a short accent rule and the report's kind, a
+  // faint glyph of the Sun's sign behind it, and the date and app version along the bottom margin.
+  const centre = pageWidth / 2;
+  const sunGlyph = plan.cover.sunSign === undefined ? undefined : SIGN_UNICODE[SIGNS[plan.cover.sunSign]?.name ?? ''];
+  if (sunGlyph !== undefined && familyOf.has(doc)) {
+    doc.saveGraphicsState();
+    doc.setGState(new GState({ opacity: 0.08 }));
+    font('normal', 260, ACCENT);
+    doc.text(sunGlyph, centre, 150, { align: 'center' });
+    doc.restoreGraphicsState();
+  }
+  font('bold', 24);
+  doc.text(pdfSafeText(doc, plan.cover.name.toUpperCase()), centre, 110, { align: 'center', charSpace: 1.2 });
+  doc.setDrawColor(...ACCENT);
+  doc.setLineWidth(0.6);
+  doc.line(centre - 10, 118, centre + 10, 118);
+  font('normal', 11, MUTED);
+  doc.text(pdfSafeText(doc, plan.cover.kind.toUpperCase()), centre, 127, { align: 'center', charSpace: 0.9 });
+  font('normal', 8.5, MUTED);
+  doc.text(pdfSafeText(doc, plan.coverGenerated), SIDE_MARGIN, pageHeight - PAGE_MARGIN - 5);
+  doc.text(`Astraya ${APP_VERSION}`, pageWidth - SIDE_MARGIN, pageHeight - PAGE_MARGIN - 5, { align: 'right' });
+  font('normal', BODY_SIZE);
 
   // Table of contents page: drawn now as a placeholder, filled in with real page numbers once every
   // section's own starting page is known — jsPDF lets a finished document be revisited with setPage.
   doc.addPage();
   const tocPageNumber = doc.internal.pages.length - 1;
-  doc.setFontSize(16);
-  doc.text('Contents', SIDE_MARGIN, 20);
+  font('bold', 16);
+  doc.text(pdfSafeText(doc, plan.contentsHeading), SIDE_MARGIN, 20);
+  font('normal', BODY_SIZE);
 
   const tocEntries: { heading: string; page: number }[] = [];
 
@@ -246,7 +267,11 @@ export async function renderPdfPlan(plan: PdfPlan): Promise<{ blob: Blob; filena
 
     if (section.kind === 'fields') {
       // A quiet panel of terms and values (#655), like the screen's `<dl>`: the birth record, the chart overview.
-      const termWidth = 42;
+      // The term column fits the longest term (#711: "How the time is known" ran into its value), within reason.
+      font('normal', BODY_SIZE - 1, MUTED);
+      const longest = Math.max(...section.fields.map((field) => doc.getTextWidth(pdfSafeText(doc, field.label))));
+      font('normal', BODY_SIZE);
+      const termWidth = Math.min(contentWidth * 0.4, Math.max(30, longest + 6));
       const valueWidth = contentWidth - termWidth - 8;
       const rows = section.fields.map((field) => ({
         term: field.label,
@@ -266,6 +291,21 @@ export async function renderPdfPlan(plan: PdfPlan): Promise<{ blob: Blob; filena
         y += Math.max(1, row.lines.length) * LINE;
       }
       y += 4;
+      if (section.map !== undefined) {
+        // The birth-place map (#711), exactly as wide as the panel above it.
+        const mapHeight = (contentWidth * section.map.height) / section.map.width;
+        y = keepTogether(doc, y + 2, mapHeight + 8);
+        const mapEl = mountSvg(section.map.markup);
+        try {
+          await svg2pdf(mapEl, doc, { x: SIDE_MARGIN, y: y - 2, width: contentWidth, height: mapHeight });
+        } finally {
+          mapEl.remove();
+        }
+        y += mapHeight + 2;
+        font('normal', 7.5, MUTED);
+        y = wrapAndPrint(doc, section.map.note, SIDE_MARGIN, y, contentWidth, 3.6);
+        font('normal', BODY_SIZE);
+      }
     } else if (section.kind === 'text') {
       // How far below its first baseline a paragraph's second line of text is: a label, or a heading
       // above it, is never the last thing on a page (#665).
@@ -412,12 +452,26 @@ export async function renderPdfPlan(plan: PdfPlan): Promise<{ blob: Blob; filena
   }
 
   // Back-fill the table of contents, now that every section's real page number is known.
+  // Each line links to its section's page, the whole line clickable, with dot leaders to the page number; the same
+  // sections become PDF bookmarks for the viewer's sidebar (#711).
   doc.setPage(tocPageNumber);
   let tocY = 32;
-  doc.setFontSize(11);
+  font('normal', 11);
+  const dotWidth = doc.getTextWidth('.');
   for (const entry of tocEntries) {
-    doc.text(pdfSafeText(doc, entry.heading), SIDE_MARGIN, tocY);
-    doc.text(String(entry.page), pageWidth - SIDE_MARGIN, tocY, { align: 'right' });
+    const title = pdfSafeText(doc, entry.heading);
+    const page = String(entry.page);
+    const titleEnd = SIDE_MARGIN + doc.getTextWidth(title) + 2;
+    const pageStart = pageWidth - SIDE_MARGIN - doc.getTextWidth(page) - 2;
+    doc.text(title, SIDE_MARGIN, tocY);
+    if (pageStart > titleEnd) {
+      font('normal', 11, RULE_DARK);
+      doc.text('.'.repeat(Math.floor((pageStart - titleEnd) / dotWidth)), pageStart, tocY, { align: 'right' });
+      font('normal', 11);
+    }
+    doc.text(page, pageWidth - SIDE_MARGIN, tocY, { align: 'right' });
+    doc.link(SIDE_MARGIN, tocY - 4.5, contentWidth, 6.5, { pageNumber: entry.page });
+    doc.outline.add(null, title, { pageNumber: entry.page });
     tocY += 7;
   }
 
