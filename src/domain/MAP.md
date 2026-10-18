@@ -34,6 +34,7 @@ One level above `src/astrology/`: composes pure astrological calculations into s
 - `periodic-transit.ts` — Periodic transit forecast (daily/weekly/monthly/yearly sky events). Deps: `astrology/transit-events`, `astrology/stations`, `astrology/aspects`, `./demibirthday`, `./lunar-returns`, `./progressed-lunar-return`, `./solar-return`, `./chart-compute`.
 - `person-form.messages.ts` — i18n for birth-record form validation errors. Deps: none.
 - `person-form.ts` — Birth-data entry form logic: Draft validation + minimal op-log mutations. Deps: `./person`, `./person-form.messages`, `time/types`, `store/oplog`, `store/ops`.
+- `person-file.ts` — One person to and from a file (#699): reads AAF/Astraya JSON into people, stages replacing a person's birth data. Deps: `./aaf-people`, `./full-export-importer`.
 - `person.ts` — Root entity: birth moment, named relocation places/formula points, place label, time accuracy, notes, offset witness. Deps: `time/types`, `astrology/formula-parser`.
 - `planetary-return.ts` — Any-body return chart (not just Sun/Moon). Deps: `astrology/planetary-returns`, `astrology/aspects`, `astrology/bodies`.
 - `primary-directions.ts` — Lifetime direct/converse, zodiacal/in-mundo Placidus directions with configurable points and a mode-aware direct bi-wheel. Deps: `astrology/primary-directions`, `astrology/progressions`, `astrology/bodies`, `./chart-compute`.
