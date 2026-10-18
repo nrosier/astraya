@@ -138,7 +138,11 @@ describe('pulling', () => {
       await vi.waitFor(() => {
         expect(deviceB.state.people.get('p1')?.displayName).toBe('Ada');
       }, WAIT);
-      expect(engineB.status.kind).toBe('synced');
+      // The pulled record lands before the engine's push round trip ends and it reports "synced" (#703): wait for
+      // that too, rather than reading it the moment the record appears.
+      await vi.waitFor(() => {
+        expect(engineB.status.kind).toBe('synced');
+      }, WAIT);
     } finally {
       engineB.close();
       deviceB.close();
