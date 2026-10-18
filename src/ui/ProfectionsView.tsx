@@ -43,6 +43,7 @@ import { ordinal } from './placement-label.js';
 import { wheelCorpus } from './wheel-corpus.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { useStableMoment } from './use-stable-moment.js';
+import { BackLink } from './BackLink.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -159,9 +160,7 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
   if (person.moment === undefined) {
     return (
       <main className="shell">
-        <p className="back">
-          <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
-        </p>
+        <BackLink fallback={personHref(personId)} />
         <h1>{t.profectionsFallback}</h1>
         <p>
           {t.notCompleteProfections(person.displayName || t.thisPerson)}{' '}
@@ -174,9 +173,7 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
   if (person.timeAccuracy === 'unknown') {
     return (
       <main className="shell">
-        <p className="back">
-          <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
-        </p>
+        <BackLink fallback={personHref(personId)} />
         <h1>{t.profectionsFallback}</h1>
         <p>{t.needsKnownTime(person.displayName || t.thisPerson)}</p>
       </main>
@@ -188,9 +185,7 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
 
   return (
     <main className="shell">
-      <p className="back">
-        <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
-      </p>
+      <BackLink fallback={personHref(personId)} />
       <h1>{person.displayName ? t.heading(person.displayName) : t.profectionsFallback}</h1>
       <GlossaryTerms terms={['profection', 'chartRuler', 'houses']} />
       <p className="hint">{t.hint}</p>

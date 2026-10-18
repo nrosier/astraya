@@ -33,14 +33,13 @@ import { EntryLabel } from './EntryLabel.js';
 import { compareSortKeys, labelForKey, sortKeyForKey, tagExplanation, tagLabel } from './placement-label.js';
 import { useMessages } from './messages.js';
 import { corpusCandidatesPanelMessages } from './CorpusCandidatesPanel.messages.js';
-import { sharedMessages } from './shared.messages.js';
 import type { CorpusCandidate } from '../sync/admin-client.js';
 import type { Locale } from '../interpretation/schema.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
+import { BackLink } from './BackLink.js';
 
 export function CorpusCandidatesPanel(): React.JSX.Element {
   const t = useMessages(corpusCandidatesPanelMessages);
-  const shared = useMessages(sharedMessages);
 
   const [corpusLocale, setCorpusLocale] = useState<Locale>('en');
   // The admin's interface language: what a candidate means is worded in it (#428).
@@ -232,9 +231,7 @@ export function CorpusCandidatesPanel(): React.JSX.Element {
 
   return (
     <main className="shell">
-      <p className="back">
-        <a href="#/admin">&larr; {shared.back}</a>
-      </p>
+      <BackLink fallback="#/admin" />
       <h1>{t.heading}</h1>
       <p>{t.intro}</p>
 

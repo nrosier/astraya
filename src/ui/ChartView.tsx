@@ -190,6 +190,7 @@ import { CustomPointEditor } from './CustomPointEditor.js';
 import { parseCoordinate } from './map-settings.js';
 import { orbConfigForContext } from '../astrology/orb-profiles.js';
 import { useStableBy, useStableMoment } from './use-stable-moment.js';
+import { BackLink } from './BackLink.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -2468,9 +2469,7 @@ export function ChartView({
   if (person.moment === undefined) {
     return (
       <main className="shell">
-        <p className="back">
-          <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
-        </p>
+        <BackLink fallback={personHref(personId)} />
         <PageHeader title={t.chartFallback} />
         <p>
           {t.notCompleteChart(person.displayName || t.thisPersonCapitalized)}{' '}
@@ -2488,9 +2487,7 @@ export function ChartView({
 
     return (
       <main className="shell shell--wide">
-        <p className="back">
-          <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
-        </p>
+        <BackLink fallback={personHref(personId)} />
         <PageHeader title={person.displayName || t.chartFallback} basis={basisLine} />
         <GlossaryTerms
           terms={[
@@ -2553,9 +2550,7 @@ export function ChartView({
 
   return (
     <main className="shell shell--wide">
-      <p className="back">
-        <a href={personHref(personId)}>&larr; {person.displayName || t.personFallback}</a>
-      </p>
+      <BackLink fallback={personHref(personId)} />
       <PageHeader title={person.displayName || t.chartFallback} basis={basisLine} />
       <GlossaryTerms
         terms={[

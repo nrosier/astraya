@@ -37,11 +37,11 @@ import { cyclesViewMessages } from './CyclesView.messages.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
-import { sharedMessages } from './shared.messages.js';
 import { SortableTable } from './SortableTable.js';
 import { clampEphemerisYear, MAX_EPHEMERIS_YEAR, MIN_EPHEMERIS_YEAR } from './year-range.js';
 import type { TableColumn } from './table-sort.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
+import { BackLink } from './BackLink.js';
 
 interface Params {
   readonly bodyA: string;
@@ -79,7 +79,6 @@ export function CyclesView(): React.JSX.Element {
   const [symbolClass] = useSymbolClass();
   // The wheel's markup is cached on these, so a change of symbol form redraws it.
   const [variants] = useGlyphVariants();
-  const shared = useMessages(sharedMessages);
   const [locale] = useLocale();
   const { provider } = useEphemerisProvider();
   const first = CYCLE_PRESETS[0];
@@ -273,9 +272,7 @@ export function CyclesView(): React.JSX.Element {
 
   return (
     <main className="shell">
-      <p className="back">
-        <a href="#/">&larr; {shared.back}</a>
-      </p>
+      <BackLink fallback="#/people" />
       <h1>{t.heading}</h1>
       <GlossaryTerms terms={['cycle', 'transit', 'retrograde']} />
       <p className="hint">{t.hint}</p>

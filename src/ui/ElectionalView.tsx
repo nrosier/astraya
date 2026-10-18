@@ -31,10 +31,10 @@ import { electionalViewMessages } from './ElectionalView.messages.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { todayInputValue } from './format.js';
 import { useMessages } from './messages.js';
-import { sharedMessages } from './shared.messages.js';
 import { SortableTable } from './SortableTable.js';
 import type { TableColumn } from './table-sort.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
+import { BackLink } from './BackLink.js';
 
 type Result =
   | { readonly kind: 'idle' }
@@ -51,7 +51,6 @@ function inDays(days: number): string {
 
 export function ElectionalView(): React.JSX.Element {
   const t = useMessages(electionalViewMessages);
-  const shared = useMessages(sharedMessages);
   const { provider } = useEphemerisProvider();
   const [fields, setFields] = useState({ fromDate: todayInputValue(), toDate: inDays(6), latitude: '', longitude: '' });
   const [rules, setRules] = useState<ReadonlySet<ElectionRuleKey>>(() => new Set(ELECTION_RULE_KEYS));
@@ -143,9 +142,7 @@ export function ElectionalView(): React.JSX.Element {
 
   return (
     <main className="shell">
-      <p className="back">
-        <a href="#/">&larr; {shared.back}</a>
-      </p>
+      <BackLink fallback="#/people" />
       <h1>{t.heading}</h1>
       <GlossaryTerms terms={['electional', 'ascendant', 'houses']} />
       <p className="hint">{t.hint}</p>

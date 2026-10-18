@@ -62,7 +62,10 @@ test('the header’s PDF-builder link opens the PDF builder, and a preset downlo
   await expect(page).toHaveURL(/#\/documents$/);
   // The rail marks where you are, from the same feature registry as the rest of the navigation.
   await expect(builderLink).toHaveAttribute('aria-current', 'page');
-  await expect(page.getByRole('heading', { name: 'Build a PDF', level: 1 })).toBeVisible();
+  // One page, one main heading (#652): the builder is a section of the Documents page, so its heading is an h2.
+  await expect(page.getByRole('heading', { name: 'Documents', level: 1 })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Build a PDF', level: 2 })).toBeVisible();
+  await expect(page.locator('main')).toHaveCount(1);
 
   await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Ada Lovelace' });
   await page

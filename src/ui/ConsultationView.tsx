@@ -91,6 +91,7 @@ import { rulershipSettingMessages } from './RulershipSetting.messages.js';
 import { FilterSummary } from './primitives/FilterSummary.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { consultationViewMessages } from './ConsultationView.messages.js';
+import { BackLink } from './BackLink.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -224,9 +225,7 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
   if (person.moment === undefined) {
     return (
       <main className="shell">
-        <p className="back">
-          <a href={personHref(personId)}>&larr; {person.displayName || t.fallback}</a>
-        </p>
+        <BackLink fallback={personHref(personId)} />
         <h1>{t.fallback}</h1>
         <p>
           {t.notComplete(person.displayName || t.fallback)} <a href={personHref(personId)}>{t.personPageLink}</a>.
@@ -278,9 +277,7 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
 
   return (
     <main className="shell">
-      <p className="back">
-        <a href={personHref(personId)}>&larr; {person.displayName || t.fallback}</a>
-      </p>
+      <BackLink fallback={personHref(personId)} />
       <h1>{person.displayName ? t.heading(person.displayName) : t.fallback}</h1>
 
       <h2>{t.basisHeading}</h2>

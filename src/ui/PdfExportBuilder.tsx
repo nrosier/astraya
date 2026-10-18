@@ -70,6 +70,7 @@ import { bodyDisplayName } from './astro-names.messages.js';
 import { chartViewMessages } from './ChartView.messages.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { useLocale } from './locale.js';
+import { BackLink } from './BackLink.js';
 import { useMessages } from './messages.js';
 import { ordered } from './people-list.js';
 import { pdfExportMessages } from './pdf-export.messages.js';
@@ -100,7 +101,11 @@ function isPartnerCandidate(candidate: Person, excludingId: string): boolean {
   return candidate.id !== excludingId && candidate.moment !== undefined && candidate.timeAccuracy !== 'unknown';
 }
 
-export function PdfExportBuilder(): React.JSX.Element {
+/**
+ * `embedded` is for a page that already has its own `<main>` and `<h1>` (the Documents page): the builder then
+ * draws its controls without a second landmark and heading (#652). Alone, at `#/documents/pdf`, it is a page.
+ */
+export function PdfExportBuilder({ embedded = false }: { readonly embedded?: boolean }): React.JSX.Element {
   const t = useMessages(pdfExportMessages);
   const ct = useMessages(chartViewMessages);
   const [locale] = useLocale();
@@ -379,9 +384,11 @@ export function PdfExportBuilder(): React.JSX.Element {
 
   const needsAiConsentButMissing = selection.interpretation.aiCustomised && !aiConsent;
 
+  const Frame = embedded ? 'div' : 'main';
   return (
-    <main className="shell">
-      <h1>{t.heading}</h1>
+    <Frame className={embedded ? undefined : 'shell'}>
+      {!embedded && <BackLink fallback="#/people" />}
+      {embedded ? <h2>{t.heading}</h2> : <h1>{t.heading}</h1>}
       <p className="hint">{t.hint}</p>
 
       <div className="field-grid">
@@ -986,6 +993,6 @@ export function PdfExportBuilder(): React.JSX.Element {
         {status.kind === 'done' && status.skipped > 0 && t.someSectionsSkipped(String(status.skipped))}
       </p>
       {status.kind === 'error' && <StatusMessage kind="error">{status.message}</StatusMessage>}
-    </main>
+    </Frame>
   );
 }
