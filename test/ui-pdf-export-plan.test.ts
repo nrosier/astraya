@@ -136,6 +136,7 @@ describe('buildPdfPlan', () => {
     const [section] = plan.sections;
     if (section?.kind !== 'chart') throw new Error('expected a chart section');
     expect(section.svg?.markup).toContain('<svg');
+    expect(section.hint).toContain(chartViewMessages.en.almutenScopeNote);
     expect(section.tables.map((t) => t.caption)).toEqual(
       expect.arrayContaining([chartViewMessages.en.positionsCaption, chartViewMessages.en.aspectsCaption]),
     );

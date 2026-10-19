@@ -167,6 +167,8 @@ const en = {
   almutenTooltip:
     'The almuten is the planet with the most essential-dignity points at a chart point — found by scoring every dignity (rulership, exaltation, triplicity, bound/term, face) a planet holds there and taking the highest total.',
   almutenTooltipLabel: 'About the almuten',
+  almutenScopeNote:
+    'This is the Almuten of the Ascendant, scored by essential-dignity points only (5/4/3/2/1 for rulership, exaltation, triplicity, bound and face, as in Lilly\u2019s fortitudes table). It does not include the planetary hour or the prenatal syzygy that some authors add to an Almuten Figuris.',
   almutenBreakdownCaption: 'Almuten candidates',
   // Jones' own seven pattern names (#35, #398) have no established Dutch astrological
   // vocabulary, the same out-of-scope treatment house-system names and "Harmonic"/"Solar
@@ -486,6 +488,8 @@ const nl: typeof en = {
   almutenTooltip:
     'De almuten is de planeet met de meeste essentiële waardigheidspunten op een chartpunt — gevonden door elke waardigheid (heerschappij, exaltatie, triplicitair, grens/term, decanaat) die een planeet daar heeft te scoren en de hoogste totaalscore te nemen.',
   almutenTooltipLabel: 'Over de almuten',
+  almutenScopeNote:
+    'Dit is de almuten van de Ascendant, uitsluitend gescoord met essentiële waardigheidspunten (5/4/3/2/1 voor heerschappij, exaltatie, triplicitair, grens en decanaat, zoals in Lilly\u2019s fortitudes-tabel). Het omvat niet het planetaire uur of de prenatale syzygie die sommige auteurs toevoegen aan een Almuten Figuris.',
   almutenBreakdownCaption: 'Almuten-kandidaten',
   jonesShapeLabels: {
     bundle: 'Bundle',

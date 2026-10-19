@@ -564,7 +564,8 @@ async function buildChartSectionPlan(
   const hint =
     almuten === undefined
       ? undefined
-      : t.almutenOfAscendantSentence(almuten.almutens.map((key) => bodyDisplayName(key, locale)).join(', '));
+      : t.almutenOfAscendantSentence(almuten.almutens.map((key) => bodyDisplayName(key, locale)).join(', ')) +
+        ` ${t.almutenScopeNote}`;
 
   const tables = options.tables.flatMap((table) =>
     tablesOf(data, table, housesRenderable, t, locale, rulership, visibility, settings.boundsScheme),
