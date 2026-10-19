@@ -102,9 +102,11 @@ JSON Schema file does enumerate them structurally.
   reach `store.mutate` and fail in a way the preview never explained. It deliberately never validates or restores
   `natalChart`/`harmonicCharts`/`chartError`/`calculation`: the birth record is this file's own stated source of
   truth, and a chart is always recomputable, so restoring a stale computed chart from a file would be restoring
-  exactly what this project refuses to treat as truth. `parseCalculationSnapshot` still uses best-effort
-  defaulting for missing fields rather than strict validation (see #583); the importer deliberately does not
-  repeat that — it fails closed and names what's unsupported.
+  exactly what this project refuses to treat as truth. A calculation snapshot arriving from outside the
+  device (a share link) goes through `decodeCalculationSnapshot` (#717), which refuses an unsupported future
+  version or an unregistered/out-of-range calculation field with a typed `SnapshotDecodeError`, and migrates
+  v1/v2/unversioned payloads deterministically; `parseCalculationSnapshot`'s best-effort, field-by-field repair is
+  kept only for a device's own saved default. The importer likewise fails closed and names what's unsupported.
   `stageFullExportRestore` then classifies each person new/updated/unchanged against this device's current
   people and builds the exact field-level mutations a restore would write, touching only fields that actually
   differ. A person already soft-deleted on this device (`store.state.deleted.people`) is classified
