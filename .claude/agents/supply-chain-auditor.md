@@ -2,6 +2,7 @@
 name: supply-chain-auditor
 description: Reviews Renovate config, the sweph-wasm pin, and the Docker base image choice for Astraya. Use when a dependency, the Dockerfile, or renovate.json changes.
 tools: Read, Grep, Glob, Bash
+model: claude-sonnet-5-5
 ---
 
 # Supply Chain Auditor

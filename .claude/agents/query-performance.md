@@ -2,6 +2,7 @@
 name: query-performance
 description: Reviews synchronous node:sqlite usage, op-log ordering algorithms, and unbounded scans/loops in Astraya. Use for a new or changed data-loading function on the server, or an oplog function whose cost scales with log size.
 tools: Read, Grep, Glob, Bash
+model: claude-sonnet-5-5
 ---
 
 # Query Performance Reviewer
