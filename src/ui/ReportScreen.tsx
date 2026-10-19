@@ -13,7 +13,7 @@
  * @exports ReportScreen
  */
 import { personHref } from './route.js';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { computeChartData, housesAreDefined, type ChartData } from '../domain/chart-compute.js';
 import { PersonNotFound } from './PersonNotFound.js';
@@ -22,8 +22,11 @@ import { ReportView } from './ReportView.js';
 import { useMessages } from './messages.js';
 import { useRulershipChoice } from './rulership-setting.js';
 import { useStoreState } from './store-context.js';
+import { useExtendedSettings } from './extended-settings-store.js';
+import { useOrbContextSource, useOrbLibrary } from './orb-library-store.js';
+import { settingsForContext, toChartCalculationOptions } from '../chart/extended-settings.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
-import { useStableMoment } from './use-stable-moment.js';
+import { useStableBy, useStableMoment } from './use-stable-moment.js';
 import { BackLink } from './BackLink.js';
 
 type Load =
@@ -35,9 +38,19 @@ export function ReportScreen({ personId }: { personId: string }): React.JSX.Elem
   const state = useStoreState();
   const person = state.people.get(personId);
   const personMoment = useStableMoment(person?.moment);
+  const customPoints = useStableBy(person?.customPoints, (points) => JSON.stringify(points ?? []));
   const t = useMessages(reportScreenMessages);
   const { provider } = useEphemerisProvider();
   const [rulership] = useRulershipChoice();
+  // The chart the Charts page draws (#732): its natal-context settings, rulers and custom points — not a
+  // default-settings chart under the same name, which would read out a different chart from the one on screen.
+  const [cardSettings] = useExtendedSettings();
+  const orbLibrary = useOrbLibrary();
+  const orbSources = useOrbContextSource();
+  const settings = useMemo(
+    () => settingsForContext(cardSettings, 'natal', orbLibrary, orbSources),
+    [cardSettings, orbLibrary, orbSources],
+  );
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
 
   useEffect(() => {
@@ -48,7 +61,11 @@ export function ReportScreen({ personId }: { personId: string }): React.JSX.Elem
 
     void (async () => {
       try {
-        const data = await computeChartData(moment, provider, { rulership });
+        const data = await computeChartData(moment, provider, {
+          ...toChartCalculationOptions(settings),
+          rulership,
+          ...(customPoints === undefined ? {} : { customPoints }),
+        });
         if (!effect.cancelled) setLoad({ kind: 'ready', data });
       } catch (error) {
         if (!effect.cancelled)
@@ -59,7 +76,7 @@ export function ReportScreen({ personId }: { personId: string }): React.JSX.Elem
     return () => {
       effect.cancelled = true;
     };
-  }, [personMoment, rulership, provider]);
+  }, [personMoment, rulership, provider, settings, customPoints]);
 
   if (person === undefined) {
     return <PersonNotFound />;
