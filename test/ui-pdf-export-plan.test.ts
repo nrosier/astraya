@@ -873,6 +873,81 @@ describe('PDF chart sections use the Charts page’s own calculation settings (#
     expect(wholeSign.provenance).not.toBe(placidus.provenance);
   }, 30_000);
 
+  async function natalPlan(settings: typeof DEFAULT_EXTENDED_SETTINGS, tables: readonly string[], wheel: boolean) {
+    const provider = await getEngine();
+    const selection: PdfSelection = {
+      personId: ADA.id,
+      ...EMPTY_SELECTION,
+      charts: [{ type: 'natal', wheel, tables: tables as never }],
+    };
+    const context: PdfPlanContext = {
+      person: ADA,
+      provider,
+      settings,
+      rulership: DEFAULT_RULERSHIP_CHOICE,
+      locale: 'en',
+      aiConsent: false,
+      corpusFetch,
+    };
+    const built = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
+    const [section] = built.sections;
+    if (section?.kind !== 'chart') throw new Error('expected a chart section');
+    return section;
+  }
+
+  it('mirrors the chart’s object policy: a body hidden on screen is absent from the PDF wheel and the tables the screen filters (#719)', async () => {
+    const hidden: typeof DEFAULT_EXTENDED_SETTINGS = {
+      ...DEFAULT_EXTENDED_SETTINGS,
+      objectPolicies: {
+        ...DEFAULT_EXTENDED_SETTINGS.objectPolicies,
+        neptune: { visible: false, aspectParticipant: true },
+      },
+    };
+    const all = ['positions', 'houses', 'aspects', 'dignities', 'derived'];
+    // The tables the Charts page filters by the object policy. Declinations and the dispositor
+    // chains name hidden bodies on screen too (their row builders take no visibility), so the PDF
+    // matches the screen there rather than diverging from it.
+    const filtered = (section: Awaited<ReturnType<typeof natalPlan>>) =>
+      section.tables.filter((table) =>
+        [
+          chartViewMessages.en.positionsCaption,
+          chartViewMessages.en.aspectsCaption,
+          chartViewMessages.en.dignitiesCaption,
+          chartViewMessages.en.derivedPointsCaption,
+        ].includes(table.caption),
+      );
+    const mentionsNeptune = (section: Awaited<ReturnType<typeof natalPlan>>): boolean =>
+      filtered(section).some((table) => table.body.some((row) => row.some((cell) => /neptune/i.test(cell))));
+    const shown = await natalPlan(DEFAULT_EXTENDED_SETTINGS, all, true);
+    const mirrored = await natalPlan(hidden, all, true);
+    // Guard against a vacuous pass: with the default policy Neptune is in those tables and the wheel.
+    expect(filtered(shown)).toHaveLength(4);
+    expect(mentionsNeptune(shown)).toBe(true);
+    expect(mentionsNeptune(mirrored)).toBe(false);
+    expect(mirrored.svg?.markup).not.toBe(shown.svg?.markup);
+  }, 60_000);
+
+  it('uses the chart’s bounds scheme and midpoint gates, as the Charts page does (#719)', async () => {
+    const midpointCaption = chartViewMessages.en.allMidpointsCaption;
+    const off = await natalPlan(DEFAULT_EXTENDED_SETTINGS, ['dignities', 'derived'], false);
+    const on = await natalPlan(
+      { ...DEFAULT_EXTENDED_SETTINGS, midpointsVisible: true },
+      ['dignities', 'derived'],
+      false,
+    );
+    expect(off.tables.some((table) => table.caption === midpointCaption)).toBe(false);
+    expect(on.tables.some((table) => table.caption === midpointCaption)).toBe(true);
+    const egyptian = await natalPlan({ ...DEFAULT_EXTENDED_SETTINGS, boundsScheme: 'egyptian' }, ['dignities'], false);
+    const ptolemaic = await natalPlan(
+      { ...DEFAULT_EXTENDED_SETTINGS, boundsScheme: 'ptolemaic' },
+      ['dignities'],
+      false,
+    );
+    const dignities = (section: typeof egyptian) =>
+      section.tables.find((table) => table.caption === chartViewMessages.en.dignitiesCaption)?.body;
+    expect(dignities(ptolemaic)).not.toEqual(dignities(egyptian));
+  }, 60_000);
+
   it('reads the interpretation from the same chart the natal section draws, not a default-settings recompute (#718)', async () => {
     const provider = await getEngine();
     const lahiri = ayanamsaByKey('lahiri')?.id;
