@@ -23,7 +23,7 @@
  * @module interpretation/rules
  * @purpose Scores and ranks every placement a computed chart has by interpretive salience, so a report can pick the handful of placements most worth saying instead of dumping every placement in birth order.
  * @conventions A plain, deterministic function of ChartData — identical input always produces identical, identically-ordered output. Weighs body category, dignity, sect light, retrograde (classical planets only), angularity (within ANGULARITY_ORB of an angle), aspect family/orb tightness, and house class (angular/succedent/cadent, 12-house systems only). Covers planet-in-sign, planet-in-house, sign-on-cusp, aspect-pair and dignity-state; nakshatra and pattern are out of scope (need data ChartData doesn't carry).
- * @exports SalienceFactor, SalientPlacement, DEFAULT_SALIENCE_LIMIT, angularityOf, derivePlacements, rankPlacements, selectSalientPlacements
+ * @exports SalienceFactor, SalientPlacement, InterpretationExclusions, NO_EXCLUSIONS, DEFAULT_SALIENCE_LIMIT, angularityOf, derivePlacements, rankPlacements, selectSalientPlacements
  */
 import { angularSeparation, DEFAULT_ORB_CONFIG, orbFor, type AspectFamily } from '../astrology/aspects.js';
 import { bodyById, type BodyCategory } from '../astrology/bodies.js';
@@ -169,11 +169,20 @@ function houseClassFactor(house: number, houseCount: number): SalienceFactor | u
   return { rule: 'house', weight: HOUSE_CLASS_WEIGHT[cls], detail: `house ${String(house)} (${cls})` };
 }
 
-function planetInSignPlacements(chart: ChartData): SalientPlacement[] {
+/**
+ * Body keys the written reading must not speak about (#721). A plain set rather than a policy, so
+ * this module stays a pure function of `ChartData`: callers turn the chart's object policy into
+ * the set (`chart/object-policy.ts`'s `interpretationExclusions`), and an empty set changes nothing.
+ */
+export type InterpretationExclusions = ReadonlySet<string>;
+
+export const NO_EXCLUSIONS: InterpretationExclusions = new Set();
+
+function planetInSignPlacements(chart: ChartData, exclude: InterpretationExclusions): SalientPlacement[] {
   const placements: SalientPlacement[] = [];
   for (const position of chart.positions) {
     const body = bodyById(position.body);
-    if (body === undefined) continue;
+    if (body === undefined || exclude.has(body.key)) continue;
     const factors: SalienceFactor[] = [bodyCategoryFactor(body.category)];
     const dignities = chart.dignities.get(position.body);
     const dignity = dignityFactor(dignities === undefined ? undefined : dignityState(dignities));
@@ -189,12 +198,12 @@ function planetInSignPlacements(chart: ChartData): SalientPlacement[] {
   return placements;
 }
 
-function planetInHousePlacements(chart: ChartData): SalientPlacement[] {
+function planetInHousePlacements(chart: ChartData, exclude: InterpretationExclusions): SalientPlacement[] {
   const houseCount = chart.houses.cusps.length - 1;
   const placements: SalientPlacement[] = [];
   for (const position of chart.positions) {
     const body = bodyById(position.body);
-    if (body === undefined) continue;
+    if (body === undefined || exclude.has(body.key)) continue;
     const house = houseOf(position.longitude, chart.houses.cusps);
     const factors: SalienceFactor[] = [bodyCategoryFactor(body.category)];
     const houseClass = houseClassFactor(house, houseCount);
@@ -224,12 +233,14 @@ function signOnCuspPlacements(chart: ChartData): SalientPlacement[] {
   return placements;
 }
 
-function aspectPairPlacements(chart: ChartData): SalientPlacement[] {
+function aspectPairPlacements(chart: ChartData, exclude: InterpretationExclusions): SalientPlacement[] {
   const placements: SalientPlacement[] = [];
   for (const aspect of chart.aspects) {
     const bodyA = bodyById(aspect.bodyA);
     const bodyB = bodyById(aspect.bodyB);
     if (bodyA === undefined || bodyB === undefined) continue;
+    // A contact belongs to both bodies: leaving either out of the reading drops it.
+    if (exclude.has(bodyA.key) || exclude.has(bodyB.key)) continue;
     const allowedOrb = orbFor(aspect.aspect.key, bodyA.category, bodyB.category, DEFAULT_ORB_CONFIG);
     const tightness = allowedOrb <= 0 ? 1 : Math.max(0, 1 - aspect.orb / allowedOrb);
     const factors: SalienceFactor[] = [
@@ -247,13 +258,13 @@ function aspectPairPlacements(chart: ChartData): SalientPlacement[] {
   return placements;
 }
 
-function dignityStatePlacements(chart: ChartData): SalientPlacement[] {
+function dignityStatePlacements(chart: ChartData, exclude: InterpretationExclusions): SalientPlacement[] {
   const placements: SalientPlacement[] = [];
   for (const [bodyId, dignities] of chart.dignities) {
     const state = dignityState(dignities);
     if (state === undefined) continue;
     const body = bodyById(bodyId);
-    if (body === undefined) continue;
+    if (body === undefined || exclude.has(body.key)) continue;
     const factors: SalienceFactor[] = [bodyCategoryFactor(body.category)];
     const dignity = dignityFactor(state);
     if (dignity) factors.push(dignity);
@@ -268,13 +279,16 @@ function dignityStatePlacements(chart: ChartData): SalientPlacement[] {
  * factors that produced it. Unordered — call `rankPlacements` or
  * `selectSalientPlacements` to get a report-ready order.
  */
-export function derivePlacements(chart: ChartData): readonly SalientPlacement[] {
+export function derivePlacements(
+  chart: ChartData,
+  exclude: InterpretationExclusions = NO_EXCLUSIONS,
+): readonly SalientPlacement[] {
   return [
-    ...planetInSignPlacements(chart),
-    ...planetInHousePlacements(chart),
+    ...planetInSignPlacements(chart, exclude),
+    ...planetInHousePlacements(chart, exclude),
     ...signOnCuspPlacements(chart),
-    ...aspectPairPlacements(chart),
-    ...dignityStatePlacements(chart),
+    ...aspectPairPlacements(chart, exclude),
+    ...dignityStatePlacements(chart, exclude),
   ];
 }
 
@@ -291,6 +305,7 @@ export function rankPlacements(placements: readonly SalientPlacement[]): readonl
 export function selectSalientPlacements(
   chart: ChartData,
   limit: number = DEFAULT_SALIENCE_LIMIT,
+  exclude: InterpretationExclusions = NO_EXCLUSIONS,
 ): readonly SalientPlacement[] {
-  return rankPlacements(derivePlacements(chart)).slice(0, limit);
+  return rankPlacements(derivePlacements(chart, exclude)).slice(0, limit);
 }

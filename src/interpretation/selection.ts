@@ -26,7 +26,13 @@ import type { DerivedPointKey } from '../astrology/derived-points.js';
 import { degreeSymbolNumber } from '../astrology/signs.js';
 import type { ChartData } from '../domain/chart-compute.js';
 import { derivedPointPlacementFacts } from '../domain/derived-point-position.js';
-import { derivePlacements, rankPlacements, type SalientPlacement } from './rules.js';
+import {
+  derivePlacements,
+  NO_EXCLUSIONS,
+  rankPlacements,
+  type InterpretationExclusions,
+  type SalientPlacement,
+} from './rules.js';
 import { placementKey, type CorpusPlacement } from './schema.js';
 import type { WheelSelection } from './selection-key.js';
 
@@ -118,13 +124,18 @@ function derivedPointPlacements(chart: ChartData, point: DerivedPointKey): reado
 }
 
 /** The chart's placements that belong to `selection`: basics first, then aspects, then (for a body) its degree-symbol last; most salient first within each. */
-export function selectionPlacements(chart: ChartData, selection: WheelSelection): readonly SalientPlacement[] {
+export function selectionPlacements(
+  chart: ChartData,
+  selection: WheelSelection,
+  exclude: InterpretationExclusions = NO_EXCLUSIONS,
+): readonly SalientPlacement[] {
   if (selection.kind === 'derived') return derivedPointPlacements(chart, selection.point);
   // `rankPlacements` already orders by salience, and `sort` is stable, so within a kind that order holds.
-  const ranked = rankPlacements(derivePlacements(chart))
+  const ranked = rankPlacements(derivePlacements(chart, exclude))
     .filter((item) => matches(item, selection))
     .sort((a, b) => categoryRank(a, selection) - categoryRank(b, selection));
-  if (selection.kind !== 'body') return ranked;
+  // A body left out of the reading has no degree-symbol entry either (#721).
+  if (selection.kind !== 'body' || exclude.has(selection.key)) return ranked;
   const degreeSymbol = degreeSymbolPlacement(chart, selection.key);
   return degreeSymbol === undefined ? ranked : [...ranked, degreeSymbol];
 }

@@ -19,6 +19,7 @@ import { Disclosure } from './primitives/Disclosure.js';
 import type { ChartData } from '../domain/chart-compute.js';
 import { resolvePlacementText } from '../interpretation/compose.js';
 import type { CorpusEntry, Locale } from '../interpretation/schema.js';
+import type { InterpretationExclusions } from '../interpretation/rules.js';
 import { parseSelectionKey, selectionPlacements } from '../interpretation/selection.js';
 import { chartViewMessages } from './ChartView.messages.js';
 import { useMessages } from './messages.js';
@@ -29,10 +30,13 @@ export function WheelSelectionText({
   chart,
   selectionKey,
   locale,
+  exclude,
 }: {
   readonly chart: ChartData;
   readonly selectionKey: string;
   readonly locale: Locale;
+  /** Objects left out of the written reading (#721); absent means every object is read. */
+  readonly exclude?: InterpretationExclusions | undefined;
 }): React.JSX.Element | null {
   const t = useMessages(chartViewMessages);
   const [corpus, setCorpus] = useState<readonly CorpusEntry[] | undefined>(undefined);
@@ -57,8 +61,8 @@ export function WheelSelectionText({
 
   const items = useMemo(() => {
     const selection = parseSelectionKey(selectionKey);
-    return selection === undefined ? [] : selectionPlacements(chart, selection);
-  }, [chart, selectionKey]);
+    return selection === undefined ? [] : selectionPlacements(chart, selection, exclude);
+  }, [chart, selectionKey, exclude]);
 
   if (items.length === 0) return null;
 

@@ -35,12 +35,13 @@
  * @conventions Three modes: 'grounded' sends only de-identified placementKeys (server re-resolves Tier-1 text, no interpretation prose crosses the wire); 'freeform' sends computed chartData and gives up the "no chart data crosses the wire" guarantee for that mode only; 'focus' sends one placement's enriched FocusContext. The wire shapes are defined once in ./tier2-contract and shared with the server, never redeclared here (#588). `locale` always rides alongside the payload.
  * @exports Tier2Error, Tier2Section, Tier2ChartDataPayload, toTier2ChartPayload, Tier2PositionsHousesPayload, Tier2RelationshipDataPayload, toTier2RelationshipPayload, Tier2Request, SavedInterpretationSummary, SavedInterpretationDetail
  */
-import { bodyByKey } from '../astrology/bodies.js';
+import { bodyById, bodyByKey } from '../astrology/bodies.js';
 import type { ChartData } from '../domain/chart-compute.js';
 import type { SynastryData } from '../domain/synastry.js';
 import type { FocusContext } from './focus-context-schema.js';
 import type { ResultBasis, ResultKind } from './result-basis.js';
 import type { Locale } from './schema.js';
+import { NO_EXCLUSIONS, type InterpretationExclusions } from './rules.js';
 import {
   isTier2Section,
   type Tier2ChartDataPayload,
@@ -89,22 +90,38 @@ async function errorFrom(response: Response): Promise<Tier2Error> {
   return new Tier2Error(`Request failed with status ${String(response.status)}`, response.status);
 }
 
-/** Flattens a computed `ChartData` into freeform mode's wire payload. */
-export function toTier2ChartPayload(chart: ChartData): Tier2ChartDataPayload {
+/**
+ * Flattens a computed `ChartData` into freeform mode's wire payload. Bodies in `exclude` (#721) are
+ * not sent, nor are the aspects they take part in: an object the practitioner left out of the reading
+ * is not handed to the model to write about. Excluding every body leaves no positions, which the
+ * server refuses as malformed rather than generating from nothing.
+ */
+export function toTier2ChartPayload(
+  chart: ChartData,
+  exclude: InterpretationExclusions = NO_EXCLUSIONS,
+): Tier2ChartDataPayload {
+  const keep = (id: number): boolean => {
+    const key = bodyById(id)?.key;
+    return key === undefined || !exclude.has(key);
+  };
   return {
-    positions: chart.positions.map((position) => ({ body: position.body, longitude: position.longitude })),
+    positions: chart.positions
+      .filter((position) => keep(position.body))
+      .map((position) => ({ body: position.body, longitude: position.longitude })),
     houses: {
       cusps: chart.houses.cusps,
       ascendant: chart.houses.ascendant,
       midheaven: chart.houses.midheaven,
     },
-    aspects: chart.aspects.map((aspect) => ({
-      bodyA: aspect.bodyA,
-      bodyB: aspect.bodyB,
-      aspectKey: aspect.aspect.key,
-      separation: aspect.separation,
-      orb: aspect.orb,
-    })),
+    aspects: chart.aspects
+      .filter((aspect) => keep(aspect.bodyA) && keep(aspect.bodyB))
+      .map((aspect) => ({
+        bodyA: aspect.bodyA,
+        bodyB: aspect.bodyB,
+        aspectKey: aspect.aspect.key,
+        separation: aspect.separation,
+        orb: aspect.orb,
+      })),
   };
 }
 

@@ -98,4 +98,47 @@ describe('the Report page computes the Charts page’s chart (#732)', () => {
       container.remove();
     }
   });
+
+  it('leaves an excluded object out of the reading and says so, while a hidden one stays in (#721)', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+        if (url.includes('/api/')) return new Response(JSON.stringify({ entries: [] }));
+        const { readFileSync } = await import('node:fs');
+        const { resolve } = await import('node:path');
+        return new Response(readFileSync(resolve(import.meta.dirname, '../public/corpus/en.json'), 'utf8'));
+      }),
+    );
+    setExtendedSettings({
+      ...DEFAULT_EXTENDED_SETTINGS,
+      objectPolicies: {
+        ...DEFAULT_EXTENDED_SETTINGS.objectPolicies,
+        mars: { visible: true, aspectParticipant: true, interpreted: false },
+        venus: { visible: false, aspectParticipant: true },
+      },
+    });
+    const { container, root } = await mount();
+    try {
+      for (let i = 0; i < 20 && container.querySelector('.report-scope') === null; i++) {
+        await act(async () => {
+          await new Promise((done) => setTimeout(done, 25));
+        });
+      }
+      const scope = container.querySelector('.report-scope');
+      expect(scope?.textContent).toContain('This reading leaves out: Mars.');
+      const headings = Array.from(container.querySelectorAll('.report-placement-label, h4')).map(
+        (node) => node.textContent,
+      );
+      expect(headings.some((text) => /\bMars\b/.test(text))).toBe(false);
+      // Venus is only hidden on the wheel, so the reading still speaks about it.
+      expect(headings.some((text) => /\bVenus\b/.test(text))).toBe(true);
+    } finally {
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+      vi.unstubAllGlobals();
+    }
+  });
 });

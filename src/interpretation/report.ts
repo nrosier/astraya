@@ -72,7 +72,13 @@ import type { ChartData } from '../domain/chart-compute.js';
 import { chartOverview, ELEMENT_ORDER, MODALITY_ORDER, type Temperament } from '../domain/chart-overview.js';
 import type { BodyId, Degrees } from '../ephemeris/types.js';
 import { composeFallbackText, findCorpusEntry } from './compose.js';
-import { derivePlacements, rankPlacements, type SalienceFactor } from './rules.js';
+import {
+  derivePlacements,
+  NO_EXCLUSIONS,
+  rankPlacements,
+  type InterpretationExclusions,
+  type SalienceFactor,
+} from './rules.js';
 import { dignityState, placementKey, type CorpusEntry, type CorpusPlacement, type Locale } from './schema.js';
 
 export type ReportSectionId =
@@ -228,6 +234,7 @@ function coreIdentitySection(
   locale: Locale,
   corpus: readonly CorpusEntry[],
   chartKind: 'natal' | 'composite',
+  exclude: InterpretationExclusions,
 ): ReportSection {
   const ascendantSign = signIndex(chart.houses.ascendant);
   // degree-symbol has no composite sibling (schema.ts: it isn't personal the way a placement
@@ -236,13 +243,18 @@ function coreIdentitySection(
   // weigh a bare degree against: no dignity, sect, angularity or aspect orb to key off).
   const degreeSymbol = (longitude: Degrees): readonly ReportParagraph[] =>
     chartKind === 'natal' ? [degreeSymbolParagraph(longitude, locale, corpus)] : [];
+  // A body left out of the reading (#721) contributes nothing here: not its sign, house or degree.
+  const bodyParagraphs = (key: 'sun' | 'moon'): readonly ReportParagraph[] =>
+    exclude.has(key)
+      ? []
+      : [
+          planetInSignParagraph(chart, key, locale, corpus, chartKind),
+          planetInHouseParagraph(chart, key, locale, corpus, chartKind),
+          ...degreeSymbol(bodyPosition(chart, key).longitude),
+        ];
   return section('core-identity', locale, [
-    planetInSignParagraph(chart, 'sun', locale, corpus, chartKind),
-    planetInHouseParagraph(chart, 'sun', locale, corpus, chartKind),
-    ...degreeSymbol(bodyPosition(chart, 'sun').longitude),
-    planetInSignParagraph(chart, 'moon', locale, corpus, chartKind),
-    planetInHouseParagraph(chart, 'moon', locale, corpus, chartKind),
-    ...degreeSymbol(bodyPosition(chart, 'moon').longitude),
+    ...bodyParagraphs('sun'),
+    ...bodyParagraphs('moon'),
     resolveParagraph(
       { category: 'sign-on-cusp', sign: ascendantSign, house: 1 },
       locale,
@@ -331,24 +343,29 @@ function chartRulerSection(
   corpus: readonly CorpusEntry[],
   rulership: RulershipChoice,
   chartKind: 'natal' | 'composite',
+  exclude: InterpretationExclusions,
 ): ReportSection {
   const ascendantSign = signIndex(chart.houses.ascendant);
   // Under Both the Ascendant has two rulers (Scorpio: Mars and Pluto); each gets its own sign paragraph.
   const rulerIds = rulersOf(ascendantSign, rulership);
   const rulerSignCategory = chartKind === 'composite' ? 'composite-planet-in-sign' : 'planet-in-sign';
-  const rulerSignParagraphs = rulerIds.map((rulerId) => {
+  const rulerSignParagraphs = rulerIds.flatMap((rulerId) => {
     const ruler = bodyById(rulerId);
     const rulerPosition = chart.positions.find((position) => position.body === rulerId);
     if (ruler === undefined || rulerPosition === undefined) {
       throw new Error('unreachable: the ascendant ruler is always one of BODIES with a computed position');
     }
-    return resolveParagraph(
-      { category: rulerSignCategory, body: ruler.key, sign: signIndex(rulerPosition.longitude) },
-      locale,
-      corpus,
-      [],
-      rulerPosition.longitude,
-    );
+    // The ruler's own sign reading is a placement of that body (#721); the chain below stays a whole-chart fact.
+    if (exclude.has(ruler.key)) return [];
+    return [
+      resolveParagraph(
+        { category: rulerSignCategory, body: ruler.key, sign: signIndex(rulerPosition.longitude) },
+        locale,
+        corpus,
+        [],
+        rulerPosition.longitude,
+      ),
+    ];
   });
 
   // A chain needs one path: the traditional ruler under Traditional, the modern one otherwise.
@@ -383,10 +400,13 @@ function housesSection(
   locale: Locale,
   corpus: readonly CorpusEntry[],
   chartKind: 'natal' | 'composite',
+  exclude: InterpretationExclusions,
 ): ReportSection {
   const houseCount = chart.houses.cusps.length - 1;
   const bodiesByHouse = new Map<number, BodyId[]>();
   for (const position of chart.positions) {
+    const key = bodyById(position.body)?.key;
+    if (key !== undefined && exclude.has(key)) continue;
     const house = houseOf(position.longitude, chart.houses.cusps);
     const list = bodiesByHouse.get(house);
     if (list) list.push(position.body);
@@ -433,8 +453,9 @@ function aspectPatternsSection(
   locale: Locale,
   corpus: readonly CorpusEntry[],
   chartKind: 'natal' | 'composite',
+  exclude: InterpretationExclusions,
 ): ReportSection {
-  const aspectPlacements = rankPlacements(derivePlacements(chart))
+  const aspectPlacements = rankPlacements(derivePlacements(chart, exclude))
     .filter((placement) => placement.placement.category === 'aspect-pair')
     .slice(0, ASPECT_PATTERNS_LIMIT);
   // `derivePlacements` always tags its own output 'aspect-pair' regardless of chart kind (it's
@@ -461,7 +482,12 @@ function aspectPatternsSection(
   return section('aspect-patterns', locale, [...shape, ...paragraphs]);
 }
 
-function dignitiesSectSection(chart: ChartData, locale: Locale, corpus: readonly CorpusEntry[]): ReportSection {
+function dignitiesSectSection(
+  chart: ChartData,
+  locale: Locale,
+  corpus: readonly CorpusEntry[],
+  exclude: InterpretationExclusions,
+): ReportSection {
   const sectSentence =
     locale === 'nl'
       ? chart.sect === 'day'
@@ -478,7 +504,7 @@ function dignitiesSectSection(chart: ChartData, locale: Locale, corpus: readonly
     const state = dignityState(dignities);
     if (state === undefined) return [];
     const body = bodyById(id);
-    if (body === undefined) return [];
+    if (body === undefined || exclude.has(body.key)) return [];
     return [resolveParagraph({ category: 'dignity-state', body: body.key, state }, locale, corpus)];
   });
 
@@ -492,9 +518,11 @@ function nodesChironSection(
   locale: Locale,
   corpus: readonly CorpusEntry[],
   chartKind: 'natal' | 'composite',
+  exclude: InterpretationExclusions,
 ): ReportSection {
   const paragraphs = NODE_CHIRON_KEYS.flatMap((key) => {
     const body = bodyByKey(key);
+    if (exclude.has(key)) return [];
     if (body === undefined || !chart.positions.some((position) => position.body === body.id)) return [];
     return [
       planetInSignParagraph(chart, key, locale, corpus, chartKind),
@@ -517,17 +545,25 @@ export function assembleReport(
    * (see those sections' own comments) and stay on the plain natal category either way.
    */
   chartKind: 'natal' | 'composite' = 'natal',
+  /**
+   * Body keys the reading must not speak about (#721), from the chart's object policy
+   * (`interpretationExclusions`). They are left out of every paragraph that names them — placements,
+   * contacts, dignities, the nodes/Chiron section and the Sun/Moon opening — and nothing is substituted.
+   * Whole-chart facts (element balance, chart shape, the dispositor chain) deliberately stay: they are
+   * statements about the whole calculation, not about one object, and `reportScope` says as much.
+   */
+  exclude: InterpretationExclusions = NO_EXCLUSIONS,
 ): Report {
   return {
     sections: [
       ...(chartKind === 'composite' ? [compositeIntroSection(locale)] : []),
-      coreIdentitySection(chart, locale, corpus, chartKind),
+      coreIdentitySection(chart, locale, corpus, chartKind, exclude),
       temperamentSection(chart, locale, rulership),
-      chartRulerSection(chart, locale, corpus, rulership, chartKind),
-      housesSection(chart, locale, corpus, chartKind),
-      aspectPatternsSection(chart, locale, corpus, chartKind),
-      dignitiesSectSection(chart, locale, corpus),
-      nodesChironSection(chart, locale, corpus, chartKind),
+      chartRulerSection(chart, locale, corpus, rulership, chartKind, exclude),
+      housesSection(chart, locale, corpus, chartKind, exclude),
+      aspectPatternsSection(chart, locale, corpus, chartKind, exclude),
+      dignitiesSectSection(chart, locale, corpus, exclude),
+      nodesChironSection(chart, locale, corpus, chartKind, exclude),
     ],
   };
 }

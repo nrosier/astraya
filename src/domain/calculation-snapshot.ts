@@ -45,7 +45,9 @@ import type { CustomPointDefinition } from './person.js';
  * booleans collapse into one `objectPolicies` field — a breaking shape change per this file's
  * own versioning policy, even though `parseExtendedSettings` keeps reading an old-shaped
  * snapshot losslessly via `objectPoliciesFromLegacyFields` below, so no existing share link or
- * saved default actually changes behavior. A v1 snapshot (or a pre-#541 link with no version at
+ * saved default actually changes behavior. #721's optional `ObjectPolicy.interpreted` is not a
+ * bump: absent means included, so every existing snapshot reads back unchanged and one with no exclusions
+ * serializes byte for byte as before. A v1 snapshot (or a pre-#541 link with no version at
  * all) still parses — it simply had no way to carry formula points, so it reads back with none.
  */
 export const CURRENT_SNAPSHOT_VERSION = 3;
@@ -169,6 +171,8 @@ function parseObjectPolicy(value: unknown, fallback: ObjectPolicy): ObjectPolicy
   return {
     visible: parseBool(value.visible, fallback.visible),
     aspectParticipant: parseBool(value.aspectParticipant, fallback.aspectParticipant),
+    // Only an explicit exclusion is carried (#721); absent means included, so a default round-trips byte for byte.
+    ...(value.interpreted === false ? { interpreted: false } : {}),
   };
 }
 

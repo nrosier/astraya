@@ -56,11 +56,13 @@ import {
 } from '../chart/calculation-profiles.js';
 import { DEFAULT_EXTENDED_SETTINGS, type ExtendedSettings } from '../chart/extended-settings.js';
 import {
+  isInterpreted,
   matchObjectPolicyPreset,
   OBJECT_POLICY_PRESET_IDS,
   PRESET_OBJECT_POLICIES,
   type ObjectKey,
   type ObjectPolicy,
+  withInterpreted,
 } from '../chart/object-policy.js';
 import { useDefaultCalculationProfile } from './default-calculation-profile.js';
 import { extendedSettingsPanelMessages } from './ExtendedSettingsPanel.messages.js';
@@ -197,10 +199,19 @@ export function ExtendedSettingsPanel({
     patch({ objectPolicies: { ...draft.objectPolicies, [key]: { ...draft.objectPolicies[key], ...next } } });
   };
 
+  /** Whether the report reads this object (#721). */
+  const setInterpreted = (key: ObjectKey, interpreted: boolean): void => {
+    patch({
+      objectPolicies: { ...draft.objectPolicies, [key]: withInterpreted(draft.objectPolicies[key], interpreted) },
+    });
+  };
+
   /** Group-level "All"/"Clear" (#585), matching `TransitFilterPanel.tsx`'s own established pattern for a long checkbox group. */
   const setGroupPolicy = (keys: readonly ObjectKey[], policy: ObjectPolicy): void => {
     const updates: Partial<Record<ObjectKey, ObjectPolicy>> = {};
-    for (const key of keys) updates[key] = policy;
+    // "All" reads every object again; "Clear" only hides and unlinks, leaving what the report reads as it was (#721).
+    for (const key of keys)
+      updates[key] = withInterpreted(policy, policy.visible ? true : isInterpreted(draft.objectPolicies[key]));
     patch({ objectPolicies: { ...draft.objectPolicies, ...updates } });
   };
 
@@ -210,7 +221,7 @@ export function ExtendedSettingsPanel({
     patch({ objectPolicies: PRESET_OBJECT_POLICIES[id as (typeof OBJECT_POLICY_PRESET_IDS)[number]] });
   };
 
-  /** One object's row: its name once, then its two independent checkboxes — visible, and whether it takes aspects. */
+  /** One object's row: its name once, then its three independent checkboxes — visible, takes aspects, and read in the report (#721). */
   const objectRow = (key: ObjectKey, label: string): React.JSX.Element => {
     const policy: ObjectPolicy = draft.objectPolicies[key];
     return (
@@ -228,6 +239,13 @@ export function ExtendedSettingsPanel({
           checked={policy.aspectParticipant}
           onChange={(value) => {
             setObjectPolicy(key, { aspectParticipant: value });
+          }}
+        />
+        <Checkbox
+          label={t.objectInterpretedLabel(label)}
+          checked={isInterpreted(policy)}
+          onChange={(value) => {
+            setInterpreted(key, value);
           }}
         />
       </div>
