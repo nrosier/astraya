@@ -15,7 +15,7 @@ The migration is complete only when all of these statements are true:
 1. A person is the persistent context for person-specific work, and switching people does not require returning to the People list.
 2. Navigation is grouped by user goal. It has no third menu level and no generic collection of unrelated feature links.
 3. Charts has one application destination, one chart-type control, and one local view navigation.
-4. The on-screen chart is split into Wheel, Aspects, Placements, and Patterns & condition views. The combined chart sheet remains available for export.
+4. The on-screen chart is split into six views: Wheel, Aspects, Matrix, Elements, Placements, and Patterns & condition. The combined chart sheet remains available for export. Dense-chart tools (isolation, family filters, consultation presets) are deferred to #616 pending measurement.
 5. Selecting a sign, body, cusp, house, or aspect updates one nearby `SelectionInspector`. It appears beside the visualization when both remain usable and immediately below otherwise.
 6. Durable account and device preferences live in a stable Preferences workspace. Page and result settings use inline controls or one staged modal according to their size.
 7. Person facts, account preferences, device preferences, calculation profiles, saved-chart overrides, page state, and request consent remain separate scopes.
@@ -94,7 +94,7 @@ Keep hash routing because the built application must work as static files. New l
 | Preferences section     | `#/preferences/:section`                                              |
 | Admin                   | Preserve the existing `#/admin/*` hierarchy unless its scope changes. |
 
-Use `natal`, `draconic`, `harmonic`, `solar-return`, and `lunar-return` for `:chartType`. Use `wheel`, `aspects`, `placements`, and `patterns` for `:chartView`.
+Use `natal`, `draconic`, `harmonic`, `solar-return`, and `lunar-return` for `:chartType`. Use `wheel`, `aspects`, `matrix`, `elements`, `placements`, and `patterns` for `:chartView`.
 
 Astraya has no production route history or external bookmarks to preserve. Replace the current route scheme in one coordinated cutover. [route.ts](../src/ui/route.ts) should parse and construct only the canonical routes after the shell migration lands. Remove obsolete path expressions, query parameters, route constructors, and compatibility branches. An obsolete or malformed hash may use the existing safe fallback to People/Home; do not redirect it to a guessed destination or keep aliases for it.
 
@@ -103,6 +103,8 @@ Move the content of the existing chart sections as follows:
 | Existing section                      | Target view  | Optional target focus |
 | ------------------------------------- | ------------ | --------------------- |
 | Chart / omitted                       | `wheel`      | None                  |
+| Aspect matrix                         | `matrix`     | None                  |
+| Emphasis (element and modality)       | `elements`   | None                  |
 | Aspects                               | `aspects`    | None                  |
 | Positions                             | `placements` | `positions`           |
 | Houses                                | `placements` | `houses`              |
@@ -341,20 +343,20 @@ Create these boundaries or equivalent boundaries with the same responsibilities:
 
 - `ChartWorkspace`: loads or receives one computed chart model and owns chart-level settings.
 - `ChartHeader`: title, chart type, calculation basis, settings, and exports.
-- `ChartViewNav`: four route links on wide layouts and one Select on narrow layouts.
-- `WheelView`, `AspectsView`, `PlacementsView`, `PatternsView`: focused result views.
+- `ChartViewNav`: six route links on wide layouts and one Select on narrow layouts.
+- `WheelView`, `AspectsView`, `MatrixView`, `ElementsView`, `PlacementsView`, `PatternsView`: focused result views.
 - `SelectionInspector`: common selected-item facts, meaning, related connections, Clear, and optional deeper disclosure.
 
 Implement in this order:
 
-1. Add the four target route views and move each old section's content to its target view. Remove the old section parameter contract when the new navigation lands.
+1. Add the six target route views and move each old section's content to its target view. Remove the old section parameter contract when the new navigation lands.
 2. Replace the five chart-type pills with one labelled Select in the header. Remove chart types from application navigation.
 3. Extract the existing dial renderer from the combined on-screen sheet without changing chart geometry or hit targets.
 4. Render the dial followed by `SelectionInspector` in DOM order inside one workbench container.
 5. Make the workbench an inline-size query container. Below `68rem`, use one column with the inspector immediately after the visualization. At `68rem` and above, use `minmax(46rem, 1fr) minmax(20rem, 24rem)` with a `2rem` gap. This threshold is the sum of the minimum useful chart width, inspector width, and gap; it is not a viewport breakpoint. Put chart workbenches in the wide visualization shell rather than the current `64rem` general-content shell, which would make the two-column state unreachable. The visualization remains first in DOM and focus order, and the inspector does not get an independent vertical scrollbar.
-6. Extract the aspect matrix into Aspects and connect it to the same selection contract.
+6. Extract the aspect matrix into its own Matrix view and connect it to the same selection contract as Aspects.
 7. Move Positions, Houses, and Derived points into Placements with visible headings. Use a small contents control only if the combined view remains several screenfuls long.
-8. Move chart shape, emphasis, degree distribution, dignities, and dispositors into Patterns & condition. Keep each visualization next to its explanation.
+8. Move chart shape, dignities, and dispositors into Patterns & condition. Keep each visualization next to its explanation. Element and modality balance (emphasis, added by #511) lives in Elements.
 9. Keep `renderChartSheetSvg` and complete-sheet PNG/PDF output for export. Screen and export composition may differ while using the same computed data.
 10. Migrate natal first, then draconic and harmonic, then returns, composite, shared charts, and tool charts that reuse `ChartDataView`.
 
@@ -490,7 +492,7 @@ Add or extend:
 Refactor existing tests around roles, names, routes, and user-visible outcomes:
 
 - `app-nav.spec.ts` and `person-nav-dropdown.spec.ts`: workspace rail/drawer, person switching, grouping, focus restoration.
-- `chart-golden-path.spec.ts`: one chart-type field, four view links, adjacent/stacked inspector, canonical routes, and exports.
+- `chart-golden-path.spec.ts`: one chart-type field, six view links, adjacent/stacked inspector, canonical routes, and exports.
 - `extended-settings.spec.ts`: complete draft semantics and profile override/default separation.
 - `astrocartography-golden-path.spec.ts`: settings summary, one recalculation on Apply, Cancel behavior, Disclosure.
 - `rulership-setting.spec.ts` and `symbol-setting.spec.ts`: canonical Preferences location and no immediate mutation from staged dialogs.
@@ -517,7 +519,7 @@ Use reviewable vertical slices in this dependency order:
 | 3     | Workspace shell, person switcher, Overview, and page-header exports                        |
 | 4     | Preferences workspace and migrated account/device settings                                 |
 | 5     | Calculation profiles and truthful chart override/default behavior                          |
-| 6     | Natal chart workbench, four views, and SelectionInspector                                  |
+| 6     | Natal chart workbench, six views, and SelectionInspector                                   |
 | 7     | Remaining chart types and complete export-equivalence checks                               |
 | 8     | Astrocartography Map settings and Disclosure                                               |
 | 9     | Transit, Primary Directions, PDF builder, tables, and remaining control migrations         |
@@ -549,7 +551,7 @@ Before removing the migration label, run these tasks with a newer astrology read
 1. Open an existing locally stored person and an existing server-synchronized person, confirm every birth-record field, edit one value, reload, and confirm both records remain intact.
 2. Add a person, understand what is missing, and reach the natal chart.
 3. Switch people while remaining in the same valid feature.
-4. Change chart type and move among all four chart views without losing context.
+4. Change chart type and move among all six chart views without losing context.
 5. Select a sign, body, cusp, house, and aspect and find each meaning immediately.
 6. Apply a temporary chart override, then separately save a calculation default.
 7. Enter a target date, change Primary Directions time key, and filter transits.
