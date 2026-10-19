@@ -108,6 +108,7 @@ function makeAspect(bodyAKey: string, bodyBKey: string, angle: number, orb: numb
     },
     separation: angle + orb,
     orb,
+    allowedOrb: 8,
     applying: false,
   };
 }

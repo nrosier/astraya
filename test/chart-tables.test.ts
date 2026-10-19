@@ -256,6 +256,7 @@ describe('aspectRows (#44)', () => {
       aspect: { key: 'square', name: 'Square', angle: 90, family: 'major' },
       separation: 91,
       orb: 1,
+      allowedOrb: 8,
       applying: true,
     };
     const data: ChartData = {
@@ -323,6 +324,7 @@ describe('crossAspectRows (#172)', () => {
       aspect: { key: 'trine', name: 'Trine', angle: 120, family: 'major' },
       separation: 119,
       orb: 1,
+      allowedOrb: 8,
       applying: false,
     };
     expect(crossAspectRows([aspect])).toEqual([
@@ -752,6 +754,7 @@ describe('chartWheelRing (#52)', () => {
       aspect: { key: 'square', name: 'Square', angle: 90, family: 'major' },
       separation: 91,
       orb: 1,
+      allowedOrb: 8,
       applying: true,
     };
     const data: ChartData = {
@@ -794,6 +797,7 @@ describe('chartWheelRing (#52)', () => {
       aspect: { key: 'square', name: 'Square', angle: 90, family: 'major' },
       separation: 91,
       orb: 1,
+      allowedOrb: 8,
       applying: true,
     };
     const minor: Aspect = {
@@ -802,6 +806,7 @@ describe('chartWheelRing (#52)', () => {
       aspect: { key: 'quincunx', name: 'Quincunx', angle: 150, family: 'minor' },
       separation: 149,
       orb: 1,
+      allowedOrb: 8,
       applying: true,
     };
     const data: ChartData = {
@@ -823,6 +828,7 @@ describe('chartWheelRing (#52)', () => {
       aspect: { key: 'square', name: 'Square', angle: 90, family: 'major' },
       separation: 91,
       orb: 1,
+      allowedOrb: 8,
       applying: true,
     };
     const data: ChartData = {
@@ -854,6 +860,7 @@ describe('chartSheetInput', () => {
     aspect: { key: 'square', name: 'Square', angle: 90, family: 'major' },
     separation: 91,
     orb: 1,
+    allowedOrb: 8,
     applying: true,
   };
   const data: ChartData = {
@@ -908,6 +915,7 @@ describe('chartSheetInput', () => {
           aspect: { key: 'sextile', name: 'Sextile', angle: 60, family: 'major' },
           separation: 58.5,
           orb: 1.5,
+          allowedOrb: 8,
           applying: false,
         },
       ],
@@ -1125,6 +1133,7 @@ describe('receptionRows (#548)', () => {
       aspect: { key: 'opposition', name: 'Opposition', angle: 180, family: 'major' },
       separation: 120,
       orb: 10,
+      allowedOrb: 8,
       applying: true,
     };
     const data: ChartData = {
