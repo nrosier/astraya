@@ -162,6 +162,12 @@ const en = {
   allHarmonicFamilies: 'All harmonic families',
   harmonicFamilyOption: (family: string) => `H${family}`,
   fixedStarsCaption: 'Fixed stars',
+  // The list is deliberately short (#398, #725): said next to the table and in the PDF so an empty table is not read as "no star is near".
+  fixedStarsScopeNote: (count: number, names: string) =>
+    `This table checks only ${String(count)} stars: ${names}. No other fixed star is looked for, so an empty or short list does not mean no star is near a planet.`,
+  // Shown near the selection inspector when the chart is not a natal chart (#725).
+  derivedChartInterpretationNote: (chartKind: string) =>
+    `This reading applies natal-chart interpretations to a derived chart (${chartKind}); treat it as indicative.`,
 
   almutenOfAscendantSentence: (names: string) => `Almuten of the Ascendant: ${names}`,
   almutenTooltip:
@@ -230,7 +236,7 @@ const en = {
   aspectPatternSeparator: ', ',
   noAspectPatterns: 'No aspect configuration among the ten planets with the orbs in force.',
   aspectPatternsSourceNote:
-    'Shapes and rules as Astrolog 8.00 defines them: every aspect in a shape is within its own orb, and a stellium is three or four mutually conjunct planets. Yods need the quincunx turned on in the orb settings. Kite is not detected.',
+    'Shapes and rules as Astrolog 8.00 defines them: every aspect in a shape is within its own orb, and a stellium is three or four mutually conjunct planets. Only the ten planets, Sun to Pluto, are considered: no nodes, angles or asteroids. Yods need the quincunx turned on in the orb settings. Kite is not detected.',
   shapeSourceNote:
     'Chart shapes are a convention from Marc Edmund Jones (1941), widely taught in modern textbooks. They are not part of classical astrology and have not been validated empirically: read them as a tendency, never a verdict. The shape is worked out from the ten planets, Sun to Pluto, and its boundaries are approximate: a chart just either side of a boundary can fall in a neighbouring shape.',
   shapeCannotBeWorkedOut: 'The chart shape cannot be worked out: it needs at least two planets.',
@@ -483,6 +489,10 @@ const nl: typeof en = {
   allHarmonicFamilies: 'Alle harmonische families',
   harmonicFamilyOption: (family: string) => `H${family}`,
   fixedStarsCaption: 'Vaste sterren',
+  fixedStarsScopeNote: (count: number, names: string) =>
+    `Deze tabel controleert slechts ${String(count)} sterren: ${names}. Er wordt naar geen enkele andere vaste ster gezocht, dus een lege of korte lijst betekent niet dat er geen ster bij een planeet staat.`,
+  derivedChartInterpretationNote: (chartKind: string) =>
+    `Deze duiding past geboortehoroscoop-interpretaties toe op een afgeleide horoscoop (${chartKind}); beschouw haar als indicatief.`,
 
   almutenOfAscendantSentence: (names: string) => `Almuten van de Ascendant: ${names}`,
   almutenTooltip:
@@ -548,7 +558,7 @@ const nl: typeof en = {
   aspectPatternSeparator: ', ',
   noAspectPatterns: 'Geen aspectconfiguratie tussen de tien planeten met de geldende orbs.',
   aspectPatternsSourceNote:
-    'Vormen en regels zoals Astrolog 8.00 ze definieert: elk aspect in een vorm valt binnen zijn eigen orb, en een stellium is drie of vier planeten die onderling conjunct staan. Voor een Yod moet de quincunx aan staan in de orbinstellingen. De vlieger wordt niet herkend.',
+    'Vormen en regels zoals Astrolog 8.00 ze definieert: elk aspect in een vorm valt binnen zijn eigen orb, en een stellium is drie of vier planeten die onderling conjunct staan. Alleen de tien planeten, Zon tot Pluto, tellen mee: geen knopen, hoeken of asteroïden. Voor een Yod moet de quincunx aan staan in de orbinstellingen. De vlieger wordt niet herkend.',
   shapeSourceNote:
     'Horoscoopvormen zijn een conventie van Marc Edmund Jones (1941), veel onderwezen in moderne leerboeken. Ze maken geen deel uit van de klassieke astrologie en zijn niet empirisch onderbouwd: lees ze als een neiging, nooit als een oordeel. De vorm wordt bepaald uit de tien planeten, Zon tot Pluto, en de grenzen zijn bij benadering: een horoscoop net aan de ene of andere kant van een grens kan in een naburige vorm vallen.',
   shapeCannotBeWorkedOut: 'De horoscoopvorm kan niet worden bepaald: er zijn minstens twee planeten nodig.',

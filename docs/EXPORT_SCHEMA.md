@@ -49,6 +49,7 @@ interface ExportedHarmonicChart {
   key: string; // Varga preset key, currently D1/D9/D10
   label: string;
   harmonic: number;
+  convention: string; // #725 — the preset's convention note, English; D10 says the classical odd/even sign restart is not applied
   source: {
     kind: 'radix';
     transform: 'longitude-times-n-mod-360';
@@ -138,6 +139,7 @@ JSON Schema file does enumerate them structurally.
   (the shape a v1-labelled file could have had was already stale by the time this document was written) and is the
   first version bump made under the policy above, going forward. #557 later added optional `harmonicCharts` with
   radix-to-result position provenance for the named Varga presets; it is additive, so the version remains v2.
+  #725 added `ExportedHarmonicChart.convention`, the preset's convention note (D10: no odd/even sign restart); additive, still v2.
   #582 added optional `ExportedPerson.calculation`, the natal chart's `CalculationArtifact`; also additive, still v2.
   #587 added optional `ExportedPerson.relocationPlaces`/`customPoints` — both read internally for chart
   computation since #559/#566 but never carried back out, so a restore built on an export missing them would

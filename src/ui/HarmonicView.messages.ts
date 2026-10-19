@@ -4,9 +4,18 @@
 /**
  * @module HarmonicView.messages
  * @purpose English/Dutch i18n strings for the Harmonic & Varga charts screen, including the divisional-chart preset picker.
- * @conventions Co-located i18n file exporting `{ en, nl }`, consumed by HarmonicView.tsx via `useMessages(harmonicViewMessages)`; `nl` is typed as `typeof en`.
+ * @conventions Co-located i18n file exporting `{ en, nl }`, consumed by HarmonicView.tsx via `useMessages(harmonicViewMessages)`; `nl` is typed as `typeof en`. `d10Note` is also read by the PDF plan (#725), so the D10 caveat is worded once.
  * @exports harmonicViewMessages
  */
+/**
+ * The D10 convention caveat (#725), one sentence shared by the preset's description on screen and by the PDF export,
+ * so a reader of either sees the same limit. `src/astrology/harmonics.ts` holds the same fact for the JSON export.
+ */
+const d10CaveatEn =
+  'This chart uses one continuous rule for every division (longitude × 10, wrapped into the zodiac), not the classical odd/even sign restart that several Vedic sources apply to D10. Treat this D10 as an approximation and check which convention your source follows.';
+const d10CaveatNl =
+  'Deze horoscoop gebruikt voor elke indeling één doorlopende regel (lengtegraad × 10, teruggevouwen in de dierenriem), niet de klassieke herstart van de tekenstelling bij oneven/even tekens die verschillende Vedische bronnen op D10 toepassen. Beschouw deze D10 als een benadering en controleer welke conventie jouw bron volgt.';
+
 const en = {
   personFallback: 'Person',
   thisPerson: 'This person',
@@ -18,6 +27,13 @@ const en = {
   heading: (name: string) => `${name}’s harmonic chart`,
   headingFallback: 'Harmonic chart',
   hint: 'Every longitude multiplied by a whole number and wrapped back into the zodiac, with whole-sign houses built from the multiplied Ascendant — the general mechanism behind both harmonic charts and Vedic Varga (divisional) charts. See the named presets’ own note on which Varga convention each one follows. This screen computes divisional-chart positions only — it has no Vimshottari dasha timing or planetary-yoga detection, so it is not a full Jyotish toolkit.',
+
+  presetDescriptions: {
+    D1: 'The natal chart itself; the trivial harmonic.',
+    D9: 'Marriage and inner strength. This module’s continuous rule matches the classical Parashari result exactly.',
+    D10: `Career and public life. ${d10CaveatEn}`,
+  } as Readonly<Record<string, string>>,
+  d10Note: d10CaveatEn,
 
   divisionalChartLabel: 'Divisional chart',
   customHarmonicOption: 'Custom harmonic…',
@@ -45,6 +61,13 @@ const nl: typeof en = {
   heading: (name: string) => `Harmonische horoscoop van ${name}`,
   headingFallback: 'Harmonische horoscoop',
   hint: 'Elke lengtegraad vermenigvuldigd met een geheel getal en teruggevouwen in de dierenriem, met huizen-per-heel-teken opgebouwd uit de vermenigvuldigde Ascendant — het algemene mechanisme achter zowel harmonische horoscopen als Vedische Varga (divisionele) horoscopen. Zie de eigen toelichting van de benoemde presets over welke Varga-conventie elke preset volgt. Dit scherm berekent alleen divisionele posities — er is geen Vimshottari-dasha-timing of yoga-detectie, dus dit is geen volledig Jyotish-instrumentarium.',
+
+  presetDescriptions: {
+    D1: 'De geboortehoroscoop zelf; de triviale harmonische.',
+    D9: 'Huwelijk en innerlijke kracht. De doorlopende regel van deze module komt exact overeen met het klassieke Parashari-resultaat.',
+    D10: `Loopbaan en openbaar leven. ${d10CaveatNl}`,
+  },
+  d10Note: d10CaveatNl,
 
   divisionalChartLabel: 'Divisionele horoscoop',
   customHarmonicOption: 'Aangepast harmonisch getal…',

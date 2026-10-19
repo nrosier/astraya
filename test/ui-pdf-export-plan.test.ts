@@ -15,7 +15,10 @@ import { CURRENT_SNAPSHOT_VERSION } from '../src/domain/calculation-snapshot.js'
 import { TRADITIONAL_ACG_BODY_IDS } from '../src/domain/astrocartography.js';
 import { EMPTY_SELECTION, type PdfSelection } from '../src/domain/pdf-export-sections.js';
 import type { Person } from '../src/domain/person.js';
+import { fixedStarsScopeNoteOf } from '../src/ui/ChartView.js';
+import { NATAL_FIXED_STARS } from '../src/domain/chart-compute.js';
 import { chartViewMessages } from '../src/ui/ChartView.messages.js';
+import { harmonicViewMessages } from '../src/ui/HarmonicView.messages.js';
 import {
   buildPdfPlan,
   sectionCalculationOptions,
@@ -997,4 +1000,80 @@ describe('PDF chart sections use the Charts page’s own calculation settings (#
       expect(options(type).customPoints).toEqual(WITH_POINT.customPoints);
     }
   });
+});
+
+describe('specialist limits in the PDF (#725)', () => {
+  const contextFor = async (locale: 'en' | 'nl'): Promise<PdfPlanContext> => ({
+    person: ADA,
+    provider: await getEngine(),
+    settings: DEFAULT_EXTENDED_SETTINGS,
+    rulership: DEFAULT_RULERSHIP_CHOICE,
+    locale,
+    aiConsent: false,
+    corpusFetch,
+  });
+
+  it('prints the D10 convention note on a tenth-harmonic section, in the document language, and not on others', async () => {
+    for (const locale of ['en', 'nl'] as const) {
+      const context = await contextFor(locale);
+      const plan = await buildPdfPlan(
+        {
+          personId: ADA.id,
+          ...EMPTY_SELECTION,
+          charts: [
+            { type: 'harmonic', wheel: false, tables: ['positions'], harmonicN: 10 },
+            { type: 'harmonic', wheel: false, tables: ['positions'], harmonicN: 9 },
+          ],
+        },
+        context,
+        chartViewMessages[locale],
+        pdfExportMessages[locale],
+      );
+      expect(plan.errors).toHaveLength(0);
+      const [d10, d9] = plan.sections;
+      if (d10?.kind !== 'chart' || d9?.kind !== 'chart') throw new Error('expected two chart sections');
+      expect(d10.hint).toContain(harmonicViewMessages[locale].d10Note);
+      expect(d9.hint ?? '').not.toContain(harmonicViewMessages[locale].d10Note);
+    }
+  }, 60_000);
+
+  it('prints the fixed-star scope note under the fixed-stars table', async () => {
+    // A day when the Sun is within a degree of Regulus, so the table exists.
+    const person: Person = {
+      ...ADA,
+      moment: {
+        civil: { year: 2000, month: 8, day: 22, hour: 12, minute: 0, second: 0 },
+        coordinates: { latitude: 51.5072, longitude: -0.1276 },
+        offsetOverrideMinutes: 0,
+      },
+    };
+    for (const locale of ['en', 'nl'] as const) {
+      const context = { ...(await contextFor(locale)), person };
+      const plan = await buildPdfPlan(
+        { personId: ADA.id, ...EMPTY_SELECTION, charts: [{ type: 'natal', wheel: false, tables: ['aspects'] }] },
+        context,
+        chartViewMessages[locale],
+        pdfExportMessages[locale],
+      );
+      const [section] = plan.sections;
+      if (section?.kind !== 'chart') throw new Error('expected a chart section');
+      const stars = section.tables.find((table) => table.caption === chartViewMessages[locale].fixedStarsCaption);
+      expect(stars?.note).toBe(fixedStarsScopeNoteOf(chartViewMessages[locale]));
+      for (const star of NATAL_FIXED_STARS) expect(stars?.note).toContain(star);
+      expect(section.tables.filter((table) => table !== stars).every((table) => table.note === undefined)).toBe(true);
+    }
+  }, 60_000);
+
+  it('adds no aspect-patterns section: the PDF does not include them, so there is no note to carry', async () => {
+    const plan = await buildPdfPlan(
+      { personId: ADA.id, ...EMPTY_SELECTION, charts: [{ type: 'natal', wheel: false, tables: ['aspects'] }] },
+      await contextFor('en'),
+      chartViewMessages.en,
+      pdfExportMessages.en,
+    );
+    const captions = plan.sections.flatMap((section) =>
+      section.kind === 'chart' ? section.tables.map((t) => t.caption) : [],
+    );
+    expect(captions).not.toContain(chartViewMessages.en.aspectPatternsHeading);
+  }, 30_000);
 });
