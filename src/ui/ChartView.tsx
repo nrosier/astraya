@@ -406,7 +406,17 @@ export function positionColumns(
       label: t.rxLabel,
       labelTooltip: t.retrogradeTooltip,
       valueOf: (row) => row.retrograde ?? false,
-      render: (row) => (row.retrograde ? '℞' : ''),
+      // Inside the station window (#724) the station marker replaces ℞; with the window off, `stationary` is never set.
+      render: (row) =>
+        row.stationary === true
+          ? row.stationType === 'first'
+            ? t.stationFirstMarker
+            : row.stationType === 'second'
+              ? t.stationSecondMarker
+              : t.stationMarker
+          : row.retrograde
+            ? '℞'
+            : '',
     },
     {
       key: 'anaretic',
@@ -644,7 +654,11 @@ export function almutenCandidateColumns(
 }
 
 /** The traditional planetary-condition table (#547) — sect alignment, angularity, hayz, motion, besiegement, solar phase/proximity. */
-export function conditionColumns(t: typeof chartViewMessages.en, locale: Locale): readonly TableColumn<ConditionRow>[] {
+export function conditionColumns(
+  t: typeof chartViewMessages.en,
+  locale: Locale,
+  motionScoreVisible = false,
+): readonly TableColumn<ConditionRow>[] {
   const sectAlignmentLabel = (row: ConditionRow): string =>
     row.sectAlignment === 'ofSect' ? t.ofSect : row.sectAlignment === 'contraSect' ? t.contraSect : t.sectNeutral;
   const angularityLabel = (row: ConditionRow): string =>
@@ -656,7 +670,15 @@ export function conditionColumns(t: typeof chartViewMessages.en, locale: Locale)
           ? t.cadent
           : '—';
   const motionLabel = (row: ConditionRow): string =>
-    row.motion === 'retrograde' ? t.retrogradeLabel : row.motion === 'stationary' ? t.stationaryLabel : t.directLabel;
+    row.motion === 'retrograde'
+      ? t.retrogradeLabel
+      : row.motion === 'stationary'
+        ? row.stationType === 'first'
+          ? t.stationaryFirstLabel
+          : row.stationType === 'second'
+            ? t.stationarySecondLabel
+            : t.stationaryLabel
+        : t.directLabel;
   const solarPhaseLabel = (row: ConditionRow): string =>
     row.solarPhase === 'oriental' ? t.oriental : row.solarPhase === 'occidental' ? t.occidental : '—';
   const solarConditionLabel = (row: ConditionRow): string =>
@@ -700,6 +722,24 @@ export function conditionColumns(t: typeof chartViewMessages.en, locale: Locale)
       render: angularityLabel,
     },
     { key: 'motion', label: t.motionLabel, valueOf: (row) => row.motion, render: motionLabel },
+    // Only with the motion score on (#724), so the table is unchanged while it is off.
+    ...(motionScoreVisible
+      ? [
+          {
+            key: 'motionScore',
+            label: t.motionScoreLabel,
+            labelTooltip: t.motionScoreTooltip,
+            valueOf: (row: ConditionRow) => row.motionScore ?? '',
+            align: 'center' as const,
+            render: (row: ConditionRow) =>
+              row.motionScore === undefined
+                ? '—'
+                : row.motionScore > 0
+                  ? `+${String(row.motionScore)}`
+                  : String(row.motionScore),
+          },
+        ]
+      : []),
     {
       key: 'inHayz',
       label: t.hayzLabel,
@@ -1111,20 +1151,24 @@ function renderTableTab(
   switch (tab) {
     case 'positions':
       return (
-        <SortableTable
-          caption={t.positionsCaption}
-          columns={positionColumns(t, locale, symbolClass, selection)}
-          rows={positionRows(data, pointVisibility, showHouses)}
-          getRowKey={(row) => row.bodyKey}
-          selectedRowKey={
-            selection?.selectedKey === undefined
-              ? undefined
-              : positionRows(data, pointVisibility, showHouses).find(
-                  (row) => bodySelectionKey(row.bodyKey) === selection.selectedKey,
-                )?.bodyKey
-          }
-          downloadFilename={deriveExportFilename(displayName, 'positions', 'csv')}
-        />
+        <>
+          <SortableTable
+            caption={t.positionsCaption}
+            columns={positionColumns(t, locale, symbolClass, selection)}
+            rows={positionRows(data, pointVisibility, showHouses)}
+            getRowKey={(row) => row.bodyKey}
+            selectedRowKey={
+              selection?.selectedKey === undefined
+                ? undefined
+                : positionRows(data, pointVisibility, showHouses).find(
+                    (row) => bodySelectionKey(row.bodyKey) === selection.selectedKey,
+                  )?.bodyKey
+            }
+            downloadFilename={deriveExportFilename(displayName, 'positions', 'csv')}
+          />
+          {/* With the station window on (#724), say what the St. markers are: the window is an Astraya convention. */}
+          {data.stationStates !== undefined && <p className="hint">{t.stationWindowNote}</p>}
+        </>
       );
     case 'houses':
       return (
@@ -1261,8 +1305,10 @@ function renderTableTab(
           <p className="hint">{t.conditionHint}</p>
           <SortableTable
             caption={t.conditionCaption}
-            columns={conditionColumns(t, locale)}
-            rows={conditionRows(data, undefined, boundsScheme)}
+            columns={conditionColumns(t, locale, pointVisibility.motionScoreVisible === true)}
+            rows={conditionRows(data, undefined, boundsScheme, {
+              motionScore: pointVisibility.motionScoreVisible === true,
+            })}
             getRowKey={(row) => row.bodyKey}
             downloadFilename={deriveExportFilename(displayName, 'condition', 'csv')}
           />

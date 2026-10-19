@@ -41,6 +41,9 @@ const SUN = idOf('sun');
 const MOON = idOf('moon');
 const MARS = idOf('mars');
 const CHIRON = idOf('chiron');
+const VENUS = idOf('venus');
+const JUPITER = idOf('jupiter');
+const SATURN = idOf('saturn');
 
 function position(body: BodyId, longitude: number, longitudeSpeed = 1): BodyPosition {
   return {
@@ -1196,5 +1199,95 @@ describe('receptionRows (#548)', () => {
     const keys = receptionRows(data).flatMap((row) => [row.bodyAKey, row.bodyBKey]);
     expect(keys).not.toContain('saturn');
     expect(keys).not.toContain('jupiter');
+  });
+});
+
+describe('the station window and motion score on the tables (#724)', () => {
+  const MERCURY_ID = idOf('mercury');
+  const mercuryMean = 0.985555555555556; // Avelar & Ribeiro p. 59: 0°59'08", the exact value the module converts.
+
+  // A day chart with a retrograde Venus, a stationary Mercury inside a window, and a Pluto with no motion score.
+  const windowOn: ChartData = {
+    positions: [
+      position(SUN, 0),
+      position(MOON, 300),
+      position(MERCURY_ID, 50, mercuryMean * 0.5),
+      position(VENUS, 95, -1),
+      position(MARS, 90),
+      position(JUPITER, 250),
+      position(SATURN, 100),
+      position(idOf('pluto'), 200, 0.001),
+    ],
+    houses: { ...HOUSES, ascendant: 10 },
+    aspects: [],
+    dignities: new Map(),
+    sect: 'day',
+    partOfFortune: 0,
+    partOfSpirit: 0,
+    stationStates: new Map<BodyId, 'first' | 'second' | undefined>([
+      [MERCURY_ID, 'second'],
+      [idOf('pluto'), undefined],
+    ]),
+  };
+
+  // The same chart with the window off: the key is absent, not set to `undefined`, which is what a real window-off chart has.
+  const windowOff: ChartData = Object.fromEntries(
+    Object.entries(windowOn).filter(([key]) => key !== 'stationStates'),
+  ) as unknown as ChartData;
+
+  it('with the window off, the condition rows and positions are exactly as before (no station or score field at all)', () => {
+    for (const row of conditionRows(windowOff)) {
+      expect(row, row.bodyKey).not.toHaveProperty('stationType');
+      expect(row, row.bodyKey).not.toHaveProperty('motionScore');
+    }
+    for (const row of positionRows(windowOff)) {
+      expect(row, row.bodyKey).not.toHaveProperty('stationary');
+      expect(row, row.bodyKey).not.toHaveProperty('stationType');
+    }
+  });
+
+  it('with the window on, a planet inside it is stationary and carries its station type', () => {
+    const mercury = conditionRows(windowOn).find((row) => row.bodyKey === 'mercury');
+    expect(mercury?.motion).toBe('stationary');
+    expect(mercury?.stationType).toBe('second');
+    expect(positionRows(windowOn).find((row) => row.bodyKey === 'mercury')).toMatchObject({
+      stationary: true,
+      stationType: 'second',
+    });
+  });
+
+  it('with the window on, a planet outside it keeps its ordinary motion and carries no station fields', () => {
+    expect(conditionRows(windowOn).find((row) => row.bodyKey === 'venus')?.motion).toBe('retrograde');
+    const venus = positionRows(windowOn).find((row) => row.bodyKey === 'venus');
+    expect(venus).not.toHaveProperty('stationary');
+  });
+
+  it('a stationary planet whose type cannot be told is stationary with no type, and no motion score', () => {
+    const data: ChartData = {
+      ...windowOn,
+      stationStates: new Map<BodyId, 'first' | 'second' | undefined>([[MERCURY_ID, undefined]]),
+    };
+    const mercury = conditionRows(data, undefined, 'egyptian', { motionScore: true }).find(
+      (row) => row.bodyKey === 'mercury',
+    );
+    expect(mercury?.motion).toBe('stationary');
+    expect(mercury).not.toHaveProperty('stationType');
+    expect(mercury).not.toHaveProperty('motionScore');
+  });
+
+  it('the motion score is absent unless asked for, and present with the points when asked', () => {
+    for (const row of conditionRows(windowOn)) expect(row, row.bodyKey).not.toHaveProperty('motionScore');
+    const scored = conditionRows(windowOn, undefined, 'egyptian', { motionScore: true });
+    // Mercury as a second station scores direct +4, and its speed is below mean (slow, -2).
+    expect(scored.find((row) => row.bodyKey === 'mercury')?.motionScore).toBe(4 - 2);
+    // Venus retrograde at speed -1, above its mean (fast, +2): -5 + 2.
+    expect(scored.find((row) => row.bodyKey === 'venus')?.motionScore).toBe(-5 + 2);
+    // Pluto has no condition row at all, so it can never carry a score.
+    expect(scored.some((row) => row.bodyKey === 'pluto')).toBe(false);
+  });
+
+  it('the Almuten and dignity points are unchanged by the window or the score', () => {
+    const points = (data: ChartData) => conditionRows(data).map((row) => [row.bodyKey, row.points, row.peregrine]);
+    expect(points(windowOn)).toEqual(points(windowOff));
   });
 });

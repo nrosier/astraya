@@ -36,6 +36,7 @@ import type { EssentialDignities } from '../astrology/dignities.js';
 import { DEFAULT_RULERSHIP_CHOICE, essentialDignitiesFor, type RulershipChoice } from '../astrology/rulership.js';
 import { partOfFortune, partOfSpirit } from '../astrology/arabic-parts.js';
 import { sectOf, type Sect } from '../astrology/sect.js';
+import { isWithinStationWindow, stationTypeOf, type StationType } from '../astrology/planetary-condition.js';
 import { julianDayFor } from '../time/julian.js';
 import { resolveMoment } from '../time/resolve.js';
 import { FINITE_DIFFERENCE_DT_DAYS, finiteDifferenceRate } from '../ephemeris/finite-difference.js';
@@ -95,6 +96,12 @@ export interface ChartCalculationOptions {
    * Vertex and the two lots do not (matching most astrology tools' own "aspects to" defaults).
    */
   readonly aspectsTo?: Readonly<Partial<Record<string, boolean>>>;
+  /**
+   * The station window (#724): when set, a planet whose speed (ignoring sign) is at most `k` times its mean daily
+   * speed is stationary, and gets its first or second station type. An Astraya convention, not a cited rule.
+   * Absent means off, and then `ChartData.stationStates` is absent too.
+   */
+  readonly stationWindow?: { readonly k: number };
 }
 
 /**
@@ -236,6 +243,54 @@ export interface ChartData {
    * doesn't coherently have one real moment to look them up for.
    */
   readonly fixedStars?: ReadonlyMap<string, Degrees>;
+  /**
+   * Per planet inside the station window (#724): its first (`'first'`) or second (`'second'`)
+   * station, or `undefined` when it is stationary but its type cannot be told. A body outside the
+   * window has no entry. Absent entirely when the window is off, so the default chart is unchanged.
+   */
+  readonly stationStates?: ReadonlyMap<BodyId, StationType | undefined>;
+}
+
+/**
+ * The finite-difference step for a planet's longitude acceleration (#724), used to tell a first
+ * station from a second one. Pinned rather than computed: a planet's speed changes smoothly, so a
+ * step of 0.01 days (about 15 minutes) gives a change in speed well above the engine's own
+ * precision, even for Pluto, which is the slowest. The second-order error of such a step is far
+ * too small to flip the sign of the acceleration near a station.
+ */
+const STATION_ACCELERATION_DT_DAYS = 0.01;
+
+/**
+ * The station state of every planet inside the window (#724), keyed by body. Only planets inside
+ * the window need an acceleration, so the extra ephemeris calls happen only when some planet is
+ * actually inside it, and not at all for a chart with none.
+ */
+async function stationStatesOf(
+  jd: JulianDayUT,
+  positions: readonly BodyPosition[],
+  k: number,
+  provider: EphemerisProvider,
+  positionOptions: PositionOptions | undefined,
+): Promise<ReadonlyMap<BodyId, StationType | undefined>> {
+  const inWindow = positions.filter((position) => isWithinStationWindow(position.body, position.longitudeSpeed, k));
+  const states = new Map<BodyId, StationType | undefined>();
+  if (inWindow.length === 0) return states;
+
+  const bodies = inWindow.map((position) => position.body);
+  const [before, after] = await Promise.all([
+    provider.positions(jd - STATION_ACCELERATION_DT_DAYS, bodies, positionOptions),
+    provider.positions(jd + STATION_ACCELERATION_DT_DAYS, bodies, positionOptions),
+  ]);
+  for (const body of bodies) {
+    const earlier = before.find((position) => position.body === body);
+    const later = after.find((position) => position.body === body);
+    if (earlier === undefined || later === undefined) {
+      throw new Error('unreachable: the ephemeris returned no position for a body it was asked for');
+    }
+    const acceleration = (later.longitudeSpeed - earlier.longitudeSpeed) / (2 * STATION_ACCELERATION_DT_DAYS);
+    states.set(body, stationTypeOf(acceleration));
+  }
+  return states;
 }
 
 /**
@@ -518,6 +573,11 @@ export async function computeChartDataAtJd(
         ];
   const angleAspects = housesUsable ? findPointAspects(points, subjects, orbConfig) : [];
 
+  // Only with the station window on (#724); absent otherwise, so a chart without it is unchanged.
+  const stationStates =
+    options.stationWindow === undefined
+      ? undefined
+      : await stationStatesOf(jd, positions, options.stationWindow.k, provider, positionOptions);
   const baseData: ChartData = {
     positions,
     houses,
@@ -531,6 +591,7 @@ export async function computeChartDataAtJd(
     declinations,
     obliquity,
     fixedStars,
+    ...(stationStates === undefined ? {} : { stationStates }),
   };
   const customPoints = materializeCustomPoints(baseData, options.customPoints);
   if (customPoints.length === 0) return baseData;

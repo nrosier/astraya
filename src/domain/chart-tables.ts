@@ -31,11 +31,13 @@ import {
   isBesieged,
   isInHayz,
   motionOf,
+  motionScoreOf,
   sectAlignmentOf,
   TRADITIONAL_PLANET_IDS,
   type Angularity,
   type Motion,
   type SectAlignment,
+  type StationType,
 } from '../astrology/planetary-condition.js';
 import { DEFAULT_RULERSHIP_CHOICE, primaryRulerOf, rulersOf, type RulershipChoice } from '../astrology/rulership.js';
 import { solarConditionOf, solarPhaseOf, type SolarCondition, type SolarPhase } from '../astrology/sect.js';
@@ -147,6 +149,8 @@ export interface PointVisibilityOptions {
   /** The 90°-dial midpoint-tree table's own visibility (#556) — previously computed and even rendered by `chart/dial90.ts`, but with no setting or UI surface reaching it at all. */
   readonly dial90Visible?: boolean; // default false
   readonly midpointTreeOrb?: Degrees; // default 1
+  /** The motion score column on the condition table (#724), a display-only option: off by default, and it changes no calculated value. */
+  readonly motionScoreVisible?: boolean; // default false
 }
 
 /** Stable display/selection key for an ephemeris body or a materialized user formula point. */
@@ -242,6 +246,20 @@ export interface PositionRow extends DegreeParts {
    * (a composite/harmonic chart — see `ChartData.declinations`'s own doc comment) (#398).
    */
   readonly outOfBounds?: boolean;
+  /** Only with the station window on (#724): true when the planet is inside it, so it is stationary. */
+  readonly stationary?: boolean;
+  /** Only with the station window on (#724), and only for a stationary planet whose station type can be told. */
+  readonly stationType?: StationType;
+}
+
+/**
+ * The station fields of a position row (#724): `stationary` and, when it can be told, `stationType`. Empty when the
+ * station window is off, or the planet is outside it, so an unchanged chart's rows are unchanged.
+ */
+function stationFieldsOf(data: ChartData, body: BodyId): { stationary?: boolean; stationType?: StationType } {
+  const stationType = data.stationStates?.get(body);
+  if (data.stationStates?.has(body) !== true) return {};
+  return stationType === undefined ? { stationary: true } : { stationary: true, stationType };
 }
 
 /**
@@ -282,6 +300,8 @@ export function positionRows(
       ...(declination === undefined || data.obliquity === undefined
         ? {}
         : { outOfBounds: isOutOfBounds(declination, data.obliquity) }),
+      // Only with the station window on (#724): absent entirely otherwise, so the row is unchanged.
+      ...stationFieldsOf(data, position.body),
     };
   });
   if (!includeAngles) return bodyRows;
@@ -498,6 +518,10 @@ export interface ConditionRow {
   /** `undefined` for the Sun itself (no phase/proximity relative to itself), or when exactly conjunct/opposite the Sun, where orientality is not a meaningful distinction (`solarPhaseOf`'s own doc comment). */
   readonly solarPhase?: SolarPhase | undefined;
   readonly solarCondition?: SolarCondition;
+  /** Only with the station window on (#724), and only for a stationary planet whose station type can be told: its first or second station. */
+  readonly stationType?: StationType;
+  /** Only with the motion score on (#724): the points from `planetary-condition.ts`'s `motionScoreOf`. Absent for a stationary planet whose station type is unknown, which gets no score rather than a guessed one. */
+  readonly motionScore?: number;
 }
 
 /**
@@ -512,6 +536,7 @@ export function conditionRows(
   data: ChartData,
   orbConfig: OrbConfig = DEFAULT_ORB_CONFIG,
   boundsScheme: BoundsScheme = 'egyptian',
+  options: { readonly motionScore?: boolean } = {},
 ): readonly ConditionRow[] {
   const housesUsable = housesAreDefined(data.houses);
   const sunBody = bodyByKey('sun');
@@ -522,6 +547,7 @@ export function conditionRows(
   const saturnPosition = saturnBody === undefined ? undefined : data.positions.find((p) => p.body === saturnBody.id);
 
   const rows: ConditionRow[] = [];
+  const stationStates = data.stationStates;
   for (const bodyId of TRADITIONAL_PLANET_IDS) {
     const position = data.positions.find((p) => p.body === bodyId);
     const body = bodyById(bodyId);
@@ -531,6 +557,10 @@ export function conditionRows(
       boundsScheme,
     });
     const isSun = sunBody?.id === bodyId;
+    // Inside the station window (#724) the planet is stationary, with its own station type when that can be told.
+    const stationary = stationStates?.has(bodyId) === true;
+    const stationState = stationStates?.get(bodyId);
+    const motionScore = motionScoreOf(bodyId, position.longitudeSpeed, stationary, stationState);
     rows.push({
       bodyKey: body.key,
       bodyName: body.name,
@@ -538,7 +568,10 @@ export function conditionRows(
       peregrine: score.peregrine,
       sectAlignment: sectAlignmentOf(bodyId, data.sect),
       ...(housesUsable ? { angularity: angularityOfHouse(houseOf(position.longitude, data.houses.cusps)) } : {}),
-      motion: motionOf(position.longitudeSpeed),
+      // With the station window off, `stationStates` is absent and the motion is as it always was (#724).
+      motion: stationary ? 'stationary' : motionOf(position.longitudeSpeed),
+      ...(stationary && stationState !== undefined ? { stationType: stationState } : {}),
+      ...(options.motionScore === true && motionScore !== undefined ? { motionScore } : {}),
       ...(housesUsable ? { inHayz: isInHayz(bodyId, position.longitude, data.houses.ascendant, data.sect) } : {}),
       besieged:
         marsPosition !== undefined && saturnPosition !== undefined && !isSun

@@ -24,7 +24,11 @@ export type ChangedSetting =
   | 'midpoints'
   | 'lilith'
   | 'node'
-  | 'rainbow';
+  | 'rainbow'
+  /** The station window (#724), an Astraya convention, on. */
+  | 'stationWindow'
+  /** The motion score (#724), on. */
+  | 'motionScore';
 
 export function changedSettings(value: ExtendedSettings): readonly ChangedSetting[] {
   const defaults = DEFAULT_EXTENDED_SETTINGS;
@@ -42,6 +46,8 @@ export function changedSettings(value: ExtendedSettings): readonly ChangedSettin
   if (value.lilithVariant !== defaults.lilithVariant) changed.push('lilith');
   if (value.nodeVariant !== defaults.nodeVariant) changed.push('node');
   if (value.rainbowZodiac !== defaults.rainbowZodiac) changed.push('rainbow');
+  if (value.stationWindow !== undefined) changed.push('stationWindow');
+  if (value.motionScore === true) changed.push('motionScore');
   return changed;
 }
 

@@ -17,10 +17,10 @@
  * @module astrology/planetary-condition
  * @purpose Classifies a traditional planet's sect alignment, angularity, hayz, motion, and besiegement.
  * @conventions Scoped to the seven traditional (Chaldean) planets — Sun/Moon/Mercury/Venus/Mars/Jupiter/Saturn — since sect, hayz and besiegement are classical concepts with no established reading for the outer planets, nodes, or asteroids. Mercury is sect-neutral (common to both sects) and so never "of sect" or in hayz.
- * @exports TRADITIONAL_PLANET_IDS, DIURNAL_PLANETS, NOCTURNAL_PLANETS, SectAlignment, sectAlignmentOf, Angularity, angularityOfHouse, Motion, motionOf, isInHayz, isBesieged
+ * @exports TRADITIONAL_PLANET_IDS, DIURNAL_PLANETS, NOCTURNAL_PLANETS, SectAlignment, sectAlignmentOf, Angularity, angularityOfHouse, Motion, motionOf, isInHayz, isBesieged, MEAN_DAILY_SPEED, meanDailySpeedOf, STATION_WINDOW_DEFAULT_K, isStationWindowK, isWithinStationWindow, StationType, stationTypeOf, MOTION_SCORE_POINTS, motionScoreOf
  */
 import type { BodyId, Degrees } from '../ephemeris/types.js';
-import { bodyByKey } from './bodies.js';
+import { bodyById, bodyByKey } from './bodies.js';
 import { angularSeparation, orbFor, type OrbConfig } from './aspects.js';
 import { signOf } from './signs.js';
 import { isAboveHorizon, type Sect } from './sect.js';
@@ -83,6 +83,176 @@ export type Motion = 'direct' | 'retrograde' | 'stationary';
 export function motionOf(longitudeSpeed: Degrees): Motion {
   if (longitudeSpeed === 0) return 'stationary';
   return longitudeSpeed > 0 ? 'direct' : 'retrograde';
+}
+
+/** Degrees, minutes and seconds of arc to decimal degrees: `dms(0, 59, 8)` is 0°59'08". */
+function dms(degrees: number, minutes: number, seconds: number): Degrees {
+  return degrees + minutes / 60 + seconds / 3600;
+}
+
+/**
+ * Sidereal orbital periods in days, for the outer planets' modern mean speed (#724). Pluto's 90560 matches the NASA
+ * planetary fact sheet's sidereal period. Uranus's 30688.5 and Neptune's 60182 are the values the project owner
+ * chose; the NASA fact sheet gives 30685.4 and 60189.0. Those differ by a few parts in 10,000, which moves station
+ * detection only slightly, but the choice is the owner's and is recorded here rather than silently re-sourced.
+ */
+const SIDEREAL_PERIOD_DAYS = {
+  uranus: 30688.5,
+  neptune: 60182,
+  pluto: 90560,
+} as const;
+
+/**
+ * Mean daily longitude speed, in degrees per day (#724), for the station window and the motion
+ * score's velocity half.
+ *
+ * The seven traditional planets use Avelar & Ribeiro, *On the Heavenly Spheres* (Helena Avelar and
+ * Luis Ribeiro, 2010), printed pp. 59–60, "Average Daily Speed": Saturn 0°02'01", Jupiter 0°04'59",
+ * Mars 0°31'27", Sun, Venus and Mercury each 0°59'08", Moon 13°10'36". Converted exactly from
+ * degrees, minutes and seconds.
+ *
+ * Uranus, Neptune and Pluto have no figure in that book. Their values are a modern mean speed, 360
+ * divided by the sidereal period in days, and are used for station detection only. They are not
+ * from Avelar & Ribeiro, and they never receive a motion score (`motionScoreOf` rejects them).
+ */
+export const MEAN_DAILY_SPEED: Readonly<Record<string, Degrees>> = {
+  sun: dms(0, 59, 8),
+  moon: dms(13, 10, 36),
+  mercury: dms(0, 59, 8),
+  venus: dms(0, 59, 8),
+  mars: dms(0, 31, 27),
+  jupiter: dms(0, 4, 59),
+  saturn: dms(0, 2, 1),
+  uranus: 360 / SIDEREAL_PERIOD_DAYS.uranus,
+  neptune: 360 / SIDEREAL_PERIOD_DAYS.neptune,
+  pluto: 360 / SIDEREAL_PERIOD_DAYS.pluto,
+};
+
+/** The mean daily speed for `body`, or `undefined` for a body with none (nodes, Lilith, Chiron, asteroids). */
+export function meanDailySpeedOf(body: BodyId): Degrees | undefined {
+  const key = bodyById(body)?.key;
+  return key === undefined ? undefined : MEAN_DAILY_SPEED[key];
+}
+
+/**
+ * The planets that can station (#724): Mercury through Pluto. The Sun and Moon never station (see
+ * `stations.ts`'s own scope note), and nodes, Lilith, Chiron and asteroids are outside this window.
+ */
+const STATION_ELIGIBLE_KEYS: readonly string[] = [
+  'mercury',
+  'venus',
+  'mars',
+  'jupiter',
+  'saturn',
+  'uranus',
+  'neptune',
+  'pluto',
+];
+
+/**
+ * The station window's default fraction k (#724). **An Astraya convention, not a citation**: Avelar
+ * & Ribeiro (2010) define a station (p. 61) but give no speed threshold for one, so 0.05 is chosen
+ * here, not taken from the source.
+ */
+export const STATION_WINDOW_DEFAULT_K = 0.05;
+
+/** Whether `k` is an acceptable station-window fraction: finite, greater than zero, and at most one (#724). */
+export function isStationWindowK(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0 && value <= 1;
+}
+
+/**
+ * Whether a planet counts as stationary under the station window (#724): its longitude speed,
+ * ignoring sign, is at most `k` times its mean daily speed. The boundary is inclusive, so a speed
+ * exactly at `k × mean` is inside. Only Mercury through Pluto qualify.
+ *
+ * This is an Astraya convention, not a rule from Avelar & Ribeiro (2010), which gives no
+ * threshold for a station.
+ */
+export function isWithinStationWindow(body: BodyId, longitudeSpeed: Degrees, k: number): boolean {
+  const key = bodyById(body)?.key;
+  if (key === undefined || !STATION_ELIGIBLE_KEYS.includes(key)) return false;
+  const mean = MEAN_DAILY_SPEED[key];
+  if (mean === undefined) return false;
+  return Math.abs(longitudeSpeed) <= k * mean;
+}
+
+/**
+ * Which station a stationary planet is at (#724), from the sign of its longitude acceleration
+ * (the rate of change of its speed) at that moment. Speed falls through zero at a first station,
+ * so the acceleration is negative there, and the planet turns retrograde. Speed rises through
+ * zero at a second station, so the acceleration is positive, and the planet resumes direct motion.
+ *
+ * The sign of the speed itself cannot tell the two apart. Near a first station the speed is
+ * positive before it and negative after, and near a second station it is the reverse. The
+ * acceleration's sign is the same either side of a station. Returns `undefined` when the
+ * acceleration is exactly zero, so the caller reports no station type rather than guessing one.
+ *
+ * Avelar & Ribeiro (2010), p. 61: the first station is the one a planet makes in direct motion,
+ * before its retrograde phase, and the second is the one it makes in retrograde motion, before its
+ * direct phase.
+ */
+export function stationTypeOf(acceleration: number): StationType | undefined {
+  if (acceleration < 0) return 'first';
+  if (acceleration > 0) return 'second';
+  return undefined;
+}
+
+/** A planet's station, with the window on: the first (about to go retrograde) or the second (about to go direct). */
+export type StationType = 'first' | 'second';
+
+/**
+ * The motion score's points, Avelar & Ribeiro (2010), p. 197, "Accidental Dignities and Debilities
+ * and Their Scoring", the Motion subsection. Direction: direct +4, retrograde −5. Velocity: fast
+ * (faster than mean) +2, slow (slower than mean) −2. A stationary planet scores as its station
+ * type: a first station as retrograde, a second as direct. The Sun and Moon are never retrograde,
+ * so they get the velocity points only, as the user decided for this app.
+ */
+export const MOTION_SCORE_POINTS = {
+  direct: 4,
+  retrograde: -5,
+  fast: 2,
+  slow: -2,
+} as const;
+
+/**
+ * The motion score for a traditional planet (#724), or `undefined` when none applies.
+ *
+ * - Uranus, Neptune and Pluto get no score, and neither does any body outside the seven
+ *   traditional planets. Their station state is shown, but they have no motion score.
+ * - A stationary planet whose station type is unknown gets no score. It is not guessed.
+ * - A planet exactly at mean speed gets no velocity points.
+ *
+ * The velocity half compares the speed without its sign against the body's mean speed, so
+ * retrograde speed is measured as its magnitude.
+ */
+export function motionScoreOf(
+  body: BodyId,
+  longitudeSpeed: Degrees,
+  stationary: boolean,
+  stationType: StationType | undefined,
+): number | undefined {
+  if (!TRADITIONAL_PLANET_IDS.includes(body)) return undefined;
+  const mean = meanDailySpeedOf(body);
+  if (mean === undefined) return undefined;
+
+  const key = bodyById(body)?.key;
+  const neverRetrograde = key === 'sun' || key === 'moon';
+  let direction = 0;
+  if (!neverRetrograde) {
+    if (stationary) {
+      if (stationType === undefined) return undefined;
+      direction = stationType === 'first' ? MOTION_SCORE_POINTS.retrograde : MOTION_SCORE_POINTS.direct;
+    } else if (longitudeSpeed === 0) {
+      return undefined;
+    } else {
+      direction = longitudeSpeed > 0 ? MOTION_SCORE_POINTS.direct : MOTION_SCORE_POINTS.retrograde;
+    }
+  }
+
+  const speed = Math.abs(longitudeSpeed);
+  const velocity = speed > mean ? MOTION_SCORE_POINTS.fast : speed < mean ? MOTION_SCORE_POINTS.slow : 0;
+  return direction + velocity;
 }
 
 /**

@@ -160,6 +160,26 @@ export interface FullExport {
   readonly people: readonly ExportedPerson[];
 }
 
+/**
+ * The disclosure for the station window and the motion score (#724), present only while either is on, so an export made
+ * with both off reads exactly as it always did. The station window is an Astraya convention, not cited, and the mean
+ * speeds and the scoring come from Avelar & Ribeiro (2010).
+ */
+function stationDisclosureOf(settings: ExtendedSettings): string {
+  const parts: string[] = [];
+  if (settings.stationWindow !== undefined) {
+    parts.push(
+      `the station window is an Astraya convention, not a cited rule: a planet is stationary when its speed, ignoring sign, is at most k × its mean daily speed, with k = ${String(settings.stationWindow.k)} (mean speeds: Avelar & Ribeiro, On the Heavenly Spheres (2010), pp. 59–60; a station: p. 61)`,
+    );
+  }
+  if (settings.motionScore === true) {
+    parts.push(
+      'the motion score uses the direct, retrograde, fast and slow points of Avelar & Ribeiro (2010), p. 197, with the Sun and Moon scored for speed only',
+    );
+  }
+  return parts.length === 0 ? '' : ` Also in force: ${parts.join('; ')}.`;
+}
+
 function noteFor(settings: ExtendedSettings, rulership: RulershipChoice): string {
   const customized = JSON.stringify(settings) !== JSON.stringify(DEFAULT_EXTENDED_SETTINGS);
   const basis = customized
@@ -167,7 +187,8 @@ function noteFor(settings: ExtendedSettings, rulership: RulershipChoice): string
     : 'the application defaults (Placidus houses, tropical zodiac, standard orbs)';
   return (
     `Charts are calculated with ${basis}, and the planetary rulers set to ${rulership}. ` +
-    'The birth record is the source of truth; a chart can always be recalculated from it.'
+    'The birth record is the source of truth; a chart can always be recalculated from it.' +
+    stationDisclosureOf(settings)
   );
 }
 

@@ -150,6 +150,19 @@ const en = {
   midpointTreeOrbDecreaseLabel: 'Decrease midpoint tree orb',
   midpointTreeOrbIncreaseLabel: 'Increase midpoint tree orb',
 
+  motionLegend: 'Station window and motion score',
+  motionHint:
+    'Both are off by default. Neither changes the Almuten or any other score, and both only add to the tables.',
+  stationWindowLabel: 'Station window (Astraya convention)',
+  stationWindowKLabel: 'Window fraction k',
+  stationWindowKDecreaseLabel: 'Decrease window fraction k',
+  stationWindowKIncreaseLabel: 'Increase window fraction k',
+  stationWindowHint:
+    'Astraya convention, not a cited rule: Avelar & Ribeiro give the mean speeds (pp. 59–60) but no threshold for a station. A planet is stationary when its speed, ignoring sign, is at most k times its mean daily speed. The default is 0.05. Stationary planets show St.1 for a first station and St.2 for a second.',
+  motionScoreLabel: 'Show the motion score on the condition table',
+  motionScoreHint:
+    'Direct +4, retrograde −5, with a first station scored as retrograde and a second as direct. Fast +2 and slow −2 against mean speed. Avelar & Ribeiro, p. 197. The Sun and Moon get the speed points only. Uranus, Neptune and Pluto get no score.',
+
   schemeLegend: 'Traditional scheme',
   schemeHint:
     'A named scheme sets the bound (term) table and orb scale together, as one coherent historical choice, rather than letting them be mixed arbitrarily. Choosing one here also sets the orb profile below; the two can still be adjusted independently afterward, which shows as Custom.',
@@ -212,6 +225,8 @@ const en = {
     lilith: (model: string) => `Lilith ${model}`,
     node: (model: string) => `Nodes ${model}`,
     rainbow: 'Rainbow zodiac',
+    stationWindow: (k: string) => `Station window k ${k} (Astraya convention)`,
+    motionScore: 'Motion score',
   },
 };
 
@@ -359,6 +374,19 @@ const nl: typeof en = {
   midpointTreeOrbDecreaseLabel: 'Orb voor de middelpuntenboom verkleinen',
   midpointTreeOrbIncreaseLabel: 'Orb voor de middelpuntenboom vergroten',
 
+  motionLegend: 'Stationsvenster en bewegingsscore',
+  motionHint:
+    'Beide staan standaard uit. Geen van beide verandert de almuten of een andere score, en ze voegen alleen iets toe aan de tabellen.',
+  stationWindowLabel: 'Stationsvenster (Astraya-conventie)',
+  stationWindowKLabel: 'Vensterfractie k',
+  stationWindowKDecreaseLabel: 'Vensterfractie k verlagen',
+  stationWindowKIncreaseLabel: 'Vensterfractie k verhogen',
+  stationWindowHint:
+    'Astraya-conventie, geen geciteerde regel: Avelar & Ribeiro geven de gemiddelde snelheden (blz. 59–60) maar geen drempel voor een station. Een planeet is stationair wanneer haar snelheid, zonder teken, hoogstens k keer haar gemiddelde dagsnelheid is. De standaard is 0,05. Stationaire planeten tonen St.1 voor een eerste station en St.2 voor een tweede.',
+  motionScoreLabel: 'De bewegingsscore tonen in de condities-tabel',
+  motionScoreHint:
+    'Direct +4, retrograde −5, waarbij een eerste station als retrograde en een tweede als direct telt. Snel +2 en traag −2 ten opzichte van de gemiddelde snelheid. Avelar & Ribeiro, blz. 197. De zon en de maan krijgen alleen de snelheidspunten. Uranus, Neptunus en Pluto krijgen geen score.',
+
   schemeLegend: 'Traditioneel schema',
   schemeHint:
     'Een benoemd schema stelt de bound-tabel (term) en orb-schaal samen in, als één coherente historische keuze, in plaats van ze willekeurig te laten mengen. Het kiezen hier stelt ook het orb-profiel hieronder in; beide kunnen daarna nog onafhankelijk worden aangepast, wat als Eigen keuze wordt getoond.',
@@ -421,6 +449,8 @@ const nl: typeof en = {
     lilith: (model: string) => `Lilith ${model}`,
     node: (model: string) => `Knopen ${model}`,
     rainbow: 'Regenboogdierenriem',
+    stationWindow: (k: string) => `Stationsvenster k ${k} (Astraya-conventie)`,
+    motionScore: 'Bewegingsscore',
   },
 };
 

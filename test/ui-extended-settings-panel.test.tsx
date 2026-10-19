@@ -712,3 +712,80 @@ describe('the traditional-scheme quick-pick (#549)', () => {
     });
   });
 });
+
+describe('the station window and motion score controls (#724)', () => {
+  it('both are off by default, and the window is labelled an Astraya convention', async () => {
+    const { container, root } = await mount(fakeProvider(), vi.fn());
+    openCard(container);
+    const windowCheckbox = checkboxLabeled(container, 'Station window (Astraya convention)');
+    expect(windowCheckbox.checked).toBe(false);
+    expect(checkboxLabeled(container, 'Show the motion score on the condition table').checked).toBe(false);
+    // No k field until the window is on: its label is absent while the window is off.
+    expect(container.textContent).not.toContain('Window fraction k');
+    expect(container.textContent).toContain('Astraya convention');
+    unmount(container, root);
+  });
+
+  it('turning the window on reveals k at 0.05 and applies it, and turning it off removes the field', async () => {
+    const onRedraw = vi.fn();
+    const { container, root } = await mount(fakeProvider(), onRedraw);
+    openCard(container);
+    act(() => {
+      checkboxLabeled(container, 'Station window (Astraya convention)').click();
+    });
+    expect(container.textContent).toContain('Window fraction k');
+    const kInput = Array.from(container.querySelectorAll<HTMLInputElement>('input[type="number"]')).find(
+      (input) => input.value === '0.05',
+    );
+    expect(kInput).not.toBeUndefined();
+    act(() => {
+      buttonNamed(container, 'Apply and redraw')?.click();
+    });
+    expect(onRedraw).toHaveBeenLastCalledWith({ ...DEFAULT_EXTENDED_SETTINGS, stationWindow: { k: 0.05 } });
+    unmount(container, root);
+  });
+
+  it('a bad k is not applied: zero and above one leave the stored value alone', async () => {
+    const onRedraw = vi.fn();
+    const { container, root } = await mount(fakeProvider(), onRedraw, {
+      ...DEFAULT_EXTENDED_SETTINGS,
+      stationWindow: { k: 0.2 },
+    });
+    openCard(container);
+    const kInput = Array.from(container.querySelectorAll<HTMLInputElement>('input[type="number"]')).find(
+      (input) => input.value === '0.2',
+    );
+    if (kInput === undefined) throw new Error('fixture bug: k field not found');
+    for (const bad of ['0', '-1', '1.5']) {
+      act(() => {
+        // React tracks the value itself, so a plain assignment would be swallowed: go through the native setter.
+        const nativeValueSetter = Reflect.get(
+          Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value') ?? {},
+          'set',
+        ) as ((this: HTMLInputElement, value: string) => void) | undefined;
+        nativeValueSetter?.call(kInput, bad);
+        kInput.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+    }
+    act(() => {
+      buttonNamed(container, 'Apply and redraw')?.click();
+    });
+    // Nothing invalid was written, so the card had nothing to apply: Apply stays unavailable.
+    expect(onRedraw).not.toHaveBeenCalled();
+    unmount(container, root);
+  });
+
+  it('the motion score applies as a single boolean, and is absent again when switched off', async () => {
+    const onRedraw = vi.fn();
+    const { container, root } = await mount(fakeProvider(), onRedraw);
+    openCard(container);
+    act(() => {
+      checkboxLabeled(container, 'Show the motion score on the condition table').click();
+    });
+    act(() => {
+      buttonNamed(container, 'Apply and redraw')?.click();
+    });
+    expect(onRedraw).toHaveBeenLastCalledWith({ ...DEFAULT_EXTENDED_SETTINGS, motionScore: true });
+    unmount(container, root);
+  });
+});
