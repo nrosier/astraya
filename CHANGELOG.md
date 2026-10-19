@@ -4,6 +4,24 @@ All notable changes to Astraya are recorded here. Versions follow
 [semantic versioning](https://semver.org/), and every milestone ends in a release —
 see [docs/RELEASING.md](docs/RELEASING.md).
 
+## [0.42.3] — 2026-10-19
+
+**Objects can be left out of the written report on their own, the object checkboxes lay out cleanly, and the specialist techniques say what they do not cover.**
+
+### Added
+
+- **A separate switch for the written report (#721).** Each object has its own switch under Extended settings for whether it appears in the written report. The chart itself does not change: the element balance, chart shape and dispositor chain still describe the whole chart, and the report names any objects it leaves out. The row of object checkboxes stays aligned and wraps so that three fit on a narrow screen.
+- **Specialist limits beside the features (#725).** The specialist techniques state their limits next to the feature rather than only in the documentation. Harmonic chart exports carry each preset's convention note, such as the D10 note that the odd/even sign restart is not applied.
+- **The Almuten of the Ascendant says what it includes (#724).**
+
+### Fixed
+
+- **The Report page computes the same chart as the Charts page (#732).**
+- **The PDF's wheel and tables follow the chart's object policy (#719).**
+- **The PDF's interpretation reads the same chart as the natal section (#718).**
+- **Aspects are ranked by the orb allowance that admitted them (#720).**
+- **Snapshots from outside the device are checked strictly against their format version before they are read (#717).**
+
 ## [0.42.2] — 2026-10-18
 
 **The PDF gets a cover page, a map of the birthplace and clickable contents, and Documents starts on the person you were viewing.**
