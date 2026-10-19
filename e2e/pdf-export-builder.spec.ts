@@ -75,7 +75,7 @@ test('the header’s PDF-builder link opens the PDF builder, and a preset downlo
   const buildButton = page.getByRole('button', { name: 'Build PDF', exact: true });
   await expect(buildButton).toBeEnabled();
   const [download] = await Promise.all([page.waitForEvent('download'), buildButton.click()]);
-  expect(download.suggestedFilename()).toBe('ada-lovelace-export.pdf');
+  expect(download.suggestedFilename()).toBe('ada-lovelace-executive-summary.pdf');
 
   const chunks: Buffer[] = [];
   for await (const chunk of await download.createReadStream()) chunks.push(chunk as Buffer);

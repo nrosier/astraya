@@ -6,58 +6,19 @@
  * so shapes are not stretched sideways; the latitude it covers follows from the map's proportions. Land is clipped to
  * the frame as polygons (so it can be filled and its outline drawn as the coastline) and borders as line runs.
  *
- * The pin is labelled with the nearest Natural Earth populated place, never the stored place label, which can be a full
- * street address: its name within 15 km, "near" it within 40 km, and only the coordinates rounded to 0.1° beyond.
+ * The pin carries no label: the birth record beside the map already gives the place and the coordinates.
  */
 /**
  * @module chart/birth-map
- * @purpose Draws the PDF's birth-place map as SVG from bundled Natural Earth land, borders and populated places, with the pin labelled by the nearest town (#711).
- * @conventions Pure; input data is `pdf-map-data.ts`'s encoding (0.02° steps for lines, hundredths for places). Classed only by colour constants passed in, so the PDF can use its light palette; the frame is ±20° of longitude scaled by cos(latitude).
- * @exports MapPlace, nearestPlace, BirthMapData, BirthMapLabels, birthMapSvg
+ * @purpose Draws the PDF's birth-place map as SVG from bundled Natural Earth land and borders, with an unlabelled pin on the birth coordinates (#711).
+ * @conventions Pure; input data is `pdf-map-data.ts`'s encoding (0.02° steps). Classed only by colour constants passed in, so the PDF can use its light palette; the frame is ±20° of longitude scaled by cos(latitude).
+ * @exports BirthMapData, birthMapSvg
  */
-import { escapeXml } from './svg-primitives.js';
-
-/** One populated place: its name and position in degrees. */
-export interface MapPlace {
-  readonly name: string;
-  readonly latitude: number;
-  readonly longitude: number;
-}
-
-const KM_PER_DEGREE = 111.2;
-
-/** The populated place nearest a position, and how far it is in kilometres. */
-export function nearestPlace(
-  latitude: number,
-  longitude: number,
-  places: string,
-): { readonly place: MapPlace; readonly km: number } | undefined {
-  const k = Math.cos((latitude * Math.PI) / 180);
-  let best: { place: MapPlace; km: number } | undefined;
-  for (const row of places.split('\n')) {
-    const [name, lat, lon] = row.split('|');
-    if (name === undefined || lat === undefined || lon === undefined) continue;
-    const place = { name, latitude: Number(lat) / 100, longitude: Number(lon) / 100 };
-    const km = Math.hypot(place.latitude - latitude, (place.longitude - longitude) * k) * KM_PER_DEGREE;
-    if (best === undefined || km < best.km) best = { place, km };
-  }
-  return best;
-}
-
 export interface BirthMapData {
   /** `pdf-map-data.ts`'s LAND_50M: one ring per line. */
   readonly land: string;
   /** BORDERS_50M: one line per line. */
   readonly borders: string;
-  /** PLACES_10M: `name|lat|lon` in hundredths. */
-  readonly places: string;
-}
-
-export interface BirthMapLabels {
-  /** "near Lyon" */
-  readonly near: (town: string) => string;
-  /** The coordinates as text, rounded to town level. */
-  readonly coordinates: string;
 }
 
 type Point = readonly [number, number];
@@ -139,7 +100,6 @@ export function birthMapSvg(
   latitude: number,
   longitude: number,
   data: BirthMapData,
-  labels: BirthMapLabels,
   size: { readonly width: number; readonly height: number },
   colors: {
     readonly sea: string;
@@ -147,8 +107,6 @@ export function birthMapSvg(
     readonly coast: string;
     readonly border: string;
     readonly pin: string;
-    readonly ink: string;
-    readonly muted: string;
   },
 ): { readonly markup: string; readonly width: number; readonly height: number } {
   const { width, height } = size;
@@ -177,17 +135,8 @@ export function birthMapSvg(
     .map((run) => path(run, false))
     .join('');
 
-  const nearest = nearestPlace(latitude, longitude, data.places);
-  const town =
-    nearest === undefined || nearest.km > 40
-      ? undefined
-      : nearest.km <= 15
-        ? nearest.place.name
-        : labels.near(nearest.place.name);
   const pin = project([longitude, latitude]).split(' ').map(Number);
   const [px, py] = [pin[0] ?? width / 2, pin[1] ?? height / 2];
-  const text = (y: number, content: string, size: number, weight: string, fill: string): string =>
-    `<text x="${(px + 11).toFixed(1)}" y="${y.toFixed(1)}" font-family="DejaVuSans, Helvetica, sans-serif" font-size="${String(size)}" font-weight="${weight}" fill="${fill}">${escapeXml(content)}</text>`;
 
   const markup =
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${String(width)} ${String(height)}" width="${String(width)}" height="${String(height)}">` +
@@ -198,9 +147,6 @@ export function birthMapSvg(
     `<path d="${borders}" fill="none" stroke="${colors.border}" stroke-width="0.6" stroke-dasharray="3 2"/>` +
     `<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="9" fill="${colors.pin}" fill-opacity="0.18"/>` +
     `<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="4.2" fill="${colors.pin}" stroke="${colors.land}" stroke-width="1.6"/>` +
-    (town === undefined
-      ? text(py + 4, labels.coordinates, 11, 'normal', colors.muted)
-      : `${text(py - 3, town, 13, 'bold', colors.ink)}${text(py + 12, labels.coordinates, 10.5, 'normal', colors.muted)}`) +
     `</g><rect width="${String(width)}" height="${String(height)}" rx="10" fill="none" stroke="${colors.border}"/></svg>`;
   return { markup, width, height };
 }

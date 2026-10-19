@@ -348,13 +348,11 @@ const MAP_COLORS = {
   coast: '#5c5878',
   border: '#9e98b8',
   pin: '#5b3fd4',
-  ink: '#16152b',
-  muted: '#5c5878',
 };
 
 /**
- * The birth record with its regional map (#711). The map data loads only here; the pin is labelled with the nearest
- * town, worked out on the fly for the PDF and never stored. The record's own place and coordinates stay as entered.
+ * The birth record with its regional map (#711). The map data loads only here; the pin sits on the record's own
+ * coordinates and carries no label, since the record beside it already names the place.
  */
 async function birthRecordPlan(
   person: Person,
@@ -368,16 +366,10 @@ async function birthRecordPlan(
     import('../chart/birth-map.js'),
     import('../chart/pdf-map-data.js'),
   ]);
-  // Town level, like the label: one decimal place is about 11 km.
-  const round = (value: number): number => Math.round(value * 10) / 10;
   const map = birthMapSvg(
     coordinates.latitude,
     coordinates.longitude,
-    { land: data.LAND_50M, borders: data.BORDERS_50M, places: data.PLACES_10M },
-    {
-      near: t.mapNear,
-      coordinates: `${formatCoordinate(round(coordinates.latitude), 'lat', locale, 1)}, ${formatCoordinate(round(coordinates.longitude), 'lon', locale, 1)}`,
-    },
+    { land: data.LAND_50M, borders: data.BORDERS_50M },
     { width: 680, height: 300 },
     MAP_COLORS,
   );
