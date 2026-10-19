@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * #722: the chart-contract parity matrix — the audit's (`ASTROLOGY_REVIEW.md`) central finding is
+ * #722: the chart-contract parity matrix — the audit's (`docs/audit/2026-10-19-1936-ASTROLOGY_REVIEW.md`) central finding is
  * that the numbers are right but a chart's *meaning* can drift between the screen, a share link,
  * a saved default, a full export and a PDF. `calculation-snapshot-parity.test.ts` (#544) pins the
  * settings round-trip for one configuration; this matrix runs several deliberately awkward ones
