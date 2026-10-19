@@ -44,9 +44,7 @@ const en = {
   } satisfies Record<'custom' | PdfPresetKey, string>,
   coverGenerated: (date: string) => `Generated on ${date}`,
   contentsHeading: 'Contents',
-  /** The PDF map's pin label when the nearest town is 15 to 40 km away (#711); only on the map, never stored. */
-  mapNear: (town: string) => `near ${town}`,
-  mapSource: 'Map: Natural Earth (public domain). The label names the nearest listed town, not the stored place.',
+  mapSource: 'Map: Natural Earth (public domain).',
   interpretationLabel: 'Interpretation',
   interpretationBaseLabel: 'Written report (included at no extra cost)',
   interpretationSabianLabel: 'Include Sabian symbol notes',
@@ -175,9 +173,7 @@ const nl: typeof en = {
   } satisfies Record<'custom' | PdfPresetKey, string>,
   coverGenerated: (date: string) => `Gemaakt op ${date}`,
   contentsHeading: 'Inhoud',
-  mapNear: (town: string) => `bij ${town}`,
-  mapSource:
-    'Kaart: Natural Earth (publiek domein). Het label noemt de dichtstbijzijnde stad in de lijst, niet de opgeslagen plaats.',
+  mapSource: 'Kaart: Natural Earth (publiek domein).',
   interpretationLabel: 'Interpretatie',
   interpretationBaseLabel: 'Geschreven verslag (zonder extra kosten)',
   interpretationSabianLabel: 'Sabian-symboolnotities opnemen',

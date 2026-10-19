@@ -476,5 +476,5 @@ export async function renderPdfPlan(plan: PdfPlan): Promise<{ blob: Blob; filena
   }
 
   const blob = doc.output('blob');
-  return { blob, filename: deriveExportFilename(plan.personName, 'export', 'pdf') };
+  return { blob, filename: deriveExportFilename(plan.personName, plan.cover.kind, 'pdf') };
 }
