@@ -72,6 +72,7 @@ const CHART: ChartData = {
       aspect: { key: 'trine', name: 'Trine', angle: 120, family: 'major' },
       separation: 119,
       orb: 1,
+      allowedOrb: 8,
       applying: false,
     },
   ],

@@ -38,6 +38,7 @@ function aspect(bodyA: number, bodyB: number, applying: boolean, orb = 1): Aspec
     aspect: { key: 'trine', name: 'Trine', angle: 120, family: 'major' },
     separation: 120 + orb,
     orb,
+    allowedOrb: 8,
     applying,
   };
 }

@@ -7,10 +7,11 @@ import {
   selectSalientPlacements,
 } from '../src/interpretation/rules.js';
 import { bodyByKey } from '../src/astrology/bodies.js';
-import type { Aspect } from '../src/astrology/aspects.js';
+import { DEFAULT_ORB_CONFIG, type Aspect } from '../src/astrology/aspects.js';
 import type { EssentialDignities } from '../src/astrology/dignities.js';
-import type { ChartData } from '../src/domain/chart-compute.js';
+import { computeChartData, type ChartData } from '../src/domain/chart-compute.js';
 import type { BodyId, BodyPosition, Degrees, HousePositions } from '../src/ephemeris/types.js';
+import { getEngine } from './engine-harness.js';
 
 function bodyId(key: string): BodyId {
   const body = bodyByKey(key);
@@ -190,6 +191,7 @@ describe('derivePlacements (#60)', () => {
       aspect: { key: 'trine', name: 'Trine', angle: 120, family: 'major' },
       separation: 121,
       orb: 1,
+      allowedOrb: 8,
       applying: false,
     };
     const chart = makeChart({ aspects: [aspect] });
@@ -204,6 +206,7 @@ describe('derivePlacements (#60)', () => {
       aspect: { key: 'trine', name: 'Trine', angle: 120, family: 'major' },
       separation: 120.1,
       orb: 0.1,
+      allowedOrb: 8,
       applying: false,
     };
     const wideAspect: Aspect = { ...tightAspect, separation: 126, orb: 6 };
@@ -239,11 +242,57 @@ describe('derivePlacements (#60)', () => {
           aspect: { key: 'square', name: 'Square', angle: 90, family: 'major' },
           separation: 90,
           orb: 0,
+          allowedOrb: 8,
           applying: false,
         },
       ],
     });
     expect(derivePlacements(chart)).toEqual(derivePlacements(chart));
+  });
+
+  it('measures an aspect’s tightness against the allowance that admitted it, not the default tiers (#720)', () => {
+    // The same 6° trine: wide under the default 7° allowance for non-luminaries, but tight under
+    // a custom 12° profile. The ranking must follow the allowance recorded on the aspect.
+    const trine = {
+      bodyA: bodyId('venus'),
+      bodyB: bodyId('mars'),
+      aspect: { key: 'trine', name: 'Trine', angle: 120, family: 'major' },
+      separation: 126,
+      orb: 6,
+      applying: false,
+    } as const;
+    const salienceWith = (allowedOrb: number): number | undefined =>
+      derivePlacements(makeChart({ aspects: [{ ...trine, allowedOrb }] })).find(
+        (p) => p.key === 'aspect-pair:trine:mars:venus',
+      )?.salience;
+    const underDefault = salienceWith(7);
+    const underWideProfile = salienceWith(12);
+    const underNarrowProfile = salienceWith(6.5);
+    expect(underWideProfile).toBeGreaterThan(underDefault ?? Infinity);
+    // A narrower profile that still admits the aspect makes the same 6° orb *less* tight.
+    expect(underNarrowProfile).toBeLessThan(underDefault ?? -Infinity);
+  });
+
+  it('records the allowance that admitted each computed aspect, so a custom profile reorders the report (#720)', async () => {
+    const provider = await getEngine();
+    const moment = {
+      civil: { year: 1990, month: 6, day: 15, hour: 14, minute: 30, second: 0 },
+      coordinates: { latitude: 51.5072, longitude: -0.1276 },
+      offsetOverrideMinutes: 60,
+    };
+    const base = await computeChartData(moment, provider, {});
+    const widened = await computeChartData(moment, provider, {
+      orbConfig: { ...DEFAULT_ORB_CONFIG, scalePercent: 50 },
+    });
+    for (const aspect of base.aspects) expect(aspect.allowedOrb).toBeGreaterThanOrEqual(aspect.orb);
+    const sameAspect = (a: Aspect, b: Aspect): boolean =>
+      a.bodyA === b.bodyA && a.bodyB === b.bodyB && a.aspect.key === b.aspect.key;
+    const compared = base.aspects.flatMap((a) => {
+      const b = widened.aspects.find((candidate) => sameAspect(a, candidate));
+      return b === undefined ? [] : [{ a, b }];
+    });
+    expect(compared.length).toBeGreaterThan(0);
+    for (const { a, b } of compared) expect(b.allowedOrb).toBeCloseTo(a.allowedOrb * 1.5, 9);
   });
 });
 
