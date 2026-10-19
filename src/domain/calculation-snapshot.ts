@@ -16,8 +16,8 @@
 /**
  * @module domain/calculation-snapshot
  * @purpose Defines a versioned, fully-validated CalculationSnapshot (settings, rulership and custom points) and the pure functions that build/parse/serialize one.
- * @conventions `version` is bumped only when the *shape* a snapshot must satisfy changes incompatibly; `parseCalculationSnapshot` never throws — an invalid or missing field is filled from the documented app defaults, the same defaults a never-customized chart already shows; strict validation checks registered house systems, aspect keys, and bounds schemes against canonical registries.
- * @exports CURRENT_SNAPSHOT_VERSION, CalculationSnapshot, buildCalculationSnapshot, snapshotCalculationOptions, calculationSnapshotIdentity, parseCalculationSnapshot, calculationSnapshotToJson
+ * @conventions `version` is bumped only when the *shape* a snapshot must satisfy changes incompatibly; `parseCalculationSnapshot` never throws — an invalid or missing field is filled from the documented app defaults, the same defaults a never-customized chart already shows (for a device's own saved default); `decodeCalculationSnapshot` is the strict, version-dispatched gate for payloads from outside the device (#717) and refuses rather than repairs; strict validation checks registered house systems, aspect keys, and bounds schemes against canonical registries.
+ * @exports CURRENT_SNAPSHOT_VERSION, CalculationSnapshot, buildCalculationSnapshot, snapshotCalculationOptions, calculationSnapshotIdentity, parseCalculationSnapshot, decodeCalculationSnapshot, SnapshotDecodeError, SNAPSHOT_ORB_SCALE_RANGE, calculationSnapshotToJson
  */
 import {
   DEFAULT_EXTENDED_SETTINGS,
@@ -33,6 +33,7 @@ import {
 } from '../chart/object-policy.js';
 import type { ChartCalculationOptions } from './chart-compute.js';
 import { DEFAULT_RULERSHIP_CHOICE, RULERSHIP_CHOICES, type RulershipChoice } from '../astrology/rulership.js';
+import { ayanamsaById } from '../astrology/ayanamsas.js';
 import { houseSystemByCode } from '../astrology/houses.js';
 import { aspectByKey } from '../astrology/aspects.js';
 import { validateOrbRules } from '../astrology/orb-profiles.js';
@@ -61,12 +62,24 @@ export interface CalculationSnapshot {
   readonly customPoints: readonly CustomPointDefinition[];
 }
 
+/** The orb-scale slider's own bounds (`ExtendedSettingsPanel`), and `orb-library`'s: a percentage outside it was never producible. */
+export const SNAPSHOT_ORB_SCALE_RANGE = { min: -90, max: 90 } as const;
+
 /**
  * Validate snapshot version matches the current schema version. Rejects unsupported
  * versions with a descriptive error rather than silently defaulting.
  */
 export function validateSnapshotVersion(version: unknown): version is typeof CURRENT_SNAPSHOT_VERSION {
   return version === CURRENT_SNAPSHOT_VERSION;
+}
+
+function isOrbScale(value: unknown): value is number {
+  return (
+    typeof value === 'number' &&
+    Number.isFinite(value) &&
+    value >= SNAPSHOT_ORB_SCALE_RANGE.min &&
+    value <= SNAPSHOT_ORB_SCALE_RANGE.max
+  );
 }
 
 /**
@@ -134,8 +147,12 @@ function isOneOf<T extends string>(value: unknown, options: readonly T[]): value
   return typeof value === 'string' && (options as readonly string[]).includes(value);
 }
 
+function isRegisteredAyanamsa(value: unknown): value is number {
+  return typeof value === 'number' && ayanamsaById(value) !== undefined;
+}
+
 function parseZodiac(value: unknown): Zodiac {
-  if (isRecord(value) && value.kind === 'sidereal' && typeof value.ayanamsa === 'number') {
+  if (isRecord(value) && value.kind === 'sidereal' && isRegisteredAyanamsa(value.ayanamsa)) {
     return { kind: 'sidereal', ayanamsa: value.ayanamsa };
   }
   return DEFAULT_EXTENDED_SETTINGS.zodiac;
@@ -263,7 +280,7 @@ function parseExtendedSettings(value: unknown): ExtendedSettings {
   return {
     houseSystem,
     zodiac: parseZodiac(value.zodiac),
-    orbScalePercent: typeof value.orbScalePercent === 'number' ? value.orbScalePercent : d.orbScalePercent,
+    orbScalePercent: isOrbScale(value.orbScalePercent) ? value.orbScalePercent : d.orbScalePercent,
     boundsScheme: isOneOf(value.boundsScheme, ['egyptian', 'ptolemaic'] as const) ? value.boundsScheme : d.boundsScheme,
     enabledMinorAspects: enabledMinorAspects.length > 0 ? enabledMinorAspects : d.enabledMinorAspects,
     lilithVariant: isOneOf(value.lilithVariant, ['mean', 'true', 'interpolated'] as const)
@@ -303,6 +320,95 @@ export function parseCalculationSnapshot(value: unknown): CalculationSnapshot {
     rulership,
     parseCustomPoints(value.customPoints),
   );
+}
+
+/** Why a payload from outside the device was refused instead of repaired (#717). */
+export class SnapshotDecodeError extends Error {
+  readonly code: 'unsupported-version' | 'invalid-field';
+
+  constructor(code: 'unsupported-version' | 'invalid-field', message: string) {
+    super(message);
+    this.name = 'SnapshotDecodeError';
+    this.code = code;
+  }
+}
+
+const SNAPSHOT_BOUNDS_SCHEMES = ['egyptian', 'ptolemaic'] as const;
+const SNAPSHOT_LILITH_VARIANTS = ['mean', 'true', 'interpolated'] as const;
+const SNAPSHOT_NODE_VARIANTS = ['mean', 'true'] as const;
+
+/** Each calculation-changing field that is *present* but not a registered/in-range value; an absent field is not a problem (older snapshots simply lacked it). */
+function invalidSettingFields(settings: Record<string, unknown>): readonly string[] {
+  const problems: string[] = [];
+  const present = (key: string): boolean => settings[key] !== undefined;
+  if (present('houseSystem') && !isValidHouseSystem(settings.houseSystem)) problems.push('houseSystem');
+  if (present('zodiac')) {
+    const zodiac = settings.zodiac;
+    const tropical = isRecord(zodiac) && zodiac.kind === 'tropical';
+    const sidereal = isRecord(zodiac) && zodiac.kind === 'sidereal' && isRegisteredAyanamsa(zodiac.ayanamsa);
+    if (!tropical && !sidereal) problems.push('zodiac');
+  }
+  if (present('orbScalePercent') && !isOrbScale(settings.orbScalePercent)) problems.push('orbScalePercent');
+  if (present('boundsScheme') && !isOneOf(settings.boundsScheme, SNAPSHOT_BOUNDS_SCHEMES))
+    problems.push('boundsScheme');
+  if (present('lilithVariant') && !isOneOf(settings.lilithVariant, SNAPSHOT_LILITH_VARIANTS)) {
+    problems.push('lilithVariant');
+  }
+  if (present('nodeVariant') && !isOneOf(settings.nodeVariant, SNAPSHOT_NODE_VARIANTS)) problems.push('nodeVariant');
+  if (present('enabledMinorAspects')) {
+    const aspects = settings.enabledMinorAspects;
+    if (!Array.isArray(aspects) || !aspects.every((key) => isValidAspect(key))) problems.push('enabledMinorAspects');
+  }
+  if (present('orbRules') && validateOrbRules(settings.orbRules) === undefined) problems.push('orbRules');
+  return problems;
+}
+
+/**
+ * The strict gate for a snapshot that arrives from outside this device — a share link or an
+ * import (#717). Unlike {@link parseCalculationSnapshot}, which repairs a device's own saved
+ * default field by field, this refuses anything it would otherwise have to guess at:
+ * - a `version` newer than this app understands, or not a positive whole number, is an
+ *   `'unsupported-version'` error, never read as the current schema;
+ * - a calculation-changing field that is present but unregistered or out of range (house
+ *   system, ayanamsa, orb scale, bounds scheme, Lilith/node variant, minor aspects, orb rules)
+ *   is an `'invalid-field'` error naming it, never a silent swap for the app default.
+ *
+ * Versions 1 and 2, and a payload with no `version` at all (a pre-#541 link), migrate
+ * deterministically: they simply lack the fields later versions added, which read as their
+ * documented defaults — v1 had no way to carry custom points, and a pre-#585 bag still carries
+ * the scattered visibility fields `parseCalculationSnapshot` folds into `objectPolicies`.
+ * A missing or non-object payload is the historical "nothing was carried" case: app defaults.
+ */
+export function decodeCalculationSnapshot(value: unknown): CalculationSnapshot {
+  if (!isRecord(value)) return parseCalculationSnapshot(value);
+  const { version } = value;
+  if (version !== undefined) {
+    if (typeof version !== 'number' || !Number.isInteger(version) || version < 1) {
+      throw new SnapshotDecodeError(
+        'unsupported-version',
+        `The snapshot version ${JSON.stringify(version)} is not valid.`,
+      );
+    }
+    if (version > CURRENT_SNAPSHOT_VERSION) {
+      throw new SnapshotDecodeError(
+        'unsupported-version',
+        `This chart was made by a newer version of Astraya (snapshot v${String(version)}) than this one understands (v${String(CURRENT_SNAPSHOT_VERSION)}). Open it in an up-to-date copy of the app.`,
+      );
+    }
+  }
+  if (value.rulership !== undefined && !isOneOf(value.rulership, RULERSHIP_CHOICES)) {
+    throw new SnapshotDecodeError('invalid-field', 'The snapshot names an unknown rulership choice (rulership).');
+  }
+  if (isRecord(value.settings)) {
+    const problems = invalidSettingFields(value.settings);
+    if (problems.length > 0) {
+      throw new SnapshotDecodeError(
+        'invalid-field',
+        `The snapshot carries values this app does not recognise (${problems.join(', ')}).`,
+      );
+    }
+  }
+  return parseCalculationSnapshot(value);
 }
 
 /**
