@@ -78,6 +78,7 @@ import {
   type SavedInterpretationSummary,
 } from '../interpretation/tier2-client.js';
 import type { ChartData } from '../domain/chart-compute.js';
+import { NO_EXCLUSIONS, type InterpretationExclusions } from '../interpretation/rules.js';
 
 type InterpretationTabKey = 'standard' | 'ai';
 const TAB_ORDER: readonly InterpretationTabKey[] = ['standard', 'ai'];
@@ -199,12 +200,15 @@ function AiCustomizedPanel({
   locale,
   chart,
   chartKind,
+  exclude,
 }: {
   readonly report: Report;
   readonly locale: Locale;
   readonly chart: ChartData;
   /** What kind of chart `chart` is (#454) — the model needs to know when it isn't an ordinary natal chart. */
   readonly chartKind: 'natal' | 'composite';
+  /** Objects left out of the reading (#721): not sent to the model either. */
+  readonly exclude: InterpretationExclusions;
 }): React.JSX.Element {
   const t = useMessages(reportViewMessages);
   const shared = useMessages(sharedMessages);
@@ -266,7 +270,7 @@ function AiCustomizedPanel({
         ? { mode: 'grounded' as const, placementKeys, customPrompt, locale }
         : {
             mode: 'freeform' as const,
-            chartData: toTier2ChartPayload(chart),
+            chartData: toTier2ChartPayload(chart, exclude),
             ...(chartKind === 'natal' ? {} : { chartKind }),
             ...(customPrompt.trim() === '' ? {} : { customPrompt }),
             locale,
@@ -417,8 +421,15 @@ function AiCustomizedPanel({
 export function ReportView({
   chart,
   chartKind = 'natal',
+  exclude = NO_EXCLUSIONS,
 }: {
   readonly chart: ChartData;
+  /**
+   * Objects the practitioner left out of the written reading (#721), from the chart's object policy. The reading
+   * and the AI payload both honour it, and the page says what it covers. Empty (every object read) by default, so a
+   * view that has no object policy of its own behaves as before.
+   */
+  readonly exclude?: InterpretationExclusions;
   /**
    * What kind of chart `chart` is (#454) — defaults to `'natal'`, which every caller except
    * `CompositeView.tsx` is. A composite chart's facts are a two-person midpoint synthesis, not
@@ -468,7 +479,7 @@ export function ReportView({
     );
   }
 
-  const report: Report = assembleReport(chart, locale, corpus, rulership, chartKind);
+  const report: Report = assembleReport(chart, locale, corpus, rulership, chartKind, exclude);
 
   const controls = (
     <div className="report-controls">
@@ -498,6 +509,17 @@ export function ReportView({
 
       <div {...tabPanelProps('interpretation', activeTab)}>
         <p className="hint">{t.interpretationDisclaimer}</p>
+        {exclude.size > 0 && (
+          // What the reading leaves out (#721), so the scope can be checked without comparing it to the chart.
+          <p className="hint report-scope">
+            {t.reportScopeExcludes(
+              [...exclude]
+                .map((key) => bodyDisplayName(key, locale))
+                .sort((a, b) => a.localeCompare(b, locale))
+                .join(', '),
+            )}
+          </p>
+        )}
         {activeTab === 'standard' ? (
           <>
             {controls}
@@ -580,7 +602,7 @@ export function ReportView({
             ))}
           </>
         ) : (
-          <AiCustomizedPanel report={report} locale={locale} chart={chart} chartKind={chartKind} />
+          <AiCustomizedPanel report={report} locale={locale} chart={chart} chartKind={chartKind} exclude={exclude} />
         )}
       </div>
     </div>

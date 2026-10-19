@@ -125,6 +125,7 @@ import {
 } from '../chart/extended-settings.js';
 import { standaloneSvg } from '../chart/standalone-svg.js';
 import { resolveWheelDisplayOptions } from '../chart/wheel-options.js';
+import { interpretationExclusions } from '../chart/object-policy.js';
 import { AstroChartWheel } from './AstroChartWheel.js';
 import { bodyById, bodyByKey } from '../astrology/bodies.js';
 import { SIGNS } from '../astrology/signs.js';
@@ -1787,6 +1788,11 @@ export function ChartDataView({
   const [overlayLoad, setOverlayLoad] = useState<OverlayLoad>({ kind: 'idle' });
 
   const pointVisibility = useMemo(() => toPointVisibilityOptions(extendedSettings), [extendedSettings]);
+  // What the written reading leaves out (#721): the wheel's "What it means" text follows the same set as the report.
+  const interpretationExcluded = useMemo(
+    () => interpretationExclusions(extendedSettings.objectPolicies),
+    [extendedSettings],
+  );
   // Which bound table the dignity/condition/reception/almuten tables use (#549) — threaded
   // alongside `rulership` through the same render-tab functions, not through `pointVisibility`
   // (it isn't a visibility concern).
@@ -2170,6 +2176,7 @@ export function ChartDataView({
                 data={inspectorData ?? data}
                 focusContext={focusContext}
                 locale={locale}
+                exclude={interpretationExcluded}
                 onClear={clearIsolation}
                 derivedChartNote={
                   isDerivedChartType(chartType)

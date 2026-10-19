@@ -17,7 +17,7 @@
  * @module chart/object-policy
  * @purpose Defines the full set of chart objects a visibility/aspect-participation policy can govern, the policy shape itself, and the default policy that matches today's pre-#585 behavior exactly.
  * @conventions `ObjectPolicies` is a plain JSON-safe Record, never a Set/Map — the specific mistake a reverted prior attempt (#601) made. Every default here is derived from, and tested against, this app's actual pre-#585 scattered-boolean behavior, not re-decided from scratch.
- * @exports OBJECT_KEYS, ObjectKey, ObjectPolicy, ObjectPolicies, DEFAULT_OBJECT_POLICIES, PRESET_OBJECT_POLICIES, ObjectPolicyPresetId, OBJECT_POLICY_PRESET_IDS, matchObjectPolicyPreset
+ * @exports OBJECT_KEYS, ObjectKey, ObjectPolicy, ObjectPolicies, isInterpreted, withInterpreted, interpretationExclusions, DEFAULT_OBJECT_POLICIES, PRESET_OBJECT_POLICIES, ObjectPolicyPresetId, OBJECT_POLICY_PRESET_IDS, matchObjectPolicyPreset
  */
 
 /** The 19 `astrology/bodies.ts` `BODIES` keys, plus the Vertex and the two Hellenistic lots (Fortune, Spirit) — every object this policy governs. The Ascendant and Midheaven are deliberately excluded: angles are structurally required wherever houses exist, never an optional object. */
@@ -52,9 +52,41 @@ export type ObjectKey = (typeof OBJECT_KEYS)[number];
 export interface ObjectPolicy {
   readonly visible: boolean;
   readonly aspectParticipant: boolean;
+  /**
+   * Whether the written report may speak about this object (#721) — a third, independent switch next
+   * to display (`visible`) and calculation (`aspectParticipant`): hiding an object declutters the
+   * wheel and never changes the reading, and leaving it out of the reading never hides it. Absent
+   * means included, which is every default and every snapshot written before this existed; only an
+   * explicit exclusion is stored, so a chart with none serializes exactly as it always did.
+   */
+  readonly interpreted?: boolean;
 }
 
 export type ObjectPolicies = Readonly<Record<ObjectKey, ObjectPolicy>>;
+
+/** Whether `policy` lets the report speak about its object (#721): everything but an explicit `interpreted: false`. */
+export function isInterpreted(policy: ObjectPolicy): boolean {
+  return policy.interpreted !== false;
+}
+
+/**
+ * `policy` with its report inclusion set (#721). Only an exclusion is stored: including an object
+ * again removes the flag rather than writing `true`, so a chart with no exclusions serializes
+ * exactly as it did before the flag existed.
+ */
+export function withInterpreted(policy: ObjectPolicy, interpreted: boolean): ObjectPolicy {
+  const { visible, aspectParticipant } = policy;
+  return interpreted ? { visible, aspectParticipant } : { visible, aspectParticipant, interpreted: false };
+}
+
+/**
+ * The body keys the report must leave out (#721), as a set the interpretation layer can test without
+ * knowing about policies. Keys are the objects' own (`BODIES` keys for bodies; the Vertex and lots are
+ * listed too, harmlessly, since no report paragraph names them).
+ */
+export function interpretationExclusions(policies: ObjectPolicies): ReadonlySet<string> {
+  return new Set(OBJECT_KEYS.filter((key) => !isInterpreted(policies[key])));
+}
 
 const ALWAYS_ON: ObjectPolicy = { visible: true, aspectParticipant: true };
 const VISIBLE_ONLY: ObjectPolicy = { visible: true, aspectParticipant: false };

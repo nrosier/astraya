@@ -260,6 +260,48 @@ describe('ExtendedSettingsPanel', () => {
     unmount(container, root);
   });
 
+  it('leaves an object out of the written report without hiding it, and includes it again cleanly (#721)', async () => {
+    const onRedraw = vi.fn();
+    const { container, root } = await mount(fakeProvider(), onRedraw);
+    openCard(container);
+
+    const interpreted = checkboxLabeled(container, 'Mars — included in the written report');
+    expect(interpreted.checked).toBe(true);
+    act(() => {
+      interpreted.click();
+    });
+    act(() => {
+      buttonNamed(container, 'Apply and redraw')?.click();
+    });
+    expect(onRedraw).toHaveBeenLastCalledWith({
+      ...DEFAULT_EXTENDED_SETTINGS,
+      objectPolicies: {
+        ...DEFAULT_EXTENDED_SETTINGS.objectPolicies,
+        mars: { visible: true, aspectParticipant: true, interpreted: false },
+      },
+    });
+    unmount(container, root);
+
+    // Ticked again, the flag is dropped rather than stored as `true`: the settings equal the defaults.
+    const excluded = {
+      ...DEFAULT_EXTENDED_SETTINGS,
+      objectPolicies: {
+        ...DEFAULT_EXTENDED_SETTINGS.objectPolicies,
+        mars: { visible: true, aspectParticipant: true, interpreted: false },
+      },
+    };
+    const again = await mount(fakeProvider(), onRedraw, excluded);
+    openCard(again.container);
+    act(() => {
+      checkboxLabeled(again.container, 'Mars — included in the written report').click();
+    });
+    act(() => {
+      buttonNamed(again.container, 'Apply and redraw')?.click();
+    });
+    expect(onRedraw).toHaveBeenLastCalledWith(DEFAULT_EXTENDED_SETTINGS);
+    unmount(again.container, again.root);
+  });
+
   it('toggles the Midpoints checkbox and applies it set', async () => {
     const onRedraw = vi.fn();
     const { container, root } = await mount(fakeProvider(), onRedraw);

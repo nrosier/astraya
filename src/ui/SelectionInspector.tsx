@@ -21,6 +21,7 @@ import { chartViewMessages } from './ChartView.messages.js';
 import { FocusInterpretation } from './FocusInterpretation.js';
 import { useMessages } from './messages.js';
 import { WheelSelectionText } from './WheelSelectionText.js';
+import type { InterpretationExclusions } from '../interpretation/rules.js';
 
 /**
  * Click-to-isolate (#400, #412): what's currently selected, from the chart's own tables. A mouse/touch
@@ -70,6 +71,7 @@ export function SelectionInspector({
   data,
   focusContext,
   locale,
+  exclude,
   onClear,
   derivedChartNote,
 }: {
@@ -78,6 +80,8 @@ export function SelectionInspector({
   readonly data: ChartData;
   readonly focusContext: FocusContext | undefined;
   readonly locale: Locale;
+  /** Objects left out of the written reading (#721): the "What it means" text leaves them out too. */
+  readonly exclude?: InterpretationExclusions;
   readonly onClear: () => void;
   /** Said when the chart is not a natal chart, since the prose below is written for natal placements (#725). */
   readonly derivedChartNote?: string | undefined;
@@ -139,7 +143,7 @@ export function SelectionInspector({
                 {facts.aspectRow.applying ? t.applying : t.separating}
               </p>
             )}
-            <WheelSelectionText chart={data} selectionKey={selectionKey} locale={locale} />
+            <WheelSelectionText chart={data} selectionKey={selectionKey} locale={locale} exclude={exclude} />
           </div>
           {focusContext !== undefined && (
             <FocusInterpretation context={focusContext} locale={locale} resetKey={selectionKey} />

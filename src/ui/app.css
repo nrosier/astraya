@@ -4562,18 +4562,41 @@ svg text.chart-symbol-text-unicode {
 }
 
 /* One object's row in the Extended Settings "Bodies and points" checklist (#585): its name, then
-   its two independent checkboxes (visible, participates in aspects), aligned into two columns
-   across every row in a group so the second checkbox lines up regardless of name length. */
+   its three independent checkboxes (visible, participates in aspects, read in the written report
+   #721). Wide enough, they sit on one line under the name's column; when the card is too narrow
+   for three, the row wraps and the name takes a line of its own, so no checkbox is clipped. */
 .settings-card-object-row {
   display: flex;
-  align-items: center;
-  gap: var(--space-3);
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-1) var(--space-4);
   min-height: 2.75rem;
+  padding-block: var(--space-1);
 }
 
 .settings-card-object-name {
   flex: 0 0 9rem;
   min-width: 0;
+  font-weight: 600;
+}
+
+.settings-card-object-checks {
+  display: flex;
+  flex: 1 1 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-4);
+  min-width: 0;
+}
+
+@media (max-width: 40rem) {
+  .settings-card-object-name {
+    flex-basis: 100%;
+  }
+
+  .settings-card-object-checks {
+    flex-basis: 100%;
+  }
 }
 
 /* The primary action of a long form stays reachable at the bottom of the viewport while its fields scroll (#513). */

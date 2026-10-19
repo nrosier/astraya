@@ -25,6 +25,7 @@ import { useStoreState } from './store-context.js';
 import { useExtendedSettings } from './extended-settings-store.js';
 import { useOrbContextSource, useOrbLibrary } from './orb-library-store.js';
 import { settingsForContext, toChartCalculationOptions } from '../chart/extended-settings.js';
+import { interpretationExclusions } from '../chart/object-policy.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { useStableBy, useStableMoment } from './use-stable-moment.js';
 import { BackLink } from './BackLink.js';
@@ -51,6 +52,8 @@ export function ReportScreen({ personId }: { personId: string }): React.JSX.Elem
     () => settingsForContext(cardSettings, 'natal', orbLibrary, orbSources),
     [cardSettings, orbLibrary, orbSources],
   );
+  // What the written reading leaves out (#721) — display-only hiding never lands here.
+  const exclusions = useMemo(() => interpretationExclusions(settings.objectPolicies), [settings]);
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
 
   useEffect(() => {
@@ -123,7 +126,7 @@ export function ReportScreen({ personId }: { personId: string }): React.JSX.Elem
           {load.data.houses.warning !== undefined && (
             <StatusMessage kind="error">{load.data.houses.warning}</StatusMessage>
           )}
-          <ReportView chart={load.data} />
+          <ReportView chart={load.data} exclude={exclusions} />
         </>
       )}
     </main>

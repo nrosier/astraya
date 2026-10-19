@@ -12,6 +12,8 @@ const en = {
   couldNotLoad: (message: string) => `Could not load the interpretation text: ${message}`,
   loadingInterpretation: 'Loading interpretation…',
   keyInsightLabel: 'Key insight',
+  reportScopeExcludes: (names: string) =>
+    `This reading leaves out: ${names}. Change this under Extended settings, “included in the written report”. The element balance, chart shape and dispositor chain still describe the whole chart.`,
   interpretationDisclaimer:
     'Read this as pieces of a whole, not standalone verdicts: a computer-generated interpretation describes one placement at a time, but no position or aspect means much on its own — only alongside everything else in the chart.',
   tocHeading: 'Contents',
@@ -66,6 +68,8 @@ const nl: typeof en = {
   couldNotLoad: (message: string) => `Kon de interpretatietekst niet laden: ${message}`,
   loadingInterpretation: 'Interpretatie wordt geladen…',
   keyInsightLabel: 'Kerninzicht',
+  reportScopeExcludes: (names: string) =>
+    `Deze duiding laat weg: ${names}. Wijzig dit onder Uitgebreide instellingen, “opgenomen in het geschreven rapport”. De elementenbalans, de horoscoopvorm en de dispositorketen beschrijven nog steeds de hele horoscoop.`,
   interpretationDisclaimer:
     'Lees dit als onderdelen van een geheel, niet als losse oordelen: een door een computer gegenereerde interpretatie beschrijft één plaatsing per keer, maar geen enkele positie of aspect betekent veel op zichzelf — alleen samen met de rest van de horoscoop.',
   tocHeading: 'Inhoud',

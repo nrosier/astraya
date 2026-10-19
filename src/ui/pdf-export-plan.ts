@@ -40,6 +40,7 @@ import {
   withOrbsOf,
   type ExtendedSettings,
 } from '../chart/extended-settings.js';
+import { interpretationExclusions } from '../chart/object-policy.js';
 import type { BoundsScheme } from '../astrology/bounds.js';
 import type { OrbContextSource, OrbLibrary } from '../astrology/orb-library.js';
 import { calculationArtifactIdentity } from '../domain/calculation-artifact.js';
@@ -1203,6 +1204,8 @@ async function buildInterpretationSections(
     provider,
     sectionCalculationOptions('natal', person, settings, rulership),
   );
+  // Objects the practitioner left out of the written reading (#721): the PDF reads what the Report page reads.
+  const exclude = interpretationExclusions(settings.objectPolicies);
   const sections: (PdfTextSectionPlan | PdfFieldsSectionPlan)[] = [];
 
   if (selection.base) {
@@ -1217,7 +1220,7 @@ async function buildInterpretationSections(
     });
     try {
       const corpus = await loadRuntimeCorpus(locale, corpusFetch ?? fetch);
-      const report = assembleReport(chart, locale, corpus, rulership);
+      const report = assembleReport(chart, locale, corpus, rulership, 'natal', exclude);
       for (const section of report.sections) {
         sections.push({
           kind: 'text',
@@ -1244,7 +1247,7 @@ async function buildInterpretationSections(
       try {
         const result = await generateTier2Interpretation({
           mode: 'freeform',
-          chartData: toTier2ChartPayload(chart),
+          chartData: toTier2ChartPayload(chart, exclude),
           locale,
         });
         sections.push({

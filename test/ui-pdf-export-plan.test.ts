@@ -986,6 +986,50 @@ describe('PDF chart sections use the Charts page’s own calculation settings (#
     expect(sidereal.reading).not.toBe(tropical.reading);
   }, 60_000);
 
+  it('leaves an object excluded from the reading out of the PDF reading too (#721)', async () => {
+    const provider = await getEngine();
+    async function readingMentionsMars(settings: typeof DEFAULT_EXTENDED_SETTINGS): Promise<boolean> {
+      const selection: PdfSelection = {
+        personId: ADA.id,
+        ...EMPTY_SELECTION,
+        interpretation: { base: true, aiCustomised: false },
+      };
+      const context: PdfPlanContext = {
+        person: ADA,
+        provider,
+        settings,
+        rulership: DEFAULT_RULERSHIP_CHOICE,
+        locale: 'en',
+        aiConsent: false,
+        corpusFetch,
+      };
+      const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
+      // A body with one paragraph gets no group heading, so look at every paragraph's own label too.
+      return plan.sections.some(
+        (section) =>
+          section.kind === 'text' &&
+          section.groups.some(
+            (group) =>
+              group.body === 'Mars' ||
+              group.paragraphs.some(
+                (paragraph) =>
+                  typeof paragraph === 'object' && 'label' in paragraph && /\bMars\b/.test(paragraph.label),
+              ),
+          ),
+      );
+    }
+    expect(await readingMentionsMars(DEFAULT_EXTENDED_SETTINGS)).toBe(true);
+    expect(
+      await readingMentionsMars({
+        ...DEFAULT_EXTENDED_SETTINGS,
+        objectPolicies: {
+          ...DEFAULT_EXTENDED_SETTINGS.objectPolicies,
+          mars: { visible: true, aspectParticipant: true, interpreted: false },
+        },
+      }),
+    ).toBe(false);
+  }, 60_000);
+
   it('maps each chart type to the options its own Charts-page view uses', () => {
     const options = (type: Parameters<typeof sectionCalculationOptions>[0]) =>
       sectionCalculationOptions(type, WITH_POINT, WHOLE_SIGN, 'traditional');
