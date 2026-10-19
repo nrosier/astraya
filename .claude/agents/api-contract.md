@@ -2,6 +2,7 @@
 name: api-contract
 description: Reviews Astraya's hand-mirrored client/server TypeScript interfaces and the op-log wire contract for drift — there is no schema library on either side. Use when a server route in server/auth/ or server/ops/ or its client caller in src/sync/ changes.
 tools: Read, Grep, Glob, Bash
+model: claude-sonnet-5-5
 ---
 
 # API Contract Reviewer

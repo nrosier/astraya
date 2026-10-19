@@ -30,7 +30,7 @@
  * @module ChartView
  * @purpose Renders the natal chart screen: the chart wheel plus every data table a chart computes (positions, houses, aspects, dignities, dispositors, declinations, antiscia, fixed stars, chart shape, derived points), and the SVG/PNG/PDF export + share-link controls.
  * @conventions Exports `ChartDataView`, the shared tabbed chart+tables UI reused by CompositeView/SharedChartView; every value is recomputed from the stored birth moment via `domain/chart-compute.js`/`domain/chart-tables.js` rather than read from a saved Chart record; houses/angles/derived-points tables are hidden when `timeAccuracy === 'unknown'`. Text comes from co-located `ChartView.messages.ts` via `useMessages()`.
- * @exports ChartView, ChartDataView, emphasisColumns, positionColumns, houseCuspColumns, angleColumns, aspectColumns, dignityColumns, almutenCandidateColumns, conditionColumns, receptionColumns, dispositorColumns, declinationColumns, antisciaColumns, midpointTreeColumns, allMidpointsColumns, fixedStarColumns, derivedPointColumns, houseSystemLabel, zodiacLabel, rulershipLabel
+ * @exports ChartView, ChartDataView, emphasisColumns, positionColumns, houseCuspColumns, angleColumns, aspectColumns, dignityColumns, almutenCandidateColumns, conditionColumns, receptionColumns, dispositorColumns, declinationColumns, antisciaColumns, midpointTreeColumns, allMidpointsColumns, fixedStarColumns, fixedStarsScopeNoteOf, derivedPointColumns, houseSystemLabel, zodiacLabel, rulershipLabel
  */
 import { formatFixed, formatOrb, formatTimestamp } from './format.js';
 import { PrintProvenance } from './PrintProvenance.js';
@@ -86,6 +86,7 @@ import { derivedPointPlacementFacts } from '../domain/derived-point-position.js'
 import {
   computeChartData,
   housesAreDefined,
+  NATAL_FIXED_STARS,
   type ChartCalculationOptions,
   type ChartData,
 } from '../domain/chart-compute.js';
@@ -146,7 +147,14 @@ import { findAspectPatterns, PATTERN_BODY_KEYS } from '../astrology/aspect-patte
 import { useSymbolClass } from './symbol-setting.js';
 import { useGlyphVariants } from './glyph-variant-setting.js';
 import { useRegisterExports } from './export-registry.js';
-import { CHART_VIEWS, chartViewLabels, type ChartViewKind, type ChartType } from './chart-sections.js';
+import {
+  CHART_VIEWS,
+  chartViewLabels,
+  isDerivedChartType,
+  type ChartViewKind,
+  type ChartType,
+} from './chart-sections.js';
+import { chartTypesMessages } from './ChartTypes.messages.js';
 import { chartHref, personHref } from './route.js';
 import { ChartTypeSelector, changeChartView } from './ChartTypeSelector.js';
 import { ChartViewNav } from './ChartViewNav.js';
@@ -944,6 +952,11 @@ export function allMidpointsColumns(
   ];
 }
 
+/** The sentence that says the fixed-star table covers only `NATAL_FIXED_STARS` (#725), for the screen and the PDF alike. */
+export function fixedStarsScopeNoteOf(t: typeof chartViewMessages.en): string {
+  return t.fixedStarsScopeNote(NATAL_FIXED_STARS.length, NATAL_FIXED_STARS.join(', '));
+}
+
 export function fixedStarColumns(t: typeof chartViewMessages.en, locale: Locale): readonly TableColumn<FixedStarRow>[] {
   return [
     // Star names (Regulus, Spica, ...) are proper nouns, the same in both locales — no glossary
@@ -1176,13 +1189,16 @@ function renderTableTab(
             />
           )}
           {starRows.length > 0 && (
-            <SortableTable
-              caption={t.fixedStarsCaption}
-              columns={fixedStarColumns(t, locale)}
-              rows={starRows}
-              getRowKey={(row) => `${row.star}-${row.bodyKey}`}
-              downloadFilename={deriveExportFilename(displayName, 'fixed-stars', 'csv')}
-            />
+            <>
+              <SortableTable
+                caption={t.fixedStarsCaption}
+                columns={fixedStarColumns(t, locale)}
+                rows={starRows}
+                getRowKey={(row) => `${row.star}-${row.bodyKey}`}
+                downloadFilename={deriveExportFilename(displayName, 'fixed-stars', 'csv')}
+              />
+              <p className="hint">{fixedStarsScopeNoteOf(t)}</p>
+            </>
           )}
           {midpointTreeHitRows.length > 0 && (
             <SortableTable
@@ -1218,6 +1234,7 @@ function renderTableTab(
                   ?
                 </Tooltip>
               </p>
+              <p className="hint">{t.almutenScopeNote}</p>
               {/* Every candidate's own breakdown, not only the winner's name (#551). */}
               <SortableTable
                 caption={t.almutenBreakdownCaption}
@@ -1702,6 +1719,7 @@ export function ChartDataView({
   onViewChange,
   buildViewHref,
   overlayContext,
+  chartType,
 }: {
   readonly load: Load;
   readonly displayName: string;
@@ -1740,8 +1758,15 @@ export function ChartDataView({
   readonly buildViewHref: (view: ChartViewKind) => string;
   /** Optional person-bound sources for configuring extra rings in the Wheel workbench. */
   readonly overlayContext?: ChartOverlayContext | undefined;
+  /**
+   * What kind of chart this is, for the screens that show a chart derived from the natal one (#725). Anything but
+   * natal makes the inspector say that natal-chart interpretations are being applied to a derived chart; left out,
+   * no such note is shown (natal, shared, composite and horary charts).
+   */
+  readonly chartType?: ChartType | undefined;
 }): React.JSX.Element {
   const t = useMessages(chartViewMessages);
+  const chartTypeT = useMessages(chartTypesMessages);
   const [locale] = useLocale();
   const [rulership] = useRulershipChoice();
   const [ownTab, setOwnTab] = useState<ChartViewKind>('wheel');
@@ -2153,6 +2178,11 @@ export function ChartDataView({
                 locale={locale}
                 exclude={interpretationExcluded}
                 onClear={clearIsolation}
+                derivedChartNote={
+                  isDerivedChartType(chartType)
+                    ? t.derivedChartInterpretationNote(chartTypeT.typeLabels[chartType].toLocaleLowerCase(locale))
+                    : undefined
+                }
               />
             )}
           </div>
@@ -2575,6 +2605,7 @@ export function ChartView({
           <div>
             <h2>{compareType.charAt(0).toUpperCase() + compareType.slice(1).replace(/-/g, ' ')}</h2>
             <ChartDataView
+              chartType={compareType}
               load={compareLoad}
               displayName={compareDisplayName}
               showHouses={showHouses}

@@ -312,6 +312,7 @@ export function RelocatedChartView({
       {relocationPlace !== undefined && load.kind !== 'idle' && (
         <>
           <ChartDataView
+            chartType="relocated"
             load={load.kind === 'ready' ? { kind: 'ready', data: load.data.relocated } : load}
             displayName={displayName}
             showHouses

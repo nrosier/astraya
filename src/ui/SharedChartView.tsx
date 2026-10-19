@@ -19,7 +19,7 @@ import { toChartCalculationOptions } from '../chart/extended-settings.js';
 import { chartSheetMetaLines } from '../domain/chart-tables.js';
 import { computeChartData, type ChartData } from '../domain/chart-compute.js';
 import { decodeChartShareLink, type ChartShareData } from '../domain/chart-share.js';
-import { parseCalculationSnapshot } from '../domain/calculation-snapshot.js';
+import { decodeCalculationSnapshot, type CalculationSnapshot } from '../domain/calculation-snapshot.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
@@ -33,11 +33,16 @@ type Load =
   | { readonly kind: 'ready'; readonly data: ChartData; readonly artifact?: CalculationArtifact | undefined }
   | { readonly kind: 'error'; readonly message: string };
 
-/** Reads the shared chart from the URL query, once, at mount. */
-function fromLocation(): { data?: ChartShareData; error?: string } {
+/**
+ * Reads the shared chart from the URL query, once, at mount. The sender's settings go through the
+ * strict decoder here (#717): a link from a newer app, or one naming an unregistered house system,
+ * ayanamsa or orb scale, is refused with a reason rather than shown as a different chart.
+ */
+function fromLocation(): { data?: ChartShareData; snapshot?: CalculationSnapshot; error?: string } {
   const query = window.location.hash.split('?')[1] ?? '';
   try {
-    return { data: decodeChartShareLink(new URLSearchParams(query)) };
+    const data = decodeChartShareLink(new URLSearchParams(query));
+    return { data, snapshot: decodeCalculationSnapshot(data.settings) };
   } catch (error) {
     // A bad or truncated link must say so, not silently show nothing or a wrong chart.
     return { error: error instanceof Error ? error.message : String(error) };
@@ -59,12 +64,9 @@ export function SharedChartView(): React.JSX.Element {
   const initial = useMemo(fromLocation, []);
   // The sender's own effective settings (#541), not this viewer's ambient device preference —
   // a shared chart must recompute under what the sender actually had in force, not whatever
-  // this browser happens to default to. `parseCalculationSnapshot` always returns a complete,
-  // valid snapshot (full app defaults for an old pre-#541 link whose `settings` bag is empty).
-  const snapshot = useMemo(
-    () => (initial.data === undefined ? undefined : parseCalculationSnapshot(initial.data.settings)),
-    [initial.data],
-  );
+  // this browser happens to default to. `decodeCalculationSnapshot` returns a complete, valid
+  // snapshot (full app defaults for an old pre-#541 link whose `settings` bag is empty).
+  const { snapshot } = initial;
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
   const { provider } = useEphemerisProvider();
   // More volatile than the share-token data above, so this reads the hash itself on every

@@ -12,6 +12,7 @@ import {
   peopleToCsv,
   type FullExport,
 } from '../src/domain/full-export.js';
+import { VARGA_PRESETS } from '../src/astrology/harmonics.js';
 import type { Person } from '../src/domain/person.js';
 import type { EphemerisProvider } from '../src/ephemeris/types.js';
 import { DEFAULT_EXTENDED_SETTINGS, toChartCalculationOptions } from '../src/chart/extended-settings.js';
@@ -149,12 +150,15 @@ describe('buildFullExport', () => {
     expect(chart?.midpointTree).toEqual([]);
     expect(chart?.allMidpoints).toEqual([]);
     expect(ada?.harmonicCharts?.map((harmonic) => harmonic.key)).toEqual(['D1', 'D9', 'D10']);
+    // #725: the D10 export says the classical odd/even sign restart is not applied.
+    expect(ada?.harmonicCharts?.find((harmonic) => harmonic.key === 'D10')?.convention).toMatch(/odd\/even/);
     for (const harmonic of ada?.harmonicCharts ?? []) {
       expect(harmonic.source).toEqual({
         kind: 'radix',
         transform: 'longitude-times-n-mod-360',
         houses: 'whole-sign-from-harmonic-ascendant',
       });
+      expect(harmonic.convention).toBe(VARGA_PRESETS.find((preset) => preset.key === harmonic.key)?.description);
       expect(harmonic.radixPositions.length).toBeGreaterThan(0);
       expect(harmonic.chart.houses?.cusps).toHaveLength(12);
     }

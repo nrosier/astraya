@@ -77,7 +77,7 @@ function contact(transiting: string, natal: string, aspectKey: string, orb: numb
   const a = bodyByKey(transiting);
   const b = bodyByKey(natal);
   if (aspect === undefined || a === undefined || b === undefined) throw new Error('fixture bug');
-  return { bodyA: a.id, bodyB: b.id, aspect, separation: aspect.angle + orb, orb, applying };
+  return { bodyA: a.id, bodyB: b.id, aspect, separation: aspect.angle + orb, orb, allowedOrb: 8, applying };
 }
 
 describe('the real transit fixture', () => {

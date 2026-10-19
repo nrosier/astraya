@@ -19,7 +19,7 @@ function countClass(svg: string, className: string): number {
 function aspect(key: string, bodyA: number, bodyB: number, orb: number, applying = true): Aspect {
   const definition = aspectByKey(key);
   if (!definition) throw new Error(`test fixture bug: unknown aspect key "${key}"`);
-  return { aspect: definition, bodyA, bodyB, separation: definition.angle + orb, orb, applying };
+  return { aspect: definition, bodyA, bodyB, separation: definition.angle + orb, orb, allowedOrb: 8, applying };
 }
 
 const NATAL_HOUSES: HousePositions = {

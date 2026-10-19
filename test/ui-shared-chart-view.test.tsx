@@ -142,4 +142,26 @@ describe('a shared chart recomputes under the sender’s own settings, not the v
       container.remove();
     }
   });
+
+  it('refuses a link whose snapshot is from a newer app, with a reason, instead of computing a different chart (#717)', async () => {
+    const sent = {
+      ...calculationSnapshotToJson(buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, 'modern')),
+      version: 999,
+    };
+    const query = encodeChartShareLink({ moment: MOMENT, settings: sent, housesKnown: true }).toString();
+    const { container, root } = await mountWithHash(`#/shared?${query}`);
+    try {
+      await act(async () => {
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+      expect(computeChartData).not.toHaveBeenCalled();
+      expect(container.textContent).toContain('newer version of Astraya');
+    } finally {
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+    }
+  });
 });

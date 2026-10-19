@@ -9,7 +9,9 @@ import {
   calculationSnapshotIdentity,
   calculationSnapshotToJson,
   CURRENT_SNAPSHOT_VERSION,
+  decodeCalculationSnapshot,
   parseCalculationSnapshot,
+  SnapshotDecodeError,
 } from '../src/domain/calculation-snapshot.js';
 import { decodeChartShareLink, encodeChartShareLink } from '../src/domain/chart-share.js';
 
@@ -251,5 +253,108 @@ describe('user-defined orb rules in the snapshot (#590)', () => {
   it('empty rule sets are normalized away, so an empty bag equals no bag', () => {
     const parsed = parseCalculationSnapshot({ settings: { orbRules: { aspectOrbs: {}, bodyOrbs: {} } } });
     expect(parsed.settings.orbRules).toBeUndefined();
+  });
+});
+
+describe('decodeCalculationSnapshot refuses what it would have to guess at (#717)', () => {
+  const STRICT_POINTS = [{ id: 'fortune-like', name: 'Fortune-like', formula: 'ascendant + moon - sun' }];
+  const sent = calculationSnapshotToJson(buildCalculationSnapshot(CUSTOM_SETTINGS, 'traditional', STRICT_POINTS));
+
+  it('round-trips a current snapshot exactly', () => {
+    expect(decodeCalculationSnapshot(sent)).toEqual(
+      buildCalculationSnapshot(CUSTOM_SETTINGS, 'traditional', STRICT_POINTS),
+    );
+  });
+
+  it.each([999, CURRENT_SNAPSHOT_VERSION + 1])(
+    'refuses a newer snapshot version (%s) instead of reading it as current',
+    (version) => {
+      expect(() => decodeCalculationSnapshot({ ...sent, version })).toThrow(SnapshotDecodeError);
+      try {
+        decodeCalculationSnapshot({ ...sent, version });
+      } catch (error) {
+        expect(error).toMatchObject({ code: 'unsupported-version' });
+      }
+    },
+  );
+
+  it.each([0, -1, 1.5, '3', null, NaN])('refuses a malformed version (%s)', (version) => {
+    expect(() => decodeCalculationSnapshot({ ...sent, version })).toThrow(SnapshotDecodeError);
+  });
+
+  it.each([
+    ['houseSystem', { houseSystem: 'not-a-house' }],
+    ['zodiac', { zodiac: { kind: 'sidereal', ayanamsa: 999999 } }],
+    ['zodiac', { zodiac: { kind: 'sidereal', ayanamsa: Number.NaN } }],
+    ['zodiac', { zodiac: { kind: 'sidereal', ayanamsa: -1 } }],
+    ['zodiac', { zodiac: { kind: 'nonsense' } }],
+    ['orbScalePercent', { orbScalePercent: 100000 }],
+    ['orbScalePercent', { orbScalePercent: -100 }],
+    ['orbScalePercent', { orbScalePercent: Number.POSITIVE_INFINITY }],
+    ['orbScalePercent', { orbScalePercent: '10' }],
+    ['boundsScheme', { boundsScheme: 'invented' }],
+    ['lilithVariant', { lilithVariant: 'osculating' }],
+    ['nodeVariant', { nodeVariant: 'south' }],
+    ['enabledMinorAspects', { enabledMinorAspects: ['sextile', 'not-an-aspect'] }],
+    ['enabledMinorAspects', { enabledMinorAspects: 'sextile' }],
+    ['orbRules', { orbRules: { aspectOrbs: {}, bodyOrbs: { notABody: 2 } } }],
+  ])('refuses an unregistered or out-of-range %s', (field, patch) => {
+    const settings = { ...(sent.settings as Record<string, unknown>), ...patch };
+    expect(() => decodeCalculationSnapshot({ ...sent, settings })).toThrow(SnapshotDecodeError);
+    try {
+      decodeCalculationSnapshot({ ...sent, settings });
+    } catch (error) {
+      expect(error).toMatchObject({ code: 'invalid-field' });
+      expect((error as Error).message).toContain(field);
+    }
+  });
+
+  it('refuses an unknown rulership choice', () => {
+    expect(() => decodeCalculationSnapshot({ ...sent, rulership: 'bogus' })).toThrow(SnapshotDecodeError);
+  });
+
+  it('still migrates v1, v2 and unversioned payloads deterministically', () => {
+    const settings = (sent as { settings: unknown }).settings;
+    for (const version of [1, 2]) {
+      const migrated = decodeCalculationSnapshot({ version, settings, rulership: 'traditional' });
+      expect(migrated.version).toBe(CURRENT_SNAPSHOT_VERSION);
+      expect(migrated.settings).toEqual(CUSTOM_SETTINGS);
+      expect(migrated.customPoints).toEqual([]);
+    }
+    expect(decodeCalculationSnapshot({ settings, rulership: 'traditional' }).settings).toEqual(CUSTOM_SETTINGS);
+  });
+
+  it('still reads a pre-#585 settings bag and the historical empty bag', () => {
+    expect(
+      decodeCalculationSnapshot({ settings: { chironVisible: false, aspectsToChiron: true } }).settings.objectPolicies
+        .chiron,
+    ).toEqual({
+      visible: false,
+      aspectParticipant: true,
+    });
+    for (const empty of [{}, undefined, null]) {
+      expect(decodeCalculationSnapshot(empty)).toEqual(
+        buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE),
+      );
+    }
+  });
+
+  it('accepts the orb-scale slider’s own extremes', () => {
+    for (const orbScalePercent of [-90, 0, 90]) {
+      const settings = { ...(sent.settings as Record<string, unknown>), orbScalePercent };
+      expect(decodeCalculationSnapshot({ ...sent, settings }).settings.orbScalePercent).toBe(orbScalePercent);
+    }
+  });
+});
+
+describe('parseCalculationSnapshot (a device’s own saved default) also bounds numbers (#717)', () => {
+  it('repairs a non-finite, out-of-range or unregistered numeric to the default instead of passing it to the engine', () => {
+    for (const orbScalePercent of [Number.NaN, Number.POSITIVE_INFINITY, 100000, -500]) {
+      expect(parseCalculationSnapshot({ settings: { orbScalePercent } }).settings.orbScalePercent).toBe(
+        DEFAULT_EXTENDED_SETTINGS.orbScalePercent,
+      );
+    }
+    const bad = parseCalculationSnapshot({ settings: { zodiac: { kind: 'sidereal', ayanamsa: 999999 } } });
+    expect(bad.settings.zodiac).toEqual(DEFAULT_EXTENDED_SETTINGS.zodiac);
   });
 });

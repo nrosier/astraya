@@ -220,6 +220,13 @@ export interface AspectMatch {
   readonly separation: Degrees;
   /** How far `separation` sits from `aspect.angle`; 0 is an exact hit. */
   readonly orb: Degrees;
+  /**
+   * The orb limit that admitted this aspect — the effective allowance (#720): custom profile,
+   * per-aspect override, body moieties and scale all applied. Recorded so anything ranking the
+   * aspect by tightness (`orb / allowedOrb`) uses the rule that produced it, never a re-lookup
+   * against the default tiers.
+   */
+  readonly allowedOrb: Degrees;
   /** True while the aspect is forming; false once it is exact or fading. */
   readonly applying: boolean;
 }
@@ -245,9 +252,10 @@ export function matchAspect(
   for (const aspect of ASPECTS) {
     if (aspect.family === 'minor' && !config.enabledMinorAspects.includes(aspect.key)) continue;
     const orb = Math.abs(separation - aspect.angle);
-    if (orb > orbFor(aspect.key, categoryA, categoryB, config, bodyKeys)) continue;
+    const allowedOrb = orbFor(aspect.key, categoryA, categoryB, config, bodyKeys);
+    if (orb > allowedOrb) continue;
     if (best !== undefined && orb >= best.orb) continue;
-    best = { aspect, separation, orb, applying: isApplying(a, b, aspect.angle) };
+    best = { aspect, separation, orb, allowedOrb, applying: isApplying(a, b, aspect.angle) };
   }
   return best;
 }

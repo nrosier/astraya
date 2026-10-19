@@ -49,6 +49,7 @@ interface ExportedHarmonicChart {
   key: string; // Varga preset key, currently D1/D9/D10
   label: string;
   harmonic: number;
+  convention: string; // #725 — the preset's convention note, English; D10 says the classical odd/even sign restart is not applied
   source: {
     kind: 'radix';
     transform: 'longitude-times-n-mod-360';
@@ -102,9 +103,11 @@ JSON Schema file does enumerate them structurally.
   reach `store.mutate` and fail in a way the preview never explained. It deliberately never validates or restores
   `natalChart`/`harmonicCharts`/`chartError`/`calculation`: the birth record is this file's own stated source of
   truth, and a chart is always recomputable, so restoring a stale computed chart from a file would be restoring
-  exactly what this project refuses to treat as truth. `parseCalculationSnapshot` still uses best-effort
-  defaulting for missing fields rather than strict validation (see #583); the importer deliberately does not
-  repeat that — it fails closed and names what's unsupported.
+  exactly what this project refuses to treat as truth. A calculation snapshot arriving from outside the
+  device (a share link) goes through `decodeCalculationSnapshot` (#717), which refuses an unsupported future
+  version or an unregistered/out-of-range calculation field with a typed `SnapshotDecodeError`, and migrates
+  v1/v2/unversioned payloads deterministically; `parseCalculationSnapshot`'s best-effort, field-by-field repair is
+  kept only for a device's own saved default. The importer likewise fails closed and names what's unsupported.
   `stageFullExportRestore` then classifies each person new/updated/unchanged against this device's current
   people and builds the exact field-level mutations a restore would write, touching only fields that actually
   differ. A person already soft-deleted on this device (`store.state.deleted.people`) is classified
@@ -136,6 +139,7 @@ JSON Schema file does enumerate them structurally.
   (the shape a v1-labelled file could have had was already stale by the time this document was written) and is the
   first version bump made under the policy above, going forward. #557 later added optional `harmonicCharts` with
   radix-to-result position provenance for the named Varga presets; it is additive, so the version remains v2.
+  #725 added `ExportedHarmonicChart.convention`, the preset's convention note (D10: no odd/even sign restart); additive, still v2.
   #582 added optional `ExportedPerson.calculation`, the natal chart's `CalculationArtifact`; also additive, still v2.
   #587 added optional `ExportedPerson.relocationPlaces`/`customPoints` — both read internally for chart
   computation since #559/#566 but never carried back out, so a restore built on an export missing them would

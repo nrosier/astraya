@@ -35,10 +35,13 @@ import {
   toChartCalculationOptions,
   orbsOf,
   settingsForContext,
+  toPointVisibilityOptions,
+  toSignWedgeStyle,
   withOrbsOf,
   type ExtendedSettings,
 } from '../chart/extended-settings.js';
 import { interpretationExclusions } from '../chart/object-policy.js';
+import type { BoundsScheme } from '../astrology/bounds.js';
 import type { OrbContextSource, OrbLibrary } from '../astrology/orb-library.js';
 import { calculationArtifactIdentity } from '../domain/calculation-artifact.js';
 import {
@@ -75,6 +78,7 @@ import {
   aspectRows,
   chartSheetInput,
   type AspectRow,
+  type PointVisibilityOptions,
 } from '../domain/chart-tables.js';
 import { computeComposite } from '../domain/composite.js';
 import { computeTransit } from '../domain/transit.js';
@@ -132,6 +136,7 @@ import {
   dignityColumns,
   dispositorColumns,
   fixedStarColumns,
+  fixedStarsScopeNoteOf,
   houseCuspColumns,
   midpointTreeColumns,
   positionColumns,
@@ -176,6 +181,7 @@ import { toRow as profectionToRow, columns as profectionColumns } from './Profec
 import { profectionsViewMessages } from './ProfectionsView.messages.js';
 import { eclipseRows, type EclipseRow } from './eclipses.js';
 import { eclipsesViewMessages } from './EclipsesView.messages.js';
+import { harmonicViewMessages } from './HarmonicView.messages.js';
 import { cellText, columnAlign, type ColumnAlign, type TableColumn } from './table-sort.js';
 
 /** A table reduced to plain strings — the same conversion a CSV download already does for every cell. */
@@ -187,6 +193,8 @@ export interface PdfTablePlan {
   readonly align: readonly ColumnAlign[];
   /** The aspect column, if any, and each row's aspect key, so the PDF can tint the aspect's name by family (#655). */
   readonly aspects?: { readonly column: number; readonly keys: readonly (string | undefined)[] };
+  /** A limit of what the table covers (#725), printed under it as the screen prints it under the same table. */
+  readonly note?: string;
 }
 
 export interface PdfChartSectionPlan {
@@ -298,7 +306,12 @@ function aspectKeyOf(row: unknown): string | undefined {
   return typeof row.aspectKey === 'string' ? row.aspectKey : undefined;
 }
 
-function tablePlanOf<T>(caption: string, columns: readonly TableColumn<T>[], rows: readonly T[]): PdfTablePlan {
+function tablePlanOf<T>(
+  caption: string,
+  columns: readonly TableColumn<T>[],
+  rows: readonly T[],
+  note?: string,
+): PdfTablePlan {
   const aspectColumn = columns.findIndex((column) => column.key === 'aspect');
   return {
     caption,
@@ -307,6 +320,7 @@ function tablePlanOf<T>(caption: string, columns: readonly TableColumn<T>[], row
     body: rows.map((row) => columns.map((column) => cellText(column, row))),
     align: columns.map((column) => columnAlign(column, rows)),
     ...(aspectColumn === -1 ? {} : { aspects: { column: aspectColumn, keys: rows.map(aspectKeyOf) } }),
+    ...(note === undefined ? {} : { note }),
   };
 }
 
@@ -377,6 +391,12 @@ async function birthRecordPlan(
   return { ...record, map: { ...map, note: t.mapSource } };
 }
 
+/**
+ * One chart's tables, drawn exactly as the Charts page draws them (#719): `visibility` is the
+ * chart's object policy, so an object hidden on screen is absent from every PDF table too — the
+ * PDF mirrors the screen rather than showing a fuller set under the same heading. The same
+ * gates apply as on screen: the 90°-dial tree and the all-midpoints list only when switched on.
+ */
 function tablesOf(
   data: ChartData,
   table: PdfChartTable,
@@ -384,32 +404,35 @@ function tablesOf(
   t: typeof chartViewMessages.en,
   locale: Locale,
   rulership: RulershipChoice,
+  visibility: PointVisibilityOptions,
+  boundsScheme: BoundsScheme,
 ): readonly PdfTablePlan[] {
   if ((table === 'houses' || table === 'derived') && !housesRenderable) return [];
   switch (table) {
     case 'positions':
-      return [tablePlanOf(t.positionsCaption, positionColumns(t, locale, 'drawn'), positionRows(data, {}, true))];
+      return [
+        tablePlanOf(t.positionsCaption, positionColumns(t, locale, 'drawn'), positionRows(data, visibility, true)),
+      ];
     case 'houses':
       return [
         tablePlanOf(t.housesCaption, houseCuspColumns(t, locale), houseCuspRows(data)),
-        tablePlanOf(t.anglesCaption, angleColumns(t, locale), angleRows(data, {})),
+        tablePlanOf(t.anglesCaption, angleColumns(t, locale), angleRows(data, visibility)),
       ];
     case 'aspects': {
       const antiscion = antisciaRows(data);
       const declinations = declinationContactRows(data);
-      const stars = fixedStarRows(data, {});
-      // Same "shown only when non-empty" convention as antiscia/declination above — this
-      // section ignores the live `ExtendedSettings.dial90Visible` toggle the same way it
-      // already ignores every other point-visibility setting (see the `{}` passed throughout
-      // this function); #556 only wires it into the on-screen table and both export formats.
-      const midpointTreeHits = midpointTreeRows(data);
+      const stars = fixedStarRows(data, visibility);
+      const midpointTreeHits =
+        visibility.dial90Visible === true ? midpointTreeRows(data, visibility.midpointTreeOrb) : [];
       return [
-        tablePlanOf(t.aspectsCaption, aspectColumns(t, locale), aspectRows(data)),
+        tablePlanOf(t.aspectsCaption, aspectColumns(t, locale), aspectRows(data, visibility)),
         ...(antiscion.length === 0 ? [] : [tablePlanOf(t.antisciaCaption, antisciaColumns(t, locale), antiscion)]),
         ...(declinations.length === 0
           ? []
           : [tablePlanOf(t.declinationsCaption, declinationColumns(t, locale), declinations)]),
-        ...(stars.length === 0 ? [] : [tablePlanOf(t.fixedStarsCaption, fixedStarColumns(t, locale), stars)]),
+        ...(stars.length === 0
+          ? []
+          : [tablePlanOf(t.fixedStarsCaption, fixedStarColumns(t, locale), stars, fixedStarsScopeNoteOf(t))]),
         ...(midpointTreeHits.length === 0
           ? []
           : [tablePlanOf(t.midpointTreeCaption, midpointTreeColumns(t, locale), midpointTreeHits)]),
@@ -418,13 +441,13 @@ function tablesOf(
     case 'dignities':
       return [
         // Always traditional (#545) — dignityRows no longer takes a rulership/display-choice parameter.
-        tablePlanOf(t.dignitiesCaption, dignityColumns(t, locale), dignityRows(data, {})),
-        tablePlanOf(t.dispositorsCaption, dispositorColumns(t, locale), dispositorRows(data, {}, rulership)),
+        tablePlanOf(t.dignitiesCaption, dignityColumns(t, locale), dignityRows(data, visibility, boundsScheme)),
+        tablePlanOf(t.dispositorsCaption, dispositorColumns(t, locale), dispositorRows(data, visibility, rulership)),
       ];
     case 'derived': {
-      const allMidpoints = allMidpointsRows(data);
+      const allMidpoints = visibility.midpointsVisible === true ? allMidpointsRows(data) : [];
       return [
-        tablePlanOf(t.derivedPointsCaption, derivedPointColumns(t, locale), derivedPointRows(data, {})),
+        tablePlanOf(t.derivedPointsCaption, derivedPointColumns(t, locale), derivedPointRows(data, visibility)),
         ...(allMidpoints.length === 0
           ? []
           : [tablePlanOf(t.allMidpointsCaption, allMidpointsColumns(t, locale), allMidpoints)]),
@@ -538,23 +561,33 @@ async function buildChartSectionPlan(
   const heading = `${label}${person.displayName === '' ? '' : ` — ${person.displayName}`}`;
   const housesRenderable = housesAreDefined(data.houses);
 
+  // The chart's own object policy (#719), as the Charts page applies it to the wheel and every table.
+  const visibility = toPointVisibilityOptions(settings);
   let svg: PdfChartSectionPlan['svg'];
   if (options.wheel && housesRenderable) {
     const sheet = renderChartSheetSvg(
-      chartSheetInput(data, [heading], label, {}, (bodyKey) => bodyShortName(bodyKey, locale)),
-      { ...resolveWheelDisplayOptions({}) },
+      chartSheetInput(data, [heading], label, visibility, (bodyKey) => bodyShortName(bodyKey, locale)),
+      { ...resolveWheelDisplayOptions({}), signWedgeStyle: toSignWedgeStyle(settings) },
     );
     svg = { markup: standaloneSvg(sheet.markup), width: sheet.width, height: sheet.height };
   }
 
   // Always traditional (#545) — almutenOfAscendant no longer takes a rulership/display-choice parameter.
-  const almuten = almutenOfAscendant(data);
-  const hint =
+  const almuten = almutenOfAscendant(data, settings.boundsScheme);
+  const almutenHint =
     almuten === undefined
       ? undefined
-      : t.almutenOfAscendantSentence(almuten.almutens.map((key) => bodyDisplayName(key, locale)).join(', '));
+      : t.almutenOfAscendantSentence(almuten.almutens.map((key) => bodyDisplayName(key, locale)).join(', ')) +
+        ` ${t.almutenScopeNote}`;
+  // The D10 convention caveat (#725), in the document's language, as the Harmonic screen shows it for the same chart.
+  const d10Hint =
+    options.type === 'harmonic' && (options.harmonicN ?? 5) === 10 ? harmonicViewMessages[locale].d10Note : undefined;
+  const hints = [almutenHint, d10Hint].filter((part): part is string => part !== undefined);
+  const hint = hints.length === 0 ? undefined : hints.join(' ');
 
-  const tables = options.tables.flatMap((table) => tablesOf(data, table, housesRenderable, t, locale, rulership));
+  const tables = options.tables.flatMap((table) =>
+    tablesOf(data, table, housesRenderable, t, locale, rulership, visibility, settings.boundsScheme),
+  );
 
   return {
     kind: 'chart',
@@ -657,7 +690,7 @@ async function buildCompositeSectionPlan(
   t: typeof chartViewMessages.en,
   pt: typeof pdfExportMessages.en,
 ): Promise<PdfChartSectionPlan> {
-  const { person, provider, rulership, locale } = context;
+  const { person, provider, settings, rulership, locale } = context;
   if (person.moment === undefined) throw new Error('this person has no complete birth record');
   const partner = resolvePartner(options.partnerId, context);
   const momentA = person.moment;
@@ -667,17 +700,21 @@ async function buildCompositeSectionPlan(
   const { composite: data } = await computeComposite(momentA, momentB, provider, { rulership });
   const heading = `${pt.compositeLabel} — ${nameA} / ${nameB}`;
   const housesRenderable = housesAreDefined(data.houses);
+  // The composite screen reuses ChartDataView, which applies the chart's object policy (#719).
+  const visibility = toPointVisibilityOptions(settings);
 
   let svg: PdfChartSectionPlan['svg'];
   if (options.wheel && housesRenderable) {
     const sheet = renderChartSheetSvg(
-      chartSheetInput(data, [heading], pt.compositeLabel, {}, (bodyKey) => bodyShortName(bodyKey, locale)),
-      { ...resolveWheelDisplayOptions({}) },
+      chartSheetInput(data, [heading], pt.compositeLabel, visibility, (bodyKey) => bodyShortName(bodyKey, locale)),
+      { ...resolveWheelDisplayOptions({}), signWedgeStyle: toSignWedgeStyle(settings) },
     );
     svg = { markup: standaloneSvg(sheet.markup), width: sheet.width, height: sheet.height };
   }
 
-  const tables = options.tables.flatMap((table) => tablesOf(data, table, housesRenderable, t, locale, rulership));
+  const tables = options.tables.flatMap((table) =>
+    tablesOf(data, table, housesRenderable, t, locale, rulership, visibility, settings.boundsScheme),
+  );
 
   return {
     kind: 'chart',

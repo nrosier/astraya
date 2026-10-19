@@ -20,7 +20,7 @@ function contact(bodyA: string, bodyB: string, aspectKey: string, orb: number): 
   const a = bodyByKey(bodyA);
   const b = bodyByKey(bodyB);
   if (aspect === undefined || a === undefined || b === undefined) throw new Error('fixture bug');
-  return { bodyA: a.id, bodyB: b.id, aspect, separation: aspect.angle + orb, orb, applying: true };
+  return { bodyA: a.id, bodyB: b.id, aspect, separation: aspect.angle + orb, orb, allowedOrb: 8, applying: true };
 }
 
 const weightOf = (key: string): number => {

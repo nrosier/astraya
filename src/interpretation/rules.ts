@@ -25,7 +25,7 @@
  * @conventions A plain, deterministic function of ChartData — identical input always produces identical, identically-ordered output. Weighs body category, dignity, sect light, retrograde (classical planets only), angularity (within ANGULARITY_ORB of an angle), aspect family/orb tightness, and house class (angular/succedent/cadent, 12-house systems only). Covers planet-in-sign, planet-in-house, sign-on-cusp, aspect-pair and dignity-state; nakshatra and pattern are out of scope (need data ChartData doesn't carry).
  * @exports SalienceFactor, SalientPlacement, InterpretationExclusions, NO_EXCLUSIONS, DEFAULT_SALIENCE_LIMIT, angularityOf, derivePlacements, rankPlacements, selectSalientPlacements
  */
-import { angularSeparation, DEFAULT_ORB_CONFIG, orbFor, type AspectFamily } from '../astrology/aspects.js';
+import { angularSeparation, type AspectFamily } from '../astrology/aspects.js';
 import { bodyById, type BodyCategory } from '../astrology/bodies.js';
 import { houseOf } from '../astrology/emphasis.js';
 import type { Sect } from '../astrology/sect.js';
@@ -241,8 +241,9 @@ function aspectPairPlacements(chart: ChartData, exclude: InterpretationExclusion
     if (bodyA === undefined || bodyB === undefined) continue;
     // A contact belongs to both bodies: leaving either out of the reading drops it.
     if (exclude.has(bodyA.key) || exclude.has(bodyB.key)) continue;
-    const allowedOrb = orbFor(aspect.aspect.key, bodyA.category, bodyB.category, DEFAULT_ORB_CONFIG);
-    const tightness = allowedOrb <= 0 ? 1 : Math.max(0, 1 - aspect.orb / allowedOrb);
+    // The allowance that admitted the aspect (#720), not the default tiers': under a custom profile
+    // or body moieties the two differ, and tightness is relative to the rule that was applied.
+    const tightness = aspect.allowedOrb <= 0 ? 1 : Math.max(0, 1 - aspect.orb / aspect.allowedOrb);
     const factors: SalienceFactor[] = [
       {
         rule: 'body-category',

@@ -180,7 +180,7 @@ export function HarmonicView({
         )}
       </div>
 
-      {preset !== undefined && <p className="hint">{preset.description}</p>}
+      {preset !== undefined && <p className="hint">{t.presetDescriptions[preset.key] ?? preset.description}</p>}
       {presetKey === CUSTOM && !nValid && <StatusMessage kind="error">{t.invalidHarmonicNumber}</StatusMessage>}
 
       {nValid && load.kind !== 'idle' && (
@@ -198,6 +198,7 @@ export function HarmonicView({
             </>
           )}
           <ChartDataView
+            chartType="harmonic"
             load={load}
             displayName={displayName}
             showHouses
