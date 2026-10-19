@@ -1,0 +1,101 @@
+// @vitest-environment jsdom
+/**
+ * Regression for #732, against the real engine: the Report page computes the chart the Charts page
+ * draws — the confirmed Extended settings, rulers and the person's custom points — not a
+ * default-settings chart under the same heading. Spies on the real `computeChartData` (never
+ * replacing it) so the assertion is on the exact options it was called with, as
+ * `ui-shared-chart-view.test.tsx` does for #541.
+ */
+import { act } from 'react';
+import { createRoot, type Root } from 'react-dom/client';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import type * as ChartComputeModule from '../src/domain/chart-compute.js';
+import type { Person } from '../src/domain/person.js';
+import type { EphemerisProvider } from '../src/ephemeris/types.js';
+import { getEngine } from './engine-harness.js';
+
+let engine: EphemerisProvider;
+
+beforeAll(async () => {
+  engine = await getEngine();
+}, 60_000);
+
+vi.mock('../src/ui/EphemerisProviderContext.js', () => ({
+  useEphemerisProvider: () => ({ provider: engine, error: undefined }),
+}));
+
+const ADA: Person = {
+  id: 'p-ada',
+  displayName: 'Ada Lovelace',
+  moment: {
+    civil: { year: 1815, month: 12, day: 10, hour: 7, minute: 45, second: 0 },
+    coordinates: { latitude: 51.5072, longitude: -0.1276 },
+    offsetOverrideMinutes: 0,
+  },
+  placeLabel: 'London, UK',
+  timeAccuracy: 'recorded',
+  notes: '',
+  missing: [],
+  customPoints: [{ id: 'fortune-like', name: 'Fortune-like', formula: 'ascendant + moon - sun' }],
+};
+
+vi.mock('../src/ui/store-context.js', () => ({
+  useStoreState: () => ({ people: new Map([[ADA.id, ADA]]) }),
+}));
+
+vi.mock('../src/domain/chart-compute.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof ChartComputeModule>();
+  return { ...actual, computeChartData: vi.fn(actual.computeChartData) };
+});
+
+const { ReportScreen } = await import('../src/ui/ReportScreen.js');
+const { computeChartData } = await import('../src/domain/chart-compute.js');
+const { DEFAULT_EXTENDED_SETTINGS } = await import('../src/chart/extended-settings.js');
+const { setExtendedSettings, resetExtendedSettings } = await import('../src/ui/extended-settings-store.js');
+const { writeRulershipChoice } = await import('../src/ui/rulership-setting.js');
+
+afterEach(() => {
+  resetExtendedSettings();
+  localStorage.clear();
+  vi.mocked(computeChartData).mockClear();
+});
+
+async function mount(): Promise<{ container: HTMLElement; root: Root }> {
+  const container = document.createElement('div');
+  document.body.append(container);
+  const root = createRoot(container);
+  await act(async () => {
+    root.render(<ReportScreen personId={ADA.id} />);
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+  });
+  return { container, root };
+}
+
+describe('the Report page computes the Charts page’s chart (#732)', () => {
+  it('uses the confirmed settings, the rulership and the person’s custom points', async () => {
+    writeRulershipChoice('traditional');
+    setExtendedSettings({ ...DEFAULT_EXTENDED_SETTINGS, houseSystem: 'W', orbScalePercent: -40, nodeVariant: 'true' });
+
+    const { container, root } = await mount();
+    try {
+      await act(async () => {
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+      expect(computeChartData).toHaveBeenCalled();
+      const options = vi.mocked(computeChartData).mock.calls.at(-1)?.[2];
+      expect(options?.houseSystem).toBe('W');
+      expect(options?.orbConfig?.scalePercent).toBe(-40);
+      expect(options?.nodeVariant).toBe('true');
+      expect(options?.rulership).toBe('traditional');
+      expect(options?.customPoints).toEqual(ADA.customPoints);
+    } finally {
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+    }
+  });
+});
