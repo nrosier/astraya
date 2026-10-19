@@ -227,27 +227,29 @@ export function ExtendedSettingsPanel({
     return (
       <div className="settings-card-object-row" key={key}>
         <span className="settings-card-object-name">{label}</span>
-        <Checkbox
-          label={t.objectVisibleLabel(label)}
-          checked={policy.visible}
-          onChange={(value) => {
-            setObjectPolicy(key, { visible: value });
-          }}
-        />
-        <Checkbox
-          label={t.objectParticipatesLabel(label)}
-          checked={policy.aspectParticipant}
-          onChange={(value) => {
-            setObjectPolicy(key, { aspectParticipant: value });
-          }}
-        />
-        <Checkbox
-          label={t.objectInterpretedLabel(label)}
-          checked={isInterpreted(policy)}
-          onChange={(value) => {
-            setInterpreted(key, value);
-          }}
-        />
+        <div className="settings-card-object-checks">
+          <Checkbox
+            label={t.objectVisibleLabel(label)}
+            checked={policy.visible}
+            onChange={(value) => {
+              setObjectPolicy(key, { visible: value });
+            }}
+          />
+          <Checkbox
+            label={t.objectParticipatesLabel(label)}
+            checked={policy.aspectParticipant}
+            onChange={(value) => {
+              setObjectPolicy(key, { aspectParticipant: value });
+            }}
+          />
+          <Checkbox
+            label={t.objectInterpretedLabel(label)}
+            checked={isInterpreted(policy)}
+            onChange={(value) => {
+              setInterpreted(key, value);
+            }}
+          />
+        </div>
       </div>
     );
   };

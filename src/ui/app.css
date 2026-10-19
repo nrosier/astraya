@@ -4568,7 +4568,7 @@ svg text.chart-symbol-text-unicode {
 .settings-card-object-row {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--space-1) var(--space-4);
   min-height: 2.75rem;
   padding-block: var(--space-1);
@@ -4580,8 +4580,21 @@ svg text.chart-symbol-text-unicode {
   font-weight: 600;
 }
 
+.settings-card-object-checks {
+  display: flex;
+  flex: 1 1 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-4);
+  min-width: 0;
+}
+
 @media (max-width: 40rem) {
   .settings-card-object-name {
+    flex-basis: 100%;
+  }
+
+  .settings-card-object-checks {
     flex-basis: 100%;
   }
 }
