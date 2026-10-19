@@ -8,6 +8,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { ayanamsaByKey } from '../src/astrology/ayanamsas.js';
 import { DEFAULT_RULERSHIP_CHOICE } from '../src/astrology/rulership.js';
 import { DEFAULT_EXTENDED_SETTINGS } from '../src/chart/extended-settings.js';
 import { CURRENT_SNAPSHOT_VERSION } from '../src/domain/calculation-snapshot.js';
@@ -871,6 +872,40 @@ describe('PDF chart sections use the Charts page’s own calculation settings (#
     );
     expect(wholeSign.provenance).not.toBe(placidus.provenance);
   }, 30_000);
+
+  it('reads the interpretation from the same chart the natal section draws, not a default-settings recompute (#718)', async () => {
+    const provider = await getEngine();
+    const lahiri = ayanamsaByKey('lahiri')?.id;
+    if (lahiri === undefined) throw new Error('expected the Lahiri ayanamsa');
+    const SIDEREAL_WHOLE_SIGN = { ...WHOLE_SIGN, zodiac: { kind: 'sidereal' as const, ayanamsa: lahiri } };
+    async function overviewAndReading(settings: typeof DEFAULT_EXTENDED_SETTINGS) {
+      const selection: PdfSelection = {
+        personId: ADA.id,
+        ...EMPTY_SELECTION,
+        interpretation: { base: true, aiCustomised: false },
+      };
+      const context: PdfPlanContext = {
+        person: ADA,
+        provider,
+        settings,
+        rulership: DEFAULT_RULERSHIP_CHOICE,
+        locale: 'en',
+        aiConsent: false,
+        corpusFetch,
+      };
+      const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
+      const [overview, ...reading] = plan.sections;
+      if (overview?.kind !== 'fields') throw new Error('expected the overview first');
+      const sun = overview.fields.find((field) => field.label === 'Sun')?.value;
+      return { sun, reading: JSON.stringify(reading) };
+    }
+    const tropical = await overviewAndReading(DEFAULT_EXTENDED_SETTINGS);
+    const sidereal = await overviewAndReading(SIDEREAL_WHOLE_SIGN);
+    // Ada's tropical Sun is in Sagittarius; with Lahiri's ~21° ayanamsa in 1815 it falls in Scorpio.
+    expect(tropical.sun).toMatch(/Sagittarius/);
+    expect(sidereal.sun).toMatch(/Scorpio/);
+    expect(sidereal.reading).not.toBe(tropical.reading);
+  }, 60_000);
 
   it('maps each chart type to the options its own Charts-page view uses', () => {
     const options = (type: Parameters<typeof sectionCalculationOptions>[0]) =>

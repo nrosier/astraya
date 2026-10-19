@@ -1157,9 +1157,15 @@ async function buildInterpretationSections(
   pt: typeof pdfExportMessages.en,
   errors: string[],
 ): Promise<readonly (PdfTextSectionPlan | PdfFieldsSectionPlan)[]> {
-  const { person, provider, rulership, locale, corpusFetch } = context;
+  const { person, provider, settings, rulership, locale, corpusFetch } = context;
   if (person.moment === undefined || (!selection.base && !selection.aiCustomised)) return [];
-  const chart = await computeChartData(person.moment, provider, { rulership });
+  // The same natal chart the Charts page and the Report view read (#718): the confirmed settings,
+  // rulers and custom points — never a default-settings recompute under the same heading.
+  const chart = await computeChartData(
+    person.moment,
+    provider,
+    sectionCalculationOptions('natal', person, settings, rulership),
+  );
   const sections: (PdfTextSectionPlan | PdfFieldsSectionPlan)[] = [];
 
   if (selection.base) {
