@@ -1217,6 +1217,7 @@ function renderTableTab(
                   ?
                 </Tooltip>
               </p>
+              <p className="hint">{t.almutenScopeNote}</p>
               {/* Every candidate's own breakdown, not only the winner's name (#551). */}
               <SortableTable
                 caption={t.almutenBreakdownCaption}
