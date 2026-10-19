@@ -23,7 +23,7 @@
  * @module ui/chart-sections
  * @purpose Defines and parses the Chart screen's two URL-encoded axes — chart type (natal/draconic/harmonic/solar-return/lunar-return) and view (wheel/aspects/matrix/elements/placements/patterns) — so the header menu, type selector, and ChartViewNav stay in agreement.
  * @conventions Pure functions only (no DOM), parsed/tested like route.ts; labels are translated via ChartView's own messages object rather than owning its own *.messages.ts file. Views are route-level links per docs/UI-UX_GUIDELINES.md §2, not ARIA tabs.
- * @exports CHART_VIEWS, ChartViewKind, CHART_TYPES, ChartType, isChartType, isChartView, chartViewFromHash, chartViewLabels
+ * @exports CHART_VIEWS, ChartViewKind, CHART_TYPES, ChartType, isChartType, isDerivedChartType, isChartView, chartViewFromHash, chartViewLabels
  */
 import type { chartViewMessages } from './ChartView.messages.js';
 
@@ -35,6 +35,15 @@ export type ChartType = (typeof CHART_TYPES)[number];
 
 export function isChartType(value: unknown): value is ChartType {
   return typeof value === 'string' && (CHART_TYPES as readonly string[]).includes(value);
+}
+
+/**
+ * Whether a chart of this type is derived from the natal chart rather than being the natal chart itself (#725): the
+ * interpretation prose written for natal placements is then applied to a transformed chart, and the screen says so.
+ * `undefined` (a screen that does not name its type: shared, composite, horary) is not flagged here.
+ */
+export function isDerivedChartType(type: ChartType | undefined): type is Exclude<ChartType, 'natal'> {
+  return type !== undefined && type !== 'natal';
 }
 
 export function isChartView(value: unknown): value is ChartViewKind {

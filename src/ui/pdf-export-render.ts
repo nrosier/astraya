@@ -437,7 +437,15 @@ export async function renderPdfPlan(plan: PdfPlan): Promise<{ blob: Blob; filena
             finalY = data.cursor?.y ?? finalY;
           },
         });
-        y = finalY + 8;
+        y = finalY + 2;
+        // A limit of what the table covers (#725), as the screen prints it under the same table.
+        if (table.note !== undefined) {
+          font('normal', 8, MUTED);
+          y = wrapAndPrint(doc, table.note, SIDE_MARGIN, y + 3, contentWidth, 4);
+          font('normal', BODY_SIZE);
+          y += 2;
+        }
+        y += 6;
       }
     }
   }

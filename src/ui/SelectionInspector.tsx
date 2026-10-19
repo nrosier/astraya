@@ -71,6 +71,7 @@ export function SelectionInspector({
   focusContext,
   locale,
   onClear,
+  derivedChartNote,
 }: {
   readonly facts: WheelIsolationFacts | undefined;
   readonly selectionKey: string | undefined;
@@ -78,6 +79,8 @@ export function SelectionInspector({
   readonly focusContext: FocusContext | undefined;
   readonly locale: Locale;
   readonly onClear: () => void;
+  /** Said when the chart is not a natal chart, since the prose below is written for natal placements (#725). */
+  readonly derivedChartNote?: string | undefined;
 }): React.JSX.Element {
   const t = useMessages(chartViewMessages);
   return (
@@ -85,6 +88,7 @@ export function SelectionInspector({
       <h3 id="selection-inspector-heading" className="selection-inspector-title">
         {t.inspectorHeading}
       </h3>
+      {derivedChartNote !== undefined && <p className="hint selection-inspector-derived-note">{derivedChartNote}</p>}
       {facts === undefined || selectionKey === undefined ? (
         <p className="hint">{t.inspectorEmpty}</p>
       ) : (

@@ -118,6 +118,7 @@ export function DraconicView({
       <p className="hint">{t.hint}</p>
 
       <ChartDataView
+        chartType="draconic"
         load={load}
         displayName={displayName}
         showHouses

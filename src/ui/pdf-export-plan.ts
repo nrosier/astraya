@@ -135,6 +135,7 @@ import {
   dignityColumns,
   dispositorColumns,
   fixedStarColumns,
+  fixedStarsScopeNoteOf,
   houseCuspColumns,
   midpointTreeColumns,
   positionColumns,
@@ -179,6 +180,7 @@ import { toRow as profectionToRow, columns as profectionColumns } from './Profec
 import { profectionsViewMessages } from './ProfectionsView.messages.js';
 import { eclipseRows, type EclipseRow } from './eclipses.js';
 import { eclipsesViewMessages } from './EclipsesView.messages.js';
+import { harmonicViewMessages } from './HarmonicView.messages.js';
 import { cellText, columnAlign, type ColumnAlign, type TableColumn } from './table-sort.js';
 
 /** A table reduced to plain strings — the same conversion a CSV download already does for every cell. */
@@ -190,6 +192,8 @@ export interface PdfTablePlan {
   readonly align: readonly ColumnAlign[];
   /** The aspect column, if any, and each row's aspect key, so the PDF can tint the aspect's name by family (#655). */
   readonly aspects?: { readonly column: number; readonly keys: readonly (string | undefined)[] };
+  /** A limit of what the table covers (#725), printed under it as the screen prints it under the same table. */
+  readonly note?: string;
 }
 
 export interface PdfChartSectionPlan {
@@ -301,7 +305,12 @@ function aspectKeyOf(row: unknown): string | undefined {
   return typeof row.aspectKey === 'string' ? row.aspectKey : undefined;
 }
 
-function tablePlanOf<T>(caption: string, columns: readonly TableColumn<T>[], rows: readonly T[]): PdfTablePlan {
+function tablePlanOf<T>(
+  caption: string,
+  columns: readonly TableColumn<T>[],
+  rows: readonly T[],
+  note?: string,
+): PdfTablePlan {
   const aspectColumn = columns.findIndex((column) => column.key === 'aspect');
   return {
     caption,
@@ -310,6 +319,7 @@ function tablePlanOf<T>(caption: string, columns: readonly TableColumn<T>[], row
     body: rows.map((row) => columns.map((column) => cellText(column, row))),
     align: columns.map((column) => columnAlign(column, rows)),
     ...(aspectColumn === -1 ? {} : { aspects: { column: aspectColumn, keys: rows.map(aspectKeyOf) } }),
+    ...(note === undefined ? {} : { note }),
   };
 }
 
@@ -419,7 +429,9 @@ function tablesOf(
         ...(declinations.length === 0
           ? []
           : [tablePlanOf(t.declinationsCaption, declinationColumns(t, locale), declinations)]),
-        ...(stars.length === 0 ? [] : [tablePlanOf(t.fixedStarsCaption, fixedStarColumns(t, locale), stars)]),
+        ...(stars.length === 0
+          ? []
+          : [tablePlanOf(t.fixedStarsCaption, fixedStarColumns(t, locale), stars, fixedStarsScopeNoteOf(t))]),
         ...(midpointTreeHits.length === 0
           ? []
           : [tablePlanOf(t.midpointTreeCaption, midpointTreeColumns(t, locale), midpointTreeHits)]),
@@ -561,11 +573,16 @@ async function buildChartSectionPlan(
 
   // Always traditional (#545) — almutenOfAscendant no longer takes a rulership/display-choice parameter.
   const almuten = almutenOfAscendant(data, settings.boundsScheme);
-  const hint =
+  const almutenHint =
     almuten === undefined
       ? undefined
       : t.almutenOfAscendantSentence(almuten.almutens.map((key) => bodyDisplayName(key, locale)).join(', ')) +
         ` ${t.almutenScopeNote}`;
+  // The D10 convention caveat (#725), in the document's language, as the Harmonic screen shows it for the same chart.
+  const d10Hint =
+    options.type === 'harmonic' && (options.harmonicN ?? 5) === 10 ? harmonicViewMessages[locale].d10Note : undefined;
+  const hints = [almutenHint, d10Hint].filter((part): part is string => part !== undefined);
+  const hint = hints.length === 0 ? undefined : hints.join(' ');
 
   const tables = options.tables.flatMap((table) =>
     tablesOf(data, table, housesRenderable, t, locale, rulership, visibility, settings.boundsScheme),

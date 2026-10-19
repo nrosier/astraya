@@ -262,6 +262,7 @@ export function ReturnView({
 
       {load.kind !== 'idle' && (
         <ChartDataView
+          chartType={kind}
           load={load.kind === 'ready' ? { kind: 'ready', data: load.data } : load}
           displayName={displayName}
           showHouses

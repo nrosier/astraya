@@ -101,6 +101,8 @@ export interface ExportedHarmonicChart {
   readonly key: string;
   readonly label: string;
   readonly harmonic: number;
+  /** The preset's own convention note (#725), English like `label`: for D10 it says the odd/even sign restart is not applied. */
+  readonly convention: string;
   readonly source: {
     readonly kind: 'radix';
     readonly transform: 'longitude-times-n-mod-360';
@@ -218,6 +220,7 @@ async function harmonicExports(
         key: preset.key,
         label: preset.label,
         harmonic: preset.n,
+        convention: preset.description,
         source: {
           kind: 'radix',
           transform: 'longitude-times-n-mod-360',
