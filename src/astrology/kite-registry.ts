@@ -39,6 +39,6 @@ export const KITE_DEFINITIONS: readonly KiteDefinition[] = [
     orbPolicy:
       'Every leg must be within its own orb under the active orb configuration (the same rule as the other aspect patterns). No separate kite orb.',
     authority:
-      'Huber, Bruno and Louise, Aspect Pattern Astrology (HopeWell, 2019 second edition; first English edition 2005; German original 1999), p. 152, chapter 5, two-coloured aspect figures: five blue aspects around one red opposition. Checked against the 2019 page image, held locally in docs/references/ (git-ignored, not committed).',
+      'Huber, Bruno and Louise, with Michael Alexander Huber, Aspect Pattern Astrology (HopeWell, 2019 second edition; first English edition 2005; German original 1999), p. 152, chapter 5, two-coloured aspect figures: five blue aspects around one red opposition. Checked against the 2019 page image, held locally in docs/references/ (git-ignored, not committed).',
   },
 ];
