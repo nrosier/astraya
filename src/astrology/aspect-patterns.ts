@@ -19,9 +19,10 @@
  *   chain's ends are in opposition (half way around), so the chain cannot fold back on itself.
  * - **Mystic Rectangle**: "two trines and two sextiles forming a rectangle": alternating sextile, trine, sextile,
  *   trine around four bodies whose diagonals are the rectangle's two oppositions.
- * - **Kite**: a Grand Trine whose focal point is opposed to one vertex and sextile to the other two. Its definition
- *   follows the project owner's 2026-10-20 decision (Huber, Aspect Pattern Astrology, 1990). That citation is not yet
- *   checked against the book, so the definition is an Astraya convention until it is.
+ * - **Kite**: a Grand Trine whose focal point is opposed to one vertex and sextile to the other two. Huber, Aspect Pattern
+ *   Astrology (HopeWell, 2019 second edition), p. 152, chapter 5 (two-coloured aspect figures), describes it as five
+ *   blue aspects around one red opposition. The Marks secondary citation (The Art of Chart Interpretation, 1986, ch. 5)
+ *   is not in the repository and is not checked.
  */
 /**
  * @module astrology/aspect-patterns
