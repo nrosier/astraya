@@ -29,6 +29,8 @@ public/corpus/
 # something the app ships or the repo distributes.
 src/interpretation/corpus/*.pdf
 src/interpretation/corpus/*.txt
+# Copyrighted reference text kept locally for citation checks; never committed.
+docs/references/helenistic.astrology.pdf
 
 # Scratch output from the Playwright MCP browser tool (page snapshots,
 # console logs, screenshots) used for manual UI verification during a
