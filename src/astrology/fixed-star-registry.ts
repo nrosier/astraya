@@ -32,6 +32,19 @@ export interface RegistryStar {
   readonly peters_knobel: string;
   readonly modernId: string | null;
   readonly notes: string | null;
+  /**
+   * Variant printed longitudes for this star. Variants are kept for the record and are
+   * never used for conjunctions (see docs/FIXED_STAR_REGISTRY.md).
+   */
+  readonly variantLongitudes: readonly RegistryVariant[];
+}
+
+/** A variant printed longitude for a registry star, kept as printed. */
+export interface RegistryVariant {
+  readonly id: string;
+  readonly signIndex: number;
+  readonly degree: number;
+  readonly minute: number;
 }
 
 /**
@@ -61,6 +74,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '315',
     modernId: 'α And',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '2',
@@ -76,6 +90,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '723',
     modernId: 'τ Cet',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '3',
@@ -91,6 +106,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '805',
     modernId: 'θ Eri',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '4',
@@ -106,6 +122,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '346',
     modernId: 'β And',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '5',
@@ -121,6 +138,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '189',
     modernId: 'β Cas',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '6',
@@ -136,6 +154,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '362',
     modernId: 'γ Ari',
     notes: 'latitude hemisphere printed in brackets',
+    variantLongitudes: [],
   },
   {
     id: '7',
@@ -151,6 +170,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '363',
     modernId: 'β Ari',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '8',
@@ -166,6 +186,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '375',
     modernId: 'α Ari',
     notes: 'latitude hemisphere in brackets',
+    variantLongitudes: [],
   },
   {
     id: '9',
@@ -181,6 +202,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '349',
     modernId: 'γ And',
     notes: 'name has bracketed [ay]',
+    variantLongitudes: [],
   },
   {
     id: '10',
@@ -196,6 +218,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '713',
     modernId: 'α Cet',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '11',
@@ -211,6 +234,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '202',
     modernId: 'β Per',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '12',
@@ -226,6 +250,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '197',
     modernId: 'α Per',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '13',
@@ -241,6 +266,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '393',
     modernId: 'α Tau',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '14',
@@ -256,6 +282,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '768',
     modernId: 'β Ori',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '15',
@@ -271,6 +298,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '222',
     modernId: 'α Aur',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '16',
@@ -290,6 +318,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '735',
     modernId: 'α Ori',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '17',
@@ -308,6 +337,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '818',
     modernId: 'α CMa',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '18',
@@ -326,6 +356,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '892',
     modernId: 'α Car',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '19',
@@ -341,6 +372,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '424',
     modernId: 'α Gem',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '20',
@@ -359,6 +391,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '848',
     modernId: 'α CMi',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '21',
@@ -374,6 +407,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '905',
     modernId: 'α Hya',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '22',
@@ -392,6 +426,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '469',
     modernId: 'α Leo',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '23',
@@ -407,6 +442,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '481',
     modernId: 'δ Leo',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '24',
@@ -422,6 +458,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '488',
     modernId: 'β Leo',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '25',
@@ -440,6 +477,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '449',
     modernId: 'M 44',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '26',
@@ -455,6 +493,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '464',
     modernId: 'μ Leo',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '27',
@@ -473,6 +512,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '467',
     modernId: 'γ Leo',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '28',
@@ -488,6 +528,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '931',
     modernId: 'γ Crv',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '29',
@@ -503,6 +544,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '736',
     modernId: 'γ Ori',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '30',
@@ -518,6 +560,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '230',
     modernId: 'β Tau',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '31',
@@ -533,6 +576,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '223',
     modernId: 'β Aur',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '32',
@@ -548,6 +592,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '760',
     modernId: 'ε Ori',
     notes: 'degree printed on second line of V',
+    variantLongitudes: [],
   },
   {
     id: '33',
@@ -563,6 +608,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '35',
     modernId: 'η UMa',
     notes: null,
+    variantLongitudes: [{ id: '33c', signIndex: 5, degree: 17, minute: 1 }],
   },
   {
     id: '33a',
@@ -578,6 +624,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '33',
     modernId: 'ε UMa',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '33b',
@@ -593,21 +640,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '34',
     modernId: 'ζ UMa',
     notes: null,
-  },
-  {
-    id: '33c',
-    arabicName: 'sābiʿ banāt naʿsh yusammā al-qāʾid',
-    signIndex: 5,
-    signPrinted: 'Vir',
-    degree: 17,
-    minute: 1,
-    latitudeText: '54',
-    latitudeHemisphere: 'N',
-    magnitudeText: '2',
-    temperaments: [],
-    peters_knobel: '[same as no. 33]',
-    modernId: null,
-    notes: 'modern id empty',
+    variantLongitudes: [],
   },
   {
     id: '34',
@@ -623,6 +656,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '928',
     modernId: 'α Crv',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '35',
@@ -641,6 +675,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '110',
     modernId: 'α Boo',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '36',
@@ -659,6 +694,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '510',
     modernId: 'α Vir',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '37',
@@ -674,6 +710,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '111',
     modernId: 'α CrB',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '38',
@@ -689,6 +726,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '969',
     modernId: 'α Cen',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '39',
@@ -707,6 +745,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '553',
     modernId: 'α Sco',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '40',
@@ -722,6 +761,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '271',
     modernId: 'α Ser',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '41',
@@ -737,6 +777,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '119',
     modernId: 'α Her',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '42',
@@ -752,6 +793,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '234',
     modernId: 'α Oph',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '43',
@@ -770,6 +812,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '592',
     modernId: 'β Sgr',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '44',
@@ -785,6 +828,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '593',
     modernId: 'α Sgr',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '45',
@@ -800,6 +844,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '149',
     modernId: 'α Lyr',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '46',
@@ -819,6 +864,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '288',
     modernId: 'α Aql',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '47',
@@ -834,6 +880,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '159',
     modernId: 'β Cyg',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '48',
@@ -849,6 +896,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '301',
     modernId: 'ε Del',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '49',
@@ -864,6 +912,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '624',
     modernId: 'δ Cap',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '50',
@@ -879,6 +928,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '331',
     modernId: 'ε Peg',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '51',
@@ -898,6 +948,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '670',
     modernId: 'α PsA',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '52',
@@ -916,6 +967,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '163',
     modernId: 'α Cyg',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '53',
@@ -931,6 +983,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '317',
     modernId: 'β Peg',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '54',
@@ -946,6 +999,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '732',
     modernId: 'ι Cet',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '55',
@@ -964,6 +1018,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '316',
     modernId: 'γ Peg',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '56',
@@ -979,6 +1034,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '574',
     modernId: 'μ Sgr',
     notes: "name printed with '?'",
+    variantLongitudes: [],
   },
   {
     id: '57',
@@ -994,6 +1050,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '566',
     modernId: 'υ Sco',
     notes: 'latitude hemisphere printed as dash',
+    variantLongitudes: [],
   },
   {
     id: '58',
@@ -1009,6 +1066,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '565',
     modernId: 'λ Sco',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '59',
@@ -1024,6 +1082,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '567',
     modernId: 'M 7',
     notes: 'sign in brackets',
+    variantLongitudes: [],
   },
   {
     id: '60',
@@ -1042,6 +1101,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '577',
     modernId: 'ν1,2 Sgr',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '61',
@@ -1057,6 +1117,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '175',
     modernId: 'ω1,2 Cyg',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '62',
@@ -1072,6 +1133,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '759',
     modernId: 'δ Ori',
     notes: null,
+    variantLongitudes: [],
   },
   {
     id: '63',
@@ -1087,6 +1149,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '844',
     modernId: 'β Col',
     notes: 'latitude hemisphere printed as dash',
+    variantLongitudes: [],
   },
   {
     id: '65',
@@ -1102,6 +1165,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     peters_knobel: '425',
     modernId: 'β Gem',
     notes: null,
+    variantLongitudes: [],
   },
 ];
 
@@ -1110,7 +1174,38 @@ export function registryLongitude(star: RegistryStar): Degrees {
   return star.signIndex * 30 + star.degree + star.minute / 60;
 }
 
-/** Map from star id to ecliptic longitude, in printed order. Ids are unique. */
-export function yemenStarLongitudes(): ReadonlyMap<string, Degrees> {
-  return new Map(YEMEN_FIXED_STARS.map((star): [string, Degrees] => [star.id, registryLongitude(star)]));
+/**
+ * General precession in longitude, 5029.0966 arcseconds per Julian century (IAU 1976; Lieske et al. 1977).
+ * The citation is recorded but NOT yet checked against a source in docs/references/; see docs/FIXED_STAR_REGISTRY.md, Precession section.
+ */
+export const PRECESSION_DEG_PER_YEAR = 5029.0966 / 3600 / 100;
+
+/** Epoch: 10 January 1262 Julian calendar, 0h, from the editors' conversion of 16 Ṣafar 660 AH (Kunitzsch and Langermann, p. 169). */
+export const REGISTRY_EPOCH_JULIAN_DAY = 2182012.5;
+
+/** Years elapsed from the registry epoch to a Julian Day, using 365.25 days per Julian year. Pure. */
+export function yearsSinceEpoch(julianDay: number): number {
+  return (julianDay - REGISTRY_EPOCH_JULIAN_DAY) / 365.25;
+}
+
+/** Shifts a longitude by `years` of general precession, normalised to [0, 360). Pure. */
+export function precessedLongitude(longitude: Degrees, years: number): Degrees {
+  const shifted = (longitude + years * PRECESSION_DEG_PER_YEAR) % 360;
+  return shifted < 0 ? shifted + 360 : shifted;
+}
+
+/**
+ * Map from star id to ecliptic longitude, in printed order. Ids are unique.
+ * Without `julianDay`, returns the printed (1262) longitudes exactly as printed.
+ * With `julianDay`, returns each printed longitude precessed by `yearsSinceEpoch(julianDay)`.
+ * Conjunctions use the main longitude only; variant longitudes are never used.
+ */
+export function yemenStarLongitudes(julianDay?: number): ReadonlyMap<string, Degrees> {
+  const years = julianDay === undefined ? 0 : yearsSinceEpoch(julianDay);
+  return new Map(
+    YEMEN_FIXED_STARS.map((star): [string, Degrees] => {
+      const printed = registryLongitude(star);
+      return [star.id, julianDay === undefined ? printed : precessedLongitude(printed, years)];
+    }),
+  );
 }
