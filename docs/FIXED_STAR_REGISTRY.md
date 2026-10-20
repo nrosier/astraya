@@ -10,11 +10,13 @@ Written for: the engineer who builds the registry, and the astrologer agent who 
 
 ## Authority line (required on every entry)
 
-The table's longitudes are Ptolemy's, precessed by 17;11, and the caption fixes the epoch as "the beginning of the year 631 Yazdijird, which is the 16th day of Ṣafar of the year 660 A.H." The article converts that date to 10 January 1262 CE. Every entry's authority string must carry both facts. The registry is therefore a 13th-century Yemeni table, not Ptolemy's catalogue directly.
+The table is the fixed-star table in al-Fārisī's _Zīj al-Muẓaffarī_ (Yemen, ca. 1270), published by Kunitzsch and Langermann, "A Star Table from Medieval Yemen", pp. 167–169. Van Dalen (_Islamic Astronomical Tables_) describes the _Muẓaffarī_ as "a reworking of the Alā'ī Zīj with adjustments for the author's geographical location and time", so the table descends from al-Fahhād's zīj, not from an independent observation. Its longitudes are Ptolemy's, precessed by 17;11 (Kunitzsch and Langermann; van Dalen does not confirm this figure). The caption fixes the epoch as "the beginning of the year 631 Yazdijird, which is the 16th day of Ṣafar of the year 660 A.H." The article converts that date to 10 January 1262 CE.
+
+Every entry's authority string must carry all of these facts: the author and zīj, the lineage from al-Fahhād's Alā'ī Zīj, the precession of 17;11, and the epoch. The registry is therefore a 13th-century Yemeni reworking, not Ptolemy's catalogue directly.
 
 ## Which printed rows become entries
 
-- **Included:** every printed row with a full longitude (sign, degree and minute). That is 68 rows.
+- **Included:** every printed row with a full longitude (sign, degree and minute). That is 68 candidate rows, before the exclusions below.
 - **Excluded:**
   - Row 28a: it repeats row 28's longitude exactly (Lib 0;41), and the print says "same as no. 28".
   - Row 64: it has no longitude at all.
