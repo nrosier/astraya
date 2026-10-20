@@ -7,7 +7,7 @@
 
 /**
  * @module FixedStarRegistry
- * @purpose The baseline fixed-star table from al-Fārisī's Zīj al-Muẓaffarī (Yemen, c. 1270), as printed; data plus a longitude helper.
+ * @purpose The baseline fixed-star table from al-Fārisī's Zīj al-Muẓaffarī (Yemen, 13th century), as printed; data plus a longitude helper.
  * @conventions Positions are as printed; no value is corrected. Bracketed or missing values are kept as printed, not inferred. The 1.0° default orb is an Astraya convention, not cited.
  * @exports RegistryStar, YEMEN_FIXED_STARS, YEMEN_STAR_AUTHORITY, FIXED_STAR_ORB_CONVENTION, registryLongitude, yemenStarLongitudes
  */
