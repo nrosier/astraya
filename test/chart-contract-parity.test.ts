@@ -46,6 +46,7 @@ import {
 } from '../src/ui/default-calculation-profile.js';
 import { buildPdfPlan, type PdfPlanContext } from '../src/ui/pdf-export-plan.js';
 import { pdfExportMessages } from '../src/ui/pdf-export.messages.js';
+import { bodyShortName } from '../src/ui/astro-names.messages.js';
 import { getEngine } from './engine-harness.js';
 
 let engine: EphemerisProvider;
@@ -258,7 +259,62 @@ describe.each(SCENARIOS)('chart contract parity: $name (#722)', (scenario) => {
   }, 60_000);
 });
 
-describe('known gaps awaiting a decision', () => {
-  it.todo('#719: a PDF wheel and tables follow the object-visibility policy, or the dialog says they do not');
-  it.todo('#721: hidden or excluded objects do not select report prose, or the report says it interprets the full set');
+describe('object visibility and interpretation participation (#719, #721)', () => {
+  // Neptune hidden and left out of the reading: the one configuration the two decisions both govern.
+  const hiddenNeptune: ExtendedSettings = {
+    ...DEFAULT_EXTENDED_SETTINGS,
+    objectPolicies: {
+      ...DEFAULT_EXTENDED_SETTINGS.objectPolicies,
+      neptune: { visible: false, aspectParticipant: false, interpreted: false },
+    },
+  };
+
+  it('#719: a PDF chart and its tables leave out an object the policy hides', async () => {
+    const context: PdfPlanContext = {
+      person: personOf({ ...scenarioForVisibility(), settings: hiddenNeptune }),
+      provider: engine,
+      settings: hiddenNeptune,
+      rulership: DEFAULT_RULERSHIP_CHOICE,
+      locale: 'en',
+      aiConsent: false,
+      corpusFetch,
+    };
+    const selection: PdfSelection = {
+      personId: 'p-parity',
+      ...EMPTY_SELECTION,
+      charts: [{ type: 'natal', wheel: true, tables: ['positions'] }],
+    };
+    const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
+    expect(plan.errors).toHaveLength(0);
+    const chartPage = plan.sections.find((section) => section.kind === 'chart');
+    if (chartPage?.kind !== 'chart') throw new Error('expected a chart page');
+    const tableText = chartPage.tables.flatMap((table) => table.body.flat()).join('|');
+    expect(tableText).not.toContain(bodyShortName('neptune', 'en'));
+  }, 60_000);
+
+  it('#721: an object excluded from interpretation selects no report prose', async () => {
+    const chart = await computeChartData(
+      scenarioForVisibility().moment,
+      engine,
+      snapshotCalculationOptions(snapshotOf({ ...scenarioForVisibility(), settings: hiddenNeptune })),
+    );
+    const corpus = await loadRuntimeCorpus('en', corpusFetch);
+    const full = assembleReport(chart, 'en', corpus, DEFAULT_RULERSHIP_CHOICE, 'natal', new Set());
+    const reduced = assembleReport(chart, 'en', corpus, DEFAULT_RULERSHIP_CHOICE, 'natal', new Set(['neptune']));
+    const mentionsNeptune = (report: typeof full): boolean =>
+      report.sections.some((section) =>
+        section.paragraphs.some(
+          (p) => p.placement !== undefined && 'body' in p.placement && p.placement.body === 'neptune',
+        ),
+      );
+    expect(mentionsNeptune(full)).toBe(true);
+    expect(mentionsNeptune(reduced)).toBe(false);
+  }, 60_000);
 });
+
+/** The tropical Koch scenario, found by name so reordering the scenario list cannot change what these tests cover. */
+function scenarioForVisibility(): Scenario {
+  const scenario = SCENARIOS.find((candidate) => candidate.name.startsWith('tropical Koch'));
+  if (scenario === undefined) throw new Error('fixture bug: no tropical Koch scenario');
+  return scenario;
+}
