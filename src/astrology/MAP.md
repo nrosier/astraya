@@ -6,7 +6,7 @@ Pure astrological calculation (no DOM/React): bodies, aspects, houses, dignities
 - `antiscia.ts` — Antiscia/contra-antiscia ("hidden conjunctions") reflection + detection. Deps: `aspects`.
 - `arabic-parts.ts` — Arabic/Hermetic lots (Part of Fortune/Spirit). Deps: `sect`.
 - `aspects.ts` — Shared aspect-finding engine (Ptolemaic/minor, orbs, applying/separating). Deps: `bodies`.
-- `aspect-patterns.ts` — Stellium, Grand Trine, T-Square, Grand Cross, Yod, Cradle, Mystic Rectangle from a chart's own aspects, per Astrolog 8.00 (#640). Deps: `./aspects`.
+- `aspect-patterns.ts` — Stellium, Grand Trine, T-Square, Grand Cross, Yod, Cradle, Mystic Rectangle from a chart's own aspects, per Astrolog 8.00 (#640); Kite from the registry (#741). Deps: `./aspects`, `./kite-registry`.
 - `astrocartography.ts` — ACG + Local Space line calculation (MC/IC/AC/DC + great circles). Deps: `fixed-stars`.
 - `ayanamsas.ts` — UI's sidereal-mode picker list. Deps: `ephemeris/generated-constants`.
 - `bodies.ts` — Single source of truth: canonical body list (luminaries, planets, nodes, Lilith, Chiron, asteroids). Deps: `ephemeris/generated-constants`.
@@ -22,6 +22,7 @@ Pure astrological calculation (no DOM/React): bodies, aspects, houses, dignities
 - `emphasis.ts` — Chart balance (element/modality/quadrant/hemisphere/dominant body/sign/house). Deps: `dignities`, `signs`.
 - `firdaria.ts` — Firdaria time-lord periods (seven classical planets + nodes, fixed years, day/night sect order) (#554). Deps: `sect`, `ephemeris/types`.
 - `fixed-star-registry.ts` — Yemen fixed-star baseline table (al-Fārisī, c. 1270, as printed) + longitude helper. Deps: `signs`.
+- `kite-registry.ts` — Cited Kite pattern definitions (#741): school, required aspects, orb policy, authority. Data only. Deps: none.
 - `fixed-stars.ts` — Fixed-star conjunctions + paran (angle-crossing). Deps: `aspects`.
 - `formula-parser.ts` — Safe recursive-descent arithmetic-expression parser/evaluator for user-defined points, no eval (#566). Deps: `ephemeris/types`.
 - `harmonics.ts` — Harmonic charts (Western) + Vedic Varga/divisional (D1/D9/D10). Deps: `signs`.
