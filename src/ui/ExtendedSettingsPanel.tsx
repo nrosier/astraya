@@ -45,6 +45,7 @@ import {
   type OrbProfileId,
 } from '../astrology/orb-profiles.js';
 import { DEFAULT_RULERSHIP_CHOICE, type RulershipChoice } from '../astrology/rulership.js';
+import { isStationWindowK, STATION_WINDOW_DEFAULT_K } from '../astrology/planetary-condition.js';
 import { aspectDisplayName, bodyDisplayName } from './astro-names.messages.js';
 import {
   applyCalculationProfile,
@@ -54,7 +55,12 @@ import {
   matchCalculationProfile,
   type CalculationProfileId,
 } from '../chart/calculation-profiles.js';
-import { DEFAULT_EXTENDED_SETTINGS, type ExtendedSettings } from '../chart/extended-settings.js';
+import {
+  DEFAULT_EXTENDED_SETTINGS,
+  withMotionScore,
+  withoutStationWindow,
+  type ExtendedSettings,
+} from '../chart/extended-settings.js';
 import {
   isInterpreted,
   matchObjectPolicyPreset,
@@ -437,6 +443,10 @@ export function ExtendedSettingsPanel({
         return t.summary.node(modelName(value.nodeVariant));
       case 'rainbow':
         return t.summary.rainbow;
+      case 'stationWindow':
+        return t.summary.stationWindow(String(value.stationWindow?.k ?? STATION_WINDOW_DEFAULT_K));
+      case 'motionScore':
+        return t.summary.motionScore;
     }
   });
   const triggerDetail = segments.length === 0 ? '' : `: ${segments.join(' · ')}`;
@@ -768,6 +778,52 @@ export function ExtendedSettingsPanel({
             />
           </div>
           <p className="hint settings-card-indent">{t.dial90Hint}</p>
+        </fieldset>
+
+        <fieldset className="field-group settings-card-group">
+          <legend>{t.motionLegend}</legend>
+          <p className="hint settings-card-tag">{t.appliesOnApply}</p>
+          <p className="hint">{t.motionHint}</p>
+          <Checkbox
+            label={t.stationWindowLabel}
+            checked={draft.stationWindow !== undefined}
+            onChange={(value) => {
+              setDraft((current) =>
+                value
+                  ? { ...current, stationWindow: { k: current.stationWindow?.k ?? STATION_WINDOW_DEFAULT_K } }
+                  : withoutStationWindow(current),
+              );
+            }}
+          />
+          {draft.stationWindow !== undefined && (
+            <div className="settings-card-indent">
+              <NumberField
+                label={t.stationWindowKLabel}
+                value={String(draft.stationWindow.k)}
+                min={0.01}
+                max={1}
+                step={0.01}
+                decreaseLabel={t.stationWindowKDecreaseLabel}
+                increaseLabel={t.stationWindowKIncreaseLabel}
+                onChange={(value) => {
+                  const parsed = Number(value);
+                  // Rounded to four places so a stepper's float arithmetic (0.05 + 0.01) never leaves a stray tail in the draft.
+                  if (value !== '' && isStationWindowK(parsed)) {
+                    patch({ stationWindow: { k: Math.round(parsed * 10000) / 10000 } });
+                  }
+                }}
+              />
+            </div>
+          )}
+          <p className="hint settings-card-indent">{t.stationWindowHint}</p>
+          <Checkbox
+            label={t.motionScoreLabel}
+            checked={draft.motionScore === true}
+            onChange={(value) => {
+              setDraft((current) => withMotionScore(current, value));
+            }}
+          />
+          <p className="hint settings-card-indent">{t.motionScoreHint}</p>
         </fieldset>
 
         <fieldset className="field-group settings-card-group">

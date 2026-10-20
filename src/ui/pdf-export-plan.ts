@@ -411,7 +411,13 @@ function tablesOf(
   switch (table) {
     case 'positions':
       return [
-        tablePlanOf(t.positionsCaption, positionColumns(t, locale, 'drawn'), positionRows(data, visibility, true)),
+        // The station window's own disclosure (#724) travels with the table it marks, as on screen.
+        tablePlanOf(
+          t.positionsCaption,
+          positionColumns(t, locale, 'drawn'),
+          positionRows(data, visibility, true),
+          data.stationStates === undefined ? undefined : t.stationWindowNote,
+        ),
       ];
     case 'houses':
       return [

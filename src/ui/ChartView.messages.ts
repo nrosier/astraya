@@ -114,6 +114,16 @@ const en = {
   directLabel: 'Direct',
   retrogradeLabel: 'Retrograde',
   stationaryLabel: 'Stationary',
+  stationaryFirstLabel: 'Stationary (1st station)',
+  stationarySecondLabel: 'Stationary (2nd station)',
+  stationFirstMarker: 'St.1',
+  stationSecondMarker: 'St.2',
+  stationMarker: 'St.',
+  stationWindowNote:
+    'Stationary planets are marked St.1 (first station), St.2 (second station), or St. when the type cannot be told. The station window is an Astraya convention, not a rule from Avelar & Ribeiro; see Extended settings.',
+  motionScoreLabel: 'Motion score',
+  motionScoreTooltip:
+    'Direct +4 or retrograde −5 (a first station scores as retrograde, a second as direct), plus fast +2 or slow −2 against mean speed. Avelar & Ribeiro, p. 197. The Sun and Moon get the speed points only. Blank when a stationary planet’s station type is unknown.',
   hayzLabel: 'Hayz',
   hayzTooltip:
     "In hayz: of the chart's sect, on its own side of the horizon for that sect, and in a sign of its own gender (masculine for a diurnal planet, feminine for a nocturnal one).",
@@ -441,6 +451,16 @@ const nl: typeof en = {
   directLabel: 'Direct',
   retrogradeLabel: 'Retrograde',
   stationaryLabel: 'Stationair',
+  stationaryFirstLabel: 'Stationair (1e station)',
+  stationarySecondLabel: 'Stationair (2e station)',
+  stationFirstMarker: 'St.1',
+  stationSecondMarker: 'St.2',
+  stationMarker: 'St.',
+  stationWindowNote:
+    'Stationaire planeten zijn gemarkeerd als St.1 (eerste station), St.2 (tweede station), of St. wanneer het type niet vastgesteld kan worden. Het stationsvenster is een Astraya-conventie, geen regel van Avelar & Ribeiro; zie Uitgebreide instellingen.',
+  motionScoreLabel: 'Bewegingsscore',
+  motionScoreTooltip:
+    'Direct +4 of retrograde −5 (een eerste station telt als retrograde, een tweede als direct), plus snel +2 of traag −2 ten opzichte van de gemiddelde snelheid. Avelar & Ribeiro, blz. 197. De zon en de maan krijgen alleen de snelheidspunten. Leeg wanneer het stationstype van een stationaire planeet onbekend is.',
   hayzLabel: 'Hayz',
   hayzTooltip:
     'In hayz: van de sect van de horoscoop, aan de eigen kant van de horizon voor die sect, en in een teken van het eigen geslacht (mannelijk voor een dagplaneet, vrouwelijk voor een nachtplaneet).',

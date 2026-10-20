@@ -358,3 +358,93 @@ describe('parseCalculationSnapshot (a device’s own saved default) also bounds 
     expect(bad.settings.zodiac).toEqual(DEFAULT_EXTENDED_SETTINGS.zodiac);
   });
 });
+
+describe('the station window and motion score in the snapshot (#724)', () => {
+  it('round-trips both settings through JSON exactly', () => {
+    const withBoth: ExtendedSettings = {
+      ...DEFAULT_EXTENDED_SETTINGS,
+      stationWindow: { k: 0.2 },
+      motionScore: true,
+    };
+    const snapshot = buildCalculationSnapshot(withBoth, DEFAULT_RULERSHIP_CHOICE);
+    expect(parseCalculationSnapshot(calculationSnapshotToJson(snapshot))).toEqual(snapshot);
+    expect(decodeCalculationSnapshot(calculationSnapshotToJson(snapshot))).toEqual(snapshot);
+  });
+
+  it('keeps the version at 3, since both fields are optional', () => {
+    expect(CURRENT_SNAPSHOT_VERSION).toBe(3);
+  });
+
+  it('a snapshot written before these fields existed parses with both off, and round-trips unchanged', () => {
+    const old = { version: 3, settings: { orbScalePercent: -10 }, rulership: 'modern' };
+    const parsed = parseCalculationSnapshot(old);
+    expect(parsed.settings.stationWindow).toBeUndefined();
+    expect(parsed.settings.motionScore).toBeUndefined();
+    const again = calculationSnapshotToJson(parsed);
+    expect(JSON.stringify(again.settings)).not.toContain('stationWindow');
+    expect(JSON.stringify(again.settings)).not.toContain('motionScore');
+  });
+
+  it('the strict decoder still accepts an old snapshot with neither field', () => {
+    expect(() => decodeCalculationSnapshot({ version: 3, settings: { orbScalePercent: -10 } })).not.toThrow();
+    expect(decodeCalculationSnapshot({ version: 2, settings: {} }).settings.stationWindow).toBeUndefined();
+  });
+
+  it('the lenient parser drops a bad k rather than applying it, leaving the window off', () => {
+    for (const k of [0, -0.05, 1.5, 'big', null]) {
+      const parsed = parseCalculationSnapshot({ settings: { stationWindow: { k } } });
+      expect(parsed.settings.stationWindow, JSON.stringify(k)).toBeUndefined();
+    }
+  });
+
+  it('the strict decoder refuses a bad k with an invalid-field error naming the setting', () => {
+    for (const stationWindow of [{ k: 0 }, { k: 2 }, { k: Number.NaN }, { k: '0.05' }, 'on', {}]) {
+      expect(() => decodeCalculationSnapshot({ version: 3, settings: { stationWindow } })).toThrow(SnapshotDecodeError);
+      try {
+        decodeCalculationSnapshot({ version: 3, settings: { stationWindow } });
+      } catch (error) {
+        expect(error).toBeInstanceOf(SnapshotDecodeError);
+        if (error instanceof SnapshotDecodeError) {
+          expect(error.code).toBe('invalid-field');
+          expect(error.message).toContain('stationWindow');
+        }
+      }
+    }
+  });
+
+  it('the strict decoder accepts a valid k at each boundary the panel can produce', () => {
+    for (const k of [0.01, 0.05, 1]) {
+      expect(
+        decodeCalculationSnapshot({ version: 3, settings: { stationWindow: { k } } }).settings.stationWindow,
+      ).toEqual({
+        k,
+      });
+    }
+  });
+
+  it('the strict decoder refuses a non-boolean motionScore', () => {
+    expect(() => decodeCalculationSnapshot({ version: 3, settings: { motionScore: 'yes' } })).toThrow(
+      SnapshotDecodeError,
+    );
+  });
+
+  it('a motionScore of false reads back as off, the same as no field at all', () => {
+    const parsed = parseCalculationSnapshot({ settings: { motionScore: false } });
+    expect(parsed.settings.motionScore).toBeUndefined();
+    expect(
+      decodeCalculationSnapshot({ version: 3, settings: { motionScore: false } }).settings.motionScore,
+    ).toBeUndefined();
+  });
+
+  it('the provenance identity changes when the window or the score changes', () => {
+    const base = calculationSnapshotIdentity(buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, 'modern'));
+    const windowed = calculationSnapshotIdentity(
+      buildCalculationSnapshot({ ...DEFAULT_EXTENDED_SETTINGS, stationWindow: { k: 0.05 } }, 'modern'),
+    );
+    const scored = calculationSnapshotIdentity(
+      buildCalculationSnapshot({ ...DEFAULT_EXTENDED_SETTINGS, motionScore: true }, 'modern'),
+    );
+    expect(windowed).not.toBe(base);
+    expect(scored).not.toBe(base);
+  });
+});

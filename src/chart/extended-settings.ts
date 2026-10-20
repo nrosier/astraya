@@ -14,7 +14,7 @@
  * @module chart/extended-settings
  * @purpose Defines the Extended settings panel's single settings bag (`ExtendedSettings`) and the pure split functions that derive each of its three consumers' own option shapes from it.
  * @conventions One settings object is split three ways rather than kept as three separate pieces of UI state: `toChartCalculationOptions` feeds `computeChartData`, `toPointVisibilityOptions` feeds `chart-tables.ts`'s display filtering, and `toSignWedgeStyle` feeds the wheel's cosmetic fill — keeping the split here means neither the panel component nor `ChartView` needs to know any destination's shape.
- * @exports DEFAULT_EXTENDED_SETTINGS, orbsOf, withOrbsOf, settingsForContext, toChartCalculationOptions, toPointVisibilityOptions, toSignWedgeStyle; ExtendedSettings type.
+ * @exports DEFAULT_EXTENDED_SETTINGS, orbsOf, withOrbsOf, withoutStationWindow, withMotionScore, settingsForContext, toChartCalculationOptions, toPointVisibilityOptions, toSignWedgeStyle; ExtendedSettings type.
  */
 import { DEFAULT_ORB_CONFIG, type OrbConfig, type OrbRule } from '../astrology/aspects.js';
 import type { BoundsScheme } from '../astrology/bounds.js';
@@ -80,6 +80,17 @@ export interface ExtendedSettings {
   /** Orb for the dial90 midpoint-tree table above, in degrees. */
   readonly midpointTreeOrb: Degrees;
   readonly rainbowZodiac: boolean;
+  /**
+   * The station window (#724): when present, a planet with |longitudeSpeed| at most `k` times its mean daily speed is
+   * stationary, and marked first or second station. **An Astraya convention**, uncited (Avelar & Ribeiro give no
+   * threshold). Absent, the default, means off, so the settings and every calculation are as before.
+   */
+  readonly stationWindow?: { readonly k: number };
+  /**
+   * Show the motion score on the condition table (#724): a display-only setting that changes no calculated value and
+   * never the Almuten. Absent or `false` means off, the default.
+   */
+  readonly motionScore?: boolean;
 }
 
 /** Placidus, tropical, every default as documented on `DEFAULT_ORB_CONFIG` and `DEFAULT_OBJECT_POLICIES` — matches what a chart looks like with the panel never opened. */
@@ -145,6 +156,23 @@ export function settingsForContext(
   };
 }
 
+/**
+ * `settings` with the station window switched off (#724), by removing the field rather than storing `undefined`: an
+ * absent field is the off state, and the canonical form every serializer and comparison relies on.
+ */
+export function withoutStationWindow(settings: ExtendedSettings): ExtendedSettings {
+  const copy = { ...settings };
+  delete copy.stationWindow;
+  return copy;
+}
+
+/** `settings` with the motion score set (#724), keeping the canonical form: off is the field absent, not `false`. */
+export function withMotionScore(settings: ExtendedSettings, on: boolean): ExtendedSettings {
+  const copy = { ...settings };
+  delete copy.motionScore;
+  return on ? { ...copy, motionScore: true } : copy;
+}
+
 /** The half of `ExtendedSettings` that changes what `computeChartData` returns. */
 export function toChartCalculationOptions(settings: ExtendedSettings): ChartCalculationOptions {
   const orbConfig: OrbConfig = {
@@ -164,6 +192,7 @@ export function toChartCalculationOptions(settings: ExtendedSettings): ChartCalc
     lilithVariant: settings.lilithVariant,
     nodeVariant: settings.nodeVariant,
     aspectsTo,
+    ...(settings.stationWindow === undefined ? {} : { stationWindow: settings.stationWindow }),
   };
 }
 
@@ -181,6 +210,7 @@ export function toPointVisibilityOptions(settings: ExtendedSettings): PointVisib
     declinationMaxOrb: settings.declinationMaxOrb,
     dial90Visible: settings.dial90Visible,
     midpointTreeOrb: settings.midpointTreeOrb,
+    motionScoreVisible: settings.motionScore === true,
   };
 }
 

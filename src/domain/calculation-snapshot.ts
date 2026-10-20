@@ -37,6 +37,7 @@ import { ayanamsaById } from '../astrology/ayanamsas.js';
 import { houseSystemByCode } from '../astrology/houses.js';
 import { aspectByKey } from '../astrology/aspects.js';
 import { validateOrbRules } from '../astrology/orb-profiles.js';
+import { isStationWindowK } from '../astrology/planetary-condition.js';
 import type { Zodiac } from '../ephemeris/types.js';
 import type { JsonValue } from '../store/ops.js';
 import type { CustomPointDefinition } from './person.js';
@@ -50,6 +51,8 @@ import type { CustomPointDefinition } from './person.js';
  * bump: absent means included, so every existing snapshot reads back unchanged and one with no exclusions
  * serializes byte for byte as before. A v1 snapshot (or a pre-#541 link with no version at
  * all) still parses — it simply had no way to carry formula points, so it reads back with none.
+ * #724's optional `stationWindow` and `motionScore` are not a bump either: absent means off, so every existing snapshot
+ * reads back unchanged and one with both off serializes byte for byte as before.
  */
 export const CURRENT_SNAPSHOT_VERSION = 3;
 
@@ -268,6 +271,15 @@ function parseOrbRules(value: unknown): { orbRules?: NonNullable<ExtendedSetting
   };
 }
 
+/**
+ * The station window (#724): kept only when it is a record with a valid fraction. An absent or
+ * invalid one is no window, which is the off state, the same result as a settings bag with none.
+ */
+function parseStationWindow(value: unknown): { stationWindow?: { readonly k: number } } {
+  if (!isRecord(value) || !isStationWindowK(value.k)) return {};
+  return { stationWindow: { k: value.k } };
+}
+
 function parseExtendedSettings(value: unknown): ExtendedSettings {
   if (!isRecord(value)) return DEFAULT_EXTENDED_SETTINGS;
   const d = DEFAULT_EXTENDED_SETTINGS;
@@ -303,6 +315,9 @@ function parseExtendedSettings(value: unknown): ExtendedSettings {
     dial90Visible: parseBool(value.dial90Visible, d.dial90Visible),
     midpointTreeOrb: parseNonNegativeNumber(value.midpointTreeOrb, d.midpointTreeOrb),
     rainbowZodiac: parseBool(value.rainbowZodiac, d.rainbowZodiac),
+    // Both absent unless on: an absent field is the off state, so an old bag and an off one read back identically (#724).
+    ...parseStationWindow(value.stationWindow),
+    ...(value.motionScore === true ? { motionScore: true } : {}),
   };
 }
 
@@ -364,6 +379,11 @@ function invalidSettingFields(settings: Record<string, unknown>): readonly strin
     if (!Array.isArray(aspects) || !aspects.every((key) => isValidAspect(key))) problems.push('enabledMinorAspects');
   }
   if (present('orbRules') && validateOrbRules(settings.orbRules) === undefined) problems.push('orbRules');
+  if (present('stationWindow')) {
+    const window = settings.stationWindow;
+    if (!isRecord(window) || !isStationWindowK(window.k)) problems.push('stationWindow');
+  }
+  if (present('motionScore') && typeof settings.motionScore !== 'boolean') problems.push('motionScore');
   return problems;
 }
 

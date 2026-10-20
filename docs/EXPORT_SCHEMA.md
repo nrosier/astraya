@@ -61,7 +61,7 @@ interface ExportedHarmonicChart {
 
 interface ExportedChart {
   sect: 'day' | 'night';
-  positions: PositionRow[]; // chart-tables.ts's own row shapes — see that module for each row's fields
+  positions: PositionRow[]; // chart-tables.ts's own row shapes — see that module for each row's fields; #724 adds optional `stationary`/`stationType`, present only with the station window on
   houses?: {
     cusps: HouseCuspRow[];
     angles: AngleRow[];
@@ -144,6 +144,8 @@ JSON Schema file does enumerate them structurally.
   #587 added optional `ExportedPerson.relocationPlaces`/`customPoints` — both read internally for chart
   computation since #559/#566 but never carried back out, so a restore built on an export missing them would
   have been lossy; also additive, still v2.
+  #724 added the optional station-window and motion-score settings (`preferences.settings.stationWindow`/`motionScore`), the
+  optional positions `stationary`/`stationType` fields, and a `note` disclosure, all present only while on; additive, still v2.
 
 ## Calculation artifact
 
@@ -160,6 +162,37 @@ JSON Schema file does enumerate them structurally.
 
 The same inputs on the same engine, data files and tzdb give the same `resultHash`. It is absent when the exporting
 browser had no Web Crypto (a non-secure context).
+
+## Station window and motion score
+
+Two optional settings (#724) are both **off by default**, and an absent field is the off state, so an export made with
+both off is byte for byte what it was before they existed. Neither changes the Almuten or any other score.
+
+- **`preferences.settings.stationWindow`** — `{ k }`, present only when the window is on. **This is an Astraya
+  convention, not a cited rule.** Avelar & Ribeiro (2010) give the mean speeds (pp. 59–60) and define a station (p. 61)
+  but give no speed threshold, so `k` (default 0.05) is chosen here, not taken from the source. A planet is stationary
+  when `|longitudeSpeed| ≤ k × meanDailySpeed`, inclusive at the boundary. Mercury through Pluto qualify; the Sun, the
+  Moon, nodes, Lilith, Chiron and asteroids never do.
+- **`preferences.settings.motionScore`** — `true` only when on. Display-only: it adds scoring to the condition table and
+  changes no calculated value.
+- **Positions rows** — with the window on, a planet inside it has `stationary: true`, and `stationType: 'first' | 'second'`
+  when the type can be told. A stationary planet whose type cannot be told has `stationary` alone. Rows are unchanged with
+  the window off.
+- **The note** — `note` gains a sentence naming the convention, its `k`, and the citations (mean speeds: A&R 2010, pp. 59–60;
+  a station: p. 61; the motion score: p. 197) only while either setting is on.
+
+**Method and citations, for a reader of the file:**
+
+- Mean daily speeds (degrees per day): Saturn 0°02'01", Jupiter 0°04'59", Mars 0°31'27", Sun, Venus and Mercury each 0°59'08",
+  Moon 13°10'36" — Avelar & Ribeiro (2010), pp. 59–60. Uranus, Neptune and Pluto have no figure in that book: their
+  station detection uses 360 divided by the orbital period from the NASA Planetary Fact Sheet (30589, 59800 and 90560 days), a modern figure, not from
+  Avelar & Ribeiro, and they never get a motion score.
+- First and second stations: the first is the station a planet makes in direct motion, before its retrograde phase, and
+  the second the one made in retrograde motion, before its direct phase (A&R 2010, p. 61). The type comes from the sign of
+  the longitude acceleration at that moment.
+- Motion score (A&R 2010, p. 197): direct +4, retrograde −5; a first station scores as retrograde, a second as direct;
+  fast (faster than mean speed) +2, slow −2. The Sun and Moon get the speed points only, as decided for this app.
+- The window threshold itself is uncited: it is an Astraya convention.
 
 ## How this is kept true
 

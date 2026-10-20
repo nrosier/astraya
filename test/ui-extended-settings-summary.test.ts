@@ -40,3 +40,14 @@ describe('changedSettings', () => {
     ]);
   });
 });
+
+describe('changedSettings for the station window and motion score (#724)', () => {
+  it('lists the station window when it is on, and the motion score when it is on', () => {
+    expect(changedSettings({ ...DEFAULT_EXTENDED_SETTINGS, stationWindow: { k: 0.05 } })).toEqual(['stationWindow']);
+    expect(changedSettings({ ...DEFAULT_EXTENDED_SETTINGS, motionScore: true })).toEqual(['motionScore']);
+  });
+
+  it('does not list either when off, including an explicit motionScore of false', () => {
+    expect(changedSettings({ ...DEFAULT_EXTENDED_SETTINGS, motionScore: false })).toEqual([]);
+  });
+});

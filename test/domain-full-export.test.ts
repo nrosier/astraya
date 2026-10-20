@@ -116,6 +116,33 @@ describe('buildFullExport', () => {
     expect(kochCusps).not.toEqual(placidusCusps);
   });
 
+  it('discloses the station window (an Astraya convention, with its k) and the motion score in the note, while on (#724)', async () => {
+    const archive = await buildFullExport({
+      people: [ADA],
+      provider: engine,
+      appVersion: '9.9.9',
+      settings: { ...DEFAULT_EXTENDED_SETTINGS, stationWindow: { k: 0.2 }, motionScore: true },
+      rulership: 'modern',
+      symbolClass: 'drawn',
+      now: NOW,
+    });
+    expect(archive.note).toContain('Astraya convention, not a cited rule');
+    expect(archive.note).toContain('k = 0.2');
+    expect(archive.note).toContain('Avelar & Ribeiro, On the Heavenly Spheres (2010), pp. 59–60');
+    expect(archive.note).toContain('p. 197');
+    expect(archive.preferences.settings).toEqual({
+      ...DEFAULT_EXTENDED_SETTINGS,
+      stationWindow: { k: 0.2 },
+      motionScore: true,
+    });
+  });
+
+  it('leaves the note exactly as it was while the station window and motion score are off (#724)', async () => {
+    const archive = await build([ADA]);
+    expect(archive.note).not.toContain('Astraya convention');
+    expect(archive.note).not.toContain('Also in force');
+  });
+
   it('says plainly when the application defaults really were used, unchanged', async () => {
     const archive = await build([ADA]);
     expect(archive.preferences.settings).toEqual(DEFAULT_EXTENDED_SETTINGS);

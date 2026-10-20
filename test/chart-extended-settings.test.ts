@@ -5,6 +5,8 @@ import {
   toChartCalculationOptions,
   toPointVisibilityOptions,
   toSignWedgeStyle,
+  withMotionScore,
+  withoutStationWindow,
   type ExtendedSettings,
 } from '../src/chart/extended-settings.js';
 import { DEFAULT_OBJECT_POLICIES, OBJECT_KEYS } from '../src/chart/object-policy.js';
@@ -125,5 +127,23 @@ describe('toSignWedgeStyle', () => {
   it('is "default" when rainbowZodiac is off and "rainbow" when on', () => {
     expect(toSignWedgeStyle(withOverrides({ rainbowZodiac: false }))).toBe('default');
     expect(toSignWedgeStyle(withOverrides({ rainbowZodiac: true }))).toBe('rainbow');
+  });
+});
+
+describe('the station window and motion score mapping (#724)', () => {
+  it('passes the window to the calculation only when it is on, and the score to display only', () => {
+    expect(toChartCalculationOptions(DEFAULT_EXTENDED_SETTINGS)).not.toHaveProperty('stationWindow');
+    expect(toChartCalculationOptions(withOverrides({ stationWindow: { k: 0.2 } })).stationWindow).toEqual({ k: 0.2 });
+    expect(toPointVisibilityOptions(DEFAULT_EXTENDED_SETTINGS).motionScoreVisible).toBe(false);
+    expect(toPointVisibilityOptions(withOverrides({ motionScore: true })).motionScoreVisible).toBe(true);
+    // The score is display-only: it adds nothing to the calculation options.
+    expect(toChartCalculationOptions(withOverrides({ motionScore: true }))).not.toHaveProperty('stationWindow');
+  });
+
+  it('removes the window and sets the score in canonical form, so an off setting is an absent field', () => {
+    const on = withOverrides({ stationWindow: { k: 0.05 }, motionScore: true });
+    expect(withoutStationWindow(on)).not.toHaveProperty('stationWindow');
+    expect(withMotionScore(on, false)).not.toHaveProperty('motionScore');
+    expect(withMotionScore(DEFAULT_EXTENDED_SETTINGS, true).motionScore).toBe(true);
   });
 });
