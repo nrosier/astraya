@@ -248,7 +248,7 @@ const en = {
   aspectPatternSeparator: ', ',
   noAspectPatterns: 'No aspect configuration among the ten planets with the orbs in force.',
   aspectPatternsSourceNote:
-    'Shapes and rules as Astrolog 8.00 defines them: every aspect in a shape is within its own orb, and a stellium is three or four mutually conjunct planets. Only the ten planets, Sun to Pluto, are considered: no nodes, angles or asteroids. Yods need the quincunx turned on in the orb settings. Kites are a Grand Trine with its focal point opposed to one vertex and sextile to the other two.',
+    'Shapes and rules as Astrolog 8.00 defines them, except the Kite: every aspect in a shape is within its own orb, and a stellium is three or four mutually conjunct planets. Only the ten planets, Sun to Pluto, are considered: no nodes, angles or asteroids. Yods need the quincunx turned on in the orb settings. The Kite follows Huber (Aspect Pattern Astrology, 2019): a Grand Trine with its focal point opposed to one vertex and sextile to the other two. Astrolog does not list it.',
   shapeSourceNote:
     'Chart shapes are a convention from Marc Edmund Jones (1941), widely taught in modern textbooks. They are not part of classical astrology and have not been validated empirically: read them as a tendency, never a verdict. The shape is worked out from the ten planets, Sun to Pluto, and its boundaries are approximate: a chart just either side of a boundary can fall in a neighbouring shape.',
   shapeCannotBeWorkedOut: 'The chart shape cannot be worked out: it needs at least two planets.',
@@ -582,7 +582,7 @@ const nl: typeof en = {
   aspectPatternSeparator: ', ',
   noAspectPatterns: 'Geen aspectconfiguratie tussen de tien planeten met de geldende orbs.',
   aspectPatternsSourceNote:
-    'Vormen en regels zoals Astrolog 8.00 ze definieert: elk aspect in een vorm valt binnen zijn eigen orb, en een stellium is drie of vier planeten die onderling conjunct staan. Alleen de tien planeten, Zon tot Pluto, tellen mee: geen knopen, hoeken of asteroïden. Voor een Yod moet de quincunx aan staan in de orbinstellingen. Vliegers zijn een grote driehoek waarvan het brandpunt tegenover één hoekpunt staat en sextiel tot de twee andere.',
+    'Vormen en regels zoals Astrolog 8.00 ze definieert, behalve de vlieger: elk aspect in een vorm valt binnen zijn eigen orb, en een stellium is drie of vier planeten die onderling conjunct staan. Alleen de tien planeten, Zon tot Pluto, tellen mee: geen knopen, hoeken of asteroïden. Voor een Yod moet de quincunx aan staan in de orbinstellingen. De vlieger volgt Huber (Aspect Pattern Astrology, 2019): een grote driehoek waarvan het brandpunt tegenover één hoekpunt staat en sextiel tot de twee andere. Astrolog kent hem niet.',
   shapeSourceNote:
     'Horoscoopvormen zijn een conventie van Marc Edmund Jones (1941), veel onderwezen in moderne leerboeken. Ze maken geen deel uit van de klassieke astrologie en zijn niet empirisch onderbouwd: lees ze als een neiging, nooit als een oordeel. De vorm wordt bepaald uit de tien planeten, Zon tot Pluto, en de grenzen zijn bij benadering: een horoscoop net aan de ene of andere kant van een grens kan in een naburige vorm vallen.',
   shapeCannotBeWorkedOut: 'De horoscoopvorm kan niet worden bepaald: er zijn minstens twee planeten nodig.',

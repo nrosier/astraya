@@ -32,6 +32,7 @@
  */
 import type { Aspect } from './aspects.js';
 import type { BodyId } from '../ephemeris/types.js';
+import { KITE_DEFINITIONS, type KiteAspectRequirement, type KiteDefinition } from './kite-registry.js';
 
 export type AspectPatternKind =
   'stellium' | 'grand-trine' | 't-square' | 'grand-cross' | 'yod' | 'cradle' | 'mystic-rectangle' | 'kite';
@@ -55,6 +56,13 @@ export const PATTERN_BODY_KEYS = [
   'neptune',
   'pluto',
 ] as const;
+
+/** The Kite definition the detector follows: the registry's Huber entry. Fails loudly if the entry is removed. */
+function kiteDefinition(): KiteDefinition {
+  const definition = KITE_DEFINITIONS.find((entry) => entry.id === 'huber-2019');
+  if (definition === undefined) throw new Error('kite-registry: the huber-2019 definition is missing');
+  return definition;
+}
 
 function combinations<T>(items: readonly T[], size: number): T[][] {
   if (size === 0) return [[]];
@@ -93,19 +101,24 @@ export function findAspectPatterns(aspects: readonly Aspect[], bodies: readonly 
     }
   }
 
-  // Kites: a Grand Trine whose focal point is opposed to one vertex and sextile to the other two.
+  // Kites: the shape comes from the registry's kite definition (kite-registry.ts): a Grand Trine, one opposition from the
+  // focal point, and sextiles from the focal point to the other two vertices. The aspects are checked by key below.
+  const kite = kiteDefinition();
+  const kiteRequires = (between: KiteAspectRequirement['between'], aspect: KiteAspectRequirement['aspect']): boolean =>
+    kite.requiredAspects.some((row) => row.between === between && row.aspect === aspect);
   for (const trine of combinations(ids, 3)) {
     const [p, q, r] = trine;
     if (p === undefined || q === undefined || r === undefined) continue;
+    if (!kiteRequires('vertex-vertex', 'trine')) continue;
     if (!combinations(trine, 2).every(([a, b]) => a !== undefined && b !== undefined && is(a, b, 'trine'))) continue;
     for (const focal of ids) {
       if (trine.includes(focal)) continue;
       const vertices = [p, q, r];
       for (const opposed of vertices) {
         const others = vertices.filter((body) => body !== opposed);
-        if (is(focal, opposed, 'opposition') && others.every((body) => is(focal, body, 'sextile'))) {
-          patterns.push({ kind: 'kite', bodies: [focal, opposed, ...others] });
-        }
+        const opposition = kiteRequires('focal-opposed', 'opposition') && is(focal, opposed, 'opposition');
+        const sextiles = kiteRequires('focal-vertex', 'sextile') && others.every((body) => is(focal, body, 'sextile'));
+        if (opposition && sextiles) patterns.push({ kind: 'kite', bodies: [focal, opposed, ...others] });
       }
     }
   }
