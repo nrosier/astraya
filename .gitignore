@@ -27,8 +27,12 @@ public/corpus/
 # Source material for hand-written corpus exemplars (#55): reference books
 # (and any text extracted from them for reading) used while drafting, not
 # something the app ships or the repo distributes.
-src/interpretation/corpus/*.pdf
 src/interpretation/corpus/*.txt
+
+# Reference PDFs (books and scans) kept locally for citation checks. Never committed,
+# whether or not the source is public domain; the citations they support are recorded
+# in docs/references/ as JSON passages instead.
+*.pdf
 
 # Scratch output from the Playwright MCP browser tool (page snapshots,
 # console logs, screenshots) used for manual UI verification during a
