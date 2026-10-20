@@ -20,7 +20,7 @@ Each longitude is taken as printed for the 1262 epoch and advanced to the chart'
 
 This rate is the project's decision, not a historical value. Al-Fārisī's own rate (1° per 66 years) is not used, and no stellar proper motion is applied.
 
-Citation status: the IAU 1976 value is recorded from the published constant and has not yet been checked against a source in docs/references/. Check it before the registry is merged, and say here whether it was checked.
+Citation status: verified on 2026-10-20 against the published IAU 1976 value (Lieske et al. 1977, _Astronomy and Astrophysics_ 58), as confirmed by the project owner. No copy of the paper is in docs/references/, so this is not a check against a file in the repo.
 
 ## Which printed rows become entries
 
@@ -33,7 +33,7 @@ Citation status: the IAU 1976 value is recorded from the published constant and 
 
 ## Fields per entry
 
-`id` (the printed row number, as text, so "33a" and "33c" stay distinct), `arabicName` (as printed, with diacritics), `transliteration`, `sign`, `degree`, `minute`, `latitude` (value and hemisphere, or empty), `magnitude` (integer or empty), `temperaments` (an array; each printed pair kept as one entry, e.g. `["Mars", "Mercury"]`), `peters_knobel`, `modernId` (e.g. "α Aur"), `authority`, `confidence`. `variantLongitudes` holds any folded variant longitudes (row 33 only, from row 33c) and is empty otherwise. Variants are never used for conjunctions.
+`id`, `arabicName`, `signIndex`, `signPrinted`, `degree`, `minute`, `latitudeText`, `latitudeHemisphere`, `magnitudeText`, `temperaments`, `peters_knobel`, `modernId`, `notes`, `variantLongitudes`. Authority is one constant (`YEMEN_STAR_AUTHORITY`) shared by every entry, not a per-entry field. Transliteration is not stored separately; `arabicName` is kept as printed. `variantLongitudes` holds any folded variant longitudes (row 33 only, from row 33c) and is empty otherwise. Variants are never used for conjunctions.
 
 ## Values kept as printed, never corrected
 
@@ -60,5 +60,5 @@ Citation status: the IAU 1976 value is recorded from the published constant and 
 
 ## Open questions for the astrologer review
 
-1. Confirm the precession citation (see the Precession section) against its source, and record the result there.
-2. Confirm the Bonatti fixed-star orb reference (Treatise 8, Part 1, ch. 108) against a page image before any reference to it is written into the spec or the code. Until then, 1.0° is an Astraya convention with no cited source.
+1. Resolved 2026-10-20: see the citation status in the Precession section.
+2. Resolved 2026-10-20: 1.0° is accepted as an Astraya convention, labelled as such, with no cited source. The Bonatti ch. 108 reference is not relied on for it.
