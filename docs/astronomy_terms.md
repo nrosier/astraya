@@ -181,7 +181,7 @@ Combined and categorized from `astrology_terms.md`, `astrology_terms.1.md`, `ast
 167. **Apparent Motion** — The illusion of planetary movement viewed from the vantage point of Earth.
 168. **Avayogi** — A challenging counter-point to the Yogi point in Vedic astrology.
 169. **Benefit** — A traditional term often applied to Jupiter and Venus, viewed in classical astrology as planets that bring ease, growth, and favorable outcomes.
-170. **Besieged** — A traditional condition where a planet is caught between two malefic planets, such as Mars and Saturn, by aspect or placement. It suggests feeling trapped or pressured from multiple difficult directions.
+170. **Besieged** — A traditional condition where a planet is caught between two malefic planets, such as Mars and Saturn, by aspect or placement. It suggests feeling trapped or pressured from multiple difficult directions. A benefic trine or sextile from the Sun, Jupiter or Venus within seven degrees is said to ease the siege (Bonatti, citing Alchabitius).
 171. **Bonification** — A traditional condition where a planet is strengthened by favorable aspects from benefics like Venus or Jupiter.
 172. **Bound** — Also known as a term, this is a traditional division of a zodiac sign into unequal segments ruled by one of the five visible planets, adding fine-tuned dignity to a placement.
 173. **Bound Ruler** — The planetary steward of a specific subdivision within a zodiac sign, influencing the planet residing in those degrees.

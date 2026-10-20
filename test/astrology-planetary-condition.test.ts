@@ -6,6 +6,9 @@ import { bodyByKey } from '../src/astrology/bodies.js';
 import { DEFAULT_ORB_CONFIG } from '../src/astrology/aspects.js';
 import {
   angularityOfHouse,
+  BESIEGEMENT_RESCUE_ORB,
+  besiegementRescueAspectOf,
+  besiegementRescuesOf,
   DIURNAL_PLANETS,
   isBesieged,
   isInHayz,
@@ -279,5 +282,73 @@ describe('motionScoreOf (#724, A&R p. 197)', () => {
 
   it('gives no score to a non-stationary planet whose speed is exactly zero (the window off, at rest)', () => {
     expect(motionScoreOf(venus, 0, false, undefined)).toBeUndefined();
+  });
+});
+
+describe('besiegement rescue (#724)', () => {
+  // Bonatti, Liber Astronomiae Part 3, Ch. XXI, p. 96 (quoting Alchabitius): trine or sextile from the Sun or
+  // another fortune, with less than seven degrees to exact. A besieged point at 100° throughout.
+  const POINT = 100;
+
+  it('uses the cited fixed 7° orb, not the app orb configuration', () => {
+    expect(BESIEGEMENT_RESCUE_ORB).toBe(7);
+  });
+
+  it('is rescued by Jupiter exactly trine, from either side', () => {
+    expect(besiegementRescuesOf(POINT, [{ key: 'jupiter', longitude: POINT + 120 }])).toEqual([
+      { bodyKey: 'jupiter', aspect: 'trine' },
+    ]);
+    expect(besiegementRescuesOf(POINT, [{ key: 'jupiter', longitude: POINT - 120 }])).toEqual([
+      { bodyKey: 'jupiter', aspect: 'trine' },
+    ]);
+  });
+
+  it('is rescued when the trine is 6.9° off exact, on either side of exact', () => {
+    expect(besiegementRescuesOf(POINT, [{ key: 'jupiter', longitude: POINT + 126.9 }])).toHaveLength(1);
+    expect(besiegementRescuesOf(POINT, [{ key: 'jupiter', longitude: POINT + 113.1 }])).toHaveLength(1);
+  });
+
+  it('is NOT rescued when the trine is exactly 7.0° off exact (strictly less than 7)', () => {
+    expect(besiegementRescuesOf(POINT, [{ key: 'jupiter', longitude: POINT + 127 }])).toEqual([]);
+    expect(besiegementRescuesOf(POINT, [{ key: 'jupiter', longitude: POINT + 113 }])).toEqual([]);
+    expect(besiegementRescueAspectOf(POINT, POINT + 60 + 7)).toBeUndefined();
+  });
+
+  it('is rescued by a Venus sextile and by the Sun', () => {
+    expect(besiegementRescuesOf(POINT, [{ key: 'venus', longitude: POINT + 60 }])).toEqual([
+      { bodyKey: 'venus', aspect: 'sextile' },
+    ]);
+    expect(besiegementRescuesOf(POINT, [{ key: 'sun', longitude: POINT - 63 }])).toEqual([
+      { bodyKey: 'sun', aspect: 'sextile' },
+    ]);
+  });
+
+  it('is not rescued by a square, an opposition or a conjunction from a fortune', () => {
+    for (const offset of [0, 90, 180]) {
+      expect(besiegementRescuesOf(POINT, [{ key: 'jupiter', longitude: POINT + offset }])).toEqual([]);
+    }
+  });
+
+  it('never lets Mars, Saturn, the Moon or Mercury rescue, even exactly trine', () => {
+    const others = ['mars', 'saturn', 'moon', 'mercury'].map((key) => ({ key, longitude: POINT + 120 }));
+    expect(besiegementRescuesOf(POINT, others)).toEqual([]);
+  });
+
+  it('reports every rescuing fortune in the stable Sun, Jupiter, Venus order, however they are listed', () => {
+    const rescues = besiegementRescuesOf(POINT, [
+      { key: 'venus', longitude: POINT + 60 },
+      { key: 'jupiter', longitude: POINT - 120 },
+      { key: 'sun', longitude: POINT + 122 },
+    ]);
+    expect(rescues.map((rescue) => rescue.bodyKey)).toEqual(['sun', 'jupiter', 'venus']);
+  });
+
+  it('is empty with no fortune in aspect', () => {
+    expect(besiegementRescuesOf(POINT, [{ key: 'jupiter', longitude: POINT + 30 }])).toEqual([]);
+    expect(besiegementRescuesOf(POINT, [])).toEqual([]);
+  });
+
+  it('does not change what makes a point besieged', () => {
+    expect(isBesieged(100, 95, 105, DEFAULT_ORB_CONFIG)).toBe(true);
   });
 });

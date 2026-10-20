@@ -78,6 +78,7 @@ const en = {
   rulerDignity: 'ruler',
   exaltedDignity: 'exalted',
   besiegedCondition: 'besieged',
+  besiegedEasedCondition: (rescuers: string) => `besieged (eased by ${rescuers})`,
   cazimiCondition: 'cazimi',
   combustCondition: 'combust',
 
@@ -154,6 +155,7 @@ const nl: typeof en = {
   rulerDignity: 'heerser',
   exaltedDignity: 'verheven',
   besiegedCondition: 'belegerd',
+  besiegedEasedCondition: (rescuers: string) => `belegerd (verlicht door ${rescuers})`,
   cazimiCondition: 'cazimi',
   combustCondition: 'combust',
 
