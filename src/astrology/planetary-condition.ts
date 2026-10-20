@@ -17,7 +17,7 @@
  * @module astrology/planetary-condition
  * @purpose Classifies a traditional planet's sect alignment, angularity, hayz, motion, and besiegement.
  * @conventions Scoped to the seven traditional (Chaldean) planets — Sun/Moon/Mercury/Venus/Mars/Jupiter/Saturn — since sect, hayz and besiegement are classical concepts with no established reading for the outer planets, nodes, or asteroids. Mercury is sect-neutral (common to both sects) and so never "of sect" or in hayz.
- * @exports TRADITIONAL_PLANET_IDS, DIURNAL_PLANETS, NOCTURNAL_PLANETS, SectAlignment, sectAlignmentOf, Angularity, angularityOfHouse, Motion, motionOf, isInHayz, isBesieged, BESIEGEMENT_RESCUE_ORB, BESIEGEMENT_FORTUNE_KEYS, BesiegementRescueAspect, BesiegementRescue, besiegementRescueAspectOf, besiegementRescuesOf, MEAN_DAILY_SPEED, meanDailySpeedOf, STATION_WINDOW_DEFAULT_K, isStationWindowK, isWithinStationWindow, StationType, stationTypeOf, MOTION_SCORE_POINTS, motionScoreOf, BESIEGEMENT_RESCUE_ORB, BESIEGEMENT_FORTUNE_KEYS, BesiegementRescueAspect, BesiegementRescue, besiegementRescueAspectOf, besiegementRescuesOf
+ * @exports TRADITIONAL_PLANET_IDS, DIURNAL_PLANETS, NOCTURNAL_PLANETS, SectAlignment, sectAlignmentOf, Angularity, angularityOfHouse, Motion, motionOf, isInHayz, isBesieged, BESIEGEMENT_RESCUE_ORB, BESIEGEMENT_FORTUNE_KEYS, BesiegementRescueAspect, BesiegementRescue, besiegementRescueAspectOf, besiegementRescuesOf, MEAN_DAILY_SPEED, meanDailySpeedOf, STATION_WINDOW_DEFAULT_K, isStationWindowK, isWithinStationWindow, StationType, stationTypeOf, MOTION_SCORE_POINTS, motionScoreOf
  */
 import type { BodyId, Degrees } from '../ephemeris/types.js';
 import { bodyById, bodyByKey } from './bodies.js';
