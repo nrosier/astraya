@@ -17,7 +17,7 @@
  * @module astrology/planetary-condition
  * @purpose Classifies a traditional planet's sect alignment, angularity, hayz, motion, and besiegement.
  * @conventions Scoped to the seven traditional (Chaldean) planets — Sun/Moon/Mercury/Venus/Mars/Jupiter/Saturn — since sect, hayz and besiegement are classical concepts with no established reading for the outer planets, nodes, or asteroids. Mercury is sect-neutral (common to both sects) and so never "of sect" or in hayz.
- * @exports TRADITIONAL_PLANET_IDS, DIURNAL_PLANETS, NOCTURNAL_PLANETS, SectAlignment, sectAlignmentOf, Angularity, angularityOfHouse, Motion, motionOf, isInHayz, isBesieged, MEAN_DAILY_SPEED, meanDailySpeedOf, STATION_WINDOW_DEFAULT_K, isStationWindowK, isWithinStationWindow, StationType, stationTypeOf, MOTION_SCORE_POINTS, motionScoreOf
+ * @exports TRADITIONAL_PLANET_IDS, DIURNAL_PLANETS, NOCTURNAL_PLANETS, SectAlignment, sectAlignmentOf, Angularity, angularityOfHouse, Motion, motionOf, isInHayz, isBesieged, BESIEGEMENT_RESCUE_ORB, BESIEGEMENT_FORTUNE_KEYS, BesiegementRescueAspect, BesiegementRescue, besiegementRescueAspectOf, besiegementRescuesOf, MEAN_DAILY_SPEED, meanDailySpeedOf, STATION_WINDOW_DEFAULT_K, isStationWindowK, isWithinStationWindow, StationType, stationTypeOf, MOTION_SCORE_POINTS, motionScoreOf, BESIEGEMENT_RESCUE_ORB, BESIEGEMENT_FORTUNE_KEYS, BesiegementRescueAspect, BesiegementRescue, besiegementRescueAspectOf, besiegementRescuesOf
  */
 import type { BodyId, Degrees } from '../ephemeris/types.js';
 import { bodyById, bodyByKey } from './bodies.js';
@@ -279,8 +279,8 @@ function isAhead(from: Degrees, to: Degrees): boolean {
 /**
  * Whether a point is "besieged" — within conjunction orb of both Mars and Saturn (the two
  * traditional malefics) at once, with one on each side rather than both bunched on the same
- * side. The classical condition also asks whether a benefic's aspect "rescues" the besieged
- * point; that reception/aspect-based rescue is not checked here, only the raw besiegement itself.
+ * side. The benefic rescue is deliberately not part of this test: a rescued point is still
+ * besieged, and `besiegementRescuesOf` (below) reports the easing fortunes separately (#724).
  */
 export function isBesieged(
   longitude: Degrees,
@@ -292,4 +292,67 @@ export function isBesieged(
   if (angularSeparation(longitude, marsLongitude) > conjunctionOrb) return false;
   if (angularSeparation(longitude, saturnLongitude) > conjunctionOrb) return false;
   return isAhead(longitude, marsLongitude) !== isAhead(longitude, saturnLongitude);
+}
+
+/**
+ * The fixed orb of the besiegement rescue, in degrees: a besieged planet is eased by a fortune's
+ * trine or sextile only when the aspect is within LESS THAN this many degrees of exact. Cited, not
+ * configurable, and independent of the app's `OrbConfig`: Bonatti, Liber Astronomiae Part 3 (Hand
+ * translation), Chapter XXI "Concerning the Besieging of Planets and Signs", printed p. 96, quoting
+ * Alchabitius ("less than seven degrees" between the planet and the Sun or fortune); and Porphyry,
+ * Introduction 15, as quoted in the Hellenistic-astrology text, Chapter 14 "Enclosure", printed
+ * pp. 474-476 (rays within seven degrees). The comparison is strict: exactly 7 degrees off does
+ * not rescue.
+ */
+export const BESIEGEMENT_RESCUE_ORB = 7;
+
+/** The fortunes that can ease a besiegement, in the stable order results are reported in: the Sun, Jupiter and Venus (Bonatti: "the Sun or another fortune"). Mars and Saturn, the besiegers, never rescue. */
+export const BESIEGEMENT_FORTUNE_KEYS: readonly string[] = ['sun', 'jupiter', 'venus'];
+
+/** Only the trine and the sextile ease a besiegement (Bonatti, Part 3, Ch. XXI); the opposition, square and conjunction do not. */
+export type BesiegementRescueAspect = 'trine' | 'sextile';
+
+/** One fortune easing a besiegement: its body key and the aspect it casts onto the besieged planet. */
+export interface BesiegementRescue {
+  readonly bodyKey: string;
+  readonly aspect: BesiegementRescueAspect;
+}
+
+/**
+ * The rescuing aspect a fortune casts onto a besieged point, if any: a trine or sextile within
+ * `BESIEGEMENT_RESCUE_ORB` (strictly less than) of exact. Uses the unsigned separation in [0, 180],
+ * which is within the orb of 120 or 60 exactly when the point sits that far ahead of or behind the
+ * fortune, so both sides are covered. Opposition, square and conjunction never rescue.
+ */
+export function besiegementRescueAspectOf(
+  longitude: Degrees,
+  fortuneLongitude: Degrees,
+): BesiegementRescueAspect | undefined {
+  const separation = angularSeparation(longitude, fortuneLongitude);
+  if (Math.abs(separation - 120) < BESIEGEMENT_RESCUE_ORB) return 'trine';
+  if (Math.abs(separation - 60) < BESIEGEMENT_RESCUE_ORB) return 'sextile';
+  return undefined;
+}
+
+/**
+ * The fortunes (from `fortunes`, only keys in `BESIEGEMENT_FORTUNE_KEYS`) that ease a besieged
+ * point, in `BESIEGEMENT_FORTUNE_KEYS` order. Call it only for a point that `isBesieged`; it does
+ * not re-check that, and the caller must leave out the besieged planet itself so it cannot rescue
+ * itself. Empty when nothing eases the besiegement.
+ *
+ * Bodily insertion (a fortune sitting between the planet and one malefic) is NOT handled: Bonatti
+ * does not state it as a rule of its own in this chapter, so only the aspectual relief is built.
+ */
+export function besiegementRescuesOf(
+  longitude: Degrees,
+  fortunes: readonly { readonly key: string; readonly longitude: Degrees }[],
+): readonly BesiegementRescue[] {
+  const rescues: BesiegementRescue[] = [];
+  for (const key of BESIEGEMENT_FORTUNE_KEYS) {
+    const fortune = fortunes.find((candidate) => candidate.key === key);
+    if (fortune === undefined) continue;
+    const aspect = besiegementRescueAspectOf(longitude, fortune.longitude);
+    if (aspect !== undefined) rescues.push({ bodyKey: key, aspect });
+  }
+  return rescues;
 }

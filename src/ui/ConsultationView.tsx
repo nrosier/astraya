@@ -65,6 +65,7 @@ import {
 } from '../astrology/transit-importance.js';
 import { civilFromJulianDay, julianDayFor } from '../time/julian.js';
 import { resolveMoment } from '../time/resolve.js';
+import { besiegementRescueList } from './besiegement-rescue-label.js';
 import { aspectDisplayName, bodyDisplayName, signDisplayName } from './astro-names.messages.js';
 import { EVERY_BODY_KEY, useTransitFilter } from './TransitFilterPanel.js';
 import { transitFilterPanelMessages } from './TransitFilterPanel.messages.js';
@@ -346,7 +347,13 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
           const notes = [
             ...(row.solarCondition === 'cazimi' ? [t.cazimiCondition] : []),
             ...(row.solarCondition === 'combust' ? [t.combustCondition] : []),
-            ...(row.besieged ? [t.besiegedCondition] : []),
+            ...(row.besieged
+              ? [
+                  row.besiegementRescuedBy === undefined
+                    ? t.besiegedCondition
+                    : t.besiegedEasedCondition(besiegementRescueList(row.besiegementRescuedBy, locale)),
+                ]
+              : []),
           ];
           return notes.length === 0 ? [] : [t.conditionLine(body(row.bodyKey), notes.join(t.conditionSeparator))];
         })

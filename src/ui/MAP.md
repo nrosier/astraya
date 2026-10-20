@@ -24,6 +24,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `AstroChartWheel.tsx` — Dev-only reference wheel via `@astrodraw/astrochart`. Deps: `chart/astrochart-adapter`.
 - `acg-map-labels.ts` — En/nl words for the astrocartography map's line names and legend, shared by screen and PDF (#667). Deps: `chart/acg-map`, `./astro-names.messages`, `./AstrocartographyView.messages`.
 - `AstrocartographyView.tsx` + `AstrocartographyView.messages.ts` — Astrocartography/local-space map; its settings live in `MapSettingsDialog`, its exports in the page header. Deps: `domain/astrocartography`, `chart/acg-map`, `interpretation/compose`.
+- `besiegement-rescue-label.ts` — Words the fortunes easing a besieged planet as en/nl text for the condition table and consultation. Deps: `astrology/planetary-condition`, `./astro-names.messages`.
 - `BiWheelSelectionPanel.tsx` + `BiWheelSelectionPanel.messages.ts` — Bi-wheel click-to-inspect panel (body/sign/aspect info). Deps: `./bi-wheel-selection`, `astro-names.messages`.
 - `BirthPlaceSearch.tsx` + `BirthPlaceSearch.messages.ts` — Geocoding place-name search field. Deps: `./forward-geocode`, `./geocode-provider`.
 - `Changelog.tsx` + `Changelog.messages.ts` — In-app CHANGELOG.md viewer. Deps: `./markdown`.

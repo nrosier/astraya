@@ -28,6 +28,7 @@ import { allMidpoints, midpointOf, midpointTree, oppositeMidpointOf } from '../a
 import { mutualReceptionBetween, type DignityType } from '../astrology/reception.js';
 import {
   angularityOfHouse,
+  besiegementRescuesOf,
   isBesieged,
   isInHayz,
   motionOf,
@@ -35,6 +36,7 @@ import {
   sectAlignmentOf,
   TRADITIONAL_PLANET_IDS,
   type Angularity,
+  type BesiegementRescue,
   type Motion,
   type SectAlignment,
   type StationType,
@@ -515,6 +517,12 @@ export interface ConditionRow {
   /** `undefined` when houses aren't usable — hayz needs the Ascendant. */
   readonly inHayz?: boolean;
   readonly besieged: boolean;
+  /**
+   * The fortunes (Sun, Jupiter, Venus) easing a besiegement (#724), each with the trine or sextile it casts
+   * within 7 degrees (Bonatti, Part 3, Ch. XXI). Present only when `besieged` is true and at least one fortune
+   * eases it; the planet stays `besieged: true` either way. Bodily insertion is not modelled.
+   */
+  readonly besiegementRescuedBy?: readonly BesiegementRescue[];
   /** `undefined` for the Sun itself (no phase/proximity relative to itself), or when exactly conjunct/opposite the Sun, where orientality is not a meaningful distinction (`solarPhaseOf`'s own doc comment). */
   readonly solarPhase?: SolarPhase | undefined;
   readonly solarCondition?: SolarCondition;
@@ -561,6 +569,22 @@ export function conditionRows(
     const stationary = stationStates?.has(bodyId) === true;
     const stationState = stationStates?.get(bodyId);
     const motionScore = motionScoreOf(bodyId, position.longitudeSpeed, stationary, stationState);
+    const besieged =
+      marsPosition !== undefined && saturnPosition !== undefined && !isSun
+        ? isBesieged(position.longitude, marsPosition.longitude, saturnPosition.longitude, orbConfig)
+        : false;
+    // A besieged planet may be eased by a fortune's trine or sextile (#724); the planet itself never eases itself.
+    const besiegementRescuedBy = besieged
+      ? besiegementRescuesOf(
+          position.longitude,
+          data.positions
+            .filter((other) => other.body !== bodyId)
+            .flatMap((other) => {
+              const key = bodyById(other.body)?.key;
+              return key === undefined ? [] : [{ key, longitude: other.longitude }];
+            }),
+        )
+      : [];
     rows.push({
       bodyKey: body.key,
       bodyName: body.name,
@@ -573,10 +597,8 @@ export function conditionRows(
       ...(stationary && stationState !== undefined ? { stationType: stationState } : {}),
       ...(options.motionScore === true && motionScore !== undefined ? { motionScore } : {}),
       ...(housesUsable ? { inHayz: isInHayz(bodyId, position.longitude, data.houses.ascendant, data.sect) } : {}),
-      besieged:
-        marsPosition !== undefined && saturnPosition !== undefined && !isSun
-          ? isBesieged(position.longitude, marsPosition.longitude, saturnPosition.longitude, orbConfig)
-          : false,
+      besieged,
+      ...(besiegementRescuedBy.length > 0 ? { besiegementRescuedBy } : {}),
       ...(isSun || sunPosition === undefined
         ? {}
         : {

@@ -129,6 +129,7 @@ import { interpretationExclusions } from '../chart/object-policy.js';
 import { AstroChartWheel } from './AstroChartWheel.js';
 import { bodyById, bodyByKey } from '../astrology/bodies.js';
 import { SIGNS } from '../astrology/signs.js';
+import { besiegementRescueList } from './besiegement-rescue-label.js';
 import { aspectDisplayName, bodyDisplayName, bodyShortName, signDisplayName } from './astro-names.messages.js';
 import { chartViewMessages } from './ChartView.messages.js';
 import { svgToPngBlob } from './chart-raster.js';
@@ -754,7 +755,12 @@ export function conditionColumns(
       labelTooltip: t.besiegedTooltip,
       valueOf: (row) => row.besieged,
       align: 'center',
-      render: (row) => (row.besieged ? '✓' : ''),
+      render: (row) =>
+        !row.besieged
+          ? ''
+          : row.besiegementRescuedBy === undefined
+            ? '✓'
+            : `✓ (${t.besiegedEased(besiegementRescueList(row.besiegementRescuedBy, locale))})`,
     },
     {
       key: 'solarPhase',

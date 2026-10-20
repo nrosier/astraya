@@ -1106,6 +1106,38 @@ describe('conditionRows (#547)', () => {
     expect(row?.besieged).toBe(true);
   });
 
+  it('leaves besiegementRescuedBy absent for a besieged planet no fortune eases, and for an unbesieged one (#724)', () => {
+    const rows = conditionRows(data);
+    const venus = rows.find((row) => row.bodyKey === 'venus');
+    expect(venus?.besieged).toBe(true);
+    expect(venus).not.toHaveProperty('besiegementRescuedBy');
+    expect(rows.find((row) => row.bodyKey === 'mercury')).not.toHaveProperty('besiegementRescuedBy');
+  });
+
+  it('names the fortunes that ease a besieged planet, which stays besieged (#724)', () => {
+    // Venus at 95 is besieged by Mars (90) and Saturn (100). Jupiter at 215 is 120° ahead (exact trine); the Sun at 35 is 60° behind (exact sextile).
+    const eased: ChartData = {
+      ...data,
+      positions: data.positions.map((p) =>
+        p.body === JUPITER ? position(JUPITER, 215) : p.body === SUN ? position(SUN, 35) : p,
+      ),
+    };
+    const venus = conditionRows(eased).find((row) => row.bodyKey === 'venus');
+    expect(venus?.besieged).toBe(true);
+    expect(venus?.besiegementRescuedBy).toEqual([
+      { bodyKey: 'sun', aspect: 'sextile' },
+      { bodyKey: 'jupiter', aspect: 'trine' },
+    ]);
+  });
+
+  it('does not ease a besiegement with a fortune 7° or more off exact (#724)', () => {
+    const offExact: ChartData = {
+      ...data,
+      positions: data.positions.map((p) => (p.body === JUPITER ? position(JUPITER, 222) : p)),
+    };
+    expect(conditionRows(offExact).find((row) => row.bodyKey === 'venus')).not.toHaveProperty('besiegementRescuedBy');
+  });
+
   it('omits solar phase/condition for the Sun itself, reports it for every other body', () => {
     const rows = conditionRows(data);
     expect(rows.find((row) => row.bodyKey === 'sun')?.solarPhase).toBeUndefined();
