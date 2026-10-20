@@ -98,3 +98,31 @@ describe('findAspectPatterns (#640)', () => {
     expect(findAspectPatterns(aspects, PLANETS)).toEqual([]);
   });
 });
+
+describe('Kite (#741)', () => {
+  const kitesAt = (placed: Readonly<Record<string, number>>, config: OrbConfig = DEFAULT_ORB_CONFIG): AspectPattern[] =>
+    patternsAt(placed, config).filter((pattern) => pattern.kind === 'kite');
+
+  it('finds a Kite: a Grand Trine with a focal body opposed to one vertex and sextile to the other two', () => {
+    // Sun 0, Moon 120, Mars 240 are a Grand Trine. Venus at 60 is sextile Sun (5.5 orb, luminary) and Moon (5.5),
+    // and opposed Mars at 180 (7 orb). Focal first, then the opposed vertex, then the other two.
+    const kites = kitesAt({ sun: 0, moon: 120, mars: 240, venus: 60 });
+    expect(kites).toHaveLength(1);
+    expect(kites[0]?.kind).toBe('kite');
+    expect(keys(kites[0])).toEqual(['venus', 'mars', 'sun', 'moon']);
+  });
+
+  it('is not a Kite when the focal body is just outside the sextile orb', () => {
+    // Venus at 66.5 is 6.5 from the sextile to Sun, past the 5.5 luminary orb. (65 would still be inside it.)
+    expect(kitesAt({ sun: 0, moon: 120, mars: 240, venus: 66.5 })).toEqual([]);
+  });
+
+  it('needs every leg in orb: one sextile pushed out of orb yields no Kite', () => {
+    // Saturn 0, Jupiter 125, Mars 240: a Grand Trine (both trines within 7). Venus at 60 is sextile Saturn (4 orb)
+    // but 65 from Jupiter, outside it. Control: Jupiter at 120 makes the same layout a Kite.
+    expect(kitesAt({ saturn: 0, jupiter: 125, mars: 240, venus: 60 })).toEqual([]);
+    const control = kitesAt({ saturn: 0, jupiter: 120, mars: 240, venus: 60 });
+    expect(control).toHaveLength(1);
+    expect(keys(control[0])).toEqual(['venus', 'mars', 'jupiter', 'saturn']);
+  });
+});
