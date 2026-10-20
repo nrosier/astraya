@@ -26,7 +26,7 @@
  */
 /**
  * @module astrology/aspect-patterns
- * @purpose Detects Stellium, Grand Trine, T-Square, Grand Cross, Yod, Cradle and Mystic Rectangle among a chart's own aspects (#640), per the Astrolog 8.00 documentation.
+ * @purpose Detects Stellium, Grand Trine, T-Square, Grand Cross, Yod, Cradle and Mystic Rectangle among a chart's own aspects (#640), per the Astrolog 8.00 documentation; and Kite (#741), whose shape follows Huber's Aspect Pattern Astrology, not Astrolog.
  * @conventions Pure; only the given bodies (Sun to Pluto by the #640 decision) and only aspects already found within orb. Each shape is listed once, its bodies in a stable order (apex first where it has one).
  * @exports AspectPatternKind, AspectPattern, PATTERN_BODY_KEYS, findAspectPatterns
  */
