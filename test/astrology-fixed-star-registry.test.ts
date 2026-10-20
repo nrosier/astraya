@@ -3,8 +3,10 @@ import {
   REGISTRY_EPOCH_JULIAN_DAY,
   YEMEN_FIXED_STARS,
   YEMEN_STAR_AUTHORITY,
+  normaliseStarQuery,
   precessedLongitude,
   registryLongitude,
+  searchYemenStars,
   yearsSinceEpoch,
   yemenStarLongitudes,
   type RegistryStar,
@@ -143,5 +145,56 @@ describe('YEMEN_STAR_AUTHORITY (#739)', () => {
     expect(YEMEN_STAR_AUTHORITY).toContain('Muẓaffarī');
     expect(YEMEN_STAR_AUTHORITY).toContain('17;11');
     expect(YEMEN_STAR_AUTHORITY).toContain('631 Yazdijird');
+  });
+});
+
+describe('searchYemenStars (#739)', () => {
+  it('normalises diacritics and case', () => {
+    expect(normaliseStarQuery('Muẓaffarī')).toBe('muzaffari');
+  });
+
+  it('trims and collapses whitespace', () => {
+    expect(normaliseStarQuery('  Surrat   al-Faras ')).toBe('surrat al-faras');
+  });
+
+  it('returns nothing for an empty query', () => {
+    expect(searchYemenStars('')).toEqual([]);
+  });
+
+  it('returns nothing for a blank query', () => {
+    expect(searchYemenStars('   ')).toEqual([]);
+  });
+
+  it('finds star 1 by its Arabic name', () => {
+    const ids = searchYemenStars('surrat al-faras').map((s) => s.id);
+    expect(ids).toContain('1');
+  });
+
+  it('finds exactly star 1 by its Peters-Knobel number', () => {
+    const results = searchYemenStars(byId('1').peters_knobel);
+    expect(results).toHaveLength(1);
+    expect(results[0]?.id).toBe('1');
+  });
+
+  it('finds star 1 by its modern id', () => {
+    const modernId = byId('1').modernId;
+    expect(modernId).toBe('α And');
+    const ids = searchYemenStars(modernId ?? '').map((s) => s.id);
+    expect(ids).toContain('1');
+  });
+
+  it('returns nothing for an unknown name', () => {
+    expect(searchYemenStars('no-such-star-xyz')).toEqual([]);
+  });
+
+  it('returns a subset of the table in printed order', () => {
+    const results = searchYemenStars('al-');
+    expect(results.length).toBeGreaterThan(0);
+    let previous = -1;
+    for (const star of results) {
+      const index = YEMEN_FIXED_STARS.indexOf(star);
+      expect(index).toBeGreaterThan(previous);
+      previous = index;
+    }
   });
 });
