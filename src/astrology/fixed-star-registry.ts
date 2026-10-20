@@ -51,10 +51,10 @@ export interface RegistryVariant {
  * The lineage is stated as far as the sources support it. The Muẓaffarī is a
  * reworking of the ʿAlāʾī Zīj for its planetary tables. For the stars, whether
  * al-Fahhād observed them is unverified (Kunitzsch & Langermann, p. 162).
+ * Lineage and epoch, stated on every entry's source (see docs/FIXED_STAR_REGISTRY.md).
  */
-/** Lineage and epoch, stated on every entry's source (see docs/FIXED_STAR_REGISTRY.md). */
 export const YEMEN_STAR_AUTHORITY =
-  "Al-Fārisī, Zīj al-Muẓaffarī (Yemen, c. 1270), part of his work on the ʿAlāʾī Zīj. Kunitzsch & Langermann, 'A Star Table from Medieval Yemen', pp. 167–169. Longitudes are Ptolemy's, precessed by 17;11 (Kunitzsch & Langermann, p. 162). Epoch: 1262 CE Julian, from 16 Ṣafar 660 AH, i.e. 631 Yazdijird (Kunitzsch & Langermann, p. 169).";
+  "Al-Fārisī, Zīj al-Muẓaffarī (Yemen, 13th century), a reworking of the ʿAlāʾī Zīj, per van Dalen (planetary tables). Kunitzsch & Langermann, 'A Star Table from Medieval Yemen', pp. 167–169. Longitudes are Ptolemy's, precessed by 17;11 (Kunitzsch & Langermann, p. 162). Epoch: 1262 CE Julian, from 16 Ṣafar 660 AH, i.e. 631 Yazdijird (Kunitzsch & Langermann, p. 169).";
 
 /** The default conjunction orb, in degrees. An Astraya convention, not a cited value. */
 export const FIXED_STAR_ORB_CONVENTION: Degrees = 1;
@@ -154,7 +154,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     temperaments: [['Mars', 'Mercury']],
     peters_knobel: '362',
     modernId: 'γ Ari',
-    notes: 'latitude hemisphere printed in brackets',
+    notes: 'latitude hemisphere printed in brackets; temperament pair printed in brackets',
     variantLongitudes: [],
   },
   {
@@ -186,7 +186,7 @@ export const YEMEN_FIXED_STARS: readonly RegistryStar[] = [
     temperaments: [['Mars', 'Mercury']],
     peters_knobel: '375',
     modernId: 'α Ari',
-    notes: 'latitude hemisphere in brackets',
+    notes: 'latitude hemisphere in brackets; temperament pair printed in brackets',
     variantLongitudes: [],
   },
   {
@@ -1178,6 +1178,7 @@ export function registryLongitude(star: RegistryStar): Degrees {
 /**
  * General precession in longitude, 5029.0966 arcseconds per Julian century (IAU 1976; Lieske et al. 1977).
  * The citation is recorded but NOT yet checked against a source in docs/references/; see docs/FIXED_STAR_REGISTRY.md, Precession section.
+ * Applied linearly from the epoch; the rate itself varies slowly over centuries, so for spans of several centuries the shift is an approximation of order 0.02°.
  */
 export const PRECESSION_DEG_PER_YEAR = 5029.0966 / 3600 / 100;
 

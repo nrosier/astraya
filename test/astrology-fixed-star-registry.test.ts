@@ -129,6 +129,10 @@ describe('precession helpers (#739)', () => {
     expect(result).toBeLessThan(360);
   });
 
+  it('the epoch is 10 January 1262 Julian, 0h', () => {
+    expect(REGISTRY_EPOCH_JULIAN_DAY).toBe(2182012.5);
+  });
+
   it('measures one Julian year as 365.25 days', () => {
     expect(yearsSinceEpoch(REGISTRY_EPOCH_JULIAN_DAY + 365.25)).toBeCloseTo(1, 6);
   });

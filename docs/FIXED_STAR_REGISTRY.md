@@ -33,7 +33,7 @@ Citation status: the IAU 1976 value is recorded from the published constant and 
 
 ## Fields per entry
 
-`id` (the printed row number, as text, so "33a" and "33c" stay distinct), `arabicName` (as printed, with diacritics), `transliteration`, `sign`, `degree`, `minute`, `latitude` (value and hemisphere, or empty), `magnitude` (integer or empty), `temperaments` (an array; each printed pair kept as one entry, e.g. `["Mars", "Mercury"]`), `peters_knobel`, `modernId` (e.g. "α Aur"), `authority`, `confidence`. `variantLongitudes` holds any folded variant longitudes (row 33 only, from row 33c) and is empty otherwise. Variants are never used for conjunctions.
+`id`, `arabicName`, `signIndex`, `signPrinted`, `degree`, `minute`, `latitudeText`, `latitudeHemisphere`, `magnitudeText`, `temperaments`, `peters_knobel`, `modernId`, `notes`, `variantLongitudes`. Authority is one constant (`YEMEN_STAR_AUTHORITY`) shared by every entry, not a per-entry field. Transliteration is not stored separately; `arabicName` is kept as printed. `variantLongitudes` holds any folded variant longitudes (row 33 only, from row 33c) and is empty otherwise. Variants are never used for conjunctions.
 
 ## Values kept as printed, never corrected
 
