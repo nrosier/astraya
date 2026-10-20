@@ -17,7 +17,17 @@ import reactHooks from 'eslint-plugin-react-hooks';
  *      a model client in the shipped bundle, which must never happen.
  */
 export default tseslint.config(
-  { ignores: ['dist/**', 'coverage/**', 'public/ephe/**', 'src/ephemeris/generated-constants.ts'] },
+  {
+    ignores: [
+      'dist/**',
+      'coverage/**',
+      'test-results/**',
+      'playwright-report/**',
+      '.claude/**',
+      'public/ephe/**',
+      'src/ephemeris/generated-constants.ts',
+    ],
+  },
   js.configs.recommended,
   ...tseslint.configs.strictTypeChecked,
   ...tseslint.configs.stylisticTypeChecked,
