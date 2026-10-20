@@ -9,7 +9,7 @@
  * @module FixedStarRegistry
  * @purpose The baseline fixed-star table from al-Fārisī's Zīj al-Muẓaffarī (Yemen, 13th century), as printed; data plus a longitude helper.
  * @conventions Positions are as printed; no value is corrected. Bracketed or missing values are kept as printed, not inferred. The 1.0° default orb is an Astraya convention, not cited.
- * @exports RegistryStar, YEMEN_FIXED_STARS, YEMEN_STAR_AUTHORITY, FIXED_STAR_ORB_CONVENTION, registryLongitude, yemenStarLongitudes
+ * @exports RegistryStar, YEMEN_FIXED_STARS, YEMEN_STAR_AUTHORITY, FIXED_STAR_ORB_CONVENTION, registryLongitude, yemenStarLongitudes, normaliseStarQuery, searchYemenStars
  */
 import type { Degrees } from '../ephemeris/types.js';
 
@@ -1210,4 +1210,26 @@ export function yemenStarLongitudes(julianDay?: number): ReadonlyMap<string, Deg
       return [star.id, julianDay === undefined ? printed : precessedLongitude(printed, years)];
     }),
   );
+}
+
+/** Search form of a name or id: NFD, combining marks and ʾ/ʿ removed, lower-case, single spaces. Pure. */
+export function normaliseStarQuery(text: string): string {
+  return text
+    .normalize('NFD')
+    .replace(/\p{Mn}/gu, '')
+    .replace(/[ʾʿ]/g, '')
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, ' ');
+}
+
+/** Stars in printed order whose name, modern id, id or Peters-Knobel number matches the query. A blank query returns none. Pure. */
+export function searchYemenStars(query: string): readonly RegistryStar[] {
+  const needle = normaliseStarQuery(query);
+  if (needle === '') return [];
+  return YEMEN_FIXED_STARS.filter((star) => {
+    if (normaliseStarQuery(star.arabicName).includes(needle)) return true;
+    if (star.modernId !== null && normaliseStarQuery(star.modernId).includes(needle)) return true;
+    return normaliseStarQuery(star.id) === needle || normaliseStarQuery(star.peters_knobel) === needle;
+  });
 }
