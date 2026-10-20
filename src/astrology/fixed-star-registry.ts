@@ -48,12 +48,13 @@ export interface RegistryVariant {
 }
 
 /**
- * The table reworks al-Fahhād's Alā'ī Zīj; the lineage and epoch are stated
- * in the authority line below, which every entry's source refers to.
+ * The lineage is stated as far as the sources support it. The Muẓaffarī is a
+ * reworking of the ʿAlāʾī Zīj for its planetary tables. For the stars, whether
+ * al-Fahhād observed them is unverified (Kunitzsch & Langermann, p. 162).
  */
 /** Lineage and epoch, stated on every entry's source (see docs/FIXED_STAR_REGISTRY.md). */
 export const YEMEN_STAR_AUTHORITY =
-  "Al-Fārisī, Zīj al-Muẓaffarī (Yemen, c. 1270), a reworking of al-Fahhād's Alā'ī Zīj; Kunitzsch & Langermann, 'A Star Table from Medieval Yemen', pp. 167–169. Longitudes are Ptolemy's precessed by 17;11. Epoch: 631 Yazdijird (10 January 1262 CE).";
+  "Al-Fārisī, Zīj al-Muẓaffarī (Yemen, c. 1270), part of his work on the ʿAlāʾī Zīj. Kunitzsch & Langermann, 'A Star Table from Medieval Yemen', pp. 167–169. Longitudes are Ptolemy's, precessed by 17;11 (Kunitzsch & Langermann, p. 162). Epoch: 1262 CE Julian, from 16 Ṣafar 660 AH, i.e. 631 Yazdijird (Kunitzsch & Langermann, p. 169).";
 
 /** The default conjunction orb, in degrees. An Astraya convention, not a cited value. */
 export const FIXED_STAR_ORB_CONVENTION: Degrees = 1;
