@@ -185,7 +185,7 @@ both off is byte for byte what it was before they existed. Neither changes the A
 
 - Mean daily speeds (degrees per day): Saturn 0°02'01", Jupiter 0°04'59", Mars 0°31'27", Sun, Venus and Mercury each 0°59'08",
   Moon 13°10'36" — Avelar & Ribeiro (2010), pp. 59–60. Uranus, Neptune and Pluto have no figure in that book: their
-  station detection uses 360 divided by the sidereal period (30688.5, 60182 and 90560 days), a modern figure, not from
+  station detection uses 360 divided by the orbital period from the NASA Planetary Fact Sheet (30589, 59800 and 90560 days), a modern figure, not from
   Avelar & Ribeiro, and they never get a motion score.
 - First and second stations: the first is the station a planet makes in direct motion, before its retrograde phase, and
   the second the one made in retrograde motion, before its direct phase (A&R 2010, p. 61). The type comes from the sign of

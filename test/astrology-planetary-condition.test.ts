@@ -150,8 +150,8 @@ describe('MEAN_DAILY_SPEED (#724, Avelar & Ribeiro 2010, pp. 59-60)', () => {
   });
 
   it('gives Uranus, Neptune and Pluto a modern figure of 360 over the sidereal period, and no figure for other bodies', () => {
-    expect(MEAN_DAILY_SPEED.uranus).toBeCloseTo(360 / 30688.5, 12);
-    expect(MEAN_DAILY_SPEED.neptune).toBeCloseTo(360 / 60182, 12);
+    expect(MEAN_DAILY_SPEED.uranus).toBeCloseTo(360 / 30589, 12);
+    expect(MEAN_DAILY_SPEED.neptune).toBeCloseTo(360 / 59800, 12);
     expect(MEAN_DAILY_SPEED.pluto).toBeCloseTo(360 / 90560, 12);
     expect(meanDailySpeedOf(idOfKey('chiron'))).toBeUndefined();
     expect(meanDailySpeedOf(idOfKey('meanNode'))).toBeUndefined();

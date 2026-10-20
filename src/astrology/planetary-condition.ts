@@ -91,14 +91,14 @@ function dms(degrees: number, minutes: number, seconds: number): Degrees {
 }
 
 /**
- * Sidereal orbital periods in days, for the outer planets' modern mean speed (#724). Pluto's 90560 matches the NASA
- * planetary fact sheet's sidereal period. Uranus's 30688.5 and Neptune's 60182 are the values the project owner
- * chose; the NASA fact sheet gives 30685.4 and 60189.0. Those differ by a few parts in 10,000, which moves station
- * detection only slightly, but the choice is the owner's and is recorded here rather than silently re-sourced.
+ * Orbital periods in days, for the outer planets' modern mean speed (#724): the "Orbital Period (days)" row of the
+ * NASA Planetary Fact Sheet (nssdc.gsfc.nasa.gov/planetary/factsheet/), values as printed there: Uranus 30,589,
+ * Neptune 59,800, Pluto 90,560. They are rounded table figures, so they are used for station detection only, never
+ * for positions. Not from Avelar & Ribeiro, who list no mean speed for these planets.
  */
 const SIDEREAL_PERIOD_DAYS = {
-  uranus: 30688.5,
-  neptune: 60182,
+  uranus: 30589,
+  neptune: 59800,
   pluto: 90560,
 } as const;
 
