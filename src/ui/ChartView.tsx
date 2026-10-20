@@ -1459,7 +1459,9 @@ function renderAspectPatterns(data: ChartData, t: typeof chartViewMessages.en, l
               {t.aspectPatternLine(
                 t.aspectPatternNames[pattern.kind],
                 pattern.bodies.map(name).join(t.aspectPatternSeparator),
-                pattern.kind === 't-square' || pattern.kind === 'yod' ? name(pattern.bodies[0] ?? -1) : undefined,
+                pattern.kind === 't-square' || pattern.kind === 'yod' || pattern.kind === 'kite'
+                  ? name(pattern.bodies[0] ?? -1)
+                  : undefined,
               )}
             </li>
           ))}

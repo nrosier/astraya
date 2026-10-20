@@ -19,8 +19,10 @@
  *   chain's ends are in opposition (half way around), so the chain cannot fold back on itself.
  * - **Mystic Rectangle**: "two trines and two sextiles forming a rectangle": alternating sextile, trine, sextile,
  *   trine around four bodies whose diagonals are the rectangle's two oppositions.
- *
- * Kite is not detected: the source does not list it, and its construction varies between authors.
+ * - **Kite**: a Grand Trine whose focal point is opposed to one vertex and sextile to the other two. Huber, Aspect Pattern
+ *   Astrology (HopeWell, 2019 second edition), p. 152, chapter 5 (two-coloured aspect figures), describes it as five
+ *   blue aspects around one red opposition. The Marks secondary citation (The Art of Chart Interpretation, 1986, ch. 5)
+ *   is not in the repository and is not checked.
  */
 /**
  * @module astrology/aspect-patterns
@@ -32,7 +34,7 @@ import type { Aspect } from './aspects.js';
 import type { BodyId } from '../ephemeris/types.js';
 
 export type AspectPatternKind =
-  'stellium' | 'grand-trine' | 't-square' | 'grand-cross' | 'yod' | 'cradle' | 'mystic-rectangle';
+  'stellium' | 'grand-trine' | 't-square' | 'grand-cross' | 'yod' | 'cradle' | 'mystic-rectangle' | 'kite';
 
 export interface AspectPattern {
   readonly kind: AspectPatternKind;
@@ -88,6 +90,23 @@ export function findAspectPatterns(aspects: readonly Aspect[], bodies: readonly 
   for (const group of combinations(ids, 3)) {
     if (combinations(group, 2).every(([a, b]) => a !== undefined && b !== undefined && is(a, b, 'trine'))) {
       patterns.push({ kind: 'grand-trine', bodies: group });
+    }
+  }
+
+  // Kites: a Grand Trine whose focal point is opposed to one vertex and sextile to the other two.
+  for (const trine of combinations(ids, 3)) {
+    const [p, q, r] = trine;
+    if (p === undefined || q === undefined || r === undefined) continue;
+    if (!combinations(trine, 2).every(([a, b]) => a !== undefined && b !== undefined && is(a, b, 'trine'))) continue;
+    for (const focal of ids) {
+      if (trine.includes(focal)) continue;
+      const vertices = [p, q, r];
+      for (const opposed of vertices) {
+        const others = vertices.filter((body) => body !== opposed);
+        if (is(focal, opposed, 'opposition') && others.every((body) => is(focal, body, 'sextile'))) {
+          patterns.push({ kind: 'kite', bodies: [focal, opposed, ...others] });
+        }
+      }
     }
   }
 
