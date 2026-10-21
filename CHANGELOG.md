@@ -4,6 +4,22 @@ All notable changes to Astraya are recorded here. Versions follow
 [semantic versioning](https://semver.org/), and every milestone ends in a release —
 see [docs/RELEASING.md](docs/RELEASING.md).
 
+## [0.42.4] — 2026-10-21
+
+**Paulus's seven Hermetic lots and the Kite aspect pattern are added, the specialist condition tables gain optional station and besiegement details, and the Kite's sources are stated accurately.**
+
+### Added
+
+- **Paulus's seven Hermetic lots (#740).** Eros, Necessity, Courage, Victory and Nemesis join the lots of Fortune and Spirit, each with its day and night formula and a citation to Paulus (Hellenistic astrology, chapter 16, printed pp. 525–526). The derived points table and the interpretation vocabulary are unchanged.
+- **The Kite aspect pattern (#741).** A Kite is a Grand Trine whose focal point opposes one vertex and sextiles the other two, with every leg inside its own orb and only the ten planets Sun to Pluto counted. The shape is held in a small cited registry that the detector reads. A Kite chart still also lists its Grand Trine.
+- **An optional station window and motion score (#724).** Both are off by default and absent from snapshots, share links and exports while off. With the window on, a planet moving slower than a set fraction of its mean daily speed is marked stationary, as a first or second station when that can be told. The motion score gives direction and speed points to the seven traditional planets and changes no other score. The window threshold is an Astraya convention, and the note on screen, in the PDF and in exports says so.
+- **A besieged planet shows which fortune eases it (#724).** When the Sun, Jupiter or Venus trines or sextiles a besieged planet within 7 degrees, the condition table and the consultation highlights name it. The planet stays besieged, and bodily insertion is not modelled.
+
+### Fixed
+
+- **The Kite's sources are stated accurately (#741).** The chart note now says that only the Kite's shape follows Huber (Aspect Pattern Astrology, 2019 second edition, p. 152), and that the orbs, the apex and the body set are Astraya's choices. It no longer says that Astrolog defines the Kite.
+- **Uranus and Neptune use the NASA fact sheet's orbital periods (#724)** when detecting stations.
+
 ## [0.42.3] — 2026-10-19
 
 **Objects can be left out of the written report on their own, the object checkboxes lay out cleanly, and the specialist techniques say what they do not cover.**
