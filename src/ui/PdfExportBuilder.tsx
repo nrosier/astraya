@@ -131,7 +131,6 @@ export function PdfExportBuilder({ embedded = false }: { readonly embedded?: boo
     ...EMPTY_SELECTION,
     interpretation: { ...EMPTY_SELECTION.interpretation, sabianSymbols: showDegreeSymbol },
   }));
-  const [aiConsent, setAiConsent] = useState(false);
   const [status, setStatus] = useState<BuildStatus>({ kind: 'idle' });
   const id = useId();
 
@@ -376,7 +375,6 @@ export function PdfExportBuilder({ embedded = false }: { readonly embedded?: boo
           settings: extendedSettings,
           rulership,
           locale,
-          aiConsent,
           people: state.people,
           orbLibrary,
           orbSources,
@@ -384,9 +382,6 @@ export function PdfExportBuilder({ embedded = false }: { readonly embedded?: boo
         ct,
         t,
       );
-      // Consent authorizes one specific build, not a standing preference (ADR 0003) — spent the
-      // moment the request goes out, same rule the AI-customised interpretation panel follows.
-      setAiConsent(false);
       const { renderPdfPlan } = await import('./pdf-export-render.js');
       const { downloadBlob } = await import('./download.js');
       const { blob, filename } = await renderPdfPlan(plan);
@@ -396,8 +391,6 @@ export function PdfExportBuilder({ embedded = false }: { readonly embedded?: boo
       setStatus({ kind: 'error', message: error instanceof Error ? error.message : String(error) });
     }
   }
-
-  const needsAiConsentButMissing = selection.interpretation.aiCustomised && !aiConsent;
 
   const Frame = embedded ? 'div' : 'main';
   return (
@@ -461,28 +454,6 @@ export function PdfExportBuilder({ embedded = false }: { readonly embedded?: boo
               }));
             }}
           />
-        )}
-        <Checkbox
-          label={t.interpretationAiLabel}
-          checked={selection.interpretation.aiCustomised}
-          onChange={(value) => {
-            setSelection((current) => ({
-              ...current,
-              interpretation: { ...current.interpretation, aiCustomised: value },
-            }));
-          }}
-        />
-        {selection.interpretation.aiCustomised && (
-          <>
-            <p className="hint">{t.interpretationAiHint}</p>
-            <Checkbox
-              label={t.interpretationAiConsentLabel}
-              checked={aiConsent}
-              onChange={(value) => {
-                setAiConsent(value);
-              }}
-            />
-          </>
         )}
       </fieldset>
 
@@ -1004,7 +975,7 @@ export function PdfExportBuilder({ embedded = false }: { readonly embedded?: boo
       <div className="sticky-actions">
         <Button
           variant="primary"
-          disabled={person === undefined || empty || status.kind === 'building' || needsAiConsentButMissing}
+          disabled={person === undefined || empty || status.kind === 'building'}
           aria-describedby={`${id}-status`}
           onClick={() => {
             void handleBuild();

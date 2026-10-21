@@ -118,7 +118,9 @@ import type { BirthMomentInput } from '../time/types.js';
 import { assembleReport, type ReportParagraph } from '../interpretation/report.js';
 import { resolvePlacementText } from '../interpretation/compose.js';
 import { loadRuntimeCorpus } from '../interpretation/corpus-client.js';
-import { generateTier2Interpretation, toTier2ChartPayload } from '../interpretation/tier2-client.js';
+import { getSavedInterpretation, type SavedInterpretationDetail } from '../interpretation/tier2-client.js';
+import { kindLabel } from './result-basis-label.js';
+import { formatSavedTime } from './saved-time.js';
 import {
   chartRulerKeysOf,
   filterTransits,
@@ -290,8 +292,8 @@ export interface PdfPlanContext {
   readonly settings: ExtendedSettings;
   readonly rulership: RulershipChoice;
   readonly locale: Locale;
-  /** Spent on this one build, per `generateTier2Interpretation`'s own consent rule (ADR 0003) — never a standing preference. */
-  readonly aiConsent: boolean;
+  /** Reopens one stored interpretation by id (#759); defaults to `getSavedInterpretation`. Injectable for tests. */
+  readonly savedInterpretation?: (id: string) => Promise<SavedInterpretationDetail>;
   /** Injectable for the same reason `corpus-client.ts`'s own `fetchImpl` is — testability without a real network. */
   readonly corpusFetch?: typeof fetch;
   /** Every stored person, so a synastry/composite section's own `partnerId` can be resolved; absent (or missing the id) if neither section is in the selection. */
@@ -1202,19 +1204,19 @@ async function buildInterpretationSections(
   errors: string[],
 ): Promise<readonly (PdfTextSectionPlan | PdfFieldsSectionPlan)[]> {
   const { person, provider, settings, rulership, locale, corpusFetch } = context;
-  if (person.moment === undefined || (!selection.base && !selection.aiCustomised)) return [];
-  // The same natal chart the Charts page and the Report view read (#718): the confirmed settings,
-  // rulers and custom points — never a default-settings recompute under the same heading.
-  const chart = await computeChartData(
-    person.moment,
-    provider,
-    sectionCalculationOptions('natal', person, settings, rulership),
-  );
-  // Objects the practitioner left out of the written reading (#721): the PDF reads what the Report page reads.
-  const exclude = interpretationExclusions(settings.objectPolicies);
+  const ids = selection.aiInterpretationIds;
+  if (!selection.base && ids.length === 0) return [];
   const sections: (PdfTextSectionPlan | PdfFieldsSectionPlan)[] = [];
-
-  if (selection.base) {
+  if (selection.base && person.moment !== undefined) {
+    // The same natal chart the Charts page and the Report view read (#718): the confirmed settings,
+    // rulers and custom points — never a default-settings recompute under the same heading.
+    const chart = await computeChartData(
+      person.moment,
+      provider,
+      sectionCalculationOptions('natal', person, settings, rulership),
+    );
+    // Objects the practitioner left out of the written reading (#721): the PDF reads what the Report page reads.
+    const exclude = interpretationExclusions(settings.objectPolicies);
     // The chart's headline facts ahead of the reading, the same rows the Report shows (#691).
     sections.push({
       kind: 'fields',
@@ -1246,24 +1248,18 @@ async function buildInterpretationSections(
     }
   }
 
-  if (selection.aiCustomised) {
-    if (!context.aiConsent) {
-      errors.push('Interpretation (AI-customised): skipped — not consented to for this build.');
-    } else {
-      try {
-        const result = await generateTier2Interpretation({
-          mode: 'freeform',
-          chartData: toTier2ChartPayload(chart, exclude),
-          locale,
-        });
-        sections.push({
-          kind: 'text',
-          heading: pt.aiNarrativeHeading,
-          groups: ungrouped(result.map((section) => `${section.heading}: ${section.body}`)),
-        });
-      } catch (error) {
-        errors.push(`Interpretation (AI-customised): ${error instanceof Error ? error.message : String(error)}`);
-      }
+  const fetchSaved = context.savedInterpretation ?? getSavedInterpretation;
+  for (const id of ids) {
+    try {
+      const saved = await fetchSaved(id);
+      const kind = saved.kind === null ? saved.mode : kindLabel(saved.kind, locale);
+      sections.push({
+        kind: 'text',
+        heading: `${pt.aiNarrativeHeading} — ${kind}, ${formatSavedTime(saved.createdAt, locale)}`,
+        groups: ungrouped(saved.sections.map((section) => `${section.heading}: ${section.body}`)),
+      });
+    } catch (error) {
+      errors.push(`Interpretation (saved ${id}): ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
