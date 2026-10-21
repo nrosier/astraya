@@ -60,8 +60,7 @@ export function PdfAiInterpretationPicker({
     };
   }, [signedIn]);
 
-  const offered =
-    state.status === 'ready' ? state.entries.filter((entry) => entry.locale === locale) : [];
+  const offered = state.status === 'ready' ? state.entries.filter((entry) => entry.locale === locale) : [];
   const byId = new Map(offered.map((entry) => [entry.id, entry]));
   const chosen = selectedIds.flatMap((id) => {
     const entry = byId.get(id);

@@ -71,6 +71,8 @@ import { chartViewMessages } from './ChartView.messages.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { useLocale } from './locale.js';
 import { BackLink } from './BackLink.js';
+import { PdfAiInterpretationPicker } from './PdfAiInterpretationPicker.js';
+import { useSessionUserOrUndefined } from './session-context.js';
 import { useShowDegreeSymbol } from './degree-symbol-setting.js';
 import { useMessages } from './messages.js';
 import { ordered } from './people-list.js';
@@ -111,6 +113,7 @@ export function PdfExportBuilder({ embedded = false }: { readonly embedded?: boo
   const t = useMessages(pdfExportMessages);
   const ct = useMessages(chartViewMessages);
   const [locale] = useLocale();
+  const user = useSessionUserOrUndefined();
   const [rulership] = useRulershipChoice();
   // The calculation settings the Charts page is drawing with (#582): a PDF chart must be that chart.
   const [extendedSettings] = useExtendedSettings();
@@ -455,6 +458,17 @@ export function PdfExportBuilder({ embedded = false }: { readonly embedded?: boo
             }}
           />
         )}
+        <PdfAiInterpretationPicker
+          selectedIds={selection.interpretation.aiInterpretationIds}
+          onChange={(ids) => {
+            setSelection((current) => ({
+              ...current,
+              interpretation: { ...current.interpretation, aiInterpretationIds: ids },
+            }));
+          }}
+          locale={locale}
+          signedIn={user !== undefined}
+        />
       </fieldset>
 
       <Disclosure title={t.chartsLegend} showLabel={t.showSection} hideLabel={t.hideSection} defaultOpen>

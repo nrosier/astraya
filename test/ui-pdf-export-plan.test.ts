@@ -291,7 +291,7 @@ describe('buildPdfPlan', () => {
       locale: 'en',
       createdAt: '2026-03-10T16:30:00.000Z',
       description: null,
-      kind: 'ai-interpretation',
+      kind: 'whole-chart',
       basis: null,
       sections: [{ heading: `Heading ${id}`, body: `Body ${id}` }],
     });
