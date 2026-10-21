@@ -19,10 +19,12 @@
  *   chain's ends are in opposition (half way around), so the chain cannot fold back on itself.
  * - **Mystic Rectangle**: "two trines and two sextiles forming a rectangle": alternating sextile, trine, sextile,
  *   trine around four bodies whose diagonals are the rectangle's two oppositions.
- * - **Kite**: a Grand Trine whose focal point is opposed to one vertex and sextile to the other two. Huber, Aspect Pattern
- *   Astrology (HopeWell, 2019 second edition), p. 152, chapter 5 (two-coloured aspect figures), describes it as five
- *   blue aspects around one red opposition. The Marks secondary citation (The Art of Chart Interpretation, 1986, ch. 5)
- *   is not in the repository and is not checked.
+ * - **Kite**: a Grand Trine with one opposition and two sextiles. Huber, Aspect Pattern Astrology (HopeWell, 2019 second
+ *   edition), p. 152, describes the shape as five blue aspects around one red opposition. Huber calls the planet at the
+ *   Kite's head the peak planet (pp. 152–153). The apex, defined in aspect terms as the focal point opposed to one vertex
+ *   and sextile to the other two, is Astraya's reading of that figure, not a rule Huber states. The Grand Trine is listed
+ *   alongside the Kite; whether it should be is an open astrologer question (#741). Marks, The Art of Chart Interpretation
+ *   (CRCS, 1986), p. 40, gives the same shape in one sentence and states no sextiles or orb rule.
  */
 /**
  * @module astrology/aspect-patterns

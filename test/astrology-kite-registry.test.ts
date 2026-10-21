@@ -60,4 +60,10 @@ describe('kite registry', () => {
       expect(definition.orbPolicy).toContain('own orb');
     }
   });
+
+  it('labels the per-leg orb rule as an Astraya design choice', () => {
+    const huber = KITE_DEFINITIONS.find((definition) => definition.id === 'huber-2019');
+    expect(huber).toBeDefined();
+    expect(huber?.orbPolicy).toContain('Astraya design choice');
+  });
 });

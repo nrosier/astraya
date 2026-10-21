@@ -37,8 +37,8 @@ export const KITE_DEFINITIONS: readonly KiteDefinition[] = [
       { aspect: 'sextile', between: 'focal-vertex', count: 2 },
     ],
     orbPolicy:
-      'Every leg must be within its own orb under the active orb configuration (the same rule as the other aspect patterns). No separate kite orb.',
+      'Astraya design choice, not stated by Huber. Huber uses his own orb table (pp. 24, 122), which Astraya does not model. Every leg must be within its own orb under the active orb configuration, as for the other aspect patterns. No separate Kite orb.',
     authority:
-      'Huber, Bruno and Louise, with Michael Alexander Huber, Aspect Pattern Astrology (HopeWell, 2019 second edition; first English edition 2005; German original 1999), p. 152, chapter 5, two-coloured aspect figures: five blue aspects around one red opposition. Checked against the 2019 page image, held locally in docs/references/ (git-ignored, not committed).',
+      'Huber, Bruno and Louise, with Michael Alexander Huber, Aspect Pattern Astrology (HopeWell, 2019 second edition; first English edition 2005; German original 1999), chapter 5, two-coloured aspect figures. The Kite shape is five blue aspects around one red opposition, p. 152. The colour key and the split are on p. 124 (sextile = Venus, trine = Jupiter, opposition = Saturn), p. 140 (the Small Talent Triangle is a trine facing the core with two sextiles) and p. 153 ("Venus aspects 2x, Jupiter aspects 3x and the red Saturn aspects (opposition)"). Blue is trine or sextile; red is opposition. Checked against the 2019 page image, held locally in docs/references/ (git-ignored, not committed).',
   },
 ];
