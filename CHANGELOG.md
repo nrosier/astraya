@@ -14,7 +14,6 @@ see [docs/RELEASING.md](docs/RELEASING.md).
 - **The Kite aspect pattern (#741).** A Kite is a Grand Trine whose focal point opposes one vertex and sextiles the other two, with every leg inside its own orb and only the ten planets Sun to Pluto counted. The shape is held in a small cited registry that the detector reads. A Kite chart still also lists its Grand Trine.
 - **An optional station window and motion score (#724).** Both are off by default and absent from snapshots, share links and exports while off. With the window on, a planet moving slower than a set fraction of its mean daily speed is marked stationary, as a first or second station when that can be told. The motion score gives direction and speed points to the seven traditional planets and changes no other score. The window threshold is an Astraya convention, and the note on screen, in the PDF and in exports says so.
 - **A besieged planet shows which fortune eases it (#724).** When the Sun, Jupiter or Venus trines or sextiles a besieged planet within 7 degrees, the condition table and the consultation highlights name it. The planet stays besieged, and bodily insertion is not modelled.
-- **A Yemen fixed-star registry as data (#739).** A cited registry of the stars with a precession correction and a name search that ignores case, diacritics and the ʾ and ʿ marks. It is not yet shown anywhere in the app.
 
 ### Fixed
 
