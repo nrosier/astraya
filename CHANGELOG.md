@@ -4,6 +4,18 @@ All notable changes to Astraya are recorded here. Versions follow
 [semantic versioning](https://semver.org/), and every milestone ends in a release —
 see [docs/RELEASING.md](docs/RELEASING.md).
 
+## [0.42.5] — 2026-10-22
+
+**The PDF builder now offers only the AI interpretations you have already saved, and the saved interpretation picker keeps its label readable on hover.**
+
+### Added
+
+- **Saved AI interpretations in the PDF (#759).** The PDF builder lists the AI interpretations you have stored, offering only those in the PDF's language, and you choose which to include and in what order. The PDF's AI section is built only from those stored texts, and nothing is generated when the PDF is made. The old AI consent checkbox is removed.
+
+### Fixed
+
+- **Disclosure triggers keep a readable label on hover (#759).** Hovering a disclosure trigger no longer drops the accent label below the 4.5:1 contrast ratio, which cleared the accessibility violation in the saved interpretation picker at 768px.
+
 ## [0.42.4] — 2026-10-21
 
 **Paulus's seven Hermetic lots and the Kite aspect pattern are added, the specialist condition tables gain optional station and besiegement details, and the Kite's sources are stated accurately.**
