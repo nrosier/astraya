@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /**
- * The sign-in panel (#651): when single sign-on is configured it opens on a choice between a local account and
- * Authentik, and each choice shows only its own path. Without single sign-on there is no choice to make, and the
+ * The sign-in panel (#651, #765): when single sign-on is configured it shows the Authentik button and the local
+ * form together on one screen, with no choice step. Without single sign-on there is no choice to make, and the
  * panel is the plain username and password form it has always been.
  */
 import { act } from 'react';
@@ -94,58 +94,45 @@ afterEach(() => {
 });
 
 describe('sign-in panel with single sign-on configured', () => {
-  it('opens on the choice, with no credentials fields and no Authentik button yet', async () => {
+  it('opens on one screen with the Authentik button and the local form together', async () => {
     const container = await mount(SSO);
     await openPanel(container);
-    const group = container.querySelector('[role="radiogroup"]');
-    expect(group?.getAttribute('aria-label')).toBe('How do you want to sign in?');
-    expect(group?.textContent).toContain('Local account');
-    expect(group?.textContent).toContain('Authentik');
-    expect(container.querySelector('input[type="password"]')).toBeNull();
-    expect(button(container, /Continue to Authentik/)).toBeUndefined();
-  });
-
-  it('shows only the username and password form after picking a local account, with a way back', async () => {
-    const container = await mount(SSO);
-    await openPanel(container);
-    const local = Array.from(container.querySelectorAll('input[type="radio"]'))[0] as HTMLInputElement;
-    await act(async () => {
-      local.click();
-      await Promise.resolve();
-    });
+    expect(container.querySelector('dialog[open]')).not.toBeNull();
+    expect(button(container, /Continue to Authentik/)).toBeDefined();
+    expect(container.querySelector('input[autocomplete="username"]')).not.toBeNull();
     expect(container.querySelector('input[type="password"]')).not.toBeNull();
     expect(container.querySelector('[role="radiogroup"]')).toBeNull();
-    expect(button(container, /Continue to Authentik/)).toBeUndefined();
-    await act(async () => {
-      button(container, /Choose another way/)?.click();
-      await Promise.resolve();
-    });
-    expect(container.querySelector('[role="radiogroup"]')).not.toBeNull();
-    expect(container.querySelector('input[type="password"]')).toBeNull();
   });
 
-  it('shows no credentials fields after picking Authentik, only a button that says where it goes', async () => {
+  it('submits the typed credentials from the single screen', async () => {
     const container = await mount(SSO);
     await openPanel(container);
-    const sso = Array.from(container.querySelectorAll('input[type="radio"]'))[1] as HTMLInputElement;
+    const user = field(container, 'input[autocomplete="username"]');
+    const pass = field(container, 'input[type="password"]');
     await act(async () => {
-      sso.click();
+      type(user, 'ada');
+      type(pass, 'secret-pass');
       await Promise.resolve();
     });
-    expect(container.querySelector('input[type="password"]')).toBeNull();
-    expect(container.querySelector('input[type="text"]')).toBeNull();
+    await act(async () => {
+      container.querySelector<HTMLButtonElement>('button[type="submit"]')?.click();
+      await Promise.resolve();
+    });
+    expect(signIn).toHaveBeenCalledWith('ada', 'secret-pass');
+  });
+
+  it('shows the Authentik button with its destination, next to the local form', async () => {
+    const container = await mount(SSO);
+    await openPanel(container);
     expect(container.textContent).toContain('You will go to Authentik to sign in');
     expect(button(container, 'Continue to Authentik')).toBeDefined();
+    expect(container.querySelector('input[autocomplete="username"]')).not.toBeNull();
+    expect(container.querySelector('input[type="password"]')).not.toBeNull();
   });
 
   it('starts the redirect to the authorization endpoint with the PKCE fields', async () => {
     const container = await mount(SSO);
     await openPanel(container);
-    const sso = Array.from(container.querySelectorAll('input[type="radio"]'))[1] as HTMLInputElement;
-    await act(async () => {
-      sso.click();
-      await Promise.resolve();
-    });
     const submitted: { action: string; fields: Record<string, string> }[] = [];
     vi.spyOn(HTMLFormElement.prototype, 'submit').mockImplementation(function (this: HTMLFormElement) {
       submitted.push({

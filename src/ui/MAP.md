@@ -10,7 +10,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `astro-glossary.messages.ts` — Astrology glossary catalogue (en/nl name + definition per term), the one source for every GlossaryTerm. Deps: none.
 - `GlossaryTerm.tsx` — Inline `GlossaryTerm` and the per-screen `GlossaryTerms` list, opening definitions through the shared Tooltip. Deps: `astro-glossary.messages`, `GlossaryTerm.messages`, `primitives/Tooltip`.
 - `GlossaryTerm.messages.ts` — en/nl label of the terms list. Deps: none.
-- `AccountPanel.tsx` + `AccountPanel.messages.ts` — Sign-in (a choice of local account or SSO when SSO is configured, #651)/out + account adoption + local-data removal. Deps: `session-context`, `sync/auth-client`, `oidc-pkce`.
+- `AccountPanel.tsx` + `AccountPanel.messages.ts` — Sign-in (a centred dialog with the Authentik button, when SSO is configured, #651, and the local form on one screen, #765)/out + account adoption + local-data removal. Deps: `session-context`, `sync/auth-client`, `oidc-pkce`, `primitives/StagedDialog`.
 - `AdminNav.tsx` + `AdminNav.messages.ts` — Admin tab strip (users/usage/corpus/candidates). Deps: `./admin-nav`.
 - `AdminPanel.tsx` + `AdminPanel.messages.ts` — User CRUD + AI-usage reporting. Deps: `sync/admin-client`, `session-context`.
 - `App.tsx` + `App.messages.ts` — Root router + sticky header + lazy-loading boundary. Deps: `route`, `session-context`, `store-context`, `person-screens`.

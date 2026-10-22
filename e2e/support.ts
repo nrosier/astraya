@@ -70,9 +70,10 @@ export async function createPerson(page: Page, input: PersonInput): Promise<void
  */
 export async function signIn(page: Page, username: string, password: string): Promise<void> {
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
-  await page.getByLabel('Username', { exact: true }).fill(username);
-  await page.getByLabel('Password', { exact: true }).fill(password);
-  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  await dialog.getByLabel('Username', { exact: true }).fill(username);
+  await dialog.getByLabel('Password', { exact: true }).fill(password);
+  await dialog.getByRole('button', { name: 'Sign in', exact: true }).click();
   const adopt = page.getByRole('button', { name: 'Add it to my account', exact: true });
   const signedIn = page.getByText(`(logged in as: ${username})`, { exact: true });
   await expect(adopt.or(signedIn)).toBeVisible();

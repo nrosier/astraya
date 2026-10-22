@@ -41,40 +41,25 @@ test.afterAll(async () => {
   rmSync(dir, { recursive: true, force: true });
 });
 
-test('the panel opens on a choice, and each path shows only its own controls', async ({ page }) => {
+test('the sign-in dialog shows both options on one screen', async ({ page }) => {
   test.setTimeout(60_000);
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
 
   const dialog = page.getByRole('dialog');
-  const choices = dialog.getByRole('radiogroup', { name: 'How do you want to sign in?' });
-  await expect(choices).toBeVisible();
-  await expect(choices.getByRole('radio', { name: /Local account/ })).toBeVisible();
-  await expect(choices.getByRole('radio', { name: /Authentik/ })).toBeVisible();
-  // Before choosing there are no credentials to type and no redirect to start.
-  await expect(dialog.getByLabel('Password', { exact: true })).toHaveCount(0);
-  await expect(dialog.getByRole('button', { name: 'Continue to Authentik' })).toHaveCount(0);
-  expect((await new AxeBuilder({ page }).include('.accountpanel-popover').analyze()).violations).toEqual([]);
-
-  await choices.getByRole('radio', { name: /Local account/ }).click();
-  await expect(dialog.getByLabel('Username', { exact: true })).toBeFocused();
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole('button', { name: 'Continue to Authentik' })).toBeVisible();
+  await expect(dialog.getByLabel('Username', { exact: true })).toBeVisible();
   await expect(dialog.getByLabel('Password', { exact: true })).toBeVisible();
-  await expect(dialog.getByRole('button', { name: 'Continue to Authentik' })).toHaveCount(0);
-  expect((await new AxeBuilder({ page }).include('.accountpanel-popover').analyze()).violations).toEqual([]);
-
-  await dialog.getByRole('button', { name: /Choose another way/ }).click();
-  await expect(choices).toBeVisible();
-  await choices.getByRole('radio', { name: /Authentik/ }).click();
-  await expect(dialog.getByLabel('Password', { exact: true })).toHaveCount(0);
-  await expect(dialog.getByText(/never sees your Authentik password/)).toBeVisible();
-  expect((await new AxeBuilder({ page }).include('.accountpanel-popover').analyze()).violations).toEqual([]);
+  await expect(dialog.getByRole('radiogroup')).toHaveCount(0);
+  await expect(dialog.getByLabel('Username', { exact: true })).toBeFocused();
+  expect((await new AxeBuilder({ page }).include('dialog.signin-card').analyze()).violations).toEqual([]);
 });
 
 test('Continue to Authentik goes to the issuer’s authorization endpoint with a PKCE challenge', async ({ page }) => {
   test.setTimeout(60_000);
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
-  await page.getByRole('radio', { name: /Authentik/ }).click();
   const navigation = page.waitForRequest((request) => request.url().includes('/authorize'));
   await page.getByRole('button', { name: 'Continue to Authentik' }).click();
   const url = new URL((await navigation).url());
@@ -86,12 +71,60 @@ test('Continue to Authentik goes to the issuer’s authorization endpoint with a
   expect(url.searchParams.get('scope')).toBe('openid profile');
 });
 
-test('the panel fits on a phone with the choice showing', async ({ page }) => {
+test('the sign-in dialog fits on a phone', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
-  const box = await page.locator('.accountpanel-popover').boundingBox();
+  const box = await page.getByRole('dialog').boundingBox();
   expect(box).not.toBeNull();
   expect((box?.x ?? -1) >= 0).toBe(true);
   expect((box?.x ?? 0) + (box?.width ?? 0) <= 390).toBe(true);
+});
+
+test('the sign-in dialog is centred in the viewport', async ({ page }) => {
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  const box = await page.getByRole('dialog').boundingBox();
+  const viewport = page.viewportSize();
+  if (box === null || viewport === null) throw new Error('not laid out');
+  expect(Math.abs(box.x + box.width / 2 - viewport.width / 2)).toBeLessThanOrEqual(1);
+  expect(Math.abs(box.y + box.height / 2 - viewport.height / 2)).toBeLessThanOrEqual(1);
+});
+
+test('Escape closes the dialog and returns focus to the Sign in pill', async ({ page }) => {
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  const pill = page.getByRole('button', { name: 'Sign in', exact: true }).first();
+  await pill.click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(dialog).toBeHidden();
+  await expect(pill).toBeFocused();
+});
+
+test('a backdrop press closes the dialog', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  await page.getByRole('button', { name: 'Sign in', exact: true }).first().click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toBeVisible();
+  // Press well outside the card, which is centred, so this lands on the dialog element's backdrop.
+  await page.mouse.click(5, 5);
+  await expect(dialog).toBeHidden();
+});
+
+test('the password toggle switches the field between password and text, and its label flips', async ({ page }) => {
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  await page.getByRole('button', { name: 'Sign in', exact: true }).first().click();
+  const dialog = page.getByRole('dialog');
+  const password = dialog.getByLabel('Password', { exact: true });
+  await expect(password).toHaveAttribute('type', 'password');
+  await expect(password).toHaveAttribute('autocomplete', 'current-password');
+  const toggle = dialog.getByRole('button', { name: 'Show password', exact: true });
+  await expect(toggle).toHaveAttribute('aria-controls', (await password.getAttribute('id')) ?? '');
+  await toggle.click();
+  await expect(password).toHaveAttribute('type', 'text');
+  await expect(dialog.getByRole('button', { name: 'Hide password', exact: true })).toBeVisible();
+  await dialog.getByRole('button', { name: 'Hide password', exact: true }).click();
+  await expect(password).toHaveAttribute('type', 'password');
 });
