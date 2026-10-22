@@ -14,7 +14,13 @@ import { join } from 'node:path';
 import { randomBytes } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
-import { generateTier2Interpretation, Tier2Error, toTier2ChartPayload } from '../src/interpretation/tier2-client.ts';
+import {
+  deleteSavedInterpretation,
+  generateTier2Interpretation,
+  listSavedInterpretations,
+  Tier2Error,
+  toTier2ChartPayload,
+} from '../src/interpretation/tier2-client.ts';
 import { bodyByKey } from '../src/astrology/bodies.ts';
 import type { ChartData } from '../src/domain/chart-compute.ts';
 import type { BodyId, HousePositions } from '../src/ephemeris/types.ts';
@@ -155,6 +161,32 @@ async function setupAdmin(username = 'alice', password = 'correct-horse-battery'
   });
   if (!response.ok) throw new Error(`setup failed with status ${String(response.status)}`);
 }
+
+describe('deleteSavedInterpretation', () => {
+  it('resolves on a successful delete, and the entry is gone from the list afterwards', async () => {
+    await setupAdmin();
+    await generateTier2Interpretation({
+      mode: 'grounded',
+      placementKeys: ['dignity-state:sun:ruler'],
+      customPrompt: 'warm and encouraging',
+      locale: 'en',
+    });
+    const [saved] = await listSavedInterpretations();
+    expect(saved).toBeDefined();
+
+    await expect(deleteSavedInterpretation(saved?.id ?? '')).resolves.toBeUndefined();
+    expect(await listSavedInterpretations()).toEqual([]);
+  });
+
+  it('throws a Tier2Error on a 404 for an id that does not exist', async () => {
+    await setupAdmin();
+    await expect(deleteSavedInterpretation('not-a-real-id')).rejects.toMatchObject({
+      name: 'Tier2Error',
+      status: 404,
+      message: 'No saved interpretation with that id.',
+    });
+  });
+});
 
 describe('toTier2ChartPayload', () => {
   it('flattens positions, houses, and aspects into the wire shape', () => {
