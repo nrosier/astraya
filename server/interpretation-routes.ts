@@ -85,7 +85,9 @@ import {
   listInterpretationResults,
   getInterpretationResult,
   deleteInterpretationResult,
+  type ResultsFilter,
 } from './interpretation/results.ts';
+import { isPersonId } from '../src/domain/id.ts';
 import { CORPUS_LOCALES, parsePlacementKey, validateKey, type Locale } from '../src/interpretation/schema.ts';
 import { resolvePlacementText } from '../src/interpretation/compose.ts';
 import { CORPUS } from '../src/interpretation/index.ts';
@@ -130,6 +132,8 @@ interface GenerateBody {
   readonly customPrompt?: unknown;
   readonly focusContext?: unknown;
   readonly locale?: unknown;
+  /** The person the page was generated for (#768); required, and only a filter for the saved result. A synastry or composite page files under its primary person. Never reaches the prompt or the basis. */
+  readonly personId?: unknown;
 }
 
 type ChartKind = 'natal' | 'composite';
@@ -500,6 +504,13 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
       if (!isLocale(locale)) {
         return reply.code(400).send({ error: `locale must be one of ${CORPUS_LOCALES.join(', ')}` });
       }
+      const { personId } = request.body;
+      if (personId === undefined) {
+        return reply.code(400).send({ error: 'personId is required: the person this interpretation is for' });
+      }
+      if (!isPersonId(personId)) {
+        return reply.code(400).send({ error: 'personId must be a person id' });
+      }
 
       let facts: string[] = [];
       let focusContext: FocusContext | undefined;
@@ -680,7 +691,7 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
       if (resultsKey) {
         saveInterpretationResult(
           db,
-          { userId, mode, locale, sections: result.sections, description, basis },
+          { userId, mode, locale, sections: result.sections, description, basis, personId },
           resultsKey,
         );
       }
@@ -691,12 +702,26 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
 
   // Lists this user's own past generations (metadata only — mode/locale/when, never the text
   // itself, so this works even when ASTRAYA_ENCRYPTION_KEY has since been removed or rotated).
-  app.get(
+  // Exactly one of `?personId=` (one person's results) or `?unlinked=1` (older results saved
+  // before a person was recorded) is required (#768); there is no whole-account list.
+  app.get<{ Querystring: { personId?: unknown; unlinked?: unknown } }>(
     '/api/interpretation/results',
     { preHandler: requireUser(db), config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
     async (request, reply) => {
       const userId = authenticatedUserId(request);
-      return reply.send({ results: listInterpretationResults(db, userId, loadEncryptionKey() ?? undefined) });
+      const { personId, unlinked } = request.query;
+      if ((personId === undefined) === (unlinked === undefined)) {
+        return reply.code(400).send({ error: 'Pass exactly one of personId or unlinked=1' });
+      }
+      let filter: ResultsFilter;
+      if (personId !== undefined) {
+        if (!isPersonId(personId)) return reply.code(400).send({ error: 'personId must be a person id' });
+        filter = { personId };
+      } else {
+        if (unlinked !== '1') return reply.code(400).send({ error: 'unlinked must be 1' });
+        filter = { unlinked: true };
+      }
+      return reply.send({ results: listInterpretationResults(db, userId, filter, loadEncryptionKey() ?? undefined) });
     },
   );
 

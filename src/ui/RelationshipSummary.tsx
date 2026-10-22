@@ -97,11 +97,14 @@ export function RelationshipSummary({
   nameA,
   nameB,
   locale,
+  personId,
 }: {
   readonly data: SynastryData;
   readonly nameA: string;
   readonly nameB: string;
   readonly locale: Locale;
+  /** The primary person of the pairing (#768): the reading lists and saves under them. Absent (until every caller passes it), nothing is listed or generated. */
+  readonly personId?: string | undefined;
 }): React.JSX.Element {
   const t = useMessages(relationshipSummaryMessages);
   const shared = useMessages(sharedMessages);
@@ -116,11 +119,14 @@ export function RelationshipSummary({
   const reasonId = useId();
 
   useEffect(() => {
-    if (user === undefined) return;
-    void listSavedInterpretations()
+    if (user === undefined || personId === undefined) {
+      setSaved([]);
+      return;
+    }
+    void listSavedInterpretations({ personId })
       .then(setSaved)
       .catch(() => undefined);
-  }, [user]);
+  }, [user, personId]);
 
   const groups = groupedRelationshipContacts(data);
   const angleContacts = relationshipAngleContacts(data);
@@ -139,6 +145,7 @@ export function RelationshipSummary({
   const disabledReason = user === undefined ? t.tier2SignIn : !consent ? t.tier2DisabledConsent : undefined;
 
   function generate(): void {
+    if (personId === undefined) return;
     setGenerating(true);
     setError(undefined);
     setSections(undefined);
@@ -151,10 +158,11 @@ export function RelationshipSummary({
         overlays.map((overlay) => ({ bodyKey: overlay.bodyKey, house: overlay.house, direction: overlay.direction })),
       ),
       locale,
+      personId,
     })
       .then((generated) => {
         setSections(generated);
-        void listSavedInterpretations()
+        void listSavedInterpretations({ personId })
           .then(setSaved)
           .catch(() => undefined);
       })

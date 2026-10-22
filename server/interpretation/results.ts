@@ -9,7 +9,7 @@
  * @module results
  * @purpose Persists and retrieves a user's own past Tier 2 generations (prose, label, and basis), stored encrypted at rest, so they can reopen one without regenerating and re-spending quota.
  * @conventions `sections_json` and the optional `description_json` are encrypted with the same `ops/crypto.ts` scheme (AES-256-GCM) and key as `ops.payload`; listing never decrypts the prose, only metadata, so it still works even if the server's encryption key has since been rotated or removed; a decryption failure for a single row's label degrades to `null` rather than throwing, since a label is a convenience, not the entry itself.
- * @exports InterpretationResultSummary, InterpretationResultDetail, saveInterpretationResult, listInterpretationResults, getInterpretationResult, deleteInterpretationResult
+ * @exports InterpretationResultSummary, InterpretationResultDetail, ResultsFilter, saveInterpretationResult, listInterpretationResults, getInterpretationResult, deleteInterpretationResult
  */
 import { randomUUID } from 'node:crypto';
 import type { Database } from '../db.ts';
@@ -46,6 +46,8 @@ export function saveInterpretationResult(
     readonly description?: string | null;
     /** What it was based on (#423), built by the route from the validated request. */
     readonly basis?: ResultBasis;
+    /** The person the result was generated for (#768); a filter for listing, not an ownership claim. The route requires it; older rows have none. */
+    readonly personId?: string;
   },
   key: Buffer,
 ): string {
@@ -57,7 +59,7 @@ export function saveInterpretationResult(
       ? undefined
       : encryptPayload(Buffer.from(params.description, 'utf8'), key);
   db.prepare(
-    'INSERT INTO interpretation_results (id, user_id, mode, locale, sections_json, key_version, iv, created_at, description_json, description_iv, kind, basis_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    'INSERT INTO interpretation_results (id, user_id, mode, locale, sections_json, key_version, iv, created_at, description_json, description_iv, kind, basis_json, person_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
   ).run(
     id,
     params.userId,
@@ -71,6 +73,7 @@ export function saveInterpretationResult(
     description?.iv ?? null,
     params.basis?.kind ?? kindForMode(params.mode) ?? null,
     params.basis === undefined ? null : JSON.stringify(params.basis),
+    params.personId ?? null,
   );
   return id;
 }
@@ -102,6 +105,9 @@ function readDescription(row: SummaryRow, key: Buffer | undefined): string | nul
   }
 }
 
+/** Which results to list (#768): one person's, or the older ones saved before a person was recorded. There is deliberately no whole-account option. */
+export type ResultsFilter = { readonly personId: string } | { readonly unlinked: true };
+
 /**
  * Metadata, newest first. The prose is never decrypted here, so this works even if the server's key
  * has since been rotated away (#340) or removed; the short descriptions (#423) are read when `key`
@@ -110,13 +116,16 @@ function readDescription(row: SummaryRow, key: Buffer | undefined): string | nul
 export function listInterpretationResults(
   db: Database,
   userId: string,
+  filter: ResultsFilter,
   key?: Buffer,
 ): readonly InterpretationResultSummary[] {
-  const rows = db
-    .prepare(
-      'SELECT id, mode, locale, created_at, description_json, description_iv, kind, basis_json FROM interpretation_results WHERE user_id = ? ORDER BY created_at DESC',
-    )
-    .all(userId) as unknown as SummaryRow[];
+  const columns =
+    'SELECT id, mode, locale, created_at, description_json, description_iv, kind, basis_json FROM interpretation_results';
+  const rows = ('personId' in filter
+    ? db.prepare(`${columns} WHERE user_id = ? AND person_id = ? ORDER BY created_at DESC`).all(userId, filter.personId)
+    : db
+        .prepare(`${columns} WHERE user_id = ? AND person_id IS NULL ORDER BY created_at DESC`)
+        .all(userId)) as unknown as SummaryRow[];
   return rows.map((row) => ({
     id: row.id,
     mode: row.mode,

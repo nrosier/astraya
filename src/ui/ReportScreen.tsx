@@ -126,7 +126,7 @@ export function ReportScreen({ personId }: { personId: string }): React.JSX.Elem
           {load.data.houses.warning !== undefined && (
             <StatusMessage kind="error">{load.data.houses.warning}</StatusMessage>
           )}
-          <ReportView chart={load.data} exclude={exclusions} />
+          <ReportView chart={load.data} exclude={exclusions} personId={personId} />
         </>
       )}
     </main>

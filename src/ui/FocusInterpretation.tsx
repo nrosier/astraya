@@ -39,11 +39,14 @@ export function FocusInterpretation({
   context,
   locale,
   resetKey,
+  personId,
 }: {
   readonly context: FocusContext | undefined;
   readonly locale: Locale;
   /** Changes with the selection: the consent, the answer and any error start over. */
   readonly resetKey: string;
+  /** The person the readings are for (#768): lists and saves under them. Absent (until every caller passes it), nothing is listed or generated. */
+  readonly personId?: string | undefined;
 }): React.JSX.Element | null {
   const t = useMessages(focusInterpretationMessages);
   const shared = useMessages(sharedMessages);
@@ -61,11 +64,14 @@ export function FocusInterpretation({
   // report page's, are not shown under a placement they were not about. Re-read after each generation.
   const [listVersion, setListVersion] = useState(0);
   useEffect(() => {
-    if (user === undefined) return;
-    void listSavedInterpretations()
+    if (user === undefined || personId === undefined) {
+      setSaved([]);
+      return;
+    }
+    void listSavedInterpretations({ personId })
       .then(setSaved)
       .catch(() => undefined);
-  }, [user, listVersion]);
+  }, [user, personId, listVersion]);
 
   useEffect(() => {
     setConsent(false);
@@ -78,13 +84,13 @@ export function FocusInterpretation({
   const disabledReason = user === undefined ? t.signIn : !consent ? t.disabledConsent : undefined;
 
   function generate(): void {
-    if (context === undefined) return;
+    if (context === undefined || personId === undefined) return;
     setGenerating(true);
     setError(undefined);
     setSections(undefined);
     // Consent authorizes this one request: spent as it is sent, as in the report's AI panel (#391).
     setConsent(false);
-    generateTier2Interpretation({ mode: 'focus', focusContext: context, locale })
+    generateTier2Interpretation({ mode: 'focus', focusContext: context, locale, personId })
       .then((generated) => {
         setSections(generated);
         setListVersion((version) => version + 1);

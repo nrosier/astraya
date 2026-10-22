@@ -312,6 +312,7 @@ export function RelocatedChartView({
       {relocationPlace !== undefined && load.kind !== 'idle' && (
         <>
           <ChartDataView
+            personId={personId}
             chartType="relocated"
             load={load.kind === 'ready' ? { kind: 'ready', data: load.data.relocated } : load}
             displayName={displayName}
@@ -339,7 +340,7 @@ export function RelocatedChartView({
           )}
           {load.kind === 'ready' && housesAreDefined(load.data.relocated.houses) && (
             <>
-              <ReportView chart={load.data.relocated} />
+              <ReportView personId={personId} chart={load.data.relocated} />
               <SortableTable
                 caption={t.comparisonCaption}
                 columns={comparisonColumns(t, locale)}

@@ -9,11 +9,11 @@
  */
 /**
  * @module ui/SavedInterpretationsPanel
- * @purpose The "Past interpretations" tab: lists the user's stored AI interpretations (#761) and opens, or deletes, one behind an in-app confirmation.
- * @conventions Loads the list on mount via tier2-client; the type label and time come from result-basis-label and saved-time; the viewer is primitives/StagedDialog used unchanged; the sections markup is this file's own, not shared with the AI-customized panel's inline list.
+ * @purpose The "Past interpretations" tab: lists the selected person's stored AI interpretations (#761, #768), plus a separate Not linked to a person section for older results, and opens, or deletes, one behind an in-app confirmation.
+ * @conventions Loads both lists via tier2-client (`{ personId }` and `{ unlinked: true }`), the person list again when the person changes; the unlinked section shows only when it has entries or failed; the type label and time come from result-basis-label and saved-time; the viewer is primitives/StagedDialog used unchanged; the sections markup is this file's own, not shared with the AI-customized panel's inline list.
  * @exports SavedInterpretationsPanel
  */
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import {
   deleteSavedInterpretation,
   getSavedInterpretation,
@@ -78,11 +78,53 @@ function DeleteConfirmation({
   );
 }
 
-export function SavedInterpretationsPanel(): React.JSX.Element {
+/** One list's fetched entries and how far loading got. */
+interface ListState {
+  readonly status: LoadState;
+  readonly items: readonly SavedInterpretationSummary[];
+}
+
+/**
+ * Loads one list (#768): the unlinked results when `unlinked` is set, else the given person's. Without a person the
+ * person list is empty and nothing is fetched.
+ */
+function useSavedList(
+  unlinked: boolean,
+  personId: string | undefined,
+): [ListState, React.Dispatch<React.SetStateAction<ListState>>] {
+  const [list, setList] = useState<ListState>({ status: 'loading', items: [] });
+  useEffect(() => {
+    if (!unlinked && personId === undefined) {
+      setList({ status: 'ready', items: [] });
+      return;
+    }
+    let cancelled = false;
+    setList({ status: 'loading', items: [] });
+    listSavedInterpretations(unlinked || personId === undefined ? { unlinked: true } : { personId })
+      .then((results) => {
+        if (!cancelled) setList({ status: 'ready', items: results });
+      })
+      .catch(() => {
+        if (!cancelled) setList({ status: 'error', items: [] });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [unlinked, personId]);
+  return [list, setList];
+}
+
+export function SavedInterpretationsPanel({
+  personId,
+}: {
+  /** The person whose past readings are listed (#768). Absent (until every caller passes it), the list is empty. */
+  readonly personId?: string | undefined;
+}): React.JSX.Element {
   const t = useMessages(savedInterpretationsPanelMessages);
   const [locale] = useLocale();
-  const [loadState, setLoadState] = useState<LoadState>('loading');
-  const [items, setItems] = useState<readonly SavedInterpretationSummary[]>([]);
+  const [personList, setPersonList] = useSavedList(false, personId);
+  // Results saved before they were linked to a person (#768): listed apart so they can still be opened or deleted.
+  const [unlinkedList, setUnlinkedList] = useSavedList(true, undefined);
   const [openId, setOpenId] = useState<string | undefined>(undefined);
   const [detail, setDetail] = useState<SavedInterpretationDetail | undefined>(undefined);
   const [detailError, setDetailError] = useState(false);
@@ -91,29 +133,15 @@ export function SavedInterpretationsPanel(): React.JSX.Element {
   const [deleteError, setDeleteError] = useState(false);
   const openerRef = useRef<HTMLButtonElement | null>(null);
   const cancelRef = useRef<HTMLButtonElement | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    listSavedInterpretations()
-      .then((results) => {
-        if (cancelled) return;
-        setItems(results);
-        setLoadState('ready');
-      })
-      .catch(() => {
-        if (!cancelled) setLoadState('error');
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const unlinkedHeadingId = useId();
 
   // Focus moves to Cancel whenever a confirmation opens, so the reader lands on the safe choice.
   useEffect(() => {
     if (pendingDelete !== undefined) cancelRef.current?.focus();
   }, [pendingDelete]);
 
-  const openItem = openId === undefined ? undefined : items.find((item) => item.id === openId);
+  const openItem =
+    openId === undefined ? undefined : [...personList.items, ...unlinkedList.items].find((item) => item.id === openId);
 
   function openSaved(id: string, opener: HTMLButtonElement): void {
     openerRef.current = opener;
@@ -143,7 +171,12 @@ export function SavedInterpretationsPanel(): React.JSX.Element {
     setDeleteError(false);
     deleteSavedInterpretation(pending.id)
       .then(() => {
-        setItems((current) => current.filter((item) => item.id !== pending.id));
+        const drop = (current: ListState): ListState => ({
+          ...current,
+          items: current.items.filter((item) => item.id !== pending.id),
+        });
+        setPersonList(drop);
+        setUnlinkedList(drop);
         setPendingDelete(undefined);
         if (openId === pending.id) closeModal();
       })
@@ -186,57 +219,75 @@ export function SavedInterpretationsPanel(): React.JSX.Element {
     </>
   );
 
+  /** One list's rows: open on the row, delete behind the in-app confirmation. */
+  function renderRows(items: readonly SavedInterpretationSummary[]): React.JSX.Element {
+    return (
+      <ul className="saved-interpretations-list">
+        {items.map((item) => {
+          const type = savedTypeLabel(item, locale) ?? t.pastTypeNeutral;
+          return (
+            <li key={item.id} className="saved-interpretation-row">
+              <button
+                type="button"
+                className="quiet"
+                onClick={(event) => {
+                  openSaved(item.id, event.currentTarget);
+                }}
+              >
+                <span className="saved-interpretation-time">{formatSavedTime(item.createdAt, locale)}</span>{' '}
+                {item.description !== null && item.description !== '' && (
+                  <span className="saved-interpretation-description">{item.description}</span>
+                )}{' '}
+                <span className="saved-interpretation-type">{type}</span>
+              </button>{' '}
+              <button
+                type="button"
+                className="quiet"
+                disabled={deleting}
+                onClick={() => {
+                  setDeleteError(false);
+                  setPendingDelete({ id: item.id, from: 'list' });
+                }}
+              >
+                {t.pastDelete}
+              </button>
+              {pendingDelete?.from === 'list' && pendingDelete.id === item.id && (
+                <DeleteConfirmation
+                  busy={deleting}
+                  cancelRef={cancelRef}
+                  onConfirm={() => {
+                    confirmDelete({ id: item.id, from: 'list' });
+                  }}
+                  onCancel={() => {
+                    setPendingDelete(undefined);
+                  }}
+                />
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    );
+  }
+
   return (
     <section className="report-section saved-interpretations-panel">
-      {loadState === 'loading' && <StatusMessage kind="loading">{t.pastLoading}</StatusMessage>}
-      {loadState === 'error' && <StatusMessage kind="error">{t.pastError}</StatusMessage>}
-      {loadState === 'ready' && items.length === 0 && <StatusMessage kind="empty">{t.pastEmpty}</StatusMessage>}
-      {loadState === 'ready' && items.length > 0 && (
-        <ul className="saved-interpretations-list">
-          {items.map((item) => {
-            const type = savedTypeLabel(item, locale) ?? t.pastTypeNeutral;
-            return (
-              <li key={item.id} className="saved-interpretation-row">
-                <button
-                  type="button"
-                  className="quiet"
-                  onClick={(event) => {
-                    openSaved(item.id, event.currentTarget);
-                  }}
-                >
-                  <span className="saved-interpretation-time">{formatSavedTime(item.createdAt, locale)}</span>{' '}
-                  {item.description !== null && item.description !== '' && (
-                    <span className="saved-interpretation-description">{item.description}</span>
-                  )}{' '}
-                  <span className="saved-interpretation-type">{type}</span>
-                </button>{' '}
-                <button
-                  type="button"
-                  className="quiet"
-                  disabled={deleting}
-                  onClick={() => {
-                    setDeleteError(false);
-                    setPendingDelete({ id: item.id, from: 'list' });
-                  }}
-                >
-                  {t.pastDelete}
-                </button>
-                {pendingDelete?.from === 'list' && pendingDelete.id === item.id && (
-                  <DeleteConfirmation
-                    busy={deleting}
-                    cancelRef={cancelRef}
-                    onConfirm={() => {
-                      confirmDelete({ id: item.id, from: 'list' });
-                    }}
-                    onCancel={() => {
-                      setPendingDelete(undefined);
-                    }}
-                  />
-                )}
-              </li>
-            );
-          })}
-        </ul>
+      {personList.status === 'loading' && <StatusMessage kind="loading">{t.pastLoading}</StatusMessage>}
+      {personList.status === 'error' && <StatusMessage kind="error">{t.pastError}</StatusMessage>}
+      {personList.status === 'ready' && personList.items.length === 0 && (
+        <StatusMessage kind="empty">{t.pastEmpty}</StatusMessage>
+      )}
+      {personList.status === 'ready' && personList.items.length > 0 && renderRows(personList.items)}
+      {(unlinkedList.status === 'error' || unlinkedList.items.length > 0) && (
+        <section className="saved-interpretations-unlinked" aria-labelledby={unlinkedHeadingId}>
+          <h3 id={unlinkedHeadingId}>{t.notLinkedHeading}</h3>
+          <p className="hint">{t.notLinkedIntro}</p>
+          {unlinkedList.status === 'error' ? (
+            <StatusMessage kind="error">{t.pastError}</StatusMessage>
+          ) : (
+            renderRows(unlinkedList.items)
+          )}
+        </section>
       )}
       {openId === undefined && deleteFailed}
       <StagedDialog

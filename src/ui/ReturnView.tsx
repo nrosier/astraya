@@ -262,6 +262,7 @@ export function ReturnView({
 
       {load.kind !== 'idle' && (
         <ChartDataView
+          personId={personId}
           chartType={kind}
           load={load.kind === 'ready' ? { kind: 'ready', data: load.data } : load}
           displayName={displayName}
@@ -304,7 +305,9 @@ export function ReturnView({
           />
         </>
       )}
-      {load.kind === 'ready' && housesAreDefined(load.data.houses) && <ReportView chart={load.data} />}
+      {load.kind === 'ready' && housesAreDefined(load.data.houses) && (
+        <ReportView personId={personId} chart={load.data} />
+      )}
     </main>
   );
 }

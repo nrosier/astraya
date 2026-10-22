@@ -59,7 +59,7 @@ beforeEach(() => {
     Promise.resolve(
       new Response(
         JSON.stringify(
-          url === '/api/interpretation/results'
+          url.startsWith('/api/interpretation/results')
             ? { results: [] }
             : { sections: [{ heading: 'Core tension', body: 'Security meets power.' }], description: null },
         ),
@@ -81,6 +81,9 @@ afterEach(() => {
   globalThis.fetch = realFetch;
 });
 
+/** The person the readings are for (#768). */
+const PERSON = 'p-abcdefghijklmnop';
+
 interface Props {
   context: FocusContext | undefined;
   resetKey: string;
@@ -93,7 +96,7 @@ async function mount(props: Props): Promise<(next: Props) => Promise<void>> {
   const root = createRoot(container);
   const render = async ({ context, resetKey, locale = 'en' }: Props): Promise<void> => {
     await act(async () => {
-      root.render(<FocusInterpretation context={context} locale={locale} resetKey={resetKey} />);
+      root.render(<FocusInterpretation context={context} locale={locale} resetKey={resetKey} personId={PERSON} />);
       await Promise.resolve();
     });
   };
@@ -156,7 +159,7 @@ describe('past readings of the selected placement (#423)', () => {
       Promise.resolve(
         new Response(
           JSON.stringify(
-            url === '/api/interpretation/results'
+            url.startsWith('/api/interpretation/results')
               ? {
                   results: [
                     entry('a', 'pluto', 'natal', 'Power and security'),
@@ -229,7 +232,12 @@ describe('FocusInterpretation (#424)', () => {
     const [url, init] = firstGenerateCall();
     expect(url).toBe('/api/interpretation/generate');
     expect(init.method).toBe('POST');
-    expect(JSON.parse(init.body as string)).toEqual({ mode: 'focus', focusContext: CONTEXT, locale: 'en' });
+    expect(JSON.parse(init.body as string)).toEqual({
+      mode: 'focus',
+      focusContext: CONTEXT,
+      locale: 'en',
+      personId: PERSON,
+    });
 
     await vi.waitFor(() => {
       expect(box().querySelector('.tier2-result')?.textContent).toContain('Security meets power.');

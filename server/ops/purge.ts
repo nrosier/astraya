@@ -13,7 +13,7 @@
 
 /**
  * @module purge
- * @purpose Server-side right-to-erasure support: records a permanent per-user deny-list of purged `(entity, entityId)` pairs and erases their already-stored op rows the moment a purge marker op lands.
+ * @purpose Server-side right-to-erasure support: records a permanent per-user deny-list of purged `(entity, entityId)` pairs and erases their already-stored op rows (and, for a person, their saved Tier 2 results) the moment a purge marker op lands.
  * @conventions Another deliberate, narrow exception to ADR 0002's opaque-relay rule, in the same category as `deletion-impact.ts`: push-time parsing of an op's plaintext body costs nothing extra, since `server/ops/routes.ts` already holds that plaintext transiently right before encrypting it, but erasing already-written rows does require decrypting at-rest ciphertext. The purge marker's own row is preserved (matched by its `hlc`) so a later pull still tells every device the entity is gone.
  * @exports OpBody, parseOpBody, isPurgeMarker, isEntityPurged, recordPurgeAndErase
  */
@@ -35,6 +35,9 @@ export interface OpBody {
  * literal unions instead of importing `src/interpretation/schema.ts`.
  */
 const PURGED_FIELD = 'purged';
+
+/** Mirrors `src/store/fold.ts`'s `KNOWN_ENTITIES` entry for a person; duplicated for the same reason as `PURGED_FIELD`. */
+const PERSON_ENTITY = 'person';
 
 /** Parses an op's plaintext body just enough to check for a purge, nothing more. */
 export function parseOpBody(plaintext: Buffer): OpBody | undefined {
@@ -107,5 +110,11 @@ export function recordPurgeAndErase(
       continue;
     }
     if (body?.entity === entity && body.entityId === entityId) del.run(row.seq);
+  }
+
+  // A purged person's saved AI interpretations go with them (#768): same transaction as the
+  // op-log erasure above. Scoped by `user_id`, so another user's results are untouched.
+  if (entity === PERSON_ENTITY) {
+    db.prepare('DELETE FROM interpretation_results WHERE user_id = ? AND person_id = ?').run(userId, entityId);
   }
 }

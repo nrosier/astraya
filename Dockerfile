@@ -127,6 +127,8 @@ COPY --from=build /app/src/interpretation/result-basis.ts ./src/interpretation/r
 # the bodies and aspects tables already copied above.
 COPY --from=build /app/src/interpretation/tier2-contract.ts ./src/interpretation/tier2-contract.ts
 COPY --from=build /app/src/ephemeris/generated-constants.ts ./src/ephemeris/generated-constants.ts
+# The person-id check that the Tier 2 routes apply to the personId of every saved result (#768): no imports of its own.
+COPY --from=build /app/src/domain/id.ts ./src/domain/id.ts
 
 # `data/` is the one writable path in the tree — it holds the SQLite file plus
 # its WAL/SHM siblings (server/db.ts). Owned by UID:GID 1000, not Chainguard's

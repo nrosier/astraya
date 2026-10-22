@@ -118,6 +118,7 @@ export function DraconicView({
       <p className="hint">{t.hint}</p>
 
       <ChartDataView
+        personId={personId}
         chartType="draconic"
         load={load}
         displayName={displayName}
@@ -144,7 +145,9 @@ export function DraconicView({
       {load.kind === 'ready' && !housesAreDefined(load.data.houses) && (
         <StatusMessage kind="error">{t.housesUndefined}</StatusMessage>
       )}
-      {load.kind === 'ready' && housesAreDefined(load.data.houses) && <ReportView chart={load.data} />}
+      {load.kind === 'ready' && housesAreDefined(load.data.houses) && (
+        <ReportView personId={personId} chart={load.data} />
+      )}
     </main>
   );
 }

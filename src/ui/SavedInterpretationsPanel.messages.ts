@@ -3,7 +3,7 @@
  */
 /**
  * @module SavedInterpretationsPanel.messages
- * @purpose English/Dutch message catalogue for the Past interpretations tab: the list states, the viewer modal and the in-app delete confirmation.
+ * @purpose English/Dutch message catalogue for the Past interpretations tab: the list states, the Not linked to a person section (#768), the viewer modal and the in-app delete confirmation.
  * @conventions Co-located i18n file exporting `{ en, nl }`, consumed via `useMessages()` by the sibling `SavedInterpretationsPanel.tsx`. The tab's own label lives in `ReportView.messages.ts`.
  * @exports savedInterpretationsPanelMessages
  */
@@ -19,6 +19,9 @@ const en = {
   pastDeleteFailed: 'Could not delete the interpretation. Try again.',
   pastNoSections: 'This interpretation has no text.',
   pastTypeNeutral: 'Saved interpretation',
+  notLinkedHeading: 'Not linked to a person',
+  notLinkedIntro:
+    'Saved before results were linked to a person. Open or delete them here; they do not appear in the PDF picker.',
 };
 
 const nl: typeof en = {
@@ -33,6 +36,9 @@ const nl: typeof en = {
   pastDeleteFailed: 'De interpretatie kon niet worden verwijderd. Probeer het opnieuw.',
   pastNoSections: 'Deze interpretatie bevat geen tekst.',
   pastTypeNeutral: 'Opgeslagen interpretatie',
+  notLinkedHeading: 'Niet gekoppeld aan een persoon',
+  notLinkedIntro:
+    'Opgeslagen voordat resultaten aan een persoon werden gekoppeld. Je kunt ze hier openen of verwijderen; ze verschijnen niet in de pdf-keuze.',
 };
 
 export const savedInterpretationsPanelMessages = { en, nl };

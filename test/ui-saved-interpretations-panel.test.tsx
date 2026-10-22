@@ -17,12 +17,15 @@ import { setLocale } from '../src/ui/locale.js';
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 const mocks = vi.hoisted(() => ({
-  list: vi.fn(),
+  list: vi.fn<(scope: unknown) => Promise<readonly SavedInterpretationSummary[]>>(),
+  unlinked: vi.fn<(scope: unknown) => Promise<readonly SavedInterpretationSummary[]>>(),
   get: vi.fn(),
   remove: vi.fn(),
 }));
+// The person's list and the unlinked list (#768) are separate requests; each scope gets its own mock.
 vi.mock('../src/interpretation/tier2-client.js', () => ({
-  listSavedInterpretations: mocks.list,
+  listSavedInterpretations: (scope: { personId: string } | { unlinked: true }) =>
+    'unlinked' in scope ? mocks.unlinked(scope) : mocks.list(scope),
   getSavedInterpretation: mocks.get,
   deleteSavedInterpretation: mocks.remove,
 }));
@@ -56,12 +59,14 @@ function detail(id: string): SavedInterpretationDetail {
 let root: Root | undefined;
 let container: HTMLElement | undefined;
 
-async function mount(): Promise<HTMLElement> {
+const PERSON = 'p-abcdefghijklmnop';
+
+async function mount(options: { readonly personId?: string } = { personId: PERSON }): Promise<HTMLElement> {
   container = document.createElement('div');
   document.body.append(container);
   root = createRoot(container);
   await act(async () => {
-    root?.render(<SavedInterpretationsPanel />);
+    root?.render(<SavedInterpretationsPanel personId={options.personId} />);
     await new Promise<void>((resolve) => setTimeout(resolve, 0));
   });
   return container;
@@ -114,6 +119,7 @@ async function click(element: HTMLElement): Promise<void> {
 beforeEach(() => {
   localStorage.clear();
   setLocale('en');
+  mocks.unlinked.mockResolvedValue([]);
 });
 
 afterEach(() => {
@@ -124,6 +130,7 @@ afterEach(() => {
   root = undefined;
   container = undefined;
   mocks.list.mockReset();
+  mocks.unlinked.mockReset();
   mocks.get.mockReset();
   mocks.remove.mockReset();
 });
@@ -312,5 +319,72 @@ describe('SavedInterpretationsPanel: delete', () => {
     expect(alertSpy).not.toHaveBeenCalled();
     confirmSpy.mockRestore();
     alertSpy.mockRestore();
+  });
+});
+
+describe('SavedInterpretationsPanel: person scope (#768)', () => {
+  function unlinkedSection(c: HTMLElement): HTMLElement | null {
+    return c.querySelector<HTMLElement>('section.saved-interpretations-unlinked');
+  }
+
+  it("lists the selected person's results and the unlinked ones as two requests", async () => {
+    mocks.list.mockResolvedValue([summary('mine')]);
+    mocks.unlinked.mockResolvedValue([summary('old')]);
+    const c = await mount();
+    await flush();
+    expect(mocks.list).toHaveBeenCalledWith({ personId: PERSON });
+    expect(mocks.unlinked).toHaveBeenCalledWith({ unlinked: true });
+    const section = unlinkedSection(c);
+    expect(section?.querySelector('h3')?.textContent).toBe(t.notLinkedHeading);
+    expect(section?.textContent).toContain(t.notLinkedIntro);
+    expect(section?.querySelectorAll('li.saved-interpretation-row')).toHaveLength(1);
+    expect(rows(c)).toHaveLength(2);
+  });
+
+  it('shows no unlinked section when there are no unlinked results', async () => {
+    mocks.list.mockResolvedValue([summary('mine')]);
+    const c = await mount();
+    await flush();
+    expect(unlinkedSection(c)).toBeNull();
+    expect(c.textContent).not.toContain(t.notLinkedHeading);
+  });
+
+  it('without a person lists nothing of its own but still shows the unlinked results', async () => {
+    mocks.unlinked.mockResolvedValue([summary('old')]);
+    const c = await mount({});
+    await flush();
+    expect(mocks.list).not.toHaveBeenCalled();
+    expect(c.textContent).toContain(t.pastEmpty);
+    expect(unlinkedSection(c)?.querySelectorAll('li.saved-interpretation-row')).toHaveLength(1);
+  });
+
+  it('opens an unlinked result in the viewer', async () => {
+    mocks.list.mockResolvedValue([]);
+    mocks.unlinked.mockResolvedValue([summary('old')]);
+    mocks.get.mockResolvedValue(detail('old'));
+    const c = await mount();
+    await flush();
+    const section = unlinkedSection(c);
+    if (section === null) throw new Error('test fixture bug: no unlinked section');
+    await click(requiredButton(section, 'li button'));
+    await flush();
+    expect(mocks.get).toHaveBeenCalledWith('old');
+    expect(c.querySelector('dialog')?.textContent).toContain('Core body text.');
+  });
+
+  it('deletes an unlinked result from its section', async () => {
+    mocks.list.mockResolvedValue([summary('mine')]);
+    mocks.unlinked.mockResolvedValue([summary('old')]);
+    mocks.remove.mockResolvedValue(undefined);
+    const c = await mount();
+    await flush();
+    const section = unlinkedSection(c);
+    if (section === null) throw new Error('test fixture bug: no unlinked section');
+    await click(buttonWithText(section, t.pastDelete));
+    await click(buttonWithText(requiredElement(section, '[role="region"]'), t.pastDeleteConfirm));
+    await flush();
+    expect(mocks.remove).toHaveBeenCalledWith('old');
+    expect(unlinkedSection(c)).toBeNull();
+    expect(rows(c)).toHaveLength(1);
   });
 });

@@ -38,7 +38,7 @@ describe('server/db.ts', () => {
   it('sets PRAGMA user_version to the number of migrations applied', () => {
     const db = openDatabase(':memory:');
     const row = db.prepare('PRAGMA user_version').get() as unknown as { user_version: number };
-    expect(row.user_version).toBe(15);
+    expect(row.user_version).toBe(16);
     db.close();
   });
 
@@ -56,7 +56,7 @@ describe('server/db.ts', () => {
       const second = openDatabase(path);
       expect(schemaOf(second)).toEqual(before);
       const row = second.prepare('PRAGMA user_version').get() as unknown as { user_version: number };
-      expect(row.user_version).toBe(15);
+      expect(row.user_version).toBe(16);
       second.close();
     } finally {
       rmSync(dir, { recursive: true, force: true });
@@ -143,7 +143,7 @@ describe('server/db.ts', () => {
 
       const db = openDatabase(path);
       const row = db.prepare('PRAGMA user_version').get() as unknown as { user_version: number };
-      expect(row.user_version).toBe(15);
+      expect(row.user_version).toBe(16);
 
       // The pre-existing row survived the users rebuild intact.
       const legacyUser = db.prepare('SELECT * FROM users WHERE id = ?').get('legacy-user') as
@@ -340,6 +340,9 @@ describe('server/db.ts', () => {
         -- A real version-12 database never had migration 15's table; drop it so re-running
         -- migrations from here doesn't collide with the one the first openDatabase() created.
         DROP TABLE interpretation_cost_reservations;
+        -- Nor migration 16's person column and its index (#768).
+        DROP INDEX interpretation_results_user_person_created;
+        ALTER TABLE interpretation_results DROP COLUMN person_id;
         PRAGMA user_version = 12;
       `);
       first.close();
@@ -381,6 +384,9 @@ describe('server/db.ts', () => {
         -- A real version-13 database never had migration 15's table; drop it so re-running
         -- migrations from here doesn't collide with the one the first openDatabase() created.
         DROP TABLE interpretation_cost_reservations;
+        -- Nor migration 16's person column and its index (#768).
+        DROP INDEX interpretation_results_user_person_created;
+        ALTER TABLE interpretation_results DROP COLUMN person_id;
         PRAGMA user_version = 13;
       `);
       first.close();
@@ -399,6 +405,44 @@ describe('server/db.ts', () => {
       expect(columns).not.toContain('is_admin');
       // The CHECK keeps a typo from creating a fourth, unranked role.
       expect(() => db.prepare("UPDATE users SET role = 'root' WHERE username = 'member'").run()).toThrow(/CHECK/);
+      db.close();
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('migration 16 adds a nullable person_id to saved results and keeps older rows, unlinked (#768)', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'astraya-db-test-'));
+    const path = join(dir, 'astraya.db');
+    try {
+      // Put a current database back into its version-15 shape, with one saved result in it.
+      const first = openDatabase(path);
+      first.exec(`
+        DROP INDEX interpretation_results_user_person_created;
+        ALTER TABLE interpretation_results DROP COLUMN person_id;
+        INSERT INTO users (id, username, password_hash, created_at) VALUES ('u', 'owner', 'h', 'now');
+        INSERT INTO interpretation_results (id, user_id, mode, locale, sections_json, key_version, iv, created_at)
+          VALUES ('r', 'u', 'grounded', 'en', x'00', 1, x'00', 'now');
+        PRAGMA user_version = 15;
+      `);
+      first.close();
+
+      const db = openDatabase(path);
+      expect(db.prepare('SELECT id, person_id FROM interpretation_results').all()).toEqual([
+        { id: 'r', person_id: null },
+      ]);
+      const index = db
+        .prepare(
+          "SELECT name FROM sqlite_master WHERE type = 'index' AND name = 'interpretation_results_user_person_created'",
+        )
+        .get();
+      expect(index).toEqual({ name: 'interpretation_results_user_person_created' });
+      const indexColumns = (
+        db.prepare('PRAGMA index_info(interpretation_results_user_person_created)').all() as unknown as {
+          name: string;
+        }[]
+      ).map((column) => column.name);
+      expect(indexColumns).toEqual(['user_id', 'person_id', 'created_at']);
       db.close();
     } finally {
       rmSync(dir, { recursive: true, force: true });

@@ -131,7 +131,12 @@ async function createAndLoginUser(
   return { userId, sessionId };
 }
 
+/** Every generation is filed under a person (#768); a well-formed id is all the route checks. */
+const PERSON_A = 'p-aaaaaaaaaaaaaaaa';
+const PERSON_B = 'p-bbbbbbbbbbbbbbbb';
+
 const VALID_BODY = {
+  personId: PERSON_A,
   placementKeys: ['dignity-state:sun:ruler'],
   customPrompt: 'warm and encouraging, focused on career growth',
   locale: 'en',
@@ -164,6 +169,7 @@ const VALID_CHART_DATA = {
 };
 
 const VALID_FREEFORM_BODY = {
+  personId: PERSON_A,
   mode: 'freeform',
   chartData: VALID_CHART_DATA,
   customPrompt: 'warm and encouraging, focused on career growth',
@@ -437,7 +443,7 @@ describe('POST /api/interpretation/generate', () => {
   });
 
   describe('the older `synthesis` spelling (#377, folded into freeform by #425)', () => {
-    const VALID_SYNTHESIS_BODY = { mode: 'synthesis', chartData: VALID_CHART_DATA, locale: 'en' };
+    const VALID_SYNTHESIS_BODY = { personId: PERSON_A, mode: 'synthesis', chartData: VALID_CHART_DATA, locale: 'en' };
 
     it('generates text from the given chart facts with no customPrompt required', async () => {
       const cookie = await signIn(app);
@@ -502,7 +508,7 @@ describe('POST /api/interpretation/generate', () => {
         method: 'POST',
         url: '/api/interpretation/generate',
         cookies: { [SESSION_COOKIE]: cookie },
-        payload,
+        payload: { personId: PERSON_A, ...payload },
       });
     }
 
@@ -584,7 +590,7 @@ describe('POST /api/interpretation/generate', () => {
         method: 'POST',
         url: '/api/interpretation/generate',
         cookies: { [SESSION_COOKIE]: cookie },
-        payload,
+        payload: { personId: PERSON_A, ...payload },
       });
     }
 
@@ -731,7 +737,7 @@ describe('POST /api/interpretation/generate', () => {
         method: 'POST',
         url: '/api/interpretation/generate',
         cookies: { [SESSION_COOKIE]: cookie },
-        payload,
+        payload: { personId: PERSON_A, ...payload },
       });
     }
 
@@ -868,7 +874,7 @@ describe('POST /api/interpretation/generate', () => {
         method: 'POST',
         url: '/api/interpretation/generate',
         cookies: { [SESSION_COOKIE]: cookie },
-        payload,
+        payload: { personId: PERSON_A, ...payload },
       });
     }
     function generationPrompt(): { system: string; user: string } {
@@ -906,13 +912,13 @@ describe('POST /api/interpretation/generate', () => {
         method: 'POST',
         url: '/api/interpretation/generate',
         cookies: { [SESSION_COOKIE]: cookie },
-        payload,
+        payload: { personId: PERSON_A, ...payload },
       });
     }
     async function listed() {
       const response = await app.inject({
         method: 'GET',
-        url: '/api/interpretation/results',
+        url: `/api/interpretation/results?personId=${PERSON_A}`,
         cookies: { [SESSION_COOKIE]: cookie ?? '' },
       });
       return response.json<{
@@ -1025,7 +1031,7 @@ describe('POST /api/interpretation/generate', () => {
         method: 'POST',
         url: '/api/interpretation/generate',
         cookies: { [SESSION_COOKIE]: cookie },
-        payload,
+        payload: { personId: PERSON_A, ...payload },
       });
     }
     function generationPrompt(): { system: string; user: string } {
@@ -1077,13 +1083,13 @@ describe('POST /api/interpretation/generate', () => {
         },
       ],
     };
-    const FOCUS_BODY = { mode: 'focus', focusContext: FOCUS, locale: 'en' };
+    const FOCUS_BODY = { personId: PERSON_A, mode: 'focus', focusContext: FOCUS, locale: 'en' };
 
     it('records which body and perspective the reading was about (#423)', async () => {
       await generateWith({ ...FOCUS_BODY, focusContext: { ...FOCUS, perspective: 'transit' } });
       const response = await app.inject({
         method: 'GET',
-        url: '/api/interpretation/results',
+        url: `/api/interpretation/results?personId=${PERSON_A}`,
         cookies: { [SESSION_COOKIE]: cookie ?? '' },
       });
       expect(response.json<{ results: unknown[] }>().results[0]).toMatchObject({
@@ -1218,7 +1224,7 @@ describe('POST /api/interpretation/generate', () => {
       await generateWith(FOCUS_BODY);
       const list = await app.inject({
         method: 'GET',
-        url: '/api/interpretation/results',
+        url: `/api/interpretation/results?personId=${PERSON_A}`,
         cookies: { [SESSION_COOKIE]: cookie ?? '' },
       });
       expect(list.json<{ results: { mode: string; description: string | null }[] }>().results[0]).toMatchObject({
@@ -1482,7 +1488,12 @@ describe('POST /api/interpretation/generate', () => {
       return { mock, resolve };
     }
 
-    const FREEFORM_NO_INSTRUCTION_BODY = { mode: 'freeform', chartData: VALID_CHART_DATA, locale: 'en' };
+    const FREEFORM_NO_INSTRUCTION_BODY = {
+      personId: PERSON_A,
+      mode: 'freeform',
+      chartData: VALID_CHART_DATA,
+      locale: 'en',
+    };
 
     it('does not let two concurrent requests from the same user both reserve against an exhausted cap', async () => {
       const cookie = await signIn(app);
@@ -1642,7 +1653,7 @@ describe('saved interpretation results (#392)', () => {
     const cookie = await signIn(app);
     const response = await app.inject({
       method: 'GET',
-      url: '/api/interpretation/results',
+      url: `/api/interpretation/results?personId=${PERSON_A}`,
       cookies: { [SESSION_COOKIE]: cookie },
     });
     expect(response.statusCode).toBe(200);
@@ -1661,7 +1672,7 @@ describe('saved interpretation results (#392)', () => {
 
     const list = await app.inject({
       method: 'GET',
-      url: '/api/interpretation/results',
+      url: `/api/interpretation/results?personId=${PERSON_A}`,
       cookies: { [SESSION_COOKIE]: cookie },
     });
     expect(list.statusCode).toBe(200);
@@ -1697,7 +1708,7 @@ describe('saved interpretation results (#392)', () => {
     const { results } = (
       await app.inject({
         method: 'GET',
-        url: '/api/interpretation/results',
+        url: `/api/interpretation/results?personId=${PERSON_A}`,
         cookies: { [SESSION_COOKIE]: aliceCookie },
       })
     ).json<{ results: { id: string }[] }>();
@@ -1720,7 +1731,11 @@ describe('saved interpretation results (#392)', () => {
       payload: VALID_BODY,
     });
     const { results } = (
-      await app.inject({ method: 'GET', url: '/api/interpretation/results', cookies: { [SESSION_COOKIE]: cookie } })
+      await app.inject({
+        method: 'GET',
+        url: `/api/interpretation/results?personId=${PERSON_A}`,
+        cookies: { [SESSION_COOKIE]: cookie },
+      })
     ).json<{ results: { id: string }[] }>();
     const id = results[0]?.id;
 
@@ -1751,7 +1766,7 @@ describe('saved interpretation results (#392)', () => {
     const { results } = (
       await app.inject({
         method: 'GET',
-        url: '/api/interpretation/results',
+        url: `/api/interpretation/results?personId=${PERSON_A}`,
         cookies: { [SESSION_COOKIE]: aliceCookie },
       })
     ).json<{ results: { id: string }[] }>();
@@ -1793,7 +1808,11 @@ describe('saved interpretation results (#392)', () => {
       payload: VALID_BODY,
     });
     const { results } = (
-      await app.inject({ method: 'GET', url: '/api/interpretation/results', cookies: { [SESSION_COOKIE]: cookie } })
+      await app.inject({
+        method: 'GET',
+        url: `/api/interpretation/results?personId=${PERSON_A}`,
+        cookies: { [SESSION_COOKIE]: cookie },
+      })
     ).json<{ results: { id: string }[] }>();
 
     delete process.env.ASTRAYA_ENCRYPTION_KEY;
@@ -1831,7 +1850,7 @@ describe('saved interpretation results (#392)', () => {
 
     const list = await app.inject({
       method: 'GET',
-      url: '/api/interpretation/results',
+      url: `/api/interpretation/results?personId=${PERSON_A}`,
       cookies: { [SESSION_COOKIE]: cookie },
     });
     expect(list.json<{ results: unknown[] }>().results).toEqual([]);
@@ -1842,5 +1861,125 @@ describe('saved interpretation results (#392)', () => {
       cookies: { [SESSION_COOKIE]: cookie },
     });
     expect(detail.statusCode).toBe(503);
+  });
+});
+
+describe('saved results are filed under a person (#768)', () => {
+  async function generate(cookie: string, personId?: unknown) {
+    const payload: Record<string, unknown> = { ...VALID_BODY };
+    if (personId === undefined) delete payload.personId;
+    else payload.personId = personId;
+    return app.inject({
+      method: 'POST',
+      url: '/api/interpretation/generate',
+      cookies: { [SESSION_COOKIE]: cookie },
+      payload,
+    });
+  }
+
+  async function list(cookie: string, query: string) {
+    return app.inject({
+      method: 'GET',
+      url: `/api/interpretation/results${query}`,
+      cookies: { [SESSION_COOKIE]: cookie },
+    });
+  }
+
+  function idsOf(response: Awaited<ReturnType<typeof list>>): string[] {
+    return response.json<{ results: { id: string }[] }>().results.map((result) => result.id);
+  }
+
+  it('rejects a generation with no personId with 400, before calling the model', async () => {
+    const cookie = await signIn(app);
+    const response = await generate(cookie);
+    expect(response.statusCode).toBe(400);
+    expect(response.json<{ error: string }>().error).toMatch(/personId is required/);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects a malformed personId with 400, before calling the model', async () => {
+    const cookie = await signIn(app);
+    for (const bad of ['', 'c-aaaaaaaaaaaaaaaa', 'p-short', 42, null]) {
+      const response = await generate(cookie, bad);
+      expect(response.statusCode).toBe(400);
+      expect(response.json<{ error: string }>().error).toMatch(/personId must be a person id/);
+    }
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('keeps the person id out of the prompt', async () => {
+    const cookie = await signIn(app);
+    await generate(cookie, PERSON_A);
+    expect(fetchMock).toHaveBeenCalled();
+    for (const call of fetchMock.mock.calls) {
+      const body = (call[1] as RequestInit | undefined)?.body;
+      expect(typeof body === 'string' ? body : '').not.toContain(PERSON_A);
+    }
+  });
+
+  it('lists a result under its own person and not under another person of the same user', async () => {
+    const cookie = await signIn(app);
+    await generate(cookie, PERSON_A);
+    const underA = await list(cookie, `?personId=${PERSON_A}`);
+    const underB = await list(cookie, `?personId=${PERSON_B}`);
+    expect(underA.statusCode).toBe(200);
+    expect(idsOf(underA)).toHaveLength(1);
+    expect(underB.statusCode).toBe(200);
+    expect(idsOf(underB)).toEqual([]);
+  });
+
+  it('lists only results with no person in the unlinked group, and they still open and delete', async () => {
+    const cookie = await signIn(app);
+    await generate(cookie, PERSON_A);
+    const raw = new DatabaseSync(dbPath);
+    const userId = (raw.prepare('SELECT user_id FROM interpretation_results').get() as { user_id: string }).user_id;
+    // An older row, saved before a person was recorded: copy the saved one with no person_id.
+    raw
+      .prepare(
+        "INSERT INTO interpretation_results (id, user_id, mode, locale, sections_json, key_version, iv, created_at) SELECT 'old', user_id, mode, locale, sections_json, key_version, iv, created_at FROM interpretation_results WHERE user_id = ?",
+      )
+      .run(userId);
+    raw.close();
+
+    const unlinked = await list(cookie, '?unlinked=1');
+    expect(unlinked.statusCode).toBe(200);
+    expect(idsOf(unlinked)).toEqual(['old']);
+    expect(idsOf(await list(cookie, `?personId=${PERSON_A}`))).not.toContain('old');
+
+    const detail = await app.inject({
+      method: 'GET',
+      url: '/api/interpretation/results/old',
+      cookies: { [SESSION_COOKIE]: cookie },
+    });
+    expect(detail.statusCode).toBe(200);
+    const deleted = await app.inject({
+      method: 'DELETE',
+      url: '/api/interpretation/results/old',
+      cookies: { [SESSION_COOKIE]: cookie },
+    });
+    expect(deleted.statusCode).toBe(200);
+    expect(idsOf(await list(cookie, '?unlinked=1'))).toEqual([]);
+  });
+
+  it('never lists another user’s result for the same person id', async () => {
+    const aliceCookie = await signIn(app);
+    await generate(aliceCookie, PERSON_A);
+    const { sessionId: bobCookie } = await createAndLoginUser(app, 'bob', 'correct-horse-battery-2');
+    expect(idsOf(await list(bobCookie, `?personId=${PERSON_A}`))).toEqual([]);
+    expect(idsOf(await list(bobCookie, '?unlinked=1'))).toEqual([]);
+  });
+
+  it('rejects a list with no person selection, with both, or with a malformed one, with 400', async () => {
+    const cookie = await signIn(app);
+    for (const query of [
+      '',
+      `?personId=${PERSON_A}&unlinked=1`,
+      '?personId=not-a-person',
+      '?personId=c-aaaaaaaaaaaaaaaa',
+      '?unlinked=true',
+    ]) {
+      const response = await list(cookie, query);
+      expect(response.statusCode, query).toBe(400);
+    }
   });
 });

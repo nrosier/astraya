@@ -348,6 +348,16 @@ const MIGRATIONS: readonly ((db: DatabaseSync) => void)[] = [
       CREATE INDEX interpretation_cost_reservations_expires ON interpretation_cost_reservations(expires_at);
     `);
   },
+  // 16: the person each saved Tier 2 result was generated for (#768), so the Past tab can show a
+  // person's own results. Ownership stays `user_id`; `person_id` is only a filter, deliberately not
+  // a foreign key (people live in the encrypted op-log, not in a table). Nullable: entries from
+  // before this have none and are listed only through the explicit "unlinked" group.
+  (db) => {
+    db.exec(`
+      ALTER TABLE interpretation_results ADD COLUMN person_id TEXT;
+      CREATE INDEX interpretation_results_user_person_created ON interpretation_results(user_id, person_id, created_at);
+    `);
+  },
 ];
 
 /** Migration steps whose table rebuild would otherwise break `REFERENCES` clauses pointing at the table being rebuilt. */

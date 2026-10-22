@@ -28,6 +28,11 @@ function makeUser(db: Database, username: string): string {
 
 const SECTIONS: readonly Tier2Section[] = [{ heading: 'Overview', body: 'A restyled interpretation.' }];
 
+/** Results saved with no person, as every save in this file before #768 was, are listed through the unlinked group. */
+const UNLINKED = { unlinked: true } as const;
+const PERSON_A = 'p-aaaaaaaaaaaaaaaa';
+const PERSON_B = 'p-bbbbbbbbbbbbbbbb';
+
 describe('saveInterpretationResult / getInterpretationResult (#392)', () => {
   it('round-trips the exact sections through encryption', () => {
     const db = openDatabase(':memory:');
@@ -126,7 +131,7 @@ describe('listInterpretationResults (#392)', () => {
   it('returns an empty array when the user has nothing saved', () => {
     const db = openDatabase(':memory:');
     const userId = makeUser(db, 'alice');
-    expect(listInterpretationResults(db, userId)).toEqual([]);
+    expect(listInterpretationResults(db, userId, UNLINKED)).toEqual([]);
     db.close();
   });
 
@@ -148,7 +153,7 @@ describe('listInterpretationResults (#392)', () => {
     );
     saveInterpretationResult(db, { userId: bob, mode: 'grounded', locale: 'en', sections: SECTIONS }, key);
 
-    const results = listInterpretationResults(db, alice);
+    const results = listInterpretationResults(db, alice, UNLINKED);
     expect(results).toHaveLength(2);
     expect(results.map((r) => r.id)).toEqual(expect.arrayContaining([first, second]));
     expect(results.every((r) => !('sections' in r))).toBe(true);
@@ -167,7 +172,7 @@ describe('the short description of an interpretation (#423)', () => {
       { userId, mode: 'grounded', locale: 'en', sections: SECTIONS, description: DESCRIPTION },
       key,
     );
-    expect(listInterpretationResults(db, userId, key)[0]).toMatchObject({ id, description: DESCRIPTION });
+    expect(listInterpretationResults(db, userId, UNLINKED, key)[0]).toMatchObject({ id, description: DESCRIPTION });
     expect(getInterpretationResult(db, userId, id, key)).toMatchObject({ id, description: DESCRIPTION });
     db.close();
   });
@@ -206,7 +211,7 @@ describe('the short description of an interpretation (#423)', () => {
       { description_json: null, description_iv: null },
       { description_json: null, description_iv: null },
     ]);
-    expect(listInterpretationResults(db, userId, key).map((r) => r.description)).toEqual([null, null]);
+    expect(listInterpretationResults(db, userId, UNLINKED, key).map((r) => r.description)).toEqual([null, null]);
     expect(getInterpretationResult(db, userId, withNone, key)?.description).toBeNull();
     expect(getInterpretationResult(db, userId, withNull, key)?.sections).toEqual(SECTIONS);
     db.close();
@@ -221,10 +226,10 @@ describe('the short description of an interpretation (#423)', () => {
       { userId, mode: 'grounded', locale: 'en', sections: SECTIONS, description: DESCRIPTION },
       key,
     );
-    expect(listInterpretationResults(db, userId)[0]?.description).toBeNull();
-    expect(listInterpretationResults(db, userId, randomBytes(32))[0]?.description).toBeNull();
+    expect(listInterpretationResults(db, userId, UNLINKED)[0]?.description).toBeNull();
+    expect(listInterpretationResults(db, userId, UNLINKED, randomBytes(32))[0]?.description).toBeNull();
     // The entry itself is still listed, so it can be told apart by its time and kind.
-    expect(listInterpretationResults(db, userId)).toHaveLength(1);
+    expect(listInterpretationResults(db, userId, UNLINKED)).toHaveLength(1);
     db.close();
   });
 
@@ -236,7 +241,7 @@ describe('the short description of an interpretation (#423)', () => {
     db.prepare(
       'INSERT INTO interpretation_results (id, user_id, mode, locale, sections_json, key_version, iv, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
     ).run('old', userId, 'synthesis', 'en', Buffer.from('x'), 1, Buffer.from('y'), '2026-01-01T00:00:00.000Z');
-    expect(listInterpretationResults(db, userId, key)).toEqual([
+    expect(listInterpretationResults(db, userId, UNLINKED, key)).toEqual([
       {
         id: 'old',
         mode: 'synthesis',
@@ -258,7 +263,7 @@ describe('what an interpretation was based on (#423)', () => {
     const userId = makeUser(db, 'alice');
     const basis = { kind: 'focus', body: 'mars', perspective: 'transit' } as const;
     const id = saveInterpretationResult(db, { userId, mode: 'focus', locale: 'en', sections: SECTIONS, basis }, key);
-    expect(listInterpretationResults(db, userId, key)[0]).toMatchObject({ id, kind: 'focus', basis });
+    expect(listInterpretationResults(db, userId, UNLINKED, key)[0]).toMatchObject({ id, kind: 'focus', basis });
     expect(getInterpretationResult(db, userId, id, key)).toMatchObject({ kind: 'focus', basis });
     db.close();
   });
@@ -271,7 +276,7 @@ describe('what an interpretation was based on (#423)', () => {
       { userId, mode: 'freeform', locale: 'en', sections: SECTIONS, basis: { kind: 'whole-chart' } },
       randomBytes(32),
     );
-    expect(listInterpretationResults(db, userId)[0]).toMatchObject({
+    expect(listInterpretationResults(db, userId, UNLINKED)[0]).toMatchObject({
       kind: 'whole-chart',
       basis: { kind: 'whole-chart' },
     });
@@ -282,7 +287,7 @@ describe('what an interpretation was based on (#423)', () => {
     const db = openDatabase(':memory:');
     const userId = makeUser(db, 'alice');
     saveInterpretationResult(db, { userId, mode: 'grounded', locale: 'en', sections: SECTIONS }, randomBytes(32));
-    expect(listInterpretationResults(db, userId)[0]).toMatchObject({ kind: 'placements', basis: null });
+    expect(listInterpretationResults(db, userId, UNLINKED)[0]).toMatchObject({ kind: 'placements', basis: null });
     db.close();
   });
 
@@ -303,7 +308,69 @@ describe('what an interpretation was based on (#423)', () => {
       'focus',
       '{"kind":"from-the-future"}',
     );
-    expect(listInterpretationResults(db, userId)[0]).toMatchObject({ kind: 'focus', basis: null });
+    expect(listInterpretationResults(db, userId, UNLINKED)[0]).toMatchObject({ kind: 'focus', basis: null });
+    db.close();
+  });
+});
+
+describe('results are filed under a person (#768)', () => {
+  function save(db: Database, userId: string, key: Buffer, personId?: string): string {
+    return saveInterpretationResult(
+      db,
+      { userId, mode: 'grounded', locale: 'en', sections: SECTIONS, ...(personId === undefined ? {} : { personId }) },
+      key,
+    );
+  }
+
+  it('stores the person id in its own column', () => {
+    const db = openDatabase(':memory:');
+    const userId = makeUser(db, 'alice');
+    save(db, userId, randomBytes(32), PERSON_A);
+    expect(db.prepare('SELECT person_id FROM interpretation_results').get()).toEqual({ person_id: PERSON_A });
+    db.close();
+  });
+
+  it('lists a result under its own person and not under another person of the same user', () => {
+    const db = openDatabase(':memory:');
+    const key = randomBytes(32);
+    const userId = makeUser(db, 'alice');
+    const forA = save(db, userId, key, PERSON_A);
+    const forB = save(db, userId, key, PERSON_B);
+    expect(listInterpretationResults(db, userId, { personId: PERSON_A }).map((r) => r.id)).toEqual([forA]);
+    expect(listInterpretationResults(db, userId, { personId: PERSON_B }).map((r) => r.id)).toEqual([forB]);
+    db.close();
+  });
+
+  it('lists only rows with no person in the unlinked group', () => {
+    const db = openDatabase(':memory:');
+    const key = randomBytes(32);
+    const userId = makeUser(db, 'alice');
+    const old = save(db, userId, key);
+    save(db, userId, key, PERSON_A);
+    expect(listInterpretationResults(db, userId, UNLINKED).map((r) => r.id)).toEqual([old]);
+    db.close();
+  });
+
+  it('never lists another user’s result, even for the same person id', () => {
+    const db = openDatabase(':memory:');
+    const key = randomBytes(32);
+    const alice = makeUser(db, 'alice');
+    const bob = makeUser(db, 'bob');
+    save(db, bob, key, PERSON_A);
+    save(db, bob, key);
+    expect(listInterpretationResults(db, alice, { personId: PERSON_A })).toEqual([]);
+    expect(listInterpretationResults(db, alice, UNLINKED)).toEqual([]);
+    db.close();
+  });
+
+  it('still opens and deletes an older result that has no person', () => {
+    const db = openDatabase(':memory:');
+    const key = randomBytes(32);
+    const userId = makeUser(db, 'alice');
+    const old = save(db, userId, key);
+    expect(getInterpretationResult(db, userId, old, key)?.sections).toEqual(SECTIONS);
+    expect(deleteInterpretationResult(db, userId, old)).toBe(true);
+    expect(getInterpretationResult(db, userId, old, key)).toBeUndefined();
     db.close();
   });
 });

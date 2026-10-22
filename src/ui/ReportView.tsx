@@ -202,6 +202,7 @@ function AiCustomizedPanel({
   chart,
   chartKind,
   exclude,
+  personId,
 }: {
   readonly report: Report;
   readonly locale: Locale;
@@ -210,6 +211,8 @@ function AiCustomizedPanel({
   readonly chartKind: 'natal' | 'composite';
   /** Objects left out of the reading (#721): not sent to the model either. */
   readonly exclude: InterpretationExclusions;
+  /** The person the report is for (#768); absent, nothing is listed or generated. */
+  readonly personId: string | undefined;
 }): React.JSX.Element {
   const t = useMessages(reportViewMessages);
   const shared = useMessages(sharedMessages);
@@ -226,13 +229,16 @@ function AiCustomizedPanel({
   const [openSavedId, setOpenSavedId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    if (user === undefined) return;
+    if (user === undefined || personId === undefined) {
+      setSavedResults([]);
+      return;
+    }
     // Empty (not an error) when the server has no ASTRAYA_ENCRYPTION_KEY configured — saving is
     // additive, so there's simply nothing to list, not a failure to surface (#392).
-    void listSavedInterpretations()
+    void listSavedInterpretations({ personId })
       .then(setSavedResults)
       .catch(() => undefined);
-  }, [user]);
+  }, [user, personId]);
 
   if (user === undefined) {
     return (
@@ -259,6 +265,7 @@ function AiCustomizedPanel({
         : undefined;
 
   function handleGenerate(): void {
+    if (personId === undefined) return;
     setGenerating(true);
     setError(undefined);
     setRejection(undefined);
@@ -268,20 +275,21 @@ function AiCustomizedPanel({
     setConsent(false);
     const request =
       mode === 'grounded'
-        ? { mode: 'grounded' as const, placementKeys, customPrompt, locale }
+        ? { mode: 'grounded' as const, placementKeys, customPrompt, locale, personId }
         : {
             mode: 'freeform' as const,
             chartData: toTier2ChartPayload(chart, exclude),
             ...(chartKind === 'natal' ? {} : { chartKind }),
             ...(customPrompt.trim() === '' ? {} : { customPrompt }),
             locale,
+            personId,
           };
     generateTier2Interpretation(request)
       .then((sections) => {
         setResult(sections);
         // Refreshes the list so a just-saved generation (if saving is enabled on this server)
         // shows up without a reload — best-effort, same as the initial load (#392).
-        void listSavedInterpretations()
+        void listSavedInterpretations({ personId })
           .then(setSavedResults)
           .catch(() => undefined);
       })
@@ -423,6 +431,7 @@ export function ReportView({
   chart,
   chartKind = 'natal',
   exclude = NO_EXCLUSIONS,
+  personId,
 }: {
   readonly chart: ChartData;
   /**
@@ -438,6 +447,8 @@ export function ReportView({
    * same framing gap #450 separately covers for the pre-generated corpus report.
    */
   readonly chartKind?: 'natal' | 'composite';
+  /** The person the report is for (#768): its AI readings list and save under them. Absent (until every caller passes it), nothing is listed or generated. */
+  readonly personId?: string | undefined;
 }): React.JSX.Element {
   const t = useMessages(reportViewMessages);
   const overviewT = useMessages(chartOverviewMessages);
@@ -603,9 +614,16 @@ export function ReportView({
             ))}
           </>
         ) : activeTab === 'ai' ? (
-          <AiCustomizedPanel report={report} locale={locale} chart={chart} chartKind={chartKind} exclude={exclude} />
+          <AiCustomizedPanel
+            report={report}
+            locale={locale}
+            chart={chart}
+            chartKind={chartKind}
+            exclude={exclude}
+            personId={personId}
+          />
         ) : (
-          <SavedInterpretationsPanel />
+          <SavedInterpretationsPanel personId={personId} />
         )}
       </div>
     </div>

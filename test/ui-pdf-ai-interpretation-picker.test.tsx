@@ -39,6 +39,7 @@ async function mount(props: {
   locale?: 'en' | 'nl';
   signedIn?: boolean;
   onChange?: (ids: readonly string[]) => void;
+  personId?: string;
 }): Promise<HTMLElement> {
   container = document.createElement('div');
   document.body.append(container);
@@ -50,6 +51,7 @@ async function mount(props: {
         onChange={props.onChange ?? (() => undefined)}
         locale={props.locale ?? 'en'}
         signedIn={props.signedIn ?? true}
+        personId={props.personId ?? 'p-abcdefghijklmnop'}
       />,
     );
     await Promise.resolve();
@@ -189,5 +191,39 @@ describe('PdfAiInterpretationPicker', () => {
     expect(onChange).not.toHaveBeenCalled();
     expect(c.querySelectorAll('ol li')).toHaveLength(1);
     expect(document.activeElement).toBe(c.querySelector('fieldset > button'));
+  });
+
+  it("lists only the given person's results", async () => {
+    list.mockResolvedValue([]);
+    await mount({ personId: 'p-person-one-aaaaaa' });
+    expect(list).toHaveBeenCalledWith({ personId: 'p-person-one-aaaaaa' });
+  });
+
+  it("drops ticked ids that are not in this person's list (#768)", async () => {
+    list.mockResolvedValue([entry('a', 'en'), entry('n', 'nl')]);
+    const onChange = vi.fn();
+    await mount({ selectedIds: ['a', 'gone', 'n'], onChange });
+    expect(onChange).toHaveBeenLastCalledWith(['a', 'n']);
+  });
+
+  it('clears every tick when the person changes, before the new list arrives (#768)', async () => {
+    list.mockResolvedValue([entry('a', 'en')]);
+    const onChange = vi.fn();
+    await mount({ selectedIds: ['a'], onChange, personId: 'p-person-one-aaaaaa' });
+    expect(onChange).not.toHaveBeenCalled();
+    list.mockReturnValue(new Promise(() => undefined));
+    act(() => {
+      root?.render(
+        <PdfAiInterpretationPicker
+          selectedIds={['a']}
+          onChange={onChange}
+          locale="en"
+          signedIn
+          personId="p-person-two-bbbbbb"
+        />,
+      );
+    });
+    expect(list).toHaveBeenLastCalledWith({ personId: 'p-person-two-bbbbbb' });
+    expect(onChange).toHaveBeenLastCalledWith([]);
   });
 });

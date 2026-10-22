@@ -376,6 +376,7 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
             nameA={nameA || t.personALabel}
             nameB={nameB || t.personBLabel}
             locale={locale}
+            personId={personId}
           />
 
           <p className="hint">{t.rankingHint}</p>

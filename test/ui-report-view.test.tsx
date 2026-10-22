@@ -561,6 +561,8 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
   let app: FastifyInstance;
   let baseUrl: string;
   let generateResponse: () => Response;
+  /** The person the report is for (#768): saved results are listed and saved under them. */
+  const PERSON = 'p-abcdefghijklmnop';
   let lastGenerateRequest: unknown;
 
   interface SessionProbeApi {
@@ -585,7 +587,7 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
       root.render(
         <SessionProvider>
           <SessionProbe />
-          <ReportView chart={makeChart()} />
+          <ReportView chart={makeChart()} personId={PERSON} />
         </SessionProvider>,
       );
       await Promise.resolve();
@@ -999,7 +1001,11 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
     const key = Buffer.from(process.env.ASTRAYA_ENCRYPTION_KEY ?? '', 'base64');
     const sections = [{ heading: 'h', body: 'b' }];
     const save = (mode: string, basis?: ResultBasis): void => {
-      saveInterpretationResult(raw, { userId, mode, locale: 'en', sections, ...(basis ? { basis } : {}) }, key);
+      saveInterpretationResult(
+        raw,
+        { userId, mode, locale: 'en', sections, personId: PERSON, ...(basis ? { basis } : {}) },
+        key,
+      );
     };
     save('grounded', { kind: 'placements', keys: ['planet-in-sign:sun:2'] });
     save('freeform', { kind: 'whole-chart' });
@@ -1039,6 +1045,7 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
       raw,
       {
         userId,
+        personId: PERSON,
         mode: 'grounded',
         locale: 'en',
         sections: [{ heading: 'h', body: 'b' }],
@@ -1051,6 +1058,7 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
       raw,
       {
         userId,
+        personId: PERSON,
         mode: 'freeform',
         locale: 'en',
         sections: [{ heading: 'h', body: 'b' }],
@@ -1100,6 +1108,7 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
       raw,
       {
         userId,
+        personId: PERSON,
         mode: 'freeform',
         locale: 'nl',
         sections: [{ heading: 'h', body: 'b' }],
@@ -1141,7 +1150,13 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
     const key = Buffer.from(process.env.ASTRAYA_ENCRYPTION_KEY ?? '', 'base64');
     const savedId = saveInterpretationResult(
       raw,
-      { userId, mode: 'synthesis', locale: 'en', sections: [{ heading: 'Overview', body: 'A saved interpretation.' }] },
+      {
+        userId,
+        personId: PERSON,
+        mode: 'synthesis',
+        locale: 'en',
+        sections: [{ heading: 'Overview', body: 'A saved interpretation.' }],
+      },
       key,
     );
     raw.close();
