@@ -235,10 +235,10 @@ function AiCustomizedPanel({
     }
     // Empty (not an error) when the server has no ASTRAYA_ENCRYPTION_KEY configured — saving is
     // additive, so there's simply nothing to list, not a failure to surface (#392).
-    void listSavedInterpretations({ personId })
+    void listSavedInterpretations({ personId }, locale)
       .then(setSavedResults)
       .catch(() => undefined);
-  }, [user, personId]);
+  }, [user, personId, locale]);
 
   if (user === undefined) {
     return (
@@ -289,7 +289,7 @@ function AiCustomizedPanel({
         setResult(sections);
         // Refreshes the list so a just-saved generation (if saving is enabled on this server)
         // shows up without a reload — best-effort, same as the initial load (#392).
-        void listSavedInterpretations({ personId })
+        void listSavedInterpretations({ personId }, locale)
           .then(setSavedResults)
           .catch(() => undefined);
       })

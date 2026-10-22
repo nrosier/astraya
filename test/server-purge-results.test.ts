@@ -35,7 +35,7 @@ function save(db: Database, userId: string, key: Buffer, personId?: string): str
 }
 
 function ids(db: Database, userId: string, filter: { personId: string } | { unlinked: true }): string[] {
-  return listInterpretationResults(db, userId, filter).map((result) => result.id);
+  return listInterpretationResults(db, userId, filter, 'en').map((result) => result.id);
 }
 
 describe('purging a person erases their saved results (#768)', () => {

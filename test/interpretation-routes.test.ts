@@ -918,7 +918,7 @@ describe('POST /api/interpretation/generate', () => {
     async function listed() {
       const response = await app.inject({
         method: 'GET',
-        url: `/api/interpretation/results?personId=${PERSON_A}`,
+        url: `/api/interpretation/results?personId=${PERSON_A}&locale=en`,
         cookies: { [SESSION_COOKIE]: cookie ?? '' },
       });
       return response.json<{
@@ -1089,7 +1089,7 @@ describe('POST /api/interpretation/generate', () => {
       await generateWith({ ...FOCUS_BODY, focusContext: { ...FOCUS, perspective: 'transit' } });
       const response = await app.inject({
         method: 'GET',
-        url: `/api/interpretation/results?personId=${PERSON_A}`,
+        url: `/api/interpretation/results?personId=${PERSON_A}&locale=en`,
         cookies: { [SESSION_COOKIE]: cookie ?? '' },
       });
       expect(response.json<{ results: unknown[] }>().results[0]).toMatchObject({
@@ -1224,7 +1224,7 @@ describe('POST /api/interpretation/generate', () => {
       await generateWith(FOCUS_BODY);
       const list = await app.inject({
         method: 'GET',
-        url: `/api/interpretation/results?personId=${PERSON_A}`,
+        url: `/api/interpretation/results?personId=${PERSON_A}&locale=en`,
         cookies: { [SESSION_COOKIE]: cookie ?? '' },
       });
       expect(list.json<{ results: { mode: string; description: string | null }[] }>().results[0]).toMatchObject({
@@ -1653,11 +1653,50 @@ describe('saved interpretation results (#392)', () => {
     const cookie = await signIn(app);
     const response = await app.inject({
       method: 'GET',
-      url: `/api/interpretation/results?personId=${PERSON_A}`,
+      url: `/api/interpretation/results?personId=${PERSON_A}&locale=en`,
       cookies: { [SESSION_COOKIE]: cookie },
     });
     expect(response.statusCode).toBe(200);
     expect(response.json<{ results: unknown[] }>().results).toEqual([]);
+  });
+
+  it('rejects a missing or unknown locale on the list with 400, in both scopes (#773)', async () => {
+    const cookie = await signIn(app);
+    for (const query of [
+      `personId=${PERSON_A}`,
+      `personId=${PERSON_A}&locale=fr`,
+      'unlinked=1',
+      'unlinked=1&locale=fr',
+    ]) {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/api/interpretation/results?${query}`,
+        cookies: { [SESSION_COOKIE]: cookie },
+      });
+      expect(response.statusCode).toBe(400);
+    }
+  });
+
+  it('lists a saved generation only in the language it was saved in (#773)', async () => {
+    const cookie = await signIn(app);
+    const generated = await app.inject({
+      method: 'POST',
+      url: '/api/interpretation/generate',
+      cookies: { [SESSION_COOKIE]: cookie },
+      payload: VALID_BODY,
+    });
+    expect(generated.statusCode).toBe(200);
+    const count = async (locale: string): Promise<number> => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/api/interpretation/results?personId=${PERSON_A}&locale=${locale}`,
+        cookies: { [SESSION_COOKIE]: cookie },
+      });
+      expect(response.statusCode).toBe(200);
+      return response.json<{ results: unknown[] }>().results.length;
+    };
+    expect(await count('en')).toBe(1);
+    expect(await count('nl')).toBe(0);
   });
 
   it('saves a successful generation and makes it retrievable without calling the model again', async () => {
@@ -1672,7 +1711,7 @@ describe('saved interpretation results (#392)', () => {
 
     const list = await app.inject({
       method: 'GET',
-      url: `/api/interpretation/results?personId=${PERSON_A}`,
+      url: `/api/interpretation/results?personId=${PERSON_A}&locale=en`,
       cookies: { [SESSION_COOKIE]: cookie },
     });
     expect(list.statusCode).toBe(200);
@@ -1708,7 +1747,7 @@ describe('saved interpretation results (#392)', () => {
     const { results } = (
       await app.inject({
         method: 'GET',
-        url: `/api/interpretation/results?personId=${PERSON_A}`,
+        url: `/api/interpretation/results?personId=${PERSON_A}&locale=en`,
         cookies: { [SESSION_COOKIE]: aliceCookie },
       })
     ).json<{ results: { id: string }[] }>();
@@ -1733,7 +1772,7 @@ describe('saved interpretation results (#392)', () => {
     const { results } = (
       await app.inject({
         method: 'GET',
-        url: `/api/interpretation/results?personId=${PERSON_A}`,
+        url: `/api/interpretation/results?personId=${PERSON_A}&locale=en`,
         cookies: { [SESSION_COOKIE]: cookie },
       })
     ).json<{ results: { id: string }[] }>();
@@ -1766,7 +1805,7 @@ describe('saved interpretation results (#392)', () => {
     const { results } = (
       await app.inject({
         method: 'GET',
-        url: `/api/interpretation/results?personId=${PERSON_A}`,
+        url: `/api/interpretation/results?personId=${PERSON_A}&locale=en`,
         cookies: { [SESSION_COOKIE]: aliceCookie },
       })
     ).json<{ results: { id: string }[] }>();
@@ -1810,7 +1849,7 @@ describe('saved interpretation results (#392)', () => {
     const { results } = (
       await app.inject({
         method: 'GET',
-        url: `/api/interpretation/results?personId=${PERSON_A}`,
+        url: `/api/interpretation/results?personId=${PERSON_A}&locale=en`,
         cookies: { [SESSION_COOKIE]: cookie },
       })
     ).json<{ results: { id: string }[] }>();
@@ -1850,7 +1889,7 @@ describe('saved interpretation results (#392)', () => {
 
     const list = await app.inject({
       method: 'GET',
-      url: `/api/interpretation/results?personId=${PERSON_A}`,
+      url: `/api/interpretation/results?personId=${PERSON_A}&locale=en`,
       cookies: { [SESSION_COOKIE]: cookie },
     });
     expect(list.json<{ results: unknown[] }>().results).toEqual([]);
@@ -1880,7 +1919,7 @@ describe('saved results are filed under a person (#768)', () => {
   async function list(cookie: string, query: string) {
     return app.inject({
       method: 'GET',
-      url: `/api/interpretation/results${query}`,
+      url: `/api/interpretation/results${query}${query === '' ? '?' : '&'}locale=en`,
       cookies: { [SESSION_COOKIE]: cookie },
     });
   }

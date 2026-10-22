@@ -235,12 +235,13 @@ export interface SavedInterpretationDetail extends SavedInterpretationSummary {
 /** Which saved results to list (#768): one person's, or the older ones saved before a person was recorded. There is no whole-account list. */
 export type SavedInterpretationsScope = { readonly personId: string } | { readonly unlinked: true };
 
-/** This user's own past generations for one scope, newest first — empty (not an error) when the server has no `ASTRAYA_ENCRYPTION_KEY` configured, same as `generateTier2Interpretation` never fails just because saving was skipped. */
+/** This user's own past generations for one scope and one language (#773), newest first — empty (not an error) when the server has no `ASTRAYA_ENCRYPTION_KEY` configured, same as `generateTier2Interpretation` never fails just because saving was skipped. */
 export async function listSavedInterpretations(
   scope: SavedInterpretationsScope,
+  locale: Locale,
 ): Promise<readonly SavedInterpretationSummary[]> {
   const query = 'personId' in scope ? `personId=${encodeURIComponent(scope.personId)}` : 'unlinked=1';
-  const response = await fetch(`/api/interpretation/results?${query}`);
+  const response = await fetch(`/api/interpretation/results?${query}&locale=${locale}`);
   if (!response.ok) throw await errorFrom(response);
   const { results } = (await response.json()) as { results: readonly SavedInterpretationSummary[] };
   return results;

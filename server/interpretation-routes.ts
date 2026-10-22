@@ -703,15 +703,19 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
   // Lists this user's own past generations (metadata only — mode/locale/when, never the text
   // itself, so this works even when ASTRAYA_ENCRYPTION_KEY has since been removed or rotated).
   // Exactly one of `?personId=` (one person's results) or `?unlinked=1` (older results saved
-  // before a person was recorded) is required (#768); there is no whole-account list.
-  app.get<{ Querystring: { personId?: unknown; unlinked?: unknown } }>(
+  // before a person was recorded) is required (#768); there is no whole-account list. `?locale=` is
+  // required too (#773): only results saved in that language are listed.
+  app.get<{ Querystring: { personId?: unknown; unlinked?: unknown; locale?: unknown } }>(
     '/api/interpretation/results',
     { preHandler: requireUser(db), config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
     async (request, reply) => {
       const userId = authenticatedUserId(request);
-      const { personId, unlinked } = request.query;
+      const { personId, unlinked, locale } = request.query;
       if ((personId === undefined) === (unlinked === undefined)) {
         return reply.code(400).send({ error: 'Pass exactly one of personId or unlinked=1' });
+      }
+      if (!isLocale(locale)) {
+        return reply.code(400).send({ error: `locale must be one of ${CORPUS_LOCALES.join(', ')}` });
       }
       let filter: ResultsFilter;
       if (personId !== undefined) {
@@ -721,7 +725,9 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
         if (unlinked !== '1') return reply.code(400).send({ error: 'unlinked must be 1' });
         filter = { unlinked: true };
       }
-      return reply.send({ results: listInterpretationResults(db, userId, filter, loadEncryptionKey() ?? undefined) });
+      return reply.send({
+        results: listInterpretationResults(db, userId, filter, locale, loadEncryptionKey() ?? undefined),
+      });
     },
   );
 

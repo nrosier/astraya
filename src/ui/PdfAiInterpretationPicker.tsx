@@ -71,7 +71,7 @@ export function PdfAiInterpretationPicker({
     }
     let cancelled = false;
     setState({ status: 'loading' });
-    listSavedInterpretations({ personId }).then(
+    listSavedInterpretations({ personId }, locale).then(
       (entries) => {
         if (!cancelled) setState({ status: 'ready', entries, personId });
       },
@@ -82,7 +82,7 @@ export function PdfAiInterpretationPicker({
     return () => {
       cancelled = true;
     };
-  }, [signedIn, personId]);
+  }, [signedIn, personId, locale]);
 
   // A change of person drops every tick at once (#768): the ticked ids were the previous person's, and the PDF must
   // never carry another person's results, not even while the new person's list is still loading.

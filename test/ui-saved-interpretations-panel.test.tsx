@@ -17,15 +17,15 @@ import { setLocale } from '../src/ui/locale.js';
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 const mocks = vi.hoisted(() => ({
-  list: vi.fn<(scope: unknown) => Promise<readonly SavedInterpretationSummary[]>>(),
-  unlinked: vi.fn<(scope: unknown) => Promise<readonly SavedInterpretationSummary[]>>(),
+  list: vi.fn<(scope: unknown, locale: unknown) => Promise<readonly SavedInterpretationSummary[]>>(),
+  unlinked: vi.fn<(scope: unknown, locale: unknown) => Promise<readonly SavedInterpretationSummary[]>>(),
   get: vi.fn(),
   remove: vi.fn(),
 }));
 // The person's list and the unlinked list (#768) are separate requests; each scope gets its own mock.
 vi.mock('../src/interpretation/tier2-client.js', () => ({
-  listSavedInterpretations: (scope: { personId: string } | { unlinked: true }) =>
-    'unlinked' in scope ? mocks.unlinked(scope) : mocks.list(scope),
+  listSavedInterpretations: (scope: { personId: string } | { unlinked: true }, locale: string) =>
+    'unlinked' in scope ? mocks.unlinked(scope, locale) : mocks.list(scope, locale),
   getSavedInterpretation: mocks.get,
   deleteSavedInterpretation: mocks.remove,
 }));
@@ -149,6 +149,15 @@ describe('SavedInterpretationsPanel: the list', () => {
     await flush();
     expect(c.textContent).not.toContain(t.pastLoading);
     expect(rows(c)).toHaveLength(2);
+  });
+
+  it('requests both lists in the current UI language (#773)', async () => {
+    mocks.list.mockResolvedValue([]);
+    setLocale('nl');
+    await mount();
+    await flush();
+    expect(mocks.list).toHaveBeenCalledWith({ personId: PERSON }, 'nl');
+    expect(mocks.unlinked).toHaveBeenCalledWith({ unlinked: true }, 'nl');
   });
 
   it('renders the empty state when there are no past interpretations', async () => {
@@ -332,8 +341,8 @@ describe('SavedInterpretationsPanel: person scope (#768)', () => {
     mocks.unlinked.mockResolvedValue([summary('old')]);
     const c = await mount();
     await flush();
-    expect(mocks.list).toHaveBeenCalledWith({ personId: PERSON });
-    expect(mocks.unlinked).toHaveBeenCalledWith({ unlinked: true });
+    expect(mocks.list).toHaveBeenCalledWith({ personId: PERSON }, 'en');
+    expect(mocks.unlinked).toHaveBeenCalledWith({ unlinked: true }, 'en');
     const section = unlinkedSection(c);
     expect(section?.querySelector('h3')?.textContent).toBe(t.notLinkedHeading);
     expect(section?.textContent).toContain(t.notLinkedIntro);

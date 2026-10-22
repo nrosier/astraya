@@ -68,10 +68,10 @@ export function FocusInterpretation({
       setSaved([]);
       return;
     }
-    void listSavedInterpretations({ personId })
+    void listSavedInterpretations({ personId }, locale)
       .then(setSaved)
       .catch(() => undefined);
-  }, [user, personId, listVersion]);
+  }, [user, personId, listVersion, locale]);
 
   useEffect(() => {
     setConsent(false);

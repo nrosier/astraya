@@ -123,10 +123,10 @@ export function RelationshipSummary({
       setSaved([]);
       return;
     }
-    void listSavedInterpretations({ personId })
+    void listSavedInterpretations({ personId }, locale)
       .then(setSaved)
       .catch(() => undefined);
-  }, [user, personId]);
+  }, [user, personId, locale]);
 
   const groups = groupedRelationshipContacts(data);
   const angleContacts = relationshipAngleContacts(data);
@@ -162,7 +162,7 @@ export function RelationshipSummary({
     })
       .then((generated) => {
         setSections(generated);
-        void listSavedInterpretations({ personId })
+        void listSavedInterpretations({ personId }, locale)
           .then(setSaved)
           .catch(() => undefined);
       })
