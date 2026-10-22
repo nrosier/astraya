@@ -70,7 +70,7 @@ const nl: typeof en = {
   loadingInterpretation: 'Interpretatie wordt geladen…',
   keyInsightLabel: 'Kerninzicht',
   reportScopeExcludes: (names: string) =>
-    `Deze duiding laat weg: ${names}. Wijzig dit onder Uitgebreide instellingen, “opgenomen in het geschreven rapport”. De elementenbalans, de horoscoopvorm en de dispositorketen beschrijven nog steeds de hele horoscoop.`,
+    `Deze interpretatie laat weg: ${names}. Wijzig dit onder Uitgebreide instellingen, “opgenomen in het geschreven rapport”. De elementenbalans, de horoscoopvorm en de dispositorketen beschrijven nog steeds de hele horoscoop.`,
   interpretationDisclaimer:
     'Lees dit als onderdelen van een geheel, niet als losse oordelen: een door een computer gegenereerde interpretatie beschrijft één plaatsing per keer, maar geen enkele positie of aspect betekent veel op zichzelf — alleen samen met de rest van de horoscoop.',
   tocHeading: 'Inhoud',
@@ -78,7 +78,7 @@ const nl: typeof en = {
   interpretationTablist: 'Interpretatiemodus',
   standardTabLabel: 'Standaard',
   aiTabLabel: 'AI-gepersonaliseerd',
-  pastTabLabel: 'Eerdere duidingen',
+  pastTabLabel: 'Eerdere interpretaties',
   tier2Heading: 'AI-gepersonaliseerde interpretatie',
   tier2SignInPrompt: 'Log in om een AI-gepersonaliseerde interpretatie in je eigen stijl en toon te genereren.',
   tier2ConsentLabel: (mode: 'grounded' | 'freeform') =>

@@ -357,7 +357,7 @@ const TIER_TEXT: Readonly<Record<Locale, Readonly<Record<CorpusTier, { label: st
     nuance: { label: 'Nuance', explanation: 'Fine detail that matters once the obvious has been said.' },
   },
   nl: {
-    core: { label: 'Kern', explanation: 'Vrijwel elke duiding wil hier iets over zeggen.' },
+    core: { label: 'Kern', explanation: 'Vrijwel elke interpretatie wil hier iets over zeggen.' },
     notable: { label: 'Opvallend', explanation: 'Tussenin: het noemen waard, door een redacteur gekozen.' },
     nuance: { label: 'Verfijning', explanation: 'Fijn detail dat telt als het voor de hand liggende gezegd is.' },
   },

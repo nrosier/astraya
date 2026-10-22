@@ -22,17 +22,17 @@ const en = {
 };
 
 const nl: typeof en = {
-  pastEmpty: 'Je hebt nog geen eerdere duidingen.',
-  pastLoading: 'Eerdere duidingen laden…',
-  pastError: 'Eerdere duidingen konden niet worden geladen.',
+  pastEmpty: 'Je hebt nog geen eerdere interpretaties.',
+  pastLoading: 'Eerdere interpretaties laden…',
+  pastError: 'Eerdere interpretaties konden niet worden geladen.',
   pastClose: 'Sluiten',
   pastDelete: 'Verwijderen',
-  pastDeleteConfirmMessage: 'Deze duiding wordt definitief verwijderd. Dat kan niet ongedaan worden gemaakt.',
+  pastDeleteConfirmMessage: 'Deze interpretatie wordt definitief verwijderd. Dat kan niet ongedaan worden gemaakt.',
   pastDeleteConfirm: 'Definitief verwijderen',
   pastDeleteCancel: 'Annuleren',
-  pastDeleteFailed: 'De duiding kon niet worden verwijderd. Probeer het opnieuw.',
-  pastNoSections: 'Deze duiding bevat geen tekst.',
-  pastTypeNeutral: 'Opgeslagen duiding',
+  pastDeleteFailed: 'De interpretatie kon niet worden verwijderd. Probeer het opnieuw.',
+  pastNoSections: 'Deze interpretatie bevat geen tekst.',
+  pastTypeNeutral: 'Opgeslagen interpretatie',
 };
 
 export const savedInterpretationsPanelMessages = { en, nl };

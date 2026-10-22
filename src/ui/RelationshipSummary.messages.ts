@@ -99,15 +99,15 @@ const nl: typeof en = {
   balanceSentence: (harmonious, challenging) =>
     `${String(harmonious)} harmonieus(e) contact(en), ${String(challenging)} uitdagend — een startpunt voor reflectie, geen score.`,
   noContactsInTheme: 'Geen contact binnen dit thema.',
-  tier2Heading: 'AI-relatieduiding',
-  tier2Generate: 'Genereer een AI-aangepaste relatieduiding',
+  tier2Heading: 'AI-relatie-interpretatie',
+  tier2Generate: 'Genereer een AI-aangepaste relatie-interpretatie',
   tier2Generating: 'Bezig met genereren…',
   tier2Consent:
     'Verstuur de berekende plaatsingen van beide personen, de aspecten tussen hun horoscopen en de huisoverlappingen (geen namen, data of plaatsen) naar een AI-model van derden voor dit ene verzoek.',
-  tier2SignIn: 'Log in om een AI-aangepaste relatieduiding te genereren.',
+  tier2SignIn: 'Log in om een AI-aangepaste relatie-interpretatie te genereren.',
   tier2DisabledConsent: 'vink eerst het toestemmingsvakje aan',
   tier2Error: (message) => `Kon niet genereren: ${message}`,
-  tier2SavedHeading: 'Eerdere relatieduidingen voor dit koppel',
+  tier2SavedHeading: 'Eerdere relatie-interpretaties voor dit koppel',
 };
 
 export const relationshipSummaryMessages = { en, nl };

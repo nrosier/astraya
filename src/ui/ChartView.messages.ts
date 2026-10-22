@@ -515,7 +515,7 @@ const nl: typeof en = {
   fixedStarsScopeNote: (count: number, names: string) =>
     `Deze tabel controleert slechts ${String(count)} sterren: ${names}. Er wordt naar geen enkele andere vaste ster gezocht, dus een lege of korte lijst betekent niet dat er geen ster bij een planeet staat.`,
   derivedChartInterpretationNote: (chartKind: string) =>
-    `Deze duiding past geboortehoroscoop-interpretaties toe op een afgeleide horoscoop (${chartKind}); beschouw haar als indicatief.`,
+    `Deze interpretatie past geboortehoroscoop-interpretaties toe op een afgeleide horoscoop (${chartKind}); beschouw haar als indicatief.`,
 
   almutenOfAscendantSentence: (names: string) => `Almuten van de Ascendant: ${names}`,
   almutenTooltip:
