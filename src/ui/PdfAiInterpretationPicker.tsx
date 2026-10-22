@@ -26,6 +26,8 @@ export interface PdfAiInterpretationPickerProps {
   /** The PDF's language; only saved interpretations in it are offered. */
   readonly locale: Locale;
   readonly signedIn: boolean;
+  /** The person the PDF is for (#768): only their saved interpretations are offered. Absent (until every caller passes it), none are. */
+  readonly personId?: string | undefined;
 }
 
 /** The type wording for an entry; the neutral label when nothing specific was recorded. */
@@ -46,6 +48,7 @@ export function PdfAiInterpretationPicker({
   onChange,
   locale,
   signedIn,
+  personId,
 }: PdfAiInterpretationPickerProps): React.JSX.Element {
   const t = useMessages(pdfExportMessages);
   const [state, setState] = useState<LoadState>({ status: 'idle' });
@@ -57,9 +60,13 @@ export function PdfAiInterpretationPicker({
       setState({ status: 'idle' });
       return;
     }
+    if (personId === undefined) {
+      setState({ status: 'ready', entries: [] });
+      return;
+    }
     let cancelled = false;
     setState({ status: 'loading' });
-    listSavedInterpretations().then(
+    listSavedInterpretations({ personId }).then(
       (entries) => {
         if (!cancelled) setState({ status: 'ready', entries });
       },
@@ -70,7 +77,7 @@ export function PdfAiInterpretationPicker({
     return () => {
       cancelled = true;
     };
-  }, [signedIn]);
+  }, [signedIn, personId]);
 
   const offered = state.status === 'ready' ? state.entries.filter((entry) => entry.locale === locale) : [];
   const byId = new Map(offered.map((entry) => [entry.id, entry]));

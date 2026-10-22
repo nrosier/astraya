@@ -74,6 +74,7 @@ export function SelectionInspector({
   exclude,
   onClear,
   derivedChartNote,
+  personId,
 }: {
   readonly facts: WheelIsolationFacts | undefined;
   readonly selectionKey: string | undefined;
@@ -85,6 +86,8 @@ export function SelectionInspector({
   readonly onClear: () => void;
   /** Said when the chart is not a natal chart, since the prose below is written for natal placements (#725). */
   readonly derivedChartNote?: string | undefined;
+  /** The person the chart belongs to (#768): the AI reading lists and saves under them. */
+  readonly personId?: string | undefined;
 }): React.JSX.Element {
   const t = useMessages(chartViewMessages);
   return (
@@ -146,7 +149,7 @@ export function SelectionInspector({
             <WheelSelectionText chart={data} selectionKey={selectionKey} locale={locale} exclude={exclude} />
           </div>
           {focusContext !== undefined && (
-            <FocusInterpretation context={focusContext} locale={locale} resetKey={selectionKey} />
+            <FocusInterpretation context={focusContext} locale={locale} resetKey={selectionKey} personId={personId} />
           )}
         </>
       )}

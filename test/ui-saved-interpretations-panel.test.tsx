@@ -61,7 +61,7 @@ async function mount(): Promise<HTMLElement> {
   document.body.append(container);
   root = createRoot(container);
   await act(async () => {
-    root?.render(<SavedInterpretationsPanel />);
+    root?.render(<SavedInterpretationsPanel personId="p-abcdefghijklmnop" />);
     await new Promise<void>((resolve) => setTimeout(resolve, 0));
   });
   return container;

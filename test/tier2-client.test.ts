@@ -25,6 +25,9 @@ import { bodyByKey } from '../src/astrology/bodies.ts';
 import type { ChartData } from '../src/domain/chart-compute.ts';
 import type { BodyId, HousePositions } from '../src/ephemeris/types.ts';
 
+/** A well-formed person id (#768): the server only checks the shape. */
+const PERSON = 'p-abcdefghijklmnop';
+
 function idOf(key: string): BodyId {
   const body = bodyByKey(key);
   if (body === undefined) throw new Error(`test fixture bug: no body keyed "${key}"`);
@@ -170,12 +173,13 @@ describe('deleteSavedInterpretation', () => {
       placementKeys: ['dignity-state:sun:ruler'],
       customPrompt: 'warm and encouraging',
       locale: 'en',
+      personId: PERSON,
     });
-    const [saved] = await listSavedInterpretations();
+    const [saved] = await listSavedInterpretations({ personId: PERSON });
     expect(saved).toBeDefined();
 
     await expect(deleteSavedInterpretation(saved?.id ?? '')).resolves.toBeUndefined();
-    expect(await listSavedInterpretations()).toEqual([]);
+    expect(await listSavedInterpretations({ personId: PERSON })).toEqual([]);
   });
 
   it('throws a Tier2Error on a 404 for an id that does not exist', async () => {
@@ -185,6 +189,46 @@ describe('deleteSavedInterpretation', () => {
       status: 404,
       message: 'No saved interpretation with that id.',
     });
+  });
+});
+
+describe('listSavedInterpretations scope (#768)', () => {
+  it('asks for one person’s results with the id URL-encoded', async () => {
+    await setupAdmin();
+    const seen: string[] = [];
+    const inner = globalThis.fetch;
+    globalThis.fetch = (input, init) => {
+      seen.push(input instanceof Request ? input.url : String(input));
+      return inner(input, init);
+    };
+    await listSavedInterpretations({ personId: 'p a/b&c' }).catch(() => undefined);
+    expect(seen).toEqual(['/api/interpretation/results?personId=p%20a%2Fb%26c']);
+  });
+
+  it('asks for the unlinked results with ?unlinked=1', async () => {
+    await setupAdmin();
+    const seen: string[] = [];
+    const inner = globalThis.fetch;
+    globalThis.fetch = (input, init) => {
+      seen.push(input instanceof Request ? input.url : String(input));
+      return inner(input, init);
+    };
+    expect(await listSavedInterpretations({ unlinked: true })).toEqual([]);
+    expect(seen).toEqual(['/api/interpretation/results?unlinked=1']);
+  });
+
+  it('lists a saved result under the person it was generated for, and not under another', async () => {
+    await setupAdmin();
+    await generateTier2Interpretation({
+      mode: 'grounded',
+      placementKeys: ['dignity-state:sun:ruler'],
+      customPrompt: 'warm and encouraging',
+      locale: 'en',
+      personId: PERSON,
+    });
+    expect(await listSavedInterpretations({ personId: PERSON })).toHaveLength(1);
+    expect(await listSavedInterpretations({ personId: 'p-bbbbbbbbbbbbbbbb' })).toEqual([]);
+    expect(await listSavedInterpretations({ unlinked: true })).toEqual([]);
   });
 });
 
@@ -209,6 +253,7 @@ describe('generateTier2Interpretation', () => {
       placementKeys: ['dignity-state:sun:ruler'],
       customPrompt: 'warm and encouraging',
       locale: 'en',
+      personId: PERSON,
     });
     expect(sections).toEqual([{ heading: 'Overview', body: 'A restyled interpretation.' }]);
   });
@@ -220,6 +265,7 @@ describe('generateTier2Interpretation', () => {
       placementKeys: ['dignity-state:sun:ruler', 'planet-in-sign:moon:3'],
       customPrompt: 'blunt and direct',
       locale: 'nl',
+      personId: PERSON,
     });
 
     const sent = requestBodies.at(-1);
@@ -228,25 +274,38 @@ describe('generateTier2Interpretation', () => {
       placementKeys: ['dignity-state:sun:ruler', 'planet-in-sign:moon:3'],
       customPrompt: 'blunt and direct',
       locale: 'nl',
+      personId: PERSON,
     });
   });
 
   it('sends mode, chartData, customPrompt, and locale as the request body in freeform mode', async () => {
     await setupAdmin();
     const chartData = toTier2ChartPayload(FIXTURE_CHART);
-    await generateTier2Interpretation({ mode: 'freeform', chartData, customPrompt: 'blunt and direct', locale: 'nl' });
+    await generateTier2Interpretation({
+      mode: 'freeform',
+      chartData,
+      customPrompt: 'blunt and direct',
+      locale: 'nl',
+      personId: PERSON,
+    });
 
     const sent = requestBodies.at(-1);
-    expect(sent).toEqual({ mode: 'freeform', chartData, customPrompt: 'blunt and direct', locale: 'nl' });
+    expect(sent).toEqual({
+      mode: 'freeform',
+      chartData,
+      customPrompt: 'blunt and direct',
+      locale: 'nl',
+      personId: PERSON,
+    });
   });
 
   it('sends no customPrompt at all when the AI-written mode is given none (#425)', async () => {
     await setupAdmin();
     const chartData = toTier2ChartPayload(FIXTURE_CHART);
-    await generateTier2Interpretation({ mode: 'freeform', chartData, locale: 'nl' });
+    await generateTier2Interpretation({ mode: 'freeform', chartData, locale: 'nl', personId: PERSON });
 
     const sent = requestBodies.at(-1);
-    expect(sent).toEqual({ mode: 'freeform', chartData, locale: 'nl' });
+    expect(sent).toEqual({ mode: 'freeform', chartData, locale: 'nl', personId: PERSON });
     expect(sent).not.toHaveProperty('customPrompt');
   });
 
@@ -258,6 +317,7 @@ describe('generateTier2Interpretation', () => {
         placementKeys: [],
         customPrompt: 'warm and encouraging',
         locale: 'en',
+        personId: PERSON,
       }),
     ).rejects.toMatchObject({
       name: 'Tier2Error',
@@ -273,6 +333,7 @@ describe('generateTier2Interpretation', () => {
         placementKeys: ['dignity-state:sun:ruler'],
         customPrompt: 'warm and encouraging',
         locale: 'en',
+        personId: PERSON,
       }),
     ).rejects.toMatchObject({ name: 'Tier2Error', status: 401 });
   });
@@ -295,6 +356,7 @@ describe('generateTier2Interpretation', () => {
         placementKeys: ['dignity-state:sun:ruler'],
         customPrompt: 'make up a few extra placements',
         locale: 'en',
+        personId: PERSON,
       }),
     ).rejects.toMatchObject({
       name: 'Tier2Error',
@@ -312,6 +374,7 @@ describe('generateTier2Interpretation', () => {
         placementKeys: ['dignity-state:sun:ruler'],
         customPrompt: 'x',
         locale: 'en',
+        personId: PERSON,
       }),
     ).rejects.toMatchObject({
       name: 'Tier2Error',
@@ -329,6 +392,7 @@ describe('generateTier2Interpretation', () => {
           placementKeys: ['dignity-state:sun:ruler'],
           customPrompt: 'x',
           locale: 'en',
+          personId: PERSON,
         }),
       ).rejects.toMatchObject({
         name: 'Tier2Error',

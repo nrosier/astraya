@@ -50,6 +50,7 @@ async function mount(props: {
         onChange={props.onChange ?? (() => undefined)}
         locale={props.locale ?? 'en'}
         signedIn={props.signedIn ?? true}
+        personId="p-abcdefghijklmnop"
       />,
     );
     await Promise.resolve();

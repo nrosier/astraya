@@ -78,7 +78,12 @@ function DeleteConfirmation({
   );
 }
 
-export function SavedInterpretationsPanel(): React.JSX.Element {
+export function SavedInterpretationsPanel({
+  personId,
+}: {
+  /** The person whose past readings are listed (#768). Absent (until every caller passes it), the list is empty. */
+  readonly personId?: string | undefined;
+}): React.JSX.Element {
   const t = useMessages(savedInterpretationsPanelMessages);
   const [locale] = useLocale();
   const [loadState, setLoadState] = useState<LoadState>('loading');
@@ -93,8 +98,13 @@ export function SavedInterpretationsPanel(): React.JSX.Element {
   const cancelRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
+    if (personId === undefined) {
+      setItems([]);
+      setLoadState('ready');
+      return;
+    }
     let cancelled = false;
-    listSavedInterpretations()
+    listSavedInterpretations({ personId })
       .then((results) => {
         if (cancelled) return;
         setItems(results);
@@ -106,7 +116,7 @@ export function SavedInterpretationsPanel(): React.JSX.Element {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [personId]);
 
   // Focus moves to Cancel whenever a confirmation opens, so the reader lands on the safe choice.
   useEffect(() => {

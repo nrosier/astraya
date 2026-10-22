@@ -343,7 +343,7 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
             />
           )}
           {selectionKey !== undefined && focusContext !== undefined && (
-            <FocusInterpretation context={focusContext} locale={locale} resetKey={selectionKey} />
+            <FocusInterpretation context={focusContext} locale={locale} resetKey={selectionKey} personId={personId} />
           )}
 
           {load.voidOfCourse !== undefined && (

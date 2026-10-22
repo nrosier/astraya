@@ -33,7 +33,7 @@
  * @module interpretation/tier2-client
  * @purpose Thin fetch() client for POST /api/interpretation/generate — the one runtime path in Astraya that calls a third-party model provider, proxied entirely through the server per ADR 0003.
  * @conventions Three modes: 'grounded' sends only de-identified placementKeys (server re-resolves Tier-1 text, no interpretation prose crosses the wire); 'freeform' sends computed chartData and gives up the "no chart data crosses the wire" guarantee for that mode only; 'focus' sends one placement's enriched FocusContext. The wire shapes are defined once in ./tier2-contract and shared with the server, never redeclared here (#588). `locale` always rides alongside the payload.
- * @exports Tier2Error, Tier2Section, Tier2ChartDataPayload, toTier2ChartPayload, Tier2PositionsHousesPayload, Tier2RelationshipDataPayload, toTier2RelationshipPayload, Tier2Request, SavedInterpretationSummary, SavedInterpretationDetail, deleteSavedInterpretation
+ * @exports Tier2Error, Tier2Section, Tier2ChartDataPayload, toTier2ChartPayload, Tier2PositionsHousesPayload, Tier2RelationshipDataPayload, toTier2RelationshipPayload, Tier2Request, SavedInterpretationsScope, SavedInterpretationSummary, SavedInterpretationDetail, deleteSavedInterpretation
  */
 import { bodyById, bodyByKey } from '../astrology/bodies.js';
 import type { ChartData } from '../domain/chart-compute.js';
@@ -155,7 +155,14 @@ export function toTier2RelationshipPayload(
   };
 }
 
-export type Tier2Request =
+/**
+ * One Tier 2 request: the mode's own payload, plus the person the page is for (#768). `personId` only
+ * files the saved result under that person — the server never puts it in the prompt or the basis. A
+ * synastry or composite page sends its primary person.
+ */
+export type Tier2Request = Tier2RequestPayload & { readonly personId: string };
+
+type Tier2RequestPayload =
   | {
       readonly mode: 'grounded';
       readonly placementKeys: readonly string[];
@@ -225,9 +232,15 @@ export interface SavedInterpretationDetail extends SavedInterpretationSummary {
   readonly sections: readonly Tier2Section[];
 }
 
-/** This user's own past generations, newest first — empty (not an error) when the server has no `ASTRAYA_ENCRYPTION_KEY` configured, same as `generateTier2Interpretation` never fails just because saving was skipped. */
-export async function listSavedInterpretations(): Promise<readonly SavedInterpretationSummary[]> {
-  const response = await fetch('/api/interpretation/results');
+/** Which saved results to list (#768): one person's, or the older ones saved before a person was recorded. There is no whole-account list. */
+export type SavedInterpretationsScope = { readonly personId: string } | { readonly unlinked: true };
+
+/** This user's own past generations for one scope, newest first — empty (not an error) when the server has no `ASTRAYA_ENCRYPTION_KEY` configured, same as `generateTier2Interpretation` never fails just because saving was skipped. */
+export async function listSavedInterpretations(
+  scope: SavedInterpretationsScope,
+): Promise<readonly SavedInterpretationSummary[]> {
+  const query = 'personId' in scope ? `personId=${encodeURIComponent(scope.personId)}` : 'unlinked=1';
+  const response = await fetch(`/api/interpretation/results?${query}`);
   if (!response.ok) throw await errorFrom(response);
   const { results } = (await response.json()) as { results: readonly SavedInterpretationSummary[] };
   return results;
