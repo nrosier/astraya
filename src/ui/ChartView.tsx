@@ -1774,6 +1774,7 @@ export function ChartDataView({
   buildViewHref,
   overlayContext,
   chartType,
+  personId,
 }: {
   readonly load: Load;
   readonly displayName: string;
@@ -1818,6 +1819,8 @@ export function ChartDataView({
    * no such note is shown (natal, shared, composite and horary charts).
    */
   readonly chartType?: ChartType | undefined;
+  /** The person the chart belongs to (#768), for the inspector's AI reading; absent on screens with no person (shared, horary). */
+  readonly personId?: string | undefined;
 }): React.JSX.Element {
   const t = useMessages(chartViewMessages);
   const chartTypeT = useMessages(chartTypesMessages);
@@ -2231,6 +2234,7 @@ export function ChartDataView({
                 focusContext={focusContext}
                 locale={locale}
                 exclude={interpretationExcluded}
+                personId={personId}
                 onClear={clearIsolation}
                 derivedChartNote={
                   isDerivedChartType(chartType)
@@ -2641,6 +2645,7 @@ export function ChartView({
           <div>
             <h2>{t.natalLabel}</h2>
             <ChartDataView
+              personId={personId}
               load={load}
               displayName={person.displayName}
               showHouses={showHouses}
@@ -2659,6 +2664,7 @@ export function ChartView({
           <div>
             <h2>{compareType.charAt(0).toUpperCase() + compareType.slice(1).replace(/-/g, ' ')}</h2>
             <ChartDataView
+              personId={personId}
               chartType={compareType}
               load={compareLoad}
               displayName={compareDisplayName}
@@ -2702,6 +2708,7 @@ export function ChartView({
         customPoints={person.customPoints ?? []}
       />
       <ChartDataView
+        personId={personId}
         load={load}
         displayName={person.displayName}
         showHouses={showHouses}

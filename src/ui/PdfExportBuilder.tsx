@@ -468,6 +468,7 @@ export function PdfExportBuilder({ embedded = false }: { readonly embedded?: boo
           }}
           locale={locale}
           signedIn={user !== undefined}
+          personId={personId === '' ? undefined : personId}
         />
       </fieldset>
 

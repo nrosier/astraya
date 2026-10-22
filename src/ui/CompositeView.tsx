@@ -150,6 +150,7 @@ export function CompositeView({
 
       {partnerId !== '' && load.kind !== 'idle' && (
         <ChartDataView
+          personId={personId}
           load={load}
           displayName={displayName || t.compositeFallback}
           showHouses
@@ -166,7 +167,7 @@ export function CompositeView({
         <StatusMessage kind="error">{t.housesUndefined}</StatusMessage>
       )}
       {partnerId !== '' && load.kind === 'ready' && housesAreDefined(load.data.houses) && (
-        <ReportView chart={load.data} chartKind="composite" />
+        <ReportView personId={personId} chart={load.data} chartKind="composite" />
       )}
     </main>
   );

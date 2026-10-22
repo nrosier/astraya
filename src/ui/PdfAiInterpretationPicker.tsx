@@ -1,7 +1,7 @@
 /**
  * @module ui/PdfAiInterpretationPicker
  * @purpose Lets the signed-in user tick saved AI interpretations in the PDF's language in a selection modal (#762) and order the chosen ones in the PDF builder (#759); it generates nothing.
- * @conventions Controlled: owns only the fetched list, never the selection. Only entries whose locale equals the PDF's locale are offered; signed out, the trigger is disabled and the list endpoint is never called. The modal only ticks entries (time, description when present, type; never the generic AI label); Move up/down stay in the builder's list; closing keeps the selection. UI strings follow the app locale; entry labels follow the PDF locale.
+ * @conventions Controlled: owns only the fetched list, never the selection. Lists only the given person's results (#768) and drops ticks that are not in that list, all of them when the person changes. Only entries whose locale equals the PDF's locale are offered; signed out, the trigger is disabled and the list endpoint is never called. The modal only ticks entries (time, description when present, type; never the generic AI label); Move up/down stay in the builder's list; closing keeps the selection. UI strings follow the app locale; entry labels follow the PDF locale.
  * @exports PdfAiInterpretationPicker
  */
 import { useEffect, useRef, useState } from 'react';
@@ -18,7 +18,12 @@ type LoadState =
   | { readonly status: 'idle' }
   | { readonly status: 'loading' }
   | { readonly status: 'error' }
-  | { readonly status: 'ready'; readonly entries: readonly SavedInterpretationSummary[] };
+  | {
+      readonly status: 'ready';
+      readonly entries: readonly SavedInterpretationSummary[];
+      /** The person the list was loaded for, so a list still showing the previous person never prunes the new one's ticks. */
+      readonly personId: string | undefined;
+    };
 
 export interface PdfAiInterpretationPickerProps {
   readonly selectedIds: readonly string[];
@@ -61,14 +66,14 @@ export function PdfAiInterpretationPicker({
       return;
     }
     if (personId === undefined) {
-      setState({ status: 'ready', entries: [] });
+      setState({ status: 'ready', entries: [], personId: undefined });
       return;
     }
     let cancelled = false;
     setState({ status: 'loading' });
     listSavedInterpretations({ personId }).then(
       (entries) => {
-        if (!cancelled) setState({ status: 'ready', entries });
+        if (!cancelled) setState({ status: 'ready', entries, personId });
       },
       () => {
         if (!cancelled) setState({ status: 'error' });
@@ -78,6 +83,23 @@ export function PdfAiInterpretationPicker({
       cancelled = true;
     };
   }, [signedIn, personId]);
+
+  // A change of person drops every tick at once (#768): the ticked ids were the previous person's, and the PDF must
+  // never carry another person's results, not even while the new person's list is still loading.
+  const lastPersonId = useRef(personId);
+  useEffect(() => {
+    if (lastPersonId.current === personId) return;
+    lastPersonId.current = personId;
+    if (selectedIds.length > 0) onChange([]);
+  }, [personId, selectedIds, onChange]);
+
+  // Once this person's list is in, ticks it does not contain are dropped (#768), e.g. a result deleted elsewhere.
+  useEffect(() => {
+    if (state.status !== 'ready' || state.personId !== personId) return;
+    const known = new Set(state.entries.map((entry) => entry.id));
+    const kept = selectedIds.filter((id) => known.has(id));
+    if (kept.length !== selectedIds.length) onChange(kept);
+  }, [state, personId, selectedIds, onChange]);
 
   const offered = state.status === 'ready' ? state.entries.filter((entry) => entry.locale === locale) : [];
   const byId = new Map(offered.map((entry) => [entry.id, entry]));
