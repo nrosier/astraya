@@ -227,7 +227,7 @@ function SignInForm({
         onDiscard={close}
         returnFocusTo={triggerRef}
         footer={null}
-        dialogClassName="settings-card signin-card"
+        dialogClassName="signin-card"
       >
         <p>{t.signInExplainer}</p>
         {ssoConfig !== undefined && (

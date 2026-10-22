@@ -3953,13 +3953,28 @@ svg text.chart-symbol-text-unicode {
 }
 
 /*
- * The sign-in dialog (#765): a centred `settings-card` holding the Authentik button and the local form on one screen.
+ * The sign-in dialog (#765): a centred card (own `signin-card` rules, not `settings-card`, so settings specs find one dialog) holding the Authentik button and the local form on one screen.
  * Sized to suit a short form rather than the 46rem settings card. Its own phone rule keeps it a centred card rather
  * than the full-screen sheet the settings cards become, so the header's sign-in does not open a sheet.
  */
 .signin-card {
   width: 440px;
   max-width: calc(100vw - 2rem);
+  max-height: calc(100vh - 2rem);
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--fg);
+}
+
+.signin-card[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.signin-card::backdrop {
+  background: rgb(0 0 0 / 0.45);
 }
 
 .signin-card .settings-card-footer:empty {
