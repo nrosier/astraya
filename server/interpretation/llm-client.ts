@@ -16,7 +16,7 @@
  * @module llm-client
  * @purpose The Tier 2 feature's real LLM provider client — the one place in the running server that reaches a third-party model (Gemini) over the network.
  * @conventions Never imported from `src/`, enforced by `test/no-runtime-llm-access.test.ts`; deliberately separate from `tools/corpus-gen`'s build-time generator client, since this one serves free-form prose inside a live per-user request rather than fixed-schema, build-time-only generation; retries only on transient 429/5xx statuses, surfacing 4xx immediately as a likely configuration problem; every call — all attempts and backoff together — is aborted at `PROVIDER_CALL_DEADLINE_MS`, kept below `cost-reservation.ts`'s lease (#476).
- * @exports PROVIDER_CALL_DEADLINE_MS, Tier2Config, loadTier2Config, Tier2Result, generateTier2Text, CustomPromptVerdict, parseCustomPromptVerdict, verifyCustomPrompt, estimateCostCents, estimateVerificationMaxCostCents, estimateGenerationMaxCostCents
+ * @exports PROVIDER_CALL_DEADLINE_MS, Tier2Config, loadTier2Config, Tier2Result, generateTier2Text, CustomPromptVerdict, parseCustomPromptVerdict, verifyCustomPrompt, VERIFIER_MAX_OUTPUT_TOKENS, estimateCostCents, estimateVerificationMaxCostCents, estimateGenerationMaxCostCents
  */
 import { isTier2Section, type Tier2Section } from '../../src/interpretation/tier2-contract.ts';
 
@@ -95,6 +95,7 @@ function sleep(ms: number, signal: AbortSignal): Promise<void> {
 interface GeminiResponse {
   readonly candidates?: readonly {
     readonly content?: { readonly parts?: readonly { readonly text?: string }[] };
+    readonly finishReason?: string;
   }[];
   readonly usageMetadata?: { readonly promptTokenCount?: number; readonly candidatesTokenCount?: number };
 }
@@ -234,6 +235,11 @@ async function callModelAttempts(
       const payload = (await response.json()) as GeminiResponse;
       const text = payload.candidates?.[0]?.content?.parts?.[0]?.text;
       if (typeof text !== 'string') {
+        // #770: thinking tokens can eat the whole output budget, leaving empty content. Name that
+        // case (fixed text, no payload) so it is distinguishable in logs; it still fails closed.
+        if (payload.candidates?.[0]?.finishReason === 'MAX_TOKENS') {
+          throw new Error('Tier 2: output token budget exhausted before any text was produced (MAX_TOKENS)');
+        }
         // Fixed message (#490): never fold the provider payload into an Error, which
         // `request.log.error` would then log at the default level.
         throw new Error('Tier 2: model response did not include the expected text content');
@@ -332,6 +338,13 @@ const VERIFIER_SYSTEM_INSTRUCTION = [
 ].join(' ');
 
 /** Phase 1 of a custom-prompt request: judges the instruction itself, before anything is generated from it. */
+/**
+ * Output budget for the verifier call (#770). Gemini's thinking tokens (~110-120 observed) count
+ * against `maxOutputTokens`; at 120 they could exhaust it, leaving empty content. 1024 leaves
+ * ample room for thinking plus the one-word verdict or a short reason. Used only by the verifier.
+ */
+export const VERIFIER_MAX_OUTPUT_TOKENS = 1024;
+
 export async function verifyCustomPrompt(
   config: Tier2Config,
   customPrompt: string,
@@ -351,7 +364,7 @@ export async function verifyCustomPrompt(
     config,
     VERIFIER_SYSTEM_INSTRUCTION,
     userContent,
-    { temperature: 0, maxOutputTokens: 120, responseMimeType: 'text/plain' },
+    { temperature: 0, maxOutputTokens: VERIFIER_MAX_OUTPUT_TOKENS, responseMimeType: 'text/plain' },
     maxRetries,
     logger,
   );
@@ -389,11 +402,11 @@ function estimatePromptTokens(...texts: readonly string[]): number {
 
 /**
  * Conservative worst-case cost, in cents, for one `verifyCustomPrompt` call — output is already
- * hard-capped at 120 tokens by that call's own `generationConfig`, so only the prompt side needs
+ * hard-capped at `VERIFIER_MAX_OUTPUT_TOKENS` by that call's own `generationConfig`, so only the prompt side needs
  * estimating here.
  */
 export function estimateVerificationMaxCostCents(instruction: string): number {
-  return estimateCostCents(estimatePromptTokens(VERIFIER_SYSTEM_INSTRUCTION, instruction), 120);
+  return estimateCostCents(estimatePromptTokens(VERIFIER_SYSTEM_INSTRUCTION, instruction), VERIFIER_MAX_OUTPUT_TOKENS);
 }
 
 /** Conservative worst-case cost, in cents, for one `generateTier2Text` call. */
