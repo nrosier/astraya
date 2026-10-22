@@ -57,7 +57,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `LanguageToggle.tsx` + `LanguageToggle.messages.ts` — Language toggle button (en/nl). Deps: `./locale`, `interpretation/schema`.
 - `Overview.tsx` + `Overview.messages.ts` — Canonical per-person Overview screen (#506/#509): record readiness, calculation basis, real next actions. Deps: `./feature-registry`, `./people-list`, `./person-nav`.
 - `PageHeader.tsx` + `PageHeader.messages.ts` — Content-header primitive (#506/#509): page title, optional basis line, and the current screen's own registered exports, replacing the old global "This page" Export submenu. Deps: `./export-registry`, `./use-exclusive-open`.
-- `PdfAiInterpretationPicker.tsx` — PDF builder picker for saved AI interpretations in the PDF's language (#759); controlled, generates nothing. Deps: `interpretation/tier2-client`, `primitives/Checkbox`, `./result-basis-label`, `./saved-time`.
+- `PdfAiInterpretationPicker.tsx` — PDF builder picker for saved AI interpretations in the PDF's language (#759); trigger opens a tick-only selection modal (#762), ordering stays in the builder; generates nothing. Deps: `interpretation/tier2-client`, `primitives/Checkbox`, `primitives/StagedDialog`, `./result-basis-label`, `./saved-time`.
 - `PdfExportBuilder.tsx` — PDF export builder screen (#441, lazy-loaded). Deps: `domain/pdf-export-sections`, `./pdf-export-plan`, `./pdf-export-render`.
 - `People.tsx` + `People.messages.ts` — Home/landing screen (list/create/restore people). Deps: `store-context`, `./people-list`.
 - `OrbRulesFields.tsx` + `OrbRulesFields.messages.ts` — Per-aspect and per-body orb inputs in the Extended settings card (#590). Deps: `orb-rules-draft`, `astro-names.messages`.

@@ -151,7 +151,7 @@ test('signed out, the saved interpretation picker is disabled, asks the server n
   const picker = page.getByRole('group', { name: 'Saved AI interpretations', exact: true });
   await expect(picker).toBeVisible();
   await expect(picker.getByText('Sign in to include your saved AI interpretations.')).toBeVisible();
-  for (const box of await picker.getByRole('checkbox').all()) await expect(box).toBeDisabled();
+  await expect(picker.getByRole('button', { name: 'Choose interpretations', exact: true })).toBeDisabled();
   // Nothing is generated at export, so there is no consent to give.
   await expect(page.getByRole('checkbox', { name: /consent/i })).toHaveCount(0);
   expect(listed).toEqual([]);
@@ -202,10 +202,13 @@ test('signed in, the picker offers the stored interpretations in the PDF’s lan
   await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Ada Lovelace' });
 
   const picker = page.getByRole('group', { name: 'Saved AI interpretations', exact: true });
-  const boxes = picker.getByRole('checkbox');
+  await picker.getByRole('button', { name: 'Choose interpretations', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Choose saved AI interpretations' });
+  const boxes = dialog.getByRole('checkbox');
   await expect(boxes).toHaveCount(2);
   await boxes.nth(0).check();
   await boxes.nth(1).check();
+  await dialog.getByRole('button', { name: 'Close', exact: true }).last().click();
   await expect(picker.getByRole('listitem')).toHaveCount(2);
   await expect(page.getByRole('checkbox', { name: /consent/i })).toHaveCount(0);
 
