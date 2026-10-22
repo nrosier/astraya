@@ -11,7 +11,7 @@
  * @module ui/result-basis-label
  * @purpose Describes what a saved AI/local interpretation (#423) was based on and what kind it is, in the interface language — e.g. "AI interpretation of Mars (natal)".
  * @conventions Every ResultKind must have wording in both en and nl, enforced by test/result-basis.test.ts; an entry saved before the basis was recorded falls back to "basis not recorded" rather than guessing.
- * @exports basisLabel, savedKindLabel, kindLabel
+ * @exports basisLabel, savedKindLabel, kindLabel, savedTypeLabel
  */
 import { kindForMode, type ResultBasis, type ResultKind } from '../interpretation/result-basis.js';
 import type { Locale } from '../interpretation/schema.js';
@@ -27,6 +27,8 @@ interface Wording {
   readonly entireChart: string;
   readonly bothCharts: string;
   readonly notRecorded: string;
+  readonly entireHoroscope: string;
+  readonly pairing: string;
   readonly natal: string;
   readonly transit: string;
   readonly of: string;
@@ -44,6 +46,8 @@ const WORDING: Readonly<Record<Locale, Wording>> = {
     entireChart: 'the entire chart',
     bothCharts: 'both charts',
     notRecorded: 'basis not recorded',
+    entireHoroscope: 'Entire horoscope',
+    pairing: 'Relationship between two charts',
     natal: 'natal',
     transit: 'transit',
     of: 'of',
@@ -59,6 +63,8 @@ const WORDING: Readonly<Record<Locale, Wording>> = {
     entireChart: 'de hele horoscoop',
     bothCharts: 'beide horoscopen',
     notRecorded: 'grondslag niet vastgelegd',
+    entireHoroscope: 'Hele horoscoop',
+    pairing: 'Relatie tussen twee horoscopen',
     natal: 'geboortehoroscoop',
     transit: 'transit',
     of: 'van',
@@ -76,12 +82,17 @@ export function basisLabel(basis: ResultBasis, locale: Locale): string {
       return `${bodyDisplayName(basis.body, locale)} (${basis.perspective === 'transit' ? words.transit : words.natal})`;
     case 'relationship':
       return words.bothCharts;
-    case 'placements': {
-      const named = basis.keys.slice(0, MAX_NAMED_PLACEMENTS).map((key) => labelForKey(key, locale));
-      const rest = basis.keys.length - named.length;
-      return rest > 0 ? `${named.join(', ')} ${words.and(rest)}` : named.join(', ');
-    }
+    case 'placements':
+      return placementList(basis.keys, locale);
   }
+}
+
+/** The named placements, then "and N more" past the first few. */
+function placementList(keys: readonly string[], locale: Locale): string {
+  const words = WORDING[locale];
+  const named = keys.slice(0, MAX_NAMED_PLACEMENTS).map((key) => labelForKey(key, locale));
+  const rest = keys.length - named.length;
+  return rest > 0 ? `${named.join(', ')} ${words.and(rest)}` : named.join(', ');
 }
 
 /**
@@ -103,4 +114,34 @@ export function savedKindLabel(
 /** Just the kind's name ("AI interpretation"), for places that already show the basis separately. */
 export function kindLabel(kind: ResultKind, locale: Locale): string {
   return WORDING[locale].kinds[kind];
+}
+
+/**
+ * The short type of a saved interpretation for the Past interpretations list: "Entire horoscope", "Juno",
+ * "Juno (transit)", "Sun in Gemini". Never the generic AI label. Returns `undefined` when nothing specific is
+ * recorded (no kind and no basis, or a basis that does not match its kind), so the caller shows its own neutral wording.
+ */
+export function savedTypeLabel(
+  saved: { readonly kind?: ResultKind | null; readonly basis?: ResultBasis | null },
+  locale: Locale,
+): string | undefined {
+  const words = WORDING[locale];
+  const basis = saved.basis ?? undefined;
+  const type = basis?.kind ?? saved.kind ?? undefined;
+  switch (type) {
+    case undefined:
+      return undefined;
+    case 'whole-chart':
+      return words.entireHoroscope;
+    case 'relationship':
+      return words.pairing;
+    case 'focus':
+      if (basis?.kind !== 'focus') return undefined;
+      return basis.perspective === 'transit'
+        ? `${bodyDisplayName(basis.body, locale)} (${words.transit})`
+        : bodyDisplayName(basis.body, locale);
+    case 'placements':
+      if (basis?.kind !== 'placements' || basis.keys.length === 0) return undefined;
+      return placementList(basis.keys, locale);
+  }
 }

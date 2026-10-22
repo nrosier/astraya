@@ -65,6 +65,7 @@ import { chartOverviewMessages } from './chart-overview.messages.js';
 import { bodyDisplayName } from './astro-names.messages.js';
 import { useShowDegreeSymbol } from './degree-symbol-setting.js';
 import { DegreeSymbolSetting } from './DegreeSymbolSetting.js';
+import { SavedInterpretationsPanel } from './SavedInterpretationsPanel.js';
 import { GlossaryTerm } from './GlossaryTerm.js';
 import { useSessionUserOrUndefined } from './session-context.js';
 import { reportViewMessages } from './ReportView.messages.js';
@@ -80,11 +81,11 @@ import {
 import type { ChartData } from '../domain/chart-compute.js';
 import { NO_EXCLUSIONS, type InterpretationExclusions } from '../interpretation/rules.js';
 
-type InterpretationTabKey = 'standard' | 'ai';
-const TAB_ORDER: readonly InterpretationTabKey[] = ['standard', 'ai'];
+type InterpretationTabKey = 'standard' | 'ai' | 'past';
+const TAB_ORDER: readonly InterpretationTabKey[] = ['standard', 'ai', 'past'];
 
 function tabLabels(t: typeof reportViewMessages.en): Record<InterpretationTabKey, string> {
-  return { standard: t.standardTabLabel, ai: t.aiTabLabel };
+  return { standard: t.standardTabLabel, ai: t.aiTabLabel, past: t.pastTabLabel };
 }
 
 /** One localized sentence per guardrail rule — never `issue.message` itself, which is English-only diagnostic text shared with the server's 400 response, not a user-facing string. */
@@ -601,8 +602,10 @@ export function ReportView({
               </section>
             ))}
           </>
-        ) : (
+        ) : activeTab === 'ai' ? (
           <AiCustomizedPanel report={report} locale={locale} chart={chart} chartKind={chartKind} exclude={exclude} />
+        ) : (
+          <SavedInterpretationsPanel />
         )}
       </div>
     </div>

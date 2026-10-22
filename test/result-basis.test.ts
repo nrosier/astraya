@@ -6,7 +6,7 @@ import {
   RESULT_KINDS,
   type ResultBasis,
 } from '../src/interpretation/result-basis.js';
-import { basisLabel, kindLabel, savedKindLabel } from '../src/ui/result-basis-label.js';
+import { basisLabel, kindLabel, savedKindLabel, savedTypeLabel } from '../src/ui/result-basis-label.js';
 
 const SAMPLES: Readonly<Record<(typeof RESULT_KINDS)[number], ResultBasis>> = {
   placements: { kind: 'placements', keys: ['planet-in-sign:sun:2', 'planet-in-house:moon:3'] },
@@ -95,5 +95,36 @@ describe('kindForMode and parseBasis', () => {
     ]) {
       expect(parseBasis(bad)).toBeUndefined();
     }
+  });
+});
+
+describe('savedTypeLabel (#761 Past interpretations)', () => {
+  it('names the type without the generic AI label', () => {
+    expect(savedTypeLabel({ kind: 'whole-chart', basis: { kind: 'whole-chart' } }, 'en')).toBe('Entire horoscope');
+    expect(savedTypeLabel({ kind: 'focus', basis: { kind: 'focus', body: 'juno', perspective: 'natal' } }, 'en')).toBe(
+      'Juno',
+    );
+    expect(
+      savedTypeLabel({ kind: 'focus', basis: { kind: 'focus', body: 'juno', perspective: 'transit' } }, 'en'),
+    ).toBe('Juno (transit)');
+    expect(
+      savedTypeLabel({ kind: 'placements', basis: { kind: 'placements', keys: ['planet-in-sign:sun:2'] } }, 'en'),
+    ).toBe('Sun in Gemini');
+    expect(savedTypeLabel({ kind: 'relationship', basis: { kind: 'relationship' } }, 'en')).toBe(
+      'Relationship between two charts',
+    );
+  });
+
+  it('returns undefined when nothing specific is recorded, so the caller shows its neutral wording', () => {
+    expect(savedTypeLabel({ kind: null, basis: null }, 'en')).toBeUndefined();
+    expect(savedTypeLabel({}, 'en')).toBeUndefined();
+    expect(savedTypeLabel({ kind: 'focus', basis: null }, 'en')).toBeUndefined();
+  });
+
+  it('has Dutch wording that is not the generic label', () => {
+    expect(savedTypeLabel({ kind: 'whole-chart', basis: { kind: 'whole-chart' } }, 'nl')).toBe('Hele horoscoop');
+    expect(savedTypeLabel({ kind: 'whole-chart', basis: { kind: 'whole-chart' } }, 'nl')).not.toBe(
+      kindLabel('whole-chart', 'nl'),
+    );
   });
 });

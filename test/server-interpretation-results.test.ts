@@ -11,6 +11,7 @@ import {
   saveInterpretationResult,
   listInterpretationResults,
   getInterpretationResult,
+  deleteInterpretationResult,
 } from '../server/interpretation/results.ts';
 import type { Tier2Section } from '../src/interpretation/tier2-contract.ts';
 
@@ -84,6 +85,39 @@ describe('saveInterpretationResult / getInterpretationResult (#392)', () => {
     );
 
     expect(() => getInterpretationResult(db, userId, id, randomBytes(32))).toThrow();
+    db.close();
+  });
+});
+
+describe('deleteInterpretationResult (#761)', () => {
+  it('removes the user’s own result and reports true, after which it is gone', () => {
+    const db = openDatabase(':memory:');
+    const key = randomBytes(32);
+    const userId = makeUser(db, 'alice');
+    const id = saveInterpretationResult(db, { userId, mode: 'grounded', locale: 'en', sections: SECTIONS }, key);
+
+    expect(deleteInterpretationResult(db, userId, id)).toBe(true);
+    expect(getInterpretationResult(db, userId, id, key)).toBeUndefined();
+    db.close();
+  });
+
+  it('reports false and leaves another user’s result in place', () => {
+    const db = openDatabase(':memory:');
+    const key = randomBytes(32);
+    const alice = makeUser(db, 'alice');
+    const bob = makeUser(db, 'bob');
+    const id = saveInterpretationResult(db, { userId: alice, mode: 'grounded', locale: 'en', sections: SECTIONS }, key);
+
+    expect(deleteInterpretationResult(db, bob, id)).toBe(false);
+    expect(getInterpretationResult(db, alice, id, key)).toBeDefined();
+    db.close();
+  });
+
+  it('reports false for an id that does not exist', () => {
+    const db = openDatabase(':memory:');
+    const userId = makeUser(db, 'alice');
+
+    expect(deleteInterpretationResult(db, userId, 'not-a-real-id')).toBe(false);
     db.close();
   });
 });

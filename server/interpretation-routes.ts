@@ -84,6 +84,7 @@ import {
   saveInterpretationResult,
   listInterpretationResults,
   getInterpretationResult,
+  deleteInterpretationResult,
 } from './interpretation/results.ts';
 import { CORPUS_LOCALES, parsePlacementKey, validateKey, type Locale } from '../src/interpretation/schema.ts';
 import { resolvePlacementText } from '../src/interpretation/compose.ts';
@@ -712,6 +713,21 @@ export function registerInterpretationRoutes(app: FastifyInstance, db: Database)
       const found = getInterpretationResult(db, userId, request.params.id, key);
       if (!found) return reply.code(404).send({ error: 'No saved interpretation with that id.' });
       return reply.send(found);
+    },
+  );
+
+  // Removes one of this user's own saved generations. No key check: deleting decrypts nothing, so it
+  // must keep working when ASTRAYA_ENCRYPTION_KEY is unset or rotated (#761). Another user's id is
+  // indistinguishable from an unknown one (404). The global origin hook (`csrf.ts`) covers DELETE.
+  app.delete<{ Params: { id: string } }>(
+    '/api/interpretation/results/:id',
+    { preHandler: requireUser(db), config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
+    async (request, reply) => {
+      const userId = authenticatedUserId(request);
+      if (!deleteInterpretationResult(db, userId, request.params.id)) {
+        return reply.code(404).send({ error: 'No saved interpretation with that id.' });
+      }
+      return reply.send({ ok: true });
     },
   );
 

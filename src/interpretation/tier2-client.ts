@@ -33,7 +33,7 @@
  * @module interpretation/tier2-client
  * @purpose Thin fetch() client for POST /api/interpretation/generate — the one runtime path in Astraya that calls a third-party model provider, proxied entirely through the server per ADR 0003.
  * @conventions Three modes: 'grounded' sends only de-identified placementKeys (server re-resolves Tier-1 text, no interpretation prose crosses the wire); 'freeform' sends computed chartData and gives up the "no chart data crosses the wire" guarantee for that mode only; 'focus' sends one placement's enriched FocusContext. The wire shapes are defined once in ./tier2-contract and shared with the server, never redeclared here (#588). `locale` always rides alongside the payload.
- * @exports Tier2Error, Tier2Section, Tier2ChartDataPayload, toTier2ChartPayload, Tier2PositionsHousesPayload, Tier2RelationshipDataPayload, toTier2RelationshipPayload, Tier2Request, SavedInterpretationSummary, SavedInterpretationDetail
+ * @exports Tier2Error, Tier2Section, Tier2ChartDataPayload, toTier2ChartPayload, Tier2PositionsHousesPayload, Tier2RelationshipDataPayload, toTier2RelationshipPayload, Tier2Request, SavedInterpretationSummary, SavedInterpretationDetail, deleteSavedInterpretation
  */
 import { bodyById, bodyByKey } from '../astrology/bodies.js';
 import type { ChartData } from '../domain/chart-compute.js';
@@ -238,4 +238,10 @@ export async function getSavedInterpretation(id: string): Promise<SavedInterpret
   const response = await fetch(`/api/interpretation/results/${encodeURIComponent(id)}`);
   if (!response.ok) throw await errorFrom(response);
   return (await response.json()) as SavedInterpretationDetail;
+}
+
+/** Deletes one of this user's own past generations by id. Resolves on success; a 404 (unknown id, or another user's) rejects with a `Tier2Error`. */
+export async function deleteSavedInterpretation(id: string): Promise<void> {
+  const response = await fetch(`/api/interpretation/results/${encodeURIComponent(id)}`, { method: 'DELETE' });
+  if (!response.ok) throw await errorFrom(response);
 }
