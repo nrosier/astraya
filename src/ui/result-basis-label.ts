@@ -58,7 +58,7 @@ const WORDING: Readonly<Record<Locale, Wording>> = {
       placements: 'Lokale interpretatie',
       'whole-chart': 'AI-interpretatie',
       focus: 'AI-interpretatie',
-      relationship: 'AI-relatieduiding',
+      relationship: 'AI-relatie-interpretatie',
     },
     entireChart: 'de hele horoscoop',
     bothCharts: 'beide horoscopen',
