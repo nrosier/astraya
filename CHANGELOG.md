@@ -4,6 +4,21 @@ All notable changes to Astraya are recorded here. Versions follow
 [semantic versioning](https://semver.org/), and every milestone ends in a release —
 see [docs/RELEASING.md](docs/RELEASING.md).
 
+## [0.42.6] — 2026-10-22
+
+**Past AI interpretations get their own tab, the PDF builder chooses interpretations in a selection modal, sign-in becomes one dialog, and Dutch wording says "interpretatie" throughout.**
+
+### Added
+
+- **A Past interpretations tab (#761).** Past AI interpretations now have their own tab on the AI interpretation screen, with a viewer for each one and a delete that asks for confirmation first.
+- **A selection modal for PDF interpretations (#762).** The PDF builder's Choose interpretations button opens a modal where you pick which past AI interpretations to include. Move up and Move down stay in the list to set their order.
+- **One sign-in dialog (#765).** The sign-in panel is a single centred dialog that shows the Authentik button and the local sign-in form together.
+
+### Fixed
+
+- **Dutch wording is consistent (#764).** Dutch text says "interpretatie", not "duiding", throughout.
+- **The sign-in dialog no longer shares the settings-card class (#765).** Settings lookups now find exactly one settings dialog.
+
 ## [0.42.5] — 2026-10-22
 
 **The PDF builder now offers only the AI interpretations you have already saved, and the saved interpretation picker keeps its label readable on hover.**
