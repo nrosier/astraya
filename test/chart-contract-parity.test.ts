@@ -222,14 +222,13 @@ describe.each(SCENARIOS)('chart contract parity: $name (#722)', (scenario) => {
       settings: scenario.settings,
       rulership: scenario.rulership,
       locale: 'en',
-      aiConsent: false,
       corpusFetch,
     };
     const selection: PdfSelection = {
       personId: 'p-parity',
       ...EMPTY_SELECTION,
       charts: [{ type: 'natal', wheel: false, tables: ['positions'] }],
-      interpretation: { base: true, aiCustomised: false },
+      interpretation: { base: true, aiInterpretationIds: [] },
     };
     const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
     expect(plan.errors).toHaveLength(0);
@@ -276,7 +275,6 @@ describe('object visibility and interpretation participation (#719, #721)', () =
       settings: hiddenNeptune,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
-      aiConsent: false,
       corpusFetch,
     };
     const selection: PdfSelection = {

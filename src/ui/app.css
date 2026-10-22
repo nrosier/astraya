@@ -4424,7 +4424,7 @@ svg text.chart-symbol-text-unicode {
   cursor: pointer;
 }
 
-.primitive-disclosure-trigger:hover {
+button.primitive-disclosure-trigger:hover:not(:disabled) {
   background: var(--surface-hover);
 }
 

@@ -60,7 +60,7 @@ describe('presets', () => {
   it('does not fill a tradition preset with an AI-customised narrative or any orb figure', () => {
     for (const key of ['executive-summary', 'complete-archive'] as const) {
       const selection = applyPdfPreset(key, 'p-ada');
-      expect(selection.interpretation.aiCustomised).toBe(false);
+      expect(selection.interpretation.aiInterpretationIds).toEqual([]);
     }
   });
 

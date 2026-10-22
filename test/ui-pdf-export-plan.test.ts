@@ -7,7 +7,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { ayanamsaByKey } from '../src/astrology/ayanamsas.js';
 import { DEFAULT_RULERSHIP_CHOICE } from '../src/astrology/rulership.js';
 import { DEFAULT_EXTENDED_SETTINGS } from '../src/chart/extended-settings.js';
@@ -15,6 +15,7 @@ import { CURRENT_SNAPSHOT_VERSION } from '../src/domain/calculation-snapshot.js'
 import { TRADITIONAL_ACG_BODY_IDS } from '../src/domain/astrocartography.js';
 import { EMPTY_SELECTION, type PdfSelection } from '../src/domain/pdf-export-sections.js';
 import type { Person } from '../src/domain/person.js';
+import type { SavedInterpretationDetail } from '../src/interpretation/tier2-client.js';
 import { fixedStarsScopeNoteOf } from '../src/ui/ChartView.js';
 import { NATAL_FIXED_STARS } from '../src/domain/chart-compute.js';
 import { chartViewMessages } from '../src/ui/ChartView.messages.js';
@@ -89,7 +90,6 @@ describe('buildPdfPlan', () => {
       settings: DEFAULT_EXTENDED_SETTINGS,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
-      aiConsent: false,
       corpusFetch,
     };
     const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
@@ -107,7 +107,6 @@ describe('buildPdfPlan', () => {
       settings: DEFAULT_EXTENDED_SETTINGS,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
-      aiConsent: false,
       corpusFetch,
     };
     const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
@@ -131,7 +130,6 @@ describe('buildPdfPlan', () => {
       settings: DEFAULT_EXTENDED_SETTINGS,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
-      aiConsent: false,
       corpusFetch,
     };
     const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
@@ -162,7 +160,6 @@ describe('buildPdfPlan', () => {
       settings: DEFAULT_EXTENDED_SETTINGS,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
-      aiConsent: false,
       corpusFetch,
     };
     const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
@@ -186,7 +183,6 @@ describe('buildPdfPlan', () => {
       settings: DEFAULT_EXTENDED_SETTINGS,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
-      aiConsent: false,
       corpusFetch,
     };
     const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
@@ -199,7 +195,7 @@ describe('buildPdfPlan', () => {
     const selection: PdfSelection = {
       personId: ADA.id,
       ...EMPTY_SELECTION,
-      interpretation: { base: true, aiCustomised: false },
+      interpretation: { base: true, aiInterpretationIds: [] },
     };
     const context: PdfPlanContext = {
       person: ADA,
@@ -207,7 +203,6 @@ describe('buildPdfPlan', () => {
       settings: DEFAULT_EXTENDED_SETTINGS,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
-      aiConsent: false,
       corpusFetch,
     };
     const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
@@ -230,7 +225,7 @@ describe('buildPdfPlan', () => {
       const selection: PdfSelection = {
         personId: ADA.id,
         ...EMPTY_SELECTION,
-        interpretation: { base: true, aiCustomised: false },
+        interpretation: { base: true, aiInterpretationIds: [] },
       };
       const context: PdfPlanContext = {
         person: ADA,
@@ -238,7 +233,6 @@ describe('buildPdfPlan', () => {
         settings: DEFAULT_EXTENDED_SETTINGS,
         rulership: DEFAULT_RULERSHIP_CHOICE,
         locale,
-        aiConsent: false,
         corpusFetch,
       };
       const messages = pdfExportMessages[locale];
@@ -268,7 +262,7 @@ describe('buildPdfPlan', () => {
       const provider = await getEngine();
       const interpretation = {
         base: true,
-        aiCustomised: false,
+        aiInterpretationIds: [],
         ...(sabianSymbols === undefined ? {} : { sabianSymbols }),
       };
       const selection: PdfSelection = { personId: ADA.id, ...EMPTY_SELECTION, interpretation };
@@ -278,7 +272,6 @@ describe('buildPdfPlan', () => {
         settings: DEFAULT_EXTENDED_SETTINGS,
         rulership: DEFAULT_RULERSHIP_CHOICE,
         locale: 'en',
-        aiConsent: false,
         corpusFetch,
       };
       const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
@@ -291,26 +284,74 @@ describe('buildPdfPlan', () => {
     30_000,
   );
 
-  it('records a skip, not a crash, when the AI-customised narrative is ticked without consent', async () => {
-    const provider = await getEngine();
-    const selection: PdfSelection = {
-      personId: ADA.id,
-      ...EMPTY_SELECTION,
-      interpretation: { base: false, aiCustomised: true },
-    };
-    const context: PdfPlanContext = {
-      person: ADA,
-      provider,
-      settings: DEFAULT_EXTENDED_SETTINGS,
-      rulership: DEFAULT_RULERSHIP_CHOICE,
+  describe('saved AI interpretations (#759)', () => {
+    const saved = (id: string): SavedInterpretationDetail => ({
+      id,
+      mode: 'freeform',
       locale: 'en',
-      aiConsent: false,
-      corpusFetch,
+      createdAt: '2026-03-10T16:30:00.000Z',
+      description: null,
+      kind: 'whole-chart',
+      basis: null,
+      sections: [{ heading: `Heading ${id}`, body: `Body ${id}` }],
+    });
+    const planWith = async (
+      ids: readonly string[],
+      fetcher: (id: string) => Promise<SavedInterpretationDetail>,
+    ): ReturnType<typeof buildPdfPlan> => {
+      const provider = await getEngine();
+      const selection: PdfSelection = {
+        personId: ADA.id,
+        ...EMPTY_SELECTION,
+        interpretation: { base: false, aiInterpretationIds: ids },
+      };
+      const context: PdfPlanContext = {
+        person: ADA,
+        provider,
+        settings: DEFAULT_EXTENDED_SETTINGS,
+        rulership: DEFAULT_RULERSHIP_CHOICE,
+        locale: 'en',
+        savedInterpretation: fetcher,
+        corpusFetch,
+      };
+      return buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
     };
-    const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
-    expect(plan.sections).toHaveLength(0);
-    expect(plan.errors).toEqual(['Interpretation (AI-customised): skipped — not consented to for this build.']);
-  }, 30_000);
+    const bodiesOf = (plan: Awaited<ReturnType<typeof buildPdfPlan>>): string[] =>
+      plan.sections.flatMap((s) => (s.kind === 'text' ? paragraphsOf(s).map(String) : []));
+
+    it('includes no AI text and never calls the fetcher when no ids are chosen', async () => {
+      const fetcher = vi.fn((id: string) => Promise.resolve(saved(id)));
+      const plan = await planWith([], fetcher);
+      expect(plan.sections).toHaveLength(0);
+      expect(plan.errors).toEqual([]);
+      expect(fetcher).not.toHaveBeenCalled();
+    }, 30_000);
+
+    it('gives exactly one AI section for one id', async () => {
+      const fetcher = vi.fn((id: string) => Promise.resolve(saved(id)));
+      const plan = await planWith(['a'], fetcher);
+      expect(plan.sections).toHaveLength(1);
+      expect(fetcher).toHaveBeenCalledTimes(1);
+      expect(bodiesOf(plan)).toEqual(['Heading a: Body a']);
+    }, 30_000);
+
+    it('keeps the chosen order across several ids', async () => {
+      const fetcher = vi.fn((id: string) => Promise.resolve(saved(id)));
+      const plan = await planWith(['c', 'a', 'b'], fetcher);
+      expect(bodiesOf(plan)).toEqual(['Heading c: Body c', 'Heading a: Body a', 'Heading b: Body b']);
+    }, 30_000);
+
+    it('records a failed fetch and still builds the other id', async () => {
+      const fetcher = vi.fn((id: string) =>
+        id === 'bad' ? Promise.reject(new Error('gone')) : Promise.resolve(saved(id)),
+      );
+      const plan = await planWith(['bad', 'ok'], fetcher);
+      expect(bodiesOf(plan)).toEqual(['Heading ok: Body ok']);
+      expect(plan.errors).toHaveLength(1);
+      expect(plan.errors[0]).toContain('bad');
+      expect(plan.errors[0]).toContain('gone');
+    }, 30_000);
+  });
 
   it('records an error and keeps the rest of the plan when a person has no birth record at all', async () => {
     const provider = await getEngine();
@@ -334,7 +375,6 @@ describe('buildPdfPlan', () => {
       settings: DEFAULT_EXTENDED_SETTINGS,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
-      aiConsent: false,
       corpusFetch,
     };
     const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
@@ -355,7 +395,6 @@ describe('buildPdfPlan', () => {
       settings: DEFAULT_EXTENDED_SETTINGS,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
-      aiConsent: false,
       corpusFetch,
       people: PEOPLE,
     };
@@ -394,7 +433,6 @@ describe('buildPdfPlan', () => {
       settings: DEFAULT_EXTENDED_SETTINGS,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
-      aiConsent: false,
       corpusFetch,
       people: PEOPLE,
     };
@@ -417,7 +455,6 @@ describe('buildPdfPlan', () => {
       settings: DEFAULT_EXTENDED_SETTINGS,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
-      aiConsent: false,
       corpusFetch,
       people: PEOPLE,
     };
@@ -440,7 +477,6 @@ describe('buildPdfPlan', () => {
       settings: DEFAULT_EXTENDED_SETTINGS,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
-      aiConsent: false,
       corpusFetch,
       people: PEOPLE,
     };
@@ -475,7 +511,6 @@ describe('buildPdfPlan', () => {
       settings: DEFAULT_EXTENDED_SETTINGS,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
-      aiConsent: false,
       corpusFetch,
     };
     const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
@@ -510,7 +545,6 @@ describe('buildPdfPlan', () => {
       settings: DEFAULT_EXTENDED_SETTINGS,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
-      aiConsent: false,
       corpusFetch,
     };
     const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
@@ -534,7 +568,6 @@ describe('buildPdfPlan', () => {
       settings: DEFAULT_EXTENDED_SETTINGS,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
-      aiConsent: false,
       corpusFetch,
     };
     const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
@@ -572,7 +605,6 @@ describe('buildPdfPlan', () => {
       settings: DEFAULT_EXTENDED_SETTINGS,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
-      aiConsent: false,
       corpusFetch,
     };
     const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
@@ -600,7 +632,6 @@ describe('buildPdfPlan', () => {
       settings: DEFAULT_EXTENDED_SETTINGS,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
-      aiConsent: false,
       corpusFetch,
     };
     const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
@@ -628,7 +659,6 @@ describe('buildPdfPlan', () => {
       settings: DEFAULT_EXTENDED_SETTINGS,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
-      aiConsent: false,
       corpusFetch,
     };
     const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
@@ -657,7 +687,6 @@ describe('buildPdfPlan', () => {
       settings: DEFAULT_EXTENDED_SETTINGS,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
-      aiConsent: false,
       corpusFetch,
     };
     const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
@@ -679,7 +708,6 @@ describe('buildPdfPlan', () => {
       settings: DEFAULT_EXTENDED_SETTINGS,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
-      aiConsent: false,
       corpusFetch,
     };
     const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
@@ -711,7 +739,6 @@ describe('buildPdfPlan', () => {
       settings: DEFAULT_EXTENDED_SETTINGS,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
-      aiConsent: false,
       corpusFetch,
     };
     const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
@@ -741,7 +768,6 @@ describe('buildPdfPlan', () => {
       settings: DEFAULT_EXTENDED_SETTINGS,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
-      aiConsent: false,
       corpusFetch,
     };
     const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
@@ -773,7 +799,6 @@ describe('buildPdfPlan', () => {
       settings: DEFAULT_EXTENDED_SETTINGS,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
-      aiConsent: false,
       corpusFetch,
     };
     const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
@@ -811,7 +836,6 @@ describe('buildPdfPlan', () => {
       settings: DEFAULT_EXTENDED_SETTINGS,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
-      aiConsent: false,
       corpusFetch,
     };
     const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
@@ -844,7 +868,6 @@ describe('PDF chart sections use the Charts page’s own calculation settings (#
       settings,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
-      aiConsent: false,
       corpusFetch,
     };
     const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
@@ -890,7 +913,6 @@ describe('PDF chart sections use the Charts page’s own calculation settings (#
       settings,
       rulership: DEFAULT_RULERSHIP_CHOICE,
       locale: 'en',
-      aiConsent: false,
       corpusFetch,
     };
     const built = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
@@ -961,7 +983,7 @@ describe('PDF chart sections use the Charts page’s own calculation settings (#
       const selection: PdfSelection = {
         personId: ADA.id,
         ...EMPTY_SELECTION,
-        interpretation: { base: true, aiCustomised: false },
+        interpretation: { base: true, aiInterpretationIds: [] },
       };
       const context: PdfPlanContext = {
         person: ADA,
@@ -969,7 +991,6 @@ describe('PDF chart sections use the Charts page’s own calculation settings (#
         settings,
         rulership: DEFAULT_RULERSHIP_CHOICE,
         locale: 'en',
-        aiConsent: false,
         corpusFetch,
       };
       const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
@@ -992,7 +1013,7 @@ describe('PDF chart sections use the Charts page’s own calculation settings (#
       const selection: PdfSelection = {
         personId: ADA.id,
         ...EMPTY_SELECTION,
-        interpretation: { base: true, aiCustomised: false },
+        interpretation: { base: true, aiInterpretationIds: [] },
       };
       const context: PdfPlanContext = {
         person: ADA,
@@ -1000,7 +1021,6 @@ describe('PDF chart sections use the Charts page’s own calculation settings (#
         settings,
         rulership: DEFAULT_RULERSHIP_CHOICE,
         locale: 'en',
-        aiConsent: false,
         corpusFetch,
       };
       const plan = await buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
@@ -1053,7 +1073,6 @@ describe('specialist limits in the PDF (#725)', () => {
     settings: DEFAULT_EXTENDED_SETTINGS,
     rulership: DEFAULT_RULERSHIP_CHOICE,
     locale,
-    aiConsent: false,
     corpusFetch,
   });
 

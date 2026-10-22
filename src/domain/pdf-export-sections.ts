@@ -61,8 +61,8 @@ export interface PdfChartSectionOptions {
 
 export interface PdfInterpretationOptions {
   readonly base: boolean;
-  /** Costs an API call and needs its own consent tick in the builder — never defaulted on by a preset. */
-  readonly aiCustomised: boolean;
+  /** Ids of saved AI interpretations to include, in the order the user chose. Empty means none. Never generates new text. */
+  readonly aiInterpretationIds: readonly string[];
   /**
    * Whether the written report includes its Sabian symbol notes (#660). Absent means included, the report's own
    * default; the builder starts it from the device's "Show Sabian symbol notes" setting, so a PDF matches the screen
@@ -203,7 +203,7 @@ const EVERY_TABLE = PDF_CHART_TABLES;
 
 export const EMPTY_SELECTION: Omit<PdfSelection, 'personId'> = {
   birthRecord: false,
-  interpretation: { base: false, aiCustomised: false },
+  interpretation: { base: false, aiInterpretationIds: [] },
   charts: [],
 };
 
@@ -334,12 +334,12 @@ export const PDF_PRESET_KEYS: readonly PdfPresetKey[] = [
 export const PDF_PRESETS: Readonly<Record<PdfPresetKey, Omit<PdfSelection, 'personId'>>> = {
   'executive-summary': {
     birthRecord: true,
-    interpretation: { base: true, aiCustomised: false },
+    interpretation: { base: true, aiInterpretationIds: [] },
     charts: [{ type: 'natal', wheel: true, tables: ['positions'] }],
   },
   'complete-archive': {
     birthRecord: true,
-    interpretation: { base: true, aiCustomised: false },
+    interpretation: { base: true, aiInterpretationIds: [] },
     charts: PDF_CHART_TYPES.map(fullChartSection),
     transits: fullTransitsSection(),
     forecast: fullForecastSection(),
@@ -355,7 +355,7 @@ export const PDF_PRESETS: Readonly<Record<PdfPresetKey, Omit<PdfSelection, 'pers
    * issue's own phrasing of this preset implies. */
   'full-predictive-report': {
     birthRecord: true,
-    interpretation: { base: true, aiCustomised: false },
+    interpretation: { base: true, aiInterpretationIds: [] },
     charts: [fullChartSection('natal')],
     transits: fullTransitsSection(),
     progressions: fullProgressionsSection(),
@@ -460,7 +460,7 @@ export function matchPdfPreset(selection: PdfSelection): PdfPresetKey | undefine
     return (
       selection.birthRecord === preset.birthRecord &&
       selection.interpretation.base === preset.interpretation.base &&
-      selection.interpretation.aiCustomised === preset.interpretation.aiCustomised &&
+      selection.interpretation.aiInterpretationIds.length === preset.interpretation.aiInterpretationIds.length &&
       selection.charts.length === preset.charts.length &&
       selection.charts.every((chart, index) => {
         const other = preset.charts[index];
@@ -491,7 +491,7 @@ export function pdfSelectionIsEmpty(selection: PdfSelection): boolean {
   return (
     !selection.birthRecord &&
     !selection.interpretation.base &&
-    !selection.interpretation.aiCustomised &&
+    selection.interpretation.aiInterpretationIds.length === 0 &&
     selection.charts.every((chart) => !chart.wheel && chart.tables.length === 0) &&
     (selection.synastry === undefined ||
       (!selection.synastry.wheel && !selection.synastry.aspectsTable && !selection.synastry.relationshipSummary)) &&

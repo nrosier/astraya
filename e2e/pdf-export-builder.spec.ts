@@ -5,6 +5,7 @@
  * drawing itself, which needs a real browser (`src/ui/pdf-export-plan.ts`'s own doc comment explains
  * why svg2pdf.js in particular cannot be imported under Vitest at all).
  */
+import { randomBytes } from 'node:crypto';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -12,7 +13,11 @@ import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
-import { createPerson, gotoAndSettle, pdfTextRuns } from './support.ts';
+import { createPerson, gotoAndSettle, pdfTextRuns, signIn } from './support.ts';
+
+const BOOTSTRAP_TOKEN = 'e2e-pdf-builder-bootstrap-token';
+const USERNAME = 'pdf-reader';
+const PASSWORD = 'correct-horse-battery-e2e';
 
 let dir: string;
 let app: FastifyInstance;
@@ -21,11 +26,22 @@ let baseUrl: string;
 test.beforeAll(async () => {
   dir = mkdtempSync(join(tmpdir(), 'astraya-e2e-'));
   process.env.LOG_LEVEL = 'silent';
+  process.env.ASTRAYA_BOOTSTRAP_TOKEN = BOOTSTRAP_TOKEN;
+  process.env.ASTRAYA_ENCRYPTION_KEY = randomBytes(32).toString('base64');
   app = await build({ dbPath: join(dir, 'astraya.db') });
   await app.listen({ port: 0, host: '127.0.0.1' });
   const address = app.server.address();
   if (address === null || typeof address === 'string') throw new Error('server did not bind to a port');
   baseUrl = `http://127.0.0.1:${String(address.port)}`;
+  // One account, for the saved interpretation picker, which is only offered when signed in (#759).
+  const setup = await app.inject({
+    method: 'POST',
+    url: '/api/setup',
+    payload: { token: BOOTSTRAP_TOKEN, username: USERNAME, password: PASSWORD },
+  });
+  if (setup.statusCode >= 400) throw new Error(`setup failed: ${String(setup.statusCode)}`);
+  delete process.env.ASTRAYA_BOOTSTRAP_TOKEN;
+  delete process.env.ASTRAYA_ENCRYPTION_KEY;
 });
 
 test.afterAll(async () => {
@@ -119,49 +135,89 @@ test('ticking a chart type reveals its own tables and wheel checkbox, and untick
   await expect(page.getByLabel('Wheel', { exact: true })).toHaveCount(0);
 });
 
-test('the AI-customised narrative needs its own consent tick before Build PDF is enabled', async ({ page }) => {
-  test.setTimeout(60_000);
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, ADA);
-  await page.goto(`${baseUrl}/#/documents/pdf`);
-  await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Ada Lovelace' });
-
-  const buildButton = page.getByRole('button', { name: 'Build PDF', exact: true });
-  await page.getByRole('checkbox', { name: 'AI-customised narrative', exact: true }).check();
-  await expect(buildButton).toBeDisabled();
-  await page
-    .getByRole('checkbox', { name: 'I consent to generating an AI-customised narrative for this export.' })
-    .check();
-  await expect(buildButton).toBeEnabled();
-});
-
-test('the AI consent is spent by the build and never remembered: a new request needs a fresh tick', async ({
+test('signed out, the saved interpretation picker is disabled, asks the server nothing, and has no consent tick (#759)', async ({
   page,
 }) => {
-  test.setTimeout(120_000);
+  test.setTimeout(60_000);
+  const listed: string[] = [];
+  page.on('request', (request) => {
+    if (request.url().includes('/api/interpretation/results')) listed.push(request.url());
+  });
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   await createPerson(page, ADA);
   await page.goto(`${baseUrl}/#/documents/pdf`);
   await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Ada Lovelace' });
 
-  const consent = page.getByRole('checkbox', {
-    name: 'I consent to generating an AI-customised narrative for this export.',
-  });
-  await page.getByRole('checkbox', { name: 'AI-customised narrative', exact: true }).check();
-  await consent.check();
-  const [download] = await Promise.all([
-    page.waitForEvent('download'),
-    page.getByRole('button', { name: 'Build PDF', exact: true }).click(),
-  ]);
-  expect(download.suggestedFilename()).toMatch(/\.pdf$/);
-  await expect(consent).not.toBeChecked();
-  await expect(page.getByRole('button', { name: 'Build PDF', exact: true })).toBeDisabled();
+  const picker = page.getByRole('group', { name: 'Saved AI interpretations', exact: true });
+  await expect(picker).toBeVisible();
+  await expect(picker.getByText('Sign in to include your saved AI interpretations.')).toBeVisible();
+  for (const box of await picker.getByRole('checkbox').all()) await expect(box).toBeDisabled();
+  // Nothing is generated at export, so there is no consent to give.
+  await expect(page.getByRole('checkbox', { name: /consent/i })).toHaveCount(0);
+  expect(listed).toEqual([]);
+});
 
-  // Nothing is kept across a reload either.
-  await page.reload();
+test('signed in, the picker offers the stored interpretations in the PDF’s language, and both build into the PDF (#759)', async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  const entries = [
+    {
+      id: 'saved-one',
+      mode: 'freeform',
+      locale: 'en',
+      createdAt: '2026-10-01T09:00:00.000Z',
+      description: null,
+      kind: 'whole-chart',
+      basis: { kind: 'whole-chart' },
+    },
+    {
+      id: 'saved-two',
+      mode: 'focus',
+      locale: 'en',
+      createdAt: '2026-10-02T09:00:00.000Z',
+      description: null,
+      kind: 'focus',
+      basis: { kind: 'focus', body: 'sun', perspective: 'natal' },
+    },
+  ];
+  // Stubbed: the stored list and each stored result. No model is ever called.
+  await page.route('**/api/interpretation/results*', async (route) => {
+    await route.fulfill({ json: { results: entries } });
+  });
+  await page.route('**/api/interpretation/results/*', async (route) => {
+    const id = decodeURIComponent(new URL(route.request().url()).pathname.split('/').pop() ?? '');
+    const entry = entries.find((candidate) => candidate.id === id);
+    if (entry === undefined) {
+      await route.fulfill({ status: 404, json: { error: 'not found' } });
+      return;
+    }
+    await route.fulfill({ json: { ...entry, sections: [{ heading: `Stored ${id}`, body: 'A stored reading.' }] } });
+  });
+
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  await createPerson(page, ADA);
+  await signIn(page, USERNAME, PASSWORD);
+  await page.goto(`${baseUrl}/#/documents/pdf`);
   await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Ada Lovelace' });
-  await page.getByRole('checkbox', { name: 'AI-customised narrative', exact: true }).check();
-  await expect(consent).not.toBeChecked();
+
+  const picker = page.getByRole('group', { name: 'Saved AI interpretations', exact: true });
+  const boxes = picker.getByRole('checkbox');
+  await expect(boxes).toHaveCount(2);
+  await boxes.nth(0).check();
+  await boxes.nth(1).check();
+  await expect(picker.getByRole('listitem')).toHaveCount(2);
+  await expect(page.getByRole('checkbox', { name: /consent/i })).toHaveCount(0);
+
+  const buildButton = page.getByRole('button', { name: 'Build PDF', exact: true });
+  await expect(buildButton).toBeEnabled();
+  const [download] = await Promise.all([page.waitForEvent('download'), buildButton.click()]);
+  expect(download.suggestedFilename()).toMatch(/\.pdf$/);
+  const chunks: Buffer[] = [];
+  for await (const chunk of await download.createReadStream()) chunks.push(chunk as Buffer);
+  const pdf = Buffer.concat(chunks);
+  expect(pdf.subarray(0, 5).toString('latin1')).toBe('%PDF-');
+  await expect(page.getByRole('status')).toHaveText('✓');
 });
 
 test('synastry and composite each get their own partner picker, and both build into one PDF (#441)', async ({

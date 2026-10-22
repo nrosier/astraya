@@ -48,9 +48,15 @@ const en = {
   interpretationLabel: 'Interpretation',
   interpretationBaseLabel: 'Written report (included at no extra cost)',
   interpretationSabianLabel: 'Include Sabian symbol notes',
-  interpretationAiLabel: 'AI-customised narrative',
-  interpretationAiHint: 'Generated on request and costs an API call. Needs its own consent, spent on this one build.',
-  interpretationAiConsentLabel: 'I consent to generating an AI-customised narrative for this export.',
+  interpretationSavedLabel: 'Saved AI interpretations',
+  interpretationSavedHint:
+    "Pick interpretations you already generated, in this PDF's language. Nothing is generated here.",
+  interpretationSavedSignedOut: 'Sign in to include your saved AI interpretations.',
+  interpretationSavedLoading: 'Loading your saved interpretations...',
+  interpretationSavedEmpty: 'You have no saved interpretations in this language yet.',
+  interpretationSavedError: 'Your saved interpretations could not be loaded. Try again later.',
+  interpretationSavedMoveUp: 'Move up',
+  interpretationSavedMoveDown: 'Move down',
   chartsLegend: 'Charts',
   chartTypeLabels: {
     natal: 'Natal',
@@ -177,10 +183,15 @@ const nl: typeof en = {
   interpretationLabel: 'Interpretatie',
   interpretationBaseLabel: 'Geschreven verslag (zonder extra kosten)',
   interpretationSabianLabel: 'Sabian-symboolnotities opnemen',
-  interpretationAiLabel: 'AI-aangepast verhaal',
-  interpretationAiHint:
-    'Wordt op verzoek gegenereerd en kost een API-aanroep. Vereist eigen toestemming, besteed aan deze ene export.',
-  interpretationAiConsentLabel: 'Ik geef toestemming om een AI-aangepast verhaal te genereren voor deze export.',
+  interpretationSavedLabel: 'Opgeslagen AI-duidingen',
+  interpretationSavedHint:
+    'Kies duidingen die je al hebt laten genereren, in de taal van deze pdf. Hier wordt niets gegenereerd.',
+  interpretationSavedSignedOut: 'Log in om je opgeslagen AI-duidingen toe te voegen.',
+  interpretationSavedLoading: 'Je opgeslagen duidingen worden geladen...',
+  interpretationSavedEmpty: 'Je hebt nog geen opgeslagen duidingen in deze taal.',
+  interpretationSavedError: 'Je opgeslagen duidingen konden niet worden geladen. Probeer het later opnieuw.',
+  interpretationSavedMoveUp: 'Omhoog',
+  interpretationSavedMoveDown: 'Omlaag',
   chartsLegend: 'Horoscopen',
   chartTypeLabels: {
     natal: 'Geboortehoroscoop',
