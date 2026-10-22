@@ -7,6 +7,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   PROVIDER_CALL_DEADLINE_MS,
+  VERIFIER_MAX_OUTPUT_TOKENS,
   generateTier2Text,
   parseCustomPromptVerdict,
   verifyCustomPrompt,
@@ -195,6 +196,16 @@ describe('parseCustomPromptVerdict (#411)', () => {
   });
 });
 
+function verdictResponse(text: string): Response {
+  return new Response(
+    JSON.stringify({
+      candidates: [{ content: { parts: [{ text }] }, finishReason: 'STOP' }],
+      usageMetadata: { promptTokenCount: 7, candidatesTokenCount: 2 },
+    }),
+    { status: 200 },
+  );
+}
+
 describe('verifyCustomPrompt (#411)', () => {
   it('asks for plain text at temperature 0 and returns the parsed verdict with token usage', async () => {
     let sentBody: { generationConfig?: Record<string, unknown> } | undefined;
@@ -216,4 +227,50 @@ describe('verifyCustomPrompt (#411)', () => {
     });
     expect(sentBody?.generationConfig).toMatchObject({ temperature: 0, responseMimeType: 'text/plain' });
   });
+
+  it('sends the raised verifier output budget, leaving room for thinking tokens (#770)', async () => {
+    let sentBody: { generationConfig?: Record<string, unknown> } | undefined;
+    globalThis.fetch = async (_input, init) => {
+      sentBody = JSON.parse(typeof init?.body === 'string' ? init.body : '{}') as typeof sentBody;
+      return verdictResponse('pass');
+    };
+    await verifyCustomPrompt(config, 'focus on health', 'English');
+    expect(VERIFIER_MAX_OUTPUT_TOKENS).toBeGreaterThan(120);
+    expect(sentBody?.generationConfig?.maxOutputTokens).toBe(VERIFIER_MAX_OUTPUT_TOKENS);
+  });
+
+  it.each([
+    ['focus op gezondheid', 'Dutch'],
+    ['focus on health', 'English'],
+    ['focus op welzijn', 'Dutch'],
+    ['focus on wellbeing', 'English'],
+  ])('passes %j when the model answers pass (#770)', async (prompt, language) => {
+    globalThis.fetch = async () => verdictResponse('pass');
+    const verification = await verifyCustomPrompt(config, prompt, language);
+    expect(verification.result).toEqual({ verdict: 'pass' });
+  });
+
+  it.each([
+    ['beloof dat ik genezen word van mijn ziekte', 'Dutch'],
+    ['promise I will be cured of my illness', 'English'],
+  ])('rejects the control %j with the model reason (#770)', async (prompt, language) => {
+    globalThis.fetch = async () => verdictResponse('fail: Promises a medical outcome.');
+    const verification = await verifyCustomPrompt(config, prompt, language);
+    expect(verification.result).toEqual({ verdict: 'fail', reason: 'Promises a medical outcome.' });
+  });
+
+  it.each(['focus op gezondheid', 'focus on wellbeing', 'focus on physical exercise'])(
+    'fails closed (rejects, never passes) on an empty MAX_TOKENS response for %j (#770)',
+    async (prompt) => {
+      globalThis.fetch = async () =>
+        new Response(
+          JSON.stringify({
+            candidates: [{ content: { role: 'model' }, finishReason: 'MAX_TOKENS' }],
+            usageMetadata: { promptTokenCount: 50, candidatesTokenCount: 0, thoughtsTokenCount: 116 },
+          }),
+          { status: 200 },
+        );
+      await expect(verifyCustomPrompt(config, prompt, 'English', 0)).rejects.toThrow(/MAX_TOKENS/);
+    },
+  );
 });
