@@ -49,8 +49,11 @@ const en = {
   interpretationBaseLabel: 'Written report (included at no extra cost)',
   interpretationSabianLabel: 'Include Sabian symbol notes',
   interpretationSavedLabel: 'Saved AI interpretations',
-  interpretationSavedHint:
-    "Pick interpretations you already generated, in this PDF's language. Nothing is generated here.",
+  interpretationSavedHint: 'Choose interpretations you already generated. Nothing is generated here.',
+  interpretationSavedChoose: 'Choose interpretations',
+  interpretationSavedModalHeading: 'Choose saved AI interpretations',
+  interpretationSavedClose: 'Close',
+  interpretationSavedTypeNeutral: 'Saved interpretation',
   interpretationSavedSignedOut: 'Sign in to include your saved AI interpretations.',
   interpretationSavedLoading: 'Loading your saved interpretations...',
   interpretationSavedEmpty: 'You have no saved interpretations in this language yet.',
@@ -185,7 +188,12 @@ const nl: typeof en = {
   interpretationSabianLabel: 'Sabian-symboolnotities opnemen',
   interpretationSavedLabel: 'Opgeslagen AI-interpretaties',
   interpretationSavedHint:
-    'Kies interpretaties die je al hebt laten genereren, in de taal van deze pdf. Hier wordt niets gegenereerd.',
+    // Dutch needs native review (#762).
+    'Kies interpretaties die je al hebt laten genereren. Hier wordt niets gegenereerd.',
+  interpretationSavedChoose: 'Interpretaties kiezen',
+  interpretationSavedModalHeading: 'Opgeslagen AI-interpretaties kiezen',
+  interpretationSavedClose: 'Sluiten',
+  interpretationSavedTypeNeutral: 'Opgeslagen interpretatie',
   interpretationSavedSignedOut: 'Log in om je opgeslagen AI-interpretaties toe te voegen.',
   interpretationSavedLoading: 'Je opgeslagen interpretaties worden geladen...',
   interpretationSavedEmpty: 'Je hebt nog geen opgeslagen interpretaties in deze taal.',
