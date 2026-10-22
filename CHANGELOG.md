@@ -4,6 +4,23 @@ All notable changes to Astraya are recorded here. Versions follow
 [semantic versioning](https://semver.org/), and every milestone ends in a release —
 see [docs/RELEASING.md](docs/RELEASING.md).
 
+## [0.42.7] — 2026-10-23
+
+**Saved AI interpretations are now kept per person: the Past tab shows the selected person's own results, and older results appear in a separate unlinked section.**
+
+### Added
+
+- **Saved interpretations follow the person (#768).** Each saved AI interpretation records the person it was generated for. The Past interpretations tab and the PDF builder's picker list the selected person's results, and results saved before this release appear in a separate "unlinked" section instead of being mixed in.
+
+### Changed
+
+- **Purging a person removes their saved interpretations (#768).** Erasing a person now also deletes the AI interpretations saved for them, in the same step as the rest of their data. Other users' results are untouched.
+
+### Notes for people running their own server
+
+- **New migration 16** adds a nullable `person_id` column and an index to `interpretation_results`. It runs automatically on next startup; no configuration changes needed. Existing results keep no person and are listed as unlinked.
+- The Docker image now includes `src/domain/id.ts`, which the saved-interpretation routes use to check the person id.
+
 ## [0.42.6] — 2026-10-22
 
 **Past AI interpretations get their own tab, the PDF builder chooses interpretations in a selection modal, sign-in becomes one dialog, and Dutch wording says "interpretatie" throughout.**
