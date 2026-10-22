@@ -99,32 +99,26 @@ test('the first Tab reaches a skip link that moves focus to the content without 
   expect(new URL(page.url()).hash).toBe('#/people');
 });
 
-test('the sign-in box opens beneath the button, inside the screen, and can be used', async ({ page }) => {
+test('the sign-in dialog opens centred, inside the screen, and takes input', async ({ page }) => {
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   const button = page.getByRole('banner').getByRole('button', { name: 'Sign in', exact: true });
-  // Measured before opening: once the box is open its own submit button is also called "Sign in".
-  const buttonBox = await button.boundingBox();
   await button.click();
-  const popover = page.locator('.accountpanel-popover');
-  await expect(popover).toBeVisible();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toBeVisible();
 
-  const popoverBox = await popover.boundingBox();
+  const dialogBox = await dialog.boundingBox();
   const viewport = page.viewportSize();
-  if (buttonBox === null || popoverBox === null || viewport === null) throw new Error('not laid out');
-  // The trigger (sign-in/account, language, theme — not navigation) sits fixed in the content
-  // area's top-right corner at >=64rem (`WorkspaceShell.tsx`, #506/#509), not inside the rail, so
-  // it keeps the room below it the old top-bar design always had.
-  expect(popoverBox.y).toBeGreaterThanOrEqual(buttonBox.y + buttonBox.height);
-  expect(popoverBox.x).toBeGreaterThanOrEqual(0);
-  expect(popoverBox.x + popoverBox.width).toBeLessThanOrEqual(viewport.width);
-  // Right-aligned with its trigger, not hanging off the left edge.
-  expect(Math.abs(popoverBox.x + popoverBox.width - (buttonBox.x + buttonBox.width))).toBeLessThan(2);
+  if (dialogBox === null || viewport === null) throw new Error('not laid out');
+  expect(dialogBox.x).toBeGreaterThanOrEqual(0);
+  expect(dialogBox.y).toBeGreaterThanOrEqual(0);
+  expect(dialogBox.x + dialogBox.width).toBeLessThanOrEqual(viewport.width);
+  expect(dialogBox.y + dialogBox.height).toBeLessThanOrEqual(viewport.height);
   // Not covered by anything: the username field takes input.
-  await page.getByLabel('Username', { exact: true }).fill('someone');
-  await expect(page.getByLabel('Username', { exact: true })).toHaveValue('someone');
+  await dialog.getByLabel('Username', { exact: true }).fill('someone');
+  await expect(dialog.getByLabel('Username', { exact: true })).toHaveValue('someone');
 });
 
-test('on a phone-width screen the header and the sign-in box stay inside the screen', async ({ page }) => {
+test('on a phone-width screen the header and the sign-in dialog stay inside the screen', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 700 });
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   const header = page.getByRole('banner');
@@ -138,7 +132,7 @@ test('on a phone-width screen the header and the sign-in box stay inside the scr
     expect((box?.x ?? -1) >= 0 && (box?.x ?? 0) + (box?.width ?? 0) <= 375).toBe(true);
   }
   await header.getByRole('button', { name: 'Sign in', exact: true }).click();
-  const box = await page.locator('.accountpanel-popover').boundingBox();
+  const box = await page.getByRole('dialog').boundingBox();
   expect(box?.x).toBeGreaterThanOrEqual(0);
   expect((box?.x ?? 0) + (box?.width ?? 0)).toBeLessThanOrEqual(375);
 });

@@ -3,9 +3,10 @@
  * `SyncBadge` (#230) — signed-in or signed-out state is the answer to "am I signed
  * in", and that has to be visible without navigating anywhere.
  *
- * Signed out: a compact "Sign in" button that opens into a non-nagging explanation of
- * what an account adds (sync to other devices) plus a form — collapsed by default so
- * it costs no space on the common, signed-out path. Signed in: a sign-out button, no
+ * Signed out: a compact "Sign in" button that opens a centred dialog with a non-nagging
+ * explanation of what an account adds (sync to other devices), the Authentik button when
+ * single sign-on is configured, and the local form, all on one screen (#765) — collapsed by
+ * default so it costs no space on the common, signed-out path. Signed in: a sign-out button, no
  * click needed to confirm you're signed in since `SyncBadge`'s own "(logged in as:
  * {username})" already says so right next to it (#230) — this panel doesn't repeat it.
  * Between the two, at most once ever per device: the adoption prompt (#109), which
@@ -14,12 +15,12 @@
 /**
  * @module AccountPanel
  * @purpose Renders the sign-in/sign-out control mounted in the sticky app header, plus the one-time account-adoption prompt and local-data-removal flow.
- * @conventions Mounted globally alongside SyncBadge; reads session state via `useSession()`/`session-context.js`; the sign-in popover opens on a choice between a local account and single sign-on when SSO is configured (#651), and goes straight to the password form when it is not; text comes from co-located `AccountPanel.messages.ts` via `useMessages()`.
+ * @conventions Mounted globally alongside SyncBadge; reads session state via `useSession()`/`session-context.js`; the sign-in is a centred `StagedDialog` showing the Authentik button (when SSO is configured, #651) and the local form on one screen, with no choice step (#765); text comes from co-located `AccountPanel.messages.ts` via `useMessages()`.
  * @exports AccountPanel
  */
 import { Button } from './primitives/Button.js';
-import { OptionCards } from './primitives/OptionCards.js';
 import { PasswordField } from './primitives/PasswordField.js';
+import { StagedDialog } from './primitives/StagedDialog.js';
 import { TextField } from './primitives/TextField.js';
 import { useEffect, useRef, useState } from 'react';
 import { removeAccountData, useSession } from './session-context.js';
@@ -153,15 +154,12 @@ function OidcSignIn({ config }: { config: { clientId: string; authorizationEndpo
 /**
  * Collapsed to a compact "Sign in" button by default — this lives in the sticky header at
  * the top right of every screen (#421), so an always-open form would sit over the page on
- * every route rather than just where it's relevant. Opening it reveals the same form as
- * a small popover beneath the button; closing it (the × or a successful sign-in) hides
- * the form again without losing anything typed elsewhere on the page.
+ * every route rather than just where it's relevant. Opening it shows the sign-in as a centred
+ * dialog (`StagedDialog`, #506/#508) with the Authentik button (when SSO is configured) and the
+ * local form on one screen; there is no choice step to get through first (#765). Closing it
+ * (Escape, the ×, a backdrop press, or a successful sign-in) hides it again without losing
+ * anything typed elsewhere on the page, and returns focus to the trigger.
  */
-type SignInMethod = 'local' | 'sso';
-
-const SIGNIN_POPOVER_ID = 'accountpanel-signin-popover';
-const SIGNIN_POPOVER_HEADING_ID = 'accountpanel-signin-popover-heading';
-
 function SignInForm({
   signIn,
   oidcConfig,
@@ -170,51 +168,25 @@ function SignInForm({
   oidcConfig: OidcConfig | undefined;
 }): React.JSX.Element {
   const [open, setOpen] = useState(false);
-  // Which way in the reader picked (#651). With no single sign-on configured there is only one way, so the choice
-  // is skipped; otherwise the panel opens on the choice, so the form that follows is plainly one path.
+  // With single sign-on configured, the Authentik button sits above the local form on the same screen (#651, #765).
   const ssoConfig = oidcConfig?.enabled === true ? oidcConfig : undefined;
-  const [picked, setPicked] = useState<SignInMethod | undefined>();
-  const method: SignInMethod | 'choose' = ssoConfig === undefined ? 'local' : (picked ?? 'choose');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
-  // Survives the disclosure swapping the trigger button out of the DOM when open,
-  // so closing (Escape, the ×, or a successful sign-in) can return focus to it (#69)
-  // instead of dropping it back to the document body.
+  // The trigger stays mounted while the dialog is open: StagedDialog returns focus to it on close (#69).
   const triggerRef = useRef<HTMLButtonElement>(null);
   const usernameRef = useRef<HTMLInputElement>(null);
   const t = useMessages(accountPanelMessages);
   const shared = useMessages(sharedMessages);
 
-  const choiceRef = useRef<HTMLDivElement>(null);
-
   const close = (): void => {
     setOpen(false);
-    setPicked(undefined);
-    triggerRef.current?.focus();
   };
 
-  // Focus follows the step: the first choice card, or the first field of the chosen form.
+  // Focus the first field once the dialog is open. Not React's autoFocus, which runs before StagedDialog calls showModal.
   useEffect(() => {
-    if (!open) return;
-    if (method === 'choose') choiceRef.current?.querySelector('input')?.focus();
-    else if (method === 'local') usernameRef.current?.focus();
-  }, [open, method]);
-
-  useEffect(() => {
-    // Otherwise this floats open over whatever screen the user navigates to next —
-    // both a stray dialog left open for no reason, and (since it's positioned
-    // absolutely) something that can sit on top of and intercept clicks on the new
-    // page's content.
-    if (!open) return;
-    const onHashChange = (): void => {
-      close();
-    };
-    window.addEventListener('hashchange', onHashChange);
-    return () => {
-      window.removeEventListener('hashchange', onHashChange);
-    };
+    if (open) usernameRef.current?.focus();
   }, [open]);
 
   const submit = (event: React.SubmitEvent<HTMLFormElement>): void => {
@@ -234,107 +206,69 @@ function SignInForm({
       });
   };
 
-  if (!open) {
-    return (
+  return (
+    <>
       <button
         ref={triggerRef}
         type="button"
         className="corner-pill corner-signin"
-        aria-expanded={false}
-        aria-controls={SIGNIN_POPOVER_ID}
+        aria-haspopup="dialog"
+        aria-expanded={open}
         onClick={() => {
           setOpen(true);
         }}
       >
         {t.signInButton}
       </button>
-    );
-  }
-
-  return (
-    <div
-      id={SIGNIN_POPOVER_ID}
-      className="accountpanel-popover"
-      role="dialog"
-      aria-labelledby={SIGNIN_POPOVER_HEADING_ID}
-      onKeyDown={(event) => {
-        if (event.key === 'Escape') close();
-      }}
-    >
-      <p className="accountpanel-popover-head">
-        <span id={SIGNIN_POPOVER_HEADING_ID}>{t.signInPopoverHeading}</span>
-        <Button size="compact" aria-label={t.closeLabel} onClick={close}>
-          ×
-        </Button>
-      </p>
-      {method === 'choose' ? (
-        <div ref={choiceRef}>
-          <p>{t.signInExplainer}</p>
-          <OptionCards
-            label={t.chooseMethodLabel}
-            value=""
-            options={[
-              { value: 'local', title: t.localTitle, consequence: t.localConsequence },
-              { value: 'sso', title: t.ssoTitle, consequence: t.ssoConsequence },
-            ]}
-            onChange={(value) => {
-              setError(undefined);
-              setPicked(value === 'sso' ? 'sso' : 'local');
-            }}
-          />
-        </div>
-      ) : (
-        <>
-          {ssoConfig !== undefined && (
-            <p className="accountpanel-step">
-              <button
-                type="button"
-                className="quiet"
-                onClick={() => {
-                  setError(undefined);
-                  setPicked(undefined);
-                }}
-              >
-                &larr; {t.chooseAnotherWay}
-              </button>
+      <StagedDialog
+        open={open}
+        heading={t.signInPopoverHeading}
+        closeLabel={t.closeLabel}
+        onDiscard={close}
+        returnFocusTo={triggerRef}
+        footer={null}
+        dialogClassName="settings-card signin-card"
+      >
+        <p>{t.signInExplainer}</p>
+        {ssoConfig !== undefined && (
+          <>
+            <OidcSignIn config={ssoConfig} />
+            <p>{t.ssoConsequence}</p>
+            <p>{t.ssoExplainer}</p>
+            <p className="signin-divider">
+              <span>{t.orDivider}</span>
             </p>
-          )}
-          {method === 'sso' && ssoConfig !== undefined ? (
-            <>
-              <p>{t.ssoExplainer}</p>
-              <OidcSignIn config={ssoConfig} />
-            </>
-          ) : (
-            <>
-              <p>{ssoConfig === undefined ? t.signInExplainer : t.localExplainer}</p>
-              {error !== undefined && <StatusMessage kind="error">{error}</StatusMessage>}
-              <form onSubmit={submit}>
-                <div className="field-grid">
-                  <TextField
-                    label={shared.usernameLabel}
-                    inputRef={usernameRef}
-                    autoComplete="username"
-                    value={username}
-                    onChange={setUsername}
-                  />
-                  <PasswordField
-                    label={t.passwordLabel}
-                    autoComplete="current-password"
-                    value={password}
-                    onChange={setPassword}
-                  />
-                </div>
-                <p className="actions">
-                  <Button type="submit" variant="primary" disabled={busy || username.trim() === '' || password === ''}>
-                    {t.signInButton}
-                  </Button>
-                </p>
-              </form>
-            </>
-          )}
-        </>
-      )}
-    </div>
+            <p>{t.localSubtext}</p>
+          </>
+        )}
+        {error !== undefined && <StatusMessage kind="error">{error}</StatusMessage>}
+        <form onSubmit={submit}>
+          <div className="field-grid">
+            <TextField
+              label={shared.usernameLabel}
+              inputRef={usernameRef}
+              autoComplete="username"
+              value={username}
+              onChange={setUsername}
+            />
+            <PasswordField
+              label={t.passwordLabel}
+              autoComplete="current-password"
+              value={password}
+              onChange={setPassword}
+              revealable
+              showLabel={t.showPasswordLabel}
+              hideLabel={t.hidePasswordLabel}
+            />
+          </div>
+          <p className="actions">
+            <Button type="submit" variant="primary" disabled={busy || username.trim() === '' || password === ''}>
+              {t.signInButton}
+            </Button>
+          </p>
+        </form>
+      </StagedDialog>
+    </>
   );
 }
 

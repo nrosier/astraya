@@ -455,20 +455,6 @@ a.corner-pill.active {
   }
 }
 
-.accountpanel-popover-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-weight: 600;
-  margin-top: 0;
-}
-
-.accountpanel-popover-head button {
-  font-size: 1.1rem;
-  line-height: 1;
-  padding: 0 0.25rem;
-}
-
 .accountpanel-popover p {
   margin: 0.5rem 0 0;
 }
@@ -3963,6 +3949,101 @@ svg text.chart-symbol-text-unicode {
     max-height: 100vh;
     border: none;
     border-radius: 0;
+  }
+}
+
+/*
+ * The sign-in dialog (#765): a centred `settings-card` holding the Authentik button and the local form on one screen.
+ * Sized to suit a short form rather than the 46rem settings card. Its own phone rule keeps it a centred card rather
+ * than the full-screen sheet the settings cards become, so the header's sign-in does not open a sheet.
+ */
+.signin-card {
+  width: 440px;
+  max-width: calc(100vw - 2rem);
+}
+
+.signin-card .settings-card-footer:empty {
+  display: none;
+}
+
+.signin-card .settings-card-body > p:first-child {
+  margin-top: 0;
+}
+
+@media (max-width: 40rem) {
+  .signin-card {
+    width: 440px;
+    max-width: calc(100vw - 2rem);
+    height: auto;
+    max-height: calc(100vh - 2rem);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+  }
+}
+
+.signin-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1rem 0 0.5rem;
+  color: var(--muted, var(--fg));
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.signin-divider::before,
+.signin-divider::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid var(--line);
+}
+
+.signin-password {
+  position: relative;
+}
+
+.signin-password input {
+  width: 100%;
+  /* Room for the toggle, and for the browser's own password badge, so neither covers the typed text. */
+  padding-right: 3rem;
+}
+
+.signin-password-toggle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--muted, var(--fg));
+  cursor: pointer;
+}
+
+.signin-password-toggle:hover {
+  color: var(--fg);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .signin-card[open] {
+    animation: signin-card-in 150ms ease-out;
+  }
+}
+
+@keyframes signin-card-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }
 
