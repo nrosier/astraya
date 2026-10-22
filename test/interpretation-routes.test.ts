@@ -1711,6 +1711,101 @@ describe('saved interpretation results (#392)', () => {
     expect(response.statusCode).toBe(404);
   });
 
+  it('deletes the signed-in user’s own result: ok, and a later get-by-id is 404', async () => {
+    const cookie = await signIn(app);
+    await app.inject({
+      method: 'POST',
+      url: '/api/interpretation/generate',
+      cookies: { [SESSION_COOKIE]: cookie },
+      payload: VALID_BODY,
+    });
+    const { results } = (
+      await app.inject({ method: 'GET', url: '/api/interpretation/results', cookies: { [SESSION_COOKIE]: cookie } })
+    ).json<{ results: { id: string }[] }>();
+    const id = results[0]?.id;
+
+    const deleted = await app.inject({
+      method: 'DELETE',
+      url: `/api/interpretation/results/${id}`,
+      cookies: { [SESSION_COOKIE]: cookie },
+    });
+    expect(deleted.statusCode).toBe(200);
+    expect(deleted.json()).toEqual({ ok: true });
+
+    const after = await app.inject({
+      method: 'GET',
+      url: `/api/interpretation/results/${id}`,
+      cookies: { [SESSION_COOKIE]: cookie },
+    });
+    expect(after.statusCode).toBe(404);
+  });
+
+  it('returns 404 on delete for another user’s result, and leaves that result in place', async () => {
+    const aliceCookie = await signIn(app);
+    await app.inject({
+      method: 'POST',
+      url: '/api/interpretation/generate',
+      cookies: { [SESSION_COOKIE]: aliceCookie },
+      payload: VALID_BODY,
+    });
+    const { results } = (
+      await app.inject({
+        method: 'GET',
+        url: '/api/interpretation/results',
+        cookies: { [SESSION_COOKIE]: aliceCookie },
+      })
+    ).json<{ results: { id: string }[] }>();
+    const id = results[0]?.id;
+
+    const { sessionId: bobCookie } = await createAndLoginUser(app, 'bob', 'correct-horse-battery-2');
+    const response = await app.inject({
+      method: 'DELETE',
+      url: `/api/interpretation/results/${id}`,
+      cookies: { [SESSION_COOKIE]: bobCookie },
+    });
+    expect(response.statusCode).toBe(404);
+    expect(response.json()).toEqual({ error: 'No saved interpretation with that id.' });
+
+    const stillThere = await app.inject({
+      method: 'GET',
+      url: `/api/interpretation/results/${id}`,
+      cookies: { [SESSION_COOKIE]: aliceCookie },
+    });
+    expect(stillThere.statusCode).toBe(200);
+  });
+
+  it('returns 404 on delete for an id that does not exist at all', async () => {
+    const cookie = await signIn(app);
+    const response = await app.inject({
+      method: 'DELETE',
+      url: '/api/interpretation/results/not-a-real-id',
+      cookies: { [SESSION_COOKIE]: cookie },
+    });
+    expect(response.statusCode).toBe(404);
+  });
+
+  it('deletes a saved result without ASTRAYA_ENCRYPTION_KEY set (no key is needed to delete)', async () => {
+    const cookie = await signIn(app);
+    await app.inject({
+      method: 'POST',
+      url: '/api/interpretation/generate',
+      cookies: { [SESSION_COOKIE]: cookie },
+      payload: VALID_BODY,
+    });
+    const { results } = (
+      await app.inject({ method: 'GET', url: '/api/interpretation/results', cookies: { [SESSION_COOKIE]: cookie } })
+    ).json<{ results: { id: string }[] }>();
+
+    delete process.env.ASTRAYA_ENCRYPTION_KEY;
+    const response = await app.inject({
+      method: 'DELETE',
+      url: `/api/interpretation/results/${results[0]?.id}`,
+      cookies: { [SESSION_COOKIE]: cookie },
+    });
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ ok: true });
+  });
+
   it('returns 404 for an id that does not exist at all', async () => {
     const cookie = await signIn(app);
     const response = await app.inject({
