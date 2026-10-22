@@ -21,6 +21,7 @@ const en = {
   interpretationTablist: 'Interpretation mode',
   standardTabLabel: 'Standard',
   aiTabLabel: 'AI-Customized',
+  pastTabLabel: 'Past interpretations',
   tier2Heading: 'AI-customized interpretation',
   tier2SignInPrompt: 'Sign in to generate an AI-customized interpretation in your own style and tone.',
   tier2ConsentLabel: (mode: 'grounded' | 'freeform'): string =>
@@ -77,6 +78,7 @@ const nl: typeof en = {
   interpretationTablist: 'Interpretatiemodus',
   standardTabLabel: 'Standaard',
   aiTabLabel: 'AI-gepersonaliseerd',
+  pastTabLabel: 'Eerdere duidingen',
   tier2Heading: 'AI-gepersonaliseerde interpretatie',
   tier2SignInPrompt: 'Log in om een AI-gepersonaliseerde interpretatie in je eigen stijl en toon te genereren.',
   tier2ConsentLabel: (mode: 'grounded' | 'freeform') =>

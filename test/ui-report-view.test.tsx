@@ -426,7 +426,11 @@ describe('Interpretation Standard/AI-Customized sub-tabs (#360)', () => {
       'fetch',
       vi.fn((input: RequestInfo | URL) => {
         const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
-        const body = url.startsWith('/api/corpus-overrides/') ? { entries: [] } : [];
+        const body = url.startsWith('/api/corpus-overrides/')
+          ? { entries: [] }
+          : url.startsWith('/api/interpretation/results')
+            ? { results: [] }
+            : [];
         return Promise.resolve({ ok: true, json: () => Promise.resolve(body) }) as unknown as ReturnType<typeof fetch>;
       }),
     );
@@ -446,6 +450,7 @@ describe('Interpretation Standard/AI-Customized sub-tabs (#360)', () => {
     expect(aiTab.getAttribute('aria-selected')).toBe('false');
     expect(standardTab.tabIndex).toBe(0);
     expect(aiTab.tabIndex).toBe(-1);
+    expect(container.querySelectorAll('button[role="tab"]')).toHaveLength(3);
 
     act(() => {
       root.unmount();
@@ -503,17 +508,18 @@ describe('Interpretation Standard/AI-Customized sub-tabs (#360)', () => {
     const { container, root } = await mount();
     const standardTab = findTab(container, reportViewMessages.en.standardTabLabel);
     const aiTab = findTab(container, reportViewMessages.en.aiTabLabel);
+    const pastTab = findTab(container, reportViewMessages.en.pastTabLabel);
 
     act(() => {
       standardTab.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }));
     });
-    expect(aiTab.getAttribute('aria-selected')).toBe('true');
-    expect(aiTab.tabIndex).toBe(0);
+    expect(pastTab.getAttribute('aria-selected')).toBe('true');
+    expect(pastTab.tabIndex).toBe(0);
     expect(standardTab.getAttribute('aria-selected')).toBe('false');
     expect(standardTab.tabIndex).toBe(-1);
 
     act(() => {
-      aiTab.dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true }));
+      pastTab.dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true }));
     });
     expect(standardTab.getAttribute('aria-selected')).toBe('true');
     expect(standardTab.tabIndex).toBe(0);
@@ -682,7 +688,11 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
         // The report's own corpus/overrides fetches — not this describe block's concern, and
         // this server doesn't serve either, so they're answered directly rather than proxied.
         if (url.startsWith('/corpus/') || url.startsWith('/api/corpus-overrides/')) {
-          const body = url.startsWith('/api/corpus-overrides/') ? { entries: [] } : [];
+          const body = url.startsWith('/api/corpus-overrides/')
+            ? { entries: [] }
+            : url.startsWith('/api/interpretation/results')
+              ? { results: [] }
+              : [];
           return new Response(JSON.stringify(body), { status: 200 });
         }
         // The route itself: intercepted here rather than reaching `app`, per this describe

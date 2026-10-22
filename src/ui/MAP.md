@@ -80,7 +80,8 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `RelationshipSummary.tsx` + `RelationshipSummary.messages.ts` — Grouped relationship-themes summary (contacts/overlays/Tier 2 AI). Deps: `domain/relationship-themes`, `domain/house-overlays`, `interpretation/tier2-client`.
 - `RelocatedChartView.tsx` + `RelocatedChartView.messages.ts` — Relocated-chart screen: saved or manual locations, relocated wheel, natal-vs-relocated comparison table (#559). Deps: `domain/relocated-chart`, store, `./map-settings`, `./ChartView`.
 - `ReportScreen.tsx` + `ReportScreen.messages.ts` — Standalone written-report route. Deps: `domain/chart-compute`, `ReportView`.
-- `ReportView.tsx` + `ReportView.messages.ts` — Report rendering + provenance toggle + degree-symbol (Sabian symbol) badge (#527) + Tier 2 AI panel. Deps: `interpretation/report`, `interpretation/corpus-client`, `interpretation/tier2-client`, `./degree-symbol-setting`, `./DegreeSymbolSetting`, `./GlossaryTerm`.
+- `SavedInterpretationsPanel.tsx` + `SavedInterpretationsPanel.messages.ts` — The "Past interpretations" tab (#761): lists stored AI interpretations, opens one in a modal, deletes behind an in-app confirmation. Deps: `interpretation/tier2-client`, `primitives/StagedDialog`, `./result-basis-label`, `./saved-time`.
+- `ReportView.tsx` + `ReportView.messages.ts` — Report rendering + provenance toggle + degree-symbol (Sabian symbol) badge (#527) + Tier 2 AI panel + Past interpretations tab (#761). Deps: `interpretation/report`, `interpretation/corpus-client`, `interpretation/tier2-client`, `./degree-symbol-setting`, `./DegreeSymbolSetting`, `./GlossaryTerm`.
 - `ReturnView.tsx` + `ReturnView.messages.ts` — Solar/lunar return charts (pick year/place/rendering). Deps: `domain/return-chart`.
 - `RulershipSetting.tsx` + `RulershipSetting.messages.ts` — Planetary-rulers preference (modern/traditional/both), built on the shared `Select` primitive. Deps: `./rulership-setting`, `astrology/rulership`, `./primitives/Select`.
 - `settings-registry.ts` — #506/#509 typed registry of every persisted setting's scope/owner/persistence/sync/commit-model, pure metadata (existing modules keep owning values). Deps: none.
@@ -141,7 +142,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `rectification.ts` — Rectification screen (form parsing + search request). Deps: `domain/rectification`, `./place-fields`.
 - `relationship-summary-pdf-text.ts` — Flattens relationship summary to PDF-friendly paragraphs. Deps: `domain/relationship-themes`, `domain/house-overlays`, `domain/synastry`.
 - `report-provenance.ts` — Formats report paragraph provenance ("why this text?"). Deps: `astrology/bodies`, `astrology/aspects`, `astrology/signs`, `interpretation/report`.
-- `result-basis-label.ts` — Composes saved-interpretation basis phrase (kind + placement). Deps: `interpretation/result-basis`, `./placement-label`.
+- `result-basis-label.ts` — Composes saved-interpretation basis phrase (kind + placement) and the short type label for the Past tab. Deps: `interpretation/result-basis`, `./placement-label`.
 - `route.ts` — Single source of truth for all hash routes. Deps: `domain/id`, `./chart-sections`.
 - `rulership-setting.ts` — Device preference for planetary rulership (modern/traditional/both). Deps: `astrology/rulership`.
 - `saved-time.ts` — Formats stored interpretation UTC instant as local written-out time. Deps: `interpretation/schema` (Locale type).
