@@ -470,7 +470,8 @@ function renderScreen(parsed: Route, seVersion: string | undefined): React.JSX.E
     parsed.kind === 'synastry' ||
     parsed.kind === 'composite' ||
     parsed.kind === 'periodic-transit' ||
-    parsed.kind === 'astrocartography'
+    parsed.kind === 'astrocartography' ||
+    parsed.kind === 'timing-timeline'
   ) {
     // The person's tabs live in the header's navigation (#421), so the view stands on its own.
     return <Stored>{renderPersonView(parsed)}</Stored>;
