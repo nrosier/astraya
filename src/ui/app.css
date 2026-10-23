@@ -3953,7 +3953,7 @@ svg text.chart-symbol-text-unicode {
 }
 
 /*
- * The sign-in dialog (#765): a centred card (own `signin-card` rules, not `settings-card`, so settings specs find one dialog) holding the Authentik button and the local form on one screen.
+ * The sign-in dialog (#765, #781): a centred card (own `signin-card` rules, not `settings-card`, so settings specs find one dialog) swapping between the OpenID and local-form stages (#781).
  * Sized to suit a short form rather than the 46rem settings card. Its own phone rule keeps it a centred card rather
  * than the full-screen sheet the settings cards become, so the header's sign-in does not open a sheet.
  */
@@ -3996,22 +3996,22 @@ svg text.chart-symbol-text-unicode {
   }
 }
 
-.signin-divider {
+/* Stage buttons (#781): the primary action fills the card; the stage switcher is a centred text button. */
+.signin-card .primitive-button-primary {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  margin: 1rem 0 0.5rem;
-  color: var(--muted, var(--fg));
-  font-size: 0.8rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
 }
 
-.signin-divider::before,
-.signin-divider::after {
-  content: '';
-  flex: 1;
-  border-top: 1px solid var(--line);
+.signin-card .signin-switch {
+  text-align: center;
+}
+
+.signin-card button svg {
+  width: 1.1em;
+  height: 1.1em;
 }
 
 .signin-password {
