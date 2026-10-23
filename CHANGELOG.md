@@ -4,6 +4,14 @@ All notable changes to Astraya are recorded here. Versions follow
 [semantic versioning](https://semver.org/), and every milestone ends in a release —
 see [docs/RELEASING.md](docs/RELEASING.md).
 
+## [0.42.9] — 2026-10-23
+
+**The timing timeline page now opens instead of sending you back to the people page.**
+
+### Fixed
+
+- **The timing timeline renders instead of redirecting to people (#776).** Opening the timing timeline used to bounce to the people view; it now shows the timeline.
+
 ## [0.42.8] — 2026-10-23
 
 **The AI safety check no longer rejects harmless prompts, and the Past interpretations list shows only readings in the current language.**
