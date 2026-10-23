@@ -4,8 +4,8 @@
  * in", and that has to be visible without navigating anywhere.
  *
  * Signed out: a compact "Sign in" button that opens a centred dialog with a non-nagging
- * explanation of what an account adds (sync to other devices), the Authentik button when
- * single sign-on is configured, and the local form, all on one screen (#765) — collapsed by
+ * explanation of what an account adds (sync to other devices), then one of two stages (#781):
+ * the OpenID button when single sign-on is configured, or the local form — collapsed by
  * default so it costs no space on the common, signed-out path. Signed in: a sign-out button, no
  * click needed to confirm you're signed in since `SyncBadge`'s own "(logged in as:
  * {username})" already says so right next to it (#230) — this panel doesn't repeat it.
@@ -15,7 +15,7 @@
 /**
  * @module AccountPanel
  * @purpose Renders the sign-in/sign-out control mounted in the sticky app header, plus the one-time account-adoption prompt and local-data-removal flow.
- * @conventions Mounted globally alongside SyncBadge; reads session state via `useSession()`/`session-context.js`; the sign-in is a centred `StagedDialog` showing the Authentik button (when SSO is configured, #651) and the local form on one screen, with no choice step (#765); text comes from co-located `AccountPanel.messages.ts` via `useMessages()`.
+ * @conventions Mounted globally alongside SyncBadge; reads session state via `useSession()`/`session-context.js`; the sign-in is a centred `StagedDialog` that swaps between an OpenID stage (when SSO is configured, #651) and a local-form stage (#781); text comes from co-located `AccountPanel.messages.ts` via `useMessages()`.
  * @exports AccountPanel
  */
 import { Button } from './primitives/Button.js';
@@ -84,6 +84,24 @@ function AdoptionPanel({
   );
 }
 
+type SignInStage = 'openid' | 'local';
+
+function ShieldIcon(): React.JSX.Element {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" focusable="false">
+      <path d="M12 3 5 6v5c0 4.5 3 8.3 7 10 4-1.7 7-5.5 7-10V6l-7-3Z" strokeWidth="2" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function ChevronIcon(): React.JSX.Element {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" focusable="false">
+      <path d="m6 9 6 6 6-6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 /**
  * A real top-level navigation to Authentik's `authorization_endpoint`, submitted as a
  * plain GET form rather than `window.location.href = ...` — hidden inputs keep the PKCE
@@ -96,7 +114,13 @@ function AdoptionPanel({
  * the issuer sending CORS headers on `/.well-known/openid-configuration`, which Authentik
  * does not do by default, and fails with an opaque cross-origin error when it doesn't.
  */
-function OidcSignIn({ config }: { config: { clientId: string; authorizationEndpoint: string } }): React.JSX.Element {
+function OidcSignIn({
+  config,
+  onOtherMethod,
+}: {
+  config: { clientId: string; authorizationEndpoint: string };
+  onOtherMethod: () => void;
+}): React.JSX.Element {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
   const t = useMessages(accountPanelMessages);
@@ -142,9 +166,16 @@ function OidcSignIn({ config }: { config: { clientId: string; authorizationEndpo
   return (
     <>
       {error !== undefined && <StatusMessage kind="error">{error}</StatusMessage>}
-      <p className="actions">
-        <Button variant="primary" busy={busy} busyLabel={t.ssoContinuing} onClick={start}>
-          {t.ssoContinueButton}
+      <Button variant="primary" busy={busy} busyLabel={t.ssoContinuing} onClick={start}>
+        <ShieldIcon />
+        {t.signInWithOpenId}
+      </Button>
+      <p>{t.ssoConsequence}</p>
+      <p>{t.ssoExplainer}</p>
+      <p className="signin-switch">
+        <Button variant="quiet" onClick={onOtherMethod}>
+          {t.otherLoginMethod}
+          <ChevronIcon />
         </Button>
       </p>
     </>
@@ -155,10 +186,11 @@ function OidcSignIn({ config }: { config: { clientId: string; authorizationEndpo
  * Collapsed to a compact "Sign in" button by default — this lives in the sticky header at
  * the top right of every screen (#421), so an always-open form would sit over the page on
  * every route rather than just where it's relevant. Opening it shows the sign-in as a centred
- * dialog (`StagedDialog`, #506/#508) with the Authentik button (when SSO is configured) and the
- * local form on one screen; there is no choice step to get through first (#765). Closing it
+ * dialog (`StagedDialog`, #506/#508) on one of two stages (#781): the OpenID button (when SSO is
+ * configured, the default) or the local form, swapped by a text button at the bottom. Closing it
  * (Escape, the ×, a backdrop press, or a successful sign-in) hides it again without losing
- * anything typed elsewhere on the page, and returns focus to the trigger.
+ * anything typed elsewhere on the page, and returns focus to the trigger and
+ * the next opening starts on the OpenID stage again.
  */
 function SignInForm({
   signIn,
@@ -168,8 +200,10 @@ function SignInForm({
   oidcConfig: OidcConfig | undefined;
 }): React.JSX.Element {
   const [open, setOpen] = useState(false);
-  // With single sign-on configured, the Authentik button sits above the local form on the same screen (#651, #765).
   const ssoConfig = oidcConfig?.enabled === true ? oidcConfig : undefined;
+  // Derived rather than initialised from `ssoConfig`, which loads async: until it resolves (or if SSO is off) the dialog is the local form (#651, #781).
+  const [chosen, setChosen] = useState<SignInStage>();
+  const stage: SignInStage = ssoConfig === undefined ? 'local' : (chosen ?? 'openid');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
@@ -182,12 +216,18 @@ function SignInForm({
 
   const close = (): void => {
     setOpen(false);
+    setChosen(undefined);
   };
 
-  // Focus the first field once the dialog is open. Not React's autoFocus, which runs before StagedDialog calls showModal.
+  const switchTo = (next: SignInStage): void => {
+    setChosen(next);
+    setError(undefined);
+  };
+
+  // Focus the first field once the local stage is showing. Not React's autoFocus, which runs before StagedDialog calls showModal.
   useEffect(() => {
-    if (open) usernameRef.current?.focus();
-  }, [open]);
+    if (open && stage === 'local') usernameRef.current?.focus();
+  }, [open, stage]);
 
   const submit = (event: React.SubmitEvent<HTMLFormElement>): void => {
     event.preventDefault();
@@ -230,43 +270,56 @@ function SignInForm({
         dialogClassName="signin-card"
       >
         <p>{t.signInExplainer}</p>
-        {ssoConfig !== undefined && (
+        {stage === 'openid' && ssoConfig !== undefined ? (
+          <OidcSignIn
+            config={ssoConfig}
+            onOtherMethod={() => {
+              switchTo('local');
+            }}
+          />
+        ) : (
           <>
-            <OidcSignIn config={ssoConfig} />
-            <p>{t.ssoConsequence}</p>
-            <p>{t.ssoExplainer}</p>
-            <p className="signin-divider">
-              <span>{t.orDivider}</span>
-            </p>
-            <p>{t.localSubtext}</p>
+            {error !== undefined && <StatusMessage kind="error">{error}</StatusMessage>}
+            <form onSubmit={submit}>
+              <div className="field-grid">
+                <TextField
+                  label={shared.usernameLabel}
+                  inputRef={usernameRef}
+                  autoComplete="username"
+                  value={username}
+                  onChange={setUsername}
+                />
+                <PasswordField
+                  label={t.passwordLabel}
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={setPassword}
+                  revealable
+                  showLabel={t.showPasswordLabel}
+                  hideLabel={t.hidePasswordLabel}
+                />
+              </div>
+              <p className="actions">
+                <Button type="submit" variant="primary" disabled={busy || username.trim() === '' || password === ''}>
+                  {t.signInButton}
+                </Button>
+              </p>
+            </form>
+            {ssoConfig !== undefined && (
+              <p className="signin-switch">
+                <Button
+                  variant="quiet"
+                  onClick={() => {
+                    switchTo('openid');
+                  }}
+                >
+                  {t.signInWithOpenId}
+                  <ChevronIcon />
+                </Button>
+              </p>
+            )}
           </>
         )}
-        {error !== undefined && <StatusMessage kind="error">{error}</StatusMessage>}
-        <form onSubmit={submit}>
-          <div className="field-grid">
-            <TextField
-              label={shared.usernameLabel}
-              inputRef={usernameRef}
-              autoComplete="username"
-              value={username}
-              onChange={setUsername}
-            />
-            <PasswordField
-              label={t.passwordLabel}
-              autoComplete="current-password"
-              value={password}
-              onChange={setPassword}
-              revealable
-              showLabel={t.showPasswordLabel}
-              hideLabel={t.hidePasswordLabel}
-            />
-          </div>
-          <p className="actions">
-            <Button type="submit" variant="primary" disabled={busy || username.trim() === '' || password === ''}>
-              {t.signInButton}
-            </Button>
-          </p>
-        </form>
       </StagedDialog>
     </>
   );

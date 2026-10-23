@@ -1,7 +1,7 @@
 /**
- * Signing in when single sign-on is configured (#651): the panel opens on a choice between a local account and
- * Authentik, and each choice shows only its own path. The real server runs with OIDC pointed at the repo's fake
- * Authentik, so "Continue to Authentik" really navigates to the issuer's authorization endpoint.
+ * Signing in when single sign-on is configured (#651, #781): the dialog opens on an OpenID stage and swaps to the
+ * local form stage via a text button, each stage showing only its own path. The real server runs with OIDC pointed
+ * at the repo's fake Authentik, so "Sign in with OpenID" really navigates to the issuer's authorization endpoint.
  */
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -41,27 +41,33 @@ test.afterAll(async () => {
   rmSync(dir, { recursive: true, force: true });
 });
 
-test('the sign-in dialog shows both options on one screen', async ({ page }) => {
+test('the sign-in dialog opens on the OpenID stage and swaps to the local form', async ({ page }) => {
   test.setTimeout(60_000);
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
 
   const dialog = page.getByRole('dialog');
   await expect(dialog).toBeVisible();
-  await expect(dialog.getByRole('button', { name: 'Continue to Authentik' })).toBeVisible();
-  await expect(dialog.getByLabel('Username', { exact: true })).toBeVisible();
-  await expect(dialog.getByLabel('Password', { exact: true })).toBeVisible();
-  await expect(dialog.getByRole('radiogroup')).toHaveCount(0);
+  await expect(dialog.getByRole('button', { name: 'Sign in with OpenID' })).toBeVisible();
+  await expect(dialog.getByRole('button', { name: 'Select another login method' })).toBeVisible();
+  await expect(dialog.getByLabel('Username', { exact: true })).toHaveCount(0);
+  await expect(dialog.getByLabel('Password', { exact: true })).toHaveCount(0);
+  expect((await new AxeBuilder({ page }).include('dialog.signin-card').analyze()).violations).toEqual([]);
+
+  await dialog.getByRole('button', { name: 'Select another login method' }).click();
   await expect(dialog.getByLabel('Username', { exact: true })).toBeFocused();
+  await expect(dialog.getByLabel('Password', { exact: true })).toBeVisible();
+  await expect(dialog.getByRole('button', { name: 'Sign in', exact: true })).toBeVisible();
+  await expect(dialog.getByRole('button', { name: 'Sign in with OpenID' })).toBeVisible();
   expect((await new AxeBuilder({ page }).include('dialog.signin-card').analyze()).violations).toEqual([]);
 });
 
-test('Continue to Authentik goes to the issuer’s authorization endpoint with a PKCE challenge', async ({ page }) => {
+test('Sign in with OpenID goes to the issuer’s authorization endpoint with a PKCE challenge', async ({ page }) => {
   test.setTimeout(60_000);
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
   const navigation = page.waitForRequest((request) => request.url().includes('/authorize'));
-  await page.getByRole('button', { name: 'Continue to Authentik' }).click();
+  await page.getByRole('button', { name: 'Sign in with OpenID' }).click();
   const url = new URL((await navigation).url());
   expect(url.pathname).toBe('/authorize');
   expect(url.searchParams.get('client_id')).toBe('astraya-e2e');
@@ -117,6 +123,7 @@ test('the password toggle switches the field between password and text, and its 
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   await page.getByRole('button', { name: 'Sign in', exact: true }).first().click();
   const dialog = page.getByRole('dialog');
+  await dialog.getByRole('button', { name: 'Select another login method' }).click();
   const password = dialog.getByLabel('Password', { exact: true });
   await expect(password).toHaveAttribute('type', 'password');
   await expect(password).toHaveAttribute('autocomplete', 'current-password');

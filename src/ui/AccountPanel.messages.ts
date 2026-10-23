@@ -17,19 +17,18 @@ const en = {
   leaveOnDeviceButton: 'Leave it on this device',
 
   ssoConsequence: 'Single sign-on: you sign in at Authentik and come back here.',
-  localSubtext: 'Local account: sign in with your Astraya username and password.',
-  orDivider: 'OR',
   showPasswordLabel: 'Show password',
   hidePasswordLabel: 'Hide password',
   ssoExplainer: 'You will go to Authentik to sign in, then return here. Astraya never sees your Authentik password.',
-  ssoContinueButton: 'Continue to Authentik',
+  signInWithOpenId: 'Sign in with OpenID',
+  otherLoginMethod: 'Select another login method',
   ssoContinuing: 'Opening Authentik…',
 
   signInButton: 'Sign in',
   closeLabel: 'Close',
   signInPopoverHeading: 'Sign in to sync this device',
   signInExplainer:
-    'An account syncs your data to your other devices. It is optional — everything here already works with no account, on this device alone.',
+    'An account syncs your data to your other devices. It is optional — (almost) everything here already works with no account, on this device alone.',
   passwordLabel: 'Password',
 
   signOutButton: 'Sign out',
@@ -55,20 +54,19 @@ const nl: typeof en = {
   leaveOnDeviceButton: 'Op dit apparaat laten staan',
 
   ssoConsequence: 'Single sign-on: je logt in bij Authentik en komt hier terug.',
-  localSubtext: 'Lokaal account: log in met je Astraya-gebruikersnaam en wachtwoord.',
-  orDivider: 'OF',
   showPasswordLabel: 'Wachtwoord tonen',
   hidePasswordLabel: 'Wachtwoord verbergen',
   ssoExplainer:
     'Je gaat naar Authentik om in te loggen en komt daarna hier terug. Astraya ziet je Authentik-wachtwoord nooit.',
-  ssoContinueButton: 'Doorgaan naar Authentik',
+  signInWithOpenId: 'Inloggen met OpenID',
+  otherLoginMethod: 'Kies een andere inlogmethode',
   ssoContinuing: 'Authentik openen…',
 
   signInButton: 'Inloggen',
   closeLabel: 'Sluiten',
   signInPopoverHeading: 'Inloggen om dit apparaat te synchroniseren',
   signInExplainer:
-    'Een account synchroniseert je gegevens naar je andere apparaten. Het is optioneel — alles hier werkt al zonder account, op dit apparaat alleen.',
+    'Een account synchroniseert je gegevens naar je andere apparaten. Het is optioneel — (bijna) alles hier werkt al zonder account, op dit apparaat alleen.',
   passwordLabel: 'Wachtwoord',
 
   signOutButton: 'Uitloggen',
