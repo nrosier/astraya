@@ -26,6 +26,9 @@ export interface TextFieldProps {
   /** For a caller that moves focus into the field, e.g. when a panel opens. */
   readonly inputRef?: React.Ref<HTMLInputElement> | undefined;
   readonly inputMode?: 'text' | 'numeric' | 'decimal' | 'email' | 'search' | 'tel' | 'url' | undefined;
+  /** Extra attributes for the input itself, e.g. the combobox ARIA and key handler of an autocomplete (#784). */
+  readonly inputProps?:
+    Omit<React.InputHTMLAttributes<HTMLInputElement>, 'id' | 'type' | 'value' | 'onChange'> | undefined;
 }
 
 export function TextField({
@@ -42,11 +45,13 @@ export function TextField({
   autoComplete,
   inputMode,
   inputRef,
+  inputProps,
 }: TextFieldProps): React.JSX.Element {
   const ids = useFieldIds(help !== undefined, error !== undefined);
   return (
     <Field label={label} ids={ids} help={help} error={error} unit={unit} optional={optional}>
       <input
+        {...inputProps}
         id={ids.inputId}
         ref={inputRef}
         type="text"

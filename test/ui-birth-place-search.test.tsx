@@ -3,7 +3,8 @@
  * BirthPlaceSearch.tsx's out-of-order-response guard (#463): a search started earlier but slow to
  * resolve must not be able to overwrite the results of a search started later and already shown,
  * and the superseded request should actually be cancelled (via `AbortSignal`), not just ignored
- * once it eventually settles.
+ * once it eventually settles. Also covers the floating dropdown (#784): debounce, states, keyboard,
+ * selection and combobox ARIA.
  */
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -31,6 +32,7 @@ const { BirthPlaceSearch } = await import('../src/ui/BirthPlaceSearch.js');
 let mounted: { container: HTMLElement; root: Root } | undefined;
 
 afterEach(() => {
+  vi.useRealTimers();
   if (mounted !== undefined) {
     act(() => {
       mounted?.root.unmount();
@@ -92,7 +94,7 @@ function startSearch(container: HTMLElement, query: string): void {
 }
 
 function resultText(container: HTMLElement): readonly string[] {
-  return Array.from(container.querySelectorAll('.birth-place-search-results button')).map((b) => b.textContent);
+  return Array.from(container.querySelectorAll('.birth-place-search-option-name')).map((b) => b.textContent);
 }
 
 const RESULT_A: ForwardGeocodeResult = { latitude: 1, longitude: 1, displayName: 'Search A result' };
@@ -147,14 +149,14 @@ describe('BirthPlaceSearch, when a slower search is superseded by a faster later
       first.reject(new DOMException('aborted', 'AbortError'));
       await Promise.resolve();
     });
-    expect(container.querySelector('.warning')).toBeNull();
+    expect(container.querySelector('[role="alert"]')).toBeNull();
 
     await act(async () => {
       second.resolve([RESULT_B]);
       await Promise.resolve();
     });
     expect(resultText(container)).toEqual(['Search B result']);
-    expect(container.querySelector('.warning')).toBeNull();
+    expect(container.querySelector('[role="alert"]')).toBeNull();
   });
 
   it('cancels the in-flight search when the component unmounts', () => {
@@ -171,5 +173,212 @@ describe('BirthPlaceSearch, when a slower search is superseded by a faster later
     mounted = undefined;
 
     expect(first.signal.aborted).toBe(true);
+  });
+});
+
+const PARIS: ForwardGeocodeResult = {
+  latitude: 48.856614,
+  longitude: 2.352222,
+  displayName: 'Paris, Île-de-France, France',
+};
+const SYDNEY: ForwardGeocodeResult = {
+  latitude: -33.8688,
+  longitude: 151.2093,
+  displayName: 'Sydney, New South Wales, Australia',
+};
+
+function type(container: HTMLElement, value: string): void {
+  act(() => {
+    setNativeValue(searchInput(container), value);
+  });
+}
+
+function key(container: HTMLElement, name: string): void {
+  act(() => {
+    searchInput(container).dispatchEvent(new KeyboardEvent('keydown', { key: name, bubbles: true, cancelable: true }));
+  });
+}
+
+async function resolveWith(index: number, results: ForwardGeocodeResult[]): Promise<void> {
+  const request = pending[index];
+  if (request === undefined) throw new Error('fixture bug: no such pending search');
+  await act(async () => {
+    request.resolve(results);
+    await Promise.resolve();
+  });
+}
+
+function options(container: HTMLElement): HTMLElement[] {
+  return Array.from(container.querySelectorAll<HTMLElement>('[role="option"]'));
+}
+
+describe('BirthPlaceSearch floating dropdown (#784)', () => {
+  it('searches after the debounce once the query is longer than 2 characters, and not before', () => {
+    vi.useFakeTimers();
+    const container = mount(() => undefined);
+
+    type(container, 'Pa');
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(pending).toHaveLength(0);
+
+    type(container, 'Par');
+    act(() => {
+      vi.advanceTimersByTime(299);
+    });
+    expect(pending).toHaveLength(0);
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+    expect(pending.map((p) => p.query)).toEqual(['Par']);
+  });
+
+  it('debounces: only the last keystroke in a burst triggers a search', () => {
+    vi.useFakeTimers();
+    const container = mount(() => undefined);
+    type(container, 'Par');
+    act(() => {
+      vi.advanceTimersByTime(200);
+    });
+    type(container, 'Pari');
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+    expect(pending.map((p) => p.query)).toEqual(['Pari']);
+  });
+
+  it('shows a searching status inside the dropdown with an aria-hidden spinner', () => {
+    const container = mount(() => undefined);
+    startSearch(container, 'Paris');
+    const status = container.querySelector('.birth-place-search-dropdown [role="status"]');
+    expect(status?.textContent).toContain('Searching');
+    expect(status?.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true');
+  });
+
+  it('shows the empty state for an empty result array', async () => {
+    const container = mount(() => undefined);
+    startSearch(container, 'Nowhereville');
+    await resolveWith(0, []);
+    const status = container.querySelector('.birth-place-search-dropdown [role="status"]');
+    expect(status?.textContent).toBe('No matching locations found');
+  });
+
+  it('shows an alert inside the dropdown when the search fails', async () => {
+    const container = mount(() => undefined);
+    startSearch(container, 'Paris');
+    await act(async () => {
+      pending[0]?.reject(new Error('503'));
+      await Promise.resolve();
+    });
+    const alert = container.querySelector('.birth-place-search-dropdown [role="alert"]');
+    expect(alert?.textContent).toContain('The place search failed');
+  });
+
+  it('exposes combobox and listbox ARIA, and tracks the active option', async () => {
+    const container = mount(() => undefined);
+    const input = searchInput(container);
+    expect(input.getAttribute('role')).toBe('combobox');
+    expect(input.getAttribute('aria-expanded')).toBe('false');
+    expect(input.getAttribute('aria-autocomplete')).toBe('list');
+
+    startSearch(container, 'Paris');
+    await resolveWith(0, [PARIS, SYDNEY]);
+
+    const listbox = container.querySelector('[role="listbox"]');
+    expect(listbox).not.toBeNull();
+    expect(input.getAttribute('aria-expanded')).toBe('true');
+    expect(input.getAttribute('aria-controls')).toBe(listbox?.id);
+    expect(input.getAttribute('aria-activedescendant')).toBeNull();
+    expect(options(container).map((o) => o.getAttribute('aria-selected'))).toEqual(['false', 'false']);
+    expect(container.querySelector('.birth-place-search-option-coords')?.textContent).toBe('48.86° N, 2.35° E');
+
+    key(container, 'ArrowDown');
+    const [first, second] = options(container);
+    expect(input.getAttribute('aria-activedescendant')).toBe(first?.id);
+    expect(first?.getAttribute('aria-selected')).toBe('true');
+    expect(second?.getAttribute('aria-selected')).toBe('false');
+  });
+
+  it('formats southern and western hemispheres with letters', async () => {
+    const container = mount(() => undefined);
+    startSearch(container, 'Sydney');
+    await resolveWith(0, [SYDNEY, { latitude: 40.7, longitude: -74, displayName: 'New York' }]);
+    expect(
+      Array.from(container.querySelectorAll('.birth-place-search-option-coords')).map((e) => e.textContent),
+    ).toEqual(['33.87° S, 151.21° E', '40.70° N, 74.00° W']);
+  });
+
+  it('moves with ArrowDown and ArrowUp, wrapping at both ends', async () => {
+    const container = mount(() => undefined);
+    startSearch(container, 'Paris');
+    await resolveWith(0, [PARIS, SYDNEY]);
+    const active = (): number => options(container).findIndex((o) => o.getAttribute('aria-selected') === 'true');
+
+    key(container, 'ArrowDown');
+    expect(active()).toBe(0);
+    key(container, 'ArrowDown');
+    expect(active()).toBe(1);
+    key(container, 'ArrowDown');
+    expect(active()).toBe(0);
+    key(container, 'ArrowUp');
+    expect(active()).toBe(1);
+  });
+
+  it('selects the active row on Enter: fills the text, passes 4-decimal coordinates, closes', async () => {
+    const onPick = vi.fn();
+    const container = mount(onPick);
+    startSearch(container, 'Paris');
+    await resolveWith(0, [PARIS, SYDNEY]);
+
+    key(container, 'ArrowDown');
+    key(container, 'Enter');
+
+    expect(onPick).toHaveBeenCalledExactlyOnceWith(48.8566, 2.3522, 'Paris, Île-de-France, France');
+    expect(searchInput(container).value).toBe('Paris');
+    expect(container.querySelector('[role="listbox"]')).toBeNull();
+    expect(searchInput(container).getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('selects a clicked row', async () => {
+    const onPick = vi.fn();
+    const container = mount(onPick);
+    startSearch(container, 'Sydney');
+    await resolveWith(0, [PARIS, SYDNEY]);
+
+    act(() => {
+      options(container)[1]?.click();
+    });
+
+    expect(onPick).toHaveBeenCalledExactlyOnceWith(-33.8688, 151.2093, 'Sydney, New South Wales, Australia');
+    expect(searchInput(container).value).toBe('Sydney');
+    expect(container.querySelector('[role="listbox"]')).toBeNull();
+  });
+
+  it('closes on Escape without selecting', async () => {
+    const onPick = vi.fn();
+    const container = mount(onPick);
+    startSearch(container, 'Paris');
+    await resolveWith(0, [PARIS]);
+
+    key(container, 'ArrowDown');
+    key(container, 'Escape');
+
+    expect(onPick).not.toHaveBeenCalled();
+    expect(container.querySelector('[role="listbox"]')).toBeNull();
+    expect(searchInput(container).value).toBe('Paris');
+  });
+
+  it('resets the active row when new results open', async () => {
+    const container = mount(() => undefined);
+    startSearch(container, 'Paris');
+    await resolveWith(0, [PARIS, SYDNEY]);
+    key(container, 'ArrowDown');
+    key(container, 'ArrowDown');
+
+    startSearch(container, 'Sydney');
+    await resolveWith(1, [SYDNEY, PARIS]);
+    expect(options(container).every((o) => o.getAttribute('aria-selected') === 'false')).toBe(true);
+    expect(searchInput(container).getAttribute('aria-activedescendant')).toBeNull();
   });
 });

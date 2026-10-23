@@ -858,19 +858,92 @@ footer {
   min-width: 0;
 }
 
-/* Click-to-confirm results (#290) — always a list, even for a single match, so a search never
-   silently sets the fields on its own. */
-.birth-place-search-results {
-  margin: 0 0 0.5rem;
-  padding: 0;
-  list-style: none;
-  display: grid;
-  gap: 0.35rem;
+/* Floating autocomplete dropdown (#784): hangs under the input at its width (the combo wrapper holds only the
+   field, so 100% is the input's bottom edge). No monospace token exists; coordinates use the system stack. */
+.birth-place-search-combo {
+  position: relative;
+  width: 100%;
 }
 
-.birth-place-search-results button {
+.birth-place-search-dropdown {
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  left: 0;
+  z-index: 10;
   width: 100%;
-  text-align: left;
+  max-height: 15rem;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-popover);
+}
+
+.birth-place-search-dropdown ul {
+  margin: 0;
+  padding: var(--space-1) 0;
+  list-style: none;
+}
+
+.birth-place-search-option {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  cursor: pointer;
+}
+
+.birth-place-search-option[aria-selected='true'] {
+  background: var(--surface-hover);
+}
+
+.birth-place-search-option-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.birth-place-search-option-coords {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+  font-size: var(--text-sm);
+  white-space: nowrap;
+}
+
+.birth-place-search-state {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.birth-place-search-error {
+  color: var(--color-danger);
+}
+
+.birth-place-search-spinner {
+  flex: 0 0 auto;
+  width: 1rem;
+  height: 1rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .birth-place-search-spinner {
+    animation: birth-place-search-spin 0.9s linear infinite;
+  }
+}
+
+@keyframes birth-place-search-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .birth-place-search .warning {
