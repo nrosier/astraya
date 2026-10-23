@@ -71,7 +71,7 @@ test('"Search for a place by name" stays visible whether or not coordinates alre
   await expect(labeledField(page, /^Search for a place by name/, 'input[type="text"]')).toBeVisible();
 });
 
-test('a single search match is still shown as a click-to-confirm list, and picking it fills coordinates and Place of birth (#290)', async ({
+test('a single search match is still shown as a click-to-confirm dropdown, and picking it fills coordinates and Place of birth (#290)', async ({
   page,
 }) => {
   await stubNominatimSearch(page, [{ lat: '48.8566', lon: '2.3522', display_name: 'Paris, Île-de-France, France' }]);
@@ -81,7 +81,7 @@ test('a single search match is still shown as a click-to-confirm list, and picki
   await labeledField(page, /^Search for a place by name/, 'input[type="text"]').fill('Paris');
   await page.getByRole('button', { name: 'Search', exact: true }).click();
 
-  const result = page.getByRole('button', { name: 'Paris, Île-de-France, France', exact: true });
+  const result = page.getByRole('option', { name: /^Paris, Île-de-France, France/ });
   await expect(result).toBeVisible();
   await result.click();
 
@@ -101,10 +101,10 @@ test('multiple search matches are each shown as a separate clickable result (#29
   await labeledField(page, /^Search for a place by name/, 'input[type="text"]').fill('Paris');
   await page.getByRole('button', { name: 'Search', exact: true }).click();
 
-  await expect(page.getByRole('button', { name: 'Paris, Île-de-France, France', exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Paris, Texas, United States', exact: true })).toBeVisible();
+  await expect(page.getByRole('option', { name: /^Paris, Île-de-France, France/ })).toBeVisible();
+  await expect(page.getByRole('option', { name: /^Paris, Texas, United States/ })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Paris, Texas, United States', exact: true }).click();
+  await page.getByRole('option', { name: /^Paris, Texas, United States/ }).click();
 
   await expect(labeledField(page, /^Latitude/, 'input[type="number"]')).toHaveValue('33.6609');
   await expect(labeledField(page, /^Longitude/, 'input[type="number"]')).toHaveValue('-95.5555');
@@ -118,7 +118,7 @@ test('a search with no matches shows an inline "not found" message (#290)', asyn
   await labeledField(page, /^Search for a place by name/, 'input[type="text"]').fill('Nowhereville');
   await page.getByRole('button', { name: 'Search', exact: true }).click();
 
-  await expect(page.getByRole('status').filter({ hasText: 'No matching place was found' })).toBeVisible();
+  await expect(page.getByRole('status').filter({ hasText: 'No matching locations found' })).toBeVisible();
 });
 
 test('a search-request failure shows an inline message, and coordinates are still editable by hand (#290)', async ({
