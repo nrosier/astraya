@@ -183,14 +183,29 @@ describe('SavedInterpretationsPanel: the list', () => {
     const c = await mount();
     await flush();
 
-    const first = rowFor(c, 0).textContent;
-    expect(first).toContain(formatSavedTime('2026-03-10T16:30:00Z', 'en'));
-    expect(first).toContain('Short and warm');
-    expect(first).toContain('Juno');
+    const first = rowFor(c, 0);
+    const firstOpen = first.querySelector('button');
+    expect(firstOpen?.textContent).toBe(`${formatSavedTime('2026-03-10T16:30:00Z', 'en')} · Short and warm · Juno`);
+    expect(first.querySelector('.saved-interpretation-description')?.textContent).toBe('Short and warm');
+    expect(first.querySelector('.saved-interpretation-type')?.textContent).toBe('Juno');
+    const firstSeparators = first.querySelectorAll('.saved-interpretation-separator');
+    expect(firstSeparators).toHaveLength(2);
+    for (const sep of firstSeparators) {
+      expect(sep.getAttribute('aria-hidden')).toBe('true');
+      expect(sep.textContent).toBe('·');
+    }
 
     const second = rowFor(c, 1);
     expect(second.textContent).toContain('Entire horoscope');
     expect(second.querySelector('.saved-interpretation-description')).toBeNull();
+    const secondSeparators = second.querySelectorAll('.saved-interpretation-separator');
+    expect(secondSeparators).toHaveLength(1);
+    for (const sep of secondSeparators) {
+      expect(sep.getAttribute('aria-hidden')).toBe('true');
+      expect(sep.textContent).toBe('·');
+    }
+    expect(second.textContent.startsWith('·')).toBe(false);
+    expect(second.textContent.endsWith('·')).toBe(false);
   });
 
   it('never shows the generic AI label as the type', async () => {

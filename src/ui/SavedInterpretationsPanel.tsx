@@ -225,6 +225,7 @@ export function SavedInterpretationsPanel({
       <ul className="saved-interpretations-list">
         {items.map((item) => {
           const type = savedTypeLabel(item, locale) ?? t.pastTypeNeutral;
+          const hasDescription = item.description !== null && item.description !== '';
           return (
             <li key={item.id} className="saved-interpretation-row">
               <button
@@ -234,10 +235,19 @@ export function SavedInterpretationsPanel({
                   openSaved(item.id, event.currentTarget);
                 }}
               >
-                <span className="saved-interpretation-time">{formatSavedTime(item.createdAt, locale)}</span>{' '}
-                {item.description !== null && item.description !== '' && (
-                  <span className="saved-interpretation-description">{item.description}</span>
+                <span className="saved-interpretation-time">{formatSavedTime(item.createdAt, locale)}</span>
+                {hasDescription && (
+                  <>
+                    {' '}
+                    <span className="saved-interpretation-separator" aria-hidden="true">
+                      ·
+                    </span>{' '}
+                    <span className="saved-interpretation-description">{item.description}</span>
+                  </>
                 )}{' '}
+                <span className="saved-interpretation-separator" aria-hidden="true">
+                  ·
+                </span>{' '}
                 <span className="saved-interpretation-type">{type}</span>
               </button>{' '}
               <button
