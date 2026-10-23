@@ -59,8 +59,19 @@ test('a person with a known birth time gets a Consultation screen with transits,
   for (const term of ['Sun', 'Moon', 'Ascendant', 'Chart ruler', 'Profection year']) {
     await expect(page.locator('.consultation-glance dt', { hasText: term }).first()).toBeVisible();
   }
-  for (const heading of ['This year', 'Major transits now', 'Directions', 'Chart highlights']) {
+  for (const heading of ['This year', 'Zodiacal releasing', 'Major transits now', 'Directions', 'Chart highlights']) {
     await expect(page.getByRole('heading', { level: 2, name: heading })).toBeVisible();
+  }
+  // Boxes sharing a grid row share a height (#774); rows are boxes whose top edges match within 1px.
+  const boxes = [];
+  for (const section of await page.locator('.consultation-section').all()) {
+    const rect = await section.boundingBox();
+    if (rect !== null) boxes.push(rect);
+  }
+  expect(boxes.length).toBeGreaterThanOrEqual(5);
+  for (const box of boxes) {
+    const row = boxes.filter((other) => Math.abs(other.y - box.y) <= 1);
+    for (const other of row) expect(Math.abs(other.height - box.height)).toBeLessThanOrEqual(1);
   }
   // Transits to the angles are listed apart from the ranked ones (#678).
   await expect(page.getByRole('heading', { level: 3, name: 'Transits to the Ascendant and Midheaven' })).toBeVisible();

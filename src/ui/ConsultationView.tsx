@@ -487,7 +487,10 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
                   )}
                 </dd>
               </dl>
-              <h3>{timingT.tracks['zodiacal-releasing']}</h3>
+            </section>
+
+            <section className="consultation-section" aria-labelledby="consultation-releasing-heading">
+              <h2 id="consultation-releasing-heading">{timingT.tracks['zodiacal-releasing']}</h2>
               {releasingLevel1.length === 0 ? <p className="hint">{timingT.noEvents}</p> : eventList(releasingLevel1)}
               {(releasingLevel2.length > 0 || monthProfection.length > 0) && (
                 <Disclosure title={t.moreTiming} summary={t.moreTimingSummary} showLabel={t.show} hideLabel={t.hide}>
