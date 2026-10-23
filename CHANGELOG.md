@@ -4,6 +4,14 @@ All notable changes to Astraya are recorded here. Versions follow
 [semantic versioning](https://semver.org/), and every milestone ends in a release —
 see [docs/RELEASING.md](docs/RELEASING.md).
 
+## [0.42.10] — 2026-10-23
+
+**Each data section on the consultation page now sits in its own bordered box.**
+
+### Added
+
+- **Consult data sections get their own bordered boxes (#774).** The sections on the consultation page are visually separated, so it is easier to see where one ends and the next begins.
+
 ## [0.42.9] — 2026-10-23
 
 **The timing timeline page now opens instead of sending you back to the people page.**
