@@ -76,6 +76,10 @@ async function stubResults(page: Page): Promise<string[]> {
   await page.route('**/api/interpretation/results?*', async (route) => {
     const params = new URL(route.request().url()).searchParams;
     const personId = params.get('personId');
+    if (params.get('locale') === null) {
+      await route.fulfill({ status: 400, json: { error: 'locale is required' } });
+      return;
+    }
     if (personId !== null) {
       asked.push(personId);
       await route.fulfill({

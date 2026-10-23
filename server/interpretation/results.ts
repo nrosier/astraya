@@ -109,7 +109,8 @@ function readDescription(row: SummaryRow, key: Buffer | undefined): string | nul
 export type ResultsFilter = { readonly personId: string } | { readonly unlinked: true };
 
 /**
- * Metadata, newest first. The prose is never decrypted here, so this works even if the server's key
+ * Metadata, newest first, for one language only (#773): a reading saved in another locale is not listed, so it
+ * cannot be opened from here either. The prose is never decrypted here, so this works even if the server's key
  * has since been rotated away (#340) or removed; the short descriptions (#423) are read when `key`
  * can decrypt them and are `null` otherwise, which only costs the label.
  */
@@ -117,15 +118,18 @@ export function listInterpretationResults(
   db: Database,
   userId: string,
   filter: ResultsFilter,
+  locale: string,
   key?: Buffer,
 ): readonly InterpretationResultSummary[] {
   const columns =
     'SELECT id, mode, locale, created_at, description_json, description_iv, kind, basis_json FROM interpretation_results';
   const rows = ('personId' in filter
-    ? db.prepare(`${columns} WHERE user_id = ? AND person_id = ? ORDER BY created_at DESC`).all(userId, filter.personId)
+    ? db
+        .prepare(`${columns} WHERE user_id = ? AND person_id = ? AND locale = ? ORDER BY created_at DESC`)
+        .all(userId, filter.personId, locale)
     : db
-        .prepare(`${columns} WHERE user_id = ? AND person_id IS NULL ORDER BY created_at DESC`)
-        .all(userId)) as unknown as SummaryRow[];
+        .prepare(`${columns} WHERE user_id = ? AND person_id IS NULL AND locale = ? ORDER BY created_at DESC`)
+        .all(userId, locale)) as unknown as SummaryRow[];
   return rows.map((row) => ({
     id: row.id,
     mode: row.mode,

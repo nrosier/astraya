@@ -22,6 +22,7 @@ import {
   type SavedInterpretationSummary,
   type Tier2Section,
 } from '../interpretation/tier2-client.js';
+import type { Locale } from '../interpretation/schema.js';
 import { StagedDialog } from './primitives/StagedDialog.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { useLocale } from './locale.js';
@@ -85,12 +86,13 @@ interface ListState {
 }
 
 /**
- * Loads one list (#768): the unlinked results when `unlinked` is set, else the given person's. Without a person the
+ * Loads one list (#768) in the current language (#773): the unlinked results when `unlinked` is set, else the given person's. Without a person the
  * person list is empty and nothing is fetched.
  */
 function useSavedList(
   unlinked: boolean,
   personId: string | undefined,
+  locale: Locale,
 ): [ListState, React.Dispatch<React.SetStateAction<ListState>>] {
   const [list, setList] = useState<ListState>({ status: 'loading', items: [] });
   useEffect(() => {
@@ -100,7 +102,7 @@ function useSavedList(
     }
     let cancelled = false;
     setList({ status: 'loading', items: [] });
-    listSavedInterpretations(unlinked || personId === undefined ? { unlinked: true } : { personId })
+    listSavedInterpretations(unlinked || personId === undefined ? { unlinked: true } : { personId }, locale)
       .then((results) => {
         if (!cancelled) setList({ status: 'ready', items: results });
       })
@@ -110,7 +112,7 @@ function useSavedList(
     return () => {
       cancelled = true;
     };
-  }, [unlinked, personId]);
+  }, [unlinked, personId, locale]);
   return [list, setList];
 }
 
@@ -122,9 +124,9 @@ export function SavedInterpretationsPanel({
 }): React.JSX.Element {
   const t = useMessages(savedInterpretationsPanelMessages);
   const [locale] = useLocale();
-  const [personList, setPersonList] = useSavedList(false, personId);
+  const [personList, setPersonList] = useSavedList(false, personId, locale);
   // Results saved before they were linked to a person (#768): listed apart so they can still be opened or deleted.
-  const [unlinkedList, setUnlinkedList] = useSavedList(true, undefined);
+  const [unlinkedList, setUnlinkedList] = useSavedList(true, undefined, locale);
   const [openId, setOpenId] = useState<string | undefined>(undefined);
   const [detail, setDetail] = useState<SavedInterpretationDetail | undefined>(undefined);
   const [detailError, setDetailError] = useState(false);

@@ -175,11 +175,11 @@ describe('deleteSavedInterpretation', () => {
       locale: 'en',
       personId: PERSON,
     });
-    const [saved] = await listSavedInterpretations({ personId: PERSON });
+    const [saved] = await listSavedInterpretations({ personId: PERSON }, 'en');
     expect(saved).toBeDefined();
 
     await expect(deleteSavedInterpretation(saved?.id ?? '')).resolves.toBeUndefined();
-    expect(await listSavedInterpretations({ personId: PERSON })).toEqual([]);
+    expect(await listSavedInterpretations({ personId: PERSON }, 'en')).toEqual([]);
   });
 
   it('throws a Tier2Error on a 404 for an id that does not exist', async () => {
@@ -201,8 +201,8 @@ describe('listSavedInterpretations scope (#768)', () => {
       seen.push(input instanceof Request ? input.url : String(input));
       return inner(input, init);
     };
-    await listSavedInterpretations({ personId: 'p a/b&c' }).catch(() => undefined);
-    expect(seen).toEqual(['/api/interpretation/results?personId=p%20a%2Fb%26c']);
+    await listSavedInterpretations({ personId: 'p a/b&c' }, 'nl').catch(() => undefined);
+    expect(seen).toEqual(['/api/interpretation/results?personId=p%20a%2Fb%26c&locale=nl']);
   });
 
   it('asks for the unlinked results with ?unlinked=1', async () => {
@@ -213,8 +213,8 @@ describe('listSavedInterpretations scope (#768)', () => {
       seen.push(input instanceof Request ? input.url : String(input));
       return inner(input, init);
     };
-    expect(await listSavedInterpretations({ unlinked: true })).toEqual([]);
-    expect(seen).toEqual(['/api/interpretation/results?unlinked=1']);
+    expect(await listSavedInterpretations({ unlinked: true }, 'en')).toEqual([]);
+    expect(seen).toEqual(['/api/interpretation/results?unlinked=1&locale=en']);
   });
 
   it('lists a saved result under the person it was generated for, and not under another', async () => {
@@ -226,9 +226,9 @@ describe('listSavedInterpretations scope (#768)', () => {
       locale: 'en',
       personId: PERSON,
     });
-    expect(await listSavedInterpretations({ personId: PERSON })).toHaveLength(1);
-    expect(await listSavedInterpretations({ personId: 'p-bbbbbbbbbbbbbbbb' })).toEqual([]);
-    expect(await listSavedInterpretations({ unlinked: true })).toEqual([]);
+    expect(await listSavedInterpretations({ personId: PERSON }, 'en')).toHaveLength(1);
+    expect(await listSavedInterpretations({ personId: 'p-bbbbbbbbbbbbbbbb' }, 'en')).toEqual([]);
+    expect(await listSavedInterpretations({ unlinked: true }, 'en')).toEqual([]);
   });
 });
 

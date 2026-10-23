@@ -196,7 +196,7 @@ describe('PdfAiInterpretationPicker', () => {
   it("lists only the given person's results", async () => {
     list.mockResolvedValue([]);
     await mount({ personId: 'p-person-one-aaaaaa' });
-    expect(list).toHaveBeenCalledWith({ personId: 'p-person-one-aaaaaa' });
+    expect(list).toHaveBeenCalledWith({ personId: 'p-person-one-aaaaaa' }, 'en');
   });
 
   it("drops ticked ids that are not in this person's list (#768)", async () => {
@@ -223,7 +223,7 @@ describe('PdfAiInterpretationPicker', () => {
         />,
       );
     });
-    expect(list).toHaveBeenLastCalledWith({ personId: 'p-person-two-bbbbbb' });
+    expect(list).toHaveBeenLastCalledWith({ personId: 'p-person-two-bbbbbb' }, 'en');
     expect(onChange).toHaveBeenLastCalledWith([]);
   });
 });
