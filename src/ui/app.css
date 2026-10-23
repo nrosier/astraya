@@ -4736,7 +4736,7 @@ button.primitive-disclosure-trigger:hover:not(:disabled) {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: var(--space-8) var(--space-6);
-  align-items: start;
+  align-items: stretch;
 }
 
 @container consultation (min-width: 48rem) {
@@ -4749,6 +4749,32 @@ button.primitive-disclosure-trigger:hover:not(:disabled) {
   display: grid;
   gap: var(--space-3);
   min-width: 0;
+}
+
+/* Each data section sits in its own box (#774); the grid stretches boxes in a row to one height. */
+.consultation-section,
+.consultation-glance {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  padding: var(--space-4);
+}
+
+/* Stretched boxes keep their content at the top instead of spreading the extra height across the rows. */
+.consultation-section {
+  align-content: start;
+}
+
+.consultation-glance {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+/* Nested panels read as part of the box rather than a second tint. */
+:is(.consultation-section, .consultation-glance) :is(.primitive-disclosure, dl) {
+  background: transparent;
 }
 
 .consultation-section > h2,
