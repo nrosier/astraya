@@ -4,6 +4,20 @@ All notable changes to Astraya are recorded here. Versions follow
 [semantic versioning](https://semver.org/), and every milestone ends in a release —
 see [docs/RELEASING.md](docs/RELEASING.md).
 
+## [0.42.8] — 2026-10-23
+
+**The AI safety check no longer rejects harmless prompts, and the Past interpretations list shows only readings in the current language.**
+
+### Fixed
+
+- **The prompt verifier no longer fails on harmless prompts (#770).** The Tier 2 verifier's output budget was too small, so Gemini thinking tokens could use it all and return nothing, which surfaced as a 502 error. The budget is raised, and an empty response that hit the limit still fails closed with a specific error.
+- **Past interpretations are listed in the current language only (#773).** The list of saved AI interpretations, and anything opened from it, now shows only readings written in the language the app is set to.
+- **Past interpretation rows are easier to read (#772).** The parts of each row are separated by a middle dot.
+
+### Notes for people running their own server
+
+- The saved-interpretations list endpoint now requires a valid `?locale=` query parameter and answers 400 without one. The app always sends it; only custom API clients are affected.
+
 ## [0.42.7] — 2026-10-23
 
 **Saved AI interpretations are now kept per person: the Past tab shows the selected person's own results, and older results appear in a separate unlinked section.**
