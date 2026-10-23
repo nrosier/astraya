@@ -72,3 +72,6 @@ data/
 
 # Lavish Editor review artifacts: per-session HTML pages, never part of the repo.
 .lavish/
+
+# Throwaway UI mockups (local review only)
+docs/mockups/
