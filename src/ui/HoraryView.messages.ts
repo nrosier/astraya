@@ -12,6 +12,11 @@ const en = {
     'Judgment method: William Lilly, Christian Astrology, Book II, pp. 162–64 (the merchant’s-ship judgment).',
   dateLabel: 'Date the question was asked',
   timeLabel: 'Local time',
+  dateCardHeading: 'Date, time & location',
+  paramsCardHeading: 'Astrological parameters',
+  setToNow: 'Set to now',
+  geocodeNotice: (host: string) =>
+    `Place search sends what you type to ${host}. You can also type the coordinates yourself.`,
   latitudeLabel: 'Latitude',
   longitudeLabel: 'Longitude',
   houseSystemLabel: 'House system',
@@ -94,6 +99,11 @@ const nl: typeof en = {
     'Oordeelmethode: William Lilly, Christian Astrology, Boek II, pp. 162–64 (het oordeel over het koopvaardijschip).',
   dateLabel: 'Datum waarop de vraag werd gesteld',
   timeLabel: 'Lokale tijd',
+  dateCardHeading: 'Datum, tijd & plaats',
+  paramsCardHeading: 'Astrologische parameters',
+  setToNow: 'Nu invullen',
+  geocodeNotice: (host: string) =>
+    `Plaatszoeken stuurt wat je typt naar ${host}. Je kunt de coördinaten ook zelf invullen.`,
   latitudeLabel: 'Breedtegraad',
   longitudeLabel: 'Lengtegraad',
   houseSystemLabel: 'Huizensysteem',

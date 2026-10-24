@@ -826,6 +826,76 @@ footer {
   gap: 1rem;
 }
 
+/*
+ * Horary chart form (#782): two cards, side by side when there is room. BirthPlaceSearch is shared with
+ * other screens, so its layout and its inner hint are adjusted here only, under `.horary-form`.
+ */
+.horary-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.horary-card {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.horary-card h2 {
+  margin: 0;
+  font-size: var(--text-lg);
+}
+
+.horary-card .hint {
+  margin: 0;
+}
+
+.horary-timestamp {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: var(--space-3);
+  align-items: end;
+}
+
+.horary-coords {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+/* Dimmed by border and background, not opacity: faded labels and text would fail WCAG AA contrast. */
+.horary-coords--pending:not(:focus-within) input {
+  border-style: dashed;
+  background: transparent;
+  color: var(--muted);
+}
+
+.horary-form .birth-place-search {
+  margin-top: 0;
+}
+
+.horary-form .birth-place-search-form {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  justify-items: stretch;
+  margin-bottom: 0;
+}
+
+.horary-form .birth-place-search-form > .hint {
+  display: none;
+}
+
+.horary-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+}
+
 .hint,
 .muted {
   color: var(--muted);
