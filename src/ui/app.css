@@ -312,6 +312,9 @@
    header is a left rail (`min-width: 64rem` below), which does not sit above the content at all,
    so nothing needs scrolling clear of it vertically. */
 html {
+  /* 14px root (87.5% of the browser default, so a user's own text-size preference still scales it).
+     Every rem below, type scale included, follows this base, so headings keep their ratio to body. */
+  font-size: 87.5%;
   scroll-padding-top: calc(var(--app-header-size, var(--app-header-height)) + 0.75rem);
 }
 
@@ -556,7 +559,7 @@ a.corner-pill.active {
   border: none;
   background: transparent;
   color: inherit;
-  font-size: 1rem;
+  font-size: var(--text-base);
   line-height: 1;
   cursor: pointer;
 }
@@ -586,7 +589,7 @@ body {
   background: var(--bg);
   color: var(--fg);
   font:
-    16px/1.65 system-ui,
+    1rem/1.65 system-ui,
     -apple-system,
     'Segoe UI',
     Roboto,
@@ -669,7 +672,7 @@ h1 {
   margin: 0 0 2rem;
   max-width: 40rem;
   color: var(--muted);
-  font-size: 1.05rem;
+  font-size: var(--text-base);
 }
 
 a {
@@ -1196,7 +1199,7 @@ label.stacked textarea {
   background: var(--surface);
   color: var(--fg);
   font: inherit;
-  font-size: 1rem;
+  font-size: var(--text-base);
   resize: vertical;
 }
 
@@ -1704,7 +1707,7 @@ label.stacked textarea:focus-visible {
   background: none;
   color: var(--muted);
   font: inherit;
-  font-size: 0.85rem;
+  font-size: var(--text-base);
   font-weight: 550;
   text-decoration: none;
   white-space: nowrap;
@@ -3663,7 +3666,7 @@ svg text.chart-symbol-text-unicode {
 }
 .relationship-summary h3 {
   margin: 0 0 0.4rem;
-  font-size: 1rem;
+  font-size: var(--text-base);
 }
 .relationship-summary h4 {
   margin: 0.9rem 0 0.3rem;
@@ -4294,7 +4297,7 @@ svg text.chart-symbol-text-unicode {
   background: var(--surface);
   color: var(--fg);
   font: inherit;
-  font-size: 1rem;
+  font-size: var(--text-base);
   font-variant-numeric: tabular-nums;
 }
 
@@ -4770,7 +4773,7 @@ button.primitive-disclosure-trigger:hover:not(:disabled) {
   :root[data-density='compact'] .primitive-field select,
   :root[data-density='compact'] .primitive-field textarea {
     padding: 0.55rem 0.7rem;
-    font-size: 1rem;
+    font-size: var(--text-base);
   }
 
   :root[data-density='compact'] .data-table th,
