@@ -97,7 +97,7 @@ const nl: typeof en = {
 
   tabLabels: {
     overview: 'Overzicht',
-    consultation: 'Consult',
+    consultation: 'Consultatie',
     'birth-record': 'Geboortegegevens',
     chart: 'Horoscopen',
     report: 'Interpretatie',

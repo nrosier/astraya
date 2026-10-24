@@ -87,8 +87,8 @@ const en = {
 };
 
 const nl: typeof en = {
-  heading: (name: string) => `Consult · ${name}`,
-  fallback: 'Consult',
+  heading: (name: string) => `Consultatie · ${name}`,
+  fallback: 'Consultatie',
   notComplete: (name: string) => `${name} heeft volledige geboortegegevens nodig voor een consultdashboard.`,
   personPageLink: 'geboortegegevens',
   calculating: 'Berekenen…',
