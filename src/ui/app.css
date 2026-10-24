@@ -857,15 +857,29 @@ footer {
 
 .horary-timestamp {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
   gap: var(--space-3);
   align-items: end;
 }
 
 .horary-coords {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-3);
+}
+
+/* Grid and flex children default to min-width: auto, so an input's intrinsic width pushed past the card. */
+.horary-card > *,
+.horary-timestamp > *,
+.horary-coords > *,
+.horary-form .birth-place-search-form > * {
+  min-width: 0;
+}
+
+.horary-card .primitive-field input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 /* Dimmed by border and background, not opacity: faded labels and text would fail WCAG AA contrast. */
