@@ -16,6 +16,7 @@
 import { GlossaryTerms } from './GlossaryTerm.js';
 import { routeHref } from './route.js';
 import { DateField } from './primitives/DateField.js';
+import { Button } from './primitives/Button.js';
 import { Select } from './primitives/Select.js';
 import { TextField } from './primitives/TextField.js';
 import { TimeField } from './primitives/TimeField.js';
@@ -28,6 +29,7 @@ import type { ChartViewKind } from './chart-sections.js';
 import { ChartDataView } from './ChartView.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { HORARY_HOUSE_SYSTEMS, nowFields, parseHoraryFields, type HoraryFieldError } from './horary.js';
+import { geocodeHost } from './geocode-provider.js';
 import { horaryViewMessages } from './HoraryView.messages.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
@@ -59,6 +61,7 @@ export function HoraryView({ view }: { readonly view?: ChartViewKind | undefined
   const [fields, setFields] = useState(() => ({ ...nowFields(), latitude: '', longitude: '' }));
   const [houseSystem, setHouseSystem] = useState(HORARY_DEFAULT_HOUSE_SYSTEM);
   const [quesitedHouse, setQuesitedHouse] = useState('7');
+  const [coordsFromSearch, setCoordsFromSearch] = useState(false);
   const [fieldError, setFieldError] = useState<HoraryFieldError>();
   const [result, setResult] = useState<Result>({ kind: 'idle' });
 
@@ -112,65 +115,86 @@ export function HoraryView({ view }: { readonly view?: ChartViewKind | undefined
       <GlossaryTerms terms={['horary', 'ascendant', 'dignity']} />
       <p className="hint">{t.hint}</p>
 
-      <div className="field-grid">
-        <DateField
-          label={t.dateLabel}
-          value={fields.date}
-          onChange={(value) => {
-            edit({ date: value });
-          }}
-        />
-        <TimeField
-          label={t.timeLabel}
-          value={fields.time}
-          onChange={(value) => {
-            edit({ time: value });
-          }}
-        />
-        <TextField
-          label={t.latitudeLabel}
-          inputMode="decimal"
-          value={fields.latitude}
-          onChange={(value) => {
-            edit({ latitude: value });
-          }}
-        />
-        <TextField
-          label={t.longitudeLabel}
-          inputMode="decimal"
-          value={fields.longitude}
-          onChange={(value) => {
-            edit({ longitude: value });
-          }}
-        />
-        <Select
-          label={t.houseSystemLabel}
-          value={houseSystem}
-          options={HORARY_HOUSE_SYSTEMS.map((code) => ({ value: code, label: t.houseSystems[code] ?? code }))}
-          onChange={setHouseSystem}
-        />
-        <Select
-          label={t.quesitedHouseLabel}
-          value={quesitedHouse}
-          options={Array.from({ length: 12 }, (_, index) => ({
-            value: String(index + 1),
-            label: t.houseOption(index + 1),
-          }))}
-          onChange={setQuesitedHouse}
-        />
+      <div className="horary-form">
+        <section className="horary-card" aria-labelledby="horary-card-datetime">
+          <h2 id="horary-card-datetime">{t.dateCardHeading}</h2>
+          <div className="horary-timestamp">
+            <DateField
+              label={t.dateLabel}
+              value={fields.date}
+              onChange={(value) => {
+                edit({ date: value });
+              }}
+            />
+            <TimeField
+              label={t.timeLabel}
+              value={fields.time}
+              onChange={(value) => {
+                edit({ time: value });
+              }}
+            />
+            <Button
+              onClick={() => {
+                edit(nowFields());
+              }}
+            >
+              {t.setToNow}
+            </Button>
+          </div>
+          <BirthPlaceSearch
+            onPick={(latitude, longitude) => {
+              edit({ latitude: String(latitude), longitude: String(longitude) });
+              setCoordsFromSearch(true);
+            }}
+          />
+          {/* Still editable; dimmed only to show a search has not filled them yet. */}
+          <div className={coordsFromSearch ? 'horary-coords' : 'horary-coords horary-coords--pending'}>
+            <TextField
+              label={t.latitudeLabel}
+              inputMode="decimal"
+              value={fields.latitude}
+              onChange={(value) => {
+                edit({ latitude: value });
+              }}
+            />
+            <TextField
+              label={t.longitudeLabel}
+              inputMode="decimal"
+              value={fields.longitude}
+              onChange={(value) => {
+                edit({ longitude: value });
+              }}
+            />
+          </div>
+          <p className="hint">{t.geocodeNotice(geocodeHost)}</p>
+        </section>
+
+        <section className="horary-card" aria-labelledby="horary-card-parameters">
+          <h2 id="horary-card-parameters">{t.paramsCardHeading}</h2>
+          <Select
+            label={t.houseSystemLabel}
+            value={houseSystem}
+            options={HORARY_HOUSE_SYSTEMS.map((code) => ({ value: code, label: t.houseSystems[code] ?? code }))}
+            onChange={setHouseSystem}
+          />
+          <Select
+            label={t.quesitedHouseLabel}
+            value={quesitedHouse}
+            options={Array.from({ length: 12 }, (_, index) => ({
+              value: String(index + 1),
+              label: t.houseOption(index + 1),
+            }))}
+            onChange={setQuesitedHouse}
+          />
+        </section>
+
+        {/* Not a <form>: BirthPlaceSearch renders its own, and forms may not nest. */}
+        <div className="horary-actions">
+          <Button variant="primary" disabled={provider === undefined || result.kind === 'casting'} onClick={cast}>
+            {result.kind === 'casting' ? t.casting : t.castButton}
+          </Button>
+        </div>
       </div>
-
-      <BirthPlaceSearch
-        onPick={(latitude, longitude) => {
-          edit({ latitude: String(latitude), longitude: String(longitude) });
-        }}
-      />
-
-      <p>
-        <button type="button" disabled={provider === undefined || result.kind === 'casting'} onClick={cast}>
-          {result.kind === 'casting' ? t.casting : t.castButton}
-        </button>
-      </p>
 
       {fieldError !== undefined && <StatusMessage kind="error">{t.fieldErrors[fieldError]}</StatusMessage>}
       {result.kind === 'error' && <StatusMessage kind="error">{t.error(result.message)}</StatusMessage>}
