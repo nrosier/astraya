@@ -15,6 +15,7 @@ import { DEFAULT_EXTENDED_SETTINGS, type ExtendedSettings } from '../src/chart/e
 import type { EphemerisProvider } from '../src/ephemeris/types.js';
 import { readDefaultCalculationProfile } from '../src/ui/default-calculation-profile.js';
 import { ExtendedSettingsPanel } from '../src/ui/ExtendedSettingsPanel.js';
+import { extendedSettingsPanelMessages } from '../src/ui/ExtendedSettingsPanel.messages.js';
 import { writeRulershipChoice } from '../src/ui/rulership-setting.js';
 
 function notImplemented(): never {
@@ -360,6 +361,17 @@ describe('ExtendedSettingsPanel', () => {
     });
 
     expect(onRedraw).toHaveBeenCalledWith({ ...DEFAULT_EXTENDED_SETTINGS, lilithVariant: 'interpolated' });
+    unmount(container, root);
+  });
+
+  it('explains Chiron, the Vertex and the Part of Spirit in plain words (#560)', async () => {
+    const { container, root } = await mount(fakeProvider(), vi.fn());
+    openCard(container);
+
+    const hints = Array.from(container.querySelectorAll('.hint')).map((hint) => hint.textContent);
+    expect(hints).toContain(extendedSettingsPanelMessages.en.chironHelp);
+    expect(hints).toContain(extendedSettingsPanelMessages.en.vertexHelp);
+    expect(hints).toContain(extendedSettingsPanelMessages.en.spiritHelp);
     unmount(container, root);
   });
 });
