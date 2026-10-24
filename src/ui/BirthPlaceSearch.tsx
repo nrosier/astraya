@@ -36,13 +36,6 @@ type SearchStatus = 'idle' | 'searching' | 'not-found' | 'error' | 'results';
 const DEBOUNCE_MS = 300;
 const MIN_AUTO_QUERY_LENGTH = 2;
 
-/** "48.85° N, 2.35° E": two decimals, hemisphere letters instead of signs. */
-function formatCoordinates(latitude: number, longitude: number): string {
-  const lat = `${formatFixed(Math.abs(latitude), 2)}° ${latitude < 0 ? 'S' : 'N'}`;
-  const lon = `${formatFixed(Math.abs(longitude), 2)}° ${longitude < 0 ? 'W' : 'E'}`;
-  return `${lat}, ${lon}`;
-}
-
 /** The first comma-separated part of a display name ("Paris" from "Paris, Île-de-France, France"). */
 function primaryLocation(displayName: string): string {
   return displayName.split(',')[0]?.trim() ?? displayName;
@@ -227,9 +220,8 @@ export function BirthPlaceSearch({
                         pickSearchResult(result);
                       }}
                     >
-                      <span className="birth-place-search-option-name">{result.displayName}</span>
-                      <span className="birth-place-search-option-coords">
-                        {formatCoordinates(result.latitude, result.longitude)}
+                      <span className="birth-place-search-option-name" title={result.displayName}>
+                        {result.displayName}
                       </span>
                     </li>
                   ))}

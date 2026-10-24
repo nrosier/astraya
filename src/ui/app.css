@@ -970,10 +970,6 @@ footer {
 }
 
 .birth-place-search-option {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-3);
   padding: var(--space-2) var(--space-3);
   cursor: pointer;
 }
@@ -983,19 +979,12 @@ footer {
 }
 
 .birth-place-search-option-name {
-  flex: 1 1 auto;
-  min-width: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.birth-place-search-option-coords {
-  flex: 0 0 auto;
-  color: var(--muted);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
-  font-size: var(--text-sm);
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .birth-place-search-state {
