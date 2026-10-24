@@ -62,7 +62,7 @@ fixed, without waiting for a milestone — a wrong chart is not something to sit
    changelog, and publishes the GitHub release.
 9. Close the milestone.
 10. Confirm the deployed app's About page shows the new version and commit, and that
-    `docker pull niqck/astraya:latest` gets that same version.
+    `docker pull ghcr.io/nrosier/astraya:latest` gets that same version.
 11. Record the manual UI/UX checks for the release in `UI-UX_RELEASE_CHECKS.md`:
     screen reader, 200 % zoom, forced colours, touch, reduced motion, keyboard only,
     and (after a shell, navigation, settings or chart-workflow change) the eight tasks.
@@ -70,7 +70,7 @@ fixed, without waiting for a milestone — a wrong chart is not something to sit
 
 ## Docker image tags
 
-The image is `niqck/astraya` on Docker Hub, built for `linux/amd64` and
+The image is `ghcr.io/nrosier/astraya` on the GitHub Container Registry, built for `linux/amd64` and
 `linux/arm64` from a single `Dockerfile`.
 
 | Trigger        | Tags pushed                   | Notes                                  |
@@ -78,7 +78,7 @@ The image is `niqck/astraya` on Docker Hub, built for `linux/amd64` and
 | `v1.2.3` tag   | `1.2.3`, `1.2`, `1`, `latest` | Pin as tightly or loosely as you like  |
 | `v1.2.3-rc.1`  | `1.2.3-rc.1` only             | A prerelease never moves a rolling tag |
 | push to `main` | _none_ — the job doesn't run  | Only tagged releases build and push    |
-| pull request   | _none_ — built but not pushed | A fork PR has no access to the secrets |
+| pull request   | _none_ — built but not pushed | A fork PR cannot push to the registry  |
 
 `latest` is set by an explicit condition in the workflow rather than by
 `docker/metadata-action`'s automatic behaviour, which would also move it for a
@@ -88,8 +88,9 @@ After pushing, the workflow starts the amd64 image it just published and waits f
 `/healthz`, then checks the served page carries its CSP header. A pushed image that
 cannot serve a request is worse than a failed build, because it looks like success.
 
-Credentials come from the `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` repository
-secrets. They are referenced only by `docker/login-action` and are never echoed.
+Credentials come from the workflow's built-in `GITHUB_TOKEN`, granted
+`packages: write` on the `image` job. There are no registry secrets to set up or
+rotate. The package must be public for `docker pull` to work without a login.
 
 ## Correctness note
 

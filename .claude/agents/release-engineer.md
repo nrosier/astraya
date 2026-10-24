@@ -114,7 +114,7 @@ full `check` suite, verifies the tag matches `package.json`'s version (so a
 mismatched tag fails loudly rather than publishing something inconsistent), and
 publishes a GitHub Release from the CHANGELOG section for that version.
 Separately, `.github/workflows/docker.yml` builds and pushes a multi-arch image
-to Docker Hub (`niqck/astraya`) with explicit `latest`-tag-setting logic, and
+to ghcr.io (`ghcr.io/nrosier/astraya`) with explicit `latest`-tag-setting logic, and
 `.github/workflows/pages.yml` deploys the static demo build to GitHub Pages —
 both are also tag-triggered side effects of the same push, not separate manual
 steps. Check all three workflow runs (`gh run list --commit <sha>` or by tag)

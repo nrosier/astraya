@@ -88,7 +88,7 @@ server to have an account on. Nothing you enter there ever leaves your device.
 A single image serves the built application; there is nothing else to deploy.
 
 ```sh
-docker run -p 8080:8080 -v astraya-data:/app/data niqck/astraya:latest
+docker run -p 8080:8080 -v astraya-data:/app/data ghcr.io/nrosier/astraya:latest
 ```
 
 Then open <http://localhost:8080>. It works offline once loaded, and needs no
