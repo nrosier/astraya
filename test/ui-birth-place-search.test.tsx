@@ -291,7 +291,7 @@ describe('BirthPlaceSearch floating dropdown (#784)', () => {
     expect(input.getAttribute('aria-controls')).toBe(listbox?.id);
     expect(input.getAttribute('aria-activedescendant')).toBeNull();
     expect(options(container).map((o) => o.getAttribute('aria-selected'))).toEqual(['false', 'false']);
-    expect(container.querySelector('.birth-place-search-option-coords')?.textContent).toBe('48.86° N, 2.35° E');
+    expect(options(container)[0]?.textContent).toBe(PARIS.displayName);
 
     key(container, 'ArrowDown');
     const [first, second] = options(container);
@@ -300,13 +300,17 @@ describe('BirthPlaceSearch floating dropdown (#784)', () => {
     expect(second?.getAttribute('aria-selected')).toBe('false');
   });
 
-  it('formats southern and western hemispheres with letters', async () => {
+  it('shows the full place name in each option, with no coordinates', async () => {
     const container = mount(() => undefined);
     startSearch(container, 'Sydney');
-    await resolveWith(0, [SYDNEY, { latitude: 40.7, longitude: -74, displayName: 'New York' }]);
-    expect(
-      Array.from(container.querySelectorAll('.birth-place-search-option-coords')).map((e) => e.textContent),
-    ).toEqual(['33.87° S, 151.21° E', '40.70° N, 74.00° W']);
+    await resolveWith(0, [SYDNEY, { latitude: 40.7, longitude: -74, displayName: 'New York, United States' }]);
+    const rows = options(container);
+    expect(rows.map((o) => o.textContent)).toEqual([SYDNEY.displayName, 'New York, United States']);
+    expect(rows[1]?.querySelector('.birth-place-search-option-name')?.getAttribute('title')).toBe(
+      'New York, United States',
+    );
+    expect(container.querySelector('.birth-place-search-option-coords')).toBeNull();
+    for (const row of rows) expect(row.textContent).not.toMatch(/°|\d\.\d/);
   });
 
   it('moves with ArrowDown and ArrowUp, wrapping at both ends', async () => {
