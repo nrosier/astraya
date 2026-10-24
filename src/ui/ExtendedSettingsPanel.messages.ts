@@ -93,6 +93,13 @@ const en = {
   vertex: 'Vertex',
   spirit: 'Part of Spirit',
   chiron: 'Chiron',
+  // nl wording pending native review (#560)
+  vertexHelp:
+    'The vertex is the point where the ecliptic crosses the prime vertical in the west. It is often read as a point of encounter with significant others.',
+  spiritHelp:
+    'Also called the Lot of Spirit or Daemonic Point. It is calculated as the mirror of the Part of Fortune and is used as a traditional lot in some practices.',
+  chironHelp:
+    'Chiron is a small body discovered in 1977, with an orbit between Saturn and Uranus. Astrologers often use it to describe wounds and healing themes.',
   midpoints: 'Midpoints (ASC/MC, Sun/Moon)',
   objectVisibleLabel: (name: string) => `${name} — visible`,
   objectParticipatesLabel: (name: string) => `${name} — participates in aspects`,
@@ -317,6 +324,13 @@ const nl: typeof en = {
   vertex: 'Vertex',
   spirit: 'Lot van de Geest',
   chiron: 'Chiron',
+  // nl wording pending native review (#560)
+  vertexHelp:
+    'Het vertex is het punt waar de ecliptica de primaire verticaal in het westen snijdt. Het wordt vaak gelezen als een punt van ontmoeting met belangrijke anderen.',
+  spiritHelp:
+    'Ook wel het Lot van de Geest of Daemonisch Punt genoemd. Het wordt berekend als spiegel van het Lot van Fortuna en wordt in sommige praktijken als traditioneel lot gebruikt.',
+  chironHelp:
+    "Chiron is een klein hemellichaam, ontdekt in 1977, met een baan tussen Saturnus en Uranus. Astrologen gebruiken het vaak om thema's van wonden en heling te beschrijven.",
   midpoints: 'Middelpunten (ASC/MC, Zon/Maan)',
   objectVisibleLabel: (name: string) => `${name} — zichtbaar`,
   objectParticipatesLabel: (name: string) => `${name} — doet mee in aspecten`,

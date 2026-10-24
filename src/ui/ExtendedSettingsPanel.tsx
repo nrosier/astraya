@@ -24,7 +24,7 @@ import { Checkbox } from './primitives/Checkbox.js';
 import { NumberField } from './primitives/NumberField.js';
 import { StagedDialog } from './primitives/StagedDialog.js';
 import { formatDecimal } from './format.js';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import { ASPECTS, DEFAULT_ORB_CONFIG } from '../astrology/aspects.js';
 import { ayanamsaByKey, AYANAMSAS } from '../astrology/ayanamsas.js';
 import { HOUSE_SYSTEMS } from '../astrology/houses.js';
@@ -265,6 +265,7 @@ export function ExtendedSettingsPanel({
     legend: string,
     keys: readonly ObjectKey[],
     labelFor: (key: ObjectKey) => string,
+    helpFor?: (key: ObjectKey) => string | undefined,
   ): React.JSX.Element => (
     <fieldset className="field-group settings-card-indent">
       <legend>{legend}</legend>
@@ -286,7 +287,15 @@ export function ExtendedSettingsPanel({
           {t.groupClear}
         </Button>
       </div>
-      {keys.map((key) => objectRow(key, labelFor(key)))}
+      {keys.map((key) => {
+        const help = helpFor?.(key);
+        return (
+          <Fragment key={key}>
+            {objectRow(key, labelFor(key))}
+            {help !== undefined && <p className="hint">{help}</p>}
+          </Fragment>
+        );
+      })}
     </fieldset>
   );
 
@@ -664,6 +673,7 @@ export function ExtendedSettingsPanel({
           {objectGroup(t.planetsGroupLabel, PLANET_KEYS, (key) => bodyDisplayName(key, locale))}
 
           <div className="settings-card-indent">{objectRow('chiron', t.chiron)}</div>
+          <p className="hint settings-card-indent">{t.chironHelp}</p>
           {objectGroup(t.minorPlanetsLegend, ASTEROID_KEYS, (key) => bodyDisplayName(key, locale))}
 
           <div className="settings-card-indent">
@@ -705,8 +715,11 @@ export function ExtendedSettingsPanel({
             {objectRow(nodePointKey(draft.nodeVariant), t.lunarNodesObjectName)}
           </div>
 
-          {objectGroup(t.pointsGroupLabel, POINT_KEYS, (key) =>
-            key === 'vertex' ? t.vertex : key === 'partOfFortune' ? t.partOfFortune : t.spirit,
+          {objectGroup(
+            t.pointsGroupLabel,
+            POINT_KEYS,
+            (key) => (key === 'vertex' ? t.vertex : key === 'partOfFortune' ? t.partOfFortune : t.spirit),
+            (key) => (key === 'vertex' ? t.vertexHelp : key === 'partOfSpirit' ? t.spiritHelp : undefined),
           )}
           <p className="hint">{t.aspectsToHint}</p>
           <Checkbox
