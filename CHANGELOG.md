@@ -4,6 +4,20 @@ All notable changes to Astraya are recorded here. Versions follow
 [semantic versioning](https://semver.org/), and every milestone ends in a release —
 see [docs/RELEASING.md](docs/RELEASING.md).
 
+## [0.42.12] — 2026-10-25
+
+**Text is a little smaller and more consistent across the app, and the place search lists plain place names.**
+
+### Fixed
+
+- **The place search dropdown shows the full place name only (#784).** Results no longer carry coordinates next to the name.
+
+### Changed
+
+- **The type scale is 14px.** Sidebar and body text are set to 14px, and headings scale in proportion to it.
+- **Small text has a 10.5px floor, and the page heading is 16px.** The smallest labels no longer drop below 10.5px, and the page heading is 1.15rem.
+- **The chart workbench layout threshold follows the root font size.** The end-to-end test measures the 68rem breakpoint in rem instead of a fixed pixel width.
+
 ## [0.42.11] — 2026-10-24
 
 **Sign-in, place search and the horary form get clearer layouts, and the health-focus interpretation block is relaxed.**
