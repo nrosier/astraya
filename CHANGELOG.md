@@ -4,6 +4,22 @@ All notable changes to Astraya are recorded here. Versions follow
 [semantic versioning](https://semver.org/), and every milestone ends in a release —
 see [docs/RELEASING.md](docs/RELEASING.md).
 
+## [0.42.11] — 2026-10-24
+
+**Sign-in, place search and the horary form get clearer layouts, and the health-focus interpretation block is relaxed.**
+
+### Added
+
+- **Sign-in is a stepped modal (#781).** The account panel swaps between stages in a single modal instead of showing everything at once.
+- **Place search results float over the page (#784).** The birth place dropdown no longer pushes the form down while you pick a result.
+- **Chiron, the Vertex and the Part of Spirit are explained (#560).** The extended settings now carry help text for these points.
+- **The horary form uses two cards (#782).** The question and the chart inputs are grouped in separate cards, and inputs stay inside them on mobile.
+
+### Fixed
+
+- **Health focus is allowed in interpretations (#770).** The safety check no longer blocks a health focus, while promised health outcomes stay blocked.
+- **The Dutch consultation label reads "Consultatie".** The label and heading now use the same word.
+
 ## [0.42.10] — 2026-10-23
 
 **Each data section on the consultation page now sits in its own bordered box.**
