@@ -33,6 +33,8 @@ let app: FastifyInstance;
 let baseUrl: string;
 const realFetch = globalThis.fetch;
 
+process.env.LOG_LEVEL = 'silent';
+
 function mount(): { container: HTMLElement; root: Root } {
   const container = document.createElement('div');
   document.body.append(container);

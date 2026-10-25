@@ -87,7 +87,10 @@ for (const theme of THEMES) {
       await page.setViewportSize(viewport);
       for (const [name, hash] of screens) {
         await page.goto(`${baseUrl}/${hash}`);
-        await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+        // Each screen is a lazy chunk (and a store open) behind a "Loading…" status; the heading is the app's
+        // ready signal. Under parallel load that hand-off outlasts the 5s default, so wait for it explicitly
+        // (still bounded) rather than race it — axe must never scan the loading placeholder.
+        await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 30_000 });
         await expectSound(page, `${name} at ${String(viewport.width)}×${String(viewport.height)} (${theme})`);
       }
     }
