@@ -2269,7 +2269,9 @@ label.stacked textarea:focus-visible {
  * inline-size query container, so the layout answers to the width the workbench actually gets, not
  * the viewport. 68rem is the sum of the minimum useful dial (46rem), the inspector's minimum (20rem)
  * and the 2rem gap: below it one column with the inspector directly under the dial, at and above it
- * two columns. The dial stays first in DOM and focus order, and the inspector never scrolls on its own.
+ * two columns, 7/12 dial and 5/12 inspector (#801) with their top edges aligned. The dial stays first in
+ * DOM and focus order. Beside the dial the inspector scrolls inside itself past the viewport's height,
+ * so a long selection never makes the page taller; stacked it is as tall as its content.
  */
 .chart-workbench-shell {
   container: chart-workbench / inline-size;
@@ -2285,16 +2287,42 @@ label.stacked textarea:focus-visible {
 @container chart-workbench (min-width: 68rem) {
   .selection-inspector {
     min-height: 14rem;
+    max-height: 100vh;
+    overflow-y: auto;
   }
 
   .chart-workbench {
-    grid-template-columns: minmax(46rem, 1fr) minmax(20rem, 24rem);
+    grid-template-columns: minmax(46rem, 7fr) minmax(20rem, 5fr);
   }
 }
 
 .chart-workbench-dial .chart-wheel {
-  margin-top: 0.5rem;
+  margin-top: 0;
   margin-bottom: 0;
+}
+
+/* The placement badges and the section groups inside the inspector (#801). */
+.selection-inspector-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.4rem 0;
+}
+
+.primitive-badge {
+  display: inline-block;
+  padding: 0.1rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-hover);
+  color: var(--fg);
+  font-size: 0.8rem;
+}
+
+.chart-isolation-group h5 {
+  margin: 0.75rem 0 0.25rem;
+  font-size: 0.85rem;
+  color: var(--muted);
 }
 
 /* The selection's facts and meaning (#400, #415): plain accessible text, unlike the wheel — reached by a
@@ -3835,19 +3863,55 @@ svg text.chart-symbol-text-unicode {
  */
 .chart-view-select {
   max-width: 20rem;
-  margin: 1rem 0 0.5rem;
+  margin: 0.25rem 0 0.5rem;
 }
 
-.chart-view-nav {
+.chart-view-nav,
+.chart-view-prefix {
   display: none;
 }
 
+/* The title row (#801): back link and heading side by side, with the view links tucked right under. */
+.chart-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.chart-title-row .back,
+.chart-title-row .page-header {
+  margin-bottom: 0;
+}
+
+.chart-title-row .page-header {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.chart-view-prefix {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
 @media (min-width: 64rem) {
+  .chart-view-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem 0.75rem;
+    margin: 0.25rem 0 0.75rem;
+  }
+
+  .chart-view-prefix {
+    display: inline;
+  }
+
   .chart-view-nav {
     display: flex;
     flex-wrap: wrap;
     gap: 0.4rem;
-    margin: 1rem 0 0.5rem;
   }
 
   .chart-view-select {

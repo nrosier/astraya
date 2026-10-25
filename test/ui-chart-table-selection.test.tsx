@@ -283,7 +283,10 @@ describe('a table row selects on the wheel (#418)', () => {
     await press(goTo);
     const facts = container.querySelector('.selection-inspector-facts');
     expect(facts?.querySelector('.chart-isolation-head strong')?.textContent).toBe('Part of Spirit');
-    expect(facts?.textContent).toMatch(/°\d\d' — House \d+/);
+    // Where it falls is the badges under the heading: sign, degree and minute, then the house (#801).
+    const badges = [...(facts?.querySelectorAll('.primitive-badge') ?? [])].map((badge) => badge.textContent);
+    expect(badges[0]).toMatch(/°\d\d'$/);
+    expect(badges[1]).toMatch(/^House \d+$/);
     // Its meaning section is there (the text itself comes from the corpus, or the mechanical sentence).
     expect(facts?.querySelector('.chart-isolation-interpretation')).not.toBeNull();
 

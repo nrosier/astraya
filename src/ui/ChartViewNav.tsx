@@ -19,7 +19,7 @@
  */
 /**
  * @module ChartViewNav
- * @purpose Renders the chart screen's local Wheel/Aspects/Placements/Patterns & condition navigation (#511) as ordinary links (wide) or a labelled Select (narrow), never ARIA tabs.
+ * @purpose Renders the chart screen's local six-view navigation (#511) under the title row, after a muted "Extended settings:" prefix (#801), as ordinary links (wide) or a labelled Select (narrow), never ARIA tabs.
  * @conventions Takes a buildHref(view) callback rather than assuming one URL shape, since chart/composite/shared/horary each have a different one. Links keep a real href but also call onNavigate with preventDefault applied, so switching is instant and works even when mounted outside the app's router. Reuses the app's existing 64rem nav breakpoint rather than inventing one.
  * @exports ChartViewNav
  */
@@ -44,7 +44,8 @@ export function ChartViewNav({
   const labels = chartViewLabels(t);
 
   return (
-    <>
+    <div className="chart-view-bar">
+      <span className="chart-view-prefix">{t.extendedSettingsPrefix}</span>
       <nav className="chart-view-nav" aria-label={t.chartViewNavLabel}>
         {availableViews.map((view) => (
           <a
@@ -71,6 +72,6 @@ export function ChartViewNav({
           }}
         />
       </div>
-    </>
+    </div>
   );
 }

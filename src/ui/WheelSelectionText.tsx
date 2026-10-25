@@ -73,16 +73,40 @@ export function WheelSelectionText({
   };
   const shown = items.slice(0, SELECTION_TEXT_LIMIT);
   const rest = items.slice(SELECTION_TEXT_LIMIT);
-  const renderItems = (list: typeof items): React.JSX.Element => (
-    <ul className="chart-isolation-texts">
-      {list.map((item) => (
-        <li key={item.key}>
-          <strong>{placementHeading(item.placement, locale, labels)}</strong>
-          <p>{resolvePlacementText(item.placement, locale, corpus ?? [])}</p>
-        </li>
-      ))}
-    </ul>
-  );
+  // Sections in reading order (#801): the sign's meaning, the house's, then the degree symbol. Entries
+  // that are none of these (dignity, aspects) follow without a heading rather than being dropped.
+  const sections: readonly { readonly heading: string | undefined; readonly categories: readonly string[] }[] = [
+    { heading: t.signSectionHeading, categories: ['planet-in-sign', 'sign-on-cusp', 'derived-point-in-sign'] },
+    { heading: t.houseSectionHeading, categories: ['planet-in-house', 'derived-point-in-house'] },
+    { heading: t.degreeSectionHeading, categories: ['degree-symbol'] },
+  ];
+  const known = sections.flatMap((entry) => entry.categories);
+  const renderItems = (list: typeof items): React.JSX.Element => {
+    const groups = [
+      ...sections.map((entry) => ({
+        heading: entry.heading,
+        rows: list.filter((item) => entry.categories.includes(item.placement.category)),
+      })),
+      { heading: undefined, rows: list.filter((item) => !known.includes(item.placement.category)) },
+    ].filter((group) => group.rows.length > 0);
+    return (
+      <>
+        {groups.map((group) => (
+          <section key={group.heading ?? 'other'} className="chart-isolation-group">
+            {group.heading !== undefined && <h5>{group.heading}</h5>}
+            <ul className="chart-isolation-texts">
+              {group.rows.map((item) => (
+                <li key={item.key}>
+                  <strong>{placementHeading(item.placement, locale, labels)}</strong>
+                  <p>{resolvePlacementText(item.placement, locale, corpus ?? [])}</p>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
+      </>
+    );
+  };
 
   return (
     <section className="chart-isolation-interpretation" aria-label={t.selectionInterpretationHeading}>

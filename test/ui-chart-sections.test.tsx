@@ -115,10 +115,11 @@ describe('the chart views (#511)', () => {
     expect(container.querySelector('div.chart-wheel')).not.toBeNull();
   });
 
-  it('every open panel starts with an h2 naming it, and only the open view is in the page', async () => {
+  it('every open table panel starts with an h2 naming it, and only the open view is in the page', async () => {
     const container = await mount();
     const t = chartViewMessages.en;
-    expect(container.querySelector('#chart-view-wheel h2')?.textContent).toBe(t.chartTabLabel);
+    // The wheel view no longer opens on a "Chart wheel" heading (#801): the view links name it.
+    expect(container.querySelector('#chart-view-wheel h2')).toBeNull();
     expect(container.querySelector('#chart-view-aspects')).toBeNull();
     await open(container, t.aspectsViewLabel);
     expect(container.querySelector('#chart-view-aspects h2')?.textContent).toBe(t.aspectsViewLabel);
@@ -219,7 +220,6 @@ describe('the chart views (#511)', () => {
     expect(stacked).not.toBeNull();
     const t = chartViewMessages.en;
     expect(Array.from(stacked?.querySelectorAll('h2') ?? []).map((heading) => heading.textContent)).toEqual([
-      t.chartTabLabel,
       t.aspectsViewLabel,
       t.matrixViewLabel,
       t.elementsViewLabel,

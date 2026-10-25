@@ -25,6 +25,7 @@ import {
   type SavedInterpretationSummary,
   type Tier2Section,
 } from '../interpretation/tier2-client.js';
+import { Button } from './primitives/Button.js';
 import { Checkbox } from './primitives/Checkbox.js';
 import { useOnline } from './online-status.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
@@ -137,14 +138,14 @@ export function FocusInterpretation({
           }}
         />
       )}
-      <button
-        type="button"
+      <Button
+        variant="primary"
         disabled={disabledReason !== undefined || generating || !online}
         aria-describedby={disabledReason === undefined ? undefined : reasonId}
         onClick={generate}
       >
         {generating ? t.generating : t.generate}
-      </button>
+      </Button>
       {!online && <StatusMessage kind="offline">{shared.offlineNeeded}</StatusMessage>}
       {disabledReason !== undefined && (
         <span id={reasonId} className="hint">
