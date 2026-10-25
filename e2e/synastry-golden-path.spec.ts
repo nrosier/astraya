@@ -156,35 +156,35 @@ test.describe('with the shared people (#799)', () => {
     await expect(page.locator('div.chart-wheel')).toBeVisible();
 
     // Get the ring legend entries
-    const adaLegendEntry = page.locator('[data-ring-legend="0"]');
-    const charlesLegendEntry = page.locator('[data-ring-legend="1"]');
+    const einsteinLegendEntry = page.locator('[data-ring-legend="0"]');
+    const bornLegendEntry = page.locator('[data-ring-legend="1"]');
 
     // Initially, both legend entries should be visible and not dimmed
-    await expect(adaLegendEntry).toBeVisible();
-    await expect(charlesLegendEntry).toBeVisible();
+    await expect(einsteinLegendEntry).toBeVisible();
+    await expect(bornLegendEntry).toBeVisible();
     const adaArrow = page.locator('[data-ring-legend-arrow="0"]');
     const charlesArrow = page.locator('[data-ring-legend-arrow="1"]');
     await expect(adaArrow).toBeAttached();
     await expect(charlesArrow).toBeAttached();
-    await expect(adaLegendEntry).not.toHaveClass(/chart-dimmed/);
-    await expect(charlesLegendEntry).not.toHaveClass(/chart-dimmed/);
+    await expect(einsteinLegendEntry).not.toHaveClass(/chart-dimmed/);
+    await expect(bornLegendEntry).not.toHaveClass(/chart-dimmed/);
 
-    // Click on Ada's legend entry to isolate her ring
-    await adaLegendEntry.click();
+    // Click on Einstein's legend entry to isolate his ring
+    await einsteinLegendEntry.click();
 
-    // Now Ada's entry should not be dimmed, but Charles's should be
-    await expect(adaLegendEntry).not.toHaveClass(/chart-dimmed/);
-    await expect(charlesLegendEntry).toHaveClass(/chart-dimmed/);
+    // Now Einstein's entry should not be dimmed, but Born's should be
+    await expect(einsteinLegendEntry).not.toHaveClass(/chart-dimmed/);
+    await expect(bornLegendEntry).toHaveClass(/chart-dimmed/);
     await expect(adaArrow).toBeVisible();
     await expect(charlesArrow).toBeHidden();
 
     // Keyboard activation keeps the legend isolation behavior available without a pointer.
-    await charlesLegendEntry.focus();
+    await bornLegendEntry.focus();
     await page.keyboard.press('Enter');
 
-    // Now Charles's entry should not be dimmed, but Ada's should be
-    await expect(charlesLegendEntry).not.toHaveClass(/chart-dimmed/);
-    await expect(adaLegendEntry).toHaveClass(/chart-dimmed/);
+    // Now Born's entry should not be dimmed, but Einstein's should be
+    await expect(bornLegendEntry).not.toHaveClass(/chart-dimmed/);
+    await expect(einsteinLegendEntry).toHaveClass(/chart-dimmed/);
     await expect(charlesArrow).toBeVisible();
     await expect(adaArrow).toBeHidden();
 
@@ -192,8 +192,8 @@ test.describe('with the shared people (#799)', () => {
     await page.locator('div.chart-wheel svg').click({ position: { x: 50, y: 50 } });
 
     // Both should be visible and not dimmed again
-    await expect(adaLegendEntry).not.toHaveClass(/chart-dimmed/);
-    await expect(charlesLegendEntry).not.toHaveClass(/chart-dimmed/);
+    await expect(einsteinLegendEntry).not.toHaveClass(/chart-dimmed/);
+    await expect(bornLegendEntry).not.toHaveClass(/chart-dimmed/);
     await expect(adaArrow).toBeHidden();
     await expect(charlesArrow).toBeHidden();
   });

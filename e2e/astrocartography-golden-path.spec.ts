@@ -199,7 +199,7 @@ test.describe('with the shared people (#799)', () => {
   let context: BrowserContext;
   let page: Page;
 
-  async function openSharedAda(page: Page): Promise<void> {
+  async function openSharedEinstein(page: Page): Promise<void> {
     await openSharedPerson(page, baseUrl, EINSTEIN);
     // On a phone the navigation is folded behind the Menu button.
     const menu = page.getByRole('button', { name: 'Menu', exact: true });
@@ -227,7 +227,7 @@ test.describe('with the shared people (#799)', () => {
 
   test('the map settings are one staged dialog: opening and cancelling never change the map, and nothing "Extended" remains (#512)', async () => {
     test.setTimeout(90_000);
-    await openSharedAda(page);
+    await openSharedEinstein(page);
     const trigger = page.getByRole('button', { name: /^Map settings/ });
     await expect(trigger).toContainText('4 line types · 7 bodies · Local Space off');
     // The settings are not scattered over the page any more.
@@ -265,7 +265,7 @@ test.describe('with the shared people (#799)', () => {
   test('the dialog works on a phone and on a short laptop screen, and line meanings say they expand (#512)', async () => {
     test.setTimeout(90_000);
     await page.setViewportSize({ width: 390, height: 844 });
-    await openSharedAda(page);
+    await openSharedEinstein(page);
     await openMapSettings(page);
     const dialog = page.getByRole('dialog', { name: 'Map settings' });
     const apply = dialog.getByRole('button', { name: /^Apply/ });
@@ -293,7 +293,7 @@ test.describe('with the shared people (#799)', () => {
 
   test('the Astrocartography page and its settings dialog have no automatically detectable accessibility violations (#512)', async () => {
     test.setTimeout(90_000);
-    await openSharedAda(page);
+    await openSharedEinstein(page);
     const resting = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
     expect(resting.violations).toEqual([]);
     await openMapSettings(page);

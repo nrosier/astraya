@@ -11,14 +11,21 @@
  * unknown (date only). They are test data, not a claim about the sources.
  */
 import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { tmpdir } from 'node:os';
 import type { Browser, BrowserContext, Page } from '@playwright/test';
 import { gotoAndSettle } from './support.ts';
 import type { PersonInput } from './support.ts';
 
-/** Where global setup writes the saved-state location; a fixed path so specs can find it without env plumbing. */
-export const SEED_POINTER_PATH = join(tmpdir(), 'astraya-e2e-shared-people.json');
+/** Environment variable through which global setup hands each run's own pointer file to the workers. */
+export const SEED_POINTER_ENV = 'ASTRAYA_E2E_SEED_POINTER';
+
+/** This run's pointer file (inside the run's own temp dir, so concurrent runs never collide). */
+export function seedPointerPath(): string {
+  const path = process.env[SEED_POINTER_ENV];
+  if (path === undefined || path === '') {
+    throw new Error(`${SEED_POINTER_ENV} is not set: shared-people specs need e2e/global-setup.ts to run first`);
+  }
+  return path;
+}
 
 export const EINSTEIN: PersonInput = {
   name: 'Albert Einstein',
@@ -58,7 +65,7 @@ interface SeedPointer {
  * deletes a person should still create its own.
  */
 export async function newSeededContext(browser: Browser, baseUrl: string): Promise<BrowserContext> {
-  const pointer = JSON.parse(readFileSync(SEED_POINTER_PATH, 'utf-8')) as SeedPointer;
+  const pointer = JSON.parse(readFileSync(seedPointerPath(), 'utf-8')) as SeedPointer;
   const saved = JSON.parse(readFileSync(pointer.statePath, 'utf-8')) as SavedState;
   const origin = new URL(baseUrl).origin;
   return browser.newContext({

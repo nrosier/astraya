@@ -3,9 +3,8 @@
  * per-test creation, survive a reload under the service worker, a second tab in the same context
  * does not corrupt them, and the saved file is never mutated.
  *
- * Finding: no UI reports a read-only tab. `tab-lock.ts` only makes `store.writable` false, and the
- * sole consumer outside the store is `use-calculation-settings-migration.ts`; so case 3 asserts the
- * read path and data integrity, not a notice.
+ * No UI reports a read-only tab, so case 3 observes the Web Lock itself (`astraya-writer:*`, tab-lock.ts)
+ * through `navigator.locks.query()`.
  */
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -18,7 +17,7 @@ import {
   BORN,
   EINSTEIN,
   MARIC,
-  SEED_POINTER_PATH,
+  seedPointerPath,
   SHARED_PEOPLE,
   newSeededContext,
   openSharedPerson,
@@ -50,8 +49,15 @@ async function expectSharedPeople(page: Page): Promise<void> {
   }
 }
 
+/** Names of the writer locks currently held on this origin (`navigator.locks.query()`). */
+function heldWriterLocks(page: Page): Promise<string[]> {
+  return page.evaluate<string[]>(
+    `navigator.locks.query().then((state) => (state.held ?? []).map((lock) => lock.name ?? '').filter((name) => name.startsWith('astraya-writer:')))`,
+  );
+}
+
 function seedFileText(): string {
-  const pointer = JSON.parse(readFileSync(SEED_POINTER_PATH, 'utf-8')) as { statePath: string };
+  const pointer = JSON.parse(readFileSync(seedPointerPath(), 'utf-8')) as { statePath: string };
   return readFileSync(pointer.statePath, 'utf-8');
 }
 
@@ -82,7 +88,7 @@ test('the people survive a reload, and the service worker does not serve a stale
   await context.close();
 });
 
-test('a second tab in the same context reads the seeded data without corrupting it', async ({ browser }) => {
+test('a second tab holds no writer lock: one tab owns it, and both tabs read the seeded data', async ({ browser }) => {
   const context = await newSeededContext(browser, baseUrl);
   const first = await context.newPage();
   await gotoAndSettle(first, `${baseUrl}/#/people`);
@@ -91,16 +97,21 @@ test('a second tab in the same context reads the seeded data without corrupting 
   const second = await context.newPage();
   await gotoAndSettle(second, `${baseUrl}/#/people`);
   await expectSharedPeople(second);
-  // No notice exists for a read-only tab (see header), so none must appear.
-  await expect(second.getByText(/read-only|another tab/i)).toHaveCount(0);
 
-  // Both tabs still read the same three records, and the writer tab is unaffected.
+  // store.ts takes `astraya-writer:<db name>` per tab with ifAvailable; exactly one tab may hold it.
+  for (const page of [first, second]) {
+    expect(await heldWriterLocks(page)).toHaveLength(1);
+  }
+
+  // The holder is the first tab: closing it frees the lock, and the second (which never queued) does not take it.
+  await first.close();
+  await expect.poll(async () => (await heldWriterLocks(second)).length).toBe(0);
+
+  // The read-only tab still reads the same records.
   await second.reload();
   await expectSharedPeople(second);
-  await first.reload();
-  await expectSharedPeople(first);
-  await openSharedPerson(first, baseUrl, MARIC);
-  await expect(first.locator('input[type="date"]')).toHaveValue(MARIC.date);
+  await openSharedPerson(second, baseUrl, MARIC);
+  await expect(second.locator('input[type="date"]')).toHaveValue(MARIC.date);
   await context.close();
 });
 
