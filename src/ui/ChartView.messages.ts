@@ -202,7 +202,6 @@ const en = {
   chartShapeSentence: (shape: string, handle: string | undefined) =>
     handle === undefined ? `Chart shape: ${shape}.` : `Chart shape: ${shape} (handle: ${handle}).`,
 
-  chartTabLabel: 'Chart wheel',
   showOnChartColumn: 'Wheel',
   showOnChartButton: 'Show',
   showSignColumn: 'Sign on wheel',
@@ -231,6 +230,7 @@ const en = {
   placementsViewLabel: 'Placements',
   patternsViewLabel: 'Patterns & condition',
   chartViewNavLabel: 'Chart view navigation',
+  extendedSettingsPrefix: 'Extended settings:',
   chartViewSelectLabel: 'Chart view',
   aspectPatternsHeading: 'Aspect configurations',
   aspectPatternNames: {
@@ -288,16 +288,6 @@ const en = {
   pngMedium: 'Medium (1200px)',
   pngLarge: 'Large (2400px)',
 
-  linkCopied: 'Link copied',
-  copyShareLink: 'Copy share link',
-  shareLinkHint:
-    'The link holds the whole birth record and settings — nothing is sent to us to create it, and opening it needs no account.',
-  // The other side of the same fact (#341): because the data is in the link and not on a
-  // server, there is nothing to revoke. Worth saying at the moment of copying rather than
-  // in a settings screen nobody opens.
-  shareLinkWarning:
-    'Anyone who has the link can read that birth data, and it cannot be revoked — sharing it is permanent wherever it is pasted.',
-
   housesUnknownHint: (name: string) =>
     `The birth time for ${name} is unknown, so houses, angles and the Ascendant-based derived points cannot be calculated — they are not shown below. Positions, aspects and dignities are still meaningful, though the Moon’s sign may be uncertain.`,
 
@@ -335,6 +325,9 @@ const en = {
   selectionMoreSummary: (count: number) => `${String(count)} more`,
   selectionShowAll: 'Show all meanings',
   selectionHideAll: 'Hide meanings',
+  signSectionHeading: 'Sign interpretation',
+  houseSectionHeading: 'House interpretation',
+  degreeSectionHeading: 'Degree or Sabian symbol',
   dignityStateLabels: { ruler: 'Ruler (home sign)', exalted: 'Exalted', detriment: 'Detriment', fall: 'Fall' },
   cuspHeading: (sign: string, house: number) => `${sign} on the cusp of house ${String(house)}`,
   isolationSignEmpty: 'No planets in this sign.',
@@ -536,7 +529,6 @@ const nl: typeof en = {
   chartShapeSentence: (shape: string, handle: string | undefined) =>
     handle === undefined ? `Horoscoopvorm: ${shape}.` : `Horoscoopvorm: ${shape} (handvat: ${handle}).`,
 
-  chartTabLabel: 'Horoscoopwiel',
   showOnChartColumn: 'Wiel',
   showOnChartButton: 'Toon',
   showSignColumn: 'Teken op wiel',
@@ -565,6 +557,7 @@ const nl: typeof en = {
   placementsViewLabel: 'Plaatsingen',
   patternsViewLabel: 'Patronen & conditie',
   chartViewNavLabel: 'Navigatie grafiekweergave',
+  extendedSettingsPrefix: 'Uitgebreide instellingen:',
   chartViewSelectLabel: 'Grafiekweergave',
   aspectPatternsHeading: 'Aspectconfiguraties',
   aspectPatternNames: {
@@ -623,13 +616,6 @@ const nl: typeof en = {
   pngMedium: 'Middel (1200px)',
   pngLarge: 'Groot (2400px)',
 
-  linkCopied: 'Link gekopieerd',
-  copyShareLink: 'Deellink kopiëren',
-  shareLinkHint:
-    'De link bevat het hele geboorterecord en de instellingen — er wordt niets naar ons verzonden om hem te maken, en het openen ervan vereist geen account.',
-  shareLinkWarning:
-    'Iedereen met de link kan die geboortegegevens lezen, en de link kan niet worden ingetrokken — delen is definitief, waar de link ook geplakt wordt.',
-
   housesUnknownHint: (name: string) =>
     `De geboortetijd van ${name} is onbekend, dus huizen, hoeken en de op de Ascendant gebaseerde afgeleide punten kunnen niet worden berekend — ze worden hieronder niet getoond. Posities, aspecten en waardigheden blijven zinvol, al kan het teken van de Maan onzeker zijn.`,
 
@@ -668,6 +654,9 @@ const nl: typeof en = {
   selectionMoreSummary: (count: number) => `${String(count)} meer`,
   selectionShowAll: 'Toon alle betekenissen',
   selectionHideAll: 'Verberg betekenissen',
+  signSectionHeading: 'Tekeninterpretatie',
+  houseSectionHeading: 'Huisinterpretatie',
+  degreeSectionHeading: 'Graad of Sabiaans symbool',
   dignityStateLabels: { ruler: 'Heerser (eigen teken)', exalted: 'Verheffing', detriment: 'Schade', fall: 'Val' },
   cuspHeading: (sign: string, house: number) => `${sign} op de cusp van huis ${String(house)}`,
   isolationSignEmpty: 'Geen planeten in dit teken.',

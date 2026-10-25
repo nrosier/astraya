@@ -20,6 +20,8 @@ import { aspectDisplayName, bodyDisplayName, signDisplayName } from './astro-nam
 import { chartViewMessages } from './ChartView.messages.js';
 import { FocusInterpretation } from './FocusInterpretation.js';
 import { useMessages } from './messages.js';
+import { Badge } from './primitives/Badge.js';
+import { Button } from './primitives/Button.js';
 import { WheelSelectionText } from './WheelSelectionText.js';
 import type { InterpretationExclusions } from '../interpretation/rules.js';
 
@@ -90,6 +92,15 @@ export function SelectionInspector({
   readonly personId?: string | undefined;
 }): React.JSX.Element {
   const t = useMessages(chartViewMessages);
+  // Where the selection stands, as the badges under the heading: sign and degree, then house.
+  const spot = facts?.positionRow ?? facts?.pointPosition;
+  const placement =
+    spot === undefined
+      ? undefined
+      : {
+          place: `${signDisplayName(spot.sign, locale)} ${String(spot.degree)}°${String(spot.minute).padStart(2, '0')}'`,
+          house: spot.house,
+        };
   return (
     <section className="selection-inspector" aria-labelledby="selection-inspector-heading" aria-live="polite">
       <h3 id="selection-inspector-heading" className="selection-inspector-title">
@@ -103,29 +114,25 @@ export function SelectionInspector({
           <div className="selection-inspector-facts">
             <div className="chart-isolation-head">
               <strong>{facts.heading}</strong>
-              <button type="button" className="quiet" onClick={onClear}>
+              <Button variant="quiet" size="compact" onClick={onClear}>
                 {t.isolationClear}
-              </button>
+              </Button>
             </div>
+            {placement !== undefined && (
+              <p className="selection-inspector-badges">
+                <Badge>{placement.place}</Badge>
+                {placement.house !== undefined && (
+                  <Badge>
+                    {t.houseLabel} {placement.house}
+                  </Badge>
+                )}
+              </p>
+            )}
             {facts.bodiesInSign !== undefined && (
               <BodyList rows={facts.bodiesInSign} emptyText={t.isolationSignEmpty} locale={locale} />
             )}
             {facts.bodiesInHouse !== undefined && (
               <BodyList rows={facts.bodiesInHouse} emptyText={t.isolationHouseEmpty} locale={locale} />
-            )}
-            {facts.positionRow !== undefined && (
-              <p>
-                {signDisplayName(facts.positionRow.sign, locale)} {facts.positionRow.degree}°
-                {String(facts.positionRow.minute).padStart(2, '0')}'
-                {facts.positionRow.house !== undefined && ` — ${t.houseLabel} ${facts.positionRow.house}`}
-              </p>
-            )}
-            {facts.pointPosition !== undefined && (
-              <p>
-                {signDisplayName(facts.pointPosition.sign, locale)} {facts.pointPosition.degree}°
-                {String(facts.pointPosition.minute).padStart(2, '0')}'
-                {facts.pointPosition.house !== undefined && ` — ${t.houseLabel} ${facts.pointPosition.house}`}
-              </p>
             )}
             {facts.relatedAspects.length > 0 && (
               <ul>

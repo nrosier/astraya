@@ -68,7 +68,6 @@ describe('where the glossary is used (#513)', () => {
     'EclipsesView',
     'ReturnView',
     'AstrocartographyView',
-    'ChartView',
   ])('%s lists the terms it relies on', (view) => {
     expect(readFileSync(`src/ui/${view}.tsx`, 'utf-8')).toContain('<GlossaryTerms');
   });

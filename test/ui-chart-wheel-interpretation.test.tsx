@@ -130,7 +130,20 @@ describe('wheel selection interpretation (#415)', () => {
     await click(container, '.chart-point[data-body="sun"]');
     const selection = parseSelectionKey('body:sun');
     if (selection === undefined) throw new Error('fixture bug');
-    const expected = selectionPlacements(data, selection)
+    // Grouped by section before the limit (#801): sign, house and degree entries, then the rest.
+    const sectioned = [
+      'planet-in-sign',
+      'sign-on-cusp',
+      'derived-point-in-sign',
+      'planet-in-house',
+      'derived-point-in-house',
+      'degree-symbol',
+    ];
+    const all = selectionPlacements(data, selection);
+    const expected = [
+      ...sectioned.flatMap((category) => all.filter((item) => item.placement.category === category)),
+      ...all.filter((item) => !sectioned.includes(item.placement.category)),
+    ]
       .slice(0, SELECTION_TEXT_LIMIT)
       .map((item) => entryText('en', item.key) ?? composeFallbackText(item.placement, 'en'));
     expect(texts(container)).toEqual(expected);

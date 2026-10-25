@@ -16,6 +16,8 @@
  */
 import { useId, useState } from 'react';
 import { downloadText } from './download.js';
+import { type GlossaryTermId } from './astro-glossary.messages.js';
+import { GlossaryTerm } from './GlossaryTerm.js';
 import { useMessages } from './messages.js';
 import { Tooltip } from './primitives/Tooltip.js';
 import { sortableTableMessages } from './SortableTable.messages.js';
@@ -41,6 +43,7 @@ export function SortableTable<T>({
   selectedRowKey,
   wrap = false,
   headingLevel = 3,
+  captionTerm,
 }: {
   readonly caption: string;
   readonly columns: readonly TableColumn<T>[];
@@ -58,6 +61,8 @@ export function SortableTable<T>({
   readonly wrap?: boolean;
   /** The caption's heading level: 2 where the page's own heading is an `h1`, so no level is skipped. */
   readonly headingLevel?: 2 | 3;
+  /** A glossary term the caption names (#801): the caption text then opens that term's definition in place. On screen only. */
+  readonly captionTerm?: GlossaryTermId | undefined;
 }): React.JSX.Element {
   const t = useMessages(sortableTableMessages);
   const [sort, setSort] = useState<SortState>();
@@ -92,7 +97,9 @@ export function SortableTable<T>({
   return (
     <section className={wrap ? 'data-table data-table-wrap' : 'data-table'}>
       <div className="data-table-head">
-        <Heading id={captionId}>{caption}</Heading>
+        <Heading id={captionId}>
+          {captionTerm === undefined ? caption : <GlossaryTerm id={captionTerm}>{caption}</GlossaryTerm>}
+        </Heading>
         {downloadFilename !== undefined && (
           <div className="data-table-actions">
             <button type="button" className="quiet" onClick={copy}>

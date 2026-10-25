@@ -1026,12 +1026,6 @@ footer {
   margin-top: 0.5rem;
 }
 
-/* Sits directly under the "copy share link" button, so it reads as that button's
-   consequence rather than as a standalone banner (#341). */
-.share-warning {
-  max-width: 42rem;
-}
-
 .warnings {
   margin: 0;
   padding: 0;
@@ -2267,9 +2261,11 @@ label.stacked textarea:focus-visible {
 /*
  * The chart workbench (#511): the dial and its SelectionInspector in one container. The shell is an
  * inline-size query container, so the layout answers to the width the workbench actually gets, not
- * the viewport. 68rem is the sum of the minimum useful dial (46rem), the inspector's minimum (20rem)
+ * the viewport. 68rem is the sum of the dial's minimum (38rem; 7/12 of the 66rem of tracks at 68rem is 38.5rem, so 7fr/5fr governs from 68rem up), the inspector's minimum (20rem)
  * and the 2rem gap: below it one column with the inspector directly under the dial, at and above it
- * two columns. The dial stays first in DOM and focus order, and the inspector never scrolls on its own.
+ * two columns, 7/12 dial and 5/12 inspector (#801) with their top edges aligned. The dial stays first in
+ * DOM and focus order. Beside the dial the inspector scrolls inside itself past the viewport's height,
+ * so a long selection never makes the page taller; stacked it is as tall as its content.
  */
 .chart-workbench-shell {
   container: chart-workbench / inline-size;
@@ -2285,16 +2281,55 @@ label.stacked textarea:focus-visible {
 @container chart-workbench (min-width: 68rem) {
   .selection-inspector {
     min-height: 14rem;
+    max-height: 100vh;
+    overflow-y: auto;
   }
 
   .chart-workbench {
-    grid-template-columns: minmax(46rem, 1fr) minmax(20rem, 24rem);
+    grid-template-columns: minmax(38rem, 7fr) minmax(20rem, 5fr);
   }
 }
 
 .chart-workbench-dial .chart-wheel {
-  margin-top: 0.5rem;
+  margin-top: 0;
   margin-bottom: 0;
+  /*
+   * Height cap (#801): the wheel is square, so its width is its height. 24rem is
+   * the chrome above the SVG (header, nav row, card top, hint), so the SVG bottom
+   * lands at or above the viewport bottom; 26rem (364px at a 14px root) is the floor
+   * where glyphs and hit targets stay legible. Wider than the cap the wheel keeps
+   * its 7/12 column width; the cap binds only on short viewports. 55rem is the upper
+   * bound: the widest the wheel is drawn, so a tall viewport never grows it past that.
+   */
+  max-width: min(55rem, max(26rem, calc(100vh - 24rem)));
+}
+
+.chart-workbench-dial .chart-wheel-hint {
+  margin: 0 0 var(--space-2);
+}
+
+/* The placement badges and the section groups inside the inspector (#801). */
+.selection-inspector-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.4rem 0;
+}
+
+.primitive-badge {
+  display: inline-block;
+  padding: 0.1rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-hover);
+  color: var(--fg);
+  font-size: 0.8rem;
+}
+
+.chart-isolation-group h5 {
+  margin: 0.75rem 0 0.25rem;
+  font-size: 0.85rem;
+  color: var(--muted);
 }
 
 /* The selection's facts and meaning (#400, #415): plain accessible text, unlike the wheel — reached by a
@@ -3412,6 +3447,11 @@ svg text.chart-symbol-text-unicode {
  * is hidden — answering the issue's "usable paper chart".
  */
 @media print {
+  /* 100vh is the page height in print, so the screen height cap would shrink the printed wheel (#801). */
+  .chart-workbench-dial .chart-wheel {
+    max-width: none;
+  }
+
   .back,
   .tabs,
   .person-nav,
@@ -3824,7 +3864,7 @@ svg text.chart-symbol-text-unicode {
 /* The Charts page's chart-type Select: natal, draconic, harmonic, solar return, lunar return. */
 .chart-type-select {
   max-width: 20rem;
-  margin: 1rem 0 0.5rem;
+  margin: var(--space-2) 0 var(--space-1);
 }
 
 /*
@@ -3835,19 +3875,65 @@ svg text.chart-symbol-text-unicode {
  */
 .chart-view-select {
   max-width: 20rem;
-  margin: 1rem 0 0.5rem;
+  margin: 0.25rem 0 0.5rem;
 }
 
-.chart-view-nav {
+.chart-view-nav,
+.chart-view-prefix {
   display: none;
 }
 
+/* The title row (#801): back link and heading side by side, with the view links tucked right under. */
+.chart-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-4);
+  margin-bottom: 0;
+}
+
+.chart-title-row .back,
+.chart-title-row .page-header {
+  margin-bottom: 0;
+}
+
+.chart-title-row .page-header {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.chart-view-prefix {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+/* The chart type select shares this row with the view nav (#801); below 64rem the two selects wrap onto separate lines when they cannot fit. */
+.chart-view-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-1) var(--space-3);
+  margin: var(--space-1) 0 var(--space-2);
+}
+
+.chart-view-bar .chart-type-select,
+.chart-view-bar .chart-view-select {
+  margin: 0;
+}
+
 @media (min-width: 64rem) {
+  .chart-view-bar {
+    align-items: center;
+  }
+
+  .chart-view-prefix {
+    display: inline;
+  }
+
   .chart-view-nav {
     display: flex;
     flex-wrap: wrap;
     gap: 0.4rem;
-    margin: 1rem 0 0.5rem;
   }
 
   .chart-view-select {
@@ -3876,7 +3962,7 @@ svg text.chart-symbol-text-unicode {
 
 /* The Extended settings (#442): a button that summarises what was changed, and the modal card it opens. */
 .extended-settings {
-  margin: 0.75rem 0;
+  margin: var(--space-2) 0;
 }
 
 .extended-settings-trigger {

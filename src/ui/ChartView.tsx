@@ -38,6 +38,7 @@ import { HOUSE_SYSTEMS } from '../astrology/houses.js';
 import type { Zodiac } from '../ephemeris/types.js';
 import { ASPECTS, aspectHarmonicFamily, DEFAULT_ORB_CONFIG, type Aspect } from '../astrology/aspects.js';
 import { Tooltip } from './primitives/Tooltip.js';
+import { GlossaryTerm } from './GlossaryTerm.js';
 import { Select } from './primitives/Select.js';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -98,14 +99,8 @@ import { computeLunarReturnChart, computeSolarReturnChart } from '../domain/retu
 import { directedChartAt, generatePrimaryDirections, type DirectedChart } from '../domain/primary-directions.js';
 import { ageInYears } from '../astrology/progressions.js';
 import { deriveExportFilename } from '../domain/export-filename.js';
-import { encodeChartShareLink } from '../domain/chart-share.js';
-import {
-  buildCalculationSnapshot,
-  calculationSnapshotIdentity,
-  calculationSnapshotToJson,
-} from '../domain/calculation-snapshot.js';
+import { buildCalculationSnapshot, calculationSnapshotIdentity } from '../domain/calculation-snapshot.js';
 import { calculationArtifactIdentity, type CalculationArtifact } from '../domain/calculation-artifact.js';
-import type { CustomPointDefinition } from '../domain/person.js';
 import { buildChartArtifact } from './chart-artifact.js';
 import { momentKey } from '../time/encode.js';
 import { renderChartDialSvg, renderChartSheetSvg } from '../chart/chart-sheet.js';
@@ -178,7 +173,6 @@ import { SelectionInspector, type WheelIsolationFacts } from './SelectionInspect
 import { useRulershipChoice } from './rulership-setting.js';
 import type { RulershipChoice } from '../astrology/rulership.js';
 import type { BoundsScheme } from '../astrology/bounds.js';
-import { GlossaryTerms } from './GlossaryTerm.js';
 import { PageHeader } from './PageHeader.js';
 import { PersonNotFound } from './PersonNotFound.js';
 import { SortableTable } from './SortableTable.js';
@@ -187,7 +181,6 @@ import type { TableColumn } from './table-sort.js';
 import type { EphemerisProvider } from '../ephemeris/types.js';
 import type { Locale } from '../interpretation/schema.js';
 import type { BirthMomentInput } from '../time/types.js';
-import { Notice } from './primitives/Notice.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import {
   ChartOverlaySettingsPanel,
@@ -1182,6 +1175,7 @@ function renderTableTab(
         <>
           <SortableTable
             caption={t.housesCaption}
+            captionTerm="houses"
             columns={houseCuspColumns(t, locale, selection)}
             rows={houseCuspRows(data)}
             getRowKey={(row) => String(row.house)}
@@ -1209,6 +1203,7 @@ function renderTableTab(
         <>
           <SortableTable
             caption={t.aspectsCaption}
+            captionTerm="aspect"
             columns={aspectColumns(t, locale, selection)}
             rows={rows}
             getRowKey={(row) => `${row.bodyAKey}-${row.aspect}-${row.bodyBKey}`}
@@ -1233,6 +1228,7 @@ function renderTableTab(
           {declinationRows.length > 0 && (
             <SortableTable
               caption={t.declinationsCaption}
+              captionTerm="declination"
               columns={declinationColumns(t, locale)}
               rows={declinationRows}
               getRowKey={(row) => `${row.bodyAKey}-${row.kind}-${row.bodyBKey}`}
@@ -1298,6 +1294,7 @@ function renderTableTab(
           )}
           <SortableTable
             caption={t.dignitiesCaption}
+            captionTerm="dignity"
             columns={dignityColumns(t, locale)}
             rows={dignityRows(data, pointVisibility, boundsScheme)}
             getRowKey={(row) => row.bodyKey}
@@ -1320,7 +1317,7 @@ function renderTableTab(
             downloadFilename={deriveExportFilename(displayName, 'condition', 'csv')}
           />
           <h4 className="dispositors-section-header" style={{ marginTop: '1.5rem', marginBottom: '0.5rem' }}>
-            {t.dispositorsCaption}{' '}
+            <GlossaryTerm id="dispositor">{t.dispositorsCaption}</GlossaryTerm>{' '}
             {/* The shared Tooltip (#456, #508) shows the same visible popup on hover, click and
                 keyboard focus — a bare <span title> or an unwired aria-label button only ever
                 reached a mouse-hover user, and never anyone who clicked expecting something to
@@ -1332,6 +1329,7 @@ function renderTableTab(
           <p className="hint">{t.dispositorsHint}</p>
           <SortableTable
             caption={t.dispositorsCaption}
+            captionTerm="dispositor"
             columns={dispositorColumns(t, locale)}
             rows={dispositorRows(data, pointVisibility, rulership)}
             getRowKey={(row) => row.bodyKey}
@@ -1358,6 +1356,7 @@ function renderTableTab(
       return (
         <SortableTable
           caption={t.derivedPointsCaption}
+          captionTerm="derivedPoint"
           columns={derivedPointColumns(t, locale, selection)}
           rows={derivedPointRows(data, pointVisibility)}
           getRowKey={(row) => row.label}
@@ -1699,64 +1698,6 @@ function resolveWheelIsolation(
 }
 
 /**
- * Copies a #65 share link for one birth moment to the clipboard — the chart itself is always
- * recomputed from `moment` on the recipient's end, so this is the entire payload; nothing is
- * sent anywhere to produce it. The link also carries the sender's own effective calculation
- * settings (#541, as a `CalculationSnapshot`), so the recipient's browser recomputes under the
- * same house system/zodiac/orbs/visibility/rulers the sender actually had in force — not
- * whatever the recipient's own device happens to default to.
- */
-function ShareLink({
-  moment,
-  housesKnown,
-  settings,
-  rulership,
-  customPoints,
-}: {
-  readonly moment: BirthMomentInput;
-  readonly housesKnown: boolean;
-  readonly settings: ExtendedSettings;
-  readonly rulership: RulershipChoice;
-  /** The person's formula points (#582): without them the recipient's chart shows different objects. */
-  readonly customPoints: readonly CustomPointDefinition[];
-}): React.JSX.Element {
-  const t = useMessages(chartViewMessages);
-  const [copied, setCopied] = useState(false);
-
-  const copy = (): void => {
-    const shareSettings = calculationSnapshotToJson(buildCalculationSnapshot(settings, rulership, customPoints));
-    const query = encodeChartShareLink({ moment, settings: shareSettings, housesKnown }).toString();
-    const url = `${window.location.origin}${window.location.pathname}#/shared?${query}`;
-    void navigator.clipboard.writeText(url).then(
-      () => {
-        setCopied(true);
-        setTimeout(() => {
-          setCopied(false);
-        }, 2000);
-      },
-      // A denied clipboard permission leaves the screen exactly as it was; there is
-      // nothing else to recover from, so this is deliberately silent.
-      () => undefined,
-    );
-  };
-
-  return (
-    <>
-      <p>
-        <button type="button" className="quiet" onClick={copy}>
-          {copied ? t.linkCopied : t.copyShareLink}
-        </button>{' '}
-        <span className="hint">{t.shareLinkHint}</span>
-      </p>
-      {/* `.warning`, not the `.hint` above it (#341). There is no server-side state behind
-          a share link, so there is nothing to revoke — the only place that can be said is
-          before the link exists, and grey small print is how it would be missed. */}
-      <Notice className="share-warning">{t.shareLinkWarning}</Notice>
-    </>
-  );
-}
-
-/**
  * The chart sheet and data tables for one computed chart, independent of where the data
  * came from — the local store (`ChartView`) or a decoded share link (`SharedChartView`,
  * #65). Kept separate so both callers get the same tabs, sheet, and loading/error states.
@@ -1773,6 +1714,7 @@ export function ChartDataView({
   view,
   onViewChange,
   buildViewHref,
+  typeSelector,
   overlayContext,
   chartType,
   personId,
@@ -1812,6 +1754,8 @@ export function ChartDataView({
   readonly onViewChange?: ((view: ChartViewKind) => void) | undefined;
   /** Builds this chart's own URL for a given view, for `ChartViewNav`'s real links — every real caller's hash shape differs, so there is no sane default. */
   readonly buildViewHref: (view: ChartViewKind) => string;
+  /** The chart type select, shown on the same row as `ChartViewNav` (#801); on its own row when that nav is not shown (loading, error, print). */
+  readonly typeSelector?: React.ReactNode;
   /** Optional person-bound sources for configuring extra rings in the Wheel workbench. */
   readonly overlayContext?: ChartOverlayContext | undefined;
   /**
@@ -2185,7 +2129,6 @@ export function ChartDataView({
   const renderChartPanel = (data: ChartData): React.ReactNode =>
     wheelMarkup === undefined ? null : (
       <>
-        <h2>{t.chartTabLabel}</h2>
         {overlayContext !== undefined && (
           <ChartOverlaySettingsPanel
             value={overlaySettings}
@@ -2273,6 +2216,17 @@ export function ChartDataView({
         snapshotIdentity={provenanceIdentity(load, extendedSettings, rulership)}
         generatedAt={formatTimestamp(new Date())}
       />
+      {/* Directly under the title row (#801): the chart's own views, once there is a chart to view. */}
+      {!(load.kind === 'ready' && !printAll) && typeSelector}
+      {load.kind === 'ready' && !printAll && (
+        <ChartViewNav
+          leading={typeSelector}
+          activeView={currentTab}
+          buildHref={buildViewHref}
+          onNavigate={setActiveTab}
+          availableViews={tabs}
+        />
+      )}
       {!showHouses && <p className="hint">{t.housesUnknownHint(displayName || t.thisPerson)}</p>}
       {showHouses && !housesComputed && <p className="hint">{t.housesUndefinedHint(displayName || t.thisPerson)}</p>}
 
@@ -2350,13 +2304,6 @@ export function ChartDataView({
             </div>
           ) : (
             <>
-              <ChartViewNav
-                activeView={currentTab}
-                buildHref={buildViewHref}
-                onNavigate={setActiveTab}
-                availableViews={tabs}
-              />
-
               {/* The wheel stays mounted while another view is open, so a selection on it survives a
                   visit to the tables; every other view is only in the page while it is shown. */}
               {tabs.includes('wheel') && (
@@ -2627,33 +2574,15 @@ export function ChartView({
 
     return (
       <main className="shell shell--wide">
-        <BackLink fallback={personHref(personId)} />
-        <PageHeader title={person.displayName || t.chartFallback} basis={basisLine} />
-        <GlossaryTerms
-          terms={[
-            'ascendant',
-            'midheaven',
-            'houses',
-            'aspect',
-            'dignity',
-            'dispositor',
-            'retrograde',
-            'declination',
-            'derivedPoint',
-          ]}
-        />
-        <ChartTypeSelector personId={personId} type="natal" view={view} />
-        <ShareLink
-          moment={person.moment}
-          housesKnown={showHouses}
-          settings={settings}
-          rulership={rulership}
-          customPoints={person.customPoints ?? []}
-        />
+        <div className="chart-title-row">
+          <BackLink fallback={personHref(personId)} />
+          <PageHeader title={person.displayName || t.chartFallback} basis={basisLine} />
+        </div>
         <div className="comparison-container" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
           <div>
             <h2>{t.natalLabel}</h2>
             <ChartDataView
+              typeSelector={<ChartTypeSelector personId={personId} type="natal" view={view} />}
               personId={personId}
               load={load}
               displayName={person.displayName}
@@ -2693,30 +2622,12 @@ export function ChartView({
 
   return (
     <main className="shell shell--wide">
-      <BackLink fallback={personHref(personId)} />
-      <PageHeader title={person.displayName || t.chartFallback} basis={basisLine} />
-      <GlossaryTerms
-        terms={[
-          'ascendant',
-          'midheaven',
-          'houses',
-          'aspect',
-          'dignity',
-          'dispositor',
-          'retrograde',
-          'declination',
-          'derivedPoint',
-        ]}
-      />
-      <ChartTypeSelector personId={personId} type="natal" view={view} />
-      <ShareLink
-        moment={person.moment}
-        housesKnown={showHouses}
-        settings={settings}
-        rulership={rulership}
-        customPoints={person.customPoints ?? []}
-      />
+      <div className="chart-title-row">
+        <BackLink fallback={personHref(personId)} />
+        <PageHeader title={person.displayName || t.chartFallback} basis={basisLine} />
+      </div>
       <ChartDataView
+        typeSelector={<ChartTypeSelector personId={personId} type="natal" view={view} />}
         personId={personId}
         load={load}
         displayName={person.displayName}
