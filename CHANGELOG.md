@@ -6,10 +6,29 @@ see [docs/ops/RELEASING.md](docs/ops/RELEASING.md).
 
 ## [Unreleased]
 
+## [0.42.13] — 2026-10-25
+
+**The chart screen gets a workspace layout with in-place term definitions, the report gets a global Sabian symbol setting, and chart settings belong to each person.**
+
+### Added
+
+- **A chart workspace (#801).** The wheel and a sectioned selection panel sit side by side, the wheel is capped so it fits the first viewport, the chart type moves onto the navigation row, and the share link and definitions list are gone.
+- **Chart terms are defined in place (#801).** Glossary tooltips explain a term where it appears.
+- **A global Sabian symbol setting (#802).** One setting controls Sabian symbols across the report, and the report is grouped into section cards.
+
 ### Changed
 
 - **Chart settings belong to each person (#806).** House system, zodiac, orbs and visible points are saved on the person, so one client's choices no longer change another's chart. Existing settings on this device are copied to existing people once. Glyph variants and the degree-symbol display stay on the device. The full export is now version 3 and the importer still reads version 2.
 - **Older builds ignore the per-person settings.** A device running an older version of Astraya does not read the new field, so it draws that person's chart from its own settings until it is updated.
+- **The container image is published to ghcr.io (#793).** Pull `ghcr.io/nrosier/astraya` instead of the Docker Hub image, which is no longer updated.
+- **The end-to-end tests share three seeded people (#799).** The specs seed three linked people once and reuse them.
+
+### Fixed
+
+- **Primary directions record and check their calculation settings (#797).**
+- **Point aspects follow the body-moiety orb profile (#796).**
+- **Tooltip popups stay inside the phone viewport (#511).**
+- **Excluded derived points stay out of the wheel text (#721).** Hiding an object is display-only; the PDF follows the chart's object visibility (#719).
 
 ## [0.42.12] — 2026-10-25
 
