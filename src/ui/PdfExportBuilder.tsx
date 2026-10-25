@@ -480,6 +480,7 @@ export function PdfExportBuilder({ embedded = false }: { readonly embedded?: boo
 
       <Disclosure title={t.chartsLegend} showLabel={t.showSection} hideLabel={t.hideSection} defaultOpen>
         <div className="field-group" role="group" aria-label={t.chartsLegend}>
+          <p className="hint">{t.chartVisibilityNote}</p>
           {PDF_CHART_TYPES.map((type) => {
             const options = chartOf(fullSelection, type);
             const included = options !== undefined;

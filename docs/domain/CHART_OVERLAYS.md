@@ -23,3 +23,7 @@ An overlay is an optional additional calculation ring in the canonical **Charts 
 - **Legend:** Each multi-ring legend entry is keyboard reachable. Activating it isolates that ring and leaves its arrow visible so the label remains traceable to its band; activating another entry or clicking empty wheel space restores the normal view.
 - **Aspects:** Inter-ring contacts are optional. Contacts touching points hidden by the current visibility settings are omitted rather than producing an invalid chord.
 - **Exports:** Wheel SVG and PNG exports use the visible multi-ring rendering when overlays are active, including legend labels and ring arrows. Print/PDF retains the rendered wheel and its provenance panel.
+
+## PDF export and visibility
+
+The PDF mirrors the on-screen chart for single charts. Objects hidden on the chart are absent from the PDF wheel, tables and aspect lists too, so a PDF never shows a fuller set than the screen under the same heading (#719). Synastry wheels are not yet affected by this rule. The written report and interpretation follow the separate "included in the written report" switch instead (#721), so an object can be hidden on the chart yet still read in the report, or the reverse.
