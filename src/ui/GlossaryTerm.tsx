@@ -17,14 +17,17 @@ import { Tooltip } from './primitives/Tooltip.js';
 export function GlossaryTerm({
   id,
   children,
+  label,
 }: {
   readonly id: GlossaryTermId;
   readonly children?: React.ReactNode;
+  /** The trigger's accessible name when its visible content (a "?") does not name the term itself. */
+  readonly label?: string | undefined;
 }): React.JSX.Element {
   const glossary = useMessages(astroGlossaryMessages);
   const entry = glossary[id];
   return (
-    <Tooltip text={entry.definition} className="glossary-term">
+    <Tooltip text={entry.definition} className="glossary-term" label={label}>
       {children ?? entry.name}
     </Tooltip>
   );

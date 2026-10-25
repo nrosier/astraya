@@ -38,6 +38,7 @@ import { HOUSE_SYSTEMS } from '../astrology/houses.js';
 import type { Zodiac } from '../ephemeris/types.js';
 import { ASPECTS, aspectHarmonicFamily, DEFAULT_ORB_CONFIG, type Aspect } from '../astrology/aspects.js';
 import { Tooltip } from './primitives/Tooltip.js';
+import { GlossaryTerm, GlossaryTerms } from './GlossaryTerm.js';
 import { Select } from './primitives/Select.js';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -1151,8 +1152,11 @@ function renderTableTab(
     case 'positions':
       return (
         <>
+          {/* The Ascendant and Midheaven rows are table cells built by the shared column functions (which the PDF also reads as plain text), so their definitions sit here as on-screen terms (#801). */}
+          {showHouses && <GlossaryTerms terms={['ascendant', 'midheaven']} />}
           <SortableTable
             caption={t.positionsCaption}
+            glossaryTerms={{ retrograde: 'retrograde' }}
             columns={positionColumns(t, locale, symbolClass, selection)}
             rows={positionRows(data, pointVisibility, showHouses)}
             getRowKey={(row) => row.bodyKey}
@@ -1174,6 +1178,7 @@ function renderTableTab(
         <>
           <SortableTable
             caption={t.housesCaption}
+            captionTerm="houses"
             columns={houseCuspColumns(t, locale, selection)}
             rows={houseCuspRows(data)}
             getRowKey={(row) => String(row.house)}
@@ -1201,6 +1206,7 @@ function renderTableTab(
         <>
           <SortableTable
             caption={t.aspectsCaption}
+            captionTerm="aspect"
             columns={aspectColumns(t, locale, selection)}
             rows={rows}
             getRowKey={(row) => `${row.bodyAKey}-${row.aspect}-${row.bodyBKey}`}
@@ -1225,6 +1231,7 @@ function renderTableTab(
           {declinationRows.length > 0 && (
             <SortableTable
               caption={t.declinationsCaption}
+              captionTerm="declination"
               columns={declinationColumns(t, locale)}
               rows={declinationRows}
               getRowKey={(row) => `${row.bodyAKey}-${row.kind}-${row.bodyBKey}`}
@@ -1290,6 +1297,7 @@ function renderTableTab(
           )}
           <SortableTable
             caption={t.dignitiesCaption}
+            captionTerm="dignity"
             columns={dignityColumns(t, locale)}
             rows={dignityRows(data, pointVisibility, boundsScheme)}
             getRowKey={(row) => row.bodyKey}
@@ -1312,7 +1320,7 @@ function renderTableTab(
             downloadFilename={deriveExportFilename(displayName, 'condition', 'csv')}
           />
           <h4 className="dispositors-section-header" style={{ marginTop: '1.5rem', marginBottom: '0.5rem' }}>
-            {t.dispositorsCaption}{' '}
+            <GlossaryTerm id="dispositor">{t.dispositorsCaption}</GlossaryTerm>{' '}
             {/* The shared Tooltip (#456, #508) shows the same visible popup on hover, click and
                 keyboard focus — a bare <span title> or an unwired aria-label button only ever
                 reached a mouse-hover user, and never anyone who clicked expecting something to
@@ -1324,6 +1332,7 @@ function renderTableTab(
           <p className="hint">{t.dispositorsHint}</p>
           <SortableTable
             caption={t.dispositorsCaption}
+            captionTerm="dispositor"
             columns={dispositorColumns(t, locale)}
             rows={dispositorRows(data, pointVisibility, rulership)}
             getRowKey={(row) => row.bodyKey}
@@ -1350,6 +1359,7 @@ function renderTableTab(
       return (
         <SortableTable
           caption={t.derivedPointsCaption}
+          captionTerm="derivedPoint"
           columns={derivedPointColumns(t, locale, selection)}
           rows={derivedPointRows(data, pointVisibility)}
           getRowKey={(row) => row.label}
