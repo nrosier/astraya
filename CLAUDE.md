@@ -70,7 +70,6 @@ These cause build/CI failures if violated:
 ## Git Workflow
 
 - **Commits:** `type(scope): subject` where scope is issue # (e.g., `feat(#441): ...`). Release automation parses this.
-- **Branches:** `fix/441-description`, merged `--no-ff` to `main`.
 - **Issues:** Open until released; tick checklist items as PRs land.
 - **Releases:** Touch `package.json`, `package-lock.json`, `CHANGELOG.md`, `README.md` badge. Semantic versioning.
 
