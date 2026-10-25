@@ -10,14 +10,17 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
-import type { Page } from '@playwright/test';
+import type { BrowserContext, Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
+import { newSeededContext } from './shared-people.ts';
 import { gotoAndSettle, labeledField } from './support.ts';
 
 let dir: string;
 let app: FastifyInstance;
 let baseUrl: string;
+let context: BrowserContext;
+let page: Page;
 
 test.beforeAll(async () => {
   dir = mkdtempSync(join(tmpdir(), 'astraya-e2e-'));
@@ -28,6 +31,16 @@ test.beforeAll(async () => {
   const address = app.server.address();
   if (address === null || typeof address === 'string') throw new Error('server did not bind to a port');
   baseUrl = `http://127.0.0.1:${String(address.port)}`;
+});
+
+// Each test starts in a fresh context holding the three shared people (#799); none of them saves, edits or deletes one.
+test.beforeEach(async ({ browser }) => {
+  context = await newSeededContext(browser, baseUrl);
+  page = await context.newPage();
+});
+
+test.afterEach(async () => {
+  await context.close();
 });
 
 test.afterAll(async () => {
@@ -59,7 +72,7 @@ async function startPersonWithoutCoordinates(page: Page): Promise<void> {
   await page.locator('input[type="date"]').fill('1990-06-15');
 }
 
-test('"Search for a place by name" stays visible whether or not coordinates already exist (#290)', async ({ page }) => {
+test('"Search for a place by name" stays visible whether or not coordinates already exist (#290)', async () => {
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   await startPersonWithoutCoordinates(page);
 
@@ -71,9 +84,7 @@ test('"Search for a place by name" stays visible whether or not coordinates alre
   await expect(labeledField(page, /^Search for a place by name/, 'input[type="text"]')).toBeVisible();
 });
 
-test('a single search match is still shown as a click-to-confirm dropdown, and picking it fills coordinates and Place of birth (#290)', async ({
-  page,
-}) => {
+test('a single search match is still shown as a click-to-confirm dropdown, and picking it fills coordinates and Place of birth (#290)', async () => {
   await stubNominatimSearch(page, [{ lat: '48.8566', lon: '2.3522', display_name: 'Paris, Île-de-France, France' }]);
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   await startPersonWithoutCoordinates(page);
@@ -90,7 +101,7 @@ test('a single search match is still shown as a click-to-confirm dropdown, and p
   await expect(labeledField(page, /^Place of birth/, 'input[type="text"]')).toHaveValue('Paris, Île-de-France, France');
 });
 
-test('multiple search matches are each shown as a separate clickable result (#290)', async ({ page }) => {
+test('multiple search matches are each shown as a separate clickable result (#290)', async () => {
   await stubNominatimSearch(page, [
     { lat: '48.8566', lon: '2.3522', display_name: 'Paris, Île-de-France, France' },
     { lat: '33.6609', lon: '-95.5555', display_name: 'Paris, Texas, United States' },
@@ -110,7 +121,7 @@ test('multiple search matches are each shown as a separate clickable result (#29
   await expect(labeledField(page, /^Longitude/, 'input[type="number"]')).toHaveValue('-95.5555');
 });
 
-test('a search with no matches shows an inline "not found" message (#290)', async ({ page }) => {
+test('a search with no matches shows an inline "not found" message (#290)', async () => {
   await stubNominatimSearch(page, []);
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   await startPersonWithoutCoordinates(page);
@@ -121,9 +132,7 @@ test('a search with no matches shows an inline "not found" message (#290)', asyn
   await expect(page.getByRole('status').filter({ hasText: 'No matching locations found' })).toBeVisible();
 });
 
-test('a search-request failure shows an inline message, and coordinates are still editable by hand (#290)', async ({
-  page,
-}) => {
+test('a search-request failure shows an inline message, and coordinates are still editable by hand (#290)', async () => {
   await stubNominatimSearch(page, [], { status: 503 });
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   await startPersonWithoutCoordinates(page);
