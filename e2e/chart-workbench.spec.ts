@@ -85,9 +85,15 @@ test('the inspector follows the dial, beside it from a 68rem workbench and below
   await pin(68);
   expect(await sideBySide()).toBe(true);
 
-  // The split is 7fr / 5fr (#801). Pin wide enough that neither column sits on its minimum
-  // (46rem dial, 20rem inspector), so the fr ratio is what decides the widths.
-  await pin(90);
+  // The split is 7fr / 5fr (#801), tested at the widest the app really reaches: the wide shell is
+  // 80rem less its 1.5rem side padding, so the workbench gets 77rem. Unpin and measure that, not a
+  // width the app never has.
+  await page.evaluate("document.querySelector('.chart-workbench-shell').style.width = ''");
+  const realWidth = Number(
+    await page.evaluate("document.querySelector('.chart-workbench-shell').getBoundingClientRect().width"),
+  );
+  expect(realWidth).toBeLessThanOrEqual(80 * remPx);
+  expect(realWidth).toBeGreaterThanOrEqual(68 * remPx);
   const d = await dial.boundingBox();
   const i = await inspector.boundingBox();
   if (d === null || i === null) throw new Error('no boxes');

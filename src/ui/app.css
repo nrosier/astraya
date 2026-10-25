@@ -1026,12 +1026,6 @@ footer {
   margin-top: 0.5rem;
 }
 
-/* Sits directly under the "copy share link" button, so it reads as that button's
-   consequence rather than as a standalone banner (#341). */
-.share-warning {
-  max-width: 42rem;
-}
-
 .warnings {
   margin: 0;
   padding: 0;
@@ -2267,7 +2261,7 @@ label.stacked textarea:focus-visible {
 /*
  * The chart workbench (#511): the dial and its SelectionInspector in one container. The shell is an
  * inline-size query container, so the layout answers to the width the workbench actually gets, not
- * the viewport. 68rem is the sum of the minimum useful dial (46rem), the inspector's minimum (20rem)
+ * the viewport. 68rem is the sum of the dial's minimum (38rem; 7/12 of the 66rem of tracks at 68rem is 38.5rem, so 7fr/5fr governs from 68rem up), the inspector's minimum (20rem)
  * and the 2rem gap: below it one column with the inspector directly under the dial, at and above it
  * two columns, 7/12 dial and 5/12 inspector (#801) with their top edges aligned. The dial stays first in
  * DOM and focus order. Beside the dial the inspector scrolls inside itself past the viewport's height,
@@ -2292,7 +2286,7 @@ label.stacked textarea:focus-visible {
   }
 
   .chart-workbench {
-    grid-template-columns: minmax(46rem, 7fr) minmax(20rem, 5fr);
+    grid-template-columns: minmax(38rem, 7fr) minmax(20rem, 5fr);
   }
 }
 

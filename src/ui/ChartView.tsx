@@ -1154,7 +1154,6 @@ function renderTableTab(
         <>
           <SortableTable
             caption={t.positionsCaption}
-            glossaryTerms={{ retrograde: 'retrograde' }}
             columns={positionColumns(t, locale, symbolClass, selection)}
             rows={positionRows(data, pointVisibility, showHouses)}
             getRowKey={(row) => row.bodyKey}

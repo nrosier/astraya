@@ -71,29 +71,41 @@ export function WheelSelectionText({
     dignityStates: t.dignityStateLabels,
     cuspOf: t.cuspHeading,
   };
-  const shown = items.slice(0, SELECTION_TEXT_LIMIT);
-  const rest = items.slice(SELECTION_TEXT_LIMIT);
   // Sections in reading order (#801): the sign's meaning, the house's, then the degree symbol. Entries
-  // that are none of these (dignity, aspects) follow without a heading rather than being dropped.
+  // that are none of these (dignity, aspects) get no heading, which the owner's three-section decision
+  // leaves unnamed; they close the list as a group of their own.
   const sections: readonly { readonly heading: string | undefined; readonly categories: readonly string[] }[] = [
     { heading: t.signSectionHeading, categories: ['planet-in-sign', 'sign-on-cusp', 'derived-point-in-sign'] },
     { heading: t.houseSectionHeading, categories: ['planet-in-house', 'derived-point-in-house'] },
     { heading: t.degreeSectionHeading, categories: ['degree-symbol'] },
   ];
   const known = sections.flatMap((entry) => entry.categories);
-  const renderItems = (list: typeof items): React.JSX.Element => {
-    const groups = [
-      ...sections.map((entry) => ({
-        heading: entry.heading,
-        rows: list.filter((item) => entry.categories.includes(item.placement.category)),
-      })),
-      { heading: undefined, rows: list.filter((item) => !known.includes(item.placement.category)) },
-    ].filter((group) => group.rows.length > 0);
+  // Grouped before the limit applies, so each heading is named once however the list is split.
+  const groups = [
+    ...sections.map((entry) => ({
+      heading: entry.heading,
+      rows: items.filter((item) => entry.categories.includes(item.placement.category)),
+    })),
+    {
+      heading: undefined as string | undefined,
+      rows: items.filter((item) => !known.includes(item.placement.category)),
+    },
+  ].filter((group) => group.rows.length > 0);
+  const ordered = groups.flatMap((group) => group.rows.map((item) => ({ item, heading: group.heading })));
+  const shownEntries = ordered.slice(0, SELECTION_TEXT_LIMIT);
+  const restEntries = ordered.slice(SELECTION_TEXT_LIMIT);
+  const renderItems = (list: typeof ordered, named: ReadonlySet<string | undefined>): React.JSX.Element => {
+    const parts: { heading: string | undefined; showHeading: boolean; rows: (typeof items)[number][] }[] = [];
+    for (const entry of list) {
+      const last = parts[parts.length - 1];
+      if (last !== undefined && last.heading === entry.heading) last.rows.push(entry.item);
+      else parts.push({ heading: entry.heading, showHeading: !named.has(entry.heading), rows: [entry.item] });
+    }
     return (
       <>
-        {groups.map((group) => (
+        {parts.map((group) => (
           <section key={group.heading ?? 'other'} className="chart-isolation-group">
-            {group.heading !== undefined && <h5>{group.heading}</h5>}
+            {group.heading !== undefined && group.showHeading && <h5>{group.heading}</h5>}
             <ul className="chart-isolation-texts">
               {group.rows.map((item) => (
                 <li key={item.key}>
@@ -107,6 +119,7 @@ export function WheelSelectionText({
       </>
     );
   };
+  const namedAbove = new Set(shownEntries.map((entry) => entry.heading));
 
   return (
     <section className="chart-isolation-interpretation" aria-label={t.selectionInterpretationHeading}>
@@ -115,17 +128,17 @@ export function WheelSelectionText({
       {!failed && corpus === undefined && <p className="hint">{t.selectionLoading}</p>}
       {corpus !== undefined && (
         <>
-          {renderItems(shown)}
-          {rest.length > 0 && (
+          {renderItems(shownEntries, new Set())}
+          {restEntries.length > 0 && (
             // Keyed on the selection, so a new one starts collapsed again.
             <Disclosure
               key={selectionKey}
               title={t.selectionMoreTitle}
-              summary={t.selectionMoreSummary(rest.length)}
+              summary={t.selectionMoreSummary(restEntries.length)}
               showLabel={t.selectionShowAll}
               hideLabel={t.selectionHideAll}
             >
-              {renderItems(rest)}
+              {renderItems(restEntries, namedAbove)}
             </Disclosure>
           )}
         </>
