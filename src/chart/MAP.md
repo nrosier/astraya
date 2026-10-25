@@ -25,7 +25,7 @@ Hand-rolled SVG rendering layer: chart wheels (single/bi-/tri-ring), aspect webs
 - `glyphs.ts` — Vector-path glyph registry (all bodies/signs/aspects) + `renderGlyph`. Deps: `./glyph-variants`, `./glyph-weight`, `./symbol-class`, `./symbol-text`.
 - `jones-shape-diagram.ts` — Jones chart-shape abstract diagram. Deps: `astrology/jones-shapes`, `./svg-primitives`, `./wheel`.
 - `multi-wheel.ts` — Main chart wheel renderer (single/bi-/tri-ring with shared anchor, glyphs, cusps, aspect webs, accessible legend, leader arrows). Deps: `astrology/aspects`, `astrology/signs`, `./aspect-web`, `./glyph-layout`, `./glyphs`, `./sheet-geometry`, `./wheel`.
-- `object-policy.ts` — Unified per-object visibility/aspect-participation policy (#585): every body plus Vertex/Fortune/Spirit, keyed the same way everywhere, plus the Core/Traditional/All presets. Deps: none (plain data, documented against pre-#585 defaults it reproduces).
+- `object-policy.ts` — Unified per-object visibility/aspect-participation policy (#585): every body plus Vertex/Fortune/Spirit, keyed the same way everywhere, plus the Core/Traditional/All presets; `interpreted` flag (#721) feeds report exclusions, separate from display. Deps: none (plain data, documented against pre-#585 defaults it reproduces).
 - `overlay-options.ts` — Persisted overlay settings bridge (antiscia/declination/dial90/midpoint-tree). Deps: `store/ops` (JsonValue).
 - `sheet-geometry.ts` — Chart sheet layout authority (800px reference frame, linear scaling, per-ring planet bands). Deps: none (pure geometry).
 - `standalone-svg.ts` — Inlines `src/ui/app.css` light-theme palette into exported SVG `<style>`. Deps: none (string manipulation).

@@ -130,9 +130,9 @@ export function degreeParts(longitude: Degrees): DegreeParts {
  * through `visibleAspects`/`visibleAngleAspects` below before rendering, so a point hidden here
  * cannot still "speak" through an aspect to something else on any of those four surfaces, even
  * though `ChartData.aspects`/`.angleAspects` themselves are untouched (the raw computed data
- * still carries it — only these filtered views omit it). Interpretation text (`src/interpretation/`)
- * does not yet consult this policy — see that module's own doc comment for why folding it in
- * needs more care than a blanket filter, and is left as a follow-up.
+ * still carries it — only these filtered views omit it). Hiding an object is display-only and
+ * never changes the interpretation: interpretation follows `ObjectPolicy.interpreted` instead,
+ * via `interpretationExclusions` in `src/chart/object-policy.ts` (#721).
  */
 export interface PointVisibilityOptions {
   /**
