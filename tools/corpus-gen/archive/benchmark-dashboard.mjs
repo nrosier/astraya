@@ -39,7 +39,7 @@
 import { writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { openBenchmarkDb, allResults, allCachedThirdPartyText } from './lib/benchmark-db.mjs';
+import { openBenchmarkDb, allResults, allCachedThirdPartyText } from './benchmark-db.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const DB_PATH = join(root, 'tools', 'corpus-gen', '.data', 'benchmark.sqlite');

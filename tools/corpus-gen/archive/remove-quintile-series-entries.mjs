@@ -35,9 +35,9 @@ import { readFile, mkdir, copyFile } from 'node:fs/promises';
 import { execSync } from 'node:child_process';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { removeCorpusEntries } from './lib/write-corpus.mjs';
-import { readTracking, writeTracking } from './lib/eval-tracking.mjs';
-import { readFeedback, writeFeedback, removeFeedback } from './lib/corpus-feedback.mjs';
+import { removeCorpusEntries } from '../lib/write-corpus.mjs';
+import { readTracking, writeTracking } from '../lib/eval-tracking.mjs';
+import { readFeedback, writeFeedback, removeFeedback } from '../lib/corpus-feedback.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const QUINTILE_SERIES_ASPECTS = new Set(['quintile', 'biquintile']);

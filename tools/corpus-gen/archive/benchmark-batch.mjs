@@ -93,9 +93,9 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildRealPlacements, astrologyApiBirthBody } from './lib/benchmark-charts.mjs';
-import { buildSystemInstruction, buildUserContent } from './lib/prompt.mjs';
-import { placementDescription, factsDescription, buildSymbolismContext } from './lib/placements.mjs';
+import { buildRealPlacements, astrologyApiBirthBody } from './benchmark-charts.mjs';
+import { buildSystemInstruction, buildUserContent } from '../lib/prompt.mjs';
+import { placementDescription, factsDescription, buildSymbolismContext } from '../lib/placements.mjs';
 import {
   openBenchmarkDb,
   getResult,
@@ -103,11 +103,11 @@ import {
   getCachedThirdParty,
   cacheThirdParty,
   purgeThirdPartyCache,
-} from './lib/benchmark-db.mjs';
-import { embed, generateStructured as ollamaGenerateStructured } from './lib/ollama.mjs';
-import { bodyByKey } from '../../src/astrology/bodies.ts';
-import { CORPUS_ENTRY_RESPONSE_SCHEMA } from '../../src/interpretation/schema.ts';
-import { estimateCostCentsForCall, formatCents } from './lib/cost-estimate.mjs';
+} from './benchmark-db.mjs';
+import { embed, generateStructured as ollamaGenerateStructured } from '../lib/ollama.mjs';
+import { bodyByKey } from '../../../src/astrology/bodies.ts';
+import { CORPUS_ENTRY_RESPONSE_SCHEMA } from '../../../src/interpretation/schema.ts';
+import { estimateCostCentsForCall, formatCents } from '../lib/cost-estimate.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const BASE_URL = 'https://json.astrologyapi.com/v1';

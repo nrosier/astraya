@@ -45,18 +45,18 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildSystemInstruction, buildUserContent } from './lib/prompt.mjs';
-import { buildVerificationPrompt, VERIFICATION_RESPONSE_SCHEMA } from './lib/verify.mjs';
+import { buildSystemInstruction, buildUserContent } from '../lib/prompt.mjs';
+import { buildVerificationPrompt, VERIFICATION_RESPONSE_SCHEMA } from '../lib/verify.mjs';
 import {
   buildPlacements,
   placementDescription,
   factsDescription,
   buildSymbolismContext,
   ASPECTS,
-} from './lib/placements.mjs';
-import { CORPUS_ENTRY_RESPONSE_SCHEMA } from '../../src/interpretation/schema.ts';
-import { lintEntry } from '../../src/interpretation/lint.ts';
-import { estimateCostCentsForCall, formatCents } from './lib/cost-estimate.mjs';
+} from '../lib/placements.mjs';
+import { CORPUS_ENTRY_RESPONSE_SCHEMA } from '../../../src/interpretation/schema.ts';
+import { lintEntry } from '../../../src/interpretation/lint.ts';
+import { estimateCostCentsForCall, formatCents } from '../lib/cost-estimate.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
