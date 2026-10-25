@@ -1,7 +1,7 @@
 # Astrological Data Sources and Coverage Recommendations
 
 **Reviewed:** October 25, 2026  
-**Purpose:** Identify publicly accessible source data and historical references relevant to the professional gaps recorded in `ASTROLOGY_REVIEW.md`. This is a research and implementation guide, not an endorsement of one astrological tradition or a grant of redistribution rights.
+**Purpose:** Identify publicly accessible source data and historical references relevant to the professional gaps recorded in `docs/audit/2026-10-25-ASTROLOGY_REVIEW.md`. This is a research and implementation guide, not an endorsement of one astrological tradition or a grant of redistribution rights.
 
 ## Executive Summary
 
