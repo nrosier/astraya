@@ -41,7 +41,8 @@ import { PersonNotFound } from './PersonNotFound.js';
 import { useStore, useStoreState } from './store-context.js';
 import type { RelocatedComparisonRow } from '../domain/relocated-chart.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
-import { useExtendedSettings } from './extended-settings-store.js';
+import { usePersonCalculationSettings } from './person-calculation-settings.js';
+import { UnreadableSettingsNotice } from './UnreadableSettingsNotice.js';
 import { orbsOf } from '../chart/extended-settings.js';
 import { useStableBy, useStableMoment } from './use-stable-moment.js';
 import { BackLink } from './BackLink.js';
@@ -179,11 +180,11 @@ export function RelocatedChartView({
   const [load, setLoad] = useState<Load>({ kind: 'idle' });
   const customPoints = useStableBy(person?.customPoints, (points) => JSON.stringify(points ?? []));
   // The aspects use the device's orbs (#590), as the natal chart does.
-  const [extendedSettings] = useExtendedSettings();
+  const { settings: extendedSettings, unreadable: settingsUnreadable } = usePersonCalculationSettings(personId);
   const orbs = useStableBy(orbsOf(extendedSettings), (config) => JSON.stringify(config));
 
   useEffect(() => {
-    if (personMoment === undefined || provider === undefined || relocationPlace === undefined) {
+    if (personMoment === undefined || provider === undefined || settingsUnreadable || relocationPlace === undefined) {
       setLoad({ kind: 'idle' });
       return undefined;
     }
@@ -208,10 +209,14 @@ export function RelocatedChartView({
     return () => {
       effect.cancelled = true;
     };
-  }, [personMoment, provider, relocationPlace, customPoints, orbs]);
+  }, [settingsUnreadable, personMoment, provider, relocationPlace, customPoints, orbs]);
 
   if (person === undefined) {
     return <PersonNotFound />;
+  }
+
+  if (settingsUnreadable) {
+    return <UnreadableSettingsNotice personId={personId} name={person.displayName || ''} />;
   }
 
   if (person.moment === undefined || person.timeAccuracy === 'unknown') {

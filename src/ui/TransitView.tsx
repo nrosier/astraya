@@ -42,7 +42,8 @@ import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { chartWheelRing, crossAspectRows, type AspectRow } from '../domain/chart-tables.js';
 import { deriveExportFilename } from '../domain/export-filename.js';
 import { computeTransit, type TransitData } from '../domain/transit.js';
-import { useExtendedSettings } from './extended-settings-store.js';
+import { usePersonCalculationSettings } from './person-calculation-settings.js';
+import { UnreadableSettingsNotice } from './UnreadableSettingsNotice.js';
 import { useOrbContextSource, useOrbLibrary } from './orb-library-store.js';
 import { renderMultiWheelSvg, type CrossRingAspects } from '../chart/multi-wheel.js';
 import { findVoidOfCourseMoon, type VoidOfCourseMoon } from '../astrology/void-of-course.js';
@@ -129,7 +130,7 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
   // The orbs are the device's Extended settings (#590): transits use the same orbs as the natal chart.
   // Everything else stays at the engine defaults, as this screen's footer says.
-  const [extendedSettings] = useExtendedSettings();
+  const { settings: extendedSettings, unreadable: settingsUnreadable } = usePersonCalculationSettings(personId);
   const orbLibrary = useOrbLibrary();
   const orbSources = useOrbContextSource();
   const snapshot = useMemo(
@@ -147,7 +148,8 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
   }, [asOf]);
 
   useEffect(() => {
-    if (personMoment === undefined || provider === undefined || targetDate === undefined) return undefined;
+    if (personMoment === undefined || provider === undefined || settingsUnreadable || targetDate === undefined)
+      return undefined;
     const moment = personMoment;
     const effect = { cancelled: false };
     setLoad({ kind: 'loading' });
@@ -180,7 +182,7 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
     return () => {
       effect.cancelled = true;
     };
-  }, [personMoment, provider, targetDate, snapshot]);
+  }, [settingsUnreadable, personMoment, provider, targetDate, snapshot]);
 
   const [rulership] = useRulershipChoice();
   const [symbolClass] = useSymbolClass();
@@ -259,6 +261,10 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
 
   if (person === undefined) {
     return <PersonNotFound />;
+  }
+
+  if (settingsUnreadable) {
+    return <UnreadableSettingsNotice personId={personId} name={person.displayName || ''} />;
   }
 
   if (person.moment === undefined) {

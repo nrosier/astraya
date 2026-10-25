@@ -199,7 +199,9 @@ Do not add a separate Hellenistic profile while it would resolve to the same own
 
 Person scope is for facts and notes about one person. The UI must name the person and say that the change applies to them. Persist through the existing person operation log so offline behavior and optional sync remain consistent.
 
-Do not store the user's astrology methodology on a person simply because a chart is calculated for that person. A person can have several chart configurations. Store reproducibility settings with the chart/configuration and store the user's starting defaults in their profile.
+A person's chart calculation settings (house system, zodiac/ayanamsa, orb scale and orb rules, visible points, aspects, Lilith and node variants) are person data (#806). Store them on the person as one `calculationSettings` register through the same operation log, so a client's chart is calculated the same way on every device and one client's choices never change another's chart. A person who has never saved settings starts from the user's default calculation profile (§3.2). A saved register this build cannot read, or one written by a newer version, must not be replaced by defaults: show a notice instead of drawing a chart.
+
+Keep the rest of the user's methodology and presentation off the person: the rulership model, the orb library and its per-context source, glyph weight and variants, and the degree-symbol display stay user or device preferences (§3.2, §3.3). Reproducibility settings recorded with a saved, shared, or exported chart remain part of that chart.
 
 ### 3.2 User/account preferences
 

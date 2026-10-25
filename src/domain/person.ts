@@ -25,9 +25,17 @@
  * @module person
  * @purpose Defines the `Person` entity — the primary entity and owner of birth data that every computed chart derives from — and assembles it from op-log register values.
  * @conventions Stores the civil-time/coordinates input as typed, never a resolved UTC offset, since historical timezone data can change (an `OffsetWitness` records what a past resolution said, for detecting drift, not for reuse); a field this build cannot read is reported as absent via `missing`, never defaulted (e.g. `{0,0}` is a real place, so it is never substituted for missing coordinates); `TimeAccuracy` distinguishes a genuinely unknown birth time, for which houses/angles are meaningless rather than merely approximate.
- * @exports Person, TimeAccuracy, OffsetWitness, RelocationPlace, CustomPointDefinition, PERSON_FIELDS, buildPerson, readCivil, readCoordinates, readCalendar, readTimeAccuracy, readWitness, readOffsetOverride, readText, readRelocationPlaces, readCustomPoints
+ * @exports Person, TimeAccuracy, OffsetWitness, RelocationPlace, CustomPointDefinition, PERSON_FIELDS, buildPerson, readCivil, readCoordinates, readCalendar, readTimeAccuracy, readWitness, readOffsetOverride, readText, readRelocationPlaces, readCustomPoints, readCalculationSettings, CalculationSettingsRead, serializeCalculationSettings
  */
 import { parseFormula } from '../astrology/formula-parser.js';
+import type { ExtendedSettings } from '../chart/extended-settings.js';
+import {
+  CURRENT_SNAPSHOT_VERSION,
+  decodeCalculationSnapshot,
+  decodeStrictExtendedSettings,
+  SnapshotDecodeError,
+} from './calculation-snapshot.js';
+import type { JsonValue } from '../store/ops.js';
 import type { BirthMomentInput, Calendar, CivilDateTime, Coordinates } from '../time/types.js';
 
 /**
@@ -105,6 +113,19 @@ export interface Person {
   readonly relocationPlaces?: readonly RelocationPlace[] | undefined;
   /** Valid custom formula points; absent in records written before #566. */
   readonly customPoints?: readonly CustomPointDefinition[] | undefined;
+  /**
+   * This person's own chart calculation settings (#806): house system, zodiac, orbs, visible points.
+   * Absent when none were ever saved for them (the screens then start from the device's default
+   * profile) or when the saved register is unreadable (see `calculationSettingsUnreadable`).
+   * Rulers, the orb library, glyph variant and degree-symbol display stay device-wide.
+   */
+  readonly calculationSettings?: ExtendedSettings | undefined;
+  /**
+   * True when a `calculationSettings` register exists but this build cannot read it (newer version or
+   * invalid field). Never filled with defaults: a screen must show a notice instead of drawing a
+   * chart from settings nobody chose.
+   */
+  readonly calculationSettingsUnreadable?: boolean | undefined;
   /** Field names that are required for a chart and are missing or unreadable. */
   readonly missing: readonly string[];
 }
@@ -123,6 +144,7 @@ export const PERSON_FIELDS = [
   'witness',
   'relocationPlaces',
   'customPoints',
+  'calculationSettings',
 ] as const;
 
 function isRecordValue(value: unknown): value is Record<string, unknown> {
@@ -261,6 +283,37 @@ export function readCustomPoints(value: unknown): readonly CustomPointDefinition
   return points;
 }
 
+/** What reading a `calculationSettings` register produced: usable settings, or an unreadable flag. */
+export type CalculationSettingsRead =
+  { readonly kind: 'settings'; readonly settings: ExtendedSettings } | { readonly kind: 'unreadable' };
+
+/**
+ * Reads the per-person calculation settings register (#806) with the strict snapshot decoder: a
+ * newer-version or invalid register is `unreadable`, never repaired with defaults. `undefined`
+ * (no register) is distinct from unreadable. Any invalid field, and with `requireAll` (the default) any
+ * missing one, makes the register unreadable; a v2 export's older settings bag is read with `requireAll` off.
+ */
+export function readCalculationSettings(value: unknown, requireAll = true): CalculationSettingsRead | undefined {
+  if (value === undefined || value === null) return undefined;
+  if (!isRecordValue(value) || !isRecordValue(value.settings)) return { kind: 'unreadable' };
+  try {
+    // Version and rulership are checked by the snapshot decoder; the settings bag itself must be complete and valid.
+    decodeCalculationSnapshot(value);
+    return { kind: 'settings', settings: decodeStrictExtendedSettings(value.settings, requireAll) };
+  } catch (error) {
+    if (error instanceof SnapshotDecodeError) return { kind: 'unreadable' };
+    throw error;
+  }
+}
+
+/**
+ * The value written to a person's `calculationSettings` register (#806): snapshot version plus the
+ * settings. Rulership stays a device preference and custom points have their own register.
+ */
+export function serializeCalculationSettings(settings: ExtendedSettings): JsonValue {
+  return JSON.parse(JSON.stringify({ version: CURRENT_SNAPSHOT_VERSION, settings })) as JsonValue;
+}
+
 /**
  * Assemble a person from field values, reporting what is unusable.
  *
@@ -276,6 +329,7 @@ export function buildPerson(id: string, fields: ReadonlyMap<string, unknown>): P
   const witness = readWitness(fields.get('witness'));
   const relocationPlaces = readRelocationPlaces(fields.get('relocationPlaces'));
   const customPoints = readCustomPoints(fields.get('customPoints'));
+  const calculation = readCalculationSettings(fields.get('calculationSettings'));
 
   const missing: string[] = [];
   if (civil === undefined) missing.push('civil');
@@ -305,6 +359,8 @@ export function buildPerson(id: string, fields: ReadonlyMap<string, unknown>): P
     ...(witness === undefined ? {} : { witness }),
     ...(relocationPlaces === undefined ? {} : { relocationPlaces }),
     ...(customPoints === undefined ? {} : { customPoints }),
+    ...(calculation?.kind === 'settings' ? { calculationSettings: calculation.settings } : {}),
+    ...(calculation?.kind === 'unreadable' ? { calculationSettingsUnreadable: true } : {}),
     missing,
   };
 }

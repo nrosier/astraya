@@ -3,7 +3,8 @@
  * commit model (#506/#509), per `docs/ui/UI-UX_IMPLEMENTATION_PLAN.md` §5.2. Pure metadata — this
  * is NOT a second storage system; each setting's actual value stays owned by its existing
  * module (`locale.ts`, `theme-dom.ts`, `symbol-setting.ts`, `glyph-variant-setting.ts`,
- * `rulership-setting.ts`) until it is deliberately migrated.
+ * `rulership-setting.ts`) until it is deliberately migrated. The one exception is the person-scope
+ * `person.calculationSettings` entry (#806), whose value lives in the op log on the person.
  *
  * Scope here means *intended* scope per `docs/ui/UI-UX_GUIDELINES.md` §3, not necessarily today's
  * persistence: language and rulership are documented as `'account'`-scoped (should sync across
@@ -161,10 +162,23 @@ export const SETTINGS: readonly SettingDefinition[] = [
     resetTarget: 'the real default (the "important" preset)',
   },
   {
+    key: 'person.calculationSettings',
+    scope: 'person',
+    owner:
+      "One person's chart calculation settings (house system, zodiac, orb scale and rules, visible points, aspects, Lilith/node variants), kept on the person (#806)",
+    describeDefault: "unset (the person starts from this device's default profile, then the Astraya default)",
+    persistence: 'indexeddb-oplog',
+    synced: true,
+    editingSurface: 'ExtendedSettingsPanel.tsx on that person’s chart screens',
+    commitMode: 'staged',
+    sensitive: false,
+    resetTarget: 'The default calculation profile',
+  },
+  {
     key: 'astraya:defaultCalculationProfile',
     scope: 'account',
     owner:
-      'The calculation profile (zodiac/houses/rulers/orbs/points/aspects) every new chart starts from on this device',
+      'The calculation profile (zodiac/houses/rulers/orbs/points/aspects) a person without settings of their own starts from on this device (#806)',
     describeDefault: 'unset (falls back to the Modern Western built-in profile)',
     persistence: 'local-storage',
     synced: false,
@@ -206,8 +220,12 @@ export function validateSettings(settings: readonly SettingDefinition[] = SETTIN
     if (setting.scope === 'device' && setting.synced) {
       violations.push(`"${setting.key}": device-scope setting must never claim cross-device sync`);
     }
-    if (setting.scope === 'person') {
-      violations.push(`"${setting.key}": person records are inputs, not settings — see docs/ui/UI-UX_GUIDELINES.md §3`);
+    // Person scope is for calculation settings stored on the person (docs/ui/UI-UX_GUIDELINES.md §3.1, #806),
+    // which live in the op log; anything else on a person is an input, not a setting.
+    if (setting.scope === 'person' && setting.persistence !== 'indexeddb-oplog') {
+      violations.push(
+        `"${setting.key}": person-scope setting must be stored on the person through the op log (got "${setting.persistence}") — see docs/ui/UI-UX_GUIDELINES.md §3.1`,
+      );
     }
   }
   return violations;

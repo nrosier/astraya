@@ -78,7 +78,8 @@ import { useMessages } from './messages.js';
 import { ordered } from './people-list.js';
 import { pdfExportMessages } from './pdf-export.messages.js';
 import { useRulershipChoice } from './rulership-setting.js';
-import { useExtendedSettings } from './extended-settings-store.js';
+import { usePersonCalculationSettings } from './person-calculation-settings.js';
+import { unreadableSettingsNoticeMessages } from './UnreadableSettingsNotice.messages.js';
 import { useOrbContextSource, useOrbLibrary } from './orb-library-store.js';
 import { useStoreState } from './store-context.js';
 import { readLastPersonId } from './last-person.js';
@@ -115,8 +116,6 @@ export function PdfExportBuilder({ embedded = false }: { readonly embedded?: boo
   const [locale] = useLocale();
   const user = useSessionUserOrUndefined();
   const [rulership] = useRulershipChoice();
-  // The calculation settings the Charts page is drawing with (#582): a PDF chart must be that chart.
-  const [extendedSettings] = useExtendedSettings();
   const orbLibrary = useOrbLibrary();
   const orbSources = useOrbContextSource();
   const { provider } = useEphemerisProvider();
@@ -138,6 +137,9 @@ export function PdfExportBuilder({ embedded = false }: { readonly embedded?: boo
   const id = useId();
 
   const person = state.people.get(personId);
+  // The chosen person's own calculation settings (#582, #806): a PDF chart must be the chart their page draws.
+  const { settings: extendedSettings, unreadable: settingsUnreadable } = usePersonCalculationSettings(personId);
+  const unreadableT = useMessages(unreadableSettingsNoticeMessages);
   const partnerCandidates = useMemo(
     () => people.filter((candidate) => isPartnerCandidate(candidate, personId)),
     [people, personId],
@@ -367,6 +369,10 @@ export function PdfExportBuilder({ embedded = false }: { readonly embedded?: boo
 
   async function handleBuild(): Promise<void> {
     if (person === undefined || provider === undefined) return;
+    if (settingsUnreadable) {
+      setStatus({ kind: 'error', message: unreadableT.notice(person.displayName || '') });
+      return;
+    }
     setStatus({ kind: 'building' });
     try {
       const { buildPdfPlan } = await import('./pdf-export-plan.js');

@@ -35,12 +35,18 @@
  * `relocationPlaces`/`customPoints` note above), so a restore of an old-shaped export is
  * unaffected either way. `calculation-snapshot.ts`'s own `CURRENT_SNAPSHOT_VERSION` is the one
  * that actually deep-parses `ExtendedSettings` and is the one that bumped for this.
+ *
+ * #806 bumped 2 to 3: each person now carries their own `calculationSettings` (the chart settings
+ * their natal chart and harmonic charts below were computed with), because chart settings moved from
+ * the device onto the person. `preferences.settings` remains the device default, used for people
+ * without their own. The importer reads v2 and v3; a v2 person takes the file's `preferences.settings`
+ * as their settings, which is exactly what their charts in that file were computed with.
  */
 /**
  * @module full-export
  * @purpose Builds the whole-device export: every person's birth record plus (where possible) their computed natal and named Varga chart tables, as one JSON document or a people CSV.
  * @conventions Plain JSON with its own `format`/`version` fields rather than a database dump; charts are computed with the caller-supplied `ExtendedSettings`/`rulership` (#541), carried verbatim into `preferences` so the document states exactly what was in force; each named Varga chart includes its radix-to-result longitude provenance; one person's chart failure is caught and reported per-person rather than failing the whole export; deleted people are excluded; `FULL_EXPORT_VERSION`'s own compatibility policy lives in docs/domain/EXPORT_SCHEMA.md, not in this file; `full-export-importer.ts` is this file's restore counterpart.
- * @exports buildFullExport, peopleToCsv, fullExportFilename, peopleCsvFilename, peopleAafFilename, FullExport, ExportedPerson, ExportedChart, ExportedHarmonicChart, FULL_EXPORT_FORMAT, FULL_EXPORT_VERSION
+ * @exports buildFullExport, peopleToCsv, fullExportFilename, peopleCsvFilename, peopleAafFilename, FullExport, ExportedPerson, ExportedChart, ExportedHarmonicChart, FULL_EXPORT_FORMAT, FULL_EXPORT_VERSION, SUPPORTED_IMPORT_VERSIONS
  */
 import { VARGA_PRESETS } from '../astrology/harmonics.js';
 import type { RulershipChoice } from '../astrology/rulership.js';
@@ -72,7 +78,9 @@ import type { CustomPointDefinition, Person, RelocationPlace } from './person.js
 import type { EphemerisProvider } from '../ephemeris/types.js';
 
 export const FULL_EXPORT_FORMAT = 'astraya-export';
-export const FULL_EXPORT_VERSION = 2;
+export const FULL_EXPORT_VERSION = 3;
+/** Versions the importer still reads: v2 files have no per-person settings, so their people take the file's preferences (#806). */
+export const SUPPORTED_IMPORT_VERSIONS: readonly number[] = [2, 3];
 
 export interface ExportedChart {
   readonly sect: ChartData['sect'];
@@ -127,6 +135,8 @@ export interface ExportedPerson {
   readonly relocationPlaces?: readonly RelocationPlace[];
   /** Custom formula points (#566); absent if none are saved. Needed for a restore to be complete — see #587. */
   readonly customPoints?: readonly CustomPointDefinition[];
+  /** The chart settings this person's charts were computed with (#806, v3); absent in v2 files and for a person whose saved settings were unreadable. */
+  readonly calculationSettings?: ExtendedSettings;
   readonly natalChart?: ExportedChart;
   /** Named Varga charts derived from the radix, absent when no usable houses are available. */
   readonly harmonicCharts?: readonly ExportedHarmonicChart[];
@@ -183,7 +193,7 @@ function stationDisclosureOf(settings: ExtendedSettings): string {
 function noteFor(settings: ExtendedSettings, rulership: RulershipChoice): string {
   const customized = JSON.stringify(settings) !== JSON.stringify(DEFAULT_EXTENDED_SETTINGS);
   const basis = customized
-    ? "this device's own current calculation settings (see preferences, below)"
+    ? "this device's own current calculation settings, or a person's own where they have saved them (see calculationSettings on each person)"
     : 'the application defaults (Placidus houses, tropical zodiac, standard orbs)';
   return (
     `Charts are calculated with ${basis}, and the planetary rulers set to ${rulership}. ` +
@@ -271,6 +281,9 @@ async function natalArtifact(
   }
 }
 
+const UNREADABLE_SETTINGS_ERROR =
+  "This person's saved chart settings could not be read by this version of Astraya, so no chart was calculated.";
+
 export async function buildFullExport(params: {
   readonly people: readonly Person[];
   readonly provider: EphemerisProvider;
@@ -280,8 +293,6 @@ export async function buildFullExport(params: {
   readonly symbolClass: string;
   readonly now: Date;
 }): Promise<FullExport> {
-  const calcOptions = { ...toChartCalculationOptions(params.settings), rulership: params.rulership };
-  const visibility = toPointVisibilityOptions(params.settings);
   const people: ExportedPerson[] = [];
   for (const person of params.people) {
     const base = {
@@ -293,12 +304,25 @@ export async function buildFullExport(params: {
       ...(person.moment === undefined ? {} : { birth: person.moment }),
       ...(person.relocationPlaces === undefined ? {} : { relocationPlaces: person.relocationPlaces }),
       ...(person.customPoints === undefined ? {} : { customPoints: person.customPoints }),
+      // A person with no register of their own is charted from the device default; writing the resolved
+      // settings makes the export self-contained, so a restore elsewhere cannot change their chart (#806).
+      ...(person.calculationSettingsUnreadable === true
+        ? {}
+        : { calculationSettings: person.calculationSettings ?? params.settings }),
       missing: person.missing,
     };
     if (person.moment === undefined) {
       people.push(base);
       continue;
     }
+    if (person.calculationSettingsUnreadable === true) {
+      // Never chart a person from settings nobody chose: say so instead of falling back to the device's.
+      people.push({ ...base, chartError: UNREADABLE_SETTINGS_ERROR });
+      continue;
+    }
+    const settings = person.calculationSettings ?? params.settings;
+    const calcOptions = { ...toChartCalculationOptions(settings), rulership: params.rulership };
+    const visibility = toPointVisibilityOptions(settings);
     try {
       const data = await computeChartData(person.moment, params.provider, {
         ...calcOptions,
@@ -316,7 +340,7 @@ export async function buildFullExport(params: {
           )
         : undefined;
       const calculation = await natalArtifact(
-        buildCalculationSnapshot(params.settings, params.rulership, person.customPoints ?? []),
+        buildCalculationSnapshot(settings, params.rulership, person.customPoints ?? []),
         person.moment,
         data,
         params,

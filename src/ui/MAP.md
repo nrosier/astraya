@@ -5,7 +5,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 **Subdirectory:** `primitives/` — shared UI primitives for the #506 UI/UX overhaul (Button, Field/TextField/NumberField/DateField/Select, Checkbox/Radio/ChoiceGroup/OptionCards, Tooltip). See its own `MAP.md`.
 
 - `About.tsx` + `About.messages.ts` — About/privacy/licence screen, version metadata. Deps: none (static content).
-- `default-calculation-profile.ts` — The saved default calculation profile (device preference, #510) that seeds the chart settings store. Deps: `chart/calculation-profiles`, `extended-settings-store`.
+- `default-calculation-profile.ts` — The saved default calculation profile (device preference, #510) that new people start from and Preferences edits (#806). Deps: `chart/calculation-profiles`.
 - `online-status.ts` — Hook following the browser's online/offline state, so network-only actions can show the offline result state. Deps: none.
 - `astro-glossary.messages.ts` — Astrology glossary catalogue (en/nl name + definition per term), the one source for every GlossaryTerm. Deps: none.
 - `GlossaryTerm.tsx` — Inline `GlossaryTerm` and the per-screen `GlossaryTerms` list, opening definitions through the shared Tooltip. Deps: `astro-glossary.messages`, `GlossaryTerm.messages`, `primitives/Tooltip`.
@@ -114,7 +114,9 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `eclipses.ts` — Eclipses screen (search capping + display rows). Deps: `astrology/eclipses`, `astrology/signs`, `time/julian`.
 - `electional.ts` — Electional screen (form parsing + result formatting). Deps: `astrology/electional`, `time/julian`, `./place-fields`.
 - `export-registry.tsx` — Per-screen export registration contexts. Deps: none (React only).
-- `extended-settings-store.ts` — In-memory chart settings store (per-visit, never persisted). Deps: `chart/extended-settings`.
+- `person-calculation-settings.ts` — Hook for one person's calculation settings (own register, else device default profile) and its async setter (rejects on write failure); flags an unreadable register (#806). Deps: `store-context`, `default-calculation-profile`, `domain/person`.
+- `UnreadableSettingsNotice.tsx` + `.messages.ts` — Notice shown instead of a chart when a person's saved settings are unreadable (#806). Deps: `primitives/StatusMessage`, `BackLink`.
+- `use-calculation-settings-migration.ts` — Once-per-account move of device chart settings onto existing people, after first sync when signed in (#806). Deps: `session-context`, `sync/engine`, `domain/calculation-settings-migration`, `default-calculation-profile`.
 - `extended-settings-summary.ts` — Diffs extended settings to summarize changes. Deps: `chart/extended-settings`.
 - `format.ts` — Locale-aware formatting (dates/coords). Deps: `interpretation/schema` (Locale type only).
 - `forward-geocode.ts` — Place-name → coordinates resolution (MapTiler/Nominatim). Deps: `./geocode-provider`.

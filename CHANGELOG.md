@@ -4,6 +4,13 @@ All notable changes to Astraya are recorded here. Versions follow
 [semantic versioning](https://semver.org/), and every milestone ends in a release —
 see [docs/ops/RELEASING.md](docs/ops/RELEASING.md).
 
+## [Unreleased]
+
+### Changed
+
+- **Chart settings belong to each person (#806).** House system, zodiac, orbs and visible points are saved on the person, so one client's choices no longer change another's chart. Existing settings on this device are copied to existing people once. Glyph variants and the degree-symbol display stay on the device. The full export is now version 3 and the importer still reads version 2.
+- **Older builds ignore the per-person settings.** A device running an older version of Astraya does not read the new field, so it draws that person's chart from its own settings until it is updated.
+
 ## [0.42.12] — 2026-10-25
 
 **Text is a little smaller and more consistent across the app, and the place search lists plain place names.**

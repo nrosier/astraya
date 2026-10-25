@@ -22,6 +22,7 @@ import { parseRoute } from './route.js';
 import { SessionProvider, useStoreStatus } from './session-context.js';
 import { StoreProvider } from './store-context.js';
 import { SyncBadge } from './SyncBadge.js';
+import { useCalculationSettingsMigration } from './use-calculation-settings-migration.js';
 import { SymbolToggle } from './SymbolToggle.js';
 import { ThemeToggle } from './ThemeToggle.js';
 import { WorkspaceShell } from './WorkspaceShell.js';
@@ -167,6 +168,8 @@ export function App(): React.JSX.Element {
  */
 function StoreFrame({ children }: { children: React.ReactNode }): React.JSX.Element {
   const status = useStoreStatus();
+  // Moves the device's chart settings onto existing people once (#806).
+  useCalculationSettingsMigration();
   return <StoreProvider store={status.kind === 'ready' ? status.store : undefined}>{children}</StoreProvider>;
 }
 

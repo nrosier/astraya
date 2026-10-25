@@ -28,7 +28,7 @@
  * @module store/oplog
  * @purpose Implements the append-only operation log itself: appending local mutations, merging a peer's records, and querying/purging the log — the structure the fold materialises state from.
  * @conventions The log is an immutable value threaded through by the caller, not module state, so multiple logs can coexist in one process for testing; records are kept sorted by HLC timestamp so merging two logs is just a union; a record from a newer client is stored unread rather than dropped, since this device may be the only route by which it reaches another peer; two different operations claiming the same timestamp is treated as corruption, never silently resolved by picking one.
- * @exports Log, Mutation, emptyLog, Appended, append, Rejection, Received, receiveRecords, since, latest, Purged, purgeEntity
+ * @exports Log, Mutation, emptyLog, Appended, append, appendAt, Rejection, Received, receiveRecords, since, latest, Purged, purgeEntity
  */
 import { compareHlc, receive, tick, type Clock, type Drift, type Hlc } from './hlc.js';
 import { decode, newRecord, type JsonValue, type OpRecord } from './ops.js';
@@ -143,6 +143,17 @@ export function append(log: Log, mutation: Mutation, physicalMillis: number): Ap
   const stamped = tick(log.clock, physicalMillis);
   const record = newRecord({ ...mutation, hlc: stamped.hlc, deviceId: stamped.clock.nodeId });
   return { log: { clock: stamped.clock, records: insert(log.records, record) }, record };
+}
+
+/**
+ * Insert a local mutation under a caller-chosen timestamp, leaving the log's clock alone.
+ *
+ * Only for `store.seed`, which stamps at the minimum HLC so any real write wins. Ordinary
+ * writes must go through `append`, which keeps the clock monotonic.
+ */
+export function appendAt(log: Log, mutation: Mutation, hlc: Hlc, deviceId: string): Appended {
+  const record = newRecord({ ...mutation, hlc, deviceId });
+  return { log: { clock: log.clock, records: insert(log.records, record) }, record };
 }
 
 /** A record that could not be stored, kept with its reason so it can be reported. */

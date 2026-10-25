@@ -29,7 +29,8 @@ import { houseSystemLabel, rulershipLabel, zodiacLabel } from './ChartView.js';
 import { PrintProvenance } from './PrintProvenance.js';
 import { DEFAULT_EXTENDED_SETTINGS, settingsForContext, withOrbsOf } from '../chart/extended-settings.js';
 import { DEFAULT_RULERSHIP_CHOICE } from '../astrology/rulership.js';
-import { useExtendedSettings } from './extended-settings-store.js';
+import { usePersonCalculationSettings } from './person-calculation-settings.js';
+import { UnreadableSettingsNotice } from './UnreadableSettingsNotice.js';
 import { useOrbContextSource, useOrbLibrary } from './orb-library-store.js';
 import { DEFAULT_ORB_CONFIG } from '../astrology/aspects.js';
 import { buildCalculationSnapshot, snapshotCalculationOptions } from '../domain/calculation-snapshot.js';
@@ -152,7 +153,7 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
   const [load, setLoad] = useState<Load>({ kind: 'idle' });
   // The orbs are the device's Extended settings (#590), tightened for synastry (#543); everything else stays at
   // the engine defaults, as this screen's footer says.
-  const [extendedSettings] = useExtendedSettings();
+  const { settings: extendedSettings, unreadable: settingsUnreadable } = usePersonCalculationSettings(personId);
   const orbLibrary = useOrbLibrary();
   const orbSources = useOrbContextSource();
   const snapshot = useMemo(
@@ -165,7 +166,7 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
   );
 
   useEffect(() => {
-    if (personMoment === undefined || partnerMoment === undefined || provider === undefined) {
+    if (personMoment === undefined || partnerMoment === undefined || provider === undefined || settingsUnreadable) {
       setLoad({ kind: 'idle' });
       return undefined;
     }
@@ -197,7 +198,7 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
     return () => {
       effect.cancelled = true;
     };
-  }, [personMoment, partnerMoment, provider, snapshot]);
+  }, [settingsUnreadable, personMoment, partnerMoment, provider, snapshot]);
 
   // The reviewed interpretation texts are fetched once a synastry is on screen, and kept per language;
   // until they arrive (or if they cannot) the rows show the mechanical sentence.
@@ -293,6 +294,10 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
 
   if (person === undefined) {
     return <PersonNotFound />;
+  }
+
+  if (settingsUnreadable) {
+    return <UnreadableSettingsNotice personId={personId} name={person.displayName || ''} />;
   }
 
   if (person.moment === undefined || person.timeAccuracy === 'unknown') {

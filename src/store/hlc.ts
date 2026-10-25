@@ -34,7 +34,7 @@
  * @module store/hlc
  * @purpose Implements the hybrid logical clock used to timestamp every operation in the log, giving the op-log a total, causally-consistent order across devices that resolves last-write-wins conflicts.
  * @conventions Timestamps are fixed-width strings (`millis-counter-nodeId`) so lexicographic string comparison equals causal order, which every string-sorted or string-keyed read in the store relies on; the logical counter never decreases even if the physical clock goes backwards; the device id breaks ties so ordering is total rather than merely partial; a peer's clock being implausibly far ahead is only reported, never rejected client-side, since only the server is positioned to judge genuine clock skew (#105).
- * @exports Hlc, NodeId, isNodeId, Clock, DRIFT_REPORT_THRESHOLD_MS, Drift, Tick, createClock, randomNodeId, encodeHlc, decodeHlc, isHlc, tick, receive, compareHlc
+ * @exports MAX_COUNTER, Hlc, NodeId, isNodeId, Clock, DRIFT_REPORT_THRESHOLD_MS, Drift, Tick, createClock, randomNodeId, encodeHlc, decodeHlc, isHlc, tick, receive, compareHlc
  */
 
 /**
@@ -60,7 +60,7 @@ export type Hlc = string;
 
 const MILLIS_DIGITS = 18;
 const COUNTER_DIGITS = 5;
-const MAX_COUNTER = 10 ** COUNTER_DIGITS - 1;
+export const MAX_COUNTER = 10 ** COUNTER_DIGITS - 1;
 
 /** A device id: 16 lowercase hex characters. Fixed width, so ties break cleanly. */
 export type NodeId = string;

@@ -37,8 +37,8 @@ import {
   putSnapshot,
 } from './db.js';
 import { EMPTY_REGISTERS, DELETED_FIELD, PURGED_FIELD, applyRecords, materialise, resume, snapshotOf } from './fold.js';
-import { append, emptyLog, latest, purgeEntity, receiveRecords, since } from './oplog.js';
-import { createClock, isNodeId, randomNodeId, receive } from './hlc.js';
+import { append, appendAt, emptyLog, latest, purgeEntity, receiveRecords, since } from './oplog.js';
+import { MAX_COUNTER, createClock, encodeHlc, isNodeId, randomNodeId, receive } from './hlc.js';
 import { decode } from './ops.js';
 import { requestPersistence } from './persist.js';
 import { acquireWriteLock } from './tab-lock.js';
@@ -61,6 +61,9 @@ const SNAPSHOT_EVERY = 50;
 
 /** The meta key holding how far the sync engine (M8) has pushed and pulled. Opaque to this file. */
 const SYNC_CURSOR_KEY = 'syncCursor';
+
+/** The meta key holding the last seed counter handed out; only ever increases, so a seed stamp is never reused. */
+const SEED_COUNTER_KEY = 'seedCounter';
 
 /** Shown when a read-only tab (#311) attempts a write. */
 const NOT_WRITABLE_MESSAGE =
@@ -136,6 +139,14 @@ export interface Store {
   readonly resumedFromSnapshot: boolean;
   /** Write fields. Resolves once the records are durable and `state` has been replaced. */
   mutate(mutations: readonly Mutation[]): Promise<void>;
+  /**
+   * Write default values that lose to every real write (#806). Records are stamped at the
+   * minimum HLC (`millis` 0) with a persisted, ever-increasing counter, so any real choice,
+   * from any device and even one made offline, wins the field's register; with no real
+   * choice the seed stands. The log clock is untouched. Resolves with the new records so the
+   * caller can push them: they sit below the sync cursor, so the engine never will.
+   */
+  seed(mutations: readonly Mutation[]): Promise<readonly OpRecord[]>;
   /** Mark an entity deleted. A tombstone is a field write, so undo is one more write. */
   remove(entity: string, entityId: string): Promise<void>;
   /** Undo a delete. Possible precisely because the tombstone was never a real deletion. */
@@ -345,6 +356,30 @@ export async function openStore(options: StoreOptions = {}): Promise<Store> {
     });
   }
 
+  function seedRecords(mutations: readonly Mutation[]): Promise<readonly OpRecord[]> {
+    return serialise(async () => {
+      if (mutations.length === 0) return [];
+      if (!tabLock.writable) throw new Error(NOT_WRITABLE_MESSAGE);
+      const stored = await getMeta(db, SEED_COUNTER_KEY);
+      const base = typeof stored === 'number' && Number.isInteger(stored) && stored >= 0 ? stored : 0;
+      if (base + mutations.length > MAX_COUNTER) throw new Error('Seed counter exhausted.');
+      let next = log;
+      const written: OpRecord[] = [];
+      let counter = base;
+      for (const mutation of mutations) {
+        counter += 1;
+        const result = appendAt(next, mutation, encodeHlc({ millis: 0, counter, nodeId: deviceId }), deviceId);
+        next = result.log;
+        written.push(result.record);
+      }
+      // The counter is burned before the records exist: if the write below fails, the
+      // numbers are simply skipped, never reused.
+      await putMeta(db, SEED_COUNTER_KEY, counter);
+      await commitRecords(next, written);
+      return written;
+    });
+  }
+
   function receiveIncoming(records: readonly unknown[]): Promise<ReceivedSummary> {
     return serialise(async () => {
       // A read-only tab must not fold a peer's record in either: doing so still advances
@@ -393,6 +428,7 @@ export async function openStore(options: StoreOptions = {}): Promise<Store> {
     },
     resumedFromSnapshot,
     mutate: write,
+    seed: seedRecords,
     remove: (entity, entityId) => write([{ entity, entityId, field: DELETED_FIELD, value: true }]),
     restore: (entity, entityId) => write([{ entity, entityId, field: DELETED_FIELD, value: false }]),
     purge: (entity, entityId) =>

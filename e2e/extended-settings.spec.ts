@@ -259,13 +259,13 @@ test('saving a profile as the device default applies it to a chart that was neve
     .check();
   await card.getByRole('button', { name: 'Save as my default', exact: true }).click();
   await expect(card).toBeHidden();
+  // Ada was created after the first launch, so she has no settings of her own and follows the new default (#806).
   await openSettings(page);
-  await expect(card.getByLabel('House system', { exact: true })).toHaveValue('P');
+  await expect(card.getByLabel('House system', { exact: true })).toHaveValue('W');
   await closeSettings(page);
 
-  // The in-memory ExtendedSettings store is seeded once per real page load (#510), not on every
-  // hash navigation within the same SPA session — matching `extended-settings-store.ts`'s own
-  // "held for the page's lifetime" design — so a genuine reload is needed to pick up the new default.
+  // Chart settings are owned by each person (#806) and seeded from the saved device default only for a person
+  // who has none of their own (#510). The reload checks that the new default persists across a real page load.
   await page.reload();
   await page.waitForLoadState('load');
 

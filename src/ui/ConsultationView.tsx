@@ -88,8 +88,8 @@ import { ordinal } from './placement-label.js';
 import { PageHeader } from './PageHeader.js';
 import { Disclosure } from './primitives/Disclosure.js';
 import { Button } from './primitives/Button.js';
-import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
-import { useDefaultCalculationProfile } from './default-calculation-profile.js';
+import { usePersonCalculationSettings } from './person-calculation-settings.js';
+import { UnreadableSettingsNotice } from './UnreadableSettingsNotice.js';
 import { rulershipSettingMessages } from './RulershipSetting.messages.js';
 import { FilterSummary } from './primitives/FilterSummary.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
@@ -139,13 +139,14 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
   const rulershipT = useMessages(rulershipSettingMessages);
   const [locale] = useLocale();
   const [rulership] = useRulershipChoice();
-  const [defaultProfile] = useDefaultCalculationProfile();
+  const { settings: personSettings, unreadable: settingsUnreadable } = usePersonCalculationSettings(personId);
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
   // The session's moment (#676): when the page opened, or when Now was last pressed. Not noon UT, where the Moon can be 6° off.
   const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
-    if (person?.moment === undefined || provider === undefined) return undefined;
+    // An unreadable register means no chart-dependent content at all, never one from placeholder settings (#806).
+    if (person?.moment === undefined || provider === undefined || settingsUnreadable) return undefined;
     const effect = { cancelled: false };
     const moment = person.moment;
     setLoad({ kind: 'loading' });
@@ -212,7 +213,7 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
     return () => {
       effect.cancelled = true;
     };
-  }, [person?.moment, provider, now, rulership]);
+  }, [person?.moment, provider, now, rulership, settingsUnreadable]);
 
   const natalHouses = load.kind === 'ready' ? load.transit.natal.houses : undefined;
   const rules = useMemo<TransitRuleContext>(
@@ -271,6 +272,10 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
 
   if (person === undefined) return <PersonNotFound />;
 
+  if (settingsUnreadable) {
+    return <UnreadableSettingsNotice personId={personId} name={person.displayName || ''} />;
+  }
+
   const title = person.displayName ? t.heading(person.displayName) : t.fallback;
   if (person.moment === undefined) {
     return (
@@ -284,7 +289,7 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
     );
   }
 
-  const zodiac = defaultProfile?.settings.zodiac ?? DEFAULT_EXTENDED_SETTINGS.zodiac;
+  const zodiac = personSettings.zodiac;
   const zodiacLabel = zodiac.kind === 'sidereal' ? t.sidereal : t.tropical;
   const signName = (sign: number): string => signDisplayName(SIGNS[sign]?.name ?? '', locale);
   const body = (key: string): string => bodyDisplayName(key, locale);

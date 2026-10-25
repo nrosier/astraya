@@ -29,7 +29,8 @@ import {
   differingPrimaryDirectionsSettings,
   type PrimaryDirectionsMismatch,
 } from '../domain/primary-directions-settings.js';
-import { useExtendedSettings } from './extended-settings-store.js';
+import { usePersonCalculationSettings } from './person-calculation-settings.js';
+import { UnreadableSettingsNotice } from './UnreadableSettingsNotice.js';
 import { useOrbContextSource, useOrbLibrary } from './orb-library-store.js';
 import { useRulershipChoice } from './rulership-setting.js';
 import { buildCalculationSnapshot, type CalculationSnapshot } from '../domain/calculation-snapshot.js';
@@ -196,7 +197,7 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
   const [locale] = useLocale();
   // The settings the person's natal chart uses, resolved as ChartView does (device-level, #797). They are
   // recorded as the artifact's requested snapshot; the directions themselves are always Placidus/tropical.
-  const [cardSettings] = useExtendedSettings();
+  const { settings: cardSettings, unreadable: settingsUnreadable } = usePersonCalculationSettings(personId);
   const orbLibrary = useOrbLibrary();
   const orbSources = useOrbContextSource();
   const settings = useMemo(
@@ -228,7 +229,7 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
   }, [asOf]);
 
   useEffect(() => {
-    if (personMoment === undefined || provider === undefined) return undefined;
+    if (personMoment === undefined || provider === undefined || settingsUnreadable) return undefined;
     const moment = personMoment;
     const effect = { cancelled: false };
     setLoad({ kind: 'loading' });
@@ -255,7 +256,7 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
     return () => {
       effect.cancelled = true;
     };
-  }, [personMoment, provider, key, method, mode, promissors, significators, requestedSnapshot]);
+  }, [settingsUnreadable, personMoment, provider, key, method, mode, promissors, significators, requestedSnapshot]);
 
   useEffect(() => {
     if (load.kind !== 'ready' || !load.data.defined || provider === undefined || targetDate === undefined) {
@@ -311,6 +312,10 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
 
   if (person === undefined) {
     return <PersonNotFound />;
+  }
+
+  if (settingsUnreadable) {
+    return <UnreadableSettingsNotice personId={personId} name={person.displayName || ''} />;
   }
 
   if (person.moment === undefined) {
