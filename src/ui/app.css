@@ -831,11 +831,12 @@ footer {
 
 /*
  * Horary chart form (#782): two cards, side by side when there is room. BirthPlaceSearch is shared with
- * other screens, so its layout and its inner hint are adjusted here only, under `.horary-form`.
+ * other screens, so its layout and its inner hint are adjusted here only, under `.horary-form`. The 25rem column
+ * floor keeps the Dutch house-system label whole; at 22rem a third (empty) track narrowed each card below it.
  */
 .horary-form {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 25rem), 1fr));
   gap: var(--space-4);
   align-items: start;
 }
@@ -885,8 +886,12 @@ footer {
   box-sizing: border-box;
 }
 
-/* Dimmed by border and background, not opacity: faded labels and text would fail WCAG AA contrast. */
-.horary-coords--pending:not(:focus-within) input {
+/*
+ * Dimmed by border and background, not opacity: faded labels and text would fail WCAG AA contrast. The
+ * `.primitive-field` prefix and the repeated `:not()` match the specificity of the shared input rule, which would
+ * otherwise win and leave the pending state looking filled.
+ */
+.horary-coords--pending:not(:focus-within) .primitive-field input:not([type='checkbox']):not([type='radio']) {
   border-style: dashed;
   background: transparent;
   color: var(--muted);
