@@ -61,6 +61,8 @@ const en = {
   interpretationSavedMoveUp: 'Move up',
   interpretationSavedMoveDown: 'Move down',
   chartsLegend: 'Charts',
+  chartVisibilityNote:
+    'Objects hidden on a chart are also left out of its PDF wheel, tables and aspect lists. Synastry is not affected.',
   chartTypeLabels: {
     natal: 'Natal',
     draconic: 'Draconic',
@@ -201,6 +203,9 @@ const nl: typeof en = {
   interpretationSavedMoveUp: 'Omhoog',
   interpretationSavedMoveDown: 'Omlaag',
   chartsLegend: 'Horoscopen',
+  // nl wording pending native review (#560)
+  chartVisibilityNote:
+    'Objecten die op een horoscoop verborgen zijn, worden ook uit het wiel, de tabellen en de aspectlijsten in de PDF weggelaten. Synastrie wordt niet beïnvloed.',
   chartTypeLabels: {
     natal: 'Geboortehoroscoop',
     draconic: 'Draconisch',
