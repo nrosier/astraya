@@ -16,7 +16,7 @@ const en = {
   showBodies: 'Show body orbs',
   hideBodies: 'Hide body orbs',
   bodiesHint:
-    'A half-orb for a body. When both bodies of a pair have one, their sum is the orb for that pair. Blank keeps the built-in value.',
+    'A half-orb for a body. When both bodies of a pair have one, their sum is the orb for that pair. Blank keeps the built-in value. For the Ascendant, Midheaven, Vertex and the two lots, a planet’s own half-orb is used (Lilly, Christian Astrology, Book II, p. 208, sources this for the Ascendant; the other points are an Astraya extension of it). A body without a half-orb uses the built-in tiers for these points.',
 };
 
 const nl: typeof en = {
@@ -31,7 +31,7 @@ const nl: typeof en = {
   showBodies: 'Lichaamsorbissen tonen',
   hideBodies: 'Lichaamsorbissen verbergen',
   bodiesHint:
-    'Een halve orbis voor een lichaam. Hebben beide lichamen van een paar er een, dan is de som de orbis voor dat paar. Leeg behoudt de ingebouwde waarde.',
+    'Een halve orbis voor een lichaam. Hebben beide lichamen van een paar er een, dan is de som de orbis voor dat paar. Leeg behoudt de ingebouwde waarde. Voor de Ascendant, het Midheaven, de Vertex en de twee punten gebruikt een planeet de eigen halve orbis (Lilly, Christian Astrology, Boek II, p. 208, onderbouwt dit voor de Ascendant; de andere punten zijn een uitbreiding van Astraya). Een lichaam zonder halve orbis gebruikt voor deze punten de ingebouwde tiers.',
 };
 
 export const orbRulesFieldsMessages = { en, nl };

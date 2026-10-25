@@ -125,7 +125,8 @@ describe('the references file', () => {
     expect(new Set(ids).size).toBe(ids.length);
     for (const passage of file.passages) {
       expect(passage.locator, passage.id).not.toBe('');
-      expect(passage.kind, passage.id).toBe('page-image-transcription');
+      // OCR-only passages must say so in their kind (unverified against the page image, #796).
+      expect(['page-image-transcription', 'ocr-transcription'], passage.id).toContain(passage.kind);
     }
   });
 });

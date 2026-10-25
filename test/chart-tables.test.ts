@@ -920,6 +920,8 @@ describe('chartSheetInput', () => {
           orb: 1.5,
           allowedOrb: 8,
           applying: false,
+          orbRule: 'body-moiety',
+          pointConvention: 'body-moiety-extended',
         },
       ],
     };
@@ -930,6 +932,7 @@ describe('chartSheetInput', () => {
       orb: 1.5,
       signedOrb: -1.5,
       applying: false,
+      orbRule: 'body-moiety',
     });
   });
 

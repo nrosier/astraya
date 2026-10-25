@@ -90,6 +90,15 @@
       "notes": "Uses the second column (Sun 15, Moon 12). The same page's Saturn/Jupiter example uses 9 and 9, each half 4 deg 30 min, summing to 9."
     },
     {
+      "id": "lilly-ii-ascendant-moiety",
+      "topic": "a body's contact to the degree ascending uses its own moiety",
+      "source": "lilly-christian-astrology-1647",
+      "locator": "Book II, p. 208 (farm / house-land question, Lord of the ascendant)",
+      "kind": "ocr-transcription",
+      "text": "If the Lord of the ascendant shall be in the ascendant or Signe ascending, or shall have a sextile or trine aspect unto the Signe ascending, but more properly to the degree ascending, within the moyity of his owne Orbs ...",
+      "notes": "Read from the OCR (b30338724_djvu.txt, near line 26620) and the Book II PDF text layer; NOT verified against the page image. Sources only the Ascendant: the aspecting body's own moiety governs its contact to the ascending degree. Astraya applies the same rule to the Midheaven, Vertex, Part of Fortune and Part of Spirit as its own extension beyond Lilly's text (#796)."
+    },
+    {
       "id": "lilly-i-combustion",
       "topic": "combustion",
       "source": "lilly-christian-astrology-1647",

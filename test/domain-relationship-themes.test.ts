@@ -3,7 +3,9 @@
  * Ephemeris engine — same convention every other cross-chart domain test here follows.
  */
 import { describe, expect, it } from 'vitest';
+import { DEFAULT_ORB_CONFIG } from '../src/astrology/aspects.js';
 import { bodyById } from '../src/astrology/bodies.js';
+import { citedPresetSettings } from '../src/astrology/orb-profiles.js';
 import { computeSynastry } from '../src/domain/synastry.js';
 import {
   aspectValence,
@@ -74,6 +76,27 @@ describe('relationshipAngleContacts (#422)', () => {
       expect(['a', 'b']).toContain(contact.side);
       expect(['asc', 'mc']).toContain(contact.angle);
       expect(contact.orb).toBeGreaterThanOrEqual(0);
+    }
+  });
+
+  it('records the orb rule, and a body-moiety profile governs synastry Asc/MC contacts (#796)', async () => {
+    const engine = await getEngine();
+    const lilly = { ...DEFAULT_ORB_CONFIG, bodyOrbs: citedPresetSettings('lilly-1647-first-v1').bodyOrbs };
+    const tierData = await computeSynastry(PERSON_A, PERSON_B, engine);
+    const lillyData = await computeSynastry(PERSON_A, PERSON_B, engine, { orbConfig: lilly });
+    for (const contact of relationshipAngleContacts(tierData)) {
+      expect(contact.orbRule).toBe('tier');
+      expect(contact.pointConvention).toBe('tier');
+    }
+    const lillyContacts = relationshipAngleContacts(lillyData);
+    expect(lillyContacts.length).toBeGreaterThan(0);
+    for (const contact of lillyContacts) {
+      const key = bodyById(contact.body)?.key ?? '';
+      const moiety = lilly.bodyOrbs[key];
+      expect(contact.pointConvention).toBe('body-moiety-extended');
+      expect(contact.orbRule).toBe(moiety === undefined ? 'tier-fallback' : 'body-moiety');
+      if (moiety !== undefined) expect(contact.allowedOrb).toBeCloseTo(moiety * 0.7, 10);
+      expect(contact.orb).toBeLessThanOrEqual(contact.allowedOrb);
     }
   });
 

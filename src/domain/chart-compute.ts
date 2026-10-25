@@ -17,15 +17,15 @@
 /**
  * @module chart-compute
  * @purpose Computes a chart's positions, houses, aspects, dignities, sect and derived points from a birth moment (#44).
- * @conventions One ephemeris pass (one Julian day, one batch position call, one house call) then pure arithmetic; nothing is cached — results are cheap to recompute, not stored as a second source of truth; `housesAreDefined` must be checked before trusting house-derived fields. Point aspects (Asc/MC always; Vertex, Part of Fortune/Spirit opt-in via `aspectsTo`) are point-to-body only, use the planet orbs, and drop a part's aspect to its own "+" luminary (#516). Enrichments (declinations, fixedStars, obliquity) are optional fields computed alongside core chart data (#589) but can be lazy-loaded separately for better performance when not needed.
+ * @conventions One ephemeris pass (one Julian day, one batch position call, one house call) then pure arithmetic; nothing is cached — results are cheap to recompute, not stored as a second source of truth; `housesAreDefined` must be checked before trusting house-derived fields. Point aspects (Asc/MC always; Vertex, Part of Fortune/Spirit opt-in via `aspectsTo`) are point-to-body only, use the aspecting body's moiety under a body-moiety profile (Lilly p. 208 for the Ascendant; an Astraya extension for MC/Vertex/lots) else the planet tiers, record the rule used (#796), and drop a part's aspect to its own "+" luminary (#516). Enrichments (declinations, fixedStars, obliquity) are optional fields computed alongside core chart data (#589) but can be lazy-loaded separately for better performance when not needed.
  * @exports computeChartData, computeChartDataAtJd, enrichChartData, housesAreDefined, isAspectParticipant, ChartData, ChartCalculationOptions, AngleAspect, NATAL_FIXED_STARS
  */
 import {
   DEFAULT_ORB_CONFIG,
   findAspects,
-  matchAspect,
+  matchPointAspect,
   type Aspect,
-  type AspectMatch,
+  type PointAspectMatch,
   type AspectSubject,
   type OrbConfig,
 } from '../astrology/aspects.js';
@@ -137,7 +137,7 @@ export type AspectAngle = 'asc' | 'mc' | 'vertex' | 'partOfFortune' | 'partOfSpi
  * An aspect between a calculated point (an angle, the Vertex or a lot) and a body (#413, #516). Separate from
  * `Aspect` because an angle has no `BodyId`; `body` is the body side, `angle` the angle side.
  */
-export interface AngleAspect extends AspectMatch {
+export interface AngleAspect extends PointAspectMatch {
   readonly angle: AspectAngle;
   readonly body: BodyId;
 }
@@ -325,10 +325,13 @@ interface AspectPoint {
 }
 
 /**
- * Aspects from each point to every subject, treating each point as a non-luminary (#413, #516).
+ * Aspects from each point to every subject (#413, #516, #796).
  *
  * Conventions: point-to-body only (points are never aspected to each other: Asc-MC is latitude geometry, and a lot to
- * the Ascendant is just the Sun-Moon aspect); the planet orbs of `orbFor`, with the luminary bonus from the body side
+ * the Ascendant is just the Sun-Moon aspect); orbs from `orbForPoint`: under a body-moiety profile the aspecting
+ * body's own moiety (Lilly, Christian Astrology (1647), Book II p. 208, for the Ascendant: "within the moyity of his
+ * owne Orbs"; applying it to the MC, Vertex and the lots is an Astraya extension beyond Lilly), a body with no moiety
+ * recorded as `tier-fallback`; otherwise the planet tiers, with the luminary bonus from the body side
  * only. Consulted (2026-10-11, #516) to check that convention, since no classical source gives lots or the Vertex
  * orbs of their own: the Solar Fire 9 User Guide (Esoteric Technologies, 2014), "Editing an Aspect Set" — luminary
  * orbs apply whenever one of the two points is the Sun or Moon, other orbs otherwise, and its Arabic Parts report
@@ -345,7 +348,7 @@ function findPointAspects(
   const result: AngleAspect[] = [];
   for (const point of points) {
     const position: BodyPosition = {
-      body: -1,
+      body: -1, // a point has no BodyId; only the body side's key selects the orb
       longitude: point.longitude,
       latitude: 0,
       distance: 1,
@@ -356,7 +359,7 @@ function findPointAspects(
     };
     for (const subject of subjects) {
       if (subject.body === point.redundantLuminary) continue;
-      const match = matchAspect(position, 'planet', subject.position, subject.category, orbConfig);
+      const match = matchPointAspect(position, subject.position, subject.category, orbConfig);
       if (match) result.push({ ...match, angle: point.id, body: subject.body });
     }
   }
