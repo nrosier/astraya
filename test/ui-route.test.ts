@@ -1,5 +1,5 @@
 /**
- * Tests for hash routing, on the one canonical scheme (docs/UI-UX_IMPLEMENTATION_PLAN.md §3).
+ * Tests for hash routing, on the one canonical scheme (docs/ui/UI-UX_IMPLEMENTATION_PLAN.md §3).
  *
  * The failures worth catching are the quiet ones: a link that lands on the home page
  * instead of the screen it names, and a mistyped person id that opens the form and reports

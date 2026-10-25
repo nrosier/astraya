@@ -1,7 +1,7 @@
 /**
  * The three built-in calculation profiles (#506/#510): named, versioned, complete starting
  * points for the chart's Extended settings, replacing the old tradition presets
- * (`extended-settings-presets.ts`, #442) with the model `docs/UI-UX_GUIDELINES.md` calls for —
+ * (`extended-settings-presets.ts`, #442) with the model `docs/ui/UI-UX_GUIDELINES.md` calls for —
  * "a profile contains zodiac/ayanamsa, house system, rulership, orbs, bodies/points, and
  * aspects. Treat a profile as a complete reproducible snapshot rather than a partial preset laid
  * over whatever values were selected previously."
@@ -21,7 +21,7 @@
  *   alias: "Vedic" describes a much broader practice than the settings this app controls.
  *
  * The three profiles use identical bodies/aspects/orbs except where the table below differs —
- * verified against `docs/UI-UX_GUIDELINES.md`'s built-in profile contract, not invented here:
+ * verified against `docs/ui/UI-UX_GUIDELINES.md`'s built-in profile contract, not invented here:
  * five major aspects, no minor aspects, mean lunar node, mean Lilith, and "Astraya standard
  * orbs" (`astrology/aspects.js`'s `DEFAULT_ORB_CONFIG`, unscaled — `orbScalePercent: 0`).
  */

@@ -6,8 +6,8 @@ to. Licences below are each package's own declared `license` field in
 than trusting this table blindly if a dependency is bumped across a major
 version, since a package can relicense between releases.
 
-Astraya is **AGPL-3.0-or-later** (see [`LICENSE`](../LICENSE) and
-[`NOTICE`](../NOTICE)). The runtime table below is the one that constraint
+Astraya is **AGPL-3.0-or-later** (see [`LICENSE`](../../LICENSE) and
+[`NOTICE`](../../NOTICE)). The runtime table below is the one that constraint
 actually binds: everything in it ends up in the shipped browser bundle or the
 server process, so each entry needs a licence compatible with distributing
 Astraya under the AGPL. The build/test table does not ship and is not subject
@@ -71,7 +71,7 @@ qualifier.
 
 Update this file in the same change that adds, removes, or re-scopes
 (runtime ↔ build/test) a dependency — this is what `CLAUDE.md`'s file-change
-workflow means by "update `docs/DEPENDENCIES.md` if external dependencies
+workflow means by "update `docs/ops/DEPENDENCIES.md` if external dependencies
 change." There is no script generating this file; it is maintained by hand,
 unlike the aspirational "generated, per-release inventory... published in the
 application's About page" `NOTICE` currently claims — no such in-app

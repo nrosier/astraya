@@ -96,7 +96,7 @@ Keep hash routing because the built application must work as static files. New l
 
 Use `natal`, `draconic`, `harmonic`, `solar-return`, and `lunar-return` for `:chartType`. Use `wheel`, `aspects`, `matrix`, `elements`, `placements`, and `patterns` for `:chartView`.
 
-Astraya has no production route history or external bookmarks to preserve. Replace the current route scheme in one coordinated cutover. [route.ts](../src/ui/route.ts) should parse and construct only the canonical routes after the shell migration lands. Remove obsolete path expressions, query parameters, route constructors, and compatibility branches. An obsolete or malformed hash may use the existing safe fallback to People/Home; do not redirect it to a guessed destination or keep aliases for it.
+Astraya has no production route history or external bookmarks to preserve. Replace the current route scheme in one coordinated cutover. [route.ts](../../src/ui/route.ts) should parse and construct only the canonical routes after the shell migration lands. Remove obsolete path expressions, query parameters, route constructors, and compatibility branches. An obsolete or malformed hash may use the existing safe fallback to People/Home; do not redirect it to a guessed destination or keep aliases for it.
 
 Move the content of the existing chart sections as follows:
 
@@ -120,7 +120,7 @@ Add canonical route tests before changing navigation. Cover every target destina
 
 UI and route compatibility are intentionally discarded. Stored person data is the compatibility boundary and must survive unchanged.
 
-Astraya does not store a person as one replaceable UI-shaped object. [person.ts](../src/domain/person.ts) materializes a person from field operations in the append-only log. The current fields are:
+Astraya does not store a person as one replaceable UI-shaped object. [person.ts](../../src/domain/person.ts) materializes a person from field operations in the append-only log. The current fields are:
 
 - `displayName`
 - `civil` date and time
@@ -137,10 +137,10 @@ The UI migration must continue to read and write these fields through `Store.mut
 
 Preserve these storage contracts:
 
-1. [db.ts](../src/store/db.ts) remains the durable IndexedDB operation log, snapshot, and device metadata store. A UI-only migration does not require a database-version bump.
-2. [ops.ts](../src/store/ops.ts)'s operation spine and current body meaning remain unchanged. Do not bump `OP_VERSION` for UI work.
-3. [fold.ts](../src/store/fold.ts) remains the only path from operations to materialized people. Unknown, incomplete, deleted, restored, and purged records retain their current behavior.
-4. [engine.ts](../src/sync/engine.ts) continues to push and pull the same records. The server relay in [routes.ts](../server/ops/routes.ts) remains an encrypted, user-scoped operation relay; it does not need a person-schema or route migration.
+1. [db.ts](../../src/store/db.ts) remains the durable IndexedDB operation log, snapshot, and device metadata store. A UI-only migration does not require a database-version bump.
+2. [ops.ts](../../src/store/ops.ts)'s operation spine and current body meaning remain unchanged. Do not bump `OP_VERSION` for UI work.
+3. [fold.ts](../../src/store/fold.ts) remains the only path from operations to materialized people. Unknown, incomplete, deleted, restored, and purged records retain their current behavior.
+4. [engine.ts](../../src/sync/engine.ts) continues to push and pull the same records. The server relay in [routes.ts](../../server/ops/routes.ts) remains an encrypted, user-scoped operation relay; it does not need a person-schema or route migration.
 5. The redesigned Birth record form continues to use `draftFrom`, `validateDraft`, and `draftToMutations` from `domain/person-form.ts`. Changing field components must not change stored values.
 
 Before the first redesigned person or shell screen lands, add a durable compatibility fixture containing a complete person plus an incomplete person. Verify all of the following:
@@ -175,7 +175,7 @@ interface FeatureDefinition {
 }
 ```
 
-Derive person navigation, Explore navigation, active state, prerequisite handling, and page-export registration from this registry. During transition, [person-nav.ts](../src/ui/person-nav.ts) and [tools-nav.ts](../src/ui/tools-nav.ts) may adapt or re-export registry results so existing callers continue to compile. Delete duplicated arrays when the last caller moves.
+Derive person navigation, Explore navigation, active state, prerequisite handling, and page-export registration from this registry. During transition, [person-nav.ts](../../src/ui/person-nav.ts) and [tools-nav.ts](../../src/ui/tools-nav.ts) may adapt or re-export registry results so existing callers continue to compile. Delete duplicated arrays when the last caller moves.
 
 Add an exhaustiveness test that fails when:
 
@@ -239,14 +239,14 @@ Implement the work in the following order. Each phase must leave the application
 
 **Goal:** Stop visual and behavioral drift before moving screens.
 
-Primary integration point: [app.css](../src/ui/app.css).
+Primary integration point: [app.css](../../src/ui/app.css).
 
 1. Introduce the semantic color, type, spacing, control, radius, elevation, and motion tokens defined in the audit.
 2. Bind `color-scheme` to the effective application theme.
 3. Implement `Field`, `TextField`, `DateField`, `NumberField`, `Select`, Checkbox, Radio, ChoiceGroup, OptionCards, and Button first.
 4. Suppress browser-dependent number spinners only after the shared accessible stepper exists.
 5. Implement the standard and compact sizes. Compact controls return to standard touch targets on coarse-pointer layouts.
-6. Migrate one representative form, one filter, and one settings dialog before broad rollout. Recommended pilots are [PersonForm.tsx](../src/ui/PersonForm.tsx), [PrimaryDirectionsView.tsx](../src/ui/PrimaryDirectionsView.tsx), and [TransitFilterPanel.tsx](../src/ui/TransitFilterPanel.tsx).
+6. Migrate one representative form, one filter, and one settings dialog before broad rollout. Recommended pilots are [PersonForm.tsx](../../src/ui/PersonForm.tsx), [PrimaryDirectionsView.tsx](../../src/ui/PrimaryDirectionsView.tsx), and [TransitFilterPanel.tsx](../../src/ui/TransitFilterPanel.tsx).
 7. Remove `.field-grid` as the source of control appearance. It may remain a layout class.
 
 **Acceptance criteria:**
@@ -261,7 +261,7 @@ Primary integration point: [app.css](../src/ui/app.css).
 
 **Goal:** Establish one information architecture before restyling individual feature pages.
 
-Primary integration points: [route.ts](../src/ui/route.ts), [App.tsx](../src/ui/App.tsx), [AppNav.tsx](../src/ui/AppNav.tsx), [person-nav.ts](../src/ui/person-nav.ts), [tools-nav.ts](../src/ui/tools-nav.ts), and [export-registry.tsx](../src/ui/export-registry.tsx).
+Primary integration points: [route.ts](../../src/ui/route.ts), [App.tsx](../../src/ui/App.tsx), [AppNav.tsx](../../src/ui/AppNav.tsx), [person-nav.ts](../../src/ui/person-nav.ts), [tools-nav.ts](../../src/ui/tools-nav.ts), and [export-registry.tsx](../../src/ui/export-registry.tsx).
 
 1. Add the feature registry and canonical route constructors.
 2. Replace current parsing and route construction with the canonical routes in `route.ts`; remove old path and query forms in the same slice.
@@ -337,7 +337,7 @@ Device presentation settings apply independently. Person records never enter thi
 
 **Goal:** Preserve Astraya's strongest interaction while removing navigation and page-length friction.
 
-Primary integration points: [ChartView.tsx](../src/ui/ChartView.tsx), [ChartTypeSelector.tsx](../src/ui/ChartTypeSelector.tsx), [chart-sections.ts](../src/ui/chart-sections.ts), [WheelSelectionText.tsx](../src/ui/WheelSelectionText.tsx), and the chart-type views that reuse `ChartDataView`.
+Primary integration points: [ChartView.tsx](../../src/ui/ChartView.tsx), [ChartTypeSelector.tsx](../../src/ui/ChartTypeSelector.tsx), [chart-sections.ts](../../src/ui/chart-sections.ts), [WheelSelectionText.tsx](../../src/ui/WheelSelectionText.tsx), and the chart-type views that reuse `ChartDataView`.
 
 Create these boundaries or equivalent boundaries with the same responsibilities:
 
@@ -386,7 +386,7 @@ Do not let optional AI output replace deterministic facts or corpus text.
 
 **Goal:** Turn the current control wall into one understandable map task.
 
-Primary integration point: [AstrocartographyView.tsx](../src/ui/AstrocartographyView.tsx).
+Primary integration point: [AstrocartographyView.tsx](../../src/ui/AstrocartographyView.tsx).
 
 1. Create `MapSettingsDialog` using the shared staged-dialog primitive.
 2. Move Line types, Primary bodies, Additional bodies, Local Space, and Relocation into its draft state.

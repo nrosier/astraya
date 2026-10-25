@@ -5,7 +5,7 @@
  * every screen.
  *
  * The group is called **Tools** (Dutch *Hulpmiddelen*). Grouped by the task the user recognizes,
- * per `docs/UI-UX_GUIDELINES.md`'s navigation table, rather than left as one flat list of five:
+ * per `docs/ui/UI-UX_GUIDELINES.md`'s navigation table, rather than left as one flat list of five:
  * **Sky & cycles** (planetary cycles, eclipses — almanac-style questions about the sky itself),
  * **Questions & planning** (horary, electional — a chart cast for a question or a search for the
  * best moment), **Birth data** (rectification — testing candidate birth times). Rendered as

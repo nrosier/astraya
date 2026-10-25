@@ -15,13 +15,13 @@
  * and the moment (`now`), so the document is reproducible and testable against the real engine.
  *
  * `FULL_EXPORT_VERSION` and the compatibility policy that governs it are documented in
- * `docs/EXPORT_SCHEMA.md` (#561) — the published, versioned schema an external tool can rely on,
+ * `docs/domain/EXPORT_SCHEMA.md` (#561) — the published, versioned schema an external tool can rely on,
  * alongside a hand-authored `docs/schema/astraya-export.schema.json` reference. Bumped from 1 to
  * 2 here to catch up with two shape changes earlier this session (antiscia/declinations, then
  * midpointTree/allMidpoints) that landed without a version bump — a lapse against the very
  * policy this issue adds, corrected rather than carried forward silently. Birth records can also be
  * exchanged as AAF (#591, `aaf.ts` and `aaf-people.ts`), implemented from the AAF'97 specification;
- * see `docs/AAF_INTERCHANGE.md` for the field mapping and what is not claimed.
+ * see `docs/domain/AAF_INTERCHANGE.md` for the field mapping and what is not claimed.
  *
  * `ExportedPerson.relocationPlaces`/`customPoints` (#587) were added so a restore
  * (`full-export-importer.ts`) is not lossy: both are read internally for chart computation
@@ -39,7 +39,7 @@
 /**
  * @module full-export
  * @purpose Builds the whole-device export: every person's birth record plus (where possible) their computed natal and named Varga chart tables, as one JSON document or a people CSV.
- * @conventions Plain JSON with its own `format`/`version` fields rather than a database dump; charts are computed with the caller-supplied `ExtendedSettings`/`rulership` (#541), carried verbatim into `preferences` so the document states exactly what was in force; each named Varga chart includes its radix-to-result longitude provenance; one person's chart failure is caught and reported per-person rather than failing the whole export; deleted people are excluded; `FULL_EXPORT_VERSION`'s own compatibility policy lives in docs/EXPORT_SCHEMA.md, not in this file; `full-export-importer.ts` is this file's restore counterpart.
+ * @conventions Plain JSON with its own `format`/`version` fields rather than a database dump; charts are computed with the caller-supplied `ExtendedSettings`/`rulership` (#541), carried verbatim into `preferences` so the document states exactly what was in force; each named Varga chart includes its radix-to-result longitude provenance; one person's chart failure is caught and reported per-person rather than failing the whole export; deleted people are excluded; `FULL_EXPORT_VERSION`'s own compatibility policy lives in docs/domain/EXPORT_SCHEMA.md, not in this file; `full-export-importer.ts` is this file's restore counterpart.
  * @exports buildFullExport, peopleToCsv, fullExportFilename, peopleCsvFilename, peopleAafFilename, FullExport, ExportedPerson, ExportedChart, ExportedHarmonicChart, FULL_EXPORT_FORMAT, FULL_EXPORT_VERSION
  */
 import { VARGA_PRESETS } from '../astrology/harmonics.js';

@@ -1,6 +1,6 @@
 /**
  * Radio option cards for "two to five exclusive choices needing explanation" (#506/#508,
- * `docs/UI-UX_GUIDELINES.md` §6) — a short title plus one concise consequence per choice, the
+ * `docs/ui/UI-UX_GUIDELINES.md` §6) — a short title plus one concise consequence per choice, the
  * whole card activating its radio. Used for e.g. Planetary rulers (Modern/Traditional/Both).
  */
 /**

@@ -2,7 +2,7 @@
  * Keeps docs/schema/astraya-export.schema.json honest against a real export (#561): not a full
  * JSON-Schema validator (no new dependency for this), just a structural check that every key a
  * real `FullExport`/`ExportedChart` actually has is one the schema's own `properties` list
- * knows about, and that `FULL_EXPORT_VERSION` matches what docs/EXPORT_SCHEMA.md's version
+ * knows about, and that `FULL_EXPORT_VERSION` matches what docs/domain/EXPORT_SCHEMA.md's version
  * history section documents as current.
  */
 import { readFileSync } from 'node:fs';

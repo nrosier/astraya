@@ -1877,7 +1877,7 @@ label.stacked textarea:focus-visible {
 /*
  * The workspace shell (#506/#509, `WorkspaceShell.tsx`): below 64rem this is a plain stack
  * (header, then main content, same order and flow as before this component existed). At and
- * above 64rem the header becomes a collapsible left rail per docs/UI-UX_GUIDELINES.md's "Target
+ * above 64rem the header becomes a collapsible left rail per docs/ui/UI-UX_GUIDELINES.md's "Target
  * application shell" instead of a bar across the top — the brand/status at its head, the
  * dropdown nav from `AppNav.tsx` filling the middle unchanged, and the account cluster anchored
  * at its foot. The toggle collapses the whole rail rather than shrinking it to icon-only buttons
@@ -3829,7 +3829,7 @@ svg text.chart-symbol-text-unicode {
 
 /*
  * The chart screen's own Wheel/Aspects/Placements/Patterns & condition navigation (#511):
- * docs/UI-UX_GUIDELINES.md §2 calls these "route-level views with stable URLs and ordinary
+ * docs/ui/UI-UX_GUIDELINES.md §2 calls these "route-level views with stable URLs and ordinary
  * links, not ARIA tabs" — a row of links at and above the app's standing 64rem nav breakpoint,
  * the shared Select below it. Exactly one of the two is ever visible.
  */
@@ -4451,7 +4451,7 @@ svg text.chart-symbol-text-unicode {
 /*
  * The shared Tooltip primitive (#456, #508): a real <button> trigger (never a bare
  * `<span title>`), with a dotted underline as the visual affordance for an inline glossary
- * term — the pattern `docs/UI-UX_GUIDELINES.md` names explicitly as the alternative to
+ * term — the pattern `docs/ui/UI-UX_GUIDELINES.md` names explicitly as the alternative to
  * `<abbr title>`, which shares native title's reliability problem.
  */
 .primitive-tooltip {

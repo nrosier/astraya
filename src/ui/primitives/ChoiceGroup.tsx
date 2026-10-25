@@ -1,6 +1,6 @@
 /**
  * A segmented control for "two to four short, exclusive choices" (#506/#508,
- * `docs/UI-UX_GUIDELINES.md` §6) — implemented as a labelled radio group, not a custom
+ * `docs/ui/UI-UX_GUIDELINES.md` §6) — implemented as a labelled radio group, not a custom
  * tab-like widget, so selected/hover/focus/disabled states come from `Radio` for free.
  */
 /**

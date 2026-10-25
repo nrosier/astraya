@@ -1,6 +1,6 @@
 /**
  * Validity checks for `settings-registry.ts` (#506/#509), per
- * `docs/UI-UX_IMPLEMENTATION_PLAN.md` §5.2/§9: the shipped registry itself has no invariant
+ * `docs/ui/UI-UX_IMPLEMENTATION_PLAN.md` §5.2/§9: the shipped registry itself has no invariant
  * violations, and `validateSettings` actually rejects each forbidden combination the plan
  * names — request-scope persistence, device-scope sync, a staged setting with immediate
  * commit, and a person-scope entry (person records are inputs, not settings).

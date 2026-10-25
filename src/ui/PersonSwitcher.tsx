@@ -1,6 +1,6 @@
 /**
  * The searchable person switcher (#506/#509) replacing the static person-name chip in
- * `AppNav.tsx`'s header: `docs/UI-UX_GUIDELINES.md` §2 is explicit that "the current person's
+ * `AppNav.tsx`'s header: `docs/ui/UI-UX_GUIDELINES.md` §2 is explicit that "the current person's
  * name is a searchable selector, not a static label. Switching people should preserve the
  * current feature when its prerequisites are met."
  *

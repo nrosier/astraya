@@ -1,6 +1,6 @@
 /**
  * @module primitives/StatusMessage
- * @purpose The one message block for a result's state (#513, `docs/UI-UX_GUIDELINES.md` §7): loading, updating, empty, zero, partial, offline, success and error, each with the right live-region semantics.
+ * @purpose The one message block for a result's state (#513, `docs/ui/UI-UX_GUIDELINES.md` §7): loading, updating, empty, zero, partial, offline, success and error, each with the right live-region semantics.
  * @conventions Errors are `role="alert"` (announced at once); every other kind is `role="status"` (polite). Appearance comes from the existing `.warning`/`.status` rules, keyed by `data-kind`, so a screen picks a kind, never a class.
  * @exports StatusMessage, STATUS_KINDS, StatusKind
  */

@@ -53,7 +53,7 @@ import { useExclusiveOpen, type ExclusiveOpen } from './use-exclusive-open.js';
 const UNGROUPED_KEYS = new Set(['overview', 'consultation', 'birth-record', 'chart', 'report', 'astrocartography']);
 // Rendered first, in this fixed order — the two tabs a person can land on regardless of
 // completeness (#506/#509's canonical Overview destination plus the existing Birth record tab),
-// per docs/UI-UX_GUIDELINES.md §2's person-workspace order.
+// per docs/ui/UI-UX_GUIDELINES.md §2's person-workspace order.
 const LEADING_KEYS = new Set(['overview', 'birth-record']);
 const TOOLS_GROUP = 'tools';
 
@@ -118,7 +118,7 @@ function PersonMenu({
 }: {
   readonly personId: string;
   readonly route: Route;
-  /** True on a global tool page, where the person is only the way back, not the subject (docs/UI-UX_GUIDELINES.md §2). */
+  /** True on a global tool page, where the person is only the way back, not the subject (docs/ui/UI-UX_GUIDELINES.md §2). */
   readonly history: boolean;
   readonly dropdown: ExclusiveOpen<string>;
   readonly onNavigate: () => void;

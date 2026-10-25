@@ -3,7 +3,7 @@ name: Docker
 # Builds the single Astraya image and publishes it to the GitHub
 # Container Registry (ghcr.io).
 #
-# Tagging strategy (docs/RELEASING.md):
+# Tagging strategy (docs/ops/RELEASING.md):
 #   v1.2.3 tag  ->  1.2.3, 1.2, 1, latest   (a user can pin as loosely as they like)
 #   pull request->  built and smoke-tested, never pushed (a fork PR has no access to
 #                                            the secrets anyway, and must not gain

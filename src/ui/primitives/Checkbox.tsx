@@ -2,7 +2,7 @@
  * The shared checkbox primitive (#506/#508): one size, stroke, selected colour, focus ring,
  * label gap, disabled treatment, and minimum row target, shared with `Radio` so the two read
  * as one visual family with different semantics (a checkmark vs. a dot), per
- * `docs/UI-UX_GUIDELINES.md` §6.
+ * `docs/ui/UI-UX_GUIDELINES.md` §6.
  */
 /**
  * @module ui/primitives/Checkbox

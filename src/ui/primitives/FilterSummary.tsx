@@ -1,6 +1,6 @@
 /**
  * @module ui/primitives/FilterSummary
- * @purpose The one line that says a result list is filtered (`docs/UI-UX_GUIDELINES.md` §6): the filter's name, how many of the total are shown, and the action that changes it.
+ * @purpose The one line that says a result list is filtered (`docs/ui/UI-UX_GUIDELINES.md` §6): the filter's name, how many of the total are shown, and the action that changes it.
  * @conventions The count is a polite live region, so a change of filter is announced; the action is optional because a screen that only reports the filter (a read-only summary) has nothing to change. Wording, including the count sentence, comes from the caller's locale file.
  * @exports FilterSummary
  */

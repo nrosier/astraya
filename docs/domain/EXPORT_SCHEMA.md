@@ -9,7 +9,7 @@ TypeScript interfaces; this is the readable copy, paired with a hand-authored JS
 This is the **documented, versioned Astraya JSON schema** half of #561's two acceptance paths. Birth records can
 also be exchanged with other astrology programs as **AAF** (whose records begin with an `#A93` chunk), from the
 AAF'97 specification; that is a separate format with its own mapping and limits, documented in
-`docs/AAF_INTERCHANGE.md` (#591). This document commits only to Astraya's own JSON schema being stable, versioned,
+`docs/domain/AAF_INTERCHANGE.md` (#591). This document commits only to Astraya's own JSON schema being stable, versioned,
 and backward-compatibility-tracked.
 
 ## Top-level shape

@@ -1,6 +1,6 @@
 /**
  * @module ui/primitives/Tabs
- * @purpose Same-page tabs (`docs/UI-UX_GUIDELINES.md` §5, §9): a few compact, mutually exclusive panels that share one context, with the WAI-ARIA tab pattern's roles, selected state and arrow-key navigation.
+ * @purpose Same-page tabs (`docs/ui/UI-UX_GUIDELINES.md` §5, §9): a few compact, mutually exclusive panels that share one context, with the WAI-ARIA tab pattern's roles, selected state and arrow-key navigation.
  * @conventions Manual activation is not used: the arrow keys, Home and End move focus and select together, because every panel here is cheap to show. Roving tabindex, so the tablist is one Tab stop and the panel is the next. The panel is the caller's, rendered after the strip with `tabPanelProps`, so the primitive owns no content. Route navigation does not use this: links stay links (§9).
  * @exports Tabs, tabPanelProps
  */

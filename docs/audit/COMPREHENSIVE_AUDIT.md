@@ -72,12 +72,12 @@
 
 ### 8. Internationalization & Local-First Integrity (86% / 100%)
 
-- **Deduction Reasons:** The comparison branch contains English-only labels outside message catalogues: `"Comparison"` (`src/ui/ChartView.tsx:2466`), `"Natal"` (`src/ui/ChartView.tsx:2491`), and a title-cased raw route key (`src/ui/ChartView.tsx:2508`). Chart-type labels already exist in `src/ui/ChartTypes.messages.ts:15`. In addition, `FullExport` is write-only: `docs/EXPORT_SCHEMA.md:96` confirms no importer/restore workflow exists, so local-first backup cannot actually recover data on another device or after data loss.
+- **Deduction Reasons:** The comparison branch contains English-only labels outside message catalogues: `"Comparison"` (`src/ui/ChartView.tsx:2466`), `"Natal"` (`src/ui/ChartView.tsx:2491`), and a title-cased raw route key (`src/ui/ChartView.tsx:2508`). Chart-type labels already exist in `src/ui/ChartTypes.messages.ts:15`. In addition, `FullExport` is write-only: `docs/domain/EXPORT_SCHEMA.md:96` confirms no importer/restore workflow exists, so local-first backup cannot actually recover data on another device or after data loss.
 - **Actionable Remediation to Reach 100%:** Route comparison labels through `{ en, nl }` catalogues and add a Dutch comparison browser test. Build a versioned restore/import flow that validates before writing, shows a conflict/merge preview, imports into a recoverable operation set, and rejects unsupported schema versions without mutating local data.
 
 ### 9. Test Coverage, QA & Documentation (92% / 100%)
 
-- **Deduction Reasons:** Validation breadth is excellent, but documentation currently contradicts runtime behavior. `docs/EXPORT_SCHEMA.md:96` tells a future importer that `parseCalculationSnapshot` fails closed, while `src/domain/calculation-snapshot.ts:128` explicitly documents best-effort defaulting and the parser does not inspect a supplied version. `docs/audit/IMPLEMENTATION_PLAN.md:20` also describes the pre-snapshot shared-chart behavior that current `src/ui/SharedChartView.tsx:58` has already replaced.
+- **Deduction Reasons:** Validation breadth is excellent, but documentation currently contradicts runtime behavior. `docs/domain/EXPORT_SCHEMA.md:96` tells a future importer that `parseCalculationSnapshot` fails closed, while `src/domain/calculation-snapshot.ts:128` explicitly documents best-effort defaulting and the parser does not inspect a supplied version. `docs/audit/IMPLEMENTATION_PLAN.md:20` also describes the pre-snapshot shared-chart behavior that current `src/ui/SharedChartView.tsx:58` has already replaced.
 - **Actionable Remediation to Reach 100%:** Correct or archive historical-plan assertions, make the export schema accurately describe current parsing semantics, and add executable documentation tests for strict version rejection, malformed snapshot settings, Dutch comparison headings, artifact parity, and backup restore.
 
 ---
@@ -98,7 +98,7 @@
 | SEC-01   | Pin GitHub Actions to immutable commit digests.            | `.github/workflows/docker.yml:42`   | MEDIUM      | EASY    | QUICK_FIX         |
 | UX-01    | Add all-object visibility and aspect-participation policy. | `src/chart/extended-settings.ts:26` | MEDIUM      | COMPLEX | TARGETED_REFACTOR |
 | I18N-01  | Localize comparison headings and fallback labels.          | `src/ui/ChartView.tsx:2466`         | MEDIUM      | EASY    | QUICK_FIX         |
-| LOCAL-01 | Add validated full-export restore/import.                  | `docs/EXPORT_SCHEMA.md:96`          | MEDIUM      | COMPLEX | TARGETED_REFACTOR |
+| LOCAL-01 | Add validated full-export restore/import.                  | `docs/domain/EXPORT_SCHEMA.md:96`   | MEDIUM      | COMPLEX | TARGETED_REFACTOR |
 
 ### 📋 Backlog / Technical Debt (P2)
 
@@ -108,7 +108,7 @@
 | PERF-01   | Lazily compute chart enrichments across the serialized worker boundary. | `src/domain/chart-compute.ts:344`       | MEDIUM      | MODERATE | TARGETED_REFACTOR |
 | DOMAIN-01 | Add source-backed professional orb profile rules.                       | `src/astrology/orb-profiles.ts:9`       | MEDIUM      | COMPLEX  | TARGETED_REFACTOR |
 | DOMAIN-02 | Provide verified practitioner interchange beyond Astraya JSON.          | `src/domain/full-export.ts:22`          | MEDIUM      | COMPLEX  | MAJOR_REWRITE     |
-| DOC-01    | Reconcile current behavior, audit plans, and export documentation.      | `docs/EXPORT_SCHEMA.md:96`              | LOW         | EASY     | QUICK_FIX         |
+| DOC-01    | Reconcile current behavior, audit plans, and export documentation.      | `docs/domain/EXPORT_SCHEMA.md:96`       | LOW         | EASY     | QUICK_FIX         |
 
 ---
 
@@ -286,7 +286,7 @@ Ship only cited presets, allow custom profiles as immutable snapshots, and inclu
 
 #### [DOMAIN-02] Practitioner interchange remains Astraya JSON only
 
-- **Location:** `src/domain/full-export.ts:22`, `docs/EXPORT_SCHEMA.md:17`
+- **Location:** `src/domain/full-export.ts:22`, `docs/domain/EXPORT_SCHEMA.md:17`
 - **Classification:** `Criticality: MEDIUM` | `Urgency: BACKLOG` | `Effort: COMPLEX` | `Scope: MAJOR_REWRITE`
 - **Issue:** The repository explicitly declines AAF/A93 import/export because it does not yet have verified field-level format and licensing knowledge. Its versioned JSON schema is useful but remains application-native.
 - **Impact:** Practitioners cannot reliably exchange birth records and chart settings with established desktop astrology workflows, limiting interoperability despite strong internal technique coverage.
@@ -315,7 +315,7 @@ Add an E2E assertion for the Dutch comparison route, not just catalogue key pari
 
 #### [LOCAL-01] Full export is not a usable recovery workflow because it cannot be restored
 
-- **Location:** `src/domain/full-export.ts:1`, `docs/EXPORT_SCHEMA.md:96`
+- **Location:** `src/domain/full-export.ts:1`, `docs/domain/EXPORT_SCHEMA.md:96`
 - **Classification:** `Criticality: MEDIUM` | `Urgency: NEXT_RELEASE` | `Effort: COMPLEX` | `Scope: TARGETED_REFACTOR`
 - **Issue:** `buildFullExport` writes a well-structured JSON document, but no importer accepts it. The schema documentation confirms the absence and therefore also the absence of backward-compatibility restore testing.
 - **Impact:** A local-first user can download a backup but cannot recover it through the product after device loss, storage corruption, or a migration. This weakens the stated backup and portability promise.
@@ -332,7 +332,7 @@ Validate first, stage conflicts without writes, require explicit confirmation, p
 
 #### [DOC-01] Export/parser documentation conflicts with the implementation and historic plan state
 
-- **Location:** `docs/EXPORT_SCHEMA.md:96`, `src/domain/calculation-snapshot.ts:128`, `docs/audit/IMPLEMENTATION_PLAN.md:20`, `src/ui/SharedChartView.tsx:58`
+- **Location:** `docs/domain/EXPORT_SCHEMA.md:96`, `src/domain/calculation-snapshot.ts:128`, `docs/audit/IMPLEMENTATION_PLAN.md:20`, `src/ui/SharedChartView.tsx:58`
 - **Classification:** `Criticality: LOW` | `Urgency: BACKLOG` | `Effort: EASY` | `Scope: QUICK_FIX`
 - **Issue:** The export schema says `parseCalculationSnapshot` fails closed for unsupported settings, but the parser documents best-effort defaulting and does not inspect version. The implementation plan also retains an old assertion that shared charts recompute from the viewer's ambient rulership, although the current shared view parses sender settings.
 - **Impact:** Future implementation work can rely on false safety semantics or repeat work already shipped, particularly around import/restore and calculation provenance.

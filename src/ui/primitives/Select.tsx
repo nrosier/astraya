@@ -1,9 +1,9 @@
 /**
  * A single-choice dropdown through the shared `Field` anatomy (#506/#508), for the "five to
- * twelve concise choices" row of `docs/UI-UX_GUIDELINES.md` §6's decision matrix.
+ * twelve concise choices" row of `docs/ui/UI-UX_GUIDELINES.md` §6's decision matrix.
  *
  * A styled native `<select>`, not a custom popover: this app has no runtime positioning
- * library (by deliberate dependency policy — see `docs/DEPENDENCIES.md`), and the native
+ * library (by deliberate dependency policy — see `docs/ops/DEPENDENCIES.md`), and the native
  * element already gives correct keyboard, screen-reader, and mobile behavior for free. The
  * guidelines' "use a proven accessible popover primitive when the popup must match Astraya"
  * is for later, if a specific screen genuinely needs it — not a default every Select pays for.

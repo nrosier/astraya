@@ -1,6 +1,6 @@
 /**
  * Message catalogue for `Overview.tsx` (#506/#509): the per-person Overview screen,
- * `docs/UI-UX_GUIDELINES.md` §2's "task launchpad, not a generic dashboard".
+ * `docs/ui/UI-UX_GUIDELINES.md` §2's "task launchpad, not a generic dashboard".
  */
 /**
  * @module ui/Overview.messages

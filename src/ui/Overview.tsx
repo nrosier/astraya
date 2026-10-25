@@ -1,6 +1,6 @@
 /**
  * The canonical per-person Overview screen (#506/#509): a task launchpad, not a generic
- * dashboard (`docs/UI-UX_GUIDELINES.md` §2). Shows record readiness, the device's current
+ * dashboard (`docs/ui/UI-UX_GUIDELINES.md` §2). Shows record readiness, the device's current
  * calculation basis, and a small set of real next actions — not decorative metrics or a chart
  * without a decision purpose.
  *

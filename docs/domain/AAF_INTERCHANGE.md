@@ -60,5 +60,5 @@ used.
 ## Not a JSON schema
 
 The issue's background mentioned JSON payloads used by commercial APIs and the Astro-Databank XML export. Astraya's
-own JSON export already has a published, versioned schema (`docs/EXPORT_SCHEMA.md`); those other formats are not
+own JSON export already has a published, versioned schema (`docs/domain/EXPORT_SCHEMA.md`); those other formats are not
 implemented, because no verified specification for them is in hand.

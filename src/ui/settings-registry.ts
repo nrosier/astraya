@@ -1,11 +1,11 @@
 /**
  * The single typed registry of every persisted UI setting's scope, owner, persistence, and
- * commit model (#506/#509), per `docs/UI-UX_IMPLEMENTATION_PLAN.md` §5.2. Pure metadata — this
+ * commit model (#506/#509), per `docs/ui/UI-UX_IMPLEMENTATION_PLAN.md` §5.2. Pure metadata — this
  * is NOT a second storage system; each setting's actual value stays owned by its existing
  * module (`locale.ts`, `theme-dom.ts`, `symbol-setting.ts`, `glyph-variant-setting.ts`,
  * `rulership-setting.ts`) until it is deliberately migrated.
  *
- * Scope here means *intended* scope per `docs/UI-UX_GUIDELINES.md` §3, not necessarily today's
+ * Scope here means *intended* scope per `docs/ui/UI-UX_GUIDELINES.md` §3, not necessarily today's
  * persistence: language and rulership are documented as `'account'`-scoped (should sync across
  * a signed-in user's devices) even though every setting below is, today, still device-local
  * `localStorage` with no sync path — formalizing that sync is explicitly Phase 3's job (#510),
@@ -14,7 +14,7 @@
 /**
  * @module ui/settings-registry
  * @purpose Typed metadata registry (scope/owner/default/persistence/sync/editing-surface/commit-mode/sensitivity) for every persisted UI setting (#506/#509), pure data only — existing modules keep owning actual values.
- * @conventions Scope documents intent (docs/UI-UX_GUIDELINES.md §3), not necessarily today's implementation — several settings are documented 'account'-scoped while still persisted device-locally, a gap Phase 3 (#510) is responsible for closing, not this registry. validateSettings() enforces the plan's required invariants (§5.2) and is exercised by test/ui-settings-registry.test.ts.
+ * @conventions Scope documents intent (docs/ui/UI-UX_GUIDELINES.md §3), not necessarily today's implementation — several settings are documented 'account'-scoped while still persisted device-locally, a gap Phase 3 (#510) is responsible for closing, not this registry. validateSettings() enforces the plan's required invariants (§5.2) and is exercised by test/ui-settings-registry.test.ts.
  * @exports SettingScope, CommitMode, SettingDefinition, SETTINGS, validateSettings
  */
 export type SettingScope = 'application' | 'account' | 'device' | 'person' | 'chart' | 'page' | 'request';
@@ -207,7 +207,7 @@ export function validateSettings(settings: readonly SettingDefinition[] = SETTIN
       violations.push(`"${setting.key}": device-scope setting must never claim cross-device sync`);
     }
     if (setting.scope === 'person') {
-      violations.push(`"${setting.key}": person records are inputs, not settings — see UI-UX_GUIDELINES.md §3`);
+      violations.push(`"${setting.key}": person records are inputs, not settings — see docs/ui/UI-UX_GUIDELINES.md §3`);
     }
   }
   return violations;

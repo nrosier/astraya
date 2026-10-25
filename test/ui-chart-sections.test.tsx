@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /**
  * The natal chart screen's views (#511): Wheel (the default), Aspects, Placements, and Patterns &
- * condition — route-level links, not ARIA tabs (`docs/UI-UX_GUIDELINES.md` §2) — each panel opening
+ * condition — route-level links, not ARIA tabs (`docs/ui/UI-UX_GUIDELINES.md` §2) — each panel opening
  * with its own h2, the wheel staying mounted while another view is open, Patterns & condition holding
  * the chart shape explanation, the Moon phase and the sect, and a chart without houses showing only
  * what it can.

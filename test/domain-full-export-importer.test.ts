@@ -104,7 +104,7 @@ describe('validateFullExport', () => {
   });
 
   it('rejects a v1-shaped export by its version, not by inferring the shape', () => {
-    // Representative of the v1 shape per docs/EXPORT_SCHEMA.md's "Version history" — no
+    // Representative of the v1 shape per docs/domain/EXPORT_SCHEMA.md's "Version history" — no
     // antiscia/declinations/midpointTree/allMidpoints on the chart, which only matters if
     // this ever started validating chart rows; it deliberately does not (see module doc).
     const v1Shaped: unknown = {

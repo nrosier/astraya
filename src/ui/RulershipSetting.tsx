@@ -7,7 +7,7 @@
 /**
  * @module RulershipSetting
  * @purpose Device-preference control for choosing modern/traditional/both planetary rulers, shared across every screen that shows a ruler, dignity, or dispositor.
- * @conventions Writes the shared device preference via rulership-setting.ts; uses RulershipSetting.messages.ts for en/nl text via useMessages(). Three exclusive choices that each need a consequence, so it is the shared `OptionCards` primitive (#513, `docs/UI-UX_GUIDELINES.md` §6) with the full explanation as a hint beneath.
+ * @conventions Writes the shared device preference via rulership-setting.ts; uses RulershipSetting.messages.ts for en/nl text via useMessages(). Three exclusive choices that each need a consequence, so it is the shared `OptionCards` primitive (#513, `docs/ui/UI-UX_GUIDELINES.md` §6) with the full explanation as a hint beneath.
  * @exports RulershipSetting
  */
 import { RULERSHIP_CHOICES, isRulershipChoice } from '../astrology/rulership.js';

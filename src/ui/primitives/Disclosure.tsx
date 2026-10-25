@@ -1,6 +1,6 @@
 /**
  * The shared disclosure primitive (#506/#508, used by #511): optional reference content that opens in
- * place, per `docs/UI-UX_GUIDELINES.md` §6's "Disclosure pattern" and the WAI-ARIA disclosure pattern.
+ * place, per `docs/ui/UI-UX_GUIDELINES.md` §6's "Disclosure pattern" and the WAI-ARIA disclosure pattern.
  * The whole trigger row is one button with a title, optional secondary text saying what will open,
  * explicit Show/Hide wording, and a trailing chevron hidden from assistive technology.
  */

@@ -1,6 +1,6 @@
 /**
  * The application shell (#506/#509): places the header beside the current screen's content as a
- * collapsible left rail on wide viewports, per `docs/UI-UX_GUIDELINES.md`'s "Target application
+ * collapsible left rail on wide viewports, per `docs/ui/UI-UX_GUIDELINES.md`'s "Target application
  * shell" — brand, the searchable person switcher, person workspace groups, and Tools/Export sit
  * in one scrollable column with the account cluster anchored at its foot, rather than a bar
  * across the top of the page.

@@ -1,8 +1,8 @@
 # UI/UX manual checks, per release
 
-An axe pass is not proof of usability (`UI-UX_GUIDELINES.md` section 9). The guidelines (section 16) and the implementation plan (section 9, "Manual checks remain required") name checks that no automated test performs. This page is the record of running them, once per release, so the answer to "has anyone actually done this?" is a row in a table and not a belief.
+An axe pass is not proof of usability (`docs/ui/UI-UX_GUIDELINES.md` section 9). The guidelines (section 16) and the implementation plan (section 9, "Manual checks remain required") name checks that no automated test performs. This page is the record of running them, once per release, so the answer to "has anyone actually done this?" is a row in a table and not a belief.
 
-It does not replace `RELEASING.md`; step 11 there points here. A release with an empty row is not blocked by it, but the row says so, with the reason.
+It does not replace `docs/ops/RELEASING.md`; step 11 there points here. A release with an empty row is not blocked by it, but the row says so, with the reason.
 
 ## How to use it
 

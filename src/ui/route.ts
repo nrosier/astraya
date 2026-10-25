@@ -9,7 +9,7 @@
  * Hash routing rather than history routing because the built app is static files: every URL
  * has to resolve without a server rewrite rule, including when the app is opened from disk.
  *
- * The canonical scheme (docs/UI-UX_IMPLEMENTATION_PLAN.md §3) is the only one: `parseRoute` reads these
+ * The canonical scheme (docs/ui/UI-UX_IMPLEMENTATION_PLAN.md §3) is the only one: `parseRoute` reads these
  * and `routeHref` writes them, so the old shapes (`#/person/:id`, `#/chart/:id?type=…`, `#/cycles`, …) are
  * simply unknown and fall back to Home. Nothing builds a hash by hand; every link goes through `routeHref`.
  *
@@ -106,7 +106,7 @@ export type Route =
   // the same reasoning synastry's second person already uses.
   | { readonly kind: 'export-builder' }
   // The Preferences workspace (#506/#510): durable account/device settings in one stable place,
-  // per docs/UI-UX_GUIDELINES.md's setting-scope model. `section` links straight to one of its headings.
+  // per docs/ui/UI-UX_GUIDELINES.md's setting-scope model. `section` links straight to one of its headings.
   | { readonly kind: 'preferences'; readonly section?: PreferencesSection }
   | { readonly kind: 'cycles' }
   | { readonly kind: 'event-search' }

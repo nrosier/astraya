@@ -94,7 +94,7 @@ docker run -p 8080:8080 -v astraya-data:/app/data ghcr.io/nrosier/astraya:latest
 Then open <http://localhost:8080>. It works offline once loaded, and needs no
 configuration — calculation happens in your browser, and no account is required.
 Images are published for `linux/amd64` and `linux/arm64`; see
-[docs/RELEASING.md](docs/RELEASING.md) for the tagging scheme.
+[docs/ops/RELEASING.md](docs/ops/RELEASING.md) for the tagging scheme.
 
 The `-v` mount is only needed if you sign in: it's where the container keeps
 accounts and sessions. Without it, that data is lost the moment the container

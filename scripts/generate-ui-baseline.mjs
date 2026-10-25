@@ -3,7 +3,7 @@
  * selection, exports and persistence, grouped by area, from the test titles themselves — so the record cannot drift
  * from the tests it describes. Run `node scripts/generate-ui-baseline.mjs` after the suite changes.
  *
- * Output: docs/UI-UX_BASELINE.md and its HTML counterpart docs/html/UI-UX_BASELINE.html (HTML-first docs policy).
+ * Output: docs/ui/UI-UX_BASELINE.md and its HTML counterpart docs/html/UI-UX_BASELINE.html (HTML-first docs policy).
  */
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -48,7 +48,7 @@ const intro = [
   `The end-to-end suite pins ${String(total)} behaviours across ${String(files.length)} specs (Playwright, against the built \`dist/\`).`,
   'This is the behaviour any redesign must keep, or change on purpose with the test changed in the same commit.',
   'Each line is a test title, so the record is the tests; regenerate with `node scripts/generate-ui-baseline.mjs`.',
-  'Persisted person data is the compatibility boundary (docs/UI-UX_IMPLEMENTATION_PLAN.md §4); routes and UI are not.',
+  'Persisted person data is the compatibility boundary (docs/ui/UI-UX_IMPLEMENTATION_PLAN.md §4); routes and UI are not.',
 ];
 
 const md = ['# UI behaviour baseline', '', ...intro.map((line) => line), ''];
@@ -58,7 +58,7 @@ for (const [area, entries] of grouped) {
     md.push(`### \`e2e/${file}\``, '', ...titles.map((title) => `- ${title}`), '');
   }
 }
-writeFileSync('docs/UI-UX_BASELINE.md', md.join('\n').replace(/\n+$/, '\n'));
+writeFileSync('docs/ui/UI-UX_BASELINE.md', md.join('\n').replace(/\n+$/, '\n'));
 
 const esc = (text) => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const inline = (text) => esc(text).replace(/`([^`]+)`/g, '<code>$1</code>');

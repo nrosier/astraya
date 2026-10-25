@@ -306,7 +306,7 @@ function AppShell(): React.JSX.Element {
       <StoreFrame>
         <ExportRegistryProvider>
           {/* `WorkspaceShell` places the header beside the screen as a collapsible left rail at
-          >=64rem (#506/#509, docs/UI-UX_GUIDELINES.md's "Target application shell"); below that
+          >=64rem (#506/#509, docs/ui/UI-UX_GUIDELINES.md's "Target application shell"); below that
           it stays `AppNav.tsx`'s existing horizontal bar with its own folding panel, unchanged.
           The header is still first in the DOM, so a keyboard user meets the skip link, then the
           controls, before any page content. Its skip link is the first focusable thing on every
