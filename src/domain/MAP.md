@@ -38,6 +38,7 @@ One level above `src/astrology/`: composes pure astrological calculations into s
 - `person.ts` — Root entity: birth moment, named relocation places/formula points, place label, time accuracy, notes, offset witness. Deps: `time/types`, `astrology/formula-parser`.
 - `planetary-return.ts` — Any-body return chart (not just Sun/Moon). Deps: `astrology/planetary-returns`, `astrology/aspects`, `astrology/bodies`.
 - `primary-directions.ts` — Lifetime direct/converse, zodiacal/in-mundo Placidus directions with configurable points and a mode-aware direct bi-wheel. Deps: `astrology/primary-directions`, `astrology/progressions`, `astrology/bodies`, `./chart-compute`.
+- `primary-directions-settings.ts` — Pure comparison of a requested calculation snapshot against the locked Placidus/tropical settings primary directions use (#797). Deps: `./calculation-artifact`, `./calculation-snapshot`.
 - `profections.ts` — Annual/monthly profections (Hellenistic house-per-year timing). Deps: `astrology/profections`, `astrology/rulership`, `astrology/progressions`, `astrology/signs`.
 - `progressed-lunar-return.ts` — Progressed-lunar-return timing (monthly Solar-Return analogue). Deps: `astrology/planetary-returns`, `astrology/aspects`.
 - `rectification.ts` — Birth-time rectification (ranks candidate times by life-event contacts). Deps: `astrology/rectification`, `time/julian`, `time/resolve`.
