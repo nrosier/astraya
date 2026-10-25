@@ -214,6 +214,8 @@ Create `src/ui/primitives/` with its own `MAP.md`. Keep business logic outside t
 - `StatusMessage`, `EmptyState`
 - `DataTable`
 
+All interactive elements (buttons, inputs, selects, badges, textareas, toggles) come from `src/ui/primitives/`, and `test/ui-primitive-enforcement.test.ts` checks that no screen writes them directly.
+
 Use real HTML inputs, buttons, links, fieldsets, tables, and dialogs. The primitive owns anatomy, states, keyboard behavior, and accessible relationships. The feature owns labels, options, validation rules, values, and domain consequences.
 
 Do not create wrappers that merely rename raw elements. A primitive is ready when equivalent controls no longer need feature-specific state CSS or behavior.

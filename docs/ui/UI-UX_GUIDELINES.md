@@ -428,13 +428,15 @@ Use layout modes for reading, forms, visualizations, data tables, and builders. 
 
 Verify at least:
 
-- 390×844 phone.
+- 390×844 is the primary baseline (iPhone 12 to 17e class). 430px wide (Plus/Max class) is the secondary breakpoint.
 - 768×1024 tablet.
 - 1280×800 laptop.
 - 1440×900 desktop.
 - 3440×1440 ultra-wide.
 
 At narrow widths, dropdown menus become in-flow panels, tables scroll within labelled containers, settings dialogs remain operable without hidden footer actions, and sticky regions must not consume most of a short viewport. At ultra-wide widths, prose remains readable and dense data may expand.
+
+Fixed or edge-to-edge chrome (sticky headers, bottom action bars, full-screen dialogs) must respect the iOS safe area. Pad it with `env(safe-area-inset-top)` and `env(safe-area-inset-bottom)`.
 
 ## 11. Use the design system rather than local styling
 
@@ -445,6 +447,8 @@ At narrow widths, dropdown menus become in-flow panels, tables scroll within lab
 - Do not add hard-coded colors, shadows, arbitrary inline style objects, or one-off disabled/loading behavior in a feature component.
 - Keep motion short and functional. Define hover, active, focus, disabled, busy, selected, and error states for every interactive component.
 - Keep both light and dark themes complete. A new token or component state is unfinished until both are legible.
+- No utility CSS framework (no Tailwind CSS) and no third-party icon library (no Lucide). Icons are inline SVG.
+- Reference colours, spacing, and radii through the native CSS custom properties (for example `var(--surface)`). Component styles contain no literal values for them.
 
 ## 12. Keep language and formatting consistent
 

@@ -3,7 +3,7 @@
  * selection, exports and persistence, grouped by area, from the test titles themselves — so the record cannot drift
  * from the tests it describes. Run `node scripts/generate-ui-baseline.mjs` after the suite changes.
  *
- * Output: docs/ui/UI-UX_BASELINE.md and its HTML counterpart docs/html/UI-UX_BASELINE.html (HTML-first docs policy).
+ * Output: docs/ui/UI-UX_BASELINE.md (markdown only).
  */
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -59,40 +59,4 @@ for (const [area, entries] of grouped) {
   }
 }
 writeFileSync('docs/ui/UI-UX_BASELINE.md', md.join('\n').replace(/\n+$/, '\n'));
-
-const esc = (text) => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-const inline = (text) => esc(text).replace(/`([^`]+)`/g, '<code>$1</code>');
-const style = /<style>[\s\S]*?<\/style>/.exec(readFileSync('docs/html/CORPUS_KEYS.html', 'utf-8'))?.[0] ?? '';
-const body = ['<h1>UI behaviour baseline</h1>', ...intro.map((line) => `<p>${inline(line)}</p>`)];
-for (const [area, entries] of grouped) {
-  body.push(`<h2>${esc(area)}</h2>`);
-  for (const { file, titles } of entries) {
-    body.push(
-      `<h3><code>e2e/${esc(file)}</code></h3>`,
-      '<ul>',
-      ...titles.map((title) => `<li>${inline(title)}</li>`),
-      '</ul>',
-    );
-  }
-}
-writeFileSync(
-  'docs/html/UI-UX_BASELINE.html',
-  [
-    '<!doctype html>',
-    '<html lang="en">',
-    '  <head>',
-    '    <meta charset="UTF-8" />',
-    '    <meta name="viewport" content="width=device-width, initial-scale=1.0" />',
-    '    <title>UI behaviour baseline</title>',
-    style,
-    '  </head>',
-    '  <body>',
-    '    <main>',
-    body.join('\n'),
-    '    </main>',
-    '  </body>',
-    '</html>',
-    '',
-  ].join('\n'),
-);
 console.log(`${String(total)} behaviours in ${String(files.length)} specs`);
