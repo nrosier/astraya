@@ -16,7 +16,7 @@
  * @module ui/placement-label
  * @purpose Turns a corpus key/placement (#428) into human-readable wording — e.g. `planet-in-house:sun:3` into "Sun in the 3rd house" — for the admin corpus screens' labels, search, and sort order.
  * @conventions Wording follows the interface locale (en/nl) and reuses the same body/sign/aspect names as every other screen (astro-names.messages.ts); pure functions, a key that doesn't parse is shown as-is rather than hidden; also supplies tier/tag/category explanatory text for the admin UI.
- * @exports ordinal, categoryLabel, placementLabel, reportParagraphLabel, labelForKey, placementSortKey, sortKeyForKey, compareSortKeys, categoryExplanation, tierLabel, tierExplanation, tagLabel, tagExplanation
+ * @exports ordinal, categoryLabel, placementLabel, sabianDegreeLabel, reportParagraphLabel, labelForKey, placementSortKey, sortKeyForKey, compareSortKeys, categoryExplanation, tierLabel, tierExplanation, tagLabel, tagExplanation
  */
 import { ASPECTS } from '../astrology/aspects.js';
 import { BODIES } from '../astrology/bodies.js';
@@ -101,6 +101,16 @@ function sign(index: number, locale: Locale): string {
 
 function aspect(key: string, locale: Locale): string {
   return aspectDisplayName(key, locale).toLowerCase();
+}
+
+/**
+ * A Sabian degree (1..360, floor(longitude)+1) as its sign degree and sign name: `6° Taurus` in English,
+ * `6° Stier` in Dutch. Degree 1 is 1° Aries; degree 31 is 1° Taurus; degree 360 is 30° Pisces.
+ */
+export function sabianDegreeLabel(degree: number, locale: Locale): string {
+  const signIndex = Math.floor((degree - 1) / 30);
+  const withinSign = ((degree - 1) % 30) + 1;
+  return `${String(withinSign)}° ${sign(signIndex, locale)}`;
 }
 
 /** A derived point's name — the English label in both languages (no vetted Dutch terms, see `derivedPointRows`). */

@@ -193,14 +193,15 @@ describe('ReportView corpus loading (locale comes from the shared locale.ts stor
     container.remove();
   });
 
-  it('renders the Sun/Moon/Ascendant/Midheaven degree-symbol paragraphs visually de-emphasized (#405/#484)', async () => {
+  it('renders the Sun/Moon/Ascendant/Midheaven degree-symbol paragraphs as their own callout block (#405/#484/#802)', async () => {
     const { container, root } = await mount();
 
     const coreIdentity = container.querySelector('#report-section-core-identity');
     if (coreIdentity === null) throw new Error('test fixture bug: no core-identity section rendered');
     const paragraphTexts = Array.from(coreIdentity.querySelectorAll('li.report-paragraph')).map((li) => ({
-      text: li.querySelector('p')?.textContent,
-      hint: li.querySelector('p')?.classList.contains('hint') ?? false,
+      text: (li.querySelector('.sabian-image') ?? li.querySelector('p'))?.textContent,
+      // The Sabian block is a bordered callout (#802), no longer a `.hint` note.
+      hint: li.querySelector('.sabian-callout') !== null,
     }));
 
     // Same fixture as interpretation-report.test.ts: Sun@10 (degree 11), Moon@100 (degree 101),
@@ -244,7 +245,7 @@ describe('ReportView corpus loading (locale comes from the shared locale.ts stor
     const coreIdentity = container.querySelector('#report-section-core-identity');
     if (coreIdentity === null) throw new Error('test fixture bug: no core-identity section rendered');
     const sabian = Array.from(coreIdentity.querySelectorAll('li.report-paragraph')).filter(
-      (li) => li.querySelector('.sabian-badge') !== null,
+      (li) => li.querySelector('.sabian-label') !== null,
     );
     expect(sabian).toHaveLength(4);
     for (const li of sabian) {
@@ -311,10 +312,96 @@ describe('ReportView corpus loading (locale comes from the shared locale.ts stor
   it('leaves an ordinary paragraph as one plain block, with no label (#653)', async () => {
     const { container, root } = await mount();
     const ordinary = Array.from(container.querySelectorAll('li.report-paragraph')).find(
-      (li) => li.querySelector('.sabian-badge') === null,
+      (li) => li.querySelector('.sabian-label') === null,
     );
     expect(ordinary?.querySelector('.sabian-insight')).toBeNull();
     expect(ordinary?.querySelector('em')).toBeNull();
+
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('hides and shows every Sabian paragraph across all sections with the one global setting (#802)', async () => {
+    const { container, root } = await mount();
+
+    const sabianCount = (): number => container.querySelectorAll('.sabian-label').length;
+    const sabianShownPerSection = (): number[] =>
+      Array.from(container.querySelectorAll('.report-section')).map(
+        (section) => section.querySelectorAll('.sabian-label').length,
+      );
+    const shownBefore = sabianCount();
+    const perSectionBefore = sabianShownPerSection();
+    expect(shownBefore).toBeGreaterThan(0);
+    expect(perSectionBefore.filter((count) => count > 0).length).toBeGreaterThan(0);
+
+    await act(async () => {
+      degreeSymbolCheckbox(container).click();
+      await Promise.resolve();
+    });
+    expect(sabianCount()).toBe(0);
+    expect(sabianShownPerSection().every((count) => count === 0)).toBe(true);
+
+    await act(async () => {
+      degreeSymbolCheckbox(container).click();
+      await Promise.resolve();
+    });
+    expect(sabianCount()).toBe(shownBefore);
+    expect(sabianShownPerSection()).toEqual(perSectionBefore);
+
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('takes the "Key insight" text away with its Sabian block (#802)', async () => {
+    // The fixture corpus is empty, so serve Sabian entries that carry a reading (see the #653 test above).
+    const entry = (degree: number): object => ({
+      key: `degree-symbol:${String(degree)}`,
+      locale: 'en',
+      tier: 'notable',
+      tags: [],
+      provenance: { source: 'generated', model: 'test', generatedAt: '2026-10-18' },
+      text: `Image number ${String(degree)} stands in the light. This reading of ${String(degree)} says what it means.`,
+    });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((input: RequestInfo | URL) => {
+        const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+        const body = url.startsWith('/api/corpus-overrides/') ? { entries: [] } : [11, 101, 1, 271].map(entry);
+        return Promise.resolve({ ok: true, json: () => Promise.resolve(body) }) as unknown as ReturnType<typeof fetch>;
+      }),
+    );
+    const { container, root } = await mount();
+    const keyInsight = reportViewMessages.en.keyInsightLabel;
+
+    expect(container.querySelectorAll('.sabian-insight').length).toBeGreaterThan(0);
+    expect(container.textContent).toContain(keyInsight);
+
+    await act(async () => {
+      degreeSymbolCheckbox(container).click();
+      await Promise.resolve();
+    });
+    expect(container.querySelectorAll('.sabian-insight')).toHaveLength(0);
+    expect(container.querySelectorAll('.sabian-insight-tag')).toHaveLength(0);
+    expect(container.textContent).not.toContain(keyInsight);
+
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('has exactly one Sabian checkbox on the Standard tab (#802)', async () => {
+    const { container, root } = await mount();
+
+    const sabianCheckboxes = Array.from(container.querySelectorAll('label')).filter((candidate) =>
+      /sabian symbol notes|sabian-symboolnotities/i.test(candidate.textContent),
+    );
+    expect(sabianCheckboxes).toHaveLength(1);
+    expect(sabianCheckboxes[0]?.querySelector('input[type="checkbox"]')).not.toBeNull();
 
     act(() => {
       root.unmount();
@@ -348,7 +435,7 @@ describe('ReportView corpus loading (locale comes from the shared locale.ts stor
 
     const coreIdentity = container.querySelector('#report-section-core-identity');
     if (coreIdentity === null) throw new Error('test fixture bug: no core-identity section rendered');
-    expect(coreIdentity.querySelector('.sabian-badge')).not.toBeNull();
+    expect(coreIdentity.querySelector('.sabian-label')).not.toBeNull();
 
     await act(async () => {
       degreeSymbolCheckbox(container).click();
@@ -359,7 +446,7 @@ describe('ReportView corpus loading (locale comes from the shared locale.ts stor
       (li) => li.querySelector('p')?.textContent,
     );
     expect(remainingTexts.some((text) => text?.includes('degree of'))).toBe(false);
-    expect(coreIdentity.querySelector('.sabian-badge')).toBeNull();
+    expect(coreIdentity.querySelector('.sabian-label')).toBeNull();
     // Unrelated paragraphs stay untouched by the filter.
     expect(remainingTexts.length).toBeGreaterThan(0);
 
@@ -373,8 +460,8 @@ describe('ReportView corpus loading (locale comes from the shared locale.ts stor
     const { container, root } = await mount();
 
     const coreIdentity = container.querySelector('#report-section-core-identity');
-    const badge = coreIdentity?.querySelector('.sabian-badge');
-    if (badge === null || badge === undefined) throw new Error('test fixture bug: no sabian-badge rendered');
+    const badge = coreIdentity?.querySelector('.sabian-label');
+    if (badge === null || badge === undefined) throw new Error('test fixture bug: no sabian-label rendered');
     const trigger = badge.querySelector('.primitive-tooltip-trigger');
     expect(trigger?.textContent).toBe('Sabian symbol');
 
@@ -401,7 +488,7 @@ describe('ReportView corpus loading (locale comes from the shared locale.ts stor
     expect(label).toBeDefined();
 
     const coreIdentity = container.querySelector('#report-section-core-identity');
-    expect(coreIdentity?.querySelector('.sabian-badge .primitive-tooltip-trigger')?.textContent).toBe('Sabian-symbool');
+    expect(coreIdentity?.querySelector('.sabian-label .primitive-tooltip-trigger')?.textContent).toBe('Sabian-symbool');
 
     act(() => {
       root.unmount();
