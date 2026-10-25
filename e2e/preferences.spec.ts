@@ -13,7 +13,8 @@ import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test, type Download } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
-import { createPerson, gotoAndSettle } from './support.ts';
+import { newSeededContext, SHARED_PEOPLE } from './shared-people.ts';
+import { gotoAndSettle } from './support.ts';
 
 let dir: string;
 let app: FastifyInstance;
@@ -155,16 +156,12 @@ test('the rulers choice changed here is the same one chart screens read, and sur
   await group.getByRole('radio', { name: /^Modern/ }).check();
 });
 
-test('exporting everything and the people CSV both produce real downloads', async ({ page }) => {
+test('exporting everything and the people CSV both produce real downloads', async ({ browser }) => {
   test.setTimeout(60_000);
+  // The shared people (#799): the export is read-only, so a context holding them stands in for a device with data.
+  const context = await newSeededContext(browser, baseUrl);
+  const page = await context.newPage();
   await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, {
-    name: 'Ada Lovelace',
-    date: '1815-12-10',
-    time: '07:45:00',
-    latitude: '51.5072',
-    longitude: '-0.1276',
-  });
   await page.getByRole('link', { name: 'Preferences', exact: true }).click();
   await page.getByRole('tab', { name: 'Data & privacy' }).click();
 
@@ -180,12 +177,13 @@ test('exporting everything and the people CSV both produce real downloads', asyn
   ]);
   expect(everything.suggestedFilename()).toMatch(/^astraya-export-\d{4}-\d{2}-\d{2}\.json$/);
   const archive = JSON.parse(await read(everything)) as { people: { displayName: string }[] };
-  expect(archive.people.map((p) => p.displayName)).toEqual(['Ada Lovelace']);
+  expect(archive.people.map((p) => p.displayName).sort()).toEqual(SHARED_PEOPLE.map((p) => p.name).sort());
   await expect(page.getByText('everything exported.', { exact: false })).toBeVisible();
 
   const [csv] = await Promise.all([
     page.waitForEvent('download'),
     page.getByRole('button', { name: 'Export people (CSV)', exact: true }).click(),
   ]);
-  expect(await read(csv)).toContain('Ada Lovelace,1815-12-10,07:45:00,recorded');
+  expect(await read(csv)).toContain('Albert Einstein,1879-03-14,11:30:00,recorded');
+  await context.close();
 });

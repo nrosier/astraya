@@ -7,13 +7,17 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
+import type { BrowserContext, Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
-import { createPerson, gotoAndSettle, openNatalChart, openSettings } from './support.ts';
+import { EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
+import { gotoAndSettle, openNatalChart, openSettings } from './support.ts';
 
 let dir: string;
 let app: FastifyInstance;
 let baseUrl: string;
+let context: BrowserContext;
+let page: Page;
 
 test.beforeAll(async () => {
   dir = mkdtempSync(join(tmpdir(), 'astraya-e2e-'));
@@ -25,24 +29,25 @@ test.beforeAll(async () => {
   baseUrl = `http://127.0.0.1:${String(address.port)}`;
 });
 
+// A fresh context per test, holding the shared people (#799).
+test.beforeEach(async ({ browser }) => {
+  context = await newSeededContext(browser, baseUrl);
+  page = await context.newPage();
+});
+
+test.afterEach(async () => {
+  await context.close();
+});
+
 test.afterAll(async () => {
   await app.close();
   rmSync(dir, { recursive: true, force: true });
 });
 
-test('a named orb profile chosen for transits changes them, leaves the card alone, and edits save a revision', async ({
-  page,
-}) => {
+test('a named orb profile chosen for transits changes them, leaves the card alone, and edits save a revision', async () => {
   test.setTimeout(120_000);
 
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, {
-    name: 'Ada Lovelace',
-    date: '1815-12-10',
-    time: '07:45:00',
-    latitude: '51.5072',
-    longitude: '-0.1276',
-  });
+  await openSharedPerson(page, baseUrl, EINSTEIN);
 
   // The count with the card's own orbs, before any profile exists.
   await page.getByRole('button', { name: 'Transits & Forecast', exact: true }).click();
@@ -75,7 +80,7 @@ test('a named orb profile chosen for transits changes them, leaves the card alon
 
   // The transit screen now finds fewer contacts than the card's orbs give it. Preferences has no person tabs, so go back to the person first.
   await page.goto(`${baseUrl}/#/people`);
-  await page.getByRole('link', { name: 'Ada Lovelace', exact: false }).first().click();
+  await page.getByRole('link', { name: 'Albert Einstein', exact: false }).first().click();
   await page.getByRole('button', { name: 'Transits & Forecast', exact: true }).click();
   await page.getByRole('link', { name: 'Transits', exact: true }).click();
   await expect(page.getByRole('table', { name: 'Contacts' })).toBeVisible();
@@ -97,7 +102,7 @@ test('a named orb profile chosen for transits changes them, leaves the card alon
   await expect(page.getByText('Saved Exact only, revision 2.')).toBeVisible();
 
   await page.goto(`${baseUrl}/#/people`);
-  await page.getByRole('link', { name: 'Ada Lovelace', exact: false }).first().click();
+  await page.getByRole('link', { name: 'Albert Einstein', exact: false }).first().click();
   await page.getByRole('button', { name: 'Transits & Forecast', exact: true }).click();
   await page.getByRole('link', { name: 'Transits', exact: true }).click();
   await expect(page.getByRole('table', { name: 'Contacts' })).toBeVisible();
@@ -105,19 +110,10 @@ test('a named orb profile chosen for transits changes them, leaves the card alon
   expect(await count()).toBeGreaterThan(withProfile);
 });
 
-test('a cited Lilly preset is offered on the card, applies, and can be chosen for transits (#590)', async ({
-  page,
-}) => {
+test('a cited Lilly preset is offered on the card, applies, and can be chosen for transits (#590)', async () => {
   test.setTimeout(120_000);
 
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, {
-    name: 'Ada Lovelace',
-    date: '1815-12-10',
-    time: '07:45:00',
-    latitude: '51.5072',
-    longitude: '-0.1276',
-  });
+  await openSharedPerson(page, baseUrl, EINSTEIN);
 
   // On the card: the preset names its source and page, and applying it is reported in the settings button.
   await openNatalChart(page, 'Aspects');

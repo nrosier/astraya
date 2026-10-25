@@ -12,7 +12,7 @@ import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
 import { MARIC, EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
-import { chooseExport, createPerson, gotoAndSettle } from './support.ts';
+import { chooseExport } from './support.ts';
 
 let dir: string;
 let app: FastifyInstance;
@@ -44,157 +44,6 @@ async function applyMapSettings(page: Page): Promise<void> {
   await expect(page.getByRole('dialog', { name: 'Map settings' })).toBeHidden();
 }
 
-async function openAda(page: Page): Promise<void> {
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, {
-    name: 'Ada Lovelace',
-    date: '1815-12-10',
-    time: '07:45:00',
-    latitude: '51.5072',
-    longitude: '-0.1276',
-  });
-  // On a phone the navigation is folded behind the Menu button.
-  const menu = page.getByRole('button', { name: 'Menu', exact: true });
-  if (await menu.isVisible()) await menu.click();
-  await page.getByRole('link', { name: 'Astrocartography', exact: true }).click();
-  await expect(page.locator('div.acg-map svg')).toBeVisible();
-}
-
-test('a person with a known birth time gets an Astrocartography map and the SVG export downloads', async ({ page }) => {
-  test.setTimeout(60_000);
-
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, {
-    name: 'Ada Lovelace',
-    date: '1815-12-10',
-    time: '07:45:00',
-    latitude: '51.5072',
-    longitude: '-0.1276',
-  });
-
-  await page.getByRole('link', { name: 'Astrocartography', exact: true }).click();
-  await expect(page.getByRole('heading', { name: /astrocartography/i, level: 1 })).toBeVisible();
-  await expect(page.locator('div.acg-map')).toBeVisible();
-  await expect(page.locator('div.acg-map svg')).toBeVisible();
-
-  const [download] = await Promise.all([page.waitForEvent('download'), chooseExport(page, 'Download SVG')]);
-  expect(download.suggestedFilename()).toBe('ada-lovelace-astrocartography.svg');
-
-  const contents = await download.createReadStream();
-  const chunks: Buffer[] = [];
-  for await (const chunk of contents) chunks.push(chunk as Buffer);
-  const svg = Buffer.concat(chunks).toString('utf-8');
-  expect(svg).toContain('<svg');
-
-  // What each line means, from the reviewed corpus text rather than the mechanical fallback (#427).
-  await expect(page.getByRole('heading', { name: 'What the lines mean', level: 2 })).toBeVisible();
-  const sun = page.locator('.acg-meanings .primitive-disclosure').first();
-  await sun.getByRole('button').click();
-  await expect(sun.locator('dd').first()).not.toContainText('Sun on the Midheaven line.');
-  expect((await sun.locator('dd').first().textContent())?.length ?? 0).toBeGreaterThan(40);
-});
-
-test('unchecking a line type removes it from the map', async ({ page }) => {
-  test.setTimeout(60_000);
-
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, {
-    name: 'Ada Lovelace',
-    date: '1815-12-10',
-    time: '07:45:00',
-    latitude: '51.5072',
-    longitude: '-0.1276',
-  });
-
-  await page.getByRole('link', { name: 'Astrocartography', exact: true }).click();
-  await expect(page.locator('div.acg-map svg')).toBeVisible();
-
-  const mcLines = page.locator('div.acg-map .acg-line-mc');
-  const before = await mcLines.count();
-  expect(before).toBeGreaterThan(0);
-
-  await openMapSettings(page);
-  await page.getByLabel('MC (Midheaven)').uncheck();
-  await applyMapSettings(page);
-  await expect(mcLines).toHaveCount(0);
-});
-
-test('enabling Local Space adds lines for the checked bodies', async ({ page }) => {
-  test.setTimeout(60_000);
-
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, {
-    name: 'Ada Lovelace',
-    date: '1815-12-10',
-    time: '07:45:00',
-    latitude: '51.5072',
-    longitude: '-0.1276',
-  });
-
-  await page.getByRole('link', { name: 'Astrocartography', exact: true }).click();
-  await expect(page.locator('div.acg-map svg')).toBeVisible();
-
-  const localSpaceLines = page.locator('div.acg-map .acg-line-local-space');
-  await expect(localSpaceLines).toHaveCount(0);
-
-  await openMapSettings(page);
-  await page.getByLabel('Show Local Space lines for the checked bodies').check();
-  await applyMapSettings(page);
-  await expect(localSpaceLines.first()).toBeVisible();
-});
-
-test('applying several changes at once is one recalculation, with the last map kept on screen meanwhile (#512)', async ({
-  page,
-}) => {
-  test.setTimeout(90_000);
-  await openAda(page);
-  await page.evaluate(`(() => {
-    window.__acgReplacements = 0;
-    const map = document.querySelector('div.acg-map');
-    new MutationObserver((records) => {
-      for (const record of records) if (record.type === 'childList') window.__acgReplacements += 1;
-    }).observe(map, { childList: true });
-  })()`);
-
-  await openMapSettings(page);
-  const dialog = page.getByRole('dialog', { name: 'Map settings' });
-  await dialog.getByLabel('MC (Midheaven)').uncheck();
-  await dialog.getByLabel('IC (Nadir)').uncheck();
-  await dialog.getByLabel('Show Local Space lines for the checked bodies').check();
-  await dialog.getByLabel('Uranus').check();
-  await applyMapSettings(page);
-
-  await expect(page.getByRole('button', { name: /^Map settings/ })).toContainText(
-    '2 line types · 8 bodies · Local Space on',
-  );
-  await expect(page.locator('div.acg-map .acg-line-mc')).toHaveCount(0);
-  await expect(page.locator('div.acg-map .acg-line-local-space').first()).toBeVisible();
-  await expect(page.locator('div.acg-map')).not.toHaveAttribute('aria-busy', 'true');
-  // The map was swapped once for the whole draft, and was never emptied in between.
-  expect(await page.evaluate('window.__acgReplacements')).toBe(1);
-  await expect(page.locator('div.acg-map svg')).toBeVisible();
-});
-
-test('relocation is validated before it can be applied (#512)', async ({ page }) => {
-  test.setTimeout(90_000);
-  await openAda(page);
-  await openMapSettings(page);
-  const dialog = page.getByRole('dialog', { name: 'Map settings' });
-  const apply = dialog.getByRole('button', { name: /^Apply/ });
-
-  await dialog.getByLabel('Latitude').fill('48.85');
-  await expect(dialog.getByText('Enter both latitude and longitude, or leave both empty.')).toBeVisible();
-  await expect(apply).toBeDisabled();
-  await dialog.getByLabel('Longitude').fill('200');
-  await expect(dialog.getByText('Enter a number from -180 to 180.')).toBeVisible();
-  await expect(apply).toBeDisabled();
-  await dialog.getByLabel('Longitude').fill('2.35');
-  await expect(apply).toBeEnabled();
-  await apply.click();
-  await expect(page.getByRole('button', { name: /^Map settings/ })).toContainText('relocated');
-  await expect(page.getByText(/Ascendant: .* · Midheaven: /)).toBeVisible();
-});
-
 test.describe('with the shared people (#799)', () => {
   let context: BrowserContext;
   let page: Page;
@@ -216,6 +65,118 @@ test.describe('with the shared people (#799)', () => {
 
   test.afterEach(async () => {
     await context.close();
+  });
+
+  test('a person with a known birth time gets an Astrocartography map and the SVG export downloads', async () => {
+    test.setTimeout(60_000);
+
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+
+    await page.getByRole('link', { name: 'Astrocartography', exact: true }).click();
+    await expect(page.getByRole('heading', { name: /astrocartography/i, level: 1 })).toBeVisible();
+    await expect(page.locator('div.acg-map')).toBeVisible();
+    await expect(page.locator('div.acg-map svg')).toBeVisible();
+
+    const [download] = await Promise.all([page.waitForEvent('download'), chooseExport(page, 'Download SVG')]);
+    expect(download.suggestedFilename()).toBe('albert-einstein-astrocartography.svg');
+
+    const contents = await download.createReadStream();
+    const chunks: Buffer[] = [];
+    for await (const chunk of contents) chunks.push(chunk as Buffer);
+    const svg = Buffer.concat(chunks).toString('utf-8');
+    expect(svg).toContain('<svg');
+
+    // What each line means, from the reviewed corpus text rather than the mechanical fallback (#427).
+    await expect(page.getByRole('heading', { name: 'What the lines mean', level: 2 })).toBeVisible();
+    const sun = page.locator('.acg-meanings .primitive-disclosure').first();
+    await sun.getByRole('button').click();
+    await expect(sun.locator('dd').first()).not.toContainText('Sun on the Midheaven line.');
+    expect((await sun.locator('dd').first().textContent())?.length ?? 0).toBeGreaterThan(40);
+  });
+
+  test('unchecking a line type removes it from the map', async () => {
+    test.setTimeout(60_000);
+
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+
+    await page.getByRole('link', { name: 'Astrocartography', exact: true }).click();
+    await expect(page.locator('div.acg-map svg')).toBeVisible();
+
+    const mcLines = page.locator('div.acg-map .acg-line-mc');
+    const before = await mcLines.count();
+    expect(before).toBeGreaterThan(0);
+
+    await openMapSettings(page);
+    await page.getByLabel('MC (Midheaven)').uncheck();
+    await applyMapSettings(page);
+    await expect(mcLines).toHaveCount(0);
+  });
+
+  test('enabling Local Space adds lines for the checked bodies', async () => {
+    test.setTimeout(60_000);
+
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+
+    await page.getByRole('link', { name: 'Astrocartography', exact: true }).click();
+    await expect(page.locator('div.acg-map svg')).toBeVisible();
+
+    const localSpaceLines = page.locator('div.acg-map .acg-line-local-space');
+    await expect(localSpaceLines).toHaveCount(0);
+
+    await openMapSettings(page);
+    await page.getByLabel('Show Local Space lines for the checked bodies').check();
+    await applyMapSettings(page);
+    await expect(localSpaceLines.first()).toBeVisible();
+  });
+
+  test('applying several changes at once is one recalculation, with the last map kept on screen meanwhile (#512)', async () => {
+    test.setTimeout(90_000);
+    await openSharedEinstein(page);
+    await page.evaluate(`(() => {
+      window.__acgReplacements = 0;
+      const map = document.querySelector('div.acg-map');
+      new MutationObserver((records) => {
+        for (const record of records) if (record.type === 'childList') window.__acgReplacements += 1;
+      }).observe(map, { childList: true });
+    })()`);
+
+    await openMapSettings(page);
+    const dialog = page.getByRole('dialog', { name: 'Map settings' });
+    await dialog.getByLabel('MC (Midheaven)').uncheck();
+    await dialog.getByLabel('IC (Nadir)').uncheck();
+    await dialog.getByLabel('Show Local Space lines for the checked bodies').check();
+    await dialog.getByLabel('Uranus').check();
+    await applyMapSettings(page);
+
+    await expect(page.getByRole('button', { name: /^Map settings/ })).toContainText(
+      '2 line types · 8 bodies · Local Space on',
+    );
+    await expect(page.locator('div.acg-map .acg-line-mc')).toHaveCount(0);
+    await expect(page.locator('div.acg-map .acg-line-local-space').first()).toBeVisible();
+    await expect(page.locator('div.acg-map')).not.toHaveAttribute('aria-busy', 'true');
+    // The map was swapped once for the whole draft, and was never emptied in between.
+    expect(await page.evaluate('window.__acgReplacements')).toBe(1);
+    await expect(page.locator('div.acg-map svg')).toBeVisible();
+  });
+
+  test('relocation is validated before it can be applied (#512)', async () => {
+    test.setTimeout(90_000);
+    await openSharedEinstein(page);
+    await openMapSettings(page);
+    const dialog = page.getByRole('dialog', { name: 'Map settings' });
+    const apply = dialog.getByRole('button', { name: /^Apply/ });
+
+    await dialog.getByLabel('Latitude').fill('48.85');
+    await expect(dialog.getByText('Enter both latitude and longitude, or leave both empty.')).toBeVisible();
+    await expect(apply).toBeDisabled();
+    await dialog.getByLabel('Longitude').fill('200');
+    await expect(dialog.getByText('Enter a number from -180 to 180.')).toBeVisible();
+    await expect(apply).toBeDisabled();
+    await dialog.getByLabel('Longitude').fill('2.35');
+    await expect(apply).toBeEnabled();
+    await apply.click();
+    await expect(page.getByRole('button', { name: /^Map settings/ })).toContainText('relocated');
+    await expect(page.getByText(/Ascendant: .* · Midheaven: /)).toBeVisible();
   });
 
   test('a person with an unknown birth time is told the map needs one', async () => {
