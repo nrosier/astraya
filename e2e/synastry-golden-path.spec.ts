@@ -11,7 +11,6 @@ import type { BrowserContext, Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
 import { EINSTEIN, MARIC, newSeededContext, openSharedPerson } from './shared-people.ts';
-import { createPerson, gotoAndSettle } from './support.ts';
 
 let dir: string;
 let app: FastifyInstance;
@@ -33,72 +32,6 @@ test.afterAll(async () => {
   rmSync(dir, { recursive: true, force: true });
 });
 
-test('two people with known birth times get a Synastry screen with a bi-wheel and aspect table', async ({ page }) => {
-  test.setTimeout(60_000);
-
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, {
-    name: 'Ada Lovelace',
-    date: '1815-12-10',
-    time: '07:45:00',
-    latitude: '51.5072',
-    longitude: '-0.1276',
-  });
-  await page.getByRole('link', { name: '← People' }).click();
-  await createPerson(page, {
-    name: 'Charles Babbage',
-    date: '1820-12-26',
-    time: '10:00:00',
-    latitude: '51.5072',
-    longitude: '-0.1276',
-  });
-
-  await page.getByRole('link', { name: '← People' }).click();
-  await page.getByRole('link').filter({ hasText: 'Ada Lovelace' }).click();
-  await page.getByRole('button', { name: 'Relationship Charts', exact: true }).click();
-  await page.getByRole('link', { name: 'Synastry', exact: true }).click();
-  await expect(page.getByRole('heading', { name: /synastry/i })).toBeVisible();
-
-  await page.getByLabel('Compare with').selectOption({ label: 'Charles Babbage' });
-
-  await expect(page.locator('div.chart-wheel')).toBeVisible();
-  await expect(page.locator('div.chart-wheel svg')).toHaveCount(1);
-  await expect(page.getByRole('table', { name: 'Aspects' })).toBeVisible();
-
-  // The aspect table's Interpretation column never renders blank (#359): it starts as the
-  // mechanical sentence and, once the reviewed corpus has loaded (#422), becomes the corpus text,
-  // led by whose side it is written from.
-  await expect(page.getByRole('columnheader', { name: 'Interpretation' })).toBeVisible();
-  const firstInterpretationCell = page.getByRole('row').nth(1).getByRole('cell').last();
-  await expect(firstInterpretationCell).not.toBeEmpty();
-  const fromCorpus = page.getByRole('cell').filter({ hasText: /^Seen from (Ada Lovelace|Charles Babbage)’s side: / });
-  await expect(fromCorpus.first()).toBeVisible();
-  // Every row that has an entry names a side; the rows that are a body paired with itself do not.
-  const rows = page.getByRole('table', { name: 'Aspects' }).locator('tbody tr');
-  expect(await fromCorpus.count()).toBeLessThanOrEqual(await rows.count());
-
-  // Ranked by importance (#422): the table opens with the strongest contacts first, each scored.
-  await expect(page.getByText('The aspects are ordered by importance')).toBeVisible();
-  const aspectsTable = page.getByRole('table', { name: 'Aspects' });
-  const headers = await aspectsTable.getByRole('columnheader').allInnerTexts();
-  const importanceColumn = headers.findIndex((header) => header.toLowerCase().includes('importance'));
-  expect(importanceColumn, `column headers: ${JSON.stringify(headers)}`).toBeGreaterThanOrEqual(0);
-  const scores: number[] = [];
-  for (const row of await aspectsTable.locator('tbody tr').all()) {
-    scores.push(Number(await row.getByRole('cell').nth(importanceColumn).innerText()));
-  }
-  expect(scores.length).toBeGreaterThan(3);
-  expect(scores.every((score) => Number.isInteger(score) && score >= 0 && score <= 100)).toBe(true);
-  expect(scores).toEqual([...scores].sort((a, b) => b - a));
-  expect(scores[0]).toBeGreaterThan(scores.at(-1) ?? 0);
-
-  const [download] = await Promise.all([
-    page.waitForEvent('download'),
-    page.getByRole('button', { name: 'Download CSV', exact: true }).click(),
-  ]);
-  expect(download.suggestedFilename()).toBe('ada-lovelace-charles-babbage-synastry-aspects.csv');
-});
-
 test.describe('with the shared people (#799)', () => {
   let context: BrowserContext;
   let page: Page;
@@ -111,6 +44,54 @@ test.describe('with the shared people (#799)', () => {
 
   test.afterEach(async () => {
     await context.close();
+  });
+
+  test('two people with known birth times get a Synastry screen with a bi-wheel and aspect table', async () => {
+    test.setTimeout(60_000);
+
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await page.getByRole('button', { name: 'Relationship Charts', exact: true }).click();
+    await page.getByRole('link', { name: 'Synastry', exact: true }).click();
+    await expect(page.getByRole('heading', { name: /synastry/i })).toBeVisible();
+
+    await page.getByLabel('Compare with').selectOption({ label: 'Max Born' });
+
+    await expect(page.locator('div.chart-wheel')).toBeVisible();
+    await expect(page.locator('div.chart-wheel svg')).toHaveCount(1);
+    await expect(page.getByRole('table', { name: 'Aspects' })).toBeVisible();
+
+    // The aspect table's Interpretation column never renders blank (#359): it starts as the
+    // mechanical sentence and, once the reviewed corpus has loaded (#422), becomes the corpus text,
+    // led by whose side it is written from.
+    await expect(page.getByRole('columnheader', { name: 'Interpretation' })).toBeVisible();
+    const firstInterpretationCell = page.getByRole('row').nth(1).getByRole('cell').last();
+    await expect(firstInterpretationCell).not.toBeEmpty();
+    const fromCorpus = page.getByRole('cell').filter({ hasText: /^Seen from (Albert Einstein|Max Born)’s side: / });
+    await expect(fromCorpus.first()).toBeVisible();
+    // Every row that has an entry names a side; the rows that are a body paired with itself do not.
+    const rows = page.getByRole('table', { name: 'Aspects' }).locator('tbody tr');
+    expect(await fromCorpus.count()).toBeLessThanOrEqual(await rows.count());
+
+    // Ranked by importance (#422): the table opens with the strongest contacts first, each scored.
+    await expect(page.getByText('The aspects are ordered by importance')).toBeVisible();
+    const aspectsTable = page.getByRole('table', { name: 'Aspects' });
+    const headers = await aspectsTable.getByRole('columnheader').allInnerTexts();
+    const importanceColumn = headers.findIndex((header) => header.toLowerCase().includes('importance'));
+    expect(importanceColumn, `column headers: ${JSON.stringify(headers)}`).toBeGreaterThanOrEqual(0);
+    const scores: number[] = [];
+    for (const row of await aspectsTable.locator('tbody tr').all()) {
+      scores.push(Number(await row.getByRole('cell').nth(importanceColumn).innerText()));
+    }
+    expect(scores.length).toBeGreaterThan(3);
+    expect(scores.every((score) => Number.isInteger(score) && score >= 0 && score <= 100)).toBe(true);
+    expect(scores).toEqual([...scores].sort((a, b) => b - a));
+    expect(scores[0]).toBeGreaterThan(scores.at(-1) ?? 0);
+
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.getByRole('button', { name: 'Download CSV', exact: true }).click(),
+    ]);
+    expect(download.suggestedFilename()).toBe('albert-einstein-max-born-synastry-aspects.csv');
   });
 
   test('the relationship summary panel groups contacts by theme, and its AI reading is gated on an account (#422)', async () => {

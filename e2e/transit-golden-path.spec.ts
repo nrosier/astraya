@@ -12,8 +12,7 @@ import { expect, test } from '@playwright/test';
 import type { BrowserContext, Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
-import { MARIC, newSeededContext, openSharedPerson } from './shared-people.ts';
-import { createPerson, gotoAndSettle } from './support.ts';
+import { EINSTEIN, MARIC, newSeededContext, openSharedPerson } from './shared-people.ts';
 
 let dir: string;
 let app: FastifyInstance;
@@ -35,72 +34,6 @@ test.afterAll(async () => {
   rmSync(dir, { recursive: true, force: true });
 });
 
-test('a person with a known birth time gets a Transit screen with a bi-wheel and contacts table', async ({ page }) => {
-  test.setTimeout(60_000);
-
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, {
-    name: 'Ada Lovelace',
-    date: '1815-12-10',
-    time: '07:45:00',
-    latitude: '51.5072',
-    longitude: '-0.1276',
-  });
-
-  await page.getByRole('button', { name: 'Transits & Forecast', exact: true }).click();
-  await page.getByRole('link', { name: 'Transits', exact: true }).click();
-  await expect(page.getByRole('heading', { level: 1, name: /transits/i })).toBeVisible();
-  await expect(page.locator('div.chart-wheel')).toBeVisible();
-  await expect(page.locator('div.chart-wheel svg')).toHaveCount(1);
-  await expect(page.getByRole('table', { name: 'Contacts' })).toBeVisible();
-
-  // Important-only by default (#416): the count, the table rows and the wheel's cross-ring lines
-  // all agree, and "All transits" widens every one of them.
-  const countText = async (): Promise<[number, number]> => {
-    const text = (await page.locator('.filter-summary-count').textContent()) ?? '';
-    const match = /· (\d+) of (\d+) shown$/.exec(text);
-    if (match === null) throw new Error(`unexpected count text: ${text}`);
-    return [Number(match[1]), Number(match[2])];
-  };
-  const rows = page.getByRole('table', { name: 'Contacts' }).locator('tbody tr');
-  const crossLines = page.locator('div.chart-wheel .chart-aspect-link[data-ring-a="1"][data-ring-b="0"]');
-  const [shown, total] = await countText();
-  expect(shown).toBeLessThan(total);
-  await expect(rows).toHaveCount(shown);
-  await expect(crossLines).toHaveCount(shown);
-  await page.getByRole('radiogroup', { name: 'Show', exact: true }).getByLabel('All', { exact: true }).check();
-  await expect(rows).toHaveCount(total);
-  await expect(crossLines).toHaveCount(total);
-  await page.getByRole('radiogroup', { name: 'Show', exact: true }).getByLabel('Important', { exact: true }).check();
-
-  // Click-to-isolate (#418): the transiting Saturn is picked out on its own ring, the panel names
-  // the ring, and a second click clears it.
-  const transitingSaturn = page.locator('div.chart-wheel .chart-point[data-body="saturn"][data-ring="1"]');
-  await transitingSaturn.locator('.chart-hit-area').click();
-  await expect(page.locator('.chart-isolation-head strong')).toHaveText('Saturn (Transit)');
-  await expect(page.locator('div.chart-wheel .chart-dimmed').first()).toBeAttached();
-  await expect(transitingSaturn).not.toHaveClass(/chart-dimmed/);
-
-  // The AI interpretation of the selected placement (#424): offered below the card for a planet,
-  // disabled with its reason while nobody is signed in, and accessible.
-  const focusButton = page.getByRole('button', { name: 'Interpret the tensions of this placement' });
-  await expect(focusButton).toBeVisible();
-  await expect(focusButton).toBeDisabled();
-  await expect(page.locator('.focus-interpretation')).toContainText('Sign in to generate an AI interpretation');
-  const focusAxe = await new AxeBuilder({ page }).include('.focus-interpretation').analyze();
-  expect(focusAxe.violations.map((v) => v.id)).toEqual([]);
-  await transitingSaturn.locator('.chart-hit-area').click();
-  await expect(page.locator('.chart-isolation-panel')).toHaveCount(0);
-  await expect(page.locator('.focus-interpretation')).toHaveCount(0);
-  await expect(page.locator('div.chart-wheel .chart-dimmed')).toHaveCount(0);
-
-  const [download] = await Promise.all([
-    page.waitForEvent('download'),
-    page.getByRole('button', { name: 'Download CSV', exact: true }).click(),
-  ]);
-  expect(download.suggestedFilename()).toBe('ada-lovelace-transit-contacts.csv');
-});
-
 test.describe('with the shared people (#799)', () => {
   let context: BrowserContext;
   let page: Page;
@@ -113,6 +46,65 @@ test.describe('with the shared people (#799)', () => {
 
   test.afterEach(async () => {
     await context.close();
+  });
+
+  test('a person with a known birth time gets a Transit screen with a bi-wheel and contacts table', async () => {
+    test.setTimeout(60_000);
+
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+
+    await page.getByRole('button', { name: 'Transits & Forecast', exact: true }).click();
+    await page.getByRole('link', { name: 'Transits', exact: true }).click();
+    await expect(page.getByRole('heading', { level: 1, name: /transits/i })).toBeVisible();
+    await expect(page.locator('div.chart-wheel')).toBeVisible();
+    await expect(page.locator('div.chart-wheel svg')).toHaveCount(1);
+    await expect(page.getByRole('table', { name: 'Contacts' })).toBeVisible();
+
+    // Important-only by default (#416): the count, the table rows and the wheel's cross-ring lines
+    // all agree, and "All transits" widens every one of them.
+    const countText = async (): Promise<[number, number]> => {
+      const text = (await page.locator('.filter-summary-count').textContent()) ?? '';
+      const match = /· (\d+) of (\d+) shown$/.exec(text);
+      if (match === null) throw new Error(`unexpected count text: ${text}`);
+      return [Number(match[1]), Number(match[2])];
+    };
+    const rows = page.getByRole('table', { name: 'Contacts' }).locator('tbody tr');
+    const crossLines = page.locator('div.chart-wheel .chart-aspect-link[data-ring-a="1"][data-ring-b="0"]');
+    const [shown, total] = await countText();
+    expect(shown).toBeLessThan(total);
+    await expect(rows).toHaveCount(shown);
+    await expect(crossLines).toHaveCount(shown);
+    await page.getByRole('radiogroup', { name: 'Show', exact: true }).getByLabel('All', { exact: true }).check();
+    await expect(rows).toHaveCount(total);
+    await expect(crossLines).toHaveCount(total);
+    await page.getByRole('radiogroup', { name: 'Show', exact: true }).getByLabel('Important', { exact: true }).check();
+
+    // Click-to-isolate (#418): the transiting Saturn is picked out on its own ring, the panel names
+    // the ring, and a second click clears it.
+    const transitingSaturn = page.locator('div.chart-wheel .chart-point[data-body="saturn"][data-ring="1"]');
+    await transitingSaturn.locator('.chart-hit-area').click();
+    await expect(page.locator('.chart-isolation-head strong')).toHaveText('Saturn (Transit)');
+    await expect(page.locator('div.chart-wheel .chart-dimmed').first()).toBeAttached();
+    await expect(transitingSaturn).not.toHaveClass(/chart-dimmed/);
+
+    // The AI interpretation of the selected placement (#424): offered below the card for a planet,
+    // disabled with its reason while nobody is signed in, and accessible.
+    const focusButton = page.getByRole('button', { name: 'Interpret the tensions of this placement' });
+    await expect(focusButton).toBeVisible();
+    await expect(focusButton).toBeDisabled();
+    await expect(page.locator('.focus-interpretation')).toContainText('Sign in to generate an AI interpretation');
+    const focusAxe = await new AxeBuilder({ page }).include('.focus-interpretation').analyze();
+    expect(focusAxe.violations.map((v) => v.id)).toEqual([]);
+    await transitingSaturn.locator('.chart-hit-area').click();
+    await expect(page.locator('.chart-isolation-panel')).toHaveCount(0);
+    await expect(page.locator('.focus-interpretation')).toHaveCount(0);
+    await expect(page.locator('div.chart-wheel .chart-dimmed')).toHaveCount(0);
+
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.getByRole('button', { name: 'Download CSV', exact: true }).click(),
+    ]);
+    expect(download.suggestedFilename()).toBe('albert-einstein-transit-contacts.csv');
   });
 
   test('a person with an unknown birth time is told transits need one', async () => {

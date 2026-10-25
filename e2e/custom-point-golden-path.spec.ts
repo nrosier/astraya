@@ -6,13 +6,17 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
+import type { BrowserContext, Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
-import { createPerson, gotoAndSettle, openNatalChart } from './support.ts';
+import { EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
+import { openNatalChart } from './support.ts';
 
 let dir: string;
 let app: FastifyInstance;
 let baseUrl: string;
+let context: BrowserContext;
+let page: Page;
 
 test.beforeAll(async () => {
   dir = mkdtempSync(join(tmpdir(), 'astraya-e2e-'));
@@ -24,21 +28,24 @@ test.beforeAll(async () => {
   baseUrl = `http://127.0.0.1:${String(address.port)}`;
 });
 
+// A fresh context per test, holding the shared people (#799).
+test.beforeEach(async ({ browser }) => {
+  context = await newSeededContext(browser, baseUrl);
+  page = await context.newPage();
+});
+
+test.afterEach(async () => {
+  await context.close();
+});
+
 test.afterAll(async () => {
   await app.close();
   rmSync(dir, { recursive: true, force: true });
 });
 
-test('a custom formula point is rendered, disabled, and removed from the natal chart (#573)', async ({ page }) => {
+test('a custom formula point is rendered, disabled, and removed from the natal chart (#573)', async () => {
   test.setTimeout(90_000);
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, {
-    name: 'Ada Lovelace',
-    date: '1815-12-10',
-    time: '07:45:00',
-    latitude: '51.5072',
-    longitude: '-0.1276',
-  });
+  await openSharedPerson(page, baseUrl, EINSTEIN);
   await openNatalChart(page);
 
   const editor = page.getByRole('region', { name: 'Custom formula points' });

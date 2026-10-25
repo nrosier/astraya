@@ -8,13 +8,17 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
+import type { BrowserContext, Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
-import { createPerson, gotoAndSettle, openNatalChart, openSettings } from './support.ts';
+import { EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
+import { openNatalChart, openSettings } from './support.ts';
 
 let dir: string;
 let app: FastifyInstance;
 let baseUrl: string;
+let context: BrowserContext;
+let page: Page;
 
 test.beforeAll(async () => {
   dir = mkdtempSync(join(tmpdir(), 'astraya-e2e-'));
@@ -26,22 +30,25 @@ test.beforeAll(async () => {
   baseUrl = `http://127.0.0.1:${String(address.port)}`;
 });
 
+// A fresh context per test, holding the shared people (#799).
+test.beforeEach(async ({ browser }) => {
+  context = await newSeededContext(browser, baseUrl);
+  page = await context.newPage();
+});
+
+test.afterEach(async () => {
+  await context.close();
+});
+
 test.afterAll(async () => {
   await app.close();
   rmSync(dir, { recursive: true, force: true });
 });
 
-test('a rule set on the card changes the transit contacts too (#590)', async ({ page }) => {
+test('a rule set on the card changes the transit contacts too (#590)', async () => {
   test.setTimeout(90_000);
 
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, {
-    name: 'Ada Lovelace',
-    date: '1815-12-10',
-    time: '07:45:00',
-    latitude: '51.5072',
-    longitude: '-0.1276',
-  });
+  await openSharedPerson(page, baseUrl, EINSTEIN);
   await page.getByRole('button', { name: 'Transits & Forecast', exact: true }).click();
   await page.getByRole('link', { name: 'Transits', exact: true }).click();
   await expect(page.getByRole('table', { name: 'Contacts' })).toBeVisible();
@@ -69,19 +76,10 @@ test('a rule set on the card changes the transit contacts too (#590)', async ({ 
   await expect.poll(totalCount).toBeLessThan(builtInTotal);
 });
 
-test('own orb rules on the natal chart change its aspects, name themselves in the settings button, and survive a profile reset', async ({
-  page,
-}) => {
+test('own orb rules on the natal chart change its aspects, name themselves in the settings button, and survive a profile reset', async () => {
   test.setTimeout(90_000);
 
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, {
-    name: 'Ada Lovelace',
-    date: '1815-12-10',
-    time: '07:45:00',
-    latitude: '51.5072',
-    longitude: '-0.1276',
-  });
+  await openSharedPerson(page, baseUrl, EINSTEIN);
   await openNatalChart(page, 'Aspects');
   const rows = page.locator('table').first().locator('tbody tr');
   await expect(rows.first()).toBeVisible();

@@ -10,7 +10,7 @@ import { join } from 'node:path';
 import { test } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
-import { createPerson, gotoAndSettle } from './support.ts';
+import { EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
 
 const OUT = 'docs/ui-baselines';
 const VIEWPORTS = [
@@ -52,16 +52,11 @@ const SURFACES: readonly (readonly [string, (id: string) => string])[] = [
   ['pdf-builder', () => '#/documents/pdf'],
 ];
 
-test('capture the reference screenshots', async ({ page }) => {
+test('capture the reference screenshots', async ({ browser }) => {
   test.setTimeout(300_000);
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, {
-    name: 'Ada Lovelace',
-    date: '1815-12-10',
-    time: '07:45:00',
-    latitude: '51.5072',
-    longitude: '-0.1276',
-  });
+  const context = await newSeededContext(browser, baseUrl);
+  const page = await context.newPage();
+  await openSharedPerson(page, baseUrl, EINSTEIN);
   personId = /#\/people\/([^/]+)\//.exec(page.url())?.[1] ?? '';
   for (const theme of THEMES) {
     await page.evaluate(`localStorage.setItem('astraya.theme', '${theme}')`);
@@ -79,4 +74,5 @@ test('capture the reference screenshots', async ({ page }) => {
       }
     }
   }
+  await context.close();
 });

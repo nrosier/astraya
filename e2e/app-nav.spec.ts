@@ -14,15 +14,7 @@ import type { BrowserContext, Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
 import { EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
-import {
-  closeSettings,
-  createPerson,
-  gotoAndSettle,
-  openChart,
-  openNatalChart,
-  openSettings,
-  openTool,
-} from './support.ts';
+import { closeSettings, gotoAndSettle, openChart, openNatalChart, openSettings, openTool } from './support.ts';
 
 let dir: string;
 let app: FastifyInstance;
@@ -42,14 +34,6 @@ test.afterAll(async () => {
   await app.close();
   rmSync(dir, { recursive: true, force: true });
 });
-
-const ADA = {
-  name: 'Ada Lovelace',
-  date: '1815-12-10',
-  time: '07:45:00',
-  latitude: '51.5072',
-  longitude: '-0.1276',
-};
 
 test('the Tools menu is in the header on every screen and opens each tool', async ({ page }) => {
   test.setTimeout(60_000);
@@ -83,190 +67,6 @@ test('the Tools menu is in the header on every screen and opens each tool', asyn
   await expect(page.getByRole('heading', { name: 'Horary chart', level: 1 })).toBeVisible();
 });
 
-test('a person’s screens carry their name and tabs in the header, with no strip above the page', async ({ page }) => {
-  test.setTimeout(60_000);
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, ADA);
-  const header = page.getByRole('banner');
-
-  await expect(header.getByText('Ada Lovelace', { exact: true })).toBeVisible();
-  for (const name of ['Birth record', 'Interpretation', 'Astrocartography']) {
-    await expect(header.getByRole('link', { name, exact: true })).toBeVisible();
-  }
-  // The charts cast for this person are one destination (#511), and the families come after it.
-  await expect(header.getByRole('link', { name: 'Charts', exact: true })).toBeVisible();
-  for (const name of ['Transits & Forecast', 'Progressions & Directions', 'Relationship Charts']) {
-    await expect(header.getByRole('button', { name, exact: true })).toBeVisible();
-  }
-  await expect(page.locator('.person-shelf')).toHaveCount(0);
-  await expect(header.getByRole('link', { name: 'Birth record', exact: true })).toHaveAttribute('aria-current', 'page');
-  await expect(header.getByText('Return to', { exact: true })).toHaveCount(0);
-
-  // The person's tabs and the Tools menu share one open-at-a-time rule.
-  await header.getByRole('button', { name: 'Transits & Forecast', exact: true }).click();
-  await header.getByRole('button', { name: 'Tools', exact: true }).click();
-  await expect(header.getByRole('navigation', { name: 'Transits & Forecast subtabs' })).toHaveCount(0);
-  await expect(header.getByRole('navigation', { name: 'Tools subtabs' })).toBeVisible();
-  const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
-  expect(results.violations).toEqual([]);
-
-  // Going to a tool keeps the person's tabs in the header (#453): a tool is not about their
-  // chart, but losing the way back to it just for visiting one is its own kind of friction.
-  await header.getByRole('link', { name: 'Planetary cycles', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Planetary cycles', level: 1 })).toBeVisible();
-  await expect(header.getByText('Ada Lovelace', { exact: true })).toBeVisible();
-  await expect(header.getByRole('link', { name: 'Charts', exact: true })).toBeVisible();
-  // On a tool page the person is history, not the subject: the rail says so (and does not on their own pages).
-  await expect(header.getByText('Return to', { exact: true })).toBeVisible();
-  // None of the person's tabs is "current" on a tool page — it genuinely isn't one of them.
-  await expect(header.getByRole('link', { name: 'Birth record', exact: true })).not.toHaveAttribute(
-    'aria-current',
-    'page',
-  );
-});
-
-test('a tool page remembers the last person visited, and returning to their tabs needs no re-pick (#453)', async ({
-  page,
-}) => {
-  test.setTimeout(60_000);
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, ADA);
-  const header = page.getByRole('banner');
-  await openTool(page, 'Eclipses');
-  await expect(page.getByRole('heading', { name: 'Eclipses', level: 1 })).toBeVisible();
-
-  // Still Ada's tabs, carried over from the person's screen the tool was opened from.
-  await expect(header.getByText('Ada Lovelace', { exact: true })).toBeVisible();
-  await header.getByRole('link', { name: 'Birth record', exact: true }).click();
-  await expect(page).toHaveURL(/#\/people\/[^/]+\/birth-record$/);
-  await expect(header.getByText('Ada Lovelace', { exact: true })).toBeVisible();
-
-  // The People list itself is not a tool page: it should not show a stale person's tabs.
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await expect(header.getByText('Ada Lovelace', { exact: true })).toHaveCount(0);
-
-  // Reopening a tool straight from the People list (no person page visited this time) still
-  // remembers Ada from before, since nothing has overwritten that memory in between.
-  await openTool(page, 'Horary chart');
-  await expect(header.getByText('Ada Lovelace', { exact: true })).toBeVisible();
-});
-
-test('the rail holds brand then navigation; the account cluster sits apart from it, top-right of the content, with and without a person', async ({
-  page,
-}) => {
-  test.setTimeout(60_000);
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  const layout = async (): Promise<void> => {
-    const brand = await page.getByRole('link', { name: 'Astraya, back to the people list' }).boundingBox();
-    const nav = await page.getByRole('navigation', { name: 'Main', exact: true }).boundingBox();
-    const signIn = await page.getByRole('button', { name: 'Sign in', exact: true }).boundingBox();
-    if (brand === null || nav === null || signIn === null) throw new Error('fixture bug: missing rail element');
-    // The navigation starts below the brand inside the rail, whatever its own height (a person's
-    // many tabs make it taller, not shorter above it).
-    expect(nav.y).toBeGreaterThanOrEqual(brand.y + brand.height);
-    // Account/language/theme are not navigation (#506/#509): they sit apart from the rail
-    // entirely, fixed to the content area's top-right corner, clear of the rail's own right edge.
-    expect(signIn.x).toBeGreaterThanOrEqual(nav.x + nav.width);
-  };
-  await layout();
-  await createPerson(page, ADA);
-  await layout();
-});
-
-test('a solar return and a lunar return are charts like any other, with their contacts to the natal chart', async ({
-  page,
-}) => {
-  test.setTimeout(120_000);
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, ADA);
-
-  // A house system chosen on the natal chart applies to the returns, which share its Extended settings.
-  await openNatalChart(page);
-  await openSettings(page);
-  await page.getByLabel('House system', { exact: true }).selectOption('W');
-  await page.getByRole('button', { name: 'Apply and redraw', exact: true }).click();
-
-  await openChart(page, 'Solar return');
-  await expect(page.getByRole('heading', { name: /solar return/i, level: 1 })).toBeVisible();
-  await openSettings(page);
-  await expect(page.getByLabel('House system', { exact: true })).toHaveValue('W');
-  await closeSettings(page);
-  await page.getByLabel('Year').fill('2025');
-  await expect(page.getByText(/Exact return: 2025-12-/)).toBeVisible({ timeout: 30_000 });
-  await expect(page.locator('div.chart-wheel')).toBeVisible();
-  await expect(page.getByRole('table', { name: 'Contacts to the natal chart' })).toBeVisible();
-  await page.getByRole('link', { name: 'Placements', exact: true }).click();
-  await expect(page).toHaveURL(/\/charts\/solar-return\/placements$/);
-
-  // Cast somewhere else: the same moment, another Ascendant.
-  await page.getByRole('radio', { name: 'Another place' }).check();
-  await page.getByLabel('Latitude').fill('-33.87');
-  await page.getByLabel('Longitude').fill('151.21');
-  await expect(page.getByText(/Exact return: 2025-12-/)).toBeVisible({ timeout: 30_000 });
-
-  await openChart(page, 'Lunar return');
-  await expect(page.getByRole('heading', { name: /lunar return/i, level: 1 })).toBeVisible();
-  await page.getByLabel('On or after').fill('2025-03-01');
-  await expect(page.getByText(/Exact return: 2025-03-/)).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByRole('table', { name: 'Contacts to the natal chart' })).toBeVisible();
-  const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
-  expect(results.violations).toEqual([]);
-});
-
-test('the header’s only export action is the PDF builder link; a chart’s own exports live in its own PageHeader', async ({
-  page,
-}) => {
-  test.setTimeout(90_000);
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, ADA);
-  const header = page.getByRole('banner');
-
-  const read = async (download: Download): Promise<string> => {
-    const chunks: Buffer[] = [];
-    for await (const chunk of await download.createReadStream()) chunks.push(chunk as Buffer);
-    return Buffer.concat(chunks).toString('utf-8');
-  };
-
-  // Full-data export and the people CSV moved to Preferences → Data & privacy (#510,
-  // e2e/preferences.spec.ts covers them); the old Export dropdown is gone entirely — a single
-  // item does not get a dropdown, so this is now a plain link, same shape as Overview/Birth record.
-  // The PDF builder link has moved to the Documents workspace (#563), renamed to "Documents".
-  await expect(header.getByRole('button', { name: 'Export', exact: true })).toHaveCount(0);
-  await expect(header.getByRole('link', { name: 'Documents', exact: true })).toBeVisible();
-
-  // On a chart, its own exports are in the page’s own header (#506/#509’s PageHeader), not the
-  // site header, and the wheel no longer carries buttons either.
-  await openNatalChart(page);
-  await expect(page.locator('div.chart-wheel')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Download SVG', exact: true })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Export PDF…', exact: true })).toHaveCount(0);
-  const main = page.getByRole('main');
-  await main.getByRole('button', { name: 'Export', exact: true }).click();
-  for (const name of [
-    'Image (SVG)',
-    'Image (PNG), Small (600px)',
-    'Image (PNG), Medium (1200px)',
-    'Image (PNG), Large (2400px)',
-    'Document (PDF, via print)…',
-  ]) {
-    await expect(main.getByRole('button', { name, exact: true })).toBeVisible();
-  }
-  const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
-  expect(results.violations).toEqual([]);
-  const [svg] = await Promise.all([
-    page.waitForEvent('download'),
-    main.getByRole('button', { name: 'Image (SVG)', exact: true }).click(),
-  ]);
-  expect(svg.suggestedFilename()).toBe('ada-lovelace-chart.svg');
-  expect(await read(svg)).toContain('<svg');
-
-  // Leaving the chart takes its PageHeader, and so its exports, away entirely; the site header is
-  // unaffected either way, since it never listed them.
-  await openTool(page, 'Eclipses');
-  await expect(page.getByRole('button', { name: 'Export', exact: true })).toHaveCount(0);
-  await expect(header.getByRole('link', { name: 'Documents', exact: true })).toBeVisible();
-});
-
 test.describe('with the shared people (#799)', () => {
   let context: BrowserContext;
   let page: Page;
@@ -279,6 +79,181 @@ test.describe('with the shared people (#799)', () => {
 
   test.afterEach(async () => {
     await context.close();
+  });
+
+  test('a person’s screens carry their name and tabs in the header, with no strip above the page', async () => {
+    test.setTimeout(60_000);
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    const header = page.getByRole('banner');
+
+    await expect(header.getByText('Albert Einstein', { exact: true })).toBeVisible();
+    for (const name of ['Birth record', 'Interpretation', 'Astrocartography']) {
+      await expect(header.getByRole('link', { name, exact: true })).toBeVisible();
+    }
+    // The charts cast for this person are one destination (#511), and the families come after it.
+    await expect(header.getByRole('link', { name: 'Charts', exact: true })).toBeVisible();
+    for (const name of ['Transits & Forecast', 'Progressions & Directions', 'Relationship Charts']) {
+      await expect(header.getByRole('button', { name, exact: true })).toBeVisible();
+    }
+    await expect(page.locator('.person-shelf')).toHaveCount(0);
+    await expect(header.getByRole('link', { name: 'Birth record', exact: true })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    await expect(header.getByText('Return to', { exact: true })).toHaveCount(0);
+
+    // The person's tabs and the Tools menu share one open-at-a-time rule.
+    await header.getByRole('button', { name: 'Transits & Forecast', exact: true }).click();
+    await header.getByRole('button', { name: 'Tools', exact: true }).click();
+    await expect(header.getByRole('navigation', { name: 'Transits & Forecast subtabs' })).toHaveCount(0);
+    await expect(header.getByRole('navigation', { name: 'Tools subtabs' })).toBeVisible();
+    const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
+    expect(results.violations).toEqual([]);
+
+    // Going to a tool keeps the person's tabs in the header (#453): a tool is not about their
+    // chart, but losing the way back to it just for visiting one is its own kind of friction.
+    await header.getByRole('link', { name: 'Planetary cycles', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Planetary cycles', level: 1 })).toBeVisible();
+    await expect(header.getByText('Albert Einstein', { exact: true })).toBeVisible();
+    await expect(header.getByRole('link', { name: 'Charts', exact: true })).toBeVisible();
+    // On a tool page the person is history, not the subject: the rail says so (and does not on their own pages).
+    await expect(header.getByText('Return to', { exact: true })).toBeVisible();
+    // None of the person's tabs is "current" on a tool page — it genuinely isn't one of them.
+    await expect(header.getByRole('link', { name: 'Birth record', exact: true })).not.toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+  });
+
+  test('a tool page remembers the last person visited, and returning to their tabs needs no re-pick (#453)', async () => {
+    test.setTimeout(60_000);
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    const header = page.getByRole('banner');
+    await openTool(page, 'Eclipses');
+    await expect(page.getByRole('heading', { name: 'Eclipses', level: 1 })).toBeVisible();
+
+    // Still Einstein's tabs, carried over from the person's screen the tool was opened from.
+    await expect(header.getByText('Albert Einstein', { exact: true })).toBeVisible();
+    await header.getByRole('link', { name: 'Birth record', exact: true }).click();
+    await expect(page).toHaveURL(/#\/people\/[^/]+\/birth-record$/);
+    await expect(header.getByText('Albert Einstein', { exact: true })).toBeVisible();
+
+    // The People list itself is not a tool page: it should not show a stale person's tabs.
+    await gotoAndSettle(page, `${baseUrl}/#/people`);
+    await expect(header.getByText('Albert Einstein', { exact: true })).toHaveCount(0);
+
+    // Reopening a tool straight from the People list (no person page visited this time) still
+    // remembers Einstein from before, since nothing has overwritten that memory in between.
+    await openTool(page, 'Horary chart');
+    await expect(header.getByText('Albert Einstein', { exact: true })).toBeVisible();
+  });
+
+  test('the rail holds brand then navigation; the account cluster sits apart from it, top-right of the content, with and without a person', async () => {
+    test.setTimeout(60_000);
+    await gotoAndSettle(page, `${baseUrl}/#/people`);
+    const layout = async (): Promise<void> => {
+      const brand = await page.getByRole('link', { name: 'Astraya, back to the people list' }).boundingBox();
+      const nav = await page.getByRole('navigation', { name: 'Main', exact: true }).boundingBox();
+      const signIn = await page.getByRole('button', { name: 'Sign in', exact: true }).boundingBox();
+      if (brand === null || nav === null || signIn === null) throw new Error('fixture bug: missing rail element');
+      // The navigation starts below the brand inside the rail, whatever its own height (a person's
+      // many tabs make it taller, not shorter above it).
+      expect(nav.y).toBeGreaterThanOrEqual(brand.y + brand.height);
+      // Account/language/theme are not navigation (#506/#509): they sit apart from the rail
+      // entirely, fixed to the content area's top-right corner, clear of the rail's own right edge.
+      expect(signIn.x).toBeGreaterThanOrEqual(nav.x + nav.width);
+    };
+    await layout();
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await layout();
+  });
+
+  test('a solar return and a lunar return are charts like any other, with their contacts to the natal chart', async () => {
+    test.setTimeout(120_000);
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+
+    // A house system chosen on the natal chart applies to the returns, which share its Extended settings.
+    await openNatalChart(page);
+    await openSettings(page);
+    await page.getByLabel('House system', { exact: true }).selectOption('W');
+    await page.getByRole('button', { name: 'Apply and redraw', exact: true }).click();
+
+    await openChart(page, 'Solar return');
+    await expect(page.getByRole('heading', { name: /solar return/i, level: 1 })).toBeVisible();
+    await openSettings(page);
+    await expect(page.getByLabel('House system', { exact: true })).toHaveValue('W');
+    await closeSettings(page);
+    await page.getByLabel('Year').fill('2025');
+    await expect(page.getByText(/Exact return: 2025-03-/)).toBeVisible({ timeout: 30_000 });
+    await expect(page.locator('div.chart-wheel')).toBeVisible();
+    await expect(page.getByRole('table', { name: 'Contacts to the natal chart' })).toBeVisible();
+    await page.getByRole('link', { name: 'Placements', exact: true }).click();
+    await expect(page).toHaveURL(/\/charts\/solar-return\/placements$/);
+
+    // Cast somewhere else: the same moment, another Ascendant.
+    await page.getByRole('radio', { name: 'Another place' }).check();
+    await page.getByLabel('Latitude').fill('-33.87');
+    await page.getByLabel('Longitude').fill('151.21');
+    await expect(page.getByText(/Exact return: 2025-03-/)).toBeVisible({ timeout: 30_000 });
+
+    await openChart(page, 'Lunar return');
+    await expect(page.getByRole('heading', { name: /lunar return/i, level: 1 })).toBeVisible();
+    await page.getByLabel('On or after').fill('2025-03-01');
+    await expect(page.getByText(/Exact return: 2025-03-/)).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole('table', { name: 'Contacts to the natal chart' })).toBeVisible();
+    const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
+    expect(results.violations).toEqual([]);
+  });
+
+  test('the header’s only export action is the PDF builder link; a chart’s own exports live in its own PageHeader', async () => {
+    test.setTimeout(90_000);
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    const header = page.getByRole('banner');
+
+    const read = async (download: Download): Promise<string> => {
+      const chunks: Buffer[] = [];
+      for await (const chunk of await download.createReadStream()) chunks.push(chunk as Buffer);
+      return Buffer.concat(chunks).toString('utf-8');
+    };
+
+    // Full-data export and the people CSV moved to Preferences → Data & privacy (#510,
+    // e2e/preferences.spec.ts covers them); the old Export dropdown is gone entirely — a single
+    // item does not get a dropdown, so this is now a plain link, same shape as Overview/Birth record.
+    // The PDF builder link has moved to the Documents workspace (#563), renamed to "Documents".
+    await expect(header.getByRole('button', { name: 'Export', exact: true })).toHaveCount(0);
+    await expect(header.getByRole('link', { name: 'Documents', exact: true })).toBeVisible();
+
+    // On a chart, its own exports are in the page’s own header (#506/#509’s PageHeader), not the
+    // site header, and the wheel no longer carries buttons either.
+    await openNatalChart(page);
+    await expect(page.locator('div.chart-wheel')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Download SVG', exact: true })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Export PDF…', exact: true })).toHaveCount(0);
+    const main = page.getByRole('main');
+    await main.getByRole('button', { name: 'Export', exact: true }).click();
+    for (const name of [
+      'Image (SVG)',
+      'Image (PNG), Small (600px)',
+      'Image (PNG), Medium (1200px)',
+      'Image (PNG), Large (2400px)',
+      'Document (PDF, via print)…',
+    ]) {
+      await expect(main.getByRole('button', { name, exact: true })).toBeVisible();
+    }
+    const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
+    expect(results.violations).toEqual([]);
+    const [svg] = await Promise.all([
+      page.waitForEvent('download'),
+      main.getByRole('button', { name: 'Image (SVG)', exact: true }).click(),
+    ]);
+    expect(svg.suggestedFilename()).toBe('albert-einstein-chart.svg');
+    expect(await read(svg)).toContain('<svg');
+
+    // Leaving the chart takes its PageHeader, and so its exports, away entirely; the site header is
+    // unaffected either way, since it never listed them.
+    await openTool(page, 'Eclipses');
+    await expect(page.getByRole('button', { name: 'Export', exact: true })).toHaveCount(0);
+    await expect(header.getByRole('link', { name: 'Documents', exact: true })).toBeVisible();
   });
 
   test('on a phone the navigation folds behind a Menu button, and nothing scrolls sideways', async () => {

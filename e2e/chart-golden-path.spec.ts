@@ -15,7 +15,7 @@ import type { BrowserContext, Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
 import { EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
-import { chooseExport, createPerson, gotoAndSettle, openNatalChart } from './support.ts';
+import { chooseExport, openNatalChart } from './support.ts';
 
 let dir: string;
 let app: FastifyInstance;
@@ -37,31 +37,6 @@ test.afterAll(async () => {
   rmSync(dir, { recursive: true, force: true });
 });
 
-test('entering birth data renders the chart wheel and the SVG export downloads', async ({ page }) => {
-  test.setTimeout(60_000);
-
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, {
-    name: 'Ada Lovelace',
-    date: '1815-12-10',
-    time: '07:45:00',
-    latitude: '51.5072',
-    longitude: '-0.1276',
-  });
-
-  await openNatalChart(page);
-  await expect(page.locator('div.chart-wheel')).toBeVisible();
-
-  const [download] = await Promise.all([page.waitForEvent('download'), chooseExport(page, 'Image (SVG)')]);
-  expect(download.suggestedFilename()).toBe('ada-lovelace-chart.svg');
-
-  const contents = await download.createReadStream();
-  const chunks: Buffer[] = [];
-  for await (const chunk of contents) chunks.push(chunk as Buffer);
-  const svg = Buffer.concat(chunks).toString('utf-8');
-  expect(svg).toContain('<svg');
-});
-
 test.describe('with the shared people (#799)', () => {
   let context: BrowserContext;
   let page: Page;
@@ -74,6 +49,24 @@ test.describe('with the shared people (#799)', () => {
 
   test.afterEach(async () => {
     await context.close();
+  });
+
+  test('entering birth data renders the chart wheel and the SVG export downloads', async () => {
+    test.setTimeout(60_000);
+
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+
+    await openNatalChart(page);
+    await expect(page.locator('div.chart-wheel')).toBeVisible();
+
+    const [download] = await Promise.all([page.waitForEvent('download'), chooseExport(page, 'Image (SVG)')]);
+    expect(download.suggestedFilename()).toBe('albert-einstein-chart.svg');
+
+    const contents = await download.createReadStream();
+    const chunks: Buffer[] = [];
+    for await (const chunk of contents) chunks.push(chunk as Buffer);
+    const svg = Buffer.concat(chunks).toString('utf-8');
+    expect(svg).toContain('<svg');
   });
 
   test('clicking a glyph on the wheel isolates it and opens a focused-info panel (#400)', async () => {
