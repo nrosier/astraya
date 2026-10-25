@@ -4532,6 +4532,18 @@ svg text.chart-symbol-text-unicode {
   color: var(--fg);
 }
 
+/* On a phone the trigger sits mid-line, so a popup anchored to it runs past the right edge and
+   stretches the page sideways (#511): span the screen instead, keeping its natural line position. */
+@media (max-width: 40rem) {
+  .primitive-tooltip-popup {
+    position: fixed;
+    inset-block-start: auto;
+    inset-inline: var(--space-3);
+    width: auto;
+    max-width: none;
+  }
+}
+
 /*
  * The content header (#506/#509, `PageHeader.tsx`): the page title and, when the screen has
  * registered any, its own export dropdown — replacing the old global Export menu's "This page"
