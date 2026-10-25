@@ -2,7 +2,7 @@
 
 All notable changes to Astraya are recorded here. Versions follow
 [semantic versioning](https://semver.org/), and every milestone ends in a release —
-see [docs/RELEASING.md](docs/RELEASING.md).
+see [docs/ops/RELEASING.md](docs/ops/RELEASING.md).
 
 ## [0.42.12] — 2026-10-25
 
@@ -223,7 +223,7 @@ see [docs/RELEASING.md](docs/RELEASING.md).
 
 - **Event search results download as a calendar file (#639).** A new _Download calendar (.ics)_ button beside the CSV one gives an iCalendar file that most calendar apps import. Each event has a stable identifier, so importing the same file twice does not duplicate it.
 - **Exchange birth records as AAF'97 (#591).** Preferences → Data exports people in the AAF'97 format that other astrology programs read, and a restore reads an AAF file as well as an Astraya export. Astraya-only data (the calculation profile, for instance) travels in a labelled extension so it is not lost on the way back.
-- **A per-release record of the manual UI/UX checks (#615).** `docs/UI-UX_RELEASE_CHECKS.md` lists the screen-reader, zoom, forced-colour, touch, reduced-motion and keyboard checks, and the representative tasks, for each release to record against.
+- **A per-release record of the manual UI/UX checks (#615).** `docs/ui/UI-UX_RELEASE_CHECKS.md` lists the screen-reader, zoom, forced-colour, touch, reduced-motion and keyboard checks, and the representative tasks, for each release to record against.
 
 ### Changed
 

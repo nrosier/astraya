@@ -28,7 +28,7 @@ Hand-rolled SVG rendering layer: chart wheels (single/bi-/tri-ring), aspect webs
 - `object-policy.ts` — Unified per-object visibility/aspect-participation policy (#585): every body plus Vertex/Fortune/Spirit, keyed the same way everywhere, plus the Core/Traditional/All presets. Deps: none (plain data, documented against pre-#585 defaults it reproduces).
 - `overlay-options.ts` — Persisted overlay settings bridge (antiscia/declination/dial90/midpoint-tree). Deps: `store/ops` (JsonValue).
 - `sheet-geometry.ts` — Chart sheet layout authority (800px reference frame, linear scaling, per-ring planet bands). Deps: none (pure geometry).
-- `standalone-svg.ts` — Inlines `app.css` light-theme palette into exported SVG `<style>`. Deps: none (string manipulation).
+- `standalone-svg.ts` — Inlines `src/ui/app.css` light-theme palette into exported SVG `<style>`. Deps: none (string manipulation).
 - `svg-primitives.ts` — Shared low-level SVG builders (line/circle/rect/polygon/text/escapeXml). Deps: none (no colour emission).
 - `symbol-class.ts` — Device-wide symbol-class setting (glyphs/Unicode/text). Deps: none (module state).
 - `symbol-text.ts` — Unicode + text-code alternatives for bodies/signs/aspects. Deps: none (static lookup).

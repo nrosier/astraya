@@ -3,8 +3,8 @@
 Shared library modules for `tools/corpus-gen/` scripts (see parent directory for scripts). Most files are prompt builders, provider clients, or persistence helpers with no CLI entry point.
 
 - `batch-state.mjs` — Batch-API job persistence: submit/check across separate runs instead of blocking (24-48h jobs). Reads/writes per-(script, locale) JSON under `batch-state/`. Deps: node:fs.
-- `benchmark-charts.mjs` — Ground comparison in real chart data (astrologyapi.com pool), derive every in-scope placement (sign/house/aspect) via Astraya math. Deps: src/astrology/*, src/interpretation/schema.
-- `benchmark-db.mjs` — Local sqlite for `benchmark-batch.mjs` (persistent scores, purgeable third-party-text cache). Deps: node:sqlite.
+- `archive/benchmark-charts.mjs` — Ground comparison in real chart data (astrologyapi.com pool), derive every in-scope placement (sign/house/aspect) via Astraya math. Deps: src/astrology/*, src/interpretation/schema.
+- `archive/benchmark-db.mjs` — Local sqlite for `benchmark-batch.mjs` (persistent scores, purgeable third-party-text cache). Deps: node:sqlite.
 - `classical-triage.mjs` — Rubric for comparing `dignity-state` entry vs. genuine classical source. Builds judge system/user prompt + response schema. Deps: none.
 - `corpus-audit.mjs` — Codifies manual corpus checks (#427). Validates key/duplicates/locale-parity, sign/house theme-shift heuristic. Deps: placements, src/interpretation/schema.
 - `corpus-evaluation.mjs` — Independent second-opinion judge (#381 stage 1) for fact errors + generic-trope failure mode (a separate note judges derived points only on staying within their facts, #517). Builds prompt/schema, majority verdict. Deps: none.

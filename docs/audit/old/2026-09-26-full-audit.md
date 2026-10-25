@@ -1,3 +1,5 @@
+> Historical: paths reflect the repo at the time this was written and may no longer exist.
+
 # Astraya full codebase audit — 2026-09-26
 
 **Scope:** `src/` (React 19 + TS frontend, ~28.6k LoC TS/TSX), `server/` (Fastify + `node:sqlite`),

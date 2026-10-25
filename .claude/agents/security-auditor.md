@@ -11,7 +11,7 @@ Read `docs/adr/0002-local-first-with-optional-sync.md` first. It names the
 worst realistic failure mode explicitly: **the server ever mixing data between
 accounts**, because the server is meant to be an "opaque relay" that never
 interprets what it stores. If a recent full audit exists
-(`docs/audit/2026-09-26-full-audit.md` at the time of writing, dated by
+(`docs/audit/old/2026-09-26-full-audit.md` at the time of writing, dated by
 filename), read it too, but verify each finding against the *current* code
 before citing it — this repo fixes findings from its own audits quickly, so a
 documented finding may already be resolved in a way the doc's prose hasn't

@@ -1,3 +1,5 @@
+> Historical: paths reflect the repo at the time this was written and may no longer exist.
+
 # Repository Audit & Review Report — Astraya
 
 **Audit date:** 2026-10-09  

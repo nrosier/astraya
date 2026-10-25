@@ -44,7 +44,7 @@ catches it until a user hits a runtime `undefined`.
 3. **Rate limiting is opt-in per route, not global** — `security-auditor` owns
    the mechanism (`global: false`, which routes currently opt in). This
    agent's angle: does a new route added to `server/auth/routes.ts`,
-   `admin-routes.ts`, or `ops/routes.ts` explicitly set
+   `admin-routes.ts`, or `server/ops/routes.ts` explicitly set
    `config: { rateLimit: {...} } }`, since forgetting fails open, not closed.
 4. **The op-log wire format has its own forward-compatibility contract**
    (`src/store/ops.ts`) that both sides must honor: `toWire()`/`fromWire()` in

@@ -1,3 +1,5 @@
+> Historical: paths reflect the repo at the time this was written and may no longer exist.
+
 # Implementation plan: Astraya professional-astrology audit (issues #541–#566)
 
 ## Context

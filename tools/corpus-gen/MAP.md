@@ -8,8 +8,8 @@ Scripts:
 
 - `apply-batch-output.mjs` — Manual-recovery counterpart to `evaluate-corpus-batch.mjs`: apply an already-downloaded OpenAI batch output file by hand. No API calls.
 - `audit-corpus.mjs` — Repeatable corpus checks (#427): key shape, locale parity, sign/house index shifts. Read-only, no API key.
-- `benchmark-batch.mjs` — External quality signal (#368 Part 3): compare Astraya's prose vs. astrologyapi.com's for same placement. Samples, judges with Laya + embeddings + LLM. Calls astrologyapi.com, Gemini.
-- `benchmark-dashboard.mjs` — Static HTML view of `benchmark-batch.mjs` history (sortable/filterable). Read-only, no API key.
+- `archive/benchmark-batch.mjs` — External quality signal (#368 Part 3): compare Astraya's prose vs. astrologyapi.com's for same placement. Samples, judges with Laya + embeddings + LLM. Calls astrologyapi.com, Gemini.
+- `archive/benchmark-dashboard.mjs` — Static HTML view of `benchmark-batch.mjs` history (sortable/filterable). Read-only, no API key.
 - `classical-triage-batch.mjs` — Check `dignity-state` corpus vs. William Lilly (#359). Judge model over entry + excerpt, tag divergences. Calls Gemini/Ollama.
 - `corpus-stats.mjs` — Visibility into #381 feedback-loop progress without re-running. Per-locale counts, in-flight batch jobs. Read-only, no API key.
 - `cross-translate-composite.mjs` — One-off #451 cleanup: cross-translate undisputed `composite-*` entries to replace their disputed-language counterpart, instead of regenerating from scratch. Calls Gemini.

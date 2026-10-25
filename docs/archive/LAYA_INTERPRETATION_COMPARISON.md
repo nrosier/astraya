@@ -1,3 +1,5 @@
+> Historical: paths reflect the repo at the time this was written and may no longer exist.
+
 # Comparing two interpretations locally with Laya/Jev
 
 Background for #368 (benchmarking Astraya's Ollama-generated interpretation

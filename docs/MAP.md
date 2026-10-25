@@ -19,7 +19,7 @@ Topic folders:
 - `domain/EXPORT_SCHEMA.md` — Astraya full-export JSON schema reference: shape, compatibility policy, version history (#561). Deps: `src/domain/full-export.ts`, `src/domain/chart-tables.ts`; paired with `schema/astraya-export.schema.json`.
 - `domain/FIXED_STAR_REGISTRY.md` — Fixed-star registry reference: sourcing, epoch, and lineage of the entries in `src/astrology/fixed-star-registry.ts`. Deps: `src/astrology/fixed-star-registry.ts`.
 - `ASTROLOGICAL_DATA_SOURCES.md` — Public astronomical datasets, historical source texts, current Astraya coverage, and adoption/licensing recommendations. Deps: `src/ephemeris/`, `src/astrology/`, upstream catalogues.
-- `ops/DEPENDENCIES.md` — Hand-maintained dependency/licence inventory `CLAUDE.md`'s onboarding checklist points to. Deps: `node_modules/*/package.json` licence fields.
+- `ops/DEPENDENCIES.md` — Hand-maintained dependency/licence inventory root `CLAUDE.md`'s onboarding checklist points to. Deps: `node_modules/*/package.json` licence fields.
 - `ops/RELEASING.md` — Release policy and tagging scheme (every milestone ends in a release).
 
 Subdirectories:
@@ -28,8 +28,7 @@ Subdirectories:
 - `adr/` — Architecture Decision Records, one numbered file per decision. Deps: none.
 - `agents/` — Generic Claude Code skill docs (`domain-modeling` skill's `CONTEXT.md`/ADR conventions) — not Astraya product documentation.
 - `archive/` — Deprecated/retired docs, append-only, never deleted outright: abandoned tooling write-ups (LAYA/Ollama benchmarking, astrologyapi.com comparison), the removed-env-vars log, and the dated UI/UX audit.
-- `audit/` — One-off repository audits, reviews, and structural evaluations, filename datestamped `YYYY-MM-DD-description.md`. Audits and reviews are the same bucket — there is no separate `reviews/`.
-- `references/` — Curated public-domain source passages for seeding the corpus (structured JSON); see its own `MAP.md` for what is kept and why. Not documentation about Astraya.
+- `audit/` — One-off repository audits, reviews, and structural evaluations, filename datestamped `YYYY-MM-DD-description.md`.- `references/` — Curated public-domain source passages for seeding the corpus (structured JSON); see its own `MAP.md` for what is kept and why. Not documentation about Astraya.
 - `schema/` — Hand-authored JSON Schema files for Astraya's own stable data formats (`astraya-export.schema.json`, #561), paired with a top-level `.md` reference doc.
 
 ## Where does a new doc go?

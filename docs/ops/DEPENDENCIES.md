@@ -75,5 +75,5 @@ workflow means by "update `docs/ops/DEPENDENCIES.md` if external dependencies
 change." There is no script generating this file; it is maintained by hand,
 unlike the aspirational "generated, per-release inventory... published in the
 application's About page" `NOTICE` currently claims — no such in-app
-inventory exists today (see `docs/audit/2026-10-07-codex-review.md` evaluation), so this file is,
+inventory exists today (see `docs/audit/old/2026-10-07-codex-review.md` evaluation), so this file is,
 for now, the actual source of truth that claim should point to.

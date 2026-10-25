@@ -1,3 +1,5 @@
+> Historical: paths reflect the repo at the time this was written and may no longer exist.
+
 # docs/ structure review — 2026-10-08
 
 Prompted by a cleanup pass (archiving dead LAYA/Ollama/astrologyapi.com tooling docs, splitting HTML

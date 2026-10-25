@@ -1,3 +1,5 @@
+> Historical: paths reflect the repo at the time this was written and may no longer exist.
+
 # Benchmarking Astraya's interpretation text against astrologyapi.com
 
 `verify-batch.mjs` and `classical-triage-batch.mjs` (#359) check the shipped

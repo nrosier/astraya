@@ -1,3 +1,5 @@
+> Historical: paths reflect the repo at the time this was written and may no longer exist.
+
 # Comprehensive Audit Fix Implementation Plan
 
 **Status:** Ready for systematic fix implementation  
