@@ -114,6 +114,30 @@ describe('the reading leaves out exactly what was excluded (#721)', () => {
     expect([...full].filter((key) => !withoutMars.has(key))).toEqual(['mars']);
   });
 
+  it('guards against a future path that names the Vertex or a lot: excluding them now changes nothing, since the report never names them', () => {
+    const policies = {
+      ...DEFAULT_OBJECT_POLICIES,
+      vertex: withInterpreted(DEFAULT_OBJECT_POLICIES.vertex, false),
+      partOfFortune: withInterpreted(DEFAULT_OBJECT_POLICIES.partOfFortune, false),
+      partOfSpirit: withInterpreted(DEFAULT_OBJECT_POLICIES.partOfSpirit, false),
+    };
+    const exclude = interpretationExclusions(policies);
+    expect([...exclude].sort()).toEqual(['partOfFortune', 'partOfSpirit', 'vertex']);
+
+    const full = assembleReport(chart, 'en', corpus, 'modern', 'natal', new Set());
+    const withoutPoints = assembleReport(chart, 'en', corpus, 'modern', 'natal', exclude);
+    // Same sections, same paragraphs: excluding these keys removes nothing from the reading.
+    expect(withoutPoints.sections.map((section) => section.id)).toEqual(full.sections.map((section) => section.id));
+    expect(withoutPoints.sections.flatMap((section) => section.paragraphs.map((p) => p.text))).toEqual(
+      full.sections.flatMap((section) => section.paragraphs.map((p) => p.text)),
+    );
+    // No paragraph in the reading is a derived-point (Part of Fortune / Spirit) placement.
+    const derivedNamed = withoutPoints.sections.flatMap((section) =>
+      section.paragraphs.filter((p) => p.placement?.category.startsWith('derived-point') === true),
+    );
+    expect(derivedNamed).toEqual([]);
+  });
+
   it('drops a contact when either of its bodies is excluded', () => {
     const contacts = derivePlacements(chart, new Set(['venus'])).filter((p) => p.placement.category === 'aspect-pair');
     for (const contact of contacts) expect(bodiesNamedBy(contact.placement)).not.toContain('venus');
@@ -146,6 +170,14 @@ describe('the reading leaves out exactly what was excluded (#721)', () => {
     expect(mars).toEqual([]);
     const sun = selectionPlacements(chart, { kind: 'body', key: 'sun', ring: 0 }, new Set(['mars']));
     for (const item of sun) expect(bodiesNamedBy(item.placement)).not.toContain('mars');
+  });
+
+  it('leaves a derived point out of the wheel’s “What it means” text when it is excluded (#721)', () => {
+    const fortune = { kind: 'derived', point: 'part-of-fortune' } as const;
+    expect(selectionPlacements(chart, fortune).length).toBeGreaterThan(0);
+    expect(selectionPlacements(chart, fortune, new Set(['partOfFortune']))).toEqual([]);
+    const spirit = { kind: 'derived', point: 'part-of-spirit' } as const;
+    expect(selectionPlacements(chart, spirit, new Set(['partOfFortune'])).length).toBeGreaterThan(0);
   });
 
   it('does not send an excluded body, or its contacts, to the AI model', () => {

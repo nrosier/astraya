@@ -24,6 +24,7 @@
 import { bodyByKey } from '../astrology/bodies.js';
 import type { DerivedPointKey } from '../astrology/derived-points.js';
 import { degreeSymbolNumber } from '../astrology/signs.js';
+import type { ObjectKey } from '../chart/object-policy.js';
 import type { ChartData } from '../domain/chart-compute.js';
 import { derivedPointPlacementFacts } from '../domain/derived-point-position.js';
 import {
@@ -110,6 +111,12 @@ function degreeSymbolPlacement(chart: ChartData, bodyKey: string): SalientPlacem
   return { placement, key: placementKey(placement), salience: 0, factors: [] };
 }
 
+/** The object-policy key each derived point is excluded under (#721); the two naming schemes differ. */
+const DERIVED_POLICY_KEY: Readonly<Record<DerivedPointKey, ObjectKey>> = {
+  'part-of-fortune': 'partOfFortune',
+  'part-of-spirit': 'partOfSpirit',
+};
+
 /**
  * A derived point's meaning (#511): where it falls, as a sign entry and then, when the chart has houses, a
  * house entry. Built from the point's own position rather than ranked out of `derivePlacements`, which
@@ -129,7 +136,10 @@ export function selectionPlacements(
   selection: WheelSelection,
   exclude: InterpretationExclusions = NO_EXCLUSIONS,
 ): readonly SalientPlacement[] {
-  if (selection.kind === 'derived') return derivedPointPlacements(chart, selection.point);
+  // A derived point left out of the reading has no entry either (#721).
+  if (selection.kind === 'derived') {
+    return exclude.has(DERIVED_POLICY_KEY[selection.point]) ? [] : derivedPointPlacements(chart, selection.point);
+  }
   // `rankPlacements` already orders by salience, and `sort` is stable, so within a kind that order holds.
   const ranked = rankPlacements(derivePlacements(chart, exclude))
     .filter((item) => matches(item, selection))
