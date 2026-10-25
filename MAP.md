@@ -17,6 +17,7 @@ Top-level application, release, and audit artifacts. Read the local map in each 
 - `.env.example` — Documented environment-variable template with no secrets. Deps: server, corpus tooling, Vite.
 - `.gitignore` — Git exclusions, including local runtime and secret files. Deps: Git.
 - `AGENTS.md` — Repository operating, quality, documentation, and release rules. Deps: all contributors.
+- `ASTROLOGY_REVIEW.md` — Professional astrology and calculation-readiness audit dated 2026-10-25. Deps: source, tests, ephemeris and UI maps.
 - `CHANGELOG.md` — Versioned product change history. Deps: release workflow.
 - `CLAUDE.md` — Legacy-compatible contributor guidance mirroring repository rules. Deps: `docs/DEPENDENCIES.md`.
 - `COMPREHENSIVE_AUDIT.md` — Evidence-backed nine-domain repository and astrological-engine audit dated 2026-10-14. Deps: source, tests, CI, Docker, documentation.
