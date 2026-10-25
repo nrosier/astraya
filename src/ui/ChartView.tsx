@@ -38,7 +38,7 @@ import { HOUSE_SYSTEMS } from '../astrology/houses.js';
 import type { Zodiac } from '../ephemeris/types.js';
 import { ASPECTS, aspectHarmonicFamily, DEFAULT_ORB_CONFIG, type Aspect } from '../astrology/aspects.js';
 import { Tooltip } from './primitives/Tooltip.js';
-import { GlossaryTerm, GlossaryTerms } from './GlossaryTerm.js';
+import { GlossaryTerm } from './GlossaryTerm.js';
 import { Select } from './primitives/Select.js';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -1152,8 +1152,6 @@ function renderTableTab(
     case 'positions':
       return (
         <>
-          {/* The Ascendant and Midheaven rows are table cells built by the shared column functions (which the PDF also reads as plain text), so their definitions sit here as on-screen terms (#801). */}
-          {showHouses && <GlossaryTerms terms={['ascendant', 'midheaven']} />}
           <SortableTable
             caption={t.positionsCaption}
             glossaryTerms={{ retrograde: 'retrograde' }}
