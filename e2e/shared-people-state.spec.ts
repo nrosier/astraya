@@ -56,6 +56,13 @@ function heldWriterLocks(page: Page): Promise<string[]> {
   );
 }
 
+/** Names of the writer locks queued (pending, not granted) on this origin. */
+function pendingWriterLocks(page: Page): Promise<string[]> {
+  return page.evaluate<string[]>(
+    `navigator.locks.query().then((state) => (state.pending ?? []).map((lock) => lock.name ?? '').filter((name) => name.startsWith('astraya-writer:')))`,
+  );
+}
+
 function seedFileText(): string {
   const pointer = JSON.parse(readFileSync(seedPointerPath(), 'utf-8')) as { statePath: string };
   return readFileSync(pointer.statePath, 'utf-8');
@@ -101,9 +108,10 @@ test('a second tab holds no writer lock: one tab owns it, and both tabs read the
   // store.ts takes `astraya-writer:<db name>` per tab with ifAvailable; exactly one tab may hold it.
   for (const page of [first, second]) {
     expect(await heldWriterLocks(page)).toHaveLength(1);
+    expect(await pendingWriterLocks(page)).toEqual([]);
   }
 
-  // The holder is the first tab: closing it frees the lock, and the second (which never queued) does not take it.
+  // The holder is the first tab: closing it frees the lock, and the second (which never queued: no pending writer locks above) does not take it.
   await first.close();
   await expect.poll(async () => (await heldWriterLocks(second)).length).toBe(0);
 

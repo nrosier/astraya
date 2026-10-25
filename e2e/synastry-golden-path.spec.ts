@@ -162,10 +162,10 @@ test.describe('with the shared people (#799)', () => {
     // Initially, both legend entries should be visible and not dimmed
     await expect(einsteinLegendEntry).toBeVisible();
     await expect(bornLegendEntry).toBeVisible();
-    const adaArrow = page.locator('[data-ring-legend-arrow="0"]');
-    const charlesArrow = page.locator('[data-ring-legend-arrow="1"]');
-    await expect(adaArrow).toBeAttached();
-    await expect(charlesArrow).toBeAttached();
+    const einsteinArrow = page.locator('[data-ring-legend-arrow="0"]');
+    const bornArrow = page.locator('[data-ring-legend-arrow="1"]');
+    await expect(einsteinArrow).toBeAttached();
+    await expect(bornArrow).toBeAttached();
     await expect(einsteinLegendEntry).not.toHaveClass(/chart-dimmed/);
     await expect(bornLegendEntry).not.toHaveClass(/chart-dimmed/);
 
@@ -175,8 +175,8 @@ test.describe('with the shared people (#799)', () => {
     // Now Einstein's entry should not be dimmed, but Born's should be
     await expect(einsteinLegendEntry).not.toHaveClass(/chart-dimmed/);
     await expect(bornLegendEntry).toHaveClass(/chart-dimmed/);
-    await expect(adaArrow).toBeVisible();
-    await expect(charlesArrow).toBeHidden();
+    await expect(einsteinArrow).toBeVisible();
+    await expect(bornArrow).toBeHidden();
 
     // Keyboard activation keeps the legend isolation behavior available without a pointer.
     await bornLegendEntry.focus();
@@ -185,8 +185,8 @@ test.describe('with the shared people (#799)', () => {
     // Now Born's entry should not be dimmed, but Einstein's should be
     await expect(bornLegendEntry).not.toHaveClass(/chart-dimmed/);
     await expect(einsteinLegendEntry).toHaveClass(/chart-dimmed/);
-    await expect(charlesArrow).toBeVisible();
-    await expect(adaArrow).toBeHidden();
+    await expect(bornArrow).toBeVisible();
+    await expect(einsteinArrow).toBeHidden();
 
     // Click on an empty area of the wheel to clear the selection
     await page.locator('div.chart-wheel svg').click({ position: { x: 50, y: 50 } });
@@ -194,7 +194,7 @@ test.describe('with the shared people (#799)', () => {
     // Both should be visible and not dimmed again
     await expect(einsteinLegendEntry).not.toHaveClass(/chart-dimmed/);
     await expect(bornLegendEntry).not.toHaveClass(/chart-dimmed/);
-    await expect(adaArrow).toBeHidden();
-    await expect(charlesArrow).toBeHidden();
+    await expect(einsteinArrow).toBeHidden();
+    await expect(bornArrow).toBeHidden();
   });
 });
