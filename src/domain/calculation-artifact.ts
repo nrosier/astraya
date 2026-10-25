@@ -31,14 +31,20 @@
  * @module domain/calculation-artifact
  * @purpose Builds a CalculationArtifact — snapshot, execution provenance and SHA-256 fingerprints of inputs and result — once a chart calculation completes (#582).
  * @conventions Hashes are SHA-256 over a canonical JSON text (sorted keys, Maps as sorted entries, non-finite numbers as strings, `undefined` fields omitted) via Web Crypto, so they are stable across key insertion order and identical in the browser and Node. Provenance values that need the app build or the engine (`astrayaVersion`, `swephVersion`) are passed in, keeping this module pure apart from the digest.
- * @exports CalculationArtifact, CalculationTechnique, CalculationProvenance, TimeProvenance, CalculationFingerprint, CalculationArtifactInputs, ArtifactVerification, ProvenanceDifference, buildCalculationArtifact, buildTechniqueArtifact, verifyCalculationArtifact, calculationArtifactIdentity, canonicalJson, sha256Hex
+ * @exports PRIMARY_DIRECTIONS_EFFECTIVE_SNAPSHOT, CalculationArtifact, CalculationTechnique, CalculationProvenance, TimeProvenance, CalculationFingerprint, CalculationArtifactInputs, ArtifactVerification, ProvenanceDifference, buildCalculationArtifact, buildTechniqueArtifact, verifyCalculationArtifact, calculationArtifactIdentity, canonicalJson, sha256Hex
  */
 import { DEFAULT_ORB_CONFIG, type OrbConfig } from '../astrology/aspects.js';
 import { ALL_ASSETS } from '../ephemeris/assets.js';
 import type { Degrees, EphemerisProvider, HouseSystem, JulianDayUT } from '../ephemeris/types.js';
 import { resolveMoment } from '../time/resolve.js';
 import type { BirthMomentInput, OffsetProvenance, TimeWarningCode } from '../time/types.js';
-import { snapshotCalculationOptions, type CalculationSnapshot } from './calculation-snapshot.js';
+import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
+import { DEFAULT_RULERSHIP_CHOICE } from '../astrology/rulership.js';
+import {
+  buildCalculationSnapshot,
+  snapshotCalculationOptions,
+  type CalculationSnapshot,
+} from './calculation-snapshot.js';
 import { computeChartData, housesAreDefined, type ChartData } from './chart-compute.js';
 import {
   generatePrimaryDirections,
@@ -81,7 +87,26 @@ export type CalculationTechnique =
       readonly key: PrimaryDirectionKey;
       readonly orb: Degrees;
       readonly options: PrimaryDirectionsOptions;
+      /**
+       * What the engine actually computed with (#797), as opposed to the artifact's own `snapshot`,
+       * which is what the practitioner's client record requested. Primary directions are always
+       * Placidus and tropical with default rulers and no custom points, so this is
+       * `PRIMARY_DIRECTIONS_EFFECTIVE_SNAPSHOT` whatever was requested. Filled in by
+       * `buildTechniqueArtifact` when omitted; absent on artifacts written before #797. Part of
+       * `inputHash`, so a replay recomputes from this recorded value, not from current defaults.
+       */
+      readonly effectiveSnapshot?: CalculationSnapshot;
     };
+
+/**
+ * The settings primary directions are really computed with (#797): Placidus houses, tropical
+ * zodiac, default rulers, no custom points. Locked in `primary-directions.ts`; recorded in the
+ * artifact beside the requested snapshot so what was computed is never confused with what was asked.
+ */
+export const PRIMARY_DIRECTIONS_EFFECTIVE_SNAPSHOT: CalculationSnapshot = buildCalculationSnapshot(
+  DEFAULT_EXTENDED_SETTINGS,
+  DEFAULT_RULERSHIP_CHOICE,
+);
 
 export interface CalculationProvenance {
   readonly time: TimeProvenance;
@@ -212,11 +237,15 @@ export async function buildTechniqueArtifact(
 async function buildArtifact(
   snapshot: CalculationSnapshot,
   moment: BirthMomentInput,
-  technique: CalculationTechnique | undefined,
+  recordedTechnique: CalculationTechnique | undefined,
   subject: ChartData,
   result: unknown,
   inputs: CalculationArtifactInputs,
 ): Promise<CalculationArtifact> {
+  const technique =
+    recordedTechnique?.kind === 'primary-directions' && recordedTechnique.effectiveSnapshot === undefined
+      ? { ...recordedTechnique, effectiveSnapshot: PRIMARY_DIRECTIONS_EFFECTIVE_SNAPSHOT }
+      : recordedTechnique;
   const housesDefined = housesAreDefined(subject.houses);
   // `technique: undefined` is omitted by `canonicalJson`, so a natal input hash is unchanged by its existence.
   const [snapshotHash, inputHash, resultHash] = await Promise.all([
@@ -296,6 +325,9 @@ async function recompute(
       return { subject: data.chartA, result: data };
     }
     case 'primary-directions': {
+      // Directions are locked to the effective settings recorded in `technique.effectiveSnapshot`
+      // (#797), never the artifact's requested `snapshot`; that value is part of `inputHash`, so an
+      // edited claim is reported as inconsistent before this runs.
       const data = await generatePrimaryDirections(
         artifact.moment,
         provider,

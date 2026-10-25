@@ -20,6 +20,18 @@ const en = {
   heading: (name: string) => `${name}’s primary directions`,
   hint: 'Primary directions turn the whole birth sky by its daily rotation: every degree of right ascension it turns after birth stands for about a year of life. Choose direct or converse motion and zodiacal or in-mundo latitude under the Placidus semi-arc method. The outer ring is available for direct directions only, because converse directions carry the selected significator rather than one whole sky.',
   source: 'Method: Bob Makransky, Primary Directions: A Primer of Calculation (1988), ch. VII (Placidian semi-arcs).',
+  lockedNotice:
+    'Primary directions are always calculated with a locked Placidus house system and tropical zodiac. They do not follow this person’s other calculation settings, such as the house system, zodiac or rulership chosen for their charts.',
+  mismatchNotice: (differences: string) =>
+    `This person’s chart settings differ from the ones primary directions use: ${differences}. The directions below are still calculated with Placidus houses and the tropical zodiac, so they will not match charts shown with those other settings.`,
+  mismatchHouseSystem: (requested: string, used: string) => `house system ${requested} (directions use ${used})`,
+  mismatchZodiac: (requested: string, used: string) => `zodiac ${requested} (directions use ${used})`,
+  mismatchRulership: (requested: string, used: string) => `rulership ${requested} (directions use ${used})`,
+  mismatchNodeVariant: (requested: string, used: string) => `lunar node ${requested} (directions use ${used})`,
+  mismatchLilithVariant: (requested: string, used: string) => `Lilith ${requested} (directions use ${used})`,
+  nodeMean: 'mean',
+  nodeTrue: 'true',
+  lilithInterpolated: 'interpolated',
   asOfLabel: 'As of',
   ageLabel: 'Age (years)',
   keyLabel: 'Time key',
@@ -77,6 +89,18 @@ const nl: typeof en = {
   hint: 'Primaire directies draaien de hele geboortehemel met zijn dagelijkse omwenteling: elke graad rechte klimming die hij na de geboorte draait, staat voor ongeveer een levensjaar. Kies directe of converse beweging en zodiakale of in-mundo-breedte binnen de methode met Placidus-semi-bogen. De buitenste ring is alleen beschikbaar voor directe directies, omdat converse directies de gekozen significator dragen en niet één volledige hemel.',
   source:
     'Methode: Bob Makransky, Primary Directions: A Primer of Calculation (1988), hfst. VII (Placidus-semi-bogen).',
+  lockedNotice:
+    'Primaire directies worden altijd berekend met een vast Placidus-huizenstelsel en een tropische dierenriem. Ze volgen de andere berekeningsinstellingen van deze persoon niet, zoals het huizenstelsel, de dierenriem of de heerserschap die voor hun horoscopen is gekozen.',
+  mismatchNotice: (differences: string) =>
+    `De berekeningsinstellingen van deze persoon wijken af van die van primaire directies: ${differences}. De directies hieronder worden nog steeds berekend met Placidus-huizen en de tropische dierenriem, dus ze komen niet overeen met horoscopen die met die andere instellingen worden getoond.`,
+  mismatchHouseSystem: (requested: string, used: string) => `huizenstelsel ${requested} (directies gebruiken ${used})`,
+  mismatchZodiac: (requested: string, used: string) => `dierenriem ${requested} (directies gebruiken ${used})`,
+  mismatchRulership: (requested: string, used: string) => `heerserschap ${requested} (directies gebruiken ${used})`,
+  mismatchNodeVariant: (requested: string, used: string) => `maansknoop ${requested} (directies gebruiken ${used})`,
+  mismatchLilithVariant: (requested: string, used: string) => `Lilith ${requested} (directies gebruiken ${used})`,
+  nodeMean: 'gemiddeld',
+  nodeTrue: 'ware',
+  lilithInterpolated: 'geïnterpoleerd',
   asOfLabel: 'Vanaf',
   ageLabel: 'Leeftijd (jaren)',
   keyLabel: 'Tijdsleutel',

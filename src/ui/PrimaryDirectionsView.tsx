@@ -16,17 +16,24 @@
 /**
  * @module PrimaryDirectionsView
  * @purpose Primary directions screen for one person: time-key picker, date and age inputs kept in step, natal/directed bi-wheel at the chosen age, the directions active at that age and the full lifetime list sorted by age.
- * @conventions Gated for unknown birth time like other angle-dependent screens; draws the bi-wheel with renderMultiWheelSvg directly (no cross-ring lines), injected as app-generated SVG the same way TransitView.tsx does; uses PrimaryDirectionsView.messages.ts for en/nl text via useMessages(). Carries its own PrintProvenance footer (#564) labelled with engine defaults, since generatePrimaryDirections doesn't yet take a user-configurable calculation snapshot.
+ * @conventions Gated for unknown birth time like other angle-dependent screens; draws the bi-wheel with renderMultiWheelSvg directly (no cross-ring lines), injected as app-generated SVG the same way TransitView.tsx does; uses PrimaryDirectionsView.messages.ts for en/nl text via useMessages(). Shows a lock notice before the controls (#797): directions are always Placidus/tropical and ignore the client's other calculation settings. Reads the device's natal calculation settings as ChartView does and records them as the artifact's requested snapshot; when they differ from the locked Placidus/tropical settings in house system, zodiac, rulership, node or Lilith, a warning Notice names the differences (#797). Carries its own PrintProvenance footer (#564) labelled with the locked effective settings (PRIMARY_DIRECTIONS_EFFECTIVE_SNAPSHOT).
  * @exports PrimaryDirectionsView
  */
 import { GlossaryTerms } from './GlossaryTerm.js';
 import { personHref } from './route.js';
 import { houseSystemLabel, rulershipLabel, zodiacLabel } from './ChartView.js';
 import { PrintProvenance } from './PrintProvenance.js';
-import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
-import { DEFAULT_RULERSHIP_CHOICE } from '../astrology/rulership.js';
-import { buildCalculationSnapshot } from '../domain/calculation-snapshot.js';
-import type { CalculationArtifact } from '../domain/calculation-artifact.js';
+import { Notice } from './primitives/Notice.js';
+import { settingsForContext } from '../chart/extended-settings.js';
+import {
+  differingPrimaryDirectionsSettings,
+  type PrimaryDirectionsMismatch,
+} from '../domain/primary-directions-settings.js';
+import { useExtendedSettings } from './extended-settings-store.js';
+import { useOrbContextSource, useOrbLibrary } from './orb-library-store.js';
+import { useRulershipChoice } from './rulership-setting.js';
+import { buildCalculationSnapshot, type CalculationSnapshot } from '../domain/calculation-snapshot.js';
+import { PRIMARY_DIRECTIONS_EFFECTIVE_SNAPSHOT, type CalculationArtifact } from '../domain/calculation-artifact.js';
 import { artifactProvenanceIdentity, buildTechniqueChartArtifact } from './chart-artifact.js';
 import { useEffect, useMemo, useState } from 'react';
 import { ageInYears, TROPICAL_YEAR_DAYS } from '../astrology/progressions.js';
@@ -68,7 +75,7 @@ import type { Locale } from '../interpretation/schema.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { Checkbox } from './primitives/Checkbox.js';
 import type { PrimaryDirectionMethod, PrimaryDirectionMode } from '../astrology/primary-directions.js';
-import { useStableMoment } from './use-stable-moment.js';
+import { useStableBy, useStableMoment } from './use-stable-moment.js';
 import { BackLink } from './BackLink.js';
 
 type Load =
@@ -80,9 +87,6 @@ type Load =
       readonly artifact?: CalculationArtifact | undefined;
     }
   | { readonly kind: 'error'; readonly message: string };
-
-/** The engine defaults the bi-wheel's natal chart is computed with, as a snapshot (#582). */
-const ENGINE_DEFAULTS_SNAPSHOT = buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE);
 
 type DirectedLoad =
   | { readonly kind: 'loading' }
@@ -148,6 +152,35 @@ function hitColumns(t: Messages, locale: Locale): readonly TableColumn<HitRow>[]
   ];
 }
 
+/** Plain-words phrases for the settings the person has that primary directions ignore (#797). */
+function mismatchPhrases(
+  mismatches: readonly PrimaryDirectionsMismatch[],
+  requested: CalculationSnapshot,
+  t: Messages,
+): string[] {
+  const used = PRIMARY_DIRECTIONS_EFFECTIVE_SNAPSHOT;
+  const node = (variant: 'mean' | 'true'): string => (variant === 'mean' ? t.nodeMean : t.nodeTrue);
+  const lilith = (variant: 'mean' | 'true' | 'interpolated'): string =>
+    variant === 'mean' ? t.nodeMean : variant === 'true' ? t.nodeTrue : t.lilithInterpolated;
+  return mismatches.map((mismatch) => {
+    switch (mismatch) {
+      case 'houseSystem':
+        return t.mismatchHouseSystem(
+          houseSystemLabel(requested.settings.houseSystem),
+          houseSystemLabel(used.settings.houseSystem),
+        );
+      case 'zodiac':
+        return t.mismatchZodiac(zodiacLabel(requested.settings.zodiac), zodiacLabel(used.settings.zodiac));
+      case 'rulership':
+        return t.mismatchRulership(rulershipLabel(requested.rulership), rulershipLabel(used.rulership));
+      case 'nodeVariant':
+        return t.mismatchNodeVariant(node(requested.settings.nodeVariant), node(used.settings.nodeVariant));
+      case 'lilithVariant':
+        return t.mismatchLilithVariant(lilith(requested.settings.lilithVariant), lilith(used.settings.lilithVariant));
+    }
+  });
+}
+
 function dateInputValue(jd: number): string {
   const civil = civilFromJulianDay(jd);
   const pad = (n: number, width = 2): string => String(n).padStart(width, '0');
@@ -158,8 +191,24 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
   const state = useStoreState();
   const person = state.people.get(personId);
   const personMoment = useStableMoment(person?.moment);
+  const customPoints = useStableBy(person?.customPoints, (points) => JSON.stringify(points ?? []));
   const t = useMessages(primaryDirectionsViewMessages);
   const [locale] = useLocale();
+  // The settings the person's natal chart uses, resolved as ChartView does (device-level, #797). They are
+  // recorded as the artifact's requested snapshot; the directions themselves are always Placidus/tropical.
+  const [cardSettings] = useExtendedSettings();
+  const orbLibrary = useOrbLibrary();
+  const orbSources = useOrbContextSource();
+  const settings = useMemo(
+    () => settingsForContext(cardSettings, 'natal', orbLibrary, orbSources),
+    [cardSettings, orbLibrary, orbSources],
+  );
+  const [rulership] = useRulershipChoice();
+  const requestedSnapshot = useMemo(
+    () => buildCalculationSnapshot(settings, rulership, customPoints ?? []),
+    [settings, rulership, customPoints],
+  );
+  const mismatches = differingPrimaryDirectionsSettings(requestedSnapshot);
   const { provider } = useEphemerisProvider();
   const [asOf, setAsOf] = useState(todayInputValue);
   // What the user is typing into the age field, kept as typed until it loses focus so the
@@ -189,7 +238,7 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
         const options = { mode, method, significators, promissors };
         const data = await generatePrimaryDirections(moment, provider, key, DEFAULT_PRIMARY_DIRECTION_ORB, options);
         const artifact = await buildTechniqueChartArtifact(
-          ENGINE_DEFAULTS_SNAPSHOT,
+          requestedSnapshot,
           moment,
           { kind: 'primary-directions', key, orb: DEFAULT_PRIMARY_DIRECTION_ORB, options },
           data.natal,
@@ -206,7 +255,7 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
     return () => {
       effect.cancelled = true;
     };
-  }, [personMoment, provider, key, method, mode, promissors, significators]);
+  }, [personMoment, provider, key, method, mode, promissors, significators, requestedSnapshot]);
 
   useEffect(() => {
     if (load.kind !== 'ready' || !load.data.defined || provider === undefined || targetDate === undefined) {
@@ -297,16 +346,15 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
   return (
     <main className="shell">
       {/* Invisible outside @media print (#564) — see app.css's own `.print-provenance` rule.
-          This screen doesn't yet thread a user-configurable calculation snapshot through
-          `generatePrimaryDirections` (see PrintProvenance.tsx's doc comment), so the footer
-          truthfully names the engine defaults the bi-wheel is actually computed with. */}
+          Primary directions are locked to Placidus/tropical (#797), so the footer names the
+          effective snapshot the engine computes with, not the client's requested settings. */}
       <PrintProvenance
-        houseSystem={houseSystemLabel(DEFAULT_EXTENDED_SETTINGS.houseSystem)}
-        zodiac={zodiacLabel(DEFAULT_EXTENDED_SETTINGS.zodiac)}
-        rulership={rulershipLabel(DEFAULT_RULERSHIP_CHOICE)}
+        houseSystem={houseSystemLabel(PRIMARY_DIRECTIONS_EFFECTIVE_SNAPSHOT.settings.houseSystem)}
+        zodiac={zodiacLabel(PRIMARY_DIRECTIONS_EFFECTIVE_SNAPSHOT.settings.zodiac)}
+        rulership={rulershipLabel(PRIMARY_DIRECTIONS_EFFECTIVE_SNAPSHOT.rulership)}
         snapshotIdentity={artifactProvenanceIdentity(
           load.kind === 'ready' ? load.artifact : undefined,
-          ENGINE_DEFAULTS_SNAPSHOT,
+          requestedSnapshot,
         )}
         generatedAt={formatTimestamp(new Date())}
       />
@@ -315,6 +363,10 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
       <GlossaryTerms terms={['primaryDirection', 'ascendant', 'midheaven']} />
       <p className="hint">{t.hint}</p>
       <p className="hint">{t.source}</p>
+      <Notice>{t.lockedNotice}</Notice>
+      {mismatches.length > 0 && (
+        <Notice tone="warning">{t.mismatchNotice(mismatchPhrases(mismatches, requestedSnapshot, t).join('; '))}</Notice>
+      )}
 
       <div className="field-grid">
         <ChoiceGroup

@@ -14,6 +14,7 @@ import {
   buildTechniqueArtifact,
   calculationArtifactIdentity,
   canonicalJson,
+  PRIMARY_DIRECTIONS_EFFECTIVE_SNAPSHOT,
   sha256Hex,
   verifyCalculationArtifact,
   type CalculationArtifact,
@@ -396,6 +397,50 @@ describe('technique artifacts and verification (#582)', () => {
     for (const artifact of [natal, await transitArtifact(), await synastryArtifact(), await directionsArtifact()]) {
       expect(await verifyCalculationArtifact(artifact, engine, INPUTS)).toEqual({ status: 'verified' });
     }
+  }, 120_000);
+
+  it('a primary-directions artifact records the requested snapshot and the Placidus/tropical one it computed with (#797)', async () => {
+    const requested = buildCalculationSnapshot(
+      { ...DEFAULT_EXTENDED_SETTINGS, houseSystem: 'W', zodiac: { kind: 'sidereal', ayanamsa: 1 } },
+      DEFAULT_RULERSHIP_CHOICE,
+    );
+    const data = await generatePrimaryDirections(
+      PERSON,
+      engine,
+      PrimaryDirectionKey.NAIBOD,
+      DEFAULT_PRIMARY_DIRECTION_ORB,
+      PD_OPTIONS,
+    );
+    const artifact = await buildTechniqueArtifact(
+      requested,
+      PERSON,
+      {
+        kind: 'primary-directions',
+        key: PrimaryDirectionKey.NAIBOD,
+        orb: DEFAULT_PRIMARY_DIRECTION_ORB,
+        options: PD_OPTIONS,
+      },
+      data.natal,
+      data,
+      INPUTS,
+    );
+    expect(artifact.snapshot.settings.houseSystem).toBe('W');
+    expect(artifact.snapshot.settings.zodiac).toEqual({ kind: 'sidereal', ayanamsa: 1 });
+    const technique = artifact.technique;
+    if (technique?.kind !== 'primary-directions') throw new Error('expected a primary-directions technique');
+    expect(technique.effectiveSnapshot).toEqual(PRIMARY_DIRECTIONS_EFFECTIVE_SNAPSHOT);
+    expect(technique.effectiveSnapshot?.settings.houseSystem).toBe('P');
+    expect(technique.effectiveSnapshot?.settings.zodiac).toEqual({ kind: 'tropical' });
+    expect(artifact.provenance.effectiveHouseSystem).toBe('P');
+    // Replay recomputes from the recorded inputs, also after a JSON round trip, and reproduces the directions.
+    const stored = JSON.parse(JSON.stringify(artifact)) as CalculationArtifact;
+    expect(await verifyCalculationArtifact(stored, engine, INPUTS)).toEqual({ status: 'verified' });
+    // The effective claim is an input: editing it is detected rather than replayed.
+    const edited = {
+      ...stored,
+      technique: { ...technique, effectiveSnapshot: requested },
+    };
+    expect((await verifyCalculationArtifact(edited, engine, INPUTS)).status).toBe('inconsistent');
   }, 120_000);
 
   it('a synastry artifact records the orbs given, so replay tightens them once and still verifies (#590)', async () => {
