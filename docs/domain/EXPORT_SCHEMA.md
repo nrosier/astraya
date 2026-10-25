@@ -21,7 +21,7 @@ interface FullExport {
   exportedAt: string; // ISO 8601 instant
   app: { version: string }; // the Astraya release that produced this file
   preferences: {
-    settings: ExtendedSettings; // chart/extended-settings.ts — every calculation setting in force
+    settings: ExtendedSettings; // chart/extended-settings.ts — the device's default calculation settings; a person without their own uses these (v3: see ExportedPerson.calculationSettings)
     rulership: 'modern' | 'traditional' | 'both';
     symbolClass: string;
   };
@@ -37,6 +37,7 @@ interface ExportedPerson {
   notes: string;
   birth?: BirthMomentInput; // absent if the birth record is incomplete
   missing: string[]; // required fields the stored record lacks
+  calculationSettings?: ExtendedSettings; // #806 (v3) — this person's own chart settings, which their charts below were computed with; absent in v2 files
   relocationPlaces?: RelocationPlace[]; // #587 — named alternate places (#559), absent if none are saved
   customPoints?: CustomPointDefinition[]; // #587 — custom formula points (#566), absent if none are saved
   natalChart?: ExportedChart; // absent if birth is incomplete, or chartError explains a failure
@@ -95,8 +96,9 @@ JSON Schema file does enumerate them structurally.
   a field, renaming a field, changing a field's type or required-ness, or changing the meaning of an existing value
   without changing its shape (e.g. a sign-index convention changing from 0-based to 1-based).
 - **Restore** (#587). `src/domain/full-export-importer.ts` validates and stages a restore:
-  `validateFullExport` strictly checks `format` and `version` against `FULL_EXPORT_VERSION` — rejecting both
-  older and newer files by name, never guessing — and the per-field shape of each `ExportedPerson`'s birth
+  `validateFullExport` strictly checks `format` and `version` — it accepts the versions in `SUPPORTED_IMPORT_VERSIONS`
+  (2 and 3) and rejects anything older or newer by name, never guessing; a v2 person has no settings of their own, so
+  they take the file's `preferences.settings` (#806), which is what their charts in that file were computed with — and the per-field shape of each `ExportedPerson`'s birth
   record, named places and custom points, reusing the same field readers `src/domain/person.ts` already applies
   to the op-log itself (not a second, looser validator), and rejects two people sharing one id or a person id
   that is itself a reserved register name (`__proto__`/`constructor`/`prototype`), rather than letting either
@@ -146,6 +148,12 @@ JSON Schema file does enumerate them structurally.
   have been lossy; also additive, still v2.
   #724 added the optional station-window and motion-score settings (`preferences.settings.stationWindow`/`motionScore`), the
   optional positions `stationary`/`stationType` fields, and a `note` disclosure, all present only while on; additive, still v2.
+- **v3** (#806): chart calculation settings moved from the device onto the person, so `ExportedPerson` gains
+  optional `calculationSettings` (the settings that person's `natalChart`/`harmonicCharts` were computed with), and
+  `preferences.settings` now means the device's default profile rather than "every setting in force". The importer
+  reads v2 and v3. Restoring writes a person's `calculationSettings` register only when it differs. An older
+  build rejects a v3 file by version, and an older build reading the op log ignores the register (accepted, #806 D6;
+  noted in the release notes).
 
 ## Calculation artifact
 

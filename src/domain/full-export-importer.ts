@@ -36,13 +36,21 @@
  * @conventions Strict, fail-closed validation reusing person.ts's own field readers rather than a second parallel validator; version checked only against the imported FULL_EXPORT_VERSION constant, never a locally declared one; staging only ever emits mutations for fields that actually differ from the current Person (never a blind overwrite, and never a clear for a field the export omits), matching person-form.ts's own diffing rule that an untouched field must not get a newer timestamp than it already has.
  * @exports Result, ImportError, RestoreItem, RestorePreview, validateFullExport, stageFullExportRestore
  */
-import { FULL_EXPORT_FORMAT, FULL_EXPORT_VERSION, type ExportedPerson, type FullExport } from './full-export.js';
+import {
+  FULL_EXPORT_FORMAT,
+  FULL_EXPORT_VERSION,
+  SUPPORTED_IMPORT_VERSIONS,
+  type ExportedPerson,
+  type FullExport,
+} from './full-export.js';
 import {
   readCalendar,
   readCivil,
   readCoordinates,
+  readCalculationSettings,
   readCustomPoints,
   readOffsetOverride,
+  serializeCalculationSettings,
   readRelocationPlaces,
   readText,
   readTimeAccuracy,
@@ -149,6 +157,13 @@ function validatePerson(raw: unknown, path: string): Result<ExportedPerson, Impo
     customPoints = points;
   }
 
+  let calculationSettings: ExtendedSettings | undefined;
+  if (raw.calculationSettings !== undefined) {
+    const read = readCalculationSettings({ settings: raw.calculationSettings });
+    if (read?.kind !== 'settings') return malformed(`${path}.calculationSettings`, 'not readable by this version');
+    calculationSettings = read.settings;
+  }
+
   return {
     ok: true,
     value: {
@@ -160,6 +175,7 @@ function validatePerson(raw: unknown, path: string): Result<ExportedPerson, Impo
       ...(birth === undefined ? {} : { birth }),
       ...(relocationPlaces === undefined ? {} : { relocationPlaces }),
       ...(customPoints === undefined ? {} : { customPoints }),
+      ...(calculationSettings === undefined ? {} : { calculationSettings }),
       missing,
     },
   };
@@ -192,7 +208,7 @@ export function validateFullExport(value: unknown): Result<FullExport, ImportErr
     return { ok: false, error: { kind: 'wrong-format', got: value.format } };
   }
   const got = value.version;
-  if (got !== FULL_EXPORT_VERSION) {
+  if (typeof got !== 'number' || !SUPPORTED_IMPORT_VERSIONS.includes(got)) {
     const direction =
       typeof got === 'number' && Number.isInteger(got)
         ? got < FULL_EXPORT_VERSION
@@ -210,12 +226,30 @@ export function validateFullExport(value: unknown): Result<FullExport, ImportErr
   if (!preferences.ok) return preferences;
   if (!Array.isArray(value.people)) return malformed('people', 'not an array');
 
+  // A v2 person has no settings of their own: they take the file's preferences, which is what their
+  // charts in that file were computed with (#806). Strictly decoded, so an unreadable bag fails the import.
+  let fileSettings: ExtendedSettings | undefined;
+  if (got < 3) {
+    const read = readCalculationSettings({ settings: preferences.value.settings }, false);
+    if (read?.kind !== 'settings') {
+      return malformed(
+        'preferences.settings',
+        'has a value this version cannot read (invalid objectPolicies, flag or orb)',
+      );
+    }
+    fileSettings = read.settings;
+  }
+
   const people: ExportedPerson[] = [];
   const seenIds = new Set<string>();
   for (let index = 0; index < value.people.length; index += 1) {
     const path = `people[${String(index)}]`;
-    const result = validatePerson(value.people[index], path);
-    if (!result.ok) return result;
+    const validated = validatePerson(value.people[index], path);
+    if (!validated.ok) return validated;
+    const result: { readonly ok: true; readonly value: ExportedPerson } =
+      fileSettings !== undefined && validated.value.calculationSettings === undefined
+        ? { ok: true, value: { ...validated.value, calculationSettings: fileSettings } }
+        : validated;
     // Two entries sharing an id are not two people — `store.mutate` would fold both sets of
     // field writes into one op-log entity by HLC, silently discarding whichever is "losing"
     // field-by-field, while this preview would have counted them as two. Rejected atomically,
@@ -331,6 +365,14 @@ function restoreMutations(entityId: string, exported: ExportedPerson, existing: 
   }
   if (exported.customPoints !== undefined && !same(existing?.customPoints, exported.customPoints)) {
     write('customPoints', serializedCustomPoints(exported.customPoints));
+  }
+
+  if (
+    exported.calculationSettings !== undefined &&
+    (existing?.calculationSettingsUnreadable === true ||
+      !same(existing?.calculationSettings, exported.calculationSettings))
+  ) {
+    write('calculationSettings', serializeCalculationSettings(exported.calculationSettings));
   }
 
   return mutations;

@@ -68,9 +68,8 @@ import { SortableTable } from './SortableTable.js';
 import type { TableColumn } from './table-sort.js';
 import { preferencesViewMessages } from './PreferencesView.messages.js';
 import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
-import { readDefaultCalculationProfile } from './default-calculation-profile.js';
+import { readDefaultCalculationProfile, useDefaultCalculationProfile } from './default-calculation-profile.js';
 import { ExtendedSettingsPanel } from './ExtendedSettingsPanel.js';
-import { useExtendedSettings } from './extended-settings-store.js';
 import { RulershipSetting } from './RulershipSetting.js';
 import { OrbLibraryEditor } from './OrbLibraryEditor.js';
 import { useOrbContextSource, useOrbLibrary } from './orb-library-store.js';
@@ -104,7 +103,10 @@ export function PreferencesView({
   const store = useOptionalStore();
   const { provider } = useEphemerisProvider();
   const [rulership] = useRulershipChoice();
-  const [extendedSettings, setExtendedSettings] = useExtendedSettings();
+  // The chart-setup editor here edits the device's default profile (#806): the starting point for a person who has
+  // not saved settings of their own. A person's own settings are changed on that person's chart screens.
+  const [savedDefault, saveDefault] = useDefaultCalculationProfile();
+  const extendedSettings = savedDefault?.settings ?? DEFAULT_EXTENDED_SETTINGS;
   const orbLibrary = useOrbLibrary();
   const orbSources = useOrbContextSource();
   const [symbolClass] = useSymbolClass();
@@ -386,13 +388,18 @@ export function PreferencesView({
           already uses, reachable here as its own dedicated entry point rather than only hidden
           behind a chart's own "Extended settings" trigger — one place to review every
           calculation-affecting setting before computing, per the audit's own ask. Bound to the
-          same page-lifetime-shared store (extended-settings-store.ts) ChartView.tsx reads, so a
-          change made here previews on the next chart drawn, exactly like changing it there. */}
+          device's default profile (#806): what a person starts from until they save settings of their own. */}
             <p>{t.chartSetupSubtitle}</p>
             {provider === undefined ? (
               <p className="hint">{t.chartSetupNeedsEngine}</p>
             ) : (
-              <ExtendedSettingsPanel value={extendedSettings} onRedraw={setExtendedSettings} provider={provider} />
+              <ExtendedSettingsPanel
+                value={extendedSettings}
+                onRedraw={(next) => {
+                  saveDefault(next, rulership);
+                }}
+                provider={provider}
+              />
             )}
           </>
         )}

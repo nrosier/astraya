@@ -136,7 +136,8 @@ import { svgToPngBlob } from './chart-raster.js';
 import { downloadBlob, downloadText } from './download.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { ExtendedSettingsPanel } from './ExtendedSettingsPanel.js';
-import { useExtendedSettings } from './extended-settings-store.js';
+import { usePersonCalculationSettings } from './person-calculation-settings.js';
+import { UnreadableSettingsNotice } from './UnreadableSettingsNotice.js';
 import { useOrbContextSource, useOrbLibrary } from './orb-library-store.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
@@ -1803,7 +1804,7 @@ export function ChartDataView({
    * settings" panel is rendered and this is wired as its `onRedraw`. Omitted by
    * `SharedChartView`, which has no panel.
    */
-  readonly onExtendedSettingsChange?: (next: ExtendedSettings) => void;
+  readonly onExtendedSettingsChange?: (next: ExtendedSettings) => void | Promise<void>;
   /** A long-lived provider for the panel's own house-system/ayanamsa name lookups. */
   readonly settingsProvider?: EphemerisProvider | undefined;
   /** The open view (#511: Wheel/Aspects/Placements/Patterns & condition), when a URL decides it (every real screen); otherwise this component's own state. */
@@ -2478,7 +2479,11 @@ export function ChartView({
   const [compareLoad, setCompareLoad] = useState<Load>({ kind: 'loading' });
   const [lastReadyData, setLastReadyData] = useState<ChartData | undefined>();
   // Shared with the solar and lunar return charts, so a house system chosen here applies there too.
-  const [cardSettings, setSettings] = useExtendedSettings();
+  const {
+    settings: cardSettings,
+    unreadable: settingsUnreadable,
+    setSettings: setSettings,
+  } = usePersonCalculationSettings(personId);
   // The natal chart uses the card's orbs unless the device chose a named orb profile for natal charts (#590); the
   // settings it resolves to are what the chart, its snapshot and its share link all record.
   const orbLibrary = useOrbLibrary();
@@ -2516,7 +2521,7 @@ export function ChartView({
   }, [load]);
 
   useEffect(() => {
-    if (personMoment === undefined || provider === undefined) return undefined;
+    if (personMoment === undefined || provider === undefined || settingsUnreadable) return undefined;
     const moment = personMoment;
     // A mutable holder rather than a `let`, matching `App.tsx`'s own effect below.
     const effect = { cancelled: false };
@@ -2547,7 +2552,7 @@ export function ChartView({
     return () => {
       effect.cancelled = true;
     };
-  }, [personId, personMoment, customPoints, settings, rulership, provider]);
+  }, [settingsUnreadable, personId, personMoment, customPoints, settings, rulership, provider]);
 
   // Compute comparison chart when compareType is provided (#439)
   useEffect(() => {
@@ -2555,7 +2560,7 @@ export function ChartView({
       setCompareLoad({ kind: 'loading' });
       return;
     }
-    if (personMoment === undefined || provider === undefined) return undefined;
+    if (personMoment === undefined || provider === undefined || settingsUnreadable) return undefined;
 
     const moment = personMoment;
     const effect = { cancelled: false };
@@ -2591,10 +2596,14 @@ export function ChartView({
     return () => {
       effect.cancelled = true;
     };
-  }, [personId, personMoment, customPoints, settings, rulership, provider, compareType]);
+  }, [settingsUnreadable, personId, personMoment, customPoints, settings, rulership, provider, compareType]);
 
   if (person === undefined) {
     return <PersonNotFound />;
+  }
+
+  if (settingsUnreadable) {
+    return <UnreadableSettingsNotice personId={personId} name={person.displayName || ''} />;
   }
 
   if (person.moment === undefined) {

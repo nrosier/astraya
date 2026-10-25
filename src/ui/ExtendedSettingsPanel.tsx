@@ -158,7 +158,8 @@ export function ExtendedSettingsPanel({
   provider,
 }: {
   readonly value: ExtendedSettings;
-  readonly onRedraw: (next: ExtendedSettings) => void;
+  /** May return a promise (a person's settings are saved asynchronously): a rejection keeps the card open and says so. */
+  readonly onRedraw: (next: ExtendedSettings) => void | Promise<void>;
   readonly provider: EphemerisProvider;
 }): React.JSX.Element {
   const [draft, setDraft] = useState<ExtendedSettings>(value);
@@ -326,6 +327,7 @@ export function ExtendedSettingsPanel({
       for (const body of VARIANT_BODIES) setVariant(body, atOpen.look[body]);
     }
     setOpen(false);
+    setApplyFailed(false);
     replaceDraft(value);
     setPendingRulers(undefined);
     setAtOpen(undefined);
@@ -355,12 +357,23 @@ export function ExtendedSettingsPanel({
       VARIANT_BODIES.some((body) => look[body] !== atOpen.look[body]));
   const dirty = !sameSettings(effective, value) || pendingRulers !== undefined || deviceChanged;
 
+  const [applyFailed, setApplyFailed] = useState(false);
   const apply = (): void => {
     if (pendingRulers !== undefined) setRulers(pendingRulers);
-    onRedraw(effective);
-    setOpen(false);
-    setPendingRulers(undefined);
-    setAtOpen(undefined);
+    setApplyFailed(false);
+    const finish = (): void => {
+      setOpen(false);
+      setPendingRulers(undefined);
+      setAtOpen(undefined);
+    };
+    const outcome = onRedraw(effective);
+    if (outcome === undefined) {
+      finish();
+      return;
+    }
+    outcome.then(finish, () => {
+      setApplyFailed(true);
+    });
   };
 
   /** "Save as my default" (#510): remembers the draft and rulers for every future chart on this device — never redraws the chart currently open, which stays Apply's job alone. */
@@ -546,6 +559,7 @@ export function ExtendedSettingsPanel({
           </>
         }
       >
+        {applyFailed && <StatusMessage kind="error">{t.applyFailed}</StatusMessage>}
         <p className="hint">{t.scopeNote}</p>
 
         <fieldset className="field-group settings-card-group">

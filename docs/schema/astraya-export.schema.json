@@ -56,6 +56,10 @@
           "type": "array",
           "items": { "type": "object", "description": "RelocationPlace — see src/domain/person.ts" }
         },
+        "calculationSettings": {
+          "type": "object",
+          "description": "ExtendedSettings (#806, v3) — this person's own chart settings, see src/chart/extended-settings.ts; absent in v2 files"
+        },
         "customPoints": {
           "type": "array",
           "items": { "type": "object", "description": "CustomPointDefinition — see src/domain/person.ts" }

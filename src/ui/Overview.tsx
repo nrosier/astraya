@@ -25,9 +25,9 @@ import { rulershipSettingMessages } from './RulershipSetting.messages.js';
 import { useRulershipChoice } from './rulership-setting.js';
 import { useStoreState } from './store-context.js';
 import { summary } from './people-list.js';
-import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
-import { useDefaultCalculationProfile } from './default-calculation-profile.js';
+import { usePersonCalculationSettings } from './person-calculation-settings.js';
 import { BackLink } from './BackLink.js';
+import { UnreadableSettingsNotice } from './UnreadableSettingsNotice.js';
 
 export function Overview({ personId }: { readonly personId: string }): React.JSX.Element {
   const state = useStoreState();
@@ -36,14 +36,18 @@ export function Overview({ personId }: { readonly personId: string }): React.JSX
   const rulershipT = useMessages(rulershipSettingMessages);
   const [locale] = useLocale();
   const [rulership] = useRulershipChoice();
-  const [defaultProfile] = useDefaultCalculationProfile();
+  const { settings: personSettings, unreadable: settingsUnreadable } = usePersonCalculationSettings(personId);
 
   if (person === undefined) {
     return <PersonNotFound />;
   }
 
+  if (settingsUnreadable) {
+    return <UnreadableSettingsNotice personId={personId} name={person.displayName || ''} />;
+  }
+
   const hasBirthMoment = person.moment !== undefined;
-  const zodiac = defaultProfile?.settings.zodiac ?? DEFAULT_EXTENDED_SETTINGS.zodiac;
+  const zodiac = personSettings.zodiac;
   const zodiacLabel = zodiac.kind === 'sidereal' ? t.sidereal : t.tropical;
 
   // Every next action but editing the birth record itself needs a complete birth moment —

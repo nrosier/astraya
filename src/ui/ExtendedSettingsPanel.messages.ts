@@ -207,6 +207,8 @@ const en = {
     `Orbs now: major aspects ${major}° (${majorLuminary}° with a luminary), sextile ${sextile}° (${sextileLuminary}°), minor aspects ${minor}°.`,
   orbRulesInvalid:
     'Check the orb rules: each orb must be a number from 0° to 30°. Apply is unavailable until they are.',
+  applyFailed:
+    "These settings could not be saved, so the chart is unchanged. Try Apply again; if it keeps failing, check this device's storage.",
   minorAspectsLegend: 'Minor aspects',
 
   wheelLegend: 'Wheel colours',
@@ -438,6 +440,8 @@ const nl: typeof en = {
     `Orbs nu: hoofdaspecten ${major}° (${majorLuminary}° met een lichtgever), sextiel ${sextile}° (${sextileLuminary}°), kleine aspecten ${minor}°.`,
   orbRulesInvalid:
     'Controleer de orbisregels: elke orbis moet een getal van 0° tot 30° zijn. Toepassen kan pas als ze kloppen.',
+  applyFailed:
+    'Deze instellingen konden niet worden opgeslagen, dus het horoscoop is niet veranderd. Probeer Toepassen opnieuw; lukt het nog steeds niet, controleer dan de opslag van dit apparaat.',
   minorAspectsLegend: 'Kleine aspecten',
 
   wheelLegend: 'Wielkleuren',

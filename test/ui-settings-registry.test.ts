@@ -3,7 +3,7 @@
  * `docs/ui/UI-UX_IMPLEMENTATION_PLAN.md` §5.2/§9: the shipped registry itself has no invariant
  * violations, and `validateSettings` actually rejects each forbidden combination the plan
  * names — request-scope persistence, device-scope sync, a staged setting with immediate
- * commit, and a person-scope entry (person records are inputs, not settings).
+ * commit, and a person-scope entry that is not stored on the person (#806).
  */
 import { describe, expect, it } from 'vitest';
 import { SETTINGS, validateSettings, type SettingDefinition } from '../src/ui/settings-registry.js';
@@ -48,9 +48,16 @@ describe('validateSettings', () => {
     expect(violations.length).toBeGreaterThan(0);
   });
 
-  it('rejects a person-scope entry outright — person records are inputs, not settings', () => {
-    const violations = validateSettings([{ ...BASE, scope: 'person' }]);
-    expect(violations.length).toBeGreaterThan(0);
+  it('rejects a person-scope entry unless it is stored on the person through the op log (#806)', () => {
+    expect(validateSettings([{ ...BASE, scope: 'person' }]).length).toBeGreaterThan(0);
+    expect(validateSettings([{ ...BASE, scope: 'person', persistence: 'indexeddb-oplog', synced: true }])).toEqual([]);
+  });
+
+  it('registers the per-person calculation settings as person scope, and glyph/degree-symbol as device (#806)', () => {
+    const scopeOf = (key: string) => SETTINGS.find((setting) => setting.key === key)?.scope;
+    expect(scopeOf('person.calculationSettings')).toBe('person');
+    expect(scopeOf('astraya:glyphVariants')).toBe('device');
+    expect(scopeOf('astraya:showDegreeSymbol')).toBe('device');
   });
 
   it('accepts a well-formed setting of every other scope', () => {

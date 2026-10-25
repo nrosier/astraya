@@ -10,6 +10,7 @@ import {
   calculationSnapshotToJson,
   CURRENT_SNAPSHOT_VERSION,
   decodeCalculationSnapshot,
+  decodeStrictExtendedSettings,
   parseCalculationSnapshot,
   SnapshotDecodeError,
 } from '../src/domain/calculation-snapshot.js';
@@ -446,5 +447,34 @@ describe('the station window and motion score in the snapshot (#724)', () => {
     );
     expect(windowed).not.toBe(base);
     expect(scored).not.toBe(base);
+  });
+});
+
+describe('decodeStrictExtendedSettings never fills a register with defaults (#806)', () => {
+  const full = JSON.parse(JSON.stringify(CUSTOM_SETTINGS)) as Record<string, unknown>;
+
+  it('reads a complete, valid settings bag', () => {
+    expect(decodeStrictExtendedSettings(full, true)).toEqual(CUSTOM_SETTINGS);
+  });
+
+  it.each([
+    ['garbage objectPolicies', { objectPolicies: 'garbage' }],
+    ['a policy with a non-boolean flag', { objectPolicies: { sun: { visible: 1, aspectParticipant: true } } }],
+    ['an out-of-range antisciaMaxOrb', { antisciaMaxOrb: -5 }],
+    ['a non-boolean declinationVisible', { declinationVisible: 'yes' }],
+  ])('refuses %s', (_name, bad) => {
+    expect(() => decodeStrictExtendedSettings({ ...full, ...bad }, true)).toThrow(SnapshotDecodeError);
+    expect(() => decodeStrictExtendedSettings({ ...full, ...bad }, false)).toThrow(SnapshotDecodeError);
+  });
+
+  it('refuses a missing field only when every field is required', () => {
+    const incomplete = { ...full };
+    delete incomplete.declinationVisible;
+    expect(() => decodeStrictExtendedSettings(incomplete, true)).toThrow(SnapshotDecodeError);
+    expect(() => decodeStrictExtendedSettings(incomplete, false)).not.toThrow();
+  });
+
+  it('refuses an object policy bag that omits an object when every field is required', () => {
+    expect(() => decodeStrictExtendedSettings({ ...full, objectPolicies: {} }, true)).toThrow(SnapshotDecodeError);
   });
 });

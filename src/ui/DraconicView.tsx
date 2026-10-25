@@ -28,7 +28,8 @@ import { PersonNotFound } from './PersonNotFound.js';
 import { useStoreState } from './store-context.js';
 import type { ChartData } from '../domain/chart-compute.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
-import { useExtendedSettings } from './extended-settings-store.js';
+import { usePersonCalculationSettings } from './person-calculation-settings.js';
+import { UnreadableSettingsNotice } from './UnreadableSettingsNotice.js';
 import { orbsOf } from '../chart/extended-settings.js';
 import { useStableBy, useStableMoment } from './use-stable-moment.js';
 import { BackLink } from './BackLink.js';
@@ -63,11 +64,11 @@ export function DraconicView({
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
   const customPoints = useStableBy(person?.customPoints, (points) => JSON.stringify(points ?? []));
   // The aspects use the device's orbs (#590), as the natal chart does.
-  const [extendedSettings] = useExtendedSettings();
+  const { settings: extendedSettings, unreadable: settingsUnreadable } = usePersonCalculationSettings(personId);
   const orbs = useStableBy(orbsOf(extendedSettings), (config) => JSON.stringify(config));
 
   useEffect(() => {
-    if (personMoment === undefined || provider === undefined) return undefined;
+    if (personMoment === undefined || provider === undefined || settingsUnreadable) return undefined;
     const moment = personMoment;
     const effect = { cancelled: false };
     setLoad({ kind: 'loading' });
@@ -88,10 +89,14 @@ export function DraconicView({
     return () => {
       effect.cancelled = true;
     };
-  }, [personMoment, provider, customPoints, orbs]);
+  }, [settingsUnreadable, personMoment, provider, customPoints, orbs]);
 
   if (person === undefined) {
     return <PersonNotFound />;
+  }
+
+  if (settingsUnreadable) {
+    return <UnreadableSettingsNotice personId={personId} name={person.displayName || ''} />;
   }
 
   if (person.moment === undefined || person.timeAccuracy === 'unknown') {

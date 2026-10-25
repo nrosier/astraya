@@ -39,8 +39,11 @@ const ADA: Person = {
   customPoints: [{ id: 'fortune-like', name: 'Fortune-like', formula: 'ascendant + moon - sun' }],
 };
 
+// The person under test; a test gives them their own calculation settings (#806) by replacing this.
+const shown = { person: ADA };
 vi.mock('../src/ui/store-context.js', () => ({
-  useStoreState: () => ({ people: new Map([[ADA.id, ADA]]) }),
+  useStoreState: () => ({ people: new Map([[shown.person.id, shown.person]]) }),
+  useStore: () => ({ mutate: () => Promise.resolve() }),
 }));
 
 vi.mock('../src/domain/chart-compute.js', async (importOriginal) => {
@@ -51,11 +54,13 @@ vi.mock('../src/domain/chart-compute.js', async (importOriginal) => {
 const { ReportScreen } = await import('../src/ui/ReportScreen.js');
 const { computeChartData } = await import('../src/domain/chart-compute.js');
 const { DEFAULT_EXTENDED_SETTINGS } = await import('../src/chart/extended-settings.js');
-const { setExtendedSettings, resetExtendedSettings } = await import('../src/ui/extended-settings-store.js');
+const setPersonSettings = (settings: typeof DEFAULT_EXTENDED_SETTINGS): void => {
+  shown.person = { ...ADA, calculationSettings: settings };
+};
 const { writeRulershipChoice } = await import('../src/ui/rulership-setting.js');
 
 afterEach(() => {
-  resetExtendedSettings();
+  shown.person = ADA;
   localStorage.clear();
   vi.mocked(computeChartData).mockClear();
 });
@@ -74,9 +79,9 @@ async function mount(): Promise<{ container: HTMLElement; root: Root }> {
 }
 
 describe('the Report page computes the Charts page’s chart (#732)', () => {
-  it('uses the confirmed settings, the rulership and the person’s custom points', async () => {
+  it('uses the person’s own settings, the rulership and the person’s custom points', async () => {
     writeRulershipChoice('traditional');
-    setExtendedSettings({ ...DEFAULT_EXTENDED_SETTINGS, houseSystem: 'W', orbScalePercent: -40, nodeVariant: 'true' });
+    setPersonSettings({ ...DEFAULT_EXTENDED_SETTINGS, houseSystem: 'W', orbScalePercent: -40, nodeVariant: 'true' });
 
     const { container, root } = await mount();
     try {
@@ -110,7 +115,7 @@ describe('the Report page computes the Charts page’s chart (#732)', () => {
         return new Response(readFileSync(resolve(import.meta.dirname, '../public/corpus/en.json'), 'utf8'));
       }),
     );
-    setExtendedSettings({
+    setPersonSettings({
       ...DEFAULT_EXTENDED_SETTINGS,
       objectPolicies: {
         ...DEFAULT_EXTENDED_SETTINGS.objectPolicies,
@@ -139,6 +144,22 @@ describe('the Report page computes the Charts page’s chart (#732)', () => {
       });
       container.remove();
       vi.unstubAllGlobals();
+    }
+  });
+});
+
+describe('an unreadable per-person settings register (#806)', () => {
+  it('shows a notice instead of drawing a chart from defaults', async () => {
+    shown.person = { ...ADA, calculationSettingsUnreadable: true };
+    const { container, root } = await mount();
+    try {
+      expect(container.textContent).toContain('saved chart settings');
+      expect(computeChartData).not.toHaveBeenCalled();
+    } finally {
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
     }
   });
 });

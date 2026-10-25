@@ -35,7 +35,8 @@ import { PersonNotFound } from './PersonNotFound.js';
 import { ReportView } from './ReportView.js';
 import { returnViewMessages } from './ReturnView.messages.js';
 import { toChartCalculationOptions } from '../chart/extended-settings.js';
-import { useExtendedSettings } from './extended-settings-store.js';
+import { usePersonCalculationSettings } from './person-calculation-settings.js';
+import { UnreadableSettingsNotice } from './UnreadableSettingsNotice.js';
 import { useRulershipChoice } from './rulership-setting.js';
 import { SortableTable } from './SortableTable.js';
 import { useStoreState } from './store-context.js';
@@ -114,7 +115,11 @@ export function ReturnView({
   const t = useMessages(returnViewMessages);
   const [locale] = useLocale();
   const [rulership] = useRulershipChoice();
-  const [settings, setSettings] = useExtendedSettings();
+  const {
+    settings: settings,
+    unreadable: settingsUnreadable,
+    setSettings: setSettings,
+  } = usePersonCalculationSettings(personId);
   const basisLine = useCalculationBasisLine(settings, rulership);
   const { provider } = useEphemerisProvider();
   const solar = kind === 'solar-return';
@@ -148,7 +153,7 @@ export function ReturnView({
   const placeInvalid = otherPlace && place === undefined;
 
   useEffect(() => {
-    if (personMoment === undefined || provider === undefined || !inputValid || placeInvalid) {
+    if (personMoment === undefined || provider === undefined || settingsUnreadable || !inputValid || placeInvalid) {
       setLoad({ kind: 'idle' });
       return undefined;
     }
@@ -181,7 +186,19 @@ export function ReturnView({
     return () => {
       effect.cancelled = true;
     };
-  }, [personMoment, provider, solar, yearNumber, fromJdParts, place, placeInvalid, inputValid, rulership, settings]);
+  }, [
+    settingsUnreadable,
+    personMoment,
+    provider,
+    solar,
+    yearNumber,
+    fromJdParts,
+    place,
+    placeInvalid,
+    inputValid,
+    rulership,
+    settings,
+  ]);
 
   const baseLabel = solar ? t.solarLabel(year) : t.lunarLabel;
   const label =
@@ -194,6 +211,10 @@ export function ReturnView({
 
   if (person === undefined) {
     return <PersonNotFound />;
+  }
+
+  if (settingsUnreadable) {
+    return <UnreadableSettingsNotice personId={personId} name={person.displayName || ''} />;
   }
 
   const fallback = solar ? t.solarHeadingFallback : t.lunarHeadingFallback;

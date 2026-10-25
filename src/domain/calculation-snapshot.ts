@@ -17,7 +17,7 @@
  * @module domain/calculation-snapshot
  * @purpose Defines a versioned, fully-validated CalculationSnapshot (settings, rulership and custom points) and the pure functions that build/parse/serialize one.
  * @conventions `version` is bumped only when the *shape* a snapshot must satisfy changes incompatibly; `parseCalculationSnapshot` never throws — an invalid or missing field is filled from the documented app defaults, the same defaults a never-customized chart already shows (for a device's own saved default); `decodeCalculationSnapshot` is the strict, version-dispatched gate for payloads from outside the device (#717) and refuses rather than repairs; strict validation checks registered house systems, aspect keys, and bounds schemes against canonical registries.
- * @exports CURRENT_SNAPSHOT_VERSION, CalculationSnapshot, buildCalculationSnapshot, snapshotCalculationOptions, calculationSnapshotIdentity, parseCalculationSnapshot, decodeCalculationSnapshot, SnapshotDecodeError, SNAPSHOT_ORB_SCALE_RANGE, calculationSnapshotToJson
+ * @exports CURRENT_SNAPSHOT_VERSION, decodeStrictExtendedSettings, CalculationSnapshot, buildCalculationSnapshot, snapshotCalculationOptions, calculationSnapshotIdentity, parseCalculationSnapshot, decodeCalculationSnapshot, SnapshotDecodeError, SNAPSHOT_ORB_SCALE_RANGE, calculationSnapshotToJson
  */
 import {
   DEFAULT_EXTENDED_SETTINGS,
@@ -356,35 +356,76 @@ const SNAPSHOT_BOUNDS_SCHEMES = ['egyptian', 'ptolemaic'] as const;
 const SNAPSHOT_LILITH_VARIANTS = ['mean', 'true', 'interpolated'] as const;
 const SNAPSHOT_NODE_VARIANTS = ['mean', 'true'] as const;
 
-/** Each calculation-changing field that is *present* but not a registered/in-range value; an absent field is not a problem (older snapshots simply lacked it). */
-function invalidSettingFields(settings: Record<string, unknown>): readonly string[] {
+function isNonNegativeNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0;
+}
+
+/** Whether `value` is a well-formed policy record; `complete` also demands every object key be present. */
+function isValidObjectPolicies(value: unknown, complete: boolean): boolean {
+  if (!isRecord(value)) return false;
+  return OBJECT_KEYS.every((key) => {
+    const policy = value[key];
+    if (policy === undefined) return !complete;
+    return (
+      isRecord(policy) &&
+      typeof policy.visible === 'boolean' &&
+      typeof policy.aspectParticipant === 'boolean' &&
+      (policy.interpreted === undefined || typeof policy.interpreted === 'boolean')
+    );
+  });
+}
+
+/**
+ * Each field of a settings bag that is invalid. With `requireAll`, a *missing* field is a problem too (a
+ * register written by this app always carries every field); without it an absent field is fine, since
+ * older snapshots and v2 files simply lacked the fields later versions added.
+ */
+function invalidSettingFields(settings: Record<string, unknown>, requireAll = false): readonly string[] {
   const problems: string[] = [];
-  const present = (key: string): boolean => settings[key] !== undefined;
-  if (present('houseSystem') && !isValidHouseSystem(settings.houseSystem)) problems.push('houseSystem');
-  if (present('zodiac')) {
-    const zodiac = settings.zodiac;
+  const check = (key: string, ok: (value: unknown) => boolean): void => {
+    const value = settings[key];
+    if (value === undefined ? requireAll : !ok(value)) problems.push(key);
+  };
+  check('houseSystem', isValidHouseSystem);
+  check('zodiac', (zodiac) => {
     const tropical = isRecord(zodiac) && zodiac.kind === 'tropical';
     const sidereal = isRecord(zodiac) && zodiac.kind === 'sidereal' && isRegisteredAyanamsa(zodiac.ayanamsa);
-    if (!tropical && !sidereal) problems.push('zodiac');
+    return tropical || sidereal;
+  });
+  check('orbScalePercent', isOrbScale);
+  check('boundsScheme', (v) => isOneOf(v, SNAPSHOT_BOUNDS_SCHEMES));
+  check('lilithVariant', (v) => isOneOf(v, SNAPSHOT_LILITH_VARIANTS));
+  check('nodeVariant', (v) => isOneOf(v, SNAPSHOT_NODE_VARIANTS));
+  check('enabledMinorAspects', (aspects) => Array.isArray(aspects) && aspects.every((key) => isValidAspect(key)));
+  check('objectPolicies', (v) => isValidObjectPolicies(v, requireAll));
+  for (const key of ['midpointsVisible', 'antisciaVisible', 'declinationVisible', 'dial90Visible', 'rainbowZodiac']) {
+    check(key, (v) => typeof v === 'boolean');
   }
-  if (present('orbScalePercent') && !isOrbScale(settings.orbScalePercent)) problems.push('orbScalePercent');
-  if (present('boundsScheme') && !isOneOf(settings.boundsScheme, SNAPSHOT_BOUNDS_SCHEMES))
-    problems.push('boundsScheme');
-  if (present('lilithVariant') && !isOneOf(settings.lilithVariant, SNAPSHOT_LILITH_VARIANTS)) {
-    problems.push('lilithVariant');
-  }
-  if (present('nodeVariant') && !isOneOf(settings.nodeVariant, SNAPSHOT_NODE_VARIANTS)) problems.push('nodeVariant');
-  if (present('enabledMinorAspects')) {
-    const aspects = settings.enabledMinorAspects;
-    if (!Array.isArray(aspects) || !aspects.every((key) => isValidAspect(key))) problems.push('enabledMinorAspects');
-  }
-  if (present('orbRules') && validateOrbRules(settings.orbRules) === undefined) problems.push('orbRules');
-  if (present('stationWindow')) {
+  for (const key of ['antisciaMaxOrb', 'declinationMaxOrb', 'midpointTreeOrb']) check(key, isNonNegativeNumber);
+  if (settings.orbRules !== undefined && validateOrbRules(settings.orbRules) === undefined) problems.push('orbRules');
+  if (settings.stationWindow !== undefined) {
     const window = settings.stationWindow;
     if (!isRecord(window) || !isStationWindowK(window.k)) problems.push('stationWindow');
   }
-  if (present('motionScore') && typeof settings.motionScore !== 'boolean') problems.push('motionScore');
+  if (settings.motionScore !== undefined && typeof settings.motionScore !== 'boolean') problems.push('motionScore');
   return problems;
+}
+
+/**
+ * The strict reader for a settings bag stored as a person's register or carried by an export (#806):
+ * any invalid field throws a `SnapshotDecodeError`, and with `requireAll` any missing one does too.
+ * Nothing is ever filled from the defaults silently.
+ */
+export function decodeStrictExtendedSettings(value: unknown, requireAll: boolean): ExtendedSettings {
+  if (!isRecord(value)) throw new SnapshotDecodeError('invalid-field', 'The settings are not an object.');
+  const problems = invalidSettingFields(value, requireAll);
+  if (problems.length > 0) {
+    throw new SnapshotDecodeError(
+      'invalid-field',
+      `The settings carry values this app does not recognise (${problems.join(', ')}).`,
+    );
+  }
+  return parseExtendedSettings(value);
 }
 
 /**

@@ -606,3 +606,99 @@ describe('cross-tab write lock (#311)', () => {
     second.close();
   });
 });
+
+describe('seed (#806)', () => {
+  const field = (value: string): { entity: string; entityId: string; field: string; value: string } => ({
+    entity: 'person',
+    entityId: PERSON,
+    field: 'displayName',
+    value,
+  });
+
+  it('stamps at the minimum HLC with a counter', async () => {
+    await withStore(async (store) => {
+      const seeded = await store.seed([field('seeded')]);
+      expect(seeded).toHaveLength(1);
+      expect(String(seeded[0]?.hlc)).toMatch(/^0{18}-00001-/);
+      expect(store.outgoing()).toContainEqual(seeded[0]);
+    });
+  });
+
+  it('keeps a seed on a field nobody else wrote', async () => {
+    await withStore(async (store) => {
+      await store.seed([field('seeded')]);
+      expect(store.state.people.get(PERSON)?.displayName).toBe('seeded');
+    });
+  });
+
+  it('loses to a real write made after it', async () => {
+    await withStore(async (store) => {
+      await store.seed([field('seeded')]);
+      await store.mutate([field('real')]);
+      expect(store.state.people.get(PERSON)?.displayName).toBe('real');
+    });
+  });
+
+  it('loses to a real write that arrives from a peer before or after it', async () => {
+    const peer = await openStore({ name: freshName(), now: ticking() });
+    const early = await openStore({ name: freshName(), now: ticking() });
+    const late = await openStore({ name: freshName(), now: ticking() });
+    try {
+      await peer.mutate([field('real')]);
+      const real = peer.outgoing();
+      // Real write arrives first, seed second.
+      await early.receive(real);
+      await early.seed([field('seeded')]);
+      expect(early.state.people.get(PERSON)?.displayName).toBe('real');
+      // Seed first, real write second.
+      await late.seed([field('seeded')]);
+      expect(late.state.people.get(PERSON)?.displayName).toBe('seeded');
+      await late.receive(real);
+      expect(late.state.people.get(PERSON)?.displayName).toBe('real');
+    } finally {
+      peer.close();
+      early.close();
+      late.close();
+    }
+  });
+
+  it('never reuses a stamp, including after reopening', async () => {
+    const name = freshName();
+    const first = await openStore({ name, now: ticking() });
+    const a = await first.seed([field('one')]);
+    const b = await first.seed([field('two'), field('three')]);
+    first.close();
+    const second = await openStore({ name, now: ticking() });
+    try {
+      const c = await second.seed([field('four')]);
+      const stamps = [...a, ...b, ...c].map((record) => String(record.hlc));
+      expect(new Set(stamps).size).toBe(4);
+      expect(stamps).toEqual([...stamps].sort());
+    } finally {
+      second.close();
+    }
+  });
+
+  it('does not move the log clock', async () => {
+    await withStore(async (store) => {
+      await store.seed([field('seeded')]);
+      expect(store.head()).toMatch(/^0{18}-/);
+      await store.mutate([field('real')]);
+      expect(String(store.outgoing().at(-1)?.hlc)).not.toMatch(/^0{18}-/);
+    });
+  });
+
+  it('is removed by a purge of the person', async () => {
+    await withStore(async (store, name) => {
+      await store.seed([field('seeded')]);
+      await store.purge('person', PERSON);
+      expect(store.outgoing().some((record) => record.field === 'displayName')).toBe(false);
+      const db = await openDatabase(name);
+      try {
+        expect((await allRecords(db)).some((record) => record.field === 'displayName')).toBe(false);
+      } finally {
+        db.close();
+      }
+    });
+  });
+});

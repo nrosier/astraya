@@ -75,15 +75,15 @@ describe('validateFullExport', () => {
   // the wrong constant (the calculation-snapshot version), so the check did nothing. These two
   // assert the comparison is actually against the imported FULL_EXPORT_VERSION, in both
   // directions a mismatch can go.
-  it('rejects a version older than FULL_EXPORT_VERSION, naming the direction (#605 regression)', async () => {
+  it('rejects a version older than any supported one, naming the direction (#605 regression)', async () => {
     const archive = await build([ADA]);
-    const tampered = { ...(roundTripped(archive) as Record<string, unknown>), version: FULL_EXPORT_VERSION - 1 };
+    const tampered = { ...(roundTripped(archive) as Record<string, unknown>), version: 1 };
     const result = validateFullExport(tampered);
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(result.error).toEqual({
       kind: 'wrong-version',
-      got: FULL_EXPORT_VERSION - 1,
+      got: 1,
       expected: FULL_EXPORT_VERSION,
       direction: 'older',
     });
@@ -218,6 +218,109 @@ describe('version check is wired to the right constant (#605 regression)', () =>
   });
 });
 
+describe('v2 files and per-person settings (#806)', () => {
+  const custom = { ...DEFAULT_EXTENDED_SETTINGS, houseSystem: 'K', orbScalePercent: -40 };
+
+  it('exports each person with their own settings, charted with them', async () => {
+    const archive = await build([{ ...ADA, calculationSettings: custom }]);
+    expect(archive.version).toBe(3);
+    expect(archive.people[0]?.calculationSettings).toEqual(custom);
+    const plain = await build([ADA]);
+    expect(JSON.stringify(archive.people[0]?.natalChart)).not.toBe(JSON.stringify(plain.people[0]?.natalChart));
+  });
+
+  it('writes the device default into a person with no register, so the export is self-contained and round-trips', async () => {
+    const archive = await buildFullExport({
+      people: [ADA],
+      provider: engine,
+      appVersion: '9.9.9',
+      settings: custom,
+      rulership: 'modern',
+      symbolClass: 'drawn',
+      now: NOW,
+    });
+    expect(archive.people[0]?.calculationSettings).toEqual(custom);
+    const result = validateFullExport(roundTripped(archive));
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.people[0]?.calculationSettings).toEqual(custom);
+    const preview = stageFullExportRestore(result.value, new Map());
+    expect(preview.items[0]?.mutations.map((m) => m.field)).toContain('calculationSettings');
+  });
+
+  it('does not export settings for a person whose register is unreadable', async () => {
+    const archive = await build([{ ...ADA, calculationSettingsUnreadable: true }]);
+    expect(archive.people[0]?.calculationSettings).toBeUndefined();
+  });
+
+  it('refuses to chart a person whose saved settings are unreadable', async () => {
+    const archive = await build([{ ...ADA, calculationSettingsUnreadable: true }]);
+    expect(archive.people[0]?.natalChart).toBeUndefined();
+    expect(archive.people[0]?.chartError).toMatch(/could not be read/);
+  });
+
+  it('round-trips a v3 person setting and stages it as a calculationSettings write', async () => {
+    const archive = await build([{ ...ADA, calculationSettings: custom }]);
+    const result = validateFullExport(roundTripped(archive));
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const preview = stageFullExportRestore(result.value, new Map());
+    expect(preview.items[0]?.mutations.map((m) => m.field)).toContain('calculationSettings');
+  });
+
+  it('accepts a v2 file: its people take the file preferences as their settings', async () => {
+    const archive = await buildFullExport({
+      people: [ADA],
+      provider: engine,
+      appVersion: '9.9.9',
+      settings: custom,
+      rulership: 'modern',
+      symbolClass: 'drawn',
+      now: NOW,
+    });
+    const v2 = { ...(roundTripped(archive) as Record<string, unknown>), version: 2 };
+    const result = validateFullExport(v2);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.people[0]?.calculationSettings).toMatchObject({ houseSystem: 'K', orbScalePercent: -40 });
+  });
+
+  it.each([
+    ['garbage objectPolicies', { objectPolicies: 'garbage' }],
+    ['a non-boolean visibility flag', { declinationVisible: 'yes' }],
+    ['an out-of-range orb', { antisciaMaxOrb: -5 }],
+  ])('fails a v2 import whose preferences.settings has %s', async (_name, bad) => {
+    const archive = roundTripped(await build([ADA])) as { preferences: { settings: Record<string, unknown> } };
+    archive.preferences.settings = { ...archive.preferences.settings, ...bad };
+    const v2 = { ...archive, version: 2 };
+    const result = validateFullExport(v2);
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error).toMatchObject({ kind: 'malformed', path: 'preferences.settings' });
+  });
+
+  it.each([
+    ['garbage objectPolicies', { objectPolicies: 'garbage' }],
+    ['a non-boolean visibility flag', { declinationVisible: 'yes' }],
+    ['an out-of-range orb', { antisciaMaxOrb: -5 }],
+  ])('rejects a v3 person whose calculationSettings has %s', async (_name, bad) => {
+    const archive = roundTripped(await build([{ ...ADA, calculationSettings: custom }])) as {
+      people: { calculationSettings: Record<string, unknown> }[];
+    };
+    const first = archive.people[0];
+    if (first === undefined) throw new Error('no person');
+    first.calculationSettings = { ...first.calculationSettings, ...bad };
+    const result = validateFullExport(archive);
+    expect(result.ok).toBe(false);
+  });
+
+  it('rejects an unreadable per-person settings bag', async () => {
+    const archive = roundTripped(await build([ADA])) as { people: Record<string, unknown>[] };
+    archive.people[0] = { ...archive.people[0], calculationSettings: { houseSystem: 'nonsense' } };
+    expect(validateFullExport(archive).ok).toBe(false);
+  });
+});
+
 describe('FULL_EXPORT_VERSION stayed at 2 through #585 (preferences.settings is never deeply validated)', () => {
   it('accepts a real archive whose preferences.settings is still pre-#585-shaped, with no objectPolicies field', async () => {
     const archive = roundTripped(await build([ADA])) as Record<string, unknown>;
@@ -263,9 +366,12 @@ describe('stageFullExportRestore', () => {
     expect(validated.ok).toBe(true);
     if (!validated.ok) return;
 
+    // The export writes the device default into every person without a register (#806), so a device
+    // already holding those settings as their own register sees no change.
+    const withRegister = (person: Person): Person => ({ ...person, calculationSettings: DEFAULT_EXTENDED_SETTINGS });
     const existing = new Map<string, Person>([
-      ['p-carol', carol],
-      ['p-dave', { ...dave, notes: 'old notes' }],
+      ['p-carol', withRegister(carol)],
+      ['p-dave', withRegister({ ...dave, notes: 'old notes' })],
       // p-bob is intentionally absent: this device has never seen it.
     ]);
 
@@ -374,7 +480,10 @@ describe('stageFullExportRestore', () => {
       expect.not.arrayContaining(birthFields),
     );
 
-    const existingPreview = stageFullExportRestore(validated.value, new Map([['p-unknown', unknownTime]]));
+    const existingPreview = stageFullExportRestore(
+      validated.value,
+      new Map([['p-unknown', { ...unknownTime, calculationSettings: DEFAULT_EXTENDED_SETTINGS }]]),
+    );
     expect(existingPreview.items[0]?.status).toBe('unchanged');
   });
 

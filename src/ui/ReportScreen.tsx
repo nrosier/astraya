@@ -22,7 +22,8 @@ import { ReportView } from './ReportView.js';
 import { useMessages } from './messages.js';
 import { useRulershipChoice } from './rulership-setting.js';
 import { useStoreState } from './store-context.js';
-import { useExtendedSettings } from './extended-settings-store.js';
+import { usePersonCalculationSettings } from './person-calculation-settings.js';
+import { UnreadableSettingsNotice } from './UnreadableSettingsNotice.js';
 import { useOrbContextSource, useOrbLibrary } from './orb-library-store.js';
 import { settingsForContext, toChartCalculationOptions } from '../chart/extended-settings.js';
 import { interpretationExclusions } from '../chart/object-policy.js';
@@ -45,7 +46,7 @@ export function ReportScreen({ personId }: { personId: string }): React.JSX.Elem
   const [rulership] = useRulershipChoice();
   // The chart the Charts page draws (#732): its natal-context settings, rulers and custom points — not a
   // default-settings chart under the same name, which would read out a different chart from the one on screen.
-  const [cardSettings] = useExtendedSettings();
+  const { settings: cardSettings, unreadable: settingsUnreadable } = usePersonCalculationSettings(personId);
   const orbLibrary = useOrbLibrary();
   const orbSources = useOrbContextSource();
   const settings = useMemo(
@@ -57,7 +58,7 @@ export function ReportScreen({ personId }: { personId: string }): React.JSX.Elem
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
 
   useEffect(() => {
-    if (personMoment === undefined || provider === undefined) return undefined;
+    if (personMoment === undefined || provider === undefined || settingsUnreadable) return undefined;
     const moment = personMoment;
     const effect = { cancelled: false };
     setLoad({ kind: 'loading' });
@@ -79,10 +80,14 @@ export function ReportScreen({ personId }: { personId: string }): React.JSX.Elem
     return () => {
       effect.cancelled = true;
     };
-  }, [personMoment, rulership, provider, settings, customPoints]);
+  }, [settingsUnreadable, personMoment, rulership, provider, settings, customPoints]);
 
   if (person === undefined) {
     return <PersonNotFound />;
+  }
+
+  if (settingsUnreadable) {
+    return <UnreadableSettingsNotice personId={personId} name={person.displayName || ''} />;
   }
 
   if (person.moment === undefined) {
