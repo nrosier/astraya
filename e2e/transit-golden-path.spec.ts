@@ -9,8 +9,10 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
+import type { BrowserContext, Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
+import { MARIC, newSeededContext, openSharedPerson } from './shared-people.ts';
 import { createPerson, gotoAndSettle } from './support.ts';
 
 let dir: string;
@@ -99,16 +101,25 @@ test('a person with a known birth time gets a Transit screen with a bi-wheel and
   expect(download.suggestedFilename()).toBe('ada-lovelace-transit-contacts.csv');
 });
 
-test('a person with an unknown birth time is told transits need one', async ({ page }) => {
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, {
-    name: 'Unknown Time',
-    date: '1990-01-01',
-    latitude: '40.7128',
-    longitude: '-74.006',
+test.describe('with the shared people (#799)', () => {
+  let context: BrowserContext;
+  let page: Page;
+
+  // A fresh context per test, holding the shared people; no test here saves, edits or deletes one.
+  test.beforeEach(async ({ browser }) => {
+    context = await newSeededContext(browser, baseUrl);
+    page = await context.newPage();
   });
 
-  await page.getByRole('button', { name: 'Transits & Forecast', exact: true }).click();
-  await page.getByRole('link', { name: 'Transits', exact: true }).click();
-  await expect(page.getByText(/needs a known birth time/)).toBeVisible();
+  test.afterEach(async () => {
+    await context.close();
+  });
+
+  test('a person with an unknown birth time is told transits need one', async () => {
+    await openSharedPerson(page, baseUrl, MARIC);
+
+    await page.getByRole('button', { name: 'Transits & Forecast', exact: true }).click();
+    await page.getByRole('link', { name: 'Transits', exact: true }).click();
+    await expect(page.getByText(/needs a known birth time/)).toBeVisible();
+  });
 });

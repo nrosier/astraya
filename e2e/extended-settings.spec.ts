@@ -7,8 +7,10 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
+import type { BrowserContext, Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
+import { EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
 import { closeSettings, createPerson, gotoAndSettle, openNatalChart, openSettings } from './support.ts';
 
 let dir: string;
@@ -119,49 +121,6 @@ test('the settings open as a card, apply together or are dropped, and the button
   expect(results.violations.map((v) => v.id)).toEqual([]);
 });
 
-test('the card works on a phone: it fills the screen, scrolls inside, and keeps Apply in reach', async ({ page }) => {
-  test.setTimeout(90_000);
-  await page.setViewportSize({ width: 390, height: 800 });
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, ADA);
-  await page.getByRole('button', { name: 'Menu', exact: true }).click();
-  await page.getByRole('link', { name: 'Charts', exact: true }).click();
-  await expect(page.locator('div.chart-wheel')).toBeVisible();
-
-  await openSettings(page);
-  const card = page.locator('dialog.settings-card');
-  const box = await card.boundingBox();
-  expect(box?.width ?? 0).toBeGreaterThanOrEqual(388);
-  expect(box?.height ?? 0).toBeGreaterThanOrEqual(790);
-  await expect(card.getByRole('button', { name: /^Apply and redraw/ })).toBeInViewport();
-  await expect(card.getByRole('button', { name: 'Cancel', exact: true })).toBeInViewport();
-  expect(
-    await page.evaluate(
-      "document.querySelector('dialog.settings-card').scrollWidth - document.querySelector('dialog.settings-card').clientWidth",
-    ),
-  ).toBeLessThanOrEqual(1);
-  const results = await new AxeBuilder({ page }).include('dialog.settings-card').analyze();
-  expect(results.violations.map((v) => v.id)).toEqual([]);
-});
-
-test('opening and cancelling the card keeps what is selected on the wheel (applying redraws, which clears it)', async ({
-  page,
-}) => {
-  test.setTimeout(90_000);
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, ADA);
-  await openNatalChart(page);
-  await expect(page.locator('div.chart-wheel')).toBeVisible();
-
-  await page.getByRole('link', { name: 'Placements', exact: true }).click();
-  await page.getByRole('button', { name: 'Show Sun on the chart', exact: true }).click();
-  await expect(page.locator('tr.data-table-row-selected')).toContainText('Sun');
-
-  await openSettings(page);
-  await closeSettings(page);
-  await expect(page.locator('tr.data-table-row-selected')).toContainText('Sun');
-});
-
 test('the unified object-visibility checklist: presets, group actions, and the live count (#585)', async ({ page }) => {
   test.setTimeout(90_000);
   await gotoAndSettle(page, `${baseUrl}/#/people`);
@@ -200,18 +159,6 @@ test('the unified object-visibility checklist: presets, group actions, and the l
   await openSettings(page);
   const results = await new AxeBuilder({ page }).include('dialog.settings-card').analyze();
   expect(results.violations.map((v) => v.id)).toEqual([]);
-});
-
-test('the card is not part of the printed page', async ({ page }) => {
-  test.setTimeout(90_000);
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, ADA);
-  await openNatalChart(page);
-  await expect(page.locator('div.chart-wheel')).toBeVisible();
-  await page.emulateMedia({ media: 'print' });
-  await expect(page.locator('button.extended-settings-trigger')).toBeHidden();
-  await page.emulateMedia({ media: 'screen' });
-  await expect(page.locator('button.extended-settings-trigger')).toBeVisible();
 });
 
 test('the Apply button enables when only Symbols are changed (#459)', async ({ page }) => {
@@ -284,4 +231,69 @@ test('saving a profile as the device default applies it to a chart that was neve
   ).toBeChecked();
   await expect(card.getByLabel('House system', { exact: true })).toHaveValue('W');
   await closeSettings(page);
+});
+
+test.describe('with the shared people (#799)', () => {
+  let context: BrowserContext;
+  let page: Page;
+
+  // A fresh context per test, holding the shared people; no test here saves, edits or deletes one.
+  test.beforeEach(async ({ browser }) => {
+    context = await newSeededContext(browser, baseUrl);
+    page = await context.newPage();
+  });
+
+  test.afterEach(async () => {
+    await context.close();
+  });
+
+  test('the card works on a phone: it fills the screen, scrolls inside, and keeps Apply in reach', async () => {
+    test.setTimeout(90_000);
+    await page.setViewportSize({ width: 390, height: 800 });
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await page.getByRole('button', { name: 'Menu', exact: true }).click();
+    await page.getByRole('link', { name: 'Charts', exact: true }).click();
+    await expect(page.locator('div.chart-wheel')).toBeVisible();
+
+    await openSettings(page);
+    const card = page.locator('dialog.settings-card');
+    const box = await card.boundingBox();
+    expect(box?.width ?? 0).toBeGreaterThanOrEqual(388);
+    expect(box?.height ?? 0).toBeGreaterThanOrEqual(790);
+    await expect(card.getByRole('button', { name: /^Apply and redraw/ })).toBeInViewport();
+    await expect(card.getByRole('button', { name: 'Cancel', exact: true })).toBeInViewport();
+    expect(
+      await page.evaluate(
+        "document.querySelector('dialog.settings-card').scrollWidth - document.querySelector('dialog.settings-card').clientWidth",
+      ),
+    ).toBeLessThanOrEqual(1);
+    const results = await new AxeBuilder({ page }).include('dialog.settings-card').analyze();
+    expect(results.violations.map((v) => v.id)).toEqual([]);
+  });
+
+  test('opening and cancelling the card keeps what is selected on the wheel (applying redraws, which clears it)', async () => {
+    test.setTimeout(90_000);
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await openNatalChart(page);
+    await expect(page.locator('div.chart-wheel')).toBeVisible();
+
+    await page.getByRole('link', { name: 'Placements', exact: true }).click();
+    await page.getByRole('button', { name: 'Show Sun on the chart', exact: true }).click();
+    await expect(page.locator('tr.data-table-row-selected')).toContainText('Sun');
+
+    await openSettings(page);
+    await closeSettings(page);
+    await expect(page.locator('tr.data-table-row-selected')).toContainText('Sun');
+  });
+
+  test('the card is not part of the printed page', async () => {
+    test.setTimeout(90_000);
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await openNatalChart(page);
+    await expect(page.locator('div.chart-wheel')).toBeVisible();
+    await page.emulateMedia({ media: 'print' });
+    await expect(page.locator('button.extended-settings-trigger')).toBeHidden();
+    await page.emulateMedia({ media: 'screen' });
+    await expect(page.locator('button.extended-settings-trigger')).toBeVisible();
+  });
 });

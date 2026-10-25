@@ -13,9 +13,11 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
+import type { BrowserContext, Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
-import { createPerson, gotoAndSettle, openNatalChart } from './support.ts';
+import { EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
+import { gotoAndSettle, openNatalChart } from './support.ts';
 
 let dir: string;
 let app: FastifyInstance;
@@ -52,35 +54,6 @@ test('one header holds the name, account, language and theme, and the old fixed 
   const box = await header.boundingBox();
   expect(box?.x).toBe(0);
   expect(box?.y).toBe(0);
-});
-
-test('the header stays in view and usable while a long page scrolls', async ({ page }) => {
-  test.setTimeout(60_000);
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, {
-    name: 'Ada Lovelace',
-    date: '1815-12-10',
-    time: '07:45:00',
-    latitude: '51.5072',
-    longitude: '-0.1276',
-  });
-  await openNatalChart(page);
-  await expect(page.locator('div.chart-wheel')).toBeVisible();
-
-  // Scroll to the very bottom of the long chart page. A sticky element whose own height equals the
-  // viewport's can land a fraction of a pixel short of its top:0 anchor when the document's total
-  // height isn't a whole number of pixels (ordinary sub-pixel text layout, not a real gap) — the
-  // ratio and y-position checks allow for that instead of demanding exact equality.
-  await page.locator('footer').scrollIntoViewIfNeeded();
-  const header = page.getByRole('banner');
-  await expect(header).toBeInViewport({ ratio: 0.99 });
-  expect((await header.boundingBox())?.y).toBeGreaterThan(-1);
-
-  // And it is clickable down there: the theme toggle works without scrolling back up.
-  const themeToggle = header.locator('.theme-toggle:not(.language-toggle)');
-  const before = await page.locator('html').getAttribute('data-theme');
-  await themeToggle.click();
-  await expect(page.locator('html')).not.toHaveAttribute('data-theme', before ?? '');
 });
 
 test('the first Tab reaches a skip link that moves focus to the content without changing the route', async ({
@@ -155,4 +128,41 @@ test('the header has no automatically detectable accessibility violations', asyn
   // The whole page too: a new banner landmark and a skip link must not break the landmark rules.
   const whole = await new AxeBuilder({ page }).analyze();
   expect(whole.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(' | ')}`)).toEqual([]);
+});
+
+test.describe('with the shared people (#799)', () => {
+  let context: BrowserContext;
+  let page: Page;
+
+  // A fresh context per test, holding the shared people; no test here saves, edits or deletes one.
+  test.beforeEach(async ({ browser }) => {
+    context = await newSeededContext(browser, baseUrl);
+    page = await context.newPage();
+  });
+
+  test.afterEach(async () => {
+    await context.close();
+  });
+
+  test('the header stays in view and usable while a long page scrolls', async () => {
+    test.setTimeout(60_000);
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await openNatalChart(page);
+    await expect(page.locator('div.chart-wheel')).toBeVisible();
+
+    // Scroll to the very bottom of the long chart page. A sticky element whose own height equals the
+    // viewport's can land a fraction of a pixel short of its top:0 anchor when the document's total
+    // height isn't a whole number of pixels (ordinary sub-pixel text layout, not a real gap) — the
+    // ratio and y-position checks allow for that instead of demanding exact equality.
+    await page.locator('footer').scrollIntoViewIfNeeded();
+    const header = page.getByRole('banner');
+    await expect(header).toBeInViewport({ ratio: 0.99 });
+    expect((await header.boundingBox())?.y).toBeGreaterThan(-1);
+
+    // And it is clickable down there: the theme toggle works without scrolling back up.
+    const themeToggle = header.locator('.theme-toggle:not(.language-toggle)');
+    const before = await page.locator('html').getAttribute('data-theme');
+    await themeToggle.click();
+    await expect(page.locator('html')).not.toHaveAttribute('data-theme', before ?? '');
+  });
 });

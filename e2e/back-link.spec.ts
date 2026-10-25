@@ -7,9 +7,11 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
+import type { BrowserContext, Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
-import { createPerson, gotoAndSettle, openNatalChart } from './support.ts';
+import { EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
+import { gotoAndSettle, openNatalChart } from './support.ts';
 
 let dir: string;
 let app: FastifyInstance;
@@ -28,21 +30,6 @@ test.beforeAll(async () => {
 test.afterAll(async () => {
   await app.close();
   rmSync(dir, { recursive: true, force: true });
-});
-
-const ADA = { name: 'Ada Lovelace', date: '1815-12-10', time: '13:00:00', latitude: '51.5072', longitude: '-0.1276' };
-
-test('Back from Documents returns to the chart the reader came from', async ({ page }) => {
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, ADA);
-  await openNatalChart(page);
-  const chartUrl = page.url();
-
-  await page.getByRole('banner').getByRole('link', { name: 'Documents', exact: true }).click();
-  await expect(page).toHaveURL(/#\/documents$/);
-  await page.getByRole('link', { name: '← Back' }).click();
-
-  await expect(page).toHaveURL(chartUrl);
 });
 
 test('opened fresh, Back on Documents goes to People', async ({ browser }) => {
@@ -64,4 +51,31 @@ test('Back from the people list never lands on the bare #/ redirect', async ({ p
   await page.goBack();
   // Before #652 this was #/, which bounced forward to #/people again.
   expect(page.url()).not.toMatch(/#\/$/);
+});
+
+test.describe('with the shared people (#799)', () => {
+  let context: BrowserContext;
+  let page: Page;
+
+  // A fresh context per test, holding the shared people; no test here saves, edits or deletes one.
+  test.beforeEach(async ({ browser }) => {
+    context = await newSeededContext(browser, baseUrl);
+    page = await context.newPage();
+  });
+
+  test.afterEach(async () => {
+    await context.close();
+  });
+
+  test('Back from Documents returns to the chart the reader came from', async () => {
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await openNatalChart(page);
+    const chartUrl = page.url();
+
+    await page.getByRole('banner').getByRole('link', { name: 'Documents', exact: true }).click();
+    await expect(page).toHaveURL(/#\/documents$/);
+    await page.getByRole('link', { name: '← Back' }).click();
+
+    await expect(page).toHaveURL(chartUrl);
+  });
 });

@@ -10,8 +10,10 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test, type Download } from '@playwright/test';
+import type { BrowserContext, Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
+import { EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
 import {
   closeSettings,
   createPerson,
@@ -149,61 +151,6 @@ test('a tool page remembers the last person visited, and returning to their tabs
   await expect(header.getByText('Ada Lovelace', { exact: true })).toBeVisible();
 });
 
-test('on a phone the navigation folds behind a Menu button, and nothing scrolls sideways', async ({ page }) => {
-  test.setTimeout(60_000);
-  await page.setViewportSize({ width: 390, height: 800 });
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, ADA);
-  const header = page.getByRole('banner');
-
-  await expect(header.getByRole('link', { name: 'Charts', exact: true })).toBeHidden();
-  const menu = header.getByRole('button', { name: 'Menu', exact: true });
-  await expect(menu).toHaveAttribute('aria-expanded', 'false');
-  await menu.click();
-  await expect(header.getByRole('button', { name: 'Close menu', exact: true })).toHaveAttribute(
-    'aria-expanded',
-    'true',
-  );
-  await expect(header.getByRole('link', { name: 'Charts', exact: true })).toBeVisible();
-  expect(await page.evaluate('document.documentElement.scrollWidth - window.innerWidth')).toBeLessThanOrEqual(1);
-  const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
-  expect(results.violations).toEqual([]);
-
-  // A group opens in place inside the panel; choosing a tool closes the whole menu and opens the screen.
-  await header.getByRole('button', { name: 'Tools', exact: true }).click();
-  await header.getByRole('link', { name: 'Eclipses', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Eclipses', level: 1 })).toBeVisible();
-  await expect(header.getByRole('button', { name: 'Menu', exact: true })).toHaveAttribute('aria-expanded', 'false');
-
-  // Escape closes the open menu and returns focus to its button.
-  await header.getByRole('button', { name: 'Menu', exact: true }).click();
-  await page.keyboard.press('Escape');
-  await expect(header.getByRole('button', { name: 'Menu', exact: true })).toBeFocused();
-});
-
-test('the rail (#506/#509) keeps the navigation reachable while the page scrolls, clear of the content it sits beside, not above', async ({
-  page,
-}) => {
-  test.setTimeout(60_000);
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, ADA);
-  await openNatalChart(page);
-  await expect(page.locator('div.chart-wheel')).toBeVisible();
-  await page.locator('footer').scrollIntoViewIfNeeded();
-  const header = page.getByRole('banner');
-  // The rail is sticky to the left at its full height, so it stays reachable through any amount
-  // of vertical scroll — unlike the old top bar, nothing above the content needs clearing by
-  // scroll padding, since the rail no longer occupies any space above it (`app.css`'s `min-width:
-  // 64rem` override replaces the measured-header-height scroll padding with a small constant).
-  // A tiny sub-pixel shortfall (document height not landing on a whole pixel) is tolerated here,
-  // not a real gap.
-  await expect(header).toBeInViewport({ ratio: 0.99 });
-  const padding = await page.evaluate('parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop)');
-  expect(padding).toBeLessThanOrEqual(20);
-  await header.getByRole('button', { name: 'Tools', exact: true }).click();
-  await expect(header.getByRole('link', { name: 'Eclipses', exact: true })).toBeVisible();
-});
-
 test('the rail holds brand then navigation; the account cluster sits apart from it, top-right of the content, with and without a person', async ({
   page,
 }) => {
@@ -224,62 +171,6 @@ test('the rail holds brand then navigation; the account cluster sits apart from 
   await layout();
   await createPerson(page, ADA);
   await layout();
-});
-
-test('Charts is one destination, and the page keeps the type and the view in the URL', async ({ page }) => {
-  test.setTimeout(90_000);
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, ADA);
-  const header = page.getByRole('banner');
-
-  // The header has one Charts link and no chart-type menu; the type is chosen once, on the page.
-  await header.getByRole('link', { name: 'Charts', exact: true }).click();
-  await expect(header.getByRole('button', { name: 'Charts', exact: true })).toHaveCount(0);
-  const selector = page.getByLabel('Chart type', { exact: true });
-  await expect(selector.locator('option')).toHaveText([
-    'Natal',
-    'Draconic',
-    'Harmonic',
-    'Solar return',
-    'Lunar return',
-    'Relocated',
-  ]);
-  await expect(selector).toHaveValue('natal');
-
-  // Choosing a type opens that chart; natal needs no query.
-  await selector.selectOption('draconic');
-  await expect(page.getByRole('heading', { name: /draconic/i, level: 1 })).toBeVisible();
-  await expect(page).toHaveURL(/#\/people\/[^/]+\/charts\/draconic\/wheel$/);
-
-  // The views are ordinary links on the page (#511), and the open one is in the URL beside the type.
-  await page.getByRole('link', { name: 'Aspects', exact: true }).click();
-  await expect(page).toHaveURL(/\/charts\/draconic\/aspects$/);
-
-  // Switching type keeps the view.
-  await selector.selectOption('natal');
-  await expect(page).toHaveURL(/\/charts\/natal\/aspects$/);
-  await expect(page.getByRole('heading', { name: 'Aspects', level: 2 })).toBeVisible();
-  await expect(selector).toHaveValue('natal');
-
-  // The header's Charts link marks the chart page as current.
-  await expect(header.getByRole('link', { name: 'Charts', exact: true })).toHaveAttribute('aria-current', 'page');
-
-  // A reload keeps the view; the wheel needs no query.
-  await page.reload();
-  await page.waitForEvent('load', { timeout: 5_000 }).catch(() => undefined);
-  await expect(page.getByRole('heading', { name: 'Aspects', level: 2 })).toBeVisible();
-  await page.getByRole('link', { name: 'Wheel', exact: true }).click();
-  await expect(page).toHaveURL(/\/charts\/natal\/wheel$/);
-  await expect(page.locator('div.chart-wheel')).toBeVisible();
-  const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
-  expect(results.violations).toEqual([]);
-
-  // The old links to the draconic and harmonic screens are gone: they fall back to People, not to a guess.
-  const personId = /#\/people\/([^/]+)\/charts/.exec(page.url())?.[1];
-  await page.goto(`${baseUrl}/#/draconic/${personId ?? ''}`);
-  await expect(page.getByRole('heading', { name: 'People', level: 1 })).toBeVisible();
-  await page.goto(`${baseUrl}/#/people/${personId ?? ''}/charts/draconic/wheel`);
-  await expect(page.getByRole('heading', { name: /draconic/i, level: 1 })).toBeVisible();
 });
 
 test('a solar return and a lunar return are charts like any other, with their contacts to the natal chart', async ({
@@ -374,4 +265,125 @@ test('the header’s only export action is the PDF builder link; a chart’s own
   await openTool(page, 'Eclipses');
   await expect(page.getByRole('button', { name: 'Export', exact: true })).toHaveCount(0);
   await expect(header.getByRole('link', { name: 'Documents', exact: true })).toBeVisible();
+});
+
+test.describe('with the shared people (#799)', () => {
+  let context: BrowserContext;
+  let page: Page;
+
+  // A fresh context per test, holding the shared people; no test here saves, edits or deletes one.
+  test.beforeEach(async ({ browser }) => {
+    context = await newSeededContext(browser, baseUrl);
+    page = await context.newPage();
+  });
+
+  test.afterEach(async () => {
+    await context.close();
+  });
+
+  test('on a phone the navigation folds behind a Menu button, and nothing scrolls sideways', async () => {
+    test.setTimeout(60_000);
+    await page.setViewportSize({ width: 390, height: 800 });
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    const header = page.getByRole('banner');
+
+    await expect(header.getByRole('link', { name: 'Charts', exact: true })).toBeHidden();
+    const menu = header.getByRole('button', { name: 'Menu', exact: true });
+    await expect(menu).toHaveAttribute('aria-expanded', 'false');
+    await menu.click();
+    await expect(header.getByRole('button', { name: 'Close menu', exact: true })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
+    await expect(header.getByRole('link', { name: 'Charts', exact: true })).toBeVisible();
+    expect(await page.evaluate('document.documentElement.scrollWidth - window.innerWidth')).toBeLessThanOrEqual(1);
+    const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
+    expect(results.violations).toEqual([]);
+
+    // A group opens in place inside the panel; choosing a tool closes the whole menu and opens the screen.
+    await header.getByRole('button', { name: 'Tools', exact: true }).click();
+    await header.getByRole('link', { name: 'Eclipses', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Eclipses', level: 1 })).toBeVisible();
+    await expect(header.getByRole('button', { name: 'Menu', exact: true })).toHaveAttribute('aria-expanded', 'false');
+
+    // Escape closes the open menu and returns focus to its button.
+    await header.getByRole('button', { name: 'Menu', exact: true }).click();
+    await page.keyboard.press('Escape');
+    await expect(header.getByRole('button', { name: 'Menu', exact: true })).toBeFocused();
+  });
+
+  test('the rail (#506/#509) keeps the navigation reachable while the page scrolls, clear of the content it sits beside, not above', async () => {
+    test.setTimeout(60_000);
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await openNatalChart(page);
+    await expect(page.locator('div.chart-wheel')).toBeVisible();
+    await page.locator('footer').scrollIntoViewIfNeeded();
+    const header = page.getByRole('banner');
+    // The rail is sticky to the left at its full height, so it stays reachable through any amount
+    // of vertical scroll — unlike the old top bar, nothing above the content needs clearing by
+    // scroll padding, since the rail no longer occupies any space above it (`app.css`'s `min-width:
+    // 64rem` override replaces the measured-header-height scroll padding with a small constant).
+    // A tiny sub-pixel shortfall (document height not landing on a whole pixel) is tolerated here,
+    // not a real gap.
+    await expect(header).toBeInViewport({ ratio: 0.99 });
+    const padding = await page.evaluate('parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop)');
+    expect(padding).toBeLessThanOrEqual(20);
+    await header.getByRole('button', { name: 'Tools', exact: true }).click();
+    await expect(header.getByRole('link', { name: 'Eclipses', exact: true })).toBeVisible();
+  });
+
+  test('Charts is one destination, and the page keeps the type and the view in the URL', async () => {
+    test.setTimeout(90_000);
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    const header = page.getByRole('banner');
+
+    // The header has one Charts link and no chart-type menu; the type is chosen once, on the page.
+    await header.getByRole('link', { name: 'Charts', exact: true }).click();
+    await expect(header.getByRole('button', { name: 'Charts', exact: true })).toHaveCount(0);
+    const selector = page.getByLabel('Chart type', { exact: true });
+    await expect(selector.locator('option')).toHaveText([
+      'Natal',
+      'Draconic',
+      'Harmonic',
+      'Solar return',
+      'Lunar return',
+      'Relocated',
+    ]);
+    await expect(selector).toHaveValue('natal');
+
+    // Choosing a type opens that chart; natal needs no query.
+    await selector.selectOption('draconic');
+    await expect(page.getByRole('heading', { name: /draconic/i, level: 1 })).toBeVisible();
+    await expect(page).toHaveURL(/#\/people\/[^/]+\/charts\/draconic\/wheel$/);
+
+    // The views are ordinary links on the page (#511), and the open one is in the URL beside the type.
+    await page.getByRole('link', { name: 'Aspects', exact: true }).click();
+    await expect(page).toHaveURL(/\/charts\/draconic\/aspects$/);
+
+    // Switching type keeps the view.
+    await selector.selectOption('natal');
+    await expect(page).toHaveURL(/\/charts\/natal\/aspects$/);
+    await expect(page.getByRole('heading', { name: 'Aspects', level: 2 })).toBeVisible();
+    await expect(selector).toHaveValue('natal');
+
+    // The header's Charts link marks the chart page as current.
+    await expect(header.getByRole('link', { name: 'Charts', exact: true })).toHaveAttribute('aria-current', 'page');
+
+    // A reload keeps the view; the wheel needs no query.
+    await page.reload();
+    await page.waitForEvent('load', { timeout: 5_000 }).catch(() => undefined);
+    await expect(page.getByRole('heading', { name: 'Aspects', level: 2 })).toBeVisible();
+    await page.getByRole('link', { name: 'Wheel', exact: true }).click();
+    await expect(page).toHaveURL(/\/charts\/natal\/wheel$/);
+    await expect(page.locator('div.chart-wheel')).toBeVisible();
+    const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
+    expect(results.violations).toEqual([]);
+
+    // The old links to the draconic and harmonic screens are gone: they fall back to People, not to a guess.
+    const personId = /#\/people\/([^/]+)\/charts/.exec(page.url())?.[1];
+    await page.goto(`${baseUrl}/#/draconic/${personId ?? ''}`);
+    await expect(page.getByRole('heading', { name: 'People', level: 1 })).toBeVisible();
+    await page.goto(`${baseUrl}/#/people/${personId ?? ''}/charts/draconic/wheel`);
+    await expect(page.getByRole('heading', { name: /draconic/i, level: 1 })).toBeVisible();
+  });
 });

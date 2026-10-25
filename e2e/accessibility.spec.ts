@@ -12,8 +12,10 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
+import type { BrowserContext, Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
+import { EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
 import { createPerson, gotoAndSettle, openChart, openNatalChart, signIn } from './support.ts';
 
 const BOOTSTRAP_TOKEN = 'e2e-a11y-bootstrap-token';
@@ -83,325 +85,9 @@ test('the empty People list has no automatically detectable accessibility violat
   expect(results.violations).toEqual([]);
 });
 
-test("a person's detail form has no automatically detectable accessibility violations", async ({ page }) => {
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, {
-    name: 'Ada Lovelace',
-    date: '1815-12-10',
-    time: '07:45:00',
-    latitude: '51.5072',
-    longitude: '-0.1276',
-  });
-
-  const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
-  expect(results.violations).toEqual([]);
-});
-
-test('the chart view (wheel plus data tables) has no automatically detectable accessibility violations', async ({
-  page,
-}) => {
-  test.setTimeout(60_000);
-
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, {
-    name: 'Ada Lovelace',
-    date: '1815-12-10',
-    time: '07:45:00',
-    latitude: '51.5072',
-    longitude: '-0.1276',
-  });
-  await openNatalChart(page);
-  await expect(page.locator('div.chart-wheel')).toBeVisible();
-
-  const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
-  expect(results.violations).toEqual([]);
-});
-
-test('every view of the natal chart has no automatically detectable accessibility violations (#511)', async ({
-  page,
-}) => {
-  test.setTimeout(90_000);
-
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, {
-    name: 'Ada Lovelace',
-    date: '1815-12-10',
-    time: '07:45:00',
-    latitude: '51.5072',
-    longitude: '-0.1276',
-  });
-  await openNatalChart(page);
-  await expect(page.locator('div.chart-wheel')).toBeVisible();
-
-  for (const name of ['Aspects', 'Aspect matrix', 'Elements & modalities', 'Placements', 'Patterns & condition']) {
-    await page.getByRole('link', { name, exact: true }).click();
-    await expect(page.getByRole('heading', { name, level: 2 })).toBeVisible();
-    const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
-    expect(results.violations, `view ${name}`).toEqual([]);
-  }
-});
-
-test('column-header and dispositor tooltips are reachable on keyboard focus, not just mouse hover (#456)', async ({
-  page,
-}) => {
-  test.setTimeout(60_000);
-
-  // axe-core (the test above) only catches markup-rule violations; it would not have caught
-  // `title`-only tooltips being invisible to a keyboard user, because a bare `title` attribute
-  // isn't itself a rule violation. This test asserts the actual accessible-description wiring.
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, {
-    name: 'Ada Lovelace',
-    date: '1815-12-10',
-    time: '07:45:00',
-    latitude: '51.5072',
-    longitude: '-0.1276',
-  });
-  await openNatalChart(page);
-  await page.getByRole('link', { name: 'Patterns & condition', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Dignities', level: 3 })).toBeVisible();
-
-  // A column header with a glossary tooltip ("Ruler") has a real "About Ruler" button beside its sort button; the
-  // same visible text appears on keyboard focus, on hover, and when it is clicked open (the shared Tooltip, #508).
-  const definition = 'Ruler (domicile): the planet is in the sign it rules — its own sign, where it is strongest';
-  const rulerHelp = page.getByRole('button', { name: 'About Ruler', exact: true });
-  const popup = page.getByRole('tooltip');
-  await rulerHelp.focus();
-  await expect(popup).toHaveText(definition);
-  await page.keyboard.press('Escape');
-  await expect(popup).toHaveCount(0);
-  await rulerHelp.hover();
-  await expect(popup).toHaveText(definition);
-  await page.mouse.move(0, 0);
-  await expect(popup).toHaveCount(0);
-  await rulerHelp.click();
-  await expect(popup).toHaveText(definition);
-  // Clicked open, it stays open when the pointer leaves, until Escape.
-  await page.mouse.move(0, 0);
-  await expect(popup).toHaveText(definition);
-  await page.keyboard.press('Escape');
-  await expect(popup).toHaveCount(0);
-
-  // The dispositors "?" is a focusable button with its own accessible name, not a bare non-interactive
-  // <span title>; its explanation shows in the same shared tooltip popup on keyboard focus (#508).
-  const dispositorsHelp = page.getByRole('button', { name: 'About dispositors', exact: true });
-  await expect(dispositorsHelp).toBeVisible();
-  await dispositorsHelp.focus();
-  await expect(dispositorsHelp).toBeFocused();
-  await expect(popup).toHaveText(
-    "A dispositor is the ruler of a planet's sign. Dispositor chains trace where each planet's rulership flows.",
-  );
-});
-
 // #456's remaining acceptance item ("test with keyboard navigation and screen readers"): the tooltipped header has a
 // real button reachable by Tab, named for its column, whose popup is announced as a `tooltip`. What this cannot verify is
 // what VoiceOver/NVDA/JAWS actually speak; that stays a manual check (axe is "a floor, not the ceiling").
-test('a tooltipped table column header is reachable by keyboard and exposes its tooltip text (#456)', async ({
-  page,
-}) => {
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, {
-    name: 'Ada Lovelace',
-    date: '1815-12-10',
-    time: '07:45:00',
-    latitude: '51.5072',
-    longitude: '-0.1276',
-  });
-  await openNatalChart(page);
-  await page.getByRole('link', { name: 'Placements', exact: true }).click();
-
-  const rxHelp = page.getByRole('button', { name: 'About Rx', exact: true });
-  await rxHelp.focus();
-  await expect(rxHelp).toBeFocused();
-  await expect(page.getByRole('tooltip')).toHaveText(/retrograde/i);
-});
-
-test('the profections screen (#168) has no automatically detectable accessibility violations', async ({ page }) => {
-  test.setTimeout(60_000);
-
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, {
-    name: 'Ada Lovelace',
-    date: '1815-12-10',
-    time: '07:45:00',
-    latitude: '51.5072',
-    longitude: '-0.1276',
-  });
-  await page.getByRole('button', { name: 'Progressions & Directions', exact: true }).click();
-  await page.getByRole('link', { name: 'Profections', exact: true }).click();
-  await expect(page.getByRole('cell', { name: 'Year' })).toBeVisible();
-
-  const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
-  expect(results.violations).toEqual([]);
-});
-
-test('the transit screen (#172) has no automatically detectable accessibility violations', async ({ page }) => {
-  test.setTimeout(60_000);
-
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, {
-    name: 'Ada Lovelace',
-    date: '1815-12-10',
-    time: '07:45:00',
-    latitude: '51.5072',
-    longitude: '-0.1276',
-  });
-  await page.getByRole('button', { name: 'Transits & Forecast', exact: true }).click();
-  await page.getByRole('link', { name: 'Transits', exact: true }).click();
-  await expect(page.locator('div.chart-wheel')).toBeVisible();
-
-  const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
-  expect(results.violations).toEqual([]);
-});
-
-test('the synastry screen (#172) has no automatically detectable accessibility violations', async ({ page }) => {
-  test.setTimeout(60_000);
-
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, {
-    name: 'Ada Lovelace',
-    date: '1815-12-10',
-    time: '07:45:00',
-    latitude: '51.5072',
-    longitude: '-0.1276',
-  });
-  await page.getByRole('link', { name: '← People' }).click();
-  await createPerson(page, {
-    name: 'Charles Babbage',
-    date: '1820-12-26',
-    time: '10:00:00',
-    latitude: '51.5072',
-    longitude: '-0.1276',
-  });
-
-  await page.getByRole('link', { name: '← People' }).click();
-  await page.getByRole('link').filter({ hasText: 'Ada Lovelace' }).click();
-  await page.getByRole('button', { name: 'Relationship Charts', exact: true }).click();
-  await page.getByRole('link', { name: 'Synastry', exact: true }).click();
-  await page.getByLabel('Compare with').selectOption({ label: 'Charles Babbage' });
-  await expect(page.locator('div.chart-wheel')).toBeVisible();
-
-  const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
-  expect(results.violations).toEqual([]);
-});
-
-test('the composite screen (#169) has no automatically detectable accessibility violations', async ({ page }) => {
-  test.setTimeout(60_000);
-
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, {
-    name: 'Ada Lovelace',
-    date: '1815-12-10',
-    time: '07:45:00',
-    latitude: '51.5072',
-    longitude: '-0.1276',
-  });
-  await page.getByRole('link', { name: '← People' }).click();
-  await createPerson(page, {
-    name: 'Charles Babbage',
-    date: '1820-12-26',
-    time: '10:00:00',
-    latitude: '51.5072',
-    longitude: '-0.1276',
-  });
-
-  await page.getByRole('link', { name: '← People' }).click();
-  await page.getByRole('link').filter({ hasText: 'Ada Lovelace' }).click();
-  await page.getByRole('button', { name: 'Relationship Charts', exact: true }).click();
-  await page.getByRole('link', { name: 'Composite', exact: true }).click();
-  await page.getByLabel('Compose with').selectOption({ label: 'Charles Babbage' });
-  await expect(page.locator('div.chart-wheel')).toBeVisible();
-
-  const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
-  expect(results.violations).toEqual([]);
-});
-
-test('the harmonic screen (#170) has no automatically detectable accessibility violations', async ({ page }) => {
-  test.setTimeout(60_000);
-
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, {
-    name: 'Ada Lovelace',
-    date: '1815-12-10',
-    time: '07:45:00',
-    latitude: '51.5072',
-    longitude: '-0.1276',
-  });
-  await openChart(page, 'Harmonic');
-  await expect(page.locator('div.chart-wheel')).toBeVisible();
-
-  const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
-  expect(results.violations).toEqual([]);
-});
-
-test('the periodic transit forecast screen (#207) has no automatically detectable accessibility violations', async ({
-  page,
-}) => {
-  test.setTimeout(60_000);
-
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, {
-    name: 'Ada Lovelace',
-    date: '1815-12-10',
-    time: '07:45:00',
-    latitude: '51.5072',
-    longitude: '-0.1276',
-  });
-  await page.getByRole('button', { name: 'Transits & Forecast', exact: true }).click();
-  await page.getByRole('link', { name: 'Forecast', exact: true }).click();
-  await expect(page.getByText(/Solar return for \d{4}/)).toBeVisible();
-
-  const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
-  expect(results.violations).toEqual([]);
-});
-
-test('the astrocartography screen (#171) has no automatically detectable accessibility violations', async ({
-  page,
-}) => {
-  test.setTimeout(60_000);
-
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, {
-    name: 'Ada Lovelace',
-    date: '1815-12-10',
-    time: '07:45:00',
-    latitude: '51.5072',
-    longitude: '-0.1276',
-  });
-  await page.getByRole('link', { name: 'Astrocartography', exact: true }).click();
-  await expect(page.locator('div.acg-map svg')).toBeVisible();
-
-  const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
-  expect(results.violations).toEqual([]);
-});
-
-test('the interpretation view has no automatically detectable accessibility violations, on either sub-tab (#360)', async ({
-  page,
-}) => {
-  test.setTimeout(60_000);
-
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, {
-    name: 'Ada Lovelace',
-    date: '1815-12-10',
-    time: '07:45:00',
-    latitude: '51.5072',
-    longitude: '-0.1276',
-  });
-  await page.getByRole('link', { name: 'Interpretation', exact: true }).click();
-  await expect(page.getByRole('tablist', { name: 'Interpretation mode' })).toBeVisible();
-
-  let results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
-  expect(results.violations).toEqual([]);
-
-  // Signed out: the AI-Customized panel shows only the sign-in prompt, no controls.
-  await page.getByRole('tab', { name: 'AI-Customized' }).click();
-  await expect(page.getByText('Sign in to generate an AI-customized interpretation')).toBeVisible();
-  await expect(page.getByRole('button', { name: /Generate/ })).toHaveCount(0);
-
-  results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
-  expect(results.violations).toEqual([]);
-});
 
 test('the AI-Customized Generate button renders as a genuinely disabled control with an accessible reason (#360)', async ({
   page,
@@ -486,4 +172,209 @@ test('the corpus-overrides table wraps its text instead of scrolling sideways, a
   }
   // Tier and category are words with an explanation, not the internal values.
   await expect(page.locator('.data-table-wrap tbody tr').first().locator('.cell-explanation').first()).toBeVisible();
+});
+
+test.describe('with the shared people (#799)', () => {
+  let context: BrowserContext;
+  let page: Page;
+
+  // A fresh context per test, holding the shared people; no test here saves, edits or deletes one.
+  test.beforeEach(async ({ browser }) => {
+    context = await newSeededContext(browser, baseUrl);
+    page = await context.newPage();
+  });
+
+  test.afterEach(async () => {
+    await context.close();
+  });
+
+  test("a person's detail form has no automatically detectable accessibility violations", async () => {
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+
+    const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
+    expect(results.violations).toEqual([]);
+  });
+
+  test('the chart view (wheel plus data tables) has no automatically detectable accessibility violations', async () => {
+    test.setTimeout(60_000);
+
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await openNatalChart(page);
+    await expect(page.locator('div.chart-wheel')).toBeVisible();
+
+    const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
+    expect(results.violations).toEqual([]);
+  });
+
+  test('every view of the natal chart has no automatically detectable accessibility violations (#511)', async () => {
+    test.setTimeout(90_000);
+
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await openNatalChart(page);
+    await expect(page.locator('div.chart-wheel')).toBeVisible();
+
+    for (const name of ['Aspects', 'Aspect matrix', 'Elements & modalities', 'Placements', 'Patterns & condition']) {
+      await page.getByRole('link', { name, exact: true }).click();
+      await expect(page.getByRole('heading', { name, level: 2 })).toBeVisible();
+      const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
+      expect(results.violations, `view ${name}`).toEqual([]);
+    }
+  });
+
+  test('column-header and dispositor tooltips are reachable on keyboard focus, not just mouse hover (#456)', async () => {
+    test.setTimeout(60_000);
+
+    // axe-core (the test above) only catches markup-rule violations; it would not have caught
+    // `title`-only tooltips being invisible to a keyboard user, because a bare `title` attribute
+    // isn't itself a rule violation. This test asserts the actual accessible-description wiring.
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await openNatalChart(page);
+    await page.getByRole('link', { name: 'Patterns & condition', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Dignities', level: 3 })).toBeVisible();
+
+    // A column header with a glossary tooltip ("Ruler") has a real "About Ruler" button beside its sort button; the
+    // same visible text appears on keyboard focus, on hover, and when it is clicked open (the shared Tooltip, #508).
+    const definition = 'Ruler (domicile): the planet is in the sign it rules — its own sign, where it is strongest';
+    const rulerHelp = page.getByRole('button', { name: 'About Ruler', exact: true });
+    const popup = page.getByRole('tooltip');
+    await rulerHelp.focus();
+    await expect(popup).toHaveText(definition);
+    await page.keyboard.press('Escape');
+    await expect(popup).toHaveCount(0);
+    await rulerHelp.hover();
+    await expect(popup).toHaveText(definition);
+    await page.mouse.move(0, 0);
+    await expect(popup).toHaveCount(0);
+    await rulerHelp.click();
+    await expect(popup).toHaveText(definition);
+    // Clicked open, it stays open when the pointer leaves, until Escape.
+    await page.mouse.move(0, 0);
+    await expect(popup).toHaveText(definition);
+    await page.keyboard.press('Escape');
+    await expect(popup).toHaveCount(0);
+
+    // The dispositors "?" is a focusable button with its own accessible name, not a bare non-interactive
+    // <span title>; its explanation shows in the same shared tooltip popup on keyboard focus (#508).
+    const dispositorsHelp = page.getByRole('button', { name: 'About dispositors', exact: true });
+    await expect(dispositorsHelp).toBeVisible();
+    await dispositorsHelp.focus();
+    await expect(dispositorsHelp).toBeFocused();
+    await expect(popup).toHaveText(
+      "A dispositor is the ruler of a planet's sign. Dispositor chains trace where each planet's rulership flows.",
+    );
+  });
+
+  test('a tooltipped table column header is reachable by keyboard and exposes its tooltip text (#456)', async () => {
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await openNatalChart(page);
+    await page.getByRole('link', { name: 'Placements', exact: true }).click();
+
+    const rxHelp = page.getByRole('button', { name: 'About Rx', exact: true });
+    await rxHelp.focus();
+    await expect(rxHelp).toBeFocused();
+    await expect(page.getByRole('tooltip')).toHaveText(/retrograde/i);
+  });
+
+  test('the profections screen (#168) has no automatically detectable accessibility violations', async () => {
+    test.setTimeout(60_000);
+
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await page.getByRole('button', { name: 'Progressions & Directions', exact: true }).click();
+    await page.getByRole('link', { name: 'Profections', exact: true }).click();
+    await expect(page.getByRole('cell', { name: 'Year' })).toBeVisible();
+
+    const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
+    expect(results.violations).toEqual([]);
+  });
+
+  test('the transit screen (#172) has no automatically detectable accessibility violations', async () => {
+    test.setTimeout(60_000);
+
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await page.getByRole('button', { name: 'Transits & Forecast', exact: true }).click();
+    await page.getByRole('link', { name: 'Transits', exact: true }).click();
+    await expect(page.locator('div.chart-wheel')).toBeVisible();
+
+    const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
+    expect(results.violations).toEqual([]);
+  });
+
+  test('the synastry screen (#172) has no automatically detectable accessibility violations', async () => {
+    test.setTimeout(60_000);
+
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await page.getByRole('button', { name: 'Relationship Charts', exact: true }).click();
+    await page.getByRole('link', { name: 'Synastry', exact: true }).click();
+    await page.getByLabel('Compare with').selectOption({ label: 'Max Born' });
+    await expect(page.locator('div.chart-wheel')).toBeVisible();
+
+    const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
+    expect(results.violations).toEqual([]);
+  });
+
+  test('the composite screen (#169) has no automatically detectable accessibility violations', async () => {
+    test.setTimeout(60_000);
+
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await page.getByRole('button', { name: 'Relationship Charts', exact: true }).click();
+    await page.getByRole('link', { name: 'Composite', exact: true }).click();
+    await page.getByLabel('Compose with').selectOption({ label: 'Max Born' });
+    await expect(page.locator('div.chart-wheel')).toBeVisible();
+
+    const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
+    expect(results.violations).toEqual([]);
+  });
+
+  test('the harmonic screen (#170) has no automatically detectable accessibility violations', async () => {
+    test.setTimeout(60_000);
+
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await openChart(page, 'Harmonic');
+    await expect(page.locator('div.chart-wheel')).toBeVisible();
+
+    const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
+    expect(results.violations).toEqual([]);
+  });
+
+  test('the periodic transit forecast screen (#207) has no automatically detectable accessibility violations', async () => {
+    test.setTimeout(60_000);
+
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await page.getByRole('button', { name: 'Transits & Forecast', exact: true }).click();
+    await page.getByRole('link', { name: 'Forecast', exact: true }).click();
+    await expect(page.getByText(/Solar return for \d{4}/)).toBeVisible();
+
+    const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
+    expect(results.violations).toEqual([]);
+  });
+
+  test('the astrocartography screen (#171) has no automatically detectable accessibility violations', async () => {
+    test.setTimeout(60_000);
+
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await page.getByRole('link', { name: 'Astrocartography', exact: true }).click();
+    await expect(page.locator('div.acg-map svg')).toBeVisible();
+
+    const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
+    expect(results.violations).toEqual([]);
+  });
+
+  test('the interpretation view has no automatically detectable accessibility violations, on either sub-tab (#360)', async () => {
+    test.setTimeout(60_000);
+
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await page.getByRole('link', { name: 'Interpretation', exact: true }).click();
+    await expect(page.getByRole('tablist', { name: 'Interpretation mode' })).toBeVisible();
+
+    let results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
+    expect(results.violations).toEqual([]);
+
+    // Signed out: the AI-Customized panel shows only the sign-in prompt, no controls.
+    await page.getByRole('tab', { name: 'AI-Customized' }).click();
+    await expect(page.getByText('Sign in to generate an AI-customized interpretation')).toBeVisible();
+    await expect(page.getByRole('button', { name: /Generate/ })).toHaveCount(0);
+
+    results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
+    expect(results.violations).toEqual([]);
+  });
 });
