@@ -6,9 +6,9 @@ Topic folders:
 
 - `ui/UI-UX_RELEASE_CHECKS.md` — Per-release record of the manual UI/UX checks and section 16 tasks that no automated test performs (#615). Deps: `ui/UI-UX_GUIDELINES.md`, `ops/RELEASING.md`; paired with `html/UI-UX_RELEASE_CHECKS.html`.
 - `ui/UI-UX_BASELINE.md` — The behaviour the end-to-end suite pins (routes, inputs, outputs, selection, exports, persistence), generated from the test titles. Deps: `scripts/generate-ui-baseline.mjs`; paired with `html/UI-UX_BASELINE.html`.
-- `ui/UI-UX_GUIDELINES.md` — Normative UI/UX implementation and behavior rules for future features. Deps: `src/ui`, `ui/UI-UX_REVIEW.md`.
+- `ui/UI-UX_GUIDELINES.md` — Normative UI/UX implementation and behavior rules for future features. Deps: `src/ui`, `archive/UI-UX_REVIEW.md`.
 - `ui/UI-UX_IMPLEMENTATION_PLAN.md` — Phased coding plan for migrating routes, shell, settings, controls, charts, and Astrocartography to the target experience. Deps: `src/ui`, `test`, `e2e`, `ui/UI-UX_GUIDELINES.md`.
-- `ui/UI-UX_REVIEW.md` — Code-grounded 2026-10-09 design and usability audit with prioritized remediation. Deps: `src/ui`, `e2e/accessibility.spec.ts`.
+- `archive/UI-UX_REVIEW.md` — Archived, dated (2026-10-09) code-grounded design and usability audit; a snapshot, not current guidance. Deps: `src/ui`, `e2e/accessibility.spec.ts`.
 - `ASTROLOGY_TERMS.md` — Combined 573-term astrology/astronomy glossary merged from six draft sources, staged as source material for #456's glossary tooltip content. Deps: none yet (not wired into `src/ui` — pending integration).
 - `domain/CORPUS_KEYS.md` — Corpus key-shape reference (which placements get which key format). Deps: `src/interpretation/schema.ts`; paired with `html/CORPUS_KEYS.html`.
 - `domain/CHART_OVERLAYS.md` — Supported chart-overlay contexts, intentional relationship-chart exceptions, interaction, and export behavior. Deps: `src/ui/ChartView.tsx`, `src/ui/SynastryView.tsx`, `src/chart/multi-wheel.ts`.
@@ -24,7 +24,7 @@ Subdirectories:
 - `ui-baselines/` — Reference screenshots of the restructured UI surfaces (both themes, 390/1280/1440 wide), written by `e2e/ui-baselines.spec.ts` when asked; documentation, not assertions.
 - `adr/` — Architecture Decision Records, one numbered file per decision. Deps: paired HTML render lives in `html/adr/` where one exists.
 - `agents/` — Generic Claude Code skill docs (`domain-modeling` skill's `CONTEXT.md`/ADR conventions) — not Astraya product documentation.
-- `archive/` — Deprecated/retired docs, append-only, never deleted outright: abandoned tooling write-ups (LAYA/Ollama benchmarking, astrologyapi.com comparison) and the removed-env-vars log.
+- `archive/` — Deprecated/retired docs, append-only, never deleted outright: abandoned tooling write-ups (LAYA/Ollama benchmarking, astrologyapi.com comparison), the removed-env-vars log, and the dated UI/UX audit.
 - `audit/` — One-off repository audits, reviews, and structural evaluations, filename datestamped `YYYY-MM-DD-description.md`. Audits and reviews are the same bucket — there is no separate `reviews/`.
 - `references/` — Curated public-domain source passages for seeding the corpus (structured JSON); see its own `MAP.md` for what is kept and why. Not documentation about Astraya.
 - `html/` — Hand-written standalone HTML counterparts of select `.md` docs (HTML-first docs policy, #399/#427): reuses `src/ui/app.css`'s tokens, no build step, no external deps. Mirrors the source file's subdirectory, e.g. `html/adr/`.

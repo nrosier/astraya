@@ -2,7 +2,7 @@
 
 **Status:** Implementation plan for the target experience  
 **Audience:** Coding agents and human contributors  
-**Related documents:** [Design and usability audit](UI-UX_REVIEW.md) · [Normative UI/UX guide](UI-UX_GUIDELINES.md)
+**Related documents:** [Design and usability audit (archived, dated snapshot)](../archive/UI-UX_REVIEW.md) · [Normative UI/UX guide](UI-UX_GUIDELINES.md)
 
 This document explains how to move the current interface to Astraya's target UI/UX without changing astrological calculations, interpretation content, persistence guarantees, or export accuracy. The audit explains the problems and priorities. The guide defines how the finished product must behave. This plan defines implementation order, integration points, migration boundaries, and acceptance criteria.
 

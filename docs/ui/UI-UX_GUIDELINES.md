@@ -2,7 +2,7 @@
 
 **Status:** Normative guidance for new UI work  
 **Audience:** Coding agents and human contributors  
-**Related documents:** [UI-UX_REVIEW.md](UI-UX_REVIEW.md) · [UI-UX_IMPLEMENTATION_PLAN.md](UI-UX_IMPLEMENTATION_PLAN.md)
+**Related documents:** [UI-UX_REVIEW.md (archived, dated 2026-10-09 audit)](../archive/UI-UX_REVIEW.md) · [UI-UX_IMPLEMENTATION_PLAN.md](UI-UX_IMPLEMENTATION_PLAN.md)
 
 This document defines how Astraya features should be organized, presented, and implemented so that the interface remains predictable as the product grows. Apply it to new screens, feature additions, and substantial UI refactors.
 
