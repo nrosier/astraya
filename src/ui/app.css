@@ -2298,7 +2298,8 @@ label.stacked textarea:focus-visible {
    * the chrome above the SVG (header, nav row, card top, hint), so the SVG bottom
    * lands at or above the viewport bottom; 26rem (364px at a 14px root) is the floor
    * where glyphs and hit targets stay legible. Wider than the cap the wheel keeps
-   * its 7/12 column width; the cap binds only on short viewports.
+   * its 7/12 column width; the cap binds only on short viewports. 55rem is the upper
+   * bound: the widest the wheel is drawn, so a tall viewport never grows it past that.
    */
   max-width: min(55rem, max(26rem, calc(100vh - 24rem)));
 }
@@ -3446,6 +3447,11 @@ svg text.chart-symbol-text-unicode {
  * is hidden — answering the issue's "usable paper chart".
  */
 @media print {
+  /* 100vh is the page height in print, so the screen height cap would shrink the printed wheel (#801). */
+  .chart-workbench-dial .chart-wheel {
+    max-width: none;
+  }
+
   .back,
   .tabs,
   .person-nav,

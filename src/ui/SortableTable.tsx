@@ -16,7 +16,7 @@
  */
 import { useId, useState } from 'react';
 import { downloadText } from './download.js';
-import { astroGlossaryMessages, type GlossaryTermId } from './astro-glossary.messages.js';
+import { type GlossaryTermId } from './astro-glossary.messages.js';
 import { GlossaryTerm } from './GlossaryTerm.js';
 import { useMessages } from './messages.js';
 import { Tooltip } from './primitives/Tooltip.js';
@@ -44,7 +44,6 @@ export function SortableTable<T>({
   wrap = false,
   headingLevel = 3,
   captionTerm,
-  glossaryTerms,
 }: {
   readonly caption: string;
   readonly columns: readonly TableColumn<T>[];
@@ -64,11 +63,8 @@ export function SortableTable<T>({
   readonly headingLevel?: 2 | 3;
   /** A glossary term the caption names (#801): the caption text then opens that term's definition in place. On screen only. */
   readonly captionTerm?: GlossaryTermId | undefined;
-  /** Column keys whose header names a glossary term (#801): a help trigger beside the label opens the definition. On screen only. */
-  readonly glossaryTerms?: Readonly<Record<string, GlossaryTermId>> | undefined;
 }): React.JSX.Element {
   const t = useMessages(sortableTableMessages);
-  const glossary = useMessages(astroGlossaryMessages);
   const [sort, setSort] = useState<SortState>();
   const [copied, setCopied] = useState(false);
   const sorted = sortRows(rows, columns, sort);
@@ -125,7 +121,6 @@ export function SortableTable<T>({
                 // A column's explanation is a real disclosure beside its sort button (#456, #508): the shared
                 // Tooltip shows the same visible text on hover, click and keyboard focus, which a `title`
                 // attribute does not reliably do for a keyboard user or a screen reader.
-                const term = glossaryTerms?.[column.key];
                 return (
                   <th
                     key={column.key}
@@ -150,11 +145,6 @@ export function SortableTable<T>({
                             <span aria-hidden="true">{sort.direction === 'asc' ? ' ▲' : ' ▼'}</span>
                           )}
                         </button>
-                      )}
-                      {term !== undefined && (
-                        <GlossaryTerm id={term} label={t.aboutColumn(glossary[term].name)}>
-                          ?
-                        </GlossaryTerm>
                       )}
                       {column.labelTooltip !== undefined && (
                         <Tooltip
