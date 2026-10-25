@@ -12,11 +12,11 @@ Prose corpus (committed JSON per locale) + composition pipeline → written repo
 - `lint.ts` — Style gate for corpus entries (length/fatalistic phrasing/medical claims/pronouns/language mismatch). Deps: `./schema`.
 - `loader.ts` — Final gate: validates entries + enforces en/nl key parity. Deps: `./schema`.
 - `prompt-guardrail.ts` — Guards Tier 2 custom prompt text (length/injection/claims/PII/fabrication). Deps: `./lint`.
-- `report.ts` — Assembles chart → named sections of non-empty paragraphs + provenance. Deps: `astrology/bodies`, `astrology/rulership`, `astrology/dispositors`, `astrology/emphasis`, `astrology/jones-shapes`, `astrology/signs`, `domain/chart-compute`, `./compose`, `./rules`, `./schema`.
+- `report.ts` — Assembles chart → named sections of non-empty paragraphs + provenance; exclusion set supplied by caller (`chart/object-policy` `interpretationExclusions`, #721). Deps: `astrology/bodies`, `astrology/rulership`, `astrology/dispositors`, `astrology/emphasis`, `astrology/jones-shapes`, `astrology/signs`, `domain/chart-compute`, `./compose`, `./rules`, `./schema`.
 - `result-basis.ts` — Stores saved AI interpretation's actual basis (not generic label). Deps: none (imported by server).
 - `sabian-split.ts` — Splits a degree-symbol paragraph into its image (first sentence) and its reading, for the Report and the PDF (#653). Deps: none.
 - `report-groups.ts` — Groups a report section's paragraphs by the body they describe, so a planet's sign, house and Sabian paragraphs sit under one heading (#654). Deps: `./report`.
-- `rules.ts` — Ranks chart placements by weighted rules (dignity/sect/retrograde/angularity/aspects/house class). Deps: `astrology/aspects`, `astrology/bodies`, `astrology/emphasis`, `astrology/sect`, `astrology/signs`, `domain/chart-compute`, `./schema`.
+- `rules.ts` — Ranks chart placements by weighted rules (dignity/sect/retrograde/angularity/aspects/house class); exclusion set supplied by caller (`chart/object-policy` `interpretationExclusions`, #721). Deps: `astrology/aspects`, `astrology/bodies`, `astrology/emphasis`, `astrology/sect`, `astrology/signs`, `domain/chart-compute`, `./schema`.
 - `schema.ts` — Single source of truth for corpus-entry shape + key parsing + validation. Deps: `astrology/bodies`, `astrology/aspects`, `astrology/signs`, `astrology/nakshatras`, `astrology/dignities`.
 - `selection-key.ts` — Wheel selection keys: builders and parser for body/sign/house/derived/aspect keys. Deps: `astrology/derived-points`, `astrology/signs`, `chart/body-id`.
 - `selection.ts` — Wheel click → matching placements, same salience ranking as report. Deps: `astrology/signs`, `chart/body-id`, `domain/chart-compute`, `./rules`.

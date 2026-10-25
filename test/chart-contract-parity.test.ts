@@ -18,6 +18,7 @@ import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { ayanamsaByKey } from '../src/astrology/ayanamsas.js';
 import { DEFAULT_RULERSHIP_CHOICE, type RulershipChoice } from '../src/astrology/rulership.js';
 import { DEFAULT_EXTENDED_SETTINGS, type ExtendedSettings } from '../src/chart/extended-settings.js';
+import { interpretationExclusions } from '../src/chart/object-policy.js';
 import {
   buildCalculationSnapshot,
   calculationSnapshotToJson,
@@ -298,7 +299,14 @@ describe('object visibility and interpretation participation (#719, #721)', () =
     );
     const corpus = await loadRuntimeCorpus('en', corpusFetch);
     const full = assembleReport(chart, 'en', corpus, DEFAULT_RULERSHIP_CHOICE, 'natal', new Set());
-    const reduced = assembleReport(chart, 'en', corpus, DEFAULT_RULERSHIP_CHOICE, 'natal', new Set(['neptune']));
+    const reduced = assembleReport(
+      chart,
+      'en',
+      corpus,
+      DEFAULT_RULERSHIP_CHOICE,
+      'natal',
+      interpretationExclusions(hiddenNeptune.objectPolicies),
+    );
     const mentionsNeptune = (report: typeof full): boolean =>
       report.sections.some((section) =>
         section.paragraphs.some(
@@ -307,6 +315,36 @@ describe('object visibility and interpretation participation (#719, #721)', () =
       );
     expect(mentionsNeptune(full)).toBe(true);
     expect(mentionsNeptune(reduced)).toBe(false);
+  }, 60_000);
+
+  it('#721: hiding an object without excluding it from interpretation keeps its prose', async () => {
+    const hiddenOnly: ExtendedSettings = {
+      ...DEFAULT_EXTENDED_SETTINGS,
+      objectPolicies: {
+        ...DEFAULT_EXTENDED_SETTINGS.objectPolicies,
+        neptune: { visible: false, aspectParticipant: true },
+      },
+    };
+    const chart = await computeChartData(
+      scenarioForVisibility().moment,
+      engine,
+      snapshotCalculationOptions(snapshotOf({ ...scenarioForVisibility(), settings: hiddenOnly })),
+    );
+    const corpus = await loadRuntimeCorpus('en', corpusFetch);
+    const report = assembleReport(
+      chart,
+      'en',
+      corpus,
+      DEFAULT_RULERSHIP_CHOICE,
+      'natal',
+      interpretationExclusions(hiddenOnly.objectPolicies),
+    );
+    const mentionsNeptune = report.sections.some((section) =>
+      section.paragraphs.some(
+        (p) => p.placement !== undefined && 'body' in p.placement && p.placement.body === 'neptune',
+      ),
+    );
+    expect(mentionsNeptune).toBe(true);
   }, 60_000);
 });
 
