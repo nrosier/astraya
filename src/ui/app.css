@@ -2065,6 +2065,39 @@ label.stacked textarea:focus-visible {
   gap: 0.4rem;
 }
 
+/* One labelled group for the planetary-rulers choice and the Sabian checkbox (#802). It wraps
+   onto its own line within .report-controls and never runs wider than the column. */
+.config-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-width: 100%;
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.config-block-heading {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+/* The Sabian checkbox row keeps its padding compact so the block stays short. */
+.config-block .degree-symbol-setting .primitive-choice {
+  min-height: 0;
+  padding: var(--space-1) 0;
+}
+
+@media (max-width: 40rem) {
+  .config-block {
+    padding: var(--space-3);
+  }
+}
+
 .report-toc {
   margin-bottom: 1.75rem;
   padding: 0.75rem 1rem;
@@ -2086,7 +2119,42 @@ label.stacked textarea:focus-visible {
 }
 
 .report-section {
-  margin-bottom: 1.75rem;
+  margin-bottom: var(--space-4);
+}
+
+/* Each report section is a bordered card (#802). The AI panel shares the class, so it matches. */
+.report-section {
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+@media (max-width: 40rem) {
+  .report-section {
+    padding: var(--space-3);
+  }
+}
+
+/* The facts under a placement title (#802): Badge chips, wrapping onto further rows when narrow. */
+.report-section .placement-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3);
+}
+
+.report-section .placement-badges .primitive-badge {
+  border-color: var(--fg);
+  background: var(--bg);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.report-section .placement-badge-retro .primitive-badge {
+  border-color: var(--aspect-hard);
+  color: var(--aspect-hard);
 }
 
 .report-section h3 {
@@ -2105,35 +2173,6 @@ label.stacked textarea:focus-visible {
 
 .report-paragraph p {
   margin: 0;
-}
-
-/*
- * Marks a degree-symbol (Sabian symbol) paragraph as its own distinct kind of note, not just
- * another `.hint`-styled one (#527). Accent-tinted via `color-mix`, same approach as
- * `.settings-card-note`, so it stays legible in both light and dark themes without a hardcoded
- * color. The badge wraps a GlossaryTerm button; its default dotted-underline styling is
- * overridden here so it reads as this pill's own label, not a separate inline control.
- */
-.sabian-badge {
-  display: inline-flex;
-  align-items: center;
-  margin: 0 0 0.3rem;
-  padding: 0.1rem 0.55rem;
-  border: 1px solid color-mix(in oklab, var(--accent) 35%, var(--line));
-  border-radius: 999px;
-  background: color-mix(in oklab, var(--accent) 12%, transparent);
-  color: var(--fg);
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.sabian-badge .primitive-tooltip-trigger {
-  border-bottom: none;
-}
-
-.sabian-badge .primitive-tooltip-trigger:hover,
-.sabian-badge .primitive-tooltip-trigger:focus-visible {
-  text-decoration: underline;
 }
 
 /* A body's group in the Report (#654): its name as a sub-heading over the sign and house paragraphs about it. */
@@ -2170,15 +2209,33 @@ label.stacked textarea:focus-visible {
  */
 .sabian-callout {
   display: grid;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-4);
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--line);
   border-left: 3px solid var(--accent);
   border-radius: 0 var(--radius) var(--radius) 0;
   background: color-mix(in oklab, var(--accent) 6%, var(--surface));
+  color: var(--fg);
 }
 
 .sabian-callout p {
   margin: 0;
+}
+
+.sabian-label {
+  font-size: 0.75rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sabian-label .primitive-tooltip-trigger {
+  color: var(--accent);
+}
+
+.sabian-degree {
+  font-size: 0.95rem;
+  font-weight: 650;
 }
 
 .sabian-insight-tag {

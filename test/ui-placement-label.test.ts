@@ -13,6 +13,7 @@ import {
   labelForKey,
   ordinal,
   placementSortKey,
+  sabianDegreeLabel,
   sortKeyForKey,
 } from '../src/ui/placement-label.js';
 
@@ -267,5 +268,24 @@ describe('reportParagraphLabel (#654): the degree goes on sign placements only',
 
   it('keeps the full label under a heading for a placement that is not one body’s sign or house', () => {
     expect(reportParagraphLabel(CUSP, 'en', 24 + 22 / 60, true)).toBe('Aries on the cusp of the 1st house · 24°22′');
+  });
+});
+
+describe('sabianDegreeLabel (#802): an absolute Sabian degree as sign degree and sign name', () => {
+  it('reads the first and last degree of the zodiac in English', () => {
+    expect(sabianDegreeLabel(1, 'en')).toBe('1° Aries');
+    expect(sabianDegreeLabel(30, 'en')).toBe('30° Aries');
+    expect(sabianDegreeLabel(360, 'en')).toBe('30° Pisces');
+  });
+
+  it('restarts the degree count at each sign boundary', () => {
+    expect(sabianDegreeLabel(31, 'en')).toBe('1° Taurus');
+    expect(sabianDegreeLabel(36, 'en')).toBe('6° Taurus');
+  });
+
+  it('uses the Dutch sign names in nl', () => {
+    expect(sabianDegreeLabel(1, 'nl')).toBe('1° Ram');
+    expect(sabianDegreeLabel(36, 'nl')).toBe('6° Stier');
+    expect(sabianDegreeLabel(360, 'nl')).toBe('30° Vissen');
   });
 });

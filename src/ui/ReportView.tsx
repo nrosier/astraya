@@ -26,7 +26,7 @@
  * (`degree-symbol-setting.ts`), unlike "Show provenance", which is a dev-only, page-local one.
  * It's its own named-and-explained section, the same label+explanation+control shape as
  * `RulershipSetting`, not a bare checkbox. A shown degree-symbol paragraph also carries a small
- * named badge (`.sabian-badge`, linking `<GlossaryTerm id="sabianSymbol">`) so it reads as a
+ * labelled block (`.sabian-label`, linking `<GlossaryTerm id="sabianSymbol">`) so it reads as a
  * distinct kind of note, not just another `.hint`-styled one. Since #653 its text is set apart: the
  * traditional image in quotation marks, then the reading under a "Key insight" label in italics
  * (`splitSabianText`; the corpus keeps one flat string per entry).
@@ -34,10 +34,10 @@
 /**
  * @module ReportView
  * @purpose Renders an interpretation Report's sections/paragraphs with a provenance toggle and a degree-symbol (Sabian symbol) visibility toggle, plus the Tier 2 opt-in AI-customized interpretation sub-tab (grounded restyle or freeform full-chart modes).
- * @conventions Thin wiring over report-provenance.ts; fetches its corpus chunk at runtime via corpus-client.ts rather than importing the full synchronous CORPUS; uses ReportView.messages.ts for en/nl text via useMessages(); the degree-symbol toggle's own label/explanation/control lives in DegreeSymbolSetting.tsx, its persisted value in degree-symbol-setting.ts — this file only reads that value to filter paragraphs.
+ * @conventions Thin wiring over report-provenance.ts; fetches its corpus chunk at runtime via corpus-client.ts rather than importing the full synchronous CORPUS; uses ReportView.messages.ts for en/nl text via useMessages(); the degree-symbol toggle's own label/explanation/control lives in DegreeSymbolSetting.tsx (controlled); this file owns the value via useShowDegreeSymbol() from degree-symbol-setting.ts, passes it down, and uses it to filter paragraphs.
  * @exports ReportView
  */
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment, useEffect, useId, useState } from 'react';
 import { assembleReport, reportPlacementKeys, type Report, type ReportParagraph } from '../interpretation/report.js';
 import { loadRuntimeCorpus } from '../interpretation/corpus-client.js';
 import type { CorpusEntry, Locale } from '../interpretation/schema.js';
@@ -58,7 +58,9 @@ import { RulershipSetting } from './RulershipSetting.js';
 import { useRulershipChoice } from './rulership-setting.js';
 import { splitSabianText } from '../interpretation/sabian-split.js';
 import { groupParagraphsByBody } from '../interpretation/report-groups.js';
-import { reportParagraphLabel } from './placement-label.js';
+import { reportParagraphLabel, sabianDegreeLabel } from './placement-label.js';
+import { placementBadges } from './report-placement-badges.js';
+import { Badge } from './primitives/Badge.js';
 import { chartOverview } from '../domain/chart-overview.js';
 import { chartOverviewRows } from './chart-overview-rows.js';
 import { chartOverviewMessages } from './chart-overview.messages.js';
@@ -121,19 +123,63 @@ function isDegreeSymbolParagraph(paragraph: ReportParagraph): boolean {
  * A Sabian paragraph (#653): the traditional image in quotation marks, then the reading under a "Key insight" label
  * in italics. The label, not the italics, carries the structure, so it reads the same to a screen reader.
  */
-function SabianText({ text }: { readonly text: string }): React.JSX.Element {
+function SabianText({
+  text,
+  degree,
+  locale,
+}: {
+  readonly text: string;
+  readonly degree: number;
+  readonly locale: Locale;
+}): React.JSX.Element {
   const t = useMessages(reportViewMessages);
   const { image, insight } = splitSabianText(text);
-  // A callout (#655): a tinted block with an accent bar, the same in the Report and the PDF.
+  // A bordered, left-accented block (#802): the label (the glossary term, uppercased by CSS) and the degree it
+  // belongs to, then the image, then the reading under its "Key insight" tag. One compact block, the same in print.
   return (
     <div className="sabian-callout">
-      <p className="hint sabian-image">&ldquo;{image}&rdquo;</p>
+      <p className="sabian-label">
+        <GlossaryTerm id="sabianSymbol" />
+      </p>
+      <p className="sabian-degree">{sabianDegreeLabel(degree, locale)}</p>
+      <p className="sabian-image">&ldquo;{image}&rdquo;</p>
       {insight !== undefined && (
-        <p className="hint sabian-insight">
+        <p className="sabian-insight">
           <strong className="sabian-insight-tag">{t.keyInsightLabel}</strong> <em>{insight}</em>
         </p>
       )}
     </div>
+  );
+}
+
+/** The facts under a placement's title (#802): sign and degree, house when it has one, and Retrograde only when it is. */
+function PlacementBadgeList({
+  chart,
+  bodyKey,
+  locale,
+}: {
+  readonly chart: ChartData;
+  readonly bodyKey: string;
+  readonly locale: Locale;
+}): React.JSX.Element | null {
+  const badges = placementBadges(chart, bodyKey, locale);
+  if (badges === undefined) return null;
+  return (
+    <ul className="placement-badges">
+      <li>
+        <Badge>{badges.signDegree}</Badge>
+      </li>
+      {badges.houseBadge !== undefined && (
+        <li>
+          <Badge>{badges.houseBadge}</Badge>
+        </li>
+      )}
+      {badges.retrogradeLabel !== undefined && (
+        <li className="placement-badge-retro">
+          <Badge>{badges.retrogradeLabel}</Badge>
+        </li>
+      )}
+    </ul>
   );
 }
 
@@ -159,16 +205,14 @@ function Paragraph({
   // this app already uses (`.hint`) — plus, since #527, a small named badge (not just `.hint`)
   // so a reader can tell a Sabian-symbol note apart from an ordinary secondary one, and look up
   // what it means without leaving the page.
-  const isDegreeSymbol = isDegreeSymbolParagraph(paragraph);
   return (
     <li className="report-paragraph">
       {label !== undefined && <p className="report-placement-label">{label}</p>}
-      {isDegreeSymbol && (
-        <div className="sabian-badge">
-          <GlossaryTerm id="sabianSymbol" />
-        </div>
+      {paragraph.placement?.category === 'degree-symbol' ? (
+        <SabianText text={paragraph.text} degree={paragraph.placement.degree} locale={locale} />
+      ) : (
+        <p>{paragraph.text}</p>
       )}
-      {isDegreeSymbol ? <SabianText text={paragraph.text} /> : <p>{paragraph.text}</p>}
       {showProvenance && (
         <p className="report-provenance hint">
           {provenance.placement !== undefined && <>{provenance.placement} &middot; </>}
@@ -456,9 +500,10 @@ export function ReportView({
   const [showProvenance, setShowProvenance] = useState(false);
   const [locale] = useLocale();
   const [rulership] = useRulershipChoice();
-  const [showDegreeSymbol] = useShowDegreeSymbol();
+  const [showDegreeSymbol, setShowDegreeSymbol] = useShowDegreeSymbol();
   const [corpus, setCorpus] = useState<readonly CorpusEntry[] | undefined>(undefined);
   const [loadError, setLoadError] = useState<string | undefined>(undefined);
+  const configHeadingId = `report-config-${useId().replace(/:/g, '')}`;
 
   useEffect(() => {
     let cancelled = false;
@@ -495,8 +540,13 @@ export function ReportView({
 
   const controls = (
     <div className="report-controls">
-      <RulershipSetting />
-      <DegreeSymbolSetting />
+      <div className="config-block" role="group" aria-labelledby={configHeadingId}>
+        <h3 id={configHeadingId} className="config-block-heading">
+          {t.configurationHeading}
+        </h3>
+        <RulershipSetting />
+        <DegreeSymbolSetting show={showDegreeSymbol} onChange={setShowDegreeSymbol} />
+      </div>
       {!import.meta.env.PROD && (
         <Checkbox
           label={t.showProvenance}
@@ -596,6 +646,7 @@ export function ReportView({
                       aria-label={bodyDisplayName(group.bodyKey, locale)}
                     >
                       <h4 className="report-body-heading">{bodyDisplayName(group.bodyKey, locale)}</h4>
+                      <PlacementBadgeList chart={chart} bodyKey={group.bodyKey} locale={locale} />
                       <ul>
                         {group.paragraphs.map((paragraph, index) => (
                           <Paragraph
