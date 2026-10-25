@@ -2293,6 +2293,14 @@ label.stacked textarea:focus-visible {
 .chart-workbench-dial .chart-wheel {
   margin-top: 0;
   margin-bottom: 0;
+  /*
+   * Height cap (#801): the wheel is square, so its width is its height. 24rem is
+   * the chrome above the SVG (header, nav row, card top, hint), so the SVG bottom
+   * lands at or above the viewport bottom; 26rem (364px at a 14px root) is the floor
+   * where glyphs and hit targets stay legible. Wider than the cap the wheel keeps
+   * its 7/12 column width; the cap binds only on short viewports.
+   */
+  max-width: min(55rem, max(26rem, calc(100vh - 24rem)));
 }
 
 .chart-workbench-dial .chart-wheel-hint {
