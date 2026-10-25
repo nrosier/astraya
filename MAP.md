@@ -2,7 +2,7 @@
 
 Top-level application, release, and audit artifacts. Read the local map in each major subdirectory before inspecting its contents.
 
-- `.github/` — CI, Docker, Pages, and release automation. Deps: `package.json`, Docker Hub, GitHub Actions.
+- `.github/` — CI, Docker, Pages, and release automation. Deps: `package.json`, ghcr.io, GitHub Actions.
 - `data/` — Runtime SQLite database mount location and ignored generated data. Deps: `server/db.ts`, Docker volume.
 - `docs/` — Product, architecture, release, dependency, and audit documentation. Deps: source and test maps.
 - `e2e/` — Playwright browser workflows and accessibility regression coverage. Deps: `dist/`, `server/index.ts`.
