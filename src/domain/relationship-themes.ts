@@ -16,7 +16,7 @@
  * @exports groupedRelationshipContacts, relationshipAngleContacts, aspectValence, RELATIONSHIP_THEMES, RelationshipTheme, RelationshipContact, AngleContact, AspectValence
  */
 import { bodyById } from '../astrology/bodies.js';
-import { matchAspect, type Aspect, type AspectMatch, type OrbConfig } from '../astrology/aspects.js';
+import { matchPointAspect, type Aspect, type OrbConfig, type PointAspectMatch } from '../astrology/aspects.js';
 import { rankedSynastryAspects, type SynastryData } from './synastry.js';
 import { housesAreDefined, type ChartData } from './chart-compute.js';
 import type { BodyId, BodyPosition, Degrees } from '../ephemeris/types.js';
@@ -39,7 +39,7 @@ export interface RelationshipContact {
 }
 
 /** A body-to-angle contact: `body` (from `side`'s own chart) to the *other* chart's Ascendant or Midheaven. */
-export interface AngleContact extends AspectMatch {
+export interface AngleContact extends PointAspectMatch {
   readonly body: BodyId;
   readonly angle: 'asc' | 'mc';
   /** Whose body this is — `'a'`'s body reaching into `'b'`'s angles, or the reverse. */
@@ -150,7 +150,7 @@ function contactsToAngles(
     for (const body of bodies) {
       const bodyDefinition = bodyById(body.body);
       if (bodyDefinition === undefined) continue;
-      const match = matchAspect(body, bodyDefinition.category, anglePosition, 'planet', orbConfig);
+      const match = matchPointAspect(anglePosition, body, bodyDefinition.category, orbConfig);
       if (match !== undefined) contacts.push({ ...match, body: body.body, angle, side });
     }
   }
@@ -159,7 +159,7 @@ function contactsToAngles(
 
 /**
  * Every real contact between one side's bodies and the *other* side's Ascendant/Midheaven —
- * both directions, each using the app's own established aspect/orb rules (`matchAspect`), not
+ * both directions, each using the app's own established aspect/orb rules (`matchPointAspect`), not
  * an invented "within N degrees" cutoff. Empty for a side whose houses have no solution (an
  * unknown-time person has no Ascendant/Midheaven to contact).
  */

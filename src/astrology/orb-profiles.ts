@@ -18,7 +18,7 @@
  * @conventions Built-ins are immutable: a changed value gets a new id, and `revision` counts revisions. A built-in's source is `null`-locator until a passage is cited in docs/references. Rules are validated as a whole: malformed input yields `undefined`, never a partial set.
  * @exports OrbProfileId, ORB_PROFILE_IDS, OrbProfileSource, OrbProfile, ORB_PROFILES, orbConfigForProfile, matchOrbProfile, CitedOrbPresetId, CITED_ORB_PRESET_IDS, CitedOrbPreset, CITED_ORB_PRESETS, citedPresetSettings, isCitedOrbPresetId, matchCitedOrbPreset, SYNASTRY_SCALE_OFFSET, SYNASTRY_DEFAULT_ORB_CONFIG, OrbContext, ORB_CONTEXTS, OrbRulesValue, validateOrbRules, orbConfigForContext
  */
-import { aspectByKey, DEFAULT_ORB_CONFIG, type OrbConfig, type OrbRule } from './aspects.js';
+import { aspectByKey, DEFAULT_ORB_CONFIG, type OrbConfig, type OrbRule, type PointOrbConvention } from './aspects.js';
 import { bodyByKey } from './bodies.js';
 import { TRANSIT_ORB_CONFIG } from './transit-importance.js';
 
@@ -121,6 +121,12 @@ export interface CitedOrbPreset {
   readonly source: { readonly authority: string; readonly locator: string };
   /** Half of each planet's orb, by body key. */
   readonly bodyOrbs: Readonly<Record<string, number>>;
+  /**
+   * How a calculated point's orb is read under this preset (#796): the aspecting body's own moiety.
+   * Lilly, Book II p. 208, gives this for the Ascendant; applying it to the MC, Vertex and the lots is
+   * an Astraya extension beyond his text.
+   */
+  readonly pointOrbConvention: PointOrbConvention;
 }
 
 /** Lilly's orbs in degrees (minutes as decimals), read from the page image: the first and second columns. */
@@ -159,6 +165,7 @@ export const CITED_ORB_PRESETS: Readonly<Record<CitedOrbPresetId, CitedOrbPreset
       "Lilly's first set of planetary orbs: Saturn 10°, Jupiter 12°, Mars 7°30', Sun 17°, Venus 8°, Mercury 7°, Moon 12°30'. Two planets are in aspect within half of each orb added together.",
     source: { authority: LILLY_AUTHORITY, locator: 'p. 107, table of the quantity of their orbs (first column)' },
     bodyOrbs: moieties(LILLY_FIRST_COLUMN),
+    pointOrbConvention: 'body-moiety-extended',
   },
   'lilly-1647-second-v1': {
     id: 'lilly-1647-second-v1',
@@ -168,6 +175,7 @@ export const CITED_ORB_PRESETS: Readonly<Record<CitedOrbPresetId, CitedOrbPreset
       "Lilly's second set of planetary orbs: Saturn 9°, Jupiter 9°, Mars 7°, Sun 15°, Venus 7°, Mercury 7°, Moon 12°. Two planets are in aspect within half of each orb added together.",
     source: { authority: LILLY_AUTHORITY, locator: 'p. 107, table of the quantity of their orbs (second column)' },
     bodyOrbs: moieties(LILLY_SECOND_COLUMN),
+    pointOrbConvention: 'body-moiety-extended',
   },
 };
 

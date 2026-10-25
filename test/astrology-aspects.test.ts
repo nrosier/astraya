@@ -10,7 +10,10 @@ import {
   fixedSubjects,
   harmonicFamilyOf,
   matchAspect,
+  matchPointAspect,
   orbFor,
+  orbForPoint,
+  pointOrbConventionOf,
   subjectsFrom,
   type AspectSubject,
 } from '../src/astrology/aspects.js';
@@ -347,5 +350,71 @@ describe('harmonicFamilyOf / aspectHarmonicFamily (#557)', () => {
 
   it('is undefined for an unknown aspect key', () => {
     expect(aspectHarmonicFamily('not-a-real-aspect')).toBeUndefined();
+  });
+});
+
+describe('orbForPoint and matchPointAspect (#796)', () => {
+  const moieties = { saturn: 5, sun: 8.5 };
+  const withMoieties = { ...DEFAULT_ORB_CONFIG, bodyOrbs: moieties };
+
+  it('reports moiety-sum for a pair with two moieties, as orbFor does', () => {
+    expect(orbFor('square', 'planet', 'luminary', withMoieties, { a: 'saturn', b: 'sun' })).toBe(13.5);
+  });
+
+  it('uses the aspecting body moiety for a point (body-moiety), times scale', () => {
+    expect(orbForPoint('square', { key: 'saturn', category: 'planet' }, withMoieties)).toEqual({
+      allowedOrb: 5,
+      rule: 'body-moiety',
+    });
+    expect(
+      orbForPoint('square', { key: 'saturn', category: 'planet' }, { ...withMoieties, scalePercent: 20 }).allowedOrb,
+    ).toBeCloseTo(6, 10);
+  });
+
+  it('falls back to the tier and records tier-fallback for a body with no moiety', () => {
+    expect(orbForPoint('square', { key: 'uranus', category: 'planet' }, withMoieties)).toEqual({
+      allowedOrb: 7,
+      rule: 'tier-fallback',
+    });
+  });
+
+  it('records aspect-override when a per-aspect orb applies and the body has no moiety', () => {
+    const config = { ...DEFAULT_ORB_CONFIG, aspectOrbs: { square: { base: 3, luminaryBonus: 1 } } };
+    expect(orbForPoint('square', { key: 'mars', category: 'planet' }, config)).toEqual({
+      allowedOrb: 3,
+      rule: 'aspect-override',
+    });
+    expect(orbForPoint('square', { key: 'sun', category: 'luminary' }, config).allowedOrb).toBe(4);
+  });
+
+  it('uses the tier and the luminary bonus, rule tier, when no moieties are set', () => {
+    expect(orbForPoint('square', { key: 'sun', category: 'luminary' })).toEqual({ allowedOrb: 10, rule: 'tier' });
+    expect(orbForPoint('square', { key: 'mars', category: 'planet' })).toEqual({ allowedOrb: 7, rule: 'tier' });
+    expect(orbForPoint('sextile', { key: 'moon', category: 'luminary' }).allowedOrb).toBe(5.5);
+  });
+
+  it('applies scale to the tier', () => {
+    expect(
+      orbForPoint('square', { key: 'mars', category: 'planet' }, { ...DEFAULT_ORB_CONFIG, scalePercent: -50 })
+        .allowedOrb,
+    ).toBe(3.5);
+  });
+
+  it('derives the point convention from the config', () => {
+    expect(pointOrbConventionOf(DEFAULT_ORB_CONFIG)).toBe('tier');
+    expect(pointOrbConventionOf({ ...DEFAULT_ORB_CONFIG, bodyOrbs: {} })).toBe('tier');
+    expect(pointOrbConventionOf(withMoieties)).toBe('body-moiety-extended');
+  });
+
+  it('matchPointAspect admits within the body moiety and records rule and convention', () => {
+    // Saturn is body id 6; the point sits 4.5 degrees short of a square to it.
+    const point = { ...position(0), body: -1 };
+    const saturn = { ...position(85.5), body: 6 };
+    const found = matchPointAspect(point, saturn, 'planet', withMoieties);
+    expect(found?.aspect.key).toBe('square');
+    expect(found?.orb).toBeCloseTo(4.5, 10);
+    expect(found?.orbRule).toBe('body-moiety');
+    expect(found?.pointConvention).toBe('body-moiety-extended');
+    expect(matchPointAspect(point, { ...position(83), body: 6 }, 'planet', withMoieties)).toBeUndefined();
   });
 });

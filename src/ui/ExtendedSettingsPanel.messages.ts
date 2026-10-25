@@ -191,9 +191,9 @@ const en = {
   },
   citedOrbPresetNotes: {
     'lilly-1647-first-v1':
-      'William Lilly’s own orbs per planet, Christian Astrology (1647), Book I, p. 107: Saturn 10°, Jupiter 12°, Mars 7°30′, Sun 17°, Venus 8°, Mercury 7°, Moon 12°30′. Two planets are in aspect within half of each orb added together. Uranus, Neptune and Pluto have no orb of his, so they use the standard tiers.',
+      'William Lilly’s own orbs per planet, Christian Astrology (1647), Book I, p. 107: Saturn 10°, Jupiter 12°, Mars 7°30′, Sun 17°, Venus 8°, Mercury 7°, Moon 12°30′. Two planets are in aspect within half of each orb added together. Uranus, Neptune and Pluto have no orb of his, so they use the standard tiers. For the Ascendant, each planet’s contact uses that planet’s own half-orb (Lilly, Book II, p. 208: “within the moyity of his owne Orbs”). Astraya extends the same rule to the Midheaven, Vertex, Part of Fortune and Part of Spirit; that extension is not Lilly’s. A body without a half-orb uses the standard tiers for these points.',
     'lilly-1647-second-v1':
-      'Lilly’s second set, same page: Saturn 9°, Jupiter 9°, Mars 7°, Sun 15°, Venus 7°, Mercury 7°, Moon 12°. Two planets are in aspect within half of each orb added together. Uranus, Neptune and Pluto use the standard tiers.',
+      'Lilly’s second set, same page: Saturn 9°, Jupiter 9°, Mars 7°, Sun 15°, Venus 7°, Mercury 7°, Moon 12°. Two planets are in aspect within half of each orb added together. Uranus, Neptune and Pluto use the standard tiers. For the Ascendant, each planet’s contact uses that planet’s own half-orb (Lilly, Book II, p. 208: “within the moyity of his owne Orbs”). Astraya extends the same rule to the Midheaven, Vertex, Part of Fortune and Part of Spirit; that extension is not Lilly’s. A body without a half-orb uses the standard tiers for these points.',
   },
   orbProfileNotes: {
     custom: 'Your own orb scale, set with the slider below.',
@@ -422,9 +422,9 @@ const nl: typeof en = {
   },
   citedOrbPresetNotes: {
     'lilly-1647-first-v1':
-      'De eigen orbissen per planeet van William Lilly, Christian Astrology (1647), Boek I, p. 107: Saturnus 10°, Jupiter 12°, Mars 7°30′, Zon 17°, Venus 8°, Mercurius 7°, Maan 12°30′. Twee planeten staan in aspect binnen de helft van elke orbis bij elkaar opgeteld. Uranus, Neptunus en Pluto hebben geen orbis van hem, dus gebruiken ze de standaardtiers.',
+      'De eigen orbissen per planeet van William Lilly, Christian Astrology (1647), Boek I, p. 107: Saturnus 10°, Jupiter 12°, Mars 7°30′, Zon 17°, Venus 8°, Mercurius 7°, Maan 12°30′. Twee planeten staan in aspect binnen de helft van elke orbis bij elkaar opgeteld. Uranus, Neptunus en Pluto hebben geen orbis van hem, dus gebruiken ze de standaardtiers. Voor de Ascendant gebruikt het contact van elke planeet de eigen halve orbis van die planeet (Lilly, Boek II, p. 208: “within the moyity of his owne Orbs”). Astraya past dezelfde regel toe op het Midheaven, de Vertex, het Fortuinpunt en het Geestpunt; die uitbreiding is niet van Lilly. Een lichaam zonder halve orbis gebruikt voor deze punten de standaardtiers.',
     'lilly-1647-second-v1':
-      'Lilly’s tweede reeks, zelfde pagina: Saturnus 9°, Jupiter 9°, Mars 7°, Zon 15°, Venus 7°, Mercurius 7°, Maan 12°. Twee planeten staan in aspect binnen de helft van elke orbis bij elkaar opgeteld. Uranus, Neptunus en Pluto gebruiken de standaardtiers.',
+      'Lilly’s tweede reeks, zelfde pagina: Saturnus 9°, Jupiter 9°, Mars 7°, Zon 15°, Venus 7°, Mercurius 7°, Maan 12°. Twee planeten staan in aspect binnen de helft van elke orbis bij elkaar opgeteld. Uranus, Neptunus en Pluto gebruiken de standaardtiers. Voor de Ascendant gebruikt het contact van elke planeet de eigen halve orbis van die planeet (Lilly, Boek II, p. 208: “within the moyity of his owne Orbs”). Astraya past dezelfde regel toe op het Midheaven, de Vertex, het Fortuinpunt en het Geestpunt; die uitbreiding is niet van Lilly. Een lichaam zonder halve orbis gebruikt voor deze punten de standaardtiers.',
   },
   orbProfileNotes: {
     custom: 'Je eigen orb-schaal, ingesteld met de schuifregelaar hieronder.',

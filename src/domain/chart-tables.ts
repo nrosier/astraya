@@ -1210,6 +1210,7 @@ export function chartSheetInput(
           orb: aspect.orb,
           signedOrb: aspect.separation - aspect.aspect.angle,
           applying: aspect.applying,
+          orbRule: aspect.orbRule,
         })),
       ],
     },

@@ -23,8 +23,8 @@
 /**
  * @module Aspects
  * @purpose Computes Ptolemaic and minor aspects between bodies, including configurable orbs and applying/separating direction.
- * @conventions Three orb tiers (major, sextile, minor) widened for luminaries, scaled by a global percentage; Astraya's own defaults, with no verified published source (majors 7°/10° with a luminary, sextile 4°/5°30', minors flat 2°30'); minor aspects are opt-in via enabledMinorAspects; `harmonicFamilyOf` is Addey's harmonic-number grouping, a distinct concept from the major/minor `AspectFamily`.
- * @exports ASPECTS, DEFAULT_ORB_CONFIG, orbFor, angularSeparation, matchAspect, findAspects, findCrossAspects, subjectsFrom, fixedSubjects, harmonicFamilyOf, aspectHarmonicFamily
+ * @conventions Three orb tiers (major, sextile, minor) widened for luminaries, scaled by a global percentage; Astraya's own defaults, with no verified published source (majors 7°/10° with a luminary, sextile 4°/5°30', minors flat 2°30'); minor aspects are opt-in via enabledMinorAspects; `harmonicFamilyOf` is Addey's harmonic-number grouping, a distinct concept from the major/minor `AspectFamily`; a calculated point's orb is the aspecting body's own moiety when the config has moieties (Lilly p. 208 for the Ascendant, an Astraya extension for MC/Vertex/lots), else the tier, and the rule used is recorded (#796).
+ * @exports ASPECTS, DEFAULT_ORB_CONFIG, orbFor, orbForPoint, matchPointAspect, pointOrbConventionOf, angularSeparation, matchAspect, findAspects, findCrossAspects, subjectsFrom, fixedSubjects, harmonicFamilyOf, aspectHarmonicFamily
  */
 import { bodyById, type BodyCategory } from './bodies.ts';
 import type { BodyId, BodyPosition, Degrees } from '../ephemeris/types.js';
@@ -138,6 +138,86 @@ export const DEFAULT_ORB_CONFIG: OrbConfig = {
 };
 
 /**
+ * Which rule produced an orb limit (#796): `moiety-sum` (both bodies of a pair have a moiety),
+ * `body-moiety` (a calculated point takes the aspecting body's own moiety), `aspect-override` (a
+ * per-aspect entry), `tier` (the built-in tiers) or `tier-fallback` (a body profile is selected
+ * but this body has no moiety, so the tiers applied). Recorded so a fall back is never silent.
+ */
+export type OrbRuleKind = 'moiety-sum' | 'body-moiety' | 'aspect-override' | 'tier' | 'tier-fallback';
+
+export interface OrbResolution {
+  readonly allowedOrb: Degrees;
+  readonly rule: OrbRuleKind;
+}
+
+/**
+ * How a calculated point's orb is read from a config (#796): `body-moiety-extended` when the config
+ * carries body moieties (the aspecting body's moiety governs the point: Lilly for the Ascendant,
+ * an Astraya extension of the same rule for the MC, Vertex and the two lots), else `tier`.
+ */
+export type PointOrbConvention = 'body-moiety-extended' | 'tier';
+
+/** Whether a config carries any body moieties. */
+function hasBodyMoieties(config: OrbConfig): boolean {
+  return config.bodyOrbs !== undefined && Object.keys(config.bodyOrbs).length > 0;
+}
+
+/** The point-orb convention a config implies; derived, never stored. */
+export function pointOrbConventionOf(config: OrbConfig): PointOrbConvention {
+  return hasBodyMoieties(config) ? 'body-moiety-extended' : 'tier';
+}
+
+function aspectOrThrow(aspectKey: string): AspectDefinition {
+  const aspect = aspectByKey(aspectKey);
+  if (aspect === undefined) {
+    throw new RangeError(`no orb configured for aspect "${aspectKey}"`);
+  }
+  return aspect;
+}
+
+/** The aspect's override or tier orb (unscaled), with whether it came from an override. */
+function overrideOrTier(
+  aspect: AspectDefinition,
+  hasLuminary: boolean,
+  config: OrbConfig,
+): { readonly raw: Degrees; readonly overridden: boolean } {
+  const override = config.aspectOrbs?.[aspect.key];
+  if (override !== undefined) {
+    return { raw: hasLuminary ? override.base + override.luminaryBonus : override.base, overridden: true };
+  }
+  const raw =
+    aspect.key === 'sextile'
+      ? hasLuminary
+        ? config.sextileOrb.base + config.sextileOrb.luminaryBonus
+        : config.sextileOrb.base
+      : aspect.family === 'major'
+        ? hasLuminary
+          ? config.majorOrb.base + config.majorOrb.luminaryBonus
+          : config.majorOrb.base
+        : config.minorOrb;
+  return { raw, overridden: false };
+}
+
+/** `orbFor` with the rule that produced the limit. */
+function resolveOrb(
+  aspectKey: string,
+  categoryA: BodyCategory,
+  categoryB: BodyCategory,
+  config: OrbConfig,
+  bodies?: { readonly a: string; readonly b: string },
+): OrbResolution {
+  const aspect = aspectOrThrow(aspectKey);
+  const scale = 1 + config.scalePercent / 100;
+  if (bodies !== undefined && config.bodyOrbs !== undefined) {
+    const halfA = config.bodyOrbs[bodies.a];
+    const halfB = config.bodyOrbs[bodies.b];
+    if (halfA !== undefined && halfB !== undefined) return { allowedOrb: (halfA + halfB) * scale, rule: 'moiety-sum' };
+  }
+  const { raw, overridden } = overrideOrTier(aspect, categoryA === 'luminary' || categoryB === 'luminary', config);
+  return { allowedOrb: raw * scale, rule: overridden ? 'aspect-override' : 'tier' };
+}
+
+/**
  * The orb limit for one aspect between two bodies. Resolution order (#590): a per-body moiety sum
  * when `bodies` is given and both have a `bodyOrbs` entry; else the aspect's own `aspectOrbs`
  * entry; else its tier. `scalePercent` then multiplies whichever applied. With neither new field
@@ -150,32 +230,32 @@ export function orbFor(
   config: OrbConfig = DEFAULT_ORB_CONFIG,
   bodies?: { readonly a: string; readonly b: string },
 ): Degrees {
-  const aspect = aspectByKey(aspectKey);
-  if (aspect === undefined) {
-    throw new RangeError(`no orb configured for aspect "${aspectKey}"`);
-  }
+  return resolveOrb(aspectKey, categoryA, categoryB, config, bodies).allowedOrb;
+}
+
+/**
+ * The orb limit for a calculated point (Ascendant, MC, Vertex, a lot) and one body (#796). Order: the
+ * aspecting body's own moiety times scale (`body-moiety`); else the aspect's `aspectOrbs` override;
+ * else the tier, with the luminary bonus from the body side only. When the config carries moieties
+ * but this body has none (Uranus, Neptune, Pluto under Lilly) the tier applies and the rule is
+ * `tier-fallback`, so the fall back is recorded rather than silent.
+ *
+ * Sources: Lilly, Christian Astrology (1647), Book II p. 208, for the Ascendant: "to the degree
+ * ascending, within the moyity of his owne Orbs". Using the same body-moiety rule for the MC, Vertex,
+ * Part of Fortune and Part of Spirit is an Astraya extension beyond Lilly's text.
+ */
+export function orbForPoint(
+  aspectKey: string,
+  body: { readonly key: string | undefined; readonly category: BodyCategory },
+  config: OrbConfig = DEFAULT_ORB_CONFIG,
+): OrbResolution {
+  const aspect = aspectOrThrow(aspectKey);
   const scale = 1 + config.scalePercent / 100;
-  if (bodies !== undefined && config.bodyOrbs !== undefined) {
-    const halfA = config.bodyOrbs[bodies.a];
-    const halfB = config.bodyOrbs[bodies.b];
-    if (halfA !== undefined && halfB !== undefined) return (halfA + halfB) * scale;
-  }
-  const hasLuminary = categoryA === 'luminary' || categoryB === 'luminary';
-  const override = config.aspectOrbs?.[aspectKey];
-  if (override !== undefined) {
-    return (hasLuminary ? override.base + override.luminaryBonus : override.base) * scale;
-  }
-  const raw =
-    aspectKey === 'sextile'
-      ? hasLuminary
-        ? config.sextileOrb.base + config.sextileOrb.luminaryBonus
-        : config.sextileOrb.base
-      : aspect.family === 'major'
-        ? hasLuminary
-          ? config.majorOrb.base + config.majorOrb.luminaryBonus
-          : config.majorOrb.base
-        : config.minorOrb;
-  return raw * scale;
+  const moiety = body.key === undefined ? undefined : config.bodyOrbs?.[body.key];
+  if (moiety !== undefined) return { allowedOrb: moiety * scale, rule: 'body-moiety' };
+  const { raw, overridden } = overrideOrTier(aspect, body.category === 'luminary', config);
+  const rule: OrbRuleKind = overridden ? 'aspect-override' : hasBodyMoieties(config) ? 'tier-fallback' : 'tier';
+  return { allowedOrb: raw * scale, rule };
 }
 
 /** Normalise to the half-open interval [0, 360). */
@@ -232,6 +312,35 @@ export interface AspectMatch {
 }
 
 /**
+ * An aspect between a calculated point and a body, with the provenance of its orb (#796): which rule
+ * admitted it and which point-orb convention the config implies.
+ */
+export interface PointAspectMatch extends AspectMatch {
+  readonly orbRule: OrbRuleKind;
+  readonly pointConvention: PointOrbConvention;
+}
+
+/** The closest aspect whose orb, from `resolve`, admits it; ties go to the smaller orb. */
+function bestMatch(
+  a: BodyPosition,
+  b: BodyPosition,
+  config: OrbConfig,
+  resolve: (aspectKey: string) => OrbResolution,
+): (AspectMatch & { readonly orbRule: OrbRuleKind }) | undefined {
+  const separation = angularSeparation(a.longitude, b.longitude);
+  let best: (AspectMatch & { readonly orbRule: OrbRuleKind }) | undefined;
+  for (const aspect of ASPECTS) {
+    if (aspect.family === 'minor' && !config.enabledMinorAspects.includes(aspect.key)) continue;
+    const orb = Math.abs(separation - aspect.angle);
+    const { allowedOrb, rule } = resolve(aspect.key);
+    if (orb > allowedOrb) continue;
+    if (best !== undefined && orb >= best.orb) continue;
+    best = { aspect, separation, orb, allowedOrb, applying: isApplying(a, b, aspect.angle), orbRule: rule };
+  }
+  return best;
+}
+
+/**
  * The closest aspect between two bodies that falls within its configured orb,
  * or `undefined` if none does. When more than one aspect's orb range would
  * cover the same separation (only possible with unusually generous orbs),
@@ -244,20 +353,34 @@ export function matchAspect(
   categoryB: BodyCategory,
   config: OrbConfig = DEFAULT_ORB_CONFIG,
 ): AspectMatch | undefined {
-  const separation = angularSeparation(a.longitude, b.longitude);
-  let best: AspectMatch | undefined;
   const keyA = bodyById(a.body)?.key;
   const keyB = bodyById(b.body)?.key;
   const bodyKeys = keyA === undefined || keyB === undefined ? undefined : { a: keyA, b: keyB };
-  for (const aspect of ASPECTS) {
-    if (aspect.family === 'minor' && !config.enabledMinorAspects.includes(aspect.key)) continue;
-    const orb = Math.abs(separation - aspect.angle);
-    const allowedOrb = orbFor(aspect.key, categoryA, categoryB, config, bodyKeys);
-    if (orb > allowedOrb) continue;
-    if (best !== undefined && orb >= best.orb) continue;
-    best = { aspect, separation, orb, allowedOrb, applying: isApplying(a, b, aspect.angle) };
-  }
-  return best;
+  const best = bestMatch(a, b, config, (key) => resolveOrb(key, categoryA, categoryB, config, bodyKeys));
+  if (best === undefined) return undefined;
+  return {
+    aspect: best.aspect,
+    separation: best.separation,
+    orb: best.orb,
+    allowedOrb: best.allowedOrb,
+    applying: best.applying,
+  };
+}
+
+/**
+ * The closest aspect between a calculated point (Ascendant, MC, Vertex, a lot: it has no real body id)
+ * and a body, with the body's own orb rule (`orbForPoint`) and the recorded provenance (#796).
+ */
+export function matchPointAspect(
+  point: BodyPosition,
+  body: BodyPosition,
+  category: BodyCategory,
+  config: OrbConfig = DEFAULT_ORB_CONFIG,
+): PointAspectMatch | undefined {
+  const key = bodyById(body.body)?.key;
+  const best = bestMatch(point, body, config, (aspectKey) => orbForPoint(aspectKey, { key, category }, config));
+  if (best === undefined) return undefined;
+  return { ...best, pointConvention: pointOrbConventionOf(config) };
 }
 
 export interface AspectSubject {
