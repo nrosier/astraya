@@ -1,7 +1,7 @@
 /**
  * The chart workbench layout (#511): the dial, then its SelectionInspector straight after it in
- * DOM order; one column below a 68rem workbench container, two columns at 68rem and above,
- * whatever the viewport; and room reserved for the inspector so a first selection does not shove
+ * DOM order; one column below a 68rem workbench container, two columns (7fr dial, 5fr inspector, #801) at 68rem
+ * and above, whatever the viewport; and room reserved for the inspector so a first selection does not shove
  * the page.
  */
 import { mkdtempSync, rmSync } from 'node:fs';
@@ -84,6 +84,19 @@ test('the inspector follows the dial, beside it from a 68rem workbench and below
 
   await pin(68);
   expect(await sideBySide()).toBe(true);
+
+  // The split is 7fr / 5fr (#801). Pin wide enough that neither column sits on its minimum
+  // (46rem dial, 20rem inspector), so the fr ratio is what decides the widths.
+  await pin(90);
+  const d = await dial.boundingBox();
+  const i = await inspector.boundingBox();
+  if (d === null || i === null) throw new Error('no boxes');
+  const gap = i.x - (d.x + d.width);
+  expect(gap).toBeGreaterThan(0);
+  const tracks = d.width + i.width;
+  expect(Math.abs(d.width - (tracks * 7) / 12)).toBeLessThanOrEqual(3);
+  expect(Math.abs(i.width - (tracks * 5) / 12)).toBeLessThanOrEqual(3);
+  expect(d.width).toBeGreaterThan(i.width);
 });
 
 test('selecting something fills the inspector in place, without moving it', async ({ page }) => {
@@ -212,7 +225,9 @@ test('a derived point is selectable from the Placements table by keyboard, with 
   await page.getByRole('link', { name: 'Wheel', exact: true }).click();
   const facts = page.locator('.selection-inspector-facts');
   await expect(facts.locator('.chart-isolation-head strong')).toHaveText('Part of Spirit');
-  await expect(facts).toContainText(/°\d\d' — House \d+/);
+  // The position and house are separate badges now (#801): "Pisces 29°51'" and "House 3".
+  await expect(facts).toContainText(/°\d\d'/);
+  await expect(facts).toContainText(/House \d+/);
   await expect(facts.locator('.chart-isolation-interpretation')).toBeVisible();
   // The corpus now carries real entries for the derived points: the meaning is written text, not the mechanical
   // "Part of Spirit in Cancer." fallback sentence.

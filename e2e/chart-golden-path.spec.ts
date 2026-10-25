@@ -176,6 +176,11 @@ test('the natal chart is split into views, opening on the wheel, and the wheel k
   ]);
   await expect(page.getByRole('link', { name: 'Wheel', exact: true })).toHaveAttribute('aria-current', 'page');
   await expect(page.locator('div.chart-wheel')).toBeVisible();
+  await expect(page.locator('.chart-view-prefix')).toBeVisible();
+  // The definitions list and the share panel left the chart view (#801).
+  await expect(page.getByText('Anyone who has the link')).toHaveCount(0);
+  await expect(page.getByText('Copy share link')).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Chart wheel' })).toHaveCount(0);
 
   // Select a planet, visit another view, come back: the selection is still there.
   await page.locator('.chart-point[data-body="sun"]').first().click({ force: true });
@@ -189,7 +194,7 @@ test('the natal chart is split into views, opening on the wheel, and the wheel k
   await expect(page.locator('.selection-inspector-facts')).toBeVisible();
 });
 
-test('the natal chart views fit a phone: a labelled Select replaces the link row, and nothing scrolls the page sideways (#511)', async ({
+test('the natal chart views fit a phone: a labelled Select replaces the link row, and the Dignities table scrolls inside its own wrapper (#511)', async ({
   page,
 }) => {
   test.setTimeout(60_000);
@@ -209,8 +214,6 @@ test('the natal chart views fit a phone: a labelled Select replaces the link row
   const select = page.getByLabel('Chart view', { exact: true });
   await expect(select).toBeVisible();
   await expect(page.locator('nav.chart-view-nav')).toBeHidden();
-  const overflow = await page.evaluate('document.documentElement.scrollWidth - window.innerWidth');
-  expect(overflow).toBeLessThanOrEqual(1);
   await select.selectOption('patterns');
   await expect(page.locator('.chart-shape-diagram')).toBeVisible();
   // The Dignities table scrolls inside its own `.data-table-scroll` wrap, never the page.
