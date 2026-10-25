@@ -33,18 +33,22 @@ export function ChartViewNav({
   buildHref,
   onNavigate,
   availableViews = CHART_VIEWS,
+  leading,
 }: {
   readonly activeView: ChartViewKind;
   readonly buildHref: (view: ChartViewKind) => string;
   readonly onNavigate: (view: ChartViewKind) => void;
   /** Which views this chart currently has content for (e.g. a chart without houses has no Wheel). */
   readonly availableViews?: readonly ChartViewKind[];
+  /** Optional control placed first on the same row (the chart type select, #801). */
+  readonly leading?: React.ReactNode;
 }): React.JSX.Element {
   const t = useMessages(chartViewMessages);
   const labels = chartViewLabels(t);
 
   return (
     <div className="chart-view-bar">
+      {leading}
       <span className="chart-view-prefix">{t.extendedSettingsPrefix}</span>
       <nav className="chart-view-nav" aria-label={t.chartViewNavLabel}>
         {availableViews.map((view) => (

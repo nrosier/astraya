@@ -3893,13 +3893,23 @@ svg text.chart-symbol-text-unicode {
   font-size: 0.9rem;
 }
 
+/* The chart type select shares this row with the view nav (#801); below 64rem the two selects wrap onto separate lines when they cannot fit. */
+.chart-view-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-1) var(--space-3);
+  margin: var(--space-1) 0 var(--space-2);
+}
+
+.chart-view-bar .chart-type-select,
+.chart-view-bar .chart-view-select {
+  margin: 0;
+}
+
 @media (min-width: 64rem) {
   .chart-view-bar {
-    display: flex;
-    flex-wrap: wrap;
     align-items: center;
-    gap: var(--space-1) var(--space-3);
-    margin: var(--space-1) 0 var(--space-2);
   }
 
   .chart-view-prefix {

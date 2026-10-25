@@ -1714,6 +1714,7 @@ export function ChartDataView({
   view,
   onViewChange,
   buildViewHref,
+  typeSelector,
   overlayContext,
   chartType,
   personId,
@@ -1753,6 +1754,8 @@ export function ChartDataView({
   readonly onViewChange?: ((view: ChartViewKind) => void) | undefined;
   /** Builds this chart's own URL for a given view, for `ChartViewNav`'s real links — every real caller's hash shape differs, so there is no sane default. */
   readonly buildViewHref: (view: ChartViewKind) => string;
+  /** The chart type select, shown on the same row as `ChartViewNav` (#801); on its own row when that nav is not shown (loading, error, print). */
+  readonly typeSelector?: React.ReactNode;
   /** Optional person-bound sources for configuring extra rings in the Wheel workbench. */
   readonly overlayContext?: ChartOverlayContext | undefined;
   /**
@@ -2214,8 +2217,10 @@ export function ChartDataView({
         generatedAt={formatTimestamp(new Date())}
       />
       {/* Directly under the title row (#801): the chart's own views, once there is a chart to view. */}
+      {!(load.kind === 'ready' && !printAll) && typeSelector}
       {load.kind === 'ready' && !printAll && (
         <ChartViewNav
+          leading={typeSelector}
           activeView={currentTab}
           buildHref={buildViewHref}
           onNavigate={setActiveTab}
@@ -2573,11 +2578,11 @@ export function ChartView({
           <BackLink fallback={personHref(personId)} />
           <PageHeader title={person.displayName || t.chartFallback} basis={basisLine} />
         </div>
-        <ChartTypeSelector personId={personId} type="natal" view={view} />
         <div className="comparison-container" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
           <div>
             <h2>{t.natalLabel}</h2>
             <ChartDataView
+              typeSelector={<ChartTypeSelector personId={personId} type="natal" view={view} />}
               personId={personId}
               load={load}
               displayName={person.displayName}
@@ -2621,8 +2626,8 @@ export function ChartView({
         <BackLink fallback={personHref(personId)} />
         <PageHeader title={person.displayName || t.chartFallback} basis={basisLine} />
       </div>
-      <ChartTypeSelector personId={personId} type="natal" view={view} />
       <ChartDataView
+        typeSelector={<ChartTypeSelector personId={personId} type="natal" view={view} />}
         personId={personId}
         load={load}
         displayName={person.displayName}
