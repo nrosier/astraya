@@ -1,6 +1,6 @@
 name: Release
 
-# Policy: every milestone ends in a tagged release. See docs/RELEASING.md.
+# Policy: every milestone ends in a tagged release. See docs/ops/RELEASING.md.
 on:
   push:
     tags: ['v*']

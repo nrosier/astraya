@@ -189,7 +189,7 @@ await expect(page.getByRole('heading', { name: aboutMessages.nl.astrologyPrimerH
 
 - **Location:** `CLAUDE.md:5`, `CLAUDE.md:34`
 - **Classification:** `Criticality: LOW` | `Urgency: BACKLOG` | `Effort: EASY` | `Scope: QUICK_FIX`
-- **Issue:** The onboarding checklist requires every agent to read `docs/DEPENDENCIES.md`, and the file-change workflow requires updating it when external dependencies change. No such file exists under `docs/`.
+- **Issue:** The onboarding checklist requires every agent to read `docs/ops/DEPENDENCIES.md`, and the file-change workflow requires updating it when external dependencies change. No such file exists under `docs/`.
 - **Impact:** The documented workflow begins with a dead path and defines a maintenance obligation that contributors cannot satisfy. Dependency/licence and lazy-loading knowledge is consequently split across `package.json`, `NOTICE`, source comments, and build scripts instead of the promised inventory.
 - **Recommended Remediation:** Either create the dependency inventory and make it the maintained source described by `CLAUDE.md`, or remove both requirements. A useful inventory should identify direct dependency, purpose, licence, runtime/build/test scope, and whether it must stay lazy-loaded.
 

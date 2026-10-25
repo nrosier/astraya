@@ -34,7 +34,7 @@ export interface RegistryStar {
   readonly notes: string | null;
   /**
    * Variant printed longitudes for this star. Variants are kept for the record and are
-   * never used for conjunctions (see docs/FIXED_STAR_REGISTRY.md).
+   * never used for conjunctions (see docs/domain/FIXED_STAR_REGISTRY.md).
    */
   readonly variantLongitudes: readonly RegistryVariant[];
 }
@@ -51,7 +51,7 @@ export interface RegistryVariant {
  * The lineage is stated as far as the sources support it. The Muẓaffarī is a
  * reworking of the ʿAlāʾī Zīj for its planetary tables. For the stars, whether
  * al-Fahhād observed them is unverified (Kunitzsch & Langermann, p. 162).
- * Lineage and epoch, stated on every entry's source (see docs/FIXED_STAR_REGISTRY.md).
+ * Lineage and epoch, stated on every entry's source (see docs/domain/FIXED_STAR_REGISTRY.md).
  */
 export const YEMEN_STAR_AUTHORITY =
   "Al-Fārisī, Zīj al-Muẓaffarī (Yemen, 13th century), a reworking of the ʿAlāʾī Zīj, per van Dalen (planetary tables). Kunitzsch & Langermann, 'A Star Table from Medieval Yemen', pp. 167–169. Longitudes are Ptolemy's, precessed by 17;11 (Kunitzsch & Langermann, p. 162). Epoch: 1262 CE Julian, from 16 Ṣafar 660 AH, i.e. 631 Yazdijird (Kunitzsch & Langermann, p. 169). Precession rate: IAU 1976, 5029.0966″ per Julian century (Lieske et al. 1977, Astronomy and Astrophysics 58), verified 2026-10-20.";
@@ -1177,7 +1177,7 @@ export function registryLongitude(star: RegistryStar): Degrees {
 
 /**
  * General precession in longitude, 5029.0966 arcseconds per Julian century (IAU 1976; Lieske et al. 1977).
- * Verified 2026-10-20 against the published IAU 1976 value (Lieske et al. 1977, Astronomy and Astrophysics 58); no copy of that paper is in docs/references/. See docs/FIXED_STAR_REGISTRY.md, Precession section.
+ * Verified 2026-10-20 against the published IAU 1976 value (Lieske et al. 1977, Astronomy and Astrophysics 58); no copy of that paper is in docs/references/. See docs/domain/FIXED_STAR_REGISTRY.md, Precession section.
  * Applied linearly from the epoch; the rate itself varies slowly over centuries, so for spans of several centuries the shift is an approximation of order 0.02°.
  */
 export const PRECESSION_DEG_PER_YEAR = 5029.0966 / 3600 / 100;

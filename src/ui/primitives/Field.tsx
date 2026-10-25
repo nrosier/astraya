@@ -1,7 +1,7 @@
 /**
  * The shared field anatomy (#506/#508): label, optional/required marker, unit, help text, and
  * error occupy defined slots so every text/date/number/select control looks and behaves the
- * same regardless of which screen it is on (`docs/UI-UX_GUIDELINES.md` §6 "Shared control
+ * same regardless of which screen it is on (`docs/ui/UI-UX_GUIDELINES.md` §6 "Shared control
  * anatomy"). `TextField`/`DateField`/`NumberField`/`Select` wrap their native control in this;
  * a feature should not assemble a label/input/error trio by hand.
  */

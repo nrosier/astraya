@@ -260,7 +260,7 @@ export function ExtendedSettingsPanel({
     );
   };
 
-  /** A group of object rows with the long-list "Select all"/"Clear" convention (`docs/UI-UX_GUIDELINES.md`'s decision matrix). */
+  /** A group of object rows with the long-list "Select all"/"Clear" convention (`docs/ui/UI-UX_GUIDELINES.md`'s decision matrix). */
   const objectGroup = (
     legend: string,
     keys: readonly ObjectKey[],

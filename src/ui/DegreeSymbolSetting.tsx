@@ -7,7 +7,7 @@
 /**
  * @module DegreeSymbolSetting
  * @purpose Device-preference control for showing/hiding degree-symbol (Sabian symbol) notes in the Report, with its own explanation of what a Sabian symbol is.
- * @conventions Writes the shared device preference via degree-symbol-setting.ts; uses DegreeSymbolSetting.messages.ts for en/nl text via useMessages(). Mirrors RulershipSetting.tsx's label+explanation+control shape, but a single boolean (Checkbox) rather than an exclusive multi-choice (OptionCards) — per docs/UI-UX_GUIDELINES.md's decision table, a lone checkbox is the right primitive here, not a radiogroup.
+ * @conventions Writes the shared device preference via degree-symbol-setting.ts; uses DegreeSymbolSetting.messages.ts for en/nl text via useMessages(). Mirrors RulershipSetting.tsx's label+explanation+control shape, but a single boolean (Checkbox) rather than an exclusive multi-choice (OptionCards) — per docs/ui/UI-UX_GUIDELINES.md's decision table, a lone checkbox is the right primitive here, not a radiogroup.
  * @exports DegreeSymbolSetting
  */
 import { useShowDegreeSymbol } from './degree-symbol-setting.js';

@@ -97,7 +97,7 @@ Astraya already distinguishes display and aspect participation in object policy.
 
 ### 2.9 Export, sharing, and reproducibility
 
-**Confirmed strengths.** Astraya provides documented, versioned native JSON and AAF birth-record interchange (`docs/EXPORT_SCHEMA.md:4-12`; `docs/AAF_INTERCHANGE.md:1-5`). It should not be criticized as lacking interchange wholesale. The calculation artifact and full export are particularly strong foundations.
+**Confirmed strengths.** Astraya provides documented, versioned native JSON and AAF birth-record interchange (`docs/domain/EXPORT_SCHEMA.md:4-12`; `docs/domain/AAF_INTERCHANGE.md:1-5`). It should not be criticized as lacking interchange wholesale. The calculation artifact and full export are particularly strong foundations.
 
 **Confirmed defect — PDF visibility drift.** A PDF chart section computes with effective settings and custom points, but calls `chartSheetInput` and `tablesOf` with empty/default visibility options (`src/ui/pdf-export-plan.ts:439-477`, `src/ui/pdf-export-plan.ts:540-556`). Objects hidden on screen can reappear in the deliverable.
 

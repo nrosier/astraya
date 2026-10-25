@@ -27,7 +27,7 @@
  * A restore never clears a field the export did not itself carry: an export's absence of an
  * optional field (a calendar override, a zone override) is not evidence the user meant to clear
  * it, just data this export's version doesn't speak to. Guessing which is which is exactly the
- * kind of silent default `docs/EXPORT_SCHEMA.md` already refuses for `parseCalculationSnapshot`
+ * kind of silent default `docs/domain/EXPORT_SCHEMA.md` already refuses for `parseCalculationSnapshot`
  * (#583); this file holds the same line.
  */
 /**

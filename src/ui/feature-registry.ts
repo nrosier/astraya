@@ -7,7 +7,7 @@
  * what lets `WorkspaceShell`/`PageHeader`/the exhaustiveness test treat every feature uniformly
  * instead of three independently-shaped lists.
  *
- * `docs/UI-UX_IMPLEMENTATION_PLAN.md` §5.1 asks for this exact shape (`FeatureDefinition`) plus
+ * `docs/ui/UI-UX_IMPLEMENTATION_PLAN.md` §5.1 asks for this exact shape (`FeatureDefinition`) plus
  * an exhaustiveness test; `test/ui-feature-registry.test.ts` is that test.
  */
 /**
@@ -24,7 +24,7 @@ import { routeHref, type Route } from './route.js';
 export type FeatureScope = 'person' | 'global' | 'document' | 'preferences' | 'admin';
 
 /**
- * Groups mirror `docs/UI-UX_GUIDELINES.md` §2's canonical information architecture: person
+ * Groups mirror `docs/ui/UI-UX_GUIDELINES.md` §2's canonical information architecture: person
  * features fall into the four person-workspace groups, global features into the three Explore
  * groups, and everything else keeps its own single-member group.
  */

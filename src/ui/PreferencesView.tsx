@@ -1,6 +1,6 @@
 /**
  * The Preferences workspace (#506/#510): durable account/device settings in one stable place,
- * per `docs/UI-UX_GUIDELINES.md` §3's setting-scope model — a reader should never have to
+ * per `docs/ui/UI-UX_GUIDELINES.md` §3's setting-scope model — a reader should never have to
  * remember that the rulers choice lives in a chart's Extended settings and the symbol class
  * lives in the header. Every control here is the *same* control other screens already use
  * (`RulershipSetting`, `SymbolSetting`, `LanguageToggle`, `ThemeToggle`), writing the same

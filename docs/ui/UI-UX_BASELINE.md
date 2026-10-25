@@ -3,7 +3,7 @@
 The end-to-end suite pins 142 behaviours across 32 specs (Playwright, against the built `dist/`).
 This is the behaviour any redesign must keep, or change on purpose with the test changed in the same commit.
 Each line is a test title, so the record is the tests; regenerate with `node scripts/generate-ui-baseline.mjs`.
-Persisted person data is the compatibility boundary (docs/UI-UX_IMPLEMENTATION_PLAN.md §4); routes and UI are not.
+Persisted person data is the compatibility boundary (docs/ui/UI-UX_IMPLEMENTATION_PLAN.md §4); routes and UI are not.
 
 ## Routes and navigation
 

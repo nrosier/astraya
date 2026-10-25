@@ -5,7 +5,7 @@
  *   a complete chart cast for one person, so they share everything below. A path segment of the chart
  *   route (`.../charts/draconic/aspects`).
  * - The **view** of the chart screen (#511): Wheel, Aspects, Aspect matrix, Elements & modalities, Placements, or Patterns & condition, per
- *   `docs/UI-UX_GUIDELINES.md` §2's target chart page. The last path segment of the chart route.
+ *   `docs/ui/UI-UX_GUIDELINES.md` §2's target chart page. The last path segment of the chart route.
  *
  * These are route-level views with stable URLs and ordinary links — not ARIA tabs (the guideline's own
  * wording) — so the header's Charts menu, the type selector, and `ChartViewNav` all have to agree on the
@@ -22,7 +22,7 @@
 /**
  * @module ui/chart-sections
  * @purpose Defines and parses the Chart screen's two URL-encoded axes — chart type (natal/draconic/harmonic/solar-return/lunar-return) and view (wheel/aspects/matrix/elements/placements/patterns) — so the header menu, type selector, and ChartViewNav stay in agreement.
- * @conventions Pure functions only (no DOM), parsed/tested like route.ts; labels are translated via ChartView's own messages object rather than owning its own *.messages.ts file. Views are route-level links per docs/UI-UX_GUIDELINES.md §2, not ARIA tabs.
+ * @conventions Pure functions only (no DOM), parsed/tested like route.ts; labels are translated via ChartView's own messages object rather than owning its own *.messages.ts file. Views are route-level links per docs/ui/UI-UX_GUIDELINES.md §2, not ARIA tabs.
  * @exports CHART_VIEWS, ChartViewKind, CHART_TYPES, ChartType, isChartType, isDerivedChartType, isChartView, chartViewFromHash, chartViewLabels
  */
 import type { chartViewMessages } from './ChartView.messages.js';

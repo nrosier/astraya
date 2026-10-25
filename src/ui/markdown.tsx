@@ -27,7 +27,7 @@ const INLINE = /(\*\*[^*]+\*\*|`[^`]+`|\[[^\]]+\]\([^)]+\))/g;
 
 export interface MarkdownOptions {
   /**
-   * Resolve a repo-relative link such as `docs/RELEASING.md`.
+   * Resolve a repo-relative link such as `docs/ops/RELEASING.md`.
    *
    * The changelog is read in two places: on GitHub, where relative links resolve
    * against the repository, and inside the app, where they would not resolve at all.

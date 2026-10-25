@@ -28,7 +28,7 @@ export const SOURCE_URL = 'https://github.com/nrosier/astraya';
 export const SOURCE_URL_FOR_BUILD: string = APP_COMMIT === 'unknown' ? SOURCE_URL : `${SOURCE_URL}/tree/${APP_COMMIT}`;
 
 /**
- * Absolute URL for a repo-relative path such as `docs/RELEASING.md`.
+ * Absolute URL for a repo-relative path such as `docs/ops/RELEASING.md`.
  *
  * Bundled Markdown (the changelog) uses relative links, which resolve against the
  * repository when read on GitHub but resolve against nothing when rendered in-app.

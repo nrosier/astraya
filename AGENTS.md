@@ -2,10 +2,10 @@
 
 ## Onboarding
 
-1. Read this file and `docs/DEPENDENCIES.md`.
+1. Read this file and `docs/ops/DEPENDENCIES.md`.
 2. Read the local `MAP.md` before inspecting or changing a directory.
-3. For UI work, read `docs/UI-UX_GUIDELINES.md`.
-4. For UI shell, navigation, settings, chart-workspace, or migration work, also read `docs/UI-UX_IMPLEMENTATION_PLAN.md`.
+3. For UI work, read `docs/ui/UI-UX_GUIDELINES.md`.
+4. For UI shell, navigation, settings, chart-workspace, or migration work, also read `docs/ui/UI-UX_IMPLEMENTATION_PLAN.md`.
 5. Respect `.claudeignore` search exclusions. Every major directory has a `MAP.md`.
 
 ## Documentation Maintenance
@@ -20,7 +20,7 @@
 - List only the file's domain, responsibility, and minimal external dependency paths.
 - Add, remove, or correct local `MAP.md` entries whenever a significant file is created, deleted, renamed, or changes responsibility.
 - For significant source files, add or verify the JSDoc `@module` header with `@purpose`, `@conventions`, and `@exports`.
-- Update `docs/DEPENDENCIES.md` when external dependencies change.
+- Update `docs/ops/DEPENDENCIES.md` when external dependencies change.
 
 ## Commands
 

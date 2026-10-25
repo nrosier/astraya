@@ -120,8 +120,8 @@ describe('a file from another program', () => {
 });
 
 describe('the extension chunk is documented', () => {
-  it('lists, in docs/AAF_INTERCHANGE.md, every key Astraya writes there', () => {
-    const doc = readFileSync(resolve(import.meta.dirname, '../docs/AAF_INTERCHANGE.md'), 'utf8');
+  it('lists, in docs/domain/AAF_INTERCHANGE.md, every key Astraya writes there', () => {
+    const doc = readFileSync(resolve(import.meta.dirname, '../docs/domain/AAF_INTERCHANGE.md'), 'utf8');
     const full = buildPerson(
       'p-full',
       new Map<string, unknown>([

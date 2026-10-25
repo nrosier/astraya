@@ -1,6 +1,6 @@
 /**
  * The chart screen's local navigation between its four views — Wheel, Aspects, Placements, and
- * Patterns & condition (#511) — per `docs/UI-UX_GUIDELINES.md` §2: "these are route-level views with
+ * Patterns & condition (#511) — per `docs/ui/UI-UX_GUIDELINES.md` §2: "these are route-level views with
  * stable URLs and ordinary links, not ARIA tabs." A compact row of real links at and above the app's
  * standing 64rem nav breakpoint (`WorkspaceShell.tsx`'s own threshold); the shared `Select` primitive,
  * labelled "Chart view", below it.

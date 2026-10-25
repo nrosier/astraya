@@ -1,6 +1,6 @@
 /**
  * The content header (#506/#509): the page title and the current screen's own exports, together
- * — per `docs/UI-UX_GUIDELINES.md`, "the content header contains the page title, compact
+ * — per `docs/ui/UI-UX_GUIDELINES.md`, "the content header contains the page title, compact
  * calculation basis, primary page action, and actions that affect only this page. It does not
  * repeat global navigation."
  *

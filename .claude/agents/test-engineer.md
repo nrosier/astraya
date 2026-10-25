@@ -50,7 +50,7 @@ a subdirectory split or a different test runner.
 - **The golden-chart gate is never waived.** Ephemeris output is checked against
   NASA JPL Horizons reference values (0.2″ tolerance for historical dates, 1.5″
   for future ones, 2.5″ for main-belt asteroids) as part of `npm test` — per
-  `docs/RELEASING.md`, this gate is never relaxed to unblock a release. A change
+  `docs/ops/RELEASING.md`, this gate is never relaxed to unblock a release. A change
   anywhere near `src/ephemeris/` needs this run, not skipped with a
   rationalization about being "close enough."
 - **Accessibility is covered at the e2e layer, and is a floor, not a ceiling.**

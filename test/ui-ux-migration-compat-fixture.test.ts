@@ -3,7 +3,7 @@
  * The UI/UX overhaul (#506) Phase 0 compatibility fixture.
  *
  * Stored person data is the one compatibility boundary the migration must never break — UI and
- * routes have none (`docs/UI-UX_IMPLEMENTATION_PLAN.md` §4). This fixture seeds a complete and an
+ * routes have none (`docs/ui/UI-UX_IMPLEMENTATION_PLAN.md` §4). This fixture seeds a complete and an
  * incomplete person through `Store.mutate()` (the existing, unchanged write path every current
  * screen already uses — not through a redesigned form, so a passing test here proves the
  * migration preserves the real persistence contract, not merely that a new writer can read its

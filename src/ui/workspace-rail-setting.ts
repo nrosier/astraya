@@ -1,5 +1,5 @@
 /**
- * Whether the desktop workspace rail (#506/#509, `docs/UI-UX_GUIDELINES.md` "Target application
+ * Whether the desktop workspace rail (#506/#509, `docs/ui/UI-UX_GUIDELINES.md` "Target application
  * shell") is collapsed: a device preference like the last-viewed-person id (`last-person.ts`,
  * whose shape this mirrors) — never synced, never sent anywhere. Collapsing hides the rail's
  * navigation and account controls entirely rather than shrinking them to icon-only buttons with

@@ -4,7 +4,7 @@
  * attribute every tooltip in the app relied on until now (confirmed live: hovering a column
  * header for 2+ seconds never rendered a visible box, only the cursor's help icon). Generalized
  * from `SyncBadge.tsx`'s click-toggled `aria-expanded`/`aria-controls` popover shape rather than
- * inventing a third one-off implementation (`docs/UI-UX_GUIDELINES.md`'s design-authority rule).
+ * inventing a third one-off implementation (`docs/ui/UI-UX_GUIDELINES.md`'s design-authority rule).
  *
  * Behavior:
  * - Hover opens after a short delay and stays open while the pointer is over the popover

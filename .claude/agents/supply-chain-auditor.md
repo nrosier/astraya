@@ -27,7 +27,7 @@ from a template), not an intentional addition.
   pinned rather than following a range, labeled for the `risk:correctness`
   category, with a reminder in the PR body to re-verify the golden-chart gate
   (the JPL Horizons reference-value tests, part of `npm test`, never waived per
-  `docs/RELEASING.md`) before merging. This is the one dependency where "just
+  `docs/ops/RELEASING.md`) before merging. This is the one dependency where "just
   bump it, tests pass" is not sufficient review — a version bump that changes
   ephemeris output by even a fraction of an arcsecond is a correctness
   regression, not a routine update.

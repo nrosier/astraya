@@ -1474,7 +1474,7 @@ function renderAspectPatterns(data: ChartData, t: typeof chartViewMessages.en, l
 
 /**
  * The Placements view (#511): Positions, Houses & angles, and Derived points, stacked with visible
- * headings rather than as separate tabs — `docs/UI-UX_GUIDELINES.md` §2's exact wording. Houses and
+ * headings rather than as separate tabs — `docs/ui/UI-UX_GUIDELINES.md` §2's exact wording. Houses and
  * derived points are skipped (not the whole view) when the chart has no houses.
  */
 function renderPlacementsView(
@@ -1540,7 +1540,7 @@ function renderPlacementsView(
 
 /**
  * The Patterns & condition view (#511): the chart shape (with the Moon's phase and sect) next to its
- * own explanation, then dignities and dispositors — `docs/UI-UX_GUIDELINES.md` §2's exact grouping.
+ * own explanation, then dignities and dispositors — `docs/ui/UI-UX_GUIDELINES.md` §2's exact grouping.
  */
 function renderPatternsView(
   data: ChartData,

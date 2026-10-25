@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/nrosier/astraya/docs/schema/astraya-export.schema.json",
   "title": "Astraya full export",
-  "description": "Hand-authored structural counterpart to src/domain/full-export.ts's FullExport/ExportedPerson/ExportedChart TypeScript interfaces (#561). See ../EXPORT_SCHEMA.md for the compatibility policy and version history. This document is maintained by hand, not generated — keep it in step with the TypeScript source when either changes.",
+  "description": "Hand-authored structural counterpart to src/domain/full-export.ts's FullExport/ExportedPerson/ExportedChart TypeScript interfaces (#561). See ../domain/EXPORT_SCHEMA.md for the compatibility policy and version history. This document is maintained by hand, not generated — keep it in step with the TypeScript source when either changes.",
   "type": "object",
   "required": ["format", "version", "exportedAt", "app", "preferences", "note", "people"],
   "additionalProperties": false,

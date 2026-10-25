@@ -1,7 +1,7 @@
 /**
  * The key reference at the top of `src/interpretation/schema.ts` (#427): one example key per
  * category, its shape, and the ordering rule for its two bodies. This fails if a category's shape
- * changes, so the table in that header (and `docs/CORPUS_KEYS.md`) cannot drift from `placementKey`.
+ * changes, so the table in that header (and `docs/domain/CORPUS_KEYS.md`) cannot drift from `placementKey`.
  */
 import { describe, expect, it } from 'vitest';
 import {

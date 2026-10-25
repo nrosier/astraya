@@ -57,7 +57,7 @@
   - Branches: Research & implement verified standard (after #590)
 
 - **#592 [DOC-01]** Documentation reconciliation — EASY
-  - Files: `docs/EXPORT_SCHEMA.md`, `docs/audit/IMPLEMENTATION_PLAN.md`
+  - Files: `docs/domain/EXPORT_SCHEMA.md`, `docs/audit/IMPLEMENTATION_PLAN.md`
   - Branches: Correct docs to match current behavior
 
 ### Priority 3 - PDF EXPORT ISSUES

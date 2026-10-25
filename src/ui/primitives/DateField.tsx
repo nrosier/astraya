@@ -1,7 +1,7 @@
 /**
  * A date input through the shared `Field` anatomy (#506/#508).
  *
- * Uses the browser's own `<input type="date">` deliberately — `docs/UI-UX_GUIDELINES.md` §6
+ * Uses the browser's own `<input type="date">` deliberately — `docs/ui/UI-UX_GUIDELINES.md` §6
  * is explicit that a native picker is the right fallback "when those requirements cannot be
  * met" (a mature accessible calendar primitive, verified across arrow keys, zoom, screen
  * readers and both languages, is a bigger build than this phase's scope). It already satisfies

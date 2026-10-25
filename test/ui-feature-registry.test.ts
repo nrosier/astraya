@@ -1,6 +1,6 @@
 /**
  * Exhaustiveness checks for `feature-registry.ts` (#506/#509), per
- * `docs/UI-UX_IMPLEMENTATION_PLAN.md` §5.1: unique keys, unique (group, order) pairs, every
+ * `docs/ui/UI-UX_IMPLEMENTATION_PLAN.md` §5.1: unique keys, unique (group, order) pairs, every
  * person feature building a working href, and every labelKey resolving in both locales via
  * the catalogue it actually looks up at render time.
  */

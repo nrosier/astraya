@@ -4,7 +4,7 @@
  * Keeps a real `<input type="number">` for keyboard/screen-reader semantics, suppresses the
  * browser's own spinner (inconsistent across browsers), and renders the shared trailing
  * Decrease/Increase buttons instead — same dimensions, icon, and boundary-disabled behavior
- * everywhere this is used, per `docs/UI-UX_GUIDELINES.md` §6. Preserves an in-progress typed
+ * everywhere this is used, per `docs/ui/UI-UX_GUIDELINES.md` §6. Preserves an in-progress typed
  * value (empty, a bare minus sign, a trailing decimal separator) rather than coercing on every
  * keystroke; a caller validates on blur/submit the same way `domain/person-form.ts` already does
  * for its own numeric fields.

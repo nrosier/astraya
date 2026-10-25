@@ -7,14 +7,14 @@ model: claude-sonnet-5-5
 
 # Release Engineer
 
-Read `docs/RELEASING.md` first — this repo documents its release process
+Read `docs/ops/RELEASING.md` first — this repo documents its release process
 explicitly, unlike some. Get every step right in order; a half-done release
 (version bumped but no tag, or tag pushed but the workflows never ran) is worse
 than not starting, because it looks live from the commit history alone.
 
 ## Versioning is milestone-driven, not calendar- or feature-count-driven
 
-Per `docs/RELEASING.md`: Astraya's milestones (M0–M9) map to versions
+Per `docs/ops/RELEASING.md`: Astraya's milestones (M0–M9) map to versions
 `v0.1.0`–`v1.0.0`. The project stays pre-1.0 while incomplete — 1.0.0 is not "the
 feature list is done," it's a deliberate, separate call. Before assuming
 "next release = patch," check which milestone the work since the last tag
@@ -90,7 +90,7 @@ Compare what changed since the last tag against each of these (`git diff --stat
    build step, a changed output directory, the smoke test's assumptions).
 8. **The service worker / PWA precache and the CSP (`server/csp.ts`)** — a new external
    resource, worker or asset type is allowed and cached as intended.
-9. **Docs** — `docs/RELEASING.md`, the ADRs and the README's feature list say what the
+9. **Docs** — `docs/ops/RELEASING.md`, the ADRs and the README's feature list say what the
    release does.
 
 If any of these is out of date, **fix it in its own commit before the release commit**,
@@ -127,7 +127,7 @@ polling `gh run list` in a tight loop.
 
 ## Checklist, in order
 
-1. Milestone check — confirm minor vs. patch against `docs/RELEASING.md`'s
+1. Milestone check — confirm minor vs. patch against `docs/ops/RELEASING.md`'s
    milestone table, not by guessing from the diff size.
 2. `npm run changelog:draft`, review/edit the result.
 3. **Check the shipped files** (Dockerfile and the rest of the section above) against what

@@ -25,7 +25,7 @@ what changed, what was found along the way, and what's deliberately left open ra
 - Added `docs/MAP.md` — this repo's `CLAUDE.md` requires one per major directory, and `docs/` didn't
   have one despite having grown to five subdirectories.
 - Every cross-reference to a moved file was grepped for and updated: `CHANGELOG.md`,
-  `docs/CORPUS_KEYS.md`, `docs/DEPENDENCIES.md`, `docs/archive/BENCHMARK_ASTROLOGYAPI.md`'s own
+  `docs/domain/CORPUS_KEYS.md`, `docs/ops/DEPENDENCIES.md`, `docs/archive/BENCHMARK_ASTROLOGYAPI.md`'s own
   internal links, `.gitignore`, and three `tools/corpus-gen/*.mjs` files that cited a doc path in a
   comment or user-facing message string.
 

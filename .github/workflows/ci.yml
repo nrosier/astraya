@@ -32,7 +32,7 @@ jobs:
             fi
           done < <(git log --no-merges --pretty=%s "$BASE..HEAD")
           if [ "$bad" -ne 0 ]; then
-            echo 'Expected e.g. "feat(chart): draw the aspect web". See docs/RELEASING.md.' >&2
+            echo 'Expected e.g. "feat(chart): draw the aspect web". See docs/ops/RELEASING.md.' >&2
             exit 1
           fi
           echo 'All commit subjects parse.'
