@@ -9,13 +9,16 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
+import type { BrowserContext, Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
-import { createPerson, gotoAndSettle } from './support.ts';
+import { EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
 
 let dir: string;
 let app: FastifyInstance;
 let baseUrl: string;
+let context: BrowserContext;
+let page: Page;
 
 test.beforeAll(async () => {
   dir = mkdtempSync(join(tmpdir(), 'astraya-e2e-'));
@@ -33,19 +36,20 @@ test.afterAll(async () => {
   rmSync(dir, { recursive: true, force: true });
 });
 
-test('a person with a known birth time gets a Consultation screen with transits, timing tracks and highlights', async ({
-  page,
-}) => {
+// A fresh context per test, holding the shared people (#799); no test here saves, edits or deletes one.
+test.beforeEach(async ({ browser }) => {
+  context = await newSeededContext(browser, baseUrl);
+  page = await context.newPage();
+});
+
+test.afterEach(async () => {
+  await context.close();
+});
+
+test('a person with a known birth time gets a Consultation screen with transits, timing tracks and highlights', async () => {
   test.setTimeout(60_000);
 
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, {
-    name: 'Ada Lovelace',
-    date: '1815-12-10',
-    time: '07:45:00',
-    latitude: '51.5072',
-    longitude: '-0.1276',
-  });
+  await openSharedPerson(page, baseUrl, EINSTEIN);
 
   await page.getByRole('link', { name: 'Consultation', exact: true }).click();
   await expect(page.getByRole('heading', { level: 1, name: /consultation/i })).toBeVisible();

@@ -11,8 +11,10 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
+import type { BrowserContext, Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
+import { EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
 import { createPerson, gotoAndSettle, pdfTextRuns, signIn } from './support.ts';
 
 const BOOTSTRAP_TOKEN = 'e2e-pdf-builder-bootstrap-token';
@@ -53,14 +55,6 @@ const ADA = {
   name: 'Ada Lovelace',
   date: '1815-12-10',
   time: '07:45:00',
-  latitude: '51.5072',
-  longitude: '-0.1276',
-};
-
-const CHARLES = {
-  name: 'Charles Babbage',
-  date: '1820-12-26',
-  time: '10:00:00',
   latitude: '51.5072',
   longitude: '-0.1276',
 };
@@ -116,45 +110,6 @@ test('the header’s PDF-builder link opens the PDF builder, and a preset downlo
   await expect(page.getByRole('status')).toHaveText('✓');
   const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
   expect(results.violations).toEqual([]);
-});
-
-test('ticking a chart type reveals its own tables and wheel checkbox, and unticking collapses them', async ({
-  page,
-}) => {
-  test.setTimeout(60_000);
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, ADA);
-  await page.goto(`${baseUrl}/#/documents/pdf`);
-  await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Ada Lovelace' });
-
-  await expect(page.getByLabel('Wheel', { exact: true })).toHaveCount(0);
-  await page.getByRole('checkbox', { name: 'Harmonic', exact: true }).check();
-  await expect(page.getByLabel('Wheel', { exact: true })).toBeVisible();
-  await expect(page.getByLabel('Harmonic number', { exact: true })).toHaveValue('5');
-  await page.getByRole('checkbox', { name: 'Harmonic', exact: true }).uncheck();
-  await expect(page.getByLabel('Wheel', { exact: true })).toHaveCount(0);
-});
-
-test('signed out, the saved interpretation picker is disabled, asks the server nothing, and has no consent tick (#759)', async ({
-  page,
-}) => {
-  test.setTimeout(60_000);
-  const listed: string[] = [];
-  page.on('request', (request) => {
-    if (request.url().includes('/api/interpretation/results')) listed.push(request.url());
-  });
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, ADA);
-  await page.goto(`${baseUrl}/#/documents/pdf`);
-  await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Ada Lovelace' });
-
-  const picker = page.getByRole('group', { name: 'Saved AI interpretations', exact: true });
-  await expect(picker).toBeVisible();
-  await expect(picker.getByText('Sign in to include your saved AI interpretations.')).toBeVisible();
-  await expect(picker.getByRole('button', { name: 'Choose interpretations', exact: true })).toBeDisabled();
-  // Nothing is generated at export, so there is no consent to give.
-  await expect(page.getByRole('checkbox', { name: /consent/i })).toHaveCount(0);
-  expect(listed).toEqual([]);
 });
 
 test('signed in, the picker offers the stored interpretations in the PDF’s language, and both build into the PDF (#759)', async ({
@@ -223,237 +178,6 @@ test('signed in, the picker offers the stored interpretations in the PDF’s lan
   await expect(page.getByRole('status')).toHaveText('✓');
 });
 
-test('synastry and composite each get their own partner picker, and both build into one PDF (#441)', async ({
-  page,
-}) => {
-  test.setTimeout(90_000);
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, ADA);
-  await page.getByRole('link', { name: '← People' }).click();
-  await createPerson(page, CHARLES);
-  await page.goto(`${baseUrl}/#/documents/pdf`);
-  await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Ada Lovelace' });
-
-  // Neither partner picker exists until its own checkbox is ticked.
-  await expect(page.getByLabel('Compare with', { exact: true })).toHaveCount(0);
-  await expect(page.getByLabel('Compose with', { exact: true })).toHaveCount(0);
-
-  await page.getByRole('checkbox', { name: 'Synastry', exact: true }).check();
-  await page.getByLabel('Compare with', { exact: true }).selectOption({ label: 'Charles Babbage' });
-  await page.getByRole('checkbox', { name: 'Composite', exact: true }).check();
-  await page.getByLabel('Compose with', { exact: true }).selectOption({ label: 'Charles Babbage' });
-
-  const buildButton = page.getByRole('button', { name: 'Build PDF', exact: true });
-  await expect(buildButton).toBeEnabled();
-  const [download] = await Promise.all([page.waitForEvent('download'), buildButton.click()]);
-  const chunks: Buffer[] = [];
-  for await (const chunk of await download.createReadStream()) chunks.push(chunk as Buffer);
-  const pdf = Buffer.concat(chunks);
-  expect(pdf.subarray(0, 5).toString('latin1')).toBe('%PDF-');
-  expect(pdf.length).toBeGreaterThan(1000);
-  await expect(page.getByRole('status')).toHaveText('✓');
-});
-
-test('unticking Synastry hides its partner picker and drops it from the selection', async ({ page }) => {
-  test.setTimeout(60_000);
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, ADA);
-  await page.getByRole('link', { name: '← People' }).click();
-  await createPerson(page, CHARLES);
-  await page.goto(`${baseUrl}/#/documents/pdf`);
-  await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Ada Lovelace' });
-
-  await page.getByRole('checkbox', { name: 'Synastry', exact: true }).check();
-  await expect(page.getByLabel('Compare with', { exact: true })).toBeVisible();
-  await page.getByRole('checkbox', { name: 'Synastry', exact: true }).uncheck();
-  await expect(page.getByLabel('Compare with', { exact: true })).toHaveCount(0);
-});
-
-test('ticking Progressions reveals its technique/MC-method controls, which collapse the MC method for non-secondary techniques (#441)', async ({
-  page,
-}) => {
-  test.setTimeout(60_000);
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, ADA);
-  await page.goto(`${baseUrl}/#/documents/pdf`);
-  await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Ada Lovelace' });
-
-  const predictive = page.getByRole('group', { name: 'Progressions, solar arc, profections & astrocartography' });
-  await expect(predictive.getByLabel('Technique', { exact: true })).toHaveCount(0);
-  await predictive.getByRole('checkbox', { name: 'Progressions', exact: true }).check();
-  await expect(predictive.getByLabel('Technique', { exact: true })).toHaveValue('secondary');
-  await expect(predictive.getByLabel('MC method', { exact: true })).toBeVisible();
-
-  await predictive.getByLabel('Technique', { exact: true }).selectOption({ label: 'Minor' });
-  await expect(predictive.getByLabel('MC method', { exact: true })).toHaveCount(0);
-
-  await predictive.getByRole('checkbox', { name: 'Progressions', exact: true }).uncheck();
-  await expect(predictive.getByLabel('Technique', { exact: true })).toHaveCount(0);
-});
-
-test('ticking Astrocartography reveals its map/line-type/body controls, which collapse when unticked (#441)', async ({
-  page,
-}) => {
-  test.setTimeout(60_000);
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, ADA);
-  await page.goto(`${baseUrl}/#/documents/pdf`);
-  await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Ada Lovelace' });
-
-  const predictive = page.getByRole('group', { name: 'Progressions, solar arc, profections & astrocartography' });
-  await expect(predictive.getByLabel('Map', { exact: true })).toHaveCount(0);
-  await predictive.getByRole('checkbox', { name: 'Astrocartography', exact: true }).check();
-  await expect(predictive.getByLabel('Map', { exact: true })).toBeChecked();
-  await expect(predictive.getByRole('checkbox', { name: 'MC', exact: true })).toBeChecked();
-  await expect(predictive.getByRole('checkbox', { name: 'Sun', exact: true })).toBeChecked();
-  await expect(predictive.getByRole('checkbox', { name: 'Uranus', exact: true })).not.toBeChecked();
-
-  await predictive.getByRole('checkbox', { name: 'Astrocartography', exact: true }).uncheck();
-  await expect(predictive.getByLabel('Map', { exact: true })).toHaveCount(0);
-});
-
-test('selecting the Full predictive report preset fills progressions and solar arc, and builds a real PDF (#441)', async ({
-  page,
-}) => {
-  test.setTimeout(90_000);
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, ADA);
-  await page.goto(`${baseUrl}/#/documents/pdf`);
-  await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Ada Lovelace' });
-  await page
-    .getByLabel('Starting point', { exact: true })
-    .selectOption({ label: 'Full predictive report (natal wheel, transits, progressions, solar arc)' });
-
-  const predictive = page.getByRole('group', { name: 'Progressions, solar arc, profections & astrocartography' });
-  await expect(predictive.getByRole('checkbox', { name: 'Progressions', exact: true })).toBeChecked();
-  await expect(predictive.getByRole('checkbox', { name: 'Solar arc directions', exact: true })).toBeChecked();
-  await expect(predictive.getByRole('checkbox', { name: 'Profections', exact: true })).not.toBeChecked();
-  await expect(predictive.getByRole('checkbox', { name: 'Astrocartography', exact: true })).not.toBeChecked();
-
-  const buildButton = page.getByRole('button', { name: 'Build PDF', exact: true });
-  await expect(buildButton).toBeEnabled();
-  const [download] = await Promise.all([page.waitForEvent('download'), buildButton.click()]);
-  const chunks: Buffer[] = [];
-  for await (const chunk of await download.createReadStream()) chunks.push(chunk as Buffer);
-  const pdf = Buffer.concat(chunks);
-  expect(pdf.subarray(0, 5).toString('latin1')).toBe('%PDF-');
-  expect(pdf.length).toBeGreaterThan(1000);
-  await expect(page.getByRole('status')).toHaveText('✓');
-});
-
-test('ticking Profections and Astrocartography on their own builds a real PDF with both sections (#441)', async ({
-  page,
-}) => {
-  test.setTimeout(90_000);
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, ADA);
-  await page.goto(`${baseUrl}/#/documents/pdf`);
-  await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Ada Lovelace' });
-
-  const predictive = page.getByRole('group', { name: 'Progressions, solar arc, profections & astrocartography' });
-  await predictive.getByRole('checkbox', { name: 'Profections', exact: true }).check();
-  await predictive.getByRole('checkbox', { name: 'Astrocartography', exact: true }).check();
-
-  const buildButton = page.getByRole('button', { name: 'Build PDF', exact: true });
-  await expect(buildButton).toBeEnabled();
-  const [download] = await Promise.all([page.waitForEvent('download'), buildButton.click()]);
-  const chunks: Buffer[] = [];
-  for await (const chunk of await download.createReadStream()) chunks.push(chunk as Buffer);
-  const pdf = Buffer.concat(chunks);
-  expect(pdf.subarray(0, 5).toString('latin1')).toBe('%PDF-');
-  expect(pdf.length).toBeGreaterThan(1000);
-  await expect(page.getByRole('status')).toHaveText('✓');
-});
-
-test('ticking Transits reveals its filter/wheel/table/date controls, and ticking Forecast reveals its tier checkboxes, both collapsing when unticked (#441)', async ({
-  page,
-}) => {
-  test.setTimeout(60_000);
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, ADA);
-  await page.goto(`${baseUrl}/#/documents/pdf`);
-  await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Ada Lovelace' });
-
-  const transitsGroup = page.getByRole('group', { name: 'Transits & Forecast' });
-  await expect(transitsGroup.getByLabel('Contacts shown', { exact: true })).toHaveCount(0);
-  await transitsGroup.getByRole('checkbox', { name: 'Transits', exact: true }).check();
-  await expect(transitsGroup.getByLabel('Contacts shown', { exact: true }).first()).toHaveValue('important');
-  await expect(transitsGroup.getByRole('checkbox', { name: 'Wheel', exact: true })).toBeChecked();
-  await expect(transitsGroup.getByRole('checkbox', { name: 'Aspects', exact: true })).toBeChecked();
-  await transitsGroup.getByRole('checkbox', { name: 'Transits', exact: true }).uncheck();
-  await expect(transitsGroup.getByLabel('Contacts shown', { exact: true })).toHaveCount(0);
-
-  await expect(transitsGroup.getByRole('checkbox', { name: 'Daily', exact: true })).toHaveCount(0);
-  await transitsGroup.getByRole('checkbox', { name: 'Forecast', exact: true }).check();
-  await expect(transitsGroup.getByRole('checkbox', { name: 'Daily', exact: true })).toBeChecked();
-  await expect(transitsGroup.getByRole('checkbox', { name: 'Weekly', exact: true })).toBeChecked();
-  await expect(transitsGroup.getByRole('checkbox', { name: 'Monthly', exact: true })).toBeChecked();
-  await expect(transitsGroup.getByRole('checkbox', { name: 'Yearly', exact: true })).toBeChecked();
-  await transitsGroup.getByRole('checkbox', { name: 'Forecast', exact: true }).uncheck();
-  await expect(transitsGroup.getByRole('checkbox', { name: 'Daily', exact: true })).toHaveCount(0);
-});
-
-test('ticking Eclipses reveals its from/to year controls, collapsing when unticked, and builds a real PDF (#441, #484)', async ({
-  page,
-}) => {
-  test.setTimeout(90_000);
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, ADA);
-  await page.goto(`${baseUrl}/#/documents/pdf`);
-  await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Ada Lovelace' });
-
-  const eclipsesGroup = page.getByRole('group', { name: 'Eclipses', exact: true });
-  await expect(eclipsesGroup.getByLabel('From year', { exact: true })).toHaveCount(0);
-  await eclipsesGroup.getByRole('checkbox', { name: 'Eclipses', exact: true }).check();
-  const thisYear = new Date().getUTCFullYear();
-  await expect(eclipsesGroup.getByLabel('From year', { exact: true })).toHaveValue(String(thisYear - 1));
-  await expect(eclipsesGroup.getByLabel('To year', { exact: true })).toHaveValue(String(thisYear + 3));
-
-  const buildButton = page.getByRole('button', { name: 'Build PDF', exact: true });
-  await expect(buildButton).toBeEnabled();
-  const [download] = await Promise.all([page.waitForEvent('download'), buildButton.click()]);
-  const chunks: Buffer[] = [];
-  for await (const chunk of await download.createReadStream()) chunks.push(chunk as Buffer);
-  const pdf = Buffer.concat(chunks);
-  expect(pdf.subarray(0, 5).toString('latin1')).toBe('%PDF-');
-  expect(pdf.length).toBeGreaterThan(1000);
-  await expect(page.getByRole('status')).toHaveText('✓');
-
-  await eclipsesGroup.getByRole('checkbox', { name: 'Eclipses', exact: true }).uncheck();
-  await expect(eclipsesGroup.getByLabel('From year', { exact: true })).toHaveCount(0);
-});
-
-test('the PDF builder has its own Sabian symbol notes option, starting from the device setting, and unticking it leaves them out of the PDF (#660)', async ({
-  page,
-}) => {
-  test.setTimeout(90_000);
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, ADA);
-  await page.goto(`${baseUrl}/#/documents`);
-  await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Ada Lovelace' });
-  await page
-    .getByLabel('Starting point', { exact: true })
-    .selectOption({ label: 'Executive summary (natal wheel, positions, interpretation)' });
-
-  // The option appears with the written report, and starts from the device setting, which is on by default: the PDF
-  // matches the Report on screen until the reader changes it here.
-  await page.getByRole('checkbox', { name: 'Written report (included at no extra cost)', exact: true }).check();
-  const option = page.getByRole('checkbox', { name: 'Include Sabian symbol notes', exact: true });
-  await expect(option).toBeChecked();
-  await option.uncheck();
-  await expect(option).not.toBeChecked();
-
-  const [download] = await Promise.all([
-    page.waitForEvent('download'),
-    page.getByRole('button', { name: 'Build PDF', exact: true }).click(),
-  ]);
-  const chunks: Buffer[] = [];
-  for await (const chunk of await download.createReadStream()) chunks.push(chunk as Buffer);
-  const runs = pdfTextRuns(Buffer.concat(chunks).toString('latin1'));
-  expect(runs.some((run) => run.text.startsWith('Core identity'))).toBe(true);
-  expect(runs.some((run) => run.text === 'KEY INSIGHT')).toBe(false);
-});
-
 test('Documents starts on the person whose pages were open, not the first in the list (#709)', async ({ page }) => {
   test.setTimeout(60_000);
   await gotoAndSettle(page, `${baseUrl}/#/people`);
@@ -464,4 +188,254 @@ test('Documents starts on the person whose pages were open, not the first in the
   await page.getByRole('banner').getByRole('link', { name: 'Documents', exact: true }).click();
   const picker = page.getByLabel('Person', { exact: true });
   await expect(picker.locator('option:checked')).toHaveText('Zoe Later');
+});
+
+test.describe('with the shared people (#799)', () => {
+  let context: BrowserContext;
+  let page: Page;
+
+  // A fresh context per test, holding the shared people; no test here saves, edits or deletes one.
+  test.beforeEach(async ({ browser }) => {
+    context = await newSeededContext(browser, baseUrl);
+    page = await context.newPage();
+  });
+
+  test.afterEach(async () => {
+    await context.close();
+  });
+
+  test('ticking a chart type reveals its own tables and wheel checkbox, and unticking collapses them', async () => {
+    test.setTimeout(60_000);
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await page.goto(`${baseUrl}/#/documents/pdf`);
+    await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Albert Einstein' });
+
+    await expect(page.getByLabel('Wheel', { exact: true })).toHaveCount(0);
+    await page.getByRole('checkbox', { name: 'Harmonic', exact: true }).check();
+    await expect(page.getByLabel('Wheel', { exact: true })).toBeVisible();
+    await expect(page.getByLabel('Harmonic number', { exact: true })).toHaveValue('5');
+    await page.getByRole('checkbox', { name: 'Harmonic', exact: true }).uncheck();
+    await expect(page.getByLabel('Wheel', { exact: true })).toHaveCount(0);
+  });
+
+  test('signed out, the saved interpretation picker is disabled, asks the server nothing, and has no consent tick (#759)', async () => {
+    test.setTimeout(60_000);
+    const listed: string[] = [];
+    page.on('request', (request) => {
+      if (request.url().includes('/api/interpretation/results')) listed.push(request.url());
+    });
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await page.goto(`${baseUrl}/#/documents/pdf`);
+    await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Albert Einstein' });
+
+    const picker = page.getByRole('group', { name: 'Saved AI interpretations', exact: true });
+    await expect(picker).toBeVisible();
+    await expect(picker.getByText('Sign in to include your saved AI interpretations.')).toBeVisible();
+    await expect(picker.getByRole('button', { name: 'Choose interpretations', exact: true })).toBeDisabled();
+    // Nothing is generated at export, so there is no consent to give.
+    await expect(page.getByRole('checkbox', { name: /consent/i })).toHaveCount(0);
+    expect(listed).toEqual([]);
+  });
+
+  test('synastry and composite each get their own partner picker, and both build into one PDF (#441)', async () => {
+    test.setTimeout(90_000);
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await page.goto(`${baseUrl}/#/documents/pdf`);
+    await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Albert Einstein' });
+
+    // Neither partner picker exists until its own checkbox is ticked.
+    await expect(page.getByLabel('Compare with', { exact: true })).toHaveCount(0);
+    await expect(page.getByLabel('Compose with', { exact: true })).toHaveCount(0);
+
+    await page.getByRole('checkbox', { name: 'Synastry', exact: true }).check();
+    await page.getByLabel('Compare with', { exact: true }).selectOption({ label: 'Max Born' });
+    await page.getByRole('checkbox', { name: 'Composite', exact: true }).check();
+    await page.getByLabel('Compose with', { exact: true }).selectOption({ label: 'Max Born' });
+
+    const buildButton = page.getByRole('button', { name: 'Build PDF', exact: true });
+    await expect(buildButton).toBeEnabled();
+    const [download] = await Promise.all([page.waitForEvent('download'), buildButton.click()]);
+    const chunks: Buffer[] = [];
+    for await (const chunk of await download.createReadStream()) chunks.push(chunk as Buffer);
+    const pdf = Buffer.concat(chunks);
+    expect(pdf.subarray(0, 5).toString('latin1')).toBe('%PDF-');
+    expect(pdf.length).toBeGreaterThan(1000);
+    await expect(page.getByRole('status')).toHaveText('✓');
+  });
+
+  test('unticking Synastry hides its partner picker and drops it from the selection', async () => {
+    test.setTimeout(60_000);
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await page.goto(`${baseUrl}/#/documents/pdf`);
+    await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Albert Einstein' });
+
+    await page.getByRole('checkbox', { name: 'Synastry', exact: true }).check();
+    await expect(page.getByLabel('Compare with', { exact: true })).toBeVisible();
+    await page.getByRole('checkbox', { name: 'Synastry', exact: true }).uncheck();
+    await expect(page.getByLabel('Compare with', { exact: true })).toHaveCount(0);
+  });
+
+  test('ticking Progressions reveals its technique/MC-method controls, which collapse the MC method for non-secondary techniques (#441)', async () => {
+    test.setTimeout(60_000);
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await page.goto(`${baseUrl}/#/documents/pdf`);
+    await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Albert Einstein' });
+
+    const predictive = page.getByRole('group', { name: 'Progressions, solar arc, profections & astrocartography' });
+    await expect(predictive.getByLabel('Technique', { exact: true })).toHaveCount(0);
+    await predictive.getByRole('checkbox', { name: 'Progressions', exact: true }).check();
+    await expect(predictive.getByLabel('Technique', { exact: true })).toHaveValue('secondary');
+    await expect(predictive.getByLabel('MC method', { exact: true })).toBeVisible();
+
+    await predictive.getByLabel('Technique', { exact: true }).selectOption({ label: 'Minor' });
+    await expect(predictive.getByLabel('MC method', { exact: true })).toHaveCount(0);
+
+    await predictive.getByRole('checkbox', { name: 'Progressions', exact: true }).uncheck();
+    await expect(predictive.getByLabel('Technique', { exact: true })).toHaveCount(0);
+  });
+
+  test('ticking Astrocartography reveals its map/line-type/body controls, which collapse when unticked (#441)', async () => {
+    test.setTimeout(60_000);
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await page.goto(`${baseUrl}/#/documents/pdf`);
+    await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Albert Einstein' });
+
+    const predictive = page.getByRole('group', { name: 'Progressions, solar arc, profections & astrocartography' });
+    await expect(predictive.getByLabel('Map', { exact: true })).toHaveCount(0);
+    await predictive.getByRole('checkbox', { name: 'Astrocartography', exact: true }).check();
+    await expect(predictive.getByLabel('Map', { exact: true })).toBeChecked();
+    await expect(predictive.getByRole('checkbox', { name: 'MC', exact: true })).toBeChecked();
+    await expect(predictive.getByRole('checkbox', { name: 'Sun', exact: true })).toBeChecked();
+    await expect(predictive.getByRole('checkbox', { name: 'Uranus', exact: true })).not.toBeChecked();
+
+    await predictive.getByRole('checkbox', { name: 'Astrocartography', exact: true }).uncheck();
+    await expect(predictive.getByLabel('Map', { exact: true })).toHaveCount(0);
+  });
+
+  test('selecting the Full predictive report preset fills progressions and solar arc, and builds a real PDF (#441)', async () => {
+    test.setTimeout(90_000);
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await page.goto(`${baseUrl}/#/documents/pdf`);
+    await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Albert Einstein' });
+    await page
+      .getByLabel('Starting point', { exact: true })
+      .selectOption({ label: 'Full predictive report (natal wheel, transits, progressions, solar arc)' });
+
+    const predictive = page.getByRole('group', { name: 'Progressions, solar arc, profections & astrocartography' });
+    await expect(predictive.getByRole('checkbox', { name: 'Progressions', exact: true })).toBeChecked();
+    await expect(predictive.getByRole('checkbox', { name: 'Solar arc directions', exact: true })).toBeChecked();
+    await expect(predictive.getByRole('checkbox', { name: 'Profections', exact: true })).not.toBeChecked();
+    await expect(predictive.getByRole('checkbox', { name: 'Astrocartography', exact: true })).not.toBeChecked();
+
+    const buildButton = page.getByRole('button', { name: 'Build PDF', exact: true });
+    await expect(buildButton).toBeEnabled();
+    const [download] = await Promise.all([page.waitForEvent('download'), buildButton.click()]);
+    const chunks: Buffer[] = [];
+    for await (const chunk of await download.createReadStream()) chunks.push(chunk as Buffer);
+    const pdf = Buffer.concat(chunks);
+    expect(pdf.subarray(0, 5).toString('latin1')).toBe('%PDF-');
+    expect(pdf.length).toBeGreaterThan(1000);
+    await expect(page.getByRole('status')).toHaveText('✓');
+  });
+
+  test('ticking Profections and Astrocartography on their own builds a real PDF with both sections (#441)', async () => {
+    test.setTimeout(90_000);
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await page.goto(`${baseUrl}/#/documents/pdf`);
+    await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Albert Einstein' });
+
+    const predictive = page.getByRole('group', { name: 'Progressions, solar arc, profections & astrocartography' });
+    await predictive.getByRole('checkbox', { name: 'Profections', exact: true }).check();
+    await predictive.getByRole('checkbox', { name: 'Astrocartography', exact: true }).check();
+
+    const buildButton = page.getByRole('button', { name: 'Build PDF', exact: true });
+    await expect(buildButton).toBeEnabled();
+    const [download] = await Promise.all([page.waitForEvent('download'), buildButton.click()]);
+    const chunks: Buffer[] = [];
+    for await (const chunk of await download.createReadStream()) chunks.push(chunk as Buffer);
+    const pdf = Buffer.concat(chunks);
+    expect(pdf.subarray(0, 5).toString('latin1')).toBe('%PDF-');
+    expect(pdf.length).toBeGreaterThan(1000);
+    await expect(page.getByRole('status')).toHaveText('✓');
+  });
+
+  test('ticking Transits reveals its filter/wheel/table/date controls, and ticking Forecast reveals its tier checkboxes, both collapsing when unticked (#441)', async () => {
+    test.setTimeout(60_000);
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await page.goto(`${baseUrl}/#/documents/pdf`);
+    await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Albert Einstein' });
+
+    const transitsGroup = page.getByRole('group', { name: 'Transits & Forecast' });
+    await expect(transitsGroup.getByLabel('Contacts shown', { exact: true })).toHaveCount(0);
+    await transitsGroup.getByRole('checkbox', { name: 'Transits', exact: true }).check();
+    await expect(transitsGroup.getByLabel('Contacts shown', { exact: true }).first()).toHaveValue('important');
+    await expect(transitsGroup.getByRole('checkbox', { name: 'Wheel', exact: true })).toBeChecked();
+    await expect(transitsGroup.getByRole('checkbox', { name: 'Aspects', exact: true })).toBeChecked();
+    await transitsGroup.getByRole('checkbox', { name: 'Transits', exact: true }).uncheck();
+    await expect(transitsGroup.getByLabel('Contacts shown', { exact: true })).toHaveCount(0);
+
+    await expect(transitsGroup.getByRole('checkbox', { name: 'Daily', exact: true })).toHaveCount(0);
+    await transitsGroup.getByRole('checkbox', { name: 'Forecast', exact: true }).check();
+    await expect(transitsGroup.getByRole('checkbox', { name: 'Daily', exact: true })).toBeChecked();
+    await expect(transitsGroup.getByRole('checkbox', { name: 'Weekly', exact: true })).toBeChecked();
+    await expect(transitsGroup.getByRole('checkbox', { name: 'Monthly', exact: true })).toBeChecked();
+    await expect(transitsGroup.getByRole('checkbox', { name: 'Yearly', exact: true })).toBeChecked();
+    await transitsGroup.getByRole('checkbox', { name: 'Forecast', exact: true }).uncheck();
+    await expect(transitsGroup.getByRole('checkbox', { name: 'Daily', exact: true })).toHaveCount(0);
+  });
+
+  test('ticking Eclipses reveals its from/to year controls, collapsing when unticked, and builds a real PDF (#441, #484)', async () => {
+    test.setTimeout(90_000);
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await page.goto(`${baseUrl}/#/documents/pdf`);
+    await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Albert Einstein' });
+
+    const eclipsesGroup = page.getByRole('group', { name: 'Eclipses', exact: true });
+    await expect(eclipsesGroup.getByLabel('From year', { exact: true })).toHaveCount(0);
+    await eclipsesGroup.getByRole('checkbox', { name: 'Eclipses', exact: true }).check();
+    const thisYear = new Date().getUTCFullYear();
+    await expect(eclipsesGroup.getByLabel('From year', { exact: true })).toHaveValue(String(thisYear - 1));
+    await expect(eclipsesGroup.getByLabel('To year', { exact: true })).toHaveValue(String(thisYear + 3));
+
+    const buildButton = page.getByRole('button', { name: 'Build PDF', exact: true });
+    await expect(buildButton).toBeEnabled();
+    const [download] = await Promise.all([page.waitForEvent('download'), buildButton.click()]);
+    const chunks: Buffer[] = [];
+    for await (const chunk of await download.createReadStream()) chunks.push(chunk as Buffer);
+    const pdf = Buffer.concat(chunks);
+    expect(pdf.subarray(0, 5).toString('latin1')).toBe('%PDF-');
+    expect(pdf.length).toBeGreaterThan(1000);
+    await expect(page.getByRole('status')).toHaveText('✓');
+
+    await eclipsesGroup.getByRole('checkbox', { name: 'Eclipses', exact: true }).uncheck();
+    await expect(eclipsesGroup.getByLabel('From year', { exact: true })).toHaveCount(0);
+  });
+
+  test('the PDF builder has its own Sabian symbol notes option, starting from the device setting, and unticking it leaves them out of the PDF (#660)', async () => {
+    test.setTimeout(90_000);
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await page.goto(`${baseUrl}/#/documents`);
+    await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Albert Einstein' });
+    await page
+      .getByLabel('Starting point', { exact: true })
+      .selectOption({ label: 'Executive summary (natal wheel, positions, interpretation)' });
+
+    // The option appears with the written report, and starts from the device setting, which is on by default: the PDF
+    // matches the Report on screen until the reader changes it here.
+    await page.getByRole('checkbox', { name: 'Written report (included at no extra cost)', exact: true }).check();
+    const option = page.getByRole('checkbox', { name: 'Include Sabian symbol notes', exact: true });
+    await expect(option).toBeChecked();
+    await option.uncheck();
+    await expect(option).not.toBeChecked();
+
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.getByRole('button', { name: 'Build PDF', exact: true }).click(),
+    ]);
+    const chunks: Buffer[] = [];
+    for await (const chunk of await download.createReadStream()) chunks.push(chunk as Buffer);
+    const runs = pdfTextRuns(Buffer.concat(chunks).toString('latin1'));
+    expect(runs.some((run) => run.text.startsWith('Core identity'))).toBe(true);
+    expect(runs.some((run) => run.text === 'KEY INSIGHT')).toBe(false);
+  });
 });

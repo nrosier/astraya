@@ -7,8 +7,10 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
+import type { BrowserContext, Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
+import { EINSTEIN, MARIC, newSeededContext, openSharedPerson } from './shared-people.ts';
 import { createPerson, gotoAndSettle } from './support.ts';
 
 let dir: string;
@@ -97,131 +99,102 @@ test('two people with known birth times get a Synastry screen with a bi-wheel an
   expect(download.suggestedFilename()).toBe('ada-lovelace-charles-babbage-synastry-aspects.csv');
 });
 
-test('the relationship summary panel groups contacts by theme, and its AI reading is gated on an account (#422)', async ({
-  page,
-}) => {
-  test.setTimeout(60_000);
+test.describe('with the shared people (#799)', () => {
+  let context: BrowserContext;
+  let page: Page;
 
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, {
-    name: 'Ada Lovelace',
-    date: '1815-12-10',
-    time: '07:45:00',
-    latitude: '51.5072',
-    longitude: '-0.1276',
-  });
-  await page.getByRole('link', { name: '← People' }).click();
-  await createPerson(page, {
-    name: 'Charles Babbage',
-    date: '1820-12-26',
-    time: '10:00:00',
-    latitude: '51.5072',
-    longitude: '-0.1276',
+  // A fresh context per test, holding the shared people; no test here saves, edits or deletes one.
+  test.beforeEach(async ({ browser }) => {
+    context = await newSeededContext(browser, baseUrl);
+    page = await context.newPage();
   });
 
-  await page.getByRole('link', { name: '← People' }).click();
-  await page.getByRole('link').filter({ hasText: 'Ada Lovelace' }).click();
-  await page.getByRole('button', { name: 'Relationship Charts', exact: true }).click();
-  await page.getByRole('link', { name: 'Synastry', exact: true }).click();
-  await page.getByLabel('Compare with').selectOption({ label: 'Charles Babbage' });
-
-  const panel = page.getByRole('region', { name: 'Relationship summary' });
-  await expect(panel).toBeVisible();
-  await expect(panel.getByText('Emotional bond')).toBeVisible();
-  // Not a verdict (#422 decision 4): the panel states counts, never a conclusion about the pair.
-  await expect(panel.getByText(/harmonious contact.*challenging/)).toBeVisible();
-
-  // The AI reading needs an account before consent even enters the picture: logged out, there is
-  // no consent checkbox to tick at all (it would wrongly suggest proceeding is one tick away), and
-  // the Generate button stays disabled with the sign-in reason, the same two-gate design every
-  // other Tier 2 panel in the app uses.
-  const generateButton = panel.getByRole('button', { name: 'Generate an AI-customised relationship reading' });
-  await expect(generateButton).toBeDisabled();
-  await expect(panel.getByText('Sign in to generate an AI-customised relationship reading.')).toBeVisible();
-  await expect(panel.getByRole('checkbox')).toHaveCount(0);
-});
-
-test('a person with an unknown birth time is told synastry needs one', async ({ page }) => {
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, {
-    name: 'Unknown Time',
-    date: '1990-01-01',
-    latitude: '40.7128',
-    longitude: '-74.006',
+  test.afterEach(async () => {
+    await context.close();
   });
 
-  await page.getByRole('button', { name: 'Relationship Charts', exact: true }).click();
-  await page.getByRole('link', { name: 'Synastry', exact: true }).click();
-  await expect(page.getByText(/needs a complete birth record with a known time/)).toBeVisible();
-});
+  test('the relationship summary panel groups contacts by theme, and its AI reading is gated on an account (#422)', async () => {
+    test.setTimeout(60_000);
 
-test("clicking a ring legend entry dims the other person's legend (#455)", async ({ page }) => {
-  test.setTimeout(60_000);
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await page.getByRole('button', { name: 'Relationship Charts', exact: true }).click();
+    await page.getByRole('link', { name: 'Synastry', exact: true }).click();
+    await page.getByLabel('Compare with').selectOption({ label: 'Max Born' });
 
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, {
-    name: 'Ada Lovelace',
-    date: '1815-12-10',
-    time: '07:45:00',
-    latitude: '51.5072',
-    longitude: '-0.1276',
+    const panel = page.getByRole('region', { name: 'Relationship summary' });
+    await expect(panel).toBeVisible();
+    await expect(panel.getByText('Emotional bond')).toBeVisible();
+    // Not a verdict (#422 decision 4): the panel states counts, never a conclusion about the pair.
+    await expect(panel.getByText(/harmonious contact.*challenging/)).toBeVisible();
+
+    // The AI reading needs an account before consent even enters the picture: logged out, there is
+    // no consent checkbox to tick at all (it would wrongly suggest proceeding is one tick away), and
+    // the Generate button stays disabled with the sign-in reason, the same two-gate design every
+    // other Tier 2 panel in the app uses.
+    const generateButton = panel.getByRole('button', { name: 'Generate an AI-customised relationship reading' });
+    await expect(generateButton).toBeDisabled();
+    await expect(panel.getByText('Sign in to generate an AI-customised relationship reading.')).toBeVisible();
+    await expect(panel.getByRole('checkbox')).toHaveCount(0);
   });
-  await page.getByRole('link', { name: '← People' }).click();
-  await createPerson(page, {
-    name: 'Charles Babbage',
-    date: '1820-12-26',
-    time: '10:00:00',
-    latitude: '51.5072',
-    longitude: '-0.1276',
+
+  test('a person with an unknown birth time is told synastry needs one', async () => {
+    await openSharedPerson(page, baseUrl, MARIC);
+
+    await page.getByRole('button', { name: 'Relationship Charts', exact: true }).click();
+    await page.getByRole('link', { name: 'Synastry', exact: true }).click();
+    await expect(page.getByText(/needs a complete birth record with a known time/)).toBeVisible();
   });
 
-  await page.getByRole('link', { name: '← People' }).click();
-  await page.getByRole('link').filter({ hasText: 'Ada Lovelace' }).click();
-  await page.getByRole('button', { name: 'Relationship Charts', exact: true }).click();
-  await page.getByRole('link', { name: 'Synastry', exact: true }).click();
-  await page.getByLabel('Compare with').selectOption({ label: 'Charles Babbage' });
+  test("clicking a ring legend entry dims the other person's legend (#455)", async () => {
+    test.setTimeout(60_000);
 
-  await expect(page.locator('div.chart-wheel')).toBeVisible();
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await page.getByRole('button', { name: 'Relationship Charts', exact: true }).click();
+    await page.getByRole('link', { name: 'Synastry', exact: true }).click();
+    await page.getByLabel('Compare with').selectOption({ label: 'Max Born' });
 
-  // Get the ring legend entries
-  const adaLegendEntry = page.locator('[data-ring-legend="0"]');
-  const charlesLegendEntry = page.locator('[data-ring-legend="1"]');
+    await expect(page.locator('div.chart-wheel')).toBeVisible();
 
-  // Initially, both legend entries should be visible and not dimmed
-  await expect(adaLegendEntry).toBeVisible();
-  await expect(charlesLegendEntry).toBeVisible();
-  const adaArrow = page.locator('[data-ring-legend-arrow="0"]');
-  const charlesArrow = page.locator('[data-ring-legend-arrow="1"]');
-  await expect(adaArrow).toBeAttached();
-  await expect(charlesArrow).toBeAttached();
-  await expect(adaLegendEntry).not.toHaveClass(/chart-dimmed/);
-  await expect(charlesLegendEntry).not.toHaveClass(/chart-dimmed/);
+    // Get the ring legend entries
+    const einsteinLegendEntry = page.locator('[data-ring-legend="0"]');
+    const bornLegendEntry = page.locator('[data-ring-legend="1"]');
 
-  // Click on Ada's legend entry to isolate her ring
-  await adaLegendEntry.click();
+    // Initially, both legend entries should be visible and not dimmed
+    await expect(einsteinLegendEntry).toBeVisible();
+    await expect(bornLegendEntry).toBeVisible();
+    const einsteinArrow = page.locator('[data-ring-legend-arrow="0"]');
+    const bornArrow = page.locator('[data-ring-legend-arrow="1"]');
+    await expect(einsteinArrow).toBeAttached();
+    await expect(bornArrow).toBeAttached();
+    await expect(einsteinLegendEntry).not.toHaveClass(/chart-dimmed/);
+    await expect(bornLegendEntry).not.toHaveClass(/chart-dimmed/);
 
-  // Now Ada's entry should not be dimmed, but Charles's should be
-  await expect(adaLegendEntry).not.toHaveClass(/chart-dimmed/);
-  await expect(charlesLegendEntry).toHaveClass(/chart-dimmed/);
-  await expect(adaArrow).toBeVisible();
-  await expect(charlesArrow).toBeHidden();
+    // Click on Einstein's legend entry to isolate his ring
+    await einsteinLegendEntry.click();
 
-  // Keyboard activation keeps the legend isolation behavior available without a pointer.
-  await charlesLegendEntry.focus();
-  await page.keyboard.press('Enter');
+    // Now Einstein's entry should not be dimmed, but Born's should be
+    await expect(einsteinLegendEntry).not.toHaveClass(/chart-dimmed/);
+    await expect(bornLegendEntry).toHaveClass(/chart-dimmed/);
+    await expect(einsteinArrow).toBeVisible();
+    await expect(bornArrow).toBeHidden();
 
-  // Now Charles's entry should not be dimmed, but Ada's should be
-  await expect(charlesLegendEntry).not.toHaveClass(/chart-dimmed/);
-  await expect(adaLegendEntry).toHaveClass(/chart-dimmed/);
-  await expect(charlesArrow).toBeVisible();
-  await expect(adaArrow).toBeHidden();
+    // Keyboard activation keeps the legend isolation behavior available without a pointer.
+    await bornLegendEntry.focus();
+    await page.keyboard.press('Enter');
 
-  // Click on an empty area of the wheel to clear the selection
-  await page.locator('div.chart-wheel svg').click({ position: { x: 50, y: 50 } });
+    // Now Born's entry should not be dimmed, but Einstein's should be
+    await expect(bornLegendEntry).not.toHaveClass(/chart-dimmed/);
+    await expect(einsteinLegendEntry).toHaveClass(/chart-dimmed/);
+    await expect(bornArrow).toBeVisible();
+    await expect(einsteinArrow).toBeHidden();
 
-  // Both should be visible and not dimmed again
-  await expect(adaLegendEntry).not.toHaveClass(/chart-dimmed/);
-  await expect(charlesLegendEntry).not.toHaveClass(/chart-dimmed/);
-  await expect(adaArrow).toBeHidden();
-  await expect(charlesArrow).toBeHidden();
+    // Click on an empty area of the wheel to clear the selection
+    await page.locator('div.chart-wheel svg').click({ position: { x: 50, y: 50 } });
+
+    // Both should be visible and not dimmed again
+    await expect(einsteinLegendEntry).not.toHaveClass(/chart-dimmed/);
+    await expect(bornLegendEntry).not.toHaveClass(/chart-dimmed/);
+    await expect(einsteinArrow).toBeHidden();
+    await expect(bornArrow).toBeHidden();
+  });
 });

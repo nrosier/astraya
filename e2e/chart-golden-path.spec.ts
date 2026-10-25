@@ -11,8 +11,10 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
+import type { BrowserContext, Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
+import { EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
 import { chooseExport, createPerson, gotoAndSettle, openNatalChart } from './support.ts';
 
 let dir: string;
@@ -60,193 +62,162 @@ test('entering birth data renders the chart wheel and the SVG export downloads',
   expect(svg).toContain('<svg');
 });
 
-test('clicking a glyph on the wheel isolates it and opens a focused-info panel (#400)', async ({ page }) => {
-  test.setTimeout(60_000);
+test.describe('with the shared people (#799)', () => {
+  let context: BrowserContext;
+  let page: Page;
 
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, {
-    name: 'Ada Lovelace',
-    date: '1815-12-10',
-    time: '07:45:00',
-    latitude: '51.5072',
-    longitude: '-0.1276',
+  // A fresh context per test, holding the shared people; no test here saves, edits or deletes one.
+  test.beforeEach(async ({ browser }) => {
+    context = await newSeededContext(browser, baseUrl);
+    page = await context.newPage();
   });
 
-  await openNatalChart(page);
-  await expect(page.locator('div.chart-wheel')).toBeVisible();
-
-  // `.chart-point` is the clickable glyph group; since #412 the Sun's radial stack and its degree
-  // tick carry `data-body="sun"` too (so dimming reaches them), which is why this is narrower
-  // than the bare attribute.
-  const sunGlyph = page.locator('.chart-point[data-body="sun"]');
-  await expect(sunGlyph).toHaveCount(1);
-  await sunGlyph.click();
-
-  const panel = page.locator('.selection-inspector-facts');
-  await expect(panel).toBeVisible();
-  await expect(panel).toContainText('Sun');
-  await expect(page.locator('.chart-wheel .chart-dimmed').first()).toBeVisible();
-
-  // Clicking the same glyph again toggles the isolation off.
-  await sunGlyph.click();
-  await expect(panel).toHaveCount(0);
-  await expect(page.locator('.chart-wheel .chart-dimmed')).toHaveCount(0);
-});
-
-test('clicking an aspect line isolates just its two endpoint bodies (#400)', async ({ page }) => {
-  test.setTimeout(60_000);
-
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, {
-    name: 'Ada Lovelace',
-    date: '1815-12-10',
-    time: '07:45:00',
-    latitude: '51.5072',
-    longitude: '-0.1276',
+  test.afterEach(async () => {
+    await context.close();
   });
 
-  await openNatalChart(page);
-  await expect(page.locator('div.chart-wheel')).toBeVisible();
+  test('clicking a glyph on the wheel isolates it and opens a focused-info panel (#400)', async () => {
+    test.setTimeout(60_000);
 
-  const line = page.locator('[data-aspect-body-a]').first();
-  await line.click({ force: true });
+    await openSharedPerson(page, baseUrl, EINSTEIN);
 
-  const panel = page.locator('.selection-inspector-facts');
-  await expect(panel).toBeVisible();
-  await expect(panel).toContainText('Orb');
+    await openNatalChart(page);
+    await expect(page.locator('div.chart-wheel')).toBeVisible();
 
-  await page.getByRole('button', { name: 'Clear', exact: true }).click();
-  await expect(panel).toHaveCount(0);
-});
+    // `.chart-point` is the clickable glyph group; since #412 the Sun's radial stack and its degree
+    // tick carry `data-body="sun"` too (so dimming reaches them), which is why this is narrower
+    // than the bare attribute.
+    const sunGlyph = page.locator('.chart-point[data-body="sun"]');
+    await expect(sunGlyph).toHaveCount(1);
+    await sunGlyph.click();
 
-test('the Jones chart-shape diagram renders alongside its text sentence and explanation (#401, #430)', async ({
-  page,
-}) => {
-  test.setTimeout(60_000);
+    const panel = page.locator('.selection-inspector-facts');
+    await expect(panel).toBeVisible();
+    await expect(panel).toContainText('Sun');
+    await expect(page.locator('.chart-wheel .chart-dimmed').first()).toBeVisible();
 
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, {
-    name: 'Ada Lovelace',
-    date: '1815-12-10',
-    time: '07:45:00',
-    latitude: '51.5072',
-    longitude: '-0.1276',
+    // Clicking the same glyph again toggles the isolation off.
+    await sunGlyph.click();
+    await expect(panel).toHaveCount(0);
+    await expect(page.locator('.chart-wheel .chart-dimmed')).toHaveCount(0);
   });
 
-  await openNatalChart(page);
-  await page.getByRole('link', { name: 'Patterns & condition', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Patterns & condition', level: 2 })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Chart shape', level: 3 })).toBeVisible();
-  await expect(page.getByText(/Chart shape: /)).toBeVisible();
-  await expect(page.locator('.chart-shape-diagram')).toBeVisible();
-  await expect(page.locator('.chart-shape-diagram .chart-shape-ring')).toBeVisible();
-  await expect(page.getByText(/Marc Edmund Jones \(1941\)/)).toBeVisible();
-  await expect(page.locator('.lunar-phase-summary')).toBeVisible();
-  await expect(page.getByText(/Sect: (Day|Night) chart/)).toBeVisible();
-});
+  test('clicking an aspect line isolates just its two endpoint bodies (#400)', async () => {
+    test.setTimeout(60_000);
 
-test('the natal chart is split into views, opening on the wheel, and the wheel keeps its selection (#511)', async ({
-  page,
-}) => {
-  test.setTimeout(60_000);
+    await openSharedPerson(page, baseUrl, EINSTEIN);
 
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, {
-    name: 'Ada Lovelace',
-    date: '1815-12-10',
-    time: '07:45:00',
-    latitude: '51.5072',
-    longitude: '-0.1276',
+    await openNatalChart(page);
+    await expect(page.locator('div.chart-wheel')).toBeVisible();
+
+    const line = page.locator('[data-aspect-body-a]').first();
+    await line.click({ force: true });
+
+    const panel = page.locator('.selection-inspector-facts');
+    await expect(panel).toBeVisible();
+    await expect(panel).toContainText('Orb');
+
+    await page.getByRole('button', { name: 'Clear', exact: true }).click();
+    await expect(panel).toHaveCount(0);
   });
-  await openNatalChart(page);
 
-  // The page states its calculation basis and where it comes from (#510).
-  await expect(page.locator('.page-header-basis')).toHaveText('Calculation profile: Modern Western — Astraya default');
+  test('the Jones chart-shape diagram renders alongside its text sentence and explanation (#401, #430)', async () => {
+    test.setTimeout(60_000);
 
-  // Route-level links (#511), not ARIA tabs.
-  await expect(page.locator('nav.chart-view-nav [role="tab"]')).toHaveCount(0);
-  const links = page.locator('nav.chart-view-nav .chart-view-link');
-  await expect(links).toHaveText([
-    'Wheel',
-    'Aspects',
-    'Aspect matrix',
-    'Elements & modalities',
-    'Placements',
-    'Patterns & condition',
-  ]);
-  await expect(page.getByRole('link', { name: 'Wheel', exact: true })).toHaveAttribute('aria-current', 'page');
-  await expect(page.locator('div.chart-wheel')).toBeVisible();
+    await openSharedPerson(page, baseUrl, EINSTEIN);
 
-  // Select a planet, visit another view, come back: the selection is still there.
-  await page.locator('.chart-point[data-body="sun"]').first().click({ force: true });
-  await expect(page.locator('.selection-inspector-facts')).toBeVisible();
-  await page.getByRole('link', { name: 'Placements', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Placements', level: 2 })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Positions', level: 3 })).toBeVisible();
-  await expect(page.locator('div.chart-wheel')).toBeHidden();
-  await expect(page.getByRole('cell', { name: 'Sun', exact: true }).first()).toBeVisible();
-  await page.getByRole('link', { name: 'Wheel', exact: true }).click();
-  await expect(page.locator('.selection-inspector-facts')).toBeVisible();
-});
-
-test('the natal chart views fit a phone: a labelled Select replaces the link row, and nothing scrolls the page sideways (#511)', async ({
-  page,
-}) => {
-  test.setTimeout(60_000);
-
-  await page.setViewportSize({ width: 390, height: 800 });
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, {
-    name: 'Ada Lovelace',
-    date: '1815-12-10',
-    time: '07:45:00',
-    latitude: '51.5072',
-    longitude: '-0.1276',
+    await openNatalChart(page);
+    await page.getByRole('link', { name: 'Patterns & condition', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Patterns & condition', level: 2 })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Chart shape', level: 3 })).toBeVisible();
+    await expect(page.getByText(/Chart shape: /)).toBeVisible();
+    await expect(page.locator('.chart-shape-diagram')).toBeVisible();
+    await expect(page.locator('.chart-shape-diagram .chart-shape-ring')).toBeVisible();
+    await expect(page.getByText(/Marc Edmund Jones \(1941\)/)).toBeVisible();
+    await expect(page.locator('.lunar-phase-summary')).toBeVisible();
+    await expect(page.getByText(/Sect: (Day|Night) chart/)).toBeVisible();
   });
-  // On a phone the navigation is folded behind the Menu button (#421).
-  await page.getByRole('button', { name: 'Menu', exact: true }).click();
-  await openNatalChart(page);
-  const select = page.getByLabel('Chart view', { exact: true });
-  await expect(select).toBeVisible();
-  await expect(page.locator('nav.chart-view-nav')).toBeHidden();
-  const overflow = await page.evaluate('document.documentElement.scrollWidth - window.innerWidth');
-  expect(overflow).toBeLessThanOrEqual(1);
-  await select.selectOption('patterns');
-  await expect(page.locator('.chart-shape-diagram')).toBeVisible();
-  // The Dignities table scrolls inside its own `.data-table-scroll` wrap, never the page.
-  expect(await page.evaluate('document.documentElement.scrollWidth - window.innerWidth')).toBeLessThanOrEqual(1);
-});
 
-test('a table row selects on the wheel and the wheel marks the table row (#418)', async ({ page }) => {
-  test.setTimeout(60_000);
+  test('the natal chart is split into views, opening on the wheel, and the wheel keeps its selection (#511)', async () => {
+    test.setTimeout(60_000);
 
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, {
-    name: 'Ada Lovelace',
-    date: '1815-12-10',
-    time: '07:45:00',
-    latitude: '51.5072',
-    longitude: '-0.1276',
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await openNatalChart(page);
+
+    // The page states its calculation basis and where it comes from (#510).
+    await expect(page.locator('.page-header-basis')).toHaveText(
+      'Calculation profile: Modern Western — Astraya default',
+    );
+
+    // Route-level links (#511), not ARIA tabs.
+    await expect(page.locator('nav.chart-view-nav [role="tab"]')).toHaveCount(0);
+    const links = page.locator('nav.chart-view-nav .chart-view-link');
+    await expect(links).toHaveText([
+      'Wheel',
+      'Aspects',
+      'Aspect matrix',
+      'Elements & modalities',
+      'Placements',
+      'Patterns & condition',
+    ]);
+    await expect(page.getByRole('link', { name: 'Wheel', exact: true })).toHaveAttribute('aria-current', 'page');
+    await expect(page.locator('div.chart-wheel')).toBeVisible();
+
+    // Select a planet, visit another view, come back: the selection is still there.
+    await page.locator('.chart-point[data-body="sun"]').first().click({ force: true });
+    await expect(page.locator('.selection-inspector-facts')).toBeVisible();
+    await page.getByRole('link', { name: 'Placements', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Placements', level: 2 })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Positions', level: 3 })).toBeVisible();
+    await expect(page.locator('div.chart-wheel')).toBeHidden();
+    await expect(page.getByRole('cell', { name: 'Sun', exact: true }).first()).toBeVisible();
+    await page.getByRole('link', { name: 'Wheel', exact: true }).click();
+    await expect(page.locator('.selection-inspector-facts')).toBeVisible();
   });
-  await openNatalChart(page);
-  await expect(page.locator('div.chart-wheel')).toBeVisible();
 
-  // Table to wheel: press Show on the Sun's row, then go to the chart: it is isolated there.
-  await page.getByRole('link', { name: 'Placements', exact: true }).click();
-  await page.getByRole('button', { name: 'Show Sun on the chart', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Show Sun on the chart', exact: true })).toHaveAttribute(
-    'aria-pressed',
-    'true',
-  );
-  await expect(page.locator('tr.data-table-row-selected')).toContainText('Sun');
-  await page.getByRole('button', { name: 'Go to the chart', exact: true }).click();
-  await expect(page.locator('div.chart-wheel')).toBeVisible();
-  await expect(page.locator('.chart-wheel .chart-dimmed').first()).toBeAttached();
-  await expect(page.locator('.selection-inspector-facts')).toBeVisible();
+  test('the natal chart views fit a phone: a labelled Select replaces the link row, and nothing scrolls the page sideways (#511)', async () => {
+    test.setTimeout(60_000);
 
-  // Wheel to table: select the Moon on the wheel and the Positions table marks its row.
-  await page.getByRole('button', { name: 'Clear', exact: true }).first().click();
-  await page.locator('.chart-point[data-body="moon"]').first().click({ force: true });
-  await page.getByRole('link', { name: 'Placements', exact: true }).click();
-  await expect(page.locator('tr.data-table-row-selected')).toContainText('Moon');
+    await page.setViewportSize({ width: 390, height: 800 });
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    // On a phone the navigation is folded behind the Menu button (#421).
+    await page.getByRole('button', { name: 'Menu', exact: true }).click();
+    await openNatalChart(page);
+    const select = page.getByLabel('Chart view', { exact: true });
+    await expect(select).toBeVisible();
+    await expect(page.locator('nav.chart-view-nav')).toBeHidden();
+    const overflow = await page.evaluate('document.documentElement.scrollWidth - window.innerWidth');
+    expect(overflow).toBeLessThanOrEqual(1);
+    await select.selectOption('patterns');
+    await expect(page.locator('.chart-shape-diagram')).toBeVisible();
+    // The Dignities table scrolls inside its own `.data-table-scroll` wrap, never the page.
+    expect(await page.evaluate('document.documentElement.scrollWidth - window.innerWidth')).toBeLessThanOrEqual(1);
+  });
+
+  test('a table row selects on the wheel and the wheel marks the table row (#418)', async () => {
+    test.setTimeout(60_000);
+
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await openNatalChart(page);
+    await expect(page.locator('div.chart-wheel')).toBeVisible();
+
+    // Table to wheel: press Show on the Sun's row, then go to the chart: it is isolated there.
+    await page.getByRole('link', { name: 'Placements', exact: true }).click();
+    await page.getByRole('button', { name: 'Show Sun on the chart', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Show Sun on the chart', exact: true })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    await expect(page.locator('tr.data-table-row-selected')).toContainText('Sun');
+    await page.getByRole('button', { name: 'Go to the chart', exact: true }).click();
+    await expect(page.locator('div.chart-wheel')).toBeVisible();
+    await expect(page.locator('.chart-wheel .chart-dimmed').first()).toBeAttached();
+    await expect(page.locator('.selection-inspector-facts')).toBeVisible();
+
+    // Wheel to table: select the Moon on the wheel and the Positions table marks its row.
+    await page.getByRole('button', { name: 'Clear', exact: true }).first().click();
+    await page.locator('.chart-point[data-body="moon"]').first().click({ force: true });
+    await page.getByRole('link', { name: 'Placements', exact: true }).click();
+    await expect(page.locator('tr.data-table-row-selected')).toContainText('Moon');
+  });
 });

@@ -7,8 +7,10 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
+import type { BrowserContext, Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
+import { EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
 import { createPerson, gotoAndSettle } from './support.ts';
 
 const sha256 = (text: string): string => createHash('sha256').update(text).digest('hex');
@@ -52,20 +54,6 @@ test('a matching person’s birth record shows the overlay, and it removes itsel
   await expect(overlay).not.toBeAttached({ timeout: 25_000 });
 });
 
-test('another person’s birth record does not', async ({ page }) => {
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, {
-    name: 'Jo Sample',
-    date: '2001-02-03',
-    time: '12:00:00',
-    latitude: '52.37',
-    longitude: '4.90',
-  });
-  await page.getByRole('link', { name: 'Birth record', exact: true }).click();
-  await page.waitForTimeout(1_500);
-  await expect(page.locator('canvas.profile-overlay')).toHaveCount(0);
-});
-
 test('nothing runs when the reader asks for reduced motion', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await gotoAndSettle(page, `${baseUrl}/#/people`);
@@ -79,4 +67,26 @@ test('nothing runs when the reader asks for reduced motion', async ({ page }) =>
   await page.getByRole('link', { name: 'Birth record', exact: true }).click();
   await page.waitForTimeout(1_500);
   await expect(page.locator('canvas.profile-overlay')).toHaveCount(0);
+});
+
+test.describe('with the shared people (#799)', () => {
+  let context: BrowserContext;
+  let page: Page;
+
+  // A fresh context per test, holding the shared people; no test here saves, edits or deletes one.
+  test.beforeEach(async ({ browser }) => {
+    context = await newSeededContext(browser, baseUrl);
+    page = await context.newPage();
+  });
+
+  test.afterEach(async () => {
+    await context.close();
+  });
+
+  test('another person’s birth record does not', async () => {
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await page.getByRole('link', { name: 'Birth record', exact: true }).click();
+    await page.waitForTimeout(1_500);
+    await expect(page.locator('canvas.profile-overlay')).toHaveCount(0);
+  });
 });

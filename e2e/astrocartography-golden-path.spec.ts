@@ -8,9 +8,10 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { AxeBuilder } from '@axe-core/playwright';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
+import { MARIC, EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
 import { chooseExport, createPerson, gotoAndSettle } from './support.ts';
 
 let dir: string;
@@ -142,58 +143,6 @@ test('enabling Local Space adds lines for the checked bodies', async ({ page }) 
   await expect(localSpaceLines.first()).toBeVisible();
 });
 
-test('a person with an unknown birth time is told the map needs one', async ({ page }) => {
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, {
-    name: 'Unknown Time',
-    date: '1990-01-01',
-    latitude: '40.7128',
-    longitude: '-74.006',
-  });
-
-  await page.getByRole('link', { name: 'Astrocartography', exact: true }).click();
-  await expect(page.getByText(/needs a known birth time/)).toBeVisible();
-});
-
-test('the map settings are one staged dialog: opening and cancelling never change the map, and nothing "Extended" remains (#512)', async ({
-  page,
-}) => {
-  test.setTimeout(90_000);
-  await openAda(page);
-  const trigger = page.getByRole('button', { name: /^Map settings/ });
-  await expect(trigger).toContainText('4 line types · 7 bodies · Local Space off');
-  // The settings are not scattered over the page any more.
-  await expect(page.getByRole('group', { name: 'Line types' })).toHaveCount(0);
-  await expect(page.getByText('Extended', { exact: true })).toHaveCount(0);
-
-  const markup = await page.locator('div.acg-map').innerHTML();
-  await trigger.click();
-  const dialog = page.getByRole('dialog', { name: 'Map settings' });
-  await expect(dialog.getByRole('group', { name: 'Primary bodies' })).toBeVisible();
-  await expect(dialog.getByRole('group', { name: 'Additional bodies' })).toBeVisible();
-  await dialog.getByLabel('MC (Midheaven)').uncheck();
-  await dialog.getByLabel('Show Local Space lines for the checked bodies').check();
-  // Nothing happens to the map, or to the trigger's summary, until Apply.
-  expect(await page.locator('div.acg-map').innerHTML()).toBe(markup);
-
-  // Cancel, Escape, the close button and the backdrop each discard the draft and give focus back.
-  await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
-  await expect(dialog).toBeHidden();
-  await expect(trigger).toBeFocused();
-  for (const close of ['escape', 'close', 'backdrop'] as const) {
-    await trigger.click();
-    await expect(dialog.getByLabel('MC (Midheaven)')).toBeChecked();
-    await dialog.getByLabel('MC (Midheaven)').uncheck();
-    if (close === 'escape') await page.keyboard.press('Escape');
-    else if (close === 'close') await dialog.getByRole('button', { name: 'Close without applying' }).click();
-    else await page.mouse.click(2, 2);
-    await expect(dialog).toBeHidden();
-    await expect(trigger).toBeFocused();
-  }
-  expect(await page.locator('div.acg-map').innerHTML()).toBe(markup);
-  await expect(trigger).toContainText('4 line types · 7 bodies · Local Space off');
-});
-
 test('applying several changes at once is one recalculation, with the last map kept on screen meanwhile (#512)', async ({
   page,
 }) => {
@@ -246,45 +195,109 @@ test('relocation is validated before it can be applied (#512)', async ({ page })
   await expect(page.getByText(/Ascendant: .* · Midheaven: /)).toBeVisible();
 });
 
-test('the dialog works on a phone and on a short laptop screen, and line meanings say they expand (#512)', async ({
-  page,
-}) => {
-  test.setTimeout(90_000);
-  await page.setViewportSize({ width: 390, height: 844 });
-  await openAda(page);
-  await openMapSettings(page);
-  const dialog = page.getByRole('dialog', { name: 'Map settings' });
-  const apply = dialog.getByRole('button', { name: /^Apply/ });
-  await expect(apply).toBeInViewport();
-  await expect(dialog.getByRole('button', { name: 'Cancel', exact: true })).toBeInViewport();
-  await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
+test.describe('with the shared people (#799)', () => {
+  let context: BrowserContext;
+  let page: Page;
 
-  // A short laptop: the footer stays reachable and takes well under half the height; the body scrolls.
-  await page.setViewportSize({ width: 1280, height: 420 });
-  await openMapSettings(page);
-  const footer = await dialog.locator('.settings-card-footer').boundingBox();
-  expect(footer?.height ?? 999).toBeLessThan(420 * 0.25);
-  await expect(apply).toBeInViewport();
-  await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
+  async function openSharedEinstein(page: Page): Promise<void> {
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    // On a phone the navigation is folded behind the Menu button.
+    const menu = page.getByRole('button', { name: 'Menu', exact: true });
+    if (await menu.isVisible()) await menu.click();
+    await page.getByRole('link', { name: 'Astrocartography', exact: true }).click();
+    await expect(page.locator('div.acg-map svg')).toBeVisible();
+  }
 
-  // The line meanings are real disclosures: a named, counted, labelled button, not a bare triangle.
-  const first = page.locator('.acg-meanings .primitive-disclosure').first();
-  await expect(first.getByRole('button')).toContainText('Show meanings');
-  await expect(first.getByRole('button')).toContainText('4 line types selected');
-  await expect(first.getByRole('button')).toHaveAttribute('aria-expanded', 'false');
-  await first.getByRole('button').click();
-  await expect(first.getByRole('button')).toContainText('Hide meanings');
-  await expect(first.locator('dd').first()).toBeVisible();
-});
+  // A fresh context per test, holding the shared people; no test here applies a setting or edits a person.
+  test.beforeEach(async ({ browser }) => {
+    context = await newSeededContext(browser, baseUrl);
+    page = await context.newPage();
+  });
 
-test('the Astrocartography page and its settings dialog have no automatically detectable accessibility violations (#512)', async ({
-  page,
-}) => {
-  test.setTimeout(90_000);
-  await openAda(page);
-  const resting = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
-  expect(resting.violations).toEqual([]);
-  await openMapSettings(page);
-  const open = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
-  expect(open.violations).toEqual([]);
+  test.afterEach(async () => {
+    await context.close();
+  });
+
+  test('a person with an unknown birth time is told the map needs one', async () => {
+    await openSharedPerson(page, baseUrl, MARIC);
+
+    await page.getByRole('link', { name: 'Astrocartography', exact: true }).click();
+    await expect(page.getByText(/needs a known birth time/)).toBeVisible();
+  });
+
+  test('the map settings are one staged dialog: opening and cancelling never change the map, and nothing "Extended" remains (#512)', async () => {
+    test.setTimeout(90_000);
+    await openSharedEinstein(page);
+    const trigger = page.getByRole('button', { name: /^Map settings/ });
+    await expect(trigger).toContainText('4 line types · 7 bodies · Local Space off');
+    // The settings are not scattered over the page any more.
+    await expect(page.getByRole('group', { name: 'Line types' })).toHaveCount(0);
+    await expect(page.getByText('Extended', { exact: true })).toHaveCount(0);
+
+    const markup = await page.locator('div.acg-map').innerHTML();
+    await trigger.click();
+    const dialog = page.getByRole('dialog', { name: 'Map settings' });
+    await expect(dialog.getByRole('group', { name: 'Primary bodies' })).toBeVisible();
+    await expect(dialog.getByRole('group', { name: 'Additional bodies' })).toBeVisible();
+    await dialog.getByLabel('MC (Midheaven)').uncheck();
+    await dialog.getByLabel('Show Local Space lines for the checked bodies').check();
+    // Nothing happens to the map, or to the trigger's summary, until Apply.
+    expect(await page.locator('div.acg-map').innerHTML()).toBe(markup);
+
+    // Cancel, Escape, the close button and the backdrop each discard the draft and give focus back.
+    await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
+    await expect(dialog).toBeHidden();
+    await expect(trigger).toBeFocused();
+    for (const close of ['escape', 'close', 'backdrop'] as const) {
+      await trigger.click();
+      await expect(dialog.getByLabel('MC (Midheaven)')).toBeChecked();
+      await dialog.getByLabel('MC (Midheaven)').uncheck();
+      if (close === 'escape') await page.keyboard.press('Escape');
+      else if (close === 'close') await dialog.getByRole('button', { name: 'Close without applying' }).click();
+      else await page.mouse.click(2, 2);
+      await expect(dialog).toBeHidden();
+      await expect(trigger).toBeFocused();
+    }
+    expect(await page.locator('div.acg-map').innerHTML()).toBe(markup);
+    await expect(trigger).toContainText('4 line types · 7 bodies · Local Space off');
+  });
+
+  test('the dialog works on a phone and on a short laptop screen, and line meanings say they expand (#512)', async () => {
+    test.setTimeout(90_000);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openSharedEinstein(page);
+    await openMapSettings(page);
+    const dialog = page.getByRole('dialog', { name: 'Map settings' });
+    const apply = dialog.getByRole('button', { name: /^Apply/ });
+    await expect(apply).toBeInViewport();
+    await expect(dialog.getByRole('button', { name: 'Cancel', exact: true })).toBeInViewport();
+    await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
+
+    // A short laptop: the footer stays reachable and takes well under half the height; the body scrolls.
+    await page.setViewportSize({ width: 1280, height: 420 });
+    await openMapSettings(page);
+    const footer = await dialog.locator('.settings-card-footer').boundingBox();
+    expect(footer?.height ?? 999).toBeLessThan(420 * 0.25);
+    await expect(apply).toBeInViewport();
+    await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
+
+    // The line meanings are real disclosures: a named, counted, labelled button, not a bare triangle.
+    const first = page.locator('.acg-meanings .primitive-disclosure').first();
+    await expect(first.getByRole('button')).toContainText('Show meanings');
+    await expect(first.getByRole('button')).toContainText('4 line types selected');
+    await expect(first.getByRole('button')).toHaveAttribute('aria-expanded', 'false');
+    await first.getByRole('button').click();
+    await expect(first.getByRole('button')).toContainText('Hide meanings');
+    await expect(first.locator('dd').first()).toBeVisible();
+  });
+
+  test('the Astrocartography page and its settings dialog have no automatically detectable accessibility violations (#512)', async () => {
+    test.setTimeout(90_000);
+    await openSharedEinstein(page);
+    const resting = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
+    expect(resting.violations).toEqual([]);
+    await openMapSettings(page);
+    const open = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
+    expect(open.violations).toEqual([]);
+  });
 });

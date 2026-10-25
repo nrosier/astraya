@@ -7,14 +7,16 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { AxeBuilder } from '@axe-core/playwright';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
-import { createPerson, gotoAndSettle } from './support.ts';
+import { EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
 
 let dir: string;
 let app: FastifyInstance;
 let baseUrl: string;
+let context: BrowserContext;
+let page: Page;
 
 test.beforeAll(async () => {
   dir = mkdtempSync(join(tmpdir(), 'astraya-e2e-'));
@@ -32,21 +34,24 @@ test.afterAll(async () => {
   rmSync(dir, { recursive: true, force: true });
 });
 
+// A fresh context per test, holding the shared people (#799); no test here saves, edits or deletes one.
+test.beforeEach(async ({ browser }) => {
+  context = await newSeededContext(browser, baseUrl);
+  page = await context.newPage();
+});
+
+test.afterEach(async () => {
+  await context.close();
+});
+
 async function personWithChart(page: Page): Promise<void> {
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await createPerson(page, {
-    name: 'Menu Tester',
-    date: '1990-06-15',
-    time: '14:30:00',
-    latitude: '38.7478',
-    longitude: '-85.0672',
-  });
+  await openSharedPerson(page, baseUrl, EINSTEIN);
 }
 
 const group = (page: Page, name: string) => page.getByRole('button', { name, exact: true });
 const popup = (page: Page, name: string) => page.getByRole('navigation', { name: `${name} subtabs` });
 
-test('opening a second group closes the first, so only one dropdown is ever open', async ({ page }) => {
+test('opening a second group closes the first, so only one dropdown is ever open', async () => {
   test.setTimeout(60_000);
   await personWithChart(page);
 
@@ -60,7 +65,7 @@ test('opening a second group closes the first, so only one dropdown is ever open
   await expect(group(page, 'Transits & Forecast')).toHaveAttribute('aria-expanded', 'false');
 });
 
-test('pressing the open group’s button again closes it', async ({ page }) => {
+test('pressing the open group’s button again closes it', async () => {
   test.setTimeout(60_000);
   await personWithChart(page);
 
@@ -70,7 +75,7 @@ test('pressing the open group’s button again closes it', async ({ page }) => {
   await expect(popup(page, 'Relationship Charts')).toHaveCount(0);
 });
 
-test('choosing an item navigates and leaves no menu open', async ({ page }) => {
+test('choosing an item navigates and leaves no menu open', async () => {
   test.setTimeout(60_000);
   await personWithChart(page);
 
@@ -83,7 +88,7 @@ test('choosing an item navigates and leaves no menu open', async ({ page }) => {
   await expect(page.locator('.app-nav-group.active')).toHaveCount(1);
 });
 
-test('a click on empty page, on content, or on another tab closes the open menu', async ({ page }) => {
+test('a click on empty page, on content, or on another tab closes the open menu', async () => {
   test.setTimeout(60_000);
   await personWithChart(page);
 
@@ -104,7 +109,7 @@ test('a click on empty page, on content, or on another tab closes the open menu'
   await expect(popup(page, 'Progressions & Directions')).toHaveCount(0);
 });
 
-test('Escape closes the menu and puts focus back on its button', async ({ page }) => {
+test('Escape closes the menu and puts focus back on its button', async () => {
   test.setTimeout(60_000);
   await personWithChart(page);
 
@@ -115,7 +120,7 @@ test('Escape closes the menu and puts focus back on its button', async ({ page }
   await expect(group(page, 'Transits & Forecast')).toBeFocused();
 });
 
-test('tabbing out of an open group closes it', async ({ page }) => {
+test('tabbing out of an open group closes it', async () => {
   test.setTimeout(60_000);
   await personWithChart(page);
 
@@ -127,7 +132,7 @@ test('tabbing out of an open group closes it', async ({ page }) => {
   await expect(popup(page, 'Relationship Charts')).toHaveCount(0);
 });
 
-test('the open menu has no automatically detectable accessibility violations', async ({ page }) => {
+test('the open menu has no automatically detectable accessibility violations', async () => {
   test.setTimeout(60_000);
   await personWithChart(page);
 
