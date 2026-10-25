@@ -4,7 +4,7 @@
 **Audited revision:** `60d67fb`  
 **Scope:** React route and component layer, global styling, design tokens, navigation, forms, charts, reports, tables, PDF export, tools, administration, state design, accessibility, and responsive test coverage.
 
-Future UI work should follow the normative [UI/UX Implementation Guide](UI-UX_GUIDELINES.md). Use the [UI/UX Migration Plan](UI-UX_IMPLEMENTATION_PLAN.md) to move the current application to that target in reviewable implementation phases.
+Future UI work should follow the normative [UI/UX Implementation Guide](../ui/UI-UX_GUIDELINES.md). Use the [UI/UX Migration Plan](../ui/UI-UX_IMPLEMENTATION_PLAN.md) to move the current application to that target in reviewable implementation phases.
 
 This audit recommends the best coherent target experience; it is not constrained to preserving existing layouts, labels, menus, settings placement, or component patterns. Current UI behavior is evidence about workflows and technical constraints, not a design standard. Where an existing pattern is inconsistent, confusing, visually dated, inaccessible, or unnecessarily complex, replace it with the cleaner pattern and migrate related surfaces toward the same target model.
 
