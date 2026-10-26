@@ -44,7 +44,12 @@ export function ReportScreen({ personId }: { personId: string }): React.JSX.Elem
   const { provider } = useEphemerisProvider();
   // The chart the Charts page draws (#732): its natal-context settings, rulers and custom points — not a
   // default-settings chart under the same name, which would read out a different chart from the one on screen.
-  const { settings: cardSettings, unreadable: settingsUnreadable, rulership } = usePersonCalculationSettings(personId);
+  const {
+    settings: cardSettings,
+    unreadable: settingsUnreadable,
+    rulership,
+    setRulership,
+  } = usePersonCalculationSettings(personId);
   const orbLibrary = useOrbLibrary();
   const orbSources = useOrbContextSource();
   const settings = useMemo(
@@ -129,7 +134,13 @@ export function ReportScreen({ personId }: { personId: string }): React.JSX.Elem
           {load.data.houses.warning !== undefined && (
             <StatusMessage kind="error">{load.data.houses.warning}</StatusMessage>
           )}
-          <ReportView chart={load.data} exclude={exclusions} personId={personId} rulership={rulership} />
+          <ReportView
+            chart={load.data}
+            exclude={exclusions}
+            personId={personId}
+            rulership={rulership}
+            onRulershipChange={setRulership}
+          />
         </>
       )}
     </main>

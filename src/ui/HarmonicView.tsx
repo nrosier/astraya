@@ -112,6 +112,7 @@ export function HarmonicView({
     settings: extendedSettings,
     unreadable: settingsUnreadable,
     rulership,
+    setRulership,
   } = usePersonCalculationSettings(personId);
   const orbs = useStableBy(orbsOf(extendedSettings), (config) => JSON.stringify(config));
 
@@ -237,7 +238,7 @@ export function HarmonicView({
         <StatusMessage kind="error">{t.housesUndefined}</StatusMessage>
       )}
       {nValid && load.kind === 'ready' && housesAreDefined(load.data.houses) && (
-        <ReportView personId={personId} chart={load.data} rulership={rulership} />
+        <ReportView personId={personId} chart={load.data} rulership={rulership} onRulershipChange={setRulership} />
       )}
     </main>
   );

@@ -1753,7 +1753,7 @@ export function ChartDataView({
    * settings" panel is rendered and this is wired as its `onRedraw`. Omitted by
    * `SharedChartView`, which has no panel.
    */
-  readonly onExtendedSettingsChange?: (next: ExtendedSettings) => void | Promise<void>;
+  readonly onExtendedSettingsChange?: (next: ExtendedSettings, rulers: RulershipChoice) => void | Promise<void>;
   /** A long-lived provider for the panel's own house-system/ayanamsa name lookups. */
   readonly settingsProvider?: EphemerisProvider | undefined;
   /** The open view (#511: Wheel/Aspects/Placements/Patterns & condition), when a URL decides it (every real screen); otherwise this component's own state. */
@@ -2219,6 +2219,7 @@ export function ChartDataView({
     onExtendedSettingsChange !== undefined && settingsProvider !== undefined ? (
       <ExtendedSettingsPanel
         value={cardSettings ?? extendedSettings}
+        rulership={rulership}
         onRedraw={onExtendedSettingsChange}
         provider={settingsProvider}
       />

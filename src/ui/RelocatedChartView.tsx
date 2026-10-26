@@ -184,6 +184,7 @@ export function RelocatedChartView({
     settings: extendedSettings,
     unreadable: settingsUnreadable,
     rulership,
+    setRulership,
   } = usePersonCalculationSettings(personId);
   const orbs = useStableBy(orbsOf(extendedSettings), (config) => JSON.stringify(config));
 
@@ -350,7 +351,12 @@ export function RelocatedChartView({
           )}
           {load.kind === 'ready' && housesAreDefined(load.data.relocated.houses) && (
             <>
-              <ReportView personId={personId} chart={load.data.relocated} rulership={rulership} />
+              <ReportView
+                personId={personId}
+                chart={load.data.relocated}
+                rulership={rulership}
+                onRulershipChange={setRulership}
+              />
               <SortableTable
                 caption={t.comparisonCaption}
                 columns={comparisonColumns(t, locale)}

@@ -30,7 +30,7 @@ const en = {
     'sidereal-lahiri-v1':
       'Sidereal zodiac with the Lahiri ayanamsa, Whole Sign houses, traditional rulers, no Chiron or Fortune, five major aspects, mean node and Lilith, standard orbs.',
   },
-  presetRulership: (scheme: string) => `Applying it also sets the planetary rulers to ${scheme} on this device.`,
+  presetRulership: (scheme: string) => `Applying it also sets the planetary rulers to ${scheme}.`,
   rulershipNames: { modern: 'Modern', traditional: 'Traditional', both: 'Both' },
 
   appliesOnApply: 'Applies when you choose “Apply and redraw”.',
@@ -262,7 +262,7 @@ const nl: typeof en = {
     'sidereal-lahiri-v1':
       'Siderische dierenriem met de Lahiri-ayanamsa, Whole Sign-huizen, traditionele heersers, geen Chiron of Fortuna, vijf hoofdaspecten, gemiddelde maansknoop en Lilith, standaardorbs.',
   },
-  presetRulership: (scheme: string) => `Toepassen zet ook de planeetheersers op ${scheme} op dit apparaat.`,
+  presetRulership: (scheme: string) => `Toepassen zet ook de planeetheersers op ${scheme}.`,
   rulershipNames: { modern: 'modern', traditional: 'traditioneel', both: 'beide' },
 
   appliesOnApply: 'Wordt toegepast met “Toepassen en opnieuw tekenen”.',

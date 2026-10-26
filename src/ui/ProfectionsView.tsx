@@ -106,7 +106,7 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
   const [locale] = useLocale();
   const [asOf, setAsOf] = useState(todayInputValue);
   const { provider } = useEphemerisProvider();
-  const { rulership } = usePersonCalculationSettings(personId);
+  const { rulership, setRulership } = usePersonCalculationSettings(personId);
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
   // The reviewed text of each profected house (#427): the mechanical sentence until it arrives.
   const [corpus, setCorpus] = useState<readonly CorpusEntry[]>([]);
@@ -192,7 +192,7 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
 
       <section className="profections-rulers-section" aria-labelledby="rulers-heading">
         <h2 id="rulers-heading">{t.rulersHeading}</h2>
-        <RulershipSetting />
+        <RulershipSetting value={rulership} onChange={setRulership} />
         <p className="profections-rulers-description">
           {rulership === 'traditional' && t.rulersTraditional}
           {rulership === 'modern' && t.rulersModern}

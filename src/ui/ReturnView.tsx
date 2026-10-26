@@ -118,6 +118,7 @@ export function ReturnView({
     unreadable: settingsUnreadable,
     setSettings: setSettings,
     rulership,
+    setRulership,
   } = usePersonCalculationSettings(personId);
   const basisLine = useCalculationBasisLine(settings, rulership);
   const { provider } = useEphemerisProvider();
@@ -327,7 +328,7 @@ export function ReturnView({
         </>
       )}
       {load.kind === 'ready' && housesAreDefined(load.data.houses) && (
-        <ReportView personId={personId} chart={load.data} rulership={rulership} />
+        <ReportView personId={personId} chart={load.data} rulership={rulership} onRulershipChange={setRulership} />
       )}
     </main>
   );

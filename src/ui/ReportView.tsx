@@ -478,6 +478,7 @@ export function ReportView({
   exclude = NO_EXCLUSIONS,
   personId,
   rulership: rulershipProp,
+  onRulershipChange,
 }: {
   readonly chart: ChartData;
   /**
@@ -500,13 +501,15 @@ export function ReportView({
    * no single person, the report follows the device default rulership.
    */
   readonly rulership?: RulershipChoice | undefined;
+  /** Saves a changed ruler choice on the person; left out (a composite), the control edits the device default rulership. */
+  readonly onRulershipChange?: ((rulership: RulershipChoice) => void | Promise<void>) | undefined;
 }): React.JSX.Element {
   const t = useMessages(reportViewMessages);
   const overviewT = useMessages(chartOverviewMessages);
   const [activeTab, setActiveTab] = useState<InterpretationTabKey>('standard');
   const [showProvenance, setShowProvenance] = useState(false);
   const [locale] = useLocale();
-  const [deviceRulership] = useRulershipChoice();
+  const [deviceRulership, setDeviceRulership] = useRulershipChoice();
   const rulership = rulershipProp ?? deviceRulership;
   const [showDegreeSymbol, setShowDegreeSymbol] = useShowDegreeSymbol();
   const [corpus, setCorpus] = useState<readonly CorpusEntry[] | undefined>(undefined);
@@ -552,7 +555,7 @@ export function ReportView({
         <h3 id={configHeadingId} className="config-block-heading">
           {t.configurationHeading}
         </h3>
-        <RulershipSetting />
+        <RulershipSetting value={rulership} onChange={onRulershipChange ?? setDeviceRulership} />
         <DegreeSymbolSetting show={showDegreeSymbol} onChange={setShowDegreeSymbol} />
       </div>
       {!import.meta.env.PROD && (

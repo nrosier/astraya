@@ -41,6 +41,8 @@ export interface PersonCalculationSettings {
    * caller can say so.
    */
   readonly setSettings: (next: ExtendedSettings, rulership?: RulershipChoice) => Promise<void>;
+  /** Saves only the person's rulers, leaving their settings register untouched (nothing nobody chose is written). */
+  readonly setRulership: (rulership: RulershipChoice) => Promise<void>;
 }
 
 export function usePersonCalculationSettings(personId: string): PersonCalculationSettings {
@@ -79,6 +81,15 @@ export function usePersonCalculationSettings(personId: string): PersonCalculatio
     },
     [store, personId, own, ownRulership],
   );
+  const setRulership = useCallback(
+    async (nextRulership: RulershipChoice): Promise<void> => {
+      if (ownRulership === nextRulership) return;
+      await store.mutate([
+        { entity: 'person', entityId: personId, field: 'rulership', value: serializeRulership(nextRulership) },
+      ]);
+    },
+    [store, personId, ownRulership],
+  );
   return {
     settings,
     rulership,
@@ -91,5 +102,6 @@ export function usePersonCalculationSettings(personId: string): PersonCalculatio
         : 'person',
     rulershipSource: unreadable ? 'application-default' : ownRulership === undefined ? 'device-default' : 'person',
     setSettings,
+    setRulership,
   };
 }

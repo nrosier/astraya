@@ -102,7 +102,8 @@ export function PreferencesView({
   const [density, setDensity] = useDensity();
   const store = useOptionalStore();
   const { provider } = useEphemerisProvider();
-  const [rulership] = useRulershipChoice();
+  // The device default rulership (#806): what a new person starts with, and what a screen with no single person shows.
+  const [rulership, setRulership] = useRulershipChoice();
   // The chart-setup editor here edits the device's default profile (#806): the starting point for a person who has
   // not saved settings of their own. A person's own settings are changed on that person's chart screens.
   const [savedDefault, saveDefault] = useDefaultCalculationProfile();
@@ -380,7 +381,13 @@ export function PreferencesView({
         {active === 'astrology' && (
           <>
             <p>{t.rulersSubtitle}</p>
-            <RulershipSetting />
+            <RulershipSetting
+              value={rulership}
+              onChange={(choice) => {
+                setRulership(choice);
+                if (savedDefault !== undefined) saveDefault(savedDefault.settings, choice);
+              }}
+            />
 
             <OrbLibraryEditor profiles={orbLibrary.profiles} sources={orbSources} />
 
@@ -395,8 +402,10 @@ export function PreferencesView({
             ) : (
               <ExtendedSettingsPanel
                 value={extendedSettings}
-                onRedraw={(next) => {
-                  saveDefault(next, rulership);
+                rulership={rulership}
+                onRedraw={(next, rulers) => {
+                  setRulership(rulers);
+                  saveDefault(next, rulers);
                 }}
                 provider={provider}
               />

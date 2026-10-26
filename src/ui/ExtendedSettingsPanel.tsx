@@ -1,13 +1,14 @@
 /**
  * The chart's "Extended settings" (#52, #442): house system, zodiac and ayanamsa, which points are shown and
- * which take aspects, the orbs and minor aspects, the wheel colours, and (as device preferences) the planetary
- * rulers and the symbols.
+ * which take aspects, the orbs and minor aspects, the wheel colours, the planetary rulers and (as a device
+ * preference) the symbols.
  *
  * Shown as a button that summarises what differs from the defaults and opens a modal card. Three kinds of setting
- * live in it, and the card says which is which: the calculation and display settings are edited in a local draft
- * (every one needs a real recompute, so nothing is committed per keystroke) and applied together with "Apply and
- * redraw", or thrown away with Cancel, Escape or a click outside; the planetary rulers and the symbols are device
- * preferences, previewed live (the chart behind the card shows them) and put back by Cancel, kept by Apply or Save as my default.
+ * live in it, and the card says which is which: the calculation and display settings and the planetary rulers are
+ * edited in a local draft (every one needs a real recompute, so nothing is committed per keystroke) and applied
+ * together with "Apply and redraw", or thrown away with Cancel, Escape or a click outside (#806: the rulers belong to
+ * the person, like the other calculation settings); the symbols are device preferences, previewed live (the chart
+ * behind the card shows them) and put back by Cancel, kept by Apply or Save as my default.
  *
  * The groups follow how a chart is set up: the frame (zodiac, then houses), what is drawn on it, then its aspects.
  * A starting point (a preset) fills the profile settings of a tradition in one go and shows "Custom" when the draft
@@ -16,8 +17,8 @@
  */
 /**
  * @module ExtendedSettingsPanel
- * @purpose Renders the chart's "Extended settings" modal: house system, zodiac/ayanamsa, visible points/aspects, orb scale, minor aspects, wheel colours, plus the planetary-rulership and symbol device preferences.
- * @conventions Calculation/display settings are edited in a local draft and only committed via "Apply and redraw" (every change needs a real recompute); planetary rulers and symbols are device preferences previewed live and put back by Cancel, kept by Apply or Save as my default. A preset (`extended-settings-presets.js`) can fill the whole profile in one go. Text comes from co-located `ExtendedSettingsPanel.messages.ts` via `useMessages()`.
+ * @purpose Renders the chart's "Extended settings" modal: house system, zodiac/ayanamsa, visible points/aspects, orb scale, minor aspects, wheel colours, the planetary rulers, plus the symbol device preference.
+ * @conventions Calculation/display settings are edited in a local draft and only committed via "Apply and redraw" (every change needs a real recompute); the planetary rulers are part of the draft (a person's own choice, #806) and are committed by Apply with the other settings; symbols are a device preference previewed live and put back by Cancel, kept by Apply or Save as my default. A preset (`extended-settings-presets.js`) can fill the whole profile in one go. Text comes from co-located `ExtendedSettingsPanel.messages.ts` via `useMessages()`.
  * @exports ExtendedSettingsPanel
  */
 import { Checkbox } from './primitives/Checkbox.js';
@@ -83,7 +84,7 @@ import { ChoiceGroup } from './primitives/ChoiceGroup.js';
 import { OptionCards } from './primitives/OptionCards.js';
 import { Select } from './primitives/Select.js';
 import { RulershipSetting } from './RulershipSetting.js';
-import { useRulershipChoice } from './rulership-setting.js';
+import { writeRulershipChoice } from './rulership-setting.js';
 import { SymbolSetting } from './SymbolSetting.js';
 import { useGlyphVariants, type GlyphLook } from './glyph-variant-setting.js';
 import { useSymbolClass } from './symbol-setting.js';
@@ -147,37 +148,36 @@ function useNameLookup<T extends number | string>(
 
 /** The device preferences the card can change live, as they were when it opened. */
 interface DeviceSnapshot {
-  readonly rulers: RulershipChoice;
   readonly symbolClass: SymbolClass;
   readonly look: GlyphLook;
 }
 
 export function ExtendedSettingsPanel({
   value,
+  rulership,
   onRedraw,
   provider,
 }: {
   readonly value: ExtendedSettings;
-  /** May return a promise (a person's settings are saved asynchronously): a rejection keeps the card open and says so. */
-  readonly onRedraw: (next: ExtendedSettings) => void | Promise<void>;
+  /** The planetary rulers the card opens with (#806): the person's own, or the device default when editing that. */
+  readonly rulership: RulershipChoice;
+  /** Receives the settings and the rulers together. May return a promise (a person's settings are saved asynchronously): a rejection keeps the card open and says so. */
+  readonly onRedraw: (next: ExtendedSettings, rulers: RulershipChoice) => void | Promise<void>;
   readonly provider: EphemerisProvider;
 }): React.JSX.Element {
   const [draft, setDraft] = useState<ExtendedSettings>(value);
   // The practitioner's own orb rules (#590) are typed as strings and only become settings when every entry parses,
   // so a half-typed number never reaches the chart. `draft.orbRules` is not read; `effective` below is the draft.
   const [rulesText, setRulesText] = useState<OrbRulesDraft>(() => orbRulesDraftFrom(value.orbRules));
-  // A starting point can also set the planetary rulers, which are a device preference; they are written only on Apply.
-  const [pendingRulers, setPendingRulers] = useState<RulershipChoice | undefined>(undefined);
-  // The device preferences edited in the card (rulers, symbols) take effect as they are changed, so the chart
+  // The planetary rulers are edited in the draft with everything else and written only on Apply (#806).
+  const [rulers, setRulers] = useState<RulershipChoice>(rulership);
+  // The device preferences edited in the card (symbols) take effect as they are changed, so the chart
   // behind it previews them; what they were when the card opened is kept so Cancel can put them back.
   const [atOpen, setAtOpen] = useState<DeviceSnapshot | undefined>(undefined);
   const [open, setOpen] = useState(false);
-  // Capture the current rulership choice for reactive description updates
-  const [rulershipChoice] = useRulershipChoice();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const t = useMessages(extendedSettingsPanelMessages);
   const [locale] = useLocale();
-  const [rulers, setRulers] = useRulershipChoice();
   const [savedDefault, setDefaultCalculationProfile] = useDefaultCalculationProfile();
   const [symbolClass, setSymbolClass] = useSymbolClass();
   const [look, setVariant, setWeight] = useGlyphVariants();
@@ -310,8 +310,8 @@ export function ExtendedSettingsPanel({
 
   const openCard = (): void => {
     replaceDraft(value);
-    setPendingRulers(undefined);
-    setAtOpen({ rulers, symbolClass, look });
+    setRulers(rulership);
+    setAtOpen({ symbolClass, look });
     setOpen(true);
   };
 
@@ -321,7 +321,6 @@ export function ExtendedSettingsPanel({
    */
   const closeCard = (keepDevice = false): void => {
     if (!keepDevice && atOpen !== undefined) {
-      setRulers(atOpen.rulers);
       setSymbolClass(atOpen.symbolClass);
       setWeight(atOpen.look.weight);
       for (const body of VARIANT_BODIES) setVariant(body, atOpen.look[body]);
@@ -329,21 +328,23 @@ export function ExtendedSettingsPanel({
     setOpen(false);
     setApplyFailed(false);
     replaceDraft(value);
-    setPendingRulers(undefined);
+    setRulers(rulership);
     setAtOpen(undefined);
   };
 
   // A changed value from outside resets the draft while the card is closed; leaving the page is StagedDialog's job.
   useEffect(() => {
-    if (!open) replaceDraft(value);
-  }, [value, open]);
+    if (!open) {
+      replaceDraft(value);
+      setRulers(rulership);
+    }
+  }, [value, rulership, open]);
 
   const parsedRules = orbRulesFromDraft(rulesText);
   const rulesValid = parsedRules !== undefined;
   // What Apply and Save as my default would use: the draft with its typed orb rules turned into real ones.
   const effective = withOrbRules(draft, parsedRules);
-  const effectiveRulers = pendingRulers ?? rulers;
-  const currentProfile = matchCalculationProfile(effective, effectiveRulers);
+  const currentProfile = matchCalculationProfile(effective, rulers);
   const currentObjectPreset = matchObjectPolicyPreset(draft.objectPolicies);
   const currentOrbProfile = effective.orbRules === undefined ? matchOrbProfile(draft.orbScalePercent) : undefined;
   const currentCitedPreset = matchCitedOrbPreset(draft.orbScalePercent, effective.orbRules);
@@ -351,22 +352,19 @@ export function ExtendedSettingsPanel({
     currentOrbProfile === undefined ? undefined : matchCalculationScheme(draft.boundsScheme, currentOrbProfile);
   const deviceChanged =
     atOpen !== undefined &&
-    (rulers !== atOpen.rulers ||
-      symbolClass !== atOpen.symbolClass ||
+    (symbolClass !== atOpen.symbolClass ||
       look.weight !== atOpen.look.weight ||
       VARIANT_BODIES.some((body) => look[body] !== atOpen.look[body]));
-  const dirty = !sameSettings(effective, value) || pendingRulers !== undefined || deviceChanged;
+  const dirty = !sameSettings(effective, value) || rulers !== rulership || deviceChanged;
 
   const [applyFailed, setApplyFailed] = useState(false);
   const apply = (): void => {
-    if (pendingRulers !== undefined) setRulers(pendingRulers);
     setApplyFailed(false);
     const finish = (): void => {
       setOpen(false);
-      setPendingRulers(undefined);
       setAtOpen(undefined);
     };
-    const outcome = onRedraw(effective);
+    const outcome = onRedraw(effective, rulers);
     if (outcome === undefined) {
       finish();
       return;
@@ -376,25 +374,24 @@ export function ExtendedSettingsPanel({
     });
   };
 
-  /** "Save as my default" (#510): remembers the draft and rulers for every future chart on this device — never redraws the chart currently open, which stays Apply's job alone. */
+  /** "Save as my default" (#510): remembers the draft and rulers as this device's default for new people (#806) — never redraws the chart currently open and writes nothing on the person, which stay Apply's job alone. */
   const saveAsDefault = (): void => {
-    if (pendingRulers !== undefined) setRulers(pendingRulers);
-    setDefaultCalculationProfile(effective, effectiveRulers);
+    writeRulershipChoice(rulers);
+    setDefaultCalculationProfile(effective, rulers);
     closeCard(true);
   };
 
   /** Both resets name their target (#510): the draft and the rulers go back to that one profile, not to a mix. */
-  const resetTo = (settings: ExtendedSettings, rulership: RulershipChoice): void => {
+  const resetTo = (settings: ExtendedSettings, targetRulership: RulershipChoice): void => {
     replaceDraft(settings);
-    setPendingRulers(rulership === rulers ? undefined : rulership);
+    setRulers(targetRulership);
   };
 
   const chooseProfile = (id: string): void => {
     if (!(CALCULATION_PROFILE_IDS as readonly string[]).includes(id)) return;
     const profileId = id as CalculationProfileId;
     replaceDraft(applyCalculationProfile(effective, profileId));
-    const profileRulers = CALCULATION_PROFILES[profileId].rulership;
-    setPendingRulers(profileRulers === rulers ? undefined : profileRulers);
+    setRulers(CALCULATION_PROFILES[profileId].rulership);
   };
 
   /** Named orb-scale quick-pick (#543) — only ever touches `orbScalePercent`, never any other field, unlike `chooseProfile`. */
@@ -580,7 +577,7 @@ export function ExtendedSettingsPanel({
             ]}
             onChange={chooseProfile}
           />
-          {currentProfile !== undefined && CALCULATION_PROFILES[currentProfile].rulership !== rulers && (
+          {currentProfile !== undefined && CALCULATION_PROFILES[currentProfile].rulership !== rulership && (
             <p className="hint">
               {t.presetRulership(t.rulershipNames[CALCULATION_PROFILES[currentProfile].rulership])}
             </p>
@@ -953,14 +950,14 @@ export function ExtendedSettingsPanel({
 
         <fieldset className="field-group settings-card-group">
           <legend>{t.rulersLegend}</legend>
-          <p className="hint settings-card-tag">{t.devicePreview}</p>
+          <p className="hint settings-card-tag">{t.appliesOnApply}</p>
           <p className="hint">{t.rulersSubtitle}</p>
-          <RulershipSetting />
+          <RulershipSetting value={rulers} onChange={setRulers} />
           <p className="settings-card-note">
             {/* Display reactive description based on rulers choice */}
-            {rulershipChoice === 'modern' && t.modernRulersDescription}
-            {rulershipChoice === 'traditional' && t.traditionalRulersDescription}
-            {rulershipChoice === 'both' && t.coRulersDescription}
+            {rulers === 'modern' && t.modernRulersDescription}
+            {rulers === 'traditional' && t.traditionalRulersDescription}
+            {rulers === 'both' && t.coRulersDescription}
           </p>
         </fieldset>
 

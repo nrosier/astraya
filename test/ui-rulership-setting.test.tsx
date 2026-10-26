@@ -3,7 +3,7 @@
  * The planetary-rulers preference and its control (#426): modern by default, kept on this device, shared
  * by every component that reads it in the same tab, and safe when storage is unusable.
  */
-import { act } from 'react';
+import { act, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RulershipChoice } from '../src/astrology/rulership.js';
@@ -123,9 +123,29 @@ describe('the hook (#426)', () => {
   });
 });
 
-describe('RulershipSetting (#426)', () => {
-  it('offers the three choices as option cards, modern selected by default, under a named group with its explanation', async () => {
-    const container = await mount(<RulershipSetting />);
+/** A caller that owns the choice, the way a settings draft or a person's register does (#806). */
+function Controlled({
+  initial = 'modern',
+  onChange,
+}: {
+  readonly initial?: RulershipChoice;
+  readonly onChange?: (choice: RulershipChoice) => void | Promise<void>;
+}): React.JSX.Element {
+  const [value, setValue] = useState<RulershipChoice>(initial);
+  return (
+    <RulershipSetting
+      value={value}
+      onChange={async (choice) => {
+        setValue(choice);
+        await onChange?.(choice);
+      }}
+    />
+  );
+}
+
+describe('RulershipSetting (#426, #806)', () => {
+  it('offers the three choices as option cards, the given one selected, under a named group with its explanation', async () => {
+    const container = await mount(<Controlled />);
     const group = container.querySelector('[role="radiogroup"]');
     expect(group?.getAttribute('aria-label')).toBe('Planetary rulers');
     expect(radios(container).map((radio) => radio.checked)).toEqual([true, false, false]);
@@ -133,25 +153,31 @@ describe('RulershipSetting (#426)', () => {
     expect(container.querySelector('.hint')?.textContent).toContain('Scorpio, Aquarius and Pisces');
   });
 
-  it('saves the choice and tells the other components', async () => {
-    const container = await mount(
-      <>
-        <RulershipSetting />
-        <Reader label="reader" />
-      </>,
-    );
+  it('reports the choice to its caller and never writes the device preference itself', async () => {
+    const onChange = vi.fn();
+    const container = await mount(<Controlled onChange={onChange} />);
     await act(async () => {
       radios(container)[2]?.click();
       await Promise.resolve();
     });
-    expect(localStorage.getItem(RULERSHIP_KEY)).toBe('both' satisfies RulershipChoice);
-    expect(container.querySelector('[data-testid="reader"]')?.textContent).toBe('both');
+    expect(onChange).toHaveBeenCalledWith('both' satisfies RulershipChoice);
+    expect(localStorage.getItem(RULERSHIP_KEY)).toBeNull();
     expect(radios(container).map((radio) => radio.checked)).toEqual([false, false, true]);
+  });
+
+  it('shows a failed save beside the control instead of swallowing it', async () => {
+    const container = await mount(<Controlled onChange={() => Promise.reject(new Error('disk full'))} />);
+    await act(async () => {
+      radios(container)[1]?.click();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(container.textContent).toContain('That did not save, so the rulers were not changed. disk full');
   });
 
   it('is in Dutch when the language is Dutch', async () => {
     setLocale('nl');
-    const container = await mount(<RulershipSetting />);
+    const container = await mount(<Controlled />);
     expect(container.textContent).toContain('Heersende planeten');
     expect(container.querySelectorAll('.primitive-option-card-title')[2]?.textContent).toBe('Beide');
   });

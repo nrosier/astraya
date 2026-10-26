@@ -167,4 +167,20 @@ describe('usePersonCalculationSettings rulership (#806)', () => {
     expect(mismatches('a')).toEqual(['rulership']);
     expect(mismatches('b')).toEqual([]);
   });
+
+  it('setRulership writes only the rulership register and skips an unchanged value', async () => {
+    await addPeople('a');
+    mount('a');
+    const spy = vi.spyOn(store, 'mutate');
+    await act(async () => {
+      await current('a').setRulership('traditional');
+    });
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy.mock.calls[0]?.[0].map((mutation) => mutation.field)).toEqual(['rulership']);
+    expect(store.state.people.get('a')?.calculationSettings).toBeUndefined();
+    await act(async () => {
+      await current('a').setRulership('traditional');
+    });
+    expect(spy).toHaveBeenCalledTimes(1);
+  });
 });
