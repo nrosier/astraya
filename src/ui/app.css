@@ -3925,22 +3925,8 @@ svg text.chart-symbol-text-unicode {
 }
 
 /*
- * The chart screen's own Wheel/Aspects/Placements/Patterns & condition navigation (#511):
- * docs/ui/UI-UX_GUIDELINES.md §2 calls these "route-level views with stable URLs and ordinary
- * links, not ARIA tabs" — a row of links at and above the app's standing 64rem nav breakpoint,
- * the shared Select below it. Exactly one of the two is ever visible.
+ * The title row (#801): back link and heading side by side, with the view row tucked right under.
  */
-.chart-view-select {
-  max-width: 20rem;
-  margin: 0.25rem 0 0.5rem;
-}
-
-.chart-view-nav,
-.chart-view-prefix {
-  display: none;
-}
-
-/* The title row (#801): back link and heading side by side, with the view links tucked right under. */
 .chart-title-row {
   display: flex;
   flex-wrap: wrap;
@@ -3959,13 +3945,20 @@ svg text.chart-symbol-text-unicode {
   min-width: 0;
 }
 
-.chart-view-prefix {
-  color: var(--muted);
-  font-size: 0.9rem;
-}
-
-/* The chart type select shares this row with the view nav (#801); below 64rem the two selects wrap onto separate lines when they cannot fit. */
-.chart-view-bar {
+/*
+ * The shared scrolling tab row (#818, `ScrollingTabRow.tsx`), used by the chart screen's views (#511, #817).
+ * Token mapping for the spec's utility classes (docs/ui/UI-UX_GUIDELINES.md §17.1): the canvas colour at the
+ * fades is `--bg`, the row's rule is `--line`, the active tab's 2px bottom border is `--accent`, muted tab text is
+ * `--muted`; no shadow, only flat 1px borders.
+ *
+ * Three widths, all one markup:
+ * - 64rem and up (the app's standing nav breakpoint): the tabs scroll sideways in one non-wrapping row with an edge
+ *   fade wherever tabs are hidden, and the actions are pinned at the far right, outside the scroller and its fades.
+ * - 450px to 64rem: the labelled Select replaces the tabs (docs/ui/UI-UX_GUIDELINES.md §2) and the actions stay
+ *   pinned as separate triggers.
+ * - Below 450px: the actions collapse behind one "⚙️ ▾" toggle that opens them in an in-flow panel.
+ */
+.tab-row {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
@@ -3973,48 +3966,301 @@ svg text.chart-symbol-text-unicode {
   margin: var(--space-1) 0 var(--space-2);
 }
 
-.chart-view-bar .chart-type-select,
-.chart-view-bar .chart-view-select {
+.tab-row .primitive-field {
+  margin-bottom: 0;
+}
+
+/* Below 64rem the scroller is not a scroller: its parts wrap as ordinary items of the row, fades and tabs gone. */
+.tab-row__viewport,
+.tab-row__scroll {
+  display: contents;
+}
+
+.tab-row__fade,
+.tab-row__tabs,
+.tab-row__prefix {
+  display: none;
+}
+
+.tab-row .chart-type-select,
+.tab-row .chart-view-select {
   margin: 0;
 }
 
-@media (min-width: 64rem) {
-  .chart-view-bar {
-    align-items: center;
+.tab-row__actions {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+.tab-row__actions-toggle {
+  display: none;
+}
+
+.tab-row__actions-panel {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.tab-row__actions-panel > * {
+  margin: 0;
+}
+
+.tab-row__actions-panel > .chart-overlay-settings > button,
+.tab-row__actions-panel > .extended-settings > button {
+  min-height: 2.25rem;
+  padding: var(--space-1) var(--space-3);
+}
+
+/* A summary of what was changed must not push the other trigger off a pinned row: it shortens instead. */
+.tab-row__actions-panel .extended-settings-trigger {
+  flex-wrap: nowrap;
+  align-items: center;
+  max-width: 22rem;
+}
+
+.tab-row__actions-panel .extended-settings-trigger-name,
+.tab-row__actions-panel .extended-settings-trigger-count {
+  white-space: nowrap;
+}
+
+.tab-row__actions-panel .extended-settings-trigger-detail {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+
+@media (max-width: 449.98px) {
+  .tab-row__actions {
+    display: contents;
   }
 
-  .chart-view-prefix {
-    display: inline;
+  .tab-row__leading {
+    order: 1;
+    flex: 1 1 0;
+    min-width: 0;
   }
 
-  .chart-view-nav {
+  .tab-row__actions-toggle {
+    display: block;
+    order: 2;
+  }
+
+  .tab-row__actions-panel {
+    display: none;
+    order: 3;
+    flex: 1 1 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding: var(--space-1);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface);
+  }
+
+  .tab-row__actions[data-open='true'] .tab-row__actions-panel {
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
   }
 
-  .chart-view-select {
+  .tab-row__actions-panel > .chart-overlay-settings > button,
+  .tab-row__actions-panel > .extended-settings > button {
+    width: 100%;
+    min-height: 2.5rem;
+    border-color: transparent;
+    background: none;
+    text-align: left;
+  }
+
+  .tab-row__actions-panel > .chart-overlay-settings > button:hover:not(:disabled),
+  .tab-row__actions-panel > .extended-settings > button:hover:not(:disabled) {
+    background: var(--surface-hover);
+  }
+
+  .tab-row__actions-panel .extended-settings-trigger {
+    flex-wrap: wrap;
+    max-width: none;
+  }
+
+  .tab-row__actions-panel .extended-settings-trigger-detail {
+    overflow: visible;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .tab-row__fallback {
+    order: 4;
+    flex: 1 1 100%;
+  }
+
+  .tab-row .chart-view-select {
+    max-width: none;
+  }
+}
+
+@media (min-width: 64rem) {
+  .tab-row {
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .tab-row__viewport {
+    display: block;
+    position: relative;
+    flex: 1 1 auto;
+    /* A flex item defaults to its content's width; without this the row would grow instead of scrolling. */
+    min-width: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .tab-row__scroll {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: var(--space-3);
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior: contain;
+    /* Native scrollbars are hidden; a finger can still pan the row sideways. */
+    touch-action: pan-x;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .tab-row__scroll::-webkit-scrollbar {
     display: none;
   }
+
+  /* Labels and selects keep their natural width; the row scrolls instead of squeezing them. */
+  .tab-row__scroll > * {
+    flex-shrink: 0;
+  }
+
+  .tab-row__leading,
+  .tab-row__prefix {
+    align-self: center;
+  }
+
+  .tab-row__leading .primitive-field {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  /* The scroller clips an outline drawn outside the control, so the focus ring is drawn inside it here. */
+  .tab-row__leading select:focus-visible {
+    outline-offset: -2px;
+  }
+
+  .tab-row__prefix {
+    display: block;
+    color: var(--muted);
+    font-size: var(--text-sm);
+    white-space: nowrap;
+  }
+
+  .tab-row__tabs {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: var(--space-2);
+  }
+
+  .tab-row__fallback {
+    display: none;
+  }
+
+  .tab-row__fade {
+    display: block;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 3rem;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .tab-row__fade--start {
+    left: 0;
+    background: linear-gradient(to right, var(--bg), transparent);
+  }
+
+  .tab-row__fade--end {
+    right: 0;
+    background: linear-gradient(to left, var(--bg), transparent);
+  }
+
+  .tab-row[data-can-scroll-start='true'] .tab-row__fade--start,
+  .tab-row[data-can-scroll-end='true'] .tab-row__fade--end {
+    opacity: 1;
+  }
+
+  .tab-row__actions {
+    flex: 0 0 auto;
+    align-items: center;
+    margin-left: 0;
+  }
 }
 
-.chart-view-link {
-  padding: 0.35rem 0.8rem;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm, 0.4rem);
+@media (min-width: 64rem) and (prefers-reduced-motion: no-preference) {
+  .tab-row__scroll {
+    scroll-behavior: smooth;
+  }
+
+  .tab-row__fade {
+    transition: opacity var(--duration-fast) var(--ease-standard);
+  }
+}
+
+/* The links: a muted label with a 2px bottom border that turns to the accent on the open one. */
+.tab-row__tabs > a {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 2px solid transparent;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
   color: var(--muted);
+  font-size: var(--text-sm);
   font-weight: 550;
   text-decoration: none;
+  white-space: nowrap;
 }
 
-.chart-view-link:hover:not(.active) {
+.tab-row__tabs > a:hover:not([aria-current='page']) {
   background: var(--surface-hover);
   color: var(--fg);
 }
 
-.chart-view-link.active {
-  border-color: var(--accent);
+.tab-row__tabs > a[aria-current='page'] {
+  border-bottom-color: var(--accent);
   color: var(--fg);
+}
+
+/* Inside the clipping scroller an outside outline would be cut at the row's top and bottom edges. */
+.tab-row__tabs > a:focus-visible {
+  outline-offset: -2px;
+}
+
+@media print {
+  .tab-row__actions,
+  .tab-row__fade {
+    display: none !important;
+  }
+}
+
+/*
+ * The chart screen's own Wheel/Aspects/Placements/Patterns & condition navigation (#511):
+ * docs/ui/UI-UX_GUIDELINES.md §2 calls these "route-level views with stable URLs and ordinary
+ * links, not ARIA tabs" — the shared tab row above at and above the app's standing 64rem nav
+ * breakpoint, this Select below it. Exactly one of the two is ever visible.
+ */
+.chart-view-select {
+  max-width: 20rem;
+  margin: 0.25rem 0 0.5rem;
 }
 
 /* The Extended settings (#442): a button that summarises what was changed, and the modal card it opens. */

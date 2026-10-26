@@ -232,6 +232,7 @@ const en = {
   chartViewNavLabel: 'Chart view navigation',
   extendedSettingsPrefix: 'Extended settings:',
   chartViewSelectLabel: 'Chart view',
+  chartActionsLabel: 'Chart actions',
   aspectPatternsHeading: 'Aspect configurations',
   aspectPatternNames: {
     stellium: 'Stellium',
@@ -559,6 +560,7 @@ const nl: typeof en = {
   chartViewNavLabel: 'Navigatie grafiekweergave',
   extendedSettingsPrefix: 'Uitgebreide instellingen:',
   chartViewSelectLabel: 'Grafiekweergave',
+  chartActionsLabel: 'Grafiekacties',
   aspectPatternsHeading: 'Aspectconfiguraties',
   aspectPatternNames: {
     stellium: 'Stellium',
