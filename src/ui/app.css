@@ -2378,6 +2378,29 @@ label.stacked textarea:focus-visible {
   background: color-mix(in oklab, var(--aspect-hard) 9%, transparent);
 }
 
+/* Stat tiles (#826): a flex-wrapped layout over the global `dl` card surface; no border,
+   radius or background of its own. Neutralises the global row hairline and cell padding. */
+dl.primitive-stat-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4) var(--space-6);
+}
+
+.primitive-stat-list > div {
+  flex: 1 1 10rem;
+}
+
+.primitive-stat-list dt,
+.primitive-stat-list dd {
+  padding: 0;
+  border-top: 0;
+}
+
+.primitive-stat-list dt {
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
 .chart-isolation-group h5 {
   margin: 0.75rem 0 0.25rem;
   font-size: 0.85rem;
