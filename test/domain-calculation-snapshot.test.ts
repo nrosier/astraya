@@ -478,3 +478,45 @@ describe('decodeStrictExtendedSettings never fills a register with defaults (#80
     expect(() => decodeStrictExtendedSettings({ ...full, objectPolicies: {} }, true)).toThrow(SnapshotDecodeError);
   });
 });
+
+describe('the keys a person register must carry (#806 compatibility pin)', () => {
+  const defaults = JSON.parse(JSON.stringify(DEFAULT_EXTENDED_SETTINGS)) as Record<string, unknown>;
+
+  it('pins exactly which settings keys requireAll demands, so adding a required key fails here first', () => {
+    const required = Object.keys(defaults).filter((key) => {
+      const without = Object.fromEntries(Object.entries(defaults).filter(([name]) => name !== key));
+      try {
+        decodeStrictExtendedSettings(without, true);
+        return false;
+      } catch (error) {
+        if (error instanceof SnapshotDecodeError) return true;
+        throw error;
+      }
+    });
+    expect(required.sort()).toEqual(
+      [
+        'antisciaMaxOrb',
+        'antisciaVisible',
+        'boundsScheme',
+        'declinationMaxOrb',
+        'declinationVisible',
+        'dial90Visible',
+        'enabledMinorAspects',
+        'houseSystem',
+        'lilithVariant',
+        'midpointTreeOrb',
+        'midpointsVisible',
+        'nodeVariant',
+        'objectPolicies',
+        'orbScalePercent',
+        'rainbowZodiac',
+        'zodiac',
+      ].sort(),
+    );
+  });
+
+  it('does not require a rulership key inside the settings bag', () => {
+    expect(() => decodeStrictExtendedSettings(defaults, true)).not.toThrow();
+    expect('rulership' in defaults).toBe(false);
+  });
+});

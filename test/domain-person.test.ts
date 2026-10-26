@@ -4,6 +4,7 @@ import { DEFAULT_EXTENDED_SETTINGS } from '../src/chart/extended-settings.js';
 import {
   buildPerson,
   PERSON_FIELDS,
+  readCalculationSettings,
   readCustomPoints,
   readRelocationPlaces,
   serializeCalculationSettings,
@@ -142,5 +143,20 @@ describe('the per-person calculationSettings register (#806)', () => {
     delete incomplete.declinationVisible;
     const person = buildPerson('p', new Map([['calculationSettings', { version: 3, settings: incomplete }]]));
     expect(person.calculationSettingsUnreadable).toBe(true);
+  });
+});
+
+describe('v0.42.13 register compatibility (#806)', () => {
+  it('reads a literal v3 register written by v0.42.13 as settings', () => {
+    const literal = JSON.parse(JSON.stringify({ version: 3, settings: DEFAULT_EXTENDED_SETTINGS })) as unknown;
+    expect(readCalculationSettings(literal)).toEqual({ kind: 'settings', settings: DEFAULT_EXTENDED_SETTINGS });
+    const person = buildPerson('p', new Map([['calculationSettings', literal]]));
+    expect(person.calculationSettingsUnreadable).toBeUndefined();
+    expect(person.calculationSettings).toEqual(DEFAULT_EXTENDED_SETTINGS);
+  });
+
+  it('still reads a register that carries an extra top-level rulership (forward tolerance)', () => {
+    const withRulership = { version: 3, settings: DEFAULT_EXTENDED_SETTINGS, rulership: 'traditional' };
+    expect(readCalculationSettings(withRulership)?.kind).toBe('settings');
   });
 });
