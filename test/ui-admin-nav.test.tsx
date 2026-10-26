@@ -73,7 +73,7 @@ describe('AdminNav', () => {
 
   it('marks only the current screen active, with aria-current', async () => {
     const container = await mount({ kind: 'admin-usage' });
-    const active = [...container.querySelectorAll('a')].filter((link) => link.classList.contains('active'));
+    const active = [...container.querySelectorAll('a')].filter((link) => link.getAttribute('aria-current') === 'page');
     expect(active.map((link) => link.textContent)).toEqual(['AI usage']);
     expect(active[0]?.getAttribute('aria-current')).toBe('page');
     expect(container.querySelectorAll('[aria-current]')).toHaveLength(1);

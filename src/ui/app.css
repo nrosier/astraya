@@ -1539,45 +1539,6 @@ label.stacked textarea:focus-visible {
   overflow: hidden;
 }
 
-.person-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 0.2rem;
-  padding: 0.6rem;
-}
-
-.person-tab {
-  padding: 0.55rem 1rem;
-  border: none;
-  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
-  background: none;
-  color: var(--muted);
-  font-weight: 550;
-}
-
-.person-tab:hover:not(.active) {
-  color: var(--fg);
-}
-
-/* The two load-bearing details for the fused look: this background must match `.person-shelf
-   .shell`'s exactly, and the negative margin pulls the tab down over the seam between the tab
-   row and the content panel so no gap or line shows through underneath it. */
-.person-tab.active {
-  background: var(--bg);
-  color: var(--fg);
-  margin-bottom: -1px;
-}
-
-/* A tab gated on a birth record that isn't complete yet — same dimmed, still-legible treatment
-   `button:disabled` uses elsewhere, layered on top of the plain (inactive) tab look. */
-.person-tab.disabled,
-.person-tab.disabled:hover {
-  opacity: 0.55;
-  color: var(--muted);
-  cursor: not-allowed;
-}
-
 .person-shelf .hint {
   margin: 0;
   padding: 0 1rem 0.75rem;
