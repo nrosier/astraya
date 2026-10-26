@@ -27,12 +27,35 @@ import {
   rowsToTsv,
   sortRows,
   toggleSort,
+  type CellValue,
   type SortState,
   type TableColumn,
 } from './table-sort.js';
 
 /** Past this many rows a table scrolls inside its own frame, so its header can stay in view while the rows pass. */
 const TALL_TABLE_ROWS = 12;
+
+/** The mark an empty on-screen cell shows (#825). Not a message: every view already draws this same character. */
+const EMPTY_CELL = '—';
+
+/**
+ * On-screen text for a plain-text cell (#825). An empty value (`''`, `null`, `undefined`) whose text is empty or the
+ * dash draws the shared em dash. Other text stays as the view drew it, e.g. "Never seen" or a check mark. Copy, CSV and
+ * PDF never reach this: they read `cellText` in `table-sort.ts`, which is unchanged.
+ */
+function screenText<T>(column: TableColumn<T>, row: T): string {
+  const value = column.valueOf(row);
+  if (isEmptyValue(value)) {
+    const text = column.render ? column.render(row) : '';
+    return text === '' || text === EMPTY_CELL ? EMPTY_CELL : text;
+  }
+  return column.render ? column.render(row) : String(value);
+}
+
+/** True for a value that is absent rather than a real value: `''`, `null` or `undefined`. */
+function isEmptyValue(value: CellValue | null | undefined): value is '' | null | undefined {
+  return value === '' || value === null || value === undefined;
+}
 
 export function SortableTable<T>({
   caption,
@@ -178,11 +201,7 @@ export function SortableTable<T>({
                       data-align={aligns.get(column.key)}
                       className={column.wrapText ? 'data-table-cell-wrap' : undefined}
                     >
-                      {column.renderCell
-                        ? column.renderCell(row)
-                        : column.render
-                          ? column.render(row)
-                          : String(column.valueOf(row))}
+                      {column.renderCell ? column.renderCell(row) : screenText(column, row)}
                     </td>
                   ))}
                 </tr>
