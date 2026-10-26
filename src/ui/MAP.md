@@ -5,7 +5,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 **Subdirectory:** `primitives/` — shared UI primitives for the #506 UI/UX overhaul (Button, Field/TextField/NumberField/DateField/Select, Checkbox/Radio/ChoiceGroup/OptionCards, Tooltip). See its own `MAP.md`.
 
 - `About.tsx` + `About.messages.ts` — About/privacy/licence screen, version metadata. Deps: none (static content).
-- `default-calculation-profile.ts` — The saved default calculation profile (device preference, #510) that Preferences edits (#806). Deps: `chart/calculation-profiles`.
+- `default-calculation-profile.ts` — The saved default calculation profile (device preference, #510) that Preferences edits; a new person receives a copy of it (#806). Deps: `chart/calculation-profiles`.
 - `online-status.ts` — Hook following the browser's online/offline state, so network-only actions can show the offline result state. Deps: none.
 - `astro-glossary.messages.ts` — Astrology glossary catalogue (en/nl name + definition per term), the one source for every GlossaryTerm. Deps: none.
 - `GlossaryTerm.tsx` — Inline `GlossaryTerm` and the per-screen `GlossaryTerms` list, opening definitions through the shared Tooltip. Deps: `astro-glossary.messages`, `GlossaryTerm.messages`, `primitives/Tooltip`.
@@ -60,7 +60,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `PageHeader.tsx` + `PageHeader.messages.ts` — Content-header primitive (#506/#509): page title, optional basis line, and the current screen's own registered exports, replacing the old global "This page" Export submenu. Deps: `./export-registry`, `./use-exclusive-open`.
 - `PdfAiInterpretationPicker.tsx` — PDF builder picker for the selected person's saved AI interpretations in the PDF's language (#759, #768), dropping ticks of other people; trigger opens a tick-only selection modal (#762), ordering stays in the builder; generates nothing. Deps: `interpretation/tier2-client`, `primitives/Checkbox`, `primitives/StagedDialog`, `./result-basis-label`, `./saved-time`.
 - `PdfExportBuilder.tsx` — PDF export builder screen (#441, lazy-loaded). Deps: `domain/pdf-export-sections`, `./pdf-export-plan`, `./pdf-export-render`.
-- `People.tsx` + `People.messages.ts` — Home/landing screen (list/create/restore people). Deps: `store-context`, `./people-list`.
+- `People.tsx` + `People.messages.ts` — Home/landing screen (list/create/restore people); a new person is created with a copy of the default calculation profile and rulership (#806). Deps: `store-context`, `./people-list`, `default-calculation-profile`, `rulership-setting`, `domain/person`.
 - `OrbRulesFields.tsx` + `OrbRulesFields.messages.ts` — Per-aspect and per-body orb inputs in the Extended settings card (#590). Deps: `orb-rules-draft`, `astro-names.messages`.
 - `OrbLibraryEditor.tsx` + `OrbLibraryEditor.messages.ts` — Preferences section: named orb profiles (revisioned) and which orbs transit, synastry and natal charts use (#590). Deps: `astrology/orb-library`, `orb-library-store`, `orb-rules-draft`, `OrbRulesFields`.
 - `orb-library-store.ts` — Device-stored orb library and per-context orb source, validated on every read (#590). Deps: `astrology/orb-library`.

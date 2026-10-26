@@ -167,7 +167,8 @@ export const SETTINGS: readonly SettingDefinition[] = [
     scope: 'person',
     owner:
       "One person's chart calculation settings (house system, zodiac, orb scale and rules, visible points, aspects, Lilith/node variants), kept on the person (#806)",
-    describeDefault: "unset (the person starts from this device's default profile, then the Astraya default)",
+    describeDefault:
+      "a copy of this device's default profile, written when the person is created; unset for a person made by an older build, who follows the default profile live, then the Astraya default",
     persistence: 'indexeddb-oplog',
     synced: true,
     editingSurface: 'ExtendedSettingsPanel.tsx on that person’s chart screens',
@@ -180,7 +181,8 @@ export const SETTINGS: readonly SettingDefinition[] = [
     scope: 'person',
     owner:
       "One person's planetary-ruler choice (Modern/Traditional/Both) wherever a ruler, dignity, or dispositor is shown for them, kept on the person as its own register so older builds ignore it (#806)",
-    describeDefault: "unset (the person starts from this device's default rulership, then modern)",
+    describeDefault:
+      "a copy of this device's default rulership, written when the person is created; unset for a person made by an older build, who follows the default rulership live, then modern",
     persistence: 'indexeddb-oplog',
     synced: true,
     editingSurface:

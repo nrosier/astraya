@@ -1,7 +1,7 @@
 /**
  * The device's default calculation profile (#510): the concrete `ExtendedSettings` snapshot and
- * planetary-ruler choice every person without calculation settings of their own starts from (#806), remembered from "Save as my
- * default" in Extended settings. A device preference like the rulers and the transit filter — never
+ * planetary-ruler choice copied onto a person when they are created (#806), and followed live by a person who has
+ * none of their own (one made by an older build), remembered from "Save as my default" in Extended settings. A device preference like the rulers and the transit filter — never
  * synced, never sent anywhere — read live by the calculation-basis line
  * and by `person-calculation-settings.ts`. A change reaches other mounted components in the same tab
  * through an event, and other tabs through the browser's `storage` event.
