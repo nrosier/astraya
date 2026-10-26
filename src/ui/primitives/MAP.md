@@ -13,6 +13,7 @@ Shared UI primitives for the #506 UI/UX overhaul (Phase 1, #508). Business logic
 - `DateField.tsx` — Native `<input type="date">` via `Field` — deliberately not a hand-built calendar grid. Deps: `./Field`.
 - `Select.tsx` — Styled native `<select>` via `Field` for 5-12 item choices. Deps: `./Field`.
 - `Badge.tsx` — Small static label chip for a fact beside a heading (e.g. a placement's sign and house), with an optional colour tone from existing tokens. Deps: none.
+- `EmptyState.tsx` — Shared "nothing here" block for an empty list or panel: message prop plus optional follow-up children, on the existing `.empty` look. Deps: none.
 - `Checkbox.tsx` — Shared checkbox anatomy, paired with `Radio`. Deps: none.
 - `Radio.tsx` — Shared radio anatomy; always used inside a caller-owned `name`/`radiogroup`. Deps: none.
 - `ChoiceGroup.tsx` — Segmented control (2-4 exclusive choices) as a labelled radiogroup over `Radio`. Deps: `./Radio`.
