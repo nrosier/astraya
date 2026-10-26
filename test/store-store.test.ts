@@ -7,6 +7,8 @@
  * same store, and that a device id is generated once and then kept forever.
  */
 import { afterEach, describe, expect, it } from 'vitest';
+import { DEFAULT_EXTENDED_SETTINGS, type ExtendedSettings } from '../src/chart/extended-settings.js';
+import { serializeCalculationSettings, serializeRulership } from '../src/domain/person.js';
 import { openStore } from '../src/store/store.js';
 import { openDatabase, allRecords, getSnapshot, DEVICE_ID_KEY, putMeta } from '../src/store/db.js';
 import { isNodeId } from '../src/store/hlc.js';
@@ -700,5 +702,50 @@ describe('seed (#806)', () => {
         db.close();
       }
     });
+  });
+});
+
+describe('person calculation settings across devices (#806)', () => {
+  it("applies one device's calculationSettings edit on the other and keeps a concurrent rulership edit", async () => {
+    const one = await openStore({ name: freshName(), now: ticking() });
+    const two = await openStore({ name: freshName(), now: ticking(1_800_000_000_000) });
+    try {
+      await one.mutate([named(PERSON, 'Ada')]);
+      await two.receive(one.outgoing());
+
+      const edited: ExtendedSettings = {
+        ...DEFAULT_EXTENDED_SETTINGS,
+        houseSystem: 'K',
+        zodiac: { kind: 'sidereal', ayanamsa: 1 },
+      };
+      await one.mutate([
+        {
+          entity: 'person',
+          entityId: PERSON,
+          field: 'calculationSettings',
+          value: serializeCalculationSettings(edited),
+        },
+      ]);
+      // Concurrent: device 2 has not yet seen device 1's edit.
+      await two.mutate([
+        { entity: 'person', entityId: PERSON, field: 'rulership', value: serializeRulership('traditional') },
+      ]);
+      expect(two.state.people.get(PERSON)?.calculationSettings).toBeUndefined();
+
+      const pushed = one.outgoing();
+      expect(pushed.filter((record) => record.field === 'calculationSettings')).toHaveLength(1);
+      const result = await two.receive(pushed);
+      expect(result.rejected).toHaveLength(0);
+      await one.receive(two.outgoing());
+
+      for (const store of [one, two]) {
+        const person = store.state.people.get(PERSON);
+        expect(person?.calculationSettings).toEqual(edited);
+        expect(person?.rulership).toBe('traditional');
+      }
+    } finally {
+      one.close();
+      two.close();
+    }
   });
 });
