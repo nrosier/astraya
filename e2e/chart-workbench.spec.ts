@@ -8,7 +8,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
-import type { BrowserContext, Page } from '@playwright/test';
+import type { BrowserContext, Locator, Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
 import { EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
@@ -272,5 +272,45 @@ test.describe('with the shared people (#799)', () => {
     await expect(show).toHaveAttribute('aria-pressed', 'false');
     await page.getByRole('link', { name: 'Wheel', exact: true }).click();
     await expect(inspector).toContainText('to explore it');
+  });
+
+  test('the chart row pins Overlays and Extended settings at the far right, and collapses them below 450px (#818)', async () => {
+    test.setTimeout(90_000);
+    const overlays = page.locator('.tab-row .chart-overlay-settings > button');
+    const settings = page.locator('.tab-row button.extended-settings-trigger');
+    const toggle = page.getByRole('button', { name: 'Chart actions', exact: true });
+    const box = async (locator: Locator): Promise<{ left: number; right: number }> => {
+      const rect = await locator.boundingBox();
+      if (rect === null) throw new Error('expected the element to have a layout box');
+      return { left: rect.x, right: rect.x + rect.width };
+    };
+
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await openNatalChart(page);
+    await expect(toggle).toBeHidden();
+    await expect(overlays).toBeVisible();
+    await expect(settings).toBeVisible();
+    // Pinned outside the scroller: both triggers sit wholly to the right of the scroll viewport, Overlays then
+    // Extended settings, and Extended settings ends the row.
+    const viewport = await box(page.locator('.tab-row__viewport'));
+    const row = await box(page.locator('.tab-row'));
+    const overlaysBox = await box(overlays);
+    const settingsBox = await box(settings);
+    expect(overlaysBox.left).toBeGreaterThanOrEqual(viewport.right);
+    expect(settingsBox.left).toBeGreaterThanOrEqual(overlaysBox.right);
+    expect(settingsBox.right).toBeGreaterThan(viewport.right);
+    expect(settingsBox.right).toBeCloseTo(row.right, 0);
+
+    // Below 450px both sit behind the one toggle until it is opened.
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(toggle).toBeVisible();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await expect(overlays).toBeHidden();
+    await expect(settings).toBeHidden();
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    await expect(overlays).toBeVisible();
+    await expect(settings).toBeVisible();
   });
 });
