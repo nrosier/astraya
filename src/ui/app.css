@@ -1294,6 +1294,15 @@ label.stacked textarea:focus-visible {
   color: var(--muted);
 }
 
+/* #826: EmptyState reuses `.empty`; only the inner message and follow-up spacing is added. */
+.primitive-empty-state-message {
+  margin: 0;
+}
+
+.primitive-empty-state-message + * {
+  margin-top: var(--space-3);
+}
+
 /* Fixed to the bottom rather than inline: PwaStatus sits outside every screen's own
    `.shell`, since an update or a warm failure applies regardless of which route is
    showing. Renders nothing when there is nothing to say, so this never costs layout
