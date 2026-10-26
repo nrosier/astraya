@@ -97,4 +97,24 @@ describe('stagePersonReplace (#699)', () => {
     expect(changes).toEqual([]);
     expect(mutations).toEqual([]);
   });
+
+  it('never writes calculation settings or rulership, even from a v4 file that carries them (#806)', async () => {
+    const archive = await buildFullExport({
+      people: [{ ...ADA, calculationSettings: { ...DEFAULT_EXTENDED_SETTINGS, houseSystem: 'K' }, rulership: 'both' }],
+      provider: engine,
+      appVersion: '9.9.9',
+      settings: DEFAULT_EXTENDED_SETTINGS,
+      rulership: 'modern',
+      symbolClass: 'drawn',
+      now: new Date('2026-10-18T12:00:00Z'),
+    });
+    const read = readPersonFile(JSON.stringify(archive));
+    if (!read.ok || read.people[0] === undefined) throw new Error('fixture bug');
+    expect(read.people[0].rulership).toBe('both');
+    const { mutations } = stagePersonReplace(KEPT, read.people[0]);
+    const fields = mutations.map((mutation) => mutation.field);
+    expect(fields).toContain('civil');
+    expect(fields).not.toContain('calculationSettings');
+    expect(fields).not.toContain('rulership');
+  });
 });

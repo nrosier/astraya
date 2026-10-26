@@ -36,6 +36,7 @@
  * @conventions Strict, fail-closed validation reusing person.ts's own field readers rather than a second parallel validator; version checked only against the imported FULL_EXPORT_VERSION constant, never a locally declared one; staging only ever emits mutations for fields that actually differ from the current Person (never a blind overwrite, and never a clear for a field the export omits), matching person-form.ts's own diffing rule that an untouched field must not get a newer timestamp than it already has.
  * @exports Result, ImportError, RestoreItem, RestorePreview, validateFullExport, stageFullExportRestore
  */
+import { isRulershipChoice } from '../astrology/rulership.js';
 import {
   FULL_EXPORT_FORMAT,
   FULL_EXPORT_VERSION,
@@ -51,6 +52,7 @@ import {
   readCustomPoints,
   readOffsetOverride,
   serializeCalculationSettings,
+  serializeRulership,
   readRelocationPlaces,
   readText,
   readTimeAccuracy,
@@ -164,6 +166,14 @@ function validatePerson(raw: unknown, path: string): Result<ExportedPerson, Impo
     calculationSettings = read.settings;
   }
 
+  let rulership: ExportedPerson['rulership'];
+  if (raw.rulership !== undefined) {
+    if (!isRulershipChoice(raw.rulership)) {
+      return malformed(`${path}.rulership`, 'not a recognised rulership choice');
+    }
+    rulership = raw.rulership;
+  }
+
   return {
     ok: true,
     value: {
@@ -176,6 +186,7 @@ function validatePerson(raw: unknown, path: string): Result<ExportedPerson, Impo
       ...(relocationPlaces === undefined ? {} : { relocationPlaces }),
       ...(customPoints === undefined ? {} : { customPoints }),
       ...(calculationSettings === undefined ? {} : { calculationSettings }),
+      ...(rulership === undefined ? {} : { rulership }),
       missing,
     },
   };
@@ -246,10 +257,18 @@ export function validateFullExport(value: unknown): Result<FullExport, ImportErr
     const path = `people[${String(index)}]`;
     const validated = validatePerson(value.people[index], path);
     if (!validated.ok) return validated;
-    const result: { readonly ok: true; readonly value: ExportedPerson } =
+    // Likewise a v2 or v3 person has no rulership of their own: their charts in that file were computed with the file's.
+    const withSettings: ExportedPerson =
       fileSettings !== undefined && validated.value.calculationSettings === undefined
-        ? { ok: true, value: { ...validated.value, calculationSettings: fileSettings } }
-        : validated;
+        ? { ...validated.value, calculationSettings: fileSettings }
+        : validated.value;
+    const result: { readonly ok: true; readonly value: ExportedPerson } = {
+      ok: true,
+      value:
+        got < 4 && withSettings.rulership === undefined
+          ? { ...withSettings, rulership: preferences.value.rulership }
+          : withSettings,
+    };
     // Two entries sharing an id are not two people — `store.mutate` would fold both sets of
     // field writes into one op-log entity by HLC, silently discarding whichever is "losing"
     // field-by-field, while this preview would have counted them as two. Rejected atomically,
@@ -373,6 +392,13 @@ function restoreMutations(entityId: string, exported: ExportedPerson, existing: 
       !same(existing?.calculationSettings, exported.calculationSettings))
   ) {
     write('calculationSettings', serializeCalculationSettings(exported.calculationSettings));
+  }
+
+  if (
+    exported.rulership !== undefined &&
+    (existing?.calculationSettingsUnreadable === true || existing?.rulership !== exported.rulership)
+  ) {
+    write('rulership', serializeRulership(exported.rulership));
   }
 
   return mutations;

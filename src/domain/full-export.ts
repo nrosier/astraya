@@ -41,6 +41,11 @@
  * the device onto the person. `preferences.settings` remains the device default, used for people
  * without their own. The importer reads v2 and v3; a v2 person takes the file's `preferences.settings`
  * as their settings, which is exactly what their charts in that file were computed with.
+ *
+ * #806 bumped 3 to 4: each person now also carries their own `rulership`, and `preferences.rulership` changes
+ * meaning from "what the charts below were computed with" to "the device default" (changing the meaning of an
+ * existing value is breaking under the compatibility policy). The importer reads v2, v3 and v4; a v2 or v3 person
+ * takes the file's `preferences.rulership`, which is exactly what their charts in that file were computed with.
  */
 /**
  * @module full-export
@@ -78,9 +83,9 @@ import type { CustomPointDefinition, Person, RelocationPlace } from './person.js
 import type { EphemerisProvider } from '../ephemeris/types.js';
 
 export const FULL_EXPORT_FORMAT = 'astraya-export';
-export const FULL_EXPORT_VERSION = 3;
-/** Versions the importer still reads: v2 files have no per-person settings, so their people take the file's preferences (#806). */
-export const SUPPORTED_IMPORT_VERSIONS: readonly number[] = [2, 3];
+export const FULL_EXPORT_VERSION = 4;
+/** Versions the importer still reads: v2 files have no per-person settings and v2/v3 files no per-person rulership, so those people take the file's preferences (#806). */
+export const SUPPORTED_IMPORT_VERSIONS: readonly number[] = [2, 3, 4];
 
 export interface ExportedChart {
   readonly sect: ChartData['sect'];
@@ -137,6 +142,8 @@ export interface ExportedPerson {
   readonly customPoints?: readonly CustomPointDefinition[];
   /** The chart settings this person's charts were computed with (#806, v3); absent in v2 files and for a person whose saved settings were unreadable. */
   readonly calculationSettings?: ExtendedSettings;
+  /** The planetary rulers this person's charts were computed with (#806, v4); absent in v2 and v3 files and for a person whose saved settings were unreadable. */
+  readonly rulership?: RulershipChoice;
   readonly natalChart?: ExportedChart;
   /** Named Varga charts derived from the radix, absent when no usable houses are available. */
   readonly harmonicCharts?: readonly ExportedHarmonicChart[];
@@ -156,10 +163,9 @@ export interface FullExport {
   readonly exportedAt: string;
   readonly app: { readonly version: string };
   /**
-   * The device's own effective calculation settings at export time, so a reader of the file
-   * knows exactly what was in force (#541) — `settings`/`rulership` are what charts below were
-   * actually computed with, not a fixed claim about "application defaults" that may no longer
-   * be true once a user has customized anything.
+   * The device's own default calculation settings at export time (#541): what a person without their own
+   * starts from. Since v4 (#806) `rulership` is likewise the device default; each person's own settings and
+   * rulership, the ones their charts below were computed with, are on the person.
    */
   readonly preferences: {
     readonly settings: ExtendedSettings;
@@ -196,7 +202,7 @@ function noteFor(settings: ExtendedSettings, rulership: RulershipChoice): string
     ? "this device's own current calculation settings, or a person's own where they have saved them (see calculationSettings on each person)"
     : 'the application defaults (Placidus houses, tropical zodiac, standard orbs)';
   return (
-    `Charts are calculated with ${basis}, and the planetary rulers set to ${rulership}. ` +
+    `Charts are calculated with ${basis}, and the planetary rulers set to ${rulership} (the device default), or a person's own where they have saved them (see rulership on each person). ` +
     'The birth record is the source of truth; a chart can always be recalculated from it.' +
     stationDisclosureOf(settings)
   );
@@ -308,7 +314,10 @@ export async function buildFullExport(params: {
       // settings makes the export self-contained, so a restore elsewhere cannot change their chart (#806).
       ...(person.calculationSettingsUnreadable === true
         ? {}
-        : { calculationSettings: person.calculationSettings ?? params.settings }),
+        : {
+            calculationSettings: person.calculationSettings ?? params.settings,
+            rulership: person.rulership ?? params.rulership,
+          }),
       missing: person.missing,
     };
     if (person.moment === undefined) {
@@ -321,7 +330,8 @@ export async function buildFullExport(params: {
       continue;
     }
     const settings = person.calculationSettings ?? params.settings;
-    const calcOptions = { ...toChartCalculationOptions(settings), rulership: params.rulership };
+    const rulership = person.rulership ?? params.rulership;
+    const calcOptions = { ...toChartCalculationOptions(settings), rulership };
     const visibility = toPointVisibilityOptions(settings);
     try {
       const data = await computeChartData(person.moment, params.provider, {
@@ -330,24 +340,17 @@ export async function buildFullExport(params: {
       });
       const withHouses = person.timeAccuracy !== 'unknown' && housesAreDefined(data.houses);
       const harmonicCharts = withHouses
-        ? await harmonicExports(
-            person.moment,
-            params.provider,
-            calcOptions,
-            params.rulership,
-            visibility,
-            person.customPoints,
-          )
+        ? await harmonicExports(person.moment, params.provider, calcOptions, rulership, visibility, person.customPoints)
         : undefined;
       const calculation = await natalArtifact(
-        buildCalculationSnapshot(settings, params.rulership, person.customPoints ?? []),
+        buildCalculationSnapshot(settings, rulership, person.customPoints ?? []),
         person.moment,
         data,
         params,
       );
       people.push({
         ...base,
-        natalChart: chartExport(data, params.rulership, visibility, withHouses),
+        natalChart: chartExport(data, rulership, visibility, withHouses),
         ...(harmonicCharts === undefined ? {} : { harmonicCharts }),
         ...(calculation === undefined ? {} : { calculation }),
       });
