@@ -108,6 +108,8 @@ export function PreferencesView({
   // not saved settings of their own. A person's own settings are changed on that person's chart screens.
   const [savedDefault, saveDefault] = useDefaultCalculationProfile();
   const extendedSettings = savedDefault?.settings ?? DEFAULT_EXTENDED_SETTINGS;
+  // A person an import creates receives a copy of these (#806), as a person added by hand does.
+  const newPersonDefaults = { settings: extendedSettings, rulership };
   const orbLibrary = useOrbLibrary();
   const orbSources = useOrbContextSource();
   const [symbolClass] = useSymbolClass();
@@ -210,7 +212,12 @@ export function PreferencesView({
         // An AAF file (#591) is staged through the same reviewed restore as a full export.
         if (isAafText(text)) {
           const { people, errors } = aafToExportedPeople(text);
-          const staged = stageFullExportRestore({ people }, store.state.people, store.state.deleted.people);
+          const staged = stageFullExportRestore(
+            { people },
+            store.state.people,
+            store.state.deleted.people,
+            newPersonDefaults,
+          );
           setPreview(staged);
           const firstError = errors[0];
           setStatus({
@@ -230,7 +237,12 @@ export function PreferencesView({
         }
         const result = validateFullExport(parsed);
         if (!result.ok) throw new Error(t.restoreInvalid(result.error));
-        const staged = stageFullExportRestore(result.value, store.state.people, store.state.deleted.people);
+        const staged = stageFullExportRestore(
+          result.value,
+          store.state.people,
+          store.state.deleted.people,
+          newPersonDefaults,
+        );
         setPreview(staged);
         // The counts themselves are shown once, inside the preview panel below (`restoreStaged`)
         // — this status line only has to say there's something to look at, not repeat it.

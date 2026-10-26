@@ -33,10 +33,10 @@
 /**
  * @module full-export-importer
  * @purpose Validates an untrusted FullExport document and stages a restore as op-log mutations, without writing anything.
- * @conventions Strict, fail-closed validation reusing person.ts's own field readers rather than a second parallel validator; version checked only against the imported FULL_EXPORT_VERSION constant, never a locally declared one; staging only ever emits mutations for fields that actually differ from the current Person (never a blind overwrite, and never a clear for a field the export omits), matching person-form.ts's own diffing rule that an untouched field must not get a newer timestamp than it already has.
- * @exports Result, ImportError, RestoreItem, RestorePreview, validateFullExport, stageFullExportRestore
+ * @conventions Strict, fail-closed validation reusing person.ts's own field readers rather than a second parallel validator; version checked only against the imported FULL_EXPORT_VERSION constant, never a locally declared one; staging gives only a person new to this device the default calculation profile for what their file lacks (#806), and otherwise only ever emits mutations for fields that actually differ from the current Person (never a blind overwrite, and never a clear for a field the export omits), matching person-form.ts's own diffing rule that an untouched field must not get a newer timestamp than it already has.
+ * @exports Result, ImportError, RestoreItem, RestorePreview, NewPersonDefaults, validateFullExport, stageFullExportRestore
  */
-import { isRulershipChoice } from '../astrology/rulership.js';
+import { isRulershipChoice, type RulershipChoice } from '../astrology/rulership.js';
 import {
   FULL_EXPORT_FORMAT,
   FULL_EXPORT_VERSION,
@@ -314,6 +314,12 @@ export interface RestoreItem {
   readonly mutations: readonly Mutation[];
 }
 
+/** The device default calculation profile a newly created person is given (#806). */
+export interface NewPersonDefaults {
+  readonly settings: ExtendedSettings;
+  readonly rulership: RulershipChoice;
+}
+
 export interface RestorePreview {
   readonly items: readonly RestoreItem[];
   readonly newCount: number;
@@ -422,6 +428,7 @@ export function stageFullExportRestore(
   archive: Pick<FullExport, 'people'>,
   existingPeople: ReadonlyMap<string, Person>,
   deletedPeople: ReadonlyMap<string, Person> = new Map(),
+  newPersonDefaults?: NewPersonDefaults,
 ): RestorePreview {
   let newCount = 0;
   let updatedCount = 0;
@@ -430,7 +437,18 @@ export function stageFullExportRestore(
   const items = archive.people.map((exported): RestoreItem => {
     const existing = existingPeople.get(exported.id);
     const deleted = existing === undefined ? deletedPeople.get(exported.id) : undefined;
-    const mutations = restoreMutations(exported.id, exported, existing ?? deleted);
+    // A person this device has never seen receives a copy of the default calculation profile for whatever their
+    // file does not carry (an AAF record, or a JSON person whose settings were unreadable at export, #806). A
+    // person already here, or tombstoned here, is never given defaults: a restore must not change their charts.
+    const incoming: ExportedPerson =
+      existing === undefined && deleted === undefined && newPersonDefaults !== undefined
+        ? {
+            ...exported,
+            calculationSettings: exported.calculationSettings ?? newPersonDefaults.settings,
+            rulership: exported.rulership ?? newPersonDefaults.rulership,
+          }
+        : exported;
+    const mutations = restoreMutations(exported.id, incoming, existing ?? deleted);
     const status =
       deleted !== undefined
         ? 'deletedLocally'
