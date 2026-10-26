@@ -37,10 +37,16 @@ describe('timing timeline route (#776)', () => {
     document.body.append(container);
     const root = createRoot(container);
     try {
-      await act(async () => {
+      act(() => {
         root.render(<App />);
-        await new Promise((resolve) => setTimeout(resolve, 50));
       });
+      // The stub screen is lazy-loaded behind Suspense; its rendering is the settle signal.
+      await vi.waitFor(
+        () => {
+          expect(container.querySelector('[data-testid="timing-timeline-stub"]')).not.toBeNull();
+        },
+        { timeout: 5000 },
+      );
       expect(window.location.hash).toBe(`#/people/${PERSON}/timing/timeline`);
       expect(container.querySelector('[data-testid="timing-timeline-stub"]')?.textContent).toBe(PERSON);
     } finally {
