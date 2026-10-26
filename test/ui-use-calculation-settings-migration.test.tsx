@@ -20,6 +20,7 @@ import { serializeCalculationSettings } from '../src/domain/person.js';
 import { DEFAULT_EXTENDED_SETTINGS } from '../src/chart/extended-settings.js';
 import {
   CALCULATION_SETTINGS_MIGRATED_KEY,
+  RULERSHIP_MIGRATED_KEY,
   useCalculationSettingsMigration,
 } from '../src/ui/use-calculation-settings-migration.js';
 
@@ -124,6 +125,8 @@ function registerOf(id: string): unknown {
 }
 
 const keyFor = (user: string): string => `${CALCULATION_SETTINGS_MIGRATED_KEY}:${user}`;
+const rulershipKeyFor = (user: string): string => `${RULERSHIP_MIGRATED_KEY}:${user}`;
+const rulershipOf = (id: string): unknown => store.state.people.get(id)?.rulership;
 
 beforeEach(async () => {
   counter += 1;
@@ -246,8 +249,9 @@ describe('useCalculationSettingsMigration (#806)', () => {
       },
       { timeout: 5000 },
     );
+    // One batch, one push: a settings seed and a rulership seed for each of the two people.
     expect(pushed).toHaveLength(1);
-    expect(pushed[0]).toHaveLength(2);
+    expect(pushed[0]).toHaveLength(4);
     for (const hlc of pushed[0] ?? []) expect(hlc).toMatch(/^0{18}-/);
   });
 
@@ -294,6 +298,103 @@ describe('useCalculationSettingsMigration (#806)', () => {
       },
       { timeout: 5000 },
     );
-    expect(pushed[0]).toHaveLength(1);
+    expect(pushed[0]).toHaveLength(2);
+  });
+
+  describe('the rulership move (#806)', () => {
+    const settled = async (user: string): Promise<void> => {
+      await vi.waitFor(
+        () => {
+          expect(localStorage.getItem(rulershipKeyFor(user))).toBe('1');
+          expect(localStorage.getItem(keyFor(user))).toBe('1');
+        },
+        { timeout: 5000 },
+      );
+    };
+
+    it('stamps the live device ruler choice on every person lacking one, under its own key', async () => {
+      localStorage.setItem('astraya:rulershipChoice', 'traditional');
+      await addPeople('p1', 'p2');
+      mount();
+      await settled('anonymous');
+      expect(rulershipOf('p1')).toBe('traditional');
+      expect(rulershipOf('p2')).toBe('traditional');
+    });
+
+    it('still runs on a device that already ran the settings move, and leaves their settings alone', async () => {
+      localStorage.setItem(keyFor('anonymous'), '1');
+      localStorage.setItem('astraya:rulershipChoice', 'both');
+      await addPeople('p1');
+      mount();
+      await vi.waitFor(
+        () => {
+          expect(localStorage.getItem(rulershipKeyFor('anonymous'))).toBe('1');
+        },
+        { timeout: 5000 },
+      );
+      expect(rulershipOf('p1')).toBe('both');
+      expect(registerOf('p1')).toBeUndefined();
+    });
+
+    it('skips a person who already has a rulership register or an unreadable one', async () => {
+      await addPeople('p1', 'p2', 'p3');
+      await store.mutate([
+        { entity: 'person', entityId: 'p1', field: 'rulership', value: 'both' },
+        { entity: 'person', entityId: 'p2', field: 'rulership', value: 'ptolemaic' },
+      ]);
+      mount();
+      await settled('anonymous');
+      expect(rulershipOf('p1')).toBe('both');
+      expect(rulershipOf('p2')).toBeUndefined();
+      expect(store.state.people.get('p2')?.calculationSettingsUnreadable).toBe(true);
+      expect(rulershipOf('p3')).toBe('modern');
+    });
+
+    it('seeds at the minimum HLC, so a real choice made before or after it wins', async () => {
+      await addPeople('p1', 'p2');
+      // p1 chose on another device whose record has not arrived yet when staging runs: the seed must still lose.
+      mount();
+      await settled('anonymous');
+      await store.mutate([{ entity: 'person', entityId: 'p2', field: 'rulership', value: 'traditional' }]);
+      expect(rulershipOf('p2')).toBe('traditional');
+      const seeded = store.outgoing().filter((record) => record.field === 'rulership');
+      expect(seeded.length).toBeGreaterThanOrEqual(2);
+      const early = await openStore({ name: `astraya-migration-hook-peer-${String(counter)}` });
+      try {
+        await early.mutate([{ entity: 'person', entityId: 'p1', field: 'rulership', value: 'both' }]);
+        await early.seed([{ entity: 'person', entityId: 'p1', field: 'rulership', value: 'modern' }]);
+        expect(early.state.people.get('p1')?.rulership).toBe('both');
+      } finally {
+        early.close();
+      }
+    });
+
+    it('signed in: waits for synced, then pushes the rulership seeds too', async () => {
+      await addPeople('p1');
+      session.userId = 'u1';
+      const { engine, setStatus, listenerCount } = makeEngine({ kind: 'syncing' });
+      session.engine = engine;
+      mount();
+      await vi.waitFor(
+        () => {
+          expect(listenerCount()).toBe(1);
+        },
+        { timeout: 5000 },
+      );
+      expect(rulershipOf('p1')).toBeUndefined();
+      expect(localStorage.getItem(rulershipKeyFor('u1'))).toBeNull();
+      act(() => {
+        setStatus({ kind: 'synced', at: 1 });
+      });
+      await settled('u1');
+      expect(rulershipOf('p1')).toBe('modern');
+      expect(pushed.flat()).toHaveLength(2);
+      for (const hlc of pushed.flat()) expect(hlc).toMatch(/^0{18}-/);
+    });
+
+    it('a fresh device with no people sets both keys', async () => {
+      mount();
+      await settled('anonymous');
+    });
   });
 });
