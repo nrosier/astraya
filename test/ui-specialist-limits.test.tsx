@@ -70,6 +70,7 @@ async function mount(
   await act(async () => {
     root.render(
       <ChartDataView
+        rulership="modern"
         load={{ kind: 'ready', data }}
         displayName="Test"
         showHouses

@@ -117,7 +117,13 @@ describe('the symbol column of the Positions table', () => {
 
   async function positions(): Promise<HTMLElement> {
     const container = await mountNode(
-      <ChartDataView load={{ kind: 'ready', data }} displayName="Test" showHouses buildViewHref={() => '#'} />,
+      <ChartDataView
+        rulership="modern"
+        load={{ kind: 'ready', data }}
+        displayName="Test"
+        showHouses
+        buildViewHref={() => '#'}
+      />,
     );
     await act(async () => {
       clickView(container, chartViewMessages.en.placementsViewLabel);

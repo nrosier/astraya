@@ -64,7 +64,11 @@ export function DraconicView({
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
   const customPoints = useStableBy(person?.customPoints, (points) => JSON.stringify(points ?? []));
   // The aspects use the device's orbs (#590), as the natal chart does.
-  const { settings: extendedSettings, unreadable: settingsUnreadable } = usePersonCalculationSettings(personId);
+  const {
+    settings: extendedSettings,
+    unreadable: settingsUnreadable,
+    rulership,
+  } = usePersonCalculationSettings(personId);
   const orbs = useStableBy(orbsOf(extendedSettings), (config) => JSON.stringify(config));
 
   useEffect(() => {
@@ -129,6 +133,7 @@ export function DraconicView({
         displayName={displayName}
         showHouses
         metaLines={metaLines}
+        rulership={rulership}
         view={view ?? 'wheel'}
         onViewChange={(next) => {
           changeChartView(personId, 'draconic', next);

@@ -71,6 +71,7 @@ async function mount(options: { showHouses?: boolean; locale?: 'en' | 'nl' } = {
     root.render(
       <ExportRegistryProvider>
         <ChartDataView
+          rulership="modern"
           load={{ kind: 'ready', data }}
           displayName="Test"
           showHouses={options.showHouses ?? true}

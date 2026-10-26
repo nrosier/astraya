@@ -71,6 +71,7 @@ async function mount(locale: 'en' | 'nl'): Promise<HTMLElement> {
   await act(async () => {
     root.render(
       <ChartDataView
+        rulership="modern"
         load={{ kind: 'ready', data }}
         displayName="Test"
         showHouses
