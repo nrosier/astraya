@@ -312,5 +312,15 @@ test.describe('with the shared people (#799)', () => {
     await expect(toggle).toHaveAttribute('aria-expanded', 'true');
     await expect(overlays).toBeVisible();
     await expect(settings).toBeVisible();
+
+    // Between 450px and 64rem (tablet) the labelled select replaces the tabs and both actions stay pinned as
+    // separate triggers, outside the (display: contents) scroll viewport's tabs; no collapse toggle.
+    await page.setViewportSize({ width: 768, height: 1024 });
+    await expect(toggle).toBeHidden();
+    await expect(page.locator('.tab-row .chart-view-select select')).toBeVisible();
+    await expect(overlays).toBeVisible();
+    await expect(settings).toBeVisible();
+    await expect(page.locator('.tab-row__viewport').locator(overlays)).toHaveCount(0);
+    await expect(page.locator('.tab-row__viewport').locator(settings)).toHaveCount(0);
   });
 });
