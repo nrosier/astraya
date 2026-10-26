@@ -2129,14 +2129,6 @@ export function ChartDataView({
   const renderChartPanel = (data: ChartData): React.ReactNode =>
     wheelMarkup === undefined ? null : (
       <>
-        {overlayContext !== undefined && (
-          <ChartOverlaySettingsPanel
-            value={overlaySettings}
-            baseLabel={overlayContext.baseLabel}
-            unavailableSources={overlayContext.baseSource === undefined ? [] : [overlayContext.baseSource]}
-            onApply={setOverlaySettings}
-          />
-        )}
         {overlayLoad.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
         {overlayLoad.kind === 'error' && (
           <StatusMessage kind="error">{t.chartError(overlayLoad.message)}</StatusMessage>
@@ -2206,6 +2198,26 @@ export function ChartDataView({
       </>
     );
 
+  // The two triggers the tab row pins at the far right (#818). The overlay rings belong to the wheel, so that trigger
+  // only exists where the wheel does; the Extended settings card needs the long-lived provider.
+  const overlaysPanel =
+    overlayContext !== undefined && wheelMarkup !== undefined ? (
+      <ChartOverlaySettingsPanel
+        value={overlaySettings}
+        baseLabel={overlayContext.baseLabel}
+        unavailableSources={overlayContext.baseSource === undefined ? [] : [overlayContext.baseSource]}
+        onApply={setOverlaySettings}
+      />
+    ) : null;
+  const settingsPanel =
+    onExtendedSettingsChange !== undefined && settingsProvider !== undefined ? (
+      <ExtendedSettingsPanel
+        value={cardSettings ?? extendedSettings}
+        onRedraw={onExtendedSettingsChange}
+        provider={settingsProvider}
+      />
+    ) : null;
+
   return (
     <>
       {/* Invisible outside @media print (#564) — see app.css's own `.print-provenance` rule. */}
@@ -2216,28 +2228,34 @@ export function ChartDataView({
         snapshotIdentity={provenanceIdentity(load, extendedSettings, rulership)}
         generatedAt={formatTimestamp(new Date())}
       />
-      {/* Directly under the title row (#801): the chart's own views, once there is a chart to view. */}
-      {!(load.kind === 'ready' && !printAll) && typeSelector}
-      {load.kind === 'ready' && !printAll && (
+      {/* Directly under the title row (#801): the chart type, the chart's own views once there is a chart to view, and the
+          Overlays and Extended settings triggers pinned at the far right (#818). The row stays in place while the chart
+          loads or fails, so the Extended settings card (a setting that might fix a failed or slow calculation, #442)
+          keeps its state and stays reachable; only the view links wait for the chart. */}
+      {printAll ? (
+        <>
+          {typeSelector}
+          {settingsPanel}
+        </>
+      ) : (
         <ChartViewNav
           leading={typeSelector}
           activeView={currentTab}
           buildHref={buildViewHref}
           onNavigate={setActiveTab}
-          availableViews={tabs}
+          availableViews={load.kind === 'ready' ? tabs : []}
+          actions={
+            overlaysPanel === null && settingsPanel === null ? undefined : (
+              <>
+                {overlaysPanel}
+                {settingsPanel}
+              </>
+            )
+          }
         />
       )}
       {!showHouses && <p className="hint">{t.housesUnknownHint(displayName || t.thisPerson)}</p>}
       {showHouses && !housesComputed && <p className="hint">{t.housesUndefinedHint(displayName || t.thisPerson)}</p>}
-
-      {/* Outside the loaded-chart gate: a setting that might fix a failed or slow calculation stays reachable (#442). */}
-      {onExtendedSettingsChange !== undefined && settingsProvider !== undefined && (
-        <ExtendedSettingsPanel
-          value={cardSettings ?? extendedSettings}
-          onRedraw={onExtendedSettingsChange}
-          provider={settingsProvider}
-        />
-      )}
 
       {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
 

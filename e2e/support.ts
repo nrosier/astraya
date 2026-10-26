@@ -114,7 +114,11 @@ export async function chooseExport(page: Page, item: string, group?: string): Pr
 /** Opens the chart's Extended settings card (a modal dialog) from its trigger, if it is not open already. */
 export async function openSettings(page: Page): Promise<void> {
   const dialog = page.locator('dialog.settings-card');
-  if (!(await dialog.isVisible())) await page.locator('button.extended-settings-trigger').click();
+  const trigger = page.locator('button.extended-settings-trigger');
+  // Below 450px the tab row's actions sit behind one "Chart actions" toggle (#818).
+  if (!(await dialog.isVisible()) && !(await trigger.isVisible()))
+    await page.getByRole('button', { name: 'Chart actions', exact: true }).click();
+  if (!(await dialog.isVisible())) await trigger.click();
   await expect(dialog).toBeVisible();
 }
 
