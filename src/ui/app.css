@@ -2348,6 +2348,36 @@ label.stacked textarea:focus-visible {
   font-size: 0.8rem;
 }
 
+.primitive-badge[data-tone='warning'] {
+  border-color: color-mix(in oklab, var(--color-warning) 35%, var(--line));
+  background: color-mix(in oklab, var(--color-warning) 9%, transparent);
+}
+
+.primitive-badge[data-tone='success'] {
+  border-color: color-mix(in oklab, var(--color-success) 35%, var(--line));
+  background: color-mix(in oklab, var(--color-success) 9%, transparent);
+}
+
+.primitive-badge[data-tone='danger'] {
+  border-color: color-mix(in oklab, var(--color-danger) 35%, var(--line));
+  background: color-mix(in oklab, var(--color-danger) 9%, transparent);
+}
+
+.primitive-badge[data-tone='accent'] {
+  border-color: color-mix(in oklab, var(--accent) 35%, var(--line));
+  background: color-mix(in oklab, var(--accent) 9%, transparent);
+}
+
+.primitive-badge[data-tone='soft'] {
+  border-color: color-mix(in oklab, var(--aspect-soft) 35%, var(--line));
+  background: color-mix(in oklab, var(--aspect-soft) 9%, transparent);
+}
+
+.primitive-badge[data-tone='hard'] {
+  border-color: color-mix(in oklab, var(--aspect-hard) 35%, var(--line));
+  background: color-mix(in oklab, var(--aspect-hard) 9%, transparent);
+}
+
 .chart-isolation-group h5 {
   margin: 0.75rem 0 0.25rem;
   font-size: 0.85rem;
