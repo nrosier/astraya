@@ -56,6 +56,8 @@ describe('validateSettings', () => {
   it('registers the per-person calculation settings as person scope, and glyph/degree-symbol as device (#806)', () => {
     const scopeOf = (key: string) => SETTINGS.find((setting) => setting.key === key)?.scope;
     expect(scopeOf('person.calculationSettings')).toBe('person');
+    expect(scopeOf('person.rulership')).toBe('person');
+    expect(scopeOf('astraya:rulershipChoice')).toBe('account');
     expect(scopeOf('astraya:glyphVariants')).toBe('device');
     expect(scopeOf('astraya:showDegreeSymbol')).toBe('device');
   });

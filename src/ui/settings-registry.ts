@@ -54,11 +54,12 @@ export const SETTINGS: readonly SettingDefinition[] = [
   {
     key: 'astraya:rulershipChoice',
     scope: 'account',
-    owner: 'Which planets rule which signs (Modern/Traditional/Both) wherever a ruler, dignity, or dispositor is shown',
+    owner:
+      'The default rulership model (Modern/Traditional/Both): what a person without a choice of their own starts from, and what a screen that belongs to no single person (Horary, Composite) shows (#806)',
     describeDefault: "'modern'",
     persistence: 'local-storage',
     synced: false,
-    editingSurface: 'RulershipSetting.tsx',
+    editingSurface: 'RulershipSetting.tsx in PreferencesView.tsx (Astrology defaults)',
     commitMode: 'immediate',
     sensitive: false,
     resetTarget: 'Astraya default (modern)',
@@ -173,6 +174,20 @@ export const SETTINGS: readonly SettingDefinition[] = [
     commitMode: 'staged',
     sensitive: false,
     resetTarget: 'The default calculation profile',
+  },
+  {
+    key: 'person.rulership',
+    scope: 'person',
+    owner:
+      "One person's planetary-ruler choice (Modern/Traditional/Both) wherever a ruler, dignity, or dispositor is shown for them, kept on the person as its own register so older builds ignore it (#806)",
+    describeDefault: "unset (the person starts from this device's default rulership, then modern)",
+    persistence: 'indexeddb-oplog',
+    synced: true,
+    editingSurface:
+      'ExtendedSettingsPanel.tsx on that person’s chart screens (saved with Apply); RulershipSetting.tsx on Profections and Report',
+    commitMode: 'staged',
+    sensitive: false,
+    resetTarget: 'The default rulership',
   },
   {
     key: 'astraya:defaultCalculationProfile',

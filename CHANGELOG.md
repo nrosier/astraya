@@ -6,6 +6,12 @@ see [docs/ops/RELEASING.md](docs/ops/RELEASING.md).
 
 ## [Unreleased]
 
+### Changed
+
+- **The planetary rulers belong to each person (#806).** Modern, Traditional or Both is saved on the person, in the Extended settings card with Apply (the live preview is gone), so one client's choice no longer changes another's chart. The rulers now saved on this device are copied to existing people once. The Preferences choice is the default for new people, and Horary and Composite charts follow it.
+- **Older builds ignore the per-person rulers.** A device running version 0.42.13 or older does not read the new field, so it draws that person's chart with its own rulers until it is updated. Going back to an older build loses nothing: the choice is picked up again on upgrade.
+- **The full export is now version 4 (#806).** Each person carries the rulers their charts were computed with, and the file's preferences hold the device default. The importer still reads versions 2 and 3, but a build older than this one rejects a version 4 file.
+
 ## [0.42.13] — 2026-10-25
 
 **The chart screen gets a workspace layout with in-place term definitions, the report gets a global Sabian symbol setting, and chart settings belong to each person.**
