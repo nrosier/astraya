@@ -158,7 +158,7 @@ import { ChartViewNav } from './ChartViewNav.js';
 import { parseSelectionKey } from '../interpretation/selection.js';
 import { buildFocusObjectContext } from '../interpretation/focus-context.js';
 import { AspectMatrix } from './AspectMatrix.js';
-import { useCalculationBasisLine } from './calculation-basis.js';
+import { orbSourceName, useCalculationBasisLine } from './calculation-basis.js';
 import { EmphasisGrid } from './EmphasisGrid.js';
 import {
   aspectSelectionKey,
@@ -2465,7 +2465,8 @@ export function ChartView({
     () => settingsForContext(cardSettings, 'natal', orbLibrary, orbSources),
     [cardSettings, orbLibrary, orbSources],
   );
-  const basisLine = useCalculationBasisLine(settings, rulership);
+  // The basis names the card's settings and the device's natal orb profile, not the orb-overridden `settings` (#806).
+  const basisLine = useCalculationBasisLine(cardSettings, rulership, orbSourceName(orbLibrary, orbSources, 'natal'));
   const lastChartKey = useRef('');
   // Memoised: it is a dependency of the wheel's markup, and a new array on every render of this screen (which a
   // change of section now causes) would redraw the wheel and drop what was selected on it.

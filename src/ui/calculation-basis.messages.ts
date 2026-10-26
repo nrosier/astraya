@@ -8,6 +8,7 @@ import type { Locale } from '../interpretation/schema.js';
 
 const en = {
   line: (profile: string, source: string) => `Calculation profile: ${profile} — ${source}`,
+  orbSource: (name: string) => `orbs: ${name} (this device)`,
   sources: {
     'astraya-default': 'Astraya default',
     'my-default': 'your saved default',
@@ -17,6 +18,7 @@ const en = {
 
 const nl: typeof en = {
   line: (profile: string, source: string) => `Berekeningsprofiel: ${profile} — ${source}`,
+  orbSource: (name: string) => `orbs: ${name} (dit apparaat)`,
   sources: {
     'astraya-default': 'Astraya-standaard',
     'my-default': 'jouw opgeslagen standaard',
