@@ -246,6 +246,7 @@ export function CyclesView(): React.JSX.Element {
       {
         key: 'since',
         label: t.sinceColumn,
+        align: 'end',
         valueOf: (row) => row.yearsSincePrevious ?? '',
         render: (row) => (row.yearsSincePrevious === undefined ? t.none : formatFixed(row.yearsSincePrevious, 2)),
       },
