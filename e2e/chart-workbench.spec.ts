@@ -274,7 +274,7 @@ test.describe('with the shared people (#799)', () => {
     await expect(inspector).toContainText('to explore it');
   });
 
-  test('the chart row pins Overlays and Extended settings at the far right, and collapses them below 450px (#818)', async () => {
+  test('the chart row pins Overlays and Extended settings at the far right, and collapses them at 40rem and below (#818, #826)', async () => {
     test.setTimeout(90_000);
     const overlays = page.locator('.tab-row .chart-overlay-settings > button');
     const settings = page.locator('.tab-row button.extended-settings-trigger');
@@ -302,26 +302,48 @@ test.describe('with the shared people (#799)', () => {
     expect(settingsBox.right).toBeGreaterThan(viewport.right);
     expect(settingsBox.right).toBeCloseTo(row.right, 0);
 
-    // Below 450px both sit behind the one toggle until it is opened.
+    const select = page.locator('.tab-row .chart-view-select select');
+    const strip = page.locator('.tab-row__tabs');
+    const pinned = async (): Promise<void> => {
+      await expect(toggle).toBeHidden();
+      await expect(strip).toBeVisible();
+      await expect(select).toBeHidden();
+      await expect(overlays).toBeVisible();
+      await expect(settings).toBeVisible();
+      await expect(page.locator('.tab-row__viewport').locator(overlays)).toHaveCount(0);
+      await expect(page.locator('.tab-row__viewport').locator(settings)).toHaveCount(0);
+    };
+    const collapsed = async (): Promise<void> => {
+      await expect(toggle).toBeVisible();
+      await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+      await expect(select).toBeVisible();
+      await expect(strip).toBeHidden();
+      await expect(overlays).toBeHidden();
+      await expect(settings).toBeHidden();
+    };
+
+    // At 40rem and below (390px) the labelled select replaces the tabs and both actions sit behind the one
+    // "Chart actions" text toggle (a Button) until it is opened.
     await page.setViewportSize({ width: 390, height: 844 });
-    await expect(toggle).toBeVisible();
-    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
-    await expect(overlays).toBeHidden();
-    await expect(settings).toBeHidden();
+    await collapsed();
+    await expect(page.locator('.tab-row__actions-toggle button.primitive-button-compact')).toHaveText(/^Chart actions/);
     await toggle.click();
     await expect(toggle).toHaveAttribute('aria-expanded', 'true');
     await expect(overlays).toBeVisible();
     await expect(settings).toBeVisible();
+    await toggle.click();
 
-    // Between 450px and 64rem (tablet) the labelled select replaces the tabs and both actions stay pinned as
-    // separate triggers, outside the (display: contents) scroll viewport's tabs; no collapse toggle.
+    // 640px is the inclusive edge of the narrow rule (max-width: 40rem): still the select and the toggle.
+    await page.setViewportSize({ width: 640, height: 900 });
+    await collapsed();
+
+    // 641px is the first width above it: the scrolling strip shows and both actions are pinned.
+    await page.setViewportSize({ width: 641, height: 900 });
+    await pinned();
+
+    // Tablet (768px) is above 40rem too: the scrolling tab row, no labelled select, both actions pinned.
     await page.setViewportSize({ width: 768, height: 1024 });
-    await expect(toggle).toBeHidden();
-    await expect(page.locator('.tab-row .chart-view-select select')).toBeVisible();
-    await expect(overlays).toBeVisible();
-    await expect(settings).toBeVisible();
-    await expect(page.locator('.tab-row__viewport').locator(overlays)).toHaveCount(0);
-    await expect(page.locator('.tab-row__viewport').locator(settings)).toHaveCount(0);
+    await pinned();
   });
 
   test('the chart tab row scrolls with the wheel, its fades follow the hidden tabs and never catch pointer events, and the touch-pan CSS contract holds (#818)', async () => {
