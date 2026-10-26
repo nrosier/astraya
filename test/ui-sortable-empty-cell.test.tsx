@@ -67,6 +67,8 @@ describe('SortableTable empty-cell rule (#825)', () => {
     const container = mount(<SortableTable caption="Demo" columns={COLUMNS} rows={ROWS} getRowKey={(row) => row.id} />);
     // Row a: the house is undefined, so the view draws '—' and the rule keeps it.
     expect(cellsOf(container, 'a')[0]).toBe('—');
+    // Row a: the note is null and has no render, so the view text is blank and the rule draws the dash.
+    expect(cellsOf(container, 'a')[1]).toBe('—');
   });
 
   it('keeps a blank cell blank when its value is not empty (a boolean check column)', () => {
