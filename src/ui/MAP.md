@@ -11,7 +11,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `GlossaryTerm.tsx` — Inline `GlossaryTerm` and the per-screen `GlossaryTerms` list, opening definitions through the shared Tooltip. Deps: `astro-glossary.messages`, `GlossaryTerm.messages`, `primitives/Tooltip`.
 - `GlossaryTerm.messages.ts` — en/nl label of the terms list. Deps: none.
 - `AccountPanel.tsx` + `AccountPanel.messages.ts` — Staged sign-in (OpenID / local, #781; OpenID when SSO is configured, #651)/out + account adoption + local-data removal. Deps: `session-context`, `sync/auth-client`, `oidc-pkce`, `primitives/StagedDialog`.
-- `AdminNav.tsx` + `AdminNav.messages.ts` — Admin tab strip (users/usage/corpus/candidates). Deps: `./admin-nav`.
+- `AdminNav.tsx` + `AdminNav.messages.ts` — Admin tab strip (users/usage/corpus/candidates) in the shared `ScrollingTabRow` (#818). Deps: `./admin-nav`, `./ScrollingTabRow`, `./primitives/Select`.
 - `AdminPanel.tsx` + `AdminPanel.messages.ts` — User CRUD + AI-usage reporting. Deps: `sync/admin-client`, `session-context`.
 - `App.tsx` + `App.messages.ts` — Root router + sticky header + lazy-loading boundary. Deps: `route`, `session-context`, `store-context`, `person-screens`.
 - `EmphasisGrid.tsx` — The element x modality grid view: the sheet export's drawing, shown on screen beside its table. Deps: `chart/emphasis-grid`, `chart/sheet-geometry`.

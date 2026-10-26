@@ -122,3 +122,24 @@ test('an ordinary member has no Admin menu', async ({ page }) => {
   await signIn(page, 'member', PASSWORD);
   await expect(page.getByRole('button', { name: 'Admin', exact: true })).toHaveCount(0);
 });
+
+test('the admin tab row scrolls as one nav on a wide screen and is a labelled select on a phone (#818)', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await openUsers(page, 'owner');
+
+  const nav = page.getByRole('navigation', { name: 'Admin sections' });
+  await expect(nav).toBeVisible();
+  await expect(nav.getByRole('link')).toHaveText(['Users', 'AI usage', 'Corpus overrides', 'Corpus candidates']);
+  await expect(nav.getByRole('link', { name: 'Users', exact: true })).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByRole('combobox', { name: 'Admin sections' })).toHaveCount(0);
+  await expect(page.locator('.tab-row__scroll')).toHaveCSS('overflow-x', 'auto');
+  await expect(page.locator('.tab-row__fallback select')).toBeHidden();
+
+  await page.setViewportSize({ width: 390, height: 800 });
+  await expect(nav).toBeHidden();
+  const select = page.locator('.tab-row__fallback select');
+  await expect(select).toBeVisible();
+  await expect(page.getByRole('combobox', { name: 'Admin sections' })).toHaveValue('users');
+});
