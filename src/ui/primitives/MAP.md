@@ -6,7 +6,7 @@ Shared UI primitives for the #506 UI/UX overhaul (Phase 1, #508). Business logic
 - `Field.tsx` + `Field.messages.ts` — Shared label/help/error/unit slot layout wrapping one form control (its own "optional" wording is translated); `useFieldIds` gives every other field primitive its id/aria-describedby wiring.
 - `TextField.tsx` — Single-line text input via `Field`. Deps: `./Field`.
 - `PasswordField.tsx` — Masked input via `Field` with a required autocomplete purpose; opt-in show/hide toggle. Deps: `./Field`.
-- `StagedDialog.tsx` — Modal draft card with one discard path (Escape, ×, backdrop, leaving the page), focus restored to its trigger, sticky footer. Deps: none.
+- `StagedDialog.tsx` — Modal draft card with one discard path (Escape, ×, backdrop, leaving the page), focus restored to its trigger, sticky footer; optional `placement="right"` drawer. Deps: none.
 - `TimeField.tsx` — Time-of-day input via `Field`, with an optional extra describing id. Deps: `./Field`.
 - `TextAreaField.tsx` — Multi-line text input via `Field`; label can be visually hidden. Deps: `./Field`.
 - `NumberField.tsx` — Numeric input with the standard Decrease/Increase stepper via `Field`; reports the raw typed string, not a coerced number. Deps: `./Field`.
@@ -14,6 +14,7 @@ Shared UI primitives for the #506 UI/UX overhaul (Phase 1, #508). Business logic
 - `Select.tsx` — Styled native `<select>` via `Field` for 5-12 item choices. Deps: `./Field`.
 - `Badge.tsx` — Small static label chip for a fact beside a heading (e.g. a placement's sign and house), with an optional colour tone from existing tokens. Deps: none.
 - `StatList.tsx` — Definition list of label/value stat tiles inside the existing global `dl` card surface (#826); no consumer yet. Deps: none.
+- `EmptyState.tsx` — Shared "nothing here" block for an empty list or panel: message prop plus optional follow-up children, on the existing `.empty` look. Deps: none.
 - `Checkbox.tsx` — Shared checkbox anatomy, paired with `Radio`. Deps: none.
 - `Radio.tsx` — Shared radio anatomy; always used inside a caller-owned `name`/`radiogroup`. Deps: none.
 - `ChoiceGroup.tsx` — Segmented control (2-4 exclusive choices) as a labelled radiogroup over `Radio`. Deps: `./Radio`.

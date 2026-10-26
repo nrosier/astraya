@@ -1294,6 +1294,15 @@ label.stacked textarea:focus-visible {
   color: var(--muted);
 }
 
+/* #826: EmptyState reuses `.empty`; only the inner message and follow-up spacing is added. */
+.primitive-empty-state-message {
+  margin: 0;
+}
+
+.primitive-empty-state-message + * {
+  margin-top: var(--space-3);
+}
+
 /* Fixed to the bottom rather than inline: PwaStatus sits outside every screen's own
    `.shell`, since an update or a warm failure applies regardless of which route is
    showing. Renders nothing when there is nothing to say, so this never costs layout
@@ -3852,7 +3861,9 @@ svg text.chart-symbol-text-unicode {
 }
 .entry-key {
   color: var(--muted);
+  font-family: inherit;
   font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
 }
 
@@ -3969,12 +3980,11 @@ svg text.chart-symbol-text-unicode {
  * fades is `--bg`, the row's rule is `--line`, the active tab's 2px bottom border is `--accent`, muted tab text is
  * `--muted`; no shadow, only flat 1px borders.
  *
- * Three widths, all one markup:
- * - 64rem and up (the app's standing nav breakpoint): the tabs scroll sideways in one non-wrapping row with an edge
- *   fade wherever tabs are hidden, and the actions are pinned at the far right, outside the scroller and its fades.
- * - 450px to 64rem: the labelled Select replaces the tabs (docs/ui/UI-UX_GUIDELINES.md §2) and the actions stay
- *   pinned as separate triggers.
- * - Below 450px: the actions collapse behind one "⚙️ ▾" toggle that opens them in an in-flow panel.
+ * Two widths, one breakpoint (#826: 40rem = 640px, inclusive on the narrow side), all one markup:
+ * - Above 40rem (641px and up): the tabs scroll sideways in one non-wrapping row with an edge fade wherever tabs
+ *   are hidden, and the actions are pinned at the far right as separate triggers, outside the scroller and fades.
+ * - 40rem and below: the labelled Select replaces the tabs (docs/ui/UI-UX_GUIDELINES.md §2) and the actions
+ *   collapse behind one "Chart actions" text toggle with a caret that opens them in an in-flow panel.
  */
 .tab-row {
   display: flex;
@@ -3988,7 +3998,7 @@ svg text.chart-symbol-text-unicode {
   margin-bottom: 0;
 }
 
-/* Below 64rem the scroller is not a scroller: its parts wrap as ordinary items of the row, fades and tabs gone. */
+/* At 40rem and below the scroller is not a scroller: its parts wrap as ordinary items of the row, fades and tabs gone. */
 .tab-row__viewport,
 .tab-row__scroll {
   display: contents;
@@ -4051,7 +4061,7 @@ svg text.chart-symbol-text-unicode {
   overflow-wrap: normal;
 }
 
-@media (max-width: 449.98px) {
+@media (max-width: 40rem) {
   .tab-row__actions {
     display: contents;
   }
@@ -4119,7 +4129,8 @@ svg text.chart-symbol-text-unicode {
   }
 }
 
-@media (min-width: 64rem) {
+/* 40.0625rem = 641px: the first width above the inclusive 40rem narrow rule. */
+@media (min-width: 40.0625rem) {
   .tab-row {
     flex-wrap: nowrap;
     align-items: center;
@@ -4224,7 +4235,7 @@ svg text.chart-symbol-text-unicode {
   }
 }
 
-@media (min-width: 64rem) and (prefers-reduced-motion: no-preference) {
+@media (min-width: 40.0625rem) and (prefers-reduced-motion: no-preference) {
   .tab-row__scroll {
     scroll-behavior: smooth;
   }
@@ -4274,8 +4285,7 @@ svg text.chart-symbol-text-unicode {
 /*
  * The chart screen's own Wheel/Aspects/Placements/Patterns & condition navigation (#511):
  * docs/ui/UI-UX_GUIDELINES.md §2 calls these "route-level views with stable URLs and ordinary
- * links, not ARIA tabs" — the shared tab row above at and above the app's standing 64rem nav
- * breakpoint, this Select below it. Exactly one of the two is ever visible.
+ * links, not ARIA tabs" — the shared tab row above 40rem (#826), this Select at 40rem and below. Exactly one of the two is ever visible.
  */
 .chart-view-select {
   max-width: 20rem;
@@ -4345,6 +4355,16 @@ svg text.chart-symbol-text-unicode {
 .settings-card::backdrop,
 .chart-overlay-settings-card::backdrop {
   background: rgb(0 0 0 / 0.45);
+}
+
+.primitive-staged-dialog[data-placement='right'] {
+  width: min(28rem, 100vw);
+  height: 100dvh;
+  max-height: 100dvh;
+  margin: 0 0 0 auto;
+  border-width: 0 0 0 1px;
+  border-radius: 0;
+  box-shadow: var(--shadow-popover);
 }
 
 .settings-card-header {

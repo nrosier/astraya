@@ -436,7 +436,11 @@ describe('CorpusOverridesPanel shows what an entry means (#428)', () => {
 
     await search(container, 'sun saturn');
     expect(tableRows(container)).toHaveLength(0);
-    expect(container.querySelector('.empty')).not.toBeNull();
+    const empty = container.querySelector('div.empty.primitive-empty-state');
+    expect(empty?.querySelector('p.primitive-empty-state-message')?.textContent).toBe(
+      'No entries match these filters.',
+    );
+    expect(container.querySelector('p.empty')).toBeNull();
   });
 
   it('names the categories in the filter in words, and filters by them', async () => {
