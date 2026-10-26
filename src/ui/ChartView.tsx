@@ -386,6 +386,7 @@ export function positionColumns(
     {
       key: 'house',
       label: t.houseLabel,
+      align: 'end',
       valueOf: (row) => row.house ?? '',
       render: (row) => (row.house === undefined ? '—' : String(row.house)),
     },
@@ -393,6 +394,7 @@ export function positionColumns(
       key: 'speed',
       label: t.speedLabel,
       labelTooltip: t.speedTooltip,
+      align: 'end',
       valueOf: (row) => row.speed ?? '',
       render: (row) => (row.speed === undefined ? '—' : formatFixed(row.speed, 4)),
     },

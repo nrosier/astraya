@@ -1453,9 +1453,8 @@ label.stacked textarea:focus-visible {
   color: var(--muted);
   font: inherit;
   font-weight: 650;
-  font-size: 0.8rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.02em;
-  text-transform: uppercase;
   text-align: left;
   cursor: pointer;
 }
@@ -4633,9 +4632,8 @@ svg text.chart-symbol-text-unicode {
 .data-table .data-table-label {
   color: var(--muted);
   font-weight: 650;
-  font-size: 0.8rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.02em;
-  text-transform: uppercase;
 }
 
 .data-table th .data-table-help .primitive-tooltip-trigger {
