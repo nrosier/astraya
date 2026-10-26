@@ -12,7 +12,10 @@ import { buildCalculationSnapshot } from '../src/domain/calculation-snapshot.js'
 import { differingPrimaryDirectionsSettings } from '../src/domain/primary-directions-settings.js';
 import { serializeCalculationSettings } from '../src/domain/person.js';
 import { openStore, type Store } from '../src/store/store.js';
-import { resetDefaultCalculationProfileMemory } from '../src/ui/default-calculation-profile.js';
+import {
+  resetDefaultCalculationProfileMemory,
+  writeDefaultCalculationProfile,
+} from '../src/ui/default-calculation-profile.js';
 import { type PersonCalculationSettings, usePersonCalculationSettings } from '../src/ui/person-calculation-settings.js';
 import { resetRulershipMemory, writeRulershipChoice } from '../src/ui/rulership-setting.js';
 import { StoreProvider } from '../src/ui/store-context.js';
@@ -90,6 +93,36 @@ describe('usePersonCalculationSettings rulership (#806)', () => {
     expect(current('a').rulershipSource).toBe('person');
     expect(current('b').rulership).toBe('modern');
     expect(current('b').rulershipSource).toBe('device-default');
+  });
+
+  it("editing one person's house system and zodiac leaves another person's settings and snapshot unchanged", async () => {
+    const deviceDefault = {
+      ...DEFAULT_EXTENDED_SETTINGS,
+      houseSystem: 'W' as const,
+      zodiac: { kind: 'sidereal' as const, ayanamsa: 5 },
+    };
+    writeDefaultCalculationProfile(deviceDefault, 'modern');
+    await addPeople('a', 'b');
+    mount('a', 'b');
+    const before = buildCalculationSnapshot(current('b').settings, current('b').rulership);
+    await act(async () => {
+      await current('a').setSettings({
+        ...current('a').settings,
+        houseSystem: 'K',
+        zodiac: { kind: 'sidereal', ayanamsa: 1 },
+      });
+    });
+    expect(current('a').source).toBe('person');
+    expect(current('a').settings.houseSystem).toBe('K');
+    expect(current('a').settings.zodiac).toEqual({ kind: 'sidereal', ayanamsa: 1 });
+    expect(current('b').source).toBe('device-default');
+    expect(current('b').settings.houseSystem).toBe('W');
+    expect(current('b').settings.zodiac).toEqual({ kind: 'sidereal', ayanamsa: 5 });
+    expect(store.state.people.get('b')?.calculationSettings).toBeUndefined();
+    const after = buildCalculationSnapshot(current('b').settings, current('b').rulership);
+    expect(after).toEqual(before);
+    expect(after.settings.houseSystem).toBe('W');
+    expect(after.settings.zodiac).toEqual({ kind: 'sidereal', ayanamsa: 5 });
   });
 
   it('writes both registers in one batch and skips a register that already holds the value', async () => {
