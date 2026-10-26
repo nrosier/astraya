@@ -3972,7 +3972,6 @@ svg text.chart-symbol-text-unicode {
   margin: 0;
 }
 
-.tab-row__actions-panel > .chart-overlay-settings > button,
 .tab-row__actions-panel > .extended-settings > button {
   min-height: 2.25rem;
   padding: var(--space-1) var(--space-3);
@@ -4030,7 +4029,6 @@ svg text.chart-symbol-text-unicode {
     display: flex;
   }
 
-  .tab-row__actions-panel > .chart-overlay-settings > button,
   .tab-row__actions-panel > .extended-settings > button {
     width: 100%;
     min-height: 2.5rem;
@@ -4039,7 +4037,6 @@ svg text.chart-symbol-text-unicode {
     text-align: left;
   }
 
-  .tab-row__actions-panel > .chart-overlay-settings > button:hover:not(:disabled),
   .tab-row__actions-panel > .extended-settings > button:hover:not(:disabled) {
     background: var(--surface-hover);
   }
@@ -4271,8 +4268,7 @@ svg text.chart-symbol-text-unicode {
   white-space: nowrap;
 }
 
-.settings-card,
-.chart-overlay-settings-card {
+.settings-card {
   width: min(46rem, calc(100vw - 2rem));
   max-height: calc(100vh - 2rem);
   padding: 0;
@@ -4282,14 +4278,12 @@ svg text.chart-symbol-text-unicode {
   color: var(--fg);
 }
 
-.settings-card[open],
-.chart-overlay-settings-card[open] {
+.settings-card[open] {
   display: flex;
   flex-direction: column;
 }
 
-.settings-card::backdrop,
-.chart-overlay-settings-card::backdrop {
+.settings-card::backdrop {
   background: rgb(0 0 0 / 0.45);
 }
 
@@ -4363,6 +4357,20 @@ svg text.chart-symbol-text-unicode {
   padding: 0.75rem 1.25rem;
   border-top: 1px solid var(--line);
   background: var(--bg);
+}
+
+.chart-overlay-settings {
+  margin: var(--space-2) 0;
+}
+
+.chart-overlay-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--line);
 }
 
 .chart-overlay-rows {
@@ -4444,8 +4452,7 @@ svg text.chart-symbol-text-unicode {
 }
 
 @media (max-width: 40rem) {
-  .settings-card,
-  .chart-overlay-settings-card {
+  .settings-card {
     width: 100vw;
     max-width: 100vw;
     height: 100vh;

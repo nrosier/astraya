@@ -50,14 +50,20 @@ test('a natal, transit, and progressed triwheel is independently configurable (#
   await openNatalChart(page);
   await expect(page.locator('div.chart-wheel')).toBeVisible();
 
-  await page.getByRole('button', { name: 'Overlay settings', exact: true }).click();
-  const dialog = page.getByRole('dialog', { name: 'Overlay settings', exact: true });
+  // The panel opens in flow under the tab row (#826), closed by default; Apply closes it again.
+  const trigger = page.locator('.chart-overlay-settings button.primitive-disclosure-trigger');
+  const dialog = page.locator('.chart-overlay-settings .primitive-disclosure-panel');
+  await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+  await trigger.click();
+  await expect(trigger).toHaveAttribute('aria-expanded', 'true');
   await dialog.getByRole('checkbox', { name: 'Transit ring', exact: true }).check();
   await dialog.getByLabel('Transit date', { exact: true }).fill('2025-01-01');
   await dialog.getByRole('checkbox', { name: 'Secondary progressed ring', exact: true }).check();
   await dialog.getByLabel('Progressed to date', { exact: true }).fill('2025-01-01');
   await dialog.getByRole('checkbox', { name: 'Show inter-ring aspects', exact: true }).check();
   await dialog.getByRole('button', { name: 'Apply overlays', exact: true }).click();
+  await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+  await expect(trigger).toBeFocused();
 
   const legends = page.locator('[data-ring-legend]');
   await expect(legends).toHaveCount(3);
@@ -75,13 +81,13 @@ test('a natal, transit, and progressed triwheel is independently configurable (#
   const downloadPath = await download.path();
   expect(readFileSync(downloadPath, 'utf8')).toContain('data-ring-legend="2"');
 
-  await page.getByRole('button', { name: 'Overlay settings', exact: true }).click();
+  await trigger.click();
   await dialog.getByRole('button', { name: 'Move Secondary progressed ring inward', exact: true }).click();
   await dialog.getByRole('button', { name: 'Apply overlays', exact: true }).click();
   await expect(page.locator('[data-ring-legend="1"]')).toContainText('Secondary progressed ring');
   await expect(page.locator('[data-ring-legend="2"]')).toContainText('Transit');
 
-  await page.getByRole('button', { name: 'Overlay settings', exact: true }).click();
+  await trigger.click();
   await dialog.getByRole('checkbox', { name: 'Transit ring', exact: true }).uncheck();
   await dialog.getByRole('button', { name: 'Apply overlays', exact: true }).click();
   await expect(legends).toHaveCount(2);

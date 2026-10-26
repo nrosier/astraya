@@ -2204,8 +2204,8 @@ export function ChartDataView({
       </>
     );
 
-  // The two triggers the tab row pins at the far right (#818). The overlay rings belong to the wheel, so that trigger
-  // only exists where the wheel does; the Extended settings card needs the long-lived provider.
+  // The overlay rings belong to the wheel, so the Overlays row only exists where the wheel does. It opens in flow under
+  // the tab row (#826), not in the pinned cluster; the Extended settings card needs the long-lived provider.
   const overlaysPanel =
     overlayContext !== undefined && wheelMarkup !== undefined ? (
       <ChartOverlaySettingsPanel
@@ -2236,7 +2236,7 @@ export function ChartDataView({
         generatedAt={formatTimestamp(new Date())}
       />
       {/* Directly under the title row (#801): the chart type, the chart's own views once there is a chart to view, and the
-          Overlays and Extended settings triggers pinned at the far right (#818). The row stays in place while the chart
+          Extended settings trigger pinned at the far right (#818); the Overlays row follows in flow (#826). The row stays in place while the chart
           loads or fails, so the Extended settings card (a setting that might fix a failed or slow calculation, #442)
           keeps its state and stays reachable; only the view links wait for the chart. */}
       {printAll ? (
@@ -2251,16 +2251,10 @@ export function ChartDataView({
           buildHref={buildViewHref}
           onNavigate={setActiveTab}
           availableViews={load.kind === 'ready' ? tabs : []}
-          actions={
-            overlaysPanel === null && settingsPanel === null ? undefined : (
-              <>
-                {overlaysPanel}
-                {settingsPanel}
-              </>
-            )
-          }
+          actions={settingsPanel ?? undefined}
         />
       )}
+      {!printAll && overlaysPanel}
       {!showHouses && <p className="hint">{t.housesUnknownHint(displayName || t.thisPerson)}</p>}
       {showHouses && !housesComputed && <p className="hint">{t.housesUndefinedHint(displayName || t.thisPerson)}</p>}
 

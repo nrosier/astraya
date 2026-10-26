@@ -1,14 +1,14 @@
 /**
  * @module ChartOverlaySettingsPanel
- * @purpose Staged Overlay settings modal for configuring additional rings in the canonical chart wheel.
- * @conventions Owns only a draft; callers receive one confirmed settings object through `onApply`, so recalculation occurs once and Cancel/Escape/backdrop retain the visible chart.
+ * @purpose Staged Overlay settings for configuring additional rings in the canonical chart wheel, opened in flow from a full-width Disclosure row under the tab row (#826).
+ * @conventions Owns only a draft that exists while the Disclosure is open; callers receive one confirmed settings object through `onApply`, so recalculation occurs once and Cancel retains the visible chart. Apply and Cancel close it by re-keying the Disclosure (it has no close API) and return focus to its trigger.
  * @exports ChartOverlaySettingsPanel, ChartOverlaySettings, ChartOverlaySource, ChartOverlayReturnKind, DEFAULT_CHART_OVERLAY_SETTINGS, orderedChartOverlaySources
  */
 import { useEffect, useRef, useState } from 'react';
+import { Disclosure } from './primitives/Disclosure.js';
 import { DateField } from './primitives/DateField.js';
 import { NumberField } from './primitives/NumberField.js';
 import { ChoiceGroup } from './primitives/ChoiceGroup.js';
-import { StagedDialog } from './primitives/StagedDialog.js';
 import { Checkbox } from './primitives/Checkbox.js';
 import { chartOverlaySettingsPanelMessages } from './ChartOverlaySettingsPanel.messages.js';
 import { todayInputValue } from './format.js';
@@ -122,14 +122,55 @@ export function ChartOverlaySettingsPanel({
   readonly onApply: (next: ChartOverlaySettings) => void;
 }): React.JSX.Element {
   const t = useMessages(chartOverlaySettingsPanelMessages);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const [open, setOpen] = useState(false);
-  const [draft, setDraft] = useState<ChartOverlaySettings>(value);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  // Re-keying remounts the Disclosure closed (it has no close API), which also drops the draft.
+  const [session, setSession] = useState(0);
+  const closed = useRef(false);
 
   useEffect(() => {
-    if (!open) setDraft(value);
-  }, [value, open]);
+    if (!closed.current) return;
+    closed.current = false;
+    wrapperRef.current?.querySelector<HTMLElement>('.primitive-disclosure-trigger')?.focus();
+  }, [session]);
 
+  const close = (): void => {
+    closed.current = true;
+    setSession((current) => current + 1);
+  };
+
+  return (
+    <div className="chart-overlay-settings" ref={wrapperRef}>
+      <Disclosure key={session} title={t.trigger} showLabel={t.showLabel} hideLabel={t.hideLabel}>
+        <OverlayDraft
+          value={value}
+          baseLabel={baseLabel}
+          unavailableSources={unavailableSources}
+          onApply={(next) => {
+            onApply(next);
+            close();
+          }}
+          onCancel={close}
+        />
+      </Disclosure>
+    </div>
+  );
+}
+
+function OverlayDraft({
+  value,
+  baseLabel,
+  unavailableSources,
+  onApply,
+  onCancel,
+}: {
+  readonly value: ChartOverlaySettings;
+  readonly baseLabel: string;
+  readonly unavailableSources: readonly ChartOverlaySource[];
+  readonly onApply: (next: ChartOverlaySettings) => void;
+  readonly onCancel: () => void;
+}): React.JSX.Element {
+  const t = useMessages(chartOverlaySettingsPanelMessages);
+  const [draft, setDraft] = useState<ChartOverlaySettings>(value);
   const unavailable = (source: ChartOverlaySource): boolean => unavailableSources.includes(source);
   const update = (next: Partial<ChartOverlaySettings>): void => {
     setDraft((current) => ({ ...current, ...next }));
@@ -169,196 +210,168 @@ export function ChartOverlaySettingsPanel({
           : undefined,
     };
   };
-  const discard = (): void => {
-    setDraft(value);
-    setOpen(false);
-  };
 
   return (
-    <div className="chart-overlay-settings">
-      <button
-        ref={triggerRef}
-        type="button"
-        className="quiet"
-        aria-haspopup="dialog"
-        onClick={() => {
-          setDraft(value);
-          setOpen(true);
-        }}
-      >
-        {t.trigger}
-      </button>
-      <StagedDialog
-        open={open}
-        heading={t.heading}
-        closeLabel={t.closeLabel}
-        onDiscard={discard}
-        returnFocusTo={triggerRef}
-        dialogClassName="chart-overlay-settings-card"
-        footer={
-          <>
-            <button
-              type="button"
-              className="quiet"
-              disabled={sameSettings(draft, value)}
-              onClick={() => {
-                onApply(draft);
-                setOpen(false);
-              }}
-            >
-              {t.apply}
-            </button>
-            <button type="button" className="quiet" onClick={discard}>
-              {t.cancel}
-            </button>
-          </>
-        }
-      >
-        <p className="settings-card-tag">{t.baseChart(baseLabel)}</p>
-        <p className="hint">{t.hint}</p>
-        <div className="chart-overlay-rows">
-          <OverlayRow
-            label={t.natal}
-            checked={draft.natal}
-            disabled={unavailable('natal')}
-            {...rowControls('natal', t.natal)}
-            onChange={(natal) => {
-              update({ natal });
-            }}
-          />
-          <OverlayRow
-            label={t.draconic}
-            checked={draft.draconic}
-            disabled={unavailable('draconic')}
-            {...rowControls('draconic', t.draconic)}
-            onChange={(draconic) => {
-              update({ draconic });
-            }}
-          />
-          <OverlayRow
-            label={t.transit}
-            checked={draft.transit}
-            {...rowControls('transit', t.transit)}
-            onChange={(transit) => {
-              update({ transit });
-            }}
-          >
-            <DateField
-              label={t.transitDate}
-              value={draft.transitDate}
-              disabled={!draft.transit}
-              onChange={(transitDate) => {
-                update({ transitDate });
-              }}
-            />
-          </OverlayRow>
-          <OverlayRow
-            label={t.progressed}
-            checked={draft.progressed}
-            {...rowControls('progressed', t.progressed)}
-            onChange={(progressed) => {
-              update({ progressed });
-            }}
-          >
-            <DateField
-              label={t.progressedDate}
-              value={draft.progressedDate}
-              disabled={!draft.progressed}
-              onChange={(progressedDate) => {
-                update({ progressedDate });
-              }}
-            />
-          </OverlayRow>
-          <OverlayRow
-            label={t.directed}
-            checked={draft.directed}
-            {...rowControls('directed', t.directed)}
-            onChange={(directed) => {
-              update({ directed });
-            }}
-          >
-            <DateField
-              label={t.directedDate}
-              value={draft.directedDate}
-              disabled={!draft.directed}
-              onChange={(directedDate) => {
-                update({ directedDate });
-              }}
-            />
-          </OverlayRow>
-          <OverlayRow
-            label={t.return}
-            checked={draft.return}
-            {...rowControls('return', t.return)}
-            onChange={(returnRing) => {
-              update({ return: returnRing });
-            }}
-          >
-            <div className="primitive-choice-field">
-              <span className="primitive-field-label">{t.returnKind}</span>
-              <ChoiceGroup
-                label={t.returnKind}
-                value={draft.returnKind}
-                disabled={!draft.return}
-                options={[
-                  { value: 'solar', label: t.solarReturn },
-                  { value: 'lunar', label: t.lunarReturn },
-                ]}
-                onChange={(returnKind) => {
-                  update({ returnKind: returnKind as ChartOverlayReturnKind });
-                }}
-              />
-            </div>
-            <DateField
-              label={t.returnDate}
-              value={draft.returnDate}
-              disabled={!draft.return}
-              onChange={(returnDate) => {
-                update({ returnDate });
-              }}
-            />
-          </OverlayRow>
-          <OverlayRow
-            label={t.relocated}
-            checked={draft.relocated}
-            {...rowControls('relocated', t.relocated)}
-            onChange={(relocated) => {
-              update({ relocated });
-            }}
-          >
-            <NumberField
-              label={t.latitude}
-              value={draft.latitude}
-              min={-90}
-              max={90}
-              step="any"
-              disabled={!draft.relocated}
-              onChange={(latitude) => {
-                update({ latitude });
-              }}
-            />
-            <NumberField
-              label={t.longitude}
-              value={draft.longitude}
-              min={-180}
-              max={180}
-              step="any"
-              disabled={!draft.relocated}
-              onChange={(longitude) => {
-                update({ longitude });
-              }}
-            />
-          </OverlayRow>
-        </div>
-        <Checkbox
-          label={t.interRingAspects}
-          checked={draft.interRingAspects}
-          disabled={!hasChartOverlays(draft)}
-          onChange={(interRingAspects) => {
-            update({ interRingAspects });
+    <div className="chart-overlay-draft">
+      <p className="settings-card-tag">{t.baseChart(baseLabel)}</p>
+      <p className="hint">{t.hint}</p>
+      <div className="chart-overlay-rows">
+        <OverlayRow
+          label={t.natal}
+          checked={draft.natal}
+          disabled={unavailable('natal')}
+          {...rowControls('natal', t.natal)}
+          onChange={(natal) => {
+            update({ natal });
           }}
         />
-      </StagedDialog>
+        <OverlayRow
+          label={t.draconic}
+          checked={draft.draconic}
+          disabled={unavailable('draconic')}
+          {...rowControls('draconic', t.draconic)}
+          onChange={(draconic) => {
+            update({ draconic });
+          }}
+        />
+        <OverlayRow
+          label={t.transit}
+          checked={draft.transit}
+          {...rowControls('transit', t.transit)}
+          onChange={(transit) => {
+            update({ transit });
+          }}
+        >
+          <DateField
+            label={t.transitDate}
+            value={draft.transitDate}
+            disabled={!draft.transit}
+            onChange={(transitDate) => {
+              update({ transitDate });
+            }}
+          />
+        </OverlayRow>
+        <OverlayRow
+          label={t.progressed}
+          checked={draft.progressed}
+          {...rowControls('progressed', t.progressed)}
+          onChange={(progressed) => {
+            update({ progressed });
+          }}
+        >
+          <DateField
+            label={t.progressedDate}
+            value={draft.progressedDate}
+            disabled={!draft.progressed}
+            onChange={(progressedDate) => {
+              update({ progressedDate });
+            }}
+          />
+        </OverlayRow>
+        <OverlayRow
+          label={t.directed}
+          checked={draft.directed}
+          {...rowControls('directed', t.directed)}
+          onChange={(directed) => {
+            update({ directed });
+          }}
+        >
+          <DateField
+            label={t.directedDate}
+            value={draft.directedDate}
+            disabled={!draft.directed}
+            onChange={(directedDate) => {
+              update({ directedDate });
+            }}
+          />
+        </OverlayRow>
+        <OverlayRow
+          label={t.return}
+          checked={draft.return}
+          {...rowControls('return', t.return)}
+          onChange={(returnRing) => {
+            update({ return: returnRing });
+          }}
+        >
+          <div className="primitive-choice-field">
+            <span className="primitive-field-label">{t.returnKind}</span>
+            <ChoiceGroup
+              label={t.returnKind}
+              value={draft.returnKind}
+              disabled={!draft.return}
+              options={[
+                { value: 'solar', label: t.solarReturn },
+                { value: 'lunar', label: t.lunarReturn },
+              ]}
+              onChange={(returnKind) => {
+                update({ returnKind: returnKind as ChartOverlayReturnKind });
+              }}
+            />
+          </div>
+          <DateField
+            label={t.returnDate}
+            value={draft.returnDate}
+            disabled={!draft.return}
+            onChange={(returnDate) => {
+              update({ returnDate });
+            }}
+          />
+        </OverlayRow>
+        <OverlayRow
+          label={t.relocated}
+          checked={draft.relocated}
+          {...rowControls('relocated', t.relocated)}
+          onChange={(relocated) => {
+            update({ relocated });
+          }}
+        >
+          <NumberField
+            label={t.latitude}
+            value={draft.latitude}
+            min={-90}
+            max={90}
+            step="any"
+            disabled={!draft.relocated}
+            onChange={(latitude) => {
+              update({ latitude });
+            }}
+          />
+          <NumberField
+            label={t.longitude}
+            value={draft.longitude}
+            min={-180}
+            max={180}
+            step="any"
+            disabled={!draft.relocated}
+            onChange={(longitude) => {
+              update({ longitude });
+            }}
+          />
+        </OverlayRow>
+      </div>
+      <Checkbox
+        label={t.interRingAspects}
+        checked={draft.interRingAspects}
+        disabled={!hasChartOverlays(draft)}
+        onChange={(interRingAspects) => {
+          update({ interRingAspects });
+        }}
+      />
+      <div className="chart-overlay-footer">
+        <button
+          type="button"
+          className="quiet"
+          disabled={sameSettings(draft, value)}
+          onClick={() => {
+            onApply(draft);
+          }}
+        >
+          {t.apply}
+        </button>
+        <button type="button" className="quiet" onClick={onCancel}>
+          {t.cancel}
+        </button>
+      </div>
     </div>
   );
 }
