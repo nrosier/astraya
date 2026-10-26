@@ -570,7 +570,6 @@ Every UI PR in the umbrella must meet these checks:
 ### 17.4 Related issues
 
 - Shared table style: #825.
-- Primitive and token gaps: #826.
 - G = #826 (primitive and token gaps)
 - Tab row: #818.
 - Chart view: #817, #824.
