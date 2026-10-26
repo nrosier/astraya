@@ -2,7 +2,8 @@
 name: a11y-specialist
 description: Reviews accessibility and en/nl i18n parity for Astraya's UI. Use for any new user-facing string or interactive component.
 tools: Read, Grep, Glob, Bash
-model: claude-sonnet-5-5
+model: sonnet
+effot: medium
 ---
 
 # Accessibility & i18n Specialist

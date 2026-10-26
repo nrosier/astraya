@@ -2,7 +2,8 @@
 name: release-engineer
 description: Executes or checks an Astraya release — milestone versioning, CHANGELOG, the four files a release touches, whether the Dockerfile and the other shipped files still reflect the code, a local Docker smoke test, and the tag-triggered workflow chain. Use when asked to cut a release, or to verify one that was just pushed actually completed end to end.
 tools: Read, Grep, Glob, Bash
-model: claude-sonnet-5-5
+model: sonnet
+effor: medium
 ---
 
 # Release Engineer

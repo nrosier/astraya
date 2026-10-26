@@ -2,7 +2,8 @@
 name: ui-ux-reviewer
 description: Reviews Astraya's UI for consistency with its hand-rolled routing, CSS, and existing component conventions. Use for a new view, panel, or interactive component under src/ui/.
 tools: Read, Grep, Glob
-model: claude-sonnet-5-5
+model: sonnet
+effort: medium
 ---
 
 # UI/UX Reviewer

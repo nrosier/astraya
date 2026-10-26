@@ -2,7 +2,8 @@
 name: db-integrity
 description: Reviews Astraya's op-log/HLC correctness, opaque-relay scoping, and the "spine is frozen forever" wire contract. Use for a change to src/store/oplog.ts, src/store/ops.ts, src/store/fold.ts, src/store/hlc.ts, or server/ops/routes.ts.
 tools: Read, Grep, Glob, Bash
-model: claude-advantage-assist[1m]
+model: opus
+effort: medium
 ---
 
 # DB Integrity Reviewer

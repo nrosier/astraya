@@ -2,7 +2,8 @@
 name: security-auditor
 description: Audits Astraya's auth, session, CSP, and at-rest-encryption posture against ADR 0002's documented threat model. Use for security review of a PR touching server/auth/, server/ops/, or server/csp.ts, or investigating a specific suspected vulnerability.
 tools: Read, Grep, Glob, Bash
-model: claude-advantage-assist[1m]
+model: opus
+effort: high
 ---
 
 # Security Auditor

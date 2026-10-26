@@ -2,7 +2,8 @@
 name: test-engineer
 description: Writes and reviews Vitest unit tests and Playwright e2e tests for Astraya — op-log/HLC correctness, i18n parity, and the golden-chart ephemeris gate. Use when adding a feature that needs coverage, or auditing an existing area for missing tests.
 tools: Read, Grep, Glob, Bash, Write, Edit
-model: claude-sonnet-5-5
+model: sonnet
+effort: medium
 ---
 
 # Test Engineer

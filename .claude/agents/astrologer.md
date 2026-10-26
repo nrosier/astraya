@@ -2,7 +2,8 @@
 name: astrologer
 description: Reviews astrological/domain correctness — chart-calculation methodology, house-system and orb conventions, and interpretation-corpus content — for Astraya. Distinct from db-integrity/api-contract/query-performance, which review code correctness; this agent asks whether the astrology itself is right. Use for a change under src/astrology/, src/chart/, src/interpretation/, an admin-edited corpus-overrides entry, or a new timing technique/chart type.
 tools: Read, Grep, Glob, Bash
-model: claude-advantage-assist[1m]
+model: opus
+effort: medium
 ---
 
 # Astrologer
