@@ -1,6 +1,7 @@
 /**
- * The planetary-rulers choice (#426), end to end: modern by default, changed from a screen that shows
- * rulers, followed by the tables, kept on this device across a reload, and shared between screens.
+ * The planetary-rulers choice (#426, #806), end to end: modern by default, chosen in a person's Extended settings
+ * and saved with Apply, followed by the tables, kept on that person across a reload, and shared between that
+ * person's screens. A device default in Preferences is what a person without a choice of their own starts from.
  * The person has Scorpio rising and Pluto in Scorpio, where the three choices disagree.
  */
 import { mkdtempSync, rmSync } from 'node:fs';
@@ -11,7 +12,7 @@ import { expect, test, type BrowserContext, type Locator, type Page } from '@pla
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
 import { EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
-import { createPerson, gotoAndSettle, openNatalChart, openSettings } from './support.ts';
+import { applySettings, createPerson, gotoAndSettle, openNatalChart, openSettings } from './support.ts';
 
 /** One of the planetary-rulers option cards (#513): a named radiogroup of Modern / Traditional / Both. */
 function rulersOption(scope: Page | Locator, title: 'Modern' | 'Traditional' | 'Both'): Locator {
@@ -40,7 +41,7 @@ test.afterAll(async () => {
   rmSync(dir, { recursive: true, force: true });
 });
 
-test('the rulers choice is modern by default, drives the dispositor table, and is kept across a reload', async ({
+test('the rulers choice is modern by default, is saved with Apply, drives the dispositor table, and is kept across a reload', async ({
   page,
 }) => {
   test.setTimeout(90_000);
@@ -72,15 +73,22 @@ test('the rulers choice is modern by default, drives the dispositor table, and i
   await expect(plutoChain).toHaveText('Pluto');
 
   // Traditional: Mars rules Scorpio, so Pluto's dispositor is Mars.
+  // Chosen in the card it is only a draft (#806): the table follows once the settings are applied.
   await rulersOption(page, 'Traditional').check();
+  await expect(plutoChain).toHaveText('Pluto');
+  await applySettings(page);
   await expect(plutoChain).toContainText('Pluto → Mars');
 
   // Both: the chain follows the modern ruler, and the other ruler is shown beside it.
+  await openSettings(page);
   await rulersOption(page, 'Both').check();
+  await applySettings(page);
   await expect(plutoChain).toHaveText('Pluto (+ Mars)');
 
-  // Kept on this device: still Both after a reload.
+  // Kept on the person: Traditional again, and still Traditional after a reload.
+  await openSettings(page);
   await rulersOption(page, 'Traditional').check();
+  await applySettings(page);
   await page.reload();
   await page.waitForEvent('load', { timeout: 5_000 }).catch(() => undefined);
   await page.getByRole('link', { name: 'Patterns & condition', exact: true }).click();
@@ -107,26 +115,28 @@ test.describe('with the shared people (#799)', () => {
     await context.close();
   });
 
-  test('the choice is shared by the other screens that show rulers (profections and transits)', async () => {
+  test("a person's choice is shared by that person's other screens, and Preferences holds the device default (profections and transits)", async () => {
     test.setTimeout(90_000);
 
     await openSharedPerson(page, baseUrl, EINSTEIN);
 
-    // Profections: the control is there, and it shows the choice made elsewhere.
+    // Profections: the control is there and saves the choice on this person at once.
     await page.getByRole('button', { name: 'Progressions & Directions', exact: true }).click();
     await page.getByRole('link', { name: 'Profections', exact: true }).click();
     await expect(rulersOption(page, 'Both')).toBeVisible();
-    await rulersOption(page, 'Both').check();
+    // The choice is written to the person's record, so the card follows once that is saved.
+    await rulersOption(page, 'Both').click();
+    await expect(rulersOption(page, 'Both')).toBeChecked();
     await expect(page.getByRole('table').first()).toBeVisible();
 
-    // Transits: the rulers are a preference, not part of the filter (#513) — the staged "Change filters" dialog points to
-    // Preferences, where the same choice is shown.
+    // Transits: the rulers are not part of the filter (#513) — the staged "Change filters" dialog points to
+    // Preferences, where the device default is shown: Einstein's own choice does not change it (#806).
     await page.getByRole('button', { name: 'Transits & Forecast', exact: true }).click();
     await page.getByRole('link', { name: 'Transits', exact: true }).click();
     await expect(page.getByRole('heading', { level: 1, name: /transits/i })).toBeVisible();
     await page.getByRole('button', { name: 'Change filters', exact: true }).click();
     await expect(rulersOption(page, 'Both')).toHaveCount(0);
-    await page.getByRole('link', { name: 'change them in Preferences' }).click();
-    await expect(rulersOption(page, 'Both')).toBeChecked();
+    await page.getByRole('link', { name: 'change it in Preferences' }).click();
+    await expect(rulersOption(page, 'Modern')).toBeChecked();
   });
 });

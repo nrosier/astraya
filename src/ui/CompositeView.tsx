@@ -29,6 +29,7 @@ import { ChartDataView } from './ChartView.js';
 import { ReportView } from './ReportView.js';
 import { compositeViewMessages } from './CompositeView.messages.js';
 import { useMessages } from './messages.js';
+import { useRulershipChoice } from './rulership-setting.js';
 import { ordered } from './people-list.js';
 import { PersonNotFound } from './PersonNotFound.js';
 import { useStoreState } from './store-context.js';
@@ -60,6 +61,8 @@ export function CompositeView({
   const person = state.people.get(personId);
   const personMoment = useStableMoment(person?.moment);
   const t = useMessages(compositeViewMessages);
+  // A composite belongs to no single person, so it follows the device default rulership (#806).
+  const [rulership] = useRulershipChoice();
 
   const candidates = useMemo(
     () =>
@@ -150,6 +153,7 @@ export function CompositeView({
 
       {partnerId !== '' && load.kind !== 'idle' && (
         <ChartDataView
+          rulership={rulership}
           personId={personId}
           load={load}
           displayName={displayName || t.compositeFallback}

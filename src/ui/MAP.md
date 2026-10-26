@@ -5,7 +5,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 **Subdirectory:** `primitives/` — shared UI primitives for the #506 UI/UX overhaul (Button, Field/TextField/NumberField/DateField/Select, Checkbox/Radio/ChoiceGroup/OptionCards, Tooltip). See its own `MAP.md`.
 
 - `About.tsx` + `About.messages.ts` — About/privacy/licence screen, version metadata. Deps: none (static content).
-- `default-calculation-profile.ts` — The saved default calculation profile (device preference, #510) that new people start from and Preferences edits (#806). Deps: `chart/calculation-profiles`.
+- `default-calculation-profile.ts` — The saved default calculation profile (device preference, #510) that Preferences edits; a new person receives a copy of it (#806). Deps: `chart/calculation-profiles`.
 - `online-status.ts` — Hook following the browser's online/offline state, so network-only actions can show the offline result state. Deps: none.
 - `astro-glossary.messages.ts` — Astrology glossary catalogue (en/nl name + definition per term), the one source for every GlossaryTerm. Deps: none.
 - `GlossaryTerm.tsx` — Inline `GlossaryTerm` and the per-screen `GlossaryTerms` list, opening definitions through the shared Tooltip. Deps: `astro-glossary.messages`, `GlossaryTerm.messages`, `primitives/Tooltip`.
@@ -15,7 +15,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `AdminPanel.tsx` + `AdminPanel.messages.ts` — User CRUD + AI-usage reporting. Deps: `sync/admin-client`, `session-context`.
 - `App.tsx` + `App.messages.ts` — Root router + sticky header + lazy-loading boundary. Deps: `route`, `session-context`, `store-context`, `person-screens`.
 - `EmphasisGrid.tsx` — The element x modality grid view: the sheet export's drawing, shown on screen beside its table. Deps: `chart/emphasis-grid`, `chart/sheet-geometry`.
-- `calculation-basis.ts` + `calculation-basis.messages.ts` — The calculation-basis line (profile name + whether it is Astraya's default, the saved default, or changed for this chart) shown on chart pages. Deps: `chart/calculation-profiles`, `default-calculation-profile`, `extended-settings-summary`, `ExtendedSettingsPanel.messages`.
+- `calculation-basis.ts` + `calculation-basis.messages.ts` — The calculation-basis line (profile name + whether it is Astraya's default, the saved default, or changed for this chart) shown on chart pages. Deps: `chart/calculation-profiles`, `astrology/orb-library`, `astrology/orb-profiles`, `default-calculation-profile`, `extended-settings-summary`, `ExtendedSettingsPanel.messages`.
 - `table-selection.tsx` — The table side of the wheel selection: `TableSelection`, each row kind's selection key, and the shared "Show on the chart" button column. Deps: `interpretation/selection-key`, `chart/body-id`, `table-sort`.
 - `appearance-settings.ts` — Motion (follow the system / reduce) and Density (standard / compact) device preferences, applied as root attributes. Deps: none.
 - `MapSettingsDialog.tsx` + `MapSettingsDialog.messages.ts` + `map-settings.ts` — The Astrocartography map's staged settings dialog (line types, primary/additional bodies, Local Space, relocation), its applied-state summary and the pure settings logic. Deps: `primitives/StagedDialog`, `domain/astrocartography`.
@@ -50,7 +50,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `ElectionalView.tsx` + `ElectionalView.messages.ts` — Electional Search tool (best-time-to-begin ranking). Deps: `astrology/electional`, `BirthPlaceSearch`.
 - `EntryLabel.tsx` — Renders corpus keys as human-readable placement names (admin UI). Deps: `./placement-label`.
 - `EphemerisProviderContext.tsx` — Web Worker-backed Swiss Ephemeris singleton context. Deps: `ephemeris/client`.
-- `ExtendedSettingsPanel.tsx` + `ExtendedSettingsPanel.messages.ts` — Chart settings modal (house system/zodiac/bodies/aspects/colours). Deps: `chart/extended-settings`, `astrology/houses`, `astrology/ayanamsas`.
+- `ExtendedSettingsPanel.tsx` + `ExtendedSettingsPanel.messages.ts` — Chart settings modal (house system/zodiac/bodies/aspects/colours; rulers staged in the draft, #806). Deps: `chart/extended-settings`, `astrology/houses`, `astrology/ayanamsas`.
 - `feature-registry.ts` — #506/#509 typed registry of every user-facing feature's scope/group/order/href/prerequisites/settings-mode/export-capabilities, derived from `person-nav`/`tools-nav`/`admin-nav`. Deps: `./person-nav`, `./tools-nav`, `./admin-nav`, `./route`.
 - `FocusInterpretation.tsx` + `FocusInterpretation.messages.ts` — Tier 2 AI-interpretation feature (consent + generate). Deps: `interpretation/tier2-client`, `interpretation/focus-context-schema`.
 - `HarmonicView.tsx` + `HarmonicView.messages.ts` — Harmonic & Varga divisional charts with radix-to-result provenance. Deps: `astrology/harmonics`, `domain/harmonic`, `SortableTable`.
@@ -60,7 +60,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `PageHeader.tsx` + `PageHeader.messages.ts` — Content-header primitive (#506/#509): page title, optional basis line, and the current screen's own registered exports, replacing the old global "This page" Export submenu. Deps: `./export-registry`, `./use-exclusive-open`.
 - `PdfAiInterpretationPicker.tsx` — PDF builder picker for the selected person's saved AI interpretations in the PDF's language (#759, #768), dropping ticks of other people; trigger opens a tick-only selection modal (#762), ordering stays in the builder; generates nothing. Deps: `interpretation/tier2-client`, `primitives/Checkbox`, `primitives/StagedDialog`, `./result-basis-label`, `./saved-time`.
 - `PdfExportBuilder.tsx` — PDF export builder screen (#441, lazy-loaded). Deps: `domain/pdf-export-sections`, `./pdf-export-plan`, `./pdf-export-render`.
-- `People.tsx` + `People.messages.ts` — Home/landing screen (list/create/restore people). Deps: `store-context`, `./people-list`.
+- `People.tsx` + `People.messages.ts` — Home/landing screen (list/create/restore people); a new person is created with a copy of the default calculation profile and rulership (#806). Deps: `store-context`, `./people-list`, `default-calculation-profile`, `rulership-setting`, `domain/person`.
 - `OrbRulesFields.tsx` + `OrbRulesFields.messages.ts` — Per-aspect and per-body orb inputs in the Extended settings card (#590). Deps: `orb-rules-draft`, `astro-names.messages`.
 - `OrbLibraryEditor.tsx` + `OrbLibraryEditor.messages.ts` — Preferences section: named orb profiles (revisioned) and which orbs transit, synastry and natal charts use (#590). Deps: `astrology/orb-library`, `orb-library-store`, `orb-rules-draft`, `OrbRulesFields`.
 - `orb-library-store.ts` — Device-stored orb library and per-context orb source, validated on every read (#590). Deps: `astrology/orb-library`.
@@ -74,7 +74,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `PreferencesView.tsx` + `PreferencesView.messages.ts` — Preferences workspace (#506/#510, lazy-loaded): General/Astrology defaults/Appearance & accessibility/Data & privacy, reusing each setting's own existing control. Deps: `./RulershipSetting`, `./SymbolSetting`, `./LanguageToggle`, `./ThemeToggle`, `domain/full-export`.
 - `PrimaryDirectionsView.tsx` + `PrimaryDirectionsView.messages.ts` — Configurable primary-directions screen (mode, method, points, date/age, direct bi-wheel, hit tables); carries its own `PrintProvenance` footer labelled with the locked Placidus/tropical snapshot; records the device's natal settings as the requested snapshot and warns when they differ (#564, #797). Deps: `domain/primary-directions`, `domain/primary-directions-settings`, `chart/multi-wheel`, `./PrintProvenance`.
 - `PrintProvenance.tsx` + `PrintProvenance.messages.ts` — Printed-page provenance footer (house system/zodiac/rulership/generated-at), invisible outside `@media print` (#564). Deps: none (thin, caller-resolved labels); wired into `ChartDataView` (every single-chart screen) plus `SynastryView.tsx`/`TransitView.tsx`/`PrimaryDirectionsView.tsx` individually.
-- `ProfectionsView.tsx` + `ProfectionsView.messages.ts` — Annual/monthly profections screen. Deps: `domain/profections`, `./rulership-setting`, `./wheel-corpus`.
+- `ProfectionsView.tsx` + `ProfectionsView.messages.ts` — Annual/monthly profections screen. Deps: `domain/profections`, `./person-calculation-settings`, `./wheel-corpus`.
 - `ProgressionsView.tsx` + `ProgressionsView.messages.ts` — Secondary/tertiary/minor progressions screen. Deps: `domain/secondary-progression`, `domain/minor-progression`.
 - `PwaStatus.tsx` + `PwaStatus.messages.ts` — PWA update + offline-cache warming banner. Deps: `pwa/register`, `pwa/warm-status`.
 - `RectificationView.tsx` + `RectificationView.messages.ts` — Birth-time rectification screen (event-matching). Deps: `domain/rectification`, `astrology/signs`.
@@ -85,7 +85,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `report-placement-badges.ts` + `report-placement-badges.messages.ts` — Pure placement badges (sign·degree, house, retrograde label) under each report placement title (#802); angles and lots get no house badge. Deps: `domain/chart-compute`, `astrology/emphasis`, `astrology/signs`, `astrology/bodies`, `./format`, `./placement-label`, `./astro-names.messages`.
 - `ReportView.tsx` + `ReportView.messages.ts` — Report rendering + provenance toggle + section cards, placement badges and a Sabian block (#527, #802) + Tier 2 AI panel + Past interpretations tab (#761). Deps: `interpretation/report`, `interpretation/corpus-client`, `interpretation/tier2-client`, `./degree-symbol-setting`, `./DegreeSymbolSetting`, `./GlossaryTerm`, `./report-placement-badges`, `./primitives/Badge`.
 - `ReturnView.tsx` + `ReturnView.messages.ts` — Solar/lunar return charts (pick year/place/rendering). Deps: `domain/return-chart`.
-- `RulershipSetting.tsx` + `RulershipSetting.messages.ts` — Planetary-rulers preference (modern/traditional/both), built on the shared `Select` primitive. Deps: `./rulership-setting`, `astrology/rulership`, `./primitives/Select`.
+- `RulershipSetting.tsx` + `RulershipSetting.messages.ts` — Controlled planetary-rulers control (modern/traditional/both; `value`/`onChange`, #806) for a person, a settings draft or the device default. Deps: `astrology/rulership`, `./primitives/OptionCards`.
 - `settings-registry.ts` — #506/#509 typed registry of every persisted setting's scope/owner/persistence/sync/commit-model, pure metadata (existing modules keep owning values). Deps: none.
 - `SetPasswordForm.tsx` + `SetPasswordForm.messages.ts` — One-time-link password set/reset form. Deps: `sync/auth-client`.
 - `SetupForm.tsx` + `SetupForm.messages.ts` — First-boot admin account bootstrap. Deps: `session-context`.
@@ -97,7 +97,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `SynastryView.tsx` + `SynastryView.messages.ts` — Synastry bi-wheel (two-person comparison); carries its own `PrintProvenance` footer labelled with engine defaults (#564). Deps: `domain/synastry`, `chart/multi-wheel`, `RelationshipSummary`, `./PrintProvenance`.
 - `SyncBadge.tsx` + `SyncBadge.messages.ts` — Always-visible sync-status badge. Deps: `session-context`, `./status`.
 - `ThemeToggle.tsx` + `ThemeToggle.messages.ts` — Light/dark/system theme override. Deps: `./theme-dom`, `./theme`.
-- `TransitFilterPanel.tsx` + `TransitFilterPanel.messages.ts` — Transit-filter controls (presets/orbs/bodies/aspects). Deps: `astrology/transit-importance`, `./rulership-setting`.
+- `TransitFilterPanel.tsx` + `TransitFilterPanel.messages.ts` — Transit-filter controls (presets/orbs/bodies/aspects). Deps: `astrology/transit-importance`.
 - `TransitView.tsx` + `TransitView.messages.ts` — Transit bi-wheel (natal ↔ transiting); carries its own `PrintProvenance` footer labelled with engine defaults (#564). Deps: `domain/transit`, `astrology/void-of-course`, `chart/multi-wheel`, `./PrintProvenance`.
 - `TimingTimelineView.tsx` + `TimingTimelineView.messages.ts` — Shared date-axis rendering and overlay for Level-1/2 releasing, timing techniques, and forecast events. Deps: `domain/timing-timeline`, `domain/profections`, `domain/primary-directions`, `domain/secondary-progression`, `domain/solar-arc-directions`, `domain/transit`, `domain/periodic-transit`.
 - `timing-timeline-labels.ts` — Words a timeline event's subject in en/nl for the timeline and consultation screens (#674). Deps: `domain/timing-timeline`, `./astro-names.messages`, `./placement-label`, `./TimingTimelineView.messages`.
@@ -116,9 +116,9 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `eclipses.ts` — Eclipses screen (search capping + display rows). Deps: `astrology/eclipses`, `astrology/signs`, `time/julian`.
 - `electional.ts` — Electional screen (form parsing + result formatting). Deps: `astrology/electional`, `time/julian`, `./place-fields`.
 - `export-registry.tsx` — Per-screen export registration contexts. Deps: none (React only).
-- `person-calculation-settings.ts` — Hook for one person's calculation settings (own register, else device default profile) and its async setter (rejects on write failure); flags an unreadable register (#806). Deps: `store-context`, `default-calculation-profile`, `domain/person`.
+- `person-calculation-settings.ts` — Hook for one person's calculation settings and rulership (own registers, else device default profile / default rulership) and async setters (reject on write failure); flags an unreadable register (#806). Deps: `store-context`, `default-calculation-profile`, `rulership-setting`, `domain/person`.
 - `UnreadableSettingsNotice.tsx` + `.messages.ts` — Notice shown instead of a chart when a person's saved settings are unreadable (#806). Deps: `primitives/StatusMessage`, `BackLink`.
-- `use-calculation-settings-migration.ts` — Once-per-account move of device chart settings onto existing people, after first sync when signed in (#806). Deps: `session-context`, `sync/engine`, `domain/calculation-settings-migration`, `default-calculation-profile`.
+- `use-calculation-settings-migration.ts` — Once-per-account moves of device chart settings and ruler choice onto existing people, after first sync when signed in (#806). Deps: `session-context`, `sync/engine`, `domain/calculation-settings-migration`, `default-calculation-profile`, `rulership-setting`.
 - `extended-settings-summary.ts` — Diffs extended settings to summarize changes. Deps: `chart/extended-settings`.
 - `format.ts` — Locale-aware formatting (dates/coords). Deps: `interpretation/schema` (Locale type only).
 - `forward-geocode.ts` — Place-name → coordinates resolution (MapTiler/Nominatim). Deps: `./geocode-provider`.
@@ -148,7 +148,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `report-provenance.ts` — Formats report paragraph provenance ("why this text?"). Deps: `astrology/bodies`, `astrology/aspects`, `astrology/signs`, `interpretation/report`.
 - `result-basis-label.ts` — Composes saved-interpretation basis phrase (kind + placement) and the short type label for the Past tab. Deps: `interpretation/result-basis`, `./placement-label`.
 - `route.ts` — Single source of truth for all hash routes. Deps: `domain/id`, `./chart-sections`.
-- `rulership-setting.ts` — Device preference for planetary rulership (modern/traditional/both). Deps: `astrology/rulership`.
+- `rulership-setting.ts` — Device default rulership (modern/traditional/both): what new people start from and person-less screens (Horary, Composite) show (#806). Deps: `astrology/rulership`.
 - `saved-time.ts` — Formats stored interpretation UTC instant as local written-out time. Deps: `interpretation/schema` (Locale type).
 - `session-context.tsx` — Owns account + store lifecycle + auth + sync-engine + anonymous-adoption prompt. Deps: `store/store`, `sync/auth-client`, `sync/engine`, `./oidc-pkce`.
 - `shared.messages.ts` — Common i18n strings reused across many components. Deps: none.

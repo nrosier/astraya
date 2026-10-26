@@ -97,6 +97,32 @@ describe('a shared chart recomputes under the sender’s own settings, not the v
     }
   });
 
+  it('labels the shared chart with the link’s rulership, not the viewer’s device one (#806)', async () => {
+    writeRulershipChoice('modern');
+    const sent = buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, 'traditional');
+    const query = encodeChartShareLink({
+      moment: MOMENT,
+      settings: calculationSnapshotToJson(sent),
+      housesKnown: true,
+    }).toString();
+
+    const { container, root } = await mountWithHash(`#/shared?${query}`);
+    try {
+      await act(async () => {
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+      const provenance = container.querySelector('.print-provenance')?.textContent ?? '';
+      expect(provenance).toContain('Traditional');
+      expect(provenance).not.toContain('Modern');
+    } finally {
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+    }
+  });
+
   it('recomputes with the sender’s own custom points, so the shared chart shows the same objects (#582)', async () => {
     const points = [{ id: 'fortune-like', name: 'Fortune-like', formula: 'ascendant + moon - sun' }];
     const sent = buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, 'modern', points);

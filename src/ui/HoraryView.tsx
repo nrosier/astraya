@@ -33,6 +33,7 @@ import { geocodeHost } from './geocode-provider.js';
 import { horaryViewMessages } from './HoraryView.messages.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
+import { useRulershipChoice } from './rulership-setting.js';
 import { transitViewMessages } from './TransitView.messages.js';
 import { voidOfCourseSentence } from './void-of-course-text.js';
 import type { BirthMomentInput } from '../time/types.js';
@@ -56,6 +57,8 @@ function horaryHref(view: ChartViewKind): string {
 export function HoraryView({ view }: { readonly view?: ChartViewKind | undefined }): React.JSX.Element {
   const t = useMessages(horaryViewMessages);
   const transit = useMessages(transitViewMessages);
+  // A horary chart belongs to no saved person, so it follows the device default rulership (#806).
+  const [rulership] = useRulershipChoice();
   const [locale] = useLocale();
   const { provider } = useEphemerisProvider();
   const [fields, setFields] = useState(() => ({ ...nowFields(), latitude: '', longitude: '' }));
@@ -247,6 +250,7 @@ export function HoraryView({ view }: { readonly view?: ChartViewKind | undefined
           )}
 
           <ChartDataView
+            rulership={rulership}
             load={{ kind: 'ready', data: ready.chart.data }}
             displayName={t.chartName}
             showHouses={ready.chart.housesAvailable}

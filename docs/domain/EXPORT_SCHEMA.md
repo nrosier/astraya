@@ -22,7 +22,7 @@ interface FullExport {
   app: { version: string }; // the Astraya release that produced this file
   preferences: {
     settings: ExtendedSettings; // chart/extended-settings.ts — the device's default calculation settings; a person without their own uses these (v3: see ExportedPerson.calculationSettings)
-    rulership: 'modern' | 'traditional' | 'both';
+    rulership: 'modern' | 'traditional' | 'both'; // v4 (#806): the device's default rulership; a person's own is ExportedPerson.rulership
     symbolClass: string;
   };
   note: string; // human-readable summary of which settings were in force
@@ -38,6 +38,7 @@ interface ExportedPerson {
   birth?: BirthMomentInput; // absent if the birth record is incomplete
   missing: string[]; // required fields the stored record lacks
   calculationSettings?: ExtendedSettings; // #806 (v3) — this person's own chart settings, which their charts below were computed with; absent in v2 files
+  rulership?: 'modern' | 'traditional' | 'both'; // #806 (v4) — this person's own planetary rulers, which their charts below were computed with; absent in v2 and v3 files
   relocationPlaces?: RelocationPlace[]; // #587 — named alternate places (#559), absent if none are saved
   customPoints?: CustomPointDefinition[]; // #587 — custom formula points (#566), absent if none are saved
   natalChart?: ExportedChart; // absent if birth is incomplete, or chartError explains a failure
@@ -97,8 +98,9 @@ JSON Schema file does enumerate them structurally.
   without changing its shape (e.g. a sign-index convention changing from 0-based to 1-based).
 - **Restore** (#587). `src/domain/full-export-importer.ts` validates and stages a restore:
   `validateFullExport` strictly checks `format` and `version` — it accepts the versions in `SUPPORTED_IMPORT_VERSIONS`
-  (2 and 3) and rejects anything older or newer by name, never guessing; a v2 person has no settings of their own, so
-  they take the file's `preferences.settings` (#806), which is what their charts in that file were computed with — and the per-field shape of each `ExportedPerson`'s birth
+  (2, 3 and 4) and rejects anything older or newer by name, never guessing; a v2 person has no settings of their own, so
+  they take the file's `preferences.settings` (#806), and a v2 or v3 person has no rulership of their own, so they take
+  the file's `preferences.rulership` — each is what their charts in that file were computed with — and the per-field shape of each `ExportedPerson`'s birth
   record, named places and custom points, reusing the same field readers `src/domain/person.ts` already applies
   to the op-log itself (not a second, looser validator), and rejects two people sharing one id or a person id
   that is itself a reserved register name (`__proto__`/`constructor`/`prototype`), rather than letting either
@@ -154,6 +156,15 @@ JSON Schema file does enumerate them structurally.
   reads v2 and v3. Restoring writes a person's `calculationSettings` register only when it differs. An older
   build rejects a v3 file by version, and an older build reading the op log ignores the register (accepted, #806 D6;
   noted in the release notes).
+- **v4** (#806): planetary rulers moved from the device onto the person too, as their own `rulership` register, so
+  `ExportedPerson` gains optional `rulership` (the rulers that person's `natalChart`/`harmonicCharts` were computed
+  with), and `preferences.rulership` now means the device's default rulership rather than "what the charts below were
+  computed with" — a change of meaning, which is why this is a bump rather than an additive field. The importer reads
+  v2, v3 and v4: a v2 or v3 person takes the file's `preferences.rulership`, exactly what their charts in that file
+  were computed with. Restoring writes a person's `rulership` register only when it differs. An older build rejects a
+  v4 file by version, so a build older than this one cannot restore it; an older build reading the op log ignores the
+  `rulership` register and draws with its own device rulership (accepted, noted in the release notes). Reverting to an
+  older build loses nothing: the registers stay in the log and are picked up again on upgrade.
 
 ## Calculation artifact
 

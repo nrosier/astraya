@@ -20,7 +20,8 @@ const en = {
     traditional: 'Scorpio, Aquarius and Pisces go to Mars, Saturn and Jupiter.',
     both: 'Each of those signs lists both planets as co-rulers.',
   },
-  hint: 'Only Scorpio, Aquarius and Pisces differ: modern gives them to Pluto, Uranus and Neptune, traditional to Mars, Saturn and Jupiter, and both lists the two as co-rulers. It sets the chart ruler, the houses a planet rules, dispositors, essential dignities, profections and the AI interpretation, and is kept on this device.',
+  hint: 'Only Scorpio, Aquarius and Pisces differ: modern gives them to Pluto, Uranus and Neptune, traditional to Mars, Saturn and Jupiter, and both lists the two as co-rulers. It sets the chart ruler, the houses a planet rules, dispositors, essential dignities, profections and the AI interpretation.',
+  saveFailed: (message: string) => `That did not save, so the rulers were not changed. ${message}`,
 };
 
 const nl: typeof en = {
@@ -36,7 +37,8 @@ const nl: typeof en = {
     traditional: 'Schorpioen, Waterman en Vissen gaan naar Mars, Saturnus en Jupiter.',
     both: 'Elk van die tekens noemt beide planeten als mede-heersers.',
   },
-  hint: 'Alleen Schorpioen, Waterman en Vissen verschillen: modern geeft ze aan Pluto, Uranus en Neptunus, traditioneel aan Mars, Saturnus en Jupiter, en beide noemt de twee als mede-heersers. Het bepaalt de horoscoopheerser, de huizen die een planeet regeert, dispositors, essentiële waardigheden, profecties en de AI-interpretatie, en wordt op dit apparaat bewaard.',
+  hint: 'Alleen Schorpioen, Waterman en Vissen verschillen: modern geeft ze aan Pluto, Uranus en Neptunus, traditioneel aan Mars, Saturnus en Jupiter, en beide noemt de twee als mede-heersers. Het bepaalt de horoscoopheerser, de huizen die een planeet regeert, dispositors, essentiële waardigheden, profecties en de AI-interpretatie.',
+  saveFailed: (message: string) => `Dat is niet opgeslagen, dus de heersers zijn niet gewijzigd. ${message}`,
 };
 
 export const rulershipSettingMessages = { en, nl };

@@ -123,6 +123,7 @@ export function SharedChartView(): React.JSX.Element {
           displayName={t.sharedChart}
           showHouses={initial.data.housesKnown}
           metaLines={chartSheetMetaLines(t.sharedChart, initial.data.moment, locale)}
+          rulership={snapshot.rulership}
           extendedSettings={snapshot.settings}
           view={view}
           onViewChange={(next) => {

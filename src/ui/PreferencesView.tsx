@@ -102,11 +102,14 @@ export function PreferencesView({
   const [density, setDensity] = useDensity();
   const store = useOptionalStore();
   const { provider } = useEphemerisProvider();
-  const [rulership] = useRulershipChoice();
+  // The device default rulership (#806): what a new person starts with, and what a screen with no single person shows.
+  const [rulership, setRulership] = useRulershipChoice();
   // The chart-setup editor here edits the device's default profile (#806): the starting point for a person who has
   // not saved settings of their own. A person's own settings are changed on that person's chart screens.
   const [savedDefault, saveDefault] = useDefaultCalculationProfile();
   const extendedSettings = savedDefault?.settings ?? DEFAULT_EXTENDED_SETTINGS;
+  // A person an import creates receives a copy of these (#806), as a person added by hand does.
+  const newPersonDefaults = { settings: extendedSettings, rulership };
   const orbLibrary = useOrbLibrary();
   const orbSources = useOrbContextSource();
   const [symbolClass] = useSymbolClass();
@@ -209,7 +212,12 @@ export function PreferencesView({
         // An AAF file (#591) is staged through the same reviewed restore as a full export.
         if (isAafText(text)) {
           const { people, errors } = aafToExportedPeople(text);
-          const staged = stageFullExportRestore({ people }, store.state.people, store.state.deleted.people);
+          const staged = stageFullExportRestore(
+            { people },
+            store.state.people,
+            store.state.deleted.people,
+            newPersonDefaults,
+          );
           setPreview(staged);
           const firstError = errors[0];
           setStatus({
@@ -229,7 +237,12 @@ export function PreferencesView({
         }
         const result = validateFullExport(parsed);
         if (!result.ok) throw new Error(t.restoreInvalid(result.error));
-        const staged = stageFullExportRestore(result.value, store.state.people, store.state.deleted.people);
+        const staged = stageFullExportRestore(
+          result.value,
+          store.state.people,
+          store.state.deleted.people,
+          newPersonDefaults,
+        );
         setPreview(staged);
         // The counts themselves are shown once, inside the preview panel below (`restoreStaged`)
         // — this status line only has to say there's something to look at, not repeat it.
@@ -380,7 +393,13 @@ export function PreferencesView({
         {active === 'astrology' && (
           <>
             <p>{t.rulersSubtitle}</p>
-            <RulershipSetting />
+            <RulershipSetting
+              value={rulership}
+              onChange={(choice) => {
+                setRulership(choice);
+                if (savedDefault !== undefined) saveDefault(savedDefault.settings, choice);
+              }}
+            />
 
             <OrbLibraryEditor profiles={orbLibrary.profiles} sources={orbSources} />
 
@@ -395,8 +414,10 @@ export function PreferencesView({
             ) : (
               <ExtendedSettingsPanel
                 value={extendedSettings}
-                onRedraw={(next) => {
-                  saveDefault(next, rulership);
+                rulership={rulership}
+                onRedraw={(next, rulers) => {
+                  setRulership(rulers);
+                  saveDefault(next, rulers);
                 }}
                 provider={provider}
               />

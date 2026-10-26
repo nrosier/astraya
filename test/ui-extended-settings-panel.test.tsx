@@ -16,6 +16,7 @@ import type { EphemerisProvider } from '../src/ephemeris/types.js';
 import { readDefaultCalculationProfile } from '../src/ui/default-calculation-profile.js';
 import { ExtendedSettingsPanel } from '../src/ui/ExtendedSettingsPanel.js';
 import { extendedSettingsPanelMessages } from '../src/ui/ExtendedSettingsPanel.messages.js';
+import type { RulershipChoice } from '../src/astrology/rulership.js';
 import { writeRulershipChoice } from '../src/ui/rulership-setting.js';
 
 function notImplemented(): never {
@@ -63,14 +64,15 @@ afterEach(() => {
 
 async function mount(
   provider: EphemerisProvider,
-  onRedraw: (next: unknown) => void,
+  onRedraw: (next: unknown, rulers: unknown) => void,
   value: ExtendedSettings = DEFAULT_EXTENDED_SETTINGS,
+  rulership: RulershipChoice = 'modern',
 ): Promise<{ container: HTMLElement; root: Root }> {
   const container = document.createElement('div');
   document.body.append(container);
   const root = createRoot(container);
   await act(async () => {
-    root.render(<ExtendedSettingsPanel value={value} onRedraw={onRedraw} provider={provider} />);
+    root.render(<ExtendedSettingsPanel value={value} rulership={rulership} onRedraw={onRedraw} provider={provider} />);
     // Lets the fake provider's already-resolved name-lookup promises settle and the
     // resulting re-render commit before assertions run.
     await Promise.resolve();
@@ -148,6 +150,15 @@ function schemeCard(container: HTMLElement, title: string): HTMLInputElement {
   return radio;
 }
 
+/** The planetary-rulers option cards (modern, traditional, both). */
+function rulersRadios(container: HTMLElement): readonly HTMLInputElement[] {
+  return [
+    ...(container
+      .querySelector('[role="radiogroup"][aria-label="Planetary rulers"]')
+      ?.querySelectorAll<HTMLInputElement>('input[type="radio"]') ?? []),
+  ];
+}
+
 /** Picks the nth planetary-rulers option card (modern, traditional, both). */
 function chooseRulers(container: HTMLElement, index: number): void {
   const radio = container
@@ -195,7 +206,7 @@ describe('ExtendedSettingsPanel', () => {
     });
 
     expect(onRedraw).toHaveBeenCalledTimes(1);
-    expect(onRedraw).toHaveBeenCalledWith({ ...DEFAULT_EXTENDED_SETTINGS, rainbowZodiac: true });
+    expect(onRedraw).toHaveBeenCalledWith({ ...DEFAULT_EXTENDED_SETTINGS, rainbowZodiac: true }, 'modern');
     expect(container.querySelector('dialog')?.hasAttribute('open')).toBe(false);
 
     unmount(container, root);
@@ -274,13 +285,16 @@ describe('ExtendedSettingsPanel', () => {
     act(() => {
       buttonNamed(container, 'Apply and redraw')?.click();
     });
-    expect(onRedraw).toHaveBeenLastCalledWith({
-      ...DEFAULT_EXTENDED_SETTINGS,
-      objectPolicies: {
-        ...DEFAULT_EXTENDED_SETTINGS.objectPolicies,
-        mars: { visible: true, aspectParticipant: true, interpreted: false },
+    expect(onRedraw).toHaveBeenLastCalledWith(
+      {
+        ...DEFAULT_EXTENDED_SETTINGS,
+        objectPolicies: {
+          ...DEFAULT_EXTENDED_SETTINGS.objectPolicies,
+          mars: { visible: true, aspectParticipant: true, interpreted: false },
+        },
       },
-    });
+      'modern',
+    );
     unmount(container, root);
 
     // Ticked again, the flag is dropped rather than stored as `true`: the settings equal the defaults.
@@ -299,7 +313,7 @@ describe('ExtendedSettingsPanel', () => {
     act(() => {
       buttonNamed(again.container, 'Apply and redraw')?.click();
     });
-    expect(onRedraw).toHaveBeenLastCalledWith(DEFAULT_EXTENDED_SETTINGS);
+    expect(onRedraw).toHaveBeenLastCalledWith(DEFAULT_EXTENDED_SETTINGS, 'modern');
     unmount(again.container, again.root);
   });
 
@@ -317,7 +331,7 @@ describe('ExtendedSettingsPanel', () => {
       buttonNamed(container, 'Apply and redraw')?.click();
     });
 
-    expect(onRedraw).toHaveBeenCalledWith({ ...DEFAULT_EXTENDED_SETTINGS, midpointsVisible: true });
+    expect(onRedraw).toHaveBeenCalledWith({ ...DEFAULT_EXTENDED_SETTINGS, midpointsVisible: true }, 'modern');
     unmount(container, root);
   });
 
@@ -360,7 +374,7 @@ describe('ExtendedSettingsPanel', () => {
       buttonNamed(container, 'Apply and redraw')?.click();
     });
 
-    expect(onRedraw).toHaveBeenCalledWith({ ...DEFAULT_EXTENDED_SETTINGS, lilithVariant: 'interpolated' });
+    expect(onRedraw).toHaveBeenCalledWith({ ...DEFAULT_EXTENDED_SETTINGS, lilithVariant: 'interpolated' }, 'modern');
     unmount(container, root);
   });
 
@@ -412,7 +426,7 @@ describe('the trigger and the starting points (#442)', () => {
     });
     expect(checkboxLabeled(container, 'Part of Fortune').checked).toBe(true);
     expect(profileCard(container, 'Traditional Western').checked).toBe(true);
-    // It also sets the (device-wide) rulers, but only when applied.
+    // It also sets the rulers, but only when applied.
     expect(container.textContent).toContain('also sets the planetary rulers to Traditional');
     act(() => {
       buttonNamed(container, 'Apply and redraw')?.click();
@@ -421,7 +435,9 @@ describe('the trigger and the starting points (#442)', () => {
     expect(applied?.houseSystem).toBe('W');
     expect(applied?.objectPolicies.partOfFortune.visible).toBe(true);
     expect(applied?.objectPolicies.chiron.visible).toBe(false);
-    expect(localStorage.getItem('astraya:rulershipChoice')).toBe('traditional');
+    // The rulers go to the caller (who saves them on the person), never to the device preference (#806).
+    expect(onRedraw.mock.calls[0]?.[1]).toBe('traditional');
+    expect(localStorage.getItem('astraya:rulershipChoice')).toBe('modern');
 
     unmount(container, root);
   });
@@ -439,35 +455,65 @@ describe('the trigger and the starting points (#442)', () => {
     unmount(container, root);
   });
 
-  it('previews a rulership or symbol change at once, and Cancel puts both back (#510)', async () => {
-    const { container, root } = await mount(fakeProvider(), vi.fn());
+  it('stages a rulership change until Apply, and previews a symbol change at once (#806, #510)', async () => {
+    const onRedraw = vi.fn();
+    const { container, root } = await mount(fakeProvider(), onRedraw);
     openCard(container);
     expect(buttonNamed(container, 'Apply and redraw')?.disabled).toBe(true);
     chooseRulers(container, 1);
-    expect(localStorage.getItem('astraya:rulershipChoice')).toBe('traditional');
+    // Only a draft: nothing is written to the device and the caller has not heard of it yet.
+    expect(localStorage.getItem('astraya:rulershipChoice')).toBe('modern');
+    expect(onRedraw).not.toHaveBeenCalled();
+    expect(buttonNamed(container, 'Apply and redraw')?.disabled).toBe(false);
     const symbolsBefore = selectLabeled(container, 'Symbols').value;
     const symbolsAfter = symbolsBefore === 'text' ? 'unicode' : 'text';
     chooseOption(selectLabeled(container, 'Symbols'), symbolsAfter);
     expect(selectLabeled(container, 'Symbols').value).toBe(symbolsAfter);
-    // A device preference changed in the card counts as a change to apply or drop.
-    expect(buttonNamed(container, 'Apply and redraw')?.disabled).toBe(false);
 
     act(() => {
       buttonNamed(container, 'Cancel')?.click();
     });
+    expect(onRedraw).not.toHaveBeenCalled();
     expect(localStorage.getItem('astraya:rulershipChoice')).toBe('modern');
     openCard(container);
+    // Cancel dropped the rulers draft and put the symbols back.
+    expect(rulersRadios(container).map((radio) => radio.checked)).toEqual([true, false, false]);
     expect(selectLabeled(container, 'Symbols').value).toBe(symbolsBefore);
     unmount(container, root);
   });
 
-  it('keeps a previewed rulership when the card is applied (#510)', async () => {
-    const { container, root } = await mount(fakeProvider(), vi.fn());
+  it('hands the chosen rulers to the caller on Apply, together with the settings (#806)', async () => {
+    const onRedraw = vi.fn();
+    const { container, root } = await mount(fakeProvider(), onRedraw);
     openCard(container);
     chooseRulers(container, 1);
     act(() => {
       buttonNamed(container, 'Apply and redraw')?.click();
     });
+    expect(onRedraw).toHaveBeenCalledTimes(1);
+    expect(onRedraw.mock.calls[0]?.[0]).toEqual(DEFAULT_EXTENDED_SETTINGS);
+    expect(onRedraw.mock.calls[0]?.[1]).toBe('traditional');
+    expect(localStorage.getItem('astraya:rulershipChoice')).toBe('modern');
+    unmount(container, root);
+  });
+
+  it('opens on the rulers it is given, not on the device preference (#806)', async () => {
+    const { container, root } = await mount(fakeProvider(), vi.fn(), DEFAULT_EXTENDED_SETTINGS, 'both');
+    openCard(container);
+    expect(rulersRadios(container).map((radio) => radio.checked)).toEqual([false, false, true]);
+    unmount(container, root);
+  });
+
+  it('"Save as my default" saves the draft rulers as the device default and calls nothing on the person (#806)', async () => {
+    const onRedraw = vi.fn();
+    const { container, root } = await mount(fakeProvider(), onRedraw);
+    openCard(container);
+    chooseRulers(container, 1);
+    act(() => {
+      buttonNamed(container, 'Save as my default')?.click();
+    });
+    expect(onRedraw).not.toHaveBeenCalled();
+    expect(readDefaultCalculationProfile()?.rulership).toBe('traditional');
     expect(localStorage.getItem('astraya:rulershipChoice')).toBe('traditional');
     unmount(container, root);
   });
@@ -523,7 +569,7 @@ describe('the orb-profile quick-pick (#543)', () => {
     act(() => {
       buttonNamed(container, 'Apply and redraw')?.click();
     });
-    expect(onRedraw).toHaveBeenCalledWith(expect.objectContaining({ orbScalePercent: -50 }));
+    expect(onRedraw).toHaveBeenCalledWith(expect.objectContaining({ orbScalePercent: -50 }), 'modern');
     unmount(container, root);
   });
 
@@ -556,7 +602,10 @@ describe('the traditional-scheme quick-pick (#549)', () => {
     act(() => {
       buttonNamed(container, 'Apply and redraw')?.click();
     });
-    expect(onRedraw).toHaveBeenCalledWith(expect.objectContaining({ boundsScheme: 'ptolemaic', orbScalePercent: 40 }));
+    expect(onRedraw).toHaveBeenCalledWith(
+      expect.objectContaining({ boundsScheme: 'ptolemaic', orbScalePercent: 40 }),
+      'modern',
+    );
     unmount(container, root);
   });
 
@@ -664,10 +713,13 @@ describe('the traditional-scheme quick-pick (#549)', () => {
       act(() => {
         buttonNamed(container, 'Apply and redraw')?.click();
       });
-      expect(onRedraw).toHaveBeenCalledWith({
-        ...DEFAULT_EXTENDED_SETTINGS,
-        orbRules: { aspectOrbs: { trine: { base: 9, luminaryBonus: 0 } } },
-      });
+      expect(onRedraw).toHaveBeenCalledWith(
+        {
+          ...DEFAULT_EXTENDED_SETTINGS,
+          orbRules: { aspectOrbs: { trine: { base: 9, luminaryBonus: 0 } } },
+        },
+        'modern',
+      );
       unmount(container, root);
     });
 
@@ -698,7 +750,7 @@ describe('the traditional-scheme quick-pick (#549)', () => {
       act(() => {
         buttonNamed(container, 'Apply and redraw')?.click();
       });
-      expect(onRedraw).toHaveBeenCalledWith(DEFAULT_EXTENDED_SETTINGS);
+      expect(onRedraw).toHaveBeenCalledWith(DEFAULT_EXTENDED_SETTINGS, 'modern');
       unmount(container, root);
     });
 
@@ -753,7 +805,7 @@ describe('the station window and motion score controls (#724)', () => {
     act(() => {
       buttonNamed(container, 'Apply and redraw')?.click();
     });
-    expect(onRedraw).toHaveBeenLastCalledWith({ ...DEFAULT_EXTENDED_SETTINGS, stationWindow: { k: 0.05 } });
+    expect(onRedraw).toHaveBeenLastCalledWith({ ...DEFAULT_EXTENDED_SETTINGS, stationWindow: { k: 0.05 } }, 'modern');
     unmount(container, root);
   });
 
@@ -797,7 +849,7 @@ describe('the station window and motion score controls (#724)', () => {
     act(() => {
       buttonNamed(container, 'Apply and redraw')?.click();
     });
-    expect(onRedraw).toHaveBeenLastCalledWith({ ...DEFAULT_EXTENDED_SETTINGS, motionScore: true });
+    expect(onRedraw).toHaveBeenLastCalledWith({ ...DEFAULT_EXTENDED_SETTINGS, motionScore: true }, 'modern');
     unmount(container, root);
   });
 });

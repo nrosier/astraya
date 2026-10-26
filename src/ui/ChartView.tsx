@@ -158,7 +158,7 @@ import { ChartViewNav } from './ChartViewNav.js';
 import { parseSelectionKey } from '../interpretation/selection.js';
 import { buildFocusObjectContext } from '../interpretation/focus-context.js';
 import { AspectMatrix } from './AspectMatrix.js';
-import { useCalculationBasisLine } from './calculation-basis.js';
+import { orbSourceName, useCalculationBasisLine } from './calculation-basis.js';
 import { EmphasisGrid } from './EmphasisGrid.js';
 import {
   aspectSelectionKey,
@@ -170,7 +170,6 @@ import {
   type TableSelection,
 } from './table-selection.js';
 import { SelectionInspector, type WheelIsolationFacts } from './SelectionInspector.js';
-import { useRulershipChoice } from './rulership-setting.js';
 import type { RulershipChoice } from '../astrology/rulership.js';
 import type { BoundsScheme } from '../astrology/bounds.js';
 import { PageHeader } from './PageHeader.js';
@@ -1709,6 +1708,7 @@ export function ChartDataView({
   displayName,
   showHouses,
   metaLines,
+  rulership,
   extendedSettings = DEFAULT_EXTENDED_SETTINGS,
   cardSettings,
   onExtendedSettingsChange,
@@ -1731,6 +1731,11 @@ export function ChartDataView({
    */
   readonly metaLines?: readonly string[] | undefined;
   /**
+   * The planetary rulers the chart's labels, dignities and dispositors use (#806): the person's own choice, or
+   * the snapshot's on a shared chart. Passed in so no chart screen reads a device value for another person's chart.
+   */
+  readonly rulership: RulershipChoice;
+  /**
    * The confirmed (post-Redraw) extended settings (#52): house system, zodiac,
    * orb rules, minor aspects, point visibility, and the wheel's sign-wedge
    * style. Defaults to `DEFAULT_EXTENDED_SETTINGS` so `SharedChartView` — which
@@ -1748,7 +1753,7 @@ export function ChartDataView({
    * settings" panel is rendered and this is wired as its `onRedraw`. Omitted by
    * `SharedChartView`, which has no panel.
    */
-  readonly onExtendedSettingsChange?: (next: ExtendedSettings) => void | Promise<void>;
+  readonly onExtendedSettingsChange?: (next: ExtendedSettings, rulers: RulershipChoice) => void | Promise<void>;
   /** A long-lived provider for the panel's own house-system/ayanamsa name lookups. */
   readonly settingsProvider?: EphemerisProvider | undefined;
   /** The open view (#511: Wheel/Aspects/Placements/Patterns & condition), when a URL decides it (every real screen); otherwise this component's own state. */
@@ -1772,7 +1777,6 @@ export function ChartDataView({
   const t = useMessages(chartViewMessages);
   const chartTypeT = useMessages(chartTypesMessages);
   const [locale] = useLocale();
-  const [rulership] = useRulershipChoice();
   const [ownTab, setOwnTab] = useState<ChartViewKind>('wheel');
   const [aspectHarmonicFamilyFilter, setAspectHarmonicFamilyFilter] = useState('all');
   const activeTab: ChartViewKind = view ?? ownTab;
@@ -2215,6 +2219,7 @@ export function ChartDataView({
     onExtendedSettingsChange !== undefined && settingsProvider !== undefined ? (
       <ExtendedSettingsPanel
         value={cardSettings ?? extendedSettings}
+        rulership={rulership}
         onRedraw={onExtendedSettingsChange}
         provider={settingsProvider}
       />
@@ -2450,6 +2455,7 @@ export function ChartView({
     settings: cardSettings,
     unreadable: settingsUnreadable,
     setSettings: setSettings,
+    rulership,
   } = usePersonCalculationSettings(personId);
   // The natal chart uses the card's orbs unless the device chose a named orb profile for natal charts (#590); the
   // settings it resolves to are what the chart, its snapshot and its share link all record.
@@ -2459,8 +2465,8 @@ export function ChartView({
     () => settingsForContext(cardSettings, 'natal', orbLibrary, orbSources),
     [cardSettings, orbLibrary, orbSources],
   );
-  const [rulership] = useRulershipChoice();
-  const basisLine = useCalculationBasisLine(settings, rulership);
+  // The basis names the card's settings and the device's natal orb profile, not the orb-overridden `settings` (#806).
+  const basisLine = useCalculationBasisLine(cardSettings, rulership, orbSourceName(orbLibrary, orbSources, 'natal'));
   const lastChartKey = useRef('');
   // Memoised: it is a dependency of the wheel's markup, and a new array on every render of this screen (which a
   // change of section now causes) would redraw the wheel and drop what was selected on it.
@@ -2608,6 +2614,7 @@ export function ChartView({
               displayName={person.displayName}
               showHouses={showHouses}
               metaLines={metaLines}
+              rulership={rulership}
               extendedSettings={settings}
               cardSettings={cardSettings}
               onExtendedSettingsChange={setSettings}
@@ -2628,6 +2635,7 @@ export function ChartView({
               displayName={compareDisplayName}
               showHouses={showHouses}
               metaLines={metaLines}
+              rulership={rulership}
               extendedSettings={settings}
               settingsProvider={provider}
               view={view ?? 'wheel'}
@@ -2653,6 +2661,7 @@ export function ChartView({
         displayName={person.displayName}
         showHouses={showHouses}
         metaLines={metaLines}
+        rulership={rulership}
         extendedSettings={settings}
         cardSettings={cardSettings}
         onExtendedSettingsChange={setSettings}

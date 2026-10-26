@@ -22,7 +22,10 @@
       "additionalProperties": false,
       "properties": {
         "settings": { "type": "object", "description": "ExtendedSettings — see src/chart/extended-settings.ts" },
-        "rulership": { "enum": ["modern", "traditional", "both"] },
+        "rulership": {
+          "enum": ["modern", "traditional", "both"],
+          "description": "The device's default rulership (v4, #806); a person's own is exportedPerson.rulership"
+        },
         "symbolClass": { "type": "string" }
       }
     },
@@ -59,6 +62,10 @@
         "calculationSettings": {
           "type": "object",
           "description": "ExtendedSettings (#806, v3) — this person's own chart settings, see src/chart/extended-settings.ts; absent in v2 files"
+        },
+        "rulership": {
+          "enum": ["modern", "traditional", "both"],
+          "description": "The planetary rulers this person's charts were computed with (#806, v4); absent in v2 and v3 files"
         },
         "customPoints": {
           "type": "array",

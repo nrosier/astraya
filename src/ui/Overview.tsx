@@ -22,7 +22,6 @@ import { useMessages } from './messages.js';
 import { overviewMessages } from './Overview.messages.js';
 import { PersonNotFound } from './PersonNotFound.js';
 import { rulershipSettingMessages } from './RulershipSetting.messages.js';
-import { useRulershipChoice } from './rulership-setting.js';
 import { useStoreState } from './store-context.js';
 import { summary } from './people-list.js';
 import { usePersonCalculationSettings } from './person-calculation-settings.js';
@@ -35,8 +34,11 @@ export function Overview({ personId }: { readonly personId: string }): React.JSX
   const t = useMessages(overviewMessages);
   const rulershipT = useMessages(rulershipSettingMessages);
   const [locale] = useLocale();
-  const [rulership] = useRulershipChoice();
-  const { settings: personSettings, unreadable: settingsUnreadable } = usePersonCalculationSettings(personId);
+  const {
+    settings: personSettings,
+    unreadable: settingsUnreadable,
+    rulership,
+  } = usePersonCalculationSettings(personId);
 
   if (person === undefined) {
     return <PersonNotFound />;

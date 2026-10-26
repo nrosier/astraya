@@ -77,7 +77,13 @@ async function mount(locale: 'en' | 'nl' = 'en'): Promise<HTMLElement> {
   const root = createRoot(container);
   await act(async () => {
     root.render(
-      <ChartDataView load={{ kind: 'ready', data }} displayName="Test" showHouses buildViewHref={() => '#'} />,
+      <ChartDataView
+        rulership="modern"
+        load={{ kind: 'ready', data }}
+        displayName="Test"
+        showHouses
+        buildViewHref={() => '#'}
+      />,
     );
     await Promise.resolve();
   });

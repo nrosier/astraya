@@ -11,7 +11,7 @@ import type { BrowserContext, Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
 import { BORN, EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
-import { closeSettings, openNatalChart, openSettings } from './support.ts';
+import { closeSettings, createPerson, gotoAndSettle, openNatalChart, openSettings } from './support.ts';
 
 let dir: string;
 let app: FastifyInstance;
@@ -191,7 +191,7 @@ test.describe('with the shared people (#799)', () => {
     await closeSettings(page);
   });
 
-  test('saving a profile as the device default applies it to a chart that was never touched (#510)', async () => {
+  test('saving a profile as the device default changes new people only, never one who already has a copy (#510, #806)', async () => {
     test.setTimeout(90_000);
     await openSharedPerson(page, baseUrl, EINSTEIN);
     await openNatalChart(page);
@@ -206,18 +206,24 @@ test.describe('with the shared people (#799)', () => {
       .check();
     await card.getByRole('button', { name: 'Save as my default', exact: true }).click();
     await expect(card).toBeHidden();
-    // Einstein was seeded without opening a chart, so he has no settings of her own and follows the new default (#806).
+    // Einstein was given a copy of the default when he was created, so the card shows his own settings (#806).
     await openSettings(page);
-    await expect(card.getByLabel('House system', { exact: true })).toHaveValue('W');
+    await expect(card.getByLabel('House system', { exact: true })).toHaveValue('P');
     await closeSettings(page);
 
-    // Chart settings are owned by each person (#806) and seeded from the saved device default only for a person
-    // who has none of their own (#510). The reload checks that the new default persists across a real page load.
+    // The reload checks that the new default persists across a real page load.
     await page.reload();
     await page.waitForLoadState('load');
 
-    // A second person's chart has never had its own settings touched, so it starts from the new default.
-    await openSharedPerson(page, baseUrl, BORN);
+    // A person created after the change receives a copy of the new default.
+    await gotoAndSettle(page, `${baseUrl}/#/people`);
+    await createPerson(page, {
+      name: 'Late Arrival',
+      date: '1990-06-15',
+      time: '17:00',
+      latitude: '51.5072',
+      longitude: '-0.1276',
+    });
     await openNatalChart(page);
     await expect(page.locator('div.chart-wheel')).toBeVisible();
 
@@ -228,6 +234,14 @@ test.describe('with the shared people (#799)', () => {
         .getByRole('radio', { name: /^Sidereal/ }),
     ).toBeChecked();
     await expect(card.getByLabel('House system', { exact: true })).toHaveValue('W');
+    await closeSettings(page);
+
+    // The seeded person who already held a copy is still on Placidus.
+    await openSharedPerson(page, baseUrl, BORN);
+    await openNatalChart(page);
+    await expect(page.locator('div.chart-wheel')).toBeVisible();
+    await openSettings(page);
+    await expect(card.getByLabel('House system', { exact: true })).toHaveValue('P');
     await closeSettings(page);
   });
 

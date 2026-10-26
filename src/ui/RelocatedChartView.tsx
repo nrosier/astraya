@@ -180,7 +180,12 @@ export function RelocatedChartView({
   const [load, setLoad] = useState<Load>({ kind: 'idle' });
   const customPoints = useStableBy(person?.customPoints, (points) => JSON.stringify(points ?? []));
   // The aspects use the device's orbs (#590), as the natal chart does.
-  const { settings: extendedSettings, unreadable: settingsUnreadable } = usePersonCalculationSettings(personId);
+  const {
+    settings: extendedSettings,
+    unreadable: settingsUnreadable,
+    rulership,
+    setRulership,
+  } = usePersonCalculationSettings(personId);
   const orbs = useStableBy(orbsOf(extendedSettings), (config) => JSON.stringify(config));
 
   useEffect(() => {
@@ -323,6 +328,7 @@ export function RelocatedChartView({
             displayName={displayName}
             showHouses
             metaLines={metaLines}
+            rulership={rulership}
             view={view ?? 'wheel'}
             onViewChange={(next) => {
               changeChartView(personId, 'relocated', next);
@@ -345,7 +351,12 @@ export function RelocatedChartView({
           )}
           {load.kind === 'ready' && housesAreDefined(load.data.relocated.houses) && (
             <>
-              <ReportView personId={personId} chart={load.data.relocated} />
+              <ReportView
+                personId={personId}
+                chart={load.data.relocated}
+                rulership={rulership}
+                onRulershipChange={setRulership}
+              />
               <SortableTable
                 caption={t.comparisonCaption}
                 columns={comparisonColumns(t, locale)}

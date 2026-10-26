@@ -25,9 +25,10 @@
  * @module person
  * @purpose Defines the `Person` entity — the primary entity and owner of birth data that every computed chart derives from — and assembles it from op-log register values.
  * @conventions Stores the civil-time/coordinates input as typed, never a resolved UTC offset, since historical timezone data can change (an `OffsetWitness` records what a past resolution said, for detecting drift, not for reuse); a field this build cannot read is reported as absent via `missing`, never defaulted (e.g. `{0,0}` is a real place, so it is never substituted for missing coordinates); `TimeAccuracy` distinguishes a genuinely unknown birth time, for which houses/angles are meaningless rather than merely approximate.
- * @exports Person, TimeAccuracy, OffsetWitness, RelocationPlace, CustomPointDefinition, PERSON_FIELDS, buildPerson, readCivil, readCoordinates, readCalendar, readTimeAccuracy, readWitness, readOffsetOverride, readText, readRelocationPlaces, readCustomPoints, readCalculationSettings, CalculationSettingsRead, serializeCalculationSettings
+ * @exports Person, TimeAccuracy, OffsetWitness, RelocationPlace, CustomPointDefinition, PERSON_FIELDS, buildPerson, readCivil, readCoordinates, readCalendar, readTimeAccuracy, readWitness, readOffsetOverride, readText, readRelocationPlaces, readCustomPoints, readCalculationSettings, CalculationSettingsRead, serializeCalculationSettings, readRulership, RulershipRead, serializeRulership, newPersonCalculationMutations
  */
 import { parseFormula } from '../astrology/formula-parser.js';
+import { isRulershipChoice, type RulershipChoice } from '../astrology/rulership.js';
 import type { ExtendedSettings } from '../chart/extended-settings.js';
 import {
   CURRENT_SNAPSHOT_VERSION,
@@ -35,6 +36,7 @@ import {
   decodeStrictExtendedSettings,
   SnapshotDecodeError,
 } from './calculation-snapshot.js';
+import type { Mutation } from '../store/oplog.js';
 import type { JsonValue } from '../store/ops.js';
 import type { BirthMomentInput, Calendar, CivilDateTime, Coordinates } from '../time/types.js';
 
@@ -117,12 +119,19 @@ export interface Person {
    * This person's own chart calculation settings (#806): house system, zodiac, orbs, visible points.
    * Absent when none were ever saved for them (the screens then start from the device's default
    * profile) or when the saved register is unreadable (see `calculationSettingsUnreadable`).
-   * Rulers, the orb library, glyph variant and degree-symbol display stay device-wide.
+   * The orb library, glyph variant and degree-symbol display stay device-wide; rulers have their own
+   * `rulership` register below.
    */
   readonly calculationSettings?: ExtendedSettings | undefined;
   /**
-   * True when a `calculationSettings` register exists but this build cannot read it (newer version or
-   * invalid field). Never filled with defaults: a screen must show a notice instead of drawing a
+   * This person's own planetary-ruler choice (#806), a separate register so the settings register keeps its
+   * version and older builds ignore it. Absent when none was ever saved (screens then start from the device's
+   * default profile); a present but unrecognised value sets `calculationSettingsUnreadable` instead.
+   */
+  readonly rulership?: RulershipChoice | undefined;
+  /**
+   * True when a `calculationSettings` or `rulership` register exists but this build cannot read it (newer version
+   * or invalid field). Never filled with defaults: a screen must show a notice instead of drawing a
    * chart from settings nobody chose.
    */
   readonly calculationSettingsUnreadable?: boolean | undefined;
@@ -145,6 +154,7 @@ export const PERSON_FIELDS = [
   'relocationPlaces',
   'customPoints',
   'calculationSettings',
+  'rulership',
 ] as const;
 
 function isRecordValue(value: unknown): value is Record<string, unknown> {
@@ -306,12 +316,43 @@ export function readCalculationSettings(value: unknown, requireAll = true): Calc
   }
 }
 
+/** What reading a `rulership` register produced: a usable choice, or an unreadable flag. */
+export type RulershipRead =
+  { readonly kind: 'rulership'; readonly rulership: RulershipChoice } | { readonly kind: 'unreadable' };
+
+/** Reads the per-person `rulership` register (#806). `undefined` (no register) is distinct from unreadable. */
+export function readRulership(value: unknown): RulershipRead | undefined {
+  if (value === undefined) return undefined;
+  return isRulershipChoice(value) ? { kind: 'rulership', rulership: value } : { kind: 'unreadable' };
+}
+
+/** The value written to a person's `rulership` register (#806): the plain choice string. */
+export function serializeRulership(rulership: RulershipChoice): JsonValue {
+  return rulership;
+}
+
 /**
  * The value written to a person's `calculationSettings` register (#806): snapshot version plus the
- * settings. Rulership stays a device preference and custom points have their own register.
+ * settings. Rulership has its own `rulership` register and custom points theirs.
  */
 export function serializeCalculationSettings(settings: ExtendedSettings): JsonValue {
   return JSON.parse(JSON.stringify({ version: CURRENT_SNAPSHOT_VERSION, settings })) as JsonValue;
+}
+
+/**
+ * The writes that give a newly created person a copy of the default calculation profile (#806): their own
+ * `calculationSettings` and `rulership` registers, serialised exactly as the setter writes them, so changing the
+ * default afterwards leaves this person's charts as they were.
+ */
+export function newPersonCalculationMutations(
+  entityId: string,
+  settings: ExtendedSettings,
+  rulership: RulershipChoice,
+): Mutation[] {
+  return [
+    { entity: 'person', entityId, field: 'calculationSettings', value: serializeCalculationSettings(settings) },
+    { entity: 'person', entityId, field: 'rulership', value: serializeRulership(rulership) },
+  ];
 }
 
 /**
@@ -330,6 +371,7 @@ export function buildPerson(id: string, fields: ReadonlyMap<string, unknown>): P
   const relocationPlaces = readRelocationPlaces(fields.get('relocationPlaces'));
   const customPoints = readCustomPoints(fields.get('customPoints'));
   const calculation = readCalculationSettings(fields.get('calculationSettings'));
+  const ruler = readRulership(fields.get('rulership'));
 
   const missing: string[] = [];
   if (civil === undefined) missing.push('civil');
@@ -360,7 +402,10 @@ export function buildPerson(id: string, fields: ReadonlyMap<string, unknown>): P
     ...(relocationPlaces === undefined ? {} : { relocationPlaces }),
     ...(customPoints === undefined ? {} : { customPoints }),
     ...(calculation?.kind === 'settings' ? { calculationSettings: calculation.settings } : {}),
-    ...(calculation?.kind === 'unreadable' ? { calculationSettingsUnreadable: true } : {}),
+    ...(ruler?.kind === 'rulership' ? { rulership: ruler.rulership } : {}),
+    ...(calculation?.kind === 'unreadable' || ruler?.kind === 'unreadable'
+      ? { calculationSettingsUnreadable: true }
+      : {}),
     missing,
   };
 }

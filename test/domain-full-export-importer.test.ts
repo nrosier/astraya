@@ -223,7 +223,7 @@ describe('v2 files and per-person settings (#806)', () => {
 
   it('exports each person with their own settings, charted with them', async () => {
     const archive = await build([{ ...ADA, calculationSettings: custom }]);
-    expect(archive.version).toBe(3);
+    expect(archive.version).toBe(4);
     expect(archive.people[0]?.calculationSettings).toEqual(custom);
     const plain = await build([ADA]);
     expect(JSON.stringify(archive.people[0]?.natalChart)).not.toBe(JSON.stringify(plain.people[0]?.natalChart));
@@ -321,6 +321,137 @@ describe('v2 files and per-person settings (#806)', () => {
   });
 });
 
+describe('per-person rulership and export v4 (#806)', () => {
+  const buildWith = (people: readonly Person[], rulership: 'modern' | 'traditional' | 'both' = 'modern') =>
+    buildFullExport({
+      people,
+      provider: engine,
+      appVersion: '9.9.9',
+      settings: DEFAULT_EXTENDED_SETTINGS,
+      rulership,
+      symbolClass: 'drawn',
+      now: NOW,
+    });
+
+  it('exports each person with their own rulership, charted with it, and preferences.rulership as the default', async () => {
+    const archive = await buildWith([
+      { ...ADA, rulership: 'traditional' },
+      { ...ADA, id: 'p-plain', displayName: 'Plain' },
+    ]);
+    expect(archive.version).toBe(4);
+    expect(archive.preferences.rulership).toBe('modern');
+    expect(archive.people[0]?.rulership).toBe('traditional');
+    // A person with no rulership of their own is charted, and written, with the device default.
+    expect(archive.people[1]?.rulership).toBe('modern');
+    expect(archive.people[0]?.calculation?.snapshot.rulership).toBe('traditional');
+    expect(archive.people[1]?.calculation?.snapshot.rulership).toBe('modern');
+  });
+
+  it('round-trips a v4 person rulership and stages it as a rulership write', async () => {
+    const archive = await buildWith([{ ...ADA, rulership: 'both' }]);
+    const result = validateFullExport(roundTripped(archive));
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.people[0]?.rulership).toBe('both');
+    const preview = stageFullExportRestore(result.value, new Map());
+    expect(preview.items[0]?.mutations).toContainEqual({
+      entity: 'person',
+      entityId: ADA.id,
+      field: 'rulership',
+      value: 'both',
+    });
+  });
+
+  it('stages nothing for a person who already holds the same rulership', async () => {
+    const archive = await buildWith([{ ...ADA, calculationSettings: DEFAULT_EXTENDED_SETTINGS, rulership: 'both' }]);
+    const result = validateFullExport(roundTripped(archive));
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const preview = stageFullExportRestore(
+      result.value,
+      new Map([[ADA.id, { ...ADA, calculationSettings: DEFAULT_EXTENDED_SETTINGS, rulership: 'both' }]]),
+    );
+    expect(preview.items[0]?.status).toBe('unchanged');
+    expect(preview.items[0]?.mutations).toEqual([]);
+  });
+
+  it('does not export a rulership for a person whose saved settings are unreadable', async () => {
+    const archive = await buildWith([{ ...ADA, calculationSettingsUnreadable: true }]);
+    expect(archive.people[0]?.rulership).toBeUndefined();
+  });
+
+  it.each([2, 3])('accepts a v%i file: its people take the file preferences as their rulership', async (version) => {
+    const archive = await buildWith([ADA], 'traditional');
+    const old = roundTripped(archive) as { people: Record<string, unknown>[] };
+    for (const person of old.people) delete person.rulership;
+    const result = validateFullExport({ ...old, version });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.people[0]?.rulership).toBe('traditional');
+  });
+
+  it('rejects an unknown rulership on a person, naming the path', async () => {
+    const archive = roundTripped(await buildWith([ADA])) as { people: Record<string, unknown>[] };
+    archive.people[0] = { ...archive.people[0], rulership: 'ptolemaic' };
+    const result = validateFullExport(archive);
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error).toMatchObject({ kind: 'malformed', path: 'people[0].rulership' });
+  });
+});
+
+describe('new people receive the default calculation profile (#806)', () => {
+  const defaults = { settings: { ...DEFAULT_EXTENDED_SETTINGS, houseSystem: 'K' }, rulership: 'both' as const };
+  const fieldsOf = (mutations: readonly { field: string }[]): string[] => mutations.map((mutation) => mutation.field);
+  const unreadableFile = async (): Promise<Parameters<typeof stageFullExportRestore>[0]> => {
+    const archive = await buildFullExport({
+      people: [{ ...ADA, calculationSettingsUnreadable: true }],
+      provider: engine,
+      appVersion: '9.9.9',
+      settings: DEFAULT_EXTENDED_SETTINGS,
+      rulership: 'modern',
+      symbolClass: 'drawn',
+      now: NOW,
+    });
+    const result = validateFullExport(roundTripped(archive));
+    if (!result.ok) throw new Error('fixture bug');
+    return result.value;
+  };
+
+  it('stamps the defaults on a new person whose file carries no settings (they were unreadable at export)', async () => {
+    const preview = stageFullExportRestore(await unreadableFile(), new Map(), new Map(), defaults);
+    expect(preview.items[0]?.status).toBe('new');
+    const mutations = preview.items[0]?.mutations ?? [];
+    expect(mutations.find((m) => m.field === 'rulership')?.value).toBe('both');
+    expect(mutations.find((m) => m.field === 'calculationSettings')?.value).toMatchObject({
+      settings: { houseSystem: 'K' },
+    });
+  });
+
+  it('keeps the file’s own settings and rulership on a new person rather than the defaults', async () => {
+    const archive = await build([{ ...ADA, calculationSettings: DEFAULT_EXTENDED_SETTINGS, rulership: 'traditional' }]);
+    const result = validateFullExport(roundTripped(archive));
+    if (!result.ok) throw new Error('fixture bug');
+    const preview = stageFullExportRestore(result.value, new Map(), new Map(), defaults);
+    const mutations = preview.items[0]?.mutations ?? [];
+    expect(mutations.find((m) => m.field === 'rulership')?.value).toBe('traditional');
+    expect(mutations.find((m) => m.field === 'calculationSettings')?.value).toMatchObject({
+      settings: { houseSystem: 'P' },
+    });
+  });
+
+  it('never gives defaults to a person already on this device or tombstoned here', async () => {
+    const file = await unreadableFile();
+    const updated = stageFullExportRestore(file, new Map([[ADA.id, { ...ADA, notes: 'old' }]]), new Map(), defaults);
+    expect(updated.items[0]?.status).toBe('updated');
+    expect(fieldsOf(updated.items[0]?.mutations ?? [])).not.toContain('rulership');
+    expect(fieldsOf(updated.items[0]?.mutations ?? [])).not.toContain('calculationSettings');
+    const deleted = stageFullExportRestore(file, new Map(), new Map([[ADA.id, ADA]]), defaults);
+    expect(deleted.items[0]?.status).toBe('deletedLocally');
+    expect(fieldsOf(deleted.items[0]?.mutations ?? [])).not.toContain('rulership');
+  });
+});
+
 describe('FULL_EXPORT_VERSION stayed at 2 through #585 (preferences.settings is never deeply validated)', () => {
   it('accepts a real archive whose preferences.settings is still pre-#585-shaped, with no objectPolicies field', async () => {
     const archive = roundTripped(await build([ADA])) as Record<string, unknown>;
@@ -368,7 +499,11 @@ describe('stageFullExportRestore', () => {
 
     // The export writes the device default into every person without a register (#806), so a device
     // already holding those settings as their own register sees no change.
-    const withRegister = (person: Person): Person => ({ ...person, calculationSettings: DEFAULT_EXTENDED_SETTINGS });
+    const withRegister = (person: Person): Person => ({
+      ...person,
+      calculationSettings: DEFAULT_EXTENDED_SETTINGS,
+      rulership: 'modern',
+    });
     const existing = new Map<string, Person>([
       ['p-carol', withRegister(carol)],
       ['p-dave', withRegister({ ...dave, notes: 'old notes' })],
@@ -482,7 +617,7 @@ describe('stageFullExportRestore', () => {
 
     const existingPreview = stageFullExportRestore(
       validated.value,
-      new Map([['p-unknown', { ...unknownTime, calculationSettings: DEFAULT_EXTENDED_SETTINGS }]]),
+      new Map([['p-unknown', { ...unknownTime, calculationSettings: DEFAULT_EXTENDED_SETTINGS, rulership: 'modern' }]]),
     );
     expect(existingPreview.items[0]?.status).toBe('unchanged');
   });

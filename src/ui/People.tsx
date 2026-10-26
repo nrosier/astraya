@@ -14,7 +14,10 @@
  */
 import { personHref } from './route.js';
 import { useState } from 'react';
+import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
 import { newId } from '../domain/id.js';
+import { newPersonCalculationMutations } from '../domain/person.js';
+import { useDefaultCalculationProfile } from './default-calculation-profile.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { caveated, ordered, summary } from './people-list.js';
@@ -22,12 +25,15 @@ import { peopleMessages } from './People.messages.js';
 import { useStore, useStoreState } from './store-context.js';
 import { trace } from '../trace.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
+import { useRulershipChoice } from './rulership-setting.js';
 
 export function People(): React.JSX.Element {
   const store = useStore();
   const state = useStoreState();
   const [locale] = useLocale();
   const t = useMessages(peopleMessages);
+  const [defaultProfile] = useDefaultCalculationProfile();
+  const [defaultRulership] = useRulershipChoice();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
 
@@ -41,8 +47,13 @@ export function People(): React.JSX.Element {
     // Created with nothing but an id, then edited. The alternative — a modal that refuses to
     // create until every field is valid — loses whatever the user had typed if they close it,
     // and there is nothing wrong with a person whose birth data has not arrived yet.
+    // It also receives a copy of the default calculation profile (#806), so later changes to the default leave this
+    // person's charts as they were; one batch, so the person never exists half-configured.
     void store
-      .mutate([{ entity: 'person', entityId: id, field: 'displayName', value: '' }])
+      .mutate([
+        { entity: 'person', entityId: id, field: 'displayName', value: '' },
+        ...newPersonCalculationMutations(id, defaultProfile?.settings ?? DEFAULT_EXTENDED_SETTINGS, defaultRulership),
+      ])
       .then(() => {
         window.location.hash = personHref(id);
       })

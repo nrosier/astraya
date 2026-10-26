@@ -5,10 +5,11 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { DEFAULT_EXTENDED_SETTINGS } from '../src/chart/extended-settings.js';
 import { aafToExportedPeople, isAafText, peopleToAaf } from '../src/domain/aaf-people.js';
 import { stageFullExportRestore } from '../src/domain/full-export-importer.js';
 import { peopleAafFilename, type FullExport } from '../src/domain/full-export.js';
-import { buildPerson, type Person } from '../src/domain/person.js';
+import { buildPerson, serializeCalculationSettings, type Person } from '../src/domain/person.js';
 
 const ADA: Person = buildPerson(
   'p-ada',
@@ -112,6 +113,19 @@ describe('a file from another program', () => {
     const preview = stageFullExportRestore(archiveOf(people), new Map());
     expect(preview.newCount).toBe(1);
     expect(people[0]?.id).toBe('aaf-1');
+  });
+
+  it('gives a new AAF person a copy of the default calculation profile when one is supplied (#806)', () => {
+    const settings = { ...DEFAULT_EXTENDED_SETTINGS, houseSystem: 'K' };
+    const preview = stageFullExportRestore(archiveOf(people), new Map(), new Map(), { settings, rulership: 'both' });
+    const mutations = preview.items[0]?.mutations ?? [];
+    expect(mutations.find((mutation) => mutation.field === 'calculationSettings')?.value).toEqual(
+      serializeCalculationSettings(settings),
+    );
+    expect(mutations.find((mutation) => mutation.field === 'rulership')?.value).toBe('both');
+    // Without defaults (no caller asked for them) nothing is invented.
+    const plain = stageFullExportRestore(archiveOf(people), new Map());
+    expect(plain.items[0]?.mutations.map((mutation) => mutation.field)).not.toContain('rulership');
   });
 
   it('gives "recorded" time accuracy when the file says nothing about it', () => {

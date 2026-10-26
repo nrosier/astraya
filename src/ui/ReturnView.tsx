@@ -37,7 +37,6 @@ import { returnViewMessages } from './ReturnView.messages.js';
 import { toChartCalculationOptions } from '../chart/extended-settings.js';
 import { usePersonCalculationSettings } from './person-calculation-settings.js';
 import { UnreadableSettingsNotice } from './UnreadableSettingsNotice.js';
-import { useRulershipChoice } from './rulership-setting.js';
 import { SortableTable } from './SortableTable.js';
 import { useStoreState } from './store-context.js';
 import { formatUtc } from './void-of-course-text.js';
@@ -114,11 +113,12 @@ export function ReturnView({
   const personMoment = useStableMoment(person?.moment);
   const t = useMessages(returnViewMessages);
   const [locale] = useLocale();
-  const [rulership] = useRulershipChoice();
   const {
     settings: settings,
     unreadable: settingsUnreadable,
     setSettings: setSettings,
+    rulership,
+    setRulership,
   } = usePersonCalculationSettings(personId);
   const basisLine = useCalculationBasisLine(settings, rulership);
   const { provider } = useEphemerisProvider();
@@ -289,6 +289,7 @@ export function ReturnView({
           displayName={displayName}
           showHouses
           metaLines={metaLines}
+          rulership={rulership}
           extendedSettings={settings}
           onExtendedSettingsChange={setSettings}
           settingsProvider={provider}
@@ -327,7 +328,7 @@ export function ReturnView({
         </>
       )}
       {load.kind === 'ready' && housesAreDefined(load.data.houses) && (
-        <ReportView personId={personId} chart={load.data} />
+        <ReportView personId={personId} chart={load.data} rulership={rulership} onRulershipChange={setRulership} />
       )}
     </main>
   );

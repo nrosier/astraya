@@ -1,13 +1,13 @@
 /**
- * Which planets rule which signs on this device (#426): Modern (the default), Traditional, or Both
- * (co-rulers). A device preference like the report voice and the transit filter — never synced, never
- * sent anywhere — read by every screen that shows a ruler, a dignity or a dispositor, and changed from
- * any of them. A change reaches the other mounted components in the same tab through an event, and
- * other tabs through the browser's `storage` event.
+ * Which planets rule which signs by default on this device (#426): Modern (the default), Traditional, or Both
+ * (co-rulers). Since #806 each person has their own rulership register; this device preference is the default a
+ * person without one starts from, what a new person is given at creation, and what the screens that belong to no
+ * single person (Horary, Composite) show. Never synced, never sent anywhere. A change reaches the other mounted
+ * components in the same tab through an event, and other tabs through the browser's `storage` event.
  */
 /**
  * @module ui/rulership-setting
- * @purpose Device preference (#426) for which planets rule which signs (Modern/Traditional/Both), read by every screen that shows a ruler, dignity, or dispositor.
+ * @purpose Device default rulership (#426, #806): the Modern/Traditional/Both choice a person without their own starts from, a new person is given, and Horary/Composite show.
  * @conventions Device preference stored in localStorage, never synced; changes propagate to other mounted components via a custom event in-tab and the browser's `storage` event across tabs; falls back to an in-memory value when storage writes are refused.
  * @exports RULERSHIP_KEY, readRulershipChoice, writeRulershipChoice, useRulershipChoice, resetRulershipMemory
  */

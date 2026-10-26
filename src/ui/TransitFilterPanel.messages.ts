@@ -22,8 +22,9 @@ const en = {
   clearFilters: 'Clear filters',
   groupAll: 'All',
   groupClear: 'Clear',
-  rulersNote: 'Planetary rulers (which planet rules a sign) are a preference:',
-  rulersLink: 'change them in Preferences',
+  rulersNote:
+    'Planetary rulers (which planet rules a sign) are saved per person, in Extended settings. The default for new people:',
+  rulersLink: 'change it in Preferences',
   dailyNote:
     'Important, for a day: the Sun, Moon, Mercury, Venus and Mars, and the slow planets only when within 1° of exact, touching your Sun, Moon, Mercury, Venus, Mars or chart ruler within 1.5° (the Moon within 1°). A common working convention, not a fixed rule — widen it below.',
   yearlyNote:
@@ -63,8 +64,9 @@ const nl: typeof en = {
   clearFilters: 'Filters wissen',
   groupAll: 'Alle',
   groupClear: 'Geen',
-  rulersNote: 'Heersende planeten (welke planeet een teken regeert) zijn een voorkeur:',
-  rulersLink: 'wijzig ze in Voorkeuren',
+  rulersNote:
+    'Heersende planeten (welke planeet een teken regeert) worden per persoon bewaard, in Uitgebreide instellingen. De standaard voor nieuwe personen:',
+  rulersLink: 'wijzig die in Voorkeuren',
   dailyNote:
     'Belangrijk, voor een dag: Zon, Maan, Mercurius, Venus en Mars, en de trage planeten alleen binnen 1° van exact, die je Zon, Maan, Mercurius, Venus, Mars of horoscoopheerser raken binnen 1,5° (de Maan binnen 1°). Een gangbare werkafspraak, geen vaste regel — verbreed het hieronder.',
   yearlyNote:

@@ -4,7 +4,11 @@ import { DEFAULT_EXTENDED_SETTINGS } from '../src/chart/extended-settings.js';
 import {
   buildPerson,
   PERSON_FIELDS,
+  readCalculationSettings,
+  newPersonCalculationMutations,
   readCustomPoints,
+  readRulership,
+  serializeRulership,
   readRelocationPlaces,
   serializeCalculationSettings,
 } from '../src/domain/person.js';
@@ -142,5 +146,72 @@ describe('the per-person calculationSettings register (#806)', () => {
     delete incomplete.declinationVisible;
     const person = buildPerson('p', new Map([['calculationSettings', { version: 3, settings: incomplete }]]));
     expect(person.calculationSettingsUnreadable).toBe(true);
+  });
+});
+
+describe('v0.42.13 register compatibility (#806)', () => {
+  it('reads a literal v3 register written by v0.42.13 as settings', () => {
+    const literal = JSON.parse(JSON.stringify({ version: 3, settings: DEFAULT_EXTENDED_SETTINGS })) as unknown;
+    expect(readCalculationSettings(literal)).toEqual({ kind: 'settings', settings: DEFAULT_EXTENDED_SETTINGS });
+    const person = buildPerson('p', new Map([['calculationSettings', literal]]));
+    expect(person.calculationSettingsUnreadable).toBeUndefined();
+    expect(person.calculationSettings).toEqual(DEFAULT_EXTENDED_SETTINGS);
+  });
+
+  it('still reads a register that carries an extra top-level rulership (forward tolerance)', () => {
+    const withRulership = { version: 3, settings: DEFAULT_EXTENDED_SETTINGS, rulership: 'traditional' };
+    expect(readCalculationSettings(withRulership)?.kind).toBe('settings');
+  });
+});
+
+describe('the per-person rulership register (#806)', () => {
+  it('is a separate field and absent when never saved', () => {
+    const person = buildPerson('p', new Map());
+    expect(PERSON_FIELDS).toContain('rulership');
+    expect('rulership' in person).toBe(false);
+    expect('calculationSettingsUnreadable' in person).toBe(false);
+  });
+
+  it.each(['modern', 'traditional', 'both'] as const)('round-trips %s', (choice) => {
+    const person = buildPerson('p', new Map([['rulership', serializeRulership(choice)]]));
+    expect(person.rulership).toBe(choice);
+    expect(readRulership(serializeRulership(choice))).toEqual({ kind: 'rulership', rulership: choice });
+    expect(person.calculationSettingsUnreadable).toBeUndefined();
+  });
+
+  it.each([['ptolemaic'], [3], [null]])('flags %s as unreadable, never as a default', (bad) => {
+    const person = buildPerson('p', new Map([['rulership', bad]]));
+    expect('rulership' in person).toBe(false);
+    expect(person.calculationSettingsUnreadable).toBe(true);
+  });
+
+  it('leaves the calculationSettings register byte-identical (v3, no rulership)', () => {
+    expect(serializeCalculationSettings(DEFAULT_EXTENDED_SETTINGS)).toEqual(
+      JSON.parse(JSON.stringify({ version: 3, settings: DEFAULT_EXTENDED_SETTINGS })),
+    );
+  });
+});
+
+describe('newPersonCalculationMutations (#806)', () => {
+  it('returns the two registers, serialised exactly as the setters write them', () => {
+    const settings = { ...DEFAULT_EXTENDED_SETTINGS, houseSystem: 'K' };
+    expect(newPersonCalculationMutations('p-new', settings, 'both')).toEqual([
+      {
+        entity: 'person',
+        entityId: 'p-new',
+        field: 'calculationSettings',
+        value: serializeCalculationSettings(settings),
+      },
+      { entity: 'person', entityId: 'p-new', field: 'rulership', value: serializeRulership('both') },
+    ]);
+  });
+
+  it('builds a person that reads back with both registers and no unreadable flag', () => {
+    const settings = { ...DEFAULT_EXTENDED_SETTINGS, houseSystem: 'K' };
+    const fields = new Map(newPersonCalculationMutations('p', settings, 'traditional').map((m) => [m.field, m.value]));
+    const person = buildPerson('p', fields);
+    expect(person.calculationSettings).toEqual(settings);
+    expect(person.rulership).toBe('traditional');
+    expect(person.calculationSettingsUnreadable).toBeUndefined();
   });
 });
