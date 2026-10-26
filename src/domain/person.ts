@@ -25,7 +25,7 @@
  * @module person
  * @purpose Defines the `Person` entity — the primary entity and owner of birth data that every computed chart derives from — and assembles it from op-log register values.
  * @conventions Stores the civil-time/coordinates input as typed, never a resolved UTC offset, since historical timezone data can change (an `OffsetWitness` records what a past resolution said, for detecting drift, not for reuse); a field this build cannot read is reported as absent via `missing`, never defaulted (e.g. `{0,0}` is a real place, so it is never substituted for missing coordinates); `TimeAccuracy` distinguishes a genuinely unknown birth time, for which houses/angles are meaningless rather than merely approximate.
- * @exports Person, TimeAccuracy, OffsetWitness, RelocationPlace, CustomPointDefinition, PERSON_FIELDS, buildPerson, readCivil, readCoordinates, readCalendar, readTimeAccuracy, readWitness, readOffsetOverride, readText, readRelocationPlaces, readCustomPoints, readCalculationSettings, CalculationSettingsRead, serializeCalculationSettings, readRulership, RulershipRead, serializeRulership
+ * @exports Person, TimeAccuracy, OffsetWitness, RelocationPlace, CustomPointDefinition, PERSON_FIELDS, buildPerson, readCivil, readCoordinates, readCalendar, readTimeAccuracy, readWitness, readOffsetOverride, readText, readRelocationPlaces, readCustomPoints, readCalculationSettings, CalculationSettingsRead, serializeCalculationSettings, readRulership, RulershipRead, serializeRulership, newPersonCalculationMutations
  */
 import { parseFormula } from '../astrology/formula-parser.js';
 import { isRulershipChoice, type RulershipChoice } from '../astrology/rulership.js';
@@ -36,6 +36,7 @@ import {
   decodeStrictExtendedSettings,
   SnapshotDecodeError,
 } from './calculation-snapshot.js';
+import type { Mutation } from '../store/oplog.js';
 import type { JsonValue } from '../store/ops.js';
 import type { BirthMomentInput, Calendar, CivilDateTime, Coordinates } from '../time/types.js';
 
@@ -336,6 +337,22 @@ export function serializeRulership(rulership: RulershipChoice): JsonValue {
  */
 export function serializeCalculationSettings(settings: ExtendedSettings): JsonValue {
   return JSON.parse(JSON.stringify({ version: CURRENT_SNAPSHOT_VERSION, settings })) as JsonValue;
+}
+
+/**
+ * The writes that give a newly created person a copy of the default calculation profile (#806): their own
+ * `calculationSettings` and `rulership` registers, serialised exactly as the setter writes them, so changing the
+ * default afterwards leaves this person's charts as they were.
+ */
+export function newPersonCalculationMutations(
+  entityId: string,
+  settings: ExtendedSettings,
+  rulership: RulershipChoice,
+): Mutation[] {
+  return [
+    { entity: 'person', entityId, field: 'calculationSettings', value: serializeCalculationSettings(settings) },
+    { entity: 'person', entityId, field: 'rulership', value: serializeRulership(rulership) },
+  ];
 }
 
 /**

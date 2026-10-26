@@ -5,6 +5,7 @@ import {
   buildPerson,
   PERSON_FIELDS,
   readCalculationSettings,
+  newPersonCalculationMutations,
   readCustomPoints,
   readRulership,
   serializeRulership,
@@ -188,5 +189,29 @@ describe('the per-person rulership register (#806)', () => {
     expect(serializeCalculationSettings(DEFAULT_EXTENDED_SETTINGS)).toEqual(
       JSON.parse(JSON.stringify({ version: 3, settings: DEFAULT_EXTENDED_SETTINGS })),
     );
+  });
+});
+
+describe('newPersonCalculationMutations (#806)', () => {
+  it('returns the two registers, serialised exactly as the setters write them', () => {
+    const settings = { ...DEFAULT_EXTENDED_SETTINGS, houseSystem: 'K' };
+    expect(newPersonCalculationMutations('p-new', settings, 'both')).toEqual([
+      {
+        entity: 'person',
+        entityId: 'p-new',
+        field: 'calculationSettings',
+        value: serializeCalculationSettings(settings),
+      },
+      { entity: 'person', entityId: 'p-new', field: 'rulership', value: serializeRulership('both') },
+    ]);
+  });
+
+  it('builds a person that reads back with both registers and no unreadable flag', () => {
+    const settings = { ...DEFAULT_EXTENDED_SETTINGS, houseSystem: 'K' };
+    const fields = new Map(newPersonCalculationMutations('p', settings, 'traditional').map((m) => [m.field, m.value]));
+    const person = buildPerson('p', fields);
+    expect(person.calculationSettings).toEqual(settings);
+    expect(person.rulership).toBe('traditional');
+    expect(person.calculationSettingsUnreadable).toBeUndefined();
   });
 });
