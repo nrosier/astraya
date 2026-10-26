@@ -64,6 +64,7 @@ a subdirectory split or a different test runner.
 - **`it.skip`/`.only`**: check whether this repo enforces a marker convention
   before leaving one in — grep for existing skip usage and match whatever
   convention is already there rather than assuming one.
+- **Creating test files with `cat >`:** before writing a new file with a Bash heredoc, check whether it already exists (`ls` or `git ls-files`). A new file must show as `A` in `git status`, not `M`; if it shows `M`, stop and read it first, because the heredoc would overwrite existing tests.
 - Every store/sync module's own docstring generally states its edge cases and
   the *why* behind a design choice (see `src/store/ops.ts`'s docstring on the
   frozen-spine/versioned-body contract) — read it before writing tests, since
