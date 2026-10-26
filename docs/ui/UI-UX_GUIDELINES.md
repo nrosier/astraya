@@ -533,3 +533,43 @@ Use these quality targets:
 - Back, reload, and sharing preserve the state users reasonably expect them to preserve.
 
 When product telemetry is appropriate, collect only privacy-respecting interaction events needed to answer a stated UX question, such as failed searches, abandoned setup, or repeated menu detours. Do not capture birth data, chart contents, free text, or astrology results. Prefer short usability sessions over permanent analytics when direct observation answers the question.
+
+## 17. Shared rules for the UI redesign umbrella (#827)
+
+These rules apply to every view issue in the redesign umbrella. View issues link here instead of restating them.
+
+### 17.1 Tailwind-to-token mapping
+
+The redesign specs use Tailwind-style class names. The project bans Tailwind (see section 11), so map each name to a token in `src/ui/app.css`. Each UI PR must record the mapping it used in its description.
+
+| Spec name | App token |
+|---|---|
+| `border-neutral-800`, `border-white/10` | `--line` |
+| `bg-neutral-900/40`, `bg-neutral-900` | `--surface` (low-opacity fill) |
+| canvas `#0b0d14` | `--bg` (`#0b0c18`) |
+| `rounded-lg` | `--radius` |
+| `font-mono text-xs` | `--text-xs`; use tabular numerals for numeric figures (rule to follow, pending #826) |
+| `text-neutral-400` | `--muted` |
+| `border-b-2` route indicator | per #818 |
+
+### 17.2 Mockup gate
+
+- Test sizes: 390×844, 1280×800, and 1440×900.
+- Themes: light and dark.
+- A static mockup must be reviewed and approved by the owner before any real build starts.
+- Mockups are not committed to the repository.
+
+### 17.3 Shared verification
+
+Every UI PR in the umbrella must meet these checks:
+
+- `npm run check` passes with zero warnings.
+- `test/ui-primitive-enforcement.test.ts` passes.
+- Every new user-facing string has both `en` and `nl` entries in its `*.messages.ts` catalogue.
+
+### 17.4 Related issues
+
+- Shared table style: #825.
+- Primitive and token gaps: #826.
+- Tab row: #818.
+- Chart view: #817, #824.
