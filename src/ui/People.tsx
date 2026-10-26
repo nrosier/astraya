@@ -24,6 +24,7 @@ import { caveated, ordered, summary } from './people-list.js';
 import { peopleMessages } from './People.messages.js';
 import { useStore, useStoreState } from './store-context.js';
 import { trace } from '../trace.js';
+import { EmptyState } from './primitives/EmptyState.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { useRulershipChoice } from './rulership-setting.js';
 
@@ -99,7 +100,7 @@ export function People(): React.JSX.Element {
       </p>
 
       {people.length === 0 ? (
-        <p className="empty">{t.empty}</p>
+        <EmptyState message={t.empty} />
       ) : (
         <ul className="people">
           {people.map((person) => (

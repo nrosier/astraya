@@ -105,4 +105,11 @@ describe('creating a person (#806)', () => {
     expect(person?.calculationSettings).toMatchObject({ houseSystem: 'K' });
     expect(person?.rulership).toBe('both');
   });
+
+  it('renders the shared EmptyState when nobody is saved yet', async () => {
+    const host = await mountPeople();
+    const empty = host.querySelector('div.empty.primitive-empty-state');
+    expect(empty?.querySelector('p.primitive-empty-state-message')?.textContent).toMatch(/^Nobody yet\./);
+    expect(host.querySelector('p.empty')).toBeNull();
+  });
 });

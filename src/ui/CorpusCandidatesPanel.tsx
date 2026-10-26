@@ -35,6 +35,7 @@ import { useMessages } from './messages.js';
 import { corpusCandidatesPanelMessages } from './CorpusCandidatesPanel.messages.js';
 import type { CorpusCandidate } from '../sync/admin-client.js';
 import type { Locale } from '../interpretation/schema.js';
+import { EmptyState } from './primitives/EmptyState.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { BackLink } from './BackLink.js';
 
@@ -256,7 +257,7 @@ export function CorpusCandidatesPanel(): React.JSX.Element {
       {candidates === undefined ? (
         <StatusMessage kind="loading">{t.loadingCandidates}</StatusMessage>
       ) : candidates.length === 0 ? (
-        <p className="empty">{t.noResults}</p>
+        <EmptyState message={t.noResults} />
       ) : (
         <>
           <p className="actions">

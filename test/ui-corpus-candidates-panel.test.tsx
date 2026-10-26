@@ -117,4 +117,17 @@ describe('CorpusCandidatesPanel shows what a candidate means (#428)', () => {
     ]);
     expect(container.querySelector('thead')?.textContent).toContain('Onderdeel');
   });
+
+  it('renders the shared EmptyState when no candidate matches', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.resolve(new Response(JSON.stringify({ candidates: [] })))),
+    );
+    const container = await mount();
+    const empty = container.querySelector('div.empty.primitive-empty-state');
+    expect(empty?.querySelector('p.primitive-empty-state-message')?.textContent).toBe(
+      'No candidates match these filters.',
+    );
+    expect(container.querySelector('p.empty')).toBeNull();
+  });
 });
