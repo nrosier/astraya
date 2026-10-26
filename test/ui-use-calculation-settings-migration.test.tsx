@@ -5,6 +5,10 @@
  * Real store (fake-indexeddb via test/setup.ts); only the session hooks are stubbed, since the
  * provider would otherwise need a server. The sync engine is a minimal stand-in exposing the
  * `status` / `subscribe` surface the hook uses.
+ *
+ * Timing: the migration runs several async store transactions before it sets its localStorage
+ * guard key, so every positive test waits (via `vi.waitFor`) on that end state rather than on a
+ * fixed delay. Negative tests first wait for a positive signal that the attempt has settled.
  */
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -39,10 +43,12 @@ vi.mock('../src/ui/session-context.js', () => ({
 }));
 
 const pushed: string[][] = [];
+let pushAttempts = 0;
 let pushFails = false;
 
 vi.mock('../src/sync/engine.js', () => ({
   pushRecords: (records: readonly { hlc: unknown }[]): Promise<void> => {
+    pushAttempts += 1;
     if (pushFails) return Promise.reject(new Error('offline'));
     pushed.push(records.map((record) => String(record.hlc)));
     return Promise.resolve();
@@ -54,7 +60,13 @@ function Harness(): null {
   return null;
 }
 
-function makeEngine(initial: SyncState): { engine: FakeEngine; setStatus: (next: SyncState) => void } {
+interface EngineHandle {
+  engine: FakeEngine;
+  setStatus: (next: SyncState) => void;
+  listenerCount: () => number;
+}
+
+function makeEngine(initial: SyncState): EngineHandle {
   const listeners = new Set<() => void>();
   const engine: FakeEngine = {
     status: initial,
@@ -71,6 +83,7 @@ function makeEngine(initial: SyncState): { engine: FakeEngine; setStatus: (next:
       engine.status = next;
       for (const listener of [...listeners]) listener();
     },
+    listenerCount: () => listeners.size,
   };
 }
 
@@ -83,20 +96,18 @@ async function addPeople(...ids: string[]): Promise<void> {
   await store.mutate(ids.map((id) => ({ entity: 'person', entityId: id, field: 'displayName', value: id })));
 }
 
-async function flush(): Promise<void> {
-  await act(async () => {
-    await new Promise((resolve) => setTimeout(resolve, 50));
-  });
-}
-
-async function mount(): Promise<void> {
+/**
+ * Renders the harness. Effects run synchronously inside React's `act`, so when this returns the
+ * hook has already decided whether to start a migration; any async work it started is awaited by
+ * the tests through `vi.waitFor`.
+ */
+function mount(): void {
   container = document.createElement('div');
   document.body.append(container);
   root = createRoot(container);
   act(() => {
     root?.render(<Harness />);
   });
-  await flush();
 }
 
 function unmount(): void {
@@ -118,6 +129,7 @@ beforeEach(async () => {
   counter += 1;
   localStorage.clear();
   pushed.length = 0;
+  pushAttempts = 0;
   pushFails = false;
   store = await openStore({ name: `astraya-migration-hook-${String(counter)}` });
   session.store = store;
@@ -133,19 +145,32 @@ afterEach(() => {
 describe('useCalculationSettingsMigration (#806)', () => {
   it('signed out: stamps every person lacking a register and sets the anonymous key', async () => {
     await addPeople('p1', 'p2');
-    await mount();
+    mount();
     expect(store.writable).toBe(true);
+    await vi.waitFor(
+      () => {
+        expect(localStorage.getItem(keyFor('anonymous'))).toBe('1');
+      },
+      { timeout: 5000 },
+    );
     expect(registerOf('p1')).toEqual(DEFAULT_EXTENDED_SETTINGS);
     expect(registerOf('p2')).toEqual(DEFAULT_EXTENDED_SETTINGS);
-    expect(localStorage.getItem(keyFor('anonymous'))).toBe('1');
   });
 
   it('a second mount with the key already set writes nothing', async () => {
     await addPeople('p1');
-    await mount();
+    mount();
+    await vi.waitFor(
+      () => {
+        expect(localStorage.getItem(keyFor('anonymous'))).toBe('1');
+      },
+      { timeout: 5000 },
+    );
     unmount();
     await addPeople('p2');
-    await mount();
+    // The key is already set, so the hook returns before any store work: nothing is scheduled
+    // and the effect has completed inside act, so there is no later write to wait for.
+    mount();
     expect(registerOf('p2')).toBeUndefined();
   });
 
@@ -155,7 +180,13 @@ describe('useCalculationSettingsMigration (#806)', () => {
     await store.mutate([{ entity: 'person', entityId: 'p1', field: 'calculationSettings', value: custom }]);
     const kept = registerOf('p1');
     expect(kept).toBeDefined();
-    await mount();
+    mount();
+    await vi.waitFor(
+      () => {
+        expect(localStorage.getItem(keyFor('anonymous'))).toBe('1');
+      },
+      { timeout: 5000 },
+    );
     expect(registerOf('p1')).toEqual(kept);
     expect(registerOf('p1')).toMatchObject({ houseSystem: 'W' });
     expect(registerOf('p2')).toEqual(DEFAULT_EXTENDED_SETTINGS);
@@ -164,25 +195,43 @@ describe('useCalculationSettingsMigration (#806)', () => {
   it('signed in, not yet synced: writes nothing and leaves the key unset', async () => {
     await addPeople('p1');
     session.userId = 'u1';
-    session.engine = makeEngine({ kind: 'syncing' }).engine;
-    await mount();
+    const { engine, listenerCount } = makeEngine({ kind: 'syncing' });
+    session.engine = engine;
+    mount();
+    // The effect has run once it has subscribed to the engine; only then is "nothing written" meaningful.
+    await vi.waitFor(
+      () => {
+        expect(listenerCount()).toBe(1);
+      },
+      { timeout: 5000 },
+    );
     expect(registerOf('p1')).toBeUndefined();
     expect(localStorage.getItem(keyFor('u1'))).toBeNull();
   });
 
   it('signed in: runs once the status becomes synced', async () => {
     await addPeople('p1');
-    const { engine, setStatus } = makeEngine({ kind: 'syncing' });
+    const { engine, setStatus, listenerCount } = makeEngine({ kind: 'syncing' });
     session.userId = 'u1';
     session.engine = engine;
-    await mount();
+    mount();
+    await vi.waitFor(
+      () => {
+        expect(listenerCount()).toBe(1);
+      },
+      { timeout: 5000 },
+    );
     expect(registerOf('p1')).toBeUndefined();
     act(() => {
       setStatus({ kind: 'synced', at: 1 });
     });
-    await flush();
+    await vi.waitFor(
+      () => {
+        expect(localStorage.getItem(keyFor('u1'))).toBe('1');
+      },
+      { timeout: 5000 },
+    );
     expect(registerOf('p1')).toBeDefined();
-    expect(localStorage.getItem(keyFor('u1'))).toBe('1');
     expect(localStorage.getItem(keyFor('anonymous'))).toBeNull();
   });
 
@@ -190,16 +239,28 @@ describe('useCalculationSettingsMigration (#806)', () => {
     await addPeople('p1', 'p2');
     session.userId = 'u1';
     session.engine = makeEngine({ kind: 'synced', at: 1 }).engine;
-    await mount();
+    mount();
+    await vi.waitFor(
+      () => {
+        expect(localStorage.getItem(keyFor('u1'))).toBe('1');
+      },
+      { timeout: 5000 },
+    );
     expect(pushed).toHaveLength(1);
     expect(pushed[0]).toHaveLength(2);
     for (const hlc of pushed[0] ?? []) expect(hlc).toMatch(/^0{18}-/);
-    expect(localStorage.getItem(keyFor('u1'))).toBe('1');
   });
 
   it('signed out: seeds without pushing', async () => {
     await addPeople('p1');
-    await mount();
+    mount();
+    // The guard key is set only after the seed completes, so it is the settle signal.
+    await vi.waitFor(
+      () => {
+        expect(localStorage.getItem(keyFor('anonymous'))).toBe('1');
+      },
+      { timeout: 5000 },
+    );
     expect(registerOf('p1')).toBeDefined();
     expect(pushed).toHaveLength(0);
   });
@@ -210,7 +271,14 @@ describe('useCalculationSettingsMigration (#806)', () => {
     session.userId = 'u1';
     session.engine = engine;
     pushFails = true;
-    await mount();
+    mount();
+    // The rejected push is the settle signal: the attempt is marked not running only after it rejects.
+    await vi.waitFor(
+      () => {
+        expect(pushAttempts).toBe(1);
+      },
+      { timeout: 5000 },
+    );
     expect(registerOf('p1')).toBeDefined();
     expect(localStorage.getItem(keyFor('u1'))).toBeNull();
     expect(pushed).toHaveLength(0);
@@ -219,9 +287,13 @@ describe('useCalculationSettingsMigration (#806)', () => {
     act(() => {
       setStatus({ kind: 'synced', at: 2 });
     });
-    await flush();
-    expect(pushed).toHaveLength(1);
+    await vi.waitFor(
+      () => {
+        expect(localStorage.getItem(keyFor('u1'))).toBe('1');
+        expect(pushed).toHaveLength(1);
+      },
+      { timeout: 5000 },
+    );
     expect(pushed[0]).toHaveLength(1);
-    expect(localStorage.getItem(keyFor('u1'))).toBe('1');
   });
 });
