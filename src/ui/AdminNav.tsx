@@ -1,7 +1,7 @@
 /**
  * The admin tab strip (#414): one place to reach every admin screen — users, AI usage, corpus
  * overrides and corpus candidates — rendered above whichever of them is open. Plain links in a labelled
- * `<nav>` (not a WAI-ARIA tablist) inside the shared `ScrollingTabRow` (#818); below 64rem a labelled Select
+ * `<nav>` (not a WAI-ARIA tablist) inside the shared `ScrollingTabRow` (#818); at 40rem and below (#826) a labelled Select
  * replaces them.
  *
  * Navigation only: every admin route is still guarded by `requireAdmin` on the server, so
@@ -10,7 +10,7 @@
 /**
  * @module AdminNav
  * @purpose Renders the admin tab strip linking to the users, AI usage, corpus overrides, and corpus candidates admin screens.
- * @conventions Uses the shared ScrollingTabRow (#818): links at 64rem+, a labelled Select below. Navigation UI only — the server's `requireAdmin` is the real security boundary, not this component; text comes from co-located `AdminNav.messages.ts` via `useMessages()`.
+ * @conventions Uses the shared ScrollingTabRow (#818): links above 40rem, a labelled Select at 40rem and below. Navigation UI only — the server's `requireAdmin` is the real security boundary, not this component; text comes from co-located `AdminNav.messages.ts` via `useMessages()`.
  * @exports AdminNav
  */
 import { activeAdminTabKey, ADMIN_TABS } from './admin-nav.js';

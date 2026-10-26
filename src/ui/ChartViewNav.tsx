@@ -1,10 +1,10 @@
 /**
  * The chart screen's local navigation between its views — Wheel, Aspects, Placements, and Patterns &
  * condition (#511) — per `docs/ui/UI-UX_GUIDELINES.md` §2: "these are route-level views with
- * stable URLs and ordinary links, not ARIA tabs." At and above the app's standing 64rem nav breakpoint
+ * stable URLs and ordinary links, not ARIA tabs." Above 40rem (#826)
  * (`WorkspaceShell.tsx`'s own threshold) they are a row of real links in the shared `ScrollingTabRow` (#818),
  * which scrolls sideways with edge fades and pins the chart's Overlays and Extended settings triggers at the far
- * right; the shared `Select` primitive, labelled "Chart view", replaces the links below it.
+ * right; the shared `Select` primitive, labelled "Chart view", replaces the links at 40rem and below.
  *
  * Takes a `buildHref` callback rather than a personId/type pair: the chart, composite, shared-link and
  * horary screens that all render these views have genuinely different URL shapes (`#/people/<id>/charts/<type>/<view>`,
@@ -21,7 +21,7 @@
 /**
  * @module ChartViewNav
  * @purpose Renders the chart screen's local view navigation (#511) under the title row as ordinary links in a horizontally scrolling tab row (wide, #818) or a labelled Select (narrow), never ARIA tabs, with the chart's pinned actions at the far right.
- * @conventions Takes a buildHref(view) callback rather than assuming one URL shape, since chart/composite/shared/horary each have a different one. Links keep a real href but also call onNavigate with preventDefault applied, so switching is instant and works even when mounted outside the app's router. Reuses the app's existing 64rem nav breakpoint rather than inventing one. With no available views (loading, error) only the leading control and the actions are drawn. The links keep the `chart-view-link` class and `active` marker the tests and e2e specs find them by.
+ * @conventions Takes a buildHref(view) callback rather than assuming one URL shape, since chart/composite/shared/horary each have a different one. Links keep a real href but also call onNavigate with preventDefault applied, so switching is instant and works even when mounted outside the app's router. The tabs-vs-select switch and the actions collapse share one 40rem breakpoint (#826). With no available views (loading, error) only the leading control and the actions are drawn. The links keep the `chart-view-link` class and `active` marker the tests and e2e specs find them by.
  * @exports ChartViewNav
  */
 import { CHART_VIEWS, chartViewLabels, type ChartViewKind } from './chart-sections.js';
@@ -45,7 +45,7 @@ export function ChartViewNav({
   readonly availableViews?: readonly ChartViewKind[];
   /** Optional control placed first on the same row (the chart type select, #801). */
   readonly leading?: React.ReactNode;
-  /** The triggers pinned at the far right (#818): Overlays and Extended settings. Behind one "⚙️ ▾" toggle below 450px. */
+  /** The triggers pinned at the far right (#818): Overlays and Extended settings. Behind one "Chart actions" toggle at 40rem and below. */
   readonly actions?: React.ReactNode;
 }): React.JSX.Element {
   const t = useMessages(chartViewMessages);
