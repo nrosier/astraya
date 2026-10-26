@@ -32,7 +32,6 @@ import {
 import { usePersonCalculationSettings } from './person-calculation-settings.js';
 import { UnreadableSettingsNotice } from './UnreadableSettingsNotice.js';
 import { useOrbContextSource, useOrbLibrary } from './orb-library-store.js';
-import { useRulershipChoice } from './rulership-setting.js';
 import { buildCalculationSnapshot, type CalculationSnapshot } from '../domain/calculation-snapshot.js';
 import { PRIMARY_DIRECTIONS_EFFECTIVE_SNAPSHOT, type CalculationArtifact } from '../domain/calculation-artifact.js';
 import { artifactProvenanceIdentity, buildTechniqueChartArtifact } from './chart-artifact.js';
@@ -195,16 +194,15 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
   const customPoints = useStableBy(person?.customPoints, (points) => JSON.stringify(points ?? []));
   const t = useMessages(primaryDirectionsViewMessages);
   const [locale] = useLocale();
-  // The settings the person's natal chart uses, resolved as ChartView does (device-level, #797). They are
+  // The settings the person's natal chart uses, resolved as ChartView does: the person's own settings and rulers (#797, #806). They are
   // recorded as the artifact's requested snapshot; the directions themselves are always Placidus/tropical.
-  const { settings: cardSettings, unreadable: settingsUnreadable } = usePersonCalculationSettings(personId);
+  const { settings: cardSettings, unreadable: settingsUnreadable, rulership } = usePersonCalculationSettings(personId);
   const orbLibrary = useOrbLibrary();
   const orbSources = useOrbContextSource();
   const settings = useMemo(
     () => settingsForContext(cardSettings, 'natal', orbLibrary, orbSources),
     [cardSettings, orbLibrary, orbSources],
   );
-  const [rulership] = useRulershipChoice();
   const requestedSnapshot = useMemo(
     () => buildCalculationSnapshot(settings, rulership, customPoints ?? []),
     [settings, rulership, customPoints],

@@ -49,7 +49,7 @@ import type { TransitAspectEvent } from '../astrology/transit-events.js';
 import { civilFromJulianDay } from '../time/julian.js';
 import { formatOrb, todayInputValue } from './format.js';
 import { useMessages } from './messages.js';
-import { useRulershipChoice } from './rulership-setting.js';
+import { usePersonCalculationSettings } from './person-calculation-settings.js';
 import {
   chartRulerKeysOf,
   filterTransits,
@@ -247,7 +247,7 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
   const [asOf, setAsOf] = useState(todayInputValue);
   const { provider } = useEphemerisProvider();
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
-  const [rulership] = useRulershipChoice();
+  const { rulership } = usePersonCalculationSettings(personId);
   const natal = load.kind === 'ready' ? load.data.natal : undefined;
   const rules = useMemo<TransitRuleContext>(
     () => ({

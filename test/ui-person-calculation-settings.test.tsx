@@ -8,6 +8,8 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_EXTENDED_SETTINGS } from '../src/chart/extended-settings.js';
+import { buildCalculationSnapshot } from '../src/domain/calculation-snapshot.js';
+import { differingPrimaryDirectionsSettings } from '../src/domain/primary-directions-settings.js';
 import { serializeCalculationSettings } from '../src/domain/person.js';
 import { openStore, type Store } from '../src/store/store.js';
 import { resetDefaultCalculationProfileMemory } from '../src/ui/default-calculation-profile.js';
@@ -152,5 +154,17 @@ describe('usePersonCalculationSettings rulership (#806)', () => {
     mount('a');
     expect(current('a').source).toBe('person');
     expect(current('a').rulership).toBe('both');
+  });
+
+  it("feeds the #797 primary-directions mismatch from the person's rulers, not the device's", async () => {
+    await addPeople('a', 'b');
+    mount('a', 'b');
+    await act(async () => {
+      await current('a').setSettings(current('a').settings, 'traditional');
+    });
+    const mismatches = (id: string): readonly string[] =>
+      differingPrimaryDirectionsSettings(buildCalculationSnapshot(current(id).settings, current(id).rulership));
+    expect(mismatches('a')).toEqual(['rulership']);
+    expect(mismatches('b')).toEqual([]);
   });
 });

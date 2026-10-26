@@ -156,7 +156,7 @@ export function DraconicView({
         <StatusMessage kind="error">{t.housesUndefined}</StatusMessage>
       )}
       {load.kind === 'ready' && housesAreDefined(load.data.houses) && (
-        <ReportView personId={personId} chart={load.data} />
+        <ReportView personId={personId} chart={load.data} rulership={rulership} />
       )}
     </main>
   );

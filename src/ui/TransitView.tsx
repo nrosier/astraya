@@ -66,7 +66,6 @@ import { housesAreDefined } from '../domain/chart-compute.js';
 import { EVERY_BODY_KEY, TransitFilterPanel, useTransitFilter } from './TransitFilterPanel.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
-import { useRulershipChoice } from './rulership-setting.js';
 import { PersonNotFound } from './PersonNotFound.js';
 import { SortableTable } from './SortableTable.js';
 import { useStoreState } from './store-context.js';
@@ -130,7 +129,11 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
   // The orbs are the device's Extended settings (#590): transits use the same orbs as the natal chart.
   // Everything else stays at the engine defaults, as this screen's footer says.
-  const { settings: extendedSettings, unreadable: settingsUnreadable } = usePersonCalculationSettings(personId);
+  const {
+    settings: extendedSettings,
+    unreadable: settingsUnreadable,
+    rulership,
+  } = usePersonCalculationSettings(personId);
   const orbLibrary = useOrbLibrary();
   const orbSources = useOrbContextSource();
   const snapshot = useMemo(
@@ -184,7 +187,6 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
     };
   }, [settingsUnreadable, personMoment, provider, targetDate, snapshot]);
 
-  const [rulership] = useRulershipChoice();
   const [symbolClass] = useSymbolClass();
   // The wheel's markup is cached on these, so a change of symbol form redraws it.
   const [variants] = useGlyphVariants();

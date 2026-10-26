@@ -76,7 +76,6 @@ import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { PersonNotFound } from './PersonNotFound.js';
 import { hrefFor } from './feature-registry.js';
 import { personHref } from './route.js';
-import { useRulershipChoice } from './rulership-setting.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { useStoreState } from './store-context.js';
@@ -138,8 +137,11 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
   const chartT = useMessages(chartViewMessages);
   const rulershipT = useMessages(rulershipSettingMessages);
   const [locale] = useLocale();
-  const [rulership] = useRulershipChoice();
-  const { settings: personSettings, unreadable: settingsUnreadable } = usePersonCalculationSettings(personId);
+  const {
+    settings: personSettings,
+    unreadable: settingsUnreadable,
+    rulership,
+  } = usePersonCalculationSettings(personId);
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
   // The session's moment (#676): when the page opened, or when Now was last pressed. Not noon UT, where the Moon can be 6° off.
   const [now, setNow] = useState(() => new Date());

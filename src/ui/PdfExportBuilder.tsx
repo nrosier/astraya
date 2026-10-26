@@ -77,7 +77,6 @@ import { useShowDegreeSymbol } from './degree-symbol-setting.js';
 import { useMessages } from './messages.js';
 import { ordered } from './people-list.js';
 import { pdfExportMessages } from './pdf-export.messages.js';
-import { useRulershipChoice } from './rulership-setting.js';
 import { usePersonCalculationSettings } from './person-calculation-settings.js';
 import { unreadableSettingsNoticeMessages } from './UnreadableSettingsNotice.messages.js';
 import { useOrbContextSource, useOrbLibrary } from './orb-library-store.js';
@@ -115,7 +114,6 @@ export function PdfExportBuilder({ embedded = false }: { readonly embedded?: boo
   const ct = useMessages(chartViewMessages);
   const [locale] = useLocale();
   const user = useSessionUserOrUndefined();
-  const [rulership] = useRulershipChoice();
   const orbLibrary = useOrbLibrary();
   const orbSources = useOrbContextSource();
   const { provider } = useEphemerisProvider();
@@ -138,7 +136,11 @@ export function PdfExportBuilder({ embedded = false }: { readonly embedded?: boo
 
   const person = state.people.get(personId);
   // The chosen person's own calculation settings (#582, #806): a PDF chart must be the chart their page draws.
-  const { settings: extendedSettings, unreadable: settingsUnreadable } = usePersonCalculationSettings(personId);
+  const {
+    settings: extendedSettings,
+    unreadable: settingsUnreadable,
+    rulership,
+  } = usePersonCalculationSettings(personId);
   const unreadableT = useMessages(unreadableSettingsNoticeMessages);
   const partnerCandidates = useMemo(
     () => people.filter((candidate) => isPartnerCandidate(candidate, personId)),

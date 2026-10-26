@@ -20,7 +20,6 @@ import { PersonNotFound } from './PersonNotFound.js';
 import { reportScreenMessages } from './ReportScreen.messages.js';
 import { ReportView } from './ReportView.js';
 import { useMessages } from './messages.js';
-import { useRulershipChoice } from './rulership-setting.js';
 import { useStoreState } from './store-context.js';
 import { usePersonCalculationSettings } from './person-calculation-settings.js';
 import { UnreadableSettingsNotice } from './UnreadableSettingsNotice.js';
@@ -43,10 +42,9 @@ export function ReportScreen({ personId }: { personId: string }): React.JSX.Elem
   const customPoints = useStableBy(person?.customPoints, (points) => JSON.stringify(points ?? []));
   const t = useMessages(reportScreenMessages);
   const { provider } = useEphemerisProvider();
-  const [rulership] = useRulershipChoice();
   // The chart the Charts page draws (#732): its natal-context settings, rulers and custom points — not a
   // default-settings chart under the same name, which would read out a different chart from the one on screen.
-  const { settings: cardSettings, unreadable: settingsUnreadable } = usePersonCalculationSettings(personId);
+  const { settings: cardSettings, unreadable: settingsUnreadable, rulership } = usePersonCalculationSettings(personId);
   const orbLibrary = useOrbLibrary();
   const orbSources = useOrbContextSource();
   const settings = useMemo(
@@ -131,7 +129,7 @@ export function ReportScreen({ personId }: { personId: string }): React.JSX.Elem
           {load.data.houses.warning !== undefined && (
             <StatusMessage kind="error">{load.data.houses.warning}</StatusMessage>
           )}
-          <ReportView chart={load.data} exclude={exclusions} personId={personId} />
+          <ReportView chart={load.data} exclude={exclusions} personId={personId} rulership={rulership} />
         </>
       )}
     </main>

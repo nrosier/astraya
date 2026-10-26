@@ -80,6 +80,7 @@ import {
   type Tier2Section,
   type SavedInterpretationSummary,
 } from '../interpretation/tier2-client.js';
+import type { RulershipChoice } from '../astrology/rulership.js';
 import type { ChartData } from '../domain/chart-compute.js';
 import { NO_EXCLUSIONS, type InterpretationExclusions } from '../interpretation/rules.js';
 
@@ -476,6 +477,7 @@ export function ReportView({
   chartKind = 'natal',
   exclude = NO_EXCLUSIONS,
   personId,
+  rulership: rulershipProp,
 }: {
   readonly chart: ChartData;
   /**
@@ -493,13 +495,19 @@ export function ReportView({
   readonly chartKind?: 'natal' | 'composite';
   /** The person the report is for (#768): its AI readings list and save under them. Absent (until every caller passes it), nothing is listed or generated. */
   readonly personId?: string | undefined;
+  /**
+   * The planetary rulers for this report (#806): the person's own choice. Left out for a composite, which belongs to
+   * no single person, the report follows the device default rulership.
+   */
+  readonly rulership?: RulershipChoice | undefined;
 }): React.JSX.Element {
   const t = useMessages(reportViewMessages);
   const overviewT = useMessages(chartOverviewMessages);
   const [activeTab, setActiveTab] = useState<InterpretationTabKey>('standard');
   const [showProvenance, setShowProvenance] = useState(false);
   const [locale] = useLocale();
-  const [rulership] = useRulershipChoice();
+  const [deviceRulership] = useRulershipChoice();
+  const rulership = rulershipProp ?? deviceRulership;
   const [showDegreeSymbol, setShowDegreeSymbol] = useShowDegreeSymbol();
   const [corpus, setCorpus] = useState<readonly CorpusEntry[] | undefined>(undefined);
   const [loadError, setLoadError] = useState<string | undefined>(undefined);

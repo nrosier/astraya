@@ -32,7 +32,7 @@ import { formatFixed, todayInputValue } from './format.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { RulershipSetting } from './RulershipSetting.js';
-import { useRulershipChoice } from './rulership-setting.js';
+import { usePersonCalculationSettings } from './person-calculation-settings.js';
 import { PersonNotFound } from './PersonNotFound.js';
 import { profectionsViewMessages } from './ProfectionsView.messages.js';
 import { SortableTable } from './SortableTable.js';
@@ -106,7 +106,7 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
   const [locale] = useLocale();
   const [asOf, setAsOf] = useState(todayInputValue);
   const { provider } = useEphemerisProvider();
-  const [rulership] = useRulershipChoice();
+  const { rulership } = usePersonCalculationSettings(personId);
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
   // The reviewed text of each profected house (#427): the mechanical sentence until it arrives.
   const [corpus, setCorpus] = useState<readonly CorpusEntry[]>([]);

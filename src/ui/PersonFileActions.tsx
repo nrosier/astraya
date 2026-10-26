@@ -22,7 +22,7 @@ import { Button } from './primitives/Button.js';
 import { FileInput } from './primitives/FileInput.js';
 import { Select } from './primitives/Select.js';
 import { StatusMessage, type StatusKind } from './primitives/StatusMessage.js';
-import { useRulershipChoice } from './rulership-setting.js';
+import { usePersonCalculationSettings } from './person-calculation-settings.js';
 import { useStore } from './store-context.js';
 import { useSymbolClass } from './symbol-setting.js';
 import { useLocale } from './locale.js';
@@ -46,7 +46,7 @@ export function PersonFileActions({
 }): React.JSX.Element {
   const store = useStore();
   const { provider } = useEphemerisProvider();
-  const [rulership] = useRulershipChoice();
+  const { rulership } = usePersonCalculationSettings(person.id);
   const [symbolClass] = useSymbolClass();
   const t = useMessages(personFileActionsMessages);
   const [locale] = useLocale();
