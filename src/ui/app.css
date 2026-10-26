@@ -4333,6 +4333,16 @@ svg text.chart-symbol-text-unicode {
   background: rgb(0 0 0 / 0.45);
 }
 
+.primitive-staged-dialog[data-placement='right'] {
+  width: min(28rem, 100vw);
+  height: 100dvh;
+  max-height: 100dvh;
+  margin: 0 0 0 auto;
+  border-width: 0 0 0 1px;
+  border-radius: 0;
+  box-shadow: var(--shadow-popover);
+}
+
 .settings-card-header {
   display: flex;
   align-items: center;
