@@ -115,7 +115,7 @@ export async function chooseExport(page: Page, item: string, group?: string): Pr
 export async function openSettings(page: Page): Promise<void> {
   const dialog = page.locator('dialog.settings-card');
   const trigger = page.locator('button.extended-settings-trigger');
-  // Below 450px the tab row's actions sit behind one "Chart actions" toggle (#818).
+  // At 40rem and below the tab row's actions sit behind one "Chart actions" toggle (#818, #826).
   if (!(await dialog.isVisible()) && !(await trigger.isVisible()))
     await page.getByRole('button', { name: 'Chart actions', exact: true }).click();
   if (!(await dialog.isVisible())) await trigger.click();
