@@ -323,4 +323,67 @@ test.describe('with the shared people (#799)', () => {
     await expect(page.locator('.tab-row__viewport').locator(overlays)).toHaveCount(0);
     await expect(page.locator('.tab-row__viewport').locator(settings)).toHaveCount(0);
   });
+
+  test('the chart tab row scrolls with the wheel, its fades follow the hidden tabs and never catch pointer events, and the touch-pan CSS contract holds (#818)', async () => {
+    test.setTimeout(90_000);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await openNatalChart(page);
+    const scroller = page.locator('.tab-row__scroll');
+    const startFade = page.locator('.tab-row__fade--start');
+    const endFade = page.locator('.tab-row__fade--end');
+    interface ScrollMetrics {
+      readonly left: number;
+      readonly max: number;
+      readonly scrollWidth: number;
+      readonly clientWidth: number;
+    }
+    // The page has no DOM typings in e2e, so the browser-side reads are strings, as elsewhere in these specs.
+    const metrics = async (): Promise<ScrollMetrics> =>
+      page.evaluate<ScrollMetrics>(`(() => {
+        const el = document.querySelector('.tab-row__scroll');
+        return { left: el.scrollLeft, max: el.scrollWidth - el.clientWidth, scrollWidth: el.scrollWidth, clientWidth: el.clientWidth };
+      })()`);
+
+    // The row overflows at 1280px, so there are tabs for the fades to point at.
+    await expect.poll(async () => (await metrics()).scrollWidth > (await metrics()).clientWidth).toBe(true);
+
+    // Touch-capable CSS contract (computed styles only; touch momentum itself is not exercised headlessly).
+    await expect(scroller).toHaveCSS('overflow-x', 'auto');
+    await expect(scroller).toHaveCSS('touch-action', 'pan-x');
+    await expect(scroller).toHaveCSS('overscroll-behavior-x', 'contain');
+    await expect(scroller).toHaveCSS('scrollbar-width', 'none');
+
+    // At the start only the end fade shows.
+    await expect.poll(async () => (await metrics()).left).toBe(0);
+    await expect(endFade).toHaveCSS('opacity', '1');
+    await expect(startFade).toHaveCSS('opacity', '0');
+
+    // A real wheel over the row moves the tabs sideways, to the far end.
+    const rect = await scroller.boundingBox();
+    if (rect === null) throw new Error('expected the scroll container to have a layout box');
+    await page.mouse.move(rect.x + rect.width / 2, rect.y + rect.height / 2);
+    await expect
+      .poll(async () => {
+        await page.mouse.wheel(0, 400);
+        const { left, max } = await metrics();
+        return left > 0 && left >= max - 1;
+      })
+      .toBe(true);
+    await expect(startFade).toHaveCSS('opacity', '1');
+    await expect(endFade).toHaveCSS('opacity', '0');
+
+    // Neither fade takes pointer events, and the point under each one belongs to something else.
+    for (const fade of [startFade, endFade]) {
+      await expect(fade).toHaveCSS('pointer-events', 'none');
+    }
+    for (const fade of [startFade, endFade]) {
+      const box = await fade.boundingBox();
+      if (box === null) throw new Error('expected the fade to have a layout box');
+      const topClass = await page.evaluate(
+        `document.elementFromPoint(${String(box.x + box.width / 2)}, ${String(box.y + box.height / 2)})?.className ?? ''`,
+      );
+      expect(String(topClass)).not.toContain('tab-row__fade');
+    }
+  });
 });
