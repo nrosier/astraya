@@ -3838,7 +3838,9 @@ svg text.chart-symbol-text-unicode {
 }
 .entry-key {
   color: var(--muted);
+  font-family: inherit;
   font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
 }
 
