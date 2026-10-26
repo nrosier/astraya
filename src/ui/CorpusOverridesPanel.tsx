@@ -56,6 +56,7 @@ import { corpusOverridesPanelMessages } from './CorpusOverridesPanel.messages.js
 import type { CorpusOverride } from '../sync/admin-client.js';
 import type { CorpusCategory, CorpusEntry, CorpusTier, Locale } from '../interpretation/schema.js';
 import { FilterSummary } from './primitives/FilterSummary.js';
+import { EmptyState } from './primitives/EmptyState.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { BackLink } from './BackLink.js';
 
@@ -466,7 +467,7 @@ export function CorpusOverridesPanel(): React.JSX.Element {
       ) : (
         <>
           {filtered.length === 0 ? (
-            <p className="empty">{t.noResults}</p>
+            <EmptyState message={t.noResults} />
           ) : (
             <SortableTable
               wrap
