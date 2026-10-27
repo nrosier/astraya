@@ -194,3 +194,44 @@ describe('AdminPanel Users table, Last sync / Last AI usage columns (#445)', () 
     }
   });
 });
+
+describe('AdminPanel Users markup (#816)', () => {
+  it('shows each username with a status Badge that carries its text, and a disabled account as danger', async () => {
+    const { container, root } = await mountSignedIn();
+    try {
+      await vi.waitFor(() => {
+        expect(container.textContent).toContain('alice');
+      });
+      const aliceRow = rowFor(container, 'alice');
+      const badge = aliceRow.querySelector('.primitive-badge');
+      // alice signed in just now, so her status is Active: a success Badge with the word, not a bare dot.
+      expect(badge?.textContent).toBe('Active');
+      expect(badge?.getAttribute('data-tone')).toBe('success');
+      expect(aliceRow.querySelector('.admin-user-name strong')?.textContent).toBe('alice');
+    } finally {
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+    }
+  });
+
+  it('marks a row’s Delete apart from the standard actions with a separator and the danger class', async () => {
+    const { container, root } = await mountSignedIn();
+    try {
+      await vi.waitFor(() => {
+        expect(container.textContent).toContain('alice');
+      });
+      const aliceRow = rowFor(container, 'alice');
+      expect(aliceRow.querySelector('.admin-action-separator')).not.toBeNull();
+      const deleteButton = [...aliceRow.querySelectorAll('button')].find((b) => b.textContent === 'Delete');
+      expect(deleteButton?.classList.contains('danger')).toBe(true);
+      expect(deleteButton?.classList.contains('primitive-button-compact')).toBe(true);
+    } finally {
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+    }
+  });
+});

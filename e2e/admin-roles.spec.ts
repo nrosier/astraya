@@ -75,6 +75,8 @@ test('a super admin can create, change the role of, and remove accounts', async 
   await expect(page.getByRole('heading', { name: 'Create a user', level: 2 })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Create user', exact: true })).toBeVisible();
   await expect(page.getByRole('columnheader', { name: 'Actions' })).toBeVisible();
+  // Each account's status is a Badge with its text (#816): the signed-in super admin is Active.
+  await expect(page.locator('.admin-user-name .primitive-badge', { hasText: 'Active' }).first()).toBeVisible();
   await expect(page.getByRole('button', { name: 'Reset password' }).first()).toBeVisible();
   await expect(page.getByRole('button', { name: 'Delete', exact: true }).first()).toBeVisible();
 

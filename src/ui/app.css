@@ -3998,6 +3998,234 @@ svg text.chart-symbol-text-unicode {
   margin-top: 0.4rem;
 }
 
+/*
+ * Admin screens (#816). The 42px gap (--space-12, D-816a) separates the view's header from its body,
+ * and only the admin container uses it; inside a body the rhythm is --space-4. Cards are flat 1px
+ * --line borders on the --surface fill, no shadow or gradient.
+ */
+.admin-view {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+
+.admin-view-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.admin-view-head h1,
+.admin-view-head p {
+  margin: 0;
+}
+
+.admin-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.admin-stack > h2 {
+  margin: 0;
+  font-size: var(--text-xl);
+  line-height: var(--leading-tight);
+}
+
+.admin-user-name {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.admin-meta {
+  color: var(--muted);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.admin-user-actions {
+  flex-wrap: wrap;
+}
+
+/* The divider that separates Delete from the standard actions; a plain rule, not a control. */
+.admin-action-separator {
+  align-self: stretch;
+  width: 1px;
+  background: var(--line);
+}
+
+/* Delete is the destructive action: red text and a red hover, never a filled button. */
+.admin-user-actions .primitive-button-compact.danger {
+  background: transparent;
+  border-color: transparent;
+}
+
+/* Filter toolbar: one wrapping row, Export pushed to the far right (#816 section 3). */
+.corpus-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+
+.corpus-toolbar .field-grid {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+
+.corpus-toolbar-end {
+  margin-left: auto;
+}
+
+.corpus-entry-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Entry card: a flat 1px border on --surface. Overridden entries carry a 2px --accent border on all four sides. */
+.corpus-entry {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.corpus-entry-overridden {
+  border: 2px solid var(--accent);
+}
+
+.corpus-entry-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+
+.corpus-entry-head > .primitive-button-compact,
+.corpus-entry-head > .primitive-choice {
+  margin-left: auto;
+}
+
+.corpus-entry-key {
+  padding: 0.1rem 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-hover);
+  color: var(--fg);
+  font-family: inherit;
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.corpus-entry-tags {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.corpus-entry-meaning {
+  margin: 0;
+  font-weight: 600;
+}
+
+.corpus-entry-text {
+  margin: 0;
+  font-size: var(--text-sm);
+  white-space: pre-wrap;
+}
+
+.corpus-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+/* Candidate queue summary: the pending count, and the sort rule beside it. */
+.corpus-queue-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-3);
+}
+
+.corpus-queue-count {
+  margin: 0;
+  font-weight: 600;
+}
+
+.corpus-queue-summary .hint {
+  margin: 0;
+}
+
+.corpus-bulk-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.corpus-bulk-bar .muted {
+  margin: 0;
+}
+
+.corpus-bulk-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+.corpus-candidate-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+/* Original and candidate text: stacked as a reading column; the candidate text is the one under review. */
+.corpus-candidate-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: color-mix(in oklab, var(--bg) 50%, var(--surface));
+}
+
+.corpus-pane-title {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-xs);
+  font-weight: 500;
+}
+
+/* Empty state: a centred, bordered card with a muted message (#816 section 4). */
+.corpus-empty .empty {
+  text-align: center;
+}
+
 /* The Charts page's chart-type Select: natal, draconic, harmonic, solar return, lunar return. */
 .chart-type-select {
   max-width: 20rem;
