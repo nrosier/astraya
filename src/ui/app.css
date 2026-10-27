@@ -4542,6 +4542,10 @@ svg text.chart-symbol-text-unicode {
 .primitive-staged-dialog[data-placement='right'] .data-table th,
 .primitive-staged-dialog[data-placement='right'] .data-table td {
   padding: var(--space-1) var(--space-2);
+
+  /* Long Dutch headings and object names wrap in the drawer instead of widening the matrix past a phone-width drawer. */
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .settings-card-choice-line {

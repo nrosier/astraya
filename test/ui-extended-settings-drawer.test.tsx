@@ -327,4 +327,11 @@ describe('the drawer width (#824, D-824c)', () => {
     expect(css).toMatch(/--drawer-max-width:\s*42rem;/);
     expect(css).toMatch(/width:\s*min\(var\(--drawer-max-width\),\s*100vw\);/);
   });
+
+  it('lets the matrix headings and cells wrap inside the drawer, so long Dutch labels do not widen it', () => {
+    const css = readFileSync(join(process.cwd(), 'src/ui/app.css'), 'utf-8');
+    const rule = /\.primitive-staged-dialog\[data-placement='right'\] \.data-table td \{([^}]*)\}/.exec(css);
+    expect(rule?.[1]).toMatch(/white-space:\s*normal;/);
+    expect(rule?.[1]).toMatch(/overflow-wrap:\s*anywhere;/);
+  });
 });
