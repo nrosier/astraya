@@ -90,7 +90,7 @@ test('a named orb profile chosen for transits changes them, leaves the card alon
   // The card is untouched: natal still uses the card's own orbs, so its settings button does not name them.
   await openNatalChart(page);
   await expect(page.locator('button.extended-settings-trigger')).toHaveText('Extended settings');
-  await openSettings(page);
+  await openSettings(page, 'Bodies & orbs');
   await expect(page.locator('dialog.settings-card').getByRole('radio', { name: /^Standard/ })).toBeChecked();
   await page.locator('dialog.settings-card').getByRole('button', { name: 'Cancel', exact: true }).click();
 
@@ -117,7 +117,7 @@ test('a cited Lilly preset is offered on the card, applies, and can be chosen fo
 
   // On the card: the preset names its source and page, and applying it is reported in the settings button.
   await openNatalChart(page, 'Aspects');
-  await openSettings(page);
+  await openSettings(page, 'Bodies & orbs');
   const card = page.locator('dialog.settings-card');
   const orbGroup = card.getByRole('radiogroup', { name: 'Orb profile' });
   await expect(orbGroup.getByRole('radio', { name: /^Lilly \(1647\), first column/ })).toBeVisible();
@@ -126,7 +126,7 @@ test('a cited Lilly preset is offered on the card, applies, and can be chosen fo
   await card.getByRole('button', { name: 'Apply and redraw', exact: true }).click();
   await expect(card).toBeHidden();
   await expect(page.locator('button.extended-settings-trigger')).toContainText('Own orb rules');
-  await openSettings(page);
+  await openSettings(page, 'Bodies & orbs');
   await expect(orbGroup.getByRole('radio', { name: /^Lilly \(1647\), first column/ })).toBeChecked();
   const axe = await new AxeBuilder({ page }).include('dialog.settings-card').analyze();
   expect(axe.violations.map((v) => v.id)).toEqual([]);

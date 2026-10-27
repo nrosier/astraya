@@ -1,5 +1,5 @@
 /**
- * The orbs are the device's Extended settings (#590): a rule set on the card changes the natal aspects,
+ * The orbs are the device's Extended settings (#590, #824): a rule set in the drawer's Bodies & orbs tab changes the natal aspects,
  * and it changes the Transit screen's contacts too, since transits use the same orbs. Real server,
  * store and ephemeris, as `transit-golden-path.spec.ts` uses.
  */
@@ -63,7 +63,7 @@ test('a rule set on the card changes the transit contacts too (#590)', async () 
 
   // The orbs are set on the Charts page, where the card lives; the Transit screen then uses them.
   await openNatalChart(page);
-  await openSettings(page);
+  await openSettings(page, 'Bodies & orbs');
   const card = page.locator('dialog.settings-card');
   await card.getByRole('button', { name: /Show aspect orbs/ }).click();
   await card.getByRole('group', { name: 'Conjunction', exact: true }).getByRole('spinbutton').first().fill('0');
@@ -86,7 +86,7 @@ test('own orb rules on the natal chart change its aspects, name themselves in th
   const builtIn = await rows.count();
 
   // A conjunction orb of 0° leaves only exact conjunctions; every other aspect keeps its tier.
-  await openSettings(page);
+  await openSettings(page, 'Bodies & orbs');
   const card = page.locator('dialog.settings-card');
   await card.getByRole('button', { name: /Show aspect orbs/ }).click();
   await card.getByRole('group', { name: 'Conjunction', exact: true }).getByRole('spinbutton').first().fill('0');
@@ -96,7 +96,7 @@ test('own orb rules on the natal chart change its aspects, name themselves in th
   await expect.poll(() => rows.count()).toBeLessThan(builtIn);
 
   // The card reopens with the rule, the orb profile reads Custom, and the fixed preview line is gone.
-  await openSettings(page);
+  await openSettings(page, 'Bodies & orbs');
   await expect(
     card.getByRole('radiogroup', { name: 'Orb profile' }).getByRole('radio', { name: /^Custom/ }),
   ).toBeChecked();

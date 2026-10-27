@@ -1,6 +1,6 @@
 /**
- * The chart's Extended settings card (#442): a summary button that opens a modal card, groups tagged by how they
- * apply, Apply and Cancel, starting points, and the phone layout.
+ * The chart's Extended settings drawer (#442, #824): a summary button that opens a right-anchored drawer, its four
+ * categories, the pinned Apply and Cancel footer, the staged formula points, and the phone layout (full width at 390).
  */
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -11,7 +11,14 @@ import type { BrowserContext, Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
 import { BORN, EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
-import { closeSettings, createPerson, gotoAndSettle, openNatalChart, openSettings } from './support.ts';
+import {
+  closeSettings,
+  createPerson,
+  gotoAndSettle,
+  openNatalChart,
+  openSettings,
+  openSettingsTab,
+} from './support.ts';
 
 let dir: string;
 let app: FastifyInstance;
@@ -55,25 +62,26 @@ test.describe('with the shared people (#799)', () => {
     const trigger = page.locator('button.extended-settings-trigger');
     await expect(trigger).toHaveText('Extended settings');
 
-    // The groups, in the order a chart is set up, each saying how it applies.
+    // The drawer: a right-anchored dialog with four categories, and the Profile & frame tab first.
     await openSettings(page);
     const card = page.locator('dialog.settings-card');
+    await expect(card).toHaveAttribute('data-placement', 'right');
     await expect(card.getByRole('heading', { name: 'Extended settings', level: 2 })).toBeVisible();
-    await expect(card.locator('fieldset.settings-card-group > legend')).toHaveText([
-      'Calculation profile',
-      'Chart frame',
-      'Bodies and points',
-      'Station window and motion score',
-      'Traditional scheme',
-      'Aspects and orbs',
-      'Wheel colours',
-      'Rulership & dignities',
-      'How planetary and zodiac symbols are displayed',
+    await expect(card.getByRole('tab')).toHaveText([
+      'Profile & frame',
+      'Bodies & orbs',
+      'Display & glyphs',
+      'Special points',
     ]);
+    await expect(card.getByRole('tab', { name: 'Profile & frame' })).toHaveAttribute('aria-selected', 'true');
+    await expect(card.locator('fieldset.settings-card-group > legend').first()).toHaveText('Calculation profile');
+    await expect(card.getByRole('button', { name: /^Apply and redraw/ })).toBeDisabled();
+    // The device preference (symbols) is in Display & glyphs and says how it applies.
+    await openSettingsTab(page, 'Display & glyphs');
     await expect(
       card.getByText('Shown at once, kept when you apply or save, and put back by Cancel.').first(),
     ).toBeVisible();
-    await expect(card.getByRole('button', { name: /^Apply and redraw/ })).toBeDisabled();
+    await openSettingsTab(page, 'Profile & frame');
 
     // Cancel drops the draft: nothing is applied and the button still says nothing.
     await card.getByLabel('House system', { exact: true }).selectOption('W');
@@ -109,11 +117,13 @@ test.describe('with the shared people (#799)', () => {
         .getByRole('radio', { name: /^Traditional Western/ }),
     ).toBeChecked();
 
-    // The orbs now in force are spelled out, not only a percentage.
+    // The orbs now in force are spelled out, not only a percentage (the orb scale is in Bodies & orbs).
+    await openSettingsTab(page, 'Bodies & orbs');
     await card.getByRole('slider', { name: 'Orb scale' }).fill('-10');
     await expect(card.getByText(/major aspects 6[.,]3°/)).toBeVisible();
 
-    // Escape closes without applying.
+    // Escape closes without applying (the house system is in Profile & frame).
+    await openSettingsTab(page, 'Profile & frame');
     await card.getByLabel('House system', { exact: true }).selectOption('P');
     await page.keyboard.press('Escape');
     await expect(card).toBeHidden();
@@ -130,9 +140,11 @@ test.describe('with the shared people (#799)', () => {
     await openNatalChart(page);
     await expect(page.locator('div.chart-wheel')).toBeVisible();
 
-    await openSettings(page);
+    await openSettings(page, 'Bodies & orbs');
     const card = page.locator('dialog.settings-card');
-    const bodiesGroup = card.locator('fieldset.settings-card-group', { hasText: 'Bodies and points' });
+    // The visibility matrix (#824): one dense table, Object then Visible, Aspects and Reports checkboxes.
+    const bodiesGroup = card.locator('fieldset.settings-card-group', { hasText: 'Object visibility' });
+    await expect(bodiesGroup.locator('.data-table table thead th').nth(1)).toHaveText(/Visible/);
 
     // Starts on no named preset (the shipped default isn't exactly Core/Traditional/All).
     const presets = bodiesGroup.getByRole('radiogroup', { name: 'Object visibility preset', exact: true });
@@ -145,10 +157,10 @@ test.describe('with the shared people (#799)', () => {
     await expect(presets.getByRole('radio', { name: /^Core/ })).toBeChecked();
 
     // The Planets group's own "All" button turns every planet back on, independent of the preset.
-    const planetsGroup = bodiesGroup
-      .locator('fieldset.field-group')
-      .filter({ has: page.locator('legend', { hasText: /^Planets$/ }) });
-    await planetsGroup.getByRole('button', { name: 'All', exact: true }).click();
+    await bodiesGroup
+      .getByRole('group', { name: 'Planets', exact: true })
+      .getByRole('button', { name: 'All', exact: true })
+      .click();
     await expect(bodiesGroup.getByLabel('Jupiter — visible', { exact: true })).toBeChecked();
     // No longer any named preset once a group action diverges from it.
     await expect(presets.getByRole('radio', { name: /^Custom/ })).toBeChecked();
@@ -169,7 +181,7 @@ test.describe('with the shared people (#799)', () => {
     await openNatalChart(page);
     await expect(page.locator('div.chart-wheel')).toBeVisible();
 
-    await openSettings(page);
+    await openSettings(page, 'Display & glyphs');
     const card = page.locator('dialog.settings-card');
     const applyButton = card.getByRole('button', { name: /^Apply and redraw/ });
 
@@ -184,7 +196,7 @@ test.describe('with the shared people (#799)', () => {
 
     // Cancel puts the symbols back: nothing sticks, and reopening shows the original choice (#510)
     await card.getByRole('button', { name: 'Cancel', exact: true }).click();
-    await openSettings(page);
+    await openSettings(page, 'Display & glyphs');
     await expect(card.getByLabel('Symbols', { exact: true })).toHaveValue('drawn');
     await expect(card.getByRole('button', { name: /^Apply and redraw/ })).toBeDisabled();
 
@@ -245,9 +257,9 @@ test.describe('with the shared people (#799)', () => {
     await closeSettings(page);
   });
 
-  test('the card works on a phone: it fills the screen, scrolls inside, and keeps Apply in reach', async () => {
+  test('the drawer works on a phone: full width at 390, scrolls inside, keeps Apply and Cancel in reach (#824)', async () => {
     test.setTimeout(90_000);
-    await page.setViewportSize({ width: 390, height: 800 });
+    await page.setViewportSize({ width: 390, height: 844 });
     await openSharedPerson(page, baseUrl, EINSTEIN);
     await page.getByRole('button', { name: 'Menu', exact: true }).click();
     await page.getByRole('link', { name: 'Charts', exact: true }).click();
@@ -256,8 +268,12 @@ test.describe('with the shared people (#799)', () => {
     await openSettings(page);
     const card = page.locator('dialog.settings-card');
     const box = await card.boundingBox();
+    // Full width on a 390px screen (D-824c: the drawer is full width below its 42rem maximum).
     expect(box?.width ?? 0).toBeGreaterThanOrEqual(388);
-    expect(box?.height ?? 0).toBeGreaterThanOrEqual(790);
+    expect(box?.height ?? 0).toBeGreaterThanOrEqual(840);
+    // The drawer's tabs are the labelled select on a phone, not a scrolling tab row.
+    await expect(card.getByRole('combobox', { name: 'Category', exact: true })).toBeVisible();
+    await expect(card.getByRole('tablist')).toBeHidden();
     await expect(card.getByRole('button', { name: /^Apply and redraw/ })).toBeInViewport();
     await expect(card.getByRole('button', { name: 'Cancel', exact: true })).toBeInViewport();
     expect(
@@ -282,6 +298,53 @@ test.describe('with the shared people (#799)', () => {
     await openSettings(page);
     await closeSettings(page);
     await expect(page.locator('tr.data-table-row-selected')).toContainText('Sun');
+  });
+
+  test('formula points are staged in the drawer: an add and a delete save only on Apply, and Cancel drops them (#824, D-824b)', async () => {
+    test.setTimeout(90_000);
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await openNatalChart(page);
+    await expect(page.locator('div.chart-wheel')).toBeVisible();
+
+    const card = page.locator('dialog.settings-card');
+    const formulaSection = card.locator('fieldset.settings-card-group', { hasText: 'Custom formula points' });
+    const savedList = page.getByRole('region', { name: 'Custom formula points' }).locator('ul li');
+
+    // Stage a new point and cancel: it never reaches the person, and the open page's own list stays empty.
+    await openSettings(page, 'Bodies & orbs');
+    await formulaSection.getByLabel('Name', { exact: true }).fill('Staged point');
+    await formulaSection.getByLabel('Formula', { exact: true }).fill('Asc + Sun - MC');
+    await formulaSection.getByRole('button', { name: 'Add formula point', exact: true }).click();
+    await expect(formulaSection.locator('tbody tr td:first-child').filter({ hasText: 'Staged point' })).toBeVisible();
+    await expect(formulaSection.getByText('Draft, saved on Apply')).toBeVisible();
+    await expect(savedList).toHaveCount(0);
+    await card.getByRole('button', { name: 'Cancel', exact: true }).click();
+    await expect(card).toBeHidden();
+    await expect(savedList).toHaveCount(0);
+    await openSettings(page, 'Bodies & orbs');
+    await expect(formulaSection.locator('tbody tr td:first-child').filter({ hasText: 'Staged point' })).toHaveCount(0);
+
+    // Stage it again and Apply: now it is saved on the person.
+    await formulaSection.getByLabel('Name', { exact: true }).fill('Kept point');
+    await formulaSection.getByLabel('Formula', { exact: true }).fill('Asc + Sun - MC');
+    await formulaSection.getByRole('button', { name: 'Add formula point', exact: true }).click();
+    await card.getByRole('button', { name: 'Apply and redraw', exact: true }).click();
+    await expect(card).toBeHidden();
+    await expect(savedList).toHaveCount(1);
+    await expect(savedList.first()).toContainText('Kept point');
+
+    // A delete is staged too: marked removed in the drawer, still saved until Apply, restored by Cancel.
+    await openSettings(page, 'Bodies & orbs');
+    await formulaSection.getByRole('button', { name: 'Remove Kept point', exact: true }).click();
+    await expect(formulaSection.getByText('Removed, saved on Apply')).toBeVisible();
+    await expect(savedList).toHaveCount(1);
+    await card.getByRole('button', { name: 'Cancel', exact: true }).click();
+    await expect(savedList).toHaveCount(1);
+    await openSettings(page, 'Bodies & orbs');
+    await formulaSection.getByRole('button', { name: 'Remove Kept point', exact: true }).click();
+    await card.getByRole('button', { name: 'Apply and redraw', exact: true }).click();
+    await expect(card).toBeHidden();
+    await expect(savedList).toHaveCount(0);
   });
 
   test('the card is not part of the printed page', async () => {

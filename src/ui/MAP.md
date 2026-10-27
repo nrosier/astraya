@@ -53,7 +53,8 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `ElectionalView.tsx` + `ElectionalView.messages.ts` — Electional Search tool (best-time-to-begin ranking). Deps: `astrology/electional`, `BirthPlaceSearch`.
 - `EntryLabel.tsx` — Renders corpus keys as human-readable placement names (admin UI). Deps: `./placement-label`.
 - `EphemerisProviderContext.tsx` — Web Worker-backed Swiss Ephemeris singleton context. Deps: `ephemeris/client`.
-- `ExtendedSettingsPanel.tsx` + `ExtendedSettingsPanel.messages.ts` — Chart settings modal (house system/zodiac/bodies/aspects/colours; rulers staged in the draft, #806). Deps: `chart/extended-settings`, `astrology/houses`, `astrology/ayanamsas`.
+- `ExtendedSettingsPanel.tsx` + `ExtendedSettingsPanel.messages.ts` — Chart Extended settings right drawer (#824): four tabbed categories, visibility matrix, staged formula points, pinned footer; rulers staged in the draft (#806). Deps: `chart/extended-settings`, `astrology/houses`, `astrology/ayanamsas`, `primitives/StagedDialog`, `primitives/Tabs`, `custom-point-problem`.
+- `custom-point-problem.ts` — Types the reasons the drawer refuses a formula point (unreadable, or duplicates a built-in). Deps: none.
 - `feature-registry.ts` — #506/#509 typed registry of every user-facing feature's scope/group/order/href/prerequisites/settings-mode/export-capabilities, derived from `person-nav`/`tools-nav`/`admin-nav`. Deps: `./person-nav`, `./tools-nav`, `./admin-nav`, `./route`.
 - `FocusInterpretation.tsx` + `FocusInterpretation.messages.ts` — Tier 2 AI-interpretation feature (consent + generate). Deps: `interpretation/tier2-client`, `interpretation/focus-context-schema`.
 - `HarmonicView.tsx` + `HarmonicView.messages.ts` — Harmonic & Varga divisional charts with radix-to-result provenance. Deps: `astrology/harmonics`, `domain/harmonic`, `SortableTable`.

@@ -97,6 +97,26 @@ const trigger = (container: HTMLElement): HTMLButtonElement => {
   return found;
 };
 
+/** The drawer's category tab with this label (#824). */
+function tabButton(container: HTMLElement, label: string): HTMLButtonElement {
+  const found = Array.from(container.querySelectorAll<HTMLButtonElement>('dialog [role="tab"]')).find(
+    (button) => button.textContent === label,
+  );
+  if (found === undefined) throw new Error(`fixture bug: no tab "${label}"`);
+  return found;
+}
+
+/** Opens the Disclosure whose title is `title` (#824). */
+function openDisclosure(container: HTMLElement, title: string): void {
+  const trigger = Array.from(
+    container.querySelectorAll<HTMLButtonElement>('dialog .primitive-disclosure-trigger'),
+  ).find((button) => button.querySelector('.primitive-disclosure-title')?.textContent === title);
+  if (trigger === undefined) throw new Error(`fixture bug: no disclosure "${title}"`);
+  act(() => {
+    trigger.click();
+  });
+}
+
 function openCard(container: HTMLElement): void {
   act(() => {
     trigger(container).click();
@@ -341,7 +361,8 @@ describe('ExtendedSettingsPanel', () => {
 
     // The house-system select, the symbols and line-weight selects and
     // the Uranus and Pluto form selects (#419); the ayanamsa picker joins them.
-    expect(container.querySelectorAll('select')).toHaveLength(5);
+    // The narrow-screen category select (#824) is a sixth select; the wide tabs are buttons, not selects.
+    expect(container.querySelectorAll('select')).toHaveLength(6);
     const siderealRadio = Array.from(
       container.querySelectorAll<HTMLInputElement>('[role="radiogroup"][aria-label="Zodiac"] input[type="radio"]'),
     ).find((radio) => !radio.checked);
@@ -353,7 +374,7 @@ describe('ExtendedSettingsPanel', () => {
     await act(async () => {
       await Promise.resolve();
     });
-    expect(container.querySelectorAll('select')).toHaveLength(6);
+    expect(container.querySelectorAll('select')).toHaveLength(7);
 
     unmount(container, root);
   });
@@ -381,6 +402,15 @@ describe('ExtendedSettingsPanel', () => {
   it('explains Chiron, the Vertex and the Part of Spirit in plain words (#560)', async () => {
     const { container, root } = await mount(fakeProvider(), vi.fn());
     openCard(container);
+    // Long explanations sit behind a Disclosure (#824), so the text is in the DOM only once opened.
+    act(() => {
+      tabButton(container, 'Bodies & orbs').click();
+    });
+    openDisclosure(container, 'About these points');
+    act(() => {
+      tabButton(container, 'Special points').click();
+    });
+    openDisclosure(container, 'About these special points');
 
     const hints = Array.from(container.querySelectorAll('.hint')).map((hint) => hint.textContent);
     expect(hints).toContain(extendedSettingsPanelMessages.en.chironHelp);
@@ -518,11 +548,11 @@ describe('the trigger and the starting points (#442)', () => {
     unmount(container, root);
   });
 
-  it('has two resets that name their target: "my default" only when one is saved, and "Astraya default" always (#510)', async () => {
+  it('has one reset, "Reset to my default" (#824): with no saved default it restores the Astraya defaults', async () => {
     const { container, root } = await mount(fakeProvider(), vi.fn());
     openCard(container);
-    expect(buttonNamed(container, 'Reset to my default')).toBeUndefined();
-    expect(buttonNamed(container, 'Reset to Astraya default')).toBeDefined();
+    expect(buttonNamed(container, 'Reset to my default')).toBeDefined();
+    expect(buttonNamed(container, 'Reset to Astraya default')).toBeUndefined();
     expect(buttonNamed(container, 'Reset to defaults')).toBeUndefined();
 
     // Save a Custom default, then wander off it: "my default" returns to it, "Astraya default" to the shipped one.
@@ -540,8 +570,13 @@ describe('the trigger and the starting points (#442)', () => {
       buttonNamed(container, 'Reset to my default')?.click();
     });
     expect(checkboxLabeled(container, 'Rainbow Color Zodiac').checked).toBe(true);
+    // With the default saved, the reset goes back to it; cleared, it goes back to the Astraya defaults.
+    localStorage.clear();
     act(() => {
-      buttonNamed(container, 'Reset to Astraya default')?.click();
+      checkboxLabeled(container, 'Rainbow Color Zodiac').click();
+    });
+    act(() => {
+      buttonNamed(container, 'Reset to my default')?.click();
     });
     expect(checkboxLabeled(container, 'Rainbow Color Zodiac').checked).toBe(false);
     unmount(container, root);

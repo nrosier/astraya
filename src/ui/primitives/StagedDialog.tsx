@@ -6,7 +6,7 @@
 /**
  * @module ui/primitives/StagedDialog
  * @purpose A native `<dialog>` modal (focus trap, Escape, backdrop) for editing a draft, with one discard path and a sticky footer.
- * @conventions Controlled: the caller owns `open` and the draft, and closes the dialog from `onDiscard` (and from its own Apply); the dialog only reports that the reader wants out. Reuses the `.settings-card` look. `dialog.showModal` is missing in some test DOMs, hence the attribute fallback. The body scrolls inside the card and the footer stays reachable, so a short viewport never loses Apply. `placement="right"` sets `data-placement` and styles the same card as a right-anchored drawer (flat border, `--shadow-popover`).
+ * @conventions Controlled: the caller owns `open` and the draft, and closes the dialog from `onDiscard` (and from its own Apply); the dialog only reports that the reader wants out. Reuses the `.settings-card` look. `dialog.showModal` is missing in some test DOMs, hence the attribute fallback. The body scrolls inside the card and the footer stays reachable, so a short viewport never loses Apply. `placement="right"` sets `data-placement` and styles the same card as a right-anchored drawer (flat border, `--shadow-popover`, `--drawer-max-width`). An optional `subheader` row (e.g. category tabs, #824) stays pinned under the heading.
  * @exports StagedDialog, StagedDialogProps
  */
 import { useEffect, useId, useRef } from 'react';
@@ -23,6 +23,8 @@ export interface StagedDialogProps {
   readonly children: React.ReactNode;
   /** The Apply / Cancel row. */
   readonly footer: React.ReactNode;
+  /** Optional row pinned under the heading, e.g. a drawer's category tabs (#824). Stays put while the body scrolls. */
+  readonly subheader?: React.ReactNode;
   /** Feature-specific card class; defaults to the established settings-card hook. */
   readonly dialogClassName?: string;
   /** `center` (default) is the modal card; `right` anchors it to the right edge as a drawer (#826). */
@@ -37,6 +39,7 @@ export function StagedDialog({
   returnFocusTo,
   children,
   footer,
+  subheader,
   dialogClassName = 'settings-card',
   placement = 'center',
 }: StagedDialogProps): React.JSX.Element {
@@ -92,6 +95,7 @@ export function StagedDialog({
               ×
             </button>
           </div>
+          {subheader !== undefined && <div className="settings-card-subheader">{subheader}</div>}
           <div className="settings-card-body">{children}</div>
           <div className="settings-card-footer">{footer}</div>
         </>

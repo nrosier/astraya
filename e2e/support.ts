@@ -111,8 +111,14 @@ export async function chooseExport(page: Page, item: string, group?: string): Pr
   await page.getByRole('button', { name: item, exact: true }).click();
 }
 
-/** Opens the chart's Extended settings card (a modal dialog) from its trigger, if it is not open already. */
-export async function openSettings(page: Page): Promise<void> {
+/** The Extended settings drawer's four categories (#824), by their visible names. */
+export type SettingsTab = 'Profile & frame' | 'Bodies & orbs' | 'Display & glyphs' | 'Special points';
+
+/**
+ * Opens the chart's Extended settings drawer (a right-anchored dialog, #824) from its trigger, if it is not open
+ * already. With `tab`, it also selects that category, since a control lives in one category only.
+ */
+export async function openSettings(page: Page, tab?: SettingsTab): Promise<void> {
   const dialog = page.locator('dialog.settings-card');
   const trigger = page.locator('button.extended-settings-trigger');
   // At 40rem and below the tab row's actions sit behind one "Chart actions" toggle (#818, #826).
@@ -120,6 +126,22 @@ export async function openSettings(page: Page): Promise<void> {
     await page.getByRole('button', { name: 'Chart actions', exact: true }).click();
   if (!(await dialog.isVisible())) await trigger.click();
   await expect(dialog).toBeVisible();
+  if (tab !== undefined) await openSettingsTab(page, tab);
+}
+
+/**
+ * Selects one category of the drawer: the tab on a wide screen, the labelled select below 40rem (#824). Both name
+ * the category the same way, so the helper reads whichever one is on screen.
+ */
+export async function openSettingsTab(page: Page, tab: SettingsTab): Promise<void> {
+  const dialog = page.locator('dialog.settings-card');
+  const wideTab = dialog.getByRole('tab', { name: tab, exact: true });
+  if (await wideTab.isVisible()) {
+    await wideTab.click();
+    await expect(wideTab).toHaveAttribute('aria-selected', 'true');
+    return;
+  }
+  await dialog.getByRole('combobox', { name: 'Category', exact: true }).selectOption({ label: tab });
 }
 
 /** Closes the card with "Apply and redraw": the draft settings and rulers are saved on the person, and the symbols it previewed stay (#510, #806). */
