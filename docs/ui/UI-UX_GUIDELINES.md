@@ -542,15 +542,16 @@ These rules apply to every view issue in the redesign umbrella. View issues link
 
 The redesign specs use Tailwind-style class names. The project bans Tailwind (see section 11), so map each name to a token in `src/ui/app.css`. Each UI PR must record the mapping it used in its description.
 
-| Spec name                               | App token                         |
-| --------------------------------------- | --------------------------------- |
-| `border-neutral-800`, `border-white/10` | `--line`                          |
-| `bg-neutral-900/40`, `bg-neutral-900`   | `--surface` (low-opacity fill)    |
-| canvas `#0b0d14`                        | `--bg` (`#0b0c18`)                |
-| `rounded-lg`                            | `--radius`                        |
-| `font-mono text-xs`                     | `--text-xs` with tabular-nums (G) |
-| `text-neutral-400`                      | `--muted`                         |
-| `border-b-2` route indicator            | per #818                          |
+| Spec name                                        | App token                         |
+| ------------------------------------------------ | --------------------------------- |
+| `border-neutral-800`, `border-white/10`          | `--line`                          |
+| `bg-neutral-900/40`, `bg-neutral-900`            | `--surface` (low-opacity fill)    |
+| canvas `#0b0d14`                                 | `--bg` (`#0b0c18`)                |
+| `rounded-lg`                                     | `--radius`                        |
+| `font-mono text-xs`                              | `--text-xs` with tabular-nums (G) |
+| `text-neutral-400`                               | `--muted`                         |
+| `border-b-2` route indicator                     | per #818                          |
+| `max-w-2xl` (drawer maximum width, #824, D-824c) | `--drawer-max-width` (42rem)      |
 
 ### 17.2 Mockup gate
 

@@ -47,6 +47,8 @@ describe('StagedDialog placement (#826)', () => {
     expect(body).toContain('box-shadow: var(--shadow-popover)');
     expect(body).toContain('border-width: 0 0 0 1px');
     expect(body).not.toMatch(/#[0-9a-f]{3,8}\b|rgba?\(|hsla?\(/i);
-    expect(new Set([...body.matchAll(/var\((--[a-z-]+)\)/g)].map((v) => v[1]))).toEqual(new Set(['--shadow-popover']));
+    expect(new Set([...body.matchAll(/var\((--[a-z-]+)\)/g)].map((v) => v[1]))).toEqual(
+      new Set(['--shadow-popover', '--drawer-max-width']),
+    );
   });
 });

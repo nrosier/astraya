@@ -40,7 +40,7 @@ import { ASPECTS, aspectHarmonicFamily, DEFAULT_ORB_CONFIG, type Aspect } from '
 import { Tooltip } from './primitives/Tooltip.js';
 import { GlossaryTerm } from './GlossaryTerm.js';
 import { Select } from './primitives/Select.js';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   allMidpointsRows,
   almutenOfAscendant,
@@ -175,7 +175,7 @@ import type { BoundsScheme } from '../astrology/bounds.js';
 import { PageHeader } from './PageHeader.js';
 import { PersonNotFound } from './PersonNotFound.js';
 import { SortableTable } from './SortableTable.js';
-import { useStoreState } from './store-context.js';
+import { useStore, useStoreState } from './store-context.js';
 import type { TableColumn } from './table-sort.js';
 import type { EphemerisProvider } from '../ephemeris/types.js';
 import type { Locale } from '../interpretation/schema.js';
@@ -192,6 +192,25 @@ import {
 import { chartOverlaySettingsPanelMessages } from './ChartOverlaySettingsPanel.messages.js';
 import { CustomPointEditor } from './CustomPointEditor.js';
 import { Button } from './primitives/Button.js';
+import type { FormulaProblem } from './custom-point-problem.js';
+import type { CustomPointDefinition } from '../domain/person.js';
+import { FormulaError, redundantBuiltInPoint } from '../domain/custom-point.js';
+import { parseFormula } from '../astrology/formula-parser.js';
+
+/** The saved shape of the formula list: the same fields `CustomPointEditor` writes, `enabled` only when off (#824). */
+function serializeCustomPoints(points: readonly CustomPointDefinition[]): readonly {
+  readonly id: string;
+  readonly name: string;
+  readonly formula: string;
+  readonly enabled?: boolean;
+}[] {
+  return points.map((point) => ({
+    id: point.id,
+    name: point.name,
+    formula: point.formula,
+    ...(point.enabled === false ? { enabled: false } : {}),
+  }));
+}
 import { parseCoordinate } from './map-settings.js';
 import { orbConfigForContext } from '../astrology/orb-profiles.js';
 import { useStableBy, useStableMoment } from './use-stable-moment.js';
@@ -1735,6 +1754,9 @@ export function ChartDataView({
   extendedSettings = DEFAULT_EXTENDED_SETTINGS,
   cardSettings,
   onExtendedSettingsChange,
+  customPointsSaved,
+  onCustomPointsChange,
+  checkFormula,
   settingsProvider,
   view,
   onViewChange,
@@ -1777,6 +1799,12 @@ export function ChartDataView({
    * `SharedChartView`, which has no panel.
    */
   readonly onExtendedSettingsChange?: (next: ExtendedSettings, rulers: RulershipChoice) => void | Promise<void>;
+  /** The person's saved custom formula points, edited in the drawer's draft (#824); saved as one list by Apply. */
+  readonly customPointsSaved?: readonly CustomPointDefinition[] | undefined;
+  /** Saves the whole formula-point list in one batch (#824); omitted on screens with no person behind them. */
+  readonly onCustomPointsChange?: ((next: readonly CustomPointDefinition[]) => Promise<void>) | undefined;
+  /** Checks one drawer formula against this chart's own identifiers (#824); undefined when it is usable. */
+  readonly checkFormula?: ((formula: string) => FormulaProblem | undefined) | undefined;
   /** A long-lived provider for the panel's own house-system/ayanamsa name lookups. */
   readonly settingsProvider?: EphemerisProvider | undefined;
   /** The open view (#511: Wheel/Aspects/Placements/Patterns & condition), when a URL decides it (every real screen); otherwise this component's own state. */
@@ -2245,6 +2273,9 @@ export function ChartDataView({
         rulership={rulership}
         onRedraw={onExtendedSettingsChange}
         provider={settingsProvider}
+        customPoints={customPointsSaved}
+        onCustomPointsChange={onCustomPointsChange}
+        checkFormula={checkFormula}
       />
     ) : null;
 
@@ -2505,6 +2536,39 @@ export function ChartView({
   // serializes requests through one promise chain, so out-of-order settings changes
   // still resolve in order.
   const { provider } = useEphemerisProvider();
+  const store = useStore();
+
+  /** Saves the drawer's whole formula list as the person's one register (#824), the same batch `CustomPointEditor` writes. */
+  const saveCustomPoints = useCallback(
+    async (next: readonly CustomPointDefinition[]): Promise<void> => {
+      await store.mutate([
+        { entity: 'person', entityId: personId, field: 'customPoints', value: serializeCustomPoints(next) },
+      ]);
+    },
+    [store, personId],
+  );
+
+  /** Checks a drawer formula against this chart's own identifiers, as `CustomPointEditor` does (#824). */
+  const checkFormula = useCallback(
+    (formula: string): FormulaProblem | undefined => {
+      if (lastReadyData === undefined) {
+        try {
+          // No chart yet: only the grammar can be checked, through the same parser the chart uses.
+          parseFormula(formula);
+          return undefined;
+        } catch (cause) {
+          return { kind: 'invalid', message: cause instanceof FormulaError ? cause.message : String(cause) };
+        }
+      }
+      try {
+        const duplicate = redundantBuiltInPoint(lastReadyData, formula);
+        return duplicate === undefined ? undefined : { kind: 'redundant', name: duplicate };
+      } catch (cause) {
+        return { kind: 'invalid', message: cause instanceof FormulaError ? cause.message : String(cause) };
+      }
+    },
+    [lastReadyData],
+  );
 
   useEffect(() => {
     if (load.kind === 'ready') setLastReadyData(load.data);
@@ -2635,6 +2699,9 @@ export function ChartView({
               extendedSettings={settings}
               cardSettings={cardSettings}
               onExtendedSettingsChange={setSettings}
+              customPointsSaved={person.customPoints}
+              onCustomPointsChange={saveCustomPoints}
+              checkFormula={checkFormula}
               settingsProvider={provider}
               view={view ?? 'wheel'}
               onViewChange={(next) => {
@@ -2682,6 +2749,9 @@ export function ChartView({
         extendedSettings={settings}
         cardSettings={cardSettings}
         onExtendedSettingsChange={setSettings}
+        customPointsSaved={person.customPoints}
+        onCustomPointsChange={saveCustomPoints}
+        checkFormula={checkFormula}
         settingsProvider={provider}
         view={view ?? 'wheel'}
         onViewChange={(next) => {
