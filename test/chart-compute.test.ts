@@ -491,3 +491,52 @@ describe('point aspects (#516)', () => {
     if (!housesAreDefined(polar.houses)) expect(polar.angleAspects).toEqual([]);
   });
 });
+
+describe('chosen fixed stars (#803)', () => {
+  const SHA = '18b0dcafbe5b7240773daba2c038a325f5b3fc4163f61e0a7f4e92abd4f517c6';
+  const star = (name: string, designation: string) => ({
+    id: `,${designation}`,
+    name,
+    designation,
+    equinox: 'ICRS',
+    sourceSha256: SHA,
+  });
+
+  it('keeps the seven-star preset exactly as before when none, or an empty list, is chosen', async () => {
+    const engine = await getEngine();
+    const before = await computeChartData(MOMENT, engine);
+    const empty = await computeChartData(MOMENT, engine, { fixedStars: [] });
+    expect([...(before.fixedStars?.keys() ?? [])]).toEqual(NATAL_FIXED_STARS);
+    expect(empty.fixedStars).toEqual(before.fixedStars);
+    for (const name of NATAL_FIXED_STARS) {
+      expect(before.fixedStars?.get(name)).toBe((await engine.fixedStar(await jdOf(), name)).longitude);
+    }
+  });
+
+  it('looks up a chosen star by its stored identifier, keyed by its name, against the real engine', async () => {
+    const engine = await getEngine();
+    const data = await computeChartData(MOMENT, engine, {
+      fixedStars: [star('Vega', 'alLyr')],
+    });
+    expect([...(data.fixedStars?.keys() ?? [])]).toEqual(['Vega']);
+    const vega = await engine.fixedStar(await jdOf(), ',alLyr');
+    expect(data.fixedStars?.get('Vega')).toBe(vega.longitude);
+    // Vega sits near 15° Capricorn in this era (loose published fact, catches a wrong star).
+    expect(data.fixedStars?.get('Vega')).toBeGreaterThan(284);
+    expect(data.fixedStars?.get('Vega')).toBeLessThan(286);
+  });
+
+  it('keeps two chosen records that share a name apart by designation', async () => {
+    const engine = await getEngine();
+    const data = await computeChartData(MOMENT, engine, {
+      fixedStars: [star('Menkar', 'alCet'), star('Menkar', 'laCet')],
+    });
+    const keys = [...(data.fixedStars?.keys() ?? [])];
+    expect(keys).toEqual(['Menkar (alCet)', 'Menkar (laCet)']);
+    expect(data.fixedStars?.get('Menkar (alCet)')).not.toBe(data.fixedStars?.get('Menkar (laCet)'));
+  });
+});
+
+async function jdOf(): Promise<number> {
+  return julianDayFor(await getEngine(), resolveMoment(MOMENT));
+}

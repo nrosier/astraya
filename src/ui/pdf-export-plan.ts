@@ -137,6 +137,7 @@ import {
   derivedPointColumns,
   dignityColumns,
   dispositorColumns,
+  checkedStarsOf,
   fixedStarColumns,
   fixedStarsScopeNoteOf,
   houseCuspColumns,
@@ -440,7 +441,14 @@ function tablesOf(
           : [tablePlanOf(t.declinationsCaption, declinationColumns(t, locale), declinations)]),
         ...(stars.length === 0
           ? []
-          : [tablePlanOf(t.fixedStarsCaption, fixedStarColumns(t, locale), stars, fixedStarsScopeNoteOf(t))]),
+          : [
+              tablePlanOf(
+                t.fixedStarsCaption,
+                fixedStarColumns(t, locale),
+                stars,
+                fixedStarsScopeNoteOf(t, checkedStarsOf(data)),
+              ),
+            ]),
         ...(midpointTreeHits.length === 0
           ? []
           : [tablePlanOf(t.midpointTreeCaption, midpointTreeColumns(t, locale), midpointTreeHits)]),
@@ -484,9 +492,11 @@ export function sectionCalculationOptions(
   rulership: RulershipChoice,
 ): ChartCalculationOptions {
   const customPoints = person.customPoints === undefined ? {} : { customPoints: person.customPoints };
+  // The chosen fixed stars (#803) belong to the natal chart, as on the chart screen, so the PDF checks the same ones.
+  const fixedStars = person.fixedStars === undefined ? {} : { fixedStars: person.fixedStars };
   switch (type) {
     case 'natal':
-      return { ...toChartCalculationOptions(settings), rulership, ...customPoints };
+      return { ...toChartCalculationOptions(settings), rulership, ...customPoints, ...fixedStars };
     case 'solar-return':
     case 'lunar-return':
       return { ...toChartCalculationOptions(settings), rulership };

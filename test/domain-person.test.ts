@@ -1,12 +1,14 @@
 /** Tests persisted person fields that require strict reader validation. */
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_EXTENDED_SETTINGS } from '../src/chart/extended-settings.js';
+import { serializeFixedStars } from '../src/ui/fixed-star-draft.js';
 import {
   buildPerson,
   PERSON_FIELDS,
   readCalculationSettings,
   newPersonCalculationMutations,
   readCustomPoints,
+  readFixedStars,
   readRulership,
   serializeRulership,
   readRelocationPlaces,
@@ -212,6 +214,55 @@ describe('newPersonCalculationMutations (#806)', () => {
     const person = buildPerson('p', fields);
     expect(person.calculationSettings).toEqual(settings);
     expect(person.rulership).toBe('traditional');
+    expect(person.calculationSettingsUnreadable).toBeUndefined();
+  });
+});
+
+describe('the per-person fixedStars register (#803, D-803b)', () => {
+  const SHA = '18b0dcafbe5b7240773daba2c038a325f5b3fc4163f61e0a7f4e92abd4f517c6';
+  const regulus = { id: ',alLeo', name: 'Regulus', designation: 'alLeo', equinox: 'ICRS', sourceSha256: SHA };
+  const nameless = { id: ',beFix', name: '', designation: 'beFix', equinox: '2000', sourceSha256: SHA };
+
+  it('round-trips what the setter writes: identifier, names, equinox and source-file hash', () => {
+    expect(PERSON_FIELDS).toContain('fixedStars');
+    const person = buildPerson('p', new Map([['fixedStars', serializeFixedStars([regulus, nameless])]]));
+    expect(person.fixedStars).toEqual([regulus, nameless]);
+  });
+
+  it('writes exactly the stored fields, nothing interpretive', () => {
+    const withExtra = { ...regulus, meaning: 'royal star' };
+    expect(serializeFixedStars([withExtra])).toEqual([regulus]);
+  });
+
+  it('is absent when nothing was ever saved, and an empty list when every star was removed', () => {
+    expect('fixedStars' in buildPerson('p', new Map())).toBe(false);
+    expect(buildPerson('p', new Map([['fixedStars', []]])).fixedStars).toEqual([]);
+  });
+
+  it('drops the whole register, never part of it, when any entry is unreadable', () => {
+    for (const bad of [
+      { ...regulus, sourceSha256: 'not-a-hash' },
+      { ...regulus, equinox: 'J2050' },
+      { ...regulus, designation: '' },
+      { ...regulus, id: 42 },
+      'Regulus',
+    ]) {
+      expect(readFixedStars([nameless, bad])).toBeUndefined();
+      expect('fixedStars' in buildPerson('p', new Map([['fixedStars', [nameless, bad]]]))).toBe(false);
+    }
+    expect(readFixedStars([regulus, regulus])).toBeUndefined();
+    expect(readFixedStars({ stars: [regulus] })).toBeUndefined();
+  });
+
+  it('leaves the other registers alone when it is unreadable', () => {
+    const person = buildPerson(
+      'p',
+      new Map<string, unknown>([
+        ['fixedStars', 'garbage'],
+        ['customPoints', [{ id: 'a', name: 'A', formula: 'sun + moon' }]],
+      ]),
+    );
+    expect(person.customPoints).toHaveLength(1);
     expect(person.calculationSettingsUnreadable).toBeUndefined();
   });
 });

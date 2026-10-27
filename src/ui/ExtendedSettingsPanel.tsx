@@ -19,8 +19,8 @@
  */
 /**
  * @module ExtendedSettingsPanel
- * @purpose Renders the chart's "Extended settings" drawer: four tabbed categories (profile and frame, bodies and orbs, display and glyphs, special points), the object visibility matrix, the custom formula points, the planetary rulers and the symbol device preference, with a pinned Apply/Cancel footer.
- * @conventions Calculation/display settings, rulers and formula points are edited in a local draft and only committed via "Apply and redraw" (every change needs a real recompute); the symbols are a device preference previewed live and put back by Cancel. The drawer is `StagedDialog placement="right"`. Tabs use the shared `Tabs` primitive, with a labelled Select below 40rem. Text comes from co-located `ExtendedSettingsPanel.messages.ts` via `useMessages()`.
+ * @purpose Renders the chart's "Extended settings" drawer: four tabbed categories (profile and frame, bodies and orbs, display and glyphs, special points), the object visibility matrix, the custom formula points, the chosen fixed stars (#803), the planetary rulers and the symbol device preference, with a pinned Apply/Cancel footer.
+ * @conventions Calculation/display settings, rulers, formula points and chosen fixed stars are edited in a local draft and only committed via "Apply and redraw" (every change needs a real recompute); the symbols are a device preference previewed live and put back by Cancel. The drawer is `StagedDialog placement="right"`. Tabs use the shared `Tabs` primitive, with a labelled Select below 40rem. Text comes from co-located `ExtendedSettingsPanel.messages.ts` via `useMessages()`.
  * @exports ExtendedSettingsPanel
  */
 import { Checkbox } from './primitives/Checkbox.js';
@@ -75,7 +75,11 @@ import {
   type ObjectPolicy,
   withInterpreted,
 } from '../chart/object-policy.js';
-import type { CustomPointDefinition } from '../domain/person.js';
+import type { ChosenFixedStar, CustomPointDefinition } from '../domain/person.js';
+import { sameChosenStars } from './fixed-star-draft.js';
+import { FixedStarPicker } from './FixedStarPicker.js';
+import { fixedStarPickerMessages } from './FixedStarPicker.messages.js';
+import { loadStarCatalogue, type LoadedStarCatalogue } from './star-catalogue-source.js';
 import type { FormulaProblem } from './custom-point-problem.js';
 import { useDefaultCalculationProfile } from './default-calculation-profile.js';
 import { extendedSettingsPanelMessages } from './ExtendedSettingsPanel.messages.js';
@@ -121,6 +125,7 @@ const ASTEROID_KEYS: readonly ObjectKey[] = ['ceres', 'pallas', 'juno', 'vesta']
 const POINT_KEYS: readonly ObjectKey[] = ['vertex', 'partOfFortune', 'partOfSpirit'];
 
 const NO_POINTS: readonly CustomPointDefinition[] = [];
+const NO_STARS: readonly ChosenFixedStar[] = [];
 
 /** The four drawer categories, in the order a chart is set up (#824). */
 const CATEGORIES = ['profile', 'bodies', 'display', 'special'] as const;
@@ -196,6 +201,9 @@ export function ExtendedSettingsPanel({
   customPoints = NO_POINTS,
   onCustomPointsChange,
   checkFormula,
+  fixedStars = NO_STARS,
+  onFixedStarsChange,
+  loadCatalogue = loadStarCatalogue,
 }: {
   readonly value: ExtendedSettings;
   /** The planetary rulers the drawer opens with (#806): the person's own, or the device default when editing that. */
@@ -209,6 +217,12 @@ export function ExtendedSettingsPanel({
   readonly onCustomPointsChange?: ((next: readonly CustomPointDefinition[]) => Promise<void>) | undefined;
   /** Checks one formula against the chart's own identifiers (#824); undefined when it is usable. */
   readonly checkFormula?: ((formula: string) => FormulaProblem | undefined) | undefined;
+  /** The person's chosen fixed stars (#803). Edited in the drawer's draft and committed by Apply (D-803e). */
+  readonly fixedStars?: readonly ChosenFixedStar[] | undefined;
+  /** Receives the whole chosen-star list on Apply, saved as one register. Omitted: the drawer shows no star picker. */
+  readonly onFixedStarsChange?: ((next: readonly ChosenFixedStar[]) => Promise<void>) | undefined;
+  /** Loads the shipped star catalogue for the picker; the same-origin `sefstars.txt` unless a test passes its own. */
+  readonly loadCatalogue?: (() => Promise<LoadedStarCatalogue>) | undefined;
 }): React.JSX.Element {
   const [draft, setDraft] = useState<ExtendedSettings>(value);
   // The practitioner's own orb rules (#590) are typed as strings and only become settings when every entry parses,
@@ -222,6 +236,8 @@ export function ExtendedSettingsPanel({
   const [pointFormula, setPointFormula] = useState('');
   const [pointShown, setPointShown] = useState(true);
   const [pointError, setPointError] = useState<string | undefined>();
+  // The chosen fixed stars are staged the same way (#803, D-803e): Apply writes the whole list to the person at once.
+  const [starDraft, setStarDraft] = useState<readonly ChosenFixedStar[]>(fixedStars);
   // The device preferences edited in the drawer (symbols) take effect as they are changed, so the chart
   // behind it previews them; what they were when the drawer opened is kept so Cancel can put them back.
   const [atOpen, setAtOpen] = useState<DeviceSnapshot | undefined>(undefined);
@@ -229,6 +245,7 @@ export function ExtendedSettingsPanel({
   const [category, setCategory] = useState<Category>('profile');
   const triggerRef = useRef<HTMLButtonElement>(null);
   const t = useMessages(extendedSettingsPanelMessages);
+  const starT = useMessages(fixedStarPickerMessages);
   const [locale] = useLocale();
   const [savedDefault, setDefaultCalculationProfile] = useDefaultCalculationProfile();
   const [symbolClass, setSymbolClass] = useSymbolClass();
@@ -386,6 +403,7 @@ export function ExtendedSettingsPanel({
     replaceDraft(value);
     setRulers(rulership);
     setFormulaRows(formulaRowsFrom(customPoints));
+    setStarDraft(fixedStars);
     setPointError(undefined);
     setAtOpen({ symbolClass, look });
     setOpen(true);
@@ -406,6 +424,7 @@ export function ExtendedSettingsPanel({
     replaceDraft(value);
     setRulers(rulership);
     setFormulaRows(formulaRowsFrom(customPoints));
+    setStarDraft(fixedStars);
     setPointError(undefined);
     setAtOpen(undefined);
   };
@@ -416,8 +435,9 @@ export function ExtendedSettingsPanel({
       replaceDraft(value);
       setRulers(rulership);
       setFormulaRows(formulaRowsFrom(customPoints));
+      setStarDraft(fixedStars);
     }
-  }, [value, rulership, customPoints, open]);
+  }, [value, rulership, customPoints, fixedStars, open]);
 
   const parsedRules = orbRulesFromDraft(rulesText);
   const rulesValid = parsedRules !== undefined;
@@ -435,7 +455,9 @@ export function ExtendedSettingsPanel({
       look.weight !== atOpen.look.weight ||
       VARIANT_BODIES.some((body) => look[body] !== atOpen.look[body]));
   const formulasChanged = !sameFormulas(formulaRows, customPoints);
-  const dirty = !sameSettings(effective, value) || rulers !== rulership || deviceChanged || formulasChanged;
+  const starsChanged = onFixedStarsChange !== undefined && !sameChosenStars(starDraft, fixedStars);
+  const dirty =
+    !sameSettings(effective, value) || rulers !== rulership || deviceChanged || formulasChanged || starsChanged;
 
   const [applyFailed, setApplyFailed] = useState(false);
   const apply = (): void => {
@@ -450,12 +472,14 @@ export function ExtendedSettingsPanel({
       formulasChanged && onCustomPointsChange !== undefined
         ? onCustomPointsChange(stagedPoints(formulaRows))
         : undefined;
+    // So are the chosen fixed stars (#803): one register, written as one batch.
+    const starsSave = starsChanged ? onFixedStarsChange(starDraft) : undefined;
     // A synchronous redraw closes the drawer at once; an asynchronous save closes it only once it is written.
-    if (outcome === undefined && pointsSave === undefined) {
+    if (outcome === undefined && pointsSave === undefined && starsSave === undefined) {
       finish();
       return;
     }
-    void Promise.all([outcome, pointsSave]).then(finish, () => {
+    void Promise.all([outcome, pointsSave, starsSave]).then(finish, () => {
       setApplyFailed(true);
     });
   };
@@ -1255,6 +1279,22 @@ export function ExtendedSettingsPanel({
                   }}
                 />
               </fieldset>
+
+              {onFixedStarsChange !== undefined && (
+                <fieldset className="field-group settings-card-group">
+                  <legend>{starT.heading}</legend>
+                  <p className="hint settings-card-tag">{t.appliesOnApply}</p>
+                  <p className="hint">{starT.staged}</p>
+                  {open && (
+                    <FixedStarPicker
+                      stars={starDraft}
+                      saved={fixedStars}
+                      onChange={setStarDraft}
+                      loadCatalogue={loadCatalogue}
+                    />
+                  )}
+                </fieldset>
+              )}
             </>
           </div>
         </div>

@@ -175,7 +175,7 @@ const en = {
   fixedStarsCaption: 'Fixed stars',
   // The list is deliberately short (#398, #725): said next to the table and in the PDF so an empty table is not read as "no star is near".
   fixedStarsScopeNote: (count: number, names: string) =>
-    `This table checks only ${String(count)} stars: ${names}. No other fixed star is looked for, so an empty or short list does not mean no star is near a planet.`,
+    `This table checks only ${count === 1 ? '1 star' : `${String(count)} stars`}: ${names}. No other fixed star is looked for, so an empty or short list does not mean no star is near a planet.`,
   // Shown near the selection inspector when the chart is not a natal chart (#725).
   derivedChartInterpretationNote: (chartKind: string) =>
     `This reading applies natal-chart interpretations to a derived chart (${chartKind}); treat it as indicative.`,
@@ -509,7 +509,7 @@ const nl: typeof en = {
   harmonicFamilyOption: (family: string) => `H${family}`,
   fixedStarsCaption: 'Vaste sterren',
   fixedStarsScopeNote: (count: number, names: string) =>
-    `Deze tabel controleert slechts ${String(count)} sterren: ${names}. Er wordt naar geen enkele andere vaste ster gezocht, dus een lege of korte lijst betekent niet dat er geen ster bij een planeet staat.`,
+    `Deze tabel controleert slechts ${count === 1 ? '1 ster' : `${String(count)} sterren`}: ${names}. Er wordt naar geen enkele andere vaste ster gezocht, dus een lege of korte lijst betekent niet dat er geen ster bij een planeet staat.`,
   derivedChartInterpretationNote: (chartKind: string) =>
     `Deze interpretatie past geboortehoroscoop-interpretaties toe op een afgeleide horoscoop (${chartKind}); beschouw haar als indicatief.`,
 
