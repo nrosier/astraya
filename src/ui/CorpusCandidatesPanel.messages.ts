@@ -29,6 +29,9 @@ const en = {
     `${count} of the selected candidates were already decided elsewhere and were skipped.`,
 
   candidatesHeading: 'Candidates',
+  candidateTextLabel: 'Candidate text',
+  pendingCount: (count: string) => `${count} pending review`,
+  sortRule: 'Sorted worst triage score first',
   selectColumn: 'Select',
   keyColumn: 'Entry',
   detailsColumn: 'Details',
@@ -72,6 +75,9 @@ const nl: typeof en = {
     `${count} van de geselecteerde kandidaten waren elders al besloten en zijn overgeslagen.`,
 
   candidatesHeading: 'Kandidaten',
+  candidateTextLabel: 'Kandidaattekst',
+  pendingCount: (count: string) => `${count} wacht op beoordeling`,
+  sortRule: 'Gesorteerd op slechtste triagescore eerst',
   selectColumn: 'Selecteren',
   keyColumn: 'Onderdeel',
   detailsColumn: 'Details',

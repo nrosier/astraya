@@ -27,8 +27,6 @@ import { Select } from './primitives/Select.js';
 import { TextAreaField } from './primitives/TextAreaField.js';
 import { TextField } from './primitives/TextField.js';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { SortableTable } from './SortableTable.js';
-import type { TableColumn } from './table-sort.js';
 import {
   deleteCorpusOverride,
   exportCorpusOverrides,
@@ -39,22 +37,13 @@ import { loadRuntimeCorpus } from '../interpretation/corpus-client.js';
 import { CORPUS_CATEGORIES, CORPUS_LOCALES, CORPUS_TIERS, categoryOfKey } from '../interpretation/schema.js';
 import { downloadBlob } from './download.js';
 import { LOCALE_LABELS, isLocale, useLocale } from './locale.js';
-import { EntryLabel } from './EntryLabel.js';
-import {
-  categoryExplanation,
-  categoryLabel,
-  compareSortKeys,
-  labelForKey,
-  sortKeyForKey,
-  tagExplanation,
-  tagLabel,
-  tierExplanation,
-  tierLabel,
-} from './placement-label.js';
+import { categoryLabel, compareSortKeys, labelForKey, sortKeyForKey, tagLabel, tierLabel } from './placement-label.js';
 import { useMessages } from './messages.js';
 import { corpusOverridesPanelMessages } from './CorpusOverridesPanel.messages.js';
 import type { CorpusOverride } from '../sync/admin-client.js';
 import type { CorpusCategory, CorpusEntry, CorpusTier, Locale } from '../interpretation/schema.js';
+import { Badge } from './primitives/Badge.js';
+import { Button } from './primitives/Button.js';
 import { FilterSummary } from './primitives/FilterSummary.js';
 import { EmptyState } from './primitives/EmptyState.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
@@ -183,10 +172,7 @@ export function CorpusOverridesPanel(): React.JSX.Element {
   }, [labelled, categoryFilter, tierFilter, tagFilter, overriddenOnly, search, overrideMap]);
 
   const visible = filtered.slice(0, page * PAGE_SIZE);
-  const categoryExplanationOf = (key: string): string | undefined => {
-    const category = categoryOfKey(key);
-    return category === undefined ? undefined : categoryExplanation(category, uiLocale);
-  };
+  const meaningOf = (key: string): string => labelForKey(key, uiLocale);
   const categoryLabelOf = (key: string): string => {
     const category = categoryOfKey(key);
     return category === undefined ? '—' : categoryLabel(category, uiLocale);
@@ -272,229 +258,200 @@ export function CorpusOverridesPanel(): React.JSX.Element {
       });
   };
 
-  const columns: readonly TableColumn<(typeof visible)[number]>[] = [
-    {
-      key: 'key',
-      label: t.keyColumn,
-      valueOf: (entry) => labelForKey(entry.key, uiLocale),
-      renderCell: (entry) => <EntryLabel entryKey={entry.key} locale={uiLocale} />,
-    },
-    {
-      key: 'details',
-      label: t.detailsColumn,
-      sortable: false,
-      valueOf: (entry) => entry.text,
-      renderCell: (entry) => (
-        <dl className="entry-details">
-          <dt>{t.categoryColumn}</dt>
-          <dd>
-            {categoryLabelOf(entry.key)}
-            <span className="cell-explanation">{categoryExplanationOf(entry.key)}</span>
-          </dd>
-          <dt>{t.tierColumn}</dt>
-          <dd>
-            {tierLabel(entry.tier, uiLocale)}
-            <span className="cell-explanation">{tierExplanation(entry.tier, uiLocale)}</span>
-          </dd>
-          <dt>{t.tagsColumn}</dt>
-          <dd>
-            {entry.tags.map((tag) => (
-              <span key={tag} className="cell-tag">
-                {tagLabel(tag, uiLocale)}
-                <span className="cell-explanation">{tagExplanation(tag, uiLocale)}</span>
-              </span>
-            ))}
-          </dd>
-          <dt>{t.textColumn}</dt>
-          <dd className="entry-text">{entry.text}</dd>
-          <dt>{t.statusColumn}</dt>
-          <dd>{overrideMap.has(entry.key) ? t.overriddenStatus : t.defaultStatus}</dd>
-        </dl>
-      ),
-    },
-    {
-      key: 'actions',
-      label: t.actionsColumn,
-      sortable: false,
-      valueOf: () => '',
-      renderCell: (entry) => (
-        <span className="actions">
-          <button
-            type="button"
-            className="quiet"
-            disabled={busyKey === entry.key}
-            onClick={() => {
-              startEdit(entry);
-            }}
-          >
-            {busyKey === entry.key ? t.savingLabel : t.editButton}
-          </button>
-        </span>
-      ),
-    },
-  ];
-
   return (
-    <main className="shell">
-      <BackLink fallback="#/admin" />
-      <h1>{t.heading}</h1>
-      <p>{t.intro}</p>
-
-      {loadError !== undefined && <StatusMessage kind="error">{t.couldNotLoad(loadError)}</StatusMessage>}
-
-      <div className="field-grid">
-        <Select
-          label={t.corpusLocaleLabel}
-          value={corpusLocale}
-          options={CORPUS_LOCALES.map((locale) => ({ value: locale, label: LOCALE_LABELS[locale] }))}
-          onChange={(value) => {
-            if (isLocale(value)) setCorpusLocale(value);
-          }}
-        />
-        <TextField label={t.searchLabel} value={search} onChange={setSearch} />
-        <Select
-          label={t.categoryLabel}
-          value={categoryFilter}
-          options={[
-            { value: '', label: t.allCategories },
-            ...CORPUS_CATEGORIES.map((category) => ({ value: category, label: categoryLabel(category, uiLocale) })),
-          ]}
-          onChange={(value) => {
-            setCategoryFilter(isCorpusCategory(value) ? value : '');
-          }}
-        />
-        <Select
-          label={t.tierLabel}
-          value={tierFilter}
-          options={[
-            { value: '', label: t.allTiers },
-            ...CORPUS_TIERS.map((tier) => ({ value: tier, label: tierLabel(tier, uiLocale) })),
-          ]}
-          onChange={(value) => {
-            setTierFilter(isCorpusTier(value) ? value : '');
-          }}
-        />
-        <Select
-          label={t.tagLabel}
-          value={tagFilter}
-          options={[
-            { value: '', label: t.allTags },
-            ...availableTags.map((tag) => ({ value: tag, label: tagLabel(tag, uiLocale) })),
-          ]}
-          onChange={setTagFilter}
-        />
-        <Checkbox label={t.overriddenOnlyLabel} checked={overriddenOnly} onChange={setOverriddenOnly} />
+    <main className="shell admin-view">
+      <div className="admin-view-head">
+        <BackLink fallback="#/admin" />
+        <h1>{t.heading}</h1>
+        <p>{t.intro}</p>
       </div>
+      <div className="admin-stack">
+        {loadError !== undefined && <StatusMessage kind="error">{t.couldNotLoad(loadError)}</StatusMessage>}
 
-      <p className="actions">
-        <button type="button" className="quiet" onClick={exportCorrections}>
-          {t.exportButton}
-        </button>
-      </p>
-
-      {saveError !== undefined && <StatusMessage kind="error">{t.saveFailed(saveError)}</StatusMessage>}
-
-      {pendingReset !== undefined && (
-        <StatusMessage kind="error">
-          {t.resetWarning(`${labelForKey(pendingReset.key, uiLocale)} (${pendingReset.key})`)}{' '}
-          <button type="button" className="danger" onClick={confirmReset}>
-            {t.resetPermanentlyButton}
-          </button>{' '}
-          <button
-            type="button"
-            className="quiet"
-            onClick={() => {
-              setPendingReset(undefined);
-            }}
-          >
-            {t.cancelButton}
-          </button>
-        </StatusMessage>
-      )}
-
-      {editing !== undefined && (
-        <form
-          className="field-grid"
-          onSubmit={(event) => {
-            event.preventDefault();
-            save();
-          }}
-        >
-          <p>
-            <strong>{labelForKey(editing.key, uiLocale)}</strong> <code className="entry-key">{editing.key}</code>
-          </p>
-          <TextAreaField
-            label={t.textLabel}
-            rows={4}
-            value={editing.text}
+        <div className="corpus-toolbar">
+          <Select
+            label={t.corpusLocaleLabel}
+            value={corpusLocale}
+            options={CORPUS_LOCALES.map((locale) => ({ value: locale, label: LOCALE_LABELS[locale] }))}
             onChange={(value) => {
-              setEditing({ ...editing, text: value });
+              if (isLocale(value)) setCorpusLocale(value);
+            }}
+          />
+          <TextField label={t.searchLabel} value={search} onChange={setSearch} />
+          <Select
+            label={t.categoryLabel}
+            value={categoryFilter}
+            options={[
+              { value: '', label: t.allCategories },
+              ...CORPUS_CATEGORIES.map((category) => ({ value: category, label: categoryLabel(category, uiLocale) })),
+            ]}
+            onChange={(value) => {
+              setCategoryFilter(isCorpusCategory(value) ? value : '');
             }}
           />
           <Select
-            label={t.tierFieldLabel}
-            value={editing.tier}
-            options={CORPUS_TIERS.map((tier) => ({ value: tier, label: tier }))}
+            label={t.tierLabel}
+            value={tierFilter}
+            options={[
+              { value: '', label: t.allTiers },
+              ...CORPUS_TIERS.map((tier) => ({ value: tier, label: tierLabel(tier, uiLocale) })),
+            ]}
             onChange={(value) => {
-              if (isCorpusTier(value)) setEditing({ ...editing, tier: value });
+              setTierFilter(isCorpusTier(value) ? value : '');
             }}
           />
-          <TextField
-            label={t.tagsFieldLabel}
-            value={editing.tags}
-            onChange={(value) => {
-              setEditing({ ...editing, tags: value });
-            }}
+          <Select
+            label={t.tagLabel}
+            value={tagFilter}
+            options={[
+              { value: '', label: t.allTags },
+              ...availableTags.map((tag) => ({ value: tag, label: tagLabel(tag, uiLocale) })),
+            ]}
+            onChange={setTagFilter}
           />
-          <p className="actions">
-            <button type="submit" disabled={busyKey === editing.key}>
-              {busyKey === editing.key ? t.savingLabel : t.saveButton}
-            </button>
-            <button type="button" className="quiet" onClick={cancelEdit}>
+          <Checkbox label={t.overriddenOnlyLabel} checked={overriddenOnly} onChange={setOverriddenOnly} />
+          <div className="corpus-toolbar-end">
+            <Button variant="quiet" onClick={exportCorrections}>
+              {t.exportButton}
+            </Button>
+          </div>
+        </div>
+
+        {saveError !== undefined && <StatusMessage kind="error">{t.saveFailed(saveError)}</StatusMessage>}
+
+        {pendingReset !== undefined && (
+          <StatusMessage kind="error">
+            {t.resetWarning(`${labelForKey(pendingReset.key, uiLocale)} (${pendingReset.key})`)}{' '}
+            <button type="button" className="danger" onClick={confirmReset}>
+              {t.resetPermanentlyButton}
+            </button>{' '}
+            <button
+              type="button"
+              className="quiet"
+              onClick={() => {
+                setPendingReset(undefined);
+              }}
+            >
               {t.cancelButton}
             </button>
-            {overrideMap.has(editing.key) && (
-              <button type="button" className="danger" disabled={busyKey === editing.key} onClick={requestReset}>
-                {t.resetButton}
-              </button>
-            )}
-          </p>
-        </form>
-      )}
+          </StatusMessage>
+        )}
 
-      {data === undefined ? (
-        <StatusMessage kind="loading">{t.loadingCorpus}</StatusMessage>
-      ) : (
-        <>
-          {filtered.length === 0 ? (
-            <EmptyState message={t.noResults} />
-          ) : (
-            <SortableTable
-              wrap
-              headingLevel={2}
-              caption={t.entriesHeading}
-              columns={columns}
-              rows={visible}
-              getRowKey={(entry) => entry.key}
-            />
-          )}
-
-          <FilterSummary summary={t.resultCount(String(visible.length), String(filtered.length))} />
-          {visible.length < filtered.length && (
-            <p className="actions">
-              <button
-                type="button"
-                className="quiet"
-                onClick={() => {
-                  setPage((current) => current + 1);
-                }}
-              >
-                {t.loadMoreButton}
-              </button>
+        {editing !== undefined && (
+          <form
+            className="field-grid"
+            onSubmit={(event) => {
+              event.preventDefault();
+              save();
+            }}
+          >
+            <p>
+              <strong>{labelForKey(editing.key, uiLocale)}</strong> <code className="entry-key">{editing.key}</code>
             </p>
-          )}
-        </>
-      )}
+            <TextAreaField
+              label={t.textLabel}
+              rows={4}
+              value={editing.text}
+              onChange={(value) => {
+                setEditing({ ...editing, text: value });
+              }}
+            />
+            <Select
+              label={t.tierFieldLabel}
+              value={editing.tier}
+              options={CORPUS_TIERS.map((tier) => ({ value: tier, label: tier }))}
+              onChange={(value) => {
+                if (isCorpusTier(value)) setEditing({ ...editing, tier: value });
+              }}
+            />
+            <TextField
+              label={t.tagsFieldLabel}
+              value={editing.tags}
+              onChange={(value) => {
+                setEditing({ ...editing, tags: value });
+              }}
+            />
+            <p className="actions">
+              <button type="submit" disabled={busyKey === editing.key}>
+                {busyKey === editing.key ? t.savingLabel : t.saveButton}
+              </button>
+              <button type="button" className="quiet" onClick={cancelEdit}>
+                {t.cancelButton}
+              </button>
+              {overrideMap.has(editing.key) && (
+                <button type="button" className="danger" disabled={busyKey === editing.key} onClick={requestReset}>
+                  {t.resetButton}
+                </button>
+              )}
+            </p>
+          </form>
+        )}
+
+        {data === undefined ? (
+          <StatusMessage kind="loading">{t.loadingCorpus}</StatusMessage>
+        ) : (
+          <>
+            <h2 className="sr-only">{t.entriesHeading}</h2>
+            {filtered.length === 0 ? (
+              <EmptyState message={t.noResults} />
+            ) : (
+              <ul className="corpus-entry-list">
+                {visible.map((entry) => {
+                  const overridden = overrideMap.has(entry.key);
+                  return (
+                    <li
+                      key={entry.key}
+                      className={overridden ? 'corpus-entry corpus-entry-overridden' : 'corpus-entry'}
+                      data-overridden={overridden ? 'true' : 'false'}
+                    >
+                      <div className="corpus-entry-head">
+                        <code className="corpus-entry-key">{entry.key}</code>
+                        <span className="corpus-entry-tags">
+                          <Badge>{categoryLabelOf(entry.key)}</Badge>
+                          <Badge>{tierLabel(entry.tier, uiLocale)}</Badge>
+                          {overridden && <Badge tone="accent">{t.overriddenStatus}</Badge>}
+                        </span>
+                        <Button
+                          variant="quiet"
+                          size="compact"
+                          disabled={busyKey === entry.key}
+                          busy={busyKey === entry.key}
+                          busyLabel={t.savingLabel}
+                          onClick={() => {
+                            startEdit(entry);
+                          }}
+                        >
+                          {t.editButton}
+                        </Button>
+                      </div>
+                      {meaningOf(entry.key) !== entry.key && (
+                        <p className="corpus-entry-meaning">
+                          <span className="entry-meaning">{meaningOf(entry.key)}</span>
+                        </p>
+                      )}
+                      <p className="corpus-entry-text">{entry.text}</p>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+
+            <div className="corpus-footer">
+              <FilterSummary summary={t.resultCount(String(visible.length), String(filtered.length))} />
+              {visible.length < filtered.length && (
+                <Button
+                  variant="quiet"
+                  onClick={() => {
+                    setPage((current) => current + 1);
+                  }}
+                >
+                  {t.loadMoreButton}
+                </Button>
+              )}
+            </div>
+          </>
+        )}
+      </div>
     </main>
   );
 }
