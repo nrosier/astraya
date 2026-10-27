@@ -63,22 +63,17 @@ test('a person with a known birth time gets a Consultation screen with transits,
   for (const term of ['Sun', 'Moon', 'Ascendant', 'Chart ruler', 'Profection year']) {
     await expect(page.locator('.consultation-glance dt', { hasText: term }).first()).toBeVisible();
   }
-  for (const heading of ['This year', 'Zodiacal releasing', 'Major transits now', 'Directions', 'Chart highlights']) {
+  for (const heading of [
+    'Major active transits',
+    'Chart highlights',
+    'Time lords and cycles',
+    'Zodiacal releasing and directions',
+  ]) {
     await expect(page.getByRole('heading', { level: 2, name: heading })).toBeVisible();
   }
-  // Boxes sharing a grid row share a height (#774); rows are boxes whose top edges match within 1px.
-  const boxes = [];
-  for (const section of await page.locator('.consultation-section').all()) {
-    const rect = await section.boundingBox();
-    if (rect !== null) boxes.push(rect);
-  }
-  expect(boxes.length).toBeGreaterThanOrEqual(5);
-  for (const box of boxes) {
-    const row = boxes.filter((other) => Math.abs(other.y - box.y) <= 1);
-    for (const other of row) expect(Math.abs(other.height - box.height)).toBeLessThanOrEqual(1);
-  }
-  // Transits to the angles are listed apart from the ranked ones (#678).
-  await expect(page.getByRole('heading', { level: 3, name: 'Transits to the Ascendant and Midheaven' })).toBeVisible();
+  // Transits to the angles are listed apart from the ranked ones (#678), one disclosure per angle (D-800a).
+  await expect(page.getByRole('button', { name: /^Transits to the Ascendant/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Transits to the Midheaven/ })).toBeVisible();
   // No duplicate launchpad: one link per section, the rest in the page header.
   await expect(page.getByRole('heading', { level: 2, name: 'Next' })).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'View all transits', exact: true })).toHaveCount(1);
@@ -92,3 +87,83 @@ test('a person with a known birth time gets a Consultation screen with transits,
   await page.getByRole('link', { name: 'View all transits', exact: true }).click();
   await expect(page.getByRole('heading', { level: 1, name: /transits/i })).toBeVisible();
 });
+
+for (const { width, height } of [
+  { width: 390, height: 844 },
+  { width: 1280, height: 800 },
+]) {
+  test(`the consultation layout holds at ${String(width)}px: tiles, 60/40 grid, a disclosure per angle, scrolling tables (#800)`, async () => {
+    test.setTimeout(60_000);
+    // Open the person at the desktop size, where the workspace nav shows the Consultation link, then resize.
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await page.getByRole('link', { name: 'Consultation', exact: true }).click();
+    await page.setViewportSize({ width, height });
+    await expect(page.getByRole('heading', { level: 2, name: 'Major active transits' })).toBeVisible();
+
+    // Tiles replace the At a glance list: 2 columns on a phone, 4 at 1280 (the shell is 64rem wide here).
+    const tiles = page.locator('dl.consultation-tiles');
+    await expect(tiles.locator('dt')).toHaveText([
+      'Sun',
+      'Moon',
+      'Ascendant',
+      'Chart ruler',
+      'Sect',
+      'Profection year',
+    ]);
+    // Columns follow the page's own content width (a container query): 2 below 40rem, 4 to 64rem, 6 above.
+    const layoutRem = Number(
+      await page.evaluate(
+        "document.querySelector('.consultation-layout').getBoundingClientRect().width / parseFloat(getComputedStyle(document.documentElement).fontSize)",
+      ),
+    );
+    const columns = String(
+      await page.evaluate("getComputedStyle(document.querySelector('dl.consultation-tiles')).gridTemplateColumns"),
+    ).split(' ').length;
+    expect(columns).toBe(layoutRem >= 64 ? 6 : layoutRem >= 40 ? 4 : 2);
+    if (width === 390) expect(columns).toBe(2);
+
+    // One column on a phone; about 60/40 at 1280.
+    const [left, right] = await page.locator('.consultation-col').all();
+    const leftBox = await left?.boundingBox();
+    const rightBox = await right?.boundingBox();
+    if (leftBox === undefined || leftBox === null || rightBox === undefined || rightBox === null)
+      throw new Error('both consultation columns should render');
+    if (width === 390) {
+      expect(rightBox.y).toBeGreaterThan(leftBox.y + leftBox.height - 1);
+    } else {
+      expect(Math.abs(rightBox.y - leftBox.y)).toBeLessThanOrEqual(1);
+      const share = leftBox.width / (leftBox.width + rightBox.width);
+      expect(share).toBeGreaterThan(0.55);
+      expect(share).toBeLessThan(0.65);
+    }
+
+    // The major transit table: four columns, in a focusable scroll region; an em dash is named when no pass is left.
+    const table = page.locator('.consultation-section .data-table-scroll');
+    await expect(table.first().getByRole('columnheader')).toHaveText(['Aspect', 'Orb', 'State', 'Next exact date']);
+    await expect(table).toHaveCSS('overflow-x', 'auto');
+    for (const dash of await table.getByRole('img', { name: 'No further exact pass' }).all()) {
+      await expect(dash).toHaveText('—');
+    }
+    const overflow = Number(
+      await page.evaluate(
+        "(() => { const el = document.querySelector('.consultation-section .data-table-scroll'); return el.scrollWidth - el.clientWidth; })()",
+      ),
+    );
+    if (width === 390) expect(overflow).toBeGreaterThan(0);
+    else expect(overflow).toBeLessThanOrEqual(1);
+    // The page itself never scrolls sideways: the table scrolls inside its frame.
+    const pageOverflow = Number(await page.evaluate('document.documentElement.scrollWidth - window.innerWidth'));
+    expect(pageOverflow).toBeLessThanOrEqual(0);
+
+    // Both angle disclosures exist and open on their own, each with its own table or its empty note.
+    for (const angle of ['Ascendant', 'Midheaven']) {
+      const trigger = page.getByRole('button', { name: new RegExp(`^Transits to the ${angle}`) });
+      await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+      await trigger.click();
+      await expect(trigger).toHaveAttribute('aria-expanded', 'true');
+      const panel = page.locator('.primitive-disclosure.open').filter({ has: trigger });
+      await expect(panel.locator('.data-table-scroll').or(panel.locator('.hint'))).toBeVisible();
+    }
+    await expect(page.locator('.primitive-disclosure.open')).toHaveCount(2);
+  });
+}
