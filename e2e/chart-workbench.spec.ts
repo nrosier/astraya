@@ -116,7 +116,7 @@ test.describe('with the shared people (#799)', () => {
     await openSharedPerson(page, baseUrl, EINSTEIN);
     await openNatalChart(page, 'Aspect matrix');
     await expect(page.getByRole('heading', { name: 'Aspect matrix', level: 2 })).toBeVisible();
-    await expect(page.locator('.chart-aspect-matrix')).toBeVisible();
+    await expect(page.locator('.mgrid')).toBeVisible();
 
     // Mars trines Pluto in Einstein's chart (Mars 296.91°, Pluto 54.73°: 117.81° apart, 2.19° off exact, inside
     // the 7° major orb): that cell is a button named for the pair.
@@ -137,6 +137,27 @@ test.describe('with the shared people (#799)', () => {
     await cell.focus();
     await page.keyboard.press('Enter');
     await expect(cell).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  test('the aspect matrix grid shows Name and House at 1280 and drops them at 390 (#820)', async () => {
+    test.setTimeout(90_000);
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await openNatalChart(page, 'Aspect matrix');
+    const grid = page.locator('.mgrid');
+    await expect(grid).toBeVisible();
+    await expect(grid.locator('[role=columnheader].mgrid-col-name')).toBeVisible();
+    await expect(grid.locator('[role=columnheader].mgrid-col-house')).toBeVisible();
+    await expect(grid.locator('.mgrid-aspect').first()).toBeVisible();
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(grid).toBeVisible();
+    await expect(grid.locator('[role=columnheader].mgrid-col-name')).toBeHidden();
+    await expect(grid.locator('[role=columnheader].mgrid-col-house')).toBeHidden();
+    await expect(grid.locator('[role=columnheader]', { hasText: 'Deg' })).toBeVisible();
+    await expect(grid.locator('[role=columnheader]', { hasText: 'Sign' })).toBeVisible();
+    await expect(grid.locator('[role=columnheader]', { hasText: 'Min' })).toBeVisible();
+    await expect(grid.locator('.mgrid-aspect').first()).toBeVisible();
   });
 
   test('the elements and modalities grid is a view of its own, with its table and a CSV download (#511)', async () => {

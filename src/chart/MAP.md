@@ -4,7 +4,7 @@ Hand-rolled SVG rendering layer: chart wheels (single/bi-/tri-ring), aspect webs
 
 - `acg-map.ts` — Astrocartography world map (AC/DC/MC/IC + local-space lines). Deps: `astrology/astrocartography`, `astrology/bodies`, `domain/astrocartography`.
 - `antiscia-overlay.ts` — Antiscia/contra-antiscia chord overlay. Deps: `astrology/antiscia`, `./wheel`.
-- `aspect-matrix.ts` — Lower-triangular aspect staircase grid: under the wheel in the sheet export, and as its own on-screen view with selectable cells. Deps: `astrology/signs`, `./aspect-web`, `./glyphs`, `./sheet-geometry`.
+- `aspect-matrix.ts` — Lower-triangular aspect staircase grid: under the wheel in the sheet and PDF export; its position and orb helpers also feed the on-screen `ui/AspectMatrixGrid`. Deps: `astrology/signs`, `./aspect-web`, `./glyphs`, `./sheet-geometry`.
 - `coastline-110m.ts` — Generated Natural Earth 1:110m coastline (public domain) as a degree-space SVG path, loaded lazily under the ACG map (#667). Deps: none.
 - `pdf-map-data.ts` — Generated Natural Earth 1:50m land and borders for the PDF birth-place map, loaded lazily (#711). Deps: none.
 - `birth-map.ts` — Draws the PDF birth-place map as SVG (±20° around the birthplace) with an unlabelled pin on the birth coordinates (#711). Deps: `./svg-primitives`.

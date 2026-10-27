@@ -19,7 +19,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `table-selection.tsx` — The table side of the wheel selection: `TableSelection`, each row kind's selection key, and the shared "Show on the chart" button column. Deps: `interpretation/selection-key`, `chart/body-id`, `table-sort`.
 - `appearance-settings.ts` — Motion (follow the system / reduce) and Density (standard / compact) device preferences, applied as root attributes. Deps: none.
 - `MapSettingsDialog.tsx` + `MapSettingsDialog.messages.ts` + `map-settings.ts` — The Astrocartography map's staged settings dialog (line types, primary/additional bodies, Local Space, relocation), its applied-state summary and the pure settings logic. Deps: `primitives/StagedDialog`, `domain/astrocartography`.
-- `AspectMatrix.tsx` — The aspect matrix view: the sheet's grid with cells that select an aspect pair on the wheel. Deps: `chart/aspect-matrix`, `interpretation/selection-key`, `wheel-interaction`.
+- `AspectMatrixGrid.tsx` — The on-screen aspect matrix (#820): an HTML token-styled grid whose cells select an aspect pair on the wheel; screen only, the sheet/PDF keep the SVG. Deps: `chart/aspect-matrix`, `chart/glyphs`, `interpretation/selection-key`, `symbol-setting`.
 - `AppNav.tsx` + `AppNav.messages.ts` — Primary navigation (person tabs, Tools/Export menus). Deps: `person-nav`, `tools-nav`, `export-registry`, `domain/full-export`.
 - `AstroChartWheel.tsx` — Dev-only reference wheel via `@astrodraw/astrochart`. Deps: `chart/astrochart-adapter`.
 - `acg-map-labels.ts` — En/nl words for the astrocartography map's line names and legend, shared by screen and PDF (#667). Deps: `chart/acg-map`, `./astro-names.messages`, `./AstrocartographyView.messages`.
