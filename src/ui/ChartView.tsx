@@ -32,62 +32,28 @@
  * @conventions Exports `ChartDataView`, the shared tabbed chart+tables UI reused by CompositeView/SharedChartView; every value is recomputed from the stored birth moment via `domain/chart-compute.js`/`domain/chart-tables.js` rather than read from a saved Chart record; houses/angles/derived-points tables are hidden when `timeAccuracy === 'unknown'`. Text comes from co-located `ChartView.messages.ts` via `useMessages()`.
  * @exports ChartView, ChartDataView, emphasisColumns, positionColumns, houseCuspColumns, angleColumns, aspectColumns, dignityColumns, almutenCandidateColumns, conditionColumns, receptionColumns, dispositorColumns, declinationColumns, antisciaColumns, midpointTreeColumns, allMidpointsColumns, fixedStarColumns, fixedStarsScopeNoteOf, checkedStarsOf, derivedPointColumns, houseSystemLabel, zodiacLabel, rulershipLabel
  */
-import { formatFixed, formatOrb, formatTimestamp } from './format.js';
+import { formatTimestamp } from './format.js';
 import { PrintProvenance } from './PrintProvenance.js';
 import { HOUSE_SYSTEMS } from '../astrology/houses.js';
 import type { Zodiac } from '../ephemeris/types.js';
 import { ASPECTS, aspectHarmonicFamily, DEFAULT_ORB_CONFIG, type Aspect } from '../astrology/aspects.js';
-import { Tooltip } from './primitives/Tooltip.js';
-import { GlossaryTerm } from './GlossaryTerm.js';
 import { Select } from './primitives/Select.js';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  allMidpointsRows,
-  almutenOfAscendant,
-  angleRows,
-  antisciaRows,
   aspectRows,
-  chartShapeOf,
   chartSheetInput,
   chartSheetMetaLines,
   chartWheelRing,
-  conditionRows,
-  declinationContactRows,
   derivedPointRows,
-  EMPHASIS_MODALITIES,
-  emphasisRows,
-  dignityRows,
-  dispositorRows,
-  fixedStarRows,
-  filterAspectRowsByHarmonicFamily,
-  houseCuspRows,
-  midpointTreeRows,
   positionRows,
-  receptionRows,
   visiblePositions,
-  type AllMidpointsRow,
-  type AlmutenCandidateRow,
-  type AngleRow,
-  type AntisciaRow,
-  type AspectRow,
-  type ConditionRow,
-  type DeclinationContactRow,
-  type DerivedPointRow,
-  type DignityRow,
-  type DispositorRow,
-  type EmphasisRow,
-  type FixedStarRow,
-  type HouseCuspRow,
-  type MidpointTreeRow,
   type PointVisibilityOptions,
-  type ReceptionRow,
   type PositionRow,
 } from '../domain/chart-tables.js';
 import { derivedPointPlacementFacts } from '../domain/derived-point-position.js';
 import {
   computeChartData,
   housesAreDefined,
-  NATAL_FIXED_STARS,
   type ChartCalculationOptions,
   type ChartData,
 } from '../domain/chart-compute.js';
@@ -105,11 +71,6 @@ import { buildChartArtifact } from './chart-artifact.js';
 import { momentKey } from '../time/encode.js';
 import { renderChartDialSvg, renderChartSheetSvg } from '../chart/chart-sheet.js';
 import { renderMultiWheelSvg, type CrossRingAspects, type WheelRingInput } from '../chart/multi-wheel.js';
-import { renderJonesShapeDiagramSvg } from '../chart/jones-shape-diagram.js';
-import { lunarPhaseOf } from '../astrology/lunar-phase.js';
-import { lotFormulaByKey } from '../astrology/arabic-parts.js';
-import type { DignityType } from '../astrology/reception.js';
-import { jonesBodyPositions } from '../astrology/jones-shapes.js';
 import {
   DEFAULT_EXTENDED_SETTINGS,
   toChartCalculationOptions,
@@ -118,13 +79,12 @@ import {
   type ExtendedSettings,
   settingsForContext,
 } from '../chart/extended-settings.js';
-import { standaloneSvg } from '../chart/standalone-svg.js';
 import { resolveWheelDisplayOptions } from '../chart/wheel-options.js';
+import { standaloneSvg } from '../chart/standalone-svg.js';
 import { interpretationExclusions } from '../chart/object-policy.js';
 import { AstroChartWheel } from './AstroChartWheel.js';
-import { bodyById, bodyByKey } from '../astrology/bodies.js';
+import { bodyById } from '../astrology/bodies.js';
 import { SIGNS } from '../astrology/signs.js';
-import { besiegementRescueList } from './besiegement-rescue-label.js';
 import { aspectDisplayName, bodyDisplayName, bodyShortName, signDisplayName } from './astro-names.messages.js';
 import { chartViewMessages } from './ChartView.messages.js';
 import { svgToPngBlob } from './chart-raster.js';
@@ -137,10 +97,7 @@ import { useOrbContextSource, useOrbLibrary } from './orb-library-store.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { useWheelIsolation } from './wheel-interaction.js';
-import { bodyGlyph, renderGlyph } from '../chart/glyphs.js';
 import type { SymbolClass } from '../chart/symbol-class.js';
-import { unicodeSymbol, textSymbol } from '../chart/symbol-text.js';
-import { findAspectPatterns, PATTERN_BODY_KEYS } from '../astrology/aspect-patterns.js';
 import { useSymbolClass } from './symbol-setting.js';
 import { useGlyphVariants } from './glyph-variant-setting.js';
 import { useRegisterExports } from './export-registry.js';
@@ -159,24 +116,13 @@ import { parseSelectionKey } from '../interpretation/selection.js';
 import { buildFocusObjectContext } from '../interpretation/focus-context.js';
 import { AspectMatrixGrid } from './AspectMatrixGrid.js';
 import { orbSourceName, useCalculationBasisLine } from './calculation-basis.js';
-import { EmphasisGrid } from './EmphasisGrid.js';
-import {
-  aspectSelectionKey,
-  bodySelectionKey,
-  derivedSelectionKey,
-  houseSelectionKey,
-  selectColumn,
-  signSelectionKey,
-  type TableSelection,
-} from './table-selection.js';
+import { type TableSelection } from './table-selection.js';
 import { SelectionInspector, type WheelIsolationFacts } from './SelectionInspector.js';
 import type { RulershipChoice } from '../astrology/rulership.js';
 import type { BoundsScheme } from '../astrology/bounds.js';
 import { PageHeader } from './PageHeader.js';
 import { PersonNotFound } from './PersonNotFound.js';
-import { SortableTable } from './SortableTable.js';
 import { useStore, useStoreState } from './store-context.js';
-import type { TableColumn } from './table-sort.js';
 import type { EphemerisProvider } from '../ephemeris/types.js';
 import type { Locale } from '../interpretation/schema.js';
 import type { BirthMomentInput } from '../time/types.js';
@@ -197,6 +143,58 @@ import type { ChosenFixedStar, CustomPointDefinition } from '../domain/person.js
 import { serializeFixedStars } from './fixed-star-draft.js';
 import { FormulaError, redundantBuiltInPoint } from '../domain/custom-point.js';
 import { parseFormula } from '../astrology/formula-parser.js';
+import {
+  aspectColumns,
+  declinationColumns,
+  antisciaColumns,
+  midpointTreeColumns,
+  allMidpointsColumns,
+  fixedStarsScopeNoteOf,
+  checkedStarsOf,
+  fixedStarColumns,
+  renderAspectsTable,
+} from './ChartViewAspects.js';
+import { emphasisColumns, renderElementsView } from './ChartViewElements.js';
+import {
+  positionColumns,
+  houseCuspColumns,
+  angleColumns,
+  derivedPointColumns,
+  renderPositionsTable,
+  renderHousesTable,
+  renderDerivedTable,
+  renderPlacementsView,
+} from './ChartViewPlacements.js';
+import {
+  dignityColumns,
+  almutenCandidateColumns,
+  conditionColumns,
+  dispositorColumns,
+  receptionColumns,
+  renderDignitiesTable,
+  renderPatternsView,
+} from './ChartViewPatterns.js';
+
+export {
+  aspectColumns,
+  declinationColumns,
+  antisciaColumns,
+  midpointTreeColumns,
+  allMidpointsColumns,
+  fixedStarsScopeNoteOf,
+  checkedStarsOf,
+  fixedStarColumns,
+  emphasisColumns,
+  positionColumns,
+  houseCuspColumns,
+  angleColumns,
+  derivedPointColumns,
+  dignityColumns,
+  almutenCandidateColumns,
+  conditionColumns,
+  dispositorColumns,
+  receptionColumns,
+};
 
 /** The saved shape of the formula list: the same fields `CustomPointEditor` writes, `enabled` only when off (#824). */
 function serializeCustomPoints(points: readonly CustomPointDefinition[]): readonly {
@@ -314,814 +312,6 @@ export function rulershipLabel(rulership: string): string {
   return rulership.charAt(0).toUpperCase() + rulership.slice(1);
 }
 
-const degreeColumns = <
-  T extends { readonly sign: string; readonly degree: number; readonly minute: number; readonly second: number },
->(
-  t: typeof chartViewMessages.en,
-  locale: Locale,
-): readonly TableColumn<T>[] => [
-  {
-    key: 'sign',
-    label: t.signLabel,
-    valueOf: (row) => row.sign,
-    render: (row) => signDisplayName(row.sign, locale),
-  },
-  { key: 'degree', label: t.degLabel, valueOf: (row) => row.degree },
-  { key: 'minute', label: t.minLabel, valueOf: (row) => row.minute },
-  { key: 'second', label: t.secLabel, valueOf: (row) => row.second },
-];
-
-/**
- * A body's symbol in a table cell, in the class the reader chose (#419): a small drawn glyph, the Unicode
- * character, or the three-letter code. The accessible name comes from the body's own name column, so the
- * cell is hidden from assistive technology rather than read as "SUN" or a stray character.
- */
-function symbolCell(bodyKey: string, fallback: string, symbolClass: SymbolClass): React.ReactNode {
-  const definition = bodyGlyph(bodyKey);
-  if (definition === undefined) return fallback;
-  if (symbolClass === 'text') {
-    return (
-      <span className="table-symbol-text" aria-hidden="true">
-        {textSymbol('body', bodyKey) ?? fallback}
-      </span>
-    );
-  }
-  if (symbolClass === 'unicode') {
-    return <span aria-hidden="true">{unicodeSymbol('body', bodyKey) ?? fallback}</span>;
-  }
-  return (
-    <svg
-      className="table-symbol"
-      viewBox="0 0 100 100"
-      aria-hidden="true"
-      focusable="false"
-      // Generated by this app from its own glyph registry, never user-supplied markup.
-      dangerouslySetInnerHTML={{ __html: renderGlyph(definition, 50, 50, 100, 'chart-glyph') }}
-    />
-  );
-}
-
-export function positionColumns(
-  t: typeof chartViewMessages.en,
-  locale: Locale,
-  symbolClass: SymbolClass,
-  selection?: TableSelection,
-): readonly TableColumn<PositionRow>[] {
-  return [
-    ...(selection === undefined
-      ? []
-      : [
-          selectColumn<PositionRow>(
-            t,
-            selection,
-            (row) => (selection.selectableBodies.has(row.bodyKey) ? bodySelectionKey(row.bodyKey) : undefined),
-            (row) => bodyDisplayName(row.bodyKey, locale),
-          ),
-        ]),
-    {
-      key: 'glyph',
-      label: t.symbolLabel,
-      valueOf: (row) => row.glyph,
-      renderCell: (row) => symbolCell(row.bodyKey, row.glyph, symbolClass),
-    },
-    {
-      key: 'bodyName',
-      label: t.bodyLabel,
-      valueOf: (row) => row.bodyName,
-      render: (row) => bodyDisplayName(row.bodyKey, locale),
-    },
-    ...degreeColumns<PositionRow>(t, locale),
-    // A sign has no table of its own, so its keyboard route to the wheel's sign selection is here, beside the sign it names (#511).
-    ...(selection === undefined
-      ? []
-      : [
-          selectColumn<PositionRow>(
-            t,
-            selection,
-            (row) => signSelectionKey(row.sign),
-            (row) => signDisplayName(row.sign, locale),
-            { key: 'selectSign', column: t.showSignColumn, button: t.showSignButton },
-          ),
-        ]),
-    {
-      key: 'house',
-      label: t.houseLabel,
-      align: 'end',
-      valueOf: (row) => row.house ?? '',
-      render: (row) => (row.house === undefined ? '—' : String(row.house)),
-    },
-    {
-      key: 'speed',
-      label: t.speedLabel,
-      labelTooltip: t.speedTooltip,
-      align: 'end',
-      valueOf: (row) => row.speed ?? '',
-      render: (row) => (row.speed === undefined ? '—' : formatFixed(row.speed, 4)),
-    },
-    {
-      key: 'retrograde',
-      label: t.rxLabel,
-      labelTooltip: t.retrogradeTooltip,
-      valueOf: (row) => row.retrograde ?? false,
-      // Inside the station window (#724) the station marker replaces ℞; with the window off, `stationary` is never set.
-      render: (row) =>
-        row.stationary === true
-          ? row.stationType === 'first'
-            ? t.stationFirstMarker
-            : row.stationType === 'second'
-              ? t.stationSecondMarker
-              : t.stationMarker
-          : row.retrograde
-            ? '℞'
-            : '',
-    },
-    {
-      key: 'anaretic',
-      label: t.anareticLabel,
-      valueOf: (row) => row.anaretic,
-      align: 'center',
-      render: (row) => (row.anaretic ? '✓' : ''),
-    },
-    {
-      key: 'outOfBounds',
-      label: t.outOfBoundsLabel,
-      valueOf: (row) => row.outOfBounds ?? false,
-      align: 'center',
-      render: (row) => (row.outOfBounds === true ? '✓' : ''),
-    },
-  ];
-}
-
-export function houseCuspColumns(
-  t: typeof chartViewMessages.en,
-  locale: Locale,
-  selection?: TableSelection,
-): readonly TableColumn<HouseCuspRow>[] {
-  return [
-    ...(selection === undefined
-      ? []
-      : [
-          selectColumn<HouseCuspRow>(
-            t,
-            selection,
-            (row) => houseSelectionKey(row.house),
-            (row) => `${t.houseLabel} ${String(row.house)}`,
-          ),
-        ]),
-    { key: 'house', label: t.houseLabel, valueOf: (row) => row.house },
-    ...degreeColumns<HouseCuspRow>(t, locale),
-  ];
-}
-
-export function angleColumns(t: typeof chartViewMessages.en, locale: Locale): readonly TableColumn<AngleRow>[] {
-  return [{ key: 'label', label: t.angleLabel, valueOf: (row) => row.label }, ...degreeColumns<AngleRow>(t, locale)];
-}
-
-export function aspectColumns(
-  t: typeof chartViewMessages.en,
-  locale: Locale,
-  selection?: TableSelection,
-): readonly TableColumn<AspectRow>[] {
-  return [
-    ...(selection === undefined
-      ? []
-      : [
-          selectColumn<AspectRow>(
-            t,
-            selection,
-            (row) =>
-              selection.selectableBodies.has(row.bodyAKey) && selection.selectableBodies.has(row.bodyBKey)
-                ? aspectSelectionKey(row)
-                : undefined,
-            (row) =>
-              `${bodyDisplayName(row.bodyAKey, locale)} ${aspectDisplayName(row.aspectKey, locale)} ${bodyDisplayName(row.bodyBKey, locale)}`,
-          ),
-        ]),
-    {
-      key: 'bodyAName',
-      label: t.bodyALabel,
-      valueOf: (row) => row.bodyAName,
-      render: (row) => bodyDisplayName(row.bodyAKey, locale),
-    },
-    {
-      key: 'aspect',
-      label: t.aspectLabel,
-      labelTooltip: t.aspectTooltip,
-      valueOf: (row) => row.aspect,
-      render: (row) => aspectDisplayName(row.aspectKey, locale),
-    },
-    {
-      key: 'bodyBName',
-      label: t.bodyBLabel,
-      valueOf: (row) => row.bodyBName,
-      render: (row) => bodyDisplayName(row.bodyBKey, locale),
-    },
-    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => formatOrb(row.orb) },
-    {
-      key: 'applying',
-      label: t.applyingLabel,
-      labelTooltip: t.applyingTooltip,
-      valueOf: (row) => row.applying,
-      render: (row) => (row.applying ? t.applying : t.separating),
-    },
-    {
-      key: 'harmonicFamily',
-      label: t.harmonicFamilyLabel,
-      labelTooltip: t.harmonicFamilyTooltip,
-      valueOf: (row) => aspectHarmonicFamily(row.aspectKey) ?? 0,
-      render: (row) => {
-        const family = aspectHarmonicFamily(row.aspectKey);
-        return family === undefined ? '' : `H${String(family)}`;
-      },
-    },
-  ];
-}
-
-/** The Houses table's selected row: the house whose cusp the wheel has selected, if any. */
-function selectedHouseRowKey(data: ChartData, selection: TableSelection | undefined): string | undefined {
-  const row = houseCuspRows(data).find((candidate) => houseSelectionKey(candidate.house) === selection?.selectedKey);
-  return row === undefined ? undefined : String(row.house);
-}
-
-export function dignityColumns(t: typeof chartViewMessages.en, locale: Locale): readonly TableColumn<DignityRow>[] {
-  return [
-    {
-      key: 'bodyName',
-      label: t.bodyLabel,
-      valueOf: (row) => row.bodyName,
-      render: (row) => bodyDisplayName(row.bodyKey, locale),
-    },
-    {
-      key: 'ruler',
-      label: t.rulerLabel,
-      labelTooltip: t.rulerTooltip,
-      valueOf: (row) => row.ruler,
-      align: 'center',
-      render: (row) => (row.ruler ? '✓' : ''),
-    },
-    {
-      key: 'exalted',
-      label: t.exaltedLabel,
-      labelTooltip: t.exaltedTooltip,
-      valueOf: (row) => row.exalted,
-      align: 'center',
-      render: (row) => (row.exalted ? '✓' : ''),
-    },
-    {
-      key: 'detriment',
-      label: t.detrimentLabel,
-      labelTooltip: t.detrimentTooltip,
-      valueOf: (row) => row.detriment,
-      align: 'center',
-      render: (row) => (row.detriment ? '✓' : ''),
-    },
-    {
-      key: 'fall',
-      label: t.fallLabel,
-      labelTooltip: t.fallTooltip,
-      valueOf: (row) => row.fall,
-      align: 'center',
-      render: (row) => (row.fall ? '✓' : ''),
-    },
-    {
-      key: 'triplicity',
-      label: t.triplicityLabel,
-      labelTooltip: t.triplicityTooltip,
-      valueOf: (row) => row.triplicity,
-      align: 'center',
-      render: (row) => (row.triplicity ? '✓' : ''),
-    },
-    {
-      key: 'bound',
-      label: t.boundLabel,
-      labelTooltip: t.boundTooltip,
-      valueOf: (row) => row.bound,
-      align: 'center',
-      render: (row) => (row.bound ? '✓' : ''),
-    },
-    {
-      key: 'face',
-      label: t.faceLabel,
-      labelTooltip: t.faceTooltip,
-      valueOf: (row) => row.face,
-      align: 'center',
-      render: (row) => (row.face ? '✓' : ''),
-    },
-    { key: 'points', label: t.dignityPointsLabel, valueOf: (row) => row.points },
-    {
-      key: 'peregrine',
-      label: t.peregrineLabel,
-      labelTooltip: t.peregrineTooltip,
-      valueOf: (row) => row.peregrine,
-      align: 'center',
-      render: (row) => (row.peregrine ? '✓' : ''),
-    },
-  ];
-}
-
-/** Every Almuten-of-the-Ascendant candidate's own score breakdown (#551) — not only the winner's name. */
-export function almutenCandidateColumns(
-  t: typeof chartViewMessages.en,
-  locale: Locale,
-): readonly TableColumn<AlmutenCandidateRow>[] {
-  return [
-    {
-      key: 'bodyName',
-      label: t.bodyLabel,
-      valueOf: (row) => row.bodyName,
-      render: (row) => bodyDisplayName(row.bodyKey, locale),
-    },
-    {
-      key: 'ruler',
-      label: t.rulerLabel,
-      valueOf: (row) => row.ruler,
-      align: 'center',
-      render: (row) => (row.ruler ? '✓' : ''),
-    },
-    {
-      key: 'exalted',
-      label: t.exaltedLabel,
-      valueOf: (row) => row.exalted,
-      align: 'center',
-      render: (row) => (row.exalted ? '✓' : ''),
-    },
-    {
-      key: 'triplicity',
-      label: t.triplicityLabel,
-      valueOf: (row) => row.triplicity,
-      align: 'center',
-      render: (row) => (row.triplicity ? '✓' : ''),
-    },
-    {
-      key: 'bound',
-      label: t.boundLabel,
-      valueOf: (row) => row.bound,
-      align: 'center',
-      render: (row) => (row.bound ? '✓' : ''),
-    },
-    {
-      key: 'face',
-      label: t.faceLabel,
-      valueOf: (row) => row.face,
-      align: 'center',
-      render: (row) => (row.face ? '✓' : ''),
-    },
-    { key: 'points', label: t.dignityPointsLabel, valueOf: (row) => row.points },
-  ];
-}
-
-/** The traditional planetary-condition table (#547) — sect alignment, angularity, hayz, motion, besiegement, solar phase/proximity. */
-export function conditionColumns(
-  t: typeof chartViewMessages.en,
-  locale: Locale,
-  motionScoreVisible = false,
-): readonly TableColumn<ConditionRow>[] {
-  const sectAlignmentLabel = (row: ConditionRow): string =>
-    row.sectAlignment === 'ofSect' ? t.ofSect : row.sectAlignment === 'contraSect' ? t.contraSect : t.sectNeutral;
-  const angularityLabel = (row: ConditionRow): string =>
-    row.angularity === 'angular'
-      ? t.angular
-      : row.angularity === 'succedent'
-        ? t.succedent
-        : row.angularity === 'cadent'
-          ? t.cadent
-          : '—';
-  const motionLabel = (row: ConditionRow): string =>
-    row.motion === 'retrograde'
-      ? t.retrogradeLabel
-      : row.motion === 'stationary'
-        ? row.stationType === 'first'
-          ? t.stationaryFirstLabel
-          : row.stationType === 'second'
-            ? t.stationarySecondLabel
-            : t.stationaryLabel
-        : t.directLabel;
-  const solarPhaseLabel = (row: ConditionRow): string =>
-    row.solarPhase === 'oriental' ? t.oriental : row.solarPhase === 'occidental' ? t.occidental : '—';
-  const solarConditionLabel = (row: ConditionRow): string =>
-    row.solarCondition === 'cazimi'
-      ? t.cazimi
-      : row.solarCondition === 'combust'
-        ? t.combust
-        : row.solarCondition === 'underTheBeams'
-          ? t.underTheBeams
-          : row.solarCondition === 'free'
-            ? t.solarConditionFree
-            : '—';
-  return [
-    {
-      key: 'bodyName',
-      label: t.bodyLabel,
-      valueOf: (row) => row.bodyName,
-      render: (row) => bodyDisplayName(row.bodyKey, locale),
-    },
-    { key: 'points', label: t.dignityPointsLabel, valueOf: (row) => row.points },
-    {
-      key: 'peregrine',
-      label: t.peregrineLabel,
-      labelTooltip: t.peregrineTooltip,
-      valueOf: (row) => row.peregrine,
-      align: 'center',
-      render: (row) => (row.peregrine ? '✓' : ''),
-    },
-    {
-      key: 'sectAlignment',
-      label: t.sectAlignmentLabel,
-      labelTooltip: t.sectAlignmentTooltip,
-      valueOf: (row) => row.sectAlignment,
-      render: sectAlignmentLabel,
-    },
-    {
-      key: 'angularity',
-      label: t.angularityLabel,
-      labelTooltip: t.angularityTooltip,
-      valueOf: (row) => row.angularity ?? '',
-      render: angularityLabel,
-    },
-    { key: 'motion', label: t.motionLabel, valueOf: (row) => row.motion, render: motionLabel },
-    // Only with the motion score on (#724), so the table is unchanged while it is off.
-    ...(motionScoreVisible
-      ? [
-          {
-            key: 'motionScore',
-            label: t.motionScoreLabel,
-            labelTooltip: t.motionScoreTooltip,
-            valueOf: (row: ConditionRow) => row.motionScore ?? '',
-            align: 'center' as const,
-            render: (row: ConditionRow) =>
-              row.motionScore === undefined
-                ? '—'
-                : row.motionScore > 0
-                  ? `+${String(row.motionScore)}`
-                  : String(row.motionScore),
-          },
-        ]
-      : []),
-    {
-      key: 'inHayz',
-      label: t.hayzLabel,
-      labelTooltip: t.hayzTooltip,
-      valueOf: (row) => row.inHayz ?? false,
-      align: 'center',
-      render: (row) => (row.inHayz === true ? '✓' : row.inHayz === false ? '' : '—'),
-    },
-    {
-      key: 'besieged',
-      label: t.besiegedLabel,
-      labelTooltip: t.besiegedTooltip,
-      valueOf: (row) => row.besieged,
-      align: 'center',
-      render: (row) =>
-        !row.besieged
-          ? ''
-          : row.besiegementRescuedBy === undefined
-            ? '✓'
-            : `✓ (${t.besiegedEased(besiegementRescueList(row.besiegementRescuedBy, locale))})`,
-    },
-    {
-      key: 'solarPhase',
-      label: t.solarPhaseLabel,
-      labelTooltip: t.solarPhaseTooltip,
-      valueOf: (row) => row.solarPhase ?? '',
-      render: solarPhaseLabel,
-    },
-    {
-      key: 'solarCondition',
-      label: t.solarConditionLabel,
-      labelTooltip: t.solarConditionTooltip,
-      valueOf: (row) => row.solarCondition ?? '',
-      render: solarConditionLabel,
-    },
-  ];
-}
-
-export function dispositorColumns(
-  t: typeof chartViewMessages.en,
-  locale: Locale,
-): readonly TableColumn<DispositorRow>[] {
-  return [
-    {
-      key: 'bodyName',
-      label: t.bodyLabel,
-      valueOf: (row) => row.bodyName,
-      render: (row) => bodyDisplayName(row.bodyKey, locale),
-    },
-    {
-      key: 'chain',
-      label: t.chainLabel,
-      valueOf: (row) =>
-        row.chain.map((key) => bodyByKey(key)?.name ?? key).join(' → ') +
-        (row.coDispositorKey === undefined
-          ? ''
-          : ` (+ ${bodyByKey(row.coDispositorKey)?.name ?? row.coDispositorKey})`),
-      render: (row) =>
-        row.chain.map((key) => bodyDisplayName(key, locale)).join(' → ') +
-        (row.coDispositorKey === undefined ? '' : ` (+ ${bodyDisplayName(row.coDispositorKey, locale)})`),
-    },
-    {
-      key: 'finalDispositorName',
-      label: t.finalDispositorLabel,
-      valueOf: (row) => row.finalDispositorName ?? '',
-      render: (row) => (row.finalDispositorKey === undefined ? '—' : bodyDisplayName(row.finalDispositorKey, locale)),
-    },
-    { key: 'cycle', label: t.cycleLabel, valueOf: (row) => row.cycle, render: (row) => (row.cycle ? '✓' : '') },
-    {
-      key: 'mutualReception',
-      label: t.mutualReceptionLabel,
-      valueOf: (row) => row.mutualReception,
-      align: 'center',
-      render: (row) => (row.mutualReception ? '✓' : ''),
-    },
-  ];
-}
-
-/** Short, translated dignity-type name, reusing the exact labels `dignityColumns`' own headers already use. */
-function dignityTypeLabel(t: typeof chartViewMessages.en, dignityType: DignityType): string {
-  switch (dignityType) {
-    case 'domicile':
-      return t.rulerLabel;
-    case 'exaltation':
-      return t.exaltedLabel;
-    case 'triplicity':
-      return t.triplicityLabel;
-    case 'bound':
-      return t.boundLabel;
-    case 'face':
-      return t.faceLabel;
-    default:
-      return dignityType;
-  }
-}
-
-/** Every receiving pair among the traditional planets (#548) — mutual/one-way reception, by which dignity, and whether the pair is also in aspect. */
-export function receptionColumns(t: typeof chartViewMessages.en, locale: Locale): readonly TableColumn<ReceptionRow>[] {
-  return [
-    {
-      key: 'bodyAName',
-      label: t.bodyALabel,
-      valueOf: (row) => row.bodyAName,
-      render: (row) => bodyDisplayName(row.bodyAKey, locale),
-    },
-    {
-      key: 'bodyBName',
-      label: t.bodyBLabel,
-      valueOf: (row) => row.bodyBName,
-      render: (row) => bodyDisplayName(row.bodyBKey, locale),
-    },
-    {
-      key: 'kind',
-      label: t.receptionKindLabel,
-      valueOf: (row) => row.kind,
-      render: (row) => (row.kind === 'mutual' ? t.mutualReceptionKind : t.oneWayReceptionKind),
-    },
-    {
-      key: 'aFromBTypes',
-      label: t.receptionAFromBLabel,
-      valueOf: (row) => row.aFromBTypes.join(','),
-      render: (row) => row.aFromBTypes.map((type) => dignityTypeLabel(t, type)).join(', '),
-    },
-    {
-      key: 'bFromATypes',
-      label: t.receptionBFromALabel,
-      valueOf: (row) => row.bFromATypes.join(','),
-      render: (row) => row.bFromATypes.map((type) => dignityTypeLabel(t, type)).join(', '),
-    },
-    {
-      key: 'sameDignityType',
-      label: t.receptionSameTypeLabel,
-      labelTooltip: t.receptionSameTypeTooltip,
-      valueOf: (row) => row.sameDignityType,
-      align: 'center',
-      render: (row) => (row.sameDignityType ? '✓' : ''),
-    },
-    {
-      key: 'aspectLinked',
-      label: t.aspectLinkedLabel,
-      labelTooltip: t.aspectLinkedTooltip,
-      valueOf: (row) => row.aspectLinked,
-      align: 'center',
-      render: (row) => (row.aspectLinked ? '✓' : ''),
-    },
-  ];
-}
-
-export function declinationColumns(
-  t: typeof chartViewMessages.en,
-  locale: Locale,
-): readonly TableColumn<DeclinationContactRow>[] {
-  return [
-    {
-      key: 'bodyAName',
-      label: t.bodyALabel,
-      valueOf: (row) => row.bodyAName,
-      render: (row) => bodyDisplayName(row.bodyAKey, locale),
-    },
-    {
-      key: 'bodyBName',
-      label: t.bodyBLabel,
-      valueOf: (row) => row.bodyBName,
-      render: (row) => bodyDisplayName(row.bodyBKey, locale),
-    },
-    {
-      key: 'kind',
-      label: t.kindLabel,
-      labelTooltip: t.declinationKindTooltip,
-      valueOf: (row) => row.kind,
-      render: (row) => t[row.kind],
-    },
-    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => formatOrb(row.orb) },
-  ];
-}
-
-export function antisciaColumns(t: typeof chartViewMessages.en, locale: Locale): readonly TableColumn<AntisciaRow>[] {
-  return [
-    {
-      key: 'bodyName',
-      label: t.bodyLabel,
-      valueOf: (row) => row.bodyName,
-      render: (row) => bodyDisplayName(row.bodyKey, locale),
-    },
-    {
-      key: 'contactName',
-      label: t.contactLabel,
-      valueOf: (row) => row.contactName,
-      render: (row) => bodyDisplayName(row.contactKey, locale),
-    },
-    {
-      key: 'kind',
-      label: t.kindLabel,
-      labelTooltip: t.antisciaKindTooltip,
-      valueOf: (row) => row.kind,
-      render: (row) => (row.kind === 'antiscion' ? t.antiscion : t.contraAntiscion),
-    },
-    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => formatOrb(row.orb) },
-  ];
-}
-
-/**
- * The 90°-dial midpoint-tree table's columns (#556): which body sits on which pair's dial
- * point, the midpoint longitude itself (sign/degree/minute/second, reusing `degreeColumns`),
- * and the orb of the hit.
- */
-export function midpointTreeColumns(
-  t: typeof chartViewMessages.en,
-  locale: Locale,
-): readonly TableColumn<MidpointTreeRow>[] {
-  return [
-    {
-      key: 'bodyName',
-      label: t.bodyLabel,
-      valueOf: (row) => row.bodyName,
-      render: (row) => bodyDisplayName(row.bodyKey, locale),
-    },
-    {
-      key: 'pair',
-      label: t.pairLabel,
-      valueOf: (row) => `${row.pairAName}/${row.pairBName}`,
-      render: (row) => `${bodyDisplayName(row.pairAKey, locale)}/${bodyDisplayName(row.pairBKey, locale)}`,
-    },
-    ...degreeColumns<MidpointTreeRow>(t, locale),
-    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => formatOrb(row.orb) },
-  ];
-}
-
-/** The all-pairs midpoint table's columns (#555): every body pair's near ("direct") and far ("indirect") midpoint. */
-export function allMidpointsColumns(
-  t: typeof chartViewMessages.en,
-  locale: Locale,
-): readonly TableColumn<AllMidpointsRow>[] {
-  return [
-    {
-      key: 'bodyAName',
-      label: t.bodyALabel,
-      valueOf: (row) => row.bodyAName,
-      render: (row) => bodyDisplayName(row.bodyAKey, locale),
-    },
-    {
-      key: 'bodyBName',
-      label: t.bodyBLabel,
-      valueOf: (row) => row.bodyBName,
-      render: (row) => bodyDisplayName(row.bodyBKey, locale),
-    },
-    {
-      key: 'kind',
-      label: t.kindLabel,
-      labelTooltip: t.midpointKindTooltip,
-      valueOf: (row) => row.kind,
-      render: (row) => (row.kind === 'direct' ? t.directMidpoint : t.indirectMidpoint),
-    },
-    ...degreeColumns<AllMidpointsRow>(t, locale),
-  ];
-}
-
-/**
- * The sentence that says which stars the fixed-star table covers (#725), for the screen and the PDF alike:
- * `NATAL_FIXED_STARS` by default, or the stars the chart actually checked (the person's chosen ones, #803).
- */
-export function fixedStarsScopeNoteOf(
-  t: typeof chartViewMessages.en,
-  stars: readonly string[] = NATAL_FIXED_STARS,
-): string {
-  return t.fixedStarsScopeNote(stars.length, stars.join(', '));
-}
-
-/** The star names a computed chart checked (#803), in the order it looked them up; the preset when it has none. */
-export function checkedStarsOf(data: ChartData): readonly string[] {
-  return data.fixedStars === undefined ? NATAL_FIXED_STARS : [...data.fixedStars.keys()];
-}
-
-export function fixedStarColumns(t: typeof chartViewMessages.en, locale: Locale): readonly TableColumn<FixedStarRow>[] {
-  return [
-    // Star names (Regulus, Spica, ...) are proper nouns, the same in both locales — no glossary
-    // lookup needed, unlike body/aspect names.
-    { key: 'star', label: t.starLabel, labelTooltip: t.starTooltip, valueOf: (row) => row.star },
-    {
-      key: 'bodyName',
-      label: t.bodyLabel,
-      valueOf: (row) => row.bodyName,
-      render: (row) => bodyDisplayName(row.bodyKey, locale),
-    },
-    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => formatOrb(row.orb) },
-  ];
-}
-
-export function derivedPointColumns(
-  t: typeof chartViewMessages.en,
-  locale: Locale,
-  selection?: TableSelection,
-): readonly TableColumn<DerivedPointRow>[] {
-  return [
-    ...(selection === undefined
-      ? []
-      : [
-          selectColumn<DerivedPointRow>(
-            t,
-            selection,
-            (row) => derivedSelectionKey(row.pointKey),
-            (row) => row.label,
-          ),
-        ]),
-    { key: 'label', label: t.pointLabel, labelTooltip: t.derivedPointTooltip, valueOf: (row) => row.label },
-    ...degreeColumns<DerivedPointRow>(t, locale),
-    {
-      key: 'formula',
-      label: t.lotFormulaLabel,
-      labelTooltip: t.lotFormulaTooltip,
-      valueOf: (row) => {
-        const formula = row.pointKey === undefined ? undefined : lotFormulaByKey(row.pointKey);
-        return formula === undefined ? '' : `${formula.dayFormula} / ${formula.nightFormula}`;
-      },
-    },
-  ];
-}
-
-/** The element x modality table's columns: the element, the bodies in each modality, and the totals. */
-export function emphasisColumns(t: typeof chartViewMessages.en, locale: Locale): readonly TableColumn<EmphasisRow>[] {
-  const rowName = (row: EmphasisRow): string =>
-    row.rowKey === 'total' ? t.emphasisTotalLabel : t.elementNames[row.rowKey];
-  return [
-    { key: 'element', label: t.emphasisElementLabel, valueOf: rowName },
-    ...EMPHASIS_MODALITIES.map((modality): TableColumn<EmphasisRow> => ({
-      key: modality,
-      label: t.modalityNames[modality],
-      // The cells list body names (the counts only sort and copy), so they read from the start, not as numbers (#821).
-      align: 'start',
-      valueOf: (row) => row.counts[modality],
-      render: (row) =>
-        row.rowKey === 'total'
-          ? String(row.counts[modality])
-          : row.bodies[modality].length === 0
-            ? t.emphasisNone
-            : row.bodies[modality].map((bodyKey) => bodyShortName(bodyKey, locale)).join(', '),
-    })),
-    { key: 'total', label: t.emphasisTotalLabel, align: 'end', valueOf: (row) => row.total },
-  ];
-}
-
-/** The Elements & modalities view (#511): the exported sheet's grid, and the same twelve cells as a table. */
-function renderElementsView(
-  data: ChartData,
-  displayName: string,
-  pointVisibility: PointVisibilityOptions,
-  t: typeof chartViewMessages.en,
-  locale: Locale,
-): React.ReactNode {
-  const input = chartSheetInput(data, [], displayName, pointVisibility, (bodyKey) => bodyShortName(bodyKey, locale));
-  return (
-    <>
-      <p className="hint">{t.emphasisHint}</p>
-      <EmphasisGrid input={input.emphasis} labels={{ elements: t.elementNames, modalities: t.modalityNames }} />
-      <SortableTable
-        caption={t.emphasisCaption}
-        columns={emphasisColumns(t, locale)}
-        rows={emphasisRows(data, pointVisibility)}
-        getRowKey={(row) => row.rowKey}
-        downloadFilename={deriveExportFilename(displayName, 'elements-modalities', 'csv')}
-      />
-    </>
-  );
-}
-
 /** The Aspect matrix view (#511): the sheet's own grid, its aspect cells selecting that pair on the wheel. */
 function renderMatrixView(
   data: ChartData,
@@ -1205,429 +395,16 @@ function renderTableTab(
 ): React.ReactNode {
   switch (tab) {
     case 'positions':
-      return (
-        <>
-          <SortableTable
-            caption={t.positionsCaption}
-            columns={positionColumns(t, locale, symbolClass, selection)}
-            rows={positionRows(data, pointVisibility, showHouses)}
-            getRowKey={(row) => row.bodyKey}
-            selectedRowKey={
-              selection?.selectedKey === undefined
-                ? undefined
-                : positionRows(data, pointVisibility, showHouses).find(
-                    (row) => bodySelectionKey(row.bodyKey) === selection.selectedKey,
-                  )?.bodyKey
-            }
-            downloadFilename={deriveExportFilename(displayName, 'positions', 'csv')}
-          />
-          {/* With the station window on (#724), say what the St. markers are: the window is an Astraya convention. */}
-          {data.stationStates !== undefined && <p className="hint">{t.stationWindowNote}</p>}
-        </>
-      );
+      return renderPositionsTable(data, displayName, pointVisibility, showHouses, t, locale, symbolClass, selection);
     case 'houses':
-      return (
-        <>
-          <SortableTable
-            caption={t.housesCaption}
-            captionTerm="houses"
-            columns={houseCuspColumns(t, locale, selection)}
-            rows={houseCuspRows(data)}
-            getRowKey={(row) => String(row.house)}
-            selectedRowKey={selectedHouseRowKey(data, selection)}
-            downloadFilename={deriveExportFilename(displayName, 'houses', 'csv')}
-          />
-          <SortableTable
-            caption={t.anglesCaption}
-            columns={angleColumns(t, locale)}
-            rows={angleRows(data, pointVisibility)}
-            getRowKey={(row) => row.label}
-            downloadFilename={deriveExportFilename(displayName, 'angles', 'csv')}
-          />
-        </>
-      );
-    case 'aspects': {
-      const rows = filterAspectRowsByHarmonicFamily(aspectRows(data, pointVisibility), aspectHarmonicFamilyFilter);
-      const declinationRows = declinationContactRows(data);
-      const antiscionRows = antisciaRows(data);
-      const starRows = fixedStarRows(data, pointVisibility);
-      const midpointTreeHitRows =
-        pointVisibility.dial90Visible === true ? midpointTreeRows(data, pointVisibility.midpointTreeOrb) : [];
-      const allMidpointRows = pointVisibility.midpointsVisible === true ? allMidpointsRows(data) : [];
-      return (
-        <>
-          <SortableTable
-            caption={t.aspectsCaption}
-            captionTerm="aspect"
-            columns={aspectColumns(t, locale, selection)}
-            rows={rows}
-            getRowKey={(row) => `${row.bodyAKey}-${row.aspect}-${row.bodyBKey}`}
-            selectedRowKey={(() => {
-              const chosen =
-                selection?.selectedKey === undefined
-                  ? undefined
-                  : rows.find((row) => aspectSelectionKey(row) === selection.selectedKey);
-              return chosen === undefined ? undefined : `${chosen.bodyAKey}-${chosen.aspect}-${chosen.bodyBKey}`;
-            })()}
-            downloadFilename={deriveExportFilename(displayName, 'aspects', 'csv')}
-          />
-          {antiscionRows.length > 0 && (
-            <SortableTable
-              caption={t.antisciaCaption}
-              columns={antisciaColumns(t, locale)}
-              rows={antiscionRows}
-              getRowKey={(row) => `${row.bodyKey}-${row.kind}-${row.contactKey}`}
-              downloadFilename={deriveExportFilename(displayName, 'antiscia', 'csv')}
-            />
-          )}
-          {declinationRows.length > 0 && (
-            <SortableTable
-              caption={t.declinationsCaption}
-              captionTerm="declination"
-              columns={declinationColumns(t, locale)}
-              rows={declinationRows}
-              getRowKey={(row) => `${row.bodyAKey}-${row.kind}-${row.bodyBKey}`}
-              downloadFilename={deriveExportFilename(displayName, 'declinations', 'csv')}
-            />
-          )}
-          {starRows.length > 0 && (
-            <>
-              <SortableTable
-                caption={t.fixedStarsCaption}
-                columns={fixedStarColumns(t, locale)}
-                rows={starRows}
-                getRowKey={(row) => `${row.star}-${row.bodyKey}`}
-                downloadFilename={deriveExportFilename(displayName, 'fixed-stars', 'csv')}
-              />
-              <p className="hint">{fixedStarsScopeNoteOf(t, checkedStarsOf(data))}</p>
-            </>
-          )}
-          {midpointTreeHitRows.length > 0 && (
-            <SortableTable
-              caption={t.midpointTreeCaption}
-              columns={midpointTreeColumns(t, locale)}
-              rows={midpointTreeHitRows}
-              getRowKey={(row) => `${row.bodyKey}-${row.pairAKey}-${row.pairBKey}`}
-              downloadFilename={deriveExportFilename(displayName, 'midpoint-tree', 'csv')}
-            />
-          )}
-          {allMidpointRows.length > 0 && (
-            <SortableTable
-              caption={t.allMidpointsCaption}
-              columns={allMidpointsColumns(t, locale)}
-              rows={allMidpointRows}
-              getRowKey={(row) => `${row.bodyAKey}-${row.bodyBKey}-${row.kind}`}
-              downloadFilename={deriveExportFilename(displayName, 'midpoints', 'csv')}
-            />
-          )}
-        </>
-      );
-    }
-    case 'dignities': {
-      // Always traditional (#545) — almutenOfAscendant no longer takes a rulership/display-choice parameter.
-      const almuten = almutenOfAscendant(data, boundsScheme);
-      return (
-        <>
-          {almuten !== undefined && (
-            <>
-              <p className="hint">
-                {t.almutenOfAscendantSentence(almuten.almutens.map((key) => bodyDisplayName(key, locale)).join(', '))}{' '}
-                <Tooltip text={t.almutenTooltip} label={t.almutenTooltipLabel}>
-                  ?
-                </Tooltip>
-              </p>
-              <p className="hint">{t.almutenScopeNote}</p>
-              {/* Every candidate's own breakdown, not only the winner's name (#551). */}
-              <SortableTable
-                caption={t.almutenBreakdownCaption}
-                columns={almutenCandidateColumns(t, locale)}
-                rows={almuten.candidates}
-                getRowKey={(row) => row.bodyKey}
-                downloadFilename={deriveExportFilename(displayName, 'almuten', 'csv')}
-              />
-            </>
-          )}
-          <SortableTable
-            caption={t.dignitiesCaption}
-            captionTerm="dignity"
-            columns={dignityColumns(t, locale)}
-            rows={dignityRows(data, pointVisibility, boundsScheme)}
-            getRowKey={(row) => row.bodyKey}
-            downloadFilename={deriveExportFilename(displayName, 'dignities', 'csv')}
-          />
-          <h4 className="condition-section-header" style={{ marginTop: '1.5rem', marginBottom: '0.5rem' }}>
-            {t.conditionCaption}{' '}
-            <Tooltip text={t.conditionTooltip} label={t.conditionTooltipLabel}>
-              ?
-            </Tooltip>
-          </h4>
-          <p className="hint">{t.conditionHint}</p>
-          <SortableTable
-            caption={t.conditionCaption}
-            columns={conditionColumns(t, locale, pointVisibility.motionScoreVisible === true)}
-            rows={conditionRows(data, undefined, boundsScheme, {
-              motionScore: pointVisibility.motionScoreVisible === true,
-            })}
-            getRowKey={(row) => row.bodyKey}
-            downloadFilename={deriveExportFilename(displayName, 'condition', 'csv')}
-          />
-          <h4 className="dispositors-section-header" style={{ marginTop: '1.5rem', marginBottom: '0.5rem' }}>
-            <GlossaryTerm id="dispositor">{t.dispositorsCaption}</GlossaryTerm>{' '}
-            {/* The shared Tooltip (#456, #508) shows the same visible popup on hover, click and
-                keyboard focus — a bare <span title> or an unwired aria-label button only ever
-                reached a mouse-hover user, and never anyone who clicked expecting something to
-                open. */}
-            <Tooltip text={t.dispositorsTooltip} label={t.dispositorsTooltipLabel}>
-              ?
-            </Tooltip>
-          </h4>
-          <p className="hint">{t.dispositorsHint}</p>
-          <SortableTable
-            caption={t.dispositorsCaption}
-            captionTerm="dispositor"
-            columns={dispositorColumns(t, locale)}
-            rows={dispositorRows(data, pointVisibility, rulership)}
-            getRowKey={(row) => row.bodyKey}
-            downloadFilename={deriveExportFilename(displayName, 'dispositors', 'csv')}
-          />
-          <h4 className="reception-section-header" style={{ marginTop: '1.5rem', marginBottom: '0.5rem' }}>
-            {t.receptionCaption}{' '}
-            <Tooltip text={t.receptionTooltip} label={t.receptionTooltipLabel}>
-              ?
-            </Tooltip>
-          </h4>
-          <p className="hint">{t.receptionHint}</p>
-          <SortableTable
-            caption={t.receptionCaption}
-            columns={receptionColumns(t, locale)}
-            rows={receptionRows(data, boundsScheme)}
-            getRowKey={(row) => `${row.bodyAKey}-${row.bodyBKey}`}
-            downloadFilename={deriveExportFilename(displayName, 'reception', 'csv')}
-          />
-        </>
-      );
-    }
+      return renderHousesTable(data, displayName, pointVisibility, t, locale, selection);
+    case 'aspects':
+      return renderAspectsTable(data, displayName, pointVisibility, t, locale, selection, aspectHarmonicFamilyFilter);
+    case 'dignities':
+      return renderDignitiesTable(data, displayName, pointVisibility, t, locale, rulership, boundsScheme);
     case 'derived':
-      return (
-        <SortableTable
-          caption={t.derivedPointsCaption}
-          captionTerm="derivedPoint"
-          columns={derivedPointColumns(t, locale, selection)}
-          rows={derivedPointRows(data, pointVisibility)}
-          getRowKey={(row) => row.label}
-          selectedRowKey={
-            derivedPointRows(data, pointVisibility).find(
-              (row) => row.pointKey !== undefined && derivedSelectionKey(row.pointKey) === selection?.selectedKey,
-            )?.label
-          }
-          downloadFilename={deriveExportFilename(displayName, 'derived-points', 'csv')}
-        />
-      );
+      return renderDerivedTable(data, displayName, pointVisibility, t, locale, selection);
   }
-}
-
-/**
- * The chart-shape section (#430): the Jones shape with its diagram and an explanation worded as a
- * convention, then what else describes the chart's overall character rather than a position — the
- * Moon's phase and, when the chart has houses, its sect. The shape comes from the ten planets only
- * (`chartShapeOf`).
- */
-function renderShapeSection(
-  data: ChartData,
-  hasHouses: boolean,
-  t: typeof chartViewMessages.en,
-  locale: Locale,
-): React.ReactNode {
-  const shape = chartShapeOf(data);
-  const shapePositions = jonesBodyPositions(data.positions);
-  const sunBody = bodyByKey('sun');
-  const moonBody = bodyByKey('moon');
-  const sunLongitude = data.positions.find((position) => position.body === sunBody?.id)?.longitude;
-  const moonLongitude = data.positions.find((position) => position.body === moonBody?.id)?.longitude;
-  const lunarPhase =
-    sunLongitude === undefined || moonLongitude === undefined ? undefined : lunarPhaseOf(moonLongitude, sunLongitude);
-  return (
-    <>
-      {shape === undefined ? (
-        <p className="hint">{t.shapeCannotBeWorkedOut}</p>
-      ) : (
-        <div className="chart-shape-summary">
-          <div>
-            <p>
-              <strong>
-                {t.chartShapeSentence(
-                  t.jonesShapeLabels[shape.shape],
-                  shape.handle === undefined ? undefined : bodyDisplayName(bodyById(shape.handle)?.key ?? '', locale),
-                )}
-              </strong>
-            </p>
-            <p>{t.jonesShapeExplanations[shape.shape]}</p>
-            <p className="hint">{t.shapeSourceNote}</p>
-          </div>
-          <div
-            className="chart-shape-diagram-wrap"
-            aria-hidden="true"
-            dangerouslySetInnerHTML={{ __html: renderJonesShapeDiagramSvg(shape, shapePositions, 140) }}
-          />
-        </div>
-      )}
-      {lunarPhase !== undefined && (
-        <p className="lunar-phase-summary">
-          {t.lunarPhaseSentence(
-            t.lunarPhaseLabels[lunarPhase.phase],
-            formatElongation(lunarPhase.elongation),
-            lunarPhase.waxing,
-            Math.round(lunarPhase.illumination * 100),
-          )}
-        </p>
-      )}
-      {hasHouses && (
-        <p>
-          {t.sectPrefix} {data.sect === 'day' ? t.dayChart : t.nightChart}
-        </p>
-      )}
-      {renderAspectPatterns(data, t, locale)}
-    </>
-  );
-}
-
-/**
- * Aspect configurations (#640): the multi-body shapes among the ten planets, read off the chart's own aspects, so they
- * follow the orbs in force. Named only; no interpretation text exists for them yet.
- */
-function renderAspectPatterns(data: ChartData, t: typeof chartViewMessages.en, locale: Locale): React.ReactNode {
-  const planets = PATTERN_BODY_KEYS.flatMap((key) => {
-    const body = bodyByKey(key);
-    return body === undefined ? [] : [body.id];
-  });
-  const patterns = findAspectPatterns(data.aspects, planets);
-  const name = (id: number): string => bodyDisplayName(bodyById(id)?.key ?? '', locale);
-  return (
-    <section aria-labelledby="aspect-patterns-heading">
-      <h3 id="aspect-patterns-heading">{t.aspectPatternsHeading}</h3>
-      {patterns.length === 0 ? (
-        <p className="hint">{t.noAspectPatterns}</p>
-      ) : (
-        <ul>
-          {patterns.map((pattern) => (
-            <li key={`${pattern.kind}-${pattern.bodies.join('-')}`}>
-              {t.aspectPatternLine(
-                t.aspectPatternNames[pattern.kind],
-                pattern.bodies.map(name).join(t.aspectPatternSeparator),
-                pattern.kind === 't-square' || pattern.kind === 'yod' || pattern.kind === 'kite'
-                  ? name(pattern.bodies[0] ?? -1)
-                  : undefined,
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
-      <p className="hint">{t.aspectPatternsSourceNote}</p>
-    </section>
-  );
-}
-
-/**
- * The Placements view (#511): Positions, Houses & angles, and Derived points, stacked with visible
- * headings rather than as separate tabs — `docs/ui/UI-UX_GUIDELINES.md` §2's exact wording. Houses and
- * derived points are skipped (not the whole view) when the chart has no houses.
- */
-function renderPlacementsView(
-  data: ChartData,
-  displayName: string,
-  pointVisibility: PointVisibilityOptions,
-  housesRenderable: boolean,
-  t: typeof chartViewMessages.en,
-  locale: Locale,
-  rulership: RulershipChoice,
-  symbolClass: SymbolClass,
-  boundsScheme: BoundsScheme,
-  selection?: TableSelection,
-): React.ReactNode {
-  return (
-    <>
-      {renderTableTab(
-        'positions',
-        data,
-        displayName,
-        pointVisibility,
-        housesRenderable,
-        t,
-        locale,
-        rulership,
-        symbolClass,
-        boundsScheme,
-        selection,
-      )}
-      {housesRenderable && (
-        <>
-          {renderTableTab(
-            'houses',
-            data,
-            displayName,
-            pointVisibility,
-            housesRenderable,
-            t,
-            locale,
-            rulership,
-            symbolClass,
-            boundsScheme,
-            selection,
-          )}
-          {renderTableTab(
-            'derived',
-            data,
-            displayName,
-            pointVisibility,
-            housesRenderable,
-            t,
-            locale,
-            rulership,
-            symbolClass,
-            boundsScheme,
-            selection,
-          )}
-        </>
-      )}
-    </>
-  );
-}
-
-/**
- * The Patterns & condition view (#511): the chart shape (with the Moon's phase and sect) next to its
- * own explanation, then dignities and dispositors — `docs/ui/UI-UX_GUIDELINES.md` §2's exact grouping.
- */
-function renderPatternsView(
-  data: ChartData,
-  displayName: string,
-  pointVisibility: PointVisibilityOptions,
-  housesRenderable: boolean,
-  t: typeof chartViewMessages.en,
-  locale: Locale,
-  rulership: RulershipChoice,
-  symbolClass: SymbolClass,
-  boundsScheme: BoundsScheme,
-  selection?: TableSelection,
-): React.ReactNode {
-  return (
-    <>
-      <h3>{t.shapeTabLabel}</h3>
-      {renderShapeSection(data, housesRenderable, t, locale)}
-      {renderTableTab(
-        'dignities',
-        data,
-        displayName,
-        pointVisibility,
-        housesRenderable,
-        t,
-        locale,
-        rulership,
-        symbolClass,
-        boundsScheme,
-        selection,
-      )}
-    </>
-  );
 }
 
 /** PNG export resolutions (#67): the wheel's own default pixel size, and 2x/4x of it. */
@@ -1637,12 +414,6 @@ function pngSizes(t: typeof chartViewMessages.en): readonly { readonly label: st
     { label: t.pngMedium, size: 1200 },
     { label: t.pngLarge, size: 2400 },
   ];
-}
-
-/** `337°28'`: an elongation to the minute, the way Astro-Seek prints it beside the phase name. */
-function formatElongation(elongation: number): string {
-  const totalMinutes = Math.round(elongation * 60) % (360 * 60);
-  return `${String(Math.floor(totalMinutes / 60))}°${String(totalMinutes % 60).padStart(2, '0')}'`;
 }
 
 /** `data-sign` on the wheel is the sign's name lowercased (`multi-wheel.ts`). */
@@ -2374,9 +1145,7 @@ export function ChartDataView({
                           housesRenderable,
                           t,
                           locale,
-                          rulership,
                           symbolClass,
-                          boundsScheme,
                         )}
                       {tab === 'patterns' &&
                         renderPatternsView(
@@ -2387,7 +1156,6 @@ export function ChartDataView({
                           t,
                           locale,
                           rulership,
-                          symbolClass,
                           boundsScheme,
                         )}
                     </>
@@ -2472,9 +1240,7 @@ export function ChartDataView({
                       housesRenderable,
                       t,
                       locale,
-                      rulership,
                       symbolClass,
-                      boundsScheme,
                       tableSelection,
                     )}
                   {currentTab === 'patterns' &&
@@ -2486,9 +1252,7 @@ export function ChartDataView({
                       t,
                       locale,
                       rulership,
-                      symbolClass,
                       boundsScheme,
-                      tableSelection,
                     )}
                 </div>
               )}
