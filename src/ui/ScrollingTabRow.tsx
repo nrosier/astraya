@@ -17,6 +17,7 @@
  */
 import { Children, useEffect, useId, useRef, useState } from 'react';
 import { Button } from './primitives/Button.js';
+import { ACTIVE_ROUTE_LINK, useTabRowScroll } from './primitives/useTabRowScroll.js';
 
 export interface ScrollingTabRowBaseProps {
   /** The accessible name of the tab navigation. */
@@ -49,12 +50,6 @@ const TOGGLE_ATTRIBUTE = 'data-tab-row-toggle';
 
 export type ScrollingTabRowProps = ScrollingTabRowBaseProps & ScrollingTabRowActions;
 
-/** Moves the scroller without the row's smooth animation (each wheel tick starts where the last one landed). */
-function jumpTo(scroller: HTMLElement, left: number): void {
-  if (typeof scroller.scrollTo === 'function') scroller.scrollTo({ left, behavior: 'instant' });
-  else scroller.scrollLeft = left;
-}
-
 export function ScrollingTabRow({
   label,
   children,
@@ -67,84 +62,12 @@ export function ScrollingTabRow({
   className,
   navClassName,
 }: ScrollingTabRowProps): React.JSX.Element {
-  const scrollerRef = useRef<HTMLDivElement>(null);
   const groupRef = useRef<HTMLDivElement>(null);
-  const [edges, setEdges] = useState({ start: false, end: false });
+  const { scrollerRef, edges } = useTabRowScroll(activeKey, ACTIVE_ROUTE_LINK);
   const [menuOpen, setMenuOpen] = useState(false);
   const panelId = useId();
   const hasTabs = Children.count(children) > 0;
   const hasActions = actions !== undefined && actions !== null && actions !== false;
-
-  const measureRef = useRef<() => void>(() => undefined);
-
-  // Which edges still have tabs behind them: read from the scroll position, never assumed.
-  useEffect(() => {
-    const scroller = scrollerRef.current;
-    if (scroller === null) return undefined;
-    const measure = (): void => {
-      const start = scroller.scrollLeft > 0;
-      const end = scroller.scrollLeft < scroller.scrollWidth - scroller.clientWidth - 1;
-      setEdges((current) => (current.start === start && current.end === end ? current : { start, end }));
-    };
-    measureRef.current = measure;
-    measure();
-    scroller.addEventListener('scroll', measure, { passive: true });
-    window.addEventListener('resize', measure);
-    const observer = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(measure);
-    observer?.observe(scroller);
-    return () => {
-      scroller.removeEventListener('scroll', measure);
-      window.removeEventListener('resize', measure);
-      observer?.disconnect();
-    };
-  }, []);
-
-  // The tabs themselves (another locale, a view added or dropped) change the scrollable width without resizing the
-  // scroller, so the edges are read again after every render; the state setter bails out when nothing changed.
-  useEffect(() => {
-    measureRef.current();
-  });
-
-  // A mouse wheel only turns vertically; over the tab row it moves the tabs sideways instead, until an end is
-  // reached and the page gets the wheel back. Native listener: React's wheel handlers are passive.
-  useEffect(() => {
-    const scroller = scrollerRef.current;
-    if (scroller === null) return undefined;
-    const onWheel = (event: WheelEvent): void => {
-      if (event.ctrlKey || Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
-      const max = scroller.scrollWidth - scroller.clientWidth;
-      if (max <= 0) return;
-      const delta = event.deltaMode === 1 ? event.deltaY * 16 : event.deltaY;
-      const next = Math.min(max, Math.max(0, scroller.scrollLeft + delta));
-      if (next === scroller.scrollLeft) return;
-      event.preventDefault();
-      jumpTo(scroller, next);
-    };
-    scroller.addEventListener('wheel', onWheel, { passive: false });
-    return () => {
-      scroller.removeEventListener('wheel', onWheel);
-    };
-  }, []);
-
-  // Keeps the open tab clear of the fades (3rem wide) when it changes, or on first draw.
-  useEffect(() => {
-    const scroller = scrollerRef.current;
-    if (scroller === null || activeKey === undefined) return;
-    const active = scroller.querySelector<HTMLElement>('[aria-current="page"]');
-    if (active === null) return;
-    const box = scroller.getBoundingClientRect();
-    const item = active.getBoundingClientRect();
-    if (item.width === 0) return;
-    const rem = Number.parseFloat(getComputedStyle(scroller).fontSize);
-    const margin = Number.isFinite(rem) ? rem * 3 : 0;
-    const behind = box.left + margin - item.left;
-    const beyond = item.right - (box.right - margin);
-    let left = scroller.scrollLeft;
-    if (behind > 0) left -= behind;
-    else if (beyond > 0) left += beyond;
-    if (left === scroller.scrollLeft) return;
-    jumpTo(scroller, left);
-  }, [activeKey]);
 
   // The collapsed actions panel: closes on an outside press, Escape and focus leaving, and once a dialog it
   // opened has closed (focus then goes to the toggle, since the trigger that opened it is hidden again).
