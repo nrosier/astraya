@@ -36,10 +36,11 @@ export interface ParsedStarCatalogue {
   readonly rejected: readonly StarLineRejection[];
 }
 
-/** Name and designation only; no interpretive text. */
+/** Name, designation and magnitude only (the picker shows magnitude); no interpretive text. */
 export interface StarSearchResult {
   readonly name: string;
   readonly designation: string;
+  readonly magnitude: StarCatalogueEntry['magnitude'];
 }
 
 const MIN_FIELDS = 14;
@@ -73,38 +74,43 @@ export function parseStarCatalogueLine(line: string): StarCatalogueEntry | strin
   return { name, designation, equinox, magnitude: Number(fields[MAGNITUDE_FIELD]) };
 }
 
-/** Parse a whole file. Blank and `#` comment lines are skipped; bad lines are reported, not thrown. */
+/**
+ * Parse a whole file. Blank and `#` comment lines are skipped; bad lines are reported, not thrown.
+ * The file repeats some stars under separate records, so records with the same
+ * trimmed name and designation are merged: the first record's fields are kept.
+ */
 export function parseStarCatalogue(text: string): ParsedStarCatalogue {
   const entries: StarCatalogueEntry[] = [];
   const rejected: StarLineRejection[] = [];
+  const seen = new Set<string>();
   const lines = text.split(/\r?\n/);
   for (const [i, raw] of lines.entries()) {
     const trimmed = raw.trim();
     if (trimmed === '' || trimmed.startsWith('#')) continue;
     const result = parseStarCatalogueLine(raw);
     if (typeof result === 'string') rejected.push({ line: i + 1, text: raw, reason: result });
-    else entries.push(result);
+    else {
+      const key = `${result.name}\u0000${result.designation}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      entries.push(result);
+    }
   }
   return { entries, rejected };
 }
 
 /**
  * Case-insensitive substring search over name and designation. The file lists
- * some stars more than once (alternate spellings, repeated blocks), so
- * identical name+designation pairs are returned once. At most
+ * `parseStarCatalogue` already merges repeated records. At most
  * `STAR_SEARCH_LIMIT` results; an empty query returns none.
  */
 export function searchStarCatalogue(entries: readonly StarCatalogueEntry[], query: string): StarSearchResult[] {
   const q = query.trim().toLowerCase();
   if (q === '') return [];
-  const seen = new Set<string>();
   const out: StarSearchResult[] = [];
   for (const e of entries) {
     if (!e.name.toLowerCase().includes(q) && !e.designation.toLowerCase().includes(q)) continue;
-    const key = `${e.name}\u0000${e.designation}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push({ name: e.name, designation: e.designation });
+    out.push({ name: e.name, designation: e.designation, magnitude: e.magnitude });
     if (out.length >= STAR_SEARCH_LIMIT) break;
   }
   return out;

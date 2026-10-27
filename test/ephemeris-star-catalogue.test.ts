@@ -44,7 +44,7 @@ describe('parseStarCatalogueLine', () => {
 describe('parseStarCatalogue', () => {
   it('skips comments and blanks and reports rejections with line numbers', () => {
     const { entries, rejected } = parseStarCatalogue(FIXTURE_TEXT);
-    expect(entries).toHaveLength(3);
+    expect(entries).toHaveLength(2);
     expect(rejected).toHaveLength(1);
     expect(rejected[0]?.line).toBe(6);
   });
@@ -52,14 +52,20 @@ describe('parseStarCatalogue', () => {
 
 describe('searchStarCatalogue', () => {
   const { entries } = parseStarCatalogue(FIXTURE_TEXT);
-  it('matches name case-insensitively and de-duplicates repeated records', () => {
-    expect(searchStarCatalogue(entries, 'FIXA')).toEqual([{ name: 'Fixa', designation: 'alFix' }]);
+  it('matches name case-insensitively and carries the magnitude', () => {
+    expect(searchStarCatalogue(entries, 'FIXA')).toEqual([{ name: 'Fixa', designation: 'alFix', magnitude: 1.5 }]);
   });
   it('matches by designation, including nameless records', () => {
     const hit = searchStarCatalogue(entries, 'befix');
-    expect(hit).toEqual([{ name: '', designation: 'beFix' }]);
+    expect(hit).toEqual([{ name: '', designation: 'beFix', magnitude: 2.5 }]);
     const [first] = hit;
     expect(first && swissStarId(first)).toBe(',beFix');
+  });
+  it('merges duplicate records at parse time, keeping the first record', () => {
+    const second = FIXTURE_A.replace('1.5, 4', '9.9, 4');
+    const merged = parseStarCatalogue([FIXTURE_A, second, `  ${FIXTURE_A}`].join('\n'));
+    expect(merged.entries).toEqual([{ name: 'Fixa', designation: 'alFix', equinox: 'ICRS', magnitude: 1.5 }]);
+    expect(merged.rejected).toEqual([]);
   });
   it('returns nothing for an empty query', () => {
     expect(searchStarCatalogue(entries, '  ')).toEqual([]);
@@ -99,7 +105,16 @@ describe('shipped public/ephe/sefstars.txt', () => {
     const { entries, rejected } = parseStarCatalogue(new TextDecoder().decode(bytes));
     expect(rejected).toEqual([]);
     expect(entries.length).toBeGreaterThan(1000);
-    expect(searchStarCatalogue(entries, 'regulus')).toContainEqual({ name: 'Regulus', designation: 'alLeo' });
+    expect(searchStarCatalogue(entries, 'regulus')).toContainEqual(
+      expect.objectContaining({ name: 'Regulus', designation: 'alLeo', magnitude: expect.any(Number) as number }),
+    );
+    expect(entries.filter((e) => e.name === 'Regulus')).toHaveLength(1);
+    expect(searchStarCatalogue(entries, 'regulus').filter((r) => r.name === 'Regulus')).toHaveLength(1);
     expect(searchStarCatalogue(entries, 'alLeo').map((r) => r.name)).toContain('Regulus');
+  });
+  it('has no duplicate name+designation pairs', () => {
+    const { entries } = parseStarCatalogue(new TextDecoder().decode(bytes));
+    const keys = entries.map((e) => `${e.name}\u0000${e.designation}`);
+    expect(new Set(keys).size).toBe(keys.length);
   });
 });
