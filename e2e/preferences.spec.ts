@@ -89,6 +89,47 @@ test('the tabs follow the arrow keys, keep one panel on screen, and do not add h
   await expect(page).toHaveURL(/#\/people$/);
 });
 
+for (const width of [390, 1280]) {
+  test(`the Preferences tab row is the shared scrolling row at ${String(width)}px and the arrows still move focus (#818)`, async ({
+    page,
+  }) => {
+    test.setTimeout(60_000);
+    await page.setViewportSize({ width, height: width === 390 ? 844 : 800 });
+    await gotoAndSettle(page, `${baseUrl}/#/preferences`);
+    const scroller = page.locator('.tab-row--always .tab-row__scroll');
+    await expect(scroller).toHaveCSS('overflow-x', 'auto');
+    await expect(scroller).toHaveCSS('touch-action', 'pan-x');
+    await expect(scroller).toHaveCSS('overscroll-behavior-x', 'contain');
+    await expect(scroller).toHaveCSS('scrollbar-width', 'none');
+    await expect(page.locator('.tab-row--always .tab-row__fade--start')).toHaveCount(1);
+    await expect(page.locator('.tab-row--always .tab-row__fade--end')).toHaveCount(1);
+    await expect(page.locator('.tab-row--always .tab-row__fade--end')).toHaveCSS('pointer-events', 'none');
+    const metrics = await page.evaluate<{ readonly scrollWidth: number; readonly clientWidth: number }>(`(() => {
+      const el = document.querySelector('.tab-row--always .tab-row__scroll');
+      return { scrollWidth: el.scrollWidth, clientWidth: el.clientWidth };
+    })()`);
+    if (width === 390) {
+      // Three long labels do not fit a phone: the row scrolls instead of wrapping, and the end fade points at them.
+      expect(metrics.scrollWidth).toBeGreaterThan(metrics.clientWidth);
+      await expect(page.locator('.tab-row--always .tab-row__fade--end')).toHaveCSS('opacity', '1');
+    } else {
+      expect(metrics.scrollWidth).toBeLessThanOrEqual(metrics.clientWidth + 1);
+      await expect(page.locator('.tab-row--always .tab-row__fade--end')).toHaveCSS('opacity', '0');
+    }
+    // Never a sideways page scroll, whatever the row does.
+    expect(await page.evaluate('document.documentElement.scrollWidth - window.innerWidth')).toBeLessThanOrEqual(1);
+    // The tablist semantics and arrow behaviour are unchanged inside the scroller.
+    const tabs = page.getByRole('tablist', { name: 'Preferences sections' });
+    await tabs.getByRole('tab', { name: 'Appearance & accessibility' }).focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(tabs.getByRole('tab', { name: 'Astrology defaults' })).toBeFocused();
+    await expect(tabs.getByRole('tab', { name: 'Astrology defaults' })).toHaveAttribute('aria-selected', 'true');
+    await page.keyboard.press('End');
+    await expect(tabs.getByRole('tab', { name: 'Data & privacy' })).toBeFocused();
+    await expect(tabs.getByRole('tab', { name: 'Data & privacy' })).toBeInViewport();
+  });
+}
+
 test('an old #/preferences/general link opens Appearance, where the language moved (#650)', async ({ page }) => {
   await gotoAndSettle(page, `${baseUrl}/#/preferences/general`);
   await expect(page.getByRole('heading', { name: 'Appearance & accessibility', level: 2 })).toBeVisible();
