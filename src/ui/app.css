@@ -4091,7 +4091,7 @@ svg text.chart-symbol-text-unicode {
   list-style: none;
 }
 
-/* Entry card: a flat 1px border on --surface. Overridden entries carry a 2px --accent border on all four sides. */
+/* Entry card: a flat 1px border on --surface. Overridden entries carry a 2px --accent left edge drawn as an inset shadow (no border change, so no size jump). */
 .corpus-entry {
   display: flex;
   flex-direction: column;
@@ -4103,7 +4103,7 @@ svg text.chart-symbol-text-unicode {
 }
 
 .corpus-entry-overridden {
-  border: 2px solid var(--accent);
+  box-shadow: inset 2px 0 0 var(--accent);
 }
 
 .corpus-entry-head {
