@@ -157,7 +157,7 @@ import { ChartTypeSelector, changeChartView } from './ChartTypeSelector.js';
 import { ChartViewNav } from './ChartViewNav.js';
 import { parseSelectionKey } from '../interpretation/selection.js';
 import { buildFocusObjectContext } from '../interpretation/focus-context.js';
-import { AspectMatrix } from './AspectMatrix.js';
+import { AspectMatrixGrid } from './AspectMatrixGrid.js';
 import { orbSourceName, useCalculationBasisLine } from './calculation-basis.js';
 import { EmphasisGrid } from './EmphasisGrid.js';
 import {
@@ -191,6 +191,7 @@ import {
 } from './ChartOverlaySettingsPanel.js';
 import { chartOverlaySettingsPanelMessages } from './ChartOverlaySettingsPanel.messages.js';
 import { CustomPointEditor } from './CustomPointEditor.js';
+import { Button } from './primitives/Button.js';
 import { parseCoordinate } from './map-settings.js';
 import { orbConfigForContext } from '../astrology/orb-profiles.js';
 import { useStableBy, useStableMoment } from './use-stable-moment.js';
@@ -1101,9 +1102,22 @@ function renderMatrixView(
   return (
     <>
       <p className="hint">{t.matrixHint}</p>
-      <AspectMatrix
+      <AspectMatrixGrid
         input={input.matrix}
         label={t.matrixLabel}
+        locale={locale}
+        labels={{
+          symbol: t.symbolLabel,
+          name: t.matrixNameLabel,
+          degree: t.degLabel,
+          sign: t.signLabel,
+          minute: t.minLabel,
+          house: t.houseLabel,
+          retrograde: t.retrogradeLabel,
+        }}
+        describe={(aKey, bKey, aspectKey) =>
+          `${bodyDisplayName(aKey, locale)} ${aspectDisplayName(aspectKey, locale)} ${bodyDisplayName(bKey, locale)}`
+        }
         selection={
           selection === undefined
             ? undefined
@@ -1111,11 +1125,18 @@ function renderMatrixView(
                 selectedKey: selection.selectedKey,
                 onToggle: selection.onToggle,
                 canSelect: (aKey, bKey) => selection.selectableBodies.has(aKey) && selection.selectableBodies.has(bKey),
-                describe: (aKey, bKey, aspectKey) =>
-                  `${bodyDisplayName(aKey, locale)} ${aspectDisplayName(aspectKey, locale)} ${bodyDisplayName(bKey, locale)}`,
               }
         }
       />
+      <p className="hint">
+        <Button
+          onClick={() => {
+            document.getElementById('custom-point-editor-heading')?.scrollIntoView({ block: 'start' });
+          }}
+        >
+          {t.matrixFormulaLink}
+        </Button>
+      </p>
     </>
   );
 }

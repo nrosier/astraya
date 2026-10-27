@@ -33,7 +33,7 @@
  * @module chart/aspect-matrix
  * @purpose Renders the Astro-Seek-style aspect grid (positions table + lower-triangular aspect staircase) that sits under the chart wheel.
  * @conventions Only the lower triangle below the diagonal is drawn (an aspect is symmetric); orb is shown as signed whole degrees (`separation - exact angle`, negative when short of exact) with an `a`/`s` applying/separating marker; cell/font sizes are fractions of a cell computed from panel width divided by row count, and the orb stack is hidden below `MIN_ORB_FONT_SIZE` to avoid overlapping, unreadably small text.
- * @exports renderAspectMatrixSvg, fitFontSize; MatrixBody, MatrixAspect, MatrixInteraction, AspectMatrixInput types.
+ * @exports renderAspectMatrixSvg, fitFontSize, formatSignedOrb, positionParts; MatrixBody, MatrixAspect, MatrixInteraction, AspectMatrixInput types.
  */
 import type { OrbRuleKind } from '../astrology/aspects.js';
 import { SIGNS } from '../astrology/signs.js';
@@ -122,7 +122,7 @@ export function fitFontSize(name: string, fontSize: number, width: number, margi
 }
 
 /** `-3`, `6`, `-0`: whole degrees, signed by side of exact. A pair a hair short of exact reads `-0`, as on Astro-Seek. */
-function formatSignedOrb(signedOrb: Degrees): string {
+export function formatSignedOrb(signedOrb: Degrees): string {
   return `${signedOrb < 0 ? '-' : ''}${String(Math.round(Math.abs(signedOrb)))}`;
 }
 
@@ -136,7 +136,7 @@ function pad2(value: number): string {
 }
 
 /** The sign a longitude falls in, with its degree and minute — rounded to the minute, as every other degree on the sheet. */
-function positionParts(longitude: Degrees): {
+export function positionParts(longitude: Degrees): {
   readonly signName: string;
   readonly element: string;
   readonly degree: number;
