@@ -19,6 +19,7 @@ import { draftFrom, draftToMutations, validateDraft, type Draft } from '../domai
 import { personFormValidationMessages } from '../domain/person-form.messages.js';
 import { formatOffset, resolveMoment } from '../time/resolve.js';
 import { Button } from './primitives/Button.js';
+import { Disclosure } from './primitives/Disclosure.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { BirthPlaceSearch } from './BirthPlaceSearch.js';
 import { useMessages } from './messages.js';
@@ -47,6 +48,11 @@ function accuracyOptions(t: typeof personFormMessages.en): Record<TimeAccuracy, 
     approximate: t.accuracyApproximate,
     unknown: t.accuracyUnknown,
   };
+}
+
+/** Whether the record already carries a calendar, offset or timezone override, so the section opens on them. */
+function hasOverrides(draft: Draft): boolean {
+  return draft.calendar !== 'auto' || draft.offsetOverride.trim() !== '' || draft.zoneOverride.trim() !== '';
 }
 
 export function PersonForm({ personId }: { personId: string }): React.JSX.Element {
@@ -155,9 +161,12 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
 
       <h2>{t.birthRecordHeading}</h2>
 
-      <fieldset className="field-group">
-        <legend>{t.whoLegend}</legend>
-        <div className="field-grid">
+      {/* Six cards in one grid (#795). The DOM order is the narrow (single-column) order: identity, place,
+          resolved timezone, then notes with Save changes, so the timezone is read before the record is saved.
+          At desktop width `.birth-record-card--*` pins each card to its column (see app.css). */}
+      <div className="birth-record">
+        <section className="birth-record-card birth-record-card--identity" aria-labelledby="birth-card-identity">
+          <h3 id="birth-card-identity">{t.identityCardHeading}</h3>
           <TextField
             label={t.nameLabel}
             value={current.displayName}
@@ -166,8 +175,60 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
               set('displayName', value);
             }}
           />
+          <div className="birth-record-timestamp">
+            <DateField
+              label={t.dateLabel}
+              value={current.date}
+              error={errors.date}
+              onChange={(value) => {
+                set('date', value);
+              }}
+            />
+            <Select
+              label={t.timeKnownLabel}
+              value={current.timeAccuracy}
+              options={Object.entries(accuracyOptions(t)).map(([value, text]) => ({ value, label: text }))}
+              onChange={(value) => {
+                set('timeAccuracy', value as TimeAccuracy);
+              }}
+            />
+            <TimeField
+              label={t.timeLabel}
+              step={1}
+              value={current.time}
+              disabled={unknown}
+              error={errors.time}
+              extraDescribedBy={unknown ? `${unknownTimeHintId}-reason` : undefined}
+              onChange={(value) => {
+                set('time', value);
+              }}
+            />
+          </div>
+          {unknown && (
+            <div>
+              <p id={`${unknownTimeHintId}-reason`} className="hint">
+                {t.timeUnavailableReason}
+              </p>
+              <p id={unknownTimeHintId} className="hint">
+                {t.unknownTimeHint}
+              </p>
+            </div>
+          )}
+        </section>
+
+        <section className="birth-record-card birth-record-card--location" aria-labelledby="birth-card-location">
+          <h3 id="birth-card-location">{t.locationCardHeading}</h3>
+          <BirthPlaceSearch
+            onPick={(lat, lng, placeLabel) => {
+              setFields({
+                latitude: String(lat),
+                longitude: String(lng),
+                ...(placeLabel === undefined ? {} : { placeLabel }),
+              });
+            }}
+          />
           {/* A label, not a lookup: the coordinates below are what the calculation uses, and this text is only
-              for the reader. "Search for a place by name" below can fill it in from a search result, but the
+              for the reader. "Search for a place by name" above can fill it in from a search result, but the
               result is still just typed text afterward — never re-derived or locked (#290). */}
           <TextField
             label={t.placeOfBirthLabel}
@@ -177,165 +238,108 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
               set('placeLabel', value);
             }}
           />
-        </div>
-      </fieldset>
-
-      <fieldset className="field-group">
-        <legend>{t.whenLegend}</legend>
-        <div className="field-grid">
-          <DateField
-            label={t.dateLabel}
-            value={current.date}
-            error={errors.date}
-            onChange={(value) => {
-              set('date', value);
-            }}
-          />
-          <Select
-            label={t.timeKnownLabel}
-            value={current.timeAccuracy}
-            options={Object.entries(accuracyOptions(t)).map(([value, text]) => ({ value, label: text }))}
-            onChange={(value) => {
-              set('timeAccuracy', value as TimeAccuracy);
-            }}
-          />
-          <TimeField
-            label={t.timeLabel}
-            step={1}
-            value={current.time}
-            disabled={unknown}
-            error={errors.time}
-            extraDescribedBy={unknown ? `${unknownTimeHintId}-reason` : undefined}
-            onChange={(value) => {
-              set('time', value);
-            }}
-          />
-        </div>
-        {unknown && (
-          <>
-            <p id={`${unknownTimeHintId}-reason`} className="hint">
-              {t.timeUnavailableReason}
-            </p>
-            <p id={unknownTimeHintId} className="hint">
-              {t.unknownTimeHint}
-            </p>
-          </>
-        )}
-      </fieldset>
-
-      <fieldset className="field-group">
-        <legend>{t.coordinatesLegend}</legend>
-        <div className="field-grid">
-          {/* The raw text, not `valueAsNumber`: a half-typed "-" is a work in progress, and reading it as a
-              number would turn it into a coordinate of zero. */}
-          <NumberField
-            label={t.latitudeLabel}
-            step="any"
-            placeholder="38.7478"
-            value={current.latitude}
-            error={errors.latitude}
-            onChange={(value) => {
-              set('latitude', value);
-            }}
-          />
-          <NumberField
-            label={t.longitudeLabel}
-            step="any"
-            placeholder="-85.0672"
-            value={current.longitude}
-            error={errors.longitude}
-            onChange={(value) => {
-              set('longitude', value);
-            }}
-          />
-        </div>
-        <BirthPlaceSearch
-          onPick={(lat, lng, placeLabel) => {
-            setFields({
-              latitude: String(lat),
-              longitude: String(lng),
-              ...(placeLabel === undefined ? {} : { placeLabel }),
-            });
-          }}
-        />
-      </fieldset>
-
-      <fieldset className="field-group">
-        <legend>{t.calendarZoneLegend}</legend>
-        <div className="field-grid">
-          <div className="primitive-choice-field">
-            <span className="primitive-field-label">{t.calendarLabel}</span>
-            <ChoiceGroup
-              label={t.calendarLabel}
-              value={current.calendar}
-              options={[
-                { value: 'auto', label: t.calendarAutomatic },
-                { value: 'gregorian', label: t.calendarGregorian },
-                { value: 'julian', label: t.calendarJulian },
-              ]}
+          <div className="birth-record-coordinates">
+            {/* The raw text, not `valueAsNumber`: a half-typed "-" is a work in progress, and reading it as a
+                number would turn it into a coordinate of zero. */}
+            <NumberField
+              label={t.latitudeLabel}
+              step="any"
+              placeholder="38.7478"
+              value={current.latitude}
+              error={errors.latitude}
               onChange={(value) => {
-                set('calendar', value as Calendar);
+                set('latitude', value);
+              }}
+            />
+            <NumberField
+              label={t.longitudeLabel}
+              step="any"
+              placeholder="-85.0672"
+              value={current.longitude}
+              error={errors.longitude}
+              onChange={(value) => {
+                set('longitude', value);
               }}
             />
           </div>
-          <NumberField
-            label={t.utcOffsetOverrideLabel}
-            step="any"
-            placeholder={t.offsetOverridePlaceholder}
-            value={current.offsetOverride}
-            error={errors.offsetOverride}
-            onChange={(value) => {
-              set('offsetOverride', value);
-            }}
-          />
-          <TextField
-            label={t.timezoneOverrideLabel}
-            placeholder={t.timezoneOverridePlaceholder}
-            value={current.zoneOverride}
-            onChange={(value) => {
-              set('zoneOverride', value);
-            }}
-          />
-        </div>
-        <p className="hint">{t.timezoneHint}</p>
-      </fieldset>
+        </section>
 
-      <fieldset className="field-group">
-        <legend>{t.notesLegend}</legend>
-        <TextAreaField
-          label={t.notesLabel}
-          hideLabel
-          rows={3}
-          value={current.notes}
-          onChange={(value) => {
-            set('notes', value);
-          }}
-        />
-      </fieldset>
-
-      {resolved !== undefined && (
-        <>
-          <h2>{t.resolvedHeading}</h2>
-          <dl>
-            <dt>{t.utcOffsetLabel}</dt>
-            <dd>{formatOffset(resolved.offsetMinutes)}</dd>
-            <dt>{t.derivedFromLabel}</dt>
-            <dd>{PROVENANCE[resolved.provenance]}</dd>
-            <dt>{t.timezoneLabel}</dt>
-            <dd>{resolved.zone ?? <span className="muted">{t.noneOffsetFromLongitude}</span>}</dd>
-            <dt>{t.calendarResolvedLabel}</dt>
-            <dd>{resolved.calendar === 'julian' ? t.calendarJulian : t.calendarGregorian}</dd>
-            {resolved.alternativeOffsetMinutes.length > 0 && (
-              <>
-                <dt>{t.alsoValidLabel}</dt>
-                <dd>{resolved.alternativeOffsetMinutes.map(formatOffset).join(', ')}</dd>
-              </>
-            )}
-          </dl>
-
-          {resolved.warnings.length > 0 && (
+        <section className="birth-record-card birth-record-card--timezone" aria-labelledby="birth-card-timezone">
+          <h3 id="birth-card-timezone">{t.timezoneCardHeading}</h3>
+          {resolved !== undefined && (
             <>
-              <h2>{t.worthCheckingHeading}</h2>
+              <dl>
+                <dt>{t.utcOffsetLabel}</dt>
+                <dd>{formatOffset(resolved.offsetMinutes)}</dd>
+                <dt>{t.derivedFromLabel}</dt>
+                <dd>{PROVENANCE[resolved.provenance]}</dd>
+                <dt>{t.timezoneLabel}</dt>
+                <dd>{resolved.zone ?? <span className="muted">{t.noneOffsetFromLongitude}</span>}</dd>
+                <dt>{t.calendarResolvedLabel}</dt>
+                <dd>{resolved.calendar === 'julian' ? t.calendarJulian : t.calendarGregorian}</dd>
+                {resolved.alternativeOffsetMinutes.length > 0 && (
+                  <>
+                    <dt>{t.alsoValidLabel}</dt>
+                    <dd>{resolved.alternativeOffsetMinutes.map(formatOffset).join(', ')}</dd>
+                  </>
+                )}
+                {/* The raw debug string is always shown (D-795a): a tabular-numerals value, no disclosure. */}
+                <dt>{t.tzdbLabel}</dt>
+                <dd>
+                  <span className="birth-record-raw">{resolved.tzdbFingerprint}</span>
+                </dd>
+              </dl>
+              <p className="hint">{t.tzdbHint}</p>
+            </>
+          )}
+
+          <Disclosure
+            title={t.overridesTitle}
+            showLabel={t.overridesShow}
+            hideLabel={t.overridesHide}
+            defaultOpen={opened !== undefined && hasOverrides(opened)}
+          >
+            <div className="birth-record-overrides">
+              <div className="primitive-choice-field">
+                <span className="primitive-field-label">{t.calendarLabel}</span>
+                <ChoiceGroup
+                  label={t.calendarLabel}
+                  value={current.calendar}
+                  options={[
+                    { value: 'auto', label: t.calendarAutomatic },
+                    { value: 'gregorian', label: t.calendarGregorian },
+                    { value: 'julian', label: t.calendarJulian },
+                  ]}
+                  onChange={(value) => {
+                    set('calendar', value as Calendar);
+                  }}
+                />
+              </div>
+              <NumberField
+                label={t.utcOffsetOverrideLabel}
+                step="any"
+                placeholder={t.offsetOverridePlaceholder}
+                value={current.offsetOverride}
+                error={errors.offsetOverride}
+                onChange={(value) => {
+                  set('offsetOverride', value);
+                }}
+              />
+              <TextField
+                label={t.timezoneOverrideLabel}
+                placeholder={t.timezoneOverridePlaceholder}
+                value={current.zoneOverride}
+                onChange={(value) => {
+                  set('zoneOverride', value);
+                }}
+              />
+              <p className="hint">{t.timezoneHint}</p>
+            </div>
+          </Disclosure>
+
+          {resolved !== undefined && resolved.warnings.length > 0 && (
+            <div>
+              <h4>{t.worthCheckingHeading}</h4>
               <ul className="warnings">
                 {resolved.warnings.map((warning) => (
                   <li
@@ -347,46 +351,59 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
                   </li>
                 ))}
               </ul>
-            </>
+            </div>
           )}
+        </section>
 
-          <p className="hint">{t.tzdbHint(resolved.tzdbFingerprint)}</p>
-        </>
-      )}
+        <section className="birth-record-card birth-record-card--notes" aria-labelledby="birth-card-notes">
+          <h3 id="birth-card-notes">{t.notesCardHeading}</h3>
+          <TextAreaField
+            label={t.notesLabel}
+            hideLabel
+            rows={3}
+            value={current.notes}
+            onChange={(value) => {
+              set('notes', value);
+            }}
+          />
+          {/* Save changes is the last thing in this card, and this card comes after the resolved timezone (D-795b). */}
+          <p className="actions">
+            <Button variant="primary" onClick={save} disabled={saving || moment === undefined}>
+              {saving ? t.saving : t.saveButton}
+            </Button>
+            {saved && !saving && (
+              <span className="status" role="status">
+                {t.savedStatus}
+              </span>
+            )}
+            {moment === undefined && (
+              <span className="muted">
+                {/* Why the button is disabled, next to the button. A disabled control with no
+                    explanation is the most common way a form wastes someone's afternoon. */}
+                {t.fillFieldsHint}
+              </span>
+            )}
+          </p>
+        </section>
 
-      <p className="actions sticky-actions">
-        <Button variant="primary" onClick={save} disabled={saving || moment === undefined}>
-          {saving ? t.saving : t.saveButton}
-        </Button>
-        {saved && !saving && (
-          <span className="status" role="status">
-            {t.savedStatus}
-          </span>
-        )}
-        {moment === undefined && (
-          <span className="muted">
-            {/* Why the button is disabled, next to the button. A disabled control with no
-                explanation is the most common way a form wastes someone's afternoon. */}
-            {t.fillFieldsHint}
-          </span>
-        )}
-      </p>
+        <PersonFileActions
+          person={person}
+          accuracyLabels={accuracyOptions(t)}
+          onReplaced={() => {
+            setDraft(undefined);
+          }}
+        />
 
-      <PersonFileActions
-        person={person}
-        accuracyLabels={accuracyOptions(t)}
-        onReplaced={() => {
-          setDraft(undefined);
-        }}
-      />
-
-      <h2>{t.deleteHeading}</h2>
-      <p className="hint">{t.deleteHint}</p>
-      <p>
-        <button type="button" className="danger" onClick={remove}>
-          {t.deleteButton(current.displayName.trim() === '' ? t.thisPerson : current.displayName)}
-        </button>
-      </p>
+        <section className="birth-record-card birth-record-card--danger" aria-labelledby="birth-card-danger">
+          <h3 id="birth-card-danger">{t.deleteHeading}</h3>
+          <p className="hint">{t.deleteHint}</p>
+          <p>
+            <button type="button" className="danger" onClick={remove}>
+              {t.deleteButton(current.displayName.trim() === '' ? t.thisPerson : current.displayName)}
+            </button>
+          </p>
+        </section>
+      </div>
     </main>
   );
 }

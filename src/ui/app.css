@@ -912,6 +912,140 @@ footer {
   display: none;
 }
 
+/*
+ * Birth record (#795): three left-hand cards (identity and timestamp, place, notes and Save) and three right-hand
+ * cards (resolved timezone, import and export, danger zone). The markup order is the single-column order, with the
+ * resolved timezone before Save changes (D-795b); from 64rem the cards are pinned to their columns. Card chrome
+ * matches `.horary-card`; only tokens are used.
+ */
+.birth-record {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.birth-record-card {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.birth-record-card > * {
+  min-width: 0;
+  margin: 0;
+}
+
+.birth-record-card h3 {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.birth-record-card h4 {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-base);
+}
+
+.birth-record-card--danger {
+  border-color: color-mix(in oklab, var(--color-danger) 45%, var(--line));
+  background: color-mix(in oklab, var(--color-danger) 6%, var(--surface));
+}
+
+.birth-record-timestamp {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+}
+
+.birth-record-coordinates {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.birth-record-overrides {
+  display: grid;
+  gap: var(--space-3);
+}
+
+/* D-795a: the raw timezone-data string is a tabular value, in the inherited family (no monospace, #826 item 5). */
+.birth-record-raw {
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+/* The place search keeps its input and button on one row inside the card. */
+.birth-record-card .birth-place-search {
+  margin-top: 0;
+}
+
+.birth-record-card .birth-place-search-form {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  justify-items: stretch;
+  margin-bottom: 0;
+}
+
+.birth-record-card .birth-place-search-form > * {
+  min-width: 0;
+}
+
+.birth-record-card .birth-place-search-form > .hint {
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
+
+@media (min-width: 64rem) {
+  /* Row 2 is flexible so a tall timezone card (overrides open) leaves its slack below the place card, not
+     between the first two cards. */
+  .birth-record {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    grid-template-rows: auto 1fr auto auto;
+  }
+
+  .birth-record-timestamp {
+    grid-template-columns: 1.2fr 1fr 1.2fr;
+  }
+
+  .birth-record-card--identity {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .birth-record-card--location {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .birth-record-card--notes {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  .birth-record-card--timezone {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+
+  .birth-record-card--files {
+    grid-column: 2;
+    grid-row: 3;
+  }
+
+  .birth-record-card--danger {
+    grid-column: 2;
+    grid-row: 4;
+  }
+}
+
 .horary-actions {
   grid-column: 1 / -1;
   display: flex;

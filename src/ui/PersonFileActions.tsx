@@ -164,8 +164,11 @@ export function PersonFileActions({
   };
 
   return (
-    <section className="person-file-actions" aria-labelledby="person-file-heading">
-      <h2 id="person-file-heading">{t.heading}</h2>
+    <section
+      className="birth-record-card birth-record-card--files person-file-actions"
+      aria-labelledby="person-file-heading"
+    >
+      <h3 id="person-file-heading">{t.heading}</h3>
       <p className="hint">{t.exportHint}</p>
       <p className="actions">
         <Button onClick={exportAaf}>{t.exportAaf}</Button> <Button onClick={exportJson}>{t.exportJson}</Button>{' '}
@@ -194,7 +197,7 @@ export function PersonFileActions({
           <StatusMessage kind="zero">{t.noChanges}</StatusMessage>
         ) : (
           <div className="person-file-preview">
-            <h3>{t.changesHeading}</h3>
+            <h4>{t.changesHeading}</h4>
             <dl>
               {staged.changes.map((change) => (
                 <Fragment key={change.field}>
