@@ -6,11 +6,33 @@ see [docs/ops/RELEASING.md](docs/ops/RELEASING.md).
 
 ## [Unreleased]
 
+## [0.42.14] — 2026-10-27
+
+**Chart settings and planetary rulers belong to each person, the tab rows scroll instead of wrapping, and the aspect matrix and elements tables become token-styled grids.**
+
+### Added
+
+- **A scrolling tab row (#818).** Tab rows scroll sideways with fades at the edges, and the wheel scrolls them too. The admin tabs and the shared Tabs primitive use the same row. Chart actions stay pinned at the far right and collapse into a "Chart actions" button on narrow screens. The row is hidden in print.
+- **Shared interface building blocks (#826).** A Badge tone prop, a StagedDialog that can sit on the right, an EmptyState, a StatList for stat tiles, and tabular numerals for entry keys.
+- **A shared data table style and empty-cell dash (#825).** Tables use one style, and a missing value shows the same em dash everywhere.
+
 ### Changed
 
 - **The planetary rulers belong to each person (#806).** Modern, Traditional or Both is saved on the person, in the Extended settings card with Apply (the live preview is gone), so one client's choice no longer changes another's chart. The rulers now saved on this device are copied to existing people once. The Preferences choice is the default for new people, and Horary and Composite charts follow it.
+- **New people start with a copy of the default calculation profile (#806).** This applies to people added by hand and by import. The calculation basis line now names the natal orb profile.
 - **Older builds ignore the per-person rulers.** A device running version 0.42.13 or older does not read the new field, so it draws that person's chart with its own rulers until it is updated. Going back to an older build loses nothing: the choice is picked up again on upgrade.
 - **The full export is now version 4 (#806).** Each person carries the rulers their charts were computed with, and the file's preferences hold the device default. The importer still reads versions 2 and 3, but a build older than this one rejects a version 4 file.
+- **The tab row switches layout at 40rem (#826).** Overlays now opens in flow from a Disclosure row under the tab row instead of floating over the chart.
+- **The aspect matrix is an HTML grid (#820).** The on-screen matrix uses the design tokens instead of a drawn graphic.
+- **The elements table is a flat grid (#821).** It shows row and column totals, and list columns are left-aligned.
+
+### Fixed
+
+- **The horary form keeps the house label whole (#782).** The dimmed coordinates stay visible at 390px, in English and Dutch.
+
+### Internal
+
+- The UI redesign rules are recorded in an umbrella document (#827), and dependencies are updated (Vite 8.3.5, @fastify/static 10.1.7, MCP SDK 1.32.2, docker/login-action).
 
 ## [0.42.13] — 2026-10-25
 
