@@ -1,16 +1,15 @@
 /**
  * The consultation dashboard (#563): one person, right now, built for a live session rather than as a general chart
- * screen. Since #669 it reads summary first: an at-a-glance block (the big three, chart ruler and sect from the shared
- * chart overview, #691, plus the profection year, firdaria and the top transit), then grouped sections laid out two
- * to a row on a wide screen: This year, Major transits now, Directions, and Chart highlights. Detail that a session
- * rarely needs first (zodiacal releasing level 2, the month profection, the chart shape, natal retrogrades, primary
- * directions beyond the first three) sits behind a disclosure. No tabs: an astrologer reads transits against timing
+ * screen. Since #800 it reads as key-metric tiles on top (the big three, chart ruler, sect and the profection year),
+ * then two balanced columns, about 60/40: transits and chart highlights on the left, time lords, zodiacal releasing
+ * and directions on the right. Major transits are a data table with state badges; the transits to the Ascendant and to
+ * the Midheaven each sit in their own disclosure (D-800a). No tabs: an astrologer reads transits against timing
  * against the chart, and tabs would hide two of the three.
  *
  * This screen computes nothing new. Each section reuses an existing pipeline, windowed to "now":
  * - Transits: `useTransitFilter`/`filterTransits`/`rankTransits` with the yearly rule set (#672), today's fast
  *   contacts on one line (`fastTriggers`), transits to the angles apart and unscored (#678), and each shown contact's
- *   exact passes (`exactPassDates`).
+ *   exact passes (`exactPassDates`), of which the table shows the next one still ahead (an em dash when none, D-800b).
  * - Timing: the `*ToTimelineEvents` adapters, windowed `now..now`; only the period and discrete-hit tracks, since
  *   the transit and progression tracks stamp every contact at the target date.
  * - The year: `consultationYear` (profection and lord, firdaria, progressed Moon, solar returns).
@@ -21,11 +20,11 @@
  */
 /**
  * @module ui/ConsultationView
- * @purpose Consultation dashboard (#563, #669): an at-a-glance summary, then This year, Major transits now, Directions and Chart highlights for one person at the moment the page opened.
- * @conventions Read-only aggregation of other screens' pipelines and the shared chart overview (#691); no new calculation. Sections are `<section aria-labelledby>` in a container-query grid; overflow goes in the Disclosure primitive. Copy in ConsultationView.messages.ts; shared terms from chartViewMessages, timingTimelineViewMessages, transitFilterPanelMessages and chartOverviewMessages.
+ * @purpose Consultation dashboard (#563, #669, #800): key-metric tiles, then a 60/40 grid of transit tables and chart highlights beside time lords, zodiacal releasing and directions, for one person at the moment the page opened.
+ * @conventions Read-only aggregation of other screens' pipelines and the shared chart overview (#691); no new calculation. Sections are `<section aria-labelledby>` in a container-query grid (single column below 48rem); one Disclosure per angle for the secondary transits; overflow goes in the Disclosure primitive. Copy in ConsultationView.messages.ts; shared terms from chartViewMessages, timingTimelineViewMessages, transitFilterPanelMessages and chartOverviewMessages.
  * @exports ConsultationView
  */
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { firdariaPeriods } from '../astrology/firdaria.js';
 import { zodiacalReleasingPeriods, zodiacalReleasingSubperiods } from '../astrology/zodiacal-releasing.js';
 import { computeChartData, housesAreDefined } from '../domain/chart-compute.js';
@@ -80,12 +79,15 @@ import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { useStoreState } from './store-context.js';
 import { formatOrb, formatTimestamp } from './format.js';
-import { angleTransits, exactPassDates, type AngleTransit } from '../domain/angle-transits.js';
+import { angleTransits, exactPassDates, type AngleKey, type AngleTransit } from '../domain/angle-transits.js';
 import { chartOverviewRows } from './chart-overview-rows.js';
 import { chartOverviewMessages } from './chart-overview.messages.js';
 import { ordinal } from './placement-label.js';
 import { PageHeader } from './PageHeader.js';
 import { Disclosure } from './primitives/Disclosure.js';
+import { Badge } from './primitives/Badge.js';
+import { ConsultationTransitTable, type TransitTableLabels, type TransitTableRow } from './ConsultationTransitTable.js';
+import { angleGroups, nextExactJd } from './consultation-transit-rows.js';
 import { Button } from './primitives/Button.js';
 import { usePersonCalculationSettings } from './person-calculation-settings.js';
 import { UnreadableSettingsNotice } from './UnreadableSettingsNotice.js';
@@ -296,26 +298,6 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
   const signName = (sign: number): string => signDisplayName(SIGNS[sign]?.name ?? '', locale);
   const body = (key: string): string => bodyDisplayName(key, locale);
   const aspect = (key: string): string => aspectDisplayName(key, locale).toLowerCase();
-  const motion = (applying: boolean): string =>
-    applying ? chartT.applying.toLowerCase() : chartT.separating.toLowerCase();
-  // Each date kept whole on one line: a wrap at its hyphens would split it (#669).
-  const exactDatesNode = (dates: readonly JulianDayUT[] | undefined): React.ReactNode =>
-    dates === undefined || dates.length === 0 ? (
-      t.noExactDate
-    ) : (
-      <>
-        {t.exactPrefix}{' '}
-        {dates.map((jd, index) => (
-          <Fragment key={jd}>
-            {index > 0 && t.listSeparator}
-            <time className="consultation-date" dateTime={dateLabel(jd)}>
-              {dateLabel(jd)}
-            </time>
-          </Fragment>
-        ))}
-      </>
-    );
-
   const trackEvents = (track: string): readonly TimingTimelineEvent[] =>
     load.kind === 'ready'
       ? (timingTimelineTracks(load.events, load.todayJd, load.todayJd).find((entry) => entry.track === track)?.events ??
@@ -371,6 +353,7 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
       : [];
 
   const overviewT = chartOverviewMessages[locale];
+  // The key-metric tiles (#800): the big three, chart ruler, sect and the profection, in that order.
   const glanceRows: readonly { readonly term: string; readonly value: string }[] =
     load.kind === 'ready'
       ? [
@@ -384,31 +367,92 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
             : [
                 {
                   term: t.profectionYear,
-                  value: t.profectionValue(
+                  value: t.profectionTile(
                     signName(load.year.profection.sign),
                     ordinal(load.year.profection.house, locale),
                     load.year.profection.lords.map(body).join(t.rulerSeparator),
-                    dateLabel(load.year.profection.endJd),
                   ),
                 },
               ]),
-          ...(load.year.firdaria === undefined
-            ? []
-            : [
-                {
-                  term: t.firdaria,
-                  value: t.firdariaValue(
-                    timelineSubjectLabel({ kind: 'firdaria', ruler: load.year.firdaria.ruler }, locale),
-                    dateLabel(load.year.firdaria.endJd),
-                  ),
-                },
-              ]),
-          ...shownContactRows.slice(0, 1).map((row) => ({
-            term: t.topTransit,
-            value: `${body(row.bodyAKey)} ${aspect(row.aspectKey)} ${body(row.bodyBKey)}`,
-          })),
         ]
       : [];
+
+  const tableLabels: TransitTableLabels = {
+    aspect: t.colAspect,
+    orb: t.colOrb,
+    state: t.colState,
+    nextExact: t.colNextExact,
+    noPass: t.noFurtherPass,
+  };
+  const nextExactLabel = (jds: readonly number[] | undefined): string | undefined => {
+    const next = load.kind === 'ready' ? nextExactJd(jds, load.todayJd) : undefined;
+    return next === undefined ? undefined : dateLabel(next);
+  };
+  const stateLabel = (applying: boolean): string => (applying ? chartT.applying : chartT.separating);
+  const majorRows: readonly TransitTableRow[] = shownContactRows.map((row) => {
+    const key = contactKey({ transitingKey: row.bodyAKey, aspectKey: row.aspectKey, target: row.bodyBKey });
+    return {
+      key,
+      aspect: t.transitAspect(body(row.bodyAKey), aspect(row.aspectKey), body(row.bodyBKey)),
+      orb: formatOrb(row.orb),
+      state: stateLabel(row.applying),
+      applying: row.applying,
+      nextExact: nextExactLabel(exactDates.get(key)),
+    };
+  });
+  const angleRows = (contacts: readonly AngleTransit[]): readonly TransitTableRow[] =>
+    contacts.map((contact) => ({
+      key: `${contact.transitingKey}-${contact.aspectKey}-${contact.angle}`,
+      aspect: t.transitAspect(body(contact.transitingKey), aspect(contact.aspectKey), body(contact.angle)),
+      orb: formatOrb(contact.orb),
+      state: stateLabel(contact.applying),
+      applying: contact.applying,
+      nextExact: nextExactLabel(contact.exactJds),
+    }));
+  const angleTitle = (angle: AngleKey): string => (angle === 'asc' ? t.ascTransitsTitle : t.mcTransitsTitle);
+  const angleEmpty = (angle: AngleKey): string => (angle === 'asc' ? t.noAscTransits : t.noMcTransits);
+
+  // A date pair as pills (#800): a span shows Start and End, a single day just the one.
+  const datePills = (event: TimingTimelineEvent): React.JSX.Element =>
+    event.endJd === undefined || event.endJd === event.startJd ? (
+      <span className="consultation-pills">
+        <Badge>
+          <span className="consultation-date">{t.datePill(dateLabel(event.startJd))}</span>
+        </Badge>
+      </span>
+    ) : (
+      <span className="consultation-pills">
+        <Badge>
+          <span className="consultation-date">{t.startPill(dateLabel(event.startJd))}</span>
+        </Badge>
+        <Badge>
+          <span className="consultation-date">{t.endPill(dateLabel(event.endJd))}</span>
+        </Badge>
+      </span>
+    );
+  const directionList = (events: readonly TimingTimelineEvent[]): React.JSX.Element => (
+    <ul className="consultation-directions">
+      {events.map((event, index) => (
+        <li key={`${event.kind}-${String(event.startJd)}-${String(index)}`}>
+          <span>{timelineSubjectLabel(event.subject, locale)}</span>
+          {datePills(event)}
+        </li>
+      ))}
+    </ul>
+  );
+  const releasingBadges = [...releasingLevel1, ...releasingLevel2].flatMap((event) =>
+    event.subject.kind === 'releasing'
+      ? [
+          {
+            key: `${event.subject.lot}-${String(event.subject.level)}-${event.subject.sign}`,
+            text: t.releasingBadge(
+              event.subject.level,
+              `${timingT.lots[event.subject.lot]} ${signDisplayName(event.subject.sign, locale)}`,
+            ),
+          },
+        ]
+      : [],
+  );
 
   return (
     <main className="shell consultation">
@@ -438,212 +482,204 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
         <div className="consultation-layout">
           <section className="consultation-glance" aria-labelledby="consultation-glance-heading">
             <h2 id="consultation-glance-heading">{overviewT.heading}</h2>
-            <dl>
+            <dl className="consultation-tiles">
               {glanceRows.map((row) => (
-                <Fragment key={row.term}>
+                <div key={row.term}>
                   <dt>{row.term}</dt>
                   <dd>{row.value}</dd>
-                </Fragment>
+                </div>
               ))}
             </dl>
           </section>
 
           <div className="consultation-grid">
-            <section className="consultation-section" aria-labelledby="consultation-year-heading">
-              <h2 id="consultation-year-heading">{t.thisYearHeading}</h2>
-              <dl>
-                {load.year.profection !== undefined && (
-                  <>
-                    <dt>{t.profectionYear}</dt>
-                    <dd>
-                      {t.profectionValue(
-                        signName(load.year.profection.sign),
-                        ordinal(load.year.profection.house, locale),
-                        load.year.profection.lords.map(body).join(t.rulerSeparator),
-                        dateLabel(load.year.profection.endJd),
-                      )}
-                    </dd>
-                  </>
-                )}
-                {load.year.firdaria !== undefined && (
-                  <>
-                    <dt>{t.firdaria}</dt>
-                    <dd>
-                      {t.firdariaValue(
-                        timelineSubjectLabel({ kind: 'firdaria', ruler: load.year.firdaria.ruler }, locale),
-                        dateLabel(load.year.firdaria.endJd),
-                      )}
-                    </dd>
-                  </>
-                )}
-                <dt>{t.progressedMoon}</dt>
-                <dd>
-                  {t.progressedMoonValue(
-                    signName(load.year.progressedMoon.sign),
-                    load.year.progressedMoon.house === undefined
-                      ? undefined
-                      : ordinal(load.year.progressedMoon.house, locale),
-                    chartT.lunarPhaseLabels[load.year.progressedMoon.phase],
+            <div className="consultation-col">
+              <section className="consultation-section" aria-labelledby="consultation-transits-heading">
+                <h2 id="consultation-transits-heading">{t.majorTransitsHeading}</h2>
+                <FilterSummary
+                  summary={transitFilterT.count(
+                    filteredContacts.length,
+                    load.transit.contacts.length,
+                    transitFilterT.presetsShort[presetOf(filter, rules) ?? 'custom'],
                   )}
-                </dd>
-                <dt>{t.solarReturns}</dt>
-                <dd>
-                  {t.solarReturnsValue(
-                    dateLabel(load.year.solarReturns.current),
-                    dateLabel(load.year.solarReturns.next),
-                  )}
-                </dd>
-              </dl>
-            </section>
-
-            <section className="consultation-section" aria-labelledby="consultation-releasing-heading">
-              <h2 id="consultation-releasing-heading">{timingT.tracks['zodiacal-releasing']}</h2>
-              {releasingLevel1.length === 0 ? <p className="hint">{timingT.noEvents}</p> : eventList(releasingLevel1)}
-              {(releasingLevel2.length > 0 || monthProfection.length > 0) && (
-                <Disclosure title={t.moreTiming} summary={t.moreTimingSummary} showLabel={t.show} hideLabel={t.hide}>
-                  {eventList([...releasingLevel2, ...monthProfection])}
-                  <p className="hint">{timingT.trackNotes.profections}</p>
-                </Disclosure>
-              )}
-              <p>
-                <a href={hrefFor('timing-timeline', { personId })}>{t.openTimingTimeline}</a>
-              </p>
-            </section>
-
-            <section className="consultation-section" aria-labelledby="consultation-transits-heading">
-              <h2 id="consultation-transits-heading">{t.majorTransitsHeading}</h2>
-              <FilterSummary
-                summary={transitFilterT.count(
-                  filteredContacts.length,
-                  load.transit.contacts.length,
-                  transitFilterT.presetsShort[presetOf(filter, rules) ?? 'custom'],
+                />
+                {/* The weights and orbs have no published source (transit-importance.ts, #590), so say so (#681). */}
+                <p className="hint">{t.rankingConvention}</p>
+                {majorRows.length === 0 ? (
+                  <p className="hint">{t.noShownTransits}</p>
+                ) : (
+                  <ConsultationTransitTable caption={t.majorTransitsHeading} labels={tableLabels} rows={majorRows} />
                 )}
-              />
-              {/* The weights and orbs have no published source (transit-importance.ts, #590), so say so (#681). */}
-              <p className="hint">{t.rankingConvention}</p>
-              {shownContactRows.length === 0 ? (
-                <p className="hint">{t.noShownTransits}</p>
-              ) : (
-                <ul>
-                  {shownContactRows.map((row) => (
-                    <li
-                      key={contactKey({ transitingKey: row.bodyAKey, aspectKey: row.aspectKey, target: row.bodyBKey })}
-                    >
-                      {t.transitRow(
-                        body(row.bodyAKey),
-                        aspect(row.aspectKey),
-                        body(row.bodyBKey),
-                        formatOrb(row.orb),
-                        motion(row.applying),
-                      )}{' '}
-                      ·{' '}
-                      {exactDatesNode(
-                        exactDates.get(
-                          contactKey({ transitingKey: row.bodyAKey, aspectKey: row.aspectKey, target: row.bodyBKey }),
-                        ),
+                <p>
+                  {fastRows.length === 0
+                    ? t.noFastToday
+                    : t.fastToday(
+                        fastRows
+                          .map((row) => `${body(row.bodyAKey)} ${aspect(row.aspectKey)} ${body(row.bodyBKey)}`)
+                          .join(t.listSeparator),
                       )}
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <p>
-                {fastRows.length === 0
-                  ? t.noFastToday
-                  : t.fastToday(
-                      fastRows
-                        .map((row) => `${body(row.bodyAKey)} ${aspect(row.aspectKey)} ${body(row.bodyBKey)}`)
-                        .join(t.listSeparator),
-                    )}
-              </p>
-              <h3>{t.anglesHeading}</h3>
-              {load.angles === undefined ? (
-                <p className="hint">{t.anglesNeedBirthTime}</p>
-              ) : load.angles.length === 0 ? (
-                <p className="hint">{t.noAngleTransits}</p>
-              ) : (
-                // In time order, unscored: no weight is invented for an angle (#678).
-                <ul>
-                  {load.angles.map((contact) => (
-                    <li key={`${contact.transitingKey}-${contact.aspectKey}-${contact.angle}`}>
-                      {t.angleTransit(
-                        body(contact.transitingKey),
-                        aspect(contact.aspectKey),
-                        body(contact.angle),
-                        formatOrb(contact.orb),
-                        motion(contact.applying),
-                      )}{' '}
-                      · {exactDatesNode(contact.exactJds)}
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <p>
-                <a href={hrefFor('transit', { personId })}>{t.viewAllTransits}</a>
-              </p>
-            </section>
-
-            <section className="consultation-section" aria-labelledby="consultation-directions-heading">
-              <h2 id="consultation-directions-heading">{t.directionsHeading}</h2>
-              {directions.length === 0 ? (
-                <p className="hint">{t.noDirections}</p>
-              ) : (
-                <>
-                  {eventList(directions.slice(0, SHOWN_DIRECTION_COUNT))}
-                  {directions.length > SHOWN_DIRECTION_COUNT && (
+                </p>
+                {/* One Disclosure per angle (D-800a), in time order and unscored: no weight is invented for an angle (#678). */}
+                {load.angles === undefined ? (
+                  <p className="hint">{t.anglesNeedBirthTime}</p>
+                ) : (
+                  angleGroups(load.angles).map((group) => (
                     <Disclosure
-                      title={t.moreDirections(directions.length - SHOWN_DIRECTION_COUNT)}
+                      key={group.angle}
+                      title={angleTitle(group.angle)}
+                      summary={t.aspectCount(group.contacts.length)}
                       showLabel={t.show}
                       hideLabel={t.hide}
                     >
-                      {eventList(directions.slice(SHOWN_DIRECTION_COUNT))}
+                      {group.contacts.length === 0 ? (
+                        <p className="hint">{angleEmpty(group.angle)}</p>
+                      ) : (
+                        <ConsultationTransitTable
+                          caption={angleTitle(group.angle)}
+                          labels={tableLabels}
+                          rows={angleRows(group.contacts)}
+                        />
+                      )}
                     </Disclosure>
-                  )}
-                </>
-              )}
-              <p>
-                <a href={hrefFor('timing-timeline', { personId })}>{t.openTimingTimeline}</a>
-              </p>
-            </section>
-
-            <section className="consultation-section" aria-labelledby="consultation-highlights-heading">
-              <h2 id="consultation-highlights-heading">{t.highlightsHeading}</h2>
-              {dignityHighlights.length === 0 && conditionHighlights.length === 0 && (
-                <p className="hint">{t.noNotableConditions}</p>
-              )}
-              {/* Each list says which rules it follows (#679): dignities the reader's rulership, conditions the traditional seven. */}
-              {dignityHighlights.length > 0 && (
-                <>
-                  <p className="hint">{t.dignityCaption(rulershipT.options[rulership])}</p>
-                  <ul>
-                    {dignityHighlights.map((line) => (
-                      <li key={line}>{line}</li>
-                    ))}
-                  </ul>
-                </>
-              )}
-              {conditionHighlights.length > 0 && (
-                <>
-                  <p className="hint">{t.conditionCaption}</p>
-                  <ul>
-                    {conditionHighlights.map((line) => (
-                      <li key={line}>{line}</li>
-                    ))}
-                  </ul>
-                </>
-              )}
-              <Disclosure title={t.moreChart} summary={t.moreChartSummary} showLabel={t.show} hideLabel={t.hide}>
-                <p>
-                  {t.chartShape}:{' '}
-                  {load.shape === undefined ? t.shapeCannotBeWorkedOut : chartT.jonesShapeLabels[load.shape.shape]}
-                </p>
-                {retrogradeAtBirth.length > 0 && (
-                  <p>{t.retrogradeAtBirth(retrogradeAtBirth.join(t.conditionSeparator))}</p>
+                  ))
                 )}
-              </Disclosure>
-              <p>
-                <a href={hrefFor('chart', { personId })}>{t.openPatternsAndCondition}</a>
-              </p>
-            </section>
+                <p>
+                  <a href={hrefFor('transit', { personId })}>{t.viewAllTransits}</a>
+                </p>
+              </section>
+
+              <section className="consultation-section" aria-labelledby="consultation-highlights-heading">
+                <h2 id="consultation-highlights-heading">{t.highlightsHeading}</h2>
+                {dignityHighlights.length === 0 && conditionHighlights.length === 0 && (
+                  <p className="hint">{t.noNotableConditions}</p>
+                )}
+                {/* Each list says which rules it follows (#679): dignities the reader's rulership, conditions the traditional seven. */}
+                {dignityHighlights.length > 0 && (
+                  <>
+                    <p className="hint">{t.dignityCaption(rulershipT.options[rulership])}</p>
+                    <ul>
+                      {dignityHighlights.map((line) => (
+                        <li key={line}>{line}</li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+                {conditionHighlights.length > 0 && (
+                  <>
+                    <p className="hint">{t.conditionCaption}</p>
+                    <ul>
+                      {conditionHighlights.map((line) => (
+                        <li key={line}>{line}</li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+                <Disclosure title={t.moreChart} summary={t.moreChartSummary} showLabel={t.show} hideLabel={t.hide}>
+                  <p>
+                    {t.chartShape}:{' '}
+                    {load.shape === undefined ? t.shapeCannotBeWorkedOut : chartT.jonesShapeLabels[load.shape.shape]}
+                  </p>
+                  {retrogradeAtBirth.length > 0 && (
+                    <p>{t.retrogradeAtBirth(retrogradeAtBirth.join(t.conditionSeparator))}</p>
+                  )}
+                </Disclosure>
+                <p>
+                  <a href={hrefFor('chart', { personId })}>{t.openPatternsAndCondition}</a>
+                </p>
+              </section>
+            </div>
+
+            <div className="consultation-col">
+              <section className="consultation-section" aria-labelledby="consultation-year-heading">
+                <h2 id="consultation-year-heading">{t.timeLordsHeading}</h2>
+                <ul className="consultation-lords">
+                  {load.year.profection !== undefined && (
+                    <li>
+                      <span className="consultation-lord-key">{t.profectionYear}</span>
+                      <span className="consultation-lord-value">
+                        {t.placeValue(signName(load.year.profection.sign), ordinal(load.year.profection.house, locale))}
+                      </span>
+                      <span className="consultation-lord-meta consultation-date">
+                        {t.endsOn(dateLabel(load.year.profection.endJd))}
+                      </span>
+                    </li>
+                  )}
+                  {load.year.firdaria !== undefined && (
+                    <li>
+                      <span className="consultation-lord-key">{t.firdaria}</span>
+                      <span className="consultation-lord-value">
+                        {timelineSubjectLabel({ kind: 'firdaria', ruler: load.year.firdaria.ruler }, locale)}
+                      </span>
+                      <span className="consultation-lord-meta consultation-date">
+                        {t.endsOn(dateLabel(load.year.firdaria.endJd))}
+                      </span>
+                    </li>
+                  )}
+                  <li>
+                    <span className="consultation-lord-key">{t.progressedMoon}</span>
+                    <span className="consultation-lord-value">
+                      {t.placeValue(
+                        signName(load.year.progressedMoon.sign),
+                        load.year.progressedMoon.house === undefined
+                          ? undefined
+                          : ordinal(load.year.progressedMoon.house, locale),
+                      )}
+                    </span>
+                    <Badge tone="soft">{chartT.lunarPhaseLabels[load.year.progressedMoon.phase]}</Badge>
+                  </li>
+                  <li>
+                    <span className="consultation-lord-key">{t.solarReturns}</span>
+                    <span className="consultation-lord-value">
+                      {t.solarReturnsValue(
+                        dateLabel(load.year.solarReturns.current),
+                        dateLabel(load.year.solarReturns.next),
+                      )}
+                    </span>
+                  </li>
+                </ul>
+                {monthProfection.length > 0 && (
+                  <Disclosure title={t.moreTiming} summary={t.moreTimingSummary} showLabel={t.show} hideLabel={t.hide}>
+                    {eventList(monthProfection)}
+                    <p className="hint">{timingT.trackNotes.profections}</p>
+                  </Disclosure>
+                )}
+              </section>
+
+              <section className="consultation-section" aria-labelledby="consultation-releasing-heading">
+                <h2 id="consultation-releasing-heading">{t.releasingDirectionsHeading}</h2>
+                {releasingBadges.length === 0 ? (
+                  <p className="hint">{timingT.noEvents}</p>
+                ) : (
+                  <div className="consultation-pills" role="group" aria-label={t.activeReleasing}>
+                    {releasingBadges.map((badge) => (
+                      <Badge key={badge.key} tone="accent">
+                        {badge.text}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+                <h3>{t.directionsHeading}</h3>
+                {directions.length === 0 ? (
+                  <p className="hint">{t.noDirections}</p>
+                ) : (
+                  <>
+                    {directionList(directions.slice(0, SHOWN_DIRECTION_COUNT))}
+                    {directions.length > SHOWN_DIRECTION_COUNT && (
+                      <Disclosure
+                        title={t.moreDirections(directions.length - SHOWN_DIRECTION_COUNT)}
+                        showLabel={t.show}
+                        hideLabel={t.hide}
+                      >
+                        {directionList(directions.slice(SHOWN_DIRECTION_COUNT))}
+                      </Disclosure>
+                    )}
+                  </>
+                )}
+                <p>
+                  <a href={hrefFor('timing-timeline', { personId })}>{t.openTimingTimeline}</a>
+                </p>
+              </section>
+            </div>
           </div>
         </div>
       )}

@@ -5760,9 +5760,8 @@ button.primitive-disclosure-trigger:hover:not(:disabled) {
 }
 
 /*
- * Consultation page (#669): the at-a-glance summary on top, then the four sections in a grid that is one column on a
- * phone and two side by side once the page itself is wide enough (a container query, so it follows the shell, not
- * the window).
+ * Consultation page (#669, #800): the key-metric tiles on top, then two columns, about 60/40, once the page itself is
+ * wide enough (a container query, so it follows the shell, not the window); one column on a phone.
  */
 .consultation-layout {
   container: consultation / inline-size;
@@ -5774,33 +5773,38 @@ button.primitive-disclosure-trigger:hover:not(:disabled) {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: var(--space-8) var(--space-6);
-  align-items: stretch;
+  align-items: start;
 }
 
 @container consultation (min-width: 48rem) {
   .consultation-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
   }
+}
+
+.consultation-col {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-6);
+  min-width: 0;
 }
 
 .consultation-section {
   display: grid;
+  /* A fixed track, so a wide table scrolls in its own frame instead of stretching the card (#800). */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-3);
   min-width: 0;
+  align-content: start;
 }
 
-/* Each data section sits in its own box (#774); the grid stretches boxes in a row to one height. */
+/* Each data section sits in its own box (#774). */
 .consultation-section,
 .consultation-glance {
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   background: var(--surface);
   padding: var(--space-4);
-}
-
-/* Stretched boxes keep their content at the top instead of spreading the extra height across the rows. */
-.consultation-section {
-  align-content: start;
 }
 
 .consultation-glance {
@@ -5821,8 +5825,121 @@ button.primitive-disclosure-trigger:hover:not(:disabled) {
 }
 
 /* The section's grid gap spaces its blocks; their own margins would double it. */
-.consultation-section > :is(p, ul, dl, h3, .primitive-disclosure) {
+.consultation-section > :is(p, ul, dl, h3, .primitive-disclosure, .data-table) {
   margin-block: 0;
+}
+
+/*
+ * The key-metric tiles (#800): 2 columns by default, 4 from 40rem of page width, 6 from 64rem. Consultation only; the
+ * shared StatList keeps its own wrapped layout. The global `dl` rule supplies the surface, so it is reset here.
+ */
+dl.consultation-tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4) var(--space-6);
+  padding: 0;
+  border: 0;
+}
+
+@container consultation (min-width: 40rem) {
+  dl.consultation-tiles {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@container consultation (min-width: 64rem) {
+  dl.consultation-tiles {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+.consultation-tiles > div {
+  min-width: 0;
+}
+
+.consultation-tiles dt,
+.consultation-tiles dd {
+  padding: 0;
+  border-top: 0;
+}
+
+.consultation-tiles dt {
+  padding-right: 0;
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.consultation-tiles dd {
+  overflow-wrap: anywhere;
+}
+
+/* Time lords and cycles: label above, value and its end date or phase beside each other. */
+.consultation-lords,
+.consultation-directions {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.consultation-lords > li,
+.consultation-directions > li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-3);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid color-mix(in oklab, var(--line) 65%, transparent);
+}
+
+.consultation-lords > li:last-child,
+.consultation-directions > li:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.consultation-lord-key {
+  flex-basis: 100%;
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.consultation-lord-value {
+  font-weight: 600;
+}
+
+.consultation-lord-meta {
+  color: var(--muted);
+}
+
+.consultation-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* The table's caption is a heading for assistive technology; the card's own title already shows it (#800). */
+:is(.consultation-section, .primitive-disclosure-panel) .data-table {
+  margin: 0;
+}
+
+.consultation-section .data-table-head {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+.consultation-section .data-table {
+  position: relative;
+}
+
+.consultation-dash {
+  color: var(--muted);
 }
 
 .consultation-date {
