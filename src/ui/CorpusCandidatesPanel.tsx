@@ -10,26 +10,29 @@
  * ones that passed" — so no client-side sort control is offered; re-sorting by anything else
  * would undercut the one prioritization this queue exists to give a reviewer.
  *
+ * Each candidate is a card, not a table row (#816): its per-card Accept is the primary action and
+ * Reject is the danger action. The bulk-select bar stays above the cards, with bulk Accept as the
+ * secondary (quiet) action (#816 D-816b).
+ *
  * Importing new candidates into the queue is not part of this screen — it happens via
  * `POST /api/admin/corpus-candidates/import`, called by generation tooling
  * (`tools/corpus-gen/`), not by a human through this UI.
  */
 /**
  * @module CorpusCandidatesPanel
- * @purpose Renders the admin screen for reviewing bulk-generated interpretation-corpus candidates, sorted worst-triage-score-first, with accept/reject actions.
- * @conventions Accepting a candidate turns it into a live correction in CorpusOverridesPanel; nothing here is visible to a reader until accepted. The corpus-language selector is local state, independent from the app's own `useLocale()`. Text comes from co-located `CorpusCandidatesPanel.messages.ts` via `useMessages()`.
+ * @purpose Renders the admin screen for reviewing bulk-generated interpretation-corpus candidates as cards, sorted worst-triage-score-first, with bulk and per-card accept/reject actions.
+ * @conventions Accepting a candidate turns it into a live correction in CorpusOverridesPanel; nothing here is visible to a reader until accepted. Accept is the primary Button, Reject the danger Button; no green. The corpus-language selector is local state, independent from the app's own `useLocale()`. Text comes from co-located `CorpusCandidatesPanel.messages.ts` via `useMessages()`.
  * @exports CorpusCandidatesPanel
  */
+import { Badge, type BadgeTone } from './primitives/Badge.js';
+import { Button } from './primitives/Button.js';
 import { Checkbox } from './primitives/Checkbox.js';
 import { formatFixed } from './format.js';
 import { Select } from './primitives/Select.js';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { SortableTable } from './SortableTable.js';
-import type { TableColumn } from './table-sort.js';
 import { decideCorpusCandidates, listCorpusCandidates } from '../sync/admin-client.js';
 import { CORPUS_LOCALES } from '../interpretation/schema.js';
 import { LOCALE_LABELS, isLocale, useLocale } from './locale.js';
-import { EntryLabel } from './EntryLabel.js';
 import { compareSortKeys, labelForKey, sortKeyForKey, tagExplanation, tagLabel } from './placement-label.js';
 import { useMessages } from './messages.js';
 import { corpusCandidatesPanelMessages } from './CorpusCandidatesPanel.messages.js';
@@ -38,6 +41,12 @@ import type { Locale } from '../interpretation/schema.js';
 import { EmptyState } from './primitives/EmptyState.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { BackLink } from './BackLink.js';
+
+/** The triage tone for a candidate: a mismatch is a warning-level fact, a match is plain (never green). */
+function triageTone(signal: CorpusCandidate['triageSignal']): BadgeTone | undefined {
+  if (signal === 'mismatch') return 'danger';
+  return undefined;
+}
 
 export function CorpusCandidatesPanel(): React.JSX.Element {
   const t = useMessages(corpusCandidatesPanelMessages);
@@ -129,177 +138,165 @@ export function CorpusCandidatesPanel(): React.JSX.Element {
       });
   };
 
-  const columns: readonly TableColumn<CorpusCandidate>[] = [
-    {
-      key: 'select',
-      label: t.selectColumn,
-      sortable: false,
-      valueOf: (candidate) => selected.has(candidate.id),
-      renderCell: (candidate) => (
-        <Checkbox
-          hideLabel
-          label={labelForKey(candidate.key, uiLocale)}
-          checked={selected.has(candidate.id)}
-          onChange={(value) => {
-            toggleSelected(candidate.id, value);
-          }}
-        />
-      ),
-    },
-    {
-      key: 'key',
-      label: t.keyColumn,
-      valueOf: (candidate) => labelForKey(candidate.key, uiLocale),
-      renderCell: (candidate) => (
-        <>
-          <EntryLabel entryKey={candidate.key} locale={uiLocale} />
-          {duplicateIdentities.has(candidate.key) && (
-            <>
-              {' '}
-              <span className="hint" role="img" aria-label={t.duplicateKeyHint} title={t.duplicateKeyHint}>
-                ⚠
-              </span>
-            </>
-          )}
-        </>
-      ),
-    },
-    {
-      key: 'details',
-      label: t.detailsColumn,
-      sortable: false,
-      valueOf: (candidate) => candidate.text,
-      renderCell: (candidate) => (
-        <dl className="entry-details">
-          <dt>{t.sourceColumn}</dt>
-          <dd>{candidate.source === 'classical-seed' ? t.sourceClassicalSeed : t.sourceLlmFill}</dd>
-          <dt>{t.triageColumn}</dt>
-          <dd>
-            {candidate.triageSignal === 'match'
-              ? t.triageMatch
-              : candidate.triageSignal === 'mismatch'
-                ? t.triageMismatch
-                : candidate.triageSignal === 'no-baseline'
-                  ? t.triageNoBaseline
-                  : t.triageUnchecked}
-            {candidate.triageScore !== undefined && ` (${formatFixed(candidate.triageScore, 2)})`}
-          </dd>
-          <dt>{t.tagsColumn}</dt>
-          <dd>
-            {candidate.tags.map((tag) => (
-              <span key={tag} className="cell-tag">
-                {tagLabel(tag, uiLocale)}
-                <span className="cell-explanation">{tagExplanation(tag, uiLocale)}</span>
-              </span>
-            ))}
-          </dd>
-          <dt>{t.textColumn}</dt>
-          <dd className="entry-text">{candidate.text}</dd>
-        </dl>
-      ),
-    },
-    {
-      key: 'actions',
-      label: t.actionsColumn,
-      sortable: false,
-      valueOf: () => '',
-      renderCell: (candidate) => (
-        <span className="actions">
-          <button
-            type="button"
-            className="quiet"
-            disabled={deciding}
-            onClick={() => {
-              decide([candidate.id], 'accept');
-            }}
-          >
-            {t.acceptButton}
-          </button>{' '}
-          <button
-            type="button"
-            className="quiet danger"
-            disabled={deciding}
-            onClick={() => {
-              decide([candidate.id], 'reject');
-            }}
-          >
-            {t.rejectButton}
-          </button>
-        </span>
-      ),
-    },
-  ];
+  const triageLabel = (candidate: CorpusCandidate): string => {
+    const word =
+      candidate.triageSignal === 'match'
+        ? t.triageMatch
+        : candidate.triageSignal === 'mismatch'
+          ? t.triageMismatch
+          : candidate.triageSignal === 'no-baseline'
+            ? t.triageNoBaseline
+            : t.triageUnchecked;
+    return candidate.triageScore === undefined ? word : `${word} (${formatFixed(candidate.triageScore, 2)})`;
+  };
 
   return (
-    <main className="shell">
-      <BackLink fallback="#/admin" />
-      <h1>{t.heading}</h1>
-      <p>{t.intro}</p>
-
-      {loadError !== undefined && <StatusMessage kind="error">{t.couldNotLoad(loadError)}</StatusMessage>}
-
-      <div className="field-grid">
-        <Select
-          label={t.corpusLocaleLabel}
-          value={corpusLocale}
-          options={CORPUS_LOCALES.map((locale) => ({ value: locale, label: LOCALE_LABELS[locale] }))}
-          onChange={(value) => {
-            if (isLocale(value)) setCorpusLocale(value);
-          }}
-        />
+    <main className="shell admin-view">
+      <div className="admin-view-head">
+        <BackLink fallback="#/admin" />
+        <h1>{t.heading}</h1>
+        <p>{t.intro}</p>
       </div>
+      <div className="admin-stack">
+        {loadError !== undefined && <StatusMessage kind="error">{t.couldNotLoad(loadError)}</StatusMessage>}
 
-      {decideError !== undefined && <StatusMessage kind="error">{t.decideFailed(decideError)}</StatusMessage>}
-      {missingCount !== undefined && missingCount > 0 && (
-        <StatusMessage kind="error">{t.missingWarning(String(missingCount))}</StatusMessage>
-      )}
-
-      {candidates === undefined ? (
-        <StatusMessage kind="loading">{t.loadingCandidates}</StatusMessage>
-      ) : candidates.length === 0 ? (
-        <EmptyState message={t.noResults} />
-      ) : (
-        <>
-          <p className="actions">
-            <Checkbox
-              label={t.selectAllLabel}
-              checked={selected.size > 0 && selected.size === candidates.length}
-              onChange={(value) => {
-                toggleSelectAll(value);
-              }}
-            />{' '}
-            {t.selectedCount(String(selected.size))}{' '}
-            <button
-              type="button"
-              disabled={selected.size === 0 || deciding}
-              onClick={() => {
-                decide(Array.from(selected), 'accept');
-              }}
-            >
-              {deciding ? t.deciding : t.acceptSelectedButton}
-            </button>{' '}
-            <button
-              type="button"
-              className="danger"
-              disabled={selected.size === 0 || deciding}
-              onClick={() => {
-                decide(Array.from(selected), 'reject');
-              }}
-            >
-              {deciding ? t.deciding : t.rejectSelectedButton}
-            </button>
-          </p>
-
-          <SortableTable
-            wrap
-            headingLevel={2}
-            caption={t.candidatesHeading}
-            columns={columns}
-            rows={candidates}
-            getRowKey={(candidate) => candidate.id}
+        <div className="corpus-toolbar">
+          <Select
+            label={t.corpusLocaleLabel}
+            value={corpusLocale}
+            options={CORPUS_LOCALES.map((locale) => ({ value: locale, label: LOCALE_LABELS[locale] }))}
+            onChange={(value) => {
+              if (isLocale(value)) setCorpusLocale(value);
+            }}
           />
-        </>
-      )}
+        </div>
+
+        {decideError !== undefined && <StatusMessage kind="error">{t.decideFailed(decideError)}</StatusMessage>}
+        {missingCount !== undefined && missingCount > 0 && (
+          <StatusMessage kind="error">{t.missingWarning(String(missingCount))}</StatusMessage>
+        )}
+
+        <div className="corpus-queue-summary">
+          <p className="corpus-queue-count">
+            {candidates === undefined ? t.loadingCandidates : t.pendingCount(String(candidates.length))}
+          </p>
+          <p className="hint">{t.sortRule}</p>
+        </div>
+
+        {candidates === undefined ? (
+          <StatusMessage kind="loading">{t.loadingCandidates}</StatusMessage>
+        ) : candidates.length === 0 ? (
+          <div className="corpus-empty">
+            <EmptyState message={t.noResults} />
+          </div>
+        ) : (
+          <>
+            <div className="corpus-bulk-bar">
+              <Checkbox
+                label={t.selectAllLabel}
+                checked={selected.size > 0 && selected.size === candidates.length}
+                onChange={(value) => {
+                  toggleSelectAll(value);
+                }}
+              />
+              <span className="muted">{t.selectedCount(String(selected.size))}</span>
+              <span className="corpus-bulk-actions">
+                <Button
+                  variant="quiet"
+                  size="compact"
+                  disabled={selected.size === 0 || deciding}
+                  onClick={() => {
+                    decide(Array.from(selected), 'accept');
+                  }}
+                >
+                  {deciding ? t.deciding : t.acceptSelectedButton}
+                </Button>
+                <Button
+                  variant="danger"
+                  size="compact"
+                  disabled={selected.size === 0 || deciding}
+                  onClick={() => {
+                    decide(Array.from(selected), 'reject');
+                  }}
+                >
+                  {deciding ? t.deciding : t.rejectSelectedButton}
+                </Button>
+              </span>
+            </div>
+
+            <h2 className="sr-only">{t.candidatesHeading}</h2>
+            <ul className="corpus-entry-list">
+              {candidates.map((candidate) => {
+                const isDuplicate = duplicateIdentities.has(candidate.key);
+                return (
+                  <li key={candidate.id} className="corpus-entry corpus-candidate">
+                    <div className="corpus-entry-head">
+                      <Checkbox
+                        hideLabel
+                        label={labelForKey(candidate.key, uiLocale)}
+                        checked={selected.has(candidate.id)}
+                        onChange={(value) => {
+                          toggleSelected(candidate.id, value);
+                        }}
+                      />
+                      <code className="corpus-entry-key">{candidate.key}</code>
+                      <span className="corpus-entry-tags">
+                        <Badge>{candidate.source === 'classical-seed' ? t.sourceClassicalSeed : t.sourceLlmFill}</Badge>
+                        <Badge tone={triageTone(candidate.triageSignal)}>{triageLabel(candidate)}</Badge>
+                        {isDuplicate && (
+                          <span className="hint" role="img" aria-label={t.duplicateKeyHint} title={t.duplicateKeyHint}>
+                            ⚠
+                          </span>
+                        )}
+                      </span>
+                      <span className="corpus-candidate-actions">
+                        <Button
+                          variant="primary"
+                          size="compact"
+                          disabled={deciding}
+                          onClick={() => {
+                            decide([candidate.id], 'accept');
+                          }}
+                        >
+                          {t.acceptButton}
+                        </Button>
+                        <Button
+                          variant="danger"
+                          size="compact"
+                          disabled={deciding}
+                          onClick={() => {
+                            decide([candidate.id], 'reject');
+                          }}
+                        >
+                          {t.rejectButton}
+                        </Button>
+                      </span>
+                    </div>
+                    {labelForKey(candidate.key, uiLocale) !== candidate.key && (
+                      <p className="corpus-entry-meaning">
+                        <span className="entry-meaning">{labelForKey(candidate.key, uiLocale)}</span>
+                      </p>
+                    )}
+                    <div className="corpus-candidate-text">
+                      <h3 className="corpus-pane-title">{t.candidateTextLabel}</h3>
+                      <p className="corpus-entry-text">{candidate.text}</p>
+                    </div>
+                    {candidate.tags.length > 0 && (
+                      <p className="corpus-entry-tags">
+                        {candidate.tags.map((tag) => (
+                          <span key={tag} className="cell-tag" title={tagExplanation(tag, uiLocale)}>
+                            {tagLabel(tag, uiLocale)}
+                          </span>
+                        ))}
+                      </p>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </>
+        )}
+      </div>
     </main>
   );
 }

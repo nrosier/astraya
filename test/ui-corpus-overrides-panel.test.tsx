@@ -141,13 +141,14 @@ function findButton(container: HTMLElement, text: string): HTMLButtonElement {
 }
 
 function searchInput(container: HTMLElement): HTMLInputElement {
-  const input = container.querySelector('.field-grid input[type="text"]');
+  const input = container.querySelector('.corpus-toolbar input[type="text"]');
   if (!(input instanceof HTMLInputElement)) throw new Error('test fixture bug: no search input');
   return input;
 }
 
-function tableRows(container: HTMLElement): readonly HTMLTableRowElement[] {
-  return Array.from(container.querySelectorAll('.data-table tbody tr'));
+/** Each entry is a card (#816 D-816c), in the list the panel renders. */
+function tableRows(container: HTMLElement): readonly HTMLElement[] {
+  return Array.from(container.querySelectorAll<HTMLElement>('ul.corpus-entry-list > li.corpus-entry'));
 }
 
 /**
@@ -156,9 +157,11 @@ function tableRows(container: HTMLElement): readonly HTMLTableRowElement[] {
  * by its key's own cell instead of assuming a position.
  */
 function editButtonForKey(container: HTMLElement, key: string): HTMLButtonElement {
-  // The row's entry cell shows what the entry means, with the key as small secondary text (#428).
-  const row = tableRows(container).find((candidate) => candidate.querySelector('td .entry-key')?.textContent === key);
-  const button = row?.querySelector('.actions button');
+  // The card's header names the key in its code badge (#816).
+  const row = tableRows(container).find(
+    (candidate) => candidate.querySelector('code.corpus-entry-key')?.textContent === key,
+  );
+  const button = row?.querySelector('.corpus-entry-head button');
   if (!(button instanceof HTMLButtonElement)) throw new Error(`test fixture bug: no edit button for row "${key}"`);
   return button;
 }
@@ -221,7 +224,7 @@ describe('CorpusOverridesPanel (#292)', () => {
     expect(rows[0]?.textContent).toContain('Moon in Taurus');
   });
 
-  it('shows each entry as Entry, Details and Actions, with the whole text and nothing cut short', async () => {
+  it('shows each entry as a card: key badge, category and tier tags, Edit, meaning and the whole text (#816)', async () => {
     const longText = `${'A long placement description that goes on and on. '.repeat(8)}The very last words.`;
     const { fetch: fetchMock } = makeFetchMock([{ ...NEUTRAL_ENTRY, text: longText }, OTHER_ENTRY]);
     vi.stubGlobal('fetch', fetchMock);
@@ -233,13 +236,19 @@ describe('CorpusOverridesPanel (#292)', () => {
       container.remove();
     };
 
-    const headers = Array.from(container.querySelectorAll('th')).map((th) => th.textContent);
-    expect(headers).toEqual(['Entry', 'Details', 'Actions']);
+    // No table: entries are cards in a list (#816 D-816c).
+    expect(container.querySelector('table')).toBeNull();
     const first = tableRows(container)[0];
-    expect(first?.querySelector('dd.entry-text')?.textContent).toBe(longText);
+    expect(first?.querySelector('.corpus-entry-head > code.corpus-entry-key')?.textContent).toBe(NEUTRAL_ENTRY.key);
+    expect(first?.querySelector('p.corpus-entry-text')?.textContent).toBe(longText);
     expect(first?.textContent).not.toContain('…');
-    const labels = Array.from(first?.querySelectorAll('dt') ?? []).map((dt) => dt.textContent);
-    expect(labels).toEqual(['Category', 'Tier', 'Tags', 'Text', 'Status']);
+    const badges = Array.from(first?.querySelectorAll('.corpus-entry-tags .primitive-badge') ?? []).map(
+      (badge) => badge.textContent,
+    );
+    expect(badges).toEqual(['Planet in sign', 'Core']);
+    expect(first?.querySelector('.corpus-entry-head button')?.textContent).toBe(
+      corpusOverridesPanelMessages.en.editButton,
+    );
   });
 
   it('editing and saving a correction marks the entry Overridden', async () => {
@@ -366,9 +375,12 @@ describe('CorpusOverridesPanel shows what an entry means (#428)', () => {
     return container;
   }
 
+  // A card's meaning is its `.entry-meaning`; a key the schema cannot read has none, so its key is shown.
   const meanings = (container: HTMLElement): (string | undefined)[] =>
     tableRows(container).map(
-      (row) => row.querySelector('td .entry-meaning')?.textContent ?? row.querySelector('td')?.textContent,
+      (row) =>
+        row.querySelector('.corpus-entry-meaning .entry-meaning')?.textContent ??
+        row.querySelector('code.corpus-entry-key')?.textContent,
     );
   const search = async (container: HTMLElement, value: string): Promise<void> => {
     await act(async () => {
@@ -380,12 +392,10 @@ describe('CorpusOverridesPanel shows what an entry means (#428)', () => {
   it('shows each entry as its meaning, with the key beneath as secondary text', async () => {
     const container = await mountWith(MEANING_CORPUS);
     const row = tableRows(container).find(
-      (r) => r.querySelector('td .entry-key')?.textContent === 'planet-in-house:sun:3',
+      (r) => r.querySelector('code.corpus-entry-key')?.textContent === 'planet-in-house:sun:3',
     );
-    expect(row?.querySelector('td .entry-meaning')?.textContent).toBe('Sun in the 3rd house');
-    expect(row?.querySelector('td .entry-key')?.textContent).toBe('planet-in-house:sun:3');
-    // The first column is the meaning, not the key.
-    expect(row?.querySelector('td')?.textContent.startsWith('Sun in the 3rd house')).toBe(true);
+    expect(row?.querySelector('.corpus-entry-meaning .entry-meaning')?.textContent).toBe('Sun in the 3rd house');
+    expect(row?.querySelector('code.corpus-entry-key')?.textContent).toBe('planet-in-house:sun:3');
   });
 
   it('reads the zero-based sign index as the sign and the house number as the house', async () => {
@@ -398,9 +408,11 @@ describe('CorpusOverridesPanel shows what an entry means (#428)', () => {
 
   it('shows a key the schema cannot read once, as it is', async () => {
     const container = await mountWith(MEANING_CORPUS);
-    const row = tableRows(container).find((r) => r.querySelector('td .entry-key')?.textContent === 'not-a-real-key');
-    expect(row?.querySelector('td .entry-meaning')).toBeNull();
-    expect(row?.querySelector('td')?.textContent).toBe('not-a-real-key');
+    const row = tableRows(container).find(
+      (r) => r.querySelector('code.corpus-entry-key')?.textContent === 'not-a-real-key',
+    );
+    expect(row?.querySelector('.entry-meaning')).toBeNull();
+    expect(row?.querySelector('.corpus-entry-meaning')).toBeNull();
   });
 
   it('lists entries by what they mean, so the 2nd house comes before the 10th', async () => {
@@ -440,7 +452,7 @@ describe('CorpusOverridesPanel shows what an entry means (#428)', () => {
     expect(empty?.querySelector('p.primitive-empty-state-message')?.textContent).toBe(
       'No entries match these filters.',
     );
-    expect(container.querySelector('p.empty')).toBeNull();
+    expect(container.querySelector('ul.corpus-entry-list')).toBeNull();
   });
 
   it('names the categories in the filter in words, and filters by them', async () => {
@@ -514,7 +526,7 @@ describe('CorpusOverridesPanel shows what an entry means (#428)', () => {
     expect(meanings(container)).toContain('Zon in Tweelingen');
     expect(meanings(container)).toContain('Zon in het 3e huis');
     expect(meanings(container)).toContain('Mars vierkant Venus');
-    expect(container.querySelector('thead th')?.textContent).toBe('Onderdeel');
+    expect(container.querySelector('h2.sr-only')?.textContent).toBe('Onderdelen');
     // Search by the Dutch meaning.
     await search(container, 'zon 3e huis');
     expect(meanings(container)).toEqual(['Zon in het 3e huis']);
@@ -523,5 +535,79 @@ describe('CorpusOverridesPanel shows what an entry means (#428)', () => {
   it('has an accessible search label that says what can be searched', async () => {
     const container = await mountWith(MEANING_CORPUS);
     expect(container.textContent).toContain('Search (meaning, key or text)');
+  });
+});
+
+describe('CorpusOverridesPanel entry cards: overridden accent (#816 D-816c)', () => {
+  let cleanup: (() => void) | undefined;
+
+  beforeEach(() => {
+    setLocale('en');
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    cleanup?.();
+    cleanup = undefined;
+  });
+
+  async function mountWithOverride(): Promise<HTMLElement> {
+    const { fetch: fetchMock, overrides } = makeFetchMock([NEUTRAL_ENTRY, OTHER_ENTRY]);
+    overrides.push({
+      id: 'ov-accent',
+      key: NEUTRAL_ENTRY.key,
+      locale: 'en',
+      text: 'A corrected description.',
+      tier: 'core',
+      tags: ['sun'],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      updatedByUserId: 'u1',
+      updatedByUsername: 'alice',
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const { container, root } = await mount();
+    cleanup = () => {
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+    };
+    return container;
+  }
+
+  it('gives an overridden entry the corpus-entry-overridden class, with an Overridden badge', async () => {
+    const container = await mountWithOverride();
+    const card = tableRows(container).find(
+      (row) => row.querySelector('code.corpus-entry-key')?.textContent === NEUTRAL_ENTRY.key,
+    );
+    expect(card?.classList.contains('corpus-entry-overridden')).toBe(true);
+    expect(card?.dataset.overridden).toBe('true');
+    const badge = [...(card?.querySelectorAll('.corpus-entry-tags .primitive-badge') ?? [])].find(
+      (b) => b.textContent === corpusOverridesPanelMessages.en.overriddenStatus,
+    );
+    expect(badge?.getAttribute('data-tone')).toBe('accent');
+  });
+
+  it('leaves a non-overridden entry as a plain card with no accent class and no Overridden badge', async () => {
+    const container = await mountWithOverride();
+    const card = tableRows(container).find(
+      (row) => row.querySelector('code.corpus-entry-key')?.textContent === OTHER_ENTRY.key,
+    );
+    expect(card?.classList.contains('corpus-entry-overridden')).toBe(false);
+    expect(card?.dataset.overridden).toBe('false');
+    expect(card?.textContent).not.toContain(corpusOverridesPanelMessages.en.overriddenStatus);
+  });
+
+  it('marks an overridden card with a 2px inset left accent shadow and no border change, and keeps the 1px card default', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const css = readFileSync(join(import.meta.dirname, '..', 'src', 'ui', 'app.css'), 'utf8');
+    const stripped = css.replace(/\/\*[\s\S]*?\*\//g, '');
+    const rule = /\.corpus-entry-overridden\s*\{([^}]*)\}/.exec(stripped);
+    expect(rule?.[1]).toMatch(/box-shadow:\s*inset 2px 0 0 var\(--accent\)/);
+    expect(rule?.[1]).not.toMatch(/border/);
+    const card = /\.corpus-entry\s*\{([^}]*)\}/.exec(stripped);
+    expect(card?.[1]).toMatch(/border:\s*1px solid var\(--line\)/);
   });
 });

@@ -20,8 +20,13 @@
  */
 import { useLocale } from './locale.js';
 import { formatCents, formatInteger, formatTimestamp } from './format.js';
+import { Badge, type BadgeTone } from './primitives/Badge.js';
+import { Button } from './primitives/Button.js';
+import { Notice } from './primitives/Notice.js';
 import { Select } from './primitives/Select.js';
+import { StatList } from './primitives/StatList.js';
 import { TextField } from './primitives/TextField.js';
+import { activeUsageUsers, totalRequests, userActivity, type UserActivity } from './admin-status.js';
 import { useEffect, useState } from 'react';
 import { SortableTable } from './SortableTable.js';
 import type { TableColumn } from './table-sort.js';
@@ -67,23 +72,23 @@ interface PendingDelete {
   readonly impact: DeletionImpact;
 }
 
-function CreateUserForm({
-  oidcEnabled,
-  create,
-}: {
-  oidcEnabled: boolean;
-  create: (username: string, role: Role) => Promise<void>;
-}): React.JSX.Element {
+const ACTIVITY_TONE: Readonly<Record<UserActivity, BadgeTone | undefined>> = {
+  active: 'success',
+  idle: undefined,
+  disabled: 'danger',
+};
+
+function activityLabel(activity: UserActivity, t: typeof adminPanelMessages.en): string {
+  return activity === 'active' ? t.statusActive : activity === 'idle' ? t.statusIdle : t.statusDisabled;
+}
+
+function CreateUserForm({ create }: { create: (username: string, role: Role) => Promise<void> }): React.JSX.Element {
   const [username, setUsername] = useState('');
   const [role, setRole] = useState<Role>('user');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
   const t = useMessages(adminPanelMessages);
   const shared = useMessages(sharedMessages);
-
-  if (oidcEnabled) {
-    return <p className="hint">{t.oidcHint}</p>;
-  }
 
   const submit = (event: React.SubmitEvent<HTMLFormElement>): void => {
     event.preventDefault();
@@ -137,6 +142,9 @@ export function AdminPanel(): React.JSX.Element {
   const shared = useMessages(sharedMessages);
   const sessionUser = useSessionUserOrUndefined();
   const canManage = sessionUser?.isSuperAdmin === true;
+  const oidcEnabled = oidcConfig?.enabled === true;
+  // Read once per render: the Active/Idle status is a 24-hour window, not a live clock.
+  const now = Date.now();
 
   const refresh = (): Promise<void> =>
     listUsers().then((loaded) => {
@@ -217,12 +225,15 @@ export function AdminPanel(): React.JSX.Element {
         key: 'username',
         label: shared.usernameLabel,
         valueOf: (user) => user.username,
-        renderCell: (user) => (
-          <>
-            {user.username}
-            {user.disabledAt !== null && t.disabledSuffix}
-          </>
-        ),
+        renderCell: (user) => {
+          const activity = userActivity(user, now);
+          return (
+            <span className="admin-user-name">
+              <strong>{user.username}</strong>{' '}
+              <Badge tone={ACTIVITY_TONE[activity]}>{activityLabel(activity, t)}</Badge>
+            </span>
+          );
+        },
       },
       {
         key: 'role',
@@ -251,18 +262,21 @@ export function AdminPanel(): React.JSX.Element {
         label: t.lastSeenColumn,
         valueOf: (user) => user.lastSeenAt ?? '',
         render: (user) => seen(user.lastSeenAt),
+        renderCell: (user) => <span className="admin-meta">{seen(user.lastSeenAt)}</span>,
       },
       {
         key: 'lastSync',
         label: t.lastSyncColumn,
         valueOf: (user) => user.lastSyncAt ?? '',
         render: (user) => seen(user.lastSyncAt),
+        renderCell: (user) => <span className="admin-meta">{seen(user.lastSyncAt)}</span>,
       },
       {
         key: 'lastAiUsage',
         label: t.lastAiUsageColumn,
         valueOf: (user) => user.lastAiUsageAt ?? '',
         render: (user) => seen(user.lastAiUsageAt),
+        renderCell: (user) => <span className="admin-meta">{seen(user.lastAiUsageAt)}</span>,
       },
     ];
     if (canManage) {
@@ -274,37 +288,38 @@ export function AdminPanel(): React.JSX.Element {
         renderCell: (user) => {
           const disabled = busyUserId === user.id;
           return (
-            <span className="actions">
-              <button
-                type="button"
-                className="quiet"
+            <span className="actions admin-user-actions">
+              <Button
+                size="compact"
+                variant="quiet"
                 disabled={disabled}
                 onClick={() => {
                   toggleEnabled(user);
                 }}
               >
                 {user.disabledAt === null ? t.disableButton : t.enableButton}
-              </button>
-              <button
-                type="button"
-                className="quiet"
+              </Button>
+              <Button
+                size="compact"
+                variant="quiet"
                 disabled={disabled}
                 onClick={() => {
                   requestReset(user);
                 }}
               >
                 {t.resetPasswordButton}
-              </button>
-              <button
-                type="button"
-                className="danger"
+              </Button>
+              <span className="admin-action-separator" aria-hidden="true" />
+              <Button
+                size="compact"
+                variant="danger"
                 disabled={disabled}
                 onClick={() => {
                   requestDelete(user);
                 }}
               >
                 {t.deleteButton}
-              </button>
+              </Button>
               {passwordLink?.userId === user.id && (
                 <p className="hint">
                   {t.copyLinkNow} <code>{passwordLink.url}</code>
@@ -319,58 +334,64 @@ export function AdminPanel(): React.JSX.Element {
   })();
 
   return (
-    <main className="shell">
-      <BackLink fallback="#/people" />
-      <h1>{t.heading}</h1>
-      {error !== undefined && <StatusMessage kind="error">{error}</StatusMessage>}
+    <main className="shell admin-view">
+      <div className="admin-view-head">
+        <BackLink fallback="#/people" />
+        <h1>{t.heading}</h1>
+      </div>
+      <div className="admin-stack">
+        {error !== undefined && <StatusMessage kind="error">{error}</StatusMessage>}
 
-      {!canManage && <p className="hint">{t.readOnlyUsersHint}</p>}
+        {!canManage && <p className="hint">{t.readOnlyUsersHint}</p>}
 
-      {canManage && pendingDelete !== undefined && (
-        <StatusMessage kind="error">
-          {t.deleteWarning(pendingDelete.user.username, describeImpact(pendingDelete.impact, t))}{' '}
-          <button type="button" className="danger" onClick={confirmDelete}>
-            {t.deletePermanentlyButton}
-          </button>{' '}
-          <button
-            type="button"
-            className="quiet"
-            onClick={() => {
-              setPendingDelete(undefined);
-            }}
-          >
-            {t.cancelButton}
-          </button>
-        </StatusMessage>
-      )}
+        {canManage && oidcEnabled && <Notice tone="warning">{t.oidcHint}</Notice>}
 
-      {canManage && (
-        <>
-          <h2>{t.createUserHeading}</h2>
-          <CreateUserForm oidcEnabled={oidcConfig?.enabled === true} create={create} />
-          {passwordLink !== undefined && users?.every((u) => u.id !== passwordLink.userId) === true && (
-            <p className="hint">
-              {t.copyLinkNow} <code>{passwordLink.url}</code>
-            </p>
-          )}
-        </>
-      )}
+        {canManage && pendingDelete !== undefined && (
+          <StatusMessage kind="error">
+            {t.deleteWarning(pendingDelete.user.username, describeImpact(pendingDelete.impact, t))}{' '}
+            <button type="button" className="danger" onClick={confirmDelete}>
+              {t.deletePermanentlyButton}
+            </button>{' '}
+            <button
+              type="button"
+              className="quiet"
+              onClick={() => {
+                setPendingDelete(undefined);
+              }}
+            >
+              {t.cancelButton}
+            </button>
+          </StatusMessage>
+        )}
 
-      {users === undefined ? (
-        <>
-          <h2>{t.usersHeading}</h2>
-          <StatusMessage kind="loading">{t.loadingUsers}</StatusMessage>
-        </>
-      ) : (
-        <SortableTable
-          wrap
-          headingLevel={2}
-          caption={t.usersHeading}
-          columns={userColumns}
-          rows={users}
-          getRowKey={(user) => user.id}
-        />
-      )}
+        {canManage && !oidcEnabled && (
+          <>
+            <h2>{t.createUserHeading}</h2>
+            <CreateUserForm create={create} />
+            {passwordLink !== undefined && users?.every((u) => u.id !== passwordLink.userId) === true && (
+              <p className="hint">
+                {t.copyLinkNow} <code>{passwordLink.url}</code>
+              </p>
+            )}
+          </>
+        )}
+
+        {users === undefined ? (
+          <>
+            <h2>{t.usersHeading}</h2>
+            <StatusMessage kind="loading">{t.loadingUsers}</StatusMessage>
+          </>
+        ) : (
+          <SortableTable
+            wrap
+            headingLevel={2}
+            caption={t.usersHeading}
+            columns={userColumns}
+            rows={users}
+            getRowKey={(user) => user.id}
+          />
+        )}
+      </div>
     </main>
   );
 }
@@ -429,32 +450,46 @@ export function AdminUsagePanel(): React.JSX.Element {
   ];
 
   return (
-    <main className="shell">
-      <BackLink fallback="#/people" />
-      <h1>{t.usageHeading}</h1>
-      {error !== undefined && <StatusMessage kind="error">{error}</StatusMessage>}
-      {usage === undefined ? (
-        <StatusMessage kind="loading">{t.loadingUsage}</StatusMessage>
-      ) : usage.users.length === 0 ? (
-        <p className="hint">{t.usageEmpty}</p>
-      ) : (
-        <>
-          <SortableTable
-            headingLevel={2}
-            caption={t.usageTableHeading}
-            columns={usageColumns}
-            rows={usage.users}
-            getRowKey={(row) => row.userId}
-          />
-          <p className="hint">
-            {t.usageCapsNote(
-              formatCents(usage.caps.userDailyCapCents, locale),
-              formatCents(usage.caps.totalDailyCapCents, locale),
-              formatCents(usage.totalCostCentsLast24h, locale),
-            )}
-          </p>
-        </>
-      )}
+    <main className="shell admin-view">
+      <div className="admin-view-head">
+        <BackLink fallback="#/people" />
+        <h1>{t.usageHeading}</h1>
+      </div>
+      <div className="admin-stack">
+        {error !== undefined && <StatusMessage kind="error">{error}</StatusMessage>}
+        {usage === undefined ? (
+          <StatusMessage kind="loading">{t.loadingUsage}</StatusMessage>
+        ) : usage.users.length === 0 ? (
+          <p className="hint">{t.usageEmpty}</p>
+        ) : (
+          <>
+            <StatList
+              items={[
+                { label: t.usageSummaryCost24h, value: formatCents(usage.totalCostCentsLast24h, locale) },
+                { label: t.usageSummaryRequests, value: formatInteger(totalRequests(usage.users), locale) },
+                {
+                  label: t.usageSummaryActiveUsers,
+                  value: formatInteger(activeUsageUsers(usage.users, Date.now()), locale),
+                },
+              ]}
+            />
+            <Notice tone="info">
+              {t.usageCapsNote(
+                formatCents(usage.caps.userDailyCapCents, locale),
+                formatCents(usage.caps.totalDailyCapCents, locale),
+                formatCents(usage.totalCostCentsLast24h, locale),
+              )}
+            </Notice>
+            <SortableTable
+              headingLevel={2}
+              caption={t.usageTableHeading}
+              columns={usageColumns}
+              rows={usage.users}
+              getRowKey={(row) => row.userId}
+            />
+          </>
+        )}
+      </div>
     </main>
   );
 }

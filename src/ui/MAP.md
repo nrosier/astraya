@@ -12,7 +12,8 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `GlossaryTerm.messages.ts` — en/nl label of the terms list. Deps: none.
 - `AccountPanel.tsx` + `AccountPanel.messages.ts` — Staged sign-in (OpenID / local, #781; OpenID when SSO is configured, #651)/out + account adoption + local-data removal. Deps: `session-context`, `sync/auth-client`, `oidc-pkce`, `primitives/StagedDialog`.
 - `AdminNav.tsx` + `AdminNav.messages.ts` — Admin tab strip (users/usage/corpus/candidates) in the shared `ScrollingTabRow` (#818). Deps: `./admin-nav`, `./ScrollingTabRow`, `./primitives/Select`.
-- `AdminPanel.tsx` + `AdminPanel.messages.ts` — User CRUD + AI-usage reporting. Deps: `sync/admin-client`, `session-context`.
+- `AdminPanel.tsx` + `AdminPanel.messages.ts` — User CRUD + AI-usage reporting, as Users and AI usage views. Deps: `sync/admin-client`, `session-context`, `admin-status`.
+- `admin-status.ts` — Pure 24-hour activity and usage-total helpers for the admin screens. Deps: `sync/admin-client`.
 - `App.tsx` + `App.messages.ts` — Root router + sticky header + lazy-loading boundary. Deps: `route`, `session-context`, `store-context`, `person-screens`.
 - `EmphasisGrid.tsx` + `emphasis-grid-model.ts` — Elements & modalities grid on screen (#821): flat bordered cells, row and column totals; the PDF and sheet export keep `chart/emphasis-grid`. Deps: `chart/glyphs`, `astrology/emphasis`.
 - `calculation-basis.ts` + `calculation-basis.messages.ts` — The calculation-basis line (profile name + whether it is Astraya's default, the saved default, or changed for this chart) shown on chart pages. Deps: `chart/calculation-profiles`, `astrology/orb-library`, `astrology/orb-profiles`, `default-calculation-profile`, `extended-settings-summary`, `ExtendedSettingsPanel.messages`.
@@ -38,8 +39,8 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `ChartOverlaySettingsPanel.tsx` + `ChartOverlaySettingsPanel.messages.ts` — Staged additional-ring source, order, contextual-input, and cross-aspect configuration for the canonical chart Wheel. Opens in flow from a Disclosure row under the tab row (#826). Deps: `primitives/Disclosure`, field primitives.
 - `CompositeView.tsx` + `CompositeView.messages.ts` — Composite midpoint chart between two people. Deps: `domain/composite`, `ChartView`, `ReportView`.
 - `ConsultationView.tsx` + `ConsultationView.messages.ts` — Consultation dashboard (#563): current transits, active timing techniques and chart highlights for one person, for today only, each a read-only slice of another screen's own compute pipeline. Deps: `domain/transit`, `domain/timing-timeline`, `domain/chart-tables`, `./TransitFilterPanel`, `./TimingTimelineView`.
-- `CorpusCandidatesPanel.tsx` + `CorpusCandidatesPanel.messages.ts` — Admin candidate-review queue (accept/reject). Deps: `sync/admin-client`, `./placement-label`.
-- `CorpusOverridesPanel.tsx` + `CorpusOverridesPanel.messages.ts` — Admin corpus-entry editor (search/filter/override). Deps: `interpretation/corpus-client`, `sync/admin-client`.
+- `CorpusCandidatesPanel.tsx` + `CorpusCandidatesPanel.messages.ts` — Admin candidate-review cards with bulk and per-card accept/reject. Deps: `sync/admin-client`, `./placement-label`.
+- `CorpusOverridesPanel.tsx` + `CorpusOverridesPanel.messages.ts` — Admin corpus-entry card editor (search/filter/override). Deps: `interpretation/corpus-client`, `sync/admin-client`.
 - `CustomPointEditor.tsx` + `CustomPointEditor.messages.ts` — Chart-side editor for a person's safe custom formula points. Deps: `domain/custom-point`, `store-context`.
 - `CyclesView.tsx` + `CyclesView.messages.ts` — Planetary Cycles tool (exact-aspect search). Deps: `astrology/mutual-aspects`, `chart/cycle-diagram`.
 - `EventSearchView.tsx` + `EventSearchView.messages.ts` — UTC batch ephemeris research and reproducible CSV tool. Deps: `domain/event-search`, `EphemerisProviderContext`.

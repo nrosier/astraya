@@ -160,18 +160,26 @@ test('the corpus-overrides table wraps its text instead of scrolling sideways, a
   await page.getByRole('button', { name: 'Admin', exact: true }).click();
   await page.getByRole('link', { name: 'Corpus overrides', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Corpus corrections' })).toBeVisible();
-  const scroll = page.locator('div.data-table-scroll').first();
-  await expect(scroll).toBeVisible();
+  // Entries are cards, not a table (#816 D-816c): the card list must fit the page at each width, with no sideways scroll.
+  const list = page.locator('ul.corpus-entry-list');
+  await expect(list).toBeVisible();
 
   for (const width of [1280, 390]) {
     await page.setViewportSize({ width, height: 900 });
-    const tableBox = await scroll.locator('table').boundingBox();
-    const scrollBox = await scroll.boundingBox();
-    const overflow = (tableBox?.width ?? Number.POSITIVE_INFINITY) - (scrollBox?.width ?? 0);
-    expect(overflow, `no sideways scroll at ${String(width)}px`).toBeLessThanOrEqual(1);
+    const listBox = await list.boundingBox();
+    const pageWidth = await page.evaluate<number>('document.documentElement.clientWidth');
+    expect(listBox?.width ?? Number.POSITIVE_INFINITY, `list fits at ${String(width)}px`).toBeLessThanOrEqual(
+      pageWidth,
+    );
+    const scrollOverflow = await page.evaluate<number>(
+      'document.documentElement.scrollWidth - document.documentElement.clientWidth',
+    );
+    expect(scrollOverflow, `no sideways scroll at ${String(width)}px`).toBeLessThanOrEqual(1);
   }
-  // Tier and category are words with an explanation, not the internal values.
-  await expect(page.locator('.data-table-wrap tbody tr').first().locator('.cell-explanation').first()).toBeVisible();
+  // Each card names its entry with a key badge and tags it with its category and tier.
+  await expect(
+    list.locator('li.corpus-entry').first().locator('.corpus-entry-tags .primitive-badge').first(),
+  ).toBeVisible();
 });
 
 test.describe('with the shared people (#799)', () => {
