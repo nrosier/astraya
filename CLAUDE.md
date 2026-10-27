@@ -40,7 +40,7 @@ When creating/deleting/renaming files with significant responsibility:
 - `npm install` (Node >=24; use npm, not yarn/pnpm).
 - `npm run check` (format/lint/typecheck/test gate; must pass before PR).
 - `npm run test` (Vitest + **non-waivable NASA JPL 0.2″ golden-chart gate**).
-- `npm run test:e2e` (Playwright against `dist/`; separate runner from `.test.ts`).
+- `npm run test:e2e` (Playwright against `dist/`; separate runner from `.test.ts`). Run it for UI/UX changes (the affected specs) and at releases; otherwise `npm run check` is the gate.
 - `npm run docker:smoke` (release safety gate: Docker image + CSP/health check).
 - `npm run corpus:audit` (tools/corpus-gen/; API keys required, costs money, never in CI).
 
@@ -60,7 +60,7 @@ These cause build/CI failures if violated:
 - **Pattern:** Pure TS (`.ts`), thin React (`.tsx`); test math directly in `.ts`.
 - **Domain Integrity:** No invented numbers/orbs; cite sources or reference tests for all house systems/conventions.
 - **Dependencies:** AGPL-3.0 compatible only (MIT/BSD/Apache-2.0/ISC/CC0); fonts may also be SIL OFL 1.1 or the Bitstream Vera licence (#655). Heavy deps use dynamic `import()`. `scripts/check-bundle-size.mjs` enforces lazy loading.
-- **Zero tolerance (purist standard):** All code must build with no errors and no warnings — `npm run check` clean, not just passing; a warning left in place is a defect, not a nit. Every `.md`/`.html` page must validate as pure W3C/spec-conformant markup — no non-standard syntax, no editor-only shortcuts.
+- **Zero tolerance (purist standard):** All code must build with no errors and no warnings — `npm run check` clean, not just passing; a warning left in place is a defect, not a nit. Docs are Markdown only: no HTML counterparts of `.md` files. Every `.md` file must be valid Markdown with no non-standard syntax and no editor-only shortcuts.
 
 ## i18n & Testing
 
@@ -70,7 +70,11 @@ These cause build/CI failures if violated:
 ## Git Workflow
 
 - **Commits:** `type(scope): subject` where scope is issue # (e.g., `feat(#441): ...`). Release automation parses this.
-- **Issues:** Open until released; tick checklist items as PRs land.
+- **Issues:** Close an issue once its fix is merged to main and every checkbox in its body is ticked (`- [x]`); no release is needed. Tick checklist items as PRs land.
+  - Labels: `partially-fixed` when work starts; `fixed` when merged; add `waiting-for-release` to a `fixed` issue until the release containing it is tagged.
+  - Before closing, count unticked `- [ ]` lines in the body; do not close if any remain.
+- **PR bodies:** write "Part of #N" or "Refs #N", never "Fixes", "Closes" or "Resolves" (GitHub auto-closes on merge). Commit scope for several issues is `fix(#580/#581)`, not with a comma.
+- **Stacked PRs:** do not use `gh pr merge --delete-branch` on a base PR that has stacked PRs; GitHub closes them.
 - **Releases:** Touch `package.json`, `package-lock.json`, `CHANGELOG.md`, `README.md` badge. Semantic versioning.
 
 ## Environment (macOS / BSD)
