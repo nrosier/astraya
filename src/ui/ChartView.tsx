@@ -1052,6 +1052,8 @@ export function emphasisColumns(t: typeof chartViewMessages.en, locale: Locale):
     ...EMPHASIS_MODALITIES.map((modality): TableColumn<EmphasisRow> => ({
       key: modality,
       label: t.modalityNames[modality],
+      // The cells list body names (the counts only sort and copy), so they read from the start, not as numbers (#821).
+      align: 'start',
       valueOf: (row) => row.counts[modality],
       render: (row) =>
         row.rowKey === 'total'
@@ -1060,7 +1062,7 @@ export function emphasisColumns(t: typeof chartViewMessages.en, locale: Locale):
             ? t.emphasisNone
             : row.bodies[modality].map((bodyKey) => bodyShortName(bodyKey, locale)).join(', '),
     })),
-    { key: 'total', label: t.emphasisTotalLabel, valueOf: (row) => row.total },
+    { key: 'total', label: t.emphasisTotalLabel, align: 'end', valueOf: (row) => row.total },
   ];
 }
 
@@ -1076,7 +1078,7 @@ function renderElementsView(
   return (
     <>
       <p className="hint">{t.emphasisHint}</p>
-      <EmphasisGrid input={input.emphasis} />
+      <EmphasisGrid input={input.emphasis} labels={{ elements: t.elementNames, modalities: t.modalityNames }} />
       <SortableTable
         caption={t.emphasisCaption}
         columns={emphasisColumns(t, locale)}

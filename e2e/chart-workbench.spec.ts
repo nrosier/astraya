@@ -145,7 +145,19 @@ test.describe('with the shared people (#799)', () => {
     await openSharedPerson(page, baseUrl, EINSTEIN);
     await openNatalChart(page, 'Elements & modalities');
     await expect(page.getByRole('heading', { name: 'Elements & modalities', level: 2 })).toBeVisible();
-    await expect(page.locator('.chart-emphasis-grid')).toBeVisible();
+    await expect(page.locator('.emphasis-screen-grid')).toBeVisible();
+
+    // #821: the grid carries its own totals (four rows, three columns) at a phone and a desktop width.
+    for (const width of [390, 1280]) {
+      await page.setViewportSize({ width, height: 800 });
+      const grid = page.locator('.emphasis-screen-grid');
+      await expect(grid.locator('.emphasis-screen-row-total')).toHaveCount(4);
+      await expect(grid.locator('.emphasis-screen-column-total')).toHaveCount(3);
+      await expect(grid.locator('.emphasis-screen-row-total').first()).toBeVisible();
+      await expect(grid.locator('.emphasis-screen-column-total').first()).toBeVisible();
+      await expect(grid.locator('.emphasis-screen-row-total').first()).toHaveCSS('text-align', 'right');
+    }
+    await page.setViewportSize({ width: 1600, height: 1000 });
 
     // The table holds every value the drawing does, as text: four elements and a totals row.
     const table = page.getByRole('table', { name: 'Elements and modalities' });

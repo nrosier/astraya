@@ -14,7 +14,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `AdminNav.tsx` + `AdminNav.messages.ts` — Admin tab strip (users/usage/corpus/candidates) in the shared `ScrollingTabRow` (#818). Deps: `./admin-nav`, `./ScrollingTabRow`, `./primitives/Select`.
 - `AdminPanel.tsx` + `AdminPanel.messages.ts` — User CRUD + AI-usage reporting. Deps: `sync/admin-client`, `session-context`.
 - `App.tsx` + `App.messages.ts` — Root router + sticky header + lazy-loading boundary. Deps: `route`, `session-context`, `store-context`, `person-screens`.
-- `EmphasisGrid.tsx` — The element x modality grid view: the sheet export's drawing, shown on screen beside its table. Deps: `chart/emphasis-grid`, `chart/sheet-geometry`.
+- `EmphasisGrid.tsx` + `emphasis-grid-model.ts` — Elements & modalities grid on screen (#821): flat bordered cells, row and column totals; the PDF and sheet export keep `chart/emphasis-grid`. Deps: `chart/glyphs`, `astrology/emphasis`.
 - `calculation-basis.ts` + `calculation-basis.messages.ts` — The calculation-basis line (profile name + whether it is Astraya's default, the saved default, or changed for this chart) shown on chart pages. Deps: `chart/calculation-profiles`, `astrology/orb-library`, `astrology/orb-profiles`, `default-calculation-profile`, `extended-settings-summary`, `ExtendedSettingsPanel.messages`.
 - `table-selection.tsx` — The table side of the wheel selection: `TableSelection`, each row kind's selection key, and the shared "Show on the chart" button column. Deps: `interpretation/selection-key`, `chart/body-id`, `table-sort`.
 - `appearance-settings.ts` — Motion (follow the system / reduce) and Density (standard / compact) device preferences, applied as root attributes. Deps: none.
