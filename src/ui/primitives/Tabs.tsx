@@ -1,10 +1,11 @@
 /**
  * @module ui/primitives/Tabs
  * @purpose Same-page tabs (`docs/ui/UI-UX_GUIDELINES.md` §5, §9): a few compact, mutually exclusive panels that share one context, with the WAI-ARIA tab pattern's roles, selected state and arrow-key navigation.
- * @conventions Manual activation is not used: the arrow keys, Home and End move focus and select together, because every panel here is cheap to show. Roving tabindex, so the tablist is one Tab stop and the panel is the next. The panel is the caller's, rendered after the strip with `tabPanelProps`, so the primitive owns no content. Route navigation does not use this: links stay links (§9).
+ * @conventions The strip sits in the shared scrolling tab row (#818): the `.tab-row` scroller with its hidden scrollbar and edge fades from `useTabRowScroll`, at every width (no fallback select; `.tab-row--always`). The tablist is not wrapped in `ScrollingTabRow` itself, because that renders a navigation landmark for route links. Manual activation is not used: the arrow keys, Home and End move focus and select together, because every panel here is cheap to show. Roving tabindex, so the tablist is one Tab stop and the panel is the next. The panel is the caller's, rendered after the strip with `tabPanelProps`, so the primitive owns no content. Route navigation does not use this: links stay links (§9).
  * @exports Tabs, tabPanelProps
  */
 import { useRef } from 'react';
+import { ACTIVE_ARIA_TAB, useTabRowScroll } from './useTabRowScroll.js';
 
 export interface TabItem<K extends string> {
   readonly key: K;
@@ -40,6 +41,7 @@ export function Tabs<K extends string>({
   readonly onSelect: (key: K) => void;
 }): React.JSX.Element {
   const refs = useRef(new Map<K, HTMLButtonElement>());
+  const { scrollerRef, edges } = useTabRowScroll(active, ACTIVE_ARIA_TAB);
 
   const onKeyDown = (event: React.KeyboardEvent<HTMLDivElement>): void => {
     const current = items.findIndex((item) => item.key === active);
@@ -57,28 +59,36 @@ export function Tabs<K extends string>({
   };
 
   return (
-    <div className="tabs" role="tablist" aria-label={label} onKeyDown={onKeyDown}>
-      {items.map((item) => (
-        <button
-          key={item.key}
-          ref={(element) => {
-            if (element === null) refs.current.delete(item.key);
-            else refs.current.set(item.key, element);
-          }}
-          type="button"
-          id={`${idBase}-tab-${item.key}`}
-          role="tab"
-          aria-selected={active === item.key}
-          aria-controls={`${idBase}-panel-${item.key}`}
-          tabIndex={active === item.key ? 0 : -1}
-          className={active === item.key ? 'tab active' : 'tab'}
-          onClick={() => {
-            onSelect(item.key);
-          }}
-        >
-          {item.label}
-        </button>
-      ))}
+    <div className="tab-row tab-row--always" data-can-scroll-start={edges.start} data-can-scroll-end={edges.end}>
+      <div className="tab-row__viewport">
+        <div ref={scrollerRef} className="tab-row__scroll">
+          <div className="tabs" role="tablist" aria-label={label} onKeyDown={onKeyDown}>
+            {items.map((item) => (
+              <button
+                key={item.key}
+                ref={(element) => {
+                  if (element === null) refs.current.delete(item.key);
+                  else refs.current.set(item.key, element);
+                }}
+                type="button"
+                id={`${idBase}-tab-${item.key}`}
+                role="tab"
+                aria-selected={active === item.key}
+                aria-controls={`${idBase}-panel-${item.key}`}
+                tabIndex={active === item.key ? 0 : -1}
+                className={active === item.key ? 'tab active' : 'tab'}
+                onClick={() => {
+                  onSelect(item.key);
+                }}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <span className="tab-row__fade tab-row__fade--start" aria-hidden="true" />
+        <span className="tab-row__fade tab-row__fade--end" aria-hidden="true" />
+      </div>
     </div>
   );
 }

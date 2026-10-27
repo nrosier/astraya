@@ -61,6 +61,36 @@ function press(element: HTMLElement, key: string): void {
 }
 
 describe('Tabs', () => {
+  it('sits in the shared scroll wrapper with both edge fades, keeping its tablist role and selected state (#818)', () => {
+    const container = mount();
+    const scroller = container.querySelector('.tab-row.tab-row--always > .tab-row__viewport > .tab-row__scroll');
+    expect(scroller).not.toBeNull();
+    const tablist = scroller?.querySelector('[role="tablist"]');
+    expect(tablist?.getAttribute('aria-label')).toBe('Demo tabs');
+    expect(tablist?.querySelectorAll('[role="tab"]')).toHaveLength(3);
+    expect(tab(container, 'One').getAttribute('aria-selected')).toBe('true');
+    for (const edge of ['start', 'end']) {
+      const fade = container.querySelector(`.tab-row__fade--${edge}`);
+      expect(fade?.getAttribute('aria-hidden')).toBe('true');
+    }
+    // The wrapper adds no landmark: the strip is still a tablist, not a navigation.
+    expect(container.querySelector('nav')).toBeNull();
+  });
+
+  it('shows the end fade while tabs are hidden, reading the scroll position (#818)', () => {
+    Object.defineProperty(HTMLElement.prototype, 'scrollWidth', { configurable: true, get: () => 900 });
+    Object.defineProperty(HTMLElement.prototype, 'clientWidth', { configurable: true, get: () => 300 });
+    try {
+      const container = mount();
+      const row = container.querySelector('.tab-row');
+      expect(row?.getAttribute('data-can-scroll-end')).toBe('true');
+      expect(row?.getAttribute('data-can-scroll-start')).toBe('false');
+    } finally {
+      Reflect.deleteProperty(HTMLElement.prototype, 'scrollWidth');
+      Reflect.deleteProperty(HTMLElement.prototype, 'clientWidth');
+    }
+  });
+
   it('exposes a named tablist whose selected tab is the only tab stop', () => {
     const container = mount();
     expect(container.querySelector('[role="tablist"]')?.getAttribute('aria-label')).toBe('Demo tabs');
