@@ -36,10 +36,28 @@ test.afterAll(async () => {
   rmSync(dir, { recursive: true, force: true });
 });
 
+/**
+ * The transit tables are cast for a fixed day, so the count of "No further exact pass" dashes (a pass
+ * is listed only when one is still ahead) does not change with the calendar. 2026-01-15 (local noon)
+ * is the day the Einstein fixture was probed: 2 of its 5 major transit rows have no exact pass left.
+ * Under the real clock the count was 0 on 2026-10-27 and 3 on 2027-03-15, which is why it is pinned.
+ */
+const PINNED_DAY = new Date('2026-01-15T12:00:00');
+const PINNED_NO_PASS_DASHES = 2;
+
+/**
+ * The table's width depends on the font the browser picks, which differs between macOS, Ubuntu CI and
+ * other machines. The layout test pins the one font the repo ships (`public/fonts/pdf/`, served from
+ * `dist/fonts/pdf/` under `font-src 'self'`), and only for the transit table.
+ */
+const PINNED_TABLE_FONT_FILE = 'DejaVuSans.ttf';
+const PINNED_TABLE_FONT = 'E2E Pinned Table';
+
 // A fresh context per test, holding the shared people (#799); no test here saves, edits or deletes one.
 test.beforeEach(async ({ browser }) => {
   context = await newSeededContext(browser, baseUrl);
   page = await context.newPage();
+  await page.clock.setFixedTime(PINNED_DAY);
 });
 
 test.afterEach(async () => {
@@ -100,6 +118,17 @@ for (const { width, height } of [
     await page.setViewportSize({ width, height });
     await expect(page.getByRole('heading', { level: 2, name: 'Major active transits' })).toBeVisible();
 
+    // Pin the table font before measuring, and wait until it has loaded so the widths use it.
+    await page.addStyleTag({
+      content: `@font-face { font-family: "${PINNED_TABLE_FONT}"; src: url("/fonts/pdf/${PINNED_TABLE_FONT_FILE}") format("truetype"); }
+.consultation-section .data-table { font-family: "${PINNED_TABLE_FONT}"; }`,
+    });
+    await page.evaluate(`document.fonts.load('1em "${PINNED_TABLE_FONT}"')`);
+    const tableFamily = String(
+      await page.evaluate("getComputedStyle(document.querySelector('.consultation-section .data-table')).fontFamily"),
+    );
+    expect(tableFamily).toContain(PINNED_TABLE_FONT);
+
     // Tiles replace the At a glance list: 2 columns on a phone, 4 at 1280 (the shell is 64rem wide here).
     const tiles = page.locator('dl.consultation-tiles');
     await expect(tiles.locator('dt')).toHaveText([
@@ -141,7 +170,10 @@ for (const { width, height } of [
     const table = page.locator('.consultation-section .data-table-scroll');
     await expect(table.first().getByRole('columnheader')).toHaveText(['Aspect', 'Orb', 'State', 'Next exact date']);
     await expect(table).toHaveCSS('overflow-x', 'auto');
-    for (const dash of await table.getByRole('img', { name: 'No further exact pass' }).all()) {
+    // The pinned day leaves exactly PINNED_NO_PASS_DASHES rows with no exact pass ahead; each shows an em dash.
+    const dashes = table.getByRole('img', { name: 'No further exact pass' });
+    await expect(dashes).toHaveCount(PINNED_NO_PASS_DASHES);
+    for (const dash of await dashes.all()) {
       await expect(dash).toHaveText('—');
     }
     const overflow = Number(
