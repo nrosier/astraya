@@ -20,21 +20,23 @@ const en = {
 
   birthRecordHeading: 'Birth record',
 
-  whoLegend: 'Who',
+  identityCardHeading: 'Identity and birth timestamp',
   nameLabel: 'Name',
   placeOfBirthLabel: 'Place of birth',
   placeOfBirthPlaceholder: 'Vevay, Indiana',
 
-  whenLegend: 'When',
   dateLabel: 'Date',
   timeLabel: 'Time',
   timeKnownLabel: 'How the time is known',
 
-  coordinatesLegend: 'Coordinates',
+  locationCardHeading: 'Location and geocoding',
   latitudeLabel: 'Latitude',
   longitudeLabel: 'Longitude',
 
-  calendarZoneLegend: 'Calendar & time zone',
+  timezoneCardHeading: 'Resolved timezone',
+  overridesTitle: 'Calendar and timezone overrides',
+  overridesShow: 'Show overrides',
+  overridesHide: 'Hide overrides',
   calendarLabel: 'Calendar',
   calendarAutomatic: 'Automatic',
   calendarGregorian: 'Gregorian',
@@ -46,18 +48,18 @@ const en = {
   timezoneHint:
     'Leave the override empty to use the timezone database. Enter it in minutes east of UTC — a birth certificate that states the offset beats any lookup we can do, and 0 means UTC rather than “no override”.',
 
-  notesLegend: 'Notes',
+  notesCardHeading: 'Notes',
   notesLabel: 'Notes',
 
-  resolvedHeading: 'Resolved',
   utcOffsetLabel: 'UTC offset',
   derivedFromLabel: 'Derived from',
   timezoneLabel: 'Timezone',
   noneOffsetFromLongitude: 'none — the offset came from longitude or from you',
   calendarResolvedLabel: 'Calendar',
   alsoValidLabel: 'Also valid',
-  tzdbHint: (fingerprint: string) =>
-    `Resolved against timezone data ${fingerprint}, which is stored with the record so a saved chart does not move when a timezone update ships.`,
+  tzdbLabel: 'Timezone data',
+  tzdbHint:
+    'The record is resolved against this timezone data and stores it, so a saved chart does not move when a timezone update ships.',
 
   worthCheckingHeading: 'Worth checking',
 
@@ -70,7 +72,7 @@ const en = {
   savedStatus: 'Saved on this device.',
   fillFieldsHint: 'Fill in the fields marked above to save.',
 
-  deleteHeading: 'Delete',
+  deleteHeading: 'Danger zone',
   deleteHint:
     'Deleting hides this person and their charts. Nothing is really removed, so it can be undone from the people list.',
   deleteButton: (name: string) => `Delete ${name}`,
@@ -90,21 +92,23 @@ const nl: typeof en = {
 
   birthRecordHeading: 'Geboortegegevens',
 
-  whoLegend: 'Wie',
+  identityCardHeading: 'Identiteit en geboortemoment',
   nameLabel: 'Naam',
   placeOfBirthLabel: 'Geboorteplaats',
   placeOfBirthPlaceholder: 'Vevay, Indiana',
 
-  whenLegend: 'Wanneer',
   dateLabel: 'Datum',
   timeLabel: 'Tijd',
   timeKnownLabel: 'Hoe de tijd bekend is',
 
-  coordinatesLegend: 'Coördinaten',
+  locationCardHeading: 'Plaats en zoeken',
   latitudeLabel: 'Breedtegraad',
   longitudeLabel: 'Lengtegraad',
 
-  calendarZoneLegend: 'Kalender & tijdzone',
+  timezoneCardHeading: 'Opgeloste tijdzone',
+  overridesTitle: 'Kalender en tijdzone overschrijven',
+  overridesShow: 'Toon overschrijvingen',
+  overridesHide: 'Verberg overschrijvingen',
   calendarLabel: 'Kalender',
   calendarAutomatic: 'Automatisch',
   calendarGregorian: 'Gregoriaans',
@@ -116,18 +120,18 @@ const nl: typeof en = {
   timezoneHint:
     'Laat de overschrijving leeg om de tijdzonedatabase te gebruiken. Voer deze in minuten oost van UTC in — een geboortecertificaat dat de afwijking vermeldt, verslaat elke opzoeking die wij kunnen doen, en 0 betekent UTC in plaats van “geen overschrijving”.',
 
-  notesLegend: 'Notities',
+  notesCardHeading: 'Notities',
   notesLabel: 'Notities',
 
-  resolvedHeading: 'Opgelost',
   utcOffsetLabel: 'UTC-afwijking',
   derivedFromLabel: 'Afgeleid van',
   timezoneLabel: 'Tijdzone',
   noneOffsetFromLongitude: 'geen — de afwijking kwam van de lengtegraad of van jou',
   calendarResolvedLabel: 'Kalender',
   alsoValidLabel: 'Ook geldig',
-  tzdbHint: (fingerprint: string) =>
-    `Opgelost tegen tijdzonedata ${fingerprint}, die bij het record wordt opgeslagen zodat een opgeslagen horoscoop niet verschuift wanneer een tijdzone-update uitkomt.`,
+  tzdbLabel: 'Tijdzonedata',
+  tzdbHint:
+    'Het record is opgelost tegen deze tijdzonedata en slaat die op, zodat een opgeslagen horoscoop niet verschuift wanneer een tijdzone-update uitkomt.',
 
   worthCheckingHeading: 'Het controleren waard',
 
@@ -141,7 +145,7 @@ const nl: typeof en = {
   savedStatus: 'Opgeslagen op dit apparaat.',
   fillFieldsHint: 'Vul de hierboven gemarkeerde velden in om op te slaan.',
 
-  deleteHeading: 'Verwijderen',
+  deleteHeading: 'Gevarenzone',
   deleteHint:
     'Verwijderen verbergt deze persoon en hun horoscopen. Er wordt niets echt verwijderd, dus het kan ongedaan worden gemaakt vanuit de personenlijst.',
   deleteButton: (name: string) => `${name} verwijderen`,
