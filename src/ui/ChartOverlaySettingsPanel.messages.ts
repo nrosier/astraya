@@ -1,15 +1,15 @@
 /**
  * @module ChartOverlaySettingsPanel.messages
- * @purpose English/Dutch labels for the chart overlay settings modal.
+ * @purpose English/Dutch labels for the chart overlay settings panel.
  * @conventions Co-located `{ en, nl }` catalogue consumed through `useMessages`; Dutch retains the same keys as English.
  * @exports chartOverlaySettingsPanelMessages
  */
 const en = {
-  heading: 'Overlay settings',
   trigger: 'Overlay settings',
-  closeLabel: 'Close without applying overlay changes',
+  showLabel: 'Show overlay settings',
+  hideLabel: 'Hide overlay settings',
   baseChart: (label: string) => `Base chart: ${label}`,
-  hint: 'Choose the additional rings to draw. Changes stay in this dialog until you apply them.',
+  hint: 'Choose the additional rings to draw. Changes stay in this panel until you apply them.',
   ringProvenance: 'Ring calculation basis',
   calculationSnapshot: (identity: string) => `Calculation snapshot ${identity}`,
   primaryDirectionsProvenance: 'Primary directions: Naibod key, direct, Placidus',
@@ -37,11 +37,11 @@ const en = {
 };
 
 const nl: typeof en = {
-  heading: 'Overlayinstellingen',
   trigger: 'Overlayinstellingen',
-  closeLabel: 'Sluiten zonder overlaywijzigingen toe te passen',
+  showLabel: 'Overlayinstellingen tonen',
+  hideLabel: 'Overlayinstellingen verbergen',
   baseChart: (label: string) => `Basishoroscoop: ${label}`,
-  hint: 'Kies de extra ringen om te tekenen. Wijzigingen blijven in dit venster tot je ze toepast.',
+  hint: 'Kies de extra ringen om te tekenen. Wijzigingen blijven in dit paneel tot je ze toepast.',
   ringProvenance: 'Berekeningsbasis per ring',
   calculationSnapshot: (identity: string) => `Berekeningssnapshot ${identity}`,
   primaryDirectionsProvenance: 'Primaire directies: Naibod-sleutel, direct, Placidus',

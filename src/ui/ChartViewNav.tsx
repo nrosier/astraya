@@ -45,7 +45,7 @@ export function ChartViewNav({
   readonly availableViews?: readonly ChartViewKind[];
   /** Optional control placed first on the same row (the chart type select, #801). */
   readonly leading?: React.ReactNode;
-  /** The triggers pinned at the far right (#818): Overlays and Extended settings. Behind one "Chart actions" toggle at 40rem and below. */
+  /** The trigger pinned at the far right (#818): Extended settings. Behind one "Chart actions" toggle at 40rem and below. */
   readonly actions?: React.ReactNode;
 }): React.JSX.Element {
   const t = useMessages(chartViewMessages);
