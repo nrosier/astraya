@@ -60,6 +60,8 @@ describe('searchStarCatalogue', () => {
     expect(hit).toEqual([{ name: '', designation: 'beFix', magnitude: 2.5 }]);
     const [first] = hit;
     expect(first && swissStarId(first)).toBe(',beFix');
+    // A named record is asked for by designation too: a name can belong to more than one record (#803).
+    expect(swissStarId({ name: 'Fixa', designation: 'alFix', magnitude: 1.5 })).toBe(',alFix');
   });
   it('merges duplicate records at parse time, keeping the first record', () => {
     const second = FIXTURE_A.replace('1.5, 4', '9.9, 4');

@@ -117,11 +117,15 @@ export function searchStarCatalogue(entries: readonly StarCatalogueEntry[], quer
 }
 
 /**
- * The identifier Swiss Ephemeris accepts for this star: the traditional name,
- * or `,designation` when there is none (swe_fixstar2 documentation).
+ * The identifier Swiss Ephemeris accepts for this star: always the `,designation` form
+ * (swe_fixstar2 documentation), never the traditional name. A name is not unique in the
+ * file: Swiss Ephemeris answers a name with the first record that carries it, so "Menkar"
+ * finds alCet even when laCet was chosen (24 of the shipped records are reached only by
+ * designation). Records that share a designation are the same object under another
+ * spelling (Aldebaran and Rohini are both alTau); the designation finds the first of them.
  */
 export function swissStarId(star: StarSearchResult): string {
-  return star.name !== '' ? star.name : `,${star.designation}`;
+  return `,${star.designation}`;
 }
 
 /** Lowercase hex SHA-256 of the given bytes: the source-file version (D-803c). */
