@@ -928,6 +928,10 @@ export interface FixedStarRow {
   readonly bodyKey: string;
   readonly bodyName: string;
   readonly orb: Degrees;
+  /** Stored designation of a chosen star (#803); absent for the preset. */
+  readonly designation?: string;
+  /** Lowercase hex SHA-256 of the catalogue file the star was chosen from (#803); absent for the preset. */
+  readonly sourceSha256?: string;
 }
 
 /** Default fixed-star conjunction orb (#398) — the same tight 1° convention as antiscia/declination contacts. */
@@ -949,11 +953,13 @@ export function fixedStarRows(
   );
   return fixedStarConjunctions(data.fixedStars, positions, orb).map((contact) => {
     const body = bodyById(contact.body);
+    const source = data.fixedStarSources?.get(contact.star);
     return {
       star: contact.star,
       bodyKey: body?.key ?? String(contact.body),
       bodyName: body?.name ?? String(contact.body),
       orb: contact.orb,
+      ...(source === undefined ? {} : { designation: source.designation, sourceSha256: source.sourceSha256 }),
     };
   });
 }

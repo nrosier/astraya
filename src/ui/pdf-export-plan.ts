@@ -144,6 +144,7 @@ import {
   midpointTreeColumns,
   positionColumns,
 } from './ChartView.js';
+import { hasStarSources } from './ChartViewAspects.js';
 import type { chartViewMessages } from './ChartView.messages.js';
 import type { pdfExportMessages } from './pdf-export.messages.js';
 import { aspectDisplayName, bodyDisplayName, bodyShortName, signDisplayName } from './astro-names.messages.js';
@@ -444,7 +445,7 @@ function tablesOf(
           : [
               tablePlanOf(
                 t.fixedStarsCaption,
-                fixedStarColumns(t, locale),
+                fixedStarColumns(t, locale, hasStarSources(stars)),
                 stars,
                 fixedStarsScopeNoteOf(t, checkedStarsOf(data)),
               ),
