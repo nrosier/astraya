@@ -17,7 +17,7 @@ Shared UI primitives for the #506 UI/UX overhaul (Phase 1, #508). Business logic
 - `EmptyState.tsx` — Shared "nothing here" block for an empty list or panel: message prop plus optional follow-up children, on the existing `.empty` look. Deps: none.
 - `Checkbox.tsx` — Shared checkbox anatomy, paired with `Radio`. Deps: none.
 - `Radio.tsx` — Shared radio anatomy; always used inside a caller-owned `name`/`radiogroup`. Deps: none.
-- `ChoiceGroup.tsx` — Segmented control (2-4 exclusive choices) as a labelled radiogroup over `Radio`. Deps: `./Radio`.
+- `ChoiceGroup.tsx` — Segmented control (2-4 exclusive choices) as a labelled radiogroup over `Radio`; `segmented` draws joined horizontal segments and `showLabel` a visible label (#824). Deps: `./Radio`.
 - `OptionCards.tsx` — Radio option cards (2-5 choices needing a title + consequence line), fully-clickable cards.
 - `Disclosure.tsx` — Shared expandable region: full-width 44px trigger row (title, summary, Show/Hide wording, chevron) over a panel (#511 first user). Deps: none.
 - `StatusMessage.tsx` — Shared result-state message (loading/updating/empty/zero/partial/offline/success/error) with the right live-region role. Deps: none.

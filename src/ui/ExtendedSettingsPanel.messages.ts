@@ -243,6 +243,10 @@ const en = {
   matrixReportsHelp:
     'Reports: whether the written report reads this object. Leaving an object out of the report does not hide it or remove it from aspects.',
   aboutReports: 'About Reports',
+  matrixBulkLabel: 'Select every object in a column',
+  matrixAllVisible: 'All visible',
+  matrixAllAspects: 'All in aspects',
+  matrixAllReports: 'All in the report',
   otherBodiesGroupLabel: 'Other bodies',
   minorSetLabel: 'Minor aspect set',
   minorSetOptions: { custom: 'Custom', off: 'Off', quintiles: 'Quintiles', all: 'All' },
@@ -530,6 +534,10 @@ const nl: typeof en = {
   matrixReportsHelp:
     'Rapport: of het geschreven rapport dit object leest. Een object uit het rapport laten verbergt het niet en haalt het niet uit de aspecten.',
   aboutReports: 'Over Rapport',
+  matrixBulkLabel: 'Alle objecten in een kolom selecteren',
+  matrixAllVisible: 'Alles zichtbaar',
+  matrixAllAspects: 'Alles in aspecten',
+  matrixAllReports: 'Alles in het rapport',
   otherBodiesGroupLabel: 'Overige hemellichamen',
   minorSetLabel: 'Set kleine aspecten',
   minorSetOptions: { custom: 'Eigen keuze', off: 'Uit', quintiles: 'Kwintielen', all: 'Alle' },

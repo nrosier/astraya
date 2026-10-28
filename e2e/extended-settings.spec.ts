@@ -175,6 +175,74 @@ test.describe('with the shared people (#799)', () => {
     expect(results.violations.map((v) => v.id)).toEqual([]);
   });
 
+  test('the drawer opens focused inside, traps Tab, closes on Escape and returns focus to its trigger (#824)', async () => {
+    test.setTimeout(90_000);
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await openNatalChart(page);
+    await expect(page.locator('div.chart-wheel')).toBeVisible();
+
+    const trigger = page.locator('button.extended-settings-trigger');
+    const card = page.locator('dialog.settings-card');
+    await openSettings(page);
+    // The tab bar sits in the header, outside the scrolling body.
+    await expect(card.locator('.settings-card-subheader').getByRole('tab')).toHaveCount(4);
+    await expect(card.locator('.settings-card-body').getByRole('tab')).toHaveCount(0);
+
+    // Tab many times: focus never leaves the dialog.
+    for (let step = 0; step < 40; step += 1) {
+      await page.keyboard.press('Tab');
+      await expect(card.locator(':focus')).toHaveCount(1);
+    }
+    for (let step = 0; step < 40; step += 1) {
+      await page.keyboard.press('Shift+Tab');
+      await expect(card.locator(':focus')).toHaveCount(1);
+    }
+
+    await page.keyboard.press('Escape');
+    await expect(card).toBeHidden();
+    await expect(trigger).toBeFocused();
+  });
+
+  test('a column checkbox sets every object at once, and the segmented control moves with the arrow keys (#824)', async () => {
+    test.setTimeout(90_000);
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await openNatalChart(page);
+    await expect(page.locator('div.chart-wheel')).toBeVisible();
+
+    const card = page.locator('dialog.settings-card');
+    await openSettings(page, 'Bodies & orbs');
+    const matrix = card.locator('fieldset.settings-card-group', { hasText: 'Object visibility' });
+    await expect(matrix.locator('.data-table table thead th')).toHaveText([/Object/, /Visible/, /Aspects/, /Reports/]);
+
+    const allReports = matrix.getByRole('checkbox', { name: 'All in the report', exact: true });
+    await expect(allReports).toBeChecked();
+    await allReports.uncheck();
+    await expect(matrix.getByLabel('Sun — included in the written report', { exact: true })).not.toBeChecked();
+    await expect(matrix.getByLabel('Jupiter — included in the written report', { exact: true })).not.toBeChecked();
+    await expect(matrix.getByLabel('Sun — visible', { exact: true })).toBeChecked();
+    await allReports.check();
+    await expect(matrix.getByLabel('Jupiter — included in the written report', { exact: true })).toBeChecked();
+
+    // The orb scale is a horizontal segmented control: a labelled radiogroup the arrow keys walk through.
+    const scale = card.getByRole('radiogroup', { name: 'Orb scale step', exact: true });
+    await expect(scale).toHaveClass(/primitive-choice-group-segmented/);
+    await expect(scale.getByRole('radio')).toHaveCount(3);
+    await scale.getByRole('radio', { name: '0%', exact: true }).check();
+    await scale.getByRole('radio', { name: '0%', exact: true }).focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(scale.getByRole('radio', { name: '+40%', exact: true })).toBeChecked();
+    await page.keyboard.press('ArrowLeft');
+    await expect(scale.getByRole('radio', { name: '0%', exact: true })).toBeChecked();
+    const labels = scale.locator('label');
+    const tops = await Promise.all([0, 1, 2].map(async (index) => (await labels.nth(index).boundingBox())?.y ?? -1));
+    expect(new Set(tops.map((top) => Math.round(top))).size).toBe(1);
+
+    // The 42rem cap holds on a wide screen.
+    const box = await card.boundingBox();
+    expect(box?.width ?? Infinity).toBeLessThanOrEqual(672 + 1);
+    await closeSettings(page);
+  });
+
   test('the Apply button enables when only Symbols are changed (#459)', async () => {
     test.setTimeout(90_000);
     await openSharedPerson(page, baseUrl, EINSTEIN);
