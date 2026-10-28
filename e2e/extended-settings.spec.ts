@@ -308,7 +308,8 @@ test.describe('with the shared people (#799)', () => {
 
     const card = page.locator('dialog.settings-card');
     const formulaSection = card.locator('fieldset.settings-card-group', { hasText: 'Custom formula points' });
-    const savedList = page.getByRole('region', { name: 'Custom formula points' }).locator('ul li');
+    // The saved list is read from the chart itself: a saved point is a body on the wheel (the inline editor is gone, #815).
+    const savedList = page.locator('g.chart-body-stack[data-body="Kept point"]');
 
     // Stage a new point and cancel: it never reaches the person, and the open page's own list stays empty.
     await openSettings(page, 'Bodies & orbs');
@@ -331,7 +332,7 @@ test.describe('with the shared people (#799)', () => {
     await card.getByRole('button', { name: 'Apply and redraw', exact: true }).click();
     await expect(card).toBeHidden();
     await expect(savedList).toHaveCount(1);
-    await expect(savedList.first()).toContainText('Kept point');
+    await expect(savedList.first()).toBeVisible();
 
     // A delete is staged too: marked removed in the drawer, still saved until Apply, restored by Cancel.
     await openSettings(page, 'Bodies & orbs');

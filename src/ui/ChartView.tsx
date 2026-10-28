@@ -136,7 +136,6 @@ import {
   type ChartOverlaySource,
 } from './ChartOverlaySettingsPanel.js';
 import { chartOverlaySettingsPanelMessages } from './ChartOverlaySettingsPanel.messages.js';
-import { CustomPointEditor } from './CustomPointEditor.js';
 import { Button } from './primitives/Button.js';
 import type { FormulaProblem } from './custom-point-problem.js';
 import type { ChosenFixedStar, CustomPointDefinition } from '../domain/person.js';
@@ -196,7 +195,7 @@ export {
   receptionColumns,
 };
 
-/** The saved shape of the formula list: the same fields `CustomPointEditor` writes, `enabled` only when off (#824). */
+/** The saved shape of the formula list: `enabled` only when off (#824). */
 function serializeCustomPoints(points: readonly CustomPointDefinition[]): readonly {
   readonly id: string;
   readonly name: string;
@@ -320,6 +319,7 @@ function renderMatrixView(
   t: typeof chartViewMessages.en,
   locale: Locale,
   selection?: TableSelection,
+  onOpenFormulas?: () => void,
 ): React.ReactNode {
   const input = chartSheetInput(data, [], displayName, pointVisibility, (bodyKey) => bodyShortName(bodyKey, locale));
   return (
@@ -351,15 +351,11 @@ function renderMatrixView(
               }
         }
       />
-      <p className="hint">
-        <Button
-          onClick={() => {
-            document.getElementById('custom-point-editor-heading')?.scrollIntoView({ block: 'start' });
-          }}
-        >
-          {t.matrixFormulaLink}
-        </Button>
-      </p>
+      {onOpenFormulas !== undefined && (
+        <p className="hint">
+          <Button onClick={onOpenFormulas}>{t.matrixFormulaLink}</Button>
+        </p>
+      )}
     </>
   );
 }
@@ -543,6 +539,7 @@ export function ChartDataView({
   fixedStarsSaved,
   onFixedStarsChange,
   settingsProvider,
+  openSettingsRequest = 0,
   view,
   onViewChange,
   buildViewHref,
@@ -596,6 +593,8 @@ export function ChartDataView({
   readonly onFixedStarsChange?: ((next: readonly ChosenFixedStar[]) => Promise<void>) | undefined;
   /** A long-lived provider for the panel's own house-system/ayanamsa name lookups. */
   readonly settingsProvider?: EphemerisProvider | undefined;
+  /** Raised by the screen around this chart (the compare link, #815) to open the Extended settings drawer on Bodies and orbs. */
+  readonly openSettingsRequest?: number | undefined;
   /** The open view (#511: Wheel/Aspects/Placements/Patterns & condition), when a URL decides it (every real screen); otherwise this component's own state. */
   readonly view?: ChartViewKind | undefined;
   readonly onViewChange?: ((view: ChartViewKind) => void) | undefined;
@@ -619,6 +618,11 @@ export function ChartDataView({
   const [locale] = useLocale();
   const [ownTab, setOwnTab] = useState<ChartViewKind>('wheel');
   const [aspectHarmonicFamilyFilter, setAspectHarmonicFamilyFilter] = useState('all');
+  // The matrix view's formula link opens the drawer on Bodies and orbs (#815); the drawer counts the requests.
+  const [ownFormulaRequests, setOwnFormulaRequests] = useState(0);
+  const openFormulaDrawer = (): void => {
+    setOwnFormulaRequests((count) => count + 1);
+  };
   const activeTab: ChartViewKind = view ?? ownTab;
   const setActiveTab = (next: ChartViewKind): void => {
     setOwnTab(next);
@@ -1068,6 +1072,7 @@ export function ChartDataView({
         checkFormula={checkFormula}
         fixedStars={fixedStarsSaved}
         onFixedStarsChange={onFixedStarsChange}
+        openRequest={openSettingsRequest + ownFormulaRequests}
       />
     ) : null;
 
@@ -1205,7 +1210,7 @@ export function ChartDataView({
                         aspectHarmonicFamilyFilter === 'all' ? undefined : Number(aspectHarmonicFamilyFilter);
                       return (
                         <>
-                          <div className="field-grid">
+                          <div className="aspect-family-filter">
                             <Select
                               label={t.harmonicFamilyFilterLabel}
                               value={aspectHarmonicFamilyFilter}
@@ -1237,7 +1242,15 @@ export function ChartDataView({
                       );
                     })()}
                   {currentTab === 'matrix' &&
-                    renderMatrixView(load.data, displayName, pointVisibility, t, locale, tableSelection)}
+                    renderMatrixView(
+                      load.data,
+                      displayName,
+                      pointVisibility,
+                      t,
+                      locale,
+                      tableSelection,
+                      settingsPanel === null ? undefined : openFormulaDrawer,
+                    )}
                   {currentTab === 'elements' && renderElementsView(load.data, displayName, pointVisibility, t, locale)}
                   {currentTab === 'placements' &&
                     renderPlacementsView(
@@ -1290,6 +1303,8 @@ export function ChartView({
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
   const [compareLoad, setCompareLoad] = useState<Load>({ kind: 'loading' });
   const [lastReadyData, setLastReadyData] = useState<ChartData | undefined>();
+  // Raised by the compare screen's formula link (#815) to open the drawer on Bodies and orbs.
+  const [compareFormulaRequest, setCompareFormulaRequest] = useState(0);
   // Shared with the solar and lunar return charts, so a house system chosen here applies there too.
   const {
     settings: cardSettings,
@@ -1330,7 +1345,7 @@ export function ChartView({
   const { provider } = useEphemerisProvider();
   const store = useStore();
 
-  /** Saves the drawer's whole formula list as the person's one register (#824), the same batch `CustomPointEditor` writes. */
+  /** Saves the drawer's whole formula list as the person's one register (#824), one batch. */
   const saveCustomPoints = useCallback(
     async (next: readonly CustomPointDefinition[]): Promise<void> => {
       await store.mutate([
@@ -1350,7 +1365,7 @@ export function ChartView({
     [store, personId],
   );
 
-  /** Checks a drawer formula against this chart's own identifiers, as `CustomPointEditor` does (#824). */
+  /** Checks a drawer formula against this chart's own identifiers (#824). */
   const checkFormula = useCallback(
     (formula: string): FormulaProblem | undefined => {
       if (lastReadyData === undefined) {
@@ -1519,6 +1534,7 @@ export function ChartView({
               fixedStarsSaved={person.fixedStars}
               onFixedStarsChange={saveFixedStars}
               settingsProvider={provider}
+              openSettingsRequest={compareFormulaRequest}
               view={view ?? 'wheel'}
               onViewChange={(next) => {
                 changeChartView(personId, 'natal', next, compareType);
@@ -1543,7 +1559,17 @@ export function ChartView({
             />
           </div>
         </div>
-        {lastReadyData !== undefined && <CustomPointEditor person={person} data={lastReadyData} />}
+        {provider !== undefined && (
+          <p className="hint">
+            <Button
+              onClick={() => {
+                setCompareFormulaRequest((count) => count + 1);
+              }}
+            >
+              {t.compareFormulaLink}
+            </Button>
+          </p>
+        )}
       </main>
     );
   }
@@ -1592,7 +1618,6 @@ export function ChartView({
               }
         }
       />
-      {lastReadyData !== undefined && <CustomPointEditor person={person} data={lastReadyData} />}
     </main>
   );
 }

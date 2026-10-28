@@ -1,7 +1,7 @@
 /**
  * @module ChartViewAspects
  * @purpose Renders the Aspects chart view tables (aspects, antiscia, declinations, fixed stars, midpoints) and their columns.
- * @conventions Pure move out of ChartView.tsx (#817): same markup and strings, no behaviour change; takes the chart data and message bundle as arguments and never imports ChartView.
+ * @conventions Moved out of ChartView.tsx (#817); the aspects table shows Applying as a Badge and the family as muted text on screen only (#815), while `render` stays plain text for copy, CSV and the PDF; takes the chart data and message bundle as arguments and never imports ChartView.
  * @exports aspectColumns, declinationColumns, antisciaColumns, midpointTreeColumns, allMidpointsColumns, fixedStarsScopeNoteOf, checkedStarsOf, fixedStarColumns, hasStarSources, renderAspectsTable
  */
 import { formatOrb } from './format.js';
@@ -28,9 +28,15 @@ import { aspectDisplayName, bodyDisplayName } from './astro-names.messages.js';
 import { degreeColumns } from './ChartViewPlacements.js';
 import type { chartViewMessages } from './ChartView.messages.js';
 import { aspectSelectionKey, selectColumn, type TableSelection } from './table-selection.js';
+import { Badge } from './primitives/Badge.js';
 import { SortableTable } from './SortableTable.js';
 import type { TableColumn } from './table-sort.js';
 import type { Locale } from '../interpretation/schema.js';
+
+function familyText(row: AspectRow): string {
+  const family = aspectHarmonicFamily(row.aspectKey);
+  return family === undefined ? '' : `H${String(family)}`;
+}
 
 export function aspectColumns(
   t: typeof chartViewMessages.en,
@@ -71,23 +77,25 @@ export function aspectColumns(
       valueOf: (row) => row.bodyBName,
       render: (row) => bodyDisplayName(row.bodyBKey, locale),
     },
-    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => formatOrb(row.orb) },
+    { key: 'orb', label: t.orbLabel, align: 'end', valueOf: (row) => row.orb, render: (row) => formatOrb(row.orb) },
     {
       key: 'applying',
       label: t.applyingLabel,
       labelTooltip: t.applyingTooltip,
       valueOf: (row) => row.applying,
+      // Plain text for copy, CSV and the PDF (which reuses these columns); the Badge is the screen cell only (#815).
       render: (row) => (row.applying ? t.applying : t.separating),
+      renderCell: (row) => (row.applying ? <Badge tone="accent">{t.applying}</Badge> : <Badge>{t.separating}</Badge>),
     },
     {
       key: 'harmonicFamily',
       label: t.harmonicFamilyLabel,
       labelTooltip: t.harmonicFamilyTooltip,
+      align: 'end',
       valueOf: (row) => aspectHarmonicFamily(row.aspectKey) ?? 0,
-      render: (row) => {
-        const family = aspectHarmonicFamily(row.aspectKey);
-        return family === undefined ? '' : `H${String(family)}`;
-      },
+      render: (row) => familyText(row),
+      // Plain muted text, not a Badge (#815 decision): the family is a tag on the row, not a state.
+      renderCell: (row) => <span className="data-table-muted">{familyText(row)}</span>,
     },
   ];
 }
@@ -116,7 +124,7 @@ export function declinationColumns(
       valueOf: (row) => row.kind,
       render: (row) => t[row.kind],
     },
-    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => formatOrb(row.orb) },
+    { key: 'orb', label: t.orbLabel, align: 'end', valueOf: (row) => row.orb, render: (row) => formatOrb(row.orb) },
   ];
 }
 
@@ -141,7 +149,7 @@ export function antisciaColumns(t: typeof chartViewMessages.en, locale: Locale):
       valueOf: (row) => row.kind,
       render: (row) => (row.kind === 'antiscion' ? t.antiscion : t.contraAntiscion),
     },
-    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => formatOrb(row.orb) },
+    { key: 'orb', label: t.orbLabel, align: 'end', valueOf: (row) => row.orb, render: (row) => formatOrb(row.orb) },
   ];
 }
 

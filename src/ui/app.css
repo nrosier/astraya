@@ -1569,6 +1569,16 @@ label.stacked textarea:focus-visible {
   font-variant-numeric: tabular-nums;
 }
 
+.data-table .data-table-muted {
+  color: var(--muted);
+}
+
+/* The Aspects view's family Select sits on its own row above the tables (#815). */
+.aspect-family-filter {
+  max-width: 20rem;
+  margin: 0 0 var(--space-4);
+}
+
 .data-table th[data-align='center'],
 .data-table td[data-align='center'] {
   text-align: center;
