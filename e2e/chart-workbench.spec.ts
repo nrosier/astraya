@@ -139,6 +139,28 @@ test.describe('with the shared people (#799)', () => {
     await expect(cell).toHaveAttribute('aria-pressed', 'false');
   });
 
+  test('Show on an Aspects row opens the Wheel with that aspect highlighted (#815)', async () => {
+    test.setTimeout(90_000);
+    await page.setViewportSize({ width: 1600, height: 1000 });
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await openNatalChart(page, 'Aspects');
+    const first = page.locator('#chart-view-aspects table tbody tr').first();
+    const show = first.getByRole('button', { name: /^Show .+ on the wheel$/ });
+    const name = (await show.getAttribute('aria-label')) ?? '';
+    expect(name).toMatch(/^Show .+ on the wheel$/);
+    await show.click();
+
+    await expect(page.getByRole('link', { name: 'Wheel', exact: true })).toHaveAttribute('aria-current', 'page');
+    await expect(page.locator('#chart-view-wheel')).toBeVisible();
+    await expect(page.locator('#chart-view-wheel')).toBeFocused();
+    await expect(page.locator('#chart-view-aspects')).toHaveCount(0);
+    // The selection dims everything but the aspect's two bodies and its line.
+    await expect(page.locator('.chart-wheel .chart-dimmed').first()).toBeAttached();
+    await expect(page.locator('.chart-wheel [data-body]:not(.chart-dimmed)')).not.toHaveCount(0);
+    await expect(page.locator('.selection-inspector-facts')).toBeVisible();
+    await expect(page.locator('.chart-wheel')).toBeInViewport();
+  });
+
   test('the aspect matrix grid shows Name and House at 1280 and drops them at 390 (#820)', async () => {
     test.setTimeout(90_000);
     await openSharedPerson(page, baseUrl, EINSTEIN);

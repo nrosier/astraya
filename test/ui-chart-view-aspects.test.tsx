@@ -12,6 +12,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import type { AntisciaRow, AspectRow, DeclinationContactRow } from '../src/domain/chart-tables.js';
 import { chartViewMessages } from '../src/ui/ChartView.messages.js';
 import { antisciaColumns, aspectColumns, declinationColumns } from '../src/ui/ChartViewAspects.js';
+import { aspectSelectionKey } from '../src/ui/table-selection.js';
 import { SortableTable } from '../src/ui/SortableTable.js';
 import { rowsToCsv, rowsToTsv, type TableColumn } from '../src/ui/table-sort.js';
 
@@ -43,6 +44,10 @@ const ROWS: readonly AspectRow[] = [
     applying: false,
   },
 ];
+
+function fixtureBug(): never {
+  throw new Error('fixture bug: missing row');
+}
 
 let root: Root | undefined;
 
@@ -111,6 +116,29 @@ describe('the aspects table (#815)', () => {
       expect(text).toContain('H3');
       expect(text).not.toContain('<');
     }
+  });
+
+  it('has a Show button in every row that opens the wheel on that aspect’s two bodies (#815)', () => {
+    const shown: string[] = [];
+    const withSelection = aspectColumns(t, 'en', {
+      selectedKey: undefined,
+      onToggle: () => {
+        throw new Error('Show must not toggle');
+      },
+      onShowOnWheel: (key) => shown.push(key),
+      selectableBodies: new Set(['sun', 'moon', 'saturn']),
+    });
+    const container = mount('Aspects', withSelection, ROWS, (row) => `${row.bodyAKey}-${row.aspect}`);
+    const buttons = Array.from(container.querySelectorAll<HTMLButtonElement>('tbody button'));
+    expect(buttons.map((b) => b.textContent)).toEqual(['Show', 'Show']);
+    expect(buttons.map((b) => b.getAttribute('aria-label'))).toEqual([
+      'Show Sun Trine Moon on the wheel',
+      'Show Sun Square Saturn on the wheel',
+    ]);
+    act(() => {
+      buttons[1]?.click();
+    });
+    expect(shown).toEqual([aspectSelectionKey(ROWS[1] ?? fixtureBug())]);
   });
 
   it('keeps the table inside the horizontal scroll frame', () => {

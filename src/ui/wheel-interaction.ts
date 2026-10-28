@@ -221,6 +221,8 @@ export interface WheelIsolation {
   readonly clear: () => void;
   /** Selects `key` as a click would (`body:sun@0`, `aspect:…`), or clears it when it is already the selection: for a table row's button (#418). */
   readonly toggle: (key: string) => void;
+  /** Selects `key` outright, even when it is already the selection (#815: a "Show" button must never un-show). */
+  readonly select: (key: string) => void;
   /** Goes on the same element as `wheelRef`. */
   readonly onClick: (event: React.MouseEvent<HTMLDivElement>) => void;
   /** Lets a focused ring legend toggle isolation with Enter or Space. */
@@ -253,6 +255,7 @@ export function useWheelIsolation(resetKey: unknown): WheelIsolation {
     toggle: (key) => {
       setSelectionKey((current) => (current === key ? undefined : key));
     },
+    select: setSelectionKey,
     onClick: (event) => {
       const next = selectionKeyForTarget(event.target as Element);
       // Clicking the selected symbol again, or empty space, clears it.

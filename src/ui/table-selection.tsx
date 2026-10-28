@@ -22,6 +22,8 @@ import type { TableColumn } from './table-sort.js';
 export interface TableSelection {
   readonly selectedKey: string | undefined;
   readonly onToggle: (key: string) => void;
+  /** Selects `key` and opens the Wheel view on it (#815); absent where a table has no wheel to go to. */
+  readonly onShowOnWheel?: ((key: string) => void) | undefined;
   readonly selectableBodies: ReadonlySet<string>;
 }
 
@@ -48,6 +50,8 @@ export function selectColumn<T>(
     column: t.showOnChartColumn,
     button: t.showOnChartButton,
   },
+  /** When true the button opens the Wheel view on the row's selection instead of toggling it (#815). */
+  opensWheel = false,
 ): TableColumn<T> {
   return {
     key: labels.key,
@@ -58,6 +62,21 @@ export function selectColumn<T>(
     renderCell: (row) => {
       const key = keyOf(row);
       if (key === undefined) return null;
+      const show = opensWheel ? selection.onShowOnWheel : undefined;
+      if (show !== undefined) {
+        return (
+          <button
+            type="button"
+            className="quiet"
+            aria-label={t.showOnWheel(nameOf(row))}
+            onClick={() => {
+              show(key);
+            }}
+          >
+            {labels.button}
+          </button>
+        );
+      }
       return (
         <button
           type="button"
