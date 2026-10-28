@@ -6,6 +6,42 @@ see [docs/ops/RELEASING.md](docs/ops/RELEASING.md).
 
 ## [Unreleased]
 
+## [0.42.15] — 2026-10-28
+
+**Fixed stars can be chosen from the full catalogue, the aspects view is redesigned with a Show-to-wheel button, and Overlays, Extended settings and the admin screens move into slide-over drawers and cards.**
+
+### Added
+
+- **A fixed-star picker (#803).** A searchable picker in the Special points tab chooses stars from the shipped catalogue. Each chosen star keeps its identifier and the version of the catalogue file it came from, and the table shows both. Duplicate catalogue records are merged and magnitude is shown in the search. A person with no chosen stars still gets the seven-star preset.
+- **A redesigned aspects view (#815).** The Applying column shows a dot and a label, and a Show button opens the wheel with that aspect highlighted. The formula editor is removed from this view.
+- **Overlays and Extended settings open as right slide-over drawers (#817, #824).** The wheel stays visible beside the drawer and is pushed aside when Overlays opens. Apply and Cancel work as before.
+- **A consultation layout (#800).** Metric tiles, a 60/40 grid and transit tables.
+- **A two-column birth record card (#795).**
+- **Redesigned admin screens (#816).** Users and AI usage get a new layout, and corpus overrides and candidates are entry cards.
+- **Pholus as an opt-in body (#804).** Default charts and contacts are unchanged.
+
+### Changed
+
+- **Older builds ignore chosen fixed stars (#803).** A device running version 0.42.14 or older does not read the new field, so it draws that person's chart with the preset stars until it is updated.
+- **Chart table views live in their own modules (#817).** The Chart view is split with no change in behaviour.
+- **Reference material is local (#864).** Only the reference index and format documents and the three JSON data files that the tests read are tracked in the repository. The rest of `docs/references/` stays on the developer's machine.
+
+### Fixed
+
+- **The wheel makes room for the Overlays drawer (#817).**
+- **Fixed-star names no longer truncate (#803).** The star-name buffer is full size and stars are identified by designation.
+- **Drawer tokens, width and Dutch wrapping (#824).**
+- **Overridden corpus entries use a 2px inset left accent (#816).**
+- **Reference data files are tracked again (#864).** A clean checkout no longer fails three tests with a missing file.
+
+### Performance
+
+- **Unrelated code is out of the main bundle (#803)**, keeping it under the size warning limit.
+
+### Internal
+
+- End-to-end tests cover the shared-people split with a guard (#799), the wheel sitting in view at 1280x800 (#801), and the stored star identifier and hash in the table (#803).
+
 ## [0.42.14] — 2026-10-27
 
 **Chart settings and planetary rulers belong to each person, the tab rows scroll instead of wrapping, and the aspect matrix and elements tables become token-styled grids.**
