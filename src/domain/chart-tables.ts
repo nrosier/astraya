@@ -43,8 +43,9 @@ import {
 } from '../astrology/planetary-condition.js';
 import { DEFAULT_RULERSHIP_CHOICE, primaryRulerOf, rulersOf, type RulershipChoice } from '../astrology/rulership.js';
 import { solarConditionOf, solarPhaseOf, type SolarCondition, type SolarPhase } from '../astrology/sect.js';
-import { degreesInSign, signIndex, signOf, type Element, type Modality } from '../astrology/signs.js';
+import { signIndex, signOf, type Element, type Modality } from '../astrology/signs.js';
 import { formatCoordinate } from '../ui/format.js';
+import { degreeParts, type DegreeParts } from './degree-parts.js';
 import { housesAreDefined, type AngleAspect, type ChartData } from './chart-compute.js';
 import { derivedPointLongitude } from './derived-point-position.js';
 import { aspectHarmonicFamily, DEFAULT_ORB_CONFIG, type Aspect, type OrbConfig } from '../astrology/aspects.js';
@@ -90,34 +91,7 @@ function bodySymbol(key: string): string {
   return BODY_SYMBOLS[key] ?? '';
 }
 
-export interface DegreeParts {
-  readonly sign: string;
-  readonly degree: number;
-  readonly minute: number;
-  readonly second: number;
-}
-
-/**
- * Splits a longitude into sign name plus degree/minute/second within it.
- *
- * Rounds the whole longitude to the nearest arcsecond *before* finding the
- * sign, rather than after splitting off the within-sign degrees. Rounding
- * after would let something like 29°59'59.6" round its seconds up to a
- * nonexistent 30°00'00" while the sign was already fixed at the *lower*
- * value — a real degree that would then print in the wrong sign. Snapping to
- * the arcsecond first means the sign lookup and the degree split always see
- * the same, already-rounded number.
- */
-export function degreeParts(longitude: Degrees): DegreeParts {
-  const rounded = Math.round(longitude * 3600) / 3600;
-  const sign = signOf(rounded).name;
-  const withinSign = degreesInSign(rounded);
-  const totalSeconds = Math.round(withinSign * 3600);
-  const degree = Math.floor(totalSeconds / 3600);
-  const minute = Math.floor((totalSeconds % 3600) / 60);
-  const second = totalSeconds % 60;
-  return { sign, degree, minute, second };
-}
+export { degreeParts, type DegreeParts } from './degree-parts.js';
 
 /**
  * Which computed points a chart's tables, wheel and matrix actually show (#542).

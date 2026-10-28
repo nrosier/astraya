@@ -31,7 +31,7 @@ import {
 } from '../astrology/aspects.js';
 import { bodyById, bodyByKey, BODIES } from '../astrology/bodies.js';
 import { materializeCustomPoints, type ComputedCustomPoint } from './custom-point.js';
-import type { CustomPointDefinition } from './person.js';
+import type { ChosenFixedStar, CustomPointDefinition } from './person.js';
 import type { EssentialDignities } from '../astrology/dignities.js';
 import { DEFAULT_RULERSHIP_CHOICE, essentialDignitiesFor, type RulershipChoice } from '../astrology/rulership.js';
 import { partOfFortune, partOfSpirit } from '../astrology/arabic-parts.js';
@@ -73,6 +73,29 @@ export const NATAL_FIXED_STARS: readonly string[] = [
   'Sirius',
 ];
 
+/** One fixed star the chart looks up: the key its longitude is stored under, and the identifier it is asked for by. */
+interface StarLookup {
+  readonly key: string;
+  readonly id: string;
+}
+
+/**
+ * The stars a chart checks (#803): the person's chosen ones by stored identifier, else the seven-star preset by name.
+ * A chosen star is keyed by its traditional name (its designation when it has none); a name chosen twice under two
+ * designations (the file has a few, e.g. Algedi) is keyed with the designation added, so neither replaces the other.
+ */
+function starLookups(chosen: readonly ChosenFixedStar[] | undefined): readonly StarLookup[] {
+  if (!chosen?.length) return NATAL_FIXED_STARS.map((name) => ({ key: name, id: name }));
+  const labelOf = (star: ChosenFixedStar): string => star.name || star.designation;
+  return chosen.map((star) => ({
+    key:
+      chosen.filter((other) => labelOf(other) === labelOf(star)).length > 1
+        ? `${labelOf(star)} (${star.designation})`
+        : labelOf(star),
+    id: star.id,
+  }));
+}
+
 export interface ChartCalculationOptions {
   readonly houseSystem?: HouseSystem;
   /** Whose rulers the essential dignities use: modern by default (#426). */
@@ -85,6 +108,11 @@ export interface ChartCalculationOptions {
   readonly nodeVariant?: 'mean' | 'true';
   /** Persisted user formulas materialized as chart points after the ephemeris calculation (#566). */
   readonly customPoints?: readonly CustomPointDefinition[];
+  /**
+   * The person's chosen fixed stars (#803), looked up by their stored Swiss identifier. Absent or empty: the chart
+   * checks `NATAL_FIXED_STARS` by name, exactly as before #803.
+   */
+  readonly fixedStars?: readonly ChosenFixedStar[];
   /**
    * Per-object aspect participation (#585), keyed by `astrology/bodies.ts` body keys plus
    * `'vertex'`/`'partOfFortune'`/`'partOfSpirit'` — deliberately a plain string-keyed map, not
@@ -237,8 +265,8 @@ export interface ChartData {
   /** True obliquity of the ecliptic at this moment — the out-of-bounds threshold (`declinations.ts`'s own doc comment). Same composite/harmonic caveat as `declinations`. */
   readonly obliquity?: Degrees;
   /**
-   * Ecliptic longitude per `NATAL_FIXED_STARS` name, for `fixed-stars.ts`'s `fixedStarConjunctions`
-   * (#398). Undefined for a composite/harmonic chart — same reasoning as `declinations`: fixed
+   * Ecliptic longitude per `NATAL_FIXED_STARS` name, or per chosen star (#803, see `starLookups`), for
+   * `fixed-stars.ts`'s `fixedStarConjunctions` (#398). Undefined for a composite/harmonic chart — same reasoning as `declinations`: fixed
    * stars conjunct a real body's own longitude, which a synthetic midpoint/multiple position
    * doesn't coherently have one real moment to look them up for.
    */
@@ -451,6 +479,7 @@ export async function computeChartDataAtJd(
     return true;
   });
 
+  const stars = starLookups(options.fixedStars);
   const [positions, houses, equatorialPositions, obliquity, fixedStarPositions] = await Promise.all([
     provider.positions(
       jd,
@@ -466,18 +495,17 @@ export async function computeChartDataAtJd(
       { ...positionOptions, equatorial: true },
     ),
     provider.obliquity(jd),
-    // `fixedStar` has no batch form (one call per name), unlike `positions` — Promise.all over
-    // NATAL_FIXED_STARS is the whole batching this gets. Keyed by the *requested* name, not the
-    // engine's own returned `.name` (which can carry extra qualifying text — confirmed by
-    // test/ephemeris-fixed-stars.test.ts's own `.toContain('regulus')`, not an exact match), so
-    // every caller gets the stable key it asked for.
-    Promise.all(NATAL_FIXED_STARS.map((name) => provider.fixedStar(jd, name, positionOptions))),
+    // `fixedStar` has no batch form (one call per star), unlike `positions` — Promise.all over
+    // the stars (`NATAL_FIXED_STARS`, or the person's chosen ones, #803) is the whole batching this
+    // gets. Keyed by the *requested* key, not the engine's own returned `.name` (which carries the
+    // designation too, "Regulus,alLeo"), so every caller gets the stable key it asked for.
+    Promise.all(stars.map((star) => provider.fixedStar(jd, star.id, positionOptions))),
   ]);
   const declinations = new Map<BodyId, Degrees>(
     equatorialPositions.map((position) => [position.body, position.latitude]),
   );
   const fixedStars = new Map<string, Degrees>(
-    fixedStarPositions.map((star, index) => [NATAL_FIXED_STARS[index] ?? star.name, star.longitude]),
+    fixedStarPositions.map((star, index) => [stars[index]?.key ?? star.name, star.longitude]),
   );
 
   const positionByBody = new Map(positions.map((position) => [position.body, position]));

@@ -77,6 +77,18 @@ const ASCMC = {
  */
 const POLAR_FALLBACK_BY_NAME: Readonly<Record<string, HouseSystem>> = { Porphyry: 'O' };
 
+/**
+ * The star name as the fixed-star calls must receive it (#803). The C functions treat `star` as an in/out buffer of
+ * `SE_MAX_STNAME` characters and write the full "name,designation" back into it, but `sweph-wasm` allocates only the
+ * requested name's length plus one. A short request ("Vega" resolving to "Vega,alLyr") therefore overruns the WASM
+ * heap: the name comes back cut short and later lookups abort with a segmentation fault (seen for Polaris). Padding
+ * with spaces gives the call a full-size buffer; Swiss Ephemeris removes every blank from a search name before it
+ * matches (`fixstar_format_search_name`, swephlib), so the padding never changes which star is found.
+ */
+function starNameBuffer(name: string): string {
+  return name.padEnd(SE.SE_MAX_STNAME - 1, ' ');
+}
+
 /** Gregorian calendar, as opposed to Julian. */
 const GREGORIAN = SE.SE_GREG_CAL;
 const JULIAN = SE.SE_JUL_CAL;
@@ -483,7 +495,7 @@ export class SwissEphemerisEngine implements EphemerisProvider {
     const flags = this.#flagsFor(options);
     let result: { star_name: string; data: readonly number[] };
     try {
-      result = this.#instance().swe_fixstar2_ut(name, jd, flags);
+      result = this.#instance().swe_fixstar2_ut(starNameBuffer(name), jd, flags);
     } catch (cause) {
       throw new EphemerisError(cause instanceof Error ? cause.message : String(cause), {
         call: 'swe_fixstar2_ut',
@@ -500,7 +512,7 @@ export class SwissEphemerisEngine implements EphemerisProvider {
       number,
     ];
     return {
-      name: result.star_name,
+      name: result.star_name.trim(),
       longitude: norm360(longitude),
       latitude,
       distance,
@@ -513,14 +525,14 @@ export class SwissEphemerisEngine implements EphemerisProvider {
   async fixedStarMagnitude(name: string): Promise<FixedStarMagnitude> {
     let result: { star_name: string; magnitude: number };
     try {
-      result = this.#instance().swe_fixstar2_mag(name);
+      result = this.#instance().swe_fixstar2_mag(starNameBuffer(name));
     } catch (cause) {
       throw new EphemerisError(cause instanceof Error ? cause.message : String(cause), {
         call: 'swe_fixstar2_mag',
         star: name,
       });
     }
-    return { name: result.star_name, magnitude: result.magnitude };
+    return { name: result.star_name.trim(), magnitude: result.magnitude };
   }
 
   async nextSunCrossing(fromJd: JulianDayUT, longitude: Degrees, zodiac?: Zodiac): Promise<JulianDayUT> {

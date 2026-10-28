@@ -15,7 +15,7 @@
  * @conventions Framework-free like src/domain and src/chart: every function takes Locale explicitly rather than reading locale.ts's store, so non-UI modules (chart-tables.ts, multi-wheel.ts) can call in without a React/localStorage dependency.
  * @exports todayInputValue, formatCoordinate, formatSignDegree, formatFixed, formatDecimal, formatInteger, formatTimestamp, formatCents, utcDay
  */
-import { degreeParts } from '../domain/chart-tables.js';
+import { degreeParts } from '../domain/degree-parts.js';
 import type { Locale } from '../interpretation/schema.js';
 
 /**

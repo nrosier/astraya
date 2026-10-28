@@ -25,7 +25,7 @@
  * @module person
  * @purpose Defines the `Person` entity — the primary entity and owner of birth data that every computed chart derives from — and assembles it from op-log register values.
  * @conventions Stores the civil-time/coordinates input as typed, never a resolved UTC offset, since historical timezone data can change (an `OffsetWitness` records what a past resolution said, for detecting drift, not for reuse); a field this build cannot read is reported as absent via `missing`, never defaulted (e.g. `{0,0}` is a real place, so it is never substituted for missing coordinates); `TimeAccuracy` distinguishes a genuinely unknown birth time, for which houses/angles are meaningless rather than merely approximate.
- * @exports Person, TimeAccuracy, OffsetWitness, RelocationPlace, CustomPointDefinition, PERSON_FIELDS, buildPerson, readCivil, readCoordinates, readCalendar, readTimeAccuracy, readWitness, readOffsetOverride, readText, readRelocationPlaces, readCustomPoints, readCalculationSettings, CalculationSettingsRead, serializeCalculationSettings, readRulership, RulershipRead, serializeRulership, newPersonCalculationMutations
+ * @exports Person, TimeAccuracy, OffsetWitness, RelocationPlace, CustomPointDefinition, ChosenFixedStar, PERSON_FIELDS, buildPerson, readCivil, readCoordinates, readCalendar, readTimeAccuracy, readWitness, readOffsetOverride, readText, readRelocationPlaces, readCustomPoints, readFixedStars, readCalculationSettings, CalculationSettingsRead, serializeCalculationSettings, readRulership, RulershipRead, serializeRulership, newPersonCalculationMutations
  */
 import { parseFormula } from '../astrology/formula-parser.js';
 import { isRulershipChoice, type RulershipChoice } from '../astrology/rulership.js';
@@ -93,6 +93,23 @@ export interface CustomPointDefinition {
   readonly enabled?: boolean | undefined;
 }
 
+/**
+ * A fixed star a user chose from the shipped catalogue for this person (#803, D-803b). Names and identifiers only:
+ * no interpretive text. Positions are always computed afresh through `EphemerisProvider.fixedStar(id)`.
+ */
+export interface ChosenFixedStar {
+  /** What Swiss Ephemeris is asked for (`swissStarId`): the `,designation` form. */
+  readonly id: string;
+  /** Traditional name from the catalogue record; empty when the record has only a designation. */
+  readonly name: string;
+  /** Nomenclature name from the catalogue record, e.g. `alLeo`. */
+  readonly designation: string;
+  /** The record's own equinox field (`1950`, `2000` or `ICRS`), the reference frame its coordinates are given in. */
+  readonly equinox: string;
+  /** Lowercase hex SHA-256 of the shipped `sefstars.txt` the star was chosen from (D-803c). */
+  readonly sourceSha256: string;
+}
+
 export interface Person {
   readonly id: string;
   /** May be empty: a person can be created before there is anything to call them. */
@@ -115,6 +132,11 @@ export interface Person {
   readonly relocationPlaces?: readonly RelocationPlace[] | undefined;
   /** Valid custom formula points; absent in records written before #566. */
   readonly customPoints?: readonly CustomPointDefinition[] | undefined;
+  /**
+   * Fixed stars chosen from the catalogue (#803); absent in records written before it, and when the register is
+   * unreadable (read atomically, like `customPoints`). Absent or empty: the chart checks the seven-star preset.
+   */
+  readonly fixedStars?: readonly ChosenFixedStar[] | undefined;
   /**
    * This person's own chart calculation settings (#806): house system, zodiac, orbs, visible points.
    * Absent when none were ever saved for them (the screens then start from the device's default
@@ -155,6 +177,7 @@ export const PERSON_FIELDS = [
   'customPoints',
   'calculationSettings',
   'rulership',
+  'fixedStars',
 ] as const;
 
 function isRecordValue(value: unknown): value is Record<string, unknown> {
@@ -293,6 +316,36 @@ export function readCustomPoints(value: unknown): readonly CustomPointDefinition
   return points;
 }
 
+/** What each stored chosen-star field must match (#803); every one is also a string of at most 128 characters. */
+const CHOSEN_STAR_FIELDS: Readonly<Record<keyof ChosenFixedStar, RegExp>> = {
+  id: /\S/,
+  name: /^/,
+  designation: /\S/,
+  // The equinoxes the star file allows; the source hash is a lowercase hex SHA-256 (D-803c).
+  equinox: /^(1950|2000|ICRS)$/,
+  sourceSha256: /^[0-9a-f]{64}$/,
+};
+
+/**
+ * Reads the chosen fixed stars atomically (#803), as `readCustomPoints` does: one malformed entry or a repeated
+ * identifier invalidates the whole list, so a partial list never draws a plausible chart nobody chose. Only the
+ * stored fields are kept.
+ */
+export function readFixedStars(value: unknown): readonly ChosenFixedStar[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const stars: ChosenFixedStar[] = [];
+  for (const candidate of value) {
+    if (!isRecordValue(candidate)) return undefined;
+    const entries = Object.entries(CHOSEN_STAR_FIELDS).map(([field, pattern]) => {
+      const text = candidate[field];
+      return typeof text === 'string' && text.length <= 128 && pattern.test(text) ? [field, text] : undefined;
+    });
+    if (entries.includes(undefined) || stars.some((star) => star.id === candidate.id)) return undefined;
+    stars.push(Object.fromEntries(entries as [string, string][]) as unknown as ChosenFixedStar);
+  }
+  return stars;
+}
+
 /** What reading a `calculationSettings` register produced: usable settings, or an unreadable flag. */
 export type CalculationSettingsRead =
   { readonly kind: 'settings'; readonly settings: ExtendedSettings } | { readonly kind: 'unreadable' };
@@ -370,6 +423,7 @@ export function buildPerson(id: string, fields: ReadonlyMap<string, unknown>): P
   const witness = readWitness(fields.get('witness'));
   const relocationPlaces = readRelocationPlaces(fields.get('relocationPlaces'));
   const customPoints = readCustomPoints(fields.get('customPoints'));
+  const fixedStars = readFixedStars(fields.get('fixedStars'));
   const calculation = readCalculationSettings(fields.get('calculationSettings'));
   const ruler = readRulership(fields.get('rulership'));
 
@@ -401,6 +455,7 @@ export function buildPerson(id: string, fields: ReadonlyMap<string, unknown>): P
     ...(witness === undefined ? {} : { witness }),
     ...(relocationPlaces === undefined ? {} : { relocationPlaces }),
     ...(customPoints === undefined ? {} : { customPoints }),
+    ...(fixedStars === undefined ? {} : { fixedStars }),
     ...(calculation?.kind === 'settings' ? { calculationSettings: calculation.settings } : {}),
     ...(ruler?.kind === 'rulership' ? { rulership: ruler.rulership } : {}),
     ...(calculation?.kind === 'unreadable' || ruler?.kind === 'unreadable'

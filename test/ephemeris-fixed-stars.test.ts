@@ -62,3 +62,34 @@ describe('fixedStarMagnitude (#33)', () => {
     await expect(engine.fixedStarMagnitude('NotARealStarName')).rejects.toThrow(EphemerisError);
   });
 });
+
+/**
+ * #803: the C fixed-star calls write "name,designation" back into the request buffer, which
+ * `sweph-wasm` sizes to the request alone. Unpadded, a short name overran the heap: the
+ * returned name was cut short and a later lookup (Polaris) aborted the WASM instance.
+ */
+describe('fixedStar request buffer (#803)', () => {
+  it('returns the full resolved name and survives a run of lookups that used to abort', async () => {
+    const engine = await getEngine();
+    for (const name of ['Vega', 'Regulus', 'Polaris', 'Achernar', 'Deneb', 'Polaris']) {
+      const star = await engine.fixedStar(JD_2024, name);
+      expect(star.name.startsWith(`${name},`)).toBe(true);
+    }
+    expect((await engine.fixedStar(JD_2024, 'Vega')).name).toBe('Vega,alLyr');
+  });
+
+  it('finds a star by its `,designation` form at the same place as by its name', async () => {
+    const engine = await getEngine();
+    const byName = await engine.fixedStar(JD_2024, 'Regulus');
+    const byDesignation = await engine.fixedStar(JD_2024, ',alLeo');
+    expect(byDesignation.name).toBe('Regulus,alLeo');
+    expect(byDesignation.longitude).toBe(byName.longitude);
+  });
+
+  it('tells two records that share a name apart by designation', async () => {
+    const engine = await getEngine();
+    // sefstars.txt lists Menkar as alCet and as laCet; the name alone always finds the first.
+    expect((await engine.fixedStar(JD_2024, 'Menkar')).name).toBe('Menkar,alCet');
+    expect((await engine.fixedStar(JD_2024, ',laCet')).name).toBe('Menkar,laCet');
+  });
+});

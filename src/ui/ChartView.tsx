@@ -30,7 +30,7 @@
  * @module ChartView
  * @purpose Renders the natal chart screen: the chart wheel plus every data table a chart computes (positions, houses, aspects, dignities, dispositors, declinations, antiscia, fixed stars, chart shape, derived points), and the SVG/PNG/PDF export + share-link controls.
  * @conventions Exports `ChartDataView`, the shared tabbed chart+tables UI reused by CompositeView/SharedChartView; every value is recomputed from the stored birth moment via `domain/chart-compute.js`/`domain/chart-tables.js` rather than read from a saved Chart record; houses/angles/derived-points tables are hidden when `timeAccuracy === 'unknown'`. Text comes from co-located `ChartView.messages.ts` via `useMessages()`.
- * @exports ChartView, ChartDataView, emphasisColumns, positionColumns, houseCuspColumns, angleColumns, aspectColumns, dignityColumns, almutenCandidateColumns, conditionColumns, receptionColumns, dispositorColumns, declinationColumns, antisciaColumns, midpointTreeColumns, allMidpointsColumns, fixedStarColumns, fixedStarsScopeNoteOf, derivedPointColumns, houseSystemLabel, zodiacLabel, rulershipLabel
+ * @exports ChartView, ChartDataView, emphasisColumns, positionColumns, houseCuspColumns, angleColumns, aspectColumns, dignityColumns, almutenCandidateColumns, conditionColumns, receptionColumns, dispositorColumns, declinationColumns, antisciaColumns, midpointTreeColumns, allMidpointsColumns, fixedStarColumns, fixedStarsScopeNoteOf, checkedStarsOf, derivedPointColumns, houseSystemLabel, zodiacLabel, rulershipLabel
  */
 import { formatFixed, formatOrb, formatTimestamp } from './format.js';
 import { PrintProvenance } from './PrintProvenance.js';
@@ -193,7 +193,8 @@ import { chartOverlaySettingsPanelMessages } from './ChartOverlaySettingsPanel.m
 import { CustomPointEditor } from './CustomPointEditor.js';
 import { Button } from './primitives/Button.js';
 import type { FormulaProblem } from './custom-point-problem.js';
-import type { CustomPointDefinition } from '../domain/person.js';
+import type { ChosenFixedStar, CustomPointDefinition } from '../domain/person.js';
+import { serializeFixedStars } from './fixed-star-draft.js';
 import { FormulaError, redundantBuiltInPoint } from '../domain/custom-point.js';
 import { parseFormula } from '../astrology/formula-parser.js';
 
@@ -1013,9 +1014,20 @@ export function allMidpointsColumns(
   ];
 }
 
-/** The sentence that says the fixed-star table covers only `NATAL_FIXED_STARS` (#725), for the screen and the PDF alike. */
-export function fixedStarsScopeNoteOf(t: typeof chartViewMessages.en): string {
-  return t.fixedStarsScopeNote(NATAL_FIXED_STARS.length, NATAL_FIXED_STARS.join(', '));
+/**
+ * The sentence that says which stars the fixed-star table covers (#725), for the screen and the PDF alike:
+ * `NATAL_FIXED_STARS` by default, or the stars the chart actually checked (the person's chosen ones, #803).
+ */
+export function fixedStarsScopeNoteOf(
+  t: typeof chartViewMessages.en,
+  stars: readonly string[] = NATAL_FIXED_STARS,
+): string {
+  return t.fixedStarsScopeNote(stars.length, stars.join(', '));
+}
+
+/** The star names a computed chart checked (#803), in the order it looked them up; the preset when it has none. */
+export function checkedStarsOf(data: ChartData): readonly string[] {
+  return data.fixedStars === undefined ? NATAL_FIXED_STARS : [...data.fixedStars.keys()];
 }
 
 export function fixedStarColumns(t: typeof chartViewMessages.en, locale: Locale): readonly TableColumn<FixedStarRow>[] {
@@ -1287,7 +1299,7 @@ function renderTableTab(
                 getRowKey={(row) => `${row.star}-${row.bodyKey}`}
                 downloadFilename={deriveExportFilename(displayName, 'fixed-stars', 'csv')}
               />
-              <p className="hint">{fixedStarsScopeNoteOf(t)}</p>
+              <p className="hint">{fixedStarsScopeNoteOf(t, checkedStarsOf(data))}</p>
             </>
           )}
           {midpointTreeHitRows.length > 0 && (
@@ -1757,6 +1769,8 @@ export function ChartDataView({
   customPointsSaved,
   onCustomPointsChange,
   checkFormula,
+  fixedStarsSaved,
+  onFixedStarsChange,
   settingsProvider,
   view,
   onViewChange,
@@ -1805,6 +1819,10 @@ export function ChartDataView({
   readonly onCustomPointsChange?: ((next: readonly CustomPointDefinition[]) => Promise<void>) | undefined;
   /** Checks one drawer formula against this chart's own identifiers (#824); undefined when it is usable. */
   readonly checkFormula?: ((formula: string) => FormulaProblem | undefined) | undefined;
+  /** The person's chosen fixed stars (#803), edited in the drawer's draft; saved as one list by Apply. */
+  readonly fixedStarsSaved?: readonly ChosenFixedStar[] | undefined;
+  /** Saves the whole chosen-star list in one batch (#803); omitted on screens with no person behind them. */
+  readonly onFixedStarsChange?: ((next: readonly ChosenFixedStar[]) => Promise<void>) | undefined;
   /** A long-lived provider for the panel's own house-system/ayanamsa name lookups. */
   readonly settingsProvider?: EphemerisProvider | undefined;
   /** The open view (#511: Wheel/Aspects/Placements/Patterns & condition), when a URL decides it (every real screen); otherwise this component's own state. */
@@ -2276,6 +2294,8 @@ export function ChartDataView({
         customPoints={customPointsSaved}
         onCustomPointsChange={onCustomPointsChange}
         checkFormula={checkFormula}
+        fixedStars={fixedStarsSaved}
+        onFixedStarsChange={onFixedStarsChange}
       />
     ) : null;
 
@@ -2493,6 +2513,7 @@ export function ChartView({
   const person = state.people.get(personId);
   const personMoment = useStableMoment(person?.moment);
   const customPoints = useStableBy(person?.customPoints, (points) => JSON.stringify(points ?? []));
+  const fixedStars = useStableBy(person?.fixedStars, (stars) => JSON.stringify(stars ?? []));
   const t = useMessages(chartViewMessages);
   const [locale] = useLocale();
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
@@ -2548,6 +2569,16 @@ export function ChartView({
     [store, personId],
   );
 
+  /** Saves the drawer's chosen fixed stars as the person's one `fixedStars` register (#803, D-803b). */
+  const saveFixedStars = useCallback(
+    async (next: readonly ChosenFixedStar[]): Promise<void> => {
+      await store.mutate([
+        { entity: 'person', entityId: personId, field: 'fixedStars', value: serializeFixedStars(next) },
+      ]);
+    },
+    [store, personId],
+  );
+
   /** Checks a drawer formula against this chart's own identifiers, as `CustomPointEditor` does (#824). */
   const checkFormula = useCallback(
     (formula: string): FormulaProblem | undefined => {
@@ -2582,7 +2613,7 @@ export function ChartView({
     // Only the planetary rulers changed (#426): keep the chart on screen while it is recalculated
     // rather than going back to "loading", so the settings panel the choice was made in stays open.
     const customPointsKey = JSON.stringify(customPoints ?? []);
-    const chartKey = `${personId}|${momentKey(moment)}|${JSON.stringify(settings)}|${customPointsKey}`;
+    const chartKey = `${personId}|${momentKey(moment)}|${JSON.stringify(settings)}|${customPointsKey}|${JSON.stringify(fixedStars ?? [])}`;
     const sameChart = lastChartKey.current === chartKey;
     lastChartKey.current = chartKey;
     setLoad((current) => (sameChart && current.kind === 'ready' ? current : { kind: 'loading' }));
@@ -2593,6 +2624,7 @@ export function ChartView({
           ...toChartCalculationOptions(settings),
           rulership,
           ...(customPoints === undefined ? {} : { customPoints }),
+          ...(fixedStars === undefined ? {} : { fixedStars }),
         });
         const snapshot = buildCalculationSnapshot(settings, rulership, customPoints ?? []);
         const artifact = await buildChartArtifact(snapshot, moment, data, provider);
@@ -2606,7 +2638,7 @@ export function ChartView({
     return () => {
       effect.cancelled = true;
     };
-  }, [settingsUnreadable, personId, personMoment, customPoints, settings, rulership, provider]);
+  }, [settingsUnreadable, personId, personMoment, customPoints, fixedStars, settings, rulership, provider]);
 
   // Compute comparison chart when compareType is provided (#439)
   useEffect(() => {
@@ -2622,6 +2654,7 @@ export function ChartView({
       ...toChartCalculationOptions(settings),
       rulership,
       ...(customPoints === undefined ? {} : { customPoints }),
+      ...(fixedStars === undefined ? {} : { fixedStars }),
     };
 
     setCompareLoad({ kind: 'loading' });
@@ -2650,7 +2683,17 @@ export function ChartView({
     return () => {
       effect.cancelled = true;
     };
-  }, [settingsUnreadable, personId, personMoment, customPoints, settings, rulership, provider, compareType]);
+  }, [
+    settingsUnreadable,
+    personId,
+    personMoment,
+    customPoints,
+    fixedStars,
+    settings,
+    rulership,
+    provider,
+    compareType,
+  ]);
 
   if (person === undefined) {
     return <PersonNotFound />;
@@ -2702,6 +2745,8 @@ export function ChartView({
               customPointsSaved={person.customPoints}
               onCustomPointsChange={saveCustomPoints}
               checkFormula={checkFormula}
+              fixedStarsSaved={person.fixedStars}
+              onFixedStarsChange={saveFixedStars}
               settingsProvider={provider}
               view={view ?? 'wheel'}
               onViewChange={(next) => {
@@ -2752,6 +2797,8 @@ export function ChartView({
         customPointsSaved={person.customPoints}
         onCustomPointsChange={saveCustomPoints}
         checkFormula={checkFormula}
+        fixedStarsSaved={person.fixedStars}
+        onFixedStarsChange={saveFixedStars}
         settingsProvider={provider}
         view={view ?? 'wheel'}
         onViewChange={(next) => {
