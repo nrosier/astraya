@@ -34,10 +34,10 @@ src/interpretation/corpus/*.txt
 # in docs/references/topics/ as JSON passages instead (#864).
 *.pdf
 
-# Local archive of source originals and extracted text (#864): indexed by processed/MAP.md,
+# Local archive of source originals and extracted text (#864): indexed by docs/references/processed/MAP.md,
 # described in docs/references/SCHEMA.md. Copyrighted text stays local, so nothing under it
 # is committed. The index stays local too.
-processed/
+docs/references/processed/
 
 # Reference files that used to sit in docs/references/ and were excluded per clone via
 # .git/info/exclude; kept here so every clone agrees.

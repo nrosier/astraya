@@ -29,7 +29,7 @@ Subdirectories:
 - `agents/` — Generic Claude Code skill docs (`domain-modeling` skill's `CONTEXT.md`/ADR conventions) — not Astraya product documentation.
 - `archive/` — Deprecated/retired docs, append-only, never deleted outright: abandoned tooling write-ups (LAYA/Ollama benchmarking, astrologyapi.com comparison), the removed-env-vars log, and the dated UI/UX audit.
 - `audit/` — One-off repository audits, reviews, and structural evaluations, filename datestamped `YYYY-MM-DD-description.md`.
-- `references/` — Source index: `orb-sources.md` plus curated citation passages in `topics/*.json`; the local archive of source texts is `processed/` (gitignored). See its own `MAP.md`. Not documentation about Astraya.
+- `references/` — Source index: `orb-sources.md` plus curated citation passages in `topics/*.json`; the local archive of source texts is `docs/references/processed/` (gitignored). See its own `MAP.md`. Not documentation about Astraya.
 - `schema/` — Hand-authored JSON Schema files for Astraya's own stable data formats (`astraya-export.schema.json`, #561), paired with a top-level `.md` reference doc.
 
 ## Where does a new doc go?
@@ -39,4 +39,4 @@ Subdirectories:
 - A living reference meant to be read repeatedly → `.md` in the matching topic folder (`ui/`, `domain/` or `ops/`).
 - Writeup for tooling or an approach that's since been abandoned → `archive/`, don't delete it outright — git history alone makes old write-ups hard to find later.
 - Docs for Claude Code's own generic skills, not specific to this app → `agents/`.
-- A third-party source text the corpus is checked or seeded against → `references/`, with its edition and licence recorded in `processed/sources.json` (see `references/SCHEMA.md`).
+- A third-party source text the corpus is checked or seeded against → `references/`, with its edition and licence recorded in `docs/references/processed/sources.json` (see `references/SCHEMA.md`).

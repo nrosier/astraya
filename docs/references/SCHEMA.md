@@ -1,6 +1,6 @@
 # sources.json record format
 
-`processed/sources.json` (local, gitignored) is a JSON array with one record per source. Fields:
+`docs/references/processed/sources.json` (local, gitignored) is a JSON array with one record per source. Fields:
 
 - `id` — Stable slug for the source, also the base name of its processed files.
 - `title` — Title of the work.
@@ -10,9 +10,9 @@
 - `licence` — Licence or public-domain status of the work.
 - `access_route` — Where the original was obtained or can be re-fetched.
 - `original_name` — File name of the original as received.
-- `processed_path` — Path of the original under `processed/originals/`, or null when missing.
+- `processed_path` — Repo-root-relative path of the original under `docs/references/processed/originals/`, or null when missing.
 - `sha256` — Hash of the original file.
-- `text_path` — Path of the extracted text under `processed/text/`.
+- `text_path` — Repo-root-relative path of the extracted text under `docs/references/processed/text/`.
 - `pages_path` — Path of per-page text, or null when none exists.
 - `page_count` — Number of pages, or null when unknown.
 - `status` — One of `extracted`, `ocr-needed`, `provisional`, `archived-record`, `missing`.
