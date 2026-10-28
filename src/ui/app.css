@@ -1573,6 +1573,30 @@ label.stacked textarea:focus-visible {
   color: var(--muted);
 }
 
+/* Applying/Separating state (#815, treatment D): a dot plus the label, never the dot alone. Filled accent = applying, hollow muted = separating. */
+.aspect-state {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.aspect-state-dot {
+  box-sizing: border-box;
+  flex: none;
+  width: calc(var(--space-2) * 1.5);
+  height: calc(var(--space-2) * 1.5);
+  border-radius: 50%;
+}
+
+.aspect-state--applying .aspect-state-dot {
+  background: var(--accent);
+}
+
+.aspect-state--separating .aspect-state-dot {
+  border: 1px solid var(--muted);
+  background: transparent;
+}
+
 /* The Aspects view's family Select sits on its own row above the tables (#815). */
 .aspect-family-filter {
   max-width: 20rem;

@@ -1,7 +1,7 @@
 /**
  * @module ChartViewAspects
  * @purpose Renders the Aspects chart view tables (aspects, antiscia, declinations, fixed stars, midpoints) and their columns.
- * @conventions Moved out of ChartView.tsx (#817); the aspects table shows Applying as a Badge and the family as muted text on screen only (#815), while `render` stays plain text for copy, CSV and the PDF; takes the chart data and message bundle as arguments and never imports ChartView.
+ * @conventions Moved out of ChartView.tsx (#817); the aspects table shows Applying as a dot plus label and the family as muted text on screen only (#815), while `render` stays plain text for copy, CSV and the PDF; takes the chart data and message bundle as arguments and never imports ChartView.
  * @exports aspectColumns, declinationColumns, antisciaColumns, midpointTreeColumns, allMidpointsColumns, fixedStarsScopeNoteOf, checkedStarsOf, fixedStarColumns, hasStarSources, renderAspectsTable
  */
 import { formatOrb } from './format.js';
@@ -28,7 +28,6 @@ import { aspectDisplayName, bodyDisplayName } from './astro-names.messages.js';
 import { degreeColumns } from './ChartViewPlacements.js';
 import type { chartViewMessages } from './ChartView.messages.js';
 import { aspectSelectionKey, selectColumn, type TableSelection } from './table-selection.js';
-import { Badge } from './primitives/Badge.js';
 import { SortableTable } from './SortableTable.js';
 import type { TableColumn } from './table-sort.js';
 import type { Locale } from '../interpretation/schema.js';
@@ -83,9 +82,14 @@ export function aspectColumns(
       label: t.applyingLabel,
       labelTooltip: t.applyingTooltip,
       valueOf: (row) => row.applying,
-      // Plain text for copy, CSV and the PDF (which reuses these columns); the Badge is the screen cell only (#815).
+      // Plain text for copy, CSV and the PDF (which reuses these columns); the dot-plus-label state is the screen cell only (#815).
       render: (row) => (row.applying ? t.applying : t.separating),
-      renderCell: (row) => (row.applying ? <Badge tone="accent">{t.applying}</Badge> : <Badge>{t.separating}</Badge>),
+      renderCell: (row) => (
+        <span className={`aspect-state aspect-state--${row.applying ? 'applying' : 'separating'}`}>
+          <span className="aspect-state-dot" aria-hidden="true" />
+          {row.applying ? t.applying : t.separating}
+        </span>
+      ),
     },
     {
       key: 'harmonicFamily',
