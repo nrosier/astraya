@@ -196,6 +196,12 @@ const BODY_GLYPHS: Readonly<Record<string, GlyphDefinition>> = {
     ),
   ]),
 
+  // Astraya's own simple drawing (#804): Kerykeion's classic theme has no Pholus artwork to port. A stem with a bowl
+  // at the top and a crossbar below it, kept clear of Chiron's key-and-ring shape.
+  pholus: glyph('pholus', [
+    path('M40 14 L40 86 M40 14 L52 14 C62 14 68 20 68 29 C68 38 62 44 52 44 L40 44 M28 62 L52 62'),
+  ]),
+
   ceres: glyph('ceres', [
     path(
       'M37.5 20.55 C42.56 15.51 50.15 14 56.75 16.73 C63.35 19.47 67.65 25.91 67.65 33.05 C67.65 42.79 59.74 50.7 50 50.7 L50 86 M32.35 68.35 L67.65 68.35',

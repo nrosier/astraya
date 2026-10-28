@@ -12,7 +12,7 @@
  * @exports computePlanetaryReturn, PlanetaryReturnData, PlanetaryReturnOptions
  */
 import { findCrossAspects, fixedSubjects, subjectsFrom, type Aspect, type OrbConfig } from '../astrology/aspects.js';
-import { BODIES, bodyById, type BodyCategory } from '../astrology/bodies.js';
+import { bodyIdsFor, type BodySetOptions, bodyById, type BodyCategory } from '../astrology/bodies.js';
 import { nextReturnOfBody } from '../astrology/planetary-returns.js';
 import { julianDayFor } from '../time/julian.js';
 import { resolveMoment } from '../time/resolve.js';
@@ -36,7 +36,7 @@ function categoryOf(body: BodyId): BodyCategory {
   return definition.category;
 }
 
-export interface PlanetaryReturnOptions {
+export interface PlanetaryReturnOptions extends BodySetOptions {
   /** The orbs the cross-chart aspects are found with (#590); the Extended settings' orbs when a chart is drawn from them. */
   readonly orbConfig?: OrbConfig;
   readonly place?: GeoPosition;
@@ -75,11 +75,7 @@ export async function computePlanetaryReturn(
   const natalJd = await julianDayFor(provider, resolved);
   const positionOptions = options.zodiac === undefined ? undefined : { zodiac: options.zodiac };
 
-  const natalPositions = await provider.positions(
-    natalJd,
-    BODIES.map((b) => b.id),
-    positionOptions,
-  );
+  const natalPositions = await provider.positions(natalJd, bodyIdsFor(options), positionOptions);
   const natalPosition = natalPositions.find((position) => position.body === body);
   if (natalPosition === undefined) {
     throw new Error(`unreachable: the ephemeris returned no position for body ${body}`);
@@ -94,11 +90,7 @@ export async function computePlanetaryReturn(
   const houseSystem = options.houseSystem ?? DEFAULT_HOUSE_SYSTEM;
 
   const [positions, houses] = await Promise.all([
-    provider.positions(
-      returnJd,
-      BODIES.map((b) => b.id),
-      positionOptions,
-    ),
+    provider.positions(returnJd, bodyIdsFor(options), positionOptions),
     provider.houses(returnJd, place, houseSystem, options.zodiac),
   ]);
 

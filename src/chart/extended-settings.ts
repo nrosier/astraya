@@ -185,6 +185,7 @@ export function toChartCalculationOptions(settings: ExtendedSettings): ChartCalc
   const aspectsTo = Object.fromEntries(
     OBJECT_KEYS.map((key) => [key, settings.objectPolicies[key].aspectParticipant]),
   ) as Record<ObjectKey, boolean>;
+  const pholus = settings.objectPolicies.pholus;
   return {
     houseSystem: settings.houseSystem,
     zodiac: settings.zodiac,
@@ -192,6 +193,8 @@ export function toChartCalculationOptions(settings: ExtendedSettings): ChartCalc
     lilithVariant: settings.lilithVariant,
     nodeVariant: settings.nodeVariant,
     aspectsTo,
+    // Pholus (#804) is computed only when the user turned it on, so every other chart's options are unchanged.
+    ...(pholus.visible || pholus.aspectParticipant ? { includePholus: true } : {}),
     ...(settings.stationWindow === undefined ? {} : { stationWindow: settings.stationWindow }),
   };
 }

@@ -29,7 +29,7 @@ import {
   type AspectSubject,
   type OrbConfig,
 } from '../astrology/aspects.js';
-import { bodyById, bodyByKey, BODIES } from '../astrology/bodies.js';
+import { bodyById, bodyByKey, bodiesFor, type BodySetOptions } from '../astrology/bodies.js';
 import { materializeCustomPoints, type ComputedCustomPoint } from './custom-point.js';
 import type { ChosenFixedStar, CustomPointDefinition } from './person.js';
 import type { EssentialDignities } from '../astrology/dignities.js';
@@ -96,7 +96,7 @@ function starLookups(chosen: readonly ChosenFixedStar[] | undefined): readonly S
   }));
 }
 
-export interface ChartCalculationOptions {
+export interface ChartCalculationOptions extends BodySetOptions {
   readonly houseSystem?: HouseSystem;
   /** Whose rulers the essential dignities use: modern by default (#426). */
   readonly rulership?: RulershipChoice;
@@ -463,7 +463,7 @@ export async function computeChartDataAtJd(
 ): Promise<ChartData> {
   const positionOptions = options.zodiac === undefined ? undefined : { zodiac: options.zodiac };
 
-  // BODIES always carries every Lilith and Node model at once; collapse each
+  // The body set always carries every Lilith and Node model at once; collapse each
   // down to the one the caller asked for (default 'mean' for both) rather
   // than showing all three Liliths and both Nodes simultaneously.
   const lilithKey =
@@ -473,7 +473,7 @@ export async function computeChartDataAtJd(
         ? 'interpolatedLilith'
         : 'meanLilith';
   const nodeKey = options.nodeVariant === 'true' ? 'trueNode' : 'meanNode';
-  const bodies = BODIES.filter((body) => {
+  const bodies = bodiesFor(options).filter((body) => {
     if (body.category === 'lilith') return body.key === lilithKey;
     if (body.category === 'node') return body.key === nodeKey;
     return true;

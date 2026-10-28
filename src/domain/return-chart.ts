@@ -69,6 +69,7 @@ export async function computeSolarReturnChart(
     ...(options.houseSystem === undefined ? {} : { houseSystem: options.houseSystem }),
     ...(options.zodiac === undefined ? {} : { zodiac: options.zodiac }),
     ...(options.orbConfig === undefined ? {} : { orbConfig: options.orbConfig }),
+    ...(options.includePholus === true ? { includePholus: true } : {}),
   });
   const chart = await computeChartDataAtJd(found.returnJd, found.place, provider, options);
   return {
@@ -91,6 +92,7 @@ export async function computeLunarReturnChart(
     ...(options.houseSystem === undefined ? {} : { houseSystem: options.houseSystem }),
     ...(options.zodiac === undefined ? {} : { zodiac: options.zodiac }),
     ...(options.orbConfig === undefined ? {} : { orbConfig: options.orbConfig }),
+    ...(options.includePholus === true ? { includePholus: true } : {}),
   });
   const first = found.returns[0];
   if (first === undefined) throw new RangeError('No lunar return was found in this period.');

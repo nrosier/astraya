@@ -365,7 +365,8 @@ function isValidObjectPolicies(value: unknown, complete: boolean): boolean {
   if (!isRecord(value)) return false;
   return OBJECT_KEYS.every((key) => {
     const policy = value[key];
-    if (policy === undefined) return !complete;
+    // Pholus (#804) arrived after registers were written, so a complete register may lack it (it then reads as off).
+    if (policy === undefined) return !complete || key === 'pholus';
     return (
       isRecord(policy) &&
       typeof policy.visible === 'boolean' &&

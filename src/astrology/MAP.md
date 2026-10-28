@@ -9,7 +9,7 @@ Pure astrological calculation (no DOM/React): bodies, aspects, houses, dignities
 - `aspect-patterns.ts` — Stellium, Grand Trine, T-Square, Grand Cross, Yod, Cradle, Mystic Rectangle from a chart's own aspects, per Astrolog 8.00 (#640); Kite from the registry (#741). Deps: `./aspects`, `./kite-registry`.
 - `astrocartography.ts` — ACG + Local Space line calculation (MC/IC/AC/DC + great circles). Deps: `fixed-stars`.
 - `ayanamsas.ts` — UI's sidereal-mode picker list. Deps: `ephemeris/generated-constants`.
-- `bodies.ts` — Single source of truth: canonical body list (luminaries, planets, nodes, Lilith, Chiron, asteroids). Deps: `ephemeris/generated-constants`.
+- `bodies.ts` — Single source of truth: canonical body list (luminaries, planets, nodes, Lilith, Chiron, asteroids) plus the opt-in set (Pholus, #804) and the shared body-set helper. Deps: `ephemeris/generated-constants`.
 - `bounds.ts` — Egyptian + Ptolemaic "terms" tables. Deps: `bodies`, `signs`.
 - `calculation-scheme.ts` — Named traditional scheme bundles (Hellenistic/Medieval Arabic/Renaissance-Lilly): bounds table + orb profile as one coherent choice (#549). Deps: `bounds`, `orb-profiles`.
 - `decans.ts` — Decan/face rulership for essential-dignity. Deps: `bodies`, `dignities`, `signs`.

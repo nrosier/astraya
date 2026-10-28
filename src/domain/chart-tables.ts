@@ -81,6 +81,7 @@ const BODY_SYMBOLS: Readonly<Record<string, string>> = {
   osculatingLilith: '⚸',
   interpolatedLilith: '⚸',
   chiron: '⚷',
+  pholus: '⯛',
   ceres: '⚳',
   pallas: '⚴',
   juno: '⚵',

@@ -13,7 +13,7 @@
  * @exports computeProgressedLunarReturn, ProgressedLunarReturnData, ProgressedLunarReturnOptions
  */
 import { findCrossAspects, fixedSubjects, subjectsFrom, type Aspect, type OrbConfig } from '../astrology/aspects.js';
-import { BODIES, bodyById, type BodyCategory } from '../astrology/bodies.js';
+import { bodyIdsFor, type BodySetOptions, bodyById, type BodyCategory } from '../astrology/bodies.js';
 import { progressedMoonLongitude, progressedLunarReturnOnOrBefore } from '../astrology/planetary-returns.js';
 import { julianDayFor } from '../time/julian.js';
 import { resolveMoment } from '../time/resolve.js';
@@ -38,7 +38,7 @@ function categoryOf(body: BodyId): BodyCategory {
   return definition.category;
 }
 
-export interface ProgressedLunarReturnOptions {
+export interface ProgressedLunarReturnOptions extends BodySetOptions {
   /** The orbs the cross-chart aspects are found with (#590); the Extended settings' orbs when a chart is drawn from them. */
   readonly orbConfig?: OrbConfig;
   readonly place?: GeoPosition;
@@ -74,16 +74,8 @@ export async function computeProgressedLunarReturn(
   const houseSystem = options.houseSystem ?? DEFAULT_HOUSE_SYSTEM;
 
   const [natalPositions, positions, houses] = await Promise.all([
-    provider.positions(
-      natalJd,
-      BODIES.map((b) => b.id),
-      positionOptions,
-    ),
-    provider.positions(
-      returnJd,
-      BODIES.map((b) => b.id),
-      positionOptions,
-    ),
+    provider.positions(natalJd, bodyIdsFor(options), positionOptions),
+    provider.positions(returnJd, bodyIdsFor(options), positionOptions),
     provider.houses(returnJd, place, houseSystem, options.zodiac),
   ]);
 
