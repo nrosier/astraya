@@ -103,6 +103,7 @@ export function positionColumns(
     {
       key: 'glyph',
       label: t.symbolLabel,
+      align: 'center',
       valueOf: (row) => row.glyph,
       renderCell: (row) => symbolCell(row.bodyKey, row.glyph, symbolClass),
     },
@@ -128,7 +129,7 @@ export function positionColumns(
     {
       key: 'house',
       label: t.houseLabel,
-      align: 'end',
+      align: 'center',
       valueOf: (row) => row.house ?? '',
       render: (row) => (row.house === undefined ? '—' : String(row.house)),
     },

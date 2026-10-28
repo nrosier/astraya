@@ -95,6 +95,20 @@ const showButton = (container: HTMLElement, name: string): HTMLButtonElement | n
 const dimmed = (container: HTMLElement): number => container.querySelectorAll('.chart-wheel .chart-dimmed').length;
 
 describe('a table row selects on the wheel (#418)', () => {
+  it('the Positions table centres the symbol and house columns and right-aligns the degree columns (#870)', async () => {
+    const container = await mount();
+    await open(container, 'positions');
+    const align = (label: string): string | null | undefined => {
+      const header = [...container.querySelectorAll('th')].find((th) => th.textContent.includes(label));
+      return header?.getAttribute('data-align');
+    };
+    expect(align(chartViewMessages.en.symbolLabel)).toBe('center');
+    expect(align(chartViewMessages.en.houseLabel)).toBe('center');
+    expect(align(chartViewMessages.en.degLabel)).toBe('end');
+    expect(align(chartViewMessages.en.minLabel)).toBe('end');
+    expect(align(chartViewMessages.en.secLabel)).toBe('end');
+  });
+
   it('a Positions row’s button isolates that body on the wheel, marks the row, and says so on the table', async () => {
     const container = await mount();
     expect(dimmed(container)).toBe(0);
