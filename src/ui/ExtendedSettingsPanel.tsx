@@ -29,7 +29,7 @@ import { StagedDialog } from './primitives/StagedDialog.js';
 import { tabPanelProps, Tabs } from './primitives/Tabs.js';
 import { Disclosure } from './primitives/Disclosure.js';
 import { formatDecimal } from './format.js';
-import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { useCallback, useEffect, useEffectEvent, useId, useRef, useState } from 'react';
 import { ASPECTS, DEFAULT_ORB_CONFIG } from '../astrology/aspects.js';
 import { ayanamsaByKey, AYANAMSAS } from '../astrology/ayanamsas.js';
 import { HOUSE_SYSTEMS } from '../astrology/houses.js';
@@ -204,6 +204,7 @@ export function ExtendedSettingsPanel({
   fixedStars = NO_STARS,
   onFixedStarsChange,
   loadCatalogue = loadStarCatalogue,
+  openRequest,
 }: {
   readonly value: ExtendedSettings;
   /** The planetary rulers the drawer opens with (#806): the person's own, or the device default when editing that. */
@@ -223,6 +224,11 @@ export function ExtendedSettingsPanel({
   readonly onFixedStarsChange?: ((next: readonly ChosenFixedStar[]) => Promise<void>) | undefined;
   /** Loads the shipped star catalogue for the picker; the same-origin `sefstars.txt` unless a test passes its own. */
   readonly loadCatalogue?: (() => Promise<LoadedStarCatalogue>) | undefined;
+  /**
+   * A counter another part of the chart screen raises to open the drawer on the Bodies and orbs tab (#815: the link
+   * that replaced the inline formula editor). Each new value opens it once; the value it starts with opens nothing.
+   */
+  readonly openRequest?: number | undefined;
 }): React.JSX.Element {
   const [draft, setDraft] = useState<ExtendedSettings>(value);
   // The practitioner's own orb rules (#590) are typed as strings and only become settings when every entry parses,
@@ -428,6 +434,23 @@ export function ExtendedSettingsPanel({
     setPointError(undefined);
     setAtOpen(undefined);
   };
+
+  // An outside request (#815) opens the drawer on the Bodies and orbs tab. When the trigger is hidden inside the
+  // collapsed "Chart actions" panel (40rem and below), that panel is opened first, so the dialog has a box to show in.
+  const handledRequest = useRef(openRequest);
+  const openOnBodies = useEffectEvent((): void => {
+    const trigger = triggerRef.current;
+    if (trigger !== null && trigger.getClientRects().length === 0) {
+      trigger.closest<HTMLElement>('.tab-row')?.querySelector<HTMLElement>('[data-tab-row-toggle]')?.click();
+    }
+    openCard();
+    setCategory('bodies');
+  });
+  useEffect(() => {
+    if (openRequest === undefined || openRequest === handledRequest.current) return;
+    handledRequest.current = openRequest;
+    openOnBodies();
+  }, [openRequest]);
 
   // A changed value from outside resets the draft while the drawer is closed; leaving the page is StagedDialog's job.
   useEffect(() => {

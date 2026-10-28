@@ -229,7 +229,8 @@ const en = {
   modalityNames: { cardinal: 'Cardinal', fixed: 'Fixed', mutable: 'Mutable' },
   matrixLabel: 'Aspect matrix: select a pair to show it on the chart',
   matrixNameLabel: 'Name',
-  matrixFormulaLink: 'Custom formula points: go to the editor (moving to a drawer, #824)',
+  matrixFormulaLink: 'Custom formula points: open them in Extended settings',
+  compareFormulaLink: 'Custom formula points: open them in Extended settings (Bodies & orbs)',
   matrixHint:
     'Each cell is the aspect between the body named on its row and the one in its column. The aspect symbol is followed by the orb in degrees, and by a for applying or s for separating; cells are tinted by aspect family.',
   placementsViewLabel: 'Placements',
@@ -561,7 +562,8 @@ const nl: typeof en = {
   modalityNames: { cardinal: 'Kardinaal', fixed: 'Vast', mutable: 'Veranderlijk' },
   matrixLabel: 'Aspectenmatrix: kies een paar om het op de horoscoop te tonen',
   matrixNameLabel: 'Naam',
-  matrixFormulaLink: 'Aangepaste formulepunten: ga naar de editor (verhuist naar een lade, #824)',
+  matrixFormulaLink: 'Aangepaste formulepunten: open ze in Uitgebreide instellingen',
+  compareFormulaLink: 'Aangepaste formulepunten: open ze in Uitgebreide instellingen (Hemellichamen en orbs)',
   matrixHint:
     'Elke cel is het aspect tussen het hemellichaam van de rij en dat van de kolom. Het aspectsymbool wordt gevolgd door de orb in graden en door a voor toenemend of s voor afnemend; cellen zijn gekleurd per aspectfamilie.',
   placementsViewLabel: 'Plaatsingen',
