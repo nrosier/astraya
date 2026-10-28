@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * The Aspects view's tables (#815): Applying is a Badge on screen (accent) and plain text everywhere else, the family
+ * The Aspects view's tables (#815): Applying is a dot plus label on screen and plain text everywhere else, the family
  * is plain muted text rather than a Badge, the orb and family columns end-align, the table keeps its six columns, and
  * the formula editor is gone from every chart view.
  */
@@ -88,11 +88,17 @@ describe('the aspects table (#815)', () => {
     expect(headersOf(view())).toEqual(['Body A', 'Aspect', 'Body B', 'Orb', 'Applying', 'Family']);
   });
 
-  it('shows Applying as an accent Badge and Separating as a toneless Badge', () => {
-    const badges = Array.from(view().querySelectorAll('.primitive-badge'));
-    expect(badges.map((badge) => badge.textContent)).toEqual(['Applying', 'Separating']);
-    expect(badges[0]?.getAttribute('data-tone')).toBe('accent');
-    expect(badges[1]?.hasAttribute('data-tone')).toBe(false);
+  it('shows Applying and Separating as a dot plus label, differing by modifier class', () => {
+    const states = Array.from(view().querySelectorAll('.aspect-state'));
+    expect(states.map((state) => state.textContent)).toEqual(['Applying', 'Separating']);
+    expect(states[0]?.classList.contains('aspect-state--applying')).toBe(true);
+    expect(states[0]?.classList.contains('aspect-state--separating')).toBe(false);
+    expect(states[1]?.classList.contains('aspect-state--separating')).toBe(true);
+    expect(states[1]?.classList.contains('aspect-state--applying')).toBe(false);
+    for (const state of states) {
+      expect(state.querySelector('.aspect-state-dot')?.getAttribute('aria-hidden')).toBe('true');
+    }
+    expect(view().querySelectorAll('td .primitive-badge')).toHaveLength(0);
   });
 
   it('shows the family as plain muted text, not a Badge', () => {
@@ -113,6 +119,7 @@ describe('the aspects table (#815)', () => {
     for (const text of [rowsToTsv(columns, ROWS), rowsToCsv(columns, ROWS)]) {
       expect(text).toContain('Applying');
       expect(text).toContain('Separating');
+      expect(text).not.toContain('aspect-state');
       expect(text).toContain('H3');
       expect(text).not.toContain('<');
     }
