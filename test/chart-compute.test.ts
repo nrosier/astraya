@@ -526,6 +526,18 @@ describe('chosen fixed stars (#803)', () => {
     expect(data.fixedStars?.get('Vega')).toBeLessThan(286);
   });
 
+  it("carries each chosen star's stored designation and source hash into fixedStarSources, and none for the preset", async () => {
+    const engine = await getEngine();
+    const data = await computeChartData(MOMENT, engine, {
+      fixedStars: [star('Vega', 'alLyr'), star('Menkar', 'alCet')],
+    });
+    expect([...(data.fixedStarSources?.entries() ?? [])]).toEqual([
+      ['Vega', { designation: 'alLyr', sourceSha256: SHA }],
+      ['Menkar', { designation: 'alCet', sourceSha256: SHA }],
+    ]);
+    expect((await computeChartData(MOMENT, engine)).fixedStarSources).toBeUndefined();
+  });
+
   it('keeps two chosen records that share a name apart by designation', async () => {
     const engine = await getEngine();
     const data = await computeChartData(MOMENT, engine, {

@@ -77,10 +77,22 @@ test('search Regulus, add it, Apply: the chart checks the chosen star (#803)', a
   await openSettings(page, 'Special points');
   await section.getByLabel('Search by name or designation', { exact: true }).fill('Regulus');
   await section.getByRole('button', { name: 'Add Regulus', exact: true }).click();
+  // The hash prefix the picker shows is the one stored with the star; the table must repeat it.
+  const sourceLine =
+    (await section.getByText(/^Source file: sefstars\.txt · SHA-256 [0-9a-f]{8}$/).textContent()) ?? '';
+  const storedPrefix = /SHA-256 ([0-9a-f]{8})$/.exec(sourceLine)?.[1] ?? '';
+  expect(storedPrefix).toMatch(/^[0-9a-f]{8}$/);
   await card.getByRole('button', { name: 'Apply and redraw', exact: true }).click();
   await expect(card).toBeHidden();
   await expect(page.getByText('This table checks only 1 star: Regulus.', { exact: false })).toBeVisible();
   await expect(starCells).toHaveText(['Regulus']);
+
+  // The table also shows the stored designation and source version of the chosen star (#803).
+  const regulusRow = starsTable.locator('tbody tr', { hasText: 'Regulus' });
+  await expect(starsTable.getByRole('columnheader', { name: 'Designation' })).toBeVisible();
+  await expect(starsTable.getByRole('columnheader', { name: 'Source version' })).toBeVisible();
+  await expect(regulusRow.getByRole('cell', { name: 'alLeo', exact: true })).toBeVisible();
+  await expect(regulusRow.getByRole('cell', { name: `SHA-256 ${storedPrefix}`, exact: true })).toBeVisible();
 
   // It travels with the person: still there after a reload, and listed in the drawer without a draft tag.
   await page.reload();
