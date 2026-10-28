@@ -1,12 +1,18 @@
 # docs/references/ — Map
 
-Public-domain source material for seeding the corpus, reduced to clean, parseable files. Raw OCR dumps are not kept: each source's re-fetch address is recorded in the JSON's `sources` block. Do not add a copyrighted translation.
+Local reference archive for the astrology corpus; not published (per owner, nothing from the source material is pushed to GitHub).
 
-- `derived-points.references.json` — Curated passages on the Part of Fortune and Part of Spirit from Ptolemy, Lilly, Wilson, Leo and Placidus, with source, locator and a verbatim/ocr-normalised flag per passage, plus a coverage block stating what no source supplies. Deps: `tools/corpus-gen` (#517 seeding), `docs/domain/CORPUS_KEYS.md`.
-- `placidus-primum-mobile-cooper-translation-1814-google-books.pdf` — Placidus de Titis, _Primum Mobile_, John Cooper's 1814 translation (479 pages, Google Books scan), used to check the three glyph-normalised Cooper passages against the page image (it has no re-fetch address). Local only and gitignored (all PDFs are); it was tracked until the check was done. Public domain text; Google's scan terms apply to the file.
+- `MAP.md` — This index. Deps: none.
+- `ORB_SOURCES.md` — What has been checked for each orb value (#590): Astraya defaults versus cited. Deps: `src/astrology/orb-profiles.ts`, `orb-conventions.references.json`.
+- `orb-conventions.references.json` — Lilly's 1647 orb table, combustion bands, fortitudes and horary considerations, with page and scan locators (#590). Deps: `src/astrology/orb-profiles.ts`, `test/astrology-cited-orb-presets.test.ts`.
+- `derived-points.references.json` — Curated Part of Fortune and Part of Spirit passages with source, locator and verbatim flag (#517). Deps: `tools/corpus-gen/classical-texts/derived-point.rules.json`, `test/docs-references.test.ts`.
+- `aaf-chunks.references.json` — AAF'97 chunk and field grammar with section numbers (#591). Deps: `src/domain/aaf.ts`.
+- `sources.json` — Index of 45 source records (licence, original name, processed, text and pages paths, status). Known discrepancy: 124 path values use the old `docs/references/processed/...` prefix and do not resolve on disk.
+- `text/` — Extracted text per source: a `.txt` and a `.pages.tsv` for each of 41 sources (82 files). Deps: `sources.json`.
+- `sources/pdf/` — 10 original book and scan PDFs (7 named, 3 `unidentified-*`). Deps: `sources.json`.
+- `sources/apa/` — 20 article PDFs (Huber, Hopewell, Konig and others). Deps: `sources.json`.
+- `sources/ocr/` — 11 OCR text files (Bonatti Liber Astronomiae translations and introduction, Lilly Christian Astrology). Deps: `sources.json`.
+- `new/` — Empty folder for new reference documents that still need processing.
+- `processed/` — Holds only original files that have been processed; currently empty, the originals listed in `sources.json` are not on disk.
 
-- `orb-conventions.references.json` — Lilly's 1647 orb table, combustion bands, fortitudes table and horary considerations, transcribed from page images with page and scan locators (#590). Deps: `src/astrology/orb-profiles.ts`, `test/astrology-cited-orb-presets.test.ts`.
-- `aaf-chunks.references.json` — The AAF'97 chunk and field grammar (#A93, #B93, #SRC/#VIA/#COM, #:), transcribed with section numbers from the published specification (#591). Deps: `src/domain/aaf.ts`.
-- `ORB_SOURCES.md` — What has been checked for each orb value (#590): which are Astraya defaults and which, if any, are cited. Deps: `src/astrology/orb-profiles.ts`.
-
-Pending source (not yet extracted): Vettius Valens, _Anthologiarum libri_, Kroll's 1908 Greek edition, archive.org `bub_gb_OQ_gAAAAMAAJ` (page-image PDF, 441 pages; its OCR text is Greek read as Latin gibberish and was discarded). Needed pages: Book II ch. 17-21 (printed pp. 79-85, PDF pages 98-104, on the Lots of Fortune and of the Daimon) and Book IV ch. 4 (printed p. 160, PDF page 179); transcribe the Greek from the page image, then translate, and flag the result as an unreviewed machine translation.
+Git state: everything in `docs/references/` is gitignored except `MAP.md` and `SCHEMA.md`, per the `docs/references/*` rule in `.gitignore`. Nothing else here is pushed to GitHub. The `ORB_SOURCES.md` and `*.references.json` files above are local copies, untracked as of this change, so they will not appear on `main`. Code and tests that read them run only on a machine that has these local files.

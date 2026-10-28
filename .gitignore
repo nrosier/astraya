@@ -75,3 +75,9 @@ data/
 
 # Throwaway UI mockups (local review only)
 docs/mockups/
+
+# Reference material is local only, never pushed. Only the two index/format docs are tracked.
+# Ignore everything in docs/references/, then re-include MAP.md and SCHEMA.md.
+docs/references/*
+!docs/references/MAP.md
+!docs/references/SCHEMA.md
