@@ -77,6 +77,15 @@ export const NATAL_FIXED_STARS: readonly string[] = [
 interface StarLookup {
   readonly key: string;
   readonly id: string;
+  /** Present for a chosen star only (#803): what was stored when it was chosen. */
+  readonly source?: ChosenStarSource;
+}
+
+/** The stored designation and source-file hash of a chosen fixed star (#803), shown beside its table row. */
+export interface ChosenStarSource {
+  readonly designation: string;
+  /** Lowercase hex SHA-256 of the `sefstars.txt` the star was chosen from (D-803c). */
+  readonly sourceSha256: string;
 }
 
 /**
@@ -93,6 +102,7 @@ function starLookups(chosen: readonly ChosenFixedStar[] | undefined): readonly S
         ? `${labelOf(star)} (${star.designation})`
         : labelOf(star),
     id: star.id,
+    source: { designation: star.designation, sourceSha256: star.sourceSha256 },
   }));
 }
 
@@ -271,6 +281,11 @@ export interface ChartData {
    * doesn't coherently have one real moment to look them up for.
    */
   readonly fixedStars?: ReadonlyMap<string, Degrees>;
+  /**
+   * The stored designation and source hash per chosen star, under the same keys as `fixedStars` (#803). Absent when
+   * the chart checks the seven-star preset, so a preset chart's data is unchanged.
+   */
+  readonly fixedStarSources?: ReadonlyMap<string, ChosenStarSource>;
   /**
    * Per planet inside the station window (#724): its first (`'first'`) or second (`'second'`)
    * station, or `undefined` when it is stationary but its type cannot be told. A body outside the
@@ -507,6 +522,9 @@ export async function computeChartDataAtJd(
   const fixedStars = new Map<string, Degrees>(
     fixedStarPositions.map((star, index) => [stars[index]?.key ?? star.name, star.longitude]),
   );
+  const fixedStarSources = new Map<string, ChosenStarSource>(
+    stars.flatMap((star) => (star.source === undefined ? [] : [[star.key, star.source] as const])),
+  );
 
   const positionByBody = new Map(positions.map((position) => [position.body, position]));
   const aspectsTo = options.aspectsTo ?? {};
@@ -622,6 +640,7 @@ export async function computeChartDataAtJd(
     declinations,
     obliquity,
     fixedStars,
+    ...(fixedStarSources.size === 0 ? {} : { fixedStarSources }),
     ...(stationStates === undefined ? {} : { stationStates }),
   };
   const customPoints = materializeCustomPoints(baseData, options.customPoints);

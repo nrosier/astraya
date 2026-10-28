@@ -675,6 +675,35 @@ describe('fixedStarRows (#398)', () => {
   });
 });
 
+describe('fixedStarRows stored identifier and version (#803)', () => {
+  const base: ChartData = {
+    positions: [position(SUN, 150.5)],
+    houses: HOUSES,
+    aspects: [],
+    dignities: new Map(),
+    sect: 'day',
+    partOfFortune: 0,
+    partOfSpirit: 0,
+    fixedStars: new Map([['Regulus', 150.1]]),
+  };
+  const sha = 'ab12cd34ef56'.padEnd(64, '0');
+
+  it('carries the stored designation and source hash of a chosen star', () => {
+    const data: ChartData = {
+      ...base,
+      fixedStarSources: new Map([['Regulus', { designation: 'alLeo', sourceSha256: sha }]]),
+    };
+    expect(fixedStarRows(data)[0]).toMatchObject({ designation: 'alLeo', sourceSha256: sha });
+  });
+
+  it('adds nothing for the preset', () => {
+    const row = fixedStarRows(base)[0];
+    expect(row).toBeDefined();
+    expect(row).not.toHaveProperty('designation');
+    expect(row).not.toHaveProperty('sourceSha256');
+  });
+});
+
 describe('chartShapeOf (#398)', () => {
   it('identifies a bucket and its handle, the same fixture jonesShapeOf itself is tested against (#35)', () => {
     const mercury = idOf('mercury');

@@ -2,7 +2,7 @@
  * @module ChartViewAspects
  * @purpose Renders the Aspects chart view tables (aspects, antiscia, declinations, fixed stars, midpoints) and their columns.
  * @conventions Pure move out of ChartView.tsx (#817): same markup and strings, no behaviour change; takes the chart data and message bundle as arguments and never imports ChartView.
- * @exports aspectColumns, declinationColumns, antisciaColumns, midpointTreeColumns, allMidpointsColumns, fixedStarsScopeNoteOf, checkedStarsOf, fixedStarColumns, renderAspectsTable
+ * @exports aspectColumns, declinationColumns, antisciaColumns, midpointTreeColumns, allMidpointsColumns, fixedStarsScopeNoteOf, checkedStarsOf, fixedStarColumns, hasStarSources, renderAspectsTable
  */
 import { formatOrb } from './format.js';
 import { aspectHarmonicFamily } from '../astrology/aspects.js';
@@ -217,7 +217,20 @@ export function checkedStarsOf(data: ChartData): readonly string[] {
   return data.fixedStars === undefined ? NATAL_FIXED_STARS : [...data.fixedStars.keys()];
 }
 
-export function fixedStarColumns(t: typeof chartViewMessages.en, locale: Locale): readonly TableColumn<FixedStarRow>[] {
+/** First characters of a stored source hash that identify the catalogue version in a table cell (#803). */
+const SOURCE_HASH_PREFIX_LENGTH = 8;
+
+/** Whether the rows come from the person's chosen stars, which carry a stored designation and source hash (#803). */
+export function hasStarSources(rows: readonly FixedStarRow[]): boolean {
+  return rows.some((row) => row.designation !== undefined);
+}
+
+/** `withSources` adds the stored designation and source-version columns, for chosen stars only (#803). */
+export function fixedStarColumns(
+  t: typeof chartViewMessages.en,
+  locale: Locale,
+  withSources = false,
+): readonly TableColumn<FixedStarRow>[] {
   return [
     // Star names (Regulus, Spica, ...) are proper nouns, the same in both locales — no glossary
     // lookup needed, unlike body/aspect names.
@@ -229,6 +242,24 @@ export function fixedStarColumns(t: typeof chartViewMessages.en, locale: Locale)
       render: (row) => bodyDisplayName(row.bodyKey, locale),
     },
     { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => formatOrb(row.orb) },
+    ...(withSources
+      ? [
+          {
+            key: 'designation',
+            label: t.columnDesignation,
+            valueOf: (row: FixedStarRow) => row.designation ?? '',
+          },
+          {
+            key: 'sourceVersion',
+            label: t.columnSourceVersion,
+            valueOf: (row: FixedStarRow) => row.sourceSha256 ?? '',
+            render: (row: FixedStarRow) =>
+              row.sourceSha256 === undefined
+                ? ''
+                : t.sourceVersionCell(row.sourceSha256.slice(0, SOURCE_HASH_PREFIX_LENGTH)),
+          },
+        ]
+      : []),
   ];
 }
 
@@ -289,7 +320,7 @@ export function renderAspectsTable(
         <>
           <SortableTable
             caption={t.fixedStarsCaption}
-            columns={fixedStarColumns(t, locale)}
+            columns={fixedStarColumns(t, locale, hasStarSources(starRows))}
             rows={starRows}
             getRowKey={(row) => `${row.star}-${row.bodyKey}`}
             downloadFilename={deriveExportFilename(displayName, 'fixed-stars', 'csv')}
