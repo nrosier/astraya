@@ -374,6 +374,23 @@ export function ExtendedSettingsPanel({
     },
   ];
 
+  /** Sets one column for every row of the matrix at once (#824); the other two columns stay as they are. */
+  const setColumn = (column: 'visible' | 'aspects' | 'reports', on: boolean): void => {
+    const updates: Partial<Record<ObjectKey, ObjectPolicy>> = {};
+    for (const { key } of matrixRows) {
+      const policy = draft.objectPolicies[key];
+      updates[key] =
+        column === 'visible'
+          ? withInterpreted({ ...policy, visible: on }, isInterpreted(policy))
+          : column === 'aspects'
+            ? withInterpreted({ ...policy, aspectParticipant: on }, isInterpreted(policy))
+            : withInterpreted(policy, on);
+    }
+    patch({ objectPolicies: { ...draft.objectPolicies, ...updates } });
+  };
+  const everyRow = (read: (policy: ObjectPolicy) => boolean): boolean =>
+    matrixRows.every((row) => read(draft.objectPolicies[row.key]));
+
   /** One group's All / Clear (the long-list convention, `docs/ui/UI-UX_GUIDELINES.md`), kept beside the matrix rather than inside it. */
   const groupActions = (legend: string, keys: readonly ObjectKey[]): React.JSX.Element => (
     <div className="settings-card-matrix-actions" role="group" aria-label={legend}>
@@ -824,6 +841,8 @@ export function ExtendedSettingsPanel({
                 <div className="settings-card-block">
                   <ChoiceGroup
                     label={t.zodiacLegend}
+                    segmented
+                    showLabel
                     value={draft.zodiac.kind}
                     options={[
                       { value: 'tropical', label: t.tropical },
@@ -924,6 +943,8 @@ export function ExtendedSettingsPanel({
                 <div className="settings-card-block">
                   <ChoiceGroup
                     label={t.orbScaleSegmentLabel}
+                    segmented
+                    showLabel
                     value={segmentFor(draft.orbScalePercent)}
                     options={ORB_SCALE_SEGMENTS.map((segment) => ({
                       value: segment.value,
@@ -998,6 +1019,7 @@ export function ExtendedSettingsPanel({
                   <div className="settings-card-minor-set">
                     <ChoiceGroup
                       label={t.minorSetLabel}
+                      segmented
                       value={minorSetFor(draft.enabledMinorAspects)}
                       options={[
                         { value: 'off', label: t.minorSetOptions.off },
@@ -1065,6 +1087,29 @@ export function ExtendedSettingsPanel({
                   {groupActions(t.planetsGroupLabel, PLANET_KEYS)}
                   {groupActions(t.minorPlanetsLegend, ASTEROID_KEYS)}
                   {groupActions(t.pointsGroupLabel, POINT_KEYS)}
+                </div>
+                <div className="settings-card-matrix-bulk" role="group" aria-label={t.matrixBulkLabel}>
+                  <Checkbox
+                    label={t.matrixAllVisible}
+                    checked={everyRow((policy) => policy.visible)}
+                    onChange={(on) => {
+                      setColumn('visible', on);
+                    }}
+                  />
+                  <Checkbox
+                    label={t.matrixAllAspects}
+                    checked={everyRow((policy) => policy.aspectParticipant)}
+                    onChange={(on) => {
+                      setColumn('aspects', on);
+                    }}
+                  />
+                  <Checkbox
+                    label={t.matrixAllReports}
+                    checked={everyRow(isInterpreted)}
+                    onChange={(on) => {
+                      setColumn('reports', on);
+                    }}
+                  />
                 </div>
                 <SortableTable
                   caption={t.matrixLegend}
@@ -1143,6 +1188,7 @@ export function ExtendedSettingsPanel({
                     <span>{t.lilithLabel}</span>
                     <ChoiceGroup
                       label={t.lilithModelAriaLabel}
+                      segmented
                       value={draft.lilithVariant}
                       options={[
                         { value: 'mean', label: t.mean },
@@ -1166,6 +1212,7 @@ export function ExtendedSettingsPanel({
                     <span>{t.lunarNodesLabel}</span>
                     <ChoiceGroup
                       label={t.lunarNodeModelAriaLabel}
+                      segmented
                       value={draft.nodeVariant}
                       options={[
                         { value: 'mean', label: t.mean },
@@ -1458,6 +1505,7 @@ function FormulaPointsSection({
         row.removed ? null : (
           <ChoiceGroup
             label={`${t.formulaModeLabel}: ${row.name}`}
+            segmented
             value={row.enabled ? 'show' : 'hidden'}
             options={[
               { value: 'show', label: t.formulaModeShow },
@@ -1499,7 +1547,19 @@ function FormulaPointsSection({
       <div className="settings-card-formula-add">
         <TextField label={t.formulaColumnName} value={name} onChange={onName} />
         <TextField label={t.formulaColumnFormula} value={formula} onChange={onFormula} />
-        <Checkbox label={t.formulaModeShow} checked={shown} onChange={onShown} />
+        <ChoiceGroup
+          label={t.formulaModeLabel}
+          segmented
+          showLabel
+          value={shown ? 'show' : 'hidden'}
+          options={[
+            { value: 'show', label: t.formulaModeShow },
+            { value: 'hidden', label: t.formulaModeHidden },
+          ]}
+          onChange={(value) => {
+            onShown(value === 'show');
+          }}
+        />
         <Button onClick={onAdd} disabled={name.trim() === '' || formula.trim() === ''}>
           {t.formulaAdd}
         </Button>

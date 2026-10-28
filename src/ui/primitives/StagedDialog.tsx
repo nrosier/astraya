@@ -6,7 +6,7 @@
 /**
  * @module ui/primitives/StagedDialog
  * @purpose A native `<dialog>` modal (focus trap, Escape, backdrop) for editing a draft, with one discard path and a sticky footer.
- * @conventions Controlled: the caller owns `open` and the draft, and closes the dialog from `onDiscard` (and from its own Apply); the dialog only reports that the reader wants out. Reuses the `.settings-card` look. `dialog.showModal` is missing in some test DOMs, hence the attribute fallback. The body scrolls inside the card and the footer stays reachable, so a short viewport never loses Apply. `placement="right"` sets `data-placement` and styles the same card as a right-anchored drawer (flat border, `--shadow-popover`, `--drawer-max-width`). `modal={false}` opens it with `show()` (no backdrop, page stays interactive; Escape handled by a document listener). An optional `subheader` row (e.g. category tabs, #824) stays pinned under the heading.
+ * @conventions Controlled: the caller owns `open` and the draft, and closes the dialog from `onDiscard` (and from its own Apply); the dialog only reports that the reader wants out. Reuses the `.settings-card` look. `dialog.showModal` is missing in some test DOMs, hence the attribute fallback. The body scrolls inside the card and the footer stays reachable, so a short viewport never loses Apply. `placement="right"` sets `data-placement` and styles the same card as a right-anchored drawer (flat border, `--shadow-popover`, `--drawer-max-width`). `modal={false}` opens it with `show()` (no backdrop, page stays interactive; Escape handled by a document listener). Tab and Shift+Tab wrap inside a modal dialog (#824), so focus never reaches the browser chrome behind it. An optional `subheader` row (e.g. category tabs, #824) stays pinned under the heading.
  * @exports StagedDialog, StagedDialogProps
  */
 import { useEffect, useId, useRef } from 'react';
@@ -35,6 +35,10 @@ export interface StagedDialogProps {
    */
   readonly modal?: boolean;
 }
+
+/** What Tab can land on inside the dialog; a hidden one is filtered out by the caller. */
+const FOCUSABLE =
+  'a[href], button:not(:disabled), input:not(:disabled):not([type="hidden"]), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])';
 
 export function StagedDialog({
   open,
@@ -102,6 +106,25 @@ export function StagedDialog({
         // Escape: the browser would close it silently; closing it through the caller also drops the draft.
         event.preventDefault();
         onDiscard();
+      }}
+      onKeyDown={(event) => {
+        if (!modal || event.key !== 'Tab') return;
+        const dialog = dialogRef.current;
+        if (dialog === null) return;
+        const stops = Array.from(dialog.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(
+          (element) => element.getClientRects().length > 0,
+        );
+        const first = stops[0];
+        const last = stops.at(-1);
+        if (first === undefined || last === undefined) return;
+        const active = document.activeElement;
+        if (event.shiftKey && (active === first || active === dialog)) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && active === last) {
+          event.preventDefault();
+          first.focus();
+        }
       }}
       onClick={(event) => {
         // A press on the backdrop is a press on the dialog element itself.

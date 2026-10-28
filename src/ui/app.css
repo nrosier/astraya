@@ -4924,6 +4924,13 @@ svg text.chart-symbol-text-unicode {
   margin-bottom: var(--space-3);
 }
 
+.settings-card-matrix-bulk {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-4);
+  margin-bottom: var(--space-2);
+}
+
 .settings-card-matrix-actions {
   display: flex;
   flex-wrap: wrap;
@@ -5523,6 +5530,63 @@ svg text.chart-symbol-text-unicode {
   display: flex;
   gap: var(--space-4);
   flex-wrap: wrap;
+}
+
+/* Segmented control (#824): the native radios stay (arrow keys move and select) but are hidden; each label is a joined segment. */
+.primitive-choice-group-segmented {
+  display: inline-flex;
+  gap: 0;
+  max-width: 100%;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.primitive-choice-group-segmented .primitive-choice {
+  position: relative;
+  justify-content: center;
+  min-height: 2.75rem;
+  padding: 0 var(--space-3);
+  color: var(--muted);
+  font-size: var(--text-xs);
+  text-align: center;
+  white-space: normal;
+  transition: background var(--duration-fast) var(--ease-standard);
+}
+
+.primitive-choice-group-segmented .primitive-choice + .primitive-choice {
+  border-left: 1px solid var(--line);
+}
+
+.primitive-choice-group-segmented .primitive-choice input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.primitive-choice-group-segmented .primitive-choice:hover:not(:has(input:disabled)) {
+  background: var(--surface-hover);
+}
+
+.primitive-choice-group-segmented .primitive-choice:has(input:checked) {
+  background: color-mix(in oklab, var(--accent) 28%, var(--surface));
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.primitive-choice-group-segmented .primitive-choice:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.primitive-choice-group-segmented .primitive-choice:has(input:disabled) {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .primitive-option-cards {

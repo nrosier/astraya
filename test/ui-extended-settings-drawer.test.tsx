@@ -335,3 +335,208 @@ describe('the drawer width (#824, D-824c)', () => {
     expect(rule?.[1]).toMatch(/overflow-wrap:\s*anywhere;/);
   });
 });
+
+function checkboxNamed(container: HTMLElement, name: string): HTMLInputElement {
+  const found = Array.from(drawer(container).querySelectorAll<HTMLInputElement>('input[type="checkbox"]')).find(
+    (input) => input.closest('label')?.textContent.trim() === name,
+  );
+  if (found === undefined) throw new Error(`fixture bug: no checkbox "${name}"`);
+  return found;
+}
+
+describe('the sticky tab bar (#824, box A)', () => {
+  it('keeps the tabs in the header, outside the scrolling body, in the right order', async () => {
+    const { container, root } = await mount(undefined, vi.fn());
+    openDrawer(container);
+    const children = Array.from(drawer(container).children).map((child) => child.className);
+    expect(children).toEqual([
+      'settings-card-header',
+      'settings-card-subheader',
+      'settings-card-body',
+      'settings-card-footer',
+    ]);
+    expect(drawer(container).querySelector('.settings-card-subheader [role="tablist"]')).not.toBeNull();
+    expect(drawer(container).querySelector('.settings-card-body [role="tablist"]')).toBeNull();
+    const css = readFileSync(join(process.cwd(), 'src/ui/app.css'), 'utf-8');
+    expect(/\.settings-card-body \{([^}]*)\}/.exec(css)?.[1]).toMatch(/overflow-y:\s*auto;/);
+    unmount(container, root);
+  });
+});
+
+describe('the visibility matrix bulk checkboxes (#824, boxes B and C)', () => {
+  it('has one row per shown object (17: the chosen Lilith and node models stand for their families), under Object, Visible, Aspects and Reports', async () => {
+    const { container, root } = await mount(undefined, vi.fn());
+    openDrawer(container);
+    const rows = drawer(container).querySelectorAll('.data-table:not(:has(td:nth-child(5))) tbody tr');
+    expect(rows.length).toBeGreaterThanOrEqual(17);
+    const first = rows[0];
+    expect(first?.querySelectorAll('input[type="checkbox"]')).toHaveLength(3);
+    unmount(container, root);
+  });
+
+  it('sets a whole column from its checkbox and leaves the other columns alone', async () => {
+    const onRedraw = vi.fn<(next: ExtendedSettings) => void>();
+    const { container, root } = await mount(undefined, onRedraw);
+    openDrawer(container);
+    const reports = checkboxNamed(container, 'All in the report');
+    expect(reports.checked).toBe(true);
+    act(() => {
+      reports.click();
+    });
+    expect(checkboxNamed(container, 'All in the report').checked).toBe(false);
+    const sunReport = checkboxNamed(container, 'Sun — included in the written report');
+    expect(sunReport.checked).toBe(false);
+    const sunVisible = checkboxNamed(container, 'Sun — visible');
+    expect(sunVisible.checked).toBe(true);
+    clickButton(container, 'Apply and redraw');
+    const applied = onRedraw.mock.calls[0]?.[0];
+    expect(applied?.objectPolicies.sun).toEqual({ visible: true, aspectParticipant: true, interpreted: false });
+    unmount(container, root);
+  });
+
+  it('turns the Visible and Aspects columns off and on again as one', async () => {
+    const { container, root } = await mount(undefined, vi.fn());
+    openDrawer(container);
+    for (const label of ['All visible', 'All in aspects']) {
+      const box = checkboxNamed(container, label);
+      const before = box.checked;
+      act(() => {
+        box.click();
+      });
+      expect(checkboxNamed(container, label).checked).toBe(!before);
+      act(() => {
+        checkboxNamed(container, label).click();
+      });
+      expect(checkboxNamed(container, label).checked).toBe(before);
+    }
+    unmount(container, root);
+  });
+});
+
+describe('the segmented controls (#824, box D)', () => {
+  it('draws the short exclusive choices as labelled segmented radiogroups', async () => {
+    const { container, root } = await mount(undefined, vi.fn());
+    openDrawer(container);
+    const zodiac = drawer(container).querySelector('[role="radiogroup"][aria-label="Zodiac"]');
+    expect(zodiac?.classList.contains('primitive-choice-group-segmented')).toBe(true);
+    expect(zodiac?.parentElement?.querySelector('.primitive-field-label')?.textContent).toBe('Zodiac');
+    expect(zodiac?.querySelectorAll('input[type="radio"]')).toHaveLength(2);
+    const css = readFileSync(join(process.cwd(), 'src/ui/app.css'), 'utf-8');
+    expect(css).toMatch(/\.primitive-choice-group-segmented \{[^}]*display:\s*inline-flex;/);
+    unmount(container, root);
+  });
+
+  it('keeps native radios in one name group, so the arrow keys move and select', async () => {
+    const { container, root } = await mount(undefined, vi.fn());
+    openDrawer(container);
+    const radios = Array.from(
+      drawer(container).querySelectorAll<HTMLInputElement>('[role="radiogroup"][aria-label="Zodiac"] input'),
+    );
+    expect(new Set(radios.map((radio) => radio.name)).size).toBe(1);
+    expect(radios[0]?.name).not.toBe('');
+    unmount(container, root);
+  });
+});
+
+describe('the formula controls (#824, box E)', () => {
+  it('has the name, formula, Show/Aspect toggle and Add button above a compact list', async () => {
+    const { container, root } = await mount(SAVED, vi.fn());
+    openDrawer(container);
+    const fieldset = Array.from(drawer(container).querySelectorAll('fieldset')).find(
+      (candidate) => candidate.querySelector('legend')?.textContent === 'Custom formula points',
+    );
+    expect(fieldset?.querySelectorAll('input[type="text"]')).toHaveLength(2);
+    const toggle = fieldset?.querySelector('.settings-card-formula-add [role="radiogroup"]');
+    expect(toggle?.getAttribute('aria-label')).toBe('Point mode');
+    expect(Array.from(toggle?.querySelectorAll('label') ?? []).map((label) => label.textContent.trim())).toEqual([
+      'Show and aspect',
+      'Saved, not drawn',
+    ]);
+    expect(fieldset?.querySelector('.settings-card-formula-add button')?.textContent).toBe('Add formula point');
+    const headers = Array.from(fieldset?.querySelectorAll('thead th') ?? []).map((th) => th.textContent.trim());
+    expect(headers).toEqual(['Name', 'Formula', 'Mode', 'Action']);
+    unmount(container, root);
+  });
+
+  it('stages a point as hidden when the toggle says Saved, not drawn', async () => {
+    const onCustomPointsChange = vi.fn<(next: readonly CustomPointDefinition[]) => Promise<void>>(() =>
+      Promise.resolve(),
+    );
+    const { container, root } = await mount([], vi.fn(), onCustomPointsChange);
+    openDrawer(container);
+    const { name, formula } = formulaInputs(container);
+    typeInto(name, 'Quiet');
+    typeInto(formula, 'Asc + Sun - MC');
+    const hidden = Array.from(
+      drawer(container).querySelectorAll<HTMLInputElement>('.settings-card-formula-add input[type="radio"]'),
+    )[1];
+    act(() => {
+      hidden?.click();
+    });
+    clickButton(container, 'Add formula point');
+    clickButton(container, 'Apply and redraw');
+    expect(onCustomPointsChange.mock.calls[0]?.[0]).toEqual([
+      expect.objectContaining({ name: 'Quiet', enabled: false }),
+    ]);
+    unmount(container, root);
+  });
+});
+
+describe('focus and Escape (#824, box G)', () => {
+  it('opens as a modal dialog, so the browser traps focus inside it', async () => {
+    const showModal = vi.fn(function (this: HTMLDialogElement) {
+      this.setAttribute('open', '');
+    });
+    Object.defineProperty(HTMLDialogElement.prototype, 'showModal', { configurable: true, value: showModal });
+    try {
+      const { container, root } = await mount(undefined, vi.fn());
+      openDrawer(container);
+      expect(showModal).toHaveBeenCalledTimes(1);
+      expect(drawer(container).getAttribute('data-modal')).toBeNull();
+      unmount(container, root);
+    } finally {
+      Reflect.deleteProperty(HTMLDialogElement.prototype, 'showModal');
+    }
+  });
+
+  it('wraps Tab from the last control to the first, and Shift+Tab from the first to the last', async () => {
+    const { container, root } = await mount(undefined, vi.fn());
+    openDrawer(container);
+    const stops = Array.from(
+      drawer(container).querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), select'),
+    );
+    const first = stops[0];
+    const last = stops.at(-1);
+    // jsdom has no layout, so every element reports no client rects; give them one for the trap's visibility filter.
+    for (const stop of stops) stop.getClientRects = () => [new DOMRect(0, 0, 1, 1)] as unknown as DOMRectList;
+    act(() => {
+      last?.focus();
+    });
+    const tab = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
+    act(() => {
+      last?.dispatchEvent(tab);
+    });
+    expect(tab.defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(first);
+    const back = new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true, cancelable: true });
+    act(() => {
+      first?.dispatchEvent(back);
+    });
+    expect(back.defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(last);
+    unmount(container, root);
+  });
+
+  it('closes on Escape without applying, and puts focus back on the trigger', async () => {
+    const onRedraw = vi.fn();
+    const { container, root } = await mount(undefined, onRedraw);
+    openDrawer(container);
+    act(() => {
+      drawer(container).dispatchEvent(new Event('cancel', { bubbles: false, cancelable: true }));
+    });
+    expect(drawer(container).hasAttribute('open')).toBe(false);
+    expect(onRedraw).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(trigger(container));
+    unmount(container, root);
+  });
+});

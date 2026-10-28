@@ -70,7 +70,11 @@ test('a custom formula point is rendered, hidden, and removed from the natal cha
 
   // A point can be kept but not drawn.
   await openSettings(page, 'Bodies & orbs');
-  await formulaSection.getByRole('radio', { name: 'Saved, not drawn' }).check();
+  // The saved-list toggle is a radiogroup labelled with the point's name; the add-row toggle is not.
+  await formulaSection
+    .getByRole('radiogroup', { name: 'Point mode: Sun plus Moon' })
+    .getByRole('radio', { name: 'Saved, not drawn' })
+    .check();
   await applySettings(page);
   await expect(page.getByRole('table').filter({ hasText: 'Sun plus Moon' })).toHaveCount(0);
 
