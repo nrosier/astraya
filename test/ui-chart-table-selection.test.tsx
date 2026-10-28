@@ -115,6 +115,21 @@ describe('a table row selects on the wheel (#418)', () => {
     expect(align(chartViewMessages.en.secLabel)).toBe('end');
   });
 
+  it('the Positions table right-aligns SPEED and left-aligns the BODY and SIGN text columns (#870)', async () => {
+    const container = await mount();
+    await open(container, 'positions');
+    const positionsSection = [...container.querySelectorAll('section.data-table')].find(
+      (section) => section.querySelector('h2, h3')?.textContent === chartViewMessages.en.positionsCaption,
+    );
+    const align = (label: string): string | null | undefined =>
+      [...(positionsSection?.querySelectorAll('thead th') ?? [])]
+        .find((th) => th.textContent.includes(label))
+        ?.getAttribute('data-align');
+    expect(align(chartViewMessages.en.speedLabel)).toBe('end');
+    expect(align(chartViewMessages.en.bodyLabel)).toBe('start');
+    expect(align(chartViewMessages.en.signLabel)).toBe('start');
+  });
+
   it('a Positions row’s button isolates that body on the wheel, marks the row, and says so on the table', async () => {
     const container = await mount();
     expect(dimmed(container)).toBe(0);

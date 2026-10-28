@@ -132,3 +132,38 @@ describe('the Dispositors chain on Patterns & condition (#870)', () => {
     expect(dispositors?.textContent).not.toContain('→→');
   });
 });
+
+describe('column alignment on Patterns & condition (#870)', () => {
+  const t = chartViewMessages.en;
+  const alignIn = (panel: Element | null | undefined, caption: string, label: string): string | null | undefined => {
+    const section = [...(panel?.querySelectorAll('section.data-table') ?? [])].find(
+      (candidate) => candidate.querySelector('h2, h3, h4')?.textContent.startsWith(caption) === true,
+    );
+    return [...(section?.querySelectorAll('thead th') ?? [])]
+      .find((th) => th.textContent.trim().startsWith(label))
+      ?.getAttribute('data-align');
+  };
+
+  it('right-aligns POINTS, left-aligns the BODY columns and centres the flag columns', async () => {
+    const container = await mountOnPatterns();
+    const panel = container.querySelector('#chart-view-patterns');
+    expect(alignIn(panel, t.dignitiesCaption, t.dignityPointsLabel)).toBe('end');
+    expect(alignIn(panel, t.dignitiesCaption, t.bodyLabel)).toBe('start');
+    expect(alignIn(panel, t.dignitiesCaption, t.rulerLabel)).toBe('center');
+    expect(alignIn(panel, t.receptionCaption, t.bodyALabel)).toBe('start');
+    expect(alignIn(panel, t.receptionCaption, t.bodyBLabel)).toBe('start');
+    expect(alignIn(panel, t.receptionCaption, t.receptionSameTypeLabel)).toBe('center');
+  });
+});
+
+describe('the Patterns key-value metrics (#870)', () => {
+  it('shows Lunar phase, Sect and Almuten of Ascendant as flat key-value cards', async () => {
+    const container = await mountOnPatterns();
+    const cards = container.querySelectorAll('#chart-view-patterns dl.metric-cards > .flat-card');
+    expect([...cards].map((card) => card.querySelector('dt')?.textContent)).toEqual([
+      chartViewMessages.en.lunarPhaseKeyLabel,
+      chartViewMessages.en.sectKeyLabel,
+      chartViewMessages.en.almutenKeyLabel,
+    ]);
+  });
+});

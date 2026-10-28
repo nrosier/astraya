@@ -157,7 +157,7 @@ describe('the chart views (#511)', () => {
     expect(panel?.textContent).toContain(t.shapeSourceNote);
     expect(Object.values(t.jonesShapeExplanations).some((text) => panel?.textContent.includes(text))).toBe(true);
     expect(panel?.querySelector('.lunar-phase-summary')?.textContent).toContain('Last Quarter Moon');
-    expect(panel?.textContent).toMatch(/Sect: (Day|Night) chart/);
+    expect(panel?.textContent).toMatch(/Sect(Day|Night) chart/);
 
     await open(container, t.placementsViewLabel);
     expect(container.querySelector('.lunar-phase-summary')).toBeNull();
