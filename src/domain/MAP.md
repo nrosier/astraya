@@ -13,6 +13,7 @@ One level above `src/astrology/`: composes pure astrological calculations into s
 - `chart-overview.ts` — One model of a chart's headline facts (big three, ruler, sect, balance, temperament, dispositor) for consultation, Report and PDF (#691). Deps: `astrology/emphasis`, `astrology/dispositors`, `astrology/rulership`, `./chart-compute`.
 - `consultation-year.ts` — The year a consultation reads: profection and lord, firdaria, progressed Moon, solar returns (#669). Deps: `./profections`, `./secondary-progression`, `./solar-return`, `astrology/firdaria`, `astrology/lunar-phase`.
 - `chart-share.ts` — Share chart via URL (no server round-trip). Encodes/decodes birth moment + settings as versioned query params. Deps: `time/encode`, `store/ops` (JsonValue).
+- `degree-parts.ts` — Splits a longitude into sign/degree/minute/second; kept apart so eager `ui/format` avoids loading `chart-tables`. Deps: `astrology/signs`.
 - `chart-tables.ts` — Converts chart data into UI table/wheel/sheet rows. Deps: `astrology/almuten`, `astrology/antiscia`, `astrology/declinations`, `astrology/dispositors`, `astrology/fixed-stars`, `astrology/jones-shapes`, `astrology/signs`, `./chart-compute`.
 - `chart.ts` — Persisted "chart" entity (distinct from computed ChartData): person ref, kind, label, settings. Deps: `store/ops`, `./id`.
 - `composite.ts` — Composite chart (synthetic midpoint + fresh aspect/dignity/sect/parts). Deps: `astrology/aspects`, `astrology/midpoints`, `astrology/rulership`, `astrology/sect`, `astrology/arabic-parts`, `./chart-compute`.
