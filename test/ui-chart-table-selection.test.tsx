@@ -19,6 +19,8 @@ let data: ChartData;
 let mounted: { container: HTMLElement; root: Root } | undefined;
 
 beforeAll(async () => {
+  // jsdom has no layout, so no scrollIntoView; the Show button calls it to bring the wheel into view (#815).
+  Element.prototype.scrollIntoView = () => undefined;
   data = await computeChartData(
     {
       civil: { year: 1970, month: 1, day: 1, hour: 0, minute: 0, second: 0 },
@@ -133,17 +135,46 @@ describe('a table row selects on the wheel (#418)', () => {
     expect(dimmed(container)).toBe(0);
   });
 
-  it('an Aspects row’s button isolates that aspect line and its two bodies, and marks the row', async () => {
+  it('an Aspects row’s Show button opens the Wheel view with that aspect and its two bodies highlighted (#815)', async () => {
     const container = await mount();
     await open(container, 'aspects');
     const buttons = Array.from(
       container.querySelectorAll<HTMLButtonElement>('#chart-view-aspects button[aria-label^="Show "]'),
     );
-    expect(buttons.length).toBeGreaterThan(0);
-    await press(buttons[0]);
+    const rows = container.querySelector('#chart-view-aspects table')?.querySelectorAll('tbody tr').length ?? -1;
+    expect(buttons).toHaveLength(rows);
+    const first = buttons[0];
+    expect(first?.getAttribute('aria-label')).toMatch(/^Show .+ on the wheel$/);
+    expect(first?.hasAttribute('aria-pressed')).toBe(false);
+    await press(first);
+
+    // Straight to the Wheel view, with everything but the aspect's two bodies and their line dimmed.
+    const wheel = container.querySelector('#chart-view-wheel');
+    expect(wheel?.hasAttribute('hidden')).toBe(false);
+    expect(container.querySelector('#chart-view-aspects')).toBeNull();
     expect(dimmed(container)).toBeGreaterThan(0);
-    expect(container.querySelectorAll('tr.data-table-row-selected')).toHaveLength(1);
-    expect(container.querySelector('.chart-selection-bar')).not.toBeNull();
+    expect(container.querySelectorAll('.chart-wheel [data-body]:not(.chart-dimmed)').length).toBeGreaterThanOrEqual(2);
+    expect(container.querySelector('.selection-inspector-facts')).not.toBeNull();
+    // Focus lands on the wheel's region, which is named.
+    await act(async () => {
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+    });
+    expect(document.activeElement).toBe(wheel);
+    expect(wheel?.getAttribute('aria-label')).toBe('Wheel');
+
+    // Showing the same aspect again keeps it shown: Show never un-shows.
+    await open(container, 'aspects');
+    await press(container.querySelector<HTMLButtonElement>('#chart-view-aspects button[aria-label^="Show "]'));
+    expect(dimmed(container)).toBeGreaterThan(0);
+  });
+
+  it('names the Show button in Dutch (#815)', async () => {
+    setLocale('nl');
+    const container = await mount();
+    await open(container, 'aspects');
+    expect(
+      container.querySelector('#chart-view-aspects button[aria-label^="Toon "]')?.getAttribute('aria-label'),
+    ).toMatch(/ op de wiel$/);
   });
 
   it('a click on the wheel marks the matching table row, in the other direction', async () => {

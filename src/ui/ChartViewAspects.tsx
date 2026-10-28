@@ -56,6 +56,8 @@ export function aspectColumns(
                 : undefined,
             (row) =>
               `${bodyDisplayName(row.bodyAKey, locale)} ${aspectDisplayName(row.aspectKey, locale)} ${bodyDisplayName(row.bodyBKey, locale)}`,
+            undefined,
+            true,
           ),
         ]),
     {

@@ -17,7 +17,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `App.tsx` + `App.messages.ts` — Root router + sticky header + lazy-loading boundary. Deps: `route`, `session-context`, `store-context`, `person-screens`.
 - `EmphasisGrid.tsx` + `emphasis-grid-model.ts` — Elements & modalities grid on screen (#821): flat bordered cells, row and column totals; the PDF and sheet export keep `chart/emphasis-grid`. Deps: `chart/glyphs`, `astrology/emphasis`.
 - `calculation-basis.ts` + `calculation-basis.messages.ts` — The calculation-basis line (profile name + whether it is Astraya's default, the saved default, or changed for this chart) shown on chart pages. Deps: `chart/calculation-profiles`, `astrology/orb-library`, `astrology/orb-profiles`, `default-calculation-profile`, `extended-settings-summary`, `ExtendedSettingsPanel.messages`.
-- `table-selection.tsx` — The table side of the wheel selection: `TableSelection`, each row kind's selection key, and the shared "Show on the chart" button column. Deps: `interpretation/selection-key`, `chart/body-id`, `table-sort`.
+- `table-selection.tsx` — The table side of the wheel selection: `TableSelection`, each row kind's selection key, and the shared "Show on the chart" button column (the Aspects variant opens the Wheel view, #815). Deps: `interpretation/selection-key`, `chart/body-id`, `table-sort`.
 - `appearance-settings.ts` — Motion (follow the system / reduce) and Density (standard / compact) device preferences, applied as root attributes. Deps: none.
 - `MapSettingsDialog.tsx` + `MapSettingsDialog.messages.ts` + `map-settings.ts` — The Astrocartography map's staged settings dialog (line types, primary/additional bodies, Local Space, relocation), its applied-state summary and the pure settings logic. Deps: `primitives/StagedDialog`, `domain/astrocartography`.
 - `AspectMatrixGrid.tsx` — The on-screen aspect matrix (#820): an HTML token-styled grid whose cells select an aspect pair on the wheel; screen only, the sheet/PDF keep the SVG. Deps: `chart/aspect-matrix`, `chart/glyphs`, `interpretation/selection-key`, `symbol-setting`.
@@ -177,7 +177,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `use-exclusive-open.ts` — Shared open/close hook for dropdown-button rows. Deps: none (React only).
 - `void-of-course-text.ts` — Composes void-of-course Moon sentence (transit screen). Deps: `astrology/bodies`, `astrology/signs`, `astrology/void-of-course`, `time/julian`.
 - `wheel-corpus.ts` — Supplies + caches interpretation corpus to wheel-selection panel. Deps: `interpretation/corpus-client`.
-- `wheel-interaction.ts` — Pointer/keyboard wheel isolation, ring legend activation, and leader-arrow state. Deps: `chart/body-id`.
+- `wheel-interaction.ts` — Pointer/keyboard wheel isolation, ring legend activation, and leader-arrow state, plus selecting a key outright for table Show buttons. Deps: `chart/body-id`.
 - `wheel-selection.ts` — Composes wheel-selection heading text. Deps: `astrology/signs`, `interpretation/schema`, `./astro-names.messages`.
 - `workspace-rail-setting.ts` — Device preference for whether the desktop workspace rail is collapsed (#506/#509). Deps: none.
 - `year-range.ts` — Ephemeris data's valid year range (clamping). Deps: none.

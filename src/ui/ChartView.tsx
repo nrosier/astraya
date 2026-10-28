@@ -861,22 +861,37 @@ export function ChartDataView({
     selectionKey: isolatedKey,
     clear: clearIsolation,
     toggle: toggleIsolation,
+    select: selectIsolation,
     onClick: handleWheelClick,
     onKeyDown: handleWheelKeyDown,
   } = useWheelIsolation(wheelMarkup);
 
   // The Positions and Aspects tables share the wheel's selection (#418): a button on a row selects it on the
   // wheel, and the row the wheel has selected is marked. Only where there is a wheel, and never in the PDF.
+  // The Aspects table's Show button goes further (#815): it selects the aspect, opens the Wheel view on it and
+  // moves focus there (`wheelPanelRef`, once the view is shown).
+  const wheelPanelRef = useRef<HTMLDivElement>(null);
+  const focusWheelPending = useRef(false);
+  const showOnWheel = useCallback(
+    (key: string): void => {
+      selectIsolation(key);
+      focusWheelPending.current = true;
+      setOwnTab('wheel');
+      onViewChange?.('wheel');
+    },
+    [selectIsolation, onViewChange],
+  );
   const tableSelection = useMemo((): TableSelection | undefined => {
     if (wheelMarkup === undefined || load.kind !== 'ready') return undefined;
     return {
       selectedKey: isolatedKey,
       onToggle: toggleIsolation,
+      onShowOnWheel: showOnWheel,
       selectableBodies: new Set(
         visiblePositions(load.data.positions, pointVisibility).map((position) => bodyById(position.body)?.key ?? ''),
       ),
     };
-  }, [wheelMarkup, load, isolatedKey, toggleIsolation, pointVisibility]);
+  }, [wheelMarkup, load, isolatedKey, toggleIsolation, showOnWheel, pointVisibility]);
 
   const isolation = useMemo(() => {
     if (isolatedKey === undefined || load.kind !== 'ready') return undefined;
@@ -974,6 +989,22 @@ export function ChartDataView({
   const tabs: readonly ChartViewKind[] = CHART_VIEWS.filter((view) => (view === 'wheel' ? sheet !== undefined : true));
   // A chosen view that has since gone (a setting made the wheel unavailable) falls back to the first one shown.
   const currentTab: ChartViewKind = tabs.includes(activeTab) ? activeTab : (tabs[0] ?? 'aspects');
+
+  // After "Show" on a table row (#815) the Wheel view is visible: focus its named region and bring it into view.
+  // Deferred a frame because the app moves focus to the screen's heading on every route change (`App.tsx`, #69),
+  // and that effect runs after this one, in the same commit.
+  useEffect(() => {
+    if (currentTab !== 'wheel' || !focusWheelPending.current) return undefined;
+    focusWheelPending.current = false;
+    const frame = requestAnimationFrame(() => {
+      const panel = wheelPanelRef.current;
+      panel?.focus({ preventScroll: true });
+      panel?.scrollIntoView({ block: 'start' });
+    });
+    return () => {
+      cancelAnimationFrame(frame);
+    };
+  }, [currentTab]);
 
   /** The wheel, what a click isolates, the interpret button and the exports: everything the Wheel view holds. */
   const renderChartPanel = (data: ChartData): React.ReactNode =>
@@ -1180,7 +1211,14 @@ export function ChartDataView({
               {/* The wheel stays mounted while another view is open, so a selection on it survives a
                   visit to the tables; every other view is only in the page while it is shown. */}
               {tabs.includes('wheel') && (
-                <div id="chart-view-wheel" hidden={currentTab !== 'wheel'}>
+                <div
+                  id="chart-view-wheel"
+                  ref={wheelPanelRef}
+                  tabIndex={-1}
+                  role="region"
+                  aria-label={t.wheelViewLabel}
+                  hidden={currentTab !== 'wheel'}
+                >
                   {renderChartPanel(load.data)}
                 </div>
               )}
