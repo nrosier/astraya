@@ -4,6 +4,7 @@
  * on the wheel, the row the wheel has selected is marked, and a bar on the table says what is
  * selected and takes you to the chart. Against a real computed chart.
  */
+import { readFileSync } from 'node:fs';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
@@ -300,6 +301,9 @@ describe('a table row selects on the wheel (#418)', () => {
     const button = showButton(container, 'Show Capricorn on the chart');
     expect(button?.textContent).toBe('Show sign');
     expect(button?.getAttribute('aria-pressed')).toBe('false');
+    // Rendered through the primitive Button (#870): its quiet variant class, type button, no stray classes.
+    expect(button?.className).toBe('quiet');
+    expect(button?.type).toBe('button');
     await press(button);
 
     expect(container.querySelector('.chart-wheel [data-sign="capricorn"]')?.classList.contains('chart-dimmed')).toBe(
@@ -322,6 +326,15 @@ describe('a table row selects on the wheel (#418)', () => {
     await open(container, 'positions');
     await press(showButton(container, 'Show Capricorn on the chart'));
     expect(dimmed(container)).toBe(0);
+  });
+
+  it('draws the Show buttons with the primitive Button, not a raw <button> (#870)', () => {
+    const source = readFileSync('src/ui/table-selection.tsx', 'utf-8')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/^\s*\/\/.*$/gm, '');
+    expect(source).toContain("from './primitives/Button.js'");
+    expect(source).not.toMatch(/<button\b/);
+    expect(source.match(/<Button\b/g)).toHaveLength(2);
   });
 
   it('a Derived points row selects that point, with its position and meaning in the inspector, and toggles off (#511)', async () => {
