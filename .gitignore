@@ -76,8 +76,14 @@ data/
 # Throwaway UI mockups (local review only)
 docs/mockups/
 
-# Reference material is local only, never pushed. Only the two index/format docs are tracked.
-# Ignore everything in docs/references/, then re-include MAP.md and SCHEMA.md.
+# Reference material is local only, never pushed. Only the index/format docs and the
+# three JSON data files that the test suite reads are tracked (#864).
 docs/references/*
 !docs/references/MAP.md
 !docs/references/SCHEMA.md
+!docs/references/orb-conventions.references.json
+!docs/references/derived-points.references.json
+!docs/references/aaf-chunks.references.json
+
+# Playwright MCP screenshots left in the repo root during manual checks.
+/*.png
