@@ -284,10 +284,12 @@ const en = {
     'last-quarter': 'Last Quarter Moon',
     balsamic: 'Balsamic Moon',
   },
-  lunarPhaseSentence: (phase: string, elongation: string, waxing: boolean, litPercent: number) =>
-    `Lunar phase: ${phase} — ${elongation} ahead of the Sun, ${waxing ? 'waxing' : 'waning'}, ${String(litPercent)}% lit.`,
+  lunarPhaseKeyLabel: 'Lunar phase',
+  lunarPhaseValue: (phase: string, elongation: string, waxing: boolean, litPercent: number) =>
+    `${phase} — ${elongation} ahead of the Sun, ${waxing ? 'waxing' : 'waning'}, ${String(litPercent)}% lit`,
 
-  sectPrefix: 'Sect:',
+  sectKeyLabel: 'Sect',
+  almutenKeyLabel: 'Almuten of Ascendant',
   dayChart: 'Day chart',
   nightChart: 'Night chart',
 
@@ -619,10 +621,12 @@ const nl: typeof en = {
     'last-quarter': 'Laatste kwartier',
     balsamic: 'Balsamische maan',
   },
-  lunarPhaseSentence: (phase: string, elongation: string, waxing: boolean, litPercent: number) =>
-    `Maanfase: ${phase} — ${elongation} voor op de Zon, ${waxing ? 'wassend' : 'afnemend'}, ${String(litPercent)}% verlicht.`,
+  lunarPhaseKeyLabel: 'Maanfase',
+  lunarPhaseValue: (phase: string, elongation: string, waxing: boolean, litPercent: number) =>
+    `${phase} — ${elongation} voor op de Zon, ${waxing ? 'wassend' : 'afnemend'}, ${String(litPercent)}% verlicht`,
 
-  sectPrefix: 'Sect:',
+  sectKeyLabel: 'Sect',
+  almutenKeyLabel: 'Almuten van de Ascendant',
   dayChart: 'Daghoroscoop',
   nightChart: 'Nachthoroscoop',
 

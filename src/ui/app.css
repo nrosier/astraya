@@ -2638,6 +2638,46 @@ dl.primitive-stat-list {
   flex-wrap: wrap;
 }
 
+/* Flat card (#870): a 1px token border on a low-opacity surface fill, small padding and radius. Shared by the shape
+   summary, the aspect patterns section and the Patterns key-value metrics. */
+.flat-card {
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: color-mix(in oklab, var(--surface) 70%, transparent);
+}
+
+/* Patterns key-value metrics (Lunar phase, Sect, Almuten of Ascendant): a wrapped row of flat cards over the global
+   `dl` surface, which this neutralises; values use tabular numerals. */
+dl.metric-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin: var(--space-3) 0;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.metric-cards > .flat-card {
+  flex: 1 1 12rem;
+}
+
+.metric-cards dt,
+.metric-cards dd {
+  padding: 0;
+  border-top: 0;
+}
+
+.metric-cards dt {
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.metric-cards dd {
+  font-variant-numeric: tabular-nums;
+}
+
 .chart-shape-summary > div:first-child {
   flex: 1 1 18rem;
 }

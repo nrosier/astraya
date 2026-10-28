@@ -72,7 +72,7 @@ describe('lunar phase line (#403)', () => {
     const container = await mount('en');
     const t = chartViewMessages.en;
     expect(container.querySelector('.lunar-phase-summary')?.textContent).toBe(
-      t.lunarPhaseSentence(t.lunarPhaseLabels['last-quarter'], "272°57'", false, 47),
+      t.lunarPhaseValue(t.lunarPhaseLabels['last-quarter'], "272°57'", false, 47),
     );
     expect(container.querySelector('.lunar-phase-summary')?.textContent).toContain('Last Quarter Moon');
   });
@@ -80,7 +80,7 @@ describe('lunar phase line (#403)', () => {
   it('is shown in Dutch when the locale is Dutch', async () => {
     const container = await mount('nl');
     expect(container.querySelector('.lunar-phase-summary')?.textContent).toBe(
-      "Maanfase: Laatste kwartier — 272°57' voor op de Zon, afnemend, 47% verlicht.",
+      "Laatste kwartier — 272°57' voor op de Zon, afnemend, 47% verlicht",
     );
   });
 });

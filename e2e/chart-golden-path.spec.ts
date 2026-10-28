@@ -128,7 +128,7 @@ test.describe('with the shared people (#799)', () => {
     await expect(page.locator('.chart-shape-diagram .chart-shape-ring')).toBeVisible();
     await expect(page.getByText(/Marc Edmund Jones \(1941\)/)).toBeVisible();
     await expect(page.locator('.lunar-phase-summary')).toBeVisible();
-    await expect(page.getByText(/Sect: (Day|Night) chart/)).toBeVisible();
+    await expect(page.locator('.sect-summary')).toBeVisible();
   });
 
   test('the natal chart is split into views, opening on the wheel, and the wheel keeps its selection (#511)', async () => {

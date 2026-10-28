@@ -419,8 +419,11 @@ function renderShapeSection(
   hasHouses: boolean,
   t: typeof chartViewMessages.en,
   locale: Locale,
+  boundsScheme: BoundsScheme,
 ): React.ReactNode {
   const shape = chartShapeOf(data);
+  // Always traditional (#545) — the same Almuten of the Ascendant the dignities section breaks down below.
+  const almuten = almutenOfAscendant(data, boundsScheme);
   const shapePositions = jonesBodyPositions(data.positions);
   const sunBody = bodyByKey('sun');
   const moonBody = bodyByKey('moon');
@@ -433,7 +436,7 @@ function renderShapeSection(
       {shape === undefined ? (
         <p className="hint">{t.shapeCannotBeWorkedOut}</p>
       ) : (
-        <div className="chart-shape-summary">
+        <div className="chart-shape-summary flat-card">
           <div>
             <p>
               <strong>
@@ -453,20 +456,39 @@ function renderShapeSection(
           />
         </div>
       )}
-      {lunarPhase !== undefined && (
-        <p className="lunar-phase-summary">
-          {t.lunarPhaseSentence(
-            t.lunarPhaseLabels[lunarPhase.phase],
-            formatElongation(lunarPhase.elongation),
-            lunarPhase.waxing,
-            Math.round(lunarPhase.illumination * 100),
+      {(lunarPhase !== undefined || hasHouses || almuten !== undefined) && (
+        <dl className="metric-cards">
+          {lunarPhase !== undefined && (
+            <div className="flat-card">
+              <dt>{t.lunarPhaseKeyLabel}</dt>
+              <dd className="lunar-phase-summary">
+                {t.lunarPhaseValue(
+                  t.lunarPhaseLabels[lunarPhase.phase],
+                  formatElongation(lunarPhase.elongation),
+                  lunarPhase.waxing,
+                  Math.round(lunarPhase.illumination * 100),
+                )}
+              </dd>
+            </div>
           )}
-        </p>
-      )}
-      {hasHouses && (
-        <p>
-          {t.sectPrefix} {data.sect === 'day' ? t.dayChart : t.nightChart}
-        </p>
+          {hasHouses && (
+            <div className="flat-card">
+              <dt>{t.sectKeyLabel}</dt>
+              <dd className="sect-summary">{data.sect === 'day' ? t.dayChart : t.nightChart}</dd>
+            </div>
+          )}
+          {almuten !== undefined && (
+            <div className="flat-card">
+              <dt>{t.almutenKeyLabel}</dt>
+              <dd className="almuten-summary">
+                {almuten.almutens.map((key) => bodyDisplayName(key, locale)).join(', ')}{' '}
+                <Tooltip text={t.almutenTooltip} label={t.almutenTooltipLabel}>
+                  ?
+                </Tooltip>
+              </dd>
+            </div>
+          )}
+        </dl>
       )}
       {renderAspectPatterns(data, t, locale)}
     </>
@@ -485,7 +507,7 @@ function renderAspectPatterns(data: ChartData, t: typeof chartViewMessages.en, l
   const patterns = findAspectPatterns(data.aspects, planets);
   const name = (id: number): string => bodyDisplayName(bodyById(id)?.key ?? '', locale);
   return (
-    <section aria-labelledby="aspect-patterns-heading">
+    <section className="flat-card" aria-labelledby="aspect-patterns-heading">
       <h3 id="aspect-patterns-heading">{t.aspectPatternsHeading}</h3>
       {patterns.length === 0 ? (
         <p className="hint">{t.noAspectPatterns}</p>
@@ -531,12 +553,6 @@ export function renderDignitiesTable(
     <>
       {almuten !== undefined && (
         <>
-          <p className="hint">
-            {t.almutenOfAscendantSentence(almuten.almutens.map((key) => bodyDisplayName(key, locale)).join(', '))}{' '}
-            <Tooltip text={t.almutenTooltip} label={t.almutenTooltipLabel}>
-              ?
-            </Tooltip>
-          </p>
           <p className="hint">{t.almutenScopeNote}</p>
           {/* Every candidate's own breakdown, not only the winner's name (#551). */}
           <SortableTable
@@ -626,7 +642,7 @@ export function renderPatternsView(
   return (
     <>
       <h3>{t.shapeTabLabel}</h3>
-      {renderShapeSection(data, housesRenderable, t, locale)}
+      {renderShapeSection(data, housesRenderable, t, locale, boundsScheme)}
       {renderDignitiesTable(data, displayName, pointVisibility, t, locale, rulership, boundsScheme)}
     </>
   );
