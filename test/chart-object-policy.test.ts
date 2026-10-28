@@ -4,7 +4,7 @@
  * to get subtly wrong.
  */
 import { beforeAll, describe, expect, it } from 'vitest';
-import { bodyByKey, BODIES } from '../src/astrology/bodies.js';
+import { bodyByKey, BODIES, OPT_IN_BODIES } from '../src/astrology/bodies.js';
 import { DEFAULT_EXTENDED_SETTINGS, toChartCalculationOptions } from '../src/chart/extended-settings.js';
 import {
   DEFAULT_OBJECT_POLICIES,
@@ -41,8 +41,8 @@ const WIDE_ORB_CONFIG = {
 };
 
 describe('OBJECT_KEYS', () => {
-  it('is exactly every BODIES key plus the Vertex and the two Hellenistic lots, with no drift between the two lists', () => {
-    const bodyKeys = BODIES.map((body) => body.key);
+  it('is exactly every BODIES and opt-in body key plus the Vertex and the two Hellenistic lots, with no drift between the two lists', () => {
+    const bodyKeys = [...BODIES, ...OPT_IN_BODIES].map((body) => body.key);
     const pointKeys: readonly ObjectKey[] = ['vertex', 'partOfFortune', 'partOfSpirit'];
     expect([...OBJECT_KEYS].sort()).toEqual([...bodyKeys, ...pointKeys].sort());
     expect(OBJECT_KEYS).toHaveLength(bodyKeys.length + pointKeys.length);

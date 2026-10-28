@@ -39,6 +39,7 @@ export const BODY_UNICODE: Readonly<Record<string, string>> = {
   osculatingLilith: '⚸',
   interpolatedLilith: '⚸',
   chiron: '⚷',
+  pholus: '⯛', // U+2BDB PHOLUS, Unicode 11
   ceres: '⚳',
   pallas: '⚴',
   juno: '⚵',
@@ -93,6 +94,7 @@ export const BODY_CODES: Readonly<Record<string, string>> = {
   osculatingLilith: 'OLI',
   interpolatedLilith: 'ILI',
   chiron: 'CHI',
+  pholus: 'PHO',
   ceres: 'CER',
   pallas: 'PAL',
   juno: 'JUN',

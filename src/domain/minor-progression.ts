@@ -19,7 +19,7 @@
  * @exports computeMinorProgression, MinorProgressionData, MinorProgressionOptions
  */
 import { findCrossAspects, fixedSubjects, subjectsFrom, type Aspect, type OrbConfig } from '../astrology/aspects.js';
-import { BODIES, bodyById, type BodyCategory } from '../astrology/bodies.js';
+import { bodyIdsFor, type BodySetOptions, bodyById, type BodyCategory } from '../astrology/bodies.js';
 import { minorProgressedJulianDay, type MinorProgressionMethod } from '../astrology/minor-progressions.js';
 import { ageInYears } from '../astrology/progressions.js';
 import { julianDayFor } from '../time/julian.js';
@@ -45,7 +45,7 @@ function categoryOf(body: BodyId): BodyCategory {
   return definition.category;
 }
 
-export interface MinorProgressionOptions {
+export interface MinorProgressionOptions extends BodySetOptions {
   /** The orbs the cross-chart aspects are found with (#590); the Extended settings' orbs when a chart is drawn from them. */
   readonly orbConfig?: OrbConfig;
   readonly houseSystem?: HouseSystem;
@@ -83,16 +83,8 @@ export async function computeMinorProgression(
 
   const progressedJd = minorProgressedJulianDay(method, natalJd, targetJd);
   const [natalPositions, positions, houses] = await Promise.all([
-    provider.positions(
-      natalJd,
-      BODIES.map((body) => body.id),
-      positionOptions,
-    ),
-    provider.positions(
-      progressedJd,
-      BODIES.map((body) => body.id),
-      positionOptions,
-    ),
+    provider.positions(natalJd, bodyIdsFor(options), positionOptions),
+    provider.positions(progressedJd, bodyIdsFor(options), positionOptions),
     provider.houses(progressedJd, place, houseSystem, options.zodiac),
   ]);
 

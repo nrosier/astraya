@@ -20,7 +20,7 @@
  * @exports OBJECT_KEYS, ObjectKey, ObjectPolicy, ObjectPolicies, isInterpreted, withInterpreted, interpretationExclusions, DEFAULT_OBJECT_POLICIES, PRESET_OBJECT_POLICIES, ObjectPolicyPresetId, OBJECT_POLICY_PRESET_IDS, matchObjectPolicyPreset
  */
 
-/** The 19 `astrology/bodies.ts` `BODIES` keys, plus the Vertex and the two Hellenistic lots (Fortune, Spirit) — every object this policy governs. The Ascendant and Midheaven are deliberately excluded: angles are structurally required wherever houses exist, never an optional object. */
+/** The 20 `astrology/bodies.ts` `BODIES` keys, Pholus (`OPT_IN_BODIES`, #804), plus the Vertex and the two Hellenistic lots (Fortune, Spirit) — every object this policy governs. The Ascendant and Midheaven are deliberately excluded: angles are structurally required wherever houses exist, never an optional object. */
 export const OBJECT_KEYS = [
   'sun',
   'moon',
@@ -38,6 +38,7 @@ export const OBJECT_KEYS = [
   'osculatingLilith',
   'interpolatedLilith',
   'chiron',
+  'pholus',
   'ceres',
   'pallas',
   'juno',
@@ -98,6 +99,7 @@ const OFF: ObjectPolicy = { visible: false, aspectParticipant: false };
  * Reproduces pre-#585 behavior exactly, key by key:
  * - Sun through Pluto: always shown, always participated — no gate ever existed.
  * - Chiron: `chironVisible` defaulted true; `aspectsToChiron` defaulted false.
+ * - Pholus (#804, new, so no pre-#585 behavior to match): hidden and not participating, so no existing chart changes.
  * - Both nodes, all three Liliths: `modernPointVisibility` defaulted false; `aspectsToLunarNodes`/`aspectsToLilith` defaulted false.
  * - The four asteroids: `modernPointVisibility` defaulted false (hidden), but had no participation gate at all (kept participating).
  * - Vertex, Part of Fortune, Part of Spirit: all three defaulted false for both visibility and `aspectsTo`.
@@ -119,6 +121,7 @@ export const DEFAULT_OBJECT_POLICIES: ObjectPolicies = {
   osculatingLilith: OFF,
   interpolatedLilith: OFF,
   chiron: VISIBLE_ONLY,
+  pholus: OFF,
   ceres: HIDDEN_BUT_PARTICIPATING,
   pallas: HIDDEN_BUT_PARTICIPATING,
   juno: HIDDEN_BUT_PARTICIPATING,

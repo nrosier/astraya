@@ -11,7 +11,7 @@
  * @exports computeLunarReturns, LunarReturnsData, LunarReturnChart, LunarReturnsOptions
  */
 import { findCrossAspects, fixedSubjects, subjectsFrom, type Aspect, type OrbConfig } from '../astrology/aspects.js';
-import { BODIES, bodyById, type BodyCategory } from '../astrology/bodies.js';
+import { bodyIdsFor, type BodySetOptions, bodyById, type BodyCategory } from '../astrology/bodies.js';
 import { lunarReturnsInPeriod } from '../astrology/solar-lunar-returns.js';
 import { SE } from '../ephemeris/generated-constants.js';
 import { julianDayFor } from '../time/julian.js';
@@ -36,7 +36,7 @@ function categoryOf(body: BodyId): BodyCategory {
   return definition.category;
 }
 
-export interface LunarReturnsOptions {
+export interface LunarReturnsOptions extends BodySetOptions {
   /** The orbs the cross-chart aspects are found with (#590); the Extended settings' orbs when a chart is drawn from them. */
   readonly orbConfig?: OrbConfig;
   readonly place?: GeoPosition;
@@ -69,11 +69,7 @@ export async function computeLunarReturns(
   const natalJd = await julianDayFor(provider, resolved);
   const positionOptions = options.zodiac === undefined ? undefined : { zodiac: options.zodiac };
 
-  const natalPositions = await provider.positions(
-    natalJd,
-    BODIES.map((body) => body.id),
-    positionOptions,
-  );
+  const natalPositions = await provider.positions(natalJd, bodyIdsFor(options), positionOptions);
   const natalMoon = natalPositions.find((position) => position.body === SE.SE_MOON);
   if (natalMoon === undefined) throw new Error('unreachable: the ephemeris returned no position for the Moon');
   const natalMoonLongitude = natalMoon.longitude;
@@ -92,11 +88,7 @@ export async function computeLunarReturns(
   const returns = await Promise.all(
     returnJds.map(async (returnJd): Promise<LunarReturnChart> => {
       const [positions, houses] = await Promise.all([
-        provider.positions(
-          returnJd,
-          BODIES.map((body) => body.id),
-          positionOptions,
-        ),
+        provider.positions(returnJd, bodyIdsFor(options), positionOptions),
         provider.houses(returnJd, place, houseSystem, options.zodiac),
       ]);
       const contacts = findCrossAspects(subjectsFrom(positions, categoryOf), natalSide, options.orbConfig);

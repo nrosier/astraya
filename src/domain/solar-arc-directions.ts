@@ -17,7 +17,7 @@
  * @exports computeSolarArcDirections, SolarArcDirectionsData, SolarArcDirectionsOptions, DirectedContact, SOLAR_ARC_ACTIVE_ORB_DEG
  */
 import { findCrossAspects, type Aspect, type OrbConfig } from '../astrology/aspects.js';
-import { BODIES, bodyByKey, bodyById, type BodyCategory } from '../astrology/bodies.js';
+import { bodyIdsFor, type BodySetOptions, bodyByKey, bodyById, type BodyCategory } from '../astrology/bodies.js';
 import { ageInYears, mcArc, progressedJulianDay, shiftHouses } from '../astrology/progressions.js';
 import {
   arcsToExactness,
@@ -44,7 +44,7 @@ import type { BirthMomentInput } from '../time/types.js';
 /** Placidus, matching `chart-compute.ts` and `secondary-progression.ts`'s default. */
 const DEFAULT_HOUSE_SYSTEM: HouseSystem = 'P';
 
-export interface SolarArcDirectionsOptions {
+export interface SolarArcDirectionsOptions extends BodySetOptions {
   /** The orbs the cross-chart aspects are found with (#590); the Extended settings' orbs when a chart is drawn from them. */
   readonly orbConfig?: OrbConfig;
   readonly houseSystem?: HouseSystem;
@@ -105,11 +105,7 @@ export async function computeSolarArcDirections(
 
   const [natalHouses, natalPositions] = await Promise.all([
     provider.houses(natalJd, place, houseSystem, options.zodiac),
-    provider.positions(
-      natalJd,
-      BODIES.map((body) => body.id),
-      positionOptions,
-    ),
+    provider.positions(natalJd, bodyIdsFor(options), positionOptions),
   ]);
   const natalSun = natalPositions.find((position) => position.body === sun.id);
   if (natalSun === undefined) throw new Error('unreachable: the ephemeris returned no position for the Sun');

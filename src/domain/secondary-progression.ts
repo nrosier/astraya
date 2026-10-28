@@ -23,7 +23,7 @@
  * @exports computeSecondaryProgression, SecondaryProgressionData, SecondaryProgressionOptions
  */
 import { findCrossAspects, fixedSubjects, subjectsFrom, type Aspect, type OrbConfig } from '../astrology/aspects.js';
-import { BODIES, bodyById, bodyByKey, type BodyCategory } from '../astrology/bodies.js';
+import { bodyIdsFor, type BodySetOptions, bodyById, bodyByKey, type BodyCategory } from '../astrology/bodies.js';
 import { computeProgressedHouses, type ProgressedMcMethod } from '../astrology/progressions.js';
 import { julianDayFor } from '../time/julian.js';
 import { resolveMoment } from '../time/resolve.js';
@@ -51,7 +51,7 @@ const DEFAULT_HOUSE_SYSTEM: HouseSystem = 'P';
 /** Naibod, the most widely used of the three — the reasonable default absent a choice. */
 const DEFAULT_MC_METHOD: ProgressedMcMethod = 'naibod';
 
-export interface SecondaryProgressionOptions {
+export interface SecondaryProgressionOptions extends BodySetOptions {
   /** The orbs the cross-chart aspects are found with (#590); the Extended settings' orbs when a chart is drawn from them. */
   readonly orbConfig?: OrbConfig;
   readonly houseSystem?: HouseSystem;
@@ -95,11 +95,7 @@ export async function computeSecondaryProgression(
 
   const [natalHouses, natalPositions] = await Promise.all([
     provider.houses(natalJd, place, houseSystem, options.zodiac),
-    provider.positions(
-      natalJd,
-      BODIES.map((body) => body.id),
-      positionOptions,
-    ),
+    provider.positions(natalJd, bodyIdsFor(options), positionOptions),
   ]);
   const natalSun = natalPositions.find((position) => position.body === sun.id);
   if (natalSun === undefined) throw new Error('unreachable: the ephemeris returned no position for the Sun');
@@ -117,11 +113,7 @@ export async function computeSecondaryProgression(
     },
   );
 
-  const positions = await provider.positions(
-    progressed.progressedJd,
-    BODIES.map((body) => body.id),
-    positionOptions,
-  );
+  const positions = await provider.positions(progressed.progressedJd, bodyIdsFor(options), positionOptions);
 
   const contacts = findCrossAspects(
     subjectsFrom(positions, categoryOf),

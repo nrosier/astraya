@@ -11,7 +11,7 @@
  * @exports computeSolarReturn, SolarReturnData, SolarReturnOptions
  */
 import { findCrossAspects, fixedSubjects, subjectsFrom, type Aspect, type OrbConfig } from '../astrology/aspects.js';
-import { BODIES, bodyById, type BodyCategory } from '../astrology/bodies.js';
+import { bodyIdsFor, type BodySetOptions, bodyById, type BodyCategory } from '../astrology/bodies.js';
 import { solarReturnInYear } from '../astrology/solar-lunar-returns.js';
 import { SE } from '../ephemeris/generated-constants.js';
 import { julianDayFor } from '../time/julian.js';
@@ -36,7 +36,7 @@ function categoryOf(body: BodyId): BodyCategory {
   return definition.category;
 }
 
-export interface SolarReturnOptions {
+export interface SolarReturnOptions extends BodySetOptions {
   /** The orbs the cross-chart aspects are found with (#590); the Extended settings' orbs when a chart is drawn from them. */
   readonly orbConfig?: OrbConfig;
   readonly place?: GeoPosition;
@@ -65,11 +65,7 @@ export async function computeSolarReturn(
   const natalJd = await julianDayFor(provider, resolved);
   const positionOptions = options.zodiac === undefined ? undefined : { zodiac: options.zodiac };
 
-  const natalPositions = await provider.positions(
-    natalJd,
-    BODIES.map((body) => body.id),
-    positionOptions,
-  );
+  const natalPositions = await provider.positions(natalJd, bodyIdsFor(options), positionOptions);
   const natalSun = natalPositions.find((position) => position.body === SE.SE_SUN);
   if (natalSun === undefined) throw new Error('unreachable: the ephemeris returned no position for the Sun');
   const natalSunLongitude = natalSun.longitude;
@@ -79,11 +75,7 @@ export async function computeSolarReturn(
   const houseSystem = options.houseSystem ?? DEFAULT_HOUSE_SYSTEM;
 
   const [positions, houses] = await Promise.all([
-    provider.positions(
-      returnJd,
-      BODIES.map((body) => body.id),
-      positionOptions,
-    ),
+    provider.positions(returnJd, bodyIdsFor(options), positionOptions),
     provider.houses(returnJd, place, houseSystem, options.zodiac),
   ]);
 
