@@ -1569,6 +1569,12 @@ label.stacked textarea:focus-visible {
   font-variant-numeric: tabular-nums;
 }
 
+/* Section headers in the Patterns view: the same spacing for the condition, dispositor and reception tables (#870). */
+.patterns-section-header {
+  margin-top: var(--space-6);
+  margin-bottom: var(--space-2);
+}
+
 .data-table .data-table-muted {
   color: var(--muted);
 }
