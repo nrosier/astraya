@@ -282,6 +282,36 @@ test.describe('with the shared people (#799)', () => {
     expect(d.width).toBeGreaterThan(i.width);
   });
 
+  test('the wheel and the inspector share one top edge on desktop, and stack on a phone (#801)', async () => {
+    test.setTimeout(90_000);
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await openNatalChart(page);
+    const dial = page.locator('.chart-workbench-dial');
+    const inspector = page.locator('.selection-inspector');
+
+    // Desktop: the wheel card and the inspector start on the same line, within 2px.
+    for (const [width, height] of [
+      [1280, 800],
+      [1600, 1000],
+    ] as const) {
+      await page.setViewportSize({ width, height });
+      await expect(dial).toBeVisible();
+      await expect(inspector).toBeVisible();
+      const d = await dial.boundingBox();
+      const i = await inspector.boundingBox();
+      if (d === null || i === null) throw new Error('no boxes');
+      expect(Math.abs(d.y - i.y)).toBeLessThanOrEqual(2);
+    }
+
+    // Phone: the inspector sits below the wheel, not beside it.
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(inspector).toBeVisible();
+    const dPhone = await dial.boundingBox();
+    const iPhone = await inspector.boundingBox();
+    if (dPhone === null || iPhone === null) throw new Error('no boxes');
+    expect(iPhone.y).toBeGreaterThanOrEqual(dPhone.y + dPhone.height - 1);
+  });
+
   test('the chart wheel sits fully in view at 1280x800 without scrolling (#801)', async () => {
     test.setTimeout(90_000);
     await openSharedPerson(page, baseUrl, EINSTEIN);
