@@ -98,8 +98,14 @@ describe('a table row selects on the wheel (#418)', () => {
   it('the Positions table centres the symbol and house columns and right-aligns the degree columns (#870)', async () => {
     const container = await mount();
     await open(container, 'positions');
+    // The Positions table is the data-table section whose heading is the Positions caption; search only its <thead>.
+    const positionsSection = [...container.querySelectorAll('section.data-table')].find(
+      (section) => section.querySelector('h2, h3')?.textContent === chartViewMessages.en.positionsCaption,
+    );
     const align = (label: string): string | null | undefined => {
-      const header = [...container.querySelectorAll('th')].find((th) => th.textContent.includes(label));
+      const header = [...(positionsSection?.querySelectorAll('thead th') ?? [])].find((th) =>
+        th.textContent.includes(label),
+      );
       return header?.getAttribute('data-align');
     };
     expect(align(chartViewMessages.en.symbolLabel)).toBe('center');
