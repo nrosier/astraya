@@ -5,13 +5,14 @@
 /**
  * @module ui/table-selection
  * @purpose The per-table side of the wheel selection contract: the `TableSelection` handed to a table, the selection key of each kind of row, and the shared "Show on the chart" button column.
- * @conventions Keys are built by `interpretation/selection-key.ts`, never by hand, so a table row, a wheel click and the inspector name the same selection the same way; the button is a real `<button>` with `aria-pressed`, so the keyboard reaches the wheel's selection too.
+ * @conventions Keys are built by `interpretation/selection-key.ts`, never by hand, so a table row, a wheel click and the inspector name the same selection the same way; the button is the primitive `Button` (a real `<button>`) with `aria-pressed`, so the keyboard reaches the wheel's selection too.
  * @exports TableSelection, bodySelectionKey, signSelectionKey, derivedSelectionKey, houseSelectionKey, aspectSelectionKey, selectColumn
  */
 import { bodyId } from '../chart/body-id.js';
 import type { AspectRow } from '../domain/chart-tables.js';
 import { selectionKey } from '../interpretation/selection-key.js';
 import type { chartViewMessages } from './ChartView.messages.js';
+import { Button } from './primitives/Button.js';
 import type { TableColumn } from './table-sort.js';
 
 /**
@@ -65,22 +66,18 @@ export function selectColumn<T>(
       const show = opensWheel ? selection.onShowOnWheel : undefined;
       if (show !== undefined) {
         return (
-          <button
-            type="button"
-            className="quiet"
+          <Button
             aria-label={t.showOnWheel(nameOf(row))}
             onClick={() => {
               show(key);
             }}
           >
             {labels.button}
-          </button>
+          </Button>
         );
       }
       return (
-        <button
-          type="button"
-          className="quiet"
+        <Button
           aria-pressed={selection.selectedKey === key}
           aria-label={t.showOnChart(nameOf(row))}
           onClick={() => {
@@ -88,7 +85,7 @@ export function selectColumn<T>(
           }}
         >
           {labels.button}
-        </button>
+        </Button>
       );
     },
   };
