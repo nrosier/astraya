@@ -260,6 +260,22 @@ test.describe('with the shared people (#799)', () => {
     expect(d.width).toBeGreaterThan(i.width);
   });
 
+  test('the chart wheel sits fully in view at 1280x800 without scrolling (#801)', async () => {
+    test.setTimeout(90_000);
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await openNatalChart(page);
+    const wheel = page.locator('.chart-workbench-dial svg').first();
+    await expect(wheel).toBeVisible();
+    const box = await wheel.boundingBox();
+    if (box === null) throw new Error('no wheel box');
+    const viewportHeight = page.viewportSize()?.height ?? 0;
+    expect(await page.evaluate('window.scrollY')).toBe(0);
+    expect(box.y).toBeGreaterThanOrEqual(0);
+    expect(box.y).toBeLessThan(viewportHeight);
+    expect(box.y + box.height).toBeLessThanOrEqual(viewportHeight);
+  });
+
   test('selecting something fills the inspector in place, without moving it', async () => {
     test.setTimeout(90_000);
     await page.setViewportSize({ width: 1600, height: 1000 });
