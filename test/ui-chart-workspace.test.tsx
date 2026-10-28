@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /**
  * The chart workspace layout (#801): the sender-side share UI is gone in both languages, the view links
- * sit under the title behind a plain "Extended settings:" prefix, and the selection panel carries its
+ * sit under the title with no static prefix text, and the selection panel carries its
  * three named sections, placement badges, and an AI button that waits for consent.
  */
 import { readFileSync } from 'node:fs';
@@ -109,14 +109,17 @@ describe('the chart workspace (#801)', () => {
     expect(readFileSync('src/ui/ChartView.tsx', 'utf-8')).not.toMatch(/ShareLink|encodeChartShareLink/);
   });
 
-  it.each(['en', 'nl'] as const)('puts a plain "%s" prefix before the six view links', async (locale) => {
-    const container = await mount(locale);
-    const prefix = container.querySelector('.chart-view-prefix');
-    expect(prefix?.textContent).toBe(chartViewMessages[locale].extendedSettingsPrefix);
-    expect(prefix?.closest('a, button')).toBeNull();
-    expect(container.querySelectorAll('.chart-view-link')).toHaveLength(6);
-    expect(container.querySelectorAll('[role="tab"], [role="tablist"]')).toHaveLength(0);
-  });
+  it.each(['en', 'nl'] as const)(
+    'draws the six view links with no static "Extended settings:" prefix in %s (#817)',
+    async (locale) => {
+      const container = await mount(locale);
+      expect(container.querySelector('.chart-view-prefix')).toBeNull();
+      expect(container.querySelector('.tab-row__prefix')).toBeNull();
+      expect(chartViewMessages[locale]).not.toHaveProperty('extendedSettingsPrefix');
+      expect(container.querySelectorAll('.chart-view-link')).toHaveLength(6);
+      expect(container.querySelectorAll('[role="tab"], [role="tablist"]')).toHaveLength(0);
+    },
+  );
 
   it('shows the three section headings once each for a body selection', async () => {
     const container = await mount('en');

@@ -155,7 +155,7 @@ test.describe('with the shared people (#799)', () => {
     ]);
     await expect(page.getByRole('link', { name: 'Wheel', exact: true })).toHaveAttribute('aria-current', 'page');
     await expect(page.locator('div.chart-wheel')).toBeVisible();
-    await expect(page.locator('.chart-view-prefix')).toBeVisible();
+    await expect(page.locator('.chart-view-prefix')).toHaveCount(0);
     // The definitions list and the share panel left the chart view (#801).
     await expect(page.getByText('Anyone who has the link')).toHaveCount(0);
     await expect(page.getByText('Copy share link')).toHaveCount(0);

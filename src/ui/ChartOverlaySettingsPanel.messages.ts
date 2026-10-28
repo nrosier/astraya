@@ -6,8 +6,6 @@
  */
 const en = {
   trigger: 'Overlay settings',
-  showLabel: 'Show overlay settings',
-  hideLabel: 'Hide overlay settings',
   baseChart: (label: string) => `Base chart: ${label}`,
   hint: 'Choose the additional rings to draw. Changes stay in this panel until you apply them.',
   ringProvenance: 'Ring calculation basis',
@@ -34,12 +32,11 @@ const en = {
   moveDown: (label: string) => `Move ${label} outward`,
   apply: 'Apply overlays',
   cancel: 'Cancel',
+  closeLabel: 'Close without applying',
 };
 
 const nl: typeof en = {
   trigger: 'Overlayinstellingen',
-  showLabel: 'Overlayinstellingen tonen',
-  hideLabel: 'Overlayinstellingen verbergen',
   baseChart: (label: string) => `Basishoroscoop: ${label}`,
   hint: 'Kies de extra ringen om te tekenen. Wijzigingen blijven in dit paneel tot je ze toepast.',
   ringProvenance: 'Berekeningsbasis per ring',
@@ -66,6 +63,7 @@ const nl: typeof en = {
   moveDown: (label: string) => `${label} naar buiten verplaatsen`,
   apply: 'Overlays toepassen',
   cancel: 'Annuleren',
+  closeLabel: 'Sluiten zonder toe te passen',
 };
 
 export const chartOverlaySettingsPanelMessages = { en, nl };

@@ -307,9 +307,9 @@ test.describe('with the shared people (#799)', () => {
     await expect(inspector).toContainText('to explore it');
   });
 
-  test('the chart row pins Extended settings at the far right and collapses it at 40rem and below, while Overlays stays in flow under the row (#818, #826)', async () => {
+  test('the chart row pins Overlays and Extended settings at the far right, drops the static prefix, and folds both into Chart actions at 40rem and below (#817, #818)', async () => {
     test.setTimeout(90_000);
-    const overlays = page.locator('.chart-overlay-settings button.primitive-disclosure-trigger');
+    const overlays = page.locator('.tab-row button.chart-overlay-trigger');
     const tabRow = page.locator('.tab-row');
     const settings = page.locator('.tab-row button.extended-settings-trigger');
     const toggle = page.getByRole('button', { name: 'Chart actions', exact: true });
@@ -319,18 +319,12 @@ test.describe('with the shared people (#799)', () => {
       return { left: rect.x, right: rect.x + rect.width };
     };
 
-    // Overlays is a full-width Disclosure row in the page flow directly under the tab row, closed by default, never
-    // inside the pinned cluster or the Chart actions popover, at every width.
-    const inFlow = async (): Promise<void> => {
-      await expect(overlays).toBeVisible();
-      await expect(overlays).toHaveAttribute('aria-expanded', 'false');
-      await expect(overlays).toContainText('Show overlay settings');
-      await expect(tabRow.locator(overlays)).toHaveCount(0);
-      const row = await tabRow.boundingBox();
-      const trigger = await overlays.boundingBox();
-      if (row === null || trigger === null) throw new Error('expected layout boxes');
-      expect(trigger.y).toBeGreaterThanOrEqual(row.y + row.height - 1);
-      expect(trigger.width).toBeGreaterThan(row.width / 2);
+    // The static "Extended settings:" text is gone at every width, and no in-flow Overlays row sits under the tab row.
+    const noPrefixNoRow = async (): Promise<void> => {
+      await expect(page.locator('.tab-row__prefix')).toHaveCount(0);
+      await expect(page.locator('.chart-view-prefix')).toHaveCount(0);
+      await expect(page.getByText('Extended settings:', { exact: true })).toHaveCount(0);
+      await expect(page.locator('button.primitive-disclosure-trigger', { hasText: 'overlay settings' })).toHaveCount(0);
     };
 
     await page.setViewportSize({ width: 1280, height: 800 });
@@ -338,13 +332,30 @@ test.describe('with the shared people (#799)', () => {
     await openNatalChart(page);
     await expect(toggle).toBeHidden();
     await expect(settings).toBeVisible();
-    // Pinned outside the scroller: Extended settings sits wholly to the right of the scroll viewport and ends the row.
+    await expect(overlays).toBeVisible();
+    // Pinned outside the scroller: both triggers sit wholly to the right of the scroll viewport; Extended settings ends the row.
     const viewport = await box(page.locator('.tab-row__viewport'));
     const row = await box(tabRow);
+    const overlaysBox = await box(overlays);
     const settingsBox = await box(settings);
-    expect(settingsBox.left).toBeGreaterThanOrEqual(viewport.right);
+    expect(overlaysBox.left).toBeGreaterThanOrEqual(viewport.right);
+    expect(overlaysBox.right).toBeLessThanOrEqual(settingsBox.left);
     expect(settingsBox.right).toBeCloseTo(row.right, 0);
-    await inFlow();
+    await noPrefixNoRow();
+
+    // Overlays opens a right slide-over drawer, not an in-flow row, and the wheel stays visible beside it.
+    const drawer = page.locator('.chart-overlay-settings dialog');
+    await overlays.click();
+    await expect(drawer).toBeVisible();
+    await expect(drawer).toHaveAttribute('data-placement', 'right');
+    await expect(page.locator('div.chart-wheel')).toBeVisible();
+    const drawerBox = await drawer.boundingBox();
+    if (drawerBox === null) throw new Error('expected the drawer to have a layout box');
+    expect(drawerBox.x + drawerBox.width).toBeGreaterThan(1270);
+    expect(drawerBox.width).toBeLessThanOrEqual(42 * 16 + 1);
+    await page.keyboard.press('Escape');
+    await expect(drawer).toBeHidden();
+    await expect(overlays).toBeFocused();
 
     const select = page.locator('.tab-row .chart-view-select select');
     const strip = page.locator('.tab-row__tabs');
@@ -353,8 +364,10 @@ test.describe('with the shared people (#799)', () => {
       await expect(strip).toBeVisible();
       await expect(select).toBeHidden();
       await expect(settings).toBeVisible();
+      await expect(overlays).toBeVisible();
       await expect(page.locator('.tab-row__viewport').locator(settings)).toHaveCount(0);
-      await inFlow();
+      await expect(page.locator('.tab-row__viewport').locator(overlays)).toHaveCount(0);
+      await noPrefixNoRow();
     };
     const collapsed = async (): Promise<void> => {
       await expect(toggle).toBeVisible();
@@ -362,31 +375,42 @@ test.describe('with the shared people (#799)', () => {
       await expect(select).toBeVisible();
       await expect(strip).toBeHidden();
       await expect(settings).toBeHidden();
-      await inFlow();
+      await expect(overlays).toBeHidden();
+      await noPrefixNoRow();
     };
 
-    // At 40rem and below (390px) the labelled select replaces the tabs and Extended settings sits behind the one
-    // "Chart actions" text toggle (a Button) until it is opened.
+    // At 40rem and below (390px) the labelled select replaces the tabs and Overlays and Extended settings sit behind
+    // the one "Chart actions" text toggle (a Button) until it is opened.
     await page.setViewportSize({ width: 390, height: 844 });
     await collapsed();
     await expect(page.locator('.tab-row__actions-toggle button.primitive-button-compact')).toHaveText(/^Chart actions/);
     await toggle.click();
     await expect(toggle).toHaveAttribute('aria-expanded', 'true');
     await expect(settings).toBeVisible();
-    // The popover holds only Extended settings.
-    await expect(page.locator('.tab-row__actions-panel').locator(overlays)).toHaveCount(0);
-    await expect(page.locator('.tab-row__actions-panel > *')).toHaveCount(1);
-    await toggle.click();
+    await expect(overlays).toBeVisible();
+    // The sheet holds exactly Overlays and Extended settings.
+    await expect(page.locator('.tab-row__actions-panel > *')).toHaveCount(2);
+    await expect(page.locator('.tab-row__actions-panel .chart-overlay-trigger')).toHaveCount(1);
+    await overlays.click();
+    await expect(drawer).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(drawer).toBeHidden();
+    // Closing the drawer also closes the sheet and puts focus on its toggle.
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
 
     // 640px is the inclusive edge of the narrow rule (max-width: 40rem): still the select and the toggle.
     await page.setViewportSize({ width: 640, height: 900 });
     await collapsed();
+    await toggle.click();
+    await expect(overlays).toBeVisible();
+    await expect(settings).toBeVisible();
+    await toggle.click();
 
-    // 641px is the first width above it: the scrolling strip shows and Extended settings is pinned.
+    // 641px is the first width above it: the scrolling strip shows and both triggers are pinned.
     await page.setViewportSize({ width: 641, height: 900 });
     await pinned();
 
-    // Tablet (768px) is above 40rem too: the scrolling tab row, no labelled select, Extended settings pinned.
+    // Tablet (768px) is above 40rem too: the scrolling tab row, no labelled select, both triggers pinned.
     await page.setViewportSize({ width: 768, height: 1024 });
     await pinned();
   });

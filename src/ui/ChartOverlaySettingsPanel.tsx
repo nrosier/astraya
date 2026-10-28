@@ -1,11 +1,11 @@
 /**
  * @module ChartOverlaySettingsPanel
- * @purpose Staged Overlay settings for configuring additional rings in the canonical chart wheel, opened in flow from a full-width Disclosure row under the tab row (#826).
- * @conventions Owns only a draft that exists while the Disclosure is open; callers receive one confirmed settings object through `onApply`, so recalculation occurs once and Cancel retains the visible chart. Apply and Cancel close it by re-keying the Disclosure (it has no close API) and return focus to its trigger.
+ * @purpose Staged Overlay settings for configuring additional rings in the canonical chart wheel, opened from the chart row's Overlays trigger as a right slide-over drawer beside the wheel (#817, #824).
+ * @conventions Owns only a draft that exists while the drawer is open (`StagedDialog placement="right"`); callers receive one confirmed settings object through `onApply`, so recalculation occurs once and Cancel, Escape and × retain the visible chart. The drawer is non-modal: from 75rem (1200px) the page makes room (the wheel column narrows) so wheel and drawer sit side by side, undimmed and clickable. Focus returns to the trigger on close.
  * @exports ChartOverlaySettingsPanel, ChartOverlaySettings, ChartOverlaySource, ChartOverlayReturnKind, DEFAULT_CHART_OVERLAY_SETTINGS, orderedChartOverlaySources
  */
-import { useEffect, useRef, useState } from 'react';
-import { Disclosure } from './primitives/Disclosure.js';
+import { useRef, useState } from 'react';
+import { StagedDialog } from './primitives/StagedDialog.js';
 import { DateField } from './primitives/DateField.js';
 import { NumberField } from './primitives/NumberField.js';
 import { ChoiceGroup } from './primitives/ChoiceGroup.js';
@@ -122,55 +122,75 @@ export function ChartOverlaySettingsPanel({
   readonly onApply: (next: ChartOverlaySettings) => void;
 }): React.JSX.Element {
   const t = useMessages(chartOverlaySettingsPanelMessages);
-  const wrapperRef = useRef<HTMLDivElement>(null);
-  // Re-keying remounts the Disclosure closed (it has no close API), which also drops the draft.
-  const [session, setSession] = useState(0);
-  const closed = useRef(false);
-
-  useEffect(() => {
-    if (!closed.current) return;
-    closed.current = false;
-    wrapperRef.current?.querySelector<HTMLElement>('.primitive-disclosure-trigger')?.focus();
-  }, [session]);
-
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const [open, setOpen] = useState(false);
+  // The draft exists only while the drawer is open: opening copies the applied settings, Cancel drops it.
+  const [draft, setDraft] = useState<ChartOverlaySettings>(value);
+  const openDrawer = (): void => {
+    setDraft(value);
+    setOpen(true);
+  };
   const close = (): void => {
-    closed.current = true;
-    setSession((current) => current + 1);
+    setOpen(false);
   };
 
   return (
-    <div className="chart-overlay-settings" ref={wrapperRef}>
-      <Disclosure key={session} title={t.trigger} showLabel={t.showLabel} hideLabel={t.hideLabel}>
-        <OverlayDraft
-          value={value}
-          baseLabel={baseLabel}
-          unavailableSources={unavailableSources}
-          onApply={(next) => {
-            onApply(next);
-            close();
-          }}
-          onCancel={close}
-        />
-      </Disclosure>
+    <div className="chart-overlay-settings">
+      <button
+        type="button"
+        ref={triggerRef}
+        className="chart-overlay-trigger"
+        aria-haspopup="dialog"
+        onClick={openDrawer}
+      >
+        {t.trigger}
+      </button>
+      <StagedDialog
+        open={open}
+        heading={t.trigger}
+        closeLabel={t.closeLabel}
+        dialogClassName="chart-overlay-drawer"
+        placement="right"
+        modal={false}
+        onDiscard={close}
+        returnFocusTo={triggerRef}
+        footer={
+          <div className="settings-card-footer-group">
+            <button type="button" className="quiet" onClick={close}>
+              {t.cancel}
+            </button>
+            <button
+              type="button"
+              className="primitive-button-primary"
+              disabled={sameSettings(draft, value)}
+              onClick={() => {
+                onApply(draft);
+                close();
+              }}
+            >
+              {t.apply}
+            </button>
+          </div>
+        }
+      >
+        <OverlayDraft draft={draft} setDraft={setDraft} baseLabel={baseLabel} unavailableSources={unavailableSources} />
+      </StagedDialog>
     </div>
   );
 }
 
 function OverlayDraft({
-  value,
+  draft,
+  setDraft,
   baseLabel,
   unavailableSources,
-  onApply,
-  onCancel,
 }: {
-  readonly value: ChartOverlaySettings;
+  readonly draft: ChartOverlaySettings;
+  readonly setDraft: React.Dispatch<React.SetStateAction<ChartOverlaySettings>>;
   readonly baseLabel: string;
   readonly unavailableSources: readonly ChartOverlaySource[];
-  readonly onApply: (next: ChartOverlaySettings) => void;
-  readonly onCancel: () => void;
 }): React.JSX.Element {
   const t = useMessages(chartOverlaySettingsPanelMessages);
-  const [draft, setDraft] = useState<ChartOverlaySettings>(value);
   const unavailable = (source: ChartOverlaySource): boolean => unavailableSources.includes(source);
   const update = (next: Partial<ChartOverlaySettings>): void => {
     setDraft((current) => ({ ...current, ...next }));
@@ -357,21 +377,6 @@ function OverlayDraft({
           update({ interRingAspects });
         }}
       />
-      <div className="chart-overlay-footer">
-        <button
-          type="button"
-          className="quiet"
-          disabled={sameSettings(draft, value)}
-          onClick={() => {
-            onApply(draft);
-          }}
-        >
-          {t.apply}
-        </button>
-        <button type="button" className="quiet" onClick={onCancel}>
-          {t.cancel}
-        </button>
-      </div>
     </div>
   );
 }
