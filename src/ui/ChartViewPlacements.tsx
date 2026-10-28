@@ -32,6 +32,7 @@ import {
   signSelectionKey,
   type TableSelection,
 } from './table-selection.js';
+import { Badge } from './primitives/Badge.js';
 import { SortableTable } from './SortableTable.js';
 import type { TableColumn } from './table-sort.js';
 import type { Locale } from '../interpretation/schema.js';
@@ -81,6 +82,15 @@ export function symbolCell(bodyKey: string, fallback: string, symbolClass: Symbo
       dangerouslySetInnerHTML={{ __html: renderGlyph(definition, 50, 50, 100, 'chart-glyph') }}
     />
   );
+}
+
+/** The station marker text for a row inside the station window (#724): first, second or unspecified station. */
+function stationMarkerText(row: PositionRow, t: typeof chartViewMessages.en): string {
+  return row.stationType === 'first'
+    ? t.stationFirstMarker
+    : row.stationType === 'second'
+      ? t.stationSecondMarker
+      : t.stationMarker;
 }
 
 export function positionColumns(
@@ -147,16 +157,10 @@ export function positionColumns(
       labelTooltip: t.retrogradeTooltip,
       valueOf: (row) => row.retrograde ?? false,
       // Inside the station window (#724) the station marker replaces ℞; with the window off, `stationary` is never set.
-      render: (row) =>
-        row.stationary === true
-          ? row.stationType === 'first'
-            ? t.stationFirstMarker
-            : row.stationType === 'second'
-              ? t.stationSecondMarker
-              : t.stationMarker
-          : row.retrograde
-            ? '℞'
-            : '',
+      render: (row) => (row.stationary === true ? stationMarkerText(row, t) : row.retrograde ? '℞' : ''),
+      // Screen only: a set retrograde flag is a badge; the station marker stays plain text. Copy, CSV and PDF use `render`.
+      renderCell: (row) =>
+        row.stationary === true ? stationMarkerText(row, t) : row.retrograde ? <Badge>℞</Badge> : null,
     },
     {
       key: 'anaretic',
@@ -164,6 +168,7 @@ export function positionColumns(
       valueOf: (row) => row.anaretic,
       align: 'center',
       render: (row) => (row.anaretic ? '✓' : ''),
+      renderCell: (row) => (row.anaretic ? <span className="data-table-muted">✓</span> : null),
     },
     {
       key: 'outOfBounds',
@@ -171,6 +176,7 @@ export function positionColumns(
       valueOf: (row) => row.outOfBounds ?? false,
       align: 'center',
       render: (row) => (row.outOfBounds === true ? '✓' : ''),
+      renderCell: (row) => (row.outOfBounds === true ? <span className="data-table-muted">✓</span> : null),
     },
   ];
 }
