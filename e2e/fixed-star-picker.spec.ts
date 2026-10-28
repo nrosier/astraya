@@ -11,7 +11,6 @@ import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
-import { newSeededContext } from './shared-people.ts';
 import { createPerson, gotoAndSettle, openNatalChart, openSettings } from './support.ts';
 
 let dir: string;
@@ -35,7 +34,7 @@ test.afterAll(async () => {
 
 test('search Regulus, add it, Apply: the chart checks the chosen star (#803)', async ({ browser }) => {
   test.setTimeout(120_000);
-  const context = await newSeededContext(browser, baseUrl);
+  const context = await browser.newContext();
   const page = await context.newPage();
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   await createPerson(page, {
