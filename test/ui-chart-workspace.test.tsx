@@ -109,14 +109,17 @@ describe('the chart workspace (#801)', () => {
     expect(readFileSync('src/ui/ChartView.tsx', 'utf-8')).not.toMatch(/ShareLink|encodeChartShareLink/);
   });
 
-  it.each(['en', 'nl'] as const)('puts a plain "%s" prefix before the six view links', async (locale) => {
-    const container = await mount(locale);
-    const prefix = container.querySelector('.chart-view-prefix');
-    expect(prefix?.textContent).toBe(chartViewMessages[locale].extendedSettingsPrefix);
-    expect(prefix?.closest('a, button')).toBeNull();
-    expect(container.querySelectorAll('.chart-view-link')).toHaveLength(6);
-    expect(container.querySelectorAll('[role="tab"], [role="tablist"]')).toHaveLength(0);
-  });
+  it.each(['en', 'nl'] as const)(
+    'draws the six view links with no static "Extended settings:" prefix in %s (#817)',
+    async (locale) => {
+      const container = await mount(locale);
+      expect(container.querySelector('.chart-view-prefix')).toBeNull();
+      expect(container.querySelector('.tab-row__prefix')).toBeNull();
+      expect(chartViewMessages[locale]).not.toHaveProperty('extendedSettingsPrefix');
+      expect(container.querySelectorAll('.chart-view-link')).toHaveLength(6);
+      expect(container.querySelectorAll('[role="tab"], [role="tablist"]')).toHaveLength(0);
+    },
+  );
 
   it('shows the three section headings once each for a body selection', async () => {
     const container = await mount('en');

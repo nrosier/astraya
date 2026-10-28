@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 /**
- * Staged Overlay settings contract (#569, #826): a closed-by-default Disclosure row opens the panel in flow,
+ * Staged Overlay settings contract (#569, #817): a trigger opens the panel as a right slide-over drawer (StagedDialog),
  * selecting a source enables its contextual input only in the draft, Cancel closes and drops the draft,
- * and Apply closes and commits it once; focus returns to the trigger.
+ * and Apply closes and commits it once; Escape discards; focus returns to the trigger.
  */
 import { act, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -75,15 +75,15 @@ describe('ChartOverlaySettingsPanel', () => {
 
   it('keeps inputs inactive until their overlay is selected and commits only on Apply', async () => {
     const container = await mount();
-    expect(container.querySelector('dialog')).toBeNull();
-    const closedTrigger = must(container.querySelector<HTMLButtonElement>('button.primitive-disclosure-trigger'));
-    expect(closedTrigger.getAttribute('aria-expanded')).toBe('false');
-    expect(closedTrigger.textContent).toContain('Show overlay settings');
+    const dialog = must(container.querySelector('dialog'));
+    expect(dialog.getAttribute('data-placement')).toBe('right');
+    expect(dialog.hasAttribute('open')).toBe(false);
     expect(container.querySelector('input[type="checkbox"]')).toBeNull();
-    await click(closedTrigger);
-    expect(must(container.querySelector('button.primitive-disclosure-trigger')).textContent).toContain(
-      'Hide overlay settings',
-    );
+    const trigger = must(container.querySelector<HTMLButtonElement>('button.chart-overlay-trigger'));
+    expect(trigger.textContent).toBe('Overlay settings');
+    await click(trigger);
+    expect(dialog.hasAttribute('open')).toBe(true);
+    expect(dialog.getAttribute('aria-labelledby')).not.toBeNull();
 
     const checkboxes = container.querySelectorAll<HTMLInputElement>('input[type="checkbox"]');
     const natal = must(checkboxes.item(0));
@@ -91,30 +91,51 @@ describe('ChartOverlaySettingsPanel', () => {
     const date = must(container.querySelector<HTMLInputElement>('input[type="date"]'));
     expect(natal.disabled).toBe(true);
     expect(date.disabled).toBe(true);
+    const apply = (): HTMLButtonElement =>
+      must(
+        [...container.querySelectorAll<HTMLButtonElement>('button')].find(
+          (button) => button.textContent === 'Apply overlays',
+        ),
+      );
+    expect(apply().disabled).toBe(true);
 
     await click(transit);
     expect(date.disabled).toBe(false);
-    await click(must([...container.querySelectorAll('button')].find((button) => button.textContent === 'Cancel')));
-    expect(container.querySelector('output')?.textContent).toBe('false');
-    const reopened = must(container.querySelector<HTMLButtonElement>('button.primitive-disclosure-trigger'));
-    expect(reopened.getAttribute('aria-expanded')).toBe('false');
-    expect(document.activeElement).toBe(reopened);
-
-    await click(reopened);
-    await click(must(container.querySelectorAll<HTMLInputElement>('input[type="checkbox"]').item(2)));
+    expect(apply().disabled).toBe(false);
     await click(
-      must([...container.querySelectorAll('button')].find((button) => button.textContent === 'Apply overlays')),
+      must(
+        [...container.querySelectorAll('.settings-card-footer button')].find(
+          (button) => button.textContent === 'Cancel',
+        ),
+      ),
     );
-    expect(container.querySelector('output')?.textContent).toBe('true');
-    const afterApply = must(container.querySelector<HTMLButtonElement>('button.primitive-disclosure-trigger'));
-    expect(afterApply.getAttribute('aria-expanded')).toBe('false');
-    expect(document.activeElement).toBe(afterApply);
+    expect(container.querySelector('output')?.textContent).toBe('false');
+    expect(dialog.hasAttribute('open')).toBe(false);
     expect(container.querySelector('input[type="checkbox"]')).toBeNull();
+    expect(document.activeElement).toBe(trigger);
+
+    await click(trigger);
+    await click(must(container.querySelectorAll<HTMLInputElement>('input[type="checkbox"]').item(2)));
+    await click(apply());
+    expect(container.querySelector('output')?.textContent).toBe('true');
+    expect(dialog.hasAttribute('open')).toBe(false);
+    expect(document.activeElement).toBe(trigger);
+    expect(container.querySelector('input[type="checkbox"]')).toBeNull();
+
+    // Reopening starts from the applied settings, and Escape discards a new draft.
+    await click(trigger);
+    expect(must(container.querySelectorAll<HTMLInputElement>('input[type="checkbox"]').item(2)).checked).toBe(true);
+    await act(async () => {
+      dialog.dispatchEvent(new Event('cancel', { bubbles: false, cancelable: true }));
+      await Promise.resolve();
+    });
+    expect(dialog.hasAttribute('open')).toBe(false);
+    expect(container.querySelector('output')?.textContent).toBe('true');
   });
 
   it('offers contextual inputs for primary directions and both return types', async () => {
     const container = await mount();
-    await click(must(container.querySelector('button.primitive-disclosure-trigger')));
+    await click(must(container.querySelector('button.chart-overlay-trigger')));
 
     expect(container.textContent).toContain('Primary directed ring');
     expect(container.textContent).toContain('Return ring');
