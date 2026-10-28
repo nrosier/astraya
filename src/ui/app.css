@@ -4416,10 +4416,6 @@ svg text.chart-symbol-text-unicode {
   margin-bottom: 0;
 }
 
-.tab-row__prefix {
-  display: none;
-}
-
 /* The scroller, its hidden scrollbar and the edge fades: shared by every tab row. */
 .tab-row__viewport {
   display: block;
@@ -4646,8 +4642,7 @@ svg text.chart-symbol-text-unicode {
     flex-shrink: 0;
   }
 
-  .tab-row__leading,
-  .tab-row__prefix {
+  .tab-row__leading {
     align-self: center;
   }
 
@@ -4660,13 +4655,6 @@ svg text.chart-symbol-text-unicode {
   /* The scroller clips an outline drawn outside the control, so the focus ring is drawn inside it here. */
   .tab-row__leading select:focus-visible {
     outline-offset: -2px;
-  }
-
-  .tab-row__prefix {
-    display: block;
-    color: var(--muted);
-    font-size: var(--text-sm);
-    white-space: nowrap;
   }
 
   .tab-row__fallback {
@@ -4799,8 +4787,7 @@ svg text.chart-symbol-text-unicode {
   flex-direction: column;
 }
 
-.settings-card::backdrop,
-.chart-overlay-drawer::backdrop {
+.settings-card::backdrop {
   background: rgb(0 0 0 / 0.45);
 }
 
@@ -4812,6 +4799,24 @@ svg text.chart-symbol-text-unicode {
   border-width: 0 0 0 1px;
   border-radius: 0;
   box-shadow: var(--shadow-popover);
+}
+
+/*
+ * The Overlays drawer is non-modal (#817): no backdrop, the page stays live. From 75rem (1200px; a media query reads
+ * the browser's 16px rem) the body makes room for the drawer, so the shell and the wheel column shrink and wheel and
+ * drawer sit side by side with no overlap (measured at 1200px and up; at 1100px the wheel's 364px floor still
+ * overlaps). Below 75rem the drawer overlays the page undimmed, and takes the full width at 40rem and below.
+ */
+.primitive-staged-dialog[data-placement='right'][data-modal='false'] {
+  position: fixed;
+  inset: 0 0 auto auto;
+  z-index: 40;
+}
+
+@media (min-width: 75rem) {
+  body:has(.primitive-staged-dialog[data-modal='false'][open]) {
+    padding-right: var(--drawer-max-width);
+  }
 }
 
 /* Drawer body (#824): the tabs stay pinned under the heading; the active category scrolls under them. */

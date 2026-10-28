@@ -28,8 +28,6 @@ export interface ScrollingTabRowBaseProps {
   readonly activeKey?: string | undefined;
   /** Controls placed first on the row at every width (inside the scrolling part when wide). */
   readonly leading?: React.ReactNode;
-  /** Muted text between `leading` and the tabs; shown only where the tabs are (above 40rem). */
-  readonly prefix?: React.ReactNode;
   /** What replaces the tabs at 40rem and below, e.g. a labelled Select. Hidden when the tabs show. */
   readonly fallback?: React.ReactNode;
   /** Extra class on the row root, for the caller's own spacing. */
@@ -55,7 +53,6 @@ export function ScrollingTabRow({
   children,
   activeKey,
   leading,
-  prefix,
   fallback,
   actions,
   actionsLabel,
@@ -105,7 +102,6 @@ export function ScrollingTabRow({
       <div className="tab-row__viewport">
         <div ref={scrollerRef} className="tab-row__scroll">
           {leading !== undefined && leading !== null && <div className="tab-row__leading">{leading}</div>}
-          {hasTabs && prefix !== undefined && prefix !== null && <div className="tab-row__prefix">{prefix}</div>}
           {hasTabs && (
             <nav
               className={['tab-row__tabs', navClassName].filter((c) => c !== undefined).join(' ')}

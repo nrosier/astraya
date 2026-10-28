@@ -1,7 +1,7 @@
 /**
  * @module ChartOverlaySettingsPanel
  * @purpose Staged Overlay settings for configuring additional rings in the canonical chart wheel, opened from the chart row's Overlays trigger as a right slide-over drawer beside the wheel (#817, #824).
- * @conventions Owns only a draft that exists while the drawer is open (`StagedDialog placement="right"`); callers receive one confirmed settings object through `onApply`, so recalculation occurs once and Cancel, Escape, × and the backdrop retain the visible chart. The chart stays visible beside the drawer. Focus returns to the trigger on close.
+ * @conventions Owns only a draft that exists while the drawer is open (`StagedDialog placement="right"`); callers receive one confirmed settings object through `onApply`, so recalculation occurs once and Cancel, Escape and × retain the visible chart. The drawer is non-modal: from 75rem (1200px) the page makes room (the wheel column narrows) so wheel and drawer sit side by side, undimmed and clickable. Focus returns to the trigger on close.
  * @exports ChartOverlaySettingsPanel, ChartOverlaySettings, ChartOverlaySource, ChartOverlayReturnKind, DEFAULT_CHART_OVERLAY_SETTINGS, orderedChartOverlaySources
  */
 import { useRef, useState } from 'react';
@@ -151,6 +151,7 @@ export function ChartOverlaySettingsPanel({
         closeLabel={t.closeLabel}
         dialogClassName="chart-overlay-drawer"
         placement="right"
+        modal={false}
         onDiscard={close}
         returnFocusTo={triggerRef}
         footer={

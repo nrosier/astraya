@@ -6,7 +6,7 @@
 /**
  * @module ui/primitives/StagedDialog
  * @purpose A native `<dialog>` modal (focus trap, Escape, backdrop) for editing a draft, with one discard path and a sticky footer.
- * @conventions Controlled: the caller owns `open` and the draft, and closes the dialog from `onDiscard` (and from its own Apply); the dialog only reports that the reader wants out. Reuses the `.settings-card` look. `dialog.showModal` is missing in some test DOMs, hence the attribute fallback. The body scrolls inside the card and the footer stays reachable, so a short viewport never loses Apply. `placement="right"` sets `data-placement` and styles the same card as a right-anchored drawer (flat border, `--shadow-popover`, `--drawer-max-width`). An optional `subheader` row (e.g. category tabs, #824) stays pinned under the heading.
+ * @conventions Controlled: the caller owns `open` and the draft, and closes the dialog from `onDiscard` (and from its own Apply); the dialog only reports that the reader wants out. Reuses the `.settings-card` look. `dialog.showModal` is missing in some test DOMs, hence the attribute fallback. The body scrolls inside the card and the footer stays reachable, so a short viewport never loses Apply. `placement="right"` sets `data-placement` and styles the same card as a right-anchored drawer (flat border, `--shadow-popover`, `--drawer-max-width`). `modal={false}` opens it with `show()` (no backdrop, page stays interactive; Escape handled by a document listener). An optional `subheader` row (e.g. category tabs, #824) stays pinned under the heading.
  * @exports StagedDialog, StagedDialogProps
  */
 import { useEffect, useId, useRef } from 'react';
@@ -29,6 +29,11 @@ export interface StagedDialogProps {
   readonly dialogClassName?: string;
   /** `center` (default) is the modal card; `right` anchors it to the right edge as a drawer (#826). */
   readonly placement?: 'center' | 'right';
+  /**
+   * `true` (default) opens it with `showModal()`: focus trap, inert page, dimmed backdrop. `false` opens it with
+   * `show()` so the page beside it stays live (#817's Overlays drawer); Escape is then handled here.
+   */
+  readonly modal?: boolean;
 }
 
 export function StagedDialog({
@@ -42,6 +47,7 @@ export function StagedDialog({
   subheader,
   dialogClassName = 'settings-card',
   placement = 'center',
+  modal = true,
 }: StagedDialogProps): React.JSX.Element {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const headingId = useId();
@@ -51,8 +57,10 @@ export function StagedDialog({
     const dialog = dialogRef.current;
     if (dialog === null) return;
     if (open) {
-      if (typeof dialog.showModal === 'function') {
+      if (modal && typeof dialog.showModal === 'function') {
         if (!dialog.open) dialog.showModal();
+      } else if (!modal && typeof dialog.show === 'function') {
+        if (!dialog.open) dialog.show();
       } else dialog.setAttribute('open', '');
     } else if (wasOpen.current) {
       if (typeof dialog.close === 'function') dialog.close();
@@ -60,7 +68,7 @@ export function StagedDialog({
       returnFocusTo.current?.focus();
     }
     wasOpen.current = open;
-  }, [open, returnFocusTo]);
+  }, [open, returnFocusTo, modal]);
 
   // Leaving the page closes the card, the same rule the menus follow.
   useEffect(() => {
@@ -71,12 +79,25 @@ export function StagedDialog({
     };
   }, [open, onDiscard]);
 
+  // A non-modal dialog gets no Escape from the browser, so it listens itself, wherever focus is.
+  useEffect(() => {
+    if (!open || modal) return undefined;
+    const onKey = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') onDiscard();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open, modal, onDiscard]);
+
   return (
     <dialog
       ref={dialogRef}
       className={`${dialogClassName} primitive-staged-dialog`}
       aria-labelledby={headingId}
       {...(placement === 'right' ? { 'data-placement': 'right' } : {})}
+      {...(modal ? {} : { 'data-modal': 'false' })}
       onCancel={(event) => {
         // Escape: the browser would close it silently; closing it through the caller also drops the draft.
         event.preventDefault();

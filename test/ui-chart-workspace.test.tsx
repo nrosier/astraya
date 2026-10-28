@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /**
  * The chart workspace layout (#801): the sender-side share UI is gone in both languages, the view links
- * sit under the title behind a plain "Extended settings:" prefix, and the selection panel carries its
+ * sit under the title with no static prefix text, and the selection panel carries its
  * three named sections, placement badges, and an AI button that waits for consent.
  */
 import { readFileSync } from 'node:fs';

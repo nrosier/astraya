@@ -77,6 +77,8 @@ describe('ChartOverlaySettingsPanel', () => {
     const container = await mount();
     const dialog = must(container.querySelector('dialog'));
     expect(dialog.getAttribute('data-placement')).toBe('right');
+    // Non-modal (#817): no backdrop and an inert-free page, so the wheel beside it stays clickable.
+    expect(dialog.getAttribute('data-modal')).toBe('false');
     expect(dialog.hasAttribute('open')).toBe(false);
     expect(container.querySelector('input[type="checkbox"]')).toBeNull();
     const trigger = must(container.querySelector<HTMLButtonElement>('button.chart-overlay-trigger'));
@@ -126,7 +128,7 @@ describe('ChartOverlaySettingsPanel', () => {
     await click(trigger);
     expect(must(container.querySelectorAll<HTMLInputElement>('input[type="checkbox"]').item(2)).checked).toBe(true);
     await act(async () => {
-      dialog.dispatchEvent(new Event('cancel', { bubbles: false, cancelable: true }));
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
       await Promise.resolve();
     });
     expect(dialog.hasAttribute('open')).toBe(false);

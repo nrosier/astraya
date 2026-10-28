@@ -58,12 +58,27 @@ test('a natal, transit, and progressed triwheel is independently configurable (#
   await trigger.click();
   await expect(dialog).toBeVisible();
   await expect(dialog).toHaveAttribute('data-placement', 'right');
+  await expect(dialog).toHaveAttribute('data-modal', 'false');
   await expect(page.locator('div.chart-wheel')).toBeVisible();
-  const drawerBox = await dialog.boundingBox();
-  const wheelBox = await page.locator('div.chart-wheel').boundingBox();
-  if (drawerBox === null || wheelBox === null) throw new Error('expected layout boxes');
-  expect(drawerBox.x + drawerBox.width).toBeGreaterThan(1200);
-  expect(drawerBox.x).toBeGreaterThan(wheelBox.x);
+  // Push-aside (#817): at 1280x800 and 1440x900 the wheel column makes room, so wheel and drawer do not overlap, the
+  // wheel is fully inside the viewport, and nothing (no backdrop) sits over it.
+  for (const viewport of [
+    { width: 1280, height: 800 },
+    { width: 1440, height: 900 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await expect(async () => {
+      const drawerBox = await dialog.boundingBox();
+      const wheelBox = await page.locator('div.chart-wheel').boundingBox();
+      if (drawerBox === null || wheelBox === null) throw new Error('expected layout boxes');
+      expect(wheelBox.x).toBeGreaterThanOrEqual(0);
+      expect(wheelBox.x + wheelBox.width).toBeLessThanOrEqual(drawerBox.x + 0.5);
+      expect(drawerBox.x + drawerBox.width).toBeGreaterThan(viewport.width - 2);
+    }).toPass();
+    // Not behind a backdrop: a trial click at the wheel's centre fails if another element would intercept it.
+    await page.locator('div.chart-wheel').click({ trial: true });
+    await expect(page.locator('.chart-point[data-body="sun"]').first()).toBeVisible();
+  }
   await dialog.getByRole('checkbox', { name: 'Transit ring', exact: true }).check();
   await dialog.getByLabel('Transit date', { exact: true }).fill('2025-01-01');
   await dialog.getByRole('checkbox', { name: 'Secondary progressed ring', exact: true }).check();
