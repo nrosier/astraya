@@ -119,3 +119,16 @@ describe('almuten and dispositors tooltips on Patterns & condition (#456)', () =
     expect(popup?.textContent).toBe(chartViewMessages.en.almutenTooltip);
   });
 });
+
+describe('the Dispositors chain on Patterns & condition (#870)', () => {
+  it('shows the arrows between bodies in a muted token, and keeps the chain text whole', async () => {
+    const container = await mountOnPatterns();
+    const panel = container.querySelector('#chart-view-patterns');
+    const dispositors = panel?.querySelector('.dispositors-section-header')?.closest('section') ?? panel;
+    const muted = dispositors?.querySelectorAll('.data-table-muted');
+    const arrows = Array.from(muted ?? []).filter((el) => el.textContent.trim() === '→');
+    expect(arrows.length).toBeGreaterThan(0);
+    // Every chain has at least one arrow once it runs past its first body.
+    expect(dispositors?.textContent).not.toContain('→→');
+  });
+});

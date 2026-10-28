@@ -308,9 +308,18 @@ export function dispositorColumns(
         (row.coDispositorKey === undefined
           ? ''
           : ` (+ ${bodyByKey(row.coDispositorKey)?.name ?? row.coDispositorKey})`),
-      render: (row) =>
-        row.chain.map((key) => bodyDisplayName(key, locale)).join(' → ') +
-        (row.coDispositorKey === undefined ? '' : ` (+ ${bodyDisplayName(row.coDispositorKey, locale)})`),
+      // The arrows are muted on screen; `valueOf` keeps the plain text for copy, CSV and the PDF (#870).
+      renderCell: (row) => (
+        <>
+          {row.chain.map((key, index) => (
+            <span key={key}>
+              {index > 0 && <span className="data-table-muted"> → </span>}
+              {bodyDisplayName(key, locale)}
+            </span>
+          ))}
+          {row.coDispositorKey === undefined ? null : ` (+ ${bodyDisplayName(row.coDispositorKey, locale)})`}
+        </>
+      ),
     },
     {
       key: 'finalDispositorName',
@@ -547,7 +556,7 @@ export function renderDignitiesTable(
         getRowKey={(row) => row.bodyKey}
         downloadFilename={deriveExportFilename(displayName, 'dignities', 'csv')}
       />
-      <h4 className="condition-section-header" style={{ marginTop: '1.5rem', marginBottom: '0.5rem' }}>
+      <h4 className="condition-section-header patterns-section-header">
         {t.conditionCaption}{' '}
         <Tooltip text={t.conditionTooltip} label={t.conditionTooltipLabel}>
           ?
@@ -563,7 +572,7 @@ export function renderDignitiesTable(
         getRowKey={(row) => row.bodyKey}
         downloadFilename={deriveExportFilename(displayName, 'condition', 'csv')}
       />
-      <h4 className="dispositors-section-header" style={{ marginTop: '1.5rem', marginBottom: '0.5rem' }}>
+      <h4 className="dispositors-section-header patterns-section-header">
         <GlossaryTerm id="dispositor">{t.dispositorsCaption}</GlossaryTerm>{' '}
         {/* The shared Tooltip (#456, #508) shows the same visible popup on hover, click and
             keyboard focus — a bare <span title> or an unwired aria-label button only ever
@@ -582,7 +591,7 @@ export function renderDignitiesTable(
         getRowKey={(row) => row.bodyKey}
         downloadFilename={deriveExportFilename(displayName, 'dispositors', 'csv')}
       />
-      <h4 className="reception-section-header" style={{ marginTop: '1.5rem', marginBottom: '0.5rem' }}>
+      <h4 className="reception-section-header patterns-section-header">
         {t.receptionCaption}{' '}
         <Tooltip text={t.receptionTooltip} label={t.receptionTooltipLabel}>
           ?
