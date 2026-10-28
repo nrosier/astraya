@@ -9,7 +9,7 @@ file…** with an `.aaf` file.
 
 The AAF'97 format specification, dated 3 February 1997, by Martin Garms and Tobias Ferber:
 <http://www.astrowissen.de/aaf/eng/lib/aafspecs.htm>. The field grammar is transcribed, with section numbers, in
-`docs/references/aaf-chunks.references.json`.
+`docs/references/topics/aaf-chunks.json`.
 
 The specification pages state no licence. The separate AAF library is commercial and copyrighted (1994–97). Astraya
 implements the format from the specification's field descriptions and its own sample records only; nothing is

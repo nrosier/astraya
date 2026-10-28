@@ -107,7 +107,7 @@ export function matchOrbProfile(scalePercent: number): OrbProfileId | undefined 
  * taken from William Lilly's own table of the orbs of the planets, *Christian Astrology* (1647), Book I,
  * p. 107. Lilly gives two columns and says he uses either; both are offered. He predates Uranus, Neptune
  * and Pluto, so a pair that includes any body he does not list falls back to the aspect's own tier.
- * The transcription, with its page and scan, is in `docs/references/orb-conventions.references.json`.
+ * The transcription, with its page and scan, is in `docs/references/topics/orb-conventions.json`.
  */
 export type CitedOrbPresetId = 'lilly-1647-first-v1' | 'lilly-1647-second-v1';
 

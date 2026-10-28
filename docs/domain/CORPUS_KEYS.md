@@ -78,7 +78,7 @@ selection. The categories are registered in the schema and shown in the chart's 
 one-line sentence until entries exist. **No entries have been generated yet.** No source describes either point in a sign or a
 house, so the generator (`tools/corpus-gen`, #517) _composes_ each entry from a short list of sourced rules
 (`tools/corpus-gen/classical-texts/derived-point.rules.json`, each citing a passage in
-`docs/references/derived-points.references.json`) in its own restrained voice, and the judge checks only that the entry stays
+`docs/references/topics/derived-points.json`) in its own restrained voice, and the judge checks only that the entry stays
 inside those facts. The generator skips these placements unless `--include-derived-points` is passed, and `--dry-run` shows
 the plan and the first prompt without any API call. That is 48 entries per language (2 points × 12 signs + 2 points × 12
 houses); the reports do not read them.

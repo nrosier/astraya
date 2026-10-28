@@ -31,8 +31,22 @@ src/interpretation/corpus/*.txt
 
 # Reference PDFs (books and scans) kept locally for citation checks. Never committed,
 # whether or not the source is public domain; the citations they support are recorded
-# in docs/references/ as JSON passages instead.
+# in docs/references/topics/ as JSON passages instead (#864).
 *.pdf
+
+# Local archive of source originals and extracted text (#864): indexed by processed/MAP.md,
+# described in docs/references/SCHEMA.md. Copyrighted text stays local, so nothing under it
+# is committed. The index stays local too.
+processed/
+
+# Reference files that used to sit in docs/references/ and were excluded per clone via
+# .git/info/exclude; kept here so every clone agrees.
+docs/references/WilliamLilly-ChristianAstrology-BookII.pdf
+docs/references/lilly-christian-astrology-book2.local.json
+docs/references/CA_DH.pdf
+docs/references/b30338724_djvu.txt
+docs/references/helena-avelar-luis-ribeiro-on-the-heavenly-spheres-a-treatise-on-traditional-astrology.pdf
+docs/references/bonatti-liber-astronomiae/
 
 # Scratch output from the Playwright MCP browser tool (page snapshots,
 # console logs, screenshots) used for manual UI verification during a

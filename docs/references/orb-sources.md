@@ -1,7 +1,7 @@
 # Orb conventions: what has been checked (#590)
 
 Status of every orb value Astraya uses. A value is **cited** only when a primary source has been read from
-a page image and transcribed in `orb-conventions.references.json`. Anything else is an **Astraya default**:
+a page image and transcribed in `topics/orb-conventions.json`. Anything else is an **Astraya default**:
 our own choice, not a citation.
 
 | Value                                                                                                                                                 | Where                                                    | Status                                                              | Source                                                                                                  |
@@ -36,4 +36,4 @@ our own choice, not a citation.
 
 - The Moon in "the later degrees of a Signe, especially in Gemini, Scorpio or Capricorn" (Lilly, Book I, p. 122) is
   not checked: he gives no degree threshold, and Astraya does not invent one. See `lilly-i-moon-later-degrees` in
-  `orb-conventions.references.json`.
+  `topics/orb-conventions.json`.

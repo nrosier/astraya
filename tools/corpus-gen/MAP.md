@@ -24,4 +24,4 @@ Scripts:
 - `sample-degree-symbol.mjs` — Pre-decision smoke test for #405: runs the full generate→judge→revise loop over a sample of degree-symbol entries, synchronous transports, no corpus/schema touch. Calls Gemini + OpenAI.
 - `verify-batch.mjs` — First trustworthiness signal (#359): check each entry's text vs. computed facts, additively tag mismatches without altering text. Calls Gemini/Ollama.
 
-Seed data read by the scripts above (`classical-texts/`): `degree-symbol.en.json` (1655 images, #405), `dignity-state.en.json` (Lilly excerpts, #359) and `derived-point.rules.json` (sourced rules the derived-point entries are composed from, #517; every rule cites a passage in `docs/references/derived-points.references.json`).
+Seed data read by the scripts above (`classical-texts/`): `degree-symbol.en.json` (1655 images, #405), `dignity-state.en.json` (Lilly excerpts, #359) and `derived-point.rules.json` (sourced rules the derived-point entries are composed from, #517; every rule cites a passage in `docs/references/topics/derived-points.json`).

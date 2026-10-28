@@ -1,7 +1,7 @@
 {
-  "$comment": "Rule data for the derived-point corpus categories (derived-point-in-sign / derived-point-in-house, #517). There is no source text for a Lot in a sign or a house, so the generator is given these sourced rules and asked to COMPOSE from them (owner decision, 2026-10-11); it is never asked to recall astrology. Every rule cites passage ids in docs/references/derived-points.references.json, and test/tools-corpus-gen-derived-points.test.ts fails if a cited id does not exist.",
+  "$comment": "Rule data for the derived-point corpus categories (derived-point-in-sign / derived-point-in-house, #517). There is no source text for a Lot in a sign or a house, so the generator is given these sourced rules and asked to COMPOSE from them (owner decision, 2026-10-11); it is never asked to recall astrology. Every rule cites passage ids in docs/references/topics/derived-points.json, and test/tools-corpus-gen-derived-points.test.ts fails if a cited id does not exist.",
   "schema_version": 1,
-  "references_file": "docs/references/derived-points.references.json",
+  "references_file": "docs/references/topics/derived-points.json",
   "points": {
     "part-of-fortune": {
       "name": "Part of Fortune",

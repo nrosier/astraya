@@ -68,7 +68,7 @@ export type SolarCondition = 'cazimi' | 'combust' | 'underTheBeams' | 'free';
  * Lilly, Christian Astrology (1647), Book I, p. 113: cazimi within 17 arcminutes of the Sun; combust within
  * 8 degrees 30 minutes of it, in the same sign; under the beams until 17 degrees. Book II, p. 300 (aphorism 26)
  * gives under the beams within 12 degrees and cazimi within 16 minutes; Book I is followed because it is the
- * fuller statement. See docs/references/orb-conventions.references.json.
+ * fuller statement. See docs/references/topics/orb-conventions.json.
  */
 /** Within the Sun's own disk, 17 arcminutes (Lilly, Book I, p. 113). */
 const CAZIMI_ORB: Degrees = 17 / 60;

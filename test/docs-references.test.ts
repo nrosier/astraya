@@ -32,10 +32,10 @@ interface ReferenceFile {
 }
 
 const file = JSON.parse(
-  readFileSync(resolve(import.meta.dirname, '../docs/references/derived-points.references.json'), 'utf8'),
+  readFileSync(resolve(import.meta.dirname, '../docs/references/topics/derived-points.json'), 'utf8'),
 ) as ReferenceFile;
 
-describe('docs/references/derived-points.references.json', () => {
+describe('docs/references/topics/derived-points.json', () => {
   it('has a version and states its coverage, including the dropped midpoints', () => {
     expect(file.schema_version).toBe(1);
     expect(Object.keys(file.coverage).sort()).toEqual(['midpoints', 'part-of-fortune', 'part-of-spirit']);

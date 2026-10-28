@@ -53,9 +53,7 @@ interface Rules {
 }
 
 const root = resolve(import.meta.dirname, '..');
-const references = JSON.parse(
-  readFileSync(resolve(root, 'docs/references/derived-points.references.json'), 'utf8'),
-) as {
+const references = JSON.parse(readFileSync(resolve(root, 'docs/references/topics/derived-points.json'), 'utf8')) as {
   passages: { id: string }[];
 };
 const derived = buildPlacements().filter(

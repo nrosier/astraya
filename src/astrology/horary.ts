@@ -34,13 +34,13 @@
  * Capricorn" (Book I, p. 122). He gives no number for "the later degrees", and this module does not
  * invent one: using the Ascendant's 27° would present a guess as his rule. A chart with the Moon at the
  * end of a sign can therefore read as fit to be judged. See `lilly-i-moon-later-degrees` in
- * `docs/references/orb-conventions.references.json`; if a source gives a threshold, add it there first.
+ * `docs/references/topics/orb-conventions.json`; if a source gives a threshold, add it there first.
  */
 
 /**
  * @module Horary
  * @purpose Checks the classical "considerations before judgment" that determine whether a horary chart is fit to be judged (radical).
- * @conventions Based on Lilly's Christian Astrology (1647), Book I, "Considerations before Judgment", pp. 121-123 (transcribed in docs/references/orb-conventions.references.json); only four of Lilly's considerations are checked (Ascendant too early/late, Moon void of course, Moon in the Via Combusta, Saturn in the seventh house), since the rest depend on the content of the question asked, which no chart alone can tell.
+ * @conventions Based on Lilly's Christian Astrology (1647), Book I, "Considerations before Judgment", pp. 121-123 (transcribed in docs/references/topics/orb-conventions.json); only four of Lilly's considerations are checked (Ascendant too early/late, Moon void of course, Moon in the Via Combusta, Saturn in the seventh house), since the rest depend on the content of the question asked, which no chart alone can tell.
  * @exports horaryConsiderations, isRadical, ASCENDANT_EARLY_LIMIT_DEG, ASCENDANT_LATE_LIMIT_DEG, VIA_COMBUSTA_START_DEG, VIA_COMBUSTA_END_DEG
  */
 import type { Degrees } from '../ephemeris/types.js';

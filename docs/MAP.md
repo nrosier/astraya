@@ -15,7 +15,7 @@ Topic folders:
 - `ASTROLOGY_TERMS.md` — Combined 573-term astrology/astronomy glossary merged from six draft sources, staged as source material for #456's glossary tooltip content. Deps: none yet (not wired into `src/ui` — pending integration).
 - `domain/CORPUS_KEYS.md` — Corpus key-shape reference (which placements get which key format). Deps: `src/interpretation/schema.ts`.
 - `domain/CHART_OVERLAYS.md` — Supported chart-overlay contexts, intentional relationship-chart exceptions, interaction, and export behavior. Deps: `src/ui/ChartView.tsx`, `src/ui/SynastryView.tsx`, `src/chart/multi-wheel.ts`.
-- `domain/AAF_INTERCHANGE.md` — AAF birth-record interchange: the AAF'97 source, the field mapping, the Astraya extension chunk, and what is not claimed (#591). Deps: `src/domain/aaf.ts`, `src/domain/aaf-people.ts`, `references/aaf-chunks.references.json`.
+- `domain/AAF_INTERCHANGE.md` — AAF birth-record interchange: the AAF'97 source, the field mapping, the Astraya extension chunk, and what is not claimed (#591). Deps: `src/domain/aaf.ts`, `src/domain/aaf-people.ts`, `references/topics/aaf-chunks.json`.
 - `domain/EXPORT_SCHEMA.md` — Astraya full-export JSON schema reference: shape, compatibility policy, version history (#561). Deps: `src/domain/full-export.ts`, `src/domain/chart-tables.ts`; paired with `schema/astraya-export.schema.json`.
 - `domain/FIXED_STAR_REGISTRY.md` — Fixed-star registry reference: sourcing, epoch, and lineage of the entries in `src/astrology/fixed-star-registry.ts`. Deps: `src/astrology/fixed-star-registry.ts`.
 - `ASTROLOGICAL_DATA_SOURCES.md` — Public astronomical datasets, historical source texts, current Astraya coverage, and adoption/licensing recommendations. Deps: `src/ephemeris/`, `src/astrology/`, upstream catalogues.
@@ -28,7 +28,8 @@ Subdirectories:
 - `adr/` — Architecture Decision Records, one numbered file per decision. Deps: none.
 - `agents/` — Generic Claude Code skill docs (`domain-modeling` skill's `CONTEXT.md`/ADR conventions) — not Astraya product documentation.
 - `archive/` — Deprecated/retired docs, append-only, never deleted outright: abandoned tooling write-ups (LAYA/Ollama benchmarking, astrologyapi.com comparison), the removed-env-vars log, and the dated UI/UX audit.
-- `audit/` — One-off repository audits, reviews, and structural evaluations, filename datestamped `YYYY-MM-DD-description.md`.- `references/` — Curated public-domain source passages for seeding the corpus (structured JSON); see its own `MAP.md` for what is kept and why. Not documentation about Astraya.
+- `audit/` — One-off repository audits, reviews, and structural evaluations, filename datestamped `YYYY-MM-DD-description.md`.
+- `references/` — Source index: `orb-sources.md` plus curated citation passages in `topics/*.json`; the local archive of source texts is `processed/` (gitignored). See its own `MAP.md`. Not documentation about Astraya.
 - `schema/` — Hand-authored JSON Schema files for Astraya's own stable data formats (`astraya-export.schema.json`, #561), paired with a top-level `.md` reference doc.
 
 ## Where does a new doc go?
@@ -38,4 +39,4 @@ Subdirectories:
 - A living reference meant to be read repeatedly → `.md` in the matching topic folder (`ui/`, `domain/` or `ops/`).
 - Writeup for tooling or an approach that's since been abandoned → `archive/`, don't delete it outright — git history alone makes old write-ups hard to find later.
 - Docs for Claude Code's own generic skills, not specific to this app → `agents/`.
-- A third-party source text the corpus is checked or seeded against → `references/`, with its edition and licence recorded in that folder's `MAP.md`.
+- A third-party source text the corpus is checked or seeded against → `references/`, with its edition and licence recorded in `processed/sources.json` (see `references/SCHEMA.md`).

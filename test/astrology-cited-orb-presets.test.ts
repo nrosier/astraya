@@ -1,6 +1,6 @@
 /**
  * The cited Lilly orb presets (#590): their numbers are pinned to the transcription in
- * docs/references/orb-conventions.references.json, and the moiety arithmetic reproduces Lilly's own
+ * docs/references/topics/orb-conventions.json, and the moiety arithmetic reproduces Lilly's own
  * worked examples. Pure, no ephemeris.
  */
 import { readFileSync } from 'node:fs';
@@ -27,7 +27,7 @@ interface Passage {
   readonly table?: { readonly rows?: readonly OrbRow[] };
 }
 const file = JSON.parse(
-  readFileSync(resolve(import.meta.dirname, '../docs/references/orb-conventions.references.json'), 'utf8'),
+  readFileSync(resolve(import.meta.dirname, '../docs/references/topics/orb-conventions.json'), 'utf8'),
 ) as { readonly passages: readonly Passage[] };
 
 const rows = file.passages.find((passage) => passage.id === 'lilly-i-orbs-table')?.table?.rows ?? [];
