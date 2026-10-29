@@ -1337,6 +1337,7 @@ export function ChartView({
   const customPoints = useStableBy(person?.customPoints, (points) => JSON.stringify(points ?? []));
   const fixedStars = useStableBy(person?.fixedStars, (stars) => JSON.stringify(stars ?? []));
   const t = useMessages(chartViewMessages);
+  const chartTypeT = useMessages(chartTypesMessages);
   const [locale] = useLocale();
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
   const [compareLoad, setCompareLoad] = useState<Load>({ kind: 'loading' });
@@ -1361,6 +1362,18 @@ export function ChartView({
   // The basis names the card's settings and the device's natal orb profile, not the orb-overridden `settings` (#806).
   const basisLine = useCalculationBasisLine(cardSettings, rulership, orbSourceName(orbLibrary, orbSources, 'natal'));
   const lastChartKey = useRef('');
+  // The page title names the chart type as well as the person (#885): "Natal · Name", or the comparison label when comparing.
+  const pageTitle = t.chartTitle(
+    compareType === undefined ? chartTypeT.typeLabels.natal : t.comparisonLabel,
+    person === undefined || person.displayName === '' ? t.chartFallback : person.displayName,
+  );
+  useEffect(() => {
+    const previousTitle = document.title;
+    document.title = pageTitle;
+    return () => {
+      document.title = previousTitle;
+    };
+  }, [pageTitle]);
   // Memoised: it is a dependency of the wheel's markup, and a new array on every render of this screen (which a
   // change of section now causes) would redraw the wheel and drop what was selected on it.
   const personName = person?.displayName ?? '';
@@ -1531,7 +1544,7 @@ export function ChartView({
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <PageHeader title={t.chartFallback} />
+        <PageHeader title={pageTitle} />
         <p>
           {t.notCompleteChart(person.displayName || t.thisPersonCapitalized)}{' '}
           <a href={personHref(personId)}>{t.personPageLink}</a>.
@@ -1550,7 +1563,7 @@ export function ChartView({
       <main className="shell shell--wide">
         <div className="chart-title-row">
           <BackLink fallback={personHref(personId)} />
-          <PageHeader title={person.displayName || t.chartFallback} basis={basisLine} />
+          <PageHeader title={pageTitle} basis={basisLine} />
         </div>
         <div className="comparison-container" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
           <div>
@@ -1616,7 +1629,7 @@ export function ChartView({
     <main className="shell shell--wide">
       <div className="chart-title-row">
         <BackLink fallback={personHref(personId)} />
-        <PageHeader title={person.displayName || t.chartFallback} basis={basisLine} />
+        <PageHeader title={pageTitle} basis={basisLine} />
       </div>
       <ChartDataView
         typeSelector={<ChartTypeSelector personId={personId} type="natal" view={view} />}

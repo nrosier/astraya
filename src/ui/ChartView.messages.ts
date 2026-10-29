@@ -319,6 +319,7 @@ const en = {
   thisPersonCapitalized: 'This person',
   personFallback: 'Person',
   chartFallback: 'Chart',
+  chartTitle: (type: string, name: string) => `${type} · ${name}`,
   natalFallback: 'Natal',
   notCompleteChart: (name: string) =>
     `${name}’s birth record is not complete enough to calculate a chart yet. Fill in the missing fields on the`,
@@ -657,6 +658,7 @@ const nl: typeof en = {
   thisPersonCapitalized: 'Deze persoon',
   personFallback: 'Persoon',
   chartFallback: 'Horoscoop',
+  chartTitle: (type: string, name: string) => `${type} · ${name}`,
   natalFallback: 'Natal',
   notCompleteChart: (name: string) =>
     `Het geboorterecord van ${name} is niet volledig genoeg om een horoscoop te berekenen. Vul de ontbrekende velden in op de`,
