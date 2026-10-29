@@ -58,7 +58,8 @@ async function settle(page: Page, hash: string, locale: string, theme: string): 
     await page
       .getByRole('button', { name: locale === 'nl' ? 'Persoon toevoegen' : 'Add a person', exact: true })
       .click();
-  await expect(page.locator('.primitive-field').first()).toBeVisible();
+  // The section tab row (#882) also holds a display:none fallback Select above 40rem; wait for a rendered field.
+  await expect(page.locator('.primitive-field:visible').first()).toBeVisible();
 }
 
 for (const [name, hash] of SCREENS) {
@@ -73,7 +74,7 @@ for (const [name, hash] of SCREENS) {
         );
 
         // A focused control draws its own ring; contrast must hold there too.
-        await page.locator('.primitive-field input, .primitive-field select').first().focus();
+        await page.locator('.primitive-field:visible input, .primitive-field:visible select').first().focus();
         const focused = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
         expect(focused.violations.map((v) => v.id)).toEqual([]);
       });
@@ -93,6 +94,7 @@ for (const [name, hash] of SCREENS) {
         const problems = await page.evaluate(`(() => {
           const found = [];
           for (const field of document.querySelectorAll('.primitive-field')) {
+            if (field.getClientRects().length === 0) continue; // the width's hidden tab-row fallback Select
             const label = field.querySelector('label');
             const control = field.querySelector('input, select, textarea');
             const name = label === null ? '' : label.textContent;
