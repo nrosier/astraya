@@ -93,6 +93,24 @@ describe('PersonForm card layout (#795)', () => {
     expect(location.querySelector('.birth-place-search-form button[type="submit"]')).not.toBeNull();
   });
 
+  it('shows the birth time as HH:MM, inside the identity card timestamp grid, with a one-minute step', () => {
+    const input = card('identity').querySelector<HTMLInputElement>('.birth-record-timestamp input[type="time"]');
+    expect(input).not.toBeNull();
+    expect(input?.value).toBe('13:00');
+    expect(input?.step).toBe('60');
+  });
+
+  it('orders the timestamp fields date, how the time is known, then time', () => {
+    const grid = card('identity').querySelector('.birth-record-timestamp');
+    const kinds = [...(grid?.children ?? [])].map((child) => {
+      if (child.querySelector('input[type="date"]') !== null) return 'date';
+      if (child.querySelector('select') !== null) return 'rating';
+      if (child.querySelector('input[type="time"]') !== null) return 'time';
+      return 'other';
+    });
+    expect(kinds).toEqual(['date', 'rating', 'time']);
+  });
+
   it('keeps Save changes as the last control of the Notes card, after the resolved timezone card', () => {
     const notes = card('notes');
     expect(notes.querySelector('textarea')).not.toBeNull();
