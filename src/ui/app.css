@@ -6325,6 +6325,8 @@ dl.consultation-tiles {
    the .chart-aspect-glyph-* rules above: cool for conjunction, sextile and trine, warm for the hard aspects, --aspect-minor
    for the quintile family. */
 .mgrid-scroll {
+  /* The positioned ancestor of the headers' `.sr-only` spans: without it they escape this clip and stretch the page sideways on a phone. */
+  position: relative;
   overflow-x: auto;
   max-width: 100%;
 }

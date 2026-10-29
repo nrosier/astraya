@@ -83,6 +83,8 @@ for (const theme of THEMES) {
       ['natal aspects', `#/people/${id ?? ''}/charts/natal/aspects`],
       ['natal placements', `#/people/${id ?? ''}/charts/natal/placements`],
       ['natal patterns', `#/people/${id ?? ''}/charts/natal/patterns`],
+      ['natal matrix', `#/people/${id ?? ''}/charts/natal/matrix`],
+      ['natal elements and modalities', `#/people/${id ?? ''}/charts/natal/elements`],
       ['transits', `#/people/${id ?? ''}/timing/transits`],
       ['PDF builder', '#/documents/pdf'],
       ['preferences', '#/preferences'],
