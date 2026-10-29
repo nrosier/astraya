@@ -121,7 +121,7 @@ test.describe('with the shared people (#799)', () => {
     await openSharedPerson(page, baseUrl, EINSTEIN);
 
     // Profections: the control is there and saves the choice on this person at once.
-    await page.getByRole('button', { name: 'Progressions & Directions', exact: true }).click();
+    await page.getByRole('link', { name: 'Progressions & Directions', exact: true }).click();
     await page.getByRole('link', { name: 'Profections', exact: true }).click();
     await expect(rulersOption(page, 'Both')).toBeVisible();
     // The choice is written to the person's record, so the card follows once that is saved.
@@ -131,7 +131,7 @@ test.describe('with the shared people (#799)', () => {
 
     // Transits: the rulers are not part of the filter (#513) — the staged "Change filters" dialog points to
     // Preferences, where the device default is shown: Einstein's own choice does not change it (#806).
-    await page.getByRole('button', { name: 'Transits & Forecast', exact: true }).click();
+    await page.getByRole('link', { name: 'Transits & Forecast', exact: true }).click();
     await page.getByRole('link', { name: 'Transits', exact: true }).click();
     await expect(page.getByRole('heading', { level: 1, name: /transits/i })).toBeVisible();
     await page.getByRole('button', { name: 'Change filters', exact: true }).click();

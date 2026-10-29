@@ -49,7 +49,7 @@ test('a person with a known birth time gets a Solar Arc screen with directed pos
 
   await openSharedPerson(page, baseUrl, EINSTEIN);
 
-  await page.getByRole('button', { name: 'Progressions & Directions', exact: true }).click();
+  await page.getByRole('link', { name: 'Progressions & Directions', exact: true }).click();
   await page.getByRole('link', { name: 'Solar Arc', exact: true }).click();
   await expect(page.getByRole('heading', { name: /solar arc/i, level: 1 })).toBeVisible();
 
@@ -60,7 +60,7 @@ test('a person with a known birth time gets a Solar Arc screen with directed pos
 test('a person with an unknown birth time is told solar arc directions need one', async () => {
   await openSharedPerson(page, baseUrl, MARIC);
 
-  await page.getByRole('button', { name: 'Progressions & Directions', exact: true }).click();
+  await page.getByRole('link', { name: 'Progressions & Directions', exact: true }).click();
   await page.getByRole('link', { name: 'Solar Arc', exact: true }).click();
   await expect(page.getByText(/need a known birth time/)).toBeVisible();
 });

@@ -287,7 +287,7 @@ test.describe('with the shared people (#799)', () => {
     test.setTimeout(60_000);
 
     await openSharedPerson(page, baseUrl, EINSTEIN);
-    await page.getByRole('button', { name: 'Progressions & Directions', exact: true }).click();
+    await page.getByRole('link', { name: 'Progressions & Directions', exact: true }).click();
     await page.getByRole('link', { name: 'Profections', exact: true }).click();
     await expect(page.getByRole('cell', { name: 'Year' })).toBeVisible();
 
@@ -299,7 +299,7 @@ test.describe('with the shared people (#799)', () => {
     test.setTimeout(60_000);
 
     await openSharedPerson(page, baseUrl, EINSTEIN);
-    await page.getByRole('button', { name: 'Transits & Forecast', exact: true }).click();
+    await page.getByRole('link', { name: 'Transits & Forecast', exact: true }).click();
     await page.getByRole('link', { name: 'Transits', exact: true }).click();
     await expect(page.locator('div.chart-wheel')).toBeVisible();
 
@@ -311,7 +311,7 @@ test.describe('with the shared people (#799)', () => {
     test.setTimeout(60_000);
 
     await openSharedPerson(page, baseUrl, EINSTEIN);
-    await page.getByRole('button', { name: 'Relationship Charts', exact: true }).click();
+    await page.getByRole('link', { name: 'Relationship Charts', exact: true }).click();
     await page.getByRole('link', { name: 'Synastry', exact: true }).click();
     await page.getByLabel('Compare with').selectOption({ label: 'Max Born' });
     await expect(page.locator('div.chart-wheel')).toBeVisible();
@@ -324,7 +324,7 @@ test.describe('with the shared people (#799)', () => {
     test.setTimeout(60_000);
 
     await openSharedPerson(page, baseUrl, EINSTEIN);
-    await page.getByRole('button', { name: 'Relationship Charts', exact: true }).click();
+    await page.getByRole('link', { name: 'Relationship Charts', exact: true }).click();
     await page.getByRole('link', { name: 'Composite', exact: true }).click();
     await page.getByLabel('Compose with').selectOption({ label: 'Max Born' });
     await expect(page.locator('div.chart-wheel')).toBeVisible();
@@ -348,7 +348,7 @@ test.describe('with the shared people (#799)', () => {
     test.setTimeout(60_000);
 
     await openSharedPerson(page, baseUrl, EINSTEIN);
-    await page.getByRole('button', { name: 'Transits & Forecast', exact: true }).click();
+    await page.getByRole('link', { name: 'Transits & Forecast', exact: true }).click();
     await page.getByRole('link', { name: 'Forecast', exact: true }).click();
     await expect(page.getByText(/Solar return for \d{4}/)).toBeVisible();
 

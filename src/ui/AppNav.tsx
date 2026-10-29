@@ -5,11 +5,10 @@
  * What it holds, left to right:
  * - on a person's screen, **whose chart** this is (the person chip) and that person's tabs: Birth
  *   record, Charts (a dropdown of the chart types: natal, draconic, harmonic, solar and lunar return),
- *   Interpretation, Astrocartography and the three grouped dropdowns (Transits & Forecast, Progressions &
- *   Directions, Relationship Charts);
- * - **Tools**, on every screen: the calculators that are not about one person's chart, grouped
- *   under noninteractive headings (Sky & cycles / Questions & planning / Birth data) rather than
- *   left as one flat list (`tools-nav.ts`, #506/#509);
+ *   Interpretation, Astrocartography and the three sections (Transits & Forecast, Progressions &
+ *   Directions, Relationship Charts), each one plain link to its first sub-view (#882);
+ * - **Tools**, on every screen: one plain link to the first calculator (#882). The sub-views of each
+ *   section, tools included, are tabs on the page (`SectionNav.tsx`), not a sub-menu here;
  * - **Build custom PDF…**, on every screen: a plain link, not a dropdown — it is the only export
  *   action left here. Full-data/people-CSV export moved to Preferences → Data & privacy (#510),
  *   and each screen's own exports (a chart's image, its print version) moved to that screen's own
@@ -23,18 +22,17 @@
  * Marked up as plain navigation links, not `role="tablist"`: these are links to different routes,
  * not same-page panels, so the WAI-ARIA tab pattern (roving tabindex, arrow keys) does not fit.
  *
- * Dropdowns share one `useExclusiveOpen` (#417): one open at a time, closed by choosing something,
- * by a click elsewhere, by Escape and by changing page. Below 1024px the whole nav folds behind a
- * Menu button and opens as a panel under the header; choosing anything, Escape or changing page
- * closes it. The dropdowns then open in place inside that panel rather than floating over it.
+ * The person switcher is the one dropdown left; it shares `useExclusiveOpen` (#417) with nothing else.
+ * Below 1024px the whole nav folds behind a Menu button and opens as a panel under the header;
+ * choosing anything, Escape or changing page closes it.
  */
 /**
  * @module AppNav
- * @purpose Renders the sticky header's main navigation: a person's chart tabs/dropdowns, the Tools menu, and the PDF-builder link.
- * @conventions Dropdowns share one `useExclusiveOpen` so only one is open at a time; folds behind a Menu button below 1024px; text comes from co-located `AppNav.messages.ts` via `useMessages()`.
+ * @purpose Renders the sticky header's main navigation: a person's tabs and one link per multi-view section (#882), the Tools link, and the PDF link.
+ * @conventions No sub-menus for sections: sub-views are tabs on the page (SectionNav). The person switcher keeps one `useExclusiveOpen`; folds behind a Menu button below 1024px; text comes from co-located `AppNav.messages.ts` via `useMessages()`.
  * @exports AppNav
  */
-import { Fragment, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { appNavMessages } from './AppNav.messages.js';
 import { useMessages } from './messages.js';
 import { activeFeatureKey, activePersonTabKey, activeToolKey } from './feature-registry.js';
@@ -42,7 +40,7 @@ import { isTabEnabled, PERSON_TAB_FAMILIES, PERSON_TABS } from './person-nav.js'
 import type { PersonTab } from './person-nav.js';
 import { routeHref, type Route } from './route.js';
 import { useOptionalStore, useStoreState } from './store-context.js';
-import { TOOL_GROUPS, TOOLS } from './tools-nav.js';
+import { TOOLS } from './tools-nav.js';
 import { useLastPersonId, writeLastPersonId } from './last-person.js';
 import { PersonSwitcher } from './PersonSwitcher.js';
 import { useExclusiveOpen, type ExclusiveOpen } from './use-exclusive-open.js';
@@ -55,58 +53,6 @@ const UNGROUPED_KEYS = new Set(['overview', 'consultation', 'birth-record', 'cha
 // completeness (#506/#509's canonical Overview destination plus the existing Birth record tab),
 // per docs/ui/UI-UX_GUIDELINES.md §2's person-workspace order.
 const LEADING_KEYS = new Set(['overview', 'birth-record']);
-const TOOLS_GROUP = 'tools';
-
-/** One dropdown button and its popup of links. */
-function NavGroup({
-  groupKey,
-  label,
-  popupAriaLabel,
-  active,
-  dropdown,
-  children,
-}: {
-  readonly groupKey: string;
-  readonly label: string;
-  readonly popupAriaLabel: string;
-  readonly active: boolean;
-  readonly dropdown: ExclusiveOpen<string>;
-  readonly children: React.ReactNode;
-}): React.JSX.Element {
-  const isOpen = dropdown.open === groupKey;
-  const popupId = `app-nav-menu-${groupKey}`;
-  return (
-    <div
-      ref={dropdown.groupRef(groupKey)}
-      className={`app-nav-group${active ? ' active' : ''}${isOpen ? ' open' : ''}`}
-      onBlur={(event) => {
-        dropdown.onGroupBlur(groupKey, event);
-      }}
-    >
-      {/* A real button, opened and closed by `useExclusiveOpen` (#417). `aria-label` pins the
-          accessible name to just the label: Chromium folds CSS-generated content such as the caret
-          (`.app-nav-group-toggle::after`) into a name otherwise. */}
-      <button
-        type="button"
-        ref={dropdown.buttonRef(groupKey)}
-        className="app-nav-group-toggle"
-        aria-label={label}
-        aria-expanded={isOpen}
-        aria-controls={isOpen ? popupId : undefined}
-        onClick={() => {
-          dropdown.toggle(groupKey);
-        }}
-      >
-        {label}
-      </button>
-      {isOpen && (
-        <nav id={popupId} className="app-nav-menu" aria-label={popupAriaLabel}>
-          {children}
-        </nav>
-      )}
-    </div>
-  );
-}
 
 /** The person chip and that person's tabs. Needs the store, so it is only rendered once one is open. */
 function PersonMenu({
@@ -179,21 +125,35 @@ function PersonMenu({
       )}
       {PERSON_TAB_FAMILIES.map((family) => {
         const familyLabel = t.familyLabels[family.key];
+        const firstKey = family.members[0];
+        const first = firstKey === undefined ? undefined : tabsByKey.get(firstKey);
+        if (first === undefined) throw new Error(`unreachable: family "${family.key}" always has a first member`);
+        // One entry per section (#882): it opens the first sub-view, and `SectionNav` shows the rest as tabs.
+        if (!isTabEnabled(first.key, hasBirthMoment)) {
+          return (
+            <button
+              key={family.key}
+              type="button"
+              disabled
+              className="app-nav-item disabled"
+              aria-label={t.disabledTabSuffix(familyLabel)}
+              title={t.completeBirthRecordHint}
+            >
+              {familyLabel}
+            </button>
+          );
+        }
+        const familyActive = active !== null && family.members.includes(active);
         return (
-          <NavGroup
+          <a
             key={family.key}
-            groupKey={family.key}
-            label={familyLabel}
-            popupAriaLabel={t.subtabsAriaLabel(familyLabel)}
-            active={active !== null && family.members.includes(active)}
-            dropdown={dropdown}
+            href={first.buildHref(personId)}
+            className={familyActive ? 'app-nav-item active' : 'app-nav-item'}
+            aria-current={familyActive ? 'page' : undefined}
+            onClick={onNavigate}
           >
-            {family.members.map((memberKey) => {
-              const tab = tabsByKey.get(memberKey);
-              if (tab === undefined) throw new Error(`unreachable: "${memberKey}" is always one of PERSON_TABS`);
-              return renderTab(tab, 'app-nav-menu-item');
-            })}
-          </NavGroup>
+            {familyLabel}
+          </a>
         );
       })}
     </>
@@ -277,34 +237,15 @@ export function AppNav({ route }: { route: Route }): React.JSX.Element {
             history={routePersonId === undefined}
           />
         )}
-        <NavGroup
-          groupKey={TOOLS_GROUP}
-          label={t.toolsLabel}
-          popupAriaLabel={t.subtabsAriaLabel(t.toolsLabel)}
-          active={activeTool !== null}
-          dropdown={dropdown}
+        {/* One entry (#882): opens the first tool; the other tools are tabs on the page (`SectionNav`). */}
+        <a
+          href={TOOLS[0]?.href ?? routeHref({ kind: 'cycles' })}
+          className={activeTool !== null ? 'app-nav-item active' : 'app-nav-item'}
+          aria-current={activeTool !== null ? 'page' : undefined}
+          onClick={closeAll}
         >
-          {TOOL_GROUPS.map((group) => (
-            // A Fragment, not a wrapping element: `.app-nav-menu` is itself the flex column that
-            // stacks every item one per row, so the heading and its tools must stay its *direct*
-            // children — a wrapping <div> would make them its own un-flexed inline flow instead,
-            // and anchors default to inline, wrapping side by side like text rather than stacking.
-            <Fragment key={group}>
-              <p className="app-nav-menu-heading">{t.toolGroupLabels[group]}</p>
-              {TOOLS.filter((tool) => tool.group === group).map((tool) => (
-                <a
-                  key={tool.key}
-                  href={tool.href}
-                  className={tool.key === activeTool ? 'app-nav-menu-item active' : 'app-nav-menu-item'}
-                  aria-current={tool.key === activeTool ? 'page' : undefined}
-                  onClick={closeAll}
-                >
-                  {t.toolLabels[tool.key]}
-                </a>
-              ))}
-            </Fragment>
-          ))}
-        </NavGroup>
+          {t.toolsLabel}
+        </a>
         {/* The current screen's own exports now live in its PageHeader (#506/#509), not here; this
             is the only export action that is not page-specific. A single-item dropdown would be
             worse than a plain link, so it is one — same as Overview/Birth record above. */}

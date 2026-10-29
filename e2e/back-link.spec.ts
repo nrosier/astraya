@@ -72,7 +72,7 @@ test.describe('with the shared people (#799)', () => {
     await openNatalChart(page);
     const chartUrl = page.url();
 
-    await page.getByRole('banner').getByRole('link', { name: 'Documents', exact: true }).click();
+    await page.getByRole('banner').getByRole('link', { name: 'PDF', exact: true }).click();
     await expect(page).toHaveURL(/#\/documents$/);
     await page.getByRole('link', { name: '← Back' }).click();
 

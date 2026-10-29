@@ -50,7 +50,7 @@ test('a named orb profile chosen for transits changes them, leaves the card alon
   await openSharedPerson(page, baseUrl, EINSTEIN);
 
   // The count with the card's own orbs, before any profile exists.
-  await page.getByRole('button', { name: 'Transits & Forecast', exact: true }).click();
+  await page.getByRole('link', { name: 'Transits & Forecast', exact: true }).click();
   await page.getByRole('link', { name: 'Transits', exact: true }).click();
   await expect(page.getByRole('table', { name: 'Contacts' })).toBeVisible();
   const count = async (): Promise<number> => {
@@ -81,7 +81,7 @@ test('a named orb profile chosen for transits changes them, leaves the card alon
   // The transit screen now finds fewer contacts than the card's orbs give it. Preferences has no person tabs, so go back to the person first.
   await page.goto(`${baseUrl}/#/people`);
   await page.getByRole('link', { name: 'Albert Einstein', exact: false }).first().click();
-  await page.getByRole('button', { name: 'Transits & Forecast', exact: true }).click();
+  await page.getByRole('link', { name: 'Transits & Forecast', exact: true }).click();
   await page.getByRole('link', { name: 'Transits', exact: true }).click();
   await expect(page.getByRole('table', { name: 'Contacts' })).toBeVisible();
   const withProfile = await count();
@@ -103,7 +103,7 @@ test('a named orb profile chosen for transits changes them, leaves the card alon
 
   await page.goto(`${baseUrl}/#/people`);
   await page.getByRole('link', { name: 'Albert Einstein', exact: false }).first().click();
-  await page.getByRole('button', { name: 'Transits & Forecast', exact: true }).click();
+  await page.getByRole('link', { name: 'Transits & Forecast', exact: true }).click();
   await page.getByRole('link', { name: 'Transits', exact: true }).click();
   await expect(page.getByRole('table', { name: 'Contacts' })).toBeVisible();
   // A wider scale finds more contacts than the first revision did, so the new revision is what the screen uses.

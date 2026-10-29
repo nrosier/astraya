@@ -25,6 +25,7 @@ import { SyncBadge } from './SyncBadge.js';
 import { useCalculationSettingsMigration } from './use-calculation-settings-migration.js';
 import { SymbolToggle } from './SymbolToggle.js';
 import { ThemeToggle } from './ThemeToggle.js';
+import { SectionNav } from './SectionNav.js';
 import { WorkspaceShell } from './WorkspaceShell.js';
 import { APP_VERSION } from '../version.js';
 import type { Route } from './route.js';
@@ -356,6 +357,8 @@ function AppShell(): React.JSX.Element {
             every lazy screen wants the same fallback, and keeping the boundary outside
             `Stored` means a chunk still in flight does not also restart the store. */}
             <div id="main-content" className="main-content" tabIndex={-1}>
+              {/* The sub-views of Transits & Forecast, Progressions & Directions, Relationship Charts and Tools (#882). */}
+              <SectionNav route={parsed} />
               <Suspense fallback={<LoadingScreen />}>{screen}</Suspense>
             </div>
             <footer>

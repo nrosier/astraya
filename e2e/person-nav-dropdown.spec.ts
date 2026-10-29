@@ -1,7 +1,7 @@
 /**
- * The person menu's grouped dropdowns (#417): one open at a time, closed by choosing an item, by a
- * click anywhere else and by Escape, and the group holding the current page highlighted without
- * being held open.
+ * The person menu's sections (#882, replacing the #417 dropdowns): Transits & Forecast, Progressions &
+ * Directions and Relationship Charts are one sidebar link each that opens the section's first sub-view,
+ * with the sub-views as tabs on the page and no sub-menu in the sidebar.
  */
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -48,96 +48,56 @@ async function personWithChart(page: Page): Promise<void> {
   await openSharedPerson(page, baseUrl, EINSTEIN);
 }
 
-const group = (page: Page, name: string) => page.getByRole('button', { name, exact: true });
-const popup = (page: Page, name: string) => page.getByRole('navigation', { name: `${name} subtabs` });
+const entry = (page: Page, name: string) => page.getByRole('banner').getByRole('link', { name, exact: true });
+const tabs = (page: Page, name: string) => page.getByRole('navigation', { name: `${name} subtabs` });
 
-test('opening a second group closes the first, so only one dropdown is ever open', async () => {
+const SECTIONS = [
+  { name: 'Transits & Forecast', url: /#\/people\/[^/]+\/timing\/transits$/, tabs: ['Transits', 'Forecast'] },
+  {
+    name: 'Progressions & Directions',
+    url: /#\/people\/[^/]+\/timing\/timeline$/,
+    tabs: ['Timing timeline', 'Profections', 'Progressions', 'Solar Arc', 'Primary Directions (Placidus)'],
+  },
+  { name: 'Relationship Charts', url: /#\/people\/[^/]+\/relationships\/synastry$/, tabs: ['Synastry', 'Composite'] },
+];
+
+for (const section of SECTIONS) {
+  test(`${section.name} is one sidebar link that opens its first sub-view, with the rest as tabs`, async () => {
+    test.setTimeout(60_000);
+    await personWithChart(page);
+
+    await expect(page.getByRole('banner').getByRole('button', { name: section.name, exact: true })).toHaveCount(0);
+    await entry(page, section.name).click();
+    await expect(page).toHaveURL(section.url);
+    await expect(page.locator('.app-nav-menu')).toHaveCount(0);
+    await expect(entry(page, section.name)).toHaveAttribute('aria-current', 'page');
+    const row = tabs(page, section.name);
+    await expect(row).toBeVisible();
+    await expect(row.getByRole('link')).toHaveText(section.tabs);
+    await expect(row.getByRole('link').first()).toHaveAttribute('aria-current', 'page');
+  });
+}
+
+test('choosing a tab opens that sub-view and keeps the section entry current', async () => {
   test.setTimeout(60_000);
   await personWithChart(page);
 
-  await group(page, 'Transits & Forecast').click();
-  await expect(popup(page, 'Transits & Forecast')).toBeVisible();
-  await expect(group(page, 'Transits & Forecast')).toHaveAttribute('aria-expanded', 'true');
-
-  await group(page, 'Progressions & Directions').click();
-  await expect(popup(page, 'Progressions & Directions')).toBeVisible();
-  await expect(popup(page, 'Transits & Forecast')).toHaveCount(0);
-  await expect(group(page, 'Transits & Forecast')).toHaveAttribute('aria-expanded', 'false');
-});
-
-test('pressing the open group’s button again closes it', async () => {
-  test.setTimeout(60_000);
-  await personWithChart(page);
-
-  await group(page, 'Relationship Charts').click();
-  await expect(popup(page, 'Relationship Charts')).toBeVisible();
-  await group(page, 'Relationship Charts').click();
-  await expect(popup(page, 'Relationship Charts')).toHaveCount(0);
-});
-
-test('choosing an item navigates and leaves no menu open', async () => {
-  test.setTimeout(60_000);
-  await personWithChart(page);
-
-  await group(page, 'Progressions & Directions').click();
-  await popup(page, 'Progressions & Directions').getByRole('link', { name: 'Profections', exact: true }).click();
+  await entry(page, 'Progressions & Directions').click();
+  await tabs(page, 'Progressions & Directions').getByRole('link', { name: 'Profections', exact: true }).click();
   await expect(page).toHaveURL(/#\/people\/[^/]+\/timing\/profections$/);
-  await expect(page.getByRole('navigation', { name: /subtabs$/ })).toHaveCount(0);
-  // The group holding the current page is highlighted, but not held open.
-  await expect(group(page, 'Progressions & Directions')).toHaveAttribute('aria-expanded', 'false');
-  await expect(page.locator('.app-nav-group.active')).toHaveCount(1);
+  await expect(entry(page, 'Progressions & Directions')).toHaveAttribute('aria-current', 'page');
+  await expect(tabs(page, 'Progressions & Directions').getByRole('link', { name: 'Profections' })).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
 });
 
-test('a click on empty page, on content, or on another tab closes the open menu', async () => {
+test('the section tab row has no automatically detectable accessibility violations', async () => {
   test.setTimeout(60_000);
   await personWithChart(page);
 
-  await group(page, 'Progressions & Directions').click();
-  await expect(popup(page, 'Progressions & Directions')).toBeVisible();
-  await page.getByRole('heading', { level: 1 }).click();
-  await expect(popup(page, 'Progressions & Directions')).toHaveCount(0);
-
-  await group(page, 'Progressions & Directions').click();
-  await expect(popup(page, 'Progressions & Directions')).toBeVisible();
-  // The page's own link: no route change follows, so only the outside press can close it.
-  await page.getByRole('link', { name: 'Birth record', exact: true }).click();
-  await expect(popup(page, 'Progressions & Directions')).toHaveCount(0);
-
-  await group(page, 'Progressions & Directions').click();
-  await expect(popup(page, 'Progressions & Directions')).toBeVisible();
-  await page.mouse.click(5, 400);
-  await expect(popup(page, 'Progressions & Directions')).toHaveCount(0);
-});
-
-test('Escape closes the menu and puts focus back on its button', async () => {
-  test.setTimeout(60_000);
-  await personWithChart(page);
-
-  await group(page, 'Transits & Forecast').click();
-  await popup(page, 'Transits & Forecast').getByRole('link').first().focus();
-  await page.keyboard.press('Escape');
-  await expect(popup(page, 'Transits & Forecast')).toHaveCount(0);
-  await expect(group(page, 'Transits & Forecast')).toBeFocused();
-});
-
-test('tabbing out of an open group closes it', async () => {
-  test.setTimeout(60_000);
-  await personWithChart(page);
-
-  await group(page, 'Relationship Charts').focus();
-  await page.keyboard.press('Enter');
-  await expect(popup(page, 'Relationship Charts')).toBeVisible();
-  // Past the popup's links and out of the group.
-  for (let i = 0; i < 6; i++) await page.keyboard.press('Tab');
-  await expect(popup(page, 'Relationship Charts')).toHaveCount(0);
-});
-
-test('the open menu has no automatically detectable accessibility violations', async () => {
-  test.setTimeout(60_000);
-  await personWithChart(page);
-
-  await group(page, 'Transits & Forecast').click();
-  await expect(popup(page, 'Transits & Forecast')).toBeVisible();
+  await entry(page, 'Transits & Forecast').click();
+  await expect(tabs(page, 'Transits & Forecast')).toBeVisible();
   const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
   expect(results.violations).toEqual([]);
 });
