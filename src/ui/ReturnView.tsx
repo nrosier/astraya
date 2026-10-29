@@ -279,57 +279,60 @@ export function ReturnView({
         <StatusMessage kind="loading">{t.returnMoment(formatUtc(load.result.returnJd))}</StatusMessage>
       )}
       <p className="hint">{t.conventions}</p>
-      {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
+      {/* The result region: busy while the return (re)calculates, as the Astrocartography map is. */}
+      <div aria-busy={load.kind === 'loading'}>
+        {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
 
-      {load.kind !== 'idle' && (
-        <ChartDataView
-          personId={personId}
-          chartType={kind}
-          load={load.kind === 'ready' ? { kind: 'ready', data: load.data } : load}
-          displayName={displayName}
-          showHouses
-          metaLines={metaLines}
-          rulership={rulership}
-          extendedSettings={settings}
-          onExtendedSettingsChange={setSettings}
-          settingsProvider={provider}
-          view={view ?? 'wheel'}
-          onViewChange={(next) => {
-            changeChartView(personId, kind, next);
-          }}
-          buildViewHref={(next) => chartHref(personId, next, kind)}
-          overlayContext={
-            provider === undefined
-              ? undefined
-              : {
-                  moment: person.moment,
-                  provider,
-                  baseLabel: displayName,
-                  options: { ...toChartCalculationOptions(settings), rulership },
-                }
-          }
-        />
-      )}
-
-      {load.kind === 'ready' && !housesAreDefined(load.data.houses) && (
-        <StatusMessage kind="error">{t.housesUndefined}</StatusMessage>
-      )}
-
-      {load.kind === 'ready' && (
-        <>
-          <p className="hint">{t.contactsHint}</p>
-          <SortableTable
-            caption={t.contactsCaption}
-            columns={contactColumns(t, locale)}
-            rows={contacts}
-            getRowKey={(row) => `${row.bodyAKey}-${row.aspect}-${row.bodyBKey}`}
-            downloadFilename={deriveExportFilename(person.displayName, `${kind}-contacts`, 'csv')}
+        {load.kind !== 'idle' && (
+          <ChartDataView
+            personId={personId}
+            chartType={kind}
+            load={load.kind === 'ready' ? { kind: 'ready', data: load.data } : load}
+            displayName={displayName}
+            showHouses
+            metaLines={metaLines}
+            rulership={rulership}
+            extendedSettings={settings}
+            onExtendedSettingsChange={setSettings}
+            settingsProvider={provider}
+            view={view ?? 'wheel'}
+            onViewChange={(next) => {
+              changeChartView(personId, kind, next);
+            }}
+            buildViewHref={(next) => chartHref(personId, next, kind)}
+            overlayContext={
+              provider === undefined
+                ? undefined
+                : {
+                    moment: person.moment,
+                    provider,
+                    baseLabel: displayName,
+                    options: { ...toChartCalculationOptions(settings), rulership },
+                  }
+            }
           />
-        </>
-      )}
-      {load.kind === 'ready' && housesAreDefined(load.data.houses) && (
-        <ReportView personId={personId} chart={load.data} rulership={rulership} onRulershipChange={setRulership} />
-      )}
+        )}
+
+        {load.kind === 'ready' && !housesAreDefined(load.data.houses) && (
+          <StatusMessage kind="error">{t.housesUndefined}</StatusMessage>
+        )}
+
+        {load.kind === 'ready' && (
+          <>
+            <p className="hint">{t.contactsHint}</p>
+            <SortableTable
+              caption={t.contactsCaption}
+              columns={contactColumns(t, locale)}
+              rows={contacts}
+              getRowKey={(row) => `${row.bodyAKey}-${row.aspect}-${row.bodyBKey}`}
+              downloadFilename={deriveExportFilename(person.displayName, `${kind}-contacts`, 'csv')}
+            />
+          </>
+        )}
+        {load.kind === 'ready' && housesAreDefined(load.data.houses) && (
+          <ReportView personId={personId} chart={load.data} rulership={rulership} onRulershipChange={setRulership} />
+        )}
+      </div>
     </main>
   );
 }

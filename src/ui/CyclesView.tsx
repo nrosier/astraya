@@ -356,55 +356,58 @@ export function CyclesView(): React.JSX.Element {
       {validation !== undefined && <StatusMessage kind="error">{validation}</StatusMessage>}
       {result.kind === 'error' && <StatusMessage kind="error">{t.error(result.message)}</StatusMessage>}
 
-      {result.kind === 'ready' &&
-        (result.rows.length === 0 ? (
-          <p className="hint">{t.noEvents}</p>
-        ) : (
-          <>
-            <p>
-              {t.summary(
-                result.rows.length,
-                nameOf(result.params.bodyA),
-                nameOf(result.params.bodyB),
-                Number(result.params.fromYear),
-                Number(result.params.toYear),
+      {/* The result region: busy while the cycles search runs, as the Astrocartography map is. */}
+      <div aria-busy={result.kind === 'loading'}>
+        {result.kind === 'ready' &&
+          (result.rows.length === 0 ? (
+            <p className="hint">{t.noEvents}</p>
+          ) : (
+            <>
+              <p>
+                {t.summary(
+                  result.rows.length,
+                  nameOf(result.params.bodyA),
+                  nameOf(result.params.bodyB),
+                  Number(result.params.fromYear),
+                  Number(result.params.toYear),
+                )}
+              </p>
+              {diagram !== undefined && (
+                <figure className="cycle-figure">
+                  {/* Hidden from assistive technology: the table, with a step button on every row, is the
+                      accessible way to the same selection. A click on a point selects it; on the empty
+                      diagram, or on the selected point again, it clears. */}
+                  <div
+                    className="cycle-diagram-interactive"
+                    aria-hidden="true"
+                    dangerouslySetInnerHTML={{ __html: diagram }}
+                    onClick={(event) => {
+                      const target = event.target;
+                      const point = target instanceof Element ? target.closest('[data-cycle-id]') : null;
+                      select(point?.getAttribute('data-cycle-id') ?? undefined, 'diagram');
+                    }}
+                  />
+                  <figcaption className="hint">
+                    {t.diagramCaption} {t.selectionHint}
+                  </figcaption>
+                </figure>
               )}
-            </p>
-            {diagram !== undefined && (
-              <figure className="cycle-figure">
-                {/* Hidden from assistive technology: the table, with a step button on every row, is the
-                    accessible way to the same selection. A click on a point selects it; on the empty
-                    diagram, or on the selected point again, it clears. */}
-                <div
-                  className="cycle-diagram-interactive"
-                  aria-hidden="true"
-                  dangerouslySetInnerHTML={{ __html: diagram }}
-                  onClick={(event) => {
-                    const target = event.target;
-                    const point = target instanceof Element ? target.closest('[data-cycle-id]') : null;
-                    select(point?.getAttribute('data-cycle-id') ?? undefined, 'diagram');
-                  }}
+              <p className="hint" role="status">
+                {selectedId === undefined ? '' : t.stepSelected(stepOf.get(selectedId) ?? 0, result.rows.length)}
+              </p>
+              <div ref={tableRef}>
+                <SortableTable
+                  caption={t.tableCaption}
+                  columns={columns}
+                  rows={result.rows}
+                  getRowKey={(row) => String(row.jd)}
+                  downloadFilename={`cycles-${result.params.bodyA}-${result.params.bodyB}-${result.params.aspect}.csv`}
+                  selectedRowKey={selectedId}
                 />
-                <figcaption className="hint">
-                  {t.diagramCaption} {t.selectionHint}
-                </figcaption>
-              </figure>
-            )}
-            <p className="hint" role="status">
-              {selectedId === undefined ? '' : t.stepSelected(stepOf.get(selectedId) ?? 0, result.rows.length)}
-            </p>
-            <div ref={tableRef}>
-              <SortableTable
-                caption={t.tableCaption}
-                columns={columns}
-                rows={result.rows}
-                getRowKey={(row) => String(row.jd)}
-                downloadFilename={`cycles-${result.params.bodyA}-${result.params.bodyB}-${result.params.aspect}.csv`}
-                selectedRowKey={selectedId}
-              />
-            </div>
-          </>
-        ))}
+              </div>
+            </>
+          ))}
+      </div>
     </main>
   );
 }

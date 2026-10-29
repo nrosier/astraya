@@ -251,39 +251,44 @@ export function SolarArcView({ personId }: { personId: string }): React.JSX.Elem
         <DateField label={t.asOfLabel} value={asOf} onChange={setAsOf} />
       </p>
 
-      {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
+      {/* The result region: busy while the directions (re)calculate, as the Astrocartography map is. */}
+      <div aria-busy={load.kind === 'loading'}>
+        {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
 
-      {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
+        {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
 
-      {load.kind === 'ready' && (
-        <>
-          <p className="hint">
-            {t.ageLine(`${formatFixed(load.data.ageInYears, 2)}${load.data.ageInYears < 0 ? ` ${t.beforeBirth}` : ''}`)}
-          </p>
-          <p className="hint">{t.arcLine(formatFixed(load.data.arc, 2))}</p>
+        {load.kind === 'ready' && (
+          <>
+            <p className="hint">
+              {t.ageLine(
+                `${formatFixed(load.data.ageInYears, 2)}${load.data.ageInYears < 0 ? ` ${t.beforeBirth}` : ''}`,
+              )}
+            </p>
+            <p className="hint">{t.arcLine(formatFixed(load.data.arc, 2))}</p>
 
-          {positions !== undefined && (
-            <SortableTable
-              caption={t.positionsCaption}
-              columns={positionColumns(t, locale)}
-              rows={positions}
-              getRowKey={(row) => row.bodyKey}
-              downloadFilename={deriveExportFilename(person.displayName, 'solar-arc', 'csv')}
-            />
-          )}
+            {positions !== undefined && (
+              <SortableTable
+                caption={t.positionsCaption}
+                columns={positionColumns(t, locale)}
+                rows={positions}
+                getRowKey={(row) => row.bodyKey}
+                downloadFilename={deriveExportFilename(person.displayName, 'solar-arc', 'csv')}
+              />
+            )}
 
-          {contacts !== undefined && contacts.length > 0 && (
-            <SortableTable
-              caption={t.contactsCaption}
-              columns={contactColumns(t, locale)}
-              rows={contacts}
-              getRowKey={(row) => `${row.bodyAKey}-${row.aspect}-${row.bodyBKey}`}
-              downloadFilename={deriveExportFilename(person.displayName, 'solar-arc-contacts', 'csv')}
-            />
-          )}
-          {contacts?.length === 0 && <p className="hint">{t.noContacts}</p>}
-        </>
-      )}
+            {contacts !== undefined && contacts.length > 0 && (
+              <SortableTable
+                caption={t.contactsCaption}
+                columns={contactColumns(t, locale)}
+                rows={contacts}
+                getRowKey={(row) => `${row.bodyAKey}-${row.aspect}-${row.bodyBKey}`}
+                downloadFilename={deriveExportFilename(person.displayName, 'solar-arc-contacts', 'csv')}
+              />
+            )}
+            {contacts?.length === 0 && <p className="hint">{t.noContacts}</p>}
+          </>
+        )}
+      </div>
     </main>
   );
 }

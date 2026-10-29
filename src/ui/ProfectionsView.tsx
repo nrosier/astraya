@@ -204,38 +204,41 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
         <DateField label={t.asOfLabel} value={asOf} onChange={setAsOf} />
       </p>
 
-      {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
+      {/* The result region: busy while the profections (re)calculate, as the Astrocartography map is. */}
+      <div aria-busy={load.kind === 'loading'}>
+        {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
 
-      {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
+        {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
 
-      {load.kind === 'ready' && (
-        <>
-          <p className="hint">
-            {t.ageLine(`${formatFixed(load.data.age, 2)}${load.data.age < 0 ? ` ${t.beforeBirth}` : ''}`)}
-          </p>
-          {rows !== undefined && (
-            <SortableTable
-              caption={t.profectionsCaption}
-              columns={columns(t, locale)}
-              rows={rows}
-              getRowKey={(row) => row.period}
-              downloadFilename={deriveExportFilename(person.displayName, 'profections', 'csv')}
-            />
-          )}
-          <section className="profection-meanings" aria-labelledby="profection-meanings-heading">
-            <h2 id="profection-meanings-heading">{t.meaningHeading}</h2>
-            {[
-              { period: t.yearPeriod, house: load.data.year.house },
-              { period: t.monthPeriod, house: load.data.month.house },
-            ].map(({ period, house }) => (
-              <div key={period}>
-                <h3>{t.periodHouse(period, ordinal(house, locale))}</h3>
-                <p>{resolvePlacementText({ category: 'profected-house', house }, locale, corpus)}</p>
-              </div>
-            ))}
-          </section>
-        </>
-      )}
+        {load.kind === 'ready' && (
+          <>
+            <p className="hint">
+              {t.ageLine(`${formatFixed(load.data.age, 2)}${load.data.age < 0 ? ` ${t.beforeBirth}` : ''}`)}
+            </p>
+            {rows !== undefined && (
+              <SortableTable
+                caption={t.profectionsCaption}
+                columns={columns(t, locale)}
+                rows={rows}
+                getRowKey={(row) => row.period}
+                downloadFilename={deriveExportFilename(person.displayName, 'profections', 'csv')}
+              />
+            )}
+            <section className="profection-meanings" aria-labelledby="profection-meanings-heading">
+              <h2 id="profection-meanings-heading">{t.meaningHeading}</h2>
+              {[
+                { period: t.yearPeriod, house: load.data.year.house },
+                { period: t.monthPeriod, house: load.data.month.house },
+              ].map(({ period, house }) => (
+                <div key={period}>
+                  <h3>{t.periodHouse(period, ordinal(house, locale))}</h3>
+                  <p>{resolvePlacementText({ category: 'profected-house', house }, locale, corpus)}</p>
+                </div>
+              ))}
+            </section>
+          </>
+        )}
+      </div>
     </main>
   );
 }

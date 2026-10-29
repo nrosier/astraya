@@ -196,20 +196,23 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
       <p className="hint">{t.hint}</p>
       <p className="hint">{t.source}</p>
       <DateField label={t.asOfLabel} value={asOf} onChange={setAsOf} />
-      {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
-      {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
-      {load.kind === 'ready' && (
-        <TimingTimelineTracks
-          axisLabel={t.axis(dateLabel(fromJd), dateLabel(toJd))}
-          tracks={tracks}
-          labels={t.tracks}
-          noEvents={t.noEvents}
-          dateLabel={dateLabel}
-          describe={(subject) => timelineSubjectLabel(subject, locale)}
-          range={t.range}
-          notes={t.trackNotes}
-        />
-      )}
+      {/* The result region: busy while the timeline (re)calculates, as the Astrocartography map is. */}
+      <div aria-busy={load.kind === 'loading'}>
+        {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
+        {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
+        {load.kind === 'ready' && (
+          <TimingTimelineTracks
+            axisLabel={t.axis(dateLabel(fromJd), dateLabel(toJd))}
+            tracks={tracks}
+            labels={t.tracks}
+            noEvents={t.noEvents}
+            dateLabel={dateLabel}
+            describe={(subject) => timelineSubjectLabel(subject, locale)}
+            range={t.range}
+            notes={t.trackNotes}
+          />
+        )}
+      </div>
     </main>
   );
 }
