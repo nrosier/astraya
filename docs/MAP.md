@@ -8,6 +8,7 @@ Topic folders:
 - `ui/UI-UX_BASELINE.md` — The behaviour the end-to-end suite pins (routes, inputs, outputs, selection, exports, persistence), generated from the test titles. Deps: `scripts/generate-ui-baseline.mjs`.
 - `ui/UI-UX_GUIDELINES.md` — Normative UI/UX implementation and behavior rules for future features. Deps: `src/ui`, `archive/UI-UX_REVIEW.md`.
 - `ui/UI-UX_IMPLEMENTATION_PLAN.md` — Phased coding plan for migrating routes, shell, settings, controls, charts, and Astrocartography to the target experience. Deps: `src/ui`, `test`, `e2e`, `ui/UI-UX_GUIDELINES.md`.
+- `ui/UI-UX_CONFORMANCE_AUDIT_2026-10-29.md` — Current-source conformance audit of the Charts reference pattern, route families, guide conflicts, and remediation acceptance criteria. Deps: `src/ui`, `test`, `e2e`, `ui/UI-UX_GUIDELINES.md`, `ui/UI-UX_IMPLEMENTATION_PLAN.md`.
 - `ui/views/chart-view.md` — Target design for the natal chart screen: sticky configuration panel, page header, chart workbench, and share notice. Deps: `src/ui/ChartView.tsx`, `src/ui/ChartViewNav.tsx`.
 - `ui/views/consultation-view.md` — Target design for the consultation dashboard: summary tile grid and section layout. Deps: `src/ui/ConsultationView.tsx`, `src/ui/chart-overview.messages.ts`.
 - `ui/views/horary-view.md` — Target design for the horary screen: location search, Set to Now action, and secondary settings disclosure. Deps: `src/ui/HoraryView.tsx`, `src/ui/BirthPlaceSearch.tsx`, `src/ui/primitives/Disclosure.tsx`.
