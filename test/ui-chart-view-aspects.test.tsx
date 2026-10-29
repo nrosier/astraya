@@ -84,8 +84,8 @@ describe('the aspects table (#815)', () => {
   const columns = aspectColumns(t, 'en');
   const view = (): HTMLElement => mount('Aspects', columns, ROWS, (row) => `${row.bodyAKey}-${row.aspect}`);
 
-  it('keeps the columns Body A, Aspect, Body B, Orb, Applying, Family in that order', () => {
-    expect(headersOf(view())).toEqual(['Body A', 'Aspect', 'Body B', 'Orb', 'Applying', 'Family']);
+  it('keeps the columns Body A, Aspect, Body B, Orb, State, Family in that order', () => {
+    expect(headersOf(view())).toEqual(['Body A', 'Aspect', 'Body B', 'Orb', 'State', 'Family']);
   });
 
   it('shows Applying and Separating as a dot plus label, differing by modifier class', () => {

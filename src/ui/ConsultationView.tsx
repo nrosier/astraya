@@ -380,7 +380,7 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
   const tableLabels: TransitTableLabels = {
     aspect: t.colAspect,
     orb: t.colOrb,
-    state: t.colState,
+    state: chartT.applyingLabel,
     nextExact: t.colNextExact,
     noPass: t.noFurtherPass,
   };

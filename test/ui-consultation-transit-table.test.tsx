@@ -1,13 +1,14 @@
 // @vitest-environment jsdom
 /**
  * #800 / D-800b: the consultation transit table. A contact with no further exact pass shows an em dash named
- * "No further exact pass"; others show the date. State is a badge, accented while applying. The frame is the shared
+ * "No further exact pass"; others show the date. State is the shared dot-plus-label marker (#815). The frame is the shared
  * data-table scroll region, so a phone scrolls the table sideways rather than restacking it.
  */
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it } from 'vitest';
 import { ConsultationTransitTable } from '../src/ui/ConsultationTransitTable.tsx';
+import { chartViewMessages } from '../src/ui/ChartView.messages.ts';
 import { consultationViewMessages } from '../src/ui/ConsultationView.messages.ts';
 
 let root: Root | undefined;
@@ -32,7 +33,7 @@ describe('ConsultationTransitTable (#800)', () => {
           labels={{
             aspect: t.colAspect,
             orb: t.colOrb,
-            state: t.colState,
+            state: chartViewMessages.en.applyingLabel,
             nextExact: t.colNextExact,
             noPass: t.noFurtherPass,
           }}
@@ -68,7 +69,7 @@ describe('ConsultationTransitTable (#800)', () => {
     expect(dashes).toHaveLength(1);
     expect(dashes[0]?.textContent).toBe('—');
     expect(container.querySelector('time')?.getAttribute('datetime')).toBe('2026-11-07');
-    expect(container.querySelector('.primitive-badge[data-tone="accent"]')?.textContent).toBe('Applying');
-    expect(container.querySelector('.primitive-badge:not([data-tone])')?.textContent).toBe('Separating');
+    expect(container.querySelector('.aspect-state--applying')?.textContent).toBe('Applying');
+    expect(container.querySelector('.aspect-state--separating')?.textContent).toBe('Separating');
   });
 });
