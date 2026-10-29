@@ -336,6 +336,7 @@ function AppShell(): React.JSX.Element {
                   {engineStatus !== 'ready' && <p className="status app-header-status">{engineStatus}</p>}
                 </div>
                 <AppNav route={parsed} />
+                {/* The utilities container (#882): the rail's foot at >=64rem, the header's own row below it. */}
                 <div className="app-header-end">
                   <SyncBadge />
                   <AccountPanel />

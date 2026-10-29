@@ -148,20 +148,26 @@ test.describe('with the shared people (#799)', () => {
     await expect(header.getByText('Albert Einstein', { exact: true })).toBeVisible();
   });
 
-  test('the rail holds brand then navigation; the account cluster sits apart from it, top-right of the content, with and without a person', async () => {
+  test('the rail holds brand, then navigation, then the utilities at its foot, with and without a person', async () => {
     test.setTimeout(60_000);
     await gotoAndSettle(page, `${baseUrl}/#/people`);
     const layout = async (): Promise<void> => {
       const brand = await page.getByRole('link', { name: 'Astraya, back to the people list' }).boundingBox();
       const nav = await page.getByRole('navigation', { name: 'Main', exact: true }).boundingBox();
+      const rail = await page.getByRole('banner').boundingBox();
       const signIn = await page.getByRole('button', { name: 'Sign in', exact: true }).boundingBox();
-      if (brand === null || nav === null || signIn === null) throw new Error('fixture bug: missing rail element');
+      if (brand === null || nav === null || rail === null || signIn === null) {
+        throw new Error('fixture bug: missing rail element');
+      }
       // The navigation starts below the brand inside the rail, whatever its own height (a person's
       // many tabs make it taller, not shorter above it).
       expect(nav.y).toBeGreaterThanOrEqual(brand.y + brand.height);
-      // Account/language/theme are not navigation (#506/#509): they sit apart from the rail
-      // entirely, fixed to the content area's top-right corner, clear of the rail's own right edge.
-      expect(signIn.x).toBeGreaterThanOrEqual(nav.x + nav.width);
+      // Account/language/theme are not navigation (#506/#509), but they live in the rail, below the
+      // navigation, at its foot (#882) — inside the rail's own box, not floating over the content.
+      expect(signIn.y).toBeGreaterThanOrEqual(nav.y + nav.height - 1);
+      expect(signIn.x).toBeGreaterThanOrEqual(rail.x);
+      expect(signIn.x + signIn.width).toBeLessThanOrEqual(rail.x + rail.width);
+      await expect(page.locator('.app-header-end')).toHaveCSS('position', 'static');
     };
     await layout();
     await openSharedPerson(page, baseUrl, EINSTEIN);
