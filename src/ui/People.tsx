@@ -13,6 +13,7 @@
  * @exports People
  */
 import { personHref } from './route.js';
+import { PageHeader } from './PageHeader.js';
 import { useState } from 'react';
 import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
 import { newId } from '../domain/id.js';
@@ -84,7 +85,7 @@ export function People(): React.JSX.Element {
 
   return (
     <main className="shell">
-      <h1>{t.heading}</h1>
+      <PageHeader title={t.heading} />
       <p className="tagline">{t.tagline}</p>
 
       {error !== undefined && (

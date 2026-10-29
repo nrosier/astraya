@@ -19,6 +19,7 @@ import { useMessages } from './messages.js';
 import { documentsViewMessages } from './DocumentsView.messages.js';
 import { PdfExportBuilder } from './PdfExportBuilder.js';
 import { BackLink } from './BackLink.js';
+import { PageHeader } from './PageHeader.js';
 
 export function DocumentsView(): React.JSX.Element {
   const t = useMessages(documentsViewMessages);
@@ -26,7 +27,7 @@ export function DocumentsView(): React.JSX.Element {
   return (
     <main className="shell">
       <BackLink fallback="#/people" />
-      <h1>{t.heading}</h1>
+      <PageHeader title={t.heading} />
       <p>{t.intro}</p>
 
       <PdfExportBuilder embedded />

@@ -75,6 +75,7 @@ import type { Locale } from '../interpretation/schema.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { useStableMoment } from './use-stable-moment.js';
 import { BackLink } from './BackLink.js';
+import { PageHeader } from './PageHeader.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -273,7 +274,7 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <h1>{t.transitsFallback}</h1>
+        <PageHeader title={t.transitsFallback} />
         <p>
           {t.notCompleteTransits(person.displayName || t.thisPerson)}{' '}
           <a href={personHref(personId)}>{t.personPageLink}</a>.
@@ -286,7 +287,7 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <h1>{t.transitsFallback}</h1>
+        <PageHeader title={t.transitsFallback} />
         <p>{t.needsKnownTime(person.displayName || t.thisPerson)}</p>
       </main>
     );
@@ -307,7 +308,7 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
         generatedAt={formatTimestamp(new Date())}
       />
       <BackLink fallback={personHref(personId)} />
-      <h1>{person.displayName ? t.heading(person.displayName) : t.transitsFallback}</h1>
+      <PageHeader title={person.displayName ? t.heading(person.displayName) : t.transitsFallback} />
       <GlossaryTerms terms={['transit', 'aspect', 'orb', 'applying', 'retrograde']} />
       <p className="hint">{t.hint(person.displayName || t.thisPerson)}</p>
 
