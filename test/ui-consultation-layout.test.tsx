@@ -96,3 +96,64 @@ describe('next exact date (D-800b)', () => {
     expect(nextExactJd(undefined, 15)).toBeUndefined();
   });
 });
+
+/** The second `.consultation-col` and everything after it: the right-hand column of the 60/40 grid. */
+function rightColumn(): string {
+  const first = view.indexOf('className="consultation-col"');
+  const second = view.indexOf('className="consultation-col"', first + 1);
+  return view.slice(second, view.indexOf('</main>', second));
+}
+
+/** The body of the `<section>` whose heading carries `headingId`. */
+function sectionBody(source: string, headingId: string): string {
+  return (
+    new RegExp(`<section className="consultation-section" aria-labelledby="${headingId}">([\\s\\S]*?)</section>`).exec(
+      source,
+    )?.[1] ?? ''
+  );
+}
+
+describe('consultation right column (#800)', () => {
+  it('holds the time-lords card and the releasing and directions card, not the transits', () => {
+    const right = rightColumn();
+    expect(right).toContain('aria-labelledby="consultation-year-heading"');
+    expect(right).toContain('aria-labelledby="consultation-releasing-heading"');
+    expect(right).not.toContain('aria-labelledby="consultation-transits-heading"');
+  });
+
+  it('puts the time-lords card before the releasing and directions card', () => {
+    const right = rightColumn();
+    expect(right.indexOf('consultation-year-heading')).toBeLessThan(right.indexOf('consultation-releasing-heading'));
+  });
+
+  it('fills the time-lords card with profection, firdaria and the progressed Moon', () => {
+    const body = sectionBody(view, 'consultation-year-heading');
+    expect(body).toContain('className="consultation-lords"');
+    expect(body).toContain('{t.profectionYear}');
+    expect(body).toContain('{t.firdaria}');
+    expect(body).toContain('{t.progressedMoon}');
+    expect(body).toContain('load.year.profection !== undefined');
+    expect(body).toContain('load.year.firdaria !== undefined');
+  });
+
+  it('fills the releasing and directions card with releasing badges and the directions list', () => {
+    const body = sectionBody(view, 'consultation-releasing-heading');
+    expect(body).toContain('{t.releasingDirectionsHeading}');
+    expect(body).toContain('releasingBadges.map(');
+    expect(body).toContain('<h3>{t.directionsHeading}</h3>');
+    expect(body).toContain('directionList(directions.slice(0, SHOWN_DIRECTION_COUNT))');
+  });
+
+  it('shows a .consultation-date pill on each direction row, from the datePills helper', () => {
+    const directionRows = /const directionList = [\s\S]*?\n {2}\);/.exec(view)?.[0] ?? '';
+    expect(directionRows).toContain('<li key=');
+    expect(directionRows).toContain('{datePills(event)}');
+
+    const pills = /const datePills = [\s\S]*?\n {2}const directionList/.exec(view)?.[0] ?? '';
+    expect(pills).toContain('className="consultation-pills"');
+    expect(pills).toContain('className="consultation-date"');
+    expect(pills).toContain('t.datePill(');
+    expect(pills).toContain('t.startPill(');
+    expect(pills).toContain('t.endPill(');
+  });
+});
