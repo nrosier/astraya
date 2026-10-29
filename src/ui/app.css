@@ -968,7 +968,7 @@ footer {
   gap: var(--space-3);
 }
 
-/* Date and how the time is known share the first row; the Time field takes the full row under them (#795). */
+/* Narrow: date and how the time is known share the first row; the Time field takes the full row under them (#795). */
 .birth-record-timestamp > :nth-child(3) {
   grid-column: 1 / -1;
 }
@@ -1018,6 +1018,15 @@ footer {
   .birth-record {
     grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
     grid-template-rows: repeat(4, auto);
+  }
+
+  /* Date, how the time is known, and the time share one row at this width (#795). */
+  .birth-record-timestamp {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .birth-record-timestamp > :nth-child(3) {
+    grid-column: auto;
   }
 
   .birth-record-card--identity {
