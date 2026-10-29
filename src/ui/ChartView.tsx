@@ -1569,7 +1569,7 @@ export function ChartView({
           <BackLink fallback={personHref(personId)} />
           <PageHeader title={pageTitle} basis={basisLine} />
         </div>
-        <div className="comparison-container" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+        <div className="comparison-container comparison-layout">
           <div>
             <h2>{t.natalLabel}</h2>
             <ChartDataView
