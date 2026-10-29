@@ -1,7 +1,8 @@
 /**
  * One person to and from a file on the birth-record page (#699): each export downloads, and an AAF import replaces
- * another person's birth data after a preview, keeping their name. The page's card layout (#795): two columns at
- * 1280px and one column at 390px, with the resolved timezone card above Notes and Save changes.
+ * another person's birth data after a preview, keeping their name. The page's card layout (#795, #896): a 60/40 pair
+ * of columns at 1280px and one column at 390px, with Save changes in the page header and the timezone as a status
+ * row inside the location card.
  */
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -49,39 +50,42 @@ test.describe('with the shared people (#799)', () => {
     test.setTimeout(90_000);
     await openSharedPerson(page, baseUrl, EINSTEIN);
     await page.getByRole('link', { name: 'Birth record', exact: true }).click();
-    const section = page.locator('section.person-file-actions');
+    const section = page.locator('div.person-file-actions');
     await expect(section.getByRole('heading', { name: 'Export or import this person' })).toBeVisible();
 
     const download = async (button: string) => {
       const [file] = await Promise.all([
         page.waitForEvent('download'),
-        section.getByRole('button', { name: button }).click(),
+        section.getByRole('button', { name: button, exact: true }).click(),
       ]);
       return file;
     };
-    const aaf = await download('Download AAF');
+    const aaf = await download('AAF');
     expect(aaf.suggestedFilename()).toBe('albert-einstein-birth-record.aaf');
     const aafPath = join(dir, 'einstein.aaf');
     await aaf.saveAs(aafPath);
-    expect((await download('Download CSV')).suggestedFilename()).toBe('albert-einstein-birth-record.csv');
-    expect((await download('Download Astraya JSON')).suggestedFilename()).toBe('albert-einstein-birth-record.json');
+    expect((await download('CSV')).suggestedFilename()).toBe('albert-einstein-birth-record.csv');
+    expect((await download('JSON')).suggestedFilename()).toBe('albert-einstein-birth-record.json');
 
     await openSharedPerson(page, baseUrl, BORN);
     await page.getByRole('link', { name: 'Birth record', exact: true }).click();
-    await section.locator('input[type="file"]').setInputFiles(aafPath);
+    // The replace flow lives in its own card, directly below the export card (#896).
+    const replace = page.locator('section.birth-record-card--replace');
+    await expect(replace.getByRole('heading', { name: 'Replace data' })).toBeVisible();
+    await replace.locator('input[type="file"]').setInputFiles(aafPath);
 
     // Nothing is saved before the reader confirms: the preview names each change.
-    await expect(section.getByRole('heading', { name: 'What changes' })).toBeVisible();
-    await expect(section.locator('dd', { hasText: '1882-12-11 → 1879-03-14' })).toBeVisible();
-    await section.getByRole('button', { name: 'Replace birth data' }).click();
-    await expect(section.getByText('Birth data replaced.')).toBeVisible();
+    await expect(replace.getByRole('heading', { name: 'What changes' })).toBeVisible();
+    await expect(replace.locator('dd', { hasText: '1882-12-11 → 1879-03-14' })).toBeVisible();
+    await replace.getByRole('button', { name: 'Replace birth data' }).click();
+    await expect(replace.getByText('Birth data replaced.')).toBeVisible();
 
     // The form now shows Einstein's birth date under Born's name.
     await expect(page.getByLabel('Date', { exact: true })).toHaveValue(EINSTEIN.date);
     await expect(page.getByLabel('Name', { exact: true })).toHaveValue(BORN.name);
   });
 
-  test('lays the birth record out as two columns of cards at 1280px and one column at 390px (#795)', async () => {
+  test('lays the birth record out as a 60/40 pair of columns at 1280px and one column at 390px (#795, #896)', async () => {
     test.setTimeout(60_000);
     await page.setViewportSize({ width: 1280, height: 800 });
     await openSharedPerson(page, baseUrl, EINSTEIN);
@@ -92,22 +96,42 @@ test.describe('with the shared people (#799)', () => {
       if (found === null) throw new Error(`${name} card not laid out`);
       return found;
     };
-    const save = page.getByRole('button', { name: 'Save', exact: true });
-    await expect(card('timezone').locator('.birth-record-raw')).toBeVisible();
+    const save = page.locator('.birth-record-save').getByRole('button', { name: 'Save', exact: true });
+    await expect(card('location').locator('.birth-record-timezone-status')).toBeVisible();
+    await expect(card('location').locator('.birth-record-timezone .primitive-disclosure-trigger')).toBeVisible();
     await expect(page.locator('.sticky-actions')).toHaveCount(0);
-    await expect(card('notes').locator('textarea, button').last()).toHaveText('Save');
-
-    // Desktop: the form cards on the left, the timezone, files and danger cards on the right.
-    const [identity, location, notes, timezone, files, danger] = await Promise.all(
-      ['identity', 'location', 'notes', 'timezone', 'files', 'danger'].map(box),
+    await expect(card('notes').locator('button')).toHaveCount(0);
+    await expect(card('location').locator('button', { hasText: 'Save' })).toHaveCount(0);
+    await expect(card('timezone')).toHaveCount(0);
+    // Save changes sits in the page header, on the same row as the title (#896).
+    const title = await page.locator('.birth-record-title-row h1').boundingBox();
+    const saveBox = await save.boundingBox();
+    if (title === null || saveBox === null) throw new Error('title row not laid out');
+    expect(Math.abs(saveBox.y + saveBox.height / 2 - (title.y + title.height / 2))).toBeLessThan(
+      Math.max(title.height, saveBox.height),
     );
-    if (!identity || !location || !notes || !timezone || !files || !danger) throw new Error('missing card');
+    expect(saveBox.x).toBeGreaterThan(title.x + title.width - 1);
+
+    // Desktop: identity, place and notes on the left (60%); the export, replace and danger cards on the right (40%).
+    const [identity, location, notes, files, replace, danger] = await Promise.all(
+      ['identity', 'location', 'notes', 'files', 'replace', 'danger'].map(box),
+    );
+    if (!identity || !location || !notes || !files || !replace || !danger) throw new Error('missing card');
     for (const left of [location, notes]) expect(Math.abs(left.x - identity.x)).toBeLessThan(1);
-    for (const right of [files, danger]) expect(Math.abs(right.x - timezone.x)).toBeLessThan(1);
-    expect(timezone.x).toBeGreaterThan(identity.x + identity.width);
-    expect(identity.width).toBeGreaterThan(timezone.width);
+    for (const right of [files, replace, danger]) expect(Math.abs(right.x - files.x)).toBeLessThan(1);
+    expect(files.x).toBeGreaterThan(identity.x + identity.width);
+    // 60/40: the left column is about 1.5 times the right column (gap and padding allowed for).
+    const ratio = identity.width / files.width;
+    expect(ratio).toBeGreaterThan(1.3);
+    expect(ratio).toBeLessThan(1.7);
     expect(location.y).toBeGreaterThan(identity.y);
     expect(notes.y).toBeGreaterThan(location.y);
+    // NOTES ends at its natural height: no grid row span and no stretch, so its bottom is not pinned to the right column.
+    await expect(card('notes')).toHaveCSS('grid-row-end', 'auto');
+    await expect(card('notes')).toHaveCSS('align-self', 'auto');
+    expect(Math.abs(notes.y + notes.height - (danger.y + danger.height))).toBeGreaterThan(1);
+    expect(replace.y).toBeGreaterThan(files.y);
+    expect(danger.y).toBeGreaterThan(replace.y);
     // Date, how the time is known, and the time share one row.
     const tops = await Promise.all(
       ['input[type="date"]', 'select', 'input[type="time"]'].map(async (selector) => {
@@ -117,16 +141,14 @@ test.describe('with the shared people (#799)', () => {
     );
     expect(Math.max(...tops) - Math.min(...tops)).toBeLessThan(2);
 
-    // Narrow: one column, and the resolved timezone comes before Save changes.
+    // Narrow: one column, with the location card (and its timezone row) above the notes.
     await page.setViewportSize({ width: 390, height: 844 });
-    const [narrowIdentity, narrowTimezone, narrowNotes] = await Promise.all(['identity', 'timezone', 'notes'].map(box));
-    if (!narrowIdentity || !narrowTimezone || !narrowNotes) throw new Error('missing card');
-    expect(Math.abs(narrowTimezone.x - narrowIdentity.x)).toBeLessThan(1);
-    const saveBox = await save.boundingBox();
-    if (saveBox === null) throw new Error('save not laid out');
-    expect(narrowTimezone.y + narrowTimezone.height).toBeLessThanOrEqual(saveBox.y);
+    const [narrowIdentity, narrowLocation, narrowNotes] = await Promise.all(['identity', 'location', 'notes'].map(box));
+    if (!narrowIdentity || !narrowLocation || !narrowNotes) throw new Error('missing card');
+    expect(Math.abs(narrowLocation.x - narrowIdentity.x)).toBeLessThan(1);
+    expect(narrowNotes.y).toBeGreaterThan(narrowLocation.y);
     // Nothing pushes the page sideways: every card ends inside the viewport.
     expect(narrowNotes.x + narrowNotes.width).toBeLessThanOrEqual(390);
-    expect(narrowTimezone.x + narrowTimezone.width).toBeLessThanOrEqual(390);
+    expect(narrowLocation.x + narrowLocation.width).toBeLessThanOrEqual(390);
   });
 });

@@ -918,22 +918,40 @@ footer {
 }
 
 /*
- * Birth record (#795): three left-hand cards (identity and timestamp, place, notes and Save) and three right-hand
- * cards (resolved timezone, import and export, danger zone). The markup order is the single-column order, with the
- * resolved timezone before Save changes (D-795b); from 64rem the cards are pinned to their columns. Card chrome
- * matches `.horary-card`; only tokens are used.
+ * Birth record (#795, #896): a single column on narrow screens and a 60/40 two-column grid from 64rem. The left
+ * column holds identity and timestamp, place (with the inline timezone row) and notes; the right column holds the
+ * export, the replace-from-file card and the danger zone. Save changes sits in the page header, beside the title.
+ * Each column stacks its cards at their natural height, so no card is stretched to match the other column.
+ * Card chrome matches `.horary-card`; only tokens are used.
  */
 .birth-record {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: var(--space-4);
-  align-items: stretch;
+  align-items: start;
+}
+
+.birth-record-column {
+  display: grid;
+  gap: var(--space-4);
+  align-content: start;
+  min-width: 0;
+}
+
+.birth-record-title-row {
+  align-items: center;
+  margin-bottom: var(--space-2);
+}
+
+.birth-record-save {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
 }
 
 .birth-record-card {
   display: grid;
-  /* Stretched cards keep their content at the top; the slack falls at the bottom of the card. */
-  align-content: start;
   gap: var(--space-3);
   min-width: 0;
   padding: var(--space-4);
@@ -994,6 +1012,39 @@ footer {
   overflow-wrap: anywhere;
 }
 
+/* Export (#896): AAF, JSON and CSV as one horizontal row of small buttons. */
+.birth-record-export-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* Inline timezone status row at the foot of the location card (#896). */
+.birth-record-timezone {
+  display: grid;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: var(--border-hairline) solid var(--line);
+}
+
+.birth-record-timezone-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2) var(--space-3);
+  margin: 0;
+  font-size: var(--text-sm);
+}
+
+.birth-record-timezone-status {
+  font-weight: 650;
+}
+
+.birth-record-timezone-details {
+  display: grid;
+  gap: var(--space-3);
+}
+
 /* The place search keeps its input and button on one row inside the card. */
 .birth-record-card .birth-place-search {
   margin-top: 0;
@@ -1016,11 +1067,10 @@ footer {
 }
 
 @media (min-width: 64rem) {
-  /* Two blocks of equal height: identity + place beside the timezone card, then notes beside files + danger.
-     Cards stretch (align-items: stretch), so the bottoms of each block line up and no gap opens between cards. */
+  /* 60/40: the form column (left) and the export, replace and danger column (right). No stretch and no row spans,
+     so NOTES ends at its natural height (#896). */
   .birth-record {
-    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-    grid-template-rows: repeat(4, auto);
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
   }
 
   /* Date, how the time is known, and the time share one row at this width (#795). */
@@ -1030,36 +1080,6 @@ footer {
 
   .birth-record-timestamp > :nth-child(3) {
     grid-column: auto;
-  }
-
-  .birth-record-card--identity {
-    grid-column: 1;
-    grid-row: 1;
-  }
-
-  .birth-record-card--location {
-    grid-column: 1;
-    grid-row: 2;
-  }
-
-  .birth-record-card--notes {
-    grid-column: 1;
-    grid-row: 3 / span 2;
-  }
-
-  .birth-record-card--timezone {
-    grid-column: 2;
-    grid-row: 1 / span 2;
-  }
-
-  .birth-record-card--files {
-    grid-column: 2;
-    grid-row: 3;
-  }
-
-  .birth-record-card--danger {
-    grid-column: 2;
-    grid-row: 4;
   }
 }
 

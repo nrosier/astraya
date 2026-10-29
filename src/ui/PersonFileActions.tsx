@@ -1,7 +1,7 @@
 /**
  * @module ui/PersonFileActions
- * @purpose The birth-record page's export and import of one person (#699): download as AAF, Astraya JSON or CSV, and replace this person's birth data from an AAF or Astraya JSON file after a preview.
- * @conventions Reuses the backup's writers (`peopleToAaf`, `buildFullExport`, `peopleToCsv`) with one person, and `domain/person-file.ts` to read and stage; the store is written only on Replace, in one `store.mutate`. CSV is export only.
+ * @purpose The birth-record page's export and import of one person (#699, #896): an export card with one row of AAF, JSON and CSV downloads, and a separate Replace data card that replaces this person's birth data from an AAF or Astraya JSON file after a preview.
+ * @conventions Reuses the backup's writers (`peopleToAaf`, `buildFullExport`, `peopleToCsv`) with one person, and `domain/person-file.ts` to read and stage; the store is written only on Replace, in one `store.mutate`. CSV is export only. Returns two sibling cards for the birth-record right-hand column.
  * @exports PersonFileActions
  */
 import { Fragment, useState } from 'react';
@@ -51,7 +51,8 @@ export function PersonFileActions({
   const t = useMessages(personFileActionsMessages);
   const [locale] = useLocale();
   const preferencesT = useMessages(preferencesViewMessages);
-  const [status, setStatus] = useState<Status | undefined>(undefined);
+  const [exportStatus, setExportStatus] = useState<Status | undefined>(undefined);
+  const [importStatus, setImportStatus] = useState<Status | undefined>(undefined);
   const [candidates, setCandidates] = useState<readonly ExportedPerson[]>([]);
   const [chosen, setChosen] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -61,15 +62,15 @@ export function PersonFileActions({
   const exportAaf = (): void => {
     const { text, skipped } = peopleToAaf([person]);
     if (skipped.length > 0) {
-      setStatus({ kind: 'error', text: t.exportAafNeedsBirth });
+      setExportStatus({ kind: 'error', text: t.exportAafNeedsBirth });
       return;
     }
     downloadText(filename('aaf'), text, 'text/plain');
-    setStatus({ kind: 'success', text: t.exported('AAF') });
+    setExportStatus({ kind: 'success', text: t.exported('AAF') });
   };
   const exportJson = (): void => {
     if (provider === undefined) {
-      setStatus({ kind: 'error', text: t.exportNeedsEngine });
+      setExportStatus({ kind: 'error', text: t.exportNeedsEngine });
       return;
     }
     const settings = readDefaultCalculationProfile()?.settings ?? DEFAULT_EXTENDED_SETTINGS;
@@ -84,29 +85,29 @@ export function PersonFileActions({
     })
       .then((archive) => {
         downloadText(filename('json'), `${JSON.stringify(archive, null, 2)}\n`, 'application/json');
-        setStatus({ kind: 'success', text: t.exported('Astraya JSON') });
+        setExportStatus({ kind: 'success', text: t.exported('Astraya JSON') });
       })
       .catch((error: unknown) => {
-        setStatus({ kind: 'error', text: error instanceof Error ? error.message : String(error) });
+        setExportStatus({ kind: 'error', text: error instanceof Error ? error.message : String(error) });
       });
   };
   const exportCsv = (): void => {
     downloadText(filename('csv'), peopleToCsv([person]), 'text/csv');
-    setStatus({ kind: 'success', text: t.exported('CSV') });
+    setExportStatus({ kind: 'success', text: t.exported('CSV') });
   };
 
   const onFileChosen = (file: File | undefined): void => {
     if (file === undefined) return;
     setCandidates([]);
     setChosen(0);
-    setStatus({ kind: 'loading', text: t.reading });
+    setImportStatus({ kind: 'loading', text: t.reading });
     void file.text().then(
       (text) => {
         const read = readPersonFile(text);
         if (!read.ok) {
           const { error } = read;
           const firstAaf = error.kind === 'no-people' ? error.aafErrors[0] : undefined;
-          setStatus({
+          setImportStatus({
             kind: 'error',
             text:
               error.kind === 'not-json'
@@ -120,10 +121,10 @@ export function PersonFileActions({
           return;
         }
         setCandidates(read.people);
-        setStatus(undefined);
+        setImportStatus(undefined);
       },
       (error: unknown) => {
-        setStatus({ kind: 'error', text: error instanceof Error ? error.message : String(error) });
+        setImportStatus({ kind: 'error', text: error instanceof Error ? error.message : String(error) });
       },
     );
   };
@@ -147,16 +148,16 @@ export function PersonFileActions({
   const confirm = (): void => {
     if (staged === undefined || staged.mutations.length === 0) return;
     setSaving(true);
-    setStatus({ kind: 'updating', text: t.applying });
+    setImportStatus({ kind: 'updating', text: t.applying });
     void store
       .mutate(staged.mutations)
       .then(() => {
         cancel();
         onReplaced();
-        setStatus({ kind: 'success', text: t.applied });
+        setImportStatus({ kind: 'success', text: t.applied });
       })
       .catch((error: unknown) => {
-        setStatus({ kind: 'error', text: t.failed(error instanceof Error ? error.message : String(error)) });
+        setImportStatus({ kind: 'error', text: t.failed(error instanceof Error ? error.message : String(error)) });
       })
       .finally(() => {
         setSaving(false);
@@ -164,59 +165,70 @@ export function PersonFileActions({
   };
 
   return (
-    <section
-      className="birth-record-card birth-record-card--files person-file-actions"
-      aria-labelledby="person-file-heading"
-    >
-      <h3 id="person-file-heading">{t.heading}</h3>
-      <p className="hint">{t.exportHint}</p>
-      <p className="actions">
-        <Button onClick={exportAaf}>{t.exportAaf}</Button> <Button onClick={exportJson}>{t.exportJson}</Button>{' '}
-        <Button onClick={exportCsv}>{t.exportCsv}</Button>
-      </p>
-      <p className="hint">{t.importHint}</p>
-      <p>
-        <FileInput
-          buttonLabel={t.importButton}
-          accept="application/json,.json,.aaf,text/plain"
-          onChange={onFileChosen}
-        />
-      </p>
-      {candidates.length > 1 && (
-        <Select
-          label={t.choosePerson}
-          value={String(chosen)}
-          options={candidates.map((candidate, index) => ({ value: String(index), label: candidate.displayName }))}
-          onChange={(value) => {
-            setChosen(Number(value));
-          }}
-        />
-      )}
-      {staged !== undefined &&
-        (staged.changes.length === 0 ? (
-          <StatusMessage kind="zero">{t.noChanges}</StatusMessage>
-        ) : (
-          <div className="person-file-preview">
-            <h4>{t.changesHeading}</h4>
-            <dl>
-              {staged.changes.map((change) => (
-                <Fragment key={change.field}>
-                  <dt>{t.fields[change.field]}</dt>
-                  <dd>{describe(change)}</dd>
-                </Fragment>
-              ))}
-            </dl>
-            <p className="actions">
-              <Button variant="danger" busy={saving} busyLabel={t.applying} onClick={confirm}>
-                {t.confirm}
-              </Button>{' '}
-              <Button onClick={cancel} disabled={saving}>
-                {t.cancel}
-              </Button>
-            </p>
-          </div>
-        ))}
-      {status !== undefined && <StatusMessage kind={status.kind}>{status.text}</StatusMessage>}
-    </section>
+    <div className="person-file-actions">
+      <section className="birth-record-card birth-record-card--files" aria-labelledby="person-file-heading">
+        <h3 id="person-file-heading">{t.heading}</h3>
+        <p className="hint">{t.exportHint}</p>
+        <div className="birth-record-export-row" role="group" aria-label={t.exportGroupLabel}>
+          <Button size="compact" onClick={exportAaf}>
+            {t.exportAaf}
+          </Button>
+          <Button size="compact" onClick={exportJson}>
+            {t.exportJson}
+          </Button>
+          <Button size="compact" onClick={exportCsv}>
+            {t.exportCsv}
+          </Button>
+        </div>
+        {exportStatus !== undefined && <StatusMessage kind={exportStatus.kind}>{exportStatus.text}</StatusMessage>}
+      </section>
+
+      <section className="birth-record-card birth-record-card--replace" aria-labelledby="person-replace-heading">
+        <h3 id="person-replace-heading">{t.replaceHeading}</h3>
+        <p className="hint">{t.importHint}</p>
+        <p>
+          <FileInput
+            buttonLabel={t.importButton}
+            accept="application/json,.json,.aaf,text/plain"
+            onChange={onFileChosen}
+          />
+        </p>
+        {candidates.length > 1 && (
+          <Select
+            label={t.choosePerson}
+            value={String(chosen)}
+            options={candidates.map((candidate, index) => ({ value: String(index), label: candidate.displayName }))}
+            onChange={(value) => {
+              setChosen(Number(value));
+            }}
+          />
+        )}
+        {staged !== undefined &&
+          (staged.changes.length === 0 ? (
+            <StatusMessage kind="zero">{t.noChanges}</StatusMessage>
+          ) : (
+            <div className="person-file-preview">
+              <h4>{t.changesHeading}</h4>
+              <dl>
+                {staged.changes.map((change) => (
+                  <Fragment key={change.field}>
+                    <dt>{t.fields[change.field]}</dt>
+                    <dd>{describe(change)}</dd>
+                  </Fragment>
+                ))}
+              </dl>
+              <p className="actions">
+                <Button variant="danger" busy={saving} busyLabel={t.applying} onClick={confirm}>
+                  {t.confirm}
+                </Button>{' '}
+                <Button onClick={cancel} disabled={saving}>
+                  {t.cancel}
+                </Button>
+              </p>
+            </div>
+          ))}
+        {importStatus !== undefined && <StatusMessage kind={importStatus.kind}>{importStatus.text}</StatusMessage>}
+      </section>
+    </div>
   );
 }
