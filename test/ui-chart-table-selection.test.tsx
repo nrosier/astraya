@@ -375,3 +375,46 @@ describe('a table row selects on the wheel (#418)', () => {
     expect(container.querySelector('.chart-selection-bar')).toBeNull();
   });
 });
+
+describe('the Placements flag columns (#870)', () => {
+  /** The cells of one column of the Positions table, with their row's body name, found by the column's header label. */
+  async function flagCells(label: string): Promise<{ body: string; cell: Element }[]> {
+    const container = await mount();
+    await open(container, 'positions');
+    const section = [...container.querySelectorAll('section.data-table')].find(
+      (s) => s.querySelector('h2, h3')?.textContent === chartViewMessages.en.positionsCaption,
+    );
+    const headers = [...(section?.querySelectorAll('thead th') ?? [])];
+    const index = headers.findIndex((th) => th.textContent.includes(label));
+    if (index < 0) throw new Error(`fixture bug: no ${label} column`);
+    return [...(section?.querySelectorAll('tbody tr') ?? [])].flatMap((row) => {
+      const cell = row.querySelectorAll('td, th')[index];
+      return cell === undefined ? [] : [{ body: row.textContent, cell }];
+    });
+  }
+
+  it('draws a set RX flag as a Badge and leaves a direct row with no badge', async () => {
+    const cells = await flagCells(chartViewMessages.en.rxLabel);
+    const retro = cells.filter(({ cell }) => cell.textContent.includes('℞'));
+    const direct = cells.filter(({ cell }) => !cell.textContent.includes('℞'));
+    expect(retro.length).toBeGreaterThan(0);
+    expect(direct.length).toBeGreaterThan(0);
+    for (const { cell } of retro) {
+      const badge = cell.querySelector('span.primitive-badge');
+      expect(badge?.textContent).toBe('℞');
+    }
+    for (const { cell } of direct) expect(cell.querySelector('.primitive-badge')).toBeNull();
+  });
+
+  it.each([
+    ['ANARETIC', chartViewMessages.en.anareticLabel],
+    ['OUT OF BOUNDS', chartViewMessages.en.outOfBoundsLabel],
+  ])('shows the %s flag as a muted check and leaves other rows empty', async (_name, label) => {
+    const cells = await flagCells(label);
+    const set = cells.filter(({ cell }) => cell.textContent !== '');
+    const empty = cells.filter(({ cell }) => cell.textContent === '');
+    expect(empty.length).toBeGreaterThan(0);
+    for (const { cell } of empty) expect(cell.querySelector('.data-table-muted')).toBeNull();
+    for (const { cell } of set) expect(cell.querySelector('span.data-table-muted')?.textContent).toBe('✓');
+  });
+});

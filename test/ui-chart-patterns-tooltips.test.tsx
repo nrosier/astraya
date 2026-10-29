@@ -167,3 +167,14 @@ describe('the Patterns key-value metrics (#870)', () => {
     ]);
   });
 });
+
+describe('the Patterns flat cards (#870)', () => {
+  it('draws the chart shape summary and the aspect patterns section as flat cards', async () => {
+    const container = await mountOnPatterns();
+    const panel = container.querySelector('#chart-view-patterns');
+    expect(panel?.querySelector('.chart-shape-summary')?.classList.contains('flat-card')).toBe(true);
+    const aspectPatterns = panel?.querySelector('section[aria-labelledby="aspect-patterns-heading"]');
+    expect(aspectPatterns).not.toBeNull();
+    expect(aspectPatterns?.classList.contains('flat-card')).toBe(true);
+  });
+});
