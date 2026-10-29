@@ -440,6 +440,16 @@ At narrow widths, dropdown menus become in-flow panels, tables scroll within lab
 
 Fixed or edge-to-edge chrome (sticky headers, bottom action bars, full-screen dialogs) must respect the iOS safe area. Pad it with `env(safe-area-inset-top)` and `env(safe-area-inset-bottom)`.
 
+### 10.1 Multi-card pages
+
+These rules apply to every page that lays out more than one card, at every size listed above.
+
+1. **Bottom row shares one bottom edge.** Cards that sit side by side in the bottom row of a grid end on the same bottom border line, so the page ends on one straight line. Stretch the row (`align-items: stretch`) and let the slack fall inside the card's own content; do not set a fixed height or a `min-height` to equalise neighbours.
+2. **Shorter column is at least about 90% of the taller column.** Where two columns sit side by side, the shorter column's height must be at least about 90% of the taller column's height at the verified widths (390×844, 1280×800, 3440×1440). Meet this from content and the grid's column proportions. If a page cannot meet it from content alone, report the page and the shortfall; do not force heights to close the gap.
+3. **Sizes follow content.** A card is never forced to a different height just to match a neighbour. Equal bottom edges come from the shared grid, not from fixed heights.
+4. **Grid edges match the content width.** The grid's left and right edges line up with the page's content width on every page.
+5. **Use shared classes and tokens.** Multi-card layouts use the shared grid or card classes and design tokens only; no hard-coded hex, rgb, or hsl values.
+
 ## 11. Use the design system rather than local styling
 
 - Use the spacing, type, semantic-color, radius, elevation, and motion tokens in `app.css`.
