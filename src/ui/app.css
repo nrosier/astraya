@@ -2269,37 +2269,27 @@ label.stacked textarea:focus-visible {
   gap: 0.4rem;
 }
 
-/* One labelled group for the planetary-rulers choice and the Sabian checkbox (#802). It wraps
-   onto its own line within .report-controls and never runs wider than the column. */
+/* The configuration (#881) is one disclosure: the rulers and Sabian settings sit inside it, collapsed to a
+   summary of the current choice. It spans the full column width, like the table of contents and the sections. */
 .config-block {
+  flex: 1 1 100%;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+}
+
+.config-block-body {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  max-width: 100%;
-  margin: 0;
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--surface);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--line);
 }
 
-.config-block-heading {
-  margin: 0;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--muted);
-}
-
-/* The Sabian checkbox row keeps its padding compact so the block stays short. */
+/* The Sabian checkbox row keeps its padding compact so the panel stays short. */
 .config-block .degree-symbol-setting .primitive-choice {
   min-height: 0;
   padding: var(--space-1) 0;
-}
-
-@media (max-width: 40rem) {
-  .config-block {
-    padding: var(--space-3);
-  }
 }
 
 .report-toc {
