@@ -12,7 +12,8 @@ const en = {
     'Judgment method: William Lilly, Christian Astrology, Book II, pp. 162–64 (the merchant’s-ship judgment).',
   dateLabel: 'Date the question was asked',
   timeLabel: 'Local time',
-  dateCardHeading: 'Date, time & location',
+  dateTimeCardHeading: 'Date and time',
+  locationCardHeading: 'Location',
   paramsCardHeading: 'Astrological parameters',
   setToNow: 'Set to now',
   geocodeNotice: (host: string) =>
@@ -99,7 +100,8 @@ const nl: typeof en = {
     'Oordeelmethode: William Lilly, Christian Astrology, Boek II, pp. 162–64 (het oordeel over het koopvaardijschip).',
   dateLabel: 'Datum waarop de vraag werd gesteld',
   timeLabel: 'Lokale tijd',
-  dateCardHeading: 'Datum, tijd & plaats',
+  dateTimeCardHeading: 'Datum en tijd',
+  locationCardHeading: 'Locatie',
   paramsCardHeading: 'Astrologische parameters',
   setToNow: 'Nu invullen',
   geocodeNotice: (host: string) =>

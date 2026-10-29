@@ -120,7 +120,7 @@ export function HoraryView({ view }: { readonly view?: ChartViewKind | undefined
 
       <div className="horary-form">
         <section className="horary-card" aria-labelledby="horary-card-datetime">
-          <h2 id="horary-card-datetime">{t.dateCardHeading}</h2>
+          <h2 id="horary-card-datetime">{t.dateTimeCardHeading}</h2>
           <div className="horary-timestamp">
             <DateField
               label={t.dateLabel}
@@ -144,6 +144,10 @@ export function HoraryView({ view }: { readonly view?: ChartViewKind | undefined
               {t.setToNow}
             </Button>
           </div>
+        </section>
+
+        <section className="horary-card" aria-labelledby="horary-card-location">
+          <h2 id="horary-card-location">{t.locationCardHeading}</h2>
           <BirthPlaceSearch
             onPick={(latitude, longitude) => {
               edit({ latitude: String(latitude), longitude: String(longitude) });

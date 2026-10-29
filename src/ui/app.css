@@ -836,7 +836,8 @@ footer {
 }
 
 /*
- * Horary chart form (#782): two cards, side by side when there is room. BirthPlaceSearch is shared with
+ * Horary chart form (#782, split into three cards for #895): date and time, location, astrological parameters.
+ * Cards sit side by side when there is room. BirthPlaceSearch is shared with
  * other screens, so its layout and its inner hint are adjusted here only, under `.horary-form`. The 25rem column
  * floor keeps the Dutch house-system label whole; at 22rem a third (empty) track narrowed each card below it.
  */
