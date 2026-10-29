@@ -49,7 +49,11 @@ afterEach(() => {
   host = undefined;
 });
 
-function mount(onToggle: (key: string) => void = () => undefined, selectedKey?: string): HTMLElement {
+function mount(
+  onToggle: (key: string) => void = () => undefined,
+  selectedKey?: string,
+  onShowOnWheel?: (key: string) => void,
+): HTMLElement {
   const el = document.createElement('div');
   document.body.append(el);
   host = el;
@@ -63,7 +67,7 @@ function mount(onToggle: (key: string) => void = () => undefined, selectedKey?: 
         labels={labels}
         locale="en"
         describe={(a, b, aspect) => `${a} ${aspect} ${b}`}
-        selection={{ selectedKey, onToggle, canSelect: (a, b) => a !== 'asc' && b !== 'asc' }}
+        selection={{ selectedKey, onToggle, onShowOnWheel, canSelect: (a, b) => a !== 'asc' && b !== 'asc' }}
       />,
     );
   });
@@ -125,6 +129,20 @@ describe('AspectMatrixGrid (#820)', () => {
     expect(onToggle).toHaveBeenCalledWith('aspect:moon@0|sun@0');
     expect(el.querySelector('button[aria-label="asc quintile moon"]')).toBeNull();
     expect(el.querySelector('[role="img"][aria-label="asc quintile moon"]')).not.toBeNull();
+  });
+
+  it('opens the Wheel view on the pair when a cell is clicked and the view can switch (#898)', () => {
+    const onToggle = vi.fn();
+    const onShowOnWheel = vi.fn();
+    const el = mount(onToggle, undefined, onShowOnWheel);
+    act(() => {
+      el.querySelector('button[aria-label="moon square sun"]')?.dispatchEvent(
+        new MouseEvent('click', { bubbles: true }),
+      );
+    });
+    expect(onShowOnWheel).toHaveBeenCalledWith('aspect:moon@0|sun@0');
+    expect(onToggle).not.toHaveBeenCalled();
+    expect(el.querySelector('button[aria-label="asc quintile moon"]')).toBeNull();
   });
 
   it('draws no exact-aspect double border and no total row (D-820)', () => {

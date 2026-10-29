@@ -199,13 +199,7 @@ test.describe('with the shared people (#799)', () => {
 
     // Table to wheel: press Show on the Sun's row, then go to the chart: it is isolated there.
     await page.getByRole('link', { name: 'Placements', exact: true }).click();
-    await page.getByRole('button', { name: 'Show Sun on the chart', exact: true }).click();
-    await expect(page.getByRole('button', { name: 'Show Sun on the chart', exact: true })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
-    await expect(page.locator('tr.data-table-row-selected')).toContainText('Sun');
-    await page.getByRole('button', { name: 'Go to the chart', exact: true }).click();
+    await page.getByRole('button', { name: 'Show Sun on the wheel', exact: true }).click();
     await expect(page.locator('div.chart-wheel')).toBeVisible();
     await expect(page.locator('.chart-wheel .chart-dimmed').first()).toBeAttached();
     await expect(page.locator('.selection-inspector-facts')).toBeVisible();

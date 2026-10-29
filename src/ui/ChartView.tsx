@@ -347,6 +347,7 @@ function renderMatrixView(
             : {
                 selectedKey: selection.selectedKey,
                 onToggle: selection.onToggle,
+                onShowOnWheel: selection.onShowOnWheel,
                 canSelect: (aKey, bKey) => selection.selectableBodies.has(aKey) && selection.selectableBodies.has(bKey),
               }
         }

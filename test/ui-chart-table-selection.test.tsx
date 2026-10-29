@@ -135,18 +135,27 @@ describe('a table row selects on the wheel (#418)', () => {
     const container = await mount();
     expect(dimmed(container)).toBe(0);
     await open(container, 'positions');
-    const sun = showButton(container, 'Show Sun on the chart');
-    expect(sun?.getAttribute('aria-pressed')).toBe('false');
+    const sun = showButton(container, 'Show Sun on the wheel');
+    expect(sun?.hasAttribute('aria-pressed')).toBe(false);
     await press(sun);
 
-    // The wheel (still mounted, hidden) has dimmed everything but the Sun and what it touches.
+    // Straight to the Wheel view, which has dimmed everything but the Sun and what it touches (#898).
+    expect(container.querySelector('#chart-view-wheel')?.hasAttribute('hidden')).toBe(false);
     expect(dimmed(container)).toBeGreaterThan(0);
-    expect(showButton(container, 'Show Sun on the chart')?.getAttribute('aria-pressed')).toBe('true');
+
+    // Back on Placements the row is marked and the bar says what is selected.
+    await open(container, 'positions');
     expect(container.querySelector('tr.data-table-row-selected')?.textContent).toContain('Sun');
     expect(container.querySelector('.chart-selection-bar')?.textContent).toContain('Selected on the chart:');
 
-    // Pressing it again clears the selection everywhere.
-    await press(showButton(container, 'Show Sun on the chart'));
+    // Show never un-shows; Clear removes the selection everywhere.
+    await press(showButton(container, 'Show Sun on the wheel'));
+    expect(dimmed(container)).toBeGreaterThan(0);
+    await open(container, 'positions');
+    const clear = Array.from(container.querySelectorAll('.chart-selection-bar button')).find(
+      (button) => button.textContent === 'Clear',
+    );
+    await press(clear);
     expect(dimmed(container)).toBe(0);
     expect(container.querySelector('tr.data-table-row-selected')).toBeNull();
     expect(container.querySelector('.chart-selection-bar')).toBeNull();
@@ -155,13 +164,16 @@ describe('a table row selects on the wheel (#418)', () => {
   it('"Go to the chart" shows the selection on the wheel, with its panel; "Clear" removes it', async () => {
     const container = await mount();
     await open(container, 'positions');
-    await press(showButton(container, 'Show Moon on the chart'));
+    await press(showButton(container, 'Show Moon on the wheel'));
+    expect(container.querySelector('#chart-view-wheel')?.hasAttribute('hidden')).toBe(false);
+    expect(container.querySelector('.selection-inspector-facts')).not.toBeNull();
+
+    await open(container, 'positions');
     const goTo = Array.from(container.querySelectorAll('.chart-selection-bar button')).find(
       (button) => button.textContent === 'Go to the chart',
     );
     await press(goTo);
     expect(container.querySelector('#chart-view-wheel')?.hasAttribute('hidden')).toBe(false);
-    expect(container.querySelector('.selection-inspector-facts')).not.toBeNull();
 
     await open(container, 'positions');
     const clear = Array.from(container.querySelectorAll('.chart-selection-bar button')).find(
@@ -204,6 +216,21 @@ describe('a table row selects on the wheel (#418)', () => {
     expect(dimmed(container)).toBeGreaterThan(0);
   });
 
+  it('a Placements Show control opens the Wheel view with that body or sign selected (#898)', async () => {
+    const container = await mount();
+    await open(container, 'positions');
+    await press(showButton(container, 'Show Sun on the wheel'));
+    expect(container.querySelector('#chart-view-wheel')?.hasAttribute('hidden')).toBe(false);
+    expect(container.querySelector('#chart-view-placements')).toBeNull();
+    expect(dimmed(container)).toBeGreaterThan(0);
+    expect(container.querySelector('.selection-inspector-facts')?.textContent).toContain('Sun');
+
+    await open(container, 'positions');
+    await press(showButton(container, 'Show Capricorn on the wheel'));
+    expect(container.querySelector('#chart-view-wheel')?.hasAttribute('hidden')).toBe(false);
+    expect(container.querySelector('.chart-wheel [data-sign="libra"]')?.classList.contains('chart-dimmed')).toBe(true);
+  });
+
   it('names the Show button in Dutch (#815)', async () => {
     setLocale('nl');
     const container = await mount();
@@ -223,7 +250,6 @@ describe('a table row selects on the wheel (#418)', () => {
     });
     await open(container, 'positions');
     expect(container.querySelector('tr.data-table-row-selected')?.textContent).toContain('Sun');
-    expect(showButton(container, 'Show Sun on the chart')?.getAttribute('aria-pressed')).toBe('true');
   });
 
   it('has no buttons on rows with no symbol on the wheel (the Ascendant), nor without a wheel at all', async () => {
@@ -250,34 +276,32 @@ describe('a table row selects on the wheel (#418)', () => {
     setLocale('nl');
     const container = await mount();
     await open(container, 'positions');
-    await press(showButton(container, 'Toon Zon op de horoscoop'));
+    await press(showButton(container, 'Toon Zon op de wiel'));
+    await open(container, 'positions');
     expect(container.querySelector('.chart-selection-bar')?.textContent).toContain('Geselecteerd op de horoscoop:');
   });
 
   it('a Houses row’s button selects that house’s cusp: wheel, inspector heading, marked row, and back (#511)', async () => {
     const container = await mount();
     await open(container, 'positions');
-    const button = showButton(container, 'Show House 5 on the chart');
-    expect(button?.getAttribute('aria-pressed')).toBe('false');
-    await press(button);
+    await press(showButton(container, 'Show House 5 on the wheel'));
 
+    // Straight to the Wheel view, with the inspector saying the same, with the sign's meaning for that cusp (#898).
+    expect(container.querySelector('#chart-view-wheel')?.hasAttribute('hidden')).toBe(false);
     expect(dimmed(container)).toBeGreaterThan(0);
     expect(container.querySelector('.chart-wheel [data-house="5"]')?.classList.contains('chart-dimmed')).toBe(false);
     expect(container.querySelector('.chart-wheel [data-house="6"]')?.classList.contains('chart-dimmed')).toBe(true);
-    expect(container.querySelector('tr.data-table-row-selected')?.textContent).toContain('5');
-    expect(showButton(container, 'Show House 5 on the chart')?.getAttribute('aria-pressed')).toBe('true');
-    expect(container.querySelector('.chart-selection-bar')?.textContent).toMatch(/on the cusp of house 5/);
-
-    // The inspector says the same, with the sign's meaning for that cusp.
-    const goTo = Array.from(container.querySelectorAll('.chart-selection-bar button')).find(
-      (b) => b.textContent === 'Go to the chart',
-    );
-    await press(goTo);
     expect(container.querySelector('.selection-inspector-facts strong')?.textContent).toMatch(/on the cusp of house 5/);
 
-    // Pressing the same button again clears it everywhere.
     await open(container, 'positions');
-    await press(showButton(container, 'Show House 5 on the chart'));
+    expect(container.querySelector('tr.data-table-row-selected')?.textContent).toContain('5');
+    expect(container.querySelector('.chart-selection-bar')?.textContent).toMatch(/on the cusp of house 5/);
+
+    // Clear removes it everywhere.
+    const clear = Array.from(container.querySelectorAll('.chart-selection-bar button')).find(
+      (b) => b.textContent === 'Clear',
+    );
+    await press(clear);
     expect(dimmed(container)).toBe(0);
     expect(container.querySelector('.chart-selection-bar')).toBeNull();
   });
@@ -292,39 +316,35 @@ describe('a table row selects on the wheel (#418)', () => {
     });
     expect(container.querySelector('.selection-inspector-facts strong')?.textContent).toMatch(/house 3/);
     await open(container, 'positions');
-    expect(showButton(container, 'Show House 3 on the chart')?.getAttribute('aria-pressed')).toBe('true');
+    expect(container.querySelector('tr.data-table-row-selected')?.textContent).toContain('3');
   });
 
   it('a “Show sign” button selects that sign on the wheel, the inspector and every button for it, and toggles off (#511)', async () => {
     const container = await mount();
     await open(container, 'positions');
-    const button = showButton(container, 'Show Capricorn on the chart');
+    const button = showButton(container, 'Show Capricorn on the wheel');
     expect(button?.textContent).toBe('Show sign');
-    expect(button?.getAttribute('aria-pressed')).toBe('false');
     // Rendered through the primitive Button (#870): its quiet variant class, type button, no stray classes.
     expect(button?.className).toBe('quiet');
     expect(button?.type).toBe('button');
     await press(button);
 
+    // Straight to the Wheel view (#898).
+    expect(container.querySelector('#chart-view-wheel')?.hasAttribute('hidden')).toBe(false);
     expect(container.querySelector('.chart-wheel [data-sign="capricorn"]')?.classList.contains('chart-dimmed')).toBe(
       false,
     );
     expect(container.querySelector('.chart-wheel [data-sign="libra"]')?.classList.contains('chart-dimmed')).toBe(true);
-    expect(container.querySelector('.chart-selection-bar')?.textContent).toContain('Capricorn');
-    for (const other of container.querySelectorAll('button[aria-label="Show Capricorn on the chart"]')) {
-      expect(other.getAttribute('aria-pressed')).toBe('true');
-    }
-
-    const goTo = Array.from(container.querySelectorAll('.chart-selection-bar button')).find(
-      (b) => b.textContent === 'Go to the chart',
-    );
-    await press(goTo);
     expect(container.querySelector('.selection-inspector-facts strong')?.textContent).toBe('Capricorn');
     // The same meaning the wheel click gives: the planets standing in the sign.
     expect(container.querySelector('.selection-inspector-facts')?.textContent).toContain('Sun');
 
     await open(container, 'positions');
-    await press(showButton(container, 'Show Capricorn on the chart'));
+    expect(container.querySelector('.chart-selection-bar')?.textContent).toContain('Capricorn');
+    const clear = Array.from(container.querySelectorAll('.chart-selection-bar button')).find(
+      (b) => b.textContent === 'Clear',
+    );
+    await press(clear);
     expect(dimmed(container)).toBe(0);
   });
 
@@ -348,19 +368,11 @@ describe('a table row selects on the wheel (#418)', () => {
       },
     });
     await open(container, 'positions');
-    const button = showButton(container, 'Show Part of Spirit on the chart');
-    expect(button?.getAttribute('aria-pressed')).toBe('false');
-    await press(button);
+    await press(showButton(container, 'Show Part of Spirit on the wheel'));
 
-    // Not drawn on the wheel, so nothing on it dims — but the row, bar and inspector all say so.
+    // Straight to the Wheel view (#898). Not drawn on the wheel, so nothing on it dims — but the inspector says so.
+    expect(container.querySelector('#chart-view-wheel')?.hasAttribute('hidden')).toBe(false);
     expect(dimmed(container)).toBe(0);
-    expect(container.querySelector('tr.data-table-row-selected')?.textContent).toContain('Part of Spirit');
-    expect(container.querySelector('.chart-selection-bar')?.textContent).toContain('Part of Spirit');
-
-    const goTo = Array.from(container.querySelectorAll('.chart-selection-bar button')).find(
-      (b) => b.textContent === 'Go to the chart',
-    );
-    await press(goTo);
     const facts = container.querySelector('.selection-inspector-facts');
     expect(facts?.querySelector('.chart-isolation-head strong')?.textContent).toBe('Part of Spirit');
     // Where it falls is the badges under the heading: sign, degree and minute, then the house (#801).
@@ -371,7 +383,12 @@ describe('a table row selects on the wheel (#418)', () => {
     expect(facts?.querySelector('.chart-isolation-interpretation')).not.toBeNull();
 
     await open(container, 'positions');
-    await press(showButton(container, 'Show Part of Spirit on the chart'));
+    expect(container.querySelector('tr.data-table-row-selected')?.textContent).toContain('Part of Spirit');
+    expect(container.querySelector('.chart-selection-bar')?.textContent).toContain('Part of Spirit');
+    const clear = Array.from(container.querySelectorAll('.chart-selection-bar button')).find(
+      (b) => b.textContent === 'Clear',
+    );
+    await press(clear);
     expect(container.querySelector('.chart-selection-bar')).toBeNull();
   });
 });
