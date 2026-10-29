@@ -1630,6 +1630,10 @@ label.stacked textarea:focus-visible {
 .data-table-scroll-tall {
   max-height: min(70vh, 44rem);
   overflow-y: auto;
+  /* Scroll cue: a fade along the bottom edge while more rows lie below; the local layer in --bg covers it once the end is reached. */
+  background:
+    linear-gradient(var(--bg), var(--bg)) local bottom / 100% var(--space-4) no-repeat,
+    linear-gradient(to bottom, transparent, var(--line)) scroll bottom / 100% var(--space-6) no-repeat;
 }
 
 .data-table-scroll-tall thead th {

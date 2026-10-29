@@ -2,7 +2,7 @@
  * @module ChartViewAspects
  * @purpose Renders the Aspects chart view tables (aspects, antiscia, declinations, fixed stars, midpoints) and their columns.
  * @conventions Moved out of ChartView.tsx (#817); the aspects table shows Applying as a dot plus label and the family as muted text on screen only (#815), while `render` stays plain text for copy, CSV and the PDF; takes the chart data and message bundle as arguments and never imports ChartView.
- * @exports aspectColumns, declinationColumns, antisciaColumns, midpointTreeColumns, allMidpointsColumns, fixedStarsScopeNoteOf, checkedStarsOf, fixedStarColumns, hasStarSources, renderAspectsTable
+ * @exports AspectState, aspectColumns, declinationColumns, antisciaColumns, midpointTreeColumns, allMidpointsColumns, fixedStarsScopeNoteOf, checkedStarsOf, fixedStarColumns, hasStarSources, renderAspectsTable
  */
 import { formatOrb } from './format.js';
 import { aspectHarmonicFamily } from '../astrology/aspects.js';
@@ -35,6 +35,22 @@ import type { Locale } from '../interpretation/schema.js';
 function familyText(row: AspectRow): string {
   const family = aspectHarmonicFamily(row.aspectKey);
   return family === undefined ? '' : `H${String(family)}`;
+}
+
+/** The dot-plus-label Applying/Separating marker (#815); the Consultation transit table reuses it. */
+export function AspectState({
+  applying,
+  label,
+}: {
+  readonly applying: boolean;
+  readonly label: string;
+}): React.JSX.Element {
+  return (
+    <span className={`aspect-state aspect-state--${applying ? 'applying' : 'separating'}`}>
+      <span className="aspect-state-dot" aria-hidden="true" />
+      {label}
+    </span>
+  );
 }
 
 export function aspectColumns(
@@ -86,12 +102,7 @@ export function aspectColumns(
       valueOf: (row) => row.applying,
       // Plain text for copy, CSV and the PDF (which reuses these columns); the dot-plus-label state is the screen cell only (#815).
       render: (row) => (row.applying ? t.applying : t.separating),
-      renderCell: (row) => (
-        <span className={`aspect-state aspect-state--${row.applying ? 'applying' : 'separating'}`}>
-          <span className="aspect-state-dot" aria-hidden="true" />
-          {row.applying ? t.applying : t.separating}
-        </span>
-      ),
+      renderCell: (row) => <AspectState applying={row.applying} label={row.applying ? t.applying : t.separating} />,
     },
     {
       key: 'harmonicFamily',

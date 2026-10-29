@@ -4,7 +4,7 @@
  * @conventions Presentational; the caller words every cell (and owns the en/nl text). Columns are not sortable, so the ranked order stays. The shared data-table frame scrolls sideways on a phone instead of restacking. A row without a next exact pass shows an em dash with the accessible name `noPass` (D-800b).
  * @exports ConsultationTransitTable, TransitTableRow, TransitTableLabels
  */
-import { Badge } from './primitives/Badge.js';
+import { AspectState } from './ChartViewAspects.js';
 import { SortableTable } from './SortableTable.js';
 import type { TableColumn } from './table-sort.js';
 
@@ -43,7 +43,7 @@ export function ConsultationTransitTable({
       key: 'state',
       label: labels.state,
       valueOf: (row) => row.state,
-      renderCell: (row) => <Badge tone={row.applying ? 'accent' : undefined}>{row.state}</Badge>,
+      renderCell: (row) => <AspectState applying={row.applying} label={row.state} />,
       sortable: false,
     },
     {
