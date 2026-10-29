@@ -36,6 +36,8 @@ export interface AspectMatrixGridLabels {
 export interface AspectMatrixGridSelection {
   readonly selectedKey: string | undefined;
   readonly onToggle: (key: string) => void;
+  /** Selects the pair and opens the Wheel view on it (#898); when absent a click only toggles the selection. */
+  readonly onShowOnWheel?: ((key: string) => void) | undefined;
   /** Whether both bodies are drawn on the wheel, i.e. the pair can be selected. */
   readonly canSelect: (aKey: string, bKey: string) => boolean;
 }
@@ -224,7 +226,7 @@ export function AspectMatrixGrid({
                         aria-label={name}
                         aria-pressed={active.selectedKey === key}
                         onClick={() => {
-                          active.onToggle(key);
+                          (active.onShowOnWheel ?? active.onToggle)(key);
                         }}
                       >
                         {body}

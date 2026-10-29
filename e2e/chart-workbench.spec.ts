@@ -53,20 +53,17 @@ test.describe('with the shared people (#799)', () => {
     await openSharedPerson(page, baseUrl, EINSTEIN);
     await openNatalChart(page, 'Placements');
     // Einstein's Sun is in Pisces.
-    const show = page.getByRole('button', { name: 'Show Pisces on the chart', exact: true }).first();
+    const show = page.getByRole('button', { name: 'Show Pisces on the wheel', exact: true }).first();
     await show.focus();
     await page.keyboard.press('Enter');
-    await expect(show).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.locator('.chart-selection-bar')).toContainText('Pisces');
-
-    await page.getByRole('link', { name: 'Wheel', exact: true }).click();
+    // Show goes straight to the Wheel (#898).
+    await expect(page.getByRole('link', { name: 'Wheel', exact: true })).toHaveAttribute('aria-current', 'page');
     await expect(page.locator('.selection-inspector-facts .chart-isolation-head strong')).toHaveText('Pisces');
     await expect(page.locator('.chart-sign[data-sign="gemini"]')).toHaveClass(/chart-dimmed/);
 
     await page.getByRole('link', { name: 'Placements', exact: true }).click();
-    await show.focus();
-    await page.keyboard.press('Space');
-    await expect(show).toHaveAttribute('aria-pressed', 'false');
+    await expect(page.locator('.chart-selection-bar')).toContainText('Pisces');
+    await page.getByRole('button', { name: 'Clear', exact: true }).first().click();
     await expect(page.locator('.chart-selection-bar')).toHaveCount(0);
   });
 
@@ -83,13 +80,11 @@ test.describe('with the shared people (#799)', () => {
       .getByRole('checkbox', { name: 'Part of Spirit — visible', exact: true })
       .check();
     await applySettings(page);
-    const show = page.getByRole('button', { name: 'Show Part of Spirit on the chart', exact: true });
+    const show = page.getByRole('button', { name: 'Show Part of Spirit on the wheel', exact: true });
     await show.focus();
     await page.keyboard.press('Enter');
-    await expect(show).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.locator('tr.data-table-row-selected')).toContainText('Part of Spirit');
-
-    await page.getByRole('link', { name: 'Wheel', exact: true }).click();
+    // Show goes straight to the Wheel (#898).
+    await expect(page.getByRole('link', { name: 'Wheel', exact: true })).toHaveAttribute('aria-current', 'page');
     const facts = page.locator('.selection-inspector-facts');
     await expect(facts.locator('.chart-isolation-head strong')).toHaveText('Part of Spirit');
     // The position and house are separate badges now (#801): "Pisces 29°51'" and "House 3".
@@ -105,9 +100,9 @@ test.describe('with the shared people (#799)', () => {
     await expect(meaning).toBeVisible();
 
     await page.getByRole('link', { name: 'Placements', exact: true }).click();
-    await show.focus();
-    await page.keyboard.press('Enter');
-    await expect(show).toHaveAttribute('aria-pressed', 'false');
+    await expect(page.locator('tr.data-table-row-selected')).toContainText('Part of Spirit');
+    await page.getByRole('button', { name: 'Clear', exact: true }).first().click();
+    await expect(page.locator('tr.data-table-row-selected')).toHaveCount(0);
   });
 
   test('the aspect matrix is a view of its own, and a cell selects its pair on the wheel by mouse and keyboard (#511)', async () => {
@@ -121,22 +116,21 @@ test.describe('with the shared people (#799)', () => {
     // Mars trines Pluto in Einstein's chart (Mars 296.91°, Pluto 54.73°: 117.81° apart, 2.19° off exact, inside
     // the 7° major orb): that cell is a button named for the pair.
     const cell = page.getByRole('button', { name: /^Mars Trine Pluto$|^Pluto Trine Mars$/ });
-    await expect(cell).toHaveAttribute('aria-pressed', 'false');
     await cell.click();
-    await expect(cell).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.locator('.chart-selection-bar')).toBeVisible();
-
-    // The same selection is what the Aspects table shows, and the wheel's inspector.
-    await page.getByRole('link', { name: 'Aspects', exact: true }).click();
-    await expect(page.locator('tr.data-table-row-selected')).toContainText('Trine');
-    await page.getByRole('link', { name: 'Wheel', exact: true }).click();
+    // A click goes straight to the Wheel with the pair highlighted (#898).
+    await expect(page.getByRole('link', { name: 'Wheel', exact: true })).toHaveAttribute('aria-current', 'page');
+    await expect(page.locator('.chart-wheel .chart-dimmed').first()).toBeAttached();
     await expect(page.locator('.selection-inspector-facts')).toBeVisible();
 
-    // Back on the matrix, Enter on the focused cell toggles it off.
+    // The same selection is what the Aspects table shows.
+    await page.getByRole('link', { name: 'Aspects', exact: true }).click();
+    await expect(page.locator('tr.data-table-row-selected')).toContainText('Trine');
+
+    // Back on the matrix, Enter on the focused cell opens the Wheel again.
     await page.getByRole('link', { name: 'Aspect matrix', exact: true }).click();
     await cell.focus();
     await page.keyboard.press('Enter');
-    await expect(cell).toHaveAttribute('aria-pressed', 'false');
+    await expect(page.getByRole('link', { name: 'Wheel', exact: true })).toHaveAttribute('aria-current', 'page');
   });
 
   test('Show on an Aspects row opens the Wheel with that aspect highlighted (#815)', async () => {
@@ -366,11 +360,9 @@ test.describe('with the shared people (#799)', () => {
 
     // The same selection is on the Placements table, reachable and clearable from the keyboard.
     await page.getByRole('link', { name: 'Placements', exact: true }).click();
-    const show = page.getByRole('button', { name: 'Show House 5 on the chart', exact: true });
-    await expect(show).toHaveAttribute('aria-pressed', 'true');
-    await show.focus();
-    await page.keyboard.press('Enter');
-    await expect(show).toHaveAttribute('aria-pressed', 'false');
+    await expect(page.locator('tr.data-table-row-selected')).toContainText('5');
+    await page.getByRole('button', { name: 'Clear', exact: true }).first().click();
+    await expect(page.locator('tr.data-table-row-selected')).toHaveCount(0);
     await page.getByRole('link', { name: 'Wheel', exact: true }).click();
     await expect(inspector).toContainText('to explore it');
   });

@@ -360,7 +360,8 @@ test.describe('with the shared people (#799)', () => {
     await expect(page.locator('div.chart-wheel')).toBeVisible();
 
     await page.getByRole('link', { name: 'Placements', exact: true }).click();
-    await page.getByRole('button', { name: 'Show Sun on the chart', exact: true }).click();
+    await page.getByRole('button', { name: 'Show Sun on the wheel', exact: true }).click();
+    await page.getByRole('link', { name: 'Placements', exact: true }).click();
     await expect(page.locator('tr.data-table-row-selected')).toContainText('Sun');
 
     await openSettings(page);
