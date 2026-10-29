@@ -6491,3 +6491,17 @@ button.mgrid-pair:focus-visible {
     display: none;
   }
 }
+
+/* Comparison view (#886): two charts side by side, one column at the shared 40rem phone breakpoint. */
+.comparison-layout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-8);
+}
+
+@media (max-width: 40rem) {
+  .comparison-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-6);
+  }
+}
