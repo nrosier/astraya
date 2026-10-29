@@ -25,6 +25,58 @@ describe('the glossary catalogue (#456)', () => {
     const definitions = GLOSSARY_TERM_IDS.map((id) => astroGlossaryMessages.en[id].definition);
     expect(new Set(definitions).size).toBe(definitions.length);
   });
+
+  it('has the same term ids in en and nl (parity, #902)', () => {
+    expect(Object.keys(astroGlossaryMessages.nl).sort()).toEqual(Object.keys(astroGlossaryMessages.en).sort());
+  });
+});
+
+interface AliasEntry {
+  readonly name: string;
+  readonly matches?: readonly string[];
+}
+
+/** One term's entry read as an optional-alias shape; terms without `matches` read as `[]`. */
+function entryFor(locale: 'en' | 'nl', id: string): AliasEntry {
+  const table: Readonly<Record<string, AliasEntry | undefined>> = astroGlossaryMessages[locale];
+  const entry = table[id];
+  if (entry === undefined) throw new Error(`no ${locale} glossary entry for ${id}`);
+  return entry;
+}
+
+function aliasesFor(locale: 'en' | 'nl', id: string): readonly string[] {
+  return entryFor(locale, id).matches ?? [];
+}
+
+describe('per-locale match aliases (#902)', () => {
+  it('gives every term with matches in en also matches in nl, and the reverse', () => {
+    for (const id of GLOSSARY_TERM_IDS) {
+      expect(aliasesFor('nl', id).length > 0, `${id} matches in nl`).toBe(aliasesFor('en', id).length > 0);
+    }
+  });
+
+  it.each(['en', 'nl'] as const)('never lists one alias under two ids in %s', (locale) => {
+    const seen = new Map<string, string>();
+    for (const id of GLOSSARY_TERM_IDS) {
+      for (const alias of aliasesFor(locale, id)) {
+        const previous = seen.get(alias);
+        expect(previous, `${alias} in ${id}`).toBeUndefined();
+        seen.set(alias, id);
+      }
+    }
+  });
+
+  it.each(['en', 'nl'] as const)('keeps every alias lower-case, trimmed and distinct from its term in %s', (locale) => {
+    for (const id of GLOSSARY_TERM_IDS) {
+      const entry = entryFor(locale, id);
+      for (const alias of aliasesFor(locale, id)) {
+        expect(alias, `${id} alias`).toBe(alias.toLowerCase());
+        expect(alias, `${id} alias`).toBe(alias.trim());
+        expect(alias.length, `${id} alias`).toBeGreaterThan(1);
+        expect(alias, `${id} alias`).not.toBe(entry.name.toLowerCase());
+      }
+    }
+  });
 });
 
 describe('GlossaryTerm (#456)', () => {
