@@ -53,7 +53,7 @@ test.describe('with the shared people (#799)', () => {
 
     await openSharedPerson(page, baseUrl, EINSTEIN);
 
-    await page.getByRole('button', { name: 'Transits & Forecast', exact: true }).click();
+    await page.getByRole('link', { name: 'Transits & Forecast', exact: true }).click();
     await page.getByRole('link', { name: 'Transits', exact: true }).click();
     await expect(page.getByRole('heading', { level: 1, name: /transits/i })).toBeVisible();
     await expect(page.locator('div.chart-wheel')).toBeVisible();
@@ -110,7 +110,7 @@ test.describe('with the shared people (#799)', () => {
   test('a person with an unknown birth time is told transits need one', async () => {
     await openSharedPerson(page, baseUrl, MARIC);
 
-    await page.getByRole('button', { name: 'Transits & Forecast', exact: true }).click();
+    await page.getByRole('link', { name: 'Transits & Forecast', exact: true }).click();
     await page.getByRole('link', { name: 'Transits', exact: true }).click();
     await expect(page.getByText(/needs a known birth time/)).toBeVisible();
   });

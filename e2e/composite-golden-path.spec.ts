@@ -48,7 +48,7 @@ test('two people with known birth times get a Composite screen with a wheel and 
   test.setTimeout(60_000);
 
   await openSharedPerson(page, baseUrl, EINSTEIN);
-  await page.getByRole('button', { name: 'Relationship Charts', exact: true }).click();
+  await page.getByRole('link', { name: 'Relationship Charts', exact: true }).click();
   await page.getByRole('link', { name: 'Composite', exact: true }).click();
   await expect(page.getByRole('heading', { name: /composite/i, level: 1 })).toBeVisible();
 
@@ -66,7 +66,7 @@ test('two people with known birth times get a Composite screen with a wheel and 
 test('a person with an unknown birth time is told a composite needs one', async () => {
   await openSharedPerson(page, baseUrl, MARIC);
 
-  await page.getByRole('button', { name: 'Relationship Charts', exact: true }).click();
+  await page.getByRole('link', { name: 'Relationship Charts', exact: true }).click();
   await page.getByRole('link', { name: 'Composite', exact: true }).click();
   await expect(page.getByText(/needs midpoint houses from both people/)).toBeVisible();
 });

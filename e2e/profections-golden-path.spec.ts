@@ -50,7 +50,7 @@ test('a person with a known birth time gets a Profections screen with a Year/Mon
 
   await openSharedPerson(page, baseUrl, EINSTEIN);
 
-  await page.getByRole('button', { name: 'Progressions & Directions', exact: true }).click();
+  await page.getByRole('link', { name: 'Progressions & Directions', exact: true }).click();
   await page.getByRole('link', { name: 'Profections', exact: true }).click();
   await expect(page.getByRole('heading', { name: /profections/i, level: 1 })).toBeVisible();
   await expect(page.getByRole('cell', { name: 'Year' })).toBeVisible();
@@ -74,7 +74,7 @@ test('a person with a known birth time gets a Profections screen with a Year/Mon
 test('a person with an unknown birth time is told profections need one', async () => {
   await openSharedPerson(page, baseUrl, MARIC);
 
-  await page.getByRole('button', { name: 'Progressions & Directions', exact: true }).click();
+  await page.getByRole('link', { name: 'Progressions & Directions', exact: true }).click();
   await page.getByRole('link', { name: 'Profections', exact: true }).click();
   await expect(page.getByText(/need a known birth time/)).toBeVisible();
 });

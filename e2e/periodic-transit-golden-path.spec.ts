@@ -50,7 +50,7 @@ test('a person with a known birth time gets a Forecast screen with all four tier
 
   await openSharedPerson(page, baseUrl, EINSTEIN);
 
-  await page.getByRole('button', { name: 'Transits & Forecast', exact: true }).click();
+  await page.getByRole('link', { name: 'Transits & Forecast', exact: true }).click();
   await page.getByRole('link', { name: 'Forecast', exact: true }).click();
   await expect(page.getByRole('heading', { name: /forecast/i, level: 1 })).toBeVisible();
 
@@ -69,7 +69,7 @@ test('changing the "as of" date recalculates the forecast', async () => {
 
   await openSharedPerson(page, baseUrl, EINSTEIN);
 
-  await page.getByRole('button', { name: 'Transits & Forecast', exact: true }).click();
+  await page.getByRole('link', { name: 'Transits & Forecast', exact: true }).click();
   await page.getByRole('link', { name: 'Forecast', exact: true }).click();
   const before = await page.getByText(/Solar return for \d{4}/).textContent();
 
@@ -84,7 +84,7 @@ test('the planetary-return picker computes a return for the chosen body (#398)',
 
   await openSharedPerson(page, baseUrl, EINSTEIN);
 
-  await page.getByRole('button', { name: 'Transits & Forecast', exact: true }).click();
+  await page.getByRole('link', { name: 'Transits & Forecast', exact: true }).click();
   await page.getByRole('link', { name: 'Forecast', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Other returns', level: 2 })).toBeVisible();
 
@@ -98,7 +98,7 @@ test('the planetary-return picker computes a return for the chosen body (#398)',
 test('a person with an unknown birth time is told a forecast needs one', async () => {
   await openSharedPerson(page, baseUrl, MARIC);
 
-  await page.getByRole('button', { name: 'Transits & Forecast', exact: true }).click();
+  await page.getByRole('link', { name: 'Transits & Forecast', exact: true }).click();
   await page.getByRole('link', { name: 'Forecast', exact: true }).click();
   await expect(page.getByText(/needs a known birth time/)).toBeVisible();
 });

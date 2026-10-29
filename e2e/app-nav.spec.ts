@@ -35,34 +35,36 @@ test.afterAll(async () => {
   rmSync(dir, { recursive: true, force: true });
 });
 
-test('the Tools menu is in the header on every screen and opens each tool', async ({ page }) => {
+test('Tools is one sidebar link on every screen; its tools are tabs on the page (#882)', async ({ page }) => {
   test.setTimeout(60_000);
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   const header = page.getByRole('banner');
+  const toolsTabs = page.getByRole('navigation', { name: 'Tools subtabs' });
 
-  await header.getByRole('button', { name: 'Tools', exact: true }).click();
-  await expect(header.getByRole('navigation', { name: 'Tools subtabs' })).toBeVisible();
+  // No sub-menu: the entry is a link, not a dropdown button, and it opens the first tool.
+  await expect(header.getByRole('button', { name: 'Tools', exact: true })).toHaveCount(0);
+  await header.getByRole('link', { name: 'Tools', exact: true }).click();
+  await expect(page).toHaveURL(/#\/explore\/cycles$/);
+  await expect(header.getByRole('link', { name: 'Tools', exact: true })).toHaveAttribute('aria-current', 'page');
+  await expect(toolsTabs).toBeVisible();
   for (const name of [
     'Planetary cycles',
+    'Ephemeris research',
     'Eclipses',
     'Horary chart',
     'Electional search',
     'Birth-time rectification',
   ]) {
-    await expect(header.getByRole('link', { name, exact: true })).toBeVisible();
+    await expect(toolsTabs.getByRole('link', { name, exact: true })).toBeVisible();
   }
-  // Choosing one closes the menu and opens the screen; the menu then marks it as the current page.
-  await header.getByRole('link', { name: 'Eclipses', exact: true }).click();
+  await toolsTabs.getByRole('link', { name: 'Eclipses', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Eclipses', level: 1 })).toBeVisible();
-  await expect(header.getByRole('navigation', { name: 'Tools subtabs' })).toHaveCount(0);
-  await header.getByRole('button', { name: 'Tools', exact: true }).click();
-  await expect(header.getByRole('link', { name: 'Eclipses', exact: true })).toHaveAttribute('aria-current', 'page');
+  await expect(toolsTabs.getByRole('link', { name: 'Eclipses', exact: true })).toHaveAttribute('aria-current', 'page');
 
-  // It is there on screens that have nothing to do with a person, and Escape closes it.
-  await page.keyboard.press('Escape');
-  await expect(header.getByRole('navigation', { name: 'Tools subtabs' })).toHaveCount(0);
+  // It is there on screens that have nothing to do with a person.
   await gotoAndSettle(page, `${baseUrl}/#/about`);
-  await expect(header.getByRole('button', { name: 'Tools', exact: true })).toBeVisible();
+  await expect(header.getByRole('link', { name: 'Tools', exact: true })).toBeVisible();
+  await expect(toolsTabs).toHaveCount(0);
   await openTool(page, 'Horary chart');
   await expect(page.getByRole('heading', { name: 'Horary chart', level: 1 })).toBeVisible();
 });
@@ -93,7 +95,8 @@ test.describe('with the shared people (#799)', () => {
     // The charts cast for this person are one destination (#511), and the families come after it.
     await expect(header.getByRole('link', { name: 'Charts', exact: true })).toBeVisible();
     for (const name of ['Transits & Forecast', 'Progressions & Directions', 'Relationship Charts']) {
-      await expect(header.getByRole('button', { name, exact: true })).toBeVisible();
+      await expect(header.getByRole('link', { name, exact: true })).toBeVisible();
+      await expect(header.getByRole('button', { name, exact: true })).toHaveCount(0);
     }
     await expect(page.locator('.person-shelf')).toHaveCount(0);
     await expect(header.getByRole('link', { name: 'Birth record', exact: true })).toHaveAttribute(
@@ -102,17 +105,14 @@ test.describe('with the shared people (#799)', () => {
     );
     await expect(header.getByText('Return to', { exact: true })).toHaveCount(0);
 
-    // The person's tabs and the Tools menu share one open-at-a-time rule.
-    await header.getByRole('button', { name: 'Transits & Forecast', exact: true }).click();
-    await header.getByRole('button', { name: 'Tools', exact: true }).click();
-    await expect(header.getByRole('navigation', { name: 'Transits & Forecast subtabs' })).toHaveCount(0);
-    await expect(header.getByRole('navigation', { name: 'Tools subtabs' })).toBeVisible();
+    // The sections are plain links: no sub-menu is ever drawn in the sidebar (#882).
+    await expect(page.locator('.app-nav-menu')).toHaveCount(0);
     const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
     expect(results.violations).toEqual([]);
 
     // Going to a tool keeps the person's tabs in the header (#453): a tool is not about their
     // chart, but losing the way back to it just for visiting one is its own kind of friction.
-    await header.getByRole('link', { name: 'Planetary cycles', exact: true }).click();
+    await header.getByRole('link', { name: 'Tools', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Planetary cycles', level: 1 })).toBeVisible();
     await expect(header.getByText('Albert Einstein', { exact: true })).toBeVisible();
     await expect(header.getByRole('link', { name: 'Charts', exact: true })).toBeVisible();
@@ -221,7 +221,7 @@ test.describe('with the shared people (#799)', () => {
     // item does not get a dropdown, so this is now a plain link, same shape as Overview/Birth record.
     // The PDF builder link has moved to the Documents workspace (#563), renamed to "Documents".
     await expect(header.getByRole('button', { name: 'Export', exact: true })).toHaveCount(0);
-    await expect(header.getByRole('link', { name: 'Documents', exact: true })).toBeVisible();
+    await expect(header.getByRole('link', { name: 'PDF', exact: true })).toBeVisible();
 
     // On a chart, its own exports are in the page’s own header (#506/#509’s PageHeader), not the
     // site header, and the wheel no longer carries buttons either.
@@ -253,7 +253,7 @@ test.describe('with the shared people (#799)', () => {
     // unaffected either way, since it never listed them.
     await openTool(page, 'Eclipses');
     await expect(page.getByRole('button', { name: 'Export', exact: true })).toHaveCount(0);
-    await expect(header.getByRole('link', { name: 'Documents', exact: true })).toBeVisible();
+    await expect(header.getByRole('link', { name: 'PDF', exact: true })).toBeVisible();
   });
 
   test('on a phone the navigation folds behind a Menu button, and nothing scrolls sideways', async () => {
@@ -275,10 +275,9 @@ test.describe('with the shared people (#799)', () => {
     const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
     expect(results.violations).toEqual([]);
 
-    // A group opens in place inside the panel; choosing a tool closes the whole menu and opens the screen.
-    await header.getByRole('button', { name: 'Tools', exact: true }).click();
-    await header.getByRole('link', { name: 'Eclipses', exact: true }).click();
-    await expect(page.getByRole('heading', { name: 'Eclipses', level: 1 })).toBeVisible();
+    // Choosing Tools closes the whole menu and opens the first tool; the other tools are tabs on the page.
+    await header.getByRole('link', { name: 'Tools', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Planetary cycles', level: 1 })).toBeVisible();
     await expect(header.getByRole('button', { name: 'Menu', exact: true })).toHaveAttribute('aria-expanded', 'false');
 
     // Escape closes the open menu and returns focus to its button.
@@ -303,8 +302,7 @@ test.describe('with the shared people (#799)', () => {
     await expect(header).toBeInViewport({ ratio: 0.99 });
     const padding = await page.evaluate('parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop)');
     expect(padding).toBeLessThanOrEqual(20);
-    await header.getByRole('button', { name: 'Tools', exact: true }).click();
-    await expect(header.getByRole('link', { name: 'Eclipses', exact: true })).toBeVisible();
+    await expect(header.getByRole('link', { name: 'Tools', exact: true })).toBeVisible();
   });
 
   test('Charts is one destination, and the page keeps the type and the view in the URL', async () => {
