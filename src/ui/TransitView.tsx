@@ -315,60 +315,63 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
         <DateField label={t.asOfLabel} value={asOf} onChange={setAsOf} />
       </p>
 
-      {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
+      {/* The result region: busy while the transit (re)calculates, as the Astrocartography map is. */}
+      <div aria-busy={load.kind === 'loading'}>
+        {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
 
-      {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
+        {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
 
-      {load.kind === 'ready' && wheelMarkup !== undefined && (
-        <>
-          {/* App-generated SVG from just-computed chart data, never user-supplied markup —
+        {load.kind === 'ready' && wheelMarkup !== undefined && (
+          <>
+            {/* App-generated SVG from just-computed chart data, never user-supplied markup —
               the same trust boundary ChartView.tsx's sheet markup is injected under. */}
-          <TransitFilterPanel
-            filter={filter}
-            rules={rules}
-            onChange={setFilter}
-            onApply={applyFilterForThisViewOnly}
-            onApplyAsDefault={setFilter}
-            shown={shownContacts.length}
-            total={load.data.contacts.length}
-            locale={locale}
-          />
-
-          <p className="hint chart-wheel-hint">{wheelT.hint}</p>
-          <div
-            ref={wheelRef}
-            className="chart-wheel chart-wheel-interactive"
-            dangerouslySetInnerHTML={{ __html: wheelMarkup }}
-            onClick={handleWheelClick}
-            onKeyDown={handleWheelKeyDown}
-          />
-          {biWheelFacts !== undefined && (
-            <BiWheelSelectionPanel
-              facts={biWheelFacts}
-              ringLabels={[t.natalLabel, t.transitRingLabel]}
+            <TransitFilterPanel
+              filter={filter}
+              rules={rules}
+              onChange={setFilter}
+              onApply={applyFilterForThisViewOnly}
+              onApplyAsDefault={setFilter}
+              shown={shownContacts.length}
+              total={load.data.contacts.length}
               locale={locale}
-              onClear={clearIsolation}
             />
-          )}
-          {selectionKey !== undefined && focusContext !== undefined && (
-            <FocusInterpretation context={focusContext} locale={locale} resetKey={selectionKey} personId={personId} />
-          )}
 
-          {load.voidOfCourse !== undefined && (
-            <p className="void-of-course-summary">
-              {voidOfCourseSentence(load.voidOfCourse, t, locale)} <span className="hint">{t.vocBasis}</span>
-            </p>
-          )}
+            <p className="hint chart-wheel-hint">{wheelT.hint}</p>
+            <div
+              ref={wheelRef}
+              className="chart-wheel chart-wheel-interactive"
+              dangerouslySetInnerHTML={{ __html: wheelMarkup }}
+              onClick={handleWheelClick}
+              onKeyDown={handleWheelKeyDown}
+            />
+            {biWheelFacts !== undefined && (
+              <BiWheelSelectionPanel
+                facts={biWheelFacts}
+                ringLabels={[t.natalLabel, t.transitRingLabel]}
+                locale={locale}
+                onClear={clearIsolation}
+              />
+            )}
+            {selectionKey !== undefined && focusContext !== undefined && (
+              <FocusInterpretation context={focusContext} locale={locale} resetKey={selectionKey} personId={personId} />
+            )}
 
-          <SortableTable
-            caption={t.contactsCaption}
-            columns={contactColumns(t, locale)}
-            rows={crossAspectRows(shownContacts)}
-            getRowKey={(row) => `${row.bodyAKey}-${row.aspect}-${row.bodyBKey}`}
-            downloadFilename={deriveExportFilename(person.displayName, 'transit-contacts', 'csv')}
-          />
-        </>
-      )}
+            {load.voidOfCourse !== undefined && (
+              <p className="void-of-course-summary">
+                {voidOfCourseSentence(load.voidOfCourse, t, locale)} <span className="hint">{t.vocBasis}</span>
+              </p>
+            )}
+
+            <SortableTable
+              caption={t.contactsCaption}
+              columns={contactColumns(t, locale)}
+              rows={crossAspectRows(shownContacts)}
+              getRowKey={(row) => `${row.bodyAKey}-${row.aspect}-${row.bodyBKey}`}
+              downloadFilename={deriveExportFilename(person.displayName, 'transit-contacts', 'csv')}
+            />
+          </>
+        )}
+      </div>
     </main>
   );
 }

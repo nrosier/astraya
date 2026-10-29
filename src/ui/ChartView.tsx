@@ -1146,123 +1146,29 @@ export function ChartDataView({
       {!showHouses && <p className="hint">{t.housesUnknownHint(displayName || t.thisPerson)}</p>}
       {showHouses && !housesComputed && <p className="hint">{t.housesUndefinedHint(displayName || t.thisPerson)}</p>}
 
-      {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
+      {/* The result region: busy while the chart (re)calculates, as the Astrocartography map is. */}
+      <div aria-busy={load.kind === 'loading'}>
+        {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
 
-      {load.kind === 'error' && <StatusMessage kind="error">{t.chartError(load.message)}</StatusMessage>}
+        {load.kind === 'error' && <StatusMessage kind="error">{t.chartError(load.message)}</StatusMessage>}
 
-      {load.kind === 'ready' && (
-        <>
-          {load.data.houses.warning !== undefined && (
-            <StatusMessage kind="error">{load.data.houses.warning}</StatusMessage>
-          )}
+        {load.kind === 'ready' && (
+          <>
+            {load.data.houses.warning !== undefined && (
+              <StatusMessage kind="error">{load.data.houses.warning}</StatusMessage>
+            )}
 
-          {printAll ? (
-            <div className="chart-print-all">
-              {tabs.map((tab) => (
-                <section key={tab}>
-                  {tab === 'wheel' ? (
-                    renderChartPanel(load.data)
-                  ) : (
-                    <>
-                      <h2>{chartViewLabels(t)[tab]}</h2>
-                      {tab === 'aspects' &&
-                        renderTableTab(
-                          'aspects',
-                          load.data,
-                          displayName,
-                          pointVisibility,
-                          housesRenderable,
-                          t,
-                          locale,
-                          rulership,
-                          symbolClass,
-                          boundsScheme,
-                        )}
-                      {tab === 'matrix' && renderMatrixView(load.data, displayName, pointVisibility, t, locale)}
-                      {tab === 'elements' && renderElementsView(load.data, displayName, pointVisibility, t, locale)}
-                      {tab === 'placements' &&
-                        renderPlacementsView(
-                          load.data,
-                          displayName,
-                          pointVisibility,
-                          housesRenderable,
-                          t,
-                          locale,
-                          symbolClass,
-                        )}
-                      {tab === 'patterns' &&
-                        renderPatternsView(
-                          load.data,
-                          displayName,
-                          pointVisibility,
-                          housesRenderable,
-                          t,
-                          locale,
-                          rulership,
-                          boundsScheme,
-                        )}
-                    </>
-                  )}
-                </section>
-              ))}
-            </div>
-          ) : (
-            <>
-              {/* The wheel stays mounted while another view is open, so a selection on it survives a
-                  visit to the tables; every other view is only in the page while it is shown. */}
-              {tabs.includes('wheel') && (
-                <div
-                  id="chart-view-wheel"
-                  ref={wheelPanelRef}
-                  tabIndex={-1}
-                  role="region"
-                  aria-label={t.wheelViewLabel}
-                  hidden={currentTab !== 'wheel'}
-                >
-                  {renderChartPanel(load.data)}
-                </div>
-              )}
-              {currentTab !== 'wheel' && (
-                <div id={`chart-view-${currentTab}`}>
-                  <h2>{chartViewLabels(t)[currentTab]}</h2>
-                  {tableSelection !== undefined && isolation !== undefined && (
-                    <p className="chart-selection-bar" role="status">
-                      {t.selectedOnChart(isolation.heading)}{' '}
-                      <button
-                        type="button"
-                        className="quiet"
-                        onClick={() => {
-                          setActiveTab('wheel');
-                        }}
-                      >
-                        {t.goToChart}
-                      </button>{' '}
-                      <button type="button" className="quiet" onClick={clearIsolation}>
-                        {t.isolationClear}
-                      </button>
-                    </p>
-                  )}
-                  {currentTab === 'aspects' &&
-                    (() => {
-                      const harmonicFamily =
-                        aspectHarmonicFamilyFilter === 'all' ? undefined : Number(aspectHarmonicFamilyFilter);
-                      return (
-                        <>
-                          <div className="aspect-family-filter">
-                            <Select
-                              label={t.harmonicFamilyFilterLabel}
-                              value={aspectHarmonicFamilyFilter}
-                              options={[
-                                { value: 'all', label: t.allHarmonicFamilies },
-                                ...HARMONIC_FAMILY_FILTERS.map((family) => ({
-                                  value: String(family),
-                                  label: t.harmonicFamilyOption(String(family)),
-                                })),
-                              ]}
-                              onChange={setAspectHarmonicFamilyFilter}
-                            />
-                          </div>
-                          {renderTableTab(
+            {printAll ? (
+              <div className="chart-print-all">
+                {tabs.map((tab) => (
+                  <section key={tab}>
+                    {tab === 'wheel' ? (
+                      renderChartPanel(load.data)
+                    ) : (
+                      <>
+                        <h2>{chartViewLabels(t)[tab]}</h2>
+                        {tab === 'aspects' &&
+                          renderTableTab(
                             'aspects',
                             load.data,
                             displayName,
@@ -1273,51 +1179,149 @@ export function ChartDataView({
                             rulership,
                             symbolClass,
                             boundsScheme,
-                            tableSelection,
-                            harmonicFamily,
                           )}
-                        </>
-                      );
-                    })()}
-                  {currentTab === 'matrix' &&
-                    renderMatrixView(
-                      load.data,
-                      displayName,
-                      pointVisibility,
-                      t,
-                      locale,
-                      tableSelection,
-                      settingsPanel === null ? undefined : openFormulaDrawer,
+                        {tab === 'matrix' && renderMatrixView(load.data, displayName, pointVisibility, t, locale)}
+                        {tab === 'elements' && renderElementsView(load.data, displayName, pointVisibility, t, locale)}
+                        {tab === 'placements' &&
+                          renderPlacementsView(
+                            load.data,
+                            displayName,
+                            pointVisibility,
+                            housesRenderable,
+                            t,
+                            locale,
+                            symbolClass,
+                          )}
+                        {tab === 'patterns' &&
+                          renderPatternsView(
+                            load.data,
+                            displayName,
+                            pointVisibility,
+                            housesRenderable,
+                            t,
+                            locale,
+                            rulership,
+                            boundsScheme,
+                          )}
+                      </>
                     )}
-                  {currentTab === 'elements' && renderElementsView(load.data, displayName, pointVisibility, t, locale)}
-                  {currentTab === 'placements' &&
-                    renderPlacementsView(
-                      load.data,
-                      displayName,
-                      pointVisibility,
-                      housesRenderable,
-                      t,
-                      locale,
-                      symbolClass,
-                      tableSelection,
+                  </section>
+                ))}
+              </div>
+            ) : (
+              <>
+                {/* The wheel stays mounted while another view is open, so a selection on it survives a
+                  visit to the tables; every other view is only in the page while it is shown. */}
+                {tabs.includes('wheel') && (
+                  <div
+                    id="chart-view-wheel"
+                    ref={wheelPanelRef}
+                    tabIndex={-1}
+                    role="region"
+                    aria-label={t.wheelViewLabel}
+                    hidden={currentTab !== 'wheel'}
+                  >
+                    {renderChartPanel(load.data)}
+                  </div>
+                )}
+                {currentTab !== 'wheel' && (
+                  <div id={`chart-view-${currentTab}`}>
+                    <h2>{chartViewLabels(t)[currentTab]}</h2>
+                    {tableSelection !== undefined && isolation !== undefined && (
+                      <p className="chart-selection-bar" role="status">
+                        {t.selectedOnChart(isolation.heading)}{' '}
+                        <button
+                          type="button"
+                          className="quiet"
+                          onClick={() => {
+                            setActiveTab('wheel');
+                          }}
+                        >
+                          {t.goToChart}
+                        </button>{' '}
+                        <button type="button" className="quiet" onClick={clearIsolation}>
+                          {t.isolationClear}
+                        </button>
+                      </p>
                     )}
-                  {currentTab === 'patterns' &&
-                    renderPatternsView(
-                      load.data,
-                      displayName,
-                      pointVisibility,
-                      housesRenderable,
-                      t,
-                      locale,
-                      rulership,
-                      boundsScheme,
-                    )}
-                </div>
-              )}
-            </>
-          )}
-        </>
-      )}
+                    {currentTab === 'aspects' &&
+                      (() => {
+                        const harmonicFamily =
+                          aspectHarmonicFamilyFilter === 'all' ? undefined : Number(aspectHarmonicFamilyFilter);
+                        return (
+                          <>
+                            <div className="aspect-family-filter">
+                              <Select
+                                label={t.harmonicFamilyFilterLabel}
+                                value={aspectHarmonicFamilyFilter}
+                                options={[
+                                  { value: 'all', label: t.allHarmonicFamilies },
+                                  ...HARMONIC_FAMILY_FILTERS.map((family) => ({
+                                    value: String(family),
+                                    label: t.harmonicFamilyOption(String(family)),
+                                  })),
+                                ]}
+                                onChange={setAspectHarmonicFamilyFilter}
+                              />
+                            </div>
+                            {renderTableTab(
+                              'aspects',
+                              load.data,
+                              displayName,
+                              pointVisibility,
+                              housesRenderable,
+                              t,
+                              locale,
+                              rulership,
+                              symbolClass,
+                              boundsScheme,
+                              tableSelection,
+                              harmonicFamily,
+                            )}
+                          </>
+                        );
+                      })()}
+                    {currentTab === 'matrix' &&
+                      renderMatrixView(
+                        load.data,
+                        displayName,
+                        pointVisibility,
+                        t,
+                        locale,
+                        tableSelection,
+                        settingsPanel === null ? undefined : openFormulaDrawer,
+                      )}
+                    {currentTab === 'elements' &&
+                      renderElementsView(load.data, displayName, pointVisibility, t, locale)}
+                    {currentTab === 'placements' &&
+                      renderPlacementsView(
+                        load.data,
+                        displayName,
+                        pointVisibility,
+                        housesRenderable,
+                        t,
+                        locale,
+                        symbolClass,
+                        tableSelection,
+                      )}
+                    {currentTab === 'patterns' &&
+                      renderPatternsView(
+                        load.data,
+                        displayName,
+                        pointVisibility,
+                        housesRenderable,
+                        t,
+                        locale,
+                        rulership,
+                        boundsScheme,
+                      )}
+                  </div>
+                )}
+              </>
+            )}
+          </>
+        )}
+      </div>
     </>
   );
 }
