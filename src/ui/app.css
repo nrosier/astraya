@@ -65,6 +65,9 @@
   --radius: 0.625rem;
   --radius-sm: 0.375rem;
 
+  /* Hairline border width for cards and panels (#795); a single device pixel reads as a hairline. */
+  --border-hairline: 1px;
+
   /* The page's own content column width — shared by `.shell` and `.person-shelf` so they
      never drift out of sync whenever this gets tuned. */
   --shell-max-width: 64rem;
@@ -934,7 +937,7 @@ footer {
   gap: var(--space-3);
   min-width: 0;
   padding: var(--space-4);
-  border: 1px solid var(--line);
+  border: var(--border-hairline) solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
 }
