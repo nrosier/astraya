@@ -6,7 +6,7 @@
 import { describe, expect, it } from 'vitest';
 import type { FixedStarRow } from '../src/domain/chart-tables.js';
 import { chartViewMessages } from '../src/ui/ChartView.messages.js';
-import { fixedStarColumns, hasStarSources } from '../src/ui/ChartViewAspects.js';
+import { fixedStarColumns, hasStarSources } from '../src/ui/ChartViewPlacements.js';
 
 const SHA = 'ab12cd34ef56'.padEnd(64, '0');
 const chosen: FixedStarRow = {

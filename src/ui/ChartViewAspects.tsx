@@ -1,8 +1,8 @@
 /**
  * @module ChartViewAspects
- * @purpose Renders the Aspects chart view tables (aspects, antiscia, declinations, fixed stars, midpoints) and their columns.
- * @conventions Moved out of ChartView.tsx (#817); the aspects table shows Applying as a dot plus label and the family as muted text on screen only (#815), while `render` stays plain text for copy, CSV and the PDF; takes the chart data and message bundle as arguments and never imports ChartView.
- * @exports AspectState, aspectColumns, declinationColumns, antisciaColumns, midpointTreeColumns, allMidpointsColumns, fixedStarsScopeNoteOf, checkedStarsOf, fixedStarColumns, hasStarSources, renderAspectsTable
+ * @purpose Renders the Aspects chart view tables (aspects, antiscia, declinations, midpoints) and their columns.
+ * @conventions Moved out of ChartView.tsx (#817); the aspects table shows Applying as a dot plus label and the family as muted text on screen only (#815), while `render` stays plain text for copy, CSV and the PDF; takes the chart data and message bundle as arguments and never imports ChartView. The fixed-stars table moved to ChartViewPlacements (#815).
+ * @exports AspectState, aspectColumns, declinationColumns, antisciaColumns, midpointTreeColumns, allMidpointsColumns, renderAspectsTable
  */
 import { formatOrb } from './format.js';
 import { aspectHarmonicFamily } from '../astrology/aspects.js';
@@ -11,18 +11,16 @@ import {
   antisciaRows,
   aspectRows,
   declinationContactRows,
-  fixedStarRows,
   filterAspectRowsByHarmonicFamily,
   midpointTreeRows,
   type AllMidpointsRow,
   type AntisciaRow,
   type AspectRow,
   type DeclinationContactRow,
-  type FixedStarRow,
   type MidpointTreeRow,
   type PointVisibilityOptions,
 } from '../domain/chart-tables.js';
-import { NATAL_FIXED_STARS, type ChartData } from '../domain/chart-compute.js';
+import { type ChartData } from '../domain/chart-compute.js';
 import { deriveExportFilename } from '../domain/export-filename.js';
 import { aspectDisplayName, bodyDisplayName } from './astro-names.messages.js';
 import { degreeColumns } from './ChartViewPlacements.js';
@@ -226,68 +224,6 @@ export function allMidpointsColumns(
   ];
 }
 
-/**
- * The sentence that says which stars the fixed-star table covers (#725), for the screen and the PDF alike:
- * `NATAL_FIXED_STARS` by default, or the stars the chart actually checked (the person's chosen ones, #803).
- */
-export function fixedStarsScopeNoteOf(
-  t: typeof chartViewMessages.en,
-  stars: readonly string[] = NATAL_FIXED_STARS,
-): string {
-  return t.fixedStarsScopeNote(stars.length, stars.join(', '));
-}
-
-/** The star names a computed chart checked (#803), in the order it looked them up; the preset when it has none. */
-export function checkedStarsOf(data: ChartData): readonly string[] {
-  return data.fixedStars === undefined ? NATAL_FIXED_STARS : [...data.fixedStars.keys()];
-}
-
-/** First characters of a stored source hash that identify the catalogue version in a table cell (#803). */
-const SOURCE_HASH_PREFIX_LENGTH = 8;
-
-/** Whether the rows come from the person's chosen stars, which carry a stored designation and source hash (#803). */
-export function hasStarSources(rows: readonly FixedStarRow[]): boolean {
-  return rows.some((row) => row.designation !== undefined);
-}
-
-/** `withSources` adds the stored designation and source-version columns, for chosen stars only (#803). */
-export function fixedStarColumns(
-  t: typeof chartViewMessages.en,
-  locale: Locale,
-  withSources = false,
-): readonly TableColumn<FixedStarRow>[] {
-  return [
-    // Star names (Regulus, Spica, ...) are proper nouns, the same in both locales — no glossary
-    // lookup needed, unlike body/aspect names.
-    { key: 'star', label: t.starLabel, labelTooltip: t.starTooltip, valueOf: (row) => row.star },
-    {
-      key: 'bodyName',
-      label: t.bodyLabel,
-      valueOf: (row) => row.bodyName,
-      render: (row) => bodyDisplayName(row.bodyKey, locale),
-    },
-    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => formatOrb(row.orb) },
-    ...(withSources
-      ? [
-          {
-            key: 'designation',
-            label: t.columnDesignation,
-            valueOf: (row: FixedStarRow) => row.designation ?? '',
-          },
-          {
-            key: 'sourceVersion',
-            label: t.columnSourceVersion,
-            valueOf: (row: FixedStarRow) => row.sourceSha256 ?? '',
-            render: (row: FixedStarRow) =>
-              row.sourceSha256 === undefined
-                ? ''
-                : t.sourceVersionCell(row.sourceSha256.slice(0, SOURCE_HASH_PREFIX_LENGTH)),
-          },
-        ]
-      : []),
-  ];
-}
-
 /** The Aspects view's tables (#511), one case of the old `renderTableTab`. */
 export function renderAspectsTable(
   data: ChartData,
@@ -301,7 +237,6 @@ export function renderAspectsTable(
   const rows = filterAspectRowsByHarmonicFamily(aspectRows(data, pointVisibility), aspectHarmonicFamilyFilter);
   const declinationRows = declinationContactRows(data);
   const antiscionRows = antisciaRows(data);
-  const starRows = fixedStarRows(data, pointVisibility);
   const midpointTreeHitRows =
     pointVisibility.dial90Visible === true ? midpointTreeRows(data, pointVisibility.midpointTreeOrb) : [];
   const allMidpointRows = pointVisibility.midpointsVisible === true ? allMidpointsRows(data) : [];
@@ -340,18 +275,6 @@ export function renderAspectsTable(
           getRowKey={(row) => `${row.bodyAKey}-${row.kind}-${row.bodyBKey}`}
           downloadFilename={deriveExportFilename(displayName, 'declinations', 'csv')}
         />
-      )}
-      {starRows.length > 0 && (
-        <>
-          <SortableTable
-            caption={t.fixedStarsCaption}
-            columns={fixedStarColumns(t, locale, hasStarSources(starRows))}
-            rows={starRows}
-            getRowKey={(row) => `${row.star}-${row.bodyKey}`}
-            downloadFilename={deriveExportFilename(displayName, 'fixed-stars', 'csv')}
-          />
-          <p className="hint">{fixedStarsScopeNoteOf(t, checkedStarsOf(data))}</p>
-        </>
       )}
       {midpointTreeHitRows.length > 0 && (
         <SortableTable

@@ -148,9 +148,6 @@ import {
   antisciaColumns,
   midpointTreeColumns,
   allMidpointsColumns,
-  fixedStarsScopeNoteOf,
-  checkedStarsOf,
-  fixedStarColumns,
   renderAspectsTable,
 } from './ChartViewAspects.js';
 import { emphasisColumns, renderElementsView } from './ChartViewElements.js';
@@ -159,6 +156,9 @@ import {
   houseCuspColumns,
   angleColumns,
   derivedPointColumns,
+  fixedStarsScopeNoteOf,
+  checkedStarsOf,
+  fixedStarColumns,
   renderPositionsTable,
   renderHousesTable,
   renderDerivedTable,
