@@ -924,11 +924,13 @@ footer {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: var(--space-4);
-  align-items: start;
+  align-items: stretch;
 }
 
 .birth-record-card {
   display: grid;
+  /* Stretched cards keep their content at the top; the slack falls at the bottom of the card. */
+  align-content: start;
   gap: var(--space-3);
   min-width: 0;
   padding: var(--space-4);
@@ -962,8 +964,13 @@ footer {
 
 .birth-record-timestamp {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-3);
+}
+
+/* Narrow: date and how the time is known share the first row; the Time field takes the full row under them (#795). */
+.birth-record-timestamp > :nth-child(3) {
+  grid-column: 1 / -1;
 }
 
 .birth-record-coordinates {
@@ -1006,15 +1013,20 @@ footer {
 }
 
 @media (min-width: 64rem) {
-  /* Row 2 is flexible so a tall timezone card (overrides open) leaves its slack below the place card, not
-     between the first two cards. */
+  /* Two blocks of equal height: identity + place beside the timezone card, then notes beside files + danger.
+     Cards stretch (align-items: stretch), so the bottoms of each block line up and no gap opens between cards. */
   .birth-record {
     grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-    grid-template-rows: auto 1fr auto auto;
+    grid-template-rows: repeat(4, auto);
   }
 
+  /* Date, how the time is known, and the time share one row at this width (#795). */
   .birth-record-timestamp {
-    grid-template-columns: 1.2fr 1fr 1.2fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .birth-record-timestamp > :nth-child(3) {
+    grid-column: auto;
   }
 
   .birth-record-card--identity {
@@ -1029,7 +1041,7 @@ footer {
 
   .birth-record-card--notes {
     grid-column: 1;
-    grid-row: 3;
+    grid-row: 3 / span 2;
   }
 
   .birth-record-card--timezone {

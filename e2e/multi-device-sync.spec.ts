@@ -138,13 +138,13 @@ test.describe('multi-device offline sync (#107)', () => {
       await backToPeople(a.page);
       await expect(a.page.getByRole('link', { name: /Grace Hopper/ })).toBeVisible();
       await a.page.getByRole('link', { name: /Ada Lovelace/ }).click();
-      await expect(a.page.locator('input[type="time"]')).toHaveValue('08:15:00');
+      await expect(a.page.locator('input[type="time"]')).toHaveValue('08:15');
       await expect(a.page.locator('textarea')).toHaveValue('Mother of computing.');
 
       await backToPeople(b.page);
       await expect(b.page.getByRole('link', { name: /Grace Hopper/ })).toBeVisible();
       await b.page.getByRole('link', { name: /Ada Lovelace/ }).click();
-      await expect(b.page.locator('input[type="time"]')).toHaveValue('08:15:00');
+      await expect(b.page.locator('input[type="time"]')).toHaveValue('08:15');
       await expect(b.page.locator('textarea')).toHaveValue('Mother of computing.');
     } finally {
       await closeDevices(a, b);

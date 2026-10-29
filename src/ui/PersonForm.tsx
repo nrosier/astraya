@@ -15,7 +15,7 @@
  * @exports PersonForm
  */
 import { useEffect, useId, useState } from 'react';
-import { draftFrom, draftToMutations, validateDraft, type Draft } from '../domain/person-form.js';
+import { draftFrom, draftToMutations, timeToHhMm, validateDraft, type Draft } from '../domain/person-form.js';
 import { personFormValidationMessages } from '../domain/person-form.messages.js';
 import { formatOffset, resolveMoment } from '../time/resolve.js';
 import { Button } from './primitives/Button.js';
@@ -194,8 +194,8 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
             />
             <TimeField
               label={t.timeLabel}
-              step={1}
-              value={current.time}
+              step={60}
+              value={timeToHhMm(current.time)}
               disabled={unknown}
               error={errors.time}
               extraDescribedBy={unknown ? `${unknownTimeHintId}-reason` : undefined}

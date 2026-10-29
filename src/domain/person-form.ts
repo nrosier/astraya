@@ -21,7 +21,7 @@
  * @module person-form
  * @purpose Models the birth-data form as pure data (#45): drafting, validating and converting a person's birth-record form into op-log mutations.
  * @conventions Draft fields are strings (what the user typed), parsed only at validation boundaries, so a half-typed value is a work-in-progress rather than coerced into a plausible number; `draftToMutations` writes only fields that actually changed (comparing against the previous draft, not the stored person) so an untouched field never gets a newer timestamp that could overwrite another device's concurrent edit; date/time/coordinates are each written as one whole register, never split field-by-field, since a merge of two partial values would describe a moment or place nobody experienced.
- * @exports Draft, EMPTY_DRAFT, draftFrom, validateDraft, draftToMutations, DraftErrors, Validated
+ * @exports Draft, EMPTY_DRAFT, draftFrom, timeToHhMm, validateDraft, draftToMutations, DraftErrors, Validated
  */
 import type { Person, TimeAccuracy } from './person.js';
 import type { personFormValidationMessages } from './person-form.messages.js';
@@ -63,6 +63,15 @@ export const EMPTY_DRAFT: Draft = {
 
 function pad(value: number, width = 2): string {
   return String(value).padStart(width, '0');
+}
+
+/**
+ * The birth time as shown and edited: `HH:MM`. The draft keeps its seconds (stored and calculated as before);
+ * only the visible text drops them.
+ */
+export function timeToHhMm(time: string): string {
+  const match = /^(\d{1,2}:\d{2}):\d{2}(?:\.\d+)?$/.exec(time.trim());
+  return match?.[1] ?? time;
 }
 
 /** Fill a draft from a stored person, so editing starts from what is on record. */

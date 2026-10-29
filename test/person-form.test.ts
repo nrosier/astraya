@@ -11,7 +11,14 @@
  *    device wrote to it while this form was open.
  */
 import { describe, expect, it } from 'vitest';
-import { EMPTY_DRAFT, draftFrom, draftToMutations, validateDraft, type Draft } from '../src/domain/person-form.js';
+import {
+  EMPTY_DRAFT,
+  draftFrom,
+  draftToMutations,
+  timeToHhMm,
+  validateDraft,
+  type Draft,
+} from '../src/domain/person-form.js';
 import { personFormValidationMessages } from '../src/domain/person-form.messages.js';
 import { buildPerson } from '../src/domain/person.js';
 
@@ -186,6 +193,29 @@ describe('loading a draft from a stored person', () => {
     );
     expect(draftFrom(person).date).toBe('0350-01-02');
     expect(draftFrom(person).time).toBe('03:04:05');
+  });
+});
+
+describe('showing the birth time as HH:MM (#795)', () => {
+  it('drops the seconds for display only', () => {
+    expect(timeToHhMm('13:00:00')).toBe('13:00');
+    expect(timeToHhMm('03:04:05.5')).toBe('03:04');
+    expect(timeToHhMm('13:00')).toBe('13:00');
+    expect(timeToHhMm('')).toBe('');
+  });
+
+  it('still stores and validates the seconds', () => {
+    const person = buildPerson(
+      'p-aaaaaaaaaaaaaaaa',
+      new Map<string, unknown>([
+        ['displayName', 'Ada'],
+        ['civil', { year: 1815, month: 12, day: 10, hour: 13, minute: 0, second: 7 }],
+        ['coordinates', { latitude: 51.5, longitude: -0.1 }],
+      ]),
+    );
+    const draft = draftFrom(person);
+    expect(draft.time).toBe('13:00:07');
+    expect(validateDraft(draft, T).moment?.civil.second).toBe(7);
   });
 });
 
