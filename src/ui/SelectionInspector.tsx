@@ -126,6 +126,11 @@ export function SelectionInspector({
                     {t.houseLabel} {placement.house}
                   </Badge>
                 )}
+                {facts.positionRow?.retrograde !== undefined && (
+                  <Badge tone={facts.positionRow.retrograde ? 'accent' : undefined}>
+                    {facts.positionRow.retrograde ? t.rxLabel : t.directLabel}
+                  </Badge>
+                )}
               </p>
             )}
             {facts.bodiesInSign !== undefined && (

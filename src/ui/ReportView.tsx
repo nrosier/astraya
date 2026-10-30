@@ -70,6 +70,7 @@ import { bodyDisplayName } from './astro-names.messages.js';
 import { useShowDegreeSymbol } from './degree-symbol-setting.js';
 import { DegreeSymbolSetting } from './DegreeSymbolSetting.js';
 import { SavedInterpretationsPanel } from './SavedInterpretationsPanel.js';
+import { GlossaryText } from './GlossaryText.js';
 import { GlossaryTerm } from './GlossaryTerm.js';
 import { useSessionUserOrUndefined } from './session-context.js';
 import { reportViewMessages } from './ReportView.messages.js';
@@ -214,7 +215,9 @@ function Paragraph({
       {paragraph.placement?.category === 'degree-symbol' ? (
         <SabianText text={paragraph.text} degree={paragraph.placement.degree} locale={locale} />
       ) : (
-        <p>{paragraph.text}</p>
+        <p>
+          <GlossaryText text={paragraph.text} />
+        </p>
       )}
       {showProvenance && (
         <p className="report-provenance hint">
