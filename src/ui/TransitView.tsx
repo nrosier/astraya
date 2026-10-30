@@ -24,7 +24,6 @@
  */
 
 import { DateField } from './primitives/DateField.js';
-import { GlossaryTerms } from './GlossaryTerm.js';
 import { personHref } from './route.js';
 import { houseSystemLabel, rulershipLabel, zodiacLabel } from './ChartView.js';
 import { PrintProvenance } from './PrintProvenance.js';
@@ -309,7 +308,6 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
       />
       <BackLink fallback={personHref(personId)} />
       <PageHeader title={person.displayName ? t.heading(person.displayName) : t.transitsFallback} />
-      <GlossaryTerms terms={['transit', 'aspect', 'orb', 'applying', 'retrograde']} />
       <p className="hint">{t.hint(person.displayName || t.thisPerson)}</p>
 
       <p>

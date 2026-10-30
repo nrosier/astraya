@@ -27,7 +27,6 @@
  * @exports PeriodicTransitView, bodyName, formatUtc, localizedSignName, signHouseLabel, contactRows, contactColumns, exactEventRows, exactEventColumns, stationRows, stationColumns
  */
 import { DateField } from './primitives/DateField.js';
-import { GlossaryTerms } from './GlossaryTerm.js';
 import { personHref } from './route.js';
 import { Select } from './primitives/Select.js';
 import { useEffect, useMemo, useState } from 'react';
@@ -396,7 +395,6 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
     <main className="shell">
       <BackLink fallback={personHref(personId)} />
       <h1>{person.displayName ? t.heading(person.displayName) : t.forecastFallback}</h1>
-      <GlossaryTerms terms={['transit', 'aspect', 'orb', 'applying']} />
       <p className="hint">{t.hint(person.displayName || t.thisFallback)}</p>
 
       <p>

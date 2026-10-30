@@ -17,7 +17,6 @@
  * @conventions Gated like PeriodicTransitView/TransitView on a known birth time (ACG lines shift ~15° longitude per hour of time error); embeds the SVG map via `dangerouslySetInnerHTML` and exports it through `standaloneSvg`/`downloadText`/`svgToPngBlob`, matching ChartView's trust-boundary pattern for app-generated markup. Reads interpretive text from the shared wheel corpus via `resolvePlacementText`.
  * @exports AstrocartographyView
  */
-import { GlossaryTerms } from './GlossaryTerm.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { personHref } from './route.js';
 import { useEffect, useMemo, useState } from 'react';
@@ -233,7 +232,6 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
         <h1>{t.astrocartographyFallback}</h1>
-        <GlossaryTerms terms={['astrocartography', 'localSpace', 'ascendant', 'midheaven']} />
         <p>{t.needsKnownTime(person.displayName || t.thisPerson)}</p>
       </main>
     );

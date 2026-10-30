@@ -13,7 +13,6 @@
  * @conventions A single synthetic chart derived from one natal chart (not a comparison), so it reuses `ChartDataView` wholesale like CompositeView/DraconicView; the in-screen picker is a named Varga preset (`VARGA_PRESETS`) or any positive integer, with a radix-to-result provenance table beside the derived chart. Text comes from co-located `HarmonicView.messages.ts` via `useMessages()`.
  * @exports HarmonicView
  */
-import { GlossaryTerms } from './GlossaryTerm.js';
 import { NumberField } from './primitives/NumberField.js';
 import { Select } from './primitives/Select.js';
 import { useEffect, useMemo, useState } from 'react';
@@ -171,7 +170,6 @@ export function HarmonicView({
     <main className="shell shell--wide">
       <BackLink fallback={personHref(personId)} />
       <h1>{person.displayName ? t.heading(person.displayName) : t.headingFallback}</h1>
-      <GlossaryTerms terms={['harmonic', 'aspect', 'orb']} />
       <ChartTypeSelector personId={personId} type="harmonic" view={view} />
       <p className="hint">{t.hint}</p>
 
