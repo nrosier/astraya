@@ -109,7 +109,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `SyncBadge.tsx` + `SyncBadge.messages.ts` — Always-visible sync-status badge. Deps: `session-context`, `./status`.
 - `ThemeToggle.tsx` + `ThemeToggle.messages.ts` — Light/dark/system theme override. Deps: `./theme-dom`, `./theme`.
 - `TransitFilterPanel.tsx` + `TransitFilterPanel.messages.ts` — Transit-filter controls (presets/orbs/bodies/aspects). Deps: `astrology/transit-importance`.
-- `TransitView.tsx` + `TransitView.messages.ts` — Transit bi-wheel (natal ↔ transiting); carries its own `PrintProvenance` footer labelled with engine defaults (#564). Deps: `domain/transit`, `astrology/void-of-course`, `chart/multi-wheel`, `./PrintProvenance`.
+- `TransitView.tsx` + `TransitView.messages.ts` — Transit bi-wheel (natal ↔ transiting); carries its own `PrintProvenance` footer labelled with engine defaults (#564). Deps: `domain/transit`, `astrology/void-of-course`, `chart/multi-wheel`, `./PrintProvenance`, `./ChartViewAspects`.
 - `TimingTimelineView.tsx` + `TimingTimelineView.messages.ts` — Shared date-axis rendering and overlay for Level-1/2 releasing, timing techniques, and forecast events. Deps: `domain/timing-timeline`, `domain/profections`, `domain/primary-directions`, `domain/secondary-progression`, `domain/solar-arc-directions`, `domain/transit`, `domain/periodic-transit`.
 - `timing-timeline-labels.ts` — Words a timeline event's subject in en/nl for the timeline and consultation screens (#674). Deps: `domain/timing-timeline`, `./astro-names.messages`, `./placement-label`, `./TimingTimelineView.messages`.
 - `WheelSelectionText.tsx` — Renders wheel-selection interpretation text. Deps: `interpretation/compose`, `./wheel-corpus`.

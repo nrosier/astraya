@@ -67,6 +67,7 @@ import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { PersonNotFound } from './PersonNotFound.js';
 import { SortableTable } from './SortableTable.js';
+import { AspectState } from './ChartViewAspects.js';
 import { useStoreState } from './store-context.js';
 import { transitViewMessages } from './TransitView.messages.js';
 import type { TableColumn } from './table-sort.js';
@@ -113,7 +114,9 @@ export function contactColumns(t: typeof transitViewMessages.en, locale: Locale)
       key: 'applying',
       label: t.applyingLabel,
       valueOf: (row) => row.applying,
+      // Plain text for the PDF and copy; the state dot plus label is the screen cell only (#918, as in the Aspects table).
       render: (row) => (row.applying ? t.applying : t.separating),
+      renderCell: (row) => <AspectState applying={row.applying} label={row.applying ? t.applying : t.separating} />,
     },
   ];
 }
