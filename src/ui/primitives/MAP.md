@@ -19,6 +19,7 @@ Shared UI primitives for the #506 UI/UX overhaul (Phase 1, #508). Business logic
 - `Radio.tsx` — Shared radio anatomy; always used inside a caller-owned `name`/`radiogroup`. Deps: none.
 - `ChoiceGroup.tsx` — Segmented control (2-4 exclusive choices) as a labelled radiogroup over `Radio`; `segmented` draws joined horizontal segments and `showLabel` a visible label (#824). Deps: `./Radio`.
 - `OptionCards.tsx` — Radio option cards (2-5 choices needing a title + consequence line), fully-clickable cards.
+- `AdvancedGroup.tsx` — Collapsed-by-default group for fine-tuning options (#916), a thin wrapper over Disclosure. Deps: `Disclosure`.
 - `Disclosure.tsx` — Shared expandable region: full-width 44px trigger row (title, summary, Show/Hide wording, chevron) over a panel (#511 first user). Deps: none.
 - `StatusMessage.tsx` — Shared result-state message (loading/updating/empty/zero/partial/offline/success/error) with the right live-region role. Deps: none.
 - `FilterSummary.tsx` — One line stating a list is filtered: filter name, shown/total count (live region), and an optional Change-filters action. Deps: none.

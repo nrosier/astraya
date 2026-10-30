@@ -21,7 +21,7 @@ import { DateField } from './primitives/DateField.js';
 import { Checkbox } from './primitives/Checkbox.js';
 import { Badge } from './primitives/Badge.js';
 import { Button } from './primitives/Button.js';
-import { Disclosure } from './primitives/Disclosure.js';
+import { AdvancedGroup } from './primitives/AdvancedGroup.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { utcDay } from './format.js';
 import { Select } from './primitives/Select.js';
@@ -553,7 +553,7 @@ export function PdfExportBuilder(): React.JSX.Element {
             </fieldset>
 
             <div className="pdf-builder-disclosures">
-              <Disclosure title={t.chartsLegend} showLabel={t.showSection} hideLabel={t.hideSection}>
+              <AdvancedGroup title={t.chartsLegend} showLabel={t.showSection} hideLabel={t.hideSection}>
                 <div className="field-group" role="group" aria-label={t.chartsLegend}>
                   <p className="hint">{t.chartVisibilityNote}</p>
                   {PDF_CHART_TYPES.map((type) => {
@@ -623,9 +623,9 @@ export function PdfExportBuilder(): React.JSX.Element {
                     );
                   })}
                 </div>
-              </Disclosure>
+              </AdvancedGroup>
 
-              <Disclosure title={t.relationshipLegend} showLabel={t.showSection} hideLabel={t.hideSection}>
+              <AdvancedGroup title={t.relationshipLegend} showLabel={t.showSection} hideLabel={t.hideSection}>
                 <div className="field-group" role="group" aria-label={t.relationshipLegend}>
                   <div>
                     <Checkbox
@@ -719,9 +719,9 @@ export function PdfExportBuilder(): React.JSX.Element {
                     )}
                   </div>
                 </div>
-              </Disclosure>
+              </AdvancedGroup>
 
-              <Disclosure title={t.transitsLegend} showLabel={t.showSection} hideLabel={t.hideSection}>
+              <AdvancedGroup title={t.transitsLegend} showLabel={t.showSection} hideLabel={t.hideSection}>
                 <div className="field-group" role="group" aria-label={t.transitsLegend}>
                   <div>
                     <Checkbox
@@ -831,9 +831,9 @@ export function PdfExportBuilder(): React.JSX.Element {
                     )}
                   </div>
                 </div>
-              </Disclosure>
+              </AdvancedGroup>
 
-              <Disclosure title={t.eclipsesLegend} showLabel={t.showSection} hideLabel={t.hideSection}>
+              <AdvancedGroup title={t.eclipsesLegend} showLabel={t.showSection} hideLabel={t.hideSection}>
                 <div className="field-group" role="group" aria-label={t.eclipsesLegend}>
                   <Checkbox
                     label={t.eclipsesLabel}
@@ -865,9 +865,9 @@ export function PdfExportBuilder(): React.JSX.Element {
                     </div>
                   )}
                 </div>
-              </Disclosure>
+              </AdvancedGroup>
 
-              <Disclosure title={t.predictiveLegend} showLabel={t.showSection} hideLabel={t.hideSection}>
+              <AdvancedGroup title={t.predictiveLegend} showLabel={t.showSection} hideLabel={t.hideSection}>
                 <div className="field-group" role="group" aria-label={t.predictiveLegend}>
                   <div>
                     <Checkbox
@@ -1067,7 +1067,7 @@ export function PdfExportBuilder(): React.JSX.Element {
                     )}
                   </div>
                 </div>
-              </Disclosure>
+              </AdvancedGroup>
             </div>
           </div>
 
