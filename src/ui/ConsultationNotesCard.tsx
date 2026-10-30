@@ -11,7 +11,7 @@
  * @conventions Local component state only, so a reload clears the notes. Copy from ConsultationView.messages.ts. Uses the shared Button primitive for every action and the shared `useOnline` for the offline line. Notes are plain text; the mockup's bold and list toolbar is not built.
  * @exports ConsultationNotesCard
  */
-import { useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { Button } from './primitives/Button.js';
 import { TextAreaField } from './primitives/TextAreaField.js';
 import { useOnline } from './online-status.js';
@@ -42,7 +42,15 @@ export function ConsultationNotesCard(): React.JSX.Element {
   const [editText, setEditText] = useState('');
   const [saveState, setSaveState] = useState<SaveState>('autosaved');
   const [nextId, setNextId] = useState(1);
+  const [pendingDeleteId, setPendingDeleteId] = useState<number | undefined>(undefined);
   const bodyId = useId();
+  const listRef = useRef<HTMLOListElement>(null);
+
+  // Focus moves to Cancel when the confirmation opens, so Enter does not delete by accident.
+  useEffect(() => {
+    if (pendingDeleteId === undefined) return;
+    listRef.current?.querySelector<HTMLButtonElement>('.consultation-note-confirm .quiet')?.focus();
+  }, [pendingDeleteId]);
 
   // Every change is a local edit. It shows "Saving" for the moment it takes to record, then the saved line.
   const commit = (update: () => void): void => {
@@ -73,9 +81,12 @@ export function ConsultationNotesCard(): React.JSX.Element {
     });
   };
 
+  // Delete asks first (owner decision on #800): the confirmation names the note and the consequence, and only its
+  // own button removes the note. Cancel and Escape keep it.
   const deleteNote = (id: number): void => {
+    setPendingDeleteId(undefined);
     commit(() => {
-      setNotes((current) => current.filter((n) => n.id !== id));
+      setNotes((current) => current.filter((note) => note.id !== id));
     });
   };
 
@@ -108,7 +119,7 @@ export function ConsultationNotesCard(): React.JSX.Element {
       <div id={bodyId} hidden={!open}>
         {open && (
           <div className="consultation-notes-body">
-            <ol className="consultation-notes-list">
+            <ol ref={listRef} className="consultation-notes-list">
               {notes.map((note) => (
                 <li key={note.id} className="consultation-note">
                   <time className="hint consultation-date" dateTime={note.savedAt}>
@@ -152,12 +163,43 @@ export function ConsultationNotesCard(): React.JSX.Element {
                           size="compact"
                           variant="danger"
                           onClick={() => {
-                            deleteNote(note.id);
+                            setPendingDeleteId(note.id);
                           }}
                         >
                           {t.notesDelete}
                         </Button>
                       </div>
+                      {pendingDeleteId === note.id && (
+                        <div
+                          className="consultation-note-confirm warning"
+                          role="region"
+                          aria-label={t.notesDeleteConfirm}
+                        >
+                          <p>
+                            <strong>{t.notesDeleteConfirm}</strong> {t.notesDeleteConsequence}
+                          </p>
+                          <div className="consultation-note-actions">
+                            <Button
+                              size="compact"
+                              variant="danger"
+                              onClick={() => {
+                                deleteNote(note.id);
+                              }}
+                            >
+                              {t.notesDeleteConfirmButton}
+                            </Button>
+                            <Button
+                              variant="quiet"
+                              size="compact"
+                              onClick={() => {
+                                setPendingDeleteId(undefined);
+                              }}
+                            >
+                              {t.notesDeleteCancel}
+                            </Button>
+                          </div>
+                        </div>
+                      )}
                     </>
                   )}
                 </li>

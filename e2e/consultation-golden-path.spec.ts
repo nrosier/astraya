@@ -148,6 +148,18 @@ test('the notes card starts collapsed, shows its save state, and expands on the 
   await page.getByRole('button', { name: 'Add note', exact: true }).click();
   await expect(page.getByText('Confirm the birth time source.')).toBeVisible();
   await expect(page.getByText('1 note', { exact: true })).toBeVisible();
+
+  // Delete asks first: Cancel keeps the note, and only the confirmation removes it.
+  await page.getByRole('button', { name: 'Delete', exact: true }).click();
+  await expect(page.getByRole('region', { name: 'Delete this note?' })).toBeVisible();
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await expect(page.getByText('Confirm the birth time source.')).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Delete this note?' })).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Delete', exact: true }).click();
+  await page.getByRole('button', { name: 'Delete note', exact: true }).click();
+  await expect(page.getByText('Confirm the birth time source.')).toHaveCount(0);
+  await expect(page.getByText('0 notes', { exact: true })).toBeVisible();
 });
 
 test('a separating transit shows the applying and separating badge with a dot and its label (#815)', async () => {
