@@ -325,6 +325,7 @@ describe('ReportView corpus loading (locale comes from the shared locale.ts stor
 
   it('hides and shows every Sabian paragraph across all sections with the one global setting (#802)', async () => {
     const { container, root } = await mount();
+    await openConfiguration(container);
 
     const sabianCount = (): number => container.querySelectorAll('.sabian-label').length;
     const sabianShownPerSection = (): number[] =>
@@ -375,6 +376,7 @@ describe('ReportView corpus loading (locale comes from the shared locale.ts stor
       }),
     );
     const { container, root } = await mount();
+    await openConfiguration(container);
     const keyInsight = reportViewMessages.en.keyInsightLabel;
 
     expect(container.querySelectorAll('.sabian-insight').length).toBeGreaterThan(0);
@@ -394,8 +396,55 @@ describe('ReportView corpus loading (locale comes from the shared locale.ts stor
     container.remove();
   });
 
+  it('collapses the configuration to its current rulers and Sabian state, and expands to both settings (#881)', async () => {
+    const { container, root } = await mount();
+
+    const block = container.querySelector('.config-block');
+    const trigger = block?.querySelector('.primitive-disclosure-trigger');
+    if (trigger === null || trigger === undefined) throw new Error('test fixture bug: no configuration disclosure');
+    expect(block?.querySelector('.primitive-disclosure-title')?.textContent).toBe('Configuration');
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    expect(block?.querySelector('.primitive-disclosure-summary')?.textContent).toBe('Rulers: Modern · Sabian: on');
+    // Collapsed: neither setting is mounted.
+    expect(block?.querySelector('[role="radiogroup"]')).toBeNull();
+    expect(block?.querySelector('input[type="checkbox"]')).toBeNull();
+
+    await openConfiguration(container);
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    expect(block?.querySelector('[role="radiogroup"][aria-label="Planetary rulers"]')).not.toBeNull();
+    expect(block?.querySelector('input[type="checkbox"]')).not.toBeNull();
+
+    // The summary follows the choice made inside.
+    await act(async () => {
+      degreeSymbolCheckbox(container).click();
+      await Promise.resolve();
+    });
+    expect(block?.querySelector('.primitive-disclosure-summary')?.textContent).toBe('Rulers: Modern · Sabian: off');
+
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('words the collapsed configuration summary in Dutch (#881)', async () => {
+    setLocale('nl');
+    const { container, root } = await mount();
+
+    expect(container.querySelector('.config-block .primitive-disclosure-title')?.textContent).toBe('Configuratie');
+    expect(container.querySelector('.config-block .primitive-disclosure-summary')?.textContent).toBe(
+      'Heersende planeten: Modern · Sabian: aan',
+    );
+
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
   it('has exactly one Sabian checkbox on the Standard tab (#802)', async () => {
     const { container, root } = await mount();
+    await openConfiguration(container);
 
     const sabianCheckboxes = Array.from(container.querySelectorAll('label')).filter((candidate) =>
       /sabian symbol notes|sabian-symboolnotities/i.test(candidate.textContent),
@@ -409,6 +458,17 @@ describe('ReportView corpus loading (locale comes from the shared locale.ts stor
     container.remove();
   });
 
+  /** The configuration disclosure (#881) holds the Sabian and rulers settings, so it is opened before they are read. */
+  async function openConfiguration(container: HTMLElement): Promise<void> {
+    const trigger = container.querySelector<HTMLButtonElement>('.config-block .primitive-disclosure-trigger');
+    if (trigger === null) throw new Error('test fixture bug: no configuration disclosure rendered');
+    if (trigger.getAttribute('aria-expanded') === 'true') return;
+    await act(async () => {
+      trigger.click();
+      await Promise.resolve();
+    });
+  }
+
   function degreeSymbolCheckbox(container: HTMLElement): HTMLInputElement {
     const label = Array.from(container.querySelectorAll('label')).find((candidate) =>
       /sabian symbol notes|sabian-symboolnotities/i.test(candidate.textContent),
@@ -420,6 +480,7 @@ describe('ReportView corpus loading (locale comes from the shared locale.ts stor
 
   it('offers a degree-symbol (Sabian symbol) visibility toggle, checked by default (#527)', async () => {
     const { container, root } = await mount();
+    await openConfiguration(container);
 
     const checkbox = degreeSymbolCheckbox(container);
     expect(checkbox.checked).toBe(true);
@@ -432,6 +493,7 @@ describe('ReportView corpus loading (locale comes from the shared locale.ts stor
 
   it('hides the degree-symbol paragraphs, and their badge, when the toggle is unchecked (#527)', async () => {
     const { container, root } = await mount();
+    await openConfiguration(container);
 
     const coreIdentity = container.querySelector('#report-section-core-identity');
     if (coreIdentity === null) throw new Error('test fixture bug: no core-identity section rendered');
@@ -480,6 +542,7 @@ describe('ReportView corpus loading (locale comes from the shared locale.ts stor
   it('is in Dutch when the language is Dutch (#527)', async () => {
     setLocale('nl');
     const { container, root } = await mount();
+    await openConfiguration(container);
 
     expect(degreeSymbolCheckbox(container).checked).toBe(true);
     const label = Array.from(container.querySelectorAll('label')).find((candidate) =>

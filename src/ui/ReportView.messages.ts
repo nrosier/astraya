@@ -10,6 +10,12 @@
 const en = {
   showProvenance: 'Show provenance (rule and corpus entry) for each paragraph',
   configurationHeading: 'Configuration',
+  configurationShow: 'Show configuration',
+  configurationHide: 'Hide configuration',
+  /** Collapsed summary of the configuration, e.g. `Rulers: Modern · Sabian: on` (#881). */
+  configurationSummary: (rulers: string, sabian: string) => `Rulers: ${rulers} · Sabian: ${sabian}`,
+  sabianOn: 'on',
+  sabianOff: 'off',
   couldNotLoad: (message: string) => `Could not load the interpretation text: ${message}`,
   loadingInterpretation: 'Loading interpretation…',
   keyInsightLabel: 'Key insight',
@@ -68,6 +74,11 @@ const en = {
 const nl: typeof en = {
   showProvenance: 'Herkomst (regel en corpustekst) tonen voor elke paragraaf',
   configurationHeading: 'Configuratie',
+  configurationShow: 'Configuratie tonen',
+  configurationHide: 'Configuratie verbergen',
+  configurationSummary: (rulers: string, sabian: string) => `Heersende planeten: ${rulers} · Sabian: ${sabian}`,
+  sabianOn: 'aan',
+  sabianOff: 'uit',
   couldNotLoad: (message: string) => `Kon de interpretatietekst niet laden: ${message}`,
   loadingInterpretation: 'Interpretatie wordt geladen…',
   keyInsightLabel: 'Kerninzicht',

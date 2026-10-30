@@ -21,7 +21,7 @@
  * and importing it here would inline all of it into this app's JS bundle.
  * See corpus-client.ts for why.
  *
- * A second, always-visible control (#527), `DegreeSymbolSetting`, shows or hides degree-symbol
+ * A second control (#527), `DegreeSymbolSetting`, inside the configuration disclosure (#881) with `RulershipSetting`; it shows or hides degree-symbol
  * (Sabian symbol) paragraphs altogether — a persisted per-device preference
  * (`degree-symbol-setting.ts`), unlike "Show provenance", which is a dev-only, page-local one.
  * It's its own named-and-explained section, the same label+explanation+control shape as
@@ -37,7 +37,7 @@
  * @conventions Thin wiring over report-provenance.ts; fetches its corpus chunk at runtime via corpus-client.ts rather than importing the full synchronous CORPUS; uses ReportView.messages.ts for en/nl text via useMessages(); the degree-symbol toggle's own label/explanation/control lives in DegreeSymbolSetting.tsx (controlled); this file owns the value via useShowDegreeSymbol() from degree-symbol-setting.ts, passes it down, and uses it to filter paragraphs.
  * @exports ReportView
  */
-import { Fragment, useEffect, useId, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { assembleReport, reportPlacementKeys, type Report, type ReportParagraph } from '../interpretation/report.js';
 import { loadRuntimeCorpus } from '../interpretation/corpus-client.js';
 import type { CorpusEntry, Locale } from '../interpretation/schema.js';
@@ -55,6 +55,8 @@ import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { Tabs, tabPanelProps } from './primitives/Tabs.js';
 import { RulershipSetting } from './RulershipSetting.js';
+import { rulershipSettingMessages } from './RulershipSetting.messages.js';
+import { Disclosure } from './primitives/Disclosure.js';
 import { useRulershipChoice } from './rulership-setting.js';
 import { splitSabianText } from '../interpretation/sabian-split.js';
 import { groupParagraphsByBody } from '../interpretation/report-groups.js';
@@ -506,6 +508,7 @@ export function ReportView({
 }): React.JSX.Element {
   const t = useMessages(reportViewMessages);
   const overviewT = useMessages(chartOverviewMessages);
+  const rulersT = useMessages(rulershipSettingMessages);
   const [activeTab, setActiveTab] = useState<InterpretationTabKey>('standard');
   const [showProvenance, setShowProvenance] = useState(false);
   const [locale] = useLocale();
@@ -514,7 +517,6 @@ export function ReportView({
   const [showDegreeSymbol, setShowDegreeSymbol] = useShowDegreeSymbol();
   const [corpus, setCorpus] = useState<readonly CorpusEntry[] | undefined>(undefined);
   const [loadError, setLoadError] = useState<string | undefined>(undefined);
-  const configHeadingId = `report-config-${useId().replace(/:/g, '')}`;
 
   useEffect(() => {
     let cancelled = false;
@@ -551,12 +553,19 @@ export function ReportView({
 
   const controls = (
     <div className="report-controls">
-      <div className="config-block" role="group" aria-labelledby={configHeadingId}>
-        <h3 id={configHeadingId} className="config-block-heading">
-          {t.configurationHeading}
-        </h3>
-        <RulershipSetting value={rulership} onChange={onRulershipChange ?? setDeviceRulership} />
-        <DegreeSymbolSetting show={showDegreeSymbol} onChange={setShowDegreeSymbol} />
+      <div className="config-block">
+        {/* One disclosure (#881): closed it states the current rulers and Sabian choice, open it holds both settings. */}
+        <Disclosure
+          title={t.configurationHeading}
+          summary={t.configurationSummary(rulersT.titles[rulership], showDegreeSymbol ? t.sabianOn : t.sabianOff)}
+          showLabel={t.configurationShow}
+          hideLabel={t.configurationHide}
+        >
+          <div className="config-block-body">
+            <RulershipSetting value={rulership} onChange={onRulershipChange ?? setDeviceRulership} />
+            <DegreeSymbolSetting show={showDegreeSymbol} onChange={setShowDegreeSymbol} />
+          </div>
+        </Disclosure>
       </div>
       {!import.meta.env.PROD && (
         <Checkbox
