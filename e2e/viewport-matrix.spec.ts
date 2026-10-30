@@ -237,6 +237,11 @@ test('consultation side-by-side columns keep the owner-accepted floor (#895)', a
     report,
   );
   console.log(report.join('\n'));
+  const family = await page.evaluate<string>(
+    `getComputedStyle(document.querySelector('.consultation-section') ?? document.body).fontFamily`,
+  );
+  console.log(`computed font-family: ${family}`);
+  expect(family, 'the pinned e2e font is applied').toContain('E2E Pinned');
   const short = ratios.filter((r) => r.ratio < CONSULTATION_FLOOR).map((r) => `${r.label}: ${r.ratio.toFixed(3)}`);
   expect(short, 'consultation shorter column below the accepted floor').toEqual([]);
 });

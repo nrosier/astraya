@@ -11,6 +11,7 @@
  * unknown (date only). They are test data, not a claim about the sources.
  */
 import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import type { Browser, BrowserContext, Page } from '@playwright/test';
 import { gotoAndSettle } from './support.ts';
 import type { PersonInput } from './support.ts';
@@ -68,9 +69,38 @@ export async function newSeededContext(browser: Browser, baseUrl: string): Promi
   const pointer = JSON.parse(readFileSync(seedPointerPath(), 'utf-8')) as SeedPointer;
   const saved = JSON.parse(readFileSync(pointer.statePath, 'utf-8')) as SavedState;
   const origin = new URL(baseUrl).origin;
-  return browser.newContext({
+  const context = await browser.newContext({
     storageState: { ...saved, origins: saved.origins.map((entry) => ({ ...entry, origin })) },
   });
+  await pinE2eFont(context);
+  return context;
+}
+
+/** The font the e2e run pins. Shipped under `public/fonts/pdf/` (Bitstream Vera licence, DEPENDENCIES.md). */
+const PINNED_FONT_FILE = 'public/fonts/pdf/DejaVuSans.ttf';
+/** A URL the test context answers itself; the app's CSP is never asked to load it. */
+const PINNED_FONT_URL = 'https://e2e-font.invalid/DejaVuSans.ttf';
+
+/**
+ * Pins one font for the whole e2e context (#895). The app uses the system UI stack, which resolves to a different
+ * font on each machine (Verdana on macOS, a CJK face on the Ubuntu CI runner), so a column's wrapped text measures
+ * differently. This swaps every element's family to one shipped font, in e2e only: production CSS and the
+ * `system-ui` stack are not changed. The font is served from a route, not the network, so it works offline.
+ */
+export async function pinE2eFont(context: BrowserContext): Promise<void> {
+  const bytes = readFileSync(join(process.cwd(), PINNED_FONT_FILE));
+  await context.route(PINNED_FONT_URL, (route) => route.fulfill({ body: bytes, contentType: 'font/ttf' }));
+  // A string script: the e2e tsconfig has no DOM types, so the body cannot name `document` in TypeScript.
+  await context.addInitScript(`(() => {
+    const attach = () => {
+      const style = document.createElement('style');
+      style.textContent = "@font-face { font-family: 'E2E Pinned'; src: url('${PINNED_FONT_URL}') format('truetype'); }" +
+        " html, body, body * { font-family: 'E2E Pinned', sans-serif; }";
+      (document.head ?? document.documentElement).appendChild(style);
+    };
+    if (document.documentElement !== null) attach();
+    else document.addEventListener('readystatechange', attach, { once: true });
+  })();`);
 }
 
 /** Opens one of the shared people from the People list, landing on their birth record. */
