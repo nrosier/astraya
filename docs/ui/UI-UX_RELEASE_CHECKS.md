@@ -53,4 +53,18 @@ Copy this table under a heading such as `### v0.40.0, 2026-11-02`.
 
 ## Past releases
 
-None recorded yet. Before this page, none of these checks had a record.
+### v0.43.0, 2026-10-30
+
+No manual UI/UX check was performed for this release. Every row is left for the owner to verify; none of the results below is a pass.
+
+| Check or task      | Result  | Who | What was seen / issue                                  |
+| ------------------ | ------- | --- | ------------------------------------------------------ |
+| Screen reader      | Not run | -   | Owner to verify. Not performed by the release process. |
+| Zoom 200 %         | Not run | -   | Owner to verify. Not performed by the release process. |
+| Forced colours     | Not run | -   | Owner to verify. Not performed by the release process. |
+| Touch and keyboard | Not run | -   | Owner to verify. Not performed by the release process. |
+| Reduced motion     | Not run | -   | Owner to verify. Not performed by the release process. |
+| Keyboard only      | Not run | -   | Owner to verify. Not performed by the release process. |
+| Tasks 1 to 8       | Not run | -   | Owner to verify. Not performed by the release process. |
+
+Before this page, none of these checks had a record.
