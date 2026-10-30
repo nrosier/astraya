@@ -361,7 +361,7 @@ const nl: typeof en = {
   aspectLabel: 'Aspect',
   bodyBLabel: 'Hemellichaam B',
   orbLabel: 'Orb',
-  applyingLabel: 'Status',
+  applyingLabel: 'Toestand',
   applying: 'Toenemend',
   separating: 'Afnemend',
   rulerLabel: 'Heerser',

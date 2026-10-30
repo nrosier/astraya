@@ -37,7 +37,7 @@ const en = {
   natalLabel: 'Natal',
   transitRingLabel: 'Transit',
   orbLabel: 'Orb',
-  applyingLabel: 'Applying',
+  applyingLabel: 'State',
   applying: 'Applying',
   separating: 'Separating',
 };
@@ -71,7 +71,7 @@ const nl: typeof en = {
   natalLabel: 'Natal',
   transitRingLabel: 'Transit',
   orbLabel: 'Orb',
-  applyingLabel: 'Toenemend',
+  applyingLabel: 'Toestand',
   applying: 'Toenemend',
   separating: 'Afnemend',
 };
