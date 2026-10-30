@@ -2749,9 +2749,18 @@ dl.metric-cards {
   margin: 0 0 0.6rem;
 }
 
+/*
+ * The preview sits on the dark canvas (#900, docs/ui/UI-UX_GUIDELINES.md §17.1: canvas = `--bg`) with a flat
+ * `--line` border, so its accents read against the canvas rather than the panel. Both themes map `--bg`, so light
+ * stays light.
+ */
 .chart-shape-diagram-wrap {
   flex: 0 0 auto;
   width: 110px;
+  padding: var(--space-2);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
 }
 
 /* The chart screen's sections (#430): a panel's own heading sits under the tab strip. */
@@ -2765,15 +2774,16 @@ dl.metric-cards {
   height: auto;
 }
 
+/* High-contrast on the dark canvas: the outline is `--muted` (not the faint `--line`), wedges are a stronger tint. */
 .chart-shape-ring {
   fill: none;
-  stroke: var(--line);
+  stroke: var(--muted);
   stroke-width: 1;
 }
 
 .chart-shape-wedge {
   fill: var(--accent);
-  fill-opacity: 0.18;
+  fill-opacity: 0.4;
   stroke: none;
 }
 
