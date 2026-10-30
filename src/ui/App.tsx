@@ -511,7 +511,7 @@ type PersonRoute = Extract<
 
 /** The Charts page: the view for the chart type the route names (natal when it names none). */
 function renderChart(parsed: Extract<Route, { kind: 'chart' }>): React.JSX.Element {
-  const { personId, view, compareType } = parsed;
+  const { personId, view, compareType, date } = parsed;
   switch (parsed.chartType ?? 'natal') {
     case 'draconic':
       return <DraconicView key={personId} personId={personId} view={view} compareType={compareType} />;
@@ -528,7 +528,7 @@ function renderChart(parsed: Extract<Route, { kind: 'chart' }>): React.JSX.Eleme
     case 'relocated':
       return <RelocatedChartView key={personId} personId={personId} view={view} compareType={compareType} />;
     case 'natal':
-      return <ChartView key={personId} personId={personId} view={view} compareType={compareType} />;
+      return <ChartView key={personId} personId={personId} view={view} compareType={compareType} date={date} />;
   }
 }
 

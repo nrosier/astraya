@@ -94,7 +94,7 @@ test('a person with a known birth time gets a Consultation screen with transits,
   await expect(page.getByRole('button', { name: /^Transits to the Midheaven/ })).toBeVisible();
   // No duplicate launchpad: one link per section, the rest in the page header.
   await expect(page.getByRole('heading', { level: 2, name: 'Next' })).toHaveCount(0);
-  await expect(page.getByRole('link', { name: 'View all transits', exact: true })).toHaveCount(1);
+  await expect(page.getByRole('link', { name: 'Open transits', exact: true }).first()).toBeVisible();
   await expect(page.getByRole('link', { name: 'Open Patterns & condition', exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Open interpretation', exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Build PDF', exact: true })).toBeVisible();
@@ -102,8 +102,65 @@ test('a person with a known birth time gets a Consultation screen with transits,
   await expect(page.getByRole('button', { name: /More chart detail/ })).toBeVisible();
 
   // The link actually opens the full canonical screen (one home per feature).
-  await page.getByRole('link', { name: 'View all transits', exact: true }).click();
+  await page.getByRole('link', { name: 'Open transits', exact: true }).first().click();
   await expect(page.getByRole('heading', { level: 1, name: /transits/i })).toBeVisible();
+});
+
+test('the Consultation header opens the chart wheel on the day shown, and the cards link to their full views (#800 round 2)', async () => {
+  test.setTimeout(60_000);
+
+  await openSharedPerson(page, baseUrl, EINSTEIN);
+  await page.getByRole('link', { name: 'Consultation', exact: true }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Consultation', exact: true })).toBeVisible();
+
+  // The title is the feature; the person sits in the muted basis line.
+  await expect(page.locator('.page-header-basis')).toContainText('Tropical');
+
+  // No date picker: the date is static text.
+  await expect(page.locator('select, input[type="date"]')).toHaveCount(0);
+
+  // The wheel link carries the day the page reads, to the minute, as `?date=YYYY-MM-DD`.
+  const wheel = page.getByRole('link', { name: 'View Chart Wheel', exact: true });
+  await expect(wheel).toHaveAttribute('href', /\/charts\/natal\/wheel\?date=2026-01-15$/);
+  await wheel.click();
+  await expect(page).toHaveURL(/#\/people\/[^/]+\/charts\/natal\/wheel\?date=2026-01-15$/);
+
+  // The time-lord card and the directions card link to their full views.
+  await page.getByRole('link', { name: 'Consultation', exact: true }).click();
+  await expect(page.getByRole('link', { name: 'Open progressions', exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Open directions', exact: true })).toBeVisible();
+});
+
+test('the notes card starts collapsed, shows its save state, and expands on the page (#800 round 2)', async () => {
+  test.setTimeout(60_000);
+
+  await openSharedPerson(page, baseUrl, EINSTEIN);
+  await page.getByRole('link', { name: 'Consultation', exact: true }).click();
+
+  const toggle = page.getByRole('button', { name: 'Show notes', exact: true });
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.getByRole('status').filter({ hasText: 'Autosaved' })).toBeVisible();
+  await expect(page.getByText('0 notes')).toBeVisible();
+
+  await toggle.click();
+  await expect(page.getByRole('button', { name: 'Hide notes', exact: true })).toHaveAttribute('aria-expanded', 'true');
+  await page.getByRole('textbox', { name: 'Note text' }).fill('Confirm the birth time source.');
+  await page.getByRole('button', { name: 'Add note', exact: true }).click();
+  await expect(page.getByText('Confirm the birth time source.')).toBeVisible();
+  await expect(page.getByText('1 note', { exact: true })).toBeVisible();
+});
+
+test('a separating transit shows the applying and separating badge with a dot and its label (#815)', async () => {
+  test.setTimeout(60_000);
+
+  await openSharedPerson(page, baseUrl, EINSTEIN);
+  await page.getByRole('link', { name: 'Consultation', exact: true }).click();
+  const states = page.locator('.consultation-section .data-table .aspect-state');
+  await expect(states.first()).toBeVisible();
+  await expect(page.locator('.aspect-state--separating').first()).toContainText('Separating');
+  await expect(page.locator('.aspect-state--applying').first()).toContainText('Applying');
+  // The dot carries no words; the label is always beside it.
+  await expect(page.locator('.aspect-state-dot').first()).toHaveAttribute('aria-hidden', 'true');
 });
 
 for (const { width, height } of [
