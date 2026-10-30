@@ -7,12 +7,27 @@
  */
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { computeChartData, type ChartData } from '../src/domain/chart-compute.js';
 import { ChartDataView } from '../src/ui/ChartView.js';
 import { ExportRegistryProvider } from '../src/ui/export-registry.js';
 import { setLocale } from '../src/ui/locale.js';
+import { getEngine } from './engine-harness.js';
 
 type LoadProp = Parameters<typeof ChartDataView>[0]['load'];
+
+let readyChart: ChartData;
+
+beforeAll(async () => {
+  readyChart = await computeChartData(
+    {
+      civil: { year: 1970, month: 1, day: 1, hour: 0, minute: 0, second: 0 },
+      coordinates: { latitude: 41.1833, longitude: -84.7333 },
+      offsetOverrideMinutes: 0,
+    },
+    await getEngine(),
+  );
+}, 60_000);
 
 let mounted: { container: HTMLElement; root: Root } | undefined;
 
@@ -56,4 +71,18 @@ describe('the chart result region (#888)', () => {
     await render({ kind: 'error', message: 'boom' });
     expect(busyRegions(container)).toEqual(['false']);
   });
+
+  it('is cleared once the chart is ready', async () => {
+    const container = await render({ kind: 'loading' });
+    expect(busyRegions(container)).toEqual(['true']);
+
+    const ready = await render(readyLoad());
+    expect(ready.querySelector('.chart-wheel')).not.toBeNull();
+    expect(busyRegions(ready)).toEqual(['false']);
+  });
 });
+
+/** A `ready` load built from the real engine, so the chart renders as it does on screen. */
+function readyLoad(): LoadProp {
+  return { kind: 'ready', data: readyChart };
+}

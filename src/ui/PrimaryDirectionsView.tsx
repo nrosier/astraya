@@ -484,60 +484,63 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
         />
       </div>
 
-      {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
+      {/* The result region: busy while the directions (re)calculate, as the Astrocartography map is. */}
+      <div aria-busy={load.kind === 'loading' || directed.kind === 'loading'}>
+        {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
 
-      {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
+        {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
 
-      {data !== undefined && !data.defined && <StatusMessage kind="error">{t.undefinedAtLatitude}</StatusMessage>}
+        {data !== undefined && !data.defined && <StatusMessage kind="error">{t.undefinedAtLatitude}</StatusMessage>}
 
-      {data?.defined === true && (
-        <>
-          {directed.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
-          {directed.kind === 'error' && <StatusMessage kind="error">{t.error(directed.message)}</StatusMessage>}
-          {directed.kind === 'before-birth' && <p className="hint">{t.beforeBirth}</p>}
-          {directed.kind === 'unavailable' && <p className="hint">{t.converseWheelUnavailable}</p>}
+        {data?.defined === true && (
+          <>
+            {directed.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
+            {directed.kind === 'error' && <StatusMessage kind="error">{t.error(directed.message)}</StatusMessage>}
+            {directed.kind === 'before-birth' && <p className="hint">{t.beforeBirth}</p>}
+            {directed.kind === 'unavailable' && <p className="hint">{t.converseWheelUnavailable}</p>}
 
-          {directed.kind === 'ready' && (
-            <>
-              <p className="hint">{t.ageLine(formatFixed(directed.chart.ageYears, 2))}</p>
-              <p className="hint">{t.arcLine(formatFixed(ageToArc(directed.chart.ageYears, data.key), 2))}</p>
-              {wheelMarkup !== undefined && (
-                // App-generated SVG from just-computed chart data, never user-supplied markup —
-                // the same trust boundary ChartView.tsx's sheet markup is injected under.
-                <div
-                  ref={wheelRef}
-                  className="chart-wheel chart-wheel-interactive"
-                  dangerouslySetInnerHTML={{ __html: wheelMarkup }}
-                  onClick={handleWheelClick}
-                  onKeyDown={handleWheelKeyDown}
-                />
-              )}
-            </>
-          )}
+            {directed.kind === 'ready' && (
+              <>
+                <p className="hint">{t.ageLine(formatFixed(directed.chart.ageYears, 2))}</p>
+                <p className="hint">{t.arcLine(formatFixed(ageToArc(directed.chart.ageYears, data.key), 2))}</p>
+                {wheelMarkup !== undefined && (
+                  // App-generated SVG from just-computed chart data, never user-supplied markup —
+                  // the same trust boundary ChartView.tsx's sheet markup is injected under.
+                  <div
+                    ref={wheelRef}
+                    className="chart-wheel chart-wheel-interactive"
+                    dangerouslySetInnerHTML={{ __html: wheelMarkup }}
+                    onClick={handleWheelClick}
+                    onKeyDown={handleWheelKeyDown}
+                  />
+                )}
+              </>
+            )}
 
-          {activeRows !== undefined && activeRows.length > 0 && (
-            <SortableTable
-              caption={t.activeCaption(String(data.orb))}
-              columns={columns}
-              rows={activeRows}
-              getRowKey={(row) => row.id}
-              downloadFilename={deriveExportFilename(person.displayName, 'primary-directions-active', 'csv')}
-            />
-          )}
-          {activeRows?.length === 0 && <p className="hint">{t.noActive}</p>}
+            {activeRows !== undefined && activeRows.length > 0 && (
+              <SortableTable
+                caption={t.activeCaption(String(data.orb))}
+                columns={columns}
+                rows={activeRows}
+                getRowKey={(row) => row.id}
+                downloadFilename={deriveExportFilename(person.displayName, 'primary-directions-active', 'csv')}
+              />
+            )}
+            {activeRows?.length === 0 && <p className="hint">{t.noActive}</p>}
 
-          {allRows !== undefined && allRows.length > 0 && (
-            <SortableTable
-              caption={t.allCaption}
-              columns={columns}
-              rows={allRows}
-              getRowKey={(row) => row.id}
-              downloadFilename={deriveExportFilename(person.displayName, 'primary-directions', 'csv')}
-            />
-          )}
-          {allRows?.length === 0 && <p className="hint">{t.noDirections}</p>}
-        </>
-      )}
+            {allRows !== undefined && allRows.length > 0 && (
+              <SortableTable
+                caption={t.allCaption}
+                columns={columns}
+                rows={allRows}
+                getRowKey={(row) => row.id}
+                downloadFilename={deriveExportFilename(person.displayName, 'primary-directions', 'csv')}
+              />
+            )}
+            {allRows?.length === 0 && <p className="hint">{t.noDirections}</p>}
+          </>
+        )}
+      </div>
     </main>
   );
 }

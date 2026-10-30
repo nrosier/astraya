@@ -204,24 +204,27 @@ export function EclipsesView(): React.JSX.Element {
       </p>
 
       {validation !== undefined && <StatusMessage kind="error">{validation}</StatusMessage>}
-      {result.kind === 'error' && <StatusMessage kind="error">{t.error(result.message)}</StatusMessage>}
+      {/* The result region: busy while the eclipses (re)calculate, as the Astrocartography map is. */}
+      <div aria-busy={result.kind === 'loading'}>
+        {result.kind === 'error' && <StatusMessage kind="error">{t.error(result.message)}</StatusMessage>}
 
-      {result.kind === 'ready' &&
-        (result.rows.length === 0 ? (
-          <p className="hint">{t.noEclipses}</p>
-        ) : (
-          <>
-            <p>{t.summary(result.rows.length, result.fromYear, result.toYear)}</p>
-            {result.anglesLeftOut && <p className="hint">{t.anglesNote}</p>}
-            <SortableTable
-              caption={t.tableCaption}
-              columns={columns}
-              rows={result.rows}
-              getRowKey={(row) => row.id}
-              downloadFilename={`eclipses-${String(result.fromYear)}-${String(result.toYear)}.csv`}
-            />
-          </>
-        ))}
+        {result.kind === 'ready' &&
+          (result.rows.length === 0 ? (
+            <p className="hint">{t.noEclipses}</p>
+          ) : (
+            <>
+              <p>{t.summary(result.rows.length, result.fromYear, result.toYear)}</p>
+              {result.anglesLeftOut && <p className="hint">{t.anglesNote}</p>}
+              <SortableTable
+                caption={t.tableCaption}
+                columns={columns}
+                rows={result.rows}
+                getRowKey={(row) => row.id}
+                downloadFilename={`eclipses-${String(result.fromYear)}-${String(result.toYear)}.csv`}
+              />
+            </>
+          ))}
+      </div>
     </main>
   );
 }

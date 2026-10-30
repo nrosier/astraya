@@ -263,28 +263,31 @@ export function EventSearchView(): React.JSX.Element {
           {t.searchButton}
         </button>
       </p>
-      {result.kind === 'loading' && <StatusMessage kind="loading">{t.searching}</StatusMessage>}
-      {result.kind === 'error' && <StatusMessage kind="error">{result.message}</StatusMessage>}
-      {result.kind === 'ready' && (
-        <section aria-live="polite">
-          <p>{t.resultCount(String(result.rows.length))}</p>
-          <p>
-            <button type="button" onClick={download}>
-              {t.downloadCsv}
-            </button>{' '}
-            <button type="button" onClick={downloadIcs}>
-              {t.downloadIcs}
-            </button>
-          </p>
-          <SortableTable
-            headingLevel={2}
-            caption={t.resultsHeading}
-            columns={columns}
-            rows={result.rows}
-            getRowKey={(row) => `${row.kind}-${String(row.jd)}-${row.label}`}
-          />
-        </section>
-      )}
+      {/* The result region: busy while the search runs, as the Astrocartography map is. */}
+      <div aria-busy={result.kind === 'loading'}>
+        {result.kind === 'loading' && <StatusMessage kind="loading">{t.searching}</StatusMessage>}
+        {result.kind === 'error' && <StatusMessage kind="error">{result.message}</StatusMessage>}
+        {result.kind === 'ready' && (
+          <section aria-live="polite">
+            <p>{t.resultCount(String(result.rows.length))}</p>
+            <p>
+              <button type="button" onClick={download}>
+                {t.downloadCsv}
+              </button>{' '}
+              <button type="button" onClick={downloadIcs}>
+                {t.downloadIcs}
+              </button>
+            </p>
+            <SortableTable
+              headingLevel={2}
+              caption={t.resultsHeading}
+              columns={columns}
+              rows={result.rows}
+              getRowKey={(row) => `${row.kind}-${String(row.jd)}-${row.label}`}
+            />
+          </section>
+        )}
+      </div>
     </main>
   );
 }

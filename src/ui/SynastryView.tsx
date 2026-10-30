@@ -351,54 +351,57 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
         <StatusMessage kind="error">{t.partnerGoneWarning}</StatusMessage>
       )}
 
-      {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
+      {/* The result region: busy while the synastry (re)calculates, as the Astrocartography map is. */}
+      <div aria-busy={load.kind === 'loading'}>
+        {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
 
-      {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
+        {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
 
-      {load.kind === 'ready' && wheelMarkup !== undefined && (
-        <>
-          {/* App-generated SVG from just-computed chart data, never user-supplied markup —
+        {load.kind === 'ready' && wheelMarkup !== undefined && (
+          <>
+            {/* App-generated SVG from just-computed chart data, never user-supplied markup —
               the same trust boundary ChartView.tsx's sheet markup is injected under. */}
-          <p className="hint chart-wheel-hint">{wheelT.hint}</p>
-          <div
-            ref={wheelRef}
-            className="chart-wheel chart-wheel-interactive"
-            dangerouslySetInnerHTML={{ __html: wheelMarkup }}
-            onClick={handleWheelClick}
-            onKeyDown={handleWheelKeyDown}
-          />
-          {biWheelFacts !== undefined && (
-            <BiWheelSelectionPanel
-              facts={biWheelFacts}
-              ringLabels={ringLabels}
-              locale={locale}
-              onClear={clearIsolation}
+            <p className="hint chart-wheel-hint">{wheelT.hint}</p>
+            <div
+              ref={wheelRef}
+              className="chart-wheel chart-wheel-interactive"
+              dangerouslySetInnerHTML={{ __html: wheelMarkup }}
+              onClick={handleWheelClick}
+              onKeyDown={handleWheelKeyDown}
             />
-          )}
-
-          <RelationshipSummary
-            data={load.data}
-            nameA={nameA || t.personALabel}
-            nameB={nameB || t.personBLabel}
-            locale={locale}
-            personId={personId}
-          />
-
-          <p className="hint">{t.rankingHint}</p>
-
-          <SortableTable
-            caption={t.aspectsCaption}
-            columns={aspectColumns(t, locale, interpretationOf, importanceOf)}
-            rows={rankedRows}
-            getRowKey={(row) => `${row.bodyAKey}-${row.aspect}-${row.bodyBKey}`}
-            downloadFilename={deriveExportFilename(
-              `${person.displayName || 'person'}-${(partner?.displayName ?? '') || 'partner'}`,
-              'synastry-aspects',
-              'csv',
+            {biWheelFacts !== undefined && (
+              <BiWheelSelectionPanel
+                facts={biWheelFacts}
+                ringLabels={ringLabels}
+                locale={locale}
+                onClear={clearIsolation}
+              />
             )}
-          />
-        </>
-      )}
+
+            <RelationshipSummary
+              data={load.data}
+              nameA={nameA || t.personALabel}
+              nameB={nameB || t.personBLabel}
+              locale={locale}
+              personId={personId}
+            />
+
+            <p className="hint">{t.rankingHint}</p>
+
+            <SortableTable
+              caption={t.aspectsCaption}
+              columns={aspectColumns(t, locale, interpretationOf, importanceOf)}
+              rows={rankedRows}
+              getRowKey={(row) => `${row.bodyAKey}-${row.aspect}-${row.bodyBKey}`}
+              downloadFilename={deriveExportFilename(
+                `${person.displayName || 'person'}-${(partner?.displayName ?? '') || 'partner'}`,
+                'synastry-aspects',
+                'csv',
+              )}
+            />
+          </>
+        )}
+      </div>
     </main>
   );
 }

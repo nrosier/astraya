@@ -475,214 +475,225 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
         </p>
       </PageHeader>
 
-      {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
-      {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
+      {/* The result region: busy while the consultation (re)calculates, as the Astrocartography map is. */}
+      <div aria-busy={load.kind === 'loading'}>
+        {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
+        {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
 
-      {load.kind === 'ready' && (
-        <div className="consultation-layout">
-          <section className="consultation-glance" aria-labelledby="consultation-glance-heading">
-            <h2 id="consultation-glance-heading">{overviewT.heading}</h2>
-            <dl className="consultation-tiles">
-              {glanceRows.map((row) => (
-                <div key={row.term}>
-                  <dt>{row.term}</dt>
-                  <dd>{row.value}</dd>
-                </div>
-              ))}
-            </dl>
-          </section>
-
-          <div className="consultation-grid">
-            <div className="consultation-col">
-              <section className="consultation-section" aria-labelledby="consultation-transits-heading">
-                <h2 id="consultation-transits-heading">{t.majorTransitsHeading}</h2>
-                <FilterSummary
-                  summary={transitFilterT.count(
-                    filteredContacts.length,
-                    load.transit.contacts.length,
-                    transitFilterT.presetsShort[presetOf(filter, rules) ?? 'custom'],
-                  )}
-                />
-                {/* The weights and orbs have no published source (transit-importance.ts, #590), so say so (#681). */}
-                <p className="hint">{t.rankingConvention}</p>
-                {majorRows.length === 0 ? (
-                  <p className="hint">{t.noShownTransits}</p>
-                ) : (
-                  <ConsultationTransitTable caption={t.majorTransitsHeading} labels={tableLabels} rows={majorRows} />
-                )}
-                <p>
-                  {fastRows.length === 0
-                    ? t.noFastToday
-                    : t.fastToday(
-                        fastRows
-                          .map((row) => `${body(row.bodyAKey)} ${aspect(row.aspectKey)} ${body(row.bodyBKey)}`)
-                          .join(t.listSeparator),
-                      )}
-                </p>
-                {/* One Disclosure per angle (D-800a), in time order and unscored: no weight is invented for an angle (#678). */}
-                {load.angles === undefined ? (
-                  <p className="hint">{t.anglesNeedBirthTime}</p>
-                ) : (
-                  angleGroups(load.angles).map((group) => (
-                    <Disclosure
-                      key={group.angle}
-                      title={angleTitle(group.angle)}
-                      summary={t.aspectCount(group.contacts.length)}
-                      showLabel={t.show}
-                      hideLabel={t.hide}
-                    >
-                      {group.contacts.length === 0 ? (
-                        <p className="hint">{angleEmpty(group.angle)}</p>
-                      ) : (
-                        <ConsultationTransitTable
-                          caption={angleTitle(group.angle)}
-                          labels={tableLabels}
-                          rows={angleRows(group.contacts)}
-                        />
-                      )}
-                    </Disclosure>
-                  ))
-                )}
-                <p>
-                  <a href={hrefFor('transit', { personId })}>{t.viewAllTransits}</a>
-                </p>
-              </section>
-
-              <section className="consultation-section" aria-labelledby="consultation-highlights-heading">
-                <h2 id="consultation-highlights-heading">{t.highlightsHeading}</h2>
-                {dignityHighlights.length === 0 && conditionHighlights.length === 0 && (
-                  <p className="hint">{t.noNotableConditions}</p>
-                )}
-                {/* Each list says which rules it follows (#679): dignities the reader's rulership, conditions the traditional seven. */}
-                {dignityHighlights.length > 0 && (
-                  <>
-                    <p className="hint">{t.dignityCaption(rulershipT.options[rulership])}</p>
-                    <ul>
-                      {dignityHighlights.map((line) => (
-                        <li key={line}>{line}</li>
-                      ))}
-                    </ul>
-                  </>
-                )}
-                {conditionHighlights.length > 0 && (
-                  <>
-                    <p className="hint">{t.conditionCaption}</p>
-                    <ul>
-                      {conditionHighlights.map((line) => (
-                        <li key={line}>{line}</li>
-                      ))}
-                    </ul>
-                  </>
-                )}
-                <Disclosure title={t.moreChart} summary={t.moreChartSummary} showLabel={t.show} hideLabel={t.hide}>
-                  <p>
-                    {t.chartShape}:{' '}
-                    {load.shape === undefined ? t.shapeCannotBeWorkedOut : chartT.jonesShapeLabels[load.shape.shape]}
-                  </p>
-                  {retrogradeAtBirth.length > 0 && (
-                    <p>{t.retrogradeAtBirth(retrogradeAtBirth.join(t.conditionSeparator))}</p>
-                  )}
-                </Disclosure>
-                <p>
-                  <a href={hrefFor('chart', { personId })}>{t.openPatternsAndCondition}</a>
-                </p>
-              </section>
-            </div>
-
-            <div className="consultation-col">
-              <section className="consultation-section" aria-labelledby="consultation-year-heading">
-                <h2 id="consultation-year-heading">{t.timeLordsHeading}</h2>
-                <ul className="consultation-lords">
-                  {load.year.profection !== undefined && (
-                    <li>
-                      <span className="consultation-lord-key">{t.profectionYear}</span>
-                      <span className="consultation-lord-value">
-                        {t.placeValue(signName(load.year.profection.sign), ordinal(load.year.profection.house, locale))}
-                      </span>
-                      <span className="consultation-lord-meta consultation-date">
-                        {t.endsOn(dateLabel(load.year.profection.endJd))}
-                      </span>
-                    </li>
-                  )}
-                  {load.year.firdaria !== undefined && (
-                    <li>
-                      <span className="consultation-lord-key">{t.firdaria}</span>
-                      <span className="consultation-lord-value">
-                        {timelineSubjectLabel({ kind: 'firdaria', ruler: load.year.firdaria.ruler }, locale)}
-                      </span>
-                      <span className="consultation-lord-meta consultation-date">
-                        {t.endsOn(dateLabel(load.year.firdaria.endJd))}
-                      </span>
-                    </li>
-                  )}
-                  <li>
-                    <span className="consultation-lord-key">{t.progressedMoon}</span>
-                    <span className="consultation-lord-value">
-                      {t.placeValue(
-                        signName(load.year.progressedMoon.sign),
-                        load.year.progressedMoon.house === undefined
-                          ? undefined
-                          : ordinal(load.year.progressedMoon.house, locale),
-                      )}
-                    </span>
-                    <Badge tone="soft">{chartT.lunarPhaseLabels[load.year.progressedMoon.phase]}</Badge>
-                  </li>
-                  <li>
-                    <span className="consultation-lord-key">{t.solarReturns}</span>
-                    <span className="consultation-lord-value">
-                      {t.solarReturnsValue(
-                        dateLabel(load.year.solarReturns.current),
-                        dateLabel(load.year.solarReturns.next),
-                      )}
-                    </span>
-                  </li>
-                </ul>
-                {monthProfection.length > 0 && (
-                  <Disclosure title={t.moreTiming} summary={t.moreTimingSummary} showLabel={t.show} hideLabel={t.hide}>
-                    {eventList(monthProfection)}
-                    <p className="hint">{timingT.trackNotes.profections}</p>
-                  </Disclosure>
-                )}
-              </section>
-
-              <section className="consultation-section" aria-labelledby="consultation-releasing-heading">
-                <h2 id="consultation-releasing-heading">{t.releasingDirectionsHeading}</h2>
-                {releasingBadges.length === 0 ? (
-                  <p className="hint">{timingT.noEvents}</p>
-                ) : (
-                  <div className="consultation-pills" role="group" aria-label={t.activeReleasing}>
-                    {releasingBadges.map((badge) => (
-                      <Badge key={badge.key} tone="accent">
-                        {badge.text}
-                      </Badge>
-                    ))}
+        {load.kind === 'ready' && (
+          <div className="consultation-layout">
+            <section className="consultation-glance" aria-labelledby="consultation-glance-heading">
+              <h2 id="consultation-glance-heading">{overviewT.heading}</h2>
+              <dl className="consultation-tiles">
+                {glanceRows.map((row) => (
+                  <div key={row.term}>
+                    <dt>{row.term}</dt>
+                    <dd>{row.value}</dd>
                   </div>
-                )}
-                <h3>{t.directionsHeading}</h3>
-                {directions.length === 0 ? (
-                  <p className="hint">{t.noDirections}</p>
-                ) : (
-                  <>
-                    {directionList(directions.slice(0, SHOWN_DIRECTION_COUNT))}
-                    {directions.length > SHOWN_DIRECTION_COUNT && (
+                ))}
+              </dl>
+            </section>
+
+            <div className="consultation-grid">
+              <div className="consultation-col">
+                <section className="consultation-section" aria-labelledby="consultation-transits-heading">
+                  <h2 id="consultation-transits-heading">{t.majorTransitsHeading}</h2>
+                  <FilterSummary
+                    summary={transitFilterT.count(
+                      filteredContacts.length,
+                      load.transit.contacts.length,
+                      transitFilterT.presetsShort[presetOf(filter, rules) ?? 'custom'],
+                    )}
+                  />
+                  {/* The weights and orbs have no published source (transit-importance.ts, #590), so say so (#681). */}
+                  <p className="hint">{t.rankingConvention}</p>
+                  {majorRows.length === 0 ? (
+                    <p className="hint">{t.noShownTransits}</p>
+                  ) : (
+                    <ConsultationTransitTable caption={t.majorTransitsHeading} labels={tableLabels} rows={majorRows} />
+                  )}
+                  <p>
+                    {fastRows.length === 0
+                      ? t.noFastToday
+                      : t.fastToday(
+                          fastRows
+                            .map((row) => `${body(row.bodyAKey)} ${aspect(row.aspectKey)} ${body(row.bodyBKey)}`)
+                            .join(t.listSeparator),
+                        )}
+                  </p>
+                  {/* One Disclosure per angle (D-800a), in time order and unscored: no weight is invented for an angle (#678). */}
+                  {load.angles === undefined ? (
+                    <p className="hint">{t.anglesNeedBirthTime}</p>
+                  ) : (
+                    angleGroups(load.angles).map((group) => (
                       <Disclosure
-                        title={t.moreDirections(directions.length - SHOWN_DIRECTION_COUNT)}
+                        key={group.angle}
+                        title={angleTitle(group.angle)}
+                        summary={t.aspectCount(group.contacts.length)}
                         showLabel={t.show}
                         hideLabel={t.hide}
                       >
-                        {directionList(directions.slice(SHOWN_DIRECTION_COUNT))}
+                        {group.contacts.length === 0 ? (
+                          <p className="hint">{angleEmpty(group.angle)}</p>
+                        ) : (
+                          <ConsultationTransitTable
+                            caption={angleTitle(group.angle)}
+                            labels={tableLabels}
+                            rows={angleRows(group.contacts)}
+                          />
+                        )}
                       </Disclosure>
+                    ))
+                  )}
+                  <p>
+                    <a href={hrefFor('transit', { personId })}>{t.viewAllTransits}</a>
+                  </p>
+                </section>
+
+                <section className="consultation-section" aria-labelledby="consultation-highlights-heading">
+                  <h2 id="consultation-highlights-heading">{t.highlightsHeading}</h2>
+                  {dignityHighlights.length === 0 && conditionHighlights.length === 0 && (
+                    <p className="hint">{t.noNotableConditions}</p>
+                  )}
+                  {/* Each list says which rules it follows (#679): dignities the reader's rulership, conditions the traditional seven. */}
+                  {dignityHighlights.length > 0 && (
+                    <>
+                      <p className="hint">{t.dignityCaption(rulershipT.options[rulership])}</p>
+                      <ul>
+                        {dignityHighlights.map((line) => (
+                          <li key={line}>{line}</li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+                  {conditionHighlights.length > 0 && (
+                    <>
+                      <p className="hint">{t.conditionCaption}</p>
+                      <ul>
+                        {conditionHighlights.map((line) => (
+                          <li key={line}>{line}</li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+                  <Disclosure title={t.moreChart} summary={t.moreChartSummary} showLabel={t.show} hideLabel={t.hide}>
+                    <p>
+                      {t.chartShape}:{' '}
+                      {load.shape === undefined ? t.shapeCannotBeWorkedOut : chartT.jonesShapeLabels[load.shape.shape]}
+                    </p>
+                    {retrogradeAtBirth.length > 0 && (
+                      <p>{t.retrogradeAtBirth(retrogradeAtBirth.join(t.conditionSeparator))}</p>
                     )}
-                  </>
-                )}
-                <p>
-                  <a href={hrefFor('timing-timeline', { personId })}>{t.openTimingTimeline}</a>
-                </p>
-              </section>
+                  </Disclosure>
+                  <p>
+                    <a href={hrefFor('chart', { personId })}>{t.openPatternsAndCondition}</a>
+                  </p>
+                </section>
+              </div>
+
+              <div className="consultation-col">
+                <section className="consultation-section" aria-labelledby="consultation-year-heading">
+                  <h2 id="consultation-year-heading">{t.timeLordsHeading}</h2>
+                  <ul className="consultation-lords">
+                    {load.year.profection !== undefined && (
+                      <li>
+                        <span className="consultation-lord-key">{t.profectionYear}</span>
+                        <span className="consultation-lord-value">
+                          {t.placeValue(
+                            signName(load.year.profection.sign),
+                            ordinal(load.year.profection.house, locale),
+                          )}
+                        </span>
+                        <span className="consultation-lord-meta consultation-date">
+                          {t.endsOn(dateLabel(load.year.profection.endJd))}
+                        </span>
+                      </li>
+                    )}
+                    {load.year.firdaria !== undefined && (
+                      <li>
+                        <span className="consultation-lord-key">{t.firdaria}</span>
+                        <span className="consultation-lord-value">
+                          {timelineSubjectLabel({ kind: 'firdaria', ruler: load.year.firdaria.ruler }, locale)}
+                        </span>
+                        <span className="consultation-lord-meta consultation-date">
+                          {t.endsOn(dateLabel(load.year.firdaria.endJd))}
+                        </span>
+                      </li>
+                    )}
+                    <li>
+                      <span className="consultation-lord-key">{t.progressedMoon}</span>
+                      <span className="consultation-lord-value">
+                        {t.placeValue(
+                          signName(load.year.progressedMoon.sign),
+                          load.year.progressedMoon.house === undefined
+                            ? undefined
+                            : ordinal(load.year.progressedMoon.house, locale),
+                        )}
+                      </span>
+                      <Badge tone="soft">{chartT.lunarPhaseLabels[load.year.progressedMoon.phase]}</Badge>
+                    </li>
+                    <li>
+                      <span className="consultation-lord-key">{t.solarReturns}</span>
+                      <span className="consultation-lord-value">
+                        {t.solarReturnsValue(
+                          dateLabel(load.year.solarReturns.current),
+                          dateLabel(load.year.solarReturns.next),
+                        )}
+                      </span>
+                    </li>
+                  </ul>
+                  {monthProfection.length > 0 && (
+                    <Disclosure
+                      title={t.moreTiming}
+                      summary={t.moreTimingSummary}
+                      showLabel={t.show}
+                      hideLabel={t.hide}
+                    >
+                      {eventList(monthProfection)}
+                      <p className="hint">{timingT.trackNotes.profections}</p>
+                    </Disclosure>
+                  )}
+                </section>
+
+                <section className="consultation-section" aria-labelledby="consultation-releasing-heading">
+                  <h2 id="consultation-releasing-heading">{t.releasingDirectionsHeading}</h2>
+                  {releasingBadges.length === 0 ? (
+                    <p className="hint">{timingT.noEvents}</p>
+                  ) : (
+                    <div className="consultation-pills" role="group" aria-label={t.activeReleasing}>
+                      {releasingBadges.map((badge) => (
+                        <Badge key={badge.key} tone="accent">
+                          {badge.text}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                  <h3>{t.directionsHeading}</h3>
+                  {directions.length === 0 ? (
+                    <p className="hint">{t.noDirections}</p>
+                  ) : (
+                    <>
+                      {directionList(directions.slice(0, SHOWN_DIRECTION_COUNT))}
+                      {directions.length > SHOWN_DIRECTION_COUNT && (
+                        <Disclosure
+                          title={t.moreDirections(directions.length - SHOWN_DIRECTION_COUNT)}
+                          showLabel={t.show}
+                          hideLabel={t.hide}
+                        >
+                          {directionList(directions.slice(SHOWN_DIRECTION_COUNT))}
+                        </Disclosure>
+                      )}
+                    </>
+                  )}
+                  <p>
+                    <a href={hrefFor('timing-timeline', { personId })}>{t.openTimingTimeline}</a>
+                  </p>
+                </section>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </main>
   );
 }

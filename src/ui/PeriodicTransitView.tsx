@@ -416,211 +416,219 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
         />
       )}
 
-      {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
+      {/* The result region: busy while the forecast (re)calculates, as the Astrocartography map is. */}
+      <div aria-busy={load.kind === 'loading'}>
+        {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
 
-      {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
+        {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
 
-      {data !== undefined && (
-        <>
-          <section>
-            <h2>{t.dailyHeading}</h2>
-            <p>
-              {t.moonInLabel} {signHouseLabel(data.daily.moon.sign, data.daily.moon.house, locale, t)}
-              {data.daily.moon.position.retrograde ? ` ${t.retrograde}` : ''}.
-            </p>
-            {data.daily.moonAspects.length > 0 && (
-              <SortableTable
-                caption={t.moonAspectsCaption}
-                columns={contactColumns(t)}
-                rows={contactRows(data.daily.moonAspects, locale)}
-                getRowKey={(row) => row.key}
-                downloadFilename={deriveExportFilename(person.displayName, 'forecast-daily-moon', 'csv')}
-              />
-            )}
-            {data.daily.exactToday.length > 0 && (
-              <SortableTable
-                caption={t.exactTodayCaption}
-                columns={exactEventColumns(t)}
-                rows={exactEventRows(data.daily.exactToday, t, locale)}
-                getRowKey={(row) => row.key}
-                downloadFilename={deriveExportFilename(person.displayName, 'forecast-daily-exact', 'csv')}
-              />
-            )}
-            {data.daily.stationsToday.length > 0 && (
-              <SortableTable
-                caption={t.stationsTodayCaption}
-                columns={stationColumns(t)}
-                rows={stationRows(data.daily.stationsToday, t, locale)}
-                getRowKey={(row) => row.key}
-                downloadFilename={deriveExportFilename(person.displayName, 'forecast-daily-stations', 'csv')}
-              />
-            )}
-          </section>
+        {data !== undefined && (
+          <>
+            <section>
+              <h2>{t.dailyHeading}</h2>
+              <p>
+                {t.moonInLabel} {signHouseLabel(data.daily.moon.sign, data.daily.moon.house, locale, t)}
+                {data.daily.moon.position.retrograde ? ` ${t.retrograde}` : ''}.
+              </p>
+              {data.daily.moonAspects.length > 0 && (
+                <SortableTable
+                  caption={t.moonAspectsCaption}
+                  columns={contactColumns(t)}
+                  rows={contactRows(data.daily.moonAspects, locale)}
+                  getRowKey={(row) => row.key}
+                  downloadFilename={deriveExportFilename(person.displayName, 'forecast-daily-moon', 'csv')}
+                />
+              )}
+              {data.daily.exactToday.length > 0 && (
+                <SortableTable
+                  caption={t.exactTodayCaption}
+                  columns={exactEventColumns(t)}
+                  rows={exactEventRows(data.daily.exactToday, t, locale)}
+                  getRowKey={(row) => row.key}
+                  downloadFilename={deriveExportFilename(person.displayName, 'forecast-daily-exact', 'csv')}
+                />
+              )}
+              {data.daily.stationsToday.length > 0 && (
+                <SortableTable
+                  caption={t.stationsTodayCaption}
+                  columns={stationColumns(t)}
+                  rows={stationRows(data.daily.stationsToday, t, locale)}
+                  getRowKey={(row) => row.key}
+                  downloadFilename={deriveExportFilename(person.displayName, 'forecast-daily-stations', 'csv')}
+                />
+              )}
+            </section>
 
-          <section>
-            <h2>{t.weeklyHeading}</h2>
-            <p className="hint">
-              {formatUtc(data.weekly.fromJd)} &ndash; {formatUtc(data.weekly.toJd)}
-            </p>
-            {data.weekly.events.length > 0 ? (
-              <SortableTable
-                caption={t.exactThisWeekCaption}
-                columns={exactEventColumns(t)}
-                rows={exactEventRows(data.weekly.events, t, locale)}
-                getRowKey={(row) => row.key}
-                downloadFilename={deriveExportFilename(person.displayName, 'forecast-weekly', 'csv')}
-              />
-            ) : (
-              <p>{t.noAspectsWeek}</p>
-            )}
-            {data.weekly.lunarReturns.returns.length > 0 ? (
-              data.weekly.lunarReturns.returns.map((lunarReturn, index) => {
-                const ascendantSign = Math.floor((lunarReturn.houses.cusps[1] ?? 0) / 30);
-                return (
-                  <div key={`${String(lunarReturn.returnJd)}-${String(index)}`}>
+            <section>
+              <h2>{t.weeklyHeading}</h2>
+              <p className="hint">
+                {formatUtc(data.weekly.fromJd)} &ndash; {formatUtc(data.weekly.toJd)}
+              </p>
+              {data.weekly.events.length > 0 ? (
+                <SortableTable
+                  caption={t.exactThisWeekCaption}
+                  columns={exactEventColumns(t)}
+                  rows={exactEventRows(data.weekly.events, t, locale)}
+                  getRowKey={(row) => row.key}
+                  downloadFilename={deriveExportFilename(person.displayName, 'forecast-weekly', 'csv')}
+                />
+              ) : (
+                <p>{t.noAspectsWeek}</p>
+              )}
+              {data.weekly.lunarReturns.returns.length > 0 ? (
+                data.weekly.lunarReturns.returns.map((lunarReturn, index) => {
+                  const ascendantSign = Math.floor((lunarReturn.houses.cusps[1] ?? 0) / 30);
+                  return (
+                    <div key={`${String(lunarReturn.returnJd)}-${String(index)}`}>
+                      <p>
+                        {t.lunarReturnSentence(
+                          formatUtc(lunarReturn.returnJd),
+                          localizedSignName(ascendantSign, locale, t),
+                        )}
+                      </p>
+                      {shownOf(lunarReturn.contacts).length > 0 && (
+                        <SortableTable
+                          caption={t.lunarReturnContactsCaption}
+                          columns={contactColumns(t)}
+                          rows={contactRows(shownOf(lunarReturn.contacts), locale)}
+                          getRowKey={(row) => row.key}
+                          downloadFilename={deriveExportFilename(
+                            person.displayName,
+                            `forecast-weekly-lunar-return-${String(index)}`,
+                            'csv',
+                          )}
+                        />
+                      )}
+                    </div>
+                  );
+                })
+              ) : (
+                <p>{t.noLunarReturnWeek}</p>
+              )}
+            </section>
+
+            <section>
+              <h2>{t.monthlyHeading}</h2>
+              <p>
+                {t.sunInThisMonth(
+                  signHouseLabel(data.monthly.sun.sign, data.monthly.sun.house, locale, t),
+                  formatUtc(data.monthly.fromJd),
+                  formatUtc(data.monthly.toJd),
+                )}
+              </p>
+              {data.monthly.events.length > 0 ? (
+                <SortableTable
+                  caption={t.exactThisMonthCaption}
+                  columns={exactEventColumns(t)}
+                  rows={exactEventRows(data.monthly.events, t, locale)}
+                  getRowKey={(row) => row.key}
+                  downloadFilename={deriveExportFilename(person.displayName, 'forecast-monthly', 'csv')}
+                />
+              ) : (
+                <p>{t.noAspectsMonth}</p>
+              )}
+              <p>
+                {t.progressedLunarReturnSentence(
+                  formatUtc(data.monthly.progressedLunarReturn.returnJd),
+                  localizedSignName(progressedLunarReturnAscendantSign, locale, t),
+                )}
+              </p>
+              {shownOf(data.monthly.progressedLunarReturn.contacts).length > 0 && (
+                <SortableTable
+                  caption={t.progressedLunarReturnContactsCaption}
+                  columns={contactColumns(t)}
+                  rows={contactRows(shownOf(data.monthly.progressedLunarReturn.contacts), locale)}
+                  getRowKey={(row) => row.key}
+                  downloadFilename={deriveExportFilename(
+                    person.displayName,
+                    'forecast-monthly-progressed-lunar-return',
+                    'csv',
+                  )}
+                />
+              )}
+            </section>
+
+            <section>
+              <h2>{t.yearlyHeading}</h2>
+              <p>
+                {t.solarReturnSentence(
+                  String(data.yearly.solarReturn.year),
+                  formatUtc(data.yearly.solarReturn.returnJd),
+                  localizedSignName(returnAscendantSign, locale, t),
+                )}
+              </p>
+              {shownOf(data.yearly.solarReturn.contacts).length > 0 && (
+                <SortableTable
+                  caption={t.solarReturnContactsCaption}
+                  columns={contactColumns(t)}
+                  rows={contactRows(shownOf(data.yearly.solarReturn.contacts), locale)}
+                  getRowKey={(row) => row.key}
+                  downloadFilename={deriveExportFilename(person.displayName, 'forecast-yearly-return', 'csv')}
+                />
+              )}
+              <p>
+                {t.demibirthdaySentence(
+                  String(data.yearly.demibirthday.year),
+                  formatUtc(data.yearly.demibirthday.demibirthdayJd),
+                  localizedSignName(demibirthdayAscendantSign, locale, t),
+                )}
+              </p>
+              {shownOf(data.yearly.demibirthday.contacts).length > 0 && (
+                <SortableTable
+                  caption={t.demibirthdayContactsCaption}
+                  columns={contactColumns(t)}
+                  rows={contactRows(shownOf(data.yearly.demibirthday.contacts), locale)}
+                  getRowKey={(row) => row.key}
+                  downloadFilename={deriveExportFilename(person.displayName, 'forecast-yearly-demibirthday', 'csv')}
+                />
+              )}
+            </section>
+
+            <section>
+              <h2>{t.planetaryReturnHeading}</h2>
+              <p className="hint">{t.planetaryReturnHint}</p>
+              <div className="field-grid">
+                <Select
+                  label={t.bodyLabel}
+                  value={returnBodyKey}
+                  options={RETURN_BODY_KEYS.map((key) => ({ value: key, label: bodyDisplayName(key, locale) }))}
+                  onChange={(value) => {
+                    setReturnBodyKey(value as ReturnBodyKey);
+                  }}
+                />
+              </div>
+
+              {/* The result region: busy while the planetary return (re)calculates, as the Astrocartography map is. */}
+              <div aria-busy={returnLoad.kind === 'loading'}>
+                {returnLoad.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
+                {returnLoad.kind === 'error' && (
+                  <StatusMessage kind="error">{t.error(returnLoad.message)}</StatusMessage>
+                )}
+                {returnData !== undefined && (
+                  <>
                     <p>
-                      {t.lunarReturnSentence(
-                        formatUtc(lunarReturn.returnJd),
-                        localizedSignName(ascendantSign, locale, t),
+                      {t.planetaryReturnSentence(
+                        bodyDisplayName(returnBodyKey, locale),
+                        formatUtc(returnData.returnJd),
+                        localizedSignName(planetaryReturnAscendantSign, locale, t),
                       )}
                     </p>
-                    {shownOf(lunarReturn.contacts).length > 0 && (
+                    {shownOf(returnData.contacts).length > 0 && (
                       <SortableTable
-                        caption={t.lunarReturnContactsCaption}
+                        caption={t.planetaryReturnContactsCaption}
                         columns={contactColumns(t)}
-                        rows={contactRows(shownOf(lunarReturn.contacts), locale)}
+                        rows={contactRows(shownOf(returnData.contacts), locale)}
                         getRowKey={(row) => row.key}
-                        downloadFilename={deriveExportFilename(
-                          person.displayName,
-                          `forecast-weekly-lunar-return-${String(index)}`,
-                          'csv',
-                        )}
+                        downloadFilename={deriveExportFilename(person.displayName, 'forecast-planetary-return', 'csv')}
                       />
                     )}
-                  </div>
-                );
-              })
-            ) : (
-              <p>{t.noLunarReturnWeek}</p>
-            )}
-          </section>
-
-          <section>
-            <h2>{t.monthlyHeading}</h2>
-            <p>
-              {t.sunInThisMonth(
-                signHouseLabel(data.monthly.sun.sign, data.monthly.sun.house, locale, t),
-                formatUtc(data.monthly.fromJd),
-                formatUtc(data.monthly.toJd),
-              )}
-            </p>
-            {data.monthly.events.length > 0 ? (
-              <SortableTable
-                caption={t.exactThisMonthCaption}
-                columns={exactEventColumns(t)}
-                rows={exactEventRows(data.monthly.events, t, locale)}
-                getRowKey={(row) => row.key}
-                downloadFilename={deriveExportFilename(person.displayName, 'forecast-monthly', 'csv')}
-              />
-            ) : (
-              <p>{t.noAspectsMonth}</p>
-            )}
-            <p>
-              {t.progressedLunarReturnSentence(
-                formatUtc(data.monthly.progressedLunarReturn.returnJd),
-                localizedSignName(progressedLunarReturnAscendantSign, locale, t),
-              )}
-            </p>
-            {shownOf(data.monthly.progressedLunarReturn.contacts).length > 0 && (
-              <SortableTable
-                caption={t.progressedLunarReturnContactsCaption}
-                columns={contactColumns(t)}
-                rows={contactRows(shownOf(data.monthly.progressedLunarReturn.contacts), locale)}
-                getRowKey={(row) => row.key}
-                downloadFilename={deriveExportFilename(
-                  person.displayName,
-                  'forecast-monthly-progressed-lunar-return',
-                  'csv',
+                  </>
                 )}
-              />
-            )}
-          </section>
-
-          <section>
-            <h2>{t.yearlyHeading}</h2>
-            <p>
-              {t.solarReturnSentence(
-                String(data.yearly.solarReturn.year),
-                formatUtc(data.yearly.solarReturn.returnJd),
-                localizedSignName(returnAscendantSign, locale, t),
-              )}
-            </p>
-            {shownOf(data.yearly.solarReturn.contacts).length > 0 && (
-              <SortableTable
-                caption={t.solarReturnContactsCaption}
-                columns={contactColumns(t)}
-                rows={contactRows(shownOf(data.yearly.solarReturn.contacts), locale)}
-                getRowKey={(row) => row.key}
-                downloadFilename={deriveExportFilename(person.displayName, 'forecast-yearly-return', 'csv')}
-              />
-            )}
-            <p>
-              {t.demibirthdaySentence(
-                String(data.yearly.demibirthday.year),
-                formatUtc(data.yearly.demibirthday.demibirthdayJd),
-                localizedSignName(demibirthdayAscendantSign, locale, t),
-              )}
-            </p>
-            {shownOf(data.yearly.demibirthday.contacts).length > 0 && (
-              <SortableTable
-                caption={t.demibirthdayContactsCaption}
-                columns={contactColumns(t)}
-                rows={contactRows(shownOf(data.yearly.demibirthday.contacts), locale)}
-                getRowKey={(row) => row.key}
-                downloadFilename={deriveExportFilename(person.displayName, 'forecast-yearly-demibirthday', 'csv')}
-              />
-            )}
-          </section>
-
-          <section>
-            <h2>{t.planetaryReturnHeading}</h2>
-            <p className="hint">{t.planetaryReturnHint}</p>
-            <div className="field-grid">
-              <Select
-                label={t.bodyLabel}
-                value={returnBodyKey}
-                options={RETURN_BODY_KEYS.map((key) => ({ value: key, label: bodyDisplayName(key, locale) }))}
-                onChange={(value) => {
-                  setReturnBodyKey(value as ReturnBodyKey);
-                }}
-              />
-            </div>
-
-            {returnLoad.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
-            {returnLoad.kind === 'error' && <StatusMessage kind="error">{t.error(returnLoad.message)}</StatusMessage>}
-            {returnData !== undefined && (
-              <>
-                <p>
-                  {t.planetaryReturnSentence(
-                    bodyDisplayName(returnBodyKey, locale),
-                    formatUtc(returnData.returnJd),
-                    localizedSignName(planetaryReturnAscendantSign, locale, t),
-                  )}
-                </p>
-                {shownOf(returnData.contacts).length > 0 && (
-                  <SortableTable
-                    caption={t.planetaryReturnContactsCaption}
-                    columns={contactColumns(t)}
-                    rows={contactRows(shownOf(returnData.contacts), locale)}
-                    getRowKey={(row) => row.key}
-                    downloadFilename={deriveExportFilename(person.displayName, 'forecast-planetary-return', 'csv')}
-                  />
-                )}
-              </>
-            )}
-          </section>
-        </>
-      )}
+              </div>
+            </section>
+          </>
+        )}
+      </div>
     </main>
   );
 }

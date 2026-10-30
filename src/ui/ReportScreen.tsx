@@ -124,25 +124,28 @@ export function ReportScreen({ personId }: { personId: string }): React.JSX.Elem
       <BackLink fallback={personHref(personId)} />
       <h1>{person.displayName ? t.heading(person.displayName) : t.reportFallback}</h1>
 
-      {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
-      {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
-      {load.kind === 'ready' && !housesAreDefined(load.data.houses) && (
-        <StatusMessage kind="error">{t.housesUndefined(person.displayName || t.thisPerson)}</StatusMessage>
-      )}
-      {load.kind === 'ready' && housesAreDefined(load.data.houses) && (
-        <>
-          {load.data.houses.warning !== undefined && (
-            <StatusMessage kind="error">{load.data.houses.warning}</StatusMessage>
-          )}
-          <ReportView
-            chart={load.data}
-            exclude={exclusions}
-            personId={personId}
-            rulership={rulership}
-            onRulershipChange={setRulership}
-          />
-        </>
-      )}
+      {/* The result region: busy while the report (re)calculates, as the Astrocartography map is. */}
+      <div aria-busy={load.kind === 'loading'}>
+        {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
+        {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
+        {load.kind === 'ready' && !housesAreDefined(load.data.houses) && (
+          <StatusMessage kind="error">{t.housesUndefined(person.displayName || t.thisPerson)}</StatusMessage>
+        )}
+        {load.kind === 'ready' && housesAreDefined(load.data.houses) && (
+          <>
+            {load.data.houses.warning !== undefined && (
+              <StatusMessage kind="error">{load.data.houses.warning}</StatusMessage>
+            )}
+            <ReportView
+              chart={load.data}
+              exclude={exclusions}
+              personId={personId}
+              rulership={rulership}
+              onRulershipChange={setRulership}
+            />
+          </>
+        )}
+      </div>
     </main>
   );
 }
