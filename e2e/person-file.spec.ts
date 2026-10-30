@@ -51,7 +51,7 @@ test.describe('with the shared people (#799)', () => {
     await openSharedPerson(page, baseUrl, EINSTEIN);
     await page.getByRole('link', { name: 'Birth record', exact: true }).click();
     const section = page.locator('div.person-file-actions');
-    await expect(section.getByRole('heading', { name: 'Export or import this person' })).toBeVisible();
+    await expect(section.getByRole('heading', { name: 'Export', exact: true })).toBeVisible();
 
     const download = async (button: string) => {
       const [file] = await Promise.all([

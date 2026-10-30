@@ -5,6 +5,8 @@
  * card, the raw timezone-data string stays reachable behind Show details (D-795a), the overrides sit in a
  * Disclosure, and the sticky action bar is gone.
  */
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -171,5 +173,42 @@ describe('PersonForm card layout (#795)', () => {
 
   it('has a danger card with the delete button', () => {
     expect(card('danger').querySelector('button.danger')?.textContent).toBe(t.deleteButton('Ada Lovelace'));
+  });
+
+  it('shows an unknown birth time as unset, not as the stored 00:00 (#795, owner 2026-10-30)', async () => {
+    await act(async () => {
+      await store.mutate([{ entity: 'person', entityId: 'ada', field: 'timeAccuracy', value: 'unknown' }]);
+    });
+    const input = card('identity').querySelector<HTMLInputElement>('.birth-record-timestamp input[type="time"]');
+    expect(input?.value).toBe('');
+    expect(input?.disabled).toBe(true);
+  });
+});
+
+describe('birth record card styling uses tokens only (#795)', () => {
+  const css = readFileSync(join(import.meta.dirname, '..', 'src', 'ui', 'app.css'), 'utf8').replace(
+    /\/\*[\s\S]*?\*\//g,
+    '',
+  );
+  const blocks = [...css.matchAll(/([^{}]*\.birth-record[^{}]*)\{([^{}]*)\}/g)].map((m) => ({
+    selector: m[1] ?? '',
+    body: m[2] ?? '',
+  }));
+
+  it('has birth-record rules to check', () => {
+    expect(blocks.length).toBeGreaterThan(10);
+  });
+
+  it('uses no literal colours, no raw hairline widths and no pixel font sizes', () => {
+    for (const { selector, body } of blocks) {
+      expect(body, selector).not.toMatch(/#[0-9a-fA-F]{3,8}\b|rgba?\(|hsla?\(/);
+      expect(body, selector).not.toMatch(/border(-[a-z]+)?:\s*(\d+(\.\d+)?px|thin|medium|thick)\b/);
+      expect(body, selector).not.toMatch(/font-size:\s*\d+(\.\d+)?px/);
+    }
+  });
+
+  it('draws the card border with the hairline token', () => {
+    const cardRule = blocks.find((block) => block.selector.trim() === '.birth-record-card');
+    expect(cardRule?.body).toMatch(/var\(--border-hairline\)/);
   });
 });
