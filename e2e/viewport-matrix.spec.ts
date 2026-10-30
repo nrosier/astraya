@@ -65,6 +65,99 @@ async function expectSound(page: Page, what: string): Promise<void> {
   ).toEqual([]);
 }
 
+/**
+ * Bottom edges of the multi-card pages (#895). Where two cards or columns sit side by side (the same top edge),
+ * they must end on one straight line. Stacked cards have no shared row, so they are not compared. The check
+ * reads rendered boxes only and never forces a height.
+ */
+const BOTTOM_EDGE_VIEWPORTS = [
+  { width: 390, height: 844 },
+  { width: 1280, height: 800 },
+  { width: 3440, height: 1440 },
+] as const;
+
+interface EdgeReport {
+  /** Bottom edges of the side-by-side boxes, or empty when the boxes are stacked. */
+  readonly bottoms: number[];
+  readonly count: number;
+}
+
+async function sideBySideBottoms(page: Page, selector: string): Promise<EdgeReport> {
+  // A string expression, as `expectSound` uses: the e2e tsconfig has no DOM types for an `$$eval` callback.
+  return page.evaluate<EdgeReport>(`(() => {
+    const rects = Array.from(document.querySelectorAll(${JSON.stringify(selector)})).map((el) => {
+      const r = el.getBoundingClientRect();
+      return { top: r.top, bottom: r.bottom };
+    });
+    const first = rects[0];
+    if (first === undefined) return { bottoms: [], count: 0 };
+    const row = rects.filter((r) => Math.abs(r.top - first.top) <= 1);
+    return { bottoms: row.length > 1 ? row.map((r) => r.bottom) : [], count: rects.length };
+  })()`);
+}
+
+for (const theme of THEMES) {
+  test(`the bottom row of multi-card pages shares one bottom edge in the ${theme} theme`, async () => {
+    await page.addInitScript((mode) => {
+      localStorage.setItem('astraya.theme', mode);
+    }, theme);
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    const id = /#\/people\/([^/]+)/.exec(page.url())?.[1];
+    expect(id).toBeDefined();
+    const pages: readonly {
+      readonly name: string;
+      readonly hash: string;
+      readonly ready: string;
+      readonly cards: string;
+    }[] = [
+      {
+        name: 'consultation',
+        hash: `#/people/${id ?? ''}/consultation`,
+        ready: '.consultation-grid',
+        cards: '.consultation-grid > .consultation-col',
+      },
+      {
+        name: 'horary',
+        hash: '#/explore/horary',
+        ready: '.horary-form',
+        cards: '.horary-form > .horary-card',
+      },
+    ];
+    for (const viewport of BOTTOM_EDGE_VIEWPORTS) {
+      await page.setViewportSize(viewport);
+      for (const target of pages) {
+        await page.goto(`${baseUrl}/${target.hash}`);
+        await expect(page.locator(target.ready)).toBeVisible({ timeout: 30_000 });
+        const { bottoms, count } = await sideBySideBottoms(page, target.cards);
+        const label = `${target.name} at ${String(viewport.width)}×${String(viewport.height)} (${theme})`;
+        expect(count, `${label}: the page has cards`).toBeGreaterThan(0);
+        if (bottoms.length === 0) continue;
+        const spread = Math.max(...bottoms) - Math.min(...bottoms);
+        expect(spread, `${label}: side-by-side bottom edges ${bottoms.join(', ')} do not align`).toBeLessThanOrEqual(1);
+      }
+    }
+  });
+}
+
+test('the horary astrological parameters card spans the full form width at 1280×800', async () => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto(`${baseUrl}/#/explore/horary`);
+  await expect(page.locator('.horary-form')).toBeVisible({ timeout: 30_000 });
+  const widths = await page.evaluate<{ readonly card: number; readonly form: number }>(`(() => {
+    const form = document.querySelector('.horary-form');
+    const card = document.querySelector('.horary-card--wide');
+    return {
+      card: card === null ? 0 : card.getBoundingClientRect().width,
+      form: form === null ? 0 : form.getBoundingClientRect().width,
+    };
+  })()`);
+  expect(widths.card, 'parameters card width').toBeGreaterThan(0);
+  expect(
+    Math.abs(widths.card - widths.form),
+    `card ${String(widths.card)} vs form ${String(widths.form)}`,
+  ).toBeLessThanOrEqual(1);
+});
+
 for (const theme of THEMES) {
   test(`the main screens hold at every required viewport in the ${theme} theme`, async () => {
     test.setTimeout(240_000);

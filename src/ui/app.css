@@ -836,7 +836,8 @@ footer {
 }
 
 /*
- * Horary chart form (#782): two cards, side by side when there is room. BirthPlaceSearch is shared with
+ * Horary chart form (#782, split into three cards for #895): date and time, location, astrological parameters.
+ * Cards sit side by side when there is room. BirthPlaceSearch is shared with
  * other screens, so its layout and its inner hint are adjusted here only, under `.horary-form`. The 25rem column
  * floor keeps the Dutch house-system label whole; at 22rem a third (empty) track narrowed each card below it.
  */
@@ -844,16 +845,24 @@ footer {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 25rem), 1fr));
   gap: var(--space-4);
-  align-items: start;
+  /* Stretch so side-by-side cards share one bottom edge (#895); no fixed height is set. */
+  align-items: stretch;
 }
 
 .horary-card {
   display: grid;
+  /* Content stays at the top; any slack from a taller neighbour falls at the bottom of the card (#895). */
+  align-content: start;
   gap: var(--space-4);
   padding: var(--space-4);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
+}
+
+/* The parameters card spans the full row so it never sits alone beside an empty track (#895). */
+.horary-card--wide {
+  grid-column: 1 / -1;
 }
 
 .horary-card h2 {
@@ -6173,7 +6182,8 @@ button.primitive-disclosure-trigger:hover:not(:disabled) {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: var(--space-8) var(--space-6);
-  align-items: start;
+  /* Stretch so both columns end on the same bottom line (#895); the slack lands in each column's last card. */
+  align-items: stretch;
 }
 
 @container consultation (min-width: 48rem) {
@@ -6183,10 +6193,15 @@ button.primitive-disclosure-trigger:hover:not(:disabled) {
 }
 
 .consultation-col {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  display: flex;
+  flex-direction: column;
   gap: var(--space-6);
   min-width: 0;
+}
+
+/* The last card takes the column's slack, so a shorter column still ends on the shared bottom edge (#895). */
+.consultation-col > :last-child {
+  flex-grow: 1;
 }
 
 .consultation-section {
