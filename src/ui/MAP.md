@@ -9,6 +9,8 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `online-status.ts` — Hook following the browser's online/offline state, so network-only actions can show the offline result state. Deps: none.
 - `astro-glossary.messages.ts` — Astrology glossary catalogue (en/nl name + definition per term), the one source for every GlossaryTerm. Deps: none.
 - `GlossaryTerm.tsx` — Inline `GlossaryTerm` and the per-screen `GlossaryTerms` list, opening definitions through the shared Tooltip. Deps: `astro-glossary.messages`, `GlossaryTerm.messages`, `primitives/Tooltip`.
+- `GlossaryText.tsx` — Opt-in prose wrapper (#902): the first mention of each glossary term in one paragraph becomes an inline `GlossaryTerm`; used for report paragraphs and wheel-selection text only. Deps: `GlossaryTerm`, `glossary-match`, `locale`.
+- `glossary-match.ts` — Pure per-locale term matcher (#902): longest phrase first, Unicode word edges, once per paragraph, compiled once per locale. Deps: `astro-glossary.messages`.
 - `GlossaryTerm.messages.ts` — en/nl label of the terms list. Deps: none.
 - `AccountPanel.tsx` + `AccountPanel.messages.ts` — Staged sign-in (OpenID / local, #781; OpenID when SSO is configured, #651)/out + account adoption + local-data removal. Deps: `session-context`, `sync/auth-client`, `oidc-pkce`, `primitives/StagedDialog`.
 - `AdminNav.tsx` + `AdminNav.messages.ts` — Admin tab strip (users/usage/corpus/candidates) in the shared `ScrollingTabRow` (#818). Deps: `./admin-nav`, `./ScrollingTabRow`, `./primitives/Select`.

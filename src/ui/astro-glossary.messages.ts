@@ -79,13 +79,12 @@ const en = {
       'A sensitive point worked out from other positions rather than a body in the sky, such as the Part of Fortune or a midpoint.',
     matches: ['derived points'],
   },
-  // Source for partOfFortune: src/astrology/arabic-parts.ts, Paulus's Hermetic lots (Introduction 23, via
-  // Hellenistic astrology, Chapter 16, printed pp. 525–526). Formula: day Asc + Moon − Sun; night Asc + Sun − Moon.
-  partOfFortune: {
-    name: 'Pars Fortunae',
+  // Source for wholeSign: docs/ASTROLOGY_TERMS.md, "Whole Sign Houses" (entry 103). Draft pending owner approval (#902).
+  wholeSign: {
+    name: 'Whole Sign houses',
     definition:
-      'A calculated lot rather than a body in the sky: the distance from the Sun to the Moon is projected from the Ascendant by day, and the reverse by night. Traditionally read as where material fortune and physical prosperity show.',
-    matches: ['part of fortune', 'lot of fortune'],
+      'A house system in which the whole sign containing the Ascendant becomes the 1st house, and each following sign forms a full house.',
+    matches: ['whole sign'],
   },
   sabianSymbol: {
     name: 'Sabian symbol',
@@ -271,13 +270,12 @@ const nl: Catalog = {
       'Een gevoelig punt dat uit andere posities wordt berekend in plaats van een lichaam aan de hemel te zijn, zoals het Fortuna-punt of een middelpunt.',
     matches: ['afgeleide punten'],
   },
-  // nl: check — Dutch name and wording of the Hermetic lot 'Part of Fortune'; owner to approve before merge.
-  partOfFortune: {
-    name: 'Pars Fortunae',
+  // nl: draft from docs/ASTROLOGY_TERMS.md entry 103 ("Whole Sign Houses"); owner to approve before merge (#902).
+  wholeSign: {
+    name: 'Whole Sign-huizen',
     definition:
-      "Een berekend punt (een lot) in plaats van een hemellichaam: de afstand van de Zon tot de Maan wordt overdag vanaf de Ascendant uitgezet, en 's nachts omgekeerd. Traditioneel gelezen als waar materiële welvaart en lichamelijk welzijn zichtbaar worden.",
-    // nl: check — 'fortuna-punt' is the Dutch word form already used in the derived-point definition above.
-    matches: ['fortuna-punt'],
+      'Een huizensysteem waarin het hele teken dat de Ascendant bevat het 1e huis wordt, en elk volgend teken een compleet huis vormt.',
+    matches: ['whole sign'],
   },
   sabianSymbol: {
     name: 'Sabian-symbool',

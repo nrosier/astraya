@@ -15,6 +15,7 @@
  * @exports WheelSelectionText
  */
 import { useEffect, useMemo, useState } from 'react';
+import { GlossaryText } from './GlossaryText.js';
 import { Disclosure } from './primitives/Disclosure.js';
 import type { ChartData } from '../domain/chart-compute.js';
 import { resolvePlacementText } from '../interpretation/compose.js';
@@ -110,7 +111,9 @@ export function WheelSelectionText({
               {group.rows.map((item) => (
                 <li key={item.key}>
                   <strong>{placementHeading(item.placement, locale, labels)}</strong>
-                  <p>{resolvePlacementText(item.placement, locale, corpus ?? [])}</p>
+                  <p>
+                    <GlossaryText text={resolvePlacementText(item.placement, locale, corpus ?? [])} />
+                  </p>
                 </li>
               ))}
             </ul>
