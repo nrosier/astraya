@@ -7,10 +7,14 @@
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { astroGlossaryMessages, GLOSSARY_TERM_IDS } from '../src/ui/astro-glossary.messages.js';
+import { astroGlossaryMessages, GLOSSARY_TERM_IDS, type GlossaryTermId } from '../src/ui/astro-glossary.messages.js';
 import { GlossaryTerm, GlossaryTerms } from '../src/ui/GlossaryTerm.js';
 import { type Locale } from '../src/interpretation/schema.js';
 import { setLocale } from '../src/ui/locale.js';
+import { SortableTable } from '../src/ui/SortableTable.js';
+import { eclipsesViewMessages } from '../src/ui/EclipsesView.messages.js';
+import { profectionsViewMessages } from '../src/ui/ProfectionsView.messages.js';
+import { synastryViewMessages } from '../src/ui/SynastryView.messages.js';
 
 // Render-only mocks (as in test/ui-page-header-screens.test.tsx): the provider never resolves, so each view
 // renders its header and loading state with no calculation running.
@@ -192,6 +196,54 @@ const views: readonly { name: string; node: () => React.JSX.Element }[] = [
   { name: 'EclipsesView', node: () => <EclipsesView /> },
   { name: 'SynastryView', node: () => <SynastryView personId="p1" /> },
 ];
+
+/** Table captions the views wrap with `captionTerm` (#901): the caption text opens its term's definition on its own view. */
+const wrappedCaptions: readonly { view: string; term: GlossaryTermId; caption: (locale: Locale) => string }[] = [
+  { view: 'EclipsesView', term: 'eclipse', caption: (locale) => eclipsesViewMessages[locale].tableCaption },
+  {
+    view: 'ProfectionsView',
+    term: 'profection',
+    caption: (locale) => profectionsViewMessages[locale].profectionsCaption,
+  },
+  { view: 'SynastryView', term: 'aspect', caption: (locale) => synastryViewMessages[locale].aspectsCaption },
+];
+
+describe('inline glossary tooltips on wrapped captions (#901)', () => {
+  afterEach(() => {
+    setLocale('en');
+  });
+
+  it.each((['en', 'nl'] as const).flatMap((locale) => wrappedCaptions.map((wrapped) => ({ locale, ...wrapped }))))(
+    '$view caption opens the $term glossary tooltip in $locale',
+    async ({ locale, term, caption }) => {
+      setLocale(locale);
+      const container = document.createElement('div');
+      document.body.append(container);
+      const root = createRoot(container);
+      try {
+        await act(async () => {
+          root.render(
+            <SortableTable
+              caption={caption(locale)}
+              captionTerm={term}
+              columns={[{ key: 'name', label: 'Name', valueOf: (row: { name: string }) => row.name }]}
+              rows={[{ name: 'row' }]}
+              getRowKey={(row) => row.name}
+            />,
+          );
+          await Promise.resolve();
+        });
+        const triggers = [...container.querySelectorAll('.glossary-term')].map((element) => element.textContent);
+        expect(triggers, `${term} tooltip in ${locale}`).toContain(caption(locale));
+      } finally {
+        act(() => {
+          root.unmount();
+        });
+        container.remove();
+      }
+    },
+  );
+});
 
 describe('no top-of-view glossary lists (#901)', () => {
   const locales: readonly Locale[] = ['en', 'nl'];

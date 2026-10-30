@@ -216,6 +216,7 @@ export function EclipsesView(): React.JSX.Element {
               {result.anglesLeftOut && <p className="hint">{t.anglesNote}</p>}
               <SortableTable
                 caption={t.tableCaption}
+                captionTerm="eclipse"
                 columns={columns}
                 rows={result.rows}
                 getRowKey={(row) => row.id}

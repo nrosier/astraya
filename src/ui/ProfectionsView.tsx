@@ -217,6 +217,7 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
             {rows !== undefined && (
               <SortableTable
                 caption={t.profectionsCaption}
+                captionTerm="profection"
                 columns={columns(t, locale)}
                 rows={rows}
                 getRowKey={(row) => row.period}
