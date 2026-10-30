@@ -111,6 +111,7 @@ export function Tooltip({ children, text, className, label }: TooltipProps): Rea
         aria-label={label}
         aria-expanded={open}
         aria-controls={open ? popoverId : undefined}
+        aria-describedby={open ? popoverId : undefined}
         onClick={() => {
           setSticky((was) => !was);
           setOpen((was) => !was || !sticky);
