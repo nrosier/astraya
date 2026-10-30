@@ -876,7 +876,8 @@ footer {
 
 .horary-timestamp {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
+  /* One field per row, so the date-and-time card carries its content down the column (#895). */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-3);
   align-items: end;
 }
