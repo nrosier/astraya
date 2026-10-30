@@ -139,6 +139,25 @@ for (const theme of THEMES) {
   });
 }
 
+test('the horary astrological parameters card spans the full form width at 1280×800', async () => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto(`${baseUrl}/#/explore/horary`);
+  await expect(page.locator('.horary-form')).toBeVisible({ timeout: 30_000 });
+  const widths = await page.evaluate<{ readonly card: number; readonly form: number }>(`(() => {
+    const form = document.querySelector('.horary-form');
+    const card = document.querySelector('.horary-card--wide');
+    return {
+      card: card === null ? 0 : card.getBoundingClientRect().width,
+      form: form === null ? 0 : form.getBoundingClientRect().width,
+    };
+  })()`);
+  expect(widths.card, 'parameters card width').toBeGreaterThan(0);
+  expect(
+    Math.abs(widths.card - widths.form),
+    `card ${String(widths.card)} vs form ${String(widths.form)}`,
+  ).toBeLessThanOrEqual(1);
+});
+
 for (const theme of THEMES) {
   test(`the main screens hold at every required viewport in the ${theme} theme`, async () => {
     test.setTimeout(240_000);

@@ -860,6 +860,11 @@ footer {
   background: var(--surface);
 }
 
+/* The parameters card spans the full row so it never sits alone beside an empty track (#895). */
+.horary-card--wide {
+  grid-column: 1 / -1;
+}
+
 .horary-card h2 {
   margin: 0;
   font-size: var(--text-lg);

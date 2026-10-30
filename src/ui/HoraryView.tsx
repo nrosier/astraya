@@ -176,7 +176,7 @@ export function HoraryView({ view }: { readonly view?: ChartViewKind | undefined
           <p className="hint">{t.geocodeNotice(geocodeHost)}</p>
         </section>
 
-        <section className="horary-card" aria-labelledby="horary-card-parameters">
+        <section className="horary-card horary-card--wide" aria-labelledby="horary-card-parameters">
           <h2 id="horary-card-parameters">{t.paramsCardHeading}</h2>
           <Select
             label={t.houseSystemLabel}
