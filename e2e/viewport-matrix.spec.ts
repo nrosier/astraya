@@ -139,6 +139,78 @@ for (const theme of THEMES) {
   });
 }
 
+/**
+ * The 90% rule (#895, `docs/ui/UI-UX_GUIDELINES.md` section 10.1): where cards or columns sit side by side, the
+ * shorter one is at least 90% of the taller one. Measured on natural content height, so the stretch that aligns the
+ * bottom edges cannot hide a shortfall: the probe sets the row to `align-items: start` and releases the last card's
+ * grow, then reads the boxes. It changes nothing the page ships.
+ */
+const NINETY_PERCENT = 0.9;
+
+interface RatioReport {
+  readonly heights: number[];
+  readonly count: number;
+}
+
+async function naturalHeights(page: Page, selector: string): Promise<RatioReport> {
+  await page.addStyleTag({
+    content:
+      '.consultation-grid, .horary-form { align-items: start !important; } .consultation-col > :last-child { flex-grow: 0 !important; }',
+  });
+  return page.evaluate<RatioReport>(`(() => {
+    const rects = Array.from(document.querySelectorAll(${JSON.stringify(selector)})).map((el) => {
+      const r = el.getBoundingClientRect();
+      return { top: r.top, height: r.height };
+    });
+    const first = rects[0];
+    if (first === undefined) return { heights: [], count: 0 };
+    const row = rects.filter((r) => Math.abs(r.top - first.top) <= 1);
+    return { heights: row.length > 1 ? row.map((r) => r.height) : [], count: rects.length };
+  })()`);
+}
+
+/*
+ * Known shortfall, measured 2026-10-30 (#895): consultation 0.895 at 1280×800 and 3440×1440; horary 0.569 at 1280×800
+ * and 0.691 at 3440×1440 (the date-and-time card beside the location card). `test.fail` records the gap without
+ * forcing heights. The test turns red when every ratio reaches 90%; then drop `.fail` and tick the #895 box.
+ */
+test.fail('side-by-side cards keep the shorter at least 90% of the taller (#895)', async () => {
+  test.setTimeout(120_000);
+  await openSharedPerson(page, baseUrl, EINSTEIN);
+  const id = /#\/people\/([^/]+)/.exec(page.url())?.[1];
+  expect(id).toBeDefined();
+  const pages = [
+    {
+      name: 'consultation',
+      hash: `#/people/${id ?? ''}/consultation`,
+      ready: '.consultation-grid',
+      cards: '.consultation-grid > .consultation-col',
+    },
+    { name: 'horary', hash: '#/explore/horary', ready: '.horary-form', cards: '.horary-form > .horary-card' },
+  ] as const;
+  const report: string[] = [];
+  const short: string[] = [];
+  for (const viewport of BOTTOM_EDGE_VIEWPORTS) {
+    await page.setViewportSize(viewport);
+    for (const target of pages) {
+      await page.goto(`${baseUrl}/${target.hash}`);
+      await expect(page.locator(target.ready)).toBeVisible({ timeout: 30_000 });
+      const { heights } = await naturalHeights(page, target.cards);
+      const label = `${target.name} ${String(viewport.width)}x${String(viewport.height)}`;
+      if (heights.length === 0) {
+        report.push(`${label}: stacked`);
+        continue;
+      }
+      const ratio = Math.min(...heights) / Math.max(...heights);
+      const line = `${label}: ${ratio.toFixed(3)} (${heights.map((h) => String(Math.round(h))).join(' / ')})`;
+      report.push(line);
+      if (ratio < NINETY_PERCENT) short.push(line);
+    }
+  }
+  console.log(report.join('\n'));
+  expect(short, `shorter column below 90% of the taller:\n${short.join('\n')}`).toEqual([]);
+});
+
 test('the horary astrological parameters card spans the full form width at 1280×800', async () => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto(`${baseUrl}/#/explore/horary`);
