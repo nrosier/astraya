@@ -107,7 +107,14 @@ for (const { width, height, rail } of RAIL_FOOT_VIEWPORTS) {
       const navBox = await page.getByRole('navigation', { name: 'Main', exact: true }).boundingBox();
       if (navBox === null) throw new Error('not laid out');
       expect(footBox.y).toBeGreaterThanOrEqual(navBox.y + navBox.height - 1);
-      expect(Math.abs(footBox.y + footBox.height - (headerBox.y + headerBox.height) + 16)).toBeLessThanOrEqual(2);
+      // The sidebar footer (version, licence, update notice) is the very last block, ending at that
+      // edge; the utilities sit directly above it.
+      const sidebarFooterBox = await header.locator('.sidebar-footer').boundingBox();
+      if (sidebarFooterBox === null) throw new Error('not laid out');
+      expect(footBox.y + footBox.height).toBeLessThanOrEqual(sidebarFooterBox.y + 1);
+      expect(
+        Math.abs(sidebarFooterBox.y + sidebarFooterBox.height - (headerBox.y + headerBox.height) + 16),
+      ).toBeLessThanOrEqual(2);
     } else {
       // Below 64rem nothing about the bar changed: the controls stay in the header's own row.
       await expect(foot).not.toHaveCSS('position', 'fixed');
@@ -213,7 +220,7 @@ test.describe('with the shared people (#799)', () => {
     // viewport's can land a fraction of a pixel short of its top:0 anchor when the document's total
     // height isn't a whole number of pixels (ordinary sub-pixel text layout, not a real gap) — the
     // ratio and y-position checks allow for that instead of demanding exact equality.
-    await page.locator('footer').scrollIntoViewIfNeeded();
+    await page.evaluate('window.scrollTo(0, document.body.scrollHeight)');
     const header = page.getByRole('banner');
     await expect(header).toBeInViewport({ ratio: 0.99 });
     expect((await header.boundingBox())?.y).toBeGreaterThan(-1);

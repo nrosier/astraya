@@ -311,7 +311,7 @@ test.describe('with the shared people (#799)', () => {
     await openSharedPerson(page, baseUrl, EINSTEIN);
     await openNatalChart(page);
     await expect(page.locator('div.chart-wheel')).toBeVisible();
-    await page.locator('footer').scrollIntoViewIfNeeded();
+    await page.evaluate('window.scrollTo(0, document.body.scrollHeight)');
     const header = page.getByRole('banner');
     // The rail is sticky to the left at its full height, so it stays reachable through any amount
     // of vertical scroll — unlike the old top bar, nothing above the content needs clearing by

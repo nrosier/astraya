@@ -18,6 +18,7 @@ import { AdminNav } from './AdminNav.js';
 import { AppNav } from './AppNav.js';
 import { ExportRegistryProvider } from './export-registry.js';
 import { PwaStatus } from './PwaStatus.js';
+import { SidebarFooter } from './SidebarFooter.js';
 import { parseRoute } from './route.js';
 import { SessionProvider, useStoreStatus } from './session-context.js';
 import { StoreProvider } from './store-context.js';
@@ -27,7 +28,6 @@ import { SymbolToggle } from './SymbolToggle.js';
 import { ThemeToggle } from './ThemeToggle.js';
 import { SectionNav } from './SectionNav.js';
 import { WorkspaceShell } from './WorkspaceShell.js';
-import { APP_VERSION } from '../version.js';
 import type { Route } from './route.js';
 import { BackLink } from './BackLink.js';
 import { trackNavigation } from './nav-history.js';
@@ -350,6 +350,8 @@ function AppShell(): React.JSX.Element {
                   <SymbolToggle />
                   <ThemeToggle />
                 </div>
+                {/* The version, About & Licence and the update notice sit at the rail's foot (previously a page footer). */}
+                <SidebarFooter />
               </header>
             }
           >
@@ -361,12 +363,6 @@ function AppShell(): React.JSX.Element {
               <SectionNav route={parsed} />
               <Suspense fallback={<LoadingScreen />}>{screen}</Suspense>
             </div>
-            <footer>
-              {/* The version itself is the changelog link: clicking a version to see what changed
-              in it is the behaviour people expect. Promoted here from the old landing page
-              (#234) so both routes stay reachable now that the landing page is gone. */}
-              <a href="#/changelog">{t.changelogLink(APP_VERSION)}</a> &middot; <a href="#/about">{t.aboutLink}</a>
-            </footer>
           </WorkspaceShell>
           <PwaStatus />
         </ExportRegistryProvider>

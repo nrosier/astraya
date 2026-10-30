@@ -1480,6 +1480,49 @@ label.stacked textarea:focus-visible {
   margin-top: var(--space-3);
 }
 
+/* Sidebar footer (`SidebarFooter.tsx`): the update notice above the version and licence line.
+   The update notice is hidden by default and shown only while an update is detected. */
+.sidebar-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.sidebar-footer-update {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: color-mix(in oklab, var(--accent) 12%, var(--surface));
+  color: var(--fg);
+}
+
+.sidebar-footer-update[hidden] {
+  display: none;
+}
+
+.sidebar-footer-update button {
+  padding: 0.25rem 0.6rem;
+  font-size: 0.75rem;
+}
+
+.sidebar-footer-meta {
+  margin: 0;
+}
+
+.sidebar-footer-meta a {
+  color: var(--muted);
+}
+
+.sidebar-footer-meta a:hover {
+  color: var(--accent);
+}
+
 /* Fixed to the bottom rather than inline: PwaStatus sits outside every screen's own
    `.shell`, since an update or a warm failure applies regardless of which route is
    showing. Renders nothing when there is nothing to say, so this never costs layout
@@ -1989,13 +2032,20 @@ label.stacked textarea:focus-visible {
   .app-header-with-person {
     grid-template-areas:
       'start nav'
-      'end end';
+      'end end'
+      'foot foot';
     grid-template-columns: minmax(0, 1fr) auto;
   }
 
   .app-header-end {
     justify-self: start;
     justify-content: flex-start;
+  }
+
+  .sidebar-footer {
+    grid-area: foot;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--line);
   }
 
   .app-nav-toggle {
@@ -2118,6 +2168,16 @@ label.stacked textarea:focus-visible {
     flex: 0 0 auto;
   }
 
+  /* The rail is a column at least one viewport tall; the nav grows, and the footer stays at its foot. */
+  .app-header,
+  .app-header-with-person {
+    justify-content: space-between;
+  }
+
+  .sidebar-footer {
+    flex: 0 0 auto;
+  }
+
   .app-nav-wrap {
     flex: 1 1 auto;
     align-items: stretch;
@@ -2175,6 +2235,13 @@ label.stacked textarea:focus-visible {
     width: 100%;
     max-width: none;
     margin-top: 0;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--line);
+  }
+
+  /* The footer block sits at the rail's foot, under the utilities, with its own top border. */
+  .sidebar-footer {
+    width: 100%;
     padding-top: 0.75rem;
     border-top: 1px solid var(--line);
   }
