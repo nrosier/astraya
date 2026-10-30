@@ -11,7 +11,7 @@
  */
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomBytes } from 'node:crypto';
@@ -1519,5 +1519,26 @@ describe('AiCustomizedPanel, signed in (#360)', () => {
     });
     container.remove();
     setLocale('en');
+  });
+});
+
+describe('interpretation configuration disclosure styles use tokens only (#881)', () => {
+  const css = readFileSync(join(import.meta.dirname, '..', 'src', 'ui', 'app.css'), 'utf8').replace(
+    /\/\*[\s\S]*?\*\//g,
+    '',
+  );
+  const blocks = [...css.matchAll(/([^{}]*\.(config-block|primitive-disclosure)[^{}]*)\{([^{}]*)\}/g)].map((m) => ({
+    selector: m[1] ?? '',
+    body: m[3] ?? '',
+  }));
+
+  it('has disclosure rules to check', () => {
+    expect(blocks.length).toBeGreaterThan(5);
+  });
+
+  it('uses no literal colours', () => {
+    for (const { selector, body } of blocks) {
+      expect(body, selector).not.toMatch(/#[0-9a-fA-F]{3,8}\b|rgba?\(|hsla?\(/);
+    }
   });
 });
