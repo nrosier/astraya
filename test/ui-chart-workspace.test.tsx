@@ -12,7 +12,9 @@ import type { ChartData } from '../src/domain/chart-compute.js';
 import { computeChartData } from '../src/domain/chart-compute.js';
 import { ChartDataView } from '../src/ui/ChartView.js';
 import { chartViewMessages } from '../src/ui/ChartView.messages.js';
+import { astroGlossaryMessages, type GlossaryTermId } from '../src/ui/astro-glossary.messages.js';
 import { focusInterpretationMessages } from '../src/ui/FocusInterpretation.messages.js';
+import { glossaryTermMessages } from '../src/ui/GlossaryTerm.messages.js';
 import { setLocale } from '../src/ui/locale.js';
 import { resetWheelCorpusCache } from '../src/ui/wheel-corpus.js';
 import { getEngine } from './engine-harness.js';
@@ -144,5 +146,43 @@ describe('the chart workspace (#801)', () => {
       await Promise.resolve();
     });
     expect(generate.disabled).toBe(false);
+  });
+
+  // The definitions list left the top of the view (#801); its terms now live only as tooltips where they appear.
+  const DEFINITION_TERMS: readonly GlossaryTermId[] = [
+    'ascendant',
+    'midheaven',
+    'houses',
+    'aspect',
+    'dignity',
+    'dispositor',
+    'retrograde',
+    'declination',
+    'derivedPoint',
+  ];
+
+  it.each(['en', 'nl'] as const)(
+    'draws none of the nine definition terms as a definitions list at the top of the view in %s',
+    async (locale) => {
+      const container = await mount(locale);
+      expect(container.querySelector('dl')).toBeNull();
+      expect(container.querySelector('.glossary-terms')).toBeNull();
+      expect(container.querySelector(`ul[aria-label="${glossaryTermMessages[locale].listLabel}"]`)).toBeNull();
+      const listedText = [...container.querySelectorAll('dt, li')].map((el) => el.textContent.trim());
+      for (const id of DEFINITION_TERMS) {
+        expect(listedText).not.toContain(astroGlossaryMessages[locale][id].name);
+      }
+    },
+  );
+
+  it('keeps the Dispositors glossary tooltip on Patterns & condition as the replacement (#801)', async () => {
+    const container = await mount('en');
+    await act(async () => {
+      Array.from(container.querySelectorAll<HTMLAnchorElement>('.chart-view-link'))
+        .find((link) => link.textContent === chartViewMessages.en.patternsViewLabel)
+        ?.click();
+      await Promise.resolve();
+    });
+    expect(container.querySelector('.dispositors-section-header .glossary-term')).not.toBeNull();
   });
 });
