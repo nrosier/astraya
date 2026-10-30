@@ -218,23 +218,26 @@ export function ElectionalView(): React.JSX.Element {
       </p>
 
       {fieldError !== undefined && <StatusMessage kind="error">{errorText(fieldError)}</StatusMessage>}
-      {result.kind === 'error' && <StatusMessage kind="error">{t.error(result.message)}</StatusMessage>}
+      {/* The result region: busy while the windows are searched, as the Astrocartography map is. */}
+      <div aria-busy={result.kind === 'searching'}>
+        {result.kind === 'error' && <StatusMessage kind="error">{t.error(result.message)}</StatusMessage>}
 
-      {result.kind === 'ready' &&
-        (result.rows.length === 0 ? (
-          <p className="hint">{t.noWindows}</p>
-        ) : (
-          <>
-            <p>{t.summary(result.rows.length, result.enabled)}</p>
-            <SortableTable
-              caption={t.tableCaption}
-              columns={columns}
-              rows={result.rows}
-              getRowKey={(row) => row.id}
-              downloadFilename="electional-windows.csv"
-            />
-          </>
-        ))}
+        {result.kind === 'ready' &&
+          (result.rows.length === 0 ? (
+            <p className="hint">{t.noWindows}</p>
+          ) : (
+            <>
+              <p>{t.summary(result.rows.length, result.enabled)}</p>
+              <SortableTable
+                caption={t.tableCaption}
+                columns={columns}
+                rows={result.rows}
+                getRowKey={(row) => row.id}
+                downloadFilename="electional-windows.csv"
+              />
+            </>
+          ))}
+      </div>
     </main>
   );
 }
