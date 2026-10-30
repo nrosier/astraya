@@ -1381,11 +1381,12 @@ export function ChartView({
   // The basis names the card's settings and the device's natal orb profile, not the orb-overridden `settings` (#806).
   const basisLine = useCalculationBasisLine(cardSettings, rulership, orbSourceName(orbLibrary, orbSources, 'natal'));
   const lastChartKey = useRef('');
-  // The page title names the chart type as well as the person (#885): "Natal · Name", or the comparison label when comparing.
-  const pageTitle = t.chartTitle(
-    compareType === undefined ? chartTypeT.typeLabels.natal : t.comparisonLabel,
-    person === undefined || person.displayName === '' ? t.chartFallback : person.displayName,
-  );
+  // The page title names the chart type as well as the person (#885): "Natal · Name", or "Natal and harmonic charts · Name" when comparing.
+  const titleName = person === undefined || person.displayName === '' ? t.chartFallback : person.displayName;
+  const pageTitle =
+    compareType === undefined
+      ? t.chartTitle(chartTypeT.typeLabels.natal, titleName)
+      : t.comparisonChartTitle(titleName);
   useEffect(() => {
     const previousTitle = document.title;
     document.title = pageTitle;

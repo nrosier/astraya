@@ -96,6 +96,35 @@ async function sideBySideBottoms(page: Page, selector: string): Promise<EdgeRepo
   })()`);
 }
 
+interface MultiCardPage {
+  readonly name: string;
+  readonly hash: string;
+  readonly ready: string;
+  readonly cards: string;
+  /** The grid whose left and right edges must match the page content width (#895). */
+  readonly grid: string;
+}
+
+/** The multi-card pages (#895): the Consultation columns and the Horary form cards. */
+function multiCardPages(personId: string): readonly MultiCardPage[] {
+  return [
+    {
+      name: 'consultation',
+      hash: `#/people/${personId}/consultation`,
+      ready: '.consultation-grid',
+      cards: '.consultation-grid > .consultation-col',
+      grid: '.consultation-grid',
+    },
+    {
+      name: 'horary',
+      hash: '#/explore/horary',
+      ready: '.horary-form',
+      cards: '.horary-form > .horary-card',
+      grid: '.horary-form',
+    },
+  ];
+}
+
 for (const theme of THEMES) {
   test(`the bottom row of multi-card pages shares one bottom edge in the ${theme} theme`, async () => {
     await page.addInitScript((mode) => {
@@ -104,25 +133,7 @@ for (const theme of THEMES) {
     await openSharedPerson(page, baseUrl, EINSTEIN);
     const id = /#\/people\/([^/]+)/.exec(page.url())?.[1];
     expect(id).toBeDefined();
-    const pages: readonly {
-      readonly name: string;
-      readonly hash: string;
-      readonly ready: string;
-      readonly cards: string;
-    }[] = [
-      {
-        name: 'consultation',
-        hash: `#/people/${id ?? ''}/consultation`,
-        ready: '.consultation-grid',
-        cards: '.consultation-grid > .consultation-col',
-      },
-      {
-        name: 'horary',
-        hash: '#/explore/horary',
-        ready: '.horary-form',
-        cards: '.horary-form > .horary-card',
-      },
-    ];
+    const pages = multiCardPages(id ?? '');
     for (const viewport of BOTTOM_EDGE_VIEWPORTS) {
       await page.setViewportSize(viewport);
       for (const target of pages) {
@@ -138,6 +149,54 @@ for (const theme of THEMES) {
     }
   });
 }
+
+interface EdgeAlignment {
+  /** Left and right edges of the grid's border box. */
+  readonly grid: { readonly left: number; readonly right: number } | null;
+  /** Left and right edges of the page content box (the nearest `main`, inside its horizontal padding). */
+  readonly content: { readonly left: number; readonly right: number } | null;
+}
+
+async function gridEdges(page: Page, gridSelector: string): Promise<EdgeAlignment> {
+  // A string expression, as elsewhere in this spec: the e2e tsconfig has no DOM types for an `evaluate` callback.
+  return page.evaluate<EdgeAlignment>(`(() => {
+    const grid = document.querySelector(${JSON.stringify(gridSelector)});
+    if (grid === null) return { grid: null, content: null };
+    const main = grid.closest('main');
+    if (main === null) return { grid: null, content: null };
+    const g = grid.getBoundingClientRect();
+    const m = main.getBoundingClientRect();
+    const style = getComputedStyle(main);
+    const padLeft = parseFloat(style.paddingLeft);
+    const padRight = parseFloat(style.paddingRight);
+    return {
+      grid: { left: g.left, right: g.right },
+      content: { left: m.left + padLeft, right: m.right - padRight },
+    };
+  })()`);
+}
+
+test('multi-card grids span the page content width at every bottom-edge viewport (#895)', async () => {
+  test.setTimeout(120_000);
+  await openSharedPerson(page, baseUrl, EINSTEIN);
+  const id = /#\/people\/([^/]+)/.exec(page.url())?.[1];
+  expect(id).toBeDefined();
+  for (const viewport of BOTTOM_EDGE_VIEWPORTS) {
+    for (const target of multiCardPages(id ?? '')) {
+      await page.setViewportSize(viewport);
+      await page.goto(`${baseUrl}/${target.hash}`);
+      await expect(page.locator(target.ready)).toBeVisible({ timeout: 30_000 });
+      const { grid, content } = await gridEdges(page, target.grid);
+      const label = `${target.name} at ${String(viewport.width)}×${String(viewport.height)}`;
+      expect(grid, `${label}: the grid is rendered`).not.toBeNull();
+      expect(content, `${label}: the page content container is found`).not.toBeNull();
+      if (grid === null || content === null) continue;
+      const measured = `grid ${grid.left.toFixed(2)}–${grid.right.toFixed(2)}, content ${content.left.toFixed(2)}–${content.right.toFixed(2)}`;
+      expect(Math.abs(grid.left - content.left), `${label}: left edge (${measured})`).toBeLessThanOrEqual(1);
+      expect(Math.abs(grid.right - content.right), `${label}: right edge (${measured})`).toBeLessThanOrEqual(1);
+    }
+  }
+});
 
 /**
  * The 90% rule (#895, `docs/ui/UI-UX_GUIDELINES.md` section 10.1): where cards or columns sit side by side, the
