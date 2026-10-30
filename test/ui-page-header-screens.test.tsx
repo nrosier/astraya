@@ -7,6 +7,7 @@
  *
  * Grouped by the file's place in the navigation: person-scoped chart and timing views, person
  * workspace screens, admin and utility screens. One `it` per view keeps a failure pinpointed.
+ * Documents is the PDF builder itself (#916), so it is asserted as a workspace screen.
  */
 import { act, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -50,8 +51,6 @@ vi.mock('../src/ui/person-calculation-settings.js', async () => {
   };
 });
 
-vi.mock('../src/ui/PdfExportBuilder.js', () => ({ PdfExportBuilder: () => <div /> }));
-
 // SetupForm only needs `setup` from the session; the full provider opens the sync engine.
 vi.mock('../src/ui/session-context.js', async (importOriginal) => {
   const actual: Record<string, unknown> = await importOriginal();
@@ -70,7 +69,7 @@ vi.mock('../src/ui/session-context.js', async (importOriginal) => {
 
 const { People } = await import('../src/ui/People.js');
 const { Overview } = await import('../src/ui/Overview.js');
-const { DocumentsView } = await import('../src/ui/DocumentsView.js');
+const { PdfExportBuilder } = await import('../src/ui/PdfExportBuilder.js');
 const { TransitView } = await import('../src/ui/TransitView.js');
 const { ChartView } = await import('../src/ui/ChartView.js');
 const { DraconicView } = await import('../src/ui/DraconicView.js');
@@ -140,7 +139,7 @@ describe('one PageHeader pattern (#887)', () => {
     });
 
     it('Documents', async () => {
-      expectPageHeader(await headingOf(<DocumentsView />));
+      expectPageHeader(await headingOf(<PdfExportBuilder />));
     });
 
     it('Transit', async () => {
