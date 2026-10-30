@@ -546,6 +546,7 @@ export function ChartDataView({
   buildViewHref,
   typeSelector,
   overlayContext,
+  initialTransitDate,
   chartType,
   personId,
 }: {
@@ -606,6 +607,12 @@ export function ChartDataView({
   /** Optional person-bound sources for configuring extra rings in the Wheel workbench. */
   readonly overlayContext?: ChartOverlayContext | undefined;
   /**
+   * A calendar day (`YYYY-MM-DD`) the wheel opens on (#800), from the route's `?date=`: the transit ring starts on,
+   * set to that day, so the wheel shows the sky of the day the Consultation screen was reading. Absent: the wheel
+   * opens with no ring, as before.
+   */
+  readonly initialTransitDate?: string | undefined;
+  /**
    * What kind of chart this is, for the screens that show a chart derived from the natal one (#725). Anything but
    * natal makes the inspector say that natal-chart interpretations are being applied to a derived chart; left out,
    * no such note is shown (natal, shared, composite and horary charts).
@@ -637,7 +644,11 @@ export function ChartDataView({
   // active tab, so the PDF the browser's own "Save as PDF" produces has all of them (#67).
   const [printAll, setPrintAll] = useState(false);
   const overlayT = useMessages(chartOverlaySettingsPanelMessages);
-  const [overlaySettings, setOverlaySettings] = useState<ChartOverlaySettings>(DEFAULT_CHART_OVERLAY_SETTINGS);
+  const [overlaySettings, setOverlaySettings] = useState<ChartOverlaySettings>(() =>
+    initialTransitDate === undefined
+      ? DEFAULT_CHART_OVERLAY_SETTINGS
+      : { ...DEFAULT_CHART_OVERLAY_SETTINGS, transit: true, transitDate: initialTransitDate },
+  );
   const [overlayLoad, setOverlayLoad] = useState<OverlayLoad>({ kind: 'idle' });
 
   const pointVisibility = useMemo(() => toPointVisibilityOptions(extendedSettings), [extendedSettings]);
@@ -1331,10 +1342,13 @@ export function ChartView({
   personId,
   view,
   compareType,
+  date,
 }: {
   personId: string;
   view?: ChartViewKind | undefined;
   compareType?: ChartType | undefined;
+  /** The day the wheel opens on (#800), from the route's `?date=`. */
+  date?: string | undefined;
 }): React.JSX.Element {
   const state = useStoreState();
   const person = state.people.get(personId);
@@ -1657,7 +1671,8 @@ export function ChartView({
         onViewChange={(next) => {
           changeChartView(personId, 'natal', next);
         }}
-        buildViewHref={(next) => chartHref(personId, next, 'natal')}
+        buildViewHref={(next) => chartHref(personId, next, 'natal', undefined, date)}
+        initialTransitDate={date}
         overlayContext={
           provider === undefined
             ? undefined
