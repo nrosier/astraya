@@ -430,8 +430,9 @@ a.corner-pill.active {
 
 /* The sign-in form and the adoption prompt float beneath their trigger rather than in the page
    flow: they have more to say than a one-line badge and must not push the page around. The
-   trigger now sits in the sticky header at the top right (#421), so the box opens downward and
-   lines up with the trigger's right edge, and never wider than the screen. */
+   trigger sits in the sticky header's row below 64rem (#421), so the box opens downward and
+   lines up with the trigger's right edge, and never wider than the screen. At 64rem and wider the
+   trigger is at the rail's foot and the box opens upward instead (see `.app-header-end` below). */
 .accountpanel-popover {
   position: absolute;
   /* Below the header's bottom edge, not over the pills beside it. */
@@ -2140,13 +2141,15 @@ label.stacked textarea:focus-visible {
     border-bottom: 1px solid var(--line);
   }
 
-  /* Sign-in/account, language and theme are not navigation, so they do not ride along inside the
-     rail at all: a fixed cluster in the content area's top-right corner is where this kind of
-     control sits in the layout the rail is modelled on. `.app-header`'s `backdrop-filter` would
-     otherwise make it the containing block for this `fixed` child (trapping it inside the rail's
-     own 16rem width, same as the mobile `.accountpanel-popover` rule already notes) — removed
-     below for exactly that reason, which also happens to be more correct now that the rail is a
-     true layout sibling of the content rather than a bar overlaying it. */
+  /* The utilities (sync, account, Preferences, language, symbols, theme) are not navigation, so
+     they sit apart from the nav list, at the foot of the rail (docs/ui/UI-UX_GUIDELINES.md,
+     "Target application shell", item 5). They stay in the rail's own flow, not `position: fixed`:
+     a fixed box would sit over the content at a viewport corner and could not follow the rail. The
+     rail is a flex column at least one viewport tall, and `.app-nav-wrap` grows to fill it, so the
+     cluster is pushed to the bottom. `.app-header`'s `backdrop-filter` is removed for the same
+     reason it always was: it would make any `fixed` descendant trap inside the rail's 16rem width.
+     The cluster's popovers open upward (see `.accountpanel-popover` below) because the foot is at
+     the bottom of the viewport. */
   .app-header,
   .app-header-with-person {
     background: var(--surface);
@@ -2160,15 +2163,26 @@ label.stacked textarea:focus-visible {
   }
 
   .app-header-end {
-    position: fixed;
-    top: 1rem;
-    right: 1rem;
-    z-index: 22;
+    position: static;
     flex: 0 0 auto;
     flex-wrap: wrap;
-    justify-content: flex-end;
-    max-width: calc(100vw - 2rem);
+    justify-content: flex-start;
+    width: 100%;
+    max-width: none;
     margin-top: 0;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--line);
+  }
+
+  /* Opens upward from the foot of the rail: there is no room below it on screen. Anchored to
+     the rail's left edge, since a rail-width box cannot be right-aligned to its trigger's edge
+     without sitting over the rail's own border. */
+  .app-header-end .accountpanel-popover,
+  .app-header-end .accountpanel-signedin .warning {
+    top: auto;
+    right: auto;
+    bottom: calc(100% + 0.5rem);
+    left: 0;
   }
 
   /* The default rule opens a flyout downward (`top: 100%`), which in a vertical list would cover

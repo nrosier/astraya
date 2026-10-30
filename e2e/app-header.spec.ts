@@ -2,9 +2,8 @@
  * The sticky header (#421, #506/#509): holds the name, the sync and account status, the language
  * and the theme, in place of the two fixed corners they used to sit in. At >=64rem (Playwright's
  * default viewport) `WorkspaceShell.tsx` lays the navigation out as a left rail rather than a bar
- * across the top; the account/language/theme cluster is not navigation, so it does not move into
- * the rail with it — it stays fixed in the content area's top-right corner instead, same place
- * (and same downward-opening sign-in box) the old top-bar design always put it. The rail itself
+ * across the top; the utilities (sync, account, Preferences, language, symbols, theme) sit in a
+ * container at the rail's foot (#882), in its own flow and not `position: fixed`. The rail itself
  * stays in view while a long page scrolls, offers a skip link as the first thing a keyboard
  * reaches, and is hidden when printing.
  */
@@ -18,6 +17,14 @@ import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
 import { EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
 import { gotoAndSettle, openNatalChart } from './support.ts';
+
+// Phone (below 64rem: the utilities keep the header's own wrapped row), a laptop and an ultra-wide
+// monitor (the rail stays 16rem wide however wide the screen is).
+const RAIL_FOOT_VIEWPORTS = [
+  { width: 390, height: 844, rail: false },
+  { width: 1280, height: 800, rail: true },
+  { width: 3440, height: 1440, rail: true },
+] as const;
 
 let dir: string;
 let app: FastifyInstance;
@@ -55,6 +62,58 @@ test('one header holds the name, account, language and theme, and the old fixed 
   expect(box?.x).toBe(0);
   expect(box?.y).toBe(0);
 });
+
+for (const { width, height, rail } of RAIL_FOOT_VIEWPORTS) {
+  test(`the utilities sit in the header's foot container and fit inside it at ${String(width)}px wide (#882)`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height });
+    await gotoAndSettle(page, `${baseUrl}/#/people`);
+    const header = page.getByRole('banner');
+    const foot = header.locator('.app-header-end');
+    const headerBox = await header.boundingBox();
+    const footBox = await foot.boundingBox();
+    if (headerBox === null || footBox === null) throw new Error('not laid out');
+
+    // All six utilities are in the one container.
+    for (const control of [
+      foot.locator('.syncbadge'),
+      foot.getByRole('button', { name: 'Sign in', exact: true }),
+      foot.getByRole('link', { name: 'Preferences', exact: true }),
+      foot.locator('.language-toggle'),
+      foot.locator('.symbol-toggle'),
+      foot.locator('.theme-toggle:not(.language-toggle)'),
+    ]) {
+      await expect(control).toBeVisible();
+      const box = await control.boundingBox();
+      if (box === null) throw new Error('not laid out');
+      // Each control fits inside its container, and the container fits inside the header.
+      expect(box.x).toBeGreaterThanOrEqual(footBox.x - 1);
+      expect(box.x + box.width).toBeLessThanOrEqual(footBox.x + footBox.width + 1);
+    }
+    expect(footBox.x).toBeGreaterThanOrEqual(headerBox.x - 1);
+    expect(footBox.x + footBox.width).toBeLessThanOrEqual(headerBox.x + headerBox.width + 1);
+    expect(await page.evaluate('document.documentElement.scrollWidth - window.innerWidth')).toBeLessThanOrEqual(1);
+
+    if (rail) {
+      // At >=64rem the rail is 16rem wide at every width (16rem of the 87.5% root size, so 224px), and
+      // the container is in its flow, not fixed.
+      const rootPx = await page.evaluate<number>('parseFloat(getComputedStyle(document.documentElement).fontSize)');
+      const railPx = 16 * rootPx;
+      await expect(foot).toHaveCSS('position', 'static');
+      expect(headerBox.width).toBeCloseTo(railPx, 0);
+      expect(footBox.x + footBox.width).toBeLessThanOrEqual(railPx + 1);
+      // At the foot: below the navigation, and ending at the rail's bottom edge less its 1rem padding.
+      const navBox = await page.getByRole('navigation', { name: 'Main', exact: true }).boundingBox();
+      if (navBox === null) throw new Error('not laid out');
+      expect(footBox.y).toBeGreaterThanOrEqual(navBox.y + navBox.height - 1);
+      expect(Math.abs(footBox.y + footBox.height - (headerBox.y + headerBox.height) + 16)).toBeLessThanOrEqual(2);
+    } else {
+      // Below 64rem nothing about the bar changed: the controls stay in the header's own row.
+      await expect(foot).not.toHaveCSS('position', 'fixed');
+    }
+  });
+}
 
 test('the first Tab reaches a skip link that moves focus to the content without changing the route', async ({
   page,
