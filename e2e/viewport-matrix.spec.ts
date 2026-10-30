@@ -139,6 +139,113 @@ for (const theme of THEMES) {
   });
 }
 
+/**
+ * The 90% rule (#895, `docs/ui/UI-UX_GUIDELINES.md` section 10.1): where cards or columns sit side by side, the
+ * shorter one is at least 90% of the taller one. Measured on natural content height, so the stretch that aligns the
+ * bottom edges cannot hide a shortfall: the probe sets the row to `align-items: start` and releases the last card's
+ * grow, then reads the boxes. It changes nothing the page ships.
+ *
+ * Horary meets 90% at every measured width. Consultation is held to 0.895, the floor the owner accepted on 2026-10-30
+ * (the two columns differ by 80px at 1280×800 and 3440×1440); it is still measured and reported.
+ */
+const NINETY_PERCENT = 0.9;
+const CONSULTATION_FLOOR = 0.895;
+
+interface RatioReport {
+  readonly heights: number[];
+  readonly count: number;
+}
+
+interface PageTarget {
+  readonly name: string;
+  readonly hash: string;
+  readonly ready: string;
+  readonly cards: string;
+}
+
+async function naturalHeights(page: Page, selector: string): Promise<RatioReport> {
+  await page.addStyleTag({
+    content:
+      '.consultation-grid, .horary-form { align-items: start !important; } .consultation-col > :last-child { flex-grow: 0 !important; }',
+  });
+  return page.evaluate<RatioReport>(`(() => {
+    const rects = Array.from(document.querySelectorAll(${JSON.stringify(selector)})).map((el) => {
+      const r = el.getBoundingClientRect();
+      return { top: r.top, height: r.height };
+    });
+    const first = rects[0];
+    if (first === undefined) return { heights: [], count: 0 };
+    const row = rects.filter((r) => Math.abs(r.top - first.top) <= 1);
+    return { heights: row.length > 1 ? row.map((r) => r.height) : [], count: rects.length };
+  })()`);
+}
+
+/** Measures one page's side-by-side row at every bottom-edge viewport, appending one report line per width. */
+async function measureRatios(
+  page: Page,
+  baseUrl: string,
+  target: PageTarget,
+  report: string[],
+): Promise<{ readonly label: string; readonly ratio: number }[]> {
+  const out: { readonly label: string; readonly ratio: number }[] = [];
+  for (const viewport of BOTTOM_EDGE_VIEWPORTS) {
+    await page.setViewportSize(viewport);
+    await page.goto(`${baseUrl}/${target.hash}`);
+    await expect(page.locator(target.ready)).toBeVisible({ timeout: 30_000 });
+    const { heights } = await naturalHeights(page, target.cards);
+    const label = `${target.name} ${String(viewport.width)}x${String(viewport.height)}`;
+    if (heights.length === 0) {
+      report.push(`${label}: stacked`);
+      continue;
+    }
+    const ratio = Math.min(...heights) / Math.max(...heights);
+    report.push(`${label}: ${ratio.toFixed(3)} (${heights.map((h) => String(Math.round(h))).join(' / ')})`);
+    out.push({ label, ratio });
+  }
+  return out;
+}
+
+test('horary side-by-side cards keep the shorter at least 90% of the taller (#895)', async () => {
+  test.setTimeout(120_000);
+  const report: string[] = [];
+  const ratios = await measureRatios(
+    page,
+    baseUrl,
+    { name: 'horary', hash: '#/explore/horary', ready: '.horary-form', cards: '.horary-form > .horary-card' },
+    report,
+  );
+  console.log(report.join('\n'));
+  const short = ratios.filter((r) => r.ratio < NINETY_PERCENT).map((r) => `${r.label}: ${r.ratio.toFixed(3)}`);
+  expect(short, 'horary shorter column below 90% of the taller').toEqual([]);
+});
+
+test('consultation side-by-side columns keep the owner-accepted floor (#895)', async () => {
+  test.setTimeout(120_000);
+  await openSharedPerson(page, baseUrl, EINSTEIN);
+  const id = /#\/people\/([^/]+)/.exec(page.url())?.[1];
+  expect(id).toBeDefined();
+  const report: string[] = [];
+  const ratios = await measureRatios(
+    page,
+    baseUrl,
+    {
+      name: 'consultation',
+      hash: `#/people/${id ?? ''}/consultation`,
+      ready: '.consultation-grid',
+      cards: '.consultation-grid > .consultation-col',
+    },
+    report,
+  );
+  console.log(report.join('\n'));
+  const family = await page.evaluate<string>(
+    `getComputedStyle(document.querySelector('.consultation-section') ?? document.body).fontFamily`,
+  );
+  console.log(`computed font-family: ${family}`);
+  expect(family, 'the pinned e2e font is applied').toContain('E2E Pinned');
+  const short = ratios.filter((r) => r.ratio < CONSULTATION_FLOOR).map((r) => `${r.label}: ${r.ratio.toFixed(3)}`);
+  expect(short, 'consultation shorter column below the accepted floor').toEqual([]);
+});
+
 test('the horary astrological parameters card spans the full form width at 1280×800', async () => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto(`${baseUrl}/#/explore/horary`);
