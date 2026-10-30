@@ -51,6 +51,12 @@ test.afterAll(async () => {
   rmSync(dir, { recursive: true, force: true });
 });
 
+/** The advanced groups start collapsed (#916): open one by its title before using what is inside it. */
+async function openGroup(page: Page, title: string): Promise<void> {
+  const trigger = page.getByRole('button', { name: new RegExp(`^${title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`) });
+  if ((await trigger.getAttribute('aria-expanded')) !== 'true') await trigger.click();
+}
+
 const ADA = {
   name: 'Ada Lovelace',
   date: '1815-12-10',
@@ -72,10 +78,11 @@ test('the header’s PDF-builder link opens the PDF builder, and a preset downlo
   await expect(page).toHaveURL(/#\/documents$/);
   // The rail marks where you are, from the same feature registry as the rest of the navigation.
   await expect(builderLink).toHaveAttribute('aria-current', 'page');
-  // One page, one main heading (#652): the builder is a section of the Documents page, so its heading is an h2.
-  await expect(page.getByRole('heading', { name: 'Documents', level: 1 })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Build a PDF', level: 2 })).toBeVisible();
+  // One page, one h1 (#916): the Documents page is the builder itself, with the shared PageHeader and no back link.
+  await expect(page.getByRole('heading', { name: 'Build a PDF', level: 1 })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
   await expect(page.locator('main')).toHaveCount(1);
+  await expect(page.getByRole('link', { name: '← Back' })).toHaveCount(0);
 
   await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Ada Lovelace' });
   await page
@@ -178,6 +185,79 @@ test('signed in, the picker offers the stored interpretations in the PDF’s lan
   await expect(page.getByRole('status')).toHaveText('✓');
 });
 
+test('the Documents page keeps its starting point and Build PDF in the header, with the summary beside the selection (#916)', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await gotoAndSettle(page, `${baseUrl}/#/documents`);
+  const header = page.locator('.page-header');
+  await expect(header.getByLabel('Starting point', { exact: true })).toBeVisible();
+  await expect(header.getByRole('button', { name: 'Build PDF', exact: true })).toBeVisible();
+  // Desktop: the summary column sits to the right of the selection, and no Build bar is pinned.
+  const selection = await page.getByRole('heading', { name: 'Document sections', level: 2 }).boundingBox();
+  const summary = await page.getByRole('complementary', { name: 'Export summary' }).boundingBox();
+  expect(selection && summary && summary.x > selection.x).toBe(true);
+  // The advanced groups start collapsed (#916), and the Charts section has no checkbox of its own.
+  await expect(page.getByRole('button', { name: /^Charts/ })).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.getByRole('checkbox', { name: 'Charts', exact: true })).toHaveCount(0);
+  // Consultation notes are off, and planned until #919.
+  await expect(page.getByRole('checkbox', { name: 'Include consultation notes', exact: true })).toBeDisabled();
+  await expect(page.getByText('Planned', { exact: true })).toBeVisible();
+});
+
+test('on a phone the Build PDF bar is pinned to the bottom of the screen (#916)', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await gotoAndSettle(page, `${baseUrl}/#/documents`);
+  // Wait for the lazy screen to be ready before measuring or scanning it.
+  await expect(page.getByRole('heading', { name: 'Build a PDF', level: 1 })).toBeVisible();
+  const bar = page.locator('.pdf-build-actions');
+  await expect(bar).toBeVisible();
+  const position = await page.evaluate("getComputedStyle(document.querySelector('.pdf-build-actions')).position");
+  expect(position).toBe('fixed');
+  const bottomGap = await page.evaluate<number>(
+    "window.innerHeight - document.querySelector('.pdf-build-actions').getBoundingClientRect().bottom",
+  );
+  expect(Math.abs(bottomGap)).toBeLessThanOrEqual(1);
+  expect(await page.evaluate('document.documentElement.scrollWidth - window.innerWidth')).toBeLessThanOrEqual(1);
+  await page.waitForLoadState('networkidle');
+  const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
+  expect(results.violations).toEqual([]);
+});
+
+for (const viewport of [
+  { width: 390, height: 844 },
+  { width: 1280, height: 800 },
+  { width: 3440, height: 1440 },
+] as const) {
+  test(`the Documents layout at ${String(viewport.width)}x${String(viewport.height)}: 60/40 on desktop, one column on a phone, full-width person picker (#916)`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(viewport);
+    await gotoAndSettle(page, `${baseUrl}/#/documents`);
+    await expect(page.getByRole('heading', { name: 'Build a PDF', level: 1 })).toBeVisible();
+    expect(await page.evaluate('document.documentElement.scrollWidth - window.innerWidth')).toBeLessThanOrEqual(1);
+    const left = await page.locator('.pdf-builder-grid > .pdf-builder-column').first().boundingBox();
+    const right = await page.getByRole('complementary', { name: 'Export summary' }).boundingBox();
+    const person = await page.getByLabel('Person', { exact: true }).boundingBox();
+    if (left === null || right === null || person === null) throw new Error('the Documents columns did not render');
+    // The person dropdown spans its whole column.
+    expect(Math.abs(person.width - left.width)).toBeLessThanOrEqual(1);
+    if (viewport.width < 1024) {
+      // A phone: one column, the summary below the selection.
+      expect(right.y).toBeGreaterThan(left.y);
+      expect(Math.abs(right.x - left.x)).toBeLessThanOrEqual(1);
+    } else {
+      // Desktop: side by side, the left column 3fr and the right 2fr (60/40).
+      expect(right.x).toBeGreaterThan(left.x + left.width - 1);
+      const share = left.width / (left.width + right.width);
+      expect(share).toBeGreaterThan(0.57);
+      expect(share).toBeLessThan(0.63);
+    }
+    // The advanced groups start collapsed at every size.
+    await expect(page.getByRole('button', { name: /^Charts/ })).toHaveAttribute('aria-expanded', 'false');
+  });
+}
+
 test('Documents starts on the person whose pages were open, not the first in the list (#709)', async ({ page }) => {
   test.setTimeout(60_000);
   await gotoAndSettle(page, `${baseUrl}/#/people`);
@@ -209,6 +289,7 @@ test.describe('with the shared people (#799)', () => {
     await openSharedPerson(page, baseUrl, EINSTEIN);
     await page.goto(`${baseUrl}/#/documents/pdf`);
     await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Albert Einstein' });
+    await openGroup(page, 'Charts');
 
     await expect(page.getByLabel('Wheel', { exact: true })).toHaveCount(0);
     await page.getByRole('checkbox', { name: 'Harmonic', exact: true }).check();
@@ -242,6 +323,7 @@ test.describe('with the shared people (#799)', () => {
     await openSharedPerson(page, baseUrl, EINSTEIN);
     await page.goto(`${baseUrl}/#/documents/pdf`);
     await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Albert Einstein' });
+    await openGroup(page, 'Relationship charts');
 
     // Neither partner picker exists until its own checkbox is ticked.
     await expect(page.getByLabel('Compare with', { exact: true })).toHaveCount(0);
@@ -268,6 +350,7 @@ test.describe('with the shared people (#799)', () => {
     await openSharedPerson(page, baseUrl, EINSTEIN);
     await page.goto(`${baseUrl}/#/documents/pdf`);
     await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Albert Einstein' });
+    await openGroup(page, 'Relationship charts');
 
     await page.getByRole('checkbox', { name: 'Synastry', exact: true }).check();
     await expect(page.getByLabel('Compare with', { exact: true })).toBeVisible();
@@ -280,6 +363,8 @@ test.describe('with the shared people (#799)', () => {
     await openSharedPerson(page, baseUrl, EINSTEIN);
     await page.goto(`${baseUrl}/#/documents/pdf`);
     await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Albert Einstein' });
+
+    await openGroup(page, 'Progressions, solar arc, profections & astrocartography');
 
     const predictive = page.getByRole('group', { name: 'Progressions, solar arc, profections & astrocartography' });
     await expect(predictive.getByLabel('Technique', { exact: true })).toHaveCount(0);
@@ -299,6 +384,8 @@ test.describe('with the shared people (#799)', () => {
     await openSharedPerson(page, baseUrl, EINSTEIN);
     await page.goto(`${baseUrl}/#/documents/pdf`);
     await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Albert Einstein' });
+
+    await openGroup(page, 'Progressions, solar arc, profections & astrocartography');
 
     const predictive = page.getByRole('group', { name: 'Progressions, solar arc, profections & astrocartography' });
     await expect(predictive.getByLabel('Map', { exact: true })).toHaveCount(0);
@@ -320,6 +407,8 @@ test.describe('with the shared people (#799)', () => {
     await page
       .getByLabel('Starting point', { exact: true })
       .selectOption({ label: 'Full predictive report (natal wheel, transits, progressions, solar arc)' });
+
+    await openGroup(page, 'Progressions, solar arc, profections & astrocartography');
 
     const predictive = page.getByRole('group', { name: 'Progressions, solar arc, profections & astrocartography' });
     await expect(predictive.getByRole('checkbox', { name: 'Progressions', exact: true })).toBeChecked();
@@ -344,6 +433,8 @@ test.describe('with the shared people (#799)', () => {
     await page.goto(`${baseUrl}/#/documents/pdf`);
     await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Albert Einstein' });
 
+    await openGroup(page, 'Progressions, solar arc, profections & astrocartography');
+
     const predictive = page.getByRole('group', { name: 'Progressions, solar arc, profections & astrocartography' });
     await predictive.getByRole('checkbox', { name: 'Profections', exact: true }).check();
     await predictive.getByRole('checkbox', { name: 'Astrocartography', exact: true }).check();
@@ -364,6 +455,8 @@ test.describe('with the shared people (#799)', () => {
     await openSharedPerson(page, baseUrl, EINSTEIN);
     await page.goto(`${baseUrl}/#/documents/pdf`);
     await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Albert Einstein' });
+
+    await openGroup(page, 'Transits & Forecast');
 
     const transitsGroup = page.getByRole('group', { name: 'Transits & Forecast' });
     await expect(transitsGroup.getByLabel('Contacts shown', { exact: true })).toHaveCount(0);
@@ -390,6 +483,8 @@ test.describe('with the shared people (#799)', () => {
     await page.goto(`${baseUrl}/#/documents/pdf`);
     await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Albert Einstein' });
 
+    await openGroup(page, 'Eclipses');
+
     const eclipsesGroup = page.getByRole('group', { name: 'Eclipses', exact: true });
     await expect(eclipsesGroup.getByLabel('From year', { exact: true })).toHaveCount(0);
     await eclipsesGroup.getByRole('checkbox', { name: 'Eclipses', exact: true }).check();
@@ -414,7 +509,7 @@ test.describe('with the shared people (#799)', () => {
   test('the PDF builder has its own Sabian symbol notes option, starting from the device setting, and unticking it leaves them out of the PDF (#660)', async () => {
     test.setTimeout(90_000);
     await openSharedPerson(page, baseUrl, EINSTEIN);
-    await page.goto(`${baseUrl}/#/documents`);
+    await gotoAndSettle(page, `${baseUrl}/#/documents`);
     await page.getByLabel('Person', { exact: true }).selectOption({ label: 'Albert Einstein' });
     await page
       .getByLabel('Starting point', { exact: true })

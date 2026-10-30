@@ -6153,21 +6153,6 @@ button.primitive-disclosure-trigger:hover:not(:disabled) {
   }
 }
 
-/* The primary action of a long form stays reachable at the bottom of the viewport while its fields scroll (#513). */
-.sticky-actions {
-  position: sticky;
-  bottom: 0;
-  z-index: 2;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-3);
-  margin: var(--space-4) 0;
-  padding: var(--space-3) 0;
-  background: var(--bg);
-  border-top: 1px solid var(--line);
-}
-
 /* The terms a screen relies on, as a quiet inline list of glossary terms under its heading (#456, #513). */
 .glossary-terms {
   display: flex;
@@ -6372,6 +6357,108 @@ dl.consultation-tiles {
   white-space: nowrap;
 }
 
+/* The page header's date line and Refresh sit beside the title (#800 round 2): the static date only, no picker. */
+.consultation-date-field {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+/* The notes card (#800 round 2): a low-profile bar by default, the notes on the page when opened. Local state only;
+   persistence is #919. */
+.consultation-notes {
+  gap: var(--space-3);
+}
+
+.consultation-notes-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+}
+
+.consultation-notes-title {
+  margin: 0;
+  margin-right: auto;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.consultation-notes-head .status {
+  margin: 0;
+  font-size: var(--text-sm);
+}
+
+/* Offline: a hollow dot, the same treatment as "separating" (a state, not a warning). */
+.consultation-notes-head .status[data-state='offline']::before {
+  box-sizing: border-box;
+  border: 1px solid var(--muted);
+  background: transparent;
+  animation: none;
+}
+
+.consultation-notes-sync {
+  margin: 0;
+  padding-left: calc(0.5rem + 0.6rem);
+  font-size: var(--text-xs);
+}
+
+.consultation-notes-body,
+.consultation-notes-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+}
+
+.consultation-notes-list {
+  list-style: none;
+}
+
+.consultation-note {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--line);
+}
+
+.consultation-note-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+
+.consultation-note-confirm p {
+  margin: 0;
+}
+
+.consultation-note-text {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.consultation-note-actions,
+.consultation-notes-add {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.consultation-notes-add {
+  justify-content: flex-end;
+}
+
 /* The birth-record easter egg (#697): over everything, never in the way of a click. */
 .profile-overlay {
   position: fixed;
@@ -6566,5 +6653,122 @@ button.mgrid-pair:focus-visible {
   .comparison-layout {
     grid-template-columns: minmax(0, 1fr);
     gap: var(--space-6);
+  }
+}
+
+/*
+ * The Documents page (issue 916): the starting point and Build PDF sit in the PageHeader's action area; below, a 60/40
+ * split (a container query, so it follows the shell) with the selection on the left and the export summary on the
+ * right, one column on a phone. Below the app's 64rem breakpoint the Build PDF row is pinned to the bottom of the
+ * viewport, respecting the iOS safe area. The fixed bar is not inside the layout container, since containment would
+ * trap a fixed element.
+ */
+.pdf-header-preset .primitive-field {
+  margin: 0;
+  min-width: 0;
+}
+
+.pdf-header-preset .primitive-field select {
+  min-width: 18rem;
+}
+
+.pdf-build-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.pdf-build-status {
+  margin: 0;
+}
+
+.pdf-builder-layout {
+  container: pdf-builder / inline-size;
+  margin-top: var(--space-6);
+}
+
+.pdf-builder-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-6);
+  align-items: start;
+}
+
+.pdf-builder-column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.pdf-builder-heading {
+  margin: 0;
+  color: var(--fg);
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+.pdf-builder-disclosures {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.pdf-summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.pdf-summary-card h2 {
+  margin: 0;
+  color: var(--fg);
+  font-size: var(--text-base);
+  font-weight: 600;
+}
+
+.pdf-summary-card ul {
+  margin: 0;
+  padding-left: 1.25rem;
+  font-size: var(--text-sm);
+}
+
+@container pdf-builder (min-width: 64rem) {
+  .pdf-builder-grid {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  }
+}
+
+@media (max-width: 63.99rem) {
+  .pdf-builder {
+    padding-bottom: 9rem;
+  }
+
+  .pdf-header-preset .primitive-field select {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .pdf-builder .pdf-build-actions {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 2;
+    flex-direction: column;
+    align-items: stretch;
+    margin: 0;
+    padding: var(--space-3) var(--space-4) calc(var(--space-3) + env(safe-area-inset-bottom));
+    background: var(--bg);
+    border-top: 1px solid var(--line);
+  }
+
+  .pdf-builder .pdf-build-actions .primitive-button-primary {
+    width: 100%;
   }
 }

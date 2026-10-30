@@ -32,13 +32,13 @@ test.afterAll(async () => {
   rmSync(dir, { recursive: true, force: true });
 });
 
-test('opened fresh, Back on Documents goes to People', async ({ browser }) => {
+test('opened fresh, Documents has no back link and its one heading is the builder', async ({ browser }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   await gotoAndSettle(page, `${baseUrl}/#/documents`);
-  await expect(page.getByRole('heading', { name: 'Documents', level: 1 })).toBeVisible();
-  await page.getByRole('link', { name: '← Back' }).click();
-  await expect(page).toHaveURL(/#\/people$/);
+  await expect(page.getByRole('heading', { name: 'Build a PDF', level: 1 })).toBeVisible();
+  // The Documents page has no bespoke back link (#916); the people list is one click away in the header.
+  await expect(page.getByRole('link', { name: '← Back' })).toHaveCount(0);
   await context.close();
 });
 
@@ -67,15 +67,12 @@ test.describe('with the shared people (#799)', () => {
     await context.close();
   });
 
-  test('Back from Documents returns to the chart the reader came from', async () => {
+  test('Documents is reached from the header with the chart still in the sidebar (#916)', async () => {
     await openSharedPerson(page, baseUrl, EINSTEIN);
     await openNatalChart(page);
-    const chartUrl = page.url();
 
     await page.getByRole('banner').getByRole('link', { name: 'PDF', exact: true }).click();
     await expect(page).toHaveURL(/#\/documents$/);
-    await page.getByRole('link', { name: '← Back' }).click();
-
-    await expect(page).toHaveURL(chartUrl);
+    await expect(page.getByRole('heading', { name: 'Build a PDF', level: 1 })).toBeVisible();
   });
 });
