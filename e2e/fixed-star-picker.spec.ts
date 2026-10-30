@@ -44,7 +44,7 @@ test('search Regulus, add it, Apply: the chart checks the chosen star (#803)', a
     latitude: '51.5072',
     longitude: '-0.1276',
   });
-  await openNatalChart(page, 'Aspects');
+  await openNatalChart(page, 'Placements');
   const starsTable = page.locator('.data-table', { has: page.getByText('Fixed stars', { exact: true }) });
   const starCells = starsTable.locator('tbody tr td:first-child');
 

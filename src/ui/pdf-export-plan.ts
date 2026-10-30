@@ -137,14 +137,11 @@ import {
   derivedPointColumns,
   dignityColumns,
   dispositorColumns,
-  checkedStarsOf,
-  fixedStarColumns,
-  fixedStarsScopeNoteOf,
   houseCuspColumns,
   midpointTreeColumns,
   positionColumns,
 } from './ChartView.js';
-import { hasStarSources } from './ChartViewAspects.js';
+import { checkedStarsOf, fixedStarColumns, fixedStarsScopeNoteOf, hasStarSources } from './ChartViewPlacements.js';
 import type { chartViewMessages } from './ChartView.messages.js';
 import type { pdfExportMessages } from './pdf-export.messages.js';
 import { aspectDisplayName, bodyDisplayName, bodyShortName, signDisplayName } from './astro-names.messages.js';
@@ -440,6 +437,7 @@ function tablesOf(
         ...(declinations.length === 0
           ? []
           : [tablePlanOf(t.declinationsCaption, declinationColumns(t, locale), declinations)]),
+        // Kept under the PDF's aspects section so the PDF output stays byte-identical (#815 moved only the screen table).
         ...(stars.length === 0
           ? []
           : [

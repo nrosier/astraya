@@ -1,22 +1,24 @@
 /**
  * @module ChartViewPlacements
- * @purpose Renders the Placements chart view (positions, houses and angles, derived points) and the tables' columns.
- * @conventions Pure move out of ChartView.tsx (#817): same markup and strings, no behaviour change; takes the chart data and message bundle as arguments and never imports ChartView.
- * @exports degreeColumns, symbolCell, positionColumns, houseCuspColumns, angleColumns, derivedPointColumns, renderPositionsTable, renderHousesTable, renderDerivedTable, renderPlacementsView
+ * @purpose Renders the Placements chart view (positions, houses and angles, derived points, fixed stars) and the tables' columns.
+ * @conventions Pure move out of ChartView.tsx (#817), and the fixed-stars table moved here from the Aspects view (#815): same markup and strings, no behaviour change; takes the chart data and message bundle as arguments and never imports ChartView or ChartViewAspects.
+ * @exports degreeColumns, symbolCell, positionColumns, houseCuspColumns, angleColumns, derivedPointColumns, fixedStarsScopeNoteOf, checkedStarsOf, hasStarSources, fixedStarColumns, renderPositionsTable, renderHousesTable, renderDerivedTable, renderFixedStarsTable, renderPlacementsView
  */
-import { formatFixed } from './format.js';
+import { formatFixed, formatOrb } from './format.js';
 import {
   angleRows,
   derivedPointRows,
+  fixedStarRows,
   houseCuspRows,
   positionRows,
   type AngleRow,
   type DerivedPointRow,
+  type FixedStarRow,
   type HouseCuspRow,
   type PointVisibilityOptions,
   type PositionRow,
 } from '../domain/chart-tables.js';
-import { type ChartData } from '../domain/chart-compute.js';
+import { NATAL_FIXED_STARS, type ChartData } from '../domain/chart-compute.js';
 import { deriveExportFilename } from '../domain/export-filename.js';
 import { lotFormulaByKey } from '../astrology/arabic-parts.js';
 import { bodyDisplayName, signDisplayName } from './astro-names.messages.js';
@@ -340,9 +342,96 @@ export function renderDerivedTable(
 }
 
 /**
+ * The sentence that says which stars the fixed-star table covers (#725), for the screen and the PDF alike:
+ * `NATAL_FIXED_STARS` by default, or the stars the chart actually checked (the person's chosen ones, #803).
+ */
+export function fixedStarsScopeNoteOf(
+  t: typeof chartViewMessages.en,
+  stars: readonly string[] = NATAL_FIXED_STARS,
+): string {
+  return t.fixedStarsScopeNote(stars.length, stars.join(', '));
+}
+
+/** The star names a computed chart checked (#803), in the order it looked them up; the preset when it has none. */
+export function checkedStarsOf(data: ChartData): readonly string[] {
+  return data.fixedStars === undefined ? NATAL_FIXED_STARS : [...data.fixedStars.keys()];
+}
+
+/** First characters of a stored source hash that identify the catalogue version in a table cell (#803). */
+const SOURCE_HASH_PREFIX_LENGTH = 8;
+
+/** Whether the rows come from the person's chosen stars, which carry a stored designation and source hash (#803). */
+export function hasStarSources(rows: readonly FixedStarRow[]): boolean {
+  return rows.some((row) => row.designation !== undefined);
+}
+
+/** `withSources` adds the stored designation and source-version columns, for chosen stars only (#803). */
+export function fixedStarColumns(
+  t: typeof chartViewMessages.en,
+  locale: Locale,
+  withSources = false,
+): readonly TableColumn<FixedStarRow>[] {
+  return [
+    // Star names (Regulus, Spica, ...) are proper nouns, the same in both locales — no glossary
+    // lookup needed, unlike body/aspect names.
+    { key: 'star', label: t.starLabel, labelTooltip: t.starTooltip, valueOf: (row) => row.star },
+    {
+      key: 'bodyName',
+      label: t.bodyLabel,
+      valueOf: (row) => row.bodyName,
+      render: (row) => bodyDisplayName(row.bodyKey, locale),
+    },
+    { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => formatOrb(row.orb) },
+    ...(withSources
+      ? [
+          {
+            key: 'designation',
+            label: t.columnDesignation,
+            valueOf: (row: FixedStarRow) => row.designation ?? '',
+          },
+          {
+            key: 'sourceVersion',
+            label: t.columnSourceVersion,
+            valueOf: (row: FixedStarRow) => row.sourceSha256 ?? '',
+            render: (row: FixedStarRow) =>
+              row.sourceSha256 === undefined
+                ? ''
+                : t.sourceVersionCell(row.sourceSha256.slice(0, SOURCE_HASH_PREFIX_LENGTH)),
+          },
+        ]
+      : []),
+  ];
+}
+
+/** The fixed-stars table and its scope note (#725), one table of the Placements view (#815). Empty when no star is in orb. */
+export function renderFixedStarsTable(
+  data: ChartData,
+  displayName: string,
+  pointVisibility: PointVisibilityOptions,
+  t: typeof chartViewMessages.en,
+  locale: Locale,
+): React.ReactNode {
+  const starRows = fixedStarRows(data, pointVisibility);
+  if (starRows.length === 0) return null;
+  return (
+    <>
+      <SortableTable
+        caption={t.fixedStarsCaption}
+        columns={fixedStarColumns(t, locale, hasStarSources(starRows))}
+        rows={starRows}
+        getRowKey={(row) => `${row.star}-${row.bodyKey}`}
+        downloadFilename={deriveExportFilename(displayName, 'fixed-stars', 'csv')}
+      />
+      <p className="hint">{fixedStarsScopeNoteOf(t, checkedStarsOf(data))}</p>
+    </>
+  );
+}
+
+/**
  * The Placements view (#511): Positions, Houses & angles, and Derived points, stacked with visible
  * headings rather than as separate tabs — `docs/ui/UI-UX_GUIDELINES.md` §2's exact wording. Houses and
- * derived points are skipped (not the whole view) when the chart has no houses.
+ * derived points are skipped (not the whole view) when the chart has no houses. The fixed-stars table
+ * comes last (#815, moved from the Aspects view).
  */
 export function renderPlacementsView(
   data: ChartData,
@@ -363,6 +452,7 @@ export function renderPlacementsView(
           {renderDerivedTable(data, displayName, pointVisibility, t, locale, selection)}
         </>
       )}
+      {renderFixedStarsTable(data, displayName, pointVisibility, t, locale)}
     </>
   );
 }

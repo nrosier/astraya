@@ -61,7 +61,11 @@ afterEach(() => {
 
 async function mount(
   data: ChartData,
-  options: { readonly chartType?: ChartType; readonly view?: 'wheel' | 'aspects'; readonly locale?: 'en' | 'nl' },
+  options: {
+    readonly chartType?: ChartType;
+    readonly view?: 'wheel' | 'aspects' | 'placements';
+    readonly locale?: 'en' | 'nl';
+  },
 ): Promise<HTMLElement> {
   setLocale(options.locale ?? 'en');
   const container = document.createElement('div');
@@ -98,15 +102,21 @@ describe('the fixed-star scope note (#725)', () => {
     expect(fixedStarsScopeNoteOf(chartViewMessages.en)).not.toBe(fixedStarsScopeNoteOf(chartViewMessages.nl));
   });
 
-  it('is shown under the fixed-stars table', async () => {
-    const container = await mount(withStar, { view: 'aspects' });
+  it('is shown under the fixed-stars table on the Placements view (#815)', async () => {
+    const container = await mount(withStar, { view: 'placements' });
     expect(container.textContent).toContain(chartViewMessages.en.fixedStarsCaption);
     expect(container.textContent).toContain(fixedStarsScopeNoteOf(chartViewMessages.en));
   });
 
   it('is shown in Dutch for a Dutch reader', async () => {
-    const container = await mount(withStar, { view: 'aspects', locale: 'nl' });
+    const container = await mount(withStar, { view: 'placements', locale: 'nl' });
     expect(container.textContent).toContain(fixedStarsScopeNoteOf(chartViewMessages.nl));
+  });
+
+  it('is not on the Aspects view (#815)', async () => {
+    const container = await mount(withStar, { view: 'aspects' });
+    expect(container.textContent).not.toContain(chartViewMessages.en.fixedStarsCaption);
+    expect(container.textContent).not.toContain(fixedStarsScopeNoteOf(chartViewMessages.en));
   });
 });
 
