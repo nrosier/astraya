@@ -1,6 +1,6 @@
 /**
  * The chart workbench layout (#511): the dial, then its SelectionInspector straight after it in
- * DOM order; one column below a 68rem workbench container, two columns (7fr dial, 5fr inspector, #801) at 68rem
+ * DOM order; one column below a 68rem workbench container, two columns (a 46rem-minimum dial and a 20-24rem inspector, #817) at 68rem
  * and above, whatever the viewport; and room reserved for the inspector so a first selection does not shove
  * the page.
  */
@@ -270,9 +270,10 @@ test.describe('with the shared people (#799)', () => {
     if (d === null || i === null) throw new Error('no boxes');
     const gap = i.x - (d.x + d.width);
     expect(gap).toBeGreaterThan(0);
-    const tracks = d.width + i.width;
-    expect(Math.abs(d.width - (tracks * 7) / 12)).toBeLessThanOrEqual(3);
-    expect(Math.abs(i.width - (tracks * 5) / 12)).toBeLessThanOrEqual(3);
+    // The approved split (#817, mockup 2026-10-30): the dial takes at least 46rem and the inspector is 20-24rem.
+    expect(d.width).toBeGreaterThanOrEqual(46 * remPx - 1);
+    expect(i.width).toBeGreaterThanOrEqual(20 * remPx - 1);
+    expect(i.width).toBeLessThanOrEqual(24 * remPx + 1);
     expect(d.width).toBeGreaterThan(i.width);
   });
 
@@ -320,6 +321,41 @@ test.describe('with the shared people (#799)', () => {
     expect(box.y).toBeGreaterThanOrEqual(0);
     expect(box.y).toBeLessThan(viewportHeight);
     expect(box.y + box.height).toBeLessThanOrEqual(viewportHeight);
+  });
+
+  test('with a body selected at 1280x800 and the Overlays drawer closed, the wheel and the Selection card both sit above the fold (#817)', async () => {
+    test.setTimeout(90_000);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await openNatalChart(page);
+    await page.locator('.chart-point[data-body="sun"]').click();
+    const inspector = page.locator('.selection-inspector');
+    await expect(inspector.locator('.selection-inspector-facts')).toContainText('Sun');
+    const viewportHeight = page.viewportSize()?.height ?? 0;
+    const wheel = await page.locator('.chart-workbench-dial .chart-wheel svg').first().boundingBox();
+    const card = await inspector.boundingBox();
+    if (wheel === null || card === null) throw new Error('no boxes');
+    // The card is capped to the mockup's clamp(350px, 55vh, 580px) and scrolls inside itself.
+    expect(card.y + card.height).toBeLessThanOrEqual(viewportHeight);
+    expect(wheel.y + wheel.height).toBeLessThanOrEqual(viewportHeight);
+    expect(await page.evaluate('window.scrollY')).toBe(0);
+    // The inspector is 24rem at most (336px at a 14px root) so the wheel keeps its 46rem minimum beside it.
+    expect(card.width).toBeLessThanOrEqual(24 * 14 + 1);
+  });
+
+  test('with the device degree-symbol setting off, the Sabian tier is gone from the Selection card (#817, D-817b)', async () => {
+    test.setTimeout(90_000);
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await page.evaluate("localStorage.setItem('astraya:showDegreeSymbol', 'false')");
+    await openNatalChart(page);
+    await page.locator('.chart-point[data-body="sun"]').click();
+    await expect(page.locator('.selection-inspector .selection-inspector-facts')).toContainText('Sun');
+    await expect(page.locator('.selection-inspector .selection-sabian')).toHaveCount(0);
+    await page.evaluate("localStorage.setItem('astraya:showDegreeSymbol', 'true')");
+    await page.reload();
+    await openNatalChart(page);
+    await page.locator('.chart-point[data-body="sun"]').click();
+    await expect(page.locator('.selection-inspector .selection-sabian')).toHaveCount(1);
   });
 
   test('selecting something fills the inspector in place, without moving it', async () => {

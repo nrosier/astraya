@@ -11,7 +11,7 @@
 /**
  * @module WheelSelectionText
  * @purpose Renders the interpretation corpus text for whatever body/sign/house/aspect is currently selected on a chart wheel.
- * @conventions Resolves each entry through interpretation/compose.ts's resolvePlacementText so an uncovered placement still gets a mechanical fallback sentence; fetches the corpus lazily on first selection via wheel-corpus.js; uses ChartView.messages.ts for en/nl text via useMessages().
+ * @conventions The degree-symbol (Sabian) entry shows only while the device setting is on (#817), in a compact bordered container. Resolves each entry through interpretation/compose.ts's resolvePlacementText so an uncovered placement still gets a mechanical fallback sentence; fetches the corpus lazily on first selection via wheel-corpus.js; uses ChartView.messages.ts for en/nl text via useMessages().
  * @exports WheelSelectionText
  */
 import { useEffect, useMemo, useState } from 'react';
@@ -22,6 +22,7 @@ import type { CorpusEntry, Locale } from '../interpretation/schema.js';
 import type { InterpretationExclusions } from '../interpretation/rules.js';
 import { parseSelectionKey, selectionPlacements } from '../interpretation/selection.js';
 import { chartViewMessages } from './ChartView.messages.js';
+import { useShowDegreeSymbol } from './degree-symbol-setting.js';
 import { useMessages } from './messages.js';
 import { wheelCorpus } from './wheel-corpus.js';
 import { placementHeading, SELECTION_TEXT_LIMIT } from './wheel-selection.js';
@@ -59,10 +60,14 @@ export function WheelSelectionText({
     };
   }, [locale]);
 
+  // The Sabian (degree-symbol) entry follows the device setting (#817): off leaves it out of the selection altogether.
+  const [showDegreeSymbol] = useShowDegreeSymbol();
   const items = useMemo(() => {
     const selection = parseSelectionKey(selectionKey);
-    return selection === undefined ? [] : selectionPlacements(chart, selection, exclude);
-  }, [chart, selectionKey, exclude]);
+    if (selection === undefined) return [];
+    const placements = selectionPlacements(chart, selection, exclude);
+    return showDegreeSymbol ? placements : placements.filter((item) => item.placement.category !== 'degree-symbol');
+  }, [chart, selectionKey, exclude, showDegreeSymbol]);
 
   if (items.length === 0) return null;
 
@@ -104,7 +109,14 @@ export function WheelSelectionText({
     return (
       <>
         {parts.map((group) => (
-          <section key={group.heading ?? 'other'} className="chart-isolation-group">
+          <section
+            key={group.heading ?? 'other'}
+            className={
+              group.heading === t.degreeSectionHeading
+                ? 'chart-isolation-group selection-sabian'
+                : 'chart-isolation-group'
+            }
+          >
             {group.heading !== undefined && group.showHeading && <h5>{group.heading}</h5>}
             <ul className="chart-isolation-texts">
               {group.rows.map((item) => (

@@ -2507,9 +2507,9 @@ label.stacked textarea:focus-visible {
 /*
  * The chart workbench (#511): the dial and its SelectionInspector in one container. The shell is an
  * inline-size query container, so the layout answers to the width the workbench actually gets, not
- * the viewport. 68rem is the sum of the dial's minimum (38rem; 7/12 of the 66rem of tracks at 68rem is 38.5rem, so 7fr/5fr governs from 68rem up), the inspector's minimum (20rem)
+ * the viewport. 68rem is the sum of the dial's minimum (46rem), the inspector's minimum (20rem)
  * and the 2rem gap: below it one column with the inspector directly under the dial, at and above it
- * two columns, 7/12 dial and 5/12 inspector (#801) with their top edges aligned. The dial stays first in
+ * two columns, a 46rem-minimum dial and a 20-24rem inspector (#817) with their top edges aligned. The dial stays first in
  * DOM and focus order. Beside the dial the inspector scrolls inside itself past the viewport's height,
  * so a long selection never makes the page taller; stacked it is as tall as its content.
  */
@@ -2525,14 +2525,20 @@ label.stacked textarea:focus-visible {
 }
 
 @container chart-workbench (min-width: 68rem) {
+  /*
+   * Fold fit (#817, owner decisions 2026-10-29/30): the inspector is capped at 24rem so the wheel keeps the
+   * rest. Measured at 1280x800 (root 14px): the workbench is 1014px, the 2rem gap 28px, so the 46rem (644px)
+   * chart minimum leaves 342px, and 24rem (336px) is the widest whole-rem cap that fits. The card scrolls
+   * inside itself (clamp as the mockup and #817 section 2), so a long selection never makes the page taller.
+   */
   .selection-inspector {
     min-height: 14rem;
-    max-height: 100vh;
+    max-height: clamp(350px, 55vh, 580px);
     overflow-y: auto;
   }
 
   .chart-workbench {
-    grid-template-columns: minmax(38rem, 7fr) minmax(20rem, 5fr);
+    grid-template-columns: minmax(46rem, 1fr) minmax(20rem, 24rem);
   }
 }
 
@@ -2552,6 +2558,15 @@ label.stacked textarea:focus-visible {
 
 .chart-workbench-dial .chart-wheel-hint {
   margin: 0 0 var(--space-2);
+}
+
+/* The Sabian (degree symbol) tier of the Selection card (#817): a compact flat container below the placement header. */
+.selection-sabian {
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
 }
 
 /* The placement badges and the section groups inside the inspector (#801). */
