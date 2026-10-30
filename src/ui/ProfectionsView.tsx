@@ -18,7 +18,6 @@
  * @exports ProfectionsView; toRow, columns, ProfectionRow (reused by pdf-export-plan.ts)
  */
 import { DateField } from './primitives/DateField.js';
-import { GlossaryTerms } from './GlossaryTerm.js';
 import { personHref } from './route.js';
 import { useEffect, useMemo, useState } from 'react';
 import { resolvePlacementText } from '../interpretation/compose.js';
@@ -187,7 +186,6 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
     <main className="shell">
       <BackLink fallback={personHref(personId)} />
       <h1>{person.displayName ? t.heading(person.displayName) : t.profectionsFallback}</h1>
-      <GlossaryTerms terms={['profection', 'chartRuler', 'houses']} />
       <p className="hint">{t.hint}</p>
 
       <section className="profections-rulers-section" aria-labelledby="rulers-heading">

@@ -22,7 +22,6 @@
  * @exports SynastryView, aspectColumns
  */
 import { Select } from './primitives/Select.js';
-import { GlossaryTerms } from './GlossaryTerm.js';
 import { formatOrb, formatTimestamp } from './format.js';
 import { personHref } from './route.js';
 import { houseSystemLabel, rulershipLabel, zodiacLabel } from './ChartView.js';
@@ -328,7 +327,6 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
       />
       <BackLink fallback={personHref(personId)} />
       <h1>{person.displayName ? t.heading(person.displayName) : t.synastryFallback}</h1>
-      <GlossaryTerms terms={['synastry', 'aspect', 'orb']} />
       <p className="hint">{t.hint}</p>
       <p className="hint">{t.overlayContext}</p>
 

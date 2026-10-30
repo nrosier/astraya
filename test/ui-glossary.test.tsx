@@ -2,7 +2,7 @@
 /**
  * The astrology glossary (#456, #513): every term has a name and a definition in both languages, a term opens its
  * definition from the keyboard through the shared Tooltip, and every screen that explains a timing or chart
- * technique lists the terms it relies on.
+ * technique explains its terms with inline tooltips (#901 removed the top-of-view lists).
  */
 import { readFileSync } from 'node:fs';
 import { act } from 'react';
@@ -106,21 +106,30 @@ describe('GlossaryTerm (#456)', () => {
   });
 });
 
-describe('where the glossary is used (#513)', () => {
+describe('no top-of-view glossary lists (#901)', () => {
+  // Source-text check, as the rest of this file: a `GlossaryTerms` call or import returning to any of these views fails.
+  // Source-text only, so it does not render en or nl; the locale-independent check is the absence of the call in the source.
+  // Terms are explained by inline `GlossaryTerm` tooltips where they appear.
   it.each([
-    'TransitView',
-    'ProgressionsView',
-    'SolarArcView',
-    'PrimaryDirectionsView',
-    'ProfectionsView',
-    'SynastryView',
-    'CompositeView',
     'DraconicView',
+    'HoraryView',
+    'SolarArcView',
     'HarmonicView',
-    'EclipsesView',
+    'TransitView',
+    'PrimaryDirectionsView',
     'ReturnView',
+    'ElectionalView',
+    'CompositeView',
+    'RectificationView',
     'AstrocartographyView',
-  ])('%s lists the terms it relies on', (view) => {
-    expect(readFileSync(`src/ui/${view}.tsx`, 'utf-8')).toContain('<GlossaryTerms');
+    'PeriodicTransitView',
+    'RelocatedChartView',
+    'ProgressionsView',
+    'ProfectionsView',
+    'CyclesView',
+    'EclipsesView',
+    'SynastryView',
+  ])('%s renders no top-of-view GlossaryTerms list', (view) => {
+    expect(readFileSync(`src/ui/${view}.tsx`, 'utf-8')).not.toMatch(/GlossaryTerms/);
   });
 });

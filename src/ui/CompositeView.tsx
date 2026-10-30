@@ -18,7 +18,6 @@
  * @exports CompositeView
  */
 import { Select } from './primitives/Select.js';
-import { GlossaryTerms } from './GlossaryTerm.js';
 import { personHref, routeHref } from './route.js';
 import { useEffect, useMemo, useState } from 'react';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
@@ -128,7 +127,6 @@ export function CompositeView({
     <main className="shell shell--wide">
       <BackLink fallback={personHref(personId)} />
       <h1>{person.displayName ? t.heading(person.displayName) : t.compositeFallback}</h1>
-      <GlossaryTerms terms={['composite', 'aspect', 'midheaven']} />
       <p className="hint">{t.hint}</p>
       <p className="hint">{t.overlayContext}</p>
 

@@ -19,7 +19,6 @@
  * @conventions Gated for unknown birth time like other angle-dependent screens; draws the bi-wheel with renderMultiWheelSvg directly (no cross-ring lines), injected as app-generated SVG the same way TransitView.tsx does; uses PrimaryDirectionsView.messages.ts for en/nl text via useMessages(). Shows a lock notice before the controls (#797): directions are always Placidus/tropical and ignore the client's other calculation settings. Reads the device's natal calculation settings as ChartView does and records them as the artifact's requested snapshot; when they differ from the locked Placidus/tropical settings in house system, zodiac, rulership, node or Lilith, a warning Notice names the differences (#797). Carries its own PrintProvenance footer (#564) labelled with the locked effective settings (PRIMARY_DIRECTIONS_EFFECTIVE_SNAPSHOT).
  * @exports PrimaryDirectionsView
  */
-import { GlossaryTerms } from './GlossaryTerm.js';
 import { personHref } from './route.js';
 import { houseSystemLabel, rulershipLabel, zodiacLabel } from './ChartView.js';
 import { PrintProvenance } from './PrintProvenance.js';
@@ -363,7 +362,6 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
       />
       <BackLink fallback={personHref(personId)} />
       <h1>{person.displayName ? t.heading(person.displayName) : t.primaryDirectionsFallback}</h1>
-      <GlossaryTerms terms={['primaryDirection', 'ascendant', 'midheaven']} />
       <p className="hint">{t.hint}</p>
       <p className="hint">{t.source}</p>
       <Notice>{t.lockedNotice}</Notice>

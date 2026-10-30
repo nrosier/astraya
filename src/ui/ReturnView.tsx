@@ -13,7 +13,6 @@
  * @exports ReturnView
  */
 import { ChoiceGroup } from './primitives/ChoiceGroup.js';
-import { GlossaryTerms } from './GlossaryTerm.js';
 import { DateField } from './primitives/DateField.js';
 import { NumberField } from './primitives/NumberField.js';
 import { useEffect, useMemo, useState } from 'react';
@@ -238,7 +237,6 @@ export function ReturnView({
     <main className="shell shell--wide">
       <BackLink fallback={personHref(personId)} />
       <h1>{heading}</h1>
-      <GlossaryTerms terms={['solarReturn', 'aspect', 'houses']} />
       <p className="hint page-header-basis">{basisLine}</p>
       <ChartTypeSelector personId={personId} type={kind} view={view} />
       <p className="hint">{solar ? t.solarHint : t.lunarHint}</p>

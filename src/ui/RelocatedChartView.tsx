@@ -16,7 +16,6 @@
  * @exports RelocatedChartView
  */
 import { useEffect, useMemo, useState } from 'react';
-import { GlossaryTerms } from './GlossaryTerm.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { computeRelocatedChart, relocatedComparisonRows, type RelocatedChartData } from '../domain/relocated-chart.js';
 import { housesAreDefined } from '../domain/chart-compute.js';
@@ -243,7 +242,6 @@ export function RelocatedChartView({
     <main className="shell shell--wide">
       <BackLink fallback={personHref(personId)} />
       <h1>{person.displayName ? t.heading(person.displayName) : t.headingFallback}</h1>
-      <GlossaryTerms terms={['ascendant', 'houses', 'aspect']} />
       <ChartTypeSelector personId={personId} type="relocated" view={view} />
       <p className="hint">{t.hint}</p>
 

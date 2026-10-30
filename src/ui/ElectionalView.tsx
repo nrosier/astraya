@@ -12,7 +12,6 @@
  * @exports ElectionalView
  */
 import { Checkbox } from './primitives/Checkbox.js';
-import { GlossaryTerms } from './GlossaryTerm.js';
 import { DateField } from './primitives/DateField.js';
 import { Select } from './primitives/Select.js';
 import { TextField } from './primitives/TextField.js';
@@ -144,7 +143,6 @@ export function ElectionalView(): React.JSX.Element {
     <main className="shell">
       <BackLink fallback="#/people" />
       <h1>{t.heading}</h1>
-      <GlossaryTerms terms={['electional', 'ascendant', 'houses']} />
       <p className="hint">{t.hint}</p>
 
       <div className="field-grid">

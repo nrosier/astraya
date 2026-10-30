@@ -14,7 +14,6 @@
  * @conventions Not person-scoped (optional pre-fill from a stored person); uses RectificationView.messages.ts for en/nl text via useMessages().
  * @exports RectificationView
  */
-import { GlossaryTerms } from './GlossaryTerm.js';
 import { formatFixed, formatOrb } from './format.js';
 import { Disclosure } from './primitives/Disclosure.js';
 import { DateField } from './primitives/DateField.js';
@@ -201,7 +200,6 @@ export function RectificationView(): React.JSX.Element {
     <main className="shell">
       <BackLink fallback="#/people" />
       <h1>{t.heading}</h1>
-      <GlossaryTerms terms={['rectification', 'ascendant', 'midheaven']} />
       <p className="hint">{t.hint}</p>
       <Notice>{t.caveat}</Notice>
 

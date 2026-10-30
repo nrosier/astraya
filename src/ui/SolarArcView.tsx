@@ -16,7 +16,6 @@
  * @exports SolarArcView; positionRows, positionColumns, contactColumns, toContactRow, formatExactDate, ContactRow (reused by pdf-export-plan.ts)
  */
 import { DateField } from './primitives/DateField.js';
-import { GlossaryTerms } from './GlossaryTerm.js';
 import { personHref } from './route.js';
 import { useEffect, useMemo, useState } from 'react';
 import { bodyById } from '../astrology/bodies.js';
@@ -244,7 +243,6 @@ export function SolarArcView({ personId }: { personId: string }): React.JSX.Elem
     <main className="shell">
       <BackLink fallback={personHref(personId)} />
       <h1>{person.displayName ? t.heading(person.displayName) : t.solarArcFallback}</h1>
-      <GlossaryTerms terms={['solarArc', 'aspect', 'progression']} />
       <p className="hint">{t.hint}</p>
 
       <p>
