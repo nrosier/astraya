@@ -4,13 +4,72 @@
  * definition from the keyboard through the shared Tooltip, and every screen that explains a timing or chart
  * technique explains its terms with inline tooltips (#901 removed the top-of-view lists).
  */
-import { readFileSync } from 'node:fs';
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { astroGlossaryMessages, GLOSSARY_TERM_IDS } from '../src/ui/astro-glossary.messages.js';
 import { GlossaryTerm, GlossaryTerms } from '../src/ui/GlossaryTerm.js';
+import { type Locale } from '../src/interpretation/schema.js';
 import { setLocale } from '../src/ui/locale.js';
+
+// Render-only mocks (as in test/ui-page-header-screens.test.tsx): the provider never resolves, so each view
+// renders its header and loading state with no calculation running.
+vi.mock('../src/ui/EphemerisProviderContext.js', () => {
+  const provider = { julianDayFromUtc: () => new Promise<number>(() => undefined) };
+  return { useEphemerisProvider: () => ({ provider, error: undefined }) };
+});
+
+vi.mock('../src/ui/store-context.js', () => {
+  const state = {
+    deleted: { people: new Map() },
+    people: new Map([
+      [
+        'p1',
+        {
+          displayName: 'Test',
+          timeAccuracy: 'exact',
+          moment: {
+            civil: { year: 1970, month: 1, day: 1, hour: 0, minute: 0, second: 0 },
+            coordinates: { latitude: 41.1833, longitude: -84.7333 },
+            zoneOverride: 'America/New_York',
+          },
+        },
+      ],
+    ]),
+  };
+  return { useStoreState: () => state, useStore: () => ({}), useOptionalStore: () => undefined };
+});
+
+vi.mock('../src/ui/person-calculation-settings.js', async () => {
+  const { DEFAULT_EXTENDED_SETTINGS } = await import('../src/chart/extended-settings.js');
+  const { DEFAULT_RULERSHIP_CHOICE } = await import('../src/astrology/rulership.js');
+  return {
+    usePersonCalculationSettings: () => ({
+      settings: DEFAULT_EXTENDED_SETTINGS,
+      rulership: DEFAULT_RULERSHIP_CHOICE,
+      unreadable: false,
+    }),
+  };
+});
+
+const { DraconicView } = await import('../src/ui/DraconicView.js');
+const { HoraryView } = await import('../src/ui/HoraryView.js');
+const { SolarArcView } = await import('../src/ui/SolarArcView.js');
+const { HarmonicView } = await import('../src/ui/HarmonicView.js');
+const { TransitView } = await import('../src/ui/TransitView.js');
+const { PrimaryDirectionsView } = await import('../src/ui/PrimaryDirectionsView.js');
+const { ReturnView } = await import('../src/ui/ReturnView.js');
+const { ElectionalView } = await import('../src/ui/ElectionalView.js');
+const { CompositeView } = await import('../src/ui/CompositeView.js');
+const { RectificationView } = await import('../src/ui/RectificationView.js');
+const { AstrocartographyView } = await import('../src/ui/AstrocartographyView.js');
+const { PeriodicTransitView } = await import('../src/ui/PeriodicTransitView.js');
+const { RelocatedChartView } = await import('../src/ui/RelocatedChartView.js');
+const { ProgressionsView } = await import('../src/ui/ProgressionsView.js');
+const { ProfectionsView } = await import('../src/ui/ProfectionsView.js');
+const { CyclesView } = await import('../src/ui/CyclesView.js');
+const { EclipsesView } = await import('../src/ui/EclipsesView.js');
+const { SynastryView } = await import('../src/ui/SynastryView.js');
 
 describe('the glossary catalogue (#456)', () => {
   it.each(['en', 'nl'] as const)('has a name and a real definition for every term in %s', (locale) => {
@@ -106,30 +165,62 @@ describe('GlossaryTerm (#456)', () => {
   });
 });
 
+/** The eighteen views whose top-of-view `ul.glossary-terms` list #901 removed. Each entry mounts the view. */
+const views: readonly { name: string; node: () => React.JSX.Element }[] = [
+  { name: 'DraconicView', node: () => <DraconicView personId="p1" view="wheel" compareType={undefined} /> },
+  { name: 'HoraryView', node: () => <HoraryView view="wheel" /> },
+  { name: 'SolarArcView', node: () => <SolarArcView personId="p1" /> },
+  { name: 'HarmonicView', node: () => <HarmonicView personId="p1" view="wheel" compareType={undefined} /> },
+  { name: 'TransitView', node: () => <TransitView personId="p1" /> },
+  { name: 'PrimaryDirectionsView', node: () => <PrimaryDirectionsView personId="p1" /> },
+  {
+    name: 'ReturnView',
+    node: () => <ReturnView personId="p1" kind="solar-return" view="wheel" compareType={undefined} />,
+  },
+  { name: 'ElectionalView', node: () => <ElectionalView /> },
+  { name: 'CompositeView', node: () => <CompositeView personId="p1" view="wheel" /> },
+  { name: 'RectificationView', node: () => <RectificationView /> },
+  { name: 'AstrocartographyView', node: () => <AstrocartographyView personId="p1" /> },
+  { name: 'PeriodicTransitView', node: () => <PeriodicTransitView personId="p1" /> },
+  {
+    name: 'RelocatedChartView',
+    node: () => <RelocatedChartView personId="p1" view="wheel" compareType={undefined} />,
+  },
+  { name: 'ProgressionsView', node: () => <ProgressionsView personId="p1" /> },
+  { name: 'ProfectionsView', node: () => <ProfectionsView personId="p1" /> },
+  { name: 'CyclesView', node: () => <CyclesView /> },
+  { name: 'EclipsesView', node: () => <EclipsesView /> },
+  { name: 'SynastryView', node: () => <SynastryView personId="p1" /> },
+];
+
 describe('no top-of-view glossary lists (#901)', () => {
-  // Source-text check, as the rest of this file: a `GlossaryTerms` call or import returning to any of these views fails.
-  // Source-text only, so it does not render en or nl; the locale-independent check is the absence of the call in the source.
-  // Terms are explained by inline `GlossaryTerm` tooltips where they appear.
-  it.each([
-    'DraconicView',
-    'HoraryView',
-    'SolarArcView',
-    'HarmonicView',
-    'TransitView',
-    'PrimaryDirectionsView',
-    'ReturnView',
-    'ElectionalView',
-    'CompositeView',
-    'RectificationView',
-    'AstrocartographyView',
-    'PeriodicTransitView',
-    'RelocatedChartView',
-    'ProgressionsView',
-    'ProfectionsView',
-    'CyclesView',
-    'EclipsesView',
-    'SynastryView',
-  ])('%s renders no top-of-view GlossaryTerms list', (view) => {
-    expect(readFileSync(`src/ui/${view}.tsx`, 'utf-8')).not.toMatch(/GlossaryTerms/);
+  const locales: readonly Locale[] = ['en', 'nl'];
+
+  afterEach(() => {
+    setLocale('en');
   });
+
+  it.each(locales.flatMap((locale) => views.map((view) => ({ locale, ...view }))))(
+    '$name renders no top-of-view glossary list in $locale',
+    async ({ locale, node }) => {
+      setLocale(locale);
+      const container = document.createElement('div');
+      document.body.append(container);
+      const root = createRoot(container);
+      try {
+        await act(async () => {
+          root.render(node());
+          await Promise.resolve();
+        });
+        // The view must have mounted its page header, so an empty render cannot pass this check.
+        expect(container.querySelector('h1')).not.toBeNull();
+        expect(container.querySelector('ul.glossary-terms')).toBeNull();
+      } finally {
+        act(() => {
+          root.unmount();
+        });
+        container.remove();
+      }
+    },
+  );
 });
