@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * #887 (audit UI-04) — People, Overview, Documents and Transit render their h1 through the shared
+ * #887 (audit UI-04) — People, Overview, Documents (#916: the PDF builder) and Transit render their h1 through the shared
  * PageHeader (its `.page-header` wrapper and `.page-header-row`), not a bare heading of their own.
  */
 import { act } from 'react';
@@ -45,11 +45,9 @@ vi.mock('../src/ui/person-calculation-settings.js', async () => {
   };
 });
 
-vi.mock('../src/ui/PdfExportBuilder.js', () => ({ PdfExportBuilder: () => <div /> }));
-
 const { People } = await import('../src/ui/People.js');
 const { Overview } = await import('../src/ui/Overview.js');
-const { DocumentsView } = await import('../src/ui/DocumentsView.js');
+const { PdfExportBuilder } = await import('../src/ui/PdfExportBuilder.js');
 const { TransitView } = await import('../src/ui/TransitView.js');
 
 async function headingOf(node: React.ReactNode): Promise<HTMLHeadingElement> {
@@ -88,8 +86,8 @@ describe('one PageHeader pattern (#887)', () => {
     expectPageHeader(await headingOf(<Overview personId="p1" />));
   });
 
-  it('Documents', async () => {
-    expectPageHeader(await headingOf(<DocumentsView />));
+  it('Documents (the PDF builder, #916)', async () => {
+    expectPageHeader(await headingOf(<PdfExportBuilder />));
   });
 
   it('Transit', async () => {

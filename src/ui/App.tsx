@@ -71,7 +71,6 @@ const EclipsesView = lazy(async () => ({ default: (await import('./EclipsesView.
 const CyclesView = lazy(async () => ({ default: (await import('./CyclesView.js')).CyclesView }));
 const EventSearchView = lazy(async () => ({ default: (await import('./EventSearchView.js')).EventSearchView }));
 const PdfExportBuilder = lazy(async () => ({ default: (await import('./PdfExportBuilder.js')).PdfExportBuilder }));
-const DocumentsView = lazy(async () => ({ default: (await import('./DocumentsView.js')).DocumentsView }));
 const PreferencesView = lazy(async () => ({ default: (await import('./PreferencesView.js')).PreferencesView }));
 const AdminPanel = lazy(async () => ({ default: (await import('./AdminPanel.js')).AdminPanel }));
 const AdminUsagePanel = lazy(async () => ({ default: (await import('./AdminPanel.js')).AdminUsagePanel }));
@@ -452,7 +451,7 @@ function renderScreen(parsed: Route, seVersion: string | undefined): React.JSX.E
   if (parsed.kind === 'documents') {
     return (
       <Stored>
-        <DocumentsView />
+        <PdfExportBuilder />
       </Stored>
     );
   }
