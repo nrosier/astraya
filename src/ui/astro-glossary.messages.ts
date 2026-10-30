@@ -82,10 +82,10 @@ const en = {
   // Source for partOfFortune: src/astrology/arabic-parts.ts, Paulus's Hermetic lots (Introduction 23, via
   // Hellenistic astrology, Chapter 16, printed pp. 525–526). Formula: day Asc + Moon − Sun; night Asc + Sun − Moon.
   partOfFortune: {
-    name: 'Part of Fortune',
+    name: 'Pars Fortunae',
     definition:
       'A calculated lot rather than a body in the sky: the distance from the Sun to the Moon is projected from the Ascendant by day, and the reverse by night. Traditionally read as where material fortune and physical prosperity show.',
-    matches: ['lot of fortune'],
+    matches: ['part of fortune', 'lot of fortune'],
   },
   sabianSymbol: {
     name: 'Sabian symbol',
@@ -273,7 +273,7 @@ const nl: Catalog = {
   },
   // nl: check — Dutch name and wording of the Hermetic lot 'Part of Fortune'; owner to approve before merge.
   partOfFortune: {
-    name: 'Lot van Fortuna',
+    name: 'Pars Fortunae',
     definition:
       "Een berekend punt (een lot) in plaats van een hemellichaam: de afstand van de Zon tot de Maan wordt overdag vanaf de Ascendant uitgezet, en 's nachts omgekeerd. Traditioneel gelezen als waar materiële welvaart en lichamelijk welzijn zichtbaar worden.",
     // nl: check — 'fortuna-punt' is the Dutch word form already used in the derived-point definition above.
