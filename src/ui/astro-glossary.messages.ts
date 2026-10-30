@@ -75,8 +75,7 @@ const en = {
   },
   derivedPoint: {
     name: 'Derived point',
-    definition:
-      'A sensitive point worked out from other positions rather than a body in the sky, such as the Part of Fortune or a midpoint.',
+    definition: 'A sensitive point worked out from other positions rather than a body in the sky, such as a midpoint.',
     matches: ['derived points'],
   },
   // Source for wholeSign: docs/ASTROLOGY_TERMS.md, "Whole Sign Houses" (entry 103). Draft pending owner approval (#902).
@@ -267,7 +266,7 @@ const nl: Catalog = {
   derivedPoint: {
     name: 'Afgeleid punt',
     definition:
-      'Een gevoelig punt dat uit andere posities wordt berekend in plaats van een lichaam aan de hemel te zijn, zoals het Fortuna-punt of een middelpunt.',
+      'Een gevoelig punt dat uit andere posities wordt berekend in plaats van een lichaam aan de hemel te zijn, zoals een middelpunt.',
     matches: ['afgeleide punten'],
   },
   // nl: draft from docs/ASTROLOGY_TERMS.md entry 103 ("Whole Sign Houses"); owner to approve before merge (#902).
