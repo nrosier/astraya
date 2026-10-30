@@ -3,7 +3,7 @@
  */
 /**
  * @module App.messages
- * @purpose English/Dutch i18n strings for the application shell: loading states, storage-unavailable warning, skip link, and footer links.
+ * @purpose English/Dutch i18n strings for the application shell: loading states, storage-unavailable warning, skip link.
  * @conventions Co-located i18n file exporting `{ en, nl }`, consumed by App.tsx via `useMessages(appMessages)`; `nl` is typed as `typeof en`.
  * @exports appMessages
  */
@@ -21,9 +21,6 @@ const en = {
   skipToContent: 'Skip to main content',
   homeLinkLabel: 'Astraya, back to the people list',
   preferencesLinkLabel: 'Preferences',
-
-  changelogLink: (version: string) => `Version ${version}`,
-  aboutLink: 'about & licence',
 };
 
 const nl: typeof en = {
@@ -40,9 +37,6 @@ const nl: typeof en = {
   skipToContent: 'Ga naar de hoofdinhoud',
   homeLinkLabel: 'Astraya, terug naar de lijst met mensen',
   preferencesLinkLabel: 'Voorkeuren',
-
-  changelogLink: (version: string) => `Versie ${version}`,
-  aboutLink: 'over & licentie',
 };
 
 export const appMessages = { en, nl };
