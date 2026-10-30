@@ -6,6 +6,37 @@ see [docs/ops/RELEASING.md](docs/ops/RELEASING.md).
 
 ## [Unreleased]
 
+## [0.43.0] — 2026-10-30
+
+**The sidebar gets one entry per section with tabs for sub-views, the page headers and chart titles are unified, and the Placements, Patterns and Extended settings screens are finished.**
+
+### Added
+
+- **One sidebar entry per section (#882).** Each section has one sidebar entry, its sub-views are tabs, and Documents is renamed PDF.
+- **One page-header pattern (#887).** People, Overview, Documents and Transit share the same page header.
+- **The chart title shows the chart type (#885).**
+- **A redesigned Placements and Patterns view (#870).** Placements and Patterns get flat cards, key-value metrics and clearer badges and alignment.
+- **Extended settings drawer complete (#824).**
+
+### Changed
+
+- **The Comparison layout uses a shared token class (#886).** It stacks at phone width.
+- **Birth record time is HH:MM (#795).** The time is shown as hours and minutes, the birth record fits one row at 1280px, and its cards are equal height.
+- **Consultation shows a State column name and state marker, with a scroll cue (#815).**
+- **Transit and Chart result regions announce recalculation (#888).** Both regions set `aria-busy` while they recalculate.
+
+### Fixed
+
+- **The Aspect matrix scrolls inside its frame at 390px (#889).**
+- **The wheel and inspector top edges line up (#801).**
+- **The control-states end-to-end test waits for a rendered field (#882).**
+
+### Internal
+
+- UI/UX conformance audit added (docs/ui/UI-UX_CONFORMANCE_AUDIT_2026-10-29.md), with a docs/ui index and a corrected docs index.
+- `docs/references/SCHEMA.md` is restored with corrected paths (#864).
+- The core-js install script is allow-listed in `package.json`.
+
 ## [0.42.15] — 2026-10-28
 
 **Fixed stars can be chosen from the full catalogue, the aspects view is redesigned with a Show-to-wheel button, and Overlays, Extended settings and the admin screens move into slide-over drawers and cards.**
