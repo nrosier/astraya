@@ -44,6 +44,7 @@ import type { Locale } from '../interpretation/schema.js';
 import { Notice } from './primitives/Notice.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { BackLink } from './BackLink.js';
+import { PageHeader } from './PageHeader.js';
 
 /** How many of the best candidates are listed, and given a detail section. */
 const SHOWN = 15;
@@ -199,7 +200,7 @@ export function RectificationView(): React.JSX.Element {
   return (
     <main className="shell">
       <BackLink fallback="#/people" />
-      <h1>{t.heading}</h1>
+      <PageHeader title={t.heading} />
       <p className="hint">{t.hint}</p>
       <Notice>{t.caveat}</Notice>
 

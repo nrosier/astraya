@@ -27,6 +27,7 @@ import { sharedChartViewMessages } from './SharedChartView.messages.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { BackLink } from './BackLink.js';
 import { replaceRoute } from './nav-history.js';
+import { PageHeader } from './PageHeader.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -112,7 +113,7 @@ export function SharedChartView(): React.JSX.Element {
   return (
     <main className="shell shell--wide">
       <BackLink fallback="#/people" />
-      <h1>{t.sharedChart}</h1>
+      <PageHeader title={t.sharedChart} />
       <p className="hint">{t.hint}</p>
 
       {initial.error !== undefined && <StatusMessage kind="error">{t.linkCouldNotBeRead(initial.error)}</StatusMessage>}

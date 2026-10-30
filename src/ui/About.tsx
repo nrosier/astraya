@@ -8,6 +8,7 @@ import { APP_BUILT_AT, APP_COMMIT, APP_VERSION, SOURCE_URL, SOURCE_URL_FOR_BUILD
 import { aboutMessages } from './About.messages.js';
 import { useMessages } from './messages.js';
 import { BackLink } from './BackLink.js';
+import { PageHeader } from './PageHeader.js';
 
 /**
  * About page.
@@ -23,7 +24,7 @@ export function About({ seVersion }: { seVersion?: string | undefined }): React.
   return (
     <main className="shell">
       <BackLink fallback="#/people" />
-      <h1>{t.heading}</h1>
+      <PageHeader title={t.heading} />
 
       <h2>{t.versionHeading}</h2>
       <dl>

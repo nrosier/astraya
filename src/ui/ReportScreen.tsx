@@ -29,6 +29,7 @@ import { interpretationExclusions } from '../chart/object-policy.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { useStableBy, useStableMoment } from './use-stable-moment.js';
 import { BackLink } from './BackLink.js';
+import { PageHeader } from './PageHeader.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -97,7 +98,7 @@ export function ReportScreen({ personId }: { personId: string }): React.JSX.Elem
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <h1>{t.reportFallback}</h1>
+        <PageHeader title={t.reportFallback} />
         <p>
           {t.notCompleteReport(person.displayName || t.thisPerson)}{' '}
           <a href={personHref(personId)}>{t.personPageLink}</a>.
@@ -113,7 +114,7 @@ export function ReportScreen({ personId }: { personId: string }): React.JSX.Elem
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <h1>{t.reportFallback}</h1>
+        <PageHeader title={t.reportFallback} />
         <p>{t.needsKnownTime(person.displayName || t.thisPerson)}</p>
       </main>
     );
@@ -122,7 +123,7 @@ export function ReportScreen({ personId }: { personId: string }): React.JSX.Elem
   return (
     <main className="shell">
       <BackLink fallback={personHref(personId)} />
-      <h1>{person.displayName ? t.heading(person.displayName) : t.reportFallback}</h1>
+      <PageHeader title={person.displayName ? t.heading(person.displayName) : t.reportFallback} />
 
       {/* The result region: busy while the report (re)calculates, as the Astrocartography map is. */}
       <div aria-busy={load.kind === 'loading'}>

@@ -104,7 +104,7 @@ test.describe('with the shared people (#799)', () => {
     await expect(card('location').locator('button', { hasText: 'Save' })).toHaveCount(0);
     await expect(card('timezone')).toHaveCount(0);
     // Save changes sits in the page header, on the same row as the title (#896).
-    const title = await page.locator('.birth-record-title-row h1').boundingBox();
+    const title = await page.locator('.page-header-row h1').boundingBox();
     const saveBox = await save.boundingBox();
     if (title === null || saveBox === null) throw new Error('title row not laid out');
     expect(Math.abs(saveBox.y + saveBox.height / 2 - (title.y + title.height / 2))).toBeLessThan(

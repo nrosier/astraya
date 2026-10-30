@@ -79,6 +79,7 @@ import { useOptionalStore } from './store-context.js';
 import { ThemeToggle } from './ThemeToggle.js';
 import { useSymbolClass } from './symbol-setting.js';
 import { BackLink } from './BackLink.js';
+import { PageHeader } from './PageHeader.js';
 
 interface ExportStatus {
   readonly kind: 'busy' | 'done' | 'error';
@@ -350,7 +351,7 @@ export function PreferencesView({
   return (
     <main className="shell">
       <BackLink fallback="#/people" />
-      <h1>{t.heading}</h1>
+      <PageHeader title={t.heading} />
       <p>{t.intro}</p>
 
       <Tabs idBase="preferences" label={t.tablistLabel} items={tabItems} active={active} onSelect={selectTab} />

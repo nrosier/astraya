@@ -37,6 +37,7 @@ import { useStore, useStoreState } from './store-context.js';
 import type { Calendar } from '../time/types.js';
 import type { TimeAccuracy } from '../domain/person.js';
 import { BackLink } from './BackLink.js';
+import { PageHeader } from './PageHeader.js';
 import { PersonFileActions } from './PersonFileActions.js';
 import { sharedMessages } from './shared.messages.js';
 import { checkFeatureFlag, initProfileOverlay, loadOverlayConfig } from './profile-overlay.js';
@@ -155,8 +156,7 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
     <main className="shell">
       <BackLink fallback="#/people" label={shared.people} />
       {/* Save changes sits in the page header, aligned with the title (#896, overrides D-795b). */}
-      <div className="page-header-row birth-record-title-row">
-        <h1>{current.displayName.trim() === '' ? t.newPerson : current.displayName}</h1>
+      <PageHeader title={current.displayName.trim() === '' ? t.newPerson : current.displayName}>
         <div className="birth-record-save">
           <Button variant="primary" onClick={save} disabled={saving || moment === undefined}>
             {saving ? t.saving : t.saveButton}
@@ -174,7 +174,7 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
             </span>
           )}
         </div>
-      </div>
+      </PageHeader>
       <p className="tagline">{t.tagline}</p>
 
       {saveError !== undefined && <StatusMessage kind="error">{t.saveFailed(saveError)}</StatusMessage>}

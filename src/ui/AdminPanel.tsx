@@ -50,6 +50,7 @@ import type { OidcConfig, Role } from '../sync/auth-client.js';
 import { useSessionUserOrUndefined } from './session-context.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { BackLink } from './BackLink.js';
+import { PageHeader } from './PageHeader.js';
 
 const ROLE_ORDER: readonly Role[] = ['user', 'admin', 'super_admin'];
 
@@ -337,7 +338,7 @@ export function AdminPanel(): React.JSX.Element {
     <main className="shell admin-view">
       <div className="admin-view-head">
         <BackLink fallback="#/people" />
-        <h1>{t.heading}</h1>
+        <PageHeader title={t.heading} />
       </div>
       <div className="admin-stack">
         {error !== undefined && <StatusMessage kind="error">{error}</StatusMessage>}
@@ -453,7 +454,7 @@ export function AdminUsagePanel(): React.JSX.Element {
     <main className="shell admin-view">
       <div className="admin-view-head">
         <BackLink fallback="#/people" />
-        <h1>{t.usageHeading}</h1>
+        <PageHeader title={t.usageHeading} />
       </div>
       <div className="admin-stack">
         {error !== undefined && <StatusMessage kind="error">{error}</StatusMessage>}

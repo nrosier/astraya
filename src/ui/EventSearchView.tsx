@@ -31,6 +31,7 @@ import { StatusMessage } from './primitives/StatusMessage.js';
 import { useMessages } from './messages.js';
 import { eventSearchViewMessages } from './EventSearchView.messages.js';
 import { BackLink } from './BackLink.js';
+import { PageHeader } from './PageHeader.js';
 
 interface Parameters {
   readonly from: string;
@@ -184,7 +185,7 @@ export function EventSearchView(): React.JSX.Element {
   return (
     <main className="shell">
       <BackLink fallback="#/people" />
-      <h1>{t.heading}</h1>
+      <PageHeader title={t.heading} />
       <p>{t.intro}</p>
       <fieldset className="field-group">
         <legend>{t.rangeLegend}</legend>
