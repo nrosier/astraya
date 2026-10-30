@@ -61,12 +61,15 @@ export type Route =
   // (absent means natal) and `view` its open Wheel/Aspects/Aspect matrix/Elements/Placements/Patterns view
   // (#511; absent means the wheel). Both are path segments of the canonical hash. Optional `compareType`
   // enables side-by-side comparison of two chart types (#439), passed as `?compare=` query param.
+  // `date` (#800) is the calendar day the chart opens on, as `?date=YYYY-MM-DD`, carried from the Consultation
+  // screen's selected day; a malformed or impossible date is dropped, so the chart opens on today as before.
   | {
       readonly kind: 'chart';
       readonly personId: string;
       readonly chartType?: ChartType;
       readonly view?: ChartViewKind;
       readonly compareType?: ChartType;
+      readonly date?: string;
     }
   // The written report (#271): Interpretation in the navigation.
   | { readonly kind: 'report'; readonly personId: string }
@@ -159,14 +162,17 @@ function personSubRoute(personId: string, rest: readonly string[], hash: string)
     return undefined;
   }
   if (area === 'charts' && isChartType(second) && isChartView(third)) {
-    const compareParam = new URLSearchParams(hash.split('?')[1] ?? '').get('compare');
+    const query = new URLSearchParams(hash.split('?')[1] ?? '');
+    const compareParam = query.get('compare');
     const compare = isChartType(compareParam) ? compareParam : undefined;
+    const date = chartDateParam(query.get('date'));
     return {
       kind: 'chart',
       personId,
       chartType: second,
       view: third,
       ...(compare === undefined ? {} : { compareType: compare }),
+      ...(date === undefined ? {} : { date }),
     };
   }
   if (rest.length !== 2) return undefined;
@@ -300,7 +306,11 @@ export function routeHref(route: Route): string {
       return person(route.personId, 'interpretation');
     case 'chart': {
       const base = person(route.personId, 'charts', route.chartType ?? 'natal', route.view ?? 'wheel');
-      return route.compareType === undefined ? base : `${base}?compare=${route.compareType}`;
+      const query = [
+        ...(route.compareType === undefined ? [] : [`compare=${route.compareType}`]),
+        ...(route.date === undefined ? [] : [`date=${route.date}`]),
+      ];
+      return query.length === 0 ? base : `${base}?${query.join('&')}`;
     }
     case 'profections':
     case 'timing-timeline':
@@ -331,15 +341,32 @@ export function routeHref(route: Route): string {
   }
 }
 
-/** The hash of a person's chart of `type` (natal when omitted), opened at `view` (the wheel when omitted), optionally in comparison mode with `compareType` (#439). */
-export function chartHref(personId: string, view?: ChartViewKind, type?: ChartType, compareType?: ChartType): string {
+/** The hash of a person's chart of `type` (natal when omitted), opened at `view` (the wheel when omitted), optionally in comparison mode with `compareType` (#439) and on the calendar day `date` (#800, `YYYY-MM-DD`). */
+export function chartHref(
+  personId: string,
+  view?: ChartViewKind,
+  type?: ChartType,
+  compareType?: ChartType,
+  date?: string,
+): string {
   return routeHref({
     kind: 'chart',
     personId,
     ...(type === undefined ? {} : { chartType: type }),
     ...(view === undefined ? {} : { view }),
     ...(compareType === undefined ? {} : { compareType }),
+    ...(date === undefined ? {} : { date }),
   });
+}
+
+/** A `date` query value that is a real calendar day (`YYYY-MM-DD`), or undefined; `2026-02-30` is rejected. */
+function chartDateParam(value: string | null): string | undefined {
+  if (value === null || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return undefined;
+  const [year, month, day] = value.split('-').map(Number) as [number, number, number];
+  const probe = new Date(Date.UTC(year, month - 1, day));
+  return probe.getUTCFullYear() === year && probe.getUTCMonth() === month - 1 && probe.getUTCDate() === day
+    ? value
+    : undefined;
 }
 
 /** The hash of a person's birth record (Edit birth record). */
