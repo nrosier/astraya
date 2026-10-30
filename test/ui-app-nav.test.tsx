@@ -163,26 +163,56 @@ describe('the person sections on a route with no person (#914)', () => {
   };
 
   it('shows the last-viewed person sections on the Documents route', async () => {
-    openStoreWithPerson('p1');
-    writeLastPersonId('p1');
+    openStoreWithPerson('p-abcdefghijklmnop');
+    writeLastPersonId('p-abcdefghijklmnop');
     await mount(parseRoute('#/documents'));
-    expect(linkNamed('Overview')?.getAttribute('href')).toBe('#/people/p1/overview');
+    expect(linkNamed('Overview')?.getAttribute('href')).toBe('#/people/p-abcdefghijklmnop/overview');
     expect(linkNamed('PDF')?.getAttribute('aria-current')).toBe('page');
     // The person is the way back here, not the subject, so the "return to" heading shows (as on tool pages).
     expect(box().querySelector('nav#app-nav .app-nav-history')).not.toBeNull();
   });
 
   it('shows no person sections on the Documents route when no person was viewed', async () => {
-    openStoreWithPerson('p1');
+    openStoreWithPerson('p-abcdefghijklmnop');
     await mount(parseRoute('#/documents'));
     expect(linkNamed('Overview')).toBeUndefined();
     expect(box().querySelector('nav#app-nav .app-nav-history')).toBeNull();
   });
 
   it('shows no person sections on the People list even when a person was viewed', async () => {
-    openStoreWithPerson('p1');
-    writeLastPersonId('p1');
+    openStoreWithPerson('p-abcdefghijklmnop');
+    writeLastPersonId('p-abcdefghijklmnop');
     await mount(parseRoute('#/people'));
     expect(linkNamed('Overview')).toBeUndefined();
+  });
+
+  it('shows the person sections on the Documents route in English and in Dutch (#914)', async () => {
+    openStoreWithPerson('p-abcdefghijklmnop');
+    writeLastPersonId('p-abcdefghijklmnop');
+    const render = await mount(parseRoute('#/documents'));
+    expect(navLinks()).toContain('Overview');
+    expect(navLinks()).toContain('Birth record');
+    expect(linkNamed('PDF')?.getAttribute('aria-current')).toBe('page');
+
+    setLocale('nl');
+    await render(parseRoute('#/documents'));
+    expect(navLinks()).toContain('Overzicht');
+    expect(navLinks()).toContain('Geboortegegevens');
+    expect(navLinks()).toContain('Hulpmiddelen');
+    expect(linkNamed('PDF')?.getAttribute('aria-current')).toBe('page');
+  });
+
+  it('keeps the sidebar section list identical on a person page and on the Documents route (#914)', async () => {
+    openStoreWithPerson('p-abcdefghijklmnop');
+    writeLastPersonId('p-abcdefghijklmnop');
+    const render = await mount(parseRoute('#/people/p-abcdefghijklmnop/overview'));
+    const onPerson = navLinks();
+    expect(onPerson).toContain('Overview');
+
+    await render(parseRoute('#/documents'));
+    expect(navLinks()).toEqual(onPerson);
+
+    await render(parseRoute('#/people/p-abcdefghijklmnop/birth-record'));
+    expect(navLinks()).toEqual(onPerson);
   });
 });
