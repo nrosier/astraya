@@ -330,52 +330,55 @@ export function RectificationView(): React.JSX.Element {
       </p>
 
       {fieldError !== undefined && <StatusMessage kind="error">{errorText(fieldError)}</StatusMessage>}
-      {result.kind === 'error' && <StatusMessage kind="error">{t.error(result.message)}</StatusMessage>}
+      {/* The result region: busy while the candidates are tested, as the Astrocartography map is. */}
+      <div aria-busy={result.kind === 'testing'}>
+        {result.kind === 'error' && <StatusMessage kind="error">{t.error(result.message)}</StatusMessage>}
 
-      {result.kind === 'ready' && (
-        <>
-          <p>{t.summary(result.tested, top.length)}</p>
-          <SortableTable
-            caption={t.tableCaption}
-            columns={columns}
-            rows={top}
-            getRowKey={(row) => String(row.jd)}
-            downloadFilename="rectification-candidates.csv"
-          />
-          <h2>{t.detailsHeading}</h2>
-          {top.slice(0, DETAILED).map((candidate) => (
-            <div key={candidate.jd} className="rectification-detail">
-              <Disclosure
-                title={t.detailsSummary(candidate.localTime, formatFixed(candidate.score, 2))}
-                summary={t.contactCount(candidate.contacts.length)}
-                showLabel={t.showDetails}
-                hideLabel={t.hideDetails}
-              >
-                {candidate.contacts.length === 0 ? (
-                  <p className="hint">{t.noContacts}</p>
-                ) : (
-                  <ul>
-                    {result.events.map((event, eventIndex) => {
-                      const forEvent = candidate.contacts.filter((contact) => contact.eventIndex === eventIndex);
-                      if (forEvent.length === 0) return null;
-                      return (
-                        <li key={eventIndex}>
-                          <strong>{t.forEvent(eventIndex + 1, event.label)}</strong>
-                          <ul>
-                            {forEvent.map((contact, contactIndex) => (
-                              <li key={contactIndex}>{describeContact(contact)}</li>
-                            ))}
-                          </ul>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </Disclosure>
-            </div>
-          ))}
-        </>
-      )}
+        {result.kind === 'ready' && (
+          <>
+            <p>{t.summary(result.tested, top.length)}</p>
+            <SortableTable
+              caption={t.tableCaption}
+              columns={columns}
+              rows={top}
+              getRowKey={(row) => String(row.jd)}
+              downloadFilename="rectification-candidates.csv"
+            />
+            <h2>{t.detailsHeading}</h2>
+            {top.slice(0, DETAILED).map((candidate) => (
+              <div key={candidate.jd} className="rectification-detail">
+                <Disclosure
+                  title={t.detailsSummary(candidate.localTime, formatFixed(candidate.score, 2))}
+                  summary={t.contactCount(candidate.contacts.length)}
+                  showLabel={t.showDetails}
+                  hideLabel={t.hideDetails}
+                >
+                  {candidate.contacts.length === 0 ? (
+                    <p className="hint">{t.noContacts}</p>
+                  ) : (
+                    <ul>
+                      {result.events.map((event, eventIndex) => {
+                        const forEvent = candidate.contacts.filter((contact) => contact.eventIndex === eventIndex);
+                        if (forEvent.length === 0) return null;
+                        return (
+                          <li key={eventIndex}>
+                            <strong>{t.forEvent(eventIndex + 1, event.label)}</strong>
+                            <ul>
+                              {forEvent.map((contact, contactIndex) => (
+                                <li key={contactIndex}>{describeContact(contact)}</li>
+                              ))}
+                            </ul>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </Disclosure>
+              </div>
+            ))}
+          </>
+        )}
+      </div>
     </main>
   );
 }

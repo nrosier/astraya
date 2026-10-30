@@ -5,7 +5,9 @@
  * render, the calculation runs, and the test waits until every result region reports `aria-busy="false"`. A
  * settled region must also hold content and show no error, so a view that stays busy, settles in an error, or
  * settles empty fails here. Synastry is driven by choosing its partner; the planetary-return region of
- * PeriodicTransitView is driven by choosing its body. Composite is covered by its own harness, not here.
+ * PeriodicTransitView is driven by choosing its body. Harmonic, Draconic, RelocatedChart and Composite render their
+ * result through ChartDataView, so they are covered here too. Horary, Electional and Rectification are driven
+ * through their own forms, as a user would fill them.
  */
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -67,6 +69,16 @@ const { EclipsesView } = await import('../src/ui/EclipsesView.js');
 const { EventSearchView } = await import('../src/ui/EventSearchView.js');
 const { SynastryView } = await import('../src/ui/SynastryView.js');
 const { ReturnView } = await import('../src/ui/ReturnView.js');
+const { HarmonicView } = await import('../src/ui/HarmonicView.js');
+const { DraconicView } = await import('../src/ui/DraconicView.js');
+const { RelocatedChartView } = await import('../src/ui/RelocatedChartView.js');
+const { CompositeView } = await import('../src/ui/CompositeView.js');
+const { HoraryView } = await import('../src/ui/HoraryView.js');
+const { horaryViewMessages } = await import('../src/ui/HoraryView.messages.js');
+const { ElectionalView } = await import('../src/ui/ElectionalView.js');
+const { electionalViewMessages } = await import('../src/ui/ElectionalView.messages.js');
+const { RectificationView } = await import('../src/ui/RectificationView.js');
+const { rectificationViewMessages } = await import('../src/ui/RectificationView.messages.js');
 
 let mounted: { container: HTMLElement; root: Root } | undefined;
 
@@ -132,7 +144,27 @@ function chooseOption(container: HTMLElement, needs: readonly string[], value: s
   select.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
+/** Sets an input's value the way typing does, so React's change handler sees it. */
+function typeInto(element: HTMLInputElement | undefined, value: string): void {
+  if (element === undefined) throw new Error('test fixture bug: missing input');
+  Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(element, value);
+  element.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+/** Every input matching `selector`, in document order. */
+const inputsOf = (container: HTMLElement, selector: string): HTMLInputElement[] =>
+  Array.from(container.querySelectorAll<HTMLInputElement>(selector));
+
+/** The button whose visible label is `label`, found the way a user finds it. */
+function buttonNamed(container: HTMLElement, label: string): HTMLButtonElement {
+  const button = Array.from(container.querySelectorAll('button')).find((el) => el.textContent.trim() === label);
+  if (button === undefined) throw new Error(`no button labelled ${label}`);
+  return button;
+}
+
 const views: readonly { name: string; node: () => React.JSX.Element }[] = [
+  { name: 'HarmonicView', node: () => <HarmonicView personId="p1" /> },
+  { name: 'DraconicView', node: () => <DraconicView personId="p1" /> },
   { name: 'ProfectionsView', node: () => <ProfectionsView personId="p1" /> },
   { name: 'SolarArcView', node: () => <SolarArcView personId="p1" /> },
   { name: 'ProgressionsView', node: () => <ProgressionsView personId="p1" /> },
@@ -194,4 +226,97 @@ describe('the calculation result regions (#888)', () => {
     const container = mount(<EventSearchView />);
     expect(busyRegions(container)).toEqual(['false']);
   });
+
+  it('RelocatedChartView result region is aria-busy while the relocated chart calculates and cleared once ready', async () => {
+    const container = mount(<RelocatedChartView personId="p1" />);
+    // No place yet, so no result region is rendered.
+    expect(busyRegions(container)).toEqual([]);
+
+    const [latitude, longitude] = inputsOf(container, '.field-grid input[type="number"]');
+    act(() => {
+      typeInto(latitude, '51.5072');
+      typeInto(longitude, '-0.1276');
+    });
+    expect(busyRegions(container)).toEqual(['true']);
+
+    await untilSettled(container);
+    expectSettledReady(container);
+  }, 60_000);
+
+  it('CompositeView result region is aria-busy while the composite calculates and cleared once ready', async () => {
+    const container = mount(<CompositeView personId="p1" />);
+    // No partner yet, so no result region is rendered.
+    expect(busyRegions(container)).toEqual([]);
+
+    act(() => {
+      chooseOption(container, ['p2'], 'p2');
+    });
+    expect(busyRegions(container)).toEqual(['true']);
+
+    await untilSettled(container);
+    expectSettledReady(container);
+  }, 60_000);
+
+  it('HoraryView result region is aria-busy only while the chart is cast and cleared once ready', async () => {
+    const container = mount(<HoraryView />);
+    expect(busyRegions(container)).toEqual(['false']);
+
+    act(() => {
+      const [latitude, longitude] = inputsOf(container, '.horary-coords input');
+      typeInto(latitude, '41.1833');
+      typeInto(longitude, '-84.7333');
+    });
+    act(() => {
+      buttonNamed(container, horaryViewMessages.en.castButton).click();
+    });
+    expect(busyRegions(container)).toEqual(['true']);
+
+    await untilSettled(container);
+    expectSettledReady(container);
+  }, 60_000);
+
+  it('ElectionalView result region is aria-busy only while the search runs and cleared once ready', async () => {
+    const container = mount(<ElectionalView />);
+    expect(busyRegions(container)).toEqual(['false']);
+
+    act(() => {
+      const [fromDate, toDate] = inputsOf(container, 'input[type="date"]');
+      // A one-day window keeps the search short: the end date matches the start date's default.
+      typeInto(toDate, fromDate?.value ?? '');
+      const [latitude, longitude] = inputsOf(container, 'input[inputmode="decimal"]');
+      typeInto(latitude, '41.1833');
+      typeInto(longitude, '-84.7333');
+    });
+    act(() => {
+      buttonNamed(container, electionalViewMessages.en.findButton).click();
+    });
+    expect(busyRegions(container)).toEqual(['true']);
+
+    await untilSettled(container);
+    expectSettledReady(container);
+  }, 60_000);
+
+  it('RectificationView result region is aria-busy only while the candidates are tested and cleared once ready', async () => {
+    const container = mount(<RectificationView />);
+    expect(busyRegions(container)).toEqual(['false']);
+
+    act(() => {
+      chooseOption(container, ['p1'], 'p1');
+    });
+    act(() => {
+      const [fromTime, toTime] = inputsOf(container, 'input[type="time"]');
+      typeInto(fromTime, '06:00');
+      typeInto(toTime, '10:00');
+      // The first date field is the birth date the person filled in; the next is the event.
+      const [, event] = inputsOf(container, 'input[type="date"]');
+      typeInto(event, '1990-06-01');
+    });
+    act(() => {
+      buttonNamed(container, rectificationViewMessages.en.findButton).click();
+    });
+    expect(busyRegions(container)).toEqual(['true']);
+
+    await untilSettled(container);
+    expectSettledReady(container);
+  }, 60_000);
 });
