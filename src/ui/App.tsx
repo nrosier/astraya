@@ -71,7 +71,6 @@ const EclipsesView = lazy(async () => ({ default: (await import('./EclipsesView.
 const CyclesView = lazy(async () => ({ default: (await import('./CyclesView.js')).CyclesView }));
 const EventSearchView = lazy(async () => ({ default: (await import('./EventSearchView.js')).EventSearchView }));
 const PdfExportBuilder = lazy(async () => ({ default: (await import('./PdfExportBuilder.js')).PdfExportBuilder }));
-const DocumentsView = lazy(async () => ({ default: (await import('./DocumentsView.js')).DocumentsView }));
 const PreferencesView = lazy(async () => ({ default: (await import('./PreferencesView.js')).PreferencesView }));
 const AdminPanel = lazy(async () => ({ default: (await import('./AdminPanel.js')).AdminPanel }));
 const AdminUsagePanel = lazy(async () => ({ default: (await import('./AdminPanel.js')).AdminUsagePanel }));
@@ -452,7 +451,7 @@ function renderScreen(parsed: Route, seVersion: string | undefined): React.JSX.E
   if (parsed.kind === 'documents') {
     return (
       <Stored>
-        <DocumentsView />
+        <PdfExportBuilder />
       </Stored>
     );
   }
@@ -511,7 +510,7 @@ type PersonRoute = Extract<
 
 /** The Charts page: the view for the chart type the route names (natal when it names none). */
 function renderChart(parsed: Extract<Route, { kind: 'chart' }>): React.JSX.Element {
-  const { personId, view, compareType } = parsed;
+  const { personId, view, compareType, date } = parsed;
   switch (parsed.chartType ?? 'natal') {
     case 'draconic':
       return <DraconicView key={personId} personId={personId} view={view} compareType={compareType} />;
@@ -528,7 +527,7 @@ function renderChart(parsed: Extract<Route, { kind: 'chart' }>): React.JSX.Eleme
     case 'relocated':
       return <RelocatedChartView key={personId} personId={personId} view={view} compareType={compareType} />;
     case 'natal':
-      return <ChartView key={personId} personId={personId} view={view} compareType={compareType} />;
+      return <ChartView key={personId} personId={personId} view={view} compareType={compareType} date={date} />;
   }
 }
 

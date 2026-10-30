@@ -157,3 +157,64 @@ describe('consultation right column (#800)', () => {
     expect(pills).toContain('t.endPill(');
   });
 });
+
+describe('consultation round 2 (#800, approved 2026-10-30)', () => {
+  it('titles the page Consultation and names the person only in the basis line', () => {
+    expect(consultationViewMessages.en.heading).toBe('Consultation');
+    expect(consultationViewMessages.nl.heading).toBe('Consultatie');
+    expect(view).toContain('title={t.heading}');
+    expect(view).toContain('basis={t.basisLine(');
+  });
+
+  it('drops the date picker and keeps the static date', () => {
+    expect(view).not.toMatch(/type="date"|DateField|<select/);
+    expect(view).toContain('t.asOf(');
+  });
+
+  it('opens the chart wheel on the selected day through the chart route', () => {
+    expect(view).toMatch(/chartHref\(personId, 'wheel', 'natal', undefined, selectedDay\)/);
+    expect(view).toMatch(/const selectedDay = `/);
+  });
+
+  it('links the time-lord card to Progressions and the directions card to Directions', () => {
+    expect(view).toContain("hrefFor('progressions', { personId })");
+    expect(view).toContain("hrefFor('primary-directions', { personId })");
+  });
+
+  it('links the Ascendant and Midheaven disclosures to the Transits view', () => {
+    const disclosure = /angleGroups\(load\.angles\)\.map[\s\S]*?<\/Disclosure>/.exec(view)?.[0] ?? '';
+    expect(disclosure).toContain("hrefFor('transit', { personId })");
+    expect(disclosure).toContain('t.openTransitsLink');
+  });
+
+  it('uses the approved count wording for each Disclosure', () => {
+    expect(consultationViewMessages.en.groupCount(2)).toBe('2 active');
+    expect(consultationViewMessages.nl.groupCount(2)).toBe('2 actief');
+  });
+
+  it('mounts the notes card last in the right column', () => {
+    const right = rightColumn();
+    expect(right.indexOf('consultation-releasing-heading')).toBeLessThan(right.indexOf('<ConsultationNotesCard'));
+  });
+});
+
+describe('applying and separating badge, treatment D (#815)', () => {
+  it('draws a filled accent dot for applying and a hollow muted dot for separating, with the label kept', () => {
+    expect(css).toMatch(/\.aspect-state--applying \.aspect-state-dot\s*\{\s*background: var\(--accent\);/);
+    expect(css).toMatch(
+      /\.aspect-state--separating \.aspect-state-dot\s*\{\s*border: 1px solid var\(--muted\);\s*background: transparent;/,
+    );
+  });
+
+  it('has no pill on the state: the label is plain text beside the dot', () => {
+    const rule = /\.aspect-state\s*\{([^}]*)\}/.exec(css)?.[1] ?? '';
+    expect(rule).not.toMatch(/border-radius|padding|background/);
+  });
+});
+
+describe('consultation strings have matching en and nl keys (i18n parity)', () => {
+  it('gives every key in en a counterpart in nl, and the reverse', () => {
+    const { en, nl } = consultationViewMessages;
+    expect(Object.keys(nl).sort()).toEqual(Object.keys(en).sort());
+  });
+});

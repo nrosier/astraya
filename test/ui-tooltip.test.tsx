@@ -104,4 +104,55 @@ describe('Tooltip', () => {
     });
     expect(popup()).toBeNull();
   });
+
+  // A browser tap on touch sends pointerover -> pointerdown -> focus (mousedown) -> pointerup ->
+  // pointerout/pointerleave (the touch pointer lifts off the element) -> click. Synthetic .click() skips all of that.
+  const touchTap = (): void => {
+    const button = trigger();
+    const init = { bubbles: true, pointerType: 'touch', isPrimary: true };
+    act(() => {
+      button.dispatchEvent(new PointerEvent('pointerover', init));
+      button.dispatchEvent(new PointerEvent('pointerdown', { ...init, button: 0, buttons: 1 }));
+    });
+    act(() => {
+      button.focus();
+    });
+    act(() => {
+      button.dispatchEvent(new PointerEvent('pointerup', { ...init, button: 0, buttons: 0 }));
+      button.dispatchEvent(new PointerEvent('pointerout', { ...init, relatedTarget: document.body }));
+    });
+    act(() => {
+      button.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+  };
+
+  it('on touch, the first tap opens the tooltip and the second tap closes it', () => {
+    touchTap();
+    expect(popup()?.textContent).toBe(DEFINITION);
+    expect(trigger().getAttribute('aria-expanded')).toBe('true');
+
+    touchTap();
+    expect(popup()).toBeNull();
+    expect(trigger().getAttribute('aria-expanded')).toBe('false');
+    // The hover timer from the second tap's pointerover must not reopen it after the delay.
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
+    expect(popup()).toBeNull();
+  });
+
+  it('on touch, a finger that only passes over the trigger (pointerover then pointerout, no tap) does not open it', () => {
+    const button = trigger();
+    const init = { bubbles: true, pointerType: 'touch', isPrimary: true };
+    act(() => {
+      button.dispatchEvent(new PointerEvent('pointerover', init));
+    });
+    act(() => {
+      button.dispatchEvent(new PointerEvent('pointerout', { ...init, relatedTarget: document.body }));
+    });
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
+    expect(popup()).toBeNull();
+  });
 });

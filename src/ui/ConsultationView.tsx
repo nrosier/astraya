@@ -74,7 +74,11 @@ import { chartViewMessages } from './ChartView.messages.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { PersonNotFound } from './PersonNotFound.js';
 import { hrefFor } from './feature-registry.js';
-import { personHref } from './route.js';
+import { chartHref, personHref } from './route.js';
+import { ConsultationNotesCard } from './ConsultationNotesCard.js';
+import { houseSystemLabel } from './ChartView.js';
+import { matchOrbProfile } from '../astrology/orb-profiles.js';
+import { extendedSettingsPanelMessages } from './ExtendedSettingsPanel.messages.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { useStoreState } from './store-context.js';
@@ -138,6 +142,7 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
   const timingT = useMessages(timingTimelineViewMessages);
   const chartT = useMessages(chartViewMessages);
   const rulershipT = useMessages(rulershipSettingMessages);
+  const orbNames = useMessages(extendedSettingsPanelMessages);
   const [locale] = useLocale();
   const {
     settings: personSettings,
@@ -280,14 +285,15 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
     return <UnreadableSettingsNotice personId={personId} name={person.displayName || ''} />;
   }
 
-  const title = person.displayName ? t.heading(person.displayName) : t.fallback;
+  // The title is the feature; the person is the subject, named in the muted basis line (#800 decision, 2026-10-30).
+  const subject = person.displayName || t.fallback;
   if (person.moment === undefined) {
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <PageHeader title={title} />
+        <PageHeader title={t.heading} />
         <p>
-          {t.notComplete(person.displayName || t.fallback)} <a href={personHref(personId)}>{t.personPageLink}</a>.
+          {t.notComplete(subject)} <a href={personHref(personId)}>{t.personPageLink}</a>.
         </p>
       </main>
     );
@@ -295,6 +301,13 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
 
   const zodiac = personSettings.zodiac;
   const zodiacLabel = zodiac.kind === 'sidereal' ? t.sidereal : t.tropical;
+  // The calculation basis as the person's own settings resolve it: the house system, and the named orb profile
+  // (Custom when the orbs are edited or match no profile).
+  const houseLabel = houseSystemLabel(personSettings.houseSystem);
+  const orbProfile =
+    personSettings.orbRules === undefined ? matchOrbProfile(personSettings.orbScalePercent) : undefined;
+  // The day the wheel opens on (#800): the day of the page's own "As of" moment, so Refresh moves it too.
+  const selectedDay = `${String(now.getFullYear()).padStart(4, '0')}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   const signName = (sign: number): string => signDisplayName(SIGNS[sign]?.name ?? '', locale);
   const body = (key: string): string => bodyDisplayName(key, locale);
   const aspect = (key: string): string => aspectDisplayName(key, locale).toLowerCase();
@@ -457,9 +470,18 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
   return (
     <main className="shell consultation">
       <BackLink fallback={personHref(personId)} />
-      <PageHeader title={title} basis={t.basisLine(zodiacLabel, rulershipT.options[rulership])}>
-        <p className="consultation-moment">
-          {t.asOf(formatTimestamp(now))}{' '}
+      <PageHeader
+        title={t.heading}
+        basis={t.basisLine(
+          subject,
+          zodiacLabel,
+          houseLabel,
+          t.rulersBasis(rulershipT.titles[rulership]),
+          t.orbsBasis(orbNames.orbProfileOptions[orbProfile ?? 'custom']),
+        )}
+      >
+        <span className="consultation-date-field">
+          <span>{t.asOf(formatTimestamp(now))}</span>{' '}
           <Button
             size="compact"
             onClick={() => {
@@ -468,7 +490,10 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
           >
             {t.refreshNow}
           </Button>
-        </p>
+        </span>
+        <a className="primitive-button-primary" href={chartHref(personId, 'wheel', 'natal', undefined, selectedDay)}>
+          {t.viewWheel}
+        </a>
         <p className="actions">
           <a href={hrefFor('report', { personId })}>{t.openInterpretation}</a>{' '}
           <a href={hrefFor('export-builder', {})}>{t.buildPdf}</a>
@@ -529,7 +554,7 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
                       <Disclosure
                         key={group.angle}
                         title={angleTitle(group.angle)}
-                        summary={t.aspectCount(group.contacts.length)}
+                        summary={t.groupCount(group.contacts.length)}
                         showLabel={t.show}
                         hideLabel={t.hide}
                       >
@@ -542,11 +567,14 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
                             rows={angleRows(group.contacts)}
                           />
                         )}
+                        <p>
+                          <a href={hrefFor('transit', { personId })}>{t.openTransitsLink}</a>
+                        </p>
                       </Disclosure>
                     ))
                   )}
-                  <p>
-                    <a href={hrefFor('transit', { personId })}>{t.viewAllTransits}</a>
+                  <p className="hint">
+                    <a href={hrefFor('transit', { personId })}>{t.openTransitsLink}</a>
                   </p>
                 </section>
 
@@ -642,6 +670,9 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
                       </span>
                     </li>
                   </ul>
+                  <p>
+                    <a href={hrefFor('progressions', { personId })}>{t.openProgressions}</a>
+                  </p>
                   {monthProfection.length > 0 && (
                     <Disclosure
                       title={t.moreTiming}
@@ -686,9 +717,12 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
                     </>
                   )}
                   <p>
+                    <a href={hrefFor('primary-directions', { personId })}>{t.openDirections}</a>{' '}
                     <a href={hrefFor('timing-timeline', { personId })}>{t.openTimingTimeline}</a>
                   </p>
                 </section>
+
+                <ConsultationNotesCard />
               </div>
             </div>
           </div>
