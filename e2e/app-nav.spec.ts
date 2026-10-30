@@ -262,6 +262,20 @@ test.describe('with the shared people (#799)', () => {
     await expect(header.getByRole('link', { name: 'PDF', exact: true })).toBeVisible();
   });
 
+  test('the person sections stay in the sidebar when moving from a person page to Documents (#914)', async () => {
+    test.setTimeout(60_000);
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    const header = page.getByRole('banner');
+    await expect(header.getByRole('link', { name: 'Birth record', exact: true })).toBeVisible();
+
+    await header.getByRole('link', { name: 'PDF', exact: true }).click();
+    await expect(page).toHaveURL(/#\/documents$/);
+    await expect(header.getByRole('link', { name: 'PDF', exact: true })).toHaveAttribute('aria-current', 'page');
+    for (const name of ['Birth record', 'Interpretation', 'Astrocartography', 'Charts']) {
+      await expect(header.getByRole('link', { name, exact: true })).toBeVisible();
+    }
+  });
+
   test('on a phone the navigation folds behind a Menu button, and nothing scrolls sideways', async () => {
     test.setTimeout(60_000);
     await page.setViewportSize({ width: 390, height: 800 });
