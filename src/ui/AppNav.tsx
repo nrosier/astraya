@@ -168,15 +168,15 @@ export function AppNav({ route }: { route: Route }): React.JSX.Element {
   // Documents workspace is app-scoped like Preferences; its active state comes from the registry.
   const documentsActive = activeFeatureKey(route, 'global') === 'documents';
   const lastPersonId = useLastPersonId();
-  // A tool page (#453) carries no person in its own route at all (`route.ts`) — falling back to
-  // the last person seen there keeps their nav tabs showing instead of losing them, and lets a
-  // link back to one of those tabs return to the same person rather than requiring they be
-  // picked again. Scoped to tool pages specifically, not every person-less route (the People
-  // list itself, say, should not show a stale person's tabs). Checked against the live store so
-  // a since-deleted person doesn't linger here.
+  // Tool pages (#453) and the Documents workspace (#914) carry no person in their own route
+  // (`route.ts`). On both, the last person seen is reused, so their nav tabs keep showing instead
+  // of disappearing, and a link back to one of those tabs returns to the same person rather than
+  // requiring they be picked again. The People list and other person-less routes are not in
+  // that set, so a stale person's tabs do not linger there. Checked against the live store so a
+  // since-deleted person doesn't linger here either.
   const personId =
     routePersonId ??
-    (activeTool !== null && lastPersonId !== undefined && store?.state.people.has(lastPersonId)
+    ((activeTool !== null || documentsActive) && lastPersonId !== undefined && store?.state.people.has(lastPersonId)
       ? lastPersonId
       : undefined);
 

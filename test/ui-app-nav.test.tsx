@@ -9,12 +9,26 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { writeLastPersonId } from '../src/ui/last-person.js';
 import { setLocale } from '../src/ui/locale.js';
 import { parseRoute, type Route } from '../src/ui/route.js';
 
 // The Export menu asks for the calculation engine; none is needed to open and close menus.
 vi.mock('../src/ui/EphemerisProviderContext.js', () => ({
   useEphemerisProvider: () => ({ provider: undefined, error: undefined }),
+}));
+
+// The person's tabs read the open store (#914 tests); with no store, `fakeStore.current` stays undefined
+// and the nav behaves as it does on a fresh device, so the other cases in this file are unaffected.
+const fakeStore = vi.hoisted(() => ({
+  current: undefined as { state: { people: ReadonlyMap<string, { displayName: string }> } } | undefined,
+}));
+vi.mock('../src/ui/store-context.js', () => ({
+  useOptionalStore: () => fakeStore.current,
+  useStoreState: () => {
+    if (fakeStore.current === undefined) throw new Error('fixture bug: no fake store');
+    return fakeStore.current.state;
+  },
 }));
 
 const { AppNav } = await import('../src/ui/AppNav.js');
@@ -135,5 +149,40 @@ describe('the Menu button for a small screen', () => {
     await click(button('Menu'));
     await render(parseRoute('#/about'));
     expect(box().querySelector('#app-nav')?.classList.contains('open')).toBe(false);
+  });
+});
+
+describe('the person sections on a route with no person (#914)', () => {
+  afterEach(() => {
+    fakeStore.current = undefined;
+    window.localStorage.clear();
+  });
+
+  const openStoreWithPerson = (personId: string): void => {
+    fakeStore.current = { state: { people: new Map([[personId, { displayName: 'Test' }]]) } };
+  };
+
+  it('shows the last-viewed person sections on the Documents route', async () => {
+    openStoreWithPerson('p1');
+    writeLastPersonId('p1');
+    await mount(parseRoute('#/documents'));
+    expect(linkNamed('Overview')?.getAttribute('href')).toBe('#/people/p1/overview');
+    expect(linkNamed('PDF')?.getAttribute('aria-current')).toBe('page');
+    // The person is the way back here, not the subject, so the "return to" heading shows (as on tool pages).
+    expect(box().querySelector('nav#app-nav .app-nav-history')).not.toBeNull();
+  });
+
+  it('shows no person sections on the Documents route when no person was viewed', async () => {
+    openStoreWithPerson('p1');
+    await mount(parseRoute('#/documents'));
+    expect(linkNamed('Overview')).toBeUndefined();
+    expect(box().querySelector('nav#app-nav .app-nav-history')).toBeNull();
+  });
+
+  it('shows no person sections on the People list even when a person was viewed', async () => {
+    openStoreWithPerson('p1');
+    writeLastPersonId('p1');
+    await mount(parseRoute('#/people'));
+    expect(linkNamed('Overview')).toBeUndefined();
   });
 });
