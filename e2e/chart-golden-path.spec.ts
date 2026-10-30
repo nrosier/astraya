@@ -131,6 +131,39 @@ test.describe('with the shared people (#799)', () => {
     await expect(page.locator('.sect-summary')).toBeVisible();
   });
 
+  test('the Patterns shape preview sits on the dark canvas with visible accent marks (#900)', async () => {
+    test.setTimeout(60_000);
+
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await openNatalChart(page, 'Patterns & condition');
+    await page.evaluate("document.documentElement.setAttribute('data-theme', 'dark')");
+
+    const preview = page.locator('.chart-shape-diagram-wrap');
+    await expect(preview).toBeVisible();
+    await expect(page.locator('.chart-shape-diagram .chart-shape-dot').first()).toBeVisible();
+
+    // Resolve a token through a throwaway probe, so the expected value is whatever --bg / --accent compute to.
+    const token = (name: string): Promise<string> =>
+      page.evaluate(
+        `(() => { const p = document.createElement('div'); p.style.background = 'var(${name})'; document.body.append(p); const c = getComputedStyle(p).backgroundColor; p.remove(); return c; })()`,
+      );
+    const canvas = await token('--bg');
+    const accent = await token('--accent');
+    expect(canvas).not.toBe('rgba(0, 0, 0, 0)');
+    expect(accent).not.toBe(canvas);
+
+    // The preview box paints the canvas token.
+    expect(
+      await page.evaluate("getComputedStyle(document.querySelector('.chart-shape-diagram-wrap')).backgroundColor"),
+    ).toBe(canvas);
+
+    // At least one accent-filled mark (a non-handle dot or a wedge) is drawn in the accent token.
+    const accentMarks = await page.evaluate(
+      `Array.from(document.querySelectorAll('.chart-shape-diagram .chart-shape-dot:not(.chart-shape-handle), .chart-shape-diagram .chart-shape-wedge')).filter((el) => getComputedStyle(el).fill === ${JSON.stringify(accent)}).length`,
+    );
+    expect(accentMarks).toBeGreaterThan(0);
+  });
+
   test('the natal chart is split into views, opening on the wheel, and the wheel keeps its selection (#511)', async () => {
     test.setTimeout(60_000);
 
