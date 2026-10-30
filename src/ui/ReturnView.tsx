@@ -46,6 +46,7 @@ import type { TableColumn } from './table-sort.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { useStableMoment } from './use-stable-moment.js';
 import { BackLink } from './BackLink.js';
+import { PageHeader } from './PageHeader.js';
 
 type Load =
   | { readonly kind: 'idle' }
@@ -221,7 +222,7 @@ export function ReturnView({
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <h1>{fallback}</h1>
+        <PageHeader title={fallback} />
         <p>
           {t.needsCompleteRecord(person.displayName || t.thisPerson)}{' '}
           <a href={personHref(personId)}>{t.personPageLink}</a>.
@@ -236,8 +237,7 @@ export function ReturnView({
   return (
     <main className="shell shell--wide">
       <BackLink fallback={personHref(personId)} />
-      <h1>{heading}</h1>
-      <p className="hint page-header-basis">{basisLine}</p>
+      <PageHeader title={heading} basis={basisLine} />
       <ChartTypeSelector personId={personId} type={kind} view={view} />
       <p className="hint">{solar ? t.solarHint : t.lunarHint}</p>
 

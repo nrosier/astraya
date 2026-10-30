@@ -21,6 +21,7 @@ import { setupFormMessages } from './SetupForm.messages.js';
 import { sharedMessages } from './shared.messages.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { BackLink } from './BackLink.js';
+import { PageHeader } from './PageHeader.js';
 
 export function SetupForm(): React.JSX.Element {
   const { setup } = useSession();
@@ -37,7 +38,7 @@ export function SetupForm(): React.JSX.Element {
     return (
       <main className="shell">
         <BackLink fallback="#/people" />
-        <h1>{t.heading}</h1>
+        <PageHeader title={t.heading} />
         <StatusMessage kind="error">{t.missingToken}</StatusMessage>
       </main>
     );
@@ -70,7 +71,7 @@ export function SetupForm(): React.JSX.Element {
   return (
     <main className="shell">
       <BackLink fallback="#/people" />
-      <h1>{t.heading}</h1>
+      <PageHeader title={t.heading} />
       {error !== undefined && <StatusMessage kind="error">{error}</StatusMessage>}
       <form onSubmit={submit}>
         <div className="field-grid">

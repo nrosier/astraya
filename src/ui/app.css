@@ -948,11 +948,6 @@ footer {
   min-width: 0;
 }
 
-.birth-record-title-row {
-  align-items: center;
-  margin-bottom: var(--space-2);
-}
-
 .birth-record-save {
   display: flex;
   flex-wrap: wrap;

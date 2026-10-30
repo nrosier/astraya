@@ -30,6 +30,7 @@ import type { TableColumn } from './table-sort.js';
 import { clampEphemerisYear, MAX_EPHEMERIS_YEAR, MIN_EPHEMERIS_YEAR } from './year-range.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { BackLink } from './BackLink.js';
+import { PageHeader } from './PageHeader.js';
 
 type Result =
   | { readonly kind: 'idle' }
@@ -179,7 +180,7 @@ export function EclipsesView(): React.JSX.Element {
   return (
     <main className="shell">
       <BackLink fallback="#/people" />
-      <h1>{t.heading}</h1>
+      <PageHeader title={t.heading} />
       <p className="hint">{t.hint}</p>
 
       <div className="field-grid">

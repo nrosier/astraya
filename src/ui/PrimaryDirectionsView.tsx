@@ -76,6 +76,7 @@ import { Checkbox } from './primitives/Checkbox.js';
 import type { PrimaryDirectionMethod, PrimaryDirectionMode } from '../astrology/primary-directions.js';
 import { useStableBy, useStableMoment } from './use-stable-moment.js';
 import { BackLink } from './BackLink.js';
+import { PageHeader } from './PageHeader.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -319,7 +320,7 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <h1>{t.primaryDirectionsFallback}</h1>
+        <PageHeader title={t.primaryDirectionsFallback} />
         <p>
           {t.notCompletePrimaryDirections(person.displayName || t.thisPerson)}{' '}
           <a href={personHref(personId)}>{t.personPageLink}</a>.
@@ -332,7 +333,7 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <h1>{t.primaryDirectionsFallback}</h1>
+        <PageHeader title={t.primaryDirectionsFallback} />
         <p>{t.needsKnownTime(person.displayName || t.thisPerson)}</p>
       </main>
     );
@@ -361,7 +362,7 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
         generatedAt={formatTimestamp(new Date())}
       />
       <BackLink fallback={personHref(personId)} />
-      <h1>{person.displayName ? t.heading(person.displayName) : t.primaryDirectionsFallback}</h1>
+      <PageHeader title={person.displayName ? t.heading(person.displayName) : t.primaryDirectionsFallback} />
       <p className="hint">{t.hint}</p>
       <p className="hint">{t.source}</p>
       <Notice>{t.lockedNotice}</Notice>

@@ -41,6 +41,7 @@ import { formatFixed } from './format.js';
 import { judgeHoraryWithMotion, type HoraryJudgment } from '../domain/horary-judgment.js';
 import { BackLink } from './BackLink.js';
 import { replaceRoute } from './nav-history.js';
+import { PageHeader } from './PageHeader.js';
 
 type Result =
   | { readonly kind: 'idle' }
@@ -113,7 +114,7 @@ export function HoraryView({ view }: { readonly view?: ChartViewKind | undefined
   return (
     <main className="shell shell--wide">
       <BackLink fallback="#/people" />
-      <h1>{t.heading}</h1>
+      <PageHeader title={t.heading} />
       <p className="hint">{t.hint}</p>
 
       <div className="horary-form">
