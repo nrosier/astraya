@@ -3,8 +3,8 @@
  */
 /**
  * @module astro-glossary.messages
- * @purpose English/Dutch name and one-to-three-sentence definition for each astrology term a screen may explain through `GlossaryTerm`, so a term reads the same wherever it appears.
- * @conventions Co-located i18n file exporting `{ en, nl }`; `nl` is typed as `typeof en`, so both locales carry every term. Definitions explain the idea and why it matters; they state no orbs, numbers or conventions beyond what the app itself uses.
+ * @purpose English/Dutch name and one-to-three-sentence definition for each astrology term a screen may explain through `GlossaryTerm`, so a term reads the same wherever it appears; optional per-locale `matches` lists the word forms the automatic body-text tooltips (#902) look for.
+ * @conventions Co-located i18n file exporting `{ en, nl }`; `nl` is typed as `typeof en`, so both locales carry every term. Definitions explain the idea and why it matters; they state no orbs, numbers or conventions beyond what the app itself uses. `matches` entries are lower-case word forms of the term (plurals, variants), never the display name itself.
  * @exports astroGlossaryMessages, GlossaryTermId, GLOSSARY_TERM_IDS
  */
 const en = {
@@ -22,15 +22,18 @@ const en = {
     name: 'Houses',
     definition:
       'Twelve divisions of the sky by place and time of birth, each tied to an area of life. Different house systems cut them differently.',
+    matches: ['house'],
   },
   aspect: {
     name: 'Aspect',
     definition:
       'A particular angle between two bodies, such as a conjunction, square or trine. Aspects are read as how the two bodies interact.',
+    matches: ['aspects'],
   },
   orb: {
     name: 'Orb',
     definition: 'How far an angle may be from exact and still count as an aspect.',
+    matches: ['orbs'],
   },
   applying: {
     name: 'Applying / separating',
@@ -46,20 +49,24 @@ const en = {
     name: 'Essential dignity',
     definition:
       'How well a planet is placed by sign: strongest in its own sign (rulership) and its exaltation, weakened in detriment and fall.',
+    matches: ['dignities'],
   },
   dispositor: {
     name: 'Dispositor',
     definition:
       'The planet that rules the sign another planet is in. Following dispositors from planet to planet shows which planet “runs” the others.',
+    matches: ['dispositors'],
   },
   chartRuler: {
     name: 'Chart ruler',
     definition: 'The planet that rules the sign on the Ascendant, read as the planet that stands for the whole chart.',
+    matches: ['chart rulers'],
   },
   declination: {
     name: 'Declination',
     definition:
       'How far a body stands north or south of the celestial equator. Two bodies at the same declination are in parallel, at opposite declinations in contraparallel.',
+    matches: ['declinations'],
   },
   antiscia: {
     name: 'Antiscia',
@@ -70,6 +77,15 @@ const en = {
     name: 'Derived point',
     definition:
       'A sensitive point worked out from other positions rather than a body in the sky, such as the Part of Fortune or a midpoint.',
+    matches: ['derived points'],
+  },
+  // Source for partOfFortune: src/astrology/arabic-parts.ts, Paulus's Hermetic lots (Introduction 23, via
+  // Hellenistic astrology, Chapter 16, printed pp. 525–526). Formula: day Asc + Moon − Sun; night Asc + Sun − Moon.
+  partOfFortune: {
+    name: 'Pars Fortunae',
+    definition:
+      'A calculated lot rather than a body in the sky: the distance from the Sun to the Moon is projected from the Ascendant by day, and the reverse by night. Traditionally read as where material fortune and physical prosperity show.',
+    matches: ['part of fortune', 'lot of fortune'],
   },
   sabianSymbol: {
     name: 'Sabian symbol',
@@ -84,31 +100,37 @@ const en = {
   transit: {
     name: 'Transit',
     definition: 'Where a planet is in the sky on a given day, compared with the positions in a birth chart.',
+    matches: ['transits'],
   },
   progression: {
     name: 'Secondary progression',
     definition:
       'A symbolic forecast that lets each day after birth stand for one year of life, then reads the chart of that day.',
+    matches: ['progressions'],
   },
   solarArc: {
     name: 'Solar arc',
     definition:
       'A symbolic forecast that moves every point forward by the distance the progressed Sun has travelled since birth.',
+    matches: ['solar arcs'],
   },
   primaryDirection: {
     name: 'Primary direction',
     definition:
       'A traditional forecast that turns the sky by the Earth’s rotation to bring one point to another, then converts that turning to years of life with a time key.',
+    matches: ['primary directions'],
   },
   profection: {
     name: 'Profection',
     definition:
       'A traditional yearly technique: each year of life advances the Ascendant by one sign, and the planet that rules it is the “lord of the year”.',
+    matches: ['profections'],
   },
   solarReturn: {
     name: 'Solar and lunar returns',
     definition:
       'The chart for the moment the Sun (or Moon) comes back to its exact birth position, read for the year (or month) ahead.',
+    matches: ['solar return', 'lunar return'],
   },
   synastry: {
     name: 'Synastry',
@@ -117,20 +139,24 @@ const en = {
   composite: {
     name: 'Composite chart',
     definition: 'One chart for a relationship, built from the midpoints between two people’s positions.',
+    matches: ['composite charts'],
   },
   draconic: {
     name: 'Draconic chart',
     definition: 'The chart rotated so the Moon’s North Node sits at 0° Aries, read as the soul’s underlying purpose.',
+    matches: ['draconic charts'],
   },
   harmonic: {
     name: 'Harmonic chart',
     definition:
       'A chart whose longitudes are multiplied by a whole number and wrapped around the zodiac, bringing out one kind of angular relationship.',
+    matches: ['harmonic charts'],
   },
   eclipse: {
     name: 'Eclipse',
     definition:
       'A New or Full Moon on the Moon’s nodes. Eclipses are read as turning points when they touch a birth chart.',
+    matches: ['eclipses'],
   },
   rectification: {
     name: 'Rectification',
@@ -157,15 +183,21 @@ const en = {
     name: 'Planetary cycle',
     definition:
       'The recurring pattern of a planet returning to or aspecting its own birth position, such as the Saturn return.',
+    matches: ['planetary cycles'],
   },
 } as const;
 
 interface Entry {
   readonly name: string;
   readonly definition: string;
+  /** Lower-case word forms a body-text match looks for in this locale, besides `name`. */
+  readonly matches?: readonly string[];
 }
 
-const nl: { readonly [K in keyof typeof en]: Entry } = {
+/** One locale's catalogue: every term id, each with the shared `Entry` shape (both locales use this type). */
+type Catalog = { readonly [K in keyof typeof en]: Entry };
+
+const nl: Catalog = {
   ascendant: {
     name: 'Ascendant',
     definition:
@@ -180,15 +212,18 @@ const nl: { readonly [K in keyof typeof en]: Entry } = {
     name: 'Huizen',
     definition:
       'Twaalf indelingen van de hemel op plaats en tijd van geboorte, elk verbonden met een levensgebied. Verschillende huizensystemen snijden ze anders.',
+    matches: ['huis'],
   },
   aspect: {
     name: 'Aspect',
     definition:
       'Een bepaalde hoek tussen twee hemellichamen, zoals een conjunctie, vierkant of driehoek. Aspecten worden gelezen als de wisselwerking tussen die twee.',
+    matches: ['aspecten'],
   },
   orb: {
     name: 'Orb',
     definition: 'Hoever een hoek van exact mag afwijken en toch als aspect geldt.',
+    matches: ['orbs'],
   },
   applying: {
     name: 'Toenemend / afnemend',
@@ -204,20 +239,26 @@ const nl: { readonly [K in keyof typeof en]: Entry } = {
     name: 'Essentiële waardigheid',
     definition:
       'Hoe goed een planeet naar teken staat: het sterkst in het eigen teken (heerschap) en in zijn verheffing, verzwakt in verbanning (detriment) en val.',
+    matches: ['waardigheden'],
   },
   dispositor: {
     name: 'Dispositor',
     definition:
       'De planeet die het teken regeert waarin een andere planeet staat. Door dispositors van planeet naar planeet te volgen zie je welke planeet de andere “aanstuurt”.',
+    // nl: check — plural of the loanword 'dispositor'.
+    matches: ['dispositors'],
   },
   chartRuler: {
     name: 'Horoscoopheerser',
     definition: 'De planeet die het teken van de Ascendant regeert; zij staat voor het hele horoscoopbeeld.',
+    // nl: check — plural of the compound 'horoscoopheerser'.
+    matches: ['horoscoopheersers'],
   },
   declination: {
     name: 'Declinatie',
     definition:
       'Hoever een hemellichaam ten noorden of zuiden van de hemelevenaar staat. Twee lichamen met dezelfde declinatie staan in parallel, met tegengestelde declinatie in contraparallel.',
+    matches: ['declinaties'],
   },
   antiscia: {
     name: 'Antiscia',
@@ -228,6 +269,15 @@ const nl: { readonly [K in keyof typeof en]: Entry } = {
     name: 'Afgeleid punt',
     definition:
       'Een gevoelig punt dat uit andere posities wordt berekend in plaats van een lichaam aan de hemel te zijn, zoals het Fortuna-punt of een middelpunt.',
+    matches: ['afgeleide punten'],
+  },
+  // nl: check — Dutch name and wording of the Hermetic lot 'Part of Fortune'; owner to approve before merge.
+  partOfFortune: {
+    name: 'Pars Fortunae',
+    definition:
+      "Een berekend punt (een lot) in plaats van een hemellichaam: de afstand van de Zon tot de Maan wordt overdag vanaf de Ascendant uitgezet, en 's nachts omgekeerd. Traditioneel gelezen als waar materiële welvaart en lichamelijk welzijn zichtbaar worden.",
+    // nl: check — 'fortuna-punt' is the Dutch word form already used in the derived-point definition above.
+    matches: ['fortuna-punt'],
   },
   sabianSymbol: {
     name: 'Sabian-symbool',
@@ -243,31 +293,41 @@ const nl: { readonly [K in keyof typeof en]: Entry } = {
     name: 'Transit',
     definition:
       'Waar een planeet op een bepaalde dag aan de hemel staat, vergeleken met de posities in een geboortehoroscoop.',
+    // nl: check — plural of the loanword 'transit'.
+    matches: ['transits'],
   },
   progression: {
     name: 'Secundaire progressie',
     definition:
       'Een symbolische voorspelling waarin elke dag na de geboorte één levensjaar voorstelt; daarna lees je de horoscoop van die dag.',
+    // nl: check — plural of 'secundaire progressie'.
+    matches: ['secundaire progressies'],
   },
   solarArc: {
     name: 'Zonneboog',
     definition:
       'Een symbolische voorspelling die elk punt vooruit schuift over de afstand die de geprogresseerde Zon sinds de geboorte heeft afgelegd.',
+    matches: ['zonnebogen'],
   },
   primaryDirection: {
     name: 'Primaire directie',
     definition:
       'Een traditionele voorspelling die de hemel met de aardrotatie draait om het ene punt bij het andere te brengen en die draaiing met een tijdsleutel omzet in levensjaren.',
+    // nl: check — plural of 'primaire directie'.
+    matches: ['primaire directies'],
   },
   profection: {
     name: 'Profectie',
     definition:
       'Een traditionele jaartechniek: elk levensjaar schuift de Ascendant één teken op, en de heerser daarvan is de “heer van het jaar”.',
+    matches: ['profecties'],
   },
   solarReturn: {
     name: 'Zonne- en maanterugkeer',
     definition:
       'De horoscoop van het moment waarop de Zon (of Maan) terugkeert op haar exacte geboorteplaats, gelezen voor het komende jaar (of de komende maand).',
+    // nl: check — 'zonneterugkeer' and 'maanterugkeer' are the Dutch word forms of the English aliases.
+    matches: ['zonneterugkeer', 'maanterugkeer'],
   },
   synastry: {
     name: 'Synastrie',
@@ -276,21 +336,25 @@ const nl: { readonly [K in keyof typeof en]: Entry } = {
   composite: {
     name: 'Composiethoroscoop',
     definition: 'Eén horoscoop voor een relatie, opgebouwd uit de middelpunten tussen de posities van twee mensen.',
+    matches: ['composiethoroscopen'],
   },
   draconic: {
     name: 'Draconische horoscoop',
     definition:
       'De horoscoop gedraaid zodat de Noordknoop van de Maan op 0° Ram staat, gelezen als het onderliggende zielsdoel.',
+    matches: ['draconische horoscopen'],
   },
   harmonic: {
     name: 'Harmonische horoscoop',
     definition:
       'Een horoscoop waarvan de lengtes met een geheel getal worden vermenigvuldigd en om de dierenriem gewikkeld, waardoor één soort hoekverhouding naar voren komt.',
+    matches: ['harmonische horoscopen'],
   },
   eclipse: {
     name: 'Eclips',
     definition:
       'Een Nieuwe of Volle Maan op de knopen van de Maan. Eclipsen gelden als keerpunten wanneer ze een geboortehoroscoop raken.',
+    matches: ['eclipsen'],
   },
   rectification: {
     name: 'Rectificatie',
@@ -318,9 +382,11 @@ const nl: { readonly [K in keyof typeof en]: Entry } = {
     name: 'Planetaire cyclus',
     definition:
       'Het terugkerende patroon waarin een planeet terugkeert naar of aspecteert met zijn eigen geboorteplaats, zoals de Saturnusterugkeer.',
+    // nl: check — plural of 'planetaire cyclus'.
+    matches: ['planetaire cycli'],
   },
 };
 
 export type GlossaryTermId = keyof typeof en;
 export const GLOSSARY_TERM_IDS = Object.keys(en) as readonly GlossaryTermId[];
-export const astroGlossaryMessages = { en, nl };
+export const astroGlossaryMessages: { readonly en: Catalog; readonly nl: Catalog } = { en, nl };
