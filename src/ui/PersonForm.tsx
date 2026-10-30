@@ -215,7 +215,9 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
               <TimeField
                 label={t.timeLabel}
                 step={60}
-                value={timeToHhMm(current.time)}
+                /* An unknown time is unset (#795, owner 2026-10-30): the field shows nothing, not the 00:00 the
+                  record stores for it. The stored value is untouched and is not used while the time is unknown. */
+                value={unknown ? '' : timeToHhMm(current.time)}
                 disabled={unknown}
                 error={errors.time}
                 extraDescribedBy={unknown ? `${unknownTimeHintId}-reason` : undefined}
