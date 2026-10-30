@@ -48,6 +48,7 @@ import { FilterSummary } from './primitives/FilterSummary.js';
 import { EmptyState } from './primitives/EmptyState.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { BackLink } from './BackLink.js';
+import { PageHeader } from './PageHeader.js';
 
 const PAGE_SIZE = 50;
 
@@ -262,7 +263,7 @@ export function CorpusOverridesPanel(): React.JSX.Element {
     <main className="shell admin-view">
       <div className="admin-view-head">
         <BackLink fallback="#/admin" />
-        <h1>{t.heading}</h1>
+        <PageHeader title={t.heading} />
         <p>{t.intro}</p>
       </div>
       <div className="admin-stack">

@@ -124,8 +124,9 @@ describe('PersonForm card layout (#795)', () => {
     const notes = card('notes');
     expect(notes.querySelector('textarea')).not.toBeNull();
     expect([...notes.querySelectorAll('button')].map((button) => button.textContent)).not.toContain(t.saveButton);
-    const header = container?.querySelector('.birth-record-title-row');
+    const header = container?.querySelector('.page-header-row');
     expect(header?.querySelector('h1')).not.toBeNull();
+    expect(header?.parentElement?.className).toBe('page-header');
     const save = header?.querySelector('.birth-record-save button');
     expect(save?.textContent).toBe(t.saveButton);
     expect(container?.querySelector('.sticky-actions')).toBeNull();

@@ -219,7 +219,7 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <h1>{t.astrocartographyFallback}</h1>
+        <PageHeader title={t.astrocartographyFallback} />
         <p>
           {t.notCompleteMap(person.displayName || t.thisPerson)} <a href={personHref(personId)}>{t.personPageLink}</a>.
         </p>
@@ -231,7 +231,7 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <h1>{t.astrocartographyFallback}</h1>
+        <PageHeader title={t.astrocartographyFallback} />
         <p>{t.needsKnownTime(person.displayName || t.thisPerson)}</p>
       </main>
     );

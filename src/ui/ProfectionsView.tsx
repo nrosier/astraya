@@ -43,6 +43,7 @@ import { wheelCorpus } from './wheel-corpus.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { useStableMoment } from './use-stable-moment.js';
 import { BackLink } from './BackLink.js';
+import { PageHeader } from './PageHeader.js';
 
 type Load =
   | { readonly kind: 'loading' }
@@ -160,7 +161,7 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <h1>{t.profectionsFallback}</h1>
+        <PageHeader title={t.profectionsFallback} />
         <p>
           {t.notCompleteProfections(person.displayName || t.thisPerson)}{' '}
           <a href={personHref(personId)}>{t.personPageLink}</a>.
@@ -173,7 +174,7 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <h1>{t.profectionsFallback}</h1>
+        <PageHeader title={t.profectionsFallback} />
         <p>{t.needsKnownTime(person.displayName || t.thisPerson)}</p>
       </main>
     );
@@ -185,7 +186,7 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
   return (
     <main className="shell">
       <BackLink fallback={personHref(personId)} />
-      <h1>{person.displayName ? t.heading(person.displayName) : t.profectionsFallback}</h1>
+      <PageHeader title={person.displayName ? t.heading(person.displayName) : t.profectionsFallback} />
       <p className="hint">{t.hint}</p>
 
       <section className="profections-rulers-section" aria-labelledby="rulers-heading">

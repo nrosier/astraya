@@ -45,6 +45,7 @@ import { UnreadableSettingsNotice } from './UnreadableSettingsNotice.js';
 import { orbsOf } from '../chart/extended-settings.js';
 import { useStableBy, useStableMoment } from './use-stable-moment.js';
 import { BackLink } from './BackLink.js';
+import { PageHeader } from './PageHeader.js';
 
 type Load =
   | { readonly kind: 'idle' }
@@ -227,7 +228,7 @@ export function RelocatedChartView({
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <h1>{t.relocatedChartFallback}</h1>
+        <PageHeader title={t.relocatedChartFallback} />
         <p>
           {t.needsCompleteRecord(person.displayName || t.thisPerson)}{' '}
           <a href={personHref(personId)}>{t.personPageLink}</a>.
@@ -241,7 +242,7 @@ export function RelocatedChartView({
   return (
     <main className="shell shell--wide">
       <BackLink fallback={personHref(personId)} />
-      <h1>{person.displayName ? t.heading(person.displayName) : t.headingFallback}</h1>
+      <PageHeader title={person.displayName ? t.heading(person.displayName) : t.headingFallback} />
       <ChartTypeSelector personId={personId} type="relocated" view={view} />
       <p className="hint">{t.hint}</p>
 

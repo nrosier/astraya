@@ -71,6 +71,7 @@ import { chartViewMessages } from './ChartView.messages.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { useLocale } from './locale.js';
 import { BackLink } from './BackLink.js';
+import { PageHeader } from './PageHeader.js';
 import { PdfAiInterpretationPicker } from './PdfAiInterpretationPicker.js';
 import { useSessionUserOrUndefined } from './session-context.js';
 import { useShowDegreeSymbol } from './degree-symbol-setting.js';
@@ -407,7 +408,7 @@ export function PdfExportBuilder({ embedded = false }: { readonly embedded?: boo
   return (
     <Frame className={embedded ? undefined : 'shell'}>
       {!embedded && <BackLink fallback="#/people" />}
-      {embedded ? <h2>{t.heading}</h2> : <h1>{t.heading}</h1>}
+      {embedded ? <h2>{t.heading}</h2> : <PageHeader title={t.heading} />}
       <p className="hint">{t.hint}</p>
 
       <div className="field-grid">
