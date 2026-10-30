@@ -1,15 +1,16 @@
 // @vitest-environment jsdom
 /**
- * The birth record's card layout (#795): the markup order is the single-column order, so the resolved
- * timezone card comes before Save changes (D-795b), Save changes is the last control of the Notes card,
- * the raw timezone-data string is always shown (D-795a), the overrides sit in a Disclosure, and the
- * sticky action bar is gone.
+ * The birth record's card layout (#795, #896): the markup order is the single-column order. Save changes sits in
+ * the page header (#896, overriding D-795b), the resolved timezone is an inline row at the foot of the location
+ * card, the raw timezone-data string stays reachable behind Show details (D-795a), the overrides sit in a
+ * Disclosure, and the sticky action bar is gone.
  */
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { openStore, type Store } from '../src/store/store.js';
 import { personFormMessages } from '../src/ui/PersonForm.messages.js';
+import { personFileActionsMessages } from '../src/ui/PersonFileActions.messages.js';
 
 vi.mock('../src/ui/EphemerisProviderContext.js', () => ({
   useEphemerisProvider: () => ({ provider: undefined, error: undefined }),
@@ -19,6 +20,7 @@ const { PersonForm } = await import('../src/ui/PersonForm.js');
 const { StoreProvider } = await import('../src/ui/store-context.js');
 
 const t = personFormMessages.en;
+const tFiles = personFileActionsMessages.en;
 let counter = 0;
 let store: Store;
 let root: Root | undefined;
@@ -58,7 +60,7 @@ afterEach(() => {
 });
 
 function cards(): HTMLElement[] {
-  return [...(container?.querySelectorAll<HTMLElement>('.birth-record > section.birth-record-card') ?? [])];
+  return [...(container?.querySelectorAll<HTMLElement>('.birth-record section.birth-record-card') ?? [])];
 }
 
 function card(modifier: string): HTMLElement {
@@ -68,18 +70,23 @@ function card(modifier: string): HTMLElement {
 }
 
 describe('PersonForm card layout (#795)', () => {
-  it('orders the cards identity, place, resolved timezone, notes and save, files, danger', () => {
+  it('orders the cards identity, place, notes, replace data, export, danger', () => {
     const order = cards().map((element) =>
       [...element.classList].find((name) => name.startsWith('birth-record-card--')),
     );
     expect(order).toEqual([
       'birth-record-card--identity',
       'birth-record-card--location',
-      'birth-record-card--timezone',
       'birth-record-card--notes',
       'birth-record-card--files',
+      'birth-record-card--replace',
       'birth-record-card--danger',
     ]);
+  });
+
+  it('has no resolved-timezone card; the timezone is a status row inside the location card (#896)', () => {
+    expect(container?.querySelector('.birth-record-card--timezone')).toBeNull();
+    expect(card('location').querySelector('.birth-record-timezone')).not.toBeNull();
   });
 
   it('puts the date, how the time is known, and the time in the identity card, and the coordinates in the place card', () => {
@@ -111,31 +118,58 @@ describe('PersonForm card layout (#795)', () => {
     expect(kinds).toEqual(['date', 'rating', 'time']);
   });
 
-  it('keeps Save changes as the last control of the Notes card, after the resolved timezone card', () => {
+  it('puts Save changes in the page header beside the title, not inside the Notes card (#896)', () => {
     const notes = card('notes');
     expect(notes.querySelector('textarea')).not.toBeNull();
-    const controls = [...notes.querySelectorAll('textarea, button')];
-    expect(controls.at(-1)?.textContent).toBe(t.saveButton);
-    const timezone = card('timezone');
-    expect(timezone.compareDocumentPosition(notes) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect([...notes.querySelectorAll('button')].map((button) => button.textContent)).not.toContain(t.saveButton);
+    const header = container?.querySelector('.birth-record-title-row');
+    expect(header?.querySelector('h1')).not.toBeNull();
+    const save = header?.querySelector('.birth-record-save button');
+    expect(save?.textContent).toBe(t.saveButton);
     expect(container?.querySelector('.sticky-actions')).toBeNull();
   });
 
-  it('shows the raw timezone data as a tabular value, with the overrides behind a Disclosure', () => {
-    const timezone = card('timezone');
-    expect(timezone.querySelector('.birth-record-raw')?.textContent).toMatch(/\S/);
-    expect(timezone.querySelector('.primitive-disclosure-title')?.textContent).toBe(t.overridesTitle);
-    const trigger = timezone.querySelector('button.primitive-disclosure-trigger');
-    expect(trigger?.getAttribute('aria-expanded')).toBe('false');
-    expect(timezone.querySelector('.birth-record-overrides')).toBeNull();
-    act(() => {
-      (trigger as HTMLButtonElement).click();
-    });
-    expect(timezone.querySelector('.birth-record-overrides input')).not.toBeNull();
+  it('shows the timezone as an inline status row with a Show details control (#896)', () => {
+    const row = card('location').querySelector('.birth-record-timezone');
+    expect(row?.querySelector('.birth-record-timezone-status')?.textContent).toMatch(/\S/);
+    const details = row?.querySelector('.primitive-disclosure-title');
+    expect(details?.textContent).toBe(t.timezoneDetailsTitle);
+    expect(row?.querySelector('.primitive-disclosure-action')?.textContent).toBe(t.timezoneShowDetails);
   });
 
-  it('has a danger card with the delete button and a files card with the download buttons', () => {
+  it('shows the raw timezone data as a tabular value, with the overrides behind a Disclosure (D-795a)', () => {
+    const row = card('location').querySelector<HTMLElement>('.birth-record-timezone');
+    if (row === null) throw new Error('test fixture bug: no timezone row');
+    const outer = row.querySelector('button.primitive-disclosure-trigger');
+    expect(outer?.getAttribute('aria-expanded')).toBe('false');
+    expect(row.querySelector('.birth-record-raw')).toBeNull();
+    act(() => {
+      (outer as HTMLButtonElement).click();
+    });
+    expect(row.querySelector('.birth-record-raw')?.textContent).toMatch(/\S/);
+    const overrides = row.querySelector('.birth-record-overrides');
+    expect(overrides).toBeNull();
+    const inner = [...row.querySelectorAll<HTMLButtonElement>('button.primitive-disclosure-trigger')].at(-1);
+    expect(inner?.querySelector('.primitive-disclosure-title')?.textContent).toBe(t.overridesTitle);
+    act(() => {
+      inner?.click();
+    });
+    expect(row.querySelector('.birth-record-overrides input')).not.toBeNull();
+  });
+
+  it('has a replace card with the import control and a files card with the three download buttons (#896)', () => {
+    expect(card('replace').querySelector('input[type="file"]')).not.toBeNull();
+    expect(card('replace').querySelector('.birth-record-export-row')).toBeNull();
+    const row = card('files').querySelector('.birth-record-export-row');
+    expect([...(row?.querySelectorAll('button') ?? [])].map((button) => button.textContent)).toEqual([
+      tFiles.exportAaf,
+      tFiles.exportJson,
+      tFiles.exportCsv,
+    ]);
+    expect(card('files').querySelector('input[type="file"]')).toBeNull();
+  });
+
+  it('has a danger card with the delete button', () => {
     expect(card('danger').querySelector('button.danger')?.textContent).toBe(t.deleteButton('Ada Lovelace'));
-    expect(card('files').querySelectorAll('button').length).toBeGreaterThanOrEqual(3);
   });
 });
