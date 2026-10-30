@@ -13,14 +13,21 @@
  *
  *   node scripts/run-without-warnings.mjs <command> [args...]
  *
+ * Termination signals (SIGINT, SIGTERM, SIGHUP) received by this wrapper are forwarded to the
+ * child, so an interrupted run does not leave the child orphaned. The wrapper then exits with the
+ * child's exit code, or 128 + signal number if the child died from a signal.
+ *
  * Used by the `test` and `build` npm scripts in package.json.
  */
 import { spawn } from 'node:child_process';
+import { constants } from 'node:os';
 
 // Node's own emitted warnings always look like "(node:12345) FooWarning: ...". Vite's size
 // warning doesn't follow that shape, so it gets its own pattern. Add future offenders here
 // rather than loosening either regex.
 const WARNING_PATTERNS = [/\(node:\d+\)\s+\w*Warning:/, /chunks are larger than \d+\s*k?B after minification/i];
+
+const FORWARDED_SIGNALS = ['SIGINT', 'SIGTERM', 'SIGHUP'];
 
 const [command, ...args] = process.argv.slice(2);
 if (command === undefined) {
@@ -30,6 +37,14 @@ if (command === undefined) {
 
 let combinedOutput = '';
 const child = spawn(command, args, { stdio: ['inherit', 'pipe', 'pipe'] });
+
+// Pass termination signals on to the child so it is not orphaned when this wrapper is killed.
+const forwardSignal = (signal) => {
+  child.kill(signal);
+};
+for (const signal of FORWARDED_SIGNALS) {
+  process.on(signal, forwardSignal);
+}
 
 child.stdout.on('data', (chunk) => {
   process.stdout.write(chunk);
@@ -45,7 +60,11 @@ child.on('error', (error) => {
   process.exit(1);
 });
 
-child.on('close', (code) => {
+child.on('close', (code, signal) => {
+  for (const forwarded of FORWARDED_SIGNALS) {
+    process.off(forwarded, forwardSignal);
+  }
+
   const matched = WARNING_PATTERNS.find((pattern) => pattern.test(combinedOutput));
   if (matched !== undefined) {
     console.error(
@@ -55,5 +74,7 @@ child.on('close', (code) => {
     );
     process.exit(1);
   }
-  process.exit(code ?? 1);
+  // A child killed by a signal has no exit code; report it as 128 + signal number.
+  const signalExitCode = signal === null ? 1 : 128 + (constants.signals[signal] ?? 0);
+  process.exit(code ?? signalExitCode);
 });
