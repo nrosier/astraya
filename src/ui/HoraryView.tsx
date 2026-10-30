@@ -203,69 +203,73 @@ export function HoraryView({ view }: { readonly view?: ChartViewKind | undefined
       </div>
 
       {fieldError !== undefined && <StatusMessage kind="error">{t.fieldErrors[fieldError]}</StatusMessage>}
-      {result.kind === 'error' && <StatusMessage kind="error">{t.error(result.message)}</StatusMessage>}
+      {/* The result region: busy while the chart is cast, as the Astrocartography map is. */}
+      <div aria-busy={result.kind === 'casting'}>
+        {result.kind === 'error' && <StatusMessage kind="error">{t.error(result.message)}</StatusMessage>}
 
-      {ready !== undefined && (
-        <>
-          <h2>{t.considerationsHeading}</h2>
-          {/* Every consideration is a verdict on this chart, so none exists before one is cast. */}
-          {!ready.chart.housesAvailable && <StatusMessage kind="partial">{t.noHouses}</StatusMessage>}
-          <p className={isRadical(ready.chart.considerations) ? 'horary-verdict' : 'horary-verdict warning'}>
-            {isRadical(ready.chart.considerations)
-              ? ready.chart.considerations.some((consideration) => consideration.applies)
-                ? t.radicalWithSoftened
-                : t.radical
-              : t.notRadical(
-                  ready.chart.considerations.filter((consideration) => consideration.applies && !consideration.softened)
-                    .length,
+        {ready !== undefined && (
+          <>
+            <h2>{t.considerationsHeading}</h2>
+            {/* Every consideration is a verdict on this chart, so none exists before one is cast. */}
+            {!ready.chart.housesAvailable && <StatusMessage kind="partial">{t.noHouses}</StatusMessage>}
+            <p className={isRadical(ready.chart.considerations) ? 'horary-verdict' : 'horary-verdict warning'}>
+              {isRadical(ready.chart.considerations)
+                ? ready.chart.considerations.some((consideration) => consideration.applies)
+                  ? t.radicalWithSoftened
+                  : t.radical
+                : t.notRadical(
+                    ready.chart.considerations.filter(
+                      (consideration) => consideration.applies && !consideration.softened,
+                    ).length,
+                  )}
+            </p>
+            <ul className="horary-considerations">
+              {ready.chart.considerations.map((consideration) => {
+                const copy = t.considerations[consideration.key];
+                return (
+                  <li key={consideration.key} className={consideration.applies ? 'applies' : 'clear'}>
+                    <strong>{copy?.label ?? consideration.key}</strong>
+                    {' — '}
+                    <span className="horary-status">
+                      {consideration.applies ? (consideration.softened ? t.appliesSoftened : t.applies) : t.clear}
+                    </span>
+                    <br />
+                    <span className="hint">{copy?.explanation}</span>
+                  </li>
+                );
+              })}
+            </ul>
+            <p className="hint">{voidOfCourseSentence(ready.chart.voidOfCourse, transit, locale)}</p>
+
+            {judgment !== undefined && (
+              <section aria-labelledby="horary-judgment-heading">
+                <h2 id="horary-judgment-heading">{t.judgmentHeading}</h2>
+                <p className="hint">{t.judgmentSource}</p>
+                <p>{t.significators(judgment.querent.rulerKey, judgment.quesited.rulerKey, judgment.quesited.house)}</p>
+                <p>{t.perfection[judgment.perfection.kind]}</p>
+                {judgment.perfection.timeToPerfectDays !== undefined && (
+                  <p className="hint">{t.timing(formatFixed(judgment.perfection.timeToPerfectDays, 1))}</p>
                 )}
-          </p>
-          <ul className="horary-considerations">
-            {ready.chart.considerations.map((consideration) => {
-              const copy = t.considerations[consideration.key];
-              return (
-                <li key={consideration.key} className={consideration.applies ? 'applies' : 'clear'}>
-                  <strong>{copy?.label ?? consideration.key}</strong>
-                  {' — '}
-                  <span className="horary-status">
-                    {consideration.applies ? (consideration.softened ? t.appliesSoftened : t.applies) : t.clear}
-                  </span>
-                  <br />
-                  <span className="hint">{copy?.explanation}</span>
-                </li>
-              );
-            })}
-          </ul>
-          <p className="hint">{voidOfCourseSentence(ready.chart.voidOfCourse, transit, locale)}</p>
+                <p>{t.reception[judgment.reception.kind]}</p>
+                {judgment.receptionAidsPerfection && <p className="hint">{t.receptionAidsPerfection}</p>}
+              </section>
+            )}
 
-          {judgment !== undefined && (
-            <section aria-labelledby="horary-judgment-heading">
-              <h2 id="horary-judgment-heading">{t.judgmentHeading}</h2>
-              <p className="hint">{t.judgmentSource}</p>
-              <p>{t.significators(judgment.querent.rulerKey, judgment.quesited.rulerKey, judgment.quesited.house)}</p>
-              <p>{t.perfection[judgment.perfection.kind]}</p>
-              {judgment.perfection.timeToPerfectDays !== undefined && (
-                <p className="hint">{t.timing(formatFixed(judgment.perfection.timeToPerfectDays, 1))}</p>
-              )}
-              <p>{t.reception[judgment.reception.kind]}</p>
-              {judgment.receptionAidsPerfection && <p className="hint">{t.receptionAidsPerfection}</p>}
-            </section>
-          )}
-
-          <ChartDataView
-            rulership={rulership}
-            load={{ kind: 'ready', data: ready.chart.data }}
-            displayName={t.chartName}
-            showHouses={ready.chart.housesAvailable}
-            metaLines={chartSheetMetaLines(t.chartName, ready.moment, locale)}
-            view={view ?? 'wheel'}
-            onViewChange={(next) => {
-              replaceRoute(horaryHref(next));
-            }}
-            buildViewHref={horaryHref}
-          />
-        </>
-      )}
+            <ChartDataView
+              rulership={rulership}
+              load={{ kind: 'ready', data: ready.chart.data }}
+              displayName={t.chartName}
+              showHouses={ready.chart.housesAvailable}
+              metaLines={chartSheetMetaLines(t.chartName, ready.moment, locale)}
+              view={view ?? 'wheel'}
+              onViewChange={(next) => {
+                replaceRoute(horaryHref(next));
+              }}
+              buildViewHref={horaryHref}
+            />
+          </>
+        )}
+      </div>
     </main>
   );
 }

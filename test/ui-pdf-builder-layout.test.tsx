@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /**
  * #916 — the Documents page is the PDF builder itself. One h1 in the shared PageHeader; the starting point and Build PDF
- * sit in its action area; the advanced groups start collapsed (Disclosure, not an AdvancedGroup primitive); the Charts
+ * sit in its action area; the advanced groups start collapsed (the shared AdvancedGroup primitive); the Charts
  * section has no checkbox of its own; consultation notes are a disabled, planned item until #919.
  */
 import { act } from 'react';
@@ -70,6 +70,7 @@ describe('the Documents page is the PDF builder (#916)', () => {
     const triggers = [...container.querySelectorAll<HTMLButtonElement>('.primitive-disclosure-trigger')];
     expect(triggers).toHaveLength(5);
     for (const trigger of triggers) expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    expect(container.querySelectorAll('.primitive-disclosure.open')).toHaveLength(0);
   });
 
   it('has no Charts-level checkbox: Charts is a disclosure only', async () => {

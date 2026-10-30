@@ -85,6 +85,44 @@ test.describe('with the shared people (#799)', () => {
     await expect(page.getByLabel('Name', { exact: true })).toHaveValue(BORN.name);
   });
 
+  test('puts Save at the right content edge, level with the page title, at 1280x800 and 390x844 (#896)', async () => {
+    test.setTimeout(60_000);
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await page.getByRole('link', { name: 'Birth record', exact: true }).click();
+    const save = page.locator('.birth-record-save').getByRole('button', { name: 'Save', exact: true });
+    const title = page.locator('.page-header-row h1');
+    await expect(save).toBeVisible();
+    await expect(title).toBeVisible();
+    for (const viewport of [
+      { width: 1280, height: 800 },
+      { width: 390, height: 844 },
+    ]) {
+      await page.setViewportSize(viewport);
+      const measured = await Promise.all([
+        save.boundingBox(),
+        title.boundingBox(),
+        // The page's right content edge: the shell's right border edge less its right padding.
+        page.evaluate(
+          `(() => {
+            const shell = document.querySelector('main.shell');
+            if (shell === null) return Number.NaN;
+            return shell.getBoundingClientRect().right - parseFloat(getComputedStyle(shell).paddingRight);
+          })()`,
+        ),
+      ]);
+      const [saveBox, titleBox, contentRight] = measured;
+      if (saveBox === null || titleBox === null || typeof contentRight !== 'number') {
+        throw new Error('Save, title or content edge not laid out');
+      }
+      const saveCentre = saveBox.y + saveBox.height / 2;
+      const titleCentre = titleBox.y + titleBox.height / 2;
+      expect(Math.abs(saveBox.x + saveBox.width - contentRight), `${String(viewport.width)}px right edge`).toBeLessThan(
+        1,
+      );
+      expect(Math.abs(saveCentre - titleCentre), `${String(viewport.width)}px vertical centre`).toBeLessThan(2);
+    }
+  });
+
   test('lays the birth record out as a 60/40 pair of columns at 1280px and one column at 390px (#795, #896)', async () => {
     test.setTimeout(60_000);
     await page.setViewportSize({ width: 1280, height: 800 });

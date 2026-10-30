@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /**
  * The Charts page title names the chart type as well as the person (#885): "Natal · Name" for the
- * natal chart, the comparison label when two charts are compared, in both locales, in the h1 and in
+ * natal chart, "Natal and harmonic charts · Name" when two charts are compared, in both locales, in the h1 and in
  * document.title. Real store (fake-indexeddb via test/setup.ts). The draconic, harmonic, return and
  * relocated charts are separate screens whose own headings already name their type.
  */
@@ -85,15 +85,24 @@ describe('chart title names the chart type (#885)', () => {
     expect(document.title).toBe('Natal · Ada');
   });
 
-  it('comparison: the h1 uses the existing comparison label', async () => {
+  it('comparison: the h1 and document.title read "Natal and harmonic charts · Ada"', async () => {
     const host = await mountChart('draconic');
-    expect(host.querySelector('h1')?.textContent).toBe(`${chartViewMessages.en.comparisonLabel} · Ada`);
-    expect(document.title).toBe('Comparison · Ada');
+    expect(host.querySelector('h1')?.textContent).toBe(chartViewMessages.en.comparisonChartTitle('Ada'));
+    expect(host.querySelector('h1')?.textContent).toBe('Natal and harmonic charts · Ada');
+    expect(document.title).toBe('Natal and harmonic charts · Ada');
   });
 
   it('Dutch: uses the existing Dutch natal label', async () => {
     setLocale('nl');
     const host = await mountChart();
     expect(host.querySelector('h1')?.textContent).toBe(`${chartTypesMessages.nl.typeLabels.natal} · Ada`);
+  });
+
+  it('Dutch comparison: the h1 and document.title read the Dutch comparison title', async () => {
+    setLocale('nl');
+    const host = await mountChart('draconic');
+    expect(host.querySelector('h1')?.textContent).toBe(chartViewMessages.nl.comparisonChartTitle('Ada'));
+    expect(host.querySelector('h1')?.textContent).toBe('Geboorte- en harmonische horoscopen · Ada');
+    expect(document.title).toBe('Geboorte- en harmonische horoscopen · Ada');
   });
 });
