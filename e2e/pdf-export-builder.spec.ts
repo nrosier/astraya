@@ -224,6 +224,40 @@ test('on a phone the Build PDF bar is pinned to the bottom of the screen (#916)'
   expect(results.violations).toEqual([]);
 });
 
+for (const viewport of [
+  { width: 390, height: 844 },
+  { width: 1280, height: 800 },
+  { width: 3440, height: 1440 },
+] as const) {
+  test(`the Documents layout at ${String(viewport.width)}x${String(viewport.height)}: 60/40 on desktop, one column on a phone, full-width person picker (#916)`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(viewport);
+    await gotoAndSettle(page, `${baseUrl}/#/documents`);
+    await expect(page.getByRole('heading', { name: 'Build a PDF', level: 1 })).toBeVisible();
+    expect(await page.evaluate('document.documentElement.scrollWidth - window.innerWidth')).toBeLessThanOrEqual(1);
+    const left = await page.locator('.pdf-builder-grid > .pdf-builder-column').first().boundingBox();
+    const right = await page.getByRole('complementary', { name: 'Export summary' }).boundingBox();
+    const person = await page.getByLabel('Person', { exact: true }).boundingBox();
+    if (left === null || right === null || person === null) throw new Error('the Documents columns did not render');
+    // The person dropdown spans its whole column.
+    expect(Math.abs(person.width - left.width)).toBeLessThanOrEqual(1);
+    if (viewport.width < 1024) {
+      // A phone: one column, the summary below the selection.
+      expect(right.y).toBeGreaterThan(left.y);
+      expect(Math.abs(right.x - left.x)).toBeLessThanOrEqual(1);
+    } else {
+      // Desktop: side by side, the left column 3fr and the right 2fr (60/40).
+      expect(right.x).toBeGreaterThan(left.x + left.width - 1);
+      const share = left.width / (left.width + right.width);
+      expect(share).toBeGreaterThan(0.57);
+      expect(share).toBeLessThan(0.63);
+    }
+    // The advanced groups start collapsed at every size.
+    await expect(page.getByRole('button', { name: /^Charts/ })).toHaveAttribute('aria-expanded', 'false');
+  });
+}
+
 test('Documents starts on the person whose pages were open, not the first in the list (#709)', async ({ page }) => {
   test.setTimeout(60_000);
   await gotoAndSettle(page, `${baseUrl}/#/people`);
