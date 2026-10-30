@@ -245,6 +245,163 @@ describe('inline glossary tooltips on wrapped captions (#901)', () => {
   );
 });
 
+/**
+ * Headings and prose that name a removed top-of-view term (#901): each view's own page header or copy opens the
+ * term's definition on that view. The term is a `GlossaryTerm` trigger whose text is the heading itself.
+ */
+const headingTerms: readonly { view: string; term: GlossaryTermId; node: () => React.JSX.Element }[] = [
+  { view: 'AstrocartographyView', term: 'astrocartography', node: () => <AstrocartographyView personId="p1" /> },
+  { view: 'CyclesView', term: 'cycle', node: () => <CyclesView /> },
+  { view: 'ElectionalView', term: 'electional', node: () => <ElectionalView /> },
+  { view: 'EclipsesView', term: 'eclipse', node: () => <EclipsesView /> },
+  { view: 'HoraryView', term: 'horary', node: () => <HoraryView view="wheel" /> },
+  { view: 'RectificationView', term: 'rectification', node: () => <RectificationView /> },
+  { view: 'CompositeView', term: 'composite', node: () => <CompositeView personId="p1" view="wheel" /> },
+  {
+    view: 'DraconicView',
+    term: 'draconic',
+    node: () => <DraconicView personId="p1" view="wheel" compareType={undefined} />,
+  },
+  {
+    view: 'HarmonicView',
+    term: 'harmonic',
+    node: () => <HarmonicView personId="p1" view="wheel" compareType={undefined} />,
+  },
+  { view: 'SynastryView', term: 'synastry', node: () => <SynastryView personId="p1" /> },
+  { view: 'TransitView', term: 'transit', node: () => <TransitView personId="p1" /> },
+  { view: 'ProgressionsView', term: 'progression', node: () => <ProgressionsView personId="p1" /> },
+  { view: 'SolarArcView', term: 'solarArc', node: () => <SolarArcView personId="p1" /> },
+  { view: 'PrimaryDirectionsView', term: 'primaryDirection', node: () => <PrimaryDirectionsView personId="p1" /> },
+  { view: 'ProfectionsView', term: 'profection', node: () => <ProfectionsView personId="p1" /> },
+  {
+    view: 'ReturnView',
+    term: 'solarReturn',
+    node: () => <ReturnView personId="p1" kind="solar-return" view="wheel" compareType={undefined} />,
+  },
+];
+
+describe('inline glossary tooltips on view headings (#901)', () => {
+  afterEach(() => {
+    setLocale('en');
+  });
+
+  it.each((['en', 'nl'] as const).flatMap((locale) => headingTerms.map((row) => ({ locale, ...row }))))(
+    '$view heading opens the $term glossary tooltip in $locale',
+    async ({ locale, term, node }) => {
+      setLocale(locale);
+      const container = document.createElement('div');
+      document.body.append(container);
+      const root = createRoot(container);
+      try {
+        await act(async () => {
+          root.render(node());
+          await Promise.resolve();
+        });
+        // The whole heading is the trigger, so its text is the heading's own visible text.
+        const heading = container.querySelector('h1');
+        const trigger = heading?.querySelector('.glossary-term');
+        expect(trigger, `${term} trigger in ${locale}`).not.toBeNull();
+        expect(trigger?.textContent, `${term} trigger text in ${locale}`).toBe(heading?.textContent);
+      } finally {
+        act(() => {
+          root.unmount();
+        });
+        container.remove();
+      }
+    },
+  );
+});
+
+/**
+ * Prose that names a removed term (#901): the view's own hint paragraph opens the term's definition, the visible word
+ * is the trigger's text. Each row is the first mention in that paragraph, as `GlossaryText` marks it.
+ */
+const proseTerms: readonly {
+  view: string;
+  term: GlossaryTermId;
+  visible: { readonly en: string; readonly nl: string };
+  node: () => React.JSX.Element;
+}[] = [
+  {
+    view: 'AstrocartographyView',
+    term: 'localSpace',
+    visible: { en: 'Local Space', nl: 'Local Space' },
+    node: () => <AstrocartographyView personId="p1" />,
+  },
+  {
+    view: 'ProfectionsView',
+    term: 'profection',
+    visible: { en: 'profections', nl: 'profecties' },
+    node: () => <ProfectionsView personId="p1" />,
+  },
+  {
+    view: 'CyclesView',
+    term: 'aspect',
+    visible: { en: 'aspect', nl: 'aspect' },
+    node: () => <CyclesView />,
+  },
+  {
+    view: 'SynastryView',
+    term: 'aspect',
+    visible: { en: 'aspects', nl: 'aspecten' },
+    node: () => <SynastryView personId="p1" />,
+  },
+  {
+    view: 'DraconicView',
+    term: 'houses',
+    visible: { en: 'houses', nl: 'huizen' },
+    node: () => <DraconicView personId="p1" view="wheel" compareType={undefined} />,
+  },
+  {
+    view: 'PrimaryDirectionsView',
+    term: 'primaryDirection',
+    visible: { en: 'Primary directions', nl: 'Primaire directies' },
+    node: () => <PrimaryDirectionsView personId="p1" />,
+  },
+  {
+    view: 'RectificationView',
+    term: 'midheaven',
+    visible: { en: 'Midheaven', nl: 'Midheaven' },
+    node: () => <RectificationView />,
+  },
+  {
+    view: 'RelocatedChartView',
+    term: 'ascendant',
+    visible: { en: 'Ascendant', nl: 'Ascendant' },
+    node: () => <RelocatedChartView personId="p1" view="wheel" compareType={undefined} />,
+  },
+];
+
+describe('inline glossary tooltips on view prose (#901)', () => {
+  afterEach(() => {
+    setLocale('en');
+  });
+
+  it.each(
+    (['en', 'nl'] as const).flatMap((locale) =>
+      proseTerms.map((row) => ({ locale, view: row.view, term: row.term, node: row.node, shown: row.visible[locale] })),
+    ),
+  )('$view prose opens the $term glossary tooltip in $locale', async ({ locale, term, shown, node }) => {
+    setLocale(locale);
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+    try {
+      await act(async () => {
+        root.render(node());
+        await Promise.resolve();
+      });
+      const triggers = [...container.querySelectorAll('.glossary-term')].map((element) => element.textContent);
+      expect(triggers, `${term} tooltip in ${locale}`).toContain(shown);
+    } finally {
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+    }
+  });
+});
+
 describe('no top-of-view glossary lists (#901)', () => {
   const locales: readonly Locale[] = ['en', 'nl'];
 

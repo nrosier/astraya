@@ -12,6 +12,7 @@
  * @conventions Independent of any person or stored data (ephemeris-only), so it lives outside `Stored`, like AdminPanel; the diagram is app-generated SVG, hidden from assistive tech since the table carries every value it plots.
  * @exports CyclesView
  */
+import { GlossaryText } from './GlossaryText.js';
 import { formatFixed } from './format.js';
 import { Select } from './primitives/Select.js';
 import { TextField } from './primitives/TextField.js';
@@ -274,8 +275,10 @@ export function CyclesView(): React.JSX.Element {
   return (
     <main className="shell">
       <BackLink fallback="#/people" />
-      <PageHeader title={t.heading} />
-      <p className="hint">{t.hint}</p>
+      <PageHeader title={t.heading} titleTerm="cycle" />
+      <p className="hint">
+        <GlossaryText text={t.hint} />
+      </p>
 
       <div className="field-grid cycles-form">
         <Select
@@ -359,17 +362,21 @@ export function CyclesView(): React.JSX.Element {
       <div aria-busy={result.kind === 'loading'}>
         {result.kind === 'ready' &&
           (result.rows.length === 0 ? (
-            <p className="hint">{t.noEvents}</p>
+            <p className="hint">
+              <GlossaryText text={t.noEvents} />
+            </p>
           ) : (
             <>
               <p>
-                {t.summary(
-                  result.rows.length,
-                  nameOf(result.params.bodyA),
-                  nameOf(result.params.bodyB),
-                  Number(result.params.fromYear),
-                  Number(result.params.toYear),
-                )}
+                <GlossaryText
+                  text={t.summary(
+                    result.rows.length,
+                    nameOf(result.params.bodyA),
+                    nameOf(result.params.bodyB),
+                    Number(result.params.fromYear),
+                    Number(result.params.toYear),
+                  )}
+                />
               </p>
               {diagram !== undefined && (
                 <figure className="cycle-figure">
@@ -387,7 +394,7 @@ export function CyclesView(): React.JSX.Element {
                     }}
                   />
                   <figcaption className="hint">
-                    {t.diagramCaption} {t.selectionHint}
+                    <GlossaryText text={t.diagramCaption} /> {t.selectionHint}
                   </figcaption>
                 </figure>
               )}

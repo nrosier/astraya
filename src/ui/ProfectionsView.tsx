@@ -18,6 +18,7 @@
  * @exports ProfectionsView; toRow, columns, ProfectionRow (reused by pdf-export-plan.ts)
  */
 import { DateField } from './primitives/DateField.js';
+import { GlossaryText } from './GlossaryText.js';
 import { personHref } from './route.js';
 import { useEffect, useMemo, useState } from 'react';
 import { resolvePlacementText } from '../interpretation/compose.js';
@@ -161,9 +162,9 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <PageHeader title={t.profectionsFallback} />
+        <PageHeader title={t.profectionsFallback} titleTerm="profection" />
         <p>
-          {t.notCompleteProfections(person.displayName || t.thisPerson)}{' '}
+          <GlossaryText text={t.notCompleteProfections(person.displayName || t.thisPerson)} />{' '}
           <a href={personHref(personId)}>{t.personPageLink}</a>.
         </p>
       </main>
@@ -174,8 +175,10 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <PageHeader title={t.profectionsFallback} />
-        <p>{t.needsKnownTime(person.displayName || t.thisPerson)}</p>
+        <PageHeader title={t.profectionsFallback} titleTerm="profection" />
+        <p>
+          <GlossaryText text={t.needsKnownTime(person.displayName || t.thisPerson)} />
+        </p>
       </main>
     );
   }
@@ -186,14 +189,19 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
   return (
     <main className="shell">
       <BackLink fallback={personHref(personId)} />
-      <PageHeader title={person.displayName ? t.heading(person.displayName) : t.profectionsFallback} />
-      <p className="hint">{t.hint}</p>
+      <PageHeader
+        title={person.displayName ? t.heading(person.displayName) : t.profectionsFallback}
+        titleTerm="profection"
+      />
+      <p className="hint">
+        <GlossaryText text={t.hint} />
+      </p>
 
       <section className="profections-rulers-section" aria-labelledby="rulers-heading">
         <h2 id="rulers-heading">{t.rulersHeading}</h2>
         <RulershipSetting value={rulership} onChange={setRulership} />
         <p className="profections-rulers-description">
-          {rulership === 'traditional' && t.rulersTraditional}
+          {rulership === 'traditional' && <GlossaryText text={t.rulersTraditional} />}
           {rulership === 'modern' && t.rulersModern}
           {rulership === 'both' && t.rulersBoth}
         </p>

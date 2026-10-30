@@ -21,6 +21,7 @@
  * @conventions Calls renderMultiWheelSvg directly like TransitView.tsx does, bypassing the single-chart AstroChartWheel; uses SynastryView.messages.ts for en/nl text via useMessages(). Carries its own PrintProvenance footer (#564) labelled with engine defaults, since computeSynastry doesn't yet take a user-configurable calculation snapshot.
  * @exports SynastryView, aspectColumns
  */
+import { GlossaryText } from './GlossaryText.js';
 import { Select } from './primitives/Select.js';
 import { formatOrb, formatTimestamp } from './format.js';
 import { personHref } from './route.js';
@@ -304,9 +305,9 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <PageHeader title={t.synastryFallback} />
+        <PageHeader title={t.synastryFallback} titleTerm="synastry" />
         <p>
-          {t.needsCompleteRecord(person.displayName || t.thisPerson)}{' '}
+          <GlossaryText text={t.needsCompleteRecord(person.displayName || t.thisPerson)} />{' '}
           <a href={personHref(personId)}>{t.personPageLink}</a>.
         </p>
       </main>
@@ -327,9 +328,16 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
         generatedAt={formatTimestamp(new Date())}
       />
       <BackLink fallback={personHref(personId)} />
-      <PageHeader title={person.displayName ? t.heading(person.displayName) : t.synastryFallback} />
-      <p className="hint">{t.hint}</p>
-      <p className="hint">{t.overlayContext}</p>
+      <PageHeader
+        title={person.displayName ? t.heading(person.displayName) : t.synastryFallback}
+        titleTerm="synastry"
+      />
+      <p className="hint">
+        <GlossaryText text={t.hint} />
+      </p>
+      <p className="hint">
+        <GlossaryText text={t.overlayContext} />
+      </p>
 
       <p>
         <Select
@@ -385,7 +393,9 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
               personId={personId}
             />
 
-            <p className="hint">{t.rankingHint}</p>
+            <p className="hint">
+              <GlossaryText text={t.rankingHint} />
+            </p>
 
             <SortableTable
               caption={t.aspectsCaption}

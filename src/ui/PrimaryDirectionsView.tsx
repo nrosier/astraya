@@ -19,6 +19,7 @@
  * @conventions Gated for unknown birth time like other angle-dependent screens; draws the bi-wheel with renderMultiWheelSvg directly (no cross-ring lines), injected as app-generated SVG the same way TransitView.tsx does; uses PrimaryDirectionsView.messages.ts for en/nl text via useMessages(). Shows a lock notice before the controls (#797): directions are always Placidus/tropical and ignore the client's other calculation settings. Reads the device's natal calculation settings as ChartView does and records them as the artifact's requested snapshot; when they differ from the locked Placidus/tropical settings in house system, zodiac, rulership, node or Lilith, a warning Notice names the differences (#797). Carries its own PrintProvenance footer (#564) labelled with the locked effective settings (PRIMARY_DIRECTIONS_EFFECTIVE_SNAPSHOT).
  * @exports PrimaryDirectionsView
  */
+import { GlossaryText } from './GlossaryText.js';
 import { personHref } from './route.js';
 import { houseSystemLabel, rulershipLabel, zodiacLabel } from './ChartView.js';
 import { PrintProvenance } from './PrintProvenance.js';
@@ -320,9 +321,9 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <PageHeader title={t.primaryDirectionsFallback} />
+        <PageHeader title={t.primaryDirectionsFallback} titleTerm="primaryDirection" />
         <p>
-          {t.notCompletePrimaryDirections(person.displayName || t.thisPerson)}{' '}
+          <GlossaryText text={t.notCompletePrimaryDirections(person.displayName || t.thisPerson)} />{' '}
           <a href={personHref(personId)}>{t.personPageLink}</a>.
         </p>
       </main>
@@ -333,8 +334,10 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <PageHeader title={t.primaryDirectionsFallback} />
-        <p>{t.needsKnownTime(person.displayName || t.thisPerson)}</p>
+        <PageHeader title={t.primaryDirectionsFallback} titleTerm="primaryDirection" />
+        <p>
+          <GlossaryText text={t.needsKnownTime(person.displayName || t.thisPerson)} />
+        </p>
       </main>
     );
   }
@@ -362,12 +365,23 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
         generatedAt={formatTimestamp(new Date())}
       />
       <BackLink fallback={personHref(personId)} />
-      <PageHeader title={person.displayName ? t.heading(person.displayName) : t.primaryDirectionsFallback} />
-      <p className="hint">{t.hint}</p>
-      <p className="hint">{t.source}</p>
-      <Notice>{t.lockedNotice}</Notice>
+      <PageHeader
+        title={person.displayName ? t.heading(person.displayName) : t.primaryDirectionsFallback}
+        titleTerm="primaryDirection"
+      />
+      <p className="hint">
+        <GlossaryText text={t.hint} />
+      </p>
+      <p className="hint">
+        <GlossaryText text={t.source} />
+      </p>
+      <Notice>
+        <GlossaryText text={t.lockedNotice} />
+      </Notice>
       {mismatches.length > 0 && (
-        <Notice tone="warning">{t.mismatchNotice(mismatchPhrases(mismatches, requestedSnapshot, t).join('; '))}</Notice>
+        <Notice tone="warning">
+          <GlossaryText text={t.mismatchNotice(mismatchPhrases(mismatches, requestedSnapshot, t).join('; '))} />
+        </Notice>
       )}
 
       <div className="field-grid">
@@ -489,13 +503,21 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
 
         {load.kind === 'error' && <StatusMessage kind="error">{t.error(load.message)}</StatusMessage>}
 
-        {data !== undefined && !data.defined && <StatusMessage kind="error">{t.undefinedAtLatitude}</StatusMessage>}
+        {data !== undefined && !data.defined && (
+          <StatusMessage kind="error">
+            <GlossaryText text={t.undefinedAtLatitude} />
+          </StatusMessage>
+        )}
 
         {data?.defined === true && (
           <>
             {directed.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
             {directed.kind === 'error' && <StatusMessage kind="error">{t.error(directed.message)}</StatusMessage>}
-            {directed.kind === 'before-birth' && <p className="hint">{t.beforeBirth}</p>}
+            {directed.kind === 'before-birth' && (
+              <p className="hint">
+                <GlossaryText text={t.beforeBirth} />
+              </p>
+            )}
             {directed.kind === 'unavailable' && <p className="hint">{t.converseWheelUnavailable}</p>}
 
             {directed.kind === 'ready' && (
@@ -525,7 +547,11 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
                 downloadFilename={deriveExportFilename(person.displayName, 'primary-directions-active', 'csv')}
               />
             )}
-            {activeRows?.length === 0 && <p className="hint">{t.noActive}</p>}
+            {activeRows?.length === 0 && (
+              <p className="hint">
+                <GlossaryText text={t.noActive} />
+              </p>
+            )}
 
             {allRows !== undefined && allRows.length > 0 && (
               <SortableTable
