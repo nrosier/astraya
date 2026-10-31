@@ -40,12 +40,7 @@ const en = {
   hideMeanings: 'Hide meanings',
   error: (message: string) => `The map could not be calculated. ${message}`,
 
-  downloadSvg: 'Download SVG',
-  downloadPng: 'Download PNG',
-
-  pngSmall: 'Small (900px)',
-  pngMedium: 'Medium (1800px)',
-  pngLarge: 'Large (3600px)',
+  exportPdf: 'Export PDF',
 };
 
 const nl: typeof en = {
@@ -81,12 +76,7 @@ const nl: typeof en = {
   hideMeanings: 'Verberg betekenissen',
   error: (message: string) => `De kaart kon niet worden berekend. ${message}`,
 
-  downloadSvg: 'SVG downloaden',
-  downloadPng: 'PNG downloaden',
-
-  pngSmall: 'Klein (900px)',
-  pngMedium: 'Middel (1800px)',
-  pngLarge: 'Groot (3600px)',
+  exportPdf: 'PDF exporteren',
 };
 
 export const astrocartographyViewMessages = { en, nl };

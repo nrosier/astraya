@@ -135,6 +135,7 @@ export function DraconicView({
       <ChartDataView
         personId={personId}
         chartType="draconic"
+        creatorSection="draconic"
         load={load}
         displayName={displayName}
         showHouses
