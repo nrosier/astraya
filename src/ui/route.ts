@@ -108,7 +108,13 @@ export type Route =
   // The PDF export builder (#441): the primary person is picked on the page itself, not the URL,
   // the same reasoning synastry's second person already uses. A page's "Export PDF" link (#915) may carry the
   // person (`?person=`) and the page's section (`section=`: a chart type or astrocartography) to open it on.
-  | { readonly kind: 'export-builder'; readonly personId?: string; readonly section?: ExportBuilderSection }
+  // `view` (#915) is the page's own Wheel/Aspects/Placements/... view, so the creator's sections match what is on screen.
+  | {
+      readonly kind: 'export-builder';
+      readonly personId?: string;
+      readonly section?: ExportBuilderSection;
+      readonly view?: ChartViewKind;
+    }
   // The Preferences workspace (#506/#510): durable account/device settings in one stable place,
   // per docs/ui/UI-UX_GUIDELINES.md's setting-scope model. `section` links straight to one of its headings.
   | { readonly kind: 'preferences'; readonly section?: PreferencesSection }
@@ -201,10 +207,12 @@ function exportBuilderRoute(hash: string): Route {
   const query = new URLSearchParams(hash.split('?')[1] ?? '');
   const personId = query.get('person');
   const section = query.get('section');
+  const view = query.get('view');
   return {
     kind: 'export-builder',
     ...(isPersonId(personId) ? { personId } : {}),
     ...(isExportBuilderSection(section) ? { section } : {}),
+    ...(isChartView(view) ? { view } : {}),
   };
 }
 
@@ -304,6 +312,7 @@ export function routeHref(route: Route): string {
       const query = [
         ...(route.personId === undefined ? [] : [`person=${route.personId}`]),
         ...(route.section === undefined ? [] : [`section=${route.section}`]),
+        ...(route.view === undefined ? [] : [`view=${route.view}`]),
       ];
       return query.length === 0 ? '#/documents/pdf' : `#/documents/pdf?${query.join('&')}`;
     }

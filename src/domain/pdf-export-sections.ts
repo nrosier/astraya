@@ -29,17 +29,38 @@
  * @module pdf-export-sections
  * @purpose Declarative registry of what can go into a PDF export (#441): which pages/sections are selectable, each section's own options, and ready-made presets.
  * @conventions Pure and DOM-free, with neither jsPDF nor React dependencies, so it's Vitest-testable without a browser; `chart/pdf-export.ts` turns a selection into pages, `ui/PdfExportBuilder.tsx` builds a selection — neither needs this file's internals beyond its exported shape; synastry/composite are single optional fields needing a partner, transits/forecast/progressions/solarArc/profections/astrocartography are single optional fields needing no partner (so, unlike synastry/composite, they can appear in a preset); `charts` is the one array field.
- * @exports PdfSelection, PdfChartSectionOptions, PdfSynastrySectionOptions, PdfCompositeSectionOptions, PdfInterpretationOptions, PdfTransitsSectionOptions, PdfForecastSectionOptions, PdfTransitFilterPreset, PdfProgressionTechnique, PdfProgressionsSectionOptions, PdfSolarArcSectionOptions, PdfProfectionsSectionOptions, PdfAcgLineType, PDF_ACG_LINE_TYPES, PdfAstrocartographySectionOptions, PdfEclipsesSectionOptions, PDF_CHART_TABLES, PDF_CHART_TYPES, EMPTY_SELECTION, PDF_PRESETS, PDF_PRESET_KEYS, applyPdfPreset, matchPdfPreset, pdfSelectionIsEmpty, defaultChartSectionOptions, defaultSynastrySectionOptions, defaultCompositeSectionOptions, defaultTransitsSectionOptions, defaultForecastSectionOptions, defaultProgressionsSectionOptions, defaultSolarArcSectionOptions, defaultProfectionsSectionOptions, defaultAstrocartographySectionOptions, defaultEclipsesSectionOptions
+ * @exports PdfSelection, PdfChartSectionOptions, PdfSynastrySectionOptions, PdfCompositeSectionOptions, PdfInterpretationOptions, PdfTransitsSectionOptions, PdfForecastSectionOptions, PdfTransitFilterPreset, PdfProgressionTechnique, PdfProgressionsSectionOptions, PdfSolarArcSectionOptions, PdfProfectionsSectionOptions, PdfAcgLineType, PDF_ACG_LINE_TYPES, PdfAstrocartographySectionOptions, PdfEclipsesSectionOptions, PDF_CHART_TABLES, PDF_VIEW_TABLES, VIEW_TABLES, PDF_CHART_TYPES, EMPTY_SELECTION, PDF_PRESETS, PDF_PRESET_KEYS, applyPdfPreset, matchPdfPreset, pdfSelectionIsEmpty, defaultChartSectionOptions, defaultSynastrySectionOptions, defaultCompositeSectionOptions, defaultTransitsSectionOptions, defaultForecastSectionOptions, defaultProgressionsSectionOptions, defaultSolarArcSectionOptions, defaultProfectionsSectionOptions, defaultAstrocartographySectionOptions, defaultEclipsesSectionOptions
  */
 import { utcDay } from '../ui/format.js';
 import type { ProgressedMcMethod } from '../astrology/progressions.js';
 import { EXTENDED_ACG_BODY_IDS, TRADITIONAL_ACG_BODY_IDS } from './astrocartography.js';
 import type { BodyId } from '../ephemeris/types.js';
-import type { ChartType } from '../ui/chart-sections.js';
+import type { ChartType, ChartViewKind } from '../ui/chart-sections.js';
 
 /** The data tables a chart-type section can include, independently of each other and of the wheel. */
 export const PDF_CHART_TABLES = ['positions', 'houses', 'aspects', 'dignities', 'derived'] as const;
-export type PdfChartTable = (typeof PDF_CHART_TABLES)[number];
+
+/**
+ * The tables a chart page's own view adds (#915), so the PDF creator's sections match what the page shows. Kept apart
+ * from `PDF_CHART_TABLES`: they are never in a full section or preset, only when a page's link asks for its view.
+ * `fixed-stars` is the Placements view's own fixed-star table; the same stars also stay inside `aspects` as before.
+ */
+export const PDF_VIEW_TABLES = ['matrix', 'elements', 'fixed-stars', 'shape'] as const;
+
+export type PdfChartTable = (typeof PDF_CHART_TABLES)[number] | (typeof PDF_VIEW_TABLES)[number];
+
+/**
+ * The tables a chart page's own view shows (#915), by the view's key. The wheel view adds no table: it only keeps the
+ * wheel on. Placements and Patterns each take the default tables they draw from, plus their own view keys.
+ */
+export const VIEW_TABLES: Readonly<Record<ChartViewKind, readonly PdfChartTable[]>> = {
+  wheel: [],
+  aspects: ['aspects'],
+  matrix: ['matrix'],
+  elements: ['elements'],
+  placements: ['positions', 'houses', 'derived', 'fixed-stars'],
+  patterns: ['dignities', 'shape'],
+};
 
 export const PDF_CHART_TYPES: readonly ChartType[] = ['natal', 'draconic', 'harmonic', 'solar-return', 'lunar-return'];
 

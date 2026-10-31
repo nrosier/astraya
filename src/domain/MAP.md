@@ -32,7 +32,7 @@ One level above `src/astrology/`: composes pure astrological calculations into s
 - `id.ts` — Local-first CSPRNG-backed prefixed base32 id generation (people/charts). Deps: Web Crypto API only.
 - `lunar-returns.ts` — Lunar returns (every Moon-to-natal-longitude each cycle). Deps: `astrology/solar-lunar-returns`, `astrology/aspects`, `ephemeris/generated-constants`.
 - `minor-progression.ts` — Tertiary/minor progressions (day-for-lunar-month / lunar-month-for-year). Deps: `astrology/minor-progressions`, `astrology/progressions`, `astrology/aspects`.
-- `pdf-export-sections.ts` — PDF export builder content (selectable chart types/tables/sections + presets). Deps: `ui/chart-sections` (ChartType).
+- `pdf-export-sections.ts` — PDF export builder content (selectable chart types/tables/sections + presets); view-only tables (`PDF_VIEW_TABLES`, `VIEW_TABLES`) that only a chart page's link adds (#915). Deps: `ui/chart-sections` (ChartType, ChartViewKind).
 - `periodic-transit.ts` — Periodic transit forecast (daily/weekly/monthly/yearly sky events). Deps: `astrology/transit-events`, `astrology/stations`, `astrology/aspects`, `./demibirthday`, `./lunar-returns`, `./progressed-lunar-return`, `./solar-return`, `./chart-compute`.
 - `person-form.messages.ts` — i18n for birth-record form validation errors. Deps: none.
 - `person-form.ts` — Birth-data entry form logic: Draft validation + minimal op-log mutations. Deps: `./person`, `./person-form.messages`, `time/types`, `store/oplog`, `store/ops`.

@@ -230,7 +230,13 @@ test.describe('with the shared people (#799)', () => {
     await expect(page.getByRole('button', { name: 'Download SVG', exact: true })).toHaveCount(0);
     const main = page.getByRole('main');
     await expect(main.getByRole('button', { name: 'Export', exact: true })).toHaveCount(0);
-    await expect(main.getByRole('link', { name: 'Export PDF', exact: true })).toBeVisible();
+    // The link sits in the page's own header, not in the view-navigation bar, and carries the open view.
+    const pageHeaderLink = main.locator('.page-header').getByRole('link', { name: 'Export PDF', exact: true });
+    await expect(pageHeaderLink).toBeVisible();
+    await expect(pageHeaderLink).toHaveAttribute('href', /&section=natal&view=wheel$/);
+    await expect(main.locator('nav.chart-view-nav').getByRole('link', { name: 'Export PDF', exact: true })).toHaveCount(
+      0,
+    );
     const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
     expect(results.violations).toEqual([]);
 

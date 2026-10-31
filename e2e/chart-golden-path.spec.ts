@@ -59,11 +59,36 @@ test.describe('with the shared people (#799)', () => {
     await openNatalChart(page);
     await expect(page.locator('div.chart-wheel')).toBeVisible();
 
-    // The page's one export is a link to the PDF creator with this person and chart type (#915); no file is built here.
-    const exportLink = page.getByRole('link', { name: 'Export PDF', exact: true });
-    await expect(exportLink).toHaveAttribute('href', /#\/documents\/pdf\?person=p-[^&]+&section=natal$/);
+    // The page's one export is a link to the PDF creator in its PageHeader, carrying this person, the chart type and
+    // the view on screen (#915); no file is built here.
+    const exportLink = page.locator('.page-header').getByRole('link', { name: 'Export PDF', exact: true });
+    await expect(exportLink).toHaveCount(1);
+    await expect(exportLink).toHaveAttribute('href', /#\/documents\/pdf\?person=p-[^&]+&section=natal&view=wheel$/);
     await exportLink.click();
-    await expect(page).toHaveURL(/#\/documents\/pdf\?person=p-[^&]+&section=natal$/);
+    await expect(page).toHaveURL(/#\/documents\/pdf\?person=p-[^&]+&section=natal&view=wheel$/);
+    await expect(page.getByRole('heading', { name: 'Build a PDF', level: 1 })).toBeVisible();
+  });
+
+  test('the PDF link follows the open view, so the creator opens on what is on screen (#915)', async () => {
+    test.setTimeout(60_000);
+
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await openNatalChart(page, 'Placements');
+
+    const exportLink = page.locator('.page-header').getByRole('link', { name: 'Export PDF', exact: true });
+    await expect(exportLink).toHaveAttribute(
+      'href',
+      /#\/documents\/pdf\?person=p-[^&]+&section=natal&view=placements$/,
+    );
+    await exportLink.click();
+    await expect(page).toHaveURL(/#\/documents\/pdf\?person=p-[^&]+&section=natal&view=placements$/);
+    // The creator opens with the Placements tables ticked on the natal section, and not the Aspects table (#915).
+    await page.getByRole('button', { name: /^Charts/ }).click();
+    const charts = page.getByRole('group', { name: 'Charts', exact: true });
+    await expect(charts.getByRole('checkbox', { name: 'Positions', exact: true }).first()).toBeChecked();
+    await expect(charts.getByRole('checkbox', { name: 'Fixed stars', exact: true }).first()).toBeChecked();
+    await expect(charts.getByRole('checkbox', { name: 'Derived points', exact: true }).first()).toBeChecked();
+    await expect(charts.getByRole('checkbox', { name: 'Aspects', exact: true }).first()).not.toBeChecked();
   });
 
   test('clicking a glyph on the wheel isolates it and opens a focused-info panel (#400)', async () => {

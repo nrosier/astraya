@@ -77,9 +77,15 @@ import {
   positionRows,
   aspectRows,
   chartSheetInput,
+  chartShapeOf,
+  emphasisRows,
   type AspectRow,
   type PointVisibilityOptions,
 } from '../domain/chart-tables.js';
+import { emphasisColumns } from './ChartViewElements.js';
+import { formatElongation } from './ChartViewPatterns.js';
+import { formatSignedOrb } from '../chart/aspect-matrix.js';
+import { lunarPhaseOf } from '../astrology/lunar-phase.js';
 import { computeComposite } from '../domain/composite.js';
 import { computeTransit } from '../domain/transit.js';
 import { computePeriodicTransitForecast, type PeriodicTransitPeriods } from '../domain/periodic-transit.js';
@@ -392,6 +398,58 @@ async function birthRecordPlan(
   return { ...record, map: { ...map, note: t.mapSource } };
 }
 
+/** One aspect pair of the matrix view, as a table row (#915). */
+interface MatrixPairRow {
+  readonly a: string;
+  readonly aspect: string;
+  readonly b: string;
+  readonly orb: number;
+}
+
+/**
+ * The Chart shape view as short text (#915): the shape and its handle, the lunar phase, the sect and the Almuten of the
+ * Ascendant, in the same words the Patterns view uses. The shape diagram and the metric cards are not reproduced.
+ */
+function shapeSummaryOf(
+  data: ChartData,
+  housesRenderable: boolean,
+  t: typeof chartViewMessages.en,
+  locale: Locale,
+  boundsScheme: BoundsScheme,
+): string {
+  const shape = chartShapeOf(data);
+  const sun = bodyByKey('sun');
+  const moon = bodyByKey('moon');
+  const sunLongitude = data.positions.find((position) => position.body === sun?.id)?.longitude;
+  const moonLongitude = data.positions.find((position) => position.body === moon?.id)?.longitude;
+  const phase =
+    sunLongitude === undefined || moonLongitude === undefined ? undefined : lunarPhaseOf(moonLongitude, sunLongitude);
+  const almuten = almutenOfAscendant(data, boundsScheme);
+  const parts: string[] = [
+    shape === undefined
+      ? t.shapeCannotBeWorkedOut
+      : t.chartShapeSentence(
+          t.jonesShapeLabels[shape.shape],
+          shape.handle === undefined ? undefined : bodyDisplayName(bodyById(shape.handle)?.key ?? '', locale),
+        ),
+  ];
+  if (phase !== undefined) {
+    parts.push(
+      `${t.lunarPhaseKeyLabel}: ${t.lunarPhaseValue(
+        t.lunarPhaseLabels[phase.phase],
+        formatElongation(phase.elongation),
+        phase.waxing,
+        Math.round(phase.illumination * 100),
+      )}`,
+    );
+  }
+  if (housesRenderable) parts.push(`${t.sectKeyLabel}: ${data.sect === 'day' ? t.dayChart : t.nightChart}`);
+  if (almuten !== undefined) {
+    parts.push(`${t.almutenKeyLabel}: ${almuten.almutens.map((key) => bodyDisplayName(key, locale)).join(', ')}`);
+  }
+  return parts.join(' ');
+}
+
 /**
  * One chart's tables, drawn exactly as the Charts page draws them (#719): `visibility` is the
  * chart's object policy, so an object hidden on screen is absent from every PDF table too — the
@@ -468,6 +526,44 @@ function tablesOf(
           : [tablePlanOf(t.allMidpointsCaption, allMidpointsColumns(t, locale), allMidpoints)]),
       ];
     }
+    // The Placements view's own fixed-star table (#915); the aspects key keeps the same table inside its output.
+    case 'fixed-stars': {
+      const stars = fixedStarRows(data, visibility);
+      return stars.length === 0
+        ? []
+        : [
+            tablePlanOf(
+              t.fixedStarsCaption,
+              fixedStarColumns(t, locale, hasStarSources(stars)),
+              stars,
+              fixedStarsScopeNoteOf(t, checkedStarsOf(data)),
+            ),
+          ];
+    }
+    // The Elements view's emphasis balance, as its table (#915). The balance grid itself is not reproduced in the PDF.
+    case 'elements':
+      return [tablePlanOf(t.emphasisCaption, emphasisColumns(t, locale), emphasisRows(data, visibility))];
+    // The Aspect matrix view as a table of its aspect pairs (#915); the grid itself is not reproduced in the PDF.
+    case 'matrix': {
+      const pairs = chartSheetInput(data, [], '', visibility, (bodyKey) => bodyShortName(bodyKey, locale)).matrix
+        .aspects;
+      const columns: readonly TableColumn<MatrixPairRow>[] = [
+        { key: 'a', label: t.matrixNameLabel, valueOf: (row) => row.a },
+        { key: 'aspect', label: t.aspectsCaption, valueOf: (row) => row.aspect },
+        { key: 'b', label: t.matrixNameLabel, valueOf: (row) => row.b },
+        { key: 'orb', label: t.orbLabel, valueOf: (row) => row.orb, render: (row) => formatSignedOrb(row.orb) },
+      ];
+      const rows: readonly MatrixPairRow[] = pairs.map((pair) => ({
+        a: bodyShortName(pair.aKey, locale),
+        b: bodyShortName(pair.bKey, locale),
+        aspect: aspectDisplayName(pair.aspectKey, locale),
+        orb: pair.signedOrb,
+      }));
+      return [tablePlanOf(t.matrixLabel, columns, rows)];
+    }
+    // The chart shape is a text summary on the section (see `shapeSummaryOf`), not a table (#915).
+    case 'shape':
+      return [];
   }
 }
 
@@ -599,7 +695,11 @@ async function buildChartSectionPlan(
   // The D10 convention caveat (#725), in the document's language, as the Harmonic screen shows it for the same chart.
   const d10Hint =
     options.type === 'harmonic' && (options.harmonicN ?? 5) === 10 ? harmonicViewMessages[locale].d10Note : undefined;
-  const hints = [almutenHint, d10Hint].filter((part): part is string => part !== undefined);
+  // The Chart shape view (#915) is a text summary: it prints with the section's own hint, where the renderer already draws it.
+  const shapeHint = options.tables.includes('shape')
+    ? shapeSummaryOf(data, housesRenderable, t, locale, settings.boundsScheme)
+    : undefined;
+  const hints = [almutenHint, d10Hint, shapeHint].filter((part): part is string => part !== undefined);
   const hint = hints.length === 0 ? undefined : hints.join(' ');
 
   const tables = options.tables.flatMap((table) =>

@@ -309,10 +309,7 @@ const en = {
   astrochartReferenceHeading: 'AstroChart reference rendering (dev only)',
   astrochartReferenceHint: 'Shown for comparison only — exports always use Astraya’s own rendering above.',
 
-  exportSvg: 'Image (SVG)',
-  exportPng: (size: string) => `Image (PNG), ${size}`,
   exportPdfCreator: 'Export PDF',
-  exportPdf: 'Document (PDF, via print)…',
 
   thisPerson: 'this person',
   thisPersonCapitalized: 'This person',
@@ -648,10 +645,7 @@ const nl: typeof en = {
   astrochartReferenceHint:
     'Alleen getoond ter vergelijking — exports gebruiken altijd Astraya’s eigen weergave hierboven.',
 
-  exportSvg: 'Afbeelding (SVG)',
-  exportPng: (size: string) => `Afbeelding (PNG), ${size}`,
   exportPdfCreator: 'PDF exporteren',
-  exportPdf: 'Document (PDF, via afdrukken)…',
 
   thisPerson: 'deze persoon',
   thisPersonCapitalized: 'Deze persoon',

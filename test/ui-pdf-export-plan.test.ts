@@ -13,7 +13,7 @@ import { DEFAULT_RULERSHIP_CHOICE } from '../src/astrology/rulership.js';
 import { DEFAULT_EXTENDED_SETTINGS } from '../src/chart/extended-settings.js';
 import { CURRENT_SNAPSHOT_VERSION } from '../src/domain/calculation-snapshot.js';
 import { TRADITIONAL_ACG_BODY_IDS } from '../src/domain/astrocartography.js';
-import { EMPTY_SELECTION, type PdfSelection } from '../src/domain/pdf-export-sections.js';
+import { EMPTY_SELECTION, type PdfChartTable, type PdfSelection } from '../src/domain/pdf-export-sections.js';
 import type { Person } from '../src/domain/person.js';
 import type { SavedInterpretationDetail } from '../src/interpretation/tier2-client.js';
 import { fixedStarsScopeNoteOf } from '../src/ui/ChartView.js';
@@ -1138,5 +1138,66 @@ describe('specialist limits in the PDF (#725)', () => {
       section.kind === 'chart' ? section.tables.map((t) => t.caption) : [],
     );
     expect(captions).not.toContain(chartViewMessages.en.aspectPatternsHeading);
+  }, 30_000);
+});
+
+describe('view tables in the PDF (#915)', () => {
+  const planFor = async (tables: readonly PdfChartTable[]) => {
+    const provider = await getEngine();
+    const selection: PdfSelection = {
+      personId: ADA.id,
+      ...EMPTY_SELECTION,
+      charts: [{ type: 'natal', wheel: false, tables }],
+    };
+    const context: PdfPlanContext = {
+      person: ADA,
+      provider,
+      settings: DEFAULT_EXTENDED_SETTINGS,
+      rulership: DEFAULT_RULERSHIP_CHOICE,
+      locale: 'en',
+      corpusFetch,
+    };
+    return buildPdfPlan(selection, context, chartViewMessages.en, pdfExportMessages.en);
+  };
+
+  it('keeps the aspects key output unchanged: the aspects table, then fixed stars inside it', async () => {
+    const plan = await planFor(['aspects']);
+    const [section] = plan.sections;
+    if (section?.kind !== 'chart') throw new Error('expected a chart section');
+    expect(section.tables[0]?.caption).toBe(chartViewMessages.en.aspectsCaption);
+    expect(section.tables.map((table) => table.caption)).toContain(chartViewMessages.en.fixedStarsCaption);
+  }, 30_000);
+
+  it('gives the fixed-stars key its own table, with no aspects table', async () => {
+    const plan = await planFor(['fixed-stars']);
+    const [section] = plan.sections;
+    if (section?.kind !== 'chart') throw new Error('expected a chart section');
+    expect(section.tables.length).toBeGreaterThan(0);
+    expect(section.tables.every((table) => table.caption === chartViewMessages.en.fixedStarsCaption)).toBe(true);
+  }, 30_000);
+
+  it('renders the elements key as the emphasis table', async () => {
+    const plan = await planFor(['elements']);
+    const [section] = plan.sections;
+    if (section?.kind !== 'chart') throw new Error('expected a chart section');
+    expect(section.tables.map((table) => table.caption)).toEqual([chartViewMessages.en.emphasisCaption]);
+    expect(section.tables[0]?.body.length).toBeGreaterThan(0);
+  }, 30_000);
+
+  it('renders the matrix key as a table of aspect pairs', async () => {
+    const plan = await planFor(['matrix']);
+    const [section] = plan.sections;
+    if (section?.kind !== 'chart') throw new Error('expected a chart section');
+    expect(section.tables.map((table) => table.caption)).toEqual([chartViewMessages.en.matrixLabel]);
+    expect(section.tables[0]?.body.length).toBeGreaterThan(0);
+  }, 30_000);
+
+  it('renders the shape key as a text summary in the section, with no table', async () => {
+    const plan = await planFor(['shape']);
+    const [section] = plan.sections;
+    if (section?.kind !== 'chart') throw new Error('expected a chart section');
+    expect(section.tables).toHaveLength(0);
+    expect(section.hint).toContain(chartViewMessages.en.sectKeyLabel);
+    expect(section.hint).toContain(chartViewMessages.en.lunarPhaseKeyLabel);
   }, 30_000);
 });

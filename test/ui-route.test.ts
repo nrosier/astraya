@@ -190,6 +190,18 @@ describe('the canonical hashes', () => {
     );
   });
 
+  it('carries the page’s view through the PDF creator link and back (#915)', () => {
+    const href = routeHref({ kind: 'export-builder', personId: ID, section: 'natal', view: 'placements' });
+    expect(href).toBe(`#/documents/pdf?person=${ID}&section=natal&view=placements`);
+    expect(parseRoute(href)).toEqual({ kind: 'export-builder', personId: ID, section: 'natal', view: 'placements' });
+    // An unknown view is dropped, as an unknown section is.
+    expect(parseRoute(`#/documents/pdf?person=${ID}&section=natal&view=nonsense`)).toEqual({
+      kind: 'export-builder',
+      personId: ID,
+      section: 'natal',
+    });
+  });
+
   it('round-trips every Preferences section', () => {
     for (const section of PREFERENCES_SECTIONS) {
       expect(parseRoute(routeHref({ kind: 'preferences', section }))).toEqual({ kind: 'preferences', section });

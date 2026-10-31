@@ -539,9 +539,9 @@ test.describe('with the shared people (#799)', () => {
     await expect(toggle).toHaveAttribute('aria-expanded', 'true');
     await expect(settings).toBeVisible();
     await expect(overlays).toBeVisible();
-    // The sheet holds Overlays and Extended settings; the natal page also has the PDF creator link (#915).
-    await expect(page.locator('.tab-row__actions-panel > *')).toHaveCount(3);
-    await expect(page.locator('.tab-row__actions-panel > a')).toHaveCount(1);
+    // The sheet holds Overlays and Extended settings only; the PDF creator link is in the PageHeader (#915).
+    await expect(page.locator('.tab-row__actions-panel > *')).toHaveCount(2);
+    await expect(page.locator('.tab-row__actions-panel > a')).toHaveCount(0);
     await expect(page.locator('.tab-row__actions-panel .chart-overlay-trigger')).toHaveCount(1);
     await overlays.click();
     await expect(drawer).toBeVisible();

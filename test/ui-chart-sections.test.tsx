@@ -8,7 +8,7 @@
  */
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import type { ChartData } from '../src/domain/chart-compute.js';
 import { computeChartData } from '../src/domain/chart-compute.js';
 import { setLocale } from '../src/ui/locale.js';
@@ -66,8 +66,6 @@ async function mount(
   options: {
     showHouses?: boolean;
     locale?: 'en' | 'nl';
-    creatorSection?: 'natal';
-    personId?: string;
   } = {},
 ): Promise<HTMLElement> {
   setLocale(options.locale ?? 'en');
@@ -83,8 +81,6 @@ async function mount(
           displayName="Test"
           showHouses={options.showHouses ?? true}
           buildViewHref={() => '#'}
-          personId={options.personId}
-          creatorSection={options.creatorSection}
         />
         <ExportProbe />
       </ExportRegistryProvider>,
@@ -216,64 +212,23 @@ describe('the chart views (#511)', () => {
     expect(container.querySelector('.lunar-phase-summary')).not.toBeNull();
   });
 
-  it('prints every view in order, each under its own h2, when exporting to PDF (#67)', async () => {
-    const container = await mount();
-    const print = vi.fn();
-    window.print = print;
-    await act(async () => {
-      Array.from(container.querySelectorAll('.export-probe button'))
-        .find((button) => button.textContent === chartViewMessages.en.exportPdf)
-        ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-      await new Promise((resolve) => setTimeout(resolve, 10));
-    });
-    const stacked = container.querySelector('.chart-print-all');
-    expect(stacked).not.toBeNull();
-    const t = chartViewMessages.en;
-    expect(Array.from(stacked?.querySelectorAll('h2') ?? []).map((heading) => heading.textContent)).toEqual([
-      t.aspectsViewLabel,
-      t.matrixViewLabel,
-      t.elementsViewLabel,
-      t.placementsViewLabel,
-      t.patternsViewLabel,
-    ]);
-    expect(stacked?.querySelector('div.chart-wheel')).not.toBeNull();
-    await vi.waitFor(() => {
-      expect(print).toHaveBeenCalled();
-    });
-    // The print dialog closing restores the views.
-    await act(async () => {
-      window.dispatchEvent(new Event('afterprint'));
-      await Promise.resolve();
-    });
-    expect(container.querySelector('.chart-print-all')).toBeNull();
-    expect(container.querySelector('nav.chart-view-nav')).not.toBeNull();
+  it('labels the PDF creator link in both locales, and drops the retired export labels (#915)', () => {
+    expect(chartViewMessages.en.exportPdfCreator).toBe('Export PDF');
+    expect(chartViewMessages.nl.exportPdfCreator).toBe('PDF exporteren');
+    const retired = ['exportSvg', 'exportPng', 'exportPdf'];
+    for (const key of retired) {
+      expect(chartViewMessages.en).not.toHaveProperty(key);
+      expect(chartViewMessages.nl).not.toHaveProperty(key);
+    }
   });
 
-  it('offers the chart’s exports to the header menu instead of drawing buttons under the wheel', async () => {
-    const container = await mount();
-    const t = chartViewMessages.en;
-    expect(container.querySelector('.chart-export-actions')).toBeNull();
-    expect(Array.from(container.querySelectorAll('.export-probe button')).map((b) => b.textContent)).toEqual([
-      t.exportSvg,
-      t.exportPng(t.pngSmall),
-      t.exportPng(t.pngMedium),
-      t.exportPng(t.pngLarge),
-      t.exportPdf,
-    ]);
+  it('registers no SVG, PNG or print-PDF item, with or without a wheel (#915)', async () => {
+    const withWheel = await mount();
+    expect(withWheel.querySelectorAll('.export-probe button')).toHaveLength(0);
+    expect(withWheel.querySelector('.chart-print-all')).toBeNull();
   });
 
-  it('sends a natal chart’s SVG, PNG and PDF to the PDF creator with the person and section (#915)', async () => {
-    const container = await mount({ creatorSection: 'natal', personId: 'p-test1' });
-    const t = chartViewMessages.en;
-    // SVG, PNG and print-PDF leave the header menu; the page's one export is the link to the creator.
-    expect(container.querySelectorAll('.export-probe button')).toHaveLength(0);
-    const link = Array.from(container.querySelectorAll<HTMLAnchorElement>('a')).find(
-      (candidate) => candidate.textContent === t.exportPdfCreator,
-    );
-    expect(link?.getAttribute('href')).toBe('#/documents/pdf?person=p-test1&section=natal');
-  });
-
-  it('offers none without a wheel (an unknown birth time has no chart image to export)', async () => {
+  it('registers none without a wheel either', async () => {
     const container = await mount({ showHouses: false });
     expect(container.querySelectorAll('.export-probe button')).toHaveLength(0);
   });

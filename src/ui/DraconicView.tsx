@@ -17,7 +17,7 @@ import { GlossaryText } from './GlossaryText.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { computeDraconic, type DraconicData } from '../domain/draconic.js';
 import { housesAreDefined } from '../domain/chart-compute.js';
-import { ChartDataView } from './ChartView.js';
+import { ChartDataView, PdfCreatorLink, pdfCreatorHref } from './ChartView.js';
 import { ChartTypeSelector, changeChartView } from './ChartTypeSelector.js';
 import { type ChartType, type ChartViewKind } from './chart-sections.js';
 import { chartHref, personHref } from './route.js';
@@ -123,10 +123,15 @@ export function DraconicView({
 
   const displayName = person.displayName ? `${person.displayName} — ${t.headingFallback}` : t.headingFallback;
 
+  // The page's one export (#915): the PDF creator, opened on this person, the draconic chart and the view on screen.
+  const creatorHref = pdfCreatorHref(personId, 'draconic', view ?? 'wheel');
+
   return (
     <main className="shell shell--wide">
       <BackLink fallback={personHref(personId)} />
-      <PageHeader title={person.displayName ? t.heading(person.displayName) : t.headingFallback} titleTerm="draconic" />
+      <PageHeader title={person.displayName ? t.heading(person.displayName) : t.headingFallback} titleTerm="draconic">
+        <PdfCreatorLink href={creatorHref} />
+      </PageHeader>
       <ChartTypeSelector personId={personId} type="draconic" view={view} />
       <p className="hint">
         <GlossaryText text={t.hint} />
@@ -135,7 +140,6 @@ export function DraconicView({
       <ChartDataView
         personId={personId}
         chartType="draconic"
-        creatorSection="draconic"
         load={load}
         displayName={displayName}
         showHouses
