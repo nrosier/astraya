@@ -37,7 +37,7 @@ import { PersonNotFound } from './PersonNotFound.js';
 import { useStoreState } from './store-context.js';
 import type { ChartData } from '../domain/chart-compute.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
-import { SortableTable } from './SortableTable.js';
+import { SortableTable, csvExportTable, useCsvExports } from './SortableTable.js';
 import type { TableColumn } from './table-sort.js';
 import { formatFixed } from './format.js';
 import { deriveExportFilename } from '../domain/export-filename.js';
@@ -144,6 +144,25 @@ export function HarmonicView({
       effect.cancelled = true;
     };
   }, [settingsUnreadable, personMoment, provider, n, nValid, customPoints, orbs]);
+
+  // The provenance table's CSV, offered in the page header (#887).
+  useCsvExports(
+    load.kind === 'ready' && person !== undefined && nValid
+      ? [
+          csvExportTable(
+            'provenance',
+            t.provenanceCaption,
+            deriveExportFilename(
+              person.displayName ? `${person.displayName} — ${label}` : label,
+              'harmonic-provenance',
+              'csv',
+            ),
+            provenanceColumns(t, n),
+            load.provenance,
+          ),
+        ]
+      : undefined,
+  );
 
   if (person === undefined) {
     return <PersonNotFound />;

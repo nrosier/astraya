@@ -12,12 +12,13 @@
  * @module SortableTable
  * @purpose Generic, reusable data table with sortable column headers, a Copy-to-clipboard button, and a CSV download, used across every tabular view in the app.
  * @conventions Thin wiring over table-sort.ts's sorting/serialization logic; uses SortableTable.messages.ts for en/nl text via useMessages().
- * @exports SortableTable
+ * @exports SortableTable, CsvExportTable, csvExportTable, useCsvExports
  */
 import { useId, useState } from 'react';
 import { downloadText } from './download.js';
 import { type GlossaryTermId } from './astro-glossary.messages.js';
 import { GlossaryTerm } from './GlossaryTerm.js';
+import { useRegisterExports } from './export-registry.js';
 import { useMessages } from './messages.js';
 import { Tooltip } from './primitives/Tooltip.js';
 import { sortableTableMessages } from './SortableTable.messages.js';
@@ -50,6 +51,42 @@ function screenText<T>(column: TableColumn<T>, row: T): string {
     return text === '' || text === EMPTY_CELL ? EMPTY_CELL : text;
   }
   return column.render ? column.render(row) : String(value);
+}
+
+/** One table a screen offers as a CSV export in its page header (#887). */
+export interface CsvExportTable {
+  readonly key: string;
+  readonly caption: string;
+  readonly filename: string;
+  readonly csv: () => string;
+}
+
+/** A header export for one table, built from its columns and rows in source order (not the on-screen sort). */
+export function csvExportTable<T>(
+  key: string,
+  caption: string,
+  filename: string,
+  columns: readonly TableColumn<T>[],
+  rows: readonly T[],
+): CsvExportTable {
+  return { key, caption, filename, csv: () => rowsToCsv(columns, rows) };
+}
+
+/**
+ * Registers a screen's CSV tables as items of its page header's Export menu (#887). Pass `undefined` while the
+ * screen has nothing to export. Call it before any early return, as with every hook.
+ */
+export function useCsvExports(tables: readonly CsvExportTable[] | undefined): void {
+  const t = useMessages(sortableTableMessages);
+  useRegisterExports(
+    tables?.map((table) => ({
+      key: table.key,
+      label: t.csvLabel(table.caption),
+      run: () => {
+        downloadText(table.filename, table.csv(), 'text/csv;charset=utf-8');
+      },
+    })),
+  );
 }
 
 /** True for a value that is absent rather than a real value: `''`, `null` or `undefined`. */
