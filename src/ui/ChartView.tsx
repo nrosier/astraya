@@ -28,7 +28,7 @@
  */
 /**
  * @module ChartView
- * @purpose Renders the natal chart screen: the chart wheel plus every data table a chart computes (positions, houses, aspects, dignities, dispositors, declinations, antiscia, fixed stars, chart shape, derived points), and the SVG/PNG/PDF export + share-link controls.
+ * @purpose Renders the natal chart screen: the chart wheel plus every data table a chart computes (positions, houses, aspects, dignities, dispositors, declinations, antiscia, fixed stars, chart shape, derived points), with no file export of its own (a page links to the PDF creator from its PageHeader, #915).
  * @conventions Exports `ChartDataView`, the shared tabbed chart+tables UI reused by CompositeView/SharedChartView; every value is recomputed from the stored birth moment via `domain/chart-compute.js`/`domain/chart-tables.js` rather than read from a saved Chart record; houses/angles/derived-points tables are hidden when `timeAccuracy === 'unknown'`. Text comes from co-located `ChartView.messages.ts` via `useMessages()`.
  * @exports ChartView, ChartDataView, emphasisColumns, positionColumns, houseCuspColumns, angleColumns, aspectColumns, dignityColumns, almutenCandidateColumns, conditionColumns, receptionColumns, dispositorColumns, declinationColumns, antisciaColumns, midpointTreeColumns, allMidpointsColumns, fixedStarColumns, fixedStarsScopeNoteOf, checkedStarsOf, derivedPointColumns, houseSystemLabel, zodiacLabel, rulershipLabel
  */
@@ -64,7 +64,6 @@ import { computeTransit } from '../domain/transit.js';
 import { computeLunarReturnChart, computeSolarReturnChart } from '../domain/return-chart.js';
 import { directedChartAt, generatePrimaryDirections, type DirectedChart } from '../domain/primary-directions.js';
 import { ageInYears } from '../astrology/progressions.js';
-import { deriveExportFilename } from '../domain/export-filename.js';
 import { buildCalculationSnapshot, calculationSnapshotIdentity } from '../domain/calculation-snapshot.js';
 import { calculationArtifactIdentity, type CalculationArtifact } from '../domain/calculation-artifact.js';
 import { buildChartArtifact } from './chart-artifact.js';
@@ -80,15 +79,12 @@ import {
   settingsForContext,
 } from '../chart/extended-settings.js';
 import { resolveWheelDisplayOptions } from '../chart/wheel-options.js';
-import { standaloneSvg } from '../chart/standalone-svg.js';
 import { interpretationExclusions } from '../chart/object-policy.js';
 import { AstroChartWheel } from './AstroChartWheel.js';
 import { bodyById } from '../astrology/bodies.js';
 import { SIGNS } from '../astrology/signs.js';
 import { aspectDisplayName, bodyDisplayName, bodyShortName, signDisplayName } from './astro-names.messages.js';
 import { chartViewMessages } from './ChartView.messages.js';
-import { svgToPngBlob } from './chart-raster.js';
-import { downloadBlob, downloadText } from './download.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { ExtendedSettingsPanel } from './ExtendedSettingsPanel.js';
 import { usePersonCalculationSettings } from './person-calculation-settings.js';
@@ -100,7 +96,6 @@ import { useWheelIsolation } from './wheel-interaction.js';
 import type { SymbolClass } from '../chart/symbol-class.js';
 import { useSymbolClass } from './symbol-setting.js';
 import { useGlyphVariants } from './glyph-variant-setting.js';
-import { useRegisterExports } from './export-registry.js';
 import {
   CHART_VIEWS,
   chartViewLabels,
@@ -409,13 +404,15 @@ function renderTableTab(
   }
 }
 
-/** PNG export resolutions (#67): the wheel's own default pixel size, and 2x/4x of it. */
-function pngSizes(t: typeof chartViewMessages.en): readonly { readonly label: string; readonly size: number }[] {
-  return [
-    { label: t.pngSmall, size: 600 },
-    { label: t.pngMedium, size: 1200 },
-    { label: t.pngLarge, size: 2400 },
-  ];
+/** A chart page's PDF creator link (#915): its person, its chart type and the view on screen, so the creator opens on them. */
+export function pdfCreatorHref(personId: string, section: ExportBuilderSection, view: ChartViewKind): string {
+  return routeHref({ kind: 'export-builder', personId, section, view });
+}
+
+/** The one export a chart page offers, drawn inside its `PageHeader` (#915); the file exports live in the PDF creator. */
+export function PdfCreatorLink({ href }: { readonly href: string }): React.JSX.Element {
+  const t = useMessages(chartViewMessages);
+  return <a href={href}>{t.exportPdfCreator}</a>;
 }
 
 /** `data-sign` on the wheel is the sign's name lowercased (`multi-wheel.ts`). */
@@ -554,7 +551,6 @@ export function ChartDataView({
   initialTransitDate,
   chartType,
   personId,
-  creatorSection,
 }: {
   readonly load: Load;
   readonly displayName: string;
@@ -626,12 +622,6 @@ export function ChartDataView({
   readonly chartType?: ChartType | undefined;
   /** The person the chart belongs to (#768), for the inspector's AI reading; absent on screens with no person (shared, horary). */
   readonly personId?: string | undefined;
-  /**
-   * The PDF creator section for this chart type (#915): when set (with `personId`), the page links to the creator
-   * with that person and section instead of offering SVG, PNG and print-PDF exports in the header's Export menu.
-   * Left out for charts the creator has no section for (relocated, composite, horary, shared).
-   */
-  readonly creatorSection?: ExportBuilderSection | undefined;
 }): React.JSX.Element {
   const t = useMessages(chartViewMessages);
   const chartTypeT = useMessages(chartTypesMessages);
@@ -651,10 +641,6 @@ export function ChartDataView({
   const [symbolClass] = useSymbolClass();
   // The wheel's markup is cached on these, so a change of symbol form redraws it.
   const [variants] = useGlyphVariants();
-  // True only for the moment between clicking "Export PDF" and the print dialog closing
-  // (see `exportPdf` below): while true, every table renders at once instead of just the
-  // active tab, so the PDF the browser's own "Save as PDF" produces has all of them (#67).
-  const [printAll, setPrintAll] = useState(false);
   const overlayT = useMessages(chartOverlaySettingsPanelMessages);
   const [overlaySettings, setOverlaySettings] = useState<ChartOverlaySettings>(() =>
     initialTransitDate === undefined
@@ -946,71 +932,6 @@ export function ChartDataView({
       : undefined;
   }, [isolatedKey, load, rulership, overlayRingData]);
 
-  useEffect(() => {
-    if (!printAll) return undefined;
-    // document.title seeds the filename most browsers' print-to-PDF dialogs suggest, so a
-    // saved PDF gets the same person-and-chart-derived name as the SVG/CSV downloads do.
-    const previousTitle = document.title;
-    document.title = deriveExportFilename(displayName, 'chart', 'pdf');
-    const restore = (): void => {
-      document.title = previousTitle;
-      setPrintAll(false);
-    };
-    window.addEventListener('afterprint', restore, { once: true });
-    // Deferred a tick so the all-tables markup this triggers is committed to the DOM
-    // before the browser captures the page to print.
-    const timer = setTimeout(() => {
-      window.print();
-    }, 0);
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener('afterprint', restore);
-    };
-  }, [printAll, displayName]);
-
-  const creatorLink =
-    creatorSection !== undefined && personId !== undefined
-      ? routeHref({ kind: 'export-builder', personId, section: creatorSection })
-      : undefined;
-
-  const exportPdf = (): void => {
-    setPrintAll(true);
-  };
-
-  const downloadSvg = (): void => {
-    if (sheet === undefined) return;
-    const markup = overlayLoad.kind === 'ready' ? overlayLoad.markup : sheet.markup;
-    downloadText(deriveExportFilename(displayName, 'chart', 'svg'), standaloneSvg(markup), 'image/svg+xml');
-  };
-
-  /** Rejects with the rasterizer's own message, which the header's export status shows. */
-  const downloadPng = async (size: number): Promise<void> => {
-    if (sheet === undefined) return;
-    const markup = overlayLoad.kind === 'ready' ? overlayLoad.markup : sheet.markup;
-    // The sheet is taller than it is wide, so the chosen size is its width and
-    // the height follows its own aspect ratio — rasterizing it square would
-    // squash the wheel into an ellipse.
-    const pngHeight = overlayLoad.kind === 'ready' ? size : Math.round((size * sheet.height) / sheet.width);
-    const blob = await svgToPngBlob(standaloneSvg(markup), size, pngHeight);
-    downloadBlob(deriveExportFilename(displayName, 'chart', 'png'), blob);
-  };
-
-  // The chart's own exports live in the header's Export menu (#export), not under the wheel: registered while
-  // this screen is mounted, so the menu offers them on every screen that shows a chart.
-  useRegisterExports(
-    sheet === undefined || creatorLink !== undefined
-      ? undefined
-      : [
-          { key: 'chart-svg', label: t.exportSvg, run: downloadSvg },
-          ...pngSizes(t).map((option) => ({
-            key: `chart-png-${String(option.size)}`,
-            label: t.exportPng(option.label),
-            run: () => downloadPng(option.size),
-          })),
-          { key: 'chart-pdf', label: t.exportPdf, run: exportPdf },
-        ],
-  );
-
   // The views this chart can show (#511): the Wheel is built on the Ascendant, so a chart without
   // houses has none of it and opens on the next view instead. Aspects/Placements/Patterns & condition
   // always have at least their Positions/Aspects/shape content, so they're never dropped outright —
@@ -1072,31 +993,28 @@ export function ChartDataView({
                 onKeyDown={handleWheelKeyDown}
               />
             </div>
-            {!printAll && (
-              <SelectionInspector
-                facts={isolation}
-                selectionKey={isolatedKey}
-                data={inspectorData ?? data}
-                focusContext={focusContext}
-                locale={locale}
-                exclude={interpretationExcluded}
-                personId={personId}
-                onClear={clearIsolation}
-                derivedChartNote={
-                  isDerivedChartType(chartType)
-                    ? t.derivedChartInterpretationNote(chartTypeT.typeLabels[chartType].toLocaleLowerCase(locale))
-                    : undefined
-                }
-              />
-            )}
+            <SelectionInspector
+              facts={isolation}
+              selectionKey={isolatedKey}
+              data={inspectorData ?? data}
+              focusContext={focusContext}
+              locale={locale}
+              exclude={interpretationExcluded}
+              personId={personId}
+              onClear={clearIsolation}
+              derivedChartNote={
+                isDerivedChartType(chartType)
+                  ? t.derivedChartInterpretationNote(chartTypeT.typeLabels[chartType].toLocaleLowerCase(locale))
+                  : undefined
+              }
+            />
           </div>
         </div>
 
         {/* AstroChart is a reference rendering kept alongside Astraya's own wheel so the
                   two can be compared during development (#231) — production users only ever
-                  see Astraya's, and it never participates in export (#67), so it's hidden
-                  during the print-all pass "Export PDF" triggers. */}
-        {!import.meta.env.PROD && !printAll && (
+                  see Astraya's, and it never participates in export (#67). */}
+        {!import.meta.env.PROD && (
           <div className="chart-wheel-reference">
             <p className="hint">{t.astrochartReferenceHeading}</p>
             <div aria-hidden="true">
@@ -1150,29 +1068,21 @@ export function ChartDataView({
           Overlays and Extended settings triggers pinned at the far right (#818, #817). The row stays in place while the chart
           loads or fails, so the Extended settings card (a setting that might fix a failed or slow calculation, #442)
           keeps its state and stays reachable; only the view links wait for the chart. */}
-      {printAll ? (
-        <>
-          {typeSelector}
-          {settingsPanel}
-        </>
-      ) : (
-        <ChartViewNav
-          leading={typeSelector}
-          activeView={currentTab}
-          buildHref={buildViewHref}
-          onNavigate={setActiveTab}
-          availableViews={load.kind === 'ready' ? tabs : []}
-          actions={
-            overlaysPanel === null && settingsPanel === null && creatorLink === undefined ? undefined : (
-              <>
-                {creatorLink === undefined ? null : <a href={creatorLink}>{t.exportPdfCreator}</a>}
-                {overlaysPanel}
-                {settingsPanel}
-              </>
-            )
-          }
-        />
-      )}
+      <ChartViewNav
+        leading={typeSelector}
+        activeView={currentTab}
+        buildHref={buildViewHref}
+        onNavigate={setActiveTab}
+        availableViews={load.kind === 'ready' ? tabs : []}
+        actions={
+          overlaysPanel === null && settingsPanel === null ? undefined : (
+            <>
+              {overlaysPanel}
+              {settingsPanel}
+            </>
+          )
+        }
+      />
       {!showHouses && <p className="hint">{t.housesUnknownHint(displayName || t.thisPerson)}</p>}
       {showHouses && !housesComputed && <p className="hint">{t.housesUndefinedHint(displayName || t.thisPerson)}</p>}
 
@@ -1188,17 +1098,62 @@ export function ChartDataView({
               <StatusMessage kind="error">{load.data.houses.warning}</StatusMessage>
             )}
 
-            {printAll ? (
-              <div className="chart-print-all">
-                {tabs.map((tab) => (
-                  <section key={tab}>
-                    {tab === 'wheel' ? (
-                      renderChartPanel(load.data)
-                    ) : (
-                      <>
-                        <h2>{chartViewLabels(t)[tab]}</h2>
-                        {tab === 'aspects' &&
-                          renderTableTab(
+            <>
+              {/* The wheel stays mounted while another view is open, so a selection on it survives a
+                  visit to the tables; every other view is only in the page while it is shown. */}
+              {tabs.includes('wheel') && (
+                <div
+                  id="chart-view-wheel"
+                  ref={wheelPanelRef}
+                  tabIndex={-1}
+                  role="region"
+                  aria-label={t.wheelViewLabel}
+                  hidden={currentTab !== 'wheel'}
+                >
+                  {renderChartPanel(load.data)}
+                </div>
+              )}
+              {currentTab !== 'wheel' && (
+                <div id={`chart-view-${currentTab}`}>
+                  <h2>{chartViewLabels(t)[currentTab]}</h2>
+                  {tableSelection !== undefined && isolation !== undefined && (
+                    <p className="chart-selection-bar" role="status">
+                      {t.selectedOnChart(isolation.heading)}{' '}
+                      <button
+                        type="button"
+                        className="quiet"
+                        onClick={() => {
+                          setActiveTab('wheel');
+                        }}
+                      >
+                        {t.goToChart}
+                      </button>{' '}
+                      <button type="button" className="quiet" onClick={clearIsolation}>
+                        {t.isolationClear}
+                      </button>
+                    </p>
+                  )}
+                  {currentTab === 'aspects' &&
+                    (() => {
+                      const harmonicFamily =
+                        aspectHarmonicFamilyFilter === 'all' ? undefined : Number(aspectHarmonicFamilyFilter);
+                      return (
+                        <>
+                          <div className="aspect-family-filter">
+                            <Select
+                              label={t.harmonicFamilyFilterLabel}
+                              value={aspectHarmonicFamilyFilter}
+                              options={[
+                                { value: 'all', label: t.allHarmonicFamilies },
+                                ...HARMONIC_FAMILY_FILTERS.map((family) => ({
+                                  value: String(family),
+                                  label: t.harmonicFamilyOption(String(family)),
+                                })),
+                              ]}
+                              onChange={setAspectHarmonicFamilyFilter}
+                            />
+                          </div>
+                          {renderTableTab(
                             'aspects',
                             load.data,
                             displayName,
@@ -1209,146 +1164,48 @@ export function ChartDataView({
                             rulership,
                             symbolClass,
                             boundsScheme,
+                            tableSelection,
+                            harmonicFamily,
                           )}
-                        {tab === 'matrix' && renderMatrixView(load.data, displayName, pointVisibility, t, locale)}
-                        {tab === 'elements' && renderElementsView(load.data, displayName, pointVisibility, t, locale)}
-                        {tab === 'placements' &&
-                          renderPlacementsView(
-                            load.data,
-                            displayName,
-                            pointVisibility,
-                            housesRenderable,
-                            t,
-                            locale,
-                            symbolClass,
-                          )}
-                        {tab === 'patterns' &&
-                          renderPatternsView(
-                            load.data,
-                            displayName,
-                            pointVisibility,
-                            housesRenderable,
-                            t,
-                            locale,
-                            rulership,
-                            boundsScheme,
-                          )}
-                      </>
+                        </>
+                      );
+                    })()}
+                  {currentTab === 'matrix' &&
+                    renderMatrixView(
+                      load.data,
+                      displayName,
+                      pointVisibility,
+                      t,
+                      locale,
+                      tableSelection,
+                      settingsPanel === null ? undefined : openFormulaDrawer,
                     )}
-                  </section>
-                ))}
-              </div>
-            ) : (
-              <>
-                {/* The wheel stays mounted while another view is open, so a selection on it survives a
-                  visit to the tables; every other view is only in the page while it is shown. */}
-                {tabs.includes('wheel') && (
-                  <div
-                    id="chart-view-wheel"
-                    ref={wheelPanelRef}
-                    tabIndex={-1}
-                    role="region"
-                    aria-label={t.wheelViewLabel}
-                    hidden={currentTab !== 'wheel'}
-                  >
-                    {renderChartPanel(load.data)}
-                  </div>
-                )}
-                {currentTab !== 'wheel' && (
-                  <div id={`chart-view-${currentTab}`}>
-                    <h2>{chartViewLabels(t)[currentTab]}</h2>
-                    {tableSelection !== undefined && isolation !== undefined && (
-                      <p className="chart-selection-bar" role="status">
-                        {t.selectedOnChart(isolation.heading)}{' '}
-                        <button
-                          type="button"
-                          className="quiet"
-                          onClick={() => {
-                            setActiveTab('wheel');
-                          }}
-                        >
-                          {t.goToChart}
-                        </button>{' '}
-                        <button type="button" className="quiet" onClick={clearIsolation}>
-                          {t.isolationClear}
-                        </button>
-                      </p>
+                  {currentTab === 'elements' && renderElementsView(load.data, displayName, pointVisibility, t, locale)}
+                  {currentTab === 'placements' &&
+                    renderPlacementsView(
+                      load.data,
+                      displayName,
+                      pointVisibility,
+                      housesRenderable,
+                      t,
+                      locale,
+                      symbolClass,
+                      tableSelection,
                     )}
-                    {currentTab === 'aspects' &&
-                      (() => {
-                        const harmonicFamily =
-                          aspectHarmonicFamilyFilter === 'all' ? undefined : Number(aspectHarmonicFamilyFilter);
-                        return (
-                          <>
-                            <div className="aspect-family-filter">
-                              <Select
-                                label={t.harmonicFamilyFilterLabel}
-                                value={aspectHarmonicFamilyFilter}
-                                options={[
-                                  { value: 'all', label: t.allHarmonicFamilies },
-                                  ...HARMONIC_FAMILY_FILTERS.map((family) => ({
-                                    value: String(family),
-                                    label: t.harmonicFamilyOption(String(family)),
-                                  })),
-                                ]}
-                                onChange={setAspectHarmonicFamilyFilter}
-                              />
-                            </div>
-                            {renderTableTab(
-                              'aspects',
-                              load.data,
-                              displayName,
-                              pointVisibility,
-                              housesRenderable,
-                              t,
-                              locale,
-                              rulership,
-                              symbolClass,
-                              boundsScheme,
-                              tableSelection,
-                              harmonicFamily,
-                            )}
-                          </>
-                        );
-                      })()}
-                    {currentTab === 'matrix' &&
-                      renderMatrixView(
-                        load.data,
-                        displayName,
-                        pointVisibility,
-                        t,
-                        locale,
-                        tableSelection,
-                        settingsPanel === null ? undefined : openFormulaDrawer,
-                      )}
-                    {currentTab === 'elements' &&
-                      renderElementsView(load.data, displayName, pointVisibility, t, locale)}
-                    {currentTab === 'placements' &&
-                      renderPlacementsView(
-                        load.data,
-                        displayName,
-                        pointVisibility,
-                        housesRenderable,
-                        t,
-                        locale,
-                        symbolClass,
-                        tableSelection,
-                      )}
-                    {currentTab === 'patterns' &&
-                      renderPatternsView(
-                        load.data,
-                        displayName,
-                        pointVisibility,
-                        housesRenderable,
-                        t,
-                        locale,
-                        rulership,
-                        boundsScheme,
-                      )}
-                  </div>
-                )}
-              </>
-            )}
+                  {currentTab === 'patterns' &&
+                    renderPatternsView(
+                      load.data,
+                      displayName,
+                      pointVisibility,
+                      housesRenderable,
+                      t,
+                      locale,
+                      rulership,
+                      boundsScheme,
+                    )}
+                </div>
+              )}
+            </>
           </>
         )}
       </div>
@@ -1592,6 +1449,8 @@ export function ChartView({
   }
 
   const showHouses = person.timeAccuracy !== 'unknown';
+  // The page's one export (#915): the PDF creator, opened on this person, the natal chart and the view on screen.
+  const creatorHref = pdfCreatorHref(personId, 'natal', view ?? 'wheel');
 
   // When comparing, show both charts side-by-side (#439)
   if (compareType !== undefined) {
@@ -1601,7 +1460,9 @@ export function ChartView({
       <main className="shell shell--wide">
         <div className="chart-title-row">
           <BackLink fallback={personHref(personId)} />
-          <PageHeader title={pageTitle} basis={basisLine} />
+          <PageHeader title={pageTitle} basis={basisLine}>
+            <PdfCreatorLink href={creatorHref} />
+          </PageHeader>
         </div>
         <div className="comparison-container comparison-layout">
           <div>
@@ -1609,7 +1470,6 @@ export function ChartView({
             <ChartDataView
               typeSelector={<ChartTypeSelector personId={personId} type="natal" view={view} />}
               personId={personId}
-              creatorSection="natal"
               load={load}
               displayName={person.displayName}
               showHouses={showHouses}
@@ -1668,12 +1528,13 @@ export function ChartView({
     <main className="shell shell--wide">
       <div className="chart-title-row">
         <BackLink fallback={personHref(personId)} />
-        <PageHeader title={pageTitle} basis={basisLine} />
+        <PageHeader title={pageTitle} basis={basisLine}>
+          <PdfCreatorLink href={creatorHref} />
+        </PageHeader>
       </div>
       <ChartDataView
         typeSelector={<ChartTypeSelector personId={personId} type="natal" view={view} />}
         personId={personId}
-        creatorSection="natal"
         load={load}
         displayName={person.displayName}
         showHouses={showHouses}

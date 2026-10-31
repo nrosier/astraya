@@ -441,9 +441,10 @@ function renderScreen(parsed: Route, seVersion: string | undefined): React.JSX.E
     return (
       <Stored>
         <PdfExportBuilder
-          key={`${parsed.personId ?? ''}/${parsed.section ?? ''}`}
+          key={`${parsed.personId ?? ''}/${parsed.section ?? ''}/${parsed.view ?? ''}`}
           personId={parsed.personId}
           section={parsed.section}
+          view={parsed.view}
         />
       </Stored>
     );

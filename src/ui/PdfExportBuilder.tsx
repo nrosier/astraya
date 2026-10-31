@@ -42,9 +42,11 @@ import {
   matchPdfPreset,
   PDF_ACG_LINE_TYPES,
   PDF_CHART_TABLES,
+  PDF_VIEW_TABLES,
   PDF_CHART_TYPES,
   PDF_PRESET_KEYS,
   pdfSelectionIsEmpty,
+  VIEW_TABLES,
   type PdfAcgLineType,
   type PdfAstrocartographySectionOptions,
   type PdfChartSectionOptions,
@@ -66,7 +68,7 @@ import type { Person } from '../domain/person.js';
 import { bodyById } from '../astrology/bodies.js';
 import type { ProgressedMcMethod } from '../astrology/progressions.js';
 import type { BodyId } from '../ephemeris/types.js';
-import type { ChartType } from './chart-sections.js';
+import type { ChartType, ChartViewKind } from './chart-sections.js';
 import { bodyDisplayName } from './astro-names.messages.js';
 import { chartViewMessages } from './ChartView.messages.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
@@ -103,12 +105,20 @@ function chartOf(selection: Draft, type: ChartType): PdfChartSectionOptions | un
 }
 
 /** The section a page's "Export PDF" link asked for (#915) starts selected, on top of the empty selection. */
-function withRequestedSection(selection: Draft, section: ExportBuilderSection | undefined): Draft {
+function withRequestedSection(
+  selection: Draft,
+  section: ExportBuilderSection | undefined,
+  view: ChartViewKind | undefined,
+): Draft {
   if (section === undefined) return selection;
   if (section === 'astrocartography')
     return { ...selection, astrocartography: defaultAstrocartographySectionOptions() };
   if (!(PDF_CHART_TYPES as readonly string[]).includes(section)) return selection;
-  return setChart(selection, defaultChartSectionOptions(section), section);
+  const defaults = defaultChartSectionOptions(section);
+  // The page's own view (#915) sets which tables the section takes, so the creator matches what is on screen.
+  // Without a view the chart keeps its full default, as before.
+  const options: PdfChartSectionOptions = view === undefined ? defaults : { ...defaults, tables: VIEW_TABLES[view] };
+  return setChart(selection, options, section);
 }
 
 /** A partner needs a complete, known-time birth record — same requirement SynastryView/CompositeView gate their own picker on. */
@@ -147,11 +157,14 @@ function summaryLabels(selection: PdfSelection, t: (typeof pdfExportMessages)['e
 export function PdfExportBuilder({
   personId: requestedPersonId,
   section,
+  view,
 }: {
   /** The person a page's "Export PDF" link asked for (#915); used when that person exists, else the usual starting point. */
   readonly personId?: string | undefined;
   /** The section that link asked for: its chart type, or the Astrocartography map, starts selected. */
   readonly section?: ExportBuilderSection | undefined;
+  /** The view the page was showing (#915): the chart section takes that view's tables, so the creator matches the screen. */
+  readonly view?: ChartViewKind | undefined;
 } = {}): React.JSX.Element {
   const t = useMessages(pdfExportMessages);
   const ct = useMessages(chartViewMessages);
@@ -178,6 +191,7 @@ export function PdfExportBuilder({
         interpretation: { ...EMPTY_SELECTION.interpretation, sabianSymbols: showDegreeSymbol },
       },
       section,
+      view,
     ),
   );
   const [status, setStatus] = useState<BuildStatus>({ kind: 'idle' });
@@ -601,7 +615,8 @@ export function PdfExportBuilder({
                                 patchChart(type, { wheel: value });
                               }}
                             />{' '}
-                            {PDF_CHART_TABLES.map((table) => (
+                            {/* A page's link can tick a view's own table (#915), so every table stays listed to tick or untick. */}
+                            {[...PDF_CHART_TABLES, ...PDF_VIEW_TABLES].map((table) => (
                               <Checkbox
                                 key={table}
                                 label={t.tableLabels[table]}

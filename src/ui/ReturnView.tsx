@@ -23,7 +23,7 @@ import { crossAspectRows, type AspectRow } from '../domain/chart-tables.js';
 import { deriveExportFilename } from '../domain/export-filename.js';
 import { housesAreDefined } from '../domain/chart-compute.js';
 import { aspectDisplayName, bodyDisplayName } from './astro-names.messages.js';
-import { ChartDataView } from './ChartView.js';
+import { ChartDataView, PdfCreatorLink, pdfCreatorHref } from './ChartView.js';
 import { ChartTypeSelector, changeChartView } from './ChartTypeSelector.js';
 import { useCalculationBasisLine } from './calculation-basis.js';
 import { type ChartType, type ChartViewKind } from './chart-sections.js';
@@ -255,10 +255,15 @@ export function ReturnView({
   const heading = person.displayName ? (solar ? t.solarHeading : t.lunarHeading)(person.displayName) : fallback;
   const displayName = person.displayName ? `${person.displayName} — ${label}` : label;
 
+  // The page's one export (#915): the PDF creator, opened on this person, this return chart and the view on screen.
+  const creatorHref = pdfCreatorHref(personId, kind, view ?? 'wheel');
+
   return (
     <main className="shell shell--wide">
       <BackLink fallback={personHref(personId)} />
-      <PageHeader title={heading} titleTerm="solarReturn" basis={basisLine} />
+      <PageHeader title={heading} titleTerm="solarReturn" basis={basisLine}>
+        <PdfCreatorLink href={creatorHref} />
+      </PageHeader>
       <ChartTypeSelector personId={personId} type={kind} view={view} />
       <p className="hint">
         <GlossaryText text={solar ? t.solarHint : t.lunarHint} />
@@ -312,7 +317,6 @@ export function ReturnView({
           <ChartDataView
             personId={personId}
             chartType={kind}
-            creatorSection={kind}
             load={load.kind === 'ready' ? { kind: 'ready', data: load.data } : load}
             displayName={displayName}
             showHouses

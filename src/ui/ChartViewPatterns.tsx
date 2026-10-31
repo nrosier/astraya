@@ -2,7 +2,7 @@
  * @module ChartViewPatterns
  * @purpose Renders the Patterns & condition chart view: chart shape, lunar phase, sect, aspect patterns, dignities, condition, dispositors and receptions.
  * @conventions Pure move out of ChartView.tsx (#817): same markup and strings, no behaviour change; takes the chart data and message bundle as arguments and never imports ChartView.
- * @exports dignityColumns, almutenCandidateColumns, conditionColumns, dispositorColumns, receptionColumns, renderDignitiesTable, renderPatternsView
+ * @exports dignityColumns, almutenCandidateColumns, conditionColumns, dispositorColumns, receptionColumns, renderDignitiesTable, renderPatternsView, formatElongation
  */
 import { Tooltip } from './primitives/Tooltip.js';
 import { GlossaryTerm } from './GlossaryTerm.js';
@@ -532,7 +532,7 @@ function renderAspectPatterns(data: ChartData, t: typeof chartViewMessages.en, l
 }
 
 /** `337°28'`: an elongation to the minute, the way Astro-Seek prints it beside the phase name. */
-function formatElongation(elongation: number): string {
+export function formatElongation(elongation: number): string {
   const totalMinutes = Math.round(elongation * 60) % (360 * 60);
   return `${String(Math.floor(totalMinutes / 60))}°${String(totalMinutes % 60).padStart(2, '0')}'`;
 }

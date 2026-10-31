@@ -16,7 +16,11 @@ import {
   EMPTY_SELECTION,
   matchPdfPreset,
   PDF_ACG_LINE_TYPES,
+  PDF_CHART_TABLES,
   PDF_CHART_TYPES,
+  PDF_PRESET_KEYS,
+  PDF_PRESETS,
+  PDF_VIEW_TABLES,
   pdfSelectionIsEmpty,
   type PdfSelection,
 } from '../src/domain/pdf-export-sections.js';
@@ -366,5 +370,32 @@ describe('eclipses in presets and matching (#441, #484)', () => {
     const archive = applyPdfPreset('complete-archive', 'p-ada');
     const withSpan: PdfSelection = { ...archive, eclipses: { table: true, fromYear: 1999, toYear: 2001 } };
     expect(matchPdfPreset(withSpan)).toBe('complete-archive');
+  });
+});
+
+describe('view tables (#915)', () => {
+  it('lists the four view keys apart from the default five, which stay unchanged', () => {
+    expect(PDF_CHART_TABLES).toEqual(['positions', 'houses', 'aspects', 'dignities', 'derived']);
+    expect(PDF_VIEW_TABLES).toEqual(['matrix', 'elements', 'fixed-stars', 'shape']);
+  });
+
+  it('keeps the view keys out of every full chart section and every full preset', () => {
+    for (const type of PDF_CHART_TYPES) {
+      expect(defaultChartSectionOptions(type).tables).toEqual(PDF_CHART_TABLES);
+    }
+    for (const key of ['complete-archive', 'full-predictive-report'] as const) {
+      for (const chart of PDF_PRESETS[key].charts) {
+        for (const table of PDF_VIEW_TABLES) expect(chart.tables).not.toContain(table);
+      }
+    }
+    for (const table of PDF_VIEW_TABLES) {
+      expect(defaultCompositeSectionOptions('p-x').tables).not.toContain(table);
+    }
+  });
+
+  it('keeps every full preset matching itself back, as before', () => {
+    for (const key of PDF_PRESET_KEYS) {
+      expect(matchPdfPreset({ personId: 'p-ada', ...PDF_PRESETS[key] })).toBe(key);
+    }
   });
 });

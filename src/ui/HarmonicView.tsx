@@ -26,7 +26,7 @@ import {
   type HarmonicPositionProvenanceRow,
 } from '../domain/harmonic.js';
 import { housesAreDefined } from '../domain/chart-compute.js';
-import { ChartDataView } from './ChartView.js';
+import { ChartDataView, PdfCreatorLink, pdfCreatorHref } from './ChartView.js';
 import { ChartTypeSelector, changeChartView } from './ChartTypeSelector.js';
 import { type ChartType, type ChartViewKind } from './chart-sections.js';
 import { chartHref, personHref } from './route.js';
@@ -187,10 +187,15 @@ export function HarmonicView({
 
   const displayName = person.displayName ? `${person.displayName} — ${label}` : label;
 
+  // The page's one export (#915): the PDF creator, opened on this person, the harmonic chart and the view on screen.
+  const creatorHref = pdfCreatorHref(personId, 'harmonic', view ?? 'wheel');
+
   return (
     <main className="shell shell--wide">
       <BackLink fallback={personHref(personId)} />
-      <PageHeader title={person.displayName ? t.heading(person.displayName) : t.headingFallback} titleTerm="harmonic" />
+      <PageHeader title={person.displayName ? t.heading(person.displayName) : t.headingFallback} titleTerm="harmonic">
+        <PdfCreatorLink href={creatorHref} />
+      </PageHeader>
       <ChartTypeSelector personId={personId} type="harmonic" view={view} />
       <p className="hint">
         <GlossaryText text={t.hint} />
@@ -231,7 +236,6 @@ export function HarmonicView({
           <ChartDataView
             personId={personId}
             chartType="harmonic"
-            creatorSection="harmonic"
             load={load}
             displayName={displayName}
             showHouses

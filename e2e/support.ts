@@ -104,13 +104,6 @@ export async function openNatalChart(page: Page, view = 'Wheel'): Promise<void> 
   if (view !== 'Wheel') await page.getByRole('link', { name: view, exact: true }).click();
 }
 
-/** Picks an export from the header's Export menu; `group` opens a submenu first, for an export that is in one. */
-export async function chooseExport(page: Page, item: string, group?: string): Promise<void> {
-  await page.getByRole('button', { name: 'Export', exact: true }).click();
-  if (group !== undefined) await page.getByRole('button', { name: group, exact: true }).click();
-  await page.getByRole('button', { name: item, exact: true }).click();
-}
-
 /** The Extended settings drawer's four categories (#824), by their visible names. */
 export type SettingsTab = 'Profile & frame' | 'Bodies & orbs' | 'Display & glyphs' | 'Special points';
 

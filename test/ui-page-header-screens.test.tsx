@@ -273,3 +273,44 @@ describe('one PageHeader pattern (#887)', () => {
     });
   });
 });
+
+/** The PDF link a chart page puts in its PageHeader (#915): exactly one, inside `.page-header`. */
+async function pdfLinksIn(node: ReactNode): Promise<HTMLAnchorElement[]> {
+  const container = document.createElement('div');
+  document.body.append(container);
+  const root = createRoot(container);
+  try {
+    await act(async () => {
+      root.render(node);
+      await Promise.resolve();
+    });
+    return Array.from(container.querySelectorAll<HTMLAnchorElement>('.page-header a')).filter((link) =>
+      link.getAttribute('href')?.startsWith('#/documents/pdf'),
+    );
+  } finally {
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+  }
+}
+
+describe('chart pages link to the PDF creator from the PageHeader (#915)', () => {
+  it('natal: one link, carrying the person, the natal section and the view', async () => {
+    const links = await pdfLinksIn(<ChartView personId="p1" view="aspects" compareType={undefined} />);
+    expect(links).toHaveLength(1);
+    expect(links[0]?.getAttribute('href')).toBe('#/documents/pdf?person=p1&section=natal&view=aspects');
+  });
+
+  it('compare chart: still exactly one link, in the header, for the natal side', async () => {
+    const links = await pdfLinksIn(<ChartView personId="p1" view="wheel" compareType="draconic" />);
+    expect(links).toHaveLength(1);
+    expect(links[0]?.getAttribute('href')).toBe('#/documents/pdf?person=p1&section=natal&view=wheel');
+  });
+
+  it('draconic: one link, with the draconic section', async () => {
+    const links = await pdfLinksIn(<DraconicView personId="p1" view="placements" compareType={undefined} />);
+    expect(links).toHaveLength(1);
+    expect(links[0]?.getAttribute('href')).toBe('#/documents/pdf?person=p1&section=draconic&view=placements');
+  });
+});
