@@ -37,7 +37,7 @@ import { formatFixed, formatOrb, todayInputValue } from './format.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { PersonNotFound } from './PersonNotFound.js';
-import { SortableTable } from './SortableTable.js';
+import { SortableTable, csvExportTable, useCsvExports } from './SortableTable.js';
 import { solarArcViewMessages } from './SolarArcView.messages.js';
 import { useStoreState } from './store-context.js';
 import type { TableColumn } from './table-sort.js';
@@ -212,6 +212,38 @@ export function SolarArcView({ personId }: { personId: string }): React.JSX.Elem
     };
   }, [personMoment, provider, targetDate]);
 
+  // The positions and contacts tables' CSVs, offered in the page header (#887). Positions first, as the screen lists them.
+  const positions = load.kind === 'ready' ? positionRows(load.data.directedPositions, load.data.houses) : undefined;
+  const contacts = load.kind === 'ready' ? load.data.contacts.map(toContactRow) : undefined;
+  useCsvExports(
+    person === undefined
+      ? undefined
+      : [
+          ...(positions === undefined
+            ? []
+            : [
+                csvExportTable(
+                  'positions',
+                  t.positionsCaption,
+                  deriveExportFilename(person.displayName, 'solar-arc', 'csv'),
+                  positionColumns(t, locale),
+                  positions,
+                ),
+              ]),
+          ...(contacts === undefined || contacts.length === 0
+            ? []
+            : [
+                csvExportTable(
+                  'contacts',
+                  t.contactsCaption,
+                  deriveExportFilename(person.displayName, 'solar-arc-contacts', 'csv'),
+                  contactColumns(t, locale),
+                  contacts,
+                ),
+              ]),
+        ],
+  );
+
   if (person === undefined) {
     return <PersonNotFound />;
   }
@@ -240,9 +272,6 @@ export function SolarArcView({ personId }: { personId: string }): React.JSX.Elem
       </main>
     );
   }
-
-  const positions = load.kind === 'ready' ? positionRows(load.data.directedPositions, load.data.houses) : undefined;
-  const contacts = load.kind === 'ready' ? load.data.contacts.map(toContactRow) : undefined;
 
   return (
     <main className="shell">

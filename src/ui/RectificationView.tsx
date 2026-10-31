@@ -38,7 +38,7 @@ import {
   type RectificationFieldError,
 } from './rectification.js';
 import { rectificationViewMessages } from './RectificationView.messages.js';
-import { SortableTable } from './SortableTable.js';
+import { SortableTable, csvExportTable, useCsvExports } from './SortableTable.js';
 import { useStoreState } from './store-context.js';
 import type { TableColumn } from './table-sort.js';
 import type { Locale } from '../interpretation/schema.js';
@@ -199,6 +199,12 @@ export function RectificationView(): React.JSX.Element {
       ? t.solarArcContact(name(contact.moving), aspect, name(contact.natal), orb)
       : t.transitContact(name(contact.moving), aspect, name(contact.natal), orb);
   };
+
+  useCsvExports(
+    result.kind === 'ready' && top.length > 0
+      ? [csvExportTable('candidates', t.tableCaption, 'rectification-candidates.csv', columns, top)]
+      : undefined,
+  );
 
   return (
     <main className="shell">
