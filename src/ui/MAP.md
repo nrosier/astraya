@@ -79,7 +79,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `orb-library-store.ts` — Device-stored orb library and per-context orb source, validated on every read (#590). Deps: `astrology/orb-library`.
 - `orb-rules-draft.ts` — Typed-string drafts of orb rules and their checked conversion to settings (#590). Deps: `astrology/orb-profiles`, `chart/extended-settings`.
 - `PeriodicTransitView.tsx` + `PeriodicTransitView.messages.ts` — Daily/weekly/monthly/yearly transit forecast. Deps: `domain/periodic-transit`, `domain/planetary-return`, `astrology/transit-importance`.
-- `PersonForm.tsx` + `PersonForm.messages.ts` — Birth-record page: Save in the page header, a 60/40 card grid (identity, place with inline timezone status row, notes; export, replace, danger) (#795, #896). Deps: `domain/person-form`, `time/resolve`, `primitives/Disclosure`.
+- `PersonForm.tsx` + `PersonForm.messages.ts` — Birth-record page: Save in the page header, a 60/40 card grid (left: identity, place; right: notes, timezone details, export, replace, danger), bottom row sharing one edge (#795, #896, #895). Deps: `domain/person-form`, `time/resolve`, `primitives/Disclosure`.
 - `PersonFileActions.tsx` + `.messages.ts` — Birth-record export row (AAF, JSON, CSV) and a separate Replace data card with preview (#699, #896). Deps: `domain/person-file`, `domain/aaf-people`, `domain/full-export`.
 - `profile-overlay.ts` — Birth-record easter egg (#697): fetches the deployment setting, checks it, draws a short self-removing canvas overlay; skipped under reduced motion. Deps: none.
 - `PersonNotFound.tsx` — "No person" fallback screen. Deps: `shared.messages`.

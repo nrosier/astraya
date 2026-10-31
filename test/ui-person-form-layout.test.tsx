@@ -72,7 +72,7 @@ function card(modifier: string): HTMLElement {
 }
 
 describe('PersonForm card layout (#795)', () => {
-  it('orders the cards identity, place, notes, replace data, export, danger', () => {
+  it('orders the cards identity, place, notes, timezone details, export, replace data, danger', () => {
     const order = cards().map((element) =>
       [...element.classList].find((name) => name.startsWith('birth-record-card--')),
     );
@@ -80,15 +80,17 @@ describe('PersonForm card layout (#795)', () => {
       'birth-record-card--identity',
       'birth-record-card--location',
       'birth-record-card--notes',
+      'birth-record-card--timezone',
       'birth-record-card--files',
       'birth-record-card--replace',
       'birth-record-card--danger',
     ]);
   });
 
-  it('has no resolved-timezone card; the timezone is a status row inside the location card (#896)', () => {
-    expect(container?.querySelector('.birth-record-card--timezone')).toBeNull();
-    expect(card('location').querySelector('.birth-record-timezone')).not.toBeNull();
+  it('keeps the timezone status row in the location card and moves the details to their own card (#896, #895)', () => {
+    expect(card('location').querySelector('.birth-record-timezone-status')).not.toBeNull();
+    expect(card('timezone').querySelector('.birth-record-timezone-status')).toBeNull();
+    expect(card('timezone').querySelector('.primitive-disclosure-trigger')).not.toBeNull();
   });
 
   it('puts the date, how the time is known, and the time in the identity card, and the coordinates in the place card', () => {
@@ -133,16 +135,15 @@ describe('PersonForm card layout (#795)', () => {
   });
 
   it('shows the timezone as an inline status row with a Show details control (#896)', () => {
-    const row = card('location').querySelector('.birth-record-timezone');
-    expect(row?.querySelector('.birth-record-timezone-status')?.textContent).toMatch(/\S/);
-    const details = row?.querySelector('.primitive-disclosure-title');
+    const status = card('location').querySelector('.birth-record-timezone-status');
+    expect(status?.textContent).toMatch(/\S/);
+    const details = card('timezone').querySelector('.primitive-disclosure-title');
     expect(details?.textContent).toBe(t.timezoneDetailsTitle);
-    expect(row?.querySelector('.primitive-disclosure-action')?.textContent).toBe(t.timezoneShowDetails);
+    expect(card('timezone').querySelector('.primitive-disclosure-action')?.textContent).toBe(t.timezoneShowDetails);
   });
 
   it('shows the raw timezone data as a tabular value, with the overrides behind a Disclosure (D-795a)', () => {
-    const row = card('location').querySelector<HTMLElement>('.birth-record-timezone');
-    if (row === null) throw new Error('test fixture bug: no timezone row');
+    const row = card('timezone');
     const outer = row.querySelector('button.primitive-disclosure-trigger');
     expect(outer?.getAttribute('aria-expanded')).toBe('false');
     expect(row.querySelector('.birth-record-raw')).toBeNull();

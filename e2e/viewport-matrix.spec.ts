@@ -105,7 +105,7 @@ interface MultiCardPage {
   readonly grid: string;
 }
 
-/** The multi-card pages (#895): the Consultation columns and the Horary form cards. */
+/** The multi-card pages (#895): the Consultation columns, the Horary form cards and the Birth Record columns. */
 function multiCardPages(personId: string): readonly MultiCardPage[] {
   return [
     {
@@ -121,6 +121,13 @@ function multiCardPages(personId: string): readonly MultiCardPage[] {
       ready: '.horary-form',
       cards: '.horary-form > .horary-card',
       grid: '.horary-form',
+    },
+    {
+      name: 'birth-record',
+      hash: `#/people/${personId}/birth-record`,
+      ready: '.birth-record',
+      cards: '.birth-record > .birth-record-column',
+      grid: '.birth-record',
     },
   ];
 }
@@ -225,7 +232,7 @@ interface PageTarget {
 async function naturalHeights(page: Page, selector: string): Promise<RatioReport> {
   await page.addStyleTag({
     content:
-      '.consultation-grid, .horary-form { align-items: start !important; } .consultation-col > :last-child { flex-grow: 0 !important; }',
+      '.consultation-grid, .horary-form, .birth-record { align-items: start !important; } .consultation-col > :last-child, .birth-record-column > :last-child { flex-grow: 0 !important; }',
   });
   return page.evaluate<RatioReport>(`(() => {
     const rects = Array.from(document.querySelectorAll(${JSON.stringify(selector)})).map((el) => {
@@ -303,6 +310,28 @@ test('consultation side-by-side columns keep the owner-accepted floor (#895)', a
   expect(family, 'the pinned e2e font is applied').toContain('E2E Pinned');
   const short = ratios.filter((r) => r.ratio < CONSULTATION_FLOOR).map((r) => `${r.label}: ${r.ratio.toFixed(3)}`);
   expect(short, 'consultation shorter column below the accepted floor').toEqual([]);
+});
+
+test('birth record side-by-side columns keep the shorter at least 90% of the taller (#895)', async () => {
+  test.setTimeout(120_000);
+  await openSharedPerson(page, baseUrl, EINSTEIN);
+  const id = /#\/people\/([^/]+)/.exec(page.url())?.[1];
+  expect(id).toBeDefined();
+  const report: string[] = [];
+  const ratios = await measureRatios(
+    page,
+    baseUrl,
+    {
+      name: 'birth-record',
+      hash: `#/people/${id ?? ''}/birth-record`,
+      ready: '.birth-record',
+      cards: '.birth-record > .birth-record-column',
+    },
+    report,
+  );
+  console.log(report.join('\n'));
+  const short = ratios.filter((r) => r.ratio < NINETY_PERCENT).map((r) => `${r.label}: ${r.ratio.toFixed(3)}`);
+  expect(short, 'birth record shorter column below 90% of the taller').toEqual([]);
 });
 
 test('the horary astrological parameters card spans the full form width at 1280×800', async () => {
