@@ -4458,8 +4458,9 @@ svg text.chart-symbol-text-unicode {
   background: var(--surface);
 }
 
+/* Overridden entry (#826 item 11): a 2px --accent border on all four sides, not a left stripe. */
 .corpus-entry-overridden {
-  box-shadow: inset 2px 0 0 var(--accent);
+  border: 2px solid var(--accent);
 }
 
 .corpus-entry-head {
