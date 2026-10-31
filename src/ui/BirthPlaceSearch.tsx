@@ -154,90 +154,92 @@ export function BirthPlaceSearch({
   return (
     <div className="birth-place-search">
       <form className="birth-place-search-form" onSubmit={searchByName}>
-        <div className="birth-place-search-combo">
-          <TextField
-            label={t.searchByName}
-            value={searchQuery}
-            placeholder={t.searchByNamePlaceholder}
-            onChange={changeQuery}
-            autoComplete="off"
-            inputProps={{
-              role: 'combobox',
-              'aria-expanded': open && searchStatus !== 'idle',
-              'aria-controls': listVisible ? listboxId : undefined,
-              'aria-autocomplete': 'list',
-              'aria-activedescendant': listVisible && activeIndex >= 0 ? optionId(activeIndex) : undefined,
-              onKeyDown: onInputKeyDown,
-              onBlur: () => {
-                setOpen(false);
-              },
-            }}
-          />
-          {open && searchStatus !== 'idle' && (
-            <div className="birth-place-search-dropdown">
-              {searchStatus === 'searching' && (
-                <p className="birth-place-search-state" role="status">
-                  <svg className="birth-place-search-spinner" viewBox="0 0 24 24" aria-hidden="true">
-                    <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="3" opacity="0.25" />
-                    <path
-                      d="M21 12a9 9 0 0 0-9-9"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  <span>{t.searching}</span>
-                </p>
-              )}
-              {searchStatus === 'not-found' && (
-                <p className="birth-place-search-state" role="status">
-                  {t.searchNoMatches}
-                </p>
-              )}
-              {searchStatus === 'error' && (
-                <p className="birth-place-search-state birth-place-search-error" role="alert">
-                  {t.searchFailed}
-                </p>
-              )}
-              {searchStatus === 'results' && (
-                <ul id={listboxId} role="listbox" aria-label={t.searchResultsLabel}>
-                  {searchResults.map((result, index) => (
-                    <li
-                      key={`${String(result.latitude)},${String(result.longitude)},${String(index)}`}
-                      id={optionId(index)}
-                      role="option"
-                      aria-selected={index === activeIndex}
-                      className="birth-place-search-option"
-                      // Keeps focus in the input so its blur handler does not close the list before the click lands.
-                      onMouseDown={(event) => {
-                        event.preventDefault();
-                      }}
-                      onMouseMove={() => {
-                        setActiveIndex(index);
-                      }}
-                      onClick={() => {
-                        pickSearchResult(result);
-                      }}
-                    >
-                      <span className="birth-place-search-option-name" title={result.displayName}>
-                        {result.displayName}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          )}
+        <div className="search-input-group">
+          <div className="birth-place-search-combo">
+            <TextField
+              label={t.searchByName}
+              value={searchQuery}
+              placeholder={t.searchByNamePlaceholder}
+              onChange={changeQuery}
+              autoComplete="off"
+              inputProps={{
+                role: 'combobox',
+                'aria-expanded': open && searchStatus !== 'idle',
+                'aria-controls': listVisible ? listboxId : undefined,
+                'aria-autocomplete': 'list',
+                'aria-activedescendant': listVisible && activeIndex >= 0 ? optionId(activeIndex) : undefined,
+                onKeyDown: onInputKeyDown,
+                onBlur: () => {
+                  setOpen(false);
+                },
+              }}
+            />
+            {open && searchStatus !== 'idle' && (
+              <div className="birth-place-search-dropdown">
+                {searchStatus === 'searching' && (
+                  <p className="birth-place-search-state" role="status">
+                    <svg className="birth-place-search-spinner" viewBox="0 0 24 24" aria-hidden="true">
+                      <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="3" opacity="0.25" />
+                      <path
+                        d="M21 12a9 9 0 0 0-9-9"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <span>{t.searching}</span>
+                  </p>
+                )}
+                {searchStatus === 'not-found' && (
+                  <p className="birth-place-search-state" role="status">
+                    {t.searchNoMatches}
+                  </p>
+                )}
+                {searchStatus === 'error' && (
+                  <p className="birth-place-search-state birth-place-search-error" role="alert">
+                    {t.searchFailed}
+                  </p>
+                )}
+                {searchStatus === 'results' && (
+                  <ul id={listboxId} role="listbox" aria-label={t.searchResultsLabel}>
+                    {searchResults.map((result, index) => (
+                      <li
+                        key={`${String(result.latitude)},${String(result.longitude)},${String(index)}`}
+                        id={optionId(index)}
+                        role="option"
+                        aria-selected={index === activeIndex}
+                        className="birth-place-search-option"
+                        // Keeps focus in the input so its blur handler does not close the list before the click lands.
+                        onMouseDown={(event) => {
+                          event.preventDefault();
+                        }}
+                        onMouseMove={() => {
+                          setActiveIndex(index);
+                        }}
+                        onClick={() => {
+                          pickSearchResult(result);
+                        }}
+                      >
+                        <span className="birth-place-search-option-name" title={result.displayName}>
+                          {result.displayName}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+          </div>
+          <button
+            type="submit"
+            className="quiet"
+            disabled={searchStatus === 'searching' || searchQuery.trim() === '' || !online}
+          >
+            {searchStatus === 'searching' ? t.searching : t.search}
+          </button>
         </div>
         <p className="hint">{t.searchDisclosure(geocodeHost)}</p>
-        <button
-          type="submit"
-          className="quiet"
-          disabled={searchStatus === 'searching' || searchQuery.trim() === '' || !online}
-        >
-          {searchStatus === 'searching' ? t.searching : t.search}
-        </button>
       </form>
       {!online && (
         <StatusMessage kind="offline">{`${shared.offlineNeeded} ${t.offlineEnterCoordinates}`}</StatusMessage>

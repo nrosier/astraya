@@ -1,8 +1,8 @@
 /**
  * One person to and from a file on the birth-record page (#699): each export downloads, and an AAF import replaces
  * another person's birth data after a preview, keeping their name. The page's card layout (#795, #896): a 60/40 pair
- * of columns at 1280px and one column at 390px, with Save changes in the page header and the timezone as a status
- * row inside the location card.
+ * of columns at 1280px and one column at 390px, with Save changes in the page header, the timezone status row in the
+ * location card and the timezone details in their own card in the right column (#895).
  */
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -136,11 +136,10 @@ test.describe('with the shared people (#799)', () => {
     };
     const save = page.locator('.birth-record-save').getByRole('button', { name: 'Save', exact: true });
     await expect(card('location').locator('.birth-record-timezone-status')).toBeVisible();
-    await expect(card('location').locator('.birth-record-timezone .primitive-disclosure-trigger')).toBeVisible();
+    await expect(card('timezone').locator('.primitive-disclosure-trigger')).toBeVisible();
     await expect(page.locator('.sticky-actions')).toHaveCount(0);
     await expect(card('notes').locator('button')).toHaveCount(0);
     await expect(card('location').locator('button', { hasText: 'Save' })).toHaveCount(0);
-    await expect(card('timezone')).toHaveCount(0);
     // Save changes sits in the page header, on the same row as the title (#896).
     const title = await page.locator('.page-header-row h1').boundingBox();
     const saveBox = await save.boundingBox();
@@ -150,25 +149,23 @@ test.describe('with the shared people (#799)', () => {
     );
     expect(saveBox.x).toBeGreaterThan(title.x + title.width - 1);
 
-    // Desktop: identity, place and notes on the left (60%); the export, replace and danger cards on the right (40%).
+    // Desktop: identity and place on the left (60%); notes, the export, replace and danger cards on the right (40%) (#895).
     const [identity, location, notes, files, replace, danger] = await Promise.all(
       ['identity', 'location', 'notes', 'files', 'replace', 'danger'].map(box),
     );
     if (!identity || !location || !notes || !files || !replace || !danger) throw new Error('missing card');
-    for (const left of [location, notes]) expect(Math.abs(left.x - identity.x)).toBeLessThan(1);
-    for (const right of [files, replace, danger]) expect(Math.abs(right.x - files.x)).toBeLessThan(1);
+    expect(Math.abs(location.x - identity.x)).toBeLessThan(1);
+    for (const right of [notes, files, replace, danger]) expect(Math.abs(right.x - files.x)).toBeLessThan(1);
     expect(files.x).toBeGreaterThan(identity.x + identity.width);
     // 60/40: the left column is about 1.5 times the right column (gap and padding allowed for).
     const ratio = identity.width / files.width;
     expect(ratio).toBeGreaterThan(1.3);
     expect(ratio).toBeLessThan(1.7);
     expect(location.y).toBeGreaterThan(identity.y);
-    expect(notes.y).toBeGreaterThan(location.y);
-    // NOTES ends at its natural height: no grid row span and no stretch, so its bottom is not pinned to the right column.
-    await expect(card('notes')).toHaveCSS('grid-row-end', 'auto');
-    await expect(card('notes')).toHaveCSS('align-self', 'auto');
-    expect(Math.abs(notes.y + notes.height - (danger.y + danger.height))).toBeGreaterThan(1);
-    expect(replace.y).toBeGreaterThan(files.y);
+    expect(notes.y).toBeLessThan(files.y);
+    // The bottom row shares one bottom edge (#895): the left column's last card and the right column's last card end together.
+    expect(Math.abs(location.y + location.height - (danger.y + danger.height))).toBeLessThanOrEqual(1);
+    expect(replace.y).toBeGreaterThan(notes.y);
     expect(danger.y).toBeGreaterThan(replace.y);
     // Date, how the time is known, and the time share one row.
     const tops = await Promise.all(
@@ -179,7 +176,7 @@ test.describe('with the shared people (#799)', () => {
     );
     expect(Math.max(...tops) - Math.min(...tops)).toBeLessThan(2);
 
-    // Narrow: one column, with the location card (and its timezone row) above the notes.
+    // Narrow: one column, with the location card above the notes.
     await page.setViewportSize({ width: 390, height: 844 });
     const [narrowIdentity, narrowLocation, narrowNotes] = await Promise.all(['identity', 'location', 'notes'].map(box));
     if (!narrowIdentity || !narrowLocation || !narrowNotes) throw new Error('missing card');
