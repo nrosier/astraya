@@ -3490,6 +3490,7 @@ svg text.chart-symbol-text-unicode {
 .emphasis-screen-grid {
   display: grid;
   grid-template-columns: auto repeat(3, minmax(0, 1fr)) auto;
+  align-items: center;
   max-width: 560px;
   margin-block: var(--space-3);
   gap: 0;
@@ -3514,7 +3515,8 @@ svg text.chart-symbol-text-unicode {
 .emphasis-screen-cell {
   display: flex;
   flex-wrap: wrap;
-  align-content: flex-start;
+  align-self: stretch;
+  align-content: center;
   gap: var(--space-1);
   min-height: 2.75rem;
   padding: var(--space-1);
