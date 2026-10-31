@@ -11,6 +11,7 @@
  */
 import { useState } from 'react';
 import { RULERSHIP_CHOICES, isRulershipChoice, type RulershipChoice } from '../astrology/rulership.js';
+import { GlossaryText } from './GlossaryText.js';
 import { useMessages } from './messages.js';
 import { OptionCards } from './primitives/OptionCards.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
@@ -51,7 +52,9 @@ export function RulershipSetting({
           if (isRulershipChoice(next)) choose(next);
         }}
       />
-      <p className="hint">{t.hint}</p>
+      <p className="hint">
+        <GlossaryText text={t.hint} />
+      </p>
       {error !== undefined && <StatusMessage kind="error">{t.saveFailed(error)}</StatusMessage>}
     </div>
   );
