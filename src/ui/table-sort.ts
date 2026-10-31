@@ -66,6 +66,8 @@ export interface TableColumn<T> {
    * sort button. Cell text stays plain, so a copy or CSV export is unchanged.
    */
   readonly labelTerm?: GlossaryTermId | undefined;
+  /** True for a column that only exists on screen (the wheel selection button, #957): copy and CSV leave it out, header and cells alike. */
+  readonly screenOnly?: boolean;
 }
 
 function comparable(value: CellValue): string | number {
@@ -98,8 +100,9 @@ export function cellText<T>(column: TableColumn<T>, row: T): string {
 
 /** Tab-separated text of `rows` under `columns` — a header row plus one line per row, pasteable into a spreadsheet. */
 export function rowsToTsv<T>(columns: readonly TableColumn<T>[], rows: readonly T[]): string {
-  const header = columns.map((column) => column.label).join('\t');
-  const lines = rows.map((row) => columns.map((column) => cellText(column, row)).join('\t'));
+  const exported = columns.filter((column) => column.screenOnly !== true);
+  const header = exported.map((column) => column.label).join('\t');
+  const lines = rows.map((row) => exported.map((column) => cellText(column, row)).join('\t'));
   return [header, ...lines].join('\n');
 }
 
@@ -111,8 +114,9 @@ function csvField(value: string): string {
 
 /** CSV text of `rows` under `columns` (#68), for a file download rather than the clipboard `rowsToTsv` serves. */
 export function rowsToCsv<T>(columns: readonly TableColumn<T>[], rows: readonly T[]): string {
-  const header = columns.map((column) => csvField(column.label)).join(',');
-  const lines = rows.map((row) => columns.map((column) => csvField(cellText(column, row))).join(','));
+  const exported = columns.filter((column) => column.screenOnly !== true);
+  const header = exported.map((column) => csvField(column.label)).join(',');
+  const lines = rows.map((row) => exported.map((column) => csvField(cellText(column, row))).join(','));
   return [header, ...lines].join('\r\n');
 }
 

@@ -59,6 +59,8 @@ export function selectColumn<T>(
     label: labels.column,
     // Its values are only a sort key (selected first); the cells are buttons, which read best from the start.
     align: 'start',
+    // A button column has no text for copy or CSV, so the export leaves it out (#957).
+    screenOnly: true,
     valueOf: (row) => (keyOf(row) !== undefined && keyOf(row) === selection.selectedKey ? 0 : 1),
     renderCell: (row) => {
       const key = keyOf(row);
