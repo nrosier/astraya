@@ -45,6 +45,9 @@ const ROUTES: readonly Route[] = [
   { kind: 'shared' },
   { kind: 'documents' },
   { kind: 'export-builder' },
+  { kind: 'export-builder', personId: ID, section: 'natal' },
+  { kind: 'export-builder', section: 'astrocartography' },
+  { kind: 'export-builder', personId: ID, section: 'lunar-return' },
   { kind: 'preferences' },
   { kind: 'preferences', section: 'data' },
   { kind: 'cycles' },
@@ -163,6 +166,28 @@ describe('the canonical hashes', () => {
   it('writes the default chart (natal, wheel) in full, so the hash always says what is open', () => {
     expect(routeHref({ kind: 'chart', personId: ID })).toBe(`#/people/${ID}/charts/natal/wheel`);
     expect(chartHref(ID)).toBe(`#/people/${ID}/charts/natal/wheel`);
+  });
+
+  it('reads the PDF creator’s optional person and section from its query (#915)', () => {
+    expect(parseRoute(`#/documents/pdf?person=${ID}&section=draconic`)).toEqual({
+      kind: 'export-builder',
+      personId: ID,
+      section: 'draconic',
+    });
+    expect(parseRoute('#/documents/pdf?section=astrocartography')).toEqual({
+      kind: 'export-builder',
+      section: 'astrocartography',
+    });
+    // A foreign person id and an unknown section are dropped, so the creator opens as it does without them.
+    expect(parseRoute('#/documents/pdf?person=x-1&section=nonsense')).toEqual({ kind: 'export-builder' });
+    expect(parseRoute('#/documents/pdf')).toEqual({ kind: 'export-builder' });
+  });
+
+  it('writes the PDF creator link with its person and section, and the bare path without them (#915)', () => {
+    expect(routeHref({ kind: 'export-builder' })).toBe('#/documents/pdf');
+    expect(routeHref({ kind: 'export-builder', personId: ID, section: 'natal' })).toBe(
+      `#/documents/pdf?person=${ID}&section=natal`,
+    );
   });
 
   it('round-trips every Preferences section', () => {

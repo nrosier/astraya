@@ -231,6 +231,7 @@ export function HarmonicView({
           <ChartDataView
             personId={personId}
             chartType="harmonic"
+            creatorSection="harmonic"
             load={load}
             displayName={displayName}
             showHouses

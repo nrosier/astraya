@@ -311,9 +311,8 @@ const en = {
 
   exportSvg: 'Image (SVG)',
   exportPng: (size: string) => `Image (PNG), ${size}`,
+  exportPdfCreator: 'Export PDF',
   exportPdf: 'Document (PDF, via print)…',
-  exportPdfHint:
-    '“Export PDF” opens your browser’s print dialog with the wheel and every data table laid out for paper — choose “Save as PDF” there.',
 
   thisPerson: 'this person',
   thisPersonCapitalized: 'This person',
@@ -651,9 +650,8 @@ const nl: typeof en = {
 
   exportSvg: 'Afbeelding (SVG)',
   exportPng: (size: string) => `Afbeelding (PNG), ${size}`,
+  exportPdfCreator: 'PDF exporteren',
   exportPdf: 'Document (PDF, via afdrukken)…',
-  exportPdfHint:
-    '“PDF exporteren” opent het afdrukdialoogvenster van je browser met het wiel en elke gegevenstabel opgemaakt voor papier — kies daar “Opslaan als PDF”.',
 
   thisPerson: 'deze persoon',
   thisPersonCapitalized: 'Deze persoon',
