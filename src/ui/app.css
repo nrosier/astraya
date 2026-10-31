@@ -2597,15 +2597,21 @@ label.stacked textarea:focus-visible {
    * Fold fit (#817, owner decisions 2026-10-29/30): the inspector is capped at 24rem so the wheel keeps the
    * rest. Measured at 1280x800 (root 14px): the workbench is 1014px, the 2rem gap 28px, so the 46rem (644px)
    * chart minimum leaves 342px, and 24rem (336px) is the widest whole-rem cap that fits. The card scrolls
-   * inside itself (clamp as the mockup and #817 section 2), so a long selection never makes the page taller.
+   * inside itself, so a long selection never makes the page taller.
+   * Owner feedback (#900, 2026-10-31): the card extends to the bottom of the window, keeping a --space-6 margin.
+   * Its top sits about 12.4rem below the top of the viewport at 1280x800 (measured, root 14px), so the
+   * 12.5rem here is that chrome; the card then fills the rest of the viewport and scrolls inside itself.
    */
   .selection-inspector {
     min-height: 14rem;
-    max-height: clamp(350px, 55vh, 580px);
+    height: calc(100vh - 12.5rem - var(--space-6));
     overflow-y: auto;
   }
 
   .chart-workbench {
+    /* .shell pads its bottom 5rem; pulling the grid up by the difference to --space-6 ends the page at the
+     * filled Selection card's margin, so the two-column chart view does not scroll the document (#900). */
+    margin-bottom: calc(var(--space-6) - 5rem);
     grid-template-columns: minmax(46rem, 1fr) minmax(20rem, 24rem);
   }
 }

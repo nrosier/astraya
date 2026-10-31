@@ -344,6 +344,29 @@ test.describe('with the shared people (#799)', () => {
     expect(card.width).toBeLessThanOrEqual(24 * 14 + 1);
   });
 
+  test('the Selection card extends to the viewport bottom, keeping --space-6 clear, with no page scroll (#817, #900)', async () => {
+    test.setTimeout(90_000);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await openNatalChart(page);
+    await page.locator('.chart-point[data-body="sun"]').click();
+    const inspector = page.locator('.selection-inspector');
+    await expect(inspector.locator('.selection-inspector-facts')).toContainText('Sun');
+    const viewportHeight = page.viewportSize()?.height ?? 0;
+    const card = await inspector.boundingBox();
+    if (card === null) throw new Error('no card box');
+    // --space-6 (1.5rem) resolved against the root font size, read from the page.
+    const spaceSix = Number(
+      await page.evaluate(
+        "parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--space-6')) * parseFloat(getComputedStyle(document.documentElement).fontSize)",
+      ),
+    );
+    expect(card.y + card.height).toBeLessThanOrEqual(viewportHeight);
+    expect(viewportHeight - (card.y + card.height)).toBeGreaterThanOrEqual(spaceSix);
+    expect(await page.evaluate('document.documentElement.scrollHeight <= window.innerHeight')).toBe(true);
+    expect(await page.evaluate('window.scrollY')).toBe(0);
+  });
+
   test('with the device degree-symbol setting off, the Sabian tier is gone from the Selection card (#817, D-817b)', async () => {
     test.setTimeout(90_000);
     await openSharedPerson(page, baseUrl, EINSTEIN);
