@@ -48,6 +48,29 @@ export function sectionTabsFor(route: Route): SectionTabs | null {
   };
 }
 
+/**
+ * Arrow, Home and End keys move between the section's tab links, the same keys the Charts tabs use (`Tabs.tsx`).
+ * Moving also opens the tab, so focus and the open sub-view stay together. Other keys keep their default.
+ */
+function onSectionTabKeyDown(event: React.KeyboardEvent<HTMLDivElement>, tabs: SectionTabs['tabs']): void {
+  if (!(event.target instanceof HTMLAnchorElement) || event.target.closest('nav') === null) return;
+  const links = Array.from(event.currentTarget.querySelectorAll<HTMLAnchorElement>('nav a'));
+  const current = links.indexOf(event.target);
+  const last = links.length - 1;
+  let next: number | undefined;
+  if (event.key === 'ArrowRight') next = current === last ? 0 : current + 1;
+  else if (event.key === 'ArrowLeft') next = current <= 0 ? last : current - 1;
+  else if (event.key === 'Home') next = 0;
+  else if (event.key === 'End') next = last;
+  if (current < 0 || next === undefined) return;
+  const target = tabs[next];
+  const link = links[next];
+  if (target === undefined || link === undefined) return;
+  event.preventDefault();
+  link.focus();
+  window.location.hash = target.href;
+}
+
 export function SectionNav({ route }: { route: Route }): React.JSX.Element | null {
   const t = useMessages(appNavMessages);
   const section = sectionTabsFor(route);
@@ -57,7 +80,12 @@ export function SectionNav({ route }: { route: Route }): React.JSX.Element | nul
   const labels: Readonly<Record<string, string>> = { ...t.tabLabels, ...t.toolLabels };
   const labelFor = (key: string): string => labels[key] ?? key;
   return (
-    <div className="person-nav section-nav">
+    <div
+      className="person-nav section-nav"
+      onKeyDown={(event) => {
+        onSectionTabKeyDown(event, section.tabs);
+      }}
+    >
       <ScrollingTabRow
         label={label}
         activeKey={section.activeKey}
