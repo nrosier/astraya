@@ -117,6 +117,30 @@ describe('SectionNav', () => {
     expect(labels(nl)).toContain('Verduisteringen');
   });
 
+  it('keeps every section tab a focusable link in tab order', async () => {
+    const routes = [
+      '#/people/p-abcdefghijklmnop/relationships/synastry',
+      '#/people/p-abcdefghijklmnop/timing/transits',
+      '#/people/p-abcdefghijklmnop/timing/profections',
+      '#/explore/cycles',
+    ];
+    for (const href of routes) {
+      const box = await mount(parseRoute(href));
+      const tabs = Array.from(box.querySelectorAll<HTMLAnchorElement>('nav a'));
+      expect(tabs.length).toBeGreaterThan(1);
+      for (const tab of tabs) {
+        expect(tab.getAttribute('href')).toMatch(/^#\//);
+        expect(tab.tabIndex).toBeGreaterThanOrEqual(0);
+        expect(tab.closest('[hidden], [inert], [aria-hidden="true"]')).toBeNull();
+      }
+      act(() => {
+        mounted?.root.unmount();
+      });
+      mounted?.container.remove();
+      mounted = undefined;
+    }
+  });
+
   it('draws nothing outside the four sections', async () => {
     const box = await mount(parseRoute('#/people'));
     expect(box.innerHTML).toBe('');
