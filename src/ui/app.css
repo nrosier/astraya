@@ -918,7 +918,7 @@ footer {
 }
 
 .horary-form .birth-place-search-form {
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
   align-items: end;
   justify-items: stretch;
   margin-bottom: 0;
@@ -1062,7 +1062,7 @@ footer {
 }
 
 .birth-record-card .birth-place-search-form {
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
   align-items: end;
   justify-items: stretch;
   margin-bottom: 0;
@@ -1130,6 +1130,37 @@ footer {
 .birth-place-search-form .primitive-field {
   width: 100%;
   min-width: 0;
+}
+
+/*
+ * #969: the input and the Search button share one row. `flex-end` puts the button on the input's bottom edge; the
+ * label sits inside the combo, so `center` would drop the button to the middle of label and input together. The
+ * TextField's bottom margin is cleared here, since it would open a gap between the input and the row's bottom edge.
+ */
+.search-input-group {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+  width: 100%;
+  min-width: 0;
+}
+
+.search-input-group > .birth-place-search-combo {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.search-input-group .primitive-field {
+  margin-bottom: 0;
+}
+
+.search-input-group .primitive-field input {
+  box-sizing: border-box;
+}
+
+.search-input-group > button {
+  box-sizing: border-box;
+  flex: 0 0 auto;
 }
 
 /* Floating autocomplete dropdown (#784): hangs under the input at its width (the combo wrapper holds only the

@@ -13,7 +13,7 @@ import { expect, test } from '@playwright/test';
 import type { BrowserContext, Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
-import { newSeededContext } from './shared-people.ts';
+import { EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
 import { gotoAndSettle, labeledField } from './support.ts';
 
 let dir: string;
@@ -146,3 +146,83 @@ test('a search-request failure shows an inline message, and coordinates are stil
   await labeledField(page, /^Longitude/, 'input[type="number"]').fill('-0.1276');
   expect(await readFields(page)).toEqual({ latitude: 51.5072, longitude: -0.1276 });
 });
+
+/**
+ * #969: the Search button must share the place input's top and bottom edges on every screen that
+ * mounts `BirthPlaceSearch`. Measured with getBoundingClientRect, because jsdom has no layout.
+ */
+interface ControlEdges {
+  readonly inputTop: number;
+  readonly inputBottom: number;
+  readonly buttonTop: number;
+  readonly buttonBottom: number;
+}
+
+async function measureSearchControls(page: Page): Promise<ControlEdges> {
+  const form = page
+    .locator('form.birth-place-search-form')
+    .filter({ has: page.locator('input[role="combobox"]') })
+    .first();
+  await expect(form).toBeVisible();
+  const input = await form.locator('input[role="combobox"]').boundingBox();
+  const button = await form.locator('button[type="submit"]').boundingBox();
+  if (input === null || button === null) throw new Error('search input or button has no bounding box');
+  return {
+    inputTop: input.y,
+    inputBottom: input.y + input.height,
+    buttonTop: button.y,
+    buttonBottom: button.y + button.height,
+  };
+}
+
+function expectFlushControls(edges: ControlEdges): void {
+  const tolerance = 0.5;
+  expect(Math.abs(edges.buttonTop - edges.inputTop)).toBeLessThanOrEqual(tolerance);
+  expect(Math.abs(edges.buttonBottom - edges.inputBottom)).toBeLessThanOrEqual(tolerance);
+}
+
+const VIEWPORTS = [
+  { width: 390, height: 844 },
+  { width: 1280, height: 800 },
+  { width: 3440, height: 1440 },
+] as const;
+
+const SCHEMES = ['light', 'dark'] as const;
+
+for (const viewport of VIEWPORTS) {
+  for (const colorScheme of SCHEMES) {
+    const label = `${String(viewport.width)}x${String(viewport.height)} ${colorScheme}`;
+
+    test(`#969 Search button is flush with the place input on the birth record (${label})`, async () => {
+      await page.setViewportSize(viewport);
+      await page.emulateMedia({ colorScheme });
+      await openSharedPerson(page, baseUrl, EINSTEIN);
+      const idMatch = /#\/people\/([^/]+)/.exec(new URL(page.url()).hash);
+      const id = idMatch?.[1];
+      if (id === undefined) throw new Error(`no person id in ${page.url()}`);
+      await gotoAndSettle(page, `${baseUrl}/#/people/${id}/birth-record`);
+      expectFlushControls(await measureSearchControls(page));
+    });
+
+    test(`#969 Search button is flush with the place input on Horary (${label})`, async () => {
+      await page.setViewportSize(viewport);
+      await page.emulateMedia({ colorScheme });
+      await gotoAndSettle(page, `${baseUrl}/#/explore/horary`);
+      expectFlushControls(await measureSearchControls(page));
+    });
+
+    test(`#969 Search button is flush with the place input on Electional (${label})`, async () => {
+      await page.setViewportSize(viewport);
+      await page.emulateMedia({ colorScheme });
+      await gotoAndSettle(page, `${baseUrl}/#/explore/electional`);
+      expectFlushControls(await measureSearchControls(page));
+    });
+
+    test(`#969 Search button is flush with the place input on Rectification (${label})`, async () => {
+      await page.setViewportSize(viewport);
+      await page.emulateMedia({ colorScheme });
+      await gotoAndSettle(page, `${baseUrl}/#/explore/rectification`);
+      expectFlushControls(await measureSearchControls(page));
+    });
+  }
+}
