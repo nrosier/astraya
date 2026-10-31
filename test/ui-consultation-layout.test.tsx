@@ -240,16 +240,14 @@ describe('right-column keys and Open links (#800)', () => {
     }
   });
 
-  it('renders an Open link on the profection and firdaria cards in en and nl', () => {
+  it('renders the profection Open link on the progressions paragraph in en and nl', () => {
     const body = sectionBody(view, 'consultation-year-heading');
-    const profectionRow =
-      /<li>\s*<span className="consultation-lord-key">\{t\.profectionYear\}[\s\S]*?<\/li>/.exec(body)?.[0] ?? '';
+    const progressionsParagraph = /<p>[\s\S]*?hrefFor\('progressions'[\s\S]*?<\/p>/.exec(body)?.[0] ?? '';
     const firdariaRow =
       /<li>\s*<span className="consultation-lord-key">\{t\.firdaria\}[\s\S]*?<\/li>/.exec(body)?.[0] ?? '';
-    expect(profectionRow).toContain("hrefFor('profections', { personId })");
-    expect(profectionRow).toContain('{t.openProfections}');
-    expect(firdariaRow).toContain("hrefFor('timing-timeline', { personId })");
-    expect(firdariaRow).toContain('{t.openTimingTimeline}');
+    expect(progressionsParagraph).toContain("hrefFor('profections', { personId })");
+    expect(progressionsParagraph).toContain('{t.openProfections}');
+    expect(firdariaRow).not.toContain('hrefFor(');
     expect(consultationViewMessages.en.openProfections).toBe('Open profections');
     expect(consultationViewMessages.nl.openProfections).toBe('Profecties openen');
     expect(consultationViewMessages.en.openTimingTimeline).toBe('Open timing timeline');
