@@ -459,6 +459,30 @@ const proseTerms: readonly {
     visible: { en: 'aspects', nl: 'aspecten' },
     node: () => <PeriodicTransitView personId="p1" />,
   },
+  {
+    view: 'ProfectionsView',
+    term: 'chartRuler',
+    visible: { en: 'chart ruler', nl: 'horoscoopheerser' },
+    node: () => <ProfectionsView personId="p1" />,
+  },
+  {
+    view: 'ElectionalView',
+    term: 'houses',
+    visible: { en: 'house', nl: 'huis' },
+    node: () => <ElectionalView />,
+  },
+  {
+    view: 'PrimaryDirectionsView',
+    term: 'ascendant',
+    visible: { en: 'Ascendant', nl: 'Ascendant' },
+    node: () => <PrimaryDirectionsView personId="p1" />,
+  },
+  {
+    view: 'PrimaryDirectionsView',
+    term: 'midheaven',
+    visible: { en: 'Midheaven', nl: 'Medium Coeli' },
+    node: () => <PrimaryDirectionsView personId="p1" />,
+  },
 ];
 
 describe('inline glossary tooltips on view prose (#901)', () => {
