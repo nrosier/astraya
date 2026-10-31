@@ -170,7 +170,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `store-context.tsx` — React adapter exposing op-log store via `useSyncExternalStore`. Deps: `store/fold`, `store/store`, `./trace`.
 - `symbol-setting.ts` — Device preference for symbol class (glyphs/Unicode/text). Deps: `chart/symbol-class`.
 - `synastry-text.ts` — Resolves Synastry aspect-row interpretation text. Deps: `interpretation/compose`, `interpretation/schema`.
-- `table-sort.ts` — Generic sorting/export engine for all data tables. Deps: none (domain-agnostic).
+- `table-sort.ts` — Generic sorting/export engine for all data tables. Deps: `astro-glossary.messages` (type only).
 - `theme-dom.ts` — DOM/storage half of light/dark theme override. Deps: `./theme`.
 - `theme.ts` — Pure theme-selection logic (cycle order/labels). Deps: `ThemeToggle.messages`.
 - `tools-nav.ts` — Tools menu backing (tool list/groups/active-tool); grouped as Sky & cycles/Questions & planning/Birth data (#506/#509). Deps: `route`.

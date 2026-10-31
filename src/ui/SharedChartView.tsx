@@ -19,7 +19,12 @@ import { toChartCalculationOptions } from '../chart/extended-settings.js';
 import { chartSheetMetaLines } from '../domain/chart-tables.js';
 import { computeChartData, type ChartData } from '../domain/chart-compute.js';
 import { decodeChartShareLink, type ChartShareData } from '../domain/chart-share.js';
-import { decodeCalculationSnapshot, type CalculationSnapshot } from '../domain/calculation-snapshot.js';
+import {
+  decodeCalculationSnapshot,
+  MAX_SNAPSHOT_FIXED_STARS,
+  SnapshotDecodeError,
+  type CalculationSnapshot,
+} from '../domain/calculation-snapshot.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
@@ -39,13 +44,20 @@ type Load =
  * strict decoder here (#717): a link from a newer app, or one naming an unregistered house system,
  * ayanamsa or orb scale, is refused with a reason rather than shown as a different chart.
  */
-function fromLocation(): { data?: ChartShareData; snapshot?: CalculationSnapshot; error?: string } {
+function fromLocation(): {
+  data?: ChartShareData;
+  snapshot?: CalculationSnapshot;
+  error?: string;
+  tooManyFixedStars?: boolean;
+} {
   const query = window.location.hash.split('?')[1] ?? '';
   try {
     const data = decodeChartShareLink(new URLSearchParams(query));
     return { data, snapshot: decodeCalculationSnapshot(data.settings) };
   } catch (error) {
     // A bad or truncated link must say so, not silently show nothing or a wrong chart.
+    if (error instanceof SnapshotDecodeError && error.code === 'too-many-fixed-stars')
+      return { tooManyFixedStars: true };
     return { error: error instanceof Error ? error.message : String(error) };
   }
 }
@@ -96,6 +108,8 @@ export function SharedChartView(): React.JSX.Element {
           ...toChartCalculationOptions(snapshot.settings),
           rulership: snapshot.rulership,
           ...(snapshot.customPoints.length === 0 ? {} : { customPoints: snapshot.customPoints }),
+          // The sender's chosen fixed stars (#860); none means the seven-star preset, as before.
+          ...(snapshot.fixedStars.length === 0 ? {} : { fixedStars: snapshot.fixedStars }),
         });
         const artifact = await buildChartArtifact(snapshot, moment, data, provider);
         if (!effect.cancelled) setLoad({ kind: 'ready', data, artifact });
@@ -116,6 +130,9 @@ export function SharedChartView(): React.JSX.Element {
       <PageHeader title={t.sharedChart} />
       <p className="hint">{t.hint}</p>
 
+      {initial.tooManyFixedStars === true && (
+        <StatusMessage kind="error">{t.tooManyFixedStars(String(MAX_SNAPSHOT_FIXED_STARS))}</StatusMessage>
+      )}
       {initial.error !== undefined && <StatusMessage kind="error">{t.linkCouldNotBeRead(initial.error)}</StatusMessage>}
 
       {initial.data !== undefined && snapshot !== undefined && (

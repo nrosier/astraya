@@ -37,6 +37,7 @@ import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { PersonNotFound } from './PersonNotFound.js';
 import { personHref } from './route.js';
 import { useStoreState } from './store-context.js';
+import { useStableBy } from './use-stable-moment.js';
 import { todayInputValue } from './format.js';
 import { useMessages } from './messages.js';
 import { timingTimelineViewMessages } from './TimingTimelineView.messages.js';
@@ -114,6 +115,8 @@ export function TimingTimelineTracks({
 export function TimingTimelineView({ personId }: { personId: string }): React.JSX.Element {
   const state = useStoreState();
   const person = state.people.get(personId);
+  // The person's chosen fixed stars (#860), as the natal chart reads them.
+  const fixedStars = useStableBy(person?.fixedStars, (stars) => JSON.stringify(stars ?? []));
   const { provider } = useEphemerisProvider();
   const t = useMessages(timingTimelineViewMessages);
   const [locale] = useLocale();
@@ -134,7 +137,7 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
         const targetJd = await provider.julianDayFromUtc(target.year, target.month, target.day, 12, 0, 0);
         const natalJd = await julianDayFor(provider, resolveMoment(moment));
         const [natal, profections, directions, progressions, solarArc, transit, forecast] = await Promise.all([
-          computeChartData(moment, provider),
+          computeChartData(moment, provider, fixedStars === undefined ? {} : { fixedStars }),
           computeProfections(moment, targetJd, provider),
           generatePrimaryDirections(moment, provider),
           computeSecondaryProgression(moment, targetJd, provider),
@@ -171,7 +174,7 @@ export function TimingTimelineView({ personId }: { personId: string }): React.JS
     return () => {
       effect.cancelled = true;
     };
-  }, [asOf, person?.moment, provider, target]);
+  }, [asOf, person?.moment, fixedStars, provider, target]);
 
   if (person === undefined) return <PersonNotFound />;
   if (person.moment === undefined) {

@@ -13,6 +13,7 @@
  * @conventions A single synthetic chart derived from one natal chart (not a comparison), so it reuses `ChartDataView` wholesale like CompositeView/DraconicView; the in-screen picker is a named Varga preset (`VARGA_PRESETS`) or any positive integer, with a radix-to-result provenance table beside the derived chart. Text comes from co-located `HarmonicView.messages.ts` via `useMessages()`.
  * @exports HarmonicView
  */
+import { GlossaryText } from './GlossaryText.js';
 import { NumberField } from './primitives/NumberField.js';
 import { Select } from './primitives/Select.js';
 import { useEffect, useMemo, useState } from 'react';
@@ -175,7 +176,7 @@ export function HarmonicView({
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <PageHeader title={t.harmonicChartsFallback} />
+        <PageHeader title={t.harmonicChartsFallback} titleTerm="harmonic" />
         <p>
           {t.needsCompleteRecord(person.displayName || t.thisPerson)}{' '}
           <a href={personHref(personId)}>{t.personPageLink}</a>.
@@ -189,9 +190,11 @@ export function HarmonicView({
   return (
     <main className="shell shell--wide">
       <BackLink fallback={personHref(personId)} />
-      <PageHeader title={person.displayName ? t.heading(person.displayName) : t.headingFallback} />
+      <PageHeader title={person.displayName ? t.heading(person.displayName) : t.headingFallback} titleTerm="harmonic" />
       <ChartTypeSelector personId={personId} type="harmonic" view={view} />
-      <p className="hint">{t.hint}</p>
+      <p className="hint">
+        <GlossaryText text={t.hint} />
+      </p>
 
       <div className="field-grid">
         <Select
@@ -253,7 +256,9 @@ export function HarmonicView({
       )}
 
       {nValid && load.kind === 'ready' && !housesAreDefined(load.data.houses) && (
-        <StatusMessage kind="error">{t.housesUndefined}</StatusMessage>
+        <StatusMessage kind="error">
+          <GlossaryText text={t.housesUndefined} />
+        </StatusMessage>
       )}
       {nValid && load.kind === 'ready' && housesAreDefined(load.data.houses) && (
         <ReportView personId={personId} chart={load.data} rulership={rulership} onRulershipChange={setRulership} />

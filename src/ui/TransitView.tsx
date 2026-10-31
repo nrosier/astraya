@@ -24,6 +24,7 @@
  */
 
 import { DateField } from './primitives/DateField.js';
+import { GlossaryText } from './GlossaryText.js';
 import { personHref } from './route.js';
 import { houseSystemLabel, rulershipLabel, zodiacLabel } from './ChartView.js';
 import { PrintProvenance } from './PrintProvenance.js';
@@ -100,6 +101,7 @@ export function contactColumns(t: typeof transitViewMessages.en, locale: Locale)
     {
       key: 'aspect',
       label: t.aspectLabel,
+      labelTerm: 'aspect',
       valueOf: (row) => row.aspect,
       render: (row) => aspectDisplayName(row.aspectKey, locale),
     },
@@ -291,9 +293,9 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <PageHeader title={t.transitsFallback} />
+        <PageHeader title={t.transitsFallback} titleTerm="transit" />
         <p>
-          {t.notCompleteTransits(person.displayName || t.thisPerson)}{' '}
+          <GlossaryText text={t.notCompleteTransits(person.displayName || t.thisPerson)} />{' '}
           <a href={personHref(personId)}>{t.personPageLink}</a>.
         </p>
       </main>
@@ -304,8 +306,10 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <PageHeader title={t.transitsFallback} />
-        <p>{t.needsKnownTime(person.displayName || t.thisPerson)}</p>
+        <PageHeader title={t.transitsFallback} titleTerm="transit" />
+        <p>
+          <GlossaryText text={t.needsKnownTime(person.displayName || t.thisPerson)} />
+        </p>
       </main>
     );
   }
@@ -325,8 +329,10 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
         generatedAt={formatTimestamp(new Date())}
       />
       <BackLink fallback={personHref(personId)} />
-      <PageHeader title={person.displayName ? t.heading(person.displayName) : t.transitsFallback} />
-      <p className="hint">{t.hint(person.displayName || t.thisPerson)}</p>
+      <PageHeader title={person.displayName ? t.heading(person.displayName) : t.transitsFallback} titleTerm="transit" />
+      <p className="hint">
+        <GlossaryText text={t.hint(person.displayName || t.thisPerson)} />
+      </p>
 
       <p>
         <DateField label={t.asOfLabel} value={asOf} onChange={setAsOf} />
@@ -375,7 +381,10 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
 
             {load.voidOfCourse !== undefined && (
               <p className="void-of-course-summary">
-                {voidOfCourseSentence(load.voidOfCourse, t, locale)} <span className="hint">{t.vocBasis}</span>
+                <GlossaryText text={voidOfCourseSentence(load.voidOfCourse, t, locale)} />{' '}
+                <span className="hint">
+                  <GlossaryText text={t.vocBasis} />
+                </span>
               </p>
             )}
 

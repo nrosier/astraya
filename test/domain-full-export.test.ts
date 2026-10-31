@@ -80,6 +80,27 @@ const build = (people: readonly Person[], rulership: 'modern' | 'traditional' | 
   });
 
 describe('buildFullExport', () => {
+  it('carries the person’s chosen fixed stars, records them in the export and in the artifact snapshot (#860)', async () => {
+    const regulus = {
+      id: ',alLeo',
+      name: 'Regulus',
+      designation: 'alLeo',
+      equinox: 'ICRS',
+      sourceSha256: 'c'.repeat(64),
+    };
+    const archive = await build([{ ...ADA, fixedStars: [regulus] }]);
+    const [person] = archive.people;
+    expect(person?.fixedStars).toEqual([regulus]);
+    expect(person?.calculation?.snapshot.fixedStars).toEqual([regulus]);
+    expect(person?.calculation?.snapshot.version).toBe(CURRENT_SNAPSHOT_VERSION);
+  });
+
+  it('omits the field when the person chose no stars (#860)', async () => {
+    const [person] = (await build([ADA])).people;
+    expect(person).not.toHaveProperty('fixedStars');
+    expect(person?.calculation?.snapshot.fixedStars).toEqual([]);
+  });
+
   it('states what it is, when and by which version, and which preferences were in force', async () => {
     const archive = await build([ADA]);
     expect(archive).toMatchObject({

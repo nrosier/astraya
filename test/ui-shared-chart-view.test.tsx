@@ -30,10 +30,13 @@ vi.mock('../src/domain/chart-compute.js', async (importOriginal) => {
 
 const { SharedChartView } = await import('../src/ui/SharedChartView.js');
 const { encodeChartShareLink } = await import('../src/domain/chart-share.js');
-const { buildCalculationSnapshot, calculationSnapshotToJson } = await import('../src/domain/calculation-snapshot.js');
+const { buildCalculationSnapshot, calculationSnapshotToJson, MAX_SNAPSHOT_FIXED_STARS } =
+  await import('../src/domain/calculation-snapshot.js');
+const { buildChartArtifact } = await import('../src/ui/chart-artifact.js');
 const { DEFAULT_EXTENDED_SETTINGS } = await import('../src/chart/extended-settings.js');
 const { writeRulershipChoice } = await import('../src/ui/rulership-setting.js');
 const { computeChartData } = await import('../src/domain/chart-compute.js');
+type ChartData = Awaited<ReturnType<typeof computeChartData>>;
 
 const MOMENT = {
   civil: { year: 1990, month: 10, day: 23, hour: 1, minute: 0, second: 0 },
@@ -183,6 +186,100 @@ describe('a shared chart recomputes under the sender’s own settings, not the v
       });
       expect(computeChartData).not.toHaveBeenCalled();
       expect(container.textContent).toContain('newer version of Astraya');
+    } finally {
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+    }
+  });
+
+  const REGULUS = {
+    id: ',alLeo',
+    name: 'Regulus',
+    designation: 'alLeo',
+    equinox: 'ICRS',
+    sourceSha256: 'b'.repeat(64),
+  };
+
+  it('recomputes with the sender’s chosen fixed stars and shows them, not the preset (#860)', async () => {
+    const sent = buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, 'modern', [], [REGULUS]);
+    const query = encodeChartShareLink({
+      moment: MOMENT,
+      settings: calculationSnapshotToJson(sent),
+      housesKnown: true,
+    }).toString();
+
+    const { container, root } = await mountWithHash(`#/shared?${query}`);
+    try {
+      await act(async () => {
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+      expect(computeChartData).toHaveBeenCalledTimes(1);
+      expect(vi.mocked(computeChartData).mock.calls[0]?.[2]?.fixedStars).toEqual([REGULUS]);
+      const data = (await vi.mocked(computeChartData).mock.results[0]?.value) as ChartData | undefined;
+      expect([...(data?.fixedStars?.keys() ?? [])]).toEqual(['Regulus']);
+    } finally {
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+    }
+  });
+
+  it('records the chosen stars in the shared chart’s artifact snapshot (#860)', async () => {
+    const sent = buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, 'modern', [], [REGULUS]);
+    const artifact = await buildChartArtifact(
+      sent,
+      MOMENT,
+      await computeChartData(MOMENT, engine, { fixedStars: [REGULUS] }),
+      engine,
+    );
+    expect(artifact?.snapshot.fixedStars).toEqual([REGULUS]);
+    const without = await buildChartArtifact(
+      buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, 'modern'),
+      MOMENT,
+      await computeChartData(MOMENT, engine),
+      engine,
+    );
+    expect(without?.snapshot.fixedStars).toEqual([]);
+    expect(artifact?.fingerprint.snapshotHash).not.toBe(without?.fingerprint.snapshotHash);
+  });
+
+  it('opens a version-3 link with no chosen stars, so the preset applies (#860)', async () => {
+    const old = { version: 3, settings: {}, rulership: 'modern', customPoints: [] };
+    const query = encodeChartShareLink({ moment: MOMENT, settings: old, housesKnown: true }).toString();
+    const { container, root } = await mountWithHash(`#/shared?${query}`);
+    try {
+      await act(async () => {
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+      expect(computeChartData).toHaveBeenCalledTimes(1);
+      expect(vi.mocked(computeChartData).mock.calls[0]?.[2]?.fixedStars).toBeUndefined();
+    } finally {
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+    }
+  });
+
+  it('says so, in words, when a link carries more chosen stars than the cap (#860)', async () => {
+    const many = Array.from({ length: MAX_SNAPSHOT_FIXED_STARS + 1 }, (_, index) => ({
+      ...REGULUS,
+      id: `,s${String(index)}`,
+    }));
+    const forged = {
+      ...calculationSnapshotToJson(buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, 'modern')),
+      fixedStars: many,
+    };
+    const query = encodeChartShareLink({ moment: MOMENT, settings: forged, housesKnown: true }).toString();
+    const { container, root } = await mountWithHash(`#/shared?${query}`);
+    try {
+      expect(container.textContent).toContain(`at most ${String(MAX_SNAPSHOT_FIXED_STARS)}`);
+      expect(computeChartData).not.toHaveBeenCalled();
     } finally {
       act(() => {
         root.unmount();

@@ -13,6 +13,7 @@
  * @conventions Needs no saved person or stored data (computed entirely in-browser), so it lives outside `Stored`, like ElectionalView; it reports only whether the chart is fit to be judged, never an answer to the question itself. Reuses the shared `ChartDataView`. Text comes from co-located `HoraryView.messages.ts` via `useMessages()`.
  * @exports HoraryView
  */
+import { GlossaryText } from './GlossaryText.js';
 import { routeHref } from './route.js';
 import { DateField } from './primitives/DateField.js';
 import { Button } from './primitives/Button.js';
@@ -114,8 +115,10 @@ export function HoraryView({ view }: { readonly view?: ChartViewKind | undefined
   return (
     <main className="shell shell--wide">
       <BackLink fallback="#/people" />
-      <PageHeader title={t.heading} />
-      <p className="hint">{t.hint}</p>
+      <PageHeader title={t.heading} titleTerm="horary" />
+      <p className="hint">
+        <GlossaryText text={t.hint} />
+      </p>
 
       <div className="horary-form">
         <section className="horary-card" aria-labelledby="horary-card-datetime">
@@ -211,7 +214,11 @@ export function HoraryView({ view }: { readonly view?: ChartViewKind | undefined
           <>
             <h2>{t.considerationsHeading}</h2>
             {/* Every consideration is a verdict on this chart, so none exists before one is cast. */}
-            {!ready.chart.housesAvailable && <StatusMessage kind="partial">{t.noHouses}</StatusMessage>}
+            {!ready.chart.housesAvailable && (
+              <StatusMessage kind="partial">
+                <GlossaryText text={t.noHouses} />
+              </StatusMessage>
+            )}
             <p className={isRadical(ready.chart.considerations) ? 'horary-verdict' : 'horary-verdict warning'}>
               {isRadical(ready.chart.considerations)
                 ? ready.chart.considerations.some((consideration) => consideration.applies)
@@ -234,7 +241,9 @@ export function HoraryView({ view }: { readonly view?: ChartViewKind | undefined
                       {consideration.applies ? (consideration.softened ? t.appliesSoftened : t.applies) : t.clear}
                     </span>
                     <br />
-                    <span className="hint">{copy?.explanation}</span>
+                    <span className="hint">
+                      {copy?.explanation === undefined ? undefined : <GlossaryText text={copy.explanation} />}
+                    </span>
                   </li>
                 );
               })}
@@ -244,9 +253,21 @@ export function HoraryView({ view }: { readonly view?: ChartViewKind | undefined
             {judgment !== undefined && (
               <section aria-labelledby="horary-judgment-heading">
                 <h2 id="horary-judgment-heading">{t.judgmentHeading}</h2>
-                <p className="hint">{t.judgmentSource}</p>
-                <p>{t.significators(judgment.querent.rulerKey, judgment.quesited.rulerKey, judgment.quesited.house)}</p>
-                <p>{t.perfection[judgment.perfection.kind]}</p>
+                <p className="hint">
+                  <GlossaryText text={t.judgmentSource} />
+                </p>
+                <p>
+                  <GlossaryText
+                    text={t.significators(
+                      judgment.querent.rulerKey,
+                      judgment.quesited.rulerKey,
+                      judgment.quesited.house,
+                    )}
+                  />
+                </p>
+                <p>
+                  <GlossaryText text={t.perfection[judgment.perfection.kind]} />
+                </p>
                 {judgment.perfection.timeToPerfectDays !== undefined && (
                   <p className="hint">{t.timing(formatFixed(judgment.perfection.timeToPerfectDays, 1))}</p>
                 )}

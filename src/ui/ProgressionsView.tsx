@@ -16,6 +16,7 @@
  * @conventions Gated for unknown birth time the same way ProfectionsView.tsx/ChartView.tsx are; uses ProgressionsView.messages.ts for en/nl text via useMessages().
  * @exports ProgressionsView; positionRows, positionColumns, contactColumns, mcMethodLabel (reused by pdf-export-plan.ts)
  */
+import { GlossaryText } from './GlossaryText.js';
 import { personHref } from './route.js';
 import { DateField } from './primitives/DateField.js';
 import { Select } from './primitives/Select.js';
@@ -124,6 +125,7 @@ export function contactColumns(
     {
       key: 'aspect',
       label: t.aspectLabel,
+      labelTerm: 'aspect',
       valueOf: (row) => row.aspect,
       render: (row) => aspectDisplayName(row.aspectKey, locale),
     },
@@ -205,9 +207,9 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <PageHeader title={t.progressionsFallback} />
+        <PageHeader title={t.progressionsFallback} titleTerm="progression" />
         <p>
-          {t.notCompleteProgressions(person.displayName || t.thisPerson)}{' '}
+          <GlossaryText text={t.notCompleteProgressions(person.displayName || t.thisPerson)} />{' '}
           <a href={personHref(personId)}>{t.personPageLink}</a>.
         </p>
       </main>
@@ -218,8 +220,10 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <PageHeader title={t.progressionsFallback} />
-        <p>{t.needsKnownTime(person.displayName || t.thisPerson)}</p>
+        <PageHeader title={t.progressionsFallback} titleTerm="progression" />
+        <p>
+          <GlossaryText text={t.needsKnownTime(person.displayName || t.thisPerson)} />
+        </p>
       </main>
     );
   }
@@ -231,8 +235,13 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
   return (
     <main className="shell">
       <BackLink fallback={personHref(personId)} />
-      <PageHeader title={person.displayName ? t.heading(person.displayName) : t.progressionsFallback} />
-      <p className="hint">{t.hint}</p>
+      <PageHeader
+        title={person.displayName ? t.heading(person.displayName) : t.progressionsFallback}
+        titleTerm="progression"
+      />
+      <p className="hint">
+        <GlossaryText text={t.hint} />
+      </p>
 
       <div className="field-grid">
         <Select

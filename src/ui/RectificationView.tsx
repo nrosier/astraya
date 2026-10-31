@@ -14,6 +14,7 @@
  * @conventions Not person-scoped (optional pre-fill from a stored person); uses RectificationView.messages.ts for en/nl text via useMessages().
  * @exports RectificationView
  */
+import { GlossaryText } from './GlossaryText.js';
 import { formatFixed, formatOrb } from './format.js';
 import { Disclosure } from './primitives/Disclosure.js';
 import { DateField } from './primitives/DateField.js';
@@ -172,12 +173,14 @@ export function RectificationView(): React.JSX.Element {
       {
         key: 'ascendant',
         label: t.ascendantColumn,
+        labelTerm: 'ascendant',
         valueOf: (row) => row.ascendant,
         render: (row) => signPosition(row.ascendant, locale),
       },
       {
         key: 'midheaven',
         label: t.midheavenColumn,
+        labelTerm: 'midheaven',
         valueOf: (row) => row.midheaven,
         render: (row) => signPosition(row.midheaven, locale),
       },
@@ -206,9 +209,13 @@ export function RectificationView(): React.JSX.Element {
   return (
     <main className="shell">
       <BackLink fallback="#/people" />
-      <PageHeader title={t.heading} />
-      <p className="hint">{t.hint}</p>
-      <Notice>{t.caveat}</Notice>
+      <PageHeader title={t.heading} titleTerm="rectification" />
+      <p className="hint">
+        <GlossaryText text={t.hint} />
+      </p>
+      <Notice>
+        <GlossaryText text={t.caveat} />
+      </Notice>
 
       <div className="field-grid">
         <Select
@@ -360,7 +367,9 @@ export function RectificationView(): React.JSX.Element {
                   hideLabel={t.hideDetails}
                 >
                   {candidate.contacts.length === 0 ? (
-                    <p className="hint">{t.noContacts}</p>
+                    <p className="hint">
+                      <GlossaryText text={t.noContacts} />
+                    </p>
                   ) : (
                     <ul>
                       {result.events.map((event, eventIndex) => {

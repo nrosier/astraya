@@ -16,6 +16,7 @@
  * @exports SolarArcView; positionRows, positionColumns, contactColumns, toContactRow, formatExactDate, ContactRow (reused by pdf-export-plan.ts)
  */
 import { DateField } from './primitives/DateField.js';
+import { GlossaryText } from './GlossaryText.js';
 import { personHref } from './route.js';
 import { useEffect, useMemo, useState } from 'react';
 import { bodyById } from '../astrology/bodies.js';
@@ -148,6 +149,7 @@ export function contactColumns(t: typeof solarArcViewMessages.en, locale: Locale
     {
       key: 'aspect',
       label: t.aspectLabel,
+      labelTerm: 'aspect',
       valueOf: (row) => row.aspect,
       render: (row) => aspectDisplayName(row.aspectKey, locale),
     },
@@ -250,9 +252,9 @@ export function SolarArcView({ personId }: { personId: string }): React.JSX.Elem
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <PageHeader title={t.solarArcFallback} />
+        <PageHeader title={t.solarArcFallback} titleTerm="solarArc" />
         <p>
-          {t.notCompleteSolarArc(person.displayName || t.thisPerson)}{' '}
+          <GlossaryText text={t.notCompleteSolarArc(person.displayName || t.thisPerson)} />{' '}
           <a href={personHref(personId)}>{t.personPageLink}</a>.
         </p>
       </main>
@@ -263,8 +265,10 @@ export function SolarArcView({ personId }: { personId: string }): React.JSX.Elem
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <PageHeader title={t.solarArcFallback} />
-        <p>{t.needsKnownTime(person.displayName || t.thisPerson)}</p>
+        <PageHeader title={t.solarArcFallback} titleTerm="solarArc" />
+        <p>
+          <GlossaryText text={t.needsKnownTime(person.displayName || t.thisPerson)} />
+        </p>
       </main>
     );
   }
@@ -272,8 +276,13 @@ export function SolarArcView({ personId }: { personId: string }): React.JSX.Elem
   return (
     <main className="shell">
       <BackLink fallback={personHref(personId)} />
-      <PageHeader title={person.displayName ? t.heading(person.displayName) : t.solarArcFallback} />
-      <p className="hint">{t.hint}</p>
+      <PageHeader
+        title={person.displayName ? t.heading(person.displayName) : t.solarArcFallback}
+        titleTerm="solarArc"
+      />
+      <p className="hint">
+        <GlossaryText text={t.hint} />
+      </p>
 
       <p>
         <DateField label={t.asOfLabel} value={asOf} onChange={setAsOf} />

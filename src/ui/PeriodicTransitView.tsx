@@ -27,6 +27,7 @@
  * @exports PeriodicTransitView, bodyName, formatUtc, localizedSignName, signHouseLabel, contactRows, contactColumns, exactEventRows, exactEventColumns, stationRows, stationColumns
  */
 import { DateField } from './primitives/DateField.js';
+import { GlossaryText } from './GlossaryText.js';
 import { personHref } from './route.js';
 import { Select } from './primitives/Select.js';
 import { useEffect, useMemo, useState } from 'react';
@@ -509,7 +510,9 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
         <PageHeader title={t.forecastFallback} />
-        <p>{t.needsKnownTime(person.displayName || t.thisPerson)}</p>
+        <p>
+          <GlossaryText text={t.needsKnownTime(person.displayName || t.thisPerson)} />
+        </p>
       </main>
     );
   }
@@ -518,7 +521,9 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
     <main className="shell">
       <BackLink fallback={personHref(personId)} />
       <PageHeader title={person.displayName ? t.heading(person.displayName) : t.forecastFallback} />
-      <p className="hint">{t.hint(person.displayName || t.thisFallback)}</p>
+      <p className="hint">
+        <GlossaryText text={t.hint(person.displayName || t.thisFallback)} />
+      </p>
 
       <p>
         <DateField label={t.asOfLabel} value={asOf} onChange={setAsOf} />
@@ -594,7 +599,9 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
                   downloadFilename={deriveExportFilename(person.displayName, 'forecast-weekly', 'csv')}
                 />
               ) : (
-                <p>{t.noAspectsWeek}</p>
+                <p>
+                  <GlossaryText text={t.noAspectsWeek} />
+                </p>
               )}
               {data.weekly.lunarReturns.returns.length > 0 ? (
                 data.weekly.lunarReturns.returns.map((lunarReturn, index) => {
@@ -602,10 +609,12 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
                   return (
                     <div key={`${String(lunarReturn.returnJd)}-${String(index)}`}>
                       <p>
-                        {t.lunarReturnSentence(
-                          formatUtc(lunarReturn.returnJd),
-                          localizedSignName(ascendantSign, locale, t),
-                        )}
+                        <GlossaryText
+                          text={t.lunarReturnSentence(
+                            formatUtc(lunarReturn.returnJd),
+                            localizedSignName(ascendantSign, locale, t),
+                          )}
+                        />
                       </p>
                       {shownOf(lunarReturn.contacts).length > 0 && (
                         <SortableTable
@@ -624,18 +633,22 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
                   );
                 })
               ) : (
-                <p>{t.noLunarReturnWeek}</p>
+                <p>
+                  <GlossaryText text={t.noLunarReturnWeek} />
+                </p>
               )}
             </section>
 
             <section>
               <h2>{t.monthlyHeading}</h2>
               <p>
-                {t.sunInThisMonth(
-                  signHouseLabel(data.monthly.sun.sign, data.monthly.sun.house, locale, t),
-                  formatUtc(data.monthly.fromJd),
-                  formatUtc(data.monthly.toJd),
-                )}
+                <GlossaryText
+                  text={t.sunInThisMonth(
+                    signHouseLabel(data.monthly.sun.sign, data.monthly.sun.house, locale, t),
+                    formatUtc(data.monthly.fromJd),
+                    formatUtc(data.monthly.toJd),
+                  )}
+                />
               </p>
               {data.monthly.events.length > 0 ? (
                 <SortableTable
@@ -646,7 +659,9 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
                   downloadFilename={deriveExportFilename(person.displayName, 'forecast-monthly', 'csv')}
                 />
               ) : (
-                <p>{t.noAspectsMonth}</p>
+                <p>
+                  <GlossaryText text={t.noAspectsMonth} />
+                </p>
               )}
               <p>
                 {t.progressedLunarReturnSentence(
@@ -672,11 +687,13 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
             <section>
               <h2>{t.yearlyHeading}</h2>
               <p>
-                {t.solarReturnSentence(
-                  String(data.yearly.solarReturn.year),
-                  formatUtc(data.yearly.solarReturn.returnJd),
-                  localizedSignName(returnAscendantSign, locale, t),
-                )}
+                <GlossaryText
+                  text={t.solarReturnSentence(
+                    String(data.yearly.solarReturn.year),
+                    formatUtc(data.yearly.solarReturn.returnJd),
+                    localizedSignName(returnAscendantSign, locale, t),
+                  )}
+                />
               </p>
               {shownOf(data.yearly.solarReturn.contacts).length > 0 && (
                 <SortableTable
@@ -688,11 +705,13 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
                 />
               )}
               <p>
-                {t.demibirthdaySentence(
-                  String(data.yearly.demibirthday.year),
-                  formatUtc(data.yearly.demibirthday.demibirthdayJd),
-                  localizedSignName(demibirthdayAscendantSign, locale, t),
-                )}
+                <GlossaryText
+                  text={t.demibirthdaySentence(
+                    String(data.yearly.demibirthday.year),
+                    formatUtc(data.yearly.demibirthday.demibirthdayJd),
+                    localizedSignName(demibirthdayAscendantSign, locale, t),
+                  )}
+                />
               </p>
               {shownOf(data.yearly.demibirthday.contacts).length > 0 && (
                 <SortableTable
@@ -707,7 +726,9 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
 
             <section>
               <h2>{t.planetaryReturnHeading}</h2>
-              <p className="hint">{t.planetaryReturnHint}</p>
+              <p className="hint">
+                <GlossaryText text={t.planetaryReturnHint} />
+              </p>
               <div className="field-grid">
                 <Select
                   label={t.bodyLabel}
@@ -728,11 +749,13 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
                 {returnData !== undefined && (
                   <>
                     <p>
-                      {t.planetaryReturnSentence(
-                        bodyDisplayName(returnBodyKey, locale),
-                        formatUtc(returnData.returnJd),
-                        localizedSignName(planetaryReturnAscendantSign, locale, t),
-                      )}
+                      <GlossaryText
+                        text={t.planetaryReturnSentence(
+                          bodyDisplayName(returnBodyKey, locale),
+                          formatUtc(returnData.returnJd),
+                          localizedSignName(planetaryReturnAscendantSign, locale, t),
+                        )}
+                      />
                     </p>
                     {shownOf(returnData.contacts).length > 0 && (
                       <SortableTable

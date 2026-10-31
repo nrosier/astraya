@@ -12,6 +12,7 @@
  * @exports ElectionalView
  */
 import { Checkbox } from './primitives/Checkbox.js';
+import { GlossaryText } from './GlossaryText.js';
 import { DateField } from './primitives/DateField.js';
 import { Select } from './primitives/Select.js';
 import { TextField } from './primitives/TextField.js';
@@ -149,8 +150,10 @@ export function ElectionalView(): React.JSX.Element {
   return (
     <main className="shell">
       <BackLink fallback="#/people" />
-      <PageHeader title={t.heading} />
-      <p className="hint">{t.hint}</p>
+      <PageHeader title={t.heading} titleTerm="electional" />
+      <p className="hint">
+        <GlossaryText text={t.hint} />
+      </p>
 
       <div className="field-grid">
         <DateField

@@ -13,6 +13,7 @@
  * @exports DraconicView
  */
 import { useEffect, useMemo, useState } from 'react';
+import { GlossaryText } from './GlossaryText.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { computeDraconic, type DraconicData } from '../domain/draconic.js';
 import { housesAreDefined } from '../domain/chart-compute.js';
@@ -63,6 +64,8 @@ export function DraconicView({
   const { provider } = useEphemerisProvider();
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
   const customPoints = useStableBy(person?.customPoints, (points) => JSON.stringify(points ?? []));
+  // The person's chosen fixed stars (#860), as the natal chart reads them.
+  const fixedStars = useStableBy(person?.fixedStars, (stars) => JSON.stringify(stars ?? []));
   // The aspects use the device's orbs (#590), as the natal chart does.
   const {
     settings: extendedSettings,
@@ -83,6 +86,7 @@ export function DraconicView({
         const data: DraconicData = await computeDraconic(moment, provider, {
           ...orbs,
           ...(customPoints === undefined ? {} : { customPoints }),
+          ...(fixedStars === undefined ? {} : { fixedStars }),
         });
         if (!effect.cancelled) setLoad({ kind: 'ready', data: data.draconic });
       } catch (error) {
@@ -94,7 +98,7 @@ export function DraconicView({
     return () => {
       effect.cancelled = true;
     };
-  }, [settingsUnreadable, personMoment, provider, customPoints, orbs]);
+  }, [settingsUnreadable, personMoment, provider, customPoints, fixedStars, orbs]);
 
   if (person === undefined) {
     return <PersonNotFound />;
@@ -108,9 +112,9 @@ export function DraconicView({
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <PageHeader title={t.draconicChartFallback} />
+        <PageHeader title={t.draconicChartFallback} titleTerm="draconic" />
         <p>
-          {t.needsCompleteRecord(person.displayName || t.thisPerson)}{' '}
+          <GlossaryText text={t.needsCompleteRecord(person.displayName || t.thisPerson)} />{' '}
           <a href={personHref(personId)}>{t.personPageLink}</a>.
         </p>
       </main>
@@ -122,9 +126,11 @@ export function DraconicView({
   return (
     <main className="shell shell--wide">
       <BackLink fallback={personHref(personId)} />
-      <PageHeader title={person.displayName ? t.heading(person.displayName) : t.headingFallback} />
+      <PageHeader title={person.displayName ? t.heading(person.displayName) : t.headingFallback} titleTerm="draconic" />
       <ChartTypeSelector personId={personId} type="draconic" view={view} />
-      <p className="hint">{t.hint}</p>
+      <p className="hint">
+        <GlossaryText text={t.hint} />
+      </p>
 
       <ChartDataView
         personId={personId}
@@ -147,13 +153,18 @@ export function DraconicView({
                 provider,
                 baseLabel: t.headingFallback,
                 baseSource: 'draconic',
-                ...(person.customPoints === undefined ? {} : { options: { customPoints: person.customPoints } }),
+                options: {
+                  ...(customPoints === undefined ? {} : { customPoints }),
+                  ...(fixedStars === undefined ? {} : { fixedStars }),
+                },
               }
         }
       />
 
       {load.kind === 'ready' && !housesAreDefined(load.data.houses) && (
-        <StatusMessage kind="error">{t.housesUndefined}</StatusMessage>
+        <StatusMessage kind="error">
+          <GlossaryText text={t.housesUndefined} />
+        </StatusMessage>
       )}
       {load.kind === 'ready' && housesAreDefined(load.data.houses) && (
         <ReportView personId={personId} chart={load.data} rulership={rulership} onRulershipChange={setRulership} />

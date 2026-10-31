@@ -4,13 +4,76 @@
  * definition from the keyboard through the shared Tooltip, and every screen that explains a timing or chart
  * technique explains its terms with inline tooltips (#901 removed the top-of-view lists).
  */
-import { readFileSync } from 'node:fs';
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
-import { describe, expect, it } from 'vitest';
-import { astroGlossaryMessages, GLOSSARY_TERM_IDS } from '../src/ui/astro-glossary.messages.js';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { astroGlossaryMessages, GLOSSARY_TERM_IDS, type GlossaryTermId } from '../src/ui/astro-glossary.messages.js';
 import { GlossaryTerm, GlossaryTerms } from '../src/ui/GlossaryTerm.js';
+import { type Locale } from '../src/interpretation/schema.js';
 import { setLocale } from '../src/ui/locale.js';
+import { SortableTable } from '../src/ui/SortableTable.js';
+import { eclipsesViewMessages } from '../src/ui/EclipsesView.messages.js';
+import { profectionsViewMessages } from '../src/ui/ProfectionsView.messages.js';
+import { synastryViewMessages } from '../src/ui/SynastryView.messages.js';
+
+// Render-only mocks (as in test/ui-page-header-screens.test.tsx): the provider never resolves, so each view
+// renders its header and loading state with no calculation running.
+vi.mock('../src/ui/EphemerisProviderContext.js', () => {
+  const provider = { julianDayFromUtc: () => new Promise<number>(() => undefined) };
+  return { useEphemerisProvider: () => ({ provider, error: undefined }) };
+});
+
+vi.mock('../src/ui/store-context.js', () => {
+  const state = {
+    deleted: { people: new Map() },
+    people: new Map([
+      [
+        'p1',
+        {
+          displayName: 'Test',
+          timeAccuracy: 'exact',
+          moment: {
+            civil: { year: 1970, month: 1, day: 1, hour: 0, minute: 0, second: 0 },
+            coordinates: { latitude: 41.1833, longitude: -84.7333 },
+            zoneOverride: 'America/New_York',
+          },
+        },
+      ],
+    ]),
+  };
+  return { useStoreState: () => state, useStore: () => ({}), useOptionalStore: () => undefined };
+});
+
+vi.mock('../src/ui/person-calculation-settings.js', async () => {
+  const { DEFAULT_EXTENDED_SETTINGS } = await import('../src/chart/extended-settings.js');
+  const { DEFAULT_RULERSHIP_CHOICE } = await import('../src/astrology/rulership.js');
+  return {
+    usePersonCalculationSettings: () => ({
+      settings: DEFAULT_EXTENDED_SETTINGS,
+      rulership: DEFAULT_RULERSHIP_CHOICE,
+      unreadable: false,
+    }),
+  };
+});
+
+const { DraconicView } = await import('../src/ui/DraconicView.js');
+const { HoraryView } = await import('../src/ui/HoraryView.js');
+const { SolarArcView } = await import('../src/ui/SolarArcView.js');
+const { HarmonicView } = await import('../src/ui/HarmonicView.js');
+const { TransitView } = await import('../src/ui/TransitView.js');
+const { PrimaryDirectionsView } = await import('../src/ui/PrimaryDirectionsView.js');
+const { ReturnView } = await import('../src/ui/ReturnView.js');
+const { ElectionalView } = await import('../src/ui/ElectionalView.js');
+const { CompositeView } = await import('../src/ui/CompositeView.js');
+const { RectificationView } = await import('../src/ui/RectificationView.js');
+const { AstrocartographyView } = await import('../src/ui/AstrocartographyView.js');
+const { PeriodicTransitView } = await import('../src/ui/PeriodicTransitView.js');
+const { RelocatedChartView } = await import('../src/ui/RelocatedChartView.js');
+const { ProgressionsView } = await import('../src/ui/ProgressionsView.js');
+const { ProfectionsView } = await import('../src/ui/ProfectionsView.js');
+const { CyclesView } = await import('../src/ui/CyclesView.js');
+const { EclipsesView } = await import('../src/ui/EclipsesView.js');
+const { SynastryView } = await import('../src/ui/SynastryView.js');
 
 describe('the glossary catalogue (#456)', () => {
   it.each(['en', 'nl'] as const)('has a name and a real definition for every term in %s', (locale) => {
@@ -106,30 +169,320 @@ describe('GlossaryTerm (#456)', () => {
   });
 });
 
-describe('no top-of-view glossary lists (#901)', () => {
-  // Source-text check, as the rest of this file: a `GlossaryTerms` call or import returning to any of these views fails.
-  // Source-text only, so it does not render en or nl; the locale-independent check is the absence of the call in the source.
-  // Terms are explained by inline `GlossaryTerm` tooltips where they appear.
-  it.each([
-    'DraconicView',
-    'HoraryView',
-    'SolarArcView',
-    'HarmonicView',
-    'TransitView',
-    'PrimaryDirectionsView',
-    'ReturnView',
-    'ElectionalView',
-    'CompositeView',
-    'RectificationView',
-    'AstrocartographyView',
-    'PeriodicTransitView',
-    'RelocatedChartView',
-    'ProgressionsView',
-    'ProfectionsView',
-    'CyclesView',
-    'EclipsesView',
-    'SynastryView',
-  ])('%s renders no top-of-view GlossaryTerms list', (view) => {
-    expect(readFileSync(`src/ui/${view}.tsx`, 'utf-8')).not.toMatch(/GlossaryTerms/);
+/** The eighteen views whose top-of-view `ul.glossary-terms` list #901 removed. Each entry mounts the view. */
+const views: readonly { name: string; node: () => React.JSX.Element }[] = [
+  { name: 'DraconicView', node: () => <DraconicView personId="p1" view="wheel" compareType={undefined} /> },
+  { name: 'HoraryView', node: () => <HoraryView view="wheel" /> },
+  { name: 'SolarArcView', node: () => <SolarArcView personId="p1" /> },
+  { name: 'HarmonicView', node: () => <HarmonicView personId="p1" view="wheel" compareType={undefined} /> },
+  { name: 'TransitView', node: () => <TransitView personId="p1" /> },
+  { name: 'PrimaryDirectionsView', node: () => <PrimaryDirectionsView personId="p1" /> },
+  {
+    name: 'ReturnView',
+    node: () => <ReturnView personId="p1" kind="solar-return" view="wheel" compareType={undefined} />,
+  },
+  { name: 'ElectionalView', node: () => <ElectionalView /> },
+  { name: 'CompositeView', node: () => <CompositeView personId="p1" view="wheel" /> },
+  { name: 'RectificationView', node: () => <RectificationView /> },
+  { name: 'AstrocartographyView', node: () => <AstrocartographyView personId="p1" /> },
+  { name: 'PeriodicTransitView', node: () => <PeriodicTransitView personId="p1" /> },
+  {
+    name: 'RelocatedChartView',
+    node: () => <RelocatedChartView personId="p1" view="wheel" compareType={undefined} />,
+  },
+  { name: 'ProgressionsView', node: () => <ProgressionsView personId="p1" /> },
+  { name: 'ProfectionsView', node: () => <ProfectionsView personId="p1" /> },
+  { name: 'CyclesView', node: () => <CyclesView /> },
+  { name: 'EclipsesView', node: () => <EclipsesView /> },
+  { name: 'SynastryView', node: () => <SynastryView personId="p1" /> },
+];
+
+/** Table captions the views wrap with `captionTerm` (#901): the caption text opens its term's definition on its own view. */
+const wrappedCaptions: readonly { view: string; term: GlossaryTermId; caption: (locale: Locale) => string }[] = [
+  { view: 'EclipsesView', term: 'eclipse', caption: (locale) => eclipsesViewMessages[locale].tableCaption },
+  {
+    view: 'ProfectionsView',
+    term: 'profection',
+    caption: (locale) => profectionsViewMessages[locale].profectionsCaption,
+  },
+  { view: 'SynastryView', term: 'aspect', caption: (locale) => synastryViewMessages[locale].aspectsCaption },
+];
+
+describe('inline glossary tooltips on wrapped captions (#901)', () => {
+  afterEach(() => {
+    setLocale('en');
   });
+
+  it.each((['en', 'nl'] as const).flatMap((locale) => wrappedCaptions.map((wrapped) => ({ locale, ...wrapped }))))(
+    '$view caption opens the $term glossary tooltip in $locale',
+    async ({ locale, term, caption }) => {
+      setLocale(locale);
+      const container = document.createElement('div');
+      document.body.append(container);
+      const root = createRoot(container);
+      try {
+        await act(async () => {
+          root.render(
+            <SortableTable
+              caption={caption(locale)}
+              captionTerm={term}
+              columns={[{ key: 'name', label: 'Name', valueOf: (row: { name: string }) => row.name }]}
+              rows={[{ name: 'row' }]}
+              getRowKey={(row) => row.name}
+            />,
+          );
+          await Promise.resolve();
+        });
+        const triggers = [...container.querySelectorAll('.glossary-term')].map((element) => element.textContent);
+        expect(triggers, `${term} tooltip in ${locale}`).toContain(caption(locale));
+      } finally {
+        act(() => {
+          root.unmount();
+        });
+        container.remove();
+      }
+    },
+  );
+});
+
+/**
+ * Headings and prose that name a removed top-of-view term (#901): each view's own page header or copy opens the
+ * term's definition on that view. The term is a `GlossaryTerm` trigger whose text is the heading itself.
+ */
+const headingTerms: readonly { view: string; term: GlossaryTermId; node: () => React.JSX.Element }[] = [
+  { view: 'AstrocartographyView', term: 'astrocartography', node: () => <AstrocartographyView personId="p1" /> },
+  { view: 'CyclesView', term: 'cycle', node: () => <CyclesView /> },
+  { view: 'ElectionalView', term: 'electional', node: () => <ElectionalView /> },
+  { view: 'EclipsesView', term: 'eclipse', node: () => <EclipsesView /> },
+  { view: 'HoraryView', term: 'horary', node: () => <HoraryView view="wheel" /> },
+  { view: 'RectificationView', term: 'rectification', node: () => <RectificationView /> },
+  { view: 'CompositeView', term: 'composite', node: () => <CompositeView personId="p1" view="wheel" /> },
+  {
+    view: 'DraconicView',
+    term: 'draconic',
+    node: () => <DraconicView personId="p1" view="wheel" compareType={undefined} />,
+  },
+  {
+    view: 'HarmonicView',
+    term: 'harmonic',
+    node: () => <HarmonicView personId="p1" view="wheel" compareType={undefined} />,
+  },
+  { view: 'SynastryView', term: 'synastry', node: () => <SynastryView personId="p1" /> },
+  { view: 'TransitView', term: 'transit', node: () => <TransitView personId="p1" /> },
+  { view: 'ProgressionsView', term: 'progression', node: () => <ProgressionsView personId="p1" /> },
+  { view: 'SolarArcView', term: 'solarArc', node: () => <SolarArcView personId="p1" /> },
+  { view: 'PrimaryDirectionsView', term: 'primaryDirection', node: () => <PrimaryDirectionsView personId="p1" /> },
+  { view: 'ProfectionsView', term: 'profection', node: () => <ProfectionsView personId="p1" /> },
+  {
+    view: 'ReturnView',
+    term: 'solarReturn',
+    node: () => <ReturnView personId="p1" kind="solar-return" view="wheel" compareType={undefined} />,
+  },
+];
+
+/**
+ * Table column headers that name a removed term (#901): the header carries a `GlossaryTerm` trigger beside its label,
+ * so the header's own visible label is the trigger's text beside the sort button. Each row mounts the table directly.
+ */
+const headerTerms: readonly { term: GlossaryTermId; label: { readonly en: string; readonly nl: string } }[] = [
+  { term: 'ascendant', label: { en: 'Ascendant', nl: 'Ascendant' } },
+  { term: 'midheaven', label: { en: 'Midheaven', nl: 'Midheaven' } },
+  { term: 'aspect', label: { en: 'Aspect', nl: 'Aspect' } },
+];
+
+describe('inline glossary tooltips on table headers (#901)', () => {
+  afterEach(() => {
+    setLocale('en');
+  });
+
+  it.each((['en', 'nl'] as const).flatMap((locale) => headerTerms.map((row) => ({ locale, ...row }))))(
+    'the $term column header opens its glossary tooltip in $locale',
+    async ({ locale, term, label }) => {
+      setLocale(locale);
+      const container = document.createElement('div');
+      document.body.append(container);
+      const root = createRoot(container);
+      try {
+        await act(async () => {
+          root.render(
+            <SortableTable
+              caption="Headers"
+              columns={[
+                { key: 'value', label: label[locale], labelTerm: term, valueOf: (row: { value: string }) => row.value },
+              ]}
+              rows={[{ value: 'row' }]}
+              getRowKey={(row) => row.value}
+            />,
+          );
+          await Promise.resolve();
+        });
+        const header = container.querySelector('th');
+        const trigger = header?.querySelector('.glossary-term');
+        expect(trigger, `${term} header trigger in ${locale}`).not.toBeNull();
+        // The trigger sits beside the sort button, so it is not nested inside it.
+        expect(header?.querySelector('button .glossary-term'), `${term} trigger outside sort button`).toBeNull();
+        // Cell text stays plain: the header term adds no glossary trigger to the body.
+        expect(container.querySelector('tbody .glossary-term'), `${term} cell in ${locale}`).toBeNull();
+      } finally {
+        act(() => {
+          root.unmount();
+        });
+        container.remove();
+      }
+    },
+  );
+});
+
+describe('inline glossary tooltips on view headings (#901)', () => {
+  afterEach(() => {
+    setLocale('en');
+  });
+
+  it.each((['en', 'nl'] as const).flatMap((locale) => headingTerms.map((row) => ({ locale, ...row }))))(
+    '$view heading opens the $term glossary tooltip in $locale',
+    async ({ locale, term, node }) => {
+      setLocale(locale);
+      const container = document.createElement('div');
+      document.body.append(container);
+      const root = createRoot(container);
+      try {
+        await act(async () => {
+          root.render(node());
+          await Promise.resolve();
+        });
+        // The whole heading is the trigger, so its text is the heading's own visible text.
+        const heading = container.querySelector('h1');
+        const trigger = heading?.querySelector('.glossary-term');
+        expect(trigger, `${term} trigger in ${locale}`).not.toBeNull();
+        expect(trigger?.textContent, `${term} trigger text in ${locale}`).toBe(heading?.textContent);
+      } finally {
+        act(() => {
+          root.unmount();
+        });
+        container.remove();
+      }
+    },
+  );
+});
+
+/**
+ * Prose that names a removed term (#901): the view's own hint paragraph opens the term's definition, the visible word
+ * is the trigger's text. Each row is the first mention in that paragraph, as `GlossaryText` marks it.
+ */
+const proseTerms: readonly {
+  view: string;
+  term: GlossaryTermId;
+  visible: { readonly en: string; readonly nl: string };
+  node: () => React.JSX.Element;
+}[] = [
+  {
+    view: 'AstrocartographyView',
+    term: 'localSpace',
+    visible: { en: 'Local Space', nl: 'Local Space' },
+    node: () => <AstrocartographyView personId="p1" />,
+  },
+  {
+    view: 'ProfectionsView',
+    term: 'profection',
+    visible: { en: 'profections', nl: 'profecties' },
+    node: () => <ProfectionsView personId="p1" />,
+  },
+  {
+    view: 'CyclesView',
+    term: 'aspect',
+    visible: { en: 'aspect', nl: 'aspect' },
+    node: () => <CyclesView />,
+  },
+  {
+    view: 'SynastryView',
+    term: 'aspect',
+    visible: { en: 'aspects', nl: 'aspecten' },
+    node: () => <SynastryView personId="p1" />,
+  },
+  {
+    view: 'DraconicView',
+    term: 'houses',
+    visible: { en: 'houses', nl: 'huizen' },
+    node: () => <DraconicView personId="p1" view="wheel" compareType={undefined} />,
+  },
+  {
+    view: 'PrimaryDirectionsView',
+    term: 'primaryDirection',
+    visible: { en: 'Primary directions', nl: 'Primaire directies' },
+    node: () => <PrimaryDirectionsView personId="p1" />,
+  },
+  {
+    view: 'RectificationView',
+    term: 'midheaven',
+    visible: { en: 'Midheaven', nl: 'Midheaven' },
+    node: () => <RectificationView />,
+  },
+  {
+    view: 'RelocatedChartView',
+    term: 'ascendant',
+    visible: { en: 'Ascendant', nl: 'Ascendant' },
+    node: () => <RelocatedChartView personId="p1" view="wheel" compareType={undefined} />,
+  },
+];
+
+describe('inline glossary tooltips on view prose (#901)', () => {
+  afterEach(() => {
+    setLocale('en');
+  });
+
+  it.each(
+    (['en', 'nl'] as const).flatMap((locale) =>
+      proseTerms.map((row) => ({ locale, view: row.view, term: row.term, node: row.node, shown: row.visible[locale] })),
+    ),
+  )('$view prose opens the $term glossary tooltip in $locale', async ({ locale, term, shown, node }) => {
+    setLocale(locale);
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+    try {
+      await act(async () => {
+        root.render(node());
+        await Promise.resolve();
+      });
+      const triggers = [...container.querySelectorAll('.glossary-term')].map((element) => element.textContent);
+      expect(triggers, `${term} tooltip in ${locale}`).toContain(shown);
+    } finally {
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+    }
+  });
+});
+
+describe('no top-of-view glossary lists (#901)', () => {
+  const locales: readonly Locale[] = ['en', 'nl'];
+
+  afterEach(() => {
+    setLocale('en');
+  });
+
+  it.each(locales.flatMap((locale) => views.map((view) => ({ locale, ...view }))))(
+    '$name renders no top-of-view glossary list in $locale',
+    async ({ locale, node }) => {
+      setLocale(locale);
+      const container = document.createElement('div');
+      document.body.append(container);
+      const root = createRoot(container);
+      try {
+        await act(async () => {
+          root.render(node());
+          await Promise.resolve();
+        });
+        // The view must have mounted its page header, so an empty render cannot pass this check.
+        expect(container.querySelector('h1')).not.toBeNull();
+        expect(container.querySelector('ul.glossary-terms')).toBeNull();
+      } finally {
+        act(() => {
+          root.unmount();
+        });
+        container.remove();
+      }
+    },
+  );
 });

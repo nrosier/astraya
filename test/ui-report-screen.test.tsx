@@ -104,6 +104,31 @@ describe('the Report page computes the Charts page’s chart (#732)', () => {
     }
   });
 
+  it('computes with the person’s chosen fixed stars, not the preset (#860)', async () => {
+    const regulus = {
+      id: ',alLeo',
+      name: 'Regulus',
+      designation: 'alLeo',
+      equinox: 'ICRS',
+      sourceSha256: 'd'.repeat(64),
+    };
+    shown.person = { ...ADA, fixedStars: [regulus] };
+    const { container, root } = await mount();
+    try {
+      await act(async () => {
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+      const options = vi.mocked(computeChartData).mock.calls.at(-1)?.[2];
+      expect(options?.fixedStars).toEqual([regulus]);
+    } finally {
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+    }
+  });
+
   it('leaves an excluded object out of the reading and says so, while a hidden one stays in (#721)', async () => {
     vi.stubGlobal(
       'fetch',
