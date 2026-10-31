@@ -6634,6 +6634,59 @@ dl.consultation-tiles {
   color: var(--fg);
 }
 
+/* The text symbol class (#900): the same size token as the AC and MC labels (`.mgrid` sets --text-xs), coloured as the drawn glyph is. */
+.mgrid-symbol-text {
+  font-size: var(--text-xs);
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  color: var(--fg);
+}
+
+.mgrid-symbol-text.chart-sign-glyph {
+  color: var(--accent);
+}
+
+.mgrid-symbol-text.chart-sign-element-fire {
+  color: var(--element-fire);
+}
+
+.mgrid-symbol-text.chart-sign-element-earth {
+  color: var(--element-earth);
+}
+
+.mgrid-symbol-text.chart-sign-element-air {
+  color: var(--element-air);
+}
+
+.mgrid-symbol-text.chart-sign-element-water {
+  color: var(--element-water);
+}
+
+.mgrid-symbol-text.chart-aspect-glyph {
+  color: var(--muted);
+}
+
+.mgrid-symbol-text.chart-aspect-glyph-semisquare,
+.mgrid-symbol-text.chart-aspect-glyph-square,
+.mgrid-symbol-text.chart-aspect-glyph-sesquiquadrate,
+.mgrid-symbol-text.chart-aspect-glyph-opposition {
+  color: var(--aspect-hard);
+}
+
+.mgrid-symbol-text.chart-aspect-glyph-conjunction,
+.mgrid-symbol-text.chart-aspect-glyph-semisextile,
+.mgrid-symbol-text.chart-aspect-glyph-sextile,
+.mgrid-symbol-text.chart-aspect-glyph-trine {
+  color: var(--aspect-soft);
+}
+
+.mgrid-symbol-text.chart-aspect-glyph-quintile,
+.mgrid-symbol-text.chart-aspect-glyph-biquintile,
+.mgrid-symbol-text.chart-aspect-glyph-quincunx {
+  color: var(--aspect-minor);
+}
+
 .mgrid-retro {
   font-size: var(--text-xs);
   color: var(--muted);
