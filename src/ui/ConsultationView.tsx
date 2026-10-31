@@ -635,6 +635,7 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
                         <span className="consultation-lord-meta consultation-date">
                           {t.endsOn(dateLabel(load.year.profection.endJd))}
                         </span>
+                        <a href={hrefFor('profections', { personId })}>{t.openProfections}</a>
                       </li>
                     )}
                     {load.year.firdaria !== undefined && (
@@ -646,6 +647,7 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
                         <span className="consultation-lord-meta consultation-date">
                           {t.endsOn(dateLabel(load.year.firdaria.endJd))}
                         </span>
+                        <a href={hrefFor('timing-timeline', { personId })}>{t.openTimingTimeline}</a>
                       </li>
                     )}
                     <li>
