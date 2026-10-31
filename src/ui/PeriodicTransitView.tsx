@@ -61,7 +61,7 @@ import { EVERY_BODY_KEY, TransitFilterPanel, useTransitFilter } from './TransitF
 import { useLocale } from './locale.js';
 import { periodicTransitViewMessages } from './PeriodicTransitView.messages.js';
 import { PersonNotFound } from './PersonNotFound.js';
-import { SortableTable } from './SortableTable.js';
+import { SortableTable, csvExportTable, useCsvExports, type CsvExportTable } from './SortableTable.js';
 import { useStoreState } from './store-context.js';
 import type { TableColumn } from './table-sort.js';
 import type { BodyId, JulianDayUT } from '../ephemeris/types.js';
@@ -340,6 +340,154 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
     };
   }, [personMoment, provider, targetDate, returnBodyKey]);
 
+  const data = load.kind === 'ready' ? load.data : undefined;
+  const returnAscendantSign = data !== undefined ? Math.floor((data.yearly.solarReturn.houses.cusps[1] ?? 0) / 30) : 0;
+  const demibirthdayAscendantSign =
+    data !== undefined ? Math.floor((data.yearly.demibirthday.houses.cusps[1] ?? 0) / 30) : 0;
+  const progressedLunarReturnAscendantSign =
+    data !== undefined ? Math.floor((data.monthly.progressedLunarReturn.houses.cusps[1] ?? 0) / 30) : 0;
+  const returnData = returnLoad.kind === 'ready' ? returnLoad.data : undefined;
+  // The return and progressed-return contacts share one filter and count. The daily Moon's own
+  // aspects are left out: that section is about the Moon, which the default rules treat as background.
+  const shownOf = (contacts: readonly Aspect[]): readonly Aspect[] =>
+    rankTransits(filterTransits(contacts, filter), filter, rules.chartRulerKeys);
+  const filteredContactLists: readonly (readonly Aspect[])[] =
+    data === undefined
+      ? []
+      : [
+          ...data.weekly.lunarReturns.returns.map((lunarReturn) => lunarReturn.contacts),
+          data.monthly.progressedLunarReturn.contacts,
+          data.yearly.solarReturn.contacts,
+          data.yearly.demibirthday.contacts,
+          ...(returnData === undefined ? [] : [returnData.contacts]),
+        ];
+  const contactsTotal = filteredContactLists.reduce((sum, list) => sum + list.length, 0);
+  const contactsShown = filteredContactLists.reduce((sum, list) => sum + shownOf(list).length, 0);
+  const planetaryReturnAscendantSign =
+    returnData !== undefined ? Math.floor((returnData.houses.cusps[1] ?? 0) / 30) : 0;
+
+  // Every table on the forecast, as CSVs in the page header (#887), in source order: the contacts as computed,
+  // with only the filter applied, not ranked. The screen's own tables keep their on-screen ranking.
+  const sourceOf = (contacts: readonly Aspect[]): readonly Aspect[] => filterTransits(contacts, filter);
+  const exportTables: readonly CsvExportTable[] | undefined =
+    data === undefined || person === undefined
+      ? undefined
+      : [
+          ...(data.daily.moonAspects.length > 0
+            ? [
+                csvExportTable(
+                  'daily-moon',
+                  t.moonAspectsCaption,
+                  deriveExportFilename(person.displayName, 'forecast-daily-moon', 'csv'),
+                  contactColumns(t),
+                  contactRows(data.daily.moonAspects, locale),
+                ),
+              ]
+            : []),
+          ...(data.daily.exactToday.length > 0
+            ? [
+                csvExportTable(
+                  'daily-exact',
+                  t.exactTodayCaption,
+                  deriveExportFilename(person.displayName, 'forecast-daily-exact', 'csv'),
+                  exactEventColumns(t),
+                  exactEventRows(data.daily.exactToday, t, locale),
+                ),
+              ]
+            : []),
+          ...(data.daily.stationsToday.length > 0
+            ? [
+                csvExportTable(
+                  'daily-stations',
+                  t.stationsTodayCaption,
+                  deriveExportFilename(person.displayName, 'forecast-daily-stations', 'csv'),
+                  stationColumns(t),
+                  stationRows(data.daily.stationsToday, t, locale),
+                ),
+              ]
+            : []),
+          ...(data.weekly.events.length > 0
+            ? [
+                csvExportTable(
+                  'weekly-exact',
+                  t.exactThisWeekCaption,
+                  deriveExportFilename(person.displayName, 'forecast-weekly', 'csv'),
+                  exactEventColumns(t),
+                  exactEventRows(data.weekly.events, t, locale),
+                ),
+              ]
+            : []),
+          ...data.weekly.lunarReturns.returns.flatMap((lunarReturn, index) =>
+            sourceOf(lunarReturn.contacts).length > 0
+              ? [
+                  csvExportTable(
+                    `weekly-lunar-return-${String(index)}`,
+                    t.lunarReturnContactsCaption,
+                    deriveExportFilename(person.displayName, `forecast-weekly-lunar-return-${String(index)}`, 'csv'),
+                    contactColumns(t),
+                    contactRows(sourceOf(lunarReturn.contacts), locale),
+                  ),
+                ]
+              : [],
+          ),
+          ...(data.monthly.events.length > 0
+            ? [
+                csvExportTable(
+                  'monthly-exact',
+                  t.exactThisMonthCaption,
+                  deriveExportFilename(person.displayName, 'forecast-monthly', 'csv'),
+                  exactEventColumns(t),
+                  exactEventRows(data.monthly.events, t, locale),
+                ),
+              ]
+            : []),
+          ...(sourceOf(data.monthly.progressedLunarReturn.contacts).length > 0
+            ? [
+                csvExportTable(
+                  'monthly-progressed-lunar-return',
+                  t.progressedLunarReturnContactsCaption,
+                  deriveExportFilename(person.displayName, 'forecast-monthly-progressed-lunar-return', 'csv'),
+                  contactColumns(t),
+                  contactRows(sourceOf(data.monthly.progressedLunarReturn.contacts), locale),
+                ),
+              ]
+            : []),
+          ...(sourceOf(data.yearly.solarReturn.contacts).length > 0
+            ? [
+                csvExportTable(
+                  'yearly-solar-return',
+                  t.solarReturnContactsCaption,
+                  deriveExportFilename(person.displayName, 'forecast-yearly-return', 'csv'),
+                  contactColumns(t),
+                  contactRows(sourceOf(data.yearly.solarReturn.contacts), locale),
+                ),
+              ]
+            : []),
+          ...(sourceOf(data.yearly.demibirthday.contacts).length > 0
+            ? [
+                csvExportTable(
+                  'yearly-demibirthday',
+                  t.demibirthdayContactsCaption,
+                  deriveExportFilename(person.displayName, 'forecast-yearly-demibirthday', 'csv'),
+                  contactColumns(t),
+                  contactRows(sourceOf(data.yearly.demibirthday.contacts), locale),
+                ),
+              ]
+            : []),
+          ...(returnData !== undefined && sourceOf(returnData.contacts).length > 0
+            ? [
+                csvExportTable(
+                  'planetary-return',
+                  t.planetaryReturnContactsCaption,
+                  deriveExportFilename(person.displayName, 'forecast-planetary-return', 'csv'),
+                  contactColumns(t),
+                  contactRows(sourceOf(returnData.contacts), locale),
+                ),
+              ]
+            : []),
+        ];
+  useCsvExports(exportTables);
+
   if (person === undefined) {
     return <PersonNotFound />;
   }
@@ -368,32 +516,6 @@ export function PeriodicTransitView({ personId }: { personId: string }): React.J
       </main>
     );
   }
-
-  const data = load.kind === 'ready' ? load.data : undefined;
-  const returnAscendantSign = data !== undefined ? Math.floor((data.yearly.solarReturn.houses.cusps[1] ?? 0) / 30) : 0;
-  const demibirthdayAscendantSign =
-    data !== undefined ? Math.floor((data.yearly.demibirthday.houses.cusps[1] ?? 0) / 30) : 0;
-  const progressedLunarReturnAscendantSign =
-    data !== undefined ? Math.floor((data.monthly.progressedLunarReturn.houses.cusps[1] ?? 0) / 30) : 0;
-  const returnData = returnLoad.kind === 'ready' ? returnLoad.data : undefined;
-  // The return and progressed-return contacts share one filter and count. The daily Moon's own
-  // aspects are left out: that section is about the Moon, which the default rules treat as background.
-  const shownOf = (contacts: readonly Aspect[]): readonly Aspect[] =>
-    rankTransits(filterTransits(contacts, filter), filter, rules.chartRulerKeys);
-  const filteredContactLists: readonly (readonly Aspect[])[] =
-    data === undefined
-      ? []
-      : [
-          ...data.weekly.lunarReturns.returns.map((lunarReturn) => lunarReturn.contacts),
-          data.monthly.progressedLunarReturn.contacts,
-          data.yearly.solarReturn.contacts,
-          data.yearly.demibirthday.contacts,
-          ...(returnData === undefined ? [] : [returnData.contacts]),
-        ];
-  const contactsTotal = filteredContactLists.reduce((sum, list) => sum + list.length, 0);
-  const contactsShown = filteredContactLists.reduce((sum, list) => sum + shownOf(list).length, 0);
-  const planetaryReturnAscendantSign =
-    returnData !== undefined ? Math.floor((returnData.houses.cusps[1] ?? 0) / 30) : 0;
 
   return (
     <main className="shell">

@@ -37,7 +37,7 @@ import { returnViewMessages } from './ReturnView.messages.js';
 import { toChartCalculationOptions } from '../chart/extended-settings.js';
 import { usePersonCalculationSettings } from './person-calculation-settings.js';
 import { UnreadableSettingsNotice } from './UnreadableSettingsNotice.js';
-import { SortableTable } from './SortableTable.js';
+import { SortableTable, csvExportTable, useCsvExports } from './SortableTable.js';
 import { useStoreState } from './store-context.js';
 import { formatUtc } from './void-of-course-text.js';
 import type { ChartData } from '../domain/chart-compute.js';
@@ -214,6 +214,21 @@ export function ReturnView({
   // Memoised: a new array each render (a change of section re-renders this screen) would redraw the wheel and drop a selection.
   const metaLines = useMemo(() => [label], [label]);
   const contacts = useMemo(() => (load.kind === 'ready' ? crossAspectRows(load.result.contacts) : []), [load]);
+
+  // The contacts table's CSV, offered in the page header (#887).
+  useCsvExports(
+    load.kind === 'ready' && person !== undefined
+      ? [
+          csvExportTable(
+            'contacts',
+            t.contactsCaption,
+            deriveExportFilename(person.displayName, `${kind}-contacts`, 'csv'),
+            contactColumns(t, locale),
+            contacts,
+          ),
+        ]
+      : undefined,
+  );
 
   if (person === undefined) {
     return <PersonNotFound />;
