@@ -67,6 +67,8 @@ const { PrimaryDirectionsView } = await import('../src/ui/PrimaryDirectionsView.
 const { CyclesView } = await import('../src/ui/CyclesView.js');
 const { EclipsesView } = await import('../src/ui/EclipsesView.js');
 const { EventSearchView } = await import('../src/ui/EventSearchView.js');
+const { eventSearchViewMessages } = await import('../src/ui/EventSearchView.messages.js');
+const { AstrocartographyView } = await import('../src/ui/AstrocartographyView.js');
 const { SynastryView } = await import('../src/ui/SynastryView.js');
 const { ReturnView } = await import('../src/ui/ReturnView.js');
 const { HarmonicView } = await import('../src/ui/HarmonicView.js');
@@ -226,6 +228,39 @@ describe('the calculation result regions (#888)', () => {
     const container = mount(<EventSearchView />);
     expect(busyRegions(container)).toEqual(['false']);
   });
+
+  it('EventSearchView result region is aria-busy while the search runs and cleared once ready', async () => {
+    const container = mount(<EventSearchView />);
+    expect(busyRegions(container)).toEqual(['false']);
+
+    // A one-day window keeps the search short; the range fields are the first two text inputs.
+    const [from, to] = inputsOf(container, 'input[type="text"]');
+    act(() => {
+      typeInto(from, '1970-01-01');
+      typeInto(to, '1970-01-02');
+    });
+    act(() => {
+      buttonNamed(container, eventSearchViewMessages.en.searchButton).click();
+    });
+    expect(busyRegions(container)).toEqual(['true']);
+
+    await untilSettled(container);
+    expectSettledReady(container);
+  }, 60_000);
+
+  it('AstrocartographyView map region is aria-busy only while recalculating and cleared once the map is ready', async () => {
+    const container = mount(<AstrocartographyView personId="p1" />);
+    // The map region renders only once the first calculation has a map to show; the loading state before it is a
+    // StatusMessage. So wait for the map itself, then assert the region has settled.
+    for (let i = 0; i < 600 && container.querySelector('.acg-map') === null; i++) {
+      await act(async () => {
+        await new Promise((done) => setTimeout(done, 50));
+      });
+    }
+    expect(container.querySelector('.acg-map')).not.toBeNull();
+    await untilSettled(container);
+    expectSettledReady(container);
+  }, 60_000);
 
   it('RelocatedChartView result region is aria-busy while the relocated chart calculates and cleared once ready', async () => {
     const container = mount(<RelocatedChartView personId="p1" />);
