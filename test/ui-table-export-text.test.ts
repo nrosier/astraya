@@ -3,8 +3,8 @@
  * The copy, CSV and PDF text of the aspect matrix's two tables, the Aspects table and the Placements (Positions) table
  * (#898), pinned as exact strings for a small fixed fixture. The PDF plan builds its tables with no wheel selection
  * (`aspectColumns(t, locale)`, `positionColumns(t, locale, 'drawn')`), so the no-selection strings below are the text
- * the PDF carries too. The on-screen Show-on-wheel column leaking into Copy and CSV is a known open defect, recorded as
- * `it.todo` rather than asserted, because this change is test-only.
+ * the PDF carries too. With a wheel selection the on-screen table adds selection columns; they are screen-only (#957),
+ * so Copy and CSV stay identical to the no-selection text.
  */
 import { describe, expect, it } from 'vitest';
 import type { AspectRow, PositionRow } from '../src/domain/chart-tables.js';
@@ -12,8 +12,16 @@ import { chartViewMessages } from '../src/ui/ChartView.messages.js';
 import { aspectColumns } from '../src/ui/ChartViewAspects.js';
 import { positionColumns } from '../src/ui/ChartViewPlacements.js';
 import { rowsToCsv, rowsToTsv } from '../src/ui/table-sort.js';
+import type { TableSelection } from '../src/ui/table-selection.js';
 
 const t = chartViewMessages.en;
+
+/** A wheel selection on the Sun, with every body selectable, as the on-screen table receives it (#418). */
+const SELECTION: TableSelection = {
+  selectedKey: 'body:sun',
+  onToggle: () => undefined,
+  selectableBodies: new Set(['sun', 'moon', 'saturn']),
+};
 
 const ASPECT_ROWS: readonly AspectRow[] = [
   {
@@ -94,11 +102,12 @@ describe('the Aspects table export text (#898)', () => {
     );
   });
 
-  // Known open defect (found by this test, not fixed here): with a wheel selection the on-screen table adds a "Wheel"
-  // column whose values are the internal sort key (1 or 0), so Copy and CSV differ from the PDF text. Expected: equal.
-  it.todo(
-    'keeps Copy and CSV identical to the PDF text when a wheel selection is passed (defect: "Wheel" column leaks)',
-  );
+  it('keeps Copy and CSV identical with a wheel selection (#957)', () => {
+    const withSelection = aspectColumns(t, 'en', SELECTION);
+    expect(withSelection.some((column) => column.key === 'select')).toBe(true);
+    expect(rowsToTsv(withSelection, ASPECT_ROWS)).toBe(rowsToTsv(aspectColumns(t, 'en'), ASPECT_ROWS));
+    expect(rowsToCsv(withSelection, ASPECT_ROWS)).toBe(rowsToCsv(aspectColumns(t, 'en'), ASPECT_ROWS));
+  });
 });
 
 describe('the Placements (Positions) table export text (#898)', () => {
@@ -122,9 +131,11 @@ describe('the Placements (Positions) table export text (#898)', () => {
     );
   });
 
-  // Known open defect (found by this test, not fixed here): with a wheel selection Copy and CSV gain a "Wheel" column
-  // (sort-key values) and a "Sign on wheel" column that the PDF does not have. Expected: identical to the PDF text.
-  it.todo(
-    'keeps Copy and CSV identical to the PDF text when a wheel selection is passed (defect: "Wheel" and "Sign on wheel" leak)',
-  );
+  it('keeps Copy and CSV identical with a wheel selection (#957)', () => {
+    const withSelection = positionColumns(t, 'en', 'drawn', SELECTION);
+    expect(withSelection.some((column) => column.key === 'select')).toBe(true);
+    expect(withSelection.some((column) => column.key === 'selectSign')).toBe(true);
+    expect(rowsToTsv(withSelection, POSITION_ROWS)).toBe(rowsToTsv(positionColumns(t, 'en', 'drawn'), POSITION_ROWS));
+    expect(rowsToCsv(withSelection, POSITION_ROWS)).toBe(rowsToCsv(positionColumns(t, 'en', 'drawn'), POSITION_ROWS));
+  });
 });
