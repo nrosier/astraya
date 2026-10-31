@@ -423,6 +423,42 @@ const proseTerms: readonly {
     visible: { en: 'Ascendant', nl: 'Ascendant' },
     node: () => <RelocatedChartView personId="p1" view="wheel" compareType={undefined} />,
   },
+  {
+    view: 'RelocatedChartView',
+    term: 'houses',
+    visible: { en: 'houses', nl: 'huizen' },
+    node: () => <RelocatedChartView personId="p1" view="wheel" compareType={undefined} />,
+  },
+  {
+    view: 'DraconicView',
+    term: 'ascendant',
+    visible: { en: 'Ascendant', nl: 'Ascendant' },
+    node: () => <DraconicView personId="p1" view="wheel" compareType={undefined} />,
+  },
+  {
+    view: 'ProfectionsView',
+    term: 'houses',
+    visible: { en: 'house', nl: 'huis' },
+    node: () => <ProfectionsView personId="p1" />,
+  },
+  {
+    view: 'RectificationView',
+    term: 'ascendant',
+    visible: { en: 'Ascendant', nl: 'Ascendant' },
+    node: () => <RectificationView />,
+  },
+  {
+    view: 'ReturnView',
+    term: 'houses',
+    visible: { en: 'houses', nl: 'huizen' },
+    node: () => <ReturnView personId="p1" kind="solar-return" view="wheel" compareType={undefined} />,
+  },
+  {
+    view: 'PeriodicTransitView',
+    term: 'aspect',
+    visible: { en: 'aspects', nl: 'aspecten' },
+    node: () => <PeriodicTransitView personId="p1" />,
+  },
 ];
 
 describe('inline glossary tooltips on view prose (#901)', () => {
