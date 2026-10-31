@@ -52,6 +52,11 @@ function inDays(days: number): string {
 
 export function ElectionalView(): React.JSX.Element {
   const t = useMessages(electionalViewMessages);
+  /** The rule's explanation; `houses` in it opens its glossary tooltip (#901). */
+  const ruleExplanation = (key: ElectionRuleKey): React.ReactNode => {
+    const explanation = t.rules[key]?.explanation;
+    return explanation === undefined ? undefined : <GlossaryText text={explanation} />;
+  };
   const { provider } = useEphemerisProvider();
   const [fields, setFields] = useState({ fromDate: todayInputValue(), toDate: inDays(6), latitude: '', longitude: '' });
   const [rules, setRules] = useState<ReadonlySet<ElectionRuleKey>>(() => new Set(ELECTION_RULE_KEYS));
@@ -209,7 +214,7 @@ export function ElectionalView(): React.JSX.Element {
             <li key={key}>
               <Checkbox
                 label={t.rules[key]?.label ?? key}
-                description={t.rules[key]?.explanation}
+                description={ruleExplanation(key)}
                 checked={rules.has(key)}
                 onChange={() => {
                   toggleRule(key);

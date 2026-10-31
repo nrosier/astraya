@@ -11,15 +11,16 @@
  * @exports Checkbox
  */
 export interface CheckboxProps {
-  readonly label: string;
+  /** Plain text, or a node such as a `GlossaryTerm` trigger (#901). */
+  readonly label: React.ReactNode;
   readonly checked: boolean;
   readonly onChange: (checked: boolean) => void;
   readonly disabled?: boolean | undefined;
   readonly id?: string | undefined;
   /** The label stays for assistive technology but is not drawn, e.g. a row-select box in a table. */
   readonly hideLabel?: boolean | undefined;
-  /** One line of explanation under the label. */
-  readonly description?: string | undefined;
+  /** One line of explanation under the label; may hold a `GlossaryText` paragraph (#901). */
+  readonly description?: React.ReactNode;
 }
 
 export function Checkbox({

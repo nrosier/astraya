@@ -19,6 +19,7 @@
  * @conventions Gated for unknown birth time like other angle-dependent screens; draws the bi-wheel with renderMultiWheelSvg directly (no cross-ring lines), injected as app-generated SVG the same way TransitView.tsx does; uses PrimaryDirectionsView.messages.ts for en/nl text via useMessages(). Shows a lock notice before the controls (#797): directions are always Placidus/tropical and ignore the client's other calculation settings. Reads the device's natal calculation settings as ChartView does and records them as the artifact's requested snapshot; when they differ from the locked Placidus/tropical settings in house system, zodiac, rulership, node or Lilith, a warning Notice names the differences (#797). Carries its own PrintProvenance footer (#564) labelled with the locked effective settings (PRIMARY_DIRECTIONS_EFFECTIVE_SNAPSHOT).
  * @exports PrimaryDirectionsView
  */
+import { GlossaryTerm } from './GlossaryTerm.js';
 import { GlossaryText } from './GlossaryText.js';
 import { personHref } from './route.js';
 import { houseSystemLabel, rulershipLabel, zodiacLabel } from './ChartView.js';
@@ -194,6 +195,13 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
   const personMoment = useStableMoment(person?.moment);
   const customPoints = useStableBy(person?.customPoints, (points) => JSON.stringify(points ?? []));
   const t = useMessages(primaryDirectionsViewMessages);
+  /** An angle's checkbox label; Ascendant and Midheaven open their glossary term (#901). Descendant and IC have no entry. */
+  const angleLabel = (option: (typeof PRIMARY_DIRECTION_ANGLE_KEYS)[number]): React.ReactNode => {
+    const label = t.angleLabels[option];
+    if (option === 'asc') return <GlossaryTerm id="ascendant">{label}</GlossaryTerm>;
+    if (option === 'mc') return <GlossaryTerm id="midheaven">{label}</GlossaryTerm>;
+    return label;
+  };
   const [locale] = useLocale();
   // The settings the person's natal chart uses, resolved as ChartView does: the person's own settings and rulers (#797, #806). They are
   // recorded as the artifact's requested snapshot; the directions themselves are always Placidus/tropical.
@@ -452,7 +460,7 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
           {PRIMARY_DIRECTION_ANGLE_KEYS.map((option) => (
             <Checkbox
               key={option}
-              label={t.angleLabels[option]}
+              label={angleLabel(option)}
               checked={significators.includes(option)}
               onChange={() => {
                 setSignificators((current) =>
