@@ -189,4 +189,28 @@ test.describe('with the shared people (#799)', () => {
     expect(narrowNotes.x + narrowNotes.width).toBeLessThanOrEqual(390);
     expect(narrowLocation.x + narrowLocation.width).toBeLessThanOrEqual(390);
   });
+
+  test('puts AAF, JSON and CSV in one horizontal row at 390x844 and 1280x800 (#896)', async () => {
+    test.setTimeout(60_000);
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await page.getByRole('link', { name: 'Birth record', exact: true }).click();
+    const group = page.locator('.birth-record-export-row');
+    for (const viewport of [
+      { width: 390, height: 844 },
+      { width: 1280, height: 800 },
+    ]) {
+      await page.setViewportSize(viewport);
+      const buttons = ['AAF', 'JSON', 'CSV'].map((name) => group.getByRole('button', { name, exact: true }));
+      const boxes = await Promise.all(
+        buttons.map(async (button) => {
+          await expect(button).toBeVisible();
+          const found = await button.boundingBox();
+          if (found === null) throw new Error(`export button not laid out at ${String(viewport.width)}px`);
+          return found;
+        }),
+      );
+      const tops = boxes.map((found) => found.y);
+      expect(Math.max(...tops) - Math.min(...tops)).toBeLessThan(2);
+    }
+  });
 });
