@@ -929,24 +929,29 @@ footer {
 }
 
 /*
- * Birth record (#795, #896): a single column on narrow screens and a 60/40 two-column grid from 64rem. The left
- * column holds identity and timestamp, place (with the inline timezone row) and notes; the right column holds the
+ * Birth record (#795, #896, #895): a single column on narrow screens and a 60/40 two-column grid from 64rem. The left
+ * column holds identity and timestamp and place; the right column holds notes, the timezone details card, the
  * export, the replace-from-file card and the danger zone. Save changes sits in the page header, beside the title.
- * Each column stacks its cards at their natural height, so no card is stretched to match the other column.
- * Card chrome matches `.horary-card`; only tokens are used.
+ * The bottom row shares one bottom edge (#895): both columns stretch to the row, and the slack lands in each
+ * column's last card, as on the Consultation grid. Card chrome matches `.horary-card`; only tokens are used.
  */
 .birth-record {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: var(--space-4);
-  align-items: start;
+  align-items: stretch;
 }
 
 .birth-record-column {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: var(--space-4);
-  align-content: start;
   min-width: 0;
+}
+
+/* The last card takes the column's slack, so a shorter column still ends on the shared bottom edge (#895). */
+.birth-record-column > :last-child {
+  flex-grow: 1;
 }
 
 .birth-record-save {
@@ -1073,8 +1078,8 @@ footer {
 }
 
 @media (min-width: 64rem) {
-  /* 60/40: the form column (left) and the export, replace and danger column (right). No stretch and no row spans,
-     so NOTES ends at its natural height (#896). */
+  /* 60/40: identity and place (left) and notes, export, replace and danger (right). Both columns share the row's
+     bottom edge (#895); the shorter one's last card absorbs the difference. */
   .birth-record {
     grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
   }

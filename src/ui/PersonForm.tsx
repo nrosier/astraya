@@ -181,8 +181,8 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
 
       <h2>{t.birthRecordHeading}</h2>
 
-      {/* Two columns of cards (#795, #896). The left column holds identity, place and notes; the right column holds
-          export, replace and danger. The DOM order is the narrow (single-column) order; see app.css for the columns. */}
+      {/* Two columns of cards (#795, #896, #895). The left column holds identity, place and the timezone status row;
+          the right column holds notes, timezone details, export, replace and danger. The DOM order is the narrow (single-column) order; see app.css for the columns. */}
       <div className="birth-record">
         <div className="birth-record-column">
           <section className="birth-record-card birth-record-card--identity" aria-labelledby="birth-card-identity">
@@ -284,6 +284,7 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
                 }}
               />
             </div>
+
             {/* The resolved timezone, as one compact status row at the foot of this card (#896). Its details and the
               overrides sit behind Show details, so the raw timezone strings (D-795a) stay one click away. */}
             <div className="birth-record-timezone">
@@ -314,85 +315,11 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
                   </ul>
                 </div>
               )}
-              <Disclosure
-                title={t.timezoneDetailsTitle}
-                showLabel={t.timezoneShowDetails}
-                hideLabel={t.timezoneHideDetails}
-                defaultOpen={opened !== undefined && hasOverrides(opened)}
-              >
-                <div className="birth-record-timezone-details">
-                  {resolved !== undefined && (
-                    <>
-                      <dl>
-                        <dt>{t.utcOffsetLabel}</dt>
-                        <dd>{formatOffset(resolved.offsetMinutes)}</dd>
-                        <dt>{t.derivedFromLabel}</dt>
-                        <dd>{PROVENANCE[resolved.provenance]}</dd>
-                        <dt>{t.calendarResolvedLabel}</dt>
-                        <dd>{resolved.calendar === 'julian' ? t.calendarJulian : t.calendarGregorian}</dd>
-                        {resolved.alternativeOffsetMinutes.length > 0 && (
-                          <>
-                            <dt>{t.alsoValidLabel}</dt>
-                            <dd>{resolved.alternativeOffsetMinutes.map(formatOffset).join(', ')}</dd>
-                          </>
-                        )}
-                        {/* The raw debug string is always shown (D-795a): a tabular-numerals value. */}
-                        <dt>{t.tzdbLabel}</dt>
-                        <dd>
-                          <span className="birth-record-raw">{resolved.tzdbFingerprint}</span>
-                        </dd>
-                      </dl>
-                      <p className="hint">{t.tzdbHint}</p>
-                    </>
-                  )}
-                  <Disclosure
-                    title={t.overridesTitle}
-                    showLabel={t.overridesShow}
-                    hideLabel={t.overridesHide}
-                    defaultOpen={opened !== undefined && hasOverrides(opened)}
-                  >
-                    <div className="birth-record-overrides">
-                      <div className="primitive-choice-field">
-                        <span className="primitive-field-label">{t.calendarLabel}</span>
-                        <ChoiceGroup
-                          label={t.calendarLabel}
-                          value={current.calendar}
-                          options={[
-                            { value: 'auto', label: t.calendarAutomatic },
-                            { value: 'gregorian', label: t.calendarGregorian },
-                            { value: 'julian', label: t.calendarJulian },
-                          ]}
-                          onChange={(value) => {
-                            set('calendar', value as Calendar);
-                          }}
-                        />
-                      </div>
-                      <NumberField
-                        label={t.utcOffsetOverrideLabel}
-                        step="any"
-                        placeholder={t.offsetOverridePlaceholder}
-                        value={current.offsetOverride}
-                        error={errors.offsetOverride}
-                        onChange={(value) => {
-                          set('offsetOverride', value);
-                        }}
-                      />
-                      <TextField
-                        label={t.timezoneOverrideLabel}
-                        placeholder={t.timezoneOverridePlaceholder}
-                        value={current.zoneOverride}
-                        onChange={(value) => {
-                          set('zoneOverride', value);
-                        }}
-                      />
-                      <p className="hint">{t.timezoneHint}</p>
-                    </div>
-                  </Disclosure>
-                </div>
-              </Disclosure>
             </div>
           </section>
+        </div>
 
+        <div className="birth-record-column">
           <section className="birth-record-card birth-record-card--notes" aria-labelledby="birth-card-notes">
             <h3 id="birth-card-notes">{t.notesCardHeading}</h3>
             <TextAreaField
@@ -405,9 +332,86 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
               }}
             />
           </section>
-        </div>
 
-        <div className="birth-record-column">
+          <section className="birth-record-card birth-record-card--timezone" aria-label={t.timezoneDetailsTitle}>
+            <Disclosure
+              title={t.timezoneDetailsTitle}
+              showLabel={t.timezoneShowDetails}
+              hideLabel={t.timezoneHideDetails}
+              defaultOpen={opened !== undefined && hasOverrides(opened)}
+            >
+              <div className="birth-record-timezone-details">
+                {resolved !== undefined && (
+                  <>
+                    <dl>
+                      <dt>{t.utcOffsetLabel}</dt>
+                      <dd>{formatOffset(resolved.offsetMinutes)}</dd>
+                      <dt>{t.derivedFromLabel}</dt>
+                      <dd>{PROVENANCE[resolved.provenance]}</dd>
+                      <dt>{t.calendarResolvedLabel}</dt>
+                      <dd>{resolved.calendar === 'julian' ? t.calendarJulian : t.calendarGregorian}</dd>
+                      {resolved.alternativeOffsetMinutes.length > 0 && (
+                        <>
+                          <dt>{t.alsoValidLabel}</dt>
+                          <dd>{resolved.alternativeOffsetMinutes.map(formatOffset).join(', ')}</dd>
+                        </>
+                      )}
+                      {/* The raw debug string is always shown (D-795a): a tabular-numerals value. */}
+                      <dt>{t.tzdbLabel}</dt>
+                      <dd>
+                        <span className="birth-record-raw">{resolved.tzdbFingerprint}</span>
+                      </dd>
+                    </dl>
+                    <p className="hint">{t.tzdbHint}</p>
+                  </>
+                )}
+                <Disclosure
+                  title={t.overridesTitle}
+                  showLabel={t.overridesShow}
+                  hideLabel={t.overridesHide}
+                  defaultOpen={opened !== undefined && hasOverrides(opened)}
+                >
+                  <div className="birth-record-overrides">
+                    <div className="primitive-choice-field">
+                      <span className="primitive-field-label">{t.calendarLabel}</span>
+                      <ChoiceGroup
+                        label={t.calendarLabel}
+                        value={current.calendar}
+                        options={[
+                          { value: 'auto', label: t.calendarAutomatic },
+                          { value: 'gregorian', label: t.calendarGregorian },
+                          { value: 'julian', label: t.calendarJulian },
+                        ]}
+                        onChange={(value) => {
+                          set('calendar', value as Calendar);
+                        }}
+                      />
+                    </div>
+                    <NumberField
+                      label={t.utcOffsetOverrideLabel}
+                      step="any"
+                      placeholder={t.offsetOverridePlaceholder}
+                      value={current.offsetOverride}
+                      error={errors.offsetOverride}
+                      onChange={(value) => {
+                        set('offsetOverride', value);
+                      }}
+                    />
+                    <TextField
+                      label={t.timezoneOverrideLabel}
+                      placeholder={t.timezoneOverridePlaceholder}
+                      value={current.zoneOverride}
+                      onChange={(value) => {
+                        set('zoneOverride', value);
+                      }}
+                    />
+                    <p className="hint">{t.timezoneHint}</p>
+                  </div>
+                </Disclosure>
+              </div>
+            </Disclosure>
+          </section>
+
           <PersonFileActions
             person={person}
             accuracyLabels={accuracyOptions(t)}
