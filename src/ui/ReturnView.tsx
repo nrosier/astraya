@@ -13,6 +13,7 @@
  * @exports ReturnView
  */
 import { ChoiceGroup } from './primitives/ChoiceGroup.js';
+import { GlossaryText } from './GlossaryText.js';
 import { DateField } from './primitives/DateField.js';
 import { NumberField } from './primitives/NumberField.js';
 import { useEffect, useMemo, useState } from 'react';
@@ -74,6 +75,7 @@ function contactColumns(t: typeof returnViewMessages.en, locale: Locale): readon
     {
       key: 'aspect',
       label: t.aspectLabel,
+      labelTerm: 'aspect',
       valueOf: (row) => row.aspect,
       render: (row) => aspectDisplayName(row.aspectKey, locale),
     },
@@ -222,7 +224,7 @@ export function ReturnView({
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <PageHeader title={fallback} />
+        <PageHeader title={fallback} titleTerm="solarReturn" />
         <p>
           {t.needsCompleteRecord(person.displayName || t.thisPerson)}{' '}
           <a href={personHref(personId)}>{t.personPageLink}</a>.
@@ -237,9 +239,11 @@ export function ReturnView({
   return (
     <main className="shell shell--wide">
       <BackLink fallback={personHref(personId)} />
-      <PageHeader title={heading} basis={basisLine} />
+      <PageHeader title={heading} titleTerm="solarReturn" basis={basisLine} />
       <ChartTypeSelector personId={personId} type={kind} view={view} />
-      <p className="hint">{solar ? t.solarHint : t.lunarHint}</p>
+      <p className="hint">
+        <GlossaryText text={solar ? t.solarHint : t.lunarHint} />
+      </p>
 
       <div className="field-grid">
         {solar ? (
@@ -252,7 +256,9 @@ export function ReturnView({
 
       <fieldset className="field-group">
         <legend>{t.placeLegend}</legend>
-        <p className="hint">{t.placeHint}</p>
+        <p className="hint">
+          <GlossaryText text={t.placeHint} />
+        </p>
         <ChoiceGroup
           label={t.placeLegend}
           value={otherPlace ? 'other' : 'birth'}
@@ -276,7 +282,9 @@ export function ReturnView({
       {load.kind === 'ready' && (
         <StatusMessage kind="loading">{t.returnMoment(formatUtc(load.result.returnJd))}</StatusMessage>
       )}
-      <p className="hint">{t.conventions}</p>
+      <p className="hint">
+        <GlossaryText text={t.conventions} />
+      </p>
       {/* The result region: busy while the return (re)calculates, as the Astrocartography map is. */}
       <div aria-busy={load.kind === 'loading'}>
         {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
@@ -312,12 +320,16 @@ export function ReturnView({
         )}
 
         {load.kind === 'ready' && !housesAreDefined(load.data.houses) && (
-          <StatusMessage kind="error">{t.housesUndefined}</StatusMessage>
+          <StatusMessage kind="error">
+            <GlossaryText text={t.housesUndefined} />
+          </StatusMessage>
         )}
 
         {load.kind === 'ready' && (
           <>
-            <p className="hint">{t.contactsHint}</p>
+            <p className="hint">
+              <GlossaryText text={t.contactsHint} />
+            </p>
             <SortableTable
               caption={t.contactsCaption}
               columns={contactColumns(t, locale)}

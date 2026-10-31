@@ -26,6 +26,7 @@ export function toggleSort(current: SortState | undefined, column: string): Sort
 }
 
 import type { ReactNode } from 'react';
+import type { GlossaryTermId } from './astro-glossary.messages.js';
 
 export type CellValue = string | number | boolean;
 
@@ -60,6 +61,11 @@ export interface TableColumn<T> {
   readonly sortable?: boolean;
   /** Tooltip text for the column header (e.g., definition or hint). Shown on hover with cursor:help styling. */
   readonly labelTooltip?: string;
+  /**
+   * A glossary term the header names (#901): rendered as a `GlossaryTerm` beside the label, never inside the
+   * sort button. Cell text stays plain, so a copy or CSV export is unchanged.
+   */
+  readonly labelTerm?: GlossaryTermId | undefined;
 }
 
 function comparable(value: CellValue): string | number {

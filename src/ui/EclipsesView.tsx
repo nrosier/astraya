@@ -10,6 +10,7 @@
  * @conventions Lives inside `Stored` because the person picker reads the local store, though the eclipse search itself needs only the ephemeris. Text comes from co-located `EclipsesView.messages.ts` via `useMessages()`.
  * @exports EclipsesView
  */
+import { GlossaryText } from './GlossaryText.js';
 import { formatOrb } from './format.js';
 import { Select } from './primitives/Select.js';
 import { TextField } from './primitives/TextField.js';
@@ -180,8 +181,10 @@ export function EclipsesView(): React.JSX.Element {
   return (
     <main className="shell">
       <BackLink fallback="#/people" />
-      <PageHeader title={t.heading} />
-      <p className="hint">{t.hint}</p>
+      <PageHeader title={t.heading} titleTerm="eclipse" />
+      <p className="hint">
+        <GlossaryText text={t.hint} />
+      </p>
 
       <div className="field-grid">
         <TextField label={t.fromYearLabel} inputMode="numeric" value={fromYear} onChange={setFromYear} />
@@ -209,13 +212,22 @@ export function EclipsesView(): React.JSX.Element {
 
         {result.kind === 'ready' &&
           (result.rows.length === 0 ? (
-            <p className="hint">{t.noEclipses}</p>
+            <p className="hint">
+              <GlossaryText text={t.noEclipses} />
+            </p>
           ) : (
             <>
-              <p>{t.summary(result.rows.length, result.fromYear, result.toYear)}</p>
-              {result.anglesLeftOut && <p className="hint">{t.anglesNote}</p>}
+              <p>
+                <GlossaryText text={t.summary(result.rows.length, result.fromYear, result.toYear)} />
+              </p>
+              {result.anglesLeftOut && (
+                <p className="hint">
+                  <GlossaryText text={t.anglesNote} />
+                </p>
+              )}
               <SortableTable
                 caption={t.tableCaption}
+                captionTerm="eclipse"
                 columns={columns}
                 rows={result.rows}
                 getRowKey={(row) => row.id}

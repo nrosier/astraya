@@ -169,6 +169,7 @@ export function SortableTable<T>({
                           )}
                         </button>
                       )}
+                      {column.labelTerm !== undefined && <GlossaryTerm id={column.labelTerm} />}
                       {column.labelTooltip !== undefined && (
                         <Tooltip
                           text={column.labelTooltip}

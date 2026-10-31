@@ -23,6 +23,8 @@
  * @exports PageHeader
  */
 import { useState } from 'react';
+import type { GlossaryTermId } from './astro-glossary.messages.js';
+import { GlossaryTerm } from './GlossaryTerm.js';
 import { useExportItems, type ExportItem } from './export-registry.js';
 import { useMessages } from './messages.js';
 import { pageHeaderMessages } from './PageHeader.messages.js';
@@ -35,10 +37,13 @@ interface ExportStatus {
 
 export function PageHeader({
   title,
+  titleTerm,
   basis,
   children,
 }: {
   readonly title: string;
+  /** A glossary term the title names: the title text itself opens that term's definition (#901). */
+  readonly titleTerm?: GlossaryTermId | undefined;
   /** A compact calculation-basis line, e.g. "Tropical · Placidus · Modern rulers". */
   readonly basis?: string | undefined;
   /** The primary page action and anything else that belongs beside the title (e.g. a share link). */
@@ -89,7 +94,7 @@ export function PageHeader({
   return (
     <div className="page-header">
       <div className="page-header-row">
-        <h1>{title}</h1>
+        <h1>{titleTerm === undefined ? title : <GlossaryTerm id={titleTerm}>{title}</GlossaryTerm>}</h1>
         {children}
         {items.length > 0 && (
           <div
