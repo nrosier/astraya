@@ -1,6 +1,6 @@
 /**
  * #826 S5: CSS guards for the token gaps. Item 5 (entry keys use tabular numerals, not the browser
- * monospace), item 13 (table headers are muted `--text-xs`, never uppercase) and item 14 (the canvas
+ * monospace), item 11 (overridden-entry border), item 13 (table headers are muted `--text-xs`, never uppercase) and item 14 (the canvas
  * colour is `--bg`, never the literal #0b0d14).
  */
 import { readdirSync, readFileSync } from 'node:fs';
@@ -55,6 +55,12 @@ describe('token gaps (#826)', () => {
     const header = rulesFor((s) => /\.data-table[^,]*\bth\b|\.data-table-label/.test(s));
     expect(header.length).toBeGreaterThan(0);
     for (const rule of header) expect(rule.body, rule.selector).not.toMatch(/text-transform:\s*uppercase/);
+  });
+
+  it('item 11: an overridden corpus entry has a 2px --accent border on all four sides', () => {
+    const overridden = rulesFor((s) => s === '.corpus-entry-overridden');
+    expect(overridden).toHaveLength(1);
+    expect(overridden[0]?.body ?? '').toMatch(/border:\s*2px solid var\(--accent\)/);
   });
 
   it('item 14: the canvas colour is --bg and the literal #0b0d14 is absent from app.css and src/ui/*.tsx', () => {

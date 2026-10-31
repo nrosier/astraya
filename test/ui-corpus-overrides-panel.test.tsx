@@ -599,14 +599,14 @@ describe('CorpusOverridesPanel entry cards: overridden accent (#816 D-816c)', ()
     expect(card?.textContent).not.toContain(corpusOverridesPanelMessages.en.overriddenStatus);
   });
 
-  it('marks an overridden card with a 2px inset left accent shadow and no border change, and keeps the 1px card default', async () => {
+  it('marks an overridden card with a 2px --accent border on all four sides (#826 item 11), and keeps the 1px card default', async () => {
     const { readFileSync } = await import('node:fs');
     const { join } = await import('node:path');
     const css = readFileSync(join(import.meta.dirname, '..', 'src', 'ui', 'app.css'), 'utf8');
     const stripped = css.replace(/\/\*[\s\S]*?\*\//g, '');
     const rule = /\.corpus-entry-overridden\s*\{([^}]*)\}/.exec(stripped);
-    expect(rule?.[1]).toMatch(/box-shadow:\s*inset 2px 0 0 var\(--accent\)/);
-    expect(rule?.[1]).not.toMatch(/border/);
+    expect(rule?.[1]).toMatch(/border:\s*2px solid var\(--accent\)/);
+    expect(rule?.[1]).not.toMatch(/box-shadow/);
     const card = /\.corpus-entry\s*\{([^}]*)\}/.exec(stripped);
     expect(card?.[1]).toMatch(/border:\s*1px solid var\(--line\)/);
   });
