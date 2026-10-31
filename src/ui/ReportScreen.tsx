@@ -41,6 +41,8 @@ export function ReportScreen({ personId }: { personId: string }): React.JSX.Elem
   const person = state.people.get(personId);
   const personMoment = useStableMoment(person?.moment);
   const customPoints = useStableBy(person?.customPoints, (points) => JSON.stringify(points ?? []));
+  // The person's chosen fixed stars (#860), as the natal chart reads them.
+  const fixedStars = useStableBy(person?.fixedStars, (stars) => JSON.stringify(stars ?? []));
   const t = useMessages(reportScreenMessages);
   const { provider } = useEphemerisProvider();
   // The chart the Charts page draws (#732): its natal-context settings, rulers and custom points — not a
@@ -73,6 +75,7 @@ export function ReportScreen({ personId }: { personId: string }): React.JSX.Elem
           ...toChartCalculationOptions(settings),
           rulership,
           ...(customPoints === undefined ? {} : { customPoints }),
+          ...(fixedStars === undefined ? {} : { fixedStars }),
         });
         if (!effect.cancelled) setLoad({ kind: 'ready', data });
       } catch (error) {
@@ -84,7 +87,7 @@ export function ReportScreen({ personId }: { personId: string }): React.JSX.Elem
     return () => {
       effect.cancelled = true;
     };
-  }, [settingsUnreadable, personMoment, rulership, provider, settings, customPoints]);
+  }, [settingsUnreadable, personMoment, rulership, provider, settings, customPoints, fixedStars]);
 
   if (person === undefined) {
     return <PersonNotFound />;

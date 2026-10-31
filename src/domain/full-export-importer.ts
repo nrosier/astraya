@@ -50,6 +50,7 @@ import {
   readCoordinates,
   readCalculationSettings,
   readCustomPoints,
+  readFixedStars,
   readOffsetOverride,
   serializeCalculationSettings,
   serializeRulership,
@@ -159,6 +160,13 @@ function validatePerson(raw: unknown, path: string): Result<ExportedPerson, Impo
     customPoints = points;
   }
 
+  let fixedStars: ExportedPerson['fixedStars'];
+  if (raw.fixedStars !== undefined) {
+    const stars = readFixedStars(raw.fixedStars);
+    if (stars === undefined) return malformed(`${path}.fixedStars`, 'malformed');
+    fixedStars = stars;
+  }
+
   let calculationSettings: ExtendedSettings | undefined;
   if (raw.calculationSettings !== undefined) {
     const read = readCalculationSettings({ settings: raw.calculationSettings });
@@ -185,6 +193,7 @@ function validatePerson(raw: unknown, path: string): Result<ExportedPerson, Impo
       ...(birth === undefined ? {} : { birth }),
       ...(relocationPlaces === undefined ? {} : { relocationPlaces }),
       ...(customPoints === undefined ? {} : { customPoints }),
+      ...(fixedStars === undefined ? {} : { fixedStars }),
       ...(calculationSettings === undefined ? {} : { calculationSettings }),
       ...(rulership === undefined ? {} : { rulership }),
       missing,
@@ -350,6 +359,16 @@ function serializedCustomPoints(points: ExportedPerson['customPoints']): JsonVal
   }));
 }
 
+function serializedFixedStars(stars: ExportedPerson['fixedStars']): JsonValue {
+  return (stars ?? []).map((star) => ({
+    id: star.id,
+    name: star.name,
+    designation: star.designation,
+    equinox: star.equinox,
+    sourceSha256: star.sourceSha256,
+  }));
+}
+
 /**
  * One mutation per field that actually differs from `existing` (`undefined` for a person this
  * device has never seen). Mirrors `person-form.ts`'s `draftToMutations`: an untouched field
@@ -390,6 +409,9 @@ function restoreMutations(entityId: string, exported: ExportedPerson, existing: 
   }
   if (exported.customPoints !== undefined && !same(existing?.customPoints, exported.customPoints)) {
     write('customPoints', serializedCustomPoints(exported.customPoints));
+  }
+  if (exported.fixedStars !== undefined && !same(existing?.fixedStars, exported.fixedStars)) {
+    write('fixedStars', serializedFixedStars(exported.fixedStars));
   }
 
   if (

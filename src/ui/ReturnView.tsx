@@ -45,7 +45,7 @@ import type { GeoPosition } from '../ephemeris/types.js';
 import type { Locale } from '../interpretation/schema.js';
 import type { TableColumn } from './table-sort.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
-import { useStableMoment } from './use-stable-moment.js';
+import { useStableBy, useStableMoment } from './use-stable-moment.js';
 import { BackLink } from './BackLink.js';
 import { PageHeader } from './PageHeader.js';
 
@@ -113,6 +113,8 @@ export function ReturnView({
   const state = useStoreState();
   const person = state.people.get(personId);
   const personMoment = useStableMoment(person?.moment);
+  // The person's chosen fixed stars (#860), as the natal chart reads them.
+  const fixedStars = useStableBy(person?.fixedStars, (stars) => JSON.stringify(stars ?? []));
   const t = useMessages(returnViewMessages);
   const [locale] = useLocale();
   const {
@@ -169,6 +171,7 @@ export function ReturnView({
           ...toChartCalculationOptions(settings),
           rulership,
           ...(place === undefined ? {} : { place }),
+          ...(fixedStars === undefined ? {} : { fixedStars }),
         };
         const result = solar
           ? await computeSolarReturnChart(moment, yearNumber, provider, options)
@@ -200,6 +203,7 @@ export function ReturnView({
     inputValid,
     rulership,
     settings,
+    fixedStars,
   ]);
 
   const baseLabel = solar ? t.solarLabel(year) : t.lunarLabel;
@@ -313,7 +317,11 @@ export function ReturnView({
                     moment: person.moment,
                     provider,
                     baseLabel: displayName,
-                    options: { ...toChartCalculationOptions(settings), rulership },
+                    options: {
+                      ...toChartCalculationOptions(settings),
+                      rulership,
+                      ...(fixedStars === undefined ? {} : { fixedStars }),
+                    },
                   }
             }
           />

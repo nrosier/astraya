@@ -567,7 +567,7 @@ async function buildChartSectionPlan(
   const artifact =
     options.type === 'natal' && person.moment !== undefined
       ? await buildChartArtifact(
-          buildCalculationSnapshot(settings, rulership, person.customPoints ?? []),
+          buildCalculationSnapshot(settings, rulership, person.customPoints ?? [], person.fixedStars ?? []),
           person.moment,
           data,
           provider,

@@ -11,10 +11,13 @@ import {
   CURRENT_SNAPSHOT_VERSION,
   decodeCalculationSnapshot,
   decodeStrictExtendedSettings,
+  MAX_SNAPSHOT_FIXED_STARS,
   parseCalculationSnapshot,
+  snapshotCalculationOptions,
   SnapshotDecodeError,
 } from '../src/domain/calculation-snapshot.js';
 import { decodeChartShareLink, encodeChartShareLink } from '../src/domain/chart-share.js';
+import type { ChosenFixedStar } from '../src/domain/person.js';
 
 const CUSTOM_SETTINGS: ExtendedSettings = {
   ...DEFAULT_EXTENDED_SETTINGS,
@@ -372,8 +375,8 @@ describe('the station window and motion score in the snapshot (#724)', () => {
     expect(decodeCalculationSnapshot(calculationSnapshotToJson(snapshot))).toEqual(snapshot);
   });
 
-  it('keeps the version at 3, since both fields are optional', () => {
-    expect(CURRENT_SNAPSHOT_VERSION).toBe(3);
+  it('stays at the version #860 set, which is the last bump (both fields are optional)', () => {
+    expect(CURRENT_SNAPSHOT_VERSION).toBe(4);
   });
 
   it('a snapshot written before these fields existed parses with both off, and round-trips unchanged', () => {
@@ -518,5 +521,65 @@ describe('the keys a person register must carry (#806 compatibility pin)', () =>
   it('does not require a rulership key inside the settings bag', () => {
     expect(() => decodeStrictExtendedSettings(defaults, true)).not.toThrow();
     expect('rulership' in defaults).toBe(false);
+  });
+});
+
+describe('chosen fixed stars in the snapshot (#860)', () => {
+  const star = (id: string): ChosenFixedStar => ({
+    id,
+    name: id.replace(',', ''),
+    designation: `d${id.replace(',', '')}`,
+    equinox: 'ICRS',
+    sourceSha256: 'a'.repeat(64),
+  });
+
+  it('round-trips the chosen stars through JSON, and records version 4', () => {
+    const snapshot = buildCalculationSnapshot(
+      DEFAULT_EXTENDED_SETTINGS,
+      'modern',
+      [],
+      [star(',alLeo'), star(',alLyr')],
+    );
+    expect(snapshot.version).toBe(4);
+    const json = calculationSnapshotToJson(snapshot);
+    expect(parseCalculationSnapshot(json)).toEqual(snapshot);
+    expect(decodeCalculationSnapshot(json)).toEqual(snapshot);
+    expect(snapshotCalculationOptions(snapshot).fixedStars).toEqual(snapshot.fixedStars);
+  });
+
+  it('passes no stars to the calculation when none are chosen, so the preset applies', () => {
+    const snapshot = buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, 'modern');
+    expect(snapshot.fixedStars).toEqual([]);
+    expect('fixedStars' in snapshotCalculationOptions(snapshot)).toBe(false);
+  });
+
+  it('still loads a version-3 snapshot, with no stars', () => {
+    const old = { version: 3, settings: { orbScalePercent: -10 }, rulership: 'modern', customPoints: [] };
+    const decoded = decodeCalculationSnapshot(old);
+    expect(decoded.fixedStars).toEqual([]);
+    expect(decoded.settings.orbScalePercent).toBe(-10);
+    expect(parseCalculationSnapshot(old).fixedStars).toEqual([]);
+  });
+
+  it('allows exactly the cap and refuses one more, in the share link and on decode', () => {
+    const atCap = Array.from({ length: MAX_SNAPSHOT_FIXED_STARS }, (_, index) => star(`,s${String(index)}`));
+    const atCapSnapshot = buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, 'modern', [], atCap);
+    expect(decodeCalculationSnapshot(calculationSnapshotToJson(atCapSnapshot)).fixedStars).toHaveLength(atCap.length);
+
+    const over = buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, 'modern', [], [...atCap, star(',extra')]);
+    expect(() => calculationSnapshotToJson(over)).toThrow(SnapshotDecodeError);
+    const forged = { ...atCapSnapshot, fixedStars: over.fixedStars };
+    expect(() => decodeCalculationSnapshot(forged)).toThrow(/at most/);
+    try {
+      decodeCalculationSnapshot(forged);
+    } catch (error) {
+      expect((error as SnapshotDecodeError).code).toBe('too-many-fixed-stars');
+    }
+  });
+
+  it('refuses a malformed star list rather than dropping stars silently', () => {
+    const bad = { version: 4, settings: {}, rulership: 'modern', fixedStars: [{ id: ',x' }] };
+    expect(() => decodeCalculationSnapshot(bad)).toThrow(SnapshotDecodeError);
+    expect(parseCalculationSnapshot(bad).fixedStars).toEqual([]);
   });
 });

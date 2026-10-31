@@ -31,7 +31,6 @@ import { parseFormula } from '../astrology/formula-parser.js';
 import { isRulershipChoice, type RulershipChoice } from '../astrology/rulership.js';
 import type { ExtendedSettings } from '../chart/extended-settings.js';
 import {
-  CURRENT_SNAPSHOT_VERSION,
   decodeCalculationSnapshot,
   decodeStrictExtendedSettings,
   SnapshotDecodeError,
@@ -59,6 +58,9 @@ export type TimeAccuracy =
   | 'unknown';
 
 const TIME_ACCURACIES: readonly TimeAccuracy[] = ['recorded', 'remembered', 'approximate', 'unknown'];
+
+/** The version a `calculationSettings` register is written with (#806, #860): its settings shape is still version 3's. */
+const SETTINGS_REGISTER_VERSION = 3;
 
 /**
  * What a past resolution said, and what produced it.
@@ -389,7 +391,8 @@ export function serializeRulership(rulership: RulershipChoice): JsonValue {
  * settings. Rulership has its own `rulership` register and custom points theirs.
  */
 export function serializeCalculationSettings(settings: ExtendedSettings): JsonValue {
-  return JSON.parse(JSON.stringify({ version: CURRENT_SNAPSHOT_VERSION, settings })) as JsonValue;
+  // Pinned at 3 (#860): the register holds settings only, and its shape did not change when the snapshot moved to 4.
+  return JSON.parse(JSON.stringify({ version: SETTINGS_REGISTER_VERSION, settings })) as JsonValue;
 }
 
 /**

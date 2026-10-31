@@ -40,6 +40,7 @@ interface ExportedPerson {
   calculationSettings?: ExtendedSettings; // #806 (v3) — this person's own chart settings, which their charts below were computed with; absent in v2 files
   rulership?: 'modern' | 'traditional' | 'both'; // #806 (v4) — this person's own planetary rulers, which their charts below were computed with; absent in v2 and v3 files
   relocationPlaces?: RelocationPlace[]; // #587 — named alternate places (#559), absent if none are saved
+  fixedStars?: ChosenFixedStar[]; // #860 — chosen catalogue fixed stars, absent if none are saved
   customPoints?: CustomPointDefinition[]; // #587 — custom formula points (#566), absent if none are saved
   natalChart?: ExportedChart; // absent if birth is incomplete, or chartError explains a failure
   harmonicCharts?: ExportedHarmonicChart[]; // named Varga charts, absent without usable houses

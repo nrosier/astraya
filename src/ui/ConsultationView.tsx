@@ -82,6 +82,7 @@ import { extendedSettingsPanelMessages } from './ExtendedSettingsPanel.messages.
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { useStoreState } from './store-context.js';
+import { useStableBy } from './use-stable-moment.js';
 import { formatOrb, formatTimestamp } from './format.js';
 import { angleTransits, exactPassDates, type AngleKey, type AngleTransit } from '../domain/angle-transits.js';
 import { chartOverviewRows } from './chart-overview-rows.js';
@@ -136,6 +137,8 @@ function dateLabel(jd: number): string {
 export function ConsultationView({ personId }: { readonly personId: string }): React.JSX.Element {
   const state = useStoreState();
   const person = state.people.get(personId);
+  // The person's chosen fixed stars (#860), as the natal chart reads them.
+  const fixedStars = useStableBy(person?.fixedStars, (stars) => JSON.stringify(stars ?? []));
   const { provider } = useEphemerisProvider();
   const t = useMessages(consultationViewMessages);
   const transitFilterT = useMessages(transitFilterPanelMessages);
@@ -176,7 +179,10 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
         // "glance" screen's load lighter than `TimingTimelineView`'s own full computation.
         const [natal, profections, directions, solarArc, transit] = await Promise.all([
           // The reader's rulership (#679), so a "ruler" highlight follows the setting the basis line names.
-          computeChartData(moment, provider, { rulership }),
+          computeChartData(moment, provider, {
+            rulership,
+            ...(fixedStars === undefined ? {} : { fixedStars }),
+          }),
           computeProfections(moment, todayJd, provider),
           generatePrimaryDirections(moment, provider),
           computeSolarArcDirections(moment, todayJd, provider),
@@ -222,7 +228,7 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
     return () => {
       effect.cancelled = true;
     };
-  }, [person?.moment, provider, now, rulership, settingsUnreadable]);
+  }, [person?.moment, fixedStars, provider, now, rulership, settingsUnreadable]);
 
   const natalHouses = load.kind === 'ready' ? load.transit.natal.houses : undefined;
   const rules = useMemo<TransitRuleContext>(
