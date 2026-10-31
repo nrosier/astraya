@@ -162,17 +162,18 @@ test.describe('with the shared people (#799)', () => {
     await openNatalChart(page, 'Aspect matrix');
     const grid = page.locator('.mgrid');
     await expect(grid).toBeVisible();
-    await expect(grid.locator('[role=columnheader].mgrid-col-name')).toBeVisible();
-    await expect(grid.locator('[role=columnheader].mgrid-col-house')).toBeVisible();
+    // The header names are screen-reader-only (#900); the row cells carry the visible Name and House.
+    await expect(grid.locator('.mgrid-cell.mgrid-col-name').first()).toBeVisible();
+    await expect(grid.locator('.mgrid-cell.mgrid-col-house').first()).toBeVisible();
     await expect(grid.locator('.mgrid-aspect').first()).toBeVisible();
 
     await page.setViewportSize({ width: 390, height: 844 });
     await expect(grid).toBeVisible();
-    await expect(grid.locator('[role=columnheader].mgrid-col-name')).toBeHidden();
-    await expect(grid.locator('[role=columnheader].mgrid-col-house')).toBeHidden();
-    await expect(grid.locator('[role=columnheader]', { hasText: 'Deg' })).toBeVisible();
-    await expect(grid.locator('[role=columnheader]', { hasText: 'Sign' })).toBeVisible();
-    await expect(grid.locator('[role=columnheader]', { hasText: 'Min' })).toBeVisible();
+    await expect(grid.locator('.mgrid-cell.mgrid-col-name').first()).toBeHidden();
+    await expect(grid.locator('.mgrid-cell.mgrid-col-house').first()).toBeHidden();
+    await expect(grid.locator('.mgrid-cell.mgrid-num').first()).toBeVisible();
+    await expect(grid.locator('.mgrid-cell.mgrid-ctr').first()).toBeVisible();
+    await expect(grid.locator('.mgrid-aspect').first()).toBeVisible();
     await expect(grid.locator('.mgrid-aspect').first()).toBeVisible();
   });
 

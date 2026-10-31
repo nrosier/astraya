@@ -8,6 +8,8 @@ import { useMemo } from 'react';
 import { formatSignedOrb, positionParts, type AspectMatrixInput, type MatrixBody } from '../chart/aspect-matrix.js';
 import { bodyId } from '../chart/body-id.js';
 import { aspectGlyph, bodyGlyph, renderGlyph, signGlyph, type GlyphDefinition } from '../chart/glyphs.js';
+import { getSymbolClass } from '../chart/symbol-class.js';
+import { textSymbol } from '../chart/symbol-text.js';
 import { selectionKey } from '../interpretation/selection-key.js';
 import type { Locale } from '../interpretation/schema.js';
 import { signDisplayName } from './astro-names.messages.js';
@@ -42,7 +44,11 @@ export interface AspectMatrixGridSelection {
   readonly canSelect: (aKey: string, bKey: string) => boolean;
 }
 
-/** A glyph from the app's registry in the reader's chosen symbol class, in its own 0-100 box. */
+/**
+ * A glyph from the app's registry in the reader's chosen symbol class, in its own 0-100 box. The text class (#900)
+ * is written as HTML text sized by the `--text-xs` token that the angle labels use; an SVG text node would take its
+ * size in box units, which cannot follow that token.
+ */
 function Glyph({
   definition,
   className,
@@ -50,6 +56,17 @@ function Glyph({
   readonly definition: GlyphDefinition;
   readonly className: string;
 }): React.JSX.Element {
+  const written =
+    getSymbolClass() === 'text' && definition.kind !== undefined
+      ? (definition.text ?? textSymbol(definition.kind, definition.key))
+      : undefined;
+  if (written !== undefined) {
+    return (
+      <span className={`mgrid-symbol-text ${className}`} aria-hidden="true">
+        {written}
+      </span>
+    );
+  }
   return (
     <svg
       className="mgrid-glyph"
@@ -112,27 +129,25 @@ export function AspectMatrixGrid({
             <div role="columnheader" className="mgrid-head mgrid-icon">
               <span className="sr-only">{labels.symbol}</span>
             </div>
+            {/* The header names are kept for screen readers only (#900): each row already shows them on screen. */}
             <div role="columnheader" className="mgrid-head mgrid-col-name">
-              {labels.name}
+              <span className="sr-only">{labels.name}</span>
             </div>
             <div role="columnheader" className="mgrid-head mgrid-num">
-              {labels.degree}
+              <span className="sr-only">{labels.degree}</span>
             </div>
             <div role="columnheader" className="mgrid-head mgrid-ctr">
-              {labels.sign}
+              <span className="sr-only">{labels.sign}</span>
             </div>
             <div role="columnheader" className="mgrid-head mgrid-num">
-              {labels.minute}
+              <span className="sr-only">{labels.minute}</span>
             </div>
             <div role="columnheader" className="mgrid-head mgrid-ctr mgrid-col-house">
-              {labels.house}
+              <span className="sr-only">{labels.house}</span>
             </div>
             {bodies.map((body) => (
               <div key={body.key} role="columnheader" className="mgrid-head mgrid-ctr">
                 <span className="sr-only">{body.name}</span>
-                <span aria-hidden="true">
-                  <BodyMark body={body} />
-                </span>
               </div>
             ))}
           </div>

@@ -8,6 +8,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { AspectMatrixInput } from '../src/chart/aspect-matrix.js';
+import { setSymbolClass } from '../src/chart/symbol-class.js';
 import { AspectMatrixGrid } from '../src/ui/AspectMatrixGrid.js';
 
 const input: AspectMatrixInput = {
@@ -150,6 +151,38 @@ describe('AspectMatrixGrid (#820)', () => {
     expect(el.innerHTML).not.toMatch(/tight|exact|double/i);
     expect(el.querySelectorAll('[role="rowgroup"]')).toHaveLength(2);
     expect(el.textContent).not.toMatch(/total/i);
+  });
+
+  it('shows no duplicate body header list above the matrix: the names are screen-reader-only (#900)', () => {
+    const el = mount();
+    const visibleHeaders = [...el.querySelectorAll('[role="columnheader"]')].filter(
+      (th) => th.querySelector('.sr-only') === null,
+    );
+    expect(visibleHeaders).toHaveLength(0);
+    const srOnly = [...el.querySelectorAll('[role="columnheader"] .sr-only')].map((s) => s.textContent);
+    expect(srOnly).toEqual(expect.arrayContaining(['Name', 'Sun', 'Moon', 'Saturn', 'Ascendant']));
+    // The row labels still name each body.
+    expect(el.querySelectorAll('[role="rowheader"] .sr-only').length).toBe(4);
+  });
+
+  it('draws the text symbol at the AC/MC size token and no SVG text node (#900)', () => {
+    setSymbolClass('text');
+    try {
+      const el = mount();
+      const textSymbol = el.querySelector('.mgrid-symbol-text');
+      expect(textSymbol?.tagName.toLowerCase()).toBe('span');
+      expect(textSymbol?.textContent).toBe('SUN');
+      expect(el.querySelector('svg text')).toBeNull();
+      const css = readFileSync('src/ui/app.css', 'utf8');
+      const rule = /\.mgrid-symbol-text \{[^}]*\}/.exec(css)?.[0] ?? '';
+      expect(rule).toMatch(/font-size:\s*var\(--text-xs\)/);
+      // The angle labels inherit the same token from `.mgrid`.
+      const grid = /\.mgrid \{[^}]*\}/.exec(css)?.[0] ?? '';
+      expect(grid).toMatch(/font-size:\s*var\(--text-xs\)/);
+      expect(rule).not.toMatch(/font-size:\s*(\d|\.)/);
+    } finally {
+      setSymbolClass('drawn');
+    }
   });
 
   it('keeps its CSS to standard tokens: no colour literals, shadows, monospace family or tight border', () => {
