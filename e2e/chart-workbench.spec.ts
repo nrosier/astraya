@@ -177,6 +177,37 @@ test.describe('with the shared people (#799)', () => {
     await expect(grid.locator('.mgrid-aspect').first()).toBeVisible();
   });
 
+  test('the aspect matrix has no visible header list and its text symbols match the AC and MC size (#900)', async () => {
+    test.setTimeout(90_000);
+    // Forces the text symbol class for this page only, before the app loads (#419).
+    await page.addInitScript(() => {
+      localStorage.setItem('astraya:symbolClass', 'text');
+    });
+    await openSharedPerson(page, baseUrl, EINSTEIN);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await openNatalChart(page, 'Aspect matrix');
+    const grid = page.locator('.mgrid');
+    await expect(grid).toBeVisible();
+
+    // Every header name is kept for screen readers only: a 1px clipped span, not a visible column header.
+    const headerNames = grid.locator('.mgrid-head span.sr-only');
+    const headerCount = await headerNames.count();
+    expect(headerCount).toBeGreaterThan(0);
+    for (let index = 0; index < headerCount; index += 1) {
+      const box = await headerNames.nth(index).boundingBox();
+      expect(box?.width ?? 0, `header name ${String(index)} is visible`).toBeLessThanOrEqual(1);
+    }
+
+    // The text symbols and the AC and MC labels share one font size (--text-xs).
+    const symbol = grid.locator('.mgrid-symbol-text').first();
+    await expect(symbol).toBeVisible();
+    const angle = grid.locator('.mgrid-label', { hasText: 'AC' }).first();
+    await expect(angle).toBeVisible();
+    const fontSize = (locator: Locator): Promise<string> =>
+      locator.evaluate<string, unknown>('(element) => getComputedStyle(element).fontSize');
+    expect(await fontSize(symbol)).toBe(await fontSize(angle));
+  });
+
   test('the elements and modalities grid is a view of its own, with its table and a CSV download (#511)', async () => {
     test.setTimeout(90_000);
     await page.setViewportSize({ width: 1600, height: 1000 });
