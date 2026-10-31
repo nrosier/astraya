@@ -6,6 +6,46 @@ see [docs/ops/RELEASING.md](docs/ops/RELEASING.md).
 
 ## [Unreleased]
 
+## [0.43.1] — 2026-10-31
+
+**Glossary terms in prose get opt-in tooltips, the PDF and Documents screens are refactored to the approved mockup, chosen fixed stars reach the exports and shared view, and the consultation, selection and matrix views are finished.**
+
+### Added
+
+- **Glossary tooltips in prose (#902).** Glossary terms in prose can show a tooltip. Tapping opens it, and a second tap closes it.
+- **Chosen fixed stars in exports and the shared view (#860).** Snapshots, artifacts, the shared view and exports include the fixed stars a person chose.
+- **A refactored PDF and Documents screen (#916).** The screen follows the approved mockup. The validation message sits next to Build PDF, and the export buttons share one row (#896).
+- **Chart page exports open the PDF creator (#915).** The SVG, PNG and PDF chart exports open the PDF creator.
+- **Consultation round 2 (#800).** The consultation view shows the date on the wheel, links and a notes card. Profection and firdaria cards get Open links, and deleting a consultation note asks for confirmation.
+- **Selection card Direct and Rx badge (#817).** The selection card shows a Direct or Rx badge. The Sabian tier is gated, and the card folds to fit.
+- **A Patterns shape preview on the dark canvas (#900).** The preview uses high-contrast accents.
+- **Primitive and token gaps built (#826).** The approved primitives and tokens are in place.
+- **Comparison chart title names the chart types (#885).** The title lists the chart types being compared.
+
+### Changed
+
+- **The sidebar footer shows the version, licence and update banner.** They moved from the page into the sidebar footer (#ui-sidebar).
+- **The consultation grid keeps its column ratio above the accepted floor (#895).** The horary date and time fields stack, so the card pair meets the 90% rule.
+
+### Fixed
+
+- **Table copy and CSV leave out the selection column (#957).**
+- **The aspect matrix is tidier (#900).** A duplicate header list is removed, the symbols are sized like AC and MC, and the body header is no longer repeated. The Elements top chart is centred vertically.
+- **Section tabs respond to arrow keys, Home and End (#882).**
+- **Calculation result regions announce recalculation (#888).** Every calculation result region sets `aria-busy` while it recalculates.
+- **The selection card extends to the bottom of the viewport (#817).**
+- **Every export screen registers its exports, and the page-header exceptions are documented (#887).**
+- **A duplicate firdaria link is removed (#800).**
+- **Removed glossary terms are inlined on every visible occurrence (#901).**
+- **Interpretation configuration tokens and Dutch text match English (#881).**
+- **Part of Fortune examples are dropped from derived point definitions (#902).**
+
+### Internal
+
+- Tests cover export invariance, glossary skip rules, the matrix and Placements export text, keyboard reach for section tabs, the Documents person sections, the consultation grid edges and the birth record save (#898, #902, #882, #914, #895, #896).
+- The test wrapper forwards SIGINT, SIGTERM and SIGHUP to its child process, so an interrupted run does not orphan the child.
+- The 0.43.0 manual UI/UX checks are recorded.
+
 ## [0.43.0] — 2026-10-30
 
 **The sidebar gets one entry per section with tabs for sub-views, the page headers and chart titles are unified, and the Placements, Patterns and Extended settings screens are finished.**
