@@ -235,6 +235,21 @@ Once the four/six-view decision is resolved, make every retained view part of th
 - The shell has a documented and testable reservation rule for global utilities and result width.
 - The viewport matrix includes all shipped chart views and comparison mode; visual/manual checks are recorded for the release candidate.
 
+## Page-header exceptions (#887)
+
+Owner decision, 2026-10-29: every top-level view uses the shared `PageHeader`. The exceptions below are the only
+screens allowed to differ. The first five render a bare `<h1>`; the last one is a fallback heading that still goes
+through `PageHeader`.
+
+| Exception                                     | Location                                                                                | Reason                                                                                  |
+| --------------------------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Set-password form (heading)                   | `src/ui/SetPasswordForm.tsx:37`                                                         | Owner-listed exception: the password form is its own gate screen.                       |
+| Set-password form (password-set confirmation) | `src/ui/SetPasswordForm.tsx:46`                                                         | Owner-listed exception: same form, confirmation state.                                  |
+| Set-password form (second state)              | `src/ui/SetPasswordForm.tsx:78`                                                         | Owner-listed exception: same form, second state.                                        |
+| Person not found                              | `src/ui/PersonNotFound.tsx:20`                                                          | Owner-listed exception: shown in place of a person's screen when that person is absent. |
+| No local storage                              | `src/ui/App.tsx:116`                                                                    | Owner-listed exception: the no-storage notice screen.                                   |
+| Fallback-only headings                        | `PageHeader` fallback titles (for example `src/ui/TransitView.tsx:279`, `:292`, `:313`) | Owner-listed exception: used only when a person's name or moment is unavailable.        |
+
 ## Corrections
 
 Corrections made 2026-10-29 by the document author's review, after checking each claim against the source. The original findings above are unchanged; each correction is also marked where it applies.

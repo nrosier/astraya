@@ -30,7 +30,7 @@ import { electionalViewMessages } from './ElectionalView.messages.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { todayInputValue } from './format.js';
 import { useMessages } from './messages.js';
-import { SortableTable } from './SortableTable.js';
+import { SortableTable, csvExportTable, useCsvExports } from './SortableTable.js';
 import type { TableColumn } from './table-sort.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { BackLink } from './BackLink.js';
@@ -139,6 +139,12 @@ export function ElectionalView(): React.JSX.Element {
 
   const errorText = (error: ElectionFieldError): string =>
     error === 'span' ? t.fieldErrors.span(MAX_ELECTION_SPAN_DAYS) : t.fieldErrors[error];
+
+  useCsvExports(
+    result.kind === 'ready' && result.rows.length > 0
+      ? [csvExportTable('windows', t.tableCaption, 'electional-windows.csv', columns, result.rows)]
+      : undefined,
+  );
 
   return (
     <main className="shell">

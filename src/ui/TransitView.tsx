@@ -66,7 +66,7 @@ import { EVERY_BODY_KEY, TransitFilterPanel, useTransitFilter } from './TransitF
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { PersonNotFound } from './PersonNotFound.js';
-import { SortableTable } from './SortableTable.js';
+import { SortableTable, csvExportTable, useCsvExports } from './SortableTable.js';
 import { AspectState } from './ChartViewAspects.js';
 import { useStoreState } from './store-context.js';
 import { transitViewMessages } from './TransitView.messages.js';
@@ -263,6 +263,21 @@ export function TransitView({ personId }: { personId: string }): React.JSX.Eleme
       rulership,
     );
   }, [load, biWheelFacts, shownContacts, rulership]);
+
+  // The contacts table's CSV, in source order (the contacts as computed), offered in the page header (#887).
+  useCsvExports(
+    load.kind === 'ready' && wheelMarkup !== undefined && person !== undefined
+      ? [
+          csvExportTable(
+            'contacts',
+            t.contactsCaption,
+            deriveExportFilename(person.displayName, 'transit-contacts', 'csv'),
+            contactColumns(t, locale),
+            crossAspectRows(filterTransits(load.data.contacts, filter)),
+          ),
+        ]
+      : undefined,
+  );
 
   if (person === undefined) {
     return <PersonNotFound />;

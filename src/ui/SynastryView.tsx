@@ -54,7 +54,7 @@ import { useMessages } from './messages.js';
 import { ordered } from './people-list.js';
 import { PersonNotFound } from './PersonNotFound.js';
 import { RelationshipSummary } from './RelationshipSummary.js';
-import { SortableTable } from './SortableTable.js';
+import { SortableTable, csvExportTable, useCsvExports } from './SortableTable.js';
 import { useStoreState } from './store-context.js';
 import { synastryViewMessages } from './SynastryView.messages.js';
 import type { TableColumn } from './table-sort.js';
@@ -291,6 +291,25 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
       crossRingOfB: 1,
     });
   }, [load, selectionKey, nameA, nameB, t]);
+
+  // The aspects table's CSV, in the order the screen ranks them (its source order), offered in the page header (#887).
+  useCsvExports(
+    load.kind === 'ready' && person !== undefined
+      ? [
+          csvExportTable(
+            'aspects',
+            t.aspectsCaption,
+            deriveExportFilename(
+              `${person.displayName || 'person'}-${(partner?.displayName ?? '') || 'partner'}`,
+              'synastry-aspects',
+              'csv',
+            ),
+            aspectColumns(t, locale, interpretationOf, importanceOf),
+            crossAspectRows(load.data.aspects),
+          ),
+        ]
+      : undefined,
+  );
 
   if (person === undefined) {
     return <PersonNotFound />;

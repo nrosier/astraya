@@ -66,7 +66,7 @@ import { primaryDirectionsViewMessages } from './PrimaryDirectionsView.messages.
 import { ChoiceGroup } from './primitives/ChoiceGroup.js';
 import { DateField } from './primitives/DateField.js';
 import { NumberField } from './primitives/NumberField.js';
-import { SortableTable } from './SortableTable.js';
+import { SortableTable, csvExportTable, useCsvExports } from './SortableTable.js';
 import { useStoreState } from './store-context.js';
 import { useSymbolClass } from './symbol-setting.js';
 import type { TableColumn } from './table-sort.js';
@@ -308,6 +308,42 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
   }, [load, directed, t, symbolClass, variants]);
   const { wheelRef, onClick: handleWheelClick, onKeyDown: handleWheelKeyDown } = useWheelIsolation(wheelMarkup);
 
+  // Both tables' CSVs, in source order (the hits as computed, not the active-only subset), offered in the page header (#887).
+  const data = load.kind === 'ready' ? load.data : undefined;
+  const shownAge = directed.kind === 'ready' ? directed.chart.ageYears : undefined;
+  const allRows = data?.hits.map(toHitRow);
+  const activeRows =
+    data !== undefined && shownAge !== undefined ? activeDirections(data.hits, shownAge).map(toHitRow) : undefined;
+  const columns = hitColumns(t, locale);
+  useCsvExports(
+    person === undefined || data === undefined
+      ? undefined
+      : [
+          ...(allRows === undefined
+            ? []
+            : [
+                csvExportTable(
+                  'all',
+                  t.allCaption,
+                  deriveExportFilename(person.displayName, 'primary-directions', 'csv'),
+                  columns,
+                  allRows,
+                ),
+              ]),
+          ...(activeRows === undefined
+            ? []
+            : [
+                csvExportTable(
+                  'active',
+                  t.activeCaption(String(data.orb)),
+                  deriveExportFilename(person.displayName, 'primary-directions-active', 'csv'),
+                  columns,
+                  activeRows,
+                ),
+              ]),
+        ],
+  );
+
   if (person === undefined) {
     return <PersonNotFound />;
   }
@@ -338,13 +374,6 @@ export function PrimaryDirectionsView({ personId }: { personId: string }): React
       </main>
     );
   }
-
-  const data = load.kind === 'ready' ? load.data : undefined;
-  const shownAge = directed.kind === 'ready' ? directed.chart.ageYears : undefined;
-  const allRows = data?.hits.map(toHitRow);
-  const activeRows =
-    data !== undefined && shownAge !== undefined ? activeDirections(data.hits, shownAge).map(toHitRow) : undefined;
-  const columns = hitColumns(t, locale);
 
   return (
     <main className="shell">

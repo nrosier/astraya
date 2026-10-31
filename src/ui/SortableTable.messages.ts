@@ -12,6 +12,7 @@ const en = {
   copy: 'Copy',
   downloadCsv: 'Download CSV',
   aboutColumn: (column: string) => `About ${column}`,
+  csvLabel: (table: string) => `${table} (CSV)`,
 };
 
 const nl: typeof en = {
@@ -19,6 +20,7 @@ const nl: typeof en = {
   copy: 'Kopiëren',
   downloadCsv: 'CSV downloaden',
   aboutColumn: (column: string) => `Over ${column}`,
+  csvLabel: (table: string) => `${table} (CSV)`,
 };
 
 export const sortableTableMessages = { en, nl };
