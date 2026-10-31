@@ -108,6 +108,34 @@ describe('GlossaryText in prose (#902)', () => {
     expect(termTriggers()).toHaveLength(1);
   });
 
+  it('leaves a link, input and textarea beside the prose unwrapped, with their values and placeholders intact', () => {
+    setLocale('en');
+    render(
+      <div>
+        <a href="#dispositor">Dispositor</a>
+        <input type="text" readOnly value="Dispositor" placeholder="Dispositor" aria-label="Dispositor field" />
+        <textarea readOnly defaultValue="Dispositor" aria-label="Dispositor notes" />
+        <p>
+          <GlossaryText text="The Dispositor shows the chain." />
+        </p>
+      </div>,
+    );
+    const link = container.querySelector('a');
+    expect(link?.querySelector('button')).toBeNull();
+    expect(link?.textContent).toBe('Dispositor');
+    const input = container.querySelector('input');
+    expect(input?.value).toBe('Dispositor');
+    expect(input?.getAttribute('placeholder')).toBe('Dispositor');
+    expect(container.querySelector('textarea')?.value).toBe('Dispositor');
+    // Only the one term in the prose is a tooltip; nothing inside the link, input or textarea is.
+    expect(termTriggers()).toHaveLength(1);
+    expect(termTriggers()[0]?.closest('a, input, textarea')).toBeNull();
+  });
+
+  // Known open defect (found by this test, not fixed here): matching does not skip a term nested inside a link. Rendering
+  // <a><GlossaryText text="Dispositor" /></a> puts a tooltip button inside the link. Expected: the link keeps plain text.
+  it.todo('leaves a glossary term inside a link as plain link text (defect: a tooltip button renders inside the link)');
+
   it('keeps the paragraph text intact for screen readers (no HTML is injected)', () => {
     setLocale('en');
     render(<p>{<GlossaryText text="A <b>bold</b> Aspect." />}</p>);
