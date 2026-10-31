@@ -678,6 +678,12 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
                   </ul>
                   <p>
                     <a href={hrefFor('progressions', { personId })}>{t.openProgressions}</a>
+                    {load.year.profection !== undefined && (
+                      <>
+                        {' '}
+                        <a href={hrefFor('profections', { personId })}>{t.openProfections}</a>
+                      </>
+                    )}
                   </p>
                   {monthProfection.length > 0 && (
                     <Disclosure

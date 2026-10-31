@@ -218,3 +218,39 @@ describe('consultation strings have matching en and nl keys (i18n parity)', () =
     expect(Object.keys(nl).sort()).toEqual(Object.keys(en).sort());
   });
 });
+
+describe('right-column keys and Open links (#800)', () => {
+  /** Every `t.<key>` the right-column cards read, from the time-lords card through the notes card mount. */
+  function rightColumnKeys(): string[] {
+    const keys = new Set<string>();
+    for (const match of rightColumn().matchAll(/\bt\.([A-Za-z]\w*)/g)) {
+      if (match[1] !== undefined) keys.add(match[1]);
+    }
+    return [...keys];
+  }
+
+  it('gives every right-column key an en and an nl string', () => {
+    const { en, nl } = consultationViewMessages;
+    const keys = rightColumnKeys();
+    expect(keys).toContain('openProfections');
+    expect(keys).toContain('openTimingTimeline');
+    for (const key of keys) {
+      expect(en, `en.${key}`).toHaveProperty(key);
+      expect(nl, `nl.${key}`).toHaveProperty(key);
+    }
+  });
+
+  it('renders the profection Open link on the progressions paragraph in en and nl', () => {
+    const body = sectionBody(view, 'consultation-year-heading');
+    const progressionsParagraph = /<p>[\s\S]*?hrefFor\('progressions'[\s\S]*?<\/p>/.exec(body)?.[0] ?? '';
+    const firdariaRow =
+      /<li>\s*<span className="consultation-lord-key">\{t\.firdaria\}[\s\S]*?<\/li>/.exec(body)?.[0] ?? '';
+    expect(progressionsParagraph).toContain("hrefFor('profections', { personId })");
+    expect(progressionsParagraph).toContain('{t.openProfections}');
+    expect(firdariaRow).not.toContain('hrefFor(');
+    expect(consultationViewMessages.en.openProfections).toBe('Open profections');
+    expect(consultationViewMessages.nl.openProfections).toBe('Profecties openen');
+    expect(consultationViewMessages.en.openTimingTimeline).toBe('Open timing timeline');
+    expect(consultationViewMessages.nl.openTimingTimeline).toBe('Tijdlijn openen');
+  });
+});
