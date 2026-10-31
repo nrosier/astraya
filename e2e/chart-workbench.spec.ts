@@ -171,8 +171,8 @@ test.describe('with the shared people (#799)', () => {
     await expect(grid).toBeVisible();
     await expect(grid.locator('.mgrid-cell.mgrid-col-name').first()).toBeHidden();
     await expect(grid.locator('.mgrid-cell.mgrid-col-house').first()).toBeHidden();
-    await expect(grid.locator('.mgrid-num').first()).toBeVisible();
-    await expect(grid.locator('.mgrid-ctr').nth(1)).toBeVisible();
+    await expect(grid.locator('.mgrid-cell.mgrid-num').first()).toBeVisible();
+    await expect(grid.locator('.mgrid-cell.mgrid-ctr').first()).toBeVisible();
     await expect(grid.locator('.mgrid-aspect').first()).toBeVisible();
     await expect(grid.locator('.mgrid-aspect').first()).toBeVisible();
   });
