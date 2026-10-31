@@ -85,6 +85,11 @@ describe('Elements grid CSS (#821)', () => {
     expect(block).toMatch(/color-mix\(in oklab, var\(--surface\) \d+%, transparent\)/);
   });
 
+  it('mid-aligns the top chart (#900): the grid centres its items vertically and cells keep their full height', () => {
+    expect(css).toMatch(/\.emphasis-screen-grid\s*\{[^}]*align-items:\s*center/);
+    expect(css).toMatch(/\.emphasis-screen-cell\s*\{[^}]*align-self:\s*stretch/);
+  });
+
   it('uses tokens only: no hex, rgb or hsl literals and no monospace family', () => {
     expect(block).not.toMatch(/#[0-9a-f]{3,8}\b|rgba?\(|hsla?\(/i);
     expect(block).not.toMatch(/monospace/i);
