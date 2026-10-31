@@ -104,7 +104,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `SetupForm.tsx` + `SetupForm.messages.ts` — First-boot admin account bootstrap. Deps: `session-context`.
 - `SharedChartView.tsx` + `SharedChartView.messages.ts` — No-account link-only shared-chart screen. Deps: `domain/chart-share`, `domain/chart-compute`.
 - `SolarArcView.tsx` + `SolarArcView.messages.ts` — Solar arc directions screen + exact-date timing. Deps: `domain/solar-arc-directions`.
-- `SortableTable.tsx` + `SortableTable.messages.ts` — Reusable sortable data table (copy/CSV download). Deps: `./table-sort`, `./download`.
+- `SortableTable.tsx` + `SortableTable.messages.ts` — Reusable sortable data table (copy/CSV download). Deps: `./table-sort`, `./download`, `./GlossaryTerm`.
 - `SymbolSetting.tsx` + `SymbolSetting.messages.ts` — Symbol-class/weight/variant device preferences, built on the shared `Select` primitive. Deps: `./symbol-setting`, `./glyph-variant-setting`, `chart/symbol-class`, `./primitives/Select`.
 - `SymbolToggle.tsx` + `SymbolToggle.messages.ts` — Header one-press symbol toggle (glyphs ↔ text). Deps: `./symbol-setting`.
 - `SynastryView.tsx` + `SynastryView.messages.ts` — Synastry bi-wheel (two-person comparison); carries its own `PrintProvenance` footer labelled with engine defaults (#564). Deps: `domain/synastry`, `chart/multi-wheel`, `RelationshipSummary`, `./PrintProvenance`.
@@ -170,7 +170,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `store-context.tsx` — React adapter exposing op-log store via `useSyncExternalStore`. Deps: `store/fold`, `store/store`, `./trace`.
 - `symbol-setting.ts` — Device preference for symbol class (glyphs/Unicode/text). Deps: `chart/symbol-class`.
 - `synastry-text.ts` — Resolves Synastry aspect-row interpretation text. Deps: `interpretation/compose`, `interpretation/schema`.
-- `table-sort.ts` — Generic sorting/export engine for all data tables. Deps: none (domain-agnostic).
+- `table-sort.ts` — Generic sorting/export engine for all data tables. Deps: `astro-glossary.messages` (type only).
 - `theme-dom.ts` — DOM/storage half of light/dark theme override. Deps: `./theme`.
 - `theme.ts` — Pure theme-selection logic (cycle order/labels). Deps: `ThemeToggle.messages`.
 - `tools-nav.ts` — Tools menu backing (tool list/groups/active-tool); grouped as Sky & cycles/Questions & planning/Birth data (#506/#509). Deps: `route`.

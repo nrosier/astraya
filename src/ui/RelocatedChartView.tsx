@@ -16,6 +16,7 @@
  * @exports RelocatedChartView
  */
 import { useEffect, useMemo, useState } from 'react';
+import { GlossaryText } from './GlossaryText.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { computeRelocatedChart, relocatedComparisonRows, type RelocatedChartData } from '../domain/relocated-chart.js';
 import { housesAreDefined } from '../domain/chart-compute.js';
@@ -230,7 +231,7 @@ export function RelocatedChartView({
         <BackLink fallback={personHref(personId)} />
         <PageHeader title={t.relocatedChartFallback} />
         <p>
-          {t.needsCompleteRecord(person.displayName || t.thisPerson)}{' '}
+          <GlossaryText text={t.needsCompleteRecord(person.displayName || t.thisPerson)} />{' '}
           <a href={personHref(personId)}>{t.personPageLink}</a>.
         </p>
       </main>
@@ -244,7 +245,9 @@ export function RelocatedChartView({
       <BackLink fallback={personHref(personId)} />
       <PageHeader title={person.displayName ? t.heading(person.displayName) : t.headingFallback} />
       <ChartTypeSelector personId={personId} type="relocated" view={view} />
-      <p className="hint">{t.hint}</p>
+      <p className="hint">
+        <GlossaryText text={t.hint} />
+      </p>
 
       <div className="relocation-saved-places">
         <Select
@@ -346,7 +349,9 @@ export function RelocatedChartView({
           />
 
           {load.kind === 'ready' && !housesAreDefined(load.data.relocated.houses) && (
-            <StatusMessage kind="error">{t.housesUndefined}</StatusMessage>
+            <StatusMessage kind="error">
+              <GlossaryText text={t.housesUndefined} />
+            </StatusMessage>
           )}
           {load.kind === 'ready' && housesAreDefined(load.data.relocated.houses) && (
             <>

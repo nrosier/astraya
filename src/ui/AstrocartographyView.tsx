@@ -17,6 +17,7 @@
  * @conventions Gated like PeriodicTransitView/TransitView on a known birth time (ACG lines shift ~15° longitude per hour of time error); embeds the SVG map via `dangerouslySetInnerHTML` and exports it through `standaloneSvg`/`downloadText`/`svgToPngBlob`, matching ChartView's trust-boundary pattern for app-generated markup. Reads interpretive text from the shared wheel corpus via `resolvePlacementText`.
  * @exports AstrocartographyView
  */
+import { GlossaryText } from './GlossaryText.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { personHref } from './route.js';
 import { useEffect, useMemo, useState } from 'react';
@@ -219,7 +220,7 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <PageHeader title={t.astrocartographyFallback} />
+        <PageHeader title={t.astrocartographyFallback} titleTerm="astrocartography" />
         <p>
           {t.notCompleteMap(person.displayName || t.thisPerson)} <a href={personHref(personId)}>{t.personPageLink}</a>.
         </p>
@@ -231,8 +232,10 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <PageHeader title={t.astrocartographyFallback} />
-        <p>{t.needsKnownTime(person.displayName || t.thisPerson)}</p>
+        <PageHeader title={t.astrocartographyFallback} titleTerm="astrocartography" />
+        <p>
+          <GlossaryText text={t.needsKnownTime(person.displayName || t.thisPerson)} />
+        </p>
       </main>
     );
   }
@@ -240,8 +243,13 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
   return (
     <main className="shell">
       <BackLink fallback={personHref(personId)} />
-      <PageHeader title={person.displayName ? t.heading(person.displayName) : t.astrocartographyFallback} />
-      <p className="hint">{t.hint}</p>
+      <PageHeader
+        title={person.displayName ? t.heading(person.displayName) : t.astrocartographyFallback}
+        titleTerm="astrocartography"
+      />
+      <p className="hint">
+        <GlossaryText text={t.hint} />
+      </p>
 
       <MapSettingsDialog applied={settings} onApply={setSettings} lineTypeLabels={lineTypeLabels(t)} />
       {data?.relocatedHouses !== undefined && (
@@ -275,7 +283,9 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
           {lineTypes.length > 0 && bodies.length > 0 && (
             <section className="acg-meanings" aria-labelledby="acg-meanings-heading">
               <h2 id="acg-meanings-heading">{t.meaningsHeading}</h2>
-              <p className="hint">{t.meaningsHint}</p>
+              <p className="hint">
+                <GlossaryText text={t.meaningsHint} />
+              </p>
               {[...TRADITIONAL_ACG_BODY_IDS, ...EXTENDED_ACG_BODY_IDS]
                 .filter((body) => bodies.includes(body))
                 .map((body) => {

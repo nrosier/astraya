@@ -13,6 +13,7 @@
  * @exports DraconicView
  */
 import { useEffect, useMemo, useState } from 'react';
+import { GlossaryText } from './GlossaryText.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { computeDraconic, type DraconicData } from '../domain/draconic.js';
 import { housesAreDefined } from '../domain/chart-compute.js';
@@ -108,9 +109,9 @@ export function DraconicView({
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <PageHeader title={t.draconicChartFallback} />
+        <PageHeader title={t.draconicChartFallback} titleTerm="draconic" />
         <p>
-          {t.needsCompleteRecord(person.displayName || t.thisPerson)}{' '}
+          <GlossaryText text={t.needsCompleteRecord(person.displayName || t.thisPerson)} />{' '}
           <a href={personHref(personId)}>{t.personPageLink}</a>.
         </p>
       </main>
@@ -122,9 +123,11 @@ export function DraconicView({
   return (
     <main className="shell shell--wide">
       <BackLink fallback={personHref(personId)} />
-      <PageHeader title={person.displayName ? t.heading(person.displayName) : t.headingFallback} />
+      <PageHeader title={person.displayName ? t.heading(person.displayName) : t.headingFallback} titleTerm="draconic" />
       <ChartTypeSelector personId={personId} type="draconic" view={view} />
-      <p className="hint">{t.hint}</p>
+      <p className="hint">
+        <GlossaryText text={t.hint} />
+      </p>
 
       <ChartDataView
         personId={personId}
@@ -153,7 +156,9 @@ export function DraconicView({
       />
 
       {load.kind === 'ready' && !housesAreDefined(load.data.houses) && (
-        <StatusMessage kind="error">{t.housesUndefined}</StatusMessage>
+        <StatusMessage kind="error">
+          <GlossaryText text={t.housesUndefined} />
+        </StatusMessage>
       )}
       {load.kind === 'ready' && housesAreDefined(load.data.houses) && (
         <ReportView personId={personId} chart={load.data} rulership={rulership} onRulershipChange={setRulership} />

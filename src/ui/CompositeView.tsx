@@ -17,6 +17,7 @@
  * @conventions Uses the near-arc midpoint convention for both positions and house cusps (`domain/composite.js`), not the time/space-midpoint "Davison" method; reuses `ChartDataView`/`ReportView` wholesale since the composite is a single synthetic `ChartData`. Text comes from co-located `CompositeView.messages.ts` via `useMessages()`.
  * @exports CompositeView
  */
+import { GlossaryText } from './GlossaryText.js';
 import { Select } from './primitives/Select.js';
 import { personHref, routeHref } from './route.js';
 import { useEffect, useMemo, useState } from 'react';
@@ -112,9 +113,9 @@ export function CompositeView({
     return (
       <main className="shell">
         <BackLink fallback={personHref(personId)} />
-        <PageHeader title={t.compositeFallback} />
+        <PageHeader title={t.compositeFallback} titleTerm="composite" />
         <p>
-          {t.needsCompleteRecord(person.displayName || t.thisPerson)}{' '}
+          <GlossaryText text={t.needsCompleteRecord(person.displayName || t.thisPerson)} />{' '}
           <a href={personHref(personId)}>{t.personPageLink}</a>.
         </p>
       </main>
@@ -127,9 +128,16 @@ export function CompositeView({
   return (
     <main className="shell shell--wide">
       <BackLink fallback={personHref(personId)} />
-      <PageHeader title={person.displayName ? t.heading(person.displayName) : t.compositeFallback} />
-      <p className="hint">{t.hint}</p>
-      <p className="hint">{t.overlayContext}</p>
+      <PageHeader
+        title={person.displayName ? t.heading(person.displayName) : t.compositeFallback}
+        titleTerm="composite"
+      />
+      <p className="hint">
+        <GlossaryText text={t.hint} />
+      </p>
+      <p className="hint">
+        <GlossaryText text={t.overlayContext} />
+      </p>
 
       <p>
         <Select
@@ -167,7 +175,9 @@ export function CompositeView({
       )}
 
       {partnerId !== '' && load.kind === 'ready' && !housesAreDefined(load.data.houses) && (
-        <StatusMessage kind="error">{t.housesUndefined}</StatusMessage>
+        <StatusMessage kind="error">
+          <GlossaryText text={t.housesUndefined} />
+        </StatusMessage>
       )}
       {partnerId !== '' && load.kind === 'ready' && housesAreDefined(load.data.houses) && (
         <ReportView personId={personId} chart={load.data} chartKind="composite" />
