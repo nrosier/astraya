@@ -19,13 +19,12 @@
  */
 import { GlossaryText } from './GlossaryText.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
-import { personHref } from './route.js';
+import { personHref, routeHref } from './route.js';
 import { useEffect, useMemo, useState } from 'react';
 import { resolvePlacementText } from '../interpretation/compose.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { renderAcgMapSvg, type AcgMapInput } from '../chart/acg-map.js';
 import { acgMapLabels } from './acg-map-labels.js';
-import { standaloneSvg } from '../chart/standalone-svg.js';
 import { bodyById } from '../astrology/bodies.js';
 import { degreesInSign, signOf } from '../astrology/signs.js';
 import {
@@ -38,12 +37,8 @@ import { ALL_LINE_TYPES, DEFAULT_MAP_SETTINGS, relocationOf, type LineType, type
 import { MapSettingsDialog } from './MapSettingsDialog.js';
 import { Disclosure } from './primitives/Disclosure.js';
 import { PageHeader } from './PageHeader.js';
-import { useRegisterExports } from './export-registry.js';
 import { bodyDisplayName, signDisplayName } from './astro-names.messages.js';
-import { deriveExportFilename } from '../domain/export-filename.js';
 import { astrocartographyViewMessages } from './AstrocartographyView.messages.js';
-import { svgToPngBlob } from './chart-raster.js';
-import { downloadBlob, downloadText } from './download.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { PersonNotFound } from './PersonNotFound.js';
@@ -56,17 +51,6 @@ import { BackLink } from './BackLink.js';
 
 function lineTypeLabels(t: typeof astrocartographyViewMessages.en): Record<LineType, string> {
   return { MC: t.mc, IC: t.ic, AC: t.ac, DC: t.dc };
-}
-
-/** PNG export resolutions, matching `ChartView.tsx`'s `PNG_SIZES`. */
-function pngSizes(
-  t: typeof astrocartographyViewMessages.en,
-): readonly { readonly label: string; readonly size: number }[] {
-  return [
-    { label: t.pngSmall, size: 900 },
-    { label: t.pngMedium, size: 1800 },
-    { label: t.pngLarge, size: 3600 },
-  ];
 }
 
 type Load =
@@ -180,38 +164,6 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
     return renderAcgMapSvg(input, { labels: acgMapLabels(locale) });
   }, [data, relocationPlace, locale, coastline]);
 
-  const displayName = person?.displayName ?? '';
-
-  const downloadSvg = (): void => {
-    if (map === undefined) return;
-    downloadText(
-      deriveExportFilename(displayName, 'astrocartography', 'svg'),
-      standaloneSvg(map.markup),
-      'image/svg+xml',
-    );
-  };
-
-  const downloadPng = async (size: number): Promise<void> => {
-    if (map === undefined) return;
-    const pngHeight = Math.round((size * map.height) / map.width);
-    const blob = await svgToPngBlob(standaloneSvg(map.markup), size, pngHeight);
-    downloadBlob(deriveExportFilename(displayName, 'astrocartography', 'png'), blob);
-  };
-
-  // The map's own exports live beside the page title, in the header's Export menu, like every other page's.
-  useRegisterExports(
-    map === undefined
-      ? undefined
-      : [
-          { key: 'acg-svg', label: t.downloadSvg, run: downloadSvg },
-          ...pngSizes(t).map((option) => ({
-            key: `acg-png-${String(option.size)}`,
-            label: `${t.downloadPng} — ${option.label}`,
-            run: () => downloadPng(option.size),
-          })),
-        ],
-  );
-
   if (person === undefined) {
     return <PersonNotFound />;
   }
@@ -246,7 +198,9 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
       <PageHeader
         title={person.displayName ? t.heading(person.displayName) : t.astrocartographyFallback}
         titleTerm="astrocartography"
-      />
+      >
+        <a href={routeHref({ kind: 'export-builder', personId, section: 'astrocartography' })}>{t.exportPdf}</a>
+      </PageHeader>
       <p className="hint">
         <GlossaryText text={t.hint} />
       </p>

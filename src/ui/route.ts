@@ -32,7 +32,7 @@
  * @module ui/route
  * @purpose Pure hash-route parsing and construction for every screen in the app, on the one canonical scheme, plus one-time-token query extraction (set-password, setup).
  * @conventions Pure and separate from components so it is tested without a DOM; hash routing since the built app is static files with no server rewrite rule; ids are validated with domain/id.js's isPersonId rather than accepted as any string; an unknown, obsolete or malformed hash falls back to Home with no redirect or alias; `parseRoute(routeHref(r))` round-trips for every route.
- * @exports Route, PreferencesSection, PREFERENCES_SECTIONS, parseRoute, routeHref, chartHref, personHref, setPasswordToken, setupToken
+ * @exports Route, ExportBuilderSection, PreferencesSection, PREFERENCES_SECTIONS, parseRoute, routeHref, chartHref, personHref, setPasswordToken, setupToken
  */
 import { isPersonId } from '../domain/id.js';
 import { chartViewFromHash, isChartType, isChartView, type ChartType, type ChartViewKind } from './chart-sections.js';
@@ -106,8 +106,9 @@ export type Route =
   // The Documents workspace (#563): PDF export builder and saved charts. App-scoped, no person context.
   | { readonly kind: 'documents' }
   // The PDF export builder (#441): the primary person is picked on the page itself, not the URL,
-  // the same reasoning synastry's second person already uses.
-  | { readonly kind: 'export-builder' }
+  // the same reasoning synastry's second person already uses. A page's "Export PDF" link (#915) may carry the
+  // person (`?person=`) and the page's section (`section=`: a chart type or astrocartography) to open it on.
+  | { readonly kind: 'export-builder'; readonly personId?: string; readonly section?: ExportBuilderSection }
   // The Preferences workspace (#506/#510): durable account/device settings in one stable place,
   // per docs/ui/UI-UX_GUIDELINES.md's setting-scope model. `section` links straight to one of its headings.
   | { readonly kind: 'preferences'; readonly section?: PreferencesSection }
@@ -188,6 +189,25 @@ function personSubRoute(personId: string, rest: readonly string[], hash: string)
   return undefined;
 }
 
+/** The PDF creator sections a page's "Export PDF" link can select (#915): a chart type, or the Astrocartography map. */
+export type ExportBuilderSection = ChartType | 'astrocartography';
+
+function isExportBuilderSection(value: unknown): value is ExportBuilderSection {
+  return value === 'astrocartography' || isChartType(value);
+}
+
+/** The PDF creator's optional `?person=&section=` parameters; a malformed id or unknown section is dropped. */
+function exportBuilderRoute(hash: string): Route {
+  const query = new URLSearchParams(hash.split('?')[1] ?? '');
+  const personId = query.get('person');
+  const section = query.get('section');
+  return {
+    kind: 'export-builder',
+    ...(isPersonId(personId) ? { personId } : {}),
+    ...(isExportBuilderSection(section) ? { section } : {}),
+  };
+}
+
 export function parseRoute(hash: string): Route {
   // Matching is on the path part alone; a query string (e.g. #/set-password?token=...) is read
   // separately by the screen that needs it. Trailing slashes are tolerated because people
@@ -206,7 +226,7 @@ export function parseRoute(hash: string): Route {
       return { kind: 'shared' };
     // #441: the PDF export builder — needs the store (to list people) but not person-scoped.
     case '#/documents/pdf':
-      return { kind: 'export-builder' };
+      return exportBuilderRoute(hash);
     // #563: the Documents workspace — PDF builder and saved charts, app-scoped.
     case '#/documents':
       return { kind: 'documents' };
@@ -280,8 +300,13 @@ export function routeHref(route: Route): string {
       return '#/shared';
     case 'documents':
       return '#/documents';
-    case 'export-builder':
-      return '#/documents/pdf';
+    case 'export-builder': {
+      const query = [
+        ...(route.personId === undefined ? [] : [`person=${route.personId}`]),
+        ...(route.section === undefined ? [] : [`section=${route.section}`]),
+      ];
+      return query.length === 0 ? '#/documents/pdf' : `#/documents/pdf?${query.join('&')}`;
+    }
     case 'preferences':
       return route.section === undefined ? '#/preferences' : `#/preferences/${route.section}`;
     case 'admin':

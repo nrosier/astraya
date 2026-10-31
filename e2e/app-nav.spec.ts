@@ -9,7 +9,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { AxeBuilder } from '@axe-core/playwright';
-import { expect, test, type Download } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import type { BrowserContext, Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
@@ -216,12 +216,6 @@ test.describe('with the shared people (#799)', () => {
     await openSharedPerson(page, baseUrl, EINSTEIN);
     const header = page.getByRole('banner');
 
-    const read = async (download: Download): Promise<string> => {
-      const chunks: Buffer[] = [];
-      for await (const chunk of await download.createReadStream()) chunks.push(chunk as Buffer);
-      return Buffer.concat(chunks).toString('utf-8');
-    };
-
     // Full-data export and the people CSV moved to Preferences → Data & privacy (#510,
     // e2e/preferences.spec.ts covers them); the old Export dropdown is gone entirely — a single
     // item does not get a dropdown, so this is now a plain link, same shape as Overview/Birth record.
@@ -229,31 +223,16 @@ test.describe('with the shared people (#799)', () => {
     await expect(header.getByRole('button', { name: 'Export', exact: true })).toHaveCount(0);
     await expect(header.getByRole('link', { name: 'PDF', exact: true })).toBeVisible();
 
-    // On a chart, its own exports are in the page’s own header (#506/#509’s PageHeader), not the
-    // site header, and the wheel no longer carries buttons either.
+    // On a chart, its one export is a link to the PDF creator in the page's own header (#915); the SVG,
+    // PNG and print-PDF items are gone, and the wheel carries no buttons.
     await openNatalChart(page);
     await expect(page.locator('div.chart-wheel')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Download SVG', exact: true })).toHaveCount(0);
-    await expect(page.getByRole('button', { name: 'Export PDF…', exact: true })).toHaveCount(0);
     const main = page.getByRole('main');
-    await main.getByRole('button', { name: 'Export', exact: true }).click();
-    for (const name of [
-      'Image (SVG)',
-      'Image (PNG), Small (600px)',
-      'Image (PNG), Medium (1200px)',
-      'Image (PNG), Large (2400px)',
-      'Document (PDF, via print)…',
-    ]) {
-      await expect(main.getByRole('button', { name, exact: true })).toBeVisible();
-    }
+    await expect(main.getByRole('button', { name: 'Export', exact: true })).toHaveCount(0);
+    await expect(main.getByRole('link', { name: 'Export PDF', exact: true })).toBeVisible();
     const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
     expect(results.violations).toEqual([]);
-    const [svg] = await Promise.all([
-      page.waitForEvent('download'),
-      main.getByRole('button', { name: 'Image (SVG)', exact: true }).click(),
-    ]);
-    expect(svg.suggestedFilename()).toBe('albert-einstein-chart.svg');
-    expect(await read(svg)).toContain('<svg');
 
     // Leaving the chart takes its PageHeader, and so its exports, away entirely; the site header is
     // unaffected either way, since it never listed them.

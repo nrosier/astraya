@@ -312,6 +312,7 @@ export function ReturnView({
           <ChartDataView
             personId={personId}
             chartType={kind}
+            creatorSection={kind}
             load={load.kind === 'ready' ? { kind: 'ready', data: load.data } : load}
             displayName={displayName}
             showHouses

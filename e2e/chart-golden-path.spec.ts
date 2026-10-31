@@ -15,7 +15,7 @@ import type { BrowserContext, Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
 import { EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
-import { chooseExport, openNatalChart } from './support.ts';
+import { openNatalChart } from './support.ts';
 
 let dir: string;
 let app: FastifyInstance;
@@ -51,7 +51,7 @@ test.describe('with the shared people (#799)', () => {
     await context.close();
   });
 
-  test('entering birth data renders the chart wheel and the SVG export downloads', async () => {
+  test('entering birth data renders the chart wheel and its Export PDF link opens the PDF creator for this chart', async () => {
     test.setTimeout(60_000);
 
     await openSharedPerson(page, baseUrl, EINSTEIN);
@@ -59,14 +59,11 @@ test.describe('with the shared people (#799)', () => {
     await openNatalChart(page);
     await expect(page.locator('div.chart-wheel')).toBeVisible();
 
-    const [download] = await Promise.all([page.waitForEvent('download'), chooseExport(page, 'Image (SVG)')]);
-    expect(download.suggestedFilename()).toBe('albert-einstein-chart.svg');
-
-    const contents = await download.createReadStream();
-    const chunks: Buffer[] = [];
-    for await (const chunk of contents) chunks.push(chunk as Buffer);
-    const svg = Buffer.concat(chunks).toString('utf-8');
-    expect(svg).toContain('<svg');
+    // The page's one export is a link to the PDF creator with this person and chart type (#915); no file is built here.
+    const exportLink = page.getByRole('link', { name: 'Export PDF', exact: true });
+    await expect(exportLink).toHaveAttribute('href', /#\/documents\/pdf\?person=p-[^&]+&section=natal$/);
+    await exportLink.click();
+    await expect(page).toHaveURL(/#\/documents\/pdf\?person=p-[^&]+&section=natal$/);
   });
 
   test('clicking a glyph on the wheel isolates it and opens a focused-info panel (#400)', async () => {

@@ -62,7 +62,14 @@ afterEach(() => {
   setLocale('en');
 });
 
-async function mount(options: { showHouses?: boolean; locale?: 'en' | 'nl' } = {}): Promise<HTMLElement> {
+async function mount(
+  options: {
+    showHouses?: boolean;
+    locale?: 'en' | 'nl';
+    creatorSection?: 'natal';
+    personId?: string;
+  } = {},
+): Promise<HTMLElement> {
   setLocale(options.locale ?? 'en');
   const container = document.createElement('div');
   document.body.append(container);
@@ -76,6 +83,8 @@ async function mount(options: { showHouses?: boolean; locale?: 'en' | 'nl' } = {
           displayName="Test"
           showHouses={options.showHouses ?? true}
           buildViewHref={() => '#'}
+          personId={options.personId}
+          creatorSection={options.creatorSection}
         />
         <ExportProbe />
       </ExportRegistryProvider>,
@@ -251,6 +260,17 @@ describe('the chart views (#511)', () => {
       t.exportPng(t.pngLarge),
       t.exportPdf,
     ]);
+  });
+
+  it('sends a natal chart’s SVG, PNG and PDF to the PDF creator with the person and section (#915)', async () => {
+    const container = await mount({ creatorSection: 'natal', personId: 'p-test1' });
+    const t = chartViewMessages.en;
+    // SVG, PNG and print-PDF leave the header menu; the page's one export is the link to the creator.
+    expect(container.querySelectorAll('.export-probe button')).toHaveLength(0);
+    const link = Array.from(container.querySelectorAll<HTMLAnchorElement>('a')).find(
+      (candidate) => candidate.textContent === t.exportPdfCreator,
+    );
+    expect(link?.getAttribute('href')).toBe('#/documents/pdf?person=p-test1&section=natal');
   });
 
   it('offers none without a wheel (an unknown birth time has no chart image to export)', async () => {

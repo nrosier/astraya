@@ -109,7 +109,7 @@ import {
   type ChartType,
 } from './chart-sections.js';
 import { chartTypesMessages } from './ChartTypes.messages.js';
-import { chartHref, personHref } from './route.js';
+import { chartHref, personHref, routeHref, type ExportBuilderSection } from './route.js';
 import { ChartTypeSelector, changeChartView } from './ChartTypeSelector.js';
 import { ChartViewNav } from './ChartViewNav.js';
 import { parseSelectionKey } from '../interpretation/selection.js';
@@ -554,6 +554,7 @@ export function ChartDataView({
   initialTransitDate,
   chartType,
   personId,
+  creatorSection,
 }: {
   readonly load: Load;
   readonly displayName: string;
@@ -625,6 +626,12 @@ export function ChartDataView({
   readonly chartType?: ChartType | undefined;
   /** The person the chart belongs to (#768), for the inspector's AI reading; absent on screens with no person (shared, horary). */
   readonly personId?: string | undefined;
+  /**
+   * The PDF creator section for this chart type (#915): when set (with `personId`), the page links to the creator
+   * with that person and section instead of offering SVG, PNG and print-PDF exports in the header's Export menu.
+   * Left out for charts the creator has no section for (relocated, composite, horary, shared).
+   */
+  readonly creatorSection?: ExportBuilderSection | undefined;
 }): React.JSX.Element {
   const t = useMessages(chartViewMessages);
   const chartTypeT = useMessages(chartTypesMessages);
@@ -961,6 +968,11 @@ export function ChartDataView({
     };
   }, [printAll, displayName]);
 
+  const creatorLink =
+    creatorSection !== undefined && personId !== undefined
+      ? routeHref({ kind: 'export-builder', personId, section: creatorSection })
+      : undefined;
+
   const exportPdf = (): void => {
     setPrintAll(true);
   };
@@ -986,7 +998,7 @@ export function ChartDataView({
   // The chart's own exports live in the header's Export menu (#export), not under the wheel: registered while
   // this screen is mounted, so the menu offers them on every screen that shows a chart.
   useRegisterExports(
-    sheet === undefined
+    sheet === undefined || creatorLink !== undefined
       ? undefined
       : [
           { key: 'chart-svg', label: t.exportSvg, run: downloadSvg },
@@ -1151,8 +1163,9 @@ export function ChartDataView({
           onNavigate={setActiveTab}
           availableViews={load.kind === 'ready' ? tabs : []}
           actions={
-            overlaysPanel === null && settingsPanel === null ? undefined : (
+            overlaysPanel === null && settingsPanel === null && creatorLink === undefined ? undefined : (
               <>
+                {creatorLink === undefined ? null : <a href={creatorLink}>{t.exportPdfCreator}</a>}
                 {overlaysPanel}
                 {settingsPanel}
               </>
@@ -1596,6 +1609,7 @@ export function ChartView({
             <ChartDataView
               typeSelector={<ChartTypeSelector personId={personId} type="natal" view={view} />}
               personId={personId}
+              creatorSection="natal"
               load={load}
               displayName={person.displayName}
               showHouses={showHouses}
@@ -1659,6 +1673,7 @@ export function ChartView({
       <ChartDataView
         typeSelector={<ChartTypeSelector personId={personId} type="natal" view={view} />}
         personId={personId}
+        creatorSection="natal"
         load={load}
         displayName={person.displayName}
         showHouses={showHouses}

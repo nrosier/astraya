@@ -12,7 +12,6 @@ import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
 import { MARIC, EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
-import { chooseExport } from './support.ts';
 
 let dir: string;
 let app: FastifyInstance;
@@ -67,7 +66,7 @@ test.describe('with the shared people (#799)', () => {
     await context.close();
   });
 
-  test('a person with a known birth time gets an Astrocartography map and the SVG export downloads', async () => {
+  test('a person with a known birth time gets an Astrocartography map and its Export PDF link opens the creator', async () => {
     test.setTimeout(60_000);
 
     await openSharedPerson(page, baseUrl, EINSTEIN);
@@ -77,14 +76,11 @@ test.describe('with the shared people (#799)', () => {
     await expect(page.locator('div.acg-map')).toBeVisible();
     await expect(page.locator('div.acg-map svg')).toBeVisible();
 
-    const [download] = await Promise.all([page.waitForEvent('download'), chooseExport(page, 'Download SVG')]);
-    expect(download.suggestedFilename()).toBe('albert-einstein-astrocartography.svg');
-
-    const contents = await download.createReadStream();
-    const chunks: Buffer[] = [];
-    for await (const chunk of contents) chunks.push(chunk as Buffer);
-    const svg = Buffer.concat(chunks).toString('utf-8');
-    expect(svg).toContain('<svg');
+    const exportLink = page.getByRole('link', { name: 'Export PDF', exact: true });
+    await expect(exportLink).toHaveAttribute('href', /#\/documents\/pdf\?person=p-[^&]+&section=astrocartography$/);
+    await exportLink.click();
+    await expect(page).toHaveURL(/#\/documents\/pdf\?person=p-[^&]+&section=astrocartography$/);
+    await page.goBack();
 
     // What each line means, from the reviewed corpus text rather than the mechanical fallback (#427).
     await expect(page.getByRole('heading', { name: 'What the lines mean', level: 2 })).toBeVisible();

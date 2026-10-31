@@ -83,6 +83,7 @@ import { unreadableSettingsNoticeMessages } from './UnreadableSettingsNotice.mes
 import { useOrbContextSource, useOrbLibrary } from './orb-library-store.js';
 import { useStoreState } from './store-context.js';
 import { readLastPersonId } from './last-person.js';
+import type { ExportBuilderSection } from './route.js';
 
 type BuildStatus =
   | { readonly kind: 'idle' }
@@ -99,6 +100,15 @@ function setChart(selection: Draft, options: PdfChartSectionOptions | undefined,
 
 function chartOf(selection: Draft, type: ChartType): PdfChartSectionOptions | undefined {
   return selection.charts.find((c) => c.type === type);
+}
+
+/** The section a page's "Export PDF" link asked for (#915) starts selected, on top of the empty selection. */
+function withRequestedSection(selection: Draft, section: ExportBuilderSection | undefined): Draft {
+  if (section === undefined) return selection;
+  if (section === 'astrocartography')
+    return { ...selection, astrocartography: defaultAstrocartographySectionOptions() };
+  if (!(PDF_CHART_TYPES as readonly string[]).includes(section)) return selection;
+  return setChart(selection, defaultChartSectionOptions(section), section);
 }
 
 /** A partner needs a complete, known-time birth record — same requirement SynastryView/CompositeView gate their own picker on. */
@@ -134,7 +144,15 @@ function summaryLabels(selection: PdfSelection, t: (typeof pdfExportMessages)['e
  * the document sections on the left, the export summary on the right. One column on a phone, where Build PDF moves to
  * a bar pinned to the bottom of the screen. Reached at `#/documents` and `#/documents/pdf`.
  */
-export function PdfExportBuilder(): React.JSX.Element {
+export function PdfExportBuilder({
+  personId: requestedPersonId,
+  section,
+}: {
+  /** The person a page's "Export PDF" link asked for (#915); used when that person exists, else the usual starting point. */
+  readonly personId?: string | undefined;
+  /** The section that link asked for: its chart type, or the Astrocartography map, starts selected. */
+  readonly section?: ExportBuilderSection | undefined;
+} = {}): React.JSX.Element {
   const t = useMessages(pdfExportMessages);
   const ct = useMessages(chartViewMessages);
   const [locale] = useLocale();
@@ -147,15 +165,21 @@ export function PdfExportBuilder(): React.JSX.Element {
 
   // Start on the person whose pages were open (#709), as the header's tool links do (#453); else the first person.
   const [personId, setPersonId] = useState<string>(() => {
+    if (requestedPersonId !== undefined && state.people.has(requestedPersonId)) return requestedPersonId;
     const last = readLastPersonId();
     return last !== undefined && state.people.has(last) ? last : (people[0]?.id ?? '');
   });
   // The Sabian notes start from the device setting, so the PDF matches the Report on screen until changed here (#660).
   const [showDegreeSymbol] = useShowDegreeSymbol();
-  const [selection, setSelection] = useState<Draft>(() => ({
-    ...EMPTY_SELECTION,
-    interpretation: { ...EMPTY_SELECTION.interpretation, sabianSymbols: showDegreeSymbol },
-  }));
+  const [selection, setSelection] = useState<Draft>(() =>
+    withRequestedSection(
+      {
+        ...EMPTY_SELECTION,
+        interpretation: { ...EMPTY_SELECTION.interpretation, sabianSymbols: showDegreeSymbol },
+      },
+      section,
+    ),
+  );
   const [status, setStatus] = useState<BuildStatus>({ kind: 'idle' });
   const id = useId();
 

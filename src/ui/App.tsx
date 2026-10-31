@@ -440,7 +440,11 @@ function renderScreen(parsed: Route, seVersion: string | undefined): React.JSX.E
   if (parsed.kind === 'export-builder') {
     return (
       <Stored>
-        <PdfExportBuilder />
+        <PdfExportBuilder
+          key={`${parsed.personId ?? ''}/${parsed.section ?? ''}`}
+          personId={parsed.personId}
+          section={parsed.section}
+        />
       </Stored>
     );
   }

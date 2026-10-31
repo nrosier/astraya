@@ -3,7 +3,7 @@
  * rings turn the natal wheel into a labelled triwheel, then each can be removed without touching
  * the remaining ring.
  */
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
@@ -11,7 +11,7 @@ import type { BrowserContext, Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
 import { EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
-import { chooseExport, openNatalChart } from './support.ts';
+import { openNatalChart } from './support.ts';
 
 let dir: string;
 let app: FastifyInstance;
@@ -97,12 +97,6 @@ test('a natal, transit, and progressed triwheel is independently configurable (#
   await expect(page.getByRole('region', { name: 'Ring calculation basis' })).toContainText('Transit');
   await expect(page.getByRole('region', { name: 'Ring calculation basis' })).toContainText('Secondary progressed ring');
   await expect(page.locator('[data-ring-a="1"][data-ring-b="0"]')).not.toHaveCount(0);
-
-  const downloadPromise = page.waitForEvent('download');
-  await chooseExport(page, 'Image (SVG)');
-  const download = await downloadPromise;
-  const downloadPath = await download.path();
-  expect(readFileSync(downloadPath, 'utf8')).toContain('data-ring-legend="2"');
 
   await trigger.click();
   await expect(dialog).toBeVisible();

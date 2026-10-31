@@ -11,7 +11,7 @@ import type { BrowserContext, Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
 import { EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
-import { chooseExport, gotoAndSettle, openNatalChart, applySettings, closeSettings, openSettings } from './support.ts';
+import { gotoAndSettle, openNatalChart, applySettings, closeSettings, openSettings } from './support.ts';
 
 let dir: string;
 let app: FastifyInstance;
@@ -87,17 +87,12 @@ test.describe('with the shared people (#799)', () => {
     await page.getByRole('link', { name: 'Placements', exact: true }).click();
     await expect(page.locator('#chart-view-placements td', { hasText: '☉' }).first()).toBeVisible();
 
-    // The exported SVG carries the choice and the style that makes it readable outside the app.
+    // The wheel shows the text choice; the PDF creator (#915) takes it from the same settings when it builds the chart.
     await page.getByRole('link', { name: 'Wheel', exact: true }).click();
     await openSettings(page, 'Display & glyphs');
     await symbols.selectOption('text');
     await applySettings(page);
-    const [download] = await Promise.all([page.waitForEvent('download'), chooseExport(page, 'Image (SVG)')]);
-    const chunks: Buffer[] = [];
-    for await (const chunk of await download.createReadStream()) chunks.push(chunk as Buffer);
-    const svg = Buffer.concat(chunks).toString('utf-8');
-    expect(svg).toContain('chart-symbol-text-text');
-    expect(svg).toContain('svg text.chart-symbol-text-text { font-size: 44px');
+    await expect(page.locator('.chart-wheel text.chart-symbol-text-text').first()).toBeAttached();
 
     // Kept on this device across a reload; Drawn restores the paths.
     await page.reload();
