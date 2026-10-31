@@ -63,6 +63,8 @@ export function DraconicView({
   const { provider } = useEphemerisProvider();
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
   const customPoints = useStableBy(person?.customPoints, (points) => JSON.stringify(points ?? []));
+  // The person's chosen fixed stars (#860), as the natal chart reads them.
+  const fixedStars = useStableBy(person?.fixedStars, (stars) => JSON.stringify(stars ?? []));
   // The aspects use the device's orbs (#590), as the natal chart does.
   const {
     settings: extendedSettings,
@@ -83,6 +85,7 @@ export function DraconicView({
         const data: DraconicData = await computeDraconic(moment, provider, {
           ...orbs,
           ...(customPoints === undefined ? {} : { customPoints }),
+          ...(fixedStars === undefined ? {} : { fixedStars }),
         });
         if (!effect.cancelled) setLoad({ kind: 'ready', data: data.draconic });
       } catch (error) {
@@ -94,7 +97,7 @@ export function DraconicView({
     return () => {
       effect.cancelled = true;
     };
-  }, [settingsUnreadable, personMoment, provider, customPoints, orbs]);
+  }, [settingsUnreadable, personMoment, provider, customPoints, fixedStars, orbs]);
 
   if (person === undefined) {
     return <PersonNotFound />;
@@ -147,7 +150,10 @@ export function DraconicView({
                 provider,
                 baseLabel: t.headingFallback,
                 baseSource: 'draconic',
-                ...(person.customPoints === undefined ? {} : { options: { customPoints: person.customPoints } }),
+                options: {
+                  ...(customPoints === undefined ? {} : { customPoints }),
+                  ...(fixedStars === undefined ? {} : { fixedStars }),
+                },
               }
         }
       />

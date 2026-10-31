@@ -179,6 +179,8 @@ export function RelocatedChartView({
   const { provider } = useEphemerisProvider();
   const [load, setLoad] = useState<Load>({ kind: 'idle' });
   const customPoints = useStableBy(person?.customPoints, (points) => JSON.stringify(points ?? []));
+  // The person's chosen fixed stars (#860), as the natal chart reads them.
+  const fixedStars = useStableBy(person?.fixedStars, (stars) => JSON.stringify(stars ?? []));
   // The aspects use the device's orbs (#590), as the natal chart does.
   const {
     settings: extendedSettings,
@@ -203,6 +205,7 @@ export function RelocatedChartView({
         const data = await computeRelocatedChart(moment, place, provider, {
           ...orbs,
           ...(customPoints === undefined ? {} : { customPoints }),
+          ...(fixedStars === undefined ? {} : { fixedStars }),
         });
         if (!effect.cancelled) setLoad({ kind: 'ready', data });
       } catch (error) {
@@ -214,7 +217,7 @@ export function RelocatedChartView({
     return () => {
       effect.cancelled = true;
     };
-  }, [settingsUnreadable, personMoment, provider, relocationPlace, customPoints, orbs]);
+  }, [settingsUnreadable, personMoment, provider, relocationPlace, customPoints, fixedStars, orbs]);
 
   if (person === undefined) {
     return <PersonNotFound />;
@@ -340,7 +343,10 @@ export function RelocatedChartView({
                     moment: person.moment,
                     provider,
                     baseLabel: displayName,
-                    ...(person.customPoints === undefined ? {} : { options: { customPoints: person.customPoints } }),
+                    options: {
+                      ...(customPoints === undefined ? {} : { customPoints }),
+                      ...(fixedStars === undefined ? {} : { fixedStars }),
+                    },
                   }
             }
           />

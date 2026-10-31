@@ -15,9 +15,9 @@
  */
 /**
  * @module domain/calculation-snapshot
- * @purpose Defines a versioned, fully-validated CalculationSnapshot (settings, rulership and custom points) and the pure functions that build/parse/serialize one.
+ * @purpose Defines a versioned, fully-validated CalculationSnapshot (settings, rulership, custom points and chosen fixed stars) and the pure functions that build/parse/serialize one.
  * @conventions `version` is bumped only when the *shape* a snapshot must satisfy changes incompatibly; `parseCalculationSnapshot` never throws — an invalid or missing field is filled from the documented app defaults, the same defaults a never-customized chart already shows (for a device's own saved default); `decodeCalculationSnapshot` is the strict, version-dispatched gate for payloads from outside the device (#717) and refuses rather than repairs; strict validation checks registered house systems, aspect keys, and bounds schemes against canonical registries.
- * @exports CURRENT_SNAPSHOT_VERSION, decodeStrictExtendedSettings, CalculationSnapshot, buildCalculationSnapshot, snapshotCalculationOptions, calculationSnapshotIdentity, parseCalculationSnapshot, decodeCalculationSnapshot, SnapshotDecodeError, SNAPSHOT_ORB_SCALE_RANGE, calculationSnapshotToJson
+ * @exports CURRENT_SNAPSHOT_VERSION, MAX_SNAPSHOT_FIXED_STARS, decodeStrictExtendedSettings, CalculationSnapshot, buildCalculationSnapshot, snapshotCalculationOptions, calculationSnapshotIdentity, parseCalculationSnapshot, decodeCalculationSnapshot, SnapshotDecodeError, SNAPSHOT_ORB_SCALE_RANGE, calculationSnapshotToJson
  */
 import {
   DEFAULT_EXTENDED_SETTINGS,
@@ -40,7 +40,8 @@ import { validateOrbRules } from '../astrology/orb-profiles.js';
 import { isStationWindowK } from '../astrology/planetary-condition.js';
 import type { Zodiac } from '../ephemeris/types.js';
 import type { JsonValue } from '../store/ops.js';
-import type { CustomPointDefinition } from './person.js';
+import { STAR_SEARCH_LIMIT } from '../ephemeris/star-catalogue.js';
+import { readFixedStars, type ChosenFixedStar, type CustomPointDefinition } from './person.js';
 
 /**
  * 2 (#582): adds `customPoints`. 3 (#585): the eleven scattered point-visibility/`aspectsTo*`
@@ -53,8 +54,16 @@ import type { CustomPointDefinition } from './person.js';
  * all) still parses — it simply had no way to carry formula points, so it reads back with none.
  * #724's optional `stationWindow` and `motionScore` are not a bump either: absent means off, so every existing snapshot
  * reads back unchanged and one with both off serializes byte for byte as before.
+ * 4 (#860): adds `fixedStars`, the person's chosen catalogue stars, so a shared or exported chart checks the same
+ * stars as the sender's. A v1-v3 snapshot has none and reads back with none (the seven-star preset).
  */
-export const CURRENT_SNAPSHOT_VERSION = 3;
+export const CURRENT_SNAPSHOT_VERSION = 4;
+
+/**
+ * The most chosen fixed stars a snapshot (and so a share link) carries (#860). The owner approved a cap without
+ * naming a number; the only star limit in the code is the catalogue search's `STAR_SEARCH_LIMIT`, reused here.
+ */
+export const MAX_SNAPSHOT_FIXED_STARS = STAR_SEARCH_LIMIT;
 
 export interface CalculationSnapshot {
   readonly version: typeof CURRENT_SNAPSHOT_VERSION;
@@ -65,6 +74,11 @@ export interface CalculationSnapshot {
    * exported chart that drops them silently shows different objects from the sender's.
    */
   readonly customPoints: readonly CustomPointDefinition[];
+  /**
+   * The person's chosen fixed stars (#860); empty means the seven-star preset. Part of what produced the chart,
+   * and capped at {@link MAX_SNAPSHOT_FIXED_STARS}.
+   */
+  readonly fixedStars: readonly ChosenFixedStar[];
 }
 
 /** The orb-scale slider's own bounds (`ExtendedSettingsPanel`), and `orb-library`'s: a percentage outside it was never producible. */
@@ -116,8 +130,9 @@ export function buildCalculationSnapshot(
   settings: ExtendedSettings,
   rulership: RulershipChoice,
   customPoints: readonly CustomPointDefinition[] = [],
+  fixedStars: readonly ChosenFixedStar[] = [],
 ): CalculationSnapshot {
-  return { version: CURRENT_SNAPSHOT_VERSION, settings, rulership, customPoints };
+  return { version: CURRENT_SNAPSHOT_VERSION, settings, rulership, customPoints, fixedStars };
 }
 
 /**
@@ -130,6 +145,7 @@ export function snapshotCalculationOptions(snapshot: CalculationSnapshot): Chart
     ...toChartCalculationOptions(snapshot.settings),
     rulership: snapshot.rulership,
     ...(snapshot.customPoints.length === 0 ? {} : { customPoints: snapshot.customPoints }),
+    ...(snapshot.fixedStars.length === 0 ? {} : { fixedStars: snapshot.fixedStars }),
   };
 }
 
@@ -184,6 +200,22 @@ function parseCustomPoints(value: unknown): readonly CustomPointDefinition[] {
     if (typeof id !== 'string' || typeof name !== 'string' || typeof formula !== 'string') return [];
     return [{ id, name, formula, ...(typeof enabled === 'boolean' ? { enabled } : {}) }];
   });
+}
+
+/**
+ * The chosen stars, read atomically like the person's own register (`readFixedStars`): a malformed entry drops the
+ * whole list, so a partial list never draws a chart nobody chose. Absent (every v1-v3 snapshot) is none.
+ */
+function parseFixedStars(value: unknown): readonly ChosenFixedStar[] {
+  return readFixedStars(value) ?? [];
+}
+
+/** The refusal for a star list over the cap (#860); the shared-chart screen words its own localized message from the code. */
+function fixedStarCapError(count: number): SnapshotDecodeError {
+  return new SnapshotDecodeError(
+    'too-many-fixed-stars',
+    `This chart names ${String(count)} chosen fixed stars; a shared chart carries at most ${String(MAX_SNAPSHOT_FIXED_STARS)}. Remove some stars and share again.`,
+  );
 }
 
 function parseObjectPolicy(value: unknown, fallback: ObjectPolicy): ObjectPolicy {
@@ -338,14 +370,15 @@ export function parseCalculationSnapshot(value: unknown): CalculationSnapshot {
     parseExtendedSettings(value.settings),
     rulership,
     parseCustomPoints(value.customPoints),
+    parseFixedStars(value.fixedStars),
   );
 }
 
 /** Why a payload from outside the device was refused instead of repaired (#717). */
 export class SnapshotDecodeError extends Error {
-  readonly code: 'unsupported-version' | 'invalid-field';
+  readonly code: 'unsupported-version' | 'invalid-field' | 'too-many-fixed-stars';
 
-  constructor(code: 'unsupported-version' | 'invalid-field', message: string) {
+  constructor(code: 'unsupported-version' | 'invalid-field' | 'too-many-fixed-stars', message: string) {
     super(message);
     this.name = 'SnapshotDecodeError';
     this.code = code;
@@ -439,7 +472,7 @@ export function decodeStrictExtendedSettings(value: unknown, requireAll: boolean
  *   system, ayanamsa, orb scale, bounds scheme, Lilith/node variant, minor aspects, orb rules)
  *   is an `'invalid-field'` error naming it, never a silent swap for the app default.
  *
- * Versions 1 and 2, and a payload with no `version` at all (a pre-#541 link), migrate
+ * Versions 1 to 3, and a payload with no `version` at all (a pre-#541 link), migrate
  * deterministically: they simply lack the fields later versions added, which read as their
  * documented defaults — v1 had no way to carry custom points, and a pre-#585 bag still carries
  * the scattered visibility fields `parseCalculationSnapshot` folds into `objectPolicies`.
@@ -465,6 +498,16 @@ export function decodeCalculationSnapshot(value: unknown): CalculationSnapshot {
   if (value.rulership !== undefined && !isOneOf(value.rulership, RULERSHIP_CHOICES)) {
     throw new SnapshotDecodeError('invalid-field', 'The snapshot names an unknown rulership choice (rulership).');
   }
+  if (value.fixedStars !== undefined) {
+    const stars = readFixedStars(value.fixedStars);
+    if (stars === undefined) {
+      throw new SnapshotDecodeError(
+        'invalid-field',
+        'The snapshot carries chosen fixed stars this app cannot read (fixedStars).',
+      );
+    }
+    if (stars.length > MAX_SNAPSHOT_FIXED_STARS) throw fixedStarCapError(stars.length);
+  }
   if (isRecord(value.settings)) {
     const problems = invalidSettingFields(value.settings);
     if (problems.length > 0) {
@@ -485,5 +528,6 @@ export function decodeCalculationSnapshot(value: unknown): CalculationSnapshot {
  * round-trip is lossless) rather than a claim the type system alone can't verify.
  */
 export function calculationSnapshotToJson(snapshot: CalculationSnapshot): Record<string, JsonValue> {
+  if (snapshot.fixedStars.length > MAX_SNAPSHOT_FIXED_STARS) throw fixedStarCapError(snapshot.fixedStars.length);
   return JSON.parse(JSON.stringify(snapshot)) as Record<string, JsonValue>;
 }

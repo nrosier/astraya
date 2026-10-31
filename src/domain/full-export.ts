@@ -79,7 +79,7 @@ import {
   positionRows,
   type PointVisibilityOptions,
 } from './chart-tables.js';
-import type { CustomPointDefinition, Person, RelocationPlace } from './person.js';
+import type { ChosenFixedStar, CustomPointDefinition, Person, RelocationPlace } from './person.js';
 import type { EphemerisProvider } from '../ephemeris/types.js';
 
 export const FULL_EXPORT_FORMAT = 'astraya-export';
@@ -140,6 +140,8 @@ export interface ExportedPerson {
   readonly relocationPlaces?: readonly RelocationPlace[];
   /** Custom formula points (#566); absent if none are saved. Needed for a restore to be complete — see #587. */
   readonly customPoints?: readonly CustomPointDefinition[];
+  /** The fixed stars this person chose from the catalogue (#860); absent if none are saved (the seven-star preset). */
+  readonly fixedStars?: readonly ChosenFixedStar[];
   /** The chart settings this person's charts were computed with (#806, v3); absent in v2 files and for a person whose saved settings were unreadable. */
   readonly calculationSettings?: ExtendedSettings;
   /** The planetary rulers this person's charts were computed with (#806, v4); absent in v2 and v3 files and for a person whose saved settings were unreadable. */
@@ -310,6 +312,7 @@ export async function buildFullExport(params: {
       ...(person.moment === undefined ? {} : { birth: person.moment }),
       ...(person.relocationPlaces === undefined ? {} : { relocationPlaces: person.relocationPlaces }),
       ...(person.customPoints === undefined ? {} : { customPoints: person.customPoints }),
+      ...(person.fixedStars === undefined ? {} : { fixedStars: person.fixedStars }),
       // A person with no register of their own is charted from the device default; writing the resolved
       // settings makes the export self-contained, so a restore elsewhere cannot change their chart (#806).
       ...(person.calculationSettingsUnreadable === true
@@ -337,13 +340,14 @@ export async function buildFullExport(params: {
       const data = await computeChartData(person.moment, params.provider, {
         ...calcOptions,
         ...(person.customPoints === undefined ? {} : { customPoints: person.customPoints }),
+        ...(person.fixedStars === undefined ? {} : { fixedStars: person.fixedStars }),
       });
       const withHouses = person.timeAccuracy !== 'unknown' && housesAreDefined(data.houses);
       const harmonicCharts = withHouses
         ? await harmonicExports(person.moment, params.provider, calcOptions, rulership, visibility, person.customPoints)
         : undefined;
       const calculation = await natalArtifact(
-        buildCalculationSnapshot(settings, rulership, person.customPoints ?? []),
+        buildCalculationSnapshot(settings, rulership, person.customPoints ?? [], person.fixedStars ?? []),
         person.moment,
         data,
         params,

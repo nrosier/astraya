@@ -225,10 +225,15 @@ type Load =
   | { readonly kind: 'error'; readonly message: string };
 
 /** The fingerprint printed with a chart: the artifact's when there is one, else the snapshot's own tag. */
-function provenanceIdentity(load: Load, settings: ExtendedSettings, rulership: RulershipChoice): string {
+function provenanceIdentity(
+  load: Load,
+  settings: ExtendedSettings,
+  rulership: RulershipChoice,
+  fixedStars: readonly ChosenFixedStar[] | undefined,
+): string {
   return load.kind === 'ready' && load.artifact !== undefined
     ? calculationArtifactIdentity(load.artifact)
-    : calculationSnapshotIdentity(buildCalculationSnapshot(settings, rulership));
+    : calculationSnapshotIdentity(buildCalculationSnapshot(settings, rulership, [], fixedStars ?? []));
 }
 
 export interface ChartOverlayContext {
@@ -681,7 +686,7 @@ export function ChartDataView({
     void (async () => {
       try {
         const rings: WheelRingInput[] = [chartWheelRing(load.data, overlayContext.baseLabel, pointVisibility)];
-        const snapshotIdentity = provenanceIdentity(load, extendedSettings, rulership);
+        const snapshotIdentity = provenanceIdentity(load, extendedSettings, rulership, fixedStarsSaved);
         const snapshot = overlayT.calculationSnapshot(snapshotIdentity);
         const ringData: OverlayRingData[] = [
           { label: overlayContext.baseLabel, data: load.data, provenance: snapshot },
@@ -840,7 +845,7 @@ export function ChartDataView({
     return () => {
       effect.cancelled = true;
     };
-  }, [load, overlayContext, overlaySettings, overlayT, pointVisibility, extendedSettings, rulership]);
+  }, [load, overlayContext, overlaySettings, overlayT, pointVisibility, extendedSettings, rulership, fixedStarsSaved]);
 
   // The export sheet (SVG/PNG/PDF) and the on-screen dial are two compositions of one computed chart (#511):
   // the dial is the sheet's own wheel, drawn alone; everything else the sheet holds is shown as tables.
@@ -1126,7 +1131,7 @@ export function ChartDataView({
         houseSystem={houseSystemLabel(extendedSettings.houseSystem)}
         zodiac={zodiacLabel(extendedSettings.zodiac)}
         rulership={rulershipLabel(rulership)}
-        snapshotIdentity={provenanceIdentity(load, extendedSettings, rulership)}
+        snapshotIdentity={provenanceIdentity(load, extendedSettings, rulership, fixedStarsSaved)}
         generatedAt={formatTimestamp(new Date())}
       />
       {/* Directly under the title row (#801): the chart type, the chart's own views once there is a chart to view, and the
@@ -1483,7 +1488,7 @@ export function ChartView({
           ...(customPoints === undefined ? {} : { customPoints }),
           ...(fixedStars === undefined ? {} : { fixedStars }),
         });
-        const snapshot = buildCalculationSnapshot(settings, rulership, customPoints ?? []);
+        const snapshot = buildCalculationSnapshot(settings, rulership, customPoints ?? [], fixedStars ?? []);
         const artifact = await buildChartArtifact(snapshot, moment, data, provider);
         if (!effect.cancelled) setLoad({ kind: 'ready', data, artifact });
       } catch (error) {
