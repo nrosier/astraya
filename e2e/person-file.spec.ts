@@ -180,6 +180,23 @@ test.describe('with the shared people (#799)', () => {
     expect(notes.y).toBeLessThan(files.y);
     // The bottom row shares one bottom edge (#895): the left column's last card and the right column's last card end together.
     expect(Math.abs(location.y + location.height - (danger.y + danger.height))).toBeLessThanOrEqual(1);
+    // The 90% rule (#895, H3): with the slack removed, the shorter column's content is at least 90% of the taller one's,
+    // and the NOTES card keeps its natural height (it is never the card that absorbs the slack).
+    await page.addStyleTag({ content: '.birth-record-column > :last-child { flex-grow: 0 !important; }' });
+    const naturalHeight = async (column: number): Promise<number> => {
+      const columnBox = await page.locator('.birth-record-column').nth(column).boundingBox();
+      const lastBox = await page
+        .locator('.birth-record-column')
+        .nth(column)
+        .locator(':scope > :last-child')
+        .boundingBox();
+      if (columnBox === null || lastBox === null) throw new Error('birth record column not laid out');
+      return lastBox.y + lastBox.height - columnBox.y;
+    };
+    const leftNatural = await naturalHeight(0);
+    const rightNatural = await naturalHeight(1);
+    expect(Math.min(leftNatural, rightNatural) / Math.max(leftNatural, rightNatural)).toBeGreaterThanOrEqual(0.9);
+    expect(notes.height).toBeLessThan(location.height);
     expect(replace.y).toBeGreaterThan(notes.y);
     expect(danger.y).toBeGreaterThan(replace.y);
     // Date, how the time is known, and the time share one row.
