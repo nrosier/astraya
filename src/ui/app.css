@@ -890,11 +890,18 @@ footer {
  */
 .horary-form {
   display: grid;
-  /* Two equal columns when there is room for them, so the top row and the wide parameters card share one width at every size (#969). */
-  grid-template-columns: repeat(2, minmax(min(100%, 25rem), 1fr));
+  /* Two equal columns when there is room for them, so the top row and the wide parameters card share one width (#969). One column on phones, as before. */
+  grid-template-columns: 1fr;
   gap: var(--space-4);
   /* Stretch so side-by-side cards share one bottom edge (#895); no fixed height is set. */
   align-items: stretch;
+}
+
+/* Two equal tracks only when each can hold the 25rem floor (the Dutch house-system label), so phones stay one column. */
+@media (min-width: 52rem) {
+  .horary-form {
+    grid-template-columns: repeat(2, minmax(25rem, 1fr));
+  }
 }
 
 .horary-card {
