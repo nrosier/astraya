@@ -216,3 +216,53 @@ describe('the person sections on a route with no person (#914)', () => {
     expect(navLinks()).toEqual(onPerson);
   });
 });
+
+describe('the full sidebar on app-scoped screens (#965)', () => {
+  afterEach(() => {
+    fakeStore.current = undefined;
+    window.localStorage.clear();
+  });
+
+  const personId = 'p-abcdefghijklmnop';
+  const openStoreWithLastPerson = (): void => {
+    fakeStore.current = { state: { people: new Map([[personId, { displayName: 'Test' }]]) } };
+    writeLastPersonId(personId);
+  };
+
+  it('lists the same sections on Admin and Preferences as on a person page', async () => {
+    openStoreWithLastPerson();
+    const render = await mount(parseRoute(`#/people/${personId}/overview`));
+    const onPerson = navLinks();
+    expect(onPerson).toContain('Overview');
+    for (const hash of ['#/admin', '#/preferences']) {
+      await render(parseRoute(hash));
+      expect(navLinks(), hash).toEqual(onPerson);
+    }
+  });
+
+  it.each(['#/admin', '#/admin/usage', '#/preferences', '#/documents', '#/about', '#/changelog'])(
+    'keeps the person sections on %s',
+    async (hash) => {
+      openStoreWithLastPerson();
+      await mount(parseRoute(hash));
+      expect(linkNamed('Overview')?.getAttribute('href')).toBe(`#/people/${personId}/overview`);
+      expect(linkNamed('Tools')).toBeDefined();
+      expect(linkNamed('PDF')).toBeDefined();
+    },
+  );
+
+  it('keeps the person sections on the PDF creator', async () => {
+    openStoreWithLastPerson();
+    await mount({ kind: 'export-builder' });
+    expect(linkNamed('Overview')).toBeDefined();
+  });
+
+  it('shows no person sections on the person picker, shared, or sign-in screens', async () => {
+    openStoreWithLastPerson();
+    const render = await mount(parseRoute('#/people'));
+    for (const hash of ['#/people', '#/shared', '#/set-password', '#/setup']) {
+      await render(parseRoute(hash));
+      expect(linkNamed('Overview'), hash).toBeUndefined();
+    }
+  });
+});
