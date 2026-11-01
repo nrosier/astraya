@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { EXTENDED_ACG_BODY_IDS, TRADITIONAL_ACG_BODY_IDS } from '../src/domain/astrocartography.js';
 import {
   applyPdfPreset,
+  chartSectionForView,
   defaultAstrocartographySectionOptions,
   defaultChartSectionOptions,
   defaultCompositeSectionOptions,
@@ -397,5 +398,27 @@ describe('view tables (#915)', () => {
     for (const key of PDF_PRESET_KEYS) {
       expect(matchPdfPreset({ personId: 'p-ada', ...PDF_PRESETS[key] })).toBe(key);
     }
+  });
+});
+
+describe('page view to chart section (#915)', () => {
+  it('takes the wheel on only for the Wheel view, the one view that shows the wheel', () => {
+    expect(chartSectionForView('natal', 'wheel').wheel).toBe(true);
+    for (const view of ['aspects', 'matrix', 'elements', 'placements', 'patterns'] as const) {
+      expect(chartSectionForView('natal', view).wheel).toBe(false);
+    }
+  });
+
+  it('takes exactly the tables the view shows', () => {
+    expect(chartSectionForView('natal', 'aspects').tables).toEqual(['aspects']);
+    expect(chartSectionForView('natal', 'matrix').tables).toEqual(['matrix']);
+    expect(chartSectionForView('natal', 'elements').tables).toEqual(['elements']);
+    expect(chartSectionForView('natal', 'placements').tables).toEqual([
+      'positions',
+      'houses',
+      'derived',
+      'fixed-stars',
+    ]);
+    expect(chartSectionForView('natal', 'patterns').tables).toEqual(['dignities', 'shape']);
   });
 });
