@@ -240,6 +240,27 @@ describe('the full sidebar on app-scoped screens (#965)', () => {
     }
   });
 
+  it('lists the same sidebar links, text and href, on a chart route, Admin and Preferences as on a person page (#965)', async () => {
+    openStoreWithLastPerson();
+    const render = await mount(parseRoute(`#/people/${personId}/overview`));
+    const baseline = Array.from(box().querySelectorAll('nav#app-nav a')).map((a) => [
+      a.textContent,
+      a.getAttribute('href'),
+    ]);
+    const linkPairs = (): unknown[] =>
+      Array.from(box().querySelectorAll('nav#app-nav a')).map((a) => [a.textContent, a.getAttribute('href')]);
+    expect(baseline).toContainEqual(['Overview', `#/people/${personId}/overview`]);
+    for (const hash of [`#/people/${personId}/charts/natal/wheel`, '#/admin', '#/preferences']) {
+      await render(parseRoute(hash));
+      expect(linkPairs(), hash).toEqual(baseline);
+      // Only the active page is marked current, so no person tab is left highlighted elsewhere.
+      const current = Array.from(box().querySelectorAll('nav#app-nav a[aria-current="page"]')).map((a) =>
+        a.getAttribute('href'),
+      );
+      expect(current.length, hash).toBeLessThanOrEqual(1);
+    }
+  });
+
   it.each(['#/admin', '#/admin/usage', '#/preferences', '#/documents', '#/about', '#/changelog'])(
     'keeps the person sections on %s',
     async (hash) => {
