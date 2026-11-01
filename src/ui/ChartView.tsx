@@ -39,6 +39,7 @@ import type { Zodiac } from '../ephemeris/types.js';
 import { ASPECTS, aspectHarmonicFamily, DEFAULT_ORB_CONFIG, type Aspect } from '../astrology/aspects.js';
 import { Select } from './primitives/Select.js';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   aspectRows,
   chartSheetInput,
@@ -107,6 +108,8 @@ import { chartTypesMessages } from './ChartTypes.messages.js';
 import { chartHref, personHref, routeHref, type ExportBuilderSection } from './route.js';
 import { ChartTypeSelector, changeChartView } from './ChartTypeSelector.js';
 import { ChartViewNav } from './ChartViewNav.js';
+import { usePageActionsTarget } from './page-actions-slot.js';
+import { useNarrowViewport } from './use-narrow-viewport.js';
 import { parseSelectionKey } from '../interpretation/selection.js';
 import { buildFocusObjectContext } from '../interpretation/focus-context.js';
 import { AspectMatrixGrid } from './AspectMatrixGrid.js';
@@ -409,10 +412,20 @@ export function pdfCreatorHref(personId: string, section: ExportBuilderSection, 
   return routeHref({ kind: 'export-builder', personId, section, view });
 }
 
-/** The one export a chart page offers, drawn inside its `PageHeader` (#915); the file exports live in the PDF creator. */
+/**
+ * The one export a chart page offers, drawn inside its `PageHeader` (#915, #976): a primary accent link to the PDF
+ * creator, with a trailing arrow so it reads as navigation to another page, not a download. The file exports live in the creator.
+ */
 export function PdfCreatorLink({ href }: { readonly href: string }): React.JSX.Element {
   const t = useMessages(chartViewMessages);
-  return <a href={href}>{t.exportPdfCreator}</a>;
+  return (
+    <a className="chart-pdf-link" href={href}>
+      {t.exportPdfCreator}
+      <span className="chart-pdf-link-arrow" aria-hidden="true">
+        {' →'}
+      </span>
+    </a>
+  );
 }
 
 /** `data-sign` on the wheel is the sign's name lowercased (`multi-wheel.ts`). */
@@ -1054,6 +1067,20 @@ export function ChartDataView({
       />
     ) : null;
 
+  // Page actions (#976): on desktop the Overlay and Extended settings triggers live in the PageHeader's top-right
+  // action group, apart from the view tabs. At 640px and below they fold into the tab row's Chart actions sheet (#817).
+  // Without a mounted header (a screen that does not use PageHeader) they stay in the tab row, as before.
+  const pageActionsTarget = usePageActionsTarget();
+  const narrow = useNarrowViewport();
+  const headerActions =
+    overlaysPanel === null && settingsPanel === null ? null : (
+      <>
+        {overlaysPanel}
+        {settingsPanel}
+      </>
+    );
+  const headerTarget = narrow ? null : pageActionsTarget;
+
   return (
     <>
       {/* Invisible outside @media print (#564) — see app.css's own `.print-provenance` rule. */}
@@ -1075,15 +1102,9 @@ export function ChartDataView({
         buildHref={buildViewHref}
         onNavigate={setActiveTab}
         availableViews={load.kind === 'ready' ? tabs : []}
-        actions={
-          overlaysPanel === null && settingsPanel === null ? undefined : (
-            <>
-              {overlaysPanel}
-              {settingsPanel}
-            </>
-          )
-        }
+        actions={headerTarget === null ? (headerActions ?? undefined) : undefined}
       />
+      {headerTarget !== null && headerActions !== null && createPortal(headerActions, headerTarget)}
       {!showHouses && <p className="hint">{t.housesUnknownHint(displayName || t.thisPerson)}</p>}
       {showHouses && !housesComputed && <p className="hint">{t.housesUndefinedHint(displayName || t.thisPerson)}</p>}
 

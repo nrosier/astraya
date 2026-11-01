@@ -28,6 +28,7 @@ import { GlossaryTerm } from './GlossaryTerm.js';
 import { useExportItems, type ExportItem } from './export-registry.js';
 import { useMessages } from './messages.js';
 import { pageHeaderMessages } from './PageHeader.messages.js';
+import { usePageActionsRef } from './page-actions-slot.js';
 import { useExclusiveOpen } from './use-exclusive-open.js';
 
 interface ExportStatus {
@@ -58,6 +59,7 @@ export function PageHeader({
   const t = useMessages(pageHeaderMessages);
   const items = useExportItems();
   const dropdown = useExclusiveOpen<'export'>('page-header-export');
+  const actionsRef = usePageActionsRef();
   const [status, setStatus] = useState<ExportStatus | undefined>(undefined);
   const isOpen = dropdown.open === 'export';
 
@@ -108,44 +110,48 @@ export function PageHeader({
             {titleAside}
           </div>
         )}
-        {children}
-        {items.length > 0 && (
-          <div
-            ref={dropdown.groupRef('export')}
-            className={isOpen ? 'page-header-export open' : 'page-header-export'}
-            onBlur={(event) => {
-              dropdown.onGroupBlur('export', event);
-            }}
-          >
-            {/* `aria-label` pins the accessible name to just the label: Chromium folds the CSS-
-                generated caret (`.page-header-export-toggle::after`) into a name otherwise, same
-                reasoning `AppNav.tsx`'s own `NavGroup` button already documents. */}
-            <button
-              type="button"
-              ref={dropdown.buttonRef('export')}
-              className="page-header-export-toggle"
-              aria-label={t.exportLabel}
-              aria-expanded={isOpen}
-              aria-controls={isOpen ? 'page-header-export-menu' : undefined}
-              onClick={() => {
-                dropdown.toggle('export');
+        {/* The top-right action group (#976): the page's primary action, its export menu, and any page-level control a
+            screen portals in (the chart's Overlay settings and Extended settings), kept apart from view navigation. */}
+        <div ref={actionsRef} className="page-header-actions">
+          {children}
+          {items.length > 0 && (
+            <div
+              ref={dropdown.groupRef('export')}
+              className={isOpen ? 'page-header-export open' : 'page-header-export'}
+              onBlur={(event) => {
+                dropdown.onGroupBlur('export', event);
               }}
             >
-              {t.exportLabel}
-            </button>
-            {isOpen && (
-              <div id="page-header-export-menu" className="page-header-export-menu" aria-label={t.exportLabel}>
-                {ungrouped.map(itemButton)}
-                {[...groups].map(([group, groupItems]) => (
-                  <div key={group} className="page-header-export-group">
-                    <p className="page-header-export-group-heading">{group}</p>
-                    {groupItems.map(itemButton)}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+              {/* `aria-label` pins the accessible name to just the label: Chromium folds the CSS-
+                generated caret (`.page-header-export-toggle::after`) into a name otherwise, same
+                reasoning `AppNav.tsx`'s own `NavGroup` button already documents. */}
+              <button
+                type="button"
+                ref={dropdown.buttonRef('export')}
+                className="page-header-export-toggle"
+                aria-label={t.exportLabel}
+                aria-expanded={isOpen}
+                aria-controls={isOpen ? 'page-header-export-menu' : undefined}
+                onClick={() => {
+                  dropdown.toggle('export');
+                }}
+              >
+                {t.exportLabel}
+              </button>
+              {isOpen && (
+                <div id="page-header-export-menu" className="page-header-export-menu" aria-label={t.exportLabel}>
+                  {ungrouped.map(itemButton)}
+                  {[...groups].map(([group, groupItems]) => (
+                    <div key={group} className="page-header-export-group">
+                      <p className="page-header-export-group-heading">{group}</p>
+                      {groupItems.map(itemButton)}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
       {subtitle !== undefined && <p className="page-header-subtitle">{subtitle}</p>}
       {basis !== undefined && <p className="hint page-header-basis">{basis}</p>}
