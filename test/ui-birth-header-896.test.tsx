@@ -2,7 +2,7 @@
 /**
  * The birth record's header (#896, owner spec 2026-11-01): Save sits top-right and reads "Saved ✓" when pristine and
  * "Save changes" as the primary action when dirty; a status dot sits inline with the name heading; the header's Export
- * dropdown is gone, and AAF, JSON and CSV stay in the EXPORT card.
+ * dropdown sits beside Save and lists AAF, JSON and CSV (#887), and the EXPORT card keeps the same three downloads.
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -88,10 +88,15 @@ function changeName(value: string): void {
 }
 
 describe('birth record header Export (#896 part 3)', () => {
-  it('has no Export dropdown in the page header, even with the export registry mounted', () => {
-    expect(container?.querySelector('.page-header-export')).toBeNull();
-    expect(container?.querySelector('.page-header-export-toggle')).toBeNull();
-    expect(container?.querySelector('.page-header-export-menu')).toBeNull();
+  it('has an Export dropdown beside Save, listing the AAF, JSON and CSV downloads (#887, owner 2026-10-30)', async () => {
+    const toggle = container?.querySelector<HTMLButtonElement>('.page-header-export-toggle');
+    expect(toggle).not.toBeUndefined();
+    await act(async () => {
+      toggle?.click();
+      await Promise.resolve();
+    });
+    const items = [...(container?.querySelectorAll('.page-header-export-item') ?? [])].map((item) => item.textContent);
+    expect(items).toEqual([tFiles.exportAaf, tFiles.exportJson, tFiles.exportCsv]);
   });
 
   it('keeps AAF, JSON and CSV in the EXPORT card in the right column', () => {
