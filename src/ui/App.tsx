@@ -17,6 +17,7 @@ import { People } from './People.js';
 import { AdminNav } from './AdminNav.js';
 import { AppNav } from './AppNav.js';
 import { ExportRegistryProvider } from './export-registry.js';
+import { PageActionsProvider } from './page-actions-slot.js';
 import { PwaStatus } from './PwaStatus.js';
 import { SidebarFooter } from './SidebarFooter.js';
 import { parseRoute } from './route.js';
@@ -308,7 +309,8 @@ function AppShell(): React.JSX.Element {
     <SessionProvider>
       <StoreFrame>
         <ExportRegistryProvider>
-          {/* `WorkspaceShell` places the header beside the screen as a collapsible left rail at
+          <PageActionsProvider>
+            {/* `WorkspaceShell` places the header beside the screen as a collapsible left rail at
           >=64rem (#506/#509, docs/ui/UI-UX_GUIDELINES.md's "Target application shell"); below that
           it stays `AppNav.tsx`'s existing horizontal bar with its own folding panel, unchanged.
           The header is still first in the DOM, so a keyboard user meets the skip link, then the
@@ -319,52 +321,53 @@ function AppShell(): React.JSX.Element {
           precisely the bug class this project is built to avoid, so it stays visible on every
           route. Language and theme are side by side: both are "change how the page looks",
           picked together more often than either alone. */}
-          <WorkspaceShell
-            header={
-              <header
-                ref={headerRef}
-                className={'personId' in parsed ? 'app-header app-header-with-person' : 'app-header'}
-              >
-                <a className="skip-link" href="#main-content" onClick={skipToContent}>
-                  {t.skipToContent}
-                </a>
-                <div className="app-header-start">
-                  <a className="app-header-brand" href="#/people" aria-label={t.homeLinkLabel}>
-                    Astraya
+            <WorkspaceShell
+              header={
+                <header
+                  ref={headerRef}
+                  className={'personId' in parsed ? 'app-header app-header-with-person' : 'app-header'}
+                >
+                  <a className="skip-link" href="#main-content" onClick={skipToContent}>
+                    {t.skipToContent}
                   </a>
-                  {engineStatus !== 'ready' && <p className="status app-header-status">{engineStatus}</p>}
-                </div>
-                <AppNav route={parsed} />
-                {/* The utilities container (#882): the rail's foot at >=64rem, the header's own row below it. */}
-                <div className="app-header-end">
-                  <SyncBadge />
-                  <AccountPanel />
-                  <a
-                    className={parsed.kind === 'preferences' ? 'corner-pill active' : 'corner-pill'}
-                    href="#/preferences"
-                    aria-current={parsed.kind === 'preferences' ? 'page' : undefined}
-                  >
-                    {t.preferencesLinkLabel}
-                  </a>
-                  <LanguageToggle />
-                  <SymbolToggle />
-                  <ThemeToggle />
-                </div>
-                {/* The version, About & Licence and the update notice sit at the rail's foot (previously a page footer). */}
-                <SidebarFooter />
-              </header>
-            }
-          >
-            {/* One boundary around the whole screen slot rather than one per lazy route (#338):
+                  <div className="app-header-start">
+                    <a className="app-header-brand" href="#/people" aria-label={t.homeLinkLabel}>
+                      Astraya
+                    </a>
+                    {engineStatus !== 'ready' && <p className="status app-header-status">{engineStatus}</p>}
+                  </div>
+                  <AppNav route={parsed} />
+                  {/* The utilities container (#882): the rail's foot at >=64rem, the header's own row below it. */}
+                  <div className="app-header-end">
+                    <SyncBadge />
+                    <AccountPanel />
+                    <a
+                      className={parsed.kind === 'preferences' ? 'corner-pill active' : 'corner-pill'}
+                      href="#/preferences"
+                      aria-current={parsed.kind === 'preferences' ? 'page' : undefined}
+                    >
+                      {t.preferencesLinkLabel}
+                    </a>
+                    <LanguageToggle />
+                    <SymbolToggle />
+                    <ThemeToggle />
+                  </div>
+                  {/* The version, About & Licence and the update notice sit at the rail's foot (previously a page footer). */}
+                  <SidebarFooter />
+                </header>
+              }
+            >
+              {/* One boundary around the whole screen slot rather than one per lazy route (#338):
             every lazy screen wants the same fallback, and keeping the boundary outside
             `Stored` means a chunk still in flight does not also restart the store. */}
-            <div id="main-content" className="main-content" tabIndex={-1}>
-              {/* The sub-views of Transits & Forecast, Progressions & Directions, Relationship Charts and Tools (#882). */}
-              <SectionNav route={parsed} />
-              <Suspense fallback={<LoadingScreen />}>{screen}</Suspense>
-            </div>
-          </WorkspaceShell>
-          <PwaStatus />
+              <div id="main-content" className="main-content" tabIndex={-1}>
+                {/* The sub-views of Transits & Forecast, Progressions & Directions, Relationship Charts and Tools (#882). */}
+                <SectionNav route={parsed} />
+                <Suspense fallback={<LoadingScreen />}>{screen}</Suspense>
+              </div>
+            </WorkspaceShell>
+            <PwaStatus />
+          </PageActionsProvider>
         </ExportRegistryProvider>
       </StoreFrame>
     </SessionProvider>
