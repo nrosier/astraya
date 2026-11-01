@@ -60,10 +60,8 @@ test('a custom formula point is rendered, hidden, and removed from the natal cha
   await formulaSection.getByRole('button', { name: 'Add formula point', exact: true }).click();
   await applySettings(page);
 
-  const customGlyph = page.locator('g.chart-body-stack[data-body="Sun plus Moon"]');
-  await expect(customGlyph).toBeVisible();
-  await customGlyph.click();
-  await expect(page.locator('.selection-inspector')).toContainText('Sun plus Moon');
+  // Saved formula points are not drawn on the wheel (#817, moved to the Bodies tab in #824).
+  await expect(page.locator('g.chart-body-stack[data-body="Sun plus Moon"]')).toHaveCount(0);
 
   await page.getByRole('link', { name: 'Placements', exact: true }).click();
   await expect(page.getByRole('table').filter({ hasText: 'Sun plus Moon' })).toBeVisible();
