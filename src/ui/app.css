@@ -5811,11 +5811,18 @@ svg text.chart-symbol-text-unicode {
 .symbol-setting-description {
   margin: 0.75rem 0 1rem;
   padding: 0.75rem;
-  border-left: 3px solid #007acc;
-  background: #fff;
-  color: #333;
+  border-left: 3px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
   font-size: 0.9em;
   line-height: 1.5;
+}
+
+/* A helper note under a Preferences row (issue 966): muted text on the card, no box, so it reads as a callout. */
+.symbol-setting-note {
+  margin: var(--space-2) 0 0;
+  color: var(--muted);
+  font-size: var(--text-xs);
 }
 
 @media (pointer: coarse) {
@@ -6097,7 +6104,7 @@ svg text.chart-symbol-text-unicode {
   margin: 0.35rem 0 0;
 }
 
-/* The one-line purpose under the title (#966): muted, body-size, the same measure as `.hint`. */
+/* The one-line purpose under the title (issue 966): muted, body-size, the same measure as `.hint`. */
 .page-header-subtitle {
   margin: 0.35rem 0 0;
   max-width: 44rem;
@@ -7097,11 +7104,12 @@ button.mgrid-pair:focus-visible {
   font-size: var(--text-lg);
 }
 
+/* A 60/40 grid (issue 966): the text takes three fifths, the control two fifths, right-aligned. A grid keeps both columns on
+   one line; a flex row with 60% + 40% plus a gap overflows and drops the control below the title. */
 .preferences-row {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
   align-items: center;
-  justify-content: space-between;
   gap: var(--space-3) var(--space-6);
   padding: var(--space-3) 0;
   border-top: var(--border-hairline) solid var(--line);
@@ -7112,7 +7120,6 @@ button.mgrid-pair:focus-visible {
 }
 
 .preferences-row-text {
-  flex: 0 1 60%;
   min-width: 0;
 }
 
@@ -7129,7 +7136,6 @@ button.mgrid-pair:focus-visible {
 }
 
 .preferences-row-control {
-  flex: 0 1 40%;
   display: flex;
   justify-content: flex-end;
   min-width: 0;
@@ -7148,10 +7154,27 @@ button.mgrid-pair:focus-visible {
   width: 100%;
 }
 
+/* Rulership (issue 966): Modern / Traditional / Both as a compact three-up grid, the active card marked by the accent
+   border. Stacks to one column on a phone, where three cards would otherwise be too narrow to read. */
+.preferences-rulership .primitive-option-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.preferences-rulership .primitive-option-card-selected {
+  border-color: var(--accent);
+}
+
 @media (max-width: 40rem) {
-  .preferences-row-text,
-  .preferences-row-control {
-    flex: 1 1 100%;
+  .preferences-rulership .primitive-option-cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 40rem) {
+  .preferences-row {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .preferences-row-control {

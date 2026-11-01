@@ -22,6 +22,8 @@ export interface FileInputProps {
   readonly disabled?: boolean | undefined;
   /** Why the button is disabled, read out instead of the bare "disabled" a screen reader otherwise announces alone. */
   readonly disabledReason?: string | undefined;
+  /** The page's main action for its group (#966): the primary button style instead of the quiet default. */
+  readonly primary?: boolean | undefined;
 }
 
 export function FileInput({
@@ -30,6 +32,7 @@ export function FileInput({
   onChange,
   disabled,
   disabledReason,
+  primary = false,
 }: FileInputProps): React.JSX.Element {
   const inputRef = useRef<HTMLInputElement>(null);
   return (
@@ -48,6 +51,7 @@ export function FileInput({
       />
       <button
         type="button"
+        className={primary ? 'primitive-button-primary' : undefined}
         disabled={disabled}
         aria-label={
           disabled === true && disabledReason !== undefined ? `${buttonLabel} — ${disabledReason}` : undefined

@@ -44,7 +44,7 @@ test('exports people as AAF records that follow the specification’s #A93 and #
   await gotoAndSettle(page, `${baseUrl}/#/preferences/data`);
   const [download] = await Promise.all([
     page.waitForEvent('download'),
-    page.getByRole('button', { name: 'Export people (AAF)', exact: true }).click(),
+    page.getByRole('button', { name: 'Export AAF', exact: true }).click(),
   ]);
   expect(download.suggestedFilename()).toMatch(/^astraya-people-\d{4}-\d{2}-\d{2}\.aaf$/);
   const path = await download.path();
