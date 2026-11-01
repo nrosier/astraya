@@ -35,6 +35,18 @@ vi.mock('../src/ui/store-context.js', () => {
   return { useStoreState: () => state, useStore: () => ({}), useOptionalStore: () => undefined };
 });
 
+vi.mock('../src/ui/person-calculation-settings.js', async () => {
+  const { DEFAULT_EXTENDED_SETTINGS } = await import('../src/chart/extended-settings.js');
+  const { DEFAULT_RULERSHIP_CHOICE } = await import('../src/astrology/rulership.js');
+  return {
+    usePersonCalculationSettings: () => ({
+      settings: DEFAULT_EXTENDED_SETTINGS,
+      rulership: DEFAULT_RULERSHIP_CHOICE,
+      unreadable: false,
+    }),
+  };
+});
+
 const { AstrocartographyView } = await import('../src/ui/AstrocartographyView.js');
 
 async function renderView(): Promise<{ container: HTMLElement; unmount: () => void }> {
@@ -63,6 +75,13 @@ describe('Astrocartography header (#978)', () => {
     expect(subtitle?.textContent).toBe(
       'A world map of the lines where each body was rising, setting, culminating or at the lowest point at birth.',
     );
+    unmount();
+  });
+
+  it('states the person’s calculation profile in the header basis line', async () => {
+    const { container, unmount } = await renderView();
+    const basis = container.querySelector('.page-header > .page-header-basis');
+    expect(basis?.textContent).toBe('Calculation profile: Modern Western — Astraya default');
     unmount();
   });
 

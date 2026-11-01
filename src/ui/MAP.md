@@ -28,7 +28,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `SectionNav.tsx` — Sub-view tab row for the four multi-view sidebar sections (#882), in `ScrollingTabRow` with a Select fallback. Deps: `AppNav.messages`, `person-nav`, `tools-nav`, `ScrollingTabRow`.
 - `AstroChartWheel.tsx` — Dev-only reference wheel via `@astrodraw/astrochart`. Deps: `chart/astrochart-adapter`.
 - `acg-map-labels.ts` — En/nl words for the astrocartography map's line names and legend, shared by screen and PDF (#667). Deps: `chart/acg-map`, `./astro-names.messages`, `./AstrocartographyView.messages`.
-- `AstrocartographyView.tsx` + `AstrocartographyView.messages.ts` — Astrocartography/local-space map; its settings live in `MapSettingsDialog`, its exports in the page header. Deps: `domain/astrocartography`, `chart/acg-map`, `interpretation/compose`.
+- `AstrocartographyView.tsx` + `AstrocartographyView.messages.ts` — Astrocartography/local-space map; header with the person’s calculation basis, Map settings drawer and Build PDF; map and meanings on card surfaces. Deps: `domain/astrocartography`, `chart/acg-map`, `interpretation/compose`, `./calculation-basis`, `./person-calculation-settings`.
 - `besiegement-rescue-label.ts` — Words the fortunes easing a besieged planet as en/nl text for the condition table and consultation. Deps: `astrology/planetary-condition`, `./astro-names.messages`.
 - `BiWheelSelectionPanel.tsx` + `BiWheelSelectionPanel.messages.ts` — Bi-wheel click-to-inspect panel (body/sign/aspect info). Deps: `./bi-wheel-selection`, `astro-names.messages`.
 - `BirthPlaceSearch.tsx` + `BirthPlaceSearch.messages.ts` — Geocoding place-name search field. Deps: `./forward-geocode`, `./geocode-provider`.
