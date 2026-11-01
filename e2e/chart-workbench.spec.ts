@@ -309,14 +309,15 @@ test.describe('with the shared people (#799)', () => {
     expect(d.width).toBeGreaterThan(i.width);
   });
 
-  test('the wheel and the inspector share one top edge on desktop, and stack on a phone (#801)', async () => {
+  test('the inspector sits beside the wheel on desktop, overlapping its vertical span, and stacks on a phone (#801, #817)', async () => {
     test.setTimeout(90_000);
     await openSharedPerson(page, baseUrl, EINSTEIN);
     await openNatalChart(page);
     const dial = page.locator('.chart-workbench-dial');
     const inspector = page.locator('.selection-inspector');
 
-    // Desktop: the wheel card and the inspector start on the same line, within 2px.
+    // Desktop: the inspector starts inside the dial's vertical span (it overhangs the wheel itself, see
+    // chart-selection-overhang.spec.ts), so the two read as one row.
     for (const [width, height] of [
       [1280, 800],
       [1600, 1000],
@@ -327,7 +328,8 @@ test.describe('with the shared people (#799)', () => {
       const d = await dial.boundingBox();
       const i = await inspector.boundingBox();
       if (d === null || i === null) throw new Error('no boxes');
-      expect(Math.abs(d.y - i.y)).toBeLessThanOrEqual(2);
+      expect(i.y).toBeGreaterThanOrEqual(d.y - 1);
+      expect(i.y).toBeLessThan(d.y + d.height);
     }
 
     // Phone: the inspector sits below the wheel, not beside it.
