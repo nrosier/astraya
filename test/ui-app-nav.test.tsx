@@ -287,3 +287,113 @@ describe('the full sidebar on app-scoped screens (#965)', () => {
     }
   });
 });
+
+// Every route the app defines (`Route['kind']` in `src/ui/route.ts`), each with a hash that `parseRoute`
+// maps back to that kind. Typed as a full record, so a new route kind without a hash fails the type check.
+const ROUTE_PERSON = 'p-abcdefghijklmnop';
+const PERSON_HASH = `#/people/${ROUTE_PERSON}`;
+const ROUTE_HASHES: Record<Route['kind'], string> = {
+  home: '#/no-such-screen',
+  about: '#/about',
+  changelog: '#/changelog',
+  people: '#/people',
+  shared: '#/shared',
+  documents: '#/documents',
+  'export-builder': '#/documents/pdf',
+  preferences: '#/preferences',
+  admin: '#/admin',
+  'admin-usage': '#/admin/usage',
+  'corpus-overrides': '#/admin/corpus-overrides',
+  'corpus-candidates': '#/admin/corpus-candidates',
+  'set-password': '#/set-password',
+  setup: '#/setup',
+  person: `${PERSON_HASH}/birth-record`,
+  'person-overview': `${PERSON_HASH}/overview`,
+  consultation: `${PERSON_HASH}/consultation`,
+  chart: `${PERSON_HASH}/charts/natal/wheel`,
+  report: `${PERSON_HASH}/interpretation`,
+  profections: `${PERSON_HASH}/timing/profections`,
+  progressions: `${PERSON_HASH}/timing/progressions`,
+  'solar-arc': `${PERSON_HASH}/timing/solar-arc`,
+  'primary-directions': `${PERSON_HASH}/timing/primary-directions`,
+  'timing-timeline': `${PERSON_HASH}/timing/timeline`,
+  transit: `${PERSON_HASH}/timing/transits`,
+  'periodic-transit': `${PERSON_HASH}/timing/forecast`,
+  synastry: `${PERSON_HASH}/relationships/synastry`,
+  composite: `${PERSON_HASH}/relationships/composite`,
+  astrocartography: `${PERSON_HASH}/location/astrocartography`,
+  cycles: '#/explore/cycles',
+  'event-search': '#/explore/event-search',
+  eclipses: '#/explore/eclipses',
+  horary: '#/explore/horary',
+  electional: '#/explore/electional',
+  rectification: '#/explore/rectification',
+};
+
+const EXPLICIT_NO_PERSON_SIDEBAR_KINDS = ['people', 'home', 'shared', 'set-password', 'setup'] as const;
+const EXPECTED_NO_PERSON_SIDEBAR = [
+  ['Tools', '#/explore/cycles'],
+  ['PDF', '#/documents'],
+];
+
+describe('the sidebar on every route (#965)', () => {
+  afterEach(() => {
+    fakeStore.current = undefined;
+    window.localStorage.clear();
+  });
+
+  const openStoreWithLastPerson = (): void => {
+    fakeStore.current = { state: { people: new Map([[ROUTE_PERSON, { displayName: 'Test' }]]) } };
+    writeLastPersonId(ROUTE_PERSON);
+  };
+  const sidebarPairs = (): unknown[] =>
+    Array.from(box().querySelectorAll('nav#app-nav a')).map((a) => [a.textContent, a.getAttribute('href')]);
+
+  it('maps every route kind to a hash that parseRoute reads back as that kind', () => {
+    for (const [kind, hash] of Object.entries(ROUTE_HASHES)) {
+      expect(parseRoute(hash).kind, hash).toBe(kind);
+    }
+    // The number of kinds in the Route union; a new kind must be added to ROUTE_HASHES and to this count.
+    expect(Object.keys(ROUTE_HASHES)).toHaveLength(35);
+  });
+
+  it('keeps the exceptions to the person sidebar as exactly the #914 list', () => {
+    expect([...EXPLICIT_NO_PERSON_SIDEBAR_KINDS]).toEqual(['people', 'home', 'shared', 'set-password', 'setup']);
+  });
+
+  it('shows the person-page sidebar as the baseline', async () => {
+    openStoreWithLastPerson();
+    await mount(parseRoute(ROUTE_HASHES['person-overview']));
+    expect(sidebarPairs()).toContainEqual(['Overview', `${PERSON_HASH}/overview`]);
+    expect(sidebarPairs()).toContainEqual(['Tools', '#/explore/cycles']);
+    expect(sidebarPairs()).toContainEqual(['PDF', '#/documents']);
+  });
+
+  const sameSidebarKinds = (Object.keys(ROUTE_HASHES) as Route['kind'][]).filter(
+    (kind) => !(EXPLICIT_NO_PERSON_SIDEBAR_KINDS as readonly string[]).includes(kind),
+  );
+  it.each(sameSidebarKinds)(
+    'shows the same sidebar links, text and href, on %s as on a person page (#965)',
+    async (kind) => {
+      const hash = ROUTE_HASHES[kind];
+      openStoreWithLastPerson();
+      const render = await mount(parseRoute(ROUTE_HASHES['person-overview']));
+      const baseline = sidebarPairs();
+      await render(parseRoute(hash));
+      expect(sidebarPairs(), hash).toEqual(baseline);
+      // Only the active page is marked current.
+      const current = Array.from(box().querySelectorAll('nav#app-nav a[aria-current="page"]')).map((a) =>
+        a.getAttribute('href'),
+      );
+      expect(current.length, hash).toBeLessThanOrEqual(1);
+    },
+  );
+
+  it.each(EXPLICIT_NO_PERSON_SIDEBAR_KINDS)('shows only Tools and PDF on %s (deliberate, #914)', async (kind) => {
+    const hash = ROUTE_HASHES[kind];
+    openStoreWithLastPerson();
+    await mount(parseRoute(hash));
+    expect(sidebarPairs(), hash).toEqual(EXPECTED_NO_PERSON_SIDEBAR);
+    expect(linkNamed('Overview'), hash).toBeUndefined();
+  });
+});
