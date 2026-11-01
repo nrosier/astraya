@@ -63,6 +63,19 @@ describe('token gaps (#826)', () => {
     expect(overridden[0]?.body ?? '').toMatch(/border:\s*2px solid var\(--accent\)/);
   });
 
+  it('#795: no border in the birth-place search or birth-record rules uses a raw px width (use --border-hairline)', () => {
+    const scoped = rulesFor((s) => /\.birth-(place-search|record)\b/.test(s));
+    expect(scoped.length).toBeGreaterThan(0);
+    const offenders = scoped.flatMap((rule) =>
+      rule.body
+        .split(';')
+        .map((decl) => decl.trim())
+        .filter((decl) => /^border(-(top|right|bottom|left))?:/.test(decl) && /\b\d+(\.\d+)?px\b/.test(decl))
+        .map((decl) => `${rule.selector} { ${decl} }`),
+    );
+    expect(offenders).toEqual([]);
+  });
+
   it('item 14: the canvas colour is --bg and the literal #0b0d14 is absent from app.css and src/ui/*.tsx', () => {
     expect(css).toMatch(/--bg:\s*#0b0c18/);
     expect(css.toLowerCase()).not.toContain('#0b0d14');
