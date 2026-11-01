@@ -590,7 +590,8 @@ test.describe('with the shared people (#799)', () => {
         return { left: el.scrollLeft, max: el.scrollWidth - el.clientWidth, scrollWidth: el.scrollWidth, clientWidth: el.clientWidth };
       })()`);
 
-    // The row overflows at 1280px, so there are tabs for the fades to point at.
+    // With the #981 layout the row fits at 1280px, so the overflow check runs at 1024px, where it overflows.
+    await page.setViewportSize({ width: 1024, height: 800 });
     await expect.poll(async () => (await metrics()).scrollWidth > (await metrics()).clientWidth).toBe(true);
 
     // Touch-capable CSS contract (computed styles only; touch momentum itself is not exercised headlessly).

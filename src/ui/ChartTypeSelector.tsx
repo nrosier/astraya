@@ -27,7 +27,7 @@ export function ChartTypeSelector({
 }): React.JSX.Element {
   const t = useMessages(chartTypesMessages);
   return (
-    <div className="chart-type-select">
+    <div className={type === 'natal' ? 'chart-type-select chart-type-select--natal' : 'chart-type-select'}>
       <Select
         label={t.typeSelectorLabel}
         value={type}
