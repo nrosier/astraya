@@ -25,9 +25,22 @@ import {
 } from './map-settings.js';
 import { mapSettingsDialogMessages } from './MapSettingsDialog.messages.js';
 import { useMessages } from './messages.js';
+import { Badge } from './primitives/Badge.js';
 import { Checkbox } from './primitives/Checkbox.js';
 import { NumberField } from './primitives/NumberField.js';
 import { StagedDialog } from './primitives/StagedDialog.js';
+
+/** The map's applied basis as a read-only badge (#978): what is drawn, never a control. Placed on the map surface. */
+export function MapBasisBadge({ settings }: { readonly settings: MapSettings }): React.JSX.Element {
+  const t = useMessages(mapSettingsDialogMessages);
+  const counts = summaryCounts(settings);
+  return (
+    <p className="map-basis">
+      <span className="map-basis-label">{t.basisLabel}</span>{' '}
+      <Badge>{t.summary(counts.lineTypes, counts.bodies, counts.localSpace, counts.relocated)}</Badge>
+    </p>
+  );
+}
 
 function bodyName(body: BodyId, locale: 'en' | 'nl'): string {
   const key = bodyById(body)?.key ?? String(body);
@@ -52,7 +65,6 @@ export function MapSettingsDialog({
   const errors = relocationErrors(draft);
   const invalid = errors.latitude !== undefined || errors.longitude !== undefined;
   const dirty = !sameMapSettings(draft, applied);
-  const counts = summaryCounts(applied);
 
   const discard = (): void => {
     setOpen(false);
@@ -78,27 +90,25 @@ export function MapSettingsDialog({
     kind === undefined ? undefined : kind === 'both' ? t.errorBoth : t.errorRange(min, max);
 
   return (
-    <div className="map-settings">
+    <>
       <button
         type="button"
         ref={triggerRef}
-        className="extended-settings-trigger"
+        className="quiet"
         aria-haspopup="dialog"
         onClick={() => {
           setDraft(applied);
           setOpen(true);
         }}
       >
-        <span className="extended-settings-trigger-name">{t.trigger}</span>
-        <span className="extended-settings-trigger-detail">
-          {t.summary(counts.lineTypes, counts.bodies, counts.localSpace, counts.relocated)}
-        </span>
+        {t.trigger}
       </button>
 
       <StagedDialog
         open={open}
         heading={t.heading}
         closeLabel={t.closeLabel}
+        placement="right"
         onDiscard={discard}
         returnFocusTo={triggerRef}
         footer={
@@ -206,6 +216,6 @@ export function MapSettingsDialog({
           />
         </fieldset>
       </StagedDialog>
-    </div>
+    </>
   );
 }

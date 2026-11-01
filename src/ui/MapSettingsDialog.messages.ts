@@ -6,6 +6,7 @@
  */
 const en = {
   trigger: 'Map settings',
+  basisLabel: 'Map basis',
   heading: 'Map settings',
   closeLabel: 'Close without applying',
   apply: 'Apply',
@@ -34,6 +35,7 @@ const en = {
 
 const nl: typeof en = {
   trigger: 'Kaartinstellingen',
+  basisLabel: 'Kaartbasis',
   heading: 'Kaartinstellingen',
   closeLabel: 'Sluiten zonder toe te passen',
   apply: 'Toepassen',
