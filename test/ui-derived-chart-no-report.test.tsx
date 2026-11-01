@@ -133,10 +133,11 @@ describe('derived charts without the general written reading (#980)', () => {
   ];
 
   for (const { name, node } of withoutReport) {
-    it(`${name} renders its chart but no ReportView`, async () => {
+    it(`${name} renders its chart and the per-object inspector but no ReportView`, async () => {
       const container = mount(node());
       await untilSettled(container);
       expectChartReady(container);
+      expect(container.querySelector('.selection-inspector')).not.toBeNull();
       expect(container.querySelector('.report')).toBeNull();
     }, 60_000);
   }
