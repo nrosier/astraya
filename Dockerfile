@@ -5,7 +5,7 @@
 # route on this same server — adding it later must not mean re-architecting how
 # the app is deployed.
 #
-# Node 24 runs the server's TypeScript directly via built-in type stripping, so
+# Node 26 runs the server's TypeScript directly via built-in type stripping, so
 # there is no server build step and no second toolchain in the runtime image.
 #
 # Everything the build produces — bundled JS, the SVG/CSS, the .se1 ephemeris
