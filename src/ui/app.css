@@ -1179,7 +1179,7 @@ footer {
   max-height: 15rem;
   overflow-y: auto;
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: var(--border-hairline) solid var(--line);
   border-radius: var(--radius);
   box-shadow: var(--shadow-popover);
 }
