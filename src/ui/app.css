@@ -890,7 +890,8 @@ footer {
  */
 .horary-form {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 25rem), 1fr));
+  /* Two equal columns when there is room for them, so the top row and the wide parameters card share one width at every size (#969). */
+  grid-template-columns: repeat(2, minmax(min(100%, 25rem), 1fr));
   gap: var(--space-4);
   /* Stretch so side-by-side cards share one bottom edge (#895); no fixed height is set. */
   align-items: stretch;
