@@ -2634,13 +2634,23 @@ label.stacked textarea:focus-visible {
    * rest. Measured at 1280x800 (root 14px): the workbench is 1014px, the 2rem gap 28px, so the 46rem (644px)
    * chart minimum leaves 342px, and 24rem (336px) is the widest whole-rem cap that fits. The card scrolls
    * inside itself, so a long selection never makes the page taller.
-   * Owner feedback (#900, 2026-10-31): the card extends to the bottom of the window, keeping a --space-6 margin.
-   * Its top sits about 12.4rem below the top of the viewport at 1280x800 (measured, root 14px), so the
-   * 12.5rem here is that chrome; the card then fills the rest of the viewport and scrolls inside itself.
+   * Owner feedback (#900, 2026-10-31) asked the card to reach the window bottom; the #817 overhang
+   * (see `.selection-inspector` below) now sets its height from the wheel's row instead.
+   */
+  /*
+   * Overhang (#817, owner decision): the card sits on the wheel's row and extends one --space-6 above the
+   * wheel's top and the same distance below its bottom. The dial's hint and wheel are its two rows (subgrid),
+   * so the card's top edge is measured from the wheel, not the hint. contain: size keeps the card's content
+   * out of the row height, so the wheel never resizes; the card scrolls inside itself.
    */
   .selection-inspector {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: stretch;
+    margin-block: calc(var(--space-6) * -1);
     min-height: 14rem;
-    height: calc(100vh - 12.5rem - var(--space-6));
+    height: auto;
+    contain: size;
     overflow-y: auto;
   }
 
@@ -2649,6 +2659,15 @@ label.stacked textarea:focus-visible {
      * filled Selection card's margin, so the two-column chart view does not scroll the document (#900). */
     margin-bottom: calc(var(--space-6) - 5rem);
     grid-template-columns: minmax(46rem, 1fr) minmax(20rem, 24rem);
+    /* No row gap here: the dial's hint and wheel meet, and the card's --space-6 margin sets the overhang. */
+    row-gap: 0;
+  }
+
+  .chart-workbench-dial {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    display: grid;
+    grid-template-rows: subgrid;
   }
 }
 
