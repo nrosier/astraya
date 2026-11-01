@@ -52,7 +52,8 @@ test('the cycles screen lists the great conjunctions with a diagram, and narrows
   // The Venus pentagram preset keeps only the retrograde (inferior) conjunctions.
   await page.getByLabel('Cycle').selectOption('venus-pentagram');
   await expect(page.getByLabel('Cycle')).toHaveValue('venus-pentagram');
-  await expect(page.getByLabel('First body’s motion')).toHaveValue('retrograde');
+  // The motion filter is a radio group (#901), so the retrograde choice is the checked radio, not a select value.
+  await expect(page.getByRole('radio', { name: 'Retrograde only (e.g. Venus’s inferior conjunctions)' })).toBeChecked();
   await expect(table.getByRole('row').nth(1)).toContainText('Venus');
 });
 
