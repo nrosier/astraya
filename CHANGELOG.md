@@ -6,6 +6,40 @@ see [docs/ops/RELEASING.md](docs/ops/RELEASING.md).
 
 ## [Unreleased]
 
+## [0.44.0] — 2026-11-01
+
+**The chart views are finished: every chart page puts its inputs below the wheel, the selector and header layouts match across the derived charts, the PDF builder and Astrocartography screens are standardised, and chart exports open the PDF creator. This release completes milestone M12 (UI: chart views).**
+
+### Added
+
+- **Chart exports open the PDF creator (#915).** The chart pages link to the PDF creator from the page header, and the SVG, PNG and PDF exports open it with that page's wheel and tables only.
+- **Body exports in the header Export menu (#887).** Cycles, Eclipses, Profections, Progressions and Relocated get header CSV export items, and every export screen registers its exports.
+
+### Changed
+
+- **Chart inputs sit below the wheel on every chart page (#1013).** On a 1280×800 screen the wheel no longer falls below the fold on Harmonic, Solar Return and Lunar Return.
+- **One chart-type selector layout (#981).** The natal chart selector matches the derived chart pages, and the same layout applies to every chart page.
+- **No general written reading on Draconic, Harmonic and Return charts (#980).** Those charts no longer show the general written interpretation.
+- **Astrocartography uses the standard header, map card and actions (#978).** The header's basis line shows the person's calculation profile.
+- **The PDF builder uses a 60/40 layout with a sticky summary (#975).** The builder follows the layout decided in #916.
+- **Selection card: saved formula points stay off the wheel (#817).** The card extends 20px above and below the wheel, and it no longer draws saved points onto the wheel itself.
+- **Preferences uses the shared page header (#966).** The header has a subtitle, and the Preferences view matches the other screens.
+
+### Fixed
+
+- **The birth record save action, status dot and header export are corrected (#896).** The bottom row meets the 90% balance rule.
+- **The Horary form stays one column on phones (#969).** The parameters card lines up with the date and location cards, and the Search button lines up with the place input.
+- **The full sidebar stays on Admin, Preferences and other app-scoped screens (#965).**
+- **Synastry gets the wide shell, so its relationship tabs match (#882).**
+- **The birth-place dropdown uses the hairline border token (#795).**
+- **Glossary terms in prose get tooltips wherever they appear (#901).**
+
+### Internal
+
+- New end-to-end and unit tests cover the chart wheel fold, the chart-type and natal selector layouts, the Selection card overhang, the PDF builder card layout, the Astrocartography header, the derived-chart reading removal, the export registrations and the sidebar on every route (#1013, #981, #980, #978, #975, #915, #817, #965).
+- Node 26 is now the minimum version (`engines`, the README and the Dockerfile comments), and the CI, Pages and release workflows run on it. The runtime dependencies `svg2pdf.js`, `jose`, `@fastify/static` and `@fastify/cookie` are updated to their latest patch releases, and the dev tooling is updated to match.
+- The Harbor scan workflow added during this cycle was removed again before release, so it does not ship.
+
 ## [0.43.1] — 2026-10-31
 
 **Glossary terms in prose get opt-in tooltips, the PDF and Documents screens are refactored to the approved mockup, chosen fixed stars reach the exports and shared view, and the consultation, selection and matrix views are finished.**

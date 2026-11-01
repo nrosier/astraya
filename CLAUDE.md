@@ -37,7 +37,7 @@ When creating/deleting/renaming files with significant responsibility:
 
 ## Critical Commands
 
-- `npm install` (Node >=24; use npm, not yarn/pnpm).
+- `npm install` (Node >=26; use npm, not yarn/pnpm).
 - `npm run check` (format/lint/typecheck/test gate; must pass before PR).
 - `npm run test` (Vitest + **non-waivable NASA JPL 0.2″ golden-chart gate**).
 - `npm run test:e2e` (Playwright against `dist/`; separate runner from `.test.ts`). Run it for UI/UX changes (the affected specs) and at releases; otherwise `npm run check` is the gate.
