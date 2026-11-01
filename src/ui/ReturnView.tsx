@@ -263,6 +263,52 @@ export function ReturnView({
         <PdfCreatorLink href={creatorHref} />
       </PageHeader>
       <ChartTypeSelector personId={personId} type={kind} view={view} />
+      {/* The result region: busy while the return (re)calculates, as the Astrocartography map is. */}
+      <div aria-busy={load.kind === 'loading'}>
+        {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
+
+        {load.kind !== 'idle' && (
+          <ChartDataView
+            personId={personId}
+            chartType={kind}
+            load={load.kind === 'ready' ? { kind: 'ready', data: load.data } : load}
+            displayName={displayName}
+            showHouses
+            metaLines={metaLines}
+            rulership={rulership}
+            extendedSettings={settings}
+            onExtendedSettingsChange={setSettings}
+            settingsProvider={provider}
+            view={view ?? 'wheel'}
+            onViewChange={(next) => {
+              changeChartView(personId, kind, next);
+            }}
+            buildViewHref={(next) => chartHref(personId, next, kind)}
+            overlayContext={
+              provider === undefined
+                ? undefined
+                : {
+                    moment: person.moment,
+                    provider,
+                    baseLabel: displayName,
+                    options: {
+                      ...toChartCalculationOptions(settings),
+                      rulership,
+                      ...(fixedStars === undefined ? {} : { fixedStars }),
+                    },
+                  }
+            }
+          />
+        )}
+
+        {load.kind === 'ready' && !housesAreDefined(load.data.houses) && (
+          <StatusMessage kind="error">
+            <GlossaryText text={t.housesUndefined} />
+          </StatusMessage>
+        )}
+      </div>
+
+      {/* Below the wheel and the Selection card (#1013): the inputs and explanations never push the chart down. */}
       <p className="hint">
         <GlossaryText text={solar ? t.solarHint : t.lunarHint} />
       </p>
@@ -307,50 +353,8 @@ export function ReturnView({
       <p className="hint">
         <GlossaryText text={t.conventions} />
       </p>
-      {/* The result region: busy while the return (re)calculates, as the Astrocartography map is. */}
-      <div aria-busy={load.kind === 'loading'}>
-        {load.kind === 'loading' && <StatusMessage kind="loading">{t.calculating}</StatusMessage>}
 
-        {load.kind !== 'idle' && (
-          <ChartDataView
-            personId={personId}
-            chartType={kind}
-            load={load.kind === 'ready' ? { kind: 'ready', data: load.data } : load}
-            displayName={displayName}
-            showHouses
-            metaLines={metaLines}
-            rulership={rulership}
-            extendedSettings={settings}
-            onExtendedSettingsChange={setSettings}
-            settingsProvider={provider}
-            view={view ?? 'wheel'}
-            onViewChange={(next) => {
-              changeChartView(personId, kind, next);
-            }}
-            buildViewHref={(next) => chartHref(personId, next, kind)}
-            overlayContext={
-              provider === undefined
-                ? undefined
-                : {
-                    moment: person.moment,
-                    provider,
-                    baseLabel: displayName,
-                    options: {
-                      ...toChartCalculationOptions(settings),
-                      rulership,
-                      ...(fixedStars === undefined ? {} : { fixedStars }),
-                    },
-                  }
-            }
-          />
-        )}
-
-        {load.kind === 'ready' && !housesAreDefined(load.data.houses) && (
-          <StatusMessage kind="error">
-            <GlossaryText text={t.housesUndefined} />
-          </StatusMessage>
-        )}
-
+      <div>
         {load.kind === 'ready' && (
           <>
             <p className="hint">
