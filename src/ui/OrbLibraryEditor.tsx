@@ -15,10 +15,12 @@ import {
 import { CITED_ORB_PRESET_IDS, CITED_ORB_PRESETS } from '../astrology/orb-profiles.js';
 import { orbRulesDraftFrom, orbRulesFromDraft, type OrbRulesDraft } from './orb-rules-draft.js';
 import { OrbRulesFields } from './OrbRulesFields.js';
+import { PreferencesRow } from './PreferencesRow.js';
 import { orbLibraryEditorMessages } from './OrbLibraryEditor.messages.js';
 import { useMessages } from './messages.js';
 import { writeOrbContextSource, writeOrbLibrary } from './orb-library-store.js';
 import { Button } from './primitives/Button.js';
+import { EmptyState } from './primitives/EmptyState.js';
 import { Select } from './primitives/Select.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { TextField } from './primitives/TextField.js';
@@ -113,11 +115,24 @@ export function OrbLibraryEditor({
 
   return (
     <section aria-labelledby="orb-library-heading">
-      <h3 id="orb-library-heading">{t.heading}</h3>
+      {/* The card title already names this block (#966), so the heading is kept for the section's name but not drawn. */}
+      <h3 id="orb-library-heading" className="sr-only">
+        {t.heading}
+      </h3>
       <p className="hint">{t.hint}</p>
 
       {profiles.length === 0 ? (
-        <p className="hint">{t.none}</p>
+        <EmptyState message={t.none}>
+          <Button
+            size="compact"
+            onClick={() => {
+              setDraft(EMPTY_DRAFT);
+              setError(undefined);
+            }}
+          >
+            {t.add}
+          </Button>
+        </EmptyState>
       ) : (
         <ul>
           {profiles.map((profile) => (
@@ -147,17 +162,19 @@ export function OrbLibraryEditor({
         </ul>
       )}
 
-      <p>
-        <Button
-          size="compact"
-          onClick={() => {
-            setDraft(EMPTY_DRAFT);
-            setError(undefined);
-          }}
-        >
-          {t.add}
-        </Button>
-      </p>
+      {profiles.length > 0 && (
+        <p>
+          <Button
+            size="compact"
+            onClick={() => {
+              setDraft(EMPTY_DRAFT);
+              setError(undefined);
+            }}
+          >
+            {t.add}
+          </Button>
+        </p>
+      )}
 
       {draft !== undefined && (
         <div className="field-group">
@@ -208,15 +225,17 @@ export function OrbLibraryEditor({
 
       <h4>{t.useHeading}</h4>
       {(['natal', 'transit', 'synastry'] as const).map((context) => (
-        <Select
-          key={context}
-          label={t.contextLabel[context]}
-          value={sources[context] ?? CARD_SOURCE}
-          options={sourceOptions}
-          onChange={(value) => {
-            choose(context, value);
-          }}
-        />
+        <PreferencesRow key={context} title={t.contextLabel[context]}>
+          <Select
+            label={t.contextLabel[context]}
+            hideLabel
+            value={sources[context] ?? CARD_SOURCE}
+            options={sourceOptions}
+            onChange={(value) => {
+              choose(context, value);
+            }}
+          />
+        </PreferencesRow>
       ))}
       <p className="hint">{t.useHint}</p>
       {status !== undefined && <StatusMessage kind="success">{status}</StatusMessage>}

@@ -81,35 +81,12 @@ import { useOptionalStore } from './store-context.js';
 import { ThemeToggle } from './ThemeToggle.js';
 import { useSymbolClass } from './symbol-setting.js';
 import { PageHeader } from './PageHeader.js';
+import { PreferencesRow } from './PreferencesRow.js';
 import { useRegisterExports } from './export-registry.js';
 
 interface ExportStatus {
   readonly kind: 'busy' | 'done' | 'error';
   readonly text: string;
-}
-
-/**
- * One setting as a two-column row (#966): the title and its muted description on the left (60%), the control on the
- * right (40%, right-aligned). Stacks on a phone. The control keeps its own accessible name.
- */
-function PreferencesRow({
-  title,
-  description,
-  children,
-}: {
-  readonly title: string;
-  readonly description?: string | undefined;
-  readonly children: React.ReactNode;
-}): React.JSX.Element {
-  return (
-    <div className="preferences-row">
-      <div className="preferences-row-text">
-        <p className="preferences-row-title">{title}</p>
-        {description !== undefined && <p className="preferences-row-description">{description}</p>}
-      </div>
-      <div className="preferences-row-control">{children}</div>
-    </div>
-  );
 }
 
 /**
@@ -421,7 +398,7 @@ export function PreferencesView({
               <h2 id="preferences-card-symbols" className="preferences-card-title">
                 {t.cardSymbols}
               </h2>
-              <SymbolSetting />
+              <SymbolSetting rows />
             </section>
 
             <section className="preferences-card" aria-labelledby="preferences-card-motion">
@@ -463,13 +440,15 @@ export function PreferencesView({
                 {t.cardRulership}
               </h2>
               <p className="hint">{t.rulersSubtitle}</p>
-              <RulershipSetting
-                value={rulership}
-                onChange={(choice) => {
-                  setRulership(choice);
-                  if (savedDefault !== undefined) saveDefault(savedDefault.settings, choice);
-                }}
-              />
+              <div className="preferences-rulership">
+                <RulershipSetting
+                  value={rulership}
+                  onChange={(choice) => {
+                    setRulership(choice);
+                    if (savedDefault !== undefined) saveDefault(savedDefault.settings, choice);
+                  }}
+                />
+              </div>
             </section>
 
             <section className="preferences-card" aria-labelledby="preferences-card-orbs">
@@ -547,6 +526,7 @@ export function PreferencesView({
                   accept="application/json,.json,.aaf,text/plain"
                   disabled={store === undefined}
                   disabledReason={t.exportNeedsStore}
+                  primary
                   onChange={onRestoreFileChosen}
                 />
               </div>

@@ -102,11 +102,10 @@ const en = {
   densityLabel: 'Density',
   densityHint: 'Compact tightens the spacing of forms and tables. Touch screens keep full-size controls either way.',
   densityOptions: { standard: 'Standard', compact: 'Compact' },
-  exportEverythingHint:
-    'Every person on this device with their birth record and natal chart data, as one JSON file, or just the people list as a spreadsheet.',
-  exportEverything: 'Export everything (one file)',
-  exportPeopleCsv: 'Export people (CSV)',
-  exportPeopleAaf: 'Export people (AAF)',
+  exportEverythingHint: 'Export birth records, natal charts, and people data stored on this device.',
+  exportEverything: 'Export JSON (Full)',
+  exportPeopleCsv: 'Export CSV',
+  exportPeopleAaf: 'Export AAF',
   exportPeopleAafName: 'the people list as AAF',
   exportAafSkipped: (count: number) =>
     `${String(count)} ${count === 1 ? 'person has' : 'people have'} no complete birth record and ${count === 1 ? 'was' : 'were'} left out: AAF needs a date and a place.`,
@@ -226,10 +225,10 @@ const nl: typeof en = {
     'Compact maakt formulieren en tabellen krapper. Aanraakschermen houden in beide gevallen volledige bedieningselementen.',
   densityOptions: { standard: 'Standaard', compact: 'Compact' },
   exportEverythingHint:
-    'Elke persoon op dit apparaat met zijn of haar geboortegegevens en de gegevens van het geboortehoroscoop, als één JSON-bestand, of alleen de personenlijst als spreadsheet.',
-  exportEverything: 'Alles exporteren (één bestand)',
-  exportPeopleCsv: 'Personen exporteren (CSV)',
-  exportPeopleAaf: 'Personen exporteren (AAF)',
+    'Exporteer geboortegegevens, geboortehoroscopen en gegevens van personen die op dit apparaat zijn opgeslagen.',
+  exportEverything: 'JSON exporteren (volledig)',
+  exportPeopleCsv: 'CSV exporteren',
+  exportPeopleAaf: 'AAF exporteren',
   exportPeopleAafName: 'de personenlijst als AAF',
   exportAafSkipped: (count: number) =>
     `${String(count)} ${count === 1 ? 'persoon heeft' : 'personen hebben'} geen volledige geboortegegevens en ${count === 1 ? 'is' : 'zijn'} weggelaten: AAF heeft een datum en een plaats nodig.`,

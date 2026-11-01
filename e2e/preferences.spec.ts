@@ -214,7 +214,7 @@ test('exporting everything and the people CSV both produce real downloads', asyn
 
   const [everything] = await Promise.all([
     page.waitForEvent('download'),
-    page.getByRole('button', { name: 'Export everything (one file)', exact: true }).click(),
+    page.getByRole('button', { name: 'Export JSON (Full)', exact: true }).click(),
   ]);
   expect(everything.suggestedFilename()).toMatch(/^astraya-export-\d{4}-\d{2}-\d{2}\.json$/);
   const archive = JSON.parse(await read(everything)) as { people: { displayName: string }[] };
@@ -223,7 +223,7 @@ test('exporting everything and the people CSV both produce real downloads', asyn
 
   const [csv] = await Promise.all([
     page.waitForEvent('download'),
-    page.getByRole('button', { name: 'Export people (CSV)', exact: true }).click(),
+    page.getByRole('button', { name: 'Export CSV', exact: true }).click(),
   ]);
   expect(await read(csv)).toContain('Albert Einstein,1879-03-14,11:30:00,recorded');
   await context.close();
