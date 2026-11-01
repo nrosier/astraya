@@ -52,9 +52,11 @@ jobs:
           # Capture the status and body so a refusal shows its real cause in the log.
           status="$(curl -sS "${cf_headers[@]}" -u "$HARBOR_ROBOT_USER:$HARBOR_ROBOT_TOKEN" \
             "$HARBOR_URL/api/v2.0/projects/$HARBOR_PROJECT/repositories/$HARBOR_REPOSITORY/artifacts/$HARBOR_TAG/additions/vulnerabilities" \
-            -o harbor-report.json -w '%{http_code}' || true)"
+            -o harbor-report.json -D harbor-headers.txt -w '%{http_code}' || true)"
           if [ "$status" != "200" ]; then
-            echo "Harbor returned HTTP $status. Response body (first 500 bytes):" >&2
+            echo "Harbor returned HTTP $status. Response headers:" >&2
+            cat harbor-headers.txt >&2 || true
+            echo "Response body (first 500 bytes):" >&2
             head -c 500 harbor-report.json >&2 || true
             echo >&2
             exit 1
