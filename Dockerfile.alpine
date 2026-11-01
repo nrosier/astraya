@@ -19,7 +19,7 @@
 # layers are built per architecture. Multi-arch therefore costs one extra small
 # `npm ci --omit=dev` under emulation instead of a full toolchain run.
 
-ARG NODE_VERSION=24-alpine
+ARG NODE_VERSION=26-alpine
 
 # ---- dependencies (cached on the lockfile alone) ----------------------------
 FROM --platform=$BUILDPLATFORM node:${NODE_VERSION} AS deps
