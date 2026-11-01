@@ -323,7 +323,7 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
 
   if (person.moment === undefined || person.timeAccuracy === 'unknown') {
     return (
-      <main className="shell">
+      <main className="shell shell--wide">
         <BackLink fallback={personHref(personId)} />
         <PageHeader title={t.synastryFallback} titleTerm="synastry" />
         <p>
@@ -335,7 +335,7 @@ export function SynastryView({ personId }: { personId: string }): React.JSX.Elem
   }
 
   return (
-    <main className="shell">
+    <main className="shell shell--wide">
       {/* Invisible outside @media print (#564) — see app.css's own `.print-provenance` rule.
           This screen doesn't yet thread a user-configurable calculation snapshot through
           `computeSynastry` (see PrintProvenance.tsx's doc comment), so the footer truthfully
