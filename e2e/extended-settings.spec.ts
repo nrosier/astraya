@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
-import type { BrowserContext, Page } from '@playwright/test';
+import type { BrowserContext, Locator, Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
 import { BORN, EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
@@ -377,8 +377,14 @@ test.describe('with the shared people (#799)', () => {
 
     const card = page.locator('dialog.settings-card');
     const formulaSection = card.locator('fieldset.settings-card-group', { hasText: 'Custom formula points' });
-    // The saved list is read from the chart itself: a saved point is a body on the wheel (the inline editor is gone, #815).
-    const savedList = page.locator('g.chart-body-stack[data-body="Kept point"]');
+    // A saved point is a row in the drawer's FormulaPointsSection list, not a wheel body (#817, moved to #824).
+    const keptRow = (): Locator => formulaSection.locator('tbody tr td:first-child').filter({ hasText: 'Kept point' });
+    // The card is closed after Apply and Cancel, so the saved list is read by reopening the Bodies tab and closing again.
+    const expectSavedAfterClose = async (count: number): Promise<void> => {
+      await openSettings(page, 'Bodies & orbs');
+      await expect(keptRow()).toHaveCount(count);
+      await closeSettings(page);
+    };
 
     // Stage a new point and cancel: it never reaches the person, and the open page's own list stays empty.
     await openSettings(page, 'Bodies & orbs');
@@ -387,10 +393,10 @@ test.describe('with the shared people (#799)', () => {
     await formulaSection.getByRole('button', { name: 'Add formula point', exact: true }).click();
     await expect(formulaSection.locator('tbody tr td:first-child').filter({ hasText: 'Staged point' })).toBeVisible();
     await expect(formulaSection.getByText('Draft, saved on Apply')).toBeVisible();
-    await expect(savedList).toHaveCount(0);
+    await expect(keptRow()).toHaveCount(0);
     await card.getByRole('button', { name: 'Cancel', exact: true }).click();
     await expect(card).toBeHidden();
-    await expect(savedList).toHaveCount(0);
+    await expectSavedAfterClose(0);
     await openSettings(page, 'Bodies & orbs');
     await expect(formulaSection.locator('tbody tr td:first-child').filter({ hasText: 'Staged point' })).toHaveCount(0);
 
@@ -400,21 +406,20 @@ test.describe('with the shared people (#799)', () => {
     await formulaSection.getByRole('button', { name: 'Add formula point', exact: true }).click();
     await card.getByRole('button', { name: 'Apply and redraw', exact: true }).click();
     await expect(card).toBeHidden();
-    await expect(savedList).toHaveCount(1);
-    await expect(savedList.first()).toBeVisible();
+    await expectSavedAfterClose(1);
 
     // A delete is staged too: marked removed in the drawer, still saved until Apply, restored by Cancel.
     await openSettings(page, 'Bodies & orbs');
     await formulaSection.getByRole('button', { name: 'Remove Kept point', exact: true }).click();
     await expect(formulaSection.getByText('Removed, saved on Apply')).toBeVisible();
-    await expect(savedList).toHaveCount(1);
+    await expect(keptRow()).toHaveCount(1);
     await card.getByRole('button', { name: 'Cancel', exact: true }).click();
-    await expect(savedList).toHaveCount(1);
+    await expectSavedAfterClose(1);
     await openSettings(page, 'Bodies & orbs');
     await formulaSection.getByRole('button', { name: 'Remove Kept point', exact: true }).click();
     await card.getByRole('button', { name: 'Apply and redraw', exact: true }).click();
     await expect(card).toBeHidden();
-    await expect(savedList).toHaveCount(0);
+    await expectSavedAfterClose(0);
   });
 
   test('the card is not part of the printed page', async () => {
