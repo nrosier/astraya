@@ -81,10 +81,26 @@ describe('materialized custom points (#573)', () => {
       9,
     );
     expect(positionRows(data).some((row) => row.bodyName === 'Fortune-like')).toBe(true);
-    expect(chartWheelRing(data).bodies.some((body) => body.key === 'Fortune-like')).toBe(true);
     expect(aspectRows(data).some((row) => row.bodyAName === 'Fortune-like' || row.bodyBName === 'Fortune-like')).toBe(
       true,
     );
+  });
+
+  it('keeps a saved formula point off the chart wheel rings (#817)', async () => {
+    const engine = await getEngine();
+    const data = await computeChartData(PERSON, engine, {
+      customPoints: [{ id: 'fortune-like', name: 'Fortune-like', formula: 'ascendant + moon - sun' }],
+    });
+    const [point] = data.customPoints ?? [];
+    expect(point).toBeDefined();
+    const ring = chartWheelRing(data);
+    expect(ring.bodies.some((body) => body.key === 'Fortune-like')).toBe(false);
+    expect(ring.bodies.some((body) => body.longitude === point?.position.longitude)).toBe(false);
+    expect(ring.bodies.length).toBeGreaterThan(0);
+    // The wheel's aspect web must not chord to the hidden point either.
+    expect(ring.aspects?.some((a) => a.bodyA === point?.body || a.bodyB === point?.body) ?? false).toBe(false);
+    // The point is still computed for the tables and the Bodies tab.
+    expect(positionRows(data).some((row) => row.bodyName === 'Fortune-like')).toBe(true);
   });
 
   it('keeps a disabled definition persisted but omits it from chart positions and aspects', async () => {

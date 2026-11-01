@@ -1032,16 +1032,23 @@ export function derivedPointRows(data: ChartData, options: PointVisibilityOption
  * finds, minor ones included, so nothing is actually hidden — only the wheel's chords are.
  */
 export function chartWheelRing(data: ChartData, label = 'Natal', options: PointVisibilityOptions = {}): WheelRingInput {
+  // Saved formula points are shown on the Bodies tab and in the tables only, never on the wheel (#817, moved to #824).
+  const isWheelBody = (body: BodyId): boolean => customPointByBody(data, body) === undefined;
   return {
     label,
     houses: data.houses,
-    bodies: visiblePositions(data.positions, options).map((position) => ({
-      body: position.body,
-      key: chartBodyKey(data, position.body),
-      longitude: position.longitude,
-      retrograde: position.retrograde,
-    })),
-    aspects: filterAspectsForDisplay(visibleAspects(data.aspects, options), { visibleFamilies: ['major'] }),
+    bodies: visiblePositions(data.positions, options)
+      .filter((position) => isWheelBody(position.body))
+      .map((position) => ({
+        body: position.body,
+        key: chartBodyKey(data, position.body),
+        longitude: position.longitude,
+        retrograde: position.retrograde,
+      })),
+    aspects: filterAspectsForDisplay(
+      visibleAspects(data.aspects, options).filter((aspect) => isWheelBody(aspect.bodyA) && isWheelBody(aspect.bodyB)),
+      { visibleFamilies: ['major'] },
+    ),
   };
 }
 
