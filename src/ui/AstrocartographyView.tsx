@@ -48,6 +48,8 @@ import type { CorpusEntry, Locale } from '../interpretation/schema.js';
 import { wheelCorpus } from './wheel-corpus.js';
 import { useStableMoment } from './use-stable-moment.js';
 import { BackLink } from './BackLink.js';
+import { useCalculationBasisLine } from './calculation-basis.js';
+import { usePersonCalculationSettings } from './person-calculation-settings.js';
 
 function lineTypeLabels(t: typeof astrocartographyViewMessages.en): Record<LineType, string> {
   return { MC: t.mc, IC: t.ic, AC: t.ac, DC: t.dc };
@@ -74,6 +76,8 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
   const person = state.people.get(personId);
   const personMoment = useStableMoment(person?.moment);
   const t = useMessages(astrocartographyViewMessages);
+  const calculation = usePersonCalculationSettings(personId);
+  const basisLine = useCalculationBasisLine(calculation.settings, calculation.rulership);
   const [locale] = useLocale();
   const { provider } = useEphemerisProvider();
   // What the map is drawn from. Edited as a draft in the Map settings dialog and replaced as a whole on Apply, so
@@ -199,6 +203,7 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
         title={person.displayName ? t.heading(person.displayName) : t.astrocartographyFallback}
         titleTerm="astrocartography"
         subtitle={t.subtitle}
+        basis={basisLine}
       >
         <MapSettingsDialog applied={settings} onApply={setSettings} lineTypeLabels={lineTypeLabels(t)} />
         <a
