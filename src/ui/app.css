@@ -4694,28 +4694,27 @@ svg text.chart-symbol-text-unicode {
   text-align: center;
 }
 
-/* The Charts page's chart-type Select: natal, draconic, harmonic, solar return, lunar return. */
+/*
+ * The Charts page's chart-type Select, on every chart page (natal, draconic, harmonic, solar return, lunar return,
+ * relocated; #981, owner decision 2026-11-01: all charts share one design). The select is as tall as the view bar
+ * under it (the 37.5px tab row viewport, 2.68rem at the 14px root).
+ */
 .chart-type-select {
   max-width: 20rem;
-  margin: var(--space-2) 0 var(--space-1);
-}
-
-/* #981: on natal the select is as tall as the view bar under it (the 37.5px tab row viewport, 2.68rem at the 14px root). */
-.chart-type-select--natal {
   margin: 0 0 var(--space-1);
 }
 
-.chart-type-select--natal .primitive-field {
+.chart-type-select .primitive-field {
   gap: var(--space-1);
 }
 
-/* #981: the natal view bar sits right under its select, with no extra row margin above it. */
-.chart-type-select--natal + .tab-row {
+/* The view bar sits right under its select, with no extra row margin above it. */
+.chart-type-select + .tab-row {
   margin-top: 0;
   margin-bottom: 0;
 }
 
-.chart-type-select--natal select {
+.chart-type-select select {
   box-sizing: border-box;
   height: 2.68rem;
 }
