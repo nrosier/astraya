@@ -240,8 +240,14 @@ for (const viewport of [
     const right = await page.getByRole('complementary', { name: 'Export summary' }).boundingBox();
     const person = await page.getByLabel('Person', { exact: true }).boundingBox();
     if (left === null || right === null || person === null) throw new Error('the Documents columns did not render');
-    // The person dropdown spans its whole column.
-    expect(Math.abs(person.width - left.width)).toBeLessThanOrEqual(1);
+    // The person dropdown spans its whole column: the width of the first section card's content box (#975 cards pad it).
+    const card = await page.locator('.pdf-builder-card').first().boundingBox();
+    if (card === null) throw new Error('the first section card did not render');
+    // Padding and border on each side both sit between the card's outer edge and its content.
+    const inset = await page.evaluate<number>(
+      "(() => { const s = getComputedStyle(document.querySelector('.pdf-builder-card')); return parseFloat(s.paddingLeft) + parseFloat(s.borderLeftWidth); })()",
+    );
+    expect(Math.abs(person.width - (card.width - 2 * inset))).toBeLessThanOrEqual(1);
     if (viewport.width < 1024) {
       // A phone: one column, the summary below the selection.
       expect(right.y).toBeGreaterThan(left.y);
