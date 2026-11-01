@@ -128,6 +128,36 @@ function expectPageHeader(h1: HTMLHeadingElement): void {
   expect(h1.textContent).not.toBe('');
 }
 
+async function screenRootOf(node: ReactNode): Promise<HTMLElement> {
+  const container = document.createElement('div');
+  document.body.append(container);
+  const root = createRoot(container);
+  try {
+    await act(async () => {
+      root.render(node);
+      await Promise.resolve();
+    });
+    const main = container.querySelector('main');
+    if (main === null) throw new Error('no main rendered');
+    return main;
+  } finally {
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+  }
+}
+
+describe('relationship screens share the wide shell (#882)', () => {
+  it('Composite and Synastry both render in the wide shell', async () => {
+    for (const node of [<CompositeView key="c" personId="p1" view="wheel" />, <SynastryView key="s" personId="p1" />]) {
+      const main = await screenRootOf(node);
+      expect(main.classList.contains('shell')).toBe(true);
+      expect(main.classList.contains('shell--wide')).toBe(true);
+    }
+  });
+});
+
 describe('one PageHeader pattern (#887)', () => {
   describe('workspace screens', () => {
     it('People', async () => {
