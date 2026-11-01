@@ -53,6 +53,30 @@ describe('PageHeader (#506/#509)', () => {
     expect(container.querySelector('button')).toBeNull();
   });
 
+  it('renders a subtitle under the title when given, and none when omitted (#966)', async () => {
+    const withSubtitle = await mount(
+      <ExportRegistryProvider>
+        <PageHeader title="Preferences" subtitle="Durable settings for this account and this device, in one place." />
+      </ExportRegistryProvider>,
+    );
+    const subtitle = withSubtitle.querySelector('.page-header-subtitle');
+    expect(subtitle?.textContent).toBe('Durable settings for this account and this device, in one place.');
+    expect(subtitle?.tagName).toBe('P');
+    expect(subtitle?.previousElementSibling?.classList.contains('page-header-row')).toBe(true);
+    act(() => {
+      mounted?.root.unmount();
+    });
+    mounted?.container.remove();
+    mounted = undefined;
+
+    const withoutSubtitle = await mount(
+      <ExportRegistryProvider>
+        <PageHeader title="Preferences" />
+      </ExportRegistryProvider>,
+    );
+    expect(withoutSubtitle.querySelector('.page-header-subtitle')).toBeNull();
+  });
+
   it('renders a basis line and the primary action slot when given', async () => {
     const container = await mount(
       <ExportRegistryProvider>

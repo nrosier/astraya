@@ -38,12 +38,15 @@ interface ExportStatus {
 export function PageHeader({
   title,
   titleTerm,
+  subtitle,
   basis,
   children,
 }: {
   readonly title: string;
   /** A glossary term the title names: the title text itself opens that term's definition (#901). */
   readonly titleTerm?: GlossaryTermId | undefined;
+  /** One sentence under the title saying what the page is for (#966). Omitted by every existing page. */
+  readonly subtitle?: string | undefined;
   /** A compact calculation-basis line, e.g. "Tropical · Placidus · Modern rulers". */
   readonly basis?: string | undefined;
   /** The primary page action and anything else that belongs beside the title (e.g. a share link). */
@@ -134,6 +137,7 @@ export function PageHeader({
           </div>
         )}
       </div>
+      {subtitle !== undefined && <p className="page-header-subtitle">{subtitle}</p>}
       {basis !== undefined && <p className="hint page-header-basis">{basis}</p>}
       {status !== undefined && (
         <p

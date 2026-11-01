@@ -51,14 +51,14 @@ test('Preferences is reachable from every screen, has three tabs, and every tab 
   ]);
   // Opens on Appearance, where the language now lives, and says what the tab's settings are stored as.
   await expect(tabs.getByRole('tab', { name: 'Appearance & accessibility' })).toHaveAttribute('aria-selected', 'true');
-  await expect(page.getByRole('heading', { name: 'Appearance & accessibility', level: 2 })).toBeVisible();
-  await expect(page.getByRole('button', { name: /Language: English/ }).first()).toBeVisible();
+  await expect(page.getByRole('tabpanel', { name: 'Appearance & accessibility' })).toBeVisible();
+  await expect(page.getByRole('radiogroup', { name: 'Language' }).getByRole('radio', { name: 'EN' })).toBeChecked();
   await expect(page.getByText(/^This device\./).first()).toBeVisible();
   // The link marks itself current while here, same convention as every other nav link.
   await expect(page.getByRole('link', { name: 'Preferences', exact: true })).toHaveAttribute('aria-current', 'page');
   for (const name of ['Appearance & accessibility', 'Astrology defaults', 'Data & privacy']) {
     await tabs.getByRole('tab', { name }).click();
-    await expect(page.getByRole('heading', { name, level: 2 })).toBeVisible();
+    await expect(page.getByRole('tabpanel', { name })).toBeVisible();
     const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
     expect(results.violations, name).toEqual([]);
   }
@@ -132,15 +132,15 @@ for (const width of [390, 1280]) {
 
 test('an old #/preferences/general link opens Appearance, where the language moved (#650)', async ({ page }) => {
   await gotoAndSettle(page, `${baseUrl}/#/preferences/general`);
-  await expect(page.getByRole('heading', { name: 'Appearance & accessibility', level: 2 })).toBeVisible();
+  await expect(page.getByRole('tabpanel', { name: 'Appearance & accessibility' })).toBeVisible();
 });
 
 test('a section link opens Preferences at that heading and moves focus there (#509)', async ({ page }) => {
   test.setTimeout(60_000);
   await gotoAndSettle(page, `${baseUrl}/#/preferences/data`);
-  await expect(page.getByRole('heading', { name: 'Data & privacy', level: 2 })).toBeFocused();
+  await expect(page.getByRole('tabpanel', { name: 'Data & privacy' })).toBeFocused();
   await gotoAndSettle(page, `${baseUrl}/#/preferences/astrology`);
-  await expect(page.getByRole('heading', { name: 'Astrology defaults', level: 2 })).toBeFocused();
+  await expect(page.getByRole('tabpanel', { name: 'Astrology defaults' })).toBeFocused();
   // An unknown section is not a guess at one: the hash falls back to People.
   await gotoAndSettle(page, `${baseUrl}/#/preferences/nope`);
   await expect(page.getByRole('heading', { name: 'Preferences', level: 1 })).toHaveCount(0);
