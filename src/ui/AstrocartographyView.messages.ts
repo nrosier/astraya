@@ -18,6 +18,10 @@ const en = {
     `Astrocartography lines shift about 15° of longitude per hour of birth-time error, so this needs a known birth time. ${name}’s birth time is unknown — the same reason their chart has no houses.`,
 
   heading: (name: string) => `${name}’s astrocartography`,
+  subtitle:
+    'A world map of the lines where each body was rising, setting, culminating or at the lowest point at birth.',
+  buildPdf: 'Build PDF →',
+  mapCardLabel: 'World map',
   hint: 'Where in the world each body’s angles (MC/IC/AC/DC) fall on the horizon or meridian right now, plus optional Local Space lines (azimuth vectors from the birthplace). Line kind is shown by both colour and dash pattern, so it stays readable without colour.',
 
   mc: 'MC (Midheaven)',
@@ -39,8 +43,6 @@ const en = {
   showMeanings: 'Show meanings',
   hideMeanings: 'Hide meanings',
   error: (message: string) => `The map could not be calculated. ${message}`,
-
-  exportPdf: 'Export PDF',
 };
 
 const nl: typeof en = {
@@ -54,6 +56,10 @@ const nl: typeof en = {
     `Astrocartografielijnen verschuiven ongeveer 15° lengtegraad per uur geboortetijdfout, dus is een bekende geboortetijd vereist. De geboortetijd van ${name} is onbekend — dezelfde reden waarom hun horoscoop geen huizen heeft.`,
 
   heading: (name: string) => `Astrocartografie van ${name}`,
+  subtitle:
+    'Een wereldkaart van de lijnen waar elk hemellichaam bij de geboorte opkwam, onderging, culmineerde of op zijn laagste punt stond.',
+  buildPdf: 'PDF samenstellen →',
+  mapCardLabel: 'Wereldkaart',
   hint: 'Waar op de wereld de hoeken (MC/IC/AC/DC) van elk hemellichaam nu op de horizon of meridiaan vallen, plus optionele Local Space-lijnen (azimutvectoren vanaf de geboorteplaats). Het lijntype wordt zowel door kleur als streeppatroon getoond, zodat het ook zonder kleur leesbaar blijft.',
 
   mc: 'MC (Midheaven)',
@@ -75,8 +81,6 @@ const nl: typeof en = {
   showMeanings: 'Toon betekenissen',
   hideMeanings: 'Verberg betekenissen',
   error: (message: string) => `De kaart kon niet worden berekend. ${message}`,
-
-  exportPdf: 'PDF exporteren',
 };
 
 export const astrocartographyViewMessages = { en, nl };

@@ -795,6 +795,53 @@ dd:not(:first-of-type) {
   overflow-wrap: break-word;
 }
 
+/* #978: the map and its legend sit on one card surface; the meanings list is grouped on a card too, so no row floats on the page background. */
+.acg-map-card,
+.acg-meanings-card {
+  padding: 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.acg-map-card {
+  margin-bottom: 1rem;
+}
+
+.acg-meanings-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.acg-meanings-card .primitive-disclosure {
+  border: 0;
+  border-radius: 0;
+  border-top: 1px solid var(--line);
+  background: transparent;
+}
+
+.acg-meanings-card .primitive-disclosure:first-child {
+  border-top: 0;
+}
+
+.acg-meanings-card .primitive-disclosure-trigger:hover:not(:disabled) {
+  background: var(--surface-hover);
+}
+
+.map-basis {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.5rem;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.map-basis-label {
+  font-weight: 600;
+}
+
 footer {
   margin-top: 4rem;
   padding-top: 1.25rem;

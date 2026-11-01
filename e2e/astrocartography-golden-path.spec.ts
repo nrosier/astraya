@@ -66,7 +66,7 @@ test.describe('with the shared people (#799)', () => {
     await context.close();
   });
 
-  test('a person with a known birth time gets an Astrocartography map and its Export PDF link opens the creator', async () => {
+  test('a person with a known birth time gets an Astrocartography map and its Build PDF link opens the creator', async () => {
     test.setTimeout(60_000);
 
     await openSharedPerson(page, baseUrl, EINSTEIN);
@@ -76,7 +76,7 @@ test.describe('with the shared people (#799)', () => {
     await expect(page.locator('div.acg-map')).toBeVisible();
     await expect(page.locator('div.acg-map svg')).toBeVisible();
 
-    const exportLink = page.getByRole('link', { name: 'Export PDF', exact: true });
+    const exportLink = page.getByRole('link', { name: 'Build PDF →', exact: true });
     await expect(exportLink).toHaveAttribute('href', /#\/documents\/pdf\?person=p-[^&]+&section=astrocartography$/);
     await exportLink.click();
     await expect(page).toHaveURL(/#\/documents\/pdf\?person=p-[^&]+&section=astrocartography$/);
@@ -144,9 +144,7 @@ test.describe('with the shared people (#799)', () => {
     await dialog.getByLabel('Uranus').check();
     await applyMapSettings(page);
 
-    await expect(page.getByRole('button', { name: /^Map settings/ })).toContainText(
-      '2 line types · 8 bodies · Local Space on',
-    );
+    await expect(page.locator('.map-basis')).toContainText('2 line types · 8 bodies · Local Space on');
     await expect(page.locator('div.acg-map .acg-line-mc')).toHaveCount(0);
     await expect(page.locator('div.acg-map .acg-line-local-space').first()).toBeVisible();
     await expect(page.locator('div.acg-map')).not.toHaveAttribute('aria-busy', 'true');
@@ -171,7 +169,7 @@ test.describe('with the shared people (#799)', () => {
     await dialog.getByLabel('Longitude').fill('2.35');
     await expect(apply).toBeEnabled();
     await apply.click();
-    await expect(page.getByRole('button', { name: /^Map settings/ })).toContainText('relocated');
+    await expect(page.locator('.map-basis')).toContainText('relocated');
     await expect(page.getByText(/Ascendant: .* · Midheaven: /)).toBeVisible();
   });
 
@@ -186,7 +184,7 @@ test.describe('with the shared people (#799)', () => {
     test.setTimeout(90_000);
     await openSharedEinstein(page);
     const trigger = page.getByRole('button', { name: /^Map settings/ });
-    await expect(trigger).toContainText('4 line types · 7 bodies · Local Space off');
+    await expect(page.locator('.map-basis')).toContainText('4 line types · 7 bodies · Local Space off');
     // The settings are not scattered over the page any more.
     await expect(page.getByRole('group', { name: 'Line types' })).toHaveCount(0);
     await expect(page.getByText('Extended', { exact: true })).toHaveCount(0);
@@ -216,7 +214,7 @@ test.describe('with the shared people (#799)', () => {
       await expect(trigger).toBeFocused();
     }
     expect(await page.locator('div.acg-map').innerHTML()).toBe(markup);
-    await expect(trigger).toContainText('4 line types · 7 bodies · Local Space off');
+    await expect(page.locator('.map-basis')).toContainText('4 line types · 7 bodies · Local Space off');
   });
 
   test('the dialog works on a phone and on a short laptop screen, and line meanings say they expand (#512)', async () => {
