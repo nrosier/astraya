@@ -5,6 +5,9 @@
 # Required repo settings (Settings -> Secrets and variables -> Actions):
 #   Secrets:   HARBOR_ROBOT_USER, HARBOR_ROBOT_TOKEN
 #              A robot account with read access to the scanned project's artifacts.
+#              CF_ACCESS_CLIENT_ID, CF_ACCESS_CLIENT_SECRET
+#              A Cloudflare Access service token whose policy allows the Harbor hostname.
+#              Without them the request is blocked by Cloudflare before reaching Harbor.
 #   Variables: HARBOR_URL (e.g. https://harbor.example.com, no trailing slash),
 #              HARBOR_PROJECT, HARBOR_REPOSITORY, HARBOR_TAG (default: latest)
 #
@@ -36,9 +39,17 @@ jobs:
           HARBOR_TAG: ${{ vars.HARBOR_TAG || 'latest' }}
           HARBOR_ROBOT_USER: ${{ secrets.HARBOR_ROBOT_USER }}
           HARBOR_ROBOT_TOKEN: ${{ secrets.HARBOR_ROBOT_TOKEN }}
+          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
         run: |
           set -euo pipefail
-          curl -fsS -u "$HARBOR_ROBOT_USER:$HARBOR_ROBOT_TOKEN" \
+          # Cloudflare Access service-token headers. Both must be set together;
+          # with neither set, the request goes out without them.
+          cf_headers=()
+          if [ -n "${CF_ACCESS_CLIENT_ID:-}" ] && [ -n "${CF_ACCESS_CLIENT_SECRET:-}" ]; then
+            cf_headers=(-H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET")
+          fi
+          curl -fsS "${cf_headers[@]}" -u "$HARBOR_ROBOT_USER:$HARBOR_ROBOT_TOKEN" \
             "$HARBOR_URL/api/v2.0/projects/$HARBOR_PROJECT/repositories/$HARBOR_REPOSITORY/artifacts/$HARBOR_TAG/additions/vulnerabilities" \
             -o harbor-report.json
           echo "Fetched the Harbor report for $HARBOR_PROJECT/$HARBOR_REPOSITORY:$HARBOR_TAG"
