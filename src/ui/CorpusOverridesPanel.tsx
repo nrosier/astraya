@@ -49,6 +49,7 @@ import { EmptyState } from './primitives/EmptyState.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { BackLink } from './BackLink.js';
 import { PageHeader } from './PageHeader.js';
+import { useRegisterExports } from './export-registry.js';
 
 const PAGE_SIZE = 50;
 
@@ -258,6 +259,9 @@ export function CorpusOverridesPanel(): React.JSX.Element {
         setLoadError(cause instanceof Error ? cause.message : String(cause));
       });
   };
+
+  // The toolbar's export, also in the header Export menu (#887).
+  useRegisterExports([{ key: 'corrections', label: t.exportButton, run: exportCorrections }]);
 
   return (
     <main className="shell admin-view">

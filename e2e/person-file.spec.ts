@@ -116,9 +116,24 @@ test.describe('with the shared people (#799)', () => {
       }
       const saveCentre = saveBox.y + saveBox.height / 2;
       const titleCentre = titleBox.y + titleBox.height / 2;
-      expect(Math.abs(saveBox.x + saveBox.width - contentRight), `${String(viewport.width)}px right edge`).toBeLessThan(
-        1,
-      );
+      // The header's Export control (#887) follows Save in the title row. On a narrow screen the row wraps, so the
+      // control may drop to its own line; either way it and Save must stay inside the content edge.
+      const exportBox = await page.locator('.page-header-row .page-header-export').boundingBox();
+      if (exportBox === null) throw new Error('Export control not laid out');
+      expect(
+        exportBox.x + exportBox.width - contentRight,
+        `${String(viewport.width)}px export stays inside the content edge`,
+      ).toBeLessThan(1);
+      expect(
+        saveBox.x + saveBox.width - contentRight,
+        `${String(viewport.width)}px Save stays inside the content edge`,
+      ).toBeLessThan(1);
+      if (Math.abs(exportBox.y - saveBox.y) < 2) {
+        // Same row: Save ends before the control, with the header's gap between them.
+        const gap = exportBox.x - (saveBox.x + saveBox.width);
+        expect(gap, `${String(viewport.width)}px Save sits beside the Export control`).toBeGreaterThanOrEqual(0);
+        expect(gap, `${String(viewport.width)}px gap to the Export control`).toBeLessThan(17);
+      }
       expect(Math.abs(saveCentre - titleCentre), `${String(viewport.width)}px vertical centre`).toBeLessThan(2);
     }
   });
