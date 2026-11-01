@@ -1,7 +1,7 @@
 /**
  * @module ui/PersonFileActions
  * @purpose The birth-record page's export and import of one person (#699, #896): an export card with one row of AAF, JSON and CSV downloads, and a separate Replace data card that replaces this person's birth data from an AAF or Astraya JSON file after a preview.
- * @conventions Reuses the backup's writers (`peopleToAaf`, `buildFullExport`, `peopleToCsv`) with one person, and `domain/person-file.ts` to read and stage; the store is written only on Replace, in one `store.mutate`. CSV is export only. Returns two sibling cards for the birth-record right-hand column.
+ * @conventions Reuses the backup's writers (`peopleToAaf`, `buildFullExport`, `peopleToCsv`) with one person, and `domain/person-file.ts` to read and stage; the store is written only on Replace, in one `store.mutate`. CSV is export only. Returns two sibling cards for the birth-record right-hand column. Not registered in the page header's Export menu (#896): the EXPORT card is the only place these downloads live.
  * @exports PersonFileActions
  */
 import { Fragment, useState } from 'react';
@@ -14,7 +14,6 @@ import { readPersonFile, stagePersonReplace, type PersonChange } from '../domain
 import { APP_VERSION } from '../version.js';
 import { readDefaultCalculationProfile } from './default-calculation-profile.js';
 import { downloadText } from './download.js';
-import { useRegisterExports } from './export-registry.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { useMessages } from './messages.js';
 import { personFileActionsMessages } from './PersonFileActions.messages.js';
@@ -96,13 +95,6 @@ export function PersonFileActions({
     downloadText(filename('csv'), peopleToCsv([person]), 'text/csv');
     setExportStatus({ kind: 'success', text: t.exported('CSV') });
   };
-  // The export row's three downloads, also in the header Export menu (#887).
-  useRegisterExports([
-    { key: 'aaf', label: t.exportAaf, run: exportAaf },
-    { key: 'json', label: t.exportJson, run: exportJson },
-    { key: 'csv', label: t.exportCsv, run: exportCsv },
-  ]);
-
   const onFileChosen = (file: File | undefined): void => {
     if (file === undefined) return;
     setCandidates([]);

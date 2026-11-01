@@ -89,7 +89,7 @@ test.describe('with the shared people (#799)', () => {
     test.setTimeout(60_000);
     await openSharedPerson(page, baseUrl, EINSTEIN);
     await page.getByRole('link', { name: 'Birth record', exact: true }).click();
-    const save = page.locator('.birth-record-save').getByRole('button', { name: 'Save', exact: true });
+    const save = page.locator('.birth-record-save button');
     const title = page.locator('.page-header-row h1');
     await expect(save).toBeVisible();
     await expect(title).toBeVisible();
@@ -116,24 +116,12 @@ test.describe('with the shared people (#799)', () => {
       }
       const saveCentre = saveBox.y + saveBox.height / 2;
       const titleCentre = titleBox.y + titleBox.height / 2;
-      // The header's Export control (#887) follows Save in the title row. On a narrow screen the row wraps, so the
-      // control may drop to its own line; either way it and Save must stay inside the content edge.
-      const exportBox = await page.locator('.page-header-row .page-header-export').boundingBox();
-      if (exportBox === null) throw new Error('Export control not laid out');
-      expect(
-        exportBox.x + exportBox.width - contentRight,
-        `${String(viewport.width)}px export stays inside the content edge`,
-      ).toBeLessThan(1);
+      // The header no longer carries an Export dropdown (#896 owner spec): Save is the only control in the top-right slot.
+      await expect(page.locator('.page-header-row .page-header-export')).toHaveCount(0);
       expect(
         saveBox.x + saveBox.width - contentRight,
         `${String(viewport.width)}px Save stays inside the content edge`,
       ).toBeLessThan(1);
-      if (Math.abs(exportBox.y - saveBox.y) < 2) {
-        // Same row: Save ends before the control, with the header's gap between them.
-        const gap = exportBox.x - (saveBox.x + saveBox.width);
-        expect(gap, `${String(viewport.width)}px Save sits beside the Export control`).toBeGreaterThanOrEqual(0);
-        expect(gap, `${String(viewport.width)}px gap to the Export control`).toBeLessThan(17);
-      }
       expect(Math.abs(saveCentre - titleCentre), `${String(viewport.width)}px vertical centre`).toBeLessThan(2);
     }
   });
@@ -149,7 +137,7 @@ test.describe('with the shared people (#799)', () => {
       if (found === null) throw new Error(`${name} card not laid out`);
       return found;
     };
-    const save = page.locator('.birth-record-save').getByRole('button', { name: 'Save', exact: true });
+    const save = page.locator('.birth-record-save button');
     await expect(card('location').locator('.birth-record-timezone-status')).toBeVisible();
     await expect(card('timezone').locator('.primitive-disclosure-trigger')).toBeVisible();
     await expect(page.locator('.sticky-actions')).toHaveCount(0);

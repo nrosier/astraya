@@ -29,6 +29,7 @@ import { DateField } from './primitives/DateField.js';
 import { NumberField } from './primitives/NumberField.js';
 import { ChoiceGroup } from './primitives/ChoiceGroup.js';
 import { Select } from './primitives/Select.js';
+import { Tooltip } from './primitives/Tooltip.js';
 import { TextAreaField } from './primitives/TextAreaField.js';
 import { TextField } from './primitives/TextField.js';
 import { TimeField } from './primitives/TimeField.js';
@@ -56,6 +57,28 @@ function hasOverrides(draft: Draft): boolean {
   return draft.calendar !== 'auto' || draft.offsetOverride.trim() !== '' || draft.zoneOverride.trim() !== '';
 }
 
+/**
+ * The save status dot beside the name heading (#896 owner spec): green when the record matches the store, amber with
+ * unsaved changes. Colour is not the only cue: the sr-only text and the aria-label both carry the status, and the
+ * tooltip opens on hover, click or keyboard focus through the shared Tooltip primitive.
+ */
+function SaveStatusDot({ dirty }: { readonly dirty: boolean }): React.JSX.Element {
+  const t = useMessages(personFormMessages);
+  const label = dirty ? t.statusUnsavedLabel : t.statusSavedLabel;
+  return (
+    <Tooltip
+      className={
+        dirty ? 'birth-record-status birth-record-status--unsaved' : 'birth-record-status birth-record-status--saved'
+      }
+      text={dirty ? t.statusUnsavedTooltip : t.statusSavedTooltip}
+      label={label}
+    >
+      <span className="birth-record-status-dot" aria-hidden="true" />
+      <span className="sr-only">{label}</span>
+    </Tooltip>
+  );
+}
+
 export function PersonForm({ personId }: { personId: string }): React.JSX.Element {
   const store = useStore();
   const state = useStoreState();
@@ -72,7 +95,6 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
   const [draft, setDraft] = useState<Draft | undefined>(undefined);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string>();
-  const [saved, setSaved] = useState(false);
 
   // The easter egg (#697), from the saved record, not the draft being edited.
   const civil = person?.moment?.civil;
@@ -104,12 +126,18 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
   const unknown = current.timeAccuracy === 'unknown';
   const { errors, moment } = validateDraft(current, validationT);
   const resolved = moment === undefined ? undefined : resolveMoment(moment);
+  // Dirty means the same as a save would write: a whitespace-only edit that normalises back to the stored value is
+  // not a change. A draft that does not validate cannot be diffed into mutations, so any field difference counts.
+  const dirty =
+    opened !== undefined &&
+    (moment === undefined
+      ? (Object.keys(current) as (keyof Draft)[]).some((field) => current[field] !== opened[field])
+      : draftToMutations(personId, current, opened, validationT).length > 0);
 
   // `onPick` below needs to update latitude and longitude together: two separate `set` calls in
   // the same handler would both close over this render's `current` and the second would clobber
   // the first's update with its own stale copy of the other field.
   const setFields = (patch: Partial<Draft>): void => {
-    setSaved(false);
     setDraft({ ...current, ...patch });
   };
 
@@ -120,18 +148,15 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
   const save = (): void => {
     if (opened === undefined || moment === undefined) return;
     const mutations = draftToMutations(personId, current, opened, validationT);
-    if (mutations.length === 0) {
-      setSaved(true);
-      return;
-    }
+    if (mutations.length === 0) return;
     setSaving(true);
     setSaveError(undefined);
     void store
       .mutate(mutations)
       .then(() => {
-        setSaved(true);
         // The draft is deliberately not reset to the stored person here. The store's state is
-        // already the authority, and re-deriving the draft would fight the user's cursor.
+        // already the authority, and re-deriving the draft would fight the user's cursor. Once the
+        // store holds the draft, `dirty` is false and the header reads Saved again.
       })
       .catch((cause: unknown) => {
         setSaveError(cause instanceof Error ? cause.message : String(cause));
@@ -155,17 +180,19 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
   return (
     <main className="shell">
       <BackLink fallback="#/people" label={shared.people} />
-      {/* Save changes sits in the page header, aligned with the title (#896, overrides D-795b). */}
-      <PageHeader title={current.displayName.trim() === '' ? t.newPerson : current.displayName}>
+      {/* Save sits in the page header's top-right slot, and the save status dot beside the name (#896 owner spec 2026-11-01). */}
+      <PageHeader
+        title={current.displayName.trim() === '' ? t.newPerson : current.displayName}
+        titleAside={<SaveStatusDot dirty={dirty} />}
+      >
         <div className="birth-record-save">
-          <Button variant="primary" onClick={save} disabled={saving || moment === undefined}>
-            {saving ? t.saving : t.saveButton}
+          <Button
+            variant={dirty ? 'primary' : 'quiet'}
+            onClick={save}
+            disabled={saving || !dirty || moment === undefined}
+          >
+            {saving ? t.saving : dirty ? t.saveButton : t.savedButton}
           </Button>
-          {saved && !saving && (
-            <span className="status" role="status">
-              {t.savedStatus}
-            </span>
-          )}
           {moment === undefined && (
             <span className="muted">
               {/* Why the button is disabled, next to the button. A disabled control with no

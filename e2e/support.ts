@@ -56,8 +56,8 @@ export async function createPerson(page: Page, input: PersonInput): Promise<void
   }
   await labeledField(page, /^Latitude/, 'input[type="number"]').fill(input.latitude);
   await labeledField(page, /^Longitude/, 'input[type="number"]').fill(input.longitude);
-  await page.getByRole('button', { name: 'Save', exact: true }).click();
-  await expect(page.getByText('Saved on this device.')).toBeVisible();
+  await page.getByRole('button', { name: 'Save changes', exact: true }).click();
+  await expect(page.getByLabel('Status: Saved on this device', { exact: true })).toBeVisible();
 }
 
 /**
