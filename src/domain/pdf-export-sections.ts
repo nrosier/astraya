@@ -534,6 +534,15 @@ export function pdfSelectionIsEmpty(selection: PdfSelection): boolean {
 }
 
 /** A chart-type section's own default parameters, for when it is first ticked in the builder. */
+/**
+ * The chart section a page's view link asks for (#915): the wheel is on only for the Wheel view, the one view that
+ * shows it, and the section takes exactly that view's tables. The chart type's other inputs keep their defaults.
+ */
+export function chartSectionForView(type: ChartType, view: ChartViewKind): PdfChartSectionOptions {
+  const defaults = defaultChartSectionOptions(type);
+  return { ...defaults, wheel: view === 'wheel', tables: VIEW_TABLES[view] };
+}
+
 export function defaultChartSectionOptions(type: ChartType): PdfChartSectionOptions {
   switch (type) {
     case 'harmonic':

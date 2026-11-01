@@ -28,6 +28,7 @@ import { Select } from './primitives/Select.js';
 import { useId, useMemo, useState } from 'react';
 import {
   applyPdfPreset,
+  chartSectionForView,
   defaultAstrocartographySectionOptions,
   defaultChartSectionOptions,
   defaultCompositeSectionOptions,
@@ -46,7 +47,6 @@ import {
   PDF_CHART_TYPES,
   PDF_PRESET_KEYS,
   pdfSelectionIsEmpty,
-  VIEW_TABLES,
   type PdfAcgLineType,
   type PdfAstrocartographySectionOptions,
   type PdfChartSectionOptions,
@@ -114,10 +114,10 @@ function withRequestedSection(
   if (section === 'astrocartography')
     return { ...selection, astrocartography: defaultAstrocartographySectionOptions() };
   if (!(PDF_CHART_TYPES as readonly string[]).includes(section)) return selection;
-  const defaults = defaultChartSectionOptions(section);
-  // The page's own view (#915) sets which tables the section takes, so the creator matches what is on screen.
+  // The page's own view (#915) sets the wheel and the tables, so the creator matches what is on screen.
   // Without a view the chart keeps its full default, as before.
-  const options: PdfChartSectionOptions = view === undefined ? defaults : { ...defaults, tables: VIEW_TABLES[view] };
+  const options: PdfChartSectionOptions =
+    view === undefined ? defaultChartSectionOptions(section) : chartSectionForView(section, view);
   return setChart(selection, options, section);
 }
 
