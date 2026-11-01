@@ -130,7 +130,8 @@ describe('PersonForm card layout (#795)', () => {
     expect(header?.querySelector('h1')).not.toBeNull();
     expect(header?.parentElement?.className).toBe('page-header');
     const save = header?.querySelector('.birth-record-save button');
-    expect(save?.textContent).toBe(t.saveButton);
+    // Pristine: Save reads Saved ✓ and is idle (#896 owner spec 2026-11-01).
+    expect(save?.textContent).toBe(t.savedButton);
     expect(container?.querySelector('.sticky-actions')).toBeNull();
   });
 

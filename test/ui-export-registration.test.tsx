@@ -344,13 +344,17 @@ describe('the body exports of Event Search, Corpus Overrides, Preferences and th
     expect(await untilExportLabels(container, 3)).toEqual([m.exportEverything, m.exportPeopleCsv, m.exportPeopleAaf]);
   }, 60_000);
 
-  it('the birth record lists its AAF, JSON and CSV downloads, in the body order', async () => {
+  it('the birth record has no header Export menu: its AAF, JSON and CSV stay in the EXPORT card (#896)', async () => {
     const container = await mount(
       <ExportRegistryProvider>
         <PersonForm personId="p1" />
       </ExportRegistryProvider>,
     );
+    expect(container.querySelector('.page-header-export-toggle')).toBeNull();
     const m = personFileActionsMessages.en;
-    expect(await untilExportLabels(container, 3)).toEqual([m.exportAaf, m.exportJson, m.exportCsv]);
+    const labels = [...container.querySelectorAll<HTMLButtonElement>('.birth-record-export-row button')].map(
+      (button) => button.textContent,
+    );
+    expect(labels).toEqual([m.exportAaf, m.exportJson, m.exportCsv]);
   }, 60_000);
 });

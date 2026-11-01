@@ -1008,6 +1008,49 @@ footer {
   gap: var(--space-3);
 }
 
+/* The title and its save-status dot sit on one line; the dot is a small coloured circle with the status also in sr-only text (#896). */
+.page-header-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* The heading takes only its text width here, so the dot sits right after the name rather than at the row's far edge. */
+.page-header-row .page-header-title h1 {
+  flex: 0 1 auto;
+}
+
+.birth-record-status {
+  display: inline-flex;
+  align-items: center;
+}
+
+.birth-record-status .primitive-tooltip-trigger {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1);
+  border-bottom: none;
+  cursor: default;
+}
+
+.birth-record-status-dot {
+  display: inline-block;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: var(--muted);
+}
+
+.birth-record-status--saved .birth-record-status-dot {
+  background: var(--color-success);
+}
+
+.birth-record-status--unsaved .birth-record-status-dot {
+  background: var(--color-warning);
+}
+
 .birth-record-card {
   display: grid;
   gap: var(--space-3);

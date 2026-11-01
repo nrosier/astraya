@@ -41,6 +41,7 @@ export function PageHeader({
   subtitle,
   basis,
   children,
+  titleAside,
 }: {
   readonly title: string;
   /** A glossary term the title names: the title text itself opens that term's definition (#901). */
@@ -51,6 +52,8 @@ export function PageHeader({
   readonly basis?: string | undefined;
   /** The primary page action and anything else that belongs beside the title (e.g. a share link). */
   readonly children?: React.ReactNode;
+  /** A small indicator read as part of the title, e.g. a save-status dot, placed directly after the title text (#896). */
+  readonly titleAside?: React.ReactNode;
 }): React.JSX.Element {
   const t = useMessages(pageHeaderMessages);
   const items = useExportItems();
@@ -97,7 +100,14 @@ export function PageHeader({
   return (
     <div className="page-header">
       <div className="page-header-row">
-        <h1>{titleTerm === undefined ? title : <GlossaryTerm id={titleTerm}>{title}</GlossaryTerm>}</h1>
+        {titleAside === undefined ? (
+          <h1>{titleTerm === undefined ? title : <GlossaryTerm id={titleTerm}>{title}</GlossaryTerm>}</h1>
+        ) : (
+          <div className="page-header-title">
+            <h1>{titleTerm === undefined ? title : <GlossaryTerm id={titleTerm}>{title}</GlossaryTerm>}</h1>
+            {titleAside}
+          </div>
+        )}
         {children}
         {items.length > 0 && (
           <div

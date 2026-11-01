@@ -72,8 +72,12 @@ const en = {
     'With no birth time, houses, the Ascendant and the Midheaven cannot be calculated at all — they are not approximate, they are undefined. Planetary positions are still meaningful, and the Moon moves about 13° a day, so its sign may be uncertain.',
 
   saving: 'Saving…',
-  saveButton: 'Save',
-  savedStatus: 'Saved on this device.',
+  saveButton: 'Save changes',
+  savedButton: 'Saved ✓',
+  statusSavedLabel: 'Status: Saved on this device',
+  statusSavedTooltip: 'All changes saved on this device',
+  statusUnsavedLabel: 'Status: Unsaved changes',
+  statusUnsavedTooltip: 'You have unsaved changes',
   fillFieldsHint: 'Fill in the fields marked above to save.',
 
   deleteHeading: 'Danger zone',
@@ -149,8 +153,12 @@ const nl: typeof en = {
     'Zonder geboortetijd kunnen huizen, de Ascendant en de Midheaven helemaal niet worden berekend — ze zijn niet bij benadering, ze zijn onbepaald. Planeetposities blijven wel betekenisvol, en de Maan verplaatst ongeveer 13° per dag, dus haar teken kan onzeker zijn.',
 
   saving: 'Opslaan…',
-  saveButton: 'Opslaan',
-  savedStatus: 'Opgeslagen op dit apparaat.',
+  saveButton: 'Wijzigingen opslaan',
+  savedButton: 'Opgeslagen ✓',
+  statusSavedLabel: 'Status: opgeslagen op dit apparaat',
+  statusSavedTooltip: 'Alle wijzigingen zijn opgeslagen op dit apparaat',
+  statusUnsavedLabel: 'Status: niet-opgeslagen wijzigingen',
+  statusUnsavedTooltip: 'Je hebt niet-opgeslagen wijzigingen',
   fillFieldsHint: 'Vul de hierboven gemarkeerde velden in om op te slaan.',
 
   deleteHeading: 'Gevarenzone',

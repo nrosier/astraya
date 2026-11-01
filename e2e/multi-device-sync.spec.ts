@@ -113,13 +113,13 @@ test.describe('multi-device offline sync (#107)', () => {
 
       // A edits the birth time while offline.
       await a.page.locator('input[type="time"]').fill('08:15:00');
-      await a.page.getByRole('button', { name: 'Save', exact: true }).click();
-      await expect(a.page.getByText('Saved on this device.')).toBeVisible();
+      await a.page.getByRole('button', { name: 'Save changes', exact: true }).click();
+      await expect(a.page.getByLabel('Status: Saved on this device', { exact: true })).toBeVisible();
 
       // B edits the notes on the same person, and creates a second person, while offline.
       await b.page.locator('textarea').fill('Mother of computing.');
-      await b.page.getByRole('button', { name: 'Save', exact: true }).click();
-      await expect(b.page.getByText('Saved on this device.')).toBeVisible();
+      await b.page.getByRole('button', { name: 'Save changes', exact: true }).click();
+      await expect(b.page.getByLabel('Status: Saved on this device', { exact: true })).toBeVisible();
 
       await backToPeople(b.page);
       await createPerson(b.page, {
@@ -175,12 +175,12 @@ test.describe('multi-device offline sync (#107)', () => {
       await b.context.setOffline(true);
 
       await a.page.getByLabel('Place of birth', { exact: true }).fill('London');
-      await a.page.getByRole('button', { name: 'Save', exact: true }).click();
-      await expect(a.page.getByText('Saved on this device.')).toBeVisible();
+      await a.page.getByRole('button', { name: 'Save changes', exact: true }).click();
+      await expect(a.page.getByLabel('Status: Saved on this device', { exact: true })).toBeVisible();
 
       await b.page.getByLabel('Place of birth', { exact: true }).fill('Paris');
-      await b.page.getByRole('button', { name: 'Save', exact: true }).click();
-      await expect(b.page.getByText('Saved on this device.')).toBeVisible();
+      await b.page.getByRole('button', { name: 'Save changes', exact: true }).click();
+      await expect(b.page.getByLabel('Status: Saved on this device', { exact: true })).toBeVisible();
 
       await a.context.setOffline(false);
       await b.context.setOffline(false);
@@ -228,8 +228,8 @@ test.describe('multi-device offline sync (#107)', () => {
 
       // B, unaware of the delete, edits an unrelated field on the same person while offline.
       await b.page.locator('textarea').fill('Still editing…');
-      await b.page.getByRole('button', { name: 'Save', exact: true }).click();
-      await expect(b.page.getByText('Saved on this device.')).toBeVisible();
+      await b.page.getByRole('button', { name: 'Save changes', exact: true }).click();
+      await expect(b.page.getByLabel('Status: Saved on this device', { exact: true })).toBeVisible();
 
       await a.context.setOffline(false);
       await b.context.setOffline(false);
