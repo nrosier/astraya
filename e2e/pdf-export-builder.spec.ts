@@ -205,6 +205,29 @@ test('the Documents page keeps its starting point and Build PDF in the header, w
   await expect(page.getByText('Planned', { exact: true })).toBeVisible();
 });
 
+test('the export summary stays in view while the Documents page scrolls at 1280x800 (#975)', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await gotoAndSettle(page, `${baseUrl}/#/documents`);
+  await expect(page.getByRole('heading', { name: 'Build a PDF', level: 1 })).toBeVisible();
+  const summary = page.getByRole('complementary', { name: 'Export summary' });
+  const before = await summary.boundingBox();
+  // The page must be taller than the viewport, or the scroll below proves nothing.
+  const scrollable = await page.evaluate<number>('document.documentElement.scrollHeight - window.innerHeight');
+  expect(scrollable).toBeGreaterThan(200);
+  await page.evaluate('window.scrollTo(0, 400)');
+  await expect.poll(() => page.evaluate<number>('window.scrollY')).toBeGreaterThanOrEqual(300);
+  const after = await summary.boundingBox();
+  if (before === null || after === null) throw new Error('the export summary did not render');
+  // Sticky at top 1.5rem: once scrolled, the summary's top sits that far below the viewport top, never off screen.
+  // The offset is the computed top of the sticky wrapper: 1.5rem, which is 21px at the app's 87.5% root size.
+  const top = await page.evaluate<number>(
+    "parseFloat(getComputedStyle(document.querySelector('.pdf-summary-sticky')).top)",
+  );
+  expect(Math.abs(after.y - top)).toBeLessThanOrEqual(1);
+  expect(after.y).toBeGreaterThanOrEqual(0);
+  expect(after.y + after.height).toBeLessThanOrEqual(800);
+});
+
 test('on a phone the Build PDF bar is pinned to the bottom of the screen (#916)', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await gotoAndSettle(page, `${baseUrl}/#/documents`);
