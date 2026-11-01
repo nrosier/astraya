@@ -30,7 +30,6 @@ import { ChartDataView, PdfCreatorLink, pdfCreatorHref } from './ChartView.js';
 import { ChartTypeSelector, changeChartView } from './ChartTypeSelector.js';
 import { type ChartType, type ChartViewKind } from './chart-sections.js';
 import { chartHref, personHref } from './route.js';
-import { ReportView } from './ReportView.js';
 import { harmonicViewMessages } from './HarmonicView.messages.js';
 import { useMessages } from './messages.js';
 import { PersonNotFound } from './PersonNotFound.js';
@@ -113,7 +112,6 @@ export function HarmonicView({
     settings: extendedSettings,
     unreadable: settingsUnreadable,
     rulership,
-    setRulership,
   } = usePersonCalculationSettings(personId);
   const orbs = useStableBy(orbsOf(extendedSettings), (config) => JSON.stringify(config));
 
@@ -264,9 +262,6 @@ export function HarmonicView({
         <StatusMessage kind="error">
           <GlossaryText text={t.housesUndefined} />
         </StatusMessage>
-      )}
-      {nValid && load.kind === 'ready' && housesAreDefined(load.data.houses) && (
-        <ReportView personId={personId} chart={load.data} rulership={rulership} onRulershipChange={setRulership} />
       )}
     </main>
   );

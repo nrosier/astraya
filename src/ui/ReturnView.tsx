@@ -32,7 +32,6 @@ import { formatOrb, todayInputValue } from './format.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { PersonNotFound } from './PersonNotFound.js';
-import { ReportView } from './ReportView.js';
 import { returnViewMessages } from './ReturnView.messages.js';
 import { toChartCalculationOptions } from '../chart/extended-settings.js';
 import { usePersonCalculationSettings } from './person-calculation-settings.js';
@@ -122,7 +121,6 @@ export function ReturnView({
     unreadable: settingsUnreadable,
     setSettings: setSettings,
     rulership,
-    setRulership,
   } = usePersonCalculationSettings(personId);
   const basisLine = useCalculationBasisLine(settings, rulership);
   const { provider } = useEphemerisProvider();
@@ -366,9 +364,6 @@ export function ReturnView({
               downloadFilename={deriveExportFilename(person.displayName, `${kind}-contacts`, 'csv')}
             />
           </>
-        )}
-        {load.kind === 'ready' && housesAreDefined(load.data.houses) && (
-          <ReportView personId={personId} chart={load.data} rulership={rulership} onRulershipChange={setRulership} />
         )}
       </div>
     </main>

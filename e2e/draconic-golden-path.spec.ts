@@ -55,8 +55,8 @@ test('a person with a known birth time gets a Draconic screen with a wheel and d
 
   await expect(page.locator('div.chart-wheel')).toBeVisible();
   await expect(page.getByRole('link', { name: 'Placements' })).toBeVisible();
-  await expect(page.locator('.report-section').first()).toBeVisible();
-  await expect(page.locator('.report-paragraph p').first()).not.toBeEmpty();
+  // #980: the general written reading lives on the interpretation page, not under a derived chart.
+  await expect(page.locator('.report')).toHaveCount(0);
 });
 
 test('a person with an unknown birth time is told a draconic chart needs one', async () => {

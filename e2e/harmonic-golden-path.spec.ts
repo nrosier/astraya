@@ -56,10 +56,8 @@ test('a person with a known birth time gets a Harmonic screen with a wheel and d
   await expect(page.locator('div.chart-wheel')).toBeVisible();
   await expect(page.getByRole('link', { name: 'Placements' })).toBeVisible();
 
-  // #359: the harmonic chart now also renders real interpretive text via `ReportView`,
-  // reusing `report.ts`'s `assembleReport` the same way the natal Report tab already does.
-  await expect(page.locator('.report-section').first()).toBeVisible();
-  await expect(page.locator('.report-paragraph p').first()).not.toBeEmpty();
+  // #980: the general written reading lives on the interpretation page, not under a derived chart.
+  await expect(page.locator('.report')).toHaveCount(0);
 
   await page.getByLabel('Divisional chart').selectOption({ label: 'D9 — Navamsha' });
   await expect(page.locator('div.chart-wheel')).toBeVisible();
