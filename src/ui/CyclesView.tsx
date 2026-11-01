@@ -37,7 +37,7 @@ import { cyclesViewMessages } from './CyclesView.messages.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
-import { SortableTable } from './SortableTable.js';
+import { SortableTable, csvExportTable, useCsvExports } from './SortableTable.js';
 import { clampEphemerisYear, MAX_EPHEMERIS_YEAR, MIN_EPHEMERIS_YEAR } from './year-range.js';
 import type { TableColumn } from './table-sort.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
@@ -271,6 +271,21 @@ export function CyclesView(): React.JSX.Element {
         : undefined,
     // eslint-disable-next-line react-hooks/exhaustive-deps -- the wheel renderers read the glyph settings from module state, so these are cache keys, not inputs the callback reads.
     [result, selectedId, symbolClass, variants],
+  );
+
+  // The exact-aspects table's CSV, in source order, offered in the page header (#887).
+  useCsvExports(
+    result.kind === 'ready' && result.rows.length > 0
+      ? [
+          csvExportTable(
+            'cycles',
+            t.tableCaption,
+            `cycles-${result.params.bodyA}-${result.params.bodyB}-${result.params.aspect}.csv`,
+            columns,
+            result.rows,
+          ),
+        ]
+      : undefined,
   );
 
   return (

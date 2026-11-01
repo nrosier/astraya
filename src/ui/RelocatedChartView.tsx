@@ -35,7 +35,7 @@ import { parseCoordinate } from './map-settings.js';
 import { NumberField } from './primitives/NumberField.js';
 import { Select } from './primitives/Select.js';
 import { TextField } from './primitives/TextField.js';
-import { SortableTable } from './SortableTable.js';
+import { SortableTable, csvExportTable, useCsvExports } from './SortableTable.js';
 import type { TableColumn } from './table-sort.js';
 import { PersonNotFound } from './PersonNotFound.js';
 import { useStore, useStoreState } from './store-context.js';
@@ -219,6 +219,31 @@ export function RelocatedChartView({
       effect.cancelled = true;
     };
   }, [settingsUnreadable, personMoment, provider, relocationPlace, customPoints, fixedStars, orbs]);
+
+  // The natal-vs-relocated table's CSV, in source order, offered in the page header (#887). Only once the screen
+  // draws that table: a ready chart whose houses are defined, for a person with a complete record.
+  useCsvExports(
+    person !== undefined &&
+      !settingsUnreadable &&
+      person.moment !== undefined &&
+      person.timeAccuracy !== 'unknown' &&
+      load.kind === 'ready' &&
+      housesAreDefined(load.data.relocated.houses)
+      ? [
+          csvExportTable(
+            'relocated-comparison',
+            t.comparisonCaption,
+            deriveExportFilename(
+              person.displayName ? `${person.displayName} — ${t.headingFallback}` : t.headingFallback,
+              'relocated-comparison',
+              'csv',
+            ),
+            comparisonColumns(t, locale),
+            relocatedComparisonRows(load.data),
+          ),
+        ]
+      : undefined,
+  );
 
   if (person === undefined) {
     return <PersonNotFound />;

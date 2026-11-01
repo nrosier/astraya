@@ -6,7 +6,9 @@
  */
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import type { EphemerisProvider } from '../src/ephemeris/types.js';
+import { getEngine } from './engine-harness.js';
 import { ExportRegistryProvider } from '../src/ui/export-registry.js';
 import { PageHeader } from '../src/ui/PageHeader.js';
 import { SortableTable, csvExportTable, useCsvExports, type CsvExportTable } from '../src/ui/SortableTable.js';
@@ -15,6 +17,46 @@ import type { TableColumn } from '../src/ui/table-sort.js';
 
 const download = vi.hoisted(() => vi.fn<(filename: string, text: string, mime: string) => void>());
 vi.mock('../src/ui/download.js', () => ({ downloadText: download, downloadBlob: vi.fn() }));
+
+let engine: EphemerisProvider;
+
+beforeAll(async () => {
+  engine = await getEngine();
+}, 60_000);
+
+// The real Swiss Ephemeris engine (no mocked calculation) and one stored person, as ui-aria-busy-results does.
+vi.mock('../src/ui/EphemerisProviderContext.js', () => ({
+  useEphemerisProvider: () => ({ provider: engine, error: undefined }),
+}));
+
+vi.mock('../src/ui/store-context.js', () => {
+  const person = {
+    id: 'p1',
+    displayName: 'Test',
+    timeAccuracy: 'exact',
+    moment: {
+      civil: { year: 1970, month: 1, day: 1, hour: 0, minute: 0, second: 0 },
+      coordinates: { latitude: 41.1833, longitude: -84.7333 },
+      offsetOverrideMinutes: 0,
+    },
+    placeLabel: 'Fort Wayne, IN',
+    notes: '',
+    missing: [],
+    customPoints: [],
+  };
+  const state = { people: new Map([[person.id, person]]) };
+  return {
+    useStoreState: () => state,
+    useStore: () => ({ mutate: () => Promise.resolve() }),
+    useOptionalStore: () => undefined,
+  };
+});
+
+const { CyclesView } = await import('../src/ui/CyclesView.js');
+const { EclipsesView } = await import('../src/ui/EclipsesView.js');
+const { ProfectionsView } = await import('../src/ui/ProfectionsView.js');
+const { ProgressionsView } = await import('../src/ui/ProgressionsView.js');
+const { RelocatedChartView } = await import('../src/ui/RelocatedChartView.js');
 
 let mounted: { container: HTMLElement; root: Root } | undefined;
 
@@ -158,4 +200,92 @@ describe('PageHeader Export menu for CSV tables (#887)', () => {
     expect(container.querySelector('.data-table-actions')).toBeNull();
     expect(container.querySelector('.page-header-export-toggle')).toBeNull();
   });
+});
+
+/** Waits (up to about 30 seconds) until the header's Export menu offers `count` items, then returns their labels. */
+async function untilExportLabels(container: HTMLElement, count: number): Promise<string[]> {
+  let labels: string[] = [];
+  for (let i = 0; i < 600; i++) {
+    const toggle = container.querySelector<HTMLButtonElement>('.page-header-export-toggle');
+    if (toggle !== null) {
+      if (container.querySelector('.page-header-export-menu') === null) {
+        await act(async () => {
+          toggle.click();
+          await Promise.resolve();
+        });
+      }
+      labels = [...container.querySelectorAll('.page-header-export-item')].map((item) => item.textContent);
+      if (labels.length >= count) return labels;
+    }
+    await act(async () => {
+      await new Promise((done) => setTimeout(done, 50));
+    });
+  }
+  return labels;
+}
+
+/** Sets an input's value the way typing does, so React's change handler sees it. */
+function typeInto(element: HTMLInputElement | undefined, value: string): void {
+  if (element === undefined) throw new Error('test fixture bug: missing input');
+  Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(element, value);
+  element.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+describe('the Cycles, Eclipses, Profections, Progressions and Relocated screens register their CSV tables (#887)', () => {
+  it('Cycles lists "Exact aspects (CSV)" in the header Export menu', async () => {
+    const container = await mount(
+      <ExportRegistryProvider>
+        <CyclesView />
+      </ExportRegistryProvider>,
+    );
+    expect(await untilExportLabels(container, 1)).toEqual(['Exact aspects (CSV)']);
+  }, 60_000);
+
+  it('Eclipses lists "Eclipses (CSV)" in the header Export menu', async () => {
+    const container = await mount(
+      <ExportRegistryProvider>
+        <EclipsesView />
+      </ExportRegistryProvider>,
+    );
+    expect(await untilExportLabels(container, 1)).toEqual(['Eclipses (CSV)']);
+  }, 60_000);
+
+  it('Profections lists "Profections (CSV)" in the header Export menu', async () => {
+    const container = await mount(
+      <ExportRegistryProvider>
+        <ProfectionsView personId="p1" />
+      </ExportRegistryProvider>,
+    );
+    expect(await untilExportLabels(container, 1)).toEqual(['Profections (CSV)']);
+  }, 60_000);
+
+  it('Progressions lists its positions table, then its contacts table, in source order', async () => {
+    const container = await mount(
+      <ExportRegistryProvider>
+        <ProgressionsView personId="p1" />
+      </ExportRegistryProvider>,
+    );
+    expect(await untilExportLabels(container, 2)).toEqual([
+      'Progressed positions (CSV)',
+      'Progressed-to-natal contacts (CSV)',
+    ]);
+  }, 60_000);
+
+  it('Relocated lists "Natal vs. relocated (CSV)" once a place is chosen', async () => {
+    const container = await mount(
+      <ExportRegistryProvider>
+        <RelocatedChartView personId="p1" />
+      </ExportRegistryProvider>,
+    );
+    // No place yet: nothing to export, so no Export control.
+    expect(container.querySelector('.page-header-export-toggle')).toBeNull();
+
+    const [latitude, longitude] = container.querySelectorAll<HTMLInputElement>('.field-grid input[type="number"]');
+    await act(async () => {
+      typeInto(latitude, '51.5072');
+      typeInto(longitude, '-0.1276');
+      await Promise.resolve();
+    });
+    expect(await untilExportLabels(container, 1)).toEqual(['Natal vs. relocated (CSV)']);
+  }, 60_000);
 });

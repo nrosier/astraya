@@ -25,7 +25,7 @@ import { eclipsesViewMessages } from './EclipsesView.messages.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
-import { SortableTable } from './SortableTable.js';
+import { SortableTable, csvExportTable, useCsvExports } from './SortableTable.js';
 import { useStoreState } from './store-context.js';
 import type { TableColumn } from './table-sort.js';
 import { clampEphemerisYear, MAX_EPHEMERIS_YEAR, MIN_EPHEMERIS_YEAR } from './year-range.js';
@@ -176,6 +176,21 @@ export function EclipsesView(): React.JSX.Element {
       },
     ],
     [t, locale, typeOf],
+  );
+
+  // The eclipses table's CSV, in source order, offered in the page header (#887).
+  useCsvExports(
+    result.kind === 'ready' && result.rows.length > 0
+      ? [
+          csvExportTable(
+            'eclipses',
+            t.tableCaption,
+            `eclipses-${String(result.fromYear)}-${String(result.toYear)}.csv`,
+            columns,
+            result.rows,
+          ),
+        ]
+      : undefined,
   );
 
   return (
