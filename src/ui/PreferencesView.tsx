@@ -25,8 +25,8 @@
  */
 /**
  * @module ui/PreferencesView
- * @purpose Preferences workspace (#506/#510): General/Astrology defaults/Appearance & accessibility/Data & privacy, each reusing the screen's own existing device/account-preference controls rather than duplicating them.
- * @conventions Every control is the same shared component/hook other screens already use (RulershipSetting.tsx, SymbolSetting.tsx, LanguageToggle.tsx, ThemeToggle.tsx) — this screen never reads or writes a setting's storage directly. Full-data export reuses domain/full-export.js's pure functions, the same ones AppNav.tsx's Export menu calls. "Check a calculation file" (#582) reuses validateFullExport for the same format/version errors Restore gives, but reads `calculation` off the raw parsed JSON directly, since the validated FullExport never carries that field.
+ * @purpose Preferences workspace (#506/#510): Appearance & accessibility/Astrology defaults/Data & privacy as Cards with 60/40 rows (#966), each reusing the screen's own existing device/account-preference controls rather than duplicating them.
+ * @conventions Every control is the same shared component/hook other screens already use (RulershipSetting.tsx, SymbolSetting.tsx, ThemeToggle.tsx, locale.ts for the language) — this screen never reads or writes a setting's storage directly. Full-data export reuses domain/full-export.js's pure functions, the same ones AppNav.tsx's Export menu calls. "Check a calculation file" (#582) reuses validateFullExport for the same format/version errors Restore gives, but reads `calculation` off the raw parsed JSON directly, since the validated FullExport never carries that field.
  * @exports PreferencesView
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -58,11 +58,13 @@ import {
   useMotion,
 } from './appearance-settings.js';
 import { Button } from './primitives/Button.js';
+import { ChoiceGroup } from './primitives/ChoiceGroup.js';
 import { FileInput } from './primitives/FileInput.js';
 import { Select } from './primitives/Select.js';
 import { downloadText } from './download.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
-import { LanguageToggle } from './LanguageToggle.js';
+import { CORPUS_LOCALES } from '../interpretation/schema.js';
+import { isLocale, useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { SortableTable } from './SortableTable.js';
 import type { TableColumn } from './table-sort.js';
@@ -78,7 +80,6 @@ import { SymbolSetting } from './SymbolSetting.js';
 import { useOptionalStore } from './store-context.js';
 import { ThemeToggle } from './ThemeToggle.js';
 import { useSymbolClass } from './symbol-setting.js';
-import { BackLink } from './BackLink.js';
 import { PageHeader } from './PageHeader.js';
 import { useRegisterExports } from './export-registry.js';
 
@@ -88,12 +89,36 @@ interface ExportStatus {
 }
 
 /**
- * Puts focus on a tab's heading when a link to that section was followed: on purpose, so a screen reader says where
- * it landed. It does not scroll: the tabs sit just above the heading, and scrolling the heading to the top would
- * hide the page title and the tab strip the reader needs to move on.
+ * One setting as a two-column row (#966): the title and its muted description on the left (60%), the control on the
+ * right (40%, right-aligned). Stacks on a phone. The control keeps its own accessible name.
+ */
+function PreferencesRow({
+  title,
+  description,
+  children,
+}: {
+  readonly title: string;
+  readonly description?: string | undefined;
+  readonly children: React.ReactNode;
+}): React.JSX.Element {
+  return (
+    <div className="preferences-row">
+      <div className="preferences-row-text">
+        <p className="preferences-row-title">{title}</p>
+        {description !== undefined && <p className="preferences-row-description">{description}</p>}
+      </div>
+      <div className="preferences-row-control">{children}</div>
+    </div>
+  );
+}
+
+/**
+ * Puts focus on the open tab's panel when a link to that section was followed: on purpose, so a screen reader says
+ * where it landed. The panel is labelled by its tab (#966 removed the repeated sub-heading). It does not scroll: the
+ * tabs sit just above the panel, and scrolling it to the top would hide the page title and the tab strip.
  */
 function focusSection(section: PreferencesSection): void {
-  document.getElementById(`preferences-${section}`)?.focus({ preventScroll: true });
+  document.getElementById(`preferences-panel-${section}`)?.focus({ preventScroll: true });
 }
 
 export function PreferencesView({
@@ -115,6 +140,8 @@ export function PreferencesView({
   const orbLibrary = useOrbLibrary();
   const orbSources = useOrbContextSource();
   const [symbolClass] = useSymbolClass();
+  // The interface language is a shared store (locale.ts), so the header's LanguageToggle and this control stay in step.
+  const [locale, setLocale] = useLocale();
   const [status, setStatus] = useState<ExportStatus | undefined>(undefined);
   const [preview, setPreview] = useState<RestorePreview | undefined>(undefined);
   const [restoring, setRestoring] = useState(false);
@@ -361,164 +388,213 @@ export function PreferencesView({
 
   return (
     <main className="shell">
-      <BackLink fallback="#/people" />
-      <PageHeader title={t.heading} />
-      <p>{t.intro}</p>
+      <PageHeader title={t.heading} subtitle={t.intro} />
 
       <Tabs idBase="preferences" label={t.tablistLabel} items={tabItems} active={active} onSelect={selectTab} />
 
       <div {...tabPanelProps('preferences', active)} className="preferences-panel">
-        <h2 id={`preferences-${active}`} tabIndex={-1}>
-          {t.tabLabels[active]}
-        </h2>
         <p className="hint preferences-scope">{t.scope[active]}</p>
 
         {active === 'appearance' && (
           <>
-            <p>{t.languageLabel}</p>
-            <LanguageToggle />
+            <section className="preferences-card" aria-labelledby="preferences-card-interface">
+              <h2 id="preferences-card-interface" className="preferences-card-title">
+                {t.cardInterface}
+              </h2>
+              <PreferencesRow title={t.languageTitle} description={t.languageLabel}>
+                <ChoiceGroup
+                  label={t.languageTitle}
+                  value={locale}
+                  segmented
+                  options={CORPUS_LOCALES.map((code) => ({ value: code, label: code.toUpperCase() }))}
+                  onChange={(value) => {
+                    if (isLocale(value)) setLocale(value);
+                  }}
+                />
+              </PreferencesRow>
+              <PreferencesRow title={t.themeTitle} description={t.themeLabel}>
+                <ThemeToggle />
+              </PreferencesRow>
+            </section>
 
-            <p>{t.themeLabel}</p>
-            <ThemeToggle />
-            <SymbolSetting />
-            <Select
-              label={t.motionLabel}
-              value={motion}
-              help={t.motionHint}
-              options={MOTION_CHOICES.map((choice) => ({ value: choice, label: t.motionOptions[choice] }))}
-              onChange={(value) => {
-                if (isMotionChoice(value)) setMotion(value);
-              }}
-            />
-            <Select
-              label={t.densityLabel}
-              value={density}
-              help={t.densityHint}
-              options={DENSITY_CHOICES.map((choice) => ({ value: choice, label: t.densityOptions[choice] }))}
-              onChange={(value) => {
-                if (isDensityChoice(value)) setDensity(value);
-              }}
-            />
+            <section className="preferences-card" aria-labelledby="preferences-card-symbols">
+              <h2 id="preferences-card-symbols" className="preferences-card-title">
+                {t.cardSymbols}
+              </h2>
+              <SymbolSetting />
+            </section>
+
+            <section className="preferences-card" aria-labelledby="preferences-card-motion">
+              <h2 id="preferences-card-motion" className="preferences-card-title">
+                {t.cardMotion}
+              </h2>
+              <PreferencesRow title={t.motionLabel}>
+                <Select
+                  label={t.motionLabel}
+                  hideLabel
+                  value={motion}
+                  help={t.motionHint}
+                  options={MOTION_CHOICES.map((choice) => ({ value: choice, label: t.motionOptions[choice] }))}
+                  onChange={(value) => {
+                    if (isMotionChoice(value)) setMotion(value);
+                  }}
+                />
+              </PreferencesRow>
+              <PreferencesRow title={t.densityLabel}>
+                <Select
+                  label={t.densityLabel}
+                  hideLabel
+                  value={density}
+                  help={t.densityHint}
+                  options={DENSITY_CHOICES.map((choice) => ({ value: choice, label: t.densityOptions[choice] }))}
+                  onChange={(value) => {
+                    if (isDensityChoice(value)) setDensity(value);
+                  }}
+                />
+              </PreferencesRow>
+            </section>
           </>
         )}
 
         {active === 'astrology' && (
           <>
-            <p>{t.rulersSubtitle}</p>
-            <RulershipSetting
-              value={rulership}
-              onChange={(choice) => {
-                setRulership(choice);
-                if (savedDefault !== undefined) saveDefault(savedDefault.settings, choice);
-              }}
-            />
+            <section className="preferences-card" aria-labelledby="preferences-card-rulership">
+              <h2 id="preferences-card-rulership" className="preferences-card-title">
+                {t.cardRulership}
+              </h2>
+              <p className="hint">{t.rulersSubtitle}</p>
+              <RulershipSetting
+                value={rulership}
+                onChange={(choice) => {
+                  setRulership(choice);
+                  if (savedDefault !== undefined) saveDefault(savedDefault.settings, choice);
+                }}
+              />
+            </section>
 
-            <OrbLibraryEditor profiles={orbLibrary.profiles} sources={orbSources} />
+            <section className="preferences-card" aria-labelledby="preferences-card-orbs">
+              <h2 id="preferences-card-orbs" className="preferences-card-title">
+                {t.cardOrbs}
+              </h2>
+              <OrbLibraryEditor profiles={orbLibrary.profiles} sources={orbSources} />
 
-            {/* The chart-setup editor (#563): the same ExtendedSettingsPanel every chart screen
+              {/* The chart-setup editor (#563): the same ExtendedSettingsPanel every chart screen
           already uses, reachable here as its own dedicated entry point rather than only hidden
           behind a chart's own "Extended settings" trigger — one place to review every
           calculation-affecting setting before computing, per the audit's own ask. Bound to the
           device's default profile (#806): what a person starts from until they save settings of their own. */}
-            <p>{t.chartSetupSubtitle}</p>
-            {provider === undefined ? (
-              <p className="hint">{t.chartSetupNeedsEngine}</p>
-            ) : (
-              <ExtendedSettingsPanel
-                value={extendedSettings}
-                rulership={rulership}
-                onRedraw={(next, rulers) => {
-                  setRulership(rulers);
-                  saveDefault(next, rulers);
-                }}
-                provider={provider}
-              />
-            )}
+              <p className="hint">{t.chartSetupSubtitle}</p>
+              {provider === undefined ? (
+                <p className="hint">{t.chartSetupNeedsEngine}</p>
+              ) : (
+                <ExtendedSettingsPanel
+                  value={extendedSettings}
+                  rulership={rulership}
+                  onRedraw={(next, rulers) => {
+                    setRulership(rulers);
+                    saveDefault(next, rulers);
+                  }}
+                  provider={provider}
+                />
+              )}
+            </section>
           </>
         )}
 
         {active === 'data' && (
           <>
-            <p>{t.exportEverythingHint}</p>
-            <p>
-              <button
-                type="button"
-                disabled={store === undefined}
-                aria-label={store === undefined ? `${t.exportEverything} — ${t.exportNeedsStore}` : undefined}
-                onClick={exportEverything}
-              >
-                {t.exportEverything}
-              </button>{' '}
-              <button
-                type="button"
-                disabled={store === undefined}
-                aria-label={store === undefined ? `${t.exportPeopleCsv} — ${t.exportNeedsStore}` : undefined}
-                onClick={exportPeopleCsv}
-              >
-                {t.exportPeopleCsv}
-              </button>{' '}
-              <button
-                type="button"
-                disabled={store === undefined}
-                aria-label={store === undefined ? `${t.exportPeopleAaf} — ${t.exportNeedsStore}` : undefined}
-                onClick={exportPeopleAaf}
-              >
-                {t.exportPeopleAaf}
-              </button>
-            </p>
-            <p>{t.restoreHint}</p>
-            <p>
-              <FileInput
-                buttonLabel={t.restoreFromFile}
-                accept="application/json,.json,.aaf,text/plain"
-                disabled={store === undefined}
-                disabledReason={t.exportNeedsStore}
-                onChange={onRestoreFileChosen}
-              />
-            </p>
-            {preview !== undefined && (
-              <div>
-                <p>
-                  {t.restoreStaged(
-                    preview.newCount,
-                    preview.updatedCount,
-                    preview.unchangedCount,
-                    preview.deletedLocallyCount,
-                  )}
-                </p>
+            <section className="preferences-card" aria-labelledby="preferences-card-export">
+              <h2 id="preferences-card-export" className="preferences-card-title">
+                {t.cardExport}
+              </h2>
+              <p className="hint">{t.exportEverythingHint}</p>
+              <div className="preferences-action-group">
+                <button
+                  type="button"
+                  disabled={store === undefined}
+                  aria-label={store === undefined ? `${t.exportEverything} — ${t.exportNeedsStore}` : undefined}
+                  onClick={exportEverything}
+                >
+                  {t.exportEverything}
+                </button>
+                <button
+                  type="button"
+                  disabled={store === undefined}
+                  aria-label={store === undefined ? `${t.exportPeopleCsv} — ${t.exportNeedsStore}` : undefined}
+                  onClick={exportPeopleCsv}
+                >
+                  {t.exportPeopleCsv}
+                </button>
+                <button
+                  type="button"
+                  disabled={store === undefined}
+                  aria-label={store === undefined ? `${t.exportPeopleAaf} — ${t.exportNeedsStore}` : undefined}
+                  onClick={exportPeopleAaf}
+                >
+                  {t.exportPeopleAaf}
+                </button>
+              </div>
+            </section>
+
+            <section className="preferences-card" aria-labelledby="preferences-card-import">
+              <h2 id="preferences-card-import" className="preferences-card-title">
+                {t.cardImport}
+              </h2>
+              <p className="hint">{t.restoreHint}</p>
+              <div className="preferences-action-group">
+                <FileInput
+                  buttonLabel={t.restoreFromFile}
+                  accept="application/json,.json,.aaf,text/plain"
+                  disabled={store === undefined}
+                  disabledReason={t.exportNeedsStore}
+                  onChange={onRestoreFileChosen}
+                />
+              </div>
+              {preview !== undefined && (
+                <div>
+                  <p>
+                    {t.restoreStaged(
+                      preview.newCount,
+                      preview.updatedCount,
+                      preview.unchangedCount,
+                      preview.deletedLocallyCount,
+                    )}
+                  </p>
+                  <SortableTable
+                    wrap
+                    caption={t.restorePreviewHeading}
+                    columns={restoreColumns}
+                    rows={preview.items}
+                    getRowKey={(item) => item.id}
+                  />
+                  <div className="preferences-action-group">
+                    <Button variant="primary" busy={restoring} busyLabel={t.restoreApplying} onClick={confirmRestore}>
+                      {t.restoreApply}
+                    </Button>
+                  </div>
+                </div>
+              )}
+              <p className="hint">{t.checkHint}</p>
+              <div className="preferences-action-group">
+                <FileInput
+                  buttonLabel={t.checkFromFile}
+                  accept="application/json"
+                  disabled={provider === undefined}
+                  disabledReason={t.exportNeedsEngine}
+                  onChange={onCheckFileChosen}
+                />
+              </div>
+              {checks !== undefined && (
                 <SortableTable
                   wrap
-                  caption={t.restorePreviewHeading}
-                  columns={restoreColumns}
-                  rows={preview.items}
-                  getRowKey={(item) => item.id}
+                  caption={t.checkResultsHeading}
+                  columns={checkColumns}
+                  rows={checks}
+                  getRowKey={(check) => check.id}
                 />
-                <p>
-                  <Button variant="primary" busy={restoring} busyLabel={t.restoreApplying} onClick={confirmRestore}>
-                    {t.restoreApply}
-                  </Button>
-                </p>
-              </div>
-            )}
-            <p>{t.checkHint}</p>
-            <p>
-              <FileInput
-                buttonLabel={t.checkFromFile}
-                accept="application/json"
-                disabled={provider === undefined}
-                disabledReason={t.exportNeedsEngine}
-                onChange={onCheckFileChosen}
-              />
-            </p>
-            {checks !== undefined && (
-              <SortableTable
-                wrap
-                caption={t.checkResultsHeading}
-                columns={checkColumns}
-                rows={checks}
-                getRowKey={(check) => check.id}
-              />
-            )}
+              )}
+            </section>
+
             {status !== undefined && (
               <p
                 className={`status preferences-export-status ${status.kind}`}

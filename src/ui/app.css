@@ -6000,6 +6000,14 @@ svg text.chart-symbol-text-unicode {
   margin: 0.35rem 0 0;
 }
 
+/* The one-line purpose under the title (#966): muted, body-size, the same measure as `.hint`. */
+.page-header-subtitle {
+  margin: 0.35rem 0 0;
+  max-width: 44rem;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
 .page-header-export {
   position: relative;
   flex: 0 0 auto;
@@ -6954,5 +6962,85 @@ button.mgrid-pair:focus-visible {
 
   .pdf-builder .pdf-build-actions .primitive-button-primary {
     width: 100%;
+  }
+}
+
+/*
+ * The Preferences workspace's standard layout (issue 966): each settings category is a card on the surface token with a
+ * hairline border, and each setting is a two-column row (title and muted description on the left, the control on the
+ * right). Only existing tokens; the card's padding and radius are the design system's own scale, not new values.
+ */
+.preferences-card {
+  margin: 0 0 var(--space-6);
+  padding: 1.25rem;
+  border: var(--border-hairline) solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.preferences-card-title {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-lg);
+}
+
+.preferences-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-6);
+  padding: var(--space-3) 0;
+  border-top: var(--border-hairline) solid var(--line);
+}
+
+.preferences-row:first-of-type {
+  border-top: 0;
+}
+
+.preferences-row-text {
+  flex: 0 1 60%;
+  min-width: 0;
+}
+
+.preferences-row-title {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.preferences-row-description {
+  margin: 0.25rem 0 0;
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.preferences-row-control {
+  flex: 0 1 40%;
+  display: flex;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.preferences-action-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3);
+}
+
+.preferences-row-control > .primitive-field,
+.preferences-row-control > .primitive-choice-field {
+  margin-bottom: 0;
+  width: 100%;
+}
+
+@media (max-width: 40rem) {
+  .preferences-row-text,
+  .preferences-row-control {
+    flex: 1 1 100%;
+  }
+
+  .preferences-row-control {
+    justify-content: flex-start;
   }
 }

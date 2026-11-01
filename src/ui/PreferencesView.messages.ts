@@ -70,6 +70,16 @@ const nlProvenanceFieldWord: ProvenanceFieldWords = {
 const en = {
   heading: 'Preferences',
   intro: 'Durable settings for this account and this device, in one place.',
+  // Card titles and the two-column row labels (#966). Each setting keeps the wording its control already had.
+  cardInterface: 'Interface & display',
+  cardSymbols: 'Symbol rendering',
+  cardMotion: 'Motion & density',
+  cardRulership: 'Rulership scheme',
+  cardOrbs: 'Orb profiles & chart assignment',
+  cardExport: 'Data export',
+  cardImport: 'Import & diagnostics',
+  languageTitle: 'Language',
+  themeTitle: 'Theme',
   tablistLabel: 'Preferences sections',
   tabLabels: { appearance: 'Appearance & accessibility', astrology: 'Astrology defaults', data: 'Data & privacy' },
   // What each tab's settings are stored as. Every one is saved in this browser and none is synced to an account yet,
@@ -180,6 +190,15 @@ const en = {
 const nl: typeof en = {
   heading: 'Voorkeuren',
   intro: 'Blijvende instellingen voor dit account en dit apparaat, op één plek.',
+  cardInterface: 'Interface & weergave',
+  cardSymbols: 'Weergave van symbolen',
+  cardMotion: 'Beweging & dichtheid',
+  cardRulership: 'Heerserschema',
+  cardOrbs: 'Orbprofielen & koppeling per horoscoop',
+  cardExport: 'Gegevens exporteren',
+  cardImport: 'Importeren & diagnose',
+  languageTitle: 'Taal',
+  themeTitle: 'Thema',
   tablistLabel: 'Onderdelen van de voorkeuren',
   tabLabels: {
     appearance: 'Weergave & toegankelijkheid',
