@@ -2722,14 +2722,15 @@ label.stacked textarea:focus-visible {
   margin-top: 0;
   margin-bottom: 0;
   /*
-   * Height cap (#801): the wheel is square, so its width is its height. 24rem is
-   * the chrome above the SVG (header, nav row, card top, hint), so the SVG bottom
+   * Height cap (#801): the wheel is square, so its width is its height. 27rem is
+   * the chrome above the SVG (header, chart type, nav row, card top, hint; the chart type
+   * block above the nav row added 3rem in #981), so the SVG bottom
    * lands at or above the viewport bottom; 26rem (364px at a 14px root) is the floor
    * where glyphs and hit targets stay legible. Wider than the cap the wheel keeps
    * its 7/12 column width; the cap binds only on short viewports. 55rem is the upper
    * bound: the widest the wheel is drawn, so a tall viewport never grows it past that.
    */
-  max-width: min(55rem, max(26rem, calc(100vh - 24rem)));
+  max-width: min(55rem, max(26rem, calc(100vh - 27rem)));
 }
 
 .chart-workbench-dial .chart-wheel-hint {
@@ -4699,25 +4700,24 @@ svg text.chart-symbol-text-unicode {
   margin: var(--space-2) 0 var(--space-1);
 }
 
-/*
- * The title row (#801): back link and heading side by side, with the view row tucked right under.
- */
-.chart-title-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--space-1) var(--space-4);
+/* #981: on natal the select is as tall as the view bar under it (the 37.5px tab row viewport, 2.68rem at the 14px root). */
+.chart-type-select--natal {
+  margin: 0 0 var(--space-1);
+}
+
+.chart-type-select--natal .primitive-field {
+  gap: var(--space-1);
+}
+
+/* #981: the natal view bar sits right under its select, with no extra row margin above it. */
+.chart-type-select--natal + .tab-row {
+  margin-top: 0;
   margin-bottom: 0;
 }
 
-.chart-title-row .back,
-.chart-title-row .page-header {
-  margin-bottom: 0;
-}
-
-.chart-title-row .page-header {
-  flex: 1 1 auto;
-  min-width: 0;
+.chart-type-select--natal select {
+  box-sizing: border-box;
+  height: 2.68rem;
 }
 
 /*

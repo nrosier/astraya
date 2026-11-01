@@ -604,7 +604,7 @@ export function ChartDataView({
   readonly onViewChange?: ((view: ChartViewKind) => void) | undefined;
   /** Builds this chart's own URL for a given view, for `ChartViewNav`'s real links — every real caller's hash shape differs, so there is no sane default. */
   readonly buildViewHref: (view: ChartViewKind) => string;
-  /** The chart type select, shown on the same row as `ChartViewNav` (#801); on its own row when that nav is not shown (loading, error, print). */
+  /** The chart type select, shown above `ChartViewNav` as a stacked field, as on the derived chart pages (#981). */
   readonly typeSelector?: React.ReactNode;
   /** Optional person-bound sources for configuring extra rings in the Wheel workbench. */
   readonly overlayContext?: ChartOverlayContext | undefined;
@@ -1064,12 +1064,13 @@ export function ChartDataView({
         snapshotIdentity={provenanceIdentity(load, extendedSettings, rulership, fixedStarsSaved)}
         generatedAt={formatTimestamp(new Date())}
       />
-      {/* Directly under the title row (#801): the chart type, the chart's own views once there is a chart to view, and the
+      {/* The chart type sits above the view bar, as on the derived chart pages (#981): a stacked label and select. */}
+      {typeSelector}
+      {/* Directly under the chart type (#801): the chart's own views once there is a chart to view, and the
           Overlays and Extended settings triggers pinned at the far right (#818, #817). The row stays in place while the chart
           loads or fails, so the Extended settings card (a setting that might fix a failed or slow calculation, #442)
           keeps its state and stays reachable; only the view links wait for the chart. */}
       <ChartViewNav
-        leading={typeSelector}
         activeView={currentTab}
         buildHref={buildViewHref}
         onNavigate={setActiveTab}
@@ -1458,12 +1459,10 @@ export function ChartView({
 
     return (
       <main className="shell shell--wide">
-        <div className="chart-title-row">
-          <BackLink fallback={personHref(personId)} />
-          <PageHeader title={pageTitle} basis={basisLine}>
-            <PdfCreatorLink href={creatorHref} />
-          </PageHeader>
-        </div>
+        <BackLink fallback={personHref(personId)} />
+        <PageHeader title={pageTitle} basis={basisLine}>
+          <PdfCreatorLink href={creatorHref} />
+        </PageHeader>
         <div className="comparison-container comparison-layout">
           <div>
             <h2>{t.natalLabel}</h2>
@@ -1526,12 +1525,10 @@ export function ChartView({
 
   return (
     <main className="shell shell--wide">
-      <div className="chart-title-row">
-        <BackLink fallback={personHref(personId)} />
-        <PageHeader title={pageTitle} basis={basisLine}>
-          <PdfCreatorLink href={creatorHref} />
-        </PageHeader>
-      </div>
+      <BackLink fallback={personHref(personId)} />
+      <PageHeader title={pageTitle} basis={basisLine}>
+        <PdfCreatorLink href={creatorHref} />
+      </PageHeader>
       <ChartDataView
         typeSelector={<ChartTypeSelector personId={personId} type="natal" view={view} />}
         personId={personId}
