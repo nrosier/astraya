@@ -36,7 +36,7 @@ import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { PersonNotFound } from './PersonNotFound.js';
 import { progressionsViewMessages } from './ProgressionsView.messages.js';
-import { SortableTable } from './SortableTable.js';
+import { SortableTable, csvExportTable, useCsvExports } from './SortableTable.js';
 import { useStoreState } from './store-context.js';
 import type { TableColumn } from './table-sort.js';
 import type { BodyPosition, HousePositions } from '../ephemeris/types.js';
@@ -199,6 +199,35 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
     };
   }, [personMoment, provider, targetDate, technique, mcMethod]);
 
+  const positions = load.kind === 'ready' ? positionRows(load.data.positions, load.data.houses) : undefined;
+  const contacts = load.kind === 'ready' ? crossAspectRows(load.data.contacts) : undefined;
+  // The positions table's CSV, then the contacts table's (only when it has rows, as the screen renders it), in
+  // source order, offered in the page header (#887).
+  useCsvExports(
+    person?.moment !== undefined && person.timeAccuracy !== 'unknown' && positions !== undefined
+      ? [
+          csvExportTable(
+            'progressions',
+            t.positionsCaption,
+            deriveExportFilename(person.displayName, 'progressions', 'csv'),
+            positionColumns(t, locale),
+            positions,
+          ),
+          ...(contacts !== undefined && contacts.length > 0
+            ? [
+                csvExportTable(
+                  'progression-contacts',
+                  t.contactsCaption,
+                  deriveExportFilename(person.displayName, 'progression-contacts', 'csv'),
+                  contactColumns(t, locale),
+                  contacts,
+                ),
+              ]
+            : []),
+        ]
+      : undefined,
+  );
+
   if (person === undefined) {
     return <PersonNotFound />;
   }
@@ -228,8 +257,6 @@ export function ProgressionsView({ personId }: { personId: string }): React.JSX.
     );
   }
 
-  const positions = load.kind === 'ready' ? positionRows(load.data.positions, load.data.houses) : undefined;
-  const contacts = load.kind === 'ready' ? crossAspectRows(load.data.contacts) : undefined;
   const usedMcMethod = load.kind === 'ready' && 'mcMethod' in load.data ? load.data.mcMethod : undefined;
 
   return (

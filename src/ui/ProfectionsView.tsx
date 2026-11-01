@@ -35,7 +35,7 @@ import { RulershipSetting } from './RulershipSetting.js';
 import { usePersonCalculationSettings } from './person-calculation-settings.js';
 import { PersonNotFound } from './PersonNotFound.js';
 import { profectionsViewMessages } from './ProfectionsView.messages.js';
-import { SortableTable } from './SortableTable.js';
+import { SortableTable, csvExportTable, useCsvExports } from './SortableTable.js';
 import { useStoreState } from './store-context.js';
 import type { TableColumn } from './table-sort.js';
 import type { CorpusEntry, Locale } from '../interpretation/schema.js';
@@ -154,6 +154,23 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
     };
   }, [personMoment, provider, targetDate, rulership]);
 
+  const rows =
+    load.kind === 'ready' ? [toRow(t.yearPeriod, load.data.year), toRow(t.monthPeriod, load.data.month)] : undefined;
+  // The profections table's CSV, in source order, offered in the page header (#887).
+  useCsvExports(
+    person?.moment !== undefined && person.timeAccuracy !== 'unknown' && rows !== undefined
+      ? [
+          csvExportTable(
+            'profections',
+            t.profectionsCaption,
+            deriveExportFilename(person.displayName, 'profections', 'csv'),
+            columns(t, locale),
+            rows,
+          ),
+        ]
+      : undefined,
+  );
+
   if (person === undefined) {
     return <PersonNotFound />;
   }
@@ -182,9 +199,6 @@ export function ProfectionsView({ personId }: { personId: string }): React.JSX.E
       </main>
     );
   }
-
-  const rows =
-    load.kind === 'ready' ? [toRow(t.yearPeriod, load.data.year), toRow(t.monthPeriod, load.data.month)] : undefined;
 
   return (
     <main className="shell">
