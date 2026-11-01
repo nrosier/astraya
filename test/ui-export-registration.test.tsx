@@ -57,6 +57,14 @@ const { EclipsesView } = await import('../src/ui/EclipsesView.js');
 const { ProfectionsView } = await import('../src/ui/ProfectionsView.js');
 const { ProgressionsView } = await import('../src/ui/ProgressionsView.js');
 const { RelocatedChartView } = await import('../src/ui/RelocatedChartView.js');
+const { EventSearchView } = await import('../src/ui/EventSearchView.js');
+const { eventSearchViewMessages } = await import('../src/ui/EventSearchView.messages.js');
+const { CorpusOverridesPanel } = await import('../src/ui/CorpusOverridesPanel.js');
+const { corpusOverridesPanelMessages } = await import('../src/ui/CorpusOverridesPanel.messages.js');
+const { PreferencesView } = await import('../src/ui/PreferencesView.js');
+const { preferencesViewMessages } = await import('../src/ui/PreferencesView.messages.js');
+const { PersonForm } = await import('../src/ui/PersonForm.js');
+const { personFileActionsMessages } = await import('../src/ui/PersonFileActions.messages.js');
 
 let mounted: { container: HTMLElement; root: Root } | undefined;
 
@@ -287,5 +295,62 @@ describe('the Cycles, Eclipses, Profections, Progressions and Relocated screens 
       await Promise.resolve();
     });
     expect(await untilExportLabels(container, 1)).toEqual(['Natal vs. relocated (CSV)']);
+  }, 60_000);
+});
+
+describe('the body exports of Event Search, Corpus Overrides, Preferences and the birth record are in the header Export menu (#887)', () => {
+  it('Event Search lists its body CSV and ICS downloads once a search has results', async () => {
+    const container = await mount(
+      <ExportRegistryProvider>
+        <EventSearchView />
+      </ExportRegistryProvider>,
+    );
+    // A one-week range keeps the real search quick; the body buttons appear with the results.
+    const [from, to] = container.querySelectorAll<HTMLInputElement>('input[placeholder="YYYY-MM-DD"]');
+    await act(async () => {
+      typeInto(from, '2026-01-01');
+      typeInto(to, '2026-01-07');
+      await Promise.resolve();
+    });
+    const search = [...container.querySelectorAll<HTMLButtonElement>('button')].find(
+      (button) => button.textContent === eventSearchViewMessages.en.searchButton,
+    );
+    await act(async () => {
+      search?.click();
+      await Promise.resolve();
+    });
+    expect(await untilExportLabels(container, 2)).toEqual([
+      eventSearchViewMessages.en.downloadCsv,
+      eventSearchViewMessages.en.downloadIcs,
+    ]);
+  }, 60_000);
+
+  it('Corpus Overrides lists its "Export corrections" download', async () => {
+    const container = await mount(
+      <ExportRegistryProvider>
+        <CorpusOverridesPanel />
+      </ExportRegistryProvider>,
+    );
+    expect(await untilExportLabels(container, 1)).toEqual([corpusOverridesPanelMessages.en.exportButton]);
+  }, 60_000);
+
+  it('Preferences lists full JSON, people CSV and people AAF, in the body order', async () => {
+    const container = await mount(
+      <ExportRegistryProvider>
+        <PreferencesView />
+      </ExportRegistryProvider>,
+    );
+    const m = preferencesViewMessages.en;
+    expect(await untilExportLabels(container, 3)).toEqual([m.exportEverything, m.exportPeopleCsv, m.exportPeopleAaf]);
+  }, 60_000);
+
+  it('the birth record lists its AAF, JSON and CSV downloads, in the body order', async () => {
+    const container = await mount(
+      <ExportRegistryProvider>
+        <PersonForm personId="p1" />
+      </ExportRegistryProvider>,
+    );
+    const m = personFileActionsMessages.en;
+    expect(await untilExportLabels(container, 3)).toEqual([m.exportAaf, m.exportJson, m.exportCsv]);
   }, 60_000);
 });

@@ -80,6 +80,7 @@ import { ThemeToggle } from './ThemeToggle.js';
 import { useSymbolClass } from './symbol-setting.js';
 import { BackLink } from './BackLink.js';
 import { PageHeader } from './PageHeader.js';
+import { useRegisterExports } from './export-registry.js';
 
 interface ExportStatus {
   readonly kind: 'busy' | 'done' | 'error';
@@ -195,6 +196,16 @@ export function PreferencesView({
       downloadText(peopleCsvFilename(now), peopleToCsv([...store.state.people.values()]), 'text/csv');
     });
   };
+
+  // The Data & privacy downloads, also in the header Export menu, disabled exactly as their body buttons are (#887).
+  const exportNeedsStore = store === undefined;
+  useRegisterExports(
+    [
+      { key: 'everything', label: t.exportEverything, run: exportEverything },
+      { key: 'people-csv', label: t.exportPeopleCsv, run: exportPeopleCsv },
+      { key: 'people-aaf', label: t.exportPeopleAaf, run: exportPeopleAaf },
+    ].map((item) => ({ ...item, disabled: exportNeedsStore })),
+  );
 
   // Validate and stage only — nothing is written here. `confirmRestore` below is the one
   // place that calls `store.mutate`, and it does so once, for every person's mutations

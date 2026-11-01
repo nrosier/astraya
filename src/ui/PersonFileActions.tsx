@@ -14,6 +14,7 @@ import { readPersonFile, stagePersonReplace, type PersonChange } from '../domain
 import { APP_VERSION } from '../version.js';
 import { readDefaultCalculationProfile } from './default-calculation-profile.js';
 import { downloadText } from './download.js';
+import { useRegisterExports } from './export-registry.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { useMessages } from './messages.js';
 import { personFileActionsMessages } from './PersonFileActions.messages.js';
@@ -95,6 +96,12 @@ export function PersonFileActions({
     downloadText(filename('csv'), peopleToCsv([person]), 'text/csv');
     setExportStatus({ kind: 'success', text: t.exported('CSV') });
   };
+  // The export row's three downloads, also in the header Export menu (#887).
+  useRegisterExports([
+    { key: 'aaf', label: t.exportAaf, run: exportAaf },
+    { key: 'json', label: t.exportJson, run: exportJson },
+    { key: 'csv', label: t.exportCsv, run: exportCsv },
+  ]);
 
   const onFileChosen = (file: File | undefined): void => {
     if (file === undefined) return;

@@ -20,6 +20,7 @@ import {
 } from '../domain/event-search.js';
 import { eventSearchToIcs } from '../domain/event-search-ics.js';
 import { downloadText } from './download.js';
+import { useRegisterExports } from './export-registry.js';
 import { useMemo, useRef, useState } from 'react';
 import { Checkbox } from './primitives/Checkbox.js';
 import { SortableTable } from './SortableTable.js';
@@ -181,6 +182,16 @@ export function EventSearchView(): React.JSX.Element {
     const now = new Date();
     downloadText(eventSearchIcsFilename(now), eventSearchToIcs(result.rows, now), 'text/calendar;charset=utf-8');
   };
+
+  // The same two downloads as the results' body buttons, in the header Export menu (#887).
+  useRegisterExports(
+    result.kind === 'ready'
+      ? [
+          { key: 'csv', label: t.downloadCsv, run: download },
+          { key: 'ics', label: t.downloadIcs, run: downloadIcs },
+        ]
+      : undefined,
+  );
 
   return (
     <main className="shell">
