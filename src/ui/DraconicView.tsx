@@ -131,10 +131,6 @@ export function DraconicView({
         <PdfCreatorLink href={creatorHref} />
       </PageHeader>
       <ChartTypeSelector personId={personId} type="draconic" view={view} />
-      <p className="hint">
-        <GlossaryText text={t.hint} />
-      </p>
-
       <ChartDataView
         personId={personId}
         chartType="draconic"
@@ -169,6 +165,11 @@ export function DraconicView({
           <GlossaryText text={t.housesUndefined} />
         </StatusMessage>
       )}
+
+      {/* Below the wheel (#1013): the explanation never pushes the chart down. */}
+      <p className="hint">
+        <GlossaryText text={t.hint} />
+      </p>
     </main>
   );
 }

@@ -195,42 +195,8 @@ export function HarmonicView({
         <PdfCreatorLink href={creatorHref} />
       </PageHeader>
       <ChartTypeSelector personId={personId} type="harmonic" view={view} />
-      <p className="hint">
-        <GlossaryText text={t.hint} />
-      </p>
-
-      <div className="field-grid">
-        <Select
-          label={t.divisionalChartLabel}
-          value={presetKey}
-          options={[
-            ...VARGA_PRESETS.map((candidate) => ({ value: candidate.key, label: candidate.label })),
-            { value: CUSTOM, label: t.customHarmonicOption },
-          ]}
-          onChange={setPresetKey}
-        />
-        {presetKey === CUSTOM && (
-          <NumberField label={t.harmonicNumberLabel} min={1} value={customN} onChange={setCustomN} />
-        )}
-      </div>
-
-      {preset !== undefined && <p className="hint">{t.presetDescriptions[preset.key] ?? preset.description}</p>}
-      {presetKey === CUSTOM && !nValid && <StatusMessage kind="error">{t.invalidHarmonicNumber}</StatusMessage>}
-
       {nValid && load.kind !== 'idle' && (
         <>
-          {load.kind === 'ready' && (
-            <>
-              <p className="hint">{t.provenanceHint(String(n))}</p>
-              <SortableTable
-                caption={t.provenanceCaption}
-                columns={provenanceColumns(t, n)}
-                rows={load.provenance}
-                getRowKey={(row) => row.bodyKey}
-                downloadFilename={deriveExportFilename(displayName, 'harmonic-provenance', 'csv')}
-              />
-            </>
-          )}
           <ChartDataView
             personId={personId}
             chartType="harmonic"
@@ -254,6 +220,42 @@ export function HarmonicView({
                     ...(person.customPoints === undefined ? {} : { options: { customPoints: person.customPoints } }),
                   }
             }
+          />
+        </>
+      )}
+
+      {/* Below the wheel and the Selection card (#1013): the inputs and explanations never push the chart down. */}
+      <p className="hint">
+        <GlossaryText text={t.hint} />
+      </p>
+
+      <div className="field-grid">
+        <Select
+          label={t.divisionalChartLabel}
+          value={presetKey}
+          options={[
+            ...VARGA_PRESETS.map((candidate) => ({ value: candidate.key, label: candidate.label })),
+            { value: CUSTOM, label: t.customHarmonicOption },
+          ]}
+          onChange={setPresetKey}
+        />
+        {presetKey === CUSTOM && (
+          <NumberField label={t.harmonicNumberLabel} min={1} value={customN} onChange={setCustomN} />
+        )}
+      </div>
+
+      {preset !== undefined && <p className="hint">{t.presetDescriptions[preset.key] ?? preset.description}</p>}
+      {presetKey === CUSTOM && !nValid && <StatusMessage kind="error">{t.invalidHarmonicNumber}</StatusMessage>}
+
+      {nValid && load.kind === 'ready' && (
+        <>
+          <p className="hint">{t.provenanceHint(String(n))}</p>
+          <SortableTable
+            caption={t.provenanceCaption}
+            columns={provenanceColumns(t, n)}
+            rows={load.provenance}
+            getRowKey={(row) => row.bodyKey}
+            downloadFilename={deriveExportFilename(displayName, 'harmonic-provenance', 'csv')}
           />
         </>
       )}
