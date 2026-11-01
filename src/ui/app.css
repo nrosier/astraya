@@ -6954,6 +6954,17 @@ button.mgrid-pair:focus-visible {
   gap: var(--space-3);
 }
 
+/* One encapsulated card per left-column section (issue 975), on the same surface and hairline as the Preferences cards. */
+.pdf-builder-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: var(--border-hairline) solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
 .pdf-summary-card {
   display: flex;
   flex-direction: column;
@@ -6980,6 +6991,12 @@ button.mgrid-pair:focus-visible {
 @container pdf-builder (min-width: 64rem) {
   .pdf-builder-grid {
     grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  }
+
+  /* The summary column stays in view while the selection scrolls (issue 975). One column on a phone has nothing to stick against. */
+  .pdf-summary-sticky {
+    position: sticky;
+    top: 1.5rem;
   }
 }
 

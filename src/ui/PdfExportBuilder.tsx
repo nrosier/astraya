@@ -482,6 +482,7 @@ export function PdfExportBuilder({
     <main className="shell shell--wide pdf-builder">
       <PageHeader
         title={t.heading}
+        subtitle={t.subtitle}
         basis={person === undefined || person.displayName === '' ? undefined : person.displayName}
       >
         <div className="pdf-header-preset">
@@ -516,601 +517,608 @@ export function PdfExportBuilder({
       <div className="pdf-builder-layout">
         <div className="pdf-builder-grid">
           <div className="pdf-builder-column">
-            <Select
-              label={t.personLabel}
-              value={personId}
-              options={[
-                ...(people.length === 0 ? [{ value: '', label: t.noPeople }] : []),
-                ...people.map((candidate) => ({
-                  value: candidate.id,
-                  label: candidate.displayName || t.unnamedOption,
-                })),
-              ]}
-              onChange={setPersonId}
-            />
-
-            <h2 className="pdf-builder-heading">{t.documentSections}</h2>
-
-            <fieldset className="field-group">
-              <legend>{t.birthRecordLabel}</legend>
-              <Checkbox
-                label={t.birthRecordLabel}
-                checked={selection.birthRecord}
-                onChange={(value) => {
-                  setSelection((current) => ({ ...current, birthRecord: value }));
-                }}
+            <section className="pdf-builder-card">
+              <Select
+                label={t.personLabel}
+                value={personId}
+                options={[
+                  ...(people.length === 0 ? [{ value: '', label: t.noPeople }] : []),
+                  ...people.map((candidate) => ({
+                    value: candidate.id,
+                    label: candidate.displayName || t.unnamedOption,
+                  })),
+                ]}
+                onChange={setPersonId}
               />
-            </fieldset>
+            </section>
 
-            <fieldset className="field-group">
-              <legend>{t.interpretationLabel}</legend>
-              <Checkbox
-                label={t.interpretationBaseLabel}
-                checked={selection.interpretation.base}
-                onChange={(value) => {
-                  setSelection((current) => ({
-                    ...current,
-                    interpretation: { ...current.interpretation, base: value },
-                  }));
-                }}
-              />
-              {selection.interpretation.base && (
-                <div className="settings-card-indent">
-                  <Checkbox
-                    label={t.interpretationSabianLabel}
-                    checked={selection.interpretation.sabianSymbols ?? true}
-                    onChange={(value) => {
-                      setSelection((current) => ({
-                        ...current,
-                        interpretation: { ...current.interpretation, sabianSymbols: value },
-                      }));
-                    }}
-                  />
-                </div>
-              )}
-              <PdfAiInterpretationPicker
-                selectedIds={selection.interpretation.aiInterpretationIds}
-                onChange={(ids) => {
-                  setSelection((current) => ({
-                    ...current,
-                    interpretation: { ...current.interpretation, aiInterpretationIds: ids },
-                  }));
-                }}
-                locale={locale}
-                signedIn={user !== undefined}
-                personId={personId === '' ? undefined : personId}
-              />
-            </fieldset>
+            <section className="pdf-builder-card">
+              <h2 className="pdf-builder-heading">{t.documentSections}</h2>
 
-            <fieldset className="field-group">
-              <legend>
-                {t.consultationNotesLegend} <Badge>{t.consultationNotesPlanned}</Badge>
-              </legend>
-              <Checkbox label={t.consultationNotesLabel} checked={false} disabled onChange={() => undefined} />
-              <p className="hint">{t.consultationNotesUnavailable}</p>
-            </fieldset>
+              <fieldset className="field-group">
+                <legend>{t.birthRecordLabel}</legend>
+                <Checkbox
+                  label={t.birthRecordLabel}
+                  checked={selection.birthRecord}
+                  onChange={(value) => {
+                    setSelection((current) => ({ ...current, birthRecord: value }));
+                  }}
+                />
+              </fieldset>
 
-            <div className="pdf-builder-disclosures">
-              <AdvancedGroup title={t.chartsLegend} showLabel={t.showSection} hideLabel={t.hideSection}>
-                <div className="field-group" role="group" aria-label={t.chartsLegend}>
-                  <p className="hint">{t.chartVisibilityNote}</p>
-                  {PDF_CHART_TYPES.map((type) => {
-                    const options = chartOf(fullSelection, type);
-                    const included = options !== undefined;
-                    return (
-                      <div key={type}>
-                        <Checkbox
-                          label={t.chartTypeLabels[type]}
-                          checked={included}
-                          onChange={(value) => {
-                            toggleChart(type, value);
-                          }}
-                        />
-                        {included && (
-                          <div className="settings-card-indent">
-                            <Checkbox
-                              label={t.wheelLabel}
-                              checked={options.wheel}
-                              onChange={(value) => {
-                                patchChart(type, { wheel: value });
-                              }}
-                            />{' '}
-                            {/* A page's link can tick a view's own table (#915), so every table stays listed to tick or untick. */}
-                            {[...PDF_CHART_TABLES, ...PDF_VIEW_TABLES].map((table) => (
-                              <Checkbox
-                                key={table}
-                                label={t.tableLabels[table]}
-                                checked={options.tables.includes(table)}
-                                onChange={(value) => {
-                                  toggleTable(type, table, value);
-                                }}
-                              />
-                            ))}
-                            {type === 'harmonic' && (
-                              <NumberField
-                                label={t.harmonicNumberLabel}
-                                min={1}
-                                step="any"
-                                value={String(options.harmonicN ?? 5)}
-                                onChange={(value) => {
-                                  patchChart(type, { harmonicN: Number(value) });
-                                }}
-                              />
-                            )}
-                            {type === 'solar-return' && (
-                              <NumberField
-                                label={t.returnYearLabel}
-                                step="any"
-                                value={String(options.returnYear ?? new Date().getFullYear())}
-                                onChange={(value) => {
-                                  patchChart(type, { returnYear: Number(value) });
-                                }}
-                              />
-                            )}
-                            {type === 'lunar-return' && (
-                              <DateField
-                                label={t.returnFromDateLabel}
-                                value={options.returnFromDate ?? utcDay()}
-                                onChange={(value) => {
-                                  patchChart(type, { returnFromDate: value });
-                                }}
-                              />
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </AdvancedGroup>
-
-              <AdvancedGroup title={t.relationshipLegend} showLabel={t.showSection} hideLabel={t.hideSection}>
-                <div className="field-group" role="group" aria-label={t.relationshipLegend}>
-                  <div>
+              <fieldset className="field-group">
+                <legend>{t.interpretationLabel}</legend>
+                <Checkbox
+                  label={t.interpretationBaseLabel}
+                  checked={selection.interpretation.base}
+                  onChange={(value) => {
+                    setSelection((current) => ({
+                      ...current,
+                      interpretation: { ...current.interpretation, base: value },
+                    }));
+                  }}
+                />
+                {selection.interpretation.base && (
+                  <div className="settings-card-indent">
                     <Checkbox
-                      label={t.synastryLabel}
-                      checked={fullSelection.synastry !== undefined}
-                      disabled={partnerCandidates.length === 0}
+                      label={t.interpretationSabianLabel}
+                      checked={selection.interpretation.sabianSymbols ?? true}
                       onChange={(value) => {
-                        toggleSynastry(value, partnerCandidates[0]?.id ?? '');
+                        setSelection((current) => ({
+                          ...current,
+                          interpretation: { ...current.interpretation, sabianSymbols: value },
+                        }));
                       }}
                     />
-                    {partnerCandidates.length === 0 && <p className="hint">{t.noPartnersHint}</p>}
-                    {fullSelection.synastry !== undefined && (
-                      <div className="settings-card-indent">
-                        <Select
-                          label={t.partnerLabelSynastry}
-                          value={fullSelection.synastry.partnerId}
-                          onChange={(value) => {
-                            patchSynastry({ partnerId: value });
-                          }}
-                          options={partnerCandidates.map((candidate) => ({
-                            value: candidate.id,
-                            label: candidate.displayName || t.unnamedOption,
-                          }))}
-                        />
-                        <br />
-                        <Checkbox
-                          label={t.wheelLabel}
-                          checked={fullSelection.synastry.wheel}
-                          onChange={(value) => {
-                            patchSynastry({ wheel: value });
-                          }}
-                        />{' '}
-                        <Checkbox
-                          label={t.aspectsTableLabel}
-                          checked={fullSelection.synastry.aspectsTable}
-                          onChange={(value) => {
-                            patchSynastry({ aspectsTable: value });
-                          }}
-                        />{' '}
-                        <Checkbox
-                          label={t.relationshipSummaryLabel}
-                          checked={fullSelection.synastry.relationshipSummary}
-                          onChange={(value) => {
-                            patchSynastry({ relationshipSummary: value });
-                          }}
-                        />
-                      </div>
-                    )}
                   </div>
-                  <div>
-                    <Checkbox
-                      label={t.compositeLabel}
-                      checked={fullSelection.composite !== undefined}
-                      disabled={partnerCandidates.length === 0}
-                      onChange={(value) => {
-                        toggleComposite(value, partnerCandidates[0]?.id ?? '');
-                      }}
-                    />
-                    {fullSelection.composite !== undefined && (
-                      <div className="settings-card-indent">
-                        <Select
-                          label={t.partnerLabelComposite}
-                          value={fullSelection.composite.partnerId}
-                          onChange={(value) => {
-                            patchComposite({ partnerId: value });
-                          }}
-                          options={partnerCandidates.map((candidate) => ({
-                            value: candidate.id,
-                            label: candidate.displayName || t.unnamedOption,
-                          }))}
-                        />
-                        <br />
-                        <Checkbox
-                          label={t.wheelLabel}
-                          checked={fullSelection.composite.wheel}
-                          onChange={(value) => {
-                            patchComposite({ wheel: value });
-                          }}
-                        />{' '}
-                        {PDF_CHART_TABLES.map((table) => (
+                )}
+                <PdfAiInterpretationPicker
+                  selectedIds={selection.interpretation.aiInterpretationIds}
+                  onChange={(ids) => {
+                    setSelection((current) => ({
+                      ...current,
+                      interpretation: { ...current.interpretation, aiInterpretationIds: ids },
+                    }));
+                  }}
+                  locale={locale}
+                  signedIn={user !== undefined}
+                  personId={personId === '' ? undefined : personId}
+                />
+              </fieldset>
+
+              <fieldset className="field-group">
+                <legend>
+                  {t.consultationNotesLegend} <Badge>{t.consultationNotesPlanned}</Badge>
+                </legend>
+                <Checkbox label={t.consultationNotesLabel} checked={false} disabled onChange={() => undefined} />
+                <p className="hint">{t.consultationNotesUnavailable}</p>
+              </fieldset>
+            </section>
+
+            <section className="pdf-builder-card">
+              <h2 className="pdf-builder-heading">{t.chartSectionsHeading}</h2>
+              <div className="pdf-builder-disclosures">
+                <AdvancedGroup title={t.chartsLegend} showLabel={t.showSection} hideLabel={t.hideSection}>
+                  <div className="field-group" role="group" aria-label={t.chartsLegend}>
+                    <p className="hint">{t.chartVisibilityNote}</p>
+                    {PDF_CHART_TYPES.map((type) => {
+                      const options = chartOf(fullSelection, type);
+                      const included = options !== undefined;
+                      return (
+                        <div key={type}>
                           <Checkbox
-                            key={table}
-                            label={t.tableLabels[table]}
-                            checked={fullSelection.composite?.tables.includes(table) ?? false}
+                            label={t.chartTypeLabels[type]}
+                            checked={included}
                             onChange={(value) => {
-                              toggleCompositeTable(table, value);
+                              toggleChart(type, value);
                             }}
                           />
-                        ))}
-                      </div>
-                    )}
+                          {included && (
+                            <div className="settings-card-indent">
+                              <Checkbox
+                                label={t.wheelLabel}
+                                checked={options.wheel}
+                                onChange={(value) => {
+                                  patchChart(type, { wheel: value });
+                                }}
+                              />{' '}
+                              {/* A page's link can tick a view's own table (#915), so every table stays listed to tick or untick. */}
+                              {[...PDF_CHART_TABLES, ...PDF_VIEW_TABLES].map((table) => (
+                                <Checkbox
+                                  key={table}
+                                  label={t.tableLabels[table]}
+                                  checked={options.tables.includes(table)}
+                                  onChange={(value) => {
+                                    toggleTable(type, table, value);
+                                  }}
+                                />
+                              ))}
+                              {type === 'harmonic' && (
+                                <NumberField
+                                  label={t.harmonicNumberLabel}
+                                  min={1}
+                                  step="any"
+                                  value={String(options.harmonicN ?? 5)}
+                                  onChange={(value) => {
+                                    patchChart(type, { harmonicN: Number(value) });
+                                  }}
+                                />
+                              )}
+                              {type === 'solar-return' && (
+                                <NumberField
+                                  label={t.returnYearLabel}
+                                  step="any"
+                                  value={String(options.returnYear ?? new Date().getFullYear())}
+                                  onChange={(value) => {
+                                    patchChart(type, { returnYear: Number(value) });
+                                  }}
+                                />
+                              )}
+                              {type === 'lunar-return' && (
+                                <DateField
+                                  label={t.returnFromDateLabel}
+                                  value={options.returnFromDate ?? utcDay()}
+                                  onChange={(value) => {
+                                    patchChart(type, { returnFromDate: value });
+                                  }}
+                                />
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
-                </div>
-              </AdvancedGroup>
+                </AdvancedGroup>
 
-              <AdvancedGroup title={t.transitsLegend} showLabel={t.showSection} hideLabel={t.hideSection}>
-                <div className="field-group" role="group" aria-label={t.transitsLegend}>
-                  <div>
-                    <Checkbox
-                      label={t.transitsLabel}
-                      checked={fullSelection.transits !== undefined}
-                      onChange={(value) => {
-                        toggleTransits(value);
-                      }}
-                    />
-                    {fullSelection.transits !== undefined && (
-                      <div className="settings-card-indent">
-                        <Select
-                          label={t.filterPresetLabel}
-                          value={fullSelection.transits.filterPreset}
-                          onChange={(value) => {
-                            patchTransits({ filterPreset: value as PdfTransitFilterPreset });
-                          }}
-                          options={(['important', 'all'] as const).map((preset) => ({
-                            value: preset,
-                            label: t.filterPresetOptions[preset],
-                          }))}
-                        />
-                        <br />
-                        <Checkbox
-                          label={t.wheelLabel}
-                          checked={fullSelection.transits.wheel}
-                          onChange={(value) => {
-                            patchTransits({ wheel: value });
-                          }}
-                        />{' '}
-                        <Checkbox
-                          label={t.aspectsTableLabel}
-                          checked={fullSelection.transits.aspectsTable}
-                          onChange={(value) => {
-                            patchTransits({ aspectsTable: value });
-                          }}
-                        />{' '}
-                        <DateField
-                          label={t.asOfDateLabel}
-                          value={fullSelection.transits.asOfDate ?? ''}
-                          onChange={(value) => {
-                            patchTransits({ asOfDate: value });
-                          }}
-                        />
-                      </div>
-                    )}
-                  </div>
-
-                  <div>
-                    <Checkbox
-                      label={t.forecastLabel}
-                      checked={fullSelection.forecast !== undefined}
-                      onChange={(value) => {
-                        toggleForecast(value);
-                      }}
-                    />
-                    {fullSelection.forecast !== undefined && (
-                      <div className="settings-card-indent">
-                        <Select
-                          label={t.filterPresetLabel}
-                          value={fullSelection.forecast.filterPreset}
-                          onChange={(value) => {
-                            patchForecast({ filterPreset: value as PdfTransitFilterPreset });
-                          }}
-                          options={(['important', 'all'] as const).map((preset) => ({
-                            value: preset,
-                            label: t.filterPresetOptions[preset],
-                          }))}
-                        />
-                        <br />
-                        <Checkbox
-                          label={t.forecastDailyLabel}
-                          checked={fullSelection.forecast.daily}
-                          onChange={(value) => {
-                            patchForecast({ daily: value });
-                          }}
-                        />{' '}
-                        <Checkbox
-                          label={t.forecastWeeklyLabel}
-                          checked={fullSelection.forecast.weekly}
-                          onChange={(value) => {
-                            patchForecast({ weekly: value });
-                          }}
-                        />{' '}
-                        <Checkbox
-                          label={t.forecastMonthlyLabel}
-                          checked={fullSelection.forecast.monthly}
-                          onChange={(value) => {
-                            patchForecast({ monthly: value });
-                          }}
-                        />{' '}
-                        <Checkbox
-                          label={t.forecastYearlyLabel}
-                          checked={fullSelection.forecast.yearly}
-                          onChange={(value) => {
-                            patchForecast({ yearly: value });
-                          }}
-                        />{' '}
-                        <DateField
-                          label={t.asOfDateLabel}
-                          value={fullSelection.forecast.asOfDate ?? ''}
-                          onChange={(value) => {
-                            patchForecast({ asOfDate: value });
-                          }}
-                        />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </AdvancedGroup>
-
-              <AdvancedGroup title={t.eclipsesLegend} showLabel={t.showSection} hideLabel={t.hideSection}>
-                <div className="field-group" role="group" aria-label={t.eclipsesLegend}>
-                  <Checkbox
-                    label={t.eclipsesLabel}
-                    checked={fullSelection.eclipses !== undefined}
-                    onChange={(value) => {
-                      toggleEclipses(value);
-                    }}
-                  />
-                  {fullSelection.eclipses !== undefined && (
-                    <div className="settings-card-indent">
-                      <NumberField
-                        label={t.fromYearLabel}
-                        step="any"
-                        value={String(fullSelection.eclipses.fromYear ?? '')}
+                <AdvancedGroup title={t.relationshipLegend} showLabel={t.showSection} hideLabel={t.hideSection}>
+                  <div className="field-group" role="group" aria-label={t.relationshipLegend}>
+                    <div>
+                      <Checkbox
+                        label={t.synastryLabel}
+                        checked={fullSelection.synastry !== undefined}
+                        disabled={partnerCandidates.length === 0}
                         onChange={(value) => {
-                          if (value === '') return;
-                          patchEclipses({ fromYear: Number(value) });
-                        }}
-                      />{' '}
-                      <NumberField
-                        label={t.toYearLabel}
-                        step="any"
-                        value={String(fullSelection.eclipses.toYear ?? '')}
-                        onChange={(value) => {
-                          if (value === '') return;
-                          patchEclipses({ toYear: Number(value) });
+                          toggleSynastry(value, partnerCandidates[0]?.id ?? '');
                         }}
                       />
+                      {partnerCandidates.length === 0 && <p className="hint">{t.noPartnersHint}</p>}
+                      {fullSelection.synastry !== undefined && (
+                        <div className="settings-card-indent">
+                          <Select
+                            label={t.partnerLabelSynastry}
+                            value={fullSelection.synastry.partnerId}
+                            onChange={(value) => {
+                              patchSynastry({ partnerId: value });
+                            }}
+                            options={partnerCandidates.map((candidate) => ({
+                              value: candidate.id,
+                              label: candidate.displayName || t.unnamedOption,
+                            }))}
+                          />
+                          <br />
+                          <Checkbox
+                            label={t.wheelLabel}
+                            checked={fullSelection.synastry.wheel}
+                            onChange={(value) => {
+                              patchSynastry({ wheel: value });
+                            }}
+                          />{' '}
+                          <Checkbox
+                            label={t.aspectsTableLabel}
+                            checked={fullSelection.synastry.aspectsTable}
+                            onChange={(value) => {
+                              patchSynastry({ aspectsTable: value });
+                            }}
+                          />{' '}
+                          <Checkbox
+                            label={t.relationshipSummaryLabel}
+                            checked={fullSelection.synastry.relationshipSummary}
+                            onChange={(value) => {
+                              patchSynastry({ relationshipSummary: value });
+                            }}
+                          />
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              </AdvancedGroup>
-
-              <AdvancedGroup title={t.predictiveLegend} showLabel={t.showSection} hideLabel={t.hideSection}>
-                <div className="field-group" role="group" aria-label={t.predictiveLegend}>
-                  <div>
-                    <Checkbox
-                      label={t.progressionsLabel}
-                      checked={fullSelection.progressions !== undefined}
-                      onChange={(value) => {
-                        toggleProgressions(value);
-                      }}
-                    />
-                    {fullSelection.progressions !== undefined && (
-                      <div className="settings-card-indent">
-                        <Select
-                          label={t.progressionTechniqueLabel}
-                          value={fullSelection.progressions.technique}
-                          onChange={(value) => {
-                            patchProgressions({ technique: value as PdfProgressionTechnique });
-                          }}
-                          options={(['secondary', 'tertiary', 'minor'] as const).map((technique) => ({
-                            value: technique,
-                            label: t.progressionTechniqueOptions[technique],
-                          }))}
-                        />{' '}
-                        {fullSelection.progressions.technique === 'secondary' && (
-                          <>
-                            <Select
-                              label={t.mcMethodLabel}
-                              value={fullSelection.progressions.mcMethod}
+                    <div>
+                      <Checkbox
+                        label={t.compositeLabel}
+                        checked={fullSelection.composite !== undefined}
+                        disabled={partnerCandidates.length === 0}
+                        onChange={(value) => {
+                          toggleComposite(value, partnerCandidates[0]?.id ?? '');
+                        }}
+                      />
+                      {fullSelection.composite !== undefined && (
+                        <div className="settings-card-indent">
+                          <Select
+                            label={t.partnerLabelComposite}
+                            value={fullSelection.composite.partnerId}
+                            onChange={(value) => {
+                              patchComposite({ partnerId: value });
+                            }}
+                            options={partnerCandidates.map((candidate) => ({
+                              value: candidate.id,
+                              label: candidate.displayName || t.unnamedOption,
+                            }))}
+                          />
+                          <br />
+                          <Checkbox
+                            label={t.wheelLabel}
+                            checked={fullSelection.composite.wheel}
+                            onChange={(value) => {
+                              patchComposite({ wheel: value });
+                            }}
+                          />{' '}
+                          {PDF_CHART_TABLES.map((table) => (
+                            <Checkbox
+                              key={table}
+                              label={t.tableLabels[table]}
+                              checked={fullSelection.composite?.tables.includes(table) ?? false}
                               onChange={(value) => {
-                                patchProgressions({ mcMethod: value as ProgressedMcMethod });
+                                toggleCompositeTable(table, value);
                               }}
-                              options={(['quotidian', 'naibod', 'solarArc'] as const).map((method) => ({
-                                value: method,
-                                label: t.mcMethodOptions[method],
-                              }))}
-                            />{' '}
-                          </>
-                        )}
-                        <br />
-                        <Checkbox
-                          label={t.positionsTableLabel}
-                          checked={fullSelection.progressions.positionsTable}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </AdvancedGroup>
+
+                <AdvancedGroup title={t.transitsLegend} showLabel={t.showSection} hideLabel={t.hideSection}>
+                  <div className="field-group" role="group" aria-label={t.transitsLegend}>
+                    <div>
+                      <Checkbox
+                        label={t.transitsLabel}
+                        checked={fullSelection.transits !== undefined}
+                        onChange={(value) => {
+                          toggleTransits(value);
+                        }}
+                      />
+                      {fullSelection.transits !== undefined && (
+                        <div className="settings-card-indent">
+                          <Select
+                            label={t.filterPresetLabel}
+                            value={fullSelection.transits.filterPreset}
+                            onChange={(value) => {
+                              patchTransits({ filterPreset: value as PdfTransitFilterPreset });
+                            }}
+                            options={(['important', 'all'] as const).map((preset) => ({
+                              value: preset,
+                              label: t.filterPresetOptions[preset],
+                            }))}
+                          />
+                          <br />
+                          <Checkbox
+                            label={t.wheelLabel}
+                            checked={fullSelection.transits.wheel}
+                            onChange={(value) => {
+                              patchTransits({ wheel: value });
+                            }}
+                          />{' '}
+                          <Checkbox
+                            label={t.aspectsTableLabel}
+                            checked={fullSelection.transits.aspectsTable}
+                            onChange={(value) => {
+                              patchTransits({ aspectsTable: value });
+                            }}
+                          />{' '}
+                          <DateField
+                            label={t.asOfDateLabel}
+                            value={fullSelection.transits.asOfDate ?? ''}
+                            onChange={(value) => {
+                              patchTransits({ asOfDate: value });
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <Checkbox
+                        label={t.forecastLabel}
+                        checked={fullSelection.forecast !== undefined}
+                        onChange={(value) => {
+                          toggleForecast(value);
+                        }}
+                      />
+                      {fullSelection.forecast !== undefined && (
+                        <div className="settings-card-indent">
+                          <Select
+                            label={t.filterPresetLabel}
+                            value={fullSelection.forecast.filterPreset}
+                            onChange={(value) => {
+                              patchForecast({ filterPreset: value as PdfTransitFilterPreset });
+                            }}
+                            options={(['important', 'all'] as const).map((preset) => ({
+                              value: preset,
+                              label: t.filterPresetOptions[preset],
+                            }))}
+                          />
+                          <br />
+                          <Checkbox
+                            label={t.forecastDailyLabel}
+                            checked={fullSelection.forecast.daily}
+                            onChange={(value) => {
+                              patchForecast({ daily: value });
+                            }}
+                          />{' '}
+                          <Checkbox
+                            label={t.forecastWeeklyLabel}
+                            checked={fullSelection.forecast.weekly}
+                            onChange={(value) => {
+                              patchForecast({ weekly: value });
+                            }}
+                          />{' '}
+                          <Checkbox
+                            label={t.forecastMonthlyLabel}
+                            checked={fullSelection.forecast.monthly}
+                            onChange={(value) => {
+                              patchForecast({ monthly: value });
+                            }}
+                          />{' '}
+                          <Checkbox
+                            label={t.forecastYearlyLabel}
+                            checked={fullSelection.forecast.yearly}
+                            onChange={(value) => {
+                              patchForecast({ yearly: value });
+                            }}
+                          />{' '}
+                          <DateField
+                            label={t.asOfDateLabel}
+                            value={fullSelection.forecast.asOfDate ?? ''}
+                            onChange={(value) => {
+                              patchForecast({ asOfDate: value });
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </AdvancedGroup>
+
+                <AdvancedGroup title={t.eclipsesLegend} showLabel={t.showSection} hideLabel={t.hideSection}>
+                  <div className="field-group" role="group" aria-label={t.eclipsesLegend}>
+                    <Checkbox
+                      label={t.eclipsesLabel}
+                      checked={fullSelection.eclipses !== undefined}
+                      onChange={(value) => {
+                        toggleEclipses(value);
+                      }}
+                    />
+                    {fullSelection.eclipses !== undefined && (
+                      <div className="settings-card-indent">
+                        <NumberField
+                          label={t.fromYearLabel}
+                          step="any"
+                          value={String(fullSelection.eclipses.fromYear ?? '')}
                           onChange={(value) => {
-                            patchProgressions({ positionsTable: value });
+                            if (value === '') return;
+                            patchEclipses({ fromYear: Number(value) });
                           }}
                         />{' '}
-                        <Checkbox
-                          label={t.contactsTableLabel}
-                          checked={fullSelection.progressions.contactsTable}
+                        <NumberField
+                          label={t.toYearLabel}
+                          step="any"
+                          value={String(fullSelection.eclipses.toYear ?? '')}
                           onChange={(value) => {
-                            patchProgressions({ contactsTable: value });
-                          }}
-                        />{' '}
-                        <DateField
-                          label={t.asOfDateLabel}
-                          value={fullSelection.progressions.asOfDate ?? ''}
-                          onChange={(value) => {
-                            patchProgressions({ asOfDate: value });
+                            if (value === '') return;
+                            patchEclipses({ toYear: Number(value) });
                           }}
                         />
                       </div>
                     )}
                   </div>
+                </AdvancedGroup>
 
-                  <div>
-                    <Checkbox
-                      label={t.solarArcLabel}
-                      checked={fullSelection.solarArc !== undefined}
-                      onChange={(value) => {
-                        toggleSolarArc(value);
-                      }}
-                    />
-                    {fullSelection.solarArc !== undefined && (
-                      <div className="settings-card-indent">
-                        <Checkbox
-                          label={t.positionsTableLabel}
-                          checked={fullSelection.solarArc.positionsTable}
-                          onChange={(value) => {
-                            patchSolarArc({ positionsTable: value });
-                          }}
-                        />{' '}
-                        <Checkbox
-                          label={t.contactsTableLabel}
-                          checked={fullSelection.solarArc.contactsTable}
-                          onChange={(value) => {
-                            patchSolarArc({ contactsTable: value });
-                          }}
-                        />{' '}
-                        <DateField
-                          label={t.asOfDateLabel}
-                          value={fullSelection.solarArc.asOfDate ?? ''}
-                          onChange={(value) => {
-                            patchSolarArc({ asOfDate: value });
-                          }}
-                        />
-                      </div>
-                    )}
-                  </div>
-
-                  <div>
-                    <Checkbox
-                      label={t.profectionsLabel}
-                      checked={fullSelection.profections !== undefined}
-                      onChange={(value) => {
-                        toggleProfections(value);
-                      }}
-                    />
-                    {fullSelection.profections !== undefined && (
-                      <div className="settings-card-indent">
-                        <Checkbox
-                          label={t.profectionsTableLabel}
-                          checked={fullSelection.profections.table}
-                          onChange={(value) => {
-                            patchProfections({ table: value });
-                          }}
-                        />{' '}
-                        <Checkbox
-                          label={t.meaningsLabel}
-                          checked={fullSelection.profections.meanings}
-                          onChange={(value) => {
-                            patchProfections({ meanings: value });
-                          }}
-                        />{' '}
-                        <DateField
-                          label={t.asOfDateLabel}
-                          value={fullSelection.profections.asOfDate ?? ''}
-                          onChange={(value) => {
-                            patchProfections({ asOfDate: value });
-                          }}
-                        />
-                      </div>
-                    )}
-                  </div>
-
-                  <div>
-                    <Checkbox
-                      label={t.astrocartographyLabel}
-                      checked={fullSelection.astrocartography !== undefined}
-                      onChange={(value) => {
-                        toggleAstrocartography(value);
-                      }}
-                    />
-                    {fullSelection.astrocartography !== undefined && (
-                      <div className="settings-card-indent">
-                        {(() => {
-                          const acg = fullSelection.astrocartography;
-                          return (
+                <AdvancedGroup title={t.predictiveLegend} showLabel={t.showSection} hideLabel={t.hideSection}>
+                  <div className="field-group" role="group" aria-label={t.predictiveLegend}>
+                    <div>
+                      <Checkbox
+                        label={t.progressionsLabel}
+                        checked={fullSelection.progressions !== undefined}
+                        onChange={(value) => {
+                          toggleProgressions(value);
+                        }}
+                      />
+                      {fullSelection.progressions !== undefined && (
+                        <div className="settings-card-indent">
+                          <Select
+                            label={t.progressionTechniqueLabel}
+                            value={fullSelection.progressions.technique}
+                            onChange={(value) => {
+                              patchProgressions({ technique: value as PdfProgressionTechnique });
+                            }}
+                            options={(['secondary', 'tertiary', 'minor'] as const).map((technique) => ({
+                              value: technique,
+                              label: t.progressionTechniqueOptions[technique],
+                            }))}
+                          />{' '}
+                          {fullSelection.progressions.technique === 'secondary' && (
                             <>
-                              <Checkbox
-                                label={t.astrocartographyMapLabel}
-                                checked={acg.map}
+                              <Select
+                                label={t.mcMethodLabel}
+                                value={fullSelection.progressions.mcMethod}
                                 onChange={(value) => {
-                                  patchAstrocartography({ map: value });
+                                  patchProgressions({ mcMethod: value as ProgressedMcMethod });
                                 }}
+                                options={(['quotidian', 'naibod', 'solarArc'] as const).map((method) => ({
+                                  value: method,
+                                  label: t.mcMethodOptions[method],
+                                }))}
                               />{' '}
-                              <Checkbox
-                                label={t.meaningsLabel}
-                                checked={acg.meanings}
-                                onChange={(value) => {
-                                  patchAstrocartography({ meanings: value });
-                                }}
-                              />{' '}
-                              <Checkbox
-                                label={t.localSpaceLabel}
-                                checked={acg.localSpace}
-                                onChange={(value) => {
-                                  patchAstrocartography({ localSpace: value });
-                                }}
-                              />
-                              <br />
-                              <span>{t.lineTypesLabel}: </span>
-                              {PDF_ACG_LINE_TYPES.map((lineType) => (
-                                <Checkbox
-                                  key={lineType}
-                                  label={t.lineTypeOptions[lineType]}
-                                  checked={acg.lineTypes.includes(lineType)}
-                                  onChange={(value) => {
-                                    toggleAstrocartographyLineType(lineType, value);
-                                  }}
-                                />
-                              ))}
-                              <br />
-                              <span>{t.bodiesLabel}: </span>
-                              {[...TRADITIONAL_ACG_BODY_IDS, ...EXTENDED_ACG_BODY_IDS].map((body) => (
-                                <Checkbox
-                                  key={body}
-                                  label={bodyDisplayName(bodyById(body)?.key ?? String(body), locale)}
-                                  checked={acg.bodies.includes(body)}
-                                  onChange={(value) => {
-                                    toggleAstrocartographyBody(body, value);
-                                  }}
-                                />
-                              ))}
                             </>
-                          );
-                        })()}
-                      </div>
-                    )}
+                          )}
+                          <br />
+                          <Checkbox
+                            label={t.positionsTableLabel}
+                            checked={fullSelection.progressions.positionsTable}
+                            onChange={(value) => {
+                              patchProgressions({ positionsTable: value });
+                            }}
+                          />{' '}
+                          <Checkbox
+                            label={t.contactsTableLabel}
+                            checked={fullSelection.progressions.contactsTable}
+                            onChange={(value) => {
+                              patchProgressions({ contactsTable: value });
+                            }}
+                          />{' '}
+                          <DateField
+                            label={t.asOfDateLabel}
+                            value={fullSelection.progressions.asOfDate ?? ''}
+                            onChange={(value) => {
+                              patchProgressions({ asOfDate: value });
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <Checkbox
+                        label={t.solarArcLabel}
+                        checked={fullSelection.solarArc !== undefined}
+                        onChange={(value) => {
+                          toggleSolarArc(value);
+                        }}
+                      />
+                      {fullSelection.solarArc !== undefined && (
+                        <div className="settings-card-indent">
+                          <Checkbox
+                            label={t.positionsTableLabel}
+                            checked={fullSelection.solarArc.positionsTable}
+                            onChange={(value) => {
+                              patchSolarArc({ positionsTable: value });
+                            }}
+                          />{' '}
+                          <Checkbox
+                            label={t.contactsTableLabel}
+                            checked={fullSelection.solarArc.contactsTable}
+                            onChange={(value) => {
+                              patchSolarArc({ contactsTable: value });
+                            }}
+                          />{' '}
+                          <DateField
+                            label={t.asOfDateLabel}
+                            value={fullSelection.solarArc.asOfDate ?? ''}
+                            onChange={(value) => {
+                              patchSolarArc({ asOfDate: value });
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <Checkbox
+                        label={t.profectionsLabel}
+                        checked={fullSelection.profections !== undefined}
+                        onChange={(value) => {
+                          toggleProfections(value);
+                        }}
+                      />
+                      {fullSelection.profections !== undefined && (
+                        <div className="settings-card-indent">
+                          <Checkbox
+                            label={t.profectionsTableLabel}
+                            checked={fullSelection.profections.table}
+                            onChange={(value) => {
+                              patchProfections({ table: value });
+                            }}
+                          />{' '}
+                          <Checkbox
+                            label={t.meaningsLabel}
+                            checked={fullSelection.profections.meanings}
+                            onChange={(value) => {
+                              patchProfections({ meanings: value });
+                            }}
+                          />{' '}
+                          <DateField
+                            label={t.asOfDateLabel}
+                            value={fullSelection.profections.asOfDate ?? ''}
+                            onChange={(value) => {
+                              patchProfections({ asOfDate: value });
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <Checkbox
+                        label={t.astrocartographyLabel}
+                        checked={fullSelection.astrocartography !== undefined}
+                        onChange={(value) => {
+                          toggleAstrocartography(value);
+                        }}
+                      />
+                      {fullSelection.astrocartography !== undefined && (
+                        <div className="settings-card-indent">
+                          {(() => {
+                            const acg = fullSelection.astrocartography;
+                            return (
+                              <>
+                                <Checkbox
+                                  label={t.astrocartographyMapLabel}
+                                  checked={acg.map}
+                                  onChange={(value) => {
+                                    patchAstrocartography({ map: value });
+                                  }}
+                                />{' '}
+                                <Checkbox
+                                  label={t.meaningsLabel}
+                                  checked={acg.meanings}
+                                  onChange={(value) => {
+                                    patchAstrocartography({ meanings: value });
+                                  }}
+                                />{' '}
+                                <Checkbox
+                                  label={t.localSpaceLabel}
+                                  checked={acg.localSpace}
+                                  onChange={(value) => {
+                                    patchAstrocartography({ localSpace: value });
+                                  }}
+                                />
+                                <br />
+                                <span>{t.lineTypesLabel}: </span>
+                                {PDF_ACG_LINE_TYPES.map((lineType) => (
+                                  <Checkbox
+                                    key={lineType}
+                                    label={t.lineTypeOptions[lineType]}
+                                    checked={acg.lineTypes.includes(lineType)}
+                                    onChange={(value) => {
+                                      toggleAstrocartographyLineType(lineType, value);
+                                    }}
+                                  />
+                                ))}
+                                <br />
+                                <span>{t.bodiesLabel}: </span>
+                                {[...TRADITIONAL_ACG_BODY_IDS, ...EXTENDED_ACG_BODY_IDS].map((body) => (
+                                  <Checkbox
+                                    key={body}
+                                    label={bodyDisplayName(bodyById(body)?.key ?? String(body), locale)}
+                                    checked={acg.bodies.includes(body)}
+                                    onChange={(value) => {
+                                      toggleAstrocartographyBody(body, value);
+                                    }}
+                                  />
+                                ))}
+                              </>
+                            );
+                          })()}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </AdvancedGroup>
-            </div>
+                </AdvancedGroup>
+              </div>
+            </section>
           </div>
 
-          <aside className="pdf-builder-column" aria-label={t.exportSummary}>
+          <aside className="pdf-builder-column pdf-summary-sticky" aria-label={t.exportSummary}>
             <div className="pdf-summary-card">
               <h2>{t.exportSummary}</h2>
               {summaryItems.length === 0 ? (
