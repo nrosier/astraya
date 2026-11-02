@@ -406,3 +406,37 @@ describe('generated ids', () => {
     expect(newId('c')).toMatch(/^c-/);
   });
 });
+
+describe('notes in the fold (#919)', () => {
+  it('resumes from a snapshot to the same note state a full rebuild gives', () => {
+    const NOTE = 'r-note';
+    const base = write(A, [
+      { entity: 'birthNote', entityId: PERSON, field: 'rev/r-birth', value: { text: 'Birth', parents: [] } },
+      {
+        entity: 'consultationNote',
+        entityId: PERSON,
+        field: `rev/${NOTE}/${NOTE}`,
+        value: { text: 'First', parents: [] },
+      },
+    ]);
+    const later = write(
+      B,
+      [
+        {
+          entity: 'consultationNote',
+          entityId: PERSON,
+          field: `rev/${NOTE}/r-two`,
+          value: { text: 'Second', parents: [NOTE] },
+        },
+      ],
+      T0 + 10_000,
+    );
+    const all = [...base, ...later];
+    const snapshot = snapshotOf(applyRecords(EMPTY_REGISTERS, base).registers, base);
+    const resumed = resume(snapshot, all);
+    const rebuilt = fold(all);
+    expect(resumed.rebuilt).toBe(false);
+    expect(materialise(resumed.registers).consultationNotes).toEqual(rebuilt.consultationNotes);
+    expect(materialise(resumed.registers).birthNotes).toEqual(rebuilt.birthNotes);
+  });
+});

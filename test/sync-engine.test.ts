@@ -264,8 +264,9 @@ describe('purge propagation (#308)', () => {
       const observer = await openDatabase(nameB);
       const remaining = (await allRecords(observer)).filter((record) => record.entityId === 'p1');
       observer.close();
-      expect(remaining).toHaveLength(1);
-      expect(remaining[0]).toMatchObject({ entity: 'person', entityId: 'p1', field: 'purged', value: true });
+      // Only the purge markers remain: one per entity a person purge covers (#919).
+      expect(remaining.map((record) => record.entity).sort()).toEqual(['birthNote', 'consultationNote', 'person']);
+      for (const record of remaining) expect(record).toMatchObject({ entityId: 'p1', field: 'purged', value: true });
 
       // A fresh device, signing in for the first time after the purge, never sees the person at all.
       const deviceC = await openStore({ name: freshDbName() });

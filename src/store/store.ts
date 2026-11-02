@@ -37,6 +37,7 @@ import {
   putSnapshot,
 } from './db.js';
 import { EMPTY_REGISTERS, DELETED_FIELD, PURGED_FIELD, applyRecords, materialise, resume, snapshotOf } from './fold.js';
+import { assertNoteMutation, entitiesPurgedWith } from './notes.js';
 import { append, appendAt, emptyLog, latest, purgeEntity, receiveRecords, since } from './oplog.js';
 import { MAX_COUNTER, createClock, encodeHlc, isNodeId, randomNodeId, receive } from './hlc.js';
 import { decode } from './ops.js';
@@ -345,6 +346,9 @@ export async function openStore(options: StoreOptions = {}): Promise<Store> {
     return serialise(async () => {
       if (mutations.length === 0) return;
       if (!tabLock.writable) throw new Error(NOT_WRITABLE_MESSAGE);
+      // Checked for the whole batch before anything is appended, so a refused note leaves the
+      // log untouched rather than half-written (#919).
+      for (const mutation of mutations) assertNoteMutation(mutation);
       let next = log;
       const written: OpRecord[] = [];
       for (const mutation of mutations) {
@@ -407,7 +411,11 @@ export async function openStore(options: StoreOptions = {}): Promise<Store> {
             purgedEntities.set(`${decoded.body.entity}\u0000${decoded.body.entityId}`, decoded.body);
           }
         }
-        for (const { entity, entityId } of purgedEntities.values()) await stripEntity(entity, entityId);
+        // A purged person takes its notes with it (#919), even from a peer that sent only the
+        // person's marker, so the fan-out is applied on this side too.
+        for (const { entity, entityId } of purgedEntities.values()) {
+          for (const kind of entitiesPurgedWith(entity)) await stripEntity(kind, entityId);
+        }
       } else {
         log = result.log;
       }
@@ -434,13 +442,22 @@ export async function openStore(options: StoreOptions = {}): Promise<Store> {
     purge: (entity, entityId) =>
       serialise(async () => {
         if (!tabLock.writable) throw new Error(NOT_WRITABLE_MESSAGE);
-        // The marker is committed first, through the ordinary incremental-fold path, so it
-        // is a normal record `since`/`outgoing` will pick up for the next push (#308) — and
-        // so `stripEntity`'s own `purgeEntity` call (which spares a `PURGED_FIELD` record)
-        // has something to spare by the time it runs.
-        const { log: nextLog, record } = append(log, { entity, entityId, field: PURGED_FIELD, value: true }, now());
-        await commitRecords(nextLog, [record]);
-        await stripEntity(entity, entityId);
+        // One marker per entity the purge covers (a person's notes go with it, #919), all in
+        // one commit, so no note can survive a person purge that was interrupted part-way.
+        // The markers are committed first, through the ordinary incremental-fold path, so they
+        // are normal records `since`/`outgoing` will pick up for the next push (#308) — and so
+        // `stripEntity`'s own `purgeEntity` call (which spares a `PURGED_FIELD` record) has
+        // something to spare by the time it runs.
+        const covered = entitiesPurgedWith(entity);
+        const written: OpRecord[] = [];
+        let next = log;
+        for (const kind of covered) {
+          const result = append(next, { entity: kind, entityId, field: PURGED_FIELD, value: true }, now());
+          next = result.log;
+          written.push(result.record);
+        }
+        await commitRecords(next, written);
+        for (const kind of covered) await stripEntity(kind, entityId);
       }),
     outgoing: (cursor) => since(log, cursor),
     receive: receiveIncoming,

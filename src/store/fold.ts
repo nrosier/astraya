@@ -37,6 +37,14 @@
 import { buildChart, type Chart } from '../domain/chart.js';
 import { buildPerson, type Person } from '../domain/person.js';
 import { compareHlc, type Hlc } from './hlc.js';
+import {
+  BIRTH_NOTE_ENTITY,
+  CONSULTATION_NOTE_ENTITY,
+  foldBirthNote,
+  foldConsultationNotes,
+  LEGACY_NOTE_FIELD,
+  type Note,
+} from './notes.js';
 import { decode, type JsonValue, type OpRecord } from './ops.js';
 
 /** The field that hides a record. A register like any other, so undo needs no new machinery. */
@@ -85,7 +93,7 @@ export interface Applied {
 }
 
 /** Entity kinds this build can materialise. Others are kept in the log and counted here. */
-const KNOWN_ENTITIES: readonly string[] = ['person', 'chart'];
+const KNOWN_ENTITIES: readonly string[] = ['person', 'chart', BIRTH_NOTE_ENTITY, CONSULTATION_NOTE_ENTITY];
 
 /**
  * Apply records to a register map.
@@ -170,6 +178,13 @@ export interface State {
   };
   /** Charts naming a person this device does not hold. Retained, not lost — usually a partial sync. */
   readonly orphanCharts: readonly string[];
+  /**
+   * The Birth Record note of each person that has one, by person id. Its head text is also
+   * `people.get(id).notes`. Forks are here and nowhere else.
+   */
+  readonly birthNotes: ReadonlyMap<string, Note>;
+  /** Live Consultation notes of each person, by person id, oldest first. Deleted notes are absent. */
+  readonly consultationNotes: ReadonlyMap<string, readonly Note[]>;
 }
 
 /**
@@ -186,11 +201,16 @@ export interface State {
  * for visibility regardless of that field's own HLC.
  */
 export function materialise(registers: Registers): State {
+  const { birthNotes, consultationNotes } = materialiseNotes(registers);
+
   const people = new Map<string, Person>();
   const deletedPeople = new Map<string, Person>();
   for (const [id, fields] of Object.entries(registers.person ?? {})) {
     if (isPurged(fields)) continue;
-    const person = buildPerson(id, valuesOf(fields));
+    // `notes` is derived from the Birth Record note's head (#919), so every reader of
+    // `person.notes` sees the current text whether it was written as a revision or read from
+    // the legacy register.
+    const person: Person = { ...buildPerson(id, valuesOf(fields)), notes: birthNotes.get(id)?.content ?? '' };
     if (isDeleted(fields)) deletedPeople.set(id, person);
     else people.set(id, person);
   }
@@ -216,7 +236,48 @@ export function materialise(registers: Registers): State {
     charts,
     deleted: { people: deletedPeople, charts: deletedCharts },
     orphanCharts,
+    birthNotes,
+    consultationNotes,
   };
+}
+
+/**
+ * Fold both note entities (#919).
+ *
+ * A note's own purge marker or its person's purge hides it, mirroring `isPurged` for people.
+ * A person's pre-#919 `notes` register is passed in as the Birth Record note's legacy root, so
+ * it is read here without an op being written.
+ */
+function materialiseNotes(registers: Registers): {
+  readonly birthNotes: ReadonlyMap<string, Note>;
+  readonly consultationNotes: ReadonlyMap<string, readonly Note[]>;
+} {
+  const personFields = registers.person ?? {};
+  const erased = (personId: string): boolean => {
+    const person = personFields[personId];
+    return person !== undefined && isPurged(person);
+  };
+
+  const birthNotes = new Map<string, Note>();
+  const birthFields = registers[BIRTH_NOTE_ENTITY] ?? {};
+  const birthIds = new Set([...Object.keys(birthFields), ...Object.keys(personFields)]);
+  for (const personId of birthIds) {
+    const fields = birthFields[personId] ?? {};
+    if (erased(personId) || isPurged(fields)) continue;
+    const legacy = personFields[personId]?.[LEGACY_NOTE_FIELD];
+    const note = foldBirthNote(personId, fields, legacy);
+    if (note !== undefined) birthNotes.set(personId, note);
+  }
+
+  const consultationNotes = new Map<string, readonly Note[]>();
+  const consultationFields = registers[CONSULTATION_NOTE_ENTITY] ?? {};
+  for (const [personId, fields] of Object.entries(consultationFields)) {
+    if (erased(personId) || isPurged(fields)) continue;
+    const notes = foldConsultationNotes(personId, fields);
+    if (notes.length > 0) consultationNotes.set(personId, notes);
+  }
+
+  return { birthNotes, consultationNotes };
 }
 
 /** The whole path, for a caller with no snapshot: records in, state out. */

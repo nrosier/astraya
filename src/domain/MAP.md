@@ -29,7 +29,7 @@ One level above `src/astrology/`: composes pure astrological calculations into s
 - `horary.ts` — Horary chart, question-moment Julian day, considerations-before-judgment, and void-of-course check. Deps: `astrology/horary`, `astrology/void-of-course`, `astrology/emphasis`, `./chart-compute`.
 - `horary-judgment.ts` — Horary significators, perfection/reception, prohibition, and relative-motion timing estimates (#552). Deps: `astrology/dignities`, `astrology/horary`, `astrology/reception`, `astrology/emphasis`, `./chart-compute`.
 - `house-overlays.ts` — Synastry house overlays (which houses each person's bodies fall in, both directions). Deps: `astrology/emphasis`, `./synastry`, `./chart-compute`.
-- `id.ts` — Local-first CSPRNG-backed prefixed base32 id generation (people/charts). Deps: Web Crypto API only.
+- `id.ts` — Local-first CSPRNG-backed prefixed base32 id generation (people/charts/note revisions). Deps: Web Crypto API only.
 - `lunar-returns.ts` — Lunar returns (every Moon-to-natal-longitude each cycle). Deps: `astrology/solar-lunar-returns`, `astrology/aspects`, `ephemeris/generated-constants`.
 - `minor-progression.ts` — Tertiary/minor progressions (day-for-lunar-month / lunar-month-for-year). Deps: `astrology/minor-progressions`, `astrology/progressions`, `astrology/aspects`.
 - `pdf-export-sections.ts` — PDF export builder content (selectable chart types/tables/sections + presets); view-only tables (`PDF_VIEW_TABLES`, `VIEW_TABLES`) that only a chart page's link adds, and `chartSectionForView` (#915). Deps: `ui/chart-sections` (ChartType, ChartViewKind).
