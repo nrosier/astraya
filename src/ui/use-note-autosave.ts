@@ -75,7 +75,50 @@ export function clearNoteJournal(storage: NoteJournalStorage, dbName: string, sc
   }
 }
 
+/** The journal scopes of one person's notes: the Birth Record note and each Consultation note (by its root id). */
+export function personNoteScopes(personId: string, consultationRootIds: readonly string[]): readonly string[] {
+  return [`birth/${personId}`, ...consultationRootIds.map((rootId) => `consultation/${rootId}`)];
+}
+
+/** Erase a purged person's pending note text (#919, spec section 7 item 8). */
+export function clearNoteJournalsForPerson(
+  storage: NoteJournalStorage,
+  dbName: string,
+  personId: string,
+  consultationRootIds: readonly string[],
+): void {
+  for (const scope of personNoteScopes(personId, consultationRootIds)) clearNoteJournal(storage, dbName, scope);
+}
+
+/** The slice of `Storage` needed to find keys by prefix. */
+export type NoteJournalIndexStorage = NoteJournalStorage & Pick<Storage, 'length' | 'key'>;
+
+/**
+ * Erase every pending note of one database, as when an account's local data is removed. The key prefix ends in
+ * the separator, so `astraya-user-1` never matches `astraya-user-12`.
+ */
+export function clearNoteJournalsForDb(storage: NoteJournalIndexStorage, dbName: string): void {
+  try {
+    const prefix = noteJournalKey(dbName, '');
+    const keys: string[] = [];
+    for (let index = 0; index < storage.length; index += 1) {
+      const key = storage.key(index);
+      if (key?.startsWith(prefix) === true) keys.push(key);
+    }
+    for (const key of keys) storage.removeItem(key);
+  } catch {
+    // Storage that throws holds nothing we can clear.
+  }
+}
+
+/** Recovered text equal to what the note already says needs no new revision. */
+export function isRedundantRecovery(recovered: string, headText: string | undefined): boolean {
+  return recovered === headText;
+}
+
 export interface UseNoteAutosaveOptions {
+  /** The text the note currently has in the store, if any. Recovered journal text equal to it is dropped, not rewritten. */
+  readonly headText?: string | undefined;
   /** The open store; undefined while it opens, when edits wait in the journal. Its `dbName` keys the journal. */
   readonly store: Store | undefined;
   /** Identifies the note within the database, e.g. `birth/<personId>` or `consultation/<noteId>`. Callers key the field by it. */
@@ -152,8 +195,8 @@ export function useNoteAutosave(options: UseNoteAutosaveOptions): NoteAutosave {
     );
   }, [owner, dbName, scope]);
 
-  const latest = useRef({ store, dbName, scope, toMutation: options.toMutation });
-  latest.current = { store, dbName, scope, toMutation: options.toMutation };
+  const latest = useRef({ store, dbName, scope, toMutation: options.toMutation, headText: options.headText });
+  latest.current = { store, dbName, scope, toMutation: options.toMutation, headText: options.headText };
   // Filled in below; timers and the save callback reach `dispatch` through it, so they never hold a stale one.
   const dispatchRef = useRef<(event: NoteSaveEvent) => void>(() => undefined);
 
@@ -236,7 +279,17 @@ export function useNoteAutosave(options: UseNoteAutosaveOptions): NoteAutosave {
   // Edits made before the store opened sit in `saving` (their save returned early), so they are sent directly.
   useEffect(() => {
     if (store === undefined) return;
-    if (textRef.current === undefined && recovered !== undefined) edit(recovered);
+    if (textRef.current === undefined && recovered !== undefined) {
+      // Text the note already holds is not a new revision: drop the journal entry and write nothing.
+      const { dbName: name, scope: key, headText } = latest.current;
+      if (isRedundantRecovery(recovered, headText)) {
+        const storage = storageOrUndefined();
+        if (storage !== undefined && name !== undefined) clearNoteJournal(storage, name, key);
+        setRecovered(undefined);
+      } else {
+        edit(recovered);
+      }
+    }
     if (!dirtyRef.current || inFlightRef.current) return;
     if (stateRef.current.phase === 'saving') {
       void save(stateRef.current.revision);

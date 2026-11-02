@@ -45,7 +45,7 @@ export function AutosavedNoteField({
   const store = useStore();
   // The journal is keyed by `store.dbName` inside the hook. Callers key this field by `scope`, so a new note
   // remounts it with fresh local text.
-  const autosave = useNoteAutosave({ store, scope, toMutation });
+  const autosave = useNoteAutosave({ store, scope, toMutation, headText: storedText });
   const [typed, setTyped] = useState<string | undefined>(undefined);
   const { state } = autosave;
   // Text left by an earlier visit shows until the user types something else.
