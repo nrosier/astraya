@@ -249,4 +249,61 @@ test.describe('multi-device offline sync (#107)', () => {
       await closeDevices(a, b);
     }
   });
+
+  test('two offline devices with pending note edits keep both edits after reconnect (#919)', async ({ browser }) => {
+    test.setTimeout(60_000);
+    const a = await newDevice(browser);
+    const b = await newDevice(browser);
+    const notesA = 'Note written offline on device A.';
+    const notesB = 'Note written offline on device B.';
+    try {
+      await gotoAndSettle(a.page, `${baseUrl}/#/people`);
+      await createPerson(a.page, {
+        name: 'Note Merge Subject',
+        date: '1972-03-04',
+        latitude: '0',
+        longitude: '0',
+      });
+      await signIn(a.page, USERNAME, PASSWORD);
+      await waitSynced(a.page);
+
+      await gotoAndSettle(b.page, `${baseUrl}/#/people`);
+      await signIn(b.page, USERNAME, PASSWORD);
+      await waitSynced(b.page);
+      await b.page.getByRole('link', { name: /Note Merge Subject/ }).click();
+
+      await a.context.setOffline(true);
+      await b.context.setOffline(true);
+
+      // Both devices edit the same birth-record note while offline. Notes autosave, so the save
+      // line (not the Save button) is what shows the edit has been committed on each device.
+      const noteA = a.page.locator('.birth-record-card--notes textarea');
+      const noteB = b.page.locator('.birth-record-card--notes textarea');
+      await noteA.fill(notesA);
+      await expect(
+        a.page.locator('.note-save-status').getByText('Saved on this device', { exact: true }),
+      ).toBeVisible();
+      await noteB.fill(notesB);
+      await expect(
+        b.page.locator('.note-save-status').getByText('Saved on this device', { exact: true }),
+      ).toBeVisible();
+
+      await a.context.setOffline(false);
+      await b.context.setOffline(false);
+      await reloadAndWaitSynced(a.page);
+      await reloadAndWaitSynced(b.page);
+
+      // Concurrent edits are kept as an "Other version" fork, so each device must show both texts:
+      // one as the note's text and the other as a fork block. Neither may be lost.
+      const shownOn = async (page: Page): Promise<string[]> => {
+        const head = await page.locator('.birth-record-card--notes textarea').inputValue();
+        const forks = await page.locator('.birth-record-card--notes .note-fork-text').allTextContents();
+        return [head, ...forks].filter((text) => text !== '').sort();
+      };
+      await expect.poll(() => shownOn(a.page)).toEqual([notesA, notesB].sort());
+      await expect.poll(() => shownOn(b.page)).toEqual([notesA, notesB].sort());
+    } finally {
+      await closeDevices(a, b);
+    }
+  });
 });
