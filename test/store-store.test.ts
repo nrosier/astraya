@@ -252,11 +252,15 @@ describe('purging', () => {
       await store.purge('person', PERSON);
       const observer = await openDatabase(name);
       const remaining = await allRecords(observer);
-      expect(remaining).toHaveLength(2);
+      // One purge marker per covered entity (person, birthNote, consultationNote, #919), plus the other person.
+      expect(remaining).toHaveLength(4);
       const other = remaining.find((record) => record.entityId === OTHER);
-      const marker = remaining.find((record) => record.entityId === PERSON);
+      const markers = remaining.filter((record) => record.entityId === PERSON);
       expect(other).toBeDefined();
-      expect(marker).toMatchObject({ entity: 'person', entityId: PERSON, field: 'purged', value: true });
+      expect(markers.map((record) => record.entity).sort()).toEqual(['birthNote', 'consultationNote', 'person']);
+      for (const marker of markers) {
+        expect(marker).toMatchObject({ field: 'purged', value: true });
+      }
       observer.close();
     });
   });
@@ -304,7 +308,8 @@ describe('purging', () => {
 
     const db = await openDatabase(name);
     const snapshot = await getSnapshot(db);
-    expect(snapshot?.applied).toBe(51);
+    // 50 OTHER writes survive; the PERSON write is stripped; three purge markers remain (#919).
+    expect(snapshot?.applied).toBe(53);
     db.close();
     first.close();
   });
