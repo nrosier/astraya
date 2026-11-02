@@ -6,6 +6,36 @@ see [docs/ops/RELEASING.md](docs/ops/RELEASING.md).
 
 ## [Unreleased]
 
+## [0.46.0] — 2026-11-02
+
+**Consultation and birth-record notes autosave and sync across your devices, and the birth record leaves the header Export menu. This release completes milestone M13 (UI: records and consultation).**
+
+### Added
+
+- **Notes autosave in the consultation and birth-record cards (#919, PR #1037).** A note saves as you type, and a save-status line shows where it stands.
+- **Notes sync across your devices (#919, PR #1033, PR #1034).** Consultation and birth-record notes travel through the same operation log as the rest of your data.
+- **Offline note edits merge on reconnect (#919, PR #1038).** Edits made on two offline devices are combined when they come back online.
+- **Full export includes notes (#919, PR #1039).** The full backup carries consultation and birth-record notes.
+
+### Changed
+
+- **The birth record leaves the header Export menu (#896, PR #1043).** The AAF, JSON and CSV downloads stay on the birth record's EXPORT card.
+- **Import accepts legacy notes and reports the held-back count (#919, PR #1044).** Legacy notes in an imported file are accepted, and the import shows how many notes were held back.
+
+### Fixed
+
+- **Draft notes survive a reload (#919, PR #1040).** Unsaved draft journals are kept across reloads, and note purges reach the other devices.
+- **Sync retries stop on quota errors and large pushes are split (#919, PR #1036).** A quota refusal is no longer retried forever, and a large batch of note edits is sent in several requests.
+- **Snapshots rebuild when the known entity kinds change (#919, PR #1035).** An older snapshot is upgraded instead of being read with the wrong entity set.
+- **Oversized imported notes are refused (#919, PR #1041).** Legacy notes stay out of the push queue.
+- **Birth-record import labels and time-source select height (#896, PR #1042).** The import labels are renamed and the time-source select height is corrected.
+
+### Internal
+
+- The notes store layer, autosave state machine and journal hook, with tests for note sync, the fold, snapshot upgrade and multi-device merge (#919, PR #1033, PR #1034, PR #1038).
+- The server's request body limit is set explicitly at 1 MiB, the same value as before, so the admin corpus import keeps working (#919).
+- A route audit for the sidebar on every route is added under `docs/ui/` (#964, PR #1030).
+
 ## [0.45.0] — 2026-11-02
 
 **The sidebar footer becomes one profile popover with the sync status, the header actions stay level with the title on phones, and the Preferences labels and tokens are aligned. This release completes milestone M11 (UI: navigation and page shell).**
