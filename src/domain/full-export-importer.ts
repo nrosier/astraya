@@ -61,6 +61,7 @@ import {
 } from './person.js';
 import type { ExtendedSettings } from '../chart/extended-settings.js';
 import type { BirthMomentInput, Calendar } from '../time/types.js';
+import { isNoteTooLong, NOTE_MAX_CHARACTERS } from '../store/notes.js';
 import type { Mutation } from '../store/oplog.js';
 import { RESERVED_NAMES, type JsonValue } from '../store/ops.js';
 
@@ -131,6 +132,10 @@ function validatePerson(raw: unknown, path: string): Result<ExportedPerson, Impo
   if (placeLabel === undefined) return malformed(`${path}.placeLabel`, 'missing or not a string');
   const notes = readText(raw.notes);
   if (notes === undefined) return malformed(`${path}.notes`, 'missing or not a string');
+  // The same limit a note written in the app has (#919). Refused here, before any write, so an
+  // oversized note can never reach the log and wedge sync.
+  if (isNoteTooLong(notes))
+    return malformed(`${path}.notes`, `longer than the ${String(NOTE_MAX_CHARACTERS)}-character note limit`);
   const timeAccuracy = readTimeAccuracy(raw.timeAccuracy);
   if (timeAccuracy === undefined) return malformed(`${path}.timeAccuracy`, 'missing or not a recognised value');
   const missingRaw = raw.missing;

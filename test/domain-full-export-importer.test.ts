@@ -729,3 +729,49 @@ describe('restoring through the real store', () => {
     });
   });
 });
+
+describe('the note length limit on import (#919)', () => {
+  const NOTE_LIMIT = 50_000;
+
+  /** A round-tripped export whose one person carries `notes` as the birth note. */
+  async function exportWithNotes(notes: string): Promise<unknown> {
+    const archive = await build([{ ...ADA, notes }]);
+    return roundTripped(archive);
+  }
+
+  it('refuses a 50,001-character birth note, naming its path', async () => {
+    const result = validateFullExport(await exportWithNotes('a'.repeat(NOTE_LIMIT + 1)));
+    expect(result).toEqual({
+      ok: false,
+      error: {
+        kind: 'malformed',
+        path: 'people[0].notes',
+        reason: `longer than the ${String(NOTE_LIMIT)}-character note limit`,
+      },
+    });
+  });
+
+  it('accepts a birth note of exactly 50,000 characters', async () => {
+    const result = validateFullExport(await exportWithNotes('a'.repeat(NOTE_LIMIT)));
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.people[0]?.notes).toHaveLength(NOTE_LIMIT);
+  });
+
+  it('counts code points, so exactly 50,000 emoji are accepted and one more is refused', async () => {
+    expect(validateFullExport(await exportWithNotes('😀'.repeat(NOTE_LIMIT))).ok).toBe(true);
+    expect(validateFullExport(await exportWithNotes('😀'.repeat(NOTE_LIMIT + 1))).ok).toBe(false);
+  });
+
+  it('a refused import never reaches the store, which keeps its existing state', async () => {
+    await withStore(async (store) => {
+      await store.mutate([{ entity: 'person', entityId: 'p-ada', field: 'displayName', value: 'Ada' }]);
+      const before = store.head();
+      const result = validateFullExport(await exportWithNotes('a'.repeat(NOTE_LIMIT + 1)));
+      // The refusal is decided before staging, so the caller has nothing to pass to store.mutate.
+      expect(result.ok).toBe(false);
+      expect(store.head()).toBe(before);
+      expect(store.state.people.get('p-ada')?.displayName).toBe('Ada');
+    });
+  });
+});
