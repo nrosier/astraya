@@ -6,6 +6,30 @@ see [docs/ops/RELEASING.md](docs/ops/RELEASING.md).
 
 ## [Unreleased]
 
+## [0.45.0] — 2026-11-02
+
+**The sidebar footer becomes one profile popover with the sync status, the header actions stay level with the title on phones, and the Preferences labels and tokens are aligned. This release completes milestone M11 (UI: navigation and page shell).**
+
+### Changed
+
+- **The sidebar footer is one profile popover (#964, PR #1024).** The profile tile opens a popover, and the sidebar shows a green sync dot and a manual sync button. The popover stays inside narrow sidebars (PR #1031).
+- **Preferences uses title-case English tab labels (#966, PR #1026, PR #1029).** The Restore and Check actions use the issue labels, and the Preferences tokens are aliased to the shared names.
+- **The Cycles motion filter explains retrograde motion (#901, PR #1021).** The retrograde tooltip is carried on the motion filter.
+
+### Added
+
+- **Birth-record downloads in the header Export menu (#887, PR #1021).** The birth-record downloads are listed in the page header Export menu.
+- **Chart navigation is separate from page actions (#976, PR #1022).** The chart navigation and the page actions no longer share one group, and the Export PDF link uses the existing tokens (PR #1022).
+
+### Fixed
+
+- **The header action group stays level with the title at 390px (#976, PR #1025).** On a 390px phone the header actions line up with the page title.
+
+### Internal
+
+- The profile tile and the page-actions slot are new components, with tests for the profile tile, the chart page actions and the narrow-sidebar clipping (#964, #976).
+- The `@vitejs/plugin-react` development dependency is updated to 6.2.1, and the lock file is refreshed for the current dependency set (PR #1027, PR #1028).
+
 ## [0.44.0] — 2026-11-01
 
 **The chart views are finished: every chart page puts its inputs below the wheel, the selector and header layouts match across the derived charts, the PDF builder and Astrocartography screens are standardised, and chart exports open the PDF creator. This release completes milestone M12 (UI: chart views).**
