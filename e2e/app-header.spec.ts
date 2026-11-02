@@ -289,4 +289,45 @@ test.describe('signed in: the sync dot and the manual sync button (#964)', () =>
     expect((await opsRequest).ok()).toBe(true);
     await expect(header.locator('.syncbadge-dot')).toHaveAttribute('data-state', 'synced');
   });
+
+  test('the profile popover stays inside a narrow sidebar at 390px without clipping or scrolling the page (#964)', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await gotoAndSettle(page, `${signedUrl}/#/people`);
+    await signIn(page, USERNAME, PASSWORD);
+    const header = page.getByRole('banner');
+
+    await header.locator('.profile-tile[aria-haspopup="true"]').click();
+    const popover = page.locator('.profile-popover');
+    await expect(popover).toBeVisible();
+    const preferences = popover.getByRole('link', { name: 'Preferences', exact: true });
+    await expect(preferences).toBeVisible();
+
+    const viewport = page.viewportSize();
+    if (viewport === null) throw new Error('no viewport');
+    const popoverBox = await popover.boundingBox();
+    const headerBox = await header.boundingBox();
+    const linkBox = await preferences.boundingBox();
+    if (popoverBox === null || headerBox === null || linkBox === null) throw new Error('not laid out');
+
+    // The popover lies within the viewport horizontally: not running off either screen edge.
+    expect(popoverBox.x).toBeGreaterThanOrEqual(0);
+    expect(popoverBox.x + popoverBox.width).toBeLessThanOrEqual(viewport.width);
+    // The header is a plain flow block here (not a clipping scroller), so the popover must sit inside
+    // the header's horizontal extent as well as the viewport.
+    expect(popoverBox.x).toBeGreaterThanOrEqual(headerBox.x - 1);
+    expect(popoverBox.x + popoverBox.width).toBeLessThanOrEqual(headerBox.x + headerBox.width + 1);
+
+    // The Preferences link is not clipped: it has a box and that box intersects the viewport.
+    expect(linkBox.x + linkBox.width).toBeGreaterThan(0);
+    expect(linkBox.x).toBeLessThan(viewport.width);
+    expect(linkBox.y + linkBox.height).toBeGreaterThan(0);
+    expect(linkBox.y).toBeLessThan(viewport.height);
+
+    // Opening the menu adds no horizontal page scroll.
+    expect(
+      await page.evaluate('document.documentElement.scrollWidth - document.documentElement.clientWidth'),
+    ).toBeLessThanOrEqual(0);
+  });
 });
