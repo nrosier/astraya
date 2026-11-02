@@ -1111,6 +1111,12 @@ footer {
   gap: var(--space-3);
 }
 
+/* The native date and time inputs are taller than a native select with the same padding. The grid stretches each field
+   to the row's height, so the select fills its field and matches them without a fixed height (#896, owner 2026-11-02). */
+.birth-record-timestamp .primitive-field select {
+  flex: 1;
+}
+
 /* Narrow: date and how the time is known share the first row; the Time field takes the full row under them (#795). */
 .birth-record-timestamp > :nth-child(3) {
   grid-column: 1 / -1;

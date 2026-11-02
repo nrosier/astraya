@@ -520,7 +520,12 @@ describe('stageFullExportRestore', () => {
     expect(byId.get('p-carol')?.status).toBe('unchanged');
     expect(byId.get('p-carol')?.mutations).toEqual([]);
     expect(byId.get('p-dave')?.status).toBe('updated');
-    expect(byId.get('p-dave')?.mutations.map((mutation) => mutation.field)).toEqual(['notes']);
+    // The Birth Record text is one new note revision (#919), never a write to the legacy `person.notes` register.
+    const daveMutations = byId.get('p-dave')?.mutations ?? [];
+    expect(daveMutations.map((mutation) => mutation.entity)).toEqual(['birthNote']);
+    expect(daveMutations.map((mutation) => (mutation.value as { text: string }).text)).toEqual([
+      'Wrote the first program.',
+    ]);
   });
 
   it('a brand-new person gets the full field set, with the birth moment as whole registers', async () => {
@@ -534,8 +539,10 @@ describe('stageFullExportRestore', () => {
     expect(item?.status).toBe('new');
     const fields = item?.mutations.map((mutation) => mutation.field);
     expect(fields).toEqual(
-      expect.arrayContaining(['displayName', 'placeLabel', 'notes', 'timeAccuracy', 'civil', 'coordinates']),
+      expect.arrayContaining(['displayName', 'placeLabel', 'timeAccuracy', 'civil', 'coordinates']),
     );
+    // The Birth Record text is a note revision, not a `notes` field (#919).
+    expect(item?.mutations.map((mutation) => mutation.entity)).toContain('birthNote');
   });
 
   it('never clears a field the export did not itself carry', async () => {
@@ -638,7 +645,7 @@ describe('stageFullExportRestore', () => {
     expect(item?.status).toBe('deletedLocally');
     // Still carries real field mutations (notes differs) — restoring never fabricates a
     // `deleted: false` write, but it also doesn't withhold the other field updates.
-    expect(item?.mutations.map((mutation) => mutation.field)).toContain('notes');
+    expect(item?.mutations.map((mutation) => mutation.entity)).toContain('birthNote');
     expect(item?.mutations.some((mutation) => mutation.field === 'deleted')).toBe(false);
   });
 });

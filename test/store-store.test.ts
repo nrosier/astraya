@@ -11,6 +11,7 @@ import { DEFAULT_EXTENDED_SETTINGS, type ExtendedSettings } from '../src/chart/e
 import { serializeCalculationSettings, serializeRulership } from '../src/domain/person.js';
 import { openStore } from '../src/store/store.js';
 import { openDatabase, allRecords, getSnapshot, DEVICE_ID_KEY, putMeta } from '../src/store/db.js';
+import { decode } from '../src/store/ops.js';
 import { isNodeId } from '../src/store/hlc.js';
 import type { Store } from '../src/store/store.js';
 
@@ -461,6 +462,44 @@ describe('receiving from a peer', () => {
     });
   });
 
+  it('adds note markers when a peer sends only a person purge marker, as an older build does (#919)', async () => {
+    await withStore(async (store, name) => {
+      await store.mutate([named(PERSON, 'Ada')]);
+
+      // An older build writes the person marker alone. Keep only that one from a current peer's purge.
+      const peer = await openStore({ name: freshName(), now: ticking() });
+      await peer.mutate([named(PERSON, 'Ada')]);
+      await peer.purge('person', PERSON);
+      const personMarkers = peer.outgoing().filter((record) => {
+        const decoded = decode(record);
+        return decoded.kind === 'known' && decoded.body.entity === 'person' && decoded.body.field === 'purged';
+      });
+      peer.close();
+      expect(personMarkers).toHaveLength(1);
+
+      await store.receive(personMarkers);
+
+      // The marker records that sync pushes next: person plus both note kinds, so the server erases the note rows.
+      const kinds = store
+        .outgoing()
+        .map((record) => decode(record))
+        .flatMap((decoded) =>
+          decoded.kind === 'known' && decoded.body.entityId === PERSON && decoded.body.field === 'purged'
+            ? [decoded.body.entity]
+            : [],
+        )
+        .sort();
+      expect(kinds).toEqual(['birthNote', 'consultationNote', 'person']);
+
+      // Receiving the same bare marker again adds nothing further.
+      await store.receive(personMarkers);
+      const observer = await openDatabase(name);
+      const markers = (await allRecords(observer)).filter((record) => record.entityId === PERSON);
+      expect(markers).toHaveLength(3);
+      observer.close();
+    });
+  });
+
   it('strips its own copy of an entity’s records when a peer’s purge marker arrives (#308)', async () => {
     await withStore(async (store, name) => {
       await store.mutate([named(PERSON, 'Ada'), named(OTHER, 'Grace')]);
@@ -484,7 +523,8 @@ describe('receiving from a peer', () => {
 
       const observer = await openDatabase(name);
       const remaining = await allRecords(observer);
-      expect(remaining).toHaveLength(2);
+      // The person marker, plus the birthNote and consultationNote markers the fan-out appends (#919), and OTHER's record.
+      expect(remaining).toHaveLength(4);
       expect(remaining.some((record) => record.entityId === PERSON && record.field === 'purged')).toBe(true);
       expect(remaining.some((record) => record.entityId === OTHER)).toBe(true);
       observer.close();

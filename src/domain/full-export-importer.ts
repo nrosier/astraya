@@ -34,13 +34,15 @@
  * @module full-export-importer
  * @purpose Validates an untrusted FullExport document and stages a restore as op-log mutations, without writing anything.
  * @conventions Strict, fail-closed validation reusing person.ts's own field readers rather than a second parallel validator; version checked only against the imported FULL_EXPORT_VERSION constant, never a locally declared one; staging gives only a person new to this device the default calculation profile for what their file lacks (#806), and otherwise only ever emits mutations for fields that actually differ from the current Person (never a blind overwrite, and never a clear for a field the export omits), matching person-form.ts's own diffing rule that an untouched field must not get a newer timestamp than it already has.
- * @exports Result, ImportError, RestoreItem, RestorePreview, NewPersonDefaults, validateFullExport, stageFullExportRestore
+ * @exports Result, ImportError, RestoreItem, RestorePreview, NewPersonDefaults, ExistingNotes, validateFullExport, stageFullExportRestore
  */
 import { isRulershipChoice, type RulershipChoice } from '../astrology/rulership.js';
 import {
   FULL_EXPORT_FORMAT,
   FULL_EXPORT_VERSION,
   SUPPORTED_IMPORT_VERSIONS,
+  type ExportedConsultationNote,
+  type ExportedNoteRevision,
   type ExportedPerson,
   type FullExport,
 } from './full-export.js';
@@ -64,6 +66,15 @@ import type { BirthMomentInput, Calendar } from '../time/types.js';
 import { isNoteTooLong, NOTE_MAX_CHARACTERS } from '../store/notes.js';
 import type { Mutation } from '../store/oplog.js';
 import { RESERVED_NAMES, type JsonValue } from '../store/ops.js';
+import { compareHlc, isHlc } from '../store/hlc.js';
+import {
+  birthNoteRevision,
+  consultationNoteRevision,
+  revisionParents,
+  type FoldedNotes,
+  type Note,
+} from '../store/notes.js';
+import { newId } from './id.js';
 
 /** The project's first reusable success/failure container — scoped here, not shared, since nothing else needs one yet. */
 export type Result<T, E> = { readonly ok: true; readonly value: T } | { readonly ok: false; readonly error: E };
@@ -119,6 +130,58 @@ function validateBirth(raw: unknown, path: string): Result<BirthMomentInput, Imp
       ...(offsetOverrideMinutes === undefined ? {} : { offsetOverrideMinutes }),
     },
   };
+}
+
+function validateRevisions(raw: unknown, path: string): Result<readonly ExportedNoteRevision[], ImportError> {
+  if (!Array.isArray(raw)) return malformed(path, 'not an array');
+  const revisions: ExportedNoteRevision[] = [];
+  const seen = new Set<string>();
+  for (const [index, entry] of (raw as readonly unknown[]).entries()) {
+    const at = `${path}[${String(index)}]`;
+    if (!isRecord(entry)) return malformed(at, 'not an object');
+    const id = readText(entry.id);
+    if (id === undefined || id === '' || RESERVED_NAMES.includes(id) || id.includes('/')) {
+      return malformed(`${at}.id`, 'missing, empty or not a usable id');
+    }
+    if (seen.has(id)) return malformed(`${at}.id`, 'duplicate revision id');
+    seen.add(id);
+    const text = readText(entry.text);
+    if (text === undefined) return malformed(`${at}.text`, 'missing or not a string');
+    // Refused here, before staging, so an over-long note fails the whole file rather than the store's batch.
+    if (Array.from(text).length > NOTE_MAX_CHARACTERS) {
+      return malformed(`${at}.text`, `longer than the ${String(NOTE_MAX_CHARACTERS)}-character limit`);
+    }
+    const parents = entry.parents;
+    if (!Array.isArray(parents) || !(parents as readonly unknown[]).every((p) => typeof p === 'string' && p !== '')) {
+      return malformed(`${at}.parents`, 'not an array of ids');
+    }
+    if (!isHlc(entry.hlc)) return malformed(`${at}.hlc`, 'not a timestamp');
+    revisions.push({ id, text, parents: [...(parents as readonly string[])], hlc: entry.hlc });
+  }
+  return { ok: true, value: revisions };
+}
+
+function validateConsultationNotes(
+  raw: unknown,
+  path: string,
+): Result<readonly ExportedConsultationNote[], ImportError> {
+  if (!Array.isArray(raw)) return malformed(path, 'not an array');
+  const notes: ExportedConsultationNote[] = [];
+  const seen = new Set<string>();
+  for (const [index, entry] of (raw as readonly unknown[]).entries()) {
+    const at = `${path}[${String(index)}]`;
+    if (!isRecord(entry)) return malformed(at, 'not an object');
+    const id = readText(entry.id);
+    if (id === undefined || id === '' || RESERVED_NAMES.includes(id) || id.includes('/')) {
+      return malformed(`${at}.id`, 'missing, empty or not a usable id');
+    }
+    if (seen.has(id)) return malformed(`${at}.id`, 'duplicate note id');
+    seen.add(id);
+    const revisions = validateRevisions(entry.revisions, `${at}.revisions`);
+    if (!revisions.ok) return revisions;
+    notes.push({ id, revisions: revisions.value });
+  }
+  return { ok: true, value: notes };
 }
 
 function validatePerson(raw: unknown, path: string): Result<ExportedPerson, ImportError> {
@@ -187,6 +250,21 @@ function validatePerson(raw: unknown, path: string): Result<ExportedPerson, Impo
     rulership = raw.rulership;
   }
 
+  let birthNote: ExportedPerson['birthNote'];
+  if (raw.birthNote !== undefined) {
+    if (!isRecord(raw.birthNote)) return malformed(`${path}.birthNote`, 'not an object');
+    const revisions = validateRevisions(raw.birthNote.revisions, `${path}.birthNote.revisions`);
+    if (!revisions.ok) return revisions;
+    birthNote = { revisions: revisions.value };
+  }
+
+  let consultationNotes: ExportedPerson['consultationNotes'];
+  if (raw.consultationNotes !== undefined) {
+    const read = validateConsultationNotes(raw.consultationNotes, `${path}.consultationNotes`);
+    if (!read.ok) return read;
+    consultationNotes = read.value;
+  }
+
   return {
     ok: true,
     value: {
@@ -195,6 +273,8 @@ function validatePerson(raw: unknown, path: string): Result<ExportedPerson, Impo
       placeLabel,
       timeAccuracy,
       notes,
+      ...(birthNote === undefined ? {} : { birthNote }),
+      ...(consultationNotes === undefined ? {} : { consultationNotes }),
       ...(birth === undefined ? {} : { birth }),
       ...(relocationPlaces === undefined ? {} : { relocationPlaces }),
       ...(customPoints === undefined ? {} : { customPoints }),
@@ -334,6 +414,14 @@ export interface NewPersonDefaults {
   readonly rulership: RulershipChoice;
 }
 
+/**
+ * This device's folded notes (`store.state`), so a restore writes only the revisions it does not already hold, and a
+ * legacy-shaped file's text resolves the forks it saw rather than forking the note (#919).
+ */
+export type ExistingNotes = FoldedNotes;
+
+const NO_NOTES: ExistingNotes = { birthNotes: new Map(), consultationNotes: new Map() };
+
 export interface RestorePreview {
   readonly items: readonly RestoreItem[];
   readonly newCount: number;
@@ -374,21 +462,72 @@ function serializedFixedStars(stars: ExportedPerson['fixedStars']): JsonValue {
   }));
 }
 
+/** Revisions in ascending HLC order, so a revision is always written after the ones it names as parents. */
+function oldestFirst(revisions: readonly ExportedNoteRevision[]): readonly ExportedNoteRevision[] {
+  return [...revisions].sort((a, b) => compareHlc(a.hlc, b.hlc));
+}
+
+/**
+ * The Birth Record note's mutations: only the revisions this store does not hold. A file with no `birthNote` is a
+ * pre-#919 export or an AAF record, carrying only the head text; that text is written as one new revision on top of
+ * every current leaf, so it resolves the forks it saw instead of forking the note, and is written only when it differs.
+ */
+function birthNoteMutations(
+  personId: string,
+  exported: ExportedPerson,
+  existing: Note | undefined,
+  currentText: string,
+): Mutation[] {
+  if (exported.birthNote !== undefined) {
+    const held = new Set(existing?.revisions.map((revision) => revision.id) ?? []);
+    return oldestFirst(exported.birthNote.revisions)
+      .filter((revision) => !held.has(revision.id))
+      .map((revision) => birthNoteRevision(personId, revision.id, revision.text, revision.parents));
+  }
+  // `currentText` is the person's head text as this device shows it, so a caller that passes no folded notes still
+  // sees an unchanged note as unchanged rather than writing a second copy of it.
+  if (exported.notes === currentText) return [];
+  const parents = existing === undefined ? [] : revisionParents(existing);
+  return [birthNoteRevision(personId, newId('r'), exported.notes, parents)];
+}
+
+/** The Consultation notes' mutations: each note's revisions this store does not hold, grouped by note. */
+function consultationNoteMutations(personId: string, exported: ExportedPerson, existing: readonly Note[]): Mutation[] {
+  const mutations: Mutation[] = [];
+  for (const note of exported.consultationNotes ?? []) {
+    const held = new Set(existing.find((candidate) => candidate.noteId === note.id)?.revisions.map((r) => r.id) ?? []);
+    for (const revision of oldestFirst(note.revisions)) {
+      if (held.has(revision.id)) continue;
+      mutations.push(consultationNoteRevision(personId, note.id, revision.id, revision.text, revision.parents));
+    }
+  }
+  return mutations;
+}
+
 /**
  * One mutation per field that actually differs from `existing` (`undefined` for a person this
  * device has never seen). Mirrors `person-form.ts`'s `draftToMutations`: an untouched field
  * keeps whatever timestamp it already had, and the birth moment is written as whole registers
- * (civil, coordinates), never a hybrid of an old and a new one.
+ * (civil, coordinates), never a hybrid of an old and a new one. Note revisions (#919) are the
+ * exception: they are added only where the store does not already hold them.
  */
-function restoreMutations(entityId: string, exported: ExportedPerson, existing: Person | undefined): Mutation[] {
+function restoreMutations(
+  entityId: string,
+  exported: ExportedPerson,
+  existing: Person | undefined,
+  notes: ExistingNotes,
+): Mutation[] {
   const mutations: Mutation[] = [];
   const write = (field: string, value: JsonValue): void => {
     mutations.push({ entity: 'person', entityId, field, value });
   };
 
+  // The Birth Record text is not written to `person.notes` any more (#919): it is a note revision, below.
+  mutations.push(...birthNoteMutations(entityId, exported, notes.birthNotes.get(entityId), existing?.notes ?? ''));
+  mutations.push(...consultationNoteMutations(entityId, exported, notes.consultationNotes.get(entityId) ?? []));
+
   if (existing?.displayName !== exported.displayName) write('displayName', exported.displayName);
   if (existing?.placeLabel !== exported.placeLabel) write('placeLabel', exported.placeLabel);
-  if (existing?.notes !== exported.notes) write('notes', exported.notes);
   if (existing?.timeAccuracy !== exported.timeAccuracy) write('timeAccuracy', exported.timeAccuracy);
 
   const birth = exported.birth;
@@ -456,6 +595,7 @@ export function stageFullExportRestore(
   existingPeople: ReadonlyMap<string, Person>,
   deletedPeople: ReadonlyMap<string, Person> = new Map(),
   newPersonDefaults?: NewPersonDefaults,
+  existingNotes: ExistingNotes = NO_NOTES,
 ): RestorePreview {
   let newCount = 0;
   let updatedCount = 0;
@@ -475,7 +615,7 @@ export function stageFullExportRestore(
             rulership: exported.rulership ?? newPersonDefaults.rulership,
           }
         : exported;
-    const mutations = restoreMutations(exported.id, incoming, existing ?? deleted);
+    const mutations = restoreMutations(exported.id, incoming, existing ?? deleted, existingNotes);
     const status =
       deleted !== undefined
         ? 'deletedLocally'

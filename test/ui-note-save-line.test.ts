@@ -9,12 +9,14 @@ import { noteSaveMessages } from '../src/ui/note-save.messages.js';
 
 const note: Note = {
   id: 'r-head',
+  noteId: 'r-root',
   rootId: 'r-root',
   personId: 'p-a',
   content: 'head',
   updatedAt: 2,
   timestamp: 1,
   forks: [{ id: 'r-fork', content: 'fork', updatedAt: 2 }],
+  revisions: [],
 };
 
 describe('the note save-state line', () => {
