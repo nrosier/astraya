@@ -23,6 +23,8 @@ import type { BirthMomentInput } from '../time/types.js';
 export const AAF_EXTENSION_CHUNK = 'astraya';
 
 export interface AafRecord {
+  /** The line of the record's #A93 chunk in the file it was read from; absent on a record built in memory. */
+  readonly line?: number;
   /** Last name, or the title of an event or institution. */
   readonly name: string;
   /** First name; empty for an event or institution. */
@@ -289,6 +291,7 @@ function parseRecord(
   const extension = extensionText === undefined ? undefined : parseExtension(extensionText.data);
   return {
     record: {
+      line: head.line,
       name,
       firstName: firstName === '*' ? '' : firstName,
       birth,

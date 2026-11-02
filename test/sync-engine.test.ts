@@ -611,6 +611,30 @@ describe('local writes are never blocked by a failing sync (#106)', () => {
   });
 });
 
+describe('an oversized legacy note stays out of the push queue (#919)', () => {
+  it('keeps it local and reports synced, while an ordinary op behind it still lands', async () => {
+    globalThis.fetch = await loginAs('alice', 'correct-horse-battery');
+    const store = await openStore({ name: freshDbName() });
+    await store.mutate([{ entity: 'person', entityId: 'p1', field: 'notes', value: 'a'.repeat(50_001) }]);
+    await store.mutate([{ entity: 'person', entityId: 'p1', field: 'displayName', value: 'Ada' }]);
+    const engine = await createSyncEngine({ store });
+    try {
+      await vi.waitFor(() => {
+        expect(engine.status.kind).toBe('synced');
+      }, WAIT);
+      expect(engine.pending()).toBe(0);
+
+      const pull = await globalThis.fetch(new URL('/api/ops', baseUrl));
+      const { ops } = (await pull.json()) as { ops: { payload: string }[] };
+      expect(ops).toHaveLength(1);
+      expect(store.outgoing().some((op) => op.field === 'notes')).toBe(true);
+    } finally {
+      engine.close();
+      store.close();
+    }
+  });
+});
+
 describe('storage quota (#919)', () => {
   it('a 409 yields the quota state, schedules no retry, and keeps the local ops', async () => {
     const postAttempts: number[] = [];

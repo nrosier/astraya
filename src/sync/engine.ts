@@ -16,6 +16,7 @@
  * @exports SyncEngine, SyncEngineOptions, SyncErrorKind, SyncError, PUSH_BATCH_MAX_BYTES, pushRecords, createSyncEngine
  */
 import { isHlc, isNodeId, type Hlc, type NodeId } from '../store/hlc.js';
+import { isOversizedLegacyNoteRecord } from '../store/notes.js';
 import type { OpRecord } from '../store/ops.js';
 import type { Store, SyncCursor } from '../store/store.js';
 import type { SyncState } from '../ui/status.js';
@@ -367,7 +368,10 @@ export async function createSyncEngine(options: SyncEngineOptions): Promise<Sync
    * account age and peer count, so it's filtered out before ever reaching the network.
    */
   function ownOutgoing(): readonly OpRecord[] {
-    return store.outgoing(cursor.pushed).filter((op) => op.deviceId === store.deviceId);
+    return store
+      .outgoing(cursor.pushed)
+      .filter((op) => op.deviceId === store.deviceId)
+      .filter((op) => !isOversizedLegacyNoteRecord(op));
   }
 
   async function pull(): Promise<void> {

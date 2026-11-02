@@ -18,6 +18,7 @@ import {
   consultationNoteRevision,
   CONSULTATION_NOTE_ENTITY,
   entitiesPurgedWith,
+  isOversizedLegacyNoteRecord,
   NOTE_MAX_CHARACTERS,
   NoteRefusedError,
 } from '../src/store/notes.js';
@@ -242,6 +243,27 @@ describe('the per-revision length limit', () => {
     expect(() => {
       assertNoteMutation({ entity: 'person', entityId: PERSON, field: 'notes', value: at(NOTE_MAX_CHARACTERS + 1) });
     }).not.toThrow();
+  });
+});
+
+describe('a legacy person.notes root over the limit (#919)', () => {
+  it('is flagged for quarantine, but a root within the limit is not', () => {
+    const [within] = legacyNotes('a'.repeat(NOTE_MAX_CHARACTERS), A, T0);
+    const [over] = legacyNotes('a'.repeat(NOTE_MAX_CHARACTERS + 1), A, T0);
+    expect(within && isOversizedLegacyNoteRecord(within)).toBe(false);
+    expect(over && isOversizedLegacyNoteRecord(over)).toBe(true);
+  });
+
+  it('is never refused or truncated by the fold: the text is still the person’s note', () => {
+    const text = 'a'.repeat(NOTE_MAX_CHARACTERS + 1);
+    const state = fold(legacyNotes(text, A, T0));
+    expect(state.birthNotes.get(PERSON)?.content).toBe(text);
+    expect(state.people.get(PERSON)?.notes).toBe(text);
+  });
+
+  it('a legacy root within the cap folds unchanged', () => {
+    const text = 'a'.repeat(NOTE_MAX_CHARACTERS);
+    expect(fold(legacyNotes(text, A, T0)).people.get(PERSON)?.notes).toBe(text);
   });
 });
 

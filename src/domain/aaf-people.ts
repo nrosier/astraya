@@ -19,6 +19,7 @@
  * @exports peopleToAaf, aafToExportedPeople, isAafText
  */
 import { encodeAafRecord, parseAaf, type AafParseError, type AafRecord } from './aaf.js';
+import { isNoteTooLong, NOTE_MAX_CHARACTERS } from '../store/notes.js';
 import type { ExportedPerson } from './full-export.js';
 import {
   readCivil,
@@ -117,13 +118,23 @@ export function aafToExportedPeople(text: string): {
   readonly people: readonly ExportedPerson[];
   readonly errors: readonly AafParseError[];
 } {
-  const { records, errors } = parseAaf(text);
+  const { records, errors: parseErrors } = parseAaf(text);
+  const errors: AafParseError[] = [...parseErrors];
   const people: ExportedPerson[] = [];
   records.forEach((record, index) => {
     const extension = record.extension ?? {};
     const civil = readCivil(record.birth.civil);
     const coordinates = readCoordinates(exactCoordinates(record.birth.coordinates, extension));
     if (civil === undefined || coordinates === undefined) return;
+    const notes = [extension.notes, record.comment].filter((part): part is string => part !== undefined && part !== '');
+    // Over the note limit (#919): refused and reported, never truncated, like any other unreadable record.
+    if (isNoteTooLong(notes.join('\n'))) {
+      errors.push({
+        line: record.line ?? 0,
+        message: `the note for ${record.firstName} ${record.name} is longer than the ${String(NOTE_MAX_CHARACTERS)}-character note limit`,
+      });
+      return;
+    }
     const calendar = extension.calendar === 'auto' ? 'auto' : record.birth.calendar;
     // Key order matches person.ts's own assembly (calendar, zoneOverride, offsetOverrideMinutes), because the restore
     // staging compares birth records by their JSON text: the same record in another key order would read as changed.
@@ -139,7 +150,6 @@ export function aafToExportedPeople(text: string): {
     const relocationPlaces = readRelocationPlaces(parseJson(extension.relocationPlaces));
     const customPoints = readCustomPoints(parseJson(extension.customPoints));
     const displayName = [record.firstName, record.name].filter((part) => part !== '').join(' ');
-    const notes = [extension.notes, record.comment].filter((part): part is string => part !== undefined && part !== '');
     people.push({
       id: personIdFor(record, index),
       displayName,
