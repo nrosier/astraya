@@ -10,7 +10,7 @@
  */
 /**
  * @module PersonForm
- * @purpose Birth-data entry/edit form for a person record (name, place, date/time, calendar/timezone overrides, notes), with resolved-moment feedback and delete.
+ * @purpose Birth-data entry/edit form for a person record (name, place, date/time, calendar/timezone overrides), with resolved-moment feedback, delete, and the autosaved notes card (#919).
  * @conventions Thin wiring over domain/person-form.ts's draft/validation/mutation logic; uses PersonForm.messages.ts for en/nl text via useMessages().
  * @exports PersonForm
  */
@@ -30,7 +30,9 @@ import { NumberField } from './primitives/NumberField.js';
 import { ChoiceGroup } from './primitives/ChoiceGroup.js';
 import { Select } from './primitives/Select.js';
 import { Tooltip } from './primitives/Tooltip.js';
-import { TextAreaField } from './primitives/TextAreaField.js';
+import { AutosavedNoteField } from './AutosavedNoteField.js';
+import { NoteForks } from './NoteForks.js';
+import { birthNoteMutation } from './note-mutations.js';
 import { TextField } from './primitives/TextField.js';
 import { TimeField } from './primitives/TimeField.js';
 import { PersonNotFound } from './PersonNotFound.js';
@@ -83,6 +85,7 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
   const store = useStore();
   const state = useStoreState();
   const person = state.people.get(personId);
+  const birthNote = state.birthNotes.get(personId);
   const t = useMessages(personFormMessages);
   const shared = useMessages(sharedMessages);
   const unknownTimeHintId = useId();
@@ -349,15 +352,17 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
         <div className="birth-record-column">
           <section className="birth-record-card birth-record-card--notes" aria-labelledby="birth-card-notes">
             <h3 id="birth-card-notes">{t.notesCardHeading}</h3>
-            <TextAreaField
+            {/* Notes autosave on their own (#919, owner 2026-11-01) and never drive Save or the status dot (2026-11-02). */}
+            <AutosavedNoteField
+              key={`birth/${personId}`}
               label={t.notesLabel}
               hideLabel
-              rows={3}
-              value={current.notes}
-              onChange={(value) => {
-                set('notes', value);
-              }}
+              storedText={person.notes}
+              scope={`birth/${personId}`}
+              toMutation={(text) => birthNoteMutation(personId, store.state.birthNotes.get(personId), text)}
+              inline
             />
+            <NoteForks forks={birthNote?.forks ?? []} />
           </section>
 
           <section className="birth-record-card birth-record-card--timezone" aria-label={t.timezoneDetailsTitle}>

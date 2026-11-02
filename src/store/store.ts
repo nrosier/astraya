@@ -123,6 +123,8 @@ export interface Store {
   readonly persistence: Persistence;
   /** This device's identity, present in every timestamp it writes. */
   readonly deviceId: NodeId;
+  /** The name of the database this store was opened with. The note journal is keyed by it (#919). */
+  readonly dbName: string;
   /**
    * False when another tab already holds this store's write lock (#311). Reads still
    * work; `mutate`/`remove`/`restore`/`purge`/`receive` all reject rather than mint a
@@ -431,6 +433,7 @@ export async function openStore(options: StoreOptions = {}): Promise<Store> {
       return persistence;
     },
     deviceId,
+    dbName: db.name,
     get writable() {
       return tabLock.writable;
     },

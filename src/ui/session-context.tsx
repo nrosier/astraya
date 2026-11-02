@@ -9,6 +9,7 @@
  * @conventions React context + provider (SessionProvider); handles offline-boot (can't tell signed-in from signed-out, falls back to the last-used store), server-side session invalidation (handleUnauthorized closes the store rather than leaving it open across accounts, per ADR 0002's cross-account data-bleed concern), and OIDC PKCE completion via oidc-pkce.js.
  * @exports removeAccountData, SessionProvider, useStoreStatus, useSyncEngine, useSession, useSessionUserOrUndefined, StoreStatus, AdoptionPrompt
  */
+import { clearNoteJournalsForDb } from './use-note-autosave.js';
 import { createContext, useContext, useEffect, useEffectEvent, useRef, useState } from 'react';
 import { openStore } from '../store/store.js';
 import { exchangeOidcCode, login, logout, me, setup as apiSetup } from '../sync/auth-client.js';
@@ -63,6 +64,8 @@ export function removeAccountData(userId: string): Promise<void> {
   return new Promise((resolve, reject) => {
     const request = indexedDB.deleteDatabase(accountDbName(userId));
     request.onsuccess = () => {
+      // Pending note text is keyed by this database name, so it goes with the database (#919).
+      if (typeof localStorage !== 'undefined') clearNoteJournalsForDb(localStorage, accountDbName(userId));
       resolve();
     };
     request.onerror = () => {

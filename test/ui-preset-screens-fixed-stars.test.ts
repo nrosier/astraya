@@ -26,7 +26,8 @@ describe('the preset-only screens use the chosen fixed stars (#860)', () => {
   });
 
   it('Consultation and Timeline recompute when the chosen stars change', () => {
-    expect(read('src/ui/ConsultationView.tsx')).toContain('[person?.moment, fixedStars, provider');
+    // The moment is a stable value (useStableMoment), so a note save does not re-run the calculation (#919).
+    expect(read('src/ui/ConsultationView.tsx')).toContain('[stableMoment, fixedStars, provider');
     expect(read('src/ui/TimingTimelineView.tsx')).toContain('[asOf, person?.moment, fixedStars, provider');
   });
 });

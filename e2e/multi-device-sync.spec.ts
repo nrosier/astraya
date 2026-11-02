@@ -117,9 +117,11 @@ test.describe('multi-device offline sync (#107)', () => {
       await expect(a.page.getByLabel('Status: Saved on this device', { exact: true })).toBeVisible();
 
       // B edits the notes on the same person, and creates a second person, while offline.
+      // Notes autosave through the op-log (#919), so there is no Save click: wait for the device-only line.
       await b.page.locator('textarea').fill('Mother of computing.');
-      await b.page.getByRole('button', { name: 'Save changes', exact: true }).click();
-      await expect(b.page.getByLabel('Status: Saved on this device', { exact: true })).toBeVisible();
+      await expect(
+        b.page.locator('.note-save-status').getByText('Saved on this device', { exact: true }),
+      ).toBeVisible();
 
       await backToPeople(b.page);
       await createPerson(b.page, {
@@ -228,8 +230,9 @@ test.describe('multi-device offline sync (#107)', () => {
 
       // B, unaware of the delete, edits an unrelated field on the same person while offline.
       await b.page.locator('textarea').fill('Still editing…');
-      await b.page.getByRole('button', { name: 'Save changes', exact: true }).click();
-      await expect(b.page.getByLabel('Status: Saved on this device', { exact: true })).toBeVisible();
+      await expect(
+        b.page.locator('.note-save-status').getByText('Saved on this device', { exact: true }),
+      ).toBeVisible();
 
       await a.context.setOffline(false);
       await b.context.setOffline(false);

@@ -5,7 +5,8 @@
  * path are exercised directly. The journal helpers take a plain storage object, so the key is checked
  * without a DOM. The hook itself is a thin shell over these and is covered by the e2e spec.
  */
-import { describe, expect, it } from 'vitest';
+// @vitest-environment jsdom
+import { describe, expect, it, vi } from 'vitest';
 import {
   initialNoteSaveState,
   NOTE_AUTOSAVE_DEBOUNCE_MS,
@@ -17,7 +18,9 @@ import {
 import {
   clearNoteJournal,
   noteJournalKey,
+  noteOwnerKey,
   readNoteJournal,
+  shouldResetNote,
   writeNoteJournal,
   type NoteJournalStorage,
 } from '../src/ui/use-note-autosave.js';
@@ -185,5 +188,87 @@ describe('note autosave: journal keying', () => {
     expect(() => {
       clearNoteJournal(broken, 'astraya', 'birth/p1');
     }).not.toThrow();
+  });
+});
+
+describe('note autosave: a blank new-note draft', () => {
+  // `toMutation` returns undefined for a blank draft that is not yet a note. The hook must then write nothing to
+  // the store, and the save still counts as done, so the state reaches `saved`.
+  it('writes nothing to the store and reports saved', async () => {
+    const { act, createElement } = await import('react');
+    const { createRoot } = await import('react-dom/client');
+    const { useNoteAutosave } = await import('../src/ui/use-note-autosave.js');
+    const writes: unknown[] = [];
+    const store = {
+      dbName: 'blank-draft-test',
+      deviceId: 'dev',
+      mutate: (mutations: readonly unknown[]): Promise<void> => {
+        writes.push(...mutations);
+        return Promise.resolve();
+      },
+    } as unknown as Parameters<typeof useNoteAutosave>[0]['store'];
+    const seen: { edit?: (text: string) => void; phase?: string } = {};
+    function Probe(): null {
+      const autosave = useNoteAutosave({
+        store,
+        scope: 'consultation/draft',
+        toMutation: () => undefined,
+      });
+      seen.edit = (text: string): void => {
+        autosave.edit(text);
+      };
+      seen.phase = autosave.state.phase;
+      return null;
+    }
+    const root = createRoot(document.createElement('div'));
+    act(() => {
+      root.render(createElement(Probe));
+    });
+    vi.useFakeTimers();
+    try {
+      act(() => {
+        seen.edit?.('   ');
+      });
+      await act(async () => {
+        vi.advanceTimersByTime(NOTE_AUTOSAVE_DEBOUNCE_MS);
+        await vi.runOnlyPendingTimersAsync();
+      });
+    } finally {
+      vi.useRealTimers();
+      act(() => {
+        root.unmount();
+      });
+    }
+    expect(writes).toEqual([]);
+    expect(seen.phase).toBe('saved');
+  });
+});
+
+describe('note autosave: journal keyed by the store, and the scope reset', () => {
+  it('a journal written under one database name is not recovered into a store with another', () => {
+    const storage = new Map<string, string>();
+    const bag: NoteJournalStorage = {
+      getItem: (key) => storage.get(key) ?? null,
+      setItem: (key, value) => {
+        storage.set(key, value);
+      },
+      removeItem: (key) => {
+        storage.delete(key);
+      },
+    };
+    writeNoteJournal(bag, 'account-a', 'birth/p1', 'pending for account a');
+    expect(readNoteJournal(bag, 'account-b', 'birth/p1')).toBeUndefined();
+    expect(readNoteJournal(bag, 'account-a', 'birth/p1')).toBe('pending for account a');
+  });
+
+  it('the owner key separates one note from another, and only a change of note resets', () => {
+    expect(noteOwnerKey('db', 'birth/p1')).not.toBe(noteOwnerKey('db', 'birth/p2'));
+    expect(noteOwnerKey('db-a', 'birth/p1')).not.toBe(noteOwnerKey('db-b', 'birth/p1'));
+    // Opening the store (no owner yet) is not a change of note, so text typed meanwhile is kept.
+    expect(shouldResetNote(undefined, noteOwnerKey('db', 'birth/p1'))).toBe(false);
+    // Same note: keep. A different note (scope or database): drop what was held for the old one.
+    expect(shouldResetNote(noteOwnerKey('db', 'birth/p1'), noteOwnerKey('db', 'birth/p1'))).toBe(false);
+    expect(shouldResetNote(noteOwnerKey('db', 'birth/p1'), noteOwnerKey('db', 'birth/p2'))).toBe(true);
+    expect(shouldResetNote(noteOwnerKey('db-a', 'birth/p1'), noteOwnerKey('db-b', 'birth/p1'))).toBe(true);
   });
 });

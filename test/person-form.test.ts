@@ -167,7 +167,7 @@ describe('loading a draft from a stored person', () => {
     expect(draft.time).toBe('14:30:00');
     expect(draft.latitude).toBe('38.7478');
     expect(draft.offsetOverride).toBe('-300');
-    expect(draft.notes).toBe('from the certificate');
+    expect(Object.keys(draft)).not.toContain('notes');
     // And the draft validates, so opening a saved person for editing cannot produce a form
     // that refuses to save what it was given.
     expect(validateDraft(draft, T).errors).toEqual({});
@@ -237,8 +237,14 @@ describe('turning a save into operations', () => {
   });
 
   it('writes only the field that changed', () => {
-    const mutations = draftToMutations(ID, { ...VEVAY, notes: 'from the certificate' }, VEVAY, T);
-    expect(mutations).toEqual([{ entity: 'person', entityId: ID, field: 'notes', value: 'from the certificate' }]);
+    const mutations = draftToMutations(ID, { ...VEVAY, placeLabel: 'Vevay, IN' }, VEVAY, T);
+    expect(mutations).toEqual([{ entity: 'person', entityId: ID, field: 'placeLabel', value: 'Vevay, IN' }]);
+  });
+
+  it('never writes notes through the page Save (#919 autosaves them)', () => {
+    // Notes are op-log revisions with their own autosave, so the page Save diff must not see them.
+    expect(Object.keys(VEVAY)).not.toContain('notes');
+    expect(draftToMutations(ID, VEVAY, VEVAY, T).some((mutation) => mutation.field === 'notes')).toBe(false);
   });
 
   it('writes the birth moment whole, never field by field', () => {

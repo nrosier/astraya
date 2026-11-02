@@ -28,6 +28,7 @@ import { trace } from '../trace.js';
 import { EmptyState } from './primitives/EmptyState.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { useRulershipChoice } from './rulership-setting.js';
+import { clearNoteJournalsForPerson } from './use-note-autosave.js';
 
 export function People(): React.JSX.Element {
   const store = useStore();
@@ -78,9 +79,16 @@ export function People(): React.JSX.Element {
     // other action this page offers, so the warning has to land before the store call, not
     // instead of it.
     if (!window.confirm(t.confirmDelete(name))) return;
-    void store.purge('person', id).catch((cause: unknown) => {
-      setError(cause instanceof Error ? cause.message : String(cause));
-    });
+    // Pending note text goes with the person (#919): the journal holds plaintext until it commits.
+    const rootIds = (store.state.consultationNotes.get(id) ?? []).map((note) => note.rootId);
+    void store
+      .purge('person', id)
+      .then(() => {
+        if (typeof localStorage !== 'undefined') clearNoteJournalsForPerson(localStorage, store.dbName, id, rootIds);
+      })
+      .catch((cause: unknown) => {
+        setError(cause instanceof Error ? cause.message : String(cause));
+      });
   };
 
   return (
