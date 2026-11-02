@@ -7,6 +7,7 @@
  * stays in view while a long page scrolls, offers a skip link as the first thing a keyboard
  * reaches, and is hidden when printing.
  */
+import { randomBytes } from 'node:crypto';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -16,7 +17,7 @@ import type { BrowserContext, Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
 import { EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
-import { gotoAndSettle, openNatalChart } from './support.ts';
+import { gotoAndSettle, openNatalChart, signIn } from './support.ts';
 
 // Phone (below 64rem: the utilities keep the header's own wrapped row), a laptop and an ultra-wide
 // monitor (the rail stays 16rem wide however wide the screen is).
@@ -233,5 +234,59 @@ test.describe('with the shared people (#799)', () => {
     await dark.check();
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
     await page.keyboard.press('Escape');
+  });
+});
+
+// The sync dot turns green (#964) and the ↻ button runs a manual sync only once a signed-in
+// session starts the real sync engine. That needs its own server with a bootstrapped admin, so
+// it stays apart from the signed-out server above.
+test.describe('signed in: the sync dot and the manual sync button (#964)', () => {
+  const USERNAME = 'header-sync-user';
+  const PASSWORD = 'correct-horse-battery-header';
+  const BOOTSTRAP = 'e2e-header-bootstrap-token';
+  let signedDir: string;
+  let signedApp: FastifyInstance;
+  let signedUrl: string;
+
+  test.beforeAll(async () => {
+    signedDir = mkdtempSync(join(tmpdir(), 'astraya-e2e-header-sync-'));
+    process.env.ASTRAYA_BOOTSTRAP_TOKEN = BOOTSTRAP;
+    process.env.ASTRAYA_ENCRYPTION_KEY = randomBytes(32).toString('base64');
+    signedApp = await build({ dbPath: join(signedDir, 'astraya.db') });
+    await signedApp.listen({ port: 0, host: '127.0.0.1' });
+    const address = signedApp.server.address();
+    if (address === null || typeof address === 'string') throw new Error('server did not bind to a port');
+    signedUrl = `http://127.0.0.1:${String(address.port)}`;
+    const response = await fetch(new URL('/api/setup', signedUrl), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: BOOTSTRAP, username: USERNAME, password: PASSWORD }),
+    });
+    if (!response.ok) throw new Error(`bootstrap failed with status ${String(response.status)}`);
+  });
+
+  test.afterAll(async () => {
+    await signedApp.close();
+    rmSync(signedDir, { recursive: true, force: true });
+    delete process.env.ASTRAYA_BOOTSTRAP_TOKEN;
+    delete process.env.ASTRAYA_ENCRYPTION_KEY;
+  });
+
+  test('a signed-in device with synced data shows the green dot, and the sync button runs a sync', async ({ page }) => {
+    await gotoAndSettle(page, `${signedUrl}/#/people`);
+    await signIn(page, USERNAME, PASSWORD);
+    const header = page.getByRole('banner');
+    await expect(page.getByText('Synced', { exact: true }).first()).toBeVisible({ timeout: 20_000 });
+
+    // Green (synced), not grey (local), once the engine has reached its synced state.
+    await expect(header.locator('.syncbadge-dot')).toHaveAttribute('data-state', 'synced');
+
+    // The ↻ button is present and enabled, and clicking it sends a real request to the relay.
+    const syncButton = header.getByRole('button', { name: 'Sync now', exact: true });
+    await expect(syncButton).toBeEnabled();
+    const opsRequest = page.waitForResponse((response) => response.url().includes('/api/ops'));
+    await syncButton.click();
+    expect((await opsRequest).ok()).toBe(true);
+    await expect(header.locator('.syncbadge-dot')).toHaveAttribute('data-state', 'synced');
   });
 });
