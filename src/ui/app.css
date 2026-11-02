@@ -569,6 +569,19 @@ a.corner-pill.active {
   cursor: default;
 }
 
+/* The sync dot (#964): green when every change is synced, grey when this device holds it alone. */
+.syncbadge-dot {
+  flex: 0 0 auto;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  background: var(--muted);
+}
+
+.syncbadge-dot[data-state='synced'] {
+  background: var(--color-success);
+}
+
 *,
 *::before,
 *::after {
@@ -1637,10 +1650,13 @@ label.stacked textarea:focus-visible {
 
 .sidebar-footer-meta {
   margin: 0;
+  font-size: var(--text-xs);
+  color: var(--muted);
 }
 
 .sidebar-footer-meta a {
   color: var(--muted);
+  font-size: var(--text-xs);
 }
 
 .sidebar-footer-meta a:hover {

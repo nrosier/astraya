@@ -52,6 +52,8 @@ test('one header holds the name, account, language and theme, and the old fixed 
   await expect(header).toBeVisible();
   await expect(header.getByRole('link', { name: 'Astraya, back to the people list' })).toBeVisible();
   await expect(header.getByRole('button', { name: 'Sign in', exact: true })).toBeVisible();
+  // The sync dot is grey while the data is only on this device (#964); the manual sync button is ↻.
+  await expect(header.locator('.syncbadge-dot')).toHaveAttribute('data-state', 'local');
   // Language and theme are now segmented controls in the profile popover (#964), not footer pills.
   await expect(header.locator('.language-toggle')).toHaveCount(0);
   await expect(header.locator('.theme-toggle')).toHaveCount(0);
