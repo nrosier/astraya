@@ -1,6 +1,6 @@
 /**
  * The Preferences workspace (#506/#510): reachable from the header's top-right cluster on every
- * screen, holds General/Astrology defaults/Appearance & accessibility/Data & privacy, and every
+ * screen, holds General/Astrology Defaults/Appearance & Accessibility/Data & Privacy, and every
  * control there writes the same shared device/account preference the rest of the app already
  * reads — this spec exists to catch a regression where this page's own copy of a setting drifts
  * from the one everywhere else reads, not to re-test each setting's own behavior (covered by
@@ -45,18 +45,18 @@ test('Preferences is reachable from every screen, has three tabs, and every tab 
   await expect(page.getByRole('heading', { name: 'Preferences', level: 1 })).toBeVisible();
   const tabs = page.getByRole('tablist', { name: 'Preferences sections' });
   await expect(tabs.getByRole('tab')).toHaveText([
-    'Appearance & accessibility',
-    'Astrology defaults',
-    'Data & privacy',
+    'Appearance & Accessibility',
+    'Astrology Defaults',
+    'Data & Privacy',
   ]);
   // Opens on Appearance, where the language now lives, and says what the tab's settings are stored as.
-  await expect(tabs.getByRole('tab', { name: 'Appearance & accessibility' })).toHaveAttribute('aria-selected', 'true');
-  await expect(page.getByRole('tabpanel', { name: 'Appearance & accessibility' })).toBeVisible();
+  await expect(tabs.getByRole('tab', { name: 'Appearance & Accessibility' })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('tabpanel', { name: 'Appearance & Accessibility' })).toBeVisible();
   await expect(page.getByRole('radiogroup', { name: 'Language' }).getByRole('radio', { name: 'EN' })).toBeChecked();
   await expect(page.getByText(/^This device\./).first()).toBeVisible();
   // The Preferences screen is current; the footer no longer carries a Preferences pill to mark (#964).
   await expect(page.getByRole('heading', { name: 'Preferences', level: 1 })).toBeVisible();
-  for (const name of ['Appearance & accessibility', 'Astrology defaults', 'Data & privacy']) {
+  for (const name of ['Appearance & Accessibility', 'Astrology Defaults', 'Data & Privacy']) {
     await tabs.getByRole('tab', { name }).click();
     await expect(page.getByRole('tabpanel', { name })).toBeVisible();
     const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
@@ -71,17 +71,17 @@ test('the tabs follow the arrow keys, keep one panel on screen, and do not add h
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   await openPreferences(page);
   const tabs = page.getByRole('tablist', { name: 'Preferences sections' });
-  const appearance = tabs.getByRole('tab', { name: 'Appearance & accessibility' });
+  const appearance = tabs.getByRole('tab', { name: 'Appearance & Accessibility' });
   await appearance.focus();
   await page.keyboard.press('ArrowRight');
-  await expect(tabs.getByRole('tab', { name: 'Astrology defaults' })).toBeFocused();
-  await expect(tabs.getByRole('tab', { name: 'Astrology defaults' })).toHaveAttribute('aria-selected', 'true');
+  await expect(tabs.getByRole('tab', { name: 'Astrology Defaults' })).toBeFocused();
+  await expect(tabs.getByRole('tab', { name: 'Astrology Defaults' })).toHaveAttribute('aria-selected', 'true');
   await expect(page).toHaveURL(/#\/preferences\/astrology$/);
   // One panel at a time: the other tabs' controls are not in the page.
   await expect(page.getByRole('radiogroup', { name: 'Planetary rulers' })).toBeVisible();
   await expect(page.getByLabel('Motion', { exact: true })).toHaveCount(0);
   await page.keyboard.press('End');
-  await expect(tabs.getByRole('tab', { name: 'Data & privacy' })).toHaveAttribute('aria-selected', 'true');
+  await expect(tabs.getByRole('tab', { name: 'Data & Privacy' })).toHaveAttribute('aria-selected', 'true');
   await page.keyboard.press('Home');
   await expect(appearance).toHaveAttribute('aria-selected', 'true');
   // Three switches later, Back still leaves Preferences instead of stepping through the tabs.
@@ -120,27 +120,27 @@ for (const width of [390, 1280]) {
     expect(await page.evaluate('document.documentElement.scrollWidth - window.innerWidth')).toBeLessThanOrEqual(1);
     // The tablist semantics and arrow behaviour are unchanged inside the scroller.
     const tabs = page.getByRole('tablist', { name: 'Preferences sections' });
-    await tabs.getByRole('tab', { name: 'Appearance & accessibility' }).focus();
+    await tabs.getByRole('tab', { name: 'Appearance & Accessibility' }).focus();
     await page.keyboard.press('ArrowRight');
-    await expect(tabs.getByRole('tab', { name: 'Astrology defaults' })).toBeFocused();
-    await expect(tabs.getByRole('tab', { name: 'Astrology defaults' })).toHaveAttribute('aria-selected', 'true');
+    await expect(tabs.getByRole('tab', { name: 'Astrology Defaults' })).toBeFocused();
+    await expect(tabs.getByRole('tab', { name: 'Astrology Defaults' })).toHaveAttribute('aria-selected', 'true');
     await page.keyboard.press('End');
-    await expect(tabs.getByRole('tab', { name: 'Data & privacy' })).toBeFocused();
-    await expect(tabs.getByRole('tab', { name: 'Data & privacy' })).toBeInViewport();
+    await expect(tabs.getByRole('tab', { name: 'Data & Privacy' })).toBeFocused();
+    await expect(tabs.getByRole('tab', { name: 'Data & Privacy' })).toBeInViewport();
   });
 }
 
 test('an old #/preferences/general link opens Appearance, where the language moved (#650)', async ({ page }) => {
   await gotoAndSettle(page, `${baseUrl}/#/preferences/general`);
-  await expect(page.getByRole('tabpanel', { name: 'Appearance & accessibility' })).toBeVisible();
+  await expect(page.getByRole('tabpanel', { name: 'Appearance & Accessibility' })).toBeVisible();
 });
 
 test('a section link opens Preferences at that heading and moves focus there (#509)', async ({ page }) => {
   test.setTimeout(60_000);
   await gotoAndSettle(page, `${baseUrl}/#/preferences/data`);
-  await expect(page.getByRole('tabpanel', { name: 'Data & privacy' })).toBeFocused();
+  await expect(page.getByRole('tabpanel', { name: 'Data & Privacy' })).toBeFocused();
   await gotoAndSettle(page, `${baseUrl}/#/preferences/astrology`);
-  await expect(page.getByRole('tabpanel', { name: 'Astrology defaults' })).toBeFocused();
+  await expect(page.getByRole('tabpanel', { name: 'Astrology Defaults' })).toBeFocused();
   // An unknown section is not a guess at one: the hash falls back to People.
   await gotoAndSettle(page, `${baseUrl}/#/preferences/nope`);
   await expect(page.getByRole('heading', { name: 'Preferences', level: 1 })).toHaveCount(0);
@@ -184,7 +184,7 @@ test('the rulers choice changed here is the same one chart screens read, and sur
   test.setTimeout(60_000);
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   await openPreferences(page);
-  await page.getByRole('tab', { name: 'Astrology defaults' }).click();
+  await page.getByRole('tab', { name: 'Astrology Defaults' }).click();
   const group = page.getByRole('radiogroup', { name: 'Planetary rulers', exact: true });
   await expect(group.getByRole('radio', { name: /^Modern/ })).toBeChecked();
   await group.getByRole('radio', { name: /^Traditional/ }).check();
@@ -204,7 +204,7 @@ test('exporting everything and the people CSV both produce real downloads', asyn
   const page = await context.newPage();
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   await openPreferences(page);
-  await page.getByRole('tab', { name: 'Data & privacy' }).click();
+  await page.getByRole('tab', { name: 'Data & Privacy' }).click();
 
   const read = async (download: Download): Promise<string> => {
     const chunks: Buffer[] = [];

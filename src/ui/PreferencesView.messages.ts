@@ -81,7 +81,7 @@ const en = {
   languageTitle: 'Language',
   themeTitle: 'Theme',
   tablistLabel: 'Preferences sections',
-  tabLabels: { appearance: 'Appearance & accessibility', astrology: 'Astrology defaults', data: 'Data & privacy' },
+  tabLabels: { appearance: 'Appearance & Accessibility', astrology: 'Astrology Defaults', data: 'Data & Privacy' },
   // What each tab's settings are stored as. Every one is saved in this browser and none is synced to an account yet,
   // so "This device" is the true scope for all of them (the guidelines' account scope waits for profile sync).
   scope: {

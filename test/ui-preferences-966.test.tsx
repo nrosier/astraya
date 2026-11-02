@@ -122,3 +122,13 @@ describe('#966 Data & privacy copy and action labels', () => {
     expect(nl.exportPeopleAaf).not.toBe(en.exportPeopleAaf);
   });
 });
+
+describe('#966 Preferences tab labels', () => {
+  it('uses the title-case English tab labels the spec names', () => {
+    expect(preferencesViewMessages.en.tabLabels).toEqual({
+      appearance: 'Appearance & Accessibility',
+      astrology: 'Astrology Defaults',
+      data: 'Data & Privacy',
+    });
+  });
+});
