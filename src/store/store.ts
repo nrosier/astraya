@@ -386,6 +386,20 @@ export async function openStore(options: StoreOptions = {}): Promise<Store> {
     });
   }
 
+  /** Whether the log already holds a purge marker for this entity. */
+  function hasPurgeMarker(from: Log, entity: string, entityId: string): boolean {
+    return from.records.some((record) => {
+      const decoded = decode(record);
+      return (
+        decoded.kind === 'known' &&
+        decoded.body.entity === entity &&
+        decoded.body.entityId === entityId &&
+        decoded.body.field === PURGED_FIELD &&
+        decoded.body.value === true
+      );
+    });
+  }
+
   function receiveIncoming(records: readonly unknown[]): Promise<ReceivedSummary> {
     return serialise(async () => {
       // A read-only tab must not fold a peer's record in either: doing so still advances
@@ -415,7 +429,21 @@ export async function openStore(options: StoreOptions = {}): Promise<Store> {
         }
         // A purged person takes its notes with it (#919), even from a peer that sent only the
         // person's marker, so the fan-out is applied on this side too.
+        // A bare person marker from an older build lacks the note markers, so the server would keep
+        // the note rows and its deny-list would stay empty for them. Append the missing ones here, the
+        // same fan-out `purge` writes locally, so they sync and the server erases those rows.
         for (const { entity, entityId } of purgedEntities.values()) {
+          const missing = entitiesPurgedWith(entity).filter((kind) => !hasPurgeMarker(log, kind, entityId));
+          if (missing.length > 0) {
+            const written: OpRecord[] = [];
+            let next = log;
+            for (const kind of missing) {
+              const appended = append(next, { entity: kind, entityId, field: PURGED_FIELD, value: true }, now());
+              next = appended.log;
+              written.push(appended.record);
+            }
+            await commitRecords(next, written);
+          }
           for (const kind of entitiesPurgedWith(entity)) await stripEntity(kind, entityId);
         }
       } else {

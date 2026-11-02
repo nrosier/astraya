@@ -19,6 +19,7 @@ import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { formatSavedTime } from './saved-time.js';
 import { useOnline } from './online-status.js';
+import { consultationDraftScope } from './use-note-autosave.js';
 import { useStore, useStoreState } from './store-context.js';
 import { consultationViewMessages } from './ConsultationView.messages.js';
 import { isSettled, noteSaveLine, summariseNoteSaves, type NoteSaveSummary } from './note-save-line.js';
@@ -71,7 +72,9 @@ export function ConsultationNotesCard({ personId }: { readonly personId: string 
   }, []);
 
   // Once the draft's note is in the store and nothing is waiting on it, the draft starts a new note.
-  const draftScope = scopeOf(draftId);
+  // The scope is stable per person so the draft's journal survives a reload and is cleared on purge; the field is keyed
+  // by `draftId` so it still starts empty once its note exists.
+  const draftScope = consultationDraftScope(personId);
   const draftState = saveStates[draftScope];
   const draftIsNote = notes.some((note) => note.rootId === draftId);
   useEffect(() => {
@@ -177,7 +180,7 @@ export function ConsultationNotesCard({ personId }: { readonly personId: string 
               ))}
             </ol>
             <AutosavedNoteField
-              key={draftScope}
+              key={draftId}
               label={t.notesFieldLabel}
               storedText=""
               scope={draftScope}

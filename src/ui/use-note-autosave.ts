@@ -11,7 +11,7 @@
  * @module use-note-autosave
  * @purpose Hook that debounces note edits, journals them in localStorage keyed by database name, and writes them through the store's `mutate`; flushes on pagehide, unmount (navigation) and reconnect.
  * @conventions Journal key is `astraya:note-journal:<store.dbName>:<scope>`, never a caller's name; the per-note state resets when the note (database and scope) changes; the journal is cleared only when the committed text is still the latest; no store means nothing is saved yet and the save runs once it opens; one save in flight at a time; timers and listeners are removed on unmount.
- * @exports noteJournalKey, noteOwnerKey, shouldResetNote, readNoteJournal, writeNoteJournal, clearNoteJournal, NoteJournalStorage, UseNoteAutosaveOptions, NoteAutosave, useNoteAutosave
+ * @exports noteJournalKey, noteOwnerKey, shouldResetNote, readNoteJournal, writeNoteJournal, clearNoteJournal, consultationDraftScope, personNoteScopes, NoteJournalStorage, UseNoteAutosaveOptions, NoteAutosave, useNoteAutosave
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { NoteRefusedError } from '../store/notes.js';
@@ -75,9 +75,21 @@ export function clearNoteJournal(storage: NoteJournalStorage, dbName: string, sc
   }
 }
 
-/** The journal scopes of one person's notes: the Birth Record note and each Consultation note (by its root id). */
+/**
+ * The journal scope of a person's new-note draft. It is stable (one per person and database, not per mount), so text
+ * typed into the draft and lost to a closed tab is found again on the next visit and cleared when the person is purged.
+ */
+export function consultationDraftScope(personId: string): string {
+  return `consultation-draft/${personId}`;
+}
+
+/** The journal scopes of one person's notes: the Birth Record note, the new-note draft and each Consultation note (by its root id). */
 export function personNoteScopes(personId: string, consultationRootIds: readonly string[]): readonly string[] {
-  return [`birth/${personId}`, ...consultationRootIds.map((rootId) => `consultation/${rootId}`)];
+  return [
+    `birth/${personId}`,
+    consultationDraftScope(personId),
+    ...consultationRootIds.map((rootId) => `consultation/${rootId}`),
+  ];
 }
 
 /** Erase a purged person's pending note text (#919, spec section 7 item 8). */
@@ -172,11 +184,22 @@ export function useNoteAutosave(options: UseNoteAutosaveOptions): NoteAutosave {
   // another. Opening the store is not a change of note, so text typed while it opened is kept.
   // Refs are written in an effect so a render that is discarded never leaves them half-changed.
   useEffect(() => {
-    if (!shouldResetNote(ownerRef.current, owner)) {
-      ownerRef.current = owner;
+    const previous = ownerRef.current;
+    ownerRef.current = owner;
+    // Recovered text is read for this note only, once its database is known. The first time a store is known
+    // (previous undefined) this is the only work to do: nothing typed yet is discarded.
+    const readRecovered = (): void => {
+      const storage = storageOrUndefined();
+      setRecovered(
+        owner === undefined || dbName === undefined || storage === undefined
+          ? undefined
+          : readNoteJournal(storage, dbName, scope),
+      );
+    };
+    if (!shouldResetNote(previous, owner)) {
+      if (previous === undefined && owner !== undefined) readRecovered();
       return;
     }
-    ownerRef.current = owner;
     textRef.current = undefined;
     dirtyRef.current = false;
     inFlightRef.current = false;
@@ -186,13 +209,7 @@ export function useNoteAutosave(options: UseNoteAutosaveOptions): NoteAutosave {
     }
     stateRef.current = initialNoteSaveState;
     setState(initialNoteSaveState);
-    // Recovered text is read for this note only, once its database is known.
-    const storage = storageOrUndefined();
-    setRecovered(
-      owner === undefined || dbName === undefined || storage === undefined
-        ? undefined
-        : readNoteJournal(storage, dbName, scope),
-    );
+    readRecovered();
   }, [owner, dbName, scope]);
 
   const latest = useRef({ store, dbName, scope, toMutation: options.toMutation, headText: options.headText });
