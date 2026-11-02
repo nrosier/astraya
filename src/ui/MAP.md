@@ -7,6 +7,9 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `About.tsx` + `About.messages.ts` — About/privacy/licence screen, version metadata. Deps: none (static content).
 - `default-calculation-profile.ts` — The saved default calculation profile (device preference, #510) that Preferences edits; a new person receives a copy of it (#806). Deps: `chart/calculation-profiles`.
 - `online-status.ts` — Hook following the browser's online/offline state, so network-only actions can show the offline result state. Deps: none.
+- `note-autosave.ts` — Pure note autosave state machine (#919): idle, pending, saving, saved, savedLocal, error; 750 ms debounce constant. Deps: none.
+- `use-note-autosave.ts` — Hook over the note state machine (#919): debounced store `mutate`, localStorage journal keyed by database name, flush on pagehide/unmount/reconnect. Deps: `note-autosave`, `store/db`, `store/notes`, `store/store`.
+- `note-save.messages.ts` — en/nl save-state strings for notes (#919): Saving, Autosaved, Saved on this device, Could not save, over-limit message. Deps: none.
 - `astro-glossary.messages.ts` — Astrology glossary catalogue (en/nl name + definition per term), the one source for every GlossaryTerm. Deps: none.
 - `GlossaryTerm.tsx` — Inline `GlossaryTerm` and the per-screen `GlossaryTerms` list, opening definitions through the shared Tooltip. Deps: `astro-glossary.messages`, `GlossaryTerm.messages`, `primitives/Tooltip`.
 - `GlossaryText.tsx` — Opt-in prose wrapper (#902): the first mention of each glossary term in one paragraph becomes an inline `GlossaryTerm`; used for report paragraphs and wheel-selection text only. Deps: `GlossaryTerm`, `glossary-match`, `locale`.
