@@ -14,7 +14,7 @@ import { expect, test, type Download } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
 import { newSeededContext, SHARED_PEOPLE } from './shared-people.ts';
-import { gotoAndSettle } from './support.ts';
+import { gotoAndSettle, openPreferences } from './support.ts';
 
 let dir: string;
 let app: FastifyInstance;
@@ -40,7 +40,7 @@ test('Preferences is reachable from every screen, has three tabs, and every tab 
 }) => {
   test.setTimeout(60_000);
   await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await page.getByRole('link', { name: 'Preferences', exact: true }).click();
+  await openPreferences(page);
   await expect(page).toHaveURL(/#\/preferences$/);
   await expect(page.getByRole('heading', { name: 'Preferences', level: 1 })).toBeVisible();
   const tabs = page.getByRole('tablist', { name: 'Preferences sections' });
@@ -54,8 +54,8 @@ test('Preferences is reachable from every screen, has three tabs, and every tab 
   await expect(page.getByRole('tabpanel', { name: 'Appearance & accessibility' })).toBeVisible();
   await expect(page.getByRole('radiogroup', { name: 'Language' }).getByRole('radio', { name: 'EN' })).toBeChecked();
   await expect(page.getByText(/^This device\./).first()).toBeVisible();
-  // The link marks itself current while here, same convention as every other nav link.
-  await expect(page.getByRole('link', { name: 'Preferences', exact: true })).toHaveAttribute('aria-current', 'page');
+  // The Preferences screen is current; the footer no longer carries a Preferences pill to mark (#964).
+  await expect(page.getByRole('heading', { name: 'Preferences', level: 1 })).toBeVisible();
   for (const name of ['Appearance & accessibility', 'Astrology defaults', 'Data & privacy']) {
     await tabs.getByRole('tab', { name }).click();
     await expect(page.getByRole('tabpanel', { name })).toBeVisible();
@@ -69,7 +69,7 @@ test('the tabs follow the arrow keys, keep one panel on screen, and do not add h
 }) => {
   test.setTimeout(60_000);
   await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await page.getByRole('link', { name: 'Preferences', exact: true }).click();
+  await openPreferences(page);
   const tabs = page.getByRole('tablist', { name: 'Preferences sections' });
   const appearance = tabs.getByRole('tab', { name: 'Appearance & accessibility' });
   await appearance.focus();
@@ -183,7 +183,7 @@ test('Motion and Density are device preferences: applied at once, kept across a 
 test('the rulers choice changed here is the same one chart screens read, and survives a reload', async ({ page }) => {
   test.setTimeout(60_000);
   await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await page.getByRole('link', { name: 'Preferences', exact: true }).click();
+  await openPreferences(page);
   await page.getByRole('tab', { name: 'Astrology defaults' }).click();
   const group = page.getByRole('radiogroup', { name: 'Planetary rulers', exact: true });
   await expect(group.getByRole('radio', { name: /^Modern/ })).toBeChecked();
@@ -203,7 +203,7 @@ test('exporting everything and the people CSV both produce real downloads', asyn
   const context = await newSeededContext(browser, baseUrl);
   const page = await context.newPage();
   await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await page.getByRole('link', { name: 'Preferences', exact: true }).click();
+  await openPreferences(page);
   await page.getByRole('tab', { name: 'Data & privacy' }).click();
 
   const read = async (download: Download): Promise<string> => {

@@ -30,8 +30,9 @@ import { useMessages } from './messages.js';
 import { startOidcHandshake } from './oidc-pkce.js';
 import { sharedMessages } from './shared.messages.js';
 import { IS_DEMO_MODE } from '../demo-mode.js';
-import type { AuthUser, OidcConfig } from '../sync/auth-client.js';
+import type { OidcConfig } from '../sync/auth-client.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
+import { ProfileTile } from './ProfileTile.js';
 
 function changes(count: number, t: typeof accountPanelMessages.en): string {
   return count === 1 ? t.oneChange : t.changesCount(String(count));
@@ -195,11 +196,18 @@ function OidcSignIn({
 function SignInForm({
   signIn,
   oidcConfig,
+  open,
+  onOpenChange,
+  triggerRef,
 }: {
   signIn: (username: string, password: string) => Promise<void>;
   oidcConfig: OidcConfig | undefined;
+  /** Opened from the profile tile (#964), so its open state is the caller's. */
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+  /** The control that opened the dialog; focus returns to it on close. */
+  readonly triggerRef: React.RefObject<HTMLElement | null>;
 }): React.JSX.Element {
-  const [open, setOpen] = useState(false);
   const ssoConfig = oidcConfig?.enabled === true ? oidcConfig : undefined;
   // Derived rather than initialised from `ssoConfig`, which loads async: until it resolves (or if SSO is off) the dialog is the local form (#651, #781).
   const [chosen, setChosen] = useState<SignInStage>();
@@ -208,14 +216,12 @@ function SignInForm({
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
-  // The trigger stays mounted while the dialog is open: StagedDialog returns focus to it on close (#69).
-  const triggerRef = useRef<HTMLButtonElement>(null);
   const usernameRef = useRef<HTMLInputElement>(null);
   const t = useMessages(accountPanelMessages);
   const shared = useMessages(sharedMessages);
 
   const close = (): void => {
-    setOpen(false);
+    onOpenChange(false);
     setChosen(undefined);
   };
 
@@ -248,18 +254,6 @@ function SignInForm({
 
   return (
     <>
-      <button
-        ref={triggerRef}
-        type="button"
-        className="corner-pill corner-signin"
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        onClick={() => {
-          setOpen(true);
-        }}
-      >
-        {t.signInButton}
-      </button>
       <StagedDialog
         open={open}
         heading={t.signInPopoverHeading}
@@ -326,60 +320,6 @@ function SignInForm({
 }
 
 /**
- * No "signed in as" text here — `SyncBadge`'s "(logged in as: {username})" already
- * says that, right next to this in the header (#230, #421).
- */
-function SignedIn({
-  user,
-  signOut,
-  onSignedOut,
-}: {
-  user: AuthUser;
-  signOut: () => Promise<void>;
-  onSignedOut: (userId: string) => void;
-}): React.JSX.Element {
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string>();
-  const t = useMessages(accountPanelMessages);
-
-  const doSignOut = (): void => {
-    setBusy(true);
-    setError(undefined);
-    // Captured before `signOut()` resolves: the `user` prop is gone once this component
-    // unmounts along with it, so there's no reading `user.id` back afterwards.
-    const userId = user.id;
-    void signOut()
-      .then(() => {
-        onSignedOut(userId);
-      })
-      .catch((cause: unknown) => {
-        setError(cause instanceof Error ? cause.message : String(cause));
-        setBusy(false);
-      });
-  };
-
-  return (
-    <div className="accountpanel-signedin">
-      <button className="corner-pill quiet" disabled={busy} onClick={doSignOut}>
-        {t.signOutButton}
-      </button>
-      {user.isAdmin && (
-        <button
-          type="button"
-          className="corner-pill quiet"
-          onClick={() => {
-            window.location.hash = '#/admin';
-          }}
-        >
-          {t.manageUsersLink}
-        </button>
-      )}
-      {error !== undefined && <StatusMessage kind="error">{t.signOutFailed(error)}</StatusMessage>}
-    </div>
-  );
-}
-
-/**
  * Offered only once signed out of `userId`'s account (#327) — never while its store is
  * the one currently open, since deleting that database out from under a live `Store`
  * instance is exactly the kind of write-after-close bug `store.ts` closing on sign-out
@@ -425,6 +365,9 @@ export function AccountPanel(): React.JSX.Element {
   // signing back in (whichever happens first makes the prompt moot).
   const [removableAccount, setRemovableAccount] = useState<string>();
   const t = useMessages(accountPanelMessages);
+  const [signInOpen, setSignInOpen] = useState(false);
+  // Focus returns here when the dialog closes: the tile's Sign in button, still mounted underneath it (#69).
+  const signInReturnRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     // Demo mode has no server to ask — skip the fetch entirely rather than let
@@ -445,30 +388,48 @@ export function AccountPanel(): React.JSX.Element {
     if (user !== undefined) setRemovableAccount(undefined);
   }, [user]);
 
-  // Positioned so the popover/warning below — absolutely positioned, `right: 0` beneath the
-  // trigger — anchors to this trigger's own box rather than to the header's (#230, #421: this
-  // shares the header with `SyncBadge`, so anchoring to the shared container would misplace the
-  // popover under whichever control sits first).
+  const tile = (
+    <ProfileTile
+      user={user}
+      onSignIn={() => {
+        signInReturnRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        setSignInOpen(true);
+      }}
+      onSignOut={signOut}
+      onSignedOut={setRemovableAccount}
+    />
+  );
+
+  // `.accountpanel` anchors the adoption and remove-data boxes to this tile's own box (#230, #421).
   return (
     <div className="accountpanel">
       {IS_DEMO_MODE ? (
         <span className="corner-pill accountpanel-demo">{t.demoModeBadge}</span>
       ) : adoption !== undefined ? (
         <AdoptionPanel recordCount={adoption.recordCount} resolveAdoption={resolveAdoption} />
-      ) : user === undefined ? (
+      ) : (
         <>
-          <SignInForm signIn={signIn} oidcConfig={oidcConfig} />
-          {removableAccount !== undefined && (
-            <RemoveAccountData
-              userId={removableAccount}
-              onRemoved={() => {
-                setRemovableAccount(undefined);
-              }}
-            />
+          {tile}
+          {user === undefined && (
+            <>
+              <SignInForm
+                signIn={signIn}
+                oidcConfig={oidcConfig}
+                open={signInOpen}
+                onOpenChange={setSignInOpen}
+                triggerRef={signInReturnRef}
+              />
+              {removableAccount !== undefined && (
+                <RemoveAccountData
+                  userId={removableAccount}
+                  onRemoved={() => {
+                    setRemovableAccount(undefined);
+                  }}
+                />
+              )}
+            </>
           )}
         </>
-      ) : (
-        <SignedIn user={user} signOut={signOut} onSignedOut={setRemovableAccount} />
       )}
     </div>
   );

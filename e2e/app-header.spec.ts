@@ -52,8 +52,11 @@ test('one header holds the name, account, language and theme, and the old fixed 
   await expect(header).toBeVisible();
   await expect(header.getByRole('link', { name: 'Astraya, back to the people list' })).toBeVisible();
   await expect(header.getByRole('button', { name: 'Sign in', exact: true })).toBeVisible();
-  await expect(header.locator('.language-toggle')).toBeVisible();
-  await expect(header.locator('.theme-toggle:not(.language-toggle)')).toBeVisible();
+  // The sync dot is grey while the data is only on this device (#964); the manual sync button is ↻.
+  await expect(header.locator('.syncbadge-dot')).toHaveAttribute('data-state', 'local');
+  // Language and theme are now segmented controls in the profile popover (#964), not footer pills.
+  await expect(header.locator('.language-toggle')).toHaveCount(0);
+  await expect(header.locator('.theme-toggle')).toHaveCount(0);
   await expect(page.locator('.locale-bar')).toHaveCount(0);
   await expect(page.locator('.account-bar')).toHaveCount(0);
   // It is a real page-flow element at the leading edge (the left rail at >=64rem), not an overlay
@@ -75,14 +78,11 @@ for (const { width, height, rail } of RAIL_FOOT_VIEWPORTS) {
     const footBox = await foot.boundingBox();
     if (headerBox === null || footBox === null) throw new Error('not laid out');
 
-    // All six utilities are in the one container.
+    // The utilities in the one container: the sync bar, the account tile (a guest's Sign in) and the symbol toggle (#964).
     for (const control of [
       foot.locator('.syncbadge'),
       foot.getByRole('button', { name: 'Sign in', exact: true }),
-      foot.getByRole('link', { name: 'Preferences', exact: true }),
-      foot.locator('.language-toggle'),
       foot.locator('.symbol-toggle'),
-      foot.locator('.theme-toggle:not(.language-toggle)'),
     ]) {
       await expect(control).toBeVisible();
       const box = await control.boundingBox();
@@ -163,8 +163,7 @@ test('on a phone-width screen the header and the sign-in dialog stay inside the 
   const header = page.getByRole('banner');
   for (const control of [
     header.getByRole('button', { name: 'Sign in', exact: true }),
-    header.locator('.language-toggle'),
-    header.locator('.theme-toggle:not(.language-toggle)'),
+    header.locator('.symbol-toggle'),
   ]) {
     await expect(control).toBeVisible();
     const box = await control.boundingBox();
@@ -225,10 +224,14 @@ test.describe('with the shared people (#799)', () => {
     await expect(header).toBeInViewport({ ratio: 0.99 });
     expect((await header.boundingBox())?.y).toBeGreaterThan(-1);
 
-    // And it is clickable down there: the theme toggle works without scrolling back up.
-    const themeToggle = header.locator('.theme-toggle:not(.language-toggle)');
-    const before = await page.locator('html').getAttribute('data-theme');
-    await themeToggle.click();
-    await expect(page.locator('html')).not.toHaveAttribute('data-theme', before ?? '');
+    // And it is clickable down there: the profile popover's theme control works without scrolling back up (#964).
+    const menu = header
+      .locator('[aria-haspopup="true"].profile-tile, [aria-haspopup="true"].profile-tile-menu')
+      .first();
+    await menu.click();
+    const dark = page.locator('.profile-popover').getByRole('radio', { name: /Dark$/ });
+    await dark.check();
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    await page.keyboard.press('Escape');
   });
 });

@@ -85,4 +85,16 @@ describe('signed out, no store, no sync engine', () => {
       unmount(root, container);
     }
   });
+
+  it('shows a grey dot for local data (#964), not the green synced dot', async () => {
+    const { container, root } = mount();
+    try {
+      await vi.waitFor(() => {
+        expect(container.querySelector('.syncbadge-dot')).not.toBeNull();
+      }, WAIT);
+      expect(container.querySelector('.syncbadge-dot')?.getAttribute('data-state')).toBe('local');
+    } finally {
+      unmount(root, container);
+    }
+  });
 });

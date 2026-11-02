@@ -12,7 +12,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `GlossaryText.tsx` — Opt-in prose wrapper (#902): the first mention of each glossary term in one paragraph becomes an inline `GlossaryTerm`; used for report paragraphs and wheel-selection text only. Deps: `GlossaryTerm`, `glossary-match`, `locale`.
 - `glossary-match.ts` — Pure per-locale term matcher (#902): longest phrase first, Unicode word edges, once per paragraph, compiled once per locale. Deps: `astro-glossary.messages`.
 - `GlossaryTerm.messages.ts` — en/nl label of the terms list. Deps: none.
-- `AccountPanel.tsx` + `AccountPanel.messages.ts` — Staged sign-in (OpenID / local, #781; OpenID when SSO is configured, #651)/out + account adoption + local-data removal. Deps: `session-context`, `sync/auth-client`, `oidc-pkce`, `primitives/StagedDialog`.
+- `AccountPanel.tsx` + `AccountPanel.messages.ts` — Staged sign-in dialog (OpenID / local, #781; #651) opened from the profile tile, account adoption, local-data removal; mounts `ProfileTile` (#964). Deps: `session-context`, `sync/auth-client`, `oidc-pkce`, `primitives/StagedDialog`, `ProfileTile`.
 - `AdminNav.tsx` + `AdminNav.messages.ts` — Admin tab strip (users/usage/corpus/candidates) in the shared `ScrollingTabRow` (#818). Deps: `./admin-nav`, `./ScrollingTabRow`, `./primitives/Select`.
 - `AdminPanel.tsx` + `AdminPanel.messages.ts` — User CRUD + AI-usage reporting, as Users and AI usage views. Deps: `sync/admin-client`, `session-context`, `admin-status`.
 - `admin-status.ts` — Pure 24-hour activity and usage-total helpers for the admin screens. Deps: `sync/admin-client`.
@@ -24,6 +24,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `MapSettingsDialog.tsx` + `MapSettingsDialog.messages.ts` + `map-settings.ts` — The Astrocartography map settings: a secondary trigger and a right-hand staged drawer (one draft, one Apply), plus the read-only Map basis badge (#978). Deps: `primitives/StagedDialog`, `primitives/Badge`, `domain/astrocartography`.
 - `AspectMatrixGrid.tsx` — The on-screen aspect matrix (#820): an HTML token-styled grid whose cells select an aspect pair on the wheel; screen only, the sheet/PDF keep the SVG. Deps: `chart/aspect-matrix`, `chart/glyphs`, `interpretation/selection-key`, `symbol-setting`.
 - `AppNav.tsx` + `AppNav.messages.ts` — Primary navigation: one link per section (Transits & Forecast, Progressions & Directions, Relationship Charts, Tools) plus PDF (#882). Deps: `person-nav`, `tools-nav`, `feature-registry`.
+- `ProfileTile.tsx` + `ProfileTile.messages.ts` — Sidebar account tile and popover (#964): identity, Preferences, Admin Panel for admins, segmented Language and Theme, Sign out/Sign in. Deps: `use-exclusive-open`, `primitives/ChoiceGroup`, `locale`, `theme-dom`, `AccountPanel.messages`.
 - `SidebarFooter.tsx` + `SidebarFooter.messages.ts` — Sidebar foot: update notice (hidden unless `pwa/register` reports an update) above the version and About & Licence links. Deps: `pwa/register`, `version`, `messages`.
 - `SectionNav.tsx` — Sub-view tab row for the four multi-view sidebar sections (#882), in `ScrollingTabRow` with a Select fallback. Deps: `AppNav.messages`, `person-nav`, `tools-nav`, `ScrollingTabRow`.
 - `AstroChartWheel.tsx` — Dev-only reference wheel via `@astrodraw/astrochart`. Deps: `chart/astrochart-adapter`.
@@ -68,7 +69,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `FocusInterpretation.tsx` + `FocusInterpretation.messages.ts` — Tier 2 AI-interpretation feature (consent + generate). Deps: `interpretation/tier2-client`, `interpretation/focus-context-schema`.
 - `HarmonicView.tsx` + `HarmonicView.messages.ts` — Harmonic & Varga divisional charts with radix-to-result provenance. Deps: `astrology/harmonics`, `domain/harmonic`, `SortableTable`.
 - `HoraryView.tsx` + `HoraryView.messages.ts` — Horary (question-chart) tool + considerations check. Deps: `astrology/horary`, `domain/horary`.
-- `LanguageToggle.tsx` + `LanguageToggle.messages.ts` — Language toggle button (en/nl). Deps: `./locale`, `interpretation/schema`.
+- `LanguageToggle.tsx` + `LanguageToggle.messages.ts` — Language toggle button (en/nl); no longer mounted in the sidebar footer (#964), whose popover has a segmented control. Deps: `./locale`, `interpretation/schema`.
 - `Overview.tsx` + `Overview.messages.ts` — Canonical per-person Overview screen (#506/#509): record readiness, calculation basis, real next actions. Deps: `./feature-registry`, `./people-list`, `./person-nav`.
 - `PageHeader.tsx` + `PageHeader.messages.ts` — Content-header primitive (#506/#509): page title, optional subtitle (#966), optional basis line, an optional title aside (save-status dot, #896), the top-right page action group (#976, `.page-header-actions`) holding its children and registered exports. Deps: `./export-registry`, `./page-actions-slot`, `./use-exclusive-open`.
 - `page-actions-slot.tsx` — Publishes the PageHeader's action group element so a screen's page-level controls (Overlay settings, Extended settings) can portal into it (#976). Deps: React only.
