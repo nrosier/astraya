@@ -112,6 +112,7 @@ export function SyncBadge(): React.JSX.Element {
       persistence: store?.persistence ?? UNKNOWN_PERSISTENCE,
       pending: engine?.pending() ?? store?.outgoing().length ?? 0,
       quarantined: engine?.quarantined() ?? 0,
+      heldBack: engine?.heldBack() ?? 0,
       sync,
       now,
     },
@@ -171,6 +172,7 @@ export function SyncBadge(): React.JSX.Element {
               </>
             )}
           </p>
+          {status.heldBackLine !== undefined && <p className="syncbadge-held-back">{status.heldBackLine}</p>}
         </div>
       )}
     </div>

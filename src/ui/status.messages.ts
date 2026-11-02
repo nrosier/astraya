@@ -55,6 +55,11 @@ const en = {
 
   synced: 'Synced',
   syncedDetail: (ago: string) => `Everything reached your server ${ago}.`,
+
+  heldBackLine: (n: string) =>
+    n === '1'
+      ? '1 note kept on this device only because it is too long to sync.'
+      : `${n} notes kept on this device only because they are too long to sync.`,
 };
 
 const nl: typeof en = {
@@ -103,6 +108,11 @@ const nl: typeof en = {
 
   synced: 'Gesynchroniseerd',
   syncedDetail: (ago: string) => `Alles is ${ago} bij je server aangekomen.`,
+
+  heldBackLine: (n: string) =>
+    n === '1'
+      ? '1 notitie wordt alleen op dit apparaat bewaard omdat ze te lang is om te synchroniseren.'
+      : `${n} notities worden alleen op dit apparaat bewaard omdat ze te lang zijn om te synchroniseren.`,
 };
 
 export const statusMessages = { en, nl };

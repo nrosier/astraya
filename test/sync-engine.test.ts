@@ -633,6 +633,40 @@ describe('an oversized legacy note stays out of the push queue (#919)', () => {
       store.close();
     }
   });
+
+  it('counts one held-back note, and keeps the status synced', async () => {
+    globalThis.fetch = await loginAs('alice', 'correct-horse-battery');
+    const store = await openStore({ name: freshDbName() });
+    await store.mutate([{ entity: 'person', entityId: 'p1', field: 'notes', value: 'a'.repeat(50_001) }]);
+    const engine = await createSyncEngine({ store });
+    try {
+      await vi.waitFor(() => {
+        expect(engine.status.kind).toBe('synced');
+      }, WAIT);
+      expect(engine.heldBack()).toBe(1);
+      expect(engine.pending()).toBe(0);
+      expect(engine.status.kind).toBe('synced');
+    } finally {
+      engine.close();
+      store.close();
+    }
+  });
+
+  it('counts zero held-back notes when no note is over the limit', async () => {
+    globalThis.fetch = await loginAs('alice', 'correct-horse-battery');
+    const store = await openStore({ name: freshDbName() });
+    await store.mutate([{ entity: 'person', entityId: 'p1', field: 'notes', value: 'a short note' }]);
+    const engine = await createSyncEngine({ store });
+    try {
+      await vi.waitFor(() => {
+        expect(engine.status.kind).toBe('synced');
+      }, WAIT);
+      expect(engine.heldBack()).toBe(0);
+    } finally {
+      engine.close();
+      store.close();
+    }
+  });
 });
 
 describe('storage quota (#919)', () => {

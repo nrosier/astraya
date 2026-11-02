@@ -121,7 +121,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `PreferencesRow.tsx` — 60/40 title-to-control row for a Preferences setting (#966). Deps: none.
 - `SymbolToggle.tsx` + `SymbolToggle.messages.ts` — Header one-press symbol toggle (glyphs ↔ text). Deps: `./symbol-setting`.
 - `SynastryView.tsx` + `SynastryView.messages.ts` — Synastry bi-wheel (two-person comparison); carries its own `PrintProvenance` footer labelled with engine defaults (#564). Deps: `domain/synastry`, `chart/multi-wheel`, `RelationshipSummary`, `./PrintProvenance`.
-- `SyncBadge.tsx` + `SyncBadge.messages.ts` — Always-visible sync-status badge. Deps: `session-context`, `./status`.
+- `SyncBadge.tsx` + `SyncBadge.messages.ts` — Always-visible sync-status badge, with the notes-held-back line in its popover (#919). Deps: `session-context`, `./status`.
 - `ThemeToggle.tsx` + `ThemeToggle.messages.ts` — Light/dark/system theme override. Deps: `./theme-dom`, `./theme`.
 - `TransitFilterPanel.tsx` + `TransitFilterPanel.messages.ts` — Transit-filter controls (presets/orbs/bodies/aspects). Deps: `astrology/transit-importance`.
 - `TransitView.tsx` + `TransitView.messages.ts` — Transit bi-wheel (natal ↔ transiting); carries its own `PrintProvenance` footer labelled with engine defaults (#564). Deps: `domain/transit`, `astrology/void-of-course`, `chart/multi-wheel`, `./PrintProvenance`, `./ChartViewAspects`.
@@ -179,7 +179,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `session-context.tsx` — Owns account + store lifecycle + auth + sync-engine + anonymous-adoption prompt. Deps: `store/store`, `sync/auth-client`, `sync/engine`, `./oidc-pkce`.
 - `shared.messages.ts` — Common i18n strings reused across many components. Deps: none.
 - `status.messages.ts` — en/nl for sync-status indicator. Deps: none.
-- `status.ts` — Decides sync-status label/tone/detail from sync/persistence/pending state. Deps: `store/persist`.
+- `status.ts` — Decides sync-status label/tone/detail from sync/persistence/pending state, plus the held-back-notes line (#919). Deps: `store/persist`.
 - `store-context.tsx` — React adapter exposing op-log store via `useSyncExternalStore`. Deps: `store/fold`, `store/store`, `./trace`.
 - `symbol-setting.ts` — Device preference for symbol class (glyphs/Unicode/text). Deps: `chart/symbol-class`.
 - `synastry-text.ts` — Resolves Synastry aspect-row interpretation text. Deps: `interpretation/compose`, `interpretation/schema`.

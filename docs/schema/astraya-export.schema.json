@@ -50,7 +50,10 @@
       "additionalProperties": false,
       "properties": {
         "id": { "type": "string" },
-        "text": { "type": "string", "description": "At most 50,000 characters" },
+        "text": {
+          "type": "string",
+          "description": "At most 50,000 characters, except a legacy root (id prefixed legacy-) written before the limit existed"
+        },
         "parents": { "type": "array", "items": { "type": "string" } },
         "hlc": { "type": "string", "description": "The hybrid logical clock timestamp the revision was written with" }
       }

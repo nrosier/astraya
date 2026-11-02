@@ -21,7 +21,7 @@ const EVICTABLE: Persistence = { state: 'evictable' };
 function status(overrides: Partial<StatusInput> = {}): ReturnType<typeof describeStatus> {
   const sync: SyncState = { kind: 'synced', at: NOW - MINUTE };
   return describeStatus(
-    { online: true, persistence: PERSISTED, pending: 0, quarantined: 0, sync, now: NOW, ...overrides },
+    { online: true, persistence: PERSISTED, pending: 0, quarantined: 0, heldBack: 0, sync, now: NOW, ...overrides },
     T,
   );
 }
@@ -155,6 +155,27 @@ describe('quarantined ops (#312)', () => {
     const shown = status({ sync, quarantined: 1 });
     expect(shown.label).not.toBe('Sync failing');
     expect(shown.tone).toBe('warn');
+  });
+});
+
+describe('notes held back from sync (#919)', () => {
+  it('shows a count of one held-back note, and the status stays synced', () => {
+    const shown = status({ heldBack: 1 });
+    expect(shown.label).toBe('Synced');
+    expect(shown.tone).toBe('ok');
+    expect(shown.heldBackLine).toBe('1 note kept on this device only because it is too long to sync.');
+  });
+
+  it('shows no held-back line when no note is held back', () => {
+    const shown = status({ heldBack: 0 });
+    expect(shown.label).toBe('Synced');
+    expect(shown.heldBackLine).toBeUndefined();
+  });
+
+  it('keeps the held-back line alongside any state, without changing its label or tone', () => {
+    const shown = status({ heldBack: 2, sync: { kind: 'off' } });
+    expect(shown.label).toBe('Local only');
+    expect(shown.heldBackLine).toBe('2 notes kept on this device only because they are too long to sync.');
   });
 });
 

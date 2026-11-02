@@ -12,7 +12,10 @@ import type { Person } from '../src/domain/person.js';
 import type { EphemerisProvider } from '../src/ephemeris/types.js';
 import { DEFAULT_EXTENDED_SETTINGS } from '../src/chart/extended-settings.js';
 import { openStore, type Store } from '../src/store/store.js';
+import { createClock, encodeHlc, randomNodeId } from '../src/store/hlc.js';
 import { getEngine } from './engine-harness.js';
+
+const T_MILLIS = 1_780_000_000_000;
 
 let engine: EphemerisProvider;
 beforeAll(async () => {
@@ -746,16 +749,11 @@ describe('the note length limit on import (#919)', () => {
     return roundTripped(archive);
   }
 
-  it('refuses a 50,001-character birth note, naming its path', async () => {
+  it('accepts a 50,001-character head-only birth note: a pre-#919 legacy note is allowed over the limit', async () => {
+    // Owner decision (2026-11-02): a legacy note written before the limit is accepted on import, so the backup
+    // the app wrote can be restored. A new-style revision over the limit is still refused (see the notes tests).
     const result = validateFullExport(await exportWithNotes('a'.repeat(NOTE_LIMIT + 1)));
-    expect(result).toEqual({
-      ok: false,
-      error: {
-        kind: 'malformed',
-        path: 'people[0].notes',
-        reason: `longer than the ${String(NOTE_LIMIT)}-character note limit`,
-      },
-    });
+    expect(result.ok).toBe(true);
   });
 
   it('accepts a birth note of exactly 50,000 characters', async () => {
@@ -767,16 +765,26 @@ describe('the note length limit on import (#919)', () => {
 
   it('counts code points, so exactly 50,000 emoji are accepted and one more is refused', async () => {
     expect(validateFullExport(await exportWithNotes('😀'.repeat(NOTE_LIMIT))).ok).toBe(true);
-    expect(validateFullExport(await exportWithNotes('😀'.repeat(NOTE_LIMIT + 1))).ok).toBe(false);
+    // A head-only over-limit note is a legacy note under the owner decision, so both sizes are accepted on import.
+    expect(validateFullExport(await exportWithNotes('😀'.repeat(NOTE_LIMIT + 1))).ok).toBe(true);
   });
 
   it('a refused import never reaches the store, which keeps its existing state', async () => {
     await withStore(async (store) => {
       await store.mutate([{ entity: 'person', entityId: 'p-ada', field: 'displayName', value: 'Ada' }]);
       const before = store.head();
-      const result = validateFullExport(await exportWithNotes('a'.repeat(NOTE_LIMIT + 1)));
+      // A new-style birth revision over the limit is refused, so nothing reaches the store.
+      const hlc = encodeHlc(createClock(randomNodeId(), T_MILLIS));
+      const revision = { id: 'r-new', text: 'a'.repeat(NOTE_LIMIT + 1), parents: [], hlc };
+      const file = await exportWithNotes('');
+      const [person] = (file as { people: Record<string, unknown>[] }).people;
+      if (person !== undefined) person.birthNote = { revisions: [revision] };
+      const result = validateFullExport(file);
       // The refusal is decided before staging, so the caller has nothing to pass to store.mutate.
       expect(result.ok).toBe(false);
+      if (!result.ok && result.error.kind === 'malformed') {
+        expect(result.error.path).toBe('people[0].birthNote.revisions[0].text');
+      }
       expect(store.head()).toBe(before);
       expect(store.state.people.get('p-ada')?.displayName).toBe('Ada');
     });

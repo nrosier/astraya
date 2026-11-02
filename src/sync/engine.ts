@@ -16,7 +16,7 @@
  * @exports SyncEngine, SyncEngineOptions, SyncErrorKind, SyncError, PUSH_BATCH_MAX_BYTES, pushRecords, createSyncEngine
  */
 import { isHlc, isNodeId, type Hlc, type NodeId } from '../store/hlc.js';
-import { isOversizedLegacyNoteRecord } from '../store/notes.js';
+import { countHeldBackNotes, isOversizedLegacyNoteRecord } from '../store/notes.js';
 import type { OpRecord } from '../store/ops.js';
 import type { Store, SyncCursor } from '../store/store.js';
 import type { SyncState } from '../ui/status.js';
@@ -52,6 +52,8 @@ export interface SyncEngine {
   pending(): number;
   /** Local records the server has permanently refused as clock-skewed (#312) and will not retry. */
   quarantined(): number;
+  /** Notes on this device that are held back from the push because they are over the length limit (#919). */
+  heldBack(): number;
   /** Manual "sync now" — safe to call while a run is already in flight (queues a rerun instead of overlapping it). */
   syncNow(): void;
   subscribe(listener: () => void): () => void;
@@ -274,7 +276,9 @@ async function getOps(since: number): Promise<readonly PullRow[]> {
  * per-account store and its own engine exist yet.
  */
 export async function pushRecords(records: readonly OpRecord[]): Promise<void> {
-  const wires = records.map(toWire);
+  // Over-limit legacy notes stay local, as in the engine's own push (#919). Adoption pushes a whole anonymous log,
+  // so without this filter one such note would be refused and wedge every op queued behind it.
+  const wires = records.filter((op) => !isOversizedLegacyNoteRecord(op)).map(toWire);
   for (let start = 0; start < wires.length;) {
     const { ops } = takeBatch(wires, start, PUSH_BATCH_MAX_BYTES);
     await postOps(ops);
@@ -372,6 +376,19 @@ export async function createSyncEngine(options: SyncEngineOptions): Promise<Sync
       .outgoing(cursor.pushed)
       .filter((op) => op.deviceId === store.deviceId)
       .filter((op) => !isOversizedLegacyNoteRecord(op));
+  }
+
+  /**
+   * Birth Record notes this device holds back from the push because their legacy text is over the limit (#919). The
+   * people come from this device's own held records, and the count from the folded note, so a note the user has since
+   * trimmed no longer counts. Only the note held here is counted; a peer's record is never this device's to hold.
+   */
+  function heldBackNotes(): number {
+    const own = new Set<string>();
+    for (const op of store.outgoing()) {
+      if (op.deviceId === store.deviceId && isOversizedLegacyNoteRecord(op)) own.add(String(op.entityId));
+    }
+    return countHeldBackNotes(store.state.birthNotes, own);
   }
 
   async function pull(): Promise<void> {
@@ -527,6 +544,7 @@ export async function createSyncEngine(options: SyncEngineOptions): Promise<Sync
     },
     pending: () => ownOutgoing().length,
     quarantined: () => cursor.quarantined?.length ?? 0,
+    heldBack: () => heldBackNotes(),
     syncNow: trigger,
     subscribe(listener) {
       listeners.add(listener);

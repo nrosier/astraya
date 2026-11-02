@@ -30,7 +30,7 @@
  * @module store/notes
  * @purpose Folds Birth Record and Consultation note revisions into heads, forks and grow-only deletes, and builds and refuses the note mutations written to the op-log.
  * @conventions Each save is an immutable revision keyed by a fresh id, so concurrent edits fork instead of overwriting; the head is the greatest-HLC leaf and every other leaf is a fork; a consultation note's delete is grow-only and cannot be undone; a legacy `person.notes` register is read as a root revision whose id embeds its HLC, so no op is written during migration; refusals carry a code rather than prose, so the UI owns the wording; a saved revision is capped at 50,000 characters.
- * @exports NOTE_MAX_CHARACTERS, isNoteTooLong, isOversizedLegacyNoteRecord, BIRTH_NOTE_ENTITY, CONSULTATION_NOTE_ENTITY, NOTE_ENTITIES, LEGACY_NOTE_FIELD, NoteFieldRegister, NoteFields, NoteRevisionView, NoteVersion, Note, FoldedNotes, foldBirthNote, foldConsultationNotes, birthNoteRevision, consultationNoteRevision, consultationNoteDelete, NoteRefusal, NoteRefusedError, assertNoteMutation, entitiesPurgedWith, revisionParents
+ * @exports NOTE_MAX_CHARACTERS, isNoteTooLong, LEGACY_REVISION_PREFIX, isLegacyRevisionId, isOversizedLegacyNoteRecord, countHeldBackNotes, BIRTH_NOTE_ENTITY, CONSULTATION_NOTE_ENTITY, NOTE_ENTITIES, LEGACY_NOTE_FIELD, NoteFieldRegister, NoteFields, NoteRevisionView, NoteVersion, Note, FoldedNotes, foldBirthNote, foldConsultationNotes, birthNoteRevision, consultationNoteRevision, consultationNoteDelete, NoteRefusal, NoteRefusedError, assertNoteMutation, entitiesPurgedWith, revisionParents
  */
 import { compareHlc, decodeHlc, isHlc, type Hlc } from './hlc.js';
 import type { Mutation } from './oplog.js';
@@ -61,17 +61,46 @@ export const LEGACY_NOTE_FIELD = 'notes';
 const PERSON_ENTITY = 'person';
 
 /**
- * Whether a log record is a pre-#919 `person.notes` write over the limit. The text stays in the
- * local log, since it is still the person's note, but it must not be pushed: the relay's request
- * limit would refuse it and hold up every op queued behind it.
+ * The id prefix of a legacy revision: the root a pre-#919 `person.notes` register is read as (`legacy-<hlc>`), or a
+ * revision an import writes for a legacy note (`legacy-<random>`). The UI never mints one: its ids come from `newId('r')`.
+ */
+export const LEGACY_REVISION_PREFIX = 'legacy-';
+
+/** Whether a revision id is a legacy one. */
+export function isLegacyRevisionId(id: string): boolean {
+  return id.startsWith(LEGACY_REVISION_PREFIX);
+}
+
+/**
+ * Whether a log record is an over-limit legacy note that must stay local (#919). The text stays in the local log,
+ * since it is still the person's note, but it must not be pushed: the relay's request limit would refuse it and hold
+ * up every op queued behind it. Covers a pre-#919 `person.notes` write and a legacy Birth Record revision.
  */
 export function isOversizedLegacyNoteRecord(record: Readonly<Record<string, unknown>>): boolean {
-  return (
-    record.entity === PERSON_ENTITY &&
-    record.field === LEGACY_NOTE_FIELD &&
-    typeof record.value === 'string' &&
-    isNoteTooLong(record.value)
-  );
+  if (record.entity === PERSON_ENTITY && record.field === LEGACY_NOTE_FIELD) {
+    return typeof record.value === 'string' && isNoteTooLong(record.value);
+  }
+  if (record.entity !== BIRTH_NOTE_ENTITY || typeof record.field !== 'string') return false;
+  const [kind, id] = record.field.split('/');
+  if (kind !== 'rev' || id === undefined || !isLegacyRevisionId(id)) return false;
+  const body = readBody(record.value);
+  return body !== undefined && isNoteTooLong(body.text);
+}
+
+/**
+ * How many Birth Record notes are held on this device and not pushed (#919): the people in `ownHeldPeople` (those this
+ * device wrote an over-limit legacy record for) whose head or a fork is still that over-limit legacy revision. A note the
+ * user has since trimmed no longer counts, because the new revision names the legacy one as a parent, so it is no
+ * longer a leaf.
+ */
+export function countHeldBackNotes(birthNotes: ReadonlyMap<string, Note>, ownHeldPeople: ReadonlySet<string>): number {
+  let held = 0;
+  for (const [personId, note] of birthNotes) {
+    if (!ownHeldPeople.has(personId)) continue;
+    const leaves = [{ id: note.id, content: note.content }, ...note.forks];
+    if (leaves.some((leaf) => isLegacyRevisionId(leaf.id) && isNoteTooLong(leaf.content))) held += 1;
+  }
+  return held;
 }
 
 /** One field's winning value and the timestamp that won it. Structurally the fold's `Register`. */
@@ -167,7 +196,7 @@ export function revisionParents(note: Note): readonly string[] {
 
 /** The id a legacy `person.notes` register is read as, carrying its timestamp so an overwrite is a new root. */
 function legacyRevisionId(hlc: Hlc): string {
-  return `legacy-${hlc}`;
+  return `${LEGACY_REVISION_PREFIX}${hlc}`;
 }
 
 function nonEmpty(value: string | undefined): value is string {
@@ -355,7 +384,10 @@ export function assertNoteMutation(mutation: Mutation): void {
 
   const body = readBody(mutation.value);
   if (body === undefined) throw new NoteRefusedError('invalid');
-  if (isNoteTooLong(body.text)) throw new NoteRefusedError('too-long');
+  // A legacy Birth Record revision may exceed the limit: it was written before the limit existed (owner decision,
+  // 2026-11-02). `isOversizedLegacyNoteRecord` keeps it out of the push, so it never reaches the relay.
+  const legacy = mutation.entity === BIRTH_NOTE_ENTITY && isLegacyRevisionId(parts[1] ?? '');
+  if (isNoteTooLong(body.text) && !legacy) throw new NoteRefusedError('too-long');
 }
 
 /**
