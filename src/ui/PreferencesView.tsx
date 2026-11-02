@@ -176,6 +176,7 @@ export function PreferencesView({
         rulership,
         symbolClass,
         now,
+        notes: store.state,
       });
       downloadText(fullExportFilename(now), `${JSON.stringify(archive, null, 2)}\n`, 'application/json');
     });
@@ -233,6 +234,7 @@ export function PreferencesView({
             store.state.people,
             store.state.deleted.people,
             newPersonDefaults,
+            store.state,
           );
           setPreview(staged);
           const firstError = errors[0];
@@ -258,6 +260,7 @@ export function PreferencesView({
           store.state.people,
           store.state.deleted.people,
           newPersonDefaults,
+          store.state,
         );
         setPreview(staged);
         // The counts themselves are shown once, inside the preview panel below (`restoreStaged`)

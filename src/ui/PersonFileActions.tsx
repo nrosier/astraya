@@ -108,6 +108,7 @@ export function PersonFileActions({
       rulership,
       symbolClass,
       now: new Date(),
+      notes: store.state,
     })
       .then((archive) => {
         downloadText(filename('json'), `${JSON.stringify(archive, null, 2)}\n`, 'application/json');

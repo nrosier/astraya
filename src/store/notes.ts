@@ -30,7 +30,7 @@
  * @module store/notes
  * @purpose Folds Birth Record and Consultation note revisions into heads, forks and grow-only deletes, and builds and refuses the note mutations written to the op-log.
  * @conventions Each save is an immutable revision keyed by a fresh id, so concurrent edits fork instead of overwriting; the head is the greatest-HLC leaf and every other leaf is a fork; a consultation note's delete is grow-only and cannot be undone; a legacy `person.notes` register is read as a root revision whose id embeds its HLC, so no op is written during migration; refusals carry a code rather than prose, so the UI owns the wording; a saved revision is capped at 50,000 characters.
- * @exports NOTE_MAX_CHARACTERS, BIRTH_NOTE_ENTITY, CONSULTATION_NOTE_ENTITY, NOTE_ENTITIES, LEGACY_NOTE_FIELD, NoteFieldRegister, NoteFields, NoteVersion, Note, foldBirthNote, foldConsultationNotes, birthNoteRevision, consultationNoteRevision, consultationNoteDelete, NoteRefusal, NoteRefusedError, assertNoteMutation, entitiesPurgedWith, revisionParents
+ * @exports NOTE_MAX_CHARACTERS, BIRTH_NOTE_ENTITY, CONSULTATION_NOTE_ENTITY, NOTE_ENTITIES, LEGACY_NOTE_FIELD, NoteFieldRegister, NoteFields, NoteRevisionView, NoteVersion, Note, FoldedNotes, foldBirthNote, foldConsultationNotes, birthNoteRevision, consultationNoteRevision, consultationNoteDelete, NoteRefusal, NoteRefusedError, assertNoteMutation, entitiesPurgedWith, revisionParents
  */
 import { compareHlc, decodeHlc, isHlc, type Hlc } from './hlc.js';
 import type { Mutation } from './oplog.js';
@@ -82,10 +82,28 @@ export interface NoteVersion {
   readonly updatedAt: number;
 }
 
+/**
+ * One revision as the fold holds it: enough to export the whole chain and to tell which
+ * revisions a store already has. `hlc` is the timestamp the revision was written with, so
+ * a reader can order a chain the way the fold did.
+ */
+export interface NoteRevisionView {
+  readonly id: string;
+  readonly content: string;
+  /** The revision ids this one was written on top of. */
+  readonly parents: readonly string[];
+  readonly hlc: Hlc;
+}
+
 /** A folded note: its head text, the forks beside it, and the timestamps the UI shows. */
 export interface Note {
   /** The head revision's id. */
   readonly id: string;
+  /**
+   * The note's key in the log: the `noteId` of its `rev/<noteId>/...` fields. Consultation notes only; a Birth
+   * Record note has one per person and uses the person id. Stable even when the root revision has not arrived yet.
+   */
+  readonly noteId: string;
   /** The root revision's id. For a consultation note this is the note id, and it never changes. */
   readonly rootId: string;
   readonly personId: string;
@@ -97,6 +115,14 @@ export interface Note {
   readonly timestamp: number;
   /** Every other leaf, newest first. Empty when no edits raced. */
   readonly forks: readonly NoteVersion[];
+  /** Every revision of this note, oldest first (by HLC). Head and forks are among them. */
+  readonly revisions: readonly NoteRevisionView[];
+}
+
+/** The folded notes of a whole store, as `store.state` holds them. */
+export interface FoldedNotes {
+  readonly birthNotes: ReadonlyMap<string, Note>;
+  readonly consultationNotes: ReadonlyMap<string, readonly Note[]>;
 }
 
 /** Why a note mutation was refused. A code, not prose, so the UI owns the wording. */
@@ -174,12 +200,19 @@ function headOf(
 
   return {
     id: head.id,
+    noteId: noteId ?? root.id,
     rootId: root.id,
     personId,
     content: head.text,
     updatedAt: decodeHlc(head.hlc).millis,
     timestamp: decodeHlc(root.hlc).millis,
     forks: forks.map((fork) => ({ id: fork.id, content: fork.text, updatedAt: decodeHlc(fork.hlc).millis })),
+    revisions: byTime.map((revision) => ({
+      id: revision.id,
+      content: revision.text,
+      parents: revision.parents,
+      hlc: revision.hlc,
+    })),
   };
 }
 

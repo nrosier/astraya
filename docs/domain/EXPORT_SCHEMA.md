@@ -46,6 +46,16 @@ interface ExportedPerson {
   harmonicCharts?: ExportedHarmonicChart[]; // named Varga charts, absent without usable houses
   chartError?: string;
   calculation?: CalculationArtifact; // #582 — natal inputs, provenance and SHA-256 fingerprints; see below
+  birthNote?: { revisions: ExportedNoteRevision[] }; // #919 — every revision of the Birth Record note; `notes` is the head's text; absent if none
+  consultationNotes?: { id: string; revisions: ExportedNoteRevision[] }[]; // #919 — Consultation notes, oldest first, keyed by note id; absent if none
+}
+
+// #919 — one immutable note revision: its text, the ids of the revisions it was written on top of, and its HLC timestamp.
+interface ExportedNoteRevision {
+  id: string;
+  text: string;
+  parents: string[];
+  hlc: string;
 }
 
 interface ExportedHarmonicChart {
@@ -166,6 +176,10 @@ JSON Schema file does enumerate them structurally.
   v4 file by version, so a build older than this one cannot restore it; an older build reading the op log ignores the
   `rulership` register and draws with its own device rulership (accepted, noted in the release notes). Reverting to an
   older build loses nothing: the registers stay in the log and are picked up again on upgrade.
+  #919 added optional `ExportedPerson.birthNote` (every revision of the Birth Record note) and `ExportedPerson.consultationNotes`
+  (each note's revisions, keyed by note id); both additive, so the version stays v4. An older reader ignores them and still
+  sees the head text in `notes`. A restore writes only the revisions the store does not already hold, through the note
+  mutation path, and never writes the legacy `person.notes` register.
 
 ## Calculation artifact
 

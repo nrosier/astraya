@@ -51,7 +51,7 @@
  * @module full-export
  * @purpose Builds the whole-device export: every person's birth record plus (where possible) their computed natal and named Varga chart tables, as one JSON document or a people CSV.
  * @conventions Plain JSON with its own `format`/`version` fields rather than a database dump; charts are computed with the caller-supplied `ExtendedSettings`/`rulership` (#541), carried verbatim into `preferences` so the document states exactly what was in force; each named Varga chart includes its radix-to-result longitude provenance; one person's chart failure is caught and reported per-person rather than failing the whole export; deleted people are excluded; `FULL_EXPORT_VERSION`'s own compatibility policy lives in docs/domain/EXPORT_SCHEMA.md, not in this file; `full-export-importer.ts` is this file's restore counterpart.
- * @exports buildFullExport, peopleToCsv, fullExportFilename, peopleCsvFilename, peopleAafFilename, FullExport, ExportedPerson, ExportedChart, ExportedHarmonicChart, FULL_EXPORT_FORMAT, FULL_EXPORT_VERSION, SUPPORTED_IMPORT_VERSIONS
+ * @exports buildFullExport, peopleToCsv, fullExportFilename, peopleCsvFilename, peopleAafFilename, FullExport, ExportedPerson, ExportedChart, ExportedHarmonicChart, ExportedNoteRevision, ExportedConsultationNote, FULL_EXPORT_FORMAT, FULL_EXPORT_VERSION, SUPPORTED_IMPORT_VERSIONS
  */
 import { VARGA_PRESETS } from '../astrology/harmonics.js';
 import type { RulershipChoice } from '../astrology/rulership.js';
@@ -80,6 +80,7 @@ import {
   type PointVisibilityOptions,
 } from './chart-tables.js';
 import type { ChosenFixedStar, CustomPointDefinition, Person, RelocationPlace } from './person.js';
+import type { FoldedNotes, NoteRevisionView } from '../store/notes.js';
 import type { EphemerisProvider } from '../ephemeris/types.js';
 
 export const FULL_EXPORT_FORMAT = 'astraya-export';
@@ -126,6 +127,24 @@ export interface ExportedHarmonicChart {
   readonly chart: ExportedChart;
 }
 
+/**
+ * One revision of a note (#919): its text, the revisions it was written on top of, and the HLC
+ * it was written with. Every revision is exported, not only the head, so a restore can tell
+ * which ones a store already holds and never writes a duplicate.
+ */
+export interface ExportedNoteRevision {
+  readonly id: string;
+  readonly text: string;
+  readonly parents: readonly string[];
+  readonly hlc: string;
+}
+
+/** A Consultation note (#919): its id, which is its first revision's id, and every revision of it. */
+export interface ExportedConsultationNote {
+  readonly id: string;
+  readonly revisions: readonly ExportedNoteRevision[];
+}
+
 export interface ExportedPerson {
   readonly id: string;
   readonly displayName: string;
@@ -146,6 +165,13 @@ export interface ExportedPerson {
   readonly calculationSettings?: ExtendedSettings;
   /** The planetary rulers this person's charts were computed with (#806, v4); absent in v2 and v3 files and for a person whose saved settings were unreadable. */
   readonly rulership?: RulershipChoice;
+  /**
+   * The Birth Record note's revisions (#919, additive); absent when the person has none. `notes` is the head's
+   * text, so an older reader still sees what was written.
+   */
+  readonly birthNote?: { readonly revisions: readonly ExportedNoteRevision[] };
+  /** The person's Consultation notes, oldest first (#919, additive); absent when there are none. */
+  readonly consultationNotes?: readonly ExportedConsultationNote[];
   readonly natalChart?: ExportedChart;
   /** Named Varga charts derived from the radix, absent when no usable houses are available. */
   readonly harmonicCharts?: readonly ExportedHarmonicChart[];
@@ -292,6 +318,15 @@ async function natalArtifact(
 const UNREADABLE_SETTINGS_ERROR =
   "This person's saved chart settings could not be read by this version of Astraya, so no chart was calculated.";
 
+function exportedRevisions(revisions: readonly NoteRevisionView[]): ExportedNoteRevision[] {
+  return revisions.map((revision) => ({
+    id: revision.id,
+    text: revision.content,
+    parents: [...revision.parents],
+    hlc: revision.hlc,
+  }));
+}
+
 export async function buildFullExport(params: {
   readonly people: readonly Person[];
   readonly provider: EphemerisProvider;
@@ -300,15 +335,28 @@ export async function buildFullExport(params: {
   readonly rulership: RulershipChoice;
   readonly symbolClass: string;
   readonly now: Date;
+  /** The store's folded notes (#919). Omitted, the export carries no notes; every app caller passes `store.state`. */
+  readonly notes?: FoldedNotes;
 }): Promise<FullExport> {
   const people: ExportedPerson[] = [];
   for (const person of params.people) {
+    const birthNote = params.notes?.birthNotes.get(person.id);
+    const consultationNotes = params.notes?.consultationNotes.get(person.id) ?? [];
     const base = {
       id: person.id,
       displayName: person.displayName,
       placeLabel: person.placeLabel,
       timeAccuracy: person.timeAccuracy,
       notes: person.notes,
+      ...(birthNote === undefined ? {} : { birthNote: { revisions: exportedRevisions(birthNote.revisions) } }),
+      ...(consultationNotes.length === 0
+        ? {}
+        : {
+            consultationNotes: consultationNotes.map((note) => ({
+              id: note.noteId,
+              revisions: exportedRevisions(note.revisions),
+            })),
+          }),
       ...(person.moment === undefined ? {} : { birth: person.moment }),
       ...(person.relocationPlaces === undefined ? {} : { relocationPlaces: person.relocationPlaces }),
       ...(person.customPoints === undefined ? {} : { customPoints: person.customPoints }),

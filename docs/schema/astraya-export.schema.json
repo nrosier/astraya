@@ -43,6 +43,18 @@
         "second": { "type": "integer" }
       }
     },
+    "exportedNoteRevision": {
+      "type": "object",
+      "description": "One immutable note revision (#919): text, the revision ids it was written on top of, and its HLC",
+      "required": ["id", "text", "parents", "hlc"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "text": { "type": "string", "description": "At most 50,000 characters" },
+        "parents": { "type": "array", "items": { "type": "string" } },
+        "hlc": { "type": "string", "description": "The hybrid logical clock timestamp the revision was written with" }
+      }
+    },
     "exportedPerson": {
       "type": "object",
       "required": ["id", "displayName", "placeLabel", "timeAccuracy", "notes", "missing"],
@@ -54,6 +66,26 @@
         "timeAccuracy": { "enum": ["recorded", "remembered", "approximate", "unknown"] },
         "notes": { "type": "string" },
         "birth": { "type": "object", "description": "BirthMomentInput — see src/time/types.ts" },
+        "birthNote": {
+          "type": "object",
+          "description": "The Birth Record note's revisions (#919, additive); notes is the head's text",
+          "required": ["revisions"],
+          "additionalProperties": false,
+          "properties": { "revisions": { "type": "array", "items": { "$ref": "#/$defs/exportedNoteRevision" } } }
+        },
+        "consultationNotes": {
+          "type": "array",
+          "description": "The person's Consultation notes, oldest first (#919, additive)",
+          "items": {
+            "type": "object",
+            "required": ["id", "revisions"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string", "description": "The note id: the first revision's id" },
+              "revisions": { "type": "array", "items": { "$ref": "#/$defs/exportedNoteRevision" } }
+            }
+          }
+        },
         "missing": { "type": "array", "items": { "type": "string" } },
         "relocationPlaces": {
           "type": "array",
