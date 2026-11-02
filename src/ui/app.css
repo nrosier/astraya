@@ -383,16 +383,6 @@ a.corner-pill.active {
   letter-spacing: 0.02em;
 }
 
-/* The compact "Sign in" button that replaces `.accountpanel-popover` when signed out and
-   collapsed — same shape as `.theme-toggle`'s neighbours, but wide enough for its label. */
-.corner-signin {
-  cursor: pointer;
-}
-
-.corner-signin:hover {
-  background: var(--surface-hover);
-}
-
 /* The static "Demo — no sign-in or sync here" badge that replaces the sign-in
    button entirely in a `demo`-mode build (#73) — same pill shape as
    `.corner-signin`, but not interactive: there's no server for it to act on. */
@@ -1655,6 +1645,218 @@ label.stacked textarea:focus-visible {
 
 .sidebar-footer-meta a:hover {
   color: var(--accent);
+}
+
+/* The profile tile and its popover (#964): the account area of the sidebar. Only existing tokens:
+   --surface (the issue's --bg-surface), --line (--border-subtle), --muted (--text-muted),
+   --radius (--radius-md), --surface-hover (--bg-hover), --shadow-popover, --color-danger. The
+   accent-subtle wash is --accent mixed into the surface, not a new colour. */
+.profile {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  gap: 0.4rem;
+  width: 100%;
+}
+
+.profile-tile,
+.profile-tile-guest {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+  min-height: 2.5rem;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--fg);
+  font: inherit;
+  font-size: 0.875rem;
+  text-align: start;
+  cursor: pointer;
+}
+
+.profile-tile:hover,
+.profile-tile-guest:hover,
+.profile-tile-menu:hover {
+  background: var(--surface-hover);
+}
+
+.profile-tile-avatar {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--accent) 16%, var(--surface));
+  color: var(--accent);
+  font-weight: 650;
+}
+
+.profile-tile-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.profile-tile-role {
+  flex: 0 0 auto;
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--accent) 16%, var(--surface));
+  color: var(--accent);
+  font-size: var(--text-xs);
+  font-weight: 650;
+}
+
+.profile-tile-kebab {
+  margin-left: auto;
+  color: var(--muted);
+}
+
+.profile-tile-guest {
+  justify-content: center;
+  font-weight: 600;
+}
+
+.profile-tile-menu {
+  flex: 0 0 auto;
+  width: 2.5rem;
+  min-height: 2.5rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+/* Floats above the tile (top-start). Min width 240px, but never wider than the narrow sidebar. */
+.profile-popover {
+  position: absolute;
+  bottom: calc(100% + 0.5rem);
+  left: 0;
+  z-index: 26;
+  min-width: min(240px, calc(100vw - 2rem));
+  max-width: min(20rem, calc(100vw - 2rem));
+  padding: 0.5rem 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--fg);
+  font-size: 0.875rem;
+  box-shadow: var(--shadow-popover);
+}
+
+.profile-popover-identity {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.5rem 0.9rem;
+}
+
+.profile-popover-name {
+  overflow-wrap: anywhere;
+  font-weight: 650;
+}
+
+.profile-popover-status {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.profile-popover-separator {
+  height: 1px;
+  margin: 0.35rem 0;
+  background: var(--line);
+}
+
+.profile-popover-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0 0.5rem;
+}
+
+.profile-popover-link,
+.profile-popover-action {
+  display: flex;
+  align-items: center;
+  min-height: 2.25rem;
+  padding: 0 0.6rem;
+  border: none;
+  border-radius: var(--radius);
+  background: none;
+  color: var(--fg);
+  font: inherit;
+  text-align: start;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.profile-popover-link:hover,
+.profile-popover-action:hover {
+  background: var(--surface-hover);
+}
+
+.profile-popover-action.danger {
+  color: var(--color-danger);
+}
+
+.profile-popover-action:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.profile-popover-row {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem 0.6rem;
+  min-height: 2.25rem;
+  padding: 0 0.6rem;
+}
+
+.profile-popover-row-label {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.profile-popover .primitive-choice-group {
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+/* The segments stay on one line inside the popover: each joined label keeps its own text, and the
+   group is a horizontal row (the base `.primitive-choice` rule stacks it). */
+.profile-popover .primitive-choice-group-segmented {
+  flex-direction: row;
+}
+
+.profile-popover .primitive-choice-group .primitive-choice {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+/* Narrow sidebars and the header's wrapped row: the popover opens downward and spans the header
+   width rather than running off the screen edge (see the rail rule below for the wide layout). */
+@media (max-width: 63.99rem) {
+  .profile-popover {
+    top: calc(100% + 0.5rem);
+    bottom: auto;
+    left: 0;
+    width: min(20rem, calc(100vw - 2rem));
+    min-width: min(240px, calc(100vw - 2rem));
+    max-width: min(20rem, calc(100vw - 2rem));
+  }
 }
 
 /* Fixed to the bottom rather than inline: PwaStatus sits outside every screen's own

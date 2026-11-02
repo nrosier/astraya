@@ -11,7 +11,6 @@ import { StatusMessage } from './primitives/StatusMessage.js';
 import { AccountPanel } from './AccountPanel.js';
 import { appMessages } from './App.messages.js';
 import { EphemerisProviderProvider, useEphemerisProvider } from './EphemerisProviderContext.js';
-import { LanguageToggle } from './LanguageToggle.js';
 import { useMessages } from './messages.js';
 import { People } from './People.js';
 import { AdminNav } from './AdminNav.js';
@@ -25,7 +24,6 @@ import { StoreProvider } from './store-context.js';
 import { SyncBadge } from './SyncBadge.js';
 import { useCalculationSettingsMigration } from './use-calculation-settings-migration.js';
 import { SymbolToggle } from './SymbolToggle.js';
-import { ThemeToggle } from './ThemeToggle.js';
 import { SectionNav } from './SectionNav.js';
 import { WorkspaceShell } from './WorkspaceShell.js';
 import type { Route } from './route.js';
@@ -335,22 +333,15 @@ function AppShell(): React.JSX.Element {
                   {engineStatus !== 'ready' && <p className="status app-header-status">{engineStatus}</p>}
                 </div>
                 <AppNav route={parsed} />
-                {/* The utilities container (#882): the rail's foot at >=64rem, the header's own row below it. */}
+                {/* The utilities container (#882), now with the profile tile (#964): the sync bar and the
+                    account tile sit at the rail's foot, and the tile's popover holds Preferences, Admin for
+                    administrators, the language and theme segments and sign-out. */}
                 <div className="app-header-end">
                   <SyncBadge />
                   <AccountPanel />
-                  <a
-                    className={parsed.kind === 'preferences' ? 'corner-pill active' : 'corner-pill'}
-                    href="#/preferences"
-                    aria-current={parsed.kind === 'preferences' ? 'page' : undefined}
-                  >
-                    {t.preferencesLinkLabel}
-                  </a>
-                  <LanguageToggle />
                   <SymbolToggle />
-                  <ThemeToggle />
                 </div>
-                {/* The version, About & Licence and the update notice sit at the rail's foot (previously a page footer). */}
+                {/* The version, About & Licence and the update notice sit at the rail's foot, below the tile. */}
                 <SidebarFooter />
               </header>
             }
