@@ -71,7 +71,7 @@ test.describe('with the shared people (#799)', () => {
     await page.getByRole('link', { name: 'Birth record', exact: true }).click();
     // The replace flow lives in its own card, directly below the export card (#896).
     const replace = page.locator('section.birth-record-card--replace');
-    await expect(replace.getByRole('heading', { name: 'Replace data' })).toBeVisible();
+    await expect(replace.getByRole('heading', { name: 'Import' })).toBeVisible();
     await replace.locator('input[type="file"]').setInputFiles(aafPath);
 
     // Nothing is saved before the reader confirms: the preview names each change.
