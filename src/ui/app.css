@@ -2018,6 +2018,8 @@ label.stacked textarea:focus-visible {
 
 .data-table th {
   background: color-mix(in oklab, var(--surface) 70%, transparent);
+  color: var(--muted);
+  font-size: var(--text-xs);
 }
 
 .data-table th[data-align='end'],
