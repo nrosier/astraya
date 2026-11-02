@@ -1019,12 +1019,14 @@ footer {
   gap: var(--space-3);
 }
 
-/* The title and its save-status dot sit on one line; the dot is a small coloured circle with the status also in sr-only text (#896). */
+/* The title and its save-status dot sit on one line; the dot is a small coloured circle with the status also in sr-only text (#896).
+   The basis is 0 so the title takes the row's free space rather than its max-content width: with the wrapped action group
+   (#976) beside it, an auto basis pushed the group onto a second row at 390px and took Save out of line with the title. */
 .page-header-title {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  flex: 1 1 auto;
+  flex: 1 1 0;
   min-width: 0;
 }
 
