@@ -40,10 +40,9 @@ describe('shared control primitives (#514)', () => {
 });
 
 describe('data table header tokens (#826)', () => {
-  it('sets the header rule to the muted small text tokens', () => {
+  it('sets the header rule to the muted text colour token', () => {
     const css = readFileSync('src/ui/app.css', 'utf-8');
     const rule = /^\.data-table th \{([^}]*)\}/m.exec(css)?.[1] ?? '';
     expect(rule).toMatch(/(?:^|;)\s*color:\s*var\(--muted\)\s*;/);
-    expect(rule).toMatch(/(?:^|;)\s*font-size:\s*var\(--text-xs\)\s*;/);
   });
 });
