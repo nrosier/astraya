@@ -10,6 +10,7 @@ import { describe, expect, it } from 'vitest';
 import { NoteForks } from '../src/ui/NoteForks.js';
 import {
   clearNoteJournalsForDb,
+  consultationDraftScope,
   clearNoteJournalsForPerson,
   isRedundantRecovery,
   noteJournalKey,
@@ -40,7 +41,12 @@ function memoryStorage(): Storage {
 
 describe('journal cleared on purge', () => {
   it('names the Birth Record and every Consultation note of the person', () => {
-    expect(personNoteScopes('p-1', ['r-a', 'r-b'])).toEqual(['birth/p-1', 'consultation/r-a', 'consultation/r-b']);
+    expect(personNoteScopes('p-1', ['r-a', 'r-b'])).toEqual([
+      'birth/p-1',
+      'consultation-draft/p-1',
+      'consultation/r-a',
+      'consultation/r-b',
+    ]);
   });
 
   it('removes the purged person`s pending text and leaves other people alone', () => {
@@ -52,6 +58,27 @@ describe('journal cleared on purge', () => {
     expect(readNoteJournal(storage, 'db', 'birth/p-1')).toBeUndefined();
     expect(readNoteJournal(storage, 'db', 'consultation/r-a')).toBeUndefined();
     expect(readNoteJournal(storage, 'db', 'birth/p-2')).toBe('someone else');
+  });
+});
+
+describe('new-note draft journal (#919)', () => {
+  it('uses one scope per person, so a draft typed before a reload is found again', () => {
+    const storage = memoryStorage();
+    // First visit: the draft is typed and the tab is closed before the save lands.
+    writeNoteJournal(storage, 'db', consultationDraftScope('p-1'), 'typed into the new-note field');
+    // Next visit mounts a new field with a new draft note id, but the same scope.
+    expect(consultationDraftScope('p-1')).toBe(consultationDraftScope('p-1'));
+    expect(readNoteJournal(storage, 'db', consultationDraftScope('p-1'))).toBe('typed into the new-note field');
+    expect(readNoteJournal(storage, 'db', consultationDraftScope('p-2'))).toBeUndefined();
+  });
+
+  it('is cleared when the person is purged, and another person`s draft is kept', () => {
+    const storage = memoryStorage();
+    writeNoteJournal(storage, 'db', consultationDraftScope('p-1'), 'secret draft');
+    writeNoteJournal(storage, 'db', consultationDraftScope('p-2'), 'someone else');
+    clearNoteJournalsForPerson(storage, 'db', 'p-1', []);
+    expect(readNoteJournal(storage, 'db', consultationDraftScope('p-1'))).toBeUndefined();
+    expect(readNoteJournal(storage, 'db', consultationDraftScope('p-2'))).toBe('someone else');
   });
 });
 
