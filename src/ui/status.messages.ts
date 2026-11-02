@@ -30,6 +30,10 @@ const en = {
   quarantinedDetail: (changes: string) =>
     `${changes} could not sync because this device's clock was off when they were made. They are still saved here, but will not be retried — export a copy to keep them.`,
 
+  quotaLabel: 'Storage full',
+  quotaDetail: (changes: string) =>
+    `This account has reached its storage limit on the server, so ${changes} cannot be sent. Nothing has been lost — every change is saved on this device. Export a copy to keep them.`,
+
   localOnly: 'Local only',
   localOnlyEvictableDetail:
     'This device holds the only copy of your data, and the browser has not promised to keep it. Export a copy, or sign in to sync.',
@@ -73,6 +77,10 @@ const nl: typeof en = {
   quarantinedLabel: (n: string) => `${n} synchroniseert niet`,
   quarantinedDetail: (changes: string) =>
     `${changes} konden niet synchroniseren omdat de klok van dit apparaat verkeerd stond toen ze werden gemaakt. Ze zijn hier nog wel opgeslagen, maar worden niet opnieuw geprobeerd — exporteer een kopie om ze te behouden.`,
+
+  quotaLabel: 'Opslag vol',
+  quotaDetail: (changes: string) =>
+    `Dit account heeft de opslaglimiet op de server bereikt, daarom kunnen ${changes} niet worden verzonden. Er is niets verloren gegaan — elke wijziging is opgeslagen op dit apparaat. Exporteer een kopie om ze te behouden.`,
 
   localOnly: 'Alleen lokaal',
   localOnlyEvictableDetail:
