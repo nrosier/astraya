@@ -98,12 +98,20 @@ const KNOWN_ENTITIES: readonly string[] = ['person', 'chart', BIRTH_NOTE_ENTITY,
 /**
  * Apply records to a register map.
  *
+ * `known` is the entity-kind set this fold is willing to materialise. It defaults to this build's
+ * set, and exists so a snapshot written by an older build (which knew fewer kinds) can be
+ * reproduced exactly in tests. Records of other kinds are skipped and counted, not folded.
+ *
  * Records may arrive in any order and may repeat: the comparison is against the stored
  * timestamp, not against arrival, so applying the same batch twice changes nothing and
  * applying a batch out of order gives the same result as applying it in order. Both are
  * relied on by sync and by resuming from a snapshot.
  */
-export function applyRecords(registers: Registers, records: readonly unknown[]): Applied {
+export function applyRecords(
+  registers: Registers,
+  records: readonly unknown[],
+  known: readonly string[] = KNOWN_ENTITIES,
+): Applied {
   // Mutable working copies, copied lazily per entity so untouched branches keep their
   // existing objects and an unchanged snapshot stays cheap to write back.
   const next: Record<string, Record<string, Record<string, Register>>> = {};
@@ -126,7 +134,7 @@ export function applyRecords(registers: Registers, records: readonly unknown[]):
       continue;
     }
     const { entity, entityId, field, value } = decoded.body;
-    if (!KNOWN_ENTITIES.includes(entity)) {
+    if (!known.includes(entity)) {
       unknownEntity += 1;
       continue;
     }
@@ -304,10 +312,21 @@ export interface Snapshot {
   readonly upTo?: Hlc;
   /** How many records at or below `upTo` were folded in. */
   readonly applied: number;
+  /**
+   * The entity kinds the building build folded. A snapshot that skipped a kind (an older build
+   * that did not know `birthNote`, say) holds no registers for it, and the count cannot reveal
+   * that: the skipped records are still counted in `applied`. So resuming trusts a snapshot only
+   * when this set equals the resuming build's set. Absent on snapshots written before this stamp
+   * existed, which are therefore rebuilt once on upgrade.
+   */
+  readonly entities?: readonly string[];
 }
 
 /**
  * Build a snapshot from registers and the log they were folded from.
+ *
+ * `known` must be the entity kinds used to fold `registers`; it is stamped onto the snapshot so
+ * that a build knowing a different set will not resume from it (see `Snapshot.entities`).
  *
  * Both numbers come from the same call on purpose. Passing the count separately invites
  * the caller to use the log's own length, which is wrong whenever the newest record is
@@ -315,7 +334,12 @@ export interface Snapshot {
  * record, the counts would disagree at every startup, and the snapshot would be rebuilt
  * forever while appearing to work.
  */
-export function snapshotOf(registers: Registers, records: readonly OpRecord[]): Snapshot {
+export function snapshotOf(
+  registers: Registers,
+  records: readonly OpRecord[],
+  known: readonly string[] = KNOWN_ENTITIES,
+): Snapshot {
+  const entities = [...known];
   let upTo: Hlc | undefined;
   for (const byId of Object.values(registers)) {
     for (const fields of Object.values(byId)) {
@@ -324,9 +348,14 @@ export function snapshotOf(registers: Registers, records: readonly OpRecord[]): 
       }
     }
   }
-  if (upTo === undefined) return { registers, applied: 0 };
+  if (upTo === undefined) return { registers, applied: 0, entities };
   const applied = records.filter((record) => compareHlc(String(record.hlc), upTo) <= 0).length;
-  return { registers, upTo, applied };
+  return { registers, upTo, applied, entities };
+}
+
+/** Whether a snapshot's stamp names exactly this build's entity kinds. Absent means unknown, so untrusted. */
+function sameKinds(stamp: readonly string[] | undefined, current: readonly string[]): boolean {
+  return stamp?.length === current.length && current.every((kind) => stamp.includes(kind));
 }
 
 export interface Resumed extends Applied {
@@ -345,7 +374,10 @@ export function resume(snapshot: Snapshot, records: readonly OpRecord[]): Resume
   const { upTo } = snapshot;
   const atOrBelow =
     upTo === undefined ? 0 : records.filter((record) => compareHlc(String(record.hlc), upTo) <= 0).length;
-  if (upTo === undefined || atOrBelow !== snapshot.applied) {
+  // The kind check comes first and is not implied by the count. A build that did not know a kind
+  // counts those records as applied, so the counts can match while the registers hold nothing
+  // for that kind (#919: a birthNote skipped by an older build was hidden behind a matching count).
+  if (!sameKinds(snapshot.entities, KNOWN_ENTITIES) || upTo === undefined || atOrBelow !== snapshot.applied) {
     return { ...applyRecords(EMPTY_REGISTERS, records), rebuilt: true };
   }
   const newer = records.filter((record) => compareHlc(String(record.hlc), upTo) > 0);
