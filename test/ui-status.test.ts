@@ -122,6 +122,24 @@ describe('failing sync', () => {
   });
 });
 
+describe('storage quota (#919)', () => {
+  it('says the storage is full, that nothing is lost, and what to do', () => {
+    const sync: SyncState = { kind: 'quota', since: NOW - 5 * MINUTE };
+    const shown = status({ sync, pending: 3 });
+    expect(shown.tone).toBe('warn');
+    expect(shown.label).toBe('Storage full');
+    expect(shown.detail).toContain('Nothing has been lost');
+    expect(shown.detail).toContain('3 changes');
+    expect(shown.action?.text).toBe('Export a copy');
+  });
+
+  it('is not hidden behind a "synced" tick while changes are unsent', () => {
+    const sync: SyncState = { kind: 'quota', since: NOW - MINUTE };
+    const shown = status({ sync, pending: 1 });
+    expect(shown.label).not.toBe('Synced');
+  });
+});
+
 describe('quarantined ops (#312)', () => {
   it('warns even though nothing is pending and the last sync succeeded', () => {
     // The one moment this is true is exactly the moment `pending` reads 0 — the branch below

@@ -12,8 +12,8 @@
 /**
  * @module sync/engine
  * @purpose Implements the client-side sync engine: a debounced/polled push-pull loop that exchanges this device's op-log against the opaque relay in `server/ops/routes.ts`, running only while signed in.
- * @conventions Every step is safe to interrupt at any point (#103) — the sync cursor only advances after the network call that made progress has already succeeded; errors are classified into a `SyncErrorKind` (`offline`/`unauthorized`/`server`/`malformed`/`rejected`) so the UI status can distinguish a blip from a bug; failed runs retry with exponential backoff plus jitter (#106); only this device's own outgoing records are ever pushed, filtering out peer records just pulled and folded in (#324); a row that fails to decode during pull is skipped rather than failing the whole page, so one corrupt record can't wedge every record behind it (#320).
- * @exports SyncEngine, SyncEngineOptions, SyncErrorKind, SyncError, pushRecords, createSyncEngine
+ * @conventions Every step is safe to interrupt at any point (#103) — the sync cursor only advances after the network call that made progress has already succeeded; errors are classified into a `SyncErrorKind` (`offline`/`unauthorized`/`server`/`malformed`/`rejected`/`quota`) so the UI status can distinguish a blip from a bug; a full server quota (409, #919) stops automatic retries until the user acts, and push batches are capped by encoded bytes (halving on a 413) so a large note cannot wedge sync against the server's body limit (#919); failed runs retry with exponential backoff plus jitter (#106); only this device's own outgoing records are ever pushed, filtering out peer records just pulled and folded in (#324); a row that fails to decode during pull is skipped rather than failing the whole page, so one corrupt record can't wedge every record behind it (#320).
+ * @exports SyncEngine, SyncEngineOptions, SyncErrorKind, SyncError, PUSH_BATCH_MAX_BYTES, pushRecords, createSyncEngine
  */
 import { isHlc, isNodeId, type Hlc, type NodeId } from '../store/hlc.js';
 import type { OpRecord } from '../store/ops.js';
@@ -23,6 +23,15 @@ import { trace } from '../trace.js';
 
 /** Matches the server's own `MAX_BATCH_SIZE`/`MAX_PAGE_SIZE` (`server/ops/routes.ts`). */
 const MAX_PAGE_SIZE = 500;
+
+/**
+ * Cap on the encoded JSON bytes of the ops in one `POST /api/ops` (#919). The server's body
+ * limit is 1 MiB (`server/index.ts`); this sits a factor of four below it. A single op larger
+ * than the cap is still sent, alone: refusing it would wedge every op queued behind it. A
+ * near-maximum (50,000-character) note revision is about 67 KB base64'd for Latin text and
+ * about 200 KB for CJK text, so a batch of them is split across requests.
+ */
+export const PUSH_BATCH_MAX_BYTES = 256 * 1024;
 
 /** Coalesces a burst of local edits into one push instead of one per keystroke. */
 const PUSH_DEBOUNCE_MS = 1_000;
@@ -68,16 +77,25 @@ export type SyncErrorKind =
   /** 2xx but the body wasn't the shape expected — a protocol mismatch, not a network condition. */
   | 'malformed'
   /** Any other non-2xx (e.g. a batch too large, malformed ops) — a bug in this client, not a blip. */
-  | 'rejected';
+  | 'rejected'
+  /**
+   * The server's per-account op quota is full (409, #919). Retrying the same request fails the
+   * same way until the account changes, so no automatic retry is scheduled. Local ops are
+   * untouched and wait on the device.
+   */
+  | 'quota';
 
 /** Thrown by `request()` below; carries which of #106's distinct failure kinds this was. */
 export class SyncError extends Error {
   readonly kind: SyncErrorKind;
+  /** The HTTP status when the error came from a response; `undefined` otherwise. */
+  readonly status: number | undefined;
 
-  constructor(kind: SyncErrorKind, message: string) {
+  constructor(kind: SyncErrorKind, message: string, status?: number) {
     super(message);
     this.name = 'SyncError';
     this.kind = kind;
+    this.status = status;
   }
 }
 
@@ -133,21 +151,39 @@ function fromWire(row: PullRow): unknown {
 /** Reads a non-2xx response's body for the specific reason, so the status bar says more than a number. */
 async function classifyErrorResponse(response: Response): Promise<SyncError> {
   if (response.status === 401) {
-    return new SyncError('unauthorized', 'Your session has expired. Sign in again to keep syncing.');
+    return new SyncError('unauthorized', 'Your session has expired. Sign in again to keep syncing.', 401);
+  }
+  if (response.status === 409) {
+    // The relay answers 409 only for the per-account op quota (`server/ops/routes.ts`, #919).
+    return new SyncError('quota', 'This account has reached its storage limit on the server.', 409);
+  }
+  if (response.status === 413) {
+    // Kept as its own message: push splits a batch on this status (`push`, #919). Only a single
+    // op the server still refuses ends up here, and then it surfaces as a plain failure.
+    return new SyncError('rejected', 'The server refused a request as too large.', 413);
   }
   if (response.status >= 500) {
-    return new SyncError('server', `The server is having trouble (status ${String(response.status)}).`);
+    return new SyncError(
+      'server',
+      `The server is having trouble (status ${String(response.status)}).`,
+      response.status,
+    );
   }
   let body: unknown;
   try {
     body = await response.json();
   } catch {
-    return new SyncError('malformed', `Request failed with status ${String(response.status)} and no readable error.`);
+    return new SyncError(
+      'malformed',
+      `Request failed with status ${String(response.status)} and no readable error.`,
+      response.status,
+    );
   }
   const error = typeof body === 'object' && body !== null ? (body as Record<string, unknown>).error : undefined;
   return new SyncError(
     'rejected',
     typeof error === 'string' ? error : `Request rejected with status ${String(response.status)}.`,
+    response.status,
   );
 }
 
@@ -167,6 +203,35 @@ interface PushResult {
   readonly seqs: readonly number[];
   /** HLCs the server refused as clock-skewed (#312) — still 2xx, since the rest of the batch went through. */
   readonly skipped: readonly Hlc[];
+}
+
+/** Encoded size of one op on the wire. Measured, not estimated: CJK text is three bytes per character. */
+function encodedBytes(op: OpWire): number {
+  return new TextEncoder().encode(JSON.stringify(op)).byteLength;
+}
+
+interface Batch {
+  readonly ops: readonly OpWire[];
+  readonly bytes: number;
+}
+
+/**
+ * The longest run of `wires` from `start` that fits `budgetBytes` and `MAX_PAGE_SIZE`. Always
+ * takes at least one op, so a single op over the budget is sent alone rather than blocking the
+ * queue (#919).
+ */
+function takeBatch(wires: readonly OpWire[], start: number, budgetBytes: number): Batch {
+  const ops: OpWire[] = [];
+  let bytes = 0;
+  for (let i = start; i < wires.length && ops.length < MAX_PAGE_SIZE; i += 1) {
+    const wire = wires[i];
+    if (wire === undefined) break;
+    const size = encodedBytes(wire);
+    if (ops.length > 0 && bytes + size > budgetBytes) break;
+    ops.push(wire);
+    bytes += size;
+  }
+  return { ops, bytes };
 }
 
 async function postOps(ops: readonly OpWire[]): Promise<PushResult> {
@@ -208,8 +273,11 @@ async function getOps(since: number): Promise<readonly PullRow[]> {
  * per-account store and its own engine exist yet.
  */
 export async function pushRecords(records: readonly OpRecord[]): Promise<void> {
-  for (let start = 0; start < records.length; start += MAX_PAGE_SIZE) {
-    await postOps(records.slice(start, start + MAX_PAGE_SIZE).map(toWire));
+  const wires = records.map(toWire);
+  for (let start = 0; start < wires.length;) {
+    const { ops } = takeBatch(wires, start, PUSH_BATCH_MAX_BYTES);
+    await postOps(ops);
+    start += ops.length;
   }
 }
 
@@ -228,6 +296,11 @@ export async function createSyncEngine(options: SyncEngineOptions): Promise<Sync
   // Drives the backoff below (#106); reset to 0 on any successful run.
   let consecutiveFailures = 0;
   let retryTimer: ReturnType<typeof setTimeout> | undefined;
+  // Push batch cap for this engine. Starts at PUSH_BATCH_MAX_BYTES and only shrinks, when the
+  // server answers 413 to a batch of more than one op (see `push`).
+  let pushBudgetBytes = PUSH_BATCH_MAX_BYTES;
+  // When the quota was first reported full; kept across runs that keep hitting it.
+  let quotaSince: number | undefined;
   // `onUnauthorized` fires once per failure episode, not once per retry — otherwise a caller
   // reacting to it (e.g. re-checking identity) would be invoked on every backoff tick.
   let unauthorizedNotified = false;
@@ -273,7 +346,17 @@ export async function createSyncEngine(options: SyncEngineOptions): Promise<Sync
     clearScheduledRetry();
     const backoff = Math.min(MAX_RETRY_MS, BASE_RETRY_MS * 2 ** (consecutiveFailures - 1));
     const jittered = backoff * (0.5 + Math.random() * 0.5);
-    retryTimer = setTimeout(trigger, jittered);
+    retryTimer = setTimeout(automaticTrigger, jittered);
+  }
+
+  /**
+   * Triggers nobody asked for: the poll, the `online` event, and the backoff timer. Suspended
+   * while the quota is full (#919), since each would only resend a request the server has
+   * already refused. A local edit or "sync now" still goes through `trigger`.
+   */
+  function automaticTrigger(): void {
+    if (status.kind === 'quota') return;
+    trigger();
   }
 
   /**
@@ -330,11 +413,23 @@ export async function createSyncEngine(options: SyncEngineOptions): Promise<Sync
         .map(toWire)
         .filter((op) => !quarantined.has(op.hlc));
       if (outgoing.length === 0) return;
-      const chunk = outgoing.slice(0, MAX_PAGE_SIZE);
-      const { skipped } = await postOps(chunk);
+      const chunk = takeBatch(outgoing, 0, pushBudgetBytes);
+      let skipped: readonly Hlc[];
+      try {
+        ({ skipped } = await postOps(chunk.ops));
+      } catch (error) {
+        // The server's body limit refused this batch (#919). Nothing was accepted, so the cursor
+        // has not moved: halve the batch and resend. Only a single op the server cannot take is
+        // a real failure, and it still surfaces as one.
+        if (error instanceof SyncError && error.status === 413 && chunk.ops.length > 1) {
+          pushBudgetBytes = Math.floor(chunk.bytes / 2);
+          continue;
+        }
+        throw error;
+      }
       // The chunk's own last record, not `store.head()`: a local edit could land mid-push and
       // move the head past what this chunk actually sent.
-      const lastWire = chunk[chunk.length - 1];
+      const lastWire = chunk.ops[chunk.ops.length - 1];
       if (lastWire === undefined) return;
       for (const hlc of skipped) quarantined.add(hlc);
       cursor = {
@@ -343,7 +438,6 @@ export async function createSyncEngine(options: SyncEngineOptions): Promise<Sync
         ...(quarantined.size > 0 ? { quarantined: [...quarantined] } : {}),
       };
       await store.setSyncCursor(cursor);
-      if (chunk.length < MAX_PAGE_SIZE) return;
     }
   }
 
@@ -359,6 +453,7 @@ export async function createSyncEngine(options: SyncEngineOptions): Promise<Sync
       if (!closed) {
         failingSince = undefined;
         consecutiveFailures = 0;
+        quotaSince = undefined;
         unauthorizedNotified = false;
         clearScheduledRetry();
         const stillPending = ownOutgoing().length > 0;
@@ -366,7 +461,17 @@ export async function createSyncEngine(options: SyncEngineOptions): Promise<Sync
         setStatus(stillPending ? { kind: 'syncing' } : { kind: 'synced', at: Date.now() });
       }
     } catch (error) {
-      if (!closed) {
+      if (!closed && error instanceof SyncError && error.kind === 'quota') {
+        // Not a failure to retry: the server refuses writes until the account changes, so no
+        // backoff is scheduled and the status says what is needed (#919). Local ops stay in
+        // the log and are sent on the next user-initiated sync.
+        failingSince = undefined;
+        consecutiveFailures = 0;
+        clearScheduledRetry();
+        quotaSince ??= Date.now();
+        setStatus({ kind: 'quota', since: quotaSince });
+      } else if (!closed) {
+        quotaSince = undefined;
         failingSince ??= Date.now();
         consecutiveFailures += 1;
         setStatus({
@@ -407,8 +512,8 @@ export async function createSyncEngine(options: SyncEngineOptions): Promise<Sync
   }
 
   const unsubscribeStore = store.subscribe(debouncedTrigger);
-  const interval = setInterval(trigger, POLL_INTERVAL_MS);
-  window.addEventListener('online', trigger);
+  const interval = setInterval(automaticTrigger, POLL_INTERVAL_MS);
+  window.addEventListener('online', automaticTrigger);
 
   trigger();
 
@@ -430,7 +535,7 @@ export async function createSyncEngine(options: SyncEngineOptions): Promise<Sync
       if (debounceTimer !== undefined) clearTimeout(debounceTimer);
       clearScheduledRetry();
       clearInterval(interval);
-      window.removeEventListener('online', trigger);
+      window.removeEventListener('online', automaticTrigger);
       unsubscribeStore();
       listeners.clear();
     },

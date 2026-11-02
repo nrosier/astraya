@@ -32,7 +32,13 @@ export type SyncState =
   | { readonly kind: 'off' }
   | { readonly kind: 'syncing' }
   | { readonly kind: 'synced'; readonly at: number }
-  | { readonly kind: 'failing'; readonly since: number; readonly message: string };
+  | { readonly kind: 'failing'; readonly since: number; readonly message: string }
+  /**
+   * The server's storage quota for this account is full (#919). Not retried automatically: the
+   * server will keep refusing until the account changes, so the status says so instead of
+   * showing a retry countdown.
+   */
+  | { readonly kind: 'quota'; readonly since: number };
 
 export interface StatusInput {
   readonly online: boolean;
@@ -98,6 +104,17 @@ export function describeStatus(input: StatusInput, t: typeof statusMessages.en):
       tone: 'warn',
       label: t.quarantinedLabel(String(quarantined)),
       detail: t.quarantinedDetail(changes(quarantined, t)),
+      action: { href: '#/about', text: t.exportACopy },
+    };
+  }
+
+  if (sync.kind === 'quota') {
+    // Always a warning: nothing retries on its own, so waiting will not clear it. The data is
+    // still here, and the user's only remedy is outside this app (export, or freeing the quota).
+    return {
+      tone: 'warn',
+      label: t.quotaLabel,
+      detail: t.quotaDetail(changes(pending, t)),
       action: { href: '#/about', text: t.exportACopy },
     };
   }

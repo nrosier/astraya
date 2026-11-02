@@ -20,6 +20,7 @@ import { build } from '../server/index.ts';
 import { createSyncEngine } from '../src/sync/engine.ts';
 import { openStore } from '../src/store/store.ts';
 import { openDatabase, allRecords } from '../src/store/db.ts';
+import { birthNoteRevision } from '../src/store/notes.ts';
 import { createClock, randomNodeId, tick } from '../src/store/hlc.ts';
 
 const BOOTSTRAP_TOKEN = 'test-bootstrap-token';
@@ -603,6 +604,159 @@ describe('local writes are never blocked by a failing sync (#106)', () => {
       }, WAIT);
       await store.mutate([{ entity: 'person', entityId: 'p1', field: 'displayName', value: 'Ada' }]);
       expect(store.state.people.get('p1')?.displayName).toBe('Ada');
+    } finally {
+      engine.close();
+      store.close();
+    }
+  });
+});
+
+describe('storage quota (#919)', () => {
+  it('a 409 yields the quota state, schedules no retry, and keeps the local ops', async () => {
+    const postAttempts: number[] = [];
+    globalThis.fetch = async (_input, init) => {
+      if (init?.method === 'POST') {
+        postAttempts.push(Date.now());
+        return new Response(JSON.stringify({ error: 'Storage quota exceeded (200000 ops).' }), { status: 409 });
+      }
+      return new Response(JSON.stringify({ ops: [] }), { status: 200 });
+    };
+    const store = await openStore({ name: freshDbName() });
+    await store.mutate([{ entity: 'person', entityId: 'p1', field: 'displayName', value: 'Ada' }]);
+    const engine = await createSyncEngine({ store });
+    try {
+      await vi.waitFor(() => {
+        expect(engine.status.kind).toBe('quota');
+      }, WAIT);
+      // The first backoff would fire within 1s. Waiting well past it shows no retry was scheduled.
+      const attemptsAtQuota = postAttempts.length;
+      await new Promise((resolve) => setTimeout(resolve, 2_500));
+      expect(postAttempts).toHaveLength(attemptsAtQuota);
+      // The local op is still in the log and still pending: nothing was discarded.
+      expect(engine.pending()).toBe(1);
+      expect(store.outgoing()).toHaveLength(1);
+    } finally {
+      engine.close();
+      store.close();
+    }
+  }, 10_000);
+
+  it('a user-initiated sync tries again after a quota refusal', async () => {
+    let quotaFull = true;
+    globalThis.fetch = async (_input, init) => {
+      if (init?.method === 'POST') {
+        if (quotaFull) return new Response(JSON.stringify({ error: 'quota' }), { status: 409 });
+        return new Response(JSON.stringify({ seqs: [1], skipped: [] }), { status: 200 });
+      }
+      return new Response(JSON.stringify({ ops: [] }), { status: 200 });
+    };
+    const store = await openStore({ name: freshDbName() });
+    await store.mutate([{ entity: 'person', entityId: 'p1', field: 'displayName', value: 'Ada' }]);
+    const engine = await createSyncEngine({ store });
+    try {
+      await vi.waitFor(() => {
+        expect(engine.status.kind).toBe('quota');
+      }, WAIT);
+      quotaFull = false;
+      engine.syncNow();
+      await vi.waitFor(() => {
+        expect(engine.status.kind).toBe('synced');
+      }, WAIT);
+      expect(engine.pending()).toBe(0);
+    } finally {
+      engine.close();
+      store.close();
+    }
+  }, 10_000);
+});
+
+describe('push batch size (#919)', () => {
+  it('splits 16 near-maximum revisions across several requests, and the server accepts all of them', async () => {
+    globalThis.fetch = await loginAs('alice', 'correct-horse-battery');
+    const store = await openStore({ name: freshDbName() });
+    // A 50,000-character CJK revision is about 150 KB of UTF-8 before base64, so 16 of them
+    // cannot share one request under the per-batch byte cap.
+    const text = '漢'.repeat(50_000);
+    let parents: string[] = [];
+    for (let i = 0; i < 16; i += 1) {
+      const revisionId = `r-${String(i)}`;
+      await store.mutate([birthNoteRevision('p1', revisionId, text, parents)]);
+      parents = [revisionId];
+    }
+    const pushBodySizes: number[] = [];
+    const loggedIn = globalThis.fetch;
+    globalThis.fetch = async (input, init) => {
+      if (init?.method === 'POST' && typeof init.body === 'string') pushBodySizes.push(init.body.length);
+      return loggedIn(input, init);
+    };
+    const engine = await createSyncEngine({ store });
+    try {
+      await vi.waitFor(
+        () => {
+          expect(engine.status.kind).toBe('synced');
+        },
+        { timeout: 20_000 },
+      );
+      expect(engine.pending()).toBe(0);
+      expect(pushBodySizes.length).toBeGreaterThan(1);
+      // Every request stays under the server's 1 MiB body limit (server/index.ts).
+      for (const size of pushBodySizes) expect(size).toBeLessThan(1024 * 1024);
+
+      const pull = await loggedIn(new URL('/api/ops', baseUrl));
+      const { ops } = (await pull.json()) as { ops: unknown[] };
+      expect(ops).toHaveLength(16);
+    } finally {
+      engine.close();
+      store.close();
+    }
+  }, 30_000);
+
+  it('a 413 for a batch of several ops is split and resent, not treated as a permanent failure', async () => {
+    const loggedIn = await loginAs('alice', 'correct-horse-battery');
+    const store = await openStore({ name: freshDbName() });
+    await store.mutate([
+      { entity: 'person', entityId: 'p1', field: 'displayName', value: 'Ada' },
+      { entity: 'person', entityId: 'p2', field: 'displayName', value: 'Grace' },
+    ]);
+    let rejectedBatch = false;
+    globalThis.fetch = async (input, init) => {
+      if (init?.method === 'POST' && !rejectedBatch) {
+        const body: unknown = typeof init.body === 'string' ? JSON.parse(init.body) : undefined;
+        const ops = typeof body === 'object' && body !== null ? (body as { ops?: unknown[] }).ops : undefined;
+        if (ops === undefined) throw new Error('expected a JSON push body');
+        if (ops.length > 1) {
+          rejectedBatch = true;
+          return new Response(JSON.stringify({ error: 'Request body is too large' }), { status: 413 });
+        }
+      }
+      return loggedIn(input, init);
+    };
+    const engine = await createSyncEngine({ store });
+    try {
+      await vi.waitFor(() => {
+        expect(engine.status.kind).toBe('synced');
+      }, WAIT);
+      expect(rejectedBatch).toBe(true);
+      expect(engine.pending()).toBe(0);
+    } finally {
+      engine.close();
+      store.close();
+    }
+  });
+
+  it('a 413 for one op the server cannot take is kept pending and reported as failing', async () => {
+    globalThis.fetch = async (_input, init) => {
+      if (init?.method === 'POST') return new Response(JSON.stringify({ error: 'too large' }), { status: 413 });
+      return new Response(JSON.stringify({ ops: [] }), { status: 200 });
+    };
+    const store = await openStore({ name: freshDbName() });
+    await store.mutate([{ entity: 'person', entityId: 'p1', field: 'displayName', value: 'Ada' }]);
+    const engine = await createSyncEngine({ store });
+    try {
+      await vi.waitFor(() => {
+        expect(engine.status.kind).toBe('failing');
+      }, WAIT);
+      expect(engine.pending()).toBe(1);
     } finally {
       engine.close();
       store.close();

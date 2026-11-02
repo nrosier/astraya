@@ -91,6 +91,15 @@ export interface BuildOptions {
 
 export async function build(options: BuildOptions = {}) {
   const app = Fastify({
+    // Set explicitly, not left to Fastify's default (#919). A single op is one base64 payload
+    // inside the JSON body: a near-maximum (50,000-character) note revision is about 67 KB for
+    // Latin text and about 200 KB for CJK text. 1 MiB leaves room for one such op plus JSON
+    // overhead, with headroom for escaped control characters. The client keeps each push batch
+    // under `PUSH_BATCH_MAX_BYTES` (src/sync/engine.ts), so many near-maximum ops are split into
+    // several requests rather than refused with 413. The default is kept on purpose: the admin
+    // corpus-candidate import takes up to 5,000 entries in one body, and a smaller limit would
+    // break it.
+    bodyLimit: 1024 * 1024,
     logger: {
       level: process.env.LOG_LEVEL ?? 'info',
       // The default `req` serializer logs the full URL, including a query string —
