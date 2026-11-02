@@ -130,6 +130,7 @@ export function SyncBadge(): React.JSX.Element {
         if (open && event.key === 'Escape') close();
       }}
     >
+      <span className="syncbadge-dot" data-state={sync.kind === 'synced' ? 'synced' : 'local'} aria-hidden="true" />
       <span className="syncbadge-text">
         <button
           ref={triggerRef}
@@ -156,7 +157,7 @@ export function SyncBadge(): React.JSX.Element {
             engine.syncNow();
           }}
         >
-          ⟳
+          ↻
         </button>
       )}
       {open && (

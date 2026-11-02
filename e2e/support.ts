@@ -83,6 +83,47 @@ export async function signIn(page: Page, username: string, password: string): Pr
   await expect(signedIn).toBeVisible();
 }
 
+/**
+ * Switches the interface language through the profile popover's segmented `[ EN | NL ]` control
+ * (#964). The control applies at once and leaves the popover open, so the menu is closed after.
+ */
+export async function setLanguage(page: Page, code: 'EN' | 'NL'): Promise<void> {
+  await page
+    .getByRole('banner')
+    .locator('[aria-haspopup="true"].profile-tile, [aria-haspopup="true"].profile-tile-menu')
+    .first()
+    .click();
+  await page
+    .locator('.profile-popover')
+    .getByRole('radiogroup', { name: /^(Language|Taal)$/ })
+    .getByRole('radio', { name: code, exact: true })
+    .check();
+  await page.keyboard.press('Escape');
+}
+
+/** Opens Preferences from the sidebar's profile popover (#964): open the account menu, then choose Preferences. */
+export async function openPreferences(page: Page): Promise<void> {
+  await page
+    .getByRole('banner')
+    .locator('[aria-haspopup="true"].profile-tile, [aria-haspopup="true"].profile-tile-menu')
+    .first()
+    .click();
+  await page.locator('.profile-popover').getByRole('link', { name: 'Preferences', exact: true }).click();
+}
+
+/**
+ * Opens the Admin Panel from the sidebar's profile popover (#964): open the account menu on the
+ * profile tile, then choose Admin Panel. Only an administrative role has the link.
+ */
+export async function openAdminPanel(page: Page): Promise<void> {
+  const menu = page
+    .getByRole('banner')
+    .locator('[aria-haspopup="true"].profile-tile, [aria-haspopup="true"].profile-tile-menu')
+    .first();
+  await menu.click();
+  await page.locator('.profile-popover').getByRole('link', { name: 'Admin Panel', exact: true }).click();
+}
+
 /** Opens a tool (#882): the sidebar's one Tools entry opens the first tool, and the others are tabs on the page. */
 export async function openTool(page: Page, name: string): Promise<void> {
   await page.getByRole('banner').getByRole('link', { name: 'Tools', exact: true }).click();

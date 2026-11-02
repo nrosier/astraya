@@ -7,6 +7,7 @@
  * stays in view while a long page scrolls, offers a skip link as the first thing a keyboard
  * reaches, and is hidden when printing.
  */
+import { randomBytes } from 'node:crypto';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -16,7 +17,7 @@ import type { BrowserContext, Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
 import { EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
-import { gotoAndSettle, openNatalChart } from './support.ts';
+import { gotoAndSettle, openNatalChart, signIn } from './support.ts';
 
 // Phone (below 64rem: the utilities keep the header's own wrapped row), a laptop and an ultra-wide
 // monitor (the rail stays 16rem wide however wide the screen is).
@@ -52,8 +53,11 @@ test('one header holds the name, account, language and theme, and the old fixed 
   await expect(header).toBeVisible();
   await expect(header.getByRole('link', { name: 'Astraya, back to the people list' })).toBeVisible();
   await expect(header.getByRole('button', { name: 'Sign in', exact: true })).toBeVisible();
-  await expect(header.locator('.language-toggle')).toBeVisible();
-  await expect(header.locator('.theme-toggle:not(.language-toggle)')).toBeVisible();
+  // The sync dot is grey while the data is only on this device (#964); the manual sync button is ↻.
+  await expect(header.locator('.syncbadge-dot')).toHaveAttribute('data-state', 'local');
+  // Language and theme are now segmented controls in the profile popover (#964), not footer pills.
+  await expect(header.locator('.language-toggle')).toHaveCount(0);
+  await expect(header.locator('.theme-toggle')).toHaveCount(0);
   await expect(page.locator('.locale-bar')).toHaveCount(0);
   await expect(page.locator('.account-bar')).toHaveCount(0);
   // It is a real page-flow element at the leading edge (the left rail at >=64rem), not an overlay
@@ -75,14 +79,11 @@ for (const { width, height, rail } of RAIL_FOOT_VIEWPORTS) {
     const footBox = await foot.boundingBox();
     if (headerBox === null || footBox === null) throw new Error('not laid out');
 
-    // All six utilities are in the one container.
+    // The utilities in the one container: the sync bar, the account tile (a guest's Sign in) and the symbol toggle (#964).
     for (const control of [
       foot.locator('.syncbadge'),
       foot.getByRole('button', { name: 'Sign in', exact: true }),
-      foot.getByRole('link', { name: 'Preferences', exact: true }),
-      foot.locator('.language-toggle'),
       foot.locator('.symbol-toggle'),
-      foot.locator('.theme-toggle:not(.language-toggle)'),
     ]) {
       await expect(control).toBeVisible();
       const box = await control.boundingBox();
@@ -163,8 +164,7 @@ test('on a phone-width screen the header and the sign-in dialog stay inside the 
   const header = page.getByRole('banner');
   for (const control of [
     header.getByRole('button', { name: 'Sign in', exact: true }),
-    header.locator('.language-toggle'),
-    header.locator('.theme-toggle:not(.language-toggle)'),
+    header.locator('.symbol-toggle'),
   ]) {
     await expect(control).toBeVisible();
     const box = await control.boundingBox();
@@ -225,10 +225,68 @@ test.describe('with the shared people (#799)', () => {
     await expect(header).toBeInViewport({ ratio: 0.99 });
     expect((await header.boundingBox())?.y).toBeGreaterThan(-1);
 
-    // And it is clickable down there: the theme toggle works without scrolling back up.
-    const themeToggle = header.locator('.theme-toggle:not(.language-toggle)');
-    const before = await page.locator('html').getAttribute('data-theme');
-    await themeToggle.click();
-    await expect(page.locator('html')).not.toHaveAttribute('data-theme', before ?? '');
+    // And it is clickable down there: the profile popover's theme control works without scrolling back up (#964).
+    const menu = header
+      .locator('[aria-haspopup="true"].profile-tile, [aria-haspopup="true"].profile-tile-menu')
+      .first();
+    await menu.click();
+    const dark = page.locator('.profile-popover').getByRole('radio', { name: /Dark$/ });
+    await dark.check();
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    await page.keyboard.press('Escape');
+  });
+});
+
+// The sync dot turns green (#964) and the ↻ button runs a manual sync only once a signed-in
+// session starts the real sync engine. That needs its own server with a bootstrapped admin, so
+// it stays apart from the signed-out server above.
+test.describe('signed in: the sync dot and the manual sync button (#964)', () => {
+  const USERNAME = 'header-sync-user';
+  const PASSWORD = 'correct-horse-battery-header';
+  const BOOTSTRAP = 'e2e-header-bootstrap-token';
+  let signedDir: string;
+  let signedApp: FastifyInstance;
+  let signedUrl: string;
+
+  test.beforeAll(async () => {
+    signedDir = mkdtempSync(join(tmpdir(), 'astraya-e2e-header-sync-'));
+    process.env.ASTRAYA_BOOTSTRAP_TOKEN = BOOTSTRAP;
+    process.env.ASTRAYA_ENCRYPTION_KEY = randomBytes(32).toString('base64');
+    signedApp = await build({ dbPath: join(signedDir, 'astraya.db') });
+    await signedApp.listen({ port: 0, host: '127.0.0.1' });
+    const address = signedApp.server.address();
+    if (address === null || typeof address === 'string') throw new Error('server did not bind to a port');
+    signedUrl = `http://127.0.0.1:${String(address.port)}`;
+    const response = await fetch(new URL('/api/setup', signedUrl), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: BOOTSTRAP, username: USERNAME, password: PASSWORD }),
+    });
+    if (!response.ok) throw new Error(`bootstrap failed with status ${String(response.status)}`);
+  });
+
+  test.afterAll(async () => {
+    await signedApp.close();
+    rmSync(signedDir, { recursive: true, force: true });
+    delete process.env.ASTRAYA_BOOTSTRAP_TOKEN;
+    delete process.env.ASTRAYA_ENCRYPTION_KEY;
+  });
+
+  test('a signed-in device with synced data shows the green dot, and the sync button runs a sync', async ({ page }) => {
+    await gotoAndSettle(page, `${signedUrl}/#/people`);
+    await signIn(page, USERNAME, PASSWORD);
+    const header = page.getByRole('banner');
+    await expect(page.getByText('Synced', { exact: true }).first()).toBeVisible({ timeout: 20_000 });
+
+    // Green (synced), not grey (local), once the engine has reached its synced state.
+    await expect(header.locator('.syncbadge-dot')).toHaveAttribute('data-state', 'synced');
+
+    // The ↻ button is present and enabled, and clicking it sends a real request to the relay.
+    const syncButton = header.getByRole('button', { name: 'Sync now', exact: true });
+    await expect(syncButton).toBeEnabled();
+    const opsRequest = page.waitForResponse((response) => response.url().includes('/api/ops'));
+    await syncButton.click();
+    expect((await opsRequest).ok()).toBe(true);
+    await expect(header.locator('.syncbadge-dot')).toHaveAttribute('data-state', 'synced');
   });
 });

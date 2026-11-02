@@ -20,7 +20,6 @@ const en = {
 
   skipToContent: 'Skip to main content',
   homeLinkLabel: 'Astraya, back to the people list',
-  preferencesLinkLabel: 'Preferences',
 };
 
 const nl: typeof en = {
@@ -36,7 +35,6 @@ const nl: typeof en = {
 
   skipToContent: 'Ga naar de hoofdinhoud',
   homeLinkLabel: 'Astraya, terug naar de lijst met mensen',
-  preferencesLinkLabel: 'Voorkeuren',
 };
 
 export const appMessages = { en, nl };

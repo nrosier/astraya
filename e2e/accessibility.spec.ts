@@ -16,7 +16,7 @@ import type { BrowserContext, Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
 import { EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
-import { createPerson, gotoAndSettle, openChart, openNatalChart, signIn } from './support.ts';
+import { createPerson, gotoAndSettle, openAdminPanel, openChart, openNatalChart, signIn } from './support.ts';
 
 const BOOTSTRAP_TOKEN = 'e2e-a11y-bootstrap-token';
 const ADMIN_USERNAME = 'admin';
@@ -132,7 +132,7 @@ test('the AI-Customized Generate button renders as a genuinely disabled control 
 test('the admin screen has no automatically detectable accessibility violations (#357)', async ({ page }) => {
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   await signIn(page, ADMIN_USERNAME, ADMIN_PASSWORD);
-  await page.getByRole('button', { name: 'Admin', exact: true }).click();
+  await openAdminPanel(page);
   await expect(page.getByRole('heading', { name: 'Admin' })).toBeVisible();
 
   const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
@@ -144,7 +144,7 @@ test('the corpus-overrides admin screen has no automatically detectable accessib
 }) => {
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   await signIn(page, ADMIN_USERNAME, ADMIN_PASSWORD);
-  await page.getByRole('button', { name: 'Admin', exact: true }).click();
+  await openAdminPanel(page);
   await page.getByRole('link', { name: 'Corpus overrides', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Corpus corrections' })).toBeVisible();
 
@@ -157,7 +157,7 @@ test('the corpus-overrides table wraps its text instead of scrolling sideways, a
 }) => {
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   await signIn(page, ADMIN_USERNAME, ADMIN_PASSWORD);
-  await page.getByRole('button', { name: 'Admin', exact: true }).click();
+  await openAdminPanel(page);
   await page.getByRole('link', { name: 'Corpus overrides', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Corpus corrections' })).toBeVisible();
   // Entries are cards, not a table (#816 D-816c): the card list must fit the page at each width, with no sideways scroll.

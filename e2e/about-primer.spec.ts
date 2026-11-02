@@ -9,7 +9,7 @@ import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
-import { gotoAndSettle } from './support.ts';
+import { gotoAndSettle, setLanguage } from './support.ts';
 
 let dir: string;
 let app: FastifyInstance;
@@ -92,7 +92,7 @@ test('the About page primer renders in Dutch with full translation', async ({ pa
   // so one click from the English default switches the whole app's locale — this is the actual
   // mechanism a user has for seeing Dutch, so the test uses it rather than asserting against
   // English strings under a misleading name (#465).
-  await page.locator('.language-toggle').click();
+  await setLanguage(page, 'NL');
 
   const primerHeading = page.getByRole('heading', { name: 'Astrologie-primer', exact: true });
   await expect(primerHeading).toBeVisible();

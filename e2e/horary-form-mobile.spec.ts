@@ -9,7 +9,7 @@ import { join } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
-import { gotoAndSettle } from './support.ts';
+import { gotoAndSettle, setLanguage } from './support.ts';
 
 let dir: string;
 let app: FastifyInstance;
@@ -90,7 +90,7 @@ test('the horary form fits a 390px phone in English and in Dutch', async ({ page
   await expect(page.getByLabel('Latitude', { exact: true })).toBeVisible();
   await checkForm(page, 'House system', ['Latitude', 'Longitude'], 'Regiomontanus (the horary tradition’s)');
 
-  await page.locator('.language-toggle').click();
+  await setLanguage(page, 'NL');
   await expect(page.getByLabel('Huizensysteem', { exact: true })).toBeVisible();
   await checkForm(
     page,

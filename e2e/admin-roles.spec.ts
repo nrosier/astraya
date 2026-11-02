@@ -12,7 +12,7 @@ import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
-import { gotoAndSettle, signIn } from './support.ts';
+import { gotoAndSettle, openAdminPanel, signIn } from './support.ts';
 
 const BOOTSTRAP_TOKEN = 'e2e-admin-roles-bootstrap-token';
 const PASSWORD = 'correct-horse-battery-e2e';
@@ -64,7 +64,7 @@ test.afterAll(async () => {
 async function openUsers(page: Page, username: string): Promise<void> {
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   await signIn(page, username, PASSWORD);
-  await page.getByRole('button', { name: 'Admin', exact: true }).click();
+  await openAdminPanel(page);
   await expect(page.getByRole('heading', { name: 'Admin', level: 1 })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Users', level: 2 })).toBeVisible();
 }
@@ -122,7 +122,13 @@ test('an admin sees the accounts read-only, and still reaches the other admin sc
 test('an ordinary member has no Admin menu', async ({ page }) => {
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   await signIn(page, 'member', PASSWORD);
-  await expect(page.getByRole('button', { name: 'Admin', exact: true })).toHaveCount(0);
+  // The Admin Panel link lives in the profile popover (#964), and only an administrative role has it.
+  await page
+    .getByRole('banner')
+    .locator('[aria-haspopup="true"].profile-tile, [aria-haspopup="true"].profile-tile-menu')
+    .first()
+    .click();
+  await expect(page.locator('.profile-popover').getByRole('link', { name: 'Admin Panel', exact: true })).toHaveCount(0);
 });
 
 test('the admin tab row scrolls as one nav on a wide screen and is a labelled select on a phone (#818)', async ({
