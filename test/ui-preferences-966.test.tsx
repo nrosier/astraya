@@ -92,13 +92,13 @@ describe('#966 rulership option grid', () => {
 
 describe('#966 Import & diagnostics primary action', () => {
   it('renders the Restore button as the primary variant when primary is set', () => {
-    const container = render(<FileInput buttonLabel="Restore from file…" primary onChange={() => undefined} />);
+    const container = render(<FileInput buttonLabel="Restore from File..." primary onChange={() => undefined} />);
     const button = container.querySelector('button');
     expect(button?.classList.contains('primitive-button-primary')).toBe(true);
   });
 
   it('keeps the Check button secondary (no primary class) by default', () => {
-    const container = render(<FileInput buttonLabel="Check a calculation file…" onChange={() => undefined} />);
+    const container = render(<FileInput buttonLabel="Check Calculation File..." onChange={() => undefined} />);
     const button = container.querySelector('button');
     expect(button?.classList.contains('primitive-button-primary')).toBe(false);
   });
