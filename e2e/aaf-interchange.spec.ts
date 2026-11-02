@@ -64,7 +64,7 @@ test('imports an AAF file from another program as a reviewed restore, and adds t
 
   await gotoAndSettle(page, `${baseUrl}/#/preferences/data`);
   const chooser = page.waitForEvent('filechooser');
-  await page.getByRole('button', { name: 'Restore from file…', exact: true }).click();
+  await page.getByRole('button', { name: 'Restore from File...', exact: true }).click();
   await (await chooser).setFiles(file);
 
   await expect(page.getByRole('cell', { name: 'Tobias Ferber', exact: true })).toBeVisible();

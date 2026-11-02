@@ -120,7 +120,7 @@ const en = {
   exportPeopleName: 'the people list',
   restoreHint:
     'Restore people from a full export made on this or another device, or import birth records from an AAF file made by another astrology program. Nothing is written until you review and confirm it.',
-  restoreFromFile: 'Restore from file…',
+  restoreFromFile: 'Restore from File...',
   restorePreparing: 'Reading the file…',
   restoreInvalidJson: 'This file is not valid JSON.',
   restoreInvalid: (error: ImportError): string => {
@@ -175,7 +175,7 @@ const en = {
   restoreFailed: (message: string): string => `The restore failed: ${message}`,
   checkHint:
     'Check whether a full export’s recorded natal calculations still reproduce on this device’s current engine and data — useful after an app, ephemeris, or timezone-database update. Nothing is written; this only reads the file.',
-  checkFromFile: 'Check a calculation file…',
+  checkFromFile: 'Check Calculation File...',
   checkPreparing: 'Reading and checking the file…',
   checkResultsHeading: 'What this file’s calculations check against',
   checkResultColumn: 'Result',
@@ -243,7 +243,7 @@ const nl: typeof en = {
   exportPeopleName: 'de personenlijst',
   restoreHint:
     'Herstel personen uit een volledige export, gemaakt op dit of een ander apparaat, of importeer geboortegegevens uit een AAF-bestand van een ander astrologieprogramma. Er wordt niets geschreven voordat je het hebt bekeken en bevestigd.',
-  restoreFromFile: 'Herstellen vanuit bestand…',
+  restoreFromFile: 'Herstellen uit bestand...',
   restorePreparing: 'Bestand wordt gelezen…',
   restoreInvalidJson: 'Dit bestand is geen geldige JSON.',
   restoreInvalid: (error: ImportError): string => {
@@ -298,7 +298,7 @@ const nl: typeof en = {
   restoreFailed: (message: string): string => `Het herstellen is mislukt: ${message}`,
   checkHint:
     'Controleer of de geboortehoroscoop-berekeningen uit een volledige export nog hetzelfde resultaat geven met de huidige rekenmachine en gegevens van dit apparaat — nuttig na een update van de app, de ephemeris of de tijdzonedatabase. Er wordt niets geschreven; dit leest alleen het bestand.',
-  checkFromFile: 'Berekening controleren…',
+  checkFromFile: 'Berekeningsbestand controleren...',
   checkPreparing: 'Bestand wordt gelezen en gecontroleerd…',
   checkResultsHeading: 'Waartegen de berekeningen uit dit bestand zijn gecontroleerd',
   checkResultColumn: 'Resultaat',

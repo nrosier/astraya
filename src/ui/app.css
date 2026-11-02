@@ -33,6 +33,12 @@
 
   /* Structural accent. */
   --accent: #a390fb;
+  /* Issue 966 names these tokens; they alias the existing ones, so no new visual value (and they follow the theme overrides). */
+  --bg-surface: var(--surface);
+  --border-subtle: var(--line);
+  --text-muted: var(--muted);
+  --radius-lg: var(--radius);
+  --border-accent: var(--accent);
   /*
    * Aspect families, by the convention every printed chart uses: hard tension
    * red, harmonious flow blue, and the quintile family (quintile, biquintile,
@@ -7124,9 +7130,9 @@ button.mgrid-pair:focus-visible {
 .preferences-card {
   margin: 0 0 var(--space-6);
   padding: 1.25rem;
-  border: var(--border-hairline) solid var(--line);
-  border-radius: var(--radius);
-  background: var(--surface);
+  border: var(--border-hairline) solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface);
 }
 
 .preferences-card-title {
@@ -7142,7 +7148,7 @@ button.mgrid-pair:focus-visible {
   align-items: center;
   gap: var(--space-3) var(--space-6);
   padding: var(--space-3) 0;
-  border-top: var(--border-hairline) solid var(--line);
+  border-top: var(--border-hairline) solid var(--border-subtle);
 }
 
 .preferences-row:first-of-type {
@@ -7161,7 +7167,7 @@ button.mgrid-pair:focus-visible {
 
 .preferences-row-description {
   margin: 0.25rem 0 0;
-  color: var(--muted);
+  color: var(--text-muted);
   font-size: var(--text-xs);
 }
 
@@ -7193,7 +7199,7 @@ button.mgrid-pair:focus-visible {
 }
 
 .preferences-rulership .primitive-option-card-selected {
-  border-color: var(--accent);
+  border-color: var(--border-accent);
 }
 
 @media (max-width: 40rem) {
