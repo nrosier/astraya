@@ -63,7 +63,7 @@ import {
 } from './person.js';
 import type { ExtendedSettings } from '../chart/extended-settings.js';
 import type { BirthMomentInput, Calendar } from '../time/types.js';
-import { isNoteTooLong, NOTE_MAX_CHARACTERS } from '../store/notes.js';
+import { isLegacyRevisionId, isNoteTooLong, LEGACY_REVISION_PREFIX, NOTE_MAX_CHARACTERS } from '../store/notes.js';
 import type { Mutation } from '../store/oplog.js';
 import { RESERVED_NAMES, type JsonValue } from '../store/ops.js';
 import { compareHlc, isHlc } from '../store/hlc.js';
@@ -132,7 +132,16 @@ function validateBirth(raw: unknown, path: string): Result<BirthMomentInput, Imp
   };
 }
 
-function validateRevisions(raw: unknown, path: string): Result<readonly ExportedNoteRevision[], ImportError> {
+/**
+ * Note revisions of one note. `legacyAllowed` is set for a Birth Record note: a pre-#919 note is the legacy root and
+ * was written before the length limit existed, so an over-limit one is accepted (owner decision, 2026-11-02). Any other
+ * revision over the limit is refused, with its path, so the file is refused as a whole.
+ */
+function validateRevisions(
+  raw: unknown,
+  path: string,
+  legacyAllowed: boolean,
+): Result<readonly ExportedNoteRevision[], ImportError> {
   if (!Array.isArray(raw)) return malformed(path, 'not an array');
   const revisions: ExportedNoteRevision[] = [];
   const seen = new Set<string>();
@@ -147,8 +156,9 @@ function validateRevisions(raw: unknown, path: string): Result<readonly Exported
     seen.add(id);
     const text = readText(entry.text);
     if (text === undefined) return malformed(`${at}.text`, 'missing or not a string');
-    // Refused here, before staging, so an over-long note fails the whole file rather than the store's batch.
-    if (Array.from(text).length > NOTE_MAX_CHARACTERS) {
+    // Refused here, before staging, so an over-long note fails the whole file rather than the store's batch. A legacy
+    // root is the exception: its text was written before the limit, so it is accepted and kept local (#919).
+    if (isNoteTooLong(text) && !(legacyAllowed && isLegacyRevisionId(id))) {
       return malformed(`${at}.text`, `longer than the ${String(NOTE_MAX_CHARACTERS)}-character limit`);
     }
     const parents = entry.parents;
@@ -165,6 +175,7 @@ function validateConsultationNotes(
   raw: unknown,
   path: string,
 ): Result<readonly ExportedConsultationNote[], ImportError> {
+  // Consultation notes were never legacy: none is accepted over the limit.
   if (!Array.isArray(raw)) return malformed(path, 'not an array');
   const notes: ExportedConsultationNote[] = [];
   const seen = new Set<string>();
@@ -177,11 +188,24 @@ function validateConsultationNotes(
     }
     if (seen.has(id)) return malformed(`${at}.id`, 'duplicate note id');
     seen.add(id);
-    const revisions = validateRevisions(entry.revisions, `${at}.revisions`);
+    const revisions = validateRevisions(entry.revisions, `${at}.revisions`, false);
     if (!revisions.ok) return revisions;
     notes.push({ id, revisions: revisions.value });
   }
   return { ok: true, value: notes };
+}
+
+/**
+ * Whether an over-limit head text is a legacy note. True when the file carries no Birth Record note (a pre-#919
+ * export), or when the Birth Record note holds a legacy root whose text is that head. Its revisions are validated
+ * separately, so a legacy head is accepted only with its legacy root.
+ */
+function isLegacyHead(birthNote: unknown, head: string): boolean {
+  if (birthNote === undefined) return true;
+  if (!isRecord(birthNote) || !Array.isArray(birthNote.revisions)) return false;
+  return (birthNote.revisions as readonly unknown[]).some(
+    (entry) => isRecord(entry) && entry.text === head && typeof entry.id === 'string' && isLegacyRevisionId(entry.id),
+  );
 }
 
 function validatePerson(raw: unknown, path: string): Result<ExportedPerson, ImportError> {
@@ -195,10 +219,12 @@ function validatePerson(raw: unknown, path: string): Result<ExportedPerson, Impo
   if (placeLabel === undefined) return malformed(`${path}.placeLabel`, 'missing or not a string');
   const notes = readText(raw.notes);
   if (notes === undefined) return malformed(`${path}.notes`, 'missing or not a string');
-  // The same limit a note written in the app has (#919). Refused here, before any write, so an
-  // oversized note can never reach the log and wedge sync.
-  if (isNoteTooLong(notes))
+  // The head text. Over the limit only when it is a legacy note (owner decision, 2026-11-02): either the file has no
+  // Birth Record revisions (a pre-#919 export, whose text is the legacy root), or the head is the legacy root those
+  // revisions carry. Any other over-limit head is refused here, before any write, so it never reaches the log.
+  if (isNoteTooLong(notes) && !isLegacyHead(raw.birthNote, notes)) {
     return malformed(`${path}.notes`, `longer than the ${String(NOTE_MAX_CHARACTERS)}-character note limit`);
+  }
   const timeAccuracy = readTimeAccuracy(raw.timeAccuracy);
   if (timeAccuracy === undefined) return malformed(`${path}.timeAccuracy`, 'missing or not a recognised value');
   const missingRaw = raw.missing;
@@ -253,7 +279,7 @@ function validatePerson(raw: unknown, path: string): Result<ExportedPerson, Impo
   let birthNote: ExportedPerson['birthNote'];
   if (raw.birthNote !== undefined) {
     if (!isRecord(raw.birthNote)) return malformed(`${path}.birthNote`, 'not an object');
-    const revisions = validateRevisions(raw.birthNote.revisions, `${path}.birthNote.revisions`);
+    const revisions = validateRevisions(raw.birthNote.revisions, `${path}.birthNote.revisions`, true);
     if (!revisions.ok) return revisions;
     birthNote = { revisions: revisions.value };
   }
@@ -488,7 +514,9 @@ function birthNoteMutations(
   // sees an unchanged note as unchanged rather than writing a second copy of it.
   if (exported.notes === currentText) return [];
   const parents = existing === undefined ? [] : revisionParents(existing);
-  return [birthNoteRevision(personId, newId('r'), exported.notes, parents)];
+  // An over-limit legacy head takes a legacy id, which the write guard admits and push keeps local (#919).
+  const id = isNoteTooLong(exported.notes) ? `${LEGACY_REVISION_PREFIX}${newId('r')}` : newId('r');
+  return [birthNoteRevision(personId, id, exported.notes, parents)];
 }
 
 /** The Consultation notes' mutations: each note's revisions this store does not hold, grouped by note. */

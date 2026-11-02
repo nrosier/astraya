@@ -17,6 +17,7 @@ import {
   consultationNoteDelete,
   consultationNoteRevision,
   CONSULTATION_NOTE_ENTITY,
+  countHeldBackNotes,
   entitiesPurgedWith,
   isOversizedLegacyNoteRecord,
   NOTE_MAX_CHARACTERS,
@@ -243,6 +244,65 @@ describe('the per-revision length limit', () => {
     expect(() => {
       assertNoteMutation({ entity: 'person', entityId: PERSON, field: 'notes', value: at(NOTE_MAX_CHARACTERS + 1) });
     }).not.toThrow();
+  });
+});
+
+describe('a legacy birth revision over the limit (#919)', () => {
+  const over = 'a'.repeat(NOTE_MAX_CHARACTERS + 1);
+
+  it('is admitted by the write guard under a legacy id, and kept out of the push', () => {
+    const mutation = birthNoteRevision(PERSON, 'legacy-000000000000000000', over, []);
+    expect(() => {
+      assertNoteMutation(mutation);
+    }).not.toThrow();
+    expect(isOversizedLegacyNoteRecord({ ...mutation, deviceId: 'd' })).toBe(true);
+  });
+
+  it('is still refused under an ordinary revision id, so new edits stay capped', () => {
+    expect(() => {
+      assertNoteMutation(birthNoteRevision(PERSON, 'r-new', over, []));
+    }).toThrow(NoteRefusedError);
+  });
+
+  it('is never admitted for a consultation note, even under a legacy-looking id', () => {
+    expect(() => {
+      assertNoteMutation(consultationNoteRevision(PERSON, 'legacy-n', 'legacy-n', over, []));
+    }).toThrow(NoteRefusedError);
+  });
+});
+
+describe('the held-back count (#919)', () => {
+  it('counts a person once when their head is an over-limit legacy revision this device holds', () => {
+    const legacy = 'legacy-000000000000000000';
+    const head = {
+      id: legacy,
+      noteId: PERSON,
+      rootId: legacy,
+      personId: PERSON,
+      content: 'a'.repeat(NOTE_MAX_CHARACTERS + 1),
+      updatedAt: 0,
+      timestamp: 0,
+      forks: [],
+      revisions: [],
+    };
+    expect(countHeldBackNotes(new Map([[PERSON, head]]), new Set([PERSON]))).toBe(1);
+  });
+
+  it('counts nothing for a note this device did not hold back, or one within the limit', () => {
+    const legacy = 'legacy-000000000000000000';
+    const base = {
+      noteId: PERSON,
+      rootId: legacy,
+      personId: PERSON,
+      updatedAt: 0,
+      timestamp: 0,
+      forks: [],
+      revisions: [],
+    };
+    const over = { ...base, id: legacy, content: 'a'.repeat(NOTE_MAX_CHARACTERS + 1) };
+    const within = { ...base, id: legacy, content: 'a short note' };
+    expect(countHeldBackNotes(new Map([[PERSON, over]]), new Set())).toBe(0);
+    expect(countHeldBackNotes(new Map([[PERSON, within]]), new Set([PERSON]))).toBe(0);
   });
 });
 

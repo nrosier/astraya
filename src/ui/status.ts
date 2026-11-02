@@ -47,6 +47,11 @@ export interface StatusInput {
   readonly pending: number;
   /** Local operations the server has permanently refused as clock-skewed (#312) — will not retry. */
   readonly quarantined: number;
+  /**
+   * Notes kept on this device only because they are over the length limit (#919). Not an error and not pending, so the
+   * status stays 'Synced'; the popover says so in its own line.
+   */
+  readonly heldBack: number;
   readonly sync: SyncState;
   readonly now: number;
 }
@@ -61,6 +66,11 @@ export interface Status {
   /** One sentence saying what it means, and what to do if anything. */
   readonly detail: string;
   readonly action?: { readonly href: string; readonly text: string };
+  /**
+   * A separate line for notes kept on this device only because they are over the length limit (#919). Shown beside any
+   * label, and never changes the label or tone, so a status that says 'Synced' still says 'Synced'.
+   */
+  readonly heldBackLine?: string;
 }
 
 /**
@@ -94,6 +104,13 @@ function changes(pending: number, t: typeof statusMessages.en): string {
 }
 
 export function describeStatus(input: StatusInput, t: typeof statusMessages.en): Status {
+  const status = describeSyncStatus(input, t);
+  // Added to every state, so the count is visible whatever the label is, and never alters the label or tone.
+  if (input.heldBack <= 0) return status;
+  return { ...status, heldBackLine: t.heldBackLine(String(input.heldBack)) };
+}
+
+function describeSyncStatus(input: StatusInput, t: typeof statusMessages.en): Status {
   const { sync, persistence, pending, quarantined, online, now } = input;
 
   if (quarantined > 0) {

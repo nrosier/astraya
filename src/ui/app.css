@@ -556,6 +556,11 @@ a.corner-pill.active {
   max-width: 44rem;
 }
 
+/* The notes-held-back line (#919): its own paragraph, set apart from the status detail above it. */
+.syncbadge-popover .syncbadge-held-back {
+  margin-top: 0.5rem;
+}
+
 .syncbadge-sync {
   width: 1.5rem;
   height: 1.5rem;

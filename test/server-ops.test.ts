@@ -328,6 +328,28 @@ describe('purge propagation and server-side erasure (#308)', () => {
     expect(ops.map((op) => op.hlc)).toEqual([marker.hlc]);
   });
 
+  it('erases birth and consultation note rows on a person purge, keeping only the marker (#919)', async () => {
+    const sessionId = await setupAdmin(app);
+    const birthRevision = makeFieldOp('birthNote', 'p-1', 'rev/r-birth', { text: 'Birth text', parents: [] });
+    const consultationRevision = makeFieldOp(
+      'consultationNote',
+      'p-1',
+      'rev/n-1/r-1',
+      { text: 'Consult text', parents: [] },
+      1,
+    );
+    await appendOps(app, sessionId, [birthRevision, consultationRevision]);
+
+    const marker = makeFieldOp('birthNote', 'p-1', 'purged', true, 2);
+    const consultationMarker = makeFieldOp('consultationNote', 'p-1', 'purged', true, 3);
+    const response = await appendOps(app, sessionId, [marker, consultationMarker]);
+    expect(response.statusCode).toBe(200);
+
+    const pull = await pullOps(app, sessionId);
+    const { ops } = pull.json<{ ops: { hlc: string }[] }>();
+    expect(ops.map((op) => op.hlc)).toEqual([marker.hlc, consultationMarker.hlc]);
+  });
+
   it('quarantines a later push naming an already-purged entity, rather than storing it', async () => {
     const sessionId = await setupAdmin(app);
     const marker = makeFieldOp('person', 'p-1', 'purged', true);

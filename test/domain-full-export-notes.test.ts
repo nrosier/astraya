@@ -393,3 +393,92 @@ describe('validating notes in an untrusted file (#919)', () => {
     expect(validateFullExport(fileWith({ birthNote: { revisions: [{ ...good, text: long }] } })).ok).toBe(false);
   });
 });
+
+describe('over-limit notes on import (#919)', () => {
+  const OVER = NOTE_MAX_CHARACTERS + 1;
+  const LEGACY_HLC = encodeHlc(createClock(NODE, T_MILLIS));
+
+  async function exportWithPeople(people: readonly Person[]): Promise<Record<string, unknown>> {
+    const archive = await buildFullExport({
+      people,
+      provider: engine,
+      appVersion: '9.9.9',
+      settings: DEFAULT_EXTENDED_SETTINGS,
+      rulership: 'modern',
+      symbolClass: 'drawn',
+      now: NOW,
+    });
+    return JSON.parse(JSON.stringify(archive)) as Record<string, unknown>;
+  }
+
+  /** A file holding Ada, with her head text and optional Birth Record note block replaced. */
+  async function fileWithAda(notes: string, birthNote?: unknown): Promise<Record<string, unknown>> {
+    const archive = await exportWithPeople([{ ...ADA, notes }]);
+    const [person] = archive.people as Record<string, unknown>[];
+    if (person !== undefined && birthNote !== undefined) person.birthNote = birthNote;
+    return archive;
+  }
+
+  it('accepts a legacy birth note over the limit, and it imports and round-trips with its text intact', async () => {
+    const longText = 'b'.repeat(OVER);
+    const legacyRoot = { id: `legacy-${LEGACY_HLC}`, text: longText, parents: [], hlc: LEGACY_HLC };
+    const result = validateFullExport(await fileWithAda(longText, { revisions: [legacyRoot] }));
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    await withStore(async (target) => {
+      const preview = stageFullExportRestore(result.value, new Map(), new Map(), undefined, target.state);
+      const mutations = preview.items.flatMap((item) => item.mutations);
+      // Written under a legacy id, which the push keeps local rather than sending (#919).
+      expect(mutations.some((m) => m.entity === 'birthNote' && m.field.startsWith('rev/legacy-'))).toBe(true);
+      await target.mutate(mutations);
+
+      expect(target.state.birthNotes.get(PERSON)?.content).toBe(longText);
+      expect(target.state.people.get(PERSON)?.notes).toBe(longText);
+      // Round-trip: exporting the imported store carries the same text again.
+      const again = validated(await exportOf(target));
+      expect(again.people[0]?.notes).toBe(longText);
+    });
+  });
+
+  it('accepts a pre-#919 head with no birth note revisions over the limit', async () => {
+    expect(validateFullExport(await fileWithAda('c'.repeat(OVER))).ok).toBe(true);
+  });
+
+  it('refuses a new-style birth revision over the limit, naming its path', async () => {
+    const revision = { id: 'r-new', text: 'n'.repeat(OVER), parents: [], hlc: LEGACY_HLC };
+    const result = validateFullExport(await fileWithAda('', { revisions: [revision] }));
+    expect(result).toEqual({
+      ok: false,
+      error: {
+        kind: 'malformed',
+        path: 'people[0].birthNote.revisions[0].text',
+        reason: `longer than the ${String(NOTE_MAX_CHARACTERS)}-character limit`,
+      },
+    });
+  });
+
+  it('refuses a consultation note over the limit, even one whose id looks legacy', async () => {
+    const archive = await fileWithAda('');
+    const [person] = archive.people as Record<string, unknown>[];
+    if (person !== undefined) {
+      person.consultationNotes = [
+        { id: 'c1', revisions: [{ id: `legacy-${LEGACY_HLC}`, text: 'x'.repeat(OVER), parents: [], hlc: LEGACY_HLC }] },
+      ];
+    }
+    const result = validateFullExport(archive);
+    expect(result.ok).toBe(false);
+    if (!result.ok && result.error.kind === 'malformed') {
+      expect(result.error.path).toBe('people[0].consultationNotes[0].revisions[0].text');
+    }
+  });
+
+  it('a legacy over-limit note on one person does not refuse the file: every person still imports', async () => {
+    const bob: Person = { ...ADA, id: 'p-bob', displayName: 'Bob', notes: 'd'.repeat(OVER) };
+    const archive = await exportWithPeople([ADA, bob]);
+    const result = validateFullExport(archive);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.people.map((p) => p.id)).toEqual([PERSON, 'p-bob']);
+  });
+});
