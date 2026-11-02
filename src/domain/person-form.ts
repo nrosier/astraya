@@ -44,7 +44,6 @@ export interface Draft {
   /** Minutes east of UTC. Empty means "use the lookup"; `0` means UTC. */
   readonly offsetOverride: string;
   readonly zoneOverride: string;
-  readonly notes: string;
 }
 
 export const EMPTY_DRAFT: Draft = {
@@ -58,7 +57,6 @@ export const EMPTY_DRAFT: Draft = {
   calendar: 'auto',
   offsetOverride: '',
   zoneOverride: '',
-  notes: '',
 };
 
 function pad(value: number, width = 2): string {
@@ -89,7 +87,6 @@ export function draftFrom(person: Person): Draft {
     calendar: moment?.calendar ?? 'auto',
     offsetOverride: moment?.offsetOverrideMinutes === undefined ? '' : String(moment.offsetOverrideMinutes),
     zoneOverride: moment?.zoneOverride ?? '',
-    notes: person.notes,
   };
 }
 
@@ -239,7 +236,6 @@ export function draftToMutations(
 
   if (draft.displayName.trim() !== previous.displayName.trim()) write('displayName', draft.displayName.trim());
   if (draft.placeLabel.trim() !== previous.placeLabel.trim()) write('placeLabel', draft.placeLabel.trim());
-  if (draft.notes !== previous.notes) write('notes', draft.notes);
   if (draft.timeAccuracy !== previous.timeAccuracy) write('timeAccuracy', draft.timeAccuracy);
   if (draft.calendar !== previous.calendar) write('calendar', draft.calendar);
   if (draft.zoneOverride.trim() !== previous.zoneOverride.trim()) write('zoneOverride', draft.zoneOverride.trim());

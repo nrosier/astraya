@@ -48,6 +48,8 @@ vi.mock('../src/ui/store-context.js', () => {
       [person.id, person],
       [partner.id, partner],
     ]),
+    birthNotes: new Map(),
+    consultationNotes: new Map(),
   };
   return {
     useStoreState: () => state,

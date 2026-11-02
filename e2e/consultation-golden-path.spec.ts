@@ -144,21 +144,21 @@ test('the notes card starts collapsed, shows its save state, and expands on the 
 
   await toggle.click();
   await expect(page.getByRole('button', { name: 'Hide notes', exact: true })).toHaveAttribute('aria-expanded', 'true');
+  // Notes autosave (#919): typing is the save, so there is no Add note button and no Save.
+  await expect(page.getByRole('button', { name: 'Add note', exact: true })).toHaveCount(0);
   await page.getByRole('textbox', { name: 'Note text' }).fill('Confirm the birth time source.');
-  await page.getByRole('button', { name: 'Add note', exact: true }).click();
-  await expect(page.getByText('Confirm the birth time source.')).toBeVisible();
   await expect(page.getByText('1 note', { exact: true })).toBeVisible();
+  await expect(page.getByRole('status').filter({ hasText: 'Autosaved' })).toBeVisible();
 
   // Delete asks first: Cancel keeps the note, and only the confirmation removes it.
   await page.getByRole('button', { name: 'Delete', exact: true }).click();
   await expect(page.getByRole('region', { name: 'Delete this note?' })).toBeVisible();
   await page.getByRole('button', { name: 'Cancel', exact: true }).click();
-  await expect(page.getByText('Confirm the birth time source.')).toBeVisible();
+  await expect(page.getByRole('textbox', { name: 'Note text' }).first()).toHaveValue('Confirm the birth time source.');
   await expect(page.getByRole('region', { name: 'Delete this note?' })).toHaveCount(0);
 
   await page.getByRole('button', { name: 'Delete', exact: true }).click();
   await page.getByRole('button', { name: 'Delete note', exact: true }).click();
-  await expect(page.getByText('Confirm the birth time source.')).toHaveCount(0);
   await expect(page.getByText('0 notes', { exact: true })).toBeVisible();
 });
 

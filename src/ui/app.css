@@ -6866,8 +6866,7 @@ dl.consultation-tiles {
   font-size: var(--text-sm);
 }
 
-/* The notes card (#800 round 2): a low-profile bar by default, the notes on the page when opened. Local state only;
-   persistence is #919. */
+/* The notes card (#800 round 2): a low-profile bar by default, the notes on the page when opened. Notes autosave (#919). */
 .consultation-notes {
   gap: var(--space-3);
 }
@@ -7436,4 +7435,34 @@ button.mgrid-pair:focus-visible {
   .preferences-row-control {
     justify-content: flex-start;
   }
+}
+
+/* Note forks (issue 919): each competing version of a concurrent edit, shown whole beside the head. */
+.note-forks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.note-fork {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+
+.note-fork-head,
+.note-fork-text,
+.note-fork-hint {
+  margin: 0;
+}
+
+.note-fork-text {
+  white-space: pre-wrap;
+}
+
+.note-fork-hint {
+  font-size: var(--text-xs);
 }

@@ -82,7 +82,7 @@ import { extendedSettingsPanelMessages } from './ExtendedSettingsPanel.messages.
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { useStoreState } from './store-context.js';
-import { useStableBy } from './use-stable-moment.js';
+import { useStableBy, useStableMoment } from './use-stable-moment.js';
 import { formatOrb, formatTimestamp } from './format.js';
 import { angleTransits, exactPassDates, type AngleKey, type AngleTransit } from '../domain/angle-transits.js';
 import { chartOverviewRows } from './chart-overview-rows.js';
@@ -138,6 +138,8 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
   const state = useStoreState();
   const person = state.people.get(personId);
   // The person's chosen fixed stars (#860), as the natal chart reads them.
+  // Keeps its identity across store writes (a note save re-folds every person), so the calculation is not redone and the page does not blank.
+  const stableMoment = useStableMoment(person?.moment);
   const fixedStars = useStableBy(person?.fixedStars, (stars) => JSON.stringify(stars ?? []));
   const { provider } = useEphemerisProvider();
   const t = useMessages(consultationViewMessages);
@@ -158,9 +160,9 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
 
   useEffect(() => {
     // An unreadable register means no chart-dependent content at all, never one from placeholder settings (#806).
-    if (person?.moment === undefined || provider === undefined || settingsUnreadable) return undefined;
+    if (stableMoment === undefined || provider === undefined || settingsUnreadable) return undefined;
     const effect = { cancelled: false };
-    const moment = person.moment;
+    const moment = stableMoment;
     setLoad({ kind: 'loading' });
     void (async () => {
       try {
@@ -228,7 +230,7 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
     return () => {
       effect.cancelled = true;
     };
-  }, [person?.moment, fixedStars, provider, now, rulership, settingsUnreadable]);
+  }, [stableMoment, fixedStars, provider, now, rulership, settingsUnreadable]);
 
   const natalHouses = load.kind === 'ready' ? load.transit.natal.houses : undefined;
   const rules = useMemo<TransitRuleContext>(
@@ -734,7 +736,7 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
                   </p>
                 </section>
 
-                <ConsultationNotesCard />
+                <ConsultationNotesCard personId={personId} />
               </div>
             </div>
           </div>

@@ -44,7 +44,7 @@ vi.mock('../src/ui/store-context.js', () => {
     missing: [],
     customPoints: [],
   };
-  const state = { people: new Map([[person.id, person]]) };
+  const state = { people: new Map([[person.id, person]]), birthNotes: new Map(), consultationNotes: new Map() };
   return {
     useStoreState: () => state,
     useStore: () => ({ mutate: () => Promise.resolve() }),
