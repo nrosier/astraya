@@ -13,12 +13,15 @@
  * @exports CyclesView
  */
 import { GlossaryText } from './GlossaryText.js';
+import { GlossaryTerm } from './GlossaryTerm.js';
+import { Radio } from './primitives/Radio.js';
+import type { GlossaryTermId } from './astro-glossary.messages.js';
 import { formatFixed } from './format.js';
 import { Select } from './primitives/Select.js';
 import { TextField } from './primitives/TextField.js';
 import { useSymbolClass } from './symbol-setting.js';
 import { useGlyphVariants } from './glyph-variant-setting.js';
-import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useEffectEvent, useId, useMemo, useRef, useState } from 'react';
 import { findMutualAspects, type MutualAspectEvent } from '../astrology/mutual-aspects.js';
 import { renderCycleDiagramSvg } from '../chart/cycle-diagram.js';
 import { aspectDisplayName, bodyDisplayName, signDisplayName } from './astro-names.messages.js';
@@ -73,6 +76,51 @@ function paramsFor(preset: CyclePreset): Params {
     fromYear: String(span.from),
     toYear: String(span.to),
   };
+}
+
+interface MotionOption {
+  readonly value: string;
+  readonly label: string;
+  /** A glossary term the option's label names, shown as a tooltip beside it (#901). */
+  readonly term?: GlossaryTermId;
+}
+
+/**
+ * The motion filter (#901): a labelled radio group, not a native select, because a glossary tooltip cannot sit
+ * inside a native `<option>`. Each choice is a real radio, so the arrow keys still move through the group.
+ */
+function MotionFilterGroup({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  readonly label: string;
+  readonly value: string;
+  readonly options: readonly MotionOption[];
+  readonly onChange: (value: string) => void;
+}): React.JSX.Element {
+  const name = useId();
+  return (
+    <fieldset className="primitive-choice-field">
+      <legend className="primitive-field-label">{label}</legend>
+      <div className="primitive-choice-group" role="radiogroup" aria-label={label}>
+        {options.map((option) => (
+          <Fragment key={option.value}>
+            <Radio
+              name={name}
+              label={option.label}
+              checked={value === option.value}
+              onChange={() => {
+                onChange(option.value);
+              }}
+            />
+            {option.term !== undefined && <GlossaryTerm id={option.term} label={option.label} />}
+          </Fragment>
+        ))}
+      </div>
+    </fieldset>
+  );
 }
 
 export function CyclesView(): React.JSX.Element {
@@ -330,12 +378,12 @@ export function CyclesView(): React.JSX.Element {
             edit({ aspect: value });
           }}
         />
-        <Select
+        <MotionFilterGroup
           label={t.motionLabel}
           value={params.motion}
           options={[
             { value: 'all', label: t.motionAll },
-            { value: 'retrograde', label: t.motionRetrograde },
+            { value: 'retrograde', label: t.motionRetrograde, term: 'retrograde' },
             { value: 'direct', label: t.motionDirect },
           ]}
           onChange={(value) => {

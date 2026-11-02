@@ -462,9 +462,17 @@ test.describe('with the shared people (#799)', () => {
 
   test('the chart row pins Overlays and Extended settings at the far right, drops the static prefix, and folds both into Chart actions at 40rem and below (#817, #818)', async () => {
     test.setTimeout(90_000);
-    const overlays = page.locator('.tab-row button.chart-overlay-trigger');
+    // #976: above 640px the Overlay and Extended settings triggers are page actions in the PageHeader's action group,
+    // so the view tab row holds only the view links. At 640px and below they sit in the tab row's Chart actions sheet.
+    // Above 640px the triggers are the PageHeader's; at 640px and below they are in the tab row's sheet. Each locator
+    // is scoped to where the trigger sits at that width, so one name, "Overlay settings", finds the right one.
+    const overlays = page.locator(
+      '.page-header-actions button.chart-overlay-trigger, .tab-row__actions-panel button.chart-overlay-trigger',
+    );
     const tabRow = page.locator('.tab-row');
-    const settings = page.locator('.tab-row button.extended-settings-trigger');
+    const settings = page.locator(
+      '.page-header-actions button.extended-settings-trigger, .tab-row__actions-panel button.extended-settings-trigger',
+    );
     const toggle = page.getByRole('button', { name: 'Chart actions', exact: true });
     const box = async (locator: Locator): Promise<{ left: number; right: number }> => {
       const rect = await locator.boundingBox();
@@ -486,14 +494,16 @@ test.describe('with the shared people (#799)', () => {
     await expect(toggle).toBeHidden();
     await expect(settings).toBeVisible();
     await expect(overlays).toBeVisible();
-    // Pinned outside the scroller: both triggers sit wholly to the right of the scroll viewport; Extended settings ends the row.
-    const viewport = await box(page.locator('.tab-row__viewport'));
-    const row = await box(tabRow);
+    // #976: both triggers sit in the PageHeader's top-right action group, to the right of the title row's own
+    // actions, and Extended settings ends the group at the page's right edge. The tab row holds neither.
+    const header = await box(page.locator('.page-header-actions'));
     const overlaysBox = await box(overlays);
     const settingsBox = await box(settings);
-    expect(overlaysBox.left).toBeGreaterThanOrEqual(viewport.right);
+    expect(overlaysBox.left).toBeGreaterThanOrEqual(header.left);
     expect(overlaysBox.right).toBeLessThanOrEqual(settingsBox.left);
-    expect(settingsBox.right).toBeCloseTo(row.right, 0);
+    expect(settingsBox.right).toBeCloseTo(header.right, 0);
+    await expect(tabRow.locator('button.chart-overlay-trigger')).toHaveCount(0);
+    await expect(tabRow.locator('button.extended-settings-trigger')).toHaveCount(0);
     await noPrefixNoRow();
 
     // Overlays opens a right slide-over drawer, not an in-flow row, and the wheel stays visible beside it.
@@ -520,6 +530,10 @@ test.describe('with the shared people (#799)', () => {
       await expect(overlays).toBeVisible();
       await expect(page.locator('.tab-row__viewport').locator(settings)).toHaveCount(0);
       await expect(page.locator('.tab-row__viewport').locator(overlays)).toHaveCount(0);
+      // #976: the tab row holds only view links; the page actions sit in the PageHeader's action group.
+      await expect(tabRow.locator('button')).toHaveCount(0);
+      await expect(page.locator('.page-header-actions button.extended-settings-trigger')).toHaveCount(1);
+      await expect(page.locator('.page-header-actions button.chart-overlay-trigger')).toHaveCount(1);
       await noPrefixNoRow();
     };
     const collapsed = async (): Promise<void> => {
@@ -536,6 +550,9 @@ test.describe('with the shared people (#799)', () => {
     // the one "Chart actions" text toggle (a Button) until it is opened.
     await page.setViewportSize({ width: 390, height: 844 });
     await collapsed();
+    // #976: on a phone the page header holds no trigger; both sit in the Chart actions sheet, not the PageHeader.
+    await expect(page.locator('.page-header-actions button.chart-overlay-trigger')).toHaveCount(0);
+    await expect(page.locator('.page-header-actions button.extended-settings-trigger')).toHaveCount(0);
     await expect(page.locator('.tab-row__actions-toggle button.primitive-button-compact')).toHaveText(/^Chart actions/);
     await toggle.click();
     await expect(toggle).toHaveAttribute('aria-expanded', 'true');
@@ -590,8 +607,10 @@ test.describe('with the shared people (#799)', () => {
         return { left: el.scrollLeft, max: el.scrollWidth - el.clientWidth, scrollWidth: el.scrollWidth, clientWidth: el.clientWidth };
       })()`);
 
-    // With the #981 layout the row fits at 1280px, so the overflow check runs at 1024px, where it overflows.
-    await page.setViewportSize({ width: 1024, height: 800 });
+    // #976 moved the page actions into the PageHeader, so the view row now fits at every width above 640px except the
+    // first one, 641px, where it overflows by about 50px (measured: scrollWidth 652, clientWidth 599). The scroll-and-fade
+    // contract is therefore tested at 641px, the width where the row overflows (owner decision on #818, 2026-11-01).
+    await page.setViewportSize({ width: 641, height: 800 });
     await expect.poll(async () => (await metrics()).scrollWidth > (await metrics()).clientWidth).toBe(true);
 
     // Touch-capable CSS contract (computed styles only; touch momentum itself is not exercised headlessly).

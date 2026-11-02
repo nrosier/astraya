@@ -116,8 +116,18 @@ test.describe('with the shared people (#799)', () => {
       }
       const saveCentre = saveBox.y + saveBox.height / 2;
       const titleCentre = titleBox.y + titleBox.height / 2;
-      // The header no longer carries an Export dropdown (#896 owner spec): Save is the only control in the top-right slot.
-      await expect(page.locator('.page-header-row .page-header-export')).toHaveCount(0);
+      // The header's Export dropdown sits beside Save (#887, owner 2026-10-30), so Save may sit left of the content
+      // edge by the width of that control. Save must still be the rightmost control or sit inside the edge.
+      const exportToggle = page.locator('.page-header-row .page-header-export-toggle');
+      const exportBox = (await exportToggle.count()) > 0 ? await exportToggle.boundingBox() : null;
+      const rightmost =
+        exportBox === null
+          ? saveBox.x + saveBox.width
+          : Math.max(saveBox.x + saveBox.width, exportBox.x + exportBox.width);
+      expect(
+        rightmost - contentRight,
+        `${String(viewport.width)}px header controls stay inside the content edge`,
+      ).toBeLessThan(1);
       expect(
         saveBox.x + saveBox.width - contentRight,
         `${String(viewport.width)}px Save stays inside the content edge`,

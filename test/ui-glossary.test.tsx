@@ -15,6 +15,7 @@ import { SortableTable } from '../src/ui/SortableTable.js';
 import { eclipsesViewMessages } from '../src/ui/EclipsesView.messages.js';
 import { profectionsViewMessages } from '../src/ui/ProfectionsView.messages.js';
 import { synastryViewMessages } from '../src/ui/SynastryView.messages.js';
+import { cyclesViewMessages } from '../src/ui/CyclesView.messages.js';
 
 // Render-only mocks (as in test/ui-page-header-screens.test.tsx): the provider never resolves, so each view
 // renders its header and loading state with no calculation running.
@@ -506,6 +507,48 @@ describe('inline glossary tooltips on view prose (#901)', () => {
       });
       const triggers = [...container.querySelectorAll('.glossary-term')].map((element) => element.textContent);
       expect(triggers, `${term} tooltip in ${locale}`).toContain(shown);
+    } finally {
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+    }
+  });
+});
+
+/**
+ * The Cycles motion filter (#901, owner decision): "retrograde" is one of its options, and a tooltip cannot sit inside
+ * a native `<option>`, so the filter is a radio group whose retrograde choice carries the glossary term.
+ */
+describe('the Cycles motion filter carries the retrograde tooltip (#901)', () => {
+  afterEach(() => {
+    setLocale('en');
+  });
+
+  it.each(['en', 'nl'] as const)('has no native select for motion and a retrograde tooltip in %s', async (locale) => {
+    setLocale(locale);
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+    try {
+      await act(async () => {
+        root.render(<CyclesView />);
+        await Promise.resolve();
+      });
+      const motionOptions = [...container.querySelectorAll('option')].map((option) => option.textContent);
+      expect(motionOptions, `no native motion option in ${locale}`).not.toContain(
+        cyclesViewMessages[locale].motionRetrograde,
+      );
+      const motionGroup = [...container.querySelectorAll('[role="radiogroup"]')].find(
+        (group) => group.getAttribute('aria-label') === cyclesViewMessages[locale].motionLabel,
+      );
+      // The trigger sits beside the retrograde radio and is named after that option (its own label).
+      const triggers = [...(motionGroup?.querySelectorAll('.glossary-term button') ?? [])].map((element) =>
+        element.getAttribute('aria-label'),
+      );
+      expect(triggers, `retrograde tooltip in the motion filter, ${locale}`).toContain(
+        cyclesViewMessages[locale].motionRetrograde,
+      );
     } finally {
       act(() => {
         root.unmount();
