@@ -306,7 +306,8 @@ describe('the body exports of Event Search, Corpus Overrides, Preferences and th
       </ExportRegistryProvider>,
     );
     // A one-week range keeps the real search quick; the body buttons appear with the results.
-    const [from, to] = container.querySelectorAll<HTMLInputElement>('input[placeholder="YYYY-MM-DD"]');
+    // From and To are the shared DateField (#1052): native date inputs that hold YYYY-MM-DD.
+    const [from, to] = container.querySelectorAll<HTMLInputElement>('input[type="date"]');
     await act(async () => {
       typeInto(from, '2026-01-01');
       typeInto(to, '2026-01-07');

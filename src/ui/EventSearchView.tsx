@@ -289,8 +289,8 @@ export function EventSearchView(): React.JSX.Element {
 
         <aside className="tool-card tool-panel" aria-labelledby="event-search-panel-heading">
           <h2 id="event-search-panel-heading">{t.panelHeading}</h2>
-          {/* The panel describes the current result: busy while the search runs. */}
-          <div className="tool-panel-body" aria-busy={result.kind === 'loading'} aria-live="polite">
+          {/* The panel describes the current result; the results region below carries the busy state (#888). */}
+          <div className="tool-panel-body" aria-live="polite">
             {result.kind === 'loading' && <StatusMessage kind="loading">{t.searching}</StatusMessage>}
             {(result.kind === 'idle' || result.kind === 'error') && <p className="hint">{t.emptyState}</p>}
             {result.kind === 'ready' && (
