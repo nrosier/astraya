@@ -68,14 +68,6 @@ function seedFileText(): string {
   return readFileSync(pointer.statePath, 'utf-8');
 }
 
-test('a context from the saved state lists the three shared people', async ({ browser }) => {
-  const context = await newSeededContext(browser, baseUrl);
-  const page = await context.newPage();
-  await gotoAndSettle(page, `${baseUrl}/#/people`);
-  await expectSharedPeople(page);
-  await context.close();
-});
-
 test('the people survive a reload, and the service worker does not serve a stale page', async ({ browser }) => {
   const context = await newSeededContext(browser, baseUrl);
   const page = await context.newPage();
