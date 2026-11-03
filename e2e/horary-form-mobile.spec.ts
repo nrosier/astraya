@@ -39,6 +39,18 @@ interface Measure {
   readonly innerWidth: number;
 }
 
+interface OverflowReport {
+  readonly documentScrollWidth: number;
+  readonly elements: readonly {
+    readonly tag: string;
+    readonly id: string;
+    readonly className: string;
+    readonly right: number;
+    readonly scrollWidth: number;
+    readonly clientWidth: number;
+  }[];
+}
+
 /** The selected option's label, and its drawn width against the select's inner width (a select has no useful scrollWidth). */
 async function measureHouseSelect(page: Page, selectLabel: string): Promise<Measure> {
   const id = await page.getByLabel(selectLabel, { exact: true }).getAttribute('id');
@@ -69,6 +81,49 @@ async function checkForm(page: Page, house: string, coords: readonly string[], e
 
   const overflow = await page.evaluate<number>('document.documentElement.scrollWidth - window.innerWidth');
   test.info().annotations.push({ type: 'overflow', description: String(overflow) });
+
+  // Diagnostic only: which elements extend past the viewport, and the sizing of the card and grid parents.
+  const offenders = await page.evaluate<OverflowReport>(
+    `(() => {
+      const vw = window.innerWidth;
+      const elements = Array.from(document.querySelectorAll('body *'))
+        .map((el) => ({ el, right: el.getBoundingClientRect().right }))
+        .filter(({ right }) => right > vw)
+        .map(({ el, right }) => ({
+          tag: el.tagName.toLowerCase(),
+          id: el.id,
+          className: typeof el.className === 'string' ? el.className : '',
+          right: Math.round(right),
+          scrollWidth: el.scrollWidth,
+          clientWidth: el.clientWidth,
+        }));
+      return { documentScrollWidth: document.documentElement.scrollWidth, elements };
+    })()`,
+  );
+  test.info().annotations.push({ type: 'overflow-document', description: String(offenders.documentScrollWidth) });
+  test.info().annotations.push({
+    type: 'overflow-elements',
+    description: JSON.stringify(offenders.elements.slice(0, 30)),
+  });
+  const sizing = await page.evaluate<string>(
+    `(() => {
+      const select = document.getElementById(${JSON.stringify(await page.getByLabel(house, { exact: true }).getAttribute('id'))});
+      const coords = document.querySelector('.horary-coords');
+      const pick = (el) => {
+        if (el === null) return null;
+        const s = getComputedStyle(el);
+        return { tag: el.tagName.toLowerCase(), cls: String(el.className), minWidth: s.minWidth, width: s.width, flexShrink: s.flexShrink };
+      };
+      const chain = (start) => {
+        const out = [];
+        let el = start;
+        for (let i = 0; i < 3 && el !== null; i++) { out.push(pick(el)); el = el.parentElement; }
+        return out;
+      };
+      return JSON.stringify({ house: chain(select), coords: chain(coords) });
+    })()`,
+  );
+  test.info().annotations.push({ type: 'sizing', description: sizing });
   expect(overflow).toBeLessThanOrEqual(0);
 
   const viewportWidth = await page.evaluate<number>('window.innerWidth');
