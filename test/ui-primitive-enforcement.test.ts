@@ -39,6 +39,75 @@ describe('shared control primitives (#514)', () => {
   });
 });
 
+/**
+ * Spacing comes from the `--space-*` tokens (#1074, guidelines §11). A padding, margin or gap written as a literal
+ * rem or px value fails here. The exceptions are deliberate and narrow:
+ * - hairlines (2px or less) and optical nudges under 0.2rem, which sit below the smallest token;
+ * - page-layout offsets above 3rem (`--space-12`), such as the shell's top and bottom padding;
+ * - negative offsets and `calc()` expressions, which position rather than space;
+ * - `em` values, which scale with their own text on purpose;
+ * - chart and visualisation geometry (§11 exempts it), by selector;
+ * - the documented exceptions in EXCEPTIONS, each with its reason.
+ */
+describe('spacing tokens (#1074)', () => {
+  const SPACING =
+    /^(?:padding|margin)(?:-(?:top|right|bottom|left|block|inline)(?:-start|-end)?)?$|^(?:row-|column-)?gap$/;
+  const VISUALISATION =
+    /chart-wheel|wheel-|\bwheel\b|mgrid|cycle-diagram|acg-map|svg|glyph|aspect-grid|matrix|elements-grid|dial/;
+
+  /** Literal values kept on purpose, by selector and value. */
+  const EXCEPTIONS: readonly { readonly selector: RegExp; readonly value: string; readonly reason: string }[] = [
+    {
+      selector: /^\.data-table th,\s*\.data-table td$/,
+      value: '0.35rem var(--space-3)',
+      reason: 'fine-pointer table rows (#513), between two tokens; the #895 Consultation balance is measured with it',
+    },
+  ];
+
+  function allowed(value: string, selector: string): boolean {
+    if (value.includes('calc(') || VISUALISATION.test(selector)) return true;
+    if (EXCEPTIONS.some((e) => e.selector.test(selector) && e.value === value)) return true;
+    for (const part of value.split(/\s+/)) {
+      const literal = /^(-?)(\d*\.?\d+)(rem|px)$/.exec(part);
+      if (literal === null) continue;
+      const [, negative, number, unit] = literal;
+      if (negative === '-') continue;
+      const rem = unit === 'rem' ? Number(number) : Number(number) / 14;
+      if (unit === 'px' && Number(number) <= 2) continue;
+      if (rem < 0.2 || rem > 3) continue;
+      return false;
+    }
+    return true;
+  }
+
+  it('uses a token for every padding, margin and gap in app.css', () => {
+    const css = readFileSync('src/ui/app.css', 'utf-8').replace(/\/\*[\s\S]*?\*\//g, '');
+    const offenders: string[] = [];
+    for (const rule of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+      const selector = (rule[1] ?? '').trim();
+      for (const declaration of (rule[2] ?? '').split(';')) {
+        const colon = declaration.indexOf(':');
+        if (colon === -1) continue;
+        const property = declaration.slice(0, colon).trim();
+        const value = declaration.slice(colon + 1).trim();
+        if (SPACING.test(property) && !allowed(value, selector))
+          offenders.push(`${selector} { ${property}: ${value} }`);
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  it('sizes buttons and fields from the control-height tokens', () => {
+    const css = readFileSync('src/ui/app.css', 'utf-8');
+    expect(css).toMatch(/--control-height:\s*[\d.]+rem;/);
+    expect(css).toMatch(/--control-height-compact:\s*[\d.]+rem;/);
+    // The standard button group and the field rule both take their height from the token, not a literal.
+    expect(css).toMatch(/\.primitive-button-primary \{\s*min-height: var\(--control-height\);/);
+    expect(css).toMatch(/\.extended-settings-trigger \{\s*min-height: var\(--control-height-compact\);/);
+    expect(css).toMatch(/\.primitive-field select \{\s*min-height: var\(--control-height\);/);
+  });
+});
+
 describe('data table header tokens (#826)', () => {
   it('sets the header rule to the muted text colour token', () => {
     const css = readFileSync('src/ui/app.css', 'utf-8');
