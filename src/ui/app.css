@@ -972,6 +972,20 @@ footer {
   margin: 0;
 }
 
+/* A labelled group inside a card: the card's gap spaces it, and its own rows are spaced the same way. */
+.tool-card .field-group {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+/* Short checkbox or radio choices that sit together on one wrapping row. */
+.tool-choice-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-4);
+}
+
 /* Two fields that belong together (a date or year range) share one row. */
 .tool-field-row {
   display: grid;

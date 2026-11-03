@@ -13,11 +13,23 @@ import { build } from '../server/index.ts';
 import { newSeededContext } from './shared-people.ts';
 import { gotoAndSettle } from './support.ts';
 
-/** Each tool page, by route, with what marks its first result as ready. */
-const TOOL_PAGES = [
-  { name: 'Eclipses', hash: '#/explore/eclipses', ready: 'table' },
-  { name: 'Planetary cycles', hash: '#/explore/cycles', ready: 'svg.cycle-diagram' },
-] as const;
+interface ToolPage {
+  readonly name: string;
+  readonly hash: string;
+  /** What marks the page as ready to measure: its first result, or the layout itself on a page that waits for input. */
+  readonly ready: string;
+  /** False where the owner accepted a measured shortfall from the 90% rule (§10.1: report it, do not force heights). */
+  readonly balanced: boolean;
+}
+
+/** Each tool page, by route. */
+const TOOL_PAGES: readonly ToolPage[] = [
+  { name: 'Eclipses', hash: '#/explore/eclipses', ready: 'table', balanced: true },
+  { name: 'Planetary cycles', hash: '#/explore/cycles', ready: 'svg.cycle-diagram', balanced: true },
+  // No search runs on open, and the form has eleven controls: the panel is 0.33 of the form before a search and 0.62
+  // after one. The owner accepted the shortfall on 2026-11-03 (#1052); the cards still stretch to one bottom edge.
+  { name: 'Ephemeris research', hash: '#/explore/event-search', ready: '.tool-layout', balanced: false },
+];
 
 const DESKTOP = [
   { width: 1280, height: 800 },
@@ -89,8 +101,10 @@ for (const tool of TOOL_PAGES) {
         expect(zone.sideBySide, `${at}: form and panel side by side`).toBe(true);
         const [formWidth = 0, panelWidth = 0] = zone.widths;
         expect(formWidth, `${at}: the form is the wider column`).toBeGreaterThan(panelWidth);
-        const ratio = Math.min(...zone.heights) / Math.max(...zone.heights);
-        expect(ratio, `${at}: the shorter card is at least 90% of the taller`).toBeGreaterThanOrEqual(0.9);
+        if (tool.balanced) {
+          const ratio = Math.min(...zone.heights) / Math.max(...zone.heights);
+          expect(ratio, `${at}: the shorter card is at least 90% of the taller`).toBeGreaterThanOrEqual(0.9);
+        }
         expect(zone.resultsBelow, `${at}: the results sit below the top zone`).toBe(true);
       }
 

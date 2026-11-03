@@ -21,12 +21,13 @@ import {
 import { eventSearchToIcs } from '../domain/event-search-ics.js';
 import { downloadText } from './download.js';
 import { useRegisterExports } from './export-registry.js';
-import { useMemo, useRef, useState } from 'react';
+import { Fragment, useMemo, useRef, useState } from 'react';
 import { Checkbox } from './primitives/Checkbox.js';
 import { SortableTable } from './SortableTable.js';
 import type { TableColumn } from './table-sort.js';
 import { Select } from './primitives/Select.js';
-import { TextField } from './primitives/TextField.js';
+import { Button } from './primitives/Button.js';
+import { DateField } from './primitives/DateField.js';
 import { useEphemerisProvider } from './EphemerisProviderContext.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { useMessages } from './messages.js';
@@ -197,91 +198,125 @@ export function EventSearchView(): React.JSX.Element {
     <main className="shell">
       <BackLink fallback="#/people" />
       <PageHeader title={t.heading} />
-      <p>{t.intro}</p>
-      <fieldset className="field-group">
-        <legend>{t.rangeLegend}</legend>
-        <TextField
-          label={t.fromLabel}
-          value={parameters.from}
-          placeholder="YYYY-MM-DD"
-          onChange={(from) => {
-            patch({ from });
-          }}
-        />
-        <TextField
-          label={t.toLabel}
-          value={parameters.to}
-          placeholder="YYYY-MM-DD"
-          onChange={(to) => {
-            patch({ to });
-          }}
-        />
-      </fieldset>
-      <fieldset className="field-group">
-        <legend>{t.eventsLegend}</legend>
-        {(['station', 'ingress', 'lunation', 'aspect'] as const).map((kind) => (
-          <Checkbox
-            key={kind}
-            label={t.kindLabels[kind]}
-            checked={parameters.kinds.includes(kind)}
-            onChange={(checked) => {
-              patch({ kinds: toggle(parameters.kinds, kind, checked) });
-            }}
-          />
-        ))}
-        <Select
-          label={t.stationBody}
-          value={parameters.stationBody}
-          options={BODY_OPTIONS}
-          onChange={(stationBody) => {
-            patch({ stationBody });
-          }}
-        />
-        <Select
-          label={t.ingressBody}
-          value={parameters.ingressBody}
-          options={BODY_OPTIONS}
-          onChange={(ingressBody) => {
-            patch({ ingressBody });
-          }}
-        />
-        <Select
-          label={t.aspectBodyA}
-          value={parameters.aspectBodyA}
-          options={BODY_OPTIONS}
-          onChange={(aspectBodyA) => {
-            patch({ aspectBodyA });
-          }}
-        />
-        <Select
-          label={t.aspectBodyB}
-          value={parameters.aspectBodyB}
-          options={BODY_OPTIONS}
-          onChange={(aspectBodyB) => {
-            patch({ aspectBodyB });
-          }}
-        />
-        <Select
-          label={t.aspect}
-          value={parameters.aspectKey}
-          options={ASPECTS.map((aspect) => ({ value: aspect.key, label: aspect.name }))}
-          onChange={(aspectKey) => {
-            patch({ aspectKey });
-          }}
-        />
-      </fieldset>
-      <p>
-        <button type="button" onClick={run} disabled={provider === undefined || result.kind === 'loading'}>
-          {t.searchButton}
-        </button>
-      </p>
+      <div className="tool-layout">
+        <section className="tool-card tool-form" aria-labelledby="event-search-heading">
+          <h2 id="event-search-heading">{t.searchHeading}</h2>
+          <fieldset className="field-group">
+            <legend>{t.rangeLegend}</legend>
+            <div className="tool-field-row">
+              <DateField
+                label={t.fromLabel}
+                value={parameters.from}
+                onChange={(from) => {
+                  patch({ from });
+                }}
+              />
+              <DateField
+                label={t.toLabel}
+                value={parameters.to}
+                onChange={(to) => {
+                  patch({ to });
+                }}
+              />
+            </div>
+          </fieldset>
+          <fieldset className="field-group">
+            <legend>{t.eventsLegend}</legend>
+            <div className="tool-choice-row">
+              {(['station', 'ingress', 'lunation', 'aspect'] as const).map((kind) => (
+                <Checkbox
+                  key={kind}
+                  label={t.kindLabels[kind]}
+                  checked={parameters.kinds.includes(kind)}
+                  onChange={(checked) => {
+                    patch({ kinds: toggle(parameters.kinds, kind, checked) });
+                  }}
+                />
+              ))}
+            </div>
+            <div className="tool-field-row">
+              <Select
+                label={t.stationBody}
+                value={parameters.stationBody}
+                options={BODY_OPTIONS}
+                onChange={(stationBody) => {
+                  patch({ stationBody });
+                }}
+              />
+              <Select
+                label={t.ingressBody}
+                value={parameters.ingressBody}
+                options={BODY_OPTIONS}
+                onChange={(ingressBody) => {
+                  patch({ ingressBody });
+                }}
+              />
+            </div>
+            <div className="tool-field-row">
+              <Select
+                label={t.aspectBodyA}
+                value={parameters.aspectBodyA}
+                options={BODY_OPTIONS}
+                onChange={(aspectBodyA) => {
+                  patch({ aspectBodyA });
+                }}
+              />
+              <Select
+                label={t.aspectBodyB}
+                value={parameters.aspectBodyB}
+                options={BODY_OPTIONS}
+                onChange={(aspectBodyB) => {
+                  patch({ aspectBodyB });
+                }}
+              />
+            </div>
+            <Select
+              label={t.aspect}
+              value={parameters.aspectKey}
+              options={ASPECTS.map((aspect) => ({ value: aspect.key, label: aspect.name }))}
+              onChange={(aspectKey) => {
+                patch({ aspectKey });
+              }}
+            />
+          </fieldset>
+          {result.kind === 'error' && <StatusMessage kind="error">{result.message}</StatusMessage>}
+          <div className="tool-actions">
+            <Button variant="primary" disabled={provider === undefined} busy={result.kind === 'loading'} onClick={run}>
+              {t.searchButton}
+            </Button>
+          </div>
+        </section>
+
+        <aside className="tool-card tool-panel" aria-labelledby="event-search-panel-heading">
+          <h2 id="event-search-panel-heading">{t.panelHeading}</h2>
+          {/* The panel describes the current result: busy while the search runs. */}
+          <div className="tool-panel-body" aria-busy={result.kind === 'loading'} aria-live="polite">
+            {result.kind === 'loading' && <StatusMessage kind="loading">{t.searching}</StatusMessage>}
+            {(result.kind === 'idle' || result.kind === 'error') && <p className="hint">{t.emptyState}</p>}
+            {result.kind === 'ready' && (
+              <>
+                <p className="tool-panel-figure">{t.resultCount(String(result.rows.length))}</p>
+                <dl className="tool-facts">
+                  <dt>{t.rangeLegend}</dt>
+                  <dd>{t.rangeValue(result.parameters.from, result.parameters.to)}</dd>
+                  {result.parameters.kinds.map((kind) => (
+                    <Fragment key={kind}>
+                      <dt>{t.kindLabels[kind]}</dt>
+                      <dd>{String(result.rows.filter((row) => row.kind === kind).length)}</dd>
+                    </Fragment>
+                  ))}
+                </dl>
+              </>
+            )}
+            <p className="hint">{t.intro}</p>
+          </div>
+        </aside>
+      </div>
+
       {/* The result region: busy while the search runs, as the Astrocartography map is. */}
       <div aria-busy={result.kind === 'loading'}>
-        {result.kind === 'loading' && <StatusMessage kind="loading">{t.searching}</StatusMessage>}
-        {result.kind === 'error' && <StatusMessage kind="error">{result.message}</StatusMessage>}
         {result.kind === 'ready' && (
-          <section aria-live="polite">
-            <p>{t.resultCount(String(result.rows.length))}</p>
+          <section>
             <p>
               <button type="button" onClick={download}>
                 {t.downloadCsv}
