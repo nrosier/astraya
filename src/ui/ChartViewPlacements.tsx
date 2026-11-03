@@ -151,7 +151,7 @@ export function positionColumns(
     {
       key: 'speed',
       label: t.speedLabel,
-      labelTooltip: t.speedTooltip,
+      labelHelp: { text: t.speedTooltip },
       align: 'end',
       valueOf: (row) => row.speed ?? '',
       render: (row) => (row.speed === undefined ? '—' : formatFixed(row.speed, 4)),
@@ -159,7 +159,7 @@ export function positionColumns(
     {
       key: 'retrograde',
       label: t.rxLabel,
-      labelTooltip: t.retrogradeTooltip,
+      labelHelp: { text: t.retrogradeTooltip },
       valueOf: (row) => row.retrograde ?? false,
       // Inside the station window (#724) the station marker replaces ℞; with the window off, `stationary` is never set.
       render: (row) => (row.stationary === true ? stationMarkerText(row, t) : row.retrograde ? '℞' : ''),
@@ -237,12 +237,12 @@ export function derivedPointColumns(
             true,
           ),
         ]),
-    { key: 'label', label: t.pointLabel, labelTooltip: t.derivedPointTooltip, valueOf: (row) => row.label },
+    { key: 'label', label: t.pointLabel, labelHelp: { text: t.derivedPointTooltip }, valueOf: (row) => row.label },
     ...degreeColumns<DerivedPointRow>(t, locale),
     {
       key: 'formula',
       label: t.lotFormulaLabel,
-      labelTooltip: t.lotFormulaTooltip,
+      labelHelp: { text: t.lotFormulaTooltip },
       valueOf: (row) => {
         const formula = row.pointKey === undefined ? undefined : lotFormulaByKey(row.pointKey);
         return formula === undefined ? '' : `${formula.dayFormula} / ${formula.nightFormula}`;
@@ -374,7 +374,7 @@ export function fixedStarColumns(
   return [
     // Star names (Regulus, Spica, ...) are proper nouns, the same in both locales — no glossary
     // lookup needed, unlike body/aspect names.
-    { key: 'star', label: t.starLabel, labelTooltip: t.starTooltip, valueOf: (row) => row.star },
+    { key: 'star', label: t.starLabel, labelHelp: { text: t.starTooltip }, valueOf: (row) => row.star },
     {
       key: 'bodyName',
       label: t.bodyLabel,

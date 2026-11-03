@@ -173,14 +173,14 @@ export function RectificationView(): React.JSX.Element {
       {
         key: 'ascendant',
         label: t.ascendantColumn,
-        labelTerm: 'ascendant',
+        labelHelp: 'ascendant',
         valueOf: (row) => row.ascendant,
         render: (row) => signPosition(row.ascendant, locale),
       },
       {
         key: 'midheaven',
         label: t.midheavenColumn,
-        labelTerm: 'midheaven',
+        labelHelp: 'midheaven',
         valueOf: (row) => row.midheaven,
         render: (row) => signPosition(row.midheaven, locale),
       },

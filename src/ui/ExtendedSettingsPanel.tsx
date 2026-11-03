@@ -357,7 +357,7 @@ export function ExtendedSettingsPanel({
     {
       key: 'reports',
       label: t.matrixReportsColumn,
-      labelTooltip: t.matrixReportsHelp,
+      labelHelp: { text: t.matrixReportsHelp },
       align: 'center',
       sortable: false,
       valueOf: (row) => isInterpreted(draft.objectPolicies[row.key]),

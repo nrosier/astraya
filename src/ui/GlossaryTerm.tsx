@@ -18,16 +18,23 @@ export function GlossaryTerm({
   id,
   children,
   label,
+  className,
 }: {
   readonly id: GlossaryTermId;
   readonly children?: React.ReactNode;
   /** The trigger's accessible name when its visible content (a "?") does not name the term itself. */
   readonly label?: string | undefined;
+  /** Extra classes for the trigger's wrapper, e.g. the shared help icon (`primitive-tooltip-icon`). */
+  readonly className?: string | undefined;
 }): React.JSX.Element {
   const glossary = useMessages(astroGlossaryMessages);
   const entry = glossary[id];
   return (
-    <Tooltip text={entry.definition} className="glossary-term" label={label}>
+    <Tooltip
+      text={entry.definition}
+      className={className === undefined ? 'glossary-term' : `glossary-term ${className}`}
+      label={label}
+    >
       {children ?? entry.name}
     </Tooltip>
   );

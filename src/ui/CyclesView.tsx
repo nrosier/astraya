@@ -271,7 +271,7 @@ export function CyclesView(): React.JSX.Element {
       {
         key: 'aspect',
         label: t.aspectColumn,
-        labelTerm: 'aspect',
+        labelHelp: 'aspect',
         valueOf: (row) => row.aspectKey,
         render: (row) => aspectDisplayName(row.aspectKey, locale),
       },

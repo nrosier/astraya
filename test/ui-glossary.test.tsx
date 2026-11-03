@@ -309,7 +309,7 @@ describe('inline glossary tooltips on table headers (#901)', () => {
             <SortableTable
               caption="Headers"
               columns={[
-                { key: 'value', label: label[locale], labelTerm: term, valueOf: (row: { value: string }) => row.value },
+                { key: 'value', label: label[locale], labelHelp: term, valueOf: (row: { value: string }) => row.value },
               ]}
               rows={[{ value: 'row' }]}
               getRowKey={(row) => row.value}
@@ -320,6 +320,8 @@ describe('inline glossary tooltips on table headers (#901)', () => {
         const header = container.querySelector('th');
         const trigger = header?.querySelector('.glossary-term');
         expect(trigger, `${term} header trigger in ${locale}`).not.toBeNull();
+        // One "?" beside the label, so the column name is not shown twice (#1077).
+        expect(trigger?.textContent, `${term} trigger text in ${locale}`).toBe('?');
         // The trigger sits beside the sort button, so it is not nested inside it.
         expect(header?.querySelector('button .glossary-term'), `${term} trigger outside sort button`).toBeNull();
         // Cell text stays plain: the header term adds no glossary trigger to the body.

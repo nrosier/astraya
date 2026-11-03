@@ -206,10 +206,18 @@ export function SortableTable<T>({
                           )}
                         </button>
                       )}
-                      {column.labelTerm !== undefined && <GlossaryTerm id={column.labelTerm} />}
-                      {column.labelTooltip !== undefined && (
+                      {typeof column.labelHelp === 'string' && (
+                        <GlossaryTerm
+                          id={column.labelHelp}
+                          label={t.aboutColumn(column.label)}
+                          className="data-table-help primitive-tooltip-icon"
+                        >
+                          ?
+                        </GlossaryTerm>
+                      )}
+                      {typeof column.labelHelp === 'object' && (
                         <Tooltip
-                          text={column.labelTooltip}
+                          text={column.labelHelp.text}
                           label={t.aboutColumn(column.label)}
                           className="data-table-help primitive-tooltip-icon"
                         >
