@@ -55,6 +55,11 @@ export interface AcgMapOptions {
   /** Map width in px; the map itself is `width / 2` tall. Default 900. */
   readonly width?: number;
   /**
+   * Emit the SVG at 100% of its container's width (#1049) with no fixed `height`, so the viewBox alone sets the
+   * aspect ratio. Only the on-screen view opts in; the PDF/export output keeps the fixed `width`/`height` default.
+   */
+  readonly fluid?: boolean;
+  /**
    * With labels, each line is named on the map and a legend below it pairs every colour with its body and every
    * dash pattern with its line type (#667), so the map reads on its own: on screen, downloaded, or in the PDF.
    */
@@ -232,9 +237,10 @@ export function renderAcgMapSvg(input: AcgMapInput, options?: AcgMapOptions): Ac
   if (legend !== undefined) parts.push(legend.markup);
   const height = mapHeight + (legend?.height ?? 0);
 
+  const size = options?.fluid === true ? 'width="100%"' : `width="${width}" height="${height}"`;
   const markup =
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" ` +
-    `width="${width}" height="${height}" class="acg-map">${parts.join('')}</svg>`;
+    `${size} class="acg-map">${parts.join('')}</svg>`;
   return { markup, width, height };
 }
 

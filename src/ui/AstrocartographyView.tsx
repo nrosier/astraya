@@ -165,7 +165,7 @@ export function AstrocartographyView({ personId }: { personId: string }): React.
       ...(coastline === undefined ? {} : { coastline }),
     };
     // Line names and a legend drawn into the map itself (#667), so the download reads on its own too.
-    return renderAcgMapSvg(input, { labels: acgMapLabels(locale) });
+    return renderAcgMapSvg(input, { labels: acgMapLabels(locale), fluid: true });
   }, [data, relocationPlace, locale, coastline]);
 
   if (person === undefined) {
