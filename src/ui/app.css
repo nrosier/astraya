@@ -1497,6 +1497,28 @@ button.quiet:hover:not(:disabled) {
   background: var(--surface-hover);
 }
 
+/* A route link styled as the quiet button (#1048): same box, weight and hover as `button.quiet`. */
+a.quiet {
+  display: inline-block;
+  padding: 0.55rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--fg);
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+a.quiet:hover {
+  background: var(--surface-hover);
+}
+
+a.quiet:focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--accent) 55%, transparent);
+  outline-offset: 2px;
+}
+
 button.danger {
   /* #506 finding 1: destructive actions move onto --color-danger, distinct from .warning's
      --color-warning, so a user can tell "needs a decision" apart from "cannot be undone". */
