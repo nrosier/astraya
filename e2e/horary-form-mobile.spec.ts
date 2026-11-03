@@ -48,6 +48,8 @@ interface OverflowReport {
     readonly right: number;
     readonly scrollWidth: number;
     readonly clientWidth: number;
+    readonly computedWidth: string;
+    readonly outerHtml: string;
   }[];
 }
 
@@ -70,7 +72,7 @@ async function measureHouseSelect(page: Page, selectLabel: string): Promise<Meas
 
 async function checkForm(page: Page, house: string, coords: readonly string[], expectedLabel: string): Promise<void> {
   const measured = await measureHouseSelect(page, house);
-  test.info().annotations.push({ type: 'house', description: JSON.stringify(measured) });
+  await test.info().attach('house.json', { body: JSON.stringify(measured), contentType: 'application/json' });
   expect(measured.label).toBe(expectedLabel);
   expect(measured.textWidth).toBeLessThanOrEqual(measured.innerWidth);
 
@@ -96,14 +98,19 @@ async function checkForm(page: Page, house: string, coords: readonly string[], e
           right: Math.round(right),
           scrollWidth: el.scrollWidth,
           clientWidth: el.clientWidth,
+          computedWidth: getComputedStyle(el).width,
+          outerHtml: el.outerHTML.slice(0, 200),
         }));
       return { documentScrollWidth: document.documentElement.scrollWidth, elements };
     })()`,
   );
-  test.info().annotations.push({ type: 'overflow-document', description: String(offenders.documentScrollWidth) });
-  test.info().annotations.push({
-    type: 'overflow-elements',
-    description: JSON.stringify(offenders.elements.slice(0, 30)),
+  await test.info().attach('overflow-document.json', {
+    body: JSON.stringify(offenders.documentScrollWidth),
+    contentType: 'application/json',
+  });
+  await test.info().attach('overflow-elements.json', {
+    body: JSON.stringify(offenders.elements.slice(0, 30), null, 2),
+    contentType: 'application/json',
   });
   const sizing = await page.evaluate<string>(
     `(() => {
@@ -123,7 +130,7 @@ async function checkForm(page: Page, house: string, coords: readonly string[], e
       return JSON.stringify({ house: chain(select), coords: chain(coords) });
     })()`,
   );
-  test.info().annotations.push({ type: 'sizing', description: sizing });
+  await test.info().attach('sizing.json', { body: sizing, contentType: 'application/json' });
   expect(overflow).toBeLessThanOrEqual(0);
 
   const viewportWidth = await page.evaluate<number>('window.innerWidth');
