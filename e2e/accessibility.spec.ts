@@ -356,16 +356,8 @@ test.describe('with the shared people (#799)', () => {
     expect(results.violations).toEqual([]);
   });
 
-  test('the astrocartography screen (#171) has no automatically detectable accessibility violations', async () => {
-    test.setTimeout(60_000);
-
-    await openSharedPerson(page, baseUrl, EINSTEIN);
-    await page.getByRole('link', { name: 'Astrocartography', exact: true }).click();
-    await expect(page.locator('div.acg-map svg')).toBeVisible();
-
-    const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
-    expect(results.violations).toEqual([]);
-  });
+  // The astrocartography screen's axe scan lives in astrocartography-golden-path.spec.ts (#512), which waits for the
+  // same map and also scans the open settings dialog (#1093 removed the duplicate that stood here).
 
   test('the interpretation view has no automatically detectable accessibility violations, on either sub-tab (#360)', async () => {
     test.setTimeout(60_000);
