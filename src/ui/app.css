@@ -927,7 +927,7 @@ footer {
 .horary-form {
   display: grid;
   /* Two equal columns when there is room for them, so the top row and the wide parameters card share one width (#969). One column on phones, as before. */
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-4);
   /* Stretch so side-by-side cards share one bottom edge (#895); no fixed height is set. */
   align-items: stretch;
