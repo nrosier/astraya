@@ -26,6 +26,7 @@ const PERSON_ROUTES = [
   'charts/natal/placements',
   'charts/natal/patterns',
   'consultation',
+  'interpretation',
   'timing/transits',
   'timing/forecast',
   'timing/primary-directions',

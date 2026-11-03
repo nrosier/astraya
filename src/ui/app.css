@@ -7680,11 +7680,21 @@ a.quiet,
 .sidebar-footer-meta a,
 .overview-actions a,
 .syncbadge-popover a,
+.report-toc a,
+.sabian-label .primitive-tooltip-trigger,
 .standalone-link {
   display: inline-block;
   min-width: var(--target-min);
   padding-block: max(0px, calc((var(--target-min) - 1lh) / 2));
   margin-block: min(0px, calc((var(--target-min) - 1lh) / -2));
+}
+
+/* The Sabian label's term is a standalone control: its dotted underline is a text decoration, so the hit-area padding
+   above does not push the line away from the word. */
+.sabian-label .primitive-tooltip-trigger {
+  border-bottom: 0;
+  text-decoration: underline dotted var(--muted);
+  text-underline-offset: 0.2em;
 }
 
 @media (pointer: coarse) {
