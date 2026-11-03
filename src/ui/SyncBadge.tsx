@@ -84,6 +84,7 @@ export function SyncBadge(): React.JSX.Element {
   const now = useNow(30_000);
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const t = useMessages(syncBadgeMessages);
   const statusT = useMessages(statusMessages);
 
@@ -101,8 +102,20 @@ export function SyncBadge(): React.JSX.Element {
       close();
     };
     window.addEventListener('hashchange', onHashChange);
+    // Guidelines §9 (#1081): a popover closes on Escape wherever focus is, and on a click outside it. Escape returns
+    // focus to the badge; a click elsewhere leaves focus where the user put it.
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') close();
+    };
+    const onPointerDown = (event: PointerEvent): void => {
+      if (event.target instanceof Node && wrapperRef.current?.contains(event.target) !== true) setOpen(false);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('pointerdown', onPointerDown);
     return () => {
       window.removeEventListener('hashchange', onHashChange);
+      document.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('pointerdown', onPointerDown);
     };
   }, [open]);
 
@@ -121,14 +134,15 @@ export function SyncBadge(): React.JSX.Element {
 
   return (
     <div
+      ref={wrapperRef}
       className="syncbadge"
       data-tone={status.tone === 'warn' ? 'warn' : 'ok'}
-      onKeyDown={(event) => {
-        // On the wrapper rather than the popover itself: the trigger button keeps focus
-        // after opening it (there's nothing inside the popover worth moving focus to — it's
-        // a read-only explanation, not a form), so a handler scoped to the popover would
-        // never see the keypress.
-        if (open && event.key === 'Escape') close();
+      onBlur={(event) => {
+        // A disclosure, not a dialog: the badge keeps focus on opening, and the popover's link follows it in Tab
+        // order. Focus leaving the badge altogether closes the popover (§9, #1081).
+        if (open && !(event.relatedTarget instanceof Node && event.currentTarget.contains(event.relatedTarget))) {
+          setOpen(false);
+        }
       }}
     >
       <span className="syncbadge-dot" data-state={sync.kind === 'synced' ? 'synced' : 'local'} aria-hidden="true" />
