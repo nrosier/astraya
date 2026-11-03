@@ -824,6 +824,17 @@ dd:not(:first-of-type) {
   margin-bottom: 1rem;
 }
 
+/* #1049: the map fills the card's inner width on screen; the viewBox keeps the aspect ratio. The generated width attribute is overridden here only, so the PDF/export SVG is unchanged. */
+.acg-map {
+  width: 100%;
+}
+
+.acg-map svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
 .acg-meanings-card {
   padding: 0;
   overflow: hidden;
