@@ -50,35 +50,19 @@ test('a natal, transit, and progressed triwheel is independently configurable (#
   await openNatalChart(page);
   await expect(page.locator('div.chart-wheel')).toBeVisible();
 
-  // The panel is a right slide-over drawer beside the wheel (#817), closed by default; the wheel stays visible while it
-  // is open, and Apply closes it again.
+  // The panel is a modal right-hand drawer (#1080, as Extended settings is), closed by default; Apply closes it again.
   const trigger = page.locator('.chart-overlay-settings button.chart-overlay-trigger');
   const dialog = page.locator('.chart-overlay-settings dialog');
   await expect(dialog).toBeHidden();
   await trigger.click();
   await expect(dialog).toBeVisible();
   await expect(dialog).toHaveAttribute('data-placement', 'right');
-  await expect(dialog).toHaveAttribute('data-modal', 'false');
+  await expect(dialog).not.toHaveAttribute('data-modal', 'false');
   await expect(page.locator('div.chart-wheel')).toBeVisible();
-  // Push-aside (#817): at 1280x800 and 1440x900 the wheel column makes room, so wheel and drawer do not overlap, the
-  // wheel is fully inside the viewport, and nothing (no backdrop) sits over it.
-  for (const viewport of [
-    { width: 1280, height: 800 },
-    { width: 1440, height: 900 },
-  ]) {
-    await page.setViewportSize(viewport);
-    await expect(async () => {
-      const drawerBox = await dialog.boundingBox();
-      const wheelBox = await page.locator('div.chart-wheel').boundingBox();
-      if (drawerBox === null || wheelBox === null) throw new Error('expected layout boxes');
-      expect(wheelBox.x).toBeGreaterThanOrEqual(0);
-      expect(wheelBox.x + wheelBox.width).toBeLessThanOrEqual(drawerBox.x + 0.5);
-      expect(drawerBox.x + drawerBox.width).toBeGreaterThan(viewport.width - 2);
-    }).toPass();
-    // Not behind a backdrop: a trial click at the wheel's centre fails if another element would intercept it.
-    await page.locator('div.chart-wheel').click({ trial: true });
-    await expect(page.locator('.chart-point[data-body="sun"]').first()).toBeVisible();
-  }
+  // Modal (#1080): the dialog is in the top layer, so the page behind it is inert.
+  expect(
+    await page.evaluate<boolean>("document.querySelector('.chart-overlay-settings dialog').matches(':modal')"),
+  ).toBe(true);
   await dialog.getByRole('checkbox', { name: 'Transit ring', exact: true }).check();
   await dialog.getByLabel('Transit date', { exact: true }).fill('2025-01-01');
   await dialog.getByRole('checkbox', { name: 'Secondary progressed ring', exact: true }).check();

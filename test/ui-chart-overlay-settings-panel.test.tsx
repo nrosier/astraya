@@ -77,8 +77,8 @@ describe('ChartOverlaySettingsPanel', () => {
     const container = await mount();
     const dialog = must(container.querySelector('dialog'));
     expect(dialog.getAttribute('data-placement')).toBe('right');
-    // Non-modal (#817): no backdrop and an inert-free page, so the wheel beside it stays clickable.
-    expect(dialog.getAttribute('data-modal')).toBe('false');
+    // Modal (#1080): the same StagedDialog as Extended settings, so no data-modal="false" marker is set.
+    expect(dialog.getAttribute('data-modal')).toBeNull();
     expect(dialog.hasAttribute('open')).toBe(false);
     expect(container.querySelector('input[type="checkbox"]')).toBeNull();
     const trigger = must(container.querySelector<HTMLButtonElement>('button.chart-overlay-trigger'));
@@ -124,11 +124,11 @@ describe('ChartOverlaySettingsPanel', () => {
     expect(document.activeElement).toBe(trigger);
     expect(container.querySelector('input[type="checkbox"]')).toBeNull();
 
-    // Reopening starts from the applied settings, and Escape discards a new draft.
+    // Reopening starts from the applied settings, and Escape (the modal dialog's cancel event) discards a new draft.
     await click(trigger);
     expect(must(container.querySelectorAll<HTMLInputElement>('input[type="checkbox"]').item(2)).checked).toBe(true);
     await act(async () => {
-      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      dialog.dispatchEvent(new Event('cancel', { cancelable: true }));
       await Promise.resolve();
     });
     expect(dialog.hasAttribute('open')).toBe(false);
