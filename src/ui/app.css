@@ -2183,6 +2183,12 @@ label.stacked textarea:focus-visible {
   overflow-x: auto;
   border: 1px solid var(--line);
   border-radius: var(--radius);
+  /* Scroll cue (#1076): a fade along each side edge while more columns lie beyond it; the local layers in --bg cover it once that end is reached. */
+  background:
+    linear-gradient(to right, var(--bg), var(--bg)) local left / var(--space-4) 100% no-repeat,
+    linear-gradient(to left, var(--bg), var(--bg)) local right / var(--space-4) 100% no-repeat,
+    linear-gradient(to right, var(--line), transparent) scroll left / var(--space-6) 100% no-repeat,
+    linear-gradient(to left, var(--line), transparent) scroll right / var(--space-6) 100% no-repeat;
 }
 
 .data-table table {
@@ -2281,6 +2287,10 @@ label.stacked textarea:focus-visible {
   overflow-y: auto;
   /* Scroll cue: a fade along the bottom edge while more rows lie below; the local layer in --bg covers it once the end is reached. */
   background:
+    linear-gradient(to right, var(--bg), var(--bg)) local left / var(--space-4) 100% no-repeat,
+    linear-gradient(to left, var(--bg), var(--bg)) local right / var(--space-4) 100% no-repeat,
+    linear-gradient(to right, var(--line), transparent) scroll left / var(--space-6) 100% no-repeat,
+    linear-gradient(to left, var(--line), transparent) scroll right / var(--space-6) 100% no-repeat,
     linear-gradient(var(--bg), var(--bg)) local bottom / 100% var(--space-4) no-repeat,
     linear-gradient(to bottom, transparent, var(--line)) scroll bottom / 100% var(--space-6) no-repeat;
 }

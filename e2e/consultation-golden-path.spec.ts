@@ -89,6 +89,12 @@ test('a person with a known birth time gets a Consultation screen with transits,
   ]) {
     await expect(page.getByRole('heading', { level: 2, name: heading })).toBeVisible();
   }
+  // The transit table is a labelled, focusable scroll region at phone width (#1076), and its scroll cue is drawn.
+  const transitRegion = page
+    .getByRole('region', { name: 'Major active transits', exact: true })
+    .and(page.locator('div.data-table-scroll'));
+  await expect(transitRegion).toHaveAttribute('tabindex', '0');
+  await expect(transitRegion).toHaveCSS('background-image', /linear-gradient/);
   // Transits to the angles are listed apart from the ranked ones (#678), one disclosure per angle (D-800a).
   await expect(page.getByRole('button', { name: /^Transits to the Ascendant/ })).toBeVisible();
   await expect(page.getByRole('button', { name: /^Transits to the Midheaven/ })).toBeVisible();
