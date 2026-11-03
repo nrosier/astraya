@@ -2,7 +2,7 @@
 /**
  * The Charts page title names the chart type as well as the person (#885): "Natal · Name" for the
  * natal chart, "Natal and harmonic charts · Name" when two charts are compared, in both locales, in the h1 and in
- * document.title. Real store (fake-indexeddb via test/setup.ts). The draconic, harmonic, return and
+ * document.title, which adds the app name (#1078). Real store (fake-indexeddb via test/setup.ts). The draconic, harmonic, return and
  * relocated charts are separate screens whose own headings already name their type.
  */
 import { act } from 'react';
@@ -82,14 +82,14 @@ describe('chart title names the chart type (#885)', () => {
   it('natal: the h1 and document.title read "Natal · Ada"', async () => {
     const host = await mountChart();
     expect(host.querySelector('h1')?.textContent).toBe(`${chartTypesMessages.en.typeLabels.natal} · Ada`);
-    expect(document.title).toBe('Natal · Ada');
+    expect(document.title).toBe('Natal · Ada – Astraya');
   });
 
   it('comparison: the h1 and document.title read "Natal and harmonic charts · Ada"', async () => {
     const host = await mountChart('draconic');
     expect(host.querySelector('h1')?.textContent).toBe(chartViewMessages.en.comparisonChartTitle('Ada'));
     expect(host.querySelector('h1')?.textContent).toBe('Natal and harmonic charts · Ada');
-    expect(document.title).toBe('Natal and harmonic charts · Ada');
+    expect(document.title).toBe('Natal and harmonic charts · Ada – Astraya');
   });
 
   it('Dutch: uses the existing Dutch natal label', async () => {
@@ -103,6 +103,6 @@ describe('chart title names the chart type (#885)', () => {
     const host = await mountChart('draconic');
     expect(host.querySelector('h1')?.textContent).toBe(chartViewMessages.nl.comparisonChartTitle('Ada'));
     expect(host.querySelector('h1')?.textContent).toBe('Geboorte- en harmonische horoscopen · Ada');
-    expect(document.title).toBe('Geboorte- en harmonische horoscopen · Ada');
+    expect(document.title).toBe('Geboorte- en harmonische horoscopen · Ada – Astraya');
   });
 });

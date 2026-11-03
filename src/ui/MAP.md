@@ -138,6 +138,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `chart-sections.ts` — Charts page URL axes (type + view: wheel/aspects/placements/patterns). Deps: `ChartView.messages`.
 - `cycles.ts` — Planetary-cycles screen (body/aspect presets + row shaping). Deps: `astrology/bodies`, `astrology/mutual-aspects`, `astrology/signs`, `time/julian`.
 - `degree-symbol-setting.ts` — Device preference for whether degree-symbol (Sabian symbol) paragraphs show in the Report (#527). Deps: none.
+- `document-title.ts` — Browser tab title from a screen's heading plus the app name (#1078); used by PageHeader and screens with their own h1. Deps: react.
 - `download.ts` — Shared file-download mechanism (object URL anchor). Deps: none (browser APIs).
 - `eclipses.ts` — Eclipses screen (search capping + display rows). Deps: `astrology/eclipses`, `astrology/signs`, `time/julian`.
 - `electional.ts` — Electional screen (form parsing + result formatting). Deps: `astrology/electional`, `time/julian`, `./place-fields`.

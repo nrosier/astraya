@@ -22,6 +22,7 @@
  * @conventions Reads `export-registry.tsx`'s existing context directly — a screen's useRegisterExports call needs no change. Uses its own `useExclusiveOpen` instance (not the header's) for the export dropdown's open/close/Escape/outside-click behavior.
  * @exports PageHeader
  */
+import { useDocumentTitle } from './document-title.js';
 import { useState } from 'react';
 import type { GlossaryTermId } from './astro-glossary.messages.js';
 import { GlossaryTerm } from './GlossaryTerm.js';
@@ -56,6 +57,8 @@ export function PageHeader({
   /** A small indicator read as part of the title, e.g. a save-status dot, placed directly after the title text (#896). */
   readonly titleAside?: React.ReactNode;
 }): React.JSX.Element {
+  // The tab title follows the page heading (#1078).
+  useDocumentTitle(title);
   const t = useMessages(pageHeaderMessages);
   const items = useExportItems();
   const dropdown = useExclusiveOpen<'export'>('page-header-export');

@@ -4,6 +4,7 @@
  * @conventions Hash routing via `parseRoute()`/`route.js` rather than a router library; every screen not needed by the landing route (the ten person-scoped screens, AdminPanel/export-builder/corpus admin screens, and About/Changelog/SetPasswordForm/SetupForm) is behind `lazy(() => import(...))` per the bundle-size budget (#338, #494); `Stored` gates routes needing the local IndexedDB store.
  * @exports App, HomeRedirect
  */
+import { DocumentTitle } from './document-title.js';
 import { lazy, Suspense, useEffect, useEffectEvent, useRef, useState } from 'react';
 import { registerServiceWorker } from '../pwa/register.js';
 import { startWarming } from '../pwa/warm-status.js';
@@ -112,6 +113,7 @@ function Stored({ children }: { children: React.ReactNode }): React.JSX.Element 
     return (
       <main className="shell">
         <BackLink fallback="#/people" />
+        <DocumentTitle heading={t.noLocalStorage} />
         <h1>{t.noLocalStorage}</h1>
         <StatusMessage kind="error">{t.noLocalStorageWarning(status.message)}</StatusMessage>
         <p>{t.noLocalStorageHint}</p>
