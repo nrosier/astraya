@@ -6373,16 +6373,8 @@ button.primitive-button-compact {
 }
 
 .data-table th .data-table-help .primitive-tooltip-trigger {
-  width: 1.1rem;
-  height: 1.1rem;
-  border: 1px solid var(--line);
-  border-radius: 50%;
-  font-size: 0.75rem;
-  font-weight: 600;
-  line-height: 1;
   letter-spacing: 0;
   text-transform: none;
-  text-align: center;
 }
 
 .data-table th .data-table-help .primitive-tooltip-popup {
@@ -6602,7 +6594,7 @@ button.primitive-button-compact {
 .primitive-disclosure-trigger {
   display: flex;
   width: 100%;
-  min-height: 2.75rem;
+  min-height: 44px;
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-2) var(--space-3);
@@ -7605,4 +7597,139 @@ button.mgrid-pair:focus-visible {
 
 .note-fork-hint {
   font-size: var(--text-xs);
+}
+
+/*
+ * Target sizes (#1073; guidelines §6; WCAG 2.5.8). Every control is at least --target-min across: 24px for any
+ * pointer, the WCAG 2.2 AA floor, and 44px on a coarse pointer, where the standard and compact control heights also
+ * become 44px. The values are CSS pixels, not rem: the 14px root (`html`, above) once shrank a 2.75rem "44px" target
+ * to 38.5px. A glossary term inside a sentence is exempt (WCAG 2.5.8's inline exception); a standalone help icon is not.
+ */
+:root {
+  --target-min: 24px;
+}
+
+@media (pointer: coarse) {
+  :root {
+    --target-min: 44px;
+    --control-height: 44px;
+    --control-height-compact: 44px;
+  }
+}
+
+/* A standalone help icon: the button is a full target; the small ring is drawn inside it. */
+.primitive-tooltip-icon .primitive-tooltip-trigger {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  min-width: var(--target-min);
+  min-height: var(--target-min);
+  padding: 0;
+  border: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.primitive-tooltip-icon .primitive-tooltip-trigger::before {
+  content: '';
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  width: 1.1rem;
+  height: 1.1rem;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  translate: -50% -50%;
+}
+
+.primitive-tooltip-icon .primitive-tooltip-trigger:hover::before,
+.primitive-tooltip-icon .primitive-tooltip-trigger:focus-visible::before {
+  border-color: var(--accent);
+}
+
+/* Small controls that keep their look but grow to the target, in both directions. */
+.data-table th button,
+.syncbadge-label,
+.workspace-rail-toggle,
+.birth-record-status .primitive-tooltip-trigger {
+  min-height: var(--target-min);
+  min-width: var(--target-min);
+}
+
+.birth-record-status .primitive-tooltip-trigger {
+  justify-content: center;
+}
+
+/* A short label ("1", "×") must not leave a standard or compact button narrower than the target. */
+button:not([class]),
+button.quiet,
+button.danger,
+a.quiet,
+.primitive-button-primary,
+.primitive-button-compact,
+.data-table-actions button {
+  min-width: var(--target-min);
+}
+
+/* A standalone text link (Back, the sidebar footer, Overview's next steps, the sync note, `.standalone-link` for a link
+   alone on its own line) gets a target-sized hit area
+   from padding, and gives the same space back with a negative margin, so the line it sits on does not move. */
+.back a,
+.sidebar-footer-meta a,
+.overview-actions a,
+.syncbadge-popover a,
+.standalone-link {
+  display: inline-block;
+  min-width: var(--target-min);
+  padding-block: max(0px, calc((var(--target-min) - 1lh) / 2));
+  margin-block: min(0px, calc((var(--target-min) - 1lh) / -2));
+}
+
+@media (pointer: coarse) {
+  .app-nav-toggle,
+  .skip-link,
+  .app-nav-item,
+  .app-nav-group-toggle,
+  .app-nav-person,
+  .tab,
+  .tab-row__tabs > a,
+  .chart-view-link,
+  .primitive-choice {
+    min-height: var(--target-min);
+  }
+
+  .app-header-brand {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--target-min);
+  }
+
+  .corner-pill {
+    height: auto;
+    min-height: var(--target-min);
+    min-width: var(--target-min);
+  }
+
+  .profile-tile-menu,
+  .signin-password-toggle {
+    min-width: var(--target-min);
+  }
+
+  .primitive-number-step {
+    width: var(--target-min);
+    height: var(--target-min);
+  }
+
+  /* More specific rules that set their own box: a segment of a segmented control, and the chart-type select, whose
+     desktop height pairs with the view bar (#511) but which is a standard touch control on a phone. */
+  .primitive-choice-group-segmented .primitive-choice {
+    min-width: var(--target-min);
+    min-height: var(--target-min);
+  }
+
+  .chart-type-select .primitive-field select {
+    height: var(--control-height);
+  }
 }

@@ -482,7 +482,7 @@ function renderShapeSection(
               <dt>{t.almutenKeyLabel}</dt>
               <dd className="almuten-summary">
                 {almuten.almutens.map((key) => bodyDisplayName(key, locale)).join(', ')}{' '}
-                <Tooltip text={t.almutenTooltip} label={t.almutenTooltipLabel}>
+                <Tooltip text={t.almutenTooltip} label={t.almutenTooltipLabel} className="primitive-tooltip-icon">
                   ?
                 </Tooltip>
               </dd>
@@ -574,7 +574,7 @@ export function renderDignitiesTable(
       />
       <h4 className="condition-section-header patterns-section-header">
         {t.conditionCaption}{' '}
-        <Tooltip text={t.conditionTooltip} label={t.conditionTooltipLabel}>
+        <Tooltip text={t.conditionTooltip} label={t.conditionTooltipLabel} className="primitive-tooltip-icon">
           ?
         </Tooltip>
       </h4>
@@ -594,7 +594,7 @@ export function renderDignitiesTable(
             keyboard focus — a bare <span title> or an unwired aria-label button only ever
             reached a mouse-hover user, and never anyone who clicked expecting something to
             open. */}
-        <Tooltip text={t.dispositorsTooltip} label={t.dispositorsTooltipLabel}>
+        <Tooltip text={t.dispositorsTooltip} label={t.dispositorsTooltipLabel} className="primitive-tooltip-icon">
           ?
         </Tooltip>
       </h4>
@@ -609,7 +609,7 @@ export function renderDignitiesTable(
       />
       <h4 className="reception-section-header patterns-section-header">
         {t.receptionCaption}{' '}
-        <Tooltip text={t.receptionTooltip} label={t.receptionTooltipLabel}>
+        <Tooltip text={t.receptionTooltip} label={t.receptionTooltipLabel} className="primitive-tooltip-icon">
           ?
         </Tooltip>
       </h4>

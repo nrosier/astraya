@@ -38,7 +38,9 @@ export function About({ seVersion }: { seVersion?: string | undefined }): React.
         <dd>{seVersion ?? t.notLoaded}</dd>
       </dl>
       <p>
-        <a href="#/changelog">{t.changelogLink}</a>
+        <a className="standalone-link" href="#/changelog">
+          {t.changelogLink}
+        </a>
       </p>
 
       <h2>{t.yourDataHeading}</h2>
@@ -68,7 +70,9 @@ export function About({ seVersion }: { seVersion?: string | undefined }): React.
         {t.licenceParagraphAfter}
       </p>
       <p>
-        <a href={SOURCE_URL_FOR_BUILD}>{t.sourceCodeLink}</a>
+        <a className="standalone-link" href={SOURCE_URL_FOR_BUILD}>
+          {t.sourceCodeLink}
+        </a>
       </p>
 
       <h2>{t.acknowledgementsHeading}</h2>

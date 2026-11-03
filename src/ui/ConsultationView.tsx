@@ -579,13 +579,17 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
                           />
                         )}
                         <p>
-                          <a href={hrefFor('transit', { personId })}>{t.openTransitsLink}</a>
+                          <a className="standalone-link" href={hrefFor('transit', { personId })}>
+                            {t.openTransitsLink}
+                          </a>
                         </p>
                       </Disclosure>
                     ))
                   )}
                   <p className="hint">
-                    <a href={hrefFor('transit', { personId })}>{t.openTransitsLink}</a>
+                    <a className="standalone-link" href={hrefFor('transit', { personId })}>
+                      {t.openTransitsLink}
+                    </a>
                   </p>
                 </section>
 
@@ -625,7 +629,9 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
                     )}
                   </Disclosure>
                   <p>
-                    <a href={hrefFor('chart', { personId })}>{t.openPatternsAndCondition}</a>
+                    <a className="standalone-link" href={hrefFor('chart', { personId })}>
+                      {t.openPatternsAndCondition}
+                    </a>
                   </p>
                 </section>
               </div>
@@ -682,11 +688,15 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
                     </li>
                   </ul>
                   <p>
-                    <a href={hrefFor('progressions', { personId })}>{t.openProgressions}</a>
+                    <a className="standalone-link" href={hrefFor('progressions', { personId })}>
+                      {t.openProgressions}
+                    </a>
                     {load.year.profection !== undefined && (
                       <>
                         {' '}
-                        <a href={hrefFor('profections', { personId })}>{t.openProfections}</a>
+                        <a className="standalone-link" href={hrefFor('profections', { personId })}>
+                          {t.openProfections}
+                        </a>
                       </>
                     )}
                   </p>
@@ -734,8 +744,12 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
                     </>
                   )}
                   <p>
-                    <a href={hrefFor('primary-directions', { personId })}>{t.openDirections}</a>{' '}
-                    <a href={hrefFor('timing-timeline', { personId })}>{t.openTimingTimeline}</a>
+                    <a className="standalone-link" href={hrefFor('primary-directions', { personId })}>
+                      {t.openDirections}
+                    </a>{' '}
+                    <a className="standalone-link" href={hrefFor('timing-timeline', { personId })}>
+                      {t.openTimingTimeline}
+                    </a>
                   </p>
                 </section>
 
