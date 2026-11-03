@@ -19,8 +19,10 @@ const en = {
   theme: 'Theme',
   light: 'Light',
   dark: 'Dark',
+  system: 'System',
   lightGlyph: '☀',
   darkGlyph: '☾',
+  systemGlyph: '◐',
   kebabGlyph: '⋮',
   menuLabel: 'Account menu',
 };
@@ -37,8 +39,10 @@ const nl: typeof en = {
   theme: 'Thema',
   light: 'Licht',
   dark: 'Donker',
+  system: 'Systeem',
   lightGlyph: '☀',
   darkGlyph: '☾',
+  systemGlyph: '◐',
   kebabGlyph: '⋮',
   menuLabel: 'Accountmenu',
 };

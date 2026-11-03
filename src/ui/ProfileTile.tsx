@@ -9,9 +9,9 @@
  * Dismissal (Escape with focus back on the tile, a press outside, tabbing out, or a page change) is
  * `useExclusiveOpen`'s, the same rules as the header's other dropdowns, not a second open/close system.
  *
- * Theme here is a two-way segmented choice, `[ ☀ Light | ☾ Dark ]` (owner decision on #964). When
- * the stored choice is "follow the system", the segment shows the OS theme, so one is always
- * selected. The Preferences page keeps its three-way `ThemeToggle` unchanged.
+ * Theme here is a three-way segmented choice, `[ ☀ Light | ☾ Dark | ◐ System ]` (#1047, matching
+ * Preferences; this replaces the two-way choice from #964). "System" is stored as `'system'` and
+ * follows `prefers-color-scheme`. The Preferences page keeps its `ThemeToggle` unchanged.
  */
 /**
  * @module ProfileTile
@@ -29,11 +29,10 @@ import { profileTileMessages } from './ProfileTile.messages.js';
 import { ChoiceGroup } from './primitives/ChoiceGroup.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { applyTheme, readStoredTheme, writeStoredTheme } from './theme-dom.js';
-import type { Theme } from './theme.js';
+import { isTheme, type Theme } from './theme.js';
 import { useExclusiveOpen } from './use-exclusive-open.js';
 
 const KEY = 'profile';
-type DisplayTheme = 'light' | 'dark';
 
 function subscribeToHash(onChange: () => void): () => void {
   window.addEventListener('hashchange', onChange);
@@ -44,18 +43,6 @@ function subscribeToHash(onChange: () => void): () => void {
 
 function currentHash(): string {
   return window.location.hash;
-}
-
-/** The theme the page shows: an explicit choice, or the OS setting when the stored choice is "system". */
-function displayTheme(stored: Theme): DisplayTheme {
-  if (stored === 'light' || stored === 'dark') return stored;
-  return typeof window.matchMedia === 'function' && window.matchMedia('(prefers-color-scheme: dark)').matches
-    ? 'dark'
-    : 'light';
-}
-
-function isDisplayTheme(value: string): value is DisplayTheme {
-  return value === 'light' || value === 'dark';
 }
 
 export function ProfileTile({
@@ -219,13 +206,14 @@ export function ProfileTile({
               <ChoiceGroup
                 label={t.theme}
                 segmented
-                value={displayTheme(storedTheme)}
+                value={storedTheme}
                 options={[
                   { value: 'light', label: `${t.lightGlyph} ${t.light}` },
                   { value: 'dark', label: `${t.darkGlyph} ${t.dark}` },
+                  { value: 'system', label: `${t.systemGlyph} ${t.system}` },
                 ]}
                 onChange={(value) => {
-                  if (!isDisplayTheme(value)) return;
+                  if (!isTheme(value)) return;
                   writeStoredTheme(value);
                   applyTheme(value);
                   setStoredTheme(value);
