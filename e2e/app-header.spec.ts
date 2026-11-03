@@ -247,6 +247,67 @@ test.describe('with the shared people (#799)', () => {
     expect(await page.evaluate(() => localStorage.getItem('astraya.theme'))).toBe('system');
     await page.keyboard.press('Escape');
   });
+
+  test('the popover theme radiogroup is operated by keyboard alone (#1047)', async () => {
+    await gotoAndSettle(page, `${baseUrl}/#/people`);
+    const header = page.getByRole('banner');
+    await header
+      .locator('[aria-haspopup="true"].profile-tile, [aria-haspopup="true"].profile-tile-menu')
+      .first()
+      .click();
+    const popover = page.locator('.profile-popover');
+    await expect(popover).toBeVisible();
+
+    // The Theme control is announced as a radiogroup named "Theme", with three native radio options.
+    const group = popover.getByRole('radiogroup', { name: 'Theme', exact: true });
+    await expect(group).toBeVisible();
+    const light = group.getByRole('radio', { name: /Light$/ });
+    const dark = group.getByRole('radio', { name: /Dark$/ });
+    const system = group.getByRole('radio', { name: /System$/ });
+    await expect(group.getByRole('radio')).toHaveCount(3);
+
+    // The seeded context starts with no explicit override: System is the checked option.
+    await expect(system).toBeChecked();
+    await expect(page.locator('html')).not.toHaveAttribute('data-theme');
+
+    // Focus the group's current option from the keyboard side, then move with the arrow keys only.
+    await system.focus();
+    await expect(system).toBeFocused();
+
+    // ArrowRight wraps from the last option (System) to the first (Light), selecting it.
+    await page.keyboard.press('ArrowRight');
+    await expect(light).toBeFocused();
+    await expect(light).toBeChecked();
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+    expect(await page.evaluate(() => localStorage.getItem('astraya.theme'))).toBe('light');
+
+    // ArrowRight moves to Dark and selects it.
+    await page.keyboard.press('ArrowRight');
+    await expect(dark).toBeFocused();
+    await expect(dark).toBeChecked();
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    expect(await page.evaluate(() => localStorage.getItem('astraya.theme'))).toBe('dark');
+
+    // Space on the already-checked Dark option leaves the selection unchanged.
+    await page.keyboard.press('Space');
+    await expect(dark).toBeChecked();
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+
+    // ArrowLeft moves back to Light.
+    await page.keyboard.press('ArrowLeft');
+    await expect(light).toBeFocused();
+    await expect(light).toBeChecked();
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+
+    // ArrowLeft wraps from Light to System, which clears the explicit override and stores 'system'.
+    await page.keyboard.press('ArrowLeft');
+    await expect(system).toBeFocused();
+    await expect(system).toBeChecked();
+    await expect(page.locator('html')).not.toHaveAttribute('data-theme');
+    expect(await page.evaluate(() => localStorage.getItem('astraya.theme'))).toBe('system');
+
+    await page.keyboard.press('Escape');
+  });
 });
 
 // The sync dot turns green (#964) and the ↻ button runs a manual sync only once a signed-in
