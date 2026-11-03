@@ -59,7 +59,9 @@ async function settle(page: Page, hash: string, locale: string, theme: string): 
       .getByRole('button', { name: locale === 'nl' ? 'Persoon toevoegen' : 'Add a person', exact: true })
       .click();
   // The section tab row (#882) also holds a display:none fallback Select above 40rem; wait for a rendered field.
-  await expect(page.locator('.primitive-field:visible').first()).toBeVisible();
+  await expect
+    .soft(page.locator('.primitive-field:visible').first(), `${hash} ${locale} ${theme}: a field is visible`)
+    .toBeVisible();
 }
 
 /** Labels cut off, controls off-screen or too narrow, and sideways page scroll, at the current viewport width. */
@@ -91,13 +93,14 @@ for (const [name, hash] of SCREENS) {
     }) => {
       test.setTimeout(120_000);
       for (const theme of THEMES) {
+        const where = `${name}, ${locale}, ${theme}`;
         await page.setViewportSize({ width: 1280, height: 900 });
         await settle(page, hash, locale, theme);
         const resting = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
         expect
           .soft(
             resting.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`),
-            `axe resting, ${theme}`,
+            `${where}: axe resting`,
           )
           .toEqual([]);
 
@@ -107,15 +110,17 @@ for (const [name, hash] of SCREENS) {
         expect
           .soft(
             focused.violations.map((v) => v.id),
-            `axe focused, ${theme}`,
+            `${where}: axe focused`,
           )
           .toEqual([]);
 
         if (theme !== 'light') continue;
         for (const width of [1280, 390]) {
           await page.setViewportSize({ width, height: 900 });
-          await expect(page.locator('.primitive-field:visible').first()).toBeVisible();
-          expect.soft(await page.evaluate(FIT_PROBLEMS), `fits ${String(width)}px wide`).toEqual([]);
+          await expect
+            .soft(page.locator('.primitive-field:visible').first(), `${where}, ${String(width)}px: a field is visible`)
+            .toBeVisible();
+          expect.soft(await page.evaluate(FIT_PROBLEMS), `${where}: fits ${String(width)}px wide`).toEqual([]);
         }
       }
     });

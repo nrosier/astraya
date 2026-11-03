@@ -158,12 +158,12 @@ interface ControlEdges {
   readonly buttonBottom: number;
 }
 
-async function measureSearchControls(page: Page): Promise<ControlEdges> {
+async function measureSearchControls(page: Page, where: string): Promise<ControlEdges> {
   const form = page
     .locator('form.birth-place-search-form')
     .filter({ has: page.locator('input[role="combobox"]') })
     .first();
-  await expect(form).toBeVisible();
+  await expect.soft(form, `${where}: search form visible`).toBeVisible();
   const input = await form.locator('input[role="combobox"]').boundingBox();
   const button = await form.locator('button[type="submit"]').boundingBox();
   if (input === null || button === null) throw new Error('search input or button has no bounding box');
@@ -215,10 +215,14 @@ for (const screen of SEARCH_SCREENS) {
     await screen.open(page);
     for (const viewport of VIEWPORTS) {
       await page.setViewportSize(viewport);
-      expectFlushControls(await measureSearchControls(page), `${String(viewport.width)}x${String(viewport.height)}`);
+      const where = `${screen.name}, ${String(viewport.width)}x${String(viewport.height)}`;
+      expectFlushControls(await measureSearchControls(page, where), where);
     }
     await page.setViewportSize(VIEWPORTS[1]);
     await page.emulateMedia({ colorScheme: 'dark' });
-    expectFlushControls(await measureSearchControls(page), '1280x800 dark');
+    expectFlushControls(
+      await measureSearchControls(page, `${screen.name}, 1280x800 dark`),
+      `${screen.name}, 1280x800 dark`,
+    );
   });
 }
