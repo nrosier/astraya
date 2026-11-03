@@ -940,6 +940,8 @@ footer {
 
 .tool-card {
   display: grid;
+  /* One column that may shrink below a long select option's width, so the card never widens the page on a phone. */
+  grid-template-columns: minmax(0, 1fr);
   /* Content stays at the top; slack from a taller neighbour falls at the bottom of the card (#895). */
   align-content: start;
   gap: var(--space-4);
@@ -953,6 +955,11 @@ footer {
 .tool-card h2 {
   margin: 0;
   font-size: var(--text-lg);
+}
+
+/* A fieldset is as wide as its longest option by default (min-inline-size: min-content); inside a card it wraps. */
+.tool-card fieldset {
+  min-inline-size: 0;
 }
 
 /* Inside a card the grid gap spaces the fields; the field's own bottom margin would double it. */
@@ -4624,12 +4631,15 @@ svg text.chart-symbol-text-unicode {
 }
 
 /* Planetary cycles (#410): the zodiac with a cycle's exact aspects joined in order. */
-.cycles-form {
-  margin-bottom: var(--space-2);
-}
-
 .cycle-figure {
   margin: var(--space-4) 0 var(--space-6);
+}
+
+/* In the tool page's side panel the card's gap spaces the figure. */
+.tool-panel .cycle-figure {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
 }
 
 .cycle-diagram {
