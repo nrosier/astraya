@@ -23,7 +23,7 @@
  * @exports PageHeader
  */
 import { useDocumentTitle } from './document-title.js';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { GlossaryTermId } from './astro-glossary.messages.js';
 import { GlossaryTerm } from './GlossaryTerm.js';
 import { useExportItems, type ExportItem } from './export-registry.js';
@@ -64,6 +64,13 @@ export function PageHeader({
   const dropdown = useExclusiveOpen<'export'>('page-header-export');
   const actionsRef = usePageActionsRef();
   const [status, setStatus] = useState<ExportStatus | undefined>(undefined);
+  // The 'done' status clears itself after 3s; keep the timer so unmounting cancels it (no stray callback after teardown).
+  const doneTimer = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    return () => {
+      window.clearTimeout(doneTimer.current);
+    };
+  }, []);
   const isOpen = dropdown.open === 'export';
 
   const run = (label: string, action: () => void | Promise<void>): void => {
@@ -73,7 +80,8 @@ export function PageHeader({
       .then(action)
       .then(() => {
         setStatus({ kind: 'done', text: t.exportDone(label) });
-        window.setTimeout(() => {
+        window.clearTimeout(doneTimer.current);
+        doneTimer.current = window.setTimeout(() => {
           setStatus((current) => (current?.kind === 'done' ? undefined : current));
         }, 3000);
       })
