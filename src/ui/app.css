@@ -1508,11 +1508,7 @@ button:not([class]),
 button.quiet,
 button.danger,
 a.quiet,
-.primitive-button-primary,
-.chart-pdf-link,
-.page-header-export-toggle,
-.chart-overlay-trigger,
-.extended-settings-trigger {
+.primitive-button-primary {
   min-height: var(--control-height);
 }
 
@@ -2165,11 +2161,13 @@ label.stacked textarea:focus-visible {
   background: var(--bg);
 }
 
-/* A pointer that can aim at a small target gets the tighter rows; touch keeps the roomy ones (#513). */
+/* A pointer that can aim at a small target gets the tighter rows; touch keeps the roomy ones (#513). The 0.35rem is a
+   documented exception to the spacing tokens (#1074): it sits between --space-1 and --space-2, and the owner-accepted
+   column balance on Consultation (#895) is measured with it. */
 @media (pointer: fine) {
   .data-table th,
   .data-table td {
-    padding: var(--space-1) var(--space-3);
+    padding: 0.35rem var(--space-3);
   }
 }
 
@@ -5082,9 +5080,12 @@ svg text.chart-symbol-text-unicode {
   margin-bottom: 0;
 }
 
-.chart-type-select select {
+.chart-type-select .primitive-field select {
   box-sizing: border-box;
+  /* Matches the view bar beside it (#511), not the standard control height: an owner-approved pairing that the
+     chart workspace's fold budget (#1013) is measured against. */
   height: 2.68rem;
+  min-height: 0;
 }
 
 /*
@@ -6496,6 +6497,7 @@ button.primitive-button-compact {
   background: var(--surface);
   color: var(--fg);
   font: inherit;
+  font-size: var(--text-sm);
   font-weight: 550;
   cursor: pointer;
 }
@@ -6512,6 +6514,27 @@ button.primitive-button-compact {
 
 .page-header-export.open .page-header-export-toggle {
   background: var(--surface-hover);
+}
+
+/* Page-header actions (Export PDF, the chart's Overlay and Extended settings, the Export menu) are toolbar controls
+   beside the title: the compact size keeps them on the title row, which the chart workspace's fold budget relies on
+   (#1013, #817: the wheel is sized from the viewport minus a fixed allowance for the rows above it). */
+.chart-pdf-link,
+.page-header-export-toggle,
+.chart-overlay-trigger,
+.extended-settings-trigger {
+  min-height: var(--control-height-compact);
+  padding-inline: var(--control-padding-x-compact);
+}
+
+@media (pointer: coarse) {
+  .chart-pdf-link,
+  .page-header-export-toggle,
+  .chart-overlay-trigger,
+  .extended-settings-trigger {
+    min-height: var(--control-height);
+    padding-inline: var(--control-padding-x);
+  }
 }
 
 .page-header-export-menu {

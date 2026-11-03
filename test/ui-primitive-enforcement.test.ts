@@ -46,7 +46,8 @@ describe('shared control primitives (#514)', () => {
  * - page-layout offsets above 3rem (`--space-12`), such as the shell's top and bottom padding;
  * - negative offsets and `calc()` expressions, which position rather than space;
  * - `em` values, which scale with their own text on purpose;
- * - chart and visualisation geometry (§11 exempts it), by selector.
+ * - chart and visualisation geometry (§11 exempts it), by selector;
+ * - the documented exceptions in EXCEPTIONS, each with its reason.
  */
 describe('spacing tokens (#1074)', () => {
   const SPACING =
@@ -54,8 +55,18 @@ describe('spacing tokens (#1074)', () => {
   const VISUALISATION =
     /chart-wheel|wheel-|\bwheel\b|mgrid|cycle-diagram|acg-map|svg|glyph|aspect-grid|matrix|elements-grid|dial/;
 
+  /** Literal values kept on purpose, by selector and value. */
+  const EXCEPTIONS: readonly { readonly selector: RegExp; readonly value: string; readonly reason: string }[] = [
+    {
+      selector: /^\.data-table th,\s*\.data-table td$/,
+      value: '0.35rem var(--space-3)',
+      reason: 'fine-pointer table rows (#513), between two tokens; the #895 Consultation balance is measured with it',
+    },
+  ];
+
   function allowed(value: string, selector: string): boolean {
     if (value.includes('calc(') || VISUALISATION.test(selector)) return true;
+    if (EXCEPTIONS.some((e) => e.selector.test(selector) && e.value === value)) return true;
     for (const part of value.split(/\s+/)) {
       const literal = /^(-?)(\d*\.?\d+)(rem|px)$/.exec(part);
       if (literal === null) continue;
@@ -91,7 +102,8 @@ describe('spacing tokens (#1074)', () => {
     expect(css).toMatch(/--control-height:\s*[\d.]+rem;/);
     expect(css).toMatch(/--control-height-compact:\s*[\d.]+rem;/);
     // The standard button group and the field rule both take their height from the token, not a literal.
-    expect(css).toMatch(/\.extended-settings-trigger \{\s*min-height: var\(--control-height\);/);
+    expect(css).toMatch(/\.primitive-button-primary \{\s*min-height: var\(--control-height\);/);
+    expect(css).toMatch(/\.extended-settings-trigger \{\s*min-height: var\(--control-height-compact\);/);
     expect(css).toMatch(/\.primitive-field select \{\s*min-height: var\(--control-height\);/);
   });
 });
