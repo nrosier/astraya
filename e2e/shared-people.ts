@@ -12,7 +12,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import type { Browser, BrowserContext, Page } from '@playwright/test';
+import type { Browser, BrowserContext, BrowserContextOptions, Page } from '@playwright/test';
 import { gotoAndSettle } from './support.ts';
 import type { PersonInput } from './support.ts';
 
@@ -63,13 +63,18 @@ interface SeedPointer {
 /**
  * A fresh context holding the seeded people, on the spec's own server. Read-only specs only: the
  * state is copied into each context, so a mutation never reaches the file, but a test that edits or
- * deletes a person should still create its own.
+ * deletes a person should still create its own. `options` adds context settings such as a viewport or touch emulation.
  */
-export async function newSeededContext(browser: Browser, baseUrl: string): Promise<BrowserContext> {
+export async function newSeededContext(
+  browser: Browser,
+  baseUrl: string,
+  options: BrowserContextOptions = {},
+): Promise<BrowserContext> {
   const pointer = JSON.parse(readFileSync(seedPointerPath(), 'utf-8')) as SeedPointer;
   const saved = JSON.parse(readFileSync(pointer.statePath, 'utf-8')) as SavedState;
   const origin = new URL(baseUrl).origin;
   const context = await browser.newContext({
+    ...options,
     storageState: { ...saved, origins: saved.origins.map((entry) => ({ ...entry, origin })) },
   });
   await pinE2eFont(context);

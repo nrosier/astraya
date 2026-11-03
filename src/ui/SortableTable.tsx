@@ -211,7 +211,7 @@ export function SortableTable<T>({
                         <Tooltip
                           text={column.labelTooltip}
                           label={t.aboutColumn(column.label)}
-                          className="data-table-help"
+                          className="data-table-help primitive-tooltip-icon"
                         >
                           ?
                         </Tooltip>
