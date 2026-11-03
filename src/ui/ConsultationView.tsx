@@ -478,16 +478,28 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
   return (
     <main className="shell consultation">
       <BackLink fallback={personHref(personId)} />
-      <PageHeader
-        title={t.heading}
-        basis={t.basisLine(
-          subject,
-          zodiacLabel,
-          houseLabel,
-          t.rulersBasis(rulershipT.titles[rulership]),
-          t.orbsBasis(orbNames.orbProfileOptions[orbProfile ?? 'custom']),
-        )}
-      >
+      <PageHeader title={t.heading}>
+        <a className="primitive-button-primary" href={chartHref(personId, 'wheel', 'natal', undefined, selectedDay)}>
+          {t.viewWheel}
+        </a>
+        <a className="quiet" href={hrefFor('report', { personId })}>
+          {t.openInterpretation}
+        </a>
+        <a className="quiet" href={hrefFor('export-builder', {})}>
+          {t.buildPdf}
+        </a>
+      </PageHeader>
+
+      <div className="consultation-context">
+        <p className="consultation-context-basis">
+          {t.basisLine(
+            subject,
+            zodiacLabel,
+            houseLabel,
+            t.rulersBasis(rulershipT.titles[rulership]),
+            t.orbsBasis(orbNames.orbProfileOptions[orbProfile ?? 'custom']),
+          )}
+        </p>
         <span className="consultation-date-field">
           <span>{t.asOf(formatTimestamp(now))}</span>{' '}
           <Button
@@ -500,16 +512,7 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
             {t.refreshNow}
           </Button>
         </span>
-        <a className="primitive-button-primary" href={chartHref(personId, 'wheel', 'natal', undefined, selectedDay)}>
-          {t.viewWheel}
-        </a>
-        <a className="quiet" href={hrefFor('report', { personId })}>
-          {t.openInterpretation}
-        </a>
-        <a className="quiet" href={hrefFor('export-builder', {})}>
-          {t.buildPdf}
-        </a>
-      </PageHeader>
+      </div>
 
       {/* The result region: busy while the consultation (re)calculates, as the Astrocartography map is. */}
       <div aria-busy={load.kind === 'loading'}>

@@ -19,9 +19,12 @@ function pageHeaderBlock(source: string): string {
 describe('Consultation header actions (#1048)', () => {
   const header = pageHeaderBlock(view);
 
-  it('keeps the header actions inside PageHeader children, with BackLink above it', () => {
+  it('keeps the header actions inside PageHeader children, with BackLink above it (#1072: timestamp in the context card below)', () => {
     expect(view.indexOf('<BackLink')).toBeLessThan(view.indexOf('<PageHeader'));
-    expect(header).toContain('<span className="consultation-date-field">');
+    expect(header).not.toContain('consultation-date-field');
+    const card = view.slice(view.indexOf('className="consultation-context"'));
+    expect(card.indexOf('<span className="consultation-date-field">')).toBeGreaterThan(-1);
+    expect(view.indexOf('</PageHeader>')).toBeLessThan(view.indexOf('className="consultation-context"'));
   });
 
   it('has at most one primary action in the header, the wheel link', () => {
@@ -37,6 +40,6 @@ describe('Consultation header actions (#1048)', () => {
   });
 
   it('renders Now as a compact quiet Button', () => {
-    expect(header).toMatch(/<Button\s+size="compact"\s+variant="quiet"/);
+    expect(view).toMatch(/<Button\s+size="compact"\s+variant="quiet"/);
   });
 });

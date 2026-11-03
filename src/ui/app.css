@@ -7158,6 +7158,31 @@ dl.consultation-tiles {
 }
 
 /* The page header's date line and Refresh sit beside the title (#800 round 2): the static date only, no picker. */
+/* The context card (#1072): full width under the title row; settings line left, timestamp and Now right. */
+.consultation-context {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+  margin-bottom: var(--space-6);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.consultation-context-basis {
+  margin: 0;
+  min-width: 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.consultation-context .consultation-date-field {
+  margin-left: auto;
+}
+
 .consultation-date-field {
   display: inline-flex;
   flex-wrap: wrap;
