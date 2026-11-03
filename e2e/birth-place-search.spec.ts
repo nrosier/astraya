@@ -163,7 +163,7 @@ async function measureSearchControls(page: Page): Promise<ControlEdges> {
     .locator('form.birth-place-search-form')
     .filter({ has: page.locator('input[role="combobox"]') })
     .first();
-  await expect(form).toBeVisible();
+  await expect.soft(form, 'search form visible').toBeVisible();
   const input = await form.locator('input[role="combobox"]').boundingBox();
   const button = await form.locator('button[type="submit"]').boundingBox();
   if (input === null || button === null) throw new Error('search input or button has no bounding box');
@@ -175,10 +175,12 @@ async function measureSearchControls(page: Page): Promise<ControlEdges> {
   };
 }
 
-function expectFlushControls(edges: ControlEdges): void {
+function expectFlushControls(edges: ControlEdges, where: string): void {
   const tolerance = 0.5;
-  expect(Math.abs(edges.buttonTop - edges.inputTop)).toBeLessThanOrEqual(tolerance);
-  expect(Math.abs(edges.buttonBottom - edges.inputBottom)).toBeLessThanOrEqual(tolerance);
+  expect.soft(Math.abs(edges.buttonTop - edges.inputTop), `${where}: top edges`).toBeLessThanOrEqual(tolerance);
+  expect
+    .soft(Math.abs(edges.buttonBottom - edges.inputBottom), `${where}: bottom edges`)
+    .toBeLessThanOrEqual(tolerance);
 }
 
 const VIEWPORTS = [
@@ -201,28 +203,28 @@ for (const viewport of VIEWPORTS) {
       const id = idMatch?.[1];
       if (id === undefined) throw new Error(`no person id in ${page.url()}`);
       await gotoAndSettle(page, `${baseUrl}/#/people/${id}/birth-record`);
-      expectFlushControls(await measureSearchControls(page));
+      expectFlushControls(await measureSearchControls(page), `birth record, ${label}`);
     });
 
     test(`#969 Search button is flush with the place input on Horary (${label})`, async () => {
       await page.setViewportSize(viewport);
       await page.emulateMedia({ colorScheme });
       await gotoAndSettle(page, `${baseUrl}/#/explore/horary`);
-      expectFlushControls(await measureSearchControls(page));
+      expectFlushControls(await measureSearchControls(page), `Horary, ${label}`);
     });
 
     test(`#969 Search button is flush with the place input on Electional (${label})`, async () => {
       await page.setViewportSize(viewport);
       await page.emulateMedia({ colorScheme });
       await gotoAndSettle(page, `${baseUrl}/#/explore/electional`);
-      expectFlushControls(await measureSearchControls(page));
+      expectFlushControls(await measureSearchControls(page), `Electional, ${label}`);
     });
 
     test(`#969 Search button is flush with the place input on Rectification (${label})`, async () => {
       await page.setViewportSize(viewport);
       await page.emulateMedia({ colorScheme });
       await gotoAndSettle(page, `${baseUrl}/#/explore/rectification`);
-      expectFlushControls(await measureSearchControls(page));
+      expectFlushControls(await measureSearchControls(page), `Rectification, ${label}`);
     });
   }
 }

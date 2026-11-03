@@ -46,7 +46,7 @@ test.afterAll(async () => {
 
 async function box(locator: Locator): Promise<{ top: number; bottom: number; height: number }> {
   // boundingBox() does not wait, so the element must be visible first.
-  await expect(locator).toBeVisible();
+  await expect.soft(locator, 'element visible').toBeVisible();
   const result = await locator.boundingBox();
   if (result === null) throw new Error('element has no bounding box');
   return { top: result.y, bottom: result.y + result.height, height: result.height };
@@ -99,10 +99,15 @@ for (const viewport of [
         const metrics = await selectorMetrics();
         // Relocated has no view bar (no tabs), so there is nothing to match against; the design-value test covers it.
         if (metrics.viewBarHeight === null) {
-          expect(type).toBe('Relocated');
+          expect.soft(type, 'only Relocated has no view bar').toBe('Relocated');
           return;
         }
-        expect(Math.abs(metrics.selectHeight - metrics.viewBarHeight)).toBeLessThanOrEqual(0.5);
+        expect
+          .soft(
+            Math.abs(metrics.selectHeight - metrics.viewBarHeight),
+            `${type} at ${String(viewport.width)}: select height equals view bar`,
+          )
+          .toBeLessThanOrEqual(0.5);
       });
 
       test(`${type}: the back link sits above the heading and the label sits above the select`, async () => {
@@ -111,13 +116,20 @@ for (const viewport of [
 
         const back = await box(page.locator('main p.back').first());
         const heading = await box(page.getByRole('heading', { level: 1 }));
-        expect(back.bottom).toBeLessThanOrEqual(heading.top);
+        expect
+          .soft(back.bottom, `${type} at ${String(viewport.width)}: back link above the heading`)
+          .toBeLessThanOrEqual(heading.top);
         // Moved from natal-chart-selector-layout.spec.ts (#1093): the natal chart has no separate title row.
-        if (type === 'Natal') await expect(page.locator('.chart-title-row')).toHaveCount(0);
+        if (type === 'Natal')
+          await expect
+            .soft(page.locator('.chart-title-row'), `Natal at ${String(viewport.width)}: no title row`)
+            .toHaveCount(0);
 
         const label = await box(page.locator('.chart-type-select label'));
         const select = await box(page.getByLabel('Chart type', { exact: true }));
-        expect(label.bottom).toBeLessThanOrEqual(select.top);
+        expect
+          .soft(label.bottom, `${type} at ${String(viewport.width)}: label above the select`)
+          .toBeLessThanOrEqual(select.top);
       });
     }
 
@@ -140,10 +152,15 @@ for (const viewport of [
           fieldGap: metrics.fieldGap,
           labelMarginBottom: metrics.labelMarginBottom,
         });
-        expect({ type: row.type, ...comparable(row.metrics) }).toEqual({
-          type: row.type,
-          ...comparable(first.metrics),
-        });
+        expect
+          .soft(
+            { type: row.type, ...comparable(row.metrics) },
+            `${row.type} at ${String(viewport.width)}: same design values as ${first.type}`,
+          )
+          .toEqual({
+            type: row.type,
+            ...comparable(first.metrics),
+          });
       }
     });
   });

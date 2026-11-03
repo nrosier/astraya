@@ -59,7 +59,9 @@ async function settle(page: Page, hash: string, locale: string, theme: string): 
       .getByRole('button', { name: locale === 'nl' ? 'Persoon toevoegen' : 'Add a person', exact: true })
       .click();
   // The section tab row (#882) also holds a display:none fallback Select above 40rem; wait for a rendered field.
-  await expect(page.locator('.primitive-field:visible').first()).toBeVisible();
+  await expect
+    .soft(page.locator('.primitive-field:visible').first(), `${hash}, ${locale}, ${theme}: a field is visible`)
+    .toBeVisible();
 }
 
 for (const [name, hash] of SCREENS) {
@@ -67,16 +69,25 @@ for (const [name, hash] of SCREENS) {
     for (const theme of THEMES) {
       test(`${name} passes axe in ${locale}, ${theme}, resting and focused`, async ({ page }) => {
         test.setTimeout(60_000);
+        const where = `${name}, ${locale}, ${theme}`;
         await settle(page, hash, locale, theme);
         const resting = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
-        expect(resting.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`)).toEqual(
-          [],
-        );
+        expect
+          .soft(
+            resting.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`),
+            `${where}: axe resting`,
+          )
+          .toEqual([]);
 
         // A focused control draws its own ring; contrast must hold there too.
         await page.locator('.primitive-field:visible input, .primitive-field:visible select').first().focus();
         const focused = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
-        expect(focused.violations.map((v) => v.id)).toEqual([]);
+        expect
+          .soft(
+            focused.violations.map((v) => v.id),
+            `${where}: axe focused`,
+          )
+          .toEqual([]);
       });
     }
   }
@@ -89,6 +100,7 @@ for (const [name, hash] of SCREENS) {
         page,
       }) => {
         test.setTimeout(60_000);
+        const where = `${name}, ${locale}, ${String(width)}px`;
         await page.setViewportSize({ width, height: 900 });
         await settle(page, hash, locale, 'light');
         const problems = await page.evaluate(`(() => {
@@ -108,7 +120,7 @@ for (const [name, hash] of SCREENS) {
           if (document.documentElement.scrollWidth > window.innerWidth + 1) found.push('page scrolls sideways');
           return found;
         })()`);
-        expect(problems).toEqual([]);
+        expect.soft(problems, `${where}: fit problems`).toEqual([]);
       });
     }
   }
