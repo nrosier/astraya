@@ -235,8 +235,8 @@ describe('the calculation result regions (#888)', () => {
     const container = mount(<EventSearchView />);
     expect(busyRegions(container)).toEqual(['false']);
 
-    // A one-day window keeps the search short; the range fields are the first two text inputs.
-    const [from, to] = inputsOf(container, 'input[type="text"]');
+    // A one-day window keeps the search short; the range fields are the shared DateField (#1052), native date inputs.
+    const [from, to] = inputsOf(container, 'input[type="date"]');
     act(() => {
       typeInto(from, '1970-01-01');
       typeInto(to, '1970-01-02');
