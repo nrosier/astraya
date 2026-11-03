@@ -17,6 +17,8 @@ export default defineConfig({
   // still open; retrying on CI only turns a rare stall into a pass without hiding
   // it locally, where it has never once reproduced.
   retries: process.env.CI ? 2 : 0,
+  // Four workers per shard on CI (#1093). Local runs at four workers passed the full suite twice; the #229 race is the open question this CI run tests.
+  ...(process.env.CI ? { workers: 4 } : {}),
   reporter: 'list',
   use: {
     trace: 'retain-on-failure',
