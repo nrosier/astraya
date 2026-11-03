@@ -90,17 +90,19 @@ export function SectionNav({ route }: { route: Route }): React.JSX.Element | nul
         label={label}
         activeKey={section.activeKey}
         fallback={
-          <div className="chart-view-select">
-            <Select
-              label={label}
-              value={section.activeKey}
-              options={section.tabs.map((tab) => ({ value: tab.key, label: labelFor(tab.key) }))}
-              onChange={(value) => {
-                const target = section.tabs.find((tab) => tab.key === value);
-                if (target !== undefined) window.location.hash = target.href;
-              }}
-            />
-          </div>
+          <nav aria-label={label}>
+            <div className="chart-view-select">
+              <Select
+                label={label}
+                value={section.activeKey}
+                options={section.tabs.map((tab) => ({ value: tab.key, label: labelFor(tab.key) }))}
+                onChange={(value) => {
+                  const target = section.tabs.find((tab) => tab.key === value);
+                  if (target !== undefined) window.location.hash = target.href;
+                }}
+              />
+            </div>
+          </nav>
         }
       >
         {section.tabs.map((tab) => {
