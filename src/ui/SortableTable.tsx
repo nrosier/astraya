@@ -171,8 +171,12 @@ export function SortableTable<T>({
           </div>
         )}
       </div>
+      {/* A sideways-scrolling frame is a named region a keyboard can focus and scroll (#1076); the edge fade is its cue. */}
       <div
         className={sorted.length > TALL_TABLE_ROWS ? 'data-table-scroll data-table-scroll-tall' : 'data-table-scroll'}
+        role="region"
+        aria-labelledby={captionId}
+        tabIndex={0}
       >
         <table aria-labelledby={captionId}>
           <thead>
