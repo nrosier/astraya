@@ -11,6 +11,10 @@ What runs on GitHub Actions, and when. The workflow is `.github/workflows/ci.yml
 | `e2e (n/4)` | pull requests and pushes to `main` | The Playwright suite, split into four shards that run in parallel. Each shard builds the app, then runs `npx playwright test --shard=n/4`. A failing shard uploads its traces as `playwright-report-n`.      |
 | `e2e`       | after the shards                   | One stable check that passes only when every shard passed.                                                                                                                                                   |
 
+## Documentation-only pull requests
+
+A `changes` job checks whether a pull request touches anything outside `docs/`, Markdown files and `.claude/`. If it doesn't, the e2e shards are skipped and the `e2e` check still reports success, so branch protection never waits on a check that never runs. The Docker workflow skips its pull-request image build for changes only under `docs/`, `test/`, `e2e/`, `.claude/` or in Markdown files. Pushes to `main` and release tags always run everything.
+
 ## Cancelling superseded runs
 
 A new push to a pull request cancels that pull request's run in progress, so a fix-up push does not queue behind the run it replaces. Pushes to `main` are grouped by commit and are never cancelled.

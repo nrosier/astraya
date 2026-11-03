@@ -16,7 +16,15 @@ name: Docker
 on:
   push:
     tags: ['v*']
+  # On a pull request the image is built and smoke-tested only when something that goes into it may have changed
+  # (#1095). The image check is not a required one, so skipping it never blocks a merge; release tags always build.
   pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - 'test/**'
+      - 'e2e/**'
+      - '.claude/**'
 
 permissions:
   contents: read
