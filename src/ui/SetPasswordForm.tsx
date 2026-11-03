@@ -19,6 +19,7 @@ import { setPasswordFormMessages } from './SetPasswordForm.messages.js';
 import { sharedMessages } from './shared.messages.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { BackLink } from './BackLink.js';
+import { DocumentTitle } from './document-title.js';
 
 export function SetPasswordForm(): React.JSX.Element {
   const [token] = useState(() => setPasswordToken(window.location.hash));
@@ -34,6 +35,7 @@ export function SetPasswordForm(): React.JSX.Element {
     return (
       <main className="shell">
         <BackLink fallback="#/people" />
+        <DocumentTitle heading={t.heading} />
         <h1>{t.heading}</h1>
         <StatusMessage kind="error">{t.missingToken}</StatusMessage>
       </main>
@@ -43,6 +45,7 @@ export function SetPasswordForm(): React.JSX.Element {
   if (done) {
     return (
       <main className="shell">
+        <DocumentTitle heading={t.passwordSetHeading} />
         <h1>{t.passwordSetHeading}</h1>
         <p>{t.passwordSetBody}</p>
         <p>
@@ -75,6 +78,7 @@ export function SetPasswordForm(): React.JSX.Element {
   return (
     <main className="shell">
       <BackLink fallback="#/people" />
+      <DocumentTitle heading={t.heading} />
       <h1>{t.heading}</h1>
       {error !== undefined && <StatusMessage kind="error">{error}</StatusMessage>}
       <form onSubmit={submit}>

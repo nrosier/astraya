@@ -1284,13 +1284,6 @@ export function ChartView({
     compareType === undefined
       ? t.chartTitle(chartTypeT.typeLabels.natal, titleName)
       : t.comparisonChartTitle(titleName);
-  useEffect(() => {
-    const previousTitle = document.title;
-    document.title = pageTitle;
-    return () => {
-      document.title = previousTitle;
-    };
-  }, [pageTitle]);
   // Memoised: it is a dependency of the wheel's markup, and a new array on every render of this screen (which a
   // change of section now causes) would redraw the wheel and drop what was selected on it.
   const personName = person?.displayName ?? '';
