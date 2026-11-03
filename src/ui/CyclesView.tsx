@@ -9,7 +9,7 @@
 /**
  * @module CyclesView
  * @purpose Renders the Planetary Cycles tool screen: exact aspects between two moving bodies over a span of years, as a sortable table and a linked zodiac diagram.
- * @conventions Independent of any person or stored data (ephemeris-only), so it lives outside `Stored`, like AdminPanel; the diagram is app-generated SVG, hidden from assistive tech since the table carries every value it plots.
+ * @conventions Independent of any person or stored data (ephemeris-only), so it lives outside `Stored`, like AdminPanel; the diagram is app-generated SVG, hidden from assistive tech since the table carries every value it plots. Laid out as a tool page (#1051): the search form and the aspect diagram side by side, the results full width below (`.tool-layout`).
  * @exports CyclesView
  */
 import { GlossaryText } from './GlossaryText.js';
@@ -17,6 +17,7 @@ import { GlossaryTerm } from './GlossaryTerm.js';
 import { Radio } from './primitives/Radio.js';
 import type { GlossaryTermId } from './astro-glossary.messages.js';
 import { formatFixed } from './format.js';
+import { Button } from './primitives/Button.js';
 import { Select } from './primitives/Select.js';
 import { TextField } from './primitives/TextField.js';
 import { useSymbolClass } from './symbol-setting.js';
@@ -344,94 +345,102 @@ export function CyclesView(): React.JSX.Element {
         <GlossaryText text={t.hint} />
       </p>
 
-      <div className="field-grid cycles-form">
-        <Select
-          label={t.presetLabel}
-          value={presetKey}
-          options={[
-            { value: 'custom', label: t.presetCustom },
-            ...CYCLE_PRESETS.map((preset) => ({ value: preset.key, label: t.presets[preset.key] ?? preset.key })),
-          ]}
-          onChange={choosePreset}
-        />
-        <Select
-          label={t.bodyALabel}
-          value={params.bodyA}
-          options={CYCLE_BODY_KEYS.map((key) => ({ value: key, label: nameOf(key) }))}
-          onChange={(value) => {
-            edit({ bodyA: value });
-          }}
-        />
-        <Select
-          label={t.bodyBLabel}
-          value={params.bodyB}
-          options={CYCLE_BODY_KEYS.map((key) => ({ value: key, label: nameOf(key) }))}
-          onChange={(value) => {
-            edit({ bodyB: value });
-          }}
-        />
-        <Select
-          label={t.aspectLabel}
-          value={params.aspect}
-          options={CYCLE_ASPECT_KEYS.map((key) => ({ value: key, label: aspectDisplayName(key, locale) }))}
-          onChange={(value) => {
-            edit({ aspect: value });
-          }}
-        />
-        <MotionFilterGroup
-          label={t.motionLabel}
-          value={params.motion}
-          options={[
-            { value: 'all', label: t.motionAll },
-            { value: 'retrograde', label: t.motionRetrograde, term: 'retrograde' },
-            { value: 'direct', label: t.motionDirect },
-          ]}
-          onChange={(value) => {
-            edit({ motion: value as MotionFilter });
-          }}
-        />
-        <TextField
-          label={t.fromYearLabel}
-          inputMode="numeric"
-          value={params.fromYear}
-          onChange={(value) => {
-            edit({ fromYear: value });
-          }}
-        />
-        <TextField
-          label={t.toYearLabel}
-          inputMode="numeric"
-          value={params.toYear}
-          onChange={(value) => {
-            edit({ toYear: value });
-          }}
-        />
-      </div>
-      <p>
-        <button
-          type="button"
-          disabled={provider === undefined || result.kind === 'loading'}
-          onClick={() => {
-            run(params);
-          }}
-        >
-          {result.kind === 'loading' ? t.finding : t.findButton}
-        </button>
-      </p>
+      <div className="tool-layout">
+        <section className="tool-card tool-form" aria-labelledby="cycles-search-heading">
+          <h2 id="cycles-search-heading">{t.searchHeading}</h2>
+          <Select
+            label={t.presetLabel}
+            value={presetKey}
+            options={[
+              { value: 'custom', label: t.presetCustom },
+              ...CYCLE_PRESETS.map((preset) => ({ value: preset.key, label: t.presets[preset.key] ?? preset.key })),
+            ]}
+            onChange={choosePreset}
+          />
+          <div className="tool-field-row">
+            <Select
+              label={t.bodyALabel}
+              value={params.bodyA}
+              options={CYCLE_BODY_KEYS.map((key) => ({ value: key, label: nameOf(key) }))}
+              onChange={(value) => {
+                edit({ bodyA: value });
+              }}
+            />
+            <Select
+              label={t.bodyBLabel}
+              value={params.bodyB}
+              options={CYCLE_BODY_KEYS.map((key) => ({ value: key, label: nameOf(key) }))}
+              onChange={(value) => {
+                edit({ bodyB: value });
+              }}
+            />
+          </div>
+          <Select
+            label={t.aspectLabel}
+            value={params.aspect}
+            options={CYCLE_ASPECT_KEYS.map((key) => ({ value: key, label: aspectDisplayName(key, locale) }))}
+            onChange={(value) => {
+              edit({ aspect: value });
+            }}
+          />
+          <MotionFilterGroup
+            label={t.motionLabel}
+            value={params.motion}
+            options={[
+              { value: 'all', label: t.motionAll },
+              { value: 'retrograde', label: t.motionRetrograde, term: 'retrograde' },
+              { value: 'direct', label: t.motionDirect },
+            ]}
+            onChange={(value) => {
+              edit({ motion: value as MotionFilter });
+            }}
+          />
+          <div className="tool-field-row">
+            <TextField
+              label={t.fromYearLabel}
+              inputMode="numeric"
+              value={params.fromYear}
+              onChange={(value) => {
+                edit({ fromYear: value });
+              }}
+            />
+            <TextField
+              label={t.toYearLabel}
+              inputMode="numeric"
+              value={params.toYear}
+              onChange={(value) => {
+                edit({ toYear: value });
+              }}
+            />
+          </div>
+          {validation !== undefined && <StatusMessage kind="error">{validation}</StatusMessage>}
+          <div className="tool-actions">
+            <Button
+              variant="primary"
+              disabled={provider === undefined}
+              busy={result.kind === 'loading'}
+              busyLabel={t.finding}
+              onClick={() => {
+                run(params);
+              }}
+            >
+              {t.findButton}
+            </Button>
+          </div>
+        </section>
 
-      {validation !== undefined && <StatusMessage kind="error">{validation}</StatusMessage>}
-      {result.kind === 'error' && <StatusMessage kind="error">{t.error(result.message)}</StatusMessage>}
-
-      {/* The result region: busy while the cycles search runs, as the Astrocartography map is. */}
-      <div aria-busy={result.kind === 'loading'}>
-        {result.kind === 'ready' &&
-          (result.rows.length === 0 ? (
-            <p className="hint">
-              <GlossaryText text={t.noEvents} />
-            </p>
-          ) : (
-            <>
-              <p>
+        <aside className="tool-card tool-panel" aria-labelledby="cycles-diagram-heading">
+          <h2 id="cycles-diagram-heading">{t.diagramHeading}</h2>
+          {/* The panel shows the current result: busy while the cycles search runs. */}
+          <div className="tool-panel-body" aria-busy={result.kind === 'loading'}>
+            {result.kind === 'loading' && <p className="hint">{t.finding}</p>}
+            {result.kind === 'ready' && result.rows.length === 0 && (
+              <p className="hint">
+                <GlossaryText text={t.noEvents} />
+              </p>
+            )}
+            {result.kind === 'ready' && result.rows.length > 0 && (
+              <p className="tool-panel-figure">
                 <GlossaryText
                   text={t.summary(
                     result.rows.length,
@@ -442,41 +451,52 @@ export function CyclesView(): React.JSX.Element {
                   )}
                 />
               </p>
-              {diagram !== undefined && (
-                <figure className="cycle-figure">
-                  {/* Hidden from assistive technology: the table, with a step button on every row, is the
+            )}
+            {result.kind === 'ready' && diagram !== undefined && (
+              <figure className="cycle-figure">
+                {/* Hidden from assistive technology: the table, with a step button on every row, is the
                       accessible way to the same selection. A click on a point selects it; on the empty
                       diagram, or on the selected point again, it clears. */}
-                  <div
-                    className="cycle-diagram-interactive"
-                    aria-hidden="true"
-                    dangerouslySetInnerHTML={{ __html: diagram }}
-                    onClick={(event) => {
-                      const target = event.target;
-                      const point = target instanceof Element ? target.closest('[data-cycle-id]') : null;
-                      select(point?.getAttribute('data-cycle-id') ?? undefined, 'diagram');
-                    }}
-                  />
-                  <figcaption className="hint">
-                    <GlossaryText text={t.diagramCaption} /> {t.selectionHint}
-                  </figcaption>
-                </figure>
-              )}
-              <p className="hint" role="status">
-                {selectedId === undefined ? '' : t.stepSelected(stepOf.get(selectedId) ?? 0, result.rows.length)}
-              </p>
-              <div ref={tableRef}>
-                <SortableTable
-                  caption={t.tableCaption}
-                  columns={columns}
-                  rows={result.rows}
-                  getRowKey={(row) => String(row.jd)}
-                  downloadFilename={`cycles-${result.params.bodyA}-${result.params.bodyB}-${result.params.aspect}.csv`}
-                  selectedRowKey={selectedId}
+                <div
+                  className="cycle-diagram-interactive"
+                  aria-hidden="true"
+                  dangerouslySetInnerHTML={{ __html: diagram }}
+                  onClick={(event) => {
+                    const target = event.target;
+                    const point = target instanceof Element ? target.closest('[data-cycle-id]') : null;
+                    select(point?.getAttribute('data-cycle-id') ?? undefined, 'diagram');
+                  }}
                 />
-              </div>
-            </>
-          ))}
+                <figcaption className="hint">
+                  <GlossaryText text={t.diagramCaption} /> {t.selectionHint}
+                </figcaption>
+              </figure>
+            )}
+          </div>
+        </aside>
+      </div>
+
+      {result.kind === 'error' && <StatusMessage kind="error">{t.error(result.message)}</StatusMessage>}
+
+      {/* The result region: busy while the cycles search runs, as the Astrocartography map is. */}
+      <div aria-busy={result.kind === 'loading'}>
+        {result.kind === 'ready' && result.rows.length > 0 && (
+          <>
+            <p className="hint" role="status">
+              {selectedId === undefined ? '' : t.stepSelected(stepOf.get(selectedId) ?? 0, result.rows.length)}
+            </p>
+            <div ref={tableRef}>
+              <SortableTable
+                caption={t.tableCaption}
+                columns={columns}
+                rows={result.rows}
+                getRowKey={(row) => String(row.jd)}
+                downloadFilename={`cycles-${result.params.bodyA}-${result.params.bodyB}-${result.params.aspect}.csv`}
+                selectedRowKey={selectedId}
+              />
+            </div>
+          </>
+        )}
       </div>
     </main>
   );

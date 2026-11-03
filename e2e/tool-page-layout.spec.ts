@@ -14,7 +14,10 @@ import { newSeededContext } from './shared-people.ts';
 import { gotoAndSettle } from './support.ts';
 
 /** Each tool page, by route, with what marks its first result as ready. */
-const TOOL_PAGES = [{ name: 'Eclipses', hash: '#/explore/eclipses', ready: 'table' }] as const;
+const TOOL_PAGES = [
+  { name: 'Eclipses', hash: '#/explore/eclipses', ready: 'table' },
+  { name: 'Planetary cycles', hash: '#/explore/cycles', ready: 'svg.cycle-diagram' },
+] as const;
 
 const DESKTOP = [
   { width: 1280, height: 800 },

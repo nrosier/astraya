@@ -7,7 +7,7 @@
  */
 const en = {
   heading: 'Planetary cycles',
-  hint: 'When two moving bodies make an exact aspect, found from the ephemeris alone — no birth chart involved. Each exact aspect is plotted on the zodiac below and joined to the next, so a cycle shows as a pattern: Venus’s inferior conjunctions with the Sun close into a five-pointed star over eight years.',
+  hint: 'When two moving bodies make an exact aspect, found from the ephemeris alone — no birth chart involved. Each exact aspect is plotted on the zodiac in the diagram and joined to the next, so a cycle shows as a pattern: Venus’s inferior conjunctions with the Sun close into a five-pointed star over eight years.',
   presetLabel: 'Cycle',
   presetCustom: 'Custom',
   presets: {
@@ -27,6 +27,8 @@ const en = {
   fromYearLabel: 'From year',
   toYearLabel: 'To year',
   findButton: 'Find',
+  searchHeading: 'Search',
+  diagramHeading: 'Aspect diagram',
   finding: 'Searching…',
   needsTwoBodies: 'Pick two different bodies.',
   badYear: (min: number, max: number) => `Enter whole years between ${String(min)} and ${String(max)}.`,
@@ -53,7 +55,7 @@ const en = {
 
 const nl: typeof en = {
   heading: 'Planetaire cycli',
-  hint: 'Wanneer twee bewegende hemellichamen een exact aspect maken, berekend uit alleen de efemeriden — zonder geboortehoroscoop. Elk exact aspect wordt hieronder op de dierenriem uitgezet en met het volgende verbonden, zodat een cyclus als patroon verschijnt: de onderste conjuncties van Venus met de Zon sluiten in acht jaar tot een vijfpuntige ster.',
+  hint: 'Wanneer twee bewegende hemellichamen een exact aspect maken, berekend uit alleen de efemeriden — zonder geboortehoroscoop. Elk exact aspect wordt in het diagram op de dierenriem uitgezet en met het volgende verbonden, zodat een cyclus als patroon verschijnt: de onderste conjuncties van Venus met de Zon sluiten in acht jaar tot een vijfpuntige ster.',
   presetLabel: 'Cyclus',
   presetCustom: 'Eigen keuze',
   presets: {
@@ -73,6 +75,8 @@ const nl: typeof en = {
   fromYearLabel: 'Vanaf jaar',
   toYearLabel: 'Tot jaar',
   findButton: 'Zoeken',
+  searchHeading: 'Zoeken',
+  diagramHeading: 'Aspectdiagram',
   finding: 'Zoeken…',
   needsTwoBodies: 'Kies twee verschillende hemellichamen.',
   badYear: (min: number, max: number) => `Voer hele jaartallen in tussen ${String(min)} en ${String(max)}.`,
