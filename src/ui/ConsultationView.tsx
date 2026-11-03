@@ -492,6 +492,7 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
           <span>{t.asOf(formatTimestamp(now))}</span>{' '}
           <Button
             size="compact"
+            variant="quiet"
             onClick={() => {
               setNow(new Date());
             }}
@@ -502,10 +503,12 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
         <a className="primitive-button-primary" href={chartHref(personId, 'wheel', 'natal', undefined, selectedDay)}>
           {t.viewWheel}
         </a>
-        <p className="actions">
-          <a href={hrefFor('report', { personId })}>{t.openInterpretation}</a>{' '}
-          <a href={hrefFor('export-builder', {})}>{t.buildPdf}</a>
-        </p>
+        <a className="quiet" href={hrefFor('report', { personId })}>
+          {t.openInterpretation}
+        </a>
+        <a className="quiet" href={hrefFor('export-builder', {})}>
+          {t.buildPdf}
+        </a>
       </PageHeader>
 
       {/* The result region: busy while the consultation (re)calculates, as the Astrocartography map is. */}
