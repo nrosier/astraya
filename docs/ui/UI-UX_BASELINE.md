@@ -1,6 +1,6 @@
 # UI behaviour baseline
 
-The end-to-end suite pins 142 behaviours across 32 specs (Playwright, against the built `dist/`).
+The end-to-end suite pins 133 behaviours across 59 specs (Playwright, against the built `dist/`).
 This is the behaviour any redesign must keep, or change on purpose with the test changed in the same commit.
 Each line is a test title, so the record is the tests; regenerate with `node scripts/generate-ui-baseline.mjs`.
 Persisted person data is the compatibility boundary (docs/ui/UI-UX_IMPLEMENTATION_PLAN.md §4); routes and UI are not.
@@ -16,66 +16,57 @@ Persisted person data is the compatibility boundary (docs/ui/UI-UX_IMPLEMENTATIO
 ### `e2e/app-header.spec.ts`
 
 - one header holds the name, account, language and theme, and the old fixed corners are gone
-- the header stays in view and usable while a long page scrolls
 - the first Tab reaches a skip link that moves focus to the content without changing the route
-- the sign-in box opens beneath the button, inside the screen, and can be used
-- on a phone-width screen the header and the sign-in box stay inside the screen
+- the sync popover closes on Escape, a click outside and focus leaving the badge (#1081)
+- the sign-in dialog opens centred, inside the screen, and takes input
+- on a phone-width screen the header and the sign-in dialog stay inside the screen
 - scrolling to an anchor or focusing a field leaves room for the header, and printing hides it
 - the header has no automatically detectable accessibility violations
 
 ### `e2e/app-nav.spec.ts`
 
-- the Tools menu is in the header on every screen and opens each tool
-- a person’s screens carry their name and tabs in the header, with no strip above the page
-- a tool page remembers the last person visited, and returning to their tabs needs no re-pick (#453)
-- on a phone the navigation folds behind a Menu button, and nothing scrolls sideways
-- the rail (#506/#509) keeps the navigation reachable while the page scrolls, clear of the content it sits beside, not above
-- the rail holds brand then navigation; the account cluster sits apart from it, top-right of the content, with and without a person
-- Charts is one destination, and the page keeps the type and the view in the URL
-- a solar return and a lunar return are charts like any other, with their contacts to the natal chart
-- the header’s only export action is the PDF builder link; a chart’s own exports live in its own PageHeader
+- Tools is one sidebar link on every screen; its tools are tabs on the page (#882)
 
 ### `e2e/person-nav-dropdown.spec.ts`
 
-- opening a second group closes the first, so only one dropdown is ever open
-- pressing the open group’s button again closes it
-- choosing an item navigates and leaves no menu open
-- a click on empty page, on content, or on another tab closes the open menu
-- Escape closes the menu and puts focus back on its button
-- tabbing out of an open group closes it
-- the open menu has no automatically detectable accessibility violations
+- choosing a tab opens that sub-view and keeps the section entry current
+- a chosen section tab survives a reload of the same route (#882)
+- Tools: every tool tab is reachable with Tab and Enter (#882)
+- the section tab row has no automatically detectable accessibility violations
 
 ## Inputs: the birth record and place
 
 ### `e2e/astrocartography-golden-path.spec.ts`
 
-- a person with a known birth time gets an Astrocartography map and the SVG export downloads
-- unchecking a line type removes it from the map
-- enabling Local Space adds lines for the checked bodies
-- a person with an unknown birth time is told the map needs one
-
 ### `e2e/birth-place-search.spec.ts`
 
 - "Search for a place by name" stays visible whether or not coordinates already exist (#290)
-- a single search match is still shown as a click-to-confirm list, and picking it fills coordinates and Place of birth (#290)
+- a single search match is still shown as a click-to-confirm dropdown, and picking it fills coordinates and Place of birth (#290)
 - multiple search matches are each shown as a separate clickable result (#290)
 - a search with no matches shows an inline "not found" message (#290)
 - a search-request failure shows an inline message, and coordinates are still editable by hand (#290)
 
 ### `e2e/chart-golden-path.spec.ts`
 
-- entering birth data renders the chart wheel and the SVG export downloads
-- clicking a glyph on the wheel isolates it and opens a focused-info panel (#400)
-- clicking an aspect line isolates just its two endpoint bodies (#400)
-- the Jones chart-shape diagram renders alongside its text sentence and explanation (#401, #430)
-- the natal chart is split into views, opening on the wheel, and the wheel keeps its selection (#511)
-- the natal chart views fit a phone: a labelled Select replaces the link row, and nothing scrolls the page sideways (#511)
-- a table row selects on the wheel and the wheel marks the table row (#418)
+### `e2e/chart-overlay-golden-path.spec.ts`
+
+- a natal, transit, and progressed triwheel is independently configurable (#558)
 
 ### `e2e/composite-golden-path.spec.ts`
 
 - two people with known birth times get a Composite screen with a wheel and data tables
 - a person with an unknown birth time is told a composite needs one
+
+### `e2e/consultation-golden-path.spec.ts`
+
+- a person with a known birth time gets a Consultation screen with transits, timing tracks and highlights
+- the Consultation header opens the chart wheel on the day shown, and the cards link to their full views (#800 round 2)
+- the notes card starts collapsed, shows its save state, and expands on the page (#800 round 2)
+- a separating transit shows the applying and separating badge with a dot and its label (#815)
+
+### `e2e/custom-point-golden-path.spec.ts`
+
+- a custom formula point is rendered, hidden, and removed from the natal chart through the drawer (#573, #815)
 
 ### `e2e/cycles-golden-path.spec.ts`
 
@@ -113,6 +104,7 @@ Persisted person data is the compatibility boundary (docs/ui/UI-UX_IMPLEMENTATIO
 - casting a horary chart shows the considerations before judgment and the chart
 - a missing date is reported inline instead of casting
 - the horary screen has no automatically detectable accessibility violations
+- a void Moon in a sign where Lilly says it matters less is shown, but the chart is still fit to be judged
 
 ### `e2e/multi-device-sync.spec.ts`
 
@@ -143,6 +135,10 @@ Persisted person data is the compatibility boundary (docs/ui/UI-UX_IMPLEMENTATIO
 - a missing event, an event before birth and a bad time are reported inline
 - the rectification screen has no automatically detectable accessibility violations
 
+### `e2e/relocated-chart-golden-path.spec.ts`
+
+- a saved relocation renders a chart and natal-vs-relocated comparison (#559)
+
 ### `e2e/solar-arc-golden-path.spec.ts`
 
 - a person with a known birth time gets a Solar Arc screen with directed positions and contacts
@@ -150,67 +146,42 @@ Persisted person data is the compatibility boundary (docs/ui/UI-UX_IMPLEMENTATIO
 
 ### `e2e/synastry-golden-path.spec.ts`
 
-- two people with known birth times get a Synastry screen with a bi-wheel and aspect table
-- the relationship summary panel groups contacts by theme, and its AI reading is gated on an account (#422)
-- a person with an unknown birth time is told synastry needs one
-- clicking a ring legend entry dims the other person's legend (#455)
-
 ### `e2e/transit-golden-path.spec.ts`
-
-- a person with a known birth time gets a Transit screen with a bi-wheel and contacts table
-- a person with an unknown birth time is told transits need one
 
 ## Chart workspace and selection
 
-### `e2e/chart-workbench.spec.ts`
+### `e2e/chart-selection-overhang-screens.spec.ts`
 
-- the inspector follows the dial, beside it from a 68rem workbench and below it under that
-- selecting something fills the inspector in place, without moving it
-- a house number on the wheel selects that house, in the inspector and in its table row (#511)
-- a sign is selectable from the Placements table by keyboard, and clearable the same way (#511)
-- a derived point is selectable from the Placements table by keyboard, with its position in the inspector (#511)
-- the aspect matrix is a view of its own, and a cell selects its pair on the wheel by mouse and keyboard (#511)
-- the elements and modalities grid is a view of its own, with its table and a CSV download (#511)
+### `e2e/chart-type-selector-layout.spec.ts`
+
+### `e2e/chart-workbench.spec.ts`
 
 ### `e2e/extended-settings.spec.ts`
 
-- the settings open as a card, apply together or are dropped, and the button says what changed
-- the card works on a phone: it fills the screen, scrolls inside, and keeps Apply in reach
-- opening and cancelling the card keeps what is selected on the wheel (applying redraws, which clears it)
-- the card is not part of the printed page
-- the Apply button enables when only Symbols are changed (#459)
-- saving a profile as the device default applies it to a chart that was never touched (#510)
-
 ### `e2e/rulership-setting.spec.ts`
 
-- the rulers choice is modern by default, drives the dispositor table, and is kept across a reload
-- the choice is shared by the other screens that show rulers (profections and transits)
+- the rulers choice is modern by default, is saved with Apply, drives the dispositor table, and is kept across a reload
 
 ### `e2e/symbol-setting.spec.ts`
 
-- the symbol class changes the wheel, the tables and the export together, and is kept on this device
 - the transit wheel and the cycles diagram follow the class too
-- Uranus and Pluto can be drawn in either of their two forms, kept on this device
-- the header toggle writes the symbols as text, and the line weight changes the drawn glyphs
 
 ## Calculation screens
+
+### `e2e/horary-form-mobile.spec.ts`
+
+- the horary form fits a 390px phone in English and in Dutch
 
 ## Exports and documents
 
 ### `e2e/pdf-export-builder.spec.ts`
 
 - the header’s PDF-builder link opens the PDF builder, and a preset downloads a real PDF
-- ticking a chart type reveals its own tables and wheel checkbox, and unticking collapses them
-- the AI-customised narrative needs its own consent tick before Build PDF is enabled
-- the AI consent is spent by the build and never remembered: a new request needs a fresh tick
-- synastry and composite each get their own partner picker, and both build into one PDF (#441)
-- unticking Synastry hides its partner picker and drops it from the selection
-- ticking Progressions reveals its technique/MC-method controls, which collapse the MC method for non-secondary techniques (#441)
-- ticking Astrocartography reveals its map/line-type/body controls, which collapse when unticked (#441)
-- selecting the Full predictive report preset fills progressions and solar arc, and builds a real PDF (#441)
-- ticking Profections and Astrocartography on their own builds a real PDF with both sections (#441)
-- ticking Transits reveals its filter/wheel/table/date controls, and ticking Forecast reveals its tier checkboxes, both collapsing when unticked (#441)
-- ticking Eclipses reveals its from/to year controls, collapsing when unticked, and builds a real PDF (#441, #484)
+- signed in, the picker offers the stored interpretations in the PDF’s language, and both build into the PDF (#759)
+- the Documents page keeps its starting point and Build PDF in the header, with the summary beside the selection (#916)
+- the export summary stays in view while the Documents page scrolls at 1280x800 (#975)
+- on a phone the Build PDF bar is pinned to the bottom of the screen (#916)
+- Documents starts on the person whose pages were open, not the first in the list (#709)
 
 ## Preferences, accounts and persistence
 
@@ -219,19 +190,6 @@ Persisted person data is the compatibility boundary (docs/ui/UI-UX_IMPLEMENTATIO
 - the bare landing page redirects to the people list with no automatically detectable accessibility violations
 - a gated chart-type tab renders as a genuinely disabled control (#234)
 - the empty People list has no automatically detectable accessibility violations
-- a person's detail form has no automatically detectable accessibility violations
-- the chart view (wheel plus data tables) has no automatically detectable accessibility violations
-- every view of the natal chart has no automatically detectable accessibility violations (#511)
-- column-header and dispositor tooltips are reachable on keyboard focus, not just mouse hover (#456)
-- a tooltipped table column header is reachable by keyboard and exposes its tooltip text (#456)
-- the profections screen (#168) has no automatically detectable accessibility violations
-- the transit screen (#172) has no automatically detectable accessibility violations
-- the synastry screen (#172) has no automatically detectable accessibility violations
-- the composite screen (#169) has no automatically detectable accessibility violations
-- the harmonic screen (#170) has no automatically detectable accessibility violations
-- the periodic transit forecast screen (#207) has no automatically detectable accessibility violations
-- the astrocartography screen (#171) has no automatically detectable accessibility violations
-- the interpretation view has no automatically detectable accessibility violations, on either sub-tab (#360)
 - the AI-Customized Generate button renders as a genuinely disabled control with an accessible reason (#360)
 - the admin screen has no automatically detectable accessibility violations (#357)
 - the corpus-overrides admin screen has no automatically detectable accessibility violations (#357)
@@ -242,13 +200,117 @@ Persisted person data is the compatibility boundary (docs/ui/UI-UX_IMPLEMENTATIO
 - a super admin can create, change the role of, and remove accounts
 - an admin sees the accounts read-only, and still reaches the other admin screens
 - an ordinary member has no Admin menu
+- the admin tab row scrolls as one nav on a wide screen and is a labelled select on a phone (#818)
 
 ### `e2e/control-states.spec.ts`
 
 ### `e2e/preferences.spec.ts`
 
-- Preferences is reachable from every screen, lists its four subsections, and has no automatically detectable accessibility violations
+- Preferences is reachable from every screen, has three tabs, and every tab has no automatically detectable accessibility violations
+- the tabs follow the arrow keys, keep one panel on screen, and do not add history entries (#650)
+- an old #/preferences/general link opens Appearance, where the language moved (#650)
 - a section link opens Preferences at that heading and moves focus there (#509)
 - Motion and Density are device preferences: applied at once, kept across a reload, and compact never shrinks touch targets (#510)
 - the rulers choice changed here is the same one chart screens read, and survives a reload
 - exporting everything and the people CSV both produce real downloads
+
+## Other
+
+### `e2e/aaf-interchange.spec.ts`
+
+- exports people as AAF records that follow the specification’s #A93 and #B93 forms
+- imports an AAF file from another program as a reviewed restore, and adds the person only on confirm
+
+### `e2e/back-link.spec.ts`
+
+- opened fresh, Documents has no back link and its one heading is the builder
+- Back from the people list never lands on the bare #/ redirect
+
+### `e2e/document-titles.spec.ts`
+
+- every screen titles its tab with its heading and the app name, and the titles differ (#1078)
+
+### `e2e/event-search-ics.spec.ts`
+
+- the event search downloads its results as a valid .ics file
+
+### `e2e/fixed-star-picker.spec.ts`
+
+- search Regulus, add it, Apply: the chart checks the chosen star (#803)
+
+### `e2e/interpretation-config.spec.ts`
+
+### `e2e/journey-3-directions-filter.spec.ts`
+
+- the Primary Directions time key can be changed to Ptolemy and the arc for the age follows it
+- the transit filter narrows the list of transits, and choosing All restores them
+
+### `e2e/journey-6-recovery.spec.ts`
+
+- a filter that matches no transits shows the empty state, and Clear filters restores them
+- a latitude outside -90 to 90 shows a clear message, and correcting it clears the message
+
+### `e2e/note-save-states.spec.ts`
+
+- birth record notes: Saving then Autosaved, the page Save never reacts, and a reload keeps the note (#919)
+- birth record notes: offline reads Saved on this device (#919)
+- birth record notes: leaving the page flushes an edit that has not waited out the debounce (#919)
+- birth record notes: an over-limit note shows the error and keeps the text (#919)
+- consultation notes: Saving then Autosaved, a note persists, and delete asks first (#919)
+- consultation notes: offline reads Saved on this device, and leaving flushes (#919)
+- the save states read in Dutch (#919)
+
+### `e2e/orb-library.spec.ts`
+
+- a named orb profile chosen for transits changes them, leaves the card alone, and edits save a revision
+- a cited Lilly preset is offered on the card, applies, and can be chosen for transits (#590)
+
+### `e2e/orb-profile.spec.ts`
+
+- a rule set on the card changes the transit contacts too (#590)
+- own orb rules on the natal chart change its aspects, name themselves in the settings button, and survive a profile reset
+
+### `e2e/person-file.spec.ts`
+
+### `e2e/profile-easter-egg.spec.ts`
+
+- a matching person’s birth record shows the overlay, and it removes itself
+- nothing runs when the reader asks for reduced motion
+
+### `e2e/saved-interpretations-person.spec.ts`
+
+- the PDF builder’s picker lists only the selected person’s results, and switching person changes the list (#768)
+- the Past tab shows the selected person’s results and a separate Not linked to a person section (#768)
+
+### `e2e/shared-people-state.spec.ts`
+
+- a context from the saved state lists the three shared people
+- the people survive a reload, and the service worker does not serve a stale page
+- a second tab holds no writer lock: one tab owns it, and both tabs read the seeded data
+- the saved state is untouched, and a fresh context still shows the same three people
+
+### `e2e/signin-choice.spec.ts`
+
+- the sign-in dialog opens on the OpenID stage and swaps to the local form
+- Sign in with OpenID goes to the issuer’s authorization endpoint with a PKCE challenge
+- the sign-in dialog fits on a phone
+- the sign-in dialog is centred in the viewport
+- Escape closes the dialog and returns focus to the Sign in pill
+- a backdrop press closes the dialog
+- the password toggle switches the field between password and text, and its label flips
+
+### `e2e/tool-page-layout.spec.ts`
+
+### `e2e/touch-targets.spec.ts`
+
+### `e2e/ui-baselines.spec.ts`
+
+- capture the reference screenshots
+
+### `e2e/viewport-matrix.spec.ts`
+
+- multi-card grids span the page content width at every bottom-edge viewport (#895)
+- horary side-by-side cards keep the shorter at least 90% of the taller (#895)
+- consultation side-by-side columns keep the owner-accepted floor (#895)
+- birth record side-by-side columns keep the shorter at least 90% of the taller (#895)
+- the horary astrological parameters card spans the full form width at 1280×800
