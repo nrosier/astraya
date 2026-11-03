@@ -139,6 +139,37 @@ test('the first Tab reaches a skip link that moves focus to the content without 
   expect(new URL(page.url()).hash).toBe('#/people');
 });
 
+test('the sync popover closes on Escape, a click outside and focus leaving the badge (#1081)', async ({ page }) => {
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  const badge = page.locator('button.syncbadge-label');
+  const popover = page.locator('.syncbadge-popover');
+
+  // Escape closes it even after focus has moved on, and returns focus to the badge.
+  await badge.click();
+  await expect(popover).toBeVisible();
+  await page.getByRole('heading', { name: 'People', level: 1 }).click();
+  await badge.click();
+  await expect(popover).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(popover).toBeHidden();
+  await expect(badge).toBeFocused();
+
+  // A click elsewhere on the page closes it.
+  await badge.click();
+  await expect(popover).toBeVisible();
+  await page.getByRole('heading', { name: 'People', level: 1 }).click();
+  await expect(popover).toBeHidden();
+
+  // A disclosure: Tab from the badge reaches the popover's link and keeps it open; Tab past it closes it.
+  await badge.click();
+  const link = popover.getByRole('link');
+  await page.keyboard.press('Tab');
+  await expect(link).toBeFocused();
+  await expect(popover).toBeVisible();
+  await page.keyboard.press('Tab');
+  await expect(popover).toBeHidden();
+});
+
 test('the sign-in dialog opens centred, inside the screen, and takes input', async ({ page }) => {
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   const button = page.getByRole('banner').getByRole('button', { name: 'Sign in', exact: true });
