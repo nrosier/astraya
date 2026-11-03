@@ -182,6 +182,19 @@ test('the corpus-overrides table wraps its text instead of scrolling sideways, a
   ).toBeVisible();
 });
 
+test('a sub-view page at phone width has no axe region violations, so the sub-view select sits in a landmark (#1050)', async ({
+  page,
+}) => {
+  // At 40rem and below the sub-view row shows its labelled Select (`.tab-row__fallback`); it must sit inside a landmark.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await gotoAndSettle(page, `${baseUrl}/#/explore/cycles`);
+  await expect(page.getByRole('heading', { name: 'Planetary cycles' })).toBeVisible();
+  await expect(page.locator('.tab-row__fallback')).toBeVisible();
+
+  const results = await new AxeBuilder({ page }).withRules(['region']).analyze();
+  expect(results.violations).toEqual([]);
+});
+
 test.describe('with the shared people (#799)', () => {
   let context: BrowserContext;
   let page: Page;
