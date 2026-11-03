@@ -14,7 +14,7 @@ import { expect, test, type Download } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
 import { newSeededContext, SHARED_PEOPLE } from './shared-people.ts';
-import { gotoAndSettle, openPreferences } from './support.ts';
+import { gotoAndSettle, openPreferences, reloadAndSettle } from './support.ts';
 
 let dir: string;
 let app: FastifyInstance;
@@ -189,8 +189,7 @@ test('the rulers choice changed here is the same one chart screens read, and sur
   await expect(group.getByRole('radio', { name: /^Modern/ })).toBeChecked();
   await group.getByRole('radio', { name: /^Traditional/ }).check();
 
-  await page.reload();
-  await page.waitForEvent('load', { timeout: 5_000 }).catch(() => undefined);
+  await reloadAndSettle(page);
   await expect(group.getByRole('radio', { name: /^Traditional/ })).toBeChecked();
 
   // Reset so this test leaves no state behind for the suite's shared ASTRAYA_DB_PATH-free run.

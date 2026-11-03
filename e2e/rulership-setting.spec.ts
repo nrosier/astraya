@@ -12,7 +12,14 @@ import { expect, test, type BrowserContext, type Locator, type Page } from '@pla
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
 import { EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
-import { applySettings, createPerson, gotoAndSettle, openNatalChart, openSettings } from './support.ts';
+import {
+  applySettings,
+  createPerson,
+  gotoAndSettle,
+  openNatalChart,
+  openSettings,
+  reloadAndSettle,
+} from './support.ts';
 
 /** One of the planetary-rulers option cards (#513): a named radiogroup of Modern / Traditional / Both. */
 function rulersOption(scope: Page | Locator, title: 'Modern' | 'Traditional' | 'Both'): Locator {
@@ -89,8 +96,7 @@ test('the rulers choice is modern by default, is saved with Apply, drives the di
   await openSettings(page);
   await rulersOption(page, 'Traditional').check();
   await applySettings(page);
-  await page.reload();
-  await page.waitForEvent('load', { timeout: 5_000 }).catch(() => undefined);
+  await reloadAndSettle(page);
   await page.getByRole('link', { name: 'Patterns & condition', exact: true }).click();
   await openSettings(page);
   await expect(rulersOption(page, 'Traditional')).toBeChecked();

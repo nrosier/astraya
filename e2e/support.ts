@@ -34,15 +34,33 @@ export interface PersonInput {
 }
 
 /**
- * Navigates and waits out the one-time reload `pwa/register.ts` triggers the instant a fresh
- * context's service worker first takes control (`controllerchange`) — without this, anything
- * that runs immediately after `page.goto` (like an axe scan) can have its execution context
- * torn out from under it by that reload. Safe to call even when no reload happens: the second
- * `waitForEvent` just times out and is swallowed.
+ * Waits out the one-time reload `pwa/register.ts` triggers the instant a fresh context's service worker first takes
+ * control (`controllerchange`, after `clients.claim()` in `sw-core.ts`). Without this, anything that runs straight
+ * after a navigation (like an axe scan) can have its execution context torn out from under it by that reload.
+ *
+ * The reload comes once per context, on the first page the worker claims. Once a worker controls the page, no reload
+ * is coming, so this returns at once (#1093): it used to wait the full 5 s on every later navigation, and on every
+ * hash-only one, for a `load` event that never fired. If the check itself is cut short by the reload, the page is
+ * mid-reload, so it waits for that load.
  */
+async function settle(page: Page): Promise<void> {
+  const controlled = await page
+    .evaluate<boolean>("'serviceWorker' in navigator && navigator.serviceWorker.controller !== null")
+    .catch(() => false);
+  if (controlled) return;
+  await page.waitForEvent('load', { timeout: 5_000 }).catch(() => undefined);
+}
+
+/** Navigates, then waits out the first-visit service-worker reload (see `settle`). */
 export async function gotoAndSettle(page: Page, url: string): Promise<void> {
   await page.goto(url);
-  await page.waitForEvent('load', { timeout: 5_000 }).catch(() => undefined);
+  await settle(page);
+}
+
+/** Reloads, then waits out the first-visit service-worker reload (see `settle`). */
+export async function reloadAndSettle(page: Page): Promise<void> {
+  await page.reload();
+  await settle(page);
 }
 
 /** Starting from the People list, creates a person and saves. Works offline — no network involved. */
@@ -155,9 +173,12 @@ export type SettingsTab = 'Profile & frame' | 'Bodies & orbs' | 'Display & glyph
 export async function openSettings(page: Page, tab?: SettingsTab): Promise<void> {
   const dialog = page.locator('dialog.settings-card');
   const trigger = page.locator('button.extended-settings-trigger');
+  const chartActions = page.getByRole('button', { name: 'Chart actions', exact: true });
+  // isVisible() does not wait, so let the chart row render before choosing a path (#1093: navigation no longer
+  // idles 5 s first, which used to hide this).
+  await expect(dialog.or(trigger).or(chartActions).first()).toBeVisible();
   // At 40rem and below the tab row's actions sit behind one "Chart actions" toggle (#818, #826).
-  if (!(await dialog.isVisible()) && !(await trigger.isVisible()))
-    await page.getByRole('button', { name: 'Chart actions', exact: true }).click();
+  if (!(await dialog.isVisible()) && !(await trigger.isVisible())) await chartActions.click();
   if (!(await dialog.isVisible())) await trigger.click();
   await expect(dialog).toBeVisible();
   if (tab !== undefined) await openSettingsTab(page, tab);
