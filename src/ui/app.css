@@ -7665,6 +7665,15 @@ a.quiet,
   min-width: 18rem;
 }
 
+/* Issue 1075: the starting point and Build PDF sit together under the title and context line (guidelines §5), with the hint beside the action it explains. */
+.pdf-primary-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-4);
+}
+
 .pdf-build-actions {
   display: flex;
   flex-wrap: wrap;
@@ -7748,9 +7757,23 @@ a.quiet,
   }
 
   /* The summary column stays in view while the selection scrolls (issue 975). One column on a phone has nothing to stick against. */
+  /* Issue 1075: clears the pinned Build PDF bar (about 80px at 1280x800, 6.5rem on the 14px root) so it never sits under it. */
   .pdf-summary-sticky {
     position: sticky;
-    top: 1.5rem;
+    top: 6.5rem;
+  }
+}
+
+/* Wide: the starting point and Build PDF stay in reach while the long form scrolls (issue 1075, guidelines §5). */
+@media (min-width: 64rem) {
+  /* At 64rem and up the app header is a left rail, not a top bar, so the bar pins to the top of the viewport. */
+  .pdf-primary-bar {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    margin-top: calc(-1 * var(--space-2));
+    padding: var(--space-2) 0;
+    background: var(--bg);
   }
 }
 

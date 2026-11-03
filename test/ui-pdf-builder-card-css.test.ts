@@ -14,8 +14,8 @@ function ruleFor(selector: string): string {
 }
 
 describe('PDF builder card and sticky CSS (#975)', () => {
-  it('makes the summary wrapper sticky at top 1.5rem, inside the desktop container query only', () => {
-    expect(ruleFor('.pdf-summary-sticky')).toMatch(/position: sticky;\s*top: 1\.5rem;/);
+  it('makes the summary wrapper sticky below the pinned Build PDF bar, inside the desktop container query only', () => {
+    expect(ruleFor('.pdf-summary-sticky')).toMatch(/position: sticky;\s*top: 6\.5rem;/);
     const query = css.indexOf('@container pdf-builder (min-width: 64rem) {');
     const sticky = css.indexOf('.pdf-summary-sticky {');
     const queryEnd = css.indexOf('\n}\n', query);

@@ -53,14 +53,15 @@ async function render(): Promise<HTMLElement> {
 }
 
 describe('the Documents page is the PDF builder (#916)', () => {
-  it('has one h1 in the shared PageHeader, with the starting point and Build PDF in its action area', async () => {
+  it('has one h1 in the shared PageHeader, with the starting point and Build PDF in the bar below the title (issue 1075)', async () => {
     const container = await render();
     const h1 = container.querySelector('h1');
     expect(h1?.textContent).toBe(pdfExportMessages.en.heading);
     expect(container.querySelectorAll('h1')).toHaveLength(1);
     expect(h1?.parentElement?.className).toBe('page-header-row');
     const actions = container.querySelector('.pdf-build-actions');
-    expect(actions?.closest('.page-header')).not.toBeNull();
+    expect(actions?.closest('.pdf-primary-bar')).not.toBeNull();
+    expect(actions?.closest('.page-header-row')).toBeNull();
     expect(container.querySelector('.pdf-header-preset select')).not.toBeNull();
     expect(container.querySelector('a[href="#/people"]')).toBeNull();
   });
