@@ -112,6 +112,8 @@ for (const viewport of [
         const back = await box(page.locator('main p.back').first());
         const heading = await box(page.getByRole('heading', { level: 1 }));
         expect(back.bottom).toBeLessThanOrEqual(heading.top);
+        // Moved from natal-chart-selector-layout.spec.ts (#1093): the natal chart has no separate title row.
+        if (type === 'Natal') await expect(page.locator('.chart-title-row')).toHaveCount(0);
 
         const label = await box(page.locator('.chart-type-select label'));
         const select = await box(page.getByLabel('Chart type', { exact: true }));

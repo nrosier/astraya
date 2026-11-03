@@ -2,6 +2,9 @@
  * The Selection card overhangs the chart wheel equally on every single-wheel chart screen (#817): one
  * --space-6 above the wheel's top and the same below its bottom. Every screen that draws its wheel through
  * ChartDataView shares one workbench, so each is measured the same way, at 1280x800 and 3440x1440.
+ *
+ * At 1280x800 the natal, draconic, harmonic, solar return and lunar return wheels, and their Selection cards, also sit
+ * above the 800px fold (#1013; merged here from chart-wheel-fold.spec.ts by #1093, which visited the same screens).
  */
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -41,6 +44,8 @@ interface Measure {
   readonly token: number;
   readonly wheelH: number;
   readonly cardH: number;
+  readonly wheelBottom: number;
+  readonly cardBottom: number;
 }
 
 async function measure(page: Page, screen: string, width: number, height: number): Promise<Measure> {
@@ -63,6 +68,8 @@ async function measure(page: Page, screen: string, width: number, height: number
     token,
     wheelH: wheel.height,
     cardH: card.height,
+    wheelBottom: wheel.y + wheel.height,
+    cardBottom: card.y + card.height,
   };
   console.log(
     `[screen ${screen} ${String(width)}x${String(height)}] wheel ${wheel.y.toFixed(2)}..${(wheel.y + wheel.height).toFixed(2)} (h ${wheel.height.toFixed(2)}) | card ${card.y.toFixed(2)}..${(card.y + card.height).toFixed(2)} (h ${card.height.toFixed(2)}) | above ${result.above.toFixed(2)} below ${result.below.toFixed(2)} token ${token.toFixed(2)}`,
@@ -74,6 +81,13 @@ function expectOverhang(m: Measure): void {
   expect(Math.abs(m.above - m.token), `${m.screen} above`).toBeLessThanOrEqual(0.5);
   expect(Math.abs(m.below - m.token), `${m.screen} below`).toBeLessThanOrEqual(0.5);
   expect(Math.abs(m.above - m.below), `${m.screen} equal`).toBeLessThanOrEqual(0.5);
+}
+
+/** At 1280x800 the wheel and its card sit above the fold (#1013); soft, so one screen does not hide the next. */
+function expectAboveFold(m: Measure): void {
+  if (m.width !== 1280 || m.height !== 800) return;
+  expect.soft(m.wheelBottom, `${m.screen} wheel bottom`).toBeLessThanOrEqual(800);
+  expect.soft(m.cardBottom, `${m.screen} card bottom`).toBeLessThanOrEqual(800);
 }
 
 test.describe('Selection card overhang on every single-wheel chart screen (#817)', () => {
@@ -100,10 +114,13 @@ test.describe('Selection card overhang on every single-wheel chart screen (#817)
       await openChart(page, 'Natal');
       const natal = await measure(page, 'natal', width, height);
       expectOverhang(natal);
+      expectAboveFold(natal);
       for (const type of ['Draconic', 'Harmonic'] as const) {
         await openChart(page, type);
         await expect(page.locator('.chart-workbench-dial .chart-wheel svg').first()).toBeVisible();
-        expectOverhang(await measure(page, type.toLowerCase(), width, height));
+        const m = await measure(page, type.toLowerCase(), width, height);
+        expectOverhang(m);
+        expectAboveFold(m);
       }
       // Relocated draws its wheel only once a location is saved (see relocated-chart-golden-path.spec.ts).
       await openChart(page, 'Relocated');
@@ -150,10 +167,14 @@ test.describe('Selection card overhang on every single-wheel chart screen (#817)
       await openSharedPerson(page, baseUrl, EINSTEIN);
       await openChart(page, 'Solar return');
       await expect(page.locator('.chart-workbench-dial .chart-wheel svg').first()).toBeVisible();
-      expectOverhang(await measure(page, 'solar-return', width, height));
+      const solar = await measure(page, 'solar-return', width, height);
+      expectOverhang(solar);
+      expectAboveFold(solar);
       await openChart(page, 'Lunar return');
       await expect(page.locator('.chart-workbench-dial .chart-wheel svg').first()).toBeVisible();
-      expectOverhang(await measure(page, 'lunar-return', width, height));
+      const lunar = await measure(page, 'lunar-return', width, height);
+      expectOverhang(lunar);
+      expectAboveFold(lunar);
     });
   }
 });
