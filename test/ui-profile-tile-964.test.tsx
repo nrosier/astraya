@@ -13,6 +13,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AuthUser } from '../src/sync/auth-client.js';
 import { getLocale, setLocale } from '../src/ui/locale.js';
 import { ProfileTile } from '../src/ui/ProfileTile.js';
+import { applyTheme, readStoredTheme } from '../src/ui/theme-dom.js';
 
 const ADMIN: AuthUser = {
   id: 'u-admin',
@@ -283,6 +284,28 @@ describe('segmented language and theme controls', () => {
     });
     expect(localStorage.getItem('astraya.theme')).toBe('light');
     expect(document.documentElement.dataset.theme).toBe('light');
+  });
+
+  it('restores the chosen theme after a reload (remount reads the stored choice) (#1047)', () => {
+    const first = mount({ user: PLAIN_USER });
+    openMenu(first);
+    act(() => {
+      segment(first, 'Theme', 'Dark').click();
+    });
+    expect(localStorage.getItem('astraya.theme')).toBe('dark');
+    act(() => {
+      mounted?.root.unmount();
+    });
+    mounted?.container.remove();
+    mounted = undefined;
+    // A reload starts with no data-theme; main.tsx then applies the stored choice before first paint.
+    delete document.documentElement.dataset.theme;
+    applyTheme(readStoredTheme());
+    expect(document.documentElement.dataset.theme).toBe('dark');
+
+    const reloaded = mount({ user: PLAIN_USER });
+    openMenu(reloaded);
+    expect(segment(reloaded, 'Theme', 'Dark').checked).toBe(true);
   });
 
   it('labels the System option in Dutch as Systeem', () => {
