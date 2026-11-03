@@ -7,11 +7,12 @@
 /**
  * @module EclipsesView
  * @purpose Renders the Eclipses tool screen: solar/lunar eclipses over a span of years, each placed in the zodiac, and (for a chosen person) which of their natal points each eclipse touches.
- * @conventions Lives inside `Stored` because the person picker reads the local store, though the eclipse search itself needs only the ephemeris. Text comes from co-located `EclipsesView.messages.ts` via `useMessages()`.
+ * @conventions Lives inside `Stored` because the person picker reads the local store, though the eclipse search itself needs only the ephemeris. Text comes from co-located `EclipsesView.messages.ts` via `useMessages()`. Laid out as a tool page (#1054): the search form and a summary panel side by side, the results full width below (`.tool-layout`).
  * @exports EclipsesView
  */
 import { GlossaryText } from './GlossaryText.js';
 import { formatOrb } from './format.js';
+import { Button } from './primitives/Button.js';
 import { Select } from './primitives/Select.js';
 import { TextField } from './primitives/TextField.js';
 import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
@@ -43,6 +44,8 @@ type Result =
       readonly toYear: number;
       /** Set when a person was chosen but their ASC/MC had to be left out. */
       readonly anglesLeftOut: boolean;
+      /** The natal chart the search compared with, as it was named then; undefined when none was chosen. */
+      readonly personName: string | undefined;
     }
   | { readonly kind: 'error'; readonly message: string };
 
@@ -116,6 +119,7 @@ export function EclipsesView(): React.JSX.Element {
           fromYear: from,
           toYear: to,
           anglesLeftOut,
+          personName: person === undefined ? undefined : person.displayName || t.unnamedPerson,
         });
       } catch (error) {
         if (id === runId.current) {
@@ -201,55 +205,88 @@ export function EclipsesView(): React.JSX.Element {
         <GlossaryText text={t.hint} />
       </p>
 
-      <div className="field-grid">
-        <TextField label={t.fromYearLabel} inputMode="numeric" value={fromYear} onChange={setFromYear} />
-        <TextField label={t.toYearLabel} inputMode="numeric" value={toYear} onChange={setToYear} />
-        <Select
-          label={t.personLabel}
-          value={personId}
-          options={[
-            { value: '', label: t.personNone },
-            ...people.map((person) => ({ value: person.id, label: person.displayName || t.unnamedPerson })),
-          ]}
-          onChange={setPersonId}
-        />
-      </div>
-      <p>
-        <button type="button" disabled={provider === undefined || result.kind === 'loading'} onClick={run}>
-          {result.kind === 'loading' ? t.finding : t.findButton}
-        </button>
-      </p>
+      <div className="tool-layout">
+        <section className="tool-card tool-form" aria-labelledby="eclipses-search-heading">
+          <h2 id="eclipses-search-heading">{t.searchHeading}</h2>
+          <div className="tool-field-row">
+            <TextField label={t.fromYearLabel} inputMode="numeric" value={fromYear} onChange={setFromYear} />
+            <TextField label={t.toYearLabel} inputMode="numeric" value={toYear} onChange={setToYear} />
+          </div>
+          <Select
+            label={t.personLabel}
+            value={personId}
+            options={[
+              { value: '', label: t.personNone },
+              ...people.map((person) => ({ value: person.id, label: person.displayName || t.unnamedPerson })),
+            ]}
+            onChange={setPersonId}
+          />
+          {validation !== undefined && <StatusMessage kind="error">{validation}</StatusMessage>}
+          <div className="tool-actions">
+            <Button
+              variant="primary"
+              disabled={provider === undefined}
+              busy={result.kind === 'loading'}
+              busyLabel={t.finding}
+              onClick={run}
+            >
+              {t.findButton}
+            </Button>
+          </div>
+        </section>
 
-      {validation !== undefined && <StatusMessage kind="error">{validation}</StatusMessage>}
+        <aside className="tool-card tool-panel" aria-labelledby="eclipses-summary-heading">
+          <h2 id="eclipses-summary-heading">{t.summaryHeading}</h2>
+          {/* The panel describes the current result: busy while the eclipses (re)calculate. */}
+          <div className="tool-panel-body" aria-busy={result.kind === 'loading'}>
+            {result.kind === 'loading' && <p className="hint">{t.finding}</p>}
+            {result.kind === 'ready' && (
+              <p className="tool-panel-figure">
+                <GlossaryText
+                  text={
+                    result.rows.length === 0
+                      ? t.noEclipses
+                      : t.summary(result.rows.length, result.fromYear, result.toYear)
+                  }
+                />
+              </p>
+            )}
+            {result.kind === 'ready' && (
+              <dl className="tool-facts">
+                <dt>{t.solarCountLabel}</dt>
+                <dd>{String(result.rows.filter((row) => row.family === 'solar').length)}</dd>
+                <dt>{t.lunarCountLabel}</dt>
+                <dd>{String(result.rows.filter((row) => row.family === 'lunar').length)}</dd>
+                <dt>{t.personLabel}</dt>
+                <dd>{result.personName ?? t.personNone}</dd>
+              </dl>
+            )}
+            {result.kind === 'ready' && result.anglesLeftOut && (
+              <p className="hint">
+                <GlossaryText text={t.anglesNote} />
+              </p>
+            )}
+            <p className="hint">
+              <GlossaryText text={t.orbNote} />
+            </p>
+          </div>
+        </aside>
+      </div>
+
       {/* The result region: busy while the eclipses (re)calculate, as the Astrocartography map is. */}
       <div aria-busy={result.kind === 'loading'}>
         {result.kind === 'error' && <StatusMessage kind="error">{t.error(result.message)}</StatusMessage>}
 
-        {result.kind === 'ready' &&
-          (result.rows.length === 0 ? (
-            <p className="hint">
-              <GlossaryText text={t.noEclipses} />
-            </p>
-          ) : (
-            <>
-              <p>
-                <GlossaryText text={t.summary(result.rows.length, result.fromYear, result.toYear)} />
-              </p>
-              {result.anglesLeftOut && (
-                <p className="hint">
-                  <GlossaryText text={t.anglesNote} />
-                </p>
-              )}
-              <SortableTable
-                caption={t.tableCaption}
-                captionTerm="eclipse"
-                columns={columns}
-                rows={result.rows}
-                getRowKey={(row) => row.id}
-                downloadFilename={`eclipses-${String(result.fromYear)}-${String(result.toYear)}.csv`}
-              />
-            </>
-          ))}
+        {result.kind === 'ready' && result.rows.length > 0 && (
+          <SortableTable
+            caption={t.tableCaption}
+            captionTerm="eclipse"
+            columns={columns}
+            rows={result.rows}
+            getRowKey={(row) => row.id}
+            downloadFilename={`eclipses-${String(result.fromYear)}-${String(result.toYear)}.csv`}
+          />
+        )}
       </div>
     </main>
   );

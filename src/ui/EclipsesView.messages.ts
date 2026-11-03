@@ -7,7 +7,13 @@
  */
 const en = {
   heading: 'Eclipses',
-  hint: 'Solar and lunar eclipses from the ephemeris, with the degree each falls at. Choose a person to see which of their natal points an eclipse touches — within 3° of the eclipse degree or of the degree opposite it.',
+  hint: 'Solar and lunar eclipses from the ephemeris, with the degree each falls at.',
+  orbNote:
+    'Choose a person to see which of their natal points an eclipse touches — within 3° of the eclipse degree or of the degree opposite it.',
+  searchHeading: 'Search',
+  summaryHeading: 'Summary',
+  solarCountLabel: 'Solar eclipses',
+  lunarCountLabel: 'Lunar eclipses',
   fromYearLabel: 'From year',
   toYearLabel: 'To year',
   personLabel: 'Natal chart',
@@ -39,7 +45,13 @@ const en = {
 
 const nl: typeof en = {
   heading: 'Verduisteringen',
-  hint: 'Zons- en maansverduisteringen uit de efemeriden, met de graad waarop elk valt. Kies een persoon om te zien welke natale punten een verduistering raakt — binnen 3° van de verduisteringsgraad of van de graad ertegenover.',
+  hint: 'Zons- en maansverduisteringen uit de efemeriden, met de graad waarop elk valt.',
+  orbNote:
+    'Kies een persoon om te zien welke natale punten een verduistering raakt — binnen 3° van de verduisteringsgraad of van de graad ertegenover.',
+  searchHeading: 'Zoeken',
+  summaryHeading: 'Samenvatting',
+  solarCountLabel: 'Zonsverduisteringen',
+  lunarCountLabel: 'Maansverduisteringen',
   fromYearLabel: 'Vanaf jaar',
   toYearLabel: 'Tot jaar',
   personLabel: 'Geboortehoroscoop',
