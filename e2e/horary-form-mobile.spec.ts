@@ -3,7 +3,7 @@
  * system's label fits its select, the coordinates are dimmed until a place search fills them, and
  * neither the page nor any input runs past the viewport. Makes no network call: no place is searched.
  */
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
@@ -108,10 +108,10 @@ async function checkForm(page: Page, house: string, coords: readonly string[], e
     body: JSON.stringify(offenders.documentScrollWidth),
     contentType: 'application/json',
   });
-  await test.info().attach('overflow-elements.json', {
-    body: JSON.stringify(offenders.elements.slice(0, 30), null, 2),
-    contentType: 'application/json',
-  });
+  // Written to disk and echoed to the CI log, so the list survives even when the assertion below fails.
+  const overflowElements = JSON.stringify(offenders.elements.slice(0, 30));
+  writeFileSync(test.info().outputPath('overflow-elements.json'), overflowElements);
+  console.log('OVERFLOW-ELEMENTS ' + overflowElements);
   const sizing = await page.evaluate<string>(
     `(() => {
       const select = document.getElementById(${JSON.stringify(await page.getByLabel(house, { exact: true }).getAttribute('id'))});
@@ -130,7 +130,8 @@ async function checkForm(page: Page, house: string, coords: readonly string[], e
       return JSON.stringify({ house: chain(select), coords: chain(coords) });
     })()`,
   );
-  await test.info().attach('sizing.json', { body: sizing, contentType: 'application/json' });
+  writeFileSync(test.info().outputPath('sizing.json'), sizing);
+  console.log('SIZING ' + sizing);
   expect(overflow).toBeLessThanOrEqual(0);
 
   const viewportWidth = await page.evaluate<number>('window.innerWidth');
