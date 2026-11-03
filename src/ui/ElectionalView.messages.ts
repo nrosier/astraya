@@ -17,6 +17,8 @@ const en = {
     minutes === 60 ? '1 hour' : minutes < 60 ? `${String(minutes)} minutes` : `${String(minutes / 60)} hours`,
   rulesLegend: 'Rules',
   findButton: 'Find times',
+  searchHeading: 'Search',
+  emptyState: 'No search yet. Choose the dates, a place and the rules, then find times.',
   finding: 'Searching…',
   fieldErrors: {
     fromDate: 'Enter a real start date.',
@@ -85,6 +87,8 @@ const nl: typeof en = {
     minutes === 60 ? '1 uur' : minutes < 60 ? `${String(minutes)} minuten` : `${String(minutes / 60)} uur`,
   rulesLegend: 'Regels',
   findButton: 'Tijden zoeken',
+  searchHeading: 'Zoeken',
+  emptyState: 'Nog geen zoekopdracht. Kies de datums, een plaats en de regels, en zoek dan tijden.',
   finding: 'Zoeken…',
   fieldErrors: {
     fromDate: 'Voer een bestaande begindatum in.',
