@@ -1,7 +1,8 @@
 /**
  * Target sizes (#1073, guidelines §6, WCAG 2.5.8): on a touch phone (390×844, coarse pointer) every control on the
  * screens a person uses is at least 44×44 CSS px, and on a desktop pointer (1280×800) at least 24×24. A control that
- * shrinks back below its target fails here by name and page.
+ * shrinks back below its target fails here by name and page. axe's `target-size` rule (WCAG 2.5.8) also runs on every
+ * route, which catches targets that are large enough but overlap their neighbours.
  *
  * Exempt, as WCAG 2.5.8 allows and the CSS block "Target sizes (#1073)" in `src/ui/app.css` documents:
  * - a link or glossary term inside a sentence or heading (the inline exception);
@@ -12,6 +13,7 @@
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
@@ -115,6 +117,8 @@ for (const pointer of POINTERS) {
         const found = await page.evaluate<Offender[]>(MEASURE(pointer.min));
         const where = route.replace(personId, ':id');
         for (const o of found) offenders.push(`${where}: ${o.what} ${String(o.width)}x${String(o.height)}`);
+        const axe = await new AxeBuilder({ page }).withRules(['target-size']).analyze();
+        for (const v of axe.violations) for (const n of v.nodes) offenders.push(`${where}: axe ${n.target.join(' ')}`);
       }
       expect(offenders).toEqual([]);
     } finally {

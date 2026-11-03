@@ -7415,6 +7415,12 @@ a.quiet,
   margin-block: min(0px, calc((var(--target-min) - 1lh) / -2));
 }
 
+/* Overview's next steps are a stacked list: borrowed space would overlap the next link's target (axe target-size), so
+   each link keeps its full target height in the layout instead. */
+.overview-actions a {
+  margin-block: 0;
+}
+
 /* The Sabian label's term is a standalone control: its dotted underline is a text decoration, so the hit-area padding
    above does not push the line away from the word. */
 .sabian-label .primitive-tooltip-trigger {
