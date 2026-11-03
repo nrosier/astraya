@@ -22,6 +22,47 @@ function throwingLocalStorage(): Storage {
   };
 }
 
+describe('the page language follows the locale (#1079)', () => {
+  const documentDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'document');
+  const storageDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+  const root = { lang: 'en' };
+
+  beforeEach(() => {
+    vi.resetModules();
+    root.lang = 'en';
+    Object.defineProperty(globalThis, 'document', { value: { documentElement: root }, configurable: true });
+  });
+
+  afterEach(() => {
+    for (const [key, descriptor] of [
+      ['document', documentDescriptor],
+      ['localStorage', storageDescriptor],
+    ] as const) {
+      if (descriptor === undefined) Reflect.deleteProperty(globalThis, key);
+      else Object.defineProperty(globalThis, key, descriptor);
+    }
+  });
+
+  it('sets <html lang> from the stored locale on start, and on every change', async () => {
+    const store = new Map<string, string>([['astraya:reportLocale', 'nl']]);
+    Object.defineProperty(globalThis, 'localStorage', {
+      configurable: true,
+      value: {
+        getItem: (key: string) => store.get(key) ?? null,
+        setItem: (key: string, value: string) => {
+          store.set(key, value);
+        },
+      },
+    });
+    const { setLocale } = await import('../src/ui/locale.ts');
+    expect(root.lang).toBe('nl');
+    setLocale('en');
+    expect(root.lang).toBe('en');
+    setLocale('nl');
+    expect(root.lang).toBe('nl');
+  });
+});
+
 describe('locale storage denial (#493)', () => {
   // Captures the descriptor rather than reading `globalThis.localStorage` by value: Node's own
   // `localStorage` is a lazy getter, and merely invoking it triggers the same

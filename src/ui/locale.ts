@@ -14,7 +14,7 @@
  */
 /**
  * @module ui/locale
- * @purpose App-wide UI locale (#158) store that drives every message catalogue read via useMessages (messages.ts) as well as the interpretation report's language.
+ * @purpose App-wide UI locale (#158) store that drives every message catalogue read via useMessages (messages.ts) as well as the interpretation report's language, and keeps the page's `<html lang>` in step with it (#1079).
  * @conventions Plain module-level useSyncExternalStore (not React context) so multiple independently-mounted components (LanguageToggle, ReportView) share state without provider wiring; persists under the legacy `astraya:reportLocale` localStorage key, which is kept for backward compatibility; storage read/write is best-effort (#493), matching the failure-safe pattern theme-dom.ts/symbol-setting.ts already use.
  * @exports LOCALE_LABELS, isLocale, getLocale, setLocale, useLocale
  */
@@ -43,7 +43,17 @@ function readStored(): Locale {
   }
 }
 
+/**
+ * Declares the page's language (#1079, WCAG 3.1.1): screen readers pick their pronunciation from `<html lang>`, and
+ * `index.html` ships `en`. Skipped where there is no document (unit tests under Node).
+ */
+function applyDocumentLang(locale: Locale): void {
+  if (typeof document === 'undefined') return;
+  document.documentElement.lang = locale;
+}
+
 let current: Locale = readStored();
+applyDocumentLang(current);
 const listeners = new Set<() => void>();
 
 export function getLocale(): Locale {
@@ -53,6 +63,7 @@ export function getLocale(): Locale {
 export function setLocale(next: Locale): void {
   if (next === current) return;
   current = next;
+  applyDocumentLang(next);
   try {
     localStorage.setItem(LOCALE_KEY, next);
   } catch {
