@@ -233,6 +233,18 @@ test.describe('with the shared people (#799)', () => {
     const dark = page.locator('.profile-popover').getByRole('radio', { name: /Dark$/ });
     await dark.check();
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    // #1047: Light and System sit beside Dark; System clears the explicit override and stores 'system'.
+    await page
+      .locator('.profile-popover')
+      .getByRole('radio', { name: /Light$/ })
+      .check();
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+    await page
+      .locator('.profile-popover')
+      .getByRole('radio', { name: /System$/ })
+      .check();
+    await expect(page.locator('html')).not.toHaveAttribute('data-theme');
+    expect(await page.evaluate(() => localStorage.getItem('astraya.theme'))).toBe('system');
     await page.keyboard.press('Escape');
   });
 });

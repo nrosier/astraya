@@ -254,13 +254,42 @@ describe('segmented language and theme controls', () => {
     expect(trigger(container).getAttribute('aria-expanded')).toBe('true');
   });
 
-  it('renders the theme as a labelled Light | Dark segmented group', () => {
+  it('renders the theme as a labelled Light | Dark | System segmented group', () => {
     const container = mount({ user: PLAIN_USER });
     openMenu(container);
     const group = container.querySelector('[role="radiogroup"][aria-label="Theme"]');
     expect(group).not.toBeNull();
     expect(group?.textContent).toContain('☀');
     expect(group?.textContent).toContain('☾');
+    expect(group?.textContent).toContain('System');
+    expect(group?.querySelectorAll('input')).toHaveLength(3);
+  });
+
+  it('stores system when System is chosen, clears the explicit theme, and keeps Light and Dark storing their values (#1047)', () => {
+    const container = mount({ user: PLAIN_USER });
+    openMenu(container);
+    act(() => {
+      segment(container, 'Theme', 'Dark').click();
+    });
+    expect(localStorage.getItem('astraya.theme')).toBe('dark');
+    act(() => {
+      segment(container, 'Theme', 'System').click();
+    });
+    expect(localStorage.getItem('astraya.theme')).toBe('system');
+    expect(document.documentElement.dataset.theme).toBeUndefined();
+    expect(segment(container, 'Theme', 'System').checked).toBe(true);
+    act(() => {
+      segment(container, 'Theme', 'Light').click();
+    });
+    expect(localStorage.getItem('astraya.theme')).toBe('light');
+    expect(document.documentElement.dataset.theme).toBe('light');
+  });
+
+  it('labels the System option in Dutch as Systeem', () => {
+    setLocale('nl');
+    const container = mount({ user: PLAIN_USER });
+    openMenu(container);
+    expect(segment(container, 'Thema', 'Systeem')).toBeDefined();
   });
 
   it('applies the chosen theme immediately, stores it, and keeps the popover open', () => {
