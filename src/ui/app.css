@@ -103,6 +103,15 @@
   --space-8: 2rem;
   --space-12: 3rem;
 
+  /* Control sizing (#1074): one height per size, shared by buttons, fields, selects and the links styled as buttons.
+     They are minimum heights, so a longer translated label wraps instead of clipping. Standard is the default; compact
+     is for dense desktop data tools only (guidelines §6) and returns to standard on a coarse pointer. */
+  --control-height: 2.875rem;
+  --control-height-compact: 2.25rem;
+  --control-padding-x: var(--space-4);
+  --control-padding-x-compact: var(--space-3);
+  --field-padding-x: var(--space-3);
+
   /* Major-second type scale. */
   --text-xs: 0.79rem;
   --text-sm: 0.889rem;
@@ -247,9 +256,9 @@
   /* Equal outer columns, so the navigation sits in the true centre of the page. */
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  gap: 0 0.75rem;
+  gap: 0 var(--space-3);
   min-height: var(--app-header-height);
-  padding: 0.5rem 1rem;
+  padding: var(--space-2) var(--space-4);
   background: color-mix(in oklab, var(--bg) 82%, transparent);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--line);
@@ -266,7 +275,7 @@
   grid-area: start;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--space-3);
   min-width: 0;
 }
 
@@ -294,7 +303,7 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 /* First focusable thing on the page, hidden until it takes focus (#421). */
@@ -303,7 +312,7 @@
   top: -4rem;
   left: 0.75rem;
   z-index: 30;
-  padding: 0.5rem 0.9rem;
+  padding: var(--space-2) var(--space-4);
   border: 1px solid var(--accent);
   border-radius: var(--radius-sm);
   background: var(--surface);
@@ -347,7 +356,7 @@ html {
   display: flex;
   align-items: center;
   height: 2.25rem;
-  padding: 0 0.85rem;
+  padding: 0 var(--space-3);
   border-radius: 999px;
   border: 1px solid var(--line);
   background: var(--surface);
@@ -405,7 +414,7 @@ a.corner-pill.active {
 .accountpanel-signedin {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: var(--space-2);
 }
 
 /* Anchors the popover/warning below to this trigger's own box — see the doc comment
@@ -438,7 +447,7 @@ a.corner-pill.active {
   right: 0;
   width: 18rem;
   max-width: calc(100vw - 2rem);
-  padding: 1rem;
+  padding: var(--space-4);
   border-radius: 0.5rem;
   border: 1px solid var(--line);
   background: var(--surface);
@@ -463,15 +472,15 @@ a.corner-pill.active {
 }
 
 .accountpanel-popover p {
-  margin: 0.5rem 0 0;
+  margin: var(--space-2) 0 0;
 }
 
 .accountpanel-popover p:first-of-type {
-  margin-top: 0.75rem;
+  margin-top: var(--space-3);
 }
 
 .accountpanel-popover form {
-  margin-top: 0.75rem;
+  margin-top: var(--space-3);
 }
 
 /* The global sync/server badge (#101, #137, #230) — a compact pill that expands, on click,
@@ -481,9 +490,9 @@ a.corner-pill.active {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: var(--space-2);
   min-height: 2.25rem;
-  padding: 0.3rem 0.5rem 0.3rem 0.85rem;
+  padding: var(--space-1) var(--space-2) var(--space-1) var(--space-3);
   border-radius: 999px;
   border: 1px solid var(--line);
   background: var(--surface);
@@ -508,7 +517,7 @@ a.corner-pill.active {
 .syncbadge-label {
   display: flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: var(--space-1);
   padding: 0;
   border: none;
   background: none;
@@ -542,7 +551,7 @@ a.corner-pill.active {
   bottom: 2.5rem;
   left: 0;
   width: 18rem;
-  padding: 1rem;
+  padding: var(--space-4);
   border-radius: 0.5rem;
   border: 1px solid var(--line);
   background: var(--surface);
@@ -558,7 +567,7 @@ a.corner-pill.active {
 
 /* The notes-held-back line (#919): its own paragraph, set apart from the status detail above it. */
 .syncbadge-popover .syncbadge-held-back {
-  margin-top: 0.5rem;
+  margin-top: var(--space-2);
 }
 
 .syncbadge-sync {
@@ -643,7 +652,7 @@ body::before {
 .shell {
   max-width: var(--shell-max-width);
   margin: 0 auto;
-  padding: 3.5rem 1.5rem 5rem;
+  padding: 3.5rem var(--space-6) 5rem;
 }
 
 .shell--wide {
@@ -651,7 +660,7 @@ body::before {
 }
 
 h1 {
-  margin: 0 0 0.35rem;
+  margin: 0 0 var(--space-1);
   font-size: clamp(1.9rem, 1.4rem + 2vw, 2.6rem);
   font-weight: 620;
   line-height: 1.15;
@@ -665,7 +674,7 @@ h1 {
  * heading — keeps ordinary heading weight further down.
  */
 .shell > h2 {
-  margin: 2.75rem 0 0.75rem;
+  margin: var(--space-12) 0 var(--space-3);
   color: var(--accent);
   font-size: 1.15rem;
   font-weight: 650;
@@ -674,7 +683,7 @@ h1 {
 }
 
 .back {
-  margin: 0 0 2rem;
+  margin: 0 0 var(--space-8);
   font-size: 0.8rem;
   font-weight: 550;
   letter-spacing: 0.04em;
@@ -691,7 +700,7 @@ h1 {
 }
 
 .tagline {
-  margin: 0 0 2rem;
+  margin: 0 0 var(--space-8);
   max-width: 40rem;
   color: var(--muted);
   font-size: var(--text-base);
@@ -719,7 +728,7 @@ a:hover {
 .status {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: var(--space-2);
   color: var(--muted);
 }
 
@@ -759,7 +768,7 @@ dl {
   grid-template-columns: max-content 1fr;
   gap: 0;
   margin: 0;
-  padding: 0.35rem 1.1rem;
+  padding: var(--space-1) var(--space-4);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: color-mix(in oklab, var(--surface) 70%, transparent);
@@ -767,11 +776,11 @@ dl {
 
 dt,
 dd {
-  padding: 0.55rem 0;
+  padding: var(--space-2) 0;
 }
 
 dt {
-  padding-right: 1.75rem;
+  padding-right: var(--space-6);
   color: var(--muted);
 }
 
@@ -807,7 +816,7 @@ dd:not(:first-of-type) {
 }
 
 .acg-meanings dd {
-  margin-top: 0.2rem;
+  margin-top: var(--space-1);
   overflow-wrap: break-word;
 }
 
@@ -859,8 +868,8 @@ dd:not(:first-of-type) {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem;
-  margin: 0 0 0.5rem;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-2);
   color: var(--muted);
   font-size: var(--text-sm);
 }
@@ -871,7 +880,7 @@ dd:not(:first-of-type) {
 
 footer {
   margin-top: 4rem;
-  padding-top: 1.25rem;
+  padding-top: var(--space-4);
   border-top: 1px solid var(--line);
   color: var(--muted);
   font-size: 0.9rem;
@@ -880,13 +889,13 @@ footer {
 
 .field-group {
   min-width: 0; /* a fieldset otherwise refuses to shrink below its widest field, and scrolls a phone sideways */
-  margin: 0 0 1.25rem;
+  margin: 0 0 var(--space-4);
   padding: 0;
   border: none;
 }
 
 .field-group legend {
-  padding: 0 0 0.5rem;
+  padding: 0 0 var(--space-2);
   color: var(--muted);
   font-size: 0.8rem;
   font-weight: 650;
@@ -906,7 +915,7 @@ footer {
 .field-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(11.5rem, 1fr));
-  gap: 1rem;
+  gap: var(--space-4);
 }
 
 /*
@@ -1249,14 +1258,14 @@ footer {
  * two that are already there.
  */
 .birth-place-search {
-  margin-top: 1rem;
+  margin-top: var(--space-4);
 }
 
 .birth-place-search-form {
   display: grid;
   justify-items: start;
   gap: var(--space-2);
-  margin-bottom: 0.5rem;
+  margin-bottom: var(--space-2);
 }
 
 /* The shared TextField owns the input's look; the form only gives it the free width. */
@@ -1374,7 +1383,7 @@ footer {
 }
 
 .birth-place-search .warning {
-  margin-top: 0.5rem;
+  margin-top: var(--space-2);
 }
 
 .warnings {
@@ -1382,7 +1391,7 @@ footer {
   padding: 0;
   list-style: none;
   display: grid;
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
 
 /*
@@ -1392,7 +1401,7 @@ footer {
  * indent and the panel all survive being seen in greyscale.
  */
 .warning {
-  padding: 0.75rem 1rem;
+  padding: var(--space-3) var(--space-4);
   border: 1px solid color-mix(in oklab, var(--color-warning) 35%, var(--line));
   border-left: 3px solid var(--color-warning);
   border-radius: var(--radius-sm);
@@ -1401,10 +1410,10 @@ footer {
 
 /* Informational warnings keep the panel shape and drop the alarm colour. */
 .warnings > li:not(.warning) {
-  padding: 0.75rem 1rem 0.75rem 0;
+  padding: var(--space-3) var(--space-4) var(--space-3) 0;
   color: var(--muted);
   border-left: 3px solid var(--line);
-  padding-left: 1rem;
+  padding-left: var(--space-4);
 }
 
 code {
@@ -1421,31 +1430,31 @@ code {
 }
 
 .prose h2 {
-  margin: 2.5rem 0 0.5rem;
+  margin: var(--space-8) 0 var(--space-2);
   font-size: 1.35rem;
   font-weight: 620;
   letter-spacing: -0.015em;
 }
 
 .prose h3 {
-  margin: 2rem 0 0.4rem;
+  margin: var(--space-8) 0 var(--space-2);
   font-size: 1.1rem;
   font-weight: 620;
 }
 
 .prose h4 {
-  margin: 1.5rem 0 0.3rem;
+  margin: var(--space-6) 0 var(--space-1);
   color: var(--accent);
   font-size: 0.95rem;
 }
 
 .prose ul {
-  margin: 0.5rem 0 1.25rem;
-  padding-left: 1.15rem;
+  margin: var(--space-2) 0 var(--space-4);
+  padding-left: var(--space-4);
 }
 
 .prose li {
-  margin-bottom: 0.4rem;
+  margin-bottom: var(--space-2);
 }
 
 .prose li::marker {
@@ -1461,7 +1470,7 @@ code {
  * (although undoable) removes someone from view.
  */
 button {
-  padding: 0.55rem 1rem;
+  padding: var(--space-1) var(--control-padding-x);
   border: 1px solid color-mix(in oklab, var(--accent) 45%, var(--line));
   border-radius: var(--radius-sm);
   background: color-mix(in oklab, var(--accent) 18%, var(--surface));
@@ -1493,14 +1502,30 @@ button.quiet {
   font-weight: 500;
 }
 
+/* The standard control height (#1074) for every button and button-styled link that is an action, not a glyph,
+   table-header or tooltip trigger with its own box. */
+button:not([class]),
+button.quiet,
+button.danger,
+a.quiet,
+.primitive-button-primary,
+.chart-pdf-link,
+.page-header-export-toggle,
+.chart-overlay-trigger,
+.extended-settings-trigger {
+  min-height: var(--control-height);
+}
+
 button.quiet:hover:not(:disabled) {
   background: var(--surface-hover);
 }
 
 /* A route link styled as the quiet button (#1048): same box, weight and hover as `button.quiet`. */
 a.quiet {
-  display: inline-block;
-  padding: 0.55rem 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-1) var(--control-padding-x);
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   background: var(--surface);
@@ -1535,7 +1560,7 @@ button.danger:hover:not(:disabled) {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
 
 /* A field the form is refusing to save is marked by state (`aria-invalid`), not by a class, so the
@@ -1551,8 +1576,8 @@ button.danger:hover:not(:disabled) {
 label.stacked {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
-  margin: 1.25rem 0;
+  gap: var(--space-1);
+  margin: var(--space-4) 0;
   color: var(--muted);
   font-size: 0.8rem;
   font-weight: 550;
@@ -1560,7 +1585,7 @@ label.stacked {
 }
 
 label.stacked textarea {
-  padding: 0.55rem 0.7rem;
+  padding: var(--space-2) var(--space-3);
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   background: var(--surface);
@@ -1588,14 +1613,14 @@ label.stacked textarea:focus-visible {
   padding: 0;
   list-style: none;
   display: grid;
-  gap: 0.6rem;
+  gap: var(--space-2);
 }
 
 .people > li {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--space-3);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
@@ -1604,7 +1629,7 @@ label.stacked textarea:focus-visible {
 .people a.person {
   flex: 1 1 14rem;
   display: block;
-  padding: 0.8rem 1rem;
+  padding: var(--space-3) var(--space-4);
   color: inherit;
   text-decoration: none;
 }
@@ -1641,7 +1666,7 @@ label.stacked textarea:focus-visible {
 }
 
 .people > li > button {
-  margin-right: 1rem;
+  margin-right: var(--space-4);
 }
 
 /* Deleted people, kept restorable. Muted so the section reads as an archive rather
@@ -1656,7 +1681,7 @@ label.stacked textarea:focus-visible {
 }
 
 .empty {
-  padding: 1.25rem;
+  padding: var(--space-4);
   border: 1px dashed var(--line);
   border-radius: var(--radius);
   color: var(--muted);
@@ -1676,7 +1701,7 @@ label.stacked textarea:focus-visible {
 .sidebar-footer {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-2);
   font-size: 0.75rem;
   color: var(--muted);
 }
@@ -1685,8 +1710,8 @@ label.stacked textarea:focus-visible {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 0.5rem;
-  padding: 0.5rem 0.6rem;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-2);
   border: 1px solid var(--accent);
   border-radius: var(--radius-sm);
   background: color-mix(in oklab, var(--accent) 12%, var(--surface));
@@ -1698,7 +1723,7 @@ label.stacked textarea:focus-visible {
 }
 
 .sidebar-footer-update button {
-  padding: 0.25rem 0.6rem;
+  padding: var(--space-1) var(--space-2);
   font-size: 0.75rem;
 }
 
@@ -1725,7 +1750,7 @@ label.stacked textarea:focus-visible {
   position: relative;
   display: flex;
   align-items: stretch;
-  gap: 0.4rem;
+  gap: var(--space-2);
   width: 100%;
 }
 
@@ -1734,10 +1759,10 @@ label.stacked textarea:focus-visible {
   display: flex;
   flex: 1 1 auto;
   align-items: center;
-  gap: 0.6rem;
+  gap: var(--space-2);
   min-width: 0;
-  min-height: 2.5rem;
-  padding: 0.35rem 0.6rem;
+  min-height: var(--control-height);
+  padding: var(--space-1) var(--space-2);
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   background: var(--surface);
@@ -1777,7 +1802,7 @@ label.stacked textarea:focus-visible {
 
 .profile-tile-role {
   flex: 0 0 auto;
-  padding: 0.05rem 0.45rem;
+  padding: 0.05rem var(--space-2);
   border-radius: 999px;
   background: color-mix(in oklab, var(--accent) 16%, var(--surface));
   color: var(--accent);
@@ -1798,7 +1823,8 @@ label.stacked textarea:focus-visible {
 .profile-tile-menu {
   flex: 0 0 auto;
   width: 2.5rem;
-  min-height: 2.5rem;
+  min-height: var(--control-height);
+  padding: 0;
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   background: var(--surface);
@@ -1815,7 +1841,7 @@ label.stacked textarea:focus-visible {
   z-index: 26;
   min-width: min(240px, calc(100vw - 2rem));
   max-width: min(20rem, calc(100vw - 2rem));
-  padding: 0.5rem 0;
+  padding: var(--space-2) 0;
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   background: var(--surface);
@@ -1828,7 +1854,7 @@ label.stacked textarea:focus-visible {
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
-  padding: 0.5rem 0.9rem;
+  padding: var(--space-2) var(--space-4);
 }
 
 .profile-popover-name {
@@ -1843,7 +1869,7 @@ label.stacked textarea:focus-visible {
 
 .profile-popover-separator {
   height: 1px;
-  margin: 0.35rem 0;
+  margin: var(--space-1) 0;
   background: var(--line);
 }
 
@@ -1851,7 +1877,7 @@ label.stacked textarea:focus-visible {
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
-  padding: 0 0.5rem;
+  padding: 0 var(--space-2);
 }
 
 .profile-popover-link,
@@ -1859,7 +1885,7 @@ label.stacked textarea:focus-visible {
   display: flex;
   align-items: center;
   min-height: 2.25rem;
-  padding: 0 0.6rem;
+  padding: 0 var(--space-2);
   border: none;
   border-radius: var(--radius-md);
   background: none;
@@ -1889,9 +1915,9 @@ label.stacked textarea:focus-visible {
   flex-wrap: nowrap;
   align-items: center;
   justify-content: space-between;
-  gap: 0.4rem 0.6rem;
+  gap: var(--space-2) var(--space-2);
   min-height: 2.25rem;
-  padding: 0 0.6rem;
+  padding: 0 var(--space-2);
 }
 
 .profile-popover-row-label {
@@ -1939,8 +1965,8 @@ label.stacked textarea:focus-visible {
   /* Below the sticky header's z-index, so a tall message never paints over it. */
   z-index: 9;
   display: grid;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-6);
   background: color-mix(in oklab, var(--surface) 92%, transparent);
   border-top: 1px solid var(--line);
   backdrop-filter: blur(6px);
@@ -1957,13 +1983,13 @@ label.stacked textarea:focus-visible {
 .pwastatus-update {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--space-3);
   flex-wrap: wrap;
   color: var(--fg);
 }
 
 .pwastatus-update button {
-  padding: 0.35rem 0.85rem;
+  padding: var(--space-1) var(--space-3);
   font-size: 0.8rem;
 }
 
@@ -1975,15 +2001,15 @@ label.stacked textarea:focus-visible {
 /* Data tables (#44): every computed quantity, sortable and copyable. Each table is its
    own panel so the Copy button's scope — which rows it copies — is never ambiguous. */
 .data-table {
-  margin: 0 0 2rem;
+  margin: 0 0 var(--space-8);
 }
 
 .data-table-head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 0.5rem;
+  gap: var(--space-4);
+  margin-bottom: var(--space-2);
 }
 
 .data-table-head h3 {
@@ -1999,12 +2025,29 @@ label.stacked textarea:focus-visible {
 
 .data-table-actions {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .data-table-actions button {
-  padding: 0.35rem 0.85rem;
-  font-size: 0.8rem;
+  min-height: var(--control-height-compact);
+  padding: 0 var(--control-padding-x-compact);
+  font-size: var(--text-sm);
+  white-space: nowrap;
+}
+
+/* A per-row action inside a data table ("Show … on the wheel") is a dense data-tool control: the compact size. */
+.data-table td button.quiet {
+  min-height: var(--control-height-compact);
+  padding: 0 var(--control-padding-x-compact);
+}
+
+@media (pointer: coarse) {
+  .data-table td button.quiet,
+  .data-table-actions button {
+    min-height: var(--control-height);
+    padding: var(--space-1) var(--control-padding-x);
+    font-size: var(--text-base);
+  }
 }
 
 .data-table-scroll {
@@ -2024,7 +2067,7 @@ label.stacked textarea:focus-visible {
 
 .data-table th,
 .data-table td {
-  padding: 0.5rem 0.85rem;
+  padding: var(--space-2) var(--space-3);
   text-align: left;
   white-space: nowrap;
   border-bottom: 1px solid color-mix(in oklab, var(--line) 65%, transparent);
@@ -2126,12 +2169,13 @@ label.stacked textarea:focus-visible {
 @media (pointer: fine) {
   .data-table th,
   .data-table td {
-    padding: 0.35rem 0.75rem;
+    padding: var(--space-1) var(--space-3);
   }
 }
 
 .data-table th button {
   width: 100%;
+  min-height: 0;
   padding: 0;
   border: none;
   background: none;
@@ -2165,7 +2209,7 @@ label.stacked textarea:focus-visible {
    shared scrolling tab row (#818, `.tab-row--always` below), so the row scrolls sideways instead of wrapping. */
 .tab {
   white-space: nowrap;
-  padding: 0.5rem 0.9rem;
+  padding: var(--space-2) var(--space-4);
   border: none;
   border-bottom: 2px solid transparent;
   border-radius: var(--radius-sm) var(--radius-sm) 0 0;
@@ -2213,7 +2257,7 @@ label.stacked textarea:focus-visible {
 
 .person-shelf .hint {
   margin: 0;
-  padding: 0 1rem 0.75rem;
+  padding: 0 var(--space-4) var(--space-3);
 }
 
 /* Overrides the standalone `.shell` (used everywhere else at full padding) down to the box's
@@ -2222,7 +2266,7 @@ label.stacked textarea:focus-visible {
 .person-shelf .shell {
   max-width: none;
   margin: 0;
-  padding: 1.5rem 1.5rem 2rem;
+  padding: var(--space-6) var(--space-6) var(--space-8);
   background: var(--bg);
 }
 
@@ -2263,8 +2307,8 @@ label.stacked textarea:focus-visible {
 
 .app-nav-person {
   max-width: 11rem;
-  margin-right: 0.3rem;
-  padding: 0 0.6rem 0 0;
+  margin-right: var(--space-1);
+  padding: 0 var(--space-2) 0 0;
   overflow: hidden;
   border: none;
   border-right: 1px solid var(--line);
@@ -2309,7 +2353,7 @@ label.stacked textarea:focus-visible {
 
 .person-switcher-item {
   display: block;
-  padding: 0.4rem 0.6rem;
+  padding: var(--space-2) var(--space-2);
   border-radius: var(--radius-sm);
   color: var(--fg);
   text-decoration: none;
@@ -2332,7 +2376,7 @@ label.stacked textarea:focus-visible {
 
 .app-nav-item,
 .app-nav-group-toggle {
-  padding: 0.3rem 0.5rem;
+  padding: var(--space-1) var(--space-2);
   border: none;
   border-radius: var(--radius-sm);
   background: none;
@@ -2389,7 +2433,7 @@ label.stacked textarea:focus-visible {
   flex-direction: column;
   gap: 0.1rem;
   min-width: 100%;
-  padding: 0.3rem;
+  padding: var(--space-1);
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
@@ -2397,7 +2441,7 @@ label.stacked textarea:focus-visible {
 }
 
 .app-nav-menu-item {
-  padding: 0.4rem 0.8rem;
+  padding: var(--space-2) var(--space-3);
   border: none;
   border-radius: var(--radius-sm);
   background: none;
@@ -2425,7 +2469,7 @@ label.stacked textarea:focus-visible {
    the Tools menu's Sky & cycles/Questions & planning/Birth data groups (#506/#509, tools-nav.ts) —
    plus the Export menu's own submenus (a group of items that expands in place). */
 .app-nav-menu-heading {
-  margin: 0.4rem 0.8rem 0.1rem;
+  margin: var(--space-2) var(--space-3) 0.1rem;
   color: var(--muted);
   font-size: 0.75rem;
   font-weight: 650;
@@ -2451,14 +2495,14 @@ label.stacked textarea:focus-visible {
 
   .sidebar-footer {
     grid-area: foot;
-    padding-top: 0.5rem;
+    padding-top: var(--space-2);
     border-top: 1px solid var(--line);
   }
 
   .app-nav-toggle {
     display: inline-flex;
     align-items: center;
-    padding: 0.4rem 0.9rem;
+    padding: var(--space-2) var(--space-4);
   }
 
   /* The panel hangs under the header, as wide as it is (the header is its containing block). */
@@ -2473,7 +2517,7 @@ label.stacked textarea:focus-visible {
     align-items: stretch;
     gap: 0.1rem;
     max-height: calc(100vh - var(--app-header-size, var(--app-header-height)));
-    padding: 0.5rem 1rem 1rem;
+    padding: var(--space-2) var(--space-4) var(--space-4);
     overflow-y: auto;
     background: var(--bg);
     border-bottom: 1px solid var(--line);
@@ -2486,29 +2530,29 @@ label.stacked textarea:focus-visible {
 
   .app-nav-person {
     max-width: none;
-    margin: 0 0 0.25rem;
-    padding: 0.4rem 0.7rem;
+    margin: 0 0 var(--space-1);
+    padding: var(--space-2) var(--space-3);
     border-right: none;
     border-bottom: 1px solid var(--line);
   }
 
   .app-nav-item,
   .app-nav-group-toggle {
-    padding: 0.65rem 0.7rem;
+    padding: var(--space-3) var(--space-3);
     text-align: left;
   }
 
   /* Inside the panel a group opens in place instead of floating over the items beneath it. */
   .app-nav-menu {
     position: static;
-    padding: 0 0 0 1rem;
+    padding: 0 0 0 var(--space-4);
     border: none;
     box-shadow: none;
     background: none;
   }
 
   .app-nav-menu-item {
-    padding: 0.6rem 0.7rem;
+    padding: var(--space-2) var(--space-3);
   }
 }
 
@@ -2565,8 +2609,8 @@ label.stacked textarea:focus-visible {
     align-items: stretch;
     width: 16rem;
     min-height: 100vh;
-    gap: 1rem;
-    padding: 1rem;
+    gap: var(--space-4);
+    padding: var(--space-4);
     border-right: 1px solid var(--line);
     border-bottom: none;
   }
@@ -2607,8 +2651,8 @@ label.stacked textarea:focus-visible {
 
   .app-nav-person {
     max-width: none;
-    margin: 0 0 0.4rem;
-    padding: 0.4rem 0.6rem 0.6rem 0;
+    margin: 0 0 var(--space-2);
+    padding: var(--space-2) var(--space-2) var(--space-2) 0;
     border-right: none;
     border-bottom: 1px solid var(--line);
   }
@@ -2642,14 +2686,14 @@ label.stacked textarea:focus-visible {
     width: 100%;
     max-width: none;
     margin-top: 0;
-    padding-top: 0.75rem;
+    padding-top: var(--space-3);
     border-top: 1px solid var(--line);
   }
 
   /* The footer block sits at the rail's foot, under the utilities, with its own top border. */
   .sidebar-footer {
     width: 100%;
-    padding-top: 0.75rem;
+    padding-top: var(--space-3);
     border-top: 1px solid var(--line);
   }
 
@@ -2676,7 +2720,7 @@ label.stacked textarea:focus-visible {
   .person-switcher-popup {
     top: 0;
     left: 100%;
-    margin-left: 0.5rem;
+    margin-left: var(--space-2);
     width: max-content;
     min-width: 12rem;
     max-width: 16rem;
@@ -2714,7 +2758,7 @@ label.stacked textarea:focus-visible {
   .workspace-shell-collapsed .app-header-with-person {
     width: 0;
     flex: 0 0 0;
-    padding: 1rem 0;
+    padding: var(--space-4) 0;
     overflow: hidden;
     border-right: none;
   }
@@ -2729,14 +2773,14 @@ label.stacked textarea:focus-visible {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.25rem;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
 }
 
 .report-controls label {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: var(--space-2);
 }
 
 /* The configuration (#881) is one disclosure: the rulers and Sabian settings sit inside it, collapsed to a
@@ -2763,14 +2807,14 @@ label.stacked textarea:focus-visible {
 }
 
 .report-toc {
-  margin-bottom: 1.75rem;
-  padding: 0.75rem 1rem;
+  margin-bottom: var(--space-6);
+  padding: var(--space-3) var(--space-4);
   border: 1px solid var(--line);
   border-radius: 0.5rem;
 }
 
 .report-toc h3 {
-  margin: 0 0 0.5rem;
+  margin: 0 0 var(--space-2);
 }
 
 .report-toc ul {
@@ -2779,7 +2823,7 @@ label.stacked textarea:focus-visible {
   padding: 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem 1.2rem;
+  gap: var(--space-2) var(--space-4);
 }
 
 .report-section {
@@ -2822,7 +2866,7 @@ label.stacked textarea:focus-visible {
 }
 
 .report-section h3 {
-  margin-bottom: 0.5rem;
+  margin-bottom: var(--space-2);
 }
 
 .report-section ul {
@@ -2832,7 +2876,7 @@ label.stacked textarea:focus-visible {
 }
 
 .report-paragraph {
-  margin-bottom: 0.9rem;
+  margin-bottom: var(--space-4);
 }
 
 .report-paragraph p {
@@ -2841,11 +2885,11 @@ label.stacked textarea:focus-visible {
 
 /* A body's group in the Report (#654): its name as a sub-heading over the sign and house paragraphs about it. */
 .report-body-group {
-  margin: 0 0 1.25rem;
+  margin: 0 0 var(--space-4);
 }
 
 .report-body-heading {
-  margin: 0 0 0.35rem;
+  margin: 0 0 var(--space-1);
   font-size: 1.05rem;
   font-weight: 650;
   color: var(--accent);
@@ -2857,8 +2901,8 @@ label.stacked textarea:focus-visible {
  */
 .report-placement-label {
   display: inline-block;
-  margin: 0 0 0.3rem;
-  padding: 0.05rem 0.55rem;
+  margin: 0 0 var(--space-1);
+  padding: 0.05rem var(--space-2);
   border-radius: 999px;
   background: var(--surface);
   font-size: 0.8rem;
@@ -2912,7 +2956,7 @@ label.stacked textarea:focus-visible {
 }
 
 .report-provenance {
-  margin-top: 0.2rem;
+  margin-top: var(--space-1);
 }
 
 .ai-customized-rejection p {
@@ -2920,18 +2964,18 @@ label.stacked textarea:focus-visible {
 }
 
 .ai-customized-rejection p + p {
-  margin-top: 0.35rem;
+  margin-top: var(--space-1);
 }
 
 /* Tier 2 (#360): the AI-customized interpretation's own sections, one `<article>` per
    `{heading, body}` pair the model returns (#376) — same rhythm as `.report-section`
    one level up, since this renders inside that same tab rather than a whole report. */
 .tier2-result {
-  margin-top: 1.25rem;
+  margin-top: var(--space-4);
 }
 
 .tier2-result article {
-  margin-bottom: 1.75rem;
+  margin-bottom: var(--space-6);
 }
 
 .tier2-result article:last-child {
@@ -2939,7 +2983,7 @@ label.stacked textarea:focus-visible {
 }
 
 .tier2-result h4 {
-  margin: 0 0 0.4rem;
+  margin: 0 0 var(--space-2);
   color: var(--accent);
   font-size: 0.95rem;
 }
@@ -2995,7 +3039,7 @@ label.stacked textarea:focus-visible {
 .chart-workbench {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 1rem 2rem;
+  gap: var(--space-4) var(--space-8);
   align-items: start;
 }
 
@@ -3074,13 +3118,13 @@ label.stacked textarea:focus-visible {
 .selection-inspector-badges {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
-  margin: 0.4rem 0;
+  gap: var(--space-2);
+  margin: var(--space-2) 0;
 }
 
 .primitive-badge {
   display: inline-block;
-  padding: 0.1rem 0.6rem;
+  padding: 0.1rem var(--space-2);
   border: 1px solid var(--line);
   border-radius: 999px;
   background: var(--surface-hover);
@@ -3142,7 +3186,7 @@ dl.primitive-stat-list {
 }
 
 .chart-isolation-group h5 {
-  margin: 0.75rem 0 0.25rem;
+  margin: var(--space-3) 0 var(--space-1);
   font-size: 0.85rem;
   color: var(--muted);
 }
@@ -3153,7 +3197,7 @@ dl.primitive-stat-list {
    shove the page. Stacked under the dial, as on a phone, nothing sits below it that could jump, so it
    stays as short as its content instead of showing a tall empty box. */
 .selection-inspector {
-  padding: 0.85rem 1.1rem;
+  padding: var(--space-3) var(--space-4);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
@@ -3161,19 +3205,19 @@ dl.primitive-stat-list {
 }
 
 .selection-inspector-title {
-  margin: 0 0 0.5rem;
+  margin: 0 0 var(--space-2);
   font-size: var(--text-base, 1rem);
 }
 
 .selection-inspector ul {
-  margin: 0.5rem 0 0;
-  padding-left: 1.1rem;
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-4);
 }
 
 .chart-isolation-panel {
   max-width: 55rem;
-  margin: -1rem auto 1.5rem;
-  padding: 0.85rem 1.1rem;
+  margin: -1rem auto var(--space-6);
+  padding: var(--space-3) var(--space-4);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
@@ -3181,15 +3225,15 @@ dl.primitive-stat-list {
 }
 
 .chart-isolation-panel ul {
-  margin: 0.5rem 0 0;
-  padding-left: 1.1rem;
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-4);
 }
 
 .chart-isolation-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
 
 /* The Jones chart-shape diagram (#401): a small standalone abstract pattern, not drawn into
@@ -3197,7 +3241,7 @@ dl.primitive-stat-list {
 .chart-shape-summary {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: var(--space-4);
   flex-wrap: wrap;
 }
 
@@ -3246,7 +3290,7 @@ dl.metric-cards {
 }
 
 .chart-shape-summary > div:first-child p {
-  margin: 0 0 0.6rem;
+  margin: 0 0 var(--space-2);
 }
 
 /*
@@ -3265,7 +3309,7 @@ dl.metric-cards {
 
 /* The chart screen's sections (#430): a panel's own heading sits under the tab strip. */
 .chart-print-all > section + section {
-  margin-top: 1.5rem;
+  margin-top: var(--space-6);
 }
 
 .chart-shape-diagram {
@@ -4361,7 +4405,7 @@ svg text.chart-symbol-text-unicode {
 .chart-print-all {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: var(--space-6);
 }
 
 /*
@@ -4497,11 +4541,11 @@ svg text.chart-symbol-text-unicode {
 
 /* Planetary cycles (#410): the zodiac with a cycle's exact aspects joined in order. */
 .cycles-form {
-  margin-bottom: 0.5rem;
+  margin-bottom: var(--space-2);
 }
 
 .cycle-figure {
-  margin: 1rem 0 1.5rem;
+  margin: var(--space-4) 0 var(--space-6);
 }
 
 .cycle-diagram {
@@ -4536,15 +4580,15 @@ svg text.chart-symbol-text-unicode {
 
 /* Horary chart (#406): the considerations before judgment, each stated in words so colour is never the only cue. */
 .horary-considerations {
-  margin: 0.5rem 0 1rem;
+  margin: var(--space-2) 0 var(--space-4);
   padding: 0;
   list-style: none;
   display: grid;
-  gap: 0.6rem;
+  gap: var(--space-2);
 }
 
 .horary-considerations li {
-  padding: 0.55rem 0.8rem;
+  padding: var(--space-2) var(--space-3);
   border: 1px solid var(--line);
   border-left-width: 4px;
   border-radius: var(--radius-sm);
@@ -4568,16 +4612,16 @@ svg text.chart-symbol-text-unicode {
   padding: 0;
   list-style: none;
   display: grid;
-  gap: 0.6rem;
+  gap: var(--space-2);
 }
 
 /* Birth-time rectification (#408): the events being tested against, and the evidence under each candidate time. */
 .rectification-events {
-  margin: 0 0 0.75rem;
+  margin: 0 0 var(--space-3);
   padding: 0;
   list-style: none;
   display: grid;
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
 
 .rectification-events > li {
@@ -4585,35 +4629,35 @@ svg text.chart-symbol-text-unicode {
 }
 
 .rectification-detail {
-  margin: 0.5rem 0;
+  margin: var(--space-2) 0;
 }
 
 .rectification-detail ul {
-  margin: 0.4rem 0 0.4rem 1.2rem;
+  margin: var(--space-2) 0 var(--space-2) var(--space-4);
 }
 
 /* The written interpretation under a wheel selection (#415). */
 /* The button under a selected placement's card that asks the model for its tensions (#424). */
 .focus-interpretation {
-  margin-top: 0.75rem;
-  padding: 0.75rem 1rem;
+  margin-top: var(--space-3);
+  padding: var(--space-3) var(--space-4);
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   background: var(--surface);
 }
 .focus-interpretation h4 {
-  margin: 0 0 0.5rem;
+  margin: 0 0 var(--space-2);
   color: var(--accent);
   font-size: 0.95rem;
 }
 .focus-interpretation label {
   display: block;
-  margin-bottom: 0.5rem;
+  margin-bottom: var(--space-2);
   color: var(--muted);
   font-size: 0.85rem;
 }
 .focus-interpretation h5 {
-  margin: 0.75rem 0 0.25rem;
+  margin: var(--space-3) 0 var(--space-1);
   font-size: 0.9rem;
 }
 .focus-interpretation .tier2-result p {
@@ -4624,31 +4668,31 @@ svg text.chart-symbol-text-unicode {
    treatment as .focus-interpretation, since both are a prose+consent panel inside a non-report
    screen. */
 .relationship-summary {
-  margin: 0.9rem 0;
-  padding: 0.75rem 1rem;
+  margin: var(--space-4) 0;
+  padding: var(--space-3) var(--space-4);
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   background: var(--surface);
 }
 .relationship-summary h3 {
-  margin: 0 0 0.4rem;
+  margin: 0 0 var(--space-2);
   font-size: var(--text-base);
 }
 .relationship-summary h4 {
-  margin: 0.9rem 0 0.3rem;
+  margin: var(--space-4) 0 var(--space-1);
   color: var(--accent);
   font-size: 0.9rem;
 }
 .relationship-summary ul {
-  margin: 0 0 0 1.1rem;
+  margin: 0 0 0 var(--space-4);
   padding: 0;
 }
 .relationship-summary li {
-  margin: 0.2rem 0;
+  margin: var(--space-1) 0;
 }
 .relationship-summary label {
   display: block;
-  margin: 0.5rem 0;
+  margin: var(--space-2) 0;
   color: var(--muted);
   font-size: 0.85rem;
 }
@@ -4658,35 +4702,35 @@ svg text.chart-symbol-text-unicode {
    since this is plain list text, not a drawn line. */
 .relationship-contact-harmonious {
   border-left: 2px solid var(--aspect-soft);
-  padding-left: 0.5rem;
+  padding-left: var(--space-2);
 }
 .relationship-contact-challenging {
   border-left: 2px solid var(--aspect-hard);
-  padding-left: 0.5rem;
+  padding-left: var(--space-2);
 }
 .relationship-contact-neutral {
   border-left: 2px solid var(--aspect-minor);
-  padding-left: 0.5rem;
+  padding-left: var(--space-2);
 }
 
 .chart-isolation-interpretation {
-  margin-top: 0.9rem;
-  padding-top: 0.75rem;
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
   border-top: 1px solid var(--line);
 }
 
 .chart-isolation-interpretation h4 {
-  margin: 0 0 0.5rem;
+  margin: 0 0 var(--space-2);
   color: var(--accent);
   font-size: 0.95rem;
 }
 
 .chart-isolation-texts {
-  margin: 0 0 0.5rem;
+  margin: 0 0 var(--space-2);
   padding: 0;
   list-style: none;
   display: grid;
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
 
 .chart-isolation-texts p {
@@ -4694,7 +4738,7 @@ svg text.chart-symbol-text-unicode {
 }
 
 .chart-isolation-interpretation > button {
-  margin: 0.25rem 0 0.5rem;
+  margin: var(--space-1) 0 var(--space-2);
 }
 
 /* A corpus entry named by what it means, with its key beside it as small secondary text (#428). */
@@ -4755,7 +4799,7 @@ svg text.chart-symbol-text-unicode {
 .entry-details {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
-  gap: 0.3rem 1rem;
+  gap: var(--space-1) var(--space-4);
   margin: 0;
 }
 
@@ -4786,7 +4830,7 @@ svg text.chart-symbol-text-unicode {
 }
 
 .cell-tag + .cell-tag {
-  margin-top: 0.4rem;
+  margin-top: var(--space-2);
 }
 
 /*
@@ -4911,7 +4955,7 @@ svg text.chart-symbol-text-unicode {
 }
 
 .corpus-entry-key {
-  padding: 0.1rem 0.5rem;
+  padding: 0.1rem var(--space-2);
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   background: var(--surface-hover);
@@ -5133,7 +5177,7 @@ svg text.chart-symbol-text-unicode {
 /* The Tabs primitive's strip keeps the spacing it had before it scrolled (#650); one row, never wrapped. */
 .tab-row--always {
   flex-wrap: nowrap;
-  margin: 1.75rem 0 1.25rem;
+  margin: var(--space-6) 0 var(--space-4);
 }
 
 .tab-row--always .tab-row__scroll > *,
@@ -5144,7 +5188,7 @@ svg text.chart-symbol-text-unicode {
 .tabs {
   display: flex;
   flex-wrap: nowrap;
-  gap: 0.3rem;
+  gap: var(--space-1);
 }
 
 /* Inside the clipping scroller an outside outline would be cut at the row's top and bottom edges. */
@@ -5180,8 +5224,8 @@ svg text.chart-symbol-text-unicode {
 
 .tab-row__actions-panel > .extended-settings > button,
 .tab-row__actions-panel > .chart-overlay-settings > button {
-  min-height: 2.25rem;
-  padding: var(--space-1) var(--space-3);
+  min-height: var(--control-height-compact);
+  padding: var(--space-1) var(--control-padding-x-compact);
 }
 
 /* A summary of what was changed must not push the other trigger off a pinned row: it shortens instead. */
@@ -5382,7 +5426,7 @@ svg text.chart-symbol-text-unicode {
  */
 .chart-view-select {
   max-width: 20rem;
-  margin: 0.25rem 0 0.5rem;
+  margin: var(--space-1) 0 var(--space-2);
 }
 
 /* The Extended settings (#442): a button that summarises what was changed, and the modal card it opens. */
@@ -5395,9 +5439,9 @@ svg text.chart-symbol-text-unicode {
   display: inline-flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 0.25rem 0.75rem;
+  gap: var(--space-1) var(--space-3);
   max-width: 100%;
-  padding: 0.4rem 0.9rem;
+  padding: var(--space-1) var(--control-padding-x);
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   background: var(--surface);
@@ -5422,7 +5466,7 @@ svg text.chart-symbol-text-unicode {
 }
 
 .extended-settings-trigger-count {
-  padding: 0.05rem 0.5rem;
+  padding: 0.05rem var(--space-2);
   border: 1px solid var(--accent);
   border-radius: 999px;
   color: var(--fg);
@@ -5498,7 +5542,7 @@ svg text.chart-symbol-text-unicode {
 .settings-card-footer-group {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: var(--space-2);
   align-items: center;
 }
 
@@ -5513,7 +5557,7 @@ svg text.chart-symbol-text-unicode {
 
 .settings-drawer-tabs-narrow {
   display: none;
-  padding: 0.5rem 0;
+  padding: var(--space-2) 0;
 }
 
 .settings-drawer-tabs-wide .tabs {
@@ -5687,8 +5731,8 @@ svg text.chart-symbol-text-unicode {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  padding: 0.75rem 1.25rem;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
   border-bottom: 1px solid var(--line);
 }
 
@@ -5701,26 +5745,26 @@ svg text.chart-symbol-text-unicode {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 0.5rem 1.25rem 1rem;
+  padding: var(--space-2) var(--space-4) var(--space-4);
 }
 
 .settings-card-group {
-  margin-top: 1rem;
+  margin-top: var(--space-4);
 }
 
 .settings-card-tag {
-  margin: 0 0 0.5rem;
+  margin: 0 0 var(--space-2);
   font-size: 0.85rem;
 }
 
 .settings-card-indent {
-  margin-left: 1.5rem;
+  margin-left: var(--space-6);
 }
 
 /* An informational note on the setting just above it, same shape as .warning but without the alarm colour. */
 .settings-card-note {
-  margin-top: 0.75rem;
-  padding: 0.75rem;
+  margin-top: var(--space-3);
+  padding: var(--space-3);
   border: 1px solid color-mix(in oklab, var(--accent) 35%, var(--line));
   border-left: 3px solid var(--accent);
   border-radius: var(--radius-sm);
@@ -5741,7 +5785,7 @@ svg text.chart-symbol-text-unicode {
 .settings-card-choices {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
-  gap: 0.15rem 1rem;
+  gap: 0.15rem var(--space-4);
 }
 
 .settings-card-footer {
@@ -5749,8 +5793,8 @@ svg text.chart-symbol-text-unicode {
   bottom: 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
-  padding: 0.75rem 1.25rem;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
   border-top: 1px solid var(--line);
   background: var(--bg);
 }
@@ -5761,40 +5805,40 @@ svg text.chart-symbol-text-unicode {
 
 .chart-overlay-rows {
   display: grid;
-  gap: 0.75rem;
-  margin-top: 1rem;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
 }
 
 .chart-overlay-row {
   display: grid;
   grid-template-columns: minmax(12rem, 0.7fr) minmax(0, 1.3fr);
   align-items: end;
-  gap: 0.75rem 1rem;
-  padding: 0.75rem 0;
+  gap: var(--space-3) var(--space-4);
+  padding: var(--space-3) 0;
   border-top: 1px solid var(--line);
 }
 
 .chart-overlay-row-inputs {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
 
 .chart-overlay-row-toggle {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .chart-overlay-row-order {
   display: inline-flex;
-  gap: 0.25rem;
+  gap: var(--space-1);
 }
 
 .chart-overlay-provenance {
-  margin-top: 1rem;
-  padding: 0.75rem 1rem;
+  margin-top: var(--space-4);
+  padding: var(--space-3) var(--space-4);
   border-left: 3px solid var(--line);
   background: var(--surface);
   font-size: 0.875rem;
@@ -5806,8 +5850,8 @@ svg text.chart-symbol-text-unicode {
 }
 
 .chart-overlay-provenance ul {
-  margin-top: 0.25rem;
-  padding-left: 1.25rem;
+  margin-top: var(--space-1);
+  padding-left: var(--space-4);
 }
 
 .chart-overlay-row--inactive .chart-overlay-row-inputs {
@@ -5819,15 +5863,15 @@ svg text.chart-symbol-text-unicode {
   display: flex;
   flex-wrap: wrap;
   align-items: end;
-  gap: 0.75rem;
-  margin: 1rem 0;
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
 }
 
 .relocation-saved-places .primitive-field,
 .relocation-save-place .primitive-field {
   display: grid;
   flex: 1 1 16rem;
-  gap: 0.25rem;
+  gap: var(--space-1);
 }
 
 @media (max-width: 40rem) {
@@ -5898,7 +5942,7 @@ svg text.chart-symbol-text-unicode {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   width: 100%;
 }
 
@@ -5918,7 +5962,7 @@ svg text.chart-symbol-text-unicode {
 .signin-password input {
   width: 100%;
   /* Room for the toggle, and for the browser's own password badge, so neither covers the typed text. */
-  padding-right: 3rem;
+  padding-right: var(--space-12);
 }
 
 .signin-password-toggle {
@@ -5964,11 +6008,11 @@ svg text.chart-symbol-text-unicode {
  * and its reactive description paragraph.
  */
 .profections-rulers-section {
-  margin-bottom: 2rem;
+  margin-bottom: var(--space-8);
 }
 
 .profections-rulers-description {
-  margin-top: 1rem;
+  margin-top: var(--space-4);
 }
 
 /*
@@ -5978,13 +6022,20 @@ svg text.chart-symbol-text-unicode {
  */
 
 .primitive-button-primary {
-  padding: 0.55rem 1.1rem;
+  padding: var(--space-1) var(--control-padding-x);
   border: 1px solid var(--accent);
   border-radius: var(--radius-sm);
   background: var(--accent);
   color: var(--bg);
   font-weight: 600;
   cursor: pointer;
+}
+
+a.primitive-button-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
 }
 
 .primitive-button-primary:hover:not(:disabled) {
@@ -5996,15 +6047,19 @@ svg text.chart-symbol-text-unicode {
   cursor: not-allowed;
 }
 
-.primitive-button-compact {
-  padding: 0.3rem 0.65rem;
+.primitive-button-compact,
+button.primitive-button-compact {
+  min-height: var(--control-height-compact);
+  padding: 0 var(--control-padding-x-compact);
   font-size: var(--text-sm);
 }
 
 @media (pointer: coarse) {
   /* Compact controls return to standard touch sizing on touch layouts (#508). */
-  .primitive-button-compact {
-    padding: 0.55rem 1.1rem;
+  .primitive-button-compact,
+  button.primitive-button-compact {
+    min-height: var(--control-height);
+    padding: var(--space-1) var(--control-padding-x);
     font-size: var(--text-base);
   }
 }
@@ -6039,7 +6094,7 @@ svg text.chart-symbol-text-unicode {
 .primitive-field input:not([type='checkbox']):not([type='radio']),
 .primitive-field select,
 .primitive-field textarea {
-  padding: 0.55rem 0.7rem;
+  padding: var(--space-1) var(--field-padding-x);
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   background: var(--surface);
@@ -6049,7 +6104,13 @@ svg text.chart-symbol-text-unicode {
   font-variant-numeric: tabular-nums;
 }
 
+.primitive-field input:not([type='checkbox']):not([type='radio']),
+.primitive-field select {
+  min-height: var(--control-height);
+}
+
 .primitive-field textarea {
+  padding-block: var(--space-2);
   resize: vertical;
 }
 
@@ -6079,8 +6140,10 @@ svg text.chart-symbol-text-unicode {
   border-color: var(--color-danger);
 }
 
+.primitive-field .primitive-control-compact,
 .primitive-control-compact {
-  padding: 0.3rem 0.5rem;
+  min-height: var(--control-height-compact);
+  padding: 0 var(--space-2);
   font-size: var(--text-sm);
 }
 
@@ -6088,8 +6151,8 @@ svg text.chart-symbol-text-unicode {
    box this used to be as a hand-written inline style, moved here once the control itself moved
    onto the shared `Select` primitive. */
 .symbol-setting-description {
-  margin: 0.75rem 0 1rem;
-  padding: 0.75rem;
+  margin: var(--space-3) 0 var(--space-4);
+  padding: var(--space-3);
   border-left: 3px solid var(--line);
   background: var(--surface);
   color: var(--muted);
@@ -6105,8 +6168,10 @@ svg text.chart-symbol-text-unicode {
 }
 
 @media (pointer: coarse) {
+  .primitive-field .primitive-control-compact,
   .primitive-control-compact {
-    padding: 0.55rem 0.75rem;
+    min-height: var(--control-height);
+    padding: var(--space-1) var(--field-padding-x);
     font-size: var(--text-base);
   }
 }
@@ -6242,7 +6307,7 @@ svg text.chart-symbol-text-unicode {
 .primitive-option-card input {
   grid-row: 1 / span 2;
   align-self: start;
-  margin-top: 0.2rem;
+  margin-top: var(--space-1);
 }
 
 .primitive-option-card-title {
@@ -6363,14 +6428,14 @@ svg text.chart-symbol-text-unicode {
  * narrow rail, which would be surprising on a full-width content page.
  */
 .page-header {
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--space-6);
 }
 
 .page-header-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 1rem;
+  gap: var(--space-4);
 }
 
 .page-header-row h1 {
@@ -6380,7 +6445,7 @@ svg text.chart-symbol-text-unicode {
 }
 
 .page-header-basis {
-  margin: 0.35rem 0 0;
+  margin: var(--space-1) 0 0;
 }
 
 /* The top-right action group (#976): the primary page action, the export menu and any page-level control a screen
@@ -6398,9 +6463,9 @@ svg text.chart-symbol-text-unicode {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
-  padding: 0.4rem 0.9rem;
+  padding: var(--space-1) var(--control-padding-x);
   border: 1px solid var(--accent);
-  border-radius: var(--radius);
+  border-radius: var(--radius-sm);
   background: var(--accent);
   color: var(--bg);
   font-weight: 600;
@@ -6413,7 +6478,7 @@ svg text.chart-symbol-text-unicode {
 
 /* The one-line purpose under the title (issue 966): muted, body-size, the same measure as `.hint`. */
 .page-header-subtitle {
-  margin: 0.35rem 0 0;
+  margin: var(--space-1) 0 0;
   max-width: 44rem;
   color: var(--muted);
   font-size: var(--text-sm);
@@ -6425,13 +6490,12 @@ svg text.chart-symbol-text-unicode {
 }
 
 .page-header-export-toggle {
-  padding: 0.4rem 0.8rem;
+  padding: var(--space-1) var(--control-padding-x);
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   background: var(--surface);
   color: var(--fg);
   font: inherit;
-  font-size: 0.9rem;
   font-weight: 550;
   cursor: pointer;
 }
@@ -6459,7 +6523,7 @@ svg text.chart-symbol-text-unicode {
   flex-direction: column;
   gap: 0.1rem;
   min-width: 14rem;
-  padding: 0.3rem;
+  padding: var(--space-1);
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
@@ -6467,7 +6531,7 @@ svg text.chart-symbol-text-unicode {
 }
 
 .page-header-export-item {
-  padding: 0.4rem 0.8rem;
+  padding: var(--space-2) var(--space-3);
   border: none;
   border-radius: var(--radius-sm);
   background: none;
@@ -6492,7 +6556,7 @@ svg text.chart-symbol-text-unicode {
 }
 
 .page-header-export-group-heading {
-  margin: 0.4rem 0.8rem 0.1rem;
+  margin: var(--space-2) var(--space-3) 0.1rem;
   color: var(--muted);
   font-size: 0.75rem;
   font-weight: 650;
@@ -6501,7 +6565,7 @@ svg text.chart-symbol-text-unicode {
 }
 
 .page-header-export-status {
-  margin: 0.5rem 0 0;
+  margin: var(--space-2) 0 0;
 }
 
 /* Disclosure (#506/#508): a full-width trigger row of at least 44px — title, what opens, explicit
@@ -6517,8 +6581,8 @@ svg text.chart-symbol-text-unicode {
   width: 100%;
   min-height: 2.75rem;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.5rem 0.85rem;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
   border: 0;
   border-radius: inherit;
   background: transparent;
@@ -6537,7 +6601,7 @@ button.primitive-disclosure-trigger:hover:not(:disabled) {
   flex: 1 1 auto;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 0.15rem 0.6rem;
+  gap: 0.15rem var(--space-2);
   min-width: 0;
 }
 
@@ -6572,7 +6636,7 @@ button.primitive-disclosure-trigger:hover:not(:disabled) {
 }
 
 .primitive-disclosure-panel {
-  padding: 0 0.85rem 0.85rem;
+  padding: 0 var(--space-3) var(--space-3);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -6613,13 +6677,14 @@ button.primitive-disclosure-trigger:hover:not(:disabled) {
 :root[data-density='compact'] .primitive-field input:not([type='checkbox']):not([type='radio']),
 :root[data-density='compact'] .primitive-field select,
 :root[data-density='compact'] .primitive-field textarea {
-  padding: 0.3rem 0.5rem;
+  min-height: var(--control-height-compact);
+  padding: 0 var(--space-2);
   font-size: var(--text-sm);
 }
 
 :root[data-density='compact'] .data-table th,
 :root[data-density='compact'] .data-table td {
-  padding: 0.3rem 0.6rem;
+  padding: var(--space-1) var(--space-2);
 }
 
 @media (pointer: coarse) {
@@ -6631,13 +6696,14 @@ button.primitive-disclosure-trigger:hover:not(:disabled) {
   :root[data-density='compact'] .primitive-field input:not([type='checkbox']):not([type='radio']),
   :root[data-density='compact'] .primitive-field select,
   :root[data-density='compact'] .primitive-field textarea {
-    padding: 0.55rem 0.7rem;
+    min-height: var(--control-height);
+    padding: var(--space-1) var(--field-padding-x);
     font-size: var(--text-base);
   }
 
   :root[data-density='compact'] .data-table th,
   :root[data-density='compact'] .data-table td {
-    padding: 0.5rem 0.85rem;
+    padding: var(--space-2) var(--space-3);
   }
 }
 
@@ -7347,7 +7413,7 @@ button.mgrid-pair:focus-visible {
 
 .pdf-summary-card ul {
   margin: 0;
-  padding-left: 1.25rem;
+  padding-left: var(--space-4);
   font-size: var(--text-sm);
 }
 
@@ -7399,7 +7465,7 @@ button.mgrid-pair:focus-visible {
  */
 .preferences-card {
   margin: 0 0 var(--space-6);
-  padding: 1.25rem;
+  padding: var(--space-4);
   border: var(--border-hairline) solid var(--border-subtle);
   border-radius: var(--radius-lg);
   background: var(--bg-surface);
@@ -7436,7 +7502,7 @@ button.mgrid-pair:focus-visible {
 }
 
 .preferences-row-description {
-  margin: 0.25rem 0 0;
+  margin: var(--space-1) 0 0;
   color: var(--text-muted);
   font-size: var(--text-xs);
 }
