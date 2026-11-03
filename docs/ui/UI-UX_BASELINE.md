@@ -1,6 +1,6 @@
 # UI behaviour baseline
 
-The end-to-end suite pins 133 behaviours across 59 specs (Playwright, against the built `dist/`).
+The end-to-end suite pins 132 behaviours across 59 specs (Playwright, against the built `dist/`).
 This is the behaviour any redesign must keep, or change on purpose with the test changed in the same commit.
 Each line is a test title, so the record is the tests; regenerate with `node scripts/generate-ui-baseline.mjs`.
 Persisted person data is the compatibility boundary (docs/ui/UI-UX_IMPLEMENTATION_PLAN.md §4); routes and UI are not.
@@ -284,7 +284,6 @@ Persisted person data is the compatibility boundary (docs/ui/UI-UX_IMPLEMENTATIO
 
 ### `e2e/shared-people-state.spec.ts`
 
-- a context from the saved state lists the three shared people
 - the people survive a reload, and the service worker does not serve a stale page
 - a second tab holds no writer lock: one tab owns it, and both tabs read the seeded data
 - the saved state is untouched, and a fresh context still shows the same three people
