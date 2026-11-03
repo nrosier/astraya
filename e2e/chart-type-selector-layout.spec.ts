@@ -91,59 +91,49 @@ for (const viewport of [
       return { selectHeight: select.height, viewBarHeight, ...styles };
     }
 
-    for (const type of CHART_TYPE_LABELS) {
-      test(`${type}: the chart type select is the same height as the view bar`, async () => {
-        await openSharedPerson(page, baseUrl, EINSTEIN);
+    // One page visits every chart type (#1093: was one test per type and check, 26 in all). Soft expects carry the
+    // chart type, so one failing type does not hide the rest.
+    test('every chart type: select matches the view bar, back link and label order, same design values', async () => {
+      test.setTimeout(180_000);
+      await openSharedPerson(page, baseUrl, EINSTEIN);
+      const rows: { type: string; metrics: SelectorMetrics }[] = [];
+      for (const type of CHART_TYPE_LABELS) {
         await openChart(page, type);
-
         const metrics = await selectorMetrics();
-        // Relocated has no view bar (no tabs), so there is nothing to match against; the design-value test covers it.
-        if (metrics.viewBarHeight === null) {
-          expect(type).toBe('Relocated');
-          return;
-        }
-        expect(Math.abs(metrics.selectHeight - metrics.viewBarHeight)).toBeLessThanOrEqual(0.5);
-      });
+        rows.push({ type, metrics });
 
-      test(`${type}: the back link sits above the heading and the label sits above the select`, async () => {
-        await openSharedPerson(page, baseUrl, EINSTEIN);
-        await openChart(page, type);
+        // The select is the same height as the view bar. Relocated has no view bar (no tabs), so nothing to match.
+        if (metrics.viewBarHeight === null) expect.soft(type, 'only Relocated has no view bar').toBe('Relocated');
+        else
+          expect
+            .soft(Math.abs(metrics.selectHeight - metrics.viewBarHeight), `${type}: select height equals view bar`)
+            .toBeLessThanOrEqual(0.5);
 
         const back = await box(page.locator('main p.back').first());
         const heading = await box(page.getByRole('heading', { level: 1 }));
-        expect(back.bottom).toBeLessThanOrEqual(heading.top);
+        expect.soft(back.bottom, `${type}: back link above the heading`).toBeLessThanOrEqual(heading.top);
         // Moved from natal-chart-selector-layout.spec.ts (#1093): the natal chart has no separate title row.
-        if (type === 'Natal') await expect(page.locator('.chart-title-row')).toHaveCount(0);
+        if (type === 'Natal') await expect.soft(page.locator('.chart-title-row'), `${type}: no title row`).toHaveCount(0);
 
         const label = await box(page.locator('.chart-type-select label'));
         const select = await box(page.getByLabel('Chart type', { exact: true }));
-        expect(label.bottom).toBeLessThanOrEqual(select.top);
-      });
-    }
-
-    test('every chart type uses the same selector design values (height, margins, gap)', async () => {
-      test.setTimeout(120_000);
-      const rows: { type: string; metrics: SelectorMetrics }[] = [];
-      for (const type of CHART_TYPE_LABELS) {
-        await openSharedPerson(page, baseUrl, EINSTEIN);
-        await openChart(page, type);
-        rows.push({ type, metrics: await selectorMetrics() });
+        expect.soft(label.bottom, `${type}: label above the select`).toBeLessThanOrEqual(select.top);
       }
+
+      // Every chart type uses the same selector design values (height, margins, gap); the view bar is compared above.
+      const comparable = (metrics: SelectorMetrics): Omit<SelectorMetrics, 'viewBarHeight'> => ({
+        selectHeight: metrics.selectHeight,
+        wrapperMarginTop: metrics.wrapperMarginTop,
+        wrapperMarginBottom: metrics.wrapperMarginBottom,
+        fieldGap: metrics.fieldGap,
+        labelMarginBottom: metrics.labelMarginBottom,
+      });
       const [first, ...rest] = rows;
       if (first === undefined) throw new Error('no chart types measured');
       for (const row of rest) {
-        // The view bar is absent on Relocated, so its height is compared only where both pages have one.
-        const comparable = (metrics: SelectorMetrics): Omit<SelectorMetrics, 'viewBarHeight'> => ({
-          selectHeight: metrics.selectHeight,
-          wrapperMarginTop: metrics.wrapperMarginTop,
-          wrapperMarginBottom: metrics.wrapperMarginBottom,
-          fieldGap: metrics.fieldGap,
-          labelMarginBottom: metrics.labelMarginBottom,
-        });
-        expect({ type: row.type, ...comparable(row.metrics) }).toEqual({
-          type: row.type,
-          ...comparable(first.metrics),
-        });
+        expect
+          .soft({ type: row.type, ...comparable(row.metrics) })
+          .toEqual({ type: row.type, ...comparable(first.metrics) });
       }
     });
   });

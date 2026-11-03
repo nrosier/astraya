@@ -62,54 +62,62 @@ async function settle(page: Page, hash: string, locale: string, theme: string): 
   await expect(page.locator('.primitive-field:visible').first()).toBeVisible();
 }
 
+/** Labels cut off, controls off-screen or too narrow, and sideways page scroll, at the current viewport width. */
+const FIT_PROBLEMS = `(() => {
+  const found = [];
+  for (const field of document.querySelectorAll('.primitive-field')) {
+    if (field.getClientRects().length === 0) continue; // the width's hidden tab-row fallback Select
+    const label = field.querySelector('label');
+    const control = field.querySelector('input, select, textarea');
+    const name = label === null ? '' : label.textContent;
+    if (label !== null && !label.classList.contains('sr-only') && label.scrollWidth > label.clientWidth + 1) found.push('label cut off: ' + name);
+    if (control !== null) {
+      const box = control.getBoundingClientRect();
+      if (box.right > window.innerWidth + 1 || box.left < -1) found.push('control off-screen: ' + name);
+      if (box.width < 40) found.push('control too narrow (' + box.width + 'px): ' + name);
+    }
+  }
+  if (document.documentElement.scrollWidth > window.innerWidth + 1) found.push('page scrolls sideways');
+  return found;
+})()`;
+
+// One test per screen and language (#1093: was one per screen, language, theme and width, 48 in all). Each loads the
+// screen once per theme: axe resting and focused in both themes, and the fit at 1280 and 390 wide in light, since
+// geometry does not depend on the theme. Soft expects, so one failing case does not hide the others.
 for (const [name, hash] of SCREENS) {
   for (const locale of LOCALES) {
-    for (const theme of THEMES) {
-      test(`${name} passes axe in ${locale}, ${theme}, resting and focused`, async ({ page }) => {
-        test.setTimeout(60_000);
+    test(`${name} in ${locale}: passes axe in light and dark, resting and focused, and fits 1280 and 390px wide`, async ({
+      page,
+    }) => {
+      test.setTimeout(120_000);
+      for (const theme of THEMES) {
+        await page.setViewportSize({ width: 1280, height: 900 });
         await settle(page, hash, locale, theme);
         const resting = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
-        expect(resting.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`)).toEqual(
-          [],
-        );
+        expect
+          .soft(
+            resting.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`),
+            `axe resting, ${theme}`,
+          )
+          .toEqual([]);
 
         // A focused control draws its own ring; contrast must hold there too.
         await page.locator('.primitive-field:visible input, .primitive-field:visible select').first().focus();
         const focused = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
-        expect(focused.violations.map((v) => v.id)).toEqual([]);
-      });
-    }
-  }
-}
+        expect
+          .soft(
+            focused.violations.map((v) => v.id),
+            `axe focused, ${theme}`,
+          )
+          .toEqual([]);
 
-for (const [name, hash] of SCREENS) {
-  for (const locale of LOCALES) {
-    for (const width of [1280, 390]) {
-      test(`${name} fits ${String(width)}px wide in ${locale}: no cut-off label, nothing past the edge`, async ({
-        page,
-      }) => {
-        test.setTimeout(60_000);
-        await page.setViewportSize({ width, height: 900 });
-        await settle(page, hash, locale, 'light');
-        const problems = await page.evaluate(`(() => {
-          const found = [];
-          for (const field of document.querySelectorAll('.primitive-field')) {
-            if (field.getClientRects().length === 0) continue; // the width's hidden tab-row fallback Select
-            const label = field.querySelector('label');
-            const control = field.querySelector('input, select, textarea');
-            const name = label === null ? '' : label.textContent;
-            if (label !== null && !label.classList.contains('sr-only') && label.scrollWidth > label.clientWidth + 1) found.push('label cut off: ' + name);
-            if (control !== null) {
-              const box = control.getBoundingClientRect();
-              if (box.right > window.innerWidth + 1 || box.left < -1) found.push('control off-screen: ' + name);
-              if (box.width < 40) found.push('control too narrow (' + box.width + 'px): ' + name);
-            }
-          }
-          if (document.documentElement.scrollWidth > window.innerWidth + 1) found.push('page scrolls sideways');
-          return found;
-        })()`);
-        expect(problems).toEqual([]);
-      });
-    }
+        if (theme !== 'light') continue;
+        for (const width of [1280, 390]) {
+          await page.setViewportSize({ width, height: 900 });
+          await expect(page.locator('.primitive-field:visible').first()).toBeVisible();
+          expect.soft(await page.evaluate(FIT_PROBLEMS), `fits ${String(width)}px wide`).toEqual([]);
+        }
+      }
+    });
   }
 }

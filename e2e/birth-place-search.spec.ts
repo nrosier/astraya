@@ -175,10 +175,12 @@ async function measureSearchControls(page: Page): Promise<ControlEdges> {
   };
 }
 
-function expectFlushControls(edges: ControlEdges): void {
+function expectFlushControls(edges: ControlEdges, where: string): void {
   const tolerance = 0.5;
-  expect(Math.abs(edges.buttonTop - edges.inputTop)).toBeLessThanOrEqual(tolerance);
-  expect(Math.abs(edges.buttonBottom - edges.inputBottom)).toBeLessThanOrEqual(tolerance);
+  expect.soft(Math.abs(edges.buttonTop - edges.inputTop), `${where}: top edges`).toBeLessThanOrEqual(tolerance);
+  expect
+    .soft(Math.abs(edges.buttonBottom - edges.inputBottom), `${where}: bottom edges`)
+    .toBeLessThanOrEqual(tolerance);
 }
 
 const VIEWPORTS = [
@@ -187,42 +189,36 @@ const VIEWPORTS = [
   { width: 3440, height: 1440 },
 ] as const;
 
-const SCHEMES = ['light', 'dark'] as const;
-
-for (const viewport of VIEWPORTS) {
-  for (const colorScheme of SCHEMES) {
-    const label = `${String(viewport.width)}x${String(viewport.height)} ${colorScheme}`;
-
-    test(`#969 Search button is flush with the place input on the birth record (${label})`, async () => {
-      await page.setViewportSize(viewport);
-      await page.emulateMedia({ colorScheme });
+/** Each screen that mounts BirthPlaceSearch, and how to reach it. */
+const SEARCH_SCREENS: readonly { readonly name: string; readonly open: (page: Page) => Promise<void> }[] = [
+  {
+    name: 'the birth record',
+    open: async (page) => {
       await openSharedPerson(page, baseUrl, EINSTEIN);
-      const idMatch = /#\/people\/([^/]+)/.exec(new URL(page.url()).hash);
-      const id = idMatch?.[1];
+      const id = /#\/people\/([^/]+)/.exec(new URL(page.url()).hash)?.[1];
       if (id === undefined) throw new Error(`no person id in ${page.url()}`);
       await gotoAndSettle(page, `${baseUrl}/#/people/${id}/birth-record`);
-      expectFlushControls(await measureSearchControls(page));
-    });
+    },
+  },
+  { name: 'Horary', open: (page) => gotoAndSettle(page, `${baseUrl}/#/explore/horary`) },
+  { name: 'Electional', open: (page) => gotoAndSettle(page, `${baseUrl}/#/explore/electional`) },
+  { name: 'Rectification', open: (page) => gotoAndSettle(page, `${baseUrl}/#/explore/rectification`) },
+];
 
-    test(`#969 Search button is flush with the place input on Horary (${label})`, async () => {
+// One test per screen (#1093: was one per screen, viewport and colour scheme, 24 in all): the screen loads once and is
+// measured at every viewport by resizing, then once more in dark at 1280x800. The edges are layout, which the colour
+// scheme does not change; the dark pass stays as a guard.
+for (const screen of SEARCH_SCREENS) {
+  test(`#969 Search button is flush with the place input on ${screen.name}, at every viewport and in dark`, async () => {
+    test.setTimeout(90_000);
+    await page.setViewportSize(VIEWPORTS[1]);
+    await screen.open(page);
+    for (const viewport of VIEWPORTS) {
       await page.setViewportSize(viewport);
-      await page.emulateMedia({ colorScheme });
-      await gotoAndSettle(page, `${baseUrl}/#/explore/horary`);
-      expectFlushControls(await measureSearchControls(page));
-    });
-
-    test(`#969 Search button is flush with the place input on Electional (${label})`, async () => {
-      await page.setViewportSize(viewport);
-      await page.emulateMedia({ colorScheme });
-      await gotoAndSettle(page, `${baseUrl}/#/explore/electional`);
-      expectFlushControls(await measureSearchControls(page));
-    });
-
-    test(`#969 Search button is flush with the place input on Rectification (${label})`, async () => {
-      await page.setViewportSize(viewport);
-      await page.emulateMedia({ colorScheme });
-      await gotoAndSettle(page, `${baseUrl}/#/explore/rectification`);
-      expectFlushControls(await measureSearchControls(page));
-    });
-  }
+      expectFlushControls(await measureSearchControls(page), `${String(viewport.width)}x${String(viewport.height)}`);
+    }
+    await page.setViewportSize(VIEWPORTS[1]);
+    await page.emulateMedia({ colorScheme: 'dark' });
+    expectFlushControls(await measureSearchControls(page), '1280x800 dark');
+  });
 }
