@@ -8,6 +8,12 @@ on:
 permissions:
   contents: read
 
+# A new push to a pull request cancels the run it supersedes, so a fix-up push does not queue behind it (#1095).
+# Pushes to main are grouped by commit, so a main run is never cancelled.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   # The changelog is drafted from commit subjects (npm run changelog:draft), so a
   # subject that does not parse is a changelog entry that silently goes missing.
@@ -81,8 +87,14 @@ jobs:
   # Drives a real browser against a real, locally-booted server (#72/#107) — proving
   # what the unit suite above can't: that a person's birth data actually produces a
   # rendered wheel and a real file download, and that two devices actually converge.
-  e2e:
+  # Split into four shards that run in parallel (#1095); e2e was the long pole of CI.
+  e2e-shard:
+    name: e2e (${{ matrix.shard }}/4)
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
@@ -94,11 +106,22 @@ jobs:
       - run: npm run corpus:split
       - name: Install Playwright's browser
         run: npx playwright install --with-deps chromium
-      - run: npm run test:e2e
+      # test:e2e is `npm run build && playwright test`; the shard runs the same two steps so it can pass --shard.
+      - run: npm run build
+      - run: npx playwright test --shard=${{ matrix.shard }}/4
       - name: Upload Playwright traces on failure
         if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.shard }}
           path: test-results/
           retention-days: 7
+
+  # One stable check named e2e: it passes only when every shard passed.
+  e2e:
+    if: always()
+    needs: e2e-shard
+    runs-on: ubuntu-latest
+    steps:
+      - name: All e2e shards passed
+        run: test "${{ needs.e2e-shard.result }}" = success
