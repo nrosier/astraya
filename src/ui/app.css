@@ -993,6 +993,21 @@ footer {
   gap: var(--space-4);
 }
 
+/* Three short fields on one row (latitude, longitude and an interval), wrapping to fewer per row when narrow. */
+.tool-field-row--three {
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+}
+
+/* A side panel that is itself a group of inputs (Electional's rules): its legend reads as the card's heading. */
+.tool-panel-fieldset > legend {
+  padding: 0 0 var(--space-1);
+  color: var(--fg);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
 /* The form's action sits at its bottom right. */
 .tool-actions {
   display: flex;
@@ -4730,6 +4745,31 @@ svg text.chart-symbol-text-unicode {
   list-style: none;
   display: grid;
   gap: var(--space-2);
+}
+
+/* Each rule: the checkbox, then its label with the explanation under it (#1053). The label is a flex row, where the
+   Checkbox's <br> does nothing; a grid puts the explanation on its own line in the label's column. */
+.election-rules .primitive-choice {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: var(--space-2);
+  align-items: start;
+  /* With its explanation under it, every rule is taller than the option-row minimum (44px on touch included), and
+     that minimum would otherwise be spread across the label's rows as empty space. */
+  min-height: 0;
+}
+
+.election-rules .primitive-choice > input {
+  margin-top: 0.2em;
+}
+
+.election-rules .primitive-choice > br {
+  display: none;
+}
+
+.election-rules .primitive-choice > .hint {
+  grid-column: 2;
+  margin: 0;
 }
 
 /* Birth-time rectification (#408): the events being tested against, and the evidence under each candidate time. */

@@ -29,6 +29,9 @@ const TOOL_PAGES: readonly ToolPage[] = [
   // No search runs on open, and the form has eleven controls: the panel is 0.33 of the form before a search and 0.62
   // after one. The owner accepted the shortfall on 2026-11-03 (#1052); the cards still stretch to one bottom edge.
   { name: 'Ephemeris research', hash: '#/explore/event-search', ready: '.tool-layout', balanced: false },
+  // The rules take the side panel (owner decision 2026-11-03, #1053); with their explanations they are taller than the
+  // form (0.66), a shortfall reported per §10.1 rather than forced.
+  { name: 'Electional search', hash: '#/explore/electional', ready: '.tool-layout', balanced: false },
 ];
 
 const DESKTOP = [

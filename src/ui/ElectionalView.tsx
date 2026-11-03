@@ -8,12 +8,13 @@
 /**
  * @module ElectionalView
  * @purpose Renders the Electional Search tool screen: ranks stretches of a date span by how many chosen traditional rules hold, to help pick a time to begin something.
- * @conventions Needs no saved person or stored data (ephemeris-only), so it lives outside `Stored`; it ranks candidate times against rules, it does not recommend acting on any one of them. Text comes from co-located `ElectionalView.messages.ts` via `useMessages()`.
+ * @conventions Needs no saved person or stored data (ephemeris-only), so it lives outside `Stored`; it ranks candidate times against rules, it does not recommend acting on any one of them. Text comes from co-located `ElectionalView.messages.ts` via `useMessages()`. Laid out as a tool page (#1053): the search form and the rules side by side, the summary and results full width below (`.tool-layout`; the rules take the panel by owner decision 2026-11-03).
  * @exports ElectionalView
  */
 import { Checkbox } from './primitives/Checkbox.js';
 import { GlossaryText } from './GlossaryText.js';
 import { DateField } from './primitives/DateField.js';
+import { Button } from './primitives/Button.js';
 import { Select } from './primitives/Select.js';
 import { TextField } from './primitives/TextField.js';
 import { useCallback, useMemo, useRef, useState } from 'react';
@@ -160,80 +161,99 @@ export function ElectionalView(): React.JSX.Element {
         <GlossaryText text={t.hint} />
       </p>
 
-      <div className="field-grid">
-        <DateField
-          label={t.fromDateLabel}
-          value={fields.fromDate}
-          onChange={(value) => {
-            edit({ fromDate: value });
-          }}
-        />
-        <DateField
-          label={t.toDateLabel}
-          value={fields.toDate}
-          onChange={(value) => {
-            edit({ toDate: value });
-          }}
-        />
-        <TextField
-          label={t.latitudeLabel}
-          inputMode="decimal"
-          value={fields.latitude}
-          onChange={(value) => {
-            edit({ latitude: value });
-          }}
-        />
-        <TextField
-          label={t.longitudeLabel}
-          inputMode="decimal"
-          value={fields.longitude}
-          onChange={(value) => {
-            edit({ longitude: value });
-          }}
-        />
-        <Select
-          label={t.stepLabel}
-          value={String(stepMinutes)}
-          options={ELECTION_STEP_MINUTES.map((minutes) => ({ value: String(minutes), label: t.stepOption(minutes) }))}
-          onChange={(value) => {
-            setStepMinutes(Number(value));
-          }}
-        />
+      <div className="tool-layout">
+        <section className="tool-card tool-form" aria-labelledby="electional-search-heading">
+          <h2 id="electional-search-heading">{t.searchHeading}</h2>
+          <div className="tool-field-row">
+            <DateField
+              label={t.fromDateLabel}
+              value={fields.fromDate}
+              onChange={(value) => {
+                edit({ fromDate: value });
+              }}
+            />
+            <DateField
+              label={t.toDateLabel}
+              value={fields.toDate}
+              onChange={(value) => {
+                edit({ toDate: value });
+              }}
+            />
+          </div>
+
+          <BirthPlaceSearch
+            onPick={(latitude, longitude) => {
+              edit({ latitude: String(latitude), longitude: String(longitude) });
+            }}
+          />
+
+          <div className="tool-field-row tool-field-row--three">
+            <TextField
+              label={t.latitudeLabel}
+              inputMode="decimal"
+              value={fields.latitude}
+              onChange={(value) => {
+                edit({ latitude: value });
+              }}
+            />
+            <TextField
+              label={t.longitudeLabel}
+              inputMode="decimal"
+              value={fields.longitude}
+              onChange={(value) => {
+                edit({ longitude: value });
+              }}
+            />
+            <Select
+              label={t.stepLabel}
+              value={String(stepMinutes)}
+              options={ELECTION_STEP_MINUTES.map((minutes) => ({
+                value: String(minutes),
+                label: t.stepOption(minutes),
+              }))}
+              onChange={(value) => {
+                setStepMinutes(Number(value));
+              }}
+            />
+          </div>
+          {fieldError !== undefined && <StatusMessage kind="error">{errorText(fieldError)}</StatusMessage>}
+          <div className="tool-actions">
+            <Button
+              variant="primary"
+              disabled={provider === undefined}
+              busy={result.kind === 'searching'}
+              busyLabel={t.finding}
+              onClick={search}
+            >
+              {t.findButton}
+            </Button>
+          </div>
+        </section>
+
+        <section className="tool-card tool-panel">
+          <fieldset className="field-group tool-panel-fieldset">
+            <legend>{t.rulesLegend}</legend>
+            <ul className="election-rules">
+              {ELECTION_RULE_KEYS.map((key) => (
+                <li key={key}>
+                  <Checkbox
+                    label={t.rules[key]?.label ?? key}
+                    description={ruleExplanation(key)}
+                    checked={rules.has(key)}
+                    onChange={() => {
+                      toggleRule(key);
+                    }}
+                  />
+                </li>
+              ))}
+            </ul>
+          </fieldset>
+        </section>
       </div>
 
-      <BirthPlaceSearch
-        onPick={(latitude, longitude) => {
-          edit({ latitude: String(latitude), longitude: String(longitude) });
-        }}
-      />
-
-      <fieldset className="field-group">
-        <legend>{t.rulesLegend}</legend>
-        <ul className="election-rules">
-          {ELECTION_RULE_KEYS.map((key) => (
-            <li key={key}>
-              <Checkbox
-                label={t.rules[key]?.label ?? key}
-                description={ruleExplanation(key)}
-                checked={rules.has(key)}
-                onChange={() => {
-                  toggleRule(key);
-                }}
-              />
-            </li>
-          ))}
-        </ul>
-      </fieldset>
-
-      <p>
-        <button type="button" disabled={provider === undefined || result.kind === 'searching'} onClick={search}>
-          {result.kind === 'searching' ? t.finding : t.findButton}
-        </button>
-      </p>
-
-      {fieldError !== undefined && <StatusMessage kind="error">{errorText(fieldError)}</StatusMessage>}
       {/* The result region: busy while the windows are searched, as the Astrocartography map is. */}
       <div aria-busy={result.kind === 'searching'}>
+        {result.kind === 'idle' && <p className="hint">{t.emptyState}</p>}
         {result.kind === 'error' && <StatusMessage kind="error">{t.error(result.message)}</StatusMessage>}
 
         {result.kind === 'ready' &&
