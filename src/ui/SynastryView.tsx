@@ -97,7 +97,7 @@ export function aspectColumns(
     {
       key: 'aspect',
       label: t.aspectLabel,
-      labelTerm: 'aspect',
+      labelHelp: 'aspect',
       valueOf: (row) => row.aspect,
       render: (row) => aspectDisplayName(row.aspectKey, locale),
     },

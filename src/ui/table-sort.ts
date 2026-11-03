@@ -59,13 +59,12 @@ export interface TableColumn<T> {
   readonly align?: ColumnAlign;
   /** False for a column of controls (row actions, a selection checkbox), whose header is a plain label, not a sort button. */
   readonly sortable?: boolean;
-  /** Tooltip text for the column header (e.g., definition or hint). Shown on hover with cursor:help styling. */
-  readonly labelTooltip?: string;
   /**
-   * A glossary term the header names (#901): rendered as a `GlossaryTerm` beside the label, never inside the
-   * sort button. Cell text stays plain, so a copy or CSV export is unchanged.
+   * Help for the column header (#1077): a glossary term (#901), whose definition comes from the glossary, or
+   * `{ text }` for help written for this column. Either way the header shows one "?" beside the label, never the
+   * word again and never inside the sort button. Cell text stays plain, so a copy or CSV export is unchanged.
    */
-  readonly labelTerm?: GlossaryTermId | undefined;
+  readonly labelHelp?: GlossaryTermId | { readonly text: string } | undefined;
   /** True for a column that only exists on screen (the wheel selection button, #957): copy and CSV leave it out, header and cells alike. */
   readonly screenOnly?: boolean;
 }

@@ -48,7 +48,7 @@ export function dignityColumns(t: typeof chartViewMessages.en, locale: Locale): 
     {
       key: 'ruler',
       label: t.rulerLabel,
-      labelTooltip: t.rulerTooltip,
+      labelHelp: { text: t.rulerTooltip },
       valueOf: (row) => row.ruler,
       align: 'center',
       render: (row) => (row.ruler ? '✓' : ''),
@@ -56,7 +56,7 @@ export function dignityColumns(t: typeof chartViewMessages.en, locale: Locale): 
     {
       key: 'exalted',
       label: t.exaltedLabel,
-      labelTooltip: t.exaltedTooltip,
+      labelHelp: { text: t.exaltedTooltip },
       valueOf: (row) => row.exalted,
       align: 'center',
       render: (row) => (row.exalted ? '✓' : ''),
@@ -64,7 +64,7 @@ export function dignityColumns(t: typeof chartViewMessages.en, locale: Locale): 
     {
       key: 'detriment',
       label: t.detrimentLabel,
-      labelTooltip: t.detrimentTooltip,
+      labelHelp: { text: t.detrimentTooltip },
       valueOf: (row) => row.detriment,
       align: 'center',
       render: (row) => (row.detriment ? '✓' : ''),
@@ -72,7 +72,7 @@ export function dignityColumns(t: typeof chartViewMessages.en, locale: Locale): 
     {
       key: 'fall',
       label: t.fallLabel,
-      labelTooltip: t.fallTooltip,
+      labelHelp: { text: t.fallTooltip },
       valueOf: (row) => row.fall,
       align: 'center',
       render: (row) => (row.fall ? '✓' : ''),
@@ -80,7 +80,7 @@ export function dignityColumns(t: typeof chartViewMessages.en, locale: Locale): 
     {
       key: 'triplicity',
       label: t.triplicityLabel,
-      labelTooltip: t.triplicityTooltip,
+      labelHelp: { text: t.triplicityTooltip },
       valueOf: (row) => row.triplicity,
       align: 'center',
       render: (row) => (row.triplicity ? '✓' : ''),
@@ -88,7 +88,7 @@ export function dignityColumns(t: typeof chartViewMessages.en, locale: Locale): 
     {
       key: 'bound',
       label: t.boundLabel,
-      labelTooltip: t.boundTooltip,
+      labelHelp: { text: t.boundTooltip },
       valueOf: (row) => row.bound,
       align: 'center',
       render: (row) => (row.bound ? '✓' : ''),
@@ -96,7 +96,7 @@ export function dignityColumns(t: typeof chartViewMessages.en, locale: Locale): 
     {
       key: 'face',
       label: t.faceLabel,
-      labelTooltip: t.faceTooltip,
+      labelHelp: { text: t.faceTooltip },
       valueOf: (row) => row.face,
       align: 'center',
       render: (row) => (row.face ? '✓' : ''),
@@ -105,7 +105,7 @@ export function dignityColumns(t: typeof chartViewMessages.en, locale: Locale): 
     {
       key: 'peregrine',
       label: t.peregrineLabel,
-      labelTooltip: t.peregrineTooltip,
+      labelHelp: { text: t.peregrineTooltip },
       valueOf: (row) => row.peregrine,
       align: 'center',
       render: (row) => (row.peregrine ? '✓' : ''),
@@ -213,7 +213,7 @@ export function conditionColumns(
     {
       key: 'peregrine',
       label: t.peregrineLabel,
-      labelTooltip: t.peregrineTooltip,
+      labelHelp: { text: t.peregrineTooltip },
       valueOf: (row) => row.peregrine,
       align: 'center',
       render: (row) => (row.peregrine ? '✓' : ''),
@@ -221,14 +221,14 @@ export function conditionColumns(
     {
       key: 'sectAlignment',
       label: t.sectAlignmentLabel,
-      labelTooltip: t.sectAlignmentTooltip,
+      labelHelp: { text: t.sectAlignmentTooltip },
       valueOf: (row) => row.sectAlignment,
       render: sectAlignmentLabel,
     },
     {
       key: 'angularity',
       label: t.angularityLabel,
-      labelTooltip: t.angularityTooltip,
+      labelHelp: { text: t.angularityTooltip },
       valueOf: (row) => row.angularity ?? '',
       render: angularityLabel,
     },
@@ -239,7 +239,7 @@ export function conditionColumns(
           {
             key: 'motionScore',
             label: t.motionScoreLabel,
-            labelTooltip: t.motionScoreTooltip,
+            labelHelp: { text: t.motionScoreTooltip },
             valueOf: (row: ConditionRow) => row.motionScore ?? '',
             align: 'center' as const,
             render: (row: ConditionRow) =>
@@ -254,7 +254,7 @@ export function conditionColumns(
     {
       key: 'inHayz',
       label: t.hayzLabel,
-      labelTooltip: t.hayzTooltip,
+      labelHelp: { text: t.hayzTooltip },
       valueOf: (row) => row.inHayz ?? false,
       align: 'center',
       render: (row) => (row.inHayz === true ? '✓' : row.inHayz === false ? '' : '—'),
@@ -262,7 +262,7 @@ export function conditionColumns(
     {
       key: 'besieged',
       label: t.besiegedLabel,
-      labelTooltip: t.besiegedTooltip,
+      labelHelp: { text: t.besiegedTooltip },
       valueOf: (row) => row.besieged,
       align: 'center',
       render: (row) =>
@@ -275,14 +275,14 @@ export function conditionColumns(
     {
       key: 'solarPhase',
       label: t.solarPhaseLabel,
-      labelTooltip: t.solarPhaseTooltip,
+      labelHelp: { text: t.solarPhaseTooltip },
       valueOf: (row) => row.solarPhase ?? '',
       render: solarPhaseLabel,
     },
     {
       key: 'solarCondition',
       label: t.solarConditionLabel,
-      labelTooltip: t.solarConditionTooltip,
+      labelHelp: { text: t.solarConditionTooltip },
       valueOf: (row) => row.solarCondition ?? '',
       render: solarConditionLabel,
     },
@@ -392,7 +392,7 @@ export function receptionColumns(t: typeof chartViewMessages.en, locale: Locale)
     {
       key: 'sameDignityType',
       label: t.receptionSameTypeLabel,
-      labelTooltip: t.receptionSameTypeTooltip,
+      labelHelp: { text: t.receptionSameTypeTooltip },
       valueOf: (row) => row.sameDignityType,
       align: 'center',
       render: (row) => (row.sameDignityType ? '✓' : ''),
@@ -400,7 +400,7 @@ export function receptionColumns(t: typeof chartViewMessages.en, locale: Locale)
     {
       key: 'aspectLinked',
       label: t.aspectLinkedLabel,
-      labelTooltip: t.aspectLinkedTooltip,
+      labelHelp: { text: t.aspectLinkedTooltip },
       valueOf: (row) => row.aspectLinked,
       align: 'center',
       render: (row) => (row.aspectLinked ? '✓' : ''),

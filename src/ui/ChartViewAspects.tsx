@@ -82,7 +82,7 @@ export function aspectColumns(
     {
       key: 'aspect',
       label: t.aspectLabel,
-      labelTooltip: t.aspectTooltip,
+      labelHelp: { text: t.aspectTooltip },
       valueOf: (row) => row.aspect,
       render: (row) => aspectDisplayName(row.aspectKey, locale),
     },
@@ -96,7 +96,7 @@ export function aspectColumns(
     {
       key: 'applying',
       label: t.applyingLabel,
-      labelTooltip: t.applyingTooltip,
+      labelHelp: { text: t.applyingTooltip },
       valueOf: (row) => row.applying,
       // Plain text for copy, CSV and the PDF (which reuses these columns); the dot-plus-label state is the screen cell only (#815).
       render: (row) => (row.applying ? t.applying : t.separating),
@@ -105,7 +105,7 @@ export function aspectColumns(
     {
       key: 'harmonicFamily',
       label: t.harmonicFamilyLabel,
-      labelTooltip: t.harmonicFamilyTooltip,
+      labelHelp: { text: t.harmonicFamilyTooltip },
       align: 'end',
       valueOf: (row) => aspectHarmonicFamily(row.aspectKey) ?? 0,
       render: (row) => familyText(row),
@@ -135,7 +135,7 @@ export function declinationColumns(
     {
       key: 'kind',
       label: t.kindLabel,
-      labelTooltip: t.declinationKindTooltip,
+      labelHelp: { text: t.declinationKindTooltip },
       valueOf: (row) => row.kind,
       render: (row) => t[row.kind],
     },
@@ -160,7 +160,7 @@ export function antisciaColumns(t: typeof chartViewMessages.en, locale: Locale):
     {
       key: 'kind',
       label: t.kindLabel,
-      labelTooltip: t.antisciaKindTooltip,
+      labelHelp: { text: t.antisciaKindTooltip },
       valueOf: (row) => row.kind,
       render: (row) => (row.kind === 'antiscion' ? t.antiscion : t.contraAntiscion),
     },
@@ -216,7 +216,7 @@ export function allMidpointsColumns(
     {
       key: 'kind',
       label: t.kindLabel,
-      labelTooltip: t.midpointKindTooltip,
+      labelHelp: { text: t.midpointKindTooltip },
       valueOf: (row) => row.kind,
       render: (row) => (row.kind === 'direct' ? t.directMidpoint : t.indirectMidpoint),
     },

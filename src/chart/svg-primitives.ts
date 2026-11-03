@@ -62,7 +62,7 @@ export function text(
   const size = fontSize === undefined ? '' : ` font-size="${fmt(fontSize)}"`;
   // An SVG <title> child is this element's own accessibility name — the equivalent of an
   // HTML `title` attribute for raw SVG markup (#456's wheel audit: the retrograde "R" mark
-  // had no accessible explanation at all, unlike its table counterpart's `labelTooltip`).
+  // had no accessible explanation at all, unlike its table counterpart's `labelHelp`).
   const titleChild = title === undefined ? '' : `<title>${escapeXml(title)}</title>`;
   return `<text x="${fmt(x)}" y="${fmt(y)}" text-anchor="${anchor}"${size} class="${className}">${content}${titleChild}</text>`;
 }
