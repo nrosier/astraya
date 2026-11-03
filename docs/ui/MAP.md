@@ -5,6 +5,7 @@
 - `UI-UX_GUIDELINES.md` — Normative UI/UX implementation guide for new UI work by agents and contributors. Deps: `src/ui`, `archive/UI-UX_REVIEW.md`.
 - `UI-UX_IMPLEMENTATION_PLAN.md` — Migration plan for reaching the target UI/UX experience. Deps: `ui/UI-UX_GUIDELINES.md`, `archive/UI-UX_REVIEW.md`.
 - `UI-UX_RELEASE_CHECKS.md` — Per-release record of the manual UI/UX checks that no automated test performs. Deps: `ui/UI-UX_GUIDELINES.md`, `ops/RELEASING.md`.
+- `UI-UX_SPEC_REVIEW_2026-11-03.md` — Rendered-UI audit of 31 routes at 390/1280/3440 in light and dark, plus dialogs, signed-in and admin routes and Dutch: target size, contrast, alignment, sizing, spacing tokens, focus and page language, mapped to M14 issues. Deps: `.claude/skills/ui-ux-spec-review`, `src/ui/app.css`.
 - `views/chart-view.md` — Target design for the natal chart screen: configuration column, page header, share notice, chart workbench. Deps: `src/ui/ChartView.tsx`.
 - `views/consultation-view.md` — Target design for the consultation dashboard: planetary indicator summary and section layout. Deps: `src/ui/ConsultationView.tsx`.
 - `views/horary-view.md` — Target design for the horary question screen: timestamp, location search, secondary settings. Deps: `src/ui/HoraryView.tsx`.
