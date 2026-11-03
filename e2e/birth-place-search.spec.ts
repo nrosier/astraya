@@ -158,12 +158,12 @@ interface ControlEdges {
   readonly buttonBottom: number;
 }
 
-async function measureSearchControls(page: Page, where: string): Promise<ControlEdges> {
+async function measureSearchControls(page: Page): Promise<ControlEdges> {
   const form = page
     .locator('form.birth-place-search-form')
     .filter({ has: page.locator('input[role="combobox"]') })
     .first();
-  await expect.soft(form, `${where}: search form visible`).toBeVisible();
+  await expect.soft(form, 'search form visible').toBeVisible();
   const input = await form.locator('input[role="combobox"]').boundingBox();
   const button = await form.locator('button[type="submit"]').boundingBox();
   if (input === null || button === null) throw new Error('search input or button has no bounding box');
@@ -189,40 +189,42 @@ const VIEWPORTS = [
   { width: 3440, height: 1440 },
 ] as const;
 
-/** Each screen that mounts BirthPlaceSearch, and how to reach it. */
-const SEARCH_SCREENS: readonly { readonly name: string; readonly open: (page: Page) => Promise<void> }[] = [
-  {
-    name: 'the birth record',
-    open: async (page) => {
+const SCHEMES = ['light', 'dark'] as const;
+
+for (const viewport of VIEWPORTS) {
+  for (const colorScheme of SCHEMES) {
+    const label = `${String(viewport.width)}x${String(viewport.height)} ${colorScheme}`;
+
+    test(`#969 Search button is flush with the place input on the birth record (${label})`, async () => {
+      await page.setViewportSize(viewport);
+      await page.emulateMedia({ colorScheme });
       await openSharedPerson(page, baseUrl, EINSTEIN);
-      const id = /#\/people\/([^/]+)/.exec(new URL(page.url()).hash)?.[1];
+      const idMatch = /#\/people\/([^/]+)/.exec(new URL(page.url()).hash);
+      const id = idMatch?.[1];
       if (id === undefined) throw new Error(`no person id in ${page.url()}`);
       await gotoAndSettle(page, `${baseUrl}/#/people/${id}/birth-record`);
-    },
-  },
-  { name: 'Horary', open: (page) => gotoAndSettle(page, `${baseUrl}/#/explore/horary`) },
-  { name: 'Electional', open: (page) => gotoAndSettle(page, `${baseUrl}/#/explore/electional`) },
-  { name: 'Rectification', open: (page) => gotoAndSettle(page, `${baseUrl}/#/explore/rectification`) },
-];
+      expectFlushControls(await measureSearchControls(page), `birth record, ${label}`);
+    });
 
-// One test per screen (#1093: was one per screen, viewport and colour scheme, 24 in all): the screen loads once and is
-// measured at every viewport by resizing, then once more in dark at 1280x800. The edges are layout, which the colour
-// scheme does not change; the dark pass stays as a guard.
-for (const screen of SEARCH_SCREENS) {
-  test(`#969 Search button is flush with the place input on ${screen.name}, at every viewport and in dark`, async () => {
-    test.setTimeout(90_000);
-    await page.setViewportSize(VIEWPORTS[1]);
-    await screen.open(page);
-    for (const viewport of VIEWPORTS) {
+    test(`#969 Search button is flush with the place input on Horary (${label})`, async () => {
       await page.setViewportSize(viewport);
-      const where = `${screen.name}, ${String(viewport.width)}x${String(viewport.height)}`;
-      expectFlushControls(await measureSearchControls(page, where), where);
-    }
-    await page.setViewportSize(VIEWPORTS[1]);
-    await page.emulateMedia({ colorScheme: 'dark' });
-    expectFlushControls(
-      await measureSearchControls(page, `${screen.name}, 1280x800 dark`),
-      `${screen.name}, 1280x800 dark`,
-    );
-  });
+      await page.emulateMedia({ colorScheme });
+      await gotoAndSettle(page, `${baseUrl}/#/explore/horary`);
+      expectFlushControls(await measureSearchControls(page), `Horary, ${label}`);
+    });
+
+    test(`#969 Search button is flush with the place input on Electional (${label})`, async () => {
+      await page.setViewportSize(viewport);
+      await page.emulateMedia({ colorScheme });
+      await gotoAndSettle(page, `${baseUrl}/#/explore/electional`);
+      expectFlushControls(await measureSearchControls(page), `Electional, ${label}`);
+    });
+
+    test(`#969 Search button is flush with the place input on Rectification (${label})`, async () => {
+      await page.setViewportSize(viewport);
+      await page.emulateMedia({ colorScheme });
+      await gotoAndSettle(page, `${baseUrl}/#/explore/rectification`);
+      expectFlushControls(await measureSearchControls(page), `Rectification, ${label}`);
+    });
+  }
 }
