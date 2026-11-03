@@ -941,9 +941,8 @@ footer {
 }
 
 .horary-card {
-  display: grid;
-  /* Content stays at the top; any slack from a taller neighbour falls at the bottom of the card (#895). */
-  align-content: start;
+  display: flex;
+  flex-direction: column;
   gap: var(--space-4);
   padding: var(--space-4);
   border: 1px solid var(--line);
@@ -963,6 +962,16 @@ footer {
 
 .horary-card .hint {
   margin: 0;
+}
+
+/*
+ * Any slack from a taller neighbour falls between the card's content and its last block, so the last block (the
+ * "Set to now" button, the helper text) ends on the card's bottom padding edge and both cards end on one visible
+ * edge (#895). No height is set; with no slack this changes nothing. Declared after `.hint` so its margin reset
+ * does not cancel the auto margin.
+ */
+.horary-card > :last-child {
+  margin-top: auto;
 }
 
 .horary-timestamp {
