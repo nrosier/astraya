@@ -27,6 +27,25 @@ describe('renderAcgMapSvg (#171)', () => {
     expect(map.markup).toContain('width="400" height="200"');
   });
 
+  it('keeps the fixed width and height by default, so the export output is unchanged (#1049)', () => {
+    const map = renderAcgMapSvg(baseInput(), { width: 900 });
+    expect(map.markup).toMatch(
+      /^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg" viewBox="0 0 900 450" width="900" height="450" class="acg-map">/,
+    );
+    expect(map.markup).not.toContain('width="100%"');
+  });
+
+  it('emits width="100%" with the same viewBox when fluid, and no fixed height (#1049)', () => {
+    const fixed = renderAcgMapSvg(baseInput(), { width: 900 });
+    const fluid = renderAcgMapSvg(baseInput(), { width: 900, fluid: true });
+    expect(fluid.markup).toMatch(
+      /^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg" viewBox="0 0 900 450" width="100%" class="acg-map">/,
+    );
+    expect(fluid.markup).not.toMatch(/<svg[^>]* height="/);
+    expect(fluid.height).toBe(fixed.height);
+    expect(fluid.width).toBe(fixed.width);
+  });
+
   it('projects longitude -180 near x=0 and longitude 180 near x=width', () => {
     const mcAt180: AcgLine = { kind: 'MC', body: SE.SE_SUN, longitude: 180 };
     const mcAtMinus180: AcgLine = { kind: 'MC', body: SE.SE_MOON, longitude: -180 };
