@@ -14,7 +14,15 @@ import type { BrowserContext, Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
 import { EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
-import { closeSettings, gotoAndSettle, openChart, openNatalChart, openSettings, openTool } from './support.ts';
+import {
+  closeSettings,
+  gotoAndSettle,
+  openChart,
+  openNatalChart,
+  openSettings,
+  openTool,
+  reloadAndSettle,
+} from './support.ts';
 
 let dir: string;
 let app: FastifyInstance;
@@ -348,8 +356,7 @@ test.describe('with the shared people (#799)', () => {
     await expect(header.getByRole('link', { name: 'Charts', exact: true })).toHaveAttribute('aria-current', 'page');
 
     // A reload keeps the view; the wheel needs no query.
-    await page.reload();
-    await page.waitForEvent('load', { timeout: 5_000 }).catch(() => undefined);
+    await reloadAndSettle(page);
     await expect(page.getByRole('heading', { name: 'Aspects', level: 2 })).toBeVisible();
     await page.getByRole('link', { name: 'Wheel', exact: true }).click();
     await expect(page).toHaveURL(/\/charts\/natal\/wheel$/);

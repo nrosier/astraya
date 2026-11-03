@@ -11,7 +11,14 @@ import type { BrowserContext, Page } from '@playwright/test';
 import type { FastifyInstance } from 'fastify';
 import { build } from '../server/index.ts';
 import { EINSTEIN, newSeededContext, openSharedPerson } from './shared-people.ts';
-import { gotoAndSettle, openNatalChart, applySettings, closeSettings, openSettings } from './support.ts';
+import {
+  applySettings,
+  closeSettings,
+  gotoAndSettle,
+  openNatalChart,
+  openSettings,
+  reloadAndSettle,
+} from './support.ts';
 
 let dir: string;
 let app: FastifyInstance;
@@ -39,8 +46,7 @@ test('the transit wheel and the cycles diagram follow the class too', async ({ p
     localStorage.setItem('astraya:symbolClass', 'text');
   });
   await page.goto(`${baseUrl}/#/explore/cycles`);
-  await page.reload();
-  await page.waitForEvent('load', { timeout: 5_000 }).catch(() => undefined);
+  await reloadAndSettle(page);
   await expect(page.getByRole('heading', { name: 'Planetary cycles', level: 1 })).toBeVisible();
   await expect(page.locator('.cycle-diagram text.chart-symbol-text-text').first()).toBeVisible({ timeout: 30_000 });
 });
@@ -95,8 +101,7 @@ test.describe('with the shared people (#799)', () => {
     await expect(page.locator('.chart-wheel text.chart-symbol-text-text').first()).toBeAttached();
 
     // Kept on this device across a reload; Drawn restores the paths.
-    await page.reload();
-    await page.waitForEvent('load', { timeout: 5_000 }).catch(() => undefined);
+    await reloadAndSettle(page);
     await expect(page.locator('.chart-wheel text.chart-symbol-text-text').first()).toBeVisible();
     await openSettings(page, 'Display & glyphs');
     await expect(page.getByLabel('Symbols', { exact: true })).toHaveValue('text');
@@ -125,8 +130,9 @@ test.describe('with the shared people (#799)', () => {
     await expect(page.locator('.chart-wheel text.chart-symbol-text-unicode', { hasText: '⛢' }).first()).toBeAttached();
 
     // Kept on this device: still chosen after a reload.
-    await page.reload();
-    await page.waitForEvent('load', { timeout: 5_000 }).catch(() => undefined);
+    await reloadAndSettle(page);
+    // openSettings picks its path with isVisible(), which does not wait: let the chart render first.
+    await expect(page.locator('div.chart-wheel')).toBeVisible();
     await openSettings(page, 'Display & glyphs');
     await expect(page.getByLabel('Uranus', { exact: true })).toHaveValue('astronomical');
     // The Pluto forms (like the line weight) are only visible in the drawn class, so they are disabled in the others.

@@ -113,7 +113,8 @@ for (const pointer of POINTERS) {
       const offenders: string[] = [];
       for (const route of routes) {
         await gotoAndSettle(page, `${baseUrl}/#/${route}`);
-        await page.waitForFunction('document.querySelector(\'[aria-busy="true"]\') === null');
+        // A locator wait, not waitForFunction: polling a string predicate needs eval, which the app's CSP blocks.
+        await expect(page.locator('[aria-busy="true"]')).toHaveCount(0, { timeout: 30_000 });
         const found = await page.evaluate<Offender[]>(MEASURE(pointer.min));
         const where = route.replace(personId, ':id');
         for (const o of found) offenders.push(`${where}: ${o.what} ${String(o.width)}x${String(o.height)}`);
