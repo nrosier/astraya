@@ -37,6 +37,9 @@ import type { TableColumn } from './table-sort.js';
 import { StatusMessage } from './primitives/StatusMessage.js';
 import { BackLink } from './BackLink.js';
 import { PageHeader } from './PageHeader.js';
+import { DEFAULT_RULERSHIP_CHOICE } from '../astrology/rulership.js';
+import { DEFAULT_EXTENDED_SETTINGS } from '../chart/extended-settings.js';
+import { useCalculationBasisLine } from './calculation-basis.js';
 
 type Result =
   | { readonly kind: 'idle' }
@@ -53,6 +56,7 @@ function inDays(days: number): string {
 
 export function ElectionalView(): React.JSX.Element {
   const t = useMessages(electionalViewMessages);
+  const basisLine = useCalculationBasisLine(DEFAULT_EXTENDED_SETTINGS, DEFAULT_RULERSHIP_CHOICE);
   /** The rule's explanation; `houses` in it opens its glossary tooltip (#901). */
   const ruleExplanation = (key: ElectionRuleKey): React.ReactNode => {
     const explanation = t.rules[key]?.explanation;
@@ -156,7 +160,7 @@ export function ElectionalView(): React.JSX.Element {
   return (
     <main className="shell">
       <BackLink fallback="#/people" />
-      <PageHeader title={t.heading} titleTerm="electional" />
+      <PageHeader title={t.heading} titleTerm="electional" basis={basisLine} basisEditHref={null} />
       <p className="hint">
         <GlossaryText text={t.hint} />
       </p>
