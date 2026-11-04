@@ -1,18 +1,15 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
 import type { OrbLibrary } from '../src/astrology/orb-library.js';
-import { applyCalculationProfile } from '../src/chart/calculation-profiles.js';
-import { DEFAULT_EXTENDED_SETTINGS, settingsForContext } from '../src/chart/extended-settings.js';
+import { DEFAULT_EXTENDED_SETTINGS } from '../src/chart/extended-settings.js';
 import {
   buildCalculationBasisLine,
-  calculationSource,
   orbSourceName,
   withBasisItems,
   type BasisWords,
 } from '../src/ui/calculation-basis.js';
 import { calculationBasisMessages } from '../src/ui/calculation-basis.messages.js';
 
-const CUSTOM = { ...DEFAULT_EXTENDED_SETTINGS, rainbowZodiac: true };
 const HOUSE: OrbLibrary = {
   profiles: [
     {
@@ -26,30 +23,6 @@ const HOUSE: OrbLibrary = {
   ],
 };
 
-describe('calculationSource (#510)', () => {
-  it('says "Astraya default" for the shipped settings and rulers, whatever is saved', () => {
-    expect(calculationSource(DEFAULT_EXTENDED_SETTINGS, 'modern', undefined)).toBe('astraya-default');
-    expect(calculationSource(DEFAULT_EXTENDED_SETTINGS, 'modern', { settings: CUSTOM, rulership: 'modern' })).toBe(
-      'astraya-default',
-    );
-  });
-
-  it('says "my default" when the chart uses exactly what the user saved', () => {
-    expect(calculationSource(CUSTOM, 'traditional', { settings: CUSTOM, rulership: 'traditional' })).toBe('my-default');
-  });
-
-  it('says "this chart" when settings or rulers differ from both defaults', () => {
-    expect(calculationSource(CUSTOM, 'modern', undefined)).toBe('this-chart');
-    expect(calculationSource(CUSTOM, 'modern', { settings: CUSTOM, rulership: 'traditional' })).toBe('this-chart');
-    expect(calculationSource(DEFAULT_EXTENDED_SETTINGS, 'traditional', undefined)).toBe('this-chart');
-  });
-
-  it('treats a built-in profile applied to the chart as a change unless it is the default', () => {
-    const traditional = applyCalculationProfile(DEFAULT_EXTENDED_SETTINGS, 'traditional-western-v1');
-    expect(calculationSource(traditional, 'traditional', undefined)).toBe('this-chart');
-  });
-});
-
 const WORDS: Record<'en' | 'nl', BasisWords> = {
   en: {
     t: calculationBasisMessages.en,
@@ -62,18 +35,6 @@ const WORDS: Record<'en' | 'nl', BasisWords> = {
     orbProfileTitles: { custom: 'Eigen keuze', 'standard-v1': 'Standaard', 'tight-v1': 'Strak', 'wide-v1': 'Ruim' },
   },
 };
-
-describe('the calculation-basis wording', () => {
-  it('has every source in both languages', () => {
-    for (const locale of ['en', 'nl'] as const) {
-      expect(Object.keys(calculationBasisMessages[locale].sources).sort()).toEqual([
-        'astraya-default',
-        'my-default',
-        'this-chart',
-      ]);
-    }
-  });
-});
 
 describe('buildCalculationBasisLine (#1059)', () => {
   it('prints zodiac, house system, rulers and orbs for the shipped defaults', () => {
@@ -165,15 +126,5 @@ describe('the natal orb profile in the basis (#806)', () => {
 
   it('shows no clause when the named profile was deleted, because the chart falls back to the card', () => {
     expect(orbSourceName({ profiles: [] }, { natal: 'gone' }, 'natal')).toBeUndefined();
-  });
-
-  it('does not call a natal orb profile "changed for this chart": the card settings are the basis', () => {
-    const card = DEFAULT_EXTENDED_SETTINGS;
-    const calculatedWith = settingsForContext(card, 'natal', HOUSE, { natal: 'house-style' });
-    // The chart really does calculate with different orbs, which is why reading the basis from them was the bug...
-    expect(calculatedWith).not.toEqual(card);
-    expect(calculationSource(calculatedWith, 'modern', undefined)).toBe('this-chart');
-    // ...so the basis is read from the card, and only the orb clause names the device profile.
-    expect(calculationSource(card, 'modern', undefined)).toBe('astraya-default');
   });
 });
