@@ -196,7 +196,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `use-exclusive-open.ts` — Shared open/close hook for dropdown-button rows. Deps: none (React only).
 - `void-of-course-text.ts` — Composes void-of-course Moon sentence (transit screen). Deps: `astrology/bodies`, `astrology/signs`, `astrology/void-of-course`, `time/julian`.
 - `wheel-corpus.ts` — Supplies + caches interpretation corpus to wheel-selection panel. Deps: `interpretation/corpus-client`.
-- `wheel-interaction.ts` — Pointer/keyboard wheel isolation, ring legend activation, and leader-arrow state, plus selecting a key outright for table Show buttons. Deps: `chart/body-id`.
+- `wheel-interaction.ts` — Pointer/keyboard wheel isolation (a selected body can also drop every aspect line not touching it, #1063), ring legend activation, and leader-arrow state, plus selecting a key outright for table Show buttons. Deps: `chart/body-id`.
 - `wheel-selection.ts` — Composes wheel-selection heading text. Deps: `astrology/signs`, `interpretation/schema`, `./astro-names.messages`.
 - `workspace-rail-setting.ts` — Device preference for whether the desktop workspace rail is collapsed (#506/#509). Deps: none.
 - `year-range.ts` — Ephemeris data's valid year range (clamping). Deps: none.
