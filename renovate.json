@@ -5,6 +5,17 @@
   "schedule": ["before 6am on monday"],
   "labels": ["type:chore", "area:infra"],
   "prConcurrentLimit": 5,
+  "ignorePaths": [
+    "**/node_modules/**",
+    "**/bower_components/**",
+    "**/vendor/**",
+    "**/examples/**",
+    "**/__tests__/**",
+    "**/test/**",
+    "**/tests/**",
+    "**/__fixtures__/**",
+    "Dockerfile.alpine"
+  ],
   "lockFileMaintenance": {
     "enabled": true
   },
@@ -17,6 +28,17 @@
       "labels": ["type:chore", "area:ephemeris", "risk:correctness"],
       "prBodyNotes": [
         "**Before merging:** run `npm run ephe:sync` (expect digest failures if upstream repacked), `node scripts/gen-constants.mjs`, and `npm test`. The golden-chart gate must stay green at its historical tolerance of 0.2 arcseconds."
+      ]
+    },
+    {
+      "description": "The shipped Dockerfile builds every stage on the Chainguard/Wolfi glibc node image, which only publishes the floating tags latest and latest-dev, so Renovate sees nothing to bump unless digests are pinned. Pin the digest so a new base image arrives as a reviewable PR. A base bump can change the libc or the node build under @node-rs/argon2 and sweph-wasm prebuilt binaries, so it is never automatic.",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["cgr.dev/chainguard/node"],
+      "pinDigests": true,
+      "automerge": false,
+      "labels": ["type:chore", "area:infra", "docker-base"],
+      "prBodyNotes": [
+        "**Before merging:** this bumps the Wolfi (glibc) base image of the shipped `Dockerfile`. Run `npm run docker:smoke`, and verify the runtime is still glibc (not musl) and that the `@node-rs/argon2` and `sweph-wasm` prebuilt binaries still load. Do not merge on a green `check` alone."
       ]
     },
     {
