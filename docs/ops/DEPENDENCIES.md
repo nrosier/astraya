@@ -57,7 +57,7 @@ tracking, not licence compliance.
 | `@types/*`                                 | TypeScript ambient types for the above.                                                              | MIT                  |
 | `@modelcontextprotocol/sdk`                | Agent/tooling support (`tools/`), excluded from `src/` by the `tools/` import boundary.              | MIT                  |
 
-`@axe-core/playwright` is MPL-2.0, outside the MIT/BSD/Apache-2.0/ISC/CC0 set
+`@axe-core/playwright` is MPL-2.0, outside the MIT/BSD/Apache-2.0/ISC/CC0/BlueOak-1.0.0 set
 `CLAUDE.md` names. It is a devDependency used only by the Playwright a11y suite
 and is never bundled or distributed with Astraya: the Docker runtime stage
 installs with `npm ci --omit=dev`. MPL-2.0's copyleft obligations, such as
