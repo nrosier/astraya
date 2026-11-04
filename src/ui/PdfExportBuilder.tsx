@@ -82,6 +82,7 @@ import { ordered } from './people-list.js';
 import { pdfExportMessages } from './pdf-export.messages.js';
 import { usePersonCalculationSettings } from './person-calculation-settings.js';
 import { unreadableSettingsNoticeMessages } from './UnreadableSettingsNotice.messages.js';
+import { orbSourceName, useCalculationBasisLine, withBasisItems } from './calculation-basis.js';
 import { useOrbContextSource, useOrbLibrary } from './orb-library-store.js';
 import { useStoreState } from './store-context.js';
 import { readLastPersonId } from './last-person.js';
@@ -212,6 +213,26 @@ export function PdfExportBuilder({
   const fullSelection: PdfSelection = { personId, ...selection };
   const currentPreset = matchPdfPreset(fullSelection);
   const empty = pdfSelectionIsEmpty(fullSelection);
+  // The basis the document is cast with (#1059): the person's own natal context, which the natal, return and
+  // interpretation sections use. Draconic, harmonic, synastry, composite and transit sections calculate with the
+  // engine defaults plus orbs (see `pdf-export-plan.ts`), so when one is selected the line says so rather than
+  // stating a zodiac and house system that section does not use.
+  const personBasis = useCalculationBasisLine(
+    extendedSettings,
+    rulership,
+    orbSourceName(orbLibrary, orbSources, 'natal'),
+  );
+  const usesOwnBasis =
+    fullSelection.synastry !== undefined ||
+    fullSelection.composite !== undefined ||
+    fullSelection.transits !== undefined ||
+    fullSelection.charts.some((chart) => chart.type === 'draconic' || chart.type === 'harmonic');
+  const basisLine =
+    person === undefined || settingsUnreadable
+      ? undefined
+      : usesOwnBasis
+        ? withBasisItems(personBasis, t.ownBasisNote)
+        : personBasis;
 
   const choosePreset = (value: string): void => {
     if (value === 'custom') return;
@@ -480,7 +501,7 @@ export function PdfExportBuilder({
           : '';
   return (
     <main className="shell shell--wide pdf-builder">
-      <PageHeader title={t.heading} subtitle={t.subtitle} />
+      <PageHeader title={t.heading} subtitle={t.subtitle} basis={basisLine} />
       {/* Issue 1075: the starting point and Build PDF sit below the title and context line (guidelines §5), not in the title row. */}
       <div className="pdf-primary-bar">
         <div className="pdf-header-preset">

@@ -126,6 +126,29 @@ describe('a shared chart recomputes under the sender’s own settings, not the v
     }
   });
 
+  it('states the sender’s basis in the page header, with no Edit link to the viewer’s Preferences (#1059)', async () => {
+    writeRulershipChoice('modern');
+    const sent = buildCalculationSnapshot({ ...DEFAULT_EXTENDED_SETTINGS, houseSystem: 'W' }, 'traditional');
+    const query = encodeChartShareLink({
+      moment: MOMENT,
+      settings: calculationSnapshotToJson(sent),
+      housesKnown: true,
+    }).toString();
+
+    const { container, root } = await mountWithHash(`#/shared?${query}`);
+    try {
+      const basis = container.querySelector('.page-header-basis')?.textContent ?? '';
+      expect(basis).toMatch(/^Tropical · .+ · Traditional rulers · Standard orbs$/);
+      expect(basis).not.toContain('Placidus');
+      expect(container.querySelector('.page-header-basis-edit')).toBeNull();
+    } finally {
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+    }
+  });
+
   it('recomputes with the sender’s own custom points, so the shared chart shows the same objects (#582)', async () => {
     const points = [{ id: 'fortune-like', name: 'Fortune-like', formula: 'ascendant + moon - sun' }];
     const sent = buildCalculationSnapshot(DEFAULT_EXTENDED_SETTINGS, 'modern', points);

@@ -41,6 +41,9 @@ import type { Calendar } from '../time/types.js';
 import type { TimeAccuracy } from '../domain/person.js';
 import { BackLink } from './BackLink.js';
 import { PageHeader } from './PageHeader.js';
+import { orbSourceName, useCalculationBasisLine } from './calculation-basis.js';
+import { useOrbContextSource, useOrbLibrary } from './orb-library-store.js';
+import { usePersonCalculationSettings } from './person-calculation-settings.js';
 import { PersonFileActions } from './PersonFileActions.js';
 import { sharedMessages } from './shared.messages.js';
 import { checkFeatureFlag, initProfileOverlay, loadOverlayConfig } from './profile-overlay.js';
@@ -90,6 +93,15 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
   const shared = useMessages(sharedMessages);
   const unknownTimeHintId = useId();
   const validationT = useMessages(personFormValidationMessages);
+  // The person's own calculation profile (#1059): what every chart of theirs is cast with.
+  const calculation = usePersonCalculationSettings(personId);
+  const orbLibrary = useOrbLibrary();
+  const orbSources = useOrbContextSource();
+  const basisLine = useCalculationBasisLine(
+    calculation.settings,
+    calculation.rulership,
+    orbSourceName(orbLibrary, orbSources, 'natal'),
+  );
 
   // The stored person, as a draft, recomputed every render rather than memoized: until the user
   // edits a field, the form must keep tracking the store, so a sync pull that merges in a remote
@@ -187,6 +199,7 @@ export function PersonForm({ personId }: { personId: string }): React.JSX.Elemen
       <PageHeader
         title={current.displayName.trim() === '' ? t.newPerson : current.displayName}
         titleAside={<SaveStatusDot dirty={dirty} />}
+        basis={calculation.unreadable ? undefined : basisLine}
       >
         <div className="birth-record-save">
           <Button

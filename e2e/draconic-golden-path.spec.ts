@@ -52,6 +52,9 @@ test('a person with a known birth time gets a Draconic screen with a wheel and d
   await openSharedPerson(page, baseUrl, EINSTEIN);
   await openChart(page, 'Draconic');
   await expect(page.getByRole('heading', { name: /draconic/i, level: 1 })).toBeVisible();
+  // #1059: the basis line names the draconic zodiac and offers the Edit link.
+  await expect(page.locator('.page-header-basis')).toContainText(/^Draconic · .+ rulers · .+ orbs$/);
+  await expect(page.locator('.page-header-basis-edit')).toBeVisible();
 
   await expect(page.locator('div.chart-wheel')).toBeVisible();
   await expect(page.getByRole('link', { name: 'Placements' })).toBeVisible();

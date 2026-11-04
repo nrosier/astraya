@@ -1,18 +1,12 @@
 /**
  * The canonical per-person Overview screen (#506/#509): a task launchpad, not a generic
- * dashboard (`docs/ui/UI-UX_GUIDELINES.md` §2). Shows record readiness, the device's current
- * calculation basis, and a small set of real next actions — not decorative metrics or a chart
- * without a decision purpose.
- *
- * The calculation-basis line is deliberately minimal (zodiac kind + rulership model only) rather
- * than resolving a house-system/ayanamsa display name, which needs an async `EphemerisProvider`
- * call (`ExtendedSettingsPanel.tsx`'s own `useNameLookup`). Zodiac kind reads the device's saved
- * default calculation profile (#510) via `default-calculation-profile.ts`, falling back to
- * `DEFAULT_EXTENDED_SETTINGS` when none is saved.
+ * dashboard (`docs/ui/UI-UX_GUIDELINES.md` §2). Shows record readiness, the person's
+ * calculation basis (in the page header, with its Edit link, #1059), and a small set of real
+ * next actions — not decorative metrics or a chart without a decision purpose.
  */
 /**
  * @module ui/Overview
- * @purpose Canonical per-person Overview screen (#506/#509): record readiness, calculation basis, and real next actions.
+ * @purpose Canonical per-person Overview screen (#506/#509): record readiness, the calculation basis line in the page header, and real next actions.
  * @conventions Uses the feature registry (feature-registry.ts) for every next-action href rather than hand-written hashes; readiness line reuses people-list.ts's summary() so this screen and the People list can never disagree about what "complete" means; uses Overview.messages.ts for en/nl text via useMessages().
  * @exports Overview
  */
@@ -21,7 +15,8 @@ import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { overviewMessages } from './Overview.messages.js';
 import { PersonNotFound } from './PersonNotFound.js';
-import { rulershipSettingMessages } from './RulershipSetting.messages.js';
+import { orbSourceName, useCalculationBasisLine } from './calculation-basis.js';
+import { useOrbContextSource, useOrbLibrary } from './orb-library-store.js';
 import { useStoreState } from './store-context.js';
 import { summary } from './people-list.js';
 import { usePersonCalculationSettings } from './person-calculation-settings.js';
@@ -33,13 +28,16 @@ export function Overview({ personId }: { readonly personId: string }): React.JSX
   const state = useStoreState();
   const person = state.people.get(personId);
   const t = useMessages(overviewMessages);
-  const rulershipT = useMessages(rulershipSettingMessages);
   const [locale] = useLocale();
   const {
     settings: personSettings,
     unreadable: settingsUnreadable,
     rulership,
   } = usePersonCalculationSettings(personId);
+  const orbLibrary = useOrbLibrary();
+  const orbSources = useOrbContextSource();
+  // The basis the person's natal chart is cast with, stated under the title as on every calculated page (#1059).
+  const basisLine = useCalculationBasisLine(personSettings, rulership, orbSourceName(orbLibrary, orbSources, 'natal'));
 
   if (person === undefined) {
     return <PersonNotFound />;
@@ -50,8 +48,6 @@ export function Overview({ personId }: { readonly personId: string }): React.JSX
   }
 
   const hasBirthMoment = person.moment !== undefined;
-  const zodiac = personSettings.zodiac;
-  const zodiacLabel = zodiac.kind === 'sidereal' ? t.sidereal : t.tropical;
 
   // Every next action but editing the birth record itself needs a complete birth moment —
   // same gate person-nav.ts's isTabEnabled applies to every other tab (only "birth-record"
@@ -71,11 +67,8 @@ export function Overview({ personId }: { readonly personId: string }): React.JSX
   return (
     <main className="shell">
       <BackLink fallback="#/people" />
-      <PageHeader title={t.heading(person.displayName || t.personFallback)} />
+      <PageHeader title={t.heading(person.displayName || t.personFallback)} basis={basisLine} />
       <p>{summary(person, locale)}</p>
-
-      <h2>{t.basisHeading}</h2>
-      <p>{t.basisLine(zodiacLabel, rulershipT.options[rulership])}</p>
 
       <h2>{t.nextActionsHeading}</h2>
       {!hasBirthMoment && <p className="hint">{t.completeBirthRecordFirst}</p>}
