@@ -82,10 +82,9 @@ Rules:
 - A structured value carries its own version (as `calculationSettings` does). A simple enum gains members by client
   release; an older client sees an unknown member as `unreadable` and keeps the log record.
 - The field names `deleted` and `purged` are reserved on this entity and ignored by its materialiser (section 3.4).
-- Any other field name is ignored by the materialiser and kept in the log. This is how the Advanced open or closed state
-  would be added if the owner chooses account scope (open question Q1): fields `advancedOpen.profile`,
-  `advancedOpen.bodies`, `advancedOpen.special`, boolean, `null` = default (collapsed, per #856). No format change is
-  needed to add them later.
+- Any other field name is ignored by the materialiser and kept in the log. The Advanced open or closed state is not an
+  account field: it is a device preference (Q1, decided A, [#1066 comment](https://github.com/nrosier/astraya/issues/1066#issuecomment-6638104548)).
+  No `advancedOpen.*` fields are defined on `account`.
 
 ### 2.3 Store and fold (pure layer)
 
@@ -132,12 +131,19 @@ Changes to existing contracts (all additive):
 A module-level `account-preferences` store (same `useSyncExternalStore` shape as `locale.ts`) is the synchronous read
 path, because `locale.ts` must set `<html lang>` at import time, before IndexedDB opens.
 
-- `localStorage` keeps the three existing keys as a **cache of the currently bound store's register**, not as a source of
-  truth. The cache exists for first paint and for the existing `storage`-event cross-tab behaviour.
-- Cache tag (db-integrity finding 2): `localStorage` is global to the browser, but the session is per tab. Every cache write
-  also writes `astraya:accountSettingsBoundDb` = the bound `store.dbName`. A tab applies a `storage` event for these keys
-  only when the tag equals its own bound `dbName`. Otherwise it keeps its in-memory values, so a tab signed in as A never
-  shows another tab's signed-out values, and the reverse.
+- **Read path (db-integrity blocking finding B1):** every synchronous read goes through the bound store's in-memory value
+  (the `account-preferences` store). `localStorage` is read once, at import, for first paint only, and is never a source of
+  truth. The call sites that read the three settings from `localStorage` directly today must move to the bound value:
+  - `src/ui/default-calculation-profile.ts`: `readDefaultCalculationProfile` and `snapshot` (around lines 47 and 79).
+  - `src/ui/rulership-setting.ts`: the rulership read and its fallback (around lines 21-50).
+  - `src/ui/use-calculation-settings-migration.ts`: the seed inputs (around lines 45 and 50).
+  - `src/ui/PersonFileActions.tsx`: the default profile read for export (around line 76), via `readDefaultCalculationProfile`.
+  - `src/ui/PreferencesView.tsx`: the default profile read for export (around line 170), via `readDefaultCalculationProfile`.
+- **Cache layout (replaces the single cache tag):** one JSON key per database, `astraya:accountSettingsCache:<dbName>`,
+  holding only the register fields that are set. First paint reads the entry for the `dbName` that `astraya:lastUserId`
+  resolves to, as today. A value and its owner are one write, so there is no ordering race between a tag and its values.
+  A `storage` event is applied only for the key of the tab's own bound `dbName`; every other key is ignored. A tab
+  signed in as A therefore never reads another tab's signed-out values, and the reverse.
 - `SessionProvider` calls `bind(store)` whenever a store becomes the active one (anonymous, account, offline-boot
   fallback, `switchTo`) and `unbind()` when it closes (`handleUnauthorized`, `signOut`).
 - `bind` replaces the cache wholesale from `store.state.account`: a field unset in the register removes its cache key
@@ -206,7 +212,8 @@ In scope: `locale`, `defaultRulership`, `defaultCalculationProfile` (the three r
 Not in scope, unchanged: every `scope: 'device'` entry; `transitFilter:<context>` (`page`); `person.*` (already in the op
 log); the Tier 2 consent (`request`, never persisted).
 
-Open: Advanced open or closed state (Q1), orb library and transit-filter default (Q4).
+Decided: the Advanced open or closed state is a device preference, not account scope (Q1, option A). The orb library and
+transit-filter default are not in the registry and are tracked as a separate issue, #1149 (Q4, option A).
 
 ### 3.4 Conflict rules
 
@@ -227,7 +234,7 @@ Open: Advanced open or closed state (Q1), orb library and transit-filter default
   signed out.
 - Signing out unbinds the account store and binds the anonymous store; the cache is replaced from the anonymous register.
   Nothing is copied from the account store to the anonymous store (a copy would leave an account's preferences behind on a
-  shared device). Whether this is the right user-visible behaviour is open question Q2.
+  shared device). This is the decided behaviour (Q2, option A).
 - Signing in as a different account binds that account's store; the previous account's cache is gone at bind time. Between
   page load and bind, first paint may show the previous cache (the last used account in the common case); this is cosmetic
   and low-sensitivity, and is replaced as soon as the store is ready.
@@ -309,8 +316,10 @@ The prompt is a UI primitive with i18n parity (`*.messages.ts` en and nl); the s
     one account's cached values into the anonymous store.
   - Anonymous at first launch of the new build: write the explicit values into the anonymous store's register with
     `store.mutate`. They later reach an account through section 3.6.
-  - Signed in at first launch: the values are candidates (age unknown) for that account through `reconcile`, after its
-    first sync. Whether they are also written to the anonymous store is part of Q2.
+  - Signed in at first launch (owner decision, 2026-11-04, [#1066 comment](https://github.com/nrosier/astraya/issues/1066#issuecomment-6643499602)):
+    on first sign-in, the device's existing language, rulership and calculation-profile values are offered once in the
+    one prompt and written to the account if accepted. They are candidates (age unknown) for that account through
+    `reconcile`, after its first sync.
   - Shared device: legacy keys were device-wide, so values set by another person on this browser can appear in the
     signed-in account's prompt. This is the device scope those keys always had, not a new bleed path, and the prompt
     makes it explicit rather than silent (db-integrity finding 9).
@@ -352,7 +361,9 @@ Required test scenarios:
    fields offline, converge byte-identically; a device on the old fold set keeps and forwards the records.
 6. Cross-account bleed (dedicated, per ADR 0002): sign in as A, set language and default profile, sign out, sign in as B
    on the same browser; B's store, register, cache and any prompt contain none of A's values. Two tabs: tab 1 signed in
-   as A, tab 2 signs out; tab 1 keeps A's values and tab 2 never shows them (cache tag).
+   as A, tab 2 signs out; tab 1 keeps A's values and tab 2 never shows them (per-database cache key). Tab 2, bound to the
+   anonymous store, saves a default profile; tab 1 then re-renders and creates a person, and the new person gets A's
+   default, not the anonymous store's (B1: reads go through the bound value).
 7. Reconcile matrix: candidate absent, target unset, equal, candidate older, candidate newer, legacy (age unknown),
    dismiss, repeat sign-in with the marker, adoption excludes `account` records.
 8. Migration: explicit legacy keys migrate, absent keys do not, guard set only after success, malformed legacy value is
