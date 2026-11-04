@@ -10,13 +10,13 @@
 const en = {
   personFallback: 'Person',
   thisPerson: 'This person',
-  relocatedChartFallback: 'Relocated chart',
+  relocatedChartFallback: 'Relocated Chart',
   needsCompleteRecord: (name: string) =>
     `A relocated chart keeps the exact birth moment but recomputes houses and angles for a different place, so it needs a complete birth record with a known time. ${name}’s does not have one yet. Fill in or correct it on the`,
   personPageLink: 'person page',
 
-  heading: (name: string) => `${name}’s relocated chart`,
-  headingFallback: 'Relocated chart',
+  heading: (name: string) => `${name}’s Relocated Chart`,
+  headingFallback: 'Relocated Chart',
   hint: 'The birth moment stays fixed; only the place changes. Planetary positions are identical to the natal chart — only houses, angles, and anything derived from the Ascendant (Vertex, Fortune, Spirit) move.',
 
   savedLocationLabel: 'Saved locations',

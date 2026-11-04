@@ -24,8 +24,8 @@ const en = {
     `A harmonic chart needs a real Ascendant to build its own houses from, so it needs a complete birth record with a known time. ${name}’s does not have one yet. Fill in or correct it on the`,
   personPageLink: 'person page',
 
-  heading: (name: string) => `${name}’s harmonic chart`,
-  headingFallback: 'Harmonic chart',
+  heading: (name: string) => `${name}’s Harmonic Chart`,
+  headingFallback: 'Harmonic Chart',
   hint: 'Every longitude multiplied by a whole number and wrapped back into the zodiac, with whole-sign houses built from the multiplied Ascendant — the general mechanism behind both harmonic charts and Vedic Varga (divisional) charts. See the named presets’ own note on which Varga convention each one follows. This screen computes divisional-chart positions only — it has no Vimshottari dasha timing or planetary-yoga detection, so it is not a full Jyotish toolkit.',
 
   presetDescriptions: {

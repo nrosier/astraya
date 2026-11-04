@@ -10,13 +10,13 @@
 const en = {
   personFallback: 'Person',
   thisPerson: 'This person',
-  draconicChartFallback: 'Draconic chart',
+  draconicChartFallback: 'Draconic Chart',
   needsCompleteRecord: (name: string) =>
     `A draconic chart measures every body from the natal North Node, so it needs a complete birth record with a known time to compute that node position from. ${name}’s does not have one yet. Fill in or correct it on the`,
   personPageLink: 'person page',
 
-  heading: (name: string) => `${name}’s draconic chart`,
-  headingFallback: 'Draconic chart',
+  heading: (name: string) => `${name}’s Draconic Chart`,
+  headingFallback: 'Draconic Chart',
   hint: 'Every longitude re-measured from the natal North Node rather than from zero Aries, with the natal houses and Ascendant unchanged — only body positions move onto the draconic zodiac.',
   housesUndefined:
     'The underlying natal chart’s houses have no valid solution — this person’s birth place falls at a latitude the chosen house system can’t resolve. Try a different house system in Extended settings on their chart page, or a location further from the poles.',
