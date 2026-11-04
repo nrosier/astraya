@@ -3,7 +3,12 @@ import { describe, expect, it } from 'vitest';
 import type { OrbLibrary } from '../src/astrology/orb-library.js';
 import { applyCalculationProfile } from '../src/chart/calculation-profiles.js';
 import { DEFAULT_EXTENDED_SETTINGS, settingsForContext } from '../src/chart/extended-settings.js';
-import { calculationSource, orbSourceName } from '../src/ui/calculation-basis.js';
+import {
+  buildCalculationBasisLine,
+  calculationSource,
+  orbSourceName,
+  type BasisWords,
+} from '../src/ui/calculation-basis.js';
 import { calculationBasisMessages } from '../src/ui/calculation-basis.messages.js';
 
 const CUSTOM = { ...DEFAULT_EXTENDED_SETTINGS, rainbowZodiac: true };
@@ -44,19 +49,56 @@ describe('calculationSource (#510)', () => {
   });
 });
 
+const WORDS: Record<'en' | 'nl', BasisWords> = {
+  en: {
+    t: calculationBasisMessages.en,
+    rulerTitles: { modern: 'Modern', traditional: 'Traditional', both: 'Both' },
+    orbProfileTitles: { custom: 'Custom', 'standard-v1': 'Standard', 'tight-v1': 'Tight', 'wide-v1': 'Wide' },
+  },
+  nl: {
+    t: calculationBasisMessages.nl,
+    rulerTitles: { modern: 'Modern', traditional: 'Traditioneel', both: 'Beide' },
+    orbProfileTitles: { custom: 'Eigen keuze', 'standard-v1': 'Standaard', 'tight-v1': 'Strak', 'wide-v1': 'Ruim' },
+  },
+};
+
 describe('the calculation-basis wording', () => {
-  it('has every source in both languages and names the profile and its source in the line', () => {
+  it('has every source in both languages', () => {
     for (const locale of ['en', 'nl'] as const) {
-      const t = calculationBasisMessages[locale];
-      expect(Object.keys(t.sources).sort()).toEqual(['astraya-default', 'my-default', 'this-chart']);
-      expect(t.line('P', 'S')).toContain('P');
-      expect(t.line('P', 'S')).toContain('S');
+      expect(Object.keys(calculationBasisMessages[locale].sources).sort()).toEqual([
+        'astraya-default',
+        'my-default',
+        'this-chart',
+      ]);
     }
   });
+});
 
-  it('names the natal orb profile in both languages', () => {
-    expect(calculationBasisMessages.en.orbSource('My house style')).toBe('orbs: My house style (this device)');
-    expect(calculationBasisMessages.nl.orbSource('My house style')).toBe('orbs: My house style (dit apparaat)');
+describe('buildCalculationBasisLine (#1059)', () => {
+  it('prints zodiac, house system, rulers and orbs for the shipped defaults', () => {
+    expect(buildCalculationBasisLine(DEFAULT_EXTENDED_SETTINGS, 'modern', WORDS.en)).toBe(
+      'Tropical · Placidus · Modern rulers · Standard orbs',
+    );
+    expect(buildCalculationBasisLine(DEFAULT_EXTENDED_SETTINGS, 'traditional', WORDS.nl)).toBe(
+      'Tropisch · Placidus · Traditioneel heersers · Standaard orbs',
+    );
+  });
+
+  it('reads sidereal and another house system', () => {
+    const settings = {
+      ...DEFAULT_EXTENDED_SETTINGS,
+      zodiac: { kind: 'sidereal', ayanamsa: 1 } as const,
+      houseSystem: 'W' as const,
+    };
+    const line = buildCalculationBasisLine(settings, 'both', WORDS.en);
+    expect(line).toMatch(/^Sidereal · .+ · Both rulers · Standard orbs$/);
+    expect(line).not.toContain('Placidus');
+  });
+
+  it('says Custom when the orbs are edited per aspect, and names a device orb profile when one applies', () => {
+    const custom = { ...DEFAULT_EXTENDED_SETTINGS, orbRules: { bodyOrbs: { venus: 4 } } };
+    expect(buildCalculationBasisLine(custom, 'modern', WORDS.en)).toContain('Custom orbs');
+    expect(buildCalculationBasisLine(custom, 'modern', WORDS.en, 'My house style')).toContain('My house style orbs');
   });
 });
 

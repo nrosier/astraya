@@ -120,7 +120,11 @@ test('the Consultation header opens the chart wheel on the day shown, and the ca
   await expect(page.getByRole('heading', { level: 1, name: 'Consultation', exact: true })).toBeVisible();
 
   // The title is the feature; the person sits in the muted basis line.
-  await expect(page.locator('.consultation-context-basis')).toContainText('Tropical');
+  await expect(page.locator('.page-header-basis')).toContainText('Tropical · Placidus');
+  await expect(page.getByRole('link', { name: 'Edit calculation basis in Preferences' })).toHaveAttribute(
+    'href',
+    '#/preferences/astrology',
+  );
 
   // No date picker: the date is static text.
   await expect(page.locator('select, input[type="date"]')).toHaveCount(0);

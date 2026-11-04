@@ -1,14 +1,17 @@
 /**
  * @module ui/calculation-basis.messages
- * @purpose English/Dutch wording for the calculation-basis line on chart pages.
- * @conventions Profile names come from the Extended settings messages, not repeated here.
+ * @purpose English/Dutch wording for the calculation-basis line on calculated pages.
+ * @conventions Ruler and orb-profile names come from the rulership and Extended settings messages, not repeated here. `sources` words the saved-default comparison of `calculationSource`.
  * @exports calculationBasisMessages
  */
 import type { Locale } from '../interpretation/schema.js';
 
 const en = {
-  line: (profile: string, source: string) => `Calculation profile: ${profile} — ${source}`,
-  orbSource: (name: string) => `orbs: ${name} (this device)`,
+  line: (zodiac: string, houses: string, rulers: string, orbs: string) => `${zodiac} · ${houses} · ${rulers} · ${orbs}`,
+  tropical: 'Tropical',
+  sidereal: 'Sidereal',
+  rulers: (title: string) => `${title} rulers`,
+  orbs: (title: string) => `${title} orbs`,
   sources: {
     'astraya-default': 'Astraya default',
     'my-default': 'your saved default',
@@ -17,8 +20,11 @@ const en = {
 };
 
 const nl: typeof en = {
-  line: (profile: string, source: string) => `Berekeningsprofiel: ${profile} — ${source}`,
-  orbSource: (name: string) => `orbs: ${name} (dit apparaat)`,
+  line: (zodiac: string, houses: string, rulers: string, orbs: string) => `${zodiac} · ${houses} · ${rulers} · ${orbs}`,
+  tropical: 'Tropisch',
+  sidereal: 'Siderisch',
+  rulers: (title: string) => `${title} heersers`,
+  orbs: (title: string) => `${title} orbs`,
   sources: {
     'astraya-default': 'Astraya-standaard',
     'my-default': 'jouw opgeslagen standaard',

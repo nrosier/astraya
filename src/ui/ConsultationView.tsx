@@ -76,9 +76,6 @@ import { PersonNotFound } from './PersonNotFound.js';
 import { hrefFor } from './feature-registry.js';
 import { chartHref, personHref } from './route.js';
 import { ConsultationNotesCard } from './ConsultationNotesCard.js';
-import { houseSystemLabel } from './ChartView.js';
-import { matchOrbProfile } from '../astrology/orb-profiles.js';
-import { extendedSettingsPanelMessages } from './ExtendedSettingsPanel.messages.js';
 import { useLocale } from './locale.js';
 import { useMessages } from './messages.js';
 import { useStoreState } from './store-context.js';
@@ -89,6 +86,7 @@ import { chartOverviewRows } from './chart-overview-rows.js';
 import { chartOverviewMessages } from './chart-overview.messages.js';
 import { ordinal } from './placement-label.js';
 import { PageHeader } from './PageHeader.js';
+import { useCalculationBasisLine } from './calculation-basis.js';
 import { Disclosure } from './primitives/Disclosure.js';
 import { Badge } from './primitives/Badge.js';
 import { ConsultationTransitTable, type TransitTableLabels, type TransitTableRow } from './ConsultationTransitTable.js';
@@ -147,13 +145,13 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
   const timingT = useMessages(timingTimelineViewMessages);
   const chartT = useMessages(chartViewMessages);
   const rulershipT = useMessages(rulershipSettingMessages);
-  const orbNames = useMessages(extendedSettingsPanelMessages);
   const [locale] = useLocale();
   const {
     settings: personSettings,
     unreadable: settingsUnreadable,
     rulership,
   } = usePersonCalculationSettings(personId);
+  const calcBasis = useCalculationBasisLine(personSettings, rulership);
   const [load, setLoad] = useState<Load>({ kind: 'loading' });
   // The session's moment (#676): when the page opened, or when Now was last pressed. Not noon UT, where the Moon can be 6° off.
   const [now, setNow] = useState(() => new Date());
@@ -307,13 +305,7 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
     );
   }
 
-  const zodiac = personSettings.zodiac;
-  const zodiacLabel = zodiac.kind === 'sidereal' ? t.sidereal : t.tropical;
-  // The calculation basis as the person's own settings resolve it: the house system, and the named orb profile
-  // (Custom when the orbs are edited or match no profile).
-  const houseLabel = houseSystemLabel(personSettings.houseSystem);
-  const orbProfile =
-    personSettings.orbRules === undefined ? matchOrbProfile(personSettings.orbScalePercent) : undefined;
+  const basisLine = t.basisSubject(subject, calcBasis);
   // The day the wheel opens on (#800): the day of the page's own "As of" moment, so Refresh moves it too.
   const selectedDay = `${String(now.getFullYear()).padStart(4, '0')}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   const signName = (sign: number): string => signDisplayName(SIGNS[sign]?.name ?? '', locale);
@@ -478,7 +470,7 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
   return (
     <main className="shell consultation">
       <BackLink fallback={personHref(personId)} />
-      <PageHeader title={t.heading}>
+      <PageHeader title={t.heading} basis={basisLine}>
         <a className="primitive-button-primary" href={chartHref(personId, 'wheel', 'natal', undefined, selectedDay)}>
           {t.viewWheel}
         </a>
@@ -491,15 +483,6 @@ export function ConsultationView({ personId }: { readonly personId: string }): R
       </PageHeader>
 
       <div className="consultation-context">
-        <p className="consultation-context-basis">
-          {t.basisLine(
-            subject,
-            zodiacLabel,
-            houseLabel,
-            t.rulersBasis(rulershipT.titles[rulership]),
-            t.orbsBasis(orbNames.orbProfileOptions[orbProfile ?? 'custom']),
-          )}
-        </p>
         <span className="consultation-date-field">
           <span>{t.asOf(formatTimestamp(now))}</span>{' '}
           <Button

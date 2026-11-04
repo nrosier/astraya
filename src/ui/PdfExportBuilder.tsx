@@ -480,11 +480,7 @@ export function PdfExportBuilder({
           : '';
   return (
     <main className="shell shell--wide pdf-builder">
-      <PageHeader
-        title={t.heading}
-        subtitle={t.subtitle}
-        basis={person === undefined || person.displayName === '' ? undefined : person.displayName}
-      />
+      <PageHeader title={t.heading} subtitle={t.subtitle} />
       {/* Issue 1075: the starting point and Build PDF sit below the title and context line (guidelines §5), not in the title row. */}
       <div className="pdf-primary-bar">
         <div className="pdf-header-preset">
