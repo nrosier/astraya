@@ -282,6 +282,8 @@ for (const viewport of [
     } else {
       // Desktop: side by side, the left column 3fr and the right 2fr (60/40).
       expect(right.x).toBeGreaterThan(left.x + left.width - 1);
+      // The summary is the top of the right column, level with the top of the settings column (#1075).
+      expect(Math.abs(right.y - left.y)).toBeLessThanOrEqual(1);
       const share = left.width / (left.width + right.width);
       expect(share).toBeGreaterThan(0.57);
       expect(share).toBeLessThan(0.63);
