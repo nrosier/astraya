@@ -10,10 +10,10 @@
 const en = {
   personFallback: 'Person',
   thisPerson: 'This person',
-  solarHeading: (name: string) => `${name}’s solar return`,
-  lunarHeading: (name: string) => `${name}’s lunar return`,
-  solarHeadingFallback: 'Solar return',
-  lunarHeadingFallback: 'Lunar return',
+  solarHeading: (name: string) => `${name}’s Solar Return`,
+  lunarHeading: (name: string) => `${name}’s Lunar Return`,
+  solarHeadingFallback: 'Solar Return',
+  lunarHeadingFallback: 'Lunar Return',
   solarHint:
     'The chart cast for the moment the Sun returns to its exact natal longitude in the chosen year, once a year around the birthday.',
   lunarHint:

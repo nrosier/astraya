@@ -1285,12 +1285,16 @@ export function ChartView({
   // The basis names the card's settings and the device's natal orb profile, not the orb-overridden `settings` (#806).
   const basisLine = useCalculationBasisLine(cardSettings, rulership, orbSourceName(orbLibrary, orbSources, 'natal'));
   const lastChartKey = useRef('');
-  // The page title names the chart type as well as the person (#885): "Natal · Name", or "Natal and harmonic charts · Name" when comparing.
-  const titleName = person === undefined || person.displayName === '' ? t.chartFallback : person.displayName;
+  // The page title names the chart type as well as the person (#885): "Name’s Natal Chart", or "Name’s Natal and Harmonic Charts" when comparing (#1140).
+  const titleName = person === undefined || person.displayName === '' ? undefined : person.displayName;
   const pageTitle =
     compareType === undefined
-      ? t.chartTitle(chartTypeT.typeLabels.natal, titleName)
-      : t.comparisonChartTitle(titleName);
+      ? titleName === undefined
+        ? t.chartTitleFallback(chartTypeT.typeLabels.natal)
+        : t.chartTitle(chartTypeT.typeLabels.natal, titleName)
+      : titleName === undefined
+        ? t.comparisonChartTitleFallback
+        : t.comparisonChartTitle(titleName);
   // Memoised: it is a dependency of the wheel's markup, and a new array on every render of this screen (which a
   // change of section now causes) would redraw the wheel and drop what was selected on it.
   const personName = person?.displayName ?? '';
