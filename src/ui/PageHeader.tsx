@@ -18,9 +18,9 @@
  */
 /**
  * @module ui/PageHeader
- * @purpose Content-header primitive (#506/#509): page title, optional basis line, and the current screen's own registered exports, replacing the old global "This page" Export submenu.
+ * @purpose Content-header primitive (#506/#509): page title, optional basis line with an Edit action (#1059), and the current screen's own registered exports, replacing the old global "This page" Export submenu.
  * @conventions Reads `export-registry.tsx`'s existing context directly — a screen's useRegisterExports call needs no change. Uses its own `useExclusiveOpen` instance (not the header's) for the export dropdown's open/close/Escape/outside-click behavior.
- * @exports PageHeader
+ * @exports PageHeader, BASIS_EDIT_HREF
  */
 import { useDocumentTitle } from './document-title.js';
 import { useEffect, useRef, useState } from 'react';
@@ -30,7 +30,11 @@ import { useExportItems, type ExportItem } from './export-registry.js';
 import { useMessages } from './messages.js';
 import { pageHeaderMessages } from './PageHeader.messages.js';
 import { usePageActionsRef } from './page-actions-slot.js';
+import { routeHref } from './route.js';
 import { useExclusiveOpen } from './use-exclusive-open.js';
+
+/** Where the basis line's Edit action goes by default: the Preferences astrology section (#1059). */
+export const BASIS_EDIT_HREF = routeHref({ kind: 'preferences', section: 'astrology' });
 
 interface ExportStatus {
   readonly kind: 'busy' | 'done' | 'error';
@@ -42,6 +46,7 @@ export function PageHeader({
   titleTerm,
   subtitle,
   basis,
+  basisEditHref = BASIS_EDIT_HREF,
   children,
   titleAside,
 }: {
@@ -52,6 +57,8 @@ export function PageHeader({
   readonly subtitle?: string | undefined;
   /** A compact calculation-basis line, e.g. "Tropical · Placidus · Modern rulers". */
   readonly basis?: string | undefined;
+  /** Where the basis line's Edit action goes (#1059); defaults to the Preferences astrology section, `null` hides it. */
+  readonly basisEditHref?: string | null | undefined;
   /** The primary page action and anything else that belongs beside the title (e.g. a share link). */
   readonly children?: React.ReactNode;
   /** A small indicator read as part of the title, e.g. a save-status dot, placed directly after the title text (#896). */
@@ -165,7 +172,16 @@ export function PageHeader({
         </div>
       </div>
       {subtitle !== undefined && <p className="page-header-subtitle">{subtitle}</p>}
-      {basis !== undefined && <p className="hint page-header-basis">{basis}</p>}
+      {basis !== undefined && (
+        <div className="page-header-basis-row">
+          <p className="hint page-header-basis">{basis}</p>
+          {basisEditHref !== null && (
+            <a className="page-header-basis-edit" href={basisEditHref} aria-label={t.editBasisLabel}>
+              {t.editBasis}
+            </a>
+          )}
+        </div>
+      )}
       {status !== undefined && (
         <p
           className={`status page-header-export-status ${status.kind}`}

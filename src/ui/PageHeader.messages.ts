@@ -12,6 +12,8 @@ const en = {
   exportPreparing: (what: string) => `Preparing ${what}…`,
   exportDone: (what: string) => `${what} exported.`,
   exportFailed: (message: string) => `The export failed: ${message}`,
+  editBasis: 'Edit',
+  editBasisLabel: 'Edit calculation basis in Preferences',
 };
 
 const nl: typeof en = {
@@ -19,6 +21,8 @@ const nl: typeof en = {
   exportPreparing: (what: string) => `${what} voorbereiden…`,
   exportDone: (what: string) => `${what} geëxporteerd.`,
   exportFailed: (message: string) => `De export is mislukt: ${message}`,
+  editBasis: 'Bewerken',
+  editBasisLabel: 'Berekeningsbasis bewerken in Voorkeuren',
 };
 
 export const pageHeaderMessages = { en, nl };

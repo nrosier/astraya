@@ -6607,7 +6607,37 @@ button.primitive-button-compact {
 }
 
 .page-header-basis {
+  margin: 0;
+  min-width: 0;
+}
+
+/* The basis line and its Edit action (#1059). The link keeps a 44px target on touch layouts. */
+.page-header-basis-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
   margin: var(--space-1) 0 0;
+}
+
+.page-header-basis-edit {
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--text-sm);
+  color: var(--accent);
+}
+
+.page-header-basis-edit:focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--accent) 55%, transparent);
+  outline-offset: 2px;
+}
+
+@media (pointer: coarse) {
+  .page-header-basis-edit {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    justify-content: center;
+  }
 }
 
 /* The top-right action group (#976): the primary page action, the export menu and any page-level control a screen
@@ -7170,13 +7200,6 @@ dl.consultation-tiles {
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   background: var(--surface);
-}
-
-.consultation-context-basis {
-  margin: 0;
-  min-width: 0;
-  color: var(--muted);
-  font-size: var(--text-sm);
 }
 
 .consultation-context .consultation-date-field {

@@ -163,8 +163,8 @@ describe('consultation round 2 (#800, approved 2026-10-30)', () => {
     expect(consultationViewMessages.en.heading).toBe('Consultation');
     expect(consultationViewMessages.nl.heading).toBe('Consultatie');
     expect(view).toContain('title={t.heading}');
-    expect(view).toContain('className="consultation-context-basis"');
-    expect(view).toContain('{t.basisLine(');
+    expect(view).toContain('basis={basisLine}');
+    expect(view).toContain('t.basisSubject(');
   });
 
   it('drops the date picker and keeps the static date', () => {

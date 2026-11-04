@@ -5,18 +5,19 @@
  */
 /**
  * @module ui/calculation-basis
- * @purpose Names the effective calculation profile of a chart and the source of its settings, as one line for a page header.
- * @conventions `calculationSource` is pure (settings and rulers against the Astraya default and the saved default); the hook only adds the translated wording. A built-in profile is named by `matchCalculationProfile`, anything else is "Custom".
- * @exports CalculationSource, calculationSource, orbSourceName, useCalculationBasisLine
+ * @purpose Builds the full calculation-basis line a calculated page states under its title (#1059): "Tropical · Placidus · Modern rulers · Standard orbs".
+ * @conventions `buildCalculationBasisLine` and `calculationSource` are pure (settings, rulers and an explicit vocabulary in; text out); the two hooks only gather the translated vocabulary. `useCalculationBasisLine` takes a person's own settings; `useDeviceCalculationBasisLine` takes the device defaults, for views with no person. Orbs are named by the device orb profile when one applies, else the built-in profile the scale matches, else "Custom".
+ * @exports CalculationSource, calculationSource, orbSourceName, BasisWords, buildCalculationBasisLine, useCalculationBasisLine, useDeviceCalculationBasisLine
  */
+import { HOUSE_SYSTEMS } from '../astrology/houses.js';
 import { CARD_SOURCE, sourceForContext, type OrbContextSource, type OrbLibrary } from '../astrology/orb-library.js';
-import { CITED_ORB_PRESETS, isCitedOrbPresetId } from '../astrology/orb-profiles.js';
 import { DEFAULT_RULERSHIP_CHOICE, type RulershipChoice } from '../astrology/rulership.js';
-import { matchCalculationProfile } from '../chart/calculation-profiles.js';
+import { CITED_ORB_PRESETS, isCitedOrbPresetId, matchOrbProfile } from '../astrology/orb-profiles.js';
 import { DEFAULT_EXTENDED_SETTINGS, type ExtendedSettings } from '../chart/extended-settings.js';
 import { useDefaultCalculationProfile, type DefaultCalculationProfile } from './default-calculation-profile.js';
 import { sameSettings } from './extended-settings-summary.js';
 import { extendedSettingsPanelMessages } from './ExtendedSettingsPanel.messages.js';
+import { rulershipSettingMessages } from './RulershipSetting.messages.js';
 import { useMessages } from './messages.js';
 import { calculationBasisMessages } from './calculation-basis.messages.js';
 
@@ -52,23 +53,69 @@ export function orbSourceName(
   return library.profiles.find((profile) => profile.id === choice)?.name;
 }
 
+/** The translated words the line is assembled from, passed in so the builder stays pure. */
+export interface BasisWords {
+  readonly t: (typeof calculationBasisMessages)['en'];
+  readonly rulerTitles: Readonly<Record<RulershipChoice, string>>;
+  readonly orbProfileTitles: Readonly<Record<'custom' | 'standard-v1' | 'tight-v1' | 'wide-v1', string>>;
+}
+
+function houseSystemName(code: string): string {
+  const key = HOUSE_SYSTEMS.find((system) => system.code === code)?.key ?? code;
+  return key.charAt(0).toUpperCase() + key.slice(1);
+}
+
 /**
- * "Calculation profile: Modern Western — Astraya default", in the reader's language. `settings` are the person's own
- * (card) settings, not the ones a context calculates with: a device's orb profile is named by `natalOrbSourceName`
- * rather than counted as a change for this chart (#806).
+ * "Tropical · Placidus · Modern rulers · Standard orbs": the zodiac, house system, rulership and orbs `settings`
+ * resolve to. `deviceOrbProfile` is the name of an orb profile the device applies on top of the card's own orbs
+ * (#806); it names the orbs when present. Orbs edited on the card, or matching no built-in profile, read "Custom".
+ */
+export function buildCalculationBasisLine(
+  settings: ExtendedSettings,
+  rulership: RulershipChoice,
+  words: BasisWords,
+  deviceOrbProfile?: string,
+): string {
+  const { t } = words;
+  const builtIn = settings.orbRules === undefined ? matchOrbProfile(settings.orbScalePercent) : undefined;
+  return t.line(
+    settings.zodiac.kind === 'sidereal' ? t.sidereal : t.tropical,
+    houseSystemName(settings.houseSystem),
+    t.rulers(words.rulerTitles[rulership]),
+    t.orbs(deviceOrbProfile ?? words.orbProfileTitles[builtIn ?? 'custom']),
+  );
+}
+
+function useBasisWords(): BasisWords {
+  return {
+    t: useMessages(calculationBasisMessages),
+    rulerTitles: useMessages(rulershipSettingMessages).titles,
+    orbProfileTitles: useMessages(extendedSettingsPanelMessages).orbProfileOptions,
+  };
+}
+
+/**
+ * The basis line for a person's own `settings` and `rulership`, in the reader's language. `settings` are the card's,
+ * not the ones a context calculates with: a device's orb profile is named by `natalOrbSourceName` (#806).
  */
 export function useCalculationBasisLine(
   settings: ExtendedSettings,
   rulership: RulershipChoice,
   natalOrbSourceName?: string,
 ): string {
-  const t = useMessages(calculationBasisMessages);
-  const names = useMessages(extendedSettingsPanelMessages).presetOptions;
+  return buildCalculationBasisLine(settings, rulership, useBasisWords(), natalOrbSourceName);
+}
+
+/**
+ * The basis line for a view with no person (Cycles, Event search, Eclipses, Electional, Rectification, Horary): the
+ * device's saved default profile, else Astraya's shipped default, which is what such a view calculates with.
+ */
+export function useDeviceCalculationBasisLine(deviceOrbProfile?: string): string {
   const [saved] = useDefaultCalculationProfile();
-  const profile = matchCalculationProfile(settings, rulership);
-  const line = t.line(
-    profile === undefined ? names.custom : names[profile],
-    t.sources[calculationSource(settings, rulership, saved)],
+  return buildCalculationBasisLine(
+    saved?.settings ?? DEFAULT_EXTENDED_SETTINGS,
+    saved?.rulership ?? DEFAULT_RULERSHIP_CHOICE,
+    useBasisWords(),
+    deviceOrbProfile,
   );
-  return natalOrbSourceName === undefined ? line : `${line}; ${t.orbSource(natalOrbSourceName)}`;
 }

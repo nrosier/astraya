@@ -89,6 +89,38 @@ describe('PageHeader (#506/#509)', () => {
     expect(container.querySelector('a')?.textContent).toBe('Copy share link');
   });
 
+  it('offers an Edit link beside the basis line, to the Preferences astrology section by default (#1059)', async () => {
+    const container = await mount(
+      <ExportRegistryProvider>
+        <PageHeader title="Natal chart" basis="Tropical · Placidus" />
+      </ExportRegistryProvider>,
+    );
+    const edit = container.querySelector('.page-header-basis-edit');
+    expect(edit?.getAttribute('href')).toBe('#/preferences/astrology');
+    expect(edit?.getAttribute('aria-label')).toBe('Edit calculation basis in Preferences');
+    expect(edit?.textContent).toBe('Edit');
+  });
+
+  it('words the Edit link in Dutch, honours a custom target, and can hide it (#1059)', async () => {
+    setLocale('nl');
+    const custom = await mount(
+      <ExportRegistryProvider>
+        <PageHeader title="Geboortehoroscoop" basis="Tropisch" basisEditHref="#/preferences/appearance" />
+      </ExportRegistryProvider>,
+    );
+    const edit = custom.querySelector('.page-header-basis-edit');
+    expect(edit?.getAttribute('href')).toBe('#/preferences/appearance');
+    expect(edit?.textContent).toBe('Bewerken');
+    mounted?.root.unmount();
+    mounted?.container.remove();
+    const hidden = await mount(
+      <ExportRegistryProvider>
+        <PageHeader title="Geboortehoroscoop" basis="Tropisch" basisEditHref={null} />
+      </ExportRegistryProvider>,
+    );
+    expect(hidden.querySelector('.page-header-basis-edit')).toBeNull();
+  });
+
   it('shows the export dropdown once a screen registers items, closed by default', async () => {
     const run = vi.fn();
     const container = await mount(

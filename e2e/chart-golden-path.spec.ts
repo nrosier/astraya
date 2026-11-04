@@ -193,9 +193,7 @@ test.describe('with the shared people (#799)', () => {
     await openNatalChart(page);
 
     // The page states its calculation basis and where it comes from (#510).
-    await expect(page.locator('.page-header-basis')).toHaveText(
-      'Calculation profile: Modern Western — Astraya default',
-    );
+    await expect(page.locator('.page-header-basis')).toHaveText('Tropical · Placidus · Modern rulers · Standard orbs');
 
     // Route-level links (#511), not ARIA tabs.
     await expect(page.locator('nav.chart-view-nav [role="tab"]')).toHaveCount(0);

@@ -34,12 +34,7 @@ const en = {
   calculating: 'Calculating…',
   error: (message: string) => `Could not calculate: ${message}`,
   // The muted subtitle names the person, then the calculation basis (#800 round 2, approved 2026-10-30).
-  basisLine: (name: string, zodiac: string, houses: string, rulership: string, orbs: string) =>
-    `${name} · ${zodiac} · ${houses} · ${rulership} · ${orbs}`,
-  rulersBasis: (title: string) => `${title} rulers`,
-  orbsBasis: (title: string) => `${title} orbs`,
-  tropical: 'Tropical',
-  sidereal: 'Sidereal',
+  basisSubject: (name: string, basis: string) => `${name} · ${basis}`,
 
   noShownTransits: 'No transits currently pass this filter.',
   rankingConvention: 'The order is Astraya’s own ranking convention, not a published rule.',
@@ -136,12 +131,7 @@ const nl: typeof en = {
   personPageLink: 'geboortegegevens',
   calculating: 'Berekenen…',
   error: (message: string) => `Berekening mislukt: ${message}`,
-  basisLine: (name: string, zodiac: string, houses: string, rulership: string, orbs: string) =>
-    `${name} · ${zodiac} · ${houses} · ${rulership} · ${orbs}`,
-  rulersBasis: (title: string) => `${title} heersers`,
-  orbsBasis: (title: string) => `${title} orbs`,
-  tropical: 'Tropisch',
-  sidereal: 'Siderisch',
+  basisSubject: (name: string, basis: string) => `${name} · ${basis}`,
 
   noShownTransits: 'Er voldoen momenteel geen transits aan dit filter.',
   rankingConvention: 'De volgorde is Astraya’s eigen rangschikking, geen gepubliceerde regel.',
