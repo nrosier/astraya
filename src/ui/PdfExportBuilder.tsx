@@ -523,6 +523,9 @@ export function PdfExportBuilder({
           />
         </div>
         <div className="pdf-build-actions">
+          <p id={`${id}-status`} className="hint pdf-build-status" role="status" aria-live="polite">
+            {statusText}
+          </p>
           <Button
             variant="primary"
             disabled={person === undefined || empty || status.kind === 'building'}
@@ -533,9 +536,6 @@ export function PdfExportBuilder({
           >
             {t.buildButton}
           </Button>
-          <p id={`${id}-status`} className="hint pdf-build-status" role="status" aria-live="polite">
-            {statusText}
-          </p>
         </div>
       </div>
       {status.kind === 'error' && <StatusMessage kind="error">{status.message}</StatusMessage>}
