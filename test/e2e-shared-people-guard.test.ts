@@ -25,6 +25,8 @@ const PERSON_MUTATIONS: readonly RegExp[] = [
 /** Specs whose seeded part edits only its own context's copy, never the saved state file. */
 const COPY_ONLY: Readonly<Record<string, string>> = {
   'extended-settings.spec.ts': 'one test adds a person after changing the device default, inside its own context',
+  'journey-2-override-vs-default.spec.ts':
+    'adds people after a chart override and after a device default, inside its own context (#514)',
   'person-file.spec.ts':
     'one test replaces a birth record inside its own context (the saved state is copied per context)',
 };

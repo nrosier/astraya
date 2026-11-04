@@ -4,9 +4,19 @@
  * ("No transits match the … filter", with its own "Clear filters" action) and the person form's
  * latitude range error. No new UI is asserted here.
  *
- * Not covered: a calculation failure. The only shipped copy for one is the Primary Directions
- * polar-latitude message, which needs a birthplace above the polar circle to reproduce, so it is
- * left to its own spec rather than invented here.
+ * Step -> box text ("Recover from incomplete data, a zero-result filter, an offline network action, and a
+ * calculation failure"):
+ *   1. incomplete data      -> a new person with only a name: Save is off, the "Fill in the fields" hint says why,
+ *                              and completing the record enables Save.
+ *   2. a zero-result filter -> the transit filter's empty state and its "Clear filters" action.
+ *   3. an offline network action -> with `context.setOffline(true)` the birth-place search is refused in words and
+ *                              disabled, manual coordinates still save, and going back online restores the search.
+ *   4. a calculation failure -> Primary Directions for a birthplace beyond the polar circle shows the shipped
+ *                              `undefinedAtLatitude` message (PrimaryDirectionsView.messages.ts), with no arc; the
+ *                              limit is `isDefinedAtLatitude` (|latitude| < 90 - obliquity), not a number chosen
+ *                              here. Longyearbyen, Svalbard (78.2232 N, 15.6267 E) is far past it. Correcting the
+ *                              place brings the arc back.
+ * The latitude range error is kept as a bonus recovery for invalid input.
  */
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -103,4 +113,94 @@ test('a latitude outside -90 to 90 shows a clear message, and correcting it clea
   await labeledField(page, /^Latitude/, 'input[type="number"]').fill('45.2');
   await expect(page.getByText('Latitude runs from -90 (south) to 90 (north).')).toHaveCount(0);
   await expect(labeledField(page, /^Latitude/, 'input[type="number"]')).toHaveValue('45.2');
+});
+
+/** Opens People and starts a new person with a name, as the first step of the incomplete-data, offline and failure journeys. */
+async function startNewPerson(page: Page, name: string): Promise<void> {
+  await gotoAndSettle(page, `${baseUrl}/#/people`);
+  await page.getByRole('button', { name: 'Add a person', exact: true }).click();
+  await labeledField(page, /^Name/, 'input[type="text"]').fill(name);
+}
+
+test('incomplete data: Save stays off with a reason beside it, and filling the missing fields turns it on', async () => {
+  await startNewPerson(page, 'Incomplete Data');
+  const save = page.getByRole('button', { name: /^(Save changes|Saved)$/ });
+
+  // 1. The record is not complete: the button is disabled and the shipped hint says what to do.
+  await expect(save).toBeDisabled();
+  await expect(page.getByText('Fill in the fields marked above to save.')).toBeVisible();
+
+  // 2. Complete it; the hint goes away and Save is available.
+  await page.locator('input[type="date"]').fill('1990-06-15');
+  await labeledField(page, /^Latitude/, 'input[type="number"]').fill('51.5072');
+  await labeledField(page, /^Longitude/, 'input[type="number"]').fill('-0.1276');
+  await expect(page.getByText('Fill in the fields marked above to save.')).toHaveCount(0);
+  await expect(save).toBeEnabled();
+  await save.click();
+  await expect(page.getByLabel('Status: Saved on this device', { exact: true })).toBeVisible();
+});
+
+test('offline: a network-only action says it needs a connection, keeps manual entry, and recovers when back online', async () => {
+  await startNewPerson(page, 'Offline Check');
+  const search = labeledField(page, /^Search for a place by name/, 'input[type="text"]');
+  const searchButton = page.getByRole('button', { name: 'Search', exact: true });
+  const offlineNotice = page.getByText(
+    'You are offline. This needs a connection; everything calculated on this device keeps working. You can still enter the coordinates yourself.',
+  );
+  await search.fill('Utrecht');
+  await expect(searchButton).toBeEnabled();
+  await expect(offlineNotice).toHaveCount(0);
+
+  // 1. Go offline: the search is refused in words and the button is off.
+  await context.setOffline(true);
+  await expect(offlineNotice).toBeVisible();
+  await expect(searchButton).toBeDisabled();
+
+  // 2. What does not need the network still works: the coordinates can be typed and the person saved.
+  await page.locator('input[type="date"]').fill('1990-06-15');
+  await labeledField(page, /^Latitude/, 'input[type="number"]').fill('52.0907');
+  await labeledField(page, /^Longitude/, 'input[type="number"]').fill('5.1214');
+  await page.getByRole('button', { name: 'Save changes', exact: true }).click();
+  await expect(page.getByLabel('Status: Saved on this device', { exact: true })).toBeVisible();
+
+  // 3. Back online: the notice goes and the search is available again.
+  await context.setOffline(false);
+  await expect(offlineNotice).toHaveCount(0);
+  await expect(searchButton).toBeEnabled();
+});
+
+// The shipped calculation-failure copy: Primary Directions says the birthplace has no Placidus semi-arcs. The rule is
+// `isDefinedAtLatitude` in src/astrology/primary-directions.ts: defined only while |latitude| < 90 - obliquity, so
+// the polar circle is the obliquity's complement and Longyearbyen (78.2232 N, 15.6267 E, Svalbard) lies beyond it.
+test('calculation failure: Primary Directions at a birthplace beyond the polar circle explains why, and correcting the place recovers', async () => {
+  test.setTimeout(90_000);
+  await startNewPerson(page, 'Polar Birth');
+  await page.locator('input[type="date"]').fill('1990-06-15');
+  await labeledField(page, /^How the time is known/, 'select').selectOption('recorded');
+  await page.locator('input[type="time"]').fill('12:00');
+  await labeledField(page, /^Latitude/, 'input[type="number"]').fill('78.2232');
+  await labeledField(page, /^Longitude/, 'input[type="number"]').fill('15.6267');
+  await page.getByRole('button', { name: 'Save changes', exact: true }).click();
+  await expect(page.getByLabel('Status: Saved on this device', { exact: true })).toBeVisible();
+
+  // 1. The calculation cannot be made: the shipped message says so, and no arc is invented.
+  await page.getByRole('link', { name: 'Progressions & Directions', exact: true }).click();
+  await page.getByRole('link', { name: 'Primary Directions (Placidus)', exact: true }).click();
+  await expect(
+    page.getByText(
+      /Primary directions by Placidus semi-arcs cannot be calculated for this birthplace: at or beyond the polar circles/,
+    ),
+  ).toBeVisible();
+  await expect(page.getByText(/Arc for this age: /)).toHaveCount(0);
+
+  // 2. The rest of the app still works, and correcting the birthplace restores the calculation.
+  await page.getByRole('link', { name: 'Birth record', exact: true }).click();
+  await labeledField(page, /^Latitude/, 'input[type="number"]').fill('52.0907');
+  await labeledField(page, /^Longitude/, 'input[type="number"]').fill('5.1214');
+  await page.getByRole('button', { name: 'Save changes', exact: true }).click();
+  await expect(page.getByLabel('Status: Saved on this device', { exact: true })).toBeVisible();
+  await page.getByRole('link', { name: 'Progressions & Directions', exact: true }).click();
+  await page.getByRole('link', { name: 'Primary Directions (Placidus)', exact: true }).click();
+  await expect(page.getByText(/Arc for this age: /)).toBeVisible();
+  await expect(page.getByText(/cannot be calculated for this birthplace/)).toHaveCount(0);
 });

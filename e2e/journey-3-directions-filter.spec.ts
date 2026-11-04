@@ -3,6 +3,11 @@
  * time key, and filter transits. Both controls are the real shared primitives on the real screens:
  * the time key is the Naibod/Ptolemy `ChoiceGroup` on the Primary Directions page, and the transit
  * filter is the "Show" preset `ChoiceGroup` plus the "Change filters" dialog on the Transits page.
+ *
+ * Step -> box text:
+ *   1. "Enter a target date"          -> the Primary Directions "As of" date field sets the age (third test).
+ *   2. "change the Primary Directions time key" -> Naibod to Ptolemy changes the basis line and the arc (first test).
+ *   3. "filter transits"              -> the Transits "Show" presets narrow and restore the list (second test).
  */
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -99,4 +104,24 @@ test('the transit filter narrows the list of transits, and choosing All restores
   await expect(rows).toHaveCount(total);
   const [restored] = await transitCount(page);
   expect(restored).toBe(total);
+});
+
+test('a target date entered on Primary Directions sets the age, and a date before birth is refused in words', async () => {
+  test.setTimeout(60_000);
+
+  await openSharedPerson(page, baseUrl, EINSTEIN);
+  await page.getByRole('link', { name: 'Progressions & Directions', exact: true }).click();
+  await page.getByRole('link', { name: 'Primary Directions (Placidus)', exact: true }).click();
+  const asOf = page.getByLabel('As of', { exact: true });
+  const age = page.getByLabel('Age (years)', { exact: true });
+  await expect(page.getByText(/Arc for this age: /)).toBeVisible();
+
+  // Forty years after the 1879-03-14 birth: the age shown is the one the typed date implies.
+  await asOf.fill('1919-03-14');
+  await expect(age).toHaveValue(/^(39\.99|40\.00|40\.01)$/);
+
+  // A date before birth gets the shipped explanation instead of a made-up arc.
+  await asOf.fill('1870-01-01');
+  await expect(page.getByText('This date is before birth; primary directions start at birth.')).toBeVisible();
+  await expect(page.getByText(/Arc for this age: /)).toHaveCount(0);
 });
