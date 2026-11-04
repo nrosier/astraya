@@ -70,6 +70,8 @@ Make a product decision first, then change all three sources of truth in one pul
 - The inspector has either no independent vertical scroll or an explicitly approved, tested exception.
 - A visual test measures both tracks, the gap, and overflow at `390×844`, `1280×800`, and `3440×1440`.
 
+**Resolution (2026-11-04, #1057):** Closed via #817 (owner decision: the inspector may scroll inside itself, overhanging the wheel's row; `src/ui/app.css:3185-3209`). The guide now records that rule (`UI-UX_GUIDELINES.md` section 2, #1057).
+
 ### UI-02 — High — The Chart page title omits the feature and selected chart type
 
 **Evidence**
@@ -91,6 +93,8 @@ Generate the title from the active chart type and person: `Natal chart · Ada Lo
 - The chart type control remains a control, not the sole textual statement of page identity.
 - The title is asserted for every chart type in the golden-path test.
 
+**Resolution (2026-11-04, #1057):** Closed via #885 (the chart title shows the chart type, not only the person name).
+
 ### UI-03 — High — Comparison mode is hard-coded to two narrow columns, including on phones
 
 **Evidence**
@@ -111,6 +115,8 @@ Replace the inline style with a named CSS container. Stack comparison charts by 
 - No horizontal overflow at `390×844`, `768×1024`, `1280×800`, `1440×900`, and `3440×1440` in both themes.
 - At the stack threshold, focus order remains first chart then second chart.
 - An E2E test exercises comparison mode, not only single-chart routes.
+
+**Resolution (2026-11-04, #1057):** Closed via #886 (Comparison view uses a token-based layout, not a hard-coded `1fr 1fr`).
 
 ### UI-04 — High — The common content-header and page-export model is not applied across the product
 
@@ -134,6 +140,8 @@ Make a small `PageHeader` migration slice for each route family. A simple direct
 - All calculated person pages display a concise effective basis or an intentional, documented reason why one is not applicable.
 - Export actions appear beside the relevant result/title, while Build PDF remains in Documents and backups remain in Preferences.
 
+**Resolution (2026-11-04, #1057):** Closed via #887 (one page-header pattern across all screens).
+
 ### UI-05 — Medium — Desktop shell placement contradicts the rail contract and can compete with page headers
 
 **Evidence**
@@ -155,6 +163,8 @@ Choose one intentional shell pattern: either anchor the utility cluster at the r
 - At desktop widths, page-title/action content cannot pass beneath or visually compete with global utilities.
 - A chart workbench that could otherwise meet its wide-layout requirement does not remain unnecessarily stacked solely because of the rail.
 - Keyboard order and skip-link behavior remain intact for both expanded and collapsed rail states.
+
+**Resolution (2026-11-04, #1057):** Closed via #964 (sidebar footer redesigned as a consolidated user profile popover).
 
 ### UI-06 — Medium — Most calculated results do not expose a busy result region during recalculation
 
@@ -180,6 +190,8 @@ Extract the Astrocartography lifecycle as the shared calculation-result contract
 - A valid previous result remains visible until the replacement is complete when technically safe.
 - Loading/error/update behavior is tested by user-visible state rather than only by the presence of a status node.
 
+**Resolution (2026-11-04, #1057):** Closed via #888 (`aria-busy` on calculation result regions).
+
 ### UI-07 — Medium — Responsive and visual test coverage is strong for selected routes but incomplete for the full Charts contract
 
 **Evidence**
@@ -201,6 +213,8 @@ Once the four/six-view decision is resolved, make every retained view part of th
 - The required viewport matrix covers every shipped chart view, comparison mode, and both themes.
 - Visual baseline capture records its source commit/date and is refreshed after a design-system slice.
 - Tests assert the decided layout contract, not a superseded comment or migration issue number.
+
+**Resolution (2026-11-04, #1057):** Closed via #889 (the viewport matrix covers the Matrix and Elements views).
 
 ## Route-family alignment map
 

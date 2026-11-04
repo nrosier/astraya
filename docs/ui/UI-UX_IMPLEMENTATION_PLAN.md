@@ -230,7 +230,7 @@ Implement the work in the following order. Each phase must leave the application
 
 1. Record the current route, input, output, selection, export, and persistence behavior used by existing E2E tests.
 2. Add tests for the canonical route contract before switching navigation. Existing route tests may be replaced in the same slice because the current hashes have no production compatibility requirement.
-3. Add screenshots only for surfaces whose visual structure is about to change. Cover both themes at 390×844, 1280×800, and 1440×900. Use assertions for behavior and accessibility; do not use screenshots as the only test.
+3. Add screenshots only for surfaces whose visual structure is about to change. Cover both themes at 390×844, 1280×800, and 3440×1440. Use assertions for behavior and accessibility; do not use screenshots as the only test.
 4. Record current eager bundle size and the lazy person-screen chunk.
 5. Add the persisted-person compatibility fixture and prove it materializes identically from local and synchronized operation records.
 6. Confirm all unrelated working-tree changes remain outside the UI migration.
@@ -355,7 +355,7 @@ Implement in this order:
 2. Replace the five chart-type pills with one labelled Select in the header. Remove chart types from application navigation.
 3. Extract the existing dial renderer from the combined on-screen sheet without changing chart geometry or hit targets.
 4. Render the dial followed by `SelectionInspector` in DOM order inside one workbench container.
-5. Make the workbench an inline-size query container. Below `68rem`, use one column with the inspector immediately after the visualization. At `68rem` and above, use `minmax(46rem, 1fr) minmax(20rem, 24rem)` with a `2rem` gap. This threshold is the sum of the minimum useful chart width, inspector width, and gap; it is not a viewport breakpoint. Put chart workbenches in the wide visualization shell rather than the current `64rem` general-content shell, which would make the two-column state unreachable. The visualization remains first in DOM and focus order, and the inspector does not get an independent vertical scrollbar.
+5. Make the workbench an inline-size query container. Below `68rem`, use one column with the inspector immediately after the visualization. At `68rem` and above, use `minmax(46rem, 1fr) minmax(20rem, 24rem)` with a `2rem` gap. This threshold is the sum of the minimum useful chart width, inspector width, and gap; it is not a viewport breakpoint. Put chart workbenches in the wide visualization shell rather than the current `64rem` general-content shell, which would make the two-column state unreachable. The visualization remains first in DOM and focus order, and the inspector may scroll inside itself on desktop (#817 owner decision) while sitting in flow below `68rem`.
 6. Extract the aspect matrix into its own Matrix view and connect it to the same selection contract as Aspects.
 7. Move Positions, Houses, and Derived points into Placements with visible headings. Use a small contents control only if the combined view remains several screenfuls long.
 8. Move chart shape, dignities, and dispositors into Patterns & condition. Keep each visualization next to its explanation. Element and modality balance (emphasis, added by #511) lives in Elements.
@@ -461,12 +461,12 @@ Prefer restore or Undo for ordinary deletion. Permanent deletion names the affec
 
 ## 8. Responsive layout contracts
 
-Verify 390×844, 768×1024, 1280×800, 1440×900, and 3440×1440.
+Verify (the e2e viewport matrix; mockups and owner visual checks use the narrower §17.2 standard in the guidelines) 390×844, 768×1024, 1280×800, 1440×900, and 3440×1440.
 
 - The workspace rail collapses when it would take useful width from the result.
 - Chart and inspector columns respond to their container, not a global viewport guess.
 - The chart workbench uses one column below `68rem`; at `68rem` and above it uses a minimum `46rem` visualization, a `20rem`–`24rem` inspector, and a `2rem` gap.
-- The inspector moves below before either column becomes cramped and never receives independent vertical scrolling.
+- The inspector moves below before either column becomes cramped and may scroll inside itself on desktop only (#817); below `68rem` it sits in flow and does not scroll independently.
 - Reading content stays near 68 characters per line.
 - Tables and large visualizations use a wider data shell.
 - Full-screen mobile dialogs retain visible title and action regions without trapping content beneath browser chrome.
@@ -548,7 +548,7 @@ Do not mix domain-calculation changes into these slices. If a UI slice reveals a
 
 ## 12. Final product acceptance
 
-Before removing the migration label, run these tasks with a newer astrology reader and an experienced practitioner:
+Before removing the migration label, cover these journeys. A Playwright spec per user journey is the acceptance evidence (owner decision 2026-11-02, confirmed 2026-11-03); real-user sessions with a newer astrology reader and an experienced practitioner are advisory:
 
 1. Open an existing locally stored person and an existing server-synchronized person, confirm every birth-record field, edit one value, reload, and confirm both records remain intact.
 2. Add a person, understand what is missing, and reach the natal chart.
