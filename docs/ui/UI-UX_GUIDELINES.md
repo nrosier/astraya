@@ -42,18 +42,18 @@ Do not begin from a desired control such as “add a modal” or “add a menu i
 
 Organize primary navigation around user goals:
 
-| Area               | Order and grouping                                                                                                        |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------- |
-| Person workspace   | **Overview → Consultation → Charts → Interpretation → Timing & forecasts → Relationships → Location**                     |
-| Person details     | **Edit birth record** from Overview and the person selector; route incomplete/new people here automatically               |
-| Charts             | One direct destination; choose Natal, Draconic, Harmonic, Solar return, or Lunar return in the chart page header          |
-| Timing & forecasts | **Current sky:** Transits, Forecast. **Symbolic timing:** Profections, Progressions, Solar Arc, Primary Directions        |
-| Relationships      | Synastry, Composite                                                                                                       |
-| Location           | Astrocartography; Local Space is configured inside Map settings rather than exposed as another destination                |
-| Tools              | **Sky & cycles:** Planetary cycles, Eclipses. **Questions & planning:** Horary, Electional. **Birth data:** Rectification |
-| Page exports       | Place exports beside the page title; use overflow only when necessary                                                     |
-| Documents          | Build custom PDF                                                                                                          |
-| Data & backup      | Preferences → Data & privacy                                                                                              |
+| Area               | Order and grouping                                                                                                                                                                                                             |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Person workspace   | **Overview → Consultation → Charts → Interpretation → Timing & forecasts → Relationships → Location**                                                                                                                          |
+| Person details     | **Edit birth record** from Overview and the person selector; route incomplete/new people here automatically                                                                                                                    |
+| Charts             | One direct destination; choose Natal, Draconic, Harmonic, Solar return, or Lunar return in the chart page header                                                                                                               |
+| Timing & forecasts | **Transits & Forecast** (Transits, Forecast) and **Progressions & Directions** (Timeline, Profections, Progressions, Solar Arc, Primary Directions); each is one rail entry whose sub-views are route links on the page (#882) |
+| Relationships      | Synastry, Composite                                                                                                                                                                                                            |
+| Location           | Astrocartography; Local Space is configured inside Map settings rather than exposed as another destination                                                                                                                     |
+| Tools              | One **Tools** section: one rail entry that opens the first tool; Planetary cycles, Ephemeris search, Eclipses, Horary, Electional and Rectification are route links on the page (#882). No Tools subgroups                     |
+| Page exports       | Place exports beside the page title; use overflow only when necessary                                                                                                                                                          |
+| Documents          | Build custom PDF                                                                                                                                                                                                               |
+| Data & backup      | Preferences → Data & privacy                                                                                                                                                                                                   |
 
 Apply these rules:
 
@@ -64,7 +64,7 @@ Apply these rules:
 - A global tool must not inherit person scope merely because a person was viewed recently. Show **Return to Ada Lovelace** for history and **Using Ada Lovelace** only when that person actually affects the tool.
 - A complete person opens on Overview. A new or incomplete person opens on Edit birth record until required data is complete.
 - The current person's name is a searchable selector, not a static label. Switching people should preserve the current feature when its prerequisites are met.
-- Route links use anchors. Buttons perform actions. Same-page tabs use the tab pattern only when small panels are genuinely mutually exclusive. Chart views use ordinary route links; related sections inside one view use headings and in-page anchors. Route links do not use `role="tab"`.
+- Route links use anchors. Buttons perform actions. A navigation action that is styled as a button stays an anchor: give it the shared button classes (for example `a.quiet`, `app.css`, #1048) or a `ButtonLink`, never a `<button>` with a click handler that changes the route. Same-page tabs use the tab pattern only when small panels are genuinely mutually exclusive. Chart views use ordinary route links; related sections inside one view use headings and in-page anchors. Route links do not use `role="tab"`.
 - Every page title must identify both the feature and its subject, for example **Natal chart · Ada Lovelace** or **Transits · Ada Lovelace**.
 
 When adding a feature, add typed metadata for its `scope`, `group`, `order`, `href`, prerequisites, settings mode, and export capabilities. Update route parsing, lazy loading, English and Dutch labels, active navigation, and relevant export registration together. An exhaustiveness test should fail when a user-facing route has no feature metadata.
@@ -99,16 +99,18 @@ Charts has one entry in the application rail. Do not list Natal, Draconic, Harmo
 
 The current on-screen chart sheet combines the dial, aspect matrix, emphasis grid, and degree strip in one tall SVG. Because the selection inspector follows that SVG, clicking something near the dial can place its explanation several panels below the click. Separate the on-screen renderers while retaining the combined chart sheet for SVG, PNG, and PDF export.
 
-Use four task-oriented chart views instead of seven technical tabs or one very long document:
+Use six task-oriented chart views instead of seven technical tabs or one very long document. They match `CHART_VIEWS` (`src/ui/chart-sections.ts:30`), the implementation plan and #976:
 
-| View                     | Contents                                                                                                                                                     |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Wheel**                | Interactive chart dial with its Selection inspector beside it when space permits and immediately below otherwise. This is the default view.                  |
-| **Aspects**              | Interactive aspect matrix with the selected aspect's facts and meaning adjacent, then the accessible aspect table and related aspect data.                   |
-| **Placements**           | Positions, Houses, and Derived points. Use visible section headings and a small in-page contents control only when the page still exceeds a few screenfuls.  |
-| **Patterns & condition** | Chart shape, element/modality emphasis, degree distribution, dignities, and dispositors. Keep each explanatory visualization next to its supporting summary. |
+| View                     | Contents                                                                                                                                                    |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Wheel**                | Interactive chart dial with its Selection inspector beside it when space permits and immediately below otherwise. This is the default view.                 |
+| **Aspects**              | Interactive aspect matrix with the selected aspect's facts and meaning adjacent, then the accessible aspect table and related aspect data.                  |
+| **Matrix**               | The aspect matrix on its own, connected to the same selection contract as Aspects (`ChartView.tsx:1195`).                                                   |
+| **Elements**             | Element and modality balance (emphasis) with its supporting summary (`ChartView.tsx:1205`).                                                                 |
+| **Placements**           | Positions, Houses, and Derived points. Use visible section headings and a small in-page contents control only when the page still exceeds a few screenfuls. |
+| **Patterns & condition** | Chart shape, degree distribution, dignities, and dispositors. Keep each explanatory visualization next to its supporting summary.                           |
 
-These are route-level views with stable URLs and ordinary links, not ARIA tabs. Show one compact **Wheel · Aspects · Placements · Patterns & condition** local navigation row on desktop. On narrow screens use the shared labelled **Chart view** Select. This is the only local chart navigation; do not add section tabs inside these views.
+These are route-level views with stable URLs and ordinary links, not ARIA tabs. Show one compact **Wheel · Aspects · Matrix · Elements · Placements · Patterns & condition** local navigation row on desktop. On narrow screens use the shared labelled **Chart view** Select. This is the only local chart navigation; do not add section tabs inside these views.
 
 The Wheel view uses a responsive workbench. Below a `68rem` content container, the inspector appears immediately below the chart. At `68rem` and above, it occupies a restrained side column. The threshold comes from a `46rem` minimum chart, `20rem` minimum inspector, and `2rem` gap rather than a device category:
 
@@ -124,7 +126,7 @@ The Wheel view uses a responsive workbench. Below a `68rem` content container, t
 └──────────────────────────────────┴────────────────────────────────┘
 ```
 
-- Every interactive visualization owns one `SelectionInspector` directly after it in DOM order. Make the workbench an inline-size query container. Use one column below `68rem`; at `68rem` and above use `minmax(46rem, 1fr) minmax(20rem, 24rem)` with a `2rem` gap. No unrelated chart, table, export control, or settings panel may separate them, and the inspector must not have an independent vertical scrollbar.
+- Every interactive visualization owns one `SelectionInspector` directly after it in DOM order. Make the workbench an inline-size query container. Use one column below `68rem`; at `68rem` and above use `minmax(46rem, 1fr) minmax(20rem, 24rem)` with a `2rem` gap. No unrelated chart, table, export control, or settings panel may separate them, and the inspector may scroll inside itself (#817 owner decision). On desktop (`.selection-inspector`, `app.css:3200-3209`) the card sits on the wheel's row and overhangs it by one `--space-6` above and below (`margin-block`), and `contain: size` keeps its content out of the row height. The rationale is fold fit: the wheel keeps its height, a long selection never makes the page taller, and the card is capped at 24rem so the 46rem wheel fits a 1280×800 fold (`app.css:3186-3193`). Below `68rem` the inspector is in flow under the chart and does not scroll independently.
 - Before a selection, the reserved inspector says **Select a planet, sign, house cusp, or aspect to explore it**. Reserve enough geometry to avoid a large page jump on first selection.
 - After selection, show the selected name, exact facts, **What it means**, related connections, and Clear. For example, selecting Leo may show **Leo on the cusp of house 5** and its interpretation.
 - Keep the inspector concise: show the most relevant corpus meanings first, retain an explicit **Show all meanings** disclosure for the rest, and place optional AI interpretation after the deterministic facts and corpus text rather than letting it displace them.
@@ -236,7 +238,7 @@ Chart calculation settings that affect reproducibility must travel with a saved/
 
 A chart preset changes the current chart draft. It must not rewrite account defaults. If the preset includes a different rulership model or house system, store that as a chart override after Apply; change the account default only after a separate **Save as my default** action.
 
-A small set of page inputs such as the target date, comparison person, table sort, and PDF contents belongs inline. When one result has several related configuration groups, such as Astrocartography line types, bodies, Local Space, and relocation, put the whole set in one staged page-settings modal and show its applied summary beside the result. Keep page state in component state unless Back/reload/share should reproduce it; in that case encode stable, non-sensitive state in the URL. Do not write page state to `localStorage` unless the user explicitly chooses **Set as default**.
+A small set of page inputs such as the target date, comparison person, table sort, and PDF contents belongs inline. When one result has several related configuration groups, such as Astrocartography line types, bodies, Local Space, and relocation, put the whole set in one staged page-settings dialog (a centred modal, or a right slide-over drawer as Map settings uses) and show its applied summary beside the result. Keep page state in component state unless Back/reload/share should reproduce it; in that case encode stable, non-sensitive state in the URL. Do not write page state to `localStorage` unless the user explicitly chooses **Set as default**.
 
 ### 3.5 Application and administrator settings
 
@@ -271,7 +273,7 @@ Use these surface rules:
 
 ### Astrocartography map settings
 
-Astrocartography uses one **Map settings** modal form for every control that changes the map. The page must not render separate inline fieldsets for Line types, Bodies, Local Space, and Relocation, and it must not add an **Extended** disclosure or second modal.
+Astrocartography uses one **Map settings** right slide-over drawer (`StagedDialog` with `placement="right"`, `MapSettingsDialog.tsx:112`, #978), not a centred modal, for every control that changes the map. The page must not render separate inline fieldsets for Line types, Bodies, Local Space, and Relocation, and it must not add an **Extended** disclosure or a second dialog.
 
 The page-level trigger sits near the map heading and includes a compact summary of the applied state, such as **4 line types · 10 bodies · Local Space off**. The dialog contains these visible groups in this order:
 
@@ -280,9 +282,9 @@ The page-level trigger sits near the map heading and includes a compact summary 
 3. **Local Space:** one staged checkbox and concise explanation.
 4. **Relocation:** optional place/coordinates with a clear action, visually secondary to the line configuration.
 
-Opening the modal copies the applied configuration into a draft. **Apply to map** validates and commits the whole draft, closes the modal, updates the summary, and starts one recalculation. **Reset** changes only the draft. **Cancel**, Escape, close, and backdrop discard it and restore focus to the trigger. Keep the last valid map visible and mark it as updating until the replacement is ready.
+Opening the drawer copies the applied configuration into a draft. **Apply to map** validates and commits the whole draft, closes the drawer, updates the summary, and starts one recalculation. **Reset** changes only the draft. **Cancel**, Escape, close, and backdrop discard it and restore focus to the trigger. Keep the last valid map visible and mark it as updating until the replacement is ready.
 
-These are page/view settings. Do not persist them silently or mix account/device preferences into the modal. Encode them in the URL only when reload, Back, bookmarking, or sharing is expected to reproduce the map.
+These are page/view settings. Do not persist them silently or mix account/device preferences into the drawer. Encode them in the URL only when reload, Back, bookmarking, or sharing is expected to reproduce the map.
 
 ### Disclosure pattern
 
@@ -351,12 +353,12 @@ Choose controls by the decision being made, not by whichever component a nearby 
 Use these mappings in the current product and in new work:
 
 - **Chart type:** one labelled Select in the chart header because five route-level choices must fit on mobile. It replaces both the Charts submenu and the chart-type pill row.
-- **Chart view:** one row of four ordinary route links on desktop and one shared labelled Select on narrow screens. Preserve chart type and view in the URL; do not render these route links with tab semantics.
+- **Chart view:** one row of six ordinary route links on desktop and one shared labelled Select on narrow screens. Preserve chart type and view in the URL; do not render these route links with tab semantics.
 - **Primary Directions time key:** two-choice segmented control for Naibod/Ptolemy. Put the selected rate and a concise explanation below the group; use option cards if translated labels make the segment too wide.
 - **Planetary rulers:** option cards for Modern, Traditional, and Both. The default lives in Preferences → Astrology defaults. A chart Advanced settings dialog may stage a chart-only override, but it must not silently change the user's default.
 - **Which transits to show:** visible compact preset choices for Important, Outer, Personal, and All; a summary such as **Important · 12 of 48 shown**; and one **Change filters** action. When advanced values differ from every preset, show **Custom · 12 of 48 shown**. Do not add a separate Show all button beside an All preset.
 - **Advanced transit filters:** segmented Tight/Balanced/Wide orb choice, clearly grouped checkboxes for aspects and bodies, group-level All/Clear actions, and a sticky modal footer. Do not place the global Planetary rulers preference inside this staged dialog.
-- **Astrocartography:** one Map settings modal containing Line types, Primary and Additional bodies, Local Space, and Relocation. Show only the applied summary on the page and recalculate once after Apply.
+- **Astrocartography:** one Map settings right slide-over drawer (`StagedDialog`, #978) containing Line types, Primary and Additional bodies, Local Space, and Relocation. Show only the applied summary on the page and recalculate once after Apply.
 
 ### Shared control anatomy
 
@@ -436,6 +438,8 @@ Verify at least:
 - 1440×900 desktop.
 - 3440×1440 ultra-wide.
 
+This five-size matrix is the e2e viewport matrix. Mockups and owner visual checks use one narrower standard instead (§17.2): 390×844, 1280×800 and 3440×1440, each in light and dark.
+
 At narrow widths, dropdown menus become in-flow panels, tables scroll within labelled containers, settings dialogs remain operable without hidden footer actions, and sticky regions must not consume most of a short viewport. At ultra-wide widths, prose remains readable and dense data may expand.
 
 Fixed or edge-to-edge chrome (sticky headers, bottom action bars, full-screen dialogs) must respect the iOS safe area. Pad it with `env(safe-area-inset-top)` and `env(safe-area-inset-bottom)`.
@@ -453,10 +457,20 @@ These rules apply to every page that lays out more than one card, at every size 
 4. **Grid edges match the content width.** The grid's left and right edges line up with the page's content width on every page.
 5. **Use shared classes and tokens.** Multi-card layouts use the shared grid or card classes and design tokens only; no hard-coded hex, rgb, or hsl values.
 
+### 10.2 Tool-page layout
+
+A tool page (a screen that takes inputs and returns results, such as Planetary cycles, Eclipses, Horary, Electional and Rectification) uses one pattern, already shipped by #896, #916 and #975 and used by #1051-#1054:
+
+- At desktop widths the top zone is a 60/40 split: the form takes 60% and a side panel takes 40%. The grid is `minmax(0, 3fr) minmax(0, 2fr)` (`.tool-layout`, `app.css:927-940`, from `52rem`).
+- The results run full width below that pair.
+- On a phone the zones stack in the same order: form, panel, results.
+- The §10.1 90% rule applies to the form/panel pair. The pair stretches to one bottom edge and is balanced by content, not by a fixed height (§10.1 rules 1 to 3).
+- Link guidance: a link that leaves the page for another route is an anchor (§2). Use the shared button classes when it should look like a button.
+
 ## 11. Use the design system rather than local styling
 
 - Use the spacing, type, semantic-color, radius, elevation, and motion tokens in `app.css`.
-- Keep layout spacing on the 4px grid unless visualization geometry requires a specialized value.
+- Keep layout spacing on the `--space-*` token scale unless visualization geometry requires a specialized value. The root font size is 14px (`app.css:330`, `font-size: 87.5%`), so the tokens resolve to 3.5, 7, 10.5, 14, 21, 28 and 42px (`--space-1` to `--space-12`, `app.css:98-104`). That scale is the grid; it is a 3.5px grid, not a 4px one.
 - Use semantic state tokens for danger, warning, success, info, and focus. Astrology colors do not double as UI state colors.
 - Use shared Button, Notice, Field, TextField, DateField, NumberField, Select, Checkbox, Radio, ChoiceGroup, OptionCards, FilterSummary, Disclosure, SelectionInspector, StatusMessage, EmptyState, DataTable, and settings-dialog primitives as they become available.
 - Do not add hard-coded colors, shadows, arbitrary inline style objects, or one-off disabled/loading behavior in a feature component.
@@ -500,7 +514,7 @@ Before considering a UI feature complete, verify:
 - [ ] The design follows the target experience rather than copying known design debt from an existing screen.
 - [ ] The goal, scope, owner, lifetime, persistence, sync, and reset behavior are documented.
 - [ ] Navigation placement follows the canonical hierarchy and adds no third menu level.
-- [ ] Chart types appear once in the page header; the four chart views use one route-level local navigation; every interactive chart places its Selection inspector directly after it in DOM order, beside it when space permits and immediately below otherwise.
+- [ ] Chart types appear once in the page header; the six chart views use one route-level local navigation; every interactive chart places its Selection inspector directly after it in DOM order, beside it when space permits and immediately below otherwise.
 - [ ] Page title identifies the feature and subject.
 - [ ] Global, account, device, person, chart, page, and request state are not conflated.
 - [ ] Apply, Cancel, Reset, Done, and Set as default have truthful behavior.
@@ -523,10 +537,12 @@ If a feature cannot satisfy a rule because of a product or technical constraint,
 
 ## 16. Validate the experience with real tasks
 
-Code review and automated accessibility checks cannot establish whether the information architecture is intuitive. Before finalizing a major shell, navigation, settings, or workflow change, test representative tasks with both a newer reader and an experienced astrology user:
+Code review and automated accessibility checks cannot establish whether the information architecture is intuitive. Before finalizing a major shell, navigation, settings, or workflow change, cover representative tasks with both a newer reader and an experienced astrology user in mind.
+
+**Acceptance evidence.** A Playwright spec per user journey is the acceptance evidence (owner decision 2026-11-02, confirmed 2026-11-03). Real-user sessions are advisory: run them when useful, but they do not gate acceptance. The journeys:
 
 1. Add a person and reach their natal chart.
-2. Select a sign, body, house cusp, and aspect; confirm each meaning appears beside its visualization on a wide layout and directly below it on a narrow layout; then move among Wheel, Aspects, Placements, and Patterns & condition without losing chart context.
+2. Select a sign, body, house cusp, and aspect; confirm each meaning appears beside its visualization on a wide layout and directly below it on a narrow layout; then move among all six chart views (Wheel, Aspects, Matrix, Elements, Placements, and Patterns & condition) without losing chart context.
 3. Enter a target date, change the Primary Directions time key, and filter transits without guessing which control to use.
 4. Configure Astrocartography line types, bodies, Local Space, and relocation in one pass; expand a body's line meanings; then cancel another settings draft without changing the map.
 5. Switch to another person and open the same feature.
@@ -568,7 +584,7 @@ The redesign specs use Tailwind-style class names. The project bans Tailwind (se
 
 ### 17.2 Mockup gate
 
-- Test sizes: 390×844, 1280×800, and 1440×900.
+- Test sizes: 390×844, 1280×800, and 3440×1440. This is the one viewport standard for mockups and owner visual checks; the e2e viewport matrix keeps all five sizes in §10.
 - Themes: light and dark.
 - A static mockup must be reviewed and approved by the owner before any real build starts.
 - Mockups are not committed to the repository.

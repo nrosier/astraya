@@ -548,7 +548,7 @@ Do not mix domain-calculation changes into these slices. If a UI slice reveals a
 
 ## 12. Final product acceptance
 
-Before removing the migration label, run these tasks with a newer astrology reader and an experienced practitioner:
+Before removing the migration label, cover these journeys. A Playwright spec per user journey is the acceptance evidence (owner decision 2026-11-02, confirmed 2026-11-03); real-user sessions with a newer astrology reader and an experienced practitioner are advisory:
 
 1. Open an existing locally stored person and an existing server-synchronized person, confirm every birth-record field, edit one value, reload, and confirm both records remain intact.
 2. Add a person, understand what is missing, and reach the natal chart.
