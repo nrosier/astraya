@@ -370,19 +370,27 @@ Not decided by this document. Each is asked through the dialogue box; the answer
   register fields `advancedOpen.<tab>`; (C) not remembered. Why A first: guidelines 3.3 reserves device scope for choices
   that reasonably differ by screen, #856's current acceptance already says device, and each toggle would be a permanent
   op in a log that is never compacted.
+  **Decided: A.** The Advanced open or closed state is a device preference, not an account setting
+  ([#1066 comment](https://github.com/nrosier/astraya/issues/1066#issuecomment-6638104548)).
 - **Q2. What a signed-out user sees right after sign-out.** Options: (A) the signed-out store's own values, defaults if
   none, with nothing copied from the account, recommended; (B) keep the account's values in effect by copying them into
   the signed-out store. Why A first: B leaves an account's preferences on a shared device after sign-out, and the
   db-integrity review found that B conflicts with bleed controls (a) and (c) in section 4: a later account signing in on
   that browser would be prompted with the first account's values.
+  **Decided: A.** After sign-out the user sees the signed-out store's own values, or defaults if none; nothing is copied
+  from the account ([#1066 comment](https://github.com/nrosier/astraya/issues/1066#issuecomment-6638104548)).
 - **Q3. Prompt shape when a newer local choice differs.** Options: (A) one prompt listing only the differing settings,
   recommended; (B) account always wins with a notice; (C) this device always wins with a notice. Why A first: it is the
   only option that satisfies "explicitly" and "not silently overwrite a newer local choice" for values whose age is
   unknown.
+  **Decided: A.** One prompt at sign-in, listing only the settings that differ
+  ([#1066 comment](https://github.com/nrosier/astraya/issues/1066#issuecomment-6638104548)).
 - **Q4. Orb library and transit-filter default.** Guidelines 3.2 names "orb profile" and "default transit-filter
   profile" as user scope, but the registry omits the orb library entirely and files the transit filter as `page` scope.
   Options: (A) track as a separate issue, recommended; (B) include now. Why A first: larger JSON shapes, no registry
   entry yet, and adding fields later needs no format change.
+  **Decided: A.** The orb profile and transit-filter scope mismatch is tracked as a separate issue
+  ([#1066 comment](https://github.com/nrosier/astraya/issues/1066#issuecomment-6638104548)).
 
 ## 8. db-integrity review
 

@@ -168,7 +168,7 @@ React UI: ~150 screens/components with co-located `*.messages.ts` (en/nl i18n), 
 - `people-list.messages.ts` — en/nl for incomplete person-record descriptions. Deps: none.
 - `people-list.ts` — Sorts people + flags caveated resolutions + composes summaries. Deps: `time/resolve`, `domain/person`.
 - `person-nav.ts` — Per-person tab bar + grouped subtab families. Deps: `route`.
-- `Home.tsx` + `Home.messages.ts` — Home screen at `#/` (#1058): last-viewed person's timing timeline, or a person picker with a first-use empty state; no redirect. Deps: `last-person`, `TimingTimelineView`, `people-list`, `store-context`, `primitives/Select`, `primitives/EmptyState`.
+- `Home.tsx` + `Home.messages.ts` — Home screen at `#/` (#1058): last-viewed person's timing timeline, or a person picker with a first-use empty state; no redirect. Sidebar is full when a person is last-viewed (#965). Deps: `last-person`, `TimingTimelineView`, `people-list`, `store-context`, `primitives/Select`, `primitives/EmptyState`.
 - `person-screens.ts` — Barrel re-export for lazy-loading every person-scoped screen. Deps: all person-scoped screens.
 - `place-fields.ts` — Shared coordinate parsing (lat/lon validation). Deps: none.
 - `placement-label.ts` — Corpus key → human-readable placement name (admin UI). Deps: `astrology/aspects`, `astrology/bodies`, `astrology/signs`, `interpretation/schema`.
