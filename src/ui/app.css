@@ -998,6 +998,20 @@ footer {
   grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
 }
 
+/* Place search, latitude, longitude and an interval on one compact grid; the search takes the first row, the rest pair up beneath it (#1053). */
+.tool-location-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.tool-location-grid > .tool-location-search {
+  grid-column: 1 / -1;
+}
+
+/* A results table in a full-width card: the table's own header (title and export actions) is the card's header. */
+.tool-results .data-table {
+  margin: 0;
+}
+
 /* A side panel that is itself a group of inputs (Electional's rules): its legend reads as the card's heading. */
 .tool-panel-fieldset > legend {
   padding: 0 0 var(--space-1);
@@ -4765,7 +4779,9 @@ svg text.chart-symbol-text-unicode {
   padding: 0;
   list-style: none;
   display: grid;
-  gap: var(--space-2);
+  /* Two columns where the panel is wide enough for two rules side by side; one on a phone (#1053). */
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--space-3) var(--space-4);
 }
 
 /* Each rule: the checkbox, then its label with the explanation under it (#1053). The label is a flex row, where the
