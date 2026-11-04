@@ -161,10 +161,12 @@ function PersonMenu({
 }
 
 // App-scoped screens that keep the last-viewed person's sections in the sidebar (#965), so the
-// sidebar is the same on every screen. The People list (the person picker; a stale person's tabs
-// must not linger there, #914), the home screen (#1058, decided: keeps the Tools and PDF only sidebar), shared charts and the sign-in/setup forms
-// are deliberately not in this set.
+// sidebar is the same on every screen. The home screen (#/) is one of them (#965 owner decision,
+// reversing the #1058 Tools-and-PDF-only sidebar). Without a last-viewed person it shows no person
+// sections, like the People list. The People list (the person picker; a stale person's tabs must not
+// linger there, #914), shared charts and the sign-in/setup forms are deliberately not in this set.
 const KEEP_PERSON_SECTIONS_KINDS: ReadonlySet<Route['kind']> = new Set([
+  'home',
   'documents',
   'export-builder',
   'preferences',
@@ -184,8 +186,8 @@ export function AppNav({ route }: { route: Route }): React.JSX.Element {
   // Documents workspace is app-scoped like Preferences; its active state comes from the registry.
   const documentsActive = activeFeatureKey(route, 'global') === 'documents';
   const lastPersonId = useLastPersonId();
-  // Tool pages (#453), the Documents workspace (#914) and the other app-scoped screens (#965:
-  // Preferences, Admin, PDF creator, About, Changelog) carry no person in their own route
+  // Tool pages (#453), the Documents workspace (#914), the home screen (#965) and the other app-scoped
+  // screens (#965: Preferences, Admin, PDF creator, About, Changelog) carry no person in their own route
   // (`route.ts`). On all of them, the last person seen is reused, so their nav tabs keep showing instead
   // of disappearing, and a link back to one of those tabs returns to the same person rather than
   // requiring they be picked again. The People list and other person-less routes are not in

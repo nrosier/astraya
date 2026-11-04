@@ -11,11 +11,12 @@
 /**
  * @module RectificationView
  * @purpose Birth-time rectification screen: tests candidate birth times for a known date/place against dated life events and ranks them by solar-arc/transit contact score.
- * @conventions Not person-scoped (optional pre-fill from a stored person); uses RectificationView.messages.ts for en/nl text via useMessages().
+ * @conventions Not person-scoped (optional pre-fill from a stored person); uses RectificationView.messages.ts for en/nl text via useMessages(). Laid out as a tool page (#1065): birth-details form and life-events panel side by side, candidate results full width below (`.tool-layout`).
  * @exports RectificationView
  */
 import { GlossaryText } from './GlossaryText.js';
 import { formatFixed, formatOrb } from './format.js';
+import { Button } from './primitives/Button.js';
 import { Disclosure } from './primitives/Disclosure.js';
 import { DateField } from './primitives/DateField.js';
 import { Select } from './primitives/Select.js';
@@ -221,132 +222,148 @@ export function RectificationView(): React.JSX.Element {
         <GlossaryText text={t.caveat} />
       </Notice>
 
-      <div className="field-grid">
-        <Select
-          label={t.personLabel}
-          value={personId}
-          options={[
-            { value: '', label: t.personNone },
-            ...people.map((person) => ({
-              value: person.id,
-              label: person.displayName === '' ? t.unnamedPerson : person.displayName,
-            })),
-          ]}
-          onChange={choosePerson}
-        />
-        <DateField
-          label={t.birthDateLabel}
-          value={fields.birthDate}
-          onChange={(value) => {
-            edit({ birthDate: value });
-            setZone({});
-          }}
-        />
-        <TextField
-          label={t.latitudeLabel}
-          inputMode="decimal"
-          value={fields.latitude}
-          onChange={(value) => {
-            edit({ latitude: value });
-            setZone({});
-          }}
-        />
-        <TextField
-          label={t.longitudeLabel}
-          inputMode="decimal"
-          value={fields.longitude}
-          onChange={(value) => {
-            edit({ longitude: value });
-            setZone({});
-          }}
-        />
-        <TimeField
-          label={t.fromTimeLabel}
-          value={fields.fromTime}
-          onChange={(value) => {
-            edit({ fromTime: value });
-          }}
-        />
-        <TimeField
-          label={t.toTimeLabel}
-          value={fields.toTime}
-          onChange={(value) => {
-            edit({ toTime: value });
-          }}
-        />
-        <Select
-          label={t.stepLabel}
-          value={String(stepMinutes)}
-          options={RECTIFICATION_STEP_MINUTES.map((minutes) => ({
-            value: String(minutes),
-            label: t.stepOption(minutes),
-          }))}
-          onChange={(value) => {
-            setStepMinutes(Number(value));
-          }}
-        />
+      <div className="tool-layout">
+        <section className="tool-card tool-form" aria-labelledby="rectification-search-heading">
+          <h2 id="rectification-search-heading">{t.searchHeading}</h2>
+          <Select
+            label={t.personLabel}
+            value={personId}
+            options={[
+              { value: '', label: t.personNone },
+              ...people.map((person) => ({
+                value: person.id,
+                label: person.displayName === '' ? t.unnamedPerson : person.displayName,
+              })),
+            ]}
+            onChange={choosePerson}
+          />
+          <DateField
+            label={t.birthDateLabel}
+            value={fields.birthDate}
+            onChange={(value) => {
+              edit({ birthDate: value });
+              setZone({});
+            }}
+          />
+          <div className="tool-field-row tool-location-grid">
+            <div className="tool-location-search">
+              <BirthPlaceSearch
+                onPick={(latitude, longitude) => {
+                  edit({ latitude: String(latitude), longitude: String(longitude) });
+                  setZone({});
+                }}
+              />
+            </div>
+            <TextField
+              label={t.latitudeLabel}
+              inputMode="decimal"
+              value={fields.latitude}
+              onChange={(value) => {
+                edit({ latitude: value });
+                setZone({});
+              }}
+            />
+            <TextField
+              label={t.longitudeLabel}
+              inputMode="decimal"
+              value={fields.longitude}
+              onChange={(value) => {
+                edit({ longitude: value });
+                setZone({});
+              }}
+            />
+          </div>
+          {fieldError !== undefined && <StatusMessage kind="error">{errorText(fieldError)}</StatusMessage>}
+          <div className="tool-actions">
+            <Button
+              variant="primary"
+              disabled={provider === undefined}
+              busy={result.kind === 'testing'}
+              busyLabel={t.testing}
+              onClick={run}
+            >
+              {t.findButton}
+            </Button>
+          </div>
+        </section>
+
+        <section className="tool-card tool-panel" aria-labelledby="rectification-panel-heading">
+          <h2 id="rectification-panel-heading">{t.panelHeading}</h2>
+          <div className="tool-field-row tool-field-row--three">
+            <TimeField
+              label={t.fromTimeLabel}
+              value={fields.fromTime}
+              onChange={(value) => {
+                edit({ fromTime: value });
+              }}
+            />
+            <TimeField
+              label={t.toTimeLabel}
+              value={fields.toTime}
+              onChange={(value) => {
+                edit({ toTime: value });
+              }}
+            />
+            <Select
+              label={t.stepLabel}
+              value={String(stepMinutes)}
+              options={RECTIFICATION_STEP_MINUTES.map((minutes) => ({
+                value: String(minutes),
+                label: t.stepOption(minutes),
+              }))}
+              onChange={(value) => {
+                setStepMinutes(Number(value));
+              }}
+            />
+          </div>
+          <fieldset className="field-group">
+            <legend>{t.eventsLegend}</legend>
+            <p className="hint">{t.eventsHint}</p>
+            <ul className="rectification-events">
+              {events.map((event, index) => (
+                <li key={index} className="tool-field-row">
+                  <DateField
+                    label={t.eventDateLabel(index + 1)}
+                    value={event.date}
+                    onChange={(value) => {
+                      updateEvent(index, { date: value });
+                    }}
+                  />
+                  <TextField
+                    label={t.eventLabelLabel(index + 1)}
+                    placeholder={t.eventLabelPlaceholder}
+                    value={event.label}
+                    onChange={(value) => {
+                      updateEvent(index, { label: value });
+                    }}
+                  />
+                  {events.length > 1 && (
+                    <button
+                      type="button"
+                      className="quiet"
+                      onClick={() => {
+                        setEvents((current) => current.filter((_, i) => i !== index));
+                      }}
+                    >
+                      {t.removeEvent(index + 1)}
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+            <button
+              type="button"
+              className="quiet"
+              onClick={() => {
+                setEvents((current) => [...current, { date: '', label: '' }]);
+              }}
+            >
+              {t.addEvent}
+            </button>
+          </fieldset>
+        </section>
       </div>
 
-      <BirthPlaceSearch
-        onPick={(latitude, longitude) => {
-          edit({ latitude: String(latitude), longitude: String(longitude) });
-          setZone({});
-        }}
-      />
-
-      <fieldset className="field-group">
-        <legend>{t.eventsLegend}</legend>
-        <p className="hint">{t.eventsHint}</p>
-        <ul className="rectification-events">
-          {events.map((event, index) => (
-            <li key={index} className="field-grid">
-              <DateField
-                label={t.eventDateLabel(index + 1)}
-                value={event.date}
-                onChange={(value) => {
-                  updateEvent(index, { date: value });
-                }}
-              />
-              <TextField
-                label={t.eventLabelLabel(index + 1)}
-                placeholder={t.eventLabelPlaceholder}
-                value={event.label}
-                onChange={(value) => {
-                  updateEvent(index, { label: value });
-                }}
-              />
-              {events.length > 1 && (
-                <button
-                  type="button"
-                  className="quiet"
-                  onClick={() => {
-                    setEvents((current) => current.filter((_, i) => i !== index));
-                  }}
-                >
-                  {t.removeEvent(index + 1)}
-                </button>
-              )}
-            </li>
-          ))}
-        </ul>
-        <button
-          type="button"
-          className="quiet"
-          onClick={() => {
-            setEvents((current) => [...current, { date: '', label: '' }]);
-          }}
-        >
-          {t.addEvent}
-        </button>
-      </fieldset>
-
-      <p>
-        <button type="button" disabled={provider === undefined || result.kind === 'testing'} onClick={run}>
-          {result.kind === 'testing' ? t.testing : t.findButton}
-        </button>
-      </p>
-
-      {fieldError !== undefined && <StatusMessage kind="error">{errorText(fieldError)}</StatusMessage>}
       {/* The result region: busy while the candidates are tested, as the Astrocartography map is. */}
       <div aria-busy={result.kind === 'testing'}>
         {result.kind === 'error' && <StatusMessage kind="error">{t.error(result.message)}</StatusMessage>}
