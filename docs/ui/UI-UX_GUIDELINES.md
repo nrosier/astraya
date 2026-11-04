@@ -467,6 +467,8 @@ A tool page (a screen that takes inputs and returns results, such as Planetary c
 - The §10.1 90% rule applies to the form/panel pair. The pair stretches to one bottom edge and is balanced by content, not by a fixed height (§10.1 rules 1 to 3).
 - Link guidance: a link that leaves the page for another route is an anchor (§2). Use the shared button classes when it should look like a button.
 
+**Documented exception (Horary, #1065).** Horary keeps the three-card layout shipped by #895 instead of the 60/40 form and side panel pair. Its side-by-side cards already keep the shorter card at least 90% of the taller (§10.1, checked by the #895 baseline), so the layout satisfies the balance rule without the tool-page grid, and moving it would add churn without a gain for the user. Horary therefore does not use `.tool-layout`. User impact: Horary reads as three cards rather than a form beside a panel, and the other tool pages keep the 60/40 split. Decided by the owner on #1065.
+
 ## 11. Use the design system rather than local styling
 
 - Use the spacing, type, semantic-color, radius, elevation, and motion tokens in `app.css`.

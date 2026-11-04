@@ -57,7 +57,7 @@ tracking, not licence compliance.
 | `@types/*`                                 | TypeScript ambient types for the above.                                                              | MIT                  |
 | `@modelcontextprotocol/sdk`                | Agent/tooling support (`tools/`), excluded from `src/` by the `tools/` import boundary.              | MIT                  |
 
-`@axe-core/playwright` is MPL-2.0, outside the MIT/BSD/Apache-2.0/ISC/CC0 set
+`@axe-core/playwright` is MPL-2.0, outside the MIT/BSD/Apache-2.0/ISC/CC0/BlueOak-1.0.0 set
 `CLAUDE.md` names. It is a devDependency used only by the Playwright a11y suite
 and is never bundled or distributed with Astraya: the Docker runtime stage
 installs with `npm ci --omit=dev`. MPL-2.0's copyleft obligations, such as
@@ -66,6 +66,22 @@ software, so none applies to a tool that stays on the developer's and CI's
 machines. It is called out here rather than silently folded into the "all
 permissive" summary, since `CLAUDE.md`'s rule is written without a scope
 qualifier.
+
+## Renovate and the Docker base image
+
+`renovate.json` is the only automated dependency tooling. Two rules concern Docker (#122):
+
+- **Shipped base image.** Every stage of `Dockerfile` is `FROM cgr.dev/chainguard/node:latest-dev` or
+  `:latest` (Chainguard/Wolfi, glibc). Chainguard's free tier publishes only those floating tags, so
+  Renovate's Docker manager has no version to bump. A package rule for `cgr.dev/chainguard/node` sets
+  `pinDigests`, so Renovate rewrites each `FROM` to `tag@sha256:...` and opens a PR when the digest moves.
+  The rule labels the PR `docker-base`, never automerges it, and tells the reviewer to run
+  `npm run docker:smoke` and to confirm the runtime is still glibc and that the `@node-rs/argon2` and
+  `sweph-wasm` prebuilt binaries still load. A green `check` job is not enough: CI does not exercise the
+  built image before merge, and the Harbor scan runs only after a release.
+- **`Dockerfile.alpine`.** A reference-only musl build that CI never builds. It is listed in `ignorePaths`
+  so Renovate opens no PRs for it. Keep the file; do not switch the shipped image to Alpine without
+  re-checking the `@node-rs/argon2` binaries (#272).
 
 ## Keeping this current
 
