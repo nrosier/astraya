@@ -47,7 +47,7 @@ test('Tools is one sidebar link on every screen; its tools are tabs on the page 
   test.setTimeout(60_000);
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   const header = page.getByRole('banner');
-  const toolsTabs = page.getByRole('navigation', { name: 'Tools subtabs' });
+  const toolsTabs = page.getByRole('tablist', { name: 'Tools subtabs' });
 
   // No sub-menu: the entry is a link, not a dropdown button, and it opens the first tool.
   await expect(header.getByRole('button', { name: 'Tools', exact: true })).toHaveCount(0);
@@ -63,18 +63,18 @@ test('Tools is one sidebar link on every screen; its tools are tabs on the page 
     'Electional search',
     'Birth-time rectification',
   ]) {
-    await expect(toolsTabs.getByRole('link', { name, exact: true })).toBeVisible();
+    await expect(toolsTabs.getByRole('tab', { name, exact: true })).toBeVisible();
   }
-  await toolsTabs.getByRole('link', { name: 'Eclipses', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Eclipses', level: 1 })).toBeVisible();
-  await expect(toolsTabs.getByRole('link', { name: 'Eclipses', exact: true })).toHaveAttribute('aria-current', 'page');
+  await toolsTabs.getByRole('tab', { name: 'Eclipses', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Eclipses', level: 2 })).toBeVisible();
+  await expect(toolsTabs.getByRole('tab', { name: 'Eclipses', exact: true })).toHaveAttribute('aria-selected', 'true');
 
   // It is there on screens that have nothing to do with a person.
   await gotoAndSettle(page, `${baseUrl}/#/about`);
   await expect(header.getByRole('link', { name: 'Tools', exact: true })).toBeVisible();
   await expect(toolsTabs).toHaveCount(0);
   await openTool(page, 'Horary chart');
-  await expect(page.getByRole('heading', { name: 'Horary chart', level: 1 })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Horary chart', level: 2 })).toBeVisible();
 });
 
 test.describe('with the shared people (#799)', () => {
@@ -121,7 +121,7 @@ test.describe('with the shared people (#799)', () => {
     // Going to a tool keeps the person's tabs in the header (#453): a tool is not about their
     // chart, but losing the way back to it just for visiting one is its own kind of friction.
     await header.getByRole('link', { name: 'Tools', exact: true }).click();
-    await expect(page.getByRole('heading', { name: 'Planetary cycles', level: 1 })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Planetary cycles', level: 2 })).toBeVisible();
     await expect(header.getByText('Albert Einstein', { exact: true })).toBeVisible();
     await expect(header.getByRole('link', { name: 'Charts', exact: true })).toBeVisible();
     // On a tool page the person is history, not the subject: the rail says so (and does not on their own pages).
@@ -138,7 +138,7 @@ test.describe('with the shared people (#799)', () => {
     await openSharedPerson(page, baseUrl, EINSTEIN);
     const header = page.getByRole('banner');
     await openTool(page, 'Eclipses');
-    await expect(page.getByRole('heading', { name: 'Eclipses', level: 1 })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Eclipses', level: 2 })).toBeVisible();
 
     // Still Einstein's tabs, carried over from the person's screen the tool was opened from.
     await expect(header.getByText('Albert Einstein', { exact: true })).toBeVisible();
@@ -290,7 +290,7 @@ test.describe('with the shared people (#799)', () => {
 
     // Choosing Tools closes the whole menu and opens the first tool; the other tools are tabs on the page.
     await header.getByRole('link', { name: 'Tools', exact: true }).click();
-    await expect(page.getByRole('heading', { name: 'Planetary cycles', level: 1 })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Planetary cycles', level: 2 })).toBeVisible();
     await expect(header.getByRole('button', { name: 'Menu', exact: true })).toHaveAttribute('aria-expanded', 'false');
 
     // Escape closes the open menu and returns focus to its button.

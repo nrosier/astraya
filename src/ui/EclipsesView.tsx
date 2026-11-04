@@ -204,7 +204,7 @@ export function EclipsesView(): React.JSX.Element {
   return (
     <main className="shell">
       <BackLink fallback="#/people" />
-      <PageHeader title={t.heading} titleTerm="eclipse" basis={basisLine} basisEditHref={null} />
+      <PageHeader title={t.heading} titleTerm="eclipse" basis={basisLine} basisEditHref={null} headingLevel={2} />
       <p className="hint">
         <GlossaryText text={t.hint} />
       </p>

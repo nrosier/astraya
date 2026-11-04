@@ -186,8 +186,8 @@ test('a sub-view page at phone width has no axe region violations, so the sub-vi
   // At 40rem and below the sub-view row shows its labelled Select (`.tab-row__fallback`); it must sit inside a landmark.
   await page.setViewportSize({ width: 390, height: 844 });
   await gotoAndSettle(page, `${baseUrl}/#/explore/cycles`);
-  await expect(page.getByRole('heading', { name: 'Planetary cycles' })).toBeVisible();
-  await expect(page.locator('.tab-row__fallback')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Planetary cycles', level: 2 })).toBeVisible();
+  await expect(page.locator('.tools-select')).toBeVisible();
 
   const results = await new AxeBuilder({ page }).withRules(['region']).analyze();
   expect(results.violations).toEqual([]);

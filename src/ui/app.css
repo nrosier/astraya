@@ -5581,7 +5581,7 @@ svg text.chart-symbol-text-unicode {
 /*
  * The links: a muted label with a 2px bottom border that turns to the accent on the open one (#1050).
  * This is the one shared link style: the chart view links (`ChartViewNav.tsx`) and the sub-view links of
- * Transits & Forecast, Progressions & Directions, Relationship Charts and Tools (`SectionNav.tsx`) both render
+ * Transits & Forecast, Progressions & Directions, Relationship Charts (`SectionNav.tsx`) both render
  * inside `ScrollingTabRow`'s `nav.tab-row__tabs`, so the active, hover and focus states below serve both.
  * There is no separate sub-view rule.
  */
@@ -8015,4 +8015,63 @@ a.quiet,
 
 .note-fork-hint {
   font-size: var(--text-xs);
+}
+
+/*
+ * The Tools frame (`ToolsLayout.tsx`, issue 1139): a "Tools" h1 and the Tabs strip above the open tool, which keeps its
+ * own name as an h2 section heading. Above 40rem the Tabs strip shows; at 40rem and below the labelled Select in a
+ * navigation landmark replaces it (the Tabs primitive has no narrow case). Same 40rem rule as the other tab rows.
+ */
+.tools-header.shell {
+  padding-top: 3.5rem;
+  padding-bottom: 0;
+}
+
+.tools-header > h1 {
+  margin: 0;
+}
+
+.tools-select {
+  display: none;
+}
+
+@media (max-width: 40rem) {
+  .tools-tabs {
+    display: none;
+  }
+
+  .tools-select {
+    display: block;
+    margin-top: var(--space-4);
+  }
+
+  .tools-select .chart-view-select {
+    max-width: none;
+  }
+}
+
+.tools-panel > main.shell {
+  padding-top: var(--space-4);
+}
+
+.page-header--section .page-header-row h2 {
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--fg);
+  font-size: var(--text-2xl);
+  font-weight: 620;
+  line-height: 1.2;
+}
+
+.page-header--section .page-header-title h2 {
+  margin: 0;
+  flex: 0 1 auto;
+  font-size: var(--text-2xl);
+}
+
+@media print {
+  .tools-header {
+    display: none;
+  }
 }

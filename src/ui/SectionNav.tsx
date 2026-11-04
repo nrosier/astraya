@@ -1,37 +1,32 @@
 /**
  * The tab row for a sidebar section with sub-views (#882): Transits & Forecast, Progressions & Directions,
- * Relationship Charts and Tools. The sidebar holds one entry per section; this row sits at the top of the
+ * Relationship Charts. The sidebar holds one entry per section; this row sits at the top of the
  * page and lists the section's sub-views as ordinary links, the same pattern the Charts page uses
  * (`ChartViewNav.tsx`, `AdminNav.tsx`): a `ScrollingTabRow` above 40rem and a labelled Select at 40rem and below.
  */
 /**
  * @module SectionNav
- * @purpose Renders the sub-view tabs of a multi-view sidebar section (Transits & Forecast, Progressions & Directions, Relationship Charts, Tools) above the open screen (#882).
- * @conventions Uses the shared ScrollingTabRow with a Select fallback, like AdminNav. Plain links to the unchanged routes, not ARIA tabs. Draws nothing on a route outside those sections. Labels come from AppNav.messages.ts.
+ * @purpose Renders the sub-view tabs of a multi-view sidebar section (Transits & Forecast, Progressions & Directions, Relationship Charts) above the open screen (#882); Tools has its own Tabs frame, ToolsLayout (#1139).
+ * @conventions Uses the shared ScrollingTabRow with a Select fallback, like AdminNav. Plain links to the unchanged routes, not ARIA tabs. Draws nothing on a route outside those sections, Tools included. Labels come from AppNav.messages.ts.
  * @exports SectionNav, sectionTabsFor, SectionTabs
  */
 import { appNavMessages } from './AppNav.messages.js';
-import { activePersonTabKey, activeToolKey } from './feature-registry.js';
+import { activePersonTabKey } from './feature-registry.js';
 import { useMessages } from './messages.js';
 import { familyForTab, PERSON_TAB_FAMILIES, PERSON_TABS } from './person-nav.js';
 import { Select } from './primitives/Select.js';
 import type { Route } from './route.js';
 import { ScrollingTabRow } from './ScrollingTabRow.js';
-import { TOOLS } from './tools-nav.js';
 
 export interface SectionTabs {
-  /** A `familyLabels` key in `AppNav.messages.ts`, or `'tools'` for the Tools section. */
-  readonly section: 'transits-forecast' | 'progressions-directions' | 'relationship-charts' | 'tools';
+  /** A `familyLabels` key in `AppNav.messages.ts`. */
+  readonly section: 'transits-forecast' | 'progressions-directions' | 'relationship-charts';
   readonly activeKey: string;
   readonly tabs: readonly { readonly key: string; readonly href: string }[];
 }
 
 /** The sub-view tabs for a route, or `null` when the route is not in a multi-view section. */
 export function sectionTabsFor(route: Route): SectionTabs | null {
-  const toolKey = activeToolKey(route);
-  if (toolKey !== null) {
-    return { section: 'tools', activeKey: toolKey, tabs: TOOLS.map((tool) => ({ key: tool.key, href: tool.href })) };
-  }
   const tabKey = activePersonTabKey(route);
   const familyKey = tabKey === null ? undefined : familyForTab(tabKey);
   if (tabKey === null || familyKey === undefined || !('personId' in route)) return null;
@@ -75,9 +70,9 @@ export function SectionNav({ route }: { route: Route }): React.JSX.Element | nul
   const t = useMessages(appNavMessages);
   const section = sectionTabsFor(route);
   if (section === null) return null;
-  const sectionLabel = section.section === 'tools' ? t.toolsLabel : t.familyLabels[section.section];
+  const sectionLabel = t.familyLabels[section.section];
   const label = t.subtabsAriaLabel(sectionLabel);
-  const labels: Readonly<Record<string, string>> = { ...t.tabLabels, ...t.toolLabels };
+  const labels: Readonly<Record<string, string>> = t.tabLabels;
   const labelFor = (key: string): string => labels[key] ?? key;
   return (
     <div

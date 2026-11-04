@@ -37,7 +37,7 @@ test('the eclipses screen lists the four eclipses of 2024 with their degrees', a
 
   await gotoAndSettle(page, `${baseUrl}/#/people`);
   await openTool(page, 'Eclipses');
-  await expect(page.getByRole('heading', { name: 'Eclipses', level: 1 })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Eclipses', level: 2 })).toBeVisible();
 
   await page.getByLabel('From year').fill('2024');
   await page.getByLabel('To year').fill('2024');
