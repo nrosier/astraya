@@ -323,6 +323,8 @@ const en = {
   personPageLink: 'person page',
 
   isolationClear: 'Clear',
+  isolationOnlyThis: 'Show only this body’s aspects',
+  isolationShowAll: 'Show all aspects',
   inspectorHeading: 'Selection',
   inspectorEmpty: 'Select a planet, sign, house cusp, or aspect to explore it',
   selectionInterpretationHeading: 'What it means',
@@ -659,6 +661,8 @@ const nl: typeof en = {
   personPageLink: 'persoonspagina',
 
   isolationClear: 'Wissen',
+  isolationOnlyThis: 'Alleen aspecten van dit lichaam tonen',
+  isolationShowAll: 'Alle aspecten tonen',
   inspectorHeading: 'Selectie',
   inspectorEmpty: 'Selecteer een planeet, teken, huispunt of aspect om het te verkennen',
   selectionInterpretationHeading: 'Wat het betekent',

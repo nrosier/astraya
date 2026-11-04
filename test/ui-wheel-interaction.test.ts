@@ -5,7 +5,7 @@
  * `renderMultiWheelSvg` emits is enough to exercise `selectionKeyForTarget` and `applyIsolation`.
  */
 import { describe, expect, it } from 'vitest';
-import { applyIsolation, selectionKeyForTarget } from '../src/ui/wheel-interaction.js';
+import { applyIsolation, ISOLATED_LINE_CLASS, selectionKeyForTarget } from '../src/ui/wheel-interaction.js';
 
 /** Narrows a `querySelector` result without a type-assertion cast or a `!`, since both are banned here. */
 function must<T>(value: T | null): T {
@@ -195,6 +195,51 @@ describe('house selection (#511)', () => {
     applyIsolation(root, 'house:2');
     expect(dimmed(root, '[data-house="1"]')).toBe(true);
     applyIsolation(root, undefined);
+    expect(root.querySelectorAll('.chart-dimmed')).toHaveLength(0);
+  });
+});
+
+describe('body isolation of aspect lines (#1063)', () => {
+  /** Sun-Moon, Sun-Mars and Moon-Mars lines: selecting the Sun must leave the first two and drop the third. */
+  function trioFragment(): HTMLElement {
+    const root = document.createElement('div');
+    root.innerHTML = `
+      <svg>
+        <g data-body="sun" data-ring="0" data-body-sign="aries"><text>Sun</text></g>
+        <g data-body="moon" data-ring="0" data-body-sign="leo"><text>Moon</text></g>
+        <g data-body="mars" data-ring="0" data-body-sign="libra"><text>Mars</text></g>
+        <g class="l" data-aspect-body-a="sun" data-aspect-body-b="moon" data-ring-a="0" data-ring-b="0"></g>
+        <g class="l" data-aspect-body-a="sun" data-aspect-body-b="mars" data-ring-a="0" data-ring-b="0"></g>
+        <g class="l" data-aspect-body-a="moon" data-aspect-body-b="mars" data-ring-a="0" data-ring-b="0"></g>
+      </svg>
+    `;
+    return root;
+  }
+  const hidden = (root: Element): number => root.querySelectorAll(`.l.${ISOLATED_LINE_CLASS}`).length;
+
+  it('removes only the lines not touching the selected body, keeping its contacts lit', () => {
+    const root = trioFragment();
+    applyIsolation(root, 'body:sun@0', true);
+    expect(hidden(root)).toBe(1);
+    expect(must(root.querySelector('[data-aspect-body-a="moon"]')).classList.contains(ISOLATED_LINE_CLASS)).toBe(true);
+    expect(must(root.querySelector('[data-body="moon"]')).classList.contains('chart-dimmed')).toBe(false);
+    expect(must(root.querySelector('[data-body="mars"]')).classList.contains('chart-dimmed')).toBe(false);
+  });
+
+  it('removes nothing when isolation is off, and for non-body selections', () => {
+    const root = trioFragment();
+    applyIsolation(root, 'body:sun@0', false);
+    expect(hidden(root)).toBe(0);
+    expect(root.querySelectorAll('.l.chart-dimmed')).toHaveLength(1);
+    applyIsolation(root, 'sign:aries', true);
+    expect(hidden(root)).toBe(0);
+  });
+
+  it('returns every line when the selection is cleared', () => {
+    const root = trioFragment();
+    applyIsolation(root, 'body:sun@0', true);
+    applyIsolation(root, undefined, true);
+    expect(hidden(root)).toBe(0);
     expect(root.querySelectorAll('.chart-dimmed')).toHaveLength(0);
   });
 });

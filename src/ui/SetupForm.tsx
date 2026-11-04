@@ -54,10 +54,8 @@ export function SetupForm(): React.JSX.Element {
     setError(undefined);
     void setup(token, username, password)
       .then(() => {
-        // Not '#/': `parseRoute` strips the trailing slash, leaving a bare '#' that matches
-        // no route and falls through to `home`, whose `HomeRedirect` renders nothing for one
-        // frame before correcting itself (#263) — a blank flash this skips by landing on the
-        // real destination directly.
+        // Not '#/': that falls through to `home` (#1058), the last-viewed person's timeline or a picker;
+        // a first account should land on the people list.
         window.location.hash = '#/people';
       })
       .catch((cause: unknown) => {
