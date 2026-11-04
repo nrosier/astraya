@@ -83,6 +83,28 @@ qualifier.
   so Renovate opens no PRs for it. Keep the file; do not switch the shipped image to Alpine without
   re-checking the `@node-rs/argon2` binaries (#272).
 
+## Harbor CVEs: minimatch not reachable in the shipped image (#990, 2026-11-04)
+
+Evidence on `origin/main` (`c8c5089`, v0.46.0), from `npm ls glob minimatch` and the same with `--omit=dev`:
+
+| CVE                                   | Package   | Installed             | Fixed  | Severity | In shipped image                    |
+| ------------------------------------- | --------- | --------------------- | ------ | -------- | ----------------------------------- |
+| CVE-2026-118773 (GHSA-3g3m-2fjr-6pw4) | glob      | 14.0.3 (prod)         | 14.0.2 | medium   | Fixed; installed version is past it |
+| CVE-2026-118764 (GHSA-g3hv-75wg-m249) | minimatch | 10.2.6 (dev only)     | 11.0.1 | moderate | No: dev tools only                  |
+| CVE-2026-118764, glob's own copy      | minimatch | 11.0.4 (prod, nested) | 11.0.1 | moderate | Present, but at a fixed version     |
+
+- The vulnerable minimatch 10.2.6 is required only by `eslint`, `@eslint/config-array` and
+  `@typescript-eslint/typescript-estree` (via `typescript-eslint`). All are devDependencies.
+- `npm ls minimatch --omit=dev` shows only `@fastify/static` > `glob@14.0.3` > `minimatch@11.0.4`, at or above the
+  fixed 11.0.1. `npm audit --omit=dev` reports 0 vulnerabilities.
+- The runtime image installs with `npm ci --omit=dev` (`Dockerfile:62`, stage `runtime-deps`) and copies only that
+  `node_modules` (`Dockerfile:72`). The full-install `node_modules` (`Dockerfile:30`, `:38`) exists only in the
+  `deps` and `build` stages and never reaches the `runtime` stage.
+- Plain `npm audit` still lists moderate findings for the dev toolchain. They are not in the image.
+
+Closing rule: #990 closes only after a Harbor scan of the next built image no longer reports either CVE. This note
+is not a substitute for that scan.
+
 ## Keeping this current
 
 Update this file in the same change that adds, removes, or re-scopes
